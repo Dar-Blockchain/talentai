@@ -6,6 +6,51 @@ const { generateToken } = require("../utils/generate-token");
 const { getGmailByToken } = require("../utils/google-auth.service");
 const { extractUsernameFromEmail, formatLocation } = require("../helpers/auth-validation.helpers");
 
+const assignFreePlanToProfile = async (profileId) => {
+  try {
+    const PlanLimits = require("../models/PlanLimits.model");
+    const Subscription = require("../models/Subscription.model");
+
+    const existing = await Subscription.countDocuments({ companyProfileId: profileId });
+    if (existing > 0) return;
+
+    const freePlan = await PlanLimits.findOne({ name: "Free", isActive: true });
+    if (!freePlan) {
+      console.warn("⚠️ Free plan not found in DB — skipping auto-assign");
+      return;
+    }
+
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setFullYear(endDate.getFullYear() + 100);
+
+    const subscription = await Subscription.create({
+      companyProfileId: profileId,
+      planId: freePlan._id,
+      startDate,
+      endDate,
+      status: "active",
+      autoRenew: false,
+      postsUsed: 0,
+      monthlyInterviewsUsed: 0,
+    });
+
+    await Profile.findByIdAndUpdate(
+      profileId,
+      {
+        activeSubscription: subscription._id,
+        $addToSet: { subscriptions: subscription._id },
+        planLimits: freePlan._id,
+      },
+      { runValidators: false }
+    );
+
+    console.log(`✅ Free plan auto-assigned to profile ${profileId}`);
+  } catch (err) {
+    console.error("❌ Failed to assign Free plan:", err.message);
+  }
+};
+
 const OTP_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
 
 // Service d'inscription
@@ -101,6 +146,8 @@ module.exports.registerUser = async (email, roleType = 'Candidate', profileDataO
         await user.save();
         console.log('🔗 Company profile linked to user - user.profile:', profile._id);
 
+        // Auto-assign Free plan immediately at registration
+        await assignFreePlanToProfile(profile._id);
       }
     } else if (roleType === 'Member' || roleType === 'Employee') {
       // For Member and Employee: create profile similar to Candidate

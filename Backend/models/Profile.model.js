@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const TodoList = require("./todoList.model");
-const PlanLimits = require("./PlanLimits.model");
 
 // Sub-schemas for skills and softSkills to enable per-item timestamps
 const skillSchema = new mongoose.Schema(
@@ -182,54 +181,6 @@ profileSchema.post("save", async function (doc) {
       });
     }
 
-    // ========== CREATE FREE SUBSCRIPTION FOR COMPANIES ==========
-    if ((doc.type === "Company" || doc.type === "Member") && !doc.activeSubscription) {
-      try {
-        // Guard: skip if this profile already has any subscription in the DB
-        const existingSubCount = await mongoose.model("Subscription").countDocuments({ companyProfileId: doc._id });
-        if (existingSubCount > 0) return;
-
-        // Try Free plan first, fall back to Trial for backward compatibility
-        const freePlan = await PlanLimits.findOne({ name: "Free", isActive: true })
-          || await PlanLimits.findOne({ name: "Trial" });
-
-        if (!freePlan) {
-          console.warn(`⚠️  Free plan not found. ${doc.type} profile ${doc._id} was not assigned a plan.`);
-          return;
-        }
-
-        const Subscription = mongoose.model("Subscription");
-        const startDate = new Date();
-        // Free plan never expires — set end date 100 years in the future
-        const isFree = freePlan.name === "Free";
-        const endDate = new Date();
-        endDate.setFullYear(endDate.getFullYear() + (isFree ? 100 : 0));
-        if (!isFree) endDate.setDate(endDate.getDate() + (freePlan.durationDays || 30));
-
-        const subscription = await Subscription.create({
-          companyProfileId: doc._id,
-          planId: freePlan._id,
-          startDate,
-          endDate,
-          status: "active",
-          autoRenew: false,
-        });
-
-        await mongoose.model("Profile").findByIdAndUpdate(
-          doc._id,
-          {
-            activeSubscription: subscription._id,
-            subscriptions: [subscription._id],
-            planLimits: freePlan._id,
-          },
-          { runValidators: false }
-        );
-
-        console.log(`✅ Free subscription created for ${doc.type.toLowerCase()} profile: ${doc._id}`);
-      } catch (subscriptionError) {
-        console.error(`⚠️  Error creating free subscription: ${subscriptionError.message}`);
-      }
-    }
   } catch (error) {
     console.error("Error in Profile post-save hook:", error);
   }

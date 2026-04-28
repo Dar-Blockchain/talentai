@@ -36,15 +36,38 @@ exports.createPost = async (req, res) => {
 
     // ========== 3. RESOURCE LIMIT CHECK ==========
     if (userProfile.type === "Company") {
-      if (!userProfile.activeSubscription) {
-        return res.status(403).json({
-          success: false,
-          error: "No active subscription found",
-          message: "Please purchase a plan to create posts",
-        });
-      }
-
       try {
+        // Auto-assign Free plan if company has no subscription yet
+        const existingSubCount = await require("../../models/Subscription.model").countDocuments({
+          companyProfileId: userProfile._id,
+          status: "active",
+          endDate: { $gt: new Date() },
+        });
+
+        if (existingSubCount === 0) {
+          const PlanLimits = require("../../models/PlanLimits.model");
+          const Subscription = require("../../models/Subscription.model");
+          const Profile = require("../../models/Profile.model");
+          const freePlan = await PlanLimits.findOne({ name: "Free", isActive: true });
+          if (freePlan) {
+            const endDate = new Date();
+            endDate.setFullYear(endDate.getFullYear() + 100);
+            const freeSub = await Subscription.create({
+              companyProfileId: userProfile._id,
+              planId: freePlan._id,
+              startDate: new Date(),
+              endDate,
+              status: "active",
+              autoRenew: false,
+            });
+            await Profile.findByIdAndUpdate(userProfile._id, {
+              activeSubscription: freeSub._id,
+              $addToSet: { subscriptions: freeSub._id },
+            });
+            console.log(`✅ Auto-assigned Free plan to company ${userProfile._id}`);
+          }
+        }
+
         const limitCheck = await subscriptionService.checkSubscriptionLimit(
           userProfile._id,
           "posts"
@@ -100,32 +123,8 @@ exports.createPost = async (req, res) => {
       userProfile,
     );
 
-    // ========== 5. INCREMENT USAGE ==========
-    if (userProfile.type === "Company") {
-      try {
-        const { Subscription } = require("../../models/Subscription.model") || { Subscription: require("../../models/Subscription.model") };
-        const activeSubs = await require("../../models/Subscription.model").find({
-          companyProfileId: userProfile._id,
-          status: "active",
-          endDate: { $gt: new Date() },
-        }).populate("planId").sort({ createdAt: 1 });
-
-        const valid = activeSubs.filter((s) => s.planId != null);
-        if (valid.length) {
-          // Increment postsUsed on the subscription with remaining capacity first
-          const target = valid.find((s) => s.planId.postsLimit === -1 || s.postsUsed < s.planId.postsLimit) || valid[0];
-          await require("../../models/Subscription.model").findByIdAndUpdate(target._id, { $inc: { postsUsed: 1 } });
-        }
-      } catch (usageErr) {
-        console.error("Failed to increment postsUsed:", usageErr.message);
-      }
-    }
-
-    // ========== 6. RETURN RESPONSE ==========
-    res.status(201).json({
-      success: true,
-      data: post,
-    });
+    // ========== 5. RETURN RESPONSE ==========
+    res.status(201).json({ success: true, data: post });
   } catch (error) {
     handleError(res, error, 400);
   }
