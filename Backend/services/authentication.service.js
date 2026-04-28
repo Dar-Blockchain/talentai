@@ -83,6 +83,7 @@ module.exports.registerUser = async (email, roleType = 'Candidate', profileDataO
         user.profile = profile._id;
         await user.save();
         console.log('🔗 Company profile linked to user - user.profile:', profile._id);
+
       }
     } else if (roleType === 'Member' || roleType === 'Employee') {
       // For Member and Employee: create profile similar to Candidate

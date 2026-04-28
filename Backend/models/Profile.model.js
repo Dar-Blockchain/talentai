@@ -182,46 +182,48 @@ profileSchema.post("save", async function (doc) {
       });
     }
 
-    // ========== CREATE TRIAL SUBSCRIPTION FOR COMPANIES ==========
+    // ========== CREATE FREE SUBSCRIPTION FOR COMPANIES ==========
     if ((doc.type === "Company" || doc.type === "Member") && !doc.activeSubscription) {
       try {
-        // Get the Trial plan
-        const trialPlan = await PlanLimits.findOne({ name: "Trial" });
+        // Try Free plan first, fall back to Trial for backward compatibility
+        const freePlan = await PlanLimits.findOne({ name: "Free", isActive: true })
+          || await PlanLimits.findOne({ name: "Trial" });
 
-        if (!trialPlan) {
-          console.warn(`⚠️  Trial plan not found. ${doc.type} profile ${doc._id} was not assigned a plan.`);
+        if (!freePlan) {
+          console.warn(`⚠️  Free plan not found. ${doc.type} profile ${doc._id} was not assigned a plan.`);
           return;
         }
 
-        // Create a trial subscription (30 days from now)
         const Subscription = mongoose.model("Subscription");
         const startDate = new Date();
+        // Free plan never expires — set end date 100 years in the future
+        const isFree = freePlan.name === "Free";
         const endDate = new Date();
-        endDate.setDate(endDate.getDate() + (trialPlan.durationDays || 30));
+        endDate.setFullYear(endDate.getFullYear() + (isFree ? 100 : 0));
+        if (!isFree) endDate.setDate(endDate.getDate() + (freePlan.durationDays || 30));
 
         const subscription = await Subscription.create({
           companyProfileId: doc._id,
-          planId: trialPlan._id,
+          planId: freePlan._id,
           startDate,
           endDate,
           status: "active",
-          autoRenew: false, // Trial doesn't auto-renew
+          autoRenew: false,
         });
 
-        // Update profile with active subscription
         await mongoose.model("Profile").findByIdAndUpdate(
           doc._id,
           {
             activeSubscription: subscription._id,
             subscriptions: [subscription._id],
-            planLimits: trialPlan._id, // Keep for backward compatibility
+            planLimits: freePlan._id,
           },
           { runValidators: false }
         );
 
-        console.log(`✅ Trial subscription created for ${doc.type.toLowerCase()} profile: ${doc._id}`);
+        console.log(`✅ Free subscription created for ${doc.type.toLowerCase()} profile: ${doc._id}`);
       } catch (subscriptionError) {
-        console.error(`⚠️  Error creating trial subscription: ${subscriptionError.message}`);
+        console.error(`⚠️  Error creating free subscription: ${subscriptionError.message}`);
       }
     }
   } catch (error) {
