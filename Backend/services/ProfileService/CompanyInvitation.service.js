@@ -306,7 +306,6 @@ const _getDefaultPermissionsByRole = (role) => {
     canViewCandidates: false,
     canViewInterviewResults: false,
     canContactCandidates: false,
-    canAccessMatching: false,
     canUseHRAgents: false,
     canManageTeam: false,
     canInviteMembers: false,
@@ -360,7 +359,6 @@ const _getDefaultPermissionsByRole = (role) => {
         canCreateJobPosts: true,
         canViewCandidates: true,
         canContactCandidates: true,
-        canAccessMatching: true,
         canViewCampaigns: true,
       };
 

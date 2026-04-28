@@ -37,6 +37,11 @@ const userSchema = new mongoose.Schema(
     ip: String,
     Localisation: String,
     role: { type: String, enum: ["Company", "Candidate", "Admin", "Employee"] },
+    language: {
+      type: String,
+      enum: ["fr", "en"],
+      default: "fr",
+    },
     profile: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Profile",
