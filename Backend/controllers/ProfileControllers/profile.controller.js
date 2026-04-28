@@ -1,5 +1,5 @@
 const profileService = require("../../services/ProfileService/profile.service");
-const User = require("../../models/User.model");
+const User = require("../../models/User.model.js");
 const {
   VALIDATION,
   buildUpdateData,

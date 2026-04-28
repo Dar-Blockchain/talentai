@@ -1,7 +1,7 @@
-const Post = require("../../models/Post.model");
+const Post = require("../../models/post.model");
 const User = require("../../models/User.model");
 const Profile = require("../../models/Profile.model");
-const PostInterviewAssessmentModel = require("../../models/PostInterviewAssessment.model");
+const PostInterviewAssessmentModel = require("../../models/postInterviewAssessment.model");
 const nodemailer = require('nodemailer');
 
 // Validate post data
@@ -597,7 +597,7 @@ module.exports.deletePost = async (postId, userId) => {
     }
 
     // 4. Archive associated job assessments
-    const PostInterviewAssessment = require('../../models/PostInterviewAssessment.model');
+    const PostInterviewAssessment = require('../../models/postInterviewAssessment.model');
     await PostInterviewAssessment.updateMany(
       { post: postId },
       { archived: true, archivedAt: new Date() }

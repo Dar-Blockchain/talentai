@@ -1,4 +1,4 @@
-const CompanyMembershipModel = require("../../models/CompanyMembership.model");
+const CompanyMembershipModel = require("../../models/companyMembership.model");
 const User = require("../../models/User.model");
 
 // Get all memberships for a company owned by the current user (with optional search, role, department filter, sorting and pagination)
@@ -127,10 +127,10 @@ module.exports.deleteMembership = async (membershipId, companyOwnerId) => {
 
   try {
     // Get all models that might reference this user
-    const EmployeePermissionsModel = require("../../models/EmployeePermissions.model");
+    const EmployeePermissionsModel = require("../../models/employeePermissions.model");
     const ProfileModel = require("../../models/Profile.model");
-    const CVAnalysisModel = require("../../models/CVAnalysis.model");
-    const CompanyInvitationModel = require("../../models/CompanyInvitation.model");
+    const CVAnalysisModel = require("../../models/cvAnalysis.model");
+    const CompanyInvitationModel = require("../../models/companyInvitation.model");
 
     // 1. Delete all employee permissions for this user
     await EmployeePermissionsModel.deleteMany({ userId });

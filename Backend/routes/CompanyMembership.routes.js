@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const CompanyMembershipController = require("../controllers/ProfileControllers/CompanyMembership.controller");
-const { requireAuth } = require("../middleware/security/auth.middleware");
-const authLogMiddleware = require("../middleware/security/request-log.middleware");
-const resolveCompanyActor = require("../middleware/resolve-company-actor.middleware");
+const CompanyMembershipController = require("../controllers/ProfileControllers/companyMembership.controller.js");
+const { requireAuth } = require("../middleware/security/auth.middleware.js");
+const authLogMiddleware = require("../middleware/security/request-log.middleware.js");
+const resolveCompanyActor = require("../middleware/resolve-company-actor.middleware.js");
 const { controledAcces } = require("../middleware/authorize.middleware.js");
 
 // ========== MIDDLEWARE: Authentication + Logging ==========

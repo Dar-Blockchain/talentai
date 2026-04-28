@@ -1,5 +1,5 @@
 const employeePermissionsService = require("../services/employeePermissions.service");
-const CompanyMembershipModel = require("../models/CompanyMembership.model");
+const CompanyMembershipModel = require("../models/companyMembership.model");
 
 // Centralized error handler
 const handleError = (res, error, defaultStatus = 500) => {
@@ -91,7 +91,7 @@ exports.updatePermissions = async (req, res) => {
 
     // If permissions don't exist, create them first
     if (!permissions) {
-      const EmployeePermissionsModel = require("../models/EmployeePermissions.model");
+      const EmployeePermissionsModel = require("../models/employeePermissions.model");
       permissions = await EmployeePermissionsModel.create({
         userId,
         membershipId: membership._id,

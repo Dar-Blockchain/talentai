@@ -15,7 +15,7 @@
 
 const User = require("../models/User.model");
 const Profile = require("../models/Profile.model");
-const Permission = require("../models/Permission.model");
+const Permission = require("../models/permission.model");
 
 /**
  * Get company permissions

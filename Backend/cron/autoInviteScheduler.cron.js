@@ -1,7 +1,7 @@
 const cron = require('node-cron');
-const JobApplication = require('../models/JobApplication.model');
+const JobApplication = require('../models/jobApplication.model');
 const Profile = require('../models/Profile.model');
-const Post = require('../models/Post.model');
+const Post = require('../models/post.model');
 const User = require('../models/User.model');
 const { sendInterviewNudge } = require('../utils/email-service');
 const { AUTO_INVITE_CONFIG, SCHEDULER_TIME_WINDOW } = require('../constants/scheduler.constants');

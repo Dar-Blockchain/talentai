@@ -301,7 +301,7 @@ exports.verifyUserOTP = async (email, otp, location = null) => {
     const [profile, companyMembership] = await Promise.all([
       updatedUser.profile ? Profile.findById(updatedUser.profile) : null,
       updatedUser.companyMembership
-        ? require('../models/CompanyMembership.model')
+        ? require('../models/companyMembership.model')
             .findById(updatedUser.companyMembership)
             .populate({
               path: 'company',

@@ -3,7 +3,7 @@
  * Handles fetching interview configuration from pipeline steps
  */
 
-const Post = require("../../models/Post.model");
+const Post = require("../../models/post.model");
 const PostSteps = require("../../models/postSteps.model");
 const pipelineConfigBuilder = require("../../services/InterviewServices/pipeline-interview-config");
 
