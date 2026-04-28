@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { emitToast } from "@/utils/toastEmitter";
 import {
   Box, Typography, Button, Chip, CircularProgress, Alert, Divider,
@@ -65,6 +66,7 @@ const cancelBtnSx = { textTransform: "none", fontWeight: 600, color: "#6B7280", 
 const saveBtnSx   = { textTransform: "none", fontWeight: 700, bgcolor: TEAL, color: "#fff", borderRadius: "9px", px: 2.5, boxShadow: "none", "&:hover": { bgcolor: "#0F766E", boxShadow: "none" }, "&.Mui-disabled": { bgcolor: "#E5E7EB" } };
 
 const ApiKeysTab: React.FC = () => {
+  const { t } = useTranslation("dashboard");
   const dispatch    = useDispatch<AppDispatch>();
   const apiKeys     = useSelector(selectApiKeys);
   const keysLoading = useSelector(selectApiKeysLoading);
@@ -81,7 +83,7 @@ const ApiKeysTab: React.FC = () => {
 
   useEffect(() => {
     dispatch(fetchApiKeys()).unwrap().catch(() =>
-      emitToast({ message: "Failed to load API keys", severity: "error" })
+      emitToast({ message: t("pages.settings.api_keys.toast.load_error"), severity: "error" })
     );
   }, [dispatch]);
 
@@ -108,9 +110,9 @@ const ApiKeysTab: React.FC = () => {
       await dispatch(createApiKey({ ...form, scopes: ['all'], ipWhitelist: parseIpWhitelist(form.ipMode, form.ipList) })).unwrap();
       setCreateOpen(false);
       setForm(DEFAULT_FORM);
-      emitToast({ message: "API key created — copy it now!", severity: "success" });
+      emitToast({ message: t("pages.settings.api_keys.toast.created"), severity: "success" });
     } catch {
-      emitToast({ message: "Failed to create API key", severity: "error" });
+      emitToast({ message: t("pages.settings.api_keys.toast.create_error"), severity: "error" });
     }
   };
 
@@ -119,9 +121,9 @@ const ApiKeysTab: React.FC = () => {
     try {
       await dispatch(updateApiKey({ id: editingKey.id, data: { ...editForm, scopes: ['all'], ipWhitelist: parseIpWhitelist(editForm.ipMode, editForm.ipList) } })).unwrap();
       setEditingKey(null);
-      emitToast({ message: "API key updated", severity: "success" });
+      emitToast({ message: t("pages.settings.api_keys.toast.updated"), severity: "success" });
     } catch {
-      emitToast({ message: "Failed to update API key", severity: "error" });
+      emitToast({ message: t("pages.settings.api_keys.toast.update_error"), severity: "error" });
     }
   };
 
@@ -129,9 +131,9 @@ const ApiKeysTab: React.FC = () => {
     if (!deleteTarget) return;
     try {
       await dispatch(deleteApiKey(deleteTarget.id)).unwrap();
-      emitToast({ message: "API key deleted", severity: "info" });
+      emitToast({ message: t("pages.settings.api_keys.toast.deleted"), severity: "info" });
     } catch {
-      emitToast({ message: "Failed to delete API key", severity: "error" });
+      emitToast({ message: t("pages.settings.api_keys.toast.delete_error"), severity: "error" });
     } finally {
       setDeleteTarget(null);
     }
@@ -140,25 +142,25 @@ const ApiKeysTab: React.FC = () => {
   const handleToggle = async (id: string, isActive: boolean) => {
     try {
       await dispatch(toggleApiKey(id)).unwrap();
-      emitToast({ message: isActive ? "API key disabled" : "API key enabled", severity: "info" });
+      emitToast({ message: isActive ? t("pages.settings.api_keys.toast.key_disabled") : t("pages.settings.api_keys.toast.key_enabled"), severity: "info" });
     } catch {
-      emitToast({ message: "Failed to toggle API key", severity: "error" });
+      emitToast({ message: t("pages.settings.api_keys.toast.toggle_error"), severity: "error" });
     }
   };
 
   const handleRegenerate = async (id: string) => {
     try {
       await dispatch(regenerateApiKey(id)).unwrap();
-      emitToast({ message: "API key regenerated — copy the new key!", severity: "success" });
+      emitToast({ message: t("pages.settings.api_keys.toast.regenerated"), severity: "success" });
     } catch {
-      emitToast({ message: "Failed to regenerate API key", severity: "error" });
+      emitToast({ message: t("pages.settings.api_keys.toast.regenerate_error"), severity: "error" });
     }
   };
 
   const handleCopy = (key: string) => {
     navigator.clipboard.writeText(key);
     setCopied(true);
-    emitToast({ message: "Key copied to clipboard", severity: "success" });
+    emitToast({ message: t("pages.settings.api_keys.toast.copied"), severity: "success" });
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -166,10 +168,10 @@ const ApiKeysTab: React.FC = () => {
     <Box sx={{ p: { xs: 2.5, md: 3.5 } }}>
       {/* Header */}
       <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2.5, flexWrap: "wrap", gap: 1.5 }}>
-        <SectionTitle title="API Keys" subtitle="Manage API keys for external integrations" />
+        <SectionTitle title={t("pages.settings.api_keys.title")} subtitle={t("pages.settings.api_keys.subtitle")} />
         <Button size="small" startIcon={<AddOutlined sx={{ fontSize: 15 }} />} onClick={() => setCreateOpen(true)}
           sx={{ textTransform: "none", fontWeight: 700, fontSize: "0.78rem", bgcolor: TEAL, color: "#fff", borderRadius: "9px", px: 2, boxShadow: "none", "&:hover": { bgcolor: "#0F766E", boxShadow: "none" } }}>
-          New API Key
+          {t("pages.settings.api_keys.new_key")}
         </Button>
       </Box>
 
@@ -177,9 +179,15 @@ const ApiKeysTab: React.FC = () => {
       {newKey && (
         <Alert severity="success" onClose={() => dispatch(clearNewKey())}
           sx={{ mb: 2.5, borderRadius: "10px", fontSize: "0.82rem", "& .MuiAlert-message": { width: "100%" } }}
-          action={<Tooltip title={copied ? "Copied!" : "Copy"}><IconButton size="small" onClick={() => handleCopy(newKey)}><ContentCopyOutlined sx={{ fontSize: 16 }} /></IconButton></Tooltip>}
+          action={
+            <Tooltip title={copied ? t("pages.settings.api_keys.copied") : t("pages.settings.api_keys.copy")}>
+              <IconButton size="small" onClick={() => handleCopy(newKey)}>
+                <ContentCopyOutlined sx={{ fontSize: 16 }} />
+              </IconButton>
+            </Tooltip>
+          }
         >
-          <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, mb: 0.5 }}>API key created — copy it now, it won't be shown again</Typography>
+          <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, mb: 0.5 }}>{t("pages.settings.api_keys.banner_title")}</Typography>
           <Box sx={{ fontFamily: "monospace", fontSize: "0.8rem", bgcolor: "#F0FDF4", px: 1.5, py: 0.75, borderRadius: "6px", wordBreak: "break-all" }}>{newKey}</Box>
         </Alert>
       )}
@@ -192,7 +200,7 @@ const ApiKeysTab: React.FC = () => {
       ) : apiKeys.length === 0 ? (
         <Box sx={{ textAlign: "center", py: 8, color: "#9CA3AF" }}>
           <KeyOutlined sx={{ fontSize: 40, mb: 1, opacity: 0.4 }} />
-          <Typography sx={{ fontSize: "0.88rem" }}>No API keys yet</Typography>
+          <Typography sx={{ fontSize: "0.88rem" }}>{t("pages.settings.api_keys.no_keys")}</Typography>
         </Box>
       ) : (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
@@ -205,37 +213,43 @@ const ApiKeysTab: React.FC = () => {
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
                   <Typography sx={{ fontSize: "0.88rem", fontWeight: 700, color: "#111827" }}>{k.name}</Typography>
                   <Chip label={k.serviceName} size="small" sx={{ height: 18, fontSize: "0.62rem", fontWeight: 600, bgcolor: "#F3F4F6", color: "#374151" }} />
-                  <Chip label={k.isActive ? "Active" : "Disabled"} size="small" sx={{ height: 18, fontSize: "0.62rem", fontWeight: 700, bgcolor: k.isActive ? "rgba(13,148,136,0.08)" : "#F3F4F6", color: k.isActive ? TEAL : "#9CA3AF" }} />
+                  <Chip
+                    label={k.isActive ? t("pages.settings.api_keys.active") : t("pages.settings.api_keys.disabled_label")}
+                    size="small"
+                    sx={{ height: 18, fontSize: "0.62rem", fontWeight: 700, bgcolor: k.isActive ? "rgba(13,148,136,0.08)" : "#F3F4F6", color: k.isActive ? TEAL : "#9CA3AF" }}
+                  />
                 </Box>
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.6 }}>
                   {k.scopes.map((s) => <Chip key={s} label={s} size="small" sx={{ height: 17, fontSize: "0.6rem", bgcolor: "#EFF6FF", color: "#2563EB" }} />)}
                 </Box>
                 <Box sx={{ display: "flex", gap: 2, mt: 0.5, flexWrap: "wrap" }}>
-                  {k.keyPreview && <Typography sx={{ fontSize: "0.68rem", color: "#9CA3AF" }}>Key: {k.keyPreview}</Typography>}
-                  <Typography sx={{ fontSize: "0.68rem", color: "#9CA3AF" }}>Rate limit: {k.rateLimit} req/s</Typography>
-                  {k.expiresAt && <Typography sx={{ fontSize: "0.68rem", color: "#9CA3AF" }}>Expires: {fmtDate(k.expiresAt)}</Typography>}
-                  {k.lastUsed && <Typography sx={{ fontSize: "0.68rem", color: "#9CA3AF" }}>Last used: {fmtDate(k.lastUsed)}</Typography>}
+                  {k.keyPreview && <Typography sx={{ fontSize: "0.68rem", color: "#9CA3AF" }}>{t("pages.settings.api_keys.key_preview", { preview: k.keyPreview })}</Typography>}
+                  <Typography sx={{ fontSize: "0.68rem", color: "#9CA3AF" }}>{t("pages.settings.api_keys.rate_limit_label", { count: k.rateLimit })}</Typography>
+                  {k.expiresAt && <Typography sx={{ fontSize: "0.68rem", color: "#9CA3AF" }}>{t("pages.settings.api_keys.expires_label", { date: fmtDate(k.expiresAt) })}</Typography>}
+                  {k.lastUsed && <Typography sx={{ fontSize: "0.68rem", color: "#9CA3AF" }}>{t("pages.settings.api_keys.last_used_label", { date: fmtDate(k.lastUsed) })}</Typography>}
                   <Typography sx={{ fontSize: "0.68rem", color: "#9CA3AF" }}>
-                    IPs: {k.ipWhitelist && k.ipWhitelist.length > 0 ? k.ipWhitelist.join(", ") : "All"}
+                    {k.ipWhitelist && k.ipWhitelist.length > 0
+                      ? t("pages.settings.api_keys.ips_label", { ips: k.ipWhitelist.join(", ") })
+                      : `IPs: ${t("pages.settings.api_keys.ips_all")}`}
                   </Typography>
                 </Box>
               </Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexShrink: 0 }}>
-                <Tooltip title={k.isActive ? "Disable" : "Enable"}>
+                <Tooltip title={k.isActive ? t("pages.settings.api_keys.toggle_disable") : t("pages.settings.api_keys.toggle_enable")}>
                   <Switch size="small" checked={k.isActive} onChange={() => handleToggle(k.id, k.isActive)}
                     sx={{ "& .MuiSwitch-switchBase.Mui-checked": { color: TEAL }, "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { bgcolor: TEAL } }} />
                 </Tooltip>
-                <Tooltip title="Regenerate key">
+                <Tooltip title={t("pages.settings.api_keys.regenerate_tooltip")}>
                   <IconButton size="small" onClick={() => handleRegenerate(k.id)} sx={{ color: "#F59E0B", "&:hover": { bgcolor: "#FFFBEB" } }}>
                     <RefreshOutlined sx={{ fontSize: 16 }} />
                   </IconButton>
                 </Tooltip>
-                <Tooltip title="Edit">
+                <Tooltip title={t("pages.settings.api_keys.edit_tooltip")}>
                   <IconButton size="small" onClick={() => setEditingKey(k)} sx={{ color: TEAL, "&:hover": { bgcolor: TEAL_BG } }}>
                     <EditOutlined sx={{ fontSize: 16 }} />
                   </IconButton>
                 </Tooltip>
-                <Tooltip title="Delete">
+                <Tooltip title={t("pages.settings.api_keys.delete_tooltip")}>
                   <IconButton size="small" onClick={() => setDeleteTarget(k)} sx={{ color: "#EF4444", "&:hover": { bgcolor: "#FEF2F2" } }}>
                     <DeleteOutlined sx={{ fontSize: 16 }} />
                   </IconButton>
@@ -248,88 +262,112 @@ const ApiKeysTab: React.FC = () => {
 
       {/* Create dialog */}
       <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: "16px" } }}>
-        <DialogTitle sx={{ fontSize: "1rem", fontWeight: 700, pb: 1 }}>Create API Key</DialogTitle>
+        <DialogTitle sx={{ fontSize: "1rem", fontWeight: 700, pb: 1 }}>{t("pages.settings.api_keys.create_title")}</DialogTitle>
         <Divider />
         <DialogForm
           fields={<>
-            <Box><FieldLabel text="Key Name" /><TextField value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} fullWidth placeholder="e.g. Mon app mobile" sx={fieldSx} /></Box>
-            <Box><FieldLabel text="Service Name" /><TextField value={form.serviceName} onChange={(e) => setForm((f) => ({ ...f, serviceName: e.target.value }))} fullWidth placeholder="e.g. mobile-app" sx={fieldSx} /></Box>
-            <Box><FieldLabel text="Scopes" /><ScopeChips /></Box>
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
-              <Box><FieldLabel text="Rate Limit (req/s)" /><TextField type="number" value={form.rateLimit} onChange={(e) => setForm((f) => ({ ...f, rateLimit: Number(e.target.value) }))} fullWidth inputProps={{ min: 1 }} sx={fieldSx} /></Box>
-              <Box><FieldLabel text="Expires At" />{datePicker(form.expiresAt, (v) => setForm((f) => ({ ...f, expiresAt: v })))}</Box>
+            <Box>
+              <FieldLabel text={t("pages.settings.api_keys.fields.key_name")} />
+              <TextField value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} fullWidth placeholder={t("pages.settings.api_keys.fields.key_name_placeholder")} sx={fieldSx} />
             </Box>
             <Box>
-              <FieldLabel text="IP Whitelist" />
+              <FieldLabel text={t("pages.settings.api_keys.fields.service_name")} />
+              <TextField value={form.serviceName} onChange={(e) => setForm((f) => ({ ...f, serviceName: e.target.value }))} fullWidth placeholder={t("pages.settings.api_keys.fields.service_placeholder")} sx={fieldSx} />
+            </Box>
+            <Box><FieldLabel text={t("pages.settings.api_keys.fields.scopes")} /><ScopeChips /></Box>
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+              <Box>
+                <FieldLabel text={t("pages.settings.api_keys.fields.rate_limit")} />
+                <TextField type="number" value={form.rateLimit} onChange={(e) => setForm((f) => ({ ...f, rateLimit: Number(e.target.value) }))} fullWidth inputProps={{ min: 1 }} sx={fieldSx} />
+              </Box>
+              <Box><FieldLabel text={t("pages.settings.api_keys.fields.expires_at")} />{datePicker(form.expiresAt, (v) => setForm((f) => ({ ...f, expiresAt: v })))}</Box>
+            </Box>
+            <Box>
+              <FieldLabel text={t("pages.settings.api_keys.fields.ip_whitelist")} />
               <ToggleButtonGroup exclusive size="small" value={form.ipMode} onChange={(_, v) => v && setForm((f) => ({ ...f, ipMode: v }))}
                 sx={{ mb: 1, "& .MuiToggleButton-root": { textTransform: "none", fontFamily: "Poppins", fontSize: "0.78rem", fontWeight: 600, px: 2, borderRadius: "8px !important", "&.Mui-selected": { bgcolor: TEAL, color: "#fff", "&:hover": { bgcolor: "#0F766E" } } } }}>
-                <ToggleButton value="all">All IPs</ToggleButton>
-                <ToggleButton value="custom">Custom</ToggleButton>
+                <ToggleButton value="all">{t("pages.settings.api_keys.fields.ip_all")}</ToggleButton>
+                <ToggleButton value="custom">{t("pages.settings.api_keys.fields.ip_custom")}</ToggleButton>
               </ToggleButtonGroup>
               {form.ipMode === "custom" && (
                 <TextField value={form.ipList} onChange={(e) => setForm((f) => ({ ...f, ipList: e.target.value }))}
-                  fullWidth multiline minRows={2} placeholder="192.168.1.1, 10.0.0.0/24" helperText="Comma-separated IPs or CIDR ranges" sx={fieldSx} />
+                  fullWidth multiline minRows={2}
+                  placeholder={t("pages.settings.api_keys.fields.ip_placeholder")}
+                  helperText={t("pages.settings.api_keys.fields.ip_helper")}
+                  sx={fieldSx} />
               )}
             </Box>
           </>}
         >
-          <Button onClick={() => setCreateOpen(false)} size="small" sx={cancelBtnSx}>Cancel</Button>
+          <Button onClick={() => setCreateOpen(false)} size="small" sx={cancelBtnSx}>{t("pages.settings.api_keys.actions.cancel")}</Button>
           <Button onClick={handleCreate} size="small" disabled={creating || !form.name.trim()} sx={saveBtnSx}>
-            {creating ? <CircularProgress size={14} sx={{ color: "#fff" }} /> : "Create Key"}
+            {creating ? <CircularProgress size={14} sx={{ color: "#fff" }} /> : t("pages.settings.api_keys.actions.create")}
           </Button>
         </DialogForm>
       </Dialog>
 
       {/* Edit dialog */}
       <Dialog open={!!editingKey} onClose={() => setEditingKey(null)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: "16px" } }}>
-        <DialogTitle sx={{ fontSize: "1rem", fontWeight: 700, pb: 1 }}>Edit API Key</DialogTitle>
+        <DialogTitle sx={{ fontSize: "1rem", fontWeight: 700, pb: 1 }}>{t("pages.settings.api_keys.edit_title")}</DialogTitle>
         <Divider />
         <DialogForm
           fields={<>
-            <Box><FieldLabel text="Key Name" /><TextField value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} fullWidth sx={fieldSx} /></Box>
-            <Box><FieldLabel text="Service Name" /><TextField value={editForm.serviceName} onChange={(e) => setEditForm((f) => ({ ...f, serviceName: e.target.value }))} fullWidth sx={fieldSx} /></Box>
-            <Box><FieldLabel text="Scopes" /><ScopeChips /></Box>
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
-              <Box><FieldLabel text="Rate Limit (req/s)" /><TextField type="number" value={editForm.rateLimit} onChange={(e) => setEditForm((f) => ({ ...f, rateLimit: Number(e.target.value) }))} fullWidth inputProps={{ min: 1 }} sx={fieldSx} /></Box>
-              <Box><FieldLabel text="Expires At" />{datePicker(editForm.expiresAt, (v) => setEditForm((f) => ({ ...f, expiresAt: v })))}</Box>
+            <Box>
+              <FieldLabel text={t("pages.settings.api_keys.fields.key_name")} />
+              <TextField value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} fullWidth sx={fieldSx} />
             </Box>
             <Box>
-              <FieldLabel text="IP Whitelist" />
+              <FieldLabel text={t("pages.settings.api_keys.fields.service_name")} />
+              <TextField value={editForm.serviceName} onChange={(e) => setEditForm((f) => ({ ...f, serviceName: e.target.value }))} fullWidth sx={fieldSx} />
+            </Box>
+            <Box><FieldLabel text={t("pages.settings.api_keys.fields.scopes")} /><ScopeChips /></Box>
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+              <Box>
+                <FieldLabel text={t("pages.settings.api_keys.fields.rate_limit")} />
+                <TextField type="number" value={editForm.rateLimit} onChange={(e) => setEditForm((f) => ({ ...f, rateLimit: Number(e.target.value) }))} fullWidth inputProps={{ min: 1 }} sx={fieldSx} />
+              </Box>
+              <Box><FieldLabel text={t("pages.settings.api_keys.fields.expires_at")} />{datePicker(editForm.expiresAt, (v) => setEditForm((f) => ({ ...f, expiresAt: v })))}</Box>
+            </Box>
+            <Box>
+              <FieldLabel text={t("pages.settings.api_keys.fields.ip_whitelist")} />
               <ToggleButtonGroup exclusive size="small" value={editForm.ipMode} onChange={(_, v) => v && setEditForm((f) => ({ ...f, ipMode: v }))}
                 sx={{ mb: 1, "& .MuiToggleButton-root": { textTransform: "none", fontFamily: "Poppins", fontSize: "0.78rem", fontWeight: 600, px: 2, borderRadius: "8px !important", "&.Mui-selected": { bgcolor: TEAL, color: "#fff", "&:hover": { bgcolor: "#0F766E" } } } }}>
-                <ToggleButton value="all">All IPs</ToggleButton>
-                <ToggleButton value="custom">Custom</ToggleButton>
+                <ToggleButton value="all">{t("pages.settings.api_keys.fields.ip_all")}</ToggleButton>
+                <ToggleButton value="custom">{t("pages.settings.api_keys.fields.ip_custom")}</ToggleButton>
               </ToggleButtonGroup>
               {editForm.ipMode === "custom" && (
                 <TextField value={editForm.ipList} onChange={(e) => setEditForm((f) => ({ ...f, ipList: e.target.value }))}
-                  fullWidth multiline minRows={2} placeholder="192.168.1.1, 10.0.0.0/24" helperText="Comma-separated IPs or CIDR ranges" sx={fieldSx} />
+                  fullWidth multiline minRows={2}
+                  placeholder={t("pages.settings.api_keys.fields.ip_placeholder")}
+                  helperText={t("pages.settings.api_keys.fields.ip_helper")}
+                  sx={fieldSx} />
               )}
             </Box>
           </>}
         >
-          <Button onClick={() => setEditingKey(null)} size="small" sx={cancelBtnSx}>Cancel</Button>
-          <Button onClick={handleUpdate} size="small" disabled={!editForm.name.trim()} sx={saveBtnSx}>Save Changes</Button>
+          <Button onClick={() => setEditingKey(null)} size="small" sx={cancelBtnSx}>{t("pages.settings.api_keys.actions.cancel")}</Button>
+          <Button onClick={handleUpdate} size="small" disabled={!editForm.name.trim()} sx={saveBtnSx}>{t("pages.settings.api_keys.actions.save")}</Button>
         </DialogForm>
       </Dialog>
 
       {/* Confirm delete dialog */}
       <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: "16px" } }}>
-        <DialogTitle sx={{ fontSize: "1rem", fontWeight: 700, pb: 1 }}>Delete API Key</DialogTitle>
+        <DialogTitle sx={{ fontSize: "1rem", fontWeight: 700, pb: 1 }}>{t("pages.settings.api_keys.delete_title")}</DialogTitle>
         <Divider />
         <DialogContent sx={{ pt: 2.5 }}>
           <Typography sx={{ fontSize: "0.88rem", color: "#374151" }}>
-            Are you sure you want to delete <strong>{deleteTarget?.name}</strong>?
+            {t("pages.settings.api_keys.delete_confirm", { name: deleteTarget?.name })}
           </Typography>
           <Typography sx={{ fontSize: "0.78rem", color: "#9CA3AF", mt: 0.75 }}>
-            This action cannot be undone. Any integration using this key will stop working immediately.
+            {t("pages.settings.api_keys.delete_warning")}
           </Typography>
         </DialogContent>
         <Divider />
         <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-          <Button onClick={() => setDeleteTarget(null)} size="small" sx={cancelBtnSx}>Cancel</Button>
+          <Button onClick={() => setDeleteTarget(null)} size="small" sx={cancelBtnSx}>{t("pages.settings.api_keys.actions.cancel")}</Button>
           <Button onClick={handleDelete} size="small"
             sx={{ textTransform: "none", fontWeight: 700, bgcolor: "#EF4444", color: "#fff", borderRadius: "9px", px: 2.5, boxShadow: "none", "&:hover": { bgcolor: "#DC2626", boxShadow: "none" } }}>
-            Delete
+            {t("pages.settings.api_keys.actions.delete")}
           </Button>
         </DialogActions>
       </Dialog>

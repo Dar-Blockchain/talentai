@@ -120,6 +120,7 @@ const EmployeeCampaignAssessment: React.FC = () => {
           participantId={participantId}
           campaignId={id ?? ''}
           onBack={handleBack}
+          onComplete={handleResults}
         />
       ) : (
         <Box sx={{ minHeight: '100vh', bgcolor: '#F8FAFC' }}>

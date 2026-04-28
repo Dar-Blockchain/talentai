@@ -1,12 +1,14 @@
 import { RootState } from "@/store/store";
 import { Box, Typography } from "@mui/material";
 import { useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 
 type Props = { themeColors: any };
 
 const ACCENT = "#0D9488";
 
 const SignInHeader: React.FC<Props> = ({ themeColors }) => {
+  const { t } = useTranslation("auth");
   const userType = useSelector((state: RootState) => state.user.userType);
 
   return (
@@ -28,7 +30,7 @@ const SignInHeader: React.FC<Props> = ({ themeColors }) => {
         mb: 0.75,
         letterSpacing: "-0.025em",
       }}>
-        Welcome back
+        {t("signin.title")}
       </Typography>
       <Typography sx={{
         fontSize: "1rem",
@@ -36,9 +38,9 @@ const SignInHeader: React.FC<Props> = ({ themeColors }) => {
         fontFamily: "Poppins",
         lineHeight: 1.6,
       }}>
-        Sign in to your{" "}
+        {t("signin.subtitle_prefix")}
         <Box component="span" sx={{ color: ACCENT, fontWeight: 600 }}>TalentAI</Box>
-        {" "}account
+        {t("signin.subtitle_suffix")}
       </Typography>
     </Box>
   );

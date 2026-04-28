@@ -1,4 +1,5 @@
 import React, { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Box, Typography, Avatar, Button, Chip, CircularProgress } from "@mui/material";
 import EditOutlined from "@mui/icons-material/EditOutlined";
 import SaveOutlined from "@mui/icons-material/SaveOutlined";
@@ -21,6 +22,7 @@ interface Props {
 }
 
 const ProfileBanner: React.FC<Props> = ({ profile, loading, uploadingImage, isEditing, onStartEdit, onCancelEdit, onSaveEdit, onImageUpload }) => {
+  const { t } = useTranslation("dashboard");
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -84,7 +86,7 @@ const ProfileBanner: React.FC<Props> = ({ profile, loading, uploadingImage, isEd
             {(profile.size || profile.companySize) && (
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                 <GroupsOutlined sx={{ fontSize: 13, color: "#9CA3AF" }} />
-                <Typography sx={{ fontSize: "0.75rem", color: "#6B7280" }}>{profile.size || profile.companySize} employees</Typography>
+                <Typography sx={{ fontSize: "0.75rem", color: "#6B7280" }}>{profile.size || profile.companySize} {t("pages.settings.employees_suffix")}</Typography>
               </Box>
             )}
           </Box>
@@ -95,18 +97,18 @@ const ProfileBanner: React.FC<Props> = ({ profile, loading, uploadingImage, isEd
           {!isEditing ? (
             <Button size="small" startIcon={<EditOutlined sx={{ fontSize: 14 }} />} onClick={onStartEdit}
               sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.78rem", color: TEAL, border: `1px solid ${TEAL_BORDER}`, borderRadius: "9px", px: 2, bgcolor: TEAL_BG, "&:hover": { bgcolor: "#CCFBF1" } }}>
-              Edit Profile
+              {t("pages.settings.banner.edit_profile")}
             </Button>
           ) : (
             <>
               <Button size="small" startIcon={<CloseOutlined sx={{ fontSize: 14 }} />} onClick={onCancelEdit}
                 sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.78rem", color: "#6B7280", border: "1px solid #E5E7EB", borderRadius: "9px", px: 1.5 }}>
-                Cancel
+                {t("pages.settings.banner.cancel")}
               </Button>
               <Button size="small" variant="contained" startIcon={loading ? undefined : <SaveOutlined sx={{ fontSize: 14 }} />}
                 onClick={onSaveEdit} disabled={loading}
                 sx={{ textTransform: "none", fontWeight: 700, fontSize: "0.78rem", bgcolor: TEAL, color: "#fff", borderRadius: "9px", px: 2, boxShadow: "none", "&:hover": { bgcolor: "#0F766E", boxShadow: "none" } }}>
-                {loading ? <CircularProgress size={14} sx={{ color: "#fff" }} /> : "Save"}
+                {loading ? <CircularProgress size={14} sx={{ color: "#fff" }} /> : t("pages.settings.banner.save")}
               </Button>
             </>
           )}

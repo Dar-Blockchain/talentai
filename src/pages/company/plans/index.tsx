@@ -1,6 +1,7 @@
 'use client';
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import Link from "next/link";
@@ -43,6 +44,7 @@ const ORDERED_PLANS = ["Standard", "Gold", "Platinum", "Diamond"];
 // ─── Combined Subscription Banner ────────────────────────
 
 const SubscriptionBanner: React.FC = () => {
+  const { t } = useTranslation("dashboard");
   const combined = useSelector(selectCombinedDetails);
   const loading  = useSelector(selectCombinedDetailsLoading);
 
@@ -72,7 +74,9 @@ const SubscriptionBanner: React.FC = () => {
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
               <CheckCircleOutlined sx={{ color: primaryColor, fontSize: 20 }} />
               <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "#111827" }}>
-                {multiPlan ? `${subscriptions.length} Active Plans` : `Active — ${c.planNames[0]}`}
+                {multiPlan
+                  ? t("pages.plans.banner.active_plans", { count: subscriptions.length })
+                  : t("pages.plans.banner.active_single", { name: c.planNames[0] })}
               </Typography>
             </Box>
             {/* Per-plan chips */}
@@ -82,7 +86,7 @@ const SubscriptionBanner: React.FC = () => {
                 return (
                   <Chip
                     key={s.id}
-                    label={`${s.planName} · expires ${fmt(s.endDate)}`}
+                    label={`${s.planName} · ${t("pages.plans.banner.expires", { date: fmt(s.endDate) })}`}
                     size="small"
                     sx={{ bgcolor: `${col}12`, color: col, fontWeight: 600, fontSize: "0.72rem" }}
                   />
@@ -92,7 +96,7 @@ const SubscriptionBanner: React.FC = () => {
           </Box>
           <Chip
             icon={<CalendarTodayOutlined sx={{ fontSize: "13px !important" }} />}
-            label={`${c.daysRemaining} day${c.daysRemaining !== 1 ? "s" : ""} until next expiry`}
+            label={t("pages.plans.banner.days_remaining", { count: c.daysRemaining })}
             size="small"
             sx={{ bgcolor: `${primaryColor}12`, color: primaryColor, fontWeight: 600, fontSize: "0.75rem", "& .MuiChip-icon": { color: primaryColor } }}
           />
@@ -104,14 +108,14 @@ const SubscriptionBanner: React.FC = () => {
             <Box>
               <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
                 <Typography sx={{ fontSize: "0.75rem", color: "#6b7280", fontWeight: 500 }}>
-                  Job posts used {multiPlan && <span style={{ color: "#9ca3af" }}>(combined)</span>}
+                  {t("pages.plans.banner.job_posts_used")} {multiPlan && <span style={{ color: "#9ca3af" }}>{t("pages.plans.banner.combined")}</span>}
                 </Typography>
                 <Typography sx={{ fontSize: "0.75rem", color: postsPct >= 90 ? "#ef4444" : primaryColor, fontWeight: 700 }}>{postsPct}%</Typography>
               </Box>
               <LinearProgress variant="determinate" value={postsPct}
                 sx={{ height: 6, borderRadius: 3, bgcolor: "#f3f4f6", "& .MuiLinearProgress-bar": { bgcolor: postsPct >= 90 ? "#ef4444" : primaryColor, borderRadius: 3 } }} />
               <Typography sx={{ fontSize: "0.7rem", color: "#9ca3af", mt: 0.5 }}>
-                {c.usage.posts.used} / {c.usage.posts.limit} posts · {c.usage.posts.remaining} remaining
+                {t("pages.plans.banner.posts_remaining", { used: c.usage.posts.used, limit: c.usage.posts.limit, remaining: c.usage.posts.remaining })}
               </Typography>
             </Box>
           </Grid>
@@ -119,14 +123,14 @@ const SubscriptionBanner: React.FC = () => {
             <Box>
               <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
                 <Typography sx={{ fontSize: "0.75rem", color: "#6b7280", fontWeight: 500 }}>
-                  Interviews this month {multiPlan && <span style={{ color: "#9ca3af" }}>(combined)</span>}
+                  {t("pages.plans.banner.interviews_month")} {multiPlan && <span style={{ color: "#9ca3af" }}>{t("pages.plans.banner.combined")}</span>}
                 </Typography>
                 <Typography sx={{ fontSize: "0.75rem", color: intPct >= 90 ? "#ef4444" : primaryColor, fontWeight: 700 }}>{intPct}%</Typography>
               </Box>
               <LinearProgress variant="determinate" value={intPct}
                 sx={{ height: 6, borderRadius: 3, bgcolor: "#f3f4f6", "& .MuiLinearProgress-bar": { bgcolor: intPct >= 90 ? "#ef4444" : primaryColor, borderRadius: 3 } }} />
               <Typography sx={{ fontSize: "0.7rem", color: "#9ca3af", mt: 0.5 }}>
-                {c.usage.monthlyInterviews.used} / {c.usage.monthlyInterviews.limit} interviews · {c.usage.monthlyInterviews.remaining} remaining
+                {t("pages.plans.banner.interviews_remaining", { used: c.usage.monthlyInterviews.used, limit: c.usage.monthlyInterviews.limit, remaining: c.usage.monthlyInterviews.remaining })}
               </Typography>
             </Box>
           </Grid>
@@ -157,6 +161,7 @@ interface PlanCardProps {
 }
 
 const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRenew, cancelling, onCancelClick, onEnableAutoRenewClick }) => {
+  const { t } = useTranslation("dashboard");
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState<string | null>(null);
   const cfg      = PLAN_CONFIG[plan.name] ?? { color: "#6b7280" };
@@ -164,7 +169,7 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
 
   const priceLabel = plan.priceUsd != null
     ? `$${plan.priceUsd.toLocaleString("en-US")}`
-    : "Contact us";
+    : t("pages.plans.card.contact_us");
 
   const handleSubscribe = async () => {
     setLoading(true);
@@ -172,7 +177,7 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
     try {
       await payWithCard(plan._id);
     } catch (err: any) {
-      setError(err?.message || "Payment failed. Please try again.");
+      setError(err?.message || t("pages.plans.card.payment_error"));
     } finally {
       setLoading(false);
     }
@@ -190,7 +195,7 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
     }}>
       {(isActive || cfg.badge) && (
         <Chip
-          label={isActive ? "Active" : cfg.badge}
+          label={isActive ? t("pages.plans.card.active_badge") : t("pages.plans.card.popular_badge")}
           size="small"
           icon={isActive ? <CheckCircleOutlined sx={{ fontSize: "14px !important" }} /> : undefined}
           sx={{
@@ -215,14 +220,14 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
         <Typography sx={{ fontSize: "2.2rem", fontWeight: 800, color: "#111827", lineHeight: 1 }}>
           {priceLabel}
         </Typography>
-        <Typography sx={{ color: "#9ca3af", fontSize: "0.85rem" }}>/ month</Typography>
+        <Typography sx={{ color: "#9ca3af", fontSize: "0.85rem" }}>{t("pages.plans.card.per_month")}</Typography>
       </Box>
 
       <Divider sx={{ mb: 2.5 }} />
 
       <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 1.5, mb: 3 }}>
-        <FeatureRow icon={<WorkOutlined sx={{ fontSize: 17 }} />} label={`${plan.postsLimit} job posts`} color={cfg.color} />
-        <FeatureRow icon={<VideoCallOutlined sx={{ fontSize: 17 }} />} label={`${plan.monthlyInterviewLimit} interviews / month`} color={cfg.color} />
+        <FeatureRow icon={<WorkOutlined sx={{ fontSize: 17 }} />} label={t("pages.plans.card.job_posts", { count: plan.postsLimit })} color={cfg.color} />
+        <FeatureRow icon={<VideoCallOutlined sx={{ fontSize: 17 }} />} label={t("pages.plans.card.interviews_month", { count: plan.monthlyInterviewLimit })} color={cfg.color} />
       </Box>
 
       {error && <Alert severity="error" sx={{ mb: 1.5, fontSize: "0.78rem", py: 0.5 }}>{error}</Alert>}
@@ -230,7 +235,7 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
       {isActive ? (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
           <AppButton
-            label="Your Current Subscription"
+            label={t("pages.plans.card.current_subscription")}
             variant="outlined"
             fullWidth
             disabled
@@ -242,7 +247,7 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
           />
           {autoRenew ? (
             <AppButton
-              label={cancelling ? "Processing…" : "Disable Auto-Renewal"}
+              label={cancelling ? t("pages.plans.card.processing") : t("pages.plans.card.disable_auto_renewal")}
               variant="outlined"
               fullWidth
               disabled={cancelling}
@@ -267,14 +272,14 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
               </Box>
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: "#92400E", lineHeight: 1.3 }}>
-                  Auto-renewal off
+                  {t("pages.plans.card.auto_renewal_off")}
                 </Typography>
                 <Typography sx={{ fontSize: "0.72rem", color: "#B45309", lineHeight: 1.3 }}>
-                  Active until expiry · won't renew
+                  {t("pages.plans.card.active_until_expiry")}
                 </Typography>
               </Box>
               <AppButton
-                label={cancelling ? "…" : "Re-enable"}
+                label={cancelling ? "…" : t("pages.plans.card.reenable")}
                 variant="contained"
                 disabled={cancelling}
                 onClick={() => onEnableAutoRenewClick(activeSubscriptionId!)}
@@ -289,7 +294,7 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
         </Box>
       ) : (
         <AppButton
-          label={loading ? "Redirecting…" : isActive ? "Add Another" : "Get Started"}
+          label={loading ? t("pages.plans.card.redirecting") : t("pages.plans.card.get_started")}
           variant="contained"
           fullWidth
           disabled={loading}
@@ -308,6 +313,7 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
 // ─── Page ────────────────────────────────────────────────
 
 const PlansPage: React.FC = () => {
+  const { t } = useTranslation("dashboard");
   const dispatch     = useDispatch<AppDispatch>();
   const router       = useRouter();
   const plans        = useSelector(selectPlanLimits);
@@ -341,13 +347,13 @@ const PlansPage: React.FC = () => {
         .unwrap()
         .then(() => {
           localStorage.removeItem("pending_payment_id");
-          showSnack("Payment successful! Your plan has been activated.", "success");
+          showSnack(t("pages.plans.snack.payment_success"), "success");
           refreshAll();
         })
-        .catch(() => showSnack("Payment received but verification failed. Please contact support.", "error"));
+        .catch(() => showSnack(t("pages.plans.snack.payment_verify_error"), "error"));
       router.replace("/company/plans", undefined, { shallow: true });
     } else if (status === "cancel") {
-      showSnack("Payment was cancelled. No charges were made.", "error");
+      showSnack(t("pages.plans.snack.payment_cancelled"), "error");
       router.replace("/company/plans", undefined, { shallow: true });
     }
   }, [router.isReady]);
@@ -361,10 +367,10 @@ const PlansPage: React.FC = () => {
     dispatch(enableAutoRenew({ subscriptionId }))
       .unwrap()
       .then(() => {
-        showSnack("Auto-renewal re-enabled. Your plan will renew automatically.", "success");
+        showSnack(t("pages.plans.snack.auto_renew_enabled"), "success");
         refreshAll();
       })
-      .catch(() => showSnack("Failed to re-enable auto-renewal. Please try again.", "error"));
+      .catch(() => showSnack(t("pages.plans.snack.auto_renew_error"), "error"));
   };
 
   const handleConfirmCancel = () => {
@@ -374,13 +380,13 @@ const PlansPage: React.FC = () => {
       .then(() => {
         setConfirmOpen(false);
         setCancelSubId(null);
-        showSnack("Auto-renewal disabled. Your plan stays active until it expires.", "success");
+        showSnack(t("pages.plans.snack.cancelled"), "success");
         refreshAll();
       })
       .catch(() => {
         setConfirmOpen(false);
         setCancelSubId(null);
-        showSnack("Failed to cancel subscription. Please try again.", "error");
+        showSnack(t("pages.plans.snack.cancel_error"), "error");
       });
   };
 
@@ -392,8 +398,8 @@ const PlansPage: React.FC = () => {
   }, [combined]);
 
   const cancellingPlanName = cancelSubId
-    ? combined?.subscriptions.find((s) => s.id === cancelSubId)?.planName ?? "this plan"
-    : "this plan";
+    ? combined?.subscriptions.find((s) => s.id === cancelSubId)?.planName ?? t("pages.plans.this_plan")
+    : t("pages.plans.this_plan");
 
   const sortedPlans = [...plans]
     .filter((p) => p.name !== "Trial")
@@ -403,16 +409,16 @@ const PlansPage: React.FC = () => {
     <DashboardLayout>
       {/* Cancel confirm dialog */}
       <Dialog open={confirmOpen} onClose={() => { setConfirmOpen(false); setCancelSubId(null); }}>
-        <DialogTitle sx={{ fontWeight: 700 }}>Disable Auto-Renewal?</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>{t("pages.plans.dialog.title")}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Your <strong>{cancellingPlanName}</strong> plan will remain fully active until its expiry date. After that, it will not renew and no further charges will be made.
+            {t("pages.plans.dialog.text", { plan: cancellingPlanName })}
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <AppButton label="Keep Auto-Renewal" variant="outlined" onClick={() => { setConfirmOpen(false); setCancelSubId(null); }} />
+          <AppButton label={t("pages.plans.dialog.keep")} variant="outlined" onClick={() => { setConfirmOpen(false); setCancelSubId(null); }} />
           <AppButton
-            label={cancelling ? "Processing…" : "Yes, Disable Renewal"}
+            label={cancelling ? t("pages.plans.card.processing") : t("pages.plans.dialog.confirm")}
             variant="contained"
             disabled={cancelling}
             onClick={handleConfirmCancel}
@@ -434,16 +440,16 @@ const PlansPage: React.FC = () => {
       </Snackbar>
 
       <PageHeader
-        title="Choose a Plan"
-        subtitle="Stack multiple plans to combine limits — posts and interviews accumulate across all active subscriptions"
+        title={t("pages.plans.title")}
+        subtitle={t("pages.plans.subtitle")}
         breadcrumbs={[
-          { label: "Dashboard", href: "/company/dashboard" },
-          { label: "Settings", href: "/company/settings" },
-          { label: "Plans" },
+          { label: t("pages.common.dashboard"), href: "/company/dashboard" },
+          { label: t("pages.plans.settings_breadcrumb"), href: "/company/settings" },
+          { label: t("pages.plans.breadcrumb") },
         ]}
         actions={
           <Link href="/company/billing">
-            <AppButton label="Payment History" variant="outlined" startIcon={<ReceiptLongOutlined />} />
+            <AppButton label={t("pages.plans.payment_history")} variant="outlined" startIcon={<ReceiptLongOutlined />} />
           </Link>
         }
       />

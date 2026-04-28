@@ -26,6 +26,7 @@ import { getUserLocation } from "@/utils/api";
 import { useToast } from "@/hooks/useToast";
 import { useRouter } from "next/router";
 import { formatTimeLeft } from "@/utils/functions";
+import { useTranslation } from "react-i18next";
 
 const CODE_LENGTH = 6;
 const CODE_TTL = 300;
@@ -59,84 +60,38 @@ const full = { flex: "1 1 100%" };
 const selectMenuProps = {
   PaperProps: {
     sx: {
-      mt: 0.5,
-      borderRadius: 2,
-      boxShadow: "0px 4px 20px rgba(0,0,0,0.08)",
-      border: "1px solid rgba(0,0,0,0.06)",
+      mt: 0.5, borderRadius: 2, boxShadow: "0px 4px 20px rgba(0,0,0,0.08)", border: "1px solid rgba(0,0,0,0.06)",
       "& .MuiList-root": { py: 0.5 },
       "& .MuiMenuItem-root": {
-        fontSize: "0.9rem",
-        py: 0.75,
-        px: 1.5,
-        borderRadius: 1,
-        mx: 0.5,
-        color: "#444",
-        fontFamily: "Poppins",
-        transition: "background 0.15s",
+        fontSize: "0.9rem", py: 0.75, px: 1.5, borderRadius: 1, mx: 0.5, color: "#444", fontFamily: "Poppins", transition: "background 0.15s",
         "&:hover": { background: `rgba(13,148,136,0.08)`, color: "#222" },
-        "&.Mui-selected": {
-          background: `rgba(13,148,136,0.12)`,
-          color: ACCENT,
-          fontWeight: 600,
-          "&:hover": { background: `rgba(13,148,136,0.18)` },
-        },
+        "&.Mui-selected": { background: `rgba(13,148,136,0.12)`, color: ACCENT, fontWeight: 600, "&:hover": { background: `rgba(13,148,136,0.18)` } },
       },
     },
   },
 };
 
-const COMPANY_SIZES = [
-  "1–10 employees",
-  "10–50 employees",
-  "50–200 employees",
-  "200–500 employees",
-  "500+ employees",
-];
-
-const INDUSTRIES = [
-  "Technology",
-  "Finance",
-  "Healthcare",
-  "Education",
-  "Other",
-];
+const COMPANY_SIZES = ["1–10 employees", "10–50 employees", "50–200 employees", "200–500 employees", "500+ employees"];
+const INDUSTRIES    = ["Technology", "Finance", "Healthcare", "Education", "Other"];
 
 type FormValues = {
-  name: string;
-  email: string;
-  industry: string;
-  size: string;
-  location: string;
-  website: string;
-  linkedin: string;
+  name: string; email: string; industry: string; size: string;
+  location: string; website: string; linkedin: string;
 };
 
-interface Props {
-  onStepChange?: (step: 1 | 2) => void;
-}
+interface Props { onStepChange?: (step: 1 | 2) => void; }
 
 const submitBtnSx = {
-  textTransform: "none",
-  fontFamily: "Poppins",
-  fontWeight: 700,
-  borderRadius: "14px",
-  height: 56,
-  background: `linear-gradient(135deg, ${ACCENT} 0%, ${ACCENT2} 100%)`,
-  color: "#fff",
-  boxShadow: `0 4px 20px ${ACCENT}50`,
-  letterSpacing: "0.01em",
-  fontSize: "1rem",
-  transition: "all 0.2s",
-  "&:hover": {
-    background: `linear-gradient(135deg, #0caa9d 0%, ${ACCENT2} 100%)`,
-    boxShadow: `0 8px 28px ${ACCENT}60`,
-    transform: "translateY(-1px)",
-  },
+  textTransform: "none", fontFamily: "Poppins", fontWeight: 700, borderRadius: "14px", height: 56,
+  background: `linear-gradient(135deg, ${ACCENT} 0%, ${ACCENT2} 100%)`, color: "#fff",
+  boxShadow: `0 4px 20px ${ACCENT}50`, letterSpacing: "0.01em", fontSize: "1rem", transition: "all 0.2s",
+  "&:hover": { background: `linear-gradient(135deg, #0caa9d 0%, ${ACCENT2} 100%)`, boxShadow: `0 8px 28px ${ACCENT}60`, transform: "translateY(-1px)" },
   "&:active": { transform: "translateY(0)" },
   "&.Mui-disabled": { background: "#F3F4F6", color: "#9CA3AF", boxShadow: "none" },
 };
 
 const CompanyRegisterForm: React.FC<Props> = ({ onStepChange }) => {
+  const { t } = useTranslation("auth");
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const { showToast } = useToast();
@@ -150,13 +105,7 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange }) => {
   const { secondsLeft, isExpired, isRunning, start: startTimer, clear: clearTimer } =
     usePersistentCountdown({ ttl: CODE_TTL, storageKey: CODE_EXPIRY_KEY });
 
-  const {
-    register,
-    handleSubmit,
-    control,
-    getValues,
-    formState: { errors },
-  } = useForm<FormValues>({
+  const { register, handleSubmit, control, getValues, formState: { errors } } = useForm<FormValues>({
     mode: "onTouched",
     defaultValues: { name: "", email: "", industry: "", size: "", location: "", website: "", linkedin: "" },
   });
@@ -168,13 +117,7 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange }) => {
         email: values.email.toLowerCase().trim(),
         roleType: "Company",
         name: values.name,
-        companyDetails: {
-          industry: values.industry,
-          size: values.size,
-          location: values.location,
-          website: values.website,
-          linkedin: values.linkedin,
-        },
+        companyDetails: { industry: values.industry, size: values.size, location: values.location, website: values.website, linkedin: values.linkedin },
       };
       await dispatch(registerUser(payload)).unwrap();
       setSavedEmail(values.email.toLowerCase().trim());
@@ -182,13 +125,8 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange }) => {
       setStep(2);
       onStepChange?.(2);
     } catch (err: any) {
-      showToast({
-        message: err || "Failed to send verification code. Please try again.",
-        severity: "error",
-      });
-    } finally {
-      setLoading(false);
-    }
+      showToast({ message: err || "Failed to send verification code. Please try again.", severity: "error" });
+    } finally { setLoading(false); }
   };
 
   const handleVerifyAndRegister = async () => {
@@ -198,16 +136,12 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange }) => {
     try {
       clearTimer();
       const location = await getUserLocation();
-      const response = await dispatch(
-        verifyOTP({ email: savedEmail, otp: code, location })
-      ).unwrap();
-
+      const response = await dispatch(verifyOTP({ email: savedEmail, otp: code, location })).unwrap();
       if (!response.token) {
         showToast({ message: "Verification failed. Please try again.", severity: "error" });
         setLoading(false);
         return;
       }
-
       router.replace("/company/dashboard");
     } catch {
       showToast({ message: "Invalid code. Please try again.", severity: "error" });
@@ -220,15 +154,11 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange }) => {
     const newCode = [...otpCode];
     newCode[index] = digit;
     setOtpCode(newCode);
-    if (digit && index < CODE_LENGTH - 1) {
-      codeInputsRef.current[index + 1]?.focus();
-    }
+    if (digit && index < CODE_LENGTH - 1) codeInputsRef.current[index + 1]?.focus();
   };
 
   const handleOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === "Backspace" && !otpCode[index] && index > 0) {
-      codeInputsRef.current[index - 1]?.focus();
-    }
+    if (e.key === "Backspace" && !otpCode[index] && index > 0) codeInputsRef.current[index - 1]?.focus();
   };
 
   const handleOtpPaste = (e: React.ClipboardEvent) => {
@@ -245,231 +175,131 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange }) => {
     <Box>
       {/* STEP 1 – Info Form */}
       {step === 1 && (
-        <Box
-          component="form"
-          onSubmit={handleSubmit(handleSendCode)}
-          sx={{ mb: 2, textAlign: "left", display: "flex", flexWrap: "wrap", gap: 3 }}
-        >
-          {/* Row 1: Company Name | Work Email */}
+        <Box component="form" onSubmit={handleSubmit(handleSendCode)} sx={{ mb: 2, textAlign: "left", display: "flex", flexWrap: "wrap", gap: 3 }}>
+
           <Box sx={half}>
             <TextField
-              label="Company Name"
-              placeholder="Acme Corp"
-              fullWidth
-              disabled={loading}
-              error={!!errors.name}
-              helperText={errors.name?.message}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <BusinessIcon sx={{ fontSize: 20, color: "#9CA3AF" }} />
-                  </InputAdornment>
-                ),
-              }}
+              label={t("company_form.company_name")} placeholder="Acme Corp" fullWidth disabled={loading}
+              error={!!errors.name} helperText={errors.name?.message}
+              InputProps={{ startAdornment: <InputAdornment position="start"><BusinessIcon sx={{ fontSize: 20, color: "#9CA3AF" }} /></InputAdornment> }}
               sx={fieldSx}
-              {...register("name", { required: "Company name is required" })}
+              {...register("name", { required: t("company_form.validation.company_name_required") })}
             />
           </Box>
           <Box sx={half}>
             <TextField
-              label="Work Email"
-              placeholder="contact@company.com"
-              fullWidth
-              type="email"
-              disabled={loading}
-              error={!!errors.email}
-              helperText={errors.email?.message}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <EmailIcon sx={{ fontSize: 20, color: "#9CA3AF" }} />
-                  </InputAdornment>
-                ),
-              }}
+              label={t("company_form.work_email")} placeholder="contact@company.com" fullWidth type="email" disabled={loading}
+              error={!!errors.email} helperText={errors.email?.message}
+              InputProps={{ startAdornment: <InputAdornment position="start"><EmailIcon sx={{ fontSize: 20, color: "#9CA3AF" }} /></InputAdornment> }}
               sx={fieldSx}
               {...register("email", {
-                required: "Email is required",
-                pattern: { value: /^\S+@\S+\.\S+$/, message: "Invalid email" },
+                required: t("company_form.validation.email_required"),
+                pattern: { value: /^\S+@\S+\.\S+$/, message: t("company_form.validation.email_invalid") },
               })}
             />
           </Box>
 
-          {/* Row 2: Industry | Size */}
           <Box sx={half}>
             <Controller
-              name="industry"
-              control={control}
-              rules={{ required: "Industry is required" }}
+              name="industry" control={control}
+              rules={{ required: t("company_form.validation.industry_required") }}
               render={({ field }) => (
                 <TextField
-                  {...field}
-                  label="Industry"
-                  fullWidth
-                  select
-                  disabled={loading}
-                  error={!!errors.industry}
-                  helperText={errors.industry?.message}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <CategoryIcon sx={{ fontSize: 20, color: "#9CA3AF" }} />
-                      </InputAdornment>
-                    ),
-                  }}
+                  {...field} label={t("company_form.industry")} fullWidth select disabled={loading}
+                  error={!!errors.industry} helperText={errors.industry?.message}
+                  InputProps={{ startAdornment: <InputAdornment position="start"><CategoryIcon sx={{ fontSize: 20, color: "#9CA3AF" }} /></InputAdornment> }}
                   SelectProps={{
-                    MenuProps: selectMenuProps,
-                    displayEmpty: true,
+                    MenuProps: selectMenuProps, displayEmpty: true,
                     renderValue: (value: any) =>
-                      value ? value : <span style={{ color: "#C4CAD4", fontSize: "0.82rem", fontFamily: "Poppins" }}>Select industry</span>,
+                      value ? value : <span style={{ color: "#C4CAD4", fontSize: "0.82rem", fontFamily: "Poppins" }}>{t("company_form.select_industry")}</span>,
                   }}
                   sx={fieldSx}
                 >
-                  {INDUSTRIES.map((ind) => (
-                    <MenuItem key={ind} value={ind}>
-                      {ind}
-                    </MenuItem>
-                  ))}
+                  {INDUSTRIES.map((ind) => <MenuItem key={ind} value={ind}>{ind}</MenuItem>)}
                 </TextField>
               )}
             />
           </Box>
           <Box sx={half}>
             <Controller
-              name="size"
-              control={control}
-              rules={{ required: "Company size is required" }}
+              name="size" control={control}
+              rules={{ required: t("company_form.validation.size_required") }}
               render={({ field }) => (
                 <TextField
-                  {...field}
-                  label="Company Size"
-                  fullWidth
-                  select
-                  disabled={loading}
-                  error={!!errors.size}
-                  helperText={errors.size?.message}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <PeopleIcon sx={{ fontSize: 20, color: "#9CA3AF" }} />
-                      </InputAdornment>
-                    ),
-                  }}
+                  {...field} label={t("company_form.company_size")} fullWidth select disabled={loading}
+                  error={!!errors.size} helperText={errors.size?.message}
+                  InputProps={{ startAdornment: <InputAdornment position="start"><PeopleIcon sx={{ fontSize: 20, color: "#9CA3AF" }} /></InputAdornment> }}
                   SelectProps={{
-                    MenuProps: selectMenuProps,
-                    displayEmpty: true,
+                    MenuProps: selectMenuProps, displayEmpty: true,
                     renderValue: (value: any) =>
-                      value ? value : <span style={{ color: "#C4CAD4", fontSize: "0.82rem", fontFamily: "Poppins" }}>Select company size</span>,
+                      value ? value : <span style={{ color: "#C4CAD4", fontSize: "0.82rem", fontFamily: "Poppins" }}>{t("company_form.select_size")}</span>,
                   }}
                   sx={fieldSx}
                 >
-                  {COMPANY_SIZES.map((s) => (
-                    <MenuItem key={s} value={s}>
-                      {s}
-                    </MenuItem>
-                  ))}
+                  {COMPANY_SIZES.map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
                 </TextField>
               )}
             />
           </Box>
 
-          {/* Row 3: Location | Website */}
           <Box sx={half}>
             <TextField
-              label="Location"
-              placeholder="e.g. Paris, France"
-              fullWidth
-              disabled={loading}
-              error={!!errors.location}
-              helperText={errors.location?.message}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <LocationOnIcon sx={{ fontSize: 20, color: "#9CA3AF" }} />
-                  </InputAdornment>
-                ),
-              }}
+              label={t("company_form.location")} placeholder="e.g. Paris, France" fullWidth disabled={loading}
+              error={!!errors.location} helperText={errors.location?.message}
+              InputProps={{ startAdornment: <InputAdornment position="start"><LocationOnIcon sx={{ fontSize: 20, color: "#9CA3AF" }} /></InputAdornment> }}
               sx={fieldSx}
-              {...register("location", { required: "Location is required" })}
+              {...register("location", { required: t("company_form.validation.location_required") })}
             />
           </Box>
           <Box sx={half}>
             <TextField
-              label="Company Website"
-              placeholder="https://yourcompany.com"
-              fullWidth
-              disabled={loading}
-              error={!!errors.website}
-              helperText={errors.website?.message}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <LanguageIcon sx={{ fontSize: 20, color: "#9CA3AF" }} />
-                  </InputAdornment>
-                ),
-              }}
+              label={t("company_form.website")} placeholder="https://yourcompany.com" fullWidth disabled={loading}
+              error={!!errors.website} helperText={errors.website?.message}
+              InputProps={{ startAdornment: <InputAdornment position="start"><LanguageIcon sx={{ fontSize: 20, color: "#9CA3AF" }} /></InputAdornment> }}
               sx={fieldSx}
               {...register("website", {
                 validate: (value) => {
                   if (!value) return true;
                   try {
                     const url = new URL(value);
-                    if (!["http:", "https:"].includes(url.protocol)) return "URL must start with http:// or https://";
-                    if (!url.hostname.includes(".")) return "Enter a valid domain (e.g. https://yourcompany.com)";
+                    if (!["http:", "https:"].includes(url.protocol)) return t("company_form.validation.url_protocol");
+                    if (!url.hostname.includes(".")) return t("company_form.validation.url_domain");
                     return true;
-                  } catch {
-                    return "Enter a valid URL (e.g. https://yourcompany.com)";
-                  }
+                  } catch { return t("company_form.validation.url_invalid"); }
                 },
               })}
             />
           </Box>
 
-          {/* Row 4: LinkedIn (full width) */}
           <Box sx={full}>
             <TextField
-              label="LinkedIn Page"
-              placeholder="https://linkedin.com/company/..."
-              fullWidth
-              disabled={loading}
-              error={!!errors.linkedin}
-              helperText={errors.linkedin?.message}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <LinkedInIcon sx={{ fontSize: 20, color: "#9CA3AF" }} />
-                  </InputAdornment>
-                ),
-              }}
+              label={t("company_form.linkedin")} placeholder="https://linkedin.com/company/..." fullWidth disabled={loading}
+              error={!!errors.linkedin} helperText={errors.linkedin?.message}
+              InputProps={{ startAdornment: <InputAdornment position="start"><LinkedInIcon sx={{ fontSize: 20, color: "#9CA3AF" }} /></InputAdornment> }}
               sx={fieldSx}
               {...register("linkedin", {
                 validate: (value) => {
                   if (!value) return true;
                   try {
                     const url = new URL(value);
-                    if (!["http:", "https:"].includes(url.protocol)) return "URL must start with https://";
-                    if (!url.hostname.replace("www.", "").startsWith("linkedin.com")) return "Must be a LinkedIn URL (linkedin.com)";
-                    if (!url.pathname.startsWith("/company/")) return "Must be a company page (linkedin.com/company/...)";
+                    if (!["http:", "https:"].includes(url.protocol)) return t("company_form.validation.linkedin_protocol");
+                    if (!url.hostname.replace("www.", "").startsWith("linkedin.com")) return t("company_form.validation.linkedin_domain");
+                    if (!url.pathname.startsWith("/company/")) return t("company_form.validation.linkedin_path");
                     return true;
-                  } catch {
-                    return "Enter a valid LinkedIn URL (e.g. https://linkedin.com/company/...)";
-                  }
+                  } catch { return t("company_form.validation.linkedin_protocol"); }
                 },
               })}
             />
           </Box>
 
-          {/* Submit */}
           <Box sx={full}>
             <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              disabled={loading}
+              type="submit" fullWidth variant="contained" disabled={loading}
               endIcon={!loading && <ArrowForwardIcon sx={{ fontSize: 18 }} />}
               startIcon={loading ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : undefined}
               sx={submitBtnSx}
             >
-              {loading ? "Sending code…" : "Continue"}
+              {loading ? t("company_form.btn_sending") : t("company_form.btn_continue")}
             </Button>
           </Box>
         </Box>
@@ -478,16 +308,11 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange }) => {
       {/* STEP 2 – OTP */}
       {step === 2 && (
         <Box sx={{ mb: 2 }}>
-          {/* Email info box */}
-          <Box sx={{
-            display: "flex", alignItems: "center", gap: 1.5,
-            bgcolor: `${ACCENT}0A`, border: `1px solid ${ACCENT}22`,
-            borderRadius: "12px", px: 2, py: 1.5, mb: 3,
-          }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, bgcolor: `${ACCENT}0A`, border: `1px solid ${ACCENT}22`, borderRadius: "12px", px: 2, py: 1.5, mb: 3 }}>
             <EmailIcon sx={{ fontSize: 18, color: ACCENT, flexShrink: 0 }} />
             <Box>
               <Typography sx={{ fontSize: "0.78rem", color: "#6B7280", fontFamily: "Poppins" }}>
-                Code sent to
+                {t("company_form.code_sent_to")}
               </Typography>
               <Typography sx={{ fontSize: "0.88rem", color: "#0F172A", fontFamily: "Poppins", fontWeight: 700 }}>
                 {savedEmail}
@@ -495,70 +320,46 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange }) => {
             </Box>
           </Box>
 
-          {/* OTP cells */}
           <Stack direction="row" spacing={1.5} justifyContent="center">
             {otpCode.map((digit, index) => (
               <Box
                 key={index}
-                sx={{
-                  width: 58, height: 68,
-                  borderRadius: "14px",
-                  border: `1.5px solid ${digit ? ACCENT : "#D1FAF5"}`,
-                  bgcolor: digit ? `${ACCENT}0C` : "#F8FFFE",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  transition: "all 0.15s",
-                  "&:focus-within": { borderColor: ACCENT, bgcolor: "#fff", boxShadow: `0 0 0 4px ${ACCENT}18` },
-                }}
+                sx={{ width: 58, height: 68, borderRadius: "14px", border: `1.5px solid ${digit ? ACCENT : "#D1FAF5"}`, bgcolor: digit ? `${ACCENT}0C` : "#F8FFFE", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s", "&:focus-within": { borderColor: ACCENT, bgcolor: "#fff", boxShadow: `0 0 0 4px ${ACCENT}18` } }}
               >
                 <Box
                   component="input"
                   ref={(el: HTMLInputElement | null) => (codeInputsRef.current[index] = el)}
-                  value={digit}
-                  maxLength={1}
+                  value={digit} maxLength={1}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleOtpChange(index, e.target.value)}
                   onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => handleOtpKeyDown(index, e)}
                   onPaste={index === 0 ? (handleOtpPaste as any) : undefined}
-                  sx={{
-                    width: "100%", height: "100%", border: "none", outline: "none",
-                    background: "transparent", textAlign: "center",
-                    fontSize: "1.6rem", fontWeight: 700, color: "#0F172A",
-                    fontFamily: "Poppins", cursor: "text",
-                  }}
+                  sx={{ width: "100%", height: "100%", border: "none", outline: "none", background: "transparent", textAlign: "center", fontSize: "1.6rem", fontWeight: 700, color: "#0F172A", fontFamily: "Poppins", cursor: "text" }}
                 />
               </Box>
             ))}
           </Stack>
 
-          {/* Timer */}
           {(isExpired || isRunning) && (
             <Box sx={{ textAlign: "center", mt: 1.5 }}>
-              <Typography sx={{
-                fontSize: "0.8rem", fontFamily: "Poppins", fontWeight: 500,
-                color: secondsLeft > 60 ? "#9CA3AF" : secondsLeft > 0 ? "#F59E0B" : "#EF4444",
-                transition: "color 0.3s",
-              }}>
-                {secondsLeft > 0 ? `Code expires in ${formatTimeLeft(secondsLeft)}` : "Code expired — request a new one"}
+              <Typography sx={{ fontSize: "0.8rem", fontFamily: "Poppins", fontWeight: 500, color: secondsLeft > 60 ? "#9CA3AF" : secondsLeft > 0 ? "#F59E0B" : "#EF4444", transition: "color 0.3s" }}>
+                {secondsLeft > 0
+                  ? t("company_form.code_expires", { time: formatTimeLeft(secondsLeft) })
+                  : t("company_form.code_expired")}
               </Typography>
             </Box>
           )}
 
-          {/* Verify / Resend button */}
           <Button
-            fullWidth
-            variant="contained"
-            onClick={
-              isExpired
-                ? () => handleSendCode(getValues())
-                : handleVerifyAndRegister
-            }
+            fullWidth variant="contained"
+            onClick={isExpired ? () => handleSendCode(getValues()) : handleVerifyAndRegister}
             disabled={loading || (!isExpired && otpCode.join("").length < CODE_LENGTH)}
             endIcon={!loading && <ArrowForwardIcon sx={{ fontSize: 18 }} />}
             startIcon={loading ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : undefined}
             sx={{ ...submitBtnSx, mt: 3 }}
           >
             {loading
-              ? isExpired ? "Resending…" : "Creating account…"
-              : isExpired ? "Resend code" : "Verify & Create Account"}
+              ? isExpired ? t("company_form.btn_resending") : t("company_form.btn_creating")
+              : isExpired ? t("company_form.btn_resend")    : t("company_form.btn_verify")}
           </Button>
         </Box>
       )}

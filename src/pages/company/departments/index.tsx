@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 import { RootState } from "@/store/store";
@@ -35,6 +36,7 @@ import DeleteDepartmentDialog from "@/components/features/company/departments/de
 import AddOutlined from "@mui/icons-material/AddOutlined";
 
 const DepartmentsPage: React.FC = () => {
+  const { t } = useTranslation("dashboard");
   useCompanyAccess("canViewDepartments");
   const dispatch  = useDispatch<AppDispatch>();
   const user      = useSelector((state: RootState) => state.user.connectedUser.user);
@@ -111,16 +113,16 @@ const DepartmentsPage: React.FC = () => {
   return (
       <DashboardLayout>
         <PageHeader
-          title="Departments"
-          subtitle="Manage your company's organizational departments."
+          title={t("pages.departments.title")}
+          subtitle={t("pages.departments.subtitle")}
           breadcrumbs={[
-            { label: "Dashboard", href: "/company/dashboard" },
-            { label: "Departments" },
+            { label: t("pages.common.dashboard"), href: "/company/dashboard" },
+            { label: t("pages.departments.title") },
           ]}
           actions={canManage ? [
             <AppButton
               key="create"
-              label="New Department"
+              label={t("pages.departments.new_department")}
               variant="contained"
               startIcon={<AddOutlined />}
               size="medium"

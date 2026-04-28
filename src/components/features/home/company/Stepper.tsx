@@ -3,6 +3,7 @@ import TuneOutlined            from "@mui/icons-material/TuneOutlined";
 import PsychologyOutlined       from "@mui/icons-material/PsychologyOutlined";
 import WorkspacePremiumOutlined from "@mui/icons-material/WorkspacePremiumOutlined";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
 const ACCENT       = "#9CA3AF";
 const ACCENT_BG    = "rgba(156,163,175,0.10)";
@@ -10,34 +11,21 @@ const ACCENT_LIGHT = "rgba(156,163,175,0.25)";
 const ease = [0.22, 1, 0.36, 1] as const;
 const VP   = { once: true, margin: "-60px" };
 
-const STEPS = [
-  {
-    number: "01",
-    tag:    "Setup",
-    label:  "Build Your Pipeline",
-    desc:   "Choose your interview modules, set pass/fail thresholds, and launch your first AI-driven role in under 30 minutes. No IT required.",
-    Icon:   TuneOutlined,
-  },
-  {
-    number: "02",
-    tag:    "Automated",
-    label:  "AI Agents Interview Candidates",
-    desc:   "Your AI recruiter runs 24/7 — assessing technical depth, soft skills, and culture fit through natural conversation, at scale, without bias.",
-    Icon:   PsychologyOutlined,
-  },
-  {
-    number: "03",
-    tag:    "Decision",
-    label:  "Review & Hire",
-    desc:   "Receive auto-ranked shortlists with blockchain-verified credentials. Compare candidates side-by-side and extend offers with full confidence.",
-    Icon:   WorkspacePremiumOutlined,
-  },
-];
+const STEP_ICONS = [TuneOutlined, PsychologyOutlined, WorkspacePremiumOutlined];
+const STEP_NUMBERS = ["01", "02", "03"];
 
 export default function GradientStepper() {
+  const { t } = useTranslation("home");
+
+  const steps = [
+    { number: STEP_NUMBERS[0], tag: t("plan.step_1_tag"), label: t("plan.step_1_label"), desc: t("plan.step_1_desc"), Icon: STEP_ICONS[0] },
+    { number: STEP_NUMBERS[1], tag: t("plan.step_2_tag"), label: t("plan.step_2_label"), desc: t("plan.step_2_desc"), Icon: STEP_ICONS[1] },
+    { number: STEP_NUMBERS[2], tag: t("plan.step_3_tag"), label: t("plan.step_3_label"), desc: t("plan.step_3_desc"), Icon: STEP_ICONS[2] },
+  ];
+
   return (
     <Box sx={{ maxWidth: 720, mx: "auto" }}>
-      {STEPS.map((step, i) => (
+      {steps.map((step, i) => (
         <motion.div
           key={step.number}
           initial={{ opacity: 0, y: 24 }}
@@ -52,7 +40,6 @@ export default function GradientStepper() {
               display: "flex", flexDirection: "column",
               alignItems: "center", flexShrink: 0, pt: 0.5,
             }}>
-              {/* Icon circle */}
               <Box sx={{
                 width: { xs: 44, md: 52 },
                 height: { xs: 44, md: 52 },
@@ -65,8 +52,7 @@ export default function GradientStepper() {
                 <step.Icon sx={{ fontSize: { xs: 20, md: 24 }, color: "#fff" }} />
               </Box>
 
-              {/* Connector line */}
-              {i < STEPS.length - 1 && (
+              {i < steps.length - 1 && (
                 <Box sx={{
                   width: "2px",
                   flex: 1,
@@ -79,7 +65,7 @@ export default function GradientStepper() {
             </Box>
 
             {/* ── Right: card ── */}
-            <Box sx={{ flex: 1, mb: i < STEPS.length - 1 ? { xs: 3, md: 4 } : 0 }}>
+            <Box sx={{ flex: 1, mb: i < steps.length - 1 ? { xs: 3, md: 4 } : 0 }}>
               <motion.div
                 whileHover={{ x: 4, transition: { type: "spring", stiffness: 300, damping: 22 } }}
               >
@@ -96,15 +82,12 @@ export default function GradientStepper() {
                     boxShadow: "0 8px 32px rgba(0,0,0,0.08)",
                   },
                 }}>
-
-                  {/* Top gradient bar */}
                   <Box sx={{
                     position: "absolute", top: 0, left: 0, right: 0, height: "3px",
                     background: `linear-gradient(90deg, #D1D5DB 0%, rgba(209,213,219,0.15) 100%)`,
                     borderRadius: "20px 20px 0 0",
                   }} />
 
-                  {/* Watermark number */}
                   <Typography sx={{
                     position: "absolute", bottom: -10, right: 16,
                     fontFamily: "Poppins", fontWeight: 900,
@@ -115,7 +98,6 @@ export default function GradientStepper() {
                     {step.number}
                   </Typography>
 
-                  {/* Tag row */}
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
                     <Box sx={{
                       display: "inline-flex", alignItems: "center",
@@ -130,7 +112,7 @@ export default function GradientStepper() {
                       fontFamily: "Poppins", fontSize: "11px", fontWeight: 700,
                       color: "#9CA3AF", letterSpacing: "1px", textTransform: "uppercase",
                     }}>
-                      Step {step.number}
+                      {t("plan.step_prefix")} {step.number}
                     </Typography>
                   </Box>
 

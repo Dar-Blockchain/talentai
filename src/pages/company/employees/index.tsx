@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Box } from "@mui/material";
 import { useRouter } from "next/router";
+import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
@@ -48,6 +49,7 @@ const SORT_MAP: Record<SortOption, { sortBy?: "name" | "date"; order?: "asc" | "
 
 
 const EmployeesPage: React.FC = () => {
+  const { t } = useTranslation("dashboard");
   const router      = useRouter();
   const dispatch    = useDispatch<AppDispatch>();
   const user        = useSelector((state: RootState) => state.user.connectedUser.user);
@@ -132,22 +134,22 @@ const EmployeesPage: React.FC = () => {
     if (addMemberSuccess) {
       setAddModalOpen(false);
       dispatch(clearAddMemberSuccess());
-      showToast({ message: "Team member invited successfully!", severity: "success" });
+      showToast({ message: t("pages.employees.invited_success"), severity: "success" });
       dispatch(fetchInvitations());
       dispatch(fetchMemberStats());
       doFetch();
     }
-  }, [addMemberSuccess, dispatch, showToast, doFetch]);
+  }, [addMemberSuccess, dispatch, showToast, doFetch, t]);
 
   useEffect(() => {
     if (updateRoleSuccess) {
       setEditModalOpen(false);
       setSelectedMember(null);
       dispatch(clearUpdateRoleSuccess());
-      showToast({ message: "Member role updated successfully!", severity: "success" });
+      showToast({ message: t("pages.employees.role_updated"), severity: "success" });
       doFetch();
     }
-  }, [updateRoleSuccess, dispatch, showToast, doFetch]);
+  }, [updateRoleSuccess, dispatch, showToast, doFetch, t]);
 
   useEffect(() => {
     if (deleteMemberSuccess) {
@@ -155,11 +157,11 @@ const EmployeesPage: React.FC = () => {
       setSelectedMember(null);
       setDetailMember(null);
       dispatch(clearDeleteMemberSuccess());
-      showToast({ message: "Team member removed successfully!", severity: "success" });
+      showToast({ message: t("pages.employees.deleted_success"), severity: "success" });
       dispatch(fetchMemberStats());
       doFetch();
     }
-  }, [deleteMemberSuccess, dispatch, showToast, doFetch]);
+  }, [deleteMemberSuccess, dispatch, showToast, doFetch, t]);
 
   const handleAddMember = useCallback(async (email: string, role: string, departmentId?: string) => {
     const result = await dispatch(addEmployee({ email, role, departmentId }));
@@ -184,21 +186,21 @@ const EmployeesPage: React.FC = () => {
   const handleResendInvitation = useCallback(async (invitationId: string) => {
     try {
       await dispatch(resendInvitation(invitationId)).unwrap();
-      showToast({ message: "Invitation resent successfully!", severity: "success" });
+      showToast({ message: t("pages.employees.resend_success"), severity: "success" });
     } catch {
-      showToast({ message: "Failed to resend invitation", severity: "error" });
+      showToast({ message: t("pages.employees.resend_error"), severity: "error" });
     }
-  }, [dispatch, showToast]);
+  }, [dispatch, showToast, t]);
 
   const handleCancelInvitation = useCallback(async (invitationId: string) => {
     try {
       await dispatch(cancelInvitation(invitationId)).unwrap();
-      showToast({ message: "Invitation cancelled successfully!", severity: "success" });
+      showToast({ message: t("pages.employees.cancel_success"), severity: "success" });
       dispatch(fetchMemberStats());
     } catch {
-      showToast({ message: "Failed to cancel invitation", severity: "error" });
+      showToast({ message: t("pages.employees.cancel_error"), severity: "error" });
     }
-  }, [dispatch, showToast]);
+  }, [dispatch, showToast, t]);
 
   const active = members.filter((m) => m.status === "active").length;
   const owners = members.filter((m) => m.role === "Owner").length;
@@ -220,16 +222,16 @@ const EmployeesPage: React.FC = () => {
       ) : (
         <Box>
           <PageHeader
-            title="Employees"
-            subtitle="Manage your team members, roles, and invitations."
+            title={t("pages.employees.title")}
+            subtitle={t("pages.employees.subtitle")}
             breadcrumbs={[
-              { label: "Dashboard", href: "/company/dashboard" },
-              { label: "Employees" },
+              { label: t("pages.common.dashboard"), href: "/company/dashboard" },
+              { label: t("pages.employees.title") },
             ]}
             actions={canInvite ? [
               <AppButton
                 key="add"
-                label="Add Employee"
+                label={t("pages.employees.add_employee")}
                 variant="contained"
                 startIcon={<PersonAddOutlined />}
                 size="medium"

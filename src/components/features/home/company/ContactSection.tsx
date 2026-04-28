@@ -7,6 +7,7 @@ import GroupsOutlinedIcon      from "@mui/icons-material/GroupsOutlined";
 import TrendingUpOutlinedIcon  from "@mui/icons-material/TrendingUpOutlined";
 import ArrowForwardOutlined    from "@mui/icons-material/ArrowForwardOutlined";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
 const ACCENT = "#0D9488";
 const VP     = { once: true, margin: "-80px" };
@@ -30,22 +31,12 @@ const FIELD_SX = {
   "& .MuiInputBase-input":             { color: "#111827" },
 };
 
-const TRUST_ITEMS = [
-  { Icon: AccessTimeOutlinedIcon, label: "< 24h reply",    desc: "No runaround",  color: "#0D9488", colorBg: "rgba(13,148,136,0.10)" },
-  { Icon: GroupsOutlinedIcon,     label: "Dedicated team", desc: "From day one",  color: "#6366F1", colorBg: "rgba(99,102,241,0.10)"  },
-  { Icon: TrendingUpOutlinedIcon, label: "75% faster",     desc: "Hiring cycles", color: "#F59E0B", colorBg: "rgba(245,158,11,0.10)"  },
-];
-
-const FEATURES = [
-  "Fully automated screening pipeline",
-  "Bias-free AI assessments",
-  "Blockchain-verified credentials",
-];
-
 interface FormState { name: string; email: string; company: string; teamSize: string; message: string }
 interface Errors    { name?: string; email?: string; company?: string; message?: string }
 
 const ContactSection: React.FC = () => {
+  const { t } = useTranslation("home");
+
   const [form, setForm]           = useState<FormState>({ name: "", email: "", company: "", teamSize: "", message: "" });
   const [errors, setErrors]       = useState<Errors>({});
   const [submitted, setSubmitted] = useState(false);
@@ -54,11 +45,11 @@ const ContactSection: React.FC = () => {
 
   const validate = (): Errors => {
     const e: Errors = {};
-    if (!form.name.trim())    e.name    = "Name is required";
-    if (!form.company.trim()) e.company = "Company is required";
-    if (!form.message.trim()) e.message = "Message is required";
-    if (!form.email.trim())   e.email   = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "Enter a valid email";
+    if (!form.name.trim())    e.name    = t("contact.error_name");
+    if (!form.company.trim()) e.company = t("contact.error_company");
+    if (!form.message.trim()) e.message = t("contact.error_message");
+    if (!form.email.trim())   e.email   = t("contact.error_email_required");
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = t("contact.error_email_invalid");
     return e;
   };
 
@@ -81,7 +72,7 @@ const ContactSection: React.FC = () => {
         setSubmitted(true);
       } else {
         const json = await res.json().catch(() => null);
-        const msg: string = json?.message || "Something went wrong. Please try again.";
+        const msg: string = json?.message || t("contact.error_generic");
         if      (/message/i.test(msg)) setErrors((prev) => ({ ...prev, message: msg }));
         else if (/email/i.test(msg))   setErrors((prev) => ({ ...prev, email: msg }));
         else if (/name/i.test(msg))    setErrors((prev) => ({ ...prev, name: msg }));
@@ -89,16 +80,28 @@ const ContactSection: React.FC = () => {
         else setSendError(msg);
       }
     } catch {
-      setSendError("Network error. Please check your connection and try again.");
+      setSendError(t("contact.error_network"));
     } finally {
       setSending(false);
     }
   };
 
+  const TRUST_ITEMS = [
+    { Icon: AccessTimeOutlinedIcon, label: t("contact.trust_reply_label"), desc: t("contact.trust_reply_desc"), color: "#0D9488", colorBg: "rgba(13,148,136,0.10)" },
+    { Icon: GroupsOutlinedIcon,     label: t("contact.trust_team_label"),  desc: t("contact.trust_team_desc"),  color: "#6366F1", colorBg: "rgba(99,102,241,0.10)"  },
+    { Icon: TrendingUpOutlinedIcon, label: t("contact.trust_faster_label"),desc: t("contact.trust_faster_desc"),color: "#F59E0B", colorBg: "rgba(245,158,11,0.10)"  },
+  ];
+
+  const FEATURES = [
+    t("contact.feature_screening"),
+    t("contact.feature_bias"),
+    t("contact.feature_blockchain"),
+  ];
+
   return (
     <Box sx={{ maxWidth: 1200, mx: "auto", px: { xs: 2, md: 4 } }}>
 
-      {/* ── Centered header ── */}
+      {/* Centered header */}
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -112,7 +115,7 @@ const ContactSection: React.FC = () => {
             borderRadius: "24px", px: 2.5, py: 0.9, mb: 2.5,
           }}>
             <Typography sx={{ fontFamily: "Poppins", fontSize: "11px", fontWeight: 700, color: ACCENT, letterSpacing: "1px", textTransform: "uppercase" }}>
-              Let's Talk
+              {t("contact.overline")}
             </Typography>
           </Box>
           <Typography sx={{
@@ -121,19 +124,19 @@ const ContactSection: React.FC = () => {
             lineHeight: 1.08, color: "#111827",
             letterSpacing: "-1px", mb: 1.5,
           }}>
-            Ready to Hire{" "}
-            <Box component="span" sx={{ color: ACCENT }}>Smarter?</Box>
+            {t("contact.headline_1")}{" "}
+            <Box component="span" sx={{ color: ACCENT }}>{t("contact.headline_accent")}</Box>
           </Typography>
           <Typography sx={{
             fontFamily: "Poppins", fontSize: { xs: "14px", md: "16px" },
             color: "#9CA3AF", maxWidth: 420, mx: "auto", lineHeight: 1.7,
           }}>
-            Tell us where your pipeline is breaking — we'll show you how to fix it.
+            {t("contact.body")}
           </Typography>
         </Box>
       </motion.div>
 
-      {/* ── Bento grid ── */}
+      {/* Bento grid */}
       <Box sx={{
         display: "grid",
         gridTemplateColumns: { xs: "1fr", md: "5fr 7fr" },
@@ -141,7 +144,7 @@ const ContactSection: React.FC = () => {
         alignItems: "start",
       }}>
 
-        {/* ── LEFT column ── */}
+        {/* LEFT column */}
         <Box sx={{ display: "flex", flexDirection: "column", gap: { xs: 2, md: 2.5 } }}>
           <motion.div
             initial={{ opacity: 0, x: -28 }}
@@ -159,7 +162,6 @@ const ContactSection: React.FC = () => {
               border: "1px solid rgba(94,234,212,0.08)",
               minHeight: { md: 420 },
             }}>
-              {/* Soft glow orbs */}
               <Box sx={{
                 position: "absolute", top: -80, right: -80, width: 280, height: 280,
                 borderRadius: "50%",
@@ -180,13 +182,13 @@ const ContactSection: React.FC = () => {
                   fontSize: { xs: "22px", md: "24px" },
                   color: "#fff", lineHeight: 1.3, mb: 2.5,
                 }}>
-                  A process your team{" "}
+                  {t("contact.left_headline_1")}{" "}
                   <Box component="span" sx={{
                     background: "linear-gradient(90deg, #5eead4 0%, #a7f3d0 100%)",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
                   }}>
-                    is proud of.
+                    {t("contact.left_headline_accent")}
                   </Box>
                 </Typography>
 
@@ -252,7 +254,7 @@ const ContactSection: React.FC = () => {
                   </Box>
                   <Box sx={{ flex: 1 }}>
                     <Typography sx={{ fontFamily: "Poppins", fontSize: "11px", color: "rgba(255,255,255,0.25)", letterSpacing: "0.5px", textTransform: "uppercase", mb: 0.2 }}>
-                      Email us directly
+                      {t("contact.email_label")}
                     </Typography>
                     <Typography sx={{ fontFamily: "Poppins", fontSize: "13px", color: "rgba(255,255,255,0.6)" }}>
                       contact@talentai.bid
@@ -261,7 +263,7 @@ const ContactSection: React.FC = () => {
                   <Box sx={{ display: "flex", alignItems: "center", gap: 0.6, flexShrink: 0 }}>
                     <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: "#4ADE80", boxShadow: "0 0 6px #4ADE80" }} />
                     <Typography sx={{ fontFamily: "Poppins", fontSize: "10.5px", color: "rgba(255,255,255,0.25)" }}>
-                      Online
+                      {t("contact.online")}
                     </Typography>
                   </Box>
                 </Box>
@@ -270,7 +272,7 @@ const ContactSection: React.FC = () => {
           </motion.div>
         </Box>
 
-        {/* ── RIGHT: form card ── */}
+        {/* RIGHT: form card */}
         <motion.div
           initial={{ opacity: 0, x: 28 }}
           whileInView={{ opacity: 1, x: 0 }}
@@ -284,7 +286,6 @@ const ContactSection: React.FC = () => {
             boxShadow: "0 8px 40px rgba(0,0,0,0.08)",
             overflow: "hidden",
           }}>
-            {/* Teal top accent */}
             <Box sx={{ height: "3px", background: `linear-gradient(90deg, ${ACCENT} 0%, rgba(13,148,136,0.12) 100%)` }} />
 
             <Box sx={{ p: { xs: 3, md: 4 } }}>
@@ -308,41 +309,43 @@ const ContactSection: React.FC = () => {
                     </Box>
                   </motion.div>
                   <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "22px", color: "#111827" }}>
-                    Message sent!
+                    {t("contact.success_title")}
                   </Typography>
                   <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", color: "#9CA3AF", maxWidth: 260 }}>
-                    We'll get back to you within 24 hours — no sales runaround.
+                    {t("contact.success_body")}
                   </Typography>
                 </Box>
               ) : (
                 <Stack spacing={2.5}>
                   <Box sx={{ mb: 0.5 }}>
                     <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "18px", color: "#111827", mb: 0.5 }}>
-                      Tell us about your team
+                      {t("contact.form_headline")}
                     </Typography>
                     <Typography sx={{ fontFamily: "Poppins", fontSize: "13px", color: "#9CA3AF" }}>
-                      We'll reach out with a personalised demo.
+                      {t("contact.form_subtitle")}
                     </Typography>
                   </Box>
 
                   <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                    <TextField label="Full name" size="small" fullWidth required
+                    <TextField label={t("contact.field_name")} size="small" fullWidth required
                       value={form.name} onChange={handleChange("name")}
                       error={!!errors.name} helperText={errors.name} sx={FIELD_SX} />
-                    <TextField label="Work email" size="small" fullWidth required type="email"
+                    <TextField label={t("contact.field_email")} size="small" fullWidth required type="email"
                       value={form.email} onChange={handleChange("email")}
                       error={!!errors.email} helperText={errors.email} sx={FIELD_SX} />
                   </Stack>
 
                   <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                    <TextField label="Company" size="small" fullWidth required
+                    <TextField label={t("contact.field_company")} size="small" fullWidth required
                       value={form.company} onChange={handleChange("company")}
                       error={!!errors.company} helperText={errors.company} sx={FIELD_SX} />
-                    <TextField label="Team size" size="small" fullWidth select
+                    <TextField label={t("contact.field_team_size")} size="small" fullWidth select
                       value={form.teamSize} onChange={handleChange("teamSize")} sx={FIELD_SX}
                       SelectProps={{ MenuProps: { PaperProps: { sx: { bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "12px", boxShadow: "0 8px 24px rgba(0,0,0,0.10)", mt: 0.5 } } } }}
                     >
-                      <MenuItem value="" disabled sx={{ fontFamily: "Poppins", fontSize: "13px", color: "#9CA3AF" }}>Select…</MenuItem>
+                      <MenuItem value="" disabled sx={{ fontFamily: "Poppins", fontSize: "13px", color: "#9CA3AF" }}>
+                        {t("contact.field_select")}
+                      </MenuItem>
                       {TEAM_SIZES.map((s) => (
                         <MenuItem key={s} value={s} sx={{
                           fontFamily: "Poppins", fontSize: "13px", color: "#374151",
@@ -353,7 +356,7 @@ const ContactSection: React.FC = () => {
                     </TextField>
                   </Stack>
 
-                  <TextField label="Where is your pipeline breaking?"
+                  <TextField label={t("contact.field_message")}
                     size="small" fullWidth required multiline rows={4}
                     value={form.message} onChange={handleChange("message")}
                     error={!!errors.message} helperText={errors.message} sx={FIELD_SX} />
@@ -375,7 +378,7 @@ const ContactSection: React.FC = () => {
                         "&.Mui-disabled": { bgcolor: ACCENT, color: "#fff", opacity: 0.55 },
                       }}
                     >
-                      {sending ? "Sending…" : "Send Message"}
+                      {sending ? t("contact.btn_sending") : t("contact.btn_send")}
                     </Button>
                   </motion.div>
 
@@ -386,7 +389,7 @@ const ContactSection: React.FC = () => {
                   )}
 
                   <Typography sx={{ fontFamily: "Poppins", fontSize: "11px", color: "#D1D5DB", textAlign: "center" }}>
-                    No spam. We respect your privacy. GDPR compliant.
+                    {t("contact.privacy")}
                   </Typography>
                 </Stack>
               )}

@@ -1,11 +1,14 @@
 import { Box, Typography } from "@mui/material";
 import Image from "next/image";
 import NextLink from "next/link";
+import { useTranslation } from "react-i18next";
 
 const ACCENT = "#0D9488";
 const ACCENT2 = "#059669";
 
 const RegisterContainer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { t } = useTranslation("auth");
+
   return (
     <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: { xs: "column", md: "row" } }}>
 
@@ -59,27 +62,27 @@ const RegisterContainer: React.FC<{ children: React.ReactNode }> = ({ children }
           <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1, px: 1.5, py: 0.6, borderRadius: "20px", bgcolor: "rgba(94,234,212,0.1)", border: "1px solid rgba(94,234,212,0.2)", mb: 3 }}>
             <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#5eead4" }} />
             <Typography sx={{ fontSize: "0.75rem", fontWeight: 600, color: "#5eead4", fontFamily: "Poppins", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-              Join TalentAI
+              {t("register_panel.badge")}
             </Typography>
           </Box>
 
           <Typography sx={{ fontSize: { md: "2.6rem", lg: "3.5rem" }, fontWeight: 800, color: "#fff", fontFamily: "Poppins", lineHeight: 1.08, mb: 3 }}>
-            Start hiring<br />
+            {t("register_panel.headline_1")}<br />
             <Box component="span" sx={{ background: "linear-gradient(90deg, #5eead4 0%, #a7f3d0 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              smarter today.
+              {t("register_panel.headline_2")}
             </Box>
           </Typography>
 
           <Box sx={{ width: 56, height: 3, borderRadius: 2, background: "linear-gradient(90deg, #5eead4, transparent)", mb: 3 }} />
 
           <Typography sx={{ fontSize: { md: "0.95rem", lg: "1.1rem" }, color: "rgba(255,255,255,0.5)", fontFamily: "Poppins", lineHeight: 1.9 }}>
-            Create your account and access AI-powered interviews, candidate scoring, and blockchain-verified credentials.
+            {t("register_panel.body")}
           </Typography>
         </Box>
 
         {/* Copyright */}
         <Typography sx={{ position: "absolute", bottom: 32, left: { md: 40, lg: 64 }, fontSize: "0.75rem", color: "rgba(255,255,255,0.2)", fontFamily: "Poppins", zIndex: 1 }}>
-          © 2026 TalentAI Inc.
+          {t("register_panel.copyright")}
         </Typography>
       </Box>
 
@@ -97,7 +100,7 @@ const RegisterContainer: React.FC<{ children: React.ReactNode }> = ({ children }
         position: "relative",
         overflowY: "auto",
       }}>
-        {/* Dot pattern — fades out at edges */}
+        {/* Dot pattern */}
         <Box sx={{
           position: "absolute", inset: 0, pointerEvents: "none",
           backgroundImage: `radial-gradient(${ACCENT}1A 1.5px, transparent 1.5px)`,
@@ -106,7 +109,7 @@ const RegisterContainer: React.FC<{ children: React.ReactNode }> = ({ children }
           WebkitMaskImage: "radial-gradient(ellipse 80% 80% at 50% 50%, #000 40%, transparent 100%)",
         }} />
 
-        {/* Soft ambient glow */}
+        {/* Ambient glow */}
         <Box sx={{
           position: "absolute", top: "40%", left: "50%",
           transform: "translate(-50%, -50%)",
@@ -117,15 +120,14 @@ const RegisterContainer: React.FC<{ children: React.ReactNode }> = ({ children }
 
         <Box sx={{ width: "100%", maxWidth: 680, position: "relative", zIndex: 1, py: { xs: 0, md: 2 } }}>
 
-          {/* ── Mobile header ── */}
+          {/* Mobile header */}
           <Box sx={{ display: { xs: "flex", md: "none" }, flexDirection: "column", alignItems: "center", mb: 4, pt: 1 }}>
             <NextLink href="/home/company" style={{ textDecoration: "none" }}>
-
-                <Image src="/logo.svg" alt="TalentAI" width={130} height={34} style={{ objectFit: "contain" }} />
+              <Image src="/logo.svg" alt="TalentAI" width={130} height={34} style={{ objectFit: "contain" }} />
             </NextLink>
           </Box>
 
-          {/* ── Card ── */}
+          {/* Card */}
           <Box sx={{
             bgcolor: "#fff",
             borderRadius: { xs: "20px", sm: "26px", md: "30px" },
@@ -137,16 +139,12 @@ const RegisterContainer: React.FC<{ children: React.ReactNode }> = ({ children }
             overflow: "hidden",
             position: "relative",
           }}>
-            {/* Accent bar */}
             <Box sx={{ height: 5, background: `linear-gradient(90deg, ${ACCENT} 0%, #2DD4BF 45%, #34D399 80%, #6EE7B7 100%)` }} />
-
-            {/* Top inner glow */}
             <Box sx={{
               position: "absolute", top: 5, left: 0, right: 0, height: 100,
               background: `linear-gradient(180deg, ${ACCENT}07 0%, transparent 100%)`,
               pointerEvents: "none",
             }} />
-
             <Box sx={{
               px: { xs: 2.5, sm: 3.5, md: 4, lg: 5.5 },
               pt: { xs: 3.5, sm: 4, md: 4.5, lg: 5 },
@@ -157,7 +155,7 @@ const RegisterContainer: React.FC<{ children: React.ReactNode }> = ({ children }
             </Box>
           </Box>
 
-          {/* ── Footer note ── */}
+          {/* Footer note */}
           <Box sx={{ mt: 3, display: "flex", flexDirection: "column", alignItems: "center", gap: 0.75 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <Box sx={{ width: 32, height: "1px", bgcolor: "#E5E7EB" }} />
@@ -165,10 +163,10 @@ const RegisterContainer: React.FC<{ children: React.ReactNode }> = ({ children }
               <Box sx={{ width: 32, height: "1px", bgcolor: "#E5E7EB" }} />
             </Box>
             <Typography sx={{ fontSize: "0.75rem", color: "#9CA3AF", fontFamily: "Poppins", textAlign: "center", lineHeight: 1.9 }}>
-              By registering you agree to our{" "}
-              <NextLink href="/terms" style={{ color: ACCENT, textDecoration: "none", fontWeight: 600 }}>Terms of Use</NextLink>
-              {" "}and{" "}
-              <NextLink href="/privacy" style={{ color: ACCENT, textDecoration: "none", fontWeight: 600 }}>Privacy Policy</NextLink>
+              {t("register_panel.footer_prefix")}{" "}
+              <NextLink href="/terms" style={{ color: ACCENT, textDecoration: "none", fontWeight: 600 }}>{t("register_panel.terms")}</NextLink>
+              {" "}{t("register_panel.footer_and")}{" "}
+              <NextLink href="/privacy" style={{ color: ACCENT, textDecoration: "none", fontWeight: 600 }}>{t("register_panel.privacy")}</NextLink>
             </Typography>
           </Box>
 

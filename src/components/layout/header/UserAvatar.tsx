@@ -71,23 +71,14 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
         sx={{
           display: "flex",
           alignItems: "center",
-          gap: 0.75,
-          pl: 0.5,
-          pr: 1,
-          py: 0.4,
-          borderRadius: "12px",
-          cursor: "pointer",
-          bgcolor: "transparent",
-          border: "1px solid",
-          borderColor: open ? "rgba(13,148,136,0.40)" : "rgba(0,0,0,0.12)",
-          boxShadow: open
-            ? "0 4px 16px rgba(13,148,136,0.12), 0 1px 4px rgba(0,0,0,0.06)"
-            : "0 1px 4px rgba(0,0,0,0.06)",
-          transition: "border-color 0.18s, box-shadow 0.18s",
-          "&:hover": {
-            borderColor: "rgba(13,148,136,0.40)",
-            boxShadow: "0 4px 16px rgba(13,148,136,0.10), 0 1px 4px rgba(0,0,0,0.06)",
-          },
+          color: '#374151',
+          bgcolor: 'transparent',
+          border: '1px solid #E5E7EB',
+          borderRadius: 2,
+          px: 1.5,
+          py: 0.5,
+          gap: 0.25,
+          '&:hover': { bgcolor: '#F9FAFB', borderColor: '#D1D5DB' },
         }}
       >
         {/* Avatar with online dot */}

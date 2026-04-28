@@ -6,6 +6,7 @@ import SigninContainer from "@/components/features/signin/SinginContainer";
 import { Box, Typography, Button, Divider } from "@mui/material";
 import DesktopWindowsOutlinedIcon from "@mui/icons-material/DesktopWindowsOutlined";
 import PhoneIphoneOutlinedIcon from "@mui/icons-material/PhoneIphoneOutlined";
+import { useTranslation } from "react-i18next";
 
 const ACCENT = "#0D9488";
 
@@ -22,6 +23,7 @@ const isMobileDevice = () => {
 };
 
 const Signin = () => {
+  const { t } = useTranslation("auth");
   const [showMobileWarning, setShowMobileWarning] = useState(false);
 
   useEffect(() => {
@@ -54,10 +56,10 @@ const Signin = () => {
             </Box>
 
             <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "1.05rem", color: "#111827", mb: 0.75 }}>
-              Best experienced on desktop
+              {t("mobile_warning.title")}
             </Typography>
             <Typography sx={{ fontFamily: "Poppins", fontSize: "0.82rem", color: "#6B7280", lineHeight: 1.75, mb: 3 }}>
-              TalentAI is designed for desktop use — AI interviews require a camera and microphone that work best on a PC or laptop.
+              {t("mobile_warning.message")}
             </Typography>
 
             <Button
@@ -72,10 +74,10 @@ const Signin = () => {
                 "&:hover": { background: `linear-gradient(135deg, #0B8078 0%, #047857 100%)` },
               }}
             >
-              Continue anyway
+              {t("mobile_warning.continue")}
             </Button>
             <Typography sx={{ fontFamily: "Poppins", fontSize: "0.72rem", color: "#9CA3AF" }}>
-              Some features may not work correctly on mobile.
+              {t("mobile_warning.note")}
             </Typography>
           </Box>
         </Box>
