@@ -440,6 +440,12 @@
         "send": "Envoyer l'invitation",
         "body_pre": "Un email d'invitation sera envoyé à ",
         "body_post": " avec un lien direct pour démarrer l'entretien."
+      },
+      "metrics": {
+        "total_applicants": "Total candidats",
+        "job_posts": "Offres d'emploi",
+        "avg_cv_score": "Score CV moyen",
+        "top_cv_score": "Meilleur score CV"
       }
     },
     "employees": {

@@ -440,6 +440,12 @@
         "send": "Send Invitation",
         "body_pre": "An invitation email will be sent to ",
         "body_post": " with a direct link to start the interview."
+      },
+      "metrics": {
+        "total_applicants": "Total Applicants",
+        "job_posts": "Job Posts",
+        "avg_cv_score": "Avg CV Score",
+        "top_cv_score": "Top CV Score"
       }
     },
     "employees": {
