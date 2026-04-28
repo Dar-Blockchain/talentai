@@ -279,7 +279,7 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
               <CheckCircleOutlined sx={{ fontSize: 16, color: cfg.color }} />
               <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: cfg.color }}>Current Plan</Typography>
             </Box>
-            {autoRenew ? (
+            {plan.name !== "Free" && (autoRenew ? (
               <AppButton
                 label={cancelling ? "Processing…" : "Disable Auto-Renewal"}
                 variant="outlined"
@@ -315,7 +315,7 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
                   }}
                 />
               </Box>
-            )}
+            ))}
           </Box>
         ) : (
           <AppButton

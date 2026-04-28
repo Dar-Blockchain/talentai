@@ -19,6 +19,7 @@ import { clearConnectedUser } from "@/store/slices/userSlice";
 import { setToastHandler } from "@/utils/toastEmitter";
 import { setSessionExpiredHandler } from "@/utils/storeEmitter";
 import { useTranslation } from "react-i18next";
+import { normalizeLangCode, MANUAL_LANG_KEY } from "@/hooks/useLanguage";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -44,6 +45,22 @@ const theme = createTheme({
   },
 });
 
+function DbLanguageSync() {
+  const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
+  const { i18n } = useTranslation();
+  useEffect(() => {
+    if (!profile) return;
+    const raw = (profile as any)?.language || (profile as any)?.companyDetails?.language;
+    const dbLang = normalizeLangCode(raw);
+    if (!dbLang) return;
+    const manual = typeof window !== 'undefined' ? localStorage.getItem(MANUAL_LANG_KEY) : null;
+    if (!manual) {
+      i18n.changeLanguage(dbLang);
+    }
+  }, [(profile as any)?.language, (profile as any)?.companyDetails?.language]);
+  return null;
+}
+
 function AuthWrapper({ children }: { children: React.ReactNode }) {
   const { user } = useSelector((state: RootState) => state.user.connectedUser);
   const dispatch = useDispatch<typeof store.dispatch>();
@@ -64,6 +81,7 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
 
   return (
     <NotificationProvider userId={userId}>
+      <DbLanguageSync />
       {children}
       <Dialog
         open={isLoggingOut}

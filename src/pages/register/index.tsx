@@ -46,6 +46,7 @@ const Register = () => {
   const hasReturnUrl = !!returnUrl;
   const [userType, setUserType] = useState<UserType | null>(null);
   const [formStep, setFormStep] = useState<1 | 2>(1);
+  const [registeredEmail, setRegisteredEmail] = useState("");
 
   const isOtpStep = formStep === 2;
   const showRoleSelect = !userType;
@@ -182,15 +183,15 @@ const Register = () => {
             </Typography>
             <Typography sx={{ fontSize: "0.95rem", color: "#6B7280", fontFamily: "Poppins", lineHeight: 1.6 }}>
               {isOtpStep
-                ? <>{t("register.otp_sent_prefix")} <Box component="span" sx={{ color: ACCENT, fontWeight: 600 }}>{t("register.otp_sent_accent")}</Box></>
+                ? <>{t("register.otp_sent_prefix")} <Box component="span" sx={{ color: ACCENT, fontWeight: 600 }}>{registeredEmail || t("register.otp_sent_accent")}</Box></>
                 : formConfig!.subtitle}
             </Typography>
           </Box>
 
           {userType === "candidate" ? (
-            <CandidateRegisterForm key="candidate" onStepChange={setFormStep} />
+            <CandidateRegisterForm key="candidate" onStepChange={setFormStep} onEmailChange={setRegisteredEmail} />
           ) : (
-            <CompanyRegisterForm key="company" onStepChange={setFormStep} />
+            <CompanyRegisterForm key="company" onStepChange={setFormStep} onEmailChange={setRegisteredEmail} />
           )}
 
           {!isOtpStep && <SignInLink returnUrl={returnUrl} label={t("register.signin_link")} />}

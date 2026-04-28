@@ -13,6 +13,7 @@ import ProfileBanner from "@/components/features/company/settings/ProfileBanner"
 import CompanyInfoTab from "@/components/features/company/settings/CompanyInfoTab";
 import ContactTab from "@/components/features/company/settings/ContactTab";
 import ApiKeysTab from "@/components/features/company/settings/ApiKeysTab";
+import LanguageTab from "@/components/features/company/settings/LanguageTab";
 import { TEAL } from "@/components/features/company/settings/settingsConstants";
 import AppButton from "@/components/ui/AppButton";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
@@ -20,6 +21,7 @@ import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
 import KeyOutlined from "@mui/icons-material/KeyOutlined";
 import CreditCardOutlined from "@mui/icons-material/CreditCardOutlined";
 import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
+import LanguageIcon from "@mui/icons-material/Language";
 
 const SettingsPage: React.FC = () => {
   const { t } = useTranslation("dashboard");
@@ -27,7 +29,7 @@ const SettingsPage: React.FC = () => {
   const empPerms = useSelector(selectEmployeePermissions);
   const {
     profile, loading, uploadingImage, fieldErrors, isEmployee,
-    handleInputChange, handleImageUpload, handleSaveProfile, handleCancel,
+    handleInputChange, handleImageUpload, handleSaveProfile, handleSaveLanguage, handleCancel,
   } = useCompanyProfileManagement();
 
   const canEdit = !isEmployee || !!empPerms?.canEditCompanyProfile;
@@ -83,12 +85,14 @@ const SettingsPage: React.FC = () => {
             <Tab label={t("pages.settings.tabs.company_info")} icon={<BusinessOutlined    sx={{ fontSize: 15 }} />} iconPosition="start" />
             <Tab label={t("pages.settings.tabs.contact")}      icon={<LocationOnOutlined  sx={{ fontSize: 15 }} />} iconPosition="start" data-tour="settings-tab-contact" />
             <Tab label={t("pages.settings.tabs.api_keys")}     icon={<KeyOutlined         sx={{ fontSize: 15 }} />} iconPosition="start" data-tour="settings-tab-apikeys" />
+            <Tab label={t("pages.settings.tabs.language")}     icon={<LanguageIcon        sx={{ fontSize: 15 }} />} iconPosition="start" />
           </Tabs>
         </Box>
 
         {tab === 0 && <CompanyInfoTab profile={profile} isEditing={isEditing} fieldErrors={fieldErrors} onInputChange={handleInputChange} />}
         {tab === 1 && <ContactTab     profile={profile} isEditing={isEditing} fieldErrors={fieldErrors} onInputChange={handleInputChange} />}
         {tab === 2 && <ApiKeysTab />}
+        {tab === 3 && <LanguageTab    profile={profile} onInputChange={handleInputChange} onSaveLanguage={handleSaveLanguage} />}
       </Box>
     </DashboardLayout>
   );

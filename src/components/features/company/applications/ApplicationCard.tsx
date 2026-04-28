@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useRouter } from "next/router";
 import { Avatar, Box, Chip, Paper, Typography } from "@mui/material";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutline";
@@ -12,9 +13,9 @@ import ApplicationCardActions from "./ApplicationCardActions";
 
 const TEAL = "#0D9488";
 
-export const STATUS_STYLE: Record<string, { label: string; bg: string; color: string }> = {
-  visited:             { label: "Visited",             bg: "#EFF6FF", color: "#2563EB" },
-  interview_completed: { label: "Interview Completed", bg: "#D1FAE5", color: "#059669" },
+export const STATUS_STYLE: Record<string, { i18nKey: string; bg: string; color: string }> = {
+  visited:             { i18nKey: "pages.applications.status.visited",             bg: "#EFF6FF", color: "#2563EB" },
+  interview_completed: { i18nKey: "pages.applications.status.interview_completed", bg: "#D1FAE5", color: "#059669" },
 };
 
 const AVATAR_COLORS = ["#0D9488", "#3B82F6", "#8B5CF6", "#F59E0B", "#EC4899", "#10B981", "#EF4444"];
@@ -53,6 +54,7 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
   onAssessment,
   onInvite,
 }) => {
+  const { t } = useTranslation("dashboard");
   const router = useRouter();
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
@@ -62,7 +64,7 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
     ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${app.userImage}`
     : undefined;
   const appId = String(app.id);
-  const style = STATUS_STYLE[app.status] ?? STATUS_STYLE.visited;
+  const statusDef = STATUS_STYLE[app.status] ?? STATUS_STYLE.visited;
 
   return (
     <Paper
@@ -93,9 +95,9 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
             {name}
           </Typography>
           <Chip
-            label={style.label}
+            label={t(statusDef.i18nKey)}
             size="small"
-            sx={{ bgcolor: style.bg, color: style.color, fontWeight: 600, fontSize: "10px", height: 18, borderRadius: "4px" }}
+            sx={{ bgcolor: statusDef.bg, color: statusDef.color, fontWeight: 600, fontSize: "10px", height: 18, borderRadius: "4px" }}
           />
           {showPostTitle && app.postTitle && (
             <Chip
@@ -119,8 +121,8 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
 
         {app.appliedAt && (
           <Typography sx={{ fontSize: "10px", color: "#9CA3AF", mt: 0.15 }}>
-            Applied {fmtDate(app.appliedAt)}
-            {app.completedAt && ` · Completed ${fmtDate(app.completedAt)}`}
+            {t("pages.applications.card.applied_date", { date: fmtDate(app.appliedAt) })}
+            {app.completedAt && t("pages.applications.card.completed_date", { date: fmtDate(app.completedAt) })}
           </Typography>
         )}
       </Box>

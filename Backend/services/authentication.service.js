@@ -22,13 +22,30 @@ module.exports.registerUser = async (email, roleType = 'Candidate', profileDataO
     const otpExpiry = new Date(Date.now() + OTP_EXPIRY_MS);
 
     // Check if user exists by email only
-    const existingUser = await User.findOne({ email }).lean().select('_id');
+    const existingUser = await User.findOne({ email }).select('_id isVerified');
 
     if (existingUser) {
-      // User already exists - refuse registration
-      const err = new Error('User already exists. Please use login instead.');
-      err.status = 409; // Conflict status code
-      throw err;
+      if (existingUser.isVerified) {
+        // Fully registered user — block
+        const err = new Error('User already exists. Please use login instead.');
+        err.status = 409;
+        throw err;
+      }
+      // Unverified user — resend a fresh OTP so they can complete registration
+      await User.findByIdAndUpdate(existingUser._id, {
+        otp: { code: otp, expiresAt: otpExpiry },
+      });
+      const emailSent = await sendOTP(email, otp);
+      if (!emailSent) {
+        const err = new Error('Error sending OTP email');
+        err.status = 500;
+        throw err;
+      }
+      return {
+        email,
+        username: existingUser.username,
+        message: 'A new verification code has been sent to your email.',
+      };
     }
 
     // If username is taken, append a number to make it unique
@@ -83,6 +100,7 @@ module.exports.registerUser = async (email, roleType = 'Candidate', profileDataO
         user.profile = profile._id;
         await user.save();
         console.log('🔗 Company profile linked to user - user.profile:', profile._id);
+
       }
     } else if (roleType === 'Member' || roleType === 'Employee') {
       // For Member and Employee: create profile similar to Candidate

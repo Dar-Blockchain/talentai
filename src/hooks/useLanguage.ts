@@ -15,6 +15,18 @@ export const LANGUAGE_OPTIONS: LanguageOption[] = [
   // Add more here: { code: 'ar', label: 'العربية', flag: '🇸🇦' }
 ];
 
+/** localStorage key written only when the user explicitly picks a language via the header switcher */
+export const MANUAL_LANG_KEY = 'talentai_lang_manual';
+
+/** Normalize any DB/legacy language string to a supported language code */
+export function normalizeLangCode(raw?: string | null): SupportedLanguage | null {
+  if (!raw) return null;
+  const l = raw.toLowerCase().trim();
+  if (l === 'fr' || l === 'french' || l === 'français' || l === 'francais') return 'fr';
+  if (l === 'en' || l === 'english') return 'en';
+  return null;
+}
+
 export function useLanguage() {
   const { i18n } = useTranslation();
 
@@ -32,6 +44,11 @@ export function useLanguage() {
 
       // Persist in cookie (works with cookies-next SSR-compat signature)
       setCookie(LANGUAGE_COOKIE, lang, { path: '/', sameSite: 'lax', maxAge: 60 * 60 * 24 * 365 });
+
+      // Mark that this was a manual user choice — DB sync will not override this
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(MANUAL_LANG_KEY, lang);
+      }
 
       // Apply RTL direction to <html> — MUI reads this automatically
       document.documentElement.dir  = RTL_LANGUAGES.includes(lang) ? 'rtl' : 'ltr';

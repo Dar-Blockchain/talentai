@@ -1,4 +1,5 @@
 import { memo, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Box, Typography, Skeleton } from "@mui/material";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutlineOutlined";
 import CheckCircleOutline from "@mui/icons-material/CheckCircleOutline";
@@ -12,14 +13,15 @@ import {
   selectPostMetricsLoading,
 } from "@/store/slices/postSlice";
 
-const CARDS = [
-  { key: "total",  Icon: WorkOutlineOutlined,        label: "Total Posts", color: "#0D9488", bg: "#F0FDFA" },
-  { key: "active", Icon: CheckCircleOutline,  label: "Active",      color: "#10B981", bg: "#F0FDF4" },
-  { key: "draft",  Icon: EditNoteOutlined,    label: "Drafts",      color: "#D97706", bg: "#FFFBEB" },
-  { key: "closed", Icon: AccessTimeOutlined,  label: "Closed",      color: "#DC2626", bg: "#FEF2F2" },
-];
+const CARD_DEFS = [
+  { key: "total",  Icon: WorkOutlineOutlined, color: "#0D9488", bg: "#F0FDFA" },
+  { key: "active", Icon: CheckCircleOutline,  color: "#10B981", bg: "#F0FDF4" },
+  { key: "draft",  Icon: EditNoteOutlined,    color: "#D97706", bg: "#FFFBEB" },
+  { key: "closed", Icon: AccessTimeOutlined,  color: "#DC2626", bg: "#FEF2F2" },
+] as const;
 
 const PostsStats: React.FC = () => {
+  const { t } = useTranslation("dashboard");
   const dispatch = useDispatch<AppDispatch>();
   const metrics  = useSelector(selectPostMetrics);
   const loading  = useSelector(selectPostMetricsLoading);
@@ -30,7 +32,7 @@ const PostsStats: React.FC = () => {
 
   return (
     <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 2, mb: 3 }}>
-      {CARDS.map(({ key, Icon, label, color, bg }) => (
+      {CARD_DEFS.map(({ key, Icon, color, bg }) => (
         <Box
           key={key}
           sx={{
@@ -50,7 +52,7 @@ const PostsStats: React.FC = () => {
               </Typography>
             )}
             <Typography sx={{ fontSize: "0.68rem", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.05em", mt: 0.4 }}>
-              {label}
+              {t(`pages.posts.stats.${key}`)}
             </Typography>
           </Box>
         </Box>
