@@ -102,12 +102,6 @@ interface InterviewDetailState {
   error: string | null;
 }
 
-interface MatchingDetailsState {
-  data: { matchScore: number; thresholdScore: number; meetsThreshold: boolean; message: string } | null;
-  loading: boolean;
-  error: string | null;
-}
-
 interface InterviewState {
   data: SkillInterviewAssessment[];
   loading: boolean;
@@ -122,7 +116,6 @@ interface InterviewState {
   companyInterviews: CompanyInterviewsState;
   companyMetrics: CompanyInterviewMetrics;
   interviewDetail: InterviewDetailState;
-  matchingDetails: MatchingDetailsState;
 }
 
 const initialState: InterviewState = {
@@ -139,7 +132,6 @@ const initialState: InterviewState = {
   companyInterviews: { items: [], total: 0, totalPages: 1, loading: false, error: null },
   companyMetrics: { total: 0, needWork: 0, excellent: 0, avgScore: 0, loading: false, error: null },
   interviewDetail: { data: null, stepsData: null, hasSteps: false, loading: false, error: null },
-  matchingDetails: { data: null, loading: false, error: null },
 };
 
 /**
@@ -347,26 +339,6 @@ export const checkPostInterviewAssessment = createAsyncThunk<
 );
 
 /**
- * Fetch matching details for a candidate and post
- */
-export const fetchMatchingDetails = createAsyncThunk<
-  { matchScore: number; thresholdScore: number; meetsThreshold: boolean; message: string },
-  string,
-  { rejectValue: string }
->(
-  'interview/fetchMatchingDetails',
-  async (postId) => {
-    try {
-      const response = await axiosInstance.get(`post-interview-assessments/matching/${postId}`);
-      return response.data.data;
-    } catch {
-      // Fail open — don't block candidate if check fails (network error, no application yet, etc.)
-      return { matchScore: null, thresholdScore: 0, meetsThreshold: true, message: '' };
-    }
-  }
-);
-
-/**
  * Fetch company post-interview assessments
  */
 export const fetchCompanyInterviews = createAsyncThunk<
@@ -557,19 +529,6 @@ const interviewSlice = createSlice({
       .addCase(fetchInterviewById.rejected, (state, action) => {
         state.interviewDetail.loading = false;
         state.interviewDetail.error = action.payload || 'An error occurred';
-      })
-      // ---- MATCHING DETAILS ----
-      .addCase(fetchMatchingDetails.pending, (state) => {
-        state.matchingDetails.loading = true;
-        state.matchingDetails.error = null;
-      })
-      .addCase(fetchMatchingDetails.fulfilled, (state, action) => {
-        state.matchingDetails.loading = false;
-        state.matchingDetails.data = action.payload;
-      })
-      .addCase(fetchMatchingDetails.rejected, (state, action) => {
-        state.matchingDetails.loading = false;
-        state.matchingDetails.error = action.payload || 'An error occurred';
       });
   },
 });
@@ -594,8 +553,5 @@ export const selectCompanyInterviewsLoading = (state: RootState) => state.interv
 export const selectCompanyInterviewsTotal = (state: RootState) => state.interview.companyInterviews.total;
 export const selectCompanyInterviewsTotalPages = (state: RootState) => state.interview.companyInterviews.totalPages;
 export const selectCompanyMetrics = (state: RootState) => state.interview.companyMetrics;
-export const selectMatchingDetails = (state: RootState) => state.interview.matchingDetails.data;
-export const selectMatchingDetailsLoading = (state: RootState) => state.interview.matchingDetails.loading;
-export const selectMatchingDetailsError = (state: RootState) => state.interview.matchingDetails.error;
 
 export default interviewSlice.reducer;

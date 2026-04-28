@@ -29,7 +29,7 @@ const ROLES = [
     type: "candidate" as UserType,
     icon: PersonOutlined,
     label: "Register as a Candidate",
-    description: "Looking for opportunities and want AI-powered job matching",
+    description: "Looking for opportunities and want to apply to jobs",
     accent: "#7C3AED",
     iconGradient: "linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)",
     shadowColor: "rgba(124,58,237,0.2)",

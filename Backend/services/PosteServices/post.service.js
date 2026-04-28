@@ -92,98 +92,9 @@ module.exports.createPostWithSideEffects = async (postData, token, userProfile) 
       }
     }
 
-    // ========== 4. NOTIFY MATCHING CANDIDATES (async, non-blocking) ==========
-    module.exports.notifyMatchingCandidates(post).catch(notifErr => {
-      console.error('❌ [createPostWithSideEffects] Failed to send notifications:', notifErr?.message || notifErr);
-    });
-
     return post;
   } catch (error) {
     console.error('Error in createPostWithSideEffects:', error.message);
-    throw error;
-  }
-};
-
-/**
- * Notify candidates who have matching skills with the post
- * @param {Object} post - Post object with skills
- */
-module.exports.notifyMatchingCandidates = async (post) => {
-  try {
-    const notificationService = require("../../services/notificationSystem.service");
-
-    console.log('🔔 Starting notification process...');
-
-    // ========== 1. EXTRACT SKILL NAMES ==========
-    const skillSources = [];
-    if (post.skillAnalysis && Array.isArray(post.skillAnalysis.requiredSkills)) {
-      skillSources.push(...post.skillAnalysis.requiredSkills);
-    }
-    if (post.jobDetails && Array.isArray(post.jobDetails.requiredSkills)) {
-      skillSources.push(...post.jobDetails.requiredSkills);
-    }
-
-    // Normalize to lowercase names
-    const skillNames = [...new Set(
-      skillSources
-        .map(s => (typeof s === 'string' ? s : (s && s.name) || '').toString().trim().toLowerCase())
-        .filter(Boolean)
-    )];
-
-    console.log('🏷️ Normalized skillNames:', skillNames);
-
-    if (skillNames.length === 0) {
-      console.log('⚠️ No hard skills found on post — skipping targeted notifications');
-      return;
-    }
-
-    // ========== 2. FETCH MATCHING PROFILES ==========
-    let matchingProfiles = await Profile.find({
-      type: 'Candidate',
-      'skills.name': { $in: skillNames }
-    }).select('userId skills').lean();
-
-    console.log('✅ matchingProfiles found (exact match):', matchingProfiles.length);
-
-    // ========== 3. FALLBACK: CASE-INSENSITIVE SEARCH ==========
-    if (matchingProfiles.length === 0 && skillNames.length > 0) {
-      console.log('⚠️ No exact matches found, trying case-insensitive search...');
-      const caseInsensitiveProfiles = await Profile.find({
-        type: 'Candidate'
-      }).lean();
-
-      const matchedProfiles = caseInsensitiveProfiles.filter(profile => {
-        if (!profile.skills || profile.skills.length === 0) return false;
-        const profileSkillNames = profile.skills.map(s => String(s.name).toLowerCase());
-        return skillNames.some(skillName => profileSkillNames.includes(skillName));
-      });
-
-      console.log('✅ matchingProfiles found (case-insensitive):', matchedProfiles.length);
-      matchingProfiles.push(...matchedProfiles);
-    }
-
-    // ========== 4. EXTRACT RECIPIENT IDS ==========
-    const recipientIds = matchingProfiles
-      .map(p => String(p.userId))
-      .filter(Boolean);
-
-    console.log('👥 recipientIds count:', recipientIds.length);
-
-    if (recipientIds.length === 0) {
-      console.log('⚠️ No matching candidate profiles found for skills:', skillNames);
-      return;
-    }
-
-    // ========== 5. SEND NOTIFICATIONS ==========
-    const title = (post.jobDetails?.title) || post.title || 'Nouvelle offre';
-    const content = `New offer: ${title} — matches your technical skills.`;
-
-    console.log('📤 Sending notifications to', recipientIds.length, 'candidates');
-    await notificationService.broadcastSystemNotification(content, recipientIds);
-
-    console.log(`✅ Sent notifications to ${recipientIds.length} matching candidates for skills:`, skillNames);
-  } catch (error) {
-    console.error('❌ [notifyMatchingCandidates] Error:', error?.message || error);
     throw error;
   }
 };
@@ -685,17 +596,7 @@ module.exports.deletePost = async (postId, userId) => {
       console.log(`📦 Archived agent: ${post.agentId}`);
     }
 
-    // 4. Archive MatchingConfig if exists
-    if (post.MatchingConfig) {
-      const MatchingConfig = require('../../models/MatchingConfig.model');
-      await MatchingConfig.findByIdAndUpdate(
-        post.MatchingConfig,
-        { archived: true, archivedAt: new Date() }
-      );
-      console.log(`📦 Archived MatchingConfig: ${post.MatchingConfig}`);
-    }
-
-    // 5. Archive associated job assessments
+    // 4. Archive associated job assessments
     const PostInterviewAssessment = require('../../models/PostInterviewAssessment.model');
     await PostInterviewAssessment.updateMany(
       { post: postId },
