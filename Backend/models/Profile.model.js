@@ -185,6 +185,10 @@ profileSchema.post("save", async function (doc) {
     // ========== CREATE FREE SUBSCRIPTION FOR COMPANIES ==========
     if ((doc.type === "Company" || doc.type === "Member") && !doc.activeSubscription) {
       try {
+        // Guard: skip if this profile already has any subscription in the DB
+        const existingSubCount = await mongoose.model("Subscription").countDocuments({ companyProfileId: doc._id });
+        if (existingSubCount > 0) return;
+
         // Try Free plan first, fall back to Trial for backward compatibility
         const freePlan = await PlanLimits.findOne({ name: "Free", isActive: true })
           || await PlanLimits.findOne({ name: "Trial" });

@@ -100,7 +100,28 @@ exports.createPost = async (req, res) => {
       userProfile,
     );
 
-    // ========== 5. RETURN RESPONSE ==========
+    // ========== 5. INCREMENT USAGE ==========
+    if (userProfile.type === "Company") {
+      try {
+        const { Subscription } = require("../../models/Subscription.model") || { Subscription: require("../../models/Subscription.model") };
+        const activeSubs = await require("../../models/Subscription.model").find({
+          companyProfileId: userProfile._id,
+          status: "active",
+          endDate: { $gt: new Date() },
+        }).populate("planId").sort({ createdAt: 1 });
+
+        const valid = activeSubs.filter((s) => s.planId != null);
+        if (valid.length) {
+          // Increment postsUsed on the subscription with remaining capacity first
+          const target = valid.find((s) => s.planId.postsLimit === -1 || s.postsUsed < s.planId.postsLimit) || valid[0];
+          await require("../../models/Subscription.model").findByIdAndUpdate(target._id, { $inc: { postsUsed: 1 } });
+        }
+      } catch (usageErr) {
+        console.error("Failed to increment postsUsed:", usageErr.message);
+      }
+    }
+
+    // ========== 6. RETURN RESPONSE ==========
     res.status(201).json({
       success: true,
       data: post,

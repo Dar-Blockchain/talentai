@@ -91,13 +91,19 @@ const seedDefaultPlans = async () => {
 
     console.log("🌱 Starting PlanLimits seeding...");
 
-    // Remove all existing plans and replace with the new ones
-    await PlanLimits.deleteMany({});
-    console.log("🗑️  Cleared existing plans");
+    // Remove plans that are no longer in defaultPlans (stale plans like Diamond, Gold, etc.)
+    const validNames = defaultPlans.map((p) => p.name);
+    await PlanLimits.deleteMany({ name: { $nin: validNames } });
+    console.log("🗑️  Removed stale plans");
 
+    // Upsert each plan by name — preserves existing _id so subscriptions stay valid
     for (const plan of defaultPlans) {
-      await PlanLimits.create(plan);
-      console.log(`✅ Plan "${plan.name}" created`);
+      await PlanLimits.findOneAndUpdate(
+        { name: plan.name },
+        { $set: plan },
+        { upsert: true, new: true }
+      );
+      console.log(`✅ Plan "${plan.name}" upserted`);
     }
 
     console.log("🎉 PlanLimits seeding completed successfully!");

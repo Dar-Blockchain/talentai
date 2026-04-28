@@ -101,12 +101,35 @@ module.exports.checkSubscriptionLimit = async (companyProfileId, limitType) => {
     }).populate("planId");
 
     const valid = allActive.filter((s) => s.planId != null);
-    const paid = valid.filter((s) => s.planId?.name !== "Trial" && s.planId?.name !== "Free");
-    const active = paid.length ? paid : valid.length ? valid : allActive;
 
-    if (!active.length) {
+    if (!allActive.length) {
       return { canUse: false, message: "No active subscription found", limitData: null };
     }
+
+    // If all subscriptions are orphaned (planId deleted), auto-repair by re-linking to Free plan
+    if (!valid.length && allActive.length) {
+      try {
+        const freePlan = await require("../models/PlanLimits.model").findOne({ name: "Free", isActive: true });
+        if (freePlan) {
+          await require("../models/Subscription.model").updateMany(
+            { _id: { $in: allActive.map((s) => s._id) } },
+            { planId: freePlan._id }
+          );
+          // Re-fetch with repaired planId
+          const repaired = await Subscription.find({
+            companyProfileId,
+            status: "active",
+            endDate: { $gt: new Date() },
+          }).populate("planId");
+          valid.push(...repaired.filter((s) => s.planId != null));
+        }
+      } catch (repairErr) {
+        console.error("Auto-repair orphaned subscriptions failed:", repairErr.message);
+      }
+    }
+
+    // Use all valid subscriptions so Free + paid limits are combined
+    const active = valid.length ? valid : allActive;
 
     let used = 0;
     let limit = 0;
@@ -500,8 +523,8 @@ module.exports.getCombinedActiveDetails = async (companyProfileId) => {
 
     // Filter out orphaned subscriptions (planId no longer exists in DB)
     const valid = allActive.filter((s) => s.planId != null);
-    const paid = valid.filter((s) => s.planId?.name !== "Trial" && s.planId?.name !== "Free");
-    const subscriptions = paid.length ? paid : valid.length ? valid : allActive;
+    // Use all valid subscriptions so Free + paid limits are combined
+    const subscriptions = valid.length ? valid : allActive;
 
     if (!subscriptions.length || subscriptions.every((s) => !s.planId)) {
       const err = new Error("No active subscription found");
