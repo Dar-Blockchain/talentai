@@ -67,6 +67,7 @@ type FormValues = {
 
 interface Props {
   onStepChange?: (step: 1 | 2) => void;
+  onEmailChange?: (email: string) => void;
 }
 
 const submitBtnSx = {
@@ -90,7 +91,7 @@ const submitBtnSx = {
   "&.Mui-disabled": { background: "#F3F4F6", color: "#9CA3AF", boxShadow: "none" },
 };
 
-const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
+const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) => {
   const { t } = useTranslation("auth");
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
@@ -169,7 +170,9 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
         if (cvFile) payload.append("resume", cvFile);
       }
       await dispatch(registerUser(payload)).unwrap();
-      setSavedEmail(values.email.toLowerCase().trim());
+      const email = values.email.toLowerCase().trim();
+      setSavedEmail(email);
+      onEmailChange?.(email);
       startTimer();
       setStep(2);
       onStepChange?.(2);
@@ -473,7 +476,7 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
               >
                 <Box
                   component="input"
-                  ref={(el: HTMLInputElement | null) => (codeInputsRef.current[index] = el)}
+                  ref={(el: unknown) => { codeInputsRef.current[index] = el as HTMLInputElement | null; }}
                   value={digit}
                   maxLength={1}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleOtpChange(index, e.target.value)}
