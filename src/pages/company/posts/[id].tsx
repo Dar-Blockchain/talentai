@@ -14,6 +14,7 @@ import {
   selectJobMatches,
   updatePostStatus,
 } from "@/store/slices/postSlice";
+import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/useToast";
 import { useDeletePost } from "@/components/features/company/posts/details/useDeletePost";
 import DeletePostModal from "@/components/features/company/posts/details/DeletePostModal";
@@ -41,6 +42,7 @@ const PostDetailsPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const { id } = router.query;
+  const { t } = useTranslation("dashboard");
   const { showToast } = useToast();
 
   const job = useSelector(selectCurrentJob);
@@ -83,10 +85,10 @@ const PostDetailsPage: React.FC = () => {
     postId: job?._id,
     refetchAfterDelete: false,
     onSuccess: () => {
-      showToast({ message: "Post deleted successfully", severity: "success" });
+      showToast({ message: t("pages.post_detail.toast.deleted"), severity: "success" });
       router.push("/company/posts");
     },
-    onError: () => showToast({ message: "Failed to delete post", severity: "error" }),
+    onError: () => showToast({ message: t("pages.post_detail.toast.delete_error"), severity: "error" }),
   });
 
   const handleSaveSuccess = () => {
@@ -103,10 +105,10 @@ const PostDetailsPage: React.FC = () => {
       .unwrap()
       .then(() => {
         setPublishConfirmOpen(false);
-        showToast({ message: "Post published! Candidates can now find and apply.", severity: "success" });
+        showToast({ message: t("pages.post_detail.toast.published"), severity: "success" });
         dispatch(fetchJobById(job._id));
       })
-      .catch(() => showToast({ message: "Failed to publish post.", severity: "error" }))
+      .catch(() => showToast({ message: t("pages.post_detail.toast.publish_error"), severity: "error" }))
       .finally(() => setPublishing(false));
   };
 
@@ -115,8 +117,8 @@ const PostDetailsPage: React.FC = () => {
     const companyId = job.user?._id || connectedUser?._id || '';
     navigator.clipboard
       .writeText(`${window.location.origin}/interview/hr?jobId=${job._id}${companyId ? `&companyId=${companyId}` : ''}&ref=link`)
-      .then(() => showToast({ message: "Interview link copied!", severity: "success" }))
-      .catch(() => showToast({ message: "Failed to copy link", severity: "error" }));
+      .then(() => showToast({ message: t("pages.post_detail.toast.link_copied"), severity: "success" }))
+      .catch(() => showToast({ message: t("pages.post_detail.toast.link_copy_error"), severity: "error" }));
   };
 
   const jd = job?.jobDetails || {};
@@ -125,7 +127,7 @@ const PostDetailsPage: React.FC = () => {
   return (
       <DashboardLayout>
         <Box>
-          {loading && <LoadingOverlay height={400} message="Loading job details…" color={TEAL} />}
+          {loading && <LoadingOverlay height={400} message={t("pages.post_detail.loading")} color={TEAL} />}
 
           {!loading && error && (
             <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>
@@ -143,9 +145,9 @@ const PostDetailsPage: React.FC = () => {
                     sx={{ mb: 2, "& .MuiBreadcrumbs-separator": { mx: 0.25 } }}
                   >
                     {[
-                      { label: "Dashboard", href: "/company/dashboard" },
-                      { label: "Job Posts", href: "/company/posts" },
-                      { label: jd.title || "Job Post" },
+                      { label: t("pages.common.dashboard"), href: "/company/dashboard" },
+                      { label: t("pages.posts.title"), href: "/company/posts" },
+                      { label: jd.title || t("pages.post_detail.fallback_title") },
                     ].map((item, i) =>
                       item.href ? (
                         <MuiLink key={i} component={Link} href={item.href} underline="hover"
@@ -178,7 +180,7 @@ const PostDetailsPage: React.FC = () => {
                             {jd.title || "Job Post"}
                           </Typography>
                           <Chip
-                            label={isDraft ? "Draft" : "Published"}
+                            label={isDraft ? t("pages.post_detail.status.draft") : t("pages.post_detail.status.published")}
                             size="small"
                             sx={{
                               height: 22, fontWeight: 700, fontSize: "11px",
@@ -255,7 +257,7 @@ const PostDetailsPage: React.FC = () => {
                         >
                           <PublishOutlined sx={{ fontSize: 15, color: "#fff" }} />
                           <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#fff", lineHeight: 1 }}>
-                            Publish Post
+                            {t("pages.post_detail.actions.publish")}
                           </Typography>
                         </Box>
                       )}
@@ -274,7 +276,7 @@ const PostDetailsPage: React.FC = () => {
                         >
                           <ContentCopyOutlined sx={{ fontSize: 14, color: "#059669" }} />
                           <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#059669", lineHeight: 1 }}>
-                            Copy Link
+                            {t("pages.post_detail.actions.copy_link")}
                           </Typography>
                         </Box>
                       )}
@@ -305,7 +307,7 @@ const PostDetailsPage: React.FC = () => {
                           >
                             {/* Edit */}
                             <Tooltip
-                              title={!isDraft ? "Cannot edit — post is already published" : hasPassedCandidates ? "Cannot edit — candidates have already passed this interview" : ""}
+                              title={!isDraft ? t("pages.post_detail.tooltips.cannot_edit_published") : hasPassedCandidates ? t("pages.post_detail.tooltips.cannot_edit_passed") : ""}
                               arrow placement="left"
                               disableHoverListener={isDraft && !hasPassedCandidates}
                             >
@@ -319,8 +321,8 @@ const PostDetailsPage: React.FC = () => {
                                     <EditOutlined sx={{ fontSize: 14, color: TEAL }} />
                                   </Box>
                                   <Box>
-                                    <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>Edit Post</Typography>
-                                    <Typography sx={{ fontSize: "11px", color: "#9CA3AF", lineHeight: 1.2 }}>{!isDraft ? "Only editable while draft" : "Modify job details"}</Typography>
+                                    <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>{t("pages.post_detail.menu.edit_title")}</Typography>
+                                    <Typography sx={{ fontSize: "11px", color: "#9CA3AF", lineHeight: 1.2 }}>{!isDraft ? t("pages.post_detail.menu.edit_desc_published") : t("pages.post_detail.menu.edit_desc_draft")}</Typography>
                                   </Box>
                                 </MenuItem>
                               </span>
@@ -337,8 +339,8 @@ const PostDetailsPage: React.FC = () => {
                                 <DeleteOutlineOutlined sx={{ fontSize: 14, color: "#EF4444" }} />
                               </Box>
                               <Box>
-                                <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#EF4444", lineHeight: 1.2 }}>Delete Post</Typography>
-                                <Typography sx={{ fontSize: "11px", color: "#9CA3AF", lineHeight: 1.2 }}>Permanently remove</Typography>
+                                <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#EF4444", lineHeight: 1.2 }}>{t("pages.post_detail.menu.delete_title")}</Typography>
+                                <Typography sx={{ fontSize: "11px", color: "#9CA3AF", lineHeight: 1.2 }}>{t("pages.post_detail.menu.delete_desc")}</Typography>
                               </Box>
                             </MenuItem>
                           </Menu>
@@ -364,8 +366,8 @@ const PostDetailsPage: React.FC = () => {
                         "& .MuiTabs-indicator": { bgcolor: TEAL, height: 2.5, borderRadius: "2px 2px 0 0" },
                       }}
                     >
-                      <Tab value="details" label="Job Details" icon={<WorkOutlineOutlined sx={{ fontSize: 15 }} />} iconPosition="start" />
-                      <Tab value="applications" label="Applications" icon={<PeopleOutlined sx={{ fontSize: 15 }} />} iconPosition="start" />
+                      <Tab value="details" label={t("pages.post_detail.tabs.details")} icon={<WorkOutlineOutlined sx={{ fontSize: 15 }} />} iconPosition="start" />
+                      <Tab value="applications" label={t("pages.post_detail.tabs.applications")} icon={<PeopleOutlined sx={{ fontSize: 15 }} />} iconPosition="start" />
                     </Tabs>
                   )}
                 </Box>
