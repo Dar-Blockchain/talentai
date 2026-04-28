@@ -10,7 +10,13 @@ import {
   ListSubheader,
   Divider,
   Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
+import PublishOutlined from "@mui/icons-material/PublishOutlined";
+import WarningAmberOutlined from "@mui/icons-material/WarningAmberOutlined";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
@@ -29,6 +35,7 @@ import {
 } from "@/store/slices/paymentSlice";
 import { useToast } from "@/hooks/useToast";
 import DeletePostModal from "@/components/features/company/posts/details/DeletePostModal";
+import PublishConfirmModal from "@/components/features/company/posts/PublishConfirmModal";
 import { useDeletePost } from "@/components/features/company/posts/details/useDeletePost";
 import JobPostsList, {
   StatusFilter,
@@ -82,7 +89,7 @@ const PostsPage: React.FC = () => {
 
   const postsUsed      = combined?.combined.usage.posts.used ?? 0;
   const postsLimit     = combined?.combined.usage.posts.limit ?? Infinity;
-  const postsAtLimit   = combined && postsLimit !== Infinity && postsUsed >= postsLimit;
+  const postsAtLimit   = combined && postsLimit !== Infinity && postsLimit !== -1 && postsUsed >= postsLimit;
 
   // ── Translation-dependent option arrays ──
   const STATUS_OPTIONS: { value: StatusFilter; label: string; color: string }[] = [
@@ -127,6 +134,8 @@ const PostsPage: React.FC = () => {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [jobToDelete, setJobToDelete] = useState<string | null>(null);
+  const [publishConfirmId, setPublishConfirmId] = useState<string | null>(null);
+  const [publishing, setPublishing] = useState(false);
 
   const deletePostHook = useDeletePost({
     postId: jobToDelete!,
@@ -187,7 +196,13 @@ const PostsPage: React.FC = () => {
   };
 
   const handlePublish = useCallback((id: string) => {
-    dispatch(updatePostStatus({ postId: id, status: "open" }))
+    setPublishConfirmId(id);
+  }, []);
+
+  const handleConfirmPublish = useCallback(() => {
+    if (!publishConfirmId) return;
+    setPublishing(true);
+    dispatch(updatePostStatus({ postId: publishConfirmId, status: "open" }))
       .unwrap()
       .then(() => {
         showToast({ message: t("pages.posts.publish_success"), severity: "success" });
@@ -627,6 +642,14 @@ const PostsPage: React.FC = () => {
           }}
           onDelete={deletePostHook.handleDelete}
           isDeleting={deletePostHook.isDeleting}
+        />
+
+        {/* Publish confirmation modal */}
+        <PublishConfirmModal
+          open={!!publishConfirmId}
+          publishing={publishing}
+          onClose={() => setPublishConfirmId(null)}
+          onConfirm={handleConfirmPublish}
         />
       </Box>
     </DashboardLayout>

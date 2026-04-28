@@ -33,13 +33,14 @@ const NotificationsOffOutlined = dynamic(() => import("@mui/icons-material/Notif
 // ─── Constants ───────────────────────────────────────────
 
 const PLAN_CONFIG: Record<string, { color: string; badge?: string }> = {
-  Standard: { color: "#0D9488" },
-  Gold:     { color: "#7C3AED", badge: "Popular" },
-  Platinum: { color: "#0891B2" },
-  Diamond:  { color: "#D97706" },
+  Free:      { color: "#6B7280" },
+  Starter:   { color: "#0D9488" },
+  Pro:       { color: "#7C3AED", badge: "Popular" },
+  Business:  { color: "#0891B2" },
+  Unlimited: { color: "#D97706" },
 };
 
-const ORDERED_PLANS = ["Standard", "Gold", "Platinum", "Diamond"];
+const ORDERED_PLANS = ["Free", "Starter", "Pro", "Business", "Unlimited"];
 
 // ─── Combined Subscription Banner ────────────────────────
 
@@ -56,7 +57,11 @@ const SubscriptionBanner: React.FC = () => {
   if (!combined || !combined.subscriptions.length) return null;
 
   const { subscriptions, combined: c } = combined;
-  const multiPlan = subscriptions.length > 1;
+  // Filter out orphaned subs whose planId was deleted (planName undefined)
+  const validSubs = subscriptions.filter((s) => !!s.planName);
+  if (!validSubs.length) return null;
+
+  const multiPlan = validSubs.length > 1;
   const primaryColor = PLAN_CONFIG[c.planNames[0]]?.color ?? "#0D9488";
 
   const postsPct      = c.usage.posts.limit > 0 ? Math.min(100, Math.round((c.usage.posts.used / c.usage.posts.limit) * 100)) : 0;
@@ -74,14 +79,12 @@ const SubscriptionBanner: React.FC = () => {
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
               <CheckCircleOutlined sx={{ color: primaryColor, fontSize: 20 }} />
               <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "#111827" }}>
-                {multiPlan
-                  ? t("pages.plans.banner.active_plans", { count: subscriptions.length })
-                  : t("pages.plans.banner.active_single", { name: c.planNames[0] })}
+                {multiPlan ? `${validSubs.length} Active Plans` : `Active — ${c.planNames.filter(Boolean)[0] ?? validSubs[0]?.planName ?? "Plan"}`}
               </Typography>
             </Box>
             {/* Per-plan chips */}
             <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-              {subscriptions.map((s) => {
+              {validSubs.map((s) => {
                 const col = PLAN_CONFIG[s.planName]?.color ?? "#6b7280";
                 return (
                   <Chip
@@ -110,12 +113,16 @@ const SubscriptionBanner: React.FC = () => {
                 <Typography sx={{ fontSize: "0.75rem", color: "#6b7280", fontWeight: 500 }}>
                   {t("pages.plans.banner.job_posts_used")} {multiPlan && <span style={{ color: "#9ca3af" }}>{t("pages.plans.banner.combined")}</span>}
                 </Typography>
-                <Typography sx={{ fontSize: "0.75rem", color: postsPct >= 90 ? "#ef4444" : primaryColor, fontWeight: 700 }}>{postsPct}%</Typography>
+                <Typography sx={{ fontSize: "0.75rem", color: primaryColor, fontWeight: 700 }}>
+                {c.usage.posts.limit === -1 ? "∞" : `${postsPct}%`}
+              </Typography>
               </Box>
-              <LinearProgress variant="determinate" value={postsPct}
+              <LinearProgress variant="determinate" value={c.usage.posts.limit === -1 ? 0 : postsPct}
                 sx={{ height: 6, borderRadius: 3, bgcolor: "#f3f4f6", "& .MuiLinearProgress-bar": { bgcolor: postsPct >= 90 ? "#ef4444" : primaryColor, borderRadius: 3 } }} />
               <Typography sx={{ fontSize: "0.7rem", color: "#9ca3af", mt: 0.5 }}>
-                {t("pages.plans.banner.posts_remaining", { used: c.usage.posts.used, limit: c.usage.posts.limit, remaining: c.usage.posts.remaining })}
+                {c.usage.posts.limit === -1
+                  ? `${c.usage.posts.used} used · Unlimited`
+                  : `${c.usage.posts.used} / ${c.usage.posts.limit} posts · ${c.usage.posts.remaining} remaining`}
               </Typography>
             </Box>
           </Grid>
@@ -125,12 +132,16 @@ const SubscriptionBanner: React.FC = () => {
                 <Typography sx={{ fontSize: "0.75rem", color: "#6b7280", fontWeight: 500 }}>
                   {t("pages.plans.banner.interviews_month")} {multiPlan && <span style={{ color: "#9ca3af" }}>{t("pages.plans.banner.combined")}</span>}
                 </Typography>
-                <Typography sx={{ fontSize: "0.75rem", color: intPct >= 90 ? "#ef4444" : primaryColor, fontWeight: 700 }}>{intPct}%</Typography>
+                <Typography sx={{ fontSize: "0.75rem", color: intPct >= 90 ? "#ef4444" : primaryColor, fontWeight: 700 }}>
+                {c.usage.monthlyInterviews.limit === -1 ? "∞" : `${intPct}%`}
+              </Typography>
               </Box>
-              <LinearProgress variant="determinate" value={intPct}
+              <LinearProgress variant="determinate" value={c.usage.monthlyInterviews.limit === -1 ? 0 : intPct}
                 sx={{ height: 6, borderRadius: 3, bgcolor: "#f3f4f6", "& .MuiLinearProgress-bar": { bgcolor: intPct >= 90 ? "#ef4444" : primaryColor, borderRadius: 3 } }} />
               <Typography sx={{ fontSize: "0.7rem", color: "#9ca3af", mt: 0.5 }}>
-                {t("pages.plans.banner.interviews_remaining", { used: c.usage.monthlyInterviews.used, limit: c.usage.monthlyInterviews.limit, remaining: c.usage.monthlyInterviews.remaining })}
+                {c.usage.monthlyInterviews.limit === -1
+                  ? `${c.usage.monthlyInterviews.used} used · Unlimited`
+                  : `${c.usage.monthlyInterviews.used} / ${c.usage.monthlyInterviews.limit} interviews · ${c.usage.monthlyInterviews.remaining} remaining`}
               </Typography>
             </Box>
           </Grid>
@@ -141,15 +152,6 @@ const SubscriptionBanner: React.FC = () => {
 };
 
 // ─── Plan card ───────────────────────────────────────────
-
-const FeatureRow: React.FC<{ icon: React.ReactNode; label: string; color: string }> = ({ icon, label, color }) => (
-  <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
-    <Box sx={{ width: 28, height: 28, borderRadius: "50%", bgcolor: `${color}14`, display: "flex", alignItems: "center", justifyContent: "center", color, flexShrink: 0 }}>
-      {icon}
-    </Box>
-    <Typography variant="body2" sx={{ color: "#374151", fontWeight: 500 }}>{label}</Typography>
-  </Box>
-);
 
 interface PlanCardProps {
   plan: PlanLimit;
@@ -166,10 +168,10 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
   const [error, setError]     = useState<string | null>(null);
   const cfg      = PLAN_CONFIG[plan.name] ?? { color: "#6b7280" };
   const isActive = !!activeSubscriptionId;
+  const isPopular = cfg.badge === "Popular";
+  const isFree    = plan.priceUsd === 0;
 
-  const priceLabel = plan.priceUsd != null
-    ? `$${plan.priceUsd.toLocaleString("en-US")}`
-    : t("pages.plans.card.contact_us");
+  const priceLabel = isFree ? "Free" : plan.priceUsd != null ? `$${plan.priceUsd.toLocaleString("en-US")}` : "Contact us";
 
   const handleSubscribe = async () => {
     setLoading(true);
@@ -186,126 +188,152 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
   return (
     <Box sx={{
       backgroundColor: "#fff",
-      borderRadius: 3,
-      border: `2px solid ${isActive ? cfg.color : cfg.badge ? cfg.color : "#f3f4f6"}`,
-      boxShadow: isActive ? `0 8px 32px ${cfg.color}30` : cfg.badge ? `0 8px 32px ${cfg.color}22` : "0 2px 12px rgba(0,0,0,0.07)",
-      p: 3.5, display: "flex", flexDirection: "column", height: "100%",
-      position: "relative", transition: "box-shadow 0.2s, transform 0.2s",
-      "&:hover": { boxShadow: `0 12px 40px ${cfg.color}28`, transform: "translateY(-2px)" },
+      borderRadius: "20px",
+      border: `2px solid ${isActive ? cfg.color : isPopular ? cfg.color : "#E5E7EB"}`,
+      boxShadow: isActive
+        ? `0 8px 32px ${cfg.color}28`
+        : isPopular
+        ? `0 12px 40px ${cfg.color}22`
+        : "0 2px 8px rgba(0,0,0,0.06)",
+      display: "flex", flexDirection: "column", height: "100%",
+      position: "relative", transition: "box-shadow 0.2s, transform 0.2s, border-color 0.2s",
+      overflow: "hidden",
+      "&:hover": { boxShadow: `0 16px 48px ${cfg.color}28`, transform: "translateY(-3px)", borderColor: cfg.color },
     }}>
-      {(isActive || cfg.badge) && (
+
+      {/* Top color bar */}
+      <Box sx={{ height: 5, bgcolor: cfg.color, flexShrink: 0 }} />
+
+      {/* Badge */}
+      {(isActive || isPopular) && (
         <Chip
-          label={isActive ? t("pages.plans.card.active_badge") : t("pages.plans.card.popular_badge")}
+          label={isActive ? "Active" : "Popular"}
           size="small"
-          icon={isActive ? <CheckCircleOutlined sx={{ fontSize: "14px !important" }} /> : undefined}
+          icon={isActive ? <CheckCircleOutlined sx={{ fontSize: "13px !important" }} /> : undefined}
           sx={{
-            position: "absolute", top: -14, left: "50%", transform: "translateX(-50%)",
-            bgcolor: cfg.color, color: "#fff", fontWeight: 700, fontSize: "0.72rem",
-            letterSpacing: 0.5, px: 1, "& .MuiChip-icon": { color: "#fff" },
+            position: "absolute", top: 17, right: 16,
+            bgcolor: cfg.color, color: "#fff", fontWeight: 700, fontSize: "0.68rem",
+            letterSpacing: 0.4, height: 22, "& .MuiChip-icon": { color: "#fff" },
           }}
         />
       )}
 
-      <Typography variant="h6" sx={{ fontWeight: 700, color: cfg.color, mb: 0.5, fontSize: "1.1rem" }}>
-        {plan.name}
-      </Typography>
-
-      {plan.description && (
-        <Typography variant="body2" sx={{ color: "#6b7280", mb: 2, lineHeight: 1.5, minHeight: 36 }}>
-          {plan.description}
+      <Box sx={{ p: 3, display: "flex", flexDirection: "column", flex: 1 }}>
+        {/* Plan name */}
+        <Typography sx={{ fontWeight: 800, fontSize: "1.05rem", color: "#111827", mb: 0.25, letterSpacing: "-0.01em" }}>
+          {plan.name}
         </Typography>
-      )}
+        {plan.description && (
+          <Typography sx={{ fontSize: "0.78rem", color: "#9CA3AF", lineHeight: 1.5, mb: 2.5, minHeight: 32 }}>
+            {plan.description}
+          </Typography>
+        )}
 
-      <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.5, mb: 2.5 }}>
-        <Typography sx={{ fontSize: "2.2rem", fontWeight: 800, color: "#111827", lineHeight: 1 }}>
-          {priceLabel}
-        </Typography>
-        <Typography sx={{ color: "#9ca3af", fontSize: "0.85rem" }}>{t("pages.plans.card.per_month")}</Typography>
-      </Box>
-
-      <Divider sx={{ mb: 2.5 }} />
-
-      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 1.5, mb: 3 }}>
-        <FeatureRow icon={<WorkOutlined sx={{ fontSize: 17 }} />} label={t("pages.plans.card.job_posts", { count: plan.postsLimit })} color={cfg.color} />
-        <FeatureRow icon={<VideoCallOutlined sx={{ fontSize: 17 }} />} label={t("pages.plans.card.interviews_month", { count: plan.monthlyInterviewLimit })} color={cfg.color} />
-      </Box>
-
-      {error && <Alert severity="error" sx={{ mb: 1.5, fontSize: "0.78rem", py: 0.5 }}>{error}</Alert>}
-
-      {isActive ? (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-          <AppButton
-            label={t("pages.plans.card.current_subscription")}
-            variant="outlined"
-            fullWidth
-            disabled
-            startIcon={<CheckCircleOutlined />}
-            sx={{
-              borderColor: cfg.color, color: cfg.color, fontWeight: 700, borderRadius: 2, py: 1.2,
-              "&.Mui-disabled": { borderColor: `${cfg.color}80`, color: `${cfg.color}80` },
-            }}
-          />
-          {autoRenew ? (
-            <AppButton
-              label={cancelling ? t("pages.plans.card.processing") : t("pages.plans.card.disable_auto_renewal")}
-              variant="outlined"
-              fullWidth
-              disabled={cancelling}
-              startIcon={cancelling ? <CircularProgress size={16} color="inherit" /> : undefined}
-              onClick={() => onCancelClick(activeSubscriptionId!)}
-              sx={{
-                borderColor: "#ef4444", color: "#ef4444", fontWeight: 600, borderRadius: 2, py: 1, fontSize: "0.82rem",
-                "&:hover": { borderColor: "#dc2626", bgcolor: "#fef2f2" },
-              }}
-            />
-          ) : (
-            <Box sx={{
-              display: "flex", alignItems: "center", gap: 1.2,
-              px: 2, py: 1.2, borderRadius: 2,
-              bgcolor: "#FFFBEB", border: "1px solid #FDE68A",
-            }}>
-              <Box sx={{
-                width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
-                bgcolor: "#FEF3C7", display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                <NotificationsOffOutlined sx={{ fontSize: 15, color: "#D97706" }} />
-              </Box>
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: "#92400E", lineHeight: 1.3 }}>
-                  {t("pages.plans.card.auto_renewal_off")}
-                </Typography>
-                <Typography sx={{ fontSize: "0.72rem", color: "#B45309", lineHeight: 1.3 }}>
-                  {t("pages.plans.card.active_until_expiry")}
-                </Typography>
-              </Box>
-              <AppButton
-                label={cancelling ? "…" : t("pages.plans.card.reenable")}
-                variant="contained"
-                disabled={cancelling}
-                onClick={() => onEnableAutoRenewClick(activeSubscriptionId!)}
-                sx={{
-                  bgcolor: "#D97706", "&:hover": { bgcolor: "#B45309" },
-                  fontWeight: 700, borderRadius: 1.5, py: 0.5, px: 1.5,
-                  fontSize: "0.72rem", minWidth: 0, flexShrink: 0,
-                }}
-              />
-            </Box>
+        {/* Price */}
+        <Box sx={{ display: "flex", alignItems: "flex-end", gap: 0.5, mb: 2.5 }}>
+          <Typography sx={{ fontSize: isFree ? "2rem" : "2.4rem", fontWeight: 800, color: cfg.color, lineHeight: 1 }}>
+            {priceLabel}
+          </Typography>
+          {!isFree && (
+            <Typography sx={{ color: "#9CA3AF", fontSize: "0.8rem", mb: 0.4 }}> / mo</Typography>
           )}
         </Box>
-      ) : (
-        <AppButton
-          label={loading ? t("pages.plans.card.redirecting") : t("pages.plans.card.get_started")}
-          variant="contained"
-          fullWidth
-          disabled={loading}
-          startIcon={loading ? <CircularProgress size={16} color="inherit" /> : isActive ? <AddCircleOutlined /> : <CreditCardOutlined />}
-          onClick={handleSubscribe}
-          sx={{
-            bgcolor: cfg.color, "&:hover": { bgcolor: cfg.color, filter: "brightness(0.9)" },
-            fontWeight: 700, borderRadius: 2, py: 1.2,
-          }}
-        />
-      )}
+
+        <Divider sx={{ mb: 2 }} />
+
+        {/* Features */}
+        <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 1.25, mb: 2.5 }}>
+          {[
+            {
+              icon: <VideoCallOutlined sx={{ fontSize: 15 }} />,
+              label: `${plan.monthlyInterviewLimit} AI interviews / month`,
+            },
+            {
+              icon: <WorkOutlined sx={{ fontSize: 15 }} />,
+              label: plan.postsLimit === -1 ? "Unlimited job posts" : `${plan.postsLimit} job post${plan.postsLimit !== 1 ? "s" : ""}`,
+            },
+          ].map(({ icon, label }) => (
+            <Box key={label} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Box sx={{
+                width: 24, height: 24, borderRadius: "6px", flexShrink: 0,
+                bgcolor: `${cfg.color}12`, border: `1px solid ${cfg.color}22`,
+                display: "flex", alignItems: "center", justifyContent: "center", color: cfg.color,
+              }}>
+                {icon}
+              </Box>
+              <Typography sx={{ fontSize: "0.82rem", color: "#374151", fontWeight: 500 }}>{label}</Typography>
+            </Box>
+          ))}
+        </Box>
+
+        {error && <Alert severity="error" sx={{ mb: 1.5, fontSize: "0.75rem", py: 0.4 }}>{error}</Alert>}
+
+        {/* CTA */}
+        {isActive ? (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            <Box sx={{
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 0.75,
+              py: 1.1, borderRadius: "10px",
+              bgcolor: `${cfg.color}10`, border: `1.5px solid ${cfg.color}30`,
+            }}>
+              <CheckCircleOutlined sx={{ fontSize: 16, color: cfg.color }} />
+              <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: cfg.color }}>Current Plan</Typography>
+            </Box>
+            {autoRenew ? (
+              <AppButton
+                label={cancelling ? "Processing…" : "Disable Auto-Renewal"}
+                variant="outlined"
+                fullWidth
+                disabled={cancelling}
+                startIcon={cancelling ? <CircularProgress size={14} color="inherit" /> : undefined}
+                onClick={() => onCancelClick(activeSubscriptionId!)}
+                sx={{
+                  borderColor: "#EF4444", color: "#EF4444", fontWeight: 600, borderRadius: "10px",
+                  py: 0.9, fontSize: "0.78rem", "&:hover": { bgcolor: "#FEF2F2", borderColor: "#DC2626" },
+                }}
+              />
+            ) : (
+              <Box sx={{
+                display: "flex", alignItems: "center", gap: 1,
+                px: 1.5, py: 1, borderRadius: "10px",
+                bgcolor: "#FFFBEB", border: "1px solid #FDE68A",
+              }}>
+                <NotificationsOffOutlined sx={{ fontSize: 16, color: "#D97706", flexShrink: 0 }} />
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography sx={{ fontSize: "0.73rem", fontWeight: 700, color: "#92400E" }}>Auto-renewal off</Typography>
+                  <Typography sx={{ fontSize: "0.68rem", color: "#B45309" }}>Won't renew after expiry</Typography>
+                </Box>
+                <AppButton
+                  label={cancelling ? "…" : "Re-enable"}
+                  variant="contained"
+                  disabled={cancelling}
+                  onClick={() => onEnableAutoRenewClick(activeSubscriptionId!)}
+                  sx={{
+                    bgcolor: "#D97706", "&:hover": { bgcolor: "#B45309" },
+                    fontWeight: 700, borderRadius: "8px", py: 0.4, px: 1.25,
+                    fontSize: "0.68rem", minWidth: 0, flexShrink: 0,
+                  }}
+                />
+              </Box>
+            )}
+          </Box>
+        ) : (
+          <AppButton
+            label={loading ? "Redirecting…" : isFree ? "Get Started Free" : "Get Started"}
+            variant="contained"
+            fullWidth
+            disabled={loading}
+            startIcon={loading ? <CircularProgress size={15} color="inherit" /> : <CreditCardOutlined sx={{ fontSize: "16px !important" }} />}
+            onClick={handleSubscribe}
+            sx={{
+              bgcolor: cfg.color, "&:hover": { bgcolor: cfg.color, filter: "brightness(0.88)" },
+              fontWeight: 700, borderRadius: "10px", py: 1.1, fontSize: "0.85rem",
+              boxShadow: `0 4px 14px ${cfg.color}30`,
+              textTransform: "none",
+            }}
+          />
+        )}
+      </Box>
     </Box>
   );
 };
@@ -462,9 +490,9 @@ const PlansPage: React.FC = () => {
           <CircularProgress />
         </Box>
       ) : (
-        <Grid container spacing={3} sx={{ mt: 0.5 }}>
+        <Grid container spacing={2.5} sx={{ mt: 0.5 }}>
           {sortedPlans.map((plan) => (
-            <Grid key={plan._id} size={{ xs: 12, sm: 6, lg: 3 }}>
+            <Grid key={plan._id} size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }}>
               <PlanCard
                 plan={plan}
                 activeSubscriptionId={activeSubByPlanName[plan.name]?.id ?? null}

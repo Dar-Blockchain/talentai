@@ -17,6 +17,7 @@ import {
 import { useToast } from "@/hooks/useToast";
 import { useDeletePost } from "@/components/features/company/posts/details/useDeletePost";
 import DeletePostModal from "@/components/features/company/posts/details/DeletePostModal";
+import PublishConfirmModal from "@/components/features/company/posts/PublishConfirmModal";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
 import JobDetailContent from "@/components/features/company/posts/details/JobDetailContent";
 import ApplicationsView from "@/components/features/company/posts/details/ApplicationsView";
@@ -53,6 +54,8 @@ const PostDetailsPage: React.FC = () => {
   const [activeEdit, setActiveEdit] = useState<"post" | "recruitment" | null>(null);
   const [activeTab, setActiveTab] = useState<"details" | "applications" | "candidates">("details");
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
+  const [publishing, setPublishing] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -86,17 +89,25 @@ const PostDetailsPage: React.FC = () => {
     onError: () => showToast({ message: "Failed to delete post", severity: "error" }),
   });
 
-  const handleSaveSuccess = () => {};
+  const handleSaveSuccess = () => {
+    setActiveEdit(null);
+    if (id) dispatch(fetchJobById(id as string));
+  };
 
-  const handlePublish = () => {
+  const handlePublish = () => setPublishConfirmOpen(true);
+
+  const handleConfirmPublish = () => {
     if (!job?._id) return;
+    setPublishing(true);
     dispatch(updatePostStatus({ postId: job._id, status: "open" }))
       .unwrap()
       .then(() => {
-        showToast({ message: "Post published successfully.", severity: "success" });
+        setPublishConfirmOpen(false);
+        showToast({ message: "Post published! Candidates can now find and apply.", severity: "success" });
         dispatch(fetchJobById(job._id));
       })
-      .catch(() => showToast({ message: "Failed to publish post.", severity: "error" }));
+      .catch(() => showToast({ message: "Failed to publish post.", severity: "error" }))
+      .finally(() => setPublishing(false));
   };
 
   const handleCopyLink = () => {
@@ -294,13 +305,13 @@ const PostDetailsPage: React.FC = () => {
                           >
                             {/* Edit */}
                             <Tooltip
-                              title={hasPassedCandidates ? "Cannot edit — candidates have already passed this interview" : ""}
+                              title={!isDraft ? "Cannot edit — post is already published" : hasPassedCandidates ? "Cannot edit — candidates have already passed this interview" : ""}
                               arrow placement="left"
-                              disableHoverListener={!hasPassedCandidates}
+                              disableHoverListener={isDraft && !hasPassedCandidates}
                             >
                               <span>
                                 <MenuItem
-                                  disabled={hasPassedCandidates}
+                                  disabled={!isDraft || hasPassedCandidates}
                                   onClick={() => { setMenuAnchor(null); setActiveEdit("post"); }}
                                   sx={{ mx: 0.5, borderRadius: "8px", gap: 1.25, py: 1, px: 1.25, "&:hover": { bgcolor: "#F0FDFA" }, "&.Mui-disabled": { opacity: 0.45 } }}
                                 >
@@ -309,7 +320,7 @@ const PostDetailsPage: React.FC = () => {
                                   </Box>
                                   <Box>
                                     <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>Edit Post</Typography>
-                                    <Typography sx={{ fontSize: "11px", color: "#9CA3AF", lineHeight: 1.2 }}>Modify job details</Typography>
+                                    <Typography sx={{ fontSize: "11px", color: "#9CA3AF", lineHeight: 1.2 }}>{!isDraft ? "Only editable while draft" : "Modify job details"}</Typography>
                                   </Box>
                                 </MenuItem>
                               </span>
@@ -384,6 +395,13 @@ const PostDetailsPage: React.FC = () => {
             onClose={deletePost.handleClose}
             onDelete={deletePost.handleDelete}
             isDeleting={deletePost.isDeleting}
+          />
+
+          <PublishConfirmModal
+            open={publishConfirmOpen}
+            publishing={publishing}
+            onClose={() => setPublishConfirmOpen(false)}
+            onConfirm={handleConfirmPublish}
           />
         </Box>
       </DashboardLayout>

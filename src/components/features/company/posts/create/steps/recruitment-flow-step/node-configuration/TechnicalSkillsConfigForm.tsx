@@ -331,7 +331,7 @@ const TechnicalSkillsConfigForm: React.FC<Props> = ({ initialConfig, onSave, onC
             endIcon={<ArrowForwardIcon sx={{ fontSize: 15 }} />}
             sx={{
               fontFamily: "Poppins", fontWeight: 700, fontSize: "13px", textTransform: "none",
-              bgcolor: TEAL, borderRadius: "10px", px: 3, boxShadow: "none",
+              bgcolor: TEAL, color: "#fff", borderRadius: "10px", px: 3, boxShadow: "none",
               "&:hover": { bgcolor: "#0F766E", boxShadow: "none" },
               "&.Mui-disabled": { bgcolor: "#E5E7EB", color: "#9CA3AF" },
             }}
@@ -344,7 +344,7 @@ const TechnicalSkillsConfigForm: React.FC<Props> = ({ initialConfig, onSave, onC
             onClick={handleSave}
             sx={{
               fontFamily: "Poppins", fontWeight: 700, fontSize: "13px", textTransform: "none",
-              bgcolor: TEAL, borderRadius: "10px", px: 3, boxShadow: "none",
+              bgcolor: TEAL, color: "#fff", borderRadius: "10px", px: 3, boxShadow: "none",
               "&:hover": { bgcolor: "#0F766E", boxShadow: "none" },
             }}
           >
