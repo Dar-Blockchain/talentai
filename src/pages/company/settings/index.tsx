@@ -1,6 +1,7 @@
 'use client';
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import Link from "next/link";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
@@ -21,6 +22,7 @@ import CreditCardOutlined from "@mui/icons-material/CreditCardOutlined";
 import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
 
 const SettingsPage: React.FC = () => {
+  const { t } = useTranslation("dashboard");
   useCompanyAccess("canViewCompanyProfile");
   const empPerms = useSelector(selectEmployeePermissions);
   const {
@@ -35,17 +37,17 @@ const SettingsPage: React.FC = () => {
   return (
     <DashboardLayout>
       <PageHeader
-        title="Settings"
-        subtitle="Manage your company profile and API keys"
+        title={t("pages.settings.title")}
+        subtitle={t("pages.settings.subtitle")}
         breadcrumbs={[
-          { label: "Dashboard", href: "/company/dashboard" },
-          { label: "Settings" },
+          { label: t("pages.common.dashboard"), href: "/company/dashboard" },
+          { label: t("pages.settings.title") },
         ]}
         icon={SettingsOutlined}
         actions={[
           <Link key="plans" href="/company/plans">
             <AppButton
-              label="View Plans"
+              label={t("pages.settings.view_plans")}
               variant="outlined"
               startIcon={<CreditCardOutlined />}
               size="medium"
@@ -78,9 +80,9 @@ const SettingsPage: React.FC = () => {
               "& .MuiTabs-indicator": { bgcolor: TEAL, height: 2 },
             }}
           >
-            <Tab label="Company Info"       icon={<BusinessOutlined    sx={{ fontSize: 15 }} />} iconPosition="start" />
-            <Tab label="Contact & Presence" icon={<LocationOnOutlined  sx={{ fontSize: 15 }} />} iconPosition="start" data-tour="settings-tab-contact" />
-            <Tab label="API Keys"           icon={<KeyOutlined         sx={{ fontSize: 15 }} />} iconPosition="start" data-tour="settings-tab-apikeys" />
+            <Tab label={t("pages.settings.tabs.company_info")} icon={<BusinessOutlined    sx={{ fontSize: 15 }} />} iconPosition="start" />
+            <Tab label={t("pages.settings.tabs.contact")}      icon={<LocationOnOutlined  sx={{ fontSize: 15 }} />} iconPosition="start" data-tour="settings-tab-contact" />
+            <Tab label={t("pages.settings.tabs.api_keys")}     icon={<KeyOutlined         sx={{ fontSize: 15 }} />} iconPosition="start" data-tour="settings-tab-apikeys" />
           </Tabs>
         </Box>
 

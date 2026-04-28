@@ -3,24 +3,9 @@ import { Box } from "@mui/material";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
+import { useTranslation } from "react-i18next";
 
 type NavItem = { label: string; id?: string; href?: string };
-
-const getNavItems = (type: string): NavItem[] => {
-  if (type === "company") return [
-    { label: "Features",     id: "features"   },
-    { label: "How It Works", id: "howitworks" },
-  ];
-  if (type === "candidate") return [
-    { label: "Find Jobs",       href: "/posts/"          },
-    { label: "How It Works",    id:   "howitworks"       },
-    { label: "Are You Hiring?", href: "/home/company/"   },
-  ];
-  return [
-    { label: "Features", id: "features" },
-    { label: "Contact",  id: "contact"  },
-  ];
-};
 
 const ACCENT = "#0D9488";
 
@@ -30,9 +15,28 @@ interface HeaderNavMenuProps {
 }
 
 const HeaderNavMenu: React.FC<HeaderNavMenuProps> = ({ direction = "row", inverted = false }) => {
+  const { t } = useTranslation("home");
   const router   = useRouter();
   const userType = useSelector((state: RootState) => state.user.userType) ?? "candidate";
   const [hovered, setHovered] = useState<string | null>(null);
+
+  const getNavItems = (): NavItem[] => {
+    if (userType === "company") return [
+      { label: t("nav.features"),    id: "features"   },
+      { label: t("nav.how_it_works"),id: "howitworks" },
+    ];
+    if (userType === "candidate") return [
+      { label: t("nav.find_jobs"),      href: "/posts/"        },
+      { label: t("nav.how_it_works"),   id:   "howitworks"     },
+      { label: t("nav.are_you_hiring"), href: "/home/company/" },
+    ];
+    return [
+      { label: t("nav.features"), id: "features" },
+      { label: t("nav.contact"),  id: "contact"  },
+    ];
+  };
+
+  const items = getNavItems();
 
   const handleNavClick = (item: NavItem) => {
     if (item.id) {
@@ -49,8 +53,6 @@ const HeaderNavMenu: React.FC<HeaderNavMenuProps> = ({ direction = "row", invert
     if (item.id && typeof window !== "undefined") return window.location.hash === `#${item.id}`;
     return false;
   };
-
-  const items = getNavItems(userType);
 
   if (direction === "column") {
     return (
@@ -91,10 +93,7 @@ const HeaderNavMenu: React.FC<HeaderNavMenuProps> = ({ direction = "row", invert
             onMouseLeave={() => setHovered(null)}
             sx={{
               position: "relative",
-              px: 1.75,
-              py: 0.75,
-              borderRadius: "10px",
-              cursor: "pointer",
+              px: 1.75, py: 0.75, borderRadius: "10px", cursor: "pointer",
               fontSize: "13.5px",
               fontWeight: active ? 650 : 500,
               color: active ? textActive : textColor,
@@ -102,17 +101,12 @@ const HeaderNavMenu: React.FC<HeaderNavMenuProps> = ({ direction = "row", invert
               bgcolor: (active || isHover) ? hoverBg : "transparent",
               transition: "color 0.18s, background 0.18s",
               "&:hover": { color: textActive },
-              // bottom accent line
               "&::after": {
                 content: '""',
-                position: "absolute",
-                bottom: 4,
-                left: "50%",
+                position: "absolute", bottom: 4, left: "50%",
                 transform: `translateX(-50%) scaleX(${active ? 1 : 0})`,
                 transformOrigin: "center",
-                width: "60%",
-                height: "2px",
-                borderRadius: "2px",
+                width: "60%", height: "2px", borderRadius: "2px",
                 bgcolor: ACCENT,
                 transition: "transform 0.22s cubic-bezier(0.34,1.56,0.64,1)",
               },

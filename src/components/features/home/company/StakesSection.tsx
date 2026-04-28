@@ -11,25 +11,12 @@ import {
   useTransform,
   animate,
 } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
-const WARN    = "rgba(255,255,255,0.55)";
-const WARN_BG = "rgba(255,255,255,0.04)";
-const ACCENT  = "#0D9488";
+const ACCENT   = "#0D9488";
 const CALENDLY = "https://calendly.com/talent__ai/30min";
 const VP   = { once: true, margin: "-60px" };
 const ease = [0.22, 1, 0.36, 1] as const;
-
-const STATS = [
-  { target: 500,  prefix: "$", suffix: "+", unit: "per role / day",    desc: "Bleeding budget while the seat stays empty" },
-  { target: 25,   prefix: "$", suffix: "K", unit: "per bad hire",       desc: "One wrong call wipes out weeks of profit" },
-  { target: 42,   prefix: "",  suffix: "",  unit: "days to hire (avg)", desc: "Your top pick accepted elsewhere on day 14" },
-  { target: 24,   prefix: "",  suffix: "%", unit: "YoY automation growth", desc: "Competitors are already moving. Fast." },
-];
-
-const TRUST = [
-  { icon: <AccessTimeOutlined sx={{ fontSize: 13 }} />, label: "Live in 30 min" },
-  { icon: <CancelOutlined     sx={{ fontSize: 13 }} />, label: "Cancel anytime" },
-];
 
 /* ── Animated counter ─────────────────────────────────────── */
 const Counter: React.FC<{ target: number; prefix: string; suffix: string }> = ({ target, prefix, suffix }) => {
@@ -51,13 +38,20 @@ const Counter: React.FC<{ target: number; prefix: string; suffix: string }> = ({
 
 /* ── Main component ───────────────────────────────────────── */
 const StakesSection: React.FC = () => {
+  const { t } = useTranslation("home");
   const [captchaOpen, setCaptchaOpen] = useState(false);
   const handleVerified = () => window.open(CALENDLY, "_blank");
+
+  const STATS = [
+    { target: 500,  prefix: "$", suffix: "+", unit: t("stakes.stat_1_unit"), desc: t("stakes.stat_1_desc") },
+    { target: 25,   prefix: "$", suffix: "K", unit: t("stakes.stat_2_unit"), desc: t("stakes.stat_2_desc") },
+    { target: 42,   prefix: "",  suffix: "",  unit: t("stakes.stat_3_unit"), desc: t("stakes.stat_3_desc") },
+    { target: 24,   prefix: "",  suffix: "%", unit: t("stakes.stat_4_unit"), desc: t("stakes.stat_4_desc") },
+  ];
 
   return (
     <Box sx={{ maxWidth: 1200, mx: "auto", px: { xs: 2, md: 4 }, position: "relative", overflow: "hidden" }}>
 
-      {/* Background glow */}
       <Box sx={{
         position: "absolute", top: "40%", left: "50%",
         transform: "translate(-50%, -50%)",
@@ -66,7 +60,7 @@ const StakesSection: React.FC = () => {
         pointerEvents: "none", zIndex: 0,
       }} />
 
-      {/* ── Centered header ── */}
+      {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -81,7 +75,7 @@ const StakesSection: React.FC = () => {
             borderRadius: "24px", px: 2.5, py: 0.9, mb: 3,
           }}>
             <Typography sx={{ fontFamily: "Poppins", fontSize: "13px", fontWeight: 700, color: "rgba(255,255,255,0.55)", letterSpacing: "0.9px", textTransform: "uppercase" }}>
-              The Cost of Inaction
+              {t("stakes.overline")}
             </Typography>
           </Box>
 
@@ -90,9 +84,9 @@ const StakesSection: React.FC = () => {
             fontSize: { xs: "26px", sm: "34px", md: "48px" },
             lineHeight: 1.1, color: "#fff", mb: 2,
           }}>
-            Every Day You Wait,{" "}
+            {t("stakes.headline_1")}{" "}
             <Box component="span" sx={{ color: ACCENT }}>
-              the Meter Keeps Running.
+              {t("stakes.headline_accent")}
             </Box>
           </Typography>
 
@@ -100,12 +94,12 @@ const StakesSection: React.FC = () => {
             fontFamily: "Poppins", fontSize: { xs: "15px", md: "16px" },
             color: "rgba(255,255,255,0.40)", maxWidth: 520, mx: "auto",
           }}>
-            Here's what slow hiring is actually costing your business — in real numbers.
+            {t("stakes.body")}
           </Typography>
         </Box>
       </motion.div>
 
-      {/* ── 4-stat horizontal strip ── */}
+      {/* 4-stat strip */}
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -120,7 +114,6 @@ const StakesSection: React.FC = () => {
           mb: { xs: 4, md: 5 },
           position: "relative",
         }}>
-          {/* Top accent line */}
           <Box sx={{
             height: "2px",
             background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.20) 30%, rgba(255,255,255,0.20) 70%, transparent 100%)",
@@ -148,8 +141,6 @@ const StakesSection: React.FC = () => {
                   "&:hover": { bgcolor: "rgba(255,255,255,0.03)" },
                   "&:hover .stat-bar": { width: "100%" },
                 }}>
-
-                  {/* Corner glow */}
                   <Box sx={{
                     position: "absolute", bottom: -20, right: -20,
                     width: 90, height: 90, borderRadius: "50%",
@@ -157,7 +148,6 @@ const StakesSection: React.FC = () => {
                     pointerEvents: "none",
                   }} />
 
-                  {/* Index number */}
                   <Typography sx={{
                     fontFamily: "Poppins", fontSize: "11px", fontWeight: 700,
                     color: "rgba(255,255,255,0.18)", letterSpacing: "1px", mb: 1.5,
@@ -165,7 +155,6 @@ const StakesSection: React.FC = () => {
                     0{i + 1}
                   </Typography>
 
-                  {/* Animated stat */}
                   <Typography sx={{
                     fontFamily: "Poppins", fontWeight: 900,
                     fontSize: { xs: "34px", md: "44px" },
@@ -175,7 +164,6 @@ const StakesSection: React.FC = () => {
                     <Counter target={s.target} prefix={s.prefix} suffix={s.suffix} />
                   </Typography>
 
-                  {/* Unit */}
                   <Typography sx={{
                     fontFamily: "Poppins", fontSize: "11px", fontWeight: 600,
                     color: "rgba(255,255,255,0.30)", letterSpacing: "0.6px",
@@ -184,7 +172,6 @@ const StakesSection: React.FC = () => {
                     {s.unit}
                   </Typography>
 
-                  {/* Animated drain bar */}
                   <Box sx={{ width: "100%", height: "2px", bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1, mb: 1.75, overflow: "hidden" }}>
                     <motion.div
                       initial={{ width: 0 }}
@@ -212,7 +199,6 @@ const StakesSection: React.FC = () => {
             ))}
           </Box>
 
-          {/* Bottom bar */}
           <Box sx={{
             px: 3, py: 1.25,
             bgcolor: "rgba(255,255,255,0.02)",
@@ -220,7 +206,7 @@ const StakesSection: React.FC = () => {
             display: "flex", justifyContent: "space-between", alignItems: "center",
           }}>
             <Typography sx={{ fontFamily: "Poppins", fontSize: "10px", color: "rgba(255,255,255,0.18)", letterSpacing: "0.5px" }}>
-              Industry averages · 2024
+              {t("stakes.source")}
             </Typography>
             <Box sx={{ display: "flex", gap: 0.5 }}>
               {[0.4, 0.22, 0.10].map((o, i) => (
@@ -231,7 +217,7 @@ const StakesSection: React.FC = () => {
         </Box>
       </motion.div>
 
-      {/* ── Bottom CTA banner ── */}
+      {/* Bottom CTA banner */}
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -258,11 +244,11 @@ const StakesSection: React.FC = () => {
               fontSize: { xs: "18px", md: "22px" },
               color: "#fff", mb: 0.5, lineHeight: 1.3,
             }}>
-              The companies automating now{" "}
-              <Box component="span" sx={{ color: ACCENT }}>will own the talent market.</Box>
+              {t("stakes.cta_headline_1")}{" "}
+              <Box component="span" sx={{ color: ACCENT }}>{t("stakes.cta_headline_accent")}</Box>
             </Typography>
             <Typography sx={{ fontFamily: "Poppins", fontSize: "13px", color: "rgba(255,255,255,0.38)" }}>
-              The ones that don't will keep losing their best candidates to faster competitors.
+              {t("stakes.cta_body")}
             </Typography>
           </Box>
 
@@ -285,15 +271,18 @@ const StakesSection: React.FC = () => {
                   "&:hover": { bgcolor: ACCENT, boxShadow: `0 6px 24px rgba(13,148,136,0.50)` },
                 }}
               >
-                Start Hiring Smarter Today
+                {t("stakes.cta_button")}
               </Button>
             </motion.div>
             <Box sx={{ display: "flex", gap: 2.5 }}>
-              {TRUST.map((t) => (
-                <Box key={t.label} sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                  <Box sx={{ color: "rgba(255,255,255,0.25)" }}>{t.icon}</Box>
+              {[
+                { icon: <AccessTimeOutlined sx={{ fontSize: 13 }} />, label: t("stakes.trust_live") },
+                { icon: <CancelOutlined     sx={{ fontSize: 13 }} />, label: t("stakes.trust_cancel") },
+              ].map((tr) => (
+                <Box key={tr.label} sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                  <Box sx={{ color: "rgba(255,255,255,0.25)" }}>{tr.icon}</Box>
                   <Typography sx={{ fontFamily: "Poppins", fontSize: "11px", color: "rgba(255,255,255,0.28)" }}>
-                    {t.label}
+                    {tr.label}
                   </Typography>
                 </Box>
               ))}

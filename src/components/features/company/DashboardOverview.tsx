@@ -2,6 +2,7 @@ import React, { memo, useMemo, useEffect } from "react";
 import { useRouter } from "next/router";
 import { Box, Typography, Avatar, Chip, Skeleton } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import { AppDispatch } from "@/store/store";
 import { fetchCompanyInterviews, selectCompanyInterviews, selectCompanyInterviewsLoading } from "@/store/slices/interviewSlice";
 import { fetchDashboardStats, selectDashboardStats, selectDashboardStatsLoading, fetchRichStats, selectRichStats, selectRichStatsLoading } from "@/store/slices/companySlice";
@@ -30,13 +31,6 @@ const TEAL        = "#0D9488";
 const TEAL_BG     = "#F0FDFA";
 const TEAL_BORDER = "#99F6E4";
 
-const STAT_CONFIG = [
-  // { key: "totalEmployees",   label: "Team Members",       icon: PeopleOutlined,           color: "#8B5CF6", bg: "#F5F3FF" },
-  { key: "avgInterviewScore", label: "Avg. Interview Score", icon: PsychologyOutlined, color: "#3B82F6", bg: "#EFF6FF", suffix: "%", emptyText: "No interviews yet", emptyHref: "/company/posts/create" },
-  { key: "activeJobPosts",    label: "Active Job Posts",    icon: WorkOutlined,        color: TEAL,      bg: TEAL_BG,   emptyText: "No posts yet",       emptyHref: "/company/posts/create" },
-  // { key: "activeCampaigns",  label: "Active Campaigns",   icon: TrendingUpOutlined,        color: "#F59E0B", bg: "#FFFBEB" },
-];
-
 const VERDICT_STYLE: Record<string, { bg: string; color: string; icon: React.ElementType }> = {
   Excellent:    { bg: "#F0FDFA", color: "#0D9488", icon: CheckCircleOutlined },
   Good:         { bg: "#EFF6FF", color: "#2563EB", icon: CheckCircleOutlined },
@@ -49,17 +43,6 @@ const AVATAR_COLORS = [TEAL, "#3B82F6", "#8B5CF6", "#F59E0B", "#EC4899"];
 const SKELETON_ROWS = [0, 1, 2, 3, 4];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const fmtTime = (iso?: string) => {
-  if (!iso) return "";
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  return days === 1 ? "Yesterday" : `${days}d ago`;
-};
-
 const getVerdict = (score: number) =>
   score >= 80 ? "Excellent" : score >= 60 ? "Good" : "Needs Work";
 
@@ -88,12 +71,6 @@ const CardHeader: React.FC<{ title: string; subtitle?: string; action?: React.Re
   </Box>
 );
 
-const ViewAll: React.FC<{ onClick: () => void }> = ({ onClick }) => (
-  <Typography onClick={onClick} sx={{ fontSize: "0.72rem", fontWeight: 600, color: TEAL, cursor: "pointer", display: "flex", alignItems: "center", gap: 0.3, "&:hover": { textDecoration: "underline" } }}>
-    View all <ChevronRightOutlined sx={{ fontSize: 14 }} />
-  </Typography>
-);
-
 const ScoreTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
@@ -110,15 +87,57 @@ const ScoreTooltip = ({ active, payload, label }: any) => {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 const DashboardOverview: React.FC = () => {
+  const { t } = useTranslation("dashboard");
   const dispatch = useDispatch<AppDispatch>();
   const router   = useRouter();
 
-  const rawInterviews   = useSelector(selectCompanyInterviews);
+  // ── Translation-dependent constants ──
+  const STAT_CONFIG = [
+    { key: "avgInterviewScore", label: t("overview.stat.avg_interview_score"), icon: PsychologyOutlined, color: "#3B82F6", bg: "#EFF6FF", suffix: "%", emptyText: t("overview.stat.no_interviews_yet"), emptyHref: "/company/posts/create" },
+    { key: "activeJobPosts",    label: t("overview.stat.active_job_posts"),    icon: WorkOutlined,        color: TEAL,      bg: TEAL_BG,   emptyText: t("overview.stat.no_posts_yet"),       emptyHref: "/company/posts/create" },
+  ];
+
+  const CAMPAIGN_STATUSES = [
+    { key: "active",  label: t("overview.campaign_activity.status.active"),  color: "#10B981" },
+    { key: "draft",   label: t("overview.campaign_activity.status.draft"),   color: "#D97706" },
+    { key: "paused",  label: t("overview.campaign_activity.status.paused"),  color: "#3B82F6" },
+    { key: "closed",  label: t("overview.campaign_activity.status.closed"),  color: "#6B7280" },
+    { key: "expired", label: t("overview.campaign_activity.status.expired"), color: "#EF4444" },
+  ];
+
+  const verdictLabel = (v: string) => {
+    const map: Record<string, string> = {
+      Excellent:    t("overview.verdict.excellent"),
+      Good:         t("overview.verdict.good"),
+      "Needs Work": t("overview.verdict.needs_work"),
+      Pending:      t("overview.verdict.pending"),
+    };
+    return map[v] ?? v;
+  };
+
+  const fmtTime = (iso?: string) => {
+    if (!iso) return "";
+    const diff = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return t("overview.time.minutes_ago", { count: mins });
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return t("overview.time.hours_ago", { count: hrs });
+    const days = Math.floor(hrs / 24);
+    return days === 1 ? t("overview.time.yesterday") : t("overview.time.days_ago", { count: days });
+  };
+
+  const ViewAll: React.FC<{ onClick: () => void }> = ({ onClick }) => (
+    <Typography onClick={onClick} sx={{ fontSize: "0.72rem", fontWeight: 600, color: TEAL, cursor: "pointer", display: "flex", alignItems: "center", gap: 0.3, "&:hover": { textDecoration: "underline" } }}>
+      {t("overview.view_all")} <ChevronRightOutlined sx={{ fontSize: 14 }} />
+    </Typography>
+  );
+
+  const rawInterviews     = useSelector(selectCompanyInterviews);
   const interviewsLoading = useSelector(selectCompanyInterviewsLoading);
-  const dashboardStats  = useSelector(selectDashboardStats);
-  const statsLoading    = useSelector(selectDashboardStatsLoading);
-  const richStats       = useSelector(selectRichStats);
-  const richLoading     = useSelector(selectRichStatsLoading);
+  const dashboardStats    = useSelector(selectDashboardStats);
+  const statsLoading      = useSelector(selectDashboardStatsLoading);
+  const richStats         = useSelector(selectRichStats);
+  const richLoading       = useSelector(selectRichStatsLoading);
   const appMetrics        = useSelector(selectApplicationMetrics);
   const appMetricsLoading = useSelector(selectApplicationMetricsLoading);
   const allApplications   = useSelector(selectAllApplications);
@@ -147,9 +166,8 @@ const DashboardOverview: React.FC = () => {
         (iv.candidate?.firstName ? `${iv.candidate.firstName} ${iv.candidate.lastName ?? ""}`.trim() : "Candidate");
       return { id: iv._id as string, name, job: iv.post?.jobDetails?.title || "—", score, verdict: getVerdict(score), avatar: getInitials(name), time: fmtTime(iv.createdAt) };
     }),
-    [rawInterviews]);
+    [rawInterviews, t]);
 
-  // Applications over time — last 30 days (uses appliedAt, falls back to createdAt)
   const appTrendData = useMemo(() => {
     const map = new Map<string, number>();
     allApplications.forEach((app: any) => {
@@ -167,7 +185,6 @@ const DashboardOverview: React.FC = () => {
     return days;
   }, [allApplications]);
 
-  // Applications per job post — top 6
   const appPerJobData = useMemo(() => {
     const map = new Map<string, number>();
     allApplications.forEach((app: any) => {
@@ -181,7 +198,6 @@ const DashboardOverview: React.FC = () => {
       .map(([title, count]) => ({ title: title.length > 20 ? title.slice(0, 20) + "…" : title, count }));
   }, [allApplications]);
 
-  // Build 30-day trend — fill missing days with 0
   const trendData = useMemo(() => {
     if (!richStats?.trend?.length) return [];
     const map = new Map(richStats.trend.map((d) => [d._id, d]));
@@ -192,17 +208,15 @@ const DashboardOverview: React.FC = () => {
       const entry = map.get(key);
       days.push({ day: key, label: fmtDay(key), count: entry?.count || 0, avgScore: Math.round(entry?.avgScore || 0) });
     }
-    // Show only every 5th label to avoid clutter
     return days.map((d, i) => ({ ...d, label: i % 5 === 0 ? d.label : "" }));
   }, [richStats]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
 
-      {/* ══ Stat Cards — all 6 in one compact row ══════════════════════════ */}
+      {/* ══ Stat Cards ══════════════════════════════════════════════════════════ */}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(3, 1fr)", lg: "repeat(6, 1fr)" }, gap: 1.5 }}>
 
-        {/* Avg Interview Score + Active Job Posts */}
         {STAT_CONFIG.map((stat, idx) => {
           const raw = dashboardStats ? (dashboardStats as any)[stat.key] : null;
           const isEmpty = !statsLoading && raw == null;
@@ -238,7 +252,7 @@ const DashboardOverview: React.FC = () => {
                 {appMetricsLoading ? <Skeleton variant="text" width={40} height={22} /> : (
                   <Typography sx={{ fontSize: "1.4rem", fontWeight: 800, color: "#111827", lineHeight: 1 }}>{appMetrics?.totalApplicants ?? 0}</Typography>
                 )}
-                <Typography sx={{ fontSize: "0.67rem", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.04em", mt: 0.3 }}>Applicants</Typography>
+                <Typography sx={{ fontSize: "0.67rem", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.04em", mt: 0.3 }}>{t("overview.stat.applicants")}</Typography>
               </Box>
             </Box>
           </Card>
@@ -255,10 +269,10 @@ const DashboardOverview: React.FC = () => {
                 {campaignMetricsLoading ? <Skeleton variant="text" width={40} height={22} /> : (
                   <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.5 }}>
                     <Typography sx={{ fontSize: "1.4rem", fontWeight: 800, color: "#111827", lineHeight: 1 }}>{campaignMetrics?.total ?? 0}</Typography>
-                    {(campaignMetrics?.active ?? 0) > 0 && <Typography sx={{ fontSize: "0.62rem", color: "#10B981", fontWeight: 700 }}>{campaignMetrics!.active} active</Typography>}
+                    {(campaignMetrics?.active ?? 0) > 0 && <Typography sx={{ fontSize: "0.62rem", color: "#10B981", fontWeight: 700 }}>{campaignMetrics!.active} {t("overview.campaign_activity.active")}</Typography>}
                   </Box>
                 )}
-                <Typography sx={{ fontSize: "0.67rem", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.04em", mt: 0.3 }}>Campaigns</Typography>
+                <Typography sx={{ fontSize: "0.67rem", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.04em", mt: 0.3 }}>{t("overview.stat.campaigns")}</Typography>
               </Box>
             </Box>
           </Card>
@@ -275,7 +289,7 @@ const DashboardOverview: React.FC = () => {
                 {deptStatsLoading ? <Skeleton variant="text" width={40} height={22} /> : (
                   <Typography sx={{ fontSize: "1.4rem", fontWeight: 800, color: "#111827", lineHeight: 1 }}>{deptStats?.total ?? 0}</Typography>
                 )}
-                <Typography sx={{ fontSize: "0.67rem", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.04em", mt: 0.3 }}>Departments</Typography>
+                <Typography sx={{ fontSize: "0.67rem", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.04em", mt: 0.3 }}>{t("overview.stat.departments")}</Typography>
               </Box>
             </Box>
           </Card>
@@ -292,7 +306,7 @@ const DashboardOverview: React.FC = () => {
                 {memberStatsLoading ? <Skeleton variant="text" width={40} height={22} /> : (
                   <Typography sx={{ fontSize: "1.4rem", fontWeight: 800, color: "#111827", lineHeight: 1 }}>{memberStats?.total ?? 0}</Typography>
                 )}
-                <Typography sx={{ fontSize: "0.67rem", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.04em", mt: 0.3 }}>Team Members</Typography>
+                <Typography sx={{ fontSize: "0.67rem", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.04em", mt: 0.3 }}>{t("overview.stat.team_members")}</Typography>
               </Box>
             </Box>
           </Card>
@@ -300,19 +314,18 @@ const DashboardOverview: React.FC = () => {
 
       </Box>
 
-      {/* ══ Row 3: Interview Trend + Score Distribution ══════════════════════ */}
+      {/* ══ Interview Trend + Score Distribution ════════════════════════════════ */}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "3fr 2fr" }, gap: 2.5 }}>
 
-        {/* Interview Trend — 30 days */}
         <Card data-tour="chart-trend">
-          <CardHeader title="Interview Activity" subtitle="Interviews conducted over the last 30 days" />
+          <CardHeader title={t("overview.interview_activity.title")} subtitle={t("overview.interview_activity.subtitle")} />
           <Box sx={{ px: 3, pt: 2.5, pb: 2 }}>
             {richLoading ? (
               <Skeleton variant="rectangular" height={220} sx={{ borderRadius: "8px" }} />
             ) : trendData.length === 0 ? (
               <Box sx={{ height: 220, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 0.5 }}>
-                <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#6B7280" }}>No interviews conducted yet</Typography>
-                <Typography sx={{ fontSize: "0.75rem", color: "#9CA3AF", textAlign: "center", maxWidth: 260 }}>Interviews run automatically when candidates complete a campaign</Typography>
+                <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#6B7280" }}>{t("overview.interview_activity.empty")}</Typography>
+                <Typography sx={{ fontSize: "0.75rem", color: "#9CA3AF", textAlign: "center", maxWidth: 260 }}>{t("overview.interview_activity.empty_sub")}</Typography>
               </Box>
             ) : (
               <ResponsiveContainer width="100%" height={220}>
@@ -327,37 +340,35 @@ const DashboardOverview: React.FC = () => {
                   <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 10, fill: "#9CA3AF" }} axisLine={false} tickLine={false} allowDecimals={false} />
                   <Tooltip content={<ScoreTooltip />} />
-                  <Area type="monotone" dataKey="count" name="Interviews" stroke={TEAL} strokeWidth={2} fill="url(#tealGrad)" dot={false} activeDot={{ r: 4, fill: TEAL }} />
+                  <Area type="monotone" dataKey="count" name={t("overview.interview_activity.title")} stroke={TEAL} strokeWidth={2} fill="url(#tealGrad)" dot={false} activeDot={{ r: 4, fill: TEAL }} />
                 </AreaChart>
               </ResponsiveContainer>
             )}
-            {/* Pass rate pill — only show when there's real data */}
             {!richLoading && richStats && richStats.totalInterviews > 0 && (
               <Box sx={{ display: "flex", alignItems: "center", gap: 2, mt: 1.5, pt: 1.5, borderTop: "1px solid #F3F4F6" }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
                   <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: TEAL }} />
-                  <Typography sx={{ fontSize: "0.72rem", color: "#6B7280" }}>Total: <strong style={{ color: "#111827" }}>{richStats.totalInterviews}</strong></Typography>
+                  <Typography sx={{ fontSize: "0.72rem", color: "#6B7280" }}>{t("overview.interview_activity.total")}: <strong style={{ color: "#111827" }}>{richStats.totalInterviews}</strong></Typography>
                 </Box>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
                   <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#10B981" }} />
-                  <Typography sx={{ fontSize: "0.72rem", color: "#6B7280" }}>Pass rate: <strong style={{ color: "#111827" }}>{richStats.passRate}%</strong></Typography>
+                  <Typography sx={{ fontSize: "0.72rem", color: "#6B7280" }}>{t("overview.interview_activity.pass_rate")}: <strong style={{ color: "#111827" }}>{richStats.passRate}%</strong></Typography>
                 </Box>
               </Box>
             )}
           </Box>
         </Card>
 
-        {/* Score Distribution */}
         <Card>
-          <CardHeader title="Score Distribution" subtitle="Candidates grouped by interview score" />
+          <CardHeader title={t("overview.score_distribution.title")} subtitle={t("overview.score_distribution.subtitle")} />
           <Box sx={{ px: 3, pt: 2.5, pb: 2 }}>
             {richLoading ? (
               <Skeleton variant="rectangular" height={220} sx={{ borderRadius: "8px" }} />
             ) : !richStats?.scoreDistribution?.some((d: any) => d.count > 0) ? (
               <Box sx={{ height: 220, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1 }}>
-                <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#6B7280" }}>No scores recorded yet</Typography>
+                <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#6B7280" }}>{t("overview.score_distribution.empty")}</Typography>
                 <Typography sx={{ fontSize: "0.75rem", color: "#9CA3AF", textAlign: "center", maxWidth: 200 }}>
-                  Scores appear after candidates complete interviews
+                  {t("overview.score_distribution.empty_sub")}
                 </Typography>
               </Box>
             ) : (
@@ -367,7 +378,7 @@ const DashboardOverview: React.FC = () => {
                   <XAxis dataKey="range" tick={{ fontSize: 10, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 10, fill: "#9CA3AF" }} axisLine={false} tickLine={false} allowDecimals={false} />
                   <Tooltip content={<ScoreTooltip />} />
-                  <Bar dataKey="count" name="Candidates" radius={[6, 6, 0, 0]} maxBarSize={40}>
+                  <Bar dataKey="count" name={t("overview.score_distribution.title")} radius={[6, 6, 0, 0]} maxBarSize={40}>
                     {richStats.scoreDistribution.map((_: any, i: number) => (
                       <Cell key={i} fill={BAR_COLORS[i]} fillOpacity={0.85} />
                     ))}
@@ -375,7 +386,6 @@ const DashboardOverview: React.FC = () => {
                 </BarChart>
               </ResponsiveContainer>
             )}
-            {/* Legend — only show when there's real data */}
             {!richLoading && richStats?.scoreDistribution?.some((d: any) => d.count > 0) && (
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1.5, pt: 1.5, borderTop: "1px solid #F3F4F6" }}>
                 {richStats.scoreDistribution.filter((d: any) => d.count > 0).map((d: any, i: number) => (
@@ -390,19 +400,18 @@ const DashboardOverview: React.FC = () => {
         </Card>
       </Box>
 
-      {/* ══ Row 3: Top Jobs by Interviews + Recent Interviews ════════════════ */}
+      {/* ══ Top Jobs + Recent Interviews ════════════════════════════════════════ */}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" }, gap: 2.5 }}>
 
-        {/* Top Jobs */}
         <Card data-tour="top-jobs">
-          <CardHeader title="Top Job Posts" subtitle="By number of interviews conducted" action={<ViewAll onClick={() => router.push("/company/posts")} />} />
+          <CardHeader title={t("overview.top_jobs.title")} subtitle={t("overview.top_jobs.subtitle")} action={<ViewAll onClick={() => router.push("/company/posts")} />} />
           <Box sx={{ px: 3, py: 2.5, display: "flex", flexDirection: "column", gap: 2 }}>
             {richLoading ? (
               SKELETON_ROWS.slice(0, 4).map((i) => <Skeleton key={i} variant="rectangular" height={36} sx={{ borderRadius: "8px" }} />)
             ) : !richStats?.topJobs?.length ? (
               <Box sx={{ py: 4, textAlign: "center" }}>
-                <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#6B7280" }}>No interviews yet</Typography>
-                <Typography sx={{ fontSize: "0.75rem", color: "#9CA3AF", mt: 0.4 }}>Interview data appears after candidates complete a campaign</Typography>
+                <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#6B7280" }}>{t("overview.top_jobs.empty")}</Typography>
+                <Typography sx={{ fontSize: "0.75rem", color: "#9CA3AF", mt: 0.4 }}>{t("overview.top_jobs.empty_sub")}</Typography>
               </Box>
             ) : richStats.topJobs.map((job: any, i: number) => {
               const pct = richStats.totalInterviews > 0 ? Math.round((job.count / richStats.totalInterviews) * 100) : 0;
@@ -411,7 +420,7 @@ const DashboardOverview: React.FC = () => {
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.75 }}>
                     <Typography sx={{ fontSize: "0.78rem", fontWeight: 600, color: "#374151", maxWidth: "65%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{job.title}</Typography>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Typography sx={{ fontSize: "0.7rem", color: "#9CA3AF" }}>{job.count} interviews</Typography>
+                      <Typography sx={{ fontSize: "0.7rem", color: "#9CA3AF" }}>{job.count} {t("overview.top_jobs.interviews")}</Typography>
                       <Chip label={job.avgScore != null ? `${job.avgScore}%` : "—"} size="small" sx={{ fontSize: "0.65rem", height: 18, fontWeight: 700, bgcolor: (job.avgScore ?? 0) >= 60 ? TEAL_BG : "#FEF2F2", color: (job.avgScore ?? 0) >= 60 ? TEAL : "#DC2626" }} />
                     </Box>
                   </Box>
@@ -424,11 +433,10 @@ const DashboardOverview: React.FC = () => {
           </Box>
         </Card>
 
-        {/* Recent Interviews */}
         <Card>
           <CardHeader
-            title="Recent Interviews"
-            subtitle={interviewsLoading ? "Loading..." : recentInterviews.length > 0 ? `${recentInterviews.length} latest results` : "No results yet"}
+            title={t("overview.recent_interviews.title")}
+            subtitle={interviewsLoading ? t("overview.recent_interviews.loading") : recentInterviews.length > 0 ? t("overview.recent_interviews.results", { count: recentInterviews.length }) : t("overview.recent_interviews.no_results")}
             action={<ViewAll onClick={() => router.push("/company/applications")} />}
           />
           <Box sx={{ px: 3, py: 2, display: "flex", flexDirection: "column", gap: 1.5 }}>
@@ -442,8 +450,8 @@ const DashboardOverview: React.FC = () => {
               ))
             ) : recentInterviews.length === 0 ? (
               <Box sx={{ py: 5, textAlign: "center" }}>
-                <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#6B7280" }}>No interviews yet</Typography>
-                <Typography sx={{ fontSize: "0.75rem", color: "#9CA3AF", mt: 0.4 }}>Interviews are generated automatically via campaigns</Typography>
+                <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#6B7280" }}>{t("overview.recent_interviews.empty")}</Typography>
+                <Typography sx={{ fontSize: "0.75rem", color: "#9CA3AF", mt: 0.4 }}>{t("overview.recent_interviews.empty_sub")}</Typography>
               </Box>
             ) : recentInterviews.map((iv, i) => {
               const vs = VERDICT_STYLE[iv.verdict] ?? VERDICT_STYLE.Pending;
@@ -460,7 +468,7 @@ const DashboardOverview: React.FC = () => {
                   </Box>
                   <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 0.5, flexShrink: 0 }}>
                     <Typography sx={{ fontSize: "0.9rem", fontWeight: 800, color: "#111827" }}>{iv.score}%</Typography>
-                    <Chip icon={<VIcon sx={{ fontSize: "11px !important" }} />} label={iv.verdict} size="small"
+                    <Chip icon={<VIcon sx={{ fontSize: "11px !important" }} />} label={verdictLabel(iv.verdict)} size="small"
                       sx={{ fontSize: "0.65rem", height: 20, fontWeight: 600, bgcolor: vs.bg, color: vs.color, border: "none", "& .MuiChip-icon": { color: `${vs.color} !important` } }} />
                   </Box>
                 </Box>
@@ -470,19 +478,18 @@ const DashboardOverview: React.FC = () => {
         </Card>
       </Box>
 
-      {/* ══ Application Charts ══════════════════════════════════════════════ */}
+      {/* ══ Application Charts ══════════════════════════════════════════════════ */}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" }, gap: 2.5 }}>
 
-        {/* Applications Over Time */}
         <Card>
-          <CardHeader title="Applications Over Time" subtitle="Daily applications in the last 30 days" />
+          <CardHeader title={t("overview.applications_over_time.title")} subtitle={t("overview.applications_over_time.subtitle")} />
           <Box sx={{ px: 3, pt: 2.5, pb: 2 }}>
             {appsLoading ? (
               <Skeleton variant="rectangular" height={220} sx={{ borderRadius: "8px" }} />
             ) : appTrendData.every(d => d.count === 0) ? (
               <Box sx={{ height: 220, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1 }}>
-                <Typography sx={{ fontSize: "0.82rem", color: "#9CA3AF" }}>No applications yet</Typography>
-                <Typography onClick={() => router.push("/company/posts/create")} sx={{ fontSize: "0.75rem", fontWeight: 600, color: "#8B5CF6", cursor: "pointer", "&:hover": { textDecoration: "underline" } }}>Post a job to attract candidates →</Typography>
+                <Typography sx={{ fontSize: "0.82rem", color: "#9CA3AF" }}>{t("overview.applications_over_time.empty")}</Typography>
+                <Typography onClick={() => router.push("/company/posts/create")} sx={{ fontSize: "0.75rem", fontWeight: 600, color: "#8B5CF6", cursor: "pointer", "&:hover": { textDecoration: "underline" } }}>{t("overview.applications_over_time.post_job")}</Typography>
               </Box>
             ) : (
               <ResponsiveContainer width="100%" height={220}>
@@ -497,23 +504,22 @@ const DashboardOverview: React.FC = () => {
                   <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 10, fill: "#9CA3AF" }} axisLine={false} tickLine={false} allowDecimals={false} />
                   <Tooltip content={<ScoreTooltip />} />
-                  <Area type="monotone" dataKey="count" name="Applications" stroke="#8B5CF6" strokeWidth={2} fill="url(#purpleGrad)" dot={false} activeDot={{ r: 4, fill: "#8B5CF6" }} />
+                  <Area type="monotone" dataKey="count" name={t("overview.applications_over_time.title")} stroke="#8B5CF6" strokeWidth={2} fill="url(#purpleGrad)" dot={false} activeDot={{ r: 4, fill: "#8B5CF6" }} />
                 </AreaChart>
               </ResponsiveContainer>
             )}
           </Box>
         </Card>
 
-        {/* Applications per Job Post */}
         <Card>
-          <CardHeader title="Applications per Job Post" subtitle="Top job posts by number of applicants" />
+          <CardHeader title={t("overview.applications_per_job.title")} subtitle={t("overview.applications_per_job.subtitle")} />
           <Box sx={{ px: 3, pt: 2.5, pb: 2 }}>
             {appsLoading ? (
               <Skeleton variant="rectangular" height={220} sx={{ borderRadius: "8px" }} />
             ) : appPerJobData.length === 0 ? (
               <Box sx={{ height: 220, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1 }}>
-                <Typography sx={{ fontSize: "0.82rem", color: "#9CA3AF" }}>No applications yet</Typography>
-                <Typography onClick={() => router.push("/company/posts/create")} sx={{ fontSize: "0.75rem", fontWeight: 600, color: "#8B5CF6", cursor: "pointer", "&:hover": { textDecoration: "underline" } }}>Post a job to attract candidates →</Typography>
+                <Typography sx={{ fontSize: "0.82rem", color: "#9CA3AF" }}>{t("overview.applications_per_job.empty")}</Typography>
+                <Typography onClick={() => router.push("/company/posts/create")} sx={{ fontSize: "0.75rem", fontWeight: 600, color: "#8B5CF6", cursor: "pointer", "&:hover": { textDecoration: "underline" } }}>{t("overview.applications_per_job.post_job")}</Typography>
               </Box>
             ) : (
               <ResponsiveContainer width="100%" height={220}>
@@ -522,7 +528,7 @@ const DashboardOverview: React.FC = () => {
                   <XAxis type="number" tick={{ fontSize: 10, fill: "#9CA3AF" }} axisLine={false} tickLine={false} allowDecimals={false} />
                   <YAxis type="category" dataKey="title" tick={{ fontSize: 10, fill: "#6B7280" }} axisLine={false} tickLine={false} width={90} />
                   <Tooltip content={<ScoreTooltip />} />
-                  <Bar dataKey="count" name="Applications" radius={[0, 6, 6, 0]} maxBarSize={28}>
+                  <Bar dataKey="count" name={t("overview.applications_per_job.title")} radius={[0, 6, 6, 0]} maxBarSize={28}>
                     {appPerJobData.map((_, i) => (
                       <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} fillOpacity={0.85} />
                     ))}
@@ -535,19 +541,18 @@ const DashboardOverview: React.FC = () => {
 
       </Box>
 
-      {/* ══ Campaign Activity + Department Members ════════════════════════════ */}
+      {/* ══ Campaign Activity + Department Members ════════════════════════════════ */}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" }, gap: 2.5 }}>
 
-        {/* Campaign Activity — trend + status breakdown */}
         <Card>
-          <CardHeader title="Campaign Activity" subtitle="Campaigns created over the last 30 days" action={<ViewAll onClick={() => router.push("/company/campaigns")} />} />
+          <CardHeader title={t("overview.campaign_activity.title")} subtitle={t("overview.campaign_activity.subtitle")} action={<ViewAll onClick={() => router.push("/company/campaigns")} />} />
           <Box sx={{ px: 3, pt: 2.5, pb: 2 }}>
             {campaignMetricsLoading ? (
               <Skeleton variant="rectangular" height={220} sx={{ borderRadius: "8px" }} />
             ) : !campaignMetrics?.trend?.some(d => d.count > 0) ? (
               <Box sx={{ height: 220, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 0.5 }}>
-                <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#6B7280" }}>No campaigns yet</Typography>
-                <Typography onClick={() => router.push("/company/campaigns")} sx={{ fontSize: "0.75rem", fontWeight: 600, color: "#F59E0B", cursor: "pointer", "&:hover": { textDecoration: "underline" } }}>Create your first campaign →</Typography>
+                <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#6B7280" }}>{t("overview.campaign_activity.empty")}</Typography>
+                <Typography onClick={() => router.push("/company/campaigns")} sx={{ fontSize: "0.75rem", fontWeight: 600, color: "#F59E0B", cursor: "pointer", "&:hover": { textDecoration: "underline" } }}>{t("overview.campaign_activity.create")}</Typography>
               </Box>
             ) : (
               <ResponsiveContainer width="100%" height={220}>
@@ -562,19 +567,13 @@ const DashboardOverview: React.FC = () => {
                   <XAxis dataKey="date" tickFormatter={(v) => { const d = new Date(v); return `${d.getMonth()+1}/${d.getDate()}`; }} tick={{ fontSize: 10, fill: "#9CA3AF" }} axisLine={false} tickLine={false} interval={4} />
                   <YAxis tick={{ fontSize: 10, fill: "#9CA3AF" }} axisLine={false} tickLine={false} allowDecimals={false} />
                   <Tooltip content={<ScoreTooltip />} />
-                  <Area type="monotone" dataKey="count" name="Campaigns" stroke="#F59E0B" strokeWidth={2} fill="url(#campTrendGrad)" dot={false} activeDot={{ r: 4, fill: "#F59E0B" }} />
+                  <Area type="monotone" dataKey="count" name={t("overview.campaign_activity.title")} stroke="#F59E0B" strokeWidth={2} fill="url(#campTrendGrad)" dot={false} activeDot={{ r: 4, fill: "#F59E0B" }} />
                 </AreaChart>
               </ResponsiveContainer>
             )}
             {!campaignMetricsLoading && campaignMetrics && campaignMetrics.total > 0 && (
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1.5, pt: 1.5, borderTop: "1px solid #F3F4F6" }}>
-                {[
-                  { key: "active",  label: "Active",  color: "#10B981" },
-                  { key: "draft",   label: "Draft",   color: "#D97706" },
-                  { key: "paused",  label: "Paused",  color: "#3B82F6" },
-                  { key: "closed",  label: "Closed",  color: "#6B7280" },
-                  { key: "expired", label: "Expired", color: "#EF4444" },
-                ].filter(s => (campaignMetrics as any)[s.key] > 0).map(s => (
+                {CAMPAIGN_STATUSES.filter(s => (campaignMetrics as any)[s.key] > 0).map(s => (
                   <Box key={s.key} sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                     <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: s.color }} />
                     <Typography sx={{ fontSize: "0.68rem", color: "#6B7280" }}>{s.label}: <strong style={{ color: "#111827" }}>{(campaignMetrics as any)[s.key]}</strong></Typography>
@@ -585,16 +584,15 @@ const DashboardOverview: React.FC = () => {
           </Box>
         </Card>
 
-        {/* Department Members — horizontal bar */}
         <Card>
-          <CardHeader title="Members per Department" subtitle="Team distribution across departments" action={<ViewAll onClick={() => router.push("/company/departments")} />} />
+          <CardHeader title={t("overview.members_per_dept.title")} subtitle={t("overview.members_per_dept.subtitle")} action={<ViewAll onClick={() => router.push("/company/departments")} />} />
           <Box sx={{ px: 3, pt: 2.5, pb: 2 }}>
             {deptStatsLoading ? (
               <Skeleton variant="rectangular" height={220} sx={{ borderRadius: "8px" }} />
             ) : !deptStats?.byDepartment?.length || deptStats.byDepartment.every(d => d.members === 0) ? (
               <Box sx={{ height: 220, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 0.5 }}>
-                <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#6B7280" }}>No departments yet</Typography>
-                <Typography onClick={() => router.push("/company/departments")} sx={{ fontSize: "0.75rem", fontWeight: 600, color: "#3B82F6", cursor: "pointer", "&:hover": { textDecoration: "underline" } }}>Create your first department →</Typography>
+                <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#6B7280" }}>{t("overview.members_per_dept.empty")}</Typography>
+                <Typography onClick={() => router.push("/company/departments")} sx={{ fontSize: "0.75rem", fontWeight: 600, color: "#3B82F6", cursor: "pointer", "&:hover": { textDecoration: "underline" } }}>{t("overview.members_per_dept.create")}</Typography>
               </Box>
             ) : (
               <ResponsiveContainer width="100%" height={220}>
@@ -603,7 +601,7 @@ const DashboardOverview: React.FC = () => {
                   <XAxis type="number" tick={{ fontSize: 10, fill: "#9CA3AF" }} axisLine={false} tickLine={false} allowDecimals={false} />
                   <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: "#6B7280" }} axisLine={false} tickLine={false} width={90} />
                   <Tooltip content={<ScoreTooltip />} />
-                  <Bar dataKey="members" name="Members" radius={[0, 6, 6, 0]} maxBarSize={24}>
+                  <Bar dataKey="members" name={t("overview.members_per_dept.title")} radius={[0, 6, 6, 0]} maxBarSize={24}>
                     {deptStats.byDepartment.map((_, i) => (
                       <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} fillOpacity={0.85} />
                     ))}

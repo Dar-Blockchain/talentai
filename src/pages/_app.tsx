@@ -1,4 +1,5 @@
 import "@/styles/globals.css";
+import "@/i18n/config"; // initialise i18next before anything renders
 import type { AppProps } from "next/app";
 import { Provider, useSelector, useDispatch } from "react-redux";
 import { store, persistor, RootState } from "../store/store";
@@ -17,6 +18,7 @@ import { isLoggingOutCheck, clearAuth, logout } from "@/store/slices/authSlice";
 import { clearConnectedUser } from "@/store/slices/userSlice";
 import { setToastHandler } from "@/utils/toastEmitter";
 import { setSessionExpiredHandler } from "@/utils/storeEmitter";
+import { useTranslation } from "react-i18next";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -46,6 +48,7 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
   const { user } = useSelector((state: RootState) => state.user.connectedUser);
   const dispatch = useDispatch<typeof store.dispatch>();
   const router = useRouter();
+  const { t } = useTranslation('auth');
 
   const userId = user?._id;
   const isLoggingOut = useSelector(isLoggingOutCheck);
@@ -79,10 +82,10 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
           <CircularProgress size={36} thickness={4} sx={{ color: "#0D9488" }} />
           <Box sx={{ textAlign: "center" }}>
             <Typography sx={{ fontWeight: 700, fontSize: "15px", color: "#111827" }}>
-              Déconnexion en cours
+              {t('logout.signing_out')}
             </Typography>
             <Typography sx={{ fontSize: "12px", color: "#6B7280", mt: 0.5 }}>
-              Veuillez patienter…
+              {t('logout.please_wait')}
             </Typography>
           </Box>
         </DialogContent>

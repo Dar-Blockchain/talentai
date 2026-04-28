@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { Box, useTheme, useMediaQuery, Modal, CircularProgress, Typography } from "@mui/material";
 import { useSelector } from "react-redux";
 import { isLoggingOutCheck } from "@/store/slices/authSlice";
+import { useTranslation } from "react-i18next";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { navigation } from "@/constants/navigation";
@@ -20,6 +21,7 @@ const COLLAPSED_WIDTH = 72;
 const HEADER_HEIGHT = 64;
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
+  const { t } = useTranslation("auth");
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const isLoggingOut = useSelector(isLoggingOutCheck);
@@ -62,10 +64,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             <CircularProgress size={40} sx={{ color: "#8310FF" }} />
             <Box sx={{ textAlign: "center" }}>
               <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "#0F172A" }}>
-                Déconnexion en cours…
+                {t("logout.signing_out")}
               </Typography>
               <Typography sx={{ fontSize: "0.8125rem", color: "#94A3B8", mt: 0.5 }}>
-                Veuillez patienter
+                {t("logout.please_wait")}
               </Typography>
             </Box>
           </Box>

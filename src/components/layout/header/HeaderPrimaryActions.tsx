@@ -3,11 +3,13 @@ import { Box } from "@mui/material";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
-import DemoVideoModal from "@/components/home/company/DemoVideoModal";
+import DemoVideoModal from "@/components/features/home/company/DemoVideoModal";
+import { useTranslation } from "react-i18next";
 
 const ACCENT = "#0D9488";
 
 const HeaderPrimaryActions = ({ inverted = false }: { inverted?: boolean }) => {
+  const { t }  = useTranslation("common");
   const router   = useRouter();
   const { user } = useSelector((state: RootState) => state.user.connectedUser);
   const [videoOpen, setVideoOpen] = useState(false);
@@ -23,11 +25,12 @@ const HeaderPrimaryActions = ({ inverted = false }: { inverted?: boolean }) => {
       <Box
         onClick={() => router.push("/signin")}
         sx={{
-          px: 1.75, py: 0.65,
+          px: 2.25, py: 0.75,
           borderRadius: "10px",
           cursor: "pointer",
           fontSize: "13.5px",
           fontWeight: 500,
+          whiteSpace: "nowrap",
           color: inverted ? "#475569" : "#555",
           transition: "color 0.18s, background 0.18s",
           "&:hover": {
@@ -36,7 +39,7 @@ const HeaderPrimaryActions = ({ inverted = false }: { inverted?: boolean }) => {
           },
         }}
       >
-        Log in
+        {t("header.login")}
       </Box>
 
       {/* Separator */}
@@ -48,12 +51,13 @@ const HeaderPrimaryActions = ({ inverted = false }: { inverted?: boolean }) => {
           userType === "candidate" ? router.push("/signin") : setVideoOpen(true)
         }
         sx={{
-          px: 2, py: 0.65,
+          px: 2.5, py: 0.75,
           borderRadius: "10px",
           cursor: "pointer",
           bgcolor: ACCENT,
           fontSize: "13.5px",
           fontWeight: 700,
+          whiteSpace: "nowrap",
           color: "white",
           letterSpacing: "0.01em",
           boxShadow: `0 2px 10px ${ACCENT}55`,
@@ -65,7 +69,7 @@ const HeaderPrimaryActions = ({ inverted = false }: { inverted?: boolean }) => {
           },
         }}
       >
-        {userType === "candidate" ? "Sign up free" : "Watch Demo"}
+        {userType === "candidate" ? t("header.signup") : t("header.watch_demo")}
       </Box>
 
       <DemoVideoModal open={videoOpen} onClose={() => setVideoOpen(false)} />

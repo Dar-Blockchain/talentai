@@ -1,0 +1,106 @@
+{
+  "title": "Campagnes",
+  "new": "Nouvelle campagne",
+  "list": {
+    "empty": "Aucune campagne",
+    "empty_description": "Créez votre première campagne d'évaluation pour mesurer les compétences de votre équipe.",
+    "no_results": "Aucune campagne ne correspond à vos filtres",
+    "no_results_description": "Essayez d'ajuster votre recherche ou vos filtres."
+  },
+  "card": {
+    "participants_one": "{{count}} participant",
+    "participants_other": "{{count}} participants",
+    "deadline": "Échéance",
+    "no_deadline": "Sans échéance",
+    "module": "Module",
+    "view_details": "Voir les détails",
+    "days_left": "{{count}} jour restant",
+    "days_left_other": "{{count}} jours restants"
+  },
+  "filters": {
+    "search_placeholder": "Rechercher des campagnes…",
+    "status_label": "Tous les statuts",
+    "period_label": "Toute période",
+    "last_7_days": "7 derniers jours",
+    "last_30_days": "30 derniers jours",
+    "last_3_months": "3 derniers mois",
+    "last_6_months": "6 derniers mois",
+    "last_year": "Dernière année",
+    "clear": "Effacer"
+  },
+  "status": {
+    "DRAFT": "Brouillon",
+    "ACTIVE": "Actif",
+    "PAUSED": "En pause",
+    "CLOSED": "Fermé",
+    "EXPIRED": "Expiré"
+  },
+  "module_type": {
+    "QUESTIONNAIRE": "Questionnaire",
+    "AI_INTERVIEW": "Entretien IA",
+    "SKILL_TEST": "Test de compétences"
+  },
+  "actions": {
+    "create": "Créer une campagne",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "publish": "Publier",
+    "pause": "Mettre en pause",
+    "reactivate": "Réactiver",
+    "close": "Fermer",
+    "duplicate": "Dupliquer",
+    "view_results": "Voir les résultats"
+  },
+  "dialogs": {
+    "delete_title": "Supprimer la campagne",
+    "delete_message": "Êtes-vous sûr de vouloir supprimer « {{title}} » ? Cette action est irréversible.",
+    "delete_confirm": "Supprimer",
+    "status_change_title": "Changer le statut",
+    "status_change_message": "Changer « {{title}} » de {{from}} à {{to}} ?"
+  },
+  "stats": {
+    "total": "Total",
+    "active": "Actif",
+    "closed_expired": "Fermé / Expiré",
+    "completed_participants": "Participants ayant terminé"
+  },
+  "assessment": {
+    "expired_title": "Évaluation fermée",
+    "expired_message": "La date limite de cette évaluation est dépassée.",
+    "paused_title": "Évaluation en pause",
+    "paused_message": "Cette évaluation est temporairement suspendue. Revenez plus tard.",
+    "closed_title": "Évaluation fermée",
+    "closed_message": "Cette évaluation n'accepte plus de soumissions.",
+    "back_to_campaigns": "Retour aux campagnes"
+  },
+  "results": {
+    "title": "Vos résultats",
+    "overall_score": "Score global",
+    "completed_on": "Terminé le {{date}}",
+    "summary": "Résumé de l'évaluation",
+    "transcript": "Transcription de l'entretien",
+    "detailed_scores": "Scores détaillés",
+    "strengths": "Points forts",
+    "areas_for_improvement": "Axes d'amélioration",
+    "no_results": "Aucun résultat disponible pour l'instant.",
+    "scoring_in_progress": "Notation IA en cours — votre score apparaîtra prochainement.",
+    "recommendation": {
+      "strong_hire": "Recrutement fortement recommandé",
+      "hire": "Recrutement recommandé",
+      "consider": "À considérer",
+      "reject": "Non retenu"
+    }
+  },
+  "participants": {
+    "title": "Participants",
+    "invite": "Inviter des participants",
+    "remove": "Retirer",
+    "status": {
+      "NOT_STARTED": "Non commencé",
+      "INVITED": "Invité",
+      "IN_PROGRESS": "En cours",
+      "COMPLETED": "Terminé",
+      "DROPPED": "Abandonné"
+    }
+  }
+}

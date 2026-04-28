@@ -197,10 +197,11 @@ interface InterviewAssessmentProps {
   participantId: string;
   campaignId:    string;
   onBack:        () => void;
+  onComplete?:   () => void;
 }
 
 const InterviewAssessment: React.FC<InterviewAssessmentProps> = ({
-  campaign, participantId, campaignId, onBack,
+  campaign, participantId, campaignId, onBack, onComplete,
 }) => {
   const router     = useRouter();
   const moduleType = campaign.module?.type ?? 'AI_INTERVIEW';
@@ -333,10 +334,10 @@ const InterviewAssessment: React.FC<InterviewAssessmentProps> = ({
 
   endInterviewRef.current = endInterview;
 
-  const handleViewResults = useCallback(
-    () => router.push(`/employee/campaigns/${campaignId}/results`),
-    [router, campaignId],
-  );
+  const handleViewResults = useCallback(() => {
+    if (onComplete) onComplete();
+    else router.push(`/employee/campaigns/${campaignId}/results`);
+  }, [onComplete, router, campaignId]);
 
   // Poll for results in DB after interview ends, then redirect
   useEffect(() => {
@@ -350,7 +351,10 @@ const InterviewAssessment: React.FC<InterviewAssessmentProps> = ({
           );
           const status = res.data?.data?.participant?.status;
           if (status === 'COMPLETED') {
-            if (!cancelled) router.push(`/employee/campaigns/${campaignId}/results`);
+            if (!cancelled) {
+              if (onComplete) onComplete();
+              else router.push(`/employee/campaigns/${campaignId}/results`);
+            }
             return;
           }
         } catch { /* keep polling */ }
@@ -359,7 +363,7 @@ const InterviewAssessment: React.FC<InterviewAssessmentProps> = ({
     };
     poll();
     return () => { cancelled = true; };
-  }, [socket.interviewStatus, campaignId, participantId, router]);
+  }, [socket.interviewStatus, campaignId, participantId, onComplete, router]);
 
   const showConnectionBanner = socket.isHydrated && socket.connectionStatus !== 'connected';
 

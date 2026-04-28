@@ -8,46 +8,19 @@ import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
 import { useRouter } from "next/router";
 import RegisterContainer from "@/components/features/register/RegisterContainer";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 
 type UserType = "candidate" | "company";
 
-const ACCENT = "#0D9488";
+const ACCENT  = "#0D9488";
 const ACCENT2 = "#059669";
 
-const ROLES = [
-  {
-    type: "company" as UserType,
-    icon: BusinessOutlined,
-    label: "Register as a Company",
-    description: "Hiring talent and want to streamline recruitment with AI",
-    accent: "#0D9488",
-    iconGradient: "linear-gradient(135deg, #0D9488 0%, #059669 100%)",
-    shadowColor: "rgba(13,148,136,0.22)",
-    border: "rgba(13,148,136,0.14)",
-  },
-  {
-    type: "candidate" as UserType,
-    icon: PersonOutlined,
-    label: "Register as a Candidate",
-    description: "Looking for opportunities and want to apply to jobs",
-    accent: "#7C3AED",
-    iconGradient: "linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)",
-    shadowColor: "rgba(124,58,237,0.2)",
-    border: "rgba(124,58,237,0.14)",
-  },
-];
-
-const FORM_TITLES = {
-  company: { title: "Register your company", subtitle: "Start hiring top talent with AI-powered recruitment" },
-  candidate: { title: "Create your account", subtitle: "Join TalentAI and discover your next opportunity" },
-};
-
-const SignInLink = ({ returnUrl }: { returnUrl?: string }) => (
+const SignInLink = ({ returnUrl, label }: { returnUrl?: string; label: string }) => (
   <Box sx={{ pt: 0.5 }}>
     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
       <Box sx={{ flex: 1, height: "1px", bgcolor: "#E5E7EB" }} />
       <Typography sx={{ fontSize: "0.75rem", color: "#9CA3AF", fontFamily: "Poppins", whiteSpace: "nowrap" }}>
-        Already have an account?
+        {label}
       </Typography>
       <Box sx={{ flex: 1, height: "1px", bgcolor: "#E5E7EB" }} />
     </Box>
@@ -60,13 +33,14 @@ const SignInLink = ({ returnUrl }: { returnUrl?: string }) => (
         transition: "all 0.2s",
         "&:hover": { bgcolor: `${ACCENT}08`, borderColor: ACCENT },
       }}>
-        Sign in to your account
+        {label}
       </Box>
     </Link>
   </Box>
 );
 
 const Register = () => {
+  const { t } = useTranslation("auth");
   const router = useRouter();
   const returnUrl = router.query.returnUrl as string | undefined;
   const hasReturnUrl = !!returnUrl;
@@ -75,6 +49,35 @@ const Register = () => {
 
   const isOtpStep = formStep === 2;
   const showRoleSelect = !userType;
+
+  const ROLES = [
+    {
+      type: "company" as UserType,
+      icon: BusinessOutlined,
+      label: t("register.company_label"),
+      description: t("register.company_desc"),
+      accent: "#0D9488",
+      iconGradient: "linear-gradient(135deg, #0D9488 0%, #059669 100%)",
+      shadowColor: "rgba(13,148,136,0.22)",
+      border: "rgba(13,148,136,0.14)",
+    },
+    {
+      type: "candidate" as UserType,
+      icon: PersonOutlined,
+      label: t("register.candidate_label"),
+      description: t("register.candidate_desc"),
+      accent: "#7C3AED",
+      iconGradient: "linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)",
+      shadowColor: "rgba(124,58,237,0.2)",
+      border: "rgba(124,58,237,0.14)",
+    },
+  ];
+
+  const FORM_TITLES = {
+    company:   { title: t("register.company_title"),   subtitle: t("register.company_subtitle") },
+    candidate: { title: t("register.candidate_title"), subtitle: t("register.candidate_subtitle") },
+  };
+
   const formConfig = userType ? FORM_TITLES[userType] : null;
 
   return (
@@ -84,16 +87,17 @@ const Register = () => {
           {/* Header */}
           <Box sx={{ mb: 3.5, textAlign: "center" }}>
             <Typography sx={{ fontSize: "2.2rem", fontWeight: 800, fontFamily: "Poppins", color: "#0F172A", lineHeight: 1.1, mb: 0.75, letterSpacing: "-0.03em" }}>
-              Get started
+              {t("register.get_started")}
             </Typography>
             <Typography sx={{ fontSize: "1.05rem", color: "#6B7280", fontFamily: "Poppins", lineHeight: 1.65 }}>
-              How will you use{" "}
+              {t("register.how_use_prefix")}{" "}
               <Box component="span" sx={{
                 fontWeight: 700,
                 background: `linear-gradient(90deg, ${ACCENT}, ${ACCENT2})`,
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-              }}>TalentAI</Box>?
+              }}>TalentAI</Box>
+              {t("register.how_use_suffix")}
             </Typography>
           </Box>
 
@@ -148,7 +152,7 @@ const Register = () => {
             ))}
           </Box>
 
-          <SignInLink returnUrl={returnUrl} />
+          <SignInLink returnUrl={returnUrl} label={t("register.already_account")} />
         </>
       ) : (
         <>
@@ -166,7 +170,7 @@ const Register = () => {
                 }}
               >
                 <ArrowForwardOutlined sx={{ fontSize: 15, transform: "rotate(180deg)" }} />
-                Change role
+                {t("register.change_role")}
               </Box>
             )}
 
@@ -174,11 +178,11 @@ const Register = () => {
               fontSize: "1.9rem", fontWeight: 800, fontFamily: "Poppins", color: "#0F172A",
               lineHeight: 1.15, mb: 0.75, letterSpacing: "-0.025em",
             }}>
-              {isOtpStep ? "Check your inbox" : formConfig!.title}
+              {isOtpStep ? t("register.check_inbox") : formConfig!.title}
             </Typography>
             <Typography sx={{ fontSize: "0.95rem", color: "#6B7280", fontFamily: "Poppins", lineHeight: 1.6 }}>
               {isOtpStep
-                ? <>We sent a 6-digit code to <Box component="span" sx={{ color: ACCENT, fontWeight: 600 }}>your email</Box></>
+                ? <>{t("register.otp_sent_prefix")} <Box component="span" sx={{ color: ACCENT, fontWeight: 600 }}>{t("register.otp_sent_accent")}</Box></>
                 : formConfig!.subtitle}
             </Typography>
           </Box>
@@ -189,7 +193,7 @@ const Register = () => {
             <CompanyRegisterForm key="company" onStepChange={setFormStep} />
           )}
 
-          {!isOtpStep && <SignInLink returnUrl={returnUrl} />}
+          {!isOtpStep && <SignInLink returnUrl={returnUrl} label={t("register.signin_link")} />}
         </>
       )}
     </RegisterContainer>

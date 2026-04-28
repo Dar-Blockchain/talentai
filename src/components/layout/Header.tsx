@@ -10,6 +10,7 @@ import HamburgerButton from "@/components/layout/header/HamburgerButton";
 import HeaderNavMenu from "@/components/layout/header/HeaderNavMenu";
 import HeaderPrimaryActions from "@/components/layout/header/HeaderPrimaryActions";
 import HeaderMessagesDropdown from "@/components/layout/header/HeaderMessagesDropdown";
+import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
 import { useRouter } from "next/router";
 import { io, Socket } from "socket.io-client";
 
@@ -83,7 +84,7 @@ const Header = () => {
           <Box sx={{
             display: "grid",
             gridTemplateColumns: "1fr auto",
-            "@media (min-width:800px)": { gridTemplateColumns: "1fr auto 1fr" },
+            "@media (min-width:800px)": { gridTemplateColumns: "auto 1fr auto" },
             alignItems: "center",
             height: 54,
             px: { xs: 1.5, md: 2.5 },
@@ -116,6 +117,11 @@ const Header = () => {
 
             {/* RIGHT — actions */}
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 1 }}>
+              {/* Language switcher — always visible on desktop */}
+              <Box sx={{ display: "none", "@media (min-width:800px)": { display: "flex" } }}>
+                <LanguageSwitcher variant="icon" size="small" />
+              </Box>
+
               {isAuthenticated ? (
                 <>
                   {/* Icon group (hidden <800px) */}

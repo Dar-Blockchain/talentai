@@ -1,0 +1,106 @@
+{
+  "title": "Campaigns",
+  "new": "New Campaign",
+  "list": {
+    "empty": "No campaigns yet",
+    "empty_description": "Create your first assessment campaign to start measuring your team's skills.",
+    "no_results": "No campaigns match your filters",
+    "no_results_description": "Try adjusting your search or filters."
+  },
+  "card": {
+    "participants_one": "{{count}} participant",
+    "participants_other": "{{count}} participants",
+    "deadline": "Deadline",
+    "no_deadline": "No deadline",
+    "module": "Module",
+    "view_details": "View Details",
+    "days_left": "{{count}} day left",
+    "days_left_other": "{{count}} days left"
+  },
+  "filters": {
+    "search_placeholder": "Search campaigns…",
+    "status_label": "All statuses",
+    "period_label": "All time",
+    "last_7_days": "Last 7 days",
+    "last_30_days": "Last 30 days",
+    "last_3_months": "Last 3 months",
+    "last_6_months": "Last 6 months",
+    "last_year": "Last year",
+    "clear": "Clear"
+  },
+  "status": {
+    "DRAFT": "Draft",
+    "ACTIVE": "Active",
+    "PAUSED": "Paused",
+    "CLOSED": "Closed",
+    "EXPIRED": "Expired"
+  },
+  "module_type": {
+    "QUESTIONNAIRE": "Questionnaire",
+    "AI_INTERVIEW": "AI Interview",
+    "SKILL_TEST": "Skill Test"
+  },
+  "actions": {
+    "create": "Create Campaign",
+    "edit": "Edit",
+    "delete": "Delete",
+    "publish": "Publish",
+    "pause": "Pause",
+    "reactivate": "Reactivate",
+    "close": "Close",
+    "duplicate": "Duplicate",
+    "view_results": "View Results"
+  },
+  "dialogs": {
+    "delete_title": "Delete Campaign",
+    "delete_message": "Are you sure you want to delete \"{{title}}\"? This action cannot be undone.",
+    "delete_confirm": "Delete",
+    "status_change_title": "Change Status",
+    "status_change_message": "Change \"{{title}}\" from {{from}} to {{to}}?"
+  },
+  "stats": {
+    "total": "Total",
+    "active": "Active",
+    "closed_expired": "Closed / Expired",
+    "completed_participants": "Completed Participants"
+  },
+  "assessment": {
+    "expired_title": "Assessment Closed",
+    "expired_message": "The deadline for this assessment has passed.",
+    "paused_title": "Assessment Paused",
+    "paused_message": "This assessment is currently paused. Please check back later.",
+    "closed_title": "Assessment Closed",
+    "closed_message": "This assessment is no longer accepting submissions.",
+    "back_to_campaigns": "Back to campaigns"
+  },
+  "results": {
+    "title": "Your Results",
+    "overall_score": "Overall Score",
+    "completed_on": "Completed on {{date}}",
+    "summary": "Assessment Summary",
+    "transcript": "Interview Transcript",
+    "detailed_scores": "Detailed Scores",
+    "strengths": "Strengths",
+    "areas_for_improvement": "Areas for Improvement",
+    "no_results": "No detailed results available yet.",
+    "scoring_in_progress": "AI scoring in progress — your score will appear shortly.",
+    "recommendation": {
+      "strong_hire": "Strong Hire",
+      "hire": "Hire",
+      "consider": "Consider",
+      "reject": "Reject"
+    }
+  },
+  "participants": {
+    "title": "Participants",
+    "invite": "Invite Participants",
+    "remove": "Remove",
+    "status": {
+      "NOT_STARTED": "Not Started",
+      "INVITED": "Invited",
+      "IN_PROGRESS": "In Progress",
+      "COMPLETED": "Completed",
+      "DROPPED": "Dropped"
+    }
+  }
+}

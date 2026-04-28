@@ -7,6 +7,7 @@ import { logout } from "@/store/slices/authSlice";
 import { useRouter } from "next/router";
 import HeaderLogo from "./HeaderLogo";
 import HeaderNavMenu from "./HeaderNavMenu";
+import { useTranslation } from "react-i18next";
 import LogoutProgressModal from "@/components/ui/LogoutProgressModal";
 import DashboardOutlined   from "@mui/icons-material/DashboardOutlined";
 import ChatBubbleOutlineOutlined from "@mui/icons-material/ChatBubbleOutlineOutlined";
@@ -71,6 +72,7 @@ const Row: React.FC<{
 );
 
 const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unreadMessageCount = 0 }) => {
+  const { t }  = useTranslation("common");
   const router   = useRouter();
   const dispatch = useDispatch<AppDispatch>();
 
@@ -202,22 +204,22 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unre
 
               {/* Actions */}
               <Box>
-                <Row icon={<DashboardOutlined />}  label="Dashboard"   onClick={goDashboard} />
+                <Row icon={<DashboardOutlined />}  label={t("header.dashboard")}   onClick={goDashboard} />
                 {!isCompany && (
-                  <Row icon={<PersonOutlined />} label="View Profile"
+                  <Row icon={<PersonOutlined />} label={t("header.view_profile")}
                     onClick={() => go("/profile/candidate/" + user?._id)} />
                 )}
-                <Row icon={<ChatBubbleOutlineOutlined />} label="Messages"
+                <Row icon={<ChatBubbleOutlineOutlined />} label={t("header.messages")}
                   badge={unreadMessageCount} onClick={() => go("/chat")} />
-                <Row icon={<NotificationsOutlined />} label="Notifications"
+                <Row icon={<NotificationsOutlined />} label={t("header.notifications")}
                   onClick={() => go(isCompany ? "/company/notifications" : "/company/notifications")} />
-                <Row icon={<SettingsOutlined />} label="Settings"
+                <Row icon={<SettingsOutlined />} label={t("header.settings")}
                   onClick={() => go(isCompany ? "/company/settings" : "/profile/candidate/settings")} />
               </Box>
 
               <Divider sx={{ my: 1, borderColor: "rgba(13,148,136,0.08)" }} />
 
-              <Row icon={<LogoutOutlined />} label="Log out" danger onClick={handleLogout} />
+              <Row icon={<LogoutOutlined />} label={t("header.logout")} danger onClick={handleLogout} />
             </>
           ) : (
             <>
@@ -239,7 +241,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unre
                     "&:hover": { bgcolor: "rgba(13,148,136,0.08)" },
                   }}
                 >
-                  Log in
+                  {t("header.login")}
                 </Box>
                 <Box
                   onClick={() => go("/signin")}
@@ -251,7 +253,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unre
                     "&:hover": { opacity: 0.92 },
                   }}
                 >
-                  Sign up free
+                  {t("header.signup")}
                 </Box>
               </Box>
             </>

@@ -3,6 +3,7 @@ import { Box, Typography } from "@mui/material";
 import AddOutlined from "@mui/icons-material/AddOutlined";
 import Head from "next/head";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
 const ACCENT        = "#0D9488";
 const ACCENT_BG     = "rgba(13,148,136,0.08)";
@@ -10,46 +11,13 @@ const ACCENT_BORDER = "rgba(13,148,136,0.35)";
 const VP   = { once: true, margin: "-80px" };
 const ease = [0.22, 1, 0.36, 1] as const;
 
-const FAQS = [
-  {
-    question: "What is TalentAI?",
-    answer: "TalentAI is an AI-powered recruitment automation platform that replaces manual hiring processes with intelligent, customizable pipelines. The platform deploys specialized conversational AI agents — including Olga (Technical Assessment), Sinda (Soft Skills Evaluation), and Yuka (Process Coordination) — to conduct natural video interviews, score candidates across multiple dimensions, and issue blockchain-verified credentials on the Hedera network. Companies use TalentAI to reduce their average 42-day hiring cycle by up to 75%.",
-  },
-  {
-    question: "How does AI interviewing work?",
-    answer: "TalentAI's AI agents conduct live video interviews using natural language processing and voice synthesis that sounds genuinely human. Each agent is specialized: Olga handles technical evaluations through interactive coding discussions, Sinda assesses soft skills through behavioral conversation, and Yuka coordinates the entire pipeline. The agents adapt their questions in real time based on candidate responses, evaluate both verbal and non-verbal cues, and produce multi-dimensional assessment reports — all without human intervention.",
-  },
-  {
-    question: "Is AI-powered hiring biased?",
-    answer: "TalentAI is specifically designed to eliminate unconscious bias in hiring. Every candidate receives identical assessment criteria, standardized questions, and objective scoring — regardless of their name, background, or appearance. All evaluation data is immutably recorded on the Hedera blockchain, creating a transparent audit trail that ensures compliance with equal opportunity employment standards and GDPR requirements.",
-  },
-  {
-    question: "What assessment modules are available?",
-    answer: "TalentAI offers 8 pre-built assessment modules: Technical Skills Evaluation, Soft Skills Assessment, Cultural Fit Analysis, Language Proficiency Testing, Practical Task Assignments, Problem-Solving Challenges, Behavioral Interviews, and Reference Verification. Each module can be configured with custom pass/fail thresholds, weighted scoring, time limits, and automatic progression rules. Companies mix and match modules to create unique pipelines for different roles, departments, or seniority levels.",
-  },
-  {
-    question: "How much does TalentAI cost?",
-    answer: "TalentAI offers flexible pricing starting at just $8 per AI interview with zero commitment — pay only for what you use. For teams with recurring hiring needs, subscription plans start at $99/month (Starter, 15 interviews) and scale to $1,499/month (Unlimited, 700 interviews with dedicated 24/7 support and BI benchmarks). Every plan includes Interview AI with scoring and reports, AI-powered job post creation, and a customizable pipeline builder. Extra interviews beyond your plan are discounted from $8 down to $4 depending on tier. A white-label enterprise solution is also available with custom infrastructure and SLA.",
-  },
-  {
-    question: "What is the TAI token?",
-    answer: "The TAI token is TalentAI's native utility token built on the Hedera Hashgraph network (HTS). It powers all platform transactions, from assessment pipeline fees to blockchain credential issuance. Subscribers receive TAI tokens with their plan, and candidates earn tokens through the Interview-to-Earn model when they complete verified AI assessments. The token also enables governance rights and staking rewards within the TalentAI ecosystem.",
-  },
-];
+const FAQ_KEYS = ["1", "2", "3", "4", "5", "6"] as const;
 
-const faqSchema = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: FAQS.map((faq) => ({
-    "@type": "Question",
-    name: faq.question,
-    acceptedAnswer: { "@type": "Answer", text: faq.answer },
-  })),
-};
+interface FaqItem { question: string; answer: string }
 
 /* ── Individual FAQ item ───────────────────────────── */
 const FAQItem: React.FC<{
-  faq: typeof FAQS[number];
+  faq: FaqItem;
   index: number;
   open: boolean;
   onToggle: () => void;
@@ -135,7 +103,7 @@ const FAQItem: React.FC<{
         </motion.div>
       </Box>
 
-      {/* Answer — animated height */}
+      {/* Answer */}
       <AnimatePresence initial={false}>
         {open && (
           <motion.div
@@ -166,9 +134,25 @@ const FAQItem: React.FC<{
 
 /* ── Main section ──────────────────────────────────── */
 const FAQSection: React.FC = () => {
+  const { t } = useTranslation("home");
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   const toggle = (i: number) => setOpenIndex(openIndex === i ? null : i);
+
+  const faqs: FaqItem[] = FAQ_KEYS.map((k) => ({
+    question: t(`faq.q${k}`),
+    answer:   t(`faq.a${k}`),
+  }));
+
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: { "@type": "Answer", text: faq.answer },
+    })),
+  };
 
   return (
     <>
@@ -181,9 +165,7 @@ const FAQSection: React.FC = () => {
 
       <Box sx={{ position: "relative", overflow: "hidden", py: { xs: 6, md: 9 } }}>
 
-        {/* ── Animated background ── */}
-
-        {/* Morphing blob — top left */}
+        {/* Animated background */}
         <motion.div
           animate={{
             borderRadius: ["60% 40% 30% 70% / 60% 30% 70% 40%", "30% 60% 70% 40% / 50% 60% 30% 60%", "50% 40% 60% 30% / 30% 70% 40% 60%", "60% 40% 30% 70% / 60% 30% 70% 40%"],
@@ -194,7 +176,6 @@ const FAQSection: React.FC = () => {
             background: "radial-gradient(circle at 40% 40%, rgba(13,148,136,0.08) 0%, transparent 70%)", pointerEvents: "none" }}
         />
 
-        {/* Morphing blob — bottom right */}
         <motion.div
           animate={{
             borderRadius: ["40% 60% 60% 40% / 40% 50% 60% 50%", "60% 40% 40% 60% / 60% 40% 50% 40%", "50% 50% 30% 70% / 50% 40% 60% 50%", "40% 60% 60% 40% / 40% 50% 60% 50%"],
@@ -205,7 +186,6 @@ const FAQSection: React.FC = () => {
             background: "radial-gradient(circle at 60% 55%, rgba(13,148,136,0.06) 0%, transparent 70%)", pointerEvents: "none" }}
         />
 
-        {/* Sweeping beam */}
         <motion.div
           animate={{ x: ["-120%", "220%"] }}
           transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", repeatDelay: 7 }}
@@ -214,7 +194,6 @@ const FAQSection: React.FC = () => {
             transform: "skewX(-12deg)", pointerEvents: "none" }}
         />
 
-        {/* Floating diamond — top right */}
         <motion.div
           animate={{ y: [0, -22, 0], rotate: [45, 68, 45], opacity: [0.10, 0.20, 0.10] }}
           transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
@@ -222,7 +201,6 @@ const FAQSection: React.FC = () => {
             border: "1.5px solid rgba(13,148,136,0.28)", transform: "rotate(45deg)", pointerEvents: "none" }}
         />
 
-        {/* Floating diamond — bottom left */}
         <motion.div
           animate={{ y: [0, 18, 0], rotate: [45, 22, 45], opacity: [0.08, 0.16, 0.08] }}
           transition={{ duration: 14, repeat: Infinity, ease: "easeInOut", delay: 3 }}
@@ -230,7 +208,6 @@ const FAQSection: React.FC = () => {
             border: "1.5px solid rgba(13,148,136,0.22)", transform: "rotate(45deg)", pointerEvents: "none" }}
         />
 
-        {/* Floating rectangle — mid right */}
         <motion.div
           animate={{ y: [0, -16, 0], rotate: [0, 5, 0], opacity: [0.07, 0.14, 0.07] }}
           transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 6 }}
@@ -238,7 +215,6 @@ const FAQSection: React.FC = () => {
             border: "1px solid rgba(13,148,136,0.20)", borderRadius: "6px", pointerEvents: "none" }}
         />
 
-        {/* Pulsing ring — center */}
         <motion.div
           animate={{ scale: [1, 1.10, 1], opacity: [0.06, 0.02, 0.06] }}
           transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
@@ -247,71 +223,71 @@ const FAQSection: React.FC = () => {
             border: "1px solid rgba(13,148,136,0.15)", pointerEvents: "none" }}
         />
 
-        {/* ── Content ── */}
+        {/* Content */}
         <Box sx={{ maxWidth: 760, mx: "auto", px: { xs: 2, md: 4 }, position: "relative" }}>
 
-        {/* ── Header ── */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={VP}
-          transition={{ duration: 0.55, ease }}
-        >
-          <Box sx={{ textAlign: "center", mb: { xs: 6, md: 8 } }}>
-            <Box sx={{
-              display: "inline-flex", alignItems: "center",
-              bgcolor: ACCENT_BG, border: `1.5px solid ${ACCENT_BORDER}`,
-              borderRadius: "24px", px: 2.5, py: 0.9, mb: 3,
-            }}>
-              <Typography sx={{
-                fontFamily: "Poppins", fontSize: "11px", fontWeight: 700,
-                color: ACCENT, letterSpacing: "1.2px", textTransform: "uppercase",
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={VP}
+            transition={{ duration: 0.55, ease }}
+          >
+            <Box sx={{ textAlign: "center", mb: { xs: 6, md: 8 } }}>
+              <Box sx={{
+                display: "inline-flex", alignItems: "center",
+                bgcolor: ACCENT_BG, border: `1.5px solid ${ACCENT_BORDER}`,
+                borderRadius: "24px", px: 2.5, py: 0.9, mb: 3,
               }}>
-                FAQ
+                <Typography sx={{
+                  fontFamily: "Poppins", fontSize: "11px", fontWeight: 700,
+                  color: ACCENT, letterSpacing: "1.2px", textTransform: "uppercase",
+                }}>
+                  {t("faq.overline")}
+                </Typography>
+              </Box>
+
+              <Typography sx={{
+                fontFamily: "Poppins", fontWeight: 800,
+                fontSize: { xs: "28px", md: "44px" },
+                lineHeight: 1.1, color: "#111827", mb: 1.5,
+                letterSpacing: "-0.5px",
+              }}>
+                {t("faq.headline_1")}{" "}
+                <Box component="span" sx={{ color: ACCENT }}>{t("faq.headline_accent")}</Box>
+              </Typography>
+
+              <Typography sx={{
+                fontFamily: "Poppins", fontSize: { xs: "14px", md: "16px" },
+                color: "#9CA3AF", lineHeight: 1.7,
+              }}>
+                {t("faq.body")}
               </Typography>
             </Box>
+          </motion.div>
 
-            <Typography sx={{
-              fontFamily: "Poppins", fontWeight: 800,
-              fontSize: { xs: "28px", md: "44px" },
-              lineHeight: 1.1, color: "#111827", mb: 1.5,
-              letterSpacing: "-0.5px",
-            }}>
-              Got questions?{" "}
-              <Box component="span" sx={{ color: ACCENT }}>We've got answers.</Box>
-            </Typography>
-
-            <Typography sx={{
-              fontFamily: "Poppins", fontSize: { xs: "14px", md: "16px" },
-              color: "#9CA3AF", lineHeight: 1.7,
-            }}>
-              Everything you need to know about AI-powered hiring with TalentAI.
-            </Typography>
-          </Box>
-        </motion.div>
-
-        {/* ── Accordion ── */}
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={VP}
-          variants={{
-            hidden: {},
-            visible: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
-          }}
-        >
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-            {FAQS.map((faq, i) => (
-              <FAQItem
-                key={i}
-                faq={faq}
-                index={i}
-                open={openIndex === i}
-                onToggle={() => toggle(i)}
-              />
-            ))}
-          </Box>
-        </motion.div>
+          {/* Accordion */}
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={VP}
+            variants={{
+              hidden: {},
+              visible: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
+            }}
+          >
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+              {faqs.map((faq, i) => (
+                <FAQItem
+                  key={i}
+                  faq={faq}
+                  index={i}
+                  open={openIndex === i}
+                  onToggle={() => toggle(i)}
+                />
+              ))}
+            </Box>
+          </motion.div>
 
         </Box>
       </Box>

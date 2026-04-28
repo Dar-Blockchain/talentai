@@ -1,6 +1,7 @@
 'use client';
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import Link from "next/link";
@@ -44,6 +45,7 @@ const ORDERED_PLANS = ["Free", "Starter", "Pro", "Business", "Unlimited"];
 // ─── Combined Subscription Banner ────────────────────────
 
 const SubscriptionBanner: React.FC = () => {
+  const { t } = useTranslation("dashboard");
   const combined = useSelector(selectCombinedDetails);
   const loading  = useSelector(selectCombinedDetailsLoading);
 
@@ -87,7 +89,7 @@ const SubscriptionBanner: React.FC = () => {
                 return (
                   <Chip
                     key={s.id}
-                    label={`${s.planName} · expires ${fmt(s.endDate)}`}
+                    label={`${s.planName} · ${t("pages.plans.banner.expires", { date: fmt(s.endDate) })}`}
                     size="small"
                     sx={{ bgcolor: `${col}12`, color: col, fontWeight: 600, fontSize: "0.72rem" }}
                   />
@@ -97,7 +99,7 @@ const SubscriptionBanner: React.FC = () => {
           </Box>
           <Chip
             icon={<CalendarTodayOutlined sx={{ fontSize: "13px !important" }} />}
-            label={`${c.daysRemaining} day${c.daysRemaining !== 1 ? "s" : ""} until next expiry`}
+            label={t("pages.plans.banner.days_remaining", { count: c.daysRemaining })}
             size="small"
             sx={{ bgcolor: `${primaryColor}12`, color: primaryColor, fontWeight: 600, fontSize: "0.75rem", "& .MuiChip-icon": { color: primaryColor } }}
           />
@@ -109,7 +111,7 @@ const SubscriptionBanner: React.FC = () => {
             <Box>
               <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
                 <Typography sx={{ fontSize: "0.75rem", color: "#6b7280", fontWeight: 500 }}>
-                  Job posts used {multiPlan && <span style={{ color: "#9ca3af" }}>(combined)</span>}
+                  {t("pages.plans.banner.job_posts_used")} {multiPlan && <span style={{ color: "#9ca3af" }}>{t("pages.plans.banner.combined")}</span>}
                 </Typography>
                 <Typography sx={{ fontSize: "0.75rem", color: primaryColor, fontWeight: 700 }}>
                 {c.usage.posts.limit === -1 ? "∞" : `${postsPct}%`}
@@ -128,7 +130,7 @@ const SubscriptionBanner: React.FC = () => {
             <Box>
               <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
                 <Typography sx={{ fontSize: "0.75rem", color: "#6b7280", fontWeight: 500 }}>
-                  Interviews this month {multiPlan && <span style={{ color: "#9ca3af" }}>(combined)</span>}
+                  {t("pages.plans.banner.interviews_month")} {multiPlan && <span style={{ color: "#9ca3af" }}>{t("pages.plans.banner.combined")}</span>}
                 </Typography>
                 <Typography sx={{ fontSize: "0.75rem", color: intPct >= 90 ? "#ef4444" : primaryColor, fontWeight: 700 }}>
                 {c.usage.monthlyInterviews.limit === -1 ? "∞" : `${intPct}%`}
@@ -161,6 +163,7 @@ interface PlanCardProps {
 }
 
 const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRenew, cancelling, onCancelClick, onEnableAutoRenewClick }) => {
+  const { t } = useTranslation("dashboard");
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState<string | null>(null);
   const cfg      = PLAN_CONFIG[plan.name] ?? { color: "#6b7280" };
@@ -176,7 +179,7 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
     try {
       await payWithCard(plan._id);
     } catch (err: any) {
-      setError(err?.message || "Payment failed. Please try again.");
+      setError(err?.message || t("pages.plans.card.payment_error"));
     } finally {
       setLoading(false);
     }
@@ -338,6 +341,7 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
 // ─── Page ────────────────────────────────────────────────
 
 const PlansPage: React.FC = () => {
+  const { t } = useTranslation("dashboard");
   const dispatch     = useDispatch<AppDispatch>();
   const router       = useRouter();
   const plans        = useSelector(selectPlanLimits);
@@ -371,13 +375,13 @@ const PlansPage: React.FC = () => {
         .unwrap()
         .then(() => {
           localStorage.removeItem("pending_payment_id");
-          showSnack("Payment successful! Your plan has been activated.", "success");
+          showSnack(t("pages.plans.snack.payment_success"), "success");
           refreshAll();
         })
-        .catch(() => showSnack("Payment received but verification failed. Please contact support.", "error"));
+        .catch(() => showSnack(t("pages.plans.snack.payment_verify_error"), "error"));
       router.replace("/company/plans", undefined, { shallow: true });
     } else if (status === "cancel") {
-      showSnack("Payment was cancelled. No charges were made.", "error");
+      showSnack(t("pages.plans.snack.payment_cancelled"), "error");
       router.replace("/company/plans", undefined, { shallow: true });
     }
   }, [router.isReady]);
@@ -391,10 +395,10 @@ const PlansPage: React.FC = () => {
     dispatch(enableAutoRenew({ subscriptionId }))
       .unwrap()
       .then(() => {
-        showSnack("Auto-renewal re-enabled. Your plan will renew automatically.", "success");
+        showSnack(t("pages.plans.snack.auto_renew_enabled"), "success");
         refreshAll();
       })
-      .catch(() => showSnack("Failed to re-enable auto-renewal. Please try again.", "error"));
+      .catch(() => showSnack(t("pages.plans.snack.auto_renew_error"), "error"));
   };
 
   const handleConfirmCancel = () => {
@@ -404,13 +408,13 @@ const PlansPage: React.FC = () => {
       .then(() => {
         setConfirmOpen(false);
         setCancelSubId(null);
-        showSnack("Auto-renewal disabled. Your plan stays active until it expires.", "success");
+        showSnack(t("pages.plans.snack.cancelled"), "success");
         refreshAll();
       })
       .catch(() => {
         setConfirmOpen(false);
         setCancelSubId(null);
-        showSnack("Failed to cancel subscription. Please try again.", "error");
+        showSnack(t("pages.plans.snack.cancel_error"), "error");
       });
   };
 
@@ -422,8 +426,8 @@ const PlansPage: React.FC = () => {
   }, [combined]);
 
   const cancellingPlanName = cancelSubId
-    ? combined?.subscriptions.find((s) => s.id === cancelSubId)?.planName ?? "this plan"
-    : "this plan";
+    ? combined?.subscriptions.find((s) => s.id === cancelSubId)?.planName ?? t("pages.plans.this_plan")
+    : t("pages.plans.this_plan");
 
   const sortedPlans = [...plans]
     .filter((p) => p.name !== "Trial")
@@ -433,16 +437,16 @@ const PlansPage: React.FC = () => {
     <DashboardLayout>
       {/* Cancel confirm dialog */}
       <Dialog open={confirmOpen} onClose={() => { setConfirmOpen(false); setCancelSubId(null); }}>
-        <DialogTitle sx={{ fontWeight: 700 }}>Disable Auto-Renewal?</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>{t("pages.plans.dialog.title")}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Your <strong>{cancellingPlanName}</strong> plan will remain fully active until its expiry date. After that, it will not renew and no further charges will be made.
+            {t("pages.plans.dialog.text", { plan: cancellingPlanName })}
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <AppButton label="Keep Auto-Renewal" variant="outlined" onClick={() => { setConfirmOpen(false); setCancelSubId(null); }} />
+          <AppButton label={t("pages.plans.dialog.keep")} variant="outlined" onClick={() => { setConfirmOpen(false); setCancelSubId(null); }} />
           <AppButton
-            label={cancelling ? "Processing…" : "Yes, Disable Renewal"}
+            label={cancelling ? t("pages.plans.card.processing") : t("pages.plans.dialog.confirm")}
             variant="contained"
             disabled={cancelling}
             onClick={handleConfirmCancel}
@@ -464,16 +468,16 @@ const PlansPage: React.FC = () => {
       </Snackbar>
 
       <PageHeader
-        title="Choose a Plan"
-        subtitle="Stack multiple plans to combine limits — posts and interviews accumulate across all active subscriptions"
+        title={t("pages.plans.title")}
+        subtitle={t("pages.plans.subtitle")}
         breadcrumbs={[
-          { label: "Dashboard", href: "/company/dashboard" },
-          { label: "Settings", href: "/company/settings" },
-          { label: "Plans" },
+          { label: t("pages.common.dashboard"), href: "/company/dashboard" },
+          { label: t("pages.plans.settings_breadcrumb"), href: "/company/settings" },
+          { label: t("pages.plans.breadcrumb") },
         ]}
         actions={
           <Link href="/company/billing">
-            <AppButton label="Payment History" variant="outlined" startIcon={<ReceiptLongOutlined />} />
+            <AppButton label={t("pages.plans.payment_history")} variant="outlined" startIcon={<ReceiptLongOutlined />} />
           </Link>
         }
       />

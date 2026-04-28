@@ -14,11 +14,9 @@ import { getUserLocation } from "@/utils/api";
 import { useToast } from "@/hooks/useToast";
 import { useRouter } from "next/router";
 import { formatTimeLeft } from "@/utils/functions";
+import { useTranslation } from "react-i18next";
 
 type FormValues = { email: string; code: string };
-
-const emailSchema = Yup.object({ email: Yup.string().email("Invalid email address").required("Email is required") });
-const codeSchema = Yup.object({ code: Yup.string().length(6, "Code must be 6 digits").required("Verification code is required") });
 
 const CODE_LENGTH = 6;
 const ACCENT = "#0D9488";
@@ -27,10 +25,14 @@ const ACCENT2 = "#059669";
 interface Props { themeColors: any }
 
 const SigninForm: React.FC<Props> = ({ themeColors }) => {
+  const { t } = useTranslation("auth");
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const { showToast } = useToast();
   const returnUrl = router.query.returnUrl as string | undefined;
+
+  const emailSchema = Yup.object({ email: Yup.string().email(t("signin.validation.email_invalid")).required(t("signin.validation.email_required")) });
+  const codeSchema  = Yup.object({ code: Yup.string().length(6, t("signin.validation.code_length")).required(t("signin.validation.code_required")) });
 
   const invitationEmail = useMemo(() => {
     if (!returnUrl) return "";
@@ -116,48 +118,18 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
       {({ values, errors, touched, handleChange, handleSubmit, setFieldValue }) => (
         <Box component="form" onSubmit={handleSubmit}>
 
-          {/* ── Step indicator ── */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3.5 }}>
-            {[
-              { n: 1, label: "Enter email" },
-              { n: 2, label: "Verify code" },
-            ].map(({ n, label }, i) => (
-              <React.Fragment key={n}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Box sx={{
-                    width: 26, height: 26, borderRadius: "50%",
-                    bgcolor: step >= n ? ACCENT : "#E5E7EB",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    transition: "background 0.3s",
-                    flexShrink: 0,
-                  }}>
-                    <Typography sx={{ fontSize: "0.72rem", fontWeight: 700, color: step >= n ? "#fff" : "#9CA3AF", fontFamily: "Poppins" }}>
-                      {n}
-                    </Typography>
-                  </Box>
-                  <Typography sx={{ fontSize: "0.8rem", fontWeight: step === n ? 600 : 400, color: step === n ? ACCENT : "#9CA3AF", fontFamily: "Poppins", transition: "color 0.3s", whiteSpace: "nowrap" }}>
-                    {label}
-                  </Typography>
-                </Box>
-                {i === 0 && (
-                  <Box sx={{ flex: 1, height: 2, borderRadius: 1, bgcolor: step === 2 ? ACCENT : "#E5E7EB", transition: "background 0.3s" }} />
-                )}
-              </React.Fragment>
-            ))}
-          </Box>
-
           {/* ── Step 1: Email ── */}
           {step === 1 && (
             <Box>
               <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#374151", fontFamily: "Poppins", mb: 1, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                Email address
+                {t("signin.email_label")}
               </Typography>
               <TextField
                 name="email"
                 value={values.email}
                 onChange={handleChange}
                 error={touched.email && Boolean(errors.email)}
-                helperText={invitationEmail ? "Email pre-filled from your invitation" : touched.email && errors.email}
+                helperText={invitationEmail ? t("signin.email_prefilled") : touched.email && errors.email}
                 fullWidth
                 placeholder="you@company.com"
                 disabled={loading || !!invitationEmail}
@@ -171,7 +143,7 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
                 sx={fieldSx}
               />
               <Typography sx={{ fontSize: "0.78rem", color: "#9CA3AF", fontFamily: "Poppins", mt: 1 }}>
-                We'll send a 6-digit verification code to this address.
+                {t("signin.email_hint")}
               </Typography>
             </Box>
           )}
@@ -179,20 +151,53 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
           {/* ── Step 2: OTP ── */}
           {step === 2 && (
             <Box>
-              <Box sx={{
-                display: "flex", alignItems: "center", gap: 1.5,
-                bgcolor: "#F9FAFB", border: "1px solid #E5E7EB",
-                borderRadius: "12px", px: 2, py: 1.5, mb: 3,
-              }}>
-                <EmailOutlinedIcon sx={{ fontSize: 18, color: ACCENT, flexShrink: 0 }} />
-                <Box>
-                  <Typography sx={{ fontSize: "0.78rem", color: "#9CA3AF", fontFamily: "Poppins" }}>
-                    Code sent to
-                  </Typography>
-                  <Typography sx={{ fontSize: "0.88rem", color: "#0F172A", fontFamily: "Poppins", fontWeight: 700 }}>
+              {/* Email confirmation card */}
+              <Box sx={{ textAlign: "center", mb: 3.5 }}>
+                {/* Icon with pulse ring */}
+                <Box sx={{ position: "relative", display: "inline-flex", mb: 2 }}>
+                  <Box sx={{
+                    position: "absolute", inset: -7, borderRadius: "22px",
+                    border: `1.5px solid ${ACCENT}22`,
+                    animation: "pulseRing 2.4s ease-in-out infinite",
+                    "@keyframes pulseRing": {
+                      "0%, 100%": { opacity: 0.6, transform: "scale(1)" },
+                      "50%":       { opacity: 0.15, transform: "scale(1.08)" },
+                    },
+                  }} />
+                  <Box sx={{
+                    width: 60, height: 60, borderRadius: "18px",
+                    background: `linear-gradient(135deg, ${ACCENT}18 0%, ${ACCENT2}12 100%)`,
+                    border: `1.5px solid ${ACCENT}30`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    boxShadow: `0 8px 24px ${ACCENT}20`,
+                  }}>
+                    <EmailOutlinedIcon sx={{ fontSize: 26, color: ACCENT }} />
+                  </Box>
+                </Box>
+
+                <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "1.05rem", color: "#111827", mb: 0.5 }}>
+                  {t("signin.code_sent_title")}
+                </Typography>
+                <Typography sx={{ fontFamily: "Poppins", fontSize: "0.82rem", color: "#6B7280", mb: 1.75 }}>
+                  {t("signin.code_sent_to")}
+                </Typography>
+
+                {/* Email chip */}
+                <Box sx={{
+                  display: "inline-flex", alignItems: "center", gap: 1,
+                  px: 2, py: 0.8, borderRadius: "12px",
+                  bgcolor: `${ACCENT}0C`, border: `1.5px solid ${ACCENT}28`,
+                  boxShadow: `0 2px 10px ${ACCENT}12`,
+                }}>
+                  <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: ACCENT, flexShrink: 0 }} />
+                  <Typography sx={{ fontFamily: "Poppins", fontSize: "0.9rem", fontWeight: 700, color: ACCENT, letterSpacing: "0.01em" }}>
                     {values.email}
                   </Typography>
                 </Box>
+
+                <Typography sx={{ fontFamily: "Poppins", fontSize: "0.72rem", color: "#9CA3AF", mt: 1.5 }}>
+                  {t("signin.spam_note")}
+                </Typography>
               </Box>
 
               <Stack direction="row" spacing={1.5} justifyContent="center">
@@ -266,7 +271,9 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
                 color: secondsLeft > 60 ? "#9CA3AF" : secondsLeft > 0 ? "#F59E0B" : "#EF4444",
                 transition: "color 0.3s",
               }}>
-                {secondsLeft > 0 ? `Code expires in ${formatTimeLeft(secondsLeft)}` : "Code expired — request a new one"}
+                {secondsLeft > 0
+                  ? t("signin.code_expires", { time: formatTimeLeft(secondsLeft) })
+                  : t("signin.code_expired")}
               </Typography>
             </Box>
           )}
@@ -309,15 +316,15 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
             }}
           >
             {loading
-              ? (step === 1 ? "Sending…" : isExpired ? "Resending…" : "Verifying…")
-              : (step === 1 ? "Send verification code" : isExpired ? "Resend code" : "Verify & sign in")}
+              ? (step === 1 ? t("signin.btn_sending") : isExpired ? t("signin.btn_resending") : t("signin.btn_verifying"))
+              : (step === 1 ? t("signin.btn_send") : isExpired ? t("signin.btn_resend") : t("signin.btn_verify"))}
           </Button>
 
           {/* ── Security note ── */}
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.75, mt: 1.5 }}>
             <LockOutlinedIcon sx={{ fontSize: 13, color: "#9CA3AF" }} />
             <Typography sx={{ fontSize: "0.75rem", color: "#9CA3AF", fontFamily: "Poppins" }}>
-              Secured with end-to-end encryption
+              {t("signin.security_note")}
             </Typography>
           </Box>
 
@@ -340,7 +347,7 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
               }}
               onClick={() => { clearTimer(); setStep(1); setFieldValue("code", ""); }}
             >
-              ← Use a different email
+              {t("signin.change_email")}
             </Button>
           )}
         </Box>

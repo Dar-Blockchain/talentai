@@ -128,6 +128,7 @@ const PublicAssessmentPage: React.FC = () => {
           participantId={participantId}
           campaignId={campaignId ?? ''}
           onBack={handleBack}
+          onComplete={() => router.push(`/campaign/results/${campaignId}`)}
         />
       ) : (
         <Box sx={{ minHeight: '100vh', bgcolor: '#F8FAFC' }}>
