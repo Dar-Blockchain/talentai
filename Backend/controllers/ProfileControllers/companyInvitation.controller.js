@@ -1,4 +1,4 @@
-const CompanyInvitationService = require("../../services/ProfileService/CompanyInvitation.service");
+const CompanyInvitationService = require("../../services/ProfileService/company.Invitation.service");
 const authService = require("../../services/authentication.service");
 const { generateToken } = require("../../utils/generate-token");
 
