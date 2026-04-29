@@ -8,7 +8,7 @@ const ragService = require("./rag.service");
 const configManager = require("../utils/config-manager");
 const { detectJobCategory, getEvaluationFramework } = require("../utils/config-manager");
 const redisSessionManager = require("../utils/redis-session-manager");
-const Post = require("../models/Post.model");
+const Post = require("../models/posts.model");
 require('dotenv').config();
 
 /**
