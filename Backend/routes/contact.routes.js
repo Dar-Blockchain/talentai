@@ -10,11 +10,13 @@ const ContactController = require("../controllers/contact.controller");
 const { requireAuth } = require("../middleware/security/auth.middleware");
 const { controledAcces } = require('../middleware/authorize.middleware.js');
 
-// All routes require admin authentication
-router.use(requireAuth);
-// POST /contact
-// Description: Submit a contact form with name, email, company, and message
+// POST /contact — public, no auth required (enterprise inquiry form)
 router.post("/", ContactController.submitContactForm);
+
+// POST /contact/enterprise — same handler, public
+router.post("/enterprise", ContactController.submitContactForm);
+
+router.use(requireAuth);
 
 // GET /contact/status
 // Description: Check if contact service is operational

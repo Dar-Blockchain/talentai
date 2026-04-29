@@ -14,7 +14,7 @@ const assignFreePlanToProfile = async (profileId) => {
     const existing = await Subscription.countDocuments({ companyProfileId: profileId });
     if (existing > 0) return;
 
-    const freePlan = await PlanLimits.findOne({ name: "Free", isActive: true });
+    const freePlan = await PlanLimits.findOne({ name: "Trial", isActive: true });
     if (!freePlan) {
       console.warn("⚠️ Free plan not found in DB — skipping auto-assign");
       return;

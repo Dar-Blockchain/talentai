@@ -16,7 +16,7 @@ require("dotenv").config();
 // Default plans
 const defaultPlans = [
   {
-    name: "Free",
+    name: "Trial",
     postsLimit: 1,
     monthlyInterviewLimit: 5,
     durationDays: 30,

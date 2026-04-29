@@ -41,6 +41,7 @@ const contactCandidateTemplate       = compileTemplate("contact-candidate.hbs");
 const interviewNudge1Template        = compileTemplate("interview-nudge-1.hbs");
 const interviewNudge2Template        = compileTemplate("interview-nudge-2.hbs");
 const interviewNudge3Template        = compileTemplate("interview-nudge-3.hbs");
+const contactEnterpriseTemplate      = compileTemplate("contact-enterprise.hbs");
 
 // Format role: "project_manager" → "Project Manager"
 const formatRole = (role) =>
@@ -249,6 +250,26 @@ const sendPlanUpgradeReminder = async (companyEmail, companyName) => {
   }
 };
 
+// ─── Send Enterprise Inquiry (to TalentAI team) ──────────────────────────────
+const sendEnterpriseInquiry = async ({ name, email, company, message }) => {
+  const mailOptions = {
+    from: FROM_ADDRESS,
+    to: process.env.EMAIL_USER || "contact@talentai.bid",
+    replyTo: email,
+    subject: `[TalentAI Enterprise] ${name}${company ? ` — ${company}` : ""}`,
+    html: contactEnterpriseTemplate({ name, email, company, message, year }),
+    attachments: [logoAttachment],
+  };
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Enterprise inquiry email received from ${email}`);
+    return true;
+  } catch (error) {
+    console.error("❌ Enterprise inquiry email failed:", error.message);
+    return false;
+  }
+};
+
 module.exports = {
   sendOTP,
   sendCompanyInvitation,
@@ -258,5 +279,6 @@ module.exports = {
   sendInterviewNudge,
   sendCandidateEmail,
   sendPlanUpgradeReminder,
+  sendEnterpriseInquiry,
   transporter,
 };

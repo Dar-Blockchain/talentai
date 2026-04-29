@@ -48,7 +48,7 @@ exports.createPost = async (req, res) => {
           const PlanLimits = require("../../models/PlanLimits.model");
           const Subscription = require("../../models/Subscription.model");
           const Profile = require("../../models/Profile.model");
-          const freePlan = await PlanLimits.findOne({ name: "Free", isActive: true });
+          const freePlan = await PlanLimits.findOne({ name: "Trial", isActive: true });
           if (freePlan) {
             const endDate = new Date();
             endDate.setFullYear(endDate.getFullYear() + 100);

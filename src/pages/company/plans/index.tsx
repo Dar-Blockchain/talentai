@@ -18,6 +18,7 @@ import {
 import {
   Box, Grid, Typography, Chip, Divider, CircularProgress, Alert, Snackbar,
   Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, LinearProgress,
+  TextField,
 } from "@mui/material";
 import AppButton from "@/components/ui/AppButton";
 
@@ -33,14 +34,14 @@ const NotificationsOffOutlined = dynamic(() => import("@mui/icons-material/Notif
 // ─── Constants ───────────────────────────────────────────
 
 const PLAN_CONFIG: Record<string, { color: string; badge?: string }> = {
-  Free:      { color: "#6B7280" },
+  Trial:     { color: "#6B7280" },
   Starter:   { color: "#0D9488" },
   Pro:       { color: "#7C3AED", badge: "Popular" },
   Business:  { color: "#0891B2" },
-  Unlimited: { color: "#D97706" },
+  Unlimited: { color: "#D97706", badge: "Enterprise" },
 };
 
-const ORDERED_PLANS = ["Free", "Starter", "Pro", "Business", "Unlimited"];
+const ORDERED_PLANS = ["Trial", "Starter", "Pro", "Business", "Unlimited"];
 
 // ─── Combined Subscription Banner ────────────────────────
 
@@ -153,6 +154,73 @@ const SubscriptionBanner: React.FC = () => {
 
 // ─── Plan card ───────────────────────────────────────────
 
+// ─── Contact Us Modal (Unlimited plan) ───────────────────
+
+const ContactUsModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
+  const [form, setForm]     = useState({ name: "", email: "", company: "", message: "" });
+  const [sending, setSending] = useState(false);
+  const [sent, setSent]     = useState(false);
+
+  const handleSend = async () => {
+    if (!form.name || !form.email) return;
+    setSending(true);
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}contact/enterprise`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, plan: "Unlimited" }),
+      });
+    } catch { /* silent — show success regardless */ }
+    setSending(false);
+    setSent(true);
+  };
+
+  const handleClose = () => { setForm({ name: "", email: "", company: "", message: "" }); setSent(false); onClose(); };
+
+  return (
+    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: "16px" } }}>
+      <DialogTitle sx={{ fontWeight: 800, fontSize: "1.1rem", pb: 0.5 }}>
+        Contact Enterprise Sales
+      </DialogTitle>
+      <DialogContent>
+        {sent ? (
+          <Box sx={{ py: 3, textAlign: "center" }}>
+            <CheckCircleOutlined sx={{ fontSize: 48, color: "#D97706", mb: 1 }} />
+            <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "#111827", mb: 0.5 }}>Message sent!</Typography>
+            <Typography sx={{ fontSize: "0.85rem", color: "#6B7280" }}>Our team will reach out within 24 hours.</Typography>
+          </Box>
+        ) : (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+            <Typography sx={{ fontSize: "0.85rem", color: "#6B7280" }}>
+              Tell us about your needs and we'll get back to you with a custom quote for the Unlimited plan.
+            </Typography>
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <TextField size="small" label="Full Name *" fullWidth value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+              <TextField size="small" label="Email *" fullWidth value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
+            </Box>
+            <TextField size="small" label="Company" fullWidth value={form.company} onChange={(e) => setForm((f) => ({ ...f, company: e.target.value }))} />
+            <TextField size="small" label="Message" fullWidth multiline rows={3} value={form.message} onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))} placeholder="Tell us about your team size and hiring needs…" />
+          </Box>
+        )}
+      </DialogContent>
+      {!sent && (
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <AppButton label="Cancel" variant="outlined" onClick={handleClose} />
+          <AppButton
+            label={sending ? "Sending…" : "Send Message"}
+            variant="contained"
+            disabled={sending || !form.name || !form.email}
+            onClick={handleSend}
+            sx={{ bgcolor: "#D97706", "&:hover": { bgcolor: "#B45309" } }}
+          />
+        </DialogActions>
+      )}
+    </Dialog>
+  );
+};
+
+// ─── Plan card ───────────────────────────────────────────
+
 interface PlanCardProps {
   plan: PlanLimit;
   activeSubscriptionId: string | null;
@@ -160,18 +228,20 @@ interface PlanCardProps {
   cancelling: boolean;
   onCancelClick: (subscriptionId: string) => void;
   onEnableAutoRenewClick: (subscriptionId: string) => void;
+  onContactUs: () => void;
 }
 
-const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRenew, cancelling, onCancelClick, onEnableAutoRenewClick }) => {
+const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRenew, cancelling, onCancelClick, onEnableAutoRenewClick, onContactUs }) => {
   const { t } = useTranslation("dashboard");
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState<string | null>(null);
-  const cfg      = PLAN_CONFIG[plan.name] ?? { color: "#6b7280" };
-  const isActive = !!activeSubscriptionId;
-  const isPopular = cfg.badge === "Popular";
-  const isFree    = plan.priceUsd === 0;
+  const cfg         = PLAN_CONFIG[plan.name] ?? { color: "#6b7280" };
+  const isActive    = !!activeSubscriptionId;
+  const isPopular   = cfg.badge === "Popular";
+  const isEnterprise = plan.name === "Unlimited";
+  const isTrial     = plan.priceUsd === 0;
 
-  const priceLabel = isFree ? "Free" : plan.priceUsd != null ? `$${plan.priceUsd.toLocaleString("en-US")}` : "Contact us";
+  const priceLabel = isTrial ? "Trial" : isEnterprise ? "Contact Us" : `$${plan.priceUsd?.toLocaleString("en-US")}`;
 
   const handleSubscribe = async () => {
     setLoading(true);
@@ -189,10 +259,10 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
     <Box sx={{
       backgroundColor: "#fff",
       borderRadius: "20px",
-      border: `2px solid ${isActive ? cfg.color : isPopular ? cfg.color : "#E5E7EB"}`,
+      border: `2px solid ${isActive ? cfg.color : (isPopular || isEnterprise) ? cfg.color : "#E5E7EB"}`,
       boxShadow: isActive
         ? `0 8px 32px ${cfg.color}28`
-        : isPopular
+        : (isPopular || isEnterprise)
         ? `0 12px 40px ${cfg.color}22`
         : "0 2px 8px rgba(0,0,0,0.06)",
       display: "flex", flexDirection: "column", height: "100%",
@@ -205,9 +275,9 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
       <Box sx={{ height: 5, bgcolor: cfg.color, flexShrink: 0 }} />
 
       {/* Badge */}
-      {(isActive || isPopular) && (
+      {(isActive || isPopular || isEnterprise) && (
         <Chip
-          label={isActive ? "Active" : "Popular"}
+          label={isActive ? "Active" : cfg.badge ?? ""}
           size="small"
           icon={isActive ? <CheckCircleOutlined sx={{ fontSize: "13px !important" }} /> : undefined}
           sx={{
@@ -231,10 +301,10 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
 
         {/* Price */}
         <Box sx={{ display: "flex", alignItems: "flex-end", gap: 0.5, mb: 2.5 }}>
-          <Typography sx={{ fontSize: isFree ? "2rem" : "2.4rem", fontWeight: 800, color: cfg.color, lineHeight: 1 }}>
+          <Typography sx={{ fontSize: (isTrial || isEnterprise) ? "1.6rem" : "2.4rem", fontWeight: 800, color: cfg.color, lineHeight: 1 }}>
             {priceLabel}
           </Typography>
-          {!isFree && (
+          {!isTrial && !isEnterprise && (
             <Typography sx={{ color: "#9CA3AF", fontSize: "0.8rem", mb: 0.4 }}> / mo</Typography>
           )}
         </Box>
@@ -279,7 +349,7 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
               <CheckCircleOutlined sx={{ fontSize: 16, color: cfg.color }} />
               <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: cfg.color }}>Current Plan</Typography>
             </Box>
-            {plan.name !== "Free" && (autoRenew ? (
+            {plan.name !== "Trial" && (autoRenew ? (
               <AppButton
                 label={cancelling ? "Processing…" : "Disable Auto-Renewal"}
                 variant="outlined"
@@ -317,9 +387,21 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
               </Box>
             ))}
           </Box>
+        ) : isEnterprise ? (
+          <AppButton
+            label="Contact Us"
+            variant="contained"
+            fullWidth
+            onClick={onContactUs}
+            sx={{
+              bgcolor: cfg.color, "&:hover": { bgcolor: cfg.color, filter: "brightness(0.88)" },
+              fontWeight: 700, borderRadius: "10px", py: 1.1, fontSize: "0.85rem",
+              boxShadow: `0 4px 14px ${cfg.color}30`, textTransform: "none",
+            }}
+          />
         ) : (
           <AppButton
-            label={loading ? "Redirecting…" : isFree ? "Get Started Free" : "Get Started"}
+            label={loading ? "Redirecting…" : isTrial ? "Get Started Free" : "Get Started"}
             variant="contained"
             fullWidth
             disabled={loading}
@@ -328,8 +410,7 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
             sx={{
               bgcolor: cfg.color, "&:hover": { bgcolor: cfg.color, filter: "brightness(0.88)" },
               fontWeight: 700, borderRadius: "10px", py: 1.1, fontSize: "0.85rem",
-              boxShadow: `0 4px 14px ${cfg.color}30`,
-              textTransform: "none",
+              boxShadow: `0 4px 14px ${cfg.color}30`, textTransform: "none",
             }}
           />
         )}
@@ -352,6 +433,7 @@ const PlansPage: React.FC = () => {
   const [snackbar, setSnackbar]         = useState<{ open: boolean; message: string; severity: "success" | "error" }>({ open: false, message: "", severity: "success" });
   const [confirmOpen, setConfirmOpen]   = useState(false);
   const [cancelSubId, setCancelSubId]   = useState<string | null>(null);
+  const [contactOpen, setContactOpen]   = useState(false);
 
   const showSnack = (message: string, severity: "success" | "error") =>
     setSnackbar({ open: true, message, severity });
@@ -502,11 +584,14 @@ const PlansPage: React.FC = () => {
                 cancelling={cancelling}
                 onCancelClick={handleCancelClick}
                 onEnableAutoRenewClick={handleEnableAutoRenew}
+                onContactUs={() => setContactOpen(true)}
               />
             </Grid>
           ))}
         </Grid>
       )}
+
+      <ContactUsModal open={contactOpen} onClose={() => setContactOpen(false)} />
     </DashboardLayout>
   );
 };
