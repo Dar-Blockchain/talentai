@@ -15,6 +15,7 @@ import EmployeesFilterBar from "@/components/features/company/employees/list/Emp
 import { RoleFilter, SortOption } from "@/components/features/company/employees/list/EmployeesList";
 import { ROLE_LABELS, ROLE_STYLES } from "@/components/features/company/employees/list/EmployeeCard";
 import { ROLES } from "@/constants/employee";
+import { useTranslation } from "react-i18next";
 
 const PURPLE = "#8310FF";
 const PAGE_SIZE = 10;
@@ -57,6 +58,8 @@ interface ParticipantsStepProps {
 
 const ParticipantsStep: React.FC<ParticipantsStepProps> = ({ selected, onChange }) => {
   const dispatch    = useDispatch<AppDispatch>();
+  const { t } = useTranslation("campaign");
+  const PS = "create_wizard.participants_step";
   const { members, pageTotal, loading, error } = useSelector(selectMembers);
   const departments = useSelector(selectDepartments);
 
@@ -121,11 +124,11 @@ const ParticipantsStep: React.FC<ParticipantsStepProps> = ({ selected, onChange 
       }}>
         <PeopleAltOutlined sx={{ fontSize: 18, color: PURPLE, flexShrink: 0 }} />
         <Typography sx={{ fontSize: "13px", color: "#374151" }}>
-          Select the employees who can participate in this campaign. Leave empty to allow all employees.
+          {t(`${PS}.banner`)}
         </Typography>
         {selected.length > 0 && (
           <Chip
-            label={`${selected.length} selected`}
+            label={t(`${PS}.selected`, { count: selected.length })}
             size="small"
             sx={{
               fontWeight: 700, fontSize: "12px",
@@ -152,8 +155,9 @@ const ParticipantsStep: React.FC<ParticipantsStepProps> = ({ selected, onChange 
       {/* Results count */}
       {!loading && !error && (
         <Typography sx={{ fontSize: "12px", color: "#9CA3AF", mb: 1.5 }}>
-          {pageTotal} employee{pageTotal !== 1 ? "s" : ""}
-          {search || roleFilter !== "all" || deptFilter !== "all" ? " match your filters" : " total"}
+          {search || roleFilter !== "all" || deptFilter !== "all"
+            ? t(`${PS}.results_filtered`, { count: pageTotal })
+            : t(`${PS}.results_total`, { count: pageTotal })}
         </Typography>
       )}
 
@@ -173,7 +177,7 @@ const ParticipantsStep: React.FC<ParticipantsStepProps> = ({ selected, onChange 
               sx={{ color: "#D1D5DB", "&.Mui-checked": { color: PURPLE }, "&.MuiCheckbox-indeterminate": { color: PURPLE }, p: 0 }}
             />
             <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#6B7280" }}>
-              Select all on this page ({members.length})
+              {t(`${PS}.select_all`, { count: members.length })}
             </Typography>
           </Box>
         )}
@@ -187,13 +191,13 @@ const ParticipantsStep: React.FC<ParticipantsStepProps> = ({ selected, onChange 
             <PeopleAltOutlined sx={{ fontSize: 40, color: "#D1D5DB", mb: 1.5 }} />
             <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#374151" }}>
               {search || roleFilter !== "all" || deptFilter !== "all"
-                ? "No employees match your filters"
-                : "No employees found"}
+                ? t(`${PS}.empty_filtered`)
+                : t(`${PS}.empty_none`)}
             </Typography>
             <Typography sx={{ fontSize: "12px", color: "#9CA3AF", mt: 0.5 }}>
               {search || roleFilter !== "all" || deptFilter !== "all"
-                ? "Try adjusting your filters."
-                : "Invite employees to your workspace first."}
+                ? t(`${PS}.hint_filtered`)
+                : t(`${PS}.hint_invite`)}
             </Typography>
           </Box>
         ) : (

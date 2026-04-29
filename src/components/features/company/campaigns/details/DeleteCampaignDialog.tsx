@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import {
   Box, Typography, IconButton,
@@ -9,6 +11,7 @@ import PeopleAltOutlined     from "@mui/icons-material/PeopleAltOutlined";
 import AssignmentOutlined    from "@mui/icons-material/AssignmentOutlined";
 import WarningAmberOutlined  from "@mui/icons-material/WarningAmberOutlined";
 import AppButton             from "@/components/ui/AppButton";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   open: boolean;
@@ -19,98 +22,115 @@ interface Props {
   loading?: boolean;
 }
 
-const DeleteCampaignDialog: React.FC<Props> = ({ open, campaignTitle, participantCount, onClose, onConfirm, loading }) => (
-  <Dialog
-    open={open}
-    onClose={onClose}
-    maxWidth="xs"
-    fullWidth
-    slotProps={{ paper: { sx: { borderRadius: "16px", boxShadow: "0 20px 60px rgba(0,0,0,0.12)" } } }}
-  >
-    <DialogTitle sx={{ p: 0 }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 3, pt: 2.5, pb: 2 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Box sx={{
-            width: 40, height: 40, borderRadius: "11px",
-            bgcolor: "#FEF2F2", border: "1px solid #FECACA",
-            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-          }}>
-            <DeleteOutlineOutlined sx={{ fontSize: 19, color: "#DC2626" }} />
+const DeleteCampaignDialog: React.FC<Props> = ({
+  open,
+  campaignTitle,
+  participantCount,
+  onClose,
+  onConfirm,
+  loading,
+}) => {
+  const { t } = useTranslation("campaign");
+
+  const sessionsLine =
+    participantCount != null && participantCount > 0
+      ? t(
+          participantCount === 1
+            ? "dialogs.delete_sessions_one"
+            : "dialogs.delete_sessions_other",
+          { count: participantCount },
+        )
+      : t("dialogs.delete_sessions_none");
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="xs"
+      fullWidth
+      slotProps={{ paper: { sx: { borderRadius: "16px", boxShadow: "0 20px 60px rgba(0,0,0,0.12)" } } }}
+    >
+      <DialogTitle sx={{ p: 0 }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 3, pt: 2.5, pb: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box sx={{
+              width: 40, height: 40, borderRadius: "11px",
+              bgcolor: "#FEF2F2", border: "1px solid #FECACA",
+              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+            }}>
+              <DeleteOutlineOutlined sx={{ fontSize: 19, color: "#DC2626" }} />
+            </Box>
+            <Box>
+              <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>
+                {t("dialogs.delete_title")}
+              </Typography>
+              <Typography sx={{ fontSize: "11px", color: "#9CA3AF", mt: 0.1 }}>
+                {t("dialogs.delete_subtitle")}
+              </Typography>
+            </Box>
           </Box>
-          <Box>
-            <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>
-              Delete Campaign
-            </Typography>
-            <Typography sx={{ fontSize: "11px", color: "#9CA3AF", mt: 0.1 }}>
-              This action cannot be undone
-            </Typography>
-          </Box>
+          <IconButton size="small" onClick={onClose} disabled={loading} sx={{ color: "#9CA3AF" }}>
+            <CloseOutlined sx={{ fontSize: 18 }} />
+          </IconButton>
         </Box>
-        <IconButton size="small" onClick={onClose} disabled={loading} sx={{ color: "#9CA3AF" }}>
-          <CloseOutlined sx={{ fontSize: 18 }} />
-        </IconButton>
-      </Box>
-    </DialogTitle>
+      </DialogTitle>
 
-    <DialogContent sx={{ px: 3, pb: 1, pt: "0 !important" }}>
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <DialogContent sx={{ px: 3, pb: 1, pt: "0 !important" }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
 
-        <Typography sx={{ fontSize: "13.5px", color: "#374151", lineHeight: 1.7 }}>
-          You are about to permanently delete{" "}
-          <Box component="span" sx={{ fontWeight: 700, color: "#111827" }}>
-            {campaignTitle}
+          <Typography sx={{ fontSize: "13.5px", color: "#374151", lineHeight: 1.7 }}>
+            {t("dialogs.delete_intro")}{" "}
+            <Box component="span" sx={{ fontWeight: 700, color: "#111827" }}>
+              {campaignTitle}
+            </Box>
+            .
+          </Typography>
+
+          <Box sx={{ borderRadius: "12px", border: "1px solid #FDE68A", bgcolor: "#FFFBEB", p: 2, display: "flex", flexDirection: "column", gap: 1.5 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <WarningAmberOutlined sx={{ fontSize: 15, color: "#D97706", flexShrink: 0 }} />
+              <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#92400E" }}>
+                {t("dialogs.delete_impact_title")}
+              </Typography>
+            </Box>
+
+            <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
+              <PeopleAltOutlined sx={{ fontSize: 14, color: "#D97706", mt: "2px", flexShrink: 0 }} />
+              <Typography sx={{ fontSize: "12.5px", color: "#78350F", lineHeight: 1.6 }}>
+                {sessionsLine}
+              </Typography>
+            </Box>
+
+            <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
+              <AssignmentOutlined sx={{ fontSize: 14, color: "#D97706", mt: "2px", flexShrink: 0 }} />
+              <Typography sx={{ fontSize: "12.5px", color: "#78350F", lineHeight: 1.6 }}>
+                {t("dialogs.delete_config_lost")}
+              </Typography>
+            </Box>
           </Box>
-          .
-        </Typography>
 
-        {/* Impact notice */}
-        <Box sx={{ borderRadius: "12px", border: "1px solid #FDE68A", bgcolor: "#FFFBEB", p: 2, display: "flex", flexDirection: "column", gap: 1.5 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <WarningAmberOutlined sx={{ fontSize: 15, color: "#D97706", flexShrink: 0 }} />
-            <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#92400E" }}>
-              What will be deleted
-            </Typography>
-          </Box>
-
-          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
-            <PeopleAltOutlined sx={{ fontSize: 14, color: "#D97706", mt: "2px", flexShrink: 0 }} />
-            <Typography sx={{ fontSize: "12.5px", color: "#78350F", lineHeight: 1.6 }}>
-              {participantCount != null && participantCount > 0
-                ? <><Box component="span" sx={{ fontWeight: 700 }}>{participantCount} participant{participantCount !== 1 ? "s" : ""}</Box> and all their session data will be permanently removed.</>
-                : <>All participant records and session data will be permanently removed.</>
-              }
-            </Typography>
-          </Box>
-
-          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
-            <AssignmentOutlined sx={{ fontSize: 14, color: "#D97706", mt: "2px", flexShrink: 0 }} />
-            <Typography sx={{ fontSize: "12.5px", color: "#78350F", lineHeight: 1.6 }}>
-              The campaign configuration, module settings, and all responses will be lost.
-            </Typography>
-          </Box>
         </Box>
+      </DialogContent>
 
-      </Box>
-    </DialogContent>
-
-    <DialogActions sx={{ px: 3, pb: 2.5, pt: 2, gap: 1 }}>
-      <Button
-        onClick={onClose}
-        disabled={loading}
-        sx={{ textTransform: "none", fontWeight: 600, fontSize: "13px", color: "#6B7280", "&:hover": { bgcolor: "#F3F4F6" } }}
-      >
-        Cancel
-      </Button>
-      <AppButton
-        label="Delete Campaign"
-        variant="danger"
-        size="medium"
-        startIcon={<DeleteOutlineOutlined />}
-        loading={loading}
-        onClick={onConfirm}
-      />
-    </DialogActions>
-  </Dialog>
-);
+      <DialogActions sx={{ px: 3, pb: 2.5, pt: 2, gap: 1 }}>
+        <Button
+          onClick={onClose}
+          disabled={loading}
+          sx={{ textTransform: "none", fontWeight: 600, fontSize: "13px", color: "#6B7280", "&:hover": { bgcolor: "#F3F4F6" } }}
+        >
+          {t("dialogs.cancel")}
+        </Button>
+        <AppButton
+          label={t("dialogs.confirm_delete")}
+          variant="danger"
+          size="medium"
+          startIcon={<DeleteOutlineOutlined />}
+          loading={loading}
+          onClick={onConfirm}
+        />
+      </DialogActions>
+    </Dialog>
+  );
+};
 
 export default DeleteCampaignDialog;

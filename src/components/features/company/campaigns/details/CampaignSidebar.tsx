@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { Box, Typography } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import ContentCopyOutlined from "@mui/icons-material/ContentCopyOutlined";
 import LinkOutlined from "@mui/icons-material/LinkOutlined";
 import OpenInNewOutlined from "@mui/icons-material/OpenInNewOutlined";
@@ -9,8 +10,11 @@ import UpdateOutlined from "@mui/icons-material/UpdateOutlined";
 import SecurityOutlined from "@mui/icons-material/SecurityOutlined";
 import GroupOutlined from "@mui/icons-material/GroupOutlined";
 import { Campaign } from "@/types/campaign";
-import { STATUS_COLORS, TYPE_LABELS, MODULE_CONFIG } from "@/constants/campaign";
+import { STATUS_COLORS } from "@/constants/campaign";
 import { fmtDate } from "@/utils/functions";
+
+const CD = "detail";
+const CW = "create_wizard";
 
 const TEAL  = "#0D9488";
 const CARD  = {
@@ -42,6 +46,7 @@ const CampaignSidebar: React.FC<Props> = ({ campaign, showLastUpdated = true }) 
 
 const CampaignLinkCard: React.FC<{ linkToken: string }> = ({ linkToken }) => {
   const [copied, setCopied] = useState(false);
+  const { t } = useTranslation("campaign");
   const url = typeof window !== "undefined"
     ? `${window.location.origin}/campaign/${linkToken}`
     : `/campaign/${linkToken}`;
@@ -63,7 +68,7 @@ const CampaignLinkCard: React.FC<{ linkToken: string }> = ({ linkToken }) => {
           <LinkOutlined sx={{ fontSize: 14, color: TEAL }} />
         </Box>
         <Typography sx={{ fontWeight: 700, fontSize: "0.8125rem", color: "#0F172A" }}>
-          Campaign Link
+          {t(`${CD}.sidebar_campaign_link`)}
         </Typography>
       </Box>
 
@@ -95,7 +100,7 @@ const CampaignLinkCard: React.FC<{ linkToken: string }> = ({ linkToken }) => {
               ? <CheckOutlined sx={{ fontSize: 13, color: "#16A34A" }} />
               : <ContentCopyOutlined sx={{ fontSize: 13, color: TEAL }} />}
             <Typography sx={{ fontSize: "12px", fontWeight: 700, color: copied ? "#16A34A" : TEAL }}>
-              {copied ? "Copied!" : "Copy"}
+              {copied ? t(`${CD}.sidebar_copied`) : t(`${CD}.sidebar_copy`)}
             </Typography>
           </Box>
           <Box
@@ -111,7 +116,7 @@ const CampaignLinkCard: React.FC<{ linkToken: string }> = ({ linkToken }) => {
             }}
           >
             <OpenInNewOutlined sx={{ fontSize: 13, color: "#64748B" }} />
-            <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#475569" }}>Open</Typography>
+            <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#475569" }}>{t(`${CD}.sidebar_open`)}</Typography>
           </Box>
         </Box>
       </Box>
@@ -147,13 +152,17 @@ const InfoRow: React.FC<{
 );
 
 const CampaignInfoCard: React.FC<{ campaign: Campaign; showLastUpdated?: boolean }> = ({ campaign, showLastUpdated = true }) => {
+  const { t } = useTranslation("campaign");
   const sc       = STATUS_COLORS[campaign.status] ?? STATUS_COLORS.DRAFT;
-  const modLabel = MODULE_CONFIG[campaign.module?.type]?.label ?? campaign.module?.type;
+  const modType  = campaign.module?.type;
+  const modLabel =
+    modType != null ? t(`${CW}.modules.${modType}.label`) : undefined;
+  const statusLabel = t(`status.${campaign.status}`, { defaultValue: campaign.status });
 
   return (
     <Box sx={{ ...CARD, p: 0, overflow: "hidden" }}>
       <Box sx={{ px: 2.25, pt: 2, pb: 1.5, borderBottom: "1px solid #F3F4F6" }}>
-        <Typography sx={{ fontWeight: 700, fontSize: "0.8125rem", color: "#0F172A" }}>Quick Info</Typography>
+        <Typography sx={{ fontWeight: 700, fontSize: "0.8125rem", color: "#0F172A" }}>{t(`${CD}.sidebar_quick_info`)}</Typography>
       </Box>
       <Box sx={{ px: 2.25, pt: 0.5, pb: 1.75 }}>
 
@@ -161,10 +170,10 @@ const CampaignInfoCard: React.FC<{ campaign: Campaign; showLastUpdated?: boolean
         <InfoRow
           icon={<Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: sc.fg }} />}
           iconColor={sc.fg}
-          label="Status"
+          label={t(`${CD}.sidebar_label_status`)}
           value={
             <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, px: 1, py: 0.2, borderRadius: "999px", bgcolor: sc.bg }}>
-              <Typography sx={{ fontSize: "11px", fontWeight: 700, color: sc.fg }}>{campaign.status}</Typography>
+              <Typography sx={{ fontSize: "11px", fontWeight: 700, color: sc.fg }}>{statusLabel}</Typography>
             </Box>
           }
         />
@@ -173,7 +182,7 @@ const CampaignInfoCard: React.FC<{ campaign: Campaign; showLastUpdated?: boolean
         <InfoRow
           icon={<SecurityOutlined sx={{ fontSize: 14 }} />}
           iconColor="#8310FF"
-          label="Module"
+          label={t(`${CD}.sidebar_label_module`)}
           value={modLabel}
         />
 
@@ -182,7 +191,7 @@ const CampaignInfoCard: React.FC<{ campaign: Campaign; showLastUpdated?: boolean
           <InfoRow
             icon={<GroupOutlined sx={{ fontSize: 14 }} />}
             iconColor="#F59E0B"
-            label="Department"
+            label={t(`${CD}.sidebar_label_department`)}
             value={campaign.targetDepartment}
           />
         )}
@@ -191,7 +200,7 @@ const CampaignInfoCard: React.FC<{ campaign: Campaign; showLastUpdated?: boolean
         <InfoRow
           icon={<CalendarTodayOutlined sx={{ fontSize: 14 }} />}
           iconColor="#64748B"
-          label="Created"
+          label={t(`${CD}.sidebar_label_created`)}
           value={fmtDate(campaign.createdAt)}
         />
 
@@ -200,7 +209,7 @@ const CampaignInfoCard: React.FC<{ campaign: Campaign; showLastUpdated?: boolean
           <InfoRow
             icon={<UpdateOutlined sx={{ fontSize: 14 }} />}
             iconColor="#94A3B8"
-            label="Updated"
+            label={t(`${CD}.sidebar_label_updated`)}
             value={fmtDate(campaign.updatedAt)}
           />
         )}

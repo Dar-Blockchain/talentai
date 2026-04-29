@@ -104,6 +104,7 @@ export const AppDatePicker: React.FC<AppDatePickerProps> = ({
                     fontSize: 13,
                     height: 38,
                     bgcolor: disabled ? "#F3F4F6" : "#fff",
+                    cursor: disabled ? "default" : "pointer",
                     "&:hover fieldset": {
                       borderColor: error ? "#EF4444" : "#D1D5DB",
                     },
@@ -114,6 +115,9 @@ export const AppDatePicker: React.FC<AppDatePickerProps> = ({
                     "& fieldset": {
                       borderColor: error ? "#EF4444" : "#E5E7EB",
                     },
+                  },
+                  "& .MuiOutlinedInput-input": {
+                    cursor: disabled ? "default" : "pointer",
                   },
                 }}
                 InputProps={{
