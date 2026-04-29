@@ -1,4 +1,4 @@
-const SkillInterviewAssessmentService = require("../../services/InterviewServices/SkillInterviewAssessment.service");
+const SkillInterviewAssessmentService = require("../../services/InterviewServices/skill.InterviewAssessment.service");
 const Profile = require("../../models/Profile.model");
 
 // ========== POST - Create a new assessment ==========
