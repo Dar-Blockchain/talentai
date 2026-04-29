@@ -2,6 +2,7 @@ import React, { memo, useState } from "react";
 import { Box, Typography, Alert, CircularProgress, useMediaQuery } from "@mui/material";
 import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
 import EmailOutlined from "@mui/icons-material/EmailOutlined";
+import { useTranslation } from "react-i18next";
 import EmployeeCard from "./EmployeeCard";
 import EmployeeSkeletonCard from "./EmployeeSkeletonCard";
 import InvitationCard from "./InvitationCard";
@@ -55,6 +56,7 @@ const EmployeesList: React.FC<EmployeesListProps> = memo(({
   invitations = [], fetchingInvitations = false, onResend, onCancel,
   total, page, pageSize, onPageChange,
 }) => {
+  const { t } = useTranslation("dashboard");
   const isMobile = useMediaQuery("(max-width:650px)");
 
   const [tab, setTab] = useState<"employees" | "invitations">("employees");
@@ -105,8 +107,8 @@ const EmployeesList: React.FC<EmployeesListProps> = memo(({
 
         {/* Tabs */}
         <Box sx={{ display: "inline-flex", alignItems: "center", bgcolor: "#F3F4F6", borderRadius: "12px", p: 0.5, gap: 0.5, flexShrink: 0 }}>
-          <TabPill id="employees"   label="Employees"   icon={<PeopleAltOutlined sx={{ fontSize: 16 }} />} count={loading ? "…" : total} color={PURPLE} />
-          {canInvite && <TabPill id="invitations" label="Invitations" icon={<EmailOutlined sx={{ fontSize: 16 }} />}    count={fetchingInvitations ? "…" : invitations.length} color={AMBER} pulse={invitations.length > 0} />}
+          <TabPill id="employees"   label={t("pages.employees.list.tab_employees")} icon={<PeopleAltOutlined sx={{ fontSize: 16 }} />} count={loading ? "…" : total} color={PURPLE} />
+          {canInvite && <TabPill id="invitations" label={t("pages.employees.list.tab_invitations")} icon={<EmailOutlined sx={{ fontSize: 16 }} />}    count={fetchingInvitations ? "…" : invitations.length} color={AMBER} pulse={invitations.length > 0} />}
         </Box>
 
         {/* Filter bar (employees tab only) */}
@@ -136,10 +138,10 @@ const EmployeesList: React.FC<EmployeesListProps> = memo(({
             <Box sx={{ textAlign: "center", py: 10 }}>
               <PeopleAltOutlined sx={{ fontSize: 48, color: "#D1D5DB", mb: 2 }} />
               <Typography sx={{ fontSize: "15px", fontWeight: 600, color: "#374151" }}>
-                {hasAnyFilter ? "No employees match your filters" : "No employees yet"}
+                {hasAnyFilter ? t("pages.employees.list.empty_employees_filtered") : t("pages.employees.list.empty_employees_none")}
               </Typography>
               <Typography sx={{ fontSize: "13px", color: "#9CA3AF", mt: 0.5 }}>
-                {hasAnyFilter ? "Try adjusting or clearing your filters." : "Add your first employee to get started."}
+                {hasAnyFilter ? t("pages.employees.list.empty_employees_filtered_hint") : t("pages.employees.list.empty_employees_hint")}
               </Typography>
             </Box>
           ) : (
@@ -153,8 +155,8 @@ const EmployeesList: React.FC<EmployeesListProps> = memo(({
           ) : invitations.length === 0 ? (
             <Box sx={{ textAlign: "center", py: 10 }}>
               <EmailOutlined sx={{ fontSize: 48, color: "#D1D5DB", mb: 2 }} />
-              <Typography sx={{ fontSize: "15px", fontWeight: 600, color: "#374151" }}>No pending invitations</Typography>
-              <Typography sx={{ fontSize: "13px", color: "#9CA3AF", mt: 0.5 }}>Invitations you send will appear here until accepted.</Typography>
+              <Typography sx={{ fontSize: "15px", fontWeight: 600, color: "#374151" }}>{t("pages.employees.list.empty_invitations_title")}</Typography>
+              <Typography sx={{ fontSize: "13px", color: "#9CA3AF", mt: 0.5 }}>{t("pages.employees.list.empty_invitations_sub")}</Typography>
             </Box>
           ) : onResend && onCancel ? (
             <Box sx={GRID}>{invitations.map((inv) => <InvitationCard key={inv._id} invitation={inv} onResend={onResend} onCancel={onCancel} />)}</Box>

@@ -448,18 +448,6 @@
         "top_cv_score": "Meilleur score CV"
       }
     },
-    "employees": {
-      "title": "Employés",
-      "subtitle": "Gérez les membres de votre équipe, leurs rôles et les invitations.",
-      "add_employee": "Ajouter un employé",
-      "invited_success": "Membre de l'équipe invité avec succès !",
-      "role_updated": "Rôle du membre mis à jour avec succès !",
-      "deleted_success": "Membre de l'équipe supprimé avec succès !",
-      "resend_success": "Invitation renvoyée avec succès !",
-      "resend_error": "Échec du renvoi de l'invitation",
-      "cancel_success": "Invitation annulée avec succès !",
-      "cancel_error": "Échec de l'annulation de l'invitation"
-    },
     "departments": {
       "title": "Départements",
       "subtitle": "Gérez les départements organisationnels de votre entreprise.",
