@@ -18,7 +18,7 @@ const resolveCompanyActor = require("../middleware/resolve-company-actor.middlew
 
 
 // All routes below: accept either API Key or JWT, then verify Company access
-router.use(requireAuth, authLogMiddleware("LinkedinPost"));
+router.use(requireAuth, controledAcces('Company'), authLogMiddleware("LinkedinPost"));
 
 
 // POST /linkedin/generate-job-post
