@@ -56,7 +56,7 @@ const shouldSendFirstReminder = (application) => {
   const shouldSend = hoursElapsed >= REMINDER_CONFIG.FIRST_REMINDER_HOURS && !application.firstReminderSentAt;
   
   const MSG = REMINDER_CONFIG.MESSAGES;
-  console.log(`   [FIRST CHECK] Hours: ${hoursElapsed.toFixed(1)}h, Already sent: ${!!application.firstReminderSentAt}, Should send: ${shouldSend}`);
+  //console.log(`   [FIRST CHECK] Hours: ${hoursElapsed.toFixed(1)}h, Already sent: ${!!application.firstReminderSentAt}, Should send: ${shouldSend}`);
   return shouldSend;
 };
 
@@ -69,9 +69,9 @@ const shouldSendSecondReminder = (application, post) => {
   const notYetSent = !application.secondReminderSentAt;
   const shouldSend = isWithin24HoursOfExpiration && notYetSent;
   
-  console.log(`   [SECOND CHECK] Hours until expiration: ${hoursUntilExpiration.toFixed(1)}h`);
-  console.log(`                 Within < 24h: ${isWithin24HoursOfExpiration}, Not sent: ${notYetSent}`);
-  console.log(`                 Should send: ${shouldSend}`);
+  //console.log(`   [SECOND CHECK] Hours until expiration: ${hoursUntilExpiration.toFixed(1)}h`);
+  //console.log(`                 Within < 24h: ${isWithin24HoursOfExpiration}, Not sent: ${notYetSent}`);
+  //console.log(`                 Should send: ${shouldSend}`);
   return shouldSend;
 };
 
@@ -79,7 +79,7 @@ const shouldSendSecondReminder = (application, post) => {
 
 const sendReminderEmail = async (application, post, reminderType) => {
   try {
-    console.log(`\n📧 [REMINDER - ${reminderType}] Processing application: ${application._id}`);
+    //console.log(`\n📧 [REMINDER - ${reminderType}] Processing application: ${application._id}`);
 
     // Fetch candidate profile
     const candidateProfile = await Profile.findById(application.profile).populate('userId');
@@ -105,11 +105,11 @@ const sendReminderEmail = async (application, post, reminderType) => {
       ? new Date(post.expirationDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
       : null;
 
-    console.log(`   📧 To: ${candidateEmail}`);
-    console.log(`   👤 Candidate: ${firstName}`);
-    console.log(`   💼 Position: ${jobTitle}`);
-    console.log(`   🏢 Company: ${companyName}`);
-    console.log(`   🔗 Interview Link: ${interviewLink}`);
+    // console.log(`   📧 To: ${candidateEmail}`);
+    // console.log(`   👤 Candidate: ${firstName}`);
+    // console.log(`   💼 Position: ${jobTitle}`);
+    // console.log(`   🏢 Company: ${companyName}`);
+    // console.log(`   🔗 Interview Link: ${interviewLink}`);
 
     // Nudge #2 for first reminder (4 days), nudge #3 for second reminder (24h before deadline)
     const nudgeNumber = reminderType === REMINDER_TYPES.SECOND_REMINDER ? 3 : 2;
@@ -124,7 +124,7 @@ const sendReminderEmail = async (application, post, reminderType) => {
       return false;
     }
 
-    console.log(`   ✅ Email sent successfully`);
+    // console.log(`   ✅ Email sent successfully`);
     return true;
 
   } catch (error) {
@@ -148,7 +148,7 @@ const updateApplicationWithReminder = async (applicationId, reminderType) => {
     }
 
     await JobApplication.findByIdAndUpdate(applicationId, updateData, { new: true });
-    console.log(`   ✅ Database updated - ${reminderType} reminder tracked`);
+    // console.log(`   ✅ Database updated - ${reminderType} reminder tracked`);
     return true;
 
   } catch (error) {
@@ -163,16 +163,16 @@ const runReminderJob = async ({ force = false } = {}) => {
   try {
     const MSG = REMINDER_CONFIG.MESSAGES;
 
-    console.log(`\n⏰ [REMINDER SCHEDULER] Running at ${new Date().toLocaleString()}${force ? ' (FORCED)' : ''}`);
+    // console.log(`\n⏰ [REMINDER SCHEDULER] Running at ${new Date().toLocaleString()}${force ? ' (FORCED)' : ''}`);
 
     // Check if we're within the time window (skip when forced or in test mode)
     if (!force && !isWithinTimeWindow()) {
       const currentHour = new Date().getHours();
-      console.log(`⏭️  Outside time window (current hour: ${currentHour}). Skipping.`);
+      // console.log(`⏭️  Outside time window (current hour: ${currentHour}). Skipping.`);
       return;
     }
 
-    console.log(`✅ Within time window. Processing reminders...`);
+    // console.log(`✅ Within time window. Processing reminders...`);
 
     // Find active applications that haven't completed interview
     const pendingApplications = await JobApplication.find({
@@ -187,7 +187,7 @@ const runReminderJob = async ({ force = false } = {}) => {
       select: 'expirationDate _id user jobDetails'
     });
 
-    console.log(`📊 Found ${pendingApplications.length} pending applications\n`);
+    // console.log(`📊 Found ${pendingApplications.length} pending applications\n`);
 
     let firstReminderCount = 0;
     let secondReminderCount = 0;
@@ -203,10 +203,10 @@ const runReminderJob = async ({ force = false } = {}) => {
       const hoursElapsed = calculateHoursSinceApplication(application.appliedAt);
       const hoursUntilExp = calculateHoursUntilExpiration(application.post.expirationDate);
 
-      console.log(`📋 Application: ${application._id}`);
-      console.log(`   ⏱️  Since application: ${hoursElapsed.toFixed(1)}h`);
-      console.log(`   ⏳ Until expiration: ${hoursUntilExp.toFixed(1)}h`);
-      console.log(`   Status: ${application.status}`);
+      // console.log(`📋 Application: ${application._id}`);
+      // console.log(`   ⏱️  Since application: ${hoursElapsed.toFixed(1)}h`);
+      // console.log(`   ⏳ Until expiration: ${hoursUntilExp.toFixed(1)}h`);
+      // console.log(`   Status: ${application.status}`);
 
       // ===== FIRST REMINDER (24 hours) =====
       if (shouldSendFirstReminder(application)) {
@@ -235,11 +235,11 @@ const runReminderJob = async ({ force = false } = {}) => {
       console.log('');
     }
 
-    console.log(`\n📊 Reminder job complete:`);
-    console.log(`   🔔 First reminders (24h):  ${firstReminderCount}`);
-    console.log(`   🔔 Second reminders (48h): ${secondReminderCount}`);
-    console.log(`   ⏭️  Skipped: ${skippedCount}`);
-    console.log(`   📈 Total reminders sent: ${firstReminderCount + secondReminderCount}`);
+    // console.log(`\n📊 Reminder job complete:`);
+    // console.log(`   🔔 First reminders (24h):  ${firstReminderCount}`);
+    // console.log(`   🔔 Second reminders (48h): ${secondReminderCount}`);
+    // console.log(`   ⏭️  Skipped: ${skippedCount}`);
+    // console.log(`   📈 Total reminders sent: ${firstReminderCount + secondReminderCount}`);
 
   } catch (error) {
     console.error(`\n❌ [REMINDER SCHEDULER] Critical error:`, error.message);
