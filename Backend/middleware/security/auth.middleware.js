@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const userModel = require("../../models/User.model");
-const ApiKey = require("../../models/apiKeys.model");
+const ApiKey = require("../../models/apiKey.model");
 const { getRedisClient, getClientIp, normalizeIp } = require("./api-key.middleware");
 
 const requireAuthUser = async (req, res, next) => {
