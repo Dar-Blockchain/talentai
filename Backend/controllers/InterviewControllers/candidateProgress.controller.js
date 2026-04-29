@@ -296,7 +296,7 @@ exports.getProgress = async (req, res) => {
 
     // 🔥 NEW: Get current step details and build interview params
     const currentStep = progress.currentStep;
-    const Post = require("../../models/post.model");
+    const Post = require("../../models/posts.model");
     const post = await Post.findById(jobId).select("title companyName");
 
     if (!post) {

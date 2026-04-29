@@ -1,5 +1,5 @@
 const PostInterviewAssessment = require("../../models/postInterviewAssessment.model");
-const Post = require("../../models/post.model");
+const Post = require("../../models/posts.model");
 const Profile = require("../../models/Profile.model");
 const User = require("../../models/User.model");
 const CandidatePostStepProgress = require("../../models/candidatePostStepsProgress.model");

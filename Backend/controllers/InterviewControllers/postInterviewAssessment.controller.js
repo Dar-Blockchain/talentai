@@ -4,7 +4,7 @@ const PostSteps = require("../../models/postSteps.model");
 const User = require("../../models/User.model");
 const Profile = require("../../models/Profile.model");
 const JobApplication = require("../../models/jobApplication.model");
-const Post = require("../../models/post.model");
+const Post = require("../../models/posts.model");
 const { sendInterviewAssessmentEmail, sendInterviewCompletionNotificationToCompany } = require("../../utils/email-service");
 
 // ========== CREATE ==========

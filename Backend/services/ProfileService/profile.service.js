@@ -1,6 +1,6 @@
 const Profile = require("../../models/Profile.model");
 const User = require("../../models/User.model");
-const Post = require("../../models/post.model");
+const Post = require("../../models/posts.model");
 // const { POST_STATUS } = require("../../constants/posts.constants");
 const fs = require("fs");
 const path = require("path");

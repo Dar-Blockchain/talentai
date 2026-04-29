@@ -3,7 +3,7 @@ const path = require("path");
 const { PDFParse } = require("pdf-parse");
 const JobApplication = require("../models/jobApplication.model");
 const Profile = require("../models/Profile.model");
-const Post = require("../models/post.model");
+const Post = require("../models/posts.model");
 const { callLLM } = require("../helpers/bedrock.helpers");
 const { analyzeCV } = require("./analyseResume.service");
 
