@@ -7,11 +7,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import {
   fetchJobById,
-  fetchJobMatches,
   selectCurrentJob,
   selectCurrentJobLoading,
   selectCurrentJobError,
-  selectJobMatches,
   updatePostStatus,
 } from "@/store/slices/postSlice";
 import { useTranslation } from "react-i18next";
@@ -50,11 +48,8 @@ const PostDetailsPage: React.FC = () => {
   const error = useSelector(selectCurrentJobError);
   const connectedUser        = useSelector((state: RootState) => state.user.connectedUser.user);
   const companyMembership    = useSelector((state: RootState) => state.user.connectedUser.companyMembership);
-  const jobMatches = useSelector(selectJobMatches);
-  const hasPassedCandidates = jobMatches.length > 0;
-
   const [activeEdit, setActiveEdit] = useState<"post" | "recruitment" | null>(null);
-  const [activeTab, setActiveTab] = useState<"details" | "applications" | "candidates">("details");
+  const [activeTab, setActiveTab] = useState<"details" | "applications">("details");
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -62,13 +57,12 @@ const PostDetailsPage: React.FC = () => {
   useEffect(() => {
     if (id) {
       dispatch(fetchJobById(id as string));
-      dispatch(fetchJobMatches({ selectedJobId: id as string, page: 1, limit: 1, passedInterview: true }));
     }
   }, [id, dispatch]);
 
   // Reset edit mode when switching tabs
   useEffect(() => {
-    if (activeTab === "candidates") setActiveEdit(null);
+    setActiveEdit(null);
   }, [activeTab]);
 
   const isOwner = useMemo(() => {
@@ -307,13 +301,13 @@ const PostDetailsPage: React.FC = () => {
                           >
                             {/* Edit */}
                             <Tooltip
-                              title={!isDraft ? t("pages.post_detail.tooltips.cannot_edit_published") : hasPassedCandidates ? t("pages.post_detail.tooltips.cannot_edit_passed") : ""}
+                              title={!isDraft ? t("pages.post_detail.tooltips.cannot_edit_published") : ""}
                               arrow placement="left"
-                              disableHoverListener={isDraft && !hasPassedCandidates}
+                              disableHoverListener={isDraft}
                             >
                               <span>
                                 <MenuItem
-                                  disabled={!isDraft || hasPassedCandidates}
+                                  disabled={!isDraft}
                                   onClick={() => { setMenuAnchor(null); setActiveEdit("post"); }}
                                   sx={{ mx: 0.5, borderRadius: "8px", gap: 1.25, py: 1, px: 1.25, "&:hover": { bgcolor: "#F0FDFA" }, "&.Mui-disabled": { opacity: 0.45 } }}
                                 >
