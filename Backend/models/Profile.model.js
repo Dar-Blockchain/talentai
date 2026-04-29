@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const TodoList = require("./TodoList.model");
+const TodoList = require("./Todo.List.model");
 
 // Sub-schemas for skills and softSkills to enable per-item timestamps
 const skillSchema = new mongoose.Schema(
