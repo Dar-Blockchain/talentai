@@ -485,7 +485,7 @@ exports.getPostsByUserTopSkills = async (req, res) => {
 exports.getPublicStats = async (req, res) => {
   try {
     const User = require("../../models/User.model");
-    const Post = require("../../models/post.model");
+    const Post = require("../../models/posts.model");
 
     // Count in parallel with .lean() for read-only
     const [userCount, postCount, companyCount] = await Promise.all([
@@ -508,7 +508,7 @@ exports.getJobInterviewConfig = async (req, res) => {
   try {
     const { jobId } = req.params;
     const candidateId = req.user?._id || req.query.candidateId;
-    const Post = require("../../models/post.model");
+    const Post = require("../../models/posts.model");
 
     // Fetch job post with user (company) info and PostSteps
     const post = await Post.findById(jobId)

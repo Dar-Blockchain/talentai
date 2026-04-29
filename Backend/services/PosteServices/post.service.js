@@ -1,4 +1,4 @@
-const Post = require("../../models/post.model");
+const Post = require("../../models/posts.model");
 const User = require("../../models/User.model");
 const Profile = require("../../models/Profile.model");
 const PostInterviewAssessmentModel = require("../../models/postInterviewAssessment.model");
