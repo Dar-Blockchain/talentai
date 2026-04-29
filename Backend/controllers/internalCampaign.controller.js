@@ -2,7 +2,7 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 const { randomUUID } = require("crypto");
 const InternalCampaign = require("../models/InternalCampaign.model");
-const CampaignParticipant = require("../models/Campaign.Participant.model");
+const CampaignParticipant = require("../models/CampaignParticipant.model");
 const CampaignResponse = require("../models/CampaignResponse.model");
 const CompanyMembership = require("../models/CompanyMembership.model");
 const Profile = require("../models/Profile.model");
