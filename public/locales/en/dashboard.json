@@ -294,11 +294,6 @@
         "top_cv_score": "Top CV Score"
       }
     },
-    "departments": {
-      "title": "Departments",
-      "subtitle": "Manage your company's organizational departments.",
-      "new_department": "New Department"
-    },
     "settings": {
       "title": "Settings",
       "subtitle": "Manage your company profile and API keys",

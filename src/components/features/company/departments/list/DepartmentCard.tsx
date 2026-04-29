@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Box, Typography, IconButton, Menu, MenuItem } from "@mui/material";
 import { motion } from "framer-motion";
-import { useRouter } from "next/router";
+import { useTranslation } from "react-i18next";
 import CorporateFareOutlined  from "@mui/icons-material/CorporateFareOutlined";
 import EditOutlined            from "@mui/icons-material/EditOutlined";
 import DeleteOutlineOutlined   from "@mui/icons-material/DeleteOutlineOutlined";
@@ -21,8 +21,10 @@ const PALETTE = [
   { accent: "#16A34A", bg: "#F0FDF4" },
 ];
 
-const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+function formatCardDate(iso: string, locale: string) {
+  const loc = locale.startsWith("fr") ? "fr-FR" : "en-US";
+  return new Date(iso).toLocaleDateString(loc, { month: "short", day: "numeric", year: "numeric" });
+}
 
 export interface DepartmentCardProps {
   department: Department;
@@ -35,9 +37,13 @@ export interface DepartmentCardProps {
 const DepartmentCard: React.FC<DepartmentCardProps> = ({
   department, index, onEdit, onDelete, canManage = true,
 }) => {
-  const router = useRouter();
+  const { t, i18n } = useTranslation("dashboard");
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const { accent, bg } = PALETTE[index % PALETTE.length];
+  const createdLabel = useMemo(
+    () => formatCardDate(department.createdAt, i18n.language),
+    [department.createdAt, i18n.language],
+  );
 
   return (
     <motion.div
@@ -126,7 +132,7 @@ const DepartmentCard: React.FC<DepartmentCardProps> = ({
                     }}>
                       <EditOutlined sx={{ fontSize: 13, color: "#2563EB" }} />
                     </Box>
-                    <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#2563EB" }}>Edit</Typography>
+                    <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#2563EB" }}>{t("pages.departments.card.menu_edit")}</Typography>
                   </MenuItem>
 
                   <Box sx={{ my: 0.75, mx: 1, height: "1px", bgcolor: "#F3F4F6" }} />
@@ -142,7 +148,7 @@ const DepartmentCard: React.FC<DepartmentCardProps> = ({
                     }}>
                       <DeleteOutlineOutlined sx={{ fontSize: 13, color: "#DC2626" }} />
                     </Box>
-                    <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#DC2626" }}>Delete</Typography>
+                    <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#DC2626" }}>{t("pages.departments.card.menu_delete")}</Typography>
                   </MenuItem>
                 </Menu>
               </>
@@ -154,7 +160,7 @@ const DepartmentCard: React.FC<DepartmentCardProps> = ({
             fontSize: "12.5px", color: "#6B7280", lineHeight: 1.65, flex: 1,
             display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
           }}>
-            {department.description || "No description provided."}
+            {department.description || t("pages.departments.card.no_description")}
           </Typography>
         </Box>
 
@@ -167,13 +173,13 @@ const DepartmentCard: React.FC<DepartmentCardProps> = ({
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.6 }}>
             <CalendarTodayOutlined sx={{ fontSize: 12, color: "#9CA3AF" }} />
             <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>
-              {fmtDate(department.createdAt)}
+              {createdLabel}
             </Typography>
           </Box>
           <Link href={`/company/departments/${department._id}`}>
             <AppButton
               endIcon={<ChevronRightOutlined sx={{ fontSize: 14 }} />}
-              label="View"
+              label={t("pages.departments.card.view")}
               size="xs"
             />
           </Link>

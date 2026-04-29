@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -8,11 +8,13 @@ import {
   DialogContent,
   DialogActions,
 } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import AppButton from "@/components/ui/AppButton";
 import DeptFormFields from "../shared/DeptFormFields";
 import { Department } from "@/store/slices/departmentSlice";
 import EditOutlined from "@mui/icons-material/EditOutlined";
 import CloseOutlined from "@mui/icons-material/CloseOutlined";
+import { resolveDepartmentApiMessage } from "@/utils/departmentI18n";
 
 const TEAL = "#0D9488";
 const TEAL_LIGHT = "#F0FDFA";
@@ -34,22 +36,28 @@ const EditDepartmentModal: React.FC<EditDepartmentModalProps> = ({
   saving,
   error,
 }) => {
+  const { t } = useTranslation("dashboard");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [nameError, setNameError] = useState("");
+
+  const displayApiError = useMemo(
+    () => resolveDepartmentApiMessage(error, t),
+    [error, t],
+  );
 
   // Populate fields when a department is passed in
   useEffect(() => {
     if (department) {
       setName(department.name);
-      setDescription(department.description);
+      setDescription(String(department.description ?? ""));
       setNameError("");
     }
   }, [department]);
 
   const handleSave = () => {
     if (!name.trim()) {
-      setNameError("Department name is required.");
+      setNameError(t("pages.departments.form.name_required"));
       return;
     }
     onSave(name.trim(), description.trim());
@@ -80,7 +88,7 @@ const EditDepartmentModal: React.FC<EditDepartmentModalProps> = ({
             <EditOutlined sx={{ fontSize: 16, color: TEAL }} />
           </Box>
           <Typography sx={{ fontSize: "16px", fontWeight: 700, color: "#111827" }}>
-            Edit Department
+            {t("pages.departments.modals.edit.title")}
           </Typography>
         </Box>
         <IconButton size="small" onClick={onClose} disabled={saving}>
@@ -98,20 +106,20 @@ const EditDepartmentModal: React.FC<EditDepartmentModalProps> = ({
             if (nameError) setNameError("");
           }}
           onDescChange={setDescription}
-          apiError={error}
+          apiError={displayApiError}
         />
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
         <AppButton
-          label="Cancel"
+          label={t("pages.departments.modals.edit.cancel")}
           variant="outlined"
           size="medium"
           onClick={onClose}
           disabled={saving}
         />
         <AppButton
-          label="Save Changes"
+          label={t("pages.departments.modals.edit.submit")}
           variant="contained"
           size="medium"
           loading={saving}
