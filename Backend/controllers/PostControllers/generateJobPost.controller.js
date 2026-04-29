@@ -2,7 +2,7 @@ const generateJobPostService = require("../../services/PosteServices/generateJob
 
 module.exports.generateJobPost = async (req, res) => {
   try {
-    const { description, workMode, contractType } = req.body;
+    const { description, workMode, contractType, language = "en" } = req.body;
     const user = req.user;
 
     if (!description) {
@@ -17,7 +17,7 @@ module.exports.generateJobPost = async (req, res) => {
     const result = await generateJobPostService.generateJobPost(
       description,
       user,
-      { workMode, contractType },
+      { workMode, contractType, language },
     );
     res.json(result);
   } catch (error) {

@@ -60,7 +60,7 @@ function registerRoutes(app) {
   app.use("/post-interview-assessments", postInterviewAssessmentRouter); //✅   Post Interview Assessments -> post-interview-assessments
 
   // Posts & Jobs
-  app.use("/linkedinPost", linkedinPostRouter); // LinkedIn Post Generation -> linkedin-post
+  app.use("/post", linkedinPostRouter); // LinkedIn Post Generation -> linkedin-post
   //app.use('/linkedin-post', linkedinPostRouter); // LinkedIn Post Generation -> linkedin-post
   app.use("/post", postRouter); //✅ Post Management -> posts
   app.use("/post-steps", postStepsRouter); //✅ Post Steps Management -> post-steps
