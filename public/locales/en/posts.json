@@ -203,7 +203,8 @@
       "description": "Description",
       "skills": "Required Skills",
       "requirements": "Requirements",
-      "responsibilities": "Responsibilities"
+      "responsibilities": "Responsibilities",
+      "interview_languages": "Interview languages"
     },
     "pipeline": {
       "title": "Recruitment Pipeline",

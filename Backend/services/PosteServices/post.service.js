@@ -290,6 +290,12 @@ module.exports.getPostById = async (postId) => {
     if (!post) {
       throw new Error("Post not found");
     }
+
+    // Ensure interviewLanguages is present for posts created before the field was added
+    if (!post.interviewLanguages || post.interviewLanguages.length === 0) {
+      post.interviewLanguages = ['en'];
+    }
+
     return post;
   } catch (error) {
     throw new Error(`Error fetching post: ${error.message}`);
@@ -548,6 +554,11 @@ module.exports.updatePost = async (postId, userId, updateData) => {
 
     // Prevent modification of createdBy
     if (updateData.createdBy) delete updateData.createdBy;
+
+    // Prevent clearing interviewLanguages — must always have at least one language
+    if (updateData.interviewLanguages !== undefined && (!Array.isArray(updateData.interviewLanguages) || updateData.interviewLanguages.length === 0)) {
+      delete updateData.interviewLanguages;
+    }
 
     Object.assign(post, updateData);
     return await post.save();
