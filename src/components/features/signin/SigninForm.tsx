@@ -222,7 +222,7 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
                     >
                       <Box
                         component="input"
-                        ref={(el: HTMLInputElement | null) => (codeInputsRef.current[i] = el)}
+                        ref={(el: unknown) => { codeInputsRef.current[i] = el as HTMLInputElement | null; }}
                         value={values.code[i] || ""}
                         maxLength={1}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {

@@ -7,11 +7,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import {
   fetchJobById,
-  fetchJobMatches,
   selectCurrentJob,
   selectCurrentJobLoading,
   selectCurrentJobError,
-  selectJobMatches,
   updatePostStatus,
 } from "@/store/slices/postSlice";
 import { useTranslation } from "react-i18next";
@@ -50,8 +48,7 @@ const PostDetailsPage: React.FC = () => {
   const error = useSelector(selectCurrentJobError);
   const connectedUser        = useSelector((state: RootState) => state.user.connectedUser.user);
   const companyMembership    = useSelector((state: RootState) => state.user.connectedUser.companyMembership);
-  const jobMatches = useSelector(selectJobMatches);
-  const hasPassedCandidates = jobMatches.length > 0;
+  const hasPassedCandidates = false;
 
   const [activeEdit, setActiveEdit] = useState<"post" | "recruitment" | null>(null);
   const [activeTab, setActiveTab] = useState<"details" | "applications" | "candidates">("details");
@@ -62,7 +59,6 @@ const PostDetailsPage: React.FC = () => {
   useEffect(() => {
     if (id) {
       dispatch(fetchJobById(id as string));
-      dispatch(fetchJobMatches({ selectedJobId: id as string, page: 1, limit: 1, passedInterview: true }));
     }
   }, [id, dispatch]);
 
