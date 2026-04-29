@@ -1,4 +1,4 @@
-const ApiKeyService = require("../services/ApiKey.service");
+const ApiKeyService = require("../services/apiKeys.service");
 
 /**
  * Create a new API key
