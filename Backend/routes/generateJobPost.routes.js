@@ -21,9 +21,9 @@ const resolveCompanyActor = require("../middleware/resolve-company-actor.middlew
 router.use(requireAuth, controledAcces('Company'), authLogMiddleware("LinkedinPost"));
 
 
-// POST /linkedin/generate-job-post
+// POST /post/generate-job-post
 // Body: { title, description, skills, ... }
 // Description: Generates an attractive LinkedIn post for a job offer
 router.post("/generate-job-post", resolveCompanyActor,generateJobPostController.generateJobPost);
 
-module.exports = router;
+module.exports = router;    
