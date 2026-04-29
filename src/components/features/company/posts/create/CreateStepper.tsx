@@ -28,7 +28,8 @@ const CreateStepper: React.FC = () => {
   const creationType = useSelector(selectCreationType);
 
   const [langModalOpen, setLangModalOpen] = useState(false);
-  const { t } = useTranslation("dashboard");
+  const { t } = useTranslation("posts");
+  const { t: td } = useTranslation("dashboard");
 
   const steps = creationType === "ai" ? ["Job Details"] : ["Job Details", "Recruitment Flow"];
 
@@ -71,13 +72,13 @@ const CreateStepper: React.FC = () => {
   return (
     <Box>
       <PageHeader
-        title={t("pages.posts.create.title")}
-        subtitle={t("pages.posts.create.subtitle")}
+        title={t("create.title")}
+        subtitle={t("create.subtitle")}
         icon={WorkOutlineOutlined}
         breadcrumbs={[
-          { label: t("pages.common.dashboard"), href: "/company/dashboard" },
-          { label: t("pages.posts.title"), href: "/company/posts" },
-          { label: t("pages.posts.create.title") },
+          { label: td("pages.common.dashboard"), href: "/company/dashboard" },
+          { label: t("title"), href: "/company/posts" },
+          { label: t("create.title") },
         ]}
       />
 
@@ -110,7 +111,7 @@ const CreateStepper: React.FC = () => {
             "&:hover": { bgcolor: "#F9FAFB", borderColor: "#9CA3AF" },
           }}
         >
-          {t("pages.posts.create.btn_cancel")}
+          {t("create.btn_cancel")}
         </Button>
 
         <Button
@@ -128,12 +129,12 @@ const CreateStepper: React.FC = () => {
           {isFinishing ? (
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <CircularProgress size={14} sx={{ color: "#9CA3AF" }} />
-              {t("pages.posts.create.btn_saving")}
+              {t("create.btn_saving")}
             </Box>
           ) : isLastStep ? (
-            t("pages.posts.create.btn_save_draft")
+            t("create.btn_save_draft")
           ) : (
-            t("pages.posts.create.btn_next")
+            t("create.btn_next")
           )}
         </Button>
       </Box>

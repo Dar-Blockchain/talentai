@@ -13,7 +13,7 @@ interface PublishConfirmModalProps {
 }
 
 const PublishConfirmModal: React.FC<PublishConfirmModalProps> = ({ open, publishing, onClose, onConfirm }) => {
-  const { t } = useTranslation("dashboard");
+  const { t } = useTranslation("posts");
   return (
   <Dialog
     open={open}
@@ -44,12 +44,12 @@ const PublishConfirmModal: React.FC<PublishConfirmModalProps> = ({ open, publish
       </Box>
 
       <Typography sx={{ fontSize: "16px", fontWeight: 800, color: "#111827", mb: 0.75 }}>
-        {t("pages.post_detail.publish_modal.title")}
+        {t("detail.publish_modal.title")}
       </Typography>
       <Typography sx={{ fontSize: "13px", color: "#6B7280", lineHeight: 1.65, mb: 2.5 }}>
-        {t("pages.post_detail.publish_modal.body_pre")}{" "}
-        <strong style={{ color: "#111827" }}>{t("pages.post_detail.publish_modal.body_highlight")}</strong>{" "}
-        {t("pages.post_detail.publish_modal.body_post")}
+        {t("detail.publish_modal.body_pre")}{" "}
+        <strong style={{ color: "#111827" }}>{t("detail.publish_modal.body_highlight")}</strong>{" "}
+        {t("detail.publish_modal.body_post")}
       </Typography>
 
       {/* Warning box */}
@@ -61,14 +61,14 @@ const PublishConfirmModal: React.FC<PublishConfirmModalProps> = ({ open, publish
       }}>
         <WarningAmberOutlined sx={{ fontSize: 16, color: "#DC2626", flexShrink: 0, mt: "1px" }} />
         <Typography sx={{ fontSize: "12px", color: "#991B1B", lineHeight: 1.55 }}>
-          {t("pages.post_detail.publish_modal.warning")}
+          {t("detail.publish_modal.warning")}
         </Typography>
       </Box>
 
       {/* Actions */}
       <Box sx={{ display: "flex", gap: 1.5 }}>
         <AppButton
-          label={t("pages.post_detail.publish_modal.cancel")}
+          label={t("detail.publish_modal.cancel")}
           variant="outlined"
           fullWidth
           onClick={onClose}
@@ -76,7 +76,7 @@ const PublishConfirmModal: React.FC<PublishConfirmModalProps> = ({ open, publish
           sx={{ borderRadius: "10px", py: 1.1, fontWeight: 600, borderColor: "#E5E7EB", color: "#374151", "&:hover": { borderColor: "#D1D5DB", bgcolor: "#F9FAFB" } }}
         />
         <AppButton
-          label={publishing ? t("pages.post_detail.publish_modal.publishing") : t("pages.post_detail.publish_modal.confirm")}
+          label={publishing ? t("detail.publish_modal.publishing") : t("detail.publish_modal.confirm")}
           variant="contained"
           fullWidth
           disabled={publishing}

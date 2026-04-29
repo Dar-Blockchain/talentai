@@ -33,7 +33,7 @@ const SectionTitle: React.FC<{ icon: React.ReactNode; title: string }> = ({ icon
 );
 
 const PostBasicDetails: React.FC<Props> = () => {
-  const { t } = useTranslation("dashboard");
+  const { t } = useTranslation("posts");
   const job = useSelector(selectCurrentJob);
   if (!job) return null;
 
@@ -45,7 +45,7 @@ const PostBasicDetails: React.FC<Props> = () => {
 
       {/* Overview */}
       <SectionCard>
-        <SectionTitle icon={<WorkOutlined sx={{ fontSize: 15 }} />} title={t("pages.post_detail.details.overview")} />
+        <SectionTitle icon={<WorkOutlined sx={{ fontSize: 15 }} />} title={t("detail.details.overview")} />
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
           {jd.workMode && (
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, bgcolor: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 2, px: 1.5, py: 0.75 }}>
@@ -76,7 +76,7 @@ const PostBasicDetails: React.FC<Props> = () => {
         {jd.description && (
           <>
             <Divider sx={{ my: 2.5 }} />
-            <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#374151", mb: 1 }}>{t("pages.post_detail.details.description")}</Typography>
+            <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#374151", mb: 1 }}>{t("detail.details.description")}</Typography>
             <Typography sx={{ fontSize: "13px", color: "#6B7280", lineHeight: 1.8 }}>{jd.description}</Typography>
           </>
         )}
@@ -85,7 +85,7 @@ const PostBasicDetails: React.FC<Props> = () => {
       {/* Skills */}
       {displaySkills.length > 0 && (
         <SectionCard>
-          <SectionTitle icon={<CodeOutlined sx={{ fontSize: 15 }} />} title={t("pages.post_detail.details.skills")} />
+          <SectionTitle icon={<CodeOutlined sx={{ fontSize: 15 }} />} title={t("detail.details.skills")} />
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
             {displaySkills.map((skill: Skill, i: number) => {
               const level = skill.type === "soft"
@@ -107,7 +107,7 @@ const PostBasicDetails: React.FC<Props> = () => {
       {/* Requirements */}
       {jd.requirements?.length > 0 && (
         <SectionCard>
-          <SectionTitle icon={<WorkOutlined sx={{ fontSize: 15 }} />} title={t("pages.post_detail.details.requirements")} />
+          <SectionTitle icon={<WorkOutlined sx={{ fontSize: 15 }} />} title={t("detail.details.requirements")} />
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             {jd.requirements.map((req: string, i: number) => (
               <Box key={i} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
@@ -122,7 +122,7 @@ const PostBasicDetails: React.FC<Props> = () => {
       {/* Responsibilities */}
       {jd.responsibilities?.length > 0 && (
         <SectionCard>
-          <SectionTitle icon={<WorkOutlined sx={{ fontSize: 15 }} />} title={t("pages.post_detail.details.responsibilities")} />
+          <SectionTitle icon={<WorkOutlined sx={{ fontSize: 15 }} />} title={t("detail.details.responsibilities")} />
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             {jd.responsibilities.map((r: string, i: number) => (
               <Box key={i} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>

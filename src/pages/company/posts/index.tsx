@@ -71,7 +71,8 @@ const selectSx = {
 };
 
 const PostsPage: React.FC = () => {
-  const { t } = useTranslation("dashboard");
+  const { t } = useTranslation("posts");
+  const { t: td } = useTranslation("dashboard");
   useCompanyAccess("canViewJobPosts");
   const dispatch = useDispatch<AppDispatch>();
   const router   = useRouter();
@@ -93,36 +94,36 @@ const PostsPage: React.FC = () => {
 
   // ── Translation-dependent option arrays ──
   const STATUS_OPTIONS: { value: StatusFilter; label: string; color: string }[] = [
-    { value: "all",     label: t("pages.posts.status.all"),    color: "#6B7280" },
-    { value: "active",  label: t("pages.posts.status.active"), color: "#059669" },
-    { value: "draft",   label: t("pages.posts.status.draft"),  color: "#D97706" },
-    { value: "expired", label: t("pages.posts.status.closed"), color: "#DC2626" },
+    { value: "all",     label: t("status.all"),    color: "#6B7280" },
+    { value: "active",  label: t("status.active"), color: "#059669" },
+    { value: "draft",   label: t("status.draft"),  color: "#D97706" },
+    { value: "expired", label: t("status.closed"), color: "#DC2626" },
   ];
 
   const TYPE_OPTIONS: { value: TypeFilter; label: string; color: string; bg: string; Icon: React.ElementType }[] = [
-    { value: "all",      label: t("pages.posts.type.all"),      color: "#6B7280", bg: "#F3F4F6", Icon: FilterListOutlined },
-    { value: "ai",       label: t("pages.posts.type.ai"),       color: "#7C3AED", bg: "#F5F3FF", Icon: AutoAwesomeOutlined },
-    { value: "pipeline", label: t("pages.posts.type.pipeline"), color: "#0891B2", bg: "#ECFEFF", Icon: AccountTreeOutlined },
-    { value: "manual",   label: t("pages.posts.type.manual"),   color: "#D97706", bg: "#FFFBEB", Icon: EditNoteOutlined },
+    { value: "all",      label: t("type.all"),      color: "#6B7280", bg: "#F3F4F6", Icon: FilterListOutlined },
+    { value: "ai",       label: t("type.ai"),       color: "#7C3AED", bg: "#F5F3FF", Icon: AutoAwesomeOutlined },
+    { value: "pipeline", label: t("type.pipeline"), color: "#0891B2", bg: "#ECFEFF", Icon: AccountTreeOutlined },
+    { value: "manual",   label: t("type.manual"),   color: "#D97706", bg: "#FFFBEB", Icon: EditNoteOutlined },
   ];
 
   const SORT_GROUPS = [
     {
-      label: t("pages.posts.sort.date_group"),
+      label: t("sort.date_group"),
       Icon: CalendarTodayOutlined,
       color: "#6B7280",
       options: [
-        { value: "newest" as SortOption, label: t("pages.posts.sort.newest") },
-        { value: "oldest" as SortOption, label: t("pages.posts.sort.oldest") },
+        { value: "newest" as SortOption, label: t("sort.newest") },
+        { value: "oldest" as SortOption, label: t("sort.oldest") },
       ],
     },
     {
-      label: t("pages.posts.sort.title_group"),
+      label: t("sort.title_group"),
       Icon: SortByAlphaOutlined,
       color: "#0891B2",
       options: [
-        { value: "title-asc" as SortOption,  label: t("pages.posts.sort.title_asc") },
-        { value: "title-desc" as SortOption, label: t("pages.posts.sort.title_desc") },
+        { value: "title-asc" as SortOption,  label: t("sort.title_asc") },
+        { value: "title-desc" as SortOption, label: t("sort.title_desc") },
       ],
     },
   ];
@@ -141,11 +142,11 @@ const PostsPage: React.FC = () => {
     postId: jobToDelete!,
     refetchAfterDelete: true,
     onSuccess: () => {
-      showToast({ message: t("pages.posts.delete_success"), severity: "success" });
+      showToast({ message: t("delete_success"), severity: "success" });
       setJobToDelete(null);
     },
     onError: () =>
-      showToast({ message: t("pages.posts.delete_error"), severity: "error" }),
+      showToast({ message: t("delete_error"), severity: "error" }),
   });
 
   const apiStatus =
@@ -205,10 +206,10 @@ const PostsPage: React.FC = () => {
     dispatch(updatePostStatus({ postId: publishConfirmId, status: "open" }))
       .unwrap()
       .then(() => {
-        showToast({ message: t("pages.posts.publish_success"), severity: "success" });
+        showToast({ message: t("publish_success"), severity: "success" });
         dispatch(fetchMyPosts({ page, limit: 12, search, sort: apiSort, status: apiStatus, creationType: typeFilter !== "all" ? typeFilter : "" }));
       })
-      .catch(() => showToast({ message: t("pages.posts.publish_error"), severity: "error" }));
+      .catch(() => showToast({ message: t("publish_error"), severity: "error" }));
   }, [dispatch, page, search, apiSort, apiStatus, typeFilter, t]);
 
   const handleCreateClick = () => {
@@ -267,12 +268,12 @@ const PostsPage: React.FC = () => {
                     lineHeight: 1.2,
                   }}
                 >
-                  {t("pages.posts.title")}
+                  {t("title")}
                 </Typography>
                 <Typography sx={{ fontSize: "12px", color: "#9CA3AF" }}>
                   {loading
-                    ? t("pages.common.loading")
-                    : t("pages.posts.count", { count: totalCount })}
+                    ? td("pages.common.loading")
+                    : t("count", { count: totalCount })}
                 </Typography>
               </Box>
             </Box>
@@ -305,7 +306,7 @@ const PostsPage: React.FC = () => {
                   sx={{ fontSize: 15, color: "#9CA3AF", mr: 0.75 }}
                 />
                 <InputBase
-                  placeholder={t("pages.posts.search_placeholder")}
+                  placeholder={t("search_placeholder")}
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
@@ -341,7 +342,7 @@ const PostsPage: React.FC = () => {
                               : (opt?.color ?? "#374151"),
                         }}
                       >
-                        {opt?.label ?? t("pages.posts.status.all")}
+                        {opt?.label ?? t("status.all")}
                       </Typography>
                     );
                   }}
@@ -409,7 +410,7 @@ const PostsPage: React.FC = () => {
                             color: val === "all" ? "#9CA3AF" : opt?.color,
                           }}
                         >
-                          {opt?.label ?? t("pages.posts.type.all")}
+                          {opt?.label ?? t("type.all")}
                         </Typography>
                       </Box>
                     );
@@ -483,7 +484,7 @@ const PostsPage: React.FC = () => {
                     const opt = SORT_OPTIONS_FLAT.find((o) => o.value === val);
                     return (
                       <Typography sx={{ fontSize: "13px", color: "#374151" }}>
-                        {opt?.label ?? t("pages.common.sort")}
+                        {opt?.label ?? td("pages.common.sort")}
                       </Typography>
                     );
                   }}
@@ -564,7 +565,7 @@ const PostsPage: React.FC = () => {
 
               {/* New Job Post button */}
               <Tooltip
-                title={postsAtLimit ? t("pages.posts.limit_tooltip", { used: postsUsed, limit: postsLimit }) : ""}
+                title={postsAtLimit ? t("limit_tooltip", { used: postsUsed, limit: postsLimit }) : ""}
                 arrow
                 disableHoverListener={!postsAtLimit}
               >
@@ -609,7 +610,7 @@ const PostsPage: React.FC = () => {
                         lineHeight: 1,
                       }}
                     >
-                      {postsAtLimit ? t("pages.posts.limit_reached", { used: postsUsed, limit: postsLimit }) : t("pages.posts.new_post")}
+                      {postsAtLimit ? t("limit_reached", { used: postsUsed, limit: postsLimit }) : t("new_post")}
                     </Typography>
                   </Box>
                 </span>

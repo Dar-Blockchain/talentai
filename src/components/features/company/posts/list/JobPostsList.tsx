@@ -88,7 +88,7 @@ const JobPostsList = memo<JobPostsListProps>(({
   canCreate = true,
   canDelete = true,
 }) => {
-  const { t } = useTranslation("dashboard");
+  const { t } = useTranslation("posts");
 
   if (loading) {
     return (
@@ -111,12 +111,12 @@ const JobPostsList = memo<JobPostsListProps>(({
       <Box sx={{ py: 12, textAlign: "center", border: "1.5px dashed #E5E7EB", borderRadius: "12px", bgcolor: "#FAFAFA" }}>
         <WorkOutlined sx={{ fontSize: 44, color: "#D1D5DB", mb: 1.5 }} />
         <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#374151", mb: 0.5 }}>
-          {hasFilters ? t("pages.posts.empty.no_match") : t("pages.posts.empty.no_posts")}
+          {hasFilters ? t("empty.no_match") : t("empty.no_posts")}
         </Typography>
         <Typography sx={{ fontSize: "13px", color: "#9CA3AF", mb: hasFilters ? 0 : 2 }}>
           {hasFilters
-            ? t("pages.posts.empty.no_match_hint")
-            : t("pages.posts.empty.no_posts_hint")}
+            ? t("empty.no_match_hint")
+            : t("empty.no_posts_hint")}
         </Typography>
         {!hasFilters && (
           <Button
@@ -125,7 +125,7 @@ const JobPostsList = memo<JobPostsListProps>(({
             onClick={onCreateClick}
             sx={{ textTransform: "none", fontWeight: 700, color: "#fff", bgcolor: TEAL, "&:hover": { bgcolor: "#0F766E" }, borderRadius: "10px" }}
           >
-            {t("pages.posts.empty.create_btn")}
+            {t("empty.create_btn")}
           </Button>
         )}
       </Box>

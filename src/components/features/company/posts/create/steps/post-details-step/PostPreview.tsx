@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation, Trans } from "react-i18next";
 import {
   Box,
   Button,
@@ -67,6 +68,7 @@ const inputSx = {
 
 const PostPreview = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const { t } = useTranslation("posts");
   const { generatedPost, loading } = useSelector((state: any) => state.postGeneration);
 
   const {
@@ -106,7 +108,7 @@ const PostPreview = () => {
     return (
       <SectionCard sx={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2 }}>
         <CircularProgress sx={{ color: TEAL }} size={40} />
-        <Typography sx={{ fontSize: "14px", color: "#6B7280" }}>Generating job post… please wait</Typography>
+        <Typography sx={{ fontSize: "14px", color: "#6B7280" }}>{t("create.preview.loading")}</Typography>
       </SectionCard>
     );
   }
@@ -119,8 +121,8 @@ const PostPreview = () => {
           <AutoAwesomeOutlined sx={{ fontSize: 32, color: TEAL }} />
         </Box>
         <Box sx={{ textAlign: "center" }}>
-          <Typography sx={{ fontSize: "15px", fontWeight: 600, color: "#111827" }}>Preview will appear here</Typography>
-          <Typography sx={{ fontSize: "13px", color: "#6B7280", mt: 0.5 }}>Fill in the form and click Generate</Typography>
+          <Typography sx={{ fontSize: "15px", fontWeight: 600, color: "#111827" }}>{t("create.preview.empty_title")}</Typography>
+          <Typography sx={{ fontSize: "13px", color: "#6B7280", mt: 0.5 }}>{t("create.preview.empty_subtitle")}</Typography>
         </Box>
       </SectionCard>
     );
@@ -135,18 +137,18 @@ const PostPreview = () => {
             <AutoAwesomeOutlined sx={{ fontSize: 20, color: INDIGO }} />
           </Box>
           <Box>
-            <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>Generated Job Post</Typography>
-            <Typography sx={{ fontSize: "12px", color: "#6B7280" }}>Review and edit the AI-generated content below</Typography>
+            <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>{t("create.preview.header_title")}</Typography>
+            <Typography sx={{ fontSize: "12px", color: "#6B7280" }}>{t("create.preview.header_subtitle")}</Typography>
           </Box>
         </Box>
       </SectionCard>
 
       {/* Basic details */}
       <SectionCard>
-        <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827", mb: 2 }}>Job Details</Typography>
+        <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827", mb: 2 }}>{t("create.preview.section_details")}</Typography>
 
         <Box sx={{ mb: 2 }}>
-          <Typography sx={labelSx}>Job Title</Typography>
+          <Typography sx={labelSx}>{t("create.preview.label_title")}</Typography>
           <TextField
             fullWidth value={title}
             onChange={(e) => dispatch(updateJobField({ field: "title", value: e.target.value }))}
@@ -158,7 +160,7 @@ const PostPreview = () => {
           <Box>
             <Typography sx={labelSx}>
               <WorkOutlined sx={{ fontSize: 14 }} />
-              Employment Type
+              {t("create.preview.label_type")}
             </Typography>
             <TextField select fullWidth value={employmentType}
               onChange={(e) => dispatch(updateJobField({ field: "employmentType", value: e.target.value }))}
@@ -170,7 +172,7 @@ const PostPreview = () => {
           <Box>
             <Typography sx={labelSx}>
               <LocationOnOutlined sx={{ fontSize: 14 }} />
-              Work Mode
+              {t("create.preview.label_work_mode")}
             </Typography>
             <TextField select fullWidth value={workMode}
               onChange={(e) => dispatch(updateJobField({ field: "workMode", value: e.target.value }))}
@@ -184,7 +186,7 @@ const PostPreview = () => {
         <Box sx={{ mb: 2 }}>
           <Typography sx={labelSx}>
             <TrendingUpIcon sx={{ fontSize: 14 }} />
-            Experience Level
+            {t("create.preview.label_experience")}
           </Typography>
           <TextField select fullWidth value={experienceLevel}
             onChange={(e) => dispatch(updateJobField({ field: "experienceLevel", value: e.target.value }))}
@@ -201,20 +203,20 @@ const PostPreview = () => {
       {/* Skills */}
       <SectionCard>
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
-          <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827" }}>Required Skills</Typography>
+          <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827" }}>{t("create.preview.section_skills")}</Typography>
         </Box>
 
         {/* Info box */}
         <Box sx={{ display: "flex", gap: 1, p: 1.5, borderRadius: 2, bgcolor: "#EFF6FF", border: "1px solid #BFDBFE", mb: 2 }}>
           <InfoOutlined sx={{ fontSize: 16, color: "#3B82F6", flexShrink: 0, mt: "1px" }} />
           <Typography sx={{ fontSize: "12px", color: "#1E40AF", lineHeight: 1.5 }}>
-            Percentages represent the <b>relative importance</b> of each skill. They are used to <b>match candidates</b> to your requirements.
+            <Trans i18nKey="create.preview.skills_info" ns="posts" components={{ bold: <b /> }} />
           </Typography>
         </Box>
 
         {/* Hard skills */}
         <Box sx={{ mb: 2 }}>
-          <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#374151", mb: 1 }}>Hard Skills</Typography>
+          <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#374151", mb: 1 }}>{t("create.preview.hard_skills")}</Typography>
           <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
             {hardSkills.map((skill, index) => (
               <SkillChip
@@ -230,7 +232,7 @@ const PostPreview = () => {
 
         {/* Soft skills */}
         <Box>
-          <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#374151", mb: 1 }}>Soft Skills</Typography>
+          <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#374151", mb: 1 }}>{t("create.preview.soft_skills")}</Typography>
           <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
             {softSkills.map((skill, index) => (
               <SkillChip
@@ -247,10 +249,10 @@ const PostPreview = () => {
 
       {/* Description / Requirements / Responsibilities */}
       <SectionCard>
-        <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827", mb: 2 }}>Content</Typography>
+        <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827", mb: 2 }}>{t("create.preview.section_content")}</Typography>
 
         <Box sx={{ mb: 2 }}>
-          <Typography sx={labelSx}>Description</Typography>
+          <Typography sx={labelSx}>{t("create.preview.label_description")}</Typography>
           <TextField
             value={description} multiline minRows={4} fullWidth
             onChange={(e) => dispatch(updateJobField({ field: "description", value: e.target.value }))}
@@ -259,7 +261,7 @@ const PostPreview = () => {
         </Box>
 
         <Box sx={{ mb: 2 }}>
-          <Typography sx={labelSx}>Requirements</Typography>
+          <Typography sx={labelSx}>{t("create.preview.label_requirements")}</Typography>
           <TextField
             value={requirements.join("\n")} multiline minRows={4} fullWidth
             onChange={(e) => dispatch(updateRequirements(e.target.value))}
@@ -268,7 +270,7 @@ const PostPreview = () => {
         </Box>
 
         <Box>
-          <Typography sx={labelSx}>Responsibilities</Typography>
+          <Typography sx={labelSx}>{t("create.preview.label_responsibilities")}</Typography>
           <TextField
             value={responsibilities.join("\n")} multiline minRows={4} fullWidth
             onChange={(e) => dispatch(updateResponsibilities(e.target.value))}
@@ -295,23 +297,26 @@ export default PostPreview;
 
 /* ── Shared sub-components ── */
 
-const AddSkillButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
-  <Button
-    variant="outlined"
-    startIcon={<AddOutlined sx={{ fontSize: 14 }} />}
-    onClick={onClick}
-    sx={{
-      height: 30, fontSize: "12px", fontWeight: 600, textTransform: "none",
-      borderRadius: "15px", px: 1.5,
-      border: `1px dashed #D1D5DB`,
-      color: "#6B7280",
-      bgcolor: "#F9FAFB",
-      "&:hover": { borderColor: TEAL, color: TEAL, bgcolor: TEAL_BG },
-    }}
-  >
-    Add Skill
-  </Button>
-);
+const AddSkillButton: React.FC<{ onClick: () => void }> = ({ onClick }) => {
+  const { t } = useTranslation("posts");
+  return (
+    <Button
+      variant="outlined"
+      startIcon={<AddOutlined sx={{ fontSize: 14 }} />}
+      onClick={onClick}
+      sx={{
+        height: 30, fontSize: "12px", fontWeight: 600, textTransform: "none",
+        borderRadius: "15px", px: 1.5,
+        border: `1px dashed #D1D5DB`,
+        color: "#6B7280",
+        bgcolor: "#F9FAFB",
+        "&:hover": { borderColor: TEAL, color: TEAL, bgcolor: TEAL_BG },
+      }}
+    >
+      {t("create.preview.btn_add_skill")}
+    </Button>
+  );
+};
 
 export const SkillChip: React.FC<{
   label: string;

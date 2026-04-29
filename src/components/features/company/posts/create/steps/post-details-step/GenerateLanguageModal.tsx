@@ -21,7 +21,7 @@ interface Props {
 
 const GenerateLanguageModal: React.FC<Props> = ({ open, loading, onConfirm, onClose }) => {
   const [selected, setSelected] = useState("en");
-  const { t } = useTranslation("dashboard");
+  const { t } = useTranslation("posts");
 
   return (
     <Dialog
@@ -49,10 +49,10 @@ const GenerateLanguageModal: React.FC<Props> = ({ open, loading, onConfirm, onCl
           <AutoAwesomeOutlined sx={{ fontSize: 22, color: TEAL }} />
         </Box>
         <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>
-          {t("pages.posts.create.lang_modal.title")}
+          {t("create.lang_modal.title")}
         </Typography>
         <Typography sx={{ fontSize: "12.5px", color: "#6B7280", mt: 0.5 }}>
-          {t("pages.posts.create.lang_modal.subtitle")}
+          {t("create.lang_modal.subtitle")}
         </Typography>
       </Box>
 
@@ -105,7 +105,7 @@ const GenerateLanguageModal: React.FC<Props> = ({ open, loading, onConfirm, onCl
             "&:hover": { bgcolor: "#F9FAFB", borderColor: "#D1D5DB" },
           }}
         >
-          {t("pages.posts.create.lang_modal.btn_cancel")}
+          {t("create.lang_modal.btn_cancel")}
         </Button>
 
         <Button
@@ -126,7 +126,7 @@ const GenerateLanguageModal: React.FC<Props> = ({ open, loading, onConfirm, onCl
             "&.Mui-disabled": { bgcolor: TEAL, opacity: 0.65, color: "#fff" },
           }}
         >
-          {loading ? t("pages.posts.create.lang_modal.btn_generating") : t("pages.posts.create.lang_modal.btn_generate")}
+          {loading ? t("create.lang_modal.btn_generating") : t("create.lang_modal.btn_generate")}
         </Button>
       </Box>
     </Dialog>

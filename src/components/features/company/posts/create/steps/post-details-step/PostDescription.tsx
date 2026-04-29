@@ -63,20 +63,20 @@ const PostDescription = () => {
     workMode: "",
   });
   const [langModalOpen, setLangModalOpen] = useState(false);
-  const { t } = useTranslation("dashboard");
+  const { t } = useTranslation("posts");
 
   const clear = (key: string) => setErrors((prev) => ({ ...prev, [key]: "" }));
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!promptDescription.trim()) e.promptDescription = t("pages.posts.create.form.error_prompt");
+    if (!promptDescription.trim()) e.promptDescription = t("create.form.error_prompt");
     if (!salary.min || !salary.max || !salary.currency) {
-      e.salary = t("pages.posts.create.form.error_salary_required");
+      e.salary = t("create.form.error_salary_required");
     } else if (Number(salary.max) <= Number(salary.min)) {
-      e.salary = t("pages.posts.create.form.error_salary_max");
+      e.salary = t("create.form.error_salary_max");
     }
-    if (!employmentType) e.employmentType = t("pages.posts.create.form.error_required");
-    if (!workMode) e.workMode = t("pages.posts.create.form.error_required");
+    if (!employmentType) e.employmentType = t("create.form.error_required");
+    if (!workMode) e.workMode = t("create.form.error_required");
     setErrors(e as any);
     return Object.keys(e).length === 0;
   };
@@ -133,10 +133,10 @@ const PostDescription = () => {
         </Box>
         <Box>
           <Typography sx={{ fontSize: "13.5px", fontWeight: 700, color: "#111827", lineHeight: 1.25 }}>
-            {t("pages.posts.create.form.header_title")}
+            {t("create.form.header_title")}
           </Typography>
           <Typography sx={{ fontSize: "11.5px", color: "#6B7280", lineHeight: 1.3 }}>
-            {t("pages.posts.create.form.header_subtitle")}
+            {t("create.form.header_subtitle")}
           </Typography>
         </Box>
       </Box>
@@ -146,11 +146,11 @@ const PostDescription = () => {
 
         {/* Prompt textarea */}
         <Box>
-          <FieldLabel label={t("pages.posts.create.form.prompt_label")} />
+          <FieldLabel label={t("create.form.prompt_label")} />
           <TextField
             value={promptDescription}
             onChange={(e) => { dispatch(setPromptDescription(e.target.value)); clear("promptDescription"); }}
-            placeholder={t("pages.posts.create.form.prompt_placeholder")}
+            placeholder={t("create.form.prompt_placeholder")}
             multiline
             minRows={5}
             maxRows={8}
@@ -173,10 +173,10 @@ const PostDescription = () => {
 
         {/* Role details row */}
         <Box>
-          <SectionLabel>{t("pages.posts.create.form.section_role")}</SectionLabel>
+          <SectionLabel>{t("create.form.section_role")}</SectionLabel>
           <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1.5 }}>
             <Box>
-              <FieldLabel icon={WorkOutlined} label={t("pages.posts.create.form.label_type")} />
+              <FieldLabel icon={WorkOutlined} label={t("create.form.label_type")} />
               <TextField
                 select fullWidth
                 value={employmentType}
@@ -184,7 +184,7 @@ const PostDescription = () => {
                 error={!!errors.employmentType}
                 sx={fieldSx}
               >
-                <MenuItem disabled value="" sx={{ fontSize: "12px" }}>{t("pages.posts.create.form.placeholder_select")}</MenuItem>
+                <MenuItem disabled value="" sx={{ fontSize: "12px" }}>{t("create.form.placeholder_select")}</MenuItem>
                 {contractTypes.map((c) => (
                   <MenuItem key={c} value={c} sx={{ fontSize: "12px" }}>{c}</MenuItem>
                 ))}
@@ -197,7 +197,7 @@ const PostDescription = () => {
             </Box>
 
             <Box>
-              <FieldLabel icon={LocationOnOutlined} label={t("pages.posts.create.form.label_work_mode")} />
+              <FieldLabel icon={LocationOnOutlined} label={t("create.form.label_work_mode")} />
               <TextField
                 select fullWidth
                 value={workMode}
@@ -205,7 +205,7 @@ const PostDescription = () => {
                 error={!!errors.workMode}
                 sx={fieldSx}
               >
-                <MenuItem disabled value="" sx={{ fontSize: "12px" }}>{t("pages.posts.create.form.placeholder_select")}</MenuItem>
+                <MenuItem disabled value="" sx={{ fontSize: "12px" }}>{t("create.form.placeholder_select")}</MenuItem>
                 {workModes.map((m) => (
                   <MenuItem key={m} value={m} sx={{ fontSize: "12px" }}>{m}</MenuItem>
                 ))}
@@ -218,7 +218,7 @@ const PostDescription = () => {
             </Box>
 
             <Box>
-              <FieldLabel icon={CalendarTodayOutlined} label={t("pages.posts.create.form.label_expires")} />
+              <FieldLabel icon={CalendarTodayOutlined} label={t("create.form.label_expires")} />
               <TextField
                 type="date"
                 fullWidth
@@ -235,17 +235,17 @@ const PostDescription = () => {
 
         {/* Salary row */}
         <Box>
-          <SectionLabel>{t("pages.posts.create.form.section_salary")}</SectionLabel>
+          <SectionLabel>{t("create.form.section_salary")}</SectionLabel>
           <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1.4fr 1.4fr", gap: 1.5 }}>
             <Box>
-              <FieldLabel icon={AttachMoneyOutlined} label={t("pages.posts.create.form.label_currency")} />
+              <FieldLabel icon={AttachMoneyOutlined} label={t("create.form.label_currency")} />
               <TextField
                 select fullWidth
                 value={salary.currency || ""}
                 onChange={(e) => handleSalaryChange("currency", e.target.value)}
                 sx={fieldSx}
               >
-                <MenuItem disabled value="" sx={{ fontSize: "12px" }}>{t("pages.posts.create.form.placeholder_select")}</MenuItem>
+                <MenuItem disabled value="" sx={{ fontSize: "12px" }}>{t("create.form.placeholder_select")}</MenuItem>
                 {defaultCurrencies.map((c: any) => (
                   <MenuItem key={c.value} value={c.value} sx={{ fontSize: "12px" }}>{c.label}</MenuItem>
                 ))}
@@ -253,23 +253,23 @@ const PostDescription = () => {
             </Box>
 
             <Box>
-              <FieldLabel label={t("pages.posts.create.form.label_min")} />
+              <FieldLabel label={t("create.form.label_min")} />
               <TextField
                 type="text" fullWidth
                 value={salary.min || ""}
                 onChange={(e) => handleSalaryChange("min", e.target.value)}
-                placeholder={t("pages.posts.create.form.placeholder_min")}
+                placeholder={t("create.form.placeholder_min")}
                 sx={fieldSx}
               />
             </Box>
 
             <Box>
-              <FieldLabel label={t("pages.posts.create.form.label_max")} />
+              <FieldLabel label={t("create.form.label_max")} />
               <TextField
                 type="text" fullWidth
                 value={salary.max || ""}
                 onChange={(e) => handleSalaryChange("max", e.target.value)}
-                placeholder={t("pages.posts.create.form.placeholder_max")}
+                placeholder={t("create.form.placeholder_max")}
                 sx={fieldSx}
               />
             </Box>
@@ -303,7 +303,7 @@ const PostDescription = () => {
             transition: "all 0.2s",
           }}
         >
-          {loading ? t("pages.posts.create.form.btn_generating") : t("pages.posts.create.form.btn_generate")}
+          {loading ? t("create.form.btn_generating") : t("create.form.btn_generate")}
         </Button>
       </Box>
 
