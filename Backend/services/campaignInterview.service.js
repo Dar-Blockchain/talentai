@@ -13,7 +13,7 @@
 
 const bedrock = require("../helpers/bedrock.helpers");
 const sessionMgr = require("../utils/redis-session-manager");
-const Campaign = require("../models/internalCampaign.model");
+const Campaign = require("../models/Internal.Campaign.model");
 const CampaignResponse = require("../models/campaignResponse.model");
 const CampaignParticipant = require("../models/campaignParticipant.model");
 require("dotenv").config();
