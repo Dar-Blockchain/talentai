@@ -1,241 +1,80 @@
-/**
- * Notification Sound Utility
- * Manages playing sounds for different notification types
- * Enhanced version with multi-tone professional sounds
- */
-
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
 
-// Configuration des sons par type de notification
-interface SoundConfig {
-  notes: { freq: number; startTime: number; duration: number }[];
-  type?: OscillatorType;
-}
-
-const SOUND_CONFIGS: Record<NotificationType, SoundConfig> = {
-  // Success: Facebook-style notification - short distinctive pop
-  success: {
-    notes: [
-      { freq: 587.33, startTime: 0, duration: 0.06 },      // D5
-      { freq: 880.00, startTime: 0.05, duration: 0.08 },   // A5
-    ],
-    type: 'sine',
-  },
-
-  // Error: Slightly lower pitched alert
-  error: {
-    notes: [
-      { freq: 493.88, startTime: 0, duration: 0.06 },      // B4
-      { freq: 369.99, startTime: 0.05, duration: 0.08 },   // F#4
-    ],
-    type: 'sine',
-  },
-
-  // Warning: Medium pitched notification
-  warning: {
-    notes: [
-      { freq: 523.25, startTime: 0, duration: 0.06 },      // C5
-      { freq: 783.99, startTime: 0.05, duration: 0.08 },   // G5
-    ],
-    type: 'sine',
-  },
-
-  // Info: Facebook-style notification - short distinctive pop (same as success)
-  info: {
-    notes: [
-      { freq: 587.33, startTime: 0, duration: 0.06 },      // D5
-      { freq: 880.00, startTime: 0.05, duration: 0.08 },   // A5
-    ],
-    type: 'sine',
-  },
+const CONFIGS: Record<NotificationType, { notes: [number, number, number][]; type: OscillatorType }> = {
+  success: { notes: [[587.33, 0, 0.06], [880, 0.05, 0.08]],    type: 'sine' },
+  info:    { notes: [[587.33, 0, 0.06], [880, 0.05, 0.08]],    type: 'sine' },
+  warning: { notes: [[523.25, 0, 0.06], [783.99, 0.05, 0.08]], type: 'sine' },
+  error:   { notes: [[493.88, 0, 0.06], [369.99, 0.05, 0.08]], type: 'sine' },
 };
+
+const STORAGE_KEY = 'notificationSoundSettings';
 
 class NotificationSoundManager {
-  private audioContext: AudioContext | null = null;
-  private enabled: boolean = true;
-  private volume: number = 0.3; // Default volume (0-1)
-  private masterGain: GainNode | null = null;
+  private ctx:  AudioContext | null = null;
+  private gain: GainNode    | null = null;
+  private enabled = true;
+  private volume  = 0.3;
 
   constructor() {
-    // Load preferences from localStorage
-    this.loadSettings();
-  }
-
-  /**
-   * Initializes the AudioContext (necessary for certain browsers)
-   */
-  private initAudioContext(): void {
-    if (!this.audioContext) {
-      try {
-        this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        this.masterGain = this.audioContext.createGain();
-        this.masterGain.connect(this.audioContext.destination);
-        this.masterGain.gain.value = this.volume;
-      } catch (e) {
-        console.warn('Web Audio API not supported:', e);
-      }
-    }
-  }
-
-  /**
-   * Charge les paramètres depuis localStorage
-   */
-  private loadSettings(): void {
+    if (typeof window === 'undefined') return;
     try {
-      // Check if localStorage is available (client-side only)
-      if (typeof window === 'undefined') return;
-
-      const settings = localStorage.getItem('notificationSoundSettings');
-      if (settings) {
-        const parsed = JSON.parse(settings);
-        this.enabled = parsed.enabled ?? true;
-        this.volume = parsed.volume ?? 0.3;
-      }
-    } catch (e) {
-      console.warn('Error loading audio settings:', e);
-    }
+      const s = localStorage.getItem(STORAGE_KEY);
+      if (s) { const p = JSON.parse(s); this.enabled = p.enabled ?? true; this.volume = p.volume ?? 0.3; }
+    } catch {}
   }
 
-  /**
-   * Saves parameters to localStorage
-   */
-  private saveSettings(): void {
+  private init(): boolean {
+    if (this.ctx) return true;
     try {
-      // Check if localStorage is available (client-side only)
-      if (typeof window === 'undefined') return;
-
-      localStorage.setItem('notificationSoundSettings', JSON.stringify({
-        enabled: this.enabled,
-        volume: this.volume,
-      }));
-    } catch (e) {
-      console.warn('Error saving audio settings:', e);
-    }
+      this.ctx  = new (window.AudioContext || (window as any).webkitAudioContext)();
+      this.gain = this.ctx.createGain();
+      this.gain.gain.value = this.volume;
+      this.gain.connect(this.ctx.destination);
+      return true;
+    } catch { return false; }
   }
 
-  /**
-   * Creates an oscillator with ADSR envelope
-   */
-  private createNote(
-    freq: number,
-    startTime: number,
-    duration: number,
-    type: OscillatorType = 'sine'
-  ): void {
-    if (!this.audioContext || !this.masterGain) return;
-
-    const now = this.audioContext.currentTime;
-    const oscillator = this.audioContext.createOscillator();
-    const gainNode = this.audioContext.createGain();
-
-    // Connect: oscillator -> gain -> masterGain -> destination
-    oscillator.connect(gainNode);
-    gainNode.connect(this.masterGain);
-
-    // Oscillator configuration
-    oscillator.type = type;
-    oscillator.frequency.setValueAtTime(freq, now + startTime);
-
-    // ADSR envelope for short, punchy sound (Facebook style)
-    const attack = 0.005;  // Very fast attack for a 'pop' sound
-    const decay = 0.02;    // Short decay
-    const sustain = 0.6;   // Moderate sustain
-    const release = 0.05;  // Fast release
-
-    const peakTime = now + startTime + attack;
-    const sustainTime = now + startTime + attack + decay;
-    const endTime = now + startTime + duration;
-
-    gainNode.gain.setValueAtTime(0, now + startTime);
-    gainNode.gain.linearRampToValueAtTime(1, peakTime); // Attack
-    gainNode.gain.linearRampToValueAtTime(sustain, sustainTime); // Decay to Sustain
-    gainNode.gain.setValueAtTime(sustain, endTime - release); // Hold Sustain
-    gainNode.gain.linearRampToValueAtTime(0, endTime); // Release
-
-    // Start and stop
-    oscillator.start(now + startTime);
-    oscillator.stop(endTime);
+  private save(): void {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ enabled: this.enabled, volume: this.volume })); } catch {}
   }
 
-  /**
-   * Plays a sound for the given notification type
-   */
-  public play(type: NotificationType): void {
-    if (!this.enabled) return;
+  private playNote(freq: number, start: number, duration: number, type: OscillatorType): void {
+    const ctx = this.ctx!; const gain = this.gain!;
+    const t   = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const g   = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t + start);
+    osc.connect(g); g.connect(gain);
+    g.gain.setValueAtTime(0,   t + start);
+    g.gain.linearRampToValueAtTime(1,   t + start + 0.005);
+    g.gain.linearRampToValueAtTime(0.6, t + start + 0.025);
+    g.gain.setValueAtTime(0.6,          t + start + duration - 0.05);
+    g.gain.linearRampToValueAtTime(0,   t + start + duration);
+    osc.start(t + start); osc.stop(t + start + duration);
+  }
 
-    this.initAudioContext();
-    if (!this.audioContext || !this.masterGain) return;
-
-    const config = SOUND_CONFIGS[type];
-
+  play(type: NotificationType): void {
+    if (!this.enabled || !this.init() || !this.ctx || !this.gain) return;
+    if (this.ctx.state === 'suspended') this.ctx.resume();
     try {
-      // Update master volume
-      this.masterGain.gain.value = this.volume;
-
-      // Play each note of the melody
-      config.notes.forEach(note => {
-        this.createNote(
-          note.freq,
-          note.startTime,
-          note.duration,
-          config.type
-        );
-      });
-    } catch (e) {
-      console.warn('Error playing sound:', e);
-    }
+      const { notes, type: oscType } = CONFIGS[type];
+      this.gain.gain.value = this.volume;
+      notes.forEach(([freq, start, dur]) => this.playNote(freq, start, dur, oscType));
+    } catch {}
   }
 
-  /**
-   * Enable/disable sounds
-   */
-  public setEnabled(enabled: boolean): void {
-    this.enabled = enabled;
-    this.saveSettings();
-  }
-
-  /**
-   * Gets the current state (enabled/disabled)
-   */
-  public isEnabled(): boolean {
-    return this.enabled;
-  }
-
-  /**
-   * Sets the volume (0-1)
-   */
-  public setVolume(volume: number): void {
-    this.volume = Math.max(0, Math.min(1, volume));
-    if (this.masterGain) {
-      this.masterGain.gain.value = this.volume;
-    }
-    this.saveSettings();
-  }
-
-  /**
-   * Gets the current volume (0-1)
-   */
-  public getVolume(): number {
-    return this.volume;
-  }
-
-  /**
-   * Test a sound (for preview)
-   */
-  public test(type: NotificationType): void {
-    const wasEnabled = this.enabled;
-    this.enabled = true;
+  test(type: NotificationType): void {
+    const prev = this.enabled; this.enabled = true;
     this.play(type);
-    this.enabled = wasEnabled;
+    this.enabled = prev;
   }
+
+  setEnabled(v: boolean): void { this.enabled = v; this.save(); }
+  setVolume(v: number):   void { this.volume = Math.max(0, Math.min(1, v)); if (this.gain) this.gain.gain.value = this.volume; this.save(); }
+  isEnabled(): boolean { return this.enabled; }
+  getVolume(): number  { return this.volume; }
 }
 
-// Instance singleton
-export const notificationSound = new NotificationSoundManager();
-
-/**
- * Hook-like function pour jouer un son de notification
- */
-export const playNotificationSound = (type: NotificationType) => {
-  notificationSound.play(type);
-};
+export const notificationSound     = new NotificationSoundManager();
+export const playNotificationSound = (type: NotificationType) => notificationSound.play(type);
