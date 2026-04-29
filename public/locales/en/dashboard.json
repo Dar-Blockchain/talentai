@@ -494,18 +494,6 @@
         "top_cv_score": "Top CV Score"
       }
     },
-    "employees": {
-      "title": "Employees",
-      "subtitle": "Manage your team members, roles, and invitations.",
-      "add_employee": "Add Employee",
-      "invited_success": "Team member invited successfully!",
-      "role_updated": "Member role updated successfully!",
-      "deleted_success": "Team member removed successfully!",
-      "resend_success": "Invitation resent successfully!",
-      "resend_error": "Failed to resend invitation",
-      "cancel_success": "Invitation cancelled successfully!",
-      "cancel_error": "Failed to cancel invitation"
-    },
     "departments": {
       "title": "Departments",
       "subtitle": "Manage your company's organizational departments.",

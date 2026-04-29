@@ -166,11 +166,11 @@ const EmployeesPage: React.FC = () => {
   const handleAddMember = useCallback(async (email: string, role: string, departmentId?: string) => {
     const result = await dispatch(addEmployee({ email, role, departmentId }));
     if (addEmployee.rejected.match(result)) {
-      const msg = (result.payload as string) || "Failed to send invitation";
+      const msg = (result.payload as string) || t("pages.employees.toast_invite_failed");
       showToast({ message: msg, severity: "error" });
       dispatch(clearError());
     }
-  }, [dispatch, showToast]);
+  }, [dispatch, showToast, t]);
 
   const handleUpdateRole = useCallback(async (role: string, departmentId?: string) => {
     if (!selectedMember) throw new Error("No member selected");

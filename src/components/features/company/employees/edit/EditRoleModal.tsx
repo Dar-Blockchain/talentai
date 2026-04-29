@@ -12,7 +12,9 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '@/store/store';
 import { fetchDepartments, selectDepartments, selectDepartmentsLoading } from '@/store/slices/departmentSlice';
+import { useTranslation } from "react-i18next";
 import { ROLES } from '@/constants/employee';
+import { getRoleDescription, getRoleLabel, roleMatchesSearch } from '@/utils/employeeRoleI18n';
 
 interface EditRoleModalProps {
   open: boolean;
@@ -28,6 +30,8 @@ const PURPLE = '#8310FF';
 const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
   open, onClose, onSave, currentRole, currentDepartmentId, memberName,
 }) => {
+  const { t } = useTranslation("dashboard");
+  const m = (key: string, opts?: { [k: string]: string }) => t(`pages.employees.modals.edit.${key}`, opts);
   const dispatch = useDispatch<AppDispatch>();
   const departments        = useSelector(selectDepartments);
   const departmentsLoading = useSelector(selectDepartmentsLoading);
@@ -56,7 +60,7 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
   );
 
   const handleSave = useCallback(async () => {
-    if (!role) { setError('Please select a role'); return; }
+    if (!role) { setError(m('select_role_error')); return; }
     setLoading(true);
     setError(null);
     try {
@@ -64,7 +68,7 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
       setSuccess(true);
       setTimeout(onClose, 1200);
     } catch (err: any) {
-      setError(err.message || 'Failed to update member');
+      setError(err.message || m('update_failed'));
     } finally {
       setLoading(false);
     }
@@ -74,10 +78,8 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
 
   const filteredRoles = useMemo(() => {
     const q = roleSearch.trim().toLowerCase();
-    return !q ? ROLES : ROLES.filter((r) =>
-      r.label.toLowerCase().includes(q) || r.description.toLowerCase().includes(q)
-    );
-  }, [roleSearch]);
+    return ROLES.filter((r) => roleMatchesSearch(r.value, q, t));
+  }, [roleSearch, t]);
 
   return (
     <Dialog
@@ -104,10 +106,11 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
             </Box>
             <Box>
               <Typography sx={{ fontWeight: 700, fontSize: '1rem', color: '#111827', lineHeight: 1.2 }}>
-                Edit Member
+                {m('title')}
               </Typography>
               <Typography sx={{ fontSize: '0.775rem', color: '#9CA3AF', mt: 0.25 }}>
-                Updating <strong style={{ color: '#374151' }}>{memberName}</strong>
+                {m('subtitle_intro')}{' '}
+                <strong style={{ color: '#374151' }}>{memberName}</strong>
               </Typography>
             </Box>
           </Box>
@@ -120,14 +123,14 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
 
       <DialogContent sx={{ px: 3, pt: 3, pb: 1 }}>
         {error   && <Alert severity="error"   sx={{ mb: 2, borderRadius: 2 }}>{error}</Alert>}
-        {success && <Alert severity="success" icon={<CheckCircleIcon />} sx={{ mb: 2, borderRadius: 2 }}>Member updated successfully!</Alert>}
+        {success && <Alert severity="success" icon={<CheckCircleIcon />} sx={{ mb: 2, borderRadius: 2 }}>{m('success')}</Alert>}
 
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
 
           {/* Role */}
           <Box>
             <Typography sx={{ mb: 1, fontWeight: 600, fontSize: '0.8rem', color: '#374151' }}>
-              Role
+              {m('role_label')}
             </Typography>
             <FormControl fullWidth size="small">
               <Select
@@ -154,10 +157,10 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
                         <Icon />
                       </Box>
                       <Typography sx={{ fontWeight: 600, fontSize: '0.875rem', color: '#111827' }}>
-                        {r.label}
+                        {getRoleLabel(r.value, t)}
                       </Typography>
                       <Typography sx={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                        — {r.description}
+                        — {getRoleDescription(r.value, t)}
                       </Typography>
                     </Box>
                   );
@@ -183,7 +186,7 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
                 >
                   <TextField
                     size="small" fullWidth autoFocus
-                    placeholder="Search roles…"
+                    placeholder={m('search_roles')}
                     value={roleSearch}
                     onChange={(e) => setRoleSearch(e.target.value)}
                     onKeyDown={(e) => e.stopPropagation()}
@@ -220,10 +223,10 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
                         </Box>
                         <Box>
                           <Typography sx={{ fontWeight: 700, fontSize: '0.875rem', color: '#111827', lineHeight: 1.2 }}>
-                            {r.label}
+                            {getRoleLabel(r.value, t)}
                           </Typography>
                           <Typography sx={{ fontSize: '0.72rem', color: '#6b7280' }}>
-                            {r.description}
+                            {getRoleDescription(r.value, t)}
                           </Typography>
                         </Box>
                       </Box>
@@ -233,7 +236,7 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
 
                 {filteredRoles.length === 0 && (
                   <MenuItem disabled sx={{ py: 2, justifyContent: 'center' }}>
-                    <Typography sx={{ fontSize: '0.8rem', color: '#9CA3AF' }}>No roles match "{roleSearch}"</Typography>
+                    <Typography sx={{ fontSize: '0.8rem', color: '#9CA3AF' }}>{m('no_roles_match', { term: roleSearch })}</Typography>
                   </MenuItem>
                 )}
               </Select>
@@ -243,9 +246,9 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
           {/* Department */}
           <Box>
             <Typography sx={{ mb: 1, fontWeight: 600, fontSize: '0.8rem', color: '#374151' }}>
-              Department{' '}
+              {m('department_label')}{' '}
               <Typography component="span" sx={{ fontWeight: 400, color: '#9CA3AF', fontSize: '0.75rem' }}>
-                (optional)
+                {m('optional')}
               </Typography>
             </Typography>
             <FormControl fullWidth size="small">
@@ -263,7 +266,7 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
                 }}
               >
                 <MenuItem value="">
-                  <Typography sx={{ color: '#9CA3AF', fontSize: '0.875rem' }}>No department</Typography>
+                  <Typography sx={{ color: '#9CA3AF', fontSize: '0.875rem' }}>{m('no_department')}</Typography>
                 </MenuItem>
                 {departments.map((d) => (
                   <MenuItem key={d._id} value={d._id}>{d.name}</MenuItem>
@@ -279,7 +282,7 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
           onClick={handleClose} disabled={loading}
           sx={{ textTransform: 'none', fontWeight: 600, color: '#6B7280', borderRadius: 2, px: 3, '&:hover': { bgcolor: '#F3F4F6' } }}
         >
-          Cancel
+          {m('cancel')}
         </Button>
         <Button
           onClick={handleSave} disabled={loading || !isChanged} variant="contained"
@@ -293,8 +296,8 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
           }}
         >
           {loading
-            ? <><CircularProgress size={15} sx={{ mr: 1, color: '#fff' }} />Updating…</>
-            : 'Save Changes'}
+            ? <><CircularProgress size={15} sx={{ mr: 1, color: '#fff' }} />{m('updating_btn')}</>
+            : m('save')}
         </Button>
       </DialogActions>
     </Dialog>

@@ -9,6 +9,7 @@ import enDashboard from '../../public/locales/en/dashboard.json';
 import enCampaign  from '../../public/locales/en/campaign.json';
 import enInterview from '../../public/locales/en/interview.json';
 import enHome      from '../../public/locales/en/home.json';
+import enEmployees from '../../messages/en/employees.json';
 
 // ── FR ──────────────────────────────────────────────
 import frCommon    from '../../public/locales/fr/common.json';
@@ -17,6 +18,7 @@ import frDashboard from '../../public/locales/fr/dashboard.json';
 import frCampaign  from '../../public/locales/fr/campaign.json';
 import frInterview from '../../public/locales/fr/interview.json';
 import frHome      from '../../public/locales/fr/home.json';
+import frEmployees from '../../messages/fr/employees.json';
 
 export const SUPPORTED_LANGUAGES = ['en', 'fr'] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
@@ -29,12 +31,26 @@ export type Namespace = (typeof NAMESPACES)[number];
 // RTL languages — extend this list when Arabic is added: ['ar']
 export const RTL_LANGUAGES: SupportedLanguage[] = [];
 
+/** Employees strings live in `messages/{lng}/employees.json` but merge under `dashboard.pages.employees`. */
+function dashboardWithEmployees<D extends { pages: Record<string, unknown> }>(
+  dashboard: D,
+  employees: Record<string, unknown>
+): D {
+  return {
+    ...dashboard,
+    pages: {
+      ...dashboard.pages,
+      employees,
+    },
+  };
+}
+
 const options: InitOptions = {
   resources: {
     en: {
       common:    enCommon,
       auth:      enAuth,
-      dashboard: enDashboard,
+      dashboard: dashboardWithEmployees(enDashboard, enEmployees),
       campaign:  enCampaign,
       interview: enInterview,
       home:      enHome,
@@ -42,7 +58,7 @@ const options: InitOptions = {
     fr: {
       common:    frCommon,
       auth:      frAuth,
-      dashboard: frDashboard,
+      dashboard: dashboardWithEmployees(frDashboard, frEmployees),
       campaign:  frCampaign,
       interview: frInterview,
       home:      frHome,
