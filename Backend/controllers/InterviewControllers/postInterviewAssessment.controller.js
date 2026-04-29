@@ -1,10 +1,10 @@
 const postInterviewAssessmentService = require("../../services/InterviewServices/postInterviewAssessment.service");
 const CandidatePostStepProgress = require("../../models/CandidatePostStepsProgress.model");
-const PostSteps = require("../../models/postSteps.model");
+const PostSteps = require("../../models/PostSteps.model");
 const User = require("../../models/User.model");
 const Profile = require("../../models/Profile.model");
 const JobApplication = require("../../models/JobApplication.model");
-const Post = require("../../models/posts.model");
+const Post = require("../../models/Post.model");
 const { sendInterviewAssessmentEmail, sendInterviewCompletionNotificationToCompany } = require("../../utils/email-service");
 
 // ========== CREATE ==========

@@ -1,7 +1,7 @@
 // usersService.js
 const mongoose = require('mongoose');
 const User = require("../models/User.model");
-const Post = require('../models/posts.model');
+const Post = require('../models/Post.model');
 const Feedback = require('../models/Feedback.model');
 const Profile = require('../models/Profile.model');
 

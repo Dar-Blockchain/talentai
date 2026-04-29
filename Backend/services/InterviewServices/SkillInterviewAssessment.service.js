@@ -1,4 +1,4 @@
-const SkillInterviewAssessment = require('../../models/skillInterviewAssessment.model');
+const SkillInterviewAssessment = require('../../models/SkillInterviewAssessment.model');
 const Profile = require('../../models/Profile.model');
 
 // ========== HELPER - Functions for score calculation ==========

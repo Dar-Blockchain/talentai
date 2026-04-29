@@ -1,4 +1,4 @@
-const Post = require("../../models/posts.model");
+const Post = require("../../models/Post.model");
 const User = require("../../models/User.model");
 const Profile = require("../../models/Profile.model");
 const PostInterviewAssessmentModel = require("../../models/PostInterviewAssessment.model");
@@ -568,7 +568,7 @@ module.exports.deletePost = async (postId, userId) => {
     
     // 1. Archive PostSteps
     if (post.PostSteps && post.PostSteps.length > 0) {
-      const PostSteps = require('../../models/postSteps.model');
+      const PostSteps = require('../../models/PostSteps.model');
       await PostSteps.updateMany(
         { _id: { $in: post.PostSteps } },
         { archived: true, archivedAt: new Date() }
