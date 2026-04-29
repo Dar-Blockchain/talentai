@@ -2,6 +2,7 @@ const nodemailer = require("nodemailer");
 const fs = require("fs");
 const path = require("path");
 const handlebars = require("handlebars");
+const { getMailTransportOptions } = require("./mail-transport-options");
 
 const compileTemplate = (templateName) => {
   const filePath = path.join(__dirname, "../templates/emails", templateName);
@@ -9,15 +10,26 @@ const compileTemplate = (templateName) => {
   return handlebars.compile(source);
 };
 
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
+// Build transport from env (EMAIL_HOST / EMAIL_PORT / EMAIL_SECURE / EMAIL_USER / EMAIL_PASSWORD).
+// Defaults: port 465 + TLS. For STARTTLS use EMAIL_PORT=587 EMAIL_SECURE=false.
+const transporter = nodemailer.createTransport(getMailTransportOptions());
+
+// Default "From" header: provider often rejects mismatched from/auth, so fall back to EMAIL_USER.
+const FROM_ADDRESS =
+  process.env.EMAIL_FROM ||
+  `"TalentAI" <${process.env.EMAIL_USER || "contact@talentai.bid"}>`;
+
+// Verify SMTP at startup so misconfigurations are visible immediately
+transporter
+  .verify()
+  .then(() =>
+    console.log(
+      `📧 SMTP ready: ${process.env.EMAIL_HOST}:${process.env.EMAIL_PORT || 465}`
+    )
+  )
+  .catch((err) =>
+    console.error("❌ SMTP verification failed:", err.message)
+  );
 
 // Compiled templates (loaded once at startup)
 const otpTemplate                    = compileTemplate("auth-otp.hbs");
@@ -48,7 +60,7 @@ const year = new Date().getFullYear();
 // ─── Send OTP ────────────────────────────────────────────────────────────────
 const sendOTP = async (email, otp) => {
   const mailOptions = {
-    from: '"TalentAI" <contact@talentai.bid>',
+    from: FROM_ADDRESS,
     to: email,
     subject: "Verification Code - TalentAI",
     html: otpTemplate({ otp, year }),
@@ -67,7 +79,7 @@ const sendOTP = async (email, otp) => {
 // ─── Send Company Invitation ──────────────────────────────────────────────────
 const sendCompanyInvitation = async (to, orgName, role, inviterEmail, invitationLink = "#") => {
   const mailOptions = {
-    from: '"TalentAI" <contact@talentai.bid>',
+    from: FROM_ADDRESS,
     to,
     subject: `Invitation: Join ${orgName} as ${role}`,
     html: organizationInviteTemplate({ orgName, role: formatRole(role), inviter: inviterEmail, invitationLink, year }),
@@ -86,7 +98,7 @@ const sendCompanyInvitation = async (to, orgName, role, inviterEmail, invitation
 // ─── Send Interview Assessment (to candidate) ────────────────────────────────
 const sendInterviewAssessmentEmail = async (candidateEmail, candidateName, postTitle) => {
   const mailOptions = {
-    from: '"TalentAI" <contact@talentai.bid>',
+    from: FROM_ADDRESS,
     to: candidateEmail,
     subject: `Interview Assessment Completed – ${postTitle || "New Opportunity"}`,
     html: interviewAssessmentTemplate({ candidateName, postTitle: postTitle || "Position", year }),
@@ -105,7 +117,7 @@ const sendInterviewAssessmentEmail = async (candidateEmail, candidateName, postT
 // ─── Send Interview Completion Notification (to company) ────────────────────
 const sendInterviewCompletionNotificationToCompany = async (companyEmail, companyName, candidateName, postTitle, candidateEmail) => {
   const mailOptions = {
-    from: '"TalentAI" <contact@talentai.bid>',
+    from: FROM_ADDRESS,
     to: companyEmail,
     subject: `Interview Completed – ${candidateName} for ${postTitle || "Position"}`,
     html: interviewCompletionTemplate({ companyName, candidateName, postTitle: postTitle || "Position", candidateEmail, year }),
@@ -124,7 +136,7 @@ const sendInterviewCompletionNotificationToCompany = async (companyEmail, compan
 // ─── Send Interview Invitation (to candidate) ────────────────────────────────
 const sendInterviewInvitation = async (candidateEmail, candidateName, jobTitle, companyName, interviewDate = null, interviewTime = null, interviewLink = null) => {
   const mailOptions = {
-    from: '"TalentAI" <contact@talentai.bid>',
+    from: FROM_ADDRESS,
     to: candidateEmail,
     subject: `Interview Invitation – ${jobTitle} at ${companyName}`,
     html: interviewInvitationTemplate({ candidateName, jobTitle, companyName, interviewDate, interviewTime, interviewLink, year }),
@@ -151,7 +163,7 @@ const sendInterviewNudge = async (candidateEmail, { firstName, jobTitle, company
   const template = templates[nudgeNumber];
   if (!template) return false;
   const mailOptions = {
-    from: '"TalentAI" <contact@talentai.bid>',
+    from: FROM_ADDRESS,
     to: candidateEmail,
     subject: subjects[nudgeNumber],
     html: template({ firstName, jobTitle, companyName, interviewLink, deadline, year }),
@@ -169,8 +181,9 @@ const sendInterviewNudge = async (candidateEmail, { firstName, jobTitle, company
 
 // ─── Send Direct Message to Candidate (from company) ─────────────────────────
 const sendCandidateEmail = async (to, candidateName, fromCompanyName, subject, message) => {
+  const senderAddr = process.env.EMAIL_USER || "contact@talentai.bid";
   const mailOptions = {
-    from: `"${fromCompanyName} via TalentAI" <contact@talentai.bid>`,
+    from: `"${fromCompanyName} via TalentAI" <${senderAddr}>`,
     to,
     subject,
     html: contactCandidateTemplate({ candidateName, companyName: fromCompanyName, subject, message, year }),
@@ -189,7 +202,7 @@ const sendCandidateEmail = async (to, candidateName, fromCompanyName, subject, m
 // ─── Send Plan Upgrade Reminder to Company ───────────────────────────────────
 const sendPlanUpgradeReminder = async (companyEmail, companyName) => {
   const mailOptions = {
-    from: '"TalentAI" <contact@talentai.bid>',
+    from: FROM_ADDRESS,
     to: companyEmail,
     subject: '🚀 Upgrade your TalentAI plan to unlock full access',
     html: `

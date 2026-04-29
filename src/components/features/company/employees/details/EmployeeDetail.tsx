@@ -18,6 +18,7 @@ import WorkHistoryOutlined from "@mui/icons-material/WorkHistoryOutlined";
 import TuneOutlined from "@mui/icons-material/TuneOutlined";
 import PersonOutlined from "@mui/icons-material/PersonOutlined";
 import CheckOutlined from "@mui/icons-material/CheckOutlined";
+import { useTranslation } from "react-i18next";
 import {
   Member,
   updateEmployeePermissions,
@@ -25,16 +26,13 @@ import {
 } from "@/store/slices/memberSlice";
 import axiosInstance from "@/utils/axiosInstance";
 import { ROLES } from "@/constants/employee";
+import { getRoleLabel } from "@/utils/employeeRoleI18n";
 import { EmployeePermission, DEFAULT_EMPLOYEE_PERMISSIONS } from "@/types/employeePermissions";
 import PermissionsPanel from "../permissions/PermissionsPanel";
 
 const PURPLE = "#8310FF";
 
 /* ── helpers ─────────────────────────────────────────── */
-const ROLE_LABELS: Record<string, string> = {
-  RH: "HR", TechLead: "Technical Leader",
-  Supervisor: "Supervisor", Manager: "Manager", Owner: "Owner",
-};
 const ROLE_STYLES: Record<string, { color: string; bg: string }> = {
   RH:         { color: "#16A34A", bg: "#F0FDF4" },
   TechLead:   { color: "#0891B2", bg: "#ECFEFF" },
@@ -160,6 +158,7 @@ interface EmployeeDetailProps {
 const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ member, onBack, onEdit, onDelete, canAssignRoles = true, canRemove = true, canManagePermissions = true, isOwner = false, isSelf = false }) => {
   const dispatch = useDispatch<AppDispatch>();
   const updatingPerms = useSelector(selectUpdatingPermissions);
+  const { t } = useTranslation("dashboard");
 
   const userId = member.userId;
 
@@ -193,7 +192,7 @@ const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ member, onBack, onEdit,
   const roleStr    = member.role as string;
   const roleEntry  = ROLES.find((r) => r.value === roleStr || r.value === roleStr.toLowerCase());
   const roleColor  = roleEntry?.color ?? ROLE_STYLES[member.role]?.color ?? "#6B7280";
-  const roleLabel  = roleEntry?.label ?? ROLE_LABELS[member.role] ?? member.role;
+  const roleLabel  = getRoleLabel(roleStr, t);
   const status     = STATUS_STYLES[member.status] ?? STATUS_STYLES.pending;
   const dept       = (member as any).department?.name ?? (member as any).departmentName ?? null;
 

@@ -3,6 +3,7 @@ import {
   Box, Typography, Avatar, Tooltip,
 } from "@mui/material";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { useRouter } from "next/router";
 import EditOutlined from "@mui/icons-material/EditOutlined";
 import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
@@ -11,6 +12,7 @@ import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
 import { Member } from "@/store/slices/memberSlice";
 import { ROLES } from "@/constants/employee";
+import { getRoleLabel } from "@/utils/employeeRoleI18n";
 
 const PURPLE = "#8310FF";
 
@@ -27,10 +29,10 @@ export const ROLE_STYLES: Record<string, { color: string; bg: string }> = {
   Owner:      { color: "#DC2626", bg: "#FEF2F2" },
 };
 
-const STATUS_STYLES: Record<string, { color: string; dot: string; label: string; bg: string }> = {
-  active:   { color: "#16A34A", dot: "#22C55E", label: "Active",   bg: "#DCFCE7" },
-  pending:  { color: "#D97706", dot: "#F59E0B", label: "Pending",  bg: "#FEF9C3" },
-  inactive: { color: "#6B7280", dot: "#D1D5DB", label: "Inactive", bg: "#F3F4F6" },
+const STATUS_META: Record<string, { color: string; dot: string; bg: string }> = {
+  active:   { color: "#16A34A", dot: "#22C55E", bg: "#DCFCE7" },
+  pending:  { color: "#D97706", dot: "#F59E0B", bg: "#FEF9C3" },
+  inactive: { color: "#6B7280", dot: "#D1D5DB", bg: "#F3F4F6" },
 };
 
 const AVATAR_PALETTES = [
@@ -47,11 +49,6 @@ function pickPalette(str: string) {
   return AVATAR_PALETTES[Math.abs(h) % AVATAR_PALETTES.length];
 }
 
-const fmtDate = (iso?: string) => {
-  if (!iso) return null;
-  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-};
-
 interface EmployeeCardProps {
   member: Member;
   index?: number;
@@ -64,9 +61,20 @@ interface EmployeeCardProps {
 
 const EmployeeCard: React.FC<EmployeeCardProps> = memo(({ member, index = 0, onEdit, onDelete, onSelect, canAssignRoles = true, canRemove = true }) => {
   const router = useRouter();
+  const { t, i18n } = useTranslation("dashboard");
+  const fmtDate = (iso?: string) => {
+    if (!iso) return null;
+    const loc = i18n.language?.startsWith("fr") ? "fr-FR" : "en-US";
+    return new Date(iso).toLocaleDateString(loc, { month: "short", day: "numeric", year: "numeric" });
+  };
+  const statusOf = (raw: string) => {
+    const m = STATUS_META[raw] ?? STATUS_META.pending!;
+    const labelKey = raw === "active" ? "status_active" : raw === "inactive" ? "status_inactive" : "status_pending";
+    return { ...m, label: t(`pages.employees.card.${labelKey}`) };
+  };
   const name    = (member.firstName && member.lastName)
     ? `${member.firstName} ${member.lastName}`
-    : member.firstName || member.lastName || member.username || "Unnamed";
+    : member.firstName || member.lastName || member.username || t("pages.employees.card.unnamed");
   const email   = member.email   || "";
   const letter  = name[0]?.toUpperCase() || "U";
   const palette = pickPalette(email || name);
@@ -74,10 +82,10 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({ member, index = 0, onE
   const roleStr   = member.role as string;
   const roleEntry = ROLES.find((r) => r.value === roleStr || r.value === roleStr.toLowerCase());
   const roleColor = roleEntry?.color ?? ROLE_STYLES[member.role]?.color ?? "#6B7280";
-  const roleLabel = roleEntry?.label ?? ROLE_LABELS[member.role] ?? member.role;
+  const roleLabel = getRoleLabel(roleStr, t);
   const RoleIcon  = roleEntry?.icon ?? null;
 
-  const status     = STATUS_STYLES[member.status] ?? STATUS_STYLES.pending;
+  const status = statusOf(member.status);
   const joinedDate = fmtDate((member as any).createdAt);
   const dept       = (member as any).department?.name ?? (member as any).departmentName ?? null;
 
@@ -220,7 +228,7 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({ member, index = 0, onE
               overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
               fontStyle: dept ? "normal" : "italic",
             }}>
-              {dept ?? "No department assigned"}
+              {dept ?? t("pages.employees.card.no_department")}
             </Typography>
           </Box>
 
@@ -261,7 +269,7 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({ member, index = 0, onE
             }}
           >
             {/* View */}
-            <Tooltip title="View profile" placement="top" arrow>
+            <Tooltip title={t("pages.employees.card.tooltip_view")} placement="top" arrow>
               <Box
                 onClick={() => router.push(`/company/employees/${member.userId}`)}
                 sx={{
@@ -273,13 +281,13 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({ member, index = 0, onE
                 }}
               >
                 <OpenInNewOutlined sx={{ fontSize: 13, color: "#64748B" }} />
-                <Typography sx={{ fontSize: "11.5px", fontWeight: 600, color: "#475569" }}>View</Typography>
+                <Typography sx={{ fontSize: "11.5px", fontWeight: 600, color: "#475569" }}>{t("pages.employees.card.view")}</Typography>
               </Box>
             </Tooltip>
 
             {/* Edit */}
             {canAssignRoles && (
-              <Tooltip title="Edit role" placement="top" arrow>
+              <Tooltip title={t("pages.employees.card.tooltip_edit")} placement="top" arrow>
                 <Box
                   onClick={() => onEdit(member)}
                   sx={{
@@ -291,14 +299,14 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({ member, index = 0, onE
                   }}
                 >
                   <EditOutlined sx={{ fontSize: 13, color: PURPLE }} />
-                  <Typography sx={{ fontSize: "11.5px", fontWeight: 600, color: PURPLE }}>Edit</Typography>
+                  <Typography sx={{ fontSize: "11.5px", fontWeight: 600, color: PURPLE }}>{t("pages.employees.card.edit")}</Typography>
                 </Box>
               </Tooltip>
             )}
 
             {/* Delete */}
             {canRemove && (
-              <Tooltip title="Remove member" placement="top" arrow>
+              <Tooltip title={t("pages.employees.card.tooltip_remove")} placement="top" arrow>
                 <Box
                   onClick={() => onDelete(member)}
                   sx={{
