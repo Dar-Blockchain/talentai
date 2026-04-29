@@ -1,4 +1,4 @@
-const ApiKey = require("../models/apiKey.model");
+const ApiKey = require("../models/apiKeys.model");
 
 /**
  * ApiKey Service - Business logic for API key management
