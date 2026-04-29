@@ -152,6 +152,7 @@ const InterviewLanguagesModal: React.FC<Props> = ({ open, onConfirm, onClose, in
             textTransform: "none", fontWeight: 700, fontSize: "13px",
             borderRadius: "10px", height: 42,
             bgcolor: TEAL, color: "#fff", boxShadow: "none",
+            whiteSpace: "nowrap",
             "&:hover": { bgcolor: "#0F766E", boxShadow: "0 4px 12px rgba(13,148,136,0.25)" },
           }}
         >

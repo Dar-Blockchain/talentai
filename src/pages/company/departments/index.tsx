@@ -34,9 +34,11 @@ import CreateDepartmentModal from "@/components/features/company/departments/new
 import EditDepartmentModal from "@/components/features/company/departments/edit/EditDepartmentModal";
 import DeleteDepartmentDialog from "@/components/features/company/departments/delete/DeleteDepartmentDialog";
 import AddOutlined from "@mui/icons-material/AddOutlined";
+import { useToast } from "@/hooks/useToast";
 
 const DepartmentsPage: React.FC = () => {
   const { t } = useTranslation("dashboard");
+  const { showToast } = useToast();
   useCompanyAccess("canViewDepartments");
   const dispatch  = useDispatch<AppDispatch>();
   const user      = useSelector((state: RootState) => state.user.connectedUser.user);
@@ -64,10 +66,11 @@ const DepartmentsPage: React.FC = () => {
 
   useEffect(() => {
     if (createSuccess) {
+      showToast({ message: t("pages.departments.toast.created"), severity: "success" });
       setCreateOpen(false);
       dispatch(clearCreateStatus());
     }
-  }, [createSuccess, dispatch]);
+  }, [createSuccess, dispatch, showToast, t]);
 
   useEffect(() => {
     if (updateSuccess) {

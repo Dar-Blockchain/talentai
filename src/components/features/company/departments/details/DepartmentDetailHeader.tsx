@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Box, Typography, Skeleton } from "@mui/material";
 import { useRouter } from "next/router";
+import { useTranslation } from "react-i18next";
 import ArrowBackOutlined from "@mui/icons-material/ArrowBackOutlined";
 import EditOutlined from "@mui/icons-material/EditOutlined";
 import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
@@ -11,8 +12,10 @@ import { Department } from "@/store/slices/departmentSlice";
 
 const PURPLE = "#8310FF";
 
-const fmtDate = (d?: string) =>
-  d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
+function formatDetailDate(iso: string, locale: string) {
+  const loc = locale.startsWith("fr") ? "fr-FR" : "en-US";
+  return new Date(iso).toLocaleDateString(loc, { month: "short", day: "numeric", year: "numeric" });
+}
 
 interface DepartmentDetailHeaderProps {
   department: Department | null;
@@ -29,6 +32,21 @@ const DepartmentDetailHeader: React.FC<DepartmentDetailHeaderProps> = ({
   department, loading, membersTotal, loadingMembers, onEdit, onDelete, canEdit = true, canDelete = true,
 }) => {
   const router = useRouter();
+  const { t, i18n } = useTranslation("dashboard");
+
+  const createdLine = useMemo(() => {
+    if (!department?.createdAt) return "\u2014";
+    const dateStr = formatDetailDate(department.createdAt, i18n.language);
+    return t("pages.departments.detail.created", { date: dateStr });
+  }, [department?.createdAt, i18n.language, t]);
+
+  const memberLabel = useMemo(
+    () =>
+      loadingMembers
+        ? t("pages.departments.detail.loading_short")
+        : t("pages.departments.detail.member_count", { count: membersTotal }),
+    [loadingMembers, membersTotal, t],
+  );
 
   return (
     <Box sx={{
@@ -50,7 +68,7 @@ const DepartmentDetailHeader: React.FC<DepartmentDetailHeaderProps> = ({
             }}
           >
             <ArrowBackOutlined sx={{ fontSize: 15 }} />
-            <Typography sx={{ fontSize: "0.8rem", fontWeight: 600, color: "inherit" }}>Departments</Typography>
+            <Typography sx={{ fontSize: "0.8rem", fontWeight: 600, color: "inherit" }}>{t("pages.departments.detail.back")}</Typography>
           </Box>
 
           {department && (canEdit || canDelete) && (
@@ -66,7 +84,7 @@ const DepartmentDetailHeader: React.FC<DepartmentDetailHeaderProps> = ({
                   }}
                 >
                   <EditOutlined sx={{ fontSize: 14, color: "#64748B" }} />
-                  <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#475569" }}>Edit</Typography>
+                  <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#475569" }}>{t("pages.departments.detail.edit")}</Typography>
                 </Box>
               )}
               {canDelete && (
@@ -80,7 +98,7 @@ const DepartmentDetailHeader: React.FC<DepartmentDetailHeaderProps> = ({
                   }}
                 >
                   <DeleteOutlineOutlined sx={{ fontSize: 14, color: "#F87171" }} />
-                  <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#EF4444" }}>Delete</Typography>
+                  <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#EF4444" }}>{t("pages.departments.detail.delete")}</Typography>
                 </Box>
               )}
             </Box>
@@ -126,13 +144,13 @@ const DepartmentDetailHeader: React.FC<DepartmentDetailHeaderProps> = ({
                 }}>
                   <PeopleAltOutlined sx={{ fontSize: 11, color: PURPLE }} />
                   <Typography sx={{ fontSize: "11px", fontWeight: 700, color: PURPLE }}>
-                    {loadingMembers ? "…" : `${membersTotal} member${membersTotal !== 1 ? "s" : ""}`}
+                    {memberLabel}
                   </Typography>
                 </Box>
                 <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
                   <CalendarTodayOutlined sx={{ fontSize: 11, color: "#CBD5E1" }} />
                   <Typography sx={{ fontSize: "11.5px", color: "#94A3B8", fontWeight: 500 }}>
-                    Created {fmtDate(department.createdAt)}
+                    {createdLine}
                   </Typography>
                 </Box>
               </Box>

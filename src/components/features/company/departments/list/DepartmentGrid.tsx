@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback } from "react";
 import { Box, Typography, InputAdornment, TextField } from "@mui/material";
 import { useSelector, useDispatch } from "react-redux";
+import { useTranslation } from "react-i18next";
 import { AppDispatch } from "@/store/store";
 import {
   selectDepartments,
@@ -13,7 +14,6 @@ import DepartmentCard from "./DepartmentCard";
 import DepartmentSkeletonCard from "./DepartmentSkeletonCard";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import CorporateFareOutlined from "@mui/icons-material/CorporateFareOutlined";
-import GroupOutlined from "@mui/icons-material/GroupOutlined";
 
 interface DepartmentGridProps {
   onEdit: (dept: Department) => void;
@@ -23,6 +23,7 @@ interface DepartmentGridProps {
 }
 
 const DepartmentGrid: React.FC<DepartmentGridProps> = ({ onEdit, onDelete, onSearch, canManage = true }) => {
+  const { t } = useTranslation("dashboard");
   const dispatch      = useDispatch<AppDispatch>();
   const departments   = useSelector(selectDepartments);
   const loading       = useSelector(selectDepartmentsLoading);
@@ -58,7 +59,9 @@ const DepartmentGrid: React.FC<DepartmentGridProps> = ({ onEdit, onDelete, onSea
           }}>
             <CorporateFareOutlined sx={{ fontSize: 15, color: "#0D9488" }} />
             <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#0D9488" }}>
-              {loading ? "—" : displayTotal} department{displayTotal !== 1 ? "s" : ""}
+              {loading
+                ? "—"
+                : t("pages.departments.toolbar.department_count", { count: displayTotal ?? 0 })}
             </Typography>
           </Box>
         </Box>
@@ -66,7 +69,7 @@ const DepartmentGrid: React.FC<DepartmentGridProps> = ({ onEdit, onDelete, onSea
         {/* Search */}
         <TextField
           size="small"
-          placeholder="Search departments…"
+          placeholder={t("pages.departments.toolbar.search_placeholder")}
           value={search}
           onChange={(e) => handleSearch(e.target.value)}
           InputProps={{

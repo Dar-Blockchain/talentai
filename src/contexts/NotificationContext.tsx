@@ -2,80 +2,40 @@ import React, { useEffect, ReactNode } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '@/store/store';
 import {
-  fetchNotifications,
-  markNotificationAsRead,
-  markAllNotificationsAsRead,
+  fetchNotifications, markNotificationAsRead, markAllNotificationsAsRead,
   clearNotifications as clearNotificationsAction,
-  archiveNotification,
-  archiveAllNotifications,
-  selectNotifications,
-  selectUnreadCount,
-  selectIsConnected,
+  archiveNotification, archiveAllNotifications,
+  selectNotifications, selectUnreadCount, selectIsConnected,
 } from '@/store/slices/notificationSlice';
 import { connectSocket, disconnectSocket } from '@/store/middleware/socketMiddleware';
 
-interface NotificationProviderProps {
-  children: ReactNode;
-  userId?: string;
-}
-
-export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children, userId }) => {
+export const NotificationProvider: React.FC<{ children: ReactNode; userId?: string }> = ({ children, userId }) => {
   const dispatch = useDispatch<AppDispatch>();
 
-  // Load existing notifications from database and connect socket on mount
   useEffect(() => {
     if (!userId) return;
-
-    // Fetch notifications from database
     dispatch(fetchNotifications());
-
-    // Connect socket for real-time updates
     dispatch(connectSocket(userId) as any);
-
-    return () => {
-      // Disconnect socket on unmount
-      dispatch(disconnectSocket() as any);
-    };
+    return () => { dispatch(disconnectSocket() as any); };
   }, [userId, dispatch]);
 
   return <>{children}</>;
 };
 
-// Custom hook to use notifications with Redux
 export const useNotifications = () => {
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch      = useDispatch<AppDispatch>();
   const notifications = useSelector(selectNotifications);
-  const unreadCount = useSelector(selectUnreadCount);
-  const isConnected = useSelector(selectIsConnected);
-
-  const markAsRead = (id: string) => {
-    dispatch(markNotificationAsRead(id));
-  };
-
-  const markAllAsRead = () => {
-    dispatch(markAllNotificationsAsRead());
-  };
-
-  const clearNotifications = () => {
-    dispatch(clearNotificationsAction());
-  };
-
-  const archive = (id: string) => {
-    dispatch(archiveNotification(id));
-  };
-
-  const archiveAll = () => {
-    dispatch(archiveAllNotifications());
-  };
+  const unreadCount   = useSelector(selectUnreadCount);
+  const isConnected   = useSelector(selectIsConnected);
 
   return {
     notifications,
     unreadCount,
-    markAsRead,
-    markAllAsRead,
-    clearNotifications,
-    archive,
-    archiveAll,
     isConnected,
+    markAsRead:         (id: string) => dispatch(markNotificationAsRead(id)),
+    markAllAsRead:      ()           => dispatch(markAllNotificationsAsRead()),
+    clearNotifications: ()           => dispatch(clearNotificationsAction()),
+    archive:            (id: string) => dispatch(archiveNotification(id)),
+    archiveAll:         ()           => dispatch(archiveAllNotifications()),
   };
 };

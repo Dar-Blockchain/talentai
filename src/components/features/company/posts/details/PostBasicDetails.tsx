@@ -8,6 +8,7 @@ import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
 import AttachMoneyOutlined from "@mui/icons-material/AttachMoneyOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import CodeOutlined from "@mui/icons-material/CodeOutlined";
+import MicOutlined from "@mui/icons-material/MicOutlined";
 import SectionCard from "@/components/ui/SectionCard";
 import { formatSalary, getLevelFromNumber, getPostSkills, getSoftSkillLevelLabel, Skill } from "@/utils/postHelpers";
 import { formatDate } from "@/utils/functions";
@@ -40,6 +41,14 @@ const PostBasicDetails: React.FC<Props> = () => {
   const jd = job.jobDetails || {};
   const displaySkills = getPostSkills(job);
 
+  const LANG_META: Record<string, { flag: string; label: string }> = {
+    en: { flag: "🇬🇧", label: "English" },
+    fr: { flag: "🇫🇷", label: "Français" },
+  };
+  const interviewLanguages: string[] = job.interviewLanguages?.length
+    ? job.interviewLanguages
+    : ["en"];
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
 
@@ -71,6 +80,36 @@ const PostBasicDetails: React.FC<Props> = () => {
               <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#6B7280" }}>{formatDate(job.createdAt)}</Typography>
             </Box>
           )}
+        </Box>
+
+        {/* Interview languages */}
+        <Divider sx={{ my: 2 }} />
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+            <MicOutlined sx={{ fontSize: 15, color: "#6B7280" }} />
+            <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#6B7280" }}>
+              {t("detail.details.interview_languages")}
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", gap: 0.75 }}>
+            {interviewLanguages.map((code) => {
+              const meta = LANG_META[code];
+              if (!meta) return null;
+              return (
+                <Box
+                  key={code}
+                  sx={{
+                    display: "inline-flex", alignItems: "center", gap: 0.5,
+                    px: 1.25, py: 0.4, borderRadius: "8px",
+                    bgcolor: "#F0FDFA", border: "1px solid #99F6E4",
+                  }}
+                >
+                  <Typography sx={{ fontSize: "13px", lineHeight: 1 }}>{meta.flag}</Typography>
+                  <Typography sx={{ fontSize: "11.5px", fontWeight: 600, color: "#0D9488" }}>{meta.label}</Typography>
+                </Box>
+              );
+            })}
+          </Box>
         </Box>
 
         {jd.description && (
