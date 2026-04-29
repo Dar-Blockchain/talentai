@@ -11,12 +11,14 @@ import {
   selectCurrentJobLoading,
   selectCurrentJobError,
   updatePostStatus,
+  updatePost,
 } from "@/store/slices/postSlice";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/useToast";
 import { useDeletePost } from "@/components/features/company/posts/details/useDeletePost";
 import DeletePostModal from "@/components/features/company/posts/details/DeletePostModal";
 import PublishConfirmModal from "@/components/features/company/posts/PublishConfirmModal";
+import InterviewLanguagesModal from "@/components/features/company/posts/create/InterviewLanguagesModal";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
 import JobDetailContent from "@/components/features/company/posts/details/JobDetailContent";
 import ApplicationsView from "@/components/features/company/posts/details/ApplicationsView";
@@ -33,6 +35,7 @@ import BusinessCenterOutlined from "@mui/icons-material/BusinessCenterOutlined";
 import SignalCellularAltOutlined from "@mui/icons-material/SignalCellularAlt";
 import LaptopOutlined from "@mui/icons-material/LaptopOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
+import MicOutlined from "@mui/icons-material/MicOutlined";
 
 const TEAL = "#0D9488";
 
@@ -40,7 +43,8 @@ const PostDetailsPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const { id } = router.query;
-  const { t } = useTranslation("dashboard");
+  const { t } = useTranslation("posts");
+  const { t: td } = useTranslation("dashboard");
   const { showToast } = useToast();
 
   const job = useSelector(selectCurrentJob);
@@ -53,6 +57,8 @@ const PostDetailsPage: React.FC = () => {
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [langModalOpen, setLangModalOpen] = useState(false);
+  const [savingLanguages, setSavingLanguages] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -79,10 +85,10 @@ const PostDetailsPage: React.FC = () => {
     postId: job?._id,
     refetchAfterDelete: false,
     onSuccess: () => {
-      showToast({ message: t("pages.post_detail.toast.deleted"), severity: "success" });
+      showToast({ message: t("detail.toast.deleted"), severity: "success" });
       router.push("/company/posts");
     },
-    onError: () => showToast({ message: t("pages.post_detail.toast.delete_error"), severity: "error" }),
+    onError: () => showToast({ message: t("detail.toast.delete_error"), severity: "error" }),
   });
 
   const handleSaveSuccess = () => {
@@ -99,10 +105,10 @@ const PostDetailsPage: React.FC = () => {
       .unwrap()
       .then(() => {
         setPublishConfirmOpen(false);
-        showToast({ message: t("pages.post_detail.toast.published"), severity: "success" });
+        showToast({ message: t("detail.toast.published"), severity: "success" });
         dispatch(fetchJobById(job._id));
       })
-      .catch(() => showToast({ message: t("pages.post_detail.toast.publish_error"), severity: "error" }))
+      .catch(() => showToast({ message: t("detail.toast.publish_error"), severity: "error" }))
       .finally(() => setPublishing(false));
   };
 
@@ -111,8 +117,22 @@ const PostDetailsPage: React.FC = () => {
     const companyId = job.user?._id || connectedUser?._id || '';
     navigator.clipboard
       .writeText(`${window.location.origin}/interview/hr?jobId=${job._id}${companyId ? `&companyId=${companyId}` : ''}&ref=link`)
-      .then(() => showToast({ message: t("pages.post_detail.toast.link_copied"), severity: "success" }))
-      .catch(() => showToast({ message: t("pages.post_detail.toast.link_copy_error"), severity: "error" }));
+      .then(() => showToast({ message: t("detail.toast.link_copied"), severity: "success" }))
+      .catch(() => showToast({ message: t("detail.toast.link_copy_error"), severity: "error" }));
+  };
+
+  const handleUpdateLanguages = (languages: string[]) => {
+    if (!job?._id) return;
+    setSavingLanguages(true);
+    dispatch(updatePost({ jobId: job._id, jobData: { interviewLanguages: languages } }))
+      .unwrap()
+      .then(() => {
+        setLangModalOpen(false);
+        showToast({ message: t("detail.toast.languages_updated"), severity: "success" });
+        dispatch(fetchJobById(job._id));
+      })
+      .catch(() => showToast({ message: t("detail.toast.languages_error"), severity: "error" }))
+      .finally(() => setSavingLanguages(false));
   };
 
   const jd = job?.jobDetails || {};
@@ -121,7 +141,7 @@ const PostDetailsPage: React.FC = () => {
   return (
       <DashboardLayout>
         <Box>
-          {loading && <LoadingOverlay height={400} message={t("pages.post_detail.loading")} color={TEAL} />}
+          {loading && <LoadingOverlay height={400} message={t("detail.loading")} color={TEAL} />}
 
           {!loading && error && (
             <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>
@@ -139,9 +159,9 @@ const PostDetailsPage: React.FC = () => {
                     sx={{ mb: 2, "& .MuiBreadcrumbs-separator": { mx: 0.25 } }}
                   >
                     {[
-                      { label: t("pages.common.dashboard"), href: "/company/dashboard" },
-                      { label: t("pages.posts.title"), href: "/company/posts" },
-                      { label: jd.title || t("pages.post_detail.fallback_title") },
+                      { label: td("pages.common.dashboard"), href: "/company/dashboard" },
+                      { label: t("title"), href: "/company/posts" },
+                      { label: jd.title || t("detail.fallback_title") },
                     ].map((item, i) =>
                       item.href ? (
                         <MuiLink key={i} component={Link} href={item.href} underline="hover"
@@ -174,7 +194,7 @@ const PostDetailsPage: React.FC = () => {
                             {jd.title || "Job Post"}
                           </Typography>
                           <Chip
-                            label={isDraft ? t("pages.post_detail.status.draft") : t("pages.post_detail.status.published")}
+                            label={isDraft ? t("detail.status.draft") : t("detail.status.published")}
                             size="small"
                             sx={{
                               height: 22, fontWeight: 700, fontSize: "11px",
@@ -237,6 +257,25 @@ const PostDetailsPage: React.FC = () => {
                     {/* Right: actions */}
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}>
 
+                      {/* Edit Interview Languages button */}
+                      {isDraft && isOwner && (
+                        <Box
+                          onClick={() => setLangModalOpen(true)}
+                          sx={{
+                            display: "flex", alignItems: "center", gap: 0.75,
+                            px: 1.75, height: 36, borderRadius: "10px", cursor: "pointer",
+                            border: "1.5px solid #99F6E4", bgcolor: "#F0FDFA",
+                            transition: "border-color 0.15s, background 0.15s",
+                            "&:hover": { borderColor: "#5EEAD4", bgcolor: "#CCFBF1" },
+                          }}
+                        >
+                          <MicOutlined sx={{ fontSize: 15, color: TEAL }} />
+                          <Typography sx={{ fontSize: "13px", fontWeight: 600, color: TEAL, lineHeight: 1 }}>
+                            {t("detail.actions.edit_languages")}
+                          </Typography>
+                        </Box>
+                      )}
+
                       {/* Publish button */}
                       {isDraft && isOwner && (
                         <Box
@@ -251,7 +290,7 @@ const PostDetailsPage: React.FC = () => {
                         >
                           <PublishOutlined sx={{ fontSize: 15, color: "#fff" }} />
                           <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#fff", lineHeight: 1 }}>
-                            {t("pages.post_detail.actions.publish")}
+                            {t("detail.actions.publish")}
                           </Typography>
                         </Box>
                       )}
@@ -270,7 +309,7 @@ const PostDetailsPage: React.FC = () => {
                         >
                           <ContentCopyOutlined sx={{ fontSize: 14, color: "#059669" }} />
                           <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#059669", lineHeight: 1 }}>
-                            {t("pages.post_detail.actions.copy_link")}
+                            {t("detail.actions.copy_link")}
                           </Typography>
                         </Box>
                       )}
@@ -301,7 +340,7 @@ const PostDetailsPage: React.FC = () => {
                           >
                             {/* Edit */}
                             <Tooltip
-                              title={!isDraft ? t("pages.post_detail.tooltips.cannot_edit_published") : ""}
+                              title={!isDraft ? t("detail.tooltips.cannot_edit_published") : ""}
                               arrow placement="left"
                               disableHoverListener={isDraft}
                             >
@@ -315,8 +354,8 @@ const PostDetailsPage: React.FC = () => {
                                     <EditOutlined sx={{ fontSize: 14, color: TEAL }} />
                                   </Box>
                                   <Box>
-                                    <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>{t("pages.post_detail.menu.edit_title")}</Typography>
-                                    <Typography sx={{ fontSize: "11px", color: "#9CA3AF", lineHeight: 1.2 }}>{!isDraft ? t("pages.post_detail.menu.edit_desc_published") : t("pages.post_detail.menu.edit_desc_draft")}</Typography>
+                                    <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>{t("detail.menu.edit_title")}</Typography>
+                                    <Typography sx={{ fontSize: "11px", color: "#9CA3AF", lineHeight: 1.2 }}>{!isDraft ? t("detail.menu.edit_desc_published") : t("detail.menu.edit_desc_draft")}</Typography>
                                   </Box>
                                 </MenuItem>
                               </span>
@@ -333,8 +372,8 @@ const PostDetailsPage: React.FC = () => {
                                 <DeleteOutlineOutlined sx={{ fontSize: 14, color: "#EF4444" }} />
                               </Box>
                               <Box>
-                                <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#EF4444", lineHeight: 1.2 }}>{t("pages.post_detail.menu.delete_title")}</Typography>
-                                <Typography sx={{ fontSize: "11px", color: "#9CA3AF", lineHeight: 1.2 }}>{t("pages.post_detail.menu.delete_desc")}</Typography>
+                                <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#EF4444", lineHeight: 1.2 }}>{t("detail.menu.delete_title")}</Typography>
+                                <Typography sx={{ fontSize: "11px", color: "#9CA3AF", lineHeight: 1.2 }}>{t("detail.menu.delete_desc")}</Typography>
                               </Box>
                             </MenuItem>
                           </Menu>
@@ -360,8 +399,8 @@ const PostDetailsPage: React.FC = () => {
                         "& .MuiTabs-indicator": { bgcolor: TEAL, height: 2.5, borderRadius: "2px 2px 0 0" },
                       }}
                     >
-                      <Tab value="details" label={t("pages.post_detail.tabs.details")} icon={<WorkOutlineOutlined sx={{ fontSize: 15 }} />} iconPosition="start" />
-                      <Tab value="applications" label={t("pages.post_detail.tabs.applications")} icon={<PeopleOutlined sx={{ fontSize: 15 }} />} iconPosition="start" />
+                      <Tab value="details" label={t("detail.tabs.details")} icon={<WorkOutlineOutlined sx={{ fontSize: 15 }} />} iconPosition="start" />
+                      <Tab value="applications" label={t("detail.tabs.applications")} icon={<PeopleOutlined sx={{ fontSize: 15 }} />} iconPosition="start" />
                     </Tabs>
                   )}
                 </Box>
@@ -398,6 +437,14 @@ const PostDetailsPage: React.FC = () => {
             publishing={publishing}
             onClose={() => setPublishConfirmOpen(false)}
             onConfirm={handleConfirmPublish}
+          />
+
+          <InterviewLanguagesModal
+            open={langModalOpen}
+            initialLanguages={job?.interviewLanguages ?? ["en"]}
+            confirmLabel={savingLanguages ? "…" : t("create.interview_lang_modal.btn_update")}
+            onConfirm={handleUpdateLanguages}
+            onClose={() => setLangModalOpen(false)}
           />
         </Box>
       </DashboardLayout>

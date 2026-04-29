@@ -1,0 +1,225 @@
+{
+  "title": "Job Posts",
+  "search_placeholder": "Search by title, description...",
+  "new_post": "New Job Post",
+  "count_one": "{{count}} post",
+  "count_other": "{{count}} posts",
+  "limit_reached": "Limit reached ({{used}}/{{limit}})",
+  "limit_tooltip": "Post limit reached ({{used}}/{{limit}}). Upgrade your plan to post more jobs.",
+  "delete_success": "Post deleted successfully",
+  "delete_error": "Failed to delete post",
+  "delete_modal": {
+    "title": "Delete Job Post",
+    "body": "Are you sure you want to delete this job post?",
+    "warning": "This action cannot be undone.",
+    "cancel": "Cancel",
+    "confirm": "Delete"
+  },
+  "publish_success": "Post published successfully.",
+  "publish_error": "Failed to publish post.",
+  "status": {
+    "all": "All statuses",
+    "active": "Open",
+    "draft": "Draft",
+    "closed": "Closed"
+  },
+  "type": {
+    "all": "All types",
+    "ai": "AI",
+    "pipeline": "Pipeline",
+    "manual": "Manual"
+  },
+  "sort": {
+    "date_group": "Date",
+    "title_group": "Title",
+    "newest": "Most recent first",
+    "oldest": "Earliest first",
+    "title_asc": "A to Z",
+    "title_desc": "Z to A"
+  },
+  "stats": {
+    "total": "Total Posts",
+    "active": "Active",
+    "draft": "Drafts",
+    "closed": "Closed"
+  },
+  "empty": {
+    "no_match": "No posts match your filters",
+    "no_match_hint": "Try different keywords or clear the filters.",
+    "no_posts": "No job posts yet",
+    "no_posts_hint": "Create your first job post to start attracting candidates.",
+    "create_btn": "Create Job Post"
+  },
+  "card": {
+    "untitled": "Untitled Position",
+    "copied": "Copied!",
+    "days_left": "{{count}}d left",
+    "expired_badge": "Expired",
+    "status": {
+      "open": "Open",
+      "draft": "Draft",
+      "closed": "Closed",
+      "expired": "Expired"
+    },
+    "creation_type": {
+      "ai": "AI",
+      "pipeline": "Pipeline",
+      "manual": "Manual"
+    },
+    "menu": {
+      "header_fallback": "Post actions",
+      "view_title": "View Details",
+      "view_desc": "Open full post page",
+      "publish_title": "Publish Post",
+      "publish_desc": "Make visible to candidates",
+      "share_title": "Share Link",
+      "share_desc": "Share with candidates",
+      "delete_title": "Delete Post",
+      "delete_desc": "This action is permanent"
+    },
+    "draft_banner": {
+      "hidden": "Not visible to candidates",
+      "action": "click to publish",
+      "btn": "Publish"
+    }
+  },
+  "create": {
+    "title": "New Job Post",
+    "subtitle": "Fill in the details below and let AI generate a comprehensive job post.",
+    "btn_cancel": "Cancel",
+    "btn_saving": "Saving…",
+    "btn_save_draft": "Save as Draft",
+    "btn_next": "Next Step →",
+    "form": {
+      "header_title": "Describe the Role",
+      "header_subtitle": "A clear prompt produces a better job post — be specific",
+      "prompt_label": "Job description prompt",
+      "prompt_placeholder": "Example:\nWe are seeking a Senior Full Stack Developer.\n- 5+ years of React.js and Node.js\n- Strong TypeScript proficiency\n- Lead core product development",
+      "section_role": "Role Details",
+      "section_salary": "Salary Range / Year",
+      "label_type": "Type",
+      "label_work_mode": "Work Mode",
+      "label_expires": "Expires",
+      "label_currency": "Currency",
+      "label_min": "Minimum",
+      "label_max": "Maximum",
+      "placeholder_select": "Select",
+      "placeholder_min": "e.g. 40 000",
+      "placeholder_max": "e.g. 70 000",
+      "btn_generate": "Generate Job Post with AI",
+      "btn_generating": "Generating Post…",
+      "error_prompt": "Please describe the role",
+      "error_salary_required": "Currency, min and max are required",
+      "error_salary_max": "Max salary must be greater than min",
+      "error_required": "Required"
+    },
+    "lang_modal": {
+      "title": "Generate in which language?",
+      "subtitle": "The entire job post will be written in this language",
+      "btn_cancel": "Cancel",
+      "btn_generate": "Generate",
+      "btn_generating": "Generating…"
+    },
+    "interview_lang_modal": {
+      "title": "Interview languages",
+      "subtitle": "Candidates will be able to conduct their interview in the selected languages",
+      "hint_one": "1 language selected — add more if needed",
+      "hint_other": "{{count}} languages selected",
+      "btn_cancel": "Cancel",
+      "btn_save": "Save as Draft",
+      "btn_update": "Update Languages"
+    },
+    "preview": {
+      "loading": "Generating job post… please wait",
+      "empty_title": "Preview will appear here",
+      "empty_subtitle": "Fill in the form and click Generate",
+      "header_title": "Generated Job Post",
+      "header_subtitle": "Review and edit the AI-generated content below",
+      "section_details": "Job Details",
+      "label_title": "Job Title",
+      "label_type": "Employment Type",
+      "label_work_mode": "Work Mode",
+      "label_experience": "Experience Level",
+      "section_skills": "Required Skills",
+      "skills_info": "Percentages represent the <bold>relative importance</bold> of each skill. They are used to <bold>match candidates</bold> to your requirements.",
+      "hard_skills": "Hard Skills",
+      "soft_skills": "Soft Skills",
+      "btn_add_skill": "Add Skill",
+      "section_content": "Content",
+      "label_description": "Description",
+      "label_requirements": "Requirements",
+      "label_responsibilities": "Responsibilities"
+    }
+  },
+  "detail": {
+    "loading": "Loading job details…",
+    "fallback_title": "Job Post",
+    "status": {
+      "draft": "Draft",
+      "published": "Published"
+    },
+    "actions": {
+      "publish": "Publish Post",
+      "copy_link": "Copy Link",
+      "edit_languages": "Interview Languages"
+    },
+    "tooltips": {
+      "cannot_edit_published": "Cannot edit — post is already published",
+      "cannot_edit_passed": "Cannot edit — candidates have already passed this interview"
+    },
+    "menu": {
+      "edit_title": "Edit Post",
+      "edit_desc_published": "Only editable while draft",
+      "edit_desc_draft": "Modify job details",
+      "delete_title": "Delete Post",
+      "delete_desc": "Permanently remove"
+    },
+    "tabs": {
+      "details": "Job Details",
+      "applications": "Applications"
+    },
+    "toast": {
+      "deleted": "Post deleted successfully",
+      "delete_error": "Failed to delete post",
+      "published": "Post published! Candidates can now find and apply.",
+      "publish_error": "Failed to publish post.",
+      "link_copied": "Interview link copied!",
+      "link_copy_error": "Failed to copy link",
+      "languages_updated": "Interview languages updated.",
+      "languages_error": "Failed to update interview languages."
+    },
+    "publish_modal": {
+      "title": "Publish this job post?",
+      "body_pre": "Once published, this post will be",
+      "body_highlight": "visible to all candidates",
+      "body_post": "and they can start applying immediately.",
+      "warning": "You won't be able to edit the post after publishing. Make sure all job details are correct before continuing.",
+      "cancel": "Cancel",
+      "publishing": "Publishing…",
+      "confirm": "Yes, Publish"
+    },
+    "details": {
+      "overview": "Job Overview",
+      "description": "Description",
+      "skills": "Required Skills",
+      "requirements": "Requirements",
+      "responsibilities": "Responsibilities"
+    },
+    "pipeline": {
+      "title": "Recruitment Pipeline",
+      "step_count_one": "{{count}} step",
+      "step_count_other": "{{count}} steps",
+      "empty_title": "No Pipeline Steps Yet",
+      "empty_hint": "Create a recruitment flow to manage your hiring process.",
+      "config": {
+        "assessment": "Assessment",
+        "technical_skills": "Technical Skills",
+        "soft_skills": "Soft Skills",
+        "categories": "Categories",
+        "interview": "Interview",
+        "email": "Email",
+        "task": "Task"
+      }
+    }
+  }
+}

@@ -21,7 +21,7 @@ const CARD_DEFS = [
 ] as const;
 
 const PostsStats: React.FC = () => {
-  const { t } = useTranslation("dashboard");
+  const { t } = useTranslation("posts");
   const dispatch = useDispatch<AppDispatch>();
   const metrics  = useSelector(selectPostMetrics);
   const loading  = useSelector(selectPostMetricsLoading);
@@ -52,7 +52,7 @@ const PostsStats: React.FC = () => {
               </Typography>
             )}
             <Typography sx={{ fontSize: "0.68rem", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.05em", mt: 0.4 }}>
-              {t(`pages.posts.stats.${key}`)}
+              {t(`stats.${key}`)}
             </Typography>
           </Box>
         </Box>

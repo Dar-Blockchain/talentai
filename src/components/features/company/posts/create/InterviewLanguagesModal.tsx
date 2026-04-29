@@ -16,11 +16,17 @@ interface Props {
   open: boolean;
   onConfirm: (languages: string[]) => void;
   onClose: () => void;
+  initialLanguages?: string[];
+  confirmLabel?: string;
 }
 
-const InterviewLanguagesModal: React.FC<Props> = ({ open, onConfirm, onClose }) => {
-  const [selected, setSelected] = useState<string[]>(["en"]);
-  const { t } = useTranslation("dashboard");
+const InterviewLanguagesModal: React.FC<Props> = ({ open, onConfirm, onClose, initialLanguages, confirmLabel }) => {
+  const [selected, setSelected] = useState<string[]>(initialLanguages ?? ["en"]);
+  const { t } = useTranslation("posts");
+
+  React.useEffect(() => {
+    if (open) setSelected(initialLanguages ?? ["en"]);
+  }, [open, initialLanguages]);
 
   const toggle = (code: string) => {
     setSelected((prev) =>
@@ -30,15 +36,8 @@ const InterviewLanguagesModal: React.FC<Props> = ({ open, onConfirm, onClose }) 
     );
   };
 
-  const handleConfirm = () => {
-    onConfirm(selected);
-    setSelected(["en"]);
-  };
-
-  const handleClose = () => {
-    onClose();
-    setSelected(["en"]);
-  };
+  const handleConfirm = () => onConfirm(selected);
+  const handleClose  = () => onClose();
 
   return (
     <Dialog
@@ -66,10 +65,10 @@ const InterviewLanguagesModal: React.FC<Props> = ({ open, onConfirm, onClose }) 
           <MicOutlined sx={{ fontSize: 22, color: TEAL }} />
         </Box>
         <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>
-          {t("pages.posts.create.interview_lang_modal.title")}
+          {t("create.interview_lang_modal.title")}
         </Typography>
         <Typography sx={{ fontSize: "12.5px", color: "#6B7280", mt: 0.5 }}>
-          {t("pages.posts.create.interview_lang_modal.subtitle")}
+          {t("create.interview_lang_modal.subtitle")}
         </Typography>
       </Box>
 
@@ -126,8 +125,8 @@ const InterviewLanguagesModal: React.FC<Props> = ({ open, onConfirm, onClose }) 
       {/* Hint */}
       <Typography sx={{ fontSize: "11px", color: "#9CA3AF", textAlign: "center", mb: 2 }}>
         {selected.length === 1
-          ? t("pages.posts.create.interview_lang_modal.hint_one")
-          : t("pages.posts.create.interview_lang_modal.hint_other", { count: selected.length })}
+          ? t("create.interview_lang_modal.hint_one")
+          : t("create.interview_lang_modal.hint_other", { count: selected.length })}
       </Typography>
 
       {/* Actions */}
@@ -142,7 +141,7 @@ const InterviewLanguagesModal: React.FC<Props> = ({ open, onConfirm, onClose }) 
             "&:hover": { bgcolor: "#F9FAFB", borderColor: "#D1D5DB" },
           }}
         >
-          {t("pages.posts.create.interview_lang_modal.btn_cancel")}
+          {t("create.interview_lang_modal.btn_cancel")}
         </Button>
 
         <Button
@@ -156,7 +155,7 @@ const InterviewLanguagesModal: React.FC<Props> = ({ open, onConfirm, onClose }) 
             "&:hover": { bgcolor: "#0F766E", boxShadow: "0 4px 12px rgba(13,148,136,0.25)" },
           }}
         >
-          {t("pages.posts.create.interview_lang_modal.btn_save")}
+          {confirmLabel ?? t("create.interview_lang_modal.btn_save")}
         </Button>
       </Box>
     </Dialog>

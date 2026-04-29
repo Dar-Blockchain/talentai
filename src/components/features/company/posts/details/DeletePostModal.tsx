@@ -24,7 +24,7 @@ const DeletePostModal: React.FC<DeletePostModalProps> = ({
   onDelete,
   isDeleting,
 }) => {
-  const { t } = useTranslation("dashboard");
+  const { t } = useTranslation("posts");
   const accent = "rgba(224, 62, 92, 1)";
 
   return (
@@ -61,15 +61,15 @@ const DeletePostModal: React.FC<DeletePostModalProps> = ({
         }}
       >
         <ErrorIcon sx={{ color: accent, fontSize: 26 }} />
-        {t("pages.posts.delete_modal.title")}
+        {t("delete_modal.title")}
       </DialogTitle>
 
       <DialogContent sx={{ px: 3, py: 3, color: "#444", background: "white" }}>
         <Typography sx={{ my: 1.5, fontSize: "0.95rem" }}>
-          {t("pages.posts.delete_modal.body")}
+          {t("delete_modal.body")}
         </Typography>
         <Typography sx={{ fontSize: "0.9rem", fontWeight: 600, color: "#5c5c5c" }}>
-          {t("pages.posts.delete_modal.warning")}
+          {t("delete_modal.warning")}
         </Typography>
       </DialogContent>
 
@@ -94,7 +94,7 @@ const DeletePostModal: React.FC<DeletePostModalProps> = ({
             "&:hover": { background: "rgba(0,0,0,0.07)" },
           }}
         >
-          {t("pages.posts.delete_modal.cancel")}
+          {t("delete_modal.cancel")}
         </Button>
         <Button
           onClick={onDelete}
@@ -117,7 +117,7 @@ const DeletePostModal: React.FC<DeletePostModalProps> = ({
             },
           }}
         >
-          {t("pages.posts.delete_modal.confirm")}
+          {t("delete_modal.confirm")}
         </Button>
       </DialogActions>
     </Dialog>

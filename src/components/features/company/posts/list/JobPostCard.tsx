@@ -47,7 +47,7 @@ interface JobPostCardProps {
 }
 
 const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDetails, onPublish, canDelete = true }) => {
-  const { t } = useTranslation("dashboard");
+  const { t } = useTranslation("posts");
   const router = useRouter();
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [copied, setCopied] = useState(false);
@@ -118,7 +118,7 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
             {/* Title + badges */}
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography noWrap sx={{ fontSize: "14.5px", fontWeight: 700, color: "#111827", lineHeight: 1.3, mb: 0.6 }}>
-                {jd.title || t("pages.posts.card.untitled")}
+                {jd.title || t("card.untitled")}
               </Typography>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                 {/* Creation type badge */}
@@ -129,7 +129,7 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
                 }}>
                   <CtIcon sx={{ fontSize: 10, color: ctInfo.color }} />
                   <Typography sx={{ fontSize: "10.5px", fontWeight: 700, color: ctInfo.color, lineHeight: 1 }}>
-                    {t(`pages.posts.card.creation_type.${ctInfo.i18nKey}`)}
+                    {t(`card.creation_type.${ctInfo.i18nKey}`)}
                   </Typography>
                 </Box>
 
@@ -141,7 +141,7 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
                 }}>
                   <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: statusStyle.dot, flexShrink: 0 }} />
                   <Typography sx={{ fontSize: "10.5px", fontWeight: 700, color: statusStyle.color, lineHeight: 1 }}>
-                    {t(`pages.posts.card.status.${statusStyle.i18nKey}`)}
+                    {t(`card.status.${statusStyle.i18nKey}`)}
                   </Typography>
                 </Box>
               </Box>
@@ -181,7 +181,7 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
               {/* Header label */}
               <Box sx={{ px: 1.5, pt: 0.5, pb: 1 }}>
                 <Typography noWrap sx={{ fontSize: "10px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                  {jd.title || t("pages.posts.card.menu.header_fallback")}
+                  {jd.title || t("card.menu.header_fallback")}
                 </Typography>
               </Box>
 
@@ -196,8 +196,8 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
                   <OpenInNewOutlined sx={{ fontSize: 13, color: "#6B7280" }} />
                 </Box>
                 <Box>
-                  <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>{t("pages.posts.card.menu.view_title")}</Typography>
-                  <Typography sx={{ fontSize: "10px", color: "#9CA3AF", lineHeight: 1.2 }}>{t("pages.posts.card.menu.view_desc")}</Typography>
+                  <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>{t("card.menu.view_title")}</Typography>
+                  <Typography sx={{ fontSize: "10px", color: "#9CA3AF", lineHeight: 1.2 }}>{t("card.menu.view_desc")}</Typography>
                 </Box>
               </MenuItem>
 
@@ -213,8 +213,8 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
                     <PublishOutlined sx={{ fontSize: 13, color: "#059669" }} />
                   </Box>
                   <Box>
-                    <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>{t("pages.posts.card.menu.publish_title")}</Typography>
-                    <Typography sx={{ fontSize: "10px", color: "#9CA3AF", lineHeight: 1.2 }}>{t("pages.posts.card.menu.publish_desc")}</Typography>
+                    <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>{t("card.menu.publish_title")}</Typography>
+                    <Typography sx={{ fontSize: "10px", color: "#9CA3AF", lineHeight: 1.2 }}>{t("card.menu.publish_desc")}</Typography>
                   </Box>
                 </MenuItem>
               )}
@@ -232,9 +232,9 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
                   </Box>
                   <Box>
                     <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>
-                      {copied ? t("pages.posts.card.copied") : t("pages.posts.card.menu.share_title")}
+                      {copied ? t("card.copied") : t("card.menu.share_title")}
                     </Typography>
-                    <Typography sx={{ fontSize: "10px", color: "#9CA3AF", lineHeight: 1.2 }}>{t("pages.posts.card.menu.share_desc")}</Typography>
+                    <Typography sx={{ fontSize: "10px", color: "#9CA3AF", lineHeight: 1.2 }}>{t("card.menu.share_desc")}</Typography>
                   </Box>
                 </MenuItem>
               )}
@@ -252,8 +252,8 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
                   <DeleteOutlineOutlined sx={{ fontSize: 13, color: "#6B7280" }} />
                 </Box>
                 <Box>
-                  <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#374151", lineHeight: 1.2 }}>{t("pages.posts.card.menu.delete_title")}</Typography>
-                  <Typography sx={{ fontSize: "10px", color: "#9CA3AF", lineHeight: 1.2 }}>{t("pages.posts.card.menu.delete_desc")}</Typography>
+                  <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#374151", lineHeight: 1.2 }}>{t("card.menu.delete_title")}</Typography>
+                  <Typography sx={{ fontSize: "10px", color: "#9CA3AF", lineHeight: 1.2 }}>{t("card.menu.delete_desc")}</Typography>
                 </Box>
               </MenuItem>
             </Menu>
@@ -306,12 +306,12 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
                   bgcolor: daysLeft <= 3 ? "#FEF2F2" : "#ECFDF5",
                   px: 0.75, py: 0.2, borderRadius: "4px",
                 }}>
-                  {t("pages.posts.card.days_left", { count: daysLeft })}
+                  {t("card.days_left", { count: daysLeft })}
                 </Typography>
               )}
               {isExpired && (
                 <Typography sx={{ fontSize: "10.5px", fontWeight: 700, color: "#DC2626", bgcolor: "#FEF2F2", px: 0.75, py: 0.2, borderRadius: "4px" }}>
-                  {t("pages.posts.card.expired_badge")}
+                  {t("card.expired_badge")}
                 </Typography>
               )}
               {job.expirationDate && !isExpired && (
@@ -323,7 +323,7 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
             </Box>
 
             {!isDraft && (
-              <Tooltip title={copied ? t("pages.posts.card.copied") : t("pages.posts.card.menu.share_title")} placement="top">
+              <Tooltip title={copied ? t("card.copied") : t("card.menu.share_title")} placement="top">
                 <IconButton
                   size="small"
                   onClick={handleCopyLink}
@@ -362,7 +362,7 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
               <PublishOutlined sx={{ fontSize: 14, color: "#D97706", flexShrink: 0 }} />
               <Typography sx={{ fontSize: "11.5px", color: "#92400E", lineHeight: 1.3 }}>
-                <strong>{t("pages.posts.card.draft_banner.hidden")}</strong> — {t("pages.posts.card.draft_banner.action")}
+                <strong>{t("card.draft_banner.hidden")}</strong> — {t("card.draft_banner.action")}
               </Typography>
             </Box>
             <Box sx={{
@@ -370,7 +370,7 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
               bgcolor: "#D97706", flexShrink: 0,
             }}>
               <Typography sx={{ fontSize: "10.5px", fontWeight: 700, color: "#fff", lineHeight: 1 }}>
-                {t("pages.posts.card.draft_banner.btn")}
+                {t("card.draft_banner.btn")}
               </Typography>
             </Box>
           </Box>
