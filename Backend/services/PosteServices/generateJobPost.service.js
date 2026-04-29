@@ -9,7 +9,7 @@ async function generateJobPost(description, user, overrides = {}) {
   // Configurable retry parameters via env
   const MAX_RETRIES = parseInt(process.env.GENERATE_JOBPOST_MAX_RETRIES || "3", 10);
   const BASE_DELAY_MS = parseInt(process.env.GENERATE_JOBPOST_BASE_DELAY_MS || "1000", 10);
-  const { workMode, contractType, language = "en" } = overrides;
+  const { workMode, contractType, language = "en", interviewLanguages } = overrides;
 
   // Helper sleep with jitter
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
