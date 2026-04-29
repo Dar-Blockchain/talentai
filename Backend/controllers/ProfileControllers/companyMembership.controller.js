@@ -1,5 +1,5 @@
-const CompanyMembershipService = require("../../services/ProfileService/company.Membership.service");
-const CompanyInvitationService = require("../../services/ProfileService/company.Invitation.service");
+const CompanyMembershipService = require("../../services/ProfileService/companyMembership.service");
+const CompanyInvitationService = require("../../services/ProfileService/companyInvitation.service");
 
 const flattenMembership = (membership) => {
   const m = membership?.toObject ? membership.toObject() : membership;
