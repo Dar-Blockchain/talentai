@@ -115,7 +115,7 @@ const internalCampaignSchema = new mongoose.Schema(
 
 internalCampaignSchema.index({ company: 1, status: 1 });
 
-module.exports = mongoose.model(
+module.exports = mongoose.models.InternalCampaign || mongoose.model(
   "InternalCampaign",
   internalCampaignSchema
 );
