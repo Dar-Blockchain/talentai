@@ -229,7 +229,7 @@ module.exports.deleteConversation = async (req, res) => {
     const userId = req.user._id;
 
     // Get conversation details before deletion for socket notification
-    const Conversation = require("../../models/Conversation.model");
+    const Conversation = require("../../models/Conversations.model");
     const conversation = await Conversation.findById(conversationId);
 
     if (!conversation) {
