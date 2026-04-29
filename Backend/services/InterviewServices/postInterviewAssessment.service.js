@@ -2,7 +2,7 @@ const PostInterviewAssessment = require("../../models/postInterviewAssessment.mo
 const Post = require("../../models/post.model");
 const Profile = require("../../models/Profile.model");
 const User = require("../../models/User.model");
-const CandidatePostStepProgress = require("../../models/candidatePostStepProgress.model");
+const CandidatePostStepProgress = require("../../models/candidatePostStepsProgress.model");
 const crypto = require("crypto");
 const subscriptionService = require("../subscription.service");
 
