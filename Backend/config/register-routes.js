@@ -29,7 +29,7 @@ const contactRouter = require('../routes/contact.routes');
 const cvAnalysisRouter = require('../routes/cvAnalysis.routes');
 const employeePermissionsRouter = require('../routes/employeePermissions.routes');
 const jobApplicationRouter = require("../routes/jobApplication.routes");
-const apiKeyRouter = require('../routes/apiKey.routes');
+const apiKeyRouter = require('../routes/apiKeys.routes');
 const paymentRouter = require('../routes/payment.routes');
 
 // const backupRouter = require('../routes/backupRouter');
