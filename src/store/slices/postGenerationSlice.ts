@@ -147,7 +147,7 @@ export const generatePost = createAsyncThunk<
     const descriptionWithDetails =
       jobDescription + salaryText + contractTypeText + workModeText;
 
-    const res = await axiosInstance.post("linkedinPost/generate-job-post", {
+    const res = await axiosInstance.post("post/generate-job-post", {
       description: descriptionWithDetails,
       contractType,
       workMode,
