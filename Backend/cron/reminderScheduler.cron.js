@@ -1,5 +1,5 @@
 const cron = require('node-cron');
-const JobApplication = require('../models/jobApplication.model');
+const JobApplication = require('../models/JobApplication.model');
 const Profile = require('../models/Profile.model');
 const Post = require('../models/posts.model');
 const User = require('../models/User.model');

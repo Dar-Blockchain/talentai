@@ -1,7 +1,7 @@
 const Stripe = require("stripe");
 require("dotenv").config();
 const planLimitsService = require("./planLimits.service");
-const Payment = require("../models/payment.model");
+const Payment = require("../models/Payment.model");
 
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 

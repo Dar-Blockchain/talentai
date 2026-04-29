@@ -1,4 +1,4 @@
-const EmployeePermissions = require("../models/employeePermissions.model");
+const EmployeePermissions = require("../models/EmployeePermissions.model");
 
 /**
  * Get permissions by userId

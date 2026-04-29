@@ -143,7 +143,7 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
 
     const updatedUser = await User.findById(userId);
     const companyMembership = updatedUser.companyMembership
-      ? await require('../../models/companyMembership.model').findById(updatedUser.companyMembership).populate({ path: 'company', select: 'username email Localisation user_image createdAt updatedAt', populate: { path: 'profile' } }).select('_id role updatedAt company')
+      ? await require('../../models/CompanyMembership.model').findById(updatedUser.companyMembership).populate({ path: 'company', select: 'username email Localisation user_image createdAt updatedAt', populate: { path: 'profile' } }).select('_id role updatedAt company')
       : null;
 
     return {
@@ -239,7 +239,7 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
 
     const updatedUser = await User.findById(userId);
     const companyMembership = updatedUser.companyMembership
-      ? await require('../../models/companyMembership.model').findById(updatedUser.companyMembership).populate({ path: 'company', select: 'username email Localisation user_image createdAt updatedAt', populate: { path: 'profile' } }).select('_id role updatedAt company')
+      ? await require('../../models/CompanyMembership.model').findById(updatedUser.companyMembership).populate({ path: 'company', select: 'username email Localisation user_image createdAt updatedAt', populate: { path: 'profile' } }).select('_id role updatedAt company')
       : null;
 
     console.log("✅ [createOrUpdateCompanyProfile] Company profile update completed successfully");
@@ -319,7 +319,7 @@ module.exports.getProfileByUserId = async (userId) => {
         : null,
 
       user.companyMembership
-        ? require('../../models/companyMembership.model')
+        ? require('../../models/CompanyMembership.model')
             .findById(user.companyMembership)
             .populate({
               path: 'company',

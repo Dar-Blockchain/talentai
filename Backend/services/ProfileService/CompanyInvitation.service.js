@@ -3,9 +3,9 @@ const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const User = require("../../models/User.model");
 const Profile = require("../../models/Profile.model");
-const CompanyMembershipModel = require("../../models/companyMembership.model");
-const CompanyInvitationModel = require("../../models/companyInvitation.model");
-const EmployeePermissionsModel = require("../../models/employeePermissions.model");
+const CompanyMembershipModel = require("../../models/CompanyMembership.model");
+const CompanyInvitationModel = require("../../models/CompanyInvitation.model");
+const EmployeePermissionsModel = require("../../models/EmployeePermissions.model");
 const employeePermissionsService = require("../employeePermissions.service");
 const { sendCompanyInvitation } = require("../../utils/email-service");
 

@@ -1,9 +1,9 @@
 const postInterviewAssessmentService = require("../../services/InterviewServices/postInterviewAssessment.service");
-const CandidatePostStepProgress = require("../../models/candidatePostStepsProgress.model");
+const CandidatePostStepProgress = require("../../models/CandidatePostStepsProgress.model");
 const PostSteps = require("../../models/postSteps.model");
 const User = require("../../models/User.model");
 const Profile = require("../../models/Profile.model");
-const JobApplication = require("../../models/jobApplication.model");
+const JobApplication = require("../../models/JobApplication.model");
 const Post = require("../../models/posts.model");
 const { sendInterviewAssessmentEmail, sendInterviewCompletionNotificationToCompany } = require("../../utils/email-service");
 
@@ -588,7 +588,7 @@ module.exports.getAssessmentByPostAndCandidate = async (req, res) => {
     if (!postId || !candidateUserId) {
       return res.status(400).json({ success: false, message: "postId and candidateUserId are required." });
     }
-    const PostInterviewAssessment = require("../../models/postInterviewAssessment.model");
+    const PostInterviewAssessment = require("../../models/PostInterviewAssessment.model");
     const assessment = await PostInterviewAssessment.findOne({ post: postId, candidate: candidateUserId })
       .populate("candidate", "firstName lastName email username profile")
       .populate("post", "jobDetails skillAnalysis")

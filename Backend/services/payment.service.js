@@ -1,4 +1,4 @@
-const Payment = require("../models/payment.model");
+const Payment = require("../models/Payment.model");
 const Profile = require("../models/Profile.model");
 const PlanLimits = require("../models/PlanLimits.model");
 const subscriptionService = require("./subscription.service");

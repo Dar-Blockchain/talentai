@@ -1,4 +1,4 @@
-const Department = require("../models/department.model");
+const Department = require("../models/Department.model");
 const mongoose = require("mongoose");
 
 /**
@@ -98,7 +98,7 @@ exports.updateDepartment = async (id, updateData) => {
  * Department stats with 30-day trend
  */
 exports.getDepartmentStats = async (companyId) => {
-  const CompanyMembership = require("../models/companyMembership.model");
+  const CompanyMembership = require("../models/CompanyMembership.model");
 
   const total = await Department.countDocuments({ companyId });
 

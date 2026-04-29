@@ -2,7 +2,7 @@
 const mongoose = require('mongoose');
 const User = require("../models/User.model");
 const Post = require('../models/posts.model');
-const Feedback = require('../models/feedback.model');
+const Feedback = require('../models/Feedback.model');
 const Profile = require('../models/Profile.model');
 
 module.exports.getAllUsers = async (searchQuery, page = 1, limit = 10) => {
@@ -50,11 +50,11 @@ module.exports.getAllUsers = async (searchQuery, page = 1, limit = 10) => {
 //Simple Get All
 
 // jobAssessmentService.js
-const PostInterviewAssessment = require("../models/postInterviewAssessment.model");
+const PostInterviewAssessment = require("../models/PostInterviewAssessment.model");
 const JobAssessmentResult = PostInterviewAssessment; // alias for compatibility
 const { POST_STATUS } = require("../constants/posts.constants");
 const InternalCampaign = require("../models/internalCampaign.model");
-const CompanyMembership = require("../models/companyMembership.model");
+const CompanyMembership = require("../models/CompanyMembership.model");
 
 module.exports.getAllJobAssessments = async (page = 1, limit = 10) => {
   try {

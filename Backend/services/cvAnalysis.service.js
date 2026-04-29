@@ -3,7 +3,7 @@
  * Manages CV analysis data operations and business logic
  */
 
-const CVAnalysis = require("../models/cvAnalysis.model");
+const CVAnalysis = require("../models/CvAnalysis.model");
 const Profile = require("../models/Profile.model");
 
 class CVAnalysisService {
