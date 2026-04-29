@@ -589,7 +589,7 @@ const IntelligentInterviewTest = () => {
         jobId={jobId}
         refParam={refParam}
         jobData={jobData}
-        checkingEligibility={matchingLoading}
+        checkingEligibility={false}
         onNext={(_) => setStep('interview')}
       />
     );
