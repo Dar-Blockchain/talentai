@@ -1,6 +1,6 @@
 const Profile = require("../../models/Profile.model");
 const User = require("../../models/User.model");
-const Post = require("../../models/Post.model");
+const Post = require("../../models/post.model");
 // const { POST_STATUS } = require("../../constants/posts.constants");
 const fs = require("fs");
 const path = require("path");
@@ -143,7 +143,7 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
 
     const updatedUser = await User.findById(userId);
     const companyMembership = updatedUser.companyMembership
-      ? await require('../../models/CompanyMembership.model').findById(updatedUser.companyMembership).populate({ path: 'company', select: 'username email Localisation user_image createdAt updatedAt', populate: { path: 'profile' } }).select('_id role updatedAt company')
+      ? await require('../../models/companyMembership.model').findById(updatedUser.companyMembership).populate({ path: 'company', select: 'username email Localisation user_image createdAt updatedAt', populate: { path: 'profile' } }).select('_id role updatedAt company')
       : null;
 
     return {
@@ -239,7 +239,7 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
 
     const updatedUser = await User.findById(userId);
     const companyMembership = updatedUser.companyMembership
-      ? await require('../../models/CompanyMembership.model').findById(updatedUser.companyMembership).populate({ path: 'company', select: 'username email Localisation user_image createdAt updatedAt', populate: { path: 'profile' } }).select('_id role updatedAt company')
+      ? await require('../../models/companyMembership.model').findById(updatedUser.companyMembership).populate({ path: 'company', select: 'username email Localisation user_image createdAt updatedAt', populate: { path: 'profile' } }).select('_id role updatedAt company')
       : null;
 
     console.log("✅ [createOrUpdateCompanyProfile] Company profile update completed successfully");
@@ -319,7 +319,7 @@ module.exports.getProfileByUserId = async (userId) => {
         : null,
 
       user.companyMembership
-        ? require('../../models/CompanyMembership.model')
+        ? require('../../models/companyMembership.model')
             .findById(user.companyMembership)
             .populate({
               path: 'company',

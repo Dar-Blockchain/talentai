@@ -90,10 +90,6 @@ interface PostState {
   companyAssessments: CompanyAssessmentsState;
   assessmentDetails: AssessmentDetailsState;
   postMetrics: PostMetricsState;
-  jobMatches: any[];
-  jobMatchesLoading: boolean;
-  jobMatchesError: string | null;
-  jobMatchesPagination: PaginationState;
 }
 
 // Initial state
@@ -181,17 +177,6 @@ const initialState: PostState = {
     data: null,
     loading: false,
     error: null,
-  },
-  jobMatches: [],
-  jobMatchesLoading: false,
-  jobMatchesError: null,
-  jobMatchesPagination: {
-    total: 0,
-    page: 1,
-    limit: 10,
-    totalPages: 0,
-    hasNextPage: false,
-    hasPrevPage: false,
   },
 };
 
@@ -355,26 +340,6 @@ export const deletePost = createAsyncThunk(
   }
 );
 
-// Async thunk to fetch job matches (candidates who passed interview)
-export const fetchJobMatches = createAsyncThunk(
-  "post/fetchJobMatches",
-  async (
-    params: { selectedJobId: string; page?: number; limit?: number; passedInterview?: boolean },
-    { rejectWithValue }
-  ) => {
-    try {
-      const { selectedJobId, page = 1, limit = 10, passedInterview } = params;
-      const query = new URLSearchParams({ page: String(page), limit: String(limit) });
-      if (passedInterview !== undefined) query.set("passedInterview", String(passedInterview));
-      const response = await axiosInstance.get(`post/${selectedJobId}/matches?${query}`);
-      return response.data?.data ?? response.data;
-    } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.message || error.message || "Error fetching job matches"
-      );
-    }
-  }
-);
 
 // Async thunk to fetch a single job by ID
 export const fetchJobById = createAsyncThunk(
@@ -725,19 +690,6 @@ const postSlice = createSlice({
         state.myPostsLoading = false;
         state.myPostsError = action.payload as string;
       })
-      // Fetch job matches
-      .addCase(fetchJobMatches.pending, (state) => {
-        state.jobMatchesLoading = true;
-        state.jobMatchesError = null;
-        state.jobMatches = [];
-      })
-      .addCase(fetchJobMatches.fulfilled, (state, action) => {
-        state.jobMatchesLoading = false;
-        state.jobMatches = action.payload.matches || [];
-        state.jobMatchesPagination = action.payload.pagination;
-      })
-      .addCase(fetchJobMatches.rejected, (state, action) => {
-      })
       // Delete post
       .addCase(deletePost.pending, (state) => {
         state.deletePostLoading = true;
@@ -953,9 +905,4 @@ export const selectPostMetricsLoading = (state: { post: PostState }) =>
 export const selectPostMetricsError = (state: { post: PostState }) =>
   state.post.postMetrics.error;
 
-// Job Matches Selectors
-export const selectJobMatches = (state: { post: PostState }) => state.post.jobMatches;
-export const selectJobMatchesLoading = (state: { post: PostState }) => state.post.jobMatchesLoading;
-export const selectJobMatchesError = (state: { post: PostState }) => state.post.jobMatchesError;
-export const selectJobMatchesPagination = (state: { post: PostState }) => state.post.jobMatchesPagination;
 

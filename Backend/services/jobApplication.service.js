@@ -1,9 +1,9 @@
 const fs = require("fs");
 const path = require("path");
 const { PDFParse } = require("pdf-parse");
-const JobApplication = require("../models/JobApplication.model");
+const JobApplication = require("../models/jobApplication.model");
 const Profile = require("../models/Profile.model");
-const Post = require("../models/Post.model");
+const Post = require("../models/post.model");
 const { callLLM } = require("../helpers/bedrock.helpers");
 const { analyzeCV } = require("./analyseResume.service");
 
@@ -986,7 +986,7 @@ module.exports.getApplicationsSummaryByPost = async (postId, filters = {}, page 
       throw error;
     }
 
-    const PostInterviewAssessment = require("../models/PostInterviewAssessment.model");
+    const PostInterviewAssessment = require("../models/postInterviewAssessment.model");
 
     // ── Build base query ─────────────────────────────────────────────────────
     const query = { post: postId, isWithdrawn: false };
@@ -1110,7 +1110,7 @@ module.exports.getApplicationsSummaryByCompany = async (companyId, filters = {},
   try {
     if (!companyId) throw Object.assign(new Error("Company ID is required"), { status: 400 });
 
-    const PostInterviewAssessment = require("../models/PostInterviewAssessment.model");
+    const PostInterviewAssessment = require("../models/postInterviewAssessment.model");
     const ObjectId = require("mongoose").Types.ObjectId;
 
     const query = { company: new ObjectId(companyId), isWithdrawn: false };

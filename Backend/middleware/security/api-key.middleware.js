@@ -1,4 +1,4 @@
-const ApiKey = require("../../models/ApiKey.model");
+const ApiKey = require("../../models/apiKey.model");
 const User = require("../../models/User.model");
 const { createClient } = require("redis");
 

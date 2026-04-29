@@ -1,8 +1,8 @@
-const PostInterviewAssessment = require("../../models/PostInterviewAssessment.model");
-const Post = require("../../models/Post.model");
+const PostInterviewAssessment = require("../../models/postInterviewAssessment.model");
+const Post = require("../../models/post.model");
 const Profile = require("../../models/Profile.model");
 const User = require("../../models/User.model");
-const CandidatePostStepProgress = require("../../models/CandidatePostStepProgress.model");
+const CandidatePostStepProgress = require("../../models/candidatePostStepProgress.model");
 const crypto = require("crypto");
 const subscriptionService = require("../subscription.service");
 
@@ -151,7 +151,7 @@ module.exports.getMatchingDetails = async (candidateId, postId) => {
     }
 
     // Get JobApplication to retrieve matchScore
-    const JobApplication = require("../../models/JobApplication.model");
+    const JobApplication = require("../../models/jobApplication.model");
     const application = await JobApplication.findOne({
       profile: candidateProfile._id,
       post: postId
