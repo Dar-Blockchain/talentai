@@ -3,7 +3,7 @@
  * Manages candidate progression through pipeline steps
  */
 
-const CandidatePostStepProgress = require("../../models/Candidate.PostStepsProgress.model");
+const CandidatePostStepProgress = require("../../models/CandidatePostStepsProgress.model");
 const PostSteps = require("../../models/PostSteps.model");
 
 /**

@@ -1,7 +1,7 @@
 const PostSteps = require("../../models/PostSteps.model");
 const Post = require("../../models/Post.model");
 const candidatePostStepProgressService = require("../candidatePostStepProgress.service");
-const CandidatePostStepProgress = require("../../models/Candidate.PostStepsProgress.model");
+const CandidatePostStepProgress = require("../../models/CandidatePostStepsProgress.model");
 
 // Create a new post step (single or multiple)
 module.exports.createPostStep = async (postStepData) => {
