@@ -110,7 +110,7 @@ module.exports.checkSubscriptionLimit = async (companyProfileId, limitType) => {
     // If all subscriptions are orphaned (planId deleted), auto-repair by re-linking to Free plan
     if (!valid.length && allActive.length) {
       try {
-        const freePlan = await require("../models/PlanLimits.model").findOne({ name: "Free", isActive: true });
+        const freePlan = await require("../models/PlanLimits.model").findOne({ name: "Trial", isActive: true });
         if (freePlan) {
           await require("../models/Subscription.model").updateMany(
             { _id: { $in: allActive.map((s) => s._id) } },
@@ -556,7 +556,7 @@ module.exports.getCombinedActiveDetails = async (companyProfileId) => {
 
       // Last-resort: link all orphaned subs to Free plan
       if (!valid.length) {
-        const freePlan = await mongoose.model("PlanLimits").findOne({ name: "Free", isActive: true });
+        const freePlan = await mongoose.model("PlanLimits").findOne({ name: "Trial", isActive: true });
         if (freePlan) {
           await Subscription.updateMany({ _id: { $in: allActive.map((s) => s._id) } }, { planId: freePlan._id });
           const repaired = await Subscription.find({ companyProfileId, status: "active", endDate: { $gt: new Date() } }).populate("planId");
