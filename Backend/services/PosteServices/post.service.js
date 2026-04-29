@@ -568,7 +568,7 @@ module.exports.deletePost = async (postId, userId) => {
     
     // 1. Archive PostSteps
     if (post.PostSteps && post.PostSteps.length > 0) {
-      const PostSteps = require('../../models/PostSteps.model');
+      const PostSteps = require('../../models/Post.Steps.model');
       await PostSteps.updateMany(
         { _id: { $in: post.PostSteps } },
         { archived: true, archivedAt: new Date() }

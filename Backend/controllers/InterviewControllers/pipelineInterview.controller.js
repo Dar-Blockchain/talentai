@@ -4,7 +4,7 @@
  */
 
 const Post = require("../../models/Post.model");
-const PostSteps = require("../../models/PostSteps.model");
+const PostSteps = require("../../models/Post.Steps.model");
 const pipelineConfigBuilder = require("../../services/InterviewServices/pipeline-interview-config");
 
 /**
