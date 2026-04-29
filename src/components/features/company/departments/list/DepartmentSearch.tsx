@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback } from "react";
 import { Box, InputAdornment, TextField } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
@@ -10,6 +11,7 @@ interface DepartmentSearchProps {
 }
 
 const DepartmentSearch: React.FC<DepartmentSearchProps> = ({ onSearch }) => {
+  const { t } = useTranslation("dashboard");
   const dispatch = useDispatch<AppDispatch>();
   const [search, setSearch] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -31,7 +33,7 @@ const DepartmentSearch: React.FC<DepartmentSearchProps> = ({ onSearch }) => {
       <TextField
         fullWidth
         size="small"
-        placeholder="Search departments by name or description…"
+        placeholder={t("pages.departments.toolbar.search_placeholder_detail")}
         value={search}
         onChange={(e) => handleChange(e.target.value)}
         InputProps={{

@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axiosInstance from "@/utils/axiosInstance";
+import { DEPARTMENT_API_ERROR_I18N, extractAxiosErrorMessage } from "@/utils/departmentI18n";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -59,8 +60,10 @@ export const fetchDepartments = createAsyncThunk<
       },
     });
     return response.data as DepartmentsResponse;
-  } catch (err: any) {
-    return rejectWithValue(err.message);
+  } catch (err: unknown) {
+    return rejectWithValue(
+      extractAxiosErrorMessage(err) ?? DEPARTMENT_API_ERROR_I18N.fetchList,
+    );
   }
 });
 
@@ -72,8 +75,10 @@ export const createDepartment = createAsyncThunk<
   try {
     const response = await axiosInstance.post("departments", payload);
     return response.data.data as Department;
-  } catch (err: any) {
-    return rejectWithValue(err.message);
+  } catch (err: unknown) {
+    return rejectWithValue(
+      extractAxiosErrorMessage(err) ?? DEPARTMENT_API_ERROR_I18N.create,
+    );
   }
 });
 
@@ -85,8 +90,10 @@ export const updateDepartment = createAsyncThunk<
   try {
     const response = await axiosInstance.put(`departments/${departmentId}`, body);
     return response.data.data as Department;
-  } catch (err: any) {
-    return rejectWithValue(err.message);
+  } catch (err: unknown) {
+    return rejectWithValue(
+      extractAxiosErrorMessage(err) ?? DEPARTMENT_API_ERROR_I18N.update,
+    );
   }
 });
 
@@ -98,8 +105,10 @@ export const fetchDepartmentById = createAsyncThunk<
   try {
     const response = await axiosInstance.get(`departments/${departmentId}`);
     return (response.data.data || response.data) as Department;
-  } catch (err: any) {
-    return rejectWithValue(err.response?.data?.message || "Error fetching department");
+  } catch (err: unknown) {
+    return rejectWithValue(
+      extractAxiosErrorMessage(err) ?? "Error fetching department",
+    );
   }
 });
 
@@ -141,8 +150,10 @@ export const deleteDepartment = createAsyncThunk<
   try {
     await axiosInstance.delete(`departments/${departmentId}`);
     return departmentId;
-  } catch (err: any) {
-    return rejectWithValue(err.message);
+  } catch (err: unknown) {
+    return rejectWithValue(
+      extractAxiosErrorMessage(err) ?? DEPARTMENT_API_ERROR_I18N.delete,
+    );
   }
 });
 
@@ -262,7 +273,8 @@ const departmentSlice = createSlice({
       })
       .addCase(fetchDepartments.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || "Error fetching departments";
+        state.error =
+          (action.payload as string | undefined) ?? DEPARTMENT_API_ERROR_I18N.fetchList;
       });
 
     // createDepartment
@@ -280,7 +292,8 @@ const departmentSlice = createSlice({
       })
       .addCase(createDepartment.rejected, (state, action) => {
         state.creating = false;
-        state.createError = action.payload || "Error creating department";
+        state.createError =
+          (action.payload as string | undefined) ?? DEPARTMENT_API_ERROR_I18N.create;
       });
 
     // updateDepartment
@@ -298,7 +311,8 @@ const departmentSlice = createSlice({
       })
       .addCase(updateDepartment.rejected, (state, action) => {
         state.updating = false;
-        state.updateError = action.payload || "Error updating department";
+        state.updateError =
+          (action.payload as string | undefined) ?? DEPARTMENT_API_ERROR_I18N.update;
       });
 
     // fetchDepartmentById
@@ -348,7 +362,8 @@ const departmentSlice = createSlice({
       })
       .addCase(deleteDepartment.rejected, (state, action) => {
         state.deleting = false;
-        state.deleteError = action.payload || "Error deleting department";
+        state.deleteError =
+          (action.payload as string | undefined) ?? DEPARTMENT_API_ERROR_I18N.delete;
       });
 
     // fetchDepartmentStats

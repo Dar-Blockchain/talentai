@@ -294,11 +294,6 @@
         "top_cv_score": "Meilleur score CV"
       }
     },
-    "departments": {
-      "title": "Départements",
-      "subtitle": "Gérez les départements organisationnels de votre entreprise.",
-      "new_department": "Nouveau département"
-    },
     "settings": {
       "title": "Paramètres",
       "subtitle": "Gérez votre profil d'entreprise et vos clés API",

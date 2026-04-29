@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   Box,
   Typography,
@@ -8,7 +8,9 @@ import {
   DialogContent,
   DialogActions,
 } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import AppButton from "@/components/ui/AppButton";
+import { resolveDepartmentApiMessage } from "@/utils/departmentI18n";
 import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
 import CloseOutlined         from "@mui/icons-material/CloseOutlined";
 import GroupOutlined         from "@mui/icons-material/GroupOutlined";
@@ -32,7 +34,14 @@ const DeleteDepartmentDialog: React.FC<DeleteDepartmentDialogProps> = ({
   onConfirm,
   deleting,
   error,
-}) => (
+}) => {
+  const { t } = useTranslation("dashboard");
+  const displayError = useMemo(
+    () => resolveDepartmentApiMessage(error, t),
+    [error, t],
+  );
+
+  return (
   <Dialog
     open={open}
     onClose={onClose}
@@ -52,10 +61,10 @@ const DeleteDepartmentDialog: React.FC<DeleteDepartmentDialogProps> = ({
           </Box>
           <Box>
             <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>
-              Delete Department
+              {t("pages.departments.modals.delete.title")}
             </Typography>
             <Typography sx={{ fontSize: "11px", color: "#9CA3AF", mt: 0.1 }}>
-              This action cannot be undone
+              {t("pages.departments.modals.delete.subtitle")}
             </Typography>
           </Box>
         </Box>
@@ -69,19 +78,19 @@ const DeleteDepartmentDialog: React.FC<DeleteDepartmentDialogProps> = ({
       <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
 
         {/* Error */}
-        {error && (
+        {displayError && (
           <Box sx={{ px: 2, py: 1.5, borderRadius: "10px", bgcolor: "#FEF2F2", border: "1px solid #FECACA" }}>
-            <Typography sx={{ fontSize: "13px", color: "#DC2626" }}>{error}</Typography>
+            <Typography sx={{ fontSize: "13px", color: "#DC2626" }}>{displayError}</Typography>
           </Box>
         )}
 
         {/* Confirmation text */}
         <Typography sx={{ fontSize: "13.5px", color: "#374151", lineHeight: 1.7 }}>
-          You are about to permanently delete{" "}
+          {t("pages.departments.modals.delete.confirm_lead")}{" "}
           <Box component="span" sx={{ fontWeight: 700, color: "#111827" }}>
             {departmentName}
           </Box>
-          .
+          {t("pages.departments.modals.delete.confirm_trail")}
         </Typography>
 
         {/* Impact notice */}
@@ -89,7 +98,7 @@ const DeleteDepartmentDialog: React.FC<DeleteDepartmentDialogProps> = ({
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <WarningAmberOutlined sx={{ fontSize: 15, color: "#D97706", flexShrink: 0 }} />
             <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#92400E" }}>
-              What will happen
+              {t("pages.departments.modals.delete.impact_title")}
             </Typography>
           </Box>
 
@@ -97,9 +106,8 @@ const DeleteDepartmentDialog: React.FC<DeleteDepartmentDialogProps> = ({
             <GroupOutlined sx={{ fontSize: 14, color: "#D97706", mt: "2px", flexShrink: 0 }} />
             <Typography sx={{ fontSize: "12.5px", color: "#78350F", lineHeight: 1.6 }}>
               {memberCount != null && memberCount > 0
-                ? <>All <Box component="span" sx={{ fontWeight: 700 }}>{memberCount} employee{memberCount !== 1 ? "s" : ""}</Box> currently in this department will have their department set to <Box component="span" sx={{ fontWeight: 700 }}>None</Box>.</>
-                : <>Any employees currently in this department will have their department set to <Box component="span" sx={{ fontWeight: 700 }}>None</Box>.</>
-              }
+                ? t("pages.departments.modals.delete.impact_with_count", { count: memberCount })
+                : t("pages.departments.modals.delete.impact_generic")}
             </Typography>
           </Box>
         </Box>
@@ -109,14 +117,14 @@ const DeleteDepartmentDialog: React.FC<DeleteDepartmentDialogProps> = ({
 
     <DialogActions sx={{ px: 3, pb: 2.5, pt: 2, gap: 1 }}>
       <AppButton
-        label="Cancel"
+        label={t("pages.departments.modals.delete.cancel")}
         variant="outlined"
         size="medium"
         onClick={onClose}
         disabled={deleting}
       />
       <AppButton
-        label="Delete Department"
+        label={t("pages.departments.modals.delete.confirm")}
         variant="danger"
         size="medium"
         startIcon={<DeleteOutlineOutlined />}
@@ -125,6 +133,7 @@ const DeleteDepartmentDialog: React.FC<DeleteDepartmentDialogProps> = ({
       />
     </DialogActions>
   </Dialog>
-);
+  );
+};
 
 export default DeleteDepartmentDialog;
