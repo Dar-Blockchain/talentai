@@ -14,7 +14,7 @@
 const bedrock = require("../helpers/bedrock.helpers");
 const sessionMgr = require("../utils/redis-session-manager");
 const Campaign = require("../models/InternalCampaign.model");
-const CampaignResponse = require("../models/campaignResponse.model");
+const CampaignResponse = require("../models/Campaign.Response.model");
 const CampaignParticipant = require("../models/campaignParticipant.model");
 require("dotenv").config();
 // ── Helper to build mixed-question prompt ──────────────────────────────────────
