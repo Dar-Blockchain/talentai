@@ -7,7 +7,7 @@
 
 const express = require("express");
 const router = express.Router();
-const CompanyInvitationController = require("../controllers/ProfileControllers/company.Invitation.controller");
+const CompanyInvitationController = require("../controllers/ProfileControllers/companyInvitation.controller");
 const { requireAuth } = require("../middleware/security/auth.middleware");
 const authLogMiddleware = require("../middleware/security/request-log.middleware");
 const resolveCompanyActor = require("../middleware/resolve-company-actor.middleware");
