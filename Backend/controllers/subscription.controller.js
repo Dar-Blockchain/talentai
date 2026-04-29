@@ -199,29 +199,36 @@ module.exports.enableAutoRenew = async (req, res) => {
  * Get combined usage across all active subscriptions for a company
  */
 module.exports.getCombinedActiveDetails = async (req, res) => {
+  const safeDefault = {
+    success: true,
+    data: {
+      subscriptions: [],
+      combined: {
+        planNames: [],
+        daysRemaining: 0,
+        soonestExpiry: null,
+        usage: {
+          posts: { used: 0, limit: -1, remaining: -1 },
+          monthlyInterviews: { used: 0, limit: -1, remaining: -1 },
+        },
+      },
+    },
+  };
+
   try {
     const companyProfileId = req.user.profile;
+    if (!companyProfileId) return res.status(200).json(safeDefault);
     const result = await subscriptionService.getCombinedActiveDetails(companyProfileId);
     res.status(200).json(result);
   } catch (error) {
-    // Return a safe default so the frontend never gets a 404 — it will show no limit wall
-    if (error.status === 404 || error.message === "No active subscription found") {
-      return res.status(200).json({
-        success: true,
-        data: {
-          subscriptions: [],
-          combined: {
-            planNames: [],
-            daysRemaining: 0,
-            soonestExpiry: null,
-            usage: {
-              posts: { used: 0, limit: -1, remaining: -1 },
-              monthlyInterviews: { used: 0, limit: -1, remaining: -1 },
-            },
-          },
-        },
-      });
+    if (
+      error.status === 404 ||
+      error.status === 400 ||
+      error.message === "No active subscription found" ||
+      error.message === "Company profile ID is required"
+    ) {
+      return res.status(200).json(safeDefault);
     }
-    handleError(res, error, 404);
+    handleError(res, error, 500);
   }
 };

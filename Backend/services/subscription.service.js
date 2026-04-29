@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Subscription = require("../models/Subscription.model");
 const Profile = require("../models/Profile.model");
 const PlanLimits = require("../models/PlanLimits.model");
@@ -522,7 +523,49 @@ module.exports.getCombinedActiveDetails = async (companyProfileId) => {
     }).populate("planId").sort({ createdAt: -1 });
 
     // Filter out orphaned subscriptions (planId no longer exists in DB)
-    const valid = allActive.filter((s) => s.planId != null);
+    let valid = allActive.filter((s) => s.planId != null);
+
+    // Auto-repair orphaned subscriptions by matching payment plan name to current PlanLimits
+    if (!valid.length && allActive.length) {
+      console.log(`⚠️  [getCombinedActiveDetails] All ${allActive.length} subs are orphaned — attempting repair via Payment records`);
+      const Payment = mongoose.model("Payment");
+      const PlanLimits = mongoose.model("PlanLimits");
+
+      for (const sub of allActive) {
+        try {
+          // Find the payment that created this subscription
+          const payment = await Payment.findOne({ subscriptionId: sub._id }).select("planName planId");
+          let planDoc = null;
+          if (payment?.planName) {
+            planDoc = await PlanLimits.findOne({ name: payment.planName, isActive: true });
+          }
+          if (!planDoc && payment?.planId) {
+            // planId on payment may still be valid even if sub.planId is gone
+            planDoc = await PlanLimits.findById(payment.planId);
+          }
+          if (planDoc) {
+            await Subscription.findByIdAndUpdate(sub._id, { planId: planDoc._id });
+            sub.planId = planDoc;
+            console.log(`✅ Repaired sub ${sub._id} → plan "${planDoc.name}"`);
+          }
+        } catch (repairErr) {
+          console.error(`⚠️  Could not repair sub ${sub._id}:`, repairErr.message);
+        }
+      }
+      valid = allActive.filter((s) => s.planId != null);
+
+      // Last-resort: link all orphaned subs to Free plan
+      if (!valid.length) {
+        const freePlan = await mongoose.model("PlanLimits").findOne({ name: "Free", isActive: true });
+        if (freePlan) {
+          await Subscription.updateMany({ _id: { $in: allActive.map((s) => s._id) } }, { planId: freePlan._id });
+          const repaired = await Subscription.find({ companyProfileId, status: "active", endDate: { $gt: new Date() } }).populate("planId");
+          valid.push(...repaired.filter((s) => s.planId != null));
+          console.log(`✅ Last-resort: linked ${valid.length} subs to Free plan`);
+        }
+      }
+    }
+
     // Use all valid subscriptions so Free + paid limits are combined
     const subscriptions = valid.length ? valid : allActive;
 
