@@ -247,6 +247,52 @@
           "action": "cliquer pour publier",
           "btn": "Publier"
         }
+      },
+      "create": {
+        "title": "Nouvelle offre d'emploi",
+        "subtitle": "Remplissez les détails ci-dessous et laissez l'IA générer une offre complète.",
+        "btn_cancel": "Annuler",
+        "btn_saving": "Enregistrement…",
+        "btn_save_draft": "Enregistrer comme brouillon",
+        "btn_next": "Étape suivante →",
+        "form": {
+          "header_title": "Décrivez le poste",
+          "header_subtitle": "Un prompt précis produit une meilleure offre — soyez spécifique",
+          "prompt_label": "Description du poste",
+          "prompt_placeholder": "Exemple :\nNous recherchons un Développeur Full Stack Senior.\n- 5+ ans d'expérience avec React.js et Node.js\n- Bonne maîtrise de TypeScript\n- Pilotage du développement produit",
+          "section_role": "Détails du poste",
+          "section_salary": "Fourchette salariale / An",
+          "label_type": "Type",
+          "label_work_mode": "Mode de travail",
+          "label_expires": "Expire le",
+          "label_currency": "Devise",
+          "label_min": "Minimum",
+          "label_max": "Maximum",
+          "placeholder_select": "Sélectionner",
+          "placeholder_min": "ex. 40 000",
+          "placeholder_max": "ex. 70 000",
+          "btn_generate": "Générer l'offre avec l'IA",
+          "btn_generating": "Génération en cours…",
+          "error_prompt": "Veuillez décrire le poste",
+          "error_salary_required": "La devise, le minimum et le maximum sont requis",
+          "error_salary_max": "Le salaire maximum doit être supérieur au minimum",
+          "error_required": "Requis"
+        },
+        "lang_modal": {
+          "title": "Dans quelle langue générer ?",
+          "subtitle": "L'offre d'emploi entière sera rédigée dans cette langue",
+          "btn_cancel": "Annuler",
+          "btn_generate": "Générer",
+          "btn_generating": "Génération…"
+        },
+        "interview_lang_modal": {
+          "title": "Langues d'entretien",
+          "subtitle": "Les candidats pourront passer leur entretien dans les langues sélectionnées",
+          "hint_one": "1 langue sélectionnée — ajoutez-en d'autres si besoin",
+          "hint_other": "{{count}} langues sélectionnées",
+          "btn_cancel": "Annuler",
+          "btn_save": "Enregistrer comme brouillon"
+        }
       }
     },
     "post_detail": {

@@ -408,6 +408,7 @@ const handleSaveProfile = useCallback(async () => {
     const targetUserId = isEmployee ? companyMembership?.company?._id : undefined;
     try {
       await dispatch(updateProfile({ payload: { language: lang }, targetUserId })).unwrap();
+      await dispatch(getMyProfile());
       showToast({ message: 'Language updated successfully!', severity: 'success' });
     } catch (err: any) {
       showToast({ message: err?.message || 'Failed to update language', severity: 'error' });

@@ -44,6 +44,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const effectiveCollapsed = collapsed || isSmallDesktop;
   const drawerWidth = effectiveCollapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH;
 
+  useEffect(() => {
+    document.body.style.setProperty(
+      "--layout-sidebar-width",
+      isMobile ? "0px" : `${drawerWidth}px`
+    );
+  }, [drawerWidth, isMobile]);
+
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
       <OnboardingTour />

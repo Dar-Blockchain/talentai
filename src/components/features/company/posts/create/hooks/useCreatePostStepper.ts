@@ -31,7 +31,8 @@ export const useCreatePostStepper = (
   recruitmentFlow: any,
   savedPost: any,
   creationType: "ai" | "manual",
-  manualPost: any
+  manualPost: any,
+  interviewLanguages: string[]
 ) => {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
@@ -61,7 +62,8 @@ export const useCreatePostStepper = (
 
   const saveOrUpdatePost = async () => {
     const jobId = savedPost?.jobData?._id;
-    const jobData = creationType === "ai" ? generatedPost : manualPost;
+    const base = creationType === "ai" ? generatedPost : manualPost;
+    const jobData = { ...base, interviewLanguages };
 
     if (jobId) {
       return dispatch(updatePost({ jobId, jobData })).unwrap();
@@ -216,7 +218,7 @@ export const useCreatePostStepper = (
 
   const handleBack = () => {
     if (activeStep === 0) {
-      dispatch(setCreationType(null));
+      router.push("/company/posts");
       return;
     }
     setActiveStep((prev) => Math.max(prev - 1, 0));

@@ -7,17 +7,16 @@ import { TEAL, TEAL_BG, TEAL_BORDER } from "./settingsConstants";
 import { useLanguage, LANGUAGE_OPTIONS } from "@/hooks/useLanguage";
 
 interface Props {
-  profile: any;
   onInputChange: (key: string, value: string) => void;
   onSaveLanguage: (lang: string) => Promise<void>;
 }
 
-const LanguageTab: React.FC<Props> = ({ profile, onInputChange, onSaveLanguage }) => {
+const LanguageTab: React.FC<Props> = ({ onInputChange, onSaveLanguage }) => {
   const { t } = useTranslation("dashboard");
   const { currentLang, changeLanguage } = useLanguage();
   const [saving, setSaving] = useState<string | null>(null);
 
-  const selected = (profile.language as string) || currentLang;
+  const selected = currentLang;
 
   const handleSelect = async (code: string) => {
     if (code === selected || saving) return;

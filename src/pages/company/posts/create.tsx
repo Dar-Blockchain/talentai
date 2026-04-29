@@ -4,14 +4,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/router";
 import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 import { AppDispatch } from "@/store/store";
-import { clearPost, selectCreationType } from "@/store/slices/postGenerationSlice";
+import { clearPost, selectCreationType, setCreationType } from "@/store/slices/postGenerationSlice";
 import { resetManualPost } from "@/store/slices/manualPostSlice";
 import { resetFlow, resetSavePost } from "@/store/slices/postSlice";
 import {
   fetchCombinedSubscriptionDetails,
   selectCombinedDetails,
 } from "@/store/slices/paymentSlice";
-import CreateMethodSelector from "@/components/features/company/posts/create/CreateMethodSelector";
 import CreateStepper from "@/components/features/company/posts/create/CreateStepper";
 import { Box, Typography } from "@mui/material";
 import LockOutlined from "@mui/icons-material/LockOutlined";
@@ -29,7 +28,10 @@ const CreatePostPage: React.FC = () => {
   const postsLimit = combined?.combined.usage.posts.limit ?? Infinity;
   const atLimit    = combined && postsLimit !== Infinity && postsLimit !== -1 && postsUsed >= postsLimit;
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    dispatch(setCreationType("ai"));
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     dispatch(fetchCombinedSubscriptionDetails());
@@ -71,7 +73,6 @@ const CreatePostPage: React.FC = () => {
 
   return (
       <DashboardLayout>
-        {!creationType && <CreateMethodSelector />}
         {creationType && <CreateStepper />}
       </DashboardLayout>
   );

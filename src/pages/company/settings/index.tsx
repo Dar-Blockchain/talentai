@@ -92,7 +92,7 @@ const SettingsPage: React.FC = () => {
         {tab === 0 && <CompanyInfoTab profile={profile} isEditing={isEditing} fieldErrors={fieldErrors} onInputChange={handleInputChange} />}
         {tab === 1 && <ContactTab     profile={profile} isEditing={isEditing} fieldErrors={fieldErrors} onInputChange={handleInputChange} />}
         {tab === 2 && <ApiKeysTab />}
-        {tab === 3 && <LanguageTab    profile={profile} onInputChange={handleInputChange} onSaveLanguage={handleSaveLanguage} />}
+        {tab === 3 && <LanguageTab onInputChange={handleInputChange} onSaveLanguage={handleSaveLanguage} />}
       </Box>
     </DashboardLayout>
   );

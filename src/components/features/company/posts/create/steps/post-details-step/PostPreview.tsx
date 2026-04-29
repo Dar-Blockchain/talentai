@@ -104,7 +104,7 @@ const PostPreview = () => {
   /* ── Loading ── */
   if (loading) {
     return (
-      <SectionCard sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 400, gap: 2 }}>
+      <SectionCard sx={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2 }}>
         <CircularProgress sx={{ color: TEAL }} size={40} />
         <Typography sx={{ fontSize: "14px", color: "#6B7280" }}>Generating job post… please wait</Typography>
       </SectionCard>
@@ -114,7 +114,7 @@ const PostPreview = () => {
   /* ── Empty ── */
   if (!generatedPost) {
     return (
-      <SectionCard sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 400, gap: 2 }}>
+      <SectionCard sx={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2 }}>
         <Box sx={{ width: 72, height: 72, borderRadius: "50%", bgcolor: TEAL_BG, border: `1px solid ${TEAL_BORDER}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <AutoAwesomeOutlined sx={{ fontSize: 32, color: TEAL }} />
         </Box>
@@ -127,7 +127,7 @@ const PostPreview = () => {
   }
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <Box sx={{ height: "100%", overflowY: "auto", display: "flex", flexDirection: "column", gap: 2 }}>
       {/* Header */}
       <SectionCard sx={{ borderLeft: `4px solid ${INDIGO}` }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>

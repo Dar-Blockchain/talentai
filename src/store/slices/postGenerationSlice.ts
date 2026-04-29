@@ -82,6 +82,8 @@ export interface PostGenerationState {
   salary: Salary;
   expirationDate: string;
 
+  interviewLanguages: string[];
+
   loading: boolean;
   error: string | null;
 
@@ -107,6 +109,8 @@ const initialState: PostGenerationState = {
   salary: { min: null, max: null, currency: "USD" },
   expirationDate: getDefaultExpirationDate(),
 
+  interviewLanguages: ["en"],
+
   loading: false,
   error: null,
   generatedAt: null,
@@ -123,11 +127,12 @@ export const generatePost = createAsyncThunk<
     salary: Salary;
     contractType?: string;
     workMode?: string;
+    language?: string;
   },
   { rejectValue: string }
 >("postGeneration/generatePost", async (payload, { rejectWithValue }) => {
   try {
-    const { jobDescription, salary, contractType, workMode } = payload;
+    const { jobDescription, salary, contractType, workMode, language } = payload;
 
     const salaryText = `\n\nSalary Range: ${
       salary.currency
@@ -146,6 +151,7 @@ export const generatePost = createAsyncThunk<
       description: descriptionWithDetails,
       contractType,
       workMode,
+      language,
     });
 
     return res.data;
@@ -173,8 +179,13 @@ const postGenerationSlice = createSlice({
       state.employmentType = "";
       state.salary = { min: null, max: null, currency: "USD" };
       state.expirationDate = getDefaultExpirationDate();
+      state.interviewLanguages = ["en"];
 
       state.loading = false;
+    },
+
+    setInterviewLanguages(state, action: PayloadAction<string[]>) {
+      state.interviewLanguages = action.payload;
     },
 
     setCreationType(state, action: PayloadAction<"ai" | "manual" | null>) {
@@ -376,6 +387,7 @@ export const {
   updateJobSalaryField,
   updateRequirements,
   updateResponsibilities,
+  setInterviewLanguages,
 } = postGenerationSlice.actions;
 
 // ------------------------------------------------------

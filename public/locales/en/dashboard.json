@@ -247,6 +247,52 @@
           "action": "click to publish",
           "btn": "Publish"
         }
+      },
+      "create": {
+        "title": "New Job Post",
+        "subtitle": "Fill in the details below and let AI generate a comprehensive job post.",
+        "btn_cancel": "Cancel",
+        "btn_saving": "Saving…",
+        "btn_save_draft": "Save as Draft",
+        "btn_next": "Next Step →",
+        "form": {
+          "header_title": "Describe the Role",
+          "header_subtitle": "A clear prompt produces a better job post — be specific",
+          "prompt_label": "Job description prompt",
+          "prompt_placeholder": "Example:\nWe are seeking a Senior Full Stack Developer.\n- 5+ years of React.js and Node.js\n- Strong TypeScript proficiency\n- Lead core product development",
+          "section_role": "Role Details",
+          "section_salary": "Salary Range / Year",
+          "label_type": "Type",
+          "label_work_mode": "Work Mode",
+          "label_expires": "Expires",
+          "label_currency": "Currency",
+          "label_min": "Minimum",
+          "label_max": "Maximum",
+          "placeholder_select": "Select",
+          "placeholder_min": "e.g. 40 000",
+          "placeholder_max": "e.g. 70 000",
+          "btn_generate": "Generate Job Post with AI",
+          "btn_generating": "Generating Post…",
+          "error_prompt": "Please describe the role",
+          "error_salary_required": "Currency, min and max are required",
+          "error_salary_max": "Max salary must be greater than min",
+          "error_required": "Required"
+        },
+        "lang_modal": {
+          "title": "Generate in which language?",
+          "subtitle": "The entire job post will be written in this language",
+          "btn_cancel": "Cancel",
+          "btn_generate": "Generate",
+          "btn_generating": "Generating…"
+        },
+        "interview_lang_modal": {
+          "title": "Interview languages",
+          "subtitle": "Candidates will be able to conduct their interview in the selected languages",
+          "hint_one": "1 language selected — add more if needed",
+          "hint_other": "{{count}} languages selected",
+          "btn_cancel": "Cancel",
+          "btn_save": "Save as Draft"
+        }
       }
     },
     "post_detail": {
