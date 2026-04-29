@@ -421,7 +421,9 @@ const PlansPage: React.FC = () => {
   // Build planName → { id, autoRenew } map from combined data
   const activeSubByPlanName = React.useMemo(() => {
     const map: Record<string, { id: string; autoRenew: boolean }> = {};
-    combined?.subscriptions.forEach((s) => { map[s.planName] = { id: s.id, autoRenew: s.autoRenew }; });
+    combined?.subscriptions
+      .filter((s) => !!s.planName)
+      .forEach((s) => { map[s.planName] = { id: s.id, autoRenew: s.autoRenew }; });
     return map;
   }, [combined]);
 
