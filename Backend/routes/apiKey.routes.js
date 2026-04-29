@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { requireAuth } = require("../middleware/security/auth.middleware");
-const apiKeyController = require("../controllers/ApiKey.controller");
+const apiKeyController = require("../controllers/apiKey.controller");
 
 // All API Key routes require user authentication
 router.use(requireAuth);
