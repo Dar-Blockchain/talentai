@@ -5,7 +5,7 @@
  */
 const express = require("express");
 const router = express.Router();
-const CVAnalysisController = require("../controllers/cvAnalysis.controller");
+const CVAnalysisController = require("../controllers/resumeAnalysis.controller");
 
 // ===== CRUD Operations =====
 
