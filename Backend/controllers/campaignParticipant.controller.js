@@ -1,5 +1,5 @@
 require("dotenv").config();
-const CampaignParticipant = require("../models/campaignParticipant.model");
+const CampaignParticipant = require("../models/Campaign.Participant.model");
 const InternalCampaign = require("../models/InternalCampaign.model");
 const campaignParticipantService = require("../services/campaignParticipant.service");
 /*
