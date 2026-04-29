@@ -53,7 +53,7 @@ module.exports.getAllUsers = async (searchQuery, page = 1, limit = 10) => {
 const PostInterviewAssessment = require("../models/PostInterviewAssessment.model");
 const JobAssessmentResult = PostInterviewAssessment; // alias for compatibility
 const { POST_STATUS } = require("../constants/posts.constants");
-const InternalCampaign = require("../models/Internal.Campaign.model");
+const InternalCampaign = require("../models/InternalCampaign.model");
 const CompanyMembership = require("../models/CompanyMembership.model");
 
 module.exports.getAllJobAssessments = async (page = 1, limit = 10) => {

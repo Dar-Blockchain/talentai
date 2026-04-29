@@ -1,4 +1,4 @@
-const InternalCampaign = require("../models/Internal.Campaign.model");
+const InternalCampaign = require("../models/InternalCampaign.model");
 const CampaignParticipant = require("../models/campaignParticipant.model");
 const mongoose = require("mongoose");
 
