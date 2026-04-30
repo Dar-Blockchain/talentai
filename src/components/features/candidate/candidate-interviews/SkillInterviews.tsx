@@ -22,6 +22,7 @@ import {
 
 interface SkillInterviewsProps {
   skillType: "technical" | "soft";
+  hideStats?: boolean;
 }
 
 const LEVEL = (s: number) =>
@@ -37,7 +38,7 @@ const getScoreColor = (s: number) =>
 const getScore = (a: SkillInterviewAssessment): number =>
   a.interviewData?.finalReport?.scores?.overall ?? a.interviewData?.finalReport?.coverage?.overall ?? 0;
 
-const SkillInterviews: React.FC<SkillInterviewsProps> = ({ skillType }) => {
+const SkillInterviews: React.FC<SkillInterviewsProps> = ({ skillType, hideStats = false }) => {
   const router   = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { data: assessments, loading, total } = useSelector(
@@ -64,17 +65,19 @@ const SkillInterviews: React.FC<SkillInterviewsProps> = ({ skillType }) => {
   return (
     <Box>
       {/* Stats */}
-      <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
-        <StatsSummaryCard label="Total" value={stats.total} subtitle={`${label}s`}
-          icon={<AssignmentOutlined sx={{ fontSize: 22, color }} />}
-          valueColor={color} borderColor={`${color}30`} iconBgColor={`${color}10`} />
-        <StatsSummaryCard label="Completed" value={stats.completed} subtitle="Assessments"
-          icon={<CheckCircleOutlined sx={{ fontSize: 22, color: "#059669" }} />}
-          valueColor="#059669" borderColor="#A7F3D0" iconBgColor="#ECFDF5" />
-        <StatsSummaryCard label="In Progress" value={stats.ongoing} subtitle="Assessments"
-          icon={<HourglassEmptyOutlined sx={{ fontSize: 22, color: "#D97706" }} />}
-          valueColor="#D97706" borderColor="#FDE68A" iconBgColor="#FFFBEB" />
-      </Box>
+      {!hideStats && (
+        <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
+          <StatsSummaryCard label="Total" value={stats.total} subtitle={`${label}s`}
+            icon={<AssignmentOutlined sx={{ fontSize: 22, color }} />}
+            valueColor={color} borderColor={`${color}30`} iconBgColor={`${color}10`} />
+          <StatsSummaryCard label="Completed" value={stats.completed} subtitle="Assessments"
+            icon={<CheckCircleOutlined sx={{ fontSize: 22, color: "#059669" }} />}
+            valueColor="#059669" borderColor="#A7F3D0" iconBgColor="#ECFDF5" />
+          <StatsSummaryCard label="In Progress" value={stats.ongoing} subtitle="Assessments"
+            icon={<HourglassEmptyOutlined sx={{ fontSize: 22, color: "#D97706" }} />}
+            valueColor="#D97706" borderColor="#FDE68A" iconBgColor="#FFFBEB" />
+        </Box>
+      )}
 
       {assessments.length === 0 ? (
         <Box sx={{ py: 10, textAlign: "center", borderRadius: "14px", border: "1.5px dashed #E5E7EB", bgcolor: "#FAFAFA" }}>
@@ -85,7 +88,7 @@ const SkillInterviews: React.FC<SkillInterviewsProps> = ({ skillType }) => {
           <Typography sx={{ color: "#9CA3AF", fontSize: "0.78rem" }}>Complete skill assessments to see your history here</Typography>
         </Box>
       ) : (
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(3, 1fr)", md: "repeat(4, 1fr)", lg: "repeat(5, 1fr)" }, gap: 1.5 }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(3, 1fr)" }, gap: 1.5 }}>
           {assessments.map(assessment => {
             const score   = getScore(assessment);
             const lvl     = LEVEL(score);

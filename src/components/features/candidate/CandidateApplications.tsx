@@ -247,7 +247,12 @@ const AppCard: React.FC<{ app: any; onClick: () => void }> = ({ app, onClick }) 
 };
 
 // ── Main component ──────────────────────────────────────────
-const CandidateApplications: React.FC = () => {
+interface CandidateApplicationsProps {
+  previewCount?: number;
+  onViewAll?: () => void;
+}
+
+const CandidateApplications: React.FC<CandidateApplicationsProps> = ({ previewCount, onViewAll }) => {
   const dispatch   = useDispatch<AppDispatch>();
   const router     = useRouter();
   const applications = useSelector(selectCandidateApplications);
@@ -278,6 +283,8 @@ const CandidateApplications: React.FC = () => {
     const matchFilter = activeFilter === "all" || (app.status || "applied").toLowerCase() === activeFilter;
     return matchSearch && matchFilter;
   });
+
+  const displayed = previewCount != null ? filtered.slice(0, previewCount) : filtered;
 
   const filterOptions = [
     { key: "all", label: "All", count: totalCount, color: T },
@@ -323,83 +330,102 @@ const CandidateApplications: React.FC = () => {
           </Box>
         </Box>
 
-        {/* Search + filter row */}
-        <Box sx={{ display: "flex", gap: 1.5, mt: 2.5, flexWrap: "wrap", alignItems: "center" }}>
-          <Box sx={{
-            display: "flex", alignItems: "center", gap: 1,
-            px: 1.5, py: 0.85, borderRadius: "11px",
-            border: "1px solid #E5E7EB", bgcolor: "#FAFAFA",
-            flex: "1 1 220px", maxWidth: 320,
-            "&:focus-within": { borderColor: T, bgcolor: "#fff", boxShadow: `0 0 0 3px ${T}15` },
-            transition: "all 0.2s",
-          }}>
-            <SearchOutlined sx={{ fontSize: 17, color: "#9CA3AF", flexShrink: 0 }} />
-            <InputBase
-              placeholder="Search job title or company…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              sx={{ fontSize: "0.8rem", flex: 1, color: "#111827", "& input::placeholder": { color: "#9CA3AF" } }}
-            />
-          </Box>
+        {/* Search + filter row — hidden in preview mode */}
+        {previewCount == null && (
+          <Box sx={{ display: "flex", gap: 1.5, mt: 2.5, flexWrap: "wrap", alignItems: "center" }}>
+            <Box sx={{
+              display: "flex", alignItems: "center", gap: 1,
+              px: 1.5, py: 0.85, borderRadius: "11px",
+              border: "1px solid #E5E7EB", bgcolor: "#FAFAFA",
+              flex: "1 1 220px", maxWidth: 320,
+              "&:focus-within": { borderColor: T, bgcolor: "#fff", boxShadow: `0 0 0 3px ${T}15` },
+              transition: "all 0.2s",
+            }}>
+              <SearchOutlined sx={{ fontSize: 17, color: "#9CA3AF", flexShrink: 0 }} />
+              <InputBase
+                placeholder="Search job title or company…"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                sx={{ fontSize: "0.8rem", flex: 1, color: "#111827", "& input::placeholder": { color: "#9CA3AF" } }}
+              />
+            </Box>
 
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <FilterListOutlined sx={{ fontSize: 15, color: "#9CA3AF" }} />
-            <Typography sx={{ fontSize: "0.72rem", color: "#9CA3AF", fontWeight: 500 }}>Filter:</Typography>
-          </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <FilterListOutlined sx={{ fontSize: 15, color: "#9CA3AF" }} />
+              <Typography sx={{ fontSize: "0.72rem", color: "#9CA3AF", fontWeight: 500 }}>Filter:</Typography>
+            </Box>
 
-          <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
-            {filterOptions.map(({ key, label, count, color }) => (
-              <Box
-                key={key}
-                onClick={() => setActiveFilter(key)}
-                sx={{
-                  px: 1.25, py: 0.45, borderRadius: "20px", cursor: "pointer",
-                  display: "flex", alignItems: "center", gap: 0.6,
-                  border: activeFilter === key ? `1.5px solid ${color}` : "1.5px solid #E5E7EB",
-                  bgcolor: activeFilter === key ? `${color}12` : "#fff",
-                  transition: "all 0.15s",
-                  "&:hover": { borderColor: color, bgcolor: `${color}08` },
-                }}
-              >
-                {key !== "all" && <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: color, flexShrink: 0 }} />}
-                <Typography sx={{ fontSize: "0.7rem", fontWeight: activeFilter === key ? 700 : 500, color: activeFilter === key ? color : "#6B7280" }}>
-                  {label}
-                </Typography>
-                <Box sx={{ px: 0.65, py: 0.1, borderRadius: "8px", bgcolor: activeFilter === key ? color : "#F3F4F6" }}>
-                  <Typography sx={{ fontSize: "0.6rem", fontWeight: 700, color: activeFilter === key ? "#fff" : "#9CA3AF" }}>{count}</Typography>
+            <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
+              {filterOptions.map(({ key, label, count, color }) => (
+                <Box
+                  key={key}
+                  onClick={() => setActiveFilter(key)}
+                  sx={{
+                    px: 1.25, py: 0.45, borderRadius: "20px", cursor: "pointer",
+                    display: "flex", alignItems: "center", gap: 0.6,
+                    border: activeFilter === key ? `1.5px solid ${color}` : "1.5px solid #E5E7EB",
+                    bgcolor: activeFilter === key ? `${color}12` : "#fff",
+                    transition: "all 0.15s",
+                    "&:hover": { borderColor: color, bgcolor: `${color}08` },
+                  }}
+                >
+                  {key !== "all" && <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: color, flexShrink: 0 }} />}
+                  <Typography sx={{ fontSize: "0.7rem", fontWeight: activeFilter === key ? 700 : 500, color: activeFilter === key ? color : "#6B7280" }}>
+                    {label}
+                  </Typography>
+                  <Box sx={{ px: 0.65, py: 0.1, borderRadius: "8px", bgcolor: activeFilter === key ? color : "#F3F4F6" }}>
+                    <Typography sx={{ fontSize: "0.6rem", fontWeight: 700, color: activeFilter === key ? "#fff" : "#9CA3AF" }}>{count}</Typography>
+                  </Box>
                 </Box>
-              </Box>
-            ))}
+              ))}
+            </Box>
           </Box>
-        </Box>
+        )}
       </Box>
 
-      {/* ── Grid ── */}
+      {/* ── List ── */}
       {loading ? (
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", lg: "1fr 1fr 1fr" }, gap: 2 }}>
-          {Array.from({ length: 6 }).map((_, i) => <CardSkeleton key={i} />)}
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+          {Array.from({ length: previewCount ?? 3 }).map((_, i) => <CardSkeleton key={i} />)}
         </Box>
 
-      ) : filtered.length === 0 ? (
+      ) : displayed.length === 0 ? (
         <Box sx={{ py: 12, textAlign: "center", bgcolor: "#fff", borderRadius: "18px", border: "1px solid #E5E7EB" }}>
           <Box sx={{ width: 72, height: 72, borderRadius: "50%", bgcolor: TBG, border: `1px solid ${TBD}`, display: "flex", alignItems: "center", justifyContent: "center", mx: "auto", mb: 2 }}>
             <WorkOutlineOutlined sx={{ fontSize: 32, color: T }} />
           </Box>
           <Typography sx={{ fontWeight: 800, color: NAVY, fontSize: "1rem", mb: 0.5 }}>No applications found</Typography>
           <Typography sx={{ color: "#9CA3AF", fontSize: "0.82rem" }}>
-            {search || activeFilter !== "all" ? "Try a different search or filter" : "Apply to job posts via interview links to see them here"}
+            Apply to job posts via interview links to see them here
           </Typography>
         </Box>
 
       ) : (
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", lg: "1fr 1fr 1fr" }, gap: 2 }}>
-          {filtered.map((app: any, i: number) => (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+          {displayed.map((app: any, i: number) => (
             <AppCard
               key={app._id || i}
               app={app}
               onClick={() => router.push(`/dashboard/candidate/applications/${app._id}`)}
             />
           ))}
+        </Box>
+      )}
+
+      {/* ── View All footer (preview mode only) ── */}
+      {previewCount != null && filtered.length > previewCount && onViewAll && (
+        <Box
+          onClick={onViewAll}
+          sx={{
+            mt: 1.5, py: 1.1, textAlign: "center", borderRadius: "12px",
+            border: `1.5px dashed ${T}50`, cursor: "pointer",
+            bgcolor: TBG, transition: "all 0.15s",
+            "&:hover": { bgcolor: "#CCFBF1", borderColor: T },
+          }}
+        >
+          <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: T }}>
+            View all {totalCount} applications →
+          </Typography>
         </Box>
       )}
 

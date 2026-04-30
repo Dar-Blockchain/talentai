@@ -53,7 +53,7 @@ function TechnicalSkills() {
         <EmptySkills type="technical" />
       ) : (
         <>
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(3, 1fr)", md: "repeat(4, 1fr)", lg: "repeat(5, 1fr)" }, gap: 2 }}>
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(3, 1fr)", md: "repeat(3, 1fr)" }, gap: 2 }}>
             {visible.map((item: any, i: number) => (
               <SkillCard key={i} skill={item} type="technical" />
             ))}
