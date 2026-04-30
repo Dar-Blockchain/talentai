@@ -1,29 +1,31 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import dynamic from "next/dynamic";
-import PageContainer from "@/components/layout/PageContainer";
-import Header from "@/components/layout/Header";
-import {
-  Box, Typography, Chip, Skeleton, Divider, Button,
-} from "@mui/material";
+import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
+import PageHeader from "@/components/layout/dashboard/PageHeader";
+import { Box, Typography, Chip, Skeleton, Divider, Button } from "@mui/material";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutline";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
 import BusinessCenterOutlined from "@mui/icons-material/BusinessCenterOutlined";
 import VideoCallOutlined from "@mui/icons-material/VideoCallOutlined";
-import ArrowBackOutlined from "@mui/icons-material/ArrowBackOutlined";
 import LinkOutlined from "@mui/icons-material/LinkOutlined";
 import AccessTimeOutlined from "@mui/icons-material/AccessTime";
+import AssignmentOutlined from "@mui/icons-material/AssignmentOutlined";
 import Cookies from "js-cookie";
 
+const T  = "#0D9488";
+const TBG = "#F0FDFA";
+const TBORDER = "#99F6E4";
+
 const STATUS_STYLE: Record<string, { bg: string; color: string; border: string; label: string }> = {
-  applied:              { bg: "#EFF6FF", color: "#2563EB", border: "#BFDBFE", label: "Applied" },
-  pending:              { bg: "#FFFBEB", color: "#D97706", border: "#FDE68A", label: "Pending" },
-  shortlisted:          { bg: "#F0FDF4", color: "#16A34A", border: "#BBF7D0", label: "Shortlisted" },
-  accepted:             { bg: "#F0FDFA", color: "#0D9488", border: "#99F6E4", label: "Accepted" },
-  rejected:             { bg: "#FEF2F2", color: "#DC2626", border: "#FECACA", label: "Rejected" },
-  withdrawn:            { bg: "#F3F4F6", color: "#6B7280", border: "#E5E7EB", label: "Withdrawn" },
-  interview_scheduled:  { bg: "#F5F0FF", color: "#8310FF", border: "#DDD6FE", label: "Interview Scheduled" },
+  applied:             { bg: "#EFF6FF", color: "#2563EB", border: "#BFDBFE", label: "Applied" },
+  pending:             { bg: "#FFFBEB", color: "#D97706", border: "#FDE68A", label: "Pending" },
+  shortlisted:         { bg: "#F0FDF4", color: "#16A34A", border: "#BBF7D0", label: "Shortlisted" },
+  accepted:            { bg: TBG,       color: T,         border: TBORDER,   label: "Accepted" },
+  rejected:            { bg: "#FEF2F2", color: "#DC2626", border: "#FECACA", label: "Rejected" },
+  withdrawn:           { bg: "#F3F4F6", color: "#6B7280", border: "#E5E7EB", label: "Withdrawn" },
+  interview_scheduled: { bg: TBG,       color: T,         border: TBORDER,   label: "Interview Scheduled" },
 };
 
 const fmtDate = (iso?: string) =>
@@ -42,7 +44,7 @@ const Section: React.FC<{ icon: React.ReactNode; title: string; children: React.
 const CandidateApplicationDetailPage: React.FC = () => {
   const router = useRouter();
   const { id } = router.query;
-  const [app, setApp] = useState<any>(null);
+  const [app, setApp]       = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -58,92 +60,91 @@ const CandidateApplicationDetailPage: React.FC = () => {
       .finally(() => setLoading(false));
   }, [id]);
 
-  const post = app?.post || {};
-  const jd = post.jobDetails || {};
-  const title = jd.title || "—";
-  const location = jd.location || "";
+  const post           = app?.post || {};
+  const jd             = post.jobDetails || {};
+  const title          = jd.title || "—";
+  const location       = jd.location || "";
   const employmentType = jd.employmentType || "";
-  const workMode = jd.workMode || "";
-  const description = jd.description || "";
-  const requirements = jd.requirements || [];
-  const salary = jd.salary || null;
-  const rawStatus = (app?.status || "applied").toLowerCase();
-  const sc = STATUS_STYLE[rawStatus] ?? STATUS_STYLE.applied;
-  const isScheduled = rawStatus === "interview_scheduled";
-  const interviewDate = app?.interviewDate || null;
-  const interviewTime = app?.interviewTime || null;
-  const interviewLink = app?.interviewLink || null;
+  const workMode       = jd.workMode || "";
+  const description    = jd.description || "";
+  const requirements   = jd.requirements || [];
+  const salary         = jd.salary || null;
+  const rawStatus      = (app?.status || "applied").toLowerCase();
+  const sc             = STATUS_STYLE[rawStatus] ?? STATUS_STYLE.applied;
+  const isScheduled    = rawStatus === "interview_scheduled";
+  const interviewDate  = app?.interviewDate || null;
+  const interviewTime  = app?.interviewTime || null;
+  const interviewLink  = app?.interviewLink || null;
 
   return (
-    <PageContainer>
-      <Header />
-      <Box sx={{ px: { xs: 2, md: 5 }, py: 3 }}>
-        {/* Back */}
-        <Button
-          startIcon={<ArrowBackOutlined sx={{ fontSize: 16 }} />}
-          onClick={() => router.push("/dashboard/candidate")}
-          sx={{ textTransform: "none", color: "#6B7280", fontWeight: 500, fontSize: "0.82rem", mb: 2, p: 0, "&:hover": { bgcolor: "transparent", color: "#111827" } }}
-        >
-          Back to Dashboard
-        </Button>
+    <DashboardLayout>
+      <PageHeader
+        title={loading ? "Application" : title}
+        subtitle="View your application details"
+        breadcrumbs={[
+          { label: "Dashboard", href: "/dashboard/candidate" },
+          { label: "Applications" },
+          { label: loading ? "..." : title },
+        ]}
+        icon={AssignmentOutlined}
+      />
 
-        {loading ? (
-          <Box sx={{ bgcolor: "#fff", borderRadius: "14px", border: "1px solid #E5E7EB", p: 3 }}>
-            <Skeleton variant="text" width="50%" height={28} />
-            <Skeleton variant="text" width="30%" height={18} sx={{ mt: 1 }} />
-            <Skeleton variant="rectangular" height={80} sx={{ borderRadius: 2, mt: 2 }} />
-          </Box>
-        ) : !app ? (
-          <Box sx={{ bgcolor: "#fff", borderRadius: "14px", border: "1px solid #E5E7EB", py: 10, textAlign: "center" }}>
-            <Typography sx={{ color: "#9CA3AF" }}>Application not found</Typography>
-          </Box>
-        ) : (
-          <>
-            {/* Interview scheduled banner */}
-            {isScheduled && (
-              <Box sx={{ bgcolor: "#8310FF", borderRadius: "14px", p: 2.5, mb: 2, display: "flex", flexWrap: "wrap", gap: 2, alignItems: "center" }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <VideoCallOutlined sx={{ fontSize: 22, color: "#fff" }} />
-                  <Typography sx={{ fontWeight: 700, color: "#fff", fontSize: "1rem" }}>Your interview is scheduled!</Typography>
-                </Box>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, ml: { xs: 0, sm: "auto" } }}>
-                  {interviewDate && (
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                      <CalendarTodayOutlined sx={{ fontSize: 14, color: "rgba(255,255,255,0.8)" }} />
-                      <Typography sx={{ fontSize: "0.82rem", color: "#fff", fontWeight: 600 }}>{interviewDate}</Typography>
-                    </Box>
-                  )}
-                  {interviewTime && (
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                      <AccessTimeOutlined sx={{ fontSize: 14, color: "rgba(255,255,255,0.8)" }} />
-                      <Typography sx={{ fontSize: "0.82rem", color: "#fff", fontWeight: 600 }}>{interviewTime}</Typography>
-                    </Box>
-                  )}
-                  {interviewLink && (
-                    <Button
-                      variant="contained"
-                      size="small"
-                      startIcon={<LinkOutlined sx={{ fontSize: 14 }} />}
-                      onClick={() => window.open(interviewLink, "_blank")}
-                      sx={{
-                        textTransform: "none", fontWeight: 700, fontSize: "0.78rem",
-                        bgcolor: "#fff", color: "#8310FF", borderRadius: "8px",
-                        boxShadow: "none", px: 1.5,
-                        "&:hover": { bgcolor: "rgba(255,255,255,0.9)", boxShadow: "none" },
-                      }}
-                    >
-                      Join Interview
-                    </Button>
-                  )}
-                </Box>
+      {loading ? (
+        <Box sx={{ bgcolor: "#fff", borderRadius: "14px", border: "1px solid #E5E7EB", p: 3 }}>
+          <Skeleton variant="text" width="50%" height={28} />
+          <Skeleton variant="text" width="30%" height={18} sx={{ mt: 1 }} />
+          <Skeleton variant="rectangular" height={80} sx={{ borderRadius: 2, mt: 2 }} />
+        </Box>
+      ) : !app ? (
+        <Box sx={{ bgcolor: "#fff", borderRadius: "14px", border: "1px solid #E5E7EB", py: 10, textAlign: "center" }}>
+          <Typography sx={{ color: "#9CA3AF" }}>Application not found</Typography>
+        </Box>
+      ) : (
+        <>
+          {/* Interview scheduled banner */}
+          {isScheduled && (
+            <Box sx={{ bgcolor: T, borderRadius: "14px", p: 2.5, mb: 2, display: "flex", flexWrap: "wrap", gap: 2, alignItems: "center" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <VideoCallOutlined sx={{ fontSize: 22, color: "#fff" }} />
+                <Typography sx={{ fontWeight: 700, color: "#fff", fontSize: "1rem" }}>Your interview is scheduled!</Typography>
               </Box>
-            )}
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, ml: { xs: 0, sm: "auto" } }}>
+                {interviewDate && (
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <CalendarTodayOutlined sx={{ fontSize: 14, color: "rgba(255,255,255,0.8)" }} />
+                    <Typography sx={{ fontSize: "0.82rem", color: "#fff", fontWeight: 600 }}>{interviewDate}</Typography>
+                  </Box>
+                )}
+                {interviewTime && (
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <AccessTimeOutlined sx={{ fontSize: 14, color: "rgba(255,255,255,0.8)" }} />
+                    <Typography sx={{ fontSize: "0.82rem", color: "#fff", fontWeight: 600 }}>{interviewTime}</Typography>
+                  </Box>
+                )}
+                {interviewLink && (
+                  <Button variant="contained" size="small"
+                    startIcon={<LinkOutlined sx={{ fontSize: 14 }} />}
+                    onClick={() => window.open(interviewLink, "_blank")}
+                    sx={{
+                      textTransform: "none", fontWeight: 700, fontSize: "0.78rem",
+                      bgcolor: "#fff", color: T, borderRadius: "8px", boxShadow: "none", px: 1.5,
+                      "&:hover": { bgcolor: TBG, boxShadow: "none" },
+                    }}
+                  >
+                    Join Interview
+                  </Button>
+                )}
+              </Box>
+            </Box>
+          )}
 
-            {/* Job card */}
-            <Box sx={{ bgcolor: "#fff", borderRadius: "14px", border: "1px solid #E5E7EB", p: 3, mb: 2 }}>
+          {/* Job card */}
+          <Box sx={{ bgcolor: "#fff", borderRadius: "14px", border: "1px solid #E5E7EB", overflow: "hidden", mb: 2 }}>
+            <Box sx={{ height: 4, background: `linear-gradient(90deg, ${T}, #14B8A6)` }} />
+            <Box sx={{ p: 3 }}>
               <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2, flexWrap: "wrap" }}>
-                <Box sx={{ width: 52, height: 52, borderRadius: "12px", bgcolor: "rgba(131,16,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <WorkOutlineOutlined sx={{ fontSize: 24, color: "#8310FF" }} />
+                <Box sx={{ width: 52, height: 52, borderRadius: "12px", bgcolor: TBG, border: `1px solid ${TBORDER}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <WorkOutlineOutlined sx={{ fontSize: 24, color: T }} />
                 </Box>
                 <Box sx={{ flex: 1, minWidth: 200 }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap", mb: 0.5 }}>
@@ -179,60 +180,57 @@ const CandidateApplicationDetailPage: React.FC = () => {
                 </>
               )}
             </Box>
+          </Box>
 
-            {/* Description */}
-            {description && (
-              <Section icon={<WorkOutlineOutlined sx={{ fontSize: 15, color: "#9CA3AF" }} />} title="Job Description">
-                <Typography sx={{ fontSize: "0.85rem", color: "#4B5563", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>{description}</Typography>
-              </Section>
-            )}
+          {description && (
+            <Section icon={<WorkOutlineOutlined sx={{ fontSize: 15, color: T }} />} title="Job Description">
+              <Typography sx={{ fontSize: "0.85rem", color: "#4B5563", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>{description}</Typography>
+            </Section>
+          )}
 
-            {/* Requirements */}
-            {requirements.length > 0 && (
-              <Section icon={<BusinessCenterOutlined sx={{ fontSize: 15, color: "#9CA3AF" }} />} title="Requirements">
-                <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
-                  {requirements.map((r: string, i: number) => (
-                    <Box component="li" key={i} sx={{ fontSize: "0.85rem", color: "#4B5563", lineHeight: 1.8 }}>{r}</Box>
-                  ))}
-                </Box>
-              </Section>
-            )}
+          {requirements.length > 0 && (
+            <Section icon={<BusinessCenterOutlined sx={{ fontSize: 15, color: T }} />} title="Requirements">
+              <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
+                {requirements.map((r: string, i: number) => (
+                  <Box component="li" key={i} sx={{ fontSize: "0.85rem", color: "#4B5563", lineHeight: 1.8 }}>{r}</Box>
+                ))}
+              </Box>
+            </Section>
+          )}
 
-            {/* CV Score */}
-            {(app.matchScore != null || app.cvAnalysis?.analysisScore != null) && (() => {
-              const score = app.matchScore ?? app.cvAnalysis?.analysisScore;
-              const scoreColor = score >= 70 ? "#059669" : score >= 50 ? "#D97706" : "#DC2626";
-              const r = 34; const circ = 2 * Math.PI * r;
-              const filled = (Math.min(score, 100) / 100) * circ;
-              return (
-                <Section icon={<BusinessCenterOutlined sx={{ fontSize: 15, color: "#9CA3AF" }} />} title="CV Match Score">
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 2.5 }}>
-                    <Box sx={{ position: "relative", width: 80, height: 80, flexShrink: 0 }}>
-                      <svg width={80} height={80} style={{ transform: "rotate(-90deg)" }}>
-                        <circle cx={40} cy={40} r={r} fill="none" stroke={`${scoreColor}18`} strokeWidth={7} />
-                        <circle cx={40} cy={40} r={r} fill="none" stroke={scoreColor} strokeWidth={7}
-                          strokeDasharray={`${filled} ${circ}`} strokeLinecap="round" />
-                      </svg>
-                      <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <Typography sx={{ fontSize: "1.1rem", fontWeight: 900, color: scoreColor, lineHeight: 1 }}>{score}%</Typography>
-                      </Box>
-                    </Box>
-                    <Box>
-                      <Typography sx={{ fontSize: "0.9rem", fontWeight: 700, color: "#111827" }}>
-                        {score >= 70 ? "Strong Match" : score >= 50 ? "Good Match" : "Low Match"}
-                      </Typography>
-                      <Typography sx={{ fontSize: "0.8rem", color: "#6B7280", mt: 0.5 }}>
-                        Your profile matches {score}% of the job requirements.
-                      </Typography>
+          {(app.matchScore != null || app.cvAnalysis?.analysisScore != null) && (() => {
+            const score = app.matchScore ?? app.cvAnalysis?.analysisScore;
+            const scoreColor = score >= 70 ? "#059669" : score >= 50 ? "#D97706" : "#DC2626";
+            const r = 34; const circ = 2 * Math.PI * r;
+            const filled = (Math.min(score, 100) / 100) * circ;
+            return (
+              <Section icon={<BusinessCenterOutlined sx={{ fontSize: 15, color: T }} />} title="CV Match Score">
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2.5 }}>
+                  <Box sx={{ position: "relative", width: 80, height: 80, flexShrink: 0 }}>
+                    <svg width={80} height={80} style={{ transform: "rotate(-90deg)" }}>
+                      <circle cx={40} cy={40} r={r} fill="none" stroke={`${scoreColor}18`} strokeWidth={7} />
+                      <circle cx={40} cy={40} r={r} fill="none" stroke={scoreColor} strokeWidth={7}
+                        strokeDasharray={`${filled} ${circ}`} strokeLinecap="round" />
+                    </svg>
+                    <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Typography sx={{ fontSize: "1.1rem", fontWeight: 900, color: scoreColor, lineHeight: 1 }}>{score}%</Typography>
                     </Box>
                   </Box>
-                </Section>
-              );
-            })()}
-          </>
-        )}
-      </Box>
-    </PageContainer>
+                  <Box>
+                    <Typography sx={{ fontSize: "0.9rem", fontWeight: 700, color: "#111827" }}>
+                      {score >= 70 ? "Strong Match" : score >= 50 ? "Good Match" : "Low Match"}
+                    </Typography>
+                    <Typography sx={{ fontSize: "0.8rem", color: "#6B7280", mt: 0.5 }}>
+                      Your profile matches {score}% of the job requirements.
+                    </Typography>
+                  </Box>
+                </Box>
+              </Section>
+            );
+          })()}
+        </>
+      )}
+    </DashboardLayout>
   );
 };
 

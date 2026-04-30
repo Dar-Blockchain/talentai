@@ -17,7 +17,7 @@ import Link from "next/link";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
 import { logout } from "@/store/slices/authSlice";
-import { navigation, employeeNavGroups, EmployeeNavItem } from "@/constants/navigation";
+import { navigation, employeeNavGroups, candidateNavGroups, EmployeeNavItem } from "@/constants/navigation";
 import { selectEmployeePermissions, fetchEmployeePermissions } from "@/store/slices/memberSlice";
 import { selectCombinedDetails, fetchCombinedSubscriptionDetails } from "@/store/slices/paymentSlice";
 import { LogoutOutlined } from "@mui/icons-material";
@@ -97,6 +97,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   }, [combinedDetails, planLimits, t]);
 
   const isEmployee  = user?.role === "Employee";
+  const isCandidate = user?.role === "Candidate";
   const companyName = companyMembership?.company?.profile?.companyDetails?.name
     || companyMembership?.company?.username
     || null;
@@ -144,7 +145,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const drawerWidth  = collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH;
   const handleToggle = useCallback(() => setCollapsed((c) => !c), [setCollapsed]);
 
-  const settingsHref = isEmployee ? "/employee/dashboard" : "/company/settings";
+  const settingsHref = isEmployee ? "/employee/dashboard" : isCandidate ? "/dashboard/candidate" : "/company/settings";
 
   const renderNavItem = (item: { id: string; icon: React.ElementType; label: string; href: string }, isCollapsed: boolean) => {
     const isActive = router.pathname === item.href || router.pathname.startsWith(item.href + "/");
@@ -294,24 +295,17 @@ const Sidebar: React.FC<SidebarProps> = ({
         <Box sx={{ flex: 1, overflowY: "auto", py: 2, px: 1 }} className="custom-scrollbar">
 
           {/* ── Company nav ── */}
-          {!isEmployee && GROUPS.map((group, gi) => {
+          {!isEmployee && !isCandidate && GROUPS.map((group, gi) => {
             const items = navigation.filter((i) => group.ids.includes(i.id));
             if (items.length === 0) return null;
-
             return (
               <Box key={group.label || gi} sx={{ mb: 1.5 }}>
                 {group.label && !isCollapsed && (
-                  <Typography sx={{
-                    px: 1.25, pt: gi === 0 ? 0 : 0.5, pb: 0.5,
-                    fontSize: "9px", fontWeight: 700, color: LABEL_C,
-                    textTransform: "uppercase", letterSpacing: "0.14em",
-                  }}>
+                  <Typography sx={{ px: 1.25, pt: gi === 0 ? 0 : 0.5, pb: 0.5, fontSize: "9px", fontWeight: 700, color: LABEL_C, textTransform: "uppercase", letterSpacing: "0.14em" }}>
                     {t(`sidebar.groups.${group.label.toLowerCase()}`, { defaultValue: group.label })}
                   </Typography>
                 )}
-                {gi > 0 && isCollapsed && (
-                  <Box sx={{ mx: "auto", mb: 1.5, width: 24, height: "1px", bgcolor: BORDER }} />
-                )}
+                {gi > 0 && isCollapsed && <Box sx={{ mx: "auto", mb: 1.5, width: 24, height: "1px", bgcolor: BORDER }} />}
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
                   {items.map((item) => renderNavItem(item, isCollapsed))}
                 </Box>
@@ -319,21 +313,30 @@ const Sidebar: React.FC<SidebarProps> = ({
             );
           })}
 
+          {/* ── Candidate nav ── */}
+          {isCandidate && candidateNavGroups.map((group, gi) => (
+            <Box key={group.group || gi} sx={{ mb: 1.5 }}>
+              {group.group && !isCollapsed && (
+                <Typography sx={{ px: 1.25, pt: gi === 0 ? 0 : 0.5, pb: 0.5, fontSize: "9px", fontWeight: 700, color: LABEL_C, textTransform: "uppercase", letterSpacing: "0.14em" }}>
+                  {group.group}
+                </Typography>
+              )}
+              {gi > 0 && isCollapsed && <Box sx={{ mx: "auto", mb: 1.5, width: 24, height: "1px", bgcolor: BORDER }} />}
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
+                {group.items.map((item) => renderNavItem(item, isCollapsed))}
+              </Box>
+            </Box>
+          ))}
+
           {/* ── Employee nav ── */}
           {isEmployee && activeEmployeeGroups.map((group, gi) => (
             <Box key={group.group || gi} sx={{ mb: 1.5 }}>
               {group.group && !isCollapsed && (
-                <Typography sx={{
-                  px: 1.25, pt: gi === 0 ? 0 : 0.5, pb: 0.5,
-                  fontSize: "9px", fontWeight: 700, color: LABEL_C,
-                  textTransform: "uppercase", letterSpacing: "0.14em",
-                }}>
+                <Typography sx={{ px: 1.25, pt: gi === 0 ? 0 : 0.5, pb: 0.5, fontSize: "9px", fontWeight: 700, color: LABEL_C, textTransform: "uppercase", letterSpacing: "0.14em" }}>
                   {t(`sidebar.groups.${group.group.toLowerCase()}`, { defaultValue: group.group })}
                 </Typography>
               )}
-              {gi > 0 && isCollapsed && (
-                <Box sx={{ mx: "auto", mb: 1.5, width: 24, height: "1px", bgcolor: BORDER }} />
-              )}
+              {gi > 0 && isCollapsed && <Box sx={{ mx: "auto", mb: 1.5, width: 24, height: "1px", bgcolor: BORDER }} />}
               <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
                 {group.items.map((item) => renderNavItem(item, isCollapsed))}
               </Box>

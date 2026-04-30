@@ -1,72 +1,42 @@
 import React from "react";
-import { Box, Button, Typography, Chip, LinearProgress, Tooltip } from "@mui/material";
-import HourglassIcon from "@/components/icons/HourglassIcon";
-import TimeOutlineIcon from "@/components/icons/TimeOutlineIcon";
-import CaseOutlineIcon from "@/components/icons/CaseOutlineIcon";
-import CheckTestIcon from "@/components/icons/checkTestIcon";
+import { Box, Button, Typography, LinearProgress, Tooltip, Avatar } from "@mui/material";
 import { formatDistanceToNowStrict } from "date-fns";
+import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
+import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
+import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
+import HourglassEmptyOutlined from "@mui/icons-material/HourglassEmptyOutlined";
+import PlayArrowOutlined from "@mui/icons-material/PlayArrowOutlined";
+import OpenInNewOutlined from "@mui/icons-material/OpenInNew";
 
 export interface PostAssessment {
   _id: string;
-  candidate?: string | {
-    _id: string;
-    username?: string;
-    email?: string;
-  };
-  company?: {
-    _id: string;
-    username?: string;
-    email?: string;
-    role?: string;
-  };
+  candidate?: string | { _id: string; username?: string; email?: string };
+  company?: { _id: string; username?: string; email?: string; role?: string; companyName?: string; logo?: string };
   post?: {
     _id: string;
-    jobDetails?: {
-      title?: string;
-      description?: string;
-    };
+    jobDetails?: { title?: string; description?: string };
     skillAnalysis?: {
       requiredSkills?: { name: string; category?: string; level?: string; importance?: string }[];
       softSkills?: { name: string; level?: string }[];
-      suggestedSkills?: {
-        technical?: { name: string }[];
-        frameworks?: { name: string }[];
-        tools?: { name: string }[];
-      };
+      suggestedSkills?: { technical?: { name: string }[]; frameworks?: { name: string }[]; tools?: { name: string }[] };
     };
-    user?: {
-      companyName?: string;
-    };
+    user?: { companyName?: string };
     status?: string;
   };
   skillType?: string;
   interviewData?: {
     interviewType?: string;
     finalReport?: {
-      coverage?: {
-        overall?: number;
-        areas?: Record<string, any>;
-      };
+      coverage?: { overall?: number; areas?: Record<string, any> };
       summary?: string;
       recommendations?: string[];
-      aiAnalysis?: {
-        strongestAreas?: string[];
-        weakestAreas?: string[];
-        recommendedFocus?: string[];
-      };
+      aiAnalysis?: { strongestAreas?: string[]; weakestAreas?: string[]; recommendedFocus?: string[] };
     };
-    analytics?: {
-      duration?: number;
-      messageCount?: number;
-      completedAreas?: number;
-      totalAreas?: number;
-      coveragePercentage?: number;
-    };
+    analytics?: { duration?: number; messageCount?: number; completedAreas?: number; totalAreas?: number; coveragePercentage?: number };
   };
   candidatePostStepProgress?: any;
   createdAt: string;
   updatedAt?: string;
-  // Number of assessments in this group (for grouped display)
   assessmentsCount?: number;
 }
 
@@ -77,220 +47,145 @@ interface AssessmentCardProps {
   quota?: number;
 }
 
-export const getScore = (assessment: PostAssessment): number => {
-  return assessment.interviewData?.finalReport?.coverage?.overall ||
-    assessment.interviewData?.analytics?.coveragePercentage ||
-    0;
+export const getScore = (a: PostAssessment): number =>
+  a.interviewData?.finalReport?.coverage?.overall ?? a.interviewData?.analytics?.coveragePercentage ?? 0;
+
+export const hasPendingSteps = (a: PostAssessment): boolean =>
+  a.candidatePostStepProgress?.steps?.some((s: any) => s.status === "pending" || s.status === "inProgress") ?? false;
+
+export const allStepsCompleted = (a: PostAssessment): boolean => {
+  const steps = a.candidatePostStepProgress?.steps;
+  if (!steps?.length) return getScore(a) >= 50;
+  return steps.every((s: any) => s.status === "done" || s.status === "passed");
 };
 
-export const hasPendingSteps = (assessment: PostAssessment): boolean => {
-  const stepProgress = assessment.candidatePostStepProgress;
-  if (!stepProgress?.steps) return false;
+export const isCompleted = (a: PostAssessment): boolean =>
+  a.candidatePostStepProgress?.steps?.length > 0 ? allStepsCompleted(a) : getScore(a) >= 50;
 
-  return stepProgress.steps.some(
-    (step: any) => step.status === 'pending' || step.status === 'inProgress'
-  );
-};
+const getScoreColor = (s: number) =>
+  s >= 80 ? "#059669" : s >= 60 ? "#0D9488" : s >= 40 ? "#D97706" : "#DC2626";
 
-export const allStepsCompleted = (assessment: PostAssessment): boolean => {
-  const stepProgress = assessment.candidatePostStepProgress;
-  if (!stepProgress?.steps || stepProgress.steps.length === 0) {
-    const score = getScore(assessment);
-    return score >= 50;
-  }
+const AssessmentCard: React.FC<AssessmentCardProps> = ({ assessment, onViewDetails, onContinueTest, quota = 0 }) => {
+  const score      = getScore(assessment);
+  const completed  = isCompleted(assessment);
+  const pending    = hasPendingSteps(assessment);
+  const quotaFull  = quota >= 5;
 
-  return stepProgress.steps.every(
-    (step: any) => step.status === 'done' || step.status === 'passed'
-  );
-};
+  const jobTitle    = assessment.post?.jobDetails?.title || "Job Application";
+  const company     = assessment.company as any;
+  const companyName = company?.companyName || company?.username || assessment.post?.user?.companyName || "";
+  const logoUrl     = company?.logo ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Companies/${company.logo}` : undefined;
 
-export const isCompleted = (assessment: PostAssessment): boolean => {
-  if (assessment.candidatePostStepProgress?.steps?.length > 0) {
-    return allStepsCompleted(assessment);
-  }
-  const score = getScore(assessment);
-  return score >= 50;
-};
-
-const AssessmentCard: React.FC<AssessmentCardProps> = ({
-  assessment,
-  onViewDetails,
-  onContinueTest,
-  quota = 0,
-}) => {
-  const score = getScore(assessment);
-  const completed = isCompleted(assessment);
-  const timeAgo = assessment.updatedAt || assessment.createdAt
+  const timeAgo = (assessment.updatedAt || assessment.createdAt)
     ? formatDistanceToNowStrict(new Date(assessment.updatedAt || assessment.createdAt), { addSuffix: true })
     : "";
-  const jobTitle = assessment.post?.jobDetails?.title || "Job Application";
-  const companyName = assessment.company?.username || assessment.post?.user?.companyName || "Company";
-  const interviewType = assessment.interviewData?.interviewType?.replace(/_/g, " ") || "HR Interview";
-  return (
-    <Box
-      sx={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        p: 2,
-        border: "1px solid rgba(211, 224, 245, 1)",
-        boxShadow: "0px 2px 18px 0px rgba(24, 25, 28, 0.03)",
-        borderRadius: "8px",
-      }}
-    >
-      <Box sx={{ flex: 1 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 0.5 }}>
-          <Typography
-            sx={{
-              fontWeight: 600,
-              fontSize: "17px",
-              lineHeight: "28px",
-              color: "rgba(62, 70, 82, 1)",
-            }}
-          >
-            {jobTitle}
-          </Typography>
-          {completed ? (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <CheckTestIcon sx={{ color: "#3EB489", fontSize: "13.5px" }} />
-              <Typography
-                sx={{
-                  fontWeight: 400,
-                  fontSize: "14px",
-                  lineHeight: "18px",
-                  color: "rgba(62, 180, 137, 1)",
-                }}
-              >
-                Completed
-              </Typography>
-            </Box>
-          ) : (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <HourglassIcon
-                sx={{ color: "rgba(250, 180, 70, 1)", fontSize: "12px" }}
-              />
-              <Typography
-                sx={{
-                  fontWeight: 400,
-                  fontSize: "14px",
-                  lineHeight: "18px",
-                  color: "rgba(250, 180, 70, 1)",
-                }}
-              >
-                Ongoing
-              </Typography>
-            </Box>
-          )}
 
-        </Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <CaseOutlineIcon
-              sx={{ fontSize: "12px", color: "rgba(84, 98, 116, 1)" }}
+  const scoreColor  = score > 0 ? getScoreColor(score) : "#E5E7EB";
+  const statusColor = completed ? "#059669" : "#D97706";
+
+  return (
+    <Box sx={{
+      borderRadius: "16px",
+      border: `1px solid ${completed ? "#A7F3D0" : "#FDE68A"}`,
+      bgcolor: "#fff",
+      overflow: "hidden",
+      transition: "all 0.2s ease",
+      "&:hover": {
+        boxShadow: `0 8px 24px ${completed ? "#05966918" : "#D9770618"}`,
+        transform: "translateY(-1px)",
+      },
+    }}>
+      <Box sx={{ height: 4, background: `linear-gradient(90deg, ${statusColor}, ${statusColor}70)` }} />
+
+      <Box sx={{ p: 2, display: "flex", alignItems: "center", gap: 2 }}>
+        <Avatar
+          src={logoUrl}
+          variant="rounded"
+          sx={{ width: 48, height: 48, borderRadius: "12px", flexShrink: 0, bgcolor: completed ? "#ECFDF5" : "#FFFBEB", border: `1px solid ${completed ? "#A7F3D0" : "#FDE68A"}`, "& img": { objectFit: "contain", p: "4px" } }}
+        >
+          <BusinessOutlined sx={{ fontSize: 22, color: statusColor }} />
+        </Avatar>
+
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.4, flexWrap: "wrap" }}>
+            <Typography sx={{ fontWeight: 800, fontSize: "0.9rem", color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 280 }}>
+              {jobTitle}
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.4, px: 1, py: 0.25, borderRadius: "20px", bgcolor: completed ? "#ECFDF5" : "#FFFBEB", border: `1px solid ${completed ? "#A7F3D0" : "#FDE68A"}`, flexShrink: 0 }}>
+              {completed
+                ? <CheckCircleOutlined sx={{ fontSize: 11, color: "#059669" }} />
+                : <HourglassEmptyOutlined sx={{ fontSize: 11, color: "#D97706" }} />}
+              <Typography sx={{ fontSize: "0.62rem", fontWeight: 700, color: statusColor }}>{completed ? "Completed" : "Ongoing"}</Typography>
+            </Box>
+          </Box>
+
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}>
+            {companyName && (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
+                <BusinessOutlined sx={{ fontSize: 11, color: "#9CA3AF" }} />
+                <Typography sx={{ fontSize: "0.7rem", color: "#6B7280", fontWeight: 500 }}>{companyName}</Typography>
+              </Box>
+            )}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
+              <AccessTimeOutlined sx={{ fontSize: 11, color: "#9CA3AF" }} />
+              <Typography sx={{ fontSize: "0.7rem", color: "#9CA3AF" }}>{timeAgo}</Typography>
+            </Box>
+          </Box>
+
+          <Box>
+            <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.4 }}>
+              <Typography sx={{ fontSize: "0.62rem", color: "#9CA3AF" }}>Progress</Typography>
+              {score > 0 && <Typography sx={{ fontSize: "0.68rem", fontWeight: 800, color: scoreColor }}>{score}%</Typography>}
+            </Box>
+            <LinearProgress
+              variant="determinate"
+              value={Math.min(Math.max(score, 0), 100)}
+              sx={{
+                height: 5, borderRadius: "99px", bgcolor: "#F3F4F6",
+                "& .MuiLinearProgress-bar": { borderRadius: "99px", bgcolor: score > 0 ? scoreColor : "#E5E7EB" },
+              }}
             />
-            <Typography
-              sx={{
-                fontWeight: 400,
-                fontSize: "11px",
-                lineHeight: "28px",
-                color: "rgba(84, 98, 116, 1)",
-              }}
-            >
-              {companyName}
-            </Typography>
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <TimeOutlineIcon />
-            <Typography
-              sx={{
-                fontWeight: 400,
-                fontSize: "11px",
-                lineHeight: "28px",
-                color: "rgba(84, 98, 116, 1)",
-              }}
-            >
-              {timeAgo}
-            </Typography>
           </Box>
         </Box>
-        {/* Progress Bar */}
-        <Box sx={{ mt: 1, maxWidth: "300px" }}>
-          <LinearProgress
-            variant="determinate"
-            value={Math.min(Math.max(score, 0), 100)}
-            sx={{
-              height: 5,
-              borderRadius: 3,
-              backgroundColor: "rgba(243, 245, 247, 1)",
-              "& .MuiLinearProgress-bar": {
-                borderRadius: 3,
-                backgroundColor: completed ? "rgba(62, 180, 137, 1)" : "rgba(250, 180, 70, 1)",
-              },
-            }}
-          />
+
+        <Box sx={{ flexShrink: 0 }}>
+          {pending ? (
+            <Tooltip title={quotaFull ? "Monthly test limit reached (5/5)." : ""} arrow>
+              <span>
+                <Button
+                  onClick={() => onContinueTest(assessment)}
+                  disabled={quotaFull}
+                  startIcon={<PlayArrowOutlined sx={{ fontSize: "15px !important" }} />}
+                  sx={{
+                    textTransform: "none", fontWeight: 700, fontSize: "0.78rem",
+                    color: "#fff", bgcolor: "#7C3AED",
+                    borderRadius: "10px", px: 2, py: 0.8, boxShadow: "none", whiteSpace: "nowrap",
+                    "&:hover": { bgcolor: "#6D28D9", boxShadow: "0 4px 12px #7C3AED30" },
+                    "&.Mui-disabled": { bgcolor: "#E5E7EB", color: "#9CA3AF" },
+                  }}
+                >
+                  Continue
+                </Button>
+              </span>
+            </Tooltip>
+          ) : (
+            <Button
+              onClick={() => onViewDetails(assessment._id)}
+              endIcon={<OpenInNewOutlined sx={{ fontSize: "13px !important" }} />}
+              sx={{
+                textTransform: "none", fontWeight: 700, fontSize: "0.78rem",
+                color: completed ? "#059669" : "#6B7280",
+                bgcolor: completed ? "#ECFDF5" : "#F9FAFB",
+                border: `1px solid ${completed ? "#A7F3D0" : "#E5E7EB"}`,
+                borderRadius: "10px", px: 2, py: 0.8, boxShadow: "none", whiteSpace: "nowrap",
+                "&:hover": { bgcolor: completed ? "#D1FAE5" : "#F3F4F6" },
+              }}
+            >
+              View Report
+            </Button>
+          )}
         </Box>
       </Box>
-      {hasPendingSteps(assessment) ? (
-        <Tooltip
-          title={quota >= 5 ? "You have reached your monthly limit of 5 tests. Please try again next month." : ""}
-          arrow
-          disableHoverListener={quota < 5}
-        >
-          <span>
-            <Button
-              onClick={() => onContinueTest(assessment)}
-              variant="outlined"
-              disabled={quota >= 5}
-              sx={{
-                width: "170px",
-                borderColor: "rgba(189, 133, 255, 1)",
-                color: "white",
-                background: "rgba(189, 133, 255, 1)",
-                fontWeight: 600,
-                borderRadius: "38px",
-                px: 3,
-                height: "42px",
-                textTransform: "none",
-                fontSize: "0.875rem",
-                "&:hover": {
-                  backgroundColor: "rgba(160, 100, 230, 1)",
-                  borderColor: "rgba(160, 100, 230, 1)",
-                },
-                "&.Mui-disabled": {
-                  backgroundColor: "rgba(189, 133, 255, 0.3)",
-                  color: "rgba(255, 255, 255, 0.6)",
-                  borderColor: "rgba(189, 133, 255, 0.3)",
-                },
-              }}
-            >
-              Complete Test
-            </Button>
-          </span>
-        </Tooltip>
-      ) : (
-        <Button
-          onClick={() => onViewDetails(assessment._id)}
-          variant="outlined"
-          sx={{
-            width: "170px",
-            borderColor: completed ? "rgba(211, 224, 245, 1)" : "rgba(189, 133, 255, 1)",
-            color: completed ? "rgba(62, 70, 82, 1)" : "rgba(189, 133, 255, 1)",
-            background: completed ? "#54627414" : "rgba(189, 133, 255, 0.08)",
-            fontWeight: completed ? 500 : 600,
-            borderRadius: "38px",
-            px: 3,
-            height: "42px",
-            textTransform: "none",
-            fontSize: "0.875rem",
-            "&:hover": {
-              backgroundColor: completed ? "rgba(211, 224, 245, 0.3)" : "rgba(189, 133, 255, 0.04)",
-              borderColor: completed ? "rgba(211, 224, 245, 1)" : "rgba(189, 133, 255, 1)",
-            },
-          }}
-        >
-          View Details
-        </Button>
-      )}
     </Box>
   );
 };

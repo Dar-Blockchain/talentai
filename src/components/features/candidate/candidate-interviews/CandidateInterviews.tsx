@@ -1,22 +1,22 @@
 import React, { useState } from "react";
-import { Box, Tabs, Tab, Typography, Stack } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import dynamic from "next/dynamic";
 import PostInterviews from "./PostInterviews";
 import SkillInterviews from "./SkillInterviews";
+import SchoolOutlined from "@mui/icons-material/SchoolOutlined";
+import CodeOutlined from "@mui/icons-material/CodeOutlined";
+import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
+import WorkOutlineOutlined from "@mui/icons-material/WorkOutlineOutlined";
 
-const INTERVIEW_TYPES = [
-  {
-    label: "Applications",
-    value: "application",
-  },
-  {
-    label: "Technical Skills",
-    value: "technical",
-  },
-  {
-    label: "Soft Skills",
-    value: "soft",
-  },
+const T    = "#0D9488";
+const TBG  = "#F0FDFA";
+const TBD  = "#99F6E4";
+const NAVY = "#0D1B2A";
+
+const TABS = [
+  { value: "application", label: "Applications",     Icon: WorkOutlineOutlined, color: "#7C3AED", bg: "#F5F3FF", border: "#DDD6FE" },
+  { value: "technical",   label: "Technical Skills", Icon: CodeOutlined,        color: "#2563EB", bg: "#EFF6FF", border: "#BFDBFE" },
+  { value: "soft",        label: "Soft Skills",      Icon: PeopleOutlined,      color: "#D97706", bg: "#FFFBEB", border: "#FDE68A" },
 ];
 
 interface CandidateInterviewsProps {
@@ -27,128 +27,67 @@ interface CandidateInterviewsProps {
 }
 
 const CandidateInterviews: React.FC<CandidateInterviewsProps> = ({
-  onViewAll,
-  onBackToAll,
-  hidden = false,
-  showViewAll = false,
+  onViewAll, onBackToAll, hidden = false, showViewAll = false,
 }) => {
   const [tab, setTab] = useState("application");
-
-  // Early return if hidden
-  if (hidden) {
-    return null;
-  }
-
-  const handleTabChange = (newTab: string) => {
-    setTab(newTab);
-  };
+  if (hidden) return null;
 
   return (
-    <Box
-      sx={{
-        px: 5,
-        py: 3,
-        mb: 2,
-        color: "#000",
-        borderRadius: "12px",
-        border: "1px solid rgba(84,98,116,0.1)",
-        backgroundColor: "white",
-      }}
-    >
-      <Typography
-        variant="h5"
-        sx={{
-          fontWeight: 600,
-          color: "#000000",
-          fontSize: "20px",
-          mb: 3,
-          position: "relative",
-          "&::after": {
-            content: '""',
-            position: "absolute",
-            bottom: "-4px",
-            left: 0,
-            width: "38px",
-            height: "5px",
-            background: "#8310FF",
-            borderRadius: "2px",
-          },
-        }}
-      >
-        Interviews & Skills assessments
-      </Typography>
-      <Box>
-        <Box
-          sx={{
-            mb: 4,
-            backgroundColor: "rgba(250, 246, 255, 1)",
-            borderRadius: "12px",
-            px: 1,
-            height: "60px",
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
-          <Tabs
-            value={tab}
-            onChange={(_, newValue) => handleTabChange(newValue)}
-            variant="scrollable"
-            scrollButtons="auto"
-            sx={{
-              width: "100%",
-              "& .MuiTab-root": {
-                flex: 1,
-                mr: 1,
-                textTransform: "none",
-                fontWeight: 600,
-                fontSize: "16px",
-                borderRadius: "12px",
-                height: 45,
-                color: "rgba(189, 133, 255, 1)",
-                transition: "all 0.3s ease",
-                backgroundColor: "rgba(244, 235, 255, 1)",
-                "&:hover": {
-                  backgroundColor: "rgba(189, 133, 255, 1)",
-                  color: "white",
-                },
-                "&.Mui-selected": {
-                  color: "white",
-                  backgroundColor: "rgba(189, 133, 255, 1)",
-                },
-              },
-              "& .MuiTabs-indicator": {
-                display: "none",
-              },
-            }}
-          >
-            {INTERVIEW_TYPES.map((t) => (
-              <Tab
-                key={t.value}
-                value={t.value}
-                label={
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                    {t.label}
-                  </Stack>
-                }
-              />
-            ))}
-          </Tabs>
+    <Box>
+      {/* ── Header panel ── */}
+      <Box sx={{
+        bgcolor: "#fff", borderRadius: "18px", border: "1px solid #E5E7EB",
+        p: 3, mb: 2.5, overflow: "hidden", position: "relative",
+      }}>
+        <Box sx={{ position: "absolute", top: -50, right: -50, width: 180, height: 180, borderRadius: "50%", bgcolor: `${T}07`, pointerEvents: "none" }} />
+
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2.5 }}>
+          <Box sx={{ width: 42, height: 42, borderRadius: "12px", bgcolor: TBG, border: `1px solid ${TBD}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <SchoolOutlined sx={{ fontSize: 22, color: T }} />
+          </Box>
+          <Box>
+            <Typography sx={{ fontSize: "1.2rem", fontWeight: 900, color: NAVY, lineHeight: 1 }}>Interviews & Assessments</Typography>
+            <Typography sx={{ fontSize: "0.75rem", color: "#9CA3AF", mt: 0.2 }}>Track your interviews and skill assessment history</Typography>
+          </Box>
         </Box>
+
+        {/* Tab switcher */}
+        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+          {TABS.map(({ value, label, Icon, color, bg, border }) => {
+            const isActive = tab === value;
+            return (
+              <Box
+                key={value}
+                onClick={() => setTab(value)}
+                sx={{
+                  display: "flex", alignItems: "center", gap: 1,
+                  px: 2, py: 1, borderRadius: "12px", cursor: "pointer",
+                  border: isActive ? `1.5px solid ${border}` : "1.5px solid #E5E7EB",
+                  bgcolor: isActive ? bg : "#FAFAFA",
+                  transition: "all 0.18s ease",
+                  "&:hover": { borderColor: border, bgcolor: bg },
+                }}
+              >
+                <Icon sx={{ fontSize: 16, color: isActive ? color : "#9CA3AF" }} />
+                <Typography sx={{ fontSize: "0.8rem", fontWeight: isActive ? 700 : 500, color: isActive ? color : "#6B7280", whiteSpace: "nowrap" }}>
+                  {label}
+                </Typography>
+              </Box>
+            );
+          })}
+        </Box>
+      </Box>
+
+      {/* ── Content ── */}
+      <Box sx={{ bgcolor: "#fff", borderRadius: "18px", border: "1px solid #E5E7EB", p: 3 }}>
         {tab === "application" && (
-          <PostInterviews
-            onViewAll={onViewAll}
-            onBackToAll={onBackToAll}
-            showViewAll={showViewAll}
-            initialDisplayCount={5}
-          />
+          <PostInterviews onViewAll={onViewAll} onBackToAll={onBackToAll} showViewAll={showViewAll} initialDisplayCount={5} />
         )}
         {tab === "technical" && <SkillInterviews skillType="technical" />}
-        {tab === "soft" && <SkillInterviews skillType="soft" />}
+        {tab === "soft"      && <SkillInterviews skillType="soft" />}
       </Box>
     </Box>
   );
-}
-// Export with dynamic import to prevent SSR issues
-export default dynamic(() => Promise.resolve(CandidateInterviews), {
-  ssr: false
-});
+};
+
+export default dynamic(() => Promise.resolve(CandidateInterviews), { ssr: false });

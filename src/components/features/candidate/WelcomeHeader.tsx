@@ -1,326 +1,166 @@
 import React, { useState } from "react";
-import {
-  Box,
-  Stack,
-  Typography,
-  Avatar,
-  Button,
-  Card,
-  Tooltip,
-} from "@mui/material";
-import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import EmailIcon from "@mui/icons-material/Email";
-import WorkIcon from "@mui/icons-material/Work";
+import { Box, Typography, Avatar, Button, Stack, Chip } from "@mui/material";
+import PlayArrowOutlined from "@mui/icons-material/PlayArrowOutlined";
+import EmailOutlined from "@mui/icons-material/EmailOutlined";
+import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
+import WorkOutlined from "@mui/icons-material/WorkOutlined";
+import SchoolOutlined from "@mui/icons-material/SchoolOutlined";
+import QuizOutlined from "@mui/icons-material/QuizOutlined";
 import Image from "next/image";
 import { useSelector } from "react-redux";
 import { useRouter } from "next/router";
 import AssessmentModal from "./AssessmentModal";
 import { RootState } from "@/store/store";
 
+const T  = "#0D9488";
+const TL = "#14B8A6";
+const TBG = "#F0FDFA";
+const TBORDER = "#99F6E4";
+
 const WelcomeHeader = () => {
   const router = useRouter();
-  const { user, profile } = useSelector(
-    (state: RootState) => state.user.connectedUser
-  );
-  console.log("👤 [WelcomeHeader] User Profile:", profile);
+  const { user, profile } = useSelector((state: RootState) => state.user.connectedUser);
   const quota = profile?.quota || 0;
   const [testModalOpen, setTestModalOpen] = useState(false);
 
-  const onStartTest = () => {
-    setTestModalOpen(true);
-  };
-  const onHrInterview = () => {
-    const experienceLevel = profile?.requiredExperienceLevel || "Mid-Level";
-    const role = profile?.targetRole || "Software Engineer";
-    router.push(
-      `/interview/hr?type=hr&role=${encodeURIComponent(
-        role
-      )}&proficiency=${encodeURIComponent(experienceLevel)}`
-    );
-  };
+  const displayName = profile?.firstName
+    ? `${profile.firstName}${profile.lastName ? ` ${profile.lastName}` : ""}`
+    : user?.username || "Candidate";
+
+  const initial = displayName[0]?.toUpperCase() || "C";
+  const avatarUrl = profile?.user_image
+    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${profile.user_image}`
+    : undefined;
+
+  const joinDate = user?.createdAt
+    ? new Date(user.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+    : null;
+
   return (
-    <Box
-      sx={{
-        background: "rgba(255, 255, 255, 1)",
-        color: "#000000",
-        px: 5,
-        py: 3,
-        marginBottom: 2,
-        position: "relative",
-        overflow: "hidden",
-        borderRadius: "12px",
-        border: "1px solid rgba(84,98,116,0.1)",
-        display: "flex",
-        flexDirection: { xs: "column", lg: "row" },
-        gap: 4,
-        alignItems: "flex-start",
-        maxWidth: "100%",
+    <Box sx={{
+      bgcolor: "#fff",
+      borderRadius: "14px",
+      border: "1px solid #E5E7EB",
+      overflow: "hidden",
+    }}>
+      {/* Teal accent bar */}
+      <Box sx={{ height: 4, background: `linear-gradient(90deg, ${T}, ${TL})` }} />
+
+      <Box sx={{
+        display: "flex", flexDirection: { xs: "column", md: "row" },
+        alignItems: { xs: "flex-start", md: "center" },
         justifyContent: "space-between",
-      }}
-    >
-      {/* Left Section - Welcome and User Info (2/3 width) */}
-      <Box sx={{ flex: 1 }}>
-        {/* Welcome Header */}
-        <Typography
-          variant="h4"
-          sx={{
-            color: "#000000",
-            fontSize: { xs: "1rem", sm: "1.75rem", md: "2rem" },
-            mb: 1,
-            lineHeight: 1.2,
-            fontFamily: "Poppins",
-            fontWeight: 600,
-            fontStyle: "normal",
-            letterSpacing: "0",
-          }}
-        >
-          Welcome back,{" "}
-          {profile?.firstName ? `${profile?.firstName}` : user?.username}
-        </Typography>
+        gap: 3, px: 3, py: 2.5,
+      }}>
+        {/* Left — avatar + info */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2.5 }}>
+          <Avatar
+            src={avatarUrl}
+            sx={{ width: 56, height: 56, bgcolor: T, fontSize: "1.25rem", fontWeight: 700, flexShrink: 0 }}
+          >
+            {initial}
+          </Avatar>
 
-        <Typography
-          variant="body1"
-          sx={{
-            color: "#000000",
-            fontSize: "13px",
-            mb: 3,
-            fontWeight: 400,
-            lineHeight: 1.4,
-          }}
-        >
-          Ready to continue your journey? Let's make today productive!
-        </Typography>
-
-        {/* User Information - Horizontal Layout */}
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
-            gap: { xs: 1, sm: 3 },
-            mb: 3,
-            flexWrap: "wrap",
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <EmailIcon
-              sx={{ color: "rgba(189, 133, 255, 1)", fontSize: "1.2rem" }}
-            />
-            <Typography
-              variant="body2"
-              sx={{
-                color: "#000000",
-                fontSize: "0.875rem",
-                fontWeight: 400,
-              }}
-            >
-              {user?.email || "ahmed@mail.com"}
+          <Box>
+            <Typography sx={{ fontSize: "18px", fontWeight: 700, color: "#111827", lineHeight: 1.2 }}>
+              Welcome back, {displayName} 👋
             </Typography>
+            <Typography sx={{ fontSize: "12.5px", color: "#6B7280", mt: 0.25 }}>
+              Ready to continue your journey? Let's make today productive!
+            </Typography>
+
+            {/* Meta chips */}
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1.25 }}>
+              {user?.email && (
+                <Chip icon={<EmailOutlined sx={{ fontSize: 13 }} />} label={user.email}
+                  size="small" sx={{ fontSize: "11px", height: 22, bgcolor: TBG, border: `1px solid ${TBORDER}`, color: T, "& .MuiChip-icon": { color: T } }} />
+              )}
+              {joinDate && (
+                <Chip icon={<CalendarTodayOutlined sx={{ fontSize: 13 }} />} label={`Joined ${joinDate}`}
+                  size="small" sx={{ fontSize: "11px", height: 22, bgcolor: TBG, border: `1px solid ${TBORDER}`, color: T, "& .MuiChip-icon": { color: T } }} />
+              )}
+              {profile?.targetRole && (
+                <Chip icon={<WorkOutlined sx={{ fontSize: 13 }} />} label={profile.targetRole}
+                  size="small" sx={{ fontSize: "11px", height: 22, bgcolor: TBG, border: `1px solid ${TBORDER}`, color: T, "& .MuiChip-icon": { color: T } }} />
+              )}
+            </Box>
+          </Box>
+        </Box>
+
+        {/* Right — stat cards + actions */}
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2, alignItems: { xs: "flex-start", md: "flex-end" } }}>
+          {/* Stat cards */}
+          <Box sx={{ display: "flex", gap: 1.5 }}>
+            <Box sx={{
+              px: 2, py: 1.5, borderRadius: "10px",
+              bgcolor: TBG, border: `1px solid ${TBORDER}`,
+              textAlign: "center", minWidth: 90,
+            }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5, mb: 0.25 }}>
+                <QuizOutlined sx={{ fontSize: 14, color: T }} />
+                <Typography sx={{ fontSize: "18px", fontWeight: 700, color: T, lineHeight: 1 }}>
+                  {quota}/5
+                </Typography>
+              </Box>
+              <Typography sx={{ fontSize: "10.5px", color: "#6B7280", fontWeight: 500 }}>Tests Passed</Typography>
+            </Box>
+
+            <Box sx={{
+              px: 2, py: 1.5, borderRadius: "10px",
+              bgcolor: TBG, border: `1px solid ${TBORDER}`,
+              textAlign: "center", minWidth: 110,
+            }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5, mb: 0.25 }}>
+                <SchoolOutlined sx={{ fontSize: 14, color: T }} />
+                <Typography sx={{ fontSize: "14px", fontWeight: 700, color: T, lineHeight: 1 }}>
+                  {profile?.requiredExperienceLevel || "Beginner"}
+                </Typography>
+              </Box>
+              <Typography sx={{ fontSize: "10.5px", color: "#6B7280", fontWeight: 500 }}>Experience Level</Typography>
+            </Box>
           </Box>
 
-          {user?.createdAt && (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <CalendarTodayIcon
-                sx={{ color: "rgba(189, 133, 255, 1)", fontSize: "1.1rem" }}
-              />
-              <Typography
-                variant="body2"
-                sx={{
-                  color: "#000000",
-                  fontSize: "0.875rem",
-                  fontWeight: 400,
-                }}
-              >
-                {new Date(user?.createdAt).toLocaleDateString("en-US", {
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                })}
-              </Typography>
-            </Box>
-          )}
-
-          {profile?.targetRole && (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <WorkIcon
-                sx={{ color: "rgba(189, 133, 255, 1)", fontSize: "1.2rem" }}
-              />
-              <Typography
-                variant="body2"
-                sx={{
-                  color: "#000000",
-                  fontSize: "0.875rem",
-                  fontWeight: 400,
-                }}
-              >
-                {profile.targetRole}
-              </Typography>
-            </Box>
-          )}
-        </Box>
-
-        {/* Action Buttons - Horizontal Layout */}
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={2}
-          sx={{ mt: 2 }}
-        >
-          <Button
-            variant="contained"
-            startIcon={<PlayArrowIcon />}
-            onClick={onStartTest}
-            disabled
-            // disabled={quota >= 5}
-            sx={{
-              background: "rgba(163, 98, 239, 1)",
-              color: "#ffffff",
-              fontWeight: 600,
-              borderRadius: "38px",
-              px: 3,
-              py: 1,
-              textTransform: "none",
-              maxWidth: "230px",
-              fontSize: "0.875rem",
-              width: "100%",
-              "&:hover": {
-                background: "rgba(163, 98, 239, 0.8)",
-                transform: "translateY(-1px)",
-                boxShadow: "0 4px 12px rgba(131, 16, 255, 0.3)",
-              },
-              "&:disabled": {
-                background: "#CCCCCC",
-                color: "#888888",
-              },
-            }}
-          >
-            Start Test
-          </Button>
-
-          <Button
-            variant="outlined"
-            startIcon={
-              <Image src="/icons/cv.svg" alt="cv" width={16} height={16} />
-            }
-            onClick={onHrInterview}
-            disabled
-            sx={{
-              border: "0.76px solid rgba(25, 25, 25, 1)",
-              color: "#000000",
-              fontWeight: 600,
-              borderRadius: "38px",
-              px: 3,
-              py: 1,
-              maxWidth: "230px",
-              width: "100%",
-              textTransform: "none",
-              fontSize: "0.875rem",
-              "&:hover": {
-                borderColor: "0.76px solid rgba(25, 25, 25, 1)",
-                background: "rgba(0, 0, 0, 0.04)",
-                transform: "translateY(-1px)",
-              },
-              "&:disabled": {
-                borderColor: "#CCCCCC",
-                color: "#888888",
-              },
-            }}
-          >
-            HR Interview Test
-          </Button>
-        </Stack>
-      </Box>
-
-      {/* Right Section - Progress Cards (1/3 width) */}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 2,
-        }}
-      >
-        {/* Tasks Completed Card */}
-        <Box
-          sx={{
-            padding: 3,
-            borderRadius: 3,
-            background: "#ffffff",
-            boxShadow: "0px 0px 8.7px 0px rgba(0, 0, 0, 0.06)",
-            textAlign: "left",
-            height: "93px",
-            width: "205px",
-            border: "1px solid rgba(157, 61, 255, 0.18)",
-          }}
-        >
-          <Tooltip title={`You can pass a maximum of 5 tests per month`}>
-            <Typography
-              variant="h4"
+          {/* Action buttons */}
+          <Stack direction="row" spacing={1}>
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<PlayArrowOutlined sx={{ fontSize: 15 }} />}
+              onClick={() => setTestModalOpen(true)}
+              disabled
               sx={{
-                fontWeight: 600,
-                color: "rgba(56, 68, 85, 1)",
-                fontSize: "24px",
-                mb: 2,
-                lineHeight: "18px",
+                bgcolor: T, color: "#fff", fontWeight: 600, borderRadius: "8px",
+                textTransform: "none", fontSize: "12.5px", px: 2,
+                "&:hover": { bgcolor: TL },
+                "&:disabled": { bgcolor: "#E5E7EB", color: "#9CA3AF" },
               }}
             >
-
-              {`${quota || 0}/5`}
-            </Typography>
-          </Tooltip>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "rgba(100, 113, 131, 1)",
-              fontSize: "17px",
-              lineHeight: "18px",
-              fontWeight: 400,
-            }}
-          >
-            Tests Passed
-          </Typography>
-        </Box>
-
-        {/* Experience Level Card */}
-        <Box
-          sx={{
-            padding: 3,
-            borderRadius: 3,
-            background: "#ffffff",
-            boxShadow: "0px 0px 8.7px 0px rgba(0, 0, 0, 0.06)",
-            textAlign: "left",
-            height: "93px",
-            width: "205px",
-            border: "1px solid rgba(157, 61, 255, 0.18)",
-          }}
-        >
-          <Typography
-            variant="h4"
-            sx={{
-              fontWeight: 600,
-              color: "rgba(56, 68, 85, 1)",
-              fontSize: "24px",
-              mb: 2,
-              lineHeight: "18px",
-            }}
-          >
-            {profile?.requiredExperienceLevel || "Beginner"}
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "rgba(100, 113, 131, 1)",
-              fontSize: "17px",
-              lineHeight: "18px",
-              fontWeight: 400,
-            }}
-          >
-            Experience Level
-          </Typography>
+              Start Test
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<Image src="/icons/cv.svg" alt="cv" width={13} height={13} />}
+              onClick={() => {
+                const level = profile?.requiredExperienceLevel || "Mid-Level";
+                const role  = profile?.targetRole || "Software Engineer";
+                router.push(`/interview/hr?type=hr&role=${encodeURIComponent(role)}&proficiency=${encodeURIComponent(level)}`);
+              }}
+              disabled
+              sx={{
+                borderColor: "#D1D5DB", color: "#374151", fontWeight: 600,
+                borderRadius: "8px", textTransform: "none", fontSize: "12.5px", px: 2,
+                "&:hover": { borderColor: T, color: T },
+                "&:disabled": { borderColor: "#E5E7EB", color: "#9CA3AF" },
+              }}
+            >
+              HR Interview
+            </Button>
+          </Stack>
         </Box>
       </Box>
-      <AssessmentModal
-        open={testModalOpen}
-        onClose={() => setTestModalOpen(false)}
-      />
+
+      <AssessmentModal open={testModalOpen} onClose={() => setTestModalOpen(false)} />
     </Box>
   );
 };

@@ -2,94 +2,42 @@ import React from "react";
 import { Box, Typography } from "@mui/material";
 
 type StatsSummaryCardProps = {
-  label: string;              // "Total"
-  value: number | string;     // 10
-  subtitle: string;           // "Applications"
-  icon: React.ReactNode;      // <DocumentIcon />
-  valueColor?: string;        // number color
+  label: string;
+  value: number | string;
+  subtitle: string;
+  icon: React.ReactNode;
+  valueColor?: string;
   borderColor?: string;
   shadowColor?: string;
   iconBgColor?: string;
 };
 
 const StatsSummaryCard: React.FC<StatsSummaryCardProps> = ({
-  label,
-  value,
-  subtitle,
-  icon,
-  valueColor = "rgba(11, 82, 198, 1)",
-  borderColor = "rgba(11, 82, 198, 0.18)",
-  shadowColor = "rgba(0, 0, 0, 0.06)",
-  iconBgColor = "rgba(11, 82, 198, 0.06)",
-}) => {
-  return (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        gap: 2,
-        p: 1.5,
-        borderRadius: "12px",
-        border: `1px solid ${borderColor}`,
-        boxShadow: `0px 0px 4.2px 0px ${shadowColor}`,
-      }}
-    >
-      {/* Icon box */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          background: iconBgColor,
-          width: 64,
-          height: 64,
-          borderRadius: "5px",
-        }}
-      >
-        {icon}
-      </Box>
-
-      {/* Text */}
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-        <Typography
-          sx={{
-            fontWeight: 400,
-            fontSize: "11px",
-            lineHeight: "18.78px",
-            letterSpacing: "0px",
-            color: "rgba(149, 157, 168, 1)",
-          }}
-        >
-          {label}
-        </Typography>
-
-        <Typography
-          sx={{
-            fontWeight: 700,
-            fontSize: "32px",
-            lineHeight: "18.78px",
-            letterSpacing: "0px",
-            verticalAlign: "middle",
-            color: valueColor,
-          }}
-        >
-          {value}
-        </Typography>
-
-        <Typography
-          sx={{
-            fontWeight: 400,
-            fontSize: "15px",
-            lineHeight: "18.78px",
-            letterSpacing: "0px",
-            color: "rgba(100, 113, 131, 1)",
-          }}
-        >
-          {subtitle}
-        </Typography>
-      </Box>
+  label, value, subtitle, icon,
+  valueColor = "#0D9488",
+  borderColor = "#E5E7EB",
+  iconBgColor = "#F0FDFA",
+}) => (
+  <Box sx={{
+    flex: 1,
+    display: "flex", alignItems: "center", gap: 1.5,
+    px: 2, py: 1.75,
+    borderRadius: "14px",
+    border: `1px solid ${borderColor}`,
+    bgcolor: "#fff",
+    boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+    transition: "box-shadow 0.2s",
+    "&:hover": { boxShadow: "0 4px 16px rgba(0,0,0,0.07)" },
+  }}>
+    <Box sx={{ width: 44, height: 44, borderRadius: "11px", bgcolor: iconBgColor, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+      {icon}
     </Box>
-  );
-};
+    <Box>
+      <Typography sx={{ fontSize: "0.65rem", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</Typography>
+      <Typography sx={{ fontSize: "1.5rem", fontWeight: 900, color: valueColor, lineHeight: 1.1 }}>{value}</Typography>
+      <Typography sx={{ fontSize: "0.7rem", color: "#6B7280", fontWeight: 500 }}>{subtitle}</Typography>
+    </Box>
+  </Box>
+);
 
 export default StatsSummaryCard;
