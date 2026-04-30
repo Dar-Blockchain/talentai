@@ -42,8 +42,8 @@ const PostBasicDetails: React.FC<Props> = () => {
   const displaySkills = getPostSkills(job);
 
   const LANG_META: Record<string, { flag: string; label: string }> = {
-    en: { flag: "🇬🇧", label: "English" },
-    fr: { flag: "🇫🇷", label: "Français" },
+    en: { flag: "us", label: "English" },
+    fr: { flag: "fr", label: "Français" },
   };
   const interviewLanguages: string[] = job.interviewLanguages?.length
     ? job.interviewLanguages
@@ -104,7 +104,7 @@ const PostBasicDetails: React.FC<Props> = () => {
                     bgcolor: "#F0FDFA", border: "1px solid #99F6E4",
                   }}
                 >
-                  <Typography sx={{ fontSize: "13px", lineHeight: 1 }}>{meta.flag}</Typography>
+                  <img src={`https://flagcdn.com/w20/${meta.flag}.png`} srcSet={`https://flagcdn.com/w40/${meta.flag}.png 2x`} width={18} height={13} alt={meta.flag} style={{ borderRadius: 2, display: 'block' }} />
                   <Typography sx={{ fontSize: "11.5px", fontWeight: 600, color: "#0D9488" }}>{meta.label}</Typography>
                 </Box>
               );

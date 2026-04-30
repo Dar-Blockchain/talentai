@@ -10,9 +10,9 @@ export interface LanguageOption {
 }
 
 export const LANGUAGE_OPTIONS: LanguageOption[] = [
-  { code: 'en', label: 'English', flag: '🇬🇧' },
-  { code: 'fr', label: 'Français', flag: '🇫🇷' },
-  // Add more here: { code: 'ar', label: 'العربية', flag: '🇸🇦' }
+  { code: 'en', label: 'English', flag: 'us' },
+  { code: 'fr', label: 'Français', flag: 'fr' },
+  // Add more here: { code: 'ar', label: 'العربية', flag: 'sa' }
 ];
 
 /** localStorage key written only when the user explicitly picks a language via the header switcher */

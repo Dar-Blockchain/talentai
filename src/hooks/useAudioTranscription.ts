@@ -443,6 +443,7 @@ export const useAudioTranscription = ({
         token: tempToken,
         sampleRate: actualSampleRate,
         encoding: 'pcm_s16le',
+        speechModel: "universal-streaming-multilingual",
         keytermsPrompt: extractTechnicalKeywords(interviewConfig, jobData),
         endOfTurnConfidenceThreshold: turnDetectionConfig.end_of_turn_confidence_threshold,
         minEndOfTurnSilenceWhenConfident: turnDetectionConfig.min_end_of_turn_silence_when_confident,

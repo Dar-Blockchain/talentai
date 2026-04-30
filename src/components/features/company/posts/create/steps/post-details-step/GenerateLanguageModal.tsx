@@ -8,8 +8,8 @@ const TEAL    = "#0D9488";
 const TEAL_BG = "#F0FDFA";
 
 const LANGUAGES = [
-  { code: "en", flag: "🇬🇧", label: "English" },
-  { code: "fr", flag: "🇫🇷", label: "Français" },
+  { code: "en", flag: "us", label: "English" },
+  { code: "fr", flag: "fr", label: "Français" },
 ];
 
 interface Props {
@@ -83,7 +83,7 @@ const GenerateLanguageModal: React.FC<Props> = ({ open, loading, onConfirm, onCl
                 fontWeight: active ? 700 : 500,
               }}
             >
-              <Typography sx={{ fontSize: "1.15rem", lineHeight: 1 }}>{lang.flag}</Typography>
+              <img src={`https://flagcdn.com/w20/${lang.flag}.png`} srcSet={`https://flagcdn.com/w40/${lang.flag}.png 2x`} width={22} height={15} alt={lang.flag} style={{ borderRadius: 2, display: 'block' }} />
               <Typography sx={{ fontSize: "13px", fontWeight: active ? 700 : 500, color: active ? "#111827" : "#6B7280" }}>
                 {lang.label}
               </Typography>

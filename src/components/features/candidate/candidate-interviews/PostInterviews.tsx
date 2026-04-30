@@ -16,6 +16,7 @@ import { AppDispatch, RootState } from "@/store/store";
 import StatsSummaryCard from "./StatsSummaryCard";
 import AssessmentCard, { PostAssessment } from "./AssessmentCard";
 import StepInfoModal from "./StepInfoModal";
+import InterviewLanguageModal from "./InterviewLanguageModal";
 import ChecklistIcon from "@/components/icons/CheckListIcon";
 import { ArrowForward, ArrowBack } from "@mui/icons-material";
 import SearchIcon from "@mui/icons-material/Search";
@@ -69,11 +70,10 @@ const PostInterviews: React.FC<PostInterviewsProps> = ({
   const [stepModalOpen, setStepModalOpen] = useState(false);
   const [selectedAssessment, setSelectedAssessment] = useState<PostAssessment | null>(null);
 
-  // Early return if hidden
-  if (hidden) {
-    return null;
-  }
-
+  // Language selection modal state
+  const [langModalOpen, setLangModalOpen] = useState(false);
+  const [pendingNav, setPendingNav] = useState<{ postId: string; stepId: string | null } | null>(null);
+  
   // Fetch assessments on mount
   useEffect(() => {
     dispatch(fetchCandidateAssessments({ page: 1, limit: 10 }));
@@ -151,12 +151,26 @@ const PostInterviews: React.FC<PostInterviewsProps> = ({
   const handleStartStep = () => {
     if (!selectedAssessment) return;
     const postId = selectedAssessment.post?._id;
+    if (!postId) return;
     const currentStep = selectedAssessment.candidatePostStepProgress?.currentStep;
+    setStepModalOpen(false);
+    setPendingNav({ postId, stepId: currentStep?._id ?? null });
+    setLangModalOpen(true);
+  };
 
-    if (postId && currentStep) {
-      setStepModalOpen(false);
-      router.push(`/interview/hr?jobId=${postId}&stepId=${currentStep._id}&pipeline=true`);
-    }
+  const handleLanguageConfirm = (lang: string) => {
+    if (!pendingNav) return;
+    setLangModalOpen(false);
+    const url = pendingNav.stepId
+      ? `/interview/hr?jobId=${pendingNav.postId}&stepId=${pendingNav.stepId}&pipeline=true&lang=${lang}`
+      : `/interview/hr?jobId=${pendingNav.postId}&lang=${lang}`;
+    router.push(url);
+    setPendingNav(null);
+  };
+
+  const handleLanguageClose = () => {
+    setLangModalOpen(false);
+    setPendingNav(null);
   };
 
   // Theme color for applications
@@ -225,6 +239,8 @@ const PostInterviews: React.FC<PostInterviewsProps> = ({
   const displayAssessments = showViewAll
     ? filteredAndSortedAssessments.slice(0, initialDisplayCount)
     : filteredAndSortedAssessments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  if (hidden) return null;
 
   if (loading) {
     return (
@@ -520,6 +536,16 @@ const PostInterviews: React.FC<PostInterviewsProps> = ({
         onStart={handleStartStep}
         assessment={selectedAssessment}
         quota={quota}
+      />
+
+      {/* Interview Language Modal */}
+      <InterviewLanguageModal
+        open={langModalOpen}
+        languages={selectedAssessment?.post?.interviewLanguages?.length
+          ? selectedAssessment.post.interviewLanguages
+          : ["en"]}
+        onConfirm={handleLanguageConfirm}
+        onClose={handleLanguageClose}
       />
     </Box>
   );

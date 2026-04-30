@@ -40,6 +40,7 @@ import { useAudioTranscription } from '@/hooks/useAudioTranscription';
 
 // Layout
 import Header from '@/components/layout/Header';
+import InterviewLanguageModal from '@/components/features/candidate/candidate-interviews/InterviewLanguageModal';
 
 // Interview components
 import {
@@ -67,6 +68,7 @@ const IntelligentInterviewTest = () => {
   const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
 
   const [step, setStep] = useState<'intro' | 'interview'>('intro');
+  const [langModalOpen, setLangModalOpen] = useState(false);
   const [coverage, setCoverage] = useState<Coverage | null>(null);
   const [coverageDashboardExpanded, setCoverageDashboardExpanded] = useState(true);
   const [assessmentChecking, setAssessmentChecking] = useState(true);
@@ -580,18 +582,48 @@ const IntelligentInterviewTest = () => {
     );
   }
 
+  const interviewLanguages: string[] = jobData?.interviewLanguages?.length
+    ? jobData.interviewLanguages
+    : ['en'];
+
+  const handleIntroNext = (_: any) => {
+    const langAlreadySet = typeof router.query.lang === 'string' && !!router.query.lang;
+    if (!langAlreadySet && hasJobId && interviewLanguages.length > 0) {
+      setLangModalOpen(true);
+    } else {
+      setStep('interview');
+    }
+  };
+
+  const handleLangConfirm = (lang: string) => {
+    setLangModalOpen(false);
+    setInterviewConfig({
+      ...interviewConfig,
+      sessionSettings: { ...interviewConfig.sessionSettings, language: lang },
+    });
+    setStep('interview');
+  };
+
   /* ── Step 1: Introduction ── */
   if (step === 'intro') {
     return (
-      <InterviewIntro
-        interviewConfig={interviewConfig}
-        hasJobId={hasJobId}
-        jobId={jobId}
-        refParam={refParam}
-        jobData={jobData}
-        checkingEligibility={false}
-        onNext={(_) => setStep('interview')}
-      />
+      <>
+        <InterviewIntro
+          interviewConfig={interviewConfig}
+          hasJobId={hasJobId}
+          jobId={jobId}
+          refParam={refParam}
+          jobData={jobData}
+          checkingEligibility={false}
+          onNext={handleIntroNext}
+        />
+        <InterviewLanguageModal
+          open={langModalOpen}
+          languages={interviewLanguages}
+          onConfirm={handleLangConfirm}
+          onClose={() => setLangModalOpen(false)}
+        />
+      </>
     );
   }
 

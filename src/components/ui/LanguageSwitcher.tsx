@@ -50,7 +50,9 @@ const LanguageSwitcher: React.FC<Props> = ({ variant = 'full', size = 'small' })
           '&:hover': { bgcolor: '#F9FAFB', borderColor: '#D1D5DB' },
         }}
       >
-        <Box component="span" sx={{ mr: 0.5 }}>{current.flag}</Box>
+        <Box component="span" sx={{ mr: 0.5, display: 'flex', alignItems: 'center' }}>
+          <img src={`https://flagcdn.com/w20/${current.flag}.png`} srcSet={`https://flagcdn.com/w40/${current.flag}.png 2x`} width={20} height={14} alt={current.flag} style={{ borderRadius: 2, display: 'block' }} />
+        </Box>
         {variant === 'full' && (
           <Typography component="span" sx={{ fontSize: 'inherit', fontWeight: 'inherit' }}>
             {current.label}
@@ -95,7 +97,7 @@ const LanguageSwitcher: React.FC<Props> = ({ variant = 'full', size = 'small' })
               '&:hover': { bgcolor: lang.code === currentLang ? '#EDE9FE' : '#F9FAFB' },
             }}
           >
-            <Box component="span" sx={{ fontSize: 18, lineHeight: 1 }}>{lang.flag}</Box>
+            <img src={`https://flagcdn.com/w20/${lang.flag}.png`} srcSet={`https://flagcdn.com/w40/${lang.flag}.png 2x`} width={20} height={14} alt={lang.flag} style={{ borderRadius: 2, display: 'block' }} />
             <Typography sx={{ flex: 1, fontSize: 13, fontWeight: lang.code === currentLang ? 600 : 400, color: '#111827' }}>
               {lang.label}
             </Typography>

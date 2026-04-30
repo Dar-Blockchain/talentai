@@ -38,6 +38,8 @@ export interface PostAssessment {
       companyName?: string;
     };
     status?: string;
+    interviewLanguages?: string[];
+    creationType?: string;
   };
   skillType?: string;
   interviewData?: {

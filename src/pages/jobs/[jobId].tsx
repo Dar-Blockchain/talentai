@@ -20,6 +20,7 @@ import { fetchJobDetails } from '@/store/slices/jobDetailsSlice';
 import { setConnectedUser } from '@/store/slices/userSlice';
 import { getPostSkills, formatSalary, getLevelFromNumber, getSoftSkillLevelLabel, Skill } from '@/utils/postHelpers';
 import OnboardingModal from '@/components/features/interview/OnboardingModal';
+import InterviewLanguageModal from '@/components/features/candidate/candidate-interviews/InterviewLanguageModal';
 import Header from '@/components/layout/Header';
 
 const PURPLE = '#8310FF';
@@ -72,6 +73,8 @@ const JobLandingPage: React.FC = () => {
   const error = useSelector((state: RootState) => state.jobDetails.error);
 
   const [modalOpen, setModalOpen] = useState(false);
+  const [langModalOpen, setLangModalOpen] = useState(false);
+  const [pendingInterviewUrl, setPendingInterviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!router.isReady || !jobId) return;
@@ -131,8 +134,22 @@ const JobLandingPage: React.FC = () => {
     dispatch(setConnectedUser({ user, profile, planLimits: null, companyMembership: null }));
 
     const companyId = jobDetails?.user?._id || jobDetails?.user || '';
+    const baseUrl = `/interview/hr?jobId=${jobId}${companyId ? `&companyId=${companyId}` : ''}&ref=link`;
     setModalOpen(false);
-    router.push(`/interview/hr?jobId=${jobId}${companyId ? `&companyId=${companyId}` : ''}&ref=link`);
+    setPendingInterviewUrl(baseUrl);
+    setLangModalOpen(true);
+  };
+
+  const handleLanguageConfirm = (lang: string) => {
+    if (!pendingInterviewUrl) return;
+    setLangModalOpen(false);
+    router.push(`${pendingInterviewUrl}&lang=${lang}`);
+    setPendingInterviewUrl(null);
+  };
+
+  const handleLanguageClose = () => {
+    setLangModalOpen(false);
+    setPendingInterviewUrl(null);
   };
 
   if (!router.isReady || loading) {
@@ -287,6 +304,13 @@ const JobLandingPage: React.FC = () => {
         jobTitle={jobTitle}
         onClose={() => setModalOpen(false)}
         onSuccess={handleApplySuccess}
+      />
+
+      <InterviewLanguageModal
+        open={langModalOpen}
+        languages={jobDetails?.interviewLanguages?.length ? jobDetails.interviewLanguages : ['en']}
+        onConfirm={handleLanguageConfirm}
+        onClose={handleLanguageClose}
       />
     </>
   );

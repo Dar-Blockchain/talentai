@@ -8,8 +8,8 @@ const TEAL    = "#0D9488";
 const TEAL_BG = "#F0FDFA";
 
 const LANGUAGES = [
-  { code: "en", flag: "🇬🇧", label: "English"  },
-  { code: "fr", flag: "🇫🇷", label: "Français" },
+  { code: "en", flag: "us", label: "English"  },
+  { code: "fr", flag: "fr", label: "Français" },
 ];
 
 interface Props {
@@ -107,7 +107,7 @@ const InterviewLanguagesModal: React.FC<Props> = ({ open, onConfirm, onClose, in
                   <CheckOutlined sx={{ fontSize: 10, color: "#fff" }} />
                 </Box>
               )}
-              <Typography sx={{ fontSize: "1.4rem", lineHeight: 1 }}>{lang.flag}</Typography>
+              <img src={`https://flagcdn.com/w40/${lang.flag}.png`} srcSet={`https://flagcdn.com/w80/${lang.flag}.png 2x`} width={32} height={22} alt={lang.flag} style={{ borderRadius: 3, display: 'block' }} />
               <Typography
                 sx={{
                   fontSize: "11.5px", fontWeight: active ? 700 : 500,

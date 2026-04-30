@@ -12,6 +12,17 @@ const Post = require("../models/Post.model");
 require('dotenv').config();
 
 /**
+ * Returns a mandatory language directive for LLM prompts when the interview
+ * language is not English. Empty string for English (no-op).
+ */
+function buildLanguageDirective(language) {
+  if (!language || language === 'en') return '';
+  const names = { fr: 'French' };
+  const langName = names[language] || language;
+  return `\n\nLANGUAGE REQUIREMENT: You MUST conduct this entire interview in ${langName}. Every question, greeting, prompt, and response must be written exclusively in ${langName}. Do not use English at all.`;
+}
+
+/**
  * Shared AI utilities for JSON parsing and error handling
  */
 class AIUtils {
@@ -578,7 +589,7 @@ RESPONSE FORMAT (JSON only):
   "expectedOutcomes": ["what we learn"],
   "followUpStrategy": "approach",
   "questionStyle": "${questionStyle?.id || 'direct'}"
-}`;
+}${buildLanguageDirective(session.metadata?.systemInfo?.language)}`;
 
       const recentContext = session.conversation.slice(-6).map(entry =>
         `${entry.type}: ${entry.content}`
@@ -2946,7 +2957,7 @@ Example: "Take your time - there's no rush. Would you like me to rephrase the qu
         console.log(`🔇 [Silence] Attempt ${attempt}/${maxRetries} - Generating silence prompt...`);
 
         const response = await bedrock.callLLM({
-          systemPrompt: "You are a supportive interviewer. Your task is to generate ONLY the encouraging text - nothing else. Be empathetic and natural.",
+          systemPrompt: `You are a supportive interviewer. Your task is to generate ONLY the encouraging text - nothing else. Be empathetic and natural.${buildLanguageDirective(session.metadata?.systemInfo?.language)}`,
           messages: [{ role: "user", content: prompt }],
           temperature: 0.7,
           maxTokens: 300,
@@ -3086,7 +3097,7 @@ REQUIREMENTS:
 Examples:
 - "Take your time to think through this."
 - "No rush - I'm listening."
-- "Whenever you're ready."`;
+- "Whenever you're ready."${buildLanguageDirective(session.metadata?.systemInfo?.language)}`;
 
       const response = await bedrock.callLLM({
         systemPrompt,
@@ -3144,7 +3155,7 @@ REQUIREMENTS:
 Examples:
 - "Would it help if I rephrased the question?"
 - "Can I break this into smaller parts for you?"
-- "Would you like me to provide a specific example?"`;
+- "Would you like me to provide a specific example?"${buildLanguageDirective(session.metadata?.systemInfo?.language)}`;
 
       const response = await bedrock.callLLM({
         systemPrompt,
@@ -3210,7 +3221,7 @@ REQUIREMENTS:
 APPROACH OPTIONS:
 1. Simpler wording of same question
 2. Break into sequential sub-questions
-3. Add scaffolding example then ask`;
+3. Add scaffolding example then ask${buildLanguageDirective(session.metadata?.systemInfo?.language)}`;
 
       const userPrompt = `ORIGINAL QUESTION: "${currentQuestion}"
 
@@ -3380,7 +3391,7 @@ REQUIREMENTS:
 - DO NOT include explanations or meta-text
 - ONLY output the greeting text itself
 
-Example format for ${config.interviewType}: ${exampleGreeting}`;
+Example format for ${config.interviewType}: ${exampleGreeting}${buildLanguageDirective(config.sessionSettings?.language)}`;
   }
 
   /**

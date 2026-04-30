@@ -212,6 +212,8 @@ export const useInterviewConfig = ({
           passThreshold: currentStep.passThreshold
         });
 
+        const selectedLang = (router.query.lang as string) || post?.interviewLanguages?.[0] || 'en';
+
         const dynamicConfig = buildInterviewConfigFromURL({
           type: currentStep.stepType,
           ...currentStep.interviewParams,
@@ -221,6 +223,11 @@ export const useInterviewConfig = ({
           passThreshold: currentStep.interviewParams.passThreshold || currentStep.passThreshold,
           softSkills: currentStep.interviewParams.softSkills
         } as any);
+
+        dynamicConfig.sessionSettings = {
+          ...dynamicConfig.sessionSettings,
+          language: selectedLang,
+        };
 
         setInterviewConfig(dynamicConfig);
         setCandidateProgress(progressData.progress);
@@ -289,6 +296,12 @@ export const useInterviewConfig = ({
 
         const config = await response.json();
         console.log('✅ Fetched standard interview config');
+
+        const selectedLang = (router.query.lang as string) || post?.interviewLanguages?.[0] || 'en';
+        config.sessionSettings = {
+          ...(config.sessionSettings ?? {}),
+          language: selectedLang,
+        };
 
         setInterviewConfig(config);
 
