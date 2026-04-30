@@ -12,6 +12,7 @@ import enInterview  from '../../public/locales/en/interview.json';
 import enHome       from '../../public/locales/en/home.json';
 import enEmployees  from '../../public/locales/en/employees.json';
 import enDepartments from '../../public/locales/en/departments.json';
+import enSubscription from '../../public/locales/en/subscription.json';
 
 // ── FR ──────────────────────────────────────────────
 import frCommon     from '../../public/locales/fr/common.json';
@@ -23,6 +24,7 @@ import frInterview  from '../../public/locales/fr/interview.json';
 import frHome       from '../../public/locales/fr/home.json';
 import frEmployees  from '../../public/locales/fr/employees.json';
 import frDepartments from '../../public/locales/fr/departments.json';
+import frSubscription from '../../public/locales/fr/subscription.json';
 
 export const SUPPORTED_LANGUAGES = ['en', 'fr'] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
@@ -38,13 +40,14 @@ export const RTL_LANGUAGES: SupportedLanguage[] = [];
 /**
  * Per-locale JSON under `public/locales/{lng}/` merges into `dashboard.pages`.
  * e.g. `employees.json` → `pages.employees`, `departments.json` → `pages.departments`,
- * `campaign.json` → `pages.campaigns`.
+ * `campaign.json` → `pages.campaigns`, `subscription.json` → `pages.subscription`.
  */
 function mergeDashboardPageBundles<D extends { pages: Record<string, unknown> }>(
   dashboard: D,
   employees: Record<string, unknown>,
   departments: Record<string, unknown>,
   campaigns: Record<string, unknown>,
+  subscription: Record<string, unknown>,
 ): D {
   return {
     ...dashboard,
@@ -53,6 +56,7 @@ function mergeDashboardPageBundles<D extends { pages: Record<string, unknown> }>
       employees,
       departments,
       campaigns,
+      subscription,
     },
   };
 }
@@ -62,7 +66,7 @@ const options: InitOptions = {
     en: {
       common:    enCommon,
       auth:      enAuth,
-      dashboard: mergeDashboardPageBundles(enDashboard, enEmployees, enDepartments, enCampaign),
+      dashboard: mergeDashboardPageBundles(enDashboard, enEmployees, enDepartments, enCampaign, enSubscription),
       posts:     enPosts,
       interview: enInterview,
       home:      enHome,
@@ -70,7 +74,7 @@ const options: InitOptions = {
     fr: {
       common:    frCommon,
       auth:      frAuth,
-      dashboard: mergeDashboardPageBundles(frDashboard, frEmployees, frDepartments, frCampaign),
+      dashboard: mergeDashboardPageBundles(frDashboard, frEmployees, frDepartments, frCampaign, frSubscription),
       posts:     frPosts,
       interview: frInterview,
       home:      frHome,

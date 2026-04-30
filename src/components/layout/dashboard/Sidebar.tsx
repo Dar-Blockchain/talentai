@@ -50,11 +50,11 @@ const HOVER_TXT = "#E8F6F9"; // hover text — near white
 const LABEL_C = "#a3aed1"; // section label — visible
 
 const GROUPS = [
-  { label: "MAIN",         ids: ["dashboard"] },
-  { label: "JOBS",   ids: ["posts", "applications"] },
-  { label: "CAMPAIGNS",   ids: ["campaigns"] },
-  { label: "Team",     ids: ["employees", "departments"] },
-  { label: "Account",  ids: ["settings", "subscription"] },
+  { groupKey: "main", ids: ["dashboard"] },
+  { groupKey: "jobs", ids: ["posts", "applications"] },
+  { groupKey: "campaigns", ids: ["campaigns"] },
+  { groupKey: "team", ids: ["employees", "departments"] },
+  { groupKey: "account", ids: ["settings", "subscription"] },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -63,7 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   mobileOpen,
   onCloseMobile,
 }) => {
-  const { t } = useTranslation("dashboard");
+  const { t, i18n } = useTranslation("dashboard");
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const router = useRouter();
@@ -197,6 +197,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const content = (mobile = false) => {
     const isCollapsed = collapsed && !mobile;
+    const planTooltipDateLocale = i18n.language?.startsWith("fr") ? "fr-FR" : "en-US";
 
     return (
       <Box
@@ -299,14 +300,14 @@ const Sidebar: React.FC<SidebarProps> = ({
             if (items.length === 0) return null;
 
             return (
-              <Box key={group.label || gi} sx={{ mb: 1.5 }}>
-                {group.label && !isCollapsed && (
+              <Box key={group.groupKey || gi} sx={{ mb: 1.5 }}>
+                {!isCollapsed && (
                   <Typography sx={{
                     px: 1.25, pt: gi === 0 ? 0 : 0.5, pb: 0.5,
                     fontSize: "9px", fontWeight: 700, color: LABEL_C,
                     textTransform: "uppercase", letterSpacing: "0.14em",
                   }}>
-                    {t(`sidebar.groups.${group.label.toLowerCase()}`, { defaultValue: group.label })}
+                    {t(`sidebar.groups.${group.groupKey}`)}
                   </Typography>
                 )}
                 {gi > 0 && isCollapsed && (
@@ -424,7 +425,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                   .filter((s) => s.planName !== "Trial")
                                   .map((s) => {
                                     const col = ({ Standard: "#0D9488", Gold: "#7C3AED", Platinum: "#0891B2", Diamond: "#D97706" } as Record<string, string>)[s.planName] ?? TEAL;
-                                    const exp = new Date(s.endDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+                                    const exp = new Date(s.endDate).toLocaleDateString(planTooltipDateLocale, { month: "short", day: "numeric", year: "numeric" });
                                     return (
                                       <Box key={s.id} sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.75, py: 0.6 }}>
                                         <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: col, flexShrink: 0 }} />
