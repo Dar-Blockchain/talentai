@@ -9,6 +9,7 @@ import EmojiEventsOutlined           from "@mui/icons-material/EmojiEventsOutlin
 import InfoOutlined                  from "@mui/icons-material/InfoOutlined";
 import { Campaign, CampaignModule, ModuleType } from "@/types/campaign";
 import { MODULE_CONFIG } from "@/constants/campaign";
+import { useTranslation, Trans } from "react-i18next";
 
 const CARD = {
   bgcolor: "#fff",
@@ -27,19 +28,23 @@ interface Props {
 const CampaignModuleCard: React.FC<Props> = ({
   module: mod, onConfigureModule, showConfigure = true, isEmployee = false,
 }) => {
+  const { t } = useTranslation("dashboard");
+  const d = "pages.campaigns.detail";
   if (!mod) return null;
 
   const cfg      = MODULE_CONFIG[mod.type];
   const Icon     = cfg.icon;
   const color    = cfg.color;
   const hasConfig = !!mod.config;
+  const moduleTitle = t(`pages.campaigns.module.${mod.type}`);
+  const moduleDesc  = t(`pages.campaigns.module_description.${mod.type}`);
 
   return (
     <Box sx={{ ...CARD, p: 0, overflow: "hidden" }}>
       {/* Header */}
       <Box sx={{ px: 2.5, pt: 2.25, pb: 1.75, borderBottom: "1px solid #F3F4F6", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <Typography sx={{ fontWeight: 700, fontSize: "0.875rem", color: "#0F172A" }}>
-          Assessment Module
+          {t(`${d}.module_card_title`)}
         </Typography>
       </Box>
 
@@ -63,7 +68,7 @@ const CampaignModuleCard: React.FC<Props> = ({
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, mb: 0.4 }}>
               <Typography sx={{ fontWeight: 700, fontSize: "0.9375rem", color: "#0F172A" }}>
-                {cfg.label}
+                {moduleTitle}
               </Typography>
               {showConfigure && !isEmployee && (
                 <Box
@@ -79,13 +84,13 @@ const CampaignModuleCard: React.FC<Props> = ({
                 >
                   <SettingsOutlined sx={{ fontSize: 12, color: hasConfig ? color : "#fff" }} />
                   <Typography sx={{ fontSize: "11px", fontWeight: 700, color: hasConfig ? color : "#fff" }}>
-                    {hasConfig ? "Edit" : "Configure"}
+                    {hasConfig ? t(`${d}.configure_edit`) : t(`${d}.configure`)}
                   </Typography>
                 </Box>
               )}
             </Box>
             <Typography sx={{ fontSize: "0.8rem", color: "#64748B", lineHeight: 1.4 }}>
-              {cfg.description}
+              {moduleDesc}
             </Typography>
           </Box>
         </Box>
@@ -101,7 +106,7 @@ const CampaignModuleCard: React.FC<Props> = ({
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.5, py: 1.25, borderRadius: "10px", bgcolor: "#FFFBEB", border: "1px solid #FDE68A" }}>
             <RadioButtonUncheckedOutlined sx={{ fontSize: 15, color: "#D97706", flexShrink: 0 }} />
             <Typography sx={{ fontSize: "12px", color: "#92400E" }}>
-              Module not configured yet. Click <strong>Configure</strong> to set it up.
+              <Trans i18nKey="pages.campaigns.detail.module_not_configured_notice" components={{ strong: <strong /> }} />
             </Typography>
           </Box>
         )}
@@ -138,24 +143,62 @@ const InfoPill: React.FC<{ icon: React.ElementType; label: string; value: string
 );
 
 const EmployeeModuleDetails: React.FC<{ mod: CampaignModule; color: string }> = ({ mod, color }) => {
+  const { t } = useTranslation("dashboard");
+  const d = "pages.campaigns.detail";
   if (!mod.config) return null;
 
-  const pills: { icon: React.ElementType; label: string; value: string }[] = [];
+  const pills: { icon: React.ElementType; label: string; value: string; key: string }[] = [];
 
   if (mod.type === "QUESTIONNAIRE") {
     const count = mod.config.questions?.length ?? 0;
-    pills.push({ icon: QuizOutlined, label: "Questions", value: `${count} question${count !== 1 ? "s" : ""}` });
+    pills.push({
+      icon: QuizOutlined,
+      key: "q",
+      label: t(`${d}.pill_questions`),
+      value: t(`${d}.pill_question_count`, { count }),
+    });
   }
 
   if (mod.type === "AI_INTERVIEW") {
-    if (mod.config.durationMinutes) pills.push({ icon: AccessTimeOutlined, label: "Duration", value: `${mod.config.durationMinutes} min` });
-    if (mod.config.scoringCriteria?.length) pills.push({ icon: EmojiEventsOutlined, label: "Scoring", value: `${mod.config.scoringCriteria.length} criteria` });
+    if (mod.config.durationMinutes) {
+      pills.push({
+        icon: AccessTimeOutlined,
+        key: "dur",
+        label: t(`${d}.pill_duration`),
+        value: t(`${d}.pill_duration_min`, { count: mod.config.durationMinutes }),
+      });
+    }
+    const critLen = mod.config.scoringCriteria?.length ?? 0;
+    if (critLen) {
+      pills.push({
+        icon: EmojiEventsOutlined,
+        key: "score",
+        label: t(`${d}.pill_scoring`),
+        value: t(`${d}.pill_criteria_count`, { count: critLen }),
+      });
+    }
   }
 
   if (mod.type === "SKILL_TEST") {
-    if (mod.config.skill) pills.push({ icon: InfoOutlined, label: "Skill", value: mod.config.skill });
-    if (mod.config.passingScore !== undefined) pills.push({ icon: EmojiEventsOutlined, label: "Pass Mark", value: `${mod.config.passingScore}%` });
-    if (mod.config.durationMinutes) pills.push({ icon: AccessTimeOutlined, label: "Duration", value: `${mod.config.durationMinutes} min` });
+    if (mod.config.skill) {
+      pills.push({ icon: InfoOutlined, key: "skill", label: t(`${d}.pill_skill`), value: mod.config.skill });
+    }
+    if (mod.config.passingScore !== undefined) {
+      pills.push({
+        icon: EmojiEventsOutlined,
+        key: "pass",
+        label: t(`${d}.pill_pass_mark`),
+        value: t(`${d}.pill_pass_pct`, { count: mod.config.passingScore }),
+      });
+    }
+    if (mod.config.durationMinutes) {
+      pills.push({
+        icon: AccessTimeOutlined,
+        key: "dur2",
+        label: t(`${d}.pill_duration`),
+        value: t(`${d}.pill_duration_min`, { count: mod.config.durationMinutes }),
+      });
+    }
   }
 
   if (pills.length === 0) return null;
@@ -163,11 +206,11 @@ const EmployeeModuleDetails: React.FC<{ mod: CampaignModule; color: string }> = 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
       <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-        What to expect
+        {t(`${d}.employee_what_to_expect`)}
       </Typography>
       <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
         {pills.map((p) => (
-          <InfoPill key={p.label} icon={p.icon} label={p.label} value={p.value} color={color} />
+          <InfoPill key={p.key} icon={p.icon} label={p.label} value={p.value} color={color} />
         ))}
       </Box>
     </Box>
@@ -184,13 +227,15 @@ const ConfigRow: React.FC<{ label: string; value: React.ReactNode }> = ({ label,
 );
 
 const ConfigDetails: React.FC<{ mod: CampaignModule; color: string }> = ({ mod, color }) => {
+  const { t } = useTranslation("dashboard");
+  const d = "pages.campaigns.detail";
   if (!mod.config) return null;
 
   return (
     <Box sx={{ borderRadius: "12px", border: "1px solid #F1F5F9", bgcolor: "#FAFBFC", overflow: "hidden" }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, px: 1.75, py: 1, borderBottom: "1px solid #F1F5F9", bgcolor: "#F0FDF4" }}>
         <CheckCircleOutlined sx={{ fontSize: 13, color: "#16A34A" }} />
-        <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#16A34A" }}>Configured</Typography>
+        <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#16A34A" }}>{t(`${d}.configured_banner`)}</Typography>
       </Box>
 
       <Box sx={{ px: 1.75, "&>:last-child": { borderBottom: "none" } }}>
@@ -198,10 +243,12 @@ const ConfigDetails: React.FC<{ mod: CampaignModule; color: string }> = ({ mod, 
           const count = mod.config!.questions?.length ?? 0;
           return (
             <ConfigRow
-              label="Questions"
+              label={t(`${d}.config_questions`)}
               value={
                 <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, px: 1, py: 0.25, borderRadius: "999px", bgcolor: `${color}10` }}>
-                  <Typography sx={{ fontSize: "12px", fontWeight: 700, color }}>{count} question{count !== 1 ? "s" : ""}</Typography>
+                  <Typography sx={{ fontSize: "12px", fontWeight: 700, color }}>
+                    {t(`${d}.pill_question_count`, { count })}
+                  </Typography>
                 </Box>
               }
             />
@@ -211,18 +258,25 @@ const ConfigDetails: React.FC<{ mod: CampaignModule; color: string }> = ({ mod, 
         {mod.type === "AI_INTERVIEW" && (() => {
           const { durationMinutes, scoringCriteria } = mod.config!;
           return (<>
-            {durationMinutes && <ConfigRow label="Duration" value={`${durationMinutes} minutes`} />}
-            {scoringCriteria && scoringCriteria.length > 0 && <ConfigRow label="Scoring Criteria" value={`${scoringCriteria.length} criteria`} />}
-            {mod.config!.agentPrompt && <ConfigRow label="Agent Prompt" value={<Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#0F172A", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{mod.config!.agentPrompt}</Typography>} />}
+            {durationMinutes && <ConfigRow label={t(`${d}.config_duration`)} value={t(`${d}.config_duration_minutes`, { count: durationMinutes })} />}
+            {scoringCriteria && scoringCriteria.length > 0 && (
+              <ConfigRow label={t(`${d}.config_scoring_criteria`)} value={t(`${d}.pill_criteria_count`, { count: scoringCriteria.length })} />
+            )}
+            {mod.config!.agentPrompt && (
+              <ConfigRow
+                label={t(`${d}.config_agent_prompt`)}
+                value={<Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#0F172A", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{mod.config!.agentPrompt}</Typography>}
+              />
+            )}
           </>);
         })()}
 
         {mod.type === "SKILL_TEST" && (() => {
           const { skill, passingScore, maxAttempts } = mod.config!;
           return (<>
-            {skill && <ConfigRow label="Skill" value={skill} />}
-            {passingScore !== undefined && <ConfigRow label="Passing Score" value={`${passingScore}%`} />}
-            {maxAttempts  !== undefined && <ConfigRow label="Max Attempts"  value={String(maxAttempts)} />}
+            {skill && <ConfigRow label={t(`${d}.config_skill`)} value={skill} />}
+            {passingScore !== undefined && <ConfigRow label={t(`${d}.config_passing_score`)} value={`${passingScore}%`} />}
+            {maxAttempts  !== undefined && <ConfigRow label={t(`${d}.config_max_attempts`)}  value={String(maxAttempts)} />}
           </>);
         })()}
 
@@ -230,10 +284,10 @@ const ConfigDetails: React.FC<{ mod: CampaignModule; color: string }> = ({ mod, 
           const count = mod.config!.resources?.length ?? 0;
           return (
             <ConfigRow
-              label="Resources"
+              label={t(`${d}.config_resources`)}
               value={
                 <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, px: 1, py: 0.25, borderRadius: "999px", bgcolor: `${color}10` }}>
-                  <Typography sx={{ fontSize: "12px", fontWeight: 700, color }}>{count} resource{count !== 1 ? "s" : ""}</Typography>
+                  <Typography sx={{ fontSize: "12px", fontWeight: 700, color }}>{t(`${d}.resource_count`, { count })}</Typography>
                 </Box>
               }
             />

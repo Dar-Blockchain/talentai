@@ -1,33 +1,52 @@
 {
   "title": "Campaigns",
-  "new": "New Campaign",
-  "list": {
-    "empty": "No campaigns yet",
-    "empty_description": "Create your first assessment campaign to start measuring your team's skills.",
-    "no_results": "No campaigns match your filters",
-    "no_results_description": "Try adjusting your search or filters."
+  "subtitle": "Manage and monitor all company campaigns.",
+  "new_campaign": "New Campaign",
+
+  "wizard_new": {
+    "title": "Create New Campaign",
+    "subtitle": "Design your assessment campaign",
+    "breadcrumb_create": "Create"
   },
-  "card": {
-    "participants_one": "{{count}} participant",
-    "participants_other": "{{count}} participants",
-    "deadline": "Deadline",
-    "no_deadline": "No deadline",
-    "module": "Module",
-    "view_details": "View Details",
-    "days_left": "{{count}} day left",
-    "days_left_other": "{{count}} days left"
-  },
-  "filters": {
+
+  "toolbar": {
     "search_placeholder": "Search campaigns…",
-    "status_label": "All statuses",
-    "period_label": "All time",
-    "last_7_days": "Last 7 days",
-    "last_30_days": "Last 30 days",
-    "last_3_months": "Last 3 months",
-    "last_6_months": "Last 6 months",
-    "last_year": "Last year",
-    "clear": "Clear"
+    "status_placeholder": "Status",
+    "period_placeholder": "Period",
+    "clear_filters": "Clear",
+    "status": {
+      "all": "All statuses",
+      "DRAFT": "Draft",
+      "ACTIVE": "Active",
+      "PAUSED": "Paused",
+      "CLOSED": "Closed",
+      "EXPIRED": "Expired"
+    },
+    "period": {
+      "all": "All time",
+      "7d": "Last 7 days",
+      "30d": "Last 30 days",
+      "3m": "Last 3 months",
+      "6m": "Last 6 months",
+      "1y": "Last year"
+    }
   },
+
+  "stats": {
+    "total": "Total",
+    "active": "Active",
+    "drafts": "Drafts",
+    "closed_expired": "Closed/Expired",
+    "completed_participants": "Completed Participants"
+  },
+
+  "empty": {
+    "filtered_title": "No campaigns match your filters",
+    "filtered_hint": "Try adjusting your search or filters.",
+    "none_title": "No campaigns yet",
+    "none_hint": "Create your first assessment campaign to start measuring your team's skills."
+  },
+
   "status": {
     "DRAFT": "Draft",
     "ACTIVE": "Active",
@@ -35,35 +54,440 @@
     "CLOSED": "Closed",
     "EXPIRED": "Expired"
   },
-  "module_type": {
+
+  "module": {
     "QUESTIONNAIRE": "Questionnaire",
     "AI_INTERVIEW": "AI Interview",
-    "SKILL_TEST": "Skill Test"
+    "SKILL_TEST": "Skill Test",
+    "TRAINING_PATH": "Training Path"
   },
-  "actions": {
-    "create": "Create Campaign",
+
+  "module_description": {
+    "QUESTIONNAIRE": "Structured questionnaire with custom questions",
+    "AI_INTERVIEW": "Conversational AI-powered interview session",
+    "SKILL_TEST": "Technical skill assessment with scoring",
+    "TRAINING_PATH": "Guided learning & development path"
+  },
+
+  "campaign_type": {
+    "PRODUCTIVITY_DIAGNOSTIC": "Productivity Diagnostic",
+    "SKILLS_MAPPING": "Skills Mapping",
+    "ENABLEMENT": "Enablement",
+    "CUSTOM": "Custom"
+  },
+
+  "card": {
+    "view": "View",
+    "no_deadline": "No deadline",
+    "deadline_expired": "Expired",
+    "expires_today": "Expires today",
+    "tomorrow_prefix": "Tomorrow",
+    "days_left_one": "{{count}} day left",
+    "days_left_other": "{{count}} days left",
+    "due_prefix": "Due:",
+    "target_participants_one": "Target participants: <strong>{{count}}</strong> participant",
+    "target_participants_other": "Target participants: <strong>{{count}}</strong> participants",
+    "access_public_link": "Public link",
+    "access_accounts_only": "Accounts only",
+    "privacy_anonymous": "Anonymous",
+    "privacy_nominative": "Nominative",
+    "menu_section_change_status": "Change Status",
+    "menu_transition": {
+      "ACTIVE": "Activate",
+      "PAUSED": "Pause",
+      "CLOSED": "Close"
+    },
+    "menu_delete": "Delete Campaign"
+  },
+
+  "modals": {
+    "delete": {
+      "title": "Delete Campaign",
+      "subtitle": "This action cannot be undone.",
+      "body_lead": "You are about to permanently delete",
+      "body_trail": ".",
+      "impact_title": "What will be deleted",
+      "impact_participants_one": "<strong>{{count}}</strong> participant and all their session data will be permanently removed.",
+      "impact_participants_other": "<strong>{{count}}</strong> participants and all their session data will be permanently removed.",
+      "impact_generic": "All participant records and session data will be permanently removed.",
+      "impact_config": "The campaign configuration, module settings, and all responses will be lost.",
+      "cancel": "Cancel",
+      "confirm": "Delete Campaign"
+    },
+    "status": {
+      "title_activate": "Activate campaign",
+      "title_pause": "Pause campaign",
+      "title_close": "Close campaign",
+      "desc_active": "Participants will be able to access and start the assessment.",
+      "desc_paused": "Participants will no longer be able to start new sessions until the campaign is resumed.",
+      "desc_closed": "The campaign will be permanently closed. Participants will lose access.",
+      "active_warning": "Once activated, the campaign <strong>can no longer be edited</strong>.",
+      "cancel": "Cancel",
+      "confirm": "Confirm"
+    }
+  },
+
+  "detail": {
+    "not_found_title": "Campaign not found",
+    "back_company": "Campaigns",
+    "back_employee": "My Campaigns",
     "edit": "Edit",
     "delete": "Delete",
-    "publish": "Publish",
-    "pause": "Pause",
-    "reactivate": "Reactivate",
-    "close": "Close",
-    "duplicate": "Duplicate",
-    "view_results": "View Results"
+    "edit_draft_only_tooltip": "Editing is only available while the campaign is in Draft.",
+    "activate_blocked_tooltip": "Configure the module before activating this campaign.",
+    "module_not_configured_badge": "Not configured",
+    "module_not_configured_tooltip": "Module not configured — required before activating.",
+    "deadline_passed": "Deadline passed",
+    "days_left_short": "{{count}}d left",
+    "employee_deadline_passed": "Deadline passed",
+    "employee_campaign_paused": "Campaign paused",
+    "employee_campaign_closed": "Campaign closed",
+    "continue": "Continue",
+    "start_questionnaire": "Start Questionnaire",
+    "start_assessment": "Start Assessment",
+    "view_results": "View Results",
+    "stats_participants": "Participants",
+    "stats_module": "Module",
+    "stats_sessions": "Sessions",
+    "stats_deadline": "Deadline",
+    "stats_my_score": "My Score",
+    "stats_my_status": "My Status",
+    "stats_no_deadline": "No deadline",
+    "stats_expired": "Expired",
+    "tab_overview": "Overview",
+    "tab_participants": "Participants",
+    "tab_sessions": "Sessions",
+    "breadcrumb_results": "Results",
+    "setup_banner": {
+      "title": "This campaign is not visible to participants yet",
+      "subtitle": "Complete the steps below to launch it."
+    },
+    "setup_step1_title": "Step 1 — Configure Module",
+    "setup_step_done": "Done",
+    "setup_step_pending": "Pending",
+    "setup_step1_desc_done": "Module is configured and ready.",
+    "setup_step1_desc_pending": "Set up the assessment module so participants know what to expect.",
+    "setup_configure_now": "Configure now",
+    "setup_step2_title": "Step 2 — Activate Campaign",
+    "setup_step2_desc_ready": "Ready to go! Activate the campaign to make it visible to participants.",
+    "setup_step2_desc_wait": "Complete step 1 first, then activate the campaign.",
+    "setup_activate_now": "Activate now",
+    "transition": {
+      "ACTIVE": "Activate",
+      "PAUSED": "Pause",
+      "CLOSED": "Close"
+    },
+    "settings_card_title": "Campaign Settings",
+    "anonymity_label": "Anonymity",
+    "anonymous": "Anonymous",
+    "nominative": "Nominative",
+    "responses_hidden": "Responses are hidden",
+    "responses_identified": "Responses are identified",
+    "access_method_label": "Access Method",
+    "access_public_link": "Public Link",
+    "access_accounts_only": "Accounts Only",
+    "access_link_and_accounts": "Link & Accounts",
+    "access_sub_link": "Anyone with the link",
+    "access_sub_accounts": "Registered users only",
+    "access_sub_both": "Both methods enabled",
+    "target_department": "Target Department",
+    "created": "Created",
+    "deadline": "Deadline",
+    "last_updated": "Last Updated",
+    "module_card_title": "Assessment Module",
+    "configure": "Configure",
+    "configure_edit": "Edit",
+    "module_not_configured_notice": "Module not configured yet. Click <strong>Configure</strong> to set it up.",
+    "employee_what_to_expect": "What to expect",
+    "pill_questions": "Questions",
+    "pill_question_count_one": "{{count}} question",
+    "pill_question_count_other": "{{count}} questions",
+    "pill_duration": "Duration",
+    "pill_duration_min": "{{count}} min",
+    "pill_scoring": "Scoring",
+    "pill_criteria_count_one": "{{count}} criterion",
+    "pill_criteria_count_other": "{{count}} criteria",
+    "pill_skill": "Skill",
+    "pill_pass_mark": "Pass Mark",
+    "pill_pass_pct": "{{count}}%",
+    "configured_banner": "Configured",
+    "config_questions": "Questions",
+    "config_duration": "Duration",
+    "config_duration_minutes": "{{count}} minutes",
+    "config_scoring_criteria": "Scoring Criteria",
+    "config_agent_prompt": "Agent Prompt",
+    "config_skill": "Skill",
+    "config_passing_score": "Passing Score",
+    "config_max_attempts": "Max Attempts",
+    "config_resources": "Resources",
+    "resource_count_one": "{{count}} resource",
+    "resource_count_other": "{{count}} resources",
+    "sidebar_link_title": "Campaign Link",
+    "sidebar_quick_info": "Quick Info",
+    "sidebar_status": "Status",
+    "sidebar_module": "Module",
+    "sidebar_department": "Department",
+    "sidebar_created": "Created",
+    "sidebar_updated": "Updated",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "open": "Open",
+    "unknown_user": "Unknown",
+    "configure_form": {
+      "questionnaire": {
+        "empty": "No questions yet. Add your first question.",
+        "question_heading": "Question {{n}}",
+        "placeholder_question": "Enter your question…",
+        "type_label": "Type",
+        "option_placeholder": "Option {{n}}",
+        "add_option": "Add Option",
+        "add_question": "Add Question",
+        "qtype_TEXT": "Text",
+        "qtype_SINGLE_CHOICE": "Single Choice",
+        "qtype_MULTIPLE_CHOICE": "Multiple Choice",
+        "qtype_RATING": "Rating"
+      },
+      "skill_test": {
+        "skill_to_assess": "Skill to assess",
+        "choose_skill": "Choose a skill to test…",
+        "search_skills": "Search skills…",
+        "no_match": "No skills match «{{query}}»",
+        "passing_score": "Passing score",
+        "passing_hint": "Minimum % to pass",
+        "max_attempts": "Max attempts",
+        "unlimited_hint": "Leave empty for unlimited",
+        "ph_score": "e.g. 70",
+        "ph_attempts": "e.g. 3",
+        "category_development": "Development",
+        "category_web3": "Web3",
+        "category_ai": "AI",
+        "category_marketing": "Marketing",
+        "category_qa": "QA",
+        "category_business": "Business"
+      },
+      "ai_interview": {
+        "agent_prompt": "Agent prompt",
+        "agent_placeholder": "Describe the AI interviewer's role, tone, and focus areas…",
+        "duration_min": "Duration (minutes)",
+        "duration_placeholder": "e.g. 30",
+        "scoring_criteria": "Scoring criteria",
+        "criterion_placeholder": "Criterion {{n}}",
+        "add_criterion": "Add criterion"
+      },
+      "training_path": {
+        "empty": "No resources yet. Add your first resource.",
+        "resource_heading": "Resource {{n}}",
+        "type_label": "Type",
+        "title_label": "Title",
+        "title_placeholder": "Resource title",
+        "url_label": "URL",
+        "url_placeholder": "https://…",
+        "time_label": "Estimated time (min)",
+        "time_placeholder": "e.g. 30",
+        "add_resource": "Add resource",
+        "rtype_LINK": "Link",
+        "rtype_DOCUMENT": "Document",
+        "rtype_COURSE": "Course",
+        "rtype_VIDEO": "Video"
+      }
+    },
+    "results_view": {
+      "completed_badge": "Completed",
+      "back_to_campaign": "Back to campaign",
+      "questionnaire": {
+        "empty": "No questions found for this questionnaire.",
+        "ai_short": "AI scoring in progress — your score will appear shortly.",
+        "overall_score": "Overall score",
+        "ai_progress_title": "AI scoring in progress…",
+        "ai_progress_sub": "This page refreshes automatically — scores will appear in a few seconds.",
+        "no_answer": "No answer provided",
+        "rating_of": "{{n}} / 5",
+        "qtype_TEXT": "Open answer",
+        "qtype_SINGLE_CHOICE": "Single choice",
+        "qtype_MULTIPLE_CHOICE": "Multiple choice",
+        "qtype_RATING": "Rating"
+      },
+      "interview": {
+        "empty": "No detailed results available yet.",
+        "overall_score": "Overall score",
+        "detailed_scores": "Detailed scores",
+        "assessment_summary": "Assessment summary",
+        "transcript": "Transcript",
+        "role_agent": "AI",
+        "role_user": "You"
+      }
+    },
+    "configure_modal_title": "Configure {{module}}",
+    "save_configuration": "Save Configuration",
+    "edit_modal": {
+      "title": "Edit Campaign",
+      "subtitle": "Only available while the campaign is in Draft",
+      "title_label": "Title",
+      "title_placeholder": "Campaign title",
+      "description_label": "Description",
+      "description_placeholder": "Optional description…",
+      "deadline_label": "Deadline",
+      "module_type_label": "Module Type",
+      "coming_soon": "Coming Soon",
+      "module_change_warning": "Changing the module type will <strong>reset the current configuration</strong>. You'll need to reconfigure it after saving.",
+      "anonymity_label": "Anonymity",
+      "access_method_label": "Access Method",
+      "accounts_only": "Accounts Only",
+      "public_link": "Public Link",
+      "cancel": "Cancel",
+      "save": "Save Changes",
+      "saving": "Saving…",
+      "error_title_required": "Title is required.",
+      "error_save_failed": "Failed to save changes."
+    },
+    "participants": {
+      "participant_status": {
+        "INVITED": "Invited",
+        "IN_PROGRESS": "In Progress",
+        "COMPLETED": "Completed",
+        "DROPPED": "Dropped"
+      },
+      "add_dialog_title": "Add Participants",
+      "add_loading_hint": "Loading available employees…",
+      "add_none_available": "No employees available to add",
+      "add_available_one": "{{count}} employee available to invite",
+      "add_available_other": "{{count}} employees available to invite",
+      "search_placeholder": "Search by name or email…",
+      "department_filter": "Department",
+      "role_filter": "Role",
+      "all_departments": "All departments",
+      "all_roles": "All roles",
+      "filters_label": "Filters:",
+      "empty_filtered_title": "No employees match your filters",
+      "empty_all_added_title": "All employees are already in this campaign",
+      "empty_filtered_hint": "Try clearing one or more filters to see more results.",
+      "empty_all_added_hint": "Every member of your company has already been added.",
+      "clear_all_filters": "Clear all filters",
+      "pagination_showing": "Showing {{from}}–{{to}} of {{total}}",
+      "done": "Done",
+      "add_button": "Add",
+      "adding": "Adding…",
+      "toolbar_total": "total",
+      "search_participants_placeholder": "Search participants…",
+      "add_participant_tooltip": "Add",
+      "col_hash": "#",
+      "col_participant": "Participant",
+      "col_status": "Status",
+      "col_role": "Role",
+      "col_actions": "Actions",
+      "empty_search_title": "No participants match your search",
+      "empty_title": "No participants yet",
+      "empty_search_hint": "Try a different name or email.",
+      "empty_hint": "Participants will appear here once they join.",
+      "tooltip_view_results": "View Results",
+      "tooltip_remove": "Remove participant"
+    },
+    "sessions": {
+      "session_status": {
+        "PENDING": "Pending",
+        "IN_PROGRESS": "In Progress",
+        "COMPLETED": "Completed",
+        "EXPIRED": "Expired"
+      },
+      "matches_search_one": "{{count}} session matches your search",
+      "matches_search_other": "{{count}} sessions match your search",
+      "total_sessions_one": "{{count}} session total",
+      "total_sessions_other": "{{count}} sessions total",
+      "search_placeholder": "Search by participant…",
+      "col_participant": "Participant",
+      "col_status": "Status",
+      "col_score": "Score",
+      "col_duration": "Duration",
+      "col_completed": "Completed",
+      "col_actions": "Actions",
+      "duration_minutes": "{{n}} min",
+      "empty_search_title": "No sessions match your search",
+      "empty_title": "No sessions yet",
+      "empty_search_hint": "Try a different name.",
+      "empty_hint": "Sessions will appear here once participants start.",
+      "anonymous": "Anonymous",
+      "identity_hidden": "Identity hidden",
+      "results": "Results",
+      "dialog_title": "Results — {{name}}",
+      "load_failed": "Failed to load results"
+    }
   },
-  "dialogs": {
-    "delete_title": "Delete Campaign",
-    "delete_message": "Are you sure you want to delete \"{{title}}\"? This action cannot be undone.",
-    "delete_confirm": "Delete",
-    "status_change_title": "Change Status",
-    "status_change_message": "Change \"{{title}}\" from {{from}} to {{to}}?"
+
+  "toast": {
+    "deleted_success": "Campaign deleted successfully!",
+    "delete_failed": "Failed to delete campaign",
+    "status_updated": "Campaign status updated to {{status}}",
+    "status_failed": "Failed to update status",
+    "module_saved": "Module configuration saved!",
+    "module_save_failed": "Failed to save module configuration"
   },
-  "stats": {
-    "total": "Total",
-    "active": "Active",
-    "closed_expired": "Closed / Expired",
-    "completed_participants": "Completed Participants"
+
+  "legacy": {
+    "new_alt": "New Campaign",
+    "list": {
+      "empty": "No campaigns yet",
+      "empty_description": "Create your first assessment campaign to start measuring your team's skills.",
+      "no_results": "No campaigns match your filters",
+      "no_results_description": "Try adjusting your search or filters."
+    },
+    "card": {
+      "participants_one": "{{count}} participant",
+      "participants_other": "{{count}} participants",
+      "deadline": "Deadline",
+      "no_deadline": "No deadline",
+      "module": "Module",
+      "view_details": "View Details",
+      "days_left": "{{count}} day left",
+      "days_left_other": "{{count}} days left"
+    },
+    "filters": {
+      "search_placeholder": "Search campaigns…",
+      "status_label": "All statuses",
+      "period_label": "All time",
+      "last_7_days": "Last 7 days",
+      "last_30_days": "Last 30 days",
+      "last_3_months": "Last 3 months",
+      "last_6_months": "Last 6 months",
+      "last_year": "Last year",
+      "clear": "Clear"
+    },
+    "module_type": {
+      "QUESTIONNAIRE": "Questionnaire",
+      "AI_INTERVIEW": "AI Interview",
+      "SKILL_TEST": "Skill Test"
+    },
+    "actions": {
+      "create": "Create Campaign",
+      "edit": "Edit",
+      "delete": "Delete",
+      "publish": "Publish",
+      "pause": "Pause",
+      "reactivate": "Reactivate",
+      "close": "Close",
+      "duplicate": "Duplicate",
+      "view_results": "View Results"
+    },
+    "dialogs": {
+      "delete_title": "Delete Campaign",
+      "delete_message": "Are you sure you want to delete \"{{title}}\"? This action cannot be undone.",
+      "delete_confirm": "Delete",
+      "status_change_title": "Change Status",
+      "status_change_message": "Change \"{{title}}\" from {{from}} to {{to}}?"
+    },
+    "participants": {
+      "title": "Participants",
+      "invite": "Invite Participants",
+      "remove": "Remove",
+      "status": {
+        "NOT_STARTED": "Not Started",
+        "INVITED": "Invited",
+        "IN_PROGRESS": "In Progress",
+        "COMPLETED": "Completed",
+        "DROPPED": "Dropped"
+      }
+    }
   },
+
   "assessment": {
     "expired_title": "Assessment Closed",
     "expired_message": "The deadline for this assessment has passed.",
@@ -89,18 +513,6 @@
       "hire": "Hire",
       "consider": "Consider",
       "reject": "Reject"
-    }
-  },
-  "participants": {
-    "title": "Participants",
-    "invite": "Invite Participants",
-    "remove": "Remove",
-    "status": {
-      "NOT_STARTED": "Not Started",
-      "INVITED": "Invited",
-      "IN_PROGRESS": "In Progress",
-      "COMPLETED": "Completed",
-      "DROPPED": "Dropped"
     }
   }
 }

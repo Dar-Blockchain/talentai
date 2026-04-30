@@ -1,13 +1,15 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Box, IconButton, Typography } from "@mui/material";
 import { DeleteOutlined } from "@mui/icons-material";
 import AppInput from "@/components/ui/AppInput";
 import AppSelect from "@/components/ui/AppSelect";
 import { EmptyState, AddRowButton } from "./QuestionnaireForm";
-
+import { useTranslation } from "react-i18next";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type ResourceType = "LINK" | "DOCUMENT" | "COURSE" | "VIDEO";
+const RESOURCE_TYPE_KEYS = ["LINK", "DOCUMENT", "COURSE", "VIDEO"] as const;
+
+type ResourceType = (typeof RESOURCE_TYPE_KEYS)[number];
 
 interface Resource {
   type: ResourceType;
@@ -27,16 +29,20 @@ interface Props {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const RESOURCE_OPTIONS = [
-  { label: "Link", value: "LINK" },
-  { label: "Document", value: "DOCUMENT" },
-  { label: "Course", value: "COURSE" },
-  { label: "Video", value: "VIDEO" },
-];
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const TrainingPathForm: React.FC<Props> = ({ config, onChange }) => {
+  const { t } = useTranslation("dashboard");
+  const cf = "pages.campaigns.detail.configure_form.training_path";
+
+  const resourceOptions = useMemo(
+    () =>
+      RESOURCE_TYPE_KEYS.map((rt) => ({
+        label: t(`${cf}.rtype_${rt}`),
+        value: rt,
+      })),
+    [t, cf],
+  );
   const addResource = () =>
     onChange({ resources: [...config.resources, { type: "LINK", title: "", url: "" }] });
 
@@ -51,7 +57,7 @@ const TrainingPathForm: React.FC<Props> = ({ config, onChange }) => {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       {config.resources.length === 0 ? (
-        <EmptyState label="No resources yet. Add your first resource." />
+        <EmptyState label={t(`${cf}.empty`)} />
       ) : (
         config.resources.map((r, i) => (
           <Box
@@ -68,7 +74,7 @@ const TrainingPathForm: React.FC<Props> = ({ config, onChange }) => {
               }}
             >
               <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#374151" }}>
-                Resource {i + 1}
+                {t(`${cf}.resource_heading`, { n: i + 1 })}
               </Typography>
               <IconButton
                 size="small"
@@ -82,33 +88,33 @@ const TrainingPathForm: React.FC<Props> = ({ config, onChange }) => {
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
               {/* Type */}
               <AppSelect
-                label="Type"
+                label={t(`${cf}.type_label`)}
                 value={r.type}
-                options={RESOURCE_OPTIONS}
+                options={resourceOptions}
                 onChange={(val) => updateResource(i, { type: val as ResourceType })}
               />
 
               {/* Title */}
               <AppInput
-                label="Title"
-                placeholder="Resource title"
+                label={t(`${cf}.title_label`)}
+                placeholder={t(`${cf}.title_placeholder`)}
                 value={r.title}
                 onChange={(e) => updateResource(i, { title: e.target.value })}
               />
 
               {/* URL */}
               <AppInput
-                label="URL"
-                placeholder="https://..."
+                label={t(`${cf}.url_label`)}
+                placeholder={t(`${cf}.url_placeholder`)}
                 value={r.url}
                 onChange={(e) => updateResource(i, { url: e.target.value })}
               />
 
               {/* Estimated time */}
               <AppInput
-                label="Estimated Time (min)"
+                label={t(`${cf}.time_label`)}
                 type="number"
-                placeholder="e.g. 30"
+                placeholder={t(`${cf}.time_placeholder`)}
                 value={String(r.estimatedTime ?? "")}
                 onChange={(e) =>
                   updateResource(i, {
@@ -123,7 +129,7 @@ const TrainingPathForm: React.FC<Props> = ({ config, onChange }) => {
         ))
       )}
 
-      <AddRowButton label="Add Resource" onClick={addResource} />
+      <AddRowButton label={t(`${cf}.add_resource`)} onClick={addResource} />
     </Box>
   );
 };

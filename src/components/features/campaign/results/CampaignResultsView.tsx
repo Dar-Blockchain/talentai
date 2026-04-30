@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
 import { Box, Typography, Chip, Divider, CircularProgress, Alert } from '@mui/material';
@@ -35,10 +36,10 @@ import type { ParticipantResultsData as ResultsData } from '@/store/slices/campa
 
 // ─── Module meta ───────────────────────────────────────────────────────────────
 
-const MODULE_META: Record<string, { label: string; icon: React.ElementType; gradient: string; accent: string }> = {
-  QUESTIONNAIRE: { label: 'Questionnaire', icon: AssignmentOutlined, gradient: 'linear-gradient(135deg,#F59E0B,#D97706)', accent: '#F59E0B' },
-  AI_INTERVIEW:  { label: 'AI Interview',  icon: PsychologyOutlined, gradient: 'linear-gradient(135deg,#0D9488,#0891B2)', accent: '#0D9488' },
-  SKILL_TEST:    { label: 'Skill Test',    icon: CodeOutlined,       gradient: 'linear-gradient(135deg,#7C3AED,#5B21B6)', accent: '#7C3AED' },
+const MODULE_META: Record<string, { icon: React.ElementType; gradient: string; accent: string }> = {
+  QUESTIONNAIRE: { icon: AssignmentOutlined, gradient: 'linear-gradient(135deg,#F59E0B,#D97706)', accent: '#F59E0B' },
+  AI_INTERVIEW:  { icon: PsychologyOutlined, gradient: 'linear-gradient(135deg,#0D9488,#0891B2)', accent: '#0D9488' },
+  SKILL_TEST:    { icon: CodeOutlined,       gradient: 'linear-gradient(135deg,#7C3AED,#5B21B6)', accent: '#7C3AED' },
 };
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
@@ -50,8 +51,12 @@ const CARD = {
   boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
 } as const;
 
-const fmt = (iso: string | null) =>
-  iso ? new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+const fmt = (iso: string | null, locale: string) =>
+  iso
+    ? new Date(iso).toLocaleDateString(locale.startsWith('fr') ? 'fr-FR' : 'en-GB', {
+      day: 'numeric', month: 'short', year: 'numeric',
+    })
+    : '—';
 
 // ─── ScoreBadge ────────────────────────────────────────────────────────────────
 
@@ -70,6 +75,8 @@ const ScoreBadge: React.FC<{ score: number | null; size?: 'sm' | 'lg' }> = ({ sc
 // ─── QuestionnaireResults ──────────────────────────────────────────────────────
 
 export const QuestionnaireResults: React.FC<{ data: ResultsData }> = ({ data }) => {
+  const { t } = useTranslation('dashboard');
+  const rq = 'pages.campaigns.detail.results_view.questionnaire';
   const questions: { question: string; type: string; options?: string[] }[] =
     data.campaign.module?.config?.questions ?? [];
   const answers = data.response?.answers ?? [];
@@ -83,11 +90,9 @@ export const QuestionnaireResults: React.FC<{ data: ResultsData }> = ({ data }) 
     RATING:          StarRounded,
   };
 
-  const typeLabel: Record<string, string> = {
-    TEXT:            'Open answer',
-    SINGLE_CHOICE:   'Single choice',
-    MULTIPLE_CHOICE: 'Multiple choice',
-    RATING:          'Rating',
+  const qTypeLabel = (type: string) => {
+    const k = `${rq}.qtype_${type}`;
+    return t(k, { defaultValue: type });
   };
 
   const aiScore   = data.response?.aiScore   ?? null;
@@ -96,7 +101,7 @@ export const QuestionnaireResults: React.FC<{ data: ResultsData }> = ({ data }) 
   if (questions.length === 0) {
     return (
       <Box sx={{ ...CARD, p: 4, textAlign: 'center' }}>
-        <Typography sx={{ color: '#9CA3AF', fontSize: 14 }}>No questions found for this questionnaire.</Typography>
+        <Typography sx={{ color: '#9CA3AF', fontSize: 14 }}>{t(`${rq}.empty`)}</Typography>
       </Box>
     );
   }
@@ -111,7 +116,7 @@ export const QuestionnaireResults: React.FC<{ data: ResultsData }> = ({ data }) 
         }}>
           <CircularProgress size={16} sx={{ color: '#D97706', flexShrink: 0 }} />
           <Typography sx={{ fontSize: 13, color: '#92400E', fontWeight: 500 }}>
-            AI scoring in progress — your score will appear shortly.
+            {t(`${rq}.ai_short`)}
           </Typography>
         </Box>
       )}
@@ -127,7 +132,7 @@ export const QuestionnaireResults: React.FC<{ data: ResultsData }> = ({ data }) 
           </Box>
           <Box sx={{ flex: 1 }}>
             <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', mb: 0.5 }}>
-              Overall Score
+              {t(`${rq}.overall_score`)}
             </Typography>
             <Typography sx={{ fontSize: 24, fontWeight: 800, color: '#0F172A', lineHeight: 1.2, mb: aiSummary ? 1 : 0 }}>
               {aiScore}<Typography component="span" sx={{ fontSize: 14, color: '#94A3B8', fontWeight: 500 }}> / 100</Typography>
@@ -142,10 +147,10 @@ export const QuestionnaireResults: React.FC<{ data: ResultsData }> = ({ data }) 
           <CircularProgress size={18} sx={{ color: '#F59E0B', flexShrink: 0 }} />
           <Box>
             <Typography sx={{ fontSize: 13, fontWeight: 600, color: '#92400E' }}>
-              AI scoring in progress…
+              {t(`${rq}.ai_progress_title`)}
             </Typography>
             <Typography sx={{ fontSize: 12, color: '#B45309' }}>
-              This page refreshes automatically — scores will appear in a few seconds.
+              {t(`${rq}.ai_progress_sub`)}
             </Typography>
           </Box>
         </Box>
@@ -174,7 +179,7 @@ export const QuestionnaireResults: React.FC<{ data: ResultsData }> = ({ data }) 
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                   <TypeIcon sx={{ fontSize: 13, color: '#9CA3AF' }} />
                   <Typography sx={{ fontSize: 11, color: '#9CA3AF', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    {typeLabel[q.type] ?? q.type}
+                    {qTypeLabel(q.type)}
                   </Typography>
                 </Box>
                 <Typography sx={{ fontSize: 15, fontWeight: 600, color: '#0F172A', lineHeight: 1.5 }}>
@@ -187,13 +192,13 @@ export const QuestionnaireResults: React.FC<{ data: ResultsData }> = ({ data }) 
             <Divider sx={{ mb: 2 }} />
 
             {answer === undefined || answer === '' || (Array.isArray(answer) && answer.length === 0) ? (
-              <Typography sx={{ fontSize: 13, color: '#9CA3AF', fontStyle: 'italic' }}>No answer provided</Typography>
+              <Typography sx={{ fontSize: 13, color: '#9CA3AF', fontStyle: 'italic' }}>{t(`${rq}.no_answer`)}</Typography>
             ) : isRating ? (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 {[1,2,3,4,5].map(s => (
                   <StarRounded key={s} sx={{ fontSize: 26, color: s <= Number(answer) ? '#F59E0B' : '#E5E7EB' }} />
                 ))}
-                <Typography sx={{ ml: 1, fontSize: 14, fontWeight: 700, color: '#F59E0B' }}>{answer} / 5</Typography>
+                <Typography sx={{ ml: 1, fontSize: 14, fontWeight: 700, color: '#F59E0B' }}>{t(`${rq}.rating_of`, { n: answer })}</Typography>
               </Box>
             ) : isMulti ? (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
@@ -236,6 +241,8 @@ export const QuestionnaireResults: React.FC<{ data: ResultsData }> = ({ data }) 
 // ─── InterviewResults ──────────────────────────────────────────────────────────
 
 export const InterviewResults: React.FC<{ data: ResultsData }> = ({ data }) => {
+  const { t } = useTranslation('dashboard');
+  const iv = 'pages.campaigns.detail.results_view.interview';
   const { response } = data;
   const score    = response?.aiScore ?? response?.testResults?.score ?? null;
   const maxScore = response?.testResults?.maxScore ?? 100;
@@ -252,7 +259,7 @@ export const InterviewResults: React.FC<{ data: ResultsData }> = ({ data }) => {
   if (!hasContent) {
     return (
       <Box sx={{ ...CARD, p: 4, textAlign: 'center' }}>
-        <Typography sx={{ color: '#9CA3AF', fontSize: 14 }}>No detailed results available yet.</Typography>
+        <Typography sx={{ color: '#9CA3AF', fontSize: 14 }}>{t(`${iv}.empty`)}</Typography>
       </Box>
     );
   }
@@ -272,7 +279,7 @@ export const InterviewResults: React.FC<{ data: ResultsData }> = ({ data }) => {
             <Typography sx={{ fontSize: 20, fontWeight: 900, color: '#fff' }}>{score}</Typography>
           </Box>
           <Box>
-            <Typography sx={{ fontSize: 12, color: '#64748B', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Overall Score</Typography>
+            <Typography sx={{ fontSize: 12, color: '#64748B', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t(`${iv}.overall_score`)}</Typography>
             <Typography sx={{ fontSize: 22, fontWeight: 800, color: '#0F172A', lineHeight: 1.2 }}>
               {score}<Typography component="span" sx={{ fontSize: 14, color: '#94A3B8', fontWeight: 500 }}> / {maxScore}</Typography>
             </Typography>
@@ -284,7 +291,7 @@ export const InterviewResults: React.FC<{ data: ResultsData }> = ({ data }) => {
       {subScores.length > 0 && (
         <Box sx={{ ...CARD, p: 3 }}>
           <Typography sx={{ fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.08em', mb: 2 }}>
-            Detailed Scores
+            {t(`${iv}.detailed_scores`)}
           </Typography>
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
             {subScores.map(({ label, value }) => {
@@ -309,7 +316,7 @@ export const InterviewResults: React.FC<{ data: ResultsData }> = ({ data }) => {
       {response?.aiSummary && (
         <Box sx={{ ...CARD, p: 3 }}>
           <Typography sx={{ fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.08em', mb: 1.5 }}>
-            Assessment Summary
+            {t(`${iv}.assessment_summary`)}
           </Typography>
           <Typography sx={{ fontSize: 14, color: '#374151', lineHeight: 1.75 }}>
             {response.aiSummary}
@@ -321,21 +328,21 @@ export const InterviewResults: React.FC<{ data: ResultsData }> = ({ data }) => {
       {(response?.interviewTranscript?.length ?? 0) > 0 && (
         <Box sx={{ ...CARD, p: 3 }}>
           <Typography sx={{ fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.08em', mb: 2 }}>
-            Transcript
+            {t(`${iv}.transcript`)}
           </Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, maxHeight: 420, overflowY: 'auto' }}>
-            {response!.interviewTranscript.map((t, i) => (
+            {response!.interviewTranscript.map((turn, i) => (
               <Box key={i} sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
                 <Chip
-                  label={t.role === 'agent' ? 'AI' : 'You'}
+                  label={turn.role === 'agent' ? t(`${iv}.role_agent`) : t(`${iv}.role_user`)}
                   size="small"
                   sx={{
                     fontSize: 10, fontWeight: 700, height: 20, flexShrink: 0,
-                    bgcolor: t.role === 'agent' ? '#EFF6FF' : '#F5F3FF',
-                    color:   t.role === 'agent' ? '#2563EB' : '#7C3AED',
+                    bgcolor: turn.role === 'agent' ? '#EFF6FF' : '#F5F3FF',
+                    color:   turn.role === 'agent' ? '#2563EB' : '#7C3AED',
                   }}
                 />
-                <Typography sx={{ fontSize: 13, color: '#374151', lineHeight: 1.6 }}>{t.message}</Typography>
+                <Typography sx={{ fontSize: 13, color: '#374151', lineHeight: 1.6 }}>{turn.message}</Typography>
               </Box>
             ))}
           </Box>
@@ -359,6 +366,8 @@ interface Props {
 const CampaignResultsView: React.FC<Props> = ({ campaignId, participantId, breadcrumbs, backHref, noLayout }) => {
   const router   = useRouter();
   const dispatch = useDispatch<AppDispatch>();
+  const { t, i18n } = useTranslation('dashboard');
+  const rv = 'pages.campaigns.detail.results_view';
 
   const data    = useSelector(selectParticipantResults);
   const loading = useSelector(selectResultsLoading);
@@ -432,18 +441,20 @@ const CampaignResultsView: React.FC<Props> = ({ campaignId, participantId, bread
                 <Typography sx={{ fontSize: 20, fontWeight: 800, color: '#0F172A', lineHeight: 1.2 }}>
                   {data.campaign.title}
                 </Typography>
-                <Typography sx={{ fontSize: 13, color: '#64748B', mt: 0.25 }}>{meta.label}</Typography>
+                <Typography sx={{ fontSize: 13, color: '#64748B', mt: 0.25 }}>
+                  {t(`pages.campaigns.module.${moduleType}`, { defaultValue: moduleType })}
+                </Typography>
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75,
                   px: 1.5, py: 0.5, borderRadius: '999px', bgcolor: '#F0FDF4', border: '1px solid #BBF7D0' }}>
                   <CheckCircleOutlined sx={{ fontSize: 14, color: '#16A34A' }} />
-                  <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#16A34A' }}>Completed</Typography>
+                  <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#16A34A' }}>{t(`${rv}.completed_badge`)}</Typography>
                 </Box>
                 {data.participant.completedAt && (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     <CalendarTodayOutlined sx={{ fontSize: 12, color: '#94A3B8' }} />
-                    <Typography sx={{ fontSize: 12, color: '#94A3B8' }}>{fmt(data.participant.completedAt)}</Typography>
+                    <Typography sx={{ fontSize: 12, color: '#94A3B8' }}>{fmt(data.participant.completedAt, i18n.language)}</Typography>
                   </Box>
                 )}
               </Box>
@@ -467,7 +478,7 @@ const CampaignResultsView: React.FC<Props> = ({ campaignId, participantId, bread
               }}
             >
               <ArrowBackOutlined sx={{ fontSize: 16 }} />
-              Back to Campaign
+              {t(`${rv}.back_to_campaign`)}
             </Box>
           )}
 

@@ -43,6 +43,7 @@ import {
 import { CampaignParticipant, NonParticipant, ParticipantStatus } from "@/types/campaign";
 import Pagination from "@/components/ui/Pagination";
 import { ROLES } from "@/constants/employee";
+import { useTranslation } from "react-i18next";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -64,11 +65,11 @@ function pickGradient(str: string) {
   return AVATAR_GRADIENTS[Math.abs(h) % AVATAR_GRADIENTS.length];
 }
 
-const STATUS_CONFIG: Record<ParticipantStatus, { label: string; color: string; bg: string; border: string; icon: React.ElementType }> = {
-  IN_PROGRESS: { label: "In Progress", color: "#D97706", bg: "#FFFBEB", border: "#FDE68A", icon: AccessTimeOutlined },
-  COMPLETED:   { label: "Completed",   color: "#16A34A", bg: "#F0FDF4", border: "#BBF7D0", icon: CheckCircleOutlined },
-  INVITED:     { label: "Invited",     color: "#0891B2", bg: "#ECFDF5", border: "#A5F3FC", icon: RadioButtonUncheckedOutlined },
-  DROPPED:     { label: "Dropped",     color: "#EF4444", bg: "#FEF2F2", border: "#FECACA", icon: RadioButtonUncheckedOutlined },
+const PARTICIPANT_STATUS_META: Record<ParticipantStatus, { color: string; bg: string; border: string; icon: React.ElementType }> = {
+  IN_PROGRESS: { color: "#D97706", bg: "#FFFBEB", border: "#FDE68A", icon: AccessTimeOutlined },
+  COMPLETED:   { color: "#16A34A", bg: "#F0FDF4", border: "#BBF7D0", icon: CheckCircleOutlined },
+  INVITED:     { color: "#0891B2", bg: "#ECFDF5", border: "#A5F3FC", icon: RadioButtonUncheckedOutlined },
+  DROPPED:     { color: "#EF4444", bg: "#FEF2F2", border: "#FECACA", icon: RadioButtonUncheckedOutlined },
 };
 
 
@@ -117,7 +118,10 @@ const ParticipantRow: React.FC<{
   removing?: boolean;
 }> = ({ participant: p, index, total, campaignId, onRemove, removing }) => {
   const router = useRouter();
-  const name      = (p.firstName && p.lastName) ? `${p.firstName} ${p.lastName}` : p.firstName || p.lastName || "Unknown";
+  const { t } = useTranslation("dashboard");
+  const pp = "pages.campaigns.detail.participants";
+  const du = "pages.campaigns.detail";
+  const name      = (p.firstName && p.lastName) ? `${p.firstName} ${p.lastName}` : p.firstName || p.lastName || t(`${du}.unknown_user`);
   const email     = p.email ?? "";
   const letter    = name[0]?.toUpperCase() || "U";
   const dept      = p.department?.name ?? null;
@@ -127,7 +131,7 @@ const ParticipantRow: React.FC<{
   const roleLabel = roleEntry?.label || roleStr || "—";
   const RoleIcon  = roleEntry?.icon ?? null;
   const status    = p.status as ParticipantStatus | undefined;
-  const sc        = status ? STATUS_CONFIG[status] : null;
+  const sc        = status ? PARTICIPANT_STATUS_META[status] : null;
   const StatusIcon = sc?.icon ?? null;
   const isLast    = index === total - 1;
 
@@ -208,7 +212,7 @@ const ParticipantRow: React.FC<{
             bgcolor: sc.bg, border: `1px solid ${sc.border}`,
           }}>
             {StatusIcon && <StatusIcon sx={{ fontSize: 11, color: sc.color }} />}
-            <Typography sx={{ fontSize: "11px", fontWeight: 700, color: sc.color, whiteSpace: "nowrap" }}>{sc.label}</Typography>
+            <Typography sx={{ fontSize: "11px", fontWeight: 700, color: sc.color, whiteSpace: "nowrap" }}>{status && t(`${pp}.participant_status.${status}`)}</Typography>
           </Box>
         ) : (
           <Typography sx={{ fontSize: "11px", color: "#CBD5E1" }}>—</Typography>
@@ -231,7 +235,7 @@ const ParticipantRow: React.FC<{
       {onRemove && (
         <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 0.75 }}>
           {p.status === "COMPLETED" && p.employeeId && (
-            <Tooltip title="View Results" placement="top" arrow>
+            <Tooltip title={t(`${pp}.tooltip_view_results`)} placement="top" arrow>
               <IconButton
                 size="small"
                 onClick={() => router.push(`/company/campaigns/${campaignId}/results?userId=${p.employeeId}`)}
@@ -241,7 +245,7 @@ const ParticipantRow: React.FC<{
               </IconButton>
             </Tooltip>
           )}
-          <Tooltip title="Remove participant" placement="top" arrow>
+          <Tooltip title={t(`${pp}.tooltip_remove`)} placement="top" arrow>
             <IconButton
               size="small" onClick={() => onRemove(p._id)} disabled={removing}
               sx={{ width: 28, height: 28, color: "#EF4444", bgcolor: "#FEF2F2", border: "1px solid #FECACA", "&:hover": { bgcolor: "#FEE2E2" }, "&:disabled": { opacity: 0.5 } }}
@@ -266,6 +270,8 @@ interface AddDialogProps {
 
 const AddParticipantDialog: React.FC<AddDialogProps> = ({ open, campaignId, onClose, onAdded }) => {
   const dispatch   = useDispatch<AppDispatch>();
+  const { t } = useTranslation("dashboard");
+  const pp = "pages.campaigns.detail.participants";
   const employees  = useSelector(selectNonParticipants);
   const loading    = useSelector(selectNonParticipantsLoading);
   const error      = useSelector(selectNonParticipantsError);
@@ -376,14 +382,14 @@ const AddParticipantDialog: React.FC<AddDialogProps> = ({ open, campaignId, onCl
           </Box>
           <Box>
             <Typography sx={{ fontWeight: 800, fontSize: "15px", color: "#0F172A", lineHeight: 1.25 }}>
-              Add Participants
+              {t(`${pp}.add_dialog_title`)}
             </Typography>
             <Typography sx={{ fontSize: "12px", color: "#94A3B8", mt: 0.3, fontWeight: 500 }}>
               {loading
-                ? "Loading available employees…"
+                ? t(`${pp}.add_loading_hint`)
                 : total === 0
-                  ? "No employees available to add"
-                  : `${total} employee${total !== 1 ? "s" : ""} available to invite`}
+                  ? t(`${pp}.add_none_available`)
+                  : t(`${pp}.add_available`, { count: total })}
             </Typography>
           </Box>
         </Box>
@@ -414,7 +420,7 @@ const AddParticipantDialog: React.FC<AddDialogProps> = ({ open, campaignId, onCl
             <SearchOutlined sx={{ fontSize: 15, color: "#9CA3AF", flexShrink: 0, mr: 0.875 }} />
             <input
               type="text"
-              placeholder="Search by name or email…"
+              placeholder={t(`${pp}.search_placeholder`)}
               value={search}
               onChange={(e) => handleSearchChange(e.target.value)}
               autoFocus
@@ -431,7 +437,7 @@ const AddParticipantDialog: React.FC<AddDialogProps> = ({ open, campaignId, onCl
           <Select
             size="small" displayEmpty value={department}
             onChange={(e) => setDepartment(e.target.value)}
-            renderValue={(v) => v ? (departments.find((d) => d._id === v)?.name ?? "Department") : "Department"}
+            renderValue={(v) => v ? (departments.find((d) => d._id === v)?.name ?? t(`${pp}.department_filter`)) : t(`${pp}.department_filter`)}
             sx={{
               fontSize: "12px", fontWeight: 600, minWidth: 140,
               bgcolor: department ? `${PURPLE}08` : "#fff",
@@ -445,7 +451,7 @@ const AddParticipantDialog: React.FC<AddDialogProps> = ({ open, campaignId, onCl
               "& .MuiSelect-icon": { color: department ? PURPLE : "#9CA3AF" },
             }}
           >
-            <MenuItem value="" sx={{ fontSize: "12px", color: "#6B7280" }}>All departments</MenuItem>
+            <MenuItem value="" sx={{ fontSize: "12px", color: "#6B7280" }}>{t(`${pp}.all_departments`)}</MenuItem>
             {departments.map((d) => (
               <MenuItem key={d._id} value={d._id} sx={{ fontSize: "12px" }}>{d.name}</MenuItem>
             ))}
@@ -455,7 +461,7 @@ const AddParticipantDialog: React.FC<AddDialogProps> = ({ open, campaignId, onCl
           <Select
             size="small" displayEmpty value={role}
             onChange={(e) => setRole(e.target.value)}
-            renderValue={(v) => v ? (ROLES.find((r) => r.value === v)?.label ?? "Role") : "Role"}
+            renderValue={(v) => v ? (ROLES.find((r) => r.value === v)?.label ?? t(`${pp}.role_filter`)) : t(`${pp}.role_filter`)}
             sx={{
               fontSize: "12px", fontWeight: 600, minWidth: 130,
               bgcolor: role ? `${PURPLE}08` : "#fff",
@@ -469,7 +475,7 @@ const AddParticipantDialog: React.FC<AddDialogProps> = ({ open, campaignId, onCl
               "& .MuiSelect-icon": { color: role ? PURPLE : "#9CA3AF" },
             }}
           >
-            <MenuItem value="" sx={{ fontSize: "12px", color: "#6B7280" }}>All roles</MenuItem>
+            <MenuItem value="" sx={{ fontSize: "12px", color: "#6B7280" }}>{t(`${pp}.all_roles`)}</MenuItem>
             {ROLES.map((r) => (
               <MenuItem key={r.value} value={r.value} sx={{ fontSize: "12px" }}>{r.label}</MenuItem>
             ))}
@@ -480,7 +486,7 @@ const AddParticipantDialog: React.FC<AddDialogProps> = ({ open, campaignId, onCl
         {(activeDeptLabel || activeRoleLabel) && (
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 1.25, flexWrap: "wrap" }}>
             <Typography sx={{ fontSize: "10px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em", mr: 0.25 }}>
-              Filters:
+              {t(`${pp}.filters_label`)}
             </Typography>
             {activeDeptLabel && (
               <Box
@@ -535,12 +541,12 @@ const AddParticipantDialog: React.FC<AddDialogProps> = ({ open, campaignId, onCl
               <PeopleAltOutlined sx={{ fontSize: 25, color: "#9CA3AF" }} />
             </Box>
             <Typography sx={{ fontSize: "14px", fontWeight: 700, color: "#374151", mb: 0.75 }}>
-              {hasFilters ? "No employees match your filters" : "All employees are already in this campaign"}
+              {hasFilters ? t(`${pp}.empty_filtered_title`) : t(`${pp}.empty_all_added_title`)}
             </Typography>
             <Typography sx={{ fontSize: "12px", color: "#9CA3AF", lineHeight: 1.6 }}>
               {hasFilters
-                ? "Try clearing one or more filters to see more results."
-                : "Every member of your company has already been added."}
+                ? t(`${pp}.empty_filtered_hint`)
+                : t(`${pp}.empty_all_added_hint`)}
             </Typography>
             {hasFilters && (
               <Box
@@ -553,7 +559,7 @@ const AddParticipantDialog: React.FC<AddDialogProps> = ({ open, campaignId, onCl
                 }}
               >
                 <CloseOutlined sx={{ fontSize: 13, color: PURPLE }} />
-                <Typography sx={{ fontSize: "12px", fontWeight: 700, color: PURPLE }}>Clear all filters</Typography>
+                <Typography sx={{ fontSize: "12px", fontWeight: 700, color: PURPLE }}>{t(`${pp}.clear_all_filters`)}</Typography>
               </Box>
             )}
           </Box>
@@ -589,7 +595,11 @@ const AddParticipantDialog: React.FC<AddDialogProps> = ({ open, campaignId, onCl
         {/* Done button row */}
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Typography sx={{ fontSize: "12px", color: "#9CA3AF" }}>
-            {total > 0 ? `Showing ${Math.min((page - 1) * PICKER_PAGE_SIZE + 1, total)}–${Math.min(page * PICKER_PAGE_SIZE, total)} of ${total}` : ""}
+            {total > 0 ? t(`${pp}.pagination_showing`, {
+              from: Math.min((page - 1) * PICKER_PAGE_SIZE + 1, total),
+              to: Math.min(page * PICKER_PAGE_SIZE, total),
+              total,
+            }) : ""}
           </Typography>
           <Box
             onClick={onClose}
@@ -602,7 +612,7 @@ const AddParticipantDialog: React.FC<AddDialogProps> = ({ open, campaignId, onCl
               transition: "all 0.18s",
             }}
           >
-            <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#fff" }}>Done</Typography>
+            <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#fff" }}>{t(`${pp}.done`)}</Typography>
           </Box>
         </Box>
       </Box>
@@ -619,7 +629,10 @@ const EmployeePickerRow: React.FC<{
   adding: boolean;
   disabled: boolean;
 }> = ({ employee: e, isLast, onAdd, adding, disabled }) => {
-  const name      = (e.firstName && e.lastName) ? `${e.firstName} ${e.lastName}` : e.firstName || e.username || "Unknown";
+  const { t } = useTranslation("dashboard");
+  const pp = "pages.campaigns.detail.participants";
+  const du = "pages.campaigns.detail";
+  const name      = (e.firstName && e.lastName) ? `${e.firstName} ${e.lastName}` : e.firstName || e.username || t(`${du}.unknown_user`);
   const email     = e.email ?? "";
   const letter    = name[0]?.toUpperCase() || "U";
   const roleEntry = ROLES.find((r) => r.value === e.role || r.value === (e.role ?? "").toLowerCase());
@@ -700,7 +713,7 @@ const EmployeePickerRow: React.FC<{
           ? <CircularProgress size={12} sx={{ color: PURPLE }} />
           : <AddOutlined sx={{ fontSize: 13, color: PURPLE }} />}
         <Typography sx={{ fontSize: "12px", fontWeight: 700, color: PURPLE, lineHeight: 1 }}>
-          {adding ? "Adding…" : "Add"}
+          {adding ? t(`${pp}.adding`) : t(`${pp}.add_button`)}
         </Typography>
       </Box>
     </Box>
@@ -713,6 +726,8 @@ interface Props { campaignId: string; mode?: "company" | "employee"; anonymityMo
 
 const CampaignParticipantsTab: React.FC<Props> = ({ campaignId, mode = "company" }) => {
   const dispatch     = useDispatch<AppDispatch>();
+  const { t } = useTranslation("dashboard");
+  const pp = "pages.campaigns.detail.participants";
   const participants = useSelector(selectCampaignParticipants);
   const loading      = useSelector(selectCampaignParticipantsLoading);
   const error        = useSelector(selectCampaignParticipantsError);
@@ -761,18 +776,18 @@ const CampaignParticipantsTab: React.FC<Props> = ({ campaignId, mode = "company"
             <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#374151" }}>
               {loading ? "…" : total}
             </Typography>
-            <Typography sx={{ fontSize: "11px", color: "#94A3B8", fontWeight: 500 }}>total</Typography>
+            <Typography sx={{ fontSize: "11px", color: "#94A3B8", fontWeight: 500 }}>{t(`${pp}.toolbar_total`)}</Typography>
           </Box>
           {!loading && participants.length > 0 && (
             <>
               {(["COMPLETED", "IN_PROGRESS", "INVITED"] as ParticipantStatus[]).map((s) => {
                 const count = participants.filter((p) => p.status === s).length;
                 if (!count) return null;
-                const sc = STATUS_CONFIG[s];
+                const sc = PARTICIPANT_STATUS_META[s];
                 return (
                   <Box key={s} sx={{ display: "flex", alignItems: "center", gap: 0.5, px: 1.125, py: "4px", borderRadius: "999px", bgcolor: sc.bg, border: `1px solid ${sc.border}` }}>
                     <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: sc.color }} />
-                    <Typography sx={{ fontSize: "11px", fontWeight: 700, color: sc.color }}>{count} {sc.label}</Typography>
+                    <Typography sx={{ fontSize: "11px", fontWeight: 700, color: sc.color }}>{count} {t(`${pp}.participant_status.${s}`)}</Typography>
                   </Box>
                 );
               })}
@@ -790,7 +805,7 @@ const CampaignParticipantsTab: React.FC<Props> = ({ campaignId, mode = "company"
           }}>
             <SearchOutlined sx={{ fontSize: 15, color: "#9CA3AF", flexShrink: 0, mr: 1 }} />
             <input
-              type="text" placeholder="Search participants…" value={search}
+              type="text" placeholder={t(`${pp}.search_participants_placeholder`)} value={search}
               onChange={(e) => handleSearchChange(e.target.value)}
               style={{ border: "none", outline: "none", background: "transparent", fontSize: "13px", color: "#111827", width: "100%", fontFamily: "inherit", padding: "2px 0" }}
             />
@@ -812,7 +827,7 @@ const CampaignParticipantsTab: React.FC<Props> = ({ campaignId, mode = "company"
               }}
             >
               <PersonAddOutlined sx={{ fontSize: 15, color: "#fff" }} />
-              <Typography sx={{ fontSize: "12.5px", fontWeight: 700, color: "#fff" }}>Add</Typography>
+              <Typography sx={{ fontSize: "12.5px", fontWeight: 700, color: "#fff" }}>{t(`${pp}.add_button`)}</Typography>
             </Box>
           )}
         </Box>
@@ -830,7 +845,13 @@ const CampaignParticipantsTab: React.FC<Props> = ({ campaignId, mode = "company"
           background: "linear-gradient(135deg, #F8F9FB 0%, #F3F4F8 100%)",
           borderBottom: "1px solid #E5E7EB",
         }}>
-          {["#", "Participant", "Status", "Role", ...(isCompany ? ["Actions"] : [])].map((col, i) => (
+          {[
+            t(`${pp}.col_hash`),
+            t(`${pp}.col_participant`),
+            t(`${pp}.col_status`),
+            t(`${pp}.col_role`),
+            ...(isCompany ? [t(`${pp}.col_actions`)] : []),
+          ].map((col, i) => (
             <Typography
               key={col}
               sx={{
@@ -855,10 +876,10 @@ const CampaignParticipantsTab: React.FC<Props> = ({ campaignId, mode = "company"
               <PeopleAltOutlined sx={{ fontSize: 26, color: "#9CA3AF" }} />
             </Box>
             <Typography sx={{ fontSize: "14px", fontWeight: 700, color: "#374151" }}>
-              {debouncedSearch ? "No participants match your search" : "No participants yet"}
+              {debouncedSearch ? t(`${pp}.empty_search_title`) : t(`${pp}.empty_title`)}
             </Typography>
             <Typography sx={{ fontSize: "12px", color: "#9CA3AF", mt: 0.5 }}>
-              {debouncedSearch ? "Try a different name or email." : "Participants will appear here once they join."}
+              {debouncedSearch ? t(`${pp}.empty_search_hint`) : t(`${pp}.empty_hint`)}
             </Typography>
           </Box>
         ) : (
