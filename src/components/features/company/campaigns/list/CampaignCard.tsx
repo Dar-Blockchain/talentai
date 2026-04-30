@@ -27,7 +27,6 @@ import {
   MODULE_CONFIG,
   STATUS_COLORS,
   STATUS_TRANSITIONS,
-  STATUS_TRANSITION_LABELS,
 } from "@/constants/campaign";
 import { CampaignStatus } from "@/types/campaign";
 
@@ -39,6 +38,7 @@ const STATUS_ICONS: Partial<Record<CampaignStatus, React.ElementType>> = {
 import AppButton from "@/components/ui/AppButton";
 import { Campaign } from "@/types/campaign";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 
 const STATUS_ACCENT: Record<string, string> = {
   DRAFT: "#9CA3AF",
@@ -57,6 +57,7 @@ const CampaignCard: React.FC<{
   canDelete?: boolean;
   canPublish?: boolean;
 }> = memo(({ campaign, onViewDetails, onDelete, onStatusChange, canEdit = true, canDelete = true, canPublish = true }) => {
+  const { t } = useTranslation("campaign");
   const sc = STATUS_COLORS[campaign.status] || STATUS_COLORS.DRAFT;
   const accentColor = STATUS_ACCENT[campaign.status] || "#9CA3AF";
   const remaining = daysLeft(campaign.deadline);
@@ -67,6 +68,16 @@ const CampaignCard: React.FC<{
 
   const moduleConf = campaign.module ? MODULE_CONFIG[campaign.module.type] : null;
   const ModuleIcon = moduleConf?.icon;
+  const moduleLabel =
+    campaign.module?.type != null
+      ? t(`module_type.${campaign.module.type}`, { defaultValue: moduleConf?.label ?? campaign.module.type })
+      : null;
+
+  const transitionTargetLabel = (s: CampaignStatus) => {
+    if (s === "ACTIVE") return t("detail.transition_btn_active");
+    if (s === "PAUSED") return t("detail.transition_btn_pause");
+    return t("detail.transition_btn_close");
+  };
 
   const isUrgent = remaining !== null && remaining <= 3 && remaining >= 0;
 
@@ -105,7 +116,7 @@ const CampaignCard: React.FC<{
         <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
           <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", flex: 1, mr: 1 }}>
             <Chip
-              label={campaign.status}
+              label={t(`status.${campaign.status}`, { defaultValue: campaign.status })}
               size="small"
               sx={{
                 bgcolor: sc.bg,
@@ -150,7 +161,7 @@ const CampaignCard: React.FC<{
                 {canPublish && (STATUS_TRANSITIONS[campaign.status]?.length ?? 0) > 0 && (
                   <Box sx={{ px: 1.25, pt: 0.5, pb: 0.75 }}>
                     <Typography sx={{ fontSize: "10px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                      Change Status
+                      {t("card.menu_change_status")}
                     </Typography>
                   </Box>
                 )}
@@ -159,7 +170,7 @@ const CampaignCard: React.FC<{
                 {canPublish && (STATUS_TRANSITIONS[campaign.status] ?? []).map((s) => {
                   const sColor = STATUS_COLORS[s];
                   const Icon   = STATUS_ICONS[s];
-                  const label  = STATUS_TRANSITION_LABELS[s];
+                  const label  = transitionTargetLabel(s);
                   return (
                     <MenuItem
                       key={s}
@@ -205,7 +216,7 @@ const CampaignCard: React.FC<{
                       <DeleteOutlineOutlined sx={{ fontSize: 14, color: "#DC2626" }} />
                     </Box>
                     <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#DC2626" }}>
-                      Delete Campaign
+                      {t("card.menu_delete_campaign")}
                     </Typography>
                   </MenuItem>
                 )}
@@ -255,7 +266,7 @@ const CampaignCard: React.FC<{
               <ModuleIcon sx={{ fontSize: 15, color: moduleConf.color }} />
             </Box>
             <Typography sx={{ fontSize: "12px", color: "#4B5563", fontWeight: 500 }}>
-              {moduleConf.label}
+              {moduleLabel}
             </Typography>
           </Box>
         )}
@@ -265,9 +276,12 @@ const CampaignCard: React.FC<{
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
             <PeopleAltOutlined sx={{ fontSize: 14, color: "#9CA3AF" }} />
             <Typography sx={{ fontSize: "11.5px", color: "#6B7280" }}>
-              Target:{" "}
-              <strong style={{ color: "#374151" }}>{campaign.targetEmployeeCount}</strong>{" "}
-              participant{campaign.targetEmployeeCount !== 1 ? "s" : ""}
+              {t(
+                campaign.targetEmployeeCount === 1
+                  ? "card.target_participants_one"
+                  : "card.target_participants_other",
+                { count: campaign.targetEmployeeCount },
+              )}
             </Typography>
           </Box>
         )}
@@ -287,7 +301,7 @@ const CampaignCard: React.FC<{
                   : <LockPersonOutlined sx={{ fontSize: 11, color: "#8B5CF6" }} />
                 }
                 <Typography sx={{ fontSize: "10px", fontWeight: 600, color: campaign.accessMethod === "LINK" ? "#1D4ED8" : "#5B21B6" }}>
-                  {campaign.accessMethod === "LINK" ? "Public link" : "Accounts only"}
+                  {campaign.accessMethod === "LINK" ? t("card.access_public_link") : t("card.access_accounts_only")}
                 </Typography>
               </Box>
             )}
@@ -303,7 +317,7 @@ const CampaignCard: React.FC<{
                   : <VisibilityOutlined sx={{ fontSize: 11, color: "#10B981" }} />
                 }
                 <Typography sx={{ fontSize: "10px", fontWeight: 600, color: campaign.anonymityMode === "ANONYMOUS" ? "#9A3412" : "#166534" }}>
-                  {campaign.anonymityMode === "ANONYMOUS" ? "Anonymous" : "Nominative"}
+                  {campaign.anonymityMode === "ANONYMOUS" ? t("card.badge_anonymous") : t("card.badge_nominative")}
                 </Typography>
               </Box>
             )}
@@ -330,25 +344,25 @@ const CampaignCard: React.FC<{
             <Tooltip title={fmtDate(campaign.deadline)} placement="top" arrow>
               <Typography sx={{ fontSize: "11px", color: isUrgent ? "#EF4444" : "#6B7280", cursor: "default" }}>
                 {remaining === 0
-                  ? <strong style={{ color: "#EF4444" }}>Expired</strong>
+                  ? <strong style={{ color: "#EF4444" }}>{t("card.deadline_expired")}</strong>
                   : isToday
-                    ? <><strong style={{ color: "#EF4444" }}>Expires today</strong></>
+                    ? <strong style={{ color: "#EF4444" }}>{t("card.deadline_expires_today")}</strong>
                     : remaining === 1
-                      ? <><strong style={{ color: "#F59E0B" }}>Tomorrow</strong> · {fmtDate(campaign.deadline)}</>
+                      ? <>{t("card.deadline_tomorrow_line", { date: fmtDate(campaign.deadline) })}</>
                       : remaining !== null && remaining <= 3
-                        ? <><strong style={{ color: "#F59E0B" }}>{remaining} days left</strong> · {fmtDate(campaign.deadline)}</>
-                        : <>Due: <strong style={{ color: "#374151" }}>{fmtDate(campaign.deadline)}</strong></>
+                        ? <>{t("card.deadline_urgent_line", { count: remaining, date: fmtDate(campaign.deadline) })}</>
+                        : <>{t("card.deadline_due_label")} <strong style={{ color: "#374151" }}>{fmtDate(campaign.deadline)}</strong></>
                 }
               </Typography>
             </Tooltip>
           ) : (
-            <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>No deadline</Typography>
+            <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>{t("card.no_deadline")}</Typography>
           )}
         </Box>
         <Link href={`/company/campaigns/${campaign._id}`}>
           <AppButton
             endIcon={<ChevronRightOutlined sx={{ fontSize: 14 }} />}
-            label="View"
+            label={t("card.view")}
             size="xs"
           />
         </Link>

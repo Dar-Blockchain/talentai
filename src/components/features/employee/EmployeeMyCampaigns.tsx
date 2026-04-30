@@ -26,6 +26,7 @@ import {
 } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
 import { Campaign, CampaignType, ModuleType, ParticipantStatus } from "@/types/campaign";
+import { useTranslation } from "react-i18next";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -81,6 +82,7 @@ const scoreColor = (s: number) => s >= 80 ? GREEN : s >= 60 ? TEAL : s >= 40 ? A
 
 const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: string) => void; onDetails: (id: string) => void; onResults: (id: string) => void }> = memo(
   ({ campaign, index, onStart, onDetails, onResults }) => {
+    const { t } = useTranslation("campaign");
     const tm = campaign.type ? TYPE_META[campaign.type] : null;
     const mm = MODULE_META[campaign.module.type];
     const ps = PARTICIPANT_STATUS_META[campaign?.participantStatus || "INVITED"];
@@ -184,7 +186,7 @@ const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: 
                   : <LockPersonOutlined sx={{ fontSize: 11, color: PURPLE }} />
                 }
                 <Typography sx={{ fontSize: "10px", fontWeight: 600, color: campaign.accessMethod === "LINK" ? "#1D4ED8" : "#5B21B6" }}>
-                  {campaign.accessMethod === "LINK" ? "Public link" : "Accounts only"}
+                  {campaign.accessMethod === "LINK" ? t("card.access_public_link") : t("card.access_accounts_only")}
                 </Typography>
               </Box>
 
@@ -200,7 +202,7 @@ const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: 
                   : <VisibilityOutlined sx={{ fontSize: 11, color: GREEN }} />
                 }
                 <Typography sx={{ fontSize: "10px", fontWeight: 600, color: campaign.anonymityMode === "ANONYMOUS" ? "#9A3412" : "#166534" }}>
-                  {campaign.anonymityMode === "ANONYMOUS" ? "Anonymous" : "Nominative"}
+                  {campaign.anonymityMode === "ANONYMOUS" ? t("card.badge_anonymous") : t("card.badge_nominative")}
                 </Typography>
               </Box>
             </Box>

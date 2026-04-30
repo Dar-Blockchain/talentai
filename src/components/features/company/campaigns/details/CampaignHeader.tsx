@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Box, Typography, Tooltip } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { useRouter } from "next/router";
 import ArrowBackOutlined        from "@mui/icons-material/ArrowBackOutlined";
 import DeleteOutlineOutlined    from "@mui/icons-material/DeleteOutlineOutlined";
@@ -13,15 +14,14 @@ import CampaignOutlined         from "@mui/icons-material/CampaignOutlined";
 import { Campaign, CampaignStatus } from "@/types/campaign";
 import {
   STATUS_COLORS,
-  STATUS_TRANSITION_LABELS,
   STATUS_TRANSITIONS,
-  TYPE_COLORS,
-  TYPE_LABELS,
   CAMPAIGN_TYPES,
-  MODULE_CONFIG,
 } from "@/constants/campaign";
 import { daysLeft } from "@/utils/functions";
 import ConfirmStatusChangeDialog from "./ConfirmStatusChangeDialog";
+
+const CD = "detail";
+const CW = "create_wizard";
 
 interface Props {
   campaign: Campaign;
@@ -46,16 +46,28 @@ const CampaignHeader: React.FC<Props> = ({
 }) => {
   const router = useRouter();
   const [pendingStatus, setPendingStatus] = useState<CampaignStatus | null>(null);
+  const { t } = useTranslation("campaign");
 
   const sc          = STATUS_COLORS[campaign.status]  ?? STATUS_COLORS.DRAFT;
-  const tc          = TYPE_COLORS[campaign.type]       ?? TYPE_COLORS.CUSTOM;
-  const typeEntry   = CAMPAIGN_TYPES.find((t) => t.value === campaign.type);
+  const typeEntry   = CAMPAIGN_TYPES.find((ty) => ty.value === campaign.type);
   const TypeIcon    = typeEntry?.icon;
   const typeColor   = typeEntry?.color ?? "#6B7280";
-  const modLabel       = MODULE_CONFIG[campaign.module?.type]?.label ?? campaign.module?.type;
+  const modType     = campaign.module?.type;
+  const modLabel =
+    modType != null
+      ? t(`${CW}.modules.${modType}.label`)
+      : undefined;
   const transitions    = STATUS_TRANSITIONS[campaign.status] ?? [];
   const remaining      = daysLeft(campaign.deadline);
   const moduleConfigured = campaign.module?.config != null;
+
+  const transitionLabel = (target: CampaignStatus) => {
+    if (target === "ACTIVE") return t(`${CD}.transition_btn_active`);
+    if (target === "PAUSED") return t(`${CD}.transition_btn_pause`);
+    return t(`${CD}.transition_btn_close`);
+  };
+
+  const statusLabel = t(`status.${campaign.status}`, { defaultValue: campaign.status });
 
   return (
     <Box sx={{
@@ -100,10 +112,12 @@ const CampaignHeader: React.FC<Props> = ({
                     }}
                   >
                     <EditOutlined sx={{ fontSize: 14, color: "#64748B" }} />
-                    <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#475569" }}>Edit</Typography>
+                    <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#475569" }}>
+                      {t(`${CD}.header_edit`)}
+                    </Typography>
                   </Box>
                 ) : (
-                  <Tooltip title="Editing is only available while the campaign is in Draft." placement="top" arrow>
+                  <Tooltip title={t(`${CD}.header_edit_tooltip`)} placement="top" arrow>
                     <Box
                       sx={{
                         display: "flex", alignItems: "center", gap: 0.625,
@@ -113,7 +127,9 @@ const CampaignHeader: React.FC<Props> = ({
                       }}
                     >
                       <EditOutlined sx={{ fontSize: 14, color: "#94A3B8" }} />
-                      <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#94A3B8" }}>Edit</Typography>
+                      <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#94A3B8" }}>
+                        {t(`${CD}.header_edit`)}
+                      </Typography>
                     </Box>
                   </Tooltip>
                 )
@@ -124,7 +140,7 @@ const CampaignHeader: React.FC<Props> = ({
                 const blocked  = s === "ACTIVE" && !moduleConfigured;
                 const sColor   = STATUS_COLORS[s];
                 const Icon     = STATUS_ICONS[s];
-                const label    = STATUS_TRANSITION_LABELS[s];
+                const label    = transitionLabel(s);
 
                 const btn = (
                   <Box
@@ -152,7 +168,7 @@ const CampaignHeader: React.FC<Props> = ({
                 );
 
                 return blocked ? (
-                  <Tooltip key={s} title="Configure the module before activating this campaign." placement="top" arrow>
+                  <Tooltip key={s} title={t(`${CD}.tooltip_activate_requires_module`)} placement="top" arrow>
                     <span>{btn}</span>
                   </Tooltip>
                 ) : btn;
@@ -171,7 +187,9 @@ const CampaignHeader: React.FC<Props> = ({
                   }}
                 >
                   <DeleteOutlineOutlined sx={{ fontSize: 14, color: "#F87171" }} />
-                  <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#EF4444" }}>Delete</Typography>
+                  <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#EF4444" }}>
+                    {t(`${CD}.header_delete`)}
+                  </Typography>
                 </Box>
               )}
             </Box>
@@ -213,7 +231,7 @@ const CampaignHeader: React.FC<Props> = ({
               }}>
                 <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: sc.fg }} />
                 <Typography sx={{ fontSize: "11px", fontWeight: 700, color: sc.fg }}>
-                  {campaign.status}
+                  {statusLabel}
                 </Typography>
               </Box>
 
@@ -232,7 +250,7 @@ const CampaignHeader: React.FC<Props> = ({
 
               {/* Not-configured warning (DRAFT only) */}
               {campaign.status === "DRAFT" && !moduleConfigured && (
-                <Tooltip title="Module not configured — required before activating." placement="top" arrow>
+                <Tooltip title={t(`${CD}.tooltip_module_required`)} placement="top" arrow>
                   <Box sx={{
                     display: "inline-flex", alignItems: "center", gap: 0.4,
                     px: 1, py: "3px", borderRadius: "999px",
@@ -240,7 +258,7 @@ const CampaignHeader: React.FC<Props> = ({
                   }}>
                     <WarningAmberOutlined sx={{ fontSize: 11, color: "#D97706" }} />
                     <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#D97706" }}>
-                      Not configured
+                      {t(`${CD}.header_not_configured`)}
                     </Typography>
                   </Box>
                 </Tooltip>
@@ -251,7 +269,9 @@ const CampaignHeader: React.FC<Props> = ({
                 <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
                   <CalendarTodayOutlined sx={{ fontSize: 11, color: "#CBD5E1" }} />
                   <Typography sx={{ fontSize: "11.5px", color: "#94A3B8", fontWeight: 500 }}>
-                    {remaining === 0 ? "Deadline passed" : `${remaining}d left`}
+                    {remaining === 0
+                      ? t(`${CD}.header_deadline_short_passed`)
+                      : t(`${CD}.header_deadline_short_left`, { count: remaining })}
                   </Typography>
                 </Box>
               )}

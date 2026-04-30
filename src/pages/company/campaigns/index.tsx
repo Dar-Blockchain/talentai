@@ -23,7 +23,7 @@ const CampaignsGrid = dynamic(
 );
 
 const CampaignsPage: React.FC = () => {
-  const { t } = useTranslation("dashboard");
+  const { t } = useTranslation(["campaign", "dashboard"]);
   useCompanyAccess("canViewCampaigns");
 
   const user     = useSelector((state: RootState) => state.user.connectedUser.user);
@@ -34,16 +34,16 @@ const CampaignsPage: React.FC = () => {
   return (
     <DashboardLayout>
       <PageHeader
-        title={t("pages.campaigns.title")}
-        subtitle={t("pages.campaigns.subtitle")}
+        title={t("pages.title")}
+        subtitle={t("pages.subtitle")}
         breadcrumbs={[
           { label: t("pages.common.dashboard"), href: "/company/dashboard" },
-          { label: t("pages.campaigns.title") },
+          { label: t("pages.title") },
         ]}
         actions={canCreate ? [
           <Link key="new" href="/company/campaigns/new">
             <AppButton
-              label={t("pages.campaigns.new_campaign")}
+              label={t("pages.new_campaign")}
               variant="contained"
               startIcon={<AddOutlined />}
               size="medium"

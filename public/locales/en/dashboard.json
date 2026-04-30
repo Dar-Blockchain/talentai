@@ -158,11 +158,6 @@
       "sort": "Sort",
       "settings": "Settings"
     },
-    "campaigns": {
-      "title": "Campaigns",
-      "subtitle": "Manage and monitor all company campaigns",
-      "new_campaign": "New Campaign"
-    },
     "applications": {
       "title": "Applications",
       "search_placeholder": "Search by name or email…",

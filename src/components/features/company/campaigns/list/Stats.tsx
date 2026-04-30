@@ -12,9 +12,11 @@ import StatCard from "@/components/ui/StatCard";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import StatsSkeleton from "./StatsSkeleton";
+import { useTranslation } from "react-i18next";
 
 const CampaignsStats: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const { t } = useTranslation("campaign");
 
 useEffect(() => {
   dispatch(fetchCampaignMetrics());
@@ -35,28 +37,28 @@ if (loading || !metrics) return <StatsSkeleton />;
     >
       <StatCard
         icon={<CampaignOutlined sx={{ fontSize: 18 }} />}
-        label="Total"
+        label={t("pages.stats.total")}
         value={metrics.total}
         color="#6B7280"
       />
 
       <StatCard
         icon={<CheckCircleOutline sx={{ fontSize: 18 }} />}
-        label="Active"
+        label={t("pages.stats.active")}
         value={metrics.active}
         color="#10B981"
       />
 
       <StatCard
         icon={<EditNoteOutlined sx={{ fontSize: 18 }} />}
-        label="Drafts"
+        label={t("pages.stats.draft")}
         value={metrics.draft}
         color="#3B82F6"
       />
 
       <StatCard
         icon={<HourglassEmptyOutlined sx={{ fontSize: 18 }} />}
-        label="Closed/Expired"
+        label={t("pages.stats.closed_expired")}
         value={metrics.closed + metrics.expired}
         color="#8B5CF6"
       />

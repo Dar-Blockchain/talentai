@@ -158,11 +158,6 @@
       "sort": "Trier",
       "settings": "Paramètres"
     },
-    "campaigns": {
-      "title": "Campagnes",
-      "subtitle": "Gérer et suivre toutes les campagnes de l'entreprise",
-      "new_campaign": "Nouvelle campagne"
-    },
     "applications": {
       "title": "Candidatures",
       "search_placeholder": "Rechercher par nom ou email…",

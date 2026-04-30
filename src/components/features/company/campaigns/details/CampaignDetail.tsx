@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import { useRouter } from "next/router";
 import { Campaign, CampaignModule, CampaignStatus, ModuleType, ParticipantStatus } from "@/types/campaign";
@@ -33,16 +33,13 @@ import RocketLaunchOutlined    from "@mui/icons-material/RocketLaunchOutlined";
 import VisibilityOffOutlined   from "@mui/icons-material/VisibilityOffOutlined";
 import { MODULE_CONFIG } from "@/constants/campaign";
 import { daysLeft, isDeadlinePassed } from "@/utils/functions";
+import { useTranslation } from "react-i18next";
 
 const PURPLE = "#8310FF";
 const CARD = { bgcolor: "#fff", border: "1px solid #EDEEF0", borderRadius: "18px", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" } as const;
 
-const PS_CONFIG: Record<ParticipantStatus, { label: string; color: string; bg: string }> = {
-  INVITED:     { label: "Invited",     color: "#0891B2", bg: "#ECFDF5" },
-  IN_PROGRESS: { label: "In Progress", color: "#D97706", bg: "#FFFBEB" },
-  COMPLETED:   { label: "Completed",   color: "#16A34A", bg: "#F0FDF4" },
-  DROPPED:     { label: "Dropped",     color: "#EF4444", bg: "#FEF2F2" },
-};
+const CD = "detail";
+const CW = "create_wizard";
 
 type TabKey = "overview" | "participants" | "sessions";
 
@@ -72,7 +69,19 @@ const CampaignDetail: React.FC<Props> = ({
   canPublish = true,
 }) => {
   const router = useRouter();
+  const { t } = useTranslation("campaign");
   const isEmployee = mode === "employee";
+
+  const participantUi = useMemo(
+    () =>
+      ({
+        INVITED: { label: t(`${CD}.participant_status.INVITED`), color: "#0891B2", bg: "#ECFDF5" },
+        IN_PROGRESS: { label: t(`${CD}.participant_status.IN_PROGRESS`), color: "#D97706", bg: "#FFFBEB" },
+        COMPLETED: { label: t(`${CD}.participant_status.COMPLETED`), color: "#16A34A", bg: "#F0FDF4" },
+        DROPPED: { label: t(`${CD}.participant_status.DROPPED`), color: "#EF4444", bg: "#FEF2F2" },
+      }) satisfies Record<ParticipantStatus, { label: string; color: string; bg: string }>,
+    [t],
+  );
 
   const [tab,                 setTab]                 = useState<TabKey>("overview");
   const [deleteOpen,          setDeleteOpen]          = useState(false);
@@ -102,7 +111,7 @@ const CampaignDetail: React.FC<Props> = ({
 
   // Employee-mode: participant status + CTA
   const pStatus   = campaign.participantStatus ?? "INVITED";
-  const ps        = PS_CONFIG[pStatus];
+  const ps        = participantUi[pStatus];
   const typeColor = "#8310FF";
   const campaignAccessible = campaign.status === "ACTIVE";
   const canStart  = (pStatus === "INVITED" || pStatus === "IN_PROGRESS") && !isExpired && campaignAccessible;
@@ -136,7 +145,7 @@ const CampaignDetail: React.FC<Props> = ({
           bgcolor: "#FEF2F2", border: "1px solid #FECACA",
         }}>
           <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#EF4444" }} />
-          <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#EF4444" }}>Deadline passed</Typography>
+          <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#EF4444" }}>{t(`${CD}.badge_deadline_passed`)}</Typography>
         </Box>
       )}
 
@@ -147,7 +156,7 @@ const CampaignDetail: React.FC<Props> = ({
           bgcolor: "#FFFBEB", border: "1px solid #FDE68A",
         }}>
           <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#D97706" }} />
-          <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#D97706" }}>Campaign paused</Typography>
+          <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#D97706" }}>{t(`${CD}.badge_paused`)}</Typography>
         </Box>
       )}
 
@@ -158,7 +167,7 @@ const CampaignDetail: React.FC<Props> = ({
           bgcolor: "#EFF6FF", border: "1px solid #BFDBFE",
         }}>
           <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#2563EB" }} />
-          <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#2563EB" }}>Campaign closed</Typography>
+          <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#2563EB" }}>{t(`${CD}.badge_closed`)}</Typography>
         </Box>
       )}
 
@@ -175,10 +184,10 @@ const CampaignDetail: React.FC<Props> = ({
             : <PlayArrowOutlined    sx={{ fontSize: 14, color: typeColor }} />}
           <Typography sx={{ fontSize: "0.775rem", fontWeight: 700, color: pStatus === "IN_PROGRESS" ? "#D97706" : typeColor }}>
             {pStatus === "IN_PROGRESS"
-              ? "Continue"
+              ? t(`${CD}.cta_continue`)
               : moduleType === "QUESTIONNAIRE"
-              ? "Start Questionnaire"
-              : "Start Assessment"}
+              ? t(`${CD}.cta_start_questionnaire`)
+              : t(`${CD}.cta_start_assessment`)}
           </Typography>
         </Box>
       )}
@@ -193,7 +202,7 @@ const CampaignDetail: React.FC<Props> = ({
           "&:hover": { boxShadow: "0 5px 16px rgba(139,92,246,0.45)", transform: "translateY(-1px)" },
         }}>
           <VisibilityOutlined sx={{ fontSize: 14, color: "#fff" }} />
-          <Typography sx={{ fontSize: "0.775rem", fontWeight: 700, color: "#fff" }}>View Results</Typography>
+          <Typography sx={{ fontSize: "0.775rem", fontWeight: 700, color: "#fff" }}>{t(`${CD}.cta_view_results`)}</Typography>
         </Box>
       )}
     </Box>
@@ -202,91 +211,141 @@ const CampaignDetail: React.FC<Props> = ({
   const score = campaign.score ?? null;
   const scoreCol = score === null ? "#6B7280" : score >= 80 ? "#16A34A" : score >= 60 ? "#0D9488" : score >= 40 ? "#D97706" : "#EF4444";
 
-  const STATS = isEmployee
-    ? [
-        {
-          icon: PeopleAltOutlined,
-          color: PURPLE,
-          bg: `${PURPLE}08`,
-          label: "Participants",
-          value: campaign.participantCount !== undefined
-            ? String(campaign.participantCount)
-            : participantsTotal > 0 ? String(participantsTotal) : "—",
-        },
-        {
-          icon: ModIcon,
-          color: modCfg?.color ?? "#6B7280",
-          bg: `${modCfg?.color ?? "#6B7280"}08`,
-          label: "Module",
-          value: modCfg?.label ?? campaign.module?.type ?? "—",
-        },
-        pStatus === "COMPLETED" && score !== null
-          ? {
-              icon: EmojiEventsOutlined,
-              color: scoreCol,
-              bg: `${scoreCol}12`,
-              label: "My Score",
-              value: `${score} / 100`,
-            }
-          : {
-              icon: EmojiEventsOutlined,
-              color: ps.color,
-              bg: ps.bg,
-              label: "My Status",
-              value: ps.label,
-            },
-        {
-          icon: AccessTimeOutlined,
-          color: remaining === null ? "#6B7280" : remaining === 0 ? "#DC2626" : remaining <= 7 ? "#D97706" : "#16A34A",
-          bg:   remaining === null ? "#F3F4F6"  : remaining === 0 ? "#FEF2F2" : remaining <= 7 ? "#FFFBEB" : "#F0FDF4",
-          label: "Deadline",
-          value: remaining === null ? "No deadline" : remaining === 0 ? "Expired" : `${remaining}d left`,
-        },
-      ]
-    : [
-        {
-          icon: PeopleAltOutlined,
-          color: PURPLE,
-          bg: `${PURPLE}08`,
-          label: "Participants",
-          value: campaign.participantCount !== undefined
-            ? String(campaign.participantCount)
-            : participantsTotal > 0 ? String(participantsTotal) : "—",
-        },
-        {
-          icon: ModIcon,
-          color: modCfg?.color ?? "#6B7280",
-          bg: `${modCfg?.color ?? "#6B7280"}08`,
-          label: "Module",
-          value: modCfg?.label ?? campaign.module?.type ?? "—",
-        },
-        {
-          icon: AssignmentOutlined,
-          color: "#0891B2",
-          bg: "#E0F2FE",
-          label: "Sessions",
-          value: campaign.sessionCount !== undefined
-            ? String(campaign.sessionCount)
-            : sessionsTotal > 0 ? String(sessionsTotal) : "—",
-        },
-        {
-          icon: AccessTimeOutlined,
-          color: remaining === null ? "#6B7280" : remaining === 0 ? "#DC2626" : remaining <= 7 ? "#D97706" : "#16A34A",
-          bg:   remaining === null ? "#F3F4F6"  : remaining === 0 ? "#FEF2F2" : remaining <= 7 ? "#FFFBEB" : "#F0FDF4",
-          label: "Deadline",
-          value: remaining === null ? "No deadline" : remaining === 0 ? "Expired" : `${remaining}d left`,
-        },
-      ] as const;
+  const STATS = useMemo(() => {
+    const moduleLabelDisplay =
+      campaign.module?.type != null
+        ? t(`${CW}.modules.${campaign.module.type}.label`)
+        : (modCfg?.label ?? campaign.module?.type ?? "—");
+    const deadlineDisplay =
+      remaining === null
+        ? t(`${CD}.deadline_none`)
+        : remaining === 0
+          ? t(`${CD}.deadline_expired`)
+          : t(`${CD}.deadline_days_left`, { count: remaining });
+
+    return isEmployee
+      ? [
+          {
+            icon: PeopleAltOutlined,
+            color: PURPLE,
+            bg: `${PURPLE}08`,
+            label: t(`${CD}.stats_participants`),
+            value:
+              campaign.participantCount !== undefined
+                ? String(campaign.participantCount)
+                : participantsTotal > 0
+                  ? String(participantsTotal)
+                  : "—",
+          },
+          {
+            icon: ModIcon,
+            color: modCfg?.color ?? "#6B7280",
+            bg: `${modCfg?.color ?? "#6B7280"}08`,
+            label: t(`${CD}.stats_module`),
+            value: moduleLabelDisplay,
+          },
+          pStatus === "COMPLETED" && score !== null
+            ? {
+                icon: EmojiEventsOutlined,
+                color: scoreCol,
+                bg: `${scoreCol}12`,
+                label: t(`${CD}.stats_my_score`),
+                value: `${score} / 100`,
+              }
+            : {
+                icon: EmojiEventsOutlined,
+                color: ps.color,
+                bg: ps.bg,
+                label: t(`${CD}.stats_my_status`),
+                value: ps.label,
+              },
+          {
+            icon: AccessTimeOutlined,
+            color:
+              remaining === null ? "#6B7280" : remaining === 0 ? "#DC2626" : remaining <= 7 ? "#D97706" : "#16A34A",
+            bg:
+              remaining === null ? "#F3F4F6" : remaining === 0 ? "#FEF2F2" : remaining <= 7 ? "#FFFBEB" : "#F0FDF4",
+            label: t(`${CD}.stats_deadline`),
+            value: deadlineDisplay,
+          },
+        ]
+      : [
+          {
+            icon: PeopleAltOutlined,
+            color: PURPLE,
+            bg: `${PURPLE}08`,
+            label: t(`${CD}.stats_participants`),
+            value:
+              campaign.participantCount !== undefined
+                ? String(campaign.participantCount)
+                : participantsTotal > 0
+                  ? String(participantsTotal)
+                  : "—",
+          },
+          {
+            icon: ModIcon,
+            color: modCfg?.color ?? "#6B7280",
+            bg: `${modCfg?.color ?? "#6B7280"}08`,
+            label: t(`${CD}.stats_module`),
+            value: moduleLabelDisplay,
+          },
+          {
+            icon: AssignmentOutlined,
+            color: "#0891B2",
+            bg: "#E0F2FE",
+            label: t(`${CD}.stats_sessions`),
+            value:
+              campaign.sessionCount !== undefined
+                ? String(campaign.sessionCount)
+                : sessionsTotal > 0
+                  ? String(sessionsTotal)
+                  : "—",
+          },
+          {
+            icon: AccessTimeOutlined,
+            color:
+              remaining === null ? "#6B7280" : remaining === 0 ? "#DC2626" : remaining <= 7 ? "#D97706" : "#16A34A",
+            bg:
+              remaining === null ? "#F3F4F6" : remaining === 0 ? "#FEF2F2" : remaining <= 7 ? "#FFFBEB" : "#F0FDF4",
+            label: t(`${CD}.stats_deadline`),
+            value: deadlineDisplay,
+          },
+        ];
+  }, [
+    isEmployee,
+    t,
+    campaign.participantCount,
+    campaign.sessionCount,
+    campaign.module?.type,
+    participantsTotal,
+    sessionsTotal,
+    modCfg?.color,
+    ModIcon,
+    pStatus,
+    score,
+    scoreCol,
+    ps.color,
+    ps.bg,
+    ps.label,
+    remaining,
+  ]);
 
   const isLinkBased = campaign.accessMethod === "LINK";
   const moduleConfigured = campaign.module?.config != null;
   const showSetupBanner = !isEmployee && campaign.status === "DRAFT";
 
-  const TABS: { key: TabKey; label: string; icon: React.ReactNode; count?: number | string; color: string }[] = [
-    { key: "overview",     label: "Overview",     icon: <DashboardOutlined  sx={{ fontSize: 16 }} />, color: PURPLE,    count: undefined },
-    ...(!isLinkBased ? [{ key: "participants" as TabKey, label: "Participants", icon: <PeopleAltOutlined sx={{ fontSize: 16 }} />, color: PURPLE, count: participantsTotal || undefined }] : []),
-    ...(!isEmployee ? [{ key: "sessions" as TabKey, label: "Sessions", icon: <AssignmentOutlined sx={{ fontSize: 16 }} />, color: "#0891B2", count: sessionsTotal || undefined }] : []),
-  ];
+  const TABS: { key: TabKey; label: string; icon: React.ReactNode; count?: number | string; color: string }[] = useMemo(
+    () => [
+      { key: "overview", label: t(`${CD}.tab_overview`), icon: <DashboardOutlined sx={{ fontSize: 16 }} />, color: PURPLE, count: undefined },
+      ...(!isLinkBased
+        ? [{ key: "participants" as TabKey, label: t(`${CD}.tab_participants`), icon: <PeopleAltOutlined sx={{ fontSize: 16 }} />, color: PURPLE, count: participantsTotal || undefined }]
+        : []),
+      ...(!isEmployee
+        ? [{ key: "sessions" as TabKey, label: t(`${CD}.tab_sessions`), icon: <AssignmentOutlined sx={{ fontSize: 16 }} />, color: "#0891B2", count: sessionsTotal || undefined }]
+        : []),
+    ],
+    [t, isLinkBased, isEmployee, participantsTotal, sessionsTotal],
+  );
 
   /* ── Tab pill (same design as EmployeesList) ── */
   const TabPill = ({ tabKey, label, icon, count, color }: {
@@ -326,7 +385,7 @@ const CampaignDetail: React.FC<Props> = ({
         onChangeStatus={canPublish ? onChangeStatus : undefined}
         onDeleteClick={canDelete && !isEmployee ? () => setDeleteOpen(true) : undefined}
         onEditClick={canEdit && !isEmployee ? () => setEditOpen(true) : undefined}
-        backLabel={isEmployee ? "My Campaigns" : "Campaigns"}
+        backLabel={isEmployee ? t(`${CD}.back_employee`) : t(`${CD}.back_company`)}
         backUrl={isEmployee ? "/employee/campaigns" : "/company/campaigns"}
         actionsNode={employeeActionsNode}
       />
@@ -360,10 +419,10 @@ const CampaignDetail: React.FC<Props> = ({
             </Box>
             <Box>
               <Typography sx={{ fontSize: "13.5px", fontWeight: 700, color: "#111827" }}>
-                Campaign not visible to participants yet
+                {t(`${CD}.draft_banner_title`)}
               </Typography>
               <Typography sx={{ fontSize: "11.5px", color: "#9CA3AF", mt: 0.1 }}>
-                Complete the steps below to launch it.
+                {t(`${CD}.draft_banner_subtitle`)}
               </Typography>
             </Box>
           </Box>
@@ -391,24 +450,22 @@ const CampaignDetail: React.FC<Props> = ({
                       : <TuneOutlined sx={{ fontSize: 15, color: "#D97706" }} />}
                   </Box>
                   <Typography sx={{ fontSize: "12.5px", fontWeight: 700, color: moduleConfigured ? "#15803D" : "#92400E" }}>
-                    Step 1 — Configure Module
+                    {t(`${CD}.setup_step1_title`)}
                   </Typography>
                 </Box>
                 {moduleConfigured
                   ? <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.4, px: 0.875, py: "2px", borderRadius: "999px", bgcolor: "#DCFCE7" }}>
                       <CheckCircleOutlined sx={{ fontSize: 11, color: "#16A34A" }} />
-                      <Typography sx={{ fontSize: "10px", fontWeight: 700, color: "#16A34A" }}>Done</Typography>
+                      <Typography sx={{ fontSize: "10px", fontWeight: 700, color: "#16A34A" }}>{t(`${CD}.setup_done`)}</Typography>
                     </Box>
                   : <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.4, px: 0.875, py: "2px", borderRadius: "999px", bgcolor: "#FEF3C7" }}>
                       <RadioButtonUncheckedOutlined sx={{ fontSize: 11, color: "#D97706" }} />
-                      <Typography sx={{ fontSize: "10px", fontWeight: 700, color: "#D97706" }}>Pending</Typography>
+                      <Typography sx={{ fontSize: "10px", fontWeight: 700, color: "#D97706" }}>{t(`${CD}.setup_pending`)}</Typography>
                     </Box>
                 }
               </Box>
               <Typography sx={{ fontSize: "11.5px", color: moduleConfigured ? "#166534" : "#78350F", lineHeight: 1.5 }}>
-                {moduleConfigured
-                  ? `Module is configured and ready.`
-                  : `Set up the assessment module so participants know what to expect.`}
+                {moduleConfigured ? t(`${CD}.setup_step1_ready`) : t(`${CD}.setup_step1_hint`)}
               </Typography>
               {!moduleConfigured && campaign.module?.type && canEdit && (
                 <Box
@@ -422,7 +479,7 @@ const CampaignDetail: React.FC<Props> = ({
                   }}
                 >
                   <TuneOutlined sx={{ fontSize: 13, color: "#D97706" }} />
-                  <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#D97706" }}>Configure now</Typography>
+                  <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#D97706" }}>{t(`${CD}.setup_configure_now`)}</Typography>
                 </Box>
               )}
             </Box>
@@ -451,18 +508,16 @@ const CampaignDetail: React.FC<Props> = ({
                     <RocketLaunchOutlined sx={{ fontSize: 15, color: moduleConfigured ? "#2563EB" : "#9CA3AF" }} />
                   </Box>
                   <Typography sx={{ fontSize: "12.5px", fontWeight: 700, color: moduleConfigured ? "#1E40AF" : "#6B7280" }}>
-                    Step 2 — Activate Campaign
+                    {t(`${CD}.setup_step2_title`)}
                   </Typography>
                 </Box>
                 <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.4, px: 0.875, py: "2px", borderRadius: "999px", bgcolor: moduleConfigured ? "#DBEAFE" : "#F3F4F6" }}>
                   <RadioButtonUncheckedOutlined sx={{ fontSize: 11, color: moduleConfigured ? "#2563EB" : "#9CA3AF" }} />
-                  <Typography sx={{ fontSize: "10px", fontWeight: 700, color: moduleConfigured ? "#2563EB" : "#9CA3AF" }}>Pending</Typography>
+                  <Typography sx={{ fontSize: "10px", fontWeight: 700, color: moduleConfigured ? "#2563EB" : "#9CA3AF" }}>{t(`${CD}.setup_pending`)}</Typography>
                 </Box>
               </Box>
               <Typography sx={{ fontSize: "11.5px", color: moduleConfigured ? "#1E40AF" : "#9CA3AF", lineHeight: 1.5 }}>
-                {moduleConfigured
-                  ? `Ready to go! Activate the campaign to make it visible to participants.`
-                  : `Complete step 1 first, then activate the campaign.`}
+                {moduleConfigured ? t(`${CD}.setup_step2_ready`) : t(`${CD}.setup_step2_blocked`)}
               </Typography>
               {moduleConfigured && canPublish && (
                 <Box
@@ -476,7 +531,7 @@ const CampaignDetail: React.FC<Props> = ({
                   }}
                 >
                   <RocketLaunchOutlined sx={{ fontSize: 13, color: "#fff" }} />
-                  <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#fff" }}>Activate now</Typography>
+                  <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#fff" }}>{t(`${CD}.setup_activate_now`)}</Typography>
                 </Box>
               )}
             </Box>

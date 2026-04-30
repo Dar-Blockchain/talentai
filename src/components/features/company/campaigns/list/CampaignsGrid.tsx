@@ -1,4 +1,4 @@
-import React, { useEffect, memo, useState, useCallback } from "react";
+import React, { useEffect, memo, useState, useCallback, useMemo } from "react";
 import {
   Box, TextField, InputAdornment, MenuItem, Select, FormControl,
   Button, Typography, Chip,
@@ -31,33 +31,41 @@ import SearchOutlined     from "@mui/icons-material/SearchOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import CloseOutlined      from "@mui/icons-material/CloseOutlined";
 import EmptyState  from "@/components/ui/EmptyState";
-import AppButton   from "@/components/ui/AppButton";
-import AddOutlined from "@mui/icons-material/AddOutlined";
+import { useTranslation } from "react-i18next";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ─── Options built from i18n (labels + fixed colors) ──────────────────────────
 
-const STATUS_OPTIONS: { value: string; label: string; color: string; bg: string }[] = [
-  { value: "",        label: "All statuses", color: "#6B7280", bg: "#F3F4F6" },
-  { value: "DRAFT",   label: "Draft",        color: "#6B7280", bg: "#F3F4F6" },
-  { value: "ACTIVE",  label: "Active",       color: "#059669", bg: "#ECFDF5" },
-  { value: "PAUSED",  label: "Paused",       color: "#D97706", bg: "#FFFBEB" },
-  { value: "CLOSED",  label: "Closed",       color: "#DC2626", bg: "#FEF2F2" },
-  { value: "EXPIRED", label: "Expired",      color: "#7C3AED", bg: "#F5F3FF" },
-];
-
-const PERIOD_OPTIONS = [
-  { value: "",    label: "All time"       },
-  { value: "7d",  label: "Last 7 days"   },
-  { value: "30d", label: "Last 30 days"  },
-  { value: "3m",  label: "Last 3 months" },
-  { value: "6m",  label: "Last 6 months" },
-  { value: "1y",  label: "Last year"     },
-];
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 const CampaignsGrid: React.FC = () => {
+  const { t } = useTranslation("campaign");
   const dispatch = useDispatch<AppDispatch>();
+
+  const STATUS_OPTIONS = useMemo(
+    () =>
+      [
+        { value: "", label: t("filters.status_label"), color: "#6B7280", bg: "#F3F4F6" },
+        { value: "DRAFT", label: t("status.DRAFT"), color: "#6B7280", bg: "#F3F4F6" },
+        { value: "ACTIVE", label: t("status.ACTIVE"), color: "#059669", bg: "#ECFDF5" },
+        { value: "PAUSED", label: t("status.PAUSED"), color: "#D97706", bg: "#FFFBEB" },
+        { value: "CLOSED", label: t("status.CLOSED"), color: "#DC2626", bg: "#FEF2F2" },
+        { value: "EXPIRED", label: t("status.EXPIRED"), color: "#7C3AED", bg: "#F5F3FF" },
+      ] as const,
+    [t],
+  );
+
+  const PERIOD_OPTIONS = useMemo(
+    () =>
+      [
+        { value: "", label: t("filters.period_label") },
+        { value: "7d", label: t("filters.last_7_days") },
+        { value: "30d", label: t("filters.last_30_days") },
+        { value: "3m", label: t("filters.last_3_months") },
+        { value: "6m", label: t("filters.last_6_months") },
+        { value: "1y", label: t("filters.last_year") },
+      ] as const,
+    [t],
+  );
+
   const campaigns     = useSelector(selectCampaigns);
   const loading       = useSelector(selectCampaignLoading);
   const deleteLoading = useSelector(selectCampaignDeleteLoading);
@@ -92,12 +100,12 @@ const CampaignsGrid: React.FC = () => {
 
   // debounce search
   useEffect(() => {
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       setSearch(searchInput);
       dispatch(setPage(1));
       dispatch(fetchCampaigns({ page: 1, limit, search: searchInput, status: status as CampaignStatus | undefined, period }));
     }, 400);
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   }, [searchInput]);
 
   const handleStatusChange = (val: string) => {
@@ -142,7 +150,7 @@ const CampaignsGrid: React.FC = () => {
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
-  const activeStatusMeta = STATUS_OPTIONS.find(o => o.value === status);
+  const activeStatusMeta = STATUS_OPTIONS.find((o) => o.value === status);
 
   return (
     <>
@@ -152,7 +160,7 @@ const CampaignsGrid: React.FC = () => {
         {/* Search */}
         <TextField
           size="small"
-          placeholder="Search campaigns…"
+          placeholder={t("filters.search_placeholder")}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           InputProps={{
@@ -182,14 +190,14 @@ const CampaignsGrid: React.FC = () => {
                     <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: opt?.color, flexShrink: 0 }} />
                   ) : null}
                   <Typography sx={{ fontSize: 13, color: v ? "#111827" : "#9CA3AF" }}>
-                    {opt?.label ?? "Status"}
+                    {opt?.label ?? t("filters.status_placeholder")}
                   </Typography>
                 </Box>
               );
             }}
             sx={{ borderRadius: 2, bgcolor: "#fff", fontSize: 13 }}
           >
-            {STATUS_OPTIONS.map(o => (
+            {STATUS_OPTIONS.map((o) => (
               <MenuItem key={o.value} value={o.value}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                   {o.value && <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: o.color, flexShrink: 0 }} />}
@@ -210,13 +218,13 @@ const CampaignsGrid: React.FC = () => {
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <CalendarTodayOutlined sx={{ fontSize: 14, color: "#9CA3AF" }} />
                 <Typography sx={{ fontSize: 13, color: v ? "#111827" : "#9CA3AF" }}>
-                  {PERIOD_OPTIONS.find(o => o.value === v)?.label ?? "Period"}
+                  {PERIOD_OPTIONS.find((o) => o.value === v)?.label ?? t("filters.period_placeholder")}
                 </Typography>
               </Box>
             )}
             sx={{ borderRadius: 2, bgcolor: "#fff", fontSize: 13 }}
           >
-            {PERIOD_OPTIONS.map(o => (
+            {PERIOD_OPTIONS.map((o) => (
               <MenuItem key={o.value} value={o.value} sx={{ fontSize: 13 }}>{o.label}</MenuItem>
             ))}
           </Select>
@@ -234,7 +242,7 @@ const CampaignsGrid: React.FC = () => {
               px: 1.5, whiteSpace: "nowrap",
             }}
           >
-            Clear
+            {t("filters.clear")}
           </Button>
         )}
       </Box>
@@ -251,7 +259,7 @@ const CampaignsGrid: React.FC = () => {
               sx={{ fontSize: 11, bgcolor: activeStatusMeta.bg, color: activeStatusMeta.color, border: "none" }} />
           )}
           {period && (
-            <Chip size="small" label={PERIOD_OPTIONS.find(o => o.value === period)?.label} onDelete={() => handlePeriodChange("")}
+            <Chip size="small" label={PERIOD_OPTIONS.find((o) => o.value === period)?.label} onDelete={() => handlePeriodChange("")}
               sx={{ fontSize: 11, bgcolor: "#F5F3FF", color: "#7C3AED", border: "none" }} />
           )}
         </Box>
@@ -263,8 +271,8 @@ const CampaignsGrid: React.FC = () => {
       ) : campaigns.length === 0 ? (
         <EmptyState
           icon={<CampaignOutlined />}
-          title={hasActiveFilters ? "No campaigns match your filters" : "No campaigns yet"}
-          description={hasActiveFilters ? "Try adjusting your search or filters." : "Create your first assessment campaign to start measuring your team's skills."}
+          title={hasActiveFilters ? t("list.no_results") : t("list.empty")}
+          description={hasActiveFilters ? t("list.no_results_description") : t("list.empty_description")}
         />
       ) : (
         <Box sx={{
