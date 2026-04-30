@@ -30,10 +30,14 @@ export function normalizeLangCode(raw?: string | null): SupportedLanguage | null
 export function useLanguage() {
   const { i18n } = useTranslation();
 
+  const raw = i18n.language ?? 'en';
+  const base = raw.split('-')[0]?.toLowerCase();
   const currentLang = (
-    SUPPORTED_LANGUAGES.includes(i18n.language as SupportedLanguage)
-      ? i18n.language
-      : 'en'
+    base === 'fr' || base === 'en'
+      ? base
+      : SUPPORTED_LANGUAGES.includes(raw as SupportedLanguage)
+        ? (raw as SupportedLanguage)
+        : 'en'
   ) as SupportedLanguage;
 
   const isRTL = RTL_LANGUAGES.includes(currentLang);

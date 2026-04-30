@@ -29,9 +29,7 @@ import AddOutlined from "@mui/icons-material/AddOutlined";
 import CloseOutlined from "@mui/icons-material/CloseOutlined";
 import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
 import InfoOutlined from "@mui/icons-material/InfoOutlined";
-import { Close } from "@mui/icons-material";
 import SkillEditorModal from "./SkillEditorModal";
-import { getLevelFromNumber } from "@/utils/postHelpers";
 import { experienceLevels } from "@/constants/candidate";
 import {
   contractTypes,
@@ -39,6 +37,14 @@ import {
 } from "@/constants/candidate";
 import SalaryRange from "./SalaryRange";
 import SectionCard from "@/components/ui/SectionCard";
+import {
+  EMPLOYMENT_OPTION_KEY,
+  EXPERIENCE_OPTION_KEY,
+  WORK_MODE_OPTION_KEY,
+  optionLabel,
+  hardSkillLevelLabel,
+  softSkillLevelLabel,
+} from "@/utils/postFormI18n";
 
 const TEAL        = "#0D9488";
 const TEAL_BG     = "#F0FDFA";
@@ -160,25 +166,27 @@ const PostPreview = () => {
           <Box>
             <Typography sx={labelSx}>
               <WorkOutlined sx={{ fontSize: 14 }} />
-              {t("create.preview.label_type")}
+              {t("create.post_form.labels.employment_type")}
             </Typography>
             <TextField select fullWidth value={employmentType}
               onChange={(e) => dispatch(updateJobField({ field: "employmentType", value: e.target.value }))}
               sx={inputSx}
             >
-              {contractTypes.map((c) => <MenuItem key={c} value={c} sx={{ fontSize: "13px" }}>{c}</MenuItem>)}
+              <MenuItem disabled value=""><Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>{t("create.post_form.placeholders.select_employment_type")}</Typography></MenuItem>
+              {contractTypes.map((c) => <MenuItem key={c} value={c} sx={{ fontSize: "13px" }}>{optionLabel(t, c, EMPLOYMENT_OPTION_KEY)}</MenuItem>)}
             </TextField>
           </Box>
           <Box>
             <Typography sx={labelSx}>
               <LocationOnOutlined sx={{ fontSize: 14 }} />
-              {t("create.preview.label_work_mode")}
+              {t("create.post_form.labels.work_mode")}
             </Typography>
             <TextField select fullWidth value={workMode}
               onChange={(e) => dispatch(updateJobField({ field: "workMode", value: e.target.value }))}
               sx={inputSx}
             >
-              {workModes.map((m) => <MenuItem key={m} value={m} sx={{ fontSize: "13px" }}>{m}</MenuItem>)}
+              <MenuItem disabled value=""><Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>{t("create.post_form.placeholders.select_work_mode")}</Typography></MenuItem>
+              {workModes.map((m) => <MenuItem key={m} value={m} sx={{ fontSize: "13px" }}>{optionLabel(t, m, WORK_MODE_OPTION_KEY)}</MenuItem>)}
             </TextField>
           </Box>
         </Box>
@@ -186,14 +194,15 @@ const PostPreview = () => {
         <Box sx={{ mb: 2 }}>
           <Typography sx={labelSx}>
             <TrendingUpIcon sx={{ fontSize: 14 }} />
-            {t("create.preview.label_experience")}
+            {t("create.post_form.labels.experience_level")}
           </Typography>
           <TextField select fullWidth value={experienceLevel}
             onChange={(e) => dispatch(updateJobField({ field: "experienceLevel", value: e.target.value }))}
             sx={inputSx}
             InputProps={{ startAdornment: <InputAdornment position="start"><TrendingUpIcon sx={{ fontSize: 16, color: "#9CA3AF" }} /></InputAdornment> }}
           >
-            {experienceLevels.map((l) => <MenuItem key={l} value={l} sx={{ fontSize: "13px" }}>{l}</MenuItem>)}
+            <MenuItem disabled value=""><Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>{t("create.post_form.placeholders.select_experience_level")}</Typography></MenuItem>
+            {experienceLevels.map((l) => <MenuItem key={l} value={l} sx={{ fontSize: "13px" }}>{optionLabel(t, l, EXPERIENCE_OPTION_KEY)}</MenuItem>)}
           </TextField>
         </Box>
 
@@ -221,12 +230,12 @@ const PostPreview = () => {
             {hardSkills.map((skill, index) => (
               <SkillChip
                 key={index}
-                label={`${skill.name} (${getLevelFromNumber(skill.level)}) · ${skill.percentage}%`}
+                label={`${skill.name} (${hardSkillLevelLabel(t, Number(skill.level))}) · ${skill.percentage}%`}
                 onDelete={() => dispatch(deleteHardSkill(index))}
                 onClick={() => handleEdit({ name: skill.name, level: skill.level, percentage: skill.percentage }, index, "hard")}
               />
             ))}
-            <AddSkillButton onClick={() => handleAdd("hard")} />
+            <AddSkillButton skillType="hard" onClick={() => handleAdd("hard")} />
           </Box>
         </Box>
 
@@ -237,12 +246,12 @@ const PostPreview = () => {
             {softSkills.map((skill, index) => (
               <SkillChip
                 key={index}
-                label={`${skill.name} (${skill.level}/5) · ${skill.percentage}%`}
+                label={`${skill.name} (${softSkillLevelLabel(t, Number(skill.level))}) · ${skill.percentage}%`}
                 onDelete={() => dispatch(deleteSoftSkill(index))}
                 onClick={() => handleEdit({ name: skill.name, level: skill.level, percentage: skill.percentage }, index, "soft")}
               />
             ))}
-            <AddSkillButton onClick={() => handleAdd("soft")} />
+            <AddSkillButton skillType="soft" onClick={() => handleAdd("soft")} />
           </Box>
         </Box>
       </SectionCard>
@@ -297,8 +306,9 @@ export default PostPreview;
 
 /* ── Shared sub-components ── */
 
-const AddSkillButton: React.FC<{ onClick: () => void }> = ({ onClick }) => {
+const AddSkillButton: React.FC<{ skillType: "hard" | "soft"; onClick: () => void }> = ({ skillType, onClick }) => {
   const { t } = useTranslation("posts");
+  const labelKey = skillType === "hard" ? "create.preview.btn_add_hard_skill" : "create.preview.btn_add_soft_skill";
   return (
     <Button
       variant="outlined"
@@ -313,7 +323,7 @@ const AddSkillButton: React.FC<{ onClick: () => void }> = ({ onClick }) => {
         "&:hover": { borderColor: TEAL, color: TEAL, bgcolor: TEAL_BG },
       }}
     >
-      {t("create.preview.btn_add_skill")}
+      {t(labelKey)}
     </Button>
   );
 };

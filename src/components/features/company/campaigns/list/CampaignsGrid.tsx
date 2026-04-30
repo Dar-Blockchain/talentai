@@ -26,46 +26,51 @@ import {
   setPage,
 } from "@/store/slices/campaignSlice";
 import Pagination from "@/components/ui/Pagination";
-import CampaignOutlined   from "@mui/icons-material/CampaignOutlined";
 import SearchOutlined     from "@mui/icons-material/SearchOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import CloseOutlined      from "@mui/icons-material/CloseOutlined";
 import EmptyState  from "@/components/ui/EmptyState";
+import CampaignOutlined   from "@mui/icons-material/CampaignOutlined";
 import { useTranslation } from "react-i18next";
 
-// ─── Options built from i18n (labels + fixed colors) ──────────────────────────
+type StatusOpt = { value: string; label: string; color: string; bg: string };
 
+const STATUS_META: Omit<StatusOpt, "label">[] = [
+  { value: "",        color: "#6B7280", bg: "#F3F4F6" },
+  { value: "DRAFT",   color: "#6B7280", bg: "#F3F4F6" },
+  { value: "ACTIVE",  color: "#059669", bg: "#ECFDF5" },
+  { value: "PAUSED",  color: "#D97706", bg: "#FFFBEB" },
+  { value: "CLOSED",  color: "#DC2626", bg: "#FEF2F2" },
+  { value: "EXPIRED", color: "#7C3AED", bg: "#F5F3FF" },
+];
+
+const PERIOD_VALUES = ["", "7d", "30d", "3m", "6m", "1y"] as const;
 
 const CampaignsGrid: React.FC = () => {
-  const { t } = useTranslation("campaign");
-  const dispatch = useDispatch<AppDispatch>();
+  const { t } = useTranslation("dashboard");
+  const p = "pages.campaigns";
 
-  const STATUS_OPTIONS = useMemo(
+  const STATUS_OPTIONS: StatusOpt[] = useMemo(
     () =>
-      [
-        { value: "", label: t("filters.status_label"), color: "#6B7280", bg: "#F3F4F6" },
-        { value: "DRAFT", label: t("status.DRAFT"), color: "#6B7280", bg: "#F3F4F6" },
-        { value: "ACTIVE", label: t("status.ACTIVE"), color: "#059669", bg: "#ECFDF5" },
-        { value: "PAUSED", label: t("status.PAUSED"), color: "#D97706", bg: "#FFFBEB" },
-        { value: "CLOSED", label: t("status.CLOSED"), color: "#DC2626", bg: "#FEF2F2" },
-        { value: "EXPIRED", label: t("status.EXPIRED"), color: "#7C3AED", bg: "#F5F3FF" },
-      ] as const,
+      STATUS_META.map((o) => ({
+        ...o,
+        label: o.value === ""
+          ? t(`${p}.toolbar.status.all`)
+          : t(`${p}.toolbar.status.${o.value}`),
+      })),
     [t],
   );
 
   const PERIOD_OPTIONS = useMemo(
     () =>
-      [
-        { value: "", label: t("filters.period_label") },
-        { value: "7d", label: t("filters.last_7_days") },
-        { value: "30d", label: t("filters.last_30_days") },
-        { value: "3m", label: t("filters.last_3_months") },
-        { value: "6m", label: t("filters.last_6_months") },
-        { value: "1y", label: t("filters.last_year") },
-      ] as const,
+      PERIOD_VALUES.map((value) => ({
+        value,
+        label: value === "" ? t(`${p}.toolbar.period.all`) : t(`${p}.toolbar.period.${value}`),
+      })),
     [t],
   );
 
+  const dispatch = useDispatch<AppDispatch>();
   const campaigns     = useSelector(selectCampaigns);
   const loading       = useSelector(selectCampaignLoading);
   const deleteLoading = useSelector(selectCampaignDeleteLoading);
@@ -85,13 +90,13 @@ const CampaignsGrid: React.FC = () => {
   const [status,      setStatus]      = useState("");
   const [period,      setPeriod]      = useState("");
 
-  const doFetch = useCallback((overrides: Record<string, any> = {}) => {
+  const doFetch = useCallback((overrides: Partial<{ search: string; status: string; period: string }> = {}) => {
     dispatch(fetchCampaigns({
       page,
       limit,
-      search: overrides.search  ?? search,
+      search: overrides.search ?? search,
       status: (overrides.status ?? status) as CampaignStatus | undefined,
-      period: overrides.period  ?? period,
+      period: overrides.period ?? period,
     }));
   }, [dispatch, page, limit, search, status, period]);
 
@@ -160,7 +165,7 @@ const CampaignsGrid: React.FC = () => {
         {/* Search */}
         <TextField
           size="small"
-          placeholder={t("filters.search_placeholder")}
+          placeholder={t(`${p}.toolbar.search_placeholder`)}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           InputProps={{
@@ -183,14 +188,14 @@ const CampaignsGrid: React.FC = () => {
             onChange={(e) => handleStatusChange(e.target.value)}
             displayEmpty
             renderValue={(v) => {
-              const opt = STATUS_OPTIONS.find(o => o.value === v);
+              const opt = STATUS_OPTIONS.find((o) => o.value === v);
               return (
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   {v ? (
                     <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: opt?.color, flexShrink: 0 }} />
                   ) : null}
                   <Typography sx={{ fontSize: 13, color: v ? "#111827" : "#9CA3AF" }}>
-                    {opt?.label ?? t("filters.status_placeholder")}
+                    {opt?.label ?? t(`${p}.toolbar.status_placeholder`)}
                   </Typography>
                 </Box>
               );
@@ -218,7 +223,7 @@ const CampaignsGrid: React.FC = () => {
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <CalendarTodayOutlined sx={{ fontSize: 14, color: "#9CA3AF" }} />
                 <Typography sx={{ fontSize: 13, color: v ? "#111827" : "#9CA3AF" }}>
-                  {PERIOD_OPTIONS.find((o) => o.value === v)?.label ?? t("filters.period_placeholder")}
+                  {PERIOD_OPTIONS.find((o) => o.value === v)?.label ?? t(`${p}.toolbar.period_placeholder`)}
                 </Typography>
               </Box>
             )}
@@ -242,7 +247,7 @@ const CampaignsGrid: React.FC = () => {
               px: 1.5, whiteSpace: "nowrap",
             }}
           >
-            {t("filters.clear")}
+            {t(`${p}.toolbar.clear_filters`)}
           </Button>
         )}
       </Box>
@@ -271,8 +276,8 @@ const CampaignsGrid: React.FC = () => {
       ) : campaigns.length === 0 ? (
         <EmptyState
           icon={<CampaignOutlined />}
-          title={hasActiveFilters ? t("list.no_results") : t("list.empty")}
-          description={hasActiveFilters ? t("list.no_results_description") : t("list.empty_description")}
+          title={hasActiveFilters ? t(`${p}.empty.filtered_title`) : t(`${p}.empty.none_title`)}
+          description={hasActiveFilters ? t(`${p}.empty.filtered_hint`) : t(`${p}.empty.none_hint`)}
         />
       ) : (
         <Box sx={{
@@ -299,7 +304,7 @@ const CampaignsGrid: React.FC = () => {
       )}
 
       {count > 0 && (
-        <Pagination page={page} pageSize={limit} total={count} onPageChange={(p) => dispatch(setPage(p))} />
+        <Pagination page={page} pageSize={limit} total={count} onPageChange={(pag) => dispatch(setPage(pag))} />
       )}
 
       <DeleteCampaignDialog

@@ -1,6 +1,5 @@
 import React from "react";
 import { Box, Chip, Typography } from "@mui/material";
-import { useTranslation } from "react-i18next";
 import LockOutlined from "@mui/icons-material/LockOutlined";
 import LockOpenOutlined from "@mui/icons-material/LockOpenOutlined";
 import LinkOutlined from "@mui/icons-material/LinkOutlined";
@@ -11,9 +10,7 @@ import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
 import UpdateOutlined from "@mui/icons-material/UpdateOutlined";
 import { Campaign } from "@/types/campaign";
 import { fmtDate, daysLeft } from "@/utils/functions";
-
-const CD = "detail";
-const CW = "create_wizard";
+import { useTranslation } from "react-i18next";
 
 const CARD = {
   bgcolor: "#fff",
@@ -55,22 +52,16 @@ interface Props {
 }
 
 const CampaignDetailsCard: React.FC<Props> = ({ campaign }) => {
-  const { t } = useTranslation("campaign");
+  const { t } = useTranslation("dashboard");
+  const d = "pages.campaigns.detail";
   const remaining    = daysLeft(campaign.deadline);
   const anonymous    = campaign.anonymityMode === "ANONYMOUS";
-
-  const accessLabel =
-    campaign.accessMethod === "LINK"
-      ? t(`${CD}.details_access_public_link`)
-      : campaign.accessMethod === "ACCOUNTS"
-        ? t(`${CD}.details_access_accounts_only`)
-        : t(`${CD}.details_access_link_and_accounts`);
-  const accessSub =
-    campaign.accessMethod === "LINK"
-      ? t(`${CD}.details_access_sub_link`)
-      : campaign.accessMethod === "ACCOUNTS"
-        ? t(`${CD}.details_access_sub_accounts`)
-        : t(`${CD}.details_access_sub_both`);
+  const accessLabel  =
+    campaign.accessMethod === "LINK"     ? t(`${d}.access_public_link`)      :
+    campaign.accessMethod === "ACCOUNTS" ? t(`${d}.access_accounts_only`)    : t(`${d}.access_link_and_accounts`);
+  const accessSub    =
+    campaign.accessMethod === "LINK"     ? t(`${d}.access_sub_link`) :
+    campaign.accessMethod === "ACCOUNTS" ? t(`${d}.access_sub_accounts`) : t(`${d}.access_sub_both`);
   const deadlineColor =
     remaining === null ? "#6B7280" :
     remaining === 0    ? "#DC2626" :
@@ -81,7 +72,7 @@ const CampaignDetailsCard: React.FC<Props> = ({ campaign }) => {
       {/* Header */}
       <Box sx={{ px: 2.5, pt: 2.25, pb: 1.75, borderBottom: "1px solid #F3F4F6" }}>
         <Typography sx={{ fontWeight: 700, fontSize: "0.875rem", color: "#0F172A" }}>
-          {t(`${CD}.details_settings_heading`)}
+          {t(`${d}.settings_card_title`)}
         </Typography>
       </Box>
 
@@ -92,13 +83,13 @@ const CampaignDetailsCard: React.FC<Props> = ({ campaign }) => {
         <InfoBlock
           icon={anonymous ? <LockOutlined sx={{ fontSize: 16 }} /> : <LockOpenOutlined sx={{ fontSize: 16 }} />}
           iconColor={anonymous ? "#8310FF" : "#0891B2"}
-          label={t(`${CD}.details_anonymity_heading`)}
+          label={t(`${d}.anonymity_label`)}
         >
           <Typography sx={{ fontSize: "0.8125rem", fontWeight: 700, color: "#0F172A" }}>
-            {anonymous ? t(`${CW}.anonymity_anonymous_label`) : t(`${CW}.anonymity_nominative_label`)}
+            {anonymous ? t(`${d}.anonymous`) : t(`${d}.nominative`)}
           </Typography>
           <Typography sx={{ fontSize: "0.7rem", color: "#94A3B8", mt: 0.15 }}>
-            {anonymous ? t(`${CD}.details_responses_hidden`) : t(`${CD}.details_responses_identified`)}
+            {anonymous ? t(`${d}.responses_hidden`) : t(`${d}.responses_identified`)}
           </Typography>
         </InfoBlock>
 
@@ -108,7 +99,7 @@ const CampaignDetailsCard: React.FC<Props> = ({ campaign }) => {
             ? <AccountCircleOutlined sx={{ fontSize: 16 }} />
             : <LinkOutlined sx={{ fontSize: 16 }} />}
           iconColor="#0D9488"
-          label={t(`${CD}.details_access_method_heading`)}
+          label={t(`${d}.access_method_label`)}
         >
           <Typography sx={{ fontSize: "0.8125rem", fontWeight: 700, color: "#0F172A" }}>
             {accessLabel}
@@ -120,7 +111,7 @@ const CampaignDetailsCard: React.FC<Props> = ({ campaign }) => {
 
         {/* Target department */}
         {campaign.targetDepartment && (
-          <InfoBlock icon={<GroupOutlined sx={{ fontSize: 16 }} />} iconColor="#F59E0B" label={t(`${CD}.details_target_department`)}>
+          <InfoBlock icon={<GroupOutlined sx={{ fontSize: 16 }} />} iconColor="#F59E0B" label={t(`${d}.target_department`)}>
             <Typography sx={{ fontSize: "0.8125rem", fontWeight: 700, color: "#0F172A" }}>
               {campaign.targetDepartment}
             </Typography>
@@ -128,7 +119,7 @@ const CampaignDetailsCard: React.FC<Props> = ({ campaign }) => {
         )}
 
         {/* Created */}
-        <InfoBlock icon={<CalendarTodayOutlined sx={{ fontSize: 16 }} />} iconColor="#6B7280" label={t(`${CD}.details_label_created`)}>
+        <InfoBlock icon={<CalendarTodayOutlined sx={{ fontSize: 16 }} />} iconColor="#6B7280" label={t(`${d}.created`)}>
           <Typography sx={{ fontSize: "0.8125rem", fontWeight: 700, color: "#0F172A" }}>
             {fmtDate(campaign.createdAt)}
           </Typography>
@@ -136,18 +127,14 @@ const CampaignDetailsCard: React.FC<Props> = ({ campaign }) => {
 
         {/* Deadline */}
         {campaign.deadline && (
-          <InfoBlock icon={<AccessTimeOutlined sx={{ fontSize: 16 }} />} iconColor={deadlineColor} label={t(`${CD}.details_label_deadline`)}>
+          <InfoBlock icon={<AccessTimeOutlined sx={{ fontSize: 16 }} />} iconColor={deadlineColor} label={t(`${d}.deadline`)}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
               <Typography sx={{ fontSize: "0.8125rem", fontWeight: 700, color: "#0F172A" }}>
                 {fmtDate(campaign.deadline)}
               </Typography>
               {remaining !== null && (
                 <Chip
-                  label={
-                    remaining === 0
-                      ? t(`${CD}.details_chip_expired`)
-                      : t(`${CD}.header_deadline_short_left`, { count: remaining })
-                  }
+                  label={remaining === 0 ? t(`${d}.stats_expired`) : t(`${d}.days_left_short`, { count: remaining })}
                   size="small"
                   sx={{
                     height: 18, fontSize: "10px", fontWeight: 700,
@@ -162,7 +149,7 @@ const CampaignDetailsCard: React.FC<Props> = ({ campaign }) => {
         )}
 
         {/* Last updated */}
-        <InfoBlock icon={<UpdateOutlined sx={{ fontSize: 16 }} />} iconColor="#94A3B8" label={t(`${CD}.details_label_last_updated`)}>
+        <InfoBlock icon={<UpdateOutlined sx={{ fontSize: 16 }} />} iconColor="#94A3B8" label={t(`${d}.last_updated`)}>
           <Typography sx={{ fontSize: "0.8125rem", fontWeight: 700, color: "#0F172A" }}>
             {fmtDate(campaign.updatedAt)}
           </Typography>

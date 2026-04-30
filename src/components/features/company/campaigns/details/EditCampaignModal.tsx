@@ -21,9 +21,6 @@ import { updateCampaign } from "@/store/slices/campaignSlice";
 import { MODULE_CONFIG } from "@/constants/campaign";
 import { useTranslation, Trans } from "react-i18next";
 
-const CD = "detail";
-const CW = "create_wizard";
-
 const PURPLE = "#8310FF";
 
 const MODULE_TYPES: ModuleType[] = ["QUESTIONNAIRE", "AI_INTERVIEW", "SKILL_TEST", "TRAINING_PATH"];
@@ -42,8 +39,9 @@ const FieldLabel: React.FC<{ label: string; required?: boolean }> = ({ label, re
 );
 
 const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }) => {
-  const { t, i18n } = useTranslation("campaign");
   const dispatch = useDispatch<AppDispatch>();
+  const { t } = useTranslation("dashboard");
+  const m = "pages.campaigns.detail.edit_modal";
 
   const [title,         setTitle]         = useState("");
   const [description,   setDescription]   = useState("");
@@ -70,7 +68,7 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
   }, [open, campaign]);
 
   const handleSave = async () => {
-    if (!title.trim()) { setError(t(`${CD}.edit_validation_title`)); return; }
+    if (!title.trim()) { setError(t(`${m}.error_title_required`)); return; }
     setSaving(true);
     setError(null);
     try {
@@ -92,7 +90,7 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
         onSaved(result.payload);
         onClose();
       } else {
-        setError((result.payload as string) || t(`${CD}.edit_error_save_failed`));
+        setError((result.payload as string) || t(`${m}.error_save_failed`));
       }
     } finally {
       setSaving(false);
@@ -108,10 +106,6 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
     fontWeight: 600,
     color: "#6B7280",
     gap: 0.625,
-    cursor: "pointer",
-    "&.Mui-disabled": {
-      cursor: "not-allowed",
-    },
     "&.Mui-selected": {
       bgcolor: `${PURPLE}10 !important`,
       borderColor: `${PURPLE}40 !important`,
@@ -138,15 +132,11 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
             <EditOutlined sx={{ fontSize: 17, color: PURPLE }} />
           </Box>
           <Box>
-            <Typography sx={{ fontSize: "15px", fontWeight: 800, color: "#0F172A" }}>
-              {t(`${CD}.edit_modal_title`)}
-            </Typography>
-            <Typography sx={{ fontSize: "11px", color: "#94A3B8" }}>
-              {t(`${CD}.edit_modal_subtitle`)}
-            </Typography>
+            <Typography sx={{ fontSize: "15px", fontWeight: 800, color: "#0F172A" }}>{t(`${m}.title`)}</Typography>
+            <Typography sx={{ fontSize: "11px", color: "#94A3B8" }}>{t(`${m}.subtitle`)}</Typography>
           </Box>
         </Box>
-        <IconButton size="small" onClick={onClose} sx={{ color: "#94A3B8", cursor: "pointer" }}>
+        <IconButton size="small" onClick={onClose} sx={{ color: "#94A3B8" }}>
           <CloseOutlined sx={{ fontSize: 18 }} />
         </IconButton>
       </DialogTitle>
@@ -156,48 +146,46 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
 
           {/* Title */}
           <Box>
-            <FieldLabel label={t(`${CD}.edit_label_title`)} required />
+            <FieldLabel label={t(`${m}.title_label`)} required />
             <TextField
               fullWidth size="small" value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder={t(`${CD}.edit_placeholder_title`)}
+              placeholder={t(`${m}.title_placeholder`)}
               sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px", fontSize: "13.5px" } }}
             />
           </Box>
 
           {/* Description */}
           <Box>
-            <FieldLabel label={t(`${CD}.edit_label_description`)} />
+            <FieldLabel label={t(`${m}.description_label`)} />
             <TextField
               fullWidth size="small" multiline minRows={2} maxRows={4}
               value={description} onChange={(e) => setDescription(e.target.value)}
-              placeholder={t(`${CD}.edit_placeholder_description`)}
+              placeholder={t(`${m}.description_placeholder`)}
               sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px", fontSize: "13px" } }}
             />
           </Box>
 
           {/* Deadline */}
           <Box>
-            <FieldLabel label={t(`${CD}.edit_label_deadline`)} />
+            <FieldLabel label={t(`${m}.deadline_label`)} />
             <TextField
               fullWidth size="small" type="date" value={deadline}
               onChange={(e) => setDeadline(e.target.value)}
-              inputProps={{
-                min: new Date().toISOString().slice(0, 10),
-                ...(i18n.language?.startsWith("fr") ? { lang: "fr-FR" } : {}),
-              }}
-              sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px", fontSize: "13px", cursor: "pointer" } }}
+              inputProps={{ min: new Date().toISOString().slice(0, 10) }}
+              sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px", fontSize: "13px" } }}
             />
           </Box>
 
           {/* Module type */}
           <Box>
-            <FieldLabel label={t(`${CD}.edit_label_module_type`)} />
+            <FieldLabel label={t(`${m}.module_type_label`)} />
             <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
               {MODULE_TYPES.map((mt) => {
                 const cfg        = MODULE_CONFIG[mt];
                 const Icon       = cfg.icon;
                 const selected   = moduleType === mt;
+                const moduleTitle = t(`pages.campaigns.module.${mt}`);
                 const comingSoon = mt === "TRAINING_PATH";
                 return (
                   <Box
@@ -223,11 +211,11 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
                     </Box>
                     <Box>
                       <Typography sx={{ fontSize: "12.5px", fontWeight: 700, color: selected ? "#111827" : "#6B7280", lineHeight: 1.2 }}>
-                        {t(`${CW}.modules.${mt}.label`)}
+                        {moduleTitle}
                       </Typography>
                       {comingSoon && (
                         <Typography sx={{ fontSize: "9px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: 0.5 }}>
-                          {t(`${CD}.edit_coming_soon`)}
+                          {t(`${m}.coming_soon`)}
                         </Typography>
                       )}
                     </Box>
@@ -244,12 +232,8 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
                 bgcolor: "#FFFBEB", border: "1px solid #FDE68A",
               }}>
                 <WarningAmberOutlined sx={{ fontSize: 14, color: "#D97706", flexShrink: 0, mt: "1px" }} />
-                <Typography component="div" sx={{ fontSize: "11.5px", color: "#92400E", lineHeight: 1.5 }}>
-                  <Trans
-                    ns="campaign"
-                    i18nKey={`${CD}.edit_module_change_warning`}
-                    components={{ strong: <strong /> }}
-                  />
+                <Typography sx={{ fontSize: "11.5px", color: "#92400E", lineHeight: 1.5 }}>
+                  <Trans i18nKey="pages.campaigns.detail.edit_modal.module_change_warning" components={{ strong: <strong /> }} />
                 </Typography>
               </Box>
             )}
@@ -257,7 +241,7 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
 
           {/* Anonymity mode */}
           <Box>
-            <FieldLabel label={t(`${CD}.edit_label_anonymity`)} />
+            <FieldLabel label={t(`${m}.anonymity_label`)} />
             <ToggleButtonGroup
               exclusive value={anonymityMode}
               onChange={(_, v) => v && setAnonymityMode(v)}
@@ -265,18 +249,18 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
             >
               <ToggleButton value="NOMINATIVE" sx={toggleSx}>
                 <LockOpenOutlined sx={{ fontSize: 14 }} />
-                {t(`${CW}.anonymity_nominative_label`)}
+                {t(`pages.campaigns.detail.nominative`)}
               </ToggleButton>
               <ToggleButton value="ANONYMOUS" sx={toggleSx}>
                 <LockOutlined sx={{ fontSize: 14 }} />
-                {t(`${CW}.anonymity_anonymous_label`)}
+                {t(`pages.campaigns.detail.anonymous`)}
               </ToggleButton>
             </ToggleButtonGroup>
           </Box>
 
           {/* Access method */}
           <Box>
-            <FieldLabel label={t(`${CD}.edit_label_access`)} />
+            <FieldLabel label={t(`${m}.access_method_label`)} />
             <ToggleButtonGroup
               exclusive value={accessMethod}
               onChange={(_, v) => v && setAccessMethod(v)}
@@ -284,11 +268,11 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
             >
               <ToggleButton value="ACCOUNTS" sx={toggleSx}>
                 <AccountCircleOutlined sx={{ fontSize: 14 }} />
-                {t("card.access_accounts_only")}
+                {t(`${m}.accounts_only`)}
               </ToggleButton>
               <ToggleButton value="LINK" sx={toggleSx}>
                 <LinkOutlined sx={{ fontSize: 14 }} />
-                {t("card.access_public_link")}
+                {t(`${m}.public_link`)}
               </ToggleButton>
             </ToggleButtonGroup>
           </Box>
@@ -302,10 +286,10 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
         </Box>
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, py: 2.5, gap: 1, "& .MuiButton-root": { cursor: "pointer" }, "& .MuiButton-root.Mui-disabled": { cursor: "not-allowed" } }}>
-        <AppButton label={t(`${CD}.edit_cancel`)} variant="outlined" size="medium" onClick={onClose} disabled={saving} />
+      <DialogActions sx={{ px: 3, py: 2.5, gap: 1 }}>
+        <AppButton label={t(`${m}.cancel`)} variant="outlined" size="medium" onClick={onClose} disabled={saving} />
         <AppButton
-          label={saving ? t(`${CD}.edit_saving`) : t(`${CD}.edit_save`)}
+          label={saving ? t(`${m}.saving`) : t(`${m}.save`)}
           variant="contained"
           size="medium"
           onClick={handleSave}

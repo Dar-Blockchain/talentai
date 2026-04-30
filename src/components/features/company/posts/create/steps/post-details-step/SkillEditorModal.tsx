@@ -25,6 +25,7 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import CloseIcon from "@mui/icons-material/Close";
 import { hardSkillLevels, softSkillLevels } from "@/constants/skills";
 import { ALL_SKILLS, SOFT_SKILLS } from "@/constants/skills";
+import { useTranslation } from "react-i18next";
 
 interface SkillEditorModalProps {
   open: boolean;
@@ -55,6 +56,7 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
   onSave
 }) => {
   const dispatch = useDispatch();
+  const { t } = useTranslation("posts");
 
   const [localSkill, setLocalSkill] = React.useState<any>(
     skill || { name: "", level: null, percentage: 0 }
@@ -106,11 +108,22 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
     onClose();
   };
 
-  const titleText = `${mode === "edit" ? "Edit" : "Add New"} ${
-    skillType === "hard" ? "Hard Skill" : "Soft Skill"
-  }`;
+  const titleKey =
+    skillType === "hard"
+      ? mode === "edit"
+        ? "create.post_form.skill_modal.title_edit_hard"
+        : "create.post_form.skill_modal.title_add_hard"
+      : mode === "edit"
+        ? "create.post_form.skill_modal.title_edit_soft"
+        : "create.post_form.skill_modal.title_add_soft";
 
-  const buttonText = mode === "edit" ? "Edit Skill" : "Add Skill";
+  const confirmKey =
+    mode === "edit" ? "create.post_form.skill_modal.btn_edit" : "create.post_form.skill_modal.btn_add";
+
+  const levelMenuLabel = (value: number) =>
+    skillType === "hard"
+      ? t(`create.post_form.hard_skill_levels.${value}`)
+      : t(`create.post_form.soft_skill_levels.${value}`);
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -136,7 +149,7 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
               fontSize: "20px",
             }}
           >
-            {titleText}
+            {t(titleKey)}
           </Typography>
 
           <IconButton onClick={onClose} sx={{ color: "black" }}>
@@ -156,7 +169,7 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
               color: "rgba(84, 98, 116, 0.53)",
             }}
           >
-            Skill Name
+            {t("create.post_form.labels.skill_name")}
           </Typography>
 
           <Autocomplete
@@ -166,13 +179,14 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
             onInputChange={(_, newValue) =>
               handleChange("name", newValue)
             }
+            getOptionLabel={(opt) => (typeof opt === "string" ? opt : opt.label)}
             renderInput={(params) => (
               <TextField
                 {...params}
                 fullWidth
                 variant="outlined"
                 sx={inputStyle}
-                placeholder="Select or type a skill"
+                placeholder={t("create.post_form.placeholders.skill_autocomplete")}
               />
             )}
           />
@@ -190,7 +204,7 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
                 color: "rgba(84, 98, 116, 0.53)",
               }}
             >
-              Experience Level
+              {t("create.post_form.skill_modal.experience_level")}
             </Typography>
 
             <TextField
@@ -218,7 +232,7 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
                 value=""
                 sx={{ fontSize: "12px", fontWeight: 500 }}
               >
-                Experience Level
+                {t("create.post_form.placeholders.select_skill_level")}
               </MenuItem>
 
               {levels.map((item) => (
@@ -227,7 +241,7 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
                   value={item.value}
                   sx={{ fontSize: "12px", fontWeight: 500 }}
                 >
-                  {item.label}
+                  {levelMenuLabel(item.value)}
                 </MenuItem>
               ))}
             </TextField>
@@ -243,7 +257,7 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
                 color: "rgba(84, 98, 116, 0.53)",
               }}
             >
-              Percentage (%)
+              {t("create.post_form.labels.percentage")}
             </Typography>
 
             <TextField
@@ -280,7 +294,7 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
             },
           }}
         >
-          Cancel
+          {t("create.post_form.skill_modal.cancel")}
         </Button>
 
         <Button
@@ -302,7 +316,7 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
             },
           }}
         >
-          {buttonText}
+          {t(confirmKey)}
         </Button>
       </DialogActions>
     </Dialog>

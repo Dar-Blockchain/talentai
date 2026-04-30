@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import {
   Box,
   Typography,
   FormControl,
   FormHelperText,
+  Stack,
   alpha,
   Divider,
 } from "@mui/material";
@@ -43,8 +44,8 @@ import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 import { AppDispatch } from "@/store/store";
 import { createCampaign } from "@/store/slices/campaignSlice";
 import { useToast } from "@/hooks/useToast";
-import ParticipantsStep from "@/components/features/company/campaigns/new/ParticipantsStep";
 import { useTranslation } from "react-i18next";
+import ParticipantsStep from "@/components/features/company/campaigns/new/ParticipantsStep";
 
 // ─── Palette ─────────────────────────────────────────────────────────────────
 
@@ -66,7 +67,50 @@ const P = {
   white:       "#FFFFFF",
 };
 
-const CW = "create_wizard" as const;
+// ─── Options ─────────────────────────────────────────────────────────────────
+
+const ACCESS_OPTIONS = [
+  {
+    value: "LINK",
+    label: "Shareable Link",
+    desc: "Anyone with the link can participate — no account required",
+    Icon: InsertLinkIcon,
+    color: "#059669",
+    bg: "#ECFDF5",
+  },
+  {
+    value: "ACCOUNTS",
+    label: "Platform Accounts",
+    desc: "Employees log in and see campaigns in their dashboard",
+    Icon: LockIcon,
+    color: "#4F46E5",
+    bg: "#EEF2FF",
+  },
+];
+
+const ANONYMITY_OPTIONS = [
+  {
+    value: "NOMINATIVE",
+    label: "Nominative",
+    desc: "Names visible to organizers",
+    Icon: VisibilityIcon,
+    color: "#0369A1",
+    bg: "#F0F9FF",
+  },
+  {
+    value: "ANONYMOUS",
+    label: "Anonymous",
+    desc: "Responses fully anonymized",
+    Icon: VisibilityOffIcon,
+    color: "#7C3AED",
+    bg: "#F5F3FF",
+  },
+];
+
+const STEPS = [
+  { label: "Campaign Details", icon: SettingsIcon },
+  { label: "Participants",     icon: PeopleAltIcon },
+];
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -137,59 +181,7 @@ const NewCampaignPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { showToast } = useToast();
   const router = useRouter();
-  const { t } = useTranslation(["campaign", "dashboard"]);
-
-  const ACCESS_OPTIONS = useMemo(
-    () => [
-      {
-        value: "LINK" as const,
-        label: t(`${CW}.access_link_label`),
-        desc: t(`${CW}.access_link_desc`),
-        Icon: InsertLinkIcon,
-        color: "#059669",
-        bg: "#ECFDF5",
-      },
-      {
-        value: "ACCOUNTS" as const,
-        label: t(`${CW}.access_accounts_label`),
-        desc: t(`${CW}.access_accounts_desc`),
-        Icon: LockIcon,
-        color: "#4F46E5",
-        bg: "#EEF2FF",
-      },
-    ],
-    [t],
-  );
-
-  const ANONYMITY_OPTIONS = useMemo(
-    () => [
-      {
-        value: "NOMINATIVE" as const,
-        label: t(`${CW}.anonymity_nominative_label`),
-        desc: t(`${CW}.anonymity_nominative_desc`),
-        Icon: VisibilityIcon,
-        color: "#0369A1",
-        bg: "#F0F9FF",
-      },
-      {
-        value: "ANONYMOUS" as const,
-        label: t(`${CW}.anonymity_anonymous_label`),
-        desc: t(`${CW}.anonymity_anonymous_desc`),
-        Icon: VisibilityOffIcon,
-        color: "#7C3AED",
-        bg: "#F5F3FF",
-      },
-    ],
-    [t],
-  );
-
-  const STEPS = useMemo(
-    () => [
-      { label: t(`${CW}.step_details`), icon: SettingsIcon },
-      { label: t(`${CW}.step_participants`), icon: PeopleAltIcon },
-    ],
-    [t],
-  );
+  const { t } = useTranslation("dashboard");
 
   const [activeStep, setActiveStep] = useState(0);
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
@@ -239,11 +231,11 @@ const NewCampaignPage: React.FC = () => {
         ...(selectedParticipants.length > 0 && { participants: selectedParticipants }),
       };
       const campaign = await dispatch(createCampaign(formattedPayload)).unwrap();
-      showToast({ message: t(`${CW}.toast_created`), severity: "success" });
+      showToast({ message: "Campaign created successfully", severity: "success" });
       router.push(`/company/campaigns/${campaign._id}`);
     } catch (error: any) {
       showToast({
-        message: error?.message || error?.response?.data?.message || t(`${CW}.toast_error`),
+        message: error?.message || error?.response?.data?.message || "Something went wrong",
         severity: "error",
       });
     }
@@ -253,12 +245,12 @@ const NewCampaignPage: React.FC = () => {
   return (
     <DashboardLayout>
       <PageHeader
-        title={t(`${CW}.title`)}
-        subtitle={t(`${CW}.subtitle`)}
+        title={t("pages.campaigns.wizard_new.title")}
+        subtitle={t("pages.campaigns.wizard_new.subtitle")}
         breadcrumbs={[
           { label: t("pages.common.dashboard"), href: "/company/dashboard" },
-          { label: t("pages.title"), href: "/company/campaigns" },
-          { label: t(`${CW}.breadcrumb_create`) },
+          { label: t("pages.campaigns.title"), href: "/company/campaigns" },
+          { label: t("pages.campaigns.wizard_new.breadcrumb_create") },
         ]}
       />
 
@@ -322,19 +314,19 @@ const NewCampaignPage: React.FC = () => {
                     <TitleIcon sx={{ fontSize: 17, color: "#fff" }} />
                   </Box>
                   <Box>
-                    <Typography sx={{ fontSize: 14, fontWeight: 700, color: P.slate800 }}>{t(`${CW}.basic_title`)}</Typography>
-                    <Typography sx={{ fontSize: 11.5, color: P.slate400 }}>{t(`${CW}.basic_subtitle`)}</Typography>
+                    <Typography sx={{ fontSize: 14, fontWeight: 700, color: P.slate800 }}>Basic Information</Typography>
+                    <Typography sx={{ fontSize: 11.5, color: P.slate400 }}>Name and description of your campaign</Typography>
                   </Box>
                 </Box>
                 <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 2 }}>
                   <Controller
                     name="title"
                     control={control}
-                    rules={{ required: t(`${CW}.validation_title`) }}
+                    rules={{ required: "Title is required" }}
                     render={({ field, fieldState }) => (
                       <AppInput
-                        label={t(`${CW}.field_title`)}
-                        placeholder={t(`${CW}.field_title_placeholder`)}
+                        label="Campaign Title"
+                        placeholder="e.g., Q4 Engineering Skills Assessment"
                         required
                         {...field}
                         error={fieldState.error?.message}
@@ -344,11 +336,11 @@ const NewCampaignPage: React.FC = () => {
                   <Controller
                     name="description"
                     control={control}
-                    rules={{ required: t(`${CW}.validation_description`) }}
+                    rules={{ required: "Description is required" }}
                     render={({ field, fieldState }) => (
                       <AppInput
-                        label={t(`${CW}.field_description`)}
-                        placeholder={t(`${CW}.field_description_placeholder`)}
+                        label="Description"
+                        placeholder="Describe the purpose, goals and expected outcomes..."
                         required
                         multiline
                         rows={3}
@@ -371,29 +363,28 @@ const NewCampaignPage: React.FC = () => {
                     <ScheduleIcon sx={{ fontSize: 17, color: "#fff" }} />
                   </Box>
                   <Box>
-                    <Typography sx={{ fontSize: 14, fontWeight: 700, color: P.slate800 }}>{t(`${CW}.settings_title`)}</Typography>
-                    <Typography sx={{ fontSize: 11.5, color: P.slate400 }}>{t(`${CW}.settings_subtitle`)}</Typography>
+                    <Typography sx={{ fontSize: 14, fontWeight: 700, color: P.slate800 }}>Campaign Settings</Typography>
+                    <Typography sx={{ fontSize: 11.5, color: P.slate400 }}>Deadline, visibility and access configuration</Typography>
                   </Box>
                 </Box>
                 <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 3 }}>
 
                   {/* Deadline */}
                   <Box>
-                    <SectionLabel>{t(`${CW}.deadline_label`)}</SectionLabel>
+                    <SectionLabel>Application Deadline</SectionLabel>
                     <Controller
                       name="deadline"
                       control={control}
                       rules={{
                         validate: (v) =>
                           v && dayjs(v).isBefore(dayjs(), "day")
-                            ? t(`${CW}.validation_deadline_past`)
+                            ? "Deadline cannot be in the past"
                             : true,
                       }}
                       render={({ field }) => (
                         <AppDatePicker
                           value={field.value}
                           onChange={field.onChange}
-                          placeholder={t(`${CW}.date_placeholder`)}
                           error={errors.deadline?.message}
                           disablePast
                           size="small"
@@ -407,11 +398,11 @@ const NewCampaignPage: React.FC = () => {
 
                   {/* Anonymity */}
                   <Box>
-                    <SectionLabel>{t(`${CW}.anonymity_label`)}</SectionLabel>
+                    <SectionLabel>Anonymity Mode</SectionLabel>
                     <Controller
                       name="anonymityMode"
                       control={control}
-                      rules={{ required: t(`${CW}.validation_anonymity`) }}
+                      rules={{ required: "Please select an anonymity mode" }}
                       render={({ field }) => (
                         <FormControl fullWidth error={!!errors.anonymityMode}>
                           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1.5 }}>
@@ -436,11 +427,11 @@ const NewCampaignPage: React.FC = () => {
 
                   {/* Access Method */}
                   <Box>
-                    <SectionLabel>{t(`${CW}.access_label`)}</SectionLabel>
+                    <SectionLabel>Access Method</SectionLabel>
                     <Controller
                       name="accessMethod"
                       control={control}
-                      rules={{ required: t(`${CW}.validation_access`) }}
+                      rules={{ required: "Please select an access method" }}
                       render={({ field }) => (
                         <FormControl fullWidth error={!!errors.accessMethod}>
                           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1.5 }}>
@@ -474,15 +465,15 @@ const NewCampaignPage: React.FC = () => {
                     <ChecklistIcon sx={{ fontSize: 17, color: "#fff" }} />
                   </Box>
                   <Box>
-                    <Typography sx={{ fontSize: 14, fontWeight: 700, color: P.slate800 }}>{t(`${CW}.module_title`)}</Typography>
-                    <Typography sx={{ fontSize: 11.5, color: P.slate400 }}>{t(`${CW}.module_subtitle`)}</Typography>
+                    <Typography sx={{ fontSize: 14, fontWeight: 700, color: P.slate800 }}>Assessment Module</Typography>
+                    <Typography sx={{ fontSize: 11.5, color: P.slate400 }}>Choose one module for this campaign</Typography>
                   </Box>
                 </Box>
                 <Box sx={{ p: 3 }}>
                   <Controller
                     name="module"
                     control={control}
-                    rules={{ validate: (v) => !!v || t(`${CW}.validation_module`) }}
+                    rules={{ validate: (v) => !!v || "Select a module" }}
                     render={({ field }) => (
                       <FormControl error={!!errors.module} fullWidth>
                         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1.5 }}>
@@ -491,8 +482,6 @@ const NewCampaignPage: React.FC = () => {
                             const Icon = m.icon;
                             const isSelected   = field.value === mod;
                             const isComingSoon = mod === "TRAINING_PATH";
-                            const ml = t(`${CW}.modules.${mod}.label`);
-                            const md = t(`${CW}.modules.${mod}.description`);
                             return (
                               <Box
                                 key={mod}
@@ -525,7 +514,7 @@ const NewCampaignPage: React.FC = () => {
                                 <Box sx={{ flex: 1, minWidth: 0 }}>
                                   <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
                                     <Typography sx={{ fontSize: 13, fontWeight: 700, color: P.slate800 }}>
-                                      {ml}
+                                      {m.label}
                                     </Typography>
                                     {isComingSoon && (
                                       <Box sx={{ px: 0.75, py: "1px", borderRadius: 99,
@@ -533,13 +522,13 @@ const NewCampaignPage: React.FC = () => {
                                         display: "inline-flex" }}>
                                         <Typography sx={{ fontSize: 9, fontWeight: 800, color: P.violet,
                                           letterSpacing: 0.6, textTransform: "uppercase" }}>
-                                          {t(`${CW}.module_soon`)}
+                                          Soon
                                         </Typography>
                                       </Box>
                                     )}
                                   </Box>
                                   <Typography sx={{ fontSize: 11.5, color: P.slate400, mt: 0.25, lineHeight: 1.4 }}>
-                                    {md}
+                                    {m.description}
                                   </Typography>
                                 </Box>
                                 {isSelected && (
@@ -574,7 +563,7 @@ const NewCampaignPage: React.FC = () => {
                   }}
                 >
                   <Typography sx={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>
-                    {isAccounts ? t(`${CW}.btn_next`) : isSubmitting ? t(`${CW}.btn_creating`) : t(`${CW}.btn_create`)}
+                    {isAccounts ? "Next: Who Can Participate" : isSubmitting ? "Creating…" : "Create Campaign"}
                   </Typography>
                   {isAccounts
                     ? <ArrowForwardIcon sx={{ fontSize: 16, color: "#fff" }} />
@@ -597,8 +586,8 @@ const NewCampaignPage: React.FC = () => {
                   <PeopleAltIcon sx={{ fontSize: 17, color: "#fff" }} />
                 </Box>
                 <Box>
-                  <Typography sx={{ fontSize: 14, fontWeight: 700, color: P.slate800 }}>{t(`${CW}.participants_title`)}</Typography>
-                  <Typography sx={{ fontSize: 11.5, color: P.slate400 }}>{t(`${CW}.participants_subtitle`)}</Typography>
+                  <Typography sx={{ fontSize: 14, fontWeight: 700, color: P.slate800 }}>Who Can Participate</Typography>
+                  <Typography sx={{ fontSize: 11.5, color: P.slate400 }}>Leave empty to allow all employees</Typography>
                 </Box>
               </Box>
               <Box sx={{ p: 3 }}>
@@ -617,7 +606,7 @@ const NewCampaignPage: React.FC = () => {
                   }}
                 >
                   <ArrowBackIcon sx={{ fontSize: 15, color: P.slate600 }} />
-                  <Typography sx={{ fontSize: 13, fontWeight: 600, color: P.slate600 }}>{t(`${CW}.back`)}</Typography>
+                  <Typography sx={{ fontSize: 13, fontWeight: 600, color: P.slate600 }}>Back</Typography>
                 </Box>
                 <Box
                   onClick={handleSubmit(onSubmit)}
@@ -632,7 +621,7 @@ const NewCampaignPage: React.FC = () => {
                   }}
                 >
                   <Typography sx={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>
-                    {isSubmitting ? t(`${CW}.btn_creating`) : t(`${CW}.btn_create`)}
+                    {isSubmitting ? "Creating…" : "Create Campaign"}
                   </Typography>
                   <AutoAwesomeIcon sx={{ fontSize: 16, color: "#fff" }} />
                 </Box>

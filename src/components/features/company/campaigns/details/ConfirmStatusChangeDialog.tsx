@@ -1,5 +1,3 @@
-"use client";
-
 import React from "react";
 import {
   Box, Typography, Button,
@@ -11,7 +9,7 @@ import StopOutlined       from "@mui/icons-material/StopOutlined";
 import InfoOutlined       from "@mui/icons-material/InfoOutlined";
 import { CampaignStatus } from "@/types/campaign";
 import { STATUS_COLORS } from "@/constants/campaign";
-import { useTranslation } from "react-i18next";
+import { useTranslation, Trans } from "react-i18next";
 
 const STATUS_ICONS: Partial<Record<CampaignStatus, React.ElementType>> = {
   ACTIVE: PlayArrowOutlined,
@@ -28,18 +26,33 @@ interface Props {
   onConfirm: () => void;
 }
 
+const pRoot = "pages.campaigns";
+
+const STATUS_TITLE_KEY: Partial<Record<CampaignStatus, string>> = {
+  ACTIVE: "modals.status.title_activate",
+  PAUSED: "modals.status.title_pause",
+  CLOSED: "modals.status.title_close",
+};
+
+const STATUS_DESC_KEY: Partial<Record<CampaignStatus, string>> = {
+  ACTIVE: "modals.status.desc_active",
+  PAUSED: "modals.status.desc_paused",
+  CLOSED: "modals.status.desc_closed",
+};
+
 const ConfirmStatusChangeDialog: React.FC<Props> = ({
   open, campaignTitle, currentStatus, targetStatus, onClose, onConfirm,
 }) => {
-  const { t } = useTranslation("campaign");
-
+  const { t } = useTranslation("dashboard");
+  const p = `${pRoot}.modals.status`;
   const sColor = STATUS_COLORS[targetStatus];
   const cColor = STATUS_COLORS[currentStatus] ?? STATUS_COLORS.DRAFT;
   const Icon   = STATUS_ICONS[targetStatus];
-  const titleKey = `dialogs.transition_title.${targetStatus}` as const;
-  const bodyKey = `dialogs.transition_body.${targetStatus}` as const;
-  const transitionTitle = t(titleKey);
-  const desc = t(bodyKey);
+  const titleKey = STATUS_TITLE_KEY[targetStatus];
+  const descKey = STATUS_DESC_KEY[targetStatus];
+
+  const currentLabel = t(`${pRoot}.status.${currentStatus}`);
+  const targetLabel = t(`${pRoot}.status.${targetStatus}`);
 
   return (
     <Dialog
@@ -60,7 +73,7 @@ const ConfirmStatusChangeDialog: React.FC<Props> = ({
           </Box>
           <Box>
             <Typography sx={{ fontWeight: 700, fontSize: "15px", color: "#0F172A" }}>
-              {transitionTitle}
+              {titleKey ? t(`${pRoot}.${titleKey}`) : t(`${p}.confirm`)}
             </Typography>
             <Typography sx={{ fontSize: "11px", color: "#94A3B8", mt: 0.25 }}>
               {campaignTitle}
@@ -70,9 +83,11 @@ const ConfirmStatusChangeDialog: React.FC<Props> = ({
       </DialogTitle>
 
       <DialogContent sx={{ px: 3, pb: 1 }}>
-        <Typography sx={{ fontSize: "13px", color: "#475569", lineHeight: 1.6 }}>
-          {desc}
-        </Typography>
+        {descKey && (
+          <Typography sx={{ fontSize: "13px", color: "#475569", lineHeight: 1.6 }}>
+            {t(`${pRoot}.${descKey}`)}
+          </Typography>
+        )}
         <Box sx={{
           mt: 1.5, px: 1.5, py: 1, borderRadius: "8px",
           bgcolor: "#F8FAFC", border: "1px solid #E2E8F0",
@@ -80,12 +95,12 @@ const ConfirmStatusChangeDialog: React.FC<Props> = ({
         }}>
           <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, px: 1, py: "2px", borderRadius: "999px", bgcolor: cColor.bg }}>
             <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: cColor.fg }} />
-            <Typography sx={{ fontSize: "11px", fontWeight: 700, color: cColor.fg }}>{t(`status.${currentStatus}`)}</Typography>
+            <Typography sx={{ fontSize: "11px", fontWeight: 700, color: cColor.fg }}>{currentLabel}</Typography>
           </Box>
           <Typography sx={{ fontSize: "12px", color: "#94A3B8" }}>→</Typography>
           <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, px: 1, py: "2px", borderRadius: "999px", bgcolor: sColor?.bg }}>
             <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: sColor?.fg }} />
-            <Typography sx={{ fontSize: "11px", fontWeight: 700, color: sColor?.fg }}>{t(`status.${targetStatus}`)}</Typography>
+            <Typography sx={{ fontSize: "11px", fontWeight: 700, color: sColor?.fg }}>{targetLabel}</Typography>
           </Box>
         </Box>
 
@@ -96,8 +111,12 @@ const ConfirmStatusChangeDialog: React.FC<Props> = ({
             bgcolor: "#FFF7ED", border: "1px solid #FED7AA",
           }}>
             <InfoOutlined sx={{ fontSize: 14, color: "#EA580C", flexShrink: 0, mt: "1px" }} />
-            <Typography sx={{ fontSize: "11.5px", color: "#9A3412", lineHeight: 1.5 }}>
-              {t("dialogs.activate_edit_warning")}
+            <Typography component="span" sx={{ fontSize: "11.5px", color: "#9A3412", lineHeight: 1.5 }}>
+              <Trans
+                i18nKey={`${p}.active_warning`}
+                ns="dashboard"
+                components={{ strong: <strong /> }}
+              />
             </Typography>
           </Box>
         )}
@@ -109,7 +128,7 @@ const ConfirmStatusChangeDialog: React.FC<Props> = ({
           onClick={onClose}
           sx={{ textTransform: "none", fontWeight: 600, fontSize: "13px", color: "#6B7280", "&:hover": { bgcolor: "#F3F4F6" } }}
         >
-          {t("dialogs.cancel")}
+          {t(`${p}.cancel`)}
         </Button>
         <Button
           onClick={onConfirm}
@@ -121,7 +140,7 @@ const ConfirmStatusChangeDialog: React.FC<Props> = ({
             "&:hover": { bgcolor: sColor?.fg, opacity: 0.88 },
           }}
         >
-          {t("dialogs.confirm")}
+          {t(`${p}.confirm`)}
         </Button>
       </DialogActions>
     </Dialog>

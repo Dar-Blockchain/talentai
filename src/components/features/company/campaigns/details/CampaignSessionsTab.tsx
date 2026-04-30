@@ -24,20 +24,25 @@ import {
 } from "@/store/slices/campaignSlice";
 import { SessionStatus } from "@/types/campaign";
 import Pagination from "@/components/ui/Pagination";
+import { useTranslation } from "react-i18next";
 
 const PAGE_SIZE = 10;
 
-const fmtDate = (d?: string) =>
-  d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
+const fmtDate = (d: string | undefined, locale: string) =>
+  d
+    ? new Date(d).toLocaleDateString(locale.startsWith("fr") ? "fr-FR" : "en-US", {
+      month: "short", day: "numeric", year: "numeric",
+    })
+    : "—";
 
 function scoreColor(s: number) { return s >= 70 ? "#16A34A" : s >= 40 ? "#D97706" : "#DC2626"; }
 function scoreBg  (s: number) { return s >= 70 ? "#F0FDF4" : s >= 40 ? "#FFFBEB" : "#FEF2F2"; }
 
-const SESSION_STATUS: Record<SessionStatus, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  PENDING:     { label: "Pending",     color: "#6B7280", bg: "#F3F4F6", icon: RadioButtonUncheckedOutlined },
-  IN_PROGRESS: { label: "In Progress", color: "#D97706", bg: "#FFFBEB", icon: AccessTimeOutlined },
-  COMPLETED:   { label: "Completed",   color: "#16A34A", bg: "#F0FDF4", icon: CheckCircleOutlined },
-  EXPIRED:     { label: "Expired",     color: "#DC2626", bg: "#FEF2F2", icon: BlockOutlined },
+const SESSION_STATUS_META: Record<SessionStatus, { color: string; bg: string; icon: React.ElementType }> = {
+  PENDING:     { color: "#6B7280", bg: "#F3F4F6", icon: RadioButtonUncheckedOutlined },
+  IN_PROGRESS: { color: "#D97706", bg: "#FFFBEB", icon: AccessTimeOutlined },
+  COMPLETED:   { color: "#16A34A", bg: "#F0FDF4", icon: CheckCircleOutlined },
+  EXPIRED:     { color: "#DC2626", bg: "#FEF2F2", icon: BlockOutlined },
 };
 
 const RowSkeleton: React.FC = () => (
@@ -64,6 +69,8 @@ const ResultsDialog: React.FC<{ campaignId: string; participantId: string | null
   const [data,    setData]    = useState<ResultsData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState<string | null>(null);
+  const { t } = useTranslation("dashboard");
+  const sp = "pages.campaigns.detail.sessions";
 
   useEffect(() => {
     if (!participantId) return;
@@ -73,7 +80,7 @@ const ResultsDialog: React.FC<{ campaignId: string; participantId: string | null
     axiosInstance
       .get(`internal-campaigns/${campaignId}/results/${participantId}`)
       .then((res) => setData(res.data.data))
-      .catch((err) => setError(err?.response?.data?.error ?? "Failed to load results"))
+      .catch((err) => setError(err?.response?.data?.error ?? t(`${sp}.load_failed`)))
       .finally(() => setLoading(false));
   }, [participantId, campaignId]);
 
@@ -83,7 +90,7 @@ const ResultsDialog: React.FC<{ campaignId: string; participantId: string | null
     <Dialog open={!!participantId} onClose={onClose} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: "16px", maxHeight: "90vh" } }}>
       <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pb: 1, borderBottom: "1px solid #F3F4F6" }}>
         <Typography sx={{ fontWeight: 700, fontSize: "15px", color: "#0F172A" }}>
-          Results — {label}
+          {t(`${sp}.dialog_title`, { name: label })}
         </Typography>
         <IconButton size="small" onClick={onClose} sx={{ color: "#9CA3AF" }}>
           <CloseOutlined sx={{ fontSize: 18 }} />
@@ -110,6 +117,9 @@ const ResultsDialog: React.FC<{ campaignId: string; participantId: string | null
 
 const SessionsView: React.FC<{ campaignId: string }> = ({ campaignId }) => {
   const dispatch = useDispatch<AppDispatch>();
+  const { t, i18n } = useTranslation("dashboard");
+  const sp = "pages.campaigns.detail.sessions";
+  const du = "pages.campaigns.detail";
   const sessions = useSelector(selectCampaignSessions);
   const loading  = useSelector(selectCampaignSessionsLoading);
   const error    = useSelector(selectCampaignSessionsError);
@@ -147,13 +157,15 @@ const SessionsView: React.FC<{ campaignId: string }> = ({ campaignId }) => {
 
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, mb: 0, flexWrap: "wrap" }}>
         <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>
-          {!loading && `${total} session${total !== 1 ? "s" : ""}${debouncedSearch ? " match your search" : " total"}`}
+          {!loading && (debouncedSearch
+            ? t(`${sp}.matches_search`, { count: total })
+            : t(`${sp}.total_sessions`, { count: total }))}
         </Typography>
         <Box sx={{ display: "flex", alignItems: "center", bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "12px", px: 1.5, py: 0.5, minWidth: 220, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
           <SearchOutlined sx={{ fontSize: 15, color: "#9CA3AF", flexShrink: 0, mr: 1 }} />
           <input
             type="text"
-            placeholder="Search by participant…"
+            placeholder={t(`${sp}.search_placeholder`)}
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
             style={{ border: "none", outline: "none", background: "transparent", fontSize: "13px", color: "#111827", width: "100%", fontFamily: "inherit", padding: "4px 0" }}
@@ -168,8 +180,15 @@ const SessionsView: React.FC<{ campaignId: string }> = ({ campaignId }) => {
 
       <Box sx={{ bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: 3, overflow: "hidden", mt: 1.5 }}>
         <Box sx={{ display: "grid", gridTemplateColumns: "1fr 130px 90px 80px 110px 110px", alignItems: "center", px: 2.5, py: 1.25, bgcolor: "#F9FAFB", borderBottom: "1px solid #E5E7EB" }}>
-          {["Participant", "Status", "Score", "Duration", "Completed", ""].map((h, i) => (
-            <Typography key={i} sx={{ fontSize: "11px", fontWeight: 700, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          {[
+            t(`${sp}.col_participant`),
+            t(`${sp}.col_status`),
+            t(`${sp}.col_score`),
+            t(`${sp}.col_duration`),
+            t(`${sp}.col_completed`),
+            t(`${sp}.col_actions`),
+          ].map((h, i) => (
+            <Typography key={i} sx={{ fontSize: "11px", fontWeight: 700, color: "#6B7280", letterSpacing: "0.02em" }}>
               {h}
             </Typography>
           ))}
@@ -183,10 +202,10 @@ const SessionsView: React.FC<{ campaignId: string }> = ({ campaignId }) => {
           <Box sx={{ textAlign: "center", py: 8 }}>
             <AssignmentOutlined sx={{ fontSize: 40, color: "#D1D5DB", mb: 1.5 }} />
             <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#374151" }}>
-              {debouncedSearch ? "No sessions match your search" : "No sessions yet"}
+              {debouncedSearch ? t(`${sp}.empty_search_title`) : t(`${sp}.empty_title`)}
             </Typography>
             <Typography sx={{ fontSize: "12px", color: "#9CA3AF", mt: 0.5 }}>
-              {debouncedSearch ? "Try a different name." : "Sessions will appear here once participants start."}
+              {debouncedSearch ? t(`${sp}.empty_search_hint`) : t(`${sp}.empty_hint`)}
             </Typography>
           </Box>
         ) : (
@@ -194,11 +213,11 @@ const SessionsView: React.FC<{ campaignId: string }> = ({ campaignId }) => {
             const p          = s.participant;
             const isAnon     = s.isAnonymous;
             const name       = isAnon
-              ? (p?.firstName ?? "Anonymous")
-              : (p ? ((p.firstName && p.lastName) ? `${p.firstName} ${p.lastName}` : p.firstName || p.lastName || p.username || "Unknown") : "Unknown");
+              ? (p?.firstName ?? t(`${sp}.anonymous`))
+              : (p ? ((p.firstName && p.lastName) ? `${p.firstName} ${p.lastName}` : p.firstName || p.lastName || p.username || t(`${du}.unknown_user`)) : t(`${du}.unknown_user`));
             const email      = isAnon ? null : (p?.email ?? "");
             const letter     = name[0]?.toUpperCase() || "?";
-            const statusCfg  = SESSION_STATUS[s.status] ?? SESSION_STATUS.PENDING;
+            const statusCfg  = SESSION_STATUS_META[s.status] ?? SESSION_STATUS_META.PENDING;
             const StatusIcon = statusCfg.icon;
 
             return (
@@ -223,7 +242,7 @@ const SessionsView: React.FC<{ campaignId: string }> = ({ campaignId }) => {
                       {name}
                     </Typography>
                     <Typography sx={{ fontSize: "11px", color: "#9CA3AF", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {isAnon ? "Identity hidden" : (email || "—")}
+                      {isAnon ? t(`${sp}.identity_hidden`) : (email || "—")}
                     </Typography>
                   </Box>
                 </Box>
@@ -232,7 +251,7 @@ const SessionsView: React.FC<{ campaignId: string }> = ({ campaignId }) => {
                 <Box>
                   <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, px: 1, py: "3px", borderRadius: "999px", bgcolor: statusCfg.bg, border: `1px solid ${statusCfg.color}25` }}>
                     <StatusIcon sx={{ fontSize: 11, color: statusCfg.color }} />
-                    <Typography sx={{ fontSize: "11px", fontWeight: 700, color: statusCfg.color }}>{statusCfg.label}</Typography>
+                    <Typography sx={{ fontSize: "11px", fontWeight: 700, color: statusCfg.color }}>{t(`${sp}.session_status.${s.status}`)}</Typography>
                   </Box>
                 </Box>
 
@@ -252,7 +271,9 @@ const SessionsView: React.FC<{ campaignId: string }> = ({ campaignId }) => {
                   {s.durationMinutes ? (
                     <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.4 }}>
                       <TimerOutlined sx={{ fontSize: 12, color: "#9CA3AF" }} />
-                      <Typography sx={{ fontSize: "12px", color: "#374151", fontWeight: 500 }}>{s.durationMinutes}m</Typography>
+                      <Typography sx={{ fontSize: "12px", color: "#374151", fontWeight: 500 }}>
+                        {t(`${sp}.duration_minutes`, { n: s.durationMinutes })}
+                      </Typography>
                     </Box>
                   ) : (
                     <Typography sx={{ fontSize: "12px", color: "#D1D5DB" }}>—</Typography>
@@ -260,7 +281,7 @@ const SessionsView: React.FC<{ campaignId: string }> = ({ campaignId }) => {
                 </Box>
 
                 {/* Completed date */}
-                <Typography sx={{ fontSize: "12px", color: "#6B7280" }}>{fmtDate(s.completedAt || s.startedAt)}</Typography>
+                <Typography sx={{ fontSize: "12px", color: "#6B7280" }}>{fmtDate(s.completedAt || s.startedAt, i18n.language)}</Typography>
 
                 {/* View Results */}
                 <Box>
@@ -275,7 +296,7 @@ const SessionsView: React.FC<{ campaignId: string }> = ({ campaignId }) => {
                       }}
                     >
                       <VisibilityOutlined sx={{ fontSize: 13, color: "#7C3AED" }} />
-                      <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#7C3AED" }}>Results</Typography>
+                      <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#7C3AED" }}>{t(`${sp}.results`)}</Typography>
                     </Box>
                   )}
                 </Box>

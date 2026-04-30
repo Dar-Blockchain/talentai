@@ -16,6 +16,7 @@ import QuestionnaireForm, { QuestionnaireConfig } from "./QuestionnaireForm";
 import AIInterviewForm, { AIInterviewConfig } from "./AIInterviewForm";
 import SkillTestForm, { SkillTestConfig } from "./SkillTestForm";
 import TrainingPathForm, { TrainingPathConfig } from "./TrainingPathForm";
+import { useTranslation } from "react-i18next";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -49,6 +50,8 @@ const ConfigureModuleModal: React.FC<Props> = ({
   onClose,
   onSave,
 }) => {
+  const { t } = useTranslation("dashboard");
+  const d = "pages.campaigns.detail";
   const [config, setConfig] = useState<AnyConfig | null>(null);
 
   useEffect(() => {
@@ -82,6 +85,8 @@ const ConfigureModuleModal: React.FC<Props> = ({
   // Resolve display metadata — null when moduleType is null (dialog closing)
   const cfg = moduleType ? MODULE_CONFIG[moduleType] : null;
   const Icon = cfg?.icon;
+  const moduleTitle = moduleType ? t(`pages.campaigns.module.${moduleType}`) : "";
+  const moduleDesc  = moduleType ? t(`pages.campaigns.module_description.${moduleType}`) : "";
 
   return (
     <Dialog
@@ -114,10 +119,10 @@ const ConfigureModuleModal: React.FC<Props> = ({
             </Box>
             <Box>
               <Typography sx={{ fontWeight: 700, fontSize: "15px", color: "#111827" }}>
-                Configure {cfg.label}
+                {t(`${d}.configure_modal_title`, { module: moduleTitle })}
               </Typography>
               <Typography sx={{ fontSize: "12px", color: "#6B7280", mt: 0.25 }}>
-                {cfg.description}
+                {moduleDesc}
               </Typography>
             </Box>
           </Box>
@@ -171,10 +176,10 @@ const ConfigureModuleModal: React.FC<Props> = ({
             "&:hover": { bgcolor: "#F3F4F6" },
           }}
         >
-          Cancel
+          {t(`${d}.edit_modal.cancel`)}
         </Button>
         <AppButton
-          label="Save Configuration"
+          label={t(`${d}.save_configuration`)}
           variant="contained"
           size="small"
           disabled={!isValid}
