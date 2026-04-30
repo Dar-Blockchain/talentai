@@ -113,6 +113,80 @@
       "error_salary_max": "Max salary must be greater than min",
       "error_required": "Required"
     },
+    "post_form": {
+      "manual": {
+        "header_title": "Custom Pipeline Post",
+        "header_subtitle": "Fill in your job details — you'll build the recruitment flow in the next step",
+        "section_job_info": "Job Information",
+        "job_title": "Job Title",
+        "job_title_placeholder": "e.g. Senior Frontend Developer",
+        "expiration_date": "Expiration Date",
+        "next_step_hint": "After saving, you'll design your custom recruitment pipeline with evaluation steps."
+      },
+      "labels": {
+        "employment_type": "Employment Type",
+        "work_mode": "Work Mode",
+        "currency": "Currency",
+        "experience_level": "Experience Level",
+        "expires": "Expires",
+        "minimum": "Minimum",
+        "maximum": "Maximum",
+        "salary_range": "Salary Range",
+        "minimum_salary": "Minimum Salary",
+        "maximum_salary": "Maximum Salary",
+        "salary_section": "Salary Range / Year",
+        "skill_name": "Skill Name",
+        "percentage": "Percentage (%)"
+      },
+      "placeholders": {
+        "select": "Select",
+        "select_employment_type": "Select employment type",
+        "select_work_mode": "Select work mode",
+        "select_currency": "Select currency",
+        "select_experience_level": "Select experience level",
+        "select_skill_level": "Experience level",
+        "skill_autocomplete": "Select or type a skill",
+        "min_salary_example": "e.g. 40 000",
+        "max_salary_example": "e.g. 70 000"
+      },
+      "options": {
+        "employment_full_time": "Full-time",
+        "employment_part_time": "Part-time",
+        "employment_contract": "Contract",
+        "employment_internship": "Internship",
+        "work_on_site": "On-site",
+        "work_remote": "Remote",
+        "work_hybrid": "Hybrid",
+        "experience_junior": "Junior",
+        "experience_mid_level": "Mid-level",
+        "experience_senior": "Senior",
+        "experience_expert": "Expert"
+      },
+      "hard_skill_levels": {
+        "1": "Entry Level",
+        "2": "Junior",
+        "3": "Mid Level",
+        "4": "Senior",
+        "5": "Expert"
+      },
+      "soft_skill_levels": {
+        "1": "1 / 5",
+        "2": "2 / 5",
+        "3": "3 / 5",
+        "4": "4 / 5",
+        "5": "5 / 5"
+      },
+      "skill_modal": {
+        "title_add_hard": "Add New Hard Skill",
+        "title_edit_hard": "Edit Hard Skill",
+        "title_add_soft": "Add New Soft Skill",
+        "title_edit_soft": "Edit Soft Skill",
+        "experience_level": "Experience Level",
+        "cancel": "Cancel",
+        "btn_add": "Add Skill",
+        "btn_edit": "Edit Skill"
+      }
+    },
     "lang_modal": {
       "title": "Generate in which language?",
       "subtitle": "The entire job post will be written in this language",
@@ -145,6 +219,8 @@
       "hard_skills": "Hard Skills",
       "soft_skills": "Soft Skills",
       "btn_add_skill": "Add Skill",
+      "btn_add_hard_skill": "Add Hard Skill",
+      "btn_add_soft_skill": "Add Soft Skill",
       "section_content": "Content",
       "label_description": "Description",
       "label_requirements": "Requirements",

@@ -1,6 +1,7 @@
 import React from "react";
 import { Stack, TextField, MenuItem, Typography, Box } from "@mui/material";
 import Image from "next/image";
+import { useTranslation } from "react-i18next";
 import { defaultCurrencies } from "@/constants/candidate";
 
 interface SalaryRangeProps {
@@ -27,6 +28,7 @@ const SalaryRange: React.FC<SalaryRangeProps> = ({
   errors = {},
   currencies = defaultCurrencies,
 }) => {
+  const { t } = useTranslation("posts");
   const handleChange =
     (field: "min" | "max" | "currency") =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,15 +66,15 @@ const SalaryRange: React.FC<SalaryRangeProps> = ({
           fontSize: 13,
         }}
       >
-        <Image src="/icons/money.svg" alt="money" width={18} height={12} />
-        Salary Range
+        <Image src="/icons/money.svg" alt="" width={18} height={12} />
+        {t("create.post_form.labels.salary_range")}
       </Typography>
 
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
         {/* Currency */}
         <Box sx={{ width: { xs: "100%", sm: "25%" } }}>
           <Typography sx={{ fontSize: 12, mb: 0.5, color: "#475569" }}>
-            Currency
+            {t("create.post_form.labels.currency")}
           </Typography>
           <TextField
             select
@@ -88,7 +90,7 @@ const SalaryRange: React.FC<SalaryRangeProps> = ({
               value=""
               sx={{ fontSize: "12px", fontWeight: 500 }}
             >
-              Currency
+              {t("create.post_form.placeholders.select_currency")}
             </MenuItem>
             {currencies.map((currency) => (
               <MenuItem
@@ -105,7 +107,7 @@ const SalaryRange: React.FC<SalaryRangeProps> = ({
         {/* Min */}
         <Box sx={{ flex: 1 }}>
           <Typography sx={{ fontSize: 12, mb: 0.5, color: "#475569" }}>
-            Minimum Salary
+            {t("create.post_form.labels.minimum_salary")}
           </Typography>
           <TextField
             type="text"
@@ -120,7 +122,7 @@ const SalaryRange: React.FC<SalaryRangeProps> = ({
         {/* Max */}
         <Box sx={{ flex: 1 }}>
           <Typography sx={{ fontSize: 12, mb: 0.5, color: "#475569" }}>
-            Maximum Salary
+            {t("create.post_form.labels.maximum_salary")}
           </Typography>
           <TextField
             type="text"

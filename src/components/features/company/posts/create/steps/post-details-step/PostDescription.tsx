@@ -11,6 +11,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import GenerateLanguageModal from "./GenerateLanguageModal";
 import { contractTypes, defaultCurrencies, workModes } from "@/constants/candidate";
+import { EMPLOYMENT_OPTION_KEY, optionLabel, WORK_MODE_OPTION_KEY } from "@/utils/postFormI18n";
 import {
   generatePost,
   setEmploymentType,
@@ -176,7 +177,7 @@ const PostDescription = () => {
           <SectionLabel>{t("create.form.section_role")}</SectionLabel>
           <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1.5 }}>
             <Box>
-              <FieldLabel icon={WorkOutlined} label={t("create.form.label_type")} />
+              <FieldLabel icon={WorkOutlined} label={t("create.post_form.labels.employment_type")} />
               <TextField
                 select fullWidth
                 value={employmentType}
@@ -184,9 +185,9 @@ const PostDescription = () => {
                 error={!!errors.employmentType}
                 sx={fieldSx}
               >
-                <MenuItem disabled value="" sx={{ fontSize: "12px" }}>{t("create.form.placeholder_select")}</MenuItem>
+                <MenuItem disabled value="" sx={{ fontSize: "12px" }}>{t("create.post_form.placeholders.select_employment_type")}</MenuItem>
                 {contractTypes.map((c) => (
-                  <MenuItem key={c} value={c} sx={{ fontSize: "12px" }}>{c}</MenuItem>
+                  <MenuItem key={c} value={c} sx={{ fontSize: "12px" }}>{optionLabel(t, c, EMPLOYMENT_OPTION_KEY)}</MenuItem>
                 ))}
               </TextField>
               {errors.employmentType && (
@@ -197,7 +198,7 @@ const PostDescription = () => {
             </Box>
 
             <Box>
-              <FieldLabel icon={LocationOnOutlined} label={t("create.form.label_work_mode")} />
+              <FieldLabel icon={LocationOnOutlined} label={t("create.post_form.labels.work_mode")} />
               <TextField
                 select fullWidth
                 value={workMode}
@@ -205,9 +206,9 @@ const PostDescription = () => {
                 error={!!errors.workMode}
                 sx={fieldSx}
               >
-                <MenuItem disabled value="" sx={{ fontSize: "12px" }}>{t("create.form.placeholder_select")}</MenuItem>
+                <MenuItem disabled value="" sx={{ fontSize: "12px" }}>{t("create.post_form.placeholders.select_work_mode")}</MenuItem>
                 {workModes.map((m) => (
-                  <MenuItem key={m} value={m} sx={{ fontSize: "12px" }}>{m}</MenuItem>
+                  <MenuItem key={m} value={m} sx={{ fontSize: "12px" }}>{optionLabel(t, m, WORK_MODE_OPTION_KEY)}</MenuItem>
                 ))}
               </TextField>
               {errors.workMode && (
@@ -218,7 +219,7 @@ const PostDescription = () => {
             </Box>
 
             <Box>
-              <FieldLabel icon={CalendarTodayOutlined} label={t("create.form.label_expires")} />
+              <FieldLabel icon={CalendarTodayOutlined} label={t("create.post_form.labels.expires")} />
               <TextField
                 type="date"
                 fullWidth
@@ -235,17 +236,17 @@ const PostDescription = () => {
 
         {/* Salary row */}
         <Box>
-          <SectionLabel>{t("create.form.section_salary")}</SectionLabel>
+          <SectionLabel>{t("create.post_form.labels.salary_section")}</SectionLabel>
           <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1.4fr 1.4fr", gap: 1.5 }}>
             <Box>
-              <FieldLabel icon={AttachMoneyOutlined} label={t("create.form.label_currency")} />
+              <FieldLabel icon={AttachMoneyOutlined} label={t("create.post_form.labels.currency")} />
               <TextField
                 select fullWidth
                 value={salary.currency || ""}
                 onChange={(e) => handleSalaryChange("currency", e.target.value)}
                 sx={fieldSx}
               >
-                <MenuItem disabled value="" sx={{ fontSize: "12px" }}>{t("create.form.placeholder_select")}</MenuItem>
+                <MenuItem disabled value="" sx={{ fontSize: "12px" }}>{t("create.post_form.placeholders.select_currency")}</MenuItem>
                 {defaultCurrencies.map((c: any) => (
                   <MenuItem key={c.value} value={c.value} sx={{ fontSize: "12px" }}>{c.label}</MenuItem>
                 ))}
@@ -253,23 +254,23 @@ const PostDescription = () => {
             </Box>
 
             <Box>
-              <FieldLabel label={t("create.form.label_min")} />
+              <FieldLabel label={t("create.post_form.labels.minimum")} />
               <TextField
                 type="text" fullWidth
                 value={salary.min || ""}
                 onChange={(e) => handleSalaryChange("min", e.target.value)}
-                placeholder={t("create.form.placeholder_min")}
+                placeholder={t("create.post_form.placeholders.min_salary_example")}
                 sx={fieldSx}
               />
             </Box>
 
             <Box>
-              <FieldLabel label={t("create.form.label_max")} />
+              <FieldLabel label={t("create.post_form.labels.maximum")} />
               <TextField
                 type="text" fullWidth
                 value={salary.max || ""}
                 onChange={(e) => handleSalaryChange("max", e.target.value)}
-                placeholder={t("create.form.placeholder_max")}
+                placeholder={t("create.post_form.placeholders.max_salary_example")}
                 sx={fieldSx}
               />
             </Box>
