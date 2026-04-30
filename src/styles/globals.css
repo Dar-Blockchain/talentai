@@ -14,6 +14,8 @@ html {
   overflow-y: auto;
   overflow-x: hidden;
   scroll-behavior: smooth;
+  /* Keeps layout stable when MUI modals/menus toggle body overflow (avoids thin right-edge gap). */
+  scrollbar-gutter: stable;
 }
 
 body {

@@ -109,6 +109,7 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
   return (
     <Menu
       {...menuProps}
+      disableScrollLock
       anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
       transformOrigin={{ vertical: "top",    horizontal: "right" }}
       PaperProps={{
