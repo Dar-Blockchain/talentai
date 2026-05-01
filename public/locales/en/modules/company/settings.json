@@ -1,0 +1,121 @@
+{
+  "title": "Settings",
+  "subtitle": "Manage your company profile and API keys",
+  "view_plans": "View Plans",
+  "employees_suffix": "employees",
+  "tabs": {
+    "company_info": "Company Info",
+    "contact": "Contact & Presence",
+    "api_keys": "API Keys",
+    "language": "Language"
+  },
+  "banner": {
+    "edit_profile": "Edit Profile",
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "company_info": {
+    "title": "Company Information",
+    "subtitle": "Your company's basic profile details",
+    "name_label": "Company Name",
+    "name_placeholder": "Your company name",
+    "email_label": "Company Email",
+    "email_helper": "Email cannot be changed",
+    "industry_label": "Industry",
+    "industry_placeholder": "e.g. Technology, Finance...",
+    "size_label": "Company Size",
+    "experience_label": "Required Experience Level",
+    "language_label": "Interface Language"
+  },
+  "contact": {
+    "title": "Contact & Presence",
+    "subtitle": "Location, social links, and work preferences",
+    "country_label": "Country / Location",
+    "country_placeholder": "Select country",
+    "employment_label": "Employment Type",
+    "size_label": "Company Size",
+    "linkedin_label": "LinkedIn URL",
+    "website_label": "Company Website"
+  },
+  "experience_levels": {
+    "entry": "Entry Level",
+    "mid": "Mid Level",
+    "senior": "Senior Level",
+    "lead": "Lead",
+    "executive": "Executive"
+  },
+  "employment_types": {
+    "remote": "Remote",
+    "onsite": "On-site",
+    "hybrid": "Hybrid"
+  },
+  "api_keys": {
+    "title": "API Keys",
+    "subtitle": "Manage API keys for external integrations",
+    "new_key": "New API Key",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "banner_title": "API key created — copy it now, it won't be shown again",
+    "no_keys": "No API keys yet",
+    "active": "Active",
+    "disabled_label": "Disabled",
+    "key_preview": "Key: {{preview}}",
+    "rate_limit_label": "Rate limit: {{count}} req/s",
+    "expires_label": "Expires: {{date}}",
+    "last_used_label": "Last used: {{date}}",
+    "ips_all": "All",
+    "ips_label": "IPs: {{ips}}",
+    "toggle_disable": "Disable",
+    "toggle_enable": "Enable",
+    "regenerate_tooltip": "Regenerate key",
+    "edit_tooltip": "Edit",
+    "delete_tooltip": "Delete",
+    "create_title": "Create API Key",
+    "edit_title": "Edit API Key",
+    "delete_title": "Delete API Key",
+    "delete_confirm": "Are you sure you want to delete {{name}}?",
+    "delete_warning": "This action cannot be undone. Any integration using this key will stop working immediately.",
+    "fields": {
+      "key_name": "Key Name",
+      "key_name_placeholder": "e.g. My mobile app",
+      "service_name": "Service Name",
+      "service_placeholder": "e.g. mobile-app",
+      "scopes": "Scopes",
+      "rate_limit": "Rate Limit (req/s)",
+      "expires_at": "Expires At",
+      "ip_whitelist": "IP Whitelist",
+      "ip_all": "All IPs",
+      "ip_custom": "Custom",
+      "ip_placeholder": "192.168.1.1, 10.0.0.0/24",
+      "ip_helper": "Comma-separated IPs or CIDR ranges"
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "create": "Create Key",
+      "save": "Save Changes",
+      "delete": "Delete"
+    },
+    "toast": {
+      "load_error": "Failed to load API keys",
+      "created": "API key created — copy it now!",
+      "create_error": "Failed to create API key",
+      "updated": "API key updated",
+      "update_error": "Failed to update API key",
+      "deleted": "API key deleted",
+      "delete_error": "Failed to delete API key",
+      "toggle_error": "Failed to toggle API key",
+      "key_disabled": "API key disabled",
+      "key_enabled": "API key enabled",
+      "regenerated": "API key regenerated — copy the new key!",
+      "regenerate_error": "Failed to regenerate API key",
+      "copied": "Key copied to clipboard"
+    }
+  },
+  "language": {
+    "title": "Interface Language",
+    "subtitle": "Choose the language used throughout your dashboard",
+    "desc_en": "Use TalentAI in English",
+    "desc_fr": "Use TalentAI in French",
+    "save_hint": "Changes apply immediately and are saved automatically."
+  }
+}

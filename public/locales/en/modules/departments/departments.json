@@ -1,0 +1,99 @@
+{
+  "title": "Departments",
+  "subtitle": "Define and maintain organisational departments. Use them to structure teams and assign employees.",
+  "new_department": "New department",
+
+  "toolbar": {
+    "department_count_one": "{{count}} department",
+    "department_count_other": "{{count}} departments",
+    "search_placeholder": "Search departments…",
+    "search_placeholder_detail": "Search departments by name or description…"
+  },
+
+  "empty": {
+    "title_filtered": "No departments found",
+    "title_none": "No departments yet",
+    "hint_filtered": "No departments match \"{{query}}\". Try a different search term.",
+    "hint_none": "Create your first department to organise teams and assign employees.",
+    "create_cta": "Create department"
+  },
+
+  "card": {
+    "no_description": "No description provided.",
+    "menu_edit": "Edit",
+    "menu_delete": "Delete",
+    "view": "View"
+  },
+
+  "form": {
+    "name_label": "Department name",
+    "name_placeholder": "e.g. Engineering, Marketing, Human Resources…",
+    "name_required": "Enter a department name.",
+    "description_label": "Description (optional)",
+    "description_placeholder": "Briefly describe this department’s purpose or scope.",
+    "character_count": "{{current}} / 500 characters max"
+  },
+
+  "errors": {
+    "create_failed": "Unable to create the department. Please try again.",
+    "update_failed": "Unable to save changes. Please try again.",
+    "delete_failed": "Unable to delete the department. Please try again.",
+    "fetch_list_failed": "Unable to load departments. Please try again."
+  },
+
+  "toast": {
+    "created": "Department created successfully."
+  },
+
+  "modals": {
+    "create": {
+      "title": "New department",
+      "cancel": "Cancel",
+      "submit": "Create department"
+    },
+    "edit": {
+      "title": "Edit department",
+      "cancel": "Cancel",
+      "submit": "Save changes"
+    },
+    "delete": {
+      "title": "Delete department",
+      "subtitle": "This action cannot be undone.",
+      "confirm_lead": "You are about to permanently delete",
+      "confirm_trail": ".",
+      "impact_title": "What happens next",
+      "impact_with_count_one": "The {{count}} employee currently assigned to this department will no longer be assigned to a department.",
+      "impact_with_count_other": "All {{count}} employees currently assigned to this department will no longer be assigned to a department.",
+      "impact_generic": "Any employees currently assigned to this department will no longer be assigned to a department.",
+      "cancel": "Cancel",
+      "confirm": "Delete department"
+    }
+  },
+
+  "detail": {
+    "back": "Departments",
+    "edit": "Edit",
+    "delete": "Delete",
+    "member_count_one": "{{count}} member",
+    "member_count_other": "{{count}} members",
+    "created": "Created {{date}}",
+    "not_found_title": "Department not found",
+    "not_found_subtitle": "This department may have been deleted or you may not have access to it.",
+    "loading_short": "…"
+  },
+
+  "members_panel": {
+    "tab_members": "Members",
+    "tab_invitations": "Invitations",
+    "invite_employee": "Invite employee",
+    "empty_members_filtered_title": "No members match your filters",
+    "empty_members_title": "No members yet",
+    "empty_members_filtered_hint": "Try adjusting your search or filters.",
+    "empty_members_hint": "Assign employees to this department to see them listed here.",
+    "empty_invitations_title": "No pending invitations",
+    "empty_invitations_hint": "Invitations you send for this department will appear here.",
+    "toast_invite_sent": "Invitation sent successfully.",
+    "toast_invite_resent": "Invitation resent.",
+    "toast_invite_cancelled": "Invitation cancelled."
+  }
+}
