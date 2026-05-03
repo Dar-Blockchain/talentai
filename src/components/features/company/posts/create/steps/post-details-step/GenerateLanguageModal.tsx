@@ -3,14 +3,10 @@ import { Box, Button, Dialog, Typography } from "@mui/material";
 import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useTranslation } from "react-i18next";
+import { SUPPORTED_LANGS } from "@/constants/languages";
 
 const TEAL    = "#0D9488";
 const TEAL_BG = "#F0FDFA";
-
-const LANGUAGES = [
-  { code: "en", flag: "us", label: "English" },
-  { code: "fr", flag: "fr", label: "Français" },
-];
 
 interface Props {
   open: boolean;
@@ -66,7 +62,7 @@ const GenerateLanguageModal: React.FC<Props> = ({ open, loading, onConfirm, onCl
           mb: 3,
         }}
       >
-        {LANGUAGES.map((lang) => {
+        {SUPPORTED_LANGS.map((lang) => {
           const active = selected === lang.code;
           return (
             <Box

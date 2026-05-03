@@ -20,7 +20,6 @@ type FormValues = { email: string; code: string };
 
 const CODE_LENGTH = 6;
 const ACCENT = "#0D9488";
-const ACCENT2 = "#059669";
 
 interface Props { themeColors: any }
 
@@ -92,20 +91,20 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
   useEffect(() => () => { clearTimer(); }, []);
 
   const fieldSx = {
-    "& .MuiInputLabel-root": { color: "#9CA3AF", fontFamily: "Poppins", fontSize: "1rem" },
-    "& .MuiInputLabel-root.Mui-focused": { color: ACCENT },
     "& .MuiOutlinedInput-root": {
-      borderRadius: "14px",
+      borderRadius: "12px",
       fontFamily: "Poppins",
-      fontSize: "1rem",
-      height: 58,
-      bgcolor: "#F8FFFE",
-      "& fieldset": { borderColor: "#D1FAF5" },
-      "&:hover fieldset": { borderColor: `${ACCENT}66` },
-      "&:hover": { bgcolor: "#F0FDFA" },
+      fontSize: { xs: "0.88rem", sm: "0.92rem" },
+      height: { xs: 50, sm: 52 },
+      bgcolor: "#F9FAFB",
+      transition: "background-color 0.15s",
+      "& fieldset": { borderColor: "#E5E7EB", borderWidth: "1.5px" },
+      "&:hover fieldset": { borderColor: "#D1D5DB" },
+      "&:hover": { bgcolor: "#F3F4F6" },
       "&.Mui-focused fieldset": { borderColor: ACCENT, borderWidth: "1.5px" },
       "&.Mui-focused": { bgcolor: "#fff" },
     },
+    "& .MuiFormHelperText-root": { fontFamily: "Poppins", fontSize: "0.72rem", mt: 0.75 },
   };
 
   return (
@@ -121,7 +120,7 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
           {/* ── Step 1: Email ── */}
           {step === 1 && (
             <Box>
-              <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#374151", fontFamily: "Poppins", mb: 1, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              <Typography sx={{ fontSize: { xs: "0.75rem", sm: "0.78rem" }, fontWeight: 500, color: "#374151", fontFamily: "Poppins", mb: 0.75 }}>
                 {t("signin.email_label")}
               </Typography>
               <TextField
@@ -136,13 +135,13 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <EmailOutlinedIcon sx={{ fontSize: 20, color: ACCENT }} />
+                      <EmailOutlinedIcon sx={{ fontSize: 17, color: "#9CA3AF" }} />
                     </InputAdornment>
                   ),
                 }}
                 sx={fieldSx}
               />
-              <Typography sx={{ fontSize: "0.78rem", color: "#9CA3AF", fontFamily: "Poppins", mt: 1 }}>
+              <Typography sx={{ fontSize: { xs: "0.7rem", sm: "0.72rem" }, color: "#9CA3AF", fontFamily: "Poppins", mt: 0.75 }}>
                 {t("signin.email_hint")}
               </Typography>
             </Box>
@@ -151,72 +150,45 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
           {/* ── Step 2: OTP ── */}
           {step === 2 && (
             <Box>
-              {/* Email confirmation card */}
-              <Box sx={{ textAlign: "center", mb: 3.5 }}>
-                {/* Icon with pulse ring */}
-                <Box sx={{ position: "relative", display: "inline-flex", mb: 2 }}>
-                  <Box sx={{
-                    position: "absolute", inset: -7, borderRadius: "22px",
-                    border: `1.5px solid ${ACCENT}22`,
-                    animation: "pulseRing 2.4s ease-in-out infinite",
-                    "@keyframes pulseRing": {
-                      "0%, 100%": { opacity: 0.6, transform: "scale(1)" },
-                      "50%":       { opacity: 0.15, transform: "scale(1.08)" },
-                    },
-                  }} />
-                  <Box sx={{
-                    width: 60, height: 60, borderRadius: "18px",
-                    background: `linear-gradient(135deg, ${ACCENT}18 0%, ${ACCENT2}12 100%)`,
-                    border: `1.5px solid ${ACCENT}30`,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    boxShadow: `0 8px 24px ${ACCENT}20`,
-                  }}>
-                    <EmailOutlinedIcon sx={{ fontSize: 26, color: ACCENT }} />
-                  </Box>
+              {/* Clean header */}
+              <Box sx={{ textAlign: "center", mb: { xs: 2.5, sm: 3 } }}>
+                <Box sx={{
+                  width: 46, height: 46, borderRadius: "13px",
+                  bgcolor: `${ACCENT}0F`,
+                  border: `1px solid ${ACCENT}1A`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  mx: "auto", mb: 1.75,
+                }}>
+                  <EmailOutlinedIcon sx={{ fontSize: 21, color: ACCENT }} />
                 </Box>
-
-                <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "1.05rem", color: "#111827", mb: 0.5 }}>
+                <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: { xs: "0.95rem", sm: "1rem" }, color: "#111827", mb: 0.5 }}>
                   {t("signin.code_sent_title")}
                 </Typography>
-                <Typography sx={{ fontFamily: "Poppins", fontSize: "0.82rem", color: "#6B7280", mb: 1.75 }}>
-                  {t("signin.code_sent_to")}
-                </Typography>
-
-                {/* Email chip */}
-                <Box sx={{
-                  display: "inline-flex", alignItems: "center", gap: 1,
-                  px: 2, py: 0.8, borderRadius: "12px",
-                  bgcolor: `${ACCENT}0C`, border: `1.5px solid ${ACCENT}28`,
-                  boxShadow: `0 2px 10px ${ACCENT}12`,
-                }}>
-                  <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: ACCENT, flexShrink: 0 }} />
-                  <Typography sx={{ fontFamily: "Poppins", fontSize: "0.9rem", fontWeight: 700, color: ACCENT, letterSpacing: "0.01em" }}>
-                    {values.email}
-                  </Typography>
-                </Box>
-
-                <Typography sx={{ fontFamily: "Poppins", fontSize: "0.72rem", color: "#9CA3AF", mt: 1.5 }}>
-                  {t("signin.spam_note")}
+                <Typography sx={{ fontFamily: "Poppins", fontSize: { xs: "0.78rem", sm: "0.83rem" }, color: "#6B7280", px: 1 }}>
+                  {t("signin.code_sent_to")}{" "}
+                  <Box component="span" sx={{ fontWeight: 600, color: "#374151" }}>{values.email}</Box>
                 </Typography>
               </Box>
 
-              <Stack direction="row" spacing={1.5} justifyContent="center">
+              {/* OTP boxes */}
+              <Stack direction="row" spacing={{ xs: 0.75, sm: 1 }} justifyContent="center">
                 {Array.from({ length: CODE_LENGTH }).map((_, i) => {
                   const filled = !!values.code[i];
                   return (
                     <Box
                       key={i}
                       sx={{
-                        width: 58, height: 68,
-                        borderRadius: "14px",
-                        border: `2px solid ${filled ? ACCENT : "#D1D5DB"}`,
-                        bgcolor: filled ? `${ACCENT}08` : "#F9FAFB",
+                        width: { xs: 44, sm: 50, md: 54 },
+                        height: { xs: 52, sm: 58, md: 62 },
+                        borderRadius: "10px",
+                        border: `1.5px solid ${filled ? ACCENT : "#E5E7EB"}`,
+                        bgcolor: filled ? `${ACCENT}06` : "#FAFAFA",
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        transition: "all 0.15s",
+                        transition: "border-color 0.15s, background-color 0.15s",
                         "&:focus-within": {
                           borderColor: ACCENT,
                           bgcolor: "#fff",
-                          boxShadow: `0 0 0 4px ${ACCENT}1A`,
+                          boxShadow: `0 0 0 3px ${ACCENT}18`,
                         },
                       }}
                     >
@@ -246,7 +218,7 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
                         sx={{
                           width: "100%", height: "100%", border: "none", outline: "none",
                           background: "transparent", textAlign: "center",
-                          fontSize: "1.75rem", fontWeight: 700, color: ACCENT,
+                          fontSize: { xs: "1.35rem", sm: "1.5rem" }, fontWeight: 700, color: "#0F172A",
                           fontFamily: "Poppins", cursor: "text",
                         }}
                       />
@@ -256,7 +228,7 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
               </Stack>
 
               {touched.code && errors.code && (
-                <Typography sx={{ color: "#EF4444", fontSize: "0.78rem", fontFamily: "Poppins", mt: 1.5, textAlign: "center" }}>
+                <Typography sx={{ color: "#EF4444", fontSize: "0.73rem", fontFamily: "Poppins", mt: 1.25, textAlign: "center" }}>
                   {errors.code}
                 </Typography>
               )}
@@ -265,9 +237,9 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
 
           {/* ── Timer ── */}
           {(isExpired || isRunning) && (
-            <Box sx={{ textAlign: "center", mt: 1.5 }}>
+            <Box sx={{ textAlign: "center", mt: 1.25 }}>
               <Typography sx={{
-                fontSize: "0.8rem", fontFamily: "Poppins", fontWeight: 500,
+                fontSize: { xs: "0.72rem", sm: "0.75rem" }, fontFamily: "Poppins", fontWeight: 500,
                 color: secondsLeft > 60 ? "#9CA3AF" : secondsLeft > 0 ? "#F59E0B" : "#EF4444",
                 transition: "color 0.3s",
               }}>
@@ -291,28 +263,23 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
                 handleSendCode(values.email);
               }
             }}
-            endIcon={!loading && <ArrowForwardIcon sx={{ fontSize: 18 }} />}
-            startIcon={loading ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : undefined}
+            endIcon={!loading && <ArrowForwardIcon sx={{ fontSize: 16 }} />}
+            startIcon={loading ? <CircularProgress size={15} sx={{ color: "#fff" }} /> : undefined}
             sx={{
-              mt: 3,
-              height: 56,
-              borderRadius: "14px",
+              mt: { xs: 2, sm: 2.5 },
+              height: { xs: 48, sm: 50, md: 52 },
+              borderRadius: "12px",
               textTransform: "none",
               fontFamily: "Poppins",
-              fontWeight: 700,
-              fontSize: "1rem",
-              letterSpacing: "0.01em",
-              background: `linear-gradient(135deg, ${ACCENT} 0%, ${ACCENT2} 100%)`,
-              boxShadow: `0 4px 20px ${ACCENT}50`,
+              fontWeight: 600,
+              fontSize: { xs: "0.88rem", sm: "0.92rem" },
+              bgcolor: ACCENT,
               color: "#fff",
-              transition: "all 0.2s",
-              "&:hover": {
-                background: `linear-gradient(135deg, #0caa9d 0%, #059669 100%)`,
-                boxShadow: `0 8px 28px ${ACCENT}60`,
-                transform: "translateY(-1px)",
-              },
-              "&:active": { transform: "translateY(0)" },
-              "&.Mui-disabled": { background: "#F3F4F6", color: "#9CA3AF", boxShadow: "none" },
+              boxShadow: "none",
+              transition: "background-color 0.15s",
+              "&:hover": { bgcolor: "#0F766E", boxShadow: "none" },
+              "&:active": { bgcolor: "#0B6563" },
+              "&.Mui-disabled": { bgcolor: "#F3F4F6", color: "#9CA3AF", boxShadow: "none" },
             }}
           >
             {loading
@@ -321,9 +288,9 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
           </Button>
 
           {/* ── Security note ── */}
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.75, mt: 1.5 }}>
-            <LockOutlinedIcon sx={{ fontSize: 13, color: "#9CA3AF" }} />
-            <Typography sx={{ fontSize: "0.75rem", color: "#9CA3AF", fontFamily: "Poppins" }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.75, mt: 1.25 }}>
+            <LockOutlinedIcon sx={{ fontSize: 12, color: "#C4C9D4" }} />
+            <Typography sx={{ fontSize: { xs: "0.68rem", sm: "0.72rem" }, color: "#9CA3AF", fontFamily: "Poppins" }}>
               {t("signin.security_note")}
             </Typography>
           </Box>
@@ -334,16 +301,16 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
               variant="text"
               fullWidth
               sx={{
-                mt: 1.5,
-                height: 42,
+                mt: 1.25,
+                height: { xs: 38, sm: 40 },
                 borderRadius: "10px",
                 fontFamily: "Poppins",
                 fontWeight: 500,
-                fontSize: "0.85rem",
+                fontSize: { xs: "0.8rem", sm: "0.83rem" },
                 textTransform: "none",
                 color: "#6B7280",
                 border: "1px solid #E5E7EB",
-                "&:hover": { bgcolor: `${ACCENT}08`, color: ACCENT, borderColor: `${ACCENT}44` },
+                "&:hover": { bgcolor: "#F9FAFB", color: "#374151", borderColor: "#D1D5DB", boxShadow: "none" },
               }}
               onClick={() => { clearTimer(); setStep(1); setFieldValue("code", ""); }}
             >
