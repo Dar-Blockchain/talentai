@@ -4,7 +4,7 @@ import HourglassIcon from "@/components/icons/HourglassIcon";
 import TimeOutlineIcon from "@/components/icons/TimeOutlineIcon";
 import CaseOutlineIcon from "@/components/icons/CaseOutlineIcon";
 import CheckTestIcon from "@/components/icons/checkTestIcon";
-import { formatDistanceToNowStrict } from "date-fns";
+import dayjs from "@/lib/dayjs";
 
 export interface PostAssessment {
   _id: string;
@@ -123,7 +123,7 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({
   const score = getScore(assessment);
   const completed = isCompleted(assessment);
   const timeAgo = assessment.updatedAt || assessment.createdAt
-    ? formatDistanceToNowStrict(new Date(assessment.updatedAt || assessment.createdAt), { addSuffix: true })
+    ? dayjs(assessment.updatedAt || assessment.createdAt).fromNow()
     : "";
   const jobTitle = assessment.post?.jobDetails?.title || "Job Application";
   const companyName = assessment.company?.username || assessment.post?.user?.companyName || "Company";

@@ -21,7 +21,7 @@ import "reactflow/dist/style.css";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import SettingsIcon from "@mui/icons-material/Settings";
-import { toast } from "react-hot-toast";
+import { useToast } from "@/hooks/useToast";
 import { NodeConfigRenderer } from "./node-configuration";
 
 const NODE_TYPE_LABELS: Record<string, string> = {
@@ -52,6 +52,7 @@ const NodeConfigurationModal: React.FC<NodeConfigurationModalProps> = ({
   onSelectedNodeChange,
   onSelectedNodesChange,
 }) => {
+  const { showToast } = useToast();
   const handleClose = () => onClose();
 
   const handleFormSave = useCallback(
@@ -65,7 +66,7 @@ const NodeConfigurationModal: React.FC<NodeConfigurationModalProps> = ({
         )
       );
       handleClose();
-      toast.success("Configuration saved!");
+      showToast({ message: "Configuration saved!", severity: "success" });
     },
     [selectedNode, setNodes]
   );

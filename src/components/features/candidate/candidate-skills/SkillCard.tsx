@@ -1,6 +1,6 @@
 import React, { useCallback } from "react";
 import { Typography, Box, LinearProgress, Button, Tooltip } from "@mui/material";
-import { formatDistanceToNowStrict } from "date-fns";
+import dayjs from "@/lib/dayjs";
 import TimeOutlineIcon from "@/components/icons/TimeOutlineIcon";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { useRouter } from "next/router";
@@ -17,7 +17,7 @@ const SkillCard: React.FC<SkillCardProps> = ({ skill, type }) => {
   const profile = useSelector((state: RootState) => state.user.connectedUser.profile)
   const scoreTest = skill.ScoreTest || 0;
   const updatedAt = skill?.updatedAt
-    ? formatDistanceToNowStrict(new Date(skill.updatedAt), { addSuffix: true })
+    ? dayjs(skill.updatedAt).fromNow()
     : "";
 
   //0->19, 20->39, 40->59, 60->79, 80->100

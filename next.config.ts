@@ -6,7 +6,6 @@ const nextConfig: NextConfig = {
   reactStrictMode: false, // Temporarily disabled to debug duplicate API calls
   output: 'standalone',
   outputFileTracingRoot: process.cwd(),
-  transpilePackages: ['@hashgraph/hedera-wallet-connect'],
   devIndicators: {
     position: "bottom-right",
   },
@@ -22,15 +21,6 @@ const nextConfig: NextConfig = {
   assetPrefix: '',
   distDir: '.next',
   webpack: (config) => {
-    // Handle @hashgraph/hedera-wallet-connect ESM issues
-    config.resolve = config.resolve || {};
-    config.resolve.extensionAlias = {
-      '.js': ['.js', '.ts', '.tsx'],
-      '.mjs': ['.mjs', '.mts'],
-      ...(config.resolve.extensionAlias || {})
-    };
-
-    // Image asset handling
     if (config.module?.rules) {
       config.module.rules.push({
         test: /\.(png|jpe?g|gif|svg|ico)$/i,
@@ -41,7 +31,6 @@ const nextConfig: NextConfig = {
       });
     }
 
-    // Fallback for node modules
     config.resolve.fallback = {
       ...config.resolve.fallback,
       fs: false,
