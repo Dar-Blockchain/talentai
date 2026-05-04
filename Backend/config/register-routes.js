@@ -88,10 +88,6 @@ function registerRoutes(app) {
 
   //payment
   app.use("/payments", paymentRouter); //✅ Payment Management -> payments
-  // Health check routes
-  app.get("/", (req, res) => {
-    res.json({ message: "Welcome to Express API!" });
-  });
 
   // Register internal campaign routes
   app.use('/internal-campaigns', internalCampaignRoutes);
@@ -104,9 +100,6 @@ function registerRoutes(app) {
   // API Key Management
   app.use('/api/api-keys', apiKeyRouter); //✅ API Key Management -> api-keys
 
-  app.get("/some-route", (req, res) => {
-    res.json("Route accessible");
-  });
 }
 
 module.exports = {
