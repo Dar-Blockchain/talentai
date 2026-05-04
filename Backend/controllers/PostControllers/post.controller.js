@@ -703,7 +703,7 @@ exports.getJobInterviewConfig = async (req, res) => {
       },
       sessionSettings: {
         duration: 45,
-        language: "en",
+        language: post.interviewLanguages?.[0] || "en",
         difficulty: "intermediate",
         silenceTimeout: 10,
         silenceIntelligence: {

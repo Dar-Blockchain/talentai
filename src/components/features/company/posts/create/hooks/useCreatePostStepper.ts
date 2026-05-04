@@ -60,10 +60,10 @@ export const useCreatePostStepper = (
       : validateManualPostStep0(manualPost, showToast);
   };
 
-  const saveOrUpdatePost = async () => {
+  const saveOrUpdatePost = async (languagesOverride?: string[]) => {
     const jobId = savedPost?.jobData?._id;
     const base = creationType === "ai" ? generatedPost : manualPost;
-    const jobData = { ...base, interviewLanguages };
+    const jobData = { ...base, interviewLanguages: languagesOverride ?? interviewLanguages };
 
     if (jobId) {
       return dispatch(updatePost({ jobId, jobData })).unwrap();
@@ -167,7 +167,7 @@ export const useCreatePostStepper = (
 
   /* -------------------- Actions -------------------- */
 
-  const handleNext = async (shouldContinue?: boolean) => {
+  const handleNext = async (shouldContinue?: boolean, languagesOverride?: string[]) => {
     /* ---------- STEP 0: Job Details ---------- */
     if (activeStep === 0 && !shouldContinue) {
       if (!validateStep0()) return;
@@ -178,7 +178,7 @@ export const useCreatePostStepper = (
 
       setIsFinishing(true);
       try {
-        const result = await saveOrUpdatePost();
+        const result = await saveOrUpdatePost(languagesOverride);
 
         if (creationType === "ai") {
           await finalizeCreation(result.jobData._id);

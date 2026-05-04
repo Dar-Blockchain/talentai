@@ -413,6 +413,15 @@
         "desc_en": "Use TalentAI in English",
         "desc_fr": "Use TalentAI in French",
         "save_hint": "Changes apply immediately and are saved automatically."
+      },
+      "generate_lang": {
+        "title": "AI Generate Language",
+        "subtitle": "Default language for AI-generated job posts. When set, the language picker is skipped automatically.",
+        "always_ask_label": "Always ask",
+        "always_ask_desc": "Show language picker every time",
+        "lang_desc_en": "Always generate in English",
+        "lang_desc_fr": "Always generate in French",
+        "save_hint": "This preference is saved locally on this device. Changes take effect immediately."
       }
     }
   }

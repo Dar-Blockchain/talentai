@@ -53,6 +53,7 @@ import {
 } from '@/components/features/interview/start';
 import InterviewIntro from '@/components/features/interview/start/InterviewIntro';
 import GDPRConsentModal from '@/components/features/interview/start/GDPRConsentModal';
+import InterviewLanguageModal from '@/components/features/candidate/candidate-interviews/InterviewLanguageModal';
 import CoverageDashboard from '@/components/features/interview/start/CoverageDashboard';
 
 // Styles
@@ -67,6 +68,7 @@ const IntelligentInterviewTest = () => {
   const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
 
   const [step, setStep] = useState<'intro' | 'interview'>('intro');
+  const [langPickerOpen, setLangPickerOpen] = useState(false);
   const [coverage, setCoverage] = useState<Coverage | null>(null);
   const [coverageDashboardExpanded, setCoverageDashboardExpanded] = useState(true);
   const [assessmentChecking, setAssessmentChecking] = useState(true);
@@ -580,18 +582,43 @@ const IntelligentInterviewTest = () => {
     );
   }
 
+  const handleIntroNext = (_: any) => {
+    const langs = jobData?.interviewLanguages as string[] | undefined;
+    if (langs && langs.length > 1) {
+      setLangPickerOpen(true);
+      return;
+    }
+    const lang = langs?.[0] || 'en';
+    setInterviewConfig({ ...interviewConfig, sessionSettings: { ...interviewConfig.sessionSettings, language: lang } });
+    setStep('interview');
+  };
+
+  const handleLangConfirm = (lang: string) => {
+    setInterviewConfig({ ...interviewConfig, sessionSettings: { ...interviewConfig.sessionSettings, language: lang } });
+    setLangPickerOpen(false);
+    setStep('interview');
+  };
+
   /* ── Step 1: Introduction ── */
   if (step === 'intro') {
     return (
-      <InterviewIntro
-        interviewConfig={interviewConfig}
-        hasJobId={hasJobId}
-        jobId={jobId}
-        refParam={refParam}
-        jobData={jobData}
-        checkingEligibility={false}
-        onNext={(_) => setStep('interview')}
-      />
+      <>
+        <InterviewIntro
+          interviewConfig={interviewConfig}
+          hasJobId={hasJobId}
+          jobId={jobId}
+          refParam={refParam}
+          jobData={jobData}
+          checkingEligibility={false}
+          onNext={handleIntroNext}
+        />
+        <InterviewLanguageModal
+          open={langPickerOpen}
+          languages={jobData?.interviewLanguages || []}
+          onConfirm={handleLangConfirm}
+          onClose={() => setLangPickerOpen(false)}
+        />
+      </>
     );
   }
 

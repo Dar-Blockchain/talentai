@@ -1,13 +1,16 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Box, Button, Dialog, Typography } from "@mui/material";
 import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
+import CheckBoxOutlined from "@mui/icons-material/CheckBoxOutlined";
+import CheckBoxOutlineBlankOutlined from "@mui/icons-material/CheckBoxOutlineBlank";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useTranslation } from "react-i18next";
 import { SUPPORTED_LANGS } from "@/constants/languages";
 
+export const GENERATE_LANG_KEY = "talentai_generate_lang";
+
 const TEAL    = "#0D9488";
 const TEAL_BG = "#F0FDFA";
-
 
 interface Props {
   open: boolean;
@@ -18,7 +21,19 @@ interface Props {
 
 const GenerateLanguageModal: React.FC<Props> = ({ open, loading, onConfirm, onClose }) => {
   const [selected, setSelected] = useState("en");
+  const [saveAsDefault, setSaveAsDefault] = useState(false);
   const { t } = useTranslation("posts");
+
+  useEffect(() => {
+    if (!open) setSaveAsDefault(false);
+  }, [open]);
+
+  const handleConfirm = () => {
+    if (saveAsDefault && typeof window !== "undefined") {
+      localStorage.setItem(GENERATE_LANG_KEY, selected);
+    }
+    onConfirm(selected);
+  };
 
   return (
     <Dialog
@@ -60,7 +75,7 @@ const GenerateLanguageModal: React.FC<Props> = ({ open, loading, onConfirm, onCl
           bgcolor: "#F3F4F6",
           borderRadius: "12px",
           p: "4px",
-          mb: 3,
+          mb: 2.5,
         }}
       >
         {SUPPORTED_LANGS.map((lang) => {
@@ -77,16 +92,47 @@ const GenerateLanguageModal: React.FC<Props> = ({ open, loading, onConfirm, onCl
                 bgcolor: active ? "#fff" : "transparent",
                 boxShadow: active ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
                 transition: "all 0.18s",
-                fontWeight: active ? 700 : 500,
               }}
             >
-              <img src={`https://flagcdn.com/w40/${lang.flag}.png`} srcSet={`https://flagcdn.com/w80/${lang.flag}.png 2x`} width={24} height={16} alt={lang.label} style={{ borderRadius: 2, display: "block" }} />
+              <img
+                src={`https://flagcdn.com/w40/${lang.flag}.png`}
+                srcSet={`https://flagcdn.com/w80/${lang.flag}.png 2x`}
+                width={24} height={16} alt={lang.label}
+                style={{ borderRadius: 2, display: "block" }}
+              />
               <Typography sx={{ fontSize: "13px", fontWeight: active ? 700 : 500, color: active ? "#111827" : "#6B7280" }}>
                 {lang.label}
               </Typography>
             </Box>
           );
         })}
+      </Box>
+
+      {/* Save as default checkbox */}
+      <Box
+        onClick={() => !loading && setSaveAsDefault((v) => !v)}
+        sx={{
+          display: "flex", alignItems: "center", gap: 1,
+          cursor: loading ? "default" : "pointer",
+          px: 1, py: 0.75, mb: 2.5,
+          borderRadius: "10px",
+          border: `1px solid ${saveAsDefault ? TEAL : "#E5E7EB"}`,
+          bgcolor: saveAsDefault ? TEAL_BG : "#FAFAFA",
+          transition: "all 0.15s",
+          userSelect: "none",
+        }}
+      >
+        {saveAsDefault
+          ? <CheckBoxOutlined sx={{ fontSize: 18, color: TEAL, flexShrink: 0 }} />
+          : <CheckBoxOutlineBlankOutlined sx={{ fontSize: 18, color: "#9CA3AF", flexShrink: 0 }} />}
+        <Box>
+          <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: saveAsDefault ? TEAL : "#374151", lineHeight: 1.3 }}>
+            Always use this language
+          </Typography>
+          <Typography sx={{ fontSize: "11px", color: "#9CA3AF", lineHeight: 1.3 }}>
+            Skip this dialog next time — change anytime in Settings
+          </Typography>
+        </Box>
       </Box>
 
       {/* Actions */}
@@ -108,7 +154,7 @@ const GenerateLanguageModal: React.FC<Props> = ({ open, loading, onConfirm, onCl
         <Button
           fullWidth
           variant="contained"
-          onClick={() => onConfirm(selected)}
+          onClick={handleConfirm}
           disabled={loading}
           startIcon={
             loading

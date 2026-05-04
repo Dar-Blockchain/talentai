@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { Box, Button, Dialog, Typography } from "@mui/material";
-import MicOutlined from "@mui/icons-material/MicOutlined";
+import TranslateOutlined from "@mui/icons-material/Translate";
 import CheckOutlined from "@mui/icons-material/CheckOutlined";
-import InfoOutlined from "@mui/icons-material/InfoOutlined";
+import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
+import LockOutlined from "@mui/icons-material/LockOutlined";
 import { LANG_META } from "@/constants/languages";
 
 const TEAL    = "#0D9488";
@@ -10,7 +11,7 @@ const TEAL_BG = "#F0FDFA";
 
 interface Props {
   open: boolean;
-  languages: string[];           // available languages from the post
+  languages: string[];
   onConfirm: (lang: string) => void;
   onClose: () => void;
 }
@@ -24,6 +25,7 @@ const InterviewLanguageModal: React.FC<Props> = ({ open, languages, onConfirm, o
 
   const isMulti = languages.length > 1;
   const singleLang = LANG_META[languages[0]];
+  const selectedMeta = LANG_META[selected];
 
   return (
     <Dialog
@@ -31,130 +33,186 @@ const InterviewLanguageModal: React.FC<Props> = ({ open, languages, onConfirm, o
       onClose={onClose}
       PaperProps={{
         sx: {
-          borderRadius: "18px",
-          width: 400,
+          borderRadius: "20px",
+          width: 420,
           maxWidth: "95vw",
-          p: 3,
-          boxShadow: "0 24px 64px rgba(0,0,0,0.12)",
+          p: 0,
+          overflow: "hidden",
+          boxShadow: "0 32px 80px rgba(0,0,0,0.14)",
         },
       }}
     >
-      {/* Icon + title */}
-      <Box sx={{ textAlign: "center", mb: 2.5 }}>
-        <Box sx={{
-          width: 44, height: 44, borderRadius: "12px",
-          bgcolor: TEAL_BG, mx: "auto", mb: 1.5,
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-          <MicOutlined sx={{ fontSize: 22, color: TEAL }} />
-        </Box>
-        <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>
-          {isMulti ? "Choose interview language" : "Interview language"}
-        </Typography>
-        <Typography sx={{ fontSize: "12.5px", color: "#6B7280", mt: 0.5 }}>
-          {isMulti
-            ? "Select the language in which you want to conduct your interview"
-            : "Your interview will be conducted in the following language"}
-        </Typography>
-      </Box>
+      {/* Teal accent bar */}
+      <Box sx={{ height: 4, background: `linear-gradient(90deg, ${TEAL}, #0891B2)` }} />
 
-      {/* Multi-language selector */}
-      {isMulti && (
-        <Box sx={{ display: "grid", gridTemplateColumns: `repeat(${languages.length}, 1fr)`, gap: 1.5, mb: 3 }}>
-          {languages.map((code) => {
-            const meta = LANG_META[code];
-            if (!meta) return null;
-            const active = selected === code;
-            return (
-              <Box
-                key={code}
-                onClick={() => setSelected(code)}
-                sx={{
-                  cursor: "pointer",
-                  border: `1.5px solid ${active ? TEAL : "#E5E7EB"}`,
-                  borderRadius: "12px",
-                  bgcolor: active ? TEAL_BG : "#FAFAFA",
-                  p: 1.75,
-                  display: "flex", flexDirection: "column", alignItems: "center", gap: 0.5,
-                  position: "relative",
-                  transition: "all 0.15s",
-                  "&:hover": { borderColor: TEAL, bgcolor: TEAL_BG },
-                }}
-              >
-                {active && (
-                  <Box sx={{
-                    position: "absolute", top: 6, right: 6,
-                    width: 16, height: 16, borderRadius: "50%",
-                    bgcolor: TEAL,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}>
-                    <CheckOutlined sx={{ fontSize: 10, color: "#fff" }} />
-                  </Box>
-                )}
-                <img src={`https://flagcdn.com/w40/${meta.flag}.png`} srcSet={`https://flagcdn.com/w80/${meta.flag}.png 2x`} width={32} height={22} alt={meta.flag} style={{ borderRadius: 3, display: 'block' }} />
-                <Typography sx={{
-                  fontSize: "12px", fontWeight: active ? 700 : 500,
-                  color: active ? TEAL : "#374151",
-                  textAlign: "center",
-                }}>
-                  {meta.label}
-                </Typography>
-              </Box>
-            );
-          })}
-        </Box>
-      )}
-
-      {/* Single-language info card */}
-      {!isMulti && singleLang && (
-        <Box sx={{
-          display: "flex", alignItems: "center", gap: 1.5,
-          p: 1.75, mb: 3,
-          borderRadius: "12px",
-          bgcolor: "#F0FDFA", border: "1px solid #99F6E4",
-        }}>
-          <img src={`https://flagcdn.com/w40/${singleLang.flag}.png`} srcSet={`https://flagcdn.com/w80/${singleLang.flag}.png 2x`} width={36} height={26} alt={singleLang.flag} style={{ borderRadius: 3, display: 'block', flexShrink: 0 }} />
-          <Box>
-            <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#0D9488" }}>
-              {singleLang.label}
-            </Typography>
-            <Typography sx={{ fontSize: "11.5px", color: "#6B7280" }}>
-              The interview will be fully conducted in this language
-            </Typography>
+      <Box sx={{ p: 3 }}>
+        {/* Icon + title */}
+        <Box sx={{ textAlign: "center", mb: 3 }}>
+          <Box sx={{
+            width: 48, height: 48, borderRadius: "14px",
+            background: `linear-gradient(135deg, ${TEAL_BG}, #E0F2FE)`,
+            border: "1.5px solid #99F6E4",
+            mx: "auto", mb: 2,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <TranslateOutlined sx={{ fontSize: 24, color: TEAL }} />
           </Box>
-          <InfoOutlined sx={{ fontSize: 16, color: "#99F6E4", ml: "auto", flexShrink: 0 }} />
+
+          <Typography sx={{ fontSize: "16px", fontWeight: 800, color: "#111827", letterSpacing: "-0.01em" }}>
+            {isMulti ? "Choose your interview language" : "Interview language"}
+          </Typography>
+
+          <Typography sx={{ fontSize: "12.5px", color: "#6B7280", mt: 0.75, lineHeight: 1.65, px: 2 }}>
+            {isMulti
+              ? "The AI interviewer will speak to you in the language you select. Take a moment to choose — this cannot be changed once the interview begins."
+              : "The AI interviewer will conduct the entire session in the language below. Make sure you're comfortable before starting."}
+          </Typography>
         </Box>
-      )}
 
-      {/* Actions */}
-      <Box sx={{ display: "flex", gap: 1.25 }}>
-        <Button
-          fullWidth
-          onClick={onClose}
-          sx={{
-            textTransform: "none", fontWeight: 600, fontSize: "13px",
-            borderRadius: "10px", height: 42,
-            color: "#6B7280", border: "1px solid #E5E7EB",
-            "&:hover": { bgcolor: "#F9FAFB", borderColor: "#D1D5DB" },
-          }}
-        >
-          Cancel
-        </Button>
+        {/* ── Multi: language picker ── */}
+        {isMulti && (
+          <>
+            <Box sx={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(languages.length, 3)}, 1fr)`, gap: 1.25, mb: 2 }}>
+              {languages.map((code) => {
+                const meta = LANG_META[code];
+                if (!meta) return null;
+                const active = selected === code;
+                return (
+                  <Box
+                    key={code}
+                    onClick={() => setSelected(code)}
+                    sx={{
+                      cursor: "pointer",
+                      border: `2px solid ${active ? TEAL : "#E5E7EB"}`,
+                      borderRadius: "14px",
+                      bgcolor: active ? TEAL_BG : "#FAFAFA",
+                      p: "14px 10px",
+                      display: "flex", flexDirection: "column", alignItems: "center", gap: 0.75,
+                      position: "relative",
+                      transition: "all 0.18s ease",
+                      "&:hover": { borderColor: TEAL, bgcolor: TEAL_BG, transform: "translateY(-1px)" },
+                    }}
+                  >
+                    {/* Selected badge */}
+                    {active && (
+                      <Box sx={{
+                        position: "absolute", top: 7, right: 7,
+                        width: 18, height: 18, borderRadius: "50%",
+                        bgcolor: TEAL,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        boxShadow: "0 2px 6px rgba(13,148,136,0.4)",
+                      }}>
+                        <CheckOutlined sx={{ fontSize: 11, color: "#fff" }} />
+                      </Box>
+                    )}
 
-        <Button
-          fullWidth
-          variant="contained"
-          onClick={() => onConfirm(selected)}
-          sx={{
-            textTransform: "none", fontWeight: 700, fontSize: "13px",
-            borderRadius: "10px", height: 42,
-            bgcolor: TEAL, color: "#fff", boxShadow: "none",
-            whiteSpace: "nowrap",
-            "&:hover": { bgcolor: "#0F766E", boxShadow: "0 4px 12px rgba(13,148,136,0.25)" },
-          }}
-        >
-          Start Interview
-        </Button>
+                    <img
+                      src={`https://flagcdn.com/w40/${meta.flag}.png`}
+                      srcSet={`https://flagcdn.com/w80/${meta.flag}.png 2x`}
+                      width={36} height={26}
+                      alt={meta.label}
+                      style={{ borderRadius: 4, display: "block", boxShadow: "0 1px 4px rgba(0,0,0,0.12)" }}
+                    />
+                    <Box sx={{ textAlign: "center" }}>
+                      <Typography sx={{
+                        fontSize: "12.5px", fontWeight: active ? 800 : 600,
+                        color: active ? TEAL : "#111827", lineHeight: 1.2,
+                      }}>
+                        {meta.label}
+                      </Typography>
+                      <Typography sx={{ fontSize: "10.5px", color: active ? "#0F766E" : "#9CA3AF", mt: 0.25 }}>
+                        {meta.englishLabel}
+                      </Typography>
+                    </Box>
+                  </Box>
+                );
+              })}
+            </Box>
+
+            {/* Selection summary */}
+            {selectedMeta && (
+              <Box sx={{
+                display: "flex", alignItems: "center", gap: 1.25,
+                px: 1.5, py: 1,
+                borderRadius: "10px",
+                bgcolor: "#F8FAFC", border: "1px solid #E2E8F0",
+                mb: 2.5,
+              }}>
+                <img
+                  src={`https://flagcdn.com/w40/${selectedMeta.flag}.png`}
+                  srcSet={`https://flagcdn.com/w80/${selectedMeta.flag}.png 2x`}
+                  width={22} height={16}
+                  alt={selectedMeta.label}
+                  style={{ borderRadius: 2, display: "block", flexShrink: 0 }}
+                />
+                <Typography sx={{ fontSize: "12px", color: "#374151", flex: 1 }}>
+                  You'll interview in{" "}
+                  <Box component="span" sx={{ fontWeight: 700, color: TEAL }}>{selectedMeta.label}</Box>
+                </Typography>
+                <LockOutlined sx={{ fontSize: 13, color: "#94A3B8", flexShrink: 0 }} />
+              </Box>
+            )}
+          </>
+        )}
+
+        {/* ── Single: info card ── */}
+        {!isMulti && singleLang && (
+          <Box sx={{
+            display: "flex", alignItems: "center", gap: 2,
+            p: 2, mb: 2.5,
+            borderRadius: "14px",
+            bgcolor: TEAL_BG, border: "1.5px solid #99F6E4",
+          }}>
+            <img
+              src={`https://flagcdn.com/w40/${singleLang.flag}.png`}
+              srcSet={`https://flagcdn.com/w80/${singleLang.flag}.png 2x`}
+              width={40} height={29}
+              alt={singleLang.label}
+              style={{ borderRadius: 4, display: "block", flexShrink: 0, boxShadow: "0 1px 4px rgba(0,0,0,0.12)" }}
+            />
+            <Box sx={{ flex: 1 }}>
+              <Typography sx={{ fontSize: "14px", fontWeight: 800, color: TEAL, lineHeight: 1.2 }}>
+                {singleLang.label}
+                <Box component="span" sx={{ fontWeight: 500, fontSize: "11.5px", color: "#0F766E", ml: 1 }}>
+                  ({singleLang.englishLabel})
+                </Box>
+              </Typography>
+              <Typography sx={{ fontSize: "11.5px", color: "#0F766E", mt: 0.4, lineHeight: 1.5 }}>
+                All questions will be asked in this language from start to finish.
+              </Typography>
+            </Box>
+          </Box>
+        )}
+
+        {/* Actions */}
+        <Box sx={{ display: "flex", gap: 1.25 }}>
+          <Button
+            onClick={onClose}
+            sx={{
+              textTransform: "none", fontWeight: 600, fontSize: "13px",
+              borderRadius: "10px", height: 44, px: 2.5,
+              color: "#6B7280", border: "1px solid #E5E7EB", flexShrink: 0,
+              "&:hover": { bgcolor: "#F9FAFB", borderColor: "#D1D5DB" },
+            }}
+          >
+            Go Back
+          </Button>
+
+          <Button
+            fullWidth
+            variant="contained"
+            endIcon={<ArrowForwardOutlined sx={{ fontSize: "15px !important" }} />}
+            onClick={() => onConfirm(selected)}
+            sx={{
+              textTransform: "none", fontWeight: 700, fontSize: "13.5px",
+              borderRadius: "10px", height: 44,
+              bgcolor: TEAL, color: "#fff", boxShadow: "none",
+              "&:hover": { bgcolor: "#0F766E", boxShadow: "0 4px 14px rgba(13,148,136,0.3)" },
+            }}
+          >
+            {isMulti ? "Start in " + (selectedMeta?.label ?? selected) : "Start Interview"}
+          </Button>
+        </Box>
       </Box>
     </Dialog>
   );
