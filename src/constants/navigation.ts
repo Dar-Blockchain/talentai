@@ -9,9 +9,6 @@ import {
   DashboardOutlined,
   SettingsOutlined,
   CreditCardOutlined,
-  AssignmentOutlined,
-  PsychologyOutlined,
-  SchoolOutlined,
 } from "@mui/icons-material";
 import { EmployeePermissionKey } from "@/types/employeePermissions";
 
@@ -45,14 +42,6 @@ export const candidateNavGroups: CandidateNavGroup[] = [
     group: "Overview",
     items: [
       { id: "candidate-dashboard", icon: DashboardOutlined, label: "Dashboard", href: "/dashboard/candidate" },
-    ],
-  },
-  {
-    group: "Career",
-    items: [
-      { id: "candidate-applications", icon: AssignmentOutlined,  label: "Applications", href: "/dashboard/candidate/applications" },
-      { id: "candidate-skills",       icon: PsychologyOutlined,  label: "Skills",       href: "/dashboard/candidate/skills" },
-      { id: "candidate-interviews",   icon: SchoolOutlined,      label: "Interviews",   href: "/dashboard/candidate/interviews" },
     ],
   },
 ];
