@@ -1,46 +1,31 @@
-import ArrowBackOutlined from "@mui/icons-material/ArrowBackOutlined";
+import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
 import { Box } from "@mui/material";
 import { REGISTER_ACCENT } from "./registerConstants";
 
 type Props = {
   label: string;
   onClick: () => void;
-  /** Tighter spacing for dense flows (e.g. company register). */
-  dense?: boolean;
 };
 
-/** Outline pill matching {@link RegisterSignInLink} primary button styling. */
-const RegisterChangeRoleButton = ({ label, onClick, dense }: Props) => (
+/** Same styles as `talentai-dev` src/pages/register/index.tsx (form header change-role link). */
+const RegisterChangeRoleButton = ({ label, onClick }: Props) => (
   <Box
-    component="button"
-    type="button"
     onClick={onClick}
     sx={{
       display: "inline-flex",
       alignItems: "center",
-      justifyContent: "center",
-      gap: 1,
-      width: "100%",
-      height: dense ? { xs: 38, sm: 41 } : { xs: 40, sm: 43 },
-      /** مسافة بين زر «تغيير الدور» والعنوان أسفله */
-      mb: dense ? { xs: 0.85, sm: 0.775 } : { xs: 1.15, sm: 1.875 },
-      px: { xs: 1.5, sm: 2 },
-      borderRadius: { xs: "12px", sm: "14px" },
-      border: `1.5px solid ${REGISTER_ACCENT}44`,
-      bgcolor: "transparent",
-      color: REGISTER_ACCENT,
-      fontFamily: "Poppins",
-      fontWeight: 700,
-      fontSize: { xs: "0.78rem", sm: "0.95rem" },
+      gap: 0.5,
+      mb: 2.5,
       cursor: "pointer",
-      transition: "all 0.2s",
-      "&:hover": {
-        bgcolor: `${REGISTER_ACCENT}08`,
-        borderColor: REGISTER_ACCENT,
-      },
+      color: "#9CA3AF",
+      fontFamily: "Poppins",
+      fontSize: "0.8rem",
+      fontWeight: 500,
+      "&:hover": { color: REGISTER_ACCENT },
+      transition: "color 0.2s",
     }}
   >
-    <ArrowBackOutlined sx={{ fontSize: { xs: 16, sm: 17 }, flexShrink: 0 }} />
+    <ArrowForwardOutlined sx={{ fontSize: 15, transform: "rotate(180deg)" }} />
     {label}
   </Box>
 );

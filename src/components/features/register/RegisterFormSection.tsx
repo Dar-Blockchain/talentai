@@ -41,9 +41,10 @@ const RegisterFormSection = ({
 
   return (
     <>
+      {/* Form header spacing matches talentai-dev register page */}
       <Box
         sx={{
-          mb: { xs: 1.85, sm: 2.875 },
+          mb: 3,
           textAlign: "center",
         }}
       >
