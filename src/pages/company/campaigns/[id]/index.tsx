@@ -1,5 +1,6 @@
 import React, { useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
+import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import CampaignDetail from "@/components/features/company/campaigns/details/CampaignDetail";
@@ -23,6 +24,8 @@ import { CampaignModule, CampaignStatus, ModuleType } from "@/types/campaign";
 
 const CampaignDetailsPage: React.FC = () => {
   const { checking } = useCompanyAccess("canViewCampaigns");
+  const { t } = useTranslation("dashboard");
+  const toastBase = "pages.campaigns.toast";
 
   const router = useRouter();
   const { id } = router.query;
@@ -52,16 +55,16 @@ const CampaignDetailsPage: React.FC = () => {
   }, [dispatch, id]);
 
   const handleDelete = useCallback(
-    async (campaignId: string) => {
+    async (campaignId: string, _title?: string) => {
       try {
         await dispatch(deleteCampaign(campaignId)).unwrap();
-        showToast({ message: "Campaign deleted successfully!", severity: "success" });
+        showToast({ message: t(`${toastBase}.deleted_success`), severity: "success" });
         router.push("/company/campaigns");
       } catch (e: any) {
-        showToast({ message: e || "Failed to delete campaign", severity: "error" });
+        showToast({ message: e || t(`${toastBase}.delete_failed`), severity: "error" });
       }
     },
-    [dispatch, router, showToast],
+    [dispatch, router, showToast, t, toastBase],
   );
 
   const handleChangeStatus = useCallback(
@@ -69,14 +72,16 @@ const CampaignDetailsPage: React.FC = () => {
       try {
         await dispatch(updateCampaignStatus({ campaignId, status })).unwrap();
         showToast({
-          message: `Campaign status updated to ${status.toLowerCase()}`,
+          message: t(`${toastBase}.status_updated`, {
+            status: t(`pages.campaigns.status.${status}`),
+          }),
           severity: "success",
         });
       } catch (e: any) {
-        showToast({ message: e || "Failed to update status", severity: "error" });
+        showToast({ message: e || t(`${toastBase}.status_failed`), severity: "error" });
       }
     },
-    [dispatch, showToast],
+    [dispatch, showToast, t, toastBase],
   );
 
   const handleSaveConfig = useCallback(
@@ -93,12 +98,12 @@ const CampaignDetailsPage: React.FC = () => {
           } as CampaignModule
         }
         await dispatch(updateCampaign({campaignId, updatePayload})).unwrap();
-        showToast({ message: "Module configuration saved!", severity: "success" });
+        showToast({ message: t(`${toastBase}.module_saved`), severity: "success" });
       } catch (e: any) {
-        showToast({ message: e || "Failed to save module configuration", severity: "error" });
+        showToast({ message: e || t(`${toastBase}.module_save_failed`), severity: "error" });
       }
     },
-    [dispatch, showToast],
+    [dispatch, showToast, t, toastBase],
   );
 
   return (

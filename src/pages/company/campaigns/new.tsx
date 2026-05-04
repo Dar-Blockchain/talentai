@@ -44,6 +44,7 @@ import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 import { AppDispatch } from "@/store/store";
 import { createCampaign } from "@/store/slices/campaignSlice";
 import { useToast } from "@/hooks/useToast";
+import { useTranslation } from "react-i18next";
 import ParticipantsStep from "@/components/features/company/campaigns/new/ParticipantsStep";
 
 // ─── Palette ─────────────────────────────────────────────────────────────────
@@ -180,6 +181,7 @@ const NewCampaignPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { showToast } = useToast();
   const router = useRouter();
+  const { t } = useTranslation("dashboard");
 
   const [activeStep, setActiveStep] = useState(0);
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
@@ -243,12 +245,12 @@ const NewCampaignPage: React.FC = () => {
   return (
     <DashboardLayout>
       <PageHeader
-        title="Create New Campaign"
-        subtitle="Design your assessment campaign"
+        title={t("pages.campaigns.wizard_new.title")}
+        subtitle={t("pages.campaigns.wizard_new.subtitle")}
         breadcrumbs={[
-          { label: "Dashboard", href: "/company/dashboard" },
-          { label: "Campaigns", href: "/company/campaigns" },
-          { label: "Create" },
+          { label: t("pages.common.dashboard"), href: "/company/dashboard" },
+          { label: t("pages.campaigns.title"), href: "/company/campaigns" },
+          { label: t("pages.campaigns.wizard_new.breadcrumb_create") },
         ]}
       />
 

@@ -3,14 +3,11 @@ import { Box, Button, Dialog, Typography } from "@mui/material";
 import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useTranslation } from "react-i18next";
+import { SUPPORTED_LANGS } from "@/constants/languages";
 
 const TEAL    = "#0D9488";
 const TEAL_BG = "#F0FDFA";
 
-const LANGUAGES = [
-  { code: "en", flag: "🇬🇧", label: "English" },
-  { code: "fr", flag: "🇫🇷", label: "Français" },
-];
 
 interface Props {
   open: boolean;
@@ -66,7 +63,7 @@ const GenerateLanguageModal: React.FC<Props> = ({ open, loading, onConfirm, onCl
           mb: 3,
         }}
       >
-        {LANGUAGES.map((lang) => {
+        {SUPPORTED_LANGS.map((lang) => {
           const active = selected === lang.code;
           return (
             <Box
@@ -83,7 +80,7 @@ const GenerateLanguageModal: React.FC<Props> = ({ open, loading, onConfirm, onCl
                 fontWeight: active ? 700 : 500,
               }}
             >
-              <Typography sx={{ fontSize: "1.15rem", lineHeight: 1 }}>{lang.flag}</Typography>
+              <img src={`https://flagcdn.com/w40/${lang.flag}.png`} srcSet={`https://flagcdn.com/w80/${lang.flag}.png 2x`} width={24} height={16} alt={lang.label} style={{ borderRadius: 2, display: "block" }} />
               <Typography sx={{ fontSize: "13px", fontWeight: active ? 700 : 500, color: active ? "#111827" : "#6B7280" }}>
                 {lang.label}
               </Typography>

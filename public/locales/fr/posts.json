@@ -113,6 +113,80 @@
       "error_salary_max": "Le salaire maximum doit être supérieur au minimum",
       "error_required": "Requis"
     },
+    "post_form": {
+      "manual": {
+        "header_title": "Publication pipeline personnalisée",
+        "header_subtitle": "Renseignez les détails du poste — vous construirez le flux de recrutement à l'étape suivante.",
+        "section_job_info": "Informations sur le poste",
+        "job_title": "Intitulé du poste",
+        "job_title_placeholder": "ex. Développeur front-end senior",
+        "expiration_date": "Date d’expiration",
+        "next_step_hint": "Après enregistrement, vous concevrez votre pipeline de recrutement personnalisé avec les étapes d’évaluation."
+      },
+      "labels": {
+        "employment_type": "Type de contrat",
+        "work_mode": "Mode de travail",
+        "currency": "Devise",
+        "experience_level": "Niveau d’expérience",
+        "expires": "Expire le",
+        "minimum": "Minimum",
+        "maximum": "Maximum",
+        "salary_range": "Fourchette salariale",
+        "minimum_salary": "Salaire minimum",
+        "maximum_salary": "Salaire maximum",
+        "salary_section": "Fourchette salariale / an",
+        "skill_name": "Compétence",
+        "percentage": "Pourcentage (%)"
+      },
+      "placeholders": {
+        "select": "Sélectionner",
+        "select_employment_type": "Sélectionner le type de contrat",
+        "select_work_mode": "Sélectionner le mode de travail",
+        "select_currency": "Sélectionner la devise",
+        "select_experience_level": "Sélectionner le niveau d’expérience",
+        "select_skill_level": "Niveau d’expérience",
+        "skill_autocomplete": "Saisir ou choisir une compétence",
+        "min_salary_example": "ex. 40 000",
+        "max_salary_example": "ex. 70 000"
+      },
+      "options": {
+        "employment_full_time": "Temps plein",
+        "employment_part_time": "Temps partiel",
+        "employment_contract": "Contrat / freelance",
+        "employment_internship": "Stage",
+        "work_on_site": "Sur site",
+        "work_remote": "Télétravail",
+        "work_hybrid": "Hybride",
+        "experience_junior": "Junior",
+        "experience_mid_level": "Intermédiaire",
+        "experience_senior": "Senior",
+        "experience_expert": "Expert"
+      },
+      "hard_skill_levels": {
+        "1": "Niveau d’entrée",
+        "2": "Junior",
+        "3": "Intermédiaire",
+        "4": "Senior",
+        "5": "Expert"
+      },
+      "soft_skill_levels": {
+        "1": "1 / 5",
+        "2": "2 / 5",
+        "3": "3 / 5",
+        "4": "4 / 5",
+        "5": "5 / 5"
+      },
+      "skill_modal": {
+        "title_add_hard": "Ajouter une compétence technique",
+        "title_edit_hard": "Modifier la compétence technique",
+        "title_add_soft": "Ajouter une soft skill",
+        "title_edit_soft": "Modifier la soft skill",
+        "experience_level": "Niveau d’expérience",
+        "cancel": "Annuler",
+        "btn_add": "Ajouter",
+        "btn_edit": "Enregistrer"
+      }
+    },
     "lang_modal": {
       "title": "Dans quelle langue générer ?",
       "subtitle": "L'offre d'emploi entière sera rédigée dans cette langue",
@@ -145,6 +219,8 @@
       "hard_skills": "Compétences techniques",
       "soft_skills": "Soft skills",
       "btn_add_skill": "Ajouter",
+      "btn_add_hard_skill": "Ajouter compétence technique",
+      "btn_add_soft_skill": "Ajouter soft skill",
       "section_content": "Contenu",
       "label_description": "Description",
       "label_requirements": "Prérequis",

@@ -414,58 +414,6 @@
         "desc_fr": "Use TalentAI in French",
         "save_hint": "Changes apply immediately and are saved automatically."
       }
-    },
-    "plans": {
-      "title": "Choose a Plan",
-      "subtitle": "Stack multiple plans to combine limits — posts and interviews accumulate across all active subscriptions",
-      "breadcrumb": "Plans",
-      "settings_breadcrumb": "Settings",
-      "payment_history": "Payment History",
-      "this_plan": "this plan",
-      "banner": {
-        "active_plans": "{{count}} Active Plans",
-        "active_single": "Active — {{name}}",
-        "expires": "expires {{date}}",
-        "days_remaining_one": "{{count}} day until next expiry",
-        "days_remaining_other": "{{count}} days until next expiry",
-        "job_posts_used": "Job posts used",
-        "interviews_month": "Interviews this month",
-        "combined": "(combined)",
-        "posts_remaining": "{{used}} / {{limit}} posts · {{remaining}} remaining",
-        "interviews_remaining": "{{used}} / {{limit}} interviews · {{remaining}} remaining"
-      },
-      "card": {
-        "active_badge": "Active",
-        "popular_badge": "Popular",
-        "contact_us": "Contact us",
-        "per_month": "/ month",
-        "job_posts": "{{count}} job posts",
-        "interviews_month": "{{count}} interviews / month",
-        "current_subscription": "Your Current Subscription",
-        "processing": "Processing…",
-        "disable_auto_renewal": "Disable Auto-Renewal",
-        "auto_renewal_off": "Auto-renewal off",
-        "active_until_expiry": "Active until expiry · won't renew",
-        "reenable": "Re-enable",
-        "redirecting": "Redirecting…",
-        "get_started": "Get Started",
-        "payment_error": "Payment failed. Please try again."
-      },
-      "dialog": {
-        "title": "Disable Auto-Renewal?",
-        "text": "Your {{plan}} plan will remain fully active until its expiry date. After that, it will not renew and no further charges will be made.",
-        "keep": "Keep Auto-Renewal",
-        "confirm": "Yes, Disable Renewal"
-      },
-      "snack": {
-        "payment_success": "Payment successful! Your plan has been activated.",
-        "payment_verify_error": "Payment received but verification failed. Please contact support.",
-        "payment_cancelled": "Payment was cancelled. No charges were made.",
-        "auto_renew_enabled": "Auto-renewal re-enabled. Your plan will renew automatically.",
-        "auto_renew_error": "Failed to re-enable auto-renewal. Please try again.",
-        "cancelled": "Auto-renewal disabled. Your plan stays active until it expires.",
-        "cancel_error": "Failed to cancel subscription. Please try again."
-      }
     }
   }
 }

@@ -414,58 +414,6 @@
         "desc_fr": "Utiliser TalentAI en français",
         "save_hint": "Les changements s'appliquent immédiatement et sont sauvegardés automatiquement."
       }
-    },
-    "plans": {
-      "title": "Choisir un plan",
-      "subtitle": "Combinez plusieurs plans pour cumuler les limites — offres et entretiens s'accumulent sur tous les abonnements actifs",
-      "breadcrumb": "Plans",
-      "settings_breadcrumb": "Paramètres",
-      "payment_history": "Historique des paiements",
-      "this_plan": "ce plan",
-      "banner": {
-        "active_plans": "{{count}} plans actifs",
-        "active_single": "Actif — {{name}}",
-        "expires": "expire le {{date}}",
-        "days_remaining_one": "{{count}} jour avant la prochaine expiration",
-        "days_remaining_other": "{{count}} jours avant la prochaine expiration",
-        "job_posts_used": "Offres utilisées",
-        "interviews_month": "Entretiens ce mois-ci",
-        "combined": "(cumulé)",
-        "posts_remaining": "{{used}} / {{limit}} offres · {{remaining}} restantes",
-        "interviews_remaining": "{{used}} / {{limit}} entretiens · {{remaining}} restants"
-      },
-      "card": {
-        "active_badge": "Actif",
-        "popular_badge": "Populaire",
-        "contact_us": "Nous contacter",
-        "per_month": "/ mois",
-        "job_posts": "{{count}} offres d'emploi",
-        "interviews_month": "{{count}} entretiens / mois",
-        "current_subscription": "Votre abonnement actuel",
-        "processing": "Traitement…",
-        "disable_auto_renewal": "Désactiver le renouvellement automatique",
-        "auto_renewal_off": "Renouvellement automatique désactivé",
-        "active_until_expiry": "Actif jusqu'à expiration · ne se renouvellera pas",
-        "reenable": "Réactiver",
-        "redirecting": "Redirection…",
-        "get_started": "Commencer",
-        "payment_error": "Paiement échoué. Veuillez réessayer."
-      },
-      "dialog": {
-        "title": "Désactiver le renouvellement automatique ?",
-        "text": "Votre plan {{plan}} restera entièrement actif jusqu'à sa date d'expiration. Après cela, il ne se renouvellera pas et aucun frais supplémentaire ne sera prélevé.",
-        "keep": "Conserver le renouvellement automatique",
-        "confirm": "Oui, désactiver le renouvellement"
-      },
-      "snack": {
-        "payment_success": "Paiement réussi ! Votre plan a été activé.",
-        "payment_verify_error": "Paiement reçu mais la vérification a échoué. Veuillez contacter le support.",
-        "payment_cancelled": "Le paiement a été annulé. Aucun frais n'a été prélevé.",
-        "auto_renew_enabled": "Renouvellement automatique réactivé. Votre plan se renouvellera automatiquement.",
-        "auto_renew_error": "Échec de la réactivation du renouvellement automatique. Veuillez réessayer.",
-        "cancelled": "Renouvellement automatique désactivé. Votre plan reste actif jusqu'à son expiration.",
-        "cancel_error": "Échec de l'annulation de l'abonnement. Veuillez réessayer."
-      }
     }
   }
 }

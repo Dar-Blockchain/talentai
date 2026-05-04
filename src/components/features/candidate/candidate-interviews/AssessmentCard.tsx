@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Button, Typography, LinearProgress, Tooltip, Avatar } from "@mui/material";
-import { formatDistanceToNowStrict } from "date-fns";
+import dayjs from "@/lib/dayjs";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
 import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
 import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
@@ -77,7 +77,7 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({ assessment, onViewDetai
   const logoUrl     = company?.logo ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Companies/${company.logo}` : undefined;
 
   const timeAgo = (assessment.updatedAt || assessment.createdAt)
-    ? formatDistanceToNowStrict(new Date(assessment.updatedAt || assessment.createdAt), { addSuffix: true })
+    ? dayjs(assessment.updatedAt || assessment.createdAt).fromNow()
     : "";
 
   const scoreColor  = score > 0 ? getScoreColor(score) : "#E5E7EB";

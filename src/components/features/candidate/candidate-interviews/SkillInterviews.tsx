@@ -1,14 +1,12 @@
 import React, { useEffect, useMemo } from "react";
 import { Box, Typography, CircularProgress, LinearProgress, Button } from "@mui/material";
 import dynamic from "next/dynamic";
-import { formatDistanceToNowStrict } from "date-fns";
+import dayjs from "@/lib/dayjs";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import CodeOutlined from "@mui/icons-material/CodeOutlined";
 import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
-import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
 import OpenInNewOutlined from "@mui/icons-material/OpenInNew";
-import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
 import { useRouter } from "next/router";
 import {
   fetchSkillAssessmentsByType,
@@ -45,7 +43,7 @@ const SkillRow: React.FC<{
   const score   = getScore(assessment);
   const lvl     = getLevelLabel(score);
   const timeAgo = (assessment.updatedAt || assessment.createdAt)
-    ? formatDistanceToNowStrict(new Date(assessment.updatedAt || assessment.createdAt), { addSuffix: true })
+    ? dayjs(assessment.updatedAt || assessment.createdAt).fromNow()
     : "";
 
   return (

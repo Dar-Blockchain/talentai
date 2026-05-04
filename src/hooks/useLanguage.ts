@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { setCookie } from 'cookies-next';
 import { LANGUAGE_COOKIE, RTL_LANGUAGES, SUPPORTED_LANGUAGES, type SupportedLanguage } from '@/i18n/config';
+import { SUPPORTED_LANGS } from '@/constants/languages';
 
 export interface LanguageOption {
   code:  SupportedLanguage;
@@ -9,11 +10,11 @@ export interface LanguageOption {
   flag:  string;
 }
 
-export const LANGUAGE_OPTIONS: LanguageOption[] = [
-  { code: 'en', label: 'English', flag: '🇬🇧' },
-  { code: 'fr', label: 'Français', flag: '🇫🇷' },
-  // Add more here: { code: 'ar', label: 'العربية', flag: '🇸🇦' }
-];
+export const LANGUAGE_OPTIONS: LanguageOption[] = SUPPORTED_LANGS.map((l) => ({
+  code:  l.code as SupportedLanguage,
+  label: l.label,
+  flag:  l.flag,
+}));
 
 /** localStorage key written only when the user explicitly picks a language via the header switcher */
 export const MANUAL_LANG_KEY = 'talentai_lang_manual';
@@ -30,10 +31,14 @@ export function normalizeLangCode(raw?: string | null): SupportedLanguage | null
 export function useLanguage() {
   const { i18n } = useTranslation();
 
+  const raw = i18n.language ?? 'en';
+  const base = raw.split('-')[0]?.toLowerCase();
   const currentLang = (
-    SUPPORTED_LANGUAGES.includes(i18n.language as SupportedLanguage)
-      ? i18n.language
-      : 'en'
+    base === 'fr' || base === 'en'
+      ? base
+      : SUPPORTED_LANGUAGES.includes(raw as SupportedLanguage)
+        ? (raw as SupportedLanguage)
+        : 'en'
   ) as SupportedLanguage;
 
   const isRTL = RTL_LANGUAGES.includes(currentLang);

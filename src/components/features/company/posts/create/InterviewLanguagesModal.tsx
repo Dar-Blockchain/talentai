@@ -3,14 +3,11 @@ import { Box, Button, Dialog, Typography } from "@mui/material";
 import MicOutlined from "@mui/icons-material/MicOutlined";
 import CheckOutlined from "@mui/icons-material/CheckOutlined";
 import { useTranslation } from "react-i18next";
+import { SUPPORTED_LANGS } from "@/constants/languages";
 
 const TEAL    = "#0D9488";
 const TEAL_BG = "#F0FDFA";
 
-const LANGUAGES = [
-  { code: "en", flag: "🇬🇧", label: "English"  },
-  { code: "fr", flag: "🇫🇷", label: "Français" },
-];
 
 interface Props {
   open: boolean;
@@ -74,7 +71,7 @@ const InterviewLanguagesModal: React.FC<Props> = ({ open, onConfirm, onClose, in
 
       {/* Language grid — multi-select */}
       <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5, mb: 3 }}>
-        {LANGUAGES.map((lang) => {
+        {SUPPORTED_LANGS.map((lang) => {
           const active = selected.includes(lang.code);
           return (
             <Box
@@ -107,7 +104,7 @@ const InterviewLanguagesModal: React.FC<Props> = ({ open, onConfirm, onClose, in
                   <CheckOutlined sx={{ fontSize: 10, color: "#fff" }} />
                 </Box>
               )}
-              <Typography sx={{ fontSize: "1.4rem", lineHeight: 1 }}>{lang.flag}</Typography>
+              <img src={`https://flagcdn.com/w40/${lang.flag}.png`} srcSet={`https://flagcdn.com/w80/${lang.flag}.png 2x`} width={28} height={20} alt={lang.label} style={{ borderRadius: 2, display: "block" }} />
               <Typography
                 sx={{
                   fontSize: "11.5px", fontWeight: active ? 700 : 500,

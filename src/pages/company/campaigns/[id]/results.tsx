@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 import { useSelector } from 'react-redux';
 import dynamic from 'next/dynamic';
@@ -10,6 +11,7 @@ import { selectSelectedCampaign } from '@/store/slices/campaignSlice';
 const MAX_TITLE_LENGTH = 28;
 
 const CompanyCampaignResults: React.FC = () => {
+  const { t }     = useTranslation('dashboard');
   const router    = useRouter();
   const { id, userId } = router.query as { id?: string; userId?: string };
   const campaign  = useSelector(selectSelectedCampaign);
@@ -26,10 +28,10 @@ const CompanyCampaignResults: React.FC = () => {
       campaignId={id}
       participantId={userId}
       breadcrumbs={[
-        { label: 'Dashboard', href: '/company/dashboard' },
-        { label: 'Campaigns', href: '/company/campaigns' },
+        { label: t('pages.common.dashboard'), href: '/company/dashboard' },
+        { label: t('pages.campaigns.title'), href: '/company/campaigns' },
         { label: crumbLabel,  href: `/company/campaigns/${id}` },
-        { label: 'Results' },
+        { label: t('pages.campaigns.detail.breadcrumb_results') },
       ]}
       backHref={`/company/campaigns/${id}`}
     />

@@ -1,6 +1,6 @@
 import React, { useCallback } from "react";
 import { Box, Typography, LinearProgress, Tooltip } from "@mui/material";
-import { formatDistanceToNowStrict } from "date-fns";
+import dayjs from "@/lib/dayjs";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
@@ -34,8 +34,8 @@ const SkillCard: React.FC<SkillCardProps> = ({ skill, type, last }) => {
   const lvl       = getLevel(skill.Levelconfirmed);
   const quotaFull = (profile?.quota ?? 0) >= 5;
   const updatedAt = skill?.updatedAt
-    ? formatDistanceToNowStrict(new Date(skill.updatedAt), { addSuffix: true })
-    : null;
+    ? dayjs(skill.updatedAt).fromNow()
+    : "";
 
   const handleTest = useCallback(() => {
     if (type === "technical") {
