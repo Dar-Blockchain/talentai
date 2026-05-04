@@ -3,14 +3,10 @@ import { Box, Button, Dialog, Typography } from "@mui/material";
 import MicOutlined from "@mui/icons-material/MicOutlined";
 import CheckOutlined from "@mui/icons-material/CheckOutlined";
 import { useTranslation } from "react-i18next";
+import { SUPPORTED_LANGS } from "@/constants/languages";
 
 const TEAL    = "#0D9488";
 const TEAL_BG = "#F0FDFA";
-
-const LANGUAGES = [
-  { code: "en", flag: "us", label: "English"  },
-  { code: "fr", flag: "fr", label: "Français" },
-];
 
 interface Props {
   open: boolean;
@@ -74,7 +70,7 @@ const InterviewLanguagesModal: React.FC<Props> = ({ open, onConfirm, onClose, in
 
       {/* Language grid — multi-select */}
       <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5, mb: 3 }}>
-        {LANGUAGES.map((lang) => {
+        {SUPPORTED_LANGS.map((lang) => {
           const active = selected.includes(lang.code);
           return (
             <Box

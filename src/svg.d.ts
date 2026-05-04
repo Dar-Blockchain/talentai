@@ -1,3 +1,6 @@
+declare module "*.css";
+declare module "*.scss";
+
 // src/svg.d.ts
 declare module "*.svg" {
   import * as React from "react";

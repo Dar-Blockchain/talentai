@@ -7,7 +7,7 @@ import { ArrowForward } from "@mui/icons-material";
 import TimeOutlineIcon from "@/components/icons/TimeOutlineIcon";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { useRouter } from "next/router";
-import { formatDistanceToNowStrict } from "date-fns";
+import dayjs from "@/lib/dayjs";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import {
@@ -193,7 +193,7 @@ const SkillInterviews: React.FC<SkillInterviewsProps> = ({ skillType }) => {
             const levelColor = getLevelColor(score);
             const updatedAt = assessment.updatedAt || assessment.createdAt;
             const timeAgo = updatedAt
-              ? formatDistanceToNowStrict(new Date(updatedAt), { addSuffix: true })
+              ? dayjs(updatedAt).fromNow()
               : "";
 
             return (

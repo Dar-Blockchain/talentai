@@ -1,7 +1,8 @@
 import { Box, MenuItem, TextField, Typography } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs from "@/lib/dayjs";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
@@ -173,11 +174,11 @@ const ManualPostForm = () => {
             <CalendarTodayOutlined sx={{ fontSize: 14 }} />
             {t("create.post_form.manual.expiration_date")}
           </Typography>
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
-              value={expirationDate ? new Date(expirationDate) : null}
+              value={expirationDate ? dayjs(expirationDate) : null}
               onChange={(date) => { if (date) dispatch(setManualExpirationDate(date.toISOString())); }}
-              minDate={new Date()}
+              minDate={dayjs()}
               slotProps={{ textField: { fullWidth: true, sx: inputSx } }}
             />
           </LocalizationProvider>

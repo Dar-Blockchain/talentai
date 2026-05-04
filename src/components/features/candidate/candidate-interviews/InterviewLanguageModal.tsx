@@ -3,14 +3,10 @@ import { Box, Button, Dialog, Typography } from "@mui/material";
 import MicOutlined from "@mui/icons-material/MicOutlined";
 import CheckOutlined from "@mui/icons-material/CheckOutlined";
 import InfoOutlined from "@mui/icons-material/InfoOutlined";
+import { LANG_META } from "@/constants/languages";
 
 const TEAL    = "#0D9488";
 const TEAL_BG = "#F0FDFA";
-
-const LANG_META: Record<string, { flag: string; label: string; nativeLabel: string }> = {
-  en: { flag: "us", label: "English",  nativeLabel: "English"  },
-  fr: { flag: "fr", label: "French",   nativeLabel: "Français" },
-};
 
 interface Props {
   open: boolean;
@@ -101,7 +97,7 @@ const InterviewLanguageModal: React.FC<Props> = ({ open, languages, onConfirm, o
                   color: active ? TEAL : "#374151",
                   textAlign: "center",
                 }}>
-                  {meta.nativeLabel}
+                  {meta.label}
                 </Typography>
               </Box>
             );
@@ -120,7 +116,7 @@ const InterviewLanguageModal: React.FC<Props> = ({ open, languages, onConfirm, o
           <img src={`https://flagcdn.com/w40/${singleLang.flag}.png`} srcSet={`https://flagcdn.com/w80/${singleLang.flag}.png 2x`} width={36} height={26} alt={singleLang.flag} style={{ borderRadius: 3, display: 'block', flexShrink: 0 }} />
           <Box>
             <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#0D9488" }}>
-              {singleLang.nativeLabel}
+              {singleLang.label}
             </Typography>
             <Typography sx={{ fontSize: "11.5px", color: "#6B7280" }}>
               The interview will be fully conducted in this language

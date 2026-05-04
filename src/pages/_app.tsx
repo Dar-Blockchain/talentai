@@ -1,5 +1,6 @@
 import "@/styles/globals.css";
 import "@/i18n/config"; // initialise i18next before anything renders
+import "@/lib/dayjs";   // extend dayjs plugins globally
 import type { AppProps } from "next/app";
 import { Provider, useSelector, useDispatch } from "react-redux";
 import { store, persistor, RootState } from "../store/store";

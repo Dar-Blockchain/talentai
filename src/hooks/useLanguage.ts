@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { setCookie } from 'cookies-next';
 import { LANGUAGE_COOKIE, RTL_LANGUAGES, SUPPORTED_LANGUAGES, type SupportedLanguage } from '@/i18n/config';
+import { SUPPORTED_LANGS } from '@/constants/languages';
 
 export interface LanguageOption {
   code:  SupportedLanguage;
@@ -9,11 +10,11 @@ export interface LanguageOption {
   flag:  string;
 }
 
-export const LANGUAGE_OPTIONS: LanguageOption[] = [
-  { code: 'en', label: 'English', flag: 'us' },
-  { code: 'fr', label: 'Français', flag: 'fr' },
-  // Add more here: { code: 'ar', label: 'العربية', flag: 'sa' }
-];
+export const LANGUAGE_OPTIONS: LanguageOption[] = SUPPORTED_LANGS.map((l) => ({
+  code:  l.code as SupportedLanguage,
+  label: l.label,
+  flag:  l.flag,
+}));
 
 /** localStorage key written only when the user explicitly picks a language via the header switcher */
 export const MANUAL_LANG_KEY = 'talentai_lang_manual';
