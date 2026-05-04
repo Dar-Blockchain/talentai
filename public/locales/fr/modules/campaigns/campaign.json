@@ -40,11 +40,6 @@
     "completed_participants": "Participants ayant terminé"
   },
 
-  "employee_card": {
-    "participants_one": "{{count}} participant",
-    "participants_other": "{{count}} participants"
-  },
-
   "empty": {
     "filtered_title": "Aucune campagne ne correspond à vos filtres",
     "filtered_hint": "Essayez d'ajuster la recherche ou les filtres.",
