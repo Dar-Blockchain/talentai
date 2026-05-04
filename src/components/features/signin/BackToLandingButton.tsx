@@ -13,23 +13,27 @@ const BackToLandingButton: React.FC<Props> = ({ themeColors }) => {
   const registerHref = returnUrl ? `/register?returnUrl=${encodeURIComponent(returnUrl)}` : "/register";
 
   return (
-    <Box sx={{ pt: 0.25 }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.75 }}>
-        <Box sx={{ flex: 1, height: "1px", bgcolor: "#F1F5F9" }} />
-        <Typography sx={{ fontSize: { xs: "0.7rem", sm: "0.72rem" }, color: "#C4C9D4", fontFamily: "Poppins", whiteSpace: "nowrap" }}>
+    <Box sx={{ pt: { xs: 0.25, sm: 0.5 } }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, sm: 1.125 }, mb: { xs: 1, sm: 1.625 } }}>
+        <Box sx={{ flex: 1, height: "1px", bgcolor: "#E5E7EB" }} />
+        <Typography sx={{ fontSize: { xs: "0.62rem", sm: "0.75rem" }, color: "#9CA3AF", fontFamily: "Poppins", whiteSpace: "nowrap" }}>
           {t("signin.new_here")}
         </Typography>
-        <Box sx={{ flex: 1, height: "1px", bgcolor: "#F1F5F9" }} />
+        <Box sx={{ flex: 1, height: "1px", bgcolor: "#E5E7EB" }} />
       </Box>
       <Link href={registerHref} style={{ textDecoration: "none" }}>
         <Box sx={{
           display: "inline-flex", alignItems: "center", justifyContent: "center",
-          width: "100%", height: { xs: 42, sm: 44 }, borderRadius: "12px",
-          border: "1.5px solid #E5E7EB",
-          color: "#374151", fontFamily: "Poppins", fontWeight: 600,
-          fontSize: { xs: "0.83rem", sm: "0.87rem" },
-          transition: "all 0.15s",
-          "&:hover": { bgcolor: "#F9FAFB", borderColor: "#D1D5DB" },
+          width: "100%",
+          height: { xs: 40, sm: 43 },
+          borderRadius: { xs: "12px", sm: "14px" },
+          border: `1.5px solid ${themeColors.primary}44`,
+          color: themeColors.primary,
+          fontFamily: "Poppins",
+          fontWeight: 700,
+          fontSize: { xs: "0.78rem", sm: "0.95rem" },
+          transition: "all 0.2s",
+          "&:hover": { bgcolor: `${themeColors.primary}08`, borderColor: themeColors.primary },
         }}>
           {t("signin.create_account")}
         </Box>

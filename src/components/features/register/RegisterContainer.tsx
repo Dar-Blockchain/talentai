@@ -9,7 +9,15 @@ const RegisterContainer: React.FC<{ children: React.ReactNode }> = ({ children }
   const { t } = useTranslation("auth");
 
   return (
-    <Box sx={{ height: "100vh", display: "flex", flexDirection: { xs: "column", md: "row" }, overflow: "hidden" }}>
+    <Box
+      sx={{
+        height: { xs: "100dvh", md: "100vh" },
+        minHeight: { xs: "100dvh", md: "100vh" },
+        display: "flex",
+        flexDirection: { xs: "column", md: "row" },
+        overflow: "hidden",
+      }}
+    >
 
       {/* ── Left panel ── */}
       <Box sx={{
@@ -99,6 +107,9 @@ const RegisterContainer: React.FC<{ children: React.ReactNode }> = ({ children }
       {/* ── Right panel ── */}
       <Box sx={{
         flex: 1,
+        minHeight: 0,
+        display: "flex",
+        flexDirection: "column",
         overflow: "hidden",
         background: "#F7F8FA",
         position: "relative",
@@ -109,42 +120,49 @@ const RegisterContainer: React.FC<{ children: React.ReactNode }> = ({ children }
           background: "radial-gradient(ellipse 80% 40% at 50% 100%, rgba(13,148,136,0.05) 0%, transparent 60%)",
         }} />
 
-        {/* Scrollable inner */}
+        {/* تمركز عمودي في كل العرض مثل إعداد تسجيل الدخول السابق؛ التمرير عند تجاوز الارتفاع */}
         <Box sx={{
-          height: "100%",
+          flex: 1,
+          minHeight: 0,
           overflowY: "auto",
+          overflowX: "hidden",
+          overscrollBehavior: "contain",
+          WebkitOverflowScrolling: "touch",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          px: { xs: 2, sm: 3, md: 4, lg: 5 },
-          py: { xs: 2, sm: 3 },
+          px: { xs: 1.25, sm: 1.625, md: 3.625, lg: 5 },
+          py: { xs: 0.5, sm: 0.275, md: 0.875 },
           position: "relative",
           zIndex: 1,
         }}>
-          {/* Mobile logo */}
-          <Box sx={{ display: { xs: "flex", md: "none" }, justifyContent: "center", mb: 2.5, flexShrink: 0 }}>
-            <NextLink href="/home/company" style={{ textDecoration: "none" }}>
-              <Image src="/logo.svg" alt="TalentAI" width={110} height={28} style={{ objectFit: "contain" }} />
-            </NextLink>
-          </Box>
-
-          <Box sx={{ width: "100%", maxWidth: { xs: 480, sm: 560, md: 600, lg: 640 } }}>
+          <Box sx={{
+            width: "100%",
+            maxWidth: { xs: "min(100%, 380px)", sm: 520, md: 560, lg: 600 },
+            flexShrink: 0,
+          }}>
+            {/* Mobile logo */}
+            <Box sx={{ display: { xs: "flex", md: "none" }, justifyContent: "center", mb: { xs: 0.5, sm: 0.475 }, flexShrink: 0 }}>
+              <NextLink href="/home/company" style={{ textDecoration: "none" }}>
+                <Image src="/logo.svg" alt="TalentAI" width={88} height={22} style={{ objectFit: "contain", width: "clamp(72px, 22vw, 88px)", height: "auto" }} />
+              </NextLink>
+            </Box>
             {/* Card */}
             <Box sx={{
               bgcolor: "#fff",
-              borderRadius: { xs: "18px", md: "20px" },
+              borderRadius: { xs: "14px", md: "20px" },
               boxShadow: "0 0 0 1px rgba(0,0,0,0.06), 0 4px 6px -1px rgba(0,0,0,0.04), 0 12px 40px -4px rgba(0,0,0,0.06)",
               overflow: "hidden",
             }}>
-              <Box sx={{ height: 2, bgcolor: ACCENT }} />
-              <Box sx={{ px: { xs: 3, sm: 4, md: 4.5 }, pt: { xs: 3, sm: 3.5 }, pb: { xs: 3, sm: 3.5 } }}>
+              <Box sx={{ height: { xs: 1.5, sm: 1.625 }, bgcolor: ACCENT }} />
+              <Box sx={{ px: { xs: 1.35, sm: 2.125, md: 3.625 }, pt: { xs: 1.1, sm: 1.625, md: 2.375 }, pb: { xs: 1.1, sm: 1.625, md: 2.375 } }}>
                 {children}
               </Box>
             </Box>
 
             {/* Footer */}
-            <Typography sx={{ mt: { xs: 1.5, sm: 2 }, fontSize: "11.5px", color: "#9CA3AF", fontFamily: "Poppins", textAlign: "center", lineHeight: 1.8 }}>
+            <Typography sx={{ mt: { xs: 0.35, sm: 0.475 }, mb: { xs: 0, sm: 0 }, fontSize: { xs: "9.5px", sm: "11.5px" }, color: "#9CA3AF", fontFamily: "Poppins", textAlign: "center", lineHeight: 1.65 }}>
               {t("register_panel.footer_prefix")}{" "}
               <NextLink href="/terms" style={{ color: ACCENT, textDecoration: "none", fontWeight: 600 }}>{t("register_panel.terms")}</NextLink>
               {" "}{t("register_panel.footer_and")}{" "}

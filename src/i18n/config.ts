@@ -3,28 +3,40 @@ import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
 // ── EN ──────────────────────────────────────────────
-import enCommon     from '../../public/locales/en/common.json';
-import enAuth       from '../../public/locales/en/auth.json';
-import enDashboard  from '../../public/locales/en/dashboard.json';
-import enPosts      from '../../public/locales/en/posts.json';
-import enCampaign   from '../../public/locales/en/campaign.json';
-import enInterview  from '../../public/locales/en/interview.json';
-import enHome       from '../../public/locales/en/home.json';
-import enEmployees  from '../../public/locales/en/employees.json';
-import enDepartments from '../../public/locales/en/departments.json';
-import enSubscription from '../../public/locales/en/subscription.json';
+import enCommon from '../../public/locales/en/shared/common.json';
+import enAuth from '../../public/locales/en/shared/auth.json';
+import enInterview from '../../public/locales/en/shared/interview.json';
+import enHome from '../../public/locales/en/shared/home.json';
+import enPosts from '../../public/locales/en/modules/company/posts.json';
+
+import enCompanyShell from '../../public/locales/en/modules/company/shell.json';
+import enEmployeeShell from '../../public/locales/en/modules/employee/shell.json';
+import enEmployeeDashboard from '../../public/locales/en/modules/employee/dashboard.json';
+import enPagesCommon from '../../public/locales/en/modules/company/pages-common.json';
+import enApplications from '../../public/locales/en/modules/company/applications.json';
+import enSettings from '../../public/locales/en/modules/company/settings.json';
+import enEmployees from '../../public/locales/en/modules/employees/employees.json';
+import enDepartments from '../../public/locales/en/modules/departments/departments.json';
+import enCampaign from '../../public/locales/en/modules/campaigns/campaign.json';
+import enSubscription from '../../public/locales/en/modules/company/subscription.json';
 
 // ── FR ──────────────────────────────────────────────
-import frCommon     from '../../public/locales/fr/common.json';
-import frAuth       from '../../public/locales/fr/auth.json';
-import frDashboard  from '../../public/locales/fr/dashboard.json';
-import frPosts      from '../../public/locales/fr/posts.json';
-import frCampaign   from '../../public/locales/fr/campaign.json';
-import frInterview  from '../../public/locales/fr/interview.json';
-import frHome       from '../../public/locales/fr/home.json';
-import frEmployees  from '../../public/locales/fr/employees.json';
-import frDepartments from '../../public/locales/fr/departments.json';
-import frSubscription from '../../public/locales/fr/subscription.json';
+import frCommon from '../../public/locales/fr/shared/common.json';
+import frAuth from '../../public/locales/fr/shared/auth.json';
+import frInterview from '../../public/locales/fr/shared/interview.json';
+import frHome from '../../public/locales/fr/shared/home.json';
+import frPosts from '../../public/locales/fr/modules/company/posts.json';
+
+import frCompanyShell from '../../public/locales/fr/modules/company/shell.json';
+import frEmployeeShell from '../../public/locales/fr/modules/employee/shell.json';
+import frEmployeeDashboard from '../../public/locales/fr/modules/employee/dashboard.json';
+import frPagesCommon from '../../public/locales/fr/modules/company/pages-common.json';
+import frApplications from '../../public/locales/fr/modules/company/applications.json';
+import frSettings from '../../public/locales/fr/modules/company/settings.json';
+import frEmployees from '../../public/locales/fr/modules/employees/employees.json';
+import frDepartments from '../../public/locales/fr/modules/departments/departments.json';
+import frCampaign from '../../public/locales/fr/modules/campaigns/campaign.json';
+import frSubscription from '../../public/locales/fr/modules/company/subscription.json';
 
 export const SUPPORTED_LANGUAGES = ['en', 'fr'] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
@@ -37,8 +49,29 @@ export type Namespace = (typeof NAMESPACES)[number];
 // RTL languages — extend this list when Arabic is added: ['ar']
 export const RTL_LANGUAGES: SupportedLanguage[] = [];
 
+/** Company + employee shell, nested `pages.*` for compose; page slices merged in `mergeDashboardPageBundles`. */
+function buildDashboardBase<
+  CS extends Record<string, unknown>,
+  ES extends Record<string, unknown>,
+  ED extends Record<string, unknown>,
+  PC extends Record<string, unknown>,
+  A extends Record<string, unknown>,
+  S extends Record<string, unknown>,
+>(companyShell: CS, employeeShell: ES, employeeDashboard: ED, pagesCommon: PC, applications: A, settings: S) {
+  return {
+    ...companyShell,
+    ...employeeShell,
+    ...employeeDashboard,
+    pages: {
+      common: pagesCommon,
+      applications,
+      settings,
+    },
+  };
+}
+
 /**
- * Per-locale JSON under `public/locales/{lng}/` merges into `dashboard.pages`.
+ * Per-locale JSON under `public/locales/{lng}/modules/**` merges into `dashboard.pages`.
  * e.g. `employees.json` → `pages.employees`, `departments.json` → `pages.departments`,
  * `campaign.json` → `pages.campaigns`, `subscription.json` → `pages.subscription`.
  */
@@ -61,23 +94,53 @@ function mergeDashboardPageBundles<D extends { pages: Record<string, unknown> }>
   };
 }
 
+const enDashboard = mergeDashboardPageBundles(
+  buildDashboardBase(
+    enCompanyShell,
+    enEmployeeShell,
+    enEmployeeDashboard,
+    enPagesCommon,
+    enApplications,
+    enSettings,
+  ),
+  enEmployees,
+  enDepartments,
+  enCampaign,
+  enSubscription,
+);
+
+const frDashboard = mergeDashboardPageBundles(
+  buildDashboardBase(
+    frCompanyShell,
+    frEmployeeShell,
+    frEmployeeDashboard,
+    frPagesCommon,
+    frApplications,
+    frSettings,
+  ),
+  frEmployees,
+  frDepartments,
+  frCampaign,
+  frSubscription,
+);
+
 const options: InitOptions = {
   resources: {
     en: {
-      common:    enCommon,
-      auth:      enAuth,
-      dashboard: mergeDashboardPageBundles(enDashboard, enEmployees, enDepartments, enCampaign, enSubscription),
-      posts:     enPosts,
+      common: enCommon,
+      auth: enAuth,
+      dashboard: enDashboard,
+      posts: enPosts,
       interview: enInterview,
-      home:      enHome,
+      home: enHome,
     },
     fr: {
-      common:    frCommon,
-      auth:      frAuth,
-      dashboard: mergeDashboardPageBundles(frDashboard, frEmployees, frDepartments, frCampaign, frSubscription),
-      posts:     frPosts,
+      common: frCommon,
+      auth: frAuth,
+      dashboard: frDashboard,
+      posts: frPosts,
       interview: frInterview,
-      home:      frHome,
+      home: frHome,
     },
   },
 
@@ -95,8 +158,8 @@ const options: InitOptions = {
     lookupLocalStorage: LANGUAGE_COOKIE,
     /** Map fr-FR / en-US → fr / en — resources are only registered under two-letter codes */
     convertDetectedLanguage: (lng: string) => {
-      const base = lng.split("-")[0]?.toLowerCase();
-      if (base === "fr" || base === "en") return base;
+      const base = lng.split('-')[0]?.toLowerCase();
+      if (base === 'fr' || base === 'en') return base;
       return lng;
     },
   } as any,

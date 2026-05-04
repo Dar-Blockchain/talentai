@@ -35,7 +35,7 @@ const Signin = () => {
       <SigninContainer>
         <SignInHeader themeColors={themeColors} />
         <SigninForm themeColors={themeColors} />
-        <Divider sx={{ my: { xs: 1.75, sm: 2 }, borderColor: "#F7F8FA" }} />
+        <Divider sx={{ my: { xs: 1.15, sm: 1.35 }, borderColor: "#E5E7EB" }} />
         <BackToLandingButton themeColors={themeColors} />
       </SigninContainer>
 
