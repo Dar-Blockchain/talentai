@@ -63,10 +63,33 @@ function getRoleFromToken(token: string): string | null {
   try {
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
     const payload = JSON.parse(atob(base64));
-    const role = payload.role ?? payload.userRole ?? payload.roleType ?? payload.type ?? null;
-    if (!role) return null;
-    if (KNOWN_ROLES.includes(role)) return role;
-    if (MEMBER_ROLES.includes(role)) return "Employee";
+    const rawRole =
+      payload.role ??
+      payload.userRole ??
+      payload.roleType ??
+      payload.type ??
+      payload.user?.role ??
+      payload.user?.userRole ??
+      payload.roles ??
+      null;
+
+    const pickOne = (v: unknown): string | null => {
+      if (!v) return null;
+      if (Array.isArray(v)) return typeof v[0] === "string" ? v[0] : null;
+      return typeof v === "string" ? v : null;
+    };
+
+    const roleStr = pickOne(rawRole);
+    if (!roleStr) return null;
+
+    const normalized = roleStr.trim();
+    const canonical =
+      KNOWN_ROLES.find((r) => r.toLowerCase() === normalized.toLowerCase()) ?? null;
+    if (canonical) return canonical;
+
+    if (MEMBER_ROLES.some((r) => r.toLowerCase() === normalized.toLowerCase())) {
+      return "Employee";
+    }
     return null;
   } catch {
     return null;
