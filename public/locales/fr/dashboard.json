@@ -413,6 +413,15 @@
         "desc_en": "Utiliser TalentAI en anglais",
         "desc_fr": "Utiliser TalentAI en français",
         "save_hint": "Les changements s'appliquent immédiatement et sont sauvegardés automatiquement."
+      },
+      "generate_lang": {
+        "title": "Langue de génération IA",
+        "subtitle": "Langue par défaut pour les offres générées par l'IA. Une fois définie, le sélecteur de langue est ignoré automatiquement.",
+        "always_ask_label": "Toujours demander",
+        "always_ask_desc": "Afficher le sélecteur de langue à chaque fois",
+        "lang_desc_en": "Toujours générer en anglais",
+        "lang_desc_fr": "Toujours générer en français",
+        "save_hint": "Cette préférence est sauvegardée localement sur cet appareil. Les changements prennent effet immédiatement."
       }
     }
   }

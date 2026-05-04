@@ -70,7 +70,10 @@ const InterviewLanguagesModal: React.FC<Props> = ({ open, onConfirm, onClose, in
       </Box>
 
       {/* Language grid — multi-select */}
-      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5, mb: 3 }}>
+      <Typography sx={{ fontSize: "10.5px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", mb: 1 }}>
+        {t("create.interview_lang_modal.select_label")}
+      </Typography>
+      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5, mb: 2 }}>
         {SUPPORTED_LANGS.map((lang) => {
           const active = selected.includes(lang.code);
           return (
@@ -120,7 +123,11 @@ const InterviewLanguagesModal: React.FC<Props> = ({ open, onConfirm, onClose, in
       </Box>
 
       {/* Hint */}
-      <Typography sx={{ fontSize: "11px", color: "#9CA3AF", textAlign: "center", mb: 2 }}>
+      <Typography sx={{
+        fontSize: "11px", textAlign: "center", mb: 2, lineHeight: 1.5,
+        color: selected.length === 1 ? "#D97706" : "#059669",
+        fontWeight: selected.length === 1 ? 500 : 400,
+      }}>
         {selected.length === 1
           ? t("create.interview_lang_modal.hint_one")
           : t("create.interview_lang_modal.hint_other", { count: selected.length })}

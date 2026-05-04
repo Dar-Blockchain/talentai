@@ -9,7 +9,7 @@ import AttachMoneyOutlined from "@mui/icons-material/AttachMoneyOutlined";
 import { useDispatch, useSelector } from "react-redux";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import GenerateLanguageModal from "./GenerateLanguageModal";
+import GenerateLanguageModal, { GENERATE_LANG_KEY } from "./GenerateLanguageModal";
 import { contractTypes, defaultCurrencies, workModes } from "@/constants/candidate";
 import { EMPLOYMENT_OPTION_KEY, optionLabel, WORK_MODE_OPTION_KEY } from "@/utils/postFormI18n";
 import {
@@ -84,7 +84,12 @@ const PostDescription = () => {
 
   const handleGenerate = () => {
     if (!validate()) return;
-    setLangModalOpen(true);
+    const savedLang = typeof window !== "undefined" ? localStorage.getItem(GENERATE_LANG_KEY) : null;
+    if (savedLang) {
+      handleConfirmLanguage(savedLang);
+    } else {
+      setLangModalOpen(true);
+    }
   };
 
   const handleConfirmLanguage = (language: string) => {
