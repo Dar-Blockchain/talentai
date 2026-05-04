@@ -23,9 +23,10 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
 
   const { user, profile } = useSelector((state: RootState) => state.user.connectedUser);
 
-  const isAdmin    = useMemo(() => user?.role === "Admin",    [user?.role]);
-  const isEmployee = useMemo(() => user?.role === "Employee", [user?.role]);
-  const isCompany  = useMemo(() => user?.role === "Company",  [user?.role]);
+  const isAdmin     = useMemo(() => user?.role === "Admin",     [user?.role]);
+  const isEmployee  = useMemo(() => user?.role === "Employee",  [user?.role]);
+  const isCompany   = useMemo(() => user?.role === "Company",   [user?.role]);
+  const isCandidate = useMemo(() => user?.role === "Candidate", [user?.role]);
 
   const displayName = useMemo(() => {
     if (isCompany) return profile?.companyDetails?.name || profile?.userId?.username || "Company";
@@ -149,6 +150,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
         initials={initials}
         isCompany={isCompany}
         isEmployee={isEmployee}
+        isCandidate={isCandidate}
         onDashboard={goToDashboard}
       />
 

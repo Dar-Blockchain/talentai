@@ -12,10 +12,12 @@ function SoftSkills() {
   if (skills.length === 0) return <EmptySkills type="soft" />;
 
   return (
-    <Box>
-      {skills.map((item: any, i: number) => (
-        <SkillCard key={i} skill={item} type="soft" last={i === skills.length - 1} />
-      ))}
+    <Box sx={{ p: 2 }}>
+      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5 }}>
+        {skills.map((item: any, i: number) => (
+          <SkillCard key={i} skill={item} type="soft" last={false} />
+        ))}
+      </Box>
     </Box>
   );
 }

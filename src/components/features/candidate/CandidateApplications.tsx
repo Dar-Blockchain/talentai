@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Avatar, Button, InputBase, Skeleton } from "@mui/material";
+import { Box, Typography, Avatar, Button, InputBase, Skeleton, Collapse } from "@mui/material";
+import ExpandMoreOutlined from "@mui/icons-material/ExpandMoreOutlined";
+import ExpandLessOutlined from "@mui/icons-material/ExpandLessOutlined";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutlineOutlined";
 import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
@@ -175,6 +177,9 @@ const CandidateApplications: React.FC<CandidateApplicationsProps> = ({ previewCo
 
   const [search,       setSearch]       = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
+  const [expanded,     setExpanded]     = useState(false);
+
+  const COLLAPSE_SIZE = 4;
 
   const fetchLimit = previewCount ?? PAGE_SIZE;
 
@@ -284,14 +289,49 @@ const CandidateApplications: React.FC<CandidateApplicationsProps> = ({ previewCo
         </Box>
       ) : (
         <Box>
-          {displayed.map((app: any, i: number) => (
+          {/* Always-visible first batch */}
+          {displayed.slice(0, COLLAPSE_SIZE).map((app: any, i: number) => (
             <AppCard
               key={app._id || i}
               app={app}
-              last={i === displayed.length - 1}
+              last={!expanded && i === Math.min(COLLAPSE_SIZE, displayed.length) - 1}
               onClick={() => router.push(`/dashboard/candidate/applications/${app._id}`)}
             />
           ))}
+
+          {/* Collapsible rest */}
+          {displayed.length > COLLAPSE_SIZE && (
+            <Collapse in={expanded} timeout={250}>
+              {displayed.slice(COLLAPSE_SIZE).map((app: any, i: number) => (
+                <AppCard
+                  key={app._id || i}
+                  app={app}
+                  last={i === displayed.length - COLLAPSE_SIZE - 1}
+                  onClick={() => router.push(`/dashboard/candidate/applications/${app._id}`)}
+                />
+              ))}
+            </Collapse>
+          )}
+
+          {/* Toggle button */}
+          {displayed.length > COLLAPSE_SIZE && (
+            <Box
+              onClick={() => setExpanded(e => !e)}
+              sx={{
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 0.75,
+                py: 1.25, borderTop: "1px solid #F1F5F9", cursor: "pointer",
+                bgcolor: "#FAFAFA", transition: "background 0.12s",
+                "&:hover": { bgcolor: "#F3F4F6" },
+              }}
+            >
+              {expanded
+                ? <ExpandLessOutlined sx={{ fontSize: 16, color: T }} />
+                : <ExpandMoreOutlined sx={{ fontSize: 16, color: T }} />}
+              <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: T }}>
+                {expanded ? "Show less" : `Show ${displayed.length - COLLAPSE_SIZE} more`}
+              </Typography>
+            </Box>
+          )}
         </Box>
       )}
 

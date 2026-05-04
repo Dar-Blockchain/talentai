@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import ExpandMoreOutlined from "@mui/icons-material/ExpandMoreOutlined";
@@ -18,17 +18,24 @@ function TechnicalSkills() {
   if (skills.length === 0) return <EmptySkills type="technical" />;
 
   return (
-    <Box>
-      {visible.map((item: any, i: number) => (
-        <SkillCard key={i} skill={item} type="technical" last={i === visible.length - 1 && remaining <= 0} />
-      ))}
+    <Box sx={{ p: 2 }}>
+      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5 }}>
+        {visible.map((item: any, i: number) => (
+          <SkillCard key={i} skill={item} type="technical" last={false} />
+        ))}
+      </Box>
       {remaining > 0 && (
-        <Box sx={{ px: 2.5, py: 1.25, borderTop: "1px solid #F1F5F9" }}>
+        <Box sx={{ pt: 1.5, display: "flex", justifyContent: "center" }}>
           <Button
             size="small"
             endIcon={<ExpandMoreOutlined sx={{ fontSize: "14px !important" }} />}
             onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
-            sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.75rem", color: "#2563EB", p: 0, "&:hover": { bgcolor: "transparent", textDecoration: "underline" } }}
+            sx={{
+              textTransform: "none", fontWeight: 600, fontSize: "0.75rem",
+              color: "#2563EB", bgcolor: "#EFF6FF", border: "1px solid #BFDBFE",
+              borderRadius: "8px", px: 2, py: 0.5,
+              "&:hover": { bgcolor: "#DBEAFE" },
+            }}
           >
             Show {remaining} more
           </Button>
