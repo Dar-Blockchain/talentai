@@ -66,7 +66,7 @@ const CreateStepper: React.FC = () => {
   const handleLanguageConfirm = (languages: string[]) => {
     dispatch(setInterviewLanguages(languages));
     setLangModalOpen(false);
-    handleNext(activeStep !== 0);
+    handleNext(activeStep !== 0, languages);
   };
 
   return (

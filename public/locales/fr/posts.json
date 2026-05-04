@@ -195,13 +195,14 @@
       "btn_generating": "Génération…"
     },
     "interview_lang_modal": {
-      "title": "Langues d'entretien",
-      "subtitle": "Les candidats pourront passer leur entretien dans les langues sélectionnées",
-      "hint_one": "1 langue sélectionnée — ajoutez-en d'autres si besoin",
-      "hint_other": "{{count}} langues sélectionnées",
+      "title": "Langue(s) d'entretien",
+      "subtitle": "Choisissez la ou les langues dans lesquelles les candidats passeront leur entretien IA. Si vous en sélectionnez plusieurs, chaque candidat choisira la sienne au démarrage.",
+      "select_label": "Langues disponibles",
+      "hint_one": "1 seule langue — tous les candidats seront interviewés dans cette langue. Ajoutez-en une autre pour leur laisser le choix.",
+      "hint_other": "{{count}} langues sélectionnées — chaque candidat choisira la sienne en commençant l'entretien.",
       "btn_cancel": "Annuler",
-      "btn_save": "Enregistrer comme brouillon",
-      "btn_update": "Mettre à jour les langues"
+      "btn_save": "Confirmer",
+      "btn_update": "Enregistrer"
     },
     "preview": {
       "loading": "Génération de l'offre… veuillez patienter",

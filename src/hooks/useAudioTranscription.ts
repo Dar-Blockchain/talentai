@@ -439,11 +439,16 @@ export const useAudioTranscription = ({
 
       console.log('📡 [INIT-B-6] Creating STREAMING transcriber (V3 API)...');
 
+      const interviewLang = interviewConfig.sessionSettings?.language || 'en';
+      const isEnglish = interviewLang === 'en';
+      // AssemblyAI streaming v4: language is set via speechModel, not languageCode.
+      // keyterms word-boost only works with the English model.
       const transcriber = client.streaming.transcriber({
         token: tempToken,
         sampleRate: actualSampleRate,
         encoding: 'pcm_s16le',
-        keytermsPrompt: extractTechnicalKeywords(interviewConfig, jobData),
+        speechModel: isEnglish ? 'universal-streaming-english' : 'universal-streaming-multilingual',
+        ...(isEnglish ? { keytermsPrompt: extractTechnicalKeywords(interviewConfig, jobData) } : {}),
         endOfTurnConfidenceThreshold: turnDetectionConfig.end_of_turn_confidence_threshold,
         minEndOfTurnSilenceWhenConfident: turnDetectionConfig.min_end_of_turn_silence_when_confident,
         maxTurnSilence: turnDetectionConfig.max_turn_silence,
