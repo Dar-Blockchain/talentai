@@ -14,12 +14,13 @@ const Subscription = require('../models/Subscription.model');
 const User = require('../models/User.model');
 const notificationService = require('../services/notificationSystem.service');
 const { sendPlanUpgradeReminder } = require('../utils/email-service');
+const logger = require('../utils/logger');
 
 const REMINDER_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 const MAX_REMINDERS = 2;
 
 async function sendPlanReminders() {
-  console.log('\n🔔 [PlanReminder] Starting daily plan reminder check...');
+  logger.info('🔔 [PlanReminder] Starting daily plan reminder check...');
 
   try {
     const now = new Date();
@@ -45,7 +46,7 @@ async function sendPlanReminders() {
       ],
     }).select('_id userId lastPlanReminderSentAt planReminderCount').lean();
 
-    console.log(`📋 [PlanReminder] Found ${companyProfiles.length} company profiles eligible for reminder check`);
+    logger.info(`📋 [PlanReminder] Found ${companyProfiles.length} company profiles eligible for reminder check`);
 
     let notified = 0;
     let skipped = 0;
@@ -74,7 +75,7 @@ async function sendPlanReminders() {
 
         const recipientUserId = profile.userId?._id || profile.userId;
         if (!recipientUserId) {
-          console.warn(`⚠️ [PlanReminder] No userId for profile ${profile._id}, skipping`);
+          logger.warn(`[PlanReminder] No userId for profile ${profile._id}, skipping`);
           continue;
         }
 
@@ -95,7 +96,7 @@ async function sendPlanReminders() {
         // Email reminder (best-effort, non-blocking)
         if (user?.email) {
           sendPlanUpgradeReminder(user.email, companyName).catch(err =>
-            console.error(`⚠️ [PlanReminder] Email failed for ${user.email}:`, err.message)
+            logger.error(`[PlanReminder] Email failed for ${user.email}:`, err.message)
           );
         }
 
@@ -106,21 +107,21 @@ async function sendPlanReminders() {
         );
 
         notified++;
-        console.log(`✅ [PlanReminder] Reminder ${reminderCount + 1}/${MAX_REMINDERS} sent to profile ${profile._id} (${user?.email || 'no email'})`);
+        logger.success(`[PlanReminder] Reminder ${reminderCount + 1}/${MAX_REMINDERS} sent to profile ${profile._id} (${user?.email || 'no email'})`);
       } catch (profileError) {
-        console.error(`❌ [PlanReminder] Error processing profile ${profile._id}:`, profileError.message);
+        logger.error(`[PlanReminder] Error processing profile ${profile._id}:`, profileError.message);
       }
     }
 
-    console.log(`✅ [PlanReminder] Done — ${notified} reminders sent, ${skipped} skipped (have active plan)`);
+    logger.success(`[PlanReminder] Done — ${notified} reminders sent, ${skipped} skipped (have active plan)`);
   } catch (error) {
-    console.error('❌ [PlanReminder] Fatal error:', error);
+    logger.error('[PlanReminder] Fatal error:', error.message);
   }
 }
 
 function initialize() {
   cron.schedule('0 10 * * *', sendPlanReminders);
-  console.log('✅ [PlanReminder] Scheduled — runs daily at 10:00 AM');
+  logger.success('[PlanReminder] Scheduled — runs daily at 10:00 AM');
 }
 
 module.exports = { initialize, sendPlanReminders };

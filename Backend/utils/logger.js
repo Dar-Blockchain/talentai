@@ -1,6 +1,7 @@
 /**
  * Centralized Logger Utility
  * Provides structured logging with timestamps and colors
+ * Only displays logs in development mode (NODE_ENV !== 'production')
  */
 
 const colors = {
@@ -13,6 +14,8 @@ const colors = {
   gray: '\x1b[90m',
 };
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 const getTimestamp = () => {
   return new Date().toISOString().split('T')[1].split('Z')[0]; // HH:MM:SS
 };
@@ -22,35 +25,43 @@ const logger = {
    * Log informational message
    */
   info: (message, data = '') => {
-    console.log(`${colors.blue}[${getTimestamp()}] ℹ️  ${message}${colors.reset}`, data);
+    if (isDevelopment) {
+      console.log(`${colors.blue}[${getTimestamp()}] ℹ️  ${message}${colors.reset}`, data);
+    }
   },
 
   /**
    * Log success message
    */
   success: (message, data = '') => {
-    console.log(`${colors.green}[${getTimestamp()}] ✅ ${message}${colors.reset}`, data);
+    if (isDevelopment) {
+      console.log(`${colors.green}[${getTimestamp()}] ✅ ${message}${colors.reset}`, data);
+    }
   },
 
   /**
    * Log warning message
    */
   warn: (message, data = '') => {
-    console.warn(`${colors.yellow}[${getTimestamp()}] ⚠️  ${message}${colors.reset}`, data);
+    if (isDevelopment) {
+      console.warn(`${colors.yellow}[${getTimestamp()}] ⚠️  ${message}${colors.reset}`, data);
+    }
   },
 
   /**
    * Log error message
    */
   error: (message, data = '') => {
-    console.error(`${colors.red}[${getTimestamp()}] ❌ ${message}${colors.reset}`, data);
+    if (isDevelopment) {
+      console.error(`${colors.red}[${getTimestamp()}] ❌ ${message}${colors.reset}`, data);
+    }
   },
 
   /**
    * Log debug message
    */
   debug: (message, data = '') => {
-    if (process.env.DEBUG === 'true') {
+    if (isDevelopment && process.env.DEBUG === 'true') {
       console.log(`${colors.gray}[${getTimestamp()}] 🐛 ${message}${colors.reset}`, data);
     }
   },
@@ -59,16 +70,20 @@ const logger = {
    * Log header (with decorative lines)
    */
   header: (message) => {
-    console.log('');
-    console.log(`${colors.bright}${colors.green}🎉 ${message}${colors.reset}`);
-    console.log('');
+    if (isDevelopment) {
+      console.log('');
+      console.log(`${colors.bright}${colors.green}🎉 ${message}${colors.reset}`);
+      console.log('');
+    }
   },
 
   /**
    * Log section
    */
   section: (message) => {
-    console.log(`${colors.bright}${colors.blue}▶ ${message}${colors.reset}`);
+    if (isDevelopment) {
+      console.log(`${colors.bright}${colors.blue}▶ ${message}${colors.reset}`);
+    }
   },
 };
 

@@ -5,6 +5,7 @@ const Post = require('../models/Post.model');
 const User = require('../models/User.model');
 const { sendInterviewNudge } = require('../utils/email-service');
 const { AUTO_INVITE_CONFIG, SCHEDULER_TIME_WINDOW } = require('../constants/scheduler.constants');
+const logger = require('../utils/logger');
 
 /**
  * Auto Interview Invitation Scheduler
@@ -33,26 +34,26 @@ const calculateHoursSinceApplication = (appliedAt) => {
 const sendAutoInvitation = async (application) => {
   try {
     const MSG = AUTO_INVITE_CONFIG.MESSAGES;
-    console.log(`\n${MSG.PROCESSING_APP.replace('%id%', application._id)}`);
+    logger.debug(`${MSG.PROCESSING_APP.replace('%id%', application._id)}`);
 
     // Fetch candidate profile
     const candidateProfile = await Profile.findById(application.profile).populate('userId');
     if (!candidateProfile || !candidateProfile.userId) {
-      console.error(`${MSG.CANDIDATE_PROFILE_NOT_FOUND.replace('%id%', application._id)}`);
+      logger.error(`${MSG.CANDIDATE_PROFILE_NOT_FOUND.replace('%id%', application._id)}`);
       return false;
     }
 
     // Fetch post details
     const post = await Post.findById(application.post);
     if (!post) {
-      console.error(`${MSG.POST_NOT_FOUND.replace('%id%', application._id)}`);
+      logger.error(`${MSG.POST_NOT_FOUND.replace('%id%', application._id)}`);
       return false;
     }
 
     // Fetch company details
     const company = await User.findById(post.user);
     if (!company) {
-      console.error(`${MSG.COMPANY_NOT_FOUND.replace('%id%', post._id)}`);
+      logger.error(`${MSG.COMPANY_NOT_FOUND.replace('%id%', post._id)}`);
       return false;
     }
 
@@ -63,11 +64,11 @@ const sendAutoInvitation = async (application) => {
     const companyName = companyProfile?.companyDetails?.name || company.username || company.email || 'Our Company';
     const interviewLink = `${process.env.BASE_URL}interview/hr/?jobId=${post._id}&companyId=${post.user}&ref=link`;
 
-    console.log(`   📧 To: ${candidateEmail}`);
-    console.log(`   👤 Candidate: ${firstName}`);
-    console.log(`   📋 Position: ${jobTitle}`);
-    console.log(`   🏢 Company: ${companyName}`);
-    console.log(`   🔗 Interview Link: ${interviewLink}`);
+    logger.debug(`   📧 To: ${candidateEmail}`);
+    logger.debug(`   👤 Candidate: ${firstName}`);
+    logger.debug(`   📋 Position: ${jobTitle}`);
+    logger.debug(`   🏢 Company: ${companyName}`);
+    logger.debug(`   🔗 Interview Link: ${interviewLink}`);
 
     // Nudge #1 — welcoming first invitation (24h after applying)
     const emailSent = await sendInterviewNudge(
@@ -77,11 +78,11 @@ const sendAutoInvitation = async (application) => {
     );
 
     if (!emailSent) {
-      console.error(`${MSG.EMAIL_FAILED.replace('%email%', candidateEmail)}`);
+      logger.error(`${MSG.EMAIL_FAILED.replace('%email%', candidateEmail)}`);
       return false;
     }
 
-    console.log(`${MSG.EMAIL_SUCCESS.replace('%email%', candidateEmail)}`);
+    logger.info(`${MSG.EMAIL_SUCCESS.replace('%email%', candidateEmail)}`);
 
     // Update application with invitation tracking
     await JobApplication.findByIdAndUpdate(
@@ -93,11 +94,11 @@ const sendAutoInvitation = async (application) => {
       { new: true }
     );
 
-    console.log(`${MSG.APP_UPDATED.replace('%count%', '1')}`);
+    logger.info(`${MSG.APP_UPDATED.replace('%count%', '1')}`);
     return true;
 
   } catch (error) {
-    console.error(`${AUTO_INVITE_CONFIG.MESSAGES.ERROR.replace('%id%', application._id).replace('%error%', error.message)}`);
+    logger.error(`${AUTO_INVITE_CONFIG.MESSAGES.ERROR.replace('%id%', application._id).replace('%error%', error.message)}`);
     return false;
   }
 };
@@ -107,17 +108,17 @@ const runAutoInviteJob = async ({ force = false } = {}) => {
     const MSG = AUTO_INVITE_CONFIG.MESSAGES;
     const CONFIG = AUTO_INVITE_CONFIG;
 
-    console.log(`\n⏰ [AUTO INVITE SCHEDULER] Running at ${new Date().toLocaleString()}${force ? ' (FORCED)' : ''}`);
+   // logger.debug(`⏰ [AUTO INVITE SCHEDULER] Running at ${new Date().toLocaleString()}${force ? ' (FORCED)' : ''}`);
 
     // Check if we're within the time window (skip when forced or in test mode)
     if (!force && !isWithinTimeWindow()) {
       const currentHour = new Date().getHours();
-      console.log(`${MSG.OUTSIDE_WINDOW}`);
-      console.log(`   ⏰ Auto-invitations are only sent between ${SCHEDULER_TIME_WINDOW.START_HOUR}:00 and ${SCHEDULER_TIME_WINDOW.END_HOUR}:00`);
+     // logger.debug(`${MSG.OUTSIDE_WINDOW}`);
+     // logger.debug(`   ⏰ Auto-invitations are only sent between ${SCHEDULER_TIME_WINDOW.START_HOUR}:00 and ${SCHEDULER_TIME_WINDOW.END_HOUR}:00`);
       return;
     }
 
-    console.log(`${MSG.WITHIN_WINDOW}`);
+    // logger.debug(`${MSG.WITHIN_WINDOW}`);
 
     // Find applications that need first-time invitations
     // (Applied FIRST_INVITE_HOURS hours ago and never invited)
@@ -131,11 +132,11 @@ const runAutoInviteJob = async ({ force = false } = {}) => {
 
     const pendingApplications = firstTimeInvites;
 
-    console.log(`${MSG.FOUND_APPLICATIONS.replace('%firstTime%', firstTimeInvites.length).replace('%recurring%', '0')}`);
-    console.log(`${MSG.TOTAL_ELIGIBLE.replace('%total%', pendingApplications.length)}`);
+    logger.info(`${MSG.FOUND_APPLICATIONS.replace('%firstTime%', firstTimeInvites.length).replace('%recurring%', '0')}`);
+    logger.info(`${MSG.TOTAL_ELIGIBLE.replace('%total%', pendingApplications.length)}`);
     
     if (pendingApplications.length === 0) {
-      console.log(`${MSG.NO_PENDING}`);
+      logger.info(`${MSG.NO_PENDING}`);
       return;
     }
 
@@ -145,10 +146,10 @@ const runAutoInviteJob = async ({ force = false } = {}) => {
     for (const application of pendingApplications) {
       const hoursElapsed = calculateHoursSinceApplication(application.appliedAt);
       
-      console.log(`\n📋 Application ${application._id}`);
-      console.log(`   ⏱️  Hours since application: ${hoursElapsed.toFixed(2)}`);
-      console.log(`   📧 Invitation #1`);
-      console.log(`   Status: ${application.status}`);
+      // logger.debug(`\n📋 Application ${application._id}`);
+      // logger.debug(`   ⏱️  Hours since application: ${hoursElapsed.toFixed(2)}`);
+      // logger.debug(`   📧 Invitation #1`);
+      // logger.debug(`   Status: ${application.status}`);
 
       const sent = await sendAutoInvitation(application);
       if (sent) {
@@ -158,26 +159,26 @@ const runAutoInviteJob = async ({ force = false } = {}) => {
       }
     }
 
-    console.log(`\n${MSG.BATCH_COMPLETE}`);
-    console.log(`${MSG.SENT.replace('%count%', successCount)}`);
-    console.log(`${MSG.FAILED.replace('%count%', failureCount)}`);
+    // logger.debug(`\n${MSG.BATCH_COMPLETE}`);
+    // logger.debug(`${MSG.SENT.replace('%count%', successCount)}`);
+    // logger.debug(`${MSG.FAILED.replace('%count%', failureCount)}`);
 
   } catch (error) {
-    console.error(`${AUTO_INVITE_CONFIG.MESSAGES.JOB_ERROR.replace('%error%', error.message)}`);
+    logger.error(`${AUTO_INVITE_CONFIG.MESSAGES.JOB_ERROR.replace('%error%', error.message)}`);
   }
 };
 
 // Schedule the job to run every hour
 const scheduleAutoInvites = () => {
   const MSG = AUTO_INVITE_CONFIG.MESSAGES;
-  console.log(`${MSG.INIT}`);
+  // logger.debug(`${MSG.INIT}`);
   
   // Run every hour at minute 0
   cron.schedule(AUTO_INVITE_CONFIG.CRON_PATTERN, () => {
     runAutoInviteJob();
   });
 
-  console.log(`${MSG.RUNNING}`);
+  //logger.debug(`${MSG.RUNNING}`);
 };
 
 module.exports = { scheduleAutoInvites, runAutoInviteJob };
