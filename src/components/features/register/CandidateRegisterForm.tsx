@@ -27,7 +27,6 @@ import { useToast } from "@/hooks/useToast";
 import { useRouter } from "next/router";
 import { formatTimeLeft } from "@/utils/functions";
 import { isInvitationUrl } from "@/utils/memberInvitation";
-import { authOutlinedInputAutofillSx } from "./authInputAutofillSx";
 import { useTranslation } from "react-i18next";
 
 const CODE_LENGTH = 6;
@@ -38,14 +37,14 @@ const ACCENT = "#0D9488";
 const ACCENT2 = "#059669";
 
 const fieldSx = {
-  "& .MuiInputLabel-root": { color: "#6B7280", fontFamily: "Poppins", fontSize: { xs: "0.78rem", sm: "0.95rem" }, fontWeight: 500 },
+  "& .MuiInputLabel-root": { color: "#6B7280", fontFamily: "Poppins", fontSize: "0.95rem", fontWeight: 500 },
   "& .MuiInputLabel-root.Mui-focused": { color: ACCENT },
-  "& .MuiInputBase-input": { fontSize: { xs: "0.8125rem", sm: "calc(1rem - 2px)" }, fontFamily: "Poppins", py: { xs: 0.5, sm: 0.625 } },
-  "& .MuiInputBase-input::placeholder": { fontSize: { xs: "0.75rem", sm: "calc(0.82rem - 2px)" }, opacity: 1, color: "#C4CAD4" },
-  "& .MuiFormHelperText-root": { fontSize: { xs: "0.68rem", sm: "0.75rem" }, mt: { xs: 0.35, sm: 0.125 } },
+  "& .MuiInputBase-input": { fontSize: "1rem", fontFamily: "Poppins" },
+  "& .MuiInputBase-input::placeholder": { fontSize: "0.82rem", opacity: 1, color: "#C4CAD4" },
+  "& .MuiFormHelperText-root": { fontSize: "0.75rem" },
   "& .MuiOutlinedInput-root": {
-    borderRadius: { xs: "11px", sm: "14px" },
-    fontSize: { xs: "0.8125rem", sm: "calc(1rem - 2px)" },
+    borderRadius: "14px",
+    fontSize: "1rem",
     fontFamily: "Poppins",
     bgcolor: "#F9FAFB",
     "& fieldset": { borderColor: "#E5E7EB" },
@@ -53,11 +52,10 @@ const fieldSx = {
     "&:hover": { bgcolor: "#F3F4F6" },
     "&.Mui-focused fieldset": { borderColor: ACCENT, borderWidth: "1.5px" },
     "&.Mui-focused": { bgcolor: "#fff" },
-    ...authOutlinedInputAutofillSx,
   },
 };
 
-const half = { flex: { xs: "1 1 100%", md: "1 1 calc(50% - 10.5px)" }, minWidth: 0 };
+const half = { flex: { xs: "1 1 100%", md: "1 1 calc(50% - 12px)" }, minWidth: 0 };
 const full = { flex: "1 1 100%" };
 
 type FormValues = {
@@ -76,13 +74,13 @@ const submitBtnSx = {
   textTransform: "none",
   fontFamily: "Poppins",
   fontWeight: 700,
-  borderRadius: { xs: "11px", sm: "14px" },
-  height: { xs: 42, sm: 53 },
+  borderRadius: "14px",
+  height: 56,
   background: `linear-gradient(135deg, ${ACCENT} 0%, ${ACCENT2} 100%)`,
   color: "#fff",
   boxShadow: `0 4px 20px ${ACCENT}50`,
   letterSpacing: "0.01em",
-  fontSize: { xs: "0.82rem", sm: "1rem" },
+  fontSize: "1rem",
   transition: "all 0.2s",
   "&:hover": {
     background: `linear-gradient(135deg, #0caa9d 0%, ${ACCENT2} 100%)`,
@@ -140,7 +138,7 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
 
   useEffect(() => {
     if (invitationEmail) setValue("email", invitationEmail);
-  }, [invitationEmail]);
+  }, [invitationEmail, setValue]);
 
   useEffect(() => {
     if (!analyzingCv) { setCvProgress(0); return; }
@@ -250,45 +248,37 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
         <Box
           component="form"
           onSubmit={handleSubmit(handleSendCode)}
-          sx={{
-            mb: { xs: 0.25, sm: 1.625 },
-            textAlign: "left",
-            display: "flex",
-            flexWrap: "wrap",
-            alignContent: "flex-start",
-            rowGap: { xs: 2.25, sm: 2.125, md: 2.625 },
-            columnGap: { xs: 1.5, sm: 2, md: 2.625 },
-          }}
+          sx={{ mb: 2, textAlign: "left", display: "flex", flexWrap: "wrap", gap: 3 }}
         >
           <Box sx={half}>
-            <TextField margin="none"
+            <TextField
               label={t("candidate_form.first_name")}
               placeholder="John"
               fullWidth
               disabled={loading}
               error={!!errors.firstName}
               helperText={errors.firstName?.message}
-              InputProps={{ startAdornment: <InputAdornment position="start"><PersonIcon sx={{ fontSize: { xs: 17, sm: 20 }, color: "#9CA3AF" }} /></InputAdornment> }}
+              InputProps={{ startAdornment: <InputAdornment position="start"><PersonIcon sx={{ fontSize: 20, color: "#9CA3AF" }} /></InputAdornment> }}
               sx={fieldSx}
               {...register("firstName", { required: t("candidate_form.validation.first_name_required") })}
             />
           </Box>
           <Box sx={half}>
-            <TextField margin="none"
+            <TextField
               label={t("candidate_form.last_name")}
               placeholder="Doe"
               fullWidth
               disabled={loading}
               error={!!errors.lastName}
               helperText={errors.lastName?.message}
-              InputProps={{ startAdornment: <InputAdornment position="start"><PersonIcon sx={{ fontSize: { xs: 17, sm: 20 }, color: "#9CA3AF" }} /></InputAdornment> }}
+              InputProps={{ startAdornment: <InputAdornment position="start"><PersonIcon sx={{ fontSize: 20, color: "#9CA3AF" }} /></InputAdornment> }}
               sx={fieldSx}
               {...register("lastName", { required: t("candidate_form.validation.last_name_required") })}
             />
           </Box>
 
           <Box sx={half}>
-            <TextField margin="none"
+            <TextField
               label={t("candidate_form.email")}
               placeholder="john@example.com"
               fullWidth
@@ -296,7 +286,7 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
               disabled={loading || !!invitationEmail}
               error={!!errors.email}
               helperText={invitationEmail ? t("candidate_form.email_prefilled") : errors.email?.message}
-              InputProps={{ startAdornment: <InputAdornment position="start"><EmailIcon sx={{ fontSize: { xs: 17, sm: 20 }, color: "#9CA3AF" }} /></InputAdornment> }}
+              InputProps={{ startAdornment: <InputAdornment position="start"><EmailIcon sx={{ fontSize: 20, color: "#9CA3AF" }} /></InputAdornment> }}
               sx={fieldSx}
               {...register("email", {
                 required: t("candidate_form.validation.email_required"),
@@ -305,14 +295,14 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
             />
           </Box>
           <Box sx={half}>
-            <TextField margin="none"
+            <TextField
               label={t("candidate_form.phone")}
               placeholder="+1 234 567 890"
               fullWidth
               disabled={loading}
               error={!!errors.phone}
               helperText={errors.phone?.message}
-              InputProps={{ startAdornment: <InputAdornment position="start"><PhoneIcon sx={{ fontSize: { xs: 17, sm: 20 }, color: "#9CA3AF" }} /></InputAdornment> }}
+              InputProps={{ startAdornment: <InputAdornment position="start"><PhoneIcon sx={{ fontSize: 20, color: "#9CA3AF" }} /></InputAdornment> }}
               sx={fieldSx}
               {...register("phone", {
                 required: t("candidate_form.validation.phone_required"),
@@ -350,11 +340,8 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
                 sx={{
                   border: "1.5px dashed",
                   borderColor: cvError ? "#EF4444" : isDragging ? ACCENT : cvFile ? ACCENT : "#E5E7EB",
-                  borderRadius: { xs: "10px", sm: "12px" },
-                  py: { xs: 1.15, sm: 1.125 },
-                  px: { xs: 1.35, sm: 1.625 },
-                  cursor: "pointer",
-                  display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: { xs: 1, sm: 1.125 },
+                  borderRadius: "12px", py: 1.5, px: 2, cursor: "pointer",
+                  display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: 1.5,
                   transition: "all 0.25s cubic-bezier(0.4,0,0.2,1)",
                   background: isDragging ? `${ACCENT}0C` : cvFile ? `${ACCENT}06` : "#FAFAFA",
                   transform: isDragging ? "scale(1.015)" : "scale(1)",
@@ -363,7 +350,7 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
                 }}
               >
                 <Box sx={{
-                  width: { xs: 30, sm: 31 }, height: { xs: 30, sm: 31 }, borderRadius: { xs: "8px", sm: "9px" }, flexShrink: 0,
+                  width: 34, height: 34, borderRadius: "9px", flexShrink: 0,
                   bgcolor: cvFile ? `${ACCENT}12` : isDragging ? `${ACCENT}18` : "#F0F0F0",
                   border: cvFile ? `1px solid ${ACCENT}30` : "none",
                   display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s",
@@ -374,10 +361,10 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
                   }
                 </Box>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography sx={{ fontWeight: 600, fontSize: { xs: "0.74rem", sm: "0.82rem" }, color: cvFile ? "#0F172A" : isDragging ? ACCENT : "#374151", fontFamily: "Poppins", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  <Typography sx={{ fontWeight: 600, fontSize: "0.82rem", color: cvFile ? "#0F172A" : isDragging ? ACCENT : "#374151", fontFamily: "Poppins", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                     {cvFile ? cvFile.name : isDragging ? t("candidate_form.cv_drop") : t("candidate_form.cv_browse")}
                   </Typography>
-                  <Typography sx={{ fontSize: { xs: "0.66rem", sm: "0.72rem" }, color: "#9CA3AF", fontFamily: "Poppins" }}>
+                  <Typography sx={{ fontSize: "0.72rem", color: "#9CA3AF", fontFamily: "Poppins" }}>
                     {cvFile
                       ? <>{(cvFile.size / 1024).toFixed(0)} KB · <Box component="span" sx={{ color: ACCENT, fontWeight: 600 }}>{t("candidate_form.cv_replace")}</Box></>
                       : cvError ? <Box component="span" sx={{ color: "#EF4444" }}>{t("candidate_form.cv_required")}</Box>
@@ -468,35 +455,24 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
 
       {/* STEP 2 – OTP */}
       {step === 2 && (
-        <Box sx={{ mb: { xs: 0.5, sm: 1.625 } }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, sm: 1.125 }, bgcolor: `${ACCENT}0A`, border: `1px solid ${ACCENT}22`, borderRadius: { xs: "10px", sm: "12px" }, px: { xs: 1.25, sm: 1.625 }, py: { xs: 1, sm: 1.125 }, mb: { xs: 1.25, sm: 2.625 } }}>
-            <EmailIcon sx={{ fontSize: { xs: 16, sm: 18 }, color: ACCENT, flexShrink: 0 }} />
+        <Box sx={{ mb: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, bgcolor: `${ACCENT}0A`, border: `1px solid ${ACCENT}22`, borderRadius: "12px", px: 2, py: 1.5, mb: 3 }}>
+            <EmailIcon sx={{ fontSize: 18, color: ACCENT, flexShrink: 0 }} />
             <Box>
-              <Typography sx={{ fontSize: { xs: "0.7rem", sm: "0.78rem" }, color: "#6B7280", fontFamily: "Poppins" }}>
+              <Typography sx={{ fontSize: "0.78rem", color: "#6B7280", fontFamily: "Poppins" }}>
                 {t("candidate_form.code_sent_to")}
               </Typography>
-              <Typography sx={{ fontSize: { xs: "0.78rem", sm: "0.88rem" }, color: "#0F172A", fontFamily: "Poppins", fontWeight: 700 }}>
+              <Typography sx={{ fontSize: "0.88rem", color: "#0F172A", fontFamily: "Poppins", fontWeight: 700 }}>
                 {savedEmail}
               </Typography>
             </Box>
           </Box>
 
-          <Stack direction="row" spacing={{ xs: 1, sm: 1.125 }} justifyContent="center">
+          <Stack direction="row" spacing={1.5} justifyContent="center">
             {otpCode.map((digit, index) => (
               <Box
                 key={index}
-                sx={{
-                  width: { xs: 38, sm: 55 },
-                  height: { xs: 46, sm: 65 },
-                  borderRadius: { xs: "11px", sm: "13px" },
-                  border: `1.5px solid ${digit ? ACCENT : "#D1FAF5"}`,
-                  bgcolor: digit ? `${ACCENT}0C` : "#F8FFFE",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  transition: "all 0.15s",
-                  "&:focus-within": { borderColor: ACCENT, bgcolor: "#fff", boxShadow: `0 0 0 3px ${ACCENT}18` },
-                }}
+                sx={{ width: 58, height: 68, borderRadius: "14px", border: `1.5px solid ${digit ? ACCENT : "#D1FAF5"}`, bgcolor: digit ? `${ACCENT}0C` : "#F8FFFE", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s", "&:focus-within": { borderColor: ACCENT, bgcolor: "#fff", boxShadow: `0 0 0 4px ${ACCENT}18` } }}
               >
                 <Box
                   component="input"
@@ -506,14 +482,14 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleOtpChange(index, e.target.value)}
                   onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => handleOtpKeyDown(index, e)}
                   onPaste={index === 0 ? (handleOtpPaste as any) : undefined}
-                  sx={{ width: "100%", height: "100%", border: "none", outline: "none", background: "transparent", textAlign: "center", fontSize: { xs: "1.2rem", sm: "calc(1.6rem - 2px)" }, fontWeight: 700, color: "#0F172A", fontFamily: "Poppins", cursor: "text" }}
+                  sx={{ width: "100%", height: "100%", border: "none", outline: "none", background: "transparent", textAlign: "center", fontSize: "1.6rem", fontWeight: 700, color: "#0F172A", fontFamily: "Poppins", cursor: "text" }}
                 />
               </Box>
             ))}
           </Stack>
 
           {(isExpired || isRunning) && (
-            <Box sx={{ textAlign: "center", mt: { xs: 1, sm: 1.125 } }}>
+            <Box sx={{ textAlign: "center", mt: 1.5 }}>
               <Typography sx={{ fontSize: "0.8rem", fontFamily: "Poppins", fontWeight: 500, color: secondsLeft > 60 ? "#9CA3AF" : secondsLeft > 0 ? "#F59E0B" : "#EF4444", transition: "color 0.3s" }}>
                 {secondsLeft > 0
                   ? t("candidate_form.code_expires", { time: formatTimeLeft(secondsLeft) })
@@ -528,7 +504,7 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
             disabled={loading || isExpired || otpCode.join("").length < CODE_LENGTH}
             endIcon={!loading && <ArrowForwardIcon sx={{ fontSize: 18 }} />}
             startIcon={loading ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : undefined}
-            sx={{ ...submitBtnSx, mt: { xs: 1.75, sm: 2.625 } }}
+            sx={{ ...submitBtnSx, mt: 3 }}
           >
             {loading ? t("candidate_form.btn_creating") : t("candidate_form.btn_verify")}
           </Button>
@@ -538,7 +514,7 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
             onClick={handleResendCode}
             disabled={resendLoading || (!isExpired && isRunning)}
             startIcon={resendLoading ? <CircularProgress size={14} sx={{ color: ACCENT }} /> : undefined}
-            sx={{ mt: { xs: 1, sm: 1.125 }, textTransform: "none", fontWeight: 500, fontSize: { xs: "0.78rem", sm: "0.85rem" }, fontFamily: "Poppins", borderRadius: "10px", height: { xs: 38, sm: 39 }, border: "1px solid #E5E7EB", color: isExpired ? ACCENT : "#9CA3AF", "&:hover": { bgcolor: `${ACCENT}08`, color: ACCENT, borderColor: `${ACCENT}44` }, "&.Mui-disabled": { color: "#C4C4C4", borderColor: "#E5E7EB" } }}
+            sx={{ mt: 1.5, textTransform: "none", fontWeight: 500, fontSize: "0.85rem", fontFamily: "Poppins", borderRadius: "10px", height: 42, border: "1px solid #E5E7EB", color: isExpired ? ACCENT : "#9CA3AF", "&:hover": { bgcolor: `${ACCENT}08`, color: ACCENT, borderColor: `${ACCENT}44` }, "&.Mui-disabled": { color: "#C4C4C4", borderColor: "#E5E7EB" } }}
           >
             {resendLoading
               ? t("candidate_form.btn_resending")
