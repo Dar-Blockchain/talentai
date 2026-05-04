@@ -13,14 +13,15 @@ import SwapHorizOutlined from "@mui/icons-material/SwapHorizOutlined";
 import LogoutOutlined    from "@mui/icons-material/LogoutOutlined";
 
 interface UserDropdownMenuProps extends Omit<MenuProps, "children"> {
-  onLogout?:    () => void;
-  displayName?: string;
-  email?:       string;
-  avatarUrl?:   string | null;
-  initials?:    string;
-  isCompany?:   boolean;
-  isEmployee?:  boolean;
-  onDashboard?: () => void;
+  onLogout?:     () => void;
+  displayName?:  string;
+  email?:        string;
+  avatarUrl?:    string | null;
+  initials?:     string;
+  isCompany?:    boolean;
+  isEmployee?:   boolean;
+  isCandidate?:  boolean;
+  onDashboard?:  () => void;
 }
 
 const Item: React.FC<{
@@ -85,8 +86,9 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
   email,
   avatarUrl,
   initials = "U",
-  isCompany  = false,
-  isEmployee = false,
+  isCompany   = false,
+  isEmployee  = false,
+  isCandidate = false,
   onDashboard,
   ...menuProps
 }) => {
@@ -185,7 +187,7 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
           sub={t("header.go_to_workspace")}
           onClick={() => { onDashboard?.(); close(); }}
         />
-        {!isCompany && !isEmployee && (
+        {!isCompany && !isEmployee && !isCandidate && (
           <Item
             icon={<PersonOutlined />}
             label={t("header.view_profile")}
