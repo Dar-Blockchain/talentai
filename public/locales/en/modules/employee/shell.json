@@ -1,0 +1,51 @@
+{
+  "employee": {
+    "my_campaigns": "My Campaigns",
+    "my_campaigns_subtitle": "Track your assigned campaigns, assessments, and learning paths.",
+    "pending": "Pending",
+    "completed": "Completed",
+    "in_progress": "In Progress",
+    "not_started": "Not Started",
+    "campaign_card": {
+      "paused": "Campaign paused",
+      "closed": "Campaign closed",
+      "deadline_passed": "Deadline passed",
+      "start": "Start Campaign",
+      "continue": "Continue",
+      "view_results": "View Results",
+      "details_tooltip": "Campaign details"
+    },
+    "my_campaigns_empty": {
+      "title": "No campaigns here",
+      "hint_invited": "You have been invited to join campaigns.",
+      "hint_in_progress": "No campaigns in progress right now.",
+      "hint_completed": "You haven't completed any campaigns yet.",
+      "hint_default": "Try adjusting your search or filters."
+    },
+    "settings": {
+      "page_title": "Settings",
+      "page_subtitle": "Manage your account and preferences",
+      "section_avatar_title": "Profile Picture",
+      "section_avatar_subtitle": "Update your display photo",
+      "section_display_name_title": "Display Name",
+      "section_display_name_subtitle": "This is how your name appears across the platform",
+      "section_account_title": "Account Information",
+      "section_account_subtitle": "Read-only information about your account",
+      "fallback_name": "Employee",
+      "avatar_formats": "JPG, PNG or GIF · Max 5 MB",
+      "avatar_uploading": "Uploading…",
+      "avatar_change_photo": "Change photo",
+      "username_label": "Username",
+      "btn_saving": "Saving…",
+      "btn_saved": "Saved",
+      "btn_save": "Save",
+      "email_label": "Email address",
+      "organization_label": "Organization",
+      "organization_fallback": "Company",
+      "role_label": "Role",
+      "department_label": "Department",
+      "error_name_required": "Name cannot be empty",
+      "error_save_failed": "Failed to save. Please try again."
+    }
+  }
+}

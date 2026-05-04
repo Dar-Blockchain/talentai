@@ -1,0 +1,121 @@
+{
+  "title": "Paramètres",
+  "subtitle": "Gérez votre profil d'entreprise et vos clés API",
+  "view_plans": "Voir les plans",
+  "employees_suffix": "employés",
+  "tabs": {
+    "company_info": "Infos entreprise",
+    "contact": "Contact & Présence",
+    "api_keys": "Clés API",
+    "language": "Langue"
+  },
+  "banner": {
+    "edit_profile": "Modifier le profil",
+    "cancel": "Annuler",
+    "save": "Enregistrer"
+  },
+  "company_info": {
+    "title": "Informations entreprise",
+    "subtitle": "Les informations de base de votre entreprise",
+    "name_label": "Nom de l'entreprise",
+    "name_placeholder": "Nom de votre entreprise",
+    "email_label": "Email de l'entreprise",
+    "email_helper": "L'email ne peut pas être modifié",
+    "industry_label": "Secteur d'activité",
+    "industry_placeholder": "ex. Technologie, Finance...",
+    "size_label": "Taille de l'entreprise",
+    "experience_label": "Niveau d'expérience requis",
+    "language_label": "Langue de l'interface"
+  },
+  "contact": {
+    "title": "Contact & Présence",
+    "subtitle": "Localisation, liens sociaux et préférences de travail",
+    "country_label": "Pays / Localisation",
+    "country_placeholder": "Sélectionner un pays",
+    "employment_label": "Type d'emploi",
+    "size_label": "Taille de l'entreprise",
+    "linkedin_label": "URL LinkedIn",
+    "website_label": "Site web de l'entreprise"
+  },
+  "experience_levels": {
+    "entry": "Débutant",
+    "mid": "Intermédiaire",
+    "senior": "Senior",
+    "lead": "Lead",
+    "executive": "Cadre dirigeant"
+  },
+  "employment_types": {
+    "remote": "Télétravail",
+    "onsite": "Présentiel",
+    "hybrid": "Hybride"
+  },
+  "api_keys": {
+    "title": "Clés API",
+    "subtitle": "Gérez les clés API pour les intégrations externes",
+    "new_key": "Nouvelle clé API",
+    "copy": "Copier",
+    "copied": "Copié !",
+    "banner_title": "Clé API créée — copiez-la maintenant, elle ne sera plus affichée",
+    "no_keys": "Aucune clé API",
+    "active": "Active",
+    "disabled_label": "Désactivée",
+    "key_preview": "Clé : {{preview}}",
+    "rate_limit_label": "Limite : {{count}} req/s",
+    "expires_label": "Expire : {{date}}",
+    "last_used_label": "Dernière util. : {{date}}",
+    "ips_all": "Toutes",
+    "ips_label": "IPs : {{ips}}",
+    "toggle_disable": "Désactiver",
+    "toggle_enable": "Activer",
+    "regenerate_tooltip": "Régénérer la clé",
+    "edit_tooltip": "Modifier",
+    "delete_tooltip": "Supprimer",
+    "create_title": "Créer une clé API",
+    "edit_title": "Modifier la clé API",
+    "delete_title": "Supprimer la clé API",
+    "delete_confirm": "Êtes-vous sûr de vouloir supprimer {{name}} ?",
+    "delete_warning": "Cette action est irréversible. Toute intégration utilisant cette clé cessera de fonctionner immédiatement.",
+    "fields": {
+      "key_name": "Nom de la clé",
+      "key_name_placeholder": "ex. Mon application mobile",
+      "service_name": "Nom du service",
+      "service_placeholder": "ex. mobile-app",
+      "scopes": "Portées",
+      "rate_limit": "Limite de débit (req/s)",
+      "expires_at": "Date d'expiration",
+      "ip_whitelist": "Liste blanche IP",
+      "ip_all": "Toutes les IPs",
+      "ip_custom": "Personnalisé",
+      "ip_placeholder": "192.168.1.1, 10.0.0.0/24",
+      "ip_helper": "IPs ou plages CIDR séparées par des virgules"
+    },
+    "actions": {
+      "cancel": "Annuler",
+      "create": "Créer la clé",
+      "save": "Enregistrer",
+      "delete": "Supprimer"
+    },
+    "toast": {
+      "load_error": "Échec du chargement des clés API",
+      "created": "Clé API créée — copiez-la maintenant !",
+      "create_error": "Échec de la création de la clé API",
+      "updated": "Clé API mise à jour",
+      "update_error": "Échec de la mise à jour de la clé API",
+      "deleted": "Clé API supprimée",
+      "delete_error": "Échec de la suppression de la clé API",
+      "toggle_error": "Échec de la modification de la clé API",
+      "key_disabled": "Clé API désactivée",
+      "key_enabled": "Clé API activée",
+      "regenerated": "Clé API régénérée — copiez la nouvelle clé !",
+      "regenerate_error": "Échec de la régénération de la clé API",
+      "copied": "Clé copiée dans le presse-papier"
+    }
+  },
+  "language": {
+    "title": "Langue de l'interface",
+    "subtitle": "Choisissez la langue utilisée dans votre tableau de bord",
+    "desc_en": "Utiliser TalentAI en anglais",
+    "desc_fr": "Utiliser TalentAI en français",
+    "save_hint": "Les changements s'appliquent immédiatement et sont sauvegardés automatiquement."
+  }
+}

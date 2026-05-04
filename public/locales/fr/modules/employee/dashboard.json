@@ -1,0 +1,33 @@
+{
+  "greeting": {
+    "morning": "Bonjour",
+    "afternoon": "Bon après-midi",
+    "evening": "Bonsoir"
+  },
+  "fallback_name": "à vous",
+  "banner": {
+    "progress_subtitle": "Voici l’avancement de vos campagnes pour aujourd’hui.",
+    "member_of": "Membre de",
+    "avg_score": "Score moy.",
+    "across_assessments_one": "Sur {{count}} évaluation",
+    "across_assessments_other": "Sur {{count}} évaluations"
+  },
+  "sections": {
+    "active_title": "Campagnes actives",
+    "active_subtitle": "{{count}} à terminer",
+    "completed_title": "Campagnes terminées",
+    "completed_subtitle": "{{count}} au total",
+    "empty_active": "Aucune campagne active pour le moment",
+    "empty_completed": "Aucune campagne terminée pour le moment"
+  },
+  "score_breakdown": {
+    "title": "Répartition des scores",
+    "subtitle_one": "Basé sur {{count}} évaluation notée",
+    "subtitle_other": "Basé sur {{count}} évaluations notées",
+    "avg_suffix": "{{score}} moy.",
+    "bucket_excellent": "Excellent (≥80)",
+    "bucket_good": "Bon (60–79)",
+    "bucket_below": "Moins de 60",
+    "recent_scores": "Scores récents"
+  }
+}

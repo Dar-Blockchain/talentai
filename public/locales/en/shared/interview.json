@@ -1,0 +1,84 @@
+{
+  "gdpr": {
+    "title": "Before we begin",
+    "message": "This interview will be recorded and analysed by AI. Your responses will be used solely to evaluate your candidacy for this assessment.",
+    "accept": "I agree, start interview",
+    "decline": "Decline"
+  },
+  "start": {
+    "title": "Ready to begin?",
+    "description": "This is a live AI interview. Speak your answers clearly and at a natural pace.",
+    "module": {
+      "AI_INTERVIEW": "AI Interview",
+      "SKILL_TEST": "Skill Assessment"
+    },
+    "tips": {
+      "title": "Tips for a great interview",
+      "quiet": "Find a quiet, well-lit space",
+      "camera": "Enable your camera",
+      "mic": "Use headphones if possible",
+      "natural": "Speak naturally — pauses are fine"
+    },
+    "btn_start": "Start Interview",
+    "connecting": "Connecting…"
+  },
+  "active": {
+    "listening": "Listening…",
+    "thinking": "Processing your answer…",
+    "waiting": "Waiting for your answer…",
+    "reading_time": "Reading time: {{seconds}}s",
+    "time_remaining": "{{time}} remaining",
+    "question_number": "Question {{current}}",
+    "coverage": "Completion"
+  },
+  "end": {
+    "btn_end": "End Interview",
+    "confirm_title": "End Interview?",
+    "confirm_message": "This assessment can only be taken once. Are you sure you want to end it now?",
+    "confirm_yes": "Yes, end interview",
+    "confirm_cancel": "Continue interview"
+  },
+  "ended": {
+    "title": "Interview Complete",
+    "subtitle": "Thank you for completing this assessment.",
+    "saving": "Saving your results…",
+    "redirect": "You'll be redirected automatically once they're ready.",
+    "btn_view_results": "View Results"
+  },
+  "scores": {
+    "overall": "Overall Score",
+    "communication": "Communication",
+    "confidence": "Confidence",
+    "clarity": "Clarity",
+    "engagement": "Engagement"
+  },
+  "coverage": {
+    "title": "Interview completion",
+    "areas": {
+      "experience": "Experience",
+      "competencies": "Competencies",
+      "motivation": "Motivation",
+      "situational": "Situational",
+      "fundamentals": "Fundamentals",
+      "practical_usage": "Practical Usage",
+      "advanced_topics": "Advanced Topics",
+      "best_practices": "Best Practices"
+    }
+  },
+  "connection": {
+    "connecting": "Connecting to interview system…",
+    "reconnecting": "Disconnected — attempting to reconnect…",
+    "error": "Connection error — please refresh"
+  },
+  "errors": {
+    "connection": "Connection lost. Please refresh the page.",
+    "microphone": "Could not access your microphone. Please check browser permissions.",
+    "camera": "Could not access your camera.",
+    "session_expired": "Your session has expired. Please rejoin via the campaign link.",
+    "start_failed": "Failed to start assessment. Please try again."
+  },
+  "transcript": {
+    "ai_label": "AI",
+    "you_label": "You"
+  }
+}
