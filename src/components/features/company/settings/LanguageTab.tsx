@@ -64,7 +64,7 @@ const LanguageTab: React.FC<Props> = ({ onInputChange, onSaveLanguage }) => {
                   : active && <CheckCircleOutlined sx={{ fontSize: 18, color: TEAL }} />
                 }
               </Box>
-              <Typography sx={{ fontSize: "2rem", lineHeight: 1 }}>{lang.flag}</Typography>
+              <img src={`https://flagcdn.com/w80/${lang.flag}.png`} srcSet={`https://flagcdn.com/w160/${lang.flag}.png 2x`} width={48} height={32} alt={lang.label} style={{ borderRadius: 4, display: 'block' }} />
               <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", color: active ? TEAL : "#111827" }}>
                 {lang.label}
               </Typography>

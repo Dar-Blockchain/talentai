@@ -50,7 +50,7 @@ const LanguageSwitcher: React.FC<Props> = ({ variant = 'full', size = 'small' })
           '&:hover': { bgcolor: '#F9FAFB', borderColor: '#D1D5DB' },
         }}
       >
-        <Box component="span" sx={{ mr: 0.5 }}>{current.flag}</Box>
+        <img src={`https://flagcdn.com/w40/${current.flag}.png`} srcSet={`https://flagcdn.com/w80/${current.flag}.png 2x`} width={20} height={14} alt={current.label} style={{ borderRadius: 2, display: 'block', marginRight: 4 }} />
         {variant === 'full' && (
           <Typography component="span" sx={{ fontSize: 'inherit', fontWeight: 'inherit' }}>
             {current.label}
@@ -94,7 +94,7 @@ const LanguageSwitcher: React.FC<Props> = ({ variant = 'full', size = 'small' })
               '&:hover': { bgcolor: lang.code === currentLang ? '#EDE9FE' : '#F9FAFB' },
             }}
           >
-            <Box component="span" sx={{ fontSize: 18, lineHeight: 1 }}>{lang.flag}</Box>
+            <img src={`https://flagcdn.com/w40/${lang.flag}.png`} srcSet={`https://flagcdn.com/w80/${lang.flag}.png 2x`} width={24} height={16} alt={lang.label} style={{ borderRadius: 2, display: 'block', flexShrink: 0 }} />
             <Typography sx={{ flex: 1, fontSize: 13, fontWeight: lang.code === currentLang ? 600 : 400, color: '#111827' }}>
               {lang.label}
             </Typography>
