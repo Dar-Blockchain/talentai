@@ -14,16 +14,18 @@ import { useRouter } from "next/router";
 import AssignmentOutlined from "@mui/icons-material/AssignmentOutlined";
 import PsychologyOutlined from "@mui/icons-material/PsychologyOutlined";
 import SchoolOutlined from "@mui/icons-material/SchoolOutlined";
-import WorkOutlineOutlined from "@mui/icons-material/WorkOutlineOutlined";
 import TrendingUpOutlined from "@mui/icons-material/TrendingUpOutlined";
 import EmojiEventsOutlined from "@mui/icons-material/EmojiEventsOutlined";
 import QuizOutlined from "@mui/icons-material/QuizOutlined";
-import OpenInNewOutlined from "@mui/icons-material/OpenInNew";
 import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
 import RadioButtonUncheckedOutlined from "@mui/icons-material/RadioButtonUncheckedOutlined";
-import { DashboardOutlined } from "@mui/icons-material";
 import ExpandMoreOutlined from "@mui/icons-material/ExpandMoreOutlined";
-import ExpandLessOutlined from "@mui/icons-material/ExpandLessOutlined";
+import ChevronLeftOutlined from "@mui/icons-material/ChevronLeftOutlined";
+import RecordVoiceOverOutlined from "@mui/icons-material/RecordVoiceOverOutlined";
+import CodeOutlined from "@mui/icons-material/CodeOutlined";
+import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
+import LockOutlined from "@mui/icons-material/LockOutlined";
+import { DashboardOutlined } from "@mui/icons-material";
 
 const T    = "#0D9488";
 const TL   = "#14B8A6";
@@ -31,20 +33,82 @@ const TBG  = "#F0FDFA";
 const TBRD = "#99F6E4";
 const NAVY = "#0D1B2A";
 
-const QuickNavItem: React.FC<{
-  icon: React.ElementType; label: string; href: string; color: string; bg: string; border: string;
-}> = ({ icon: Icon, label, href, color, bg, border }) => {
-  const router = useRouter();
-  const isActive = router.pathname === href || router.pathname.startsWith(href + "/");
-  return (
-    <Box onClick={() => router.push(href)} sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 1.5, py: 1.1, borderRadius: "10px", cursor: "pointer", border: `1px solid ${isActive ? border : "#E5E7EB"}`, bgcolor: isActive ? bg : "#FAFAFA", transition: "all 0.18s ease", "&:hover": { borderColor: border, bgcolor: bg } }}>
-      <Box sx={{ width: 30, height: 30, borderRadius: "8px", bgcolor: isActive ? bg : "#fff", border: `1px solid ${isActive ? border : "#E5E7EB"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        <Icon sx={{ fontSize: 15, color: isActive ? color : "#6B7280" }} />
+type ActiveView = "applications" | "skills" | "interviews" | "technical" | "soft" | "dashboard" | null;
+
+// ── Collapsed section row (click to expand) ─────────────────
+const CollapsedRow: React.FC<{
+  icon: React.ReactNode;
+  iconBg: string; iconBorder: string;
+  title: string; subtitle: string;
+  color: string;
+  onExpand: () => void;
+}> = ({ icon, iconBg, iconBorder, title, subtitle, color, onExpand }) => (
+  <Box
+    onClick={onExpand}
+    sx={{
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      bgcolor: "#fff", borderRadius: "14px", border: "1px solid #E5E7EB",
+      px: 2.5, py: 1.5, cursor: "pointer", boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+      transition: "all 0.18s",
+      "&:hover": { borderColor: color, boxShadow: `0 2px 12px ${color}18`, bgcolor: "#FAFAFA" },
+    }}
+  >
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+      <Box sx={{ width: 32, height: 32, borderRadius: "9px", bgcolor: iconBg, border: `1px solid ${iconBorder}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        {icon}
       </Box>
-      <Typography sx={{ fontSize: "0.82rem", fontWeight: isActive ? 700 : 500, color: isActive ? color : "#374151" }}>{label}</Typography>
+      <Box>
+        <Typography sx={{ fontSize: "0.88rem", fontWeight: 700, color: NAVY, lineHeight: 1.2 }}>{title}</Typography>
+        <Typography sx={{ fontSize: "0.66rem", color: "#9CA3AF" }}>{subtitle}</Typography>
+      </Box>
     </Box>
-  );
-};
+    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, px: 1.25, py: 0.5, borderRadius: "8px", bgcolor: `${color}10`, border: `1px solid ${color}30` }}>
+      <Typography sx={{ fontSize: "0.72rem", fontWeight: 700, color }}>View All</Typography>
+      <ExpandMoreOutlined sx={{ fontSize: 14, color }} />
+    </Box>
+  </Box>
+);
+
+// ── Slim "← Hide" bar above expanded sections ───────────────
+const HideBar: React.FC<{ onHide: () => void }> = ({ onHide }) => (
+  <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+    <Button
+      size="small"
+      startIcon={<ChevronLeftOutlined sx={{ fontSize: "14px !important" }} />}
+      onClick={onHide}
+      sx={{
+        textTransform: "none", fontWeight: 700, fontSize: "0.72rem",
+        color: "#6B7280", bgcolor: "#F9FAFB", border: "1px solid #E5E7EB",
+        borderRadius: "10px", px: 1.5, py: 0.5,
+        "&:hover": { bgcolor: "#F3F4F6" },
+      }}
+    >
+      Hide
+    </Button>
+  </Box>
+);
+
+const QuickNavItem: React.FC<{
+  icon: React.ElementType; label: string; color: string; bg: string; border: string;
+  active: boolean; onExpand: () => void;
+}> = ({ icon: Icon, label, color, bg, border, active, onExpand }) => (
+  <Box
+    onClick={onExpand}
+    sx={{
+      display: "flex", alignItems: "center", gap: 1.5, px: 1.5, py: 1.1,
+      borderRadius: "10px", cursor: "pointer",
+      border: `1px solid ${active ? border : "#E5E7EB"}`,
+      bgcolor: active ? bg : "#FAFAFA",
+      transition: "all 0.18s ease",
+      "&:hover": { borderColor: border, bgcolor: bg },
+    }}
+  >
+    <Box sx={{ width: 30, height: 30, borderRadius: "8px", bgcolor: active ? bg : "#fff", border: `1px solid ${active ? border : "#E5E7EB"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+      <Icon sx={{ fontSize: 15, color: active ? color : "#6B7280" }} />
+    </Box>
+    <Typography sx={{ fontSize: "0.82rem", fontWeight: active ? 700 : 500, color: active ? color : "#374151" }}>{label}</Typography>
+  </Box>
+);
 
 const StatPill: React.FC<{ label: string; value: number | string; color: string; bg: string; border: string }> = ({ label, value, color, bg, border }) => (
   <Box sx={{ flex: 1, px: 1.5, py: 1.25, borderRadius: "10px", bgcolor: bg, border: `1px solid ${border}`, textAlign: "center" }}>
@@ -52,8 +116,6 @@ const StatPill: React.FC<{ label: string; value: number | string; color: string;
     <Typography sx={{ fontSize: "0.65rem", color: "#6B7280", fontWeight: 500, mt: 0.25 }}>{label}</Typography>
   </Box>
 );
-
-type Section = "applications" | "skills" | "interviews" | "technical" | "soft" | null;
 
 const DashboardCandidate: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -63,10 +125,7 @@ const DashboardCandidate: React.FC = () => {
   const stats    = useSelector(selectCandidateStats);
   const quota    = profile?.quota ?? 0;
 
-  const [expandedSection, setExpandedSection] = useState<Section>(null);
-
-  const toggleSection = (section: Section) =>
-    setExpandedSection(prev => (prev === section ? null : section));
+  const [activeView, setActiveView] = useState<ActiveView>(null);
 
   useEffect(() => { dispatch(fetchCandidateStats()); }, [dispatch]);
 
@@ -97,12 +156,17 @@ const DashboardCandidate: React.FC = () => {
     { label: "Submit an application",      done: totalApplications > 0                       },
   ];
 
-  const QUICK_LINKS = [
-    { icon: DashboardOutlined,  label: "Dashboard",    href: "/dashboard/candidate",              color: T,         bg: TBG,       border: TBRD      },
-    { icon: AssignmentOutlined, label: "Applications", href: "/dashboard/candidate/applications", color: "#7C3AED", bg: "#F5F3FF", border: "#DDD6FE" },
-    { icon: PsychologyOutlined, label: "Skills",       href: "/dashboard/candidate/skills",       color: "#2563EB", bg: "#EFF6FF", border: "#BFDBFE" },
-    { icon: SchoolOutlined,     label: "Interviews",   href: "/dashboard/candidate/interviews",   color: "#D97706", bg: "#FFFBEB", border: "#FDE68A" },
+  const QUICK_LINKS: { icon: React.ElementType; label: string; view: ActiveView; color: string; bg: string; border: string }[] = [
+    { icon: DashboardOutlined,  label: "Dashboard",             view: null,           color: T,         bg: TBG,       border: TBRD      },
+    { icon: AssignmentOutlined, label: "Applications",          view: "applications", color: "#7C3AED", bg: "#F5F3FF", border: "#DDD6FE" },
+    { icon: PsychologyOutlined, label: "Skills",                view: "skills",       color: "#2563EB", bg: "#EFF6FF", border: "#BFDBFE" },
+    { icon: SchoolOutlined,     label: "Job Interviews",        view: "interviews",   color: "#D97706", bg: "#FFFBEB", border: "#FDE68A" },
+    { icon: CodeOutlined,       label: "Technical Assessments", view: "technical",    color: "#2563EB", bg: "#EFF6FF", border: "#BFDBFE" },
+    { icon: PeopleOutlined,     label: "Soft Assessments",      view: "soft",         color: "#D97706", bg: "#FFFBEB", border: "#FDE68A" },
   ];
+
+  const expand = (view: ActiveView) => setActiveView(view);
+  const hide   = () => setActiveView(null);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", bgcolor: "rgb(249 250 251)" }}>
@@ -201,60 +265,164 @@ const DashboardCandidate: React.FC = () => {
               </Box>
             </Box>
 
-            {/* ══ CENTER — Applications, Skills, Interviews ══ */}
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            {/* ══ CENTER ══ */}
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
 
-              {/* Applications — has its own internal card header */}
-              <Box>
-                <CandidateApplications />
-              </Box>
+              {/* ── Quick Actions: always visible ── */}
+              <Box sx={{ bgcolor: "#fff", borderRadius: "14px", border: "1px solid #E5E7EB", px: 2, py: 1.5, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+                  <Typography sx={{ fontSize: "0.65rem", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", mb: 1.25 }}>
+                    Quick Actions
+                  </Typography>
+                  <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr 1fr" }, gap: 1.25 }}>
 
-              {/* Skills — has its own internal cards per section */}
-              <Box>
-                <CandidateSkills />
-              </Box>
+                    {/* Skill Interview */}
+                    <Box
+                      onClick={() => quota >= 5 ? null : router.push("/interview/hr")}
+                      sx={{
+                        display: "flex", alignItems: "center", gap: 1.25,
+                        borderRadius: "10px", border: `1px solid ${quota >= 5 ? "#E5E7EB" : "#BFDBFE"}`,
+                        bgcolor: quota >= 5 ? "#F9FAFB" : "#EFF6FF",
+                        px: 1.5, py: 1, cursor: quota >= 5 ? "not-allowed" : "pointer",
+                        opacity: quota >= 5 ? 0.55 : 1, transition: "all 0.15s",
+                        "&:hover": quota >= 5 ? {} : { borderColor: "#2563EB", bgcolor: "#DBEAFE", transform: "translateY(-1px)" },
+                      }}
+                    >
+                      <Box sx={{ width: 28, height: 28, borderRadius: "8px", bgcolor: quota >= 5 ? "#F3F4F6" : "#DBEAFE", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <CodeOutlined sx={{ fontSize: 15, color: quota >= 5 ? "#9CA3AF" : "#2563EB" }} />
+                      </Box>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography sx={{ fontWeight: 700, fontSize: "0.78rem", color: quota >= 5 ? "#9CA3AF" : "#1E40AF", lineHeight: 1.2 }}>Skill Interview</Typography>
+                        <Typography sx={{ fontSize: "0.62rem", color: quota >= 5 ? "#9CA3AF" : "#3B82F6" }}>{quota >= 5 ? "Limit reached" : "Start →"}</Typography>
+                      </Box>
+                      {quota >= 5 && <LockOutlined sx={{ fontSize: 13, color: "#9CA3AF", flexShrink: 0 }} />}
+                    </Box>
 
-              {/* Post Interviews */}
-              <Box sx={{ bgcolor: "#fff", borderRadius: "18px", border: "1px solid #E5E7EB", p: { xs: 2, sm: 3 }, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, mb: 2.5 }}>
-                  <Box sx={{ width: 34, height: 34, borderRadius: "10px", bgcolor: "#F0FDFA", border: "1px solid #99F6E4", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <SchoolOutlined sx={{ fontSize: 18, color: T }} />
-                  </Box>
-                  <Box>
-                    <Typography sx={{ fontSize: "1rem", fontWeight: 800, color: NAVY, lineHeight: 1.2 }}>Job Interviews</Typography>
-                    <Typography sx={{ fontSize: "0.68rem", color: "#9CA3AF" }}>Your application interview progress</Typography>
+                    {/* HR Interview */}
+                    <Box
+                      onClick={() => quota >= 5 ? null : router.push("/interview/hr?type=soft")}
+                      sx={{
+                        display: "flex", alignItems: "center", gap: 1.25,
+                        borderRadius: "10px", border: `1px solid ${quota >= 5 ? "#E5E7EB" : "#FDE68A"}`,
+                        bgcolor: quota >= 5 ? "#F9FAFB" : "#FFFBEB",
+                        px: 1.5, py: 1, cursor: quota >= 5 ? "not-allowed" : "pointer",
+                        opacity: quota >= 5 ? 0.55 : 1, transition: "all 0.15s",
+                        "&:hover": quota >= 5 ? {} : { borderColor: "#D97706", bgcolor: "#FEF3C7", transform: "translateY(-1px)" },
+                      }}
+                    >
+                      <Box sx={{ width: 28, height: 28, borderRadius: "8px", bgcolor: quota >= 5 ? "#F3F4F6" : "#FEF3C7", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <RecordVoiceOverOutlined sx={{ fontSize: 15, color: quota >= 5 ? "#9CA3AF" : "#D97706" }} />
+                      </Box>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography sx={{ fontWeight: 700, fontSize: "0.78rem", color: quota >= 5 ? "#9CA3AF" : "#92400E", lineHeight: 1.2 }}>HR Interview</Typography>
+                        <Typography sx={{ fontSize: "0.62rem", color: quota >= 5 ? "#9CA3AF" : "#D97706" }}>{quota >= 5 ? "Limit reached" : "Start →"}</Typography>
+                      </Box>
+                      {quota >= 5 && <LockOutlined sx={{ fontSize: 13, color: "#9CA3AF", flexShrink: 0 }} />}
+                    </Box>
+
+                    {/* Quota */}
+                    <Box sx={{
+                      display: "flex", alignItems: "center", gap: 1.25,
+                      borderRadius: "10px", border: `1px solid ${quota >= 5 ? "#FECACA" : TBRD}`,
+                      bgcolor: quota >= 5 ? "#FEF2F2" : TBG,
+                      px: 1.5, py: 1,
+                    }}>
+                      <Box sx={{ width: 28, height: 28, borderRadius: "8px", bgcolor: quota >= 5 ? "#FEE2E2" : "#CCFBF1", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <QuizOutlined sx={{ fontSize: 15, color: quota >= 5 ? "#DC2626" : T }} />
+                      </Box>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.4 }}>
+                          <Typography sx={{ fontWeight: 700, fontSize: "0.78rem", color: quota >= 5 ? "#991B1B" : NAVY, lineHeight: 1 }}>Monthly Quota</Typography>
+                          <Typography sx={{ fontSize: "0.65rem", fontWeight: 700, color: quota >= 5 ? "#DC2626" : T }}>{quota}/5</Typography>
+                        </Box>
+                        <Box sx={{ display: "flex", gap: 0.4 }}>
+                          {[1,2,3,4,5].map(n => (
+                            <Box key={n} sx={{ flex: 1, height: 4, borderRadius: "99px", bgcolor: n <= quota ? (quota >= 5 ? "#DC2626" : T) : "#E5E7EB" }} />
+                          ))}
+                        </Box>
+                      </Box>
+                    </Box>
+
                   </Box>
                 </Box>
-                <PostInterviews showViewAll={false} />
-              </Box>
 
-              {/* Technical Skill Assessments */}
-              <Box sx={{ bgcolor: "#fff", borderRadius: "18px", border: "1px solid #E5E7EB", p: { xs: 2, sm: 3 }, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, mb: 2.5 }}>
-                  <Box sx={{ width: 34, height: 34, borderRadius: "10px", bgcolor: "#EFF6FF", border: "1px solid #BFDBFE", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <PsychologyOutlined sx={{ fontSize: 18, color: "#2563EB" }} />
-                  </Box>
-                  <Box>
-                    <Typography sx={{ fontSize: "1rem", fontWeight: 800, color: NAVY, lineHeight: 1.2 }}>Technical Assessments</Typography>
-                    <Typography sx={{ fontSize: "0.68rem", color: "#9CA3AF" }}>Your skill assessment results</Typography>
-                  </Box>
+              {/* ── Applications ── */}
+              {activeView === "applications" && (
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  <HideBar onHide={hide} />
+                  <CandidateApplications />
                 </Box>
-                <SkillInterviews skillType="technical" hideStats />
-              </Box>
+              )}
+              {activeView === null && (
+                <CandidateApplications previewCount={2} onViewAll={() => expand("applications")} />
+              )}
 
-              {/* Soft Skill Assessments */}
-              <Box sx={{ bgcolor: "#fff", borderRadius: "18px", border: "1px solid #E5E7EB", p: { xs: 2, sm: 3 }, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, mb: 2.5 }}>
-                  <Box sx={{ width: 34, height: 34, borderRadius: "10px", bgcolor: "#FFFBEB", border: "1px solid #FDE68A", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <AssignmentOutlined sx={{ fontSize: 18, color: "#D97706" }} />
-                  </Box>
-                  <Box>
-                    <Typography sx={{ fontSize: "1rem", fontWeight: 800, color: NAVY, lineHeight: 1.2 }}>Soft Skill Assessments</Typography>
-                    <Typography sx={{ fontSize: "0.68rem", color: "#9CA3AF" }}>Your soft skill assessment results</Typography>
-                  </Box>
+              {/* ── Skills ── */}
+              {activeView === null && (
+                <CollapsedRow
+                  icon={<PsychologyOutlined sx={{ fontSize: 16, color: "#2563EB" }} />}
+                  iconBg="#EFF6FF" iconBorder="#BFDBFE"
+                  title="Skills & Expertise" subtitle="Your technical and soft skills"
+                  color="#2563EB"
+                  onExpand={() => expand("skills")}
+                />
+              )}
+              {activeView === "skills" && (
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  <HideBar onHide={hide} />
+                  <CandidateSkills />
                 </Box>
-                <SkillInterviews skillType="soft" hideStats />
-              </Box>
+              )}
+
+              {/* ── Job Interviews ── */}
+              {activeView === null && (
+                <CollapsedRow
+                  icon={<SchoolOutlined sx={{ fontSize: 16, color: T }} />}
+                  iconBg={TBG} iconBorder={TBRD}
+                  title="Job Interviews" subtitle="Your application interview progress"
+                  color={T}
+                  onExpand={() => expand("interviews")}
+                />
+              )}
+              {activeView === "interviews" && (
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  <HideBar onHide={hide} />
+                  <PostInterviews />
+                </Box>
+              )}
+
+              {/* ── Technical Assessments ── */}
+              {activeView === null && (
+                <CollapsedRow
+                  icon={<PsychologyOutlined sx={{ fontSize: 16, color: "#2563EB" }} />}
+                  iconBg="#EFF6FF" iconBorder="#BFDBFE"
+                  title="Technical Assessments" subtitle="Your technical skill assessment results"
+                  color="#2563EB"
+                  onExpand={() => expand("technical")}
+                />
+              )}
+              {activeView === "technical" && (
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  <HideBar onHide={hide} />
+                  <SkillInterviews skillType="technical" />
+                </Box>
+              )}
+
+              {/* ── Soft Assessments ── */}
+              {activeView === null && (
+                <CollapsedRow
+                  icon={<AssignmentOutlined sx={{ fontSize: 16, color: "#D97706" }} />}
+                  iconBg="#FFFBEB" iconBorder="#FDE68A"
+                  title="Soft Skill Assessments" subtitle="Your soft skill assessment results"
+                  color="#D97706"
+                  onExpand={() => expand("soft")}
+                />
+              )}
+              {activeView === "soft" && (
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  <HideBar onHide={hide} />
+                  <SkillInterviews skillType="soft" />
+                </Box>
+              )}
 
             </Box>
 
@@ -264,39 +432,19 @@ const DashboardCandidate: React.FC = () => {
               <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 2, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
                 <Typography sx={{ fontWeight: 700, fontSize: "0.8rem", color: NAVY, mb: 1.5 }}>Quick Navigation</Typography>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
-                  {QUICK_LINKS.map(link => <QuickNavItem key={link.href} {...link} />)}
+                  {QUICK_LINKS.map(link => (
+                    <QuickNavItem
+                      key={link.label}
+                      icon={link.icon}
+                      label={link.label}
+                      color={link.color}
+                      bg={link.bg}
+                      border={link.border}
+                      active={activeView === link.view}
+                      onExpand={() => link.view === null ? hide() : expand(link.view)}
+                    />
+                  ))}
                 </Box>
-              </Box>
-
-              <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 2, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-                <Typography sx={{ fontWeight: 700, fontSize: "0.8rem", color: NAVY, mb: 1.5 }}>Career Actions</Typography>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  <Button fullWidth size="small" startIcon={<WorkOutlineOutlined sx={{ fontSize: 15 }} />}
-                    onClick={() => router.push("/dashboard/candidate/applications")}
-                    sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.78rem", color: "#7C3AED", bgcolor: "#F5F3FF", border: "1px solid #DDD6FE", borderRadius: "10px", py: 0.9, justifyContent: "flex-start", px: 1.5, "&:hover": { bgcolor: "#EDE9FE" } }}>
-                    View Applications
-                  </Button>
-                  <Button fullWidth size="small" startIcon={<PsychologyOutlined sx={{ fontSize: 15 }} />}
-                    onClick={() => router.push("/dashboard/candidate/skills")}
-                    sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.78rem", color: "#2563EB", bgcolor: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: "10px", py: 0.9, justifyContent: "flex-start", px: 1.5, "&:hover": { bgcolor: "#DBEAFE" } }}>
-                    Manage Skills
-                  </Button>
-                  <Button fullWidth size="small" startIcon={<SchoolOutlined sx={{ fontSize: 15 }} />}
-                    onClick={() => router.push("/dashboard/candidate/interviews")}
-                    sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.78rem", color: "#D97706", bgcolor: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: "10px", py: 0.9, justifyContent: "flex-start", px: 1.5, "&:hover": { bgcolor: "#FEF3C7" } }}>
-                    View Interviews
-                  </Button>
-                </Box>
-              </Box>
-
-              <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 2, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-                <Typography sx={{ fontWeight: 700, fontSize: "0.8rem", color: NAVY, mb: 0.5 }}>Explore Opportunities</Typography>
-                <Typography sx={{ fontSize: "0.7rem", color: "#9CA3AF", mb: 1.5 }}>Find jobs that match your profile</Typography>
-                <Button fullWidth size="small" endIcon={<OpenInNewOutlined sx={{ fontSize: 13 }} />}
-                  onClick={() => router.push("/jobs")}
-                  sx={{ textTransform: "none", fontWeight: 700, fontSize: "0.78rem", color: "#fff", bgcolor: T, borderRadius: "10px", py: 1, "&:hover": { bgcolor: TL } }}>
-                  Browse Jobs
-                </Button>
               </Box>
 
               <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 2, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>

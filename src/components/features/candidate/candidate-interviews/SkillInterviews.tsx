@@ -4,15 +4,12 @@ import dynamic from "next/dynamic";
 import { formatDistanceToNowStrict } from "date-fns";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/store/store";
-import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
-import OpenInNewOutlined from "@mui/icons-material/OpenInNew";
 import CodeOutlined from "@mui/icons-material/CodeOutlined";
 import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
+import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
+import OpenInNewOutlined from "@mui/icons-material/OpenInNew";
 import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
-import HourglassEmptyOutlined from "@mui/icons-material/HourglassEmptyOutlined";
-import AssignmentOutlined from "@mui/icons-material/AssignmentOutlined";
 import { useRouter } from "next/router";
-import StatsSummaryCard from "./StatsSummaryCard";
 import {
   fetchSkillAssessmentsByType,
   selectTechnicalAssessments,
@@ -25,21 +22,91 @@ interface SkillInterviewsProps {
   hideStats?: boolean;
 }
 
-const LEVEL = (s: number) =>
-  s >= 80 ? { label: "Expert",     color: "#059669", bg: "#ECFDF5", border: "#A7F3D0" } :
-  s >= 60 ? { label: "Senior",     color: "#2563EB", bg: "#EFF6FF", border: "#BFDBFE" } :
-  s >= 40 ? { label: "Mid Level",  color: "#D97706", bg: "#FFFBEB", border: "#FDE68A" } :
-  s >= 20 ? { label: "Junior",     color: "#EA580C", bg: "#FFF7ED", border: "#FED7AA" } :
-            { label: "Entry",      color: "#64748B", bg: "#F8FAFC", border: "#CBD5E1" };
+const getScore = (a: SkillInterviewAssessment): number =>
+  a.interviewData?.finalReport?.scores?.overall ?? a.interviewData?.finalReport?.coverage?.overall ?? 0;
 
 const getScoreColor = (s: number) =>
   s >= 80 ? "#059669" : s >= 60 ? "#0D9488" : s >= 40 ? "#D97706" : "#DC2626";
 
-const getScore = (a: SkillInterviewAssessment): number =>
-  a.interviewData?.finalReport?.scores?.overall ?? a.interviewData?.finalReport?.coverage?.overall ?? 0;
+const getLevelLabel = (s: number) =>
+  s >= 80 ? { label: "Expert", color: "#059669" } :
+  s >= 60 ? { label: "Senior", color: "#2563EB" } :
+  s >= 40 ? { label: "Mid",    color: "#D97706" } :
+  s >= 20 ? { label: "Junior", color: "#EA580C" } :
+             { label: "Entry",  color: "#64748B" };
+
+const SkillRow: React.FC<{
+  assessment: SkillInterviewAssessment;
+  last: boolean;
+  accentColor: string;
+  Icon: React.ElementType;
+}> = ({ assessment, last, accentColor, Icon }) => {
+  const router  = useRouter();
+  const score   = getScore(assessment);
+  const lvl     = getLevelLabel(score);
+  const timeAgo = (assessment.updatedAt || assessment.createdAt)
+    ? formatDistanceToNowStrict(new Date(assessment.updatedAt || assessment.createdAt), { addSuffix: true })
+    : "";
+
+  return (
+    <Box sx={{
+      display: "flex", alignItems: "center", gap: 1.5,
+      px: 2.5, py: 1.5,
+      borderBottom: last ? "none" : "1px solid #F1F5F9",
+      transition: "background 0.12s",
+      "&:hover": { bgcolor: "#F8FAFC" },
+    }}>
+      {/* Icon */}
+      <Box sx={{ width: 34, height: 34, borderRadius: "9px", bgcolor: `${accentColor}0F`, border: `1px solid ${accentColor}20`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <Icon sx={{ fontSize: 16, color: accentColor }} />
+      </Box>
+
+      {/* Name + progress */}
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography sx={{ fontSize: "0.85rem", fontWeight: 600, color: "#0F172A", mb: 0.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {assessment.skill || "Skill Assessment"}
+        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          {score > 0 ? (
+            <>
+              <LinearProgress variant="determinate" value={Math.min(score, 100)}
+                sx={{ flex: 1, height: 3, borderRadius: "99px", bgcolor: "#E2E8F0", "& .MuiLinearProgress-bar": { borderRadius: "99px", bgcolor: getScoreColor(score) } }} />
+              <Typography sx={{ fontSize: "0.68rem", fontWeight: 700, color: getScoreColor(score), flexShrink: 0 }}>{score}%</Typography>
+            </>
+          ) : (
+            <Typography sx={{ fontSize: "0.7rem", color: "#94A3B8" }}>Not tested yet</Typography>
+          )}
+        </Box>
+      </Box>
+
+      {/* Right: level + time */}
+      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 0.3, flexShrink: 0 }}>
+        <Box sx={{ px: 0.9, py: 0.2, borderRadius: "20px", bgcolor: `${lvl.color}12`, border: `1px solid ${lvl.color}25` }}>
+          <Typography sx={{ fontSize: "0.6rem", fontWeight: 700, color: lvl.color }}>{lvl.label}</Typography>
+        </Box>
+        {timeAgo && <Typography sx={{ fontSize: "0.6rem", color: "#CBD5E1" }}>{timeAgo}</Typography>}
+      </Box>
+
+      {/* Report button */}
+      {score > 0 && (
+        <Button
+          onClick={() => router.push(`/interview/report/${assessment._id}`)}
+          endIcon={<OpenInNewOutlined sx={{ fontSize: "11px !important" }} />}
+          sx={{
+            textTransform: "none", fontWeight: 700, fontSize: "0.7rem",
+            color: "#059669", bgcolor: "#F0FDF4", border: "1px solid #BBF7D0",
+            borderRadius: "8px", px: 1.25, py: 0.4, minWidth: 0, boxShadow: "none", flexShrink: 0,
+            "&:hover": { bgcolor: "#DCFCE7" },
+          }}
+        >
+          Report
+        </Button>
+      )}
+    </Box>
+  );
+};
 
 const SkillInterviews: React.FC<SkillInterviewsProps> = ({ skillType, hideStats = false }) => {
-  const router   = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { data: assessments, loading, total } = useSelector(
     skillType === "technical" ? selectTechnicalAssessments : selectSoftAssessments
@@ -52,112 +119,57 @@ const SkillInterviews: React.FC<SkillInterviewsProps> = ({ skillType, hideStats 
     return { total: total || assessments.length, completed, ongoing: assessments.length - completed };
   }, [assessments, total]);
 
-  const color  = skillType === "technical" ? "#2563EB" : "#D97706";
-  const Icon   = skillType === "technical" ? CodeOutlined : PeopleOutlined;
-  const label  = skillType === "technical" ? "Technical Skill" : "Soft Skill";
-
-  if (loading) return (
-    <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
-      <CircularProgress sx={{ color }} />
-    </Box>
-  );
+  const isTech      = skillType === "technical";
+  const accentColor = isTech ? "#2563EB" : "#D97706";
+  const Icon        = isTech ? CodeOutlined : PeopleOutlined;
+  const title       = isTech ? "Technical Assessments" : "Soft Assessments";
+  const doneColor   = "#059669";
+  const ongoingColor = "#D97706";
 
   return (
-    <Box>
-      {/* Stats */}
-      {!hideStats && (
-        <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
-          <StatsSummaryCard label="Total" value={stats.total} subtitle={`${label}s`}
-            icon={<AssignmentOutlined sx={{ fontSize: 22, color }} />}
-            valueColor={color} borderColor={`${color}30`} iconBgColor={`${color}10`} />
-          <StatsSummaryCard label="Completed" value={stats.completed} subtitle="Assessments"
-            icon={<CheckCircleOutlined sx={{ fontSize: 22, color: "#059669" }} />}
-            valueColor="#059669" borderColor="#A7F3D0" iconBgColor="#ECFDF5" />
-          <StatsSummaryCard label="In Progress" value={stats.ongoing} subtitle="Assessments"
-            icon={<HourglassEmptyOutlined sx={{ fontSize: 22, color: "#D97706" }} />}
-            valueColor="#D97706" borderColor="#FDE68A" iconBgColor="#FFFBEB" />
-        </Box>
-      )}
+    <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E2E8F0", overflow: "hidden" }}>
 
-      {assessments.length === 0 ? (
-        <Box sx={{ py: 10, textAlign: "center", borderRadius: "14px", border: "1.5px dashed #E5E7EB", bgcolor: "#FAFAFA" }}>
-          <Box sx={{ width: 56, height: 56, borderRadius: "50%", bgcolor: `${color}10`, border: `1.5px solid ${color}30`, display: "flex", alignItems: "center", justifyContent: "center", mx: "auto", mb: 2 }}>
-            <Icon sx={{ fontSize: 26, color }} />
+      {/* Header */}
+      <Box sx={{ px: 2.5, pt: 2, pb: 1.75, borderBottom: "1px solid #F1F5F9" }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Icon sx={{ fontSize: 18, color: accentColor }} />
+            <Typography sx={{ fontSize: "0.95rem", fontWeight: 700, color: "#0F172A" }}>{title}</Typography>
           </Box>
-          <Typography sx={{ fontWeight: 800, color: "#111827", fontSize: "0.9rem", mb: 0.5 }}>No {label} assessments yet</Typography>
-          <Typography sx={{ color: "#9CA3AF", fontSize: "0.78rem" }}>Complete skill assessments to see your history here</Typography>
+          {!hideStats && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Box sx={{ px: 1, py: 0.25, borderRadius: "20px", bgcolor: "#ECFDF5", border: "1px solid #A7F3D0" }}>
+                <Typography sx={{ fontSize: "0.65rem", fontWeight: 700, color: doneColor }}>{stats.completed} done</Typography>
+              </Box>
+              <Box sx={{ px: 1, py: 0.25, borderRadius: "20px", bgcolor: "#FFFBEB", border: "1px solid #FDE68A" }}>
+                <Typography sx={{ fontSize: "0.65rem", fontWeight: 700, color: ongoingColor }}>{stats.ongoing} pending</Typography>
+              </Box>
+            </Box>
+          )}
+        </Box>
+      </Box>
+
+      {/* Body */}
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 5 }}>
+          <CircularProgress size={24} sx={{ color: accentColor }} />
+        </Box>
+      ) : assessments.length === 0 ? (
+        <Box sx={{ py: 6, textAlign: "center" }}>
+          <Icon sx={{ fontSize: 32, color: "#CBD5E1", mb: 1 }} />
+          <Typography sx={{ fontSize: "0.82rem", color: "#94A3B8" }}>No {isTech ? "technical" : "soft"} assessments yet</Typography>
         </Box>
       ) : (
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(3, 1fr)" }, gap: 1.5 }}>
-          {assessments.map(assessment => {
-            const score   = getScore(assessment);
-            const lvl     = LEVEL(score);
-            const timeAgo = (assessment.updatedAt || assessment.createdAt)
-              ? formatDistanceToNowStrict(new Date(assessment.updatedAt || assessment.createdAt), { addSuffix: true })
-              : "";
-
-            return (
-              <Box
-                key={assessment._id}
-                sx={{
-                  borderRadius: "14px",
-                  border: `1.5px solid ${lvl.border}`,
-                  bgcolor: lvl.bg,
-                  p: "12px 14px",
-                  display: "flex", flexDirection: "column", gap: "8px",
-                  transition: "all 0.18s ease",
-                  position: "relative", overflow: "hidden",
-                  "&:hover": { borderColor: lvl.color, boxShadow: `0 4px 16px ${lvl.color}20`, transform: "translateY(-1px)", bgcolor: "#fff" },
-                }}
-              >
-                <Box sx={{ position: "absolute", top: 0, right: 0, width: 36, height: 36, background: `radial-gradient(circle at top right, ${lvl.color}15, transparent 70%)`, pointerEvents: "none" }} />
-
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 0.75 }}>
-                  <Typography sx={{ fontWeight: 700, fontSize: "0.8rem", color: "#111827", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {assessment.skill || "Skill Assessment"}
-                  </Typography>
-                  <Box sx={{ px: "7px", py: "2px", borderRadius: "20px", bgcolor: "#fff", border: `1px solid ${lvl.border}`, flexShrink: 0 }}>
-                    <Typography sx={{ fontSize: "0.58rem", fontWeight: 700, color: lvl.color }}>{lvl.label}</Typography>
-                  </Box>
-                </Box>
-
-                <Box>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", mb: "4px" }}>
-                    <Typography sx={{ fontSize: "0.6rem", color: "#9CA3AF" }}>{score > 0 ? "Score" : "Not tested"}</Typography>
-                    {score > 0 && <Typography sx={{ fontSize: "0.7rem", fontWeight: 900, color: getScoreColor(score) }}>{score}%</Typography>}
-                  </Box>
-                  <LinearProgress
-                    variant="determinate"
-                    value={Math.min(Math.max(score, 0), 100)}
-                    sx={{
-                      height: 4, borderRadius: "99px", bgcolor: `${lvl.color}18`,
-                      "& .MuiLinearProgress-bar": { borderRadius: "99px", bgcolor: score > 0 ? getScoreColor(score) : "transparent" },
-                    }}
-                  />
-                </Box>
-
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.3 }}>
-                    <AccessTimeOutlined sx={{ fontSize: 10, color: "#9CA3AF" }} />
-                    <Typography sx={{ fontSize: "0.58rem", color: "#9CA3AF" }}>{timeAgo || "—"}</Typography>
-                  </Box>
-                  <Button
-                    size="small"
-                    onClick={() => router.push(`/interview/report/${assessment._id}`)}
-                    endIcon={<OpenInNewOutlined sx={{ fontSize: "10px !important" }} />}
-                    sx={{
-                      textTransform: "none", fontWeight: 700, fontSize: "0.6rem",
-                      color: lvl.color, bgcolor: "#fff", border: `1px solid ${lvl.border}`,
-                      borderRadius: "6px", px: 1, py: 0.2, minWidth: 0, boxShadow: "none",
-                      "&:hover": { bgcolor: lvl.color, color: "#fff" },
-                    }}
-                  >
-                    Report
-                  </Button>
-                </Box>
-              </Box>
-            );
-          })}
+        <Box>
+          {assessments.map((a, i) => (
+            <SkillRow
+              key={a._id}
+              assessment={a}
+              last={i === assessments.length - 1}
+              accentColor={accentColor}
+              Icon={Icon}
+            />
+          ))}
         </Box>
       )}
     </Box>
