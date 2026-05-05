@@ -1,28 +1,28 @@
 # API Endpoints Inventory - TalentAI Backend
 
-**Généré le:** 5 mai 2026  
-**Objectif:** Vérifier quelles APIs sont utilisées et lesquelles ne le sont pas
+**Generated:** May 5, 2026  
+**Purpose:** Verify which APIs are used and which ones are not
 
 ---
 
-## 📊 Statistiques Globales
+## 📊 Global Statistics
 
-- **Total d'endpoints:** 156
-- **Total de modules:** 33
-- **Endpoints publics:** 15
-- **Endpoints protégés:** 141
-- **Types d'authentification:** JWT Token, API Key
+- **Total Endpoints:** 156
+- **Total Modules:** 33
+- **Public Endpoints:** 15
+- **Protected Endpoints:** 141
+- **Authentication Types:** JWT Token, API Key
 
 ---
 
-## 🔐 Authentification
+## 🔐 Authentication
 
-### Types d'authentification requis:
-- **public** - Pas d'authentification
-- **required** - Authentification JWT obligatoire
-- **optional** - Authentification recommandée mais facultative
+### Required authentication types:
+- **public** - No authentication required
+- **required** - JWT Token authentication required
+- **optional** - Authentication recommended but optional
 
-### Rôles:
+### Roles:
 - Candidate
 - Company
 - Employee
