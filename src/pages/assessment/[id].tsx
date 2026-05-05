@@ -55,7 +55,9 @@ const StatPill: React.FC<{ label: string; value: number | string; color: string;
 const ProfileCard: React.FC<{
   displayName: string; email?: string; initial: string; avatarUrl?: string;
   targetRole?: string; experienceLevel?: string; score: number;
-}> = ({ displayName, email, initial, avatarUrl, targetRole, experienceLevel, score }) => (
+  labels: { score: string; assessment: string; };
+  assessmentTypeLabel: string;
+}> = ({ displayName, email, initial, avatarUrl, targetRole, experienceLevel, score, labels, assessmentTypeLabel }) => (
   <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
     <Box sx={{ height: 56, background: `linear-gradient(135deg, ${NAVY} 0%, ${T} 100%)`, position: 'relative' }}>
       <Box sx={{ position: 'absolute', top: '50%', right: 16, transform: 'translateY(-50%)', width: 32, height: 32, borderRadius: '50%', bgcolor: `${TL}30`, border: `1px solid ${TL}40` }} />
@@ -77,18 +79,18 @@ const ProfileCard: React.FC<{
       )}
       <Divider sx={{ my: 1.5 }} />
       <Box sx={{ display: 'flex', gap: 1 }}>
-        <StatPill label="Score" value={`${Math.round(score)}%`} color={score >= 70 ? '#059669' : score >= 50 ? '#D97706' : '#DC2626'} bg={score >= 70 ? '#F0FDF4' : score >= 50 ? '#FFFBEB' : '#FEF2F2'} border={score >= 70 ? '#BBF7D0' : score >= 50 ? '#FDE68A' : '#FECACA'} />
-        <StatPill label="Assessment" value="HR" color={T} bg={TBG} border={TBRD} />
+        <StatPill label={labels.score} value={`${Math.round(score)}%`} color={score >= 70 ? '#059669' : score >= 50 ? '#D97706' : '#DC2626'} bg={score >= 70 ? '#F0FDF4' : score >= 50 ? '#FFFBEB' : '#FEF2F2'} border={score >= 70 ? '#BBF7D0' : score >= 50 ? '#FDE68A' : '#FECACA'} />
+        <StatPill label={labels.assessment} value={assessmentTypeLabel} color={T} bg={TBG} border={TBRD} />
       </Box>
     </Box>
   </Box>
 );
 
-const ProfileStrengthCard: React.FC<{ checklist: { label: string; done: boolean }[] }> = ({ checklist }) => (
+const ProfileStrengthCard: React.FC<{ title: string; checklist: { label: string; done: boolean }[] }> = ({ title, checklist }) => (
   <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', p: 2, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
       <TrendingUpOutlined sx={{ fontSize: 16, color: '#7C3AED' }} />
-      <Typography sx={{ fontWeight: 700, fontSize: '0.82rem', color: NAVY }}>Profile Strength</Typography>
+      <Typography sx={{ fontWeight: 700, fontSize: '0.82rem', color: NAVY }}>{title}</Typography>
     </Box>
     <LinearProgress variant="determinate"
       value={Math.round((checklist.filter(c => c.done).length / checklist.length) * 100)}
@@ -130,22 +132,24 @@ const ScoreRing: React.FC<{ score: number; size?: number }> = ({ score, size = 8
 };
 
 const AssessmentSummaryPanel: React.FC<{ assessment: any; analytics: any }> = ({ assessment, analytics }) => {
+  const { t } = useTranslation('dashboard');
+  const s = (k: string, opts?: any) => t(`candidate.assessment_detail.${k}`, opts) as string;
   const score = assessment?.interviewData?.finalReport?.coverage?.overall || 0;
   const scoreColor = score >= 70 ? '#059669' : score >= 50 ? '#D97706' : '#DC2626';
-  const scoreLabel = score >= 70 ? 'Strong' : score >= 50 ? 'Good' : 'Needs Work';
+  const scoreLabel = score >= 70 ? s('summary.strong') : score >= 50 ? s('summary.good') : s('summary.needs_work');
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {/* Overall score */}
       <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', p: 2, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
         <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', mb: 1.5 }}>
-          Overall Score
+          {s('summary.overall_score')}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <ScoreRing score={score} />
           <Box>
             <Typography sx={{ fontSize: '0.9rem', fontWeight: 800, color: scoreColor }}>{scoreLabel}</Typography>
-            <Typography sx={{ fontSize: '0.72rem', color: '#6B7280', mt: 0.25 }}>Coverage performance</Typography>
+            <Typography sx={{ fontSize: '0.72rem', color: '#6B7280', mt: 0.25 }}>{s('summary.coverage_performance')}</Typography>
           </Box>
         </Box>
       </Box>
@@ -153,7 +157,7 @@ const AssessmentSummaryPanel: React.FC<{ assessment: any; analytics: any }> = ({
       {/* Quick stats */}
       <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', p: 2, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
         <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', mb: 1.25 }}>
-          Interview Stats
+          {s('summary.interview_stats')}
         </Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -161,7 +165,7 @@ const AssessmentSummaryPanel: React.FC<{ assessment: any; analytics: any }> = ({
               <AccessTimeOutlined sx={{ fontSize: 14, color: '#2563EB' }} />
             </Box>
             <Box>
-              <Typography sx={{ fontSize: '0.72rem', color: '#94A3B8' }}>Duration</Typography>
+              <Typography sx={{ fontSize: '0.72rem', color: '#94A3B8' }}>{s('summary.duration')}</Typography>
               <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: NAVY }}>
                 {analytics?.duration ? `${Math.floor(analytics.duration / 60)}m ${analytics.duration % 60}s` : '—'}
               </Typography>
@@ -172,7 +176,7 @@ const AssessmentSummaryPanel: React.FC<{ assessment: any; analytics: any }> = ({
               <ChatOutlined sx={{ fontSize: 14, color: T }} />
             </Box>
             <Box>
-              <Typography sx={{ fontSize: '0.72rem', color: '#94A3B8' }}>Messages</Typography>
+              <Typography sx={{ fontSize: '0.72rem', color: '#94A3B8' }}>{s('summary.messages')}</Typography>
               <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: NAVY }}>{analytics?.messageCount ?? '—'}</Typography>
             </Box>
           </Box>
@@ -181,7 +185,7 @@ const AssessmentSummaryPanel: React.FC<{ assessment: any; analytics: any }> = ({
               <AssessmentOutlined sx={{ fontSize: 14, color: '#D97706' }} />
             </Box>
             <Box>
-              <Typography sx={{ fontSize: '0.72rem', color: '#94A3B8' }}>Areas Covered</Typography>
+              <Typography sx={{ fontSize: '0.72rem', color: '#94A3B8' }}>{s('summary.areas_covered')}</Typography>
               <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: NAVY }}>
                 {analytics?.completedAreas ?? '—'}/{analytics?.totalAreas ?? 4}
               </Typography>
@@ -193,7 +197,7 @@ const AssessmentSummaryPanel: React.FC<{ assessment: any; analytics: any }> = ({
               <WorkOutlineOutlined sx={{ fontSize: 14, color: '#7C3AED' }} />
             </Box>
             <Box>
-              <Typography sx={{ fontSize: '0.72rem', color: '#94A3B8' }}>Job</Typography>
+              <Typography sx={{ fontSize: '0.72rem', color: '#94A3B8' }}>{s('summary.job')}</Typography>
               <Typography sx={{ fontSize: '0.78rem', fontWeight: 600, color: NAVY, lineHeight: 1.3 }}>
                 {assessment?.post?.jobDetails?.title || '—'}
               </Typography>
@@ -211,6 +215,7 @@ const AssessmentDetailsPage = () => {
   const router    = useRouter();
   const { id }    = router.query;
   const { t }     = useTranslation('dashboard');
+  const s = (k: string, opts?: any) => t(`candidate.assessment_detail.${k}`, opts) as string;
   const dispatch  = useDispatch<AppDispatch>();
   const profile   = useSelector((state: RootState) => state.user.connectedUser.profile);
   const user      = useSelector((state: RootState) => state.user.connectedUser.user);
@@ -242,20 +247,21 @@ const AssessmentDetailsPage = () => {
   // Profile sidebar data
   const displayName = profile?.firstName
     ? `${profile.firstName}${profile.lastName ? ` ${profile.lastName}` : ''}`
-    : user?.username || 'Candidate';
+    : user?.username || s('candidate_fallback');
   const initial   = displayName[0]?.toUpperCase() || 'C';
   const avatarUrl = profile?.user_image
     ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${profile.user_image}`
     : undefined;
   const quota = profile?.quota ?? 0;
   const checklist = [
-    { label: 'Complete profile',  done: !!(profile?.firstName && profile?.lastName) },
-    { label: 'Add target role',   done: !!profile?.targetRole                       },
-    { label: 'Set experience',    done: !!profile?.requiredExperienceLevel          },
-    { label: 'First skill test',  done: quota > 0                                   },
+    { label: s('checklist.complete_profile'), done: !!(profile?.firstName && profile?.lastName) },
+    { label: s('checklist.add_target_role'),  done: !!profile?.targetRole                       },
+    { label: s('checklist.set_experience'),   done: !!profile?.requiredExperienceLevel          },
+    { label: s('checklist.first_skill_test'), done: quota > 0                                   },
   ];
 
-  const jobTitle = assessment?.post?.jobDetails?.title || 'Assessment';
+  const jobTitle = assessment?.post?.jobDetails?.title || s('default_title');
+  const assessmentTypeLabel = (assessment?.interviewData?.interviewType || 'HR').replace(/_/g, ' ');
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', bgcolor: 'rgb(249 250 251)' }}>
@@ -273,8 +279,10 @@ const AssessmentDetailsPage = () => {
               displayName={displayName} email={user?.email} initial={initial} avatarUrl={avatarUrl}
               targetRole={profile?.targetRole} experienceLevel={profile?.requiredExperienceLevel}
               score={coverageScore}
+              labels={{ score: s('sidebar.score'), assessment: s('sidebar.assessment') }}
+              assessmentTypeLabel={assessmentTypeLabel}
             />
-            <ProfileStrengthCard checklist={checklist} />
+            <ProfileStrengthCard title={s('sidebar.profile_strength')} checklist={checklist} />
           </Box>
 
           {/* ── CENTER: assessment content ── */}
@@ -288,14 +296,14 @@ const AssessmentDetailsPage = () => {
                 onClick={() => router.push('/dashboard/candidate')}
                 sx={{ textTransform: 'none', fontWeight: 700, fontSize: '0.72rem', color: '#6B7280', bgcolor: '#fff', border: '1px solid #E5E7EB', borderRadius: '10px', px: 1.5, py: 0.5, '&:hover': { bgcolor: '#F3F4F6' }, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
               >
-                Back to Dashboard
+                {s('back_to_dashboard')}
               </Button>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                <Typography sx={{ fontSize: '0.72rem', color: '#94A3B8' }}>Dashboard</Typography>
+                <Typography sx={{ fontSize: '0.72rem', color: '#94A3B8' }}>{t('candidate.nav.dashboard')}</Typography>
                 <Typography sx={{ fontSize: '0.72rem', color: '#CBD5E1' }}>›</Typography>
-                <Typography sx={{ fontSize: '0.72rem', color: '#94A3B8' }}>Assessments</Typography>
+                <Typography sx={{ fontSize: '0.72rem', color: '#94A3B8' }}>{t('candidate.nav.all_assessments')}</Typography>
                 <Typography sx={{ fontSize: '0.72rem', color: '#CBD5E1' }}>›</Typography>
-                <Typography sx={{ fontSize: '0.72rem', fontWeight: 600, color: NAVY }}>{loading ? '...' : jobTitle}</Typography>
+                <Typography sx={{ fontSize: '0.72rem', fontWeight: 600, color: NAVY }}>{loading ? s('loading_title') : jobTitle}</Typography>
               </Box>
             </Box>
 
@@ -313,7 +321,7 @@ const AssessmentDetailsPage = () => {
             {!loading && error && (
               <Box sx={{ bgcolor: '#FEF2F2', borderRadius: '16px', border: '1px solid #FECACA', p: 3, textAlign: 'center' }}>
                 <AssessmentOutlined sx={{ fontSize: 40, color: '#FECACA', mb: 1 }} />
-                <Typography sx={{ color: '#DC2626', fontWeight: 700, fontSize: '0.9rem' }}>Failed to load assessment</Typography>
+                <Typography sx={{ color: '#DC2626', fontWeight: 700, fontSize: '0.9rem' }}>{s('error_title')}</Typography>
                 <Typography sx={{ color: '#9CA3AF', fontSize: '0.78rem', mt: 0.5 }}>{error}</Typography>
               </Box>
             )}
@@ -322,7 +330,7 @@ const AssessmentDetailsPage = () => {
             {!loading && !error && !assessment && (
               <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', py: 10, textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
                 <AssessmentOutlined sx={{ fontSize: 40, color: '#D1D5DB', mb: 1 }} />
-                <Typography sx={{ color: '#9CA3AF', fontWeight: 600 }}>Assessment not found</Typography>
+                <Typography sx={{ color: '#9CA3AF', fontWeight: 600 }}>{s('not_found')}</Typography>
               </Box>
             )}
 
@@ -332,56 +340,40 @@ const AssessmentDetailsPage = () => {
                 <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
                   <Box sx={{ height: 4, background: `linear-gradient(90deg, ${T}, ${TL})` }} />
                   <Box sx={{ p: 2.5 }}>
-                    <AssessmentHeader assessment={assessment} />
+                    <AssessmentHeader assessment={assessment} container={false} />
                   </Box>
                 </Box>
 
                 {stepsData?.steps?.length > 0 && (
-                  <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', p: 2.5, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-                    <PipelineSteps stepsData={stepsData} />
-                  </Box>
+                  <PipelineSteps stepsData={stepsData} />
                 )}
 
                 {Object.keys(coverageAreas).length > 0 && (
-                  <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', p: 2.5, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-                    <CoverageAnalysis coverageAreas={coverageAreas} />
-                  </Box>
+                  <CoverageAnalysis coverageAreas={coverageAreas} />
                 )}
 
                 {Object.keys(coverageAreas).length > 0 && (
-                  <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', p: 2.5, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-                    <CoverageAreas coverageAreas={coverageAreas} />
-                  </Box>
+                  <CoverageAreas coverageAreas={coverageAreas} />
                 )}
 
                 {Object.keys(aiAnalysis).length > 0 && (
-                  <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', p: 2.5, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-                    <AiAnalysisSection aiAnalysis={aiAnalysis} />
-                  </Box>
+                  <AiAnalysisSection aiAnalysis={aiAnalysis} />
                 )}
 
                 {(requiredSkills.length > 0 || softSkills.length > 0) && (
-                  <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', p: 2.5, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-                    <SkillsSection requiredSkills={requiredSkills} softSkills={softSkills} suggestedSkills={suggestedSkills} />
-                  </Box>
+                  <SkillsSection requiredSkills={requiredSkills} softSkills={softSkills} suggestedSkills={suggestedSkills} />
                 )}
 
                 {summary && (
-                  <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', p: 2.5, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-                    <SummarySection summary={summary} />
-                  </Box>
+                  <SummarySection summary={summary} />
                 )}
 
                 {(jobDescription || jobRequirements?.length > 0) && (
-                  <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', p: 2.5, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-                    <JobDetailsSection description={jobDescription} requirements={jobRequirements} responsibilities={jobResponsibilities} />
-                  </Box>
+                  <JobDetailsSection description={jobDescription} requirements={jobRequirements} responsibilities={jobResponsibilities} />
                 )}
 
                 {recommendations.length > 0 && (
-                  <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', p: 2.5, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-                    <RecommendationsSection recommendations={recommendations} />
-                  </Box>
+                  <RecommendationsSection recommendations={recommendations} />
                 )}
               </>
             )}

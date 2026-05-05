@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { Box, Typography, Chip, LinearProgress, Collapse, IconButton } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
@@ -9,7 +10,6 @@ import {
   formatDuration,
   formatAreaName,
   getStepStatusColor,
-  getStepStatusLabel,
   CHART_COLORS,
 } from './helpers';
 
@@ -18,6 +18,8 @@ interface PipelineStepsProps {
 }
 
 const PipelineSteps: React.FC<PipelineStepsProps> = ({ stepsData }) => {
+  const { t } = useTranslation('dashboard');
+  const s = (k: string, opts?: any) => t(`candidate.assessment_detail.${k}`, opts) as string;
   const [expandedSteps, setExpandedSteps] = useState<Record<string, boolean>>({});
 
   const sortedSteps = useMemo(() => {
@@ -39,12 +41,12 @@ const PipelineSteps: React.FC<PipelineStepsProps> = ({ stepsData }) => {
   return (
     <Box sx={sectionStyle}>
       <Typography variant="h5" sx={sectionTitleStyle('#8310FF')}>
-        Pipeline Steps
+        {s('pipeline_steps.title')}
       </Typography>
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
         <Typography variant="body2" sx={{ color: '#6b7280', fontWeight: 500 }}>
-          {completedCount} / {sortedSteps.length} Steps Completed
+          {s('pipeline_steps.completed', { completed: completedCount, total: sortedSteps.length })}
         </Typography>
         <LinearProgress
           variant="determinate"
@@ -80,12 +82,20 @@ interface StepCardProps {
 }
 
 const StepCard: React.FC<StepCardProps> = React.memo(({ step, index, isExpanded, onToggle }) => {
+  const { t } = useTranslation('dashboard');
+  const s = (k: string, opts?: any) => t(`candidate.assessment_detail.${k}`, opts) as string;
   const statusColors = getStepStatusColor(step.status);
   const stepLabel = step.stepId?.data?.label || step.stepId?.data?.config?.title || `Step ${index + 1}`;
   const stepType = step.stepId?.data?.type || 'interview';
   const stepKey = step._id || `step-${index}`;
   const interviewDetails = step.interviewDetails;
   const hasDetails = !!interviewDetails?.interviewData;
+  const statusLabel =
+    step.status === 'done' || step.status === 'passed'
+      ? s('pipeline_steps.status.completed')
+      : step.status === 'inProgress'
+        ? s('pipeline_steps.status.in_progress')
+        : s('pipeline_steps.status.pending');
 
   return (
     <Box>
@@ -122,7 +132,7 @@ const StepCard: React.FC<StepCardProps> = React.memo(({ step, index, isExpanded,
               <Typography sx={{ fontWeight: 600, color: '#111827', fontSize: '14px' }}>{stepLabel}</Typography>
               <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '11px', textTransform: 'capitalize' }}>
                 {stepType}
-                {step.completedAt && ` - ${new Date(step.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
+                {step.completedAt && ` - ${new Date(step.completedAt).toLocaleDateString(i18n.language || 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
               </Typography>
             </Box>
           </Box>
@@ -132,7 +142,7 @@ const StepCard: React.FC<StepCardProps> = React.memo(({ step, index, isExpanded,
               <Typography sx={{ fontWeight: 700, fontSize: '14px', color: statusColors.color }}>{Math.round(step.score)}%</Typography>
             )}
             <Chip
-              label={getStepStatusLabel(step.status)}
+              label={statusLabel}
               size="small"
               sx={{
                 backgroundColor: statusColors.bg, color: statusColors.color,
@@ -157,6 +167,8 @@ const StepCard: React.FC<StepCardProps> = React.memo(({ step, index, isExpanded,
 });
 
 const StepInterviewDetails: React.FC<{ interviewDetails: any }> = React.memo(({ interviewDetails }) => {
+  const { t, i18n } = useTranslation('dashboard');
+  const s = (k: string, opts?: any) => t(`candidate.assessment_detail.${k}`, opts) as string;
   const data = interviewDetails.interviewData;
   const areas = data?.finalReport?.coverage?.areas;
   const aiAnalysis = data?.finalReport?.aiAnalysis;
@@ -164,18 +176,18 @@ const StepInterviewDetails: React.FC<{ interviewDetails: any }> = React.memo(({ 
   return (
     <Box sx={{ ml: 3, mt: 1, p: 2, backgroundColor: 'rgba(248, 249, 252, 1)', borderRadius: '10px', border: '1px solid rgba(238, 240, 242, 1)' }}>
       <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'rgba(23, 43, 77, 1)', fontSize: '13px', mb: 1.5 }}>
-        Interview Details
+        {s('pipeline_steps.interview_details')}
       </Typography>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1.5, mb: 2 }}>
-        <MiniStat value={`${Math.round(data?.finalReport?.coverage?.overall || 0)}%`} label="Coverage" color="#8310FF" />
-        <MiniStat value={formatDuration(data?.analytics?.duration || 0)} label="Duration" color="#6366f1" />
-        <MiniStat value={data?.analytics?.messageCount || 0} label="Messages" color="#10b981" />
+        <MiniStat value={`${Math.round(data?.finalReport?.coverage?.overall || 0)}%`} label={s('header.coverage')} color="#8310FF" />
+        <MiniStat value={formatDuration(data?.analytics?.duration || 0)} label={s('summary.duration')} color="#6366f1" />
+        <MiniStat value={data?.analytics?.messageCount || 0} label={s('summary.messages')} color="#10b981" />
       </Box>
 
       {areas && Object.keys(areas).length > 0 && (
         <Box sx={{ mb: 2 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#374151', fontSize: '12px', mb: 1 }}>Coverage Areas</Typography>
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#374151', fontSize: '12px', mb: 1 }}>{s('pipeline_steps.coverage_areas')}</Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             {Object.entries(areas).map(([areaKey, areaData]: [string, any], idx: number) => (
               <Box key={areaKey} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -202,10 +214,10 @@ const StepInterviewDetails: React.FC<{ interviewDetails: any }> = React.memo(({ 
       {aiAnalysis && (
         <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
           {aiAnalysis.strongestAreas?.length > 0 && (
-            <AnalysisBox title="Strengths" items={aiAnalysis.strongestAreas} bg="rgba(16, 185, 129, 0.06)" border="rgba(16, 185, 129, 0.15)" titleColor="#065f46" itemColor="#047857" />
+            <AnalysisBox title={s('pipeline_steps.strengths')} items={aiAnalysis.strongestAreas} bg="rgba(16, 185, 129, 0.06)" border="rgba(16, 185, 129, 0.15)" titleColor="#065f46" itemColor="#047857" />
           )}
           {aiAnalysis.weakestAreas?.length > 0 && (
-            <AnalysisBox title="Needs Improvement" items={aiAnalysis.weakestAreas} bg="rgba(239, 68, 68, 0.06)" border="rgba(239, 68, 68, 0.15)" titleColor="#991b1b" itemColor="#b91c1c" />
+            <AnalysisBox title={s('pipeline_steps.needs_improvement')} items={aiAnalysis.weakestAreas} bg="rgba(239, 68, 68, 0.06)" border="rgba(239, 68, 68, 0.15)" titleColor="#991b1b" itemColor="#b91c1c" />
           )}
         </Box>
       )}

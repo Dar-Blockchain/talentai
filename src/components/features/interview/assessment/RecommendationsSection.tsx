@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { sectionStyle, sectionTitleStyle } from './helpers';
 
 interface RecommendationsSectionProps {
@@ -7,12 +8,14 @@ interface RecommendationsSectionProps {
 }
 
 const RecommendationsSection: React.FC<RecommendationsSectionProps> = ({ recommendations }) => {
+  const { t } = useTranslation('dashboard');
+  const s = (k: string, opts?: any) => t(`candidate.assessment_detail.${k}`, opts) as string;
   if (recommendations.length === 0) return null;
 
   return (
     <Box sx={sectionStyle}>
       <Typography variant="h5" sx={sectionTitleStyle('rgba(245, 158, 11, 0.83)')}>
-        Recommendations ({recommendations.length})
+        {s('recommendations.title', { count: recommendations.length })}
       </Typography>
 
       <List sx={{ p: 0 }}>
