@@ -12,6 +12,7 @@ import {
   getStepStatusColor,
   CHART_COLORS,
 } from './helpers';
+import i18n from '@/i18n/config';
 
 interface PipelineStepsProps {
   stepsData: any;
