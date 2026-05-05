@@ -1,0 +1,722 @@
+{
+  "title": "Dashboard",
+  "welcome": "Welcome back, {{name}}",
+  "candidate_settings": {
+    "tabs": {
+      "personal": "Personal Info",
+      "contact": "Contact",
+      "notifications": "Notifications",
+      "visibility": "Public Profile",
+      "settings_label": "Settings"
+    },
+    "personal": {
+      "title": "Personal Information",
+      "subtitle": "Manage your profile details and preferences",
+      "edit": "Edit",
+      "cancel": "Cancel",
+      "save": "Save",
+      "username": "Username",
+      "email": "Email",
+      "first_name": "First Name",
+      "last_name": "Last Name",
+      "gender": "Gender",
+      "country": "Country",
+      "language": "Language",
+      "timezone": "Time Zone",
+      "experience_level": "Experience Level",
+      "target_role": "Target Role",
+      "gender_male": "Male",
+      "gender_female": "Female",
+      "gender_other": "Prefer not to say",
+      "target_role_placeholder": "e.g., Software Engineer",
+      "save_success": "Profile updated successfully!"
+    },
+    "contact": {
+      "title": "Contact Information",
+      "subtitle": "Manage your contact details and social profiles",
+      "edit": "Edit",
+      "cancel": "Cancel",
+      "save": "Save",
+      "email": "Email",
+      "email_helper": "Email cannot be changed",
+      "phone": "Phone Number",
+      "phone_placeholder": "+33612345678",
+      "location": "Location",
+      "location_placeholder": "Paris, France",
+      "address": "Address",
+      "address_placeholder": "123 Rue de Paris",
+      "linkedin": "LinkedIn URL",
+      "linkedin_placeholder": "https://linkedin.com/in/yourprofile",
+      "github": "GitHub URL",
+      "github_placeholder": "https://github.com/yourprofile",
+      "website": "Personal Website",
+      "website_placeholder": "https://yourwebsite.com"
+    },
+    "notifications": {
+      "title": "Notification History",
+      "subtitle": "View and manage all your notifications",
+      "connected": "Connected",
+      "disconnected": "Disconnected",
+      "mark_all_read": "Mark all read",
+      "archive_all": "Archive all",
+      "stat_total": "Total",
+      "stat_unread": "Unread",
+      "stat_this_week": "This Week",
+      "stat_important": "Important",
+      "tab_active": "Active ({{count}})",
+      "tab_archived": "Archived ({{count}})",
+      "empty_title": "No notifications yet",
+      "empty_archived_title": "No archived notifications",
+      "empty_subtitle": "You're all caught up!",
+      "empty_connecting": "Connecting to notification service...",
+      "empty_archived_subtitle": "You haven't archived any notifications yet.",
+      "badge_new": "NEW"
+    },
+    "visibility": {
+      "title": "Public Profile Visibility",
+      "subtitle": "Control who can view your profile information",
+      "membership_title": "Visibility managed by your company membership.",
+      "membership_subtitle": "As a company member, your profile is automatically set to private.",
+      "status_public": "Profile is Public",
+      "status_private": "Profile is Private",
+      "desc_public": "Anyone with the link can view your profile",
+      "desc_private": "Your profile is hidden from public view",
+      "updating": "Updating...",
+      "url_title": "Public Profile URL",
+      "url_tooltip": "Share this link to allow others to view your public profile",
+      "copy_link": "Copy Link",
+      "copied": "Copied!",
+      "view_profile": "View Profile",
+      "success_public": "Your profile is now public and can be viewed by anyone with the link",
+      "success_private": "Your profile is now private and hidden from public view",
+      "copied_toast": "Profile link copied to clipboard!",
+      "privacy_title": "Privacy Information",
+      "privacy_intro": "When your profile is public, these details will be visible to anyone with the link:",
+      "privacy_footer": "Your email and sensitive information are never publicly visible.",
+      "privacy_item_1": "Profile picture and basic information (name, title, location)",
+      "privacy_item_2": "Skills and experience level",
+      "privacy_item_3": "Work preferences and education",
+      "privacy_item_4": "Public contact information (if provided)"
+    }
+  },
+  "candidate": {
+    "nav": {
+      "dashboard": "Dashboard",
+      "overview": "Overview",
+      "applications": "Applications",
+      "your_job_applies": "Your job applies",
+      "skills": "Skills",
+      "tech_and_soft": "Tech & soft",
+      "interviews": "Interviews",
+      "all_assessments": "All assessments",
+      "navigation": "Navigation"
+    },
+    "profile": {
+      "applications": "Applications",
+      "interviews": "Interviews",
+      "monthly_tests": "Monthly Tests",
+      "maxed": "Maxed",
+      "left": "{{count}} left",
+      "profile_strength": "Profile Strength"
+    },
+    "checklist": {
+      "complete_profile": "Complete your profile",
+      "add_target_role": "Add a target role",
+      "set_experience": "Set experience level",
+      "first_skill_test": "Take your first skill test",
+      "first_application": "Submit an application"
+    },
+    "actions": {
+      "skill_interview": "Skill Interview",
+      "hr_interview": "HR Interview",
+      "coming_soon": "Coming soon",
+      "monthly_quota": "Monthly Quota",
+      "hide": "Hide",
+      "view_all": "View All"
+    },
+    "sections": {
+      "skills_title": "Skills & Expertise",
+      "skills_subtitle": "Your technical and soft skills",
+      "interviews_title": "Interviews & Assessments",
+      "interviews_subtitle": "Job interviews, technical & soft"
+    },
+    "my_applications": {
+      "title": "My Applications",
+      "view_all": "View all →",
+      "search_placeholder": "Search jobs or companies…",
+      "status": {
+        "applied": "Applied",
+        "pending": "Pending",
+        "shortlisted": "Shortlisted",
+        "accepted": "Accepted",
+        "rejected": "Rejected",
+        "withdrawn": "Withdrawn",
+        "interview_scheduled": "Interview Scheduled",
+        "interview_completed": "Interview Completed",
+        "viewed": "Viewed",
+        "visited": "Visited",
+        "all": "All"
+      },
+      "match": "{{score}}% match",
+      "applied_date": "Applied {{date}}",
+      "empty_title": "No applications yet",
+      "empty_subtitle": "Apply to jobs to track them here",
+      "show_less": "Show less",
+      "show_more": "Show {{count}} more",
+      "page_of": "Page {{current}} of {{total}}"
+    },
+    "application_detail": {
+      "back_to_dashboard": "Back to Dashboard",
+      "loading_title": "…",
+      "not_found": "Application not found",
+      "details": "Details",
+      "applied_on": "Applied {{date}}",
+      "job_description": "Job Description",
+      "requirements": "Requirements",
+      "profile_strength": "Profile Strength",
+      "profile": {
+        "applications": "Applications",
+        "active": "Active"
+      },
+      "checklist": {
+        "complete_profile": "Complete profile",
+        "add_target_role": "Add target role",
+        "set_experience": "Set experience",
+        "first_skill_test": "First skill test"
+      },
+      "interview_banner": {
+        "title": "Your interview is scheduled!",
+        "join": "Join Interview"
+      },
+      "cv_match_score": {
+        "title": "CV Match Score",
+        "strong": "Strong Match",
+        "good": "Good Match",
+        "low": "Low Match",
+        "subtitle": "Your profile matches {{score}}% of the job requirements."
+      },
+      "timeline": {
+        "title": "Application Status",
+        "applied": "Applied",
+        "under_review": "Under Review",
+        "shortlisted": "Shortlisted",
+        "interview": "Interview",
+        "accepted": "Accepted",
+        "withdrawn": "Withdrawn",
+        "not_selected": "Not Selected",
+        "closed": "This application is closed",
+        "current_stage": "Current stage"
+      }
+    },
+    "assessment_detail": {
+      "back_to_dashboard": "Back to Dashboard",
+      "loading_title": "…",
+      "default_title": "Assessment",
+      "candidate_fallback": "Candidate",
+      "error_title": "Failed to load assessment",
+      "not_found": "Assessment not found",
+      "unknown_user": "Unknown user",
+      "unknown_job": "Unknown job",
+      "sidebar": {
+        "score": "Score",
+        "assessment": "Assessment",
+        "profile_strength": "Profile Strength"
+      },
+      "checklist": {
+        "complete_profile": "Complete profile",
+        "add_target_role": "Add target role",
+        "set_experience": "Set experience",
+        "first_skill_test": "First skill test"
+      },
+      "header": {
+        "title": "Interview Assessment",
+        "overall_score": "Overall Score",
+        "details": "Assessment Details",
+        "analytics": "Interview Analytics",
+        "coverage": "Coverage"
+      },
+      "summary": {
+        "overall_score": "Overall Score",
+        "strong": "Strong",
+        "good": "Good",
+        "needs_work": "Needs Work",
+        "coverage_performance": "Coverage performance",
+        "interview_stats": "Interview Stats",
+        "duration": "Duration",
+        "messages": "Messages",
+        "areas_covered": "Areas Covered",
+        "job": "Job"
+      },
+      "pipeline_steps": {
+        "title": "Pipeline Steps",
+        "completed": "{{completed}} / {{total}} Steps Completed",
+        "interview_details": "Interview Details",
+        "coverage_areas": "Coverage Areas",
+        "strengths": "Strengths",
+        "needs_improvement": "Needs Improvement",
+        "status": {
+          "completed": "Completed",
+          "in_progress": "In Progress",
+          "pending": "Pending"
+        }
+      },
+      "coverage_areas": {
+        "title": "Coverage Areas",
+        "meta": "{{depth}} | {{count}} questions",
+        "completed": "Completed",
+        "in_progress": "In Progress"
+      },
+      "job_details": {
+        "description": "Job Description",
+        "requirements": "Requirements",
+        "responsibilities": "Responsibilities"
+      },
+      "summary_section": {
+        "title": "Summary"
+      },
+      "recommendations": {
+        "title": "Recommendations ({{count}})"
+      },
+      "coverage_analysis": {
+        "title": "Coverage Analysis",
+        "by_area": "Coverage by Area",
+        "radar": "Skills Radar"
+      },
+      "ai_analysis": {
+        "title": "AI Analysis",
+        "strongest_areas": "Strongest Areas",
+        "areas_for_improvement": "Areas for Improvement",
+        "recommended_focus": "Recommended Focus"
+      },
+      "skills": {
+        "required": "Required Skills",
+        "soft": "Soft Skills",
+        "suggested": "Suggested Skills"
+      }
+    }
+  },
+  "overview": {
+    "stat": {
+      "avg_interview_score": "Avg. Interview Score",
+      "active_job_posts": "Active Job Posts",
+      "applicants": "Applicants",
+      "campaigns": "Campaigns",
+      "departments": "Departments",
+      "team_members": "Team Members",
+      "no_interviews_yet": "No interviews yet",
+      "no_posts_yet": "No posts yet"
+    },
+    "interview_activity": {
+      "title": "Interview Activity",
+      "subtitle": "Interviews conducted over the last 30 days",
+      "empty": "No interviews conducted yet",
+      "empty_sub": "Interviews run automatically when candidates complete a campaign",
+      "total": "Total",
+      "pass_rate": "Pass rate"
+    },
+    "score_distribution": {
+      "title": "Score Distribution",
+      "subtitle": "Candidates grouped by interview score",
+      "empty": "No scores recorded yet",
+      "empty_sub": "Scores appear after candidates complete interviews"
+    },
+    "top_jobs": {
+      "title": "Top Job Posts",
+      "subtitle": "By number of interviews conducted",
+      "interviews": "interviews",
+      "empty": "No interviews yet",
+      "empty_sub": "Interview data appears after candidates complete a campaign"
+    },
+    "recent_interviews": {
+      "title": "Recent Interviews",
+      "loading": "Loading...",
+      "results": "{{count}} latest results",
+      "no_results": "No results yet",
+      "empty": "No interviews yet",
+      "empty_sub": "Interviews are generated automatically via campaigns"
+    },
+    "applications_over_time": {
+      "title": "Applications Over Time",
+      "subtitle": "Daily applications in the last 30 days",
+      "empty": "No applications yet",
+      "post_job": "Post a job to attract candidates →"
+    },
+    "applications_per_job": {
+      "title": "Applications per Job Post",
+      "subtitle": "Top job posts by number of applicants",
+      "empty": "No applications yet",
+      "post_job": "Post a job to attract candidates →"
+    },
+    "campaign_activity": {
+      "title": "Campaign Activity",
+      "subtitle": "Campaigns created over the last 30 days",
+      "empty": "No campaigns yet",
+      "create": "Create your first campaign →",
+      "active": "active",
+      "status": {
+        "active": "Active",
+        "draft": "Draft",
+        "paused": "Paused",
+        "closed": "Closed",
+        "expired": "Expired"
+      }
+    },
+    "members_per_dept": {
+      "title": "Members per Department",
+      "subtitle": "Team distribution across departments",
+      "empty": "No departments yet",
+      "create": "Create your first department →"
+    },
+    "view_all": "View all",
+    "verdict": {
+      "excellent": "Excellent",
+      "good": "Good",
+      "needs_work": "Needs Work",
+      "pending": "Pending"
+    },
+    "time": {
+      "minutes_ago": "{{count}}m ago",
+      "hours_ago": "{{count}}h ago",
+      "yesterday": "Yesterday",
+      "days_ago": "{{count}}d ago"
+    }
+  },
+  "metrics": {
+    "total_campaigns": "Total Campaigns",
+    "active_campaigns": "Active Campaigns",
+    "interviews_completed": "Interviews Completed",
+    "avg_score": "Average Score",
+    "completion_rate": "Completion Rate",
+    "time_saved": "Time Saved"
+  },
+  "quick_actions": {
+    "title": "Quick Actions",
+    "new_campaign": "New Campaign",
+    "view_reports": "View Reports",
+    "invite_team": "Invite Team"
+  },
+  "recent_campaigns": {
+    "title": "Recent Campaigns",
+    "view_all": "View all",
+    "empty": "No campaigns yet. Create one to get started."
+  },
+  "trend": {
+    "title": "Campaign Activity",
+    "subtitle": "Campaigns created in the last 30 days",
+    "no_data": "No activity in the selected period."
+  },
+  "employee": {
+    "my_campaigns": "My Campaigns",
+    "pending": "Pending",
+    "completed": "Completed",
+    "in_progress": "In Progress",
+    "not_started": "Not Started"
+  },
+  "sidebar": {
+    "groups": {
+      "main": "Main",
+      "jobs": "Jobs",
+      "campaigns": "Campaigns",
+      "team": "Team",
+      "account": "Account",
+      "personal": "Personal",
+      "company": "Company"
+    },
+    "nav": {
+      "dashboard": "Dashboard",
+      "campaigns": "Campaigns",
+      "posts": "Posts",
+      "employees": "Employees",
+      "departments": "Departments",
+      "applications": "Applications",
+      "settings": "Settings",
+      "subscription": "Subscription",
+      "my-campaigns": "My Campaigns"
+    },
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "sign_out": "Sign out",
+    "plan": {
+      "active_plans": "Active Plans",
+      "count_plans_one": "{{count}} Plan",
+      "count_plans_other": "{{count}} Plans",
+      "expires": "Expires {{date}}",
+      "trial": "Trial plan",
+      "view_all": "View all plans →"
+    }
+  },
+  "pages": {
+    "common": {
+      "dashboard": "Dashboard",
+      "loading": "Loading…",
+      "sort": "Sort",
+      "settings": "Settings"
+    },
+    "campaigns": {
+      "title": "Campaigns",
+      "subtitle": "Manage and monitor all company campaigns",
+      "new_campaign": "New Campaign"
+    },
+    "applications": {
+      "title": "Applications",
+      "search_placeholder": "Search by name or email…",
+      "all_jobs": "All jobs",
+      "candidate_count_one": "{{count}} candidate",
+      "candidate_count_other": "{{count}} candidates",
+      "download_cvs": "Download CVs",
+      "preparing": "Preparing…",
+      "no_candidates_download": "No candidates to download",
+      "download_cvs_tooltip_one": "Download {{count}} CV as ZIP",
+      "download_cvs_tooltip_other": "Download {{count}} CVs as ZIP",
+      "no_cv_alert": "No CVs available for the current filters.",
+      "status": {
+        "all": "All statuses",
+        "visited": "Visited",
+        "interview_completed": "Interview Completed"
+      },
+      "sort": {
+        "date_applied": "Date Applied",
+        "match_score": "Match Score",
+        "interview_score": "Interview Score",
+        "candidate_name": "Candidate Name",
+        "most_recent": "Most recent first",
+        "earliest": "Earliest first",
+        "best_match": "Best match first",
+        "worst_match": "Worst match first",
+        "top_performers": "Top performers first",
+        "low_performers": "Low performers first",
+        "a_to_z": "A to Z",
+        "z_to_a": "Z to A"
+      },
+      "empty_filtered_title": "No matching applicants",
+      "empty_no_apps_title": "No applications yet",
+      "empty_filtered_sub": "Try adjusting your filters",
+      "empty_no_apps_sub": "Applications will appear here once candidates apply",
+      "job_picker": {
+        "title": "Filter by Job",
+        "subtitle": "Select a job post to filter applications",
+        "search": "Search job posts…",
+        "all_jobs": "All jobs",
+        "no_match": "No posts match your search",
+        "no_posts": "No job posts found"
+      },
+      "card": {
+        "applied_date": "Applied {{date}}",
+        "completed_date": "· Completed {{date}}"
+      },
+      "actions": {
+        "score_match": "Match",
+        "score_interview": "Interview",
+        "send_invite": "Send Invite",
+        "contact": "Contact",
+        "menu": {
+          "view_profile_title": "View Profile",
+          "view_profile_desc": "Full candidate details",
+          "view_results_title": "View Results",
+          "view_results_desc_done": "Interview assessment",
+          "view_results_desc_pending": "Not completed yet",
+          "download_cv_title": "Download CV",
+          "download_cv_desc_done": "Download PDF resume",
+          "download_cv_desc_none": "No CV uploaded",
+          "contact_title": "Contact Candidate",
+          "contact_desc_none": "No email"
+        }
+      },
+      "contact_modal": {
+        "mode_email_label": "Email",
+        "mode_email_sublabel": "Send via email",
+        "mode_chat_label": "Internal Chat",
+        "mode_chat_sublabel": "Send via platform chat",
+        "success_email_title": "Email sent!",
+        "success_chat_title": "Message sent!",
+        "success_email_body": "Your email was delivered to {{name}}.",
+        "success_chat_body": "{{name}} will see your message in the chat.",
+        "chat_banner": "This message will appear in the platform inbox. {{name}} will be notified immediately.",
+        "subject_placeholder": "Subject",
+        "msg_placeholder_email": "Hi {{firstName}},\n\nWe reviewed your application and…",
+        "msg_placeholder_chat": "Write your message…",
+        "error_empty": "Please write a message.",
+        "error_no_user": "Cannot start chat — missing user info.",
+        "error_conv": "Failed to start conversation. Please try again.",
+        "error_msg": "Failed to send message. Please try again.",
+        "error_email": "Failed to send. Please try again.",
+        "cancel": "Cancel",
+        "sending": "Sending…",
+        "send_email": "Send Email",
+        "send_message": "Send Message"
+      },
+      "assessment_modal": {
+        "subtitle": "Interview Assessment Results",
+        "loading": "Loading assessment…",
+        "not_found": "Assessment not found",
+        "verdict_passed": "Passed",
+        "verdict_review": "In Review",
+        "verdict_needs_work": "Needs Work",
+        "duration": "Duration:",
+        "responses": "Responses:",
+        "tab_scores": "Scores",
+        "tab_coverage": "Coverage",
+        "tab_ai_report": "AI Report",
+        "score_breakdown": "Score Breakdown",
+        "score_overall": "Overall",
+        "score_coverage": "Coverage",
+        "score_communication": "Communication",
+        "score_technical_depth": "Technical Depth",
+        "score_problem_approach": "Problem Approach",
+        "score_learning_ability": "Learning Ability",
+        "strengths": "Strengths",
+        "weak_areas": "Weak Areas",
+        "overall_coverage": "Overall Coverage",
+        "ai_summary_title": "AI Assessment Summary",
+        "recommendations_title": "Recommendations"
+      },
+      "invite_modal": {
+        "title": "Send Interview Invitation",
+        "to_label": "To",
+        "success_title": "Invitation sent!",
+        "success_body": "{{name}} will receive an email with the interview link.",
+        "cancel": "Cancel",
+        "sending": "Sending…",
+        "send": "Send Invitation",
+        "body_pre": "An invitation email will be sent to ",
+        "body_post": " with a direct link to start the interview."
+      },
+      "metrics": {
+        "total_applicants": "Total Applicants",
+        "job_posts": "Job Posts",
+        "avg_cv_score": "Avg CV Score",
+        "top_cv_score": "Top CV Score"
+      }
+    },
+    "settings": {
+      "title": "Settings",
+      "subtitle": "Manage your company profile and API keys",
+      "view_plans": "View Plans",
+      "employees_suffix": "employees",
+      "tabs": {
+        "company_info": "Company Info",
+        "contact": "Contact & Presence",
+        "api_keys": "API Keys",
+        "language": "Language"
+      },
+      "banner": {
+        "edit_profile": "Edit Profile",
+        "cancel": "Cancel",
+        "save": "Save"
+      },
+      "company_info": {
+        "title": "Company Information",
+        "subtitle": "Your company's basic profile details",
+        "name_label": "Company Name",
+        "name_placeholder": "Your company name",
+        "email_label": "Company Email",
+        "email_helper": "Email cannot be changed",
+        "industry_label": "Industry",
+        "industry_placeholder": "e.g. Technology, Finance...",
+        "size_label": "Company Size",
+        "experience_label": "Required Experience Level",
+        "language_label": "Interface Language"
+      },
+      "contact": {
+        "title": "Contact & Presence",
+        "subtitle": "Location, social links, and work preferences",
+        "country_label": "Country / Location",
+        "country_placeholder": "Select country",
+        "employment_label": "Employment Type",
+        "size_label": "Company Size",
+        "linkedin_label": "LinkedIn URL",
+        "website_label": "Company Website"
+      },
+      "experience_levels": {
+        "entry": "Entry Level",
+        "mid": "Mid Level",
+        "senior": "Senior Level",
+        "lead": "Lead",
+        "executive": "Executive"
+      },
+      "employment_types": {
+        "remote": "Remote",
+        "onsite": "On-site",
+        "hybrid": "Hybrid"
+      },
+      "api_keys": {
+        "title": "API Keys",
+        "subtitle": "Manage API keys for external integrations",
+        "new_key": "New API Key",
+        "copy": "Copy",
+        "copied": "Copied!",
+        "banner_title": "API key created — copy it now, it won't be shown again",
+        "no_keys": "No API keys yet",
+        "active": "Active",
+        "disabled_label": "Disabled",
+        "key_preview": "Key: {{preview}}",
+        "rate_limit_label": "Rate limit: {{count}} req/s",
+        "expires_label": "Expires: {{date}}",
+        "last_used_label": "Last used: {{date}}",
+        "ips_all": "All",
+        "ips_label": "IPs: {{ips}}",
+        "toggle_disable": "Disable",
+        "toggle_enable": "Enable",
+        "regenerate_tooltip": "Regenerate key",
+        "edit_tooltip": "Edit",
+        "delete_tooltip": "Delete",
+        "create_title": "Create API Key",
+        "edit_title": "Edit API Key",
+        "delete_title": "Delete API Key",
+        "delete_confirm": "Are you sure you want to delete {{name}}?",
+        "delete_warning": "This action cannot be undone. Any integration using this key will stop working immediately.",
+        "fields": {
+          "key_name": "Key Name",
+          "key_name_placeholder": "e.g. My mobile app",
+          "service_name": "Service Name",
+          "service_placeholder": "e.g. mobile-app",
+          "scopes": "Scopes",
+          "rate_limit": "Rate Limit (req/s)",
+          "expires_at": "Expires At",
+          "ip_whitelist": "IP Whitelist",
+          "ip_all": "All IPs",
+          "ip_custom": "Custom",
+          "ip_placeholder": "192.168.1.1, 10.0.0.0/24",
+          "ip_helper": "Comma-separated IPs or CIDR ranges"
+        },
+        "actions": {
+          "cancel": "Cancel",
+          "create": "Create Key",
+          "save": "Save Changes",
+          "delete": "Delete"
+        },
+        "toast": {
+          "load_error": "Failed to load API keys",
+          "created": "API key created — copy it now!",
+          "create_error": "Failed to create API key",
+          "updated": "API key updated",
+          "update_error": "Failed to update API key",
+          "deleted": "API key deleted",
+          "delete_error": "Failed to delete API key",
+          "toggle_error": "Failed to toggle API key",
+          "key_disabled": "API key disabled",
+          "key_enabled": "API key enabled",
+          "regenerated": "API key regenerated — copy the new key!",
+          "regenerate_error": "Failed to regenerate API key",
+          "copied": "Key copied to clipboard"
+        }
+      },
+      "language": {
+        "title": "Interface Language",
+        "subtitle": "Choose the language used throughout your dashboard",
+        "desc_en": "Use TalentAI in English",
+        "desc_fr": "Use TalentAI in French",
+        "save_hint": "Changes apply immediately and are saved automatically."
+      },
+      "generate_lang": {
+        "title": "AI Generate Language",
+        "subtitle": "Default language for AI-generated job posts. When set, the language picker is skipped automatically.",
+        "always_ask_label": "Always ask",
+        "always_ask_desc": "Show language picker every time",
+        "lang_desc_en": "Always generate in English",
+        "lang_desc_fr": "Always generate in French",
+        "save_hint": "This preference is saved locally on this device. Changes take effect immediately."
+      }
+    }
+  }
+}

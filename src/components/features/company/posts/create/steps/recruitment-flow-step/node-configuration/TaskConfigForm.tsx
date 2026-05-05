@@ -272,7 +272,7 @@ const TaskConfigForm: React.FC<TaskConfigFormProps> = ({
           disabled={!isValid}
           sx={{
             fontFamily: "Poppins", fontWeight: 700, fontSize: "13px", textTransform: "none",
-            bgcolor: "#0D9488", borderRadius: "10px", px: 3, boxShadow: "none",
+            bgcolor: "#0D9488", color: "#fff", borderRadius: "10px", px: 3, boxShadow: "none",
             "&:hover": { bgcolor: "#0F766E", boxShadow: "none" },
             "&.Mui-disabled": { bgcolor: "#E5E7EB", color: "#9CA3AF" },
           }}

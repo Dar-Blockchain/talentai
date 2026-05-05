@@ -1,0 +1,99 @@
+{
+  "title": "Départements",
+  "subtitle": "Définissez et gérez les départements de votre organisation. Structurez les équipes et attribuez les collaborateurs.",
+  "new_department": "Nouveau département",
+
+  "toolbar": {
+    "department_count_one": "{{count}} département",
+    "department_count_other": "{{count}} départements",
+    "search_placeholder": "Rechercher des départements…",
+    "search_placeholder_detail": "Rechercher par nom ou description…"
+  },
+
+  "empty": {
+    "title_filtered": "Aucun département trouvé",
+    "title_none": "Aucun département pour le moment",
+    "hint_filtered": "Aucun département ne correspond à « {{query}} ». Essayez un autre terme.",
+    "hint_none": "Créez votre premier département pour organiser les équipes et attribuer des collaborateurs.",
+    "create_cta": "Créer un département"
+  },
+
+  "card": {
+    "no_description": "Aucune description renseignée.",
+    "menu_edit": "Modifier",
+    "menu_delete": "Supprimer",
+    "view": "Voir"
+  },
+
+  "form": {
+    "name_label": "Nom du département",
+    "name_placeholder": "ex. Ingénierie, Marketing, Ressources humaines…",
+    "name_required": "Saisissez un nom de département.",
+    "description_label": "Description (facultative)",
+    "description_placeholder": "Décrivez brièvement la mission, le périmètre ou les responsabilités de ce département.",
+    "character_count": "{{current}} / 500 caractères max."
+  },
+
+  "errors": {
+    "create_failed": "Impossible de créer le département. Veuillez réessayer.",
+    "update_failed": "Impossible d'enregistrer les modifications. Veuillez réessayer.",
+    "delete_failed": "Impossible de supprimer le département. Veuillez réessayer.",
+    "fetch_list_failed": "Impossible de charger les départements. Veuillez réessayer."
+  },
+
+  "toast": {
+    "created": "Département créé avec succès."
+  },
+
+  "modals": {
+    "create": {
+      "title": "Nouveau département",
+      "cancel": "Annuler",
+      "submit": "Créer le département"
+    },
+    "edit": {
+      "title": "Modifier le département",
+      "cancel": "Annuler",
+      "submit": "Enregistrer les modifications"
+    },
+    "delete": {
+      "title": "Supprimer le département",
+      "subtitle": "Cette action est irréversible.",
+      "confirm_lead": "Vous êtes sur le point de supprimer définitivement",
+      "confirm_trail": ".",
+      "impact_title": "Conséquences",
+      "impact_with_count_one": "Le collaborateur actuellement rattaché à ce département ne sera plus affecté à un département.",
+      "impact_with_count_other": "Les {{count}} collaborateurs actuellement rattachés à ce département ne seront plus affectés à un département.",
+      "impact_generic": "Tout collaborateur actuellement rattaché à ce département ne sera plus affecté à un département.",
+      "cancel": "Annuler",
+      "confirm": "Supprimer le département"
+    }
+  },
+
+  "detail": {
+    "back": "Départements",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "member_count_one": "{{count}} membre",
+    "member_count_other": "{{count}} membres",
+    "created": "Créé le {{date}}",
+    "not_found_title": "Département introuvable",
+    "not_found_subtitle": "Ce département a peut-être été supprimé ou vous n’y avez pas accès.",
+    "loading_short": "…"
+  },
+
+  "members_panel": {
+    "tab_members": "Membres",
+    "tab_invitations": "Invitations",
+    "invite_employee": "Inviter un collaborateur",
+    "empty_members_filtered_title": "Aucun membre ne correspond aux filtres",
+    "empty_members_title": "Aucun membre pour le moment",
+    "empty_members_filtered_hint": "Modifiez votre recherche ou vos filtres.",
+    "empty_members_hint": "Attribuez des collaborateurs à ce département pour les voir apparaître ici.",
+    "empty_invitations_title": "Aucune invitation en attente",
+    "empty_invitations_hint": "Les invitations envoyées pour ce département apparaîtront ici.",
+    "toast_invite_sent": "Invitation envoyée avec succès.",
+    "toast_invite_resent": "Invitation renvoyée.",
+    "toast_invite_cancelled": "Invitation annulée."
+  }
+}

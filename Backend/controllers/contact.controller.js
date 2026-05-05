@@ -28,7 +28,7 @@ class ContactController {
    */
   static async submitContactForm(req, res) {
     try {
-      const { name, email, company, teamSize, message } = req.body;
+      const { name, email, company, teamSize, message, plan } = req.body;
 
       // Send contact email via service
       const result = await ContactService.sendContactEmail({
@@ -36,7 +36,7 @@ class ContactController {
         email,
         company,
         teamSize,
-        message,
+        message: plan ? `[Plan: ${plan}]\n${message || ""}` : message,
       });
 
       // Log submission asynchronously (don't wait)

@@ -1,4 +1,4 @@
-import React, { useEffect, memo, useState, useCallback } from "react";
+import React, { useEffect, memo, useState, useCallback, useMemo } from "react";
 import {
   Box, TextField, InputAdornment, MenuItem, Select, FormControl,
   Button, Typography, Chip,
@@ -26,37 +26,50 @@ import {
   setPage,
 } from "@/store/slices/campaignSlice";
 import Pagination from "@/components/ui/Pagination";
-import CampaignOutlined   from "@mui/icons-material/CampaignOutlined";
 import SearchOutlined     from "@mui/icons-material/SearchOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import CloseOutlined      from "@mui/icons-material/CloseOutlined";
 import EmptyState  from "@/components/ui/EmptyState";
-import AppButton   from "@/components/ui/AppButton";
-import AddOutlined from "@mui/icons-material/AddOutlined";
+import CampaignOutlined   from "@mui/icons-material/CampaignOutlined";
+import { useTranslation } from "react-i18next";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+type StatusOpt = { value: string; label: string; color: string; bg: string };
 
-const STATUS_OPTIONS: { value: string; label: string; color: string; bg: string }[] = [
-  { value: "",        label: "All statuses", color: "#6B7280", bg: "#F3F4F6" },
-  { value: "DRAFT",   label: "Draft",        color: "#6B7280", bg: "#F3F4F6" },
-  { value: "ACTIVE",  label: "Active",       color: "#059669", bg: "#ECFDF5" },
-  { value: "PAUSED",  label: "Paused",       color: "#D97706", bg: "#FFFBEB" },
-  { value: "CLOSED",  label: "Closed",       color: "#DC2626", bg: "#FEF2F2" },
-  { value: "EXPIRED", label: "Expired",      color: "#7C3AED", bg: "#F5F3FF" },
+const STATUS_META: Omit<StatusOpt, "label">[] = [
+  { value: "",        color: "#6B7280", bg: "#F3F4F6" },
+  { value: "DRAFT",   color: "#6B7280", bg: "#F3F4F6" },
+  { value: "ACTIVE",  color: "#059669", bg: "#ECFDF5" },
+  { value: "PAUSED",  color: "#D97706", bg: "#FFFBEB" },
+  { value: "CLOSED",  color: "#DC2626", bg: "#FEF2F2" },
+  { value: "EXPIRED", color: "#7C3AED", bg: "#F5F3FF" },
 ];
 
-const PERIOD_OPTIONS = [
-  { value: "",    label: "All time"       },
-  { value: "7d",  label: "Last 7 days"   },
-  { value: "30d", label: "Last 30 days"  },
-  { value: "3m",  label: "Last 3 months" },
-  { value: "6m",  label: "Last 6 months" },
-  { value: "1y",  label: "Last year"     },
-];
-
-// ─── Component ────────────────────────────────────────────────────────────────
+const PERIOD_VALUES = ["", "7d", "30d", "3m", "6m", "1y"] as const;
 
 const CampaignsGrid: React.FC = () => {
+  const { t } = useTranslation("dashboard");
+  const p = "pages.campaigns";
+
+  const STATUS_OPTIONS: StatusOpt[] = useMemo(
+    () =>
+      STATUS_META.map((o) => ({
+        ...o,
+        label: o.value === ""
+          ? t(`${p}.toolbar.status.all`)
+          : t(`${p}.toolbar.status.${o.value}`),
+      })),
+    [t],
+  );
+
+  const PERIOD_OPTIONS = useMemo(
+    () =>
+      PERIOD_VALUES.map((value) => ({
+        value,
+        label: value === "" ? t(`${p}.toolbar.period.all`) : t(`${p}.toolbar.period.${value}`),
+      })),
+    [t],
+  );
+
   const dispatch = useDispatch<AppDispatch>();
   const campaigns     = useSelector(selectCampaigns);
   const loading       = useSelector(selectCampaignLoading);
@@ -68,7 +81,7 @@ const CampaignsGrid: React.FC = () => {
   const user     = useSelector((state: RootState) => state.user.connectedUser.user);
   const empPerms = useSelector(selectEmployeePermissions);
   const isEmp    = user?.role === "Employee";
-  const canEdit    = !isEmp || empPerms === null || !!empPerms.canEditCampaign;
+  const canEdit    = !isEmp || empPerms === null || !!empPerms.canEditCampaign || !!empPerms.canCreateCampaign;
   const canDelete  = !isEmp || !!empPerms?.canDeleteCampaign;
   const canPublish = !isEmp || !!empPerms?.canPublishCampaign;
 
@@ -77,13 +90,13 @@ const CampaignsGrid: React.FC = () => {
   const [status,      setStatus]      = useState("");
   const [period,      setPeriod]      = useState("");
 
-  const doFetch = useCallback((overrides: Record<string, any> = {}) => {
+  const doFetch = useCallback((overrides: Partial<{ search: string; status: string; period: string }> = {}) => {
     dispatch(fetchCampaigns({
       page,
       limit,
-      search: overrides.search  ?? search,
+      search: overrides.search ?? search,
       status: (overrides.status ?? status) as CampaignStatus | undefined,
-      period: overrides.period  ?? period,
+      period: overrides.period ?? period,
     }));
   }, [dispatch, page, limit, search, status, period]);
 
@@ -92,12 +105,12 @@ const CampaignsGrid: React.FC = () => {
 
   // debounce search
   useEffect(() => {
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       setSearch(searchInput);
       dispatch(setPage(1));
       dispatch(fetchCampaigns({ page: 1, limit, search: searchInput, status: status as CampaignStatus | undefined, period }));
     }, 400);
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   }, [searchInput]);
 
   const handleStatusChange = (val: string) => {
@@ -142,7 +155,7 @@ const CampaignsGrid: React.FC = () => {
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
-  const activeStatusMeta = STATUS_OPTIONS.find(o => o.value === status);
+  const activeStatusMeta = STATUS_OPTIONS.find((o) => o.value === status);
 
   return (
     <>
@@ -152,7 +165,7 @@ const CampaignsGrid: React.FC = () => {
         {/* Search */}
         <TextField
           size="small"
-          placeholder="Search campaigns…"
+          placeholder={t(`${p}.toolbar.search_placeholder`)}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           InputProps={{
@@ -175,21 +188,21 @@ const CampaignsGrid: React.FC = () => {
             onChange={(e) => handleStatusChange(e.target.value)}
             displayEmpty
             renderValue={(v) => {
-              const opt = STATUS_OPTIONS.find(o => o.value === v);
+              const opt = STATUS_OPTIONS.find((o) => o.value === v);
               return (
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   {v ? (
                     <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: opt?.color, flexShrink: 0 }} />
                   ) : null}
                   <Typography sx={{ fontSize: 13, color: v ? "#111827" : "#9CA3AF" }}>
-                    {opt?.label ?? "Status"}
+                    {opt?.label ?? t(`${p}.toolbar.status_placeholder`)}
                   </Typography>
                 </Box>
               );
             }}
             sx={{ borderRadius: 2, bgcolor: "#fff", fontSize: 13 }}
           >
-            {STATUS_OPTIONS.map(o => (
+            {STATUS_OPTIONS.map((o) => (
               <MenuItem key={o.value} value={o.value}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                   {o.value && <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: o.color, flexShrink: 0 }} />}
@@ -210,13 +223,13 @@ const CampaignsGrid: React.FC = () => {
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <CalendarTodayOutlined sx={{ fontSize: 14, color: "#9CA3AF" }} />
                 <Typography sx={{ fontSize: 13, color: v ? "#111827" : "#9CA3AF" }}>
-                  {PERIOD_OPTIONS.find(o => o.value === v)?.label ?? "Period"}
+                  {PERIOD_OPTIONS.find((o) => o.value === v)?.label ?? t(`${p}.toolbar.period_placeholder`)}
                 </Typography>
               </Box>
             )}
             sx={{ borderRadius: 2, bgcolor: "#fff", fontSize: 13 }}
           >
-            {PERIOD_OPTIONS.map(o => (
+            {PERIOD_OPTIONS.map((o) => (
               <MenuItem key={o.value} value={o.value} sx={{ fontSize: 13 }}>{o.label}</MenuItem>
             ))}
           </Select>
@@ -234,7 +247,7 @@ const CampaignsGrid: React.FC = () => {
               px: 1.5, whiteSpace: "nowrap",
             }}
           >
-            Clear
+            {t(`${p}.toolbar.clear_filters`)}
           </Button>
         )}
       </Box>
@@ -251,7 +264,7 @@ const CampaignsGrid: React.FC = () => {
               sx={{ fontSize: 11, bgcolor: activeStatusMeta.bg, color: activeStatusMeta.color, border: "none" }} />
           )}
           {period && (
-            <Chip size="small" label={PERIOD_OPTIONS.find(o => o.value === period)?.label} onDelete={() => handlePeriodChange("")}
+            <Chip size="small" label={PERIOD_OPTIONS.find((o) => o.value === period)?.label} onDelete={() => handlePeriodChange("")}
               sx={{ fontSize: 11, bgcolor: "#F5F3FF", color: "#7C3AED", border: "none" }} />
           )}
         </Box>
@@ -263,8 +276,8 @@ const CampaignsGrid: React.FC = () => {
       ) : campaigns.length === 0 ? (
         <EmptyState
           icon={<CampaignOutlined />}
-          title={hasActiveFilters ? "No campaigns match your filters" : "No campaigns yet"}
-          description={hasActiveFilters ? "Try adjusting your search or filters." : "Create your first assessment campaign to start measuring your team's skills."}
+          title={hasActiveFilters ? t(`${p}.empty.filtered_title`) : t(`${p}.empty.none_title`)}
+          description={hasActiveFilters ? t(`${p}.empty.filtered_hint`) : t(`${p}.empty.none_hint`)}
         />
       ) : (
         <Box sx={{
@@ -291,7 +304,7 @@ const CampaignsGrid: React.FC = () => {
       )}
 
       {count > 0 && (
-        <Pagination page={page} pageSize={limit} total={count} onPageChange={(p) => dispatch(setPage(p))} />
+        <Pagination page={page} pageSize={limit} total={count} onPageChange={(pag) => dispatch(setPage(pag))} />
       )}
 
       <DeleteCampaignDialog

@@ -34,6 +34,13 @@ const paymentSchema = new mongoose.Schema(
       description: "Amount paid in USD",
     },
 
+    // ========== SUBSCRIPTION REFERENCE ==========
+    subscriptionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Subscription",
+      description: "Reference to the subscription created from this payment",
+    },
+
     // ========== STRIPE INFO ==========
     stripeSessionId: {
       type: String,
@@ -105,21 +112,22 @@ paymentSchema.index({ planId: 1 });
 paymentSchema.index({ stripeSessionId: 1 });
 paymentSchema.index({ createdAt: -1 });
 
-// Post-save hook to automatically link payment to profile and update planLimits
+// Post-save hook to automatically create subscription and link payment to profile
 paymentSchema.post("save", async function (doc) {
   try {
-    // Use 'this' to ensure we have the most recent data
     const payment = this;
-    
+
     console.log(`📌 [Payment Post-Save Hook] Payment ${payment._id} saved with status: ${payment.status}`);
-    console.log(`📌 [Payment Post-Save Hook] companyProfileId: ${payment.companyProfileId}, planId: ${payment.planId}`);
+    console.log(
+      `📌 [Payment Post-Save Hook] companyProfileId: ${payment.companyProfileId}, planId: ${payment.planId}`
+    );
 
     if (payment.companyProfileId) {
       const Profile = require("./Profile.model");
       const profile = await Profile.findById(payment.companyProfileId);
-      
-      console.log(`📌 [Payment Post-Save Hook] Profile found: ${profile ? 'Yes' : 'No'}`);
-      
+
+      console.log(`📌 [Payment Post-Save Hook] Profile found: ${profile ? "Yes" : "No"}`);
+
       if (profile) {
         let updated = false;
 
@@ -127,18 +135,63 @@ paymentSchema.post("save", async function (doc) {
         if (!profile.payments) {
           profile.payments = [];
         }
-        
+
         if (!profile.payments.includes(payment._id)) {
           profile.payments.push(payment._id);
           updated = true;
           console.log(`✅ Payment ${payment._id} linked to profile ${payment.companyProfileId}`);
         }
 
-        // ✅ Update planLimits when payment is completed
-        if (payment.status === "completed" && payment.planId) {
-          profile.planLimits = payment.planId;
-          updated = true;
-          console.log(`✅ Profile planLimits updated with plan ${payment.planId} for payment ${payment._id}`);
+        // ✅ CREATE SUBSCRIPTION when payment is completed
+        if (payment.status === "completed" && payment.planId && !payment.subscriptionId) {
+          try {
+            const Subscription = require("./Subscription.model");
+            const PlanLimits = require("./PlanLimits.model");
+
+            const plan = await PlanLimits.findById(payment.planId);
+            if (!plan) {
+              throw new Error("Plan not found");
+            }
+
+            const startDate = new Date();
+            const endDate = new Date();
+            endDate.setDate(endDate.getDate() + (plan.durationDays || 30));
+
+            // Create subscription
+            const subscription = await Subscription.create({
+              companyProfileId: payment.companyProfileId,
+              planId: payment.planId,
+              paymentId: payment._id,
+              startDate,
+              endDate,
+              status: "active",
+              autoRenew: true,
+            });
+
+            // Update payment with subscription reference
+            payment.subscriptionId = subscription._id;
+            await payment.save({ validateBeforeSave: false });
+
+            console.log(
+              `✅ Subscription ${subscription._id} created from payment ${payment._id}`
+            );
+
+            // Update profile with new subscription
+            if (!profile.subscriptions) {
+              profile.subscriptions = [];
+            }
+            profile.subscriptions.push(subscription._id);
+            profile.activeSubscription = subscription._id;
+            profile.planLimits = payment.planId; // Keep for backward compatibility
+            updated = true;
+
+            console.log(`✅ Profile updated with new subscription ${subscription._id}`);
+          } catch (subscriptionError) {
+            console.error(
+              `⚠️ Warning: Error creating subscription from payment: ${subscriptionError.message}`
+            );
+            // Continue - payment is already saved
+          }
         }
 
         // Save profile only if something changed

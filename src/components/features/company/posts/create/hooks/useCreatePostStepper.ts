@@ -31,7 +31,8 @@ export const useCreatePostStepper = (
   recruitmentFlow: any,
   savedPost: any,
   creationType: "ai" | "manual",
-  manualPost: any
+  manualPost: any,
+  interviewLanguages: string[]
 ) => {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
@@ -59,9 +60,10 @@ export const useCreatePostStepper = (
       : validateManualPostStep0(manualPost, showToast);
   };
 
-  const saveOrUpdatePost = async () => {
+  const saveOrUpdatePost = async (languagesOverride?: string[]) => {
     const jobId = savedPost?.jobData?._id;
-    const jobData = creationType === "ai" ? generatedPost : manualPost;
+    const base = creationType === "ai" ? generatedPost : manualPost;
+    const jobData = { ...base, interviewLanguages: languagesOverride ?? interviewLanguages };
 
     if (jobId) {
       return dispatch(updatePost({ jobId, jobData })).unwrap();
@@ -124,14 +126,9 @@ export const useCreatePostStepper = (
       ).unwrap();
 
 
-      // Directly publish and redirect (free during beta, no payment modal needed)
-      await dispatch(
-        updatePostStatus({ postId: savedPost.jobData._id, status: "open" })
-      ).unwrap();
-
       router.push("/company/posts");
       showToast({
-        message: "Job post created successfully.",
+        message: "Job post saved as draft.",
         severity: "success",
       });
     } catch (error) {
@@ -152,15 +149,9 @@ export const useCreatePostStepper = (
     try {
 
       if (creationType === "ai") {
-        await dispatch(
-          updatePostStatus({ postId: resolvedPostId, status: "open" })
-        ).unwrap();
-      }
-
-      if (creationType === "ai") {
         router.push("/company/posts");
         showToast({
-          message: "Job post created successfully.",
+          message: "Job post saved as draft.",
           severity: "success",
         });
         return;
@@ -176,7 +167,7 @@ export const useCreatePostStepper = (
 
   /* -------------------- Actions -------------------- */
 
-  const handleNext = async (shouldContinue?: boolean) => {
+  const handleNext = async (shouldContinue?: boolean, languagesOverride?: string[]) => {
     /* ---------- STEP 0: Job Details ---------- */
     if (activeStep === 0 && !shouldContinue) {
       if (!validateStep0()) return;
@@ -187,7 +178,7 @@ export const useCreatePostStepper = (
 
       setIsFinishing(true);
       try {
-        const result = await saveOrUpdatePost();
+        const result = await saveOrUpdatePost(languagesOverride);
 
         if (creationType === "ai") {
           await finalizeCreation(result.jobData._id);
@@ -227,7 +218,7 @@ export const useCreatePostStepper = (
 
   const handleBack = () => {
     if (activeStep === 0) {
-      dispatch(setCreationType(null));
+      router.push("/company/posts");
       return;
     }
     setActiveStep((prev) => Math.max(prev - 1, 0));

@@ -1,41 +1,49 @@
-const getDetailedPrompt = (description, companyLocation) =>
-  `
-    As an expert technical recruiter and AI assistant, analyze this job description and generate a JSON object with only the following structure:
-    1. Create a professional job post
-    2. Extract and suggest relevant skills
-    3. Format it for LinkedIn
-    4. Provide comprehensive skill analysis
+const getDetailedPrompt = (description, companyLocation, language = "en") => {
+  const languageInstructions = language === "fr" 
+    ? `Vous devez générer TOUT le contenu en FRANÇAIS (y compris les titres, descriptions, exigences, responsabilités, compétences et le post LinkedIn). Assurez-vous que chaque champ de texte est en français correctement formé.`
+    : `Generate ALL content in ENGLISH (including titles, descriptions, requirements, responsibilities, skills, and LinkedIn post). Ensure all text fields are in proper English.`;
 
-    IMPORTANT:
-    - Extract the exact salary range (min, max, currency) as specified in the job description. Do not estimate or change these values.
-    - For the "location" field, extract the location from the job description if specified.
-    - If no location is specified in the job description, use the company location: "${companyLocation}".
-    - Always include "location" in the output.
-    - **CRITICAL: The sum of all percentages in requiredSkills + softSkills must equal EXACTLY 100%**
-    - If the job description explicitly mentions language (for example: English, French, Spanish), INCLUDE THAT LANGUAGE as the single soft skill. Assign the language a suitable "percentage" and "level".
-    - If no language is mentioned, generate one relevant soft skill as usual (e.g., Problem solving, Communication, Teamwork, Leadership, Adaptability, Time management) .
+  return `
+As an expert technical recruiter and AI assistant, analyze this job description and generate a JSON object with only the following structure:
 
-    - Set skill level based on years of experience mentioned in the job post:
-      - 1 year = level 1
-      - 2 years = level 2
-      - 5 years = level 3
-      - 10 years = level 4
-      - 15+ years = level 5
+${languageInstructions}
 
-    - Each skill in "requiredSkills" must include a "percentage" field representing its importance weight in the job.
-    - Only one soft skill must be generated.
-     - If no clear priorities are specified, distribute the percentages evenly and logically among all required skills.
-    - Core and frequently mentioned skills should receive higher percentages.
+1. Create a professional job post
+2. Extract and suggest relevant skills
+3. Format it for LinkedIn
+4. Provide comprehensive skill analysis
 
-    Job Description:
-    ${description}
+IMPORTANT:
+${languageInstructions}
+- Extract the exact salary range (min, max, currency) as specified in the job description. Do not estimate or change these values.
+- For the "location" field, extract the location from the job description if specified.
+- If no location is specified in the job description, use the company location: "${companyLocation}".
+- Always include "location" in the output.
+- **CRITICAL: The sum of all percentages in requiredSkills + softSkills must equal EXACTLY 100%**
+- If the job description explicitly mentions language (for example: English, French, Spanish), INCLUDE THAT LANGUAGE as the single soft skill. Assign the language a suitable "percentage" and "level".
+- If no language is mentioned, generate one relevant soft skill as usual (e.g., Problem solving, Communication, Teamwork, Leadership, Adaptability, Time management).
 
-    Return the response in the following JSON format:
+- Set skill level based on years of experience mentioned in the job post:
+  - 1 year = level 1
+  - 2 years = level 2
+  - 5 years = level 3
+  - 10 years = level 4
+  - 15+ years = level 5
 
-    {
-      "jobDetails": {
-        "title": "Job title",
-        "description": "A concise, professional summary of the role (2-4 sentences). Must clearly state what the role is about, the team/product context, and the impact the hire will have. Do NOT repeat requirements or responsibilities here.",
+- Each skill in "requiredSkills" must include a "percentage" field representing its importance weight in the job.
+- Only one soft skill must be generated.
+- If no clear priorities are specified, distribute the percentages evenly and logically among all required skills.
+- Core and frequently mentioned skills should receive higher percentages.
+
+Job Description:
+${description}
+
+Return the response in the following JSON format:
+
+{
+  "jobDetails": {
+    "title": "Job title",
+    "description": "A concise, professional summary of the role (2-4 sentences). Must clearly state what the role is about, the team/product context, and the impact the hire will have. Do NOT repeat requirements or responsibilities here.",
         "requirements": ["Each requirement must be specific, measurable, and directly relevant to the role. Use concrete technologies, years of experience, degrees, or certifications. Avoid vague terms like 'good knowledge of' or 'familiarity with'. Example: '3+ years of production experience with React.js and TypeScript' instead of 'Experience with frontend frameworks'."],
         "responsibilities": ["Each responsibility must describe a concrete, actionable task the candidate will perform daily or regularly. Use strong action verbs (design, implement, optimize, lead, build, deploy, review, mentor). Avoid generic filler like 'Work with the team' or 'Participate in meetings'. Example: 'Design and implement RESTful APIs serving 10K+ requests/min using Node.js and Express' instead of 'Develop backend services'."],
         "location": "Job location",
@@ -49,83 +57,82 @@ const getDetailedPrompt = (description, companyLocation) =>
         }
       },
       "skillAnalysis": {
-       "requiredSkills": [
+      "requiredSkills": [
+        {
+          "name": "Skill 1",
+          "level": "Required level (1-5) based on years of experience",
+          "category": "Frontend/Backend/DevOps/etc.",
+          "percentage": 0
+        }
+      ],
+      "softSkills": [
+        {
+          "name": "Soft Skill 1",
+          "level": "Required level (1-5) based on needs",
+          "percentage": 0
+        }
+      ],
+      "suggestedSkills": {
+        "technical": [
           {
-            "name": "Skill 1",
-            "level": "Required level (1-5) based on years of experience",
+            "name": "Skill name",
+            "reason": "Why this skill is relevant",
             "category": "Frontend/Backend/DevOps/etc.",
-            "percentage": 0
+            "priority": "Senior/Mid_Level/Junior"
           }
-          // Optionally include 1 or 2 more skills if relevant to the job (max total 3)
         ],
-        "softSkills": [
+        "frameworks": [
           {
-            "name": "Soft Skill 1",
-            "level": "Required level (1-5) based on needs",
-            "percentage": 0
-          },
+            "name": "Framework name",
+            "relatedTo": "Related technology",
+            "priority": "Senior/Mid_Level/Junior"
+          }
         ],
-
-        "suggestedSkills": {
-          "technical": [
-            {
-              "name": "Skill name",
-              "reason": "Why this skill is relevant",
-              "category": "Frontend/Backend/DevOps/etc.",
-              "priority": "Senior/Mid_Level/Junior"
-            }
-          ],
-          "frameworks": [
-            {
-              "name": "Framework name",
-              "relatedTo": "Related technology",
-              "priority": "Senior/Mid_Level/Junior"
-            }
-          ],
-          "tools": [
-            {
-              "name": "Tool name",
-              "purpose": "What it's used for",
-              "category": "Version Control/CI-CD/Testing/etc."
-            }
-          ]
-        },
-        "skillSummary": {
-          "mainTechnologies": ["Core technologies required"],
-          "complementarySkills": ["Skills that would add value"],
-          "learningPath": ["Suggested skills to learn"],
-          "stackComplexity": "Simple/Moderate/Complex"
+        "tools": [
+          {
+            "name": "Tool name",
+            "purpose": "What it's used for",
+            "category": "Version Control/CI-CD/Testing/etc."
+          }
+        ]
+      },
+      "skillSummary": {
+        "mainTechnologies": ["Core technologies required"],
+        "complementarySkills": ["Skills that would add value"],
+        "learningPath": ["Suggested skills to learn"],
+        "stackComplexity": "Simple/Moderate/Complex"
+      }
+    },
+    "linkedinPost": {
+      "formattedContent": {
+        "headline": "Attention-grabbing headline",
+        "introduction": "Engaging opening paragraph",
+        "companyPitch": "Brief compelling pitch",
+        "roleOverview": "Clear role description",
+        "keyPoints": ["Bullet points of key aspects"],
+        "skillsRequired": "Formatted skills section",
+        "benefitsSection": "What we offer",
+        "callToAction": "Engaging call to action"
+      },
+      "hashtags": ["Relevant", "Hashtags"],
+      "formatting": {
+        "emojis": {
+          "company": "🏢",
+          "location": "📍",
+          "salary": "💰",
+          "requirements": "📋",
+          "skills": "💻",
+          "benefits": "🎯",
+          "apply": "✨"
         }
       },
-      "linkedinPost": {
-        "formattedContent": {
-          "headline": "Attention-grabbing headline",
-          "introduction": "Engaging opening paragraph",
-          "companyPitch": "Brief compelling pitch",
-          "roleOverview": "Clear role description",
-          "keyPoints": ["Bullet points of key aspects"],
-          "skillsRequired": "Formatted skills section",
-          "benefitsSection": "What we offer",
-          "callToAction": "Engaging call to action"
-        },
-        "hashtags": ["Relevant", "Hashtags"],
-        "formatting": {
-          "emojis": {
-            "company": "🏢",
-            "location": "📍",
-            "salary": "💰",
-            "requirements": "📋",
-            "skills": "💻",
-            "benefits": "🎯",
-            "apply": "✨"
-          }
-        },
-        "finalPost": "The complete formatted post ready for LinkedIn"
-      }
+      "finalPost": "The complete formatted post ready for LinkedIn"
     }
+  }
+}
 
-    STRICT SKILL RULES:
-    - REQUIRED: Generate 1 to 3 skills in "requiredSkills" based on the actual requirements of the job description. Include only relevant and technical skills.
+STRICT SKILL RULES:
+- REQUIRED: Generate 1 to 3 skills in "requiredSkills" based on the actual requirements of the job description. Include only relevant and technical skills.
     - NEVER generate general or non-technical skills such as “Web Development”, “Software Engineering”, “Programming”, or “Full Stack”.
     - Skills MUST ALWAYS be specific and technical (e.g., React.js, Next.js, Node.js, Express.js, NestJS, MongoDB, PostgreSQL, REST APIs, HTML/CSS, TypeScript, Docker, AWS, Redis, CI/CD, PHPUnit, Laravel, Symfony).
     - The total percentage of requiredSkills and softSkills combined must equal 100%.
@@ -164,36 +171,11 @@ const getDetailedPrompt = (description, companyLocation) =>
     - The soft skill must include a "percentage" field.
     - Never use vague or irrelevant soft skills.
 
-    Before generating the job details, include the following matching configuration exactly as structured:
-
-    "matchingConfig": {
-    "weights": {
-    "hardSkill": "DYNAMIC based on job description, very close to 'experience' weight",
-    "experience": "DYNAMIC based on job description, very close to 'hardSkill' weight",
-    "SoftSkill": "DYNAMIC based on job description, can be higher or lower than hardSkill/experience depending on job requirements",
-    "salary": "DYNAMIC based on job description, max 10",
-    "workMode": "DYNAMIC based on job description, max 10",
-    "contract": "DYNAMIC based on job description, max 10"
-      },
-
-      "exchangeRates": {
-        "USD": 1,
-        "EUR": 1.1,
-        "TND": 0.32
-      }
-    },
-
-    - The "weights" for "hardSkill" and "experience" must be dynamically adjusted but **always very close in value**, as both are crucial for technical projects.
-    - "SoftSkill" weight should be dynamically adjusted but always smaller than "hardSkill" and "experience".
-    - "salary", "workMode", and "contract" must also be dynamically determined but **always very low compared to the others**.
-    - The total sum of all weights must always equal 100%.
-    - Return only the defined JSON fields; do NOT add any extra fields.
-
-    The "exchangeRates" values must reflect today's real exchange rates.
-
     CRITICAL: Return ONLY the raw JSON object. Do NOT include any explanation, reasoning, or text before or after the JSON.
 `.trim();
+};
 
 module.exports = {
   getDetailedPrompt,
+  generatePrompt: getDetailedPrompt,
 };

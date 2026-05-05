@@ -15,7 +15,9 @@ import {
   selectDepartments,
   selectDepartmentsLoading,
 } from '@/store/slices/departmentSlice';
+import { useTranslation } from "react-i18next";
 import { ROLES } from '@/constants/employee';
+import { getRoleDescription, getRoleLabel, roleMatchesSearch } from '@/utils/employeeRoleI18n';
 
 interface AddEmployeeModalProps {
   open: boolean;
@@ -24,12 +26,12 @@ interface AddEmployeeModalProps {
   defaultDepartmentId?: string;
 }
 
-
-
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PURPLE = '#8310FF';
 
 const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, onClose, onSave, defaultDepartmentId }) => {
+  const { t } = useTranslation("dashboard");
+  const m = (key: string, opts?: { [k: string]: string }) => t(`pages.employees.modals.add.${key}`, opts);
   const dispatch = useDispatch<AppDispatch>();
   const departments       = useSelector(selectDepartments);
   const departmentsLoading = useSelector(selectDepartmentsLoading);
@@ -67,6 +69,11 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, on
 
   const handleClose = useCallback(() => { if (!loading) onClose(); }, [loading, onClose]);
 
+  const filteredRolesForSearch = useMemo(() => {
+    const q = roleSearch.trim().toLowerCase();
+    return ROLES.filter((r) => roleMatchesSearch(r.value, q, t));
+  }, [roleSearch, t]);
+
   return (
     <Dialog
       open={open}
@@ -101,10 +108,10 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, on
             </Box>
             <Box>
               <Typography sx={{ fontWeight: 700, fontSize: '1rem', color: '#111827', lineHeight: 1.2 }}>
-                Add Employee
+                {m('title')}
               </Typography>
               <Typography sx={{ fontSize: '0.775rem', color: '#9CA3AF', mt: 0.25 }}>
-                Send an invitation to your workspace
+                {m('subtitle')}
               </Typography>
             </Box>
           </Box>
@@ -121,11 +128,11 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, on
           {/* Email */}
           <Box>
             <Typography sx={{ mb: 1, fontWeight: 600, fontSize: '0.8rem', color: '#374151' }}>
-              Email Address
+              {m('email_label')}
             </Typography>
             <TextField
               fullWidth size="small" type="email"
-              placeholder="colleague@company.com"
+              placeholder={m('email_placeholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
@@ -139,16 +146,16 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, on
               }}
             />
             <Typography sx={{ fontSize: '0.72rem', color: '#9CA3AF', mt: 0.75 }}>
-              They'll receive an email invitation to join your team.
+              {m('email_helper')}
             </Typography>
           </Box>
 
           {/* Department (optional) */}
           <Box>
             <Typography sx={{ mb: 1, fontWeight: 600, fontSize: '0.8rem', color: '#374151' }}>
-              Department{' '}
+              {m('department_label')}{' '}
               {!defaultDepartmentId && (
-                <Typography component="span" sx={{ fontWeight: 400, color: '#9CA3AF', fontSize: '0.75rem' }}>(optional)</Typography>
+                <Typography component="span" sx={{ fontWeight: 400, color: '#9CA3AF', fontSize: '0.75rem' }}>{m('optional')}</Typography>
               )}
             </Typography>
             <FormControl fullWidth size="small">
@@ -169,7 +176,7 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, on
                 }}
               >
                 <MenuItem value="">
-                  <Typography sx={{ color: '#9CA3AF', fontSize: '0.875rem' }}>No department</Typography>
+                  <Typography sx={{ color: '#9CA3AF', fontSize: '0.875rem' }}>{m('no_department')}</Typography>
                 </MenuItem>
                 {departments.map((d) => (
                   <MenuItem key={d._id} value={d._id}>
@@ -183,7 +190,7 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, on
           {/* Role — searchable Select */}
           <Box>
             <Typography sx={{ mb: 1, fontWeight: 600, fontSize: '0.8rem', color: '#374151' }}>
-              Select Role
+              {m('select_role')}
             </Typography>
             <FormControl fullWidth size="small">
               <Select
@@ -213,10 +220,10 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, on
                         <Icon />
                       </Box>
                       <Typography sx={{ fontWeight: 600, fontSize: '0.875rem', color: '#111827' }}>
-                        {r.label}
+                        {getRoleLabel(r.value, t)}
                       </Typography>
                       <Typography sx={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                        — {r.description}
+                        — {getRoleDescription(r.value, t)}
                       </Typography>
                     </Box>
                   );
@@ -243,7 +250,7 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, on
                 >
                   <TextField
                     size="small" fullWidth autoFocus
-                    placeholder="Search roles…"
+                    placeholder={m('search_roles')}
                     value={roleSearch}
                     onChange={(e) => setRoleSearch(e.target.value)}
                     onKeyDown={(e) => e.stopPropagation()}
@@ -266,10 +273,7 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, on
                 </MenuItem>
 
                 {/* Filtered role list */}
-                {ROLES.filter((r) => {
-                  const q = roleSearch.trim().toLowerCase();
-                  return !q || r.label.toLowerCase().includes(q) || r.description.toLowerCase().includes(q);
-                }).map((r) => {
+                {filteredRolesForSearch.map((r) => {
                   const Icon = r.icon;
                   return (
                     <MenuItem key={r.value} value={r.value} sx={{ py: 1.25, px: 2 }}>
@@ -285,10 +289,10 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, on
                         </Box>
                         <Box>
                           <Typography sx={{ fontWeight: 700, fontSize: '0.875rem', color: '#111827', lineHeight: 1.2 }}>
-                            {r.label}
+                            {getRoleLabel(r.value, t)}
                           </Typography>
                           <Typography sx={{ fontSize: '0.72rem', color: '#6b7280' }}>
-                            {r.description}
+                            {getRoleDescription(r.value, t)}
                           </Typography>
                         </Box>
                       </Box>
@@ -297,12 +301,9 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, on
                 })}
 
                 {/* Empty state */}
-                {ROLES.filter((r) => {
-                  const q = roleSearch.trim().toLowerCase();
-                  return !q || r.label.toLowerCase().includes(q) || r.description.toLowerCase().includes(q);
-                }).length === 0 && (
+                {filteredRolesForSearch.length === 0 && (
                   <MenuItem disabled sx={{ py: 2, justifyContent: 'center' }}>
-                    <Typography sx={{ fontSize: '0.8rem', color: '#9CA3AF' }}>No roles match "{roleSearch}"</Typography>
+                    <Typography sx={{ fontSize: '0.8rem', color: '#9CA3AF' }}>{m('no_roles_match', { term: roleSearch })}</Typography>
                   </MenuItem>
                 )}
               </Select>
@@ -316,7 +317,7 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, on
           onClick={handleClose} disabled={loading}
           sx={{ textTransform: 'none', fontWeight: 600, color: '#6B7280', borderRadius: 2, px: 3, '&:hover': { bgcolor: '#F3F4F6' } }}
         >
-          Cancel
+          {m('cancel')}
         </Button>
         <Button
           onClick={handleSave} disabled={loading || !isFormValid} variant="contained"
@@ -330,8 +331,8 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, on
           }}
         >
           {loading
-            ? <><CircularProgress size={15} sx={{ mr: 1, color: '#fff' }} />Sending…</>
-            : 'Send Invitation'}
+            ? <><CircularProgress size={15} sx={{ mr: 1, color: '#fff' }} />{m('sending')}</>
+            : m('send_invitation')}
         </Button>
       </DialogActions>
     </Dialog>

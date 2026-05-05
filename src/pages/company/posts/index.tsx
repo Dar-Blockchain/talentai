@@ -9,9 +9,17 @@ import {
   InputBase,
   ListSubheader,
   Divider,
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
+import PublishOutlined from "@mui/icons-material/PublishOutlined";
+import WarningAmberOutlined from "@mui/icons-material/WarningAmberOutlined";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/router";
+import { useTranslation } from "react-i18next";
 import { AppDispatch } from "@/store/store";
 import {
   fetchMyPosts,
@@ -19,9 +27,15 @@ import {
   selectMyPostsLoading,
   selectMyPostsError,
   selectMyPostsPagination,
+  updatePostStatus,
 } from "@/store/slices/postSlice";
+import {
+  fetchCombinedSubscriptionDetails,
+  selectCombinedDetails,
+} from "@/store/slices/paymentSlice";
 import { useToast } from "@/hooks/useToast";
 import DeletePostModal from "@/components/features/company/posts/details/DeletePostModal";
+import PublishConfirmModal from "@/components/features/company/posts/PublishConfirmModal";
 import { useDeletePost } from "@/components/features/company/posts/details/useDeletePost";
 import JobPostsList, {
   StatusFilter,
@@ -45,50 +59,7 @@ import FilterListOutlined from "@mui/icons-material/FilterListOutlined";
 
 const TEAL = "#0D9488";
 
-const STATUS_OPTIONS: { value: StatusFilter; label: string; color: string }[] =
-  [
-    { value: "all", label: "All statuses", color: "#6B7280" },
-    { value: "active", label: "Open", color: "#059669" },
-    { value: "draft", label: "Draft", color: "#D97706" },
-    { value: "expired", label: "Closed", color: "#DC2626" },
-  ];
-
 type TypeFilter = "all" | "ai" | "pipeline" | "manual";
-
-const TYPE_OPTIONS: {
-  value: TypeFilter;
-  label: string;
-  color: string;
-  bg: string;
-  Icon: React.ElementType;
-}[] = [
-  { value: "all",      label: "All types",  color: "#6B7280", bg: "#F3F4F6", Icon: FilterListOutlined },
-  { value: "ai",       label: "AI",         color: "#7C3AED", bg: "#F5F3FF", Icon: AutoAwesomeOutlined },
-  { value: "pipeline", label: "Pipeline",   color: "#0891B2", bg: "#ECFEFF", Icon: AccountTreeOutlined },
-  { value: "manual",   label: "Manual",     color: "#D97706", bg: "#FFFBEB", Icon: EditNoteOutlined },
-];
-
-const SORT_GROUPS = [
-  {
-    label: "Date",
-    Icon: CalendarTodayOutlined,
-    color: "#6B7280",
-    options: [
-      { value: "newest" as SortOption, label: "Most recent first" },
-      { value: "oldest" as SortOption, label: "Earliest first" },
-    ],
-  },
-  {
-    label: "Title",
-    Icon: SortByAlphaOutlined,
-    color: "#0891B2",
-    options: [
-      { value: "title-asc" as SortOption, label: "A to Z" },
-      { value: "title-desc" as SortOption, label: "Z to A" },
-    ],
-  },
-];
-const SORT_OPTIONS_FLAT = SORT_GROUPS.flatMap((g) => g.options);
 
 const selectSx = {
   height: 34,
@@ -100,6 +71,8 @@ const selectSx = {
 };
 
 const PostsPage: React.FC = () => {
+  const { t } = useTranslation("posts");
+  const { t: td } = useTranslation("dashboard");
   useCompanyAccess("canViewJobPosts");
   const dispatch = useDispatch<AppDispatch>();
   const router   = useRouter();
@@ -109,10 +82,52 @@ const PostsPage: React.FC = () => {
   const canDelete = user?.role !== "Employee" || !!empPerms?.canCreateJobPosts;
   const { showToast } = useToast();
 
-  const posts = useSelector(selectMyPosts);
-  const loading = useSelector(selectMyPostsLoading);
-  const error = useSelector(selectMyPostsError);
+  const posts      = useSelector(selectMyPosts);
+  const loading    = useSelector(selectMyPostsLoading);
+  const error      = useSelector(selectMyPostsError);
   const pagination = useSelector(selectMyPostsPagination);
+  const combined   = useSelector(selectCombinedDetails);
+
+  const postsUsed      = combined?.combined.usage.posts.used ?? 0;
+  const postsLimit     = combined?.combined.usage.posts.limit ?? Infinity;
+  const postsAtLimit   = combined && postsLimit !== Infinity && postsLimit !== -1 && postsUsed >= postsLimit;
+
+  // ── Translation-dependent option arrays ──
+  const STATUS_OPTIONS: { value: StatusFilter; label: string; color: string }[] = [
+    { value: "all",     label: t("status.all"),    color: "#6B7280" },
+    { value: "active",  label: t("status.active"), color: "#059669" },
+    { value: "draft",   label: t("status.draft"),  color: "#D97706" },
+    { value: "expired", label: t("status.closed"), color: "#DC2626" },
+  ];
+
+  const TYPE_OPTIONS: { value: TypeFilter; label: string; color: string; bg: string; Icon: React.ElementType }[] = [
+    { value: "all",      label: t("type.all"),      color: "#6B7280", bg: "#F3F4F6", Icon: FilterListOutlined },
+    { value: "ai",       label: t("type.ai"),       color: "#7C3AED", bg: "#F5F3FF", Icon: AutoAwesomeOutlined },
+    { value: "pipeline", label: t("type.pipeline"), color: "#0891B2", bg: "#ECFEFF", Icon: AccountTreeOutlined },
+    { value: "manual",   label: t("type.manual"),   color: "#D97706", bg: "#FFFBEB", Icon: EditNoteOutlined },
+  ];
+
+  const SORT_GROUPS = [
+    {
+      label: t("sort.date_group"),
+      Icon: CalendarTodayOutlined,
+      color: "#6B7280",
+      options: [
+        { value: "newest" as SortOption, label: t("sort.newest") },
+        { value: "oldest" as SortOption, label: t("sort.oldest") },
+      ],
+    },
+    {
+      label: t("sort.title_group"),
+      Icon: SortByAlphaOutlined,
+      color: "#0891B2",
+      options: [
+        { value: "title-asc" as SortOption,  label: t("sort.title_asc") },
+        { value: "title-desc" as SortOption, label: t("sort.title_desc") },
+      ],
+    },
+  ];
+  const SORT_OPTIONS_FLAT = SORT_GROUPS.flatMap((g) => g.options);
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
@@ -120,16 +135,18 @@ const PostsPage: React.FC = () => {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [jobToDelete, setJobToDelete] = useState<string | null>(null);
+  const [publishConfirmId, setPublishConfirmId] = useState<string | null>(null);
+  const [publishing, setPublishing] = useState(false);
 
   const deletePostHook = useDeletePost({
     postId: jobToDelete!,
     refetchAfterDelete: true,
     onSuccess: () => {
-      showToast({ message: "Post deleted successfully", severity: "success" });
+      showToast({ message: t("delete_success"), severity: "success" });
       setJobToDelete(null);
     },
     onError: () =>
-      showToast({ message: "Failed to delete post", severity: "error" }),
+      showToast({ message: t("delete_error"), severity: "error" }),
   });
 
   const apiStatus =
@@ -167,6 +184,10 @@ const PostsPage: React.FC = () => {
     load();
   }, [load]);
 
+  useEffect(() => {
+    dispatch(fetchCombinedSubscriptionDetails());
+  }, [dispatch]);
+
   const filteredPosts = posts as any[];
   const totalCount = (pagination as any)?.total ?? filteredPosts.length;
 
@@ -175,7 +196,28 @@ const PostsPage: React.FC = () => {
     deletePostHook.handleOpen();
   };
 
-  const handleCreateClick = () => router.push("/company/posts/create");
+  const handlePublish = useCallback((id: string) => {
+    setPublishConfirmId(id);
+  }, []);
+
+  const handleConfirmPublish = useCallback(() => {
+    if (!publishConfirmId) return;
+    setPublishing(true);
+    dispatch(updatePostStatus({ postId: publishConfirmId, status: "open" }))
+      .unwrap()
+      .then(() => {
+        setPublishConfirmId(null);
+        showToast({ message: t("publish_success"), severity: "success" });
+        dispatch(fetchMyPosts({ page, limit: 8, search, sort: apiSort, status: apiStatus, creationType: typeFilter !== "all" ? typeFilter : undefined }));
+      })
+      .catch(() => showToast({ message: t("publish_error"), severity: "error" }))
+      .finally(() => setPublishing(false));
+  }, [dispatch, publishConfirmId, page, search, apiSort, apiStatus, typeFilter, t]);
+
+  const handleCreateClick = () => {
+    if (postsAtLimit) return;
+    router.push("/company/posts/create");
+  };
 
   return (
     <DashboardLayout>
@@ -228,17 +270,17 @@ const PostsPage: React.FC = () => {
                     lineHeight: 1.2,
                   }}
                 >
-                  Job Posts
+                  {t("title")}
                 </Typography>
                 <Typography sx={{ fontSize: "12px", color: "#9CA3AF" }}>
                   {loading
-                    ? "Loading…"
-                    : `${totalCount} post${totalCount !== 1 ? "s" : ""}`}
+                    ? td("pages.common.loading")
+                    : t("count", { count: totalCount })}
                 </Typography>
               </Box>
             </Box>
 
-            {/* Right: search + status + sort + divider + New Job Post */}
+            {/* Right: search + filters + New Job Post */}
             <Box
               sx={{
                 display: "flex",
@@ -266,7 +308,7 @@ const PostsPage: React.FC = () => {
                   sx={{ fontSize: 15, color: "#9CA3AF", mr: 0.75 }}
                 />
                 <InputBase
-                  placeholder="Search by title, description..."
+                  placeholder={t("search_placeholder")}
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
@@ -302,7 +344,7 @@ const PostsPage: React.FC = () => {
                               : (opt?.color ?? "#374151"),
                         }}
                       >
-                        {opt?.label ?? "All statuses"}
+                        {opt?.label ?? t("status.all")}
                       </Typography>
                     );
                   }}
@@ -370,7 +412,7 @@ const PostsPage: React.FC = () => {
                             color: val === "all" ? "#9CA3AF" : opt?.color,
                           }}
                         >
-                          {opt?.label ?? "All types"}
+                          {opt?.label ?? t("type.all")}
                         </Typography>
                       </Box>
                     );
@@ -444,7 +486,7 @@ const PostsPage: React.FC = () => {
                     const opt = SORT_OPTIONS_FLAT.find((o) => o.value === val);
                     return (
                       <Typography sx={{ fontSize: "13px", color: "#374151" }}>
-                        {opt?.label ?? "Sort"}
+                        {opt?.label ?? td("pages.common.sort")}
                       </Typography>
                     );
                   }}
@@ -524,41 +566,57 @@ const PostsPage: React.FC = () => {
               />
 
               {/* New Job Post button */}
-              <Box
-                component="button"
-                onClick={handleCreateClick}
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 0.75,
-                  height: 36,
-                  px: 1.75,
-                  border: "none",
-                  borderRadius: "10px",
-                  cursor: "pointer",
-                  outline: "none",
-                  background: `linear-gradient(135deg, ${TEAL} 0%, #0F766E 100%)`,
-                  boxShadow: `0 2px 8px ${TEAL}40`,
-                  color: "#fff",
-                  transition: "all 0.15s",
-                  "&:hover": {
-                    opacity: 0.9,
-                    boxShadow: `0 4px 14px ${TEAL}50`,
-                  },
-                }}
+              <Tooltip
+                title={postsAtLimit ? t("limit_tooltip", { used: postsUsed, limit: postsLimit }) : ""}
+                arrow
+                disableHoverListener={!postsAtLimit}
               >
-                <AddOutlined sx={{ fontSize: 16 }} />
-                <Typography
-                  sx={{
-                    fontSize: "13px",
-                    fontWeight: 700,
-                    color: "#fff",
-                    lineHeight: 1,
-                  }}
-                >
-                  New Job Post
-                </Typography>
-              </Box>
+                <span>
+                  <Box
+                    component="button"
+                    onClick={handleCreateClick}
+                    disabled={!!postsAtLimit}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.75,
+                      height: 36,
+                      px: 1.75,
+                      border: "none",
+                      borderRadius: "10px",
+                      outline: "none",
+                      transition: "all 0.15s",
+                      ...(postsAtLimit ? {
+                        cursor: "not-allowed",
+                        background: "#E5E7EB",
+                        boxShadow: "none",
+                        color: "#9CA3AF",
+                      } : {
+                        cursor: "pointer",
+                        background: `linear-gradient(135deg, ${TEAL} 0%, #0F766E 100%)`,
+                        boxShadow: `0 2px 8px ${TEAL}40`,
+                        color: "#fff",
+                        "&:hover": {
+                          opacity: 0.9,
+                          boxShadow: `0 4px 14px ${TEAL}50`,
+                        },
+                      }),
+                    }}
+                  >
+                    <AddOutlined sx={{ fontSize: 16 }} />
+                    <Typography
+                      sx={{
+                        fontSize: "13px",
+                        fontWeight: 700,
+                        color: "inherit",
+                        lineHeight: 1,
+                      }}
+                    >
+                      {postsAtLimit ? t("limit_reached", { used: postsUsed, limit: postsLimit }) : t("new_post")}
+                    </Typography>
+                  </Box>
+                </span>
+              </Tooltip>
             </Box>
           </Box>
         </Box>
@@ -574,6 +632,7 @@ const PostsPage: React.FC = () => {
           pagination={pagination}
           onPageChange={setPage}
           onDelete={handleDelete}
+          onPublish={handlePublish}
           onViewDetails={(id) => router.push(`/company/posts/${id}`)}
           onCreateClick={handleCreateClick}
         />
@@ -586,6 +645,14 @@ const PostsPage: React.FC = () => {
           }}
           onDelete={deletePostHook.handleDelete}
           isDeleting={deletePostHook.isDeleting}
+        />
+
+        {/* Publish confirmation modal */}
+        <PublishConfirmModal
+          open={!!publishConfirmId}
+          publishing={publishing}
+          onClose={() => setPublishConfirmId(null)}
+          onConfirm={handleConfirmPublish}
         />
       </Box>
     </DashboardLayout>

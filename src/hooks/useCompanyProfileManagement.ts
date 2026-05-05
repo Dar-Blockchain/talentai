@@ -10,6 +10,7 @@ import {
   updateProfile,
   uploadProfileImage,
 } from '@/store/slices/userSlice';
+import { normalizeLangCode } from '@/hooks/useLanguage';
 
 const initialProfile: UserProfile = {
   username: '',
@@ -20,7 +21,7 @@ const initialProfile: UserProfile = {
   lastName: '',
   gender: 'Male',
   country: 'Tunisia',
-  language: 'English',
+  language: 'en',
   timezone: 'UTC+01:00',
   phone: '',
   address: '',
@@ -106,7 +107,7 @@ export const useCompanyProfileManagement = () => {
         lastName: '',
         gender: 'Male',
         country: companyData?.location || 'Tunisia',
-        language: 'English',
+        language: normalizeLangCode(companyProfile?.language || companyData?.language) ?? 'en',
         timezone: 'UTC+01:00',
         phone: companyData?.phone || '',
         address: companyData?.address || '',
@@ -147,7 +148,7 @@ export const useCompanyProfileManagement = () => {
         lastName: '',
         gender: 'Male',
         country: companyData?.location || 'Tunisia',
-        language: 'English',
+        language: normalizeLangCode(reduxProfile?.language || companyData?.language) ?? 'en',
         timezone: 'UTC+01:00',
         phone: reduxProfile.companyDetails?.phone || '',
         address: reduxProfile.companyDetails?.address || '',
@@ -365,6 +366,7 @@ const handleSaveProfile = useCallback(async () => {
     updatePayload.employmentType = profile.employmentType;
     updatePayload.requiredSkills = profile.requiredSkills || [];
     updatePayload.requiredExperienceLevel = profile.requiredExperienceLevel;
+    updatePayload.language = profile.language || 'en';
   }
 
   if (activeTab === 'contact') {
@@ -402,6 +404,17 @@ const handleSaveProfile = useCallback(async () => {
 }, [profile, activeTab, dispatch, showToast]);
 
 
+  const handleSaveLanguage = useCallback(async (lang: string) => {
+    const targetUserId = isEmployee ? companyMembership?.company?._id : undefined;
+    try {
+      await dispatch(updateProfile({ payload: { language: lang }, targetUserId })).unwrap();
+      await dispatch(getMyProfile());
+      showToast({ message: 'Language updated successfully!', severity: 'success' });
+    } catch (err: any) {
+      showToast({ message: err?.message || 'Failed to update language', severity: 'error' });
+    }
+  }, [dispatch, showToast, isEmployee, companyMembership]);
+
   const handleCancel = useCallback(() => {
     setProfile(savedProfile);
     setFieldErrors({});
@@ -436,6 +449,7 @@ const handleSaveProfile = useCallback(async () => {
     handleSelectChange,
     handleImageUpload,
     handleSaveProfile,
+    handleSaveLanguage,
     handleCancel,
     handleDismissError,
     handleDismissSuccess,

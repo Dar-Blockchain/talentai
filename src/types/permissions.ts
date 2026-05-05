@@ -15,9 +15,6 @@ export interface Permission {
   canViewCandidateProfiles: boolean;
   canContactCandidates: boolean;
 
-  // Matching Permissions
-  canAccessMatching: boolean;
-
   // HR Agent Permissions
   canUseHRAgents: boolean;
 
@@ -41,7 +38,6 @@ export type PermissionKey = keyof Omit<
 export const PERMISSION_CATEGORIES = {
   JOB_POSTS: 'Job Posts',
   CANDIDATES: 'Candidates',
-  MATCHING: 'Matching',
   HR_AGENTS: 'HR Agents',
   TEAM: 'Team Management',
 } as const;
@@ -78,16 +74,6 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
         key: 'canContactCandidates',
         label: 'Contact Candidates',
         description: 'Send messages and communicate with candidates',
-      },
-    ],
-  },
-  {
-    category: PERMISSION_CATEGORIES.MATCHING,
-    permissions: [
-      {
-        key: 'canAccessMatching',
-        label: 'Access Matching',
-        description: 'Access matching algorithm and view candidate matches',
       },
     ],
   },
@@ -130,9 +116,6 @@ export const DEFAULT_PERMISSIONS: Omit<Permission, '_id' | 'userId' | 'profileId
   // Candidate Permissions
   canViewCandidateProfiles: true,
   canContactCandidates: true,
-
-  // Matching Permissions
-  canAccessMatching: true,
 
   // HR Agent Permissions
   canUseHRAgents: true,

@@ -22,6 +22,7 @@ import BugReportIcon from "@mui/icons-material/BugReport";
 import BusinessCenterIcon from "@mui/icons-material/BusinessCenter";
 import AppInput from "@/components/ui/AppInput";
 import { ALL_SKILLS } from "@/constants/skills";
+import { useTranslation } from "react-i18next";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -40,13 +41,13 @@ interface Props {
 
 const PURPLE = "#8310FF";
 
-const CATEGORY_META: Record<string, { label: string; icon: React.ElementType; color: string }> = {
-  development: { label: "Development", icon: CodeIcon, color: "#3B82F6" },
-  web3:        { label: "Web3",        icon: AccountTreeIcon, color: "#8B5CF6" },
-  ai:          { label: "AI",          icon: SmartToyIcon,   color: "#06B6D4" },
-  marketing:   { label: "Marketing",   icon: CampaignIcon,   color: "#F59E0B" },
-  qa:          { label: "QA",          icon: BugReportIcon,  color: "#EF4444" },
-  business:    { label: "Business",    icon: BusinessCenterIcon, color: "#10B981" },
+const CATEGORY_META: Record<string, { icon: React.ElementType; color: string }> = {
+  development: { icon: CodeIcon, color: "#3B82F6" },
+  web3:        { icon: AccountTreeIcon, color: "#8B5CF6" },
+  ai:          { icon: SmartToyIcon, color: "#06B6D4" },
+  marketing:   { icon: CampaignIcon, color: "#F59E0B" },
+  qa:          { icon: BugReportIcon, color: "#EF4444" },
+  business:    { icon: BusinessCenterIcon, color: "#10B981" },
 };
 
 const CATEGORY_ORDER = ["development", "web3", "ai", "marketing", "qa", "business"];
@@ -54,7 +55,11 @@ const CATEGORY_ORDER = ["development", "web3", "ai", "marketing", "qa", "busines
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const SkillTestForm: React.FC<Props> = ({ config, onChange }) => {
+  const { t } = useTranslation("dashboard");
+  const cf = "pages.campaigns.detail.configure_form.skill_test";
   const [skillSearch, setSkillSearch] = useState("");
+
+  const categoryLabel = (catId: string) => t(`${cf}.category_${catId}`);
 
   const filteredGroups = useMemo(() => {
     const q = skillSearch.trim().toLowerCase();
@@ -82,7 +87,7 @@ const SkillTestForm: React.FC<Props> = ({ config, onChange }) => {
       <Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 1 }}>
           <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-            Skill to assess
+            {t(`${cf}.skill_to_assess`)}
           </Typography>
           <Typography sx={{ fontSize: "11px", color: "#EF4444", fontWeight: 700, lineHeight: 1 }}>*</Typography>
         </Box>
@@ -117,7 +122,7 @@ const SkillTestForm: React.FC<Props> = ({ config, onChange }) => {
               if (!val) {
                 return (
                   <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>
-                    Choose a skill to test…
+                    {t(`${cf}.choose_skill`)}
                   </Typography>
                 );
               }
@@ -139,7 +144,7 @@ const SkillTestForm: React.FC<Props> = ({ config, onChange }) => {
                   </Typography>
                   {selectedMeta && (
                     <Chip
-                      label={selectedMeta.label}
+                      label={categoryLabel(selectedSkillCat!)}
                       size="small"
                       sx={{
                         height: 18, fontSize: "10px", fontWeight: 600,
@@ -168,7 +173,7 @@ const SkillTestForm: React.FC<Props> = ({ config, onChange }) => {
             >
               <TextField
                 size="small" fullWidth autoFocus
-                placeholder="Search skills…"
+                placeholder={t(`${cf}.search_skills`)}
                 value={skillSearch}
                 onChange={(e) => setSkillSearch(e.target.value)}
                 onKeyDown={(e) => e.stopPropagation()}
@@ -208,7 +213,7 @@ const SkillTestForm: React.FC<Props> = ({ config, onChange }) => {
                   }}
                 >
                   <CatIcon sx={{ fontSize: 13 }} />
-                  {meta.label}
+                  {categoryLabel(catId)}
                 </ListSubheader>,
                 ...skills.map((s) => {
                   const isSelected = config.skill === s.label;
@@ -245,7 +250,7 @@ const SkillTestForm: React.FC<Props> = ({ config, onChange }) => {
                 <Box sx={{ textAlign: "center" }}>
                   <SearchOutlined sx={{ fontSize: 28, color: "#D1D5DB", mb: 0.5 }} />
                   <Typography sx={{ fontSize: "12px", color: "#9CA3AF" }}>
-                    No skills match &ldquo;{skillSearch}&rdquo;
+                    {t(`${cf}.no_match`, { query: skillSearch })}
                   </Typography>
                 </Box>
               </MenuItem>
@@ -265,13 +270,13 @@ const SkillTestForm: React.FC<Props> = ({ config, onChange }) => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.6, mb: 1 }}>
             <EmojiEventsOutlined sx={{ fontSize: 14, color: "#F59E0B" }} />
             <Typography sx={{ fontSize: "11.5px", fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              Passing Score
+              {t(`${cf}.passing_score`)}
             </Typography>
           </Box>
           <AppInput
             label=""
             type="number"
-            placeholder="e.g. 70"
+            placeholder={t(`${cf}.ph_score`)}
             value={String(config.passingScore ?? "")}
             onChange={(e) =>
               onChange({
@@ -281,7 +286,7 @@ const SkillTestForm: React.FC<Props> = ({ config, onChange }) => {
             }
           />
           <Typography sx={{ fontSize: "10.5px", color: "#9CA3AF", mt: 0.5 }}>
-            Minimum % to pass
+            {t(`${cf}.passing_hint`)}
           </Typography>
         </Box>
 
@@ -290,23 +295,21 @@ const SkillTestForm: React.FC<Props> = ({ config, onChange }) => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.6, mb: 1 }}>
             <RepeatOutlined sx={{ fontSize: 14, color: "#3B82F6" }} />
             <Typography sx={{ fontSize: "11.5px", fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              Max Attempts
+              {t(`${cf}.max_attempts`)}
             </Typography>
           </Box>
           <AppInput
             label=""
             type="number"
-            placeholder="e.g. 3"
+            placeholder={t(`${cf}.ph_attempts`)}
             value={String(config.maxAttempts ?? "")}
-            onChange={(e) =>
-              onChange({
-                ...config,
-                maxAttempts: e.target.value ? Number(e.target.value) : undefined,
-              })
-            }
+            onChange={(e) => {
+              const n = e.target.value ? Number(e.target.value) : undefined;
+              onChange({ ...config, maxAttempts: n !== undefined ? Math.max(1, n) : undefined });
+            }}
           />
           <Typography sx={{ fontSize: "10.5px", color: "#9CA3AF", mt: 0.5 }}>
-            Leave empty for unlimited
+            {t(`${cf}.unlimited_hint`)}
           </Typography>
         </Box>
       </Box>

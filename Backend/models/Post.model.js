@@ -159,8 +159,6 @@ const postSchema = new mongoose.Schema({
     },
   ],
 
-  MatchingConfig: { type: mongoose.Schema.Types.ObjectId, ref: 'MatchingConfig' },
-
   // Post creation type
   creationType: {
     type: String,
@@ -183,6 +181,14 @@ const postSchema = new mongoose.Schema({
     type: Date,
     default: null,
     description: 'Timestamp when post was archived'
+  },
+
+  // Interview Languages field - array of languages for the job post interview
+  interviewLanguages: {
+    type: [String],
+    enum: ['en', 'fr'],
+    default: ['en'],
+    description: 'Interview languages for the job post (e.g., ["en", "fr"])'
   },
 
 });

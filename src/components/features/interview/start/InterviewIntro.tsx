@@ -11,6 +11,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import Header from '@/components/layout/Header';
 import { GlobalStyles } from './styles';
+import { useTranslation } from 'react-i18next';
 
 const PURPLE = '#8310FF';
 const PURPLE_BG = 'rgba(244,235,255,1)';
@@ -34,13 +35,6 @@ interface InterviewIntroProps {
   onNext: (applicantData: ApplicantData) => void;
 }
 
-const tips = [
-  'Find a quiet place with good lighting',
-  'Ensure mic & camera are working',
-  'Speak clearly — take time to think',
-  'You can ask the AI to repeat a question',
-];
-
 const InterviewIntro: React.FC<InterviewIntroProps> = ({
   interviewConfig,
   hasJobId,
@@ -50,6 +44,7 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
   checkingEligibility = false,
   onNext,
 }) => {
+  const { t } = useTranslation('interview');
   const authUser = useSelector((state: RootState) => state.user.connectedUser.user);
   const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
 
@@ -77,6 +72,13 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
   const skills: string[] = (jobData?.skillAnalysis?.requiredSkills || []).map((s: any) => s.name).filter(Boolean).slice(0, 6);
   const description = jd?.description || '';
 
+  const tips = [
+    t('intro.tip1'),
+    t('intro.tip2'),
+    t('intro.tip3'),
+    t('intro.tip4'),
+  ];
+
   return (
     <>
       <style jsx global>{GlobalStyles}</style>
@@ -90,14 +92,14 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
               <Box sx={{ width: 26, height: 26, borderRadius: '50%', bgcolor: PURPLE, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Typography sx={{ color: '#fff', fontWeight: 700, fontSize: '0.68rem', fontFamily: 'Poppins' }}>1</Typography>
               </Box>
-              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.78rem', color: PURPLE, whiteSpace: 'nowrap' }}>Overview</Typography>
+              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.78rem', color: PURPLE, whiteSpace: 'nowrap' }}>{t('intro.step1_label')}</Typography>
             </Box>
             <Box sx={{ flex: 1, height: 1, bgcolor: '#E5E7EB', mx: 2 }} />
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
               <Box sx={{ width: 26, height: 26, borderRadius: '50%', bgcolor: 'transparent', border: '2px solid #D1D5DB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Typography sx={{ color: '#9CA3AF', fontWeight: 700, fontSize: '0.68rem', fontFamily: 'Poppins' }}>2</Typography>
               </Box>
-              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 400, fontSize: '0.78rem', color: '#9CA3AF', whiteSpace: 'nowrap' }}>AI Interview</Typography>
+              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 400, fontSize: '0.78rem', color: '#9CA3AF', whiteSpace: 'nowrap' }}>{t('intro.step2_label')}</Typography>
             </Box>
           </Box>
 
@@ -154,7 +156,7 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
                 {description && (
                   <Box>
                     <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.83rem', color: '#111827', mb: 1 }}>
-                      About the role
+                      {t('intro.about_role')}
                     </Typography>
                     <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.8rem', color: '#4B5563', lineHeight: 1.65 }}>
                       {description.length > 280 ? description.slice(0, 280) + '…' : description}
@@ -164,7 +166,7 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
                 {skills.length > 0 && (
                   <Box>
                     <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.83rem', color: '#111827', mb: 1 }}>
-                      Key skills
+                      {t('intro.key_skills')}
                     </Typography>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
                       {skills.map((s, i) => (
@@ -178,7 +180,7 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: 2, bgcolor: '#F9FAFB', borderRadius: '10px', border: '1px solid #F3F4F6' }}>
                     <MicNoneOutlinedIcon sx={{ color: PURPLE, fontSize: 20, flexShrink: 0 }} />
                     <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.8rem', color: '#4B5563', lineHeight: 1.6 }}>
-                      Answer questions via voice & video. The AI will adapt based on your responses.
+                      {t('intro.voice_video_desc')}
                     </Typography>
                   </Box>
                 )}
@@ -187,7 +189,7 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
               {/* RIGHT: Before you start */}
               <Box>
                 <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.83rem', color: '#111827', mb: 1.25 }}>
-                  Before you start
+                  {t('intro.before_start')}
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   {tips.map((tip, i) => (
@@ -202,11 +204,11 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
                 <Box sx={{ mt: 2.5, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6, px: 1.25, py: 0.5, bgcolor: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '8px' }}>
                     <VideocamOutlinedIcon sx={{ fontSize: 14, color: '#6B7280' }} />
-                    <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', color: '#374151' }}>Video</Typography>
+                    <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', color: '#374151' }}>{t('intro.video_label')}</Typography>
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6, px: 1.25, py: 0.5, bgcolor: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '8px' }}>
                     <MicNoneOutlinedIcon sx={{ fontSize: 14, color: '#6B7280' }} />
-                    <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', color: '#374151' }}>Voice</Typography>
+                    <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', color: '#374151' }}>{t('intro.voice_label')}</Typography>
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6, px: 1.25, py: 0.5, bgcolor: PURPLE_BG, border: `1px solid ${PURPLE_BORDER}`, borderRadius: '8px' }}>
                     <TimerOutlinedIcon sx={{ fontSize: 14, color: PURPLE }} />
@@ -234,9 +236,9 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
                 {checkingEligibility ? (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <CircularProgress size={16} sx={{ color: '#9CA3AF' }} />
-                    <span>Checking eligibility…</span>
+                    <span>{t('intro.checking')}</span>
                   </Box>
-                ) : 'Start Interview'}
+                ) : t('start.btn_start')}
               </Button>
             </Box>
           </Box>

@@ -77,10 +77,6 @@ interface PostState {
   myPostsLoading: boolean;
   myPostsError: string | null;
   myPostsPagination: PaginationState;
-  jobMatches: any[];
-  jobMatchesLoading: boolean;
-  jobMatchesError: string | null;
-  jobMatchesPagination: PaginationState;
   deletePostLoading: boolean;
   deletePostError: string | null;
   currentJob: any | null;
@@ -107,17 +103,6 @@ const initialState: PostState = {
   myPostsLoading: false,
   myPostsError: null,
   myPostsPagination: {
-    total: 0,
-    page: 1,
-    limit: 10,
-    totalPages: 0,
-    hasNextPage: false,
-    hasPrevPage: false,
-  },
-  jobMatches: [],
-  jobMatchesLoading: false,
-  jobMatchesError: null,
-  jobMatchesPagination: {
     total: 0,
     page: 1,
     limit: 10,
@@ -193,7 +178,6 @@ const initialState: PostState = {
     loading: false,
     error: null,
   },
-
 };
 
 export const savePost = createAsyncThunk(
@@ -341,127 +325,6 @@ export const fetchMyPosts = createAsyncThunk(
 // Track ongoing fetches to prevent duplicates at thunk level
 const ongoingFetches = new Map<string, Promise<any>>();
 
-// Async thunk to fetch matches for a selected job post
-export const fetchJobMatches = createAsyncThunk(
-  "post/fetchJobMatches",
-  async (
-    {
-      selectedJobId,
-      page = 1,
-      limit = 10,
-      passedInterview = false,
-    }: { selectedJobId: string; page?: number; limit?: number; passedInterview?: boolean },
-    { rejectWithValue }
-  ) => {
-    const fetchKey = `${selectedJobId}-${page}-${limit}-${passedInterview}`;
-    console.log(
-      "🚀 [fetchJobMatches] Thunk executing for job:",
-      selectedJobId,
-      "page:",
-      page,
-      "key:",
-      fetchKey
-    );
-
-    // If already fetching this exact request, wait for it
-    if (ongoingFetches.has(fetchKey)) {
-      console.log(
-        "⚠️ [fetchJobMatches] Duplicate thunk call detected, waiting for existing fetch"
-      );
-      return ongoingFetches.get(fetchKey)!;
-    }
-
-    // Create the fetch promise and store it
-    const fetchPromise = (async () => {
-      try {
-        const queryParams = new URLSearchParams({
-          page: page.toString(),
-          limit: limit.toString(),
-          ...(passedInterview && { passedInterview: 'true' }),
-        });
-
-        console.log(
-          "📡 [fetchJobMatches] Making API call to:",
-          `matching/jobs/${selectedJobId}/matches?${queryParams}`
-        );
-
-        const response = await axiosInstance.get(
-          `matching/jobs/${selectedJobId}/matches?${queryParams}`
-        );
-
-        const data = response.data;
-        const matches = data && Array.isArray(data.matches) ? data.matches : [];
-
-        // Send notification to newly matched candidates
-        // if (matches.length > 0) {
-        //   try {
-        //     // Get previous matches from state to detect new ones
-        //     const state = getState() as any;
-        //     const previousMatches = state.post?.jobMatches || [];
-        //     const previousIds = new Set(previousMatches.map((m: any) => m.candidateId || m._id));
-
-        //     // Find newly matched candidates
-        //     const newMatches = matches.filter((match: any) =>
-        //       !previousIds.has(match.candidateId || match._id)
-        //     );
-
-        //     if (newMatches.length > 0) {
-        //       const candidateIds = newMatches.map((match: any) => match.candidateId || match._id);
-        //       const jobTitle = data.jobTitle || 'a new job opportunity';
-
-        //       console.log('📢 [JobMatches] Sending notification to newly matched candidates:', candidateIds);
-
-        //       await dispatch(broadcastSystemNotification({
-        //         content: `🎯 Great news! Your profile matches ${jobTitle}. A company is looking for candidates with your skills. Check it out now!`,
-        //         recipientIds: candidateIds
-        //       })).unwrap();
-        //     }
-        //   } catch (notifError) {
-        //     console.error('❌ [JobMatches] Failed to send notification:', notifError);
-        //     // Don't fail the fetch if notification fails
-        //   }
-        // }
-
-        // Clean up the ongoing fetch
-        ongoingFetches.delete(fetchKey);
-        console.log("🧹 [fetchJobMatches] Cleaned up fetch key:", fetchKey);
-
-        // Return matches with pagination data
-        return {
-          matches,
-          pagination: {
-            total: data.pagination?.totalMatches || matches.length,
-            page: data.pagination?.page || page,
-            limit: data.pagination?.limit || limit,
-            totalPages:
-              data.pagination?.totalPages ||
-              Math.ceil(
-                (data.pagination?.totalMatches || matches.length) / limit
-              ),
-            hasNextPage: data.pagination?.hasNextPage || false,
-            hasPrevPage: data.pagination?.hasPrevPage || false,
-          },
-        };
-      } catch (error: any) {
-        // Clean up the ongoing fetch on error
-        ongoingFetches.delete(fetchKey);
-        console.log(
-          "🧹 [fetchJobMatches] Cleaned up fetch key (error):",
-          fetchKey
-        );
-        return rejectWithValue(
-          error.response?.data?.message || error.message || "An error occurred while fetching matches"
-        );
-      }
-    })();
-
-    // Store the promise and return it
-    ongoingFetches.set(fetchKey, fetchPromise);
-    console.log("💾 [fetchJobMatches] Stored fetch promise for key:", fetchKey);
-    return fetchPromise;
-  }
-);
-
 // Async thunk to delete a post by id
 export const deletePost = createAsyncThunk(
   "post/deletePost",
@@ -476,6 +339,7 @@ export const deletePost = createAsyncThunk(
     }
   }
 );
+
 
 // Async thunk to fetch a single job by ID
 export const fetchJobById = createAsyncThunk(
@@ -826,21 +690,6 @@ const postSlice = createSlice({
         state.myPostsLoading = false;
         state.myPostsError = action.payload as string;
       })
-      // Fetch job matches
-      .addCase(fetchJobMatches.pending, (state) => {
-        state.jobMatchesLoading = true;
-        state.jobMatchesError = null;
-        state.jobMatches = [];
-      })
-      .addCase(fetchJobMatches.fulfilled, (state, action) => {
-        state.jobMatchesLoading = false;
-        state.jobMatches = action.payload.matches || [];
-        state.jobMatchesPagination = action.payload.pagination;
-      })
-      .addCase(fetchJobMatches.rejected, (state, action) => {
-        state.jobMatchesLoading = false;
-        state.jobMatchesError = action.payload as string;
-      })
       // Delete post
       .addCase(deletePost.pending, (state) => {
         state.deletePostLoading = true;
@@ -993,11 +842,6 @@ export const selectMyPostsLoading = (state: { post: PostState }) =>
 export const selectMyPostsError = (state: { post: PostState }) =>
   state.post.myPostsError;
 
-export const selectJobMatches = (state: { post: PostState }) =>
-  state.post.jobMatches;
-export const selectJobMatchesLoading = (state: { post: PostState }) =>
-  state.post.jobMatchesLoading;
-
 export const selectDeletePostLoading = (state: { post: PostState }) =>
   state.post.deletePostLoading;
 export const selectDeletePostError = (state: { post: PostState }) =>
@@ -1011,11 +855,6 @@ export const selectCurrentJobError = (state: { post: PostState }) =>
   state.post.currentJobError;
 export const selectMyPostsPagination = (state: { post: PostState }) =>
   state.post.myPostsPagination;
-
-export const selectJobMatchesError = (state: { post: PostState }) =>
-  state.post.jobMatchesError;
-export const selectJobMatchesPagination = (state: { post: PostState }) =>
-  state.post.jobMatchesPagination;
 
 // Selector to get a job from myPosts by ID (if already loaded)
 export const selectJobById = (jobId: string) => (state: { post: PostState }) =>
@@ -1065,4 +904,5 @@ export const selectPostMetricsLoading = (state: { post: PostState }) =>
   state.post.postMetrics.loading;
 export const selectPostMetricsError = (state: { post: PostState }) =>
   state.post.postMetrics.error;
+
 

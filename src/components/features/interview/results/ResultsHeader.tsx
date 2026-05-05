@@ -6,12 +6,15 @@ import {
   CalendarToday as CalendarTodayIcon,
 } from '@mui/icons-material';
 import { InterviewAnalysis } from './types';
+import { useTranslation } from 'react-i18next';
 
 interface ResultsHeaderProps {
   analysis: InterviewAnalysis;
 }
 
 export default function ResultsHeader({ analysis }: ResultsHeaderProps) {
+  const { t } = useTranslation('modules/interview/results');
+
   const formatDuration = (duration: number) => {
     const totalSeconds = Math.floor(duration / 1000);
     const minutes = Math.floor(totalSeconds / 60);
@@ -55,7 +58,7 @@ export default function ResultsHeader({ analysis }: ResultsHeaderProps) {
               fontWeight: 600,
             }}
           >
-            Interview Complete!
+            {t('header.complete')}
           </Typography>
         </Box>
 
@@ -100,7 +103,7 @@ export default function ResultsHeader({ analysis }: ResultsHeaderProps) {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <TrendingUpIcon sx={{ color: 'rgba(189, 133, 255, 1)', fontSize: '1.1rem' }} />
             <Typography variant="body2" sx={{ color: '#000000', fontSize: '0.875rem' }}>
-              Level: {analysis.overallLevel}
+              {t('header.level')} {analysis.overallLevel}
             </Typography>
           </Box>
         </Box>
@@ -145,7 +148,7 @@ export default function ResultsHeader({ analysis }: ResultsHeaderProps) {
                 {Math.round(analysis.overallScore)}
               </Typography>
               <Typography variant="caption" sx={{ color: '#9e9e9e', fontWeight: 600 }}>
-                SCORE
+                {t('header.score')}
               </Typography>
             </Box>
           </Box>

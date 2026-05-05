@@ -2,43 +2,34 @@ const PostInterviewAssessment = require("../../models/PostInterviewAssessment.mo
 const Post = require("../../models/Post.model");
 const Profile = require("../../models/Profile.model");
 const User = require("../../models/User.model");
-const CandidatePostStepProgress = require("../../models/CandidatePostStepProgress.model");
+const CandidatePostStepProgress = require("../../models/CandidatePostStepsProgress.model");
 const crypto = require("crypto");
+const subscriptionService = require("../subscription.service");
 
 // ========== MONTHLY INTERVIEW LIMIT HELPERS ==========
 const checkMonthlyInterviewLimit = async (companyId) => {
   try {
-    const profile = await Profile.findOne({ userId: companyId }).populate('planLimits');
+    const profile = await Profile.findOne({ userId: companyId });
     if (!profile) {
       const err = new Error('Company profile not found');
       err.status = 404;
       throw err;
     }
-
     if (profile.type !== 'Company') {
       const err = new Error('Only company accounts can create interview assessments');
       err.status = 403;
       throw err;
     }
 
-    if (!profile.planLimits) {
-      const err = new Error('No plan assigned to your company');
+    const result = await subscriptionService.checkSubscriptionLimit(profile._id.toString(), 'monthlyInterviews');
+    if (!result.canUse) {
+      const err = new Error(result.message);
       err.status = 403;
+      err.limitData = result.limitData;
       throw err;
     }
 
-    const used = profile.planUsage?.monthlyInterviewsUsed || 0;
-    const limit = profile.planLimits.monthlyInterviewLimit || 0;
-
-    if (used + 1 > limit) {
-      const remaining = Math.max(0, limit - used);
-      const err = new Error(`You have reached the monthly interviews limit (${limit}) for your plan: ${profile.planLimits.name}. You can create ${remaining} more interview(s) this month.`);
-      err.status = 403;
-      err.limitData = { planName: profile.planLimits.name, limit, used, remaining };
-      throw err;
-    }
-
-    return { canCreate: true, used, limit };
+    return { canCreate: true, used: result.limitData?.used ?? 0, limit: result.limitData?.limit ?? 0 };
   } catch (error) {
     console.error('Error checking monthly interview limit:', error.message || error);
     throw error;
@@ -47,20 +38,38 @@ const checkMonthlyInterviewLimit = async (companyId) => {
 
 const incrementMonthlyInterviewsUsage = async (companyId) => {
   try {
-    const profile = await Profile.findOneAndUpdate(
-      { userId: companyId },
-      { $inc: { 'planUsage.monthlyInterviewsUsed': 1 } },
-      { new: true }
-    ).populate('planLimits');
-
+    const profile = await Profile.findOne({ userId: companyId });
     if (!profile) {
       const err = new Error('Profile not found when incrementing monthly interviews');
       err.status = 404;
       throw err;
     }
 
-    console.log(`✅ [incrementMonthlyInterviewsUsage] monthlyInterviewsUsed -> ${profile.planUsage.monthlyInterviewsUsed}`);
-    return profile;
+    // Increment on all active non-Trial subscriptions (distributed evenly — first active sub gets +1)
+    const Subscription = require("../../models/Subscription.model");
+    const active = await Subscription.find({
+      companyProfileId: profile._id.toString(),
+      status: "active",
+      endDate: { $gt: new Date() },
+    }).populate("planId").sort({ createdAt: -1 });
+
+    const paid = active.filter((s) => s.planId?.name !== "Trial");
+    const targets = paid.length ? paid : active;
+
+    if (targets.length === 0) {
+      console.warn(`⚠️ [incrementMonthlyInterviewsUsage] No active subscription found for profile ${profile._id}`);
+      return;
+    }
+
+    // Increment the subscription with the most remaining capacity first
+    const target = targets.reduce((best, s) => {
+      const remaining = (s.planId?.monthlyInterviewLimit || 0) - (s.monthlyInterviewsUsed || 0);
+      const bestRemaining = (best.planId?.monthlyInterviewLimit || 0) - (best.monthlyInterviewsUsed || 0);
+      return remaining > bestRemaining ? s : best;
+    });
+
+    await subscriptionService.incrementUsage(target._id.toString(), 'monthlyInterviewsUsed', 1);
+    console.log(`✅ [incrementMonthlyInterviewsUsage] subscription ${target._id} monthlyInterviewsUsed +1`);
   } catch (error) {
     console.error('Error incrementing monthly interviews usage:', error.message || error);
     throw error;

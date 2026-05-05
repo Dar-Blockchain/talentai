@@ -1,0 +1,722 @@
+{
+  "title": "Tableau de bord",
+  "welcome": "Bon retour, {{name}}",
+  "candidate_settings": {
+    "tabs": {
+      "personal": "Informations personnelles",
+      "contact": "Contact",
+      "notifications": "Notifications",
+      "visibility": "Profil public",
+      "settings_label": "Paramètres"
+    },
+    "personal": {
+      "title": "Informations personnelles",
+      "subtitle": "Gérez vos informations de profil et préférences",
+      "edit": "Modifier",
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "username": "Nom d'utilisateur",
+      "email": "Email",
+      "first_name": "Prénom",
+      "last_name": "Nom",
+      "gender": "Genre",
+      "country": "Pays",
+      "language": "Langue",
+      "timezone": "Fuseau horaire",
+      "experience_level": "Niveau d'expérience",
+      "target_role": "Poste cible",
+      "gender_male": "Homme",
+      "gender_female": "Femme",
+      "gender_other": "Préférer ne pas dire",
+      "target_role_placeholder": "ex. Ingénieur logiciel",
+      "save_success": "Profil mis à jour avec succès !"
+    },
+    "contact": {
+      "title": "Informations de contact",
+      "subtitle": "Gérez vos coordonnées et profils sociaux",
+      "edit": "Modifier",
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "email": "Email",
+      "email_helper": "L'email ne peut pas être modifié",
+      "phone": "Numéro de téléphone",
+      "phone_placeholder": "+33612345678",
+      "location": "Localisation",
+      "location_placeholder": "Paris, France",
+      "address": "Adresse",
+      "address_placeholder": "123 Rue de Paris",
+      "linkedin": "URL LinkedIn",
+      "linkedin_placeholder": "https://linkedin.com/in/votreprofil",
+      "github": "URL GitHub",
+      "github_placeholder": "https://github.com/votreprofil",
+      "website": "Site personnel",
+      "website_placeholder": "https://votresite.com"
+    },
+    "notifications": {
+      "title": "Historique des notifications",
+      "subtitle": "Consultez et gérez toutes vos notifications",
+      "connected": "Connecté",
+      "disconnected": "Déconnecté",
+      "mark_all_read": "Tout marquer comme lu",
+      "archive_all": "Tout archiver",
+      "stat_total": "Total",
+      "stat_unread": "Non lues",
+      "stat_this_week": "Cette semaine",
+      "stat_important": "Important",
+      "tab_active": "Actives ({{count}})",
+      "tab_archived": "Archivées ({{count}})",
+      "empty_title": "Aucune notification",
+      "empty_archived_title": "Aucune notification archivée",
+      "empty_subtitle": "Vous êtes à jour !",
+      "empty_connecting": "Connexion au service de notifications...",
+      "empty_archived_subtitle": "Vous n'avez pas encore archivé de notifications.",
+      "badge_new": "NOUVEAU"
+    },
+    "visibility": {
+      "title": "Visibilité du profil public",
+      "subtitle": "Contrôlez qui peut voir vos informations de profil",
+      "membership_title": "Visibilité gérée par votre appartenance à l'entreprise.",
+      "membership_subtitle": "En tant que membre d'une entreprise, votre profil est automatiquement défini comme privé.",
+      "status_public": "Profil public",
+      "status_private": "Profil privé",
+      "desc_public": "Toute personne ayant le lien peut voir votre profil",
+      "desc_private": "Votre profil est masqué du public",
+      "updating": "Mise à jour...",
+      "url_title": "URL du profil public",
+      "url_tooltip": "Partagez ce lien pour permettre à d'autres de voir votre profil",
+      "copy_link": "Copier le lien",
+      "copied": "Copié !",
+      "view_profile": "Voir le profil",
+      "success_public": "Votre profil est maintenant public et peut être vu par toute personne ayant le lien",
+      "success_private": "Votre profil est maintenant privé et masqué du public",
+      "copied_toast": "Lien du profil copié dans le presse-papiers !",
+      "privacy_title": "Informations de confidentialité",
+      "privacy_intro": "Lorsque votre profil est public, ces informations seront visibles par toute personne ayant le lien :",
+      "privacy_footer": "Votre email et vos informations sensibles ne seront jamais visibles publiquement.",
+      "privacy_item_1": "Photo de profil et informations de base (nom, titre, localisation)",
+      "privacy_item_2": "Compétences et niveau d'expérience",
+      "privacy_item_3": "Préférences de travail et formation",
+      "privacy_item_4": "Informations de contact publiques (si fournies)"
+    }
+  },
+  "candidate": {
+    "nav": {
+      "dashboard": "Tableau de bord",
+      "overview": "Aperçu",
+      "applications": "Candidatures",
+      "your_job_applies": "Vos candidatures",
+      "skills": "Compétences",
+      "tech_and_soft": "Tech & soft",
+      "interviews": "Entretiens",
+      "all_assessments": "Tous les examens",
+      "navigation": "Navigation"
+    },
+    "profile": {
+      "applications": "Candidatures",
+      "interviews": "Entretiens",
+      "monthly_tests": "Tests mensuels",
+      "maxed": "Maximum atteint",
+      "left": "{{count}} restant",
+      "profile_strength": "Force du profil"
+    },
+    "checklist": {
+      "complete_profile": "Compléter votre profil",
+      "add_target_role": "Ajouter un rôle cible",
+      "set_experience": "Définir votre niveau",
+      "first_skill_test": "Passer votre premier test",
+      "first_application": "Soumettre une candidature"
+    },
+    "actions": {
+      "skill_interview": "Entretien de compétences",
+      "hr_interview": "Entretien RH",
+      "coming_soon": "Bientôt disponible",
+      "monthly_quota": "Quota mensuel",
+      "hide": "Masquer",
+      "view_all": "Voir tout"
+    },
+    "sections": {
+      "skills_title": "Compétences & Expertise",
+      "skills_subtitle": "Vos compétences techniques et comportementales",
+      "interviews_title": "Entretiens & Évaluations",
+      "interviews_subtitle": "Entretiens, technique & soft skills"
+    },
+    "my_applications": {
+      "title": "Mes candidatures",
+      "view_all": "Voir tout →",
+      "search_placeholder": "Rechercher emplois ou entreprises…",
+      "status": {
+        "applied": "Candidaté",
+        "pending": "En attente",
+        "shortlisted": "Présélectionné",
+        "accepted": "Accepté",
+        "rejected": "Refusé",
+        "withdrawn": "Retiré",
+        "interview_scheduled": "Entretien planifié",
+        "interview_completed": "Entretien terminé",
+        "viewed": "Vu",
+        "visited": "Visité",
+        "all": "Tous"
+      },
+      "match": "{{score}}% de correspondance",
+      "applied_date": "Candidaté le {{date}}",
+      "empty_title": "Aucune candidature",
+      "empty_subtitle": "Postulez à des offres pour les suivre ici",
+      "show_less": "Voir moins",
+      "show_more": "Voir {{count}} de plus",
+      "page_of": "Page {{current}} sur {{total}}"
+    },
+    "application_detail": {
+      "back_to_dashboard": "Retour au tableau de bord",
+      "loading_title": "…",
+      "not_found": "Candidature introuvable",
+      "details": "Détails",
+      "applied_on": "Candidaté le {{date}}",
+      "job_description": "Description du poste",
+      "requirements": "Exigences",
+      "profile_strength": "Force du profil",
+      "profile": {
+        "applications": "Candidatures",
+        "active": "Actif"
+      },
+      "checklist": {
+        "complete_profile": "Compléter le profil",
+        "add_target_role": "Ajouter un poste cible",
+        "set_experience": "Définir l’expérience",
+        "first_skill_test": "Premier test de compétences"
+      },
+      "interview_banner": {
+        "title": "Votre entretien est planifié !",
+        "join": "Rejoindre l’entretien"
+      },
+      "cv_match_score": {
+        "title": "Score de correspondance CV",
+        "strong": "Excellente correspondance",
+        "good": "Bonne correspondance",
+        "low": "Faible correspondance",
+        "subtitle": "Votre profil correspond à {{score}}% des exigences du poste."
+      },
+      "timeline": {
+        "title": "Statut de la candidature",
+        "applied": "Candidature envoyée",
+        "under_review": "En cours d’examen",
+        "shortlisted": "Présélectionné",
+        "interview": "Entretien",
+        "accepted": "Accepté",
+        "withdrawn": "Retiré",
+        "not_selected": "Non retenu",
+        "closed": "Cette candidature est clôturée",
+        "current_stage": "Étape actuelle"
+      }
+    },
+    "assessment_detail": {
+      "back_to_dashboard": "Retour au tableau de bord",
+      "loading_title": "…",
+      "default_title": "Évaluation",
+      "candidate_fallback": "Candidat",
+      "error_title": "Échec du chargement de l’évaluation",
+      "not_found": "Évaluation introuvable",
+      "unknown_user": "Utilisateur inconnu",
+      "unknown_job": "Poste inconnu",
+      "sidebar": {
+        "score": "Score",
+        "assessment": "Évaluation",
+        "profile_strength": "Force du profil"
+      },
+      "checklist": {
+        "complete_profile": "Compléter le profil",
+        "add_target_role": "Ajouter un poste cible",
+        "set_experience": "Définir l’expérience",
+        "first_skill_test": "Premier test de compétences"
+      },
+      "header": {
+        "title": "Évaluation d’entretien",
+        "overall_score": "Score global",
+        "details": "Détails de l’évaluation",
+        "analytics": "Analytique de l’entretien",
+        "coverage": "Couverture"
+      },
+      "summary": {
+        "overall_score": "Score global",
+        "strong": "Excellent",
+        "good": "Bon",
+        "needs_work": "À améliorer",
+        "coverage_performance": "Performance de couverture",
+        "interview_stats": "Statistiques",
+        "duration": "Durée",
+        "messages": "Messages",
+        "areas_covered": "Zones couvertes",
+        "job": "Poste"
+      },
+      "pipeline_steps": {
+        "title": "Étapes du pipeline",
+        "completed": "{{completed}} / {{total}} étapes terminées",
+        "interview_details": "Détails de l’entretien",
+        "coverage_areas": "Zones couvertes",
+        "strengths": "Points forts",
+        "needs_improvement": "Axes d’amélioration",
+        "status": {
+          "completed": "Terminé",
+          "in_progress": "En cours",
+          "pending": "En attente"
+        }
+      },
+      "coverage_areas": {
+        "title": "Zones couvertes",
+        "meta": "{{depth}} | {{count}} questions",
+        "completed": "Terminé",
+        "in_progress": "En cours"
+      },
+      "job_details": {
+        "description": "Description du poste",
+        "requirements": "Exigences",
+        "responsibilities": "Responsabilités"
+      },
+      "summary_section": {
+        "title": "Résumé"
+      },
+      "recommendations": {
+        "title": "Recommandations ({{count}})"
+      },
+      "coverage_analysis": {
+        "title": "Analyse de la couverture",
+        "by_area": "Couverture par zone",
+        "radar": "Radar des compétences"
+      },
+      "ai_analysis": {
+        "title": "Analyse IA",
+        "strongest_areas": "Zones les plus fortes",
+        "areas_for_improvement": "Zones à améliorer",
+        "recommended_focus": "Axes recommandés"
+      },
+      "skills": {
+        "required": "Compétences requises",
+        "soft": "Soft skills",
+        "suggested": "Compétences suggérées"
+      }
+    }
+  },
+  "overview": {
+    "stat": {
+      "avg_interview_score": "Score moyen",
+      "active_job_posts": "Offres actives",
+      "applicants": "Candidats",
+      "campaigns": "Campagnes",
+      "departments": "Départements",
+      "team_members": "Membres de l'équipe",
+      "no_interviews_yet": "Aucun entretien",
+      "no_posts_yet": "Aucune offre"
+    },
+    "interview_activity": {
+      "title": "Activité des entretiens",
+      "subtitle": "Entretiens menés ces 30 derniers jours",
+      "empty": "Aucun entretien effectué",
+      "empty_sub": "Les entretiens se lancent automatiquement quand les candidats terminent une campagne",
+      "total": "Total",
+      "pass_rate": "Taux de réussite"
+    },
+    "score_distribution": {
+      "title": "Répartition des scores",
+      "subtitle": "Candidats regroupés par score d'entretien",
+      "empty": "Aucun score enregistré",
+      "empty_sub": "Les scores apparaissent après que les candidats terminent les entretiens"
+    },
+    "top_jobs": {
+      "title": "Meilleures offres",
+      "subtitle": "Par nombre d'entretiens effectués",
+      "interviews": "entretiens",
+      "empty": "Aucun entretien",
+      "empty_sub": "Les données apparaissent après que les candidats terminent une campagne"
+    },
+    "recent_interviews": {
+      "title": "Entretiens récents",
+      "loading": "Chargement…",
+      "results": "{{count}} derniers résultats",
+      "no_results": "Aucun résultat",
+      "empty": "Aucun entretien",
+      "empty_sub": "Les entretiens sont générés automatiquement via les campagnes"
+    },
+    "applications_over_time": {
+      "title": "Candidatures dans le temps",
+      "subtitle": "Candidatures quotidiennes ces 30 derniers jours",
+      "empty": "Aucune candidature",
+      "post_job": "Publiez une offre pour attirer des candidats →"
+    },
+    "applications_per_job": {
+      "title": "Candidatures par offre",
+      "subtitle": "Meilleures offres par nombre de candidats",
+      "empty": "Aucune candidature",
+      "post_job": "Publiez une offre pour attirer des candidats →"
+    },
+    "campaign_activity": {
+      "title": "Activité des campagnes",
+      "subtitle": "Campagnes créées ces 30 derniers jours",
+      "empty": "Aucune campagne",
+      "create": "Créer votre première campagne →",
+      "active": "actives",
+      "status": {
+        "active": "Actif",
+        "draft": "Brouillon",
+        "paused": "En pause",
+        "closed": "Fermé",
+        "expired": "Expiré"
+      }
+    },
+    "members_per_dept": {
+      "title": "Membres par département",
+      "subtitle": "Répartition de l'équipe par département",
+      "empty": "Aucun département",
+      "create": "Créer votre premier département →"
+    },
+    "view_all": "Voir tout",
+    "verdict": {
+      "excellent": "Excellent",
+      "good": "Bien",
+      "needs_work": "À améliorer",
+      "pending": "En attente"
+    },
+    "time": {
+      "minutes_ago": "il y a {{count}}m",
+      "hours_ago": "il y a {{count}}h",
+      "yesterday": "Hier",
+      "days_ago": "il y a {{count}}j"
+    }
+  },
+  "metrics": {
+    "total_campaigns": "Total campagnes",
+    "active_campaigns": "Campagnes actives",
+    "interviews_completed": "Entretiens terminés",
+    "avg_score": "Score moyen",
+    "completion_rate": "Taux de complétion",
+    "time_saved": "Temps économisé"
+  },
+  "quick_actions": {
+    "title": "Actions rapides",
+    "new_campaign": "Nouvelle campagne",
+    "view_reports": "Voir les rapports",
+    "invite_team": "Inviter l'équipe"
+  },
+  "recent_campaigns": {
+    "title": "Campagnes récentes",
+    "view_all": "Voir tout",
+    "empty": "Aucune campagne. Créez-en une pour commencer."
+  },
+  "trend": {
+    "title": "Activité des campagnes",
+    "subtitle": "Campagnes créées ces 30 derniers jours",
+    "no_data": "Aucune activité sur la période sélectionnée."
+  },
+  "employee": {
+    "my_campaigns": "Mes campagnes",
+    "pending": "En attente",
+    "completed": "Terminé",
+    "in_progress": "En cours",
+    "not_started": "Non commencé"
+  },
+  "sidebar": {
+    "groups": {
+      "main": "Principal",
+      "jobs": "Emplois",
+      "campaigns": "Campagnes",
+      "team": "Équipe",
+      "account": "Compte",
+      "personal": "Personnel",
+      "company": "Entreprise"
+    },
+    "nav": {
+      "dashboard": "Tableau de bord",
+      "campaigns": "Campagnes",
+      "posts": "Offres",
+      "employees": "Employés",
+      "departments": "Départements",
+      "applications": "Candidatures",
+      "settings": "Paramètres",
+      "subscription": "Abonnement",
+      "my-campaigns": "Mes campagnes"
+    },
+    "collapse": "Réduire",
+    "expand": "Développer",
+    "sign_out": "Se déconnecter",
+    "plan": {
+      "active_plans": "Plans actifs",
+      "count_plans_one": "{{count}} Plan",
+      "count_plans_other": "{{count}} Plans",
+      "expires": "Expire le {{date}}",
+      "trial": "Plan d'essai",
+      "view_all": "Voir tous les plans →"
+    }
+  },
+  "pages": {
+    "common": {
+      "dashboard": "Tableau de bord",
+      "loading": "Chargement…",
+      "sort": "Trier",
+      "settings": "Paramètres"
+    },
+    "campaigns": {
+      "title": "Campagnes",
+      "subtitle": "Gérer et suivre toutes les campagnes de l'entreprise",
+      "new_campaign": "Nouvelle campagne"
+    },
+    "applications": {
+      "title": "Candidatures",
+      "search_placeholder": "Rechercher par nom ou email…",
+      "all_jobs": "Tous les postes",
+      "candidate_count_one": "{{count}} candidat",
+      "candidate_count_other": "{{count}} candidats",
+      "download_cvs": "Télécharger les CV",
+      "preparing": "Préparation…",
+      "no_candidates_download": "Aucun candidat à télécharger",
+      "download_cvs_tooltip_one": "Télécharger {{count}} CV en ZIP",
+      "download_cvs_tooltip_other": "Télécharger {{count}} CV en ZIP",
+      "no_cv_alert": "Aucun CV disponible pour les filtres actuels.",
+      "status": {
+        "all": "Tous les statuts",
+        "visited": "Visité",
+        "interview_completed": "Entretien terminé"
+      },
+      "sort": {
+        "date_applied": "Date de candidature",
+        "match_score": "Score de correspondance",
+        "interview_score": "Score d'entretien",
+        "candidate_name": "Nom du candidat",
+        "most_recent": "Plus récent en premier",
+        "earliest": "Plus ancien en premier",
+        "best_match": "Meilleure correspondance en premier",
+        "worst_match": "Moins bonne correspondance en premier",
+        "top_performers": "Meilleurs scores en premier",
+        "low_performers": "Scores les plus bas en premier",
+        "a_to_z": "A à Z",
+        "z_to_a": "Z à A"
+      },
+      "empty_filtered_title": "Aucun candidat correspondant",
+      "empty_no_apps_title": "Aucune candidature",
+      "empty_filtered_sub": "Essayez d'ajuster vos filtres",
+      "empty_no_apps_sub": "Les candidatures apparaîtront ici une fois que les candidats postuleront",
+      "job_picker": {
+        "title": "Filtrer par poste",
+        "subtitle": "Sélectionnez une offre pour filtrer les candidatures",
+        "search": "Rechercher des offres…",
+        "all_jobs": "Tous les postes",
+        "no_match": "Aucune offre ne correspond à votre recherche",
+        "no_posts": "Aucune offre trouvée"
+      },
+      "card": {
+        "applied_date": "Postulé le {{date}}",
+        "completed_date": "· Terminé le {{date}}"
+      },
+      "actions": {
+        "score_match": "Correspond.",
+        "score_interview": "Entretien",
+        "send_invite": "Inviter",
+        "contact": "Contacter",
+        "menu": {
+          "view_profile_title": "Voir le profil",
+          "view_profile_desc": "Détails complets du candidat",
+          "view_results_title": "Voir les résultats",
+          "view_results_desc_done": "Évaluation de l'entretien",
+          "view_results_desc_pending": "Pas encore terminé",
+          "download_cv_title": "Télécharger le CV",
+          "download_cv_desc_done": "Télécharger en PDF",
+          "download_cv_desc_none": "Aucun CV téléversé",
+          "contact_title": "Contacter le candidat",
+          "contact_desc_none": "Pas d'email"
+        }
+      },
+      "contact_modal": {
+        "mode_email_label": "Email",
+        "mode_email_sublabel": "Envoyer par email",
+        "mode_chat_label": "Chat interne",
+        "mode_chat_sublabel": "Envoyer via le chat",
+        "success_email_title": "Email envoyé !",
+        "success_chat_title": "Message envoyé !",
+        "success_email_body": "Votre email a été livré à {{name}}.",
+        "success_chat_body": "{{name}} verra votre message dans le chat.",
+        "chat_banner": "Ce message apparaîtra dans la boîte de réception. {{name}} sera notifié immédiatement.",
+        "subject_placeholder": "Sujet",
+        "msg_placeholder_email": "Bonjour {{firstName}},\n\nNous avons examiné votre candidature et…",
+        "msg_placeholder_chat": "Écrivez votre message…",
+        "error_empty": "Veuillez écrire un message.",
+        "error_no_user": "Impossible de démarrer le chat — informations manquantes.",
+        "error_conv": "Échec du démarrage de la conversation. Veuillez réessayer.",
+        "error_msg": "Échec de l'envoi du message. Veuillez réessayer.",
+        "error_email": "Échec de l'envoi. Veuillez réessayer.",
+        "cancel": "Annuler",
+        "sending": "Envoi…",
+        "send_email": "Envoyer l'email",
+        "send_message": "Envoyer le message"
+      },
+      "assessment_modal": {
+        "subtitle": "Résultats de l'évaluation",
+        "loading": "Chargement…",
+        "not_found": "Évaluation introuvable",
+        "verdict_passed": "Réussi",
+        "verdict_review": "En révision",
+        "verdict_needs_work": "À améliorer",
+        "duration": "Durée :",
+        "responses": "Réponses :",
+        "tab_scores": "Scores",
+        "tab_coverage": "Couverture",
+        "tab_ai_report": "Rapport IA",
+        "score_breakdown": "Détail des scores",
+        "score_overall": "Global",
+        "score_coverage": "Couverture",
+        "score_communication": "Communication",
+        "score_technical_depth": "Profondeur technique",
+        "score_problem_approach": "Approche problème",
+        "score_learning_ability": "Capacité d'apprentissage",
+        "strengths": "Points forts",
+        "weak_areas": "Points faibles",
+        "overall_coverage": "Couverture globale",
+        "ai_summary_title": "Résumé de l'IA",
+        "recommendations_title": "Recommandations"
+      },
+      "invite_modal": {
+        "title": "Envoyer une invitation",
+        "to_label": "À",
+        "success_title": "Invitation envoyée !",
+        "success_body": "{{name}} recevra un email avec le lien vers l'entretien.",
+        "cancel": "Annuler",
+        "sending": "Envoi…",
+        "send": "Envoyer l'invitation",
+        "body_pre": "Un email d'invitation sera envoyé à ",
+        "body_post": " avec un lien direct pour démarrer l'entretien."
+      },
+      "metrics": {
+        "total_applicants": "Total candidats",
+        "job_posts": "Offres d'emploi",
+        "avg_cv_score": "Score CV moyen",
+        "top_cv_score": "Meilleur score CV"
+      }
+    },
+    "settings": {
+      "title": "Paramètres",
+      "subtitle": "Gérez votre profil d'entreprise et vos clés API",
+      "view_plans": "Voir les plans",
+      "employees_suffix": "employés",
+      "tabs": {
+        "company_info": "Infos entreprise",
+        "contact": "Contact & Présence",
+        "api_keys": "Clés API",
+        "language": "Langue"
+      },
+      "banner": {
+        "edit_profile": "Modifier le profil",
+        "cancel": "Annuler",
+        "save": "Enregistrer"
+      },
+      "company_info": {
+        "title": "Informations entreprise",
+        "subtitle": "Les informations de base de votre entreprise",
+        "name_label": "Nom de l'entreprise",
+        "name_placeholder": "Nom de votre entreprise",
+        "email_label": "Email de l'entreprise",
+        "email_helper": "L'email ne peut pas être modifié",
+        "industry_label": "Secteur d'activité",
+        "industry_placeholder": "ex. Technologie, Finance...",
+        "size_label": "Taille de l'entreprise",
+        "experience_label": "Niveau d'expérience requis",
+        "language_label": "Langue de l'interface"
+      },
+      "contact": {
+        "title": "Contact & Présence",
+        "subtitle": "Localisation, liens sociaux et préférences de travail",
+        "country_label": "Pays / Localisation",
+        "country_placeholder": "Sélectionner un pays",
+        "employment_label": "Type d'emploi",
+        "size_label": "Taille de l'entreprise",
+        "linkedin_label": "URL LinkedIn",
+        "website_label": "Site web de l'entreprise"
+      },
+      "experience_levels": {
+        "entry": "Débutant",
+        "mid": "Intermédiaire",
+        "senior": "Senior",
+        "lead": "Lead",
+        "executive": "Cadre dirigeant"
+      },
+      "employment_types": {
+        "remote": "Télétravail",
+        "onsite": "Présentiel",
+        "hybrid": "Hybride"
+      },
+      "api_keys": {
+        "title": "Clés API",
+        "subtitle": "Gérez les clés API pour les intégrations externes",
+        "new_key": "Nouvelle clé API",
+        "copy": "Copier",
+        "copied": "Copié !",
+        "banner_title": "Clé API créée — copiez-la maintenant, elle ne sera plus affichée",
+        "no_keys": "Aucune clé API",
+        "active": "Active",
+        "disabled_label": "Désactivée",
+        "key_preview": "Clé : {{preview}}",
+        "rate_limit_label": "Limite : {{count}} req/s",
+        "expires_label": "Expire : {{date}}",
+        "last_used_label": "Dernière util. : {{date}}",
+        "ips_all": "Toutes",
+        "ips_label": "IPs : {{ips}}",
+        "toggle_disable": "Désactiver",
+        "toggle_enable": "Activer",
+        "regenerate_tooltip": "Régénérer la clé",
+        "edit_tooltip": "Modifier",
+        "delete_tooltip": "Supprimer",
+        "create_title": "Créer une clé API",
+        "edit_title": "Modifier la clé API",
+        "delete_title": "Supprimer la clé API",
+        "delete_confirm": "Êtes-vous sûr de vouloir supprimer {{name}} ?",
+        "delete_warning": "Cette action est irréversible. Toute intégration utilisant cette clé cessera de fonctionner immédiatement.",
+        "fields": {
+          "key_name": "Nom de la clé",
+          "key_name_placeholder": "ex. Mon application mobile",
+          "service_name": "Nom du service",
+          "service_placeholder": "ex. mobile-app",
+          "scopes": "Portées",
+          "rate_limit": "Limite de débit (req/s)",
+          "expires_at": "Date d'expiration",
+          "ip_whitelist": "Liste blanche IP",
+          "ip_all": "Toutes les IPs",
+          "ip_custom": "Personnalisé",
+          "ip_placeholder": "192.168.1.1, 10.0.0.0/24",
+          "ip_helper": "IPs ou plages CIDR séparées par des virgules"
+        },
+        "actions": {
+          "cancel": "Annuler",
+          "create": "Créer la clé",
+          "save": "Enregistrer",
+          "delete": "Supprimer"
+        },
+        "toast": {
+          "load_error": "Échec du chargement des clés API",
+          "created": "Clé API créée — copiez-la maintenant !",
+          "create_error": "Échec de la création de la clé API",
+          "updated": "Clé API mise à jour",
+          "update_error": "Échec de la mise à jour de la clé API",
+          "deleted": "Clé API supprimée",
+          "delete_error": "Échec de la suppression de la clé API",
+          "toggle_error": "Échec de la modification de la clé API",
+          "key_disabled": "Clé API désactivée",
+          "key_enabled": "Clé API activée",
+          "regenerated": "Clé API régénérée — copiez la nouvelle clé !",
+          "regenerate_error": "Échec de la régénération de la clé API",
+          "copied": "Clé copiée dans le presse-papier"
+        }
+      },
+      "language": {
+        "title": "Langue de l'interface",
+        "subtitle": "Choisissez la langue utilisée dans votre tableau de bord",
+        "desc_en": "Utiliser TalentAI en anglais",
+        "desc_fr": "Utiliser TalentAI en français",
+        "save_hint": "Les changements s'appliquent immédiatement et sont sauvegardés automatiquement."
+      },
+      "generate_lang": {
+        "title": "Langue de génération IA",
+        "subtitle": "Langue par défaut pour les offres générées par l'IA. Une fois définie, le sélecteur de langue est ignoré automatiquement.",
+        "always_ask_label": "Toujours demander",
+        "always_ask_desc": "Afficher le sélecteur de langue à chaque fois",
+        "lang_desc_en": "Toujours générer en anglais",
+        "lang_desc_fr": "Toujours générer en français",
+        "save_hint": "Cette préférence est sauvegardée localement sur cet appareil. Les changements prennent effet immédiatement."
+      }
+    }
+  }
+}

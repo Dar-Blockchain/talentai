@@ -21,6 +21,7 @@ import { setConnectedUser } from '@/store/slices/userSlice';
 import { getPostSkills, formatSalary, getLevelFromNumber, getSoftSkillLevelLabel, Skill } from '@/utils/postHelpers';
 import OnboardingModal from '@/components/features/interview/OnboardingModal';
 import Header from '@/components/layout/Header';
+import { useTranslation } from 'react-i18next';
 
 const PURPLE = '#8310FF';
 const PURPLE_LIGHT = 'rgba(131,16,255,0.08)';
@@ -63,6 +64,7 @@ const MetaBadge: React.FC<{ icon: React.ReactNode; label: string; color: string;
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 const JobLandingPage: React.FC = () => {
+  const { t } = useTranslation('modules/interview/apply');
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { jobId } = router.query;
@@ -139,7 +141,7 @@ const JobLandingPage: React.FC = () => {
     return (
       <Box sx={{ minHeight: '100vh', bgcolor: '#F8F9FA', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
         <CircularProgress sx={{ color: PURPLE }} size={44} />
-        <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280' }}>Loading job details…</Typography>
+        <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280' }}>{t('loading')}</Typography>
       </Box>
     );
   }
@@ -147,9 +149,9 @@ const JobLandingPage: React.FC = () => {
   if (error || !jobDetails) {
     return (
       <Box sx={{ minHeight: '100vh', bgcolor: '#F8F9FA', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, px: 3 }}>
-        <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.2rem', color: '#111827' }}>Job not found</Typography>
+        <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.2rem', color: '#111827' }}>{t('not_found')}</Typography>
         <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280', textAlign: 'center' }}>
-          This link may be expired or invalid. Please contact the recruiter.
+          {t('not_found_desc')}
         </Typography>
       </Box>
     );
@@ -197,14 +199,14 @@ const JobLandingPage: React.FC = () => {
 
             {jd.description && (
               <SectionCard>
-                <SectionTitle icon={<WorkOutlineIcon sx={{ fontSize: 15 }} />} title="Job Description" />
+                <SectionTitle icon={<WorkOutlineIcon sx={{ fontSize: 15 }} />} title={t('section.description')} />
                 <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.88rem', color: '#374151', lineHeight: 1.85, whiteSpace: 'pre-line' }}>{jd.description}</Typography>
               </SectionCard>
             )}
 
             {jd.requirements && (
               <SectionCard>
-                <SectionTitle icon={<CheckCircleOutlineIcon sx={{ fontSize: 15 }} />} title="Requirements" />
+                <SectionTitle icon={<CheckCircleOutlineIcon sx={{ fontSize: 15 }} />} title={t('section.requirements')} />
                 <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.88rem', color: '#374151', lineHeight: 1.85, whiteSpace: 'pre-line' }}>{jd.requirements}</Typography>
               </SectionCard>
             )}
@@ -214,7 +216,7 @@ const JobLandingPage: React.FC = () => {
                 <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
                   {skills.filter(s => s.type === 'technical').length > 0 && (
                     <Box sx={{ flex: 1 }}>
-                      <SectionTitle icon={<CodeIcon sx={{ fontSize: 15 }} />} title="Technical Skills" />
+                      <SectionTitle icon={<CodeIcon sx={{ fontSize: 15 }} />} title={t('section.technical_skills')} />
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
                         {skills.filter(s => s.type === 'technical').map((skill: Skill, i: number) => (
                           <Chip key={i} label={`${skill.name}${skill.level ? ` · ${getLevelFromNumber(skill.level)}` : ''}`} size="small"
@@ -225,7 +227,7 @@ const JobLandingPage: React.FC = () => {
                   )}
                   {skills.filter(s => s.type === 'soft').length > 0 && (
                     <Box sx={{ flex: 1 }}>
-                      <SectionTitle icon={<PsychologyIcon sx={{ fontSize: 15 }} />} title="Soft Skills" />
+                      <SectionTitle icon={<PsychologyIcon sx={{ fontSize: 15 }} />} title={t('section.soft_skills')} />
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
                         {skills.filter(s => s.type === 'soft').map((skill: Skill, i: number) => (
                           <Chip key={i} label={`${skill.name}${skill.level ? ` · ${getSoftSkillLevelLabel(Number(skill.level))}` : ''}`} size="small"
@@ -242,15 +244,15 @@ const JobLandingPage: React.FC = () => {
           {/* ── Right: Sticky apply panel ── */}
           <Box sx={{ width: { xs: '100%', md: 320 }, flexShrink: 0, position: { md: 'sticky' }, top: { md: 24 } }}>
             <SectionCard>
-              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.05rem', color: '#111827', mb: 0.5 }}>Ready to apply?</Typography>
+              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.05rem', color: '#111827', mb: 0.5 }}>{t('apply_panel.title')}</Typography>
               <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#6B7280', mb: 2.5, lineHeight: 1.6 }}>
-                Fill in a short form and start your AI interview immediately.
+                {t('apply_panel.subtitle')}
               </Typography>
 
               {[
-                { num: 1, label: 'Fill in your details', sub: 'Name, email, phone' },
-                { num: 2, label: 'Upload your CV', sub: 'PDF format, required' },
-                { num: 3, label: 'Start AI Interview', sub: 'Takes ~20 minutes' },
+                { num: 1, label: t('apply_panel.step1_label'), sub: t('apply_panel.step1_sub') },
+                { num: 2, label: t('apply_panel.step2_label'), sub: t('apply_panel.step2_sub') },
+                { num: 3, label: t('apply_panel.step3_label'), sub: t('apply_panel.step3_sub') },
               ].map(({ num, label, sub }) => (
                 <Box key={num} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 1.75 }}>
                   <Box sx={{ width: 26, height: 26, borderRadius: '50%', flexShrink: 0, bgcolor: PURPLE_LIGHT, border: `1px solid ${PURPLE_BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -271,10 +273,10 @@ const JobLandingPage: React.FC = () => {
                   fontSize: '0.95rem', py: 1.5, borderRadius: '12px', textTransform: 'none',
                   boxShadow: 'none', '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' },
                 }}>
-                Apply Now
+                {t('apply_panel.btn')}
               </Button>
               <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', color: '#9CA3AF', textAlign: 'center', mt: 1.25 }}>
-                No account required · Takes ~20 min
+                {t('apply_panel.disclaimer')}
               </Typography>
             </SectionCard>
           </Box>

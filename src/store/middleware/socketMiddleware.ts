@@ -152,7 +152,17 @@ export const socketMiddleware: Middleware = (store) => {
 
       // Listen for interview completion notifications
       socket.on('interview_completed', (data: any) => {
-        const message = `Your ${data.interviewType || 'interview'} has been completed successfully. Results are now available.`;
+        const typeLabels: Record<string, string> = {
+          HR_INTERVIEW: 'HR',
+          TECHNICAL_INTERVIEW: 'Technical',
+          CODING_TEST: 'Coding Test',
+          SOFT_SKILLS: 'Soft Skills',
+        };
+        const typeLabel = data.interviewType ? (typeLabels[data.interviewType] || data.interviewType.replace(/_/g, ' ')) : null;
+        const jobTitle = data.jobTitle ? ` for ${data.jobTitle}` : '';
+        const message = typeLabel
+          ? `You completed your ${typeLabel} interview${jobTitle}. Your results are now available in your dashboard.`
+          : `You completed your interview${jobTitle}. Your results are now available in your dashboard.`;
         const notification = {
           id: Date.now().toString(),
           type: 'success' as const,

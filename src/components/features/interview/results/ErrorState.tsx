@@ -6,12 +6,14 @@ import {
 import { useRouter } from 'next/router';
 import PageContainer from '@/components/layout/PageContainer';
 import Header from '@/components/layout/Header';
+import { useTranslation } from 'react-i18next';
 
 interface ErrorStateProps {
   error: string | null;
 }
 
 export default function ErrorState({ error }: ErrorStateProps) {
+  const { t } = useTranslation('modules/interview/results');
   const router = useRouter();
 
   return (
@@ -38,10 +40,10 @@ export default function ErrorState({ error }: ErrorStateProps) {
           <WarningIcon sx={{ fontSize: 40, color: '#fa709a' }} />
         </Avatar>
         <Typography variant="h5" sx={{ fontWeight: 600, mb: 2, color: '#000000' }}>
-          No Analysis Data Available
+          {t('error.title')}
         </Typography>
         <Typography variant="body2" sx={{ color: '#6b7280', mb: 3, maxWidth: 400, mx: 'auto' }}>
-          {error || 'No interview data found. This could be because the interview was not completed or the session has expired.'}
+          {error || t('error.fallback_desc')}
         </Typography>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
           <Button
@@ -63,7 +65,7 @@ export default function ErrorState({ error }: ErrorStateProps) {
               },
             }}
           >
-            Return to Dashboard
+            {t('error.return_btn')}
           </Button>
           <Button
             variant="outlined"
@@ -82,7 +84,7 @@ export default function ErrorState({ error }: ErrorStateProps) {
               },
             }}
           >
-            Take New Interview
+            {t('error.new_interview_btn')}
           </Button>
         </Stack>
       </Box>

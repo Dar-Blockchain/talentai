@@ -1,12 +1,15 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
 import { selectCurrentJob } from "@/store/slices/postSlice";
 import { Box, Typography, Chip, Divider } from "@mui/material";
+import { LANG_META } from "@/constants/languages";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
 import AttachMoneyOutlined from "@mui/icons-material/AttachMoneyOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import CodeOutlined from "@mui/icons-material/CodeOutlined";
+import MicOutlined from "@mui/icons-material/MicOutlined";
 import SectionCard from "@/components/ui/SectionCard";
 import { formatSalary, getLevelFromNumber, getPostSkills, getSoftSkillLevelLabel, Skill } from "@/utils/postHelpers";
 import { formatDate } from "@/utils/functions";
@@ -32,18 +35,24 @@ const SectionTitle: React.FC<{ icon: React.ReactNode; title: string }> = ({ icon
 );
 
 const PostBasicDetails: React.FC<Props> = () => {
+  const { t } = useTranslation("posts");
   const job = useSelector(selectCurrentJob);
   if (!job) return null;
 
   const jd = job.jobDetails || {};
   const displaySkills = getPostSkills(job);
 
+
+  const interviewLanguages: string[] = job.interviewLanguages?.length
+    ? job.interviewLanguages
+    : ["en"];
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
 
       {/* Overview */}
       <SectionCard>
-        <SectionTitle icon={<WorkOutlined sx={{ fontSize: 15 }} />} title="Job Overview" />
+        <SectionTitle icon={<WorkOutlined sx={{ fontSize: 15 }} />} title={t("detail.details.overview")} />
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
           {jd.workMode && (
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, bgcolor: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 2, px: 1.5, py: 0.75 }}>
@@ -71,10 +80,40 @@ const PostBasicDetails: React.FC<Props> = () => {
           )}
         </Box>
 
+        {/* Interview languages */}
+        <Divider sx={{ my: 2 }} />
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+            <MicOutlined sx={{ fontSize: 15, color: "#6B7280" }} />
+            <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#6B7280" }}>
+              {t("detail.details.interview_languages")}
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", gap: 0.75 }}>
+            {interviewLanguages.map((code) => {
+              const meta = LANG_META[code];
+              if (!meta) return null;
+              return (
+                <Box
+                  key={code}
+                  sx={{
+                    display: "inline-flex", alignItems: "center", gap: 0.5,
+                    px: 1.25, py: 0.4, borderRadius: "8px",
+                    bgcolor: "#F0FDFA", border: "1px solid #99F6E4",
+                  }}
+                >
+                  <img src={`https://flagcdn.com/w40/${meta.flag}.png`} srcSet={`https://flagcdn.com/w80/${meta.flag}.png 2x`} width={20} height={14} alt={meta.label} style={{ borderRadius: 2, display: "block" }} />
+                  <Typography sx={{ fontSize: "11.5px", fontWeight: 600, color: "#0D9488" }}>{meta.label}</Typography>
+                </Box>
+              );
+            })}
+          </Box>
+        </Box>
+
         {jd.description && (
           <>
             <Divider sx={{ my: 2.5 }} />
-            <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#374151", mb: 1 }}>Description</Typography>
+            <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#374151", mb: 1 }}>{t("detail.details.description")}</Typography>
             <Typography sx={{ fontSize: "13px", color: "#6B7280", lineHeight: 1.8 }}>{jd.description}</Typography>
           </>
         )}
@@ -83,7 +122,7 @@ const PostBasicDetails: React.FC<Props> = () => {
       {/* Skills */}
       {displaySkills.length > 0 && (
         <SectionCard>
-          <SectionTitle icon={<CodeOutlined sx={{ fontSize: 15 }} />} title="Required Skills" />
+          <SectionTitle icon={<CodeOutlined sx={{ fontSize: 15 }} />} title={t("detail.details.skills")} />
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
             {displaySkills.map((skill: Skill, i: number) => {
               const level = skill.type === "soft"
@@ -105,7 +144,7 @@ const PostBasicDetails: React.FC<Props> = () => {
       {/* Requirements */}
       {jd.requirements?.length > 0 && (
         <SectionCard>
-          <SectionTitle icon={<WorkOutlined sx={{ fontSize: 15 }} />} title="Requirements" />
+          <SectionTitle icon={<WorkOutlined sx={{ fontSize: 15 }} />} title={t("detail.details.requirements")} />
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             {jd.requirements.map((req: string, i: number) => (
               <Box key={i} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
@@ -120,7 +159,7 @@ const PostBasicDetails: React.FC<Props> = () => {
       {/* Responsibilities */}
       {jd.responsibilities?.length > 0 && (
         <SectionCard>
-          <SectionTitle icon={<WorkOutlined sx={{ fontSize: 15 }} />} title="Responsibilities" />
+          <SectionTitle icon={<WorkOutlined sx={{ fontSize: 15 }} />} title={t("detail.details.responsibilities")} />
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             {jd.responsibilities.map((r: string, i: number) => (
               <Box key={i} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>

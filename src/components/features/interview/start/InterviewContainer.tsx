@@ -7,6 +7,7 @@ import VideocamIcon from '@mui/icons-material/Videocam';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import { InterviewStatus, ConnectionStatus, CameraStatus, AgentState } from '@/types/interview';
+import { useTranslation } from 'react-i18next';
 
 const REPORT_POLL_INTERVAL = 1500; // ms between checks
 const REPORT_MAX_WAIT = 20000;     // max 20 s wait before navigating anyway
@@ -33,6 +34,7 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
   onStartInterview,
   onViewResults,
 }) => {
+  const { t } = useTranslation('interview');
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const deadlineRef = useRef<number>(0);
   const [waitDots, setWaitDots] = useState('');
@@ -84,9 +86,9 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
   const allReady = isHydrated && connectionStatus === 'connected' && cameraStatus === 'granted';
 
   const checks = [
-    { label: 'Camera access', ok: cameraStatus === 'granted' },
-    { label: 'System connected', ok: connectionStatus === 'connected' },
-    { label: 'Page loaded', ok: isHydrated },
+    { label: t('container.check_camera'), ok: cameraStatus === 'granted' },
+    { label: t('container.check_system'), ok: connectionStatus === 'connected' },
+    { label: t('container.check_loaded'), ok: isHydrated },
   ];
 
   return (
@@ -127,13 +129,13 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
           </Box>
           <Box>
             <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.95rem', color: '#111827', lineHeight: 1.2 }}>
-              {agentState === 'thinking' ? 'AI is thinking…'
-                : agentState === 'processing' ? 'Processing your answer…'
-                : 'Recording your response'}
+              {agentState === 'thinking' ? t('container.thinking')
+                : agentState === 'processing' ? t('container.processing')
+                : t('container.recording')}
             </Typography>
             <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', color: '#9ca3af', mt: 0.2 }}>
               {agentState === 'thinking' || agentState === 'processing'
-                ? 'Please wait…' : 'Listening to your answer…'}
+                ? t('container.wait') : t('container.listening')}
             </Typography>
           </Box>
         </Box>
@@ -164,10 +166,10 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
             </Box>
 
             <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.2rem', color: '#111827', mb: 0.5 }}>
-              Ready to begin?
+              {t('container.ready_title')}
             </Typography>
             <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#6b7280', mb: 3, lineHeight: 1.6 }}>
-              Your AI interviewer is ready and waiting.
+              {t('container.ready_subtitle')}
             </Typography>
 
             {/* Pre-flight checks */}
@@ -188,7 +190,7 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
                     {label}
                   </Typography>
                   <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', fontWeight: 600, color: ok ? '#22c55e' : '#f59e0b' }}>
-                    {ok ? 'OK' : 'Waiting'}
+                    {ok ? t('container.check_ok') : t('container.check_waiting')}
                   </Typography>
                 </Box>
               ))}
@@ -214,14 +216,14 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
                 '&.Mui-disabled': { bgcolor: '#f3f4f6', color: '#9ca3af', boxShadow: 'none' },
               }}
             >
-              Start Interview
+              {t('start.btn_start')}
             </Button>
 
             {cameraStatus !== 'granted' && cameraStatus !== 'requesting' && (
               <Box display="flex" alignItems="center" justifyContent="center" gap={0.5} sx={{ mt: 1.5 }}>
                 <VideocamIcon sx={{ fontSize: 15, color: '#f59e0b' }} />
                 <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', color: '#f59e0b' }}>
-                  Camera permission required
+                  {t('container.camera_warning')}
                 </Typography>
               </Box>
             )}
@@ -233,10 +235,10 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
           <Box sx={{ textAlign: 'center', py: 2 }}>
             <CircularProgress size={48} sx={{ color: '#8310FF', mb: 2 }} />
             <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1rem', color: '#111827', mb: 0.5 }}>
-              Starting interview…
+              {t('container.starting_title')}
             </Typography>
             <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#6b7280' }}>
-              Please wait while we connect you to your AI interviewer.
+              {t('container.starting_subtitle')}
             </Typography>
           </Box>
         )}
@@ -266,7 +268,7 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
                 lineHeight: 1.7,
                 minHeight: 80,
               }}>
-                {currentTranscript || 'Waiting for speech…'}
+                {currentTranscript || t('container.speech_placeholder')}
               </Typography>
             </Box>
 
@@ -278,10 +280,10 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
           <Box sx={{ textAlign: 'center', py: 2 }}>
             <CircularProgress size={48} sx={{ color: '#8310FF', mb: 2 }} />
             <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1rem', color: '#111827', mb: 0.5 }}>
-              Analyzing your results{waitDots}
+              {t('container.analyzing_title')}{waitDots}
             </Typography>
             <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#6b7280' }}>
-              Please wait while we prepare your report.
+              {t('container.analyzing_subtitle')}
             </Typography>
           </Box>
         )}

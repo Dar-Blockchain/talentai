@@ -1,7 +1,7 @@
 # Dependencies
 #node_modules/
 yarn.lock
-
+backups
 # Environment variables
 .env
 .env.local

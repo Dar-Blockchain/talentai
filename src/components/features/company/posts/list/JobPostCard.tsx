@@ -1,4 +1,5 @@
 import { memo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Box, Typography, IconButton, Menu, MenuItem, Tooltip } from "@mui/material";
 import { motion } from "framer-motion";
 import { useRouter } from "next/router";
@@ -10,6 +11,7 @@ import MoreVertOutlined from "@mui/icons-material/MoreVert";
 import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
 import OpenInNewOutlined from "@mui/icons-material/OpenInNewOutlined";
 import ContentCopyOutlined from "@mui/icons-material/ContentCopyOutlined";
+import PublishOutlined from "@mui/icons-material/PublishOutlined";
 import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
 import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
 
@@ -21,18 +23,18 @@ const getDaysLeft = (expirationDate?: string) => {
   return Math.ceil((new Date(expirationDate).getTime() - Date.now()) / 86400000);
 };
 
-const CREATION_TYPE: Record<string, { label: string; color: string; bg: string; Icon: React.ElementType }> = {
-  ai:       { label: "AI",       color: "#7C3AED", bg: "#F5F3FF", Icon: AutoAwesomeOutlined },
-  pipeline: { label: "Pipeline", color: "#0891B2", bg: "#ECFEFF", Icon: AccountTreeOutlined },
-  manual:   { label: "Manual",   color: "#D97706", bg: "#FFFBEB", Icon: EditNoteOutlined },
+const CREATION_TYPE: Record<string, { i18nKey: string; color: string; bg: string; Icon: React.ElementType }> = {
+  ai:       { i18nKey: "ai",       color: "#7C3AED", bg: "#F5F3FF", Icon: AutoAwesomeOutlined },
+  pipeline: { i18nKey: "pipeline", color: "#0891B2", bg: "#ECFEFF", Icon: AccountTreeOutlined },
+  manual:   { i18nKey: "manual",   color: "#D97706", bg: "#FFFBEB", Icon: EditNoteOutlined },
 };
 
-const STATUS_STYLES: Record<string, { label: string; color: string; bg: string; dot: string }> = {
-  active:  { label: "Open",    color: "#059669", bg: "#ECFDF5", dot: "#10B981" },
-  open:    { label: "Open",    color: "#059669", bg: "#ECFDF5", dot: "#10B981" },
-  draft:   { label: "Draft",   color: "#D97706", bg: "#FFFBEB", dot: "#F59E0B" },
-  closed:  { label: "Closed",  color: "#6B7280", bg: "#F3F4F6", dot: "#9CA3AF" },
-  expired: { label: "Expired", color: "#DC2626", bg: "#FEF2F2", dot: "#EF4444" },
+const STATUS_STYLES: Record<string, { i18nKey: string; color: string; bg: string; dot: string }> = {
+  active:  { i18nKey: "open",    color: "#059669", bg: "#ECFDF5", dot: "#10B981" },
+  open:    { i18nKey: "open",    color: "#059669", bg: "#ECFDF5", dot: "#10B981" },
+  draft:   { i18nKey: "draft",   color: "#D97706", bg: "#FFFBEB", dot: "#F59E0B" },
+  closed:  { i18nKey: "closed",  color: "#6B7280", bg: "#F3F4F6", dot: "#9CA3AF" },
+  expired: { i18nKey: "expired", color: "#DC2626", bg: "#FEF2F2", dot: "#EF4444" },
 };
 
 interface JobPostCardProps {
@@ -40,10 +42,12 @@ interface JobPostCardProps {
   index?: number;
   onDelete: (id: string) => void;
   onViewDetails: (id: string) => void;
+  onPublish?: (id: string) => void;
   canDelete?: boolean;
 }
 
-const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDetails, canDelete = true }) => {
+const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDetails, onPublish, canDelete = true }) => {
+  const { t } = useTranslation("posts");
   const router = useRouter();
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [copied, setCopied] = useState(false);
@@ -95,8 +99,8 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
           },
         }}
       >
-        {/* Top accent bar — subtle gray */}
-        <Box sx={{ height: 3, bgcolor: "#E5E7EB", flexShrink: 0 }} />
+        {/* Top accent bar */}
+        <Box sx={{ height: 3, bgcolor: isDraft ? "#F59E0B" : "#E5E7EB", flexShrink: 0 }} />
 
         <Box sx={{ p: 2.5, display: "flex", flexDirection: "column", gap: 1.75, flex: 1 }}>
 
@@ -114,7 +118,7 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
             {/* Title + badges */}
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography noWrap sx={{ fontSize: "14.5px", fontWeight: 700, color: "#111827", lineHeight: 1.3, mb: 0.6 }}>
-                {jd.title || "Untitled Position"}
+                {jd.title || t("card.untitled")}
               </Typography>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                 {/* Creation type badge */}
@@ -125,7 +129,7 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
                 }}>
                   <CtIcon sx={{ fontSize: 10, color: ctInfo.color }} />
                   <Typography sx={{ fontSize: "10.5px", fontWeight: 700, color: ctInfo.color, lineHeight: 1 }}>
-                    {ctInfo.label}
+                    {t(`card.creation_type.${ctInfo.i18nKey}`)}
                   </Typography>
                 </Box>
 
@@ -137,7 +141,7 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
                 }}>
                   <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: statusStyle.dot, flexShrink: 0 }} />
                   <Typography sx={{ fontSize: "10.5px", fontWeight: 700, color: statusStyle.color, lineHeight: 1 }}>
-                    {statusStyle.label}
+                    {t(`card.status.${statusStyle.i18nKey}`)}
                   </Typography>
                 </Box>
               </Box>
@@ -177,7 +181,7 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
               {/* Header label */}
               <Box sx={{ px: 1.5, pt: 0.5, pb: 1 }}>
                 <Typography noWrap sx={{ fontSize: "10px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                  {jd.title || "Post actions"}
+                  {jd.title || t("card.menu.header_fallback")}
                 </Typography>
               </Box>
 
@@ -192,10 +196,28 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
                   <OpenInNewOutlined sx={{ fontSize: 13, color: "#6B7280" }} />
                 </Box>
                 <Box>
-                  <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>View Details</Typography>
-                  <Typography sx={{ fontSize: "10px", color: "#9CA3AF", lineHeight: 1.2 }}>Open full post page</Typography>
+                  <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>{t("card.menu.view_title")}</Typography>
+                  <Typography sx={{ fontSize: "10px", color: "#9CA3AF", lineHeight: 1.2 }}>{t("card.menu.view_desc")}</Typography>
                 </Box>
               </MenuItem>
+
+              {isDraft && onPublish && (
+                <MenuItem
+                  onClick={(e) => { e.stopPropagation(); setMenuAnchor(null); onPublish(job._id); }}
+                  sx={{
+                    gap: 1.25, borderRadius: "8px", py: 0.9, px: 1.25,
+                    "&:hover": { bgcolor: "#ECFDF5", "& .menu-icon-box": { bgcolor: "#D1FAE5" } },
+                  }}
+                >
+                  <Box className="menu-icon-box" sx={{ width: 26, height: 26, borderRadius: "7px", bgcolor: "#ECFDF5", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background 0.15s" }}>
+                    <PublishOutlined sx={{ fontSize: 13, color: "#059669" }} />
+                  </Box>
+                  <Box>
+                    <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>{t("card.menu.publish_title")}</Typography>
+                    <Typography sx={{ fontSize: "10px", color: "#9CA3AF", lineHeight: 1.2 }}>{t("card.menu.publish_desc")}</Typography>
+                  </Box>
+                </MenuItem>
+              )}
 
               {!isDraft && (
                 <MenuItem
@@ -210,9 +232,9 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
                   </Box>
                   <Box>
                     <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>
-                      {copied ? "Copied!" : "Share Link"}
+                      {copied ? t("card.copied") : t("card.menu.share_title")}
                     </Typography>
-                    <Typography sx={{ fontSize: "10px", color: "#9CA3AF", lineHeight: 1.2 }}>Share with candidates</Typography>
+                    <Typography sx={{ fontSize: "10px", color: "#9CA3AF", lineHeight: 1.2 }}>{t("card.menu.share_desc")}</Typography>
                   </Box>
                 </MenuItem>
               )}
@@ -230,8 +252,8 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
                   <DeleteOutlineOutlined sx={{ fontSize: 13, color: "#6B7280" }} />
                 </Box>
                 <Box>
-                  <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#374151", lineHeight: 1.2 }}>Delete Post</Typography>
-                  <Typography sx={{ fontSize: "10px", color: "#9CA3AF", lineHeight: 1.2 }}>This action is permanent</Typography>
+                  <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#374151", lineHeight: 1.2 }}>{t("card.menu.delete_title")}</Typography>
+                  <Typography sx={{ fontSize: "10px", color: "#9CA3AF", lineHeight: 1.2 }}>{t("card.menu.delete_desc")}</Typography>
                 </Box>
               </MenuItem>
             </Menu>
@@ -284,12 +306,12 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
                   bgcolor: daysLeft <= 3 ? "#FEF2F2" : "#ECFDF5",
                   px: 0.75, py: 0.2, borderRadius: "4px",
                 }}>
-                  {daysLeft}d left
+                  {t("card.days_left", { count: daysLeft })}
                 </Typography>
               )}
               {isExpired && (
                 <Typography sx={{ fontSize: "10.5px", fontWeight: 700, color: "#DC2626", bgcolor: "#FEF2F2", px: 0.75, py: 0.2, borderRadius: "4px" }}>
-                  Expired
+                  {t("card.expired_badge")}
                 </Typography>
               )}
               {job.expirationDate && !isExpired && (
@@ -301,7 +323,7 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
             </Box>
 
             {!isDraft && (
-              <Tooltip title={copied ? "Copied!" : "Share Link"} placement="top">
+              <Tooltip title={copied ? t("card.copied") : t("card.menu.share_title")} placement="top">
                 <IconButton
                   size="small"
                   onClick={handleCopyLink}
@@ -321,6 +343,38 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
             )}
           </Box>
         </Box>
+
+        {/* Draft publish banner */}
+        {isDraft && onPublish && (
+          <Box
+            onClick={(e) => { e.stopPropagation(); onPublish(job._id); }}
+            sx={{
+              mx: 2.5, mb: 2.5, px: 1.5, py: 1,
+              borderRadius: "8px",
+              border: "1.5px dashed #FCD34D",
+              bgcolor: "#FFFBEB",
+              display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1,
+              cursor: "pointer",
+              transition: "all 0.15s",
+              "&:hover": { bgcolor: "#FEF3C7", borderColor: "#F59E0B" },
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+              <PublishOutlined sx={{ fontSize: 14, color: "#D97706", flexShrink: 0 }} />
+              <Typography sx={{ fontSize: "11.5px", color: "#92400E", lineHeight: 1.3 }}>
+                <strong>{t("card.draft_banner.hidden")}</strong> — {t("card.draft_banner.action")}
+              </Typography>
+            </Box>
+            <Box sx={{
+              px: 1.25, py: 0.4, borderRadius: "6px",
+              bgcolor: "#D97706", flexShrink: 0,
+            }}>
+              <Typography sx={{ fontSize: "10.5px", fontWeight: 700, color: "#fff", lineHeight: 1 }}>
+                {t("card.draft_banner.btn")}
+              </Typography>
+            </Box>
+          </Box>
+        )}
       </Box>
     </motion.div>
   );

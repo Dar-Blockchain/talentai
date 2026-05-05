@@ -941,16 +941,19 @@ module.exports.updateProfileVisibility = async (userId, isPublicProfile) => {
 };
 
 // ========== PLAN USAGE FUNCTIONS ==========
+// NOTE: These functions are DEPRECATED - Use subscription.service instead
+// Kept for backward compatibility
 
 /**
+ * DEPRECATED - Use subscriptionService.checkSubscriptionLimit() instead
  * Check if a user can perform an action based on plan limits
  * @param {string} userId - User ID
- * @param {string} limitType - Type of limit: 'posts', 'candidateUnlocks', 'monthlyInterviews'
+ * @param {string} limitType - Type of limit: 'posts', 'monthlyInterviews'
  * @returns {object} - { canUse: boolean, message: string, limitData: object }
  */
 module.exports.checkPlanLimit = async (userId, limitType) => {
   try {
-    const profile = await Profile.findOne({ userId }).populate('planLimits');
+    const profile = await Profile.findOne({ userId });
 
     if (!profile) {
       throw new Error('User profile not found');
@@ -960,48 +963,10 @@ module.exports.checkPlanLimit = async (userId, limitType) => {
       throw new Error('This action is only available for company accounts');
     }
 
-    if (!profile.planLimits) {
-      throw new Error('No plan assigned to your company');
-    }
-
-    const planLimits = profile.planLimits;
-    const planUsage = profile.planUsage || {};
-
-    let used = 0;
-    let limit = 0;
-    let fieldName = '';
-
-    switch (limitType) {
-      case 'posts':
-        used = planUsage.postsUsed || 0;
-        limit = planLimits.postsLimit || 0;
-        fieldName = 'postsLimit';
-        break;
-      case 'monthlyInterviews':
-        used = planUsage.monthlyInterviewsUsed || 0;
-        limit = planLimits.monthlyInterviewLimit || 0;
-        fieldName = 'monthlyInterviewLimit';
-        break;
-      default:
-        throw new Error('Invalid limit type');
-    }
-
-    const canUse = used < limit;
-    const message = canUse
-      ? `You can create ${limit - used} more ${limitType}`
-      : `You have reached the maximum ${limitType} (${limit}) for your plan`;
-
-    return {
-      canUse,
-      message,
-      limitData: {
-        used,
-        limit,
-        remaining: Math.max(0, limit - used),
-        planName: planLimits.name,
-        fieldName
-      }
-    };
+    const subscriptionService = require('../subscription.service');
+    
+    // Use new subscription service
+    return await subscriptionService.checkSubscriptionLimit(profile._id, limitType);
   } catch (error) {
     console.error('❌ Error checking plan limit:', error);
     throw error;
@@ -1009,10 +974,18 @@ module.exports.checkPlanLimit = async (userId, limitType) => {
 };
 
 /**
+ * DEPRECATED - Use subscriptionService.incrementUsage() instead
  * Increment plan usage counter
  * @param {string} userId - User ID
  * @param {string} usageType - Type of usage: 'postsUsed', 'monthlyInterviewsUsed'
  * @returns {object} - Updated profile
+ */
+/**
+ * DEPRECATED - Use subscriptionService.incrementUsage() instead
+ * Increment plan usage counter
+ * @param {string} userId - User ID
+ * @param {string} usageType - Type of usage: 'postsUsed', 'monthlyInterviewsUsed'
+ * @returns {object} - Updated subscription
  */
 module.exports.incrementPlanUsage = async (userId, usageType) => {
   try {
@@ -1020,22 +993,26 @@ module.exports.incrementPlanUsage = async (userId, usageType) => {
       throw new Error('Invalid usage type');
     }
 
-    const updateObj = {};
-    updateObj[`planUsage.${usageType}`] = 1;
-
-    const profile = await Profile.findOneAndUpdate(
-      { userId },
-      { $inc: updateObj },
-      { new: true }
-    ).populate('planLimits');
+    const profile = await Profile.findOne({ userId }).populate('activeSubscription');
 
     if (!profile) {
       throw new Error('Profile not found');
     }
 
-    console.log(`✅ [incrementPlanUsage] ${usageType} incremented. New value: ${profile.planUsage[usageType]}`);
+    if (!profile.activeSubscription) {
+      throw new Error('No active subscription found');
+    }
 
-    return profile;
+    const subscriptionService = require('../subscription.service');
+    
+    // Use new subscription service
+    const result = await subscriptionService.incrementUsage(
+      profile.activeSubscription._id,
+      usageType,
+      1
+    );
+
+    return result.data;
   } catch (error) {
     console.error('❌ Error incrementing plan usage:', error);
     throw error;

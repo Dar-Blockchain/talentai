@@ -12,6 +12,21 @@ const Post = require("../models/Post.model");
 require('dotenv').config();
 
 /**
+ * Returns a language enforcement directive to inject into AI prompts.
+ * Empty string for English (model default). Call this from any class.
+ */
+function getLanguageInstruction(config) {
+  const lang = config?.sessionSettings?.language || 'en';
+  const map = {
+    fr: 'CRITICAL LANGUAGE RULE: You MUST respond ENTIRELY in French. Every single word — questions, greetings, follow-ups — must be in French. Do NOT use English at all.',
+    de: 'CRITICAL LANGUAGE RULE: You MUST respond ENTIRELY in German (Deutsch). Every single word must be in German. Do NOT use English at all.',
+    es: 'CRITICAL LANGUAGE RULE: You MUST respond ENTIRELY in Spanish (Español). Every single word must be in Spanish. Do NOT use English at all.',
+    ar: 'CRITICAL LANGUAGE RULE: You MUST respond ENTIRELY in Arabic (العربية). Every single word must be in Arabic. Do NOT use English at all.',
+  };
+  return map[lang] || '';
+}
+
+/**
  * Shared AI utilities for JSON parsing and error handling
  */
 class AIUtils {
@@ -542,7 +557,8 @@ ${questionStyle.instruction}
 IMPORTANT: Follow this style while respecting the strategy mode above. The style dictates HOW to phrase the question; the strategy dictates WHAT area to target.`;
       }
 
-      const systemPrompt = `You are an expert interviewer. Generate ONE targeted question.
+      const langInstruction = getLanguageInstruction(session.config);
+      const systemPrompt = `You are an expert interviewer. Generate ONE targeted question.${langInstruction ? '\n\n' + langInstruction : ''}
 ${personaBlock}
 ${profileBlock}
 ${strategyBlock}
@@ -668,9 +684,10 @@ Generate the next question.`;
     }
   }
 
-  async generateTargetedQuestionForArea(areaName, areaData, candidateHistory, roleContext) {
+  async generateTargetedQuestionForArea(areaName, areaData, candidateHistory, roleContext, language = 'en') {
     try {
-      const systemPrompt = `Generate a specific, targeted question to explore a particular competency area in depth.
+      const langInstruction = getLanguageInstruction({ sessionSettings: { language } });
+      const systemPrompt = `Generate a specific, targeted question to explore a particular competency area in depth.${langInstruction ? '\n\n' + langInstruction : ''}
 
 REQUIREMENTS:
 - Focus specifically on the target competency area
@@ -2036,8 +2053,9 @@ Determine if interview objectives have been sufficiently met to end the session.
 
         console.log(`🤖 [Greeting] Attempt ${attempt}/${maxRetries} - Generating greeting...`);
 
+        const langInstruction = getLanguageInstruction(config);
         const llmOptions = {
-          systemPrompt: "You are a professional interviewer. Your task is to generate ONLY the greeting text - nothing else. Do not include labels, explanations, or formatting. Just write the natural greeting sentences.",
+          systemPrompt: `You are a professional interviewer. Your task is to generate ONLY the greeting text - nothing else. Do not include labels, explanations, or formatting. Just write the natural greeting sentences.${langInstruction ? '\n\n' + langInstruction : ''}`,
           messages: [{ role: "user", content: prompt }],
           temperature: 0.6,
           maxTokens: 400,
@@ -2486,7 +2504,8 @@ Determine if interview objectives have been sufficiently met to end the session.
               strategy.targetArea,
               finalCoverage.areas[strategy.targetArea] || {},
               finalSession.conversation,
-              finalSession.config.context
+              finalSession.config.context,
+              finalSession.config.sessionSettings?.language || 'en'
             );
             finalQuestion = { ...altQuestion, targetAreas: [strategy.targetArea] };
           } catch (altErr) {
@@ -3380,7 +3399,7 @@ REQUIREMENTS:
 - DO NOT include explanations or meta-text
 - ONLY output the greeting text itself
 
-Example format for ${config.interviewType}: ${exampleGreeting}`;
+Example format for ${config.interviewType}: ${exampleGreeting}${getLanguageInstruction(config) ? '\n\n' + getLanguageInstruction(config) : ''}`;
   }
 
   /**

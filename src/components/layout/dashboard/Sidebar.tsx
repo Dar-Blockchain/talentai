@@ -8,6 +8,7 @@ import {
   Avatar,
   Tooltip,
   Typography,
+  Divider,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
@@ -18,11 +19,13 @@ import { RootState, AppDispatch } from "@/store/store";
 import { logout } from "@/store/slices/authSlice";
 import { navigation, employeeNavGroups, EmployeeNavItem } from "@/constants/navigation";
 import { selectEmployeePermissions, fetchEmployeePermissions } from "@/store/slices/memberSlice";
+import { selectCombinedDetails, fetchCombinedSubscriptionDetails } from "@/store/slices/paymentSlice";
 import { LogoutOutlined } from "@mui/icons-material";
 import { useRouter } from "next/router";
 import ChevronLeftOutlined from "@mui/icons-material/ChevronLeftOutlined";
 import ChevronRightOutlined from "@mui/icons-material/ChevronRightOutlined";
 import LogoutProgressModal from "@/components/ui/LogoutProgressModal";
+import { useTranslation } from "react-i18next";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -47,11 +50,11 @@ const HOVER_TXT = "#E8F6F9"; // hover text — near white
 const LABEL_C = "#a3aed1"; // section label — visible
 
 const GROUPS = [
-  { label: "MAIN",         ids: ["dashboard"] },
-  { label: "JOBS",   ids: ["posts", "applications"] },
-  { label: "CAMPAIGNS",   ids: ["campaigns"] },
-  { label: "Team",     ids: ["employees", "departments"] },
-  { label: "Account",  ids: ["settings", "subscription"] },
+  { groupKey: "main", ids: ["dashboard"] },
+  { groupKey: "jobs", ids: ["posts", "applications"] },
+  { groupKey: "campaigns", ids: ["campaigns"] },
+  { groupKey: "team", ids: ["employees", "departments"] },
+  { groupKey: "account", ids: ["settings", "subscription"] },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -60,6 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   mobileOpen,
   onCloseMobile,
 }) => {
+  const { t, i18n } = useTranslation("dashboard");
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const router = useRouter();
@@ -77,7 +81,20 @@ const Sidebar: React.FC<SidebarProps> = ({
   const user              = useSelector((state: RootState) => state.user.connectedUser.user);
   const companyMembership = useSelector((state: RootState) => state.user.connectedUser.companyMembership);
   const planLimits        = useSelector((state: RootState) => state.user.connectedUser.planLimits);
+  const combinedDetails   = useSelector(selectCombinedDetails);
   const employeePermissions = useSelector(selectEmployeePermissions);
+
+  // Derive the badge label: prefer paid active plans from combined data, fall back to planLimits
+  const activePlanLabel = React.useMemo(() => {
+    if (combinedDetails?.subscriptions?.length) {
+      const paid = combinedDetails.subscriptions.filter((s) => s.planName !== "Trial");
+      if (paid.length > 1) return t("sidebar.plan.count_plans", { count: paid.length });
+      if (paid.length === 1) return paid[0].planName;
+      // Only trial
+      return combinedDetails.subscriptions[0]?.planName ?? null;
+    }
+    return (planLimits as any)?.name ?? null;
+  }, [combinedDetails, planLimits, t]);
 
   const isEmployee  = user?.role === "Employee";
   const companyName = companyMembership?.company?.profile?.companyDetails?.name
@@ -90,6 +107,13 @@ const Sidebar: React.FC<SidebarProps> = ({
       dispatch(fetchEmployeePermissions(user._id));
     }
   }, [isEmployee, employeePermissions, user?._id]);
+
+  // Keep plan badge up-to-date for company users
+  useEffect(() => {
+    if (!isEmployee && user?.role === "Company" && !combinedDetails) {
+      dispatch(fetchCombinedSubscriptionDetails());
+    }
+  }, [isEmployee, user?.role, combinedDetails]);
 
   // Build filtered groups for employees
   const activeEmployeeGroups = employeeNavGroups.map((group) => ({
@@ -124,6 +148,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const renderNavItem = (item: { id: string; icon: React.ElementType; label: string; href: string }, isCollapsed: boolean) => {
     const isActive = router.pathname === item.href || router.pathname.startsWith(item.href + "/");
+    const translatedLabel = t(`sidebar.nav.${item.id}`, { defaultValue: item.label });
     const btn = (
       <Link key={item.id} href={item.href} passHref style={{ textDecoration: "none" }}>
         <Box
@@ -159,19 +184,20 @@ const Sidebar: React.FC<SidebarProps> = ({
           </Box>
           {!isCollapsed && (
             <Typography sx={{ fontSize: "13px", fontWeight: isActive ? 600 : 400, color: "inherit", lineHeight: 1 }}>
-              {item.label}
+              {translatedLabel}
             </Typography>
           )}
         </Box>
       </Link>
     );
     return isCollapsed ? (
-      <Tooltip key={item.id} title={item.label} placement="right" arrow><span>{btn}</span></Tooltip>
+      <Tooltip key={item.id} title={translatedLabel} placement="right" arrow><span>{btn}</span></Tooltip>
     ) : btn;
   };
 
   const content = (mobile = false) => {
     const isCollapsed = collapsed && !mobile;
+    const planTooltipDateLocale = i18n.language?.startsWith("fr") ? "fr-FR" : "en-US";
 
     return (
       <Box
@@ -208,7 +234,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Collapse toggle */}
           {!mobile && !isCollapsed && (
-            <Tooltip title="Collapse" placement="right">
+            <Tooltip title={t("sidebar.collapse")} placement="right">
               <IconButton
                 onClick={handleToggle}
                 size="small"
@@ -229,7 +255,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Expand float */}
           {!mobile && isCollapsed && (
-            <Tooltip title="Expand" placement="right">
+            <Tooltip title={t("sidebar.expand")} placement="right">
               <IconButton
                 onClick={handleToggle}
                 size="small"
@@ -274,14 +300,14 @@ const Sidebar: React.FC<SidebarProps> = ({
             if (items.length === 0) return null;
 
             return (
-              <Box key={group.label || gi} sx={{ mb: 1.5 }}>
-                {group.label && !isCollapsed && (
+              <Box key={group.groupKey || gi} sx={{ mb: 1.5 }}>
+                {!isCollapsed && (
                   <Typography sx={{
                     px: 1.25, pt: gi === 0 ? 0 : 0.5, pb: 0.5,
                     fontSize: "9px", fontWeight: 700, color: LABEL_C,
                     textTransform: "uppercase", letterSpacing: "0.14em",
                   }}>
-                    {group.label}
+                    {t(`sidebar.groups.${group.groupKey}`)}
                   </Typography>
                 )}
                 {gi > 0 && isCollapsed && (
@@ -303,7 +329,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   fontSize: "9px", fontWeight: 700, color: LABEL_C,
                   textTransform: "uppercase", letterSpacing: "0.14em",
                 }}>
-                  {group.group}
+                  {t(`sidebar.groups.${group.group.toLowerCase()}`, { defaultValue: group.group })}
                 </Typography>
               )}
               {gi > 0 && isCollapsed && (
@@ -354,17 +380,81 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <Typography noWrap sx={{ fontSize: "12.5px", fontWeight: 600, color: "#E8F6F9", lineHeight: 1.35 }}>
                     {displayName}
                   </Typography>
-                  {(planLimits as any)?.name && (
-                    <Box sx={{
-                      display: "inline-flex", alignItems: "center", flexShrink: 0,
-                      px: 0.75, py: 0.15,
-                      borderRadius: "4px",
-                      bgcolor: `${TEAL}28`,
-                      border: `1px solid ${TEAL}55`,
-                    }}>
-                      <Typography sx={{ fontSize: "9px", fontWeight: 700, color: TEAL_LIGHT, letterSpacing: "0.04em", lineHeight: 1.4 }}>
-                        {(planLimits as any).name}
-                      </Typography>
+                  {activePlanLabel && (
+                    <Box
+                      onClick={(e) => { e.stopPropagation(); router.push("/company/plans"); }}
+                      sx={{
+                        position: "relative", display: "inline-flex", flexShrink: 0,
+                        "& .plan-tooltip": { opacity: 0, pointerEvents: "none", transition: "opacity 0.15s" },
+                        "&:hover .plan-tooltip": { opacity: 1, pointerEvents: "auto" },
+                      }}
+                    >
+                      {/* Badge */}
+                      <Box sx={{
+                        display: "inline-flex", alignItems: "center",
+                        px: 0.75, py: 0.15, borderRadius: "4px",
+                        bgcolor: `${TEAL}28`, border: `1px solid ${TEAL}55`,
+                        cursor: "pointer", transition: "all 0.15s",
+                        "&:hover": { bgcolor: `${TEAL}45`, border: `1px solid ${TEAL}99` },
+                      }}>
+                        <Typography sx={{ fontSize: "9px", fontWeight: 700, color: TEAL_LIGHT, letterSpacing: "0.04em", lineHeight: 1.4 }}>
+                          {activePlanLabel}
+                        </Typography>
+                      </Box>
+
+                      {/* Pure-CSS tooltip — pb bridges the gap so hover doesn't drop */}
+                      <Box className="plan-tooltip" sx={{
+                        position: "absolute", bottom: "100%", left: 0,
+                        zIndex: 9999, pb: "8px",
+                      }}>
+                        <Box sx={{
+                          minWidth: 200,
+                          bgcolor: "#0D1B2A", border: "1px solid #1E3448",
+                          borderRadius: "10px", overflow: "hidden",
+                          boxShadow: "0 8px 32px rgba(0,0,0,0.55)",
+                        }}>
+                          <Box sx={{ px: 1.75, pt: 1.25, pb: 0.75 }}>
+                            <Typography sx={{ fontSize: "9px", fontWeight: 700, color: "#4B7A96", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                              {t("sidebar.plan.active_plans")}
+                            </Typography>
+                          </Box>
+                          <Divider sx={{ borderColor: "#1E3448" }} />
+                          <Box sx={{ py: 0.75 }}>
+                            {combinedDetails?.subscriptions?.length
+                              ? combinedDetails.subscriptions
+                                  .filter((s) => s.planName !== "Trial")
+                                  .map((s) => {
+                                    const col = ({ Standard: "#0D9488", Gold: "#7C3AED", Platinum: "#0891B2", Diamond: "#D97706" } as Record<string, string>)[s.planName] ?? TEAL;
+                                    const exp = new Date(s.endDate).toLocaleDateString(planTooltipDateLocale, { month: "short", day: "numeric", year: "numeric" });
+                                    return (
+                                      <Box key={s.id} sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.75, py: 0.6 }}>
+                                        <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: col, flexShrink: 0 }} />
+                                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                                          <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#E8F6F9", lineHeight: 1.3 }}>
+                                            {s.planName}
+                                          </Typography>
+                                          <Typography sx={{ fontSize: "9.5px", color: "#4B7A96", lineHeight: 1.3 }}>
+                                            {t("sidebar.plan.expires", { date: exp })}
+                                          </Typography>
+                                        </Box>
+                                      </Box>
+                                    );
+                                  })
+                              : (
+                                <Box sx={{ px: 1.75, py: 0.6 }}>
+                                  <Typography sx={{ fontSize: "11px", color: "#4B7A96" }}>{t("sidebar.plan.trial")}</Typography>
+                                </Box>
+                              )
+                            }
+                          </Box>
+                          <Divider sx={{ borderColor: "#1E3448" }} />
+                          <Box sx={{ px: 1.75, py: 1 }}>
+                            <Typography sx={{ fontSize: "10px", fontWeight: 600, color: TEAL_LIGHT }}>
+                              {t("sidebar.plan.view_all")}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Box>
                     </Box>
                   )}
                 </Box>
@@ -377,7 +467,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             )}
 
             {!isCollapsed && (
-              <Tooltip title="Sign out">
+              <Tooltip title={t("sidebar.sign_out")}>
                 <IconButton
                   size="small"
                   onClick={(e) => {

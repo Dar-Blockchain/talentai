@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
-const TodoList = require("./todoList.model");
-const PlanLimits = require("./PlanLimits.model");
+const TodoList = require("./TodoList.model");
 
 // Sub-schemas for skills and softSkills to enable per-item timestamps
 const skillSchema = new mongoose.Schema(
@@ -100,12 +99,35 @@ const profileSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    lastPlanReminderSentAt: { type: Date, default: null },
+    planReminderCount: { type: Number, default: 0 },
     readyForMatch: { type: Boolean, default: false },
     isPublicProfile: { type: Boolean, default: false },
 
     // ========== REFERENCES & ASSOCIATIONS ==========
     todoList: { type: mongoose.Schema.Types.ObjectId, ref: "TodoList" },
-    planLimits: { type: mongoose.Schema.Types.ObjectId, ref: "PlanLimits" },
+    
+    // ========== SUBSCRIPTION MANAGEMENT ==========
+    activeSubscription: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Subscription",
+      description: "Currently active subscription for the company",
+    },
+    subscriptions: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Subscription",
+        description: "Complete history of subscriptions",
+      },
+    ],
+    
+    // ========== DEPRECATED - KEPT FOR BACKWARD COMPATIBILITY ==========
+    planLimits: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "PlanLimits",
+      description: "DEPRECATED: Use activeSubscription.planId instead. Kept for backward compatibility.",
+    },
+    
     payments: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -135,23 +157,6 @@ const profileSchema = new mongoose.Schema(
         required: false,
       },
     },
-    planUsage: {
-      postsUsed: {
-        type: Number,
-        default: 0,
-        description: "Current number of posts created",
-      },
-      monthlyInterviewsUsed: {
-        type: Number,
-        default: 0,
-        description: "Current number of interviews used this month",
-      },
-      lastMonthlyResetDate: {
-        type: Date,
-        default: Date.now,
-        description: "Last date when monthly interview count was reset",
-      },
-    },
     requiredSkills: [String],
     requiredExperienceLevel: {
       type: String,
@@ -167,6 +172,7 @@ const profileSchema = new mongoose.Schema(
 
 profileSchema.post("save", async function (doc) {
   try {
+    // ========== CREATE TODOLIST FOR CANDIDATES ==========
     if (doc.type === "Candidate" && !doc.todoList) {
       const todoList = await TodoList.create({ profile: doc._id });
 
@@ -175,19 +181,6 @@ profileSchema.post("save", async function (doc) {
       });
     }
 
-    if ((doc.type === "Company" || doc.type === "Member") && !doc.planLimits) {
-      // Get the Trial plan
-      const trialPlan = await PlanLimits.findOne({ name: "Trial" });
-
-      if (trialPlan) {
-        await mongoose.model("Profile").findByIdAndUpdate(doc._id, {
-          planLimits: trialPlan._id,
-        });
-        console.log(`✅ Trial plan assigned to ${doc.type.toLowerCase()} profile: ${doc._id}`);
-      } else {
-        console.warn(`⚠️  Trial plan not found. ${doc.type} profile ${doc._id} was not assigned a plan.`);
-      }
-    }
   } catch (error) {
     console.error("Error in Profile post-save hook:", error);
   }

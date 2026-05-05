@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Button } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import { InterviewStatus, AgentState } from '@/types/interview';
+import { useTranslation } from 'react-i18next';
 
 interface AgentStatusPanelProps {
   interviewStatus: InterviewStatus;
@@ -25,6 +26,7 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
   isVoiceActive,
   onSubmitAnswer,
 }) => {
+  const { t } = useTranslation('interview');
   if (interviewStatus !== 'active') return null;
 
   const isProcessing = agentState === 'thinking' || agentState === 'processing';
@@ -52,7 +54,7 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
           '&.Mui-disabled': { bgcolor: '#f3f4f6', color: '#9ca3af', boxShadow: 'none' },
         }}
       >
-        {isProcessing ? 'Processing…' : isSpeaking ? 'Listening…' : 'Submit & Continue'}
+        {isProcessing ? t('agent.processing') : isSpeaking ? t('agent.listening') : t('agent.submit')}
       </Button>
     </Box>
   );

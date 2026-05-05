@@ -1,11 +1,14 @@
 import { Box, Typography, Stack, Chip, LinearProgress } from '@mui/material';
 import { getScoreColor, getScoreBg } from './utils';
+import { useTranslation } from 'react-i18next';
 
 interface CoverageDetailsProps {
   coverage: { [key: string]: any };
 }
 
 export default function CoverageDetails({ coverage }: CoverageDetailsProps) {
+  const { t } = useTranslation('modules/interview/results');
+
   if (!coverage || Object.keys(coverage).length === 0) {
     return null;
   }
@@ -41,7 +44,7 @@ export default function CoverageDetails({ coverage }: CoverageDetailsProps) {
           },
         }}
       >
-        Detailed Coverage Analysis
+        {t('coverage.title')}
       </Typography>
 
       <Stack spacing={3}>

@@ -1,0 +1,45 @@
+{
+  "loading": "Loading interview…",
+  "company_only": {
+    "title": "This interview is for candidates only",
+    "redirecting": "Redirecting you to the dashboard…"
+  },
+  "archived": {
+    "title": "This position is no longer available",
+    "desc": "This job post has been archived by the company and is no longer accepting new interviews."
+  },
+  "expired": {
+    "title": "This position is no longer accepting applications",
+    "desc": "This job post has exceeded its expiration date and is no longer open for interviews."
+  },
+  "completed": {
+    "title": "You've already completed this interview",
+    "desc_pre": "Your assessment for",
+    "desc_post": "has already been submitted. The hiring team will review your results and get back to you."
+  },
+  "limit": {
+    "badge": "Interviews Paused",
+    "title": "Interview Unavailable",
+    "desc": "The company has reached their monthly interview quota. New slots open at the start of next month.",
+    "contact": "If you believe this is an error, please contact the recruiter directly.",
+    "go_back": "← Go Back",
+    "go_home": "Go to Home"
+  },
+  "back_to_dashboard": "Back to Dashboard",
+  "connection": {
+    "connecting": "Connecting to interview system…",
+    "error": "Connection error — please refresh",
+    "reconnecting": "Disconnected — attempting to reconnect…"
+  },
+  "step": "Step {{current}} / {{total}}",
+  "end_interview": "End Interview",
+  "interview_completion": "Interview completion",
+  "ai_powered": "AI-powered interview",
+  "interview_types": {
+    "technical": "Technical Interview",
+    "technical_role": "{{role}} Interview",
+    "assessment": "Soft Skills Assessment",
+    "evaluation": "Psychotechnic Assessment",
+    "hr": "HR Interview"
+  }
+}

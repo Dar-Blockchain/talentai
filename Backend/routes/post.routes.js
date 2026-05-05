@@ -11,6 +11,7 @@ const express = require("express");
 const router = express.Router();
 const { requireAuth } = require("../middleware/security/auth.middleware");
 const { verifyApiKey, checkScope } = require("../middleware/security/api-key.middleware");
+const generateJobPostController = require("../controllers/PostControllers/generateJobPost.controller");
 
 // Import des middlewares
 const postController = require("../controllers/PostControllers/post.controller");
@@ -34,6 +35,8 @@ router.get("/public-stats", postController.getPublicStats);
 
 
 router.use(requireAuth,authLogMiddleware("Post"));
+
+router.post("/generate-job-post",controledAcces('Company'), resolveCompanyActor,generateJobPostController.generateJobPost);
 
 // POST /post/save-post
 // Description: Creates a post

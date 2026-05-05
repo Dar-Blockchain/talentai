@@ -1,11 +1,11 @@
 import { Box, MenuItem, TextField, Typography } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs from "@/lib/dayjs";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
-import TitleOutlined from "@mui/icons-material/TitleOutlined";
 import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
 import { useSelector, useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
@@ -21,6 +21,8 @@ import {
 } from "@/store/slices/manualPostSlice";
 import { useEffect } from "react";
 import SectionCard from "@/components/ui/SectionCard";
+import { useTranslation } from "react-i18next";
+import { EMPLOYMENT_OPTION_KEY, WORK_MODE_OPTION_KEY, optionLabel } from "@/utils/postFormI18n";
 
 const TEAL        = "#0D9488";
 const TEAL_BG     = "#F0FDFA";
@@ -50,6 +52,7 @@ const inputSx = {
 
 const ManualPostForm = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const { t } = useTranslation("posts");
   const manualPost = useSelector((state: any) => state.manualPost);
   const {
     jobDetails: { title, employmentType, location, salary },
@@ -97,10 +100,10 @@ const ManualPostForm = () => {
           </Box>
           <Box>
             <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>
-              Custom Pipeline Post
+              {t("create.post_form.manual.header_title")}
             </Typography>
             <Typography sx={{ fontSize: "12px", color: "#6B7280" }}>
-              Fill in your job details — you'll build the recruitment flow in the next step
+              {t("create.post_form.manual.header_subtitle")}
             </Typography>
           </Box>
         </Box>
@@ -109,18 +112,18 @@ const ManualPostForm = () => {
       {/* Job details card */}
       <SectionCard>
         <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827", mb: 2 }}>
-          Job Information
+          {t("create.post_form.manual.section_job_info")}
         </Typography>
 
         {/* Title */}
         <Box sx={{ mb: 2 }}>
           <Typography sx={labelSx}>
-            Job Title
+            {t("create.post_form.manual.job_title")}
           </Typography>
           <TextField
             fullWidth value={title}
             onChange={(e) => dispatch(updateJobDetails({ title: e.target.value }))}
-            placeholder="e.g. Senior Frontend Developer"
+            placeholder={t("create.post_form.manual.job_title_placeholder")}
             sx={inputSx}
           />
         </Box>
@@ -130,16 +133,16 @@ const ManualPostForm = () => {
           <Box>
             <Typography sx={labelSx}>
               <WorkOutlined sx={{ fontSize: 14 }} />
-              Employment Type
+              {t("create.post_form.labels.employment_type")}
             </Typography>
             <TextField
               select fullWidth value={employmentType}
               onChange={(e) => dispatch(updateJobDetails({ employmentType: e.target.value }))}
               sx={inputSx}
             >
-              <MenuItem disabled value="" sx={{ fontSize: "13px" }}>Select type</MenuItem>
+              <MenuItem disabled value="" sx={{ fontSize: "13px" }}>{t("create.post_form.placeholders.select_employment_type")}</MenuItem>
               {contractTypes.map((c) => (
-                <MenuItem key={c} value={c} sx={{ fontSize: "13px" }}>{c}</MenuItem>
+                <MenuItem key={c} value={c} sx={{ fontSize: "13px" }}>{optionLabel(t, c, EMPLOYMENT_OPTION_KEY)}</MenuItem>
               ))}
             </TextField>
           </Box>
@@ -147,16 +150,16 @@ const ManualPostForm = () => {
           <Box>
             <Typography sx={labelSx}>
               <LocationOnOutlined sx={{ fontSize: 14 }} />
-              Work Mode
+              {t("create.post_form.labels.work_mode")}
             </Typography>
             <TextField
               select fullWidth value={location}
               onChange={(e) => dispatch(updateJobDetails({ location: e.target.value }))}
               sx={inputSx}
             >
-              <MenuItem disabled value="" sx={{ fontSize: "13px" }}>Select mode</MenuItem>
+              <MenuItem disabled value="" sx={{ fontSize: "13px" }}>{t("create.post_form.placeholders.select_work_mode")}</MenuItem>
               {workModes.map((m) => (
-                <MenuItem key={m} value={m} sx={{ fontSize: "13px" }}>{m}</MenuItem>
+                <MenuItem key={m} value={m} sx={{ fontSize: "13px" }}>{optionLabel(t, m, WORK_MODE_OPTION_KEY)}</MenuItem>
               ))}
             </TextField>
           </Box>
@@ -169,13 +172,13 @@ const ManualPostForm = () => {
         <Box sx={{ mt: 2 }}>
           <Typography sx={labelSx}>
             <CalendarTodayOutlined sx={{ fontSize: 14 }} />
-            Expiration Date
+            {t("create.post_form.manual.expiration_date")}
           </Typography>
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
-              value={expirationDate ? new Date(expirationDate) : null}
+              value={expirationDate ? dayjs(expirationDate) : null}
               onChange={(date) => { if (date) dispatch(setManualExpirationDate(date.toISOString())); }}
-              minDate={new Date()}
+              minDate={dayjs()}
               slotProps={{ textField: { fullWidth: true, sx: inputSx } }}
             />
           </LocalizationProvider>
@@ -187,7 +190,7 @@ const ManualPostForm = () => {
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <AccountTreeOutlined sx={{ fontSize: 20, color: TEAL }} />
           <Typography sx={{ fontSize: "12px", color: "#0F766E" }}>
-            After saving, you'll design your custom recruitment pipeline with evaluation steps.
+            {t("create.post_form.manual.next_step_hint")}
           </Typography>
         </Box>
       </SectionCard>

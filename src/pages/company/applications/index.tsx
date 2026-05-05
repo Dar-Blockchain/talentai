@@ -7,6 +7,7 @@ import {
   ListItemIcon, ListSubheader, Menu, MenuItem, Pagination, Select,
   Tooltip, Typography,
 } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import SortOutlined from "@mui/icons-material/SortOutlined";
 import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
@@ -41,55 +42,58 @@ import AssessmentDetailsModal, { AssessmentTarget } from "@/components/features/
 import ApplicationMetrics from "@/components/features/company/applications/ApplicationMetrics";
 import InviteToInterviewModal, { InviteTarget } from "@/components/features/company/applications/InviteToInterviewModal";
 import ApplicationCard from "@/components/features/company/applications/ApplicationCard";
-// ── Constants ──────────────────────────────────────────────────────────────────
+
 const TEAL = "#0D9488";
 const PAGE_SIZE = 15;
-
-const STATUS_STYLE: Record<string, { label: string; bg: string; color: string }> = {
-  visited:             { label: "Visited",             bg: "#EFF6FF", color: "#2563EB" },
-  interview_completed: { label: "Interview Completed", bg: "#D1FAE5", color: "#059669" },
-};
-
-const SORT_GROUPS = [
-  {
-    label: "Date Applied", Icon: CalendarTodayOutlined, color: "#6B7280",
-    options: [
-      { value: "appliedAt_desc", label: "Most recent first" },
-      { value: "appliedAt_asc",  label: "Earliest first" },
-    ],
-  },
-  {
-    label: "Match Score", Icon: StarOutlineOutlined, color: "#D97706",
-    options: [
-      { value: "matchScore_desc", label: "Best match first" },
-      { value: "matchScore_asc",  label: "Worst match first" },
-    ],
-  },
-  {
-    label: "Interview Score", Icon: PsychologyOutlined, color: "#7C3AED",
-    options: [
-      { value: "interviewScore_desc", label: "Top performers first" },
-      { value: "interviewScore_asc",  label: "Low performers first" },
-    ],
-  },
-  {
-    label: "Candidate Name", Icon: SortByAlphaOutlined, color: "#0891B2",
-    options: [
-      { value: "name_asc",  label: "A to Z" },
-      { value: "name_desc", label: "Z to A" },
-    ],
-  },
-];
-const SORT_OPTIONS = SORT_GROUPS.flatMap(g => g.options);
 
 // ── Main component ────────────────────────────────────────────────────────────
 
 const ApplicationsPage: React.FC = () => {
+  const { t } = useTranslation("dashboard");
   const dispatch   = useDispatch<AppDispatch>();
   const rows       = useSelector(selectCompanySummary);
   const loading    = useSelector(selectCompanySummaryLoading);
   const pagination = useSelector(selectCompanySummaryPagination);
   const metrics    = useSelector(selectApplicationMetrics);
+
+  // ── Translation-dependent constants ──
+  const STATUS_STYLE: Record<string, { label: string; bg: string; color: string }> = {
+    visited:             { label: t("pages.applications.status.visited"),              bg: "#EFF6FF", color: "#2563EB" },
+    interview_completed: { label: t("pages.applications.status.interview_completed"),  bg: "#D1FAE5", color: "#059669" },
+  };
+
+  const SORT_GROUPS = [
+    {
+      label: t("pages.applications.sort.date_applied"), Icon: CalendarTodayOutlined, color: "#6B7280",
+      options: [
+        { value: "appliedAt_desc", label: t("pages.applications.sort.most_recent") },
+        { value: "appliedAt_asc",  label: t("pages.applications.sort.earliest") },
+      ],
+    },
+    {
+      label: t("pages.applications.sort.match_score"), Icon: StarOutlineOutlined, color: "#D97706",
+      options: [
+        { value: "matchScore_desc", label: t("pages.applications.sort.best_match") },
+        { value: "matchScore_asc",  label: t("pages.applications.sort.worst_match") },
+      ],
+    },
+    {
+      label: t("pages.applications.sort.interview_score"), Icon: PsychologyOutlined, color: "#7C3AED",
+      options: [
+        { value: "interviewScore_desc", label: t("pages.applications.sort.top_performers") },
+        { value: "interviewScore_asc",  label: t("pages.applications.sort.low_performers") },
+      ],
+    },
+    {
+      label: t("pages.applications.sort.candidate_name"), Icon: SortByAlphaOutlined, color: "#0891B2",
+      options: [
+        { value: "name_asc",  label: t("pages.applications.sort.a_to_z") },
+        { value: "name_desc", label: t("pages.applications.sort.z_to_a") },
+      ],
+    },
+  ];
+  const SORT_OPTIONS = SORT_GROUPS.flatMap(g => g.options);
+
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch]           = useState("");
   const [status, setStatus]           = useState("");
@@ -108,8 +112,8 @@ const ApplicationsPage: React.FC = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    const t = setTimeout(() => setSearch(searchInput), 350);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setSearch(searchInput), 350);
+    return () => clearTimeout(timer);
   }, [searchInput]);
 
   useEffect(() => { setPage(1); }, [search, status, postId, sort]);
@@ -145,11 +149,11 @@ const ApplicationsPage: React.FC = () => {
       link.click();
       URL.revokeObjectURL(url);
     } catch {
-      alert("No CVs available for the current filters.");
+      alert(t("pages.applications.no_cv_alert"));
     } finally {
       setDownloading(false);
     }
-  }, [search, status, postId]);
+  }, [search, status, postId, t]);
 
   return (
     <DashboardLayout>
@@ -160,9 +164,9 @@ const ApplicationsPage: React.FC = () => {
               <PeopleAltOutlined sx={{ fontSize: 20, color: TEAL }} />
             </Box>
             <Box>
-              <Typography sx={{ fontWeight: 800, fontSize: "1.1rem", color: "#111827", lineHeight: 1.2 }}>Applications</Typography>
+              <Typography sx={{ fontWeight: 800, fontSize: "1.1rem", color: "#111827", lineHeight: 1.2 }}>{t("pages.applications.title")}</Typography>
               <Typography sx={{ fontSize: "12px", color: "#9CA3AF" }}>
-                {loading ? "Loading…" : `${pagination.totalCount} candidate${pagination.totalCount !== 1 ? "s" : ""}`}
+                {loading ? t("pages.common.loading") : t("pages.applications.candidate_count", { count: pagination.totalCount })}
               </Typography>
             </Box>
           </Box>
@@ -171,12 +175,12 @@ const ApplicationsPage: React.FC = () => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
             <Box sx={{ display: "flex", alignItems: "center", bgcolor: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "8px", px: 1.25, height: 34, minWidth: 220, "&:focus-within": { borderColor: TEAL }, transition: "border-color 0.15s" }}>
               <SearchOutlined sx={{ fontSize: 15, color: "#9CA3AF", mr: 0.75 }} />
-              <InputBase placeholder="Search by name or email…" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} sx={{ fontSize: "13px", flex: 1 }} />
+              <InputBase placeholder={t("pages.applications.search_placeholder")} value={searchInput} onChange={(e) => setSearchInput(e.target.value)} sx={{ fontSize: "13px", flex: 1 }} />
             </Box>
 
             <FormControl size="small">
               <Select value={status} onChange={(e) => setStatus(e.target.value)} displayEmpty sx={selectSx}>
-                <MenuItem value=""><em style={{ color: "#9CA3AF", fontStyle: "normal" }}>All statuses</em></MenuItem>
+                <MenuItem value=""><em style={{ color: "#9CA3AF", fontStyle: "normal" }}>{t("pages.applications.status.all")}</em></MenuItem>
                 {Object.entries(STATUS_STYLE).map(([val, { label }]) => (
                   <MenuItem key={val} value={val} sx={{ fontSize: "13px" }}>{label}</MenuItem>
                 ))}
@@ -197,7 +201,7 @@ const ApplicationsPage: React.FC = () => {
             >
               <WorkOutlineOutlined sx={{ fontSize: 14, color: postId ? TEAL : "#9CA3AF", flexShrink: 0 }} />
               <Typography noWrap sx={{ fontSize: "13px", color: postId ? TEAL : "#9CA3AF", flex: 1, fontWeight: postId ? 600 : 400 }}>
-                {postId ? postTitle : "All jobs"}
+                {postId ? postTitle : t("pages.applications.all_jobs")}
               </Typography>
               {postId && (
                 <CloseOutlined
@@ -214,7 +218,7 @@ const ApplicationsPage: React.FC = () => {
                 startAdornment={<SortOutlined sx={{ fontSize: 14, color: "#9CA3AF", mr: 0.5 }} />}
                 renderValue={(val) => {
                   const opt = SORT_OPTIONS.find(o => o.value === val);
-                  return <Typography sx={{ fontSize: "13px", color: "#374151" }}>{opt?.label ?? "Sort"}</Typography>;
+                  return <Typography sx={{ fontSize: "13px", color: "#374151" }}>{opt?.label ?? t("pages.common.sort")}</Typography>;
                 }}
                 sx={selectSx}
                 MenuProps={{ PaperProps: { sx: { borderRadius: "12px", boxShadow: "0 12px 32px rgba(0,0,0,0.12)", border: "1px solid #E5E7EB", mt: 0.5, minWidth: 200 } } }}
@@ -237,7 +241,7 @@ const ApplicationsPage: React.FC = () => {
             <Box sx={{ width: "1px", height: 22, bgcolor: "#E5E7EB", mx: 0.25 }} />
 
             {/* Download CVs button */}
-            <Tooltip title={pagination.totalCount === 0 ? "No candidates to download" : `Download ${pagination.totalCount} CV${pagination.totalCount !== 1 ? "s" : ""} as ZIP`}>
+            <Tooltip title={pagination.totalCount === 0 ? t("pages.applications.no_candidates_download") : t("pages.applications.download_cvs_tooltip", { count: pagination.totalCount })}>
               <span>
                 <Box
                   component="button"
@@ -258,7 +262,7 @@ const ApplicationsPage: React.FC = () => {
                     ? <CircularProgress size={13} sx={{ color: TEAL }} />
                     : <FileDownloadOutlined sx={{ fontSize: 15 }} />}
                   <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "inherit", lineHeight: 1 }}>
-                    {downloading ? "Preparing…" : "Download CVs"}
+                    {downloading ? t("pages.applications.preparing") : t("pages.applications.download_cvs")}
                   </Typography>
                 </Box>
               </span>
@@ -279,10 +283,10 @@ const ApplicationsPage: React.FC = () => {
         <Box sx={{ py: 12, textAlign: "center", border: "1.5px dashed #E5E7EB", borderRadius: "12px", bgcolor: "#FAFAFA" }}>
           <PeopleAltOutlined sx={{ fontSize: 44, color: "#D1D5DB", mb: 1.5 }} />
           <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#374151", mb: 0.5 }}>
-            {search || status || postId ? "No matching applicants" : "No applications yet"}
+            {search || status || postId ? t("pages.applications.empty_filtered_title") : t("pages.applications.empty_no_apps_title")}
           </Typography>
           <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>
-            {search || status || postId ? "Try adjusting your filters" : "Applications will appear here once candidates apply"}
+            {search || status || postId ? t("pages.applications.empty_filtered_sub") : t("pages.applications.empty_no_apps_sub")}
           </Typography>
         </Box>
       ) : (
@@ -347,6 +351,7 @@ interface PostPickerModalProps {
 const POST_PICKER_PAGE_SIZE = 8;
 
 const PostPickerModal: React.FC<PostPickerModalProps> = ({ open, selectedId, onSelect, onClose }) => {
+  const { t } = useTranslation("dashboard");
   const dispatch      = useDispatch<AppDispatch>();
   const posts         = useSelector(selectMyPosts) as any[];
   const postsLoading  = useSelector(selectMyPostsLoading);
@@ -356,19 +361,16 @@ const PostPickerModal: React.FC<PostPickerModalProps> = ({ open, selectedId, onS
   const [search, setSearch]           = useState("");
   const [page, setPage]               = useState(1);
 
-  // Debounce search
   useEffect(() => {
-    const t = setTimeout(() => { setSearch(searchInput); setPage(1); }, 350);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => { setSearch(searchInput); setPage(1); }, 350);
+    return () => clearTimeout(timer);
   }, [searchInput]);
 
-  // Fetch on open / search / page change
   useEffect(() => {
     if (!open) return;
     dispatch(fetchMyPosts({ search: search || undefined, page, limit: POST_PICKER_PAGE_SIZE }));
   }, [open, search, page, dispatch]);
 
-  // Reset on close
   useEffect(() => {
     if (!open) { setSearchInput(""); setSearch(""); setPage(1); }
   }, [open]);
@@ -390,8 +392,8 @@ const PostPickerModal: React.FC<PostPickerModalProps> = ({ open, selectedId, onS
             <WorkOutlineOutlined sx={{ fontSize: 16, color: TEAL }} />
           </Box>
           <Box>
-            <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827", lineHeight: 1.2 }}>Filter by Job</Typography>
-            <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>Select a job post to filter applications</Typography>
+            <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827", lineHeight: 1.2 }}>{t("pages.applications.job_picker.title")}</Typography>
+            <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>{t("pages.applications.job_picker.subtitle")}</Typography>
           </Box>
         </Box>
         <IconButton size="small" onClick={onClose} sx={{ color: "#6B7280", "&:hover": { bgcolor: "#F3F4F6" } }}>
@@ -404,7 +406,7 @@ const PostPickerModal: React.FC<PostPickerModalProps> = ({ open, selectedId, onS
         <Box sx={{ display: "flex", alignItems: "center", bgcolor: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "8px", px: 1.25, height: 36, mb: 1.5, "&:focus-within": { borderColor: TEAL }, transition: "border-color 0.15s" }}>
           <SearchOutlined sx={{ fontSize: 15, color: "#9CA3AF", mr: 0.75 }} />
           <InputBase
-            placeholder="Search job posts…"
+            placeholder={t("pages.applications.job_picker.search")}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             sx={{ fontSize: "13px", flex: 1 }}
@@ -433,7 +435,7 @@ const PostPickerModal: React.FC<PostPickerModalProps> = ({ open, selectedId, onS
             <LayersOutlined sx={{ fontSize: 16, color: !selectedId ? TEAL : "#9CA3AF" }} />
           </Box>
           <Typography sx={{ fontSize: "13px", fontWeight: !selectedId ? 700 : 500, color: !selectedId ? TEAL : "#374151", flex: 1 }}>
-            All jobs
+            {t("pages.applications.job_picker.all_jobs")}
           </Typography>
           {!selectedId && <CheckOutlined sx={{ fontSize: 16, color: TEAL }} />}
         </Box>
@@ -449,7 +451,7 @@ const PostPickerModal: React.FC<PostPickerModalProps> = ({ open, selectedId, onS
           <Box sx={{ py: 5, textAlign: "center" }}>
             <WorkOutlineOutlined sx={{ fontSize: 36, color: "#D1D5DB", mb: 1 }} />
             <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>
-              {search ? "No posts match your search" : "No job posts found"}
+              {search ? t("pages.applications.job_picker.no_match") : t("pages.applications.job_picker.no_posts")}
             </Typography>
           </Box>
         ) : (

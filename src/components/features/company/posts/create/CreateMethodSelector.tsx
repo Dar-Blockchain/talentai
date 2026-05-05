@@ -154,8 +154,51 @@ const MethodCard: React.FC<MethodCardProps> = ({
   </Box>
 );
 
+const METHODS: (Omit<MethodCardProps, "onClick"> & { id: string; type: "ai" | "manual"; enabled: boolean })[] = [
+  {
+    id: "ai",
+    type: "ai",
+    enabled: true,
+    title: "AI-Powered",
+    subtitle: "Fastest — 1 step",
+    description: "Describe your ideal candidate and let AI generate a comprehensive job post with skills, requirements, and matching configuration in minutes.",
+    icon: SmartToyOutlined,
+    badge: { label: "Recommended", color: TEAL, bg: "#F0FDFA" },
+    accentColor: TEAL,
+    accentBg: "#F0FDFA",
+    accentBorder: "#99F6E4",
+    accentBarColor: TEAL,
+    features: [
+      { text: "AI-generated job description", note: "Saves up to 30 minutes of writing" },
+      { text: "Automatic skill extraction" },
+      { text: "Smart candidate matching" },
+    ],
+  },
+  {
+    id: "manual",
+    type: "manual",
+    enabled: false,
+    title: "Custom Pipeline",
+    subtitle: "Full control — 2 steps",
+    description: "Design your own recruitment workflow with custom tests, interviews, and evaluation conditions. Perfect for structured hiring processes.",
+    icon: AccountTreeOutlined,
+    badge: { label: "Advanced", color: "#6366F1", bg: "#EEF2FF" },
+    accentColor: "#6366F1",
+    accentBg: "#EEF2FF",
+    accentBorder: "#C7D2FE",
+    accentBarColor: "#818CF8",
+    features: [
+      { text: "Visual pipeline builder", note: "Drag-and-drop step configuration" },
+      { text: "Custom evaluation steps" },
+      { text: "Multi-stage interview flows" },
+    ],
+  },
+];
+
 const CreateMethodSelector: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const activeMethods = METHODS.filter((m) => m.enabled);
+  const hasChoice = activeMethods.length > 1;
 
   return (
     <Box>
@@ -172,60 +215,44 @@ const CreateMethodSelector: React.FC = () => {
 
       <Box sx={{ maxWidth: 900, mx: "auto" }}>
 
-        {/* Section label */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
-          <Box sx={{ height: "1px", flex: 1, bgcolor: "#F3F4F6" }} />
-          <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em", whiteSpace: "nowrap" }}>
-            Select a creation method
-          </Typography>
-          <Box sx={{ height: "1px", flex: 1, bgcolor: "#F3F4F6" }} />
+        {/* Section label — only when multiple methods are available */}
+        {hasChoice && (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
+            <Box sx={{ height: "1px", flex: 1, bgcolor: "#F3F4F6" }} />
+            <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em", whiteSpace: "nowrap" }}>
+              Select a creation method
+            </Typography>
+            <Box sx={{ height: "1px", flex: 1, bgcolor: "#F3F4F6" }} />
+          </Box>
+        )}
+
+        <Box sx={{ display: "flex", justifyContent: "center" }}>
+          <Box sx={{
+            display: "grid",
+            gridTemplateColumns: hasChoice ? { xs: "1fr", md: "repeat(2, 1fr)" } : "1fr",
+            gap: 2.5,
+            width: "100%",
+            maxWidth: hasChoice ? 900 : 420,
+          }}>
+            {activeMethods.map((method) => (
+              <MethodCard
+                key={method.id}
+                {...method}
+                onClick={() => dispatch(setCreationType(method.type))}
+              />
+            ))}
+          </Box>
         </Box>
 
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 3 }}>
-          <MethodCard
-            title="AI-Powered"
-            subtitle="Fastest — 1 step"
-            description="Describe your ideal candidate and let AI generate a comprehensive job post with skills, requirements, and matching configuration in minutes."
-            icon={SmartToyOutlined}
-            badge={{ label: "Recommended", color: TEAL, bg: "#F0FDFA" }}
-            accentColor={TEAL}
-            accentBg="#F0FDFA"
-            accentBorder="#99F6E4"
-            accentBarColor={TEAL}
-            features={[
-              { text: "AI-generated job description", note: "Saves up to 30 minutes of writing" },
-              { text: "Automatic skill extraction" },
-              { text: "Smart candidate matching" },
-            ]}
-            onClick={() => dispatch(setCreationType("ai"))}
-          />
-
-          <MethodCard
-            title="Custom Pipeline"
-            subtitle="Full control — 2 steps"
-            description="Design your own recruitment workflow with custom tests, interviews, and evaluation conditions. Perfect for structured hiring processes."
-            icon={AccountTreeOutlined}
-            badge={{ label: "Advanced", color: "#6366F1", bg: "#EEF2FF" }}
-            accentColor="#6366F1"
-            accentBg="#EEF2FF"
-            accentBorder="#C7D2FE"
-            accentBarColor="#818CF8"
-            features={[
-              { text: "Visual pipeline builder", note: "Drag-and-drop step configuration" },
-              { text: "Custom evaluation steps" },
-              { text: "Multi-stage interview flows" },
-            ]}
-            onClick={() => dispatch(setCreationType("manual"))}
-          />
-        </Box>
-
-        {/* Bottom hint */}
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1, mt: 3.5 }}>
-          <EditNoteOutlined sx={{ fontSize: 14, color: "#9CA3AF" }} />
-          <Typography sx={{ fontSize: "12px", color: "#9CA3AF" }}>
-            Both methods let you fully edit all details before publishing.
-          </Typography>
-        </Box>
+        {/* Bottom hint — only when multiple methods */}
+        {hasChoice && (
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1, mt: 3.5 }}>
+            <EditNoteOutlined sx={{ fontSize: 14, color: "#9CA3AF" }} />
+            <Typography sx={{ fontSize: "12px", color: "#9CA3AF" }}>
+              Both methods let you fully edit all details before publishing.
+            </Typography>
+          </Box>
+        )}
       </Box>
     </Box>
   );

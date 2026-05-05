@@ -4,6 +4,7 @@ import AddOutlined from "@mui/icons-material/AddOutlined";
 import CorporateFareOutlined from "@mui/icons-material/CorporateFareOutlined";
 import SearchOffOutlined from "@mui/icons-material/SearchOffOutlined";
 import { useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import { selectDepartments, selectDepartmentsLoading } from "@/store/slices/departmentSlice";
 import AppButton from "@/components/ui/AppButton";
 
@@ -14,6 +15,7 @@ interface DepartmentEmptyStateProps {
 }
 
 const DepartmentEmptyState: React.FC<DepartmentEmptyStateProps> = ({ search, onCreateClick, canManage = true }) => {
+  const { t } = useTranslation("dashboard");
   const departments = useSelector(selectDepartments);
   const loading = useSelector(selectDepartmentsLoading);
 
@@ -50,17 +52,19 @@ const DepartmentEmptyState: React.FC<DepartmentEmptyStateProps> = ({ search, onC
       </Box>
 
       <Typography sx={{ fontSize: "16px", fontWeight: 700, color: "#111827", mb: 0.75 }}>
-        {isFiltered ? "No departments found" : "No departments yet"}
+        {isFiltered
+          ? t("pages.departments.empty.title_filtered")
+          : t("pages.departments.empty.title_none")}
       </Typography>
       <Typography sx={{ fontSize: "13.5px", color: "#9CA3AF", maxWidth: 340, lineHeight: 1.6, mb: 3 }}>
         {isFiltered
-          ? `No departments match "${search}". Try a different keyword.`
-          : "Create your first department to start organizing your company's teams and employees."}
+          ? t("pages.departments.empty.hint_filtered", { query: search })
+          : t("pages.departments.empty.hint_none")}
       </Typography>
 
       {!isFiltered && canManage && (
         <AppButton
-          label="Create Department"
+          label={t("pages.departments.empty.create_cta")}
           variant="contained"
           startIcon={<AddOutlined />}
           size="medium"

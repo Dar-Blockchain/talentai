@@ -1,12 +1,16 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Box, Typography } from "@mui/material";
 import { useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import { selectDepartmentsError } from "@/store/slices/departmentSlice";
+import { resolveDepartmentApiMessage } from "@/utils/departmentI18n";
 
 const DepartmentFetchError: React.FC = () => {
+  const { t } = useTranslation("dashboard");
   const error = useSelector(selectDepartmentsError);
+  const message = useMemo(() => resolveDepartmentApiMessage(error, t), [error, t]);
 
-  if (!error) return null;
+  if (!message) return null;
 
   return (
     <Box
@@ -19,7 +23,7 @@ const DepartmentFetchError: React.FC = () => {
         border: "1px solid #FECACA",
       }}
     >
-      <Typography sx={{ fontSize: "13px", color: "#DC2626" }}>{error}</Typography>
+      <Typography sx={{ fontSize: "13px", color: "#DC2626" }}>{message}</Typography>
     </Box>
   );
 };

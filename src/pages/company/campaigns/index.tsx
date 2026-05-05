@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
@@ -22,6 +23,7 @@ const CampaignsGrid = dynamic(
 );
 
 const CampaignsPage: React.FC = () => {
+  const { t } = useTranslation("dashboard");
   useCompanyAccess("canViewCampaigns");
 
   const user     = useSelector((state: RootState) => state.user.connectedUser.user);
@@ -32,16 +34,16 @@ const CampaignsPage: React.FC = () => {
   return (
     <DashboardLayout>
       <PageHeader
-        title="Campaigns"
-        subtitle="Manage and monitor all company campaigns"
+        title={t("pages.campaigns.title")}
+        subtitle={t("pages.campaigns.subtitle")}
         breadcrumbs={[
-          { label: "Dashboard", href: "/company/dashboard" },
-          { label: "Campaigns" },
+          { label: t("pages.common.dashboard"), href: "/company/dashboard" },
+          { label: t("pages.campaigns.title") },
         ]}
         actions={canCreate ? [
           <Link key="new" href="/company/campaigns/new">
             <AppButton
-              label="New Campaign"
+              label={t("pages.campaigns.new_campaign")}
               variant="contained"
               startIcon={<AddOutlined />}
               size="medium"

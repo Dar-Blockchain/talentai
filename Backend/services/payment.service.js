@@ -1,6 +1,22 @@
 const Payment = require("../models/Payment.model");
 const Profile = require("../models/Profile.model");
 const PlanLimits = require("../models/PlanLimits.model");
+const subscriptionService = require("./subscription.service");
+
+/**
+ * PAYMENT SERVICE - Refactored with Subscription Model
+ * 
+ * NOTE: Plan usage tracking has been moved to subscription.service.js
+ * The Payment model now creates Subscriptions automatically via post-save hooks.
+ * 
+ * For checking limits and tracking usage, use subscription.service methods:
+ * - subscriptionService.checkSubscriptionLimit()
+ * - subscriptionService.incrementUsage()
+ * - subscriptionService.resetMonthlyInterviewIfNeeded()
+ * 
+ * @see subscription.service.js for subscription management
+ * @see Subscription.model.js for subscription data structure
+ */
 
 /**
  * Get payment by Stripe session ID

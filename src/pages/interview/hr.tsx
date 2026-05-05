@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 import {
   Box,
@@ -18,7 +19,7 @@ import Cookies from 'js-cookie';
 import { RootState, AppDispatch } from '@/store/store';
 import { useSelector, useDispatch } from 'react-redux';
 import dynamic from 'next/dynamic';
-import { checkPostInterviewAssessment, fetchMatchingDetails, selectMatchingDetails, selectMatchingDetailsLoading } from '@/store/slices/interviewSlice';
+import { checkPostInterviewAssessment } from '@/store/slices/interviewSlice';
 
 
 // Types
@@ -53,6 +54,7 @@ import {
 } from '@/components/features/interview/start';
 import InterviewIntro from '@/components/features/interview/start/InterviewIntro';
 import GDPRConsentModal from '@/components/features/interview/start/GDPRConsentModal';
+import InterviewLanguageModal from '@/components/features/candidate/candidate-interviews/InterviewLanguageModal';
 import CoverageDashboard from '@/components/features/interview/start/CoverageDashboard';
 
 // Styles
@@ -63,18 +65,18 @@ const PURPLE = '#8310FF';
 const IntelligentInterviewTest = () => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
+  const { t } = useTranslation('modules/interview/hr');
   const authUser = useSelector((state: RootState) => state.user.connectedUser.user);
   const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
 
   const [step, setStep] = useState<'intro' | 'interview'>('intro');
+  const [langPickerOpen, setLangPickerOpen] = useState(false);
   const [coverage, setCoverage] = useState<Coverage | null>(null);
   const [coverageDashboardExpanded, setCoverageDashboardExpanded] = useState(true);
   const [assessmentChecking, setAssessmentChecking] = useState(true);
   const [alreadyCompleted, setAlreadyCompleted] = useState(false);
   const [isArchived, setIsArchived] = useState(false);
   const [companyBlocked, setCompanyBlocked] = useState(false);
-  const matchingDetails = useSelector(selectMatchingDetails);
-  const matchingLoading = useSelector(selectMatchingDetailsLoading);
 
   // Once router is ready: show overview only if jobId is in the URL, otherwise skip straight to interview
   const hasJobId = router.isReady && typeof router.query.jobId === 'string' && !!router.query.jobId;
@@ -105,9 +107,6 @@ const IntelligentInterviewTest = () => {
           body: JSON.stringify({ post: postId }),
         }).catch(() => {});
       }
-
-      // Fetch matching details — only meaningful for logged-in candidates
-      dispatch(fetchMatchingDetails(postId));
 
       dispatch(checkPostInterviewAssessment(postId)).then((result) => {
         if (checkPostInterviewAssessment.fulfilled.match(result)) {
@@ -142,6 +141,7 @@ const IntelligentInterviewTest = () => {
     jobData,
     limitReached,
     limitMessage,
+    limitJobTitle,
     isExpired,
   } = useInterviewConfig({ showNotification: notify });
 
@@ -324,17 +324,17 @@ const IntelligentInterviewTest = () => {
   const interviewLabel = jobPostTitle
     ? jobPostTitle
     : interviewConfig?.interviewType === 'TECHNICAL_INTERVIEW'
-      ? `${interviewConfig.context?.targetRole || 'Technical'} Interview`
+      ? t('interview_types.technical_role', { role: interviewConfig.context?.targetRole || 'Technical' })
       : interviewConfig?.interviewType === 'ASSESSMENT'
-        ? 'Soft Skills Assessment'
+        ? t('interview_types.assessment')
         : interviewConfig?.interviewType === 'EVALUATION'
-          ? 'Psychotechnic Assessment'
-          : 'HR Interview';
+          ? t('interview_types.evaluation')
+          : t('interview_types.hr');
 
   const isActive = socket.interviewStatus === 'active';
 
   /* ── Checking assessment status / loading config ── */
-  if (assessmentChecking || (hasJobId && configLoading)) {
+  if (!limitReached && (assessmentChecking || (hasJobId && configLoading))) {
     return (
       <>
         <style jsx global>{GlobalStyles}</style>
@@ -343,7 +343,7 @@ const IntelligentInterviewTest = () => {
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)', gap: 2 }}>
             <CircularProgress sx={{ color: '#8310FF' }} size={40} />
             <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280' }}>
-              Loading interview…
+              {t('loading')}
             </Typography>
           </Box>
         </Box>
@@ -360,10 +360,10 @@ const IntelligentInterviewTest = () => {
           <Box sx={{ textAlign: 'center', p: 4 }}>
             <CircularProgress sx={{ color: PURPLE, mb: 3 }} size={40} />
             <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.1rem', color: '#111827', mb: 1 }}>
-              This interview is for candidates only
+              {t('company_only.title')}
             </Typography>
             <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280' }}>
-              Redirecting you to the dashboard…
+              {t('company_only.redirecting')}
             </Typography>
           </Box>
         </Box>
@@ -384,17 +384,17 @@ const IntelligentInterviewTest = () => {
                 <Typography sx={{ fontSize: 32 }}>📦</Typography>
               </Box>
               <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.3rem', color: '#111827', mb: 1 }}>
-                This position is no longer available
+                {t('archived.title')}
               </Typography>
               <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280', lineHeight: 1.7, mb: 3.5 }}>
-                This job post has been archived by the company and is no longer accepting new interviews.
+                {t('archived.desc')}
               </Typography>
               <Button
                 variant="contained"
                 onClick={() => router.push('/dashboard/candidate')}
                 sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', bgcolor: '#8310FF', color: '#fff', borderRadius: '10px', px: 3, py: 1.2, boxShadow: 'none', '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' } }}
               >
-                Back to Dashboard
+                {t('back_to_dashboard')}
               </Button>
             </Box>
           </Container>
@@ -416,17 +416,17 @@ const IntelligentInterviewTest = () => {
                 <Typography sx={{ fontSize: 32 }}>⏰</Typography>
               </Box>
               <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.3rem', color: '#111827', mb: 1 }}>
-                This position is no longer accepting applications
+                {t('expired.title')}
               </Typography>
               <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280', lineHeight: 1.7, mb: 3.5 }}>
-                This job post has exceeded its expiration date and is no longer open for interviews.
+                {t('expired.desc')}
               </Typography>
               <Button
                 variant="contained"
                 onClick={() => router.push('/dashboard/candidate')}
                 sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', bgcolor: '#8310FF', color: '#fff', borderRadius: '10px', px: 3, py: 1.2, boxShadow: 'none', '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' } }}
               >
-                Back to Dashboard
+                {t('back_to_dashboard')}
               </Button>
             </Box>
           </Container>
@@ -434,72 +434,6 @@ const IntelligentInterviewTest = () => {
       </>
     );
   }
-
-  /* ── Matching score too low ── */
-  if (!matchingLoading && matchingDetails && !matchingDetails.meetsThreshold) {
-    const pct = Math.round((matchingDetails.matchScore / matchingDetails.thresholdScore) * 100);
-    const barWidth = Math.min(pct, 100);
-    return (
-      <>
-        <style jsx global>{GlobalStyles}</style>
-        <Box sx={{ minHeight: '100vh', bgcolor: '#F8F9FA' }}>
-          <Header />
-          <Container maxWidth="sm" sx={{ py: { xs: 6, md: 10 } }}>
-            <Box sx={{ bgcolor: '#fff', borderRadius: '20px', border: '1px solid #E5E7EB', overflow: 'hidden' }}>
-
-              {/* Top accent bar */}
-              <Box sx={{ height: 4, bgcolor: '#F3F4F6' }}>
-                <Box sx={{ height: '100%', width: `${barWidth}%`, bgcolor: '#DC2626', borderRadius: '0 4px 4px 0', transition: 'width 0.6s ease' }} />
-              </Box>
-
-              <Box sx={{ p: { xs: 4, md: 5 }, textAlign: 'center' }}>
-                {/* Icon */}
-                <Box sx={{ width: 68, height: 68, borderRadius: '50%', bgcolor: '#FEF2F2', border: '2px solid #FECACA', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 3 }}>
-                  <Typography sx={{ fontSize: 28 }}>🎯</Typography>
-                </Box>
-
-                <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.25rem', color: '#111827', mb: 0.75 }}>
-                  Your profile doesn't meet the requirements
-                </Typography>
-                <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.84rem', color: '#6B7280', lineHeight: 1.75, mb: 3.5, maxWidth: 380, mx: 'auto' }}>
-                  This position requires a minimum match score of <strong style={{ color: '#111827' }}>{matchingDetails.thresholdScore}/100</strong>. Based on your profile and CV, your current score is <strong style={{ color: '#DC2626' }}>{matchingDetails.matchScore}/100</strong>. We encourage you to strengthen your profile and apply to roles that better match your skills.
-                </Typography>
-
-                {/* Score comparison */}
-                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0, mb: 4, borderRadius: '14px', overflow: 'hidden', border: '1px solid #E5E7EB' }}>
-                  <Box sx={{ flex: 1, py: 2.5, px: 2, bgcolor: '#FEF2F2', borderRight: '1px solid #E5E7EB' }}>
-                    <Typography sx={{ fontFamily: 'Poppins', fontWeight: 800, fontSize: '2rem', color: '#DC2626', lineHeight: 1 }}>
-                      {matchingDetails.matchScore}
-                    </Typography>
-                    <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.7rem', fontWeight: 600, color: '#EF4444', mt: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      Your Score
-                    </Typography>
-                  </Box>
-                  <Box sx={{ flex: 1, py: 2.5, px: 2, bgcolor: '#F9FAFB' }}>
-                    <Typography sx={{ fontFamily: 'Poppins', fontWeight: 800, fontSize: '2rem', color: '#374151', lineHeight: 1 }}>
-                      {matchingDetails.thresholdScore}
-                    </Typography>
-                    <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.7rem', fontWeight: 600, color: '#6B7280', mt: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      Required
-                    </Typography>
-                  </Box>
-                </Box>
-
-                <Button
-                  variant="contained"
-                  onClick={() => router.push('/dashboard/candidate')}
-                  sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', bgcolor: '#8310FF', color: '#fff', borderRadius: '10px', px: 4, py: 1.25, boxShadow: 'none', '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' } }}
-                >
-                  Explore Other Opportunities
-                </Button>
-              </Box>
-            </Box>
-          </Container>
-        </Box>
-      </>
-    );
-  }
-
 
   /* ── Already completed ── */
   if (alreadyCompleted) {
@@ -516,7 +450,7 @@ const IntelligentInterviewTest = () => {
                 <CheckCircleIcon sx={{ fontSize: 36, color: '#8310FF' }} />
               </Box>
               <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.3rem', color: '#111827', mb: 1 }}>
-                You've already completed this interview
+                {t('completed.title')}
               </Typography>
               {company && (
                 <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#8310FF', fontWeight: 600, mb: 1 }}>
@@ -524,15 +458,14 @@ const IntelligentInterviewTest = () => {
                 </Typography>
               )}
               <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280', lineHeight: 1.7, mb: 3.5 }}>
-                Your assessment for <strong style={{ color: '#111827' }}>{jobTitle}</strong> has already been submitted.
-                The hiring team will review your results and get back to you.
+                {t('completed.desc_pre')} <strong style={{ color: '#111827' }}>{jobTitle}</strong> {t('completed.desc_post')}
               </Typography>
               <Button
                 variant="contained"
                 onClick={() => router.push('/dashboard/candidate')}
                 sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', bgcolor: '#8310FF', color: '#fff', borderRadius: '10px', px: 3, py: 1.2, boxShadow: 'none', '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' } }}
               >
-                Back to Dashboard
+                {t('back_to_dashboard')}
               </Button>
             </Box>
           </Container>
@@ -546,38 +479,147 @@ const IntelligentInterviewTest = () => {
     return (
       <>
         <style jsx global>{GlobalStyles}</style>
-        <Box sx={{ minHeight: '100vh', bgcolor: '#F8F9FA' }}>
+        <Box sx={{ minHeight: '100vh', bgcolor: '#F1F5F9', display: 'flex', flexDirection: 'column' }}>
           <Header />
-          <Container maxWidth="sm" sx={{ py: { xs: 6, md: 10 } }}>
-            <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', p: { xs: 4, md: 5 }, textAlign: 'center' }}>
-              <Box sx={{ width: 72, height: 72, borderRadius: '50%', bgcolor: 'rgba(255,87,51,0.08)', border: '2px solid rgba(255,87,51,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 3 }}>
-                <Typography sx={{ fontSize: '2rem' }}>🚫</Typography>
+          <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', px: 2, py: { xs: 5, md: 8 } }}>
+            <Box sx={{
+              width: '100%', maxWidth: 480,
+              bgcolor: '#fff', borderRadius: '24px',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)',
+              overflow: 'hidden',
+            }}>
+              {/* Top accent bar — red gradient */}
+              <Box sx={{ height: 6, background: 'linear-gradient(90deg, #EF4444 0%, #F97316 100%)' }} />
+
+              <Box sx={{ p: { xs: 4, md: 5 }, textAlign: 'center' }}>
+                {/* Icon circle */}
+                <Box sx={{
+                  width: 80, height: 80, borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #FEE2E2 0%, #FFEDD5 100%)',
+                  border: '2px solid #FECACA',
+                  boxShadow: '0 4px 16px rgba(239,68,68,0.15)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  mx: 'auto', mb: 2.5,
+                }}>
+                  <Typography sx={{ fontSize: '2rem', lineHeight: 1, userSelect: 'none' }}>🔒</Typography>
+                </Box>
+
+                {/* Status badge */}
+                <Box sx={{
+                  display: 'inline-flex', alignItems: 'center', gap: 0.8,
+                  bgcolor: '#FEF2F2', border: '1px solid #FECACA',
+                  borderRadius: '20px', px: 1.8, py: 0.5, mb: 2.5,
+                }}>
+                  <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: '#EF4444', flexShrink: 0 }} />
+                  <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: '#DC2626', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                    {t('limit.badge')}
+                  </Typography>
+                </Box>
+
+                {/* Heading */}
+                <Typography sx={{ fontWeight: 800, fontSize: '1.45rem', color: '#0F172A', lineHeight: 1.25, mb: 1.5, letterSpacing: '-0.01em' }}>
+                  {t('limit.title')}
+                </Typography>
+
+                {/* Job title pill */}
+                {limitJobTitle && (
+                  <Box sx={{
+                    display: 'inline-flex', alignItems: 'center', gap: 1,
+                    bgcolor: '#F8FAFC', border: '1px solid #E2E8F0',
+                    borderRadius: '10px', px: 2, py: 0.7, mb: 2.5,
+                  }}>
+                    <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#94A3B8', flexShrink: 0 }} />
+                    <Typography sx={{ fontSize: '0.83rem', fontWeight: 600, color: '#475569' }}>
+                      {limitJobTitle}
+                    </Typography>
+                  </Box>
+                )}
+
+                {/* Divider */}
+                <Box sx={{ height: '1px', bgcolor: '#F1F5F9', mb: 2.5 }} />
+
+                {/* Description */}
+                <Typography sx={{ fontSize: '0.9rem', color: '#475569', lineHeight: 1.8, mb: 1.5 }}>
+                  {t('limit.desc')}
+                </Typography>
+                <Typography sx={{ fontSize: '0.82rem', color: '#94A3B8', lineHeight: 1.7, mb: 4 }}>
+                  {t('limit.contact')}
+                </Typography>
+
+                {/* Buttons */}
+                <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => router.back()}
+                    sx={{
+                      textTransform: 'none', fontWeight: 600, fontSize: '0.875rem',
+                      borderRadius: '12px', px: 3, py: 1.2,
+                      borderColor: '#E2E8F0', color: '#475569',
+                      '&:hover': { borderColor: '#CBD5E1', bgcolor: '#F8FAFC' },
+                    }}
+                  >
+                    {t('limit.go_back')}
+                  </Button>
+                  <Button
+                    variant="contained"
+                    onClick={() => router.push('/')}
+                    sx={{
+                      textTransform: 'none', fontWeight: 700, fontSize: '0.875rem',
+                      borderRadius: '12px', px: 3, py: 1.2,
+                      background: 'linear-gradient(135deg, #0D9488 0%, #0891B2 100%)',
+                      color: '#fff',
+                      boxShadow: '0 4px 12px rgba(13,148,136,0.25)',
+                      '&:hover': { background: 'linear-gradient(135deg, #0F766E 0%, #0E7490 100%)', boxShadow: '0 6px 16px rgba(13,148,136,0.35)', color: '#fff' },
+                    }}
+                  >
+                    {t('limit.go_home')}
+                  </Button>
+                </Box>
               </Box>
-              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.3rem', color: '#111827', mb: 1 }}>
-                Interview limit reached
-              </Typography>
-              <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280', lineHeight: 1.7, mb: 3.5 }}>
-                {limitMessage}
-              </Typography>
             </Box>
-          </Container>
+          </Box>
         </Box>
       </>
     );
   }
 
+  const handleIntroNext = (_: any) => {
+    const langs = jobData?.interviewLanguages as string[] | undefined;
+    if (langs && langs.length > 1) {
+      setLangPickerOpen(true);
+      return;
+    }
+    const lang = langs?.[0] || 'en';
+    setInterviewConfig({ ...interviewConfig, sessionSettings: { ...interviewConfig.sessionSettings, language: lang } });
+    setStep('interview');
+  };
+
+  const handleLangConfirm = (lang: string) => {
+    setInterviewConfig({ ...interviewConfig, sessionSettings: { ...interviewConfig.sessionSettings, language: lang } });
+    setLangPickerOpen(false);
+    setStep('interview');
+  };
+
   /* ── Step 1: Introduction ── */
   if (step === 'intro') {
     return (
-      <InterviewIntro
-        interviewConfig={interviewConfig}
-        hasJobId={hasJobId}
-        jobId={jobId}
-        refParam={refParam}
-        jobData={jobData}
-        checkingEligibility={matchingLoading}
-        onNext={(_) => setStep('interview')}
-      />
+      <>
+        <InterviewIntro
+          interviewConfig={interviewConfig}
+          hasJobId={hasJobId}
+          jobId={jobId}
+          refParam={refParam}
+          jobData={jobData}
+          checkingEligibility={false}
+          onNext={handleIntroNext}
+        />
+        <InterviewLanguageModal
+          open={langPickerOpen}
+          languages={jobData?.interviewLanguages || []}
+          onConfirm={handleLangConfirm}
+          onClose={() => setLangPickerOpen(false)}
+        />
+      </>
     );
   }
 
@@ -592,7 +634,7 @@ const IntelligentInterviewTest = () => {
           <Box sx={{ bgcolor: '#fefce8', borderBottom: '1px solid #fde047', px: { xs: 2, md: 4 }, py: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
             <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#ca8a04' }} />
             <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.8rem', color: '#854d0e' }}>
-              {socket.connectionStatus === 'connecting' ? 'Connecting to interview system…' : socket.connectionStatus === 'error' ? 'Connection error — please refresh' : 'Disconnected — attempting to reconnect…'}
+              {socket.connectionStatus === 'connecting' ? t('connection.connecting') : socket.connectionStatus === 'error' ? t('connection.error') : t('connection.reconnecting')}
             </Typography>
           </Box>
         )}
@@ -624,7 +666,7 @@ const IntelligentInterviewTest = () => {
                   {(jobData?.companyName || interviewConfig?.interviewType === 'TECHNICAL_INTERVIEW') && (
                     <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.78rem', color: '#6B7280', mt: 0.25 }}>
                       {jobData?.companyName
-                        ? `${jobData.companyName} · AI-powered interview`
+                        ? `${jobData.companyName} · ${t('ai_powered')}`
                         : `${router.query.skill || 'Technical'} · ${interviewConfig.context?.experienceLevel || ''}`}
                     </Typography>
                   )}
@@ -636,7 +678,7 @@ const IntelligentInterviewTest = () => {
                 {isPipelineJob && currentPipelineStep && candidateProgress && (
                   <Box display="flex" alignItems="center" gap={1}>
                     <Chip
-                      label={`Step ${currentPipelineStep} / ${candidateProgress.steps.length}`}
+                      label={t('step', { current: currentPipelineStep, total: candidateProgress.steps.length })}
                       size="small"
                       sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.72rem', bgcolor: 'rgba(131,16,255,0.08)', color: PURPLE, border: '1px solid rgba(131,16,255,0.2)', height: 24 }}
                     />
@@ -655,7 +697,7 @@ const IntelligentInterviewTest = () => {
                       '&:hover': { bgcolor: '#fee2e2', boxShadow: 'none' },
                     }}
                   >
-                    End Interview
+                    {t('end_interview')}
                   </Button>
                 )}
               </Box>
@@ -676,7 +718,7 @@ const IntelligentInterviewTest = () => {
             }}>
               <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
                 <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.82rem', color: '#374151' }}>
-                  Interview completion
+                  {t('interview_completion')}
                 </Typography>
                 <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.82rem', color: PURPLE }}>
                   {Math.round(coverage?.overall ?? 0)}%

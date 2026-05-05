@@ -1,0 +1,303 @@
+{
+  "title": "Offres d'emploi",
+  "search_placeholder": "Rechercher par titre, description...",
+  "new_post": "Nouvelle offre",
+  "count_one": "{{count}} offre",
+  "count_other": "{{count}} offres",
+  "limit_reached": "Limite atteinte ({{used}}/{{limit}})",
+  "limit_tooltip": "Limite d'offres atteinte ({{used}}/{{limit}}). Mettez à niveau votre plan pour publier plus d'offres.",
+  "delete_success": "Offre supprimée avec succès",
+  "delete_error": "Échec de la suppression de l'offre",
+  "delete_modal": {
+    "title": "Supprimer l'offre d'emploi",
+    "body": "Êtes-vous sûr de vouloir supprimer cette offre d'emploi ?",
+    "warning": "Cette action est irréversible.",
+    "cancel": "Annuler",
+    "confirm": "Supprimer"
+  },
+  "publish_success": "Offre publiée avec succès.",
+  "publish_error": "Échec de la publication de l'offre.",
+  "status": {
+    "all": "Tous les statuts",
+    "active": "Ouverte",
+    "draft": "Brouillon",
+    "closed": "Fermée"
+  },
+  "type": {
+    "all": "Tous les types",
+    "ai": "IA",
+    "pipeline": "Pipeline",
+    "manual": "Manuel"
+  },
+  "sort": {
+    "date_group": "Date",
+    "title_group": "Titre",
+    "newest": "Plus récent en premier",
+    "oldest": "Plus ancien en premier",
+    "title_asc": "A à Z",
+    "title_desc": "Z à A"
+  },
+  "stats": {
+    "total": "Total offres",
+    "active": "Actives",
+    "draft": "Brouillons",
+    "closed": "Fermées"
+  },
+  "empty": {
+    "no_match": "Aucune offre ne correspond à vos filtres",
+    "no_match_hint": "Essayez d'autres mots-clés ou supprimez les filtres.",
+    "no_posts": "Aucune offre pour le moment",
+    "no_posts_hint": "Créez votre première offre pour commencer à attirer des candidats.",
+    "create_btn": "Créer une offre"
+  },
+  "card": {
+    "untitled": "Poste sans titre",
+    "copied": "Copié !",
+    "days_left": "{{count}}j restants",
+    "expired_badge": "Expirée",
+    "status": {
+      "open": "Ouverte",
+      "draft": "Brouillon",
+      "closed": "Fermée",
+      "expired": "Expirée"
+    },
+    "creation_type": {
+      "ai": "IA",
+      "pipeline": "Pipeline",
+      "manual": "Manuel"
+    },
+    "menu": {
+      "header_fallback": "Actions",
+      "view_title": "Voir les détails",
+      "view_desc": "Ouvrir la page complète",
+      "publish_title": "Publier l'offre",
+      "publish_desc": "Rendre visible aux candidats",
+      "share_title": "Partager le lien",
+      "share_desc": "Partager avec les candidats",
+      "delete_title": "Supprimer l'offre",
+      "delete_desc": "Cette action est permanente"
+    },
+    "draft_banner": {
+      "hidden": "Non visible par les candidats",
+      "action": "cliquer pour publier",
+      "btn": "Publier"
+    }
+  },
+  "create": {
+    "title": "Nouvelle offre d'emploi",
+    "subtitle": "Remplissez les détails ci-dessous et laissez l'IA générer une offre complète.",
+    "btn_cancel": "Annuler",
+    "btn_saving": "Enregistrement…",
+    "btn_save_draft": "Enregistrer comme brouillon",
+    "btn_next": "Étape suivante →",
+    "form": {
+      "header_title": "Décrivez le poste",
+      "header_subtitle": "Un prompt précis produit une meilleure offre — soyez spécifique",
+      "prompt_label": "Description du poste",
+      "prompt_placeholder": "Exemple :\nNous recherchons un Développeur Full Stack Senior.\n- 5+ ans d'expérience avec React.js et Node.js\n- Bonne maîtrise de TypeScript\n- Pilotage du développement produit",
+      "section_role": "Détails du poste",
+      "section_salary": "Fourchette salariale / An",
+      "label_type": "Type",
+      "label_work_mode": "Mode de travail",
+      "label_expires": "Expire le",
+      "label_currency": "Devise",
+      "label_min": "Minimum",
+      "label_max": "Maximum",
+      "placeholder_select": "Sélectionner",
+      "placeholder_min": "ex. 40 000",
+      "placeholder_max": "ex. 70 000",
+      "btn_generate": "Générer l'offre avec l'IA",
+      "btn_generating": "Génération en cours…",
+      "error_prompt": "Veuillez décrire le poste",
+      "error_salary_required": "La devise, le minimum et le maximum sont requis",
+      "error_salary_max": "Le salaire maximum doit être supérieur au minimum",
+      "error_required": "Requis"
+    },
+    "post_form": {
+      "manual": {
+        "header_title": "Publication pipeline personnalisée",
+        "header_subtitle": "Renseignez les détails du poste — vous construirez le flux de recrutement à l'étape suivante.",
+        "section_job_info": "Informations sur le poste",
+        "job_title": "Intitulé du poste",
+        "job_title_placeholder": "ex. Développeur front-end senior",
+        "expiration_date": "Date d’expiration",
+        "next_step_hint": "Après enregistrement, vous concevrez votre pipeline de recrutement personnalisé avec les étapes d’évaluation."
+      },
+      "labels": {
+        "employment_type": "Type de contrat",
+        "work_mode": "Mode de travail",
+        "currency": "Devise",
+        "experience_level": "Niveau d’expérience",
+        "expires": "Expire le",
+        "minimum": "Minimum",
+        "maximum": "Maximum",
+        "salary_range": "Fourchette salariale",
+        "minimum_salary": "Salaire minimum",
+        "maximum_salary": "Salaire maximum",
+        "salary_section": "Fourchette salariale / an",
+        "skill_name": "Compétence",
+        "percentage": "Pourcentage (%)"
+      },
+      "placeholders": {
+        "select": "Sélectionner",
+        "select_employment_type": "Sélectionner le type de contrat",
+        "select_work_mode": "Sélectionner le mode de travail",
+        "select_currency": "Sélectionner la devise",
+        "select_experience_level": "Sélectionner le niveau d’expérience",
+        "select_skill_level": "Niveau d’expérience",
+        "skill_autocomplete": "Saisir ou choisir une compétence",
+        "min_salary_example": "ex. 40 000",
+        "max_salary_example": "ex. 70 000"
+      },
+      "options": {
+        "employment_full_time": "Temps plein",
+        "employment_part_time": "Temps partiel",
+        "employment_contract": "Contrat / freelance",
+        "employment_internship": "Stage",
+        "work_on_site": "Sur site",
+        "work_remote": "Télétravail",
+        "work_hybrid": "Hybride",
+        "experience_junior": "Junior",
+        "experience_mid_level": "Intermédiaire",
+        "experience_senior": "Senior",
+        "experience_expert": "Expert"
+      },
+      "hard_skill_levels": {
+        "1": "Niveau d’entrée",
+        "2": "Junior",
+        "3": "Intermédiaire",
+        "4": "Senior",
+        "5": "Expert"
+      },
+      "soft_skill_levels": {
+        "1": "1 / 5",
+        "2": "2 / 5",
+        "3": "3 / 5",
+        "4": "4 / 5",
+        "5": "5 / 5"
+      },
+      "skill_modal": {
+        "title_add_hard": "Ajouter une compétence technique",
+        "title_edit_hard": "Modifier la compétence technique",
+        "title_add_soft": "Ajouter une soft skill",
+        "title_edit_soft": "Modifier la soft skill",
+        "experience_level": "Niveau d’expérience",
+        "cancel": "Annuler",
+        "btn_add": "Ajouter",
+        "btn_edit": "Enregistrer"
+      }
+    },
+    "lang_modal": {
+      "title": "Dans quelle langue générer ?",
+      "subtitle": "L'offre d'emploi entière sera rédigée dans cette langue",
+      "btn_cancel": "Annuler",
+      "btn_generate": "Générer",
+      "btn_generating": "Génération…"
+    },
+    "interview_lang_modal": {
+      "title": "Langue(s) d'entretien",
+      "subtitle": "Choisissez la ou les langues dans lesquelles les candidats passeront leur entretien IA. Si vous en sélectionnez plusieurs, chaque candidat choisira la sienne au démarrage.",
+      "select_label": "Langues disponibles",
+      "hint_one": "1 seule langue — tous les candidats seront interviewés dans cette langue. Ajoutez-en une autre pour leur laisser le choix.",
+      "hint_other": "{{count}} langues sélectionnées — chaque candidat choisira la sienne en commençant l'entretien.",
+      "btn_cancel": "Annuler",
+      "btn_save": "Confirmer",
+      "btn_update": "Enregistrer"
+    },
+    "preview": {
+      "loading": "Génération de l'offre… veuillez patienter",
+      "empty_title": "L'aperçu apparaîtra ici",
+      "empty_subtitle": "Remplissez le formulaire et cliquez sur Générer",
+      "header_title": "Offre générée",
+      "header_subtitle": "Vérifiez et modifiez le contenu généré par l'IA ci-dessous",
+      "section_details": "Détails du poste",
+      "label_title": "Titre du poste",
+      "label_type": "Type de contrat",
+      "label_work_mode": "Mode de travail",
+      "label_experience": "Niveau d'expérience",
+      "section_skills": "Compétences requises",
+      "skills_info": "Les pourcentages représentent l'<bold>importance relative</bold> de chaque compétence. Ils sont utilisés pour <bold>faire correspondre les candidats</bold> à vos exigences.",
+      "hard_skills": "Compétences techniques",
+      "soft_skills": "Soft skills",
+      "btn_add_skill": "Ajouter",
+      "btn_add_hard_skill": "Ajouter compétence technique",
+      "btn_add_soft_skill": "Ajouter soft skill",
+      "section_content": "Contenu",
+      "label_description": "Description",
+      "label_requirements": "Prérequis",
+      "label_responsibilities": "Responsabilités"
+    }
+  },
+  "detail": {
+    "loading": "Chargement de l'offre…",
+    "fallback_title": "Offre d'emploi",
+    "status": {
+      "draft": "Brouillon",
+      "published": "Publiée"
+    },
+    "actions": {
+      "publish": "Publier l'offre",
+      "copy_link": "Copier le lien",
+      "edit_languages": "Langues d'entretien"
+    },
+    "tooltips": {
+      "cannot_edit_published": "Modification impossible — l'offre est déjà publiée",
+      "cannot_edit_passed": "Modification impossible — des candidats ont déjà passé cet entretien"
+    },
+    "menu": {
+      "edit_title": "Modifier l'offre",
+      "edit_desc_published": "Modifiable uniquement en brouillon",
+      "edit_desc_draft": "Modifier les détails du poste",
+      "delete_title": "Supprimer l'offre",
+      "delete_desc": "Suppression permanente"
+    },
+    "tabs": {
+      "details": "Détails du poste",
+      "applications": "Candidatures"
+    },
+    "toast": {
+      "deleted": "Offre supprimée avec succès",
+      "delete_error": "Échec de la suppression de l'offre",
+      "published": "Offre publiée ! Les candidats peuvent maintenant postuler.",
+      "publish_error": "Échec de la publication de l'offre.",
+      "link_copied": "Lien d'entretien copié !",
+      "link_copy_error": "Échec de la copie du lien",
+      "languages_updated": "Langues d'entretien mises à jour.",
+      "languages_error": "Échec de la mise à jour des langues d'entretien."
+    },
+    "publish_modal": {
+      "title": "Publier cette offre d'emploi ?",
+      "body_pre": "Une fois publiée, cette offre sera",
+      "body_highlight": "visible par tous les candidats",
+      "body_post": "et ils pourront postuler immédiatement.",
+      "warning": "Vous ne pourrez plus modifier l'offre après publication. Vérifiez tous les détails avant de continuer.",
+      "cancel": "Annuler",
+      "publishing": "Publication…",
+      "confirm": "Oui, publier"
+    },
+    "details": {
+      "overview": "Aperçu du poste",
+      "description": "Description",
+      "skills": "Compétences requises",
+      "requirements": "Prérequis",
+      "responsibilities": "Responsabilités",
+      "interview_languages": "Langues d'entretien"
+    },
+    "pipeline": {
+      "title": "Pipeline de recrutement",
+      "step_count_one": "{{count}} étape",
+      "step_count_other": "{{count}} étapes",
+      "empty_title": "Aucune étape de pipeline",
+      "empty_hint": "Créez un flux de recrutement pour gérer votre processus d'embauche.",
+      "config": {
+        "assessment": "Évaluation",
+        "technical_skills": "Compétences techniques",
+        "soft_skills": "Soft skills",
+        "categories": "Catégories",
+        "interview": "Entretien",
+        "email": "Email",
+        "task": "Tâche"
+      }
+    }
+  }
+}

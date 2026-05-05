@@ -3,7 +3,7 @@
  * Manages contact form submissions and email sending
  */
 
-const { transporter } = require("../utils/email-service");
+const { transporter, sendEnterpriseInquiry } = require("../utils/email-service");
 
 class ContactService {
   /**
@@ -12,10 +12,10 @@ class ContactService {
   static validateContactInput(data) {
     const { name, email, company, teamSize, message } = data;
 
-    if (!name || !email || !company || !message) {
+    if (!name || !email) {
       throw {
         status: 400,
-        message: "Missing required fields: name, email, company, and message are required.",
+        message: "Missing required fields: name and email are required.",
       };
     }
 
@@ -28,15 +28,7 @@ class ContactService {
       };
     }
 
-    // Validate message length
-    if (message.length < 10) {
-      throw {
-        status: 400,
-        message: "Message must be at least 10 characters long.",
-      };
-    }
-
-    if (message.length > 5000) {
+    if (message && message.length > 5000) {
       throw {
         status: 400,
         message: "Message cannot exceed 5000 characters.",
@@ -96,7 +88,7 @@ class ContactService {
       from: '"TalentAI Contact" <contact@talentai.bid>',
       to: "contact@talentai.bid",
       replyTo: email,
-      subject: `[TalentAI Contact] ${name} — ${company}`,
+      subject: `[TalentAI Enterprise] ${name}${company ? ` — ${company}` : ""}`,
       html: htmlContent,
     };
   }
@@ -106,19 +98,13 @@ class ContactService {
    */
   static async sendContactEmail(data) {
     try {
-      const validatedData = this.validateContactInput(data);
-      const mailOptions = this.createMailOptions(validatedData);
+      const { name, email, company, message } = this.validateContactInput(data);
 
-      await transporter.sendMail(mailOptions);
+      await sendEnterpriseInquiry({ name, email, company, message });
 
       return {
         success: true,
-        message: "Contact email sent successfully",
-        data: {
-          recipient: mailOptions.to,
-          subject: mailOptions.subject,
-          replyTo: validatedData.email,
-        },
+        message: "Your message has been sent. Our team will get back to you within 24 hours.",
       };
     } catch (error) {
       console.error("❌ Contact email failed:", error.message);

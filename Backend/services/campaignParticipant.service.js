@@ -1,5 +1,5 @@
-const CampaignParticipant = require("../models/campaignParticipant.model");
-const InternalCampaign = require("../models/internalCampaign.model");
+const CampaignParticipant = require("../models/CampaignParticipant.model");
+const InternalCampaign = require("../models/InternalCampaign.model");
 const crypto = require("crypto");
 
 /**

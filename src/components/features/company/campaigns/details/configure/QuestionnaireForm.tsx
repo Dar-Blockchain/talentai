@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Box, Button, IconButton, Typography } from "@mui/material";
 import { AddOutlined, CloseOutlined, DeleteOutlined } from "@mui/icons-material";
 import AppInput from "@/components/ui/AppInput";
 import AppSelect from "@/components/ui/AppSelect";
 import { Question, QuestionnaireModule, QuestionType } from "@/types/campaign";
+import { useTranslation } from "react-i18next";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -16,18 +17,20 @@ interface Props {
   onChange: (config: NonNullable<QuestionnaireModule["config"]>) => void;
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const TYPE_OPTIONS = [
-  { label: "Text", value: "TEXT" },
-  { label: "Single Choice", value: "SINGLE_CHOICE" },
-  { label: "Multiple Choice", value: "MULTIPLE_CHOICE" },
-  { label: "Rating", value: "RATING" },
-];
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const QuestionnaireForm: React.FC<Props> = ({ config, onChange }) => {
+  const { t } = useTranslation("dashboard");
+  const cf = "pages.campaigns.detail.configure_form.questionnaire";
+
+  const typeOptions = useMemo(
+    () =>
+      (["TEXT", "SINGLE_CHOICE", "MULTIPLE_CHOICE", "RATING"] as QuestionType[]).map((type) => ({
+        label: t(`${cf}.qtype_${type}`),
+        value: type,
+      })),
+    [t, cf],
+  );
   const addQuestion = () =>
     onChange({ questions: [...config.questions, { question: "", type: "TEXT" }] });
 
@@ -60,7 +63,7 @@ const QuestionnaireForm: React.FC<Props> = ({ config, onChange }) => {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       {config.questions.length === 0 ? (
-        <EmptyState label="No questions yet. Add your first question." />
+        <EmptyState label={t(`${cf}.empty`)} />
       ) : (
         config.questions.map((q, i) => (
           <Box
@@ -77,7 +80,7 @@ const QuestionnaireForm: React.FC<Props> = ({ config, onChange }) => {
               }}
             >
               <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#374151" }}>
-                Question {i + 1}
+                {t(`${cf}.question_heading`, { n: i + 1 })}
               </Typography>
               <IconButton
                 size="small"
@@ -91,16 +94,16 @@ const QuestionnaireForm: React.FC<Props> = ({ config, onChange }) => {
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
               {/* Question text */}
               <AppInput
-                placeholder="Enter your question..."
+                placeholder={t(`${cf}.placeholder_question`)}
                 value={q.question}
                 onChange={(e) => updateQuestion(i, { question: e.target.value })}
               />
 
               {/* Question type */}
               <AppSelect
-                label="Type"
+                label={t(`${cf}.type_label`)}
                 value={q.type}
-                options={TYPE_OPTIONS}
+                options={typeOptions}
                 onChange={(val) =>
                   updateQuestion(i, {
                     type: val as QuestionType,
@@ -115,7 +118,7 @@ const QuestionnaireForm: React.FC<Props> = ({ config, onChange }) => {
                   {(q.options ?? []).map((opt, oi) => (
                     <Box key={oi} sx={{ display: "flex", gap: 1, alignItems: "center" }}>
                       <AppInput
-                        placeholder={`Option ${oi + 1}`}
+                        placeholder={t(`${cf}.option_placeholder`, { n: oi + 1 })}
                         value={opt}
                         onChange={(e) => updateOption(i, oi, e.target.value)}
                       />
@@ -143,7 +146,7 @@ const QuestionnaireForm: React.FC<Props> = ({ config, onChange }) => {
                       textTransform: "none",
                     }}
                   >
-                    Add Option
+                    {t(`${cf}.add_option`)}
                   </Button>
                 </Box>
               )}
@@ -152,7 +155,7 @@ const QuestionnaireForm: React.FC<Props> = ({ config, onChange }) => {
         ))
       )}
 
-      <AddRowButton label="Add Question" onClick={addQuestion} />
+      <AddRowButton label={t(`${cf}.add_question`)} onClick={addQuestion} />
     </Box>
   );
 };
