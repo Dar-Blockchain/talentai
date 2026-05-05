@@ -111,11 +111,11 @@ const Register = () => {
     <RegisterContainer companyMobileLayout={companyMobileLayout}>
       {showRoleSelect ? (
         <>
-          <Box sx={{ mb: 3.5, textAlign: "center" }}>
-            <Typography sx={{ fontSize: "2.2rem", fontWeight: 800, fontFamily: "Poppins", color: "#0F172A", lineHeight: 1.1, mb: 0.75, letterSpacing: "-0.03em" }}>
+          <Box sx={{ mb: { xs: 2.5, sm: 3 }, textAlign: "center" }}>
+            <Typography sx={{ fontSize: { xs: "1.9rem", sm: "2.05rem", md: "2.2rem" }, fontWeight: 800, fontFamily: "Poppins", color: "#0F172A", lineHeight: 1.1, mb: { xs: 0.6, sm: 0.75 }, letterSpacing: "-0.03em" }}>
               {t("register.get_started")}
             </Typography>
-            <Typography sx={{ fontSize: "1.05rem", color: "#6B7280", fontFamily: "Poppins", lineHeight: 1.65 }}>
+            <Typography sx={{ fontSize: { xs: "0.95rem", sm: "1rem", md: "1.05rem" }, color: "#6B7280", fontFamily: "Poppins", lineHeight: 1.65 }}>
               {t("register.how_use_prefix")}{" "}
               <Box component="span" sx={{
                 fontWeight: 700,
@@ -127,19 +127,21 @@ const Register = () => {
             </Typography>
           </Box>
 
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mb: 3.5 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: { xs: 1.5, sm: 2 }, mb: { xs: 2.5, sm: 3 }, width: "100%" }}>
             {ROLES.map(({ type, icon: Icon, label, description, accent, iconGradient, shadowColor, border }) => (
               <Box
                 key={type}
                 onClick={() => setUserType(type)}
                 sx={{
-                  display: "flex", alignItems: "center", gap: 2.5,
-                  p: 2.5, borderRadius: "18px",
+                  display: "flex", alignItems: "center", gap: { xs: 1.5, sm: 2.5 },
+                  p: { xs: 2, sm: 2.5 }, borderRadius: { xs: "16px", sm: "18px" },
                   border: `1.5px solid ${border}`,
                   bgcolor: "#fff",
                   cursor: "pointer",
                   boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
                   transition: "all 0.25s cubic-bezier(0.4,0,0.2,1)",
+                  width: "100%",
+                  minWidth: 0,
                   "&:hover": {
                     boxShadow: `0 10px 36px ${shadowColor}, 0 2px 8px rgba(0,0,0,0.04)`,
                     transform: "translateY(-3px)",
@@ -148,30 +150,30 @@ const Register = () => {
                 }}
               >
                 <Box sx={{
-                  width: 54, height: 54, borderRadius: "15px",
+                  width: { xs: 46, sm: 54 }, height: { xs: 46, sm: 54 }, borderRadius: { xs: "13px", sm: "15px" },
                   background: iconGradient,
                   display: "flex", alignItems: "center", justifyContent: "center",
                   flexShrink: 0,
                   boxShadow: `0 6px 18px ${shadowColor}`,
                 }}>
-                  <Icon sx={{ fontSize: 26, color: "#fff" }} />
+                  <Icon sx={{ fontSize: { xs: 22, sm: 26 }, color: "#fff" }} />
                 </Box>
-                <Box sx={{ flex: 1 }}>
-                  <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "#0F172A", mb: 0.3, fontFamily: "Poppins" }}>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography sx={{ fontWeight: 700, fontSize: { xs: "0.95rem", sm: "1rem" }, color: "#0F172A", mb: 0.3, fontFamily: "Poppins" }}>
                     {label}
                   </Typography>
-                  <Typography sx={{ color: "#6B7280", fontSize: "0.82rem", lineHeight: 1.5, fontFamily: "Poppins" }}>
+                  <Typography sx={{ color: "#6B7280", fontSize: { xs: "0.78rem", sm: "0.82rem" }, lineHeight: 1.5, fontFamily: "Poppins" }}>
                     {description}
                   </Typography>
                 </Box>
                 <Box sx={{
-                  width: 32, height: 32, borderRadius: "10px",
+                  width: { xs: 30, sm: 32 }, height: { xs: 30, sm: 32 }, borderRadius: "10px",
                   bgcolor: `${accent}10`, border: `1px solid ${accent}20`,
                   display: "flex", alignItems: "center", justifyContent: "center",
                   flexShrink: 0,
                   transition: "all 0.2s",
                 }}>
-                  <ArrowForwardOutlined sx={{ fontSize: 16, color: accent }} />
+                  <ArrowForwardOutlined sx={{ fontSize: { xs: 15, sm: 16 }, color: accent }} />
                 </Box>
               </Box>
             ))}
