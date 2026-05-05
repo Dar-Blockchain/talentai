@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/useToast";
 import { useRouter } from "next/router";
 import { formatTimeLeft } from "@/utils/functions";
 import { useTranslation } from "react-i18next";
+import { registerMq } from "@/components/features/register/registerLayout";
 
 type FormValues = { email: string; code: string };
 
@@ -157,38 +158,49 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
 
       {/* ── Step 2: OTP ── */}
       {step === 2 && (
-        <Box>
+        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
           {/* Clean header */}
-          <Box sx={{ textAlign: "center", mb: { xs: 2.5, sm: 3 } }}>
+          <Box sx={{ width: "100%", textAlign: "center", mb: { xs: 2.25, sm: 2.75, [registerMq.desktopUp]: 3 } }}>
             <Box sx={{
-              width: 46, height: 46, borderRadius: "13px",
+              width: { xs: 44, sm: 46 }, height: { xs: 44, sm: 46 }, borderRadius: "13px",
               bgcolor: `${ACCENT}0F`,
               border: `1px solid ${ACCENT}1A`,
               display: "flex", alignItems: "center", justifyContent: "center",
-              mx: "auto", mb: 1.75,
+              mx: "auto", mb: { xs: 1.5, sm: 1.75 },
             }}>
-              <EmailOutlinedIcon sx={{ fontSize: 21, color: ACCENT }} />
+              <EmailOutlinedIcon sx={{ fontSize: { xs: 20, sm: 21 }, color: ACCENT }} />
             </Box>
             <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: { xs: "0.95rem", sm: "1rem" }, color: "#111827", mb: 0.5 }}>
               {t("signin.code_sent_title")}
             </Typography>
-            <Typography sx={{ fontFamily: "Poppins", fontSize: { xs: "0.78rem", sm: "0.83rem" }, color: "#6B7280", px: 1 }}>
+            <Typography sx={{ fontFamily: "Poppins", fontSize: { xs: "0.78rem", sm: "0.83rem" }, color: "#6B7280", px: { xs: 0.5, sm: 1 }, lineHeight: 1.45 }}>
               {t("signin.code_sent_to")}{" "}
-              <Box component="span" sx={{ fontWeight: 600, color: "#374151" }}>{emailValue}</Box>
+              <Box component="span" sx={{ fontWeight: 600, color: "#374151", overflowWrap: "anywhere", wordBreak: "break-word" }}>{emailValue}</Box>
             </Typography>
           </Box>
 
           {/* OTP boxes */}
-          <Stack direction="row" spacing={{ xs: 0.75, sm: 1 }} justifyContent="center">
+          <Stack
+            direction="row"
+            justifyContent="center"
+            sx={{
+              width: "100%",
+              maxWidth: { xs: "100%", sm: 360, [registerMq.desktopUp]: 380 },
+              mx: "auto",
+              gap: { xs: 0.55, sm: 0.75, [registerMq.desktopUp]: 1 },
+            }}
+          >
             {Array.from({ length: CODE_LENGTH }).map((_, i) => {
               const filled = !!codeValue[i];
               return (
                 <Box
                   key={i}
                   sx={{
-                    width: { xs: 44, sm: 50, md: 54 },
-                    height: { xs: 52, sm: 58, md: 62 },
-                    borderRadius: "10px",
+                    flex: "1 1 0",
+                    minWidth: { xs: 28, sm: 32, [registerMq.desktopUp]: 36 },
+                    maxWidth: { xs: 46, sm: 52, [registerMq.desktopUp]: 54 },
+                    height: { xs: 44, sm: 50, [registerMq.desktopUp]: 54, lg: 62 },
+                    borderRadius: { xs: "10px", sm: "11px", [registerMq.desktopUp]: "12px" },
                     border: `1.5px solid ${filled ? ACCENT : "#E5E7EB"}`,
                     bgcolor: filled ? `${ACCENT}06` : "#FAFAFA",
                     display: "flex", alignItems: "center", justifyContent: "center",
@@ -228,7 +240,7 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
                     sx={{
                       width: "100%", height: "100%", border: "none", outline: "none",
                       background: "transparent", textAlign: "center",
-                      fontSize: { xs: "1.35rem", sm: "1.5rem" }, fontWeight: 700, color: "#0F172A",
+                      fontSize: { xs: "1.15rem", sm: "1.28rem", [registerMq.desktopUp]: "1.35rem", lg: "1.55rem" }, fontWeight: 700, color: "#0F172A",
                       fontFamily: "Poppins", cursor: "text",
                     }}
                   />
@@ -241,7 +253,7 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
 
       {/* ── Timer ── */}
       {(isExpired || isRunning) && (
-        <Box sx={{ textAlign: "center", mt: 1.25 }}>
+        <Box sx={{ textAlign: "center", mt: { xs: 1, sm: 1.25, [registerMq.desktopUp]: 1.5 } }}>
           <Typography sx={{
             fontSize: { xs: "0.72rem", sm: "0.75rem" }, fontFamily: "Poppins", fontWeight: 500,
             color: secondsLeft > 60 ? "#9CA3AF" : secondsLeft > 0 ? "#F59E0B" : "#EF4444",
@@ -268,7 +280,7 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
         endIcon={!loading && <ArrowForwardIcon sx={{ fontSize: 16 }} />}
         startIcon={loading ? <CircularProgress size={15} sx={{ color: "#fff" }} /> : undefined}
         sx={{
-          mt: { xs: 2, sm: 2.5 },
+          mt: { xs: 1.75, sm: 2.25, [registerMq.desktopUp]: 2.5 },
           height: { xs: 48, sm: 50, md: 52 },
           borderRadius: "12px",
           textTransform: "none",
@@ -303,7 +315,7 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
           variant="text"
           fullWidth
           sx={{
-            mt: 1.25,
+            mt: { xs: 1, sm: 1.25 },
             height: { xs: 38, sm: 40 },
             borderRadius: "10px",
             fontFamily: "Poppins",
