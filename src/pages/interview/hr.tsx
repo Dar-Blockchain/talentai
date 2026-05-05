@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 import {
   Box,
@@ -64,6 +65,7 @@ const PURPLE = '#8310FF';
 const IntelligentInterviewTest = () => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
+  const { t } = useTranslation('modules/interview/hr');
   const authUser = useSelector((state: RootState) => state.user.connectedUser.user);
   const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
 
@@ -322,12 +324,12 @@ const IntelligentInterviewTest = () => {
   const interviewLabel = jobPostTitle
     ? jobPostTitle
     : interviewConfig?.interviewType === 'TECHNICAL_INTERVIEW'
-      ? `${interviewConfig.context?.targetRole || 'Technical'} Interview`
+      ? t('interview_types.technical_role', { role: interviewConfig.context?.targetRole || 'Technical' })
       : interviewConfig?.interviewType === 'ASSESSMENT'
-        ? 'Soft Skills Assessment'
+        ? t('interview_types.assessment')
         : interviewConfig?.interviewType === 'EVALUATION'
-          ? 'Psychotechnic Assessment'
-          : 'HR Interview';
+          ? t('interview_types.evaluation')
+          : t('interview_types.hr');
 
   const isActive = socket.interviewStatus === 'active';
 
@@ -341,7 +343,7 @@ const IntelligentInterviewTest = () => {
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)', gap: 2 }}>
             <CircularProgress sx={{ color: '#8310FF' }} size={40} />
             <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280' }}>
-              Loading interview…
+              {t('loading')}
             </Typography>
           </Box>
         </Box>
@@ -358,10 +360,10 @@ const IntelligentInterviewTest = () => {
           <Box sx={{ textAlign: 'center', p: 4 }}>
             <CircularProgress sx={{ color: PURPLE, mb: 3 }} size={40} />
             <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.1rem', color: '#111827', mb: 1 }}>
-              This interview is for candidates only
+              {t('company_only.title')}
             </Typography>
             <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280' }}>
-              Redirecting you to the dashboard…
+              {t('company_only.redirecting')}
             </Typography>
           </Box>
         </Box>
@@ -382,17 +384,17 @@ const IntelligentInterviewTest = () => {
                 <Typography sx={{ fontSize: 32 }}>📦</Typography>
               </Box>
               <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.3rem', color: '#111827', mb: 1 }}>
-                This position is no longer available
+                {t('archived.title')}
               </Typography>
               <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280', lineHeight: 1.7, mb: 3.5 }}>
-                This job post has been archived by the company and is no longer accepting new interviews.
+                {t('archived.desc')}
               </Typography>
               <Button
                 variant="contained"
                 onClick={() => router.push('/dashboard/candidate')}
                 sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', bgcolor: '#8310FF', color: '#fff', borderRadius: '10px', px: 3, py: 1.2, boxShadow: 'none', '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' } }}
               >
-                Back to Dashboard
+                {t('back_to_dashboard')}
               </Button>
             </Box>
           </Container>
@@ -414,17 +416,17 @@ const IntelligentInterviewTest = () => {
                 <Typography sx={{ fontSize: 32 }}>⏰</Typography>
               </Box>
               <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.3rem', color: '#111827', mb: 1 }}>
-                This position is no longer accepting applications
+                {t('expired.title')}
               </Typography>
               <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280', lineHeight: 1.7, mb: 3.5 }}>
-                This job post has exceeded its expiration date and is no longer open for interviews.
+                {t('expired.desc')}
               </Typography>
               <Button
                 variant="contained"
                 onClick={() => router.push('/dashboard/candidate')}
                 sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', bgcolor: '#8310FF', color: '#fff', borderRadius: '10px', px: 3, py: 1.2, boxShadow: 'none', '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' } }}
               >
-                Back to Dashboard
+                {t('back_to_dashboard')}
               </Button>
             </Box>
           </Container>
@@ -448,7 +450,7 @@ const IntelligentInterviewTest = () => {
                 <CheckCircleIcon sx={{ fontSize: 36, color: '#8310FF' }} />
               </Box>
               <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.3rem', color: '#111827', mb: 1 }}>
-                You've already completed this interview
+                {t('completed.title')}
               </Typography>
               {company && (
                 <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#8310FF', fontWeight: 600, mb: 1 }}>
@@ -456,15 +458,14 @@ const IntelligentInterviewTest = () => {
                 </Typography>
               )}
               <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280', lineHeight: 1.7, mb: 3.5 }}>
-                Your assessment for <strong style={{ color: '#111827' }}>{jobTitle}</strong> has already been submitted.
-                The hiring team will review your results and get back to you.
+                {t('completed.desc_pre')} <strong style={{ color: '#111827' }}>{jobTitle}</strong> {t('completed.desc_post')}
               </Typography>
               <Button
                 variant="contained"
                 onClick={() => router.push('/dashboard/candidate')}
                 sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', bgcolor: '#8310FF', color: '#fff', borderRadius: '10px', px: 3, py: 1.2, boxShadow: 'none', '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' } }}
               >
-                Back to Dashboard
+                {t('back_to_dashboard')}
               </Button>
             </Box>
           </Container>
@@ -511,13 +512,13 @@ const IntelligentInterviewTest = () => {
                 }}>
                   <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: '#EF4444', flexShrink: 0 }} />
                   <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: '#DC2626', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                    Interviews Paused
+                    {t('limit.badge')}
                   </Typography>
                 </Box>
 
                 {/* Heading */}
                 <Typography sx={{ fontWeight: 800, fontSize: '1.45rem', color: '#0F172A', lineHeight: 1.25, mb: 1.5, letterSpacing: '-0.01em' }}>
-                  Interview Unavailable
+                  {t('limit.title')}
                 </Typography>
 
                 {/* Job title pill */}
@@ -539,10 +540,10 @@ const IntelligentInterviewTest = () => {
 
                 {/* Description */}
                 <Typography sx={{ fontSize: '0.9rem', color: '#475569', lineHeight: 1.8, mb: 1.5 }}>
-                  The company has reached their monthly interview quota. New slots open at the start of next month.
+                  {t('limit.desc')}
                 </Typography>
                 <Typography sx={{ fontSize: '0.82rem', color: '#94A3B8', lineHeight: 1.7, mb: 4 }}>
-                  If you believe this is an error, please contact the recruiter directly.
+                  {t('limit.contact')}
                 </Typography>
 
                 {/* Buttons */}
@@ -557,7 +558,7 @@ const IntelligentInterviewTest = () => {
                       '&:hover': { borderColor: '#CBD5E1', bgcolor: '#F8FAFC' },
                     }}
                   >
-                    ← Go Back
+                    {t('limit.go_back')}
                   </Button>
                   <Button
                     variant="contained"
@@ -571,7 +572,7 @@ const IntelligentInterviewTest = () => {
                       '&:hover': { background: 'linear-gradient(135deg, #0F766E 0%, #0E7490 100%)', boxShadow: '0 6px 16px rgba(13,148,136,0.35)', color: '#fff' },
                     }}
                   >
-                    Go to Home
+                    {t('limit.go_home')}
                   </Button>
                 </Box>
               </Box>
@@ -633,7 +634,7 @@ const IntelligentInterviewTest = () => {
           <Box sx={{ bgcolor: '#fefce8', borderBottom: '1px solid #fde047', px: { xs: 2, md: 4 }, py: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
             <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#ca8a04' }} />
             <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.8rem', color: '#854d0e' }}>
-              {socket.connectionStatus === 'connecting' ? 'Connecting to interview system…' : socket.connectionStatus === 'error' ? 'Connection error — please refresh' : 'Disconnected — attempting to reconnect…'}
+              {socket.connectionStatus === 'connecting' ? t('connection.connecting') : socket.connectionStatus === 'error' ? t('connection.error') : t('connection.reconnecting')}
             </Typography>
           </Box>
         )}
@@ -665,7 +666,7 @@ const IntelligentInterviewTest = () => {
                   {(jobData?.companyName || interviewConfig?.interviewType === 'TECHNICAL_INTERVIEW') && (
                     <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.78rem', color: '#6B7280', mt: 0.25 }}>
                       {jobData?.companyName
-                        ? `${jobData.companyName} · AI-powered interview`
+                        ? `${jobData.companyName} · ${t('ai_powered')}`
                         : `${router.query.skill || 'Technical'} · ${interviewConfig.context?.experienceLevel || ''}`}
                     </Typography>
                   )}
@@ -677,7 +678,7 @@ const IntelligentInterviewTest = () => {
                 {isPipelineJob && currentPipelineStep && candidateProgress && (
                   <Box display="flex" alignItems="center" gap={1}>
                     <Chip
-                      label={`Step ${currentPipelineStep} / ${candidateProgress.steps.length}`}
+                      label={t('step', { current: currentPipelineStep, total: candidateProgress.steps.length })}
                       size="small"
                       sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.72rem', bgcolor: 'rgba(131,16,255,0.08)', color: PURPLE, border: '1px solid rgba(131,16,255,0.2)', height: 24 }}
                     />
@@ -696,7 +697,7 @@ const IntelligentInterviewTest = () => {
                       '&:hover': { bgcolor: '#fee2e2', boxShadow: 'none' },
                     }}
                   >
-                    End Interview
+                    {t('end_interview')}
                   </Button>
                 )}
               </Box>
@@ -717,7 +718,7 @@ const IntelligentInterviewTest = () => {
             }}>
               <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
                 <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.82rem', color: '#374151' }}>
-                  Interview completion
+                  {t('interview_completion')}
                 </Typography>
                 <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.82rem', color: PURPLE }}>
                   {Math.round(coverage?.overall ?? 0)}%

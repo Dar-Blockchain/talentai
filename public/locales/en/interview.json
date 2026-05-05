@@ -183,13 +183,5 @@
   "transcript": {
     "ai_label": "AI",
     "you_label": "You"
-  },
-  "page_header": {
-    "status_ready": "Ready",
-    "status_live": "● Live",
-    "status_completed": "Completed",
-    "speaking": "🎤 Speaking",
-    "ai_thinking": "🧠 AI Thinking",
-    "end_btn": "End"
   }
 }

@@ -47,18 +47,21 @@ const theme = createTheme({
 });
 
 function DbLanguageSync() {
-  const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
+  const user = useSelector((state: RootState) => state.user.connectedUser.user);
   const { i18n } = useTranslation();
+
   useEffect(() => {
-    if (!profile) return;
-    const raw = (profile as any)?.language || (profile as any)?.companyDetails?.language;
+    if (!user) return;
+    // language is stored on the User document, not the Profile
+    const raw = (user as any)?.language;
     const dbLang = normalizeLangCode(raw);
     if (!dbLang) return;
-    const manual = typeof window !== 'undefined' ? localStorage.getItem(MANUAL_LANG_KEY) : null;
-    if (!manual) {
-      i18n.changeLanguage(dbLang);
+    // Always apply the account's saved language — clear any pre-login guest selection
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(MANUAL_LANG_KEY);
     }
-  }, [(profile as any)?.language, (profile as any)?.companyDetails?.language]);
+    i18n.changeLanguage(dbLang);
+  }, [(user as any)?.language, (user as any)?._id]);
   return null;
 }
 

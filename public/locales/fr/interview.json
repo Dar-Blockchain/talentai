@@ -183,13 +183,5 @@
   "transcript": {
     "ai_label": "IA",
     "you_label": "Vous"
-  },
-  "page_header": {
-    "status_ready": "Prêt",
-    "status_live": "● En direct",
-    "status_completed": "Terminé",
-    "speaking": "🎤 En train de parler",
-    "ai_thinking": "🧠 IA réfléchit",
-    "end_btn": "Terminer"
   }
 }

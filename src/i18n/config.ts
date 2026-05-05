@@ -13,6 +13,8 @@ import enHome       from '../../public/locales/en/shared/home.json';
 import enEmployees  from '../../public/locales/en/modules/employees/employees.json';
 import enDepartments from '../../public/locales/en/modules/departments/departments.json';
 import enSubscription from '../../public/locales/en/modules/company/subscription.json';
+import enInterviewHr from '../../public/locales/en/modules/interview/interview.json';
+import enInterviewResults from '../../public/locales/en/modules/interview/results.json';
 
 // ── FR ──────────────────────────────────────────────
 import frCommon     from '../../public/locales/fr/shared/common.json';
@@ -25,6 +27,8 @@ import frHome       from '../../public/locales/fr/shared/home.json';
 import frEmployees  from '../../public/locales/fr/modules/employees/employees.json';
 import frDepartments from '../../public/locales/fr/modules/departments/departments.json';
 import frSubscription from '../../public/locales/fr/modules/company/subscription.json';
+import frInterviewHr from '../../public/locales/fr/modules/interview/interview.json';
+import frInterviewResults from '../../public/locales/fr/modules/interview/results.json';
 
 export const SUPPORTED_LANGUAGES = ['en', 'fr'] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
@@ -72,6 +76,8 @@ const options: InitOptions = {
       posts:     enPosts,
       interview: enInterview,
       home:      enHome,
+      'modules/interview/hr':      enInterviewHr,
+      'modules/interview/results': enInterviewResults,
     },
     fr: {
       common:    frCommon,
@@ -80,6 +86,8 @@ const options: InitOptions = {
       posts:     frPosts,
       interview: frInterview,
       home:      frHome,
+      'modules/interview/hr':      frInterviewHr,
+      'modules/interview/results': frInterviewResults,
     },
   },
 
@@ -120,10 +128,10 @@ if (!i18n.isInitialized) {
 } else {
   // Re-sync all bundles so JSON changes survive HMR without a full restart
   SUPPORTED_LANGUAGES.forEach((lng) => {
-    NAMESPACES.forEach((ns) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const bundle = (options.resources as any)?.[lng]?.[ns];
-      if (bundle) i18n.addResourceBundle(lng, ns, bundle, true, true);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const langBundles = (options.resources as any)?.[lng] ?? {};
+    Object.keys(langBundles).forEach((ns) => {
+      i18n.addResourceBundle(lng, ns, langBundles[ns], true, true);
     });
   });
 }

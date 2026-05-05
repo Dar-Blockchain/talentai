@@ -4,6 +4,7 @@ import {
 } from '@mui/material';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import GppBadRoundedIcon from '@mui/icons-material/GppBadRounded';
+import { useTranslation } from 'react-i18next';
 
 const MAX_WARNINGS = 2;
 
@@ -25,7 +26,16 @@ const SecurityModals: React.FC<SecurityModalsProps> = ({
   onDismissFirst,
   onReturnToDashboard,
 }) => {
+  const { t } = useTranslation('interview');
   const warningsLeft = MAX_WARNINGS - securityViolationCount + 1;
+
+  const prohibitedRules = [
+    t('security.prohibited_copy'),
+    t('security.prohibited_tabs'),
+    t('security.prohibited_rightclick'),
+    t('security.prohibited_screenshot'),
+    t('security.prohibited_devtools'),
+  ];
 
   return (
     <>
@@ -49,20 +59,19 @@ const SecurityModals: React.FC<SecurityModalsProps> = ({
           </Box>
 
           <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.05rem', color: '#111827', textAlign: 'center', mb: 0.75 }}>
-            Security Warning
+            {t('security.warning_title')}
           </Typography>
 
           <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#4B5563', textAlign: 'center', lineHeight: 1.7, mb: 2.5 }}>
-            <strong style={{ color: '#D97706' }}>{violationType || 'A restricted action'}</strong> was detected.
-            This interview is monitored. Please stay focused and keep this window active.
+            <strong style={{ color: '#D97706' }}>{violationType || 'A restricted action'}</strong> {t('security.warning_desc')}
           </Typography>
 
           {/* Warning counter bar */}
           <Box sx={{ mb: 2.5 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.75 }}>
-              <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', color: '#6B7280' }}>Violations</Typography>
+              <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', color: '#6B7280' }}>{t('security.violations_label')}</Typography>
               <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', fontWeight: 700, color: securityViolationCount >= MAX_WARNINGS ? '#EF4444' : '#D97706' }}>
-                {securityViolationCount} / {MAX_WARNINGS + 1} — {warningsLeft > 0 ? `${warningsLeft} warning${warningsLeft > 1 ? 's' : ''} left` : 'Next violation ends the interview'}
+                {securityViolationCount} / {MAX_WARNINGS + 1} — {warningsLeft > 0 ? t('security.warnings_left', { count: warningsLeft }) : t('security.no_warnings_left')}
               </Typography>
             </Box>
             <LinearProgress
@@ -78,15 +87,9 @@ const SecurityModals: React.FC<SecurityModalsProps> = ({
           {/* Prohibited actions reminder */}
           <Box sx={{ bgcolor: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '10px', p: 1.5, mb: 2.5 }}>
             <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', fontWeight: 700, color: '#92400E', mb: 0.75 }}>
-              Prohibited during the interview:
+              {t('security.prohibited_title')}
             </Typography>
-            {[
-              'Copy, cut, or paste any text',
-              'Switching tabs or applications',
-              'Right-clicking the page',
-              'Taking screenshots',
-              'Opening developer tools',
-            ].map((rule) => (
+            {prohibitedRules.map((rule) => (
               <Typography key={rule} sx={{ fontFamily: 'Poppins', fontSize: '0.71rem', color: '#78350F', lineHeight: 1.7 }}>
                 · {rule}
               </Typography>
@@ -99,7 +102,7 @@ const SecurityModals: React.FC<SecurityModalsProps> = ({
             onClick={onDismissFirst}
             sx={{ bgcolor: '#F59E0B', color: '#fff', fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.88rem', textTransform: 'none', borderRadius: '10px', py: 1.2, boxShadow: 'none', '&:hover': { bgcolor: '#D97706', boxShadow: 'none' } }}
           >
-            I Understand — Continue Interview
+            {t('security.understand_btn')}
           </Button>
         </DialogContent>
       </Dialog>
@@ -123,11 +126,11 @@ const SecurityModals: React.FC<SecurityModalsProps> = ({
           </Box>
 
           <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.05rem', color: '#111827', textAlign: 'center', mb: 0.75 }}>
-            Interview Terminated
+            {t('security.terminated_title')}
           </Typography>
 
           <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#4B5563', textAlign: 'center', lineHeight: 1.7, mb: 3 }}>
-            Multiple security violations were detected. The interview has been automatically terminated and the hiring team has been notified.
+            {t('security.terminated_desc')}
           </Typography>
 
           <Button
@@ -136,7 +139,7 @@ const SecurityModals: React.FC<SecurityModalsProps> = ({
             onClick={onReturnToDashboard}
             sx={{ bgcolor: '#EF4444', color: '#fff', fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.88rem', textTransform: 'none', borderRadius: '10px', py: 1.2, boxShadow: 'none', '&:hover': { bgcolor: '#DC2626', boxShadow: 'none' } }}
           >
-            Return to Dashboard
+            {t('security.return_dashboard')}
           </Button>
         </DialogContent>
       </Dialog>

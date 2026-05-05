@@ -6,12 +6,14 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
 import { submitFeedback } from '@/store/slices/feedbackSlice';
+import { useTranslation } from 'react-i18next';
 
 interface InterviewFeedbackProps {
   interviewId?: string;
 }
 
 const InterviewFeedback: React.FC<InterviewFeedbackProps> = ({ interviewId }) => {
+  const { t } = useTranslation('modules/interview/results');
   const dispatch = useDispatch<AppDispatch>();
   const { submitting, submitted, error } = useSelector((state: RootState) => state.feedback);
 
@@ -23,8 +25,8 @@ const InterviewFeedback: React.FC<InterviewFeedbackProps> = ({ interviewId }) =>
     rating === 0
       ? null
       : rating <= 3
-      ? 'What went wrong?'
-      : 'What did you like most?';
+      ? t('feedback.question_bad')
+      : t('feedback.question_good');
 
   const handleSubmit = () => {
     if (!rating) return;
@@ -50,10 +52,10 @@ const InterviewFeedback: React.FC<InterviewFeedbackProps> = ({ interviewId }) =>
       >
         <CheckCircleOutlineIcon sx={{ fontSize: 48, color: '#16a34a' }} />
         <Typography sx={{ fontWeight: 700, fontSize: '1.1rem', color: '#15803d', fontFamily: 'Poppins' }}>
-          Thank you for your feedback!
+          {t('feedback.thanks_title')}
         </Typography>
         <Typography sx={{ fontSize: '0.85rem', color: '#4ade80', fontFamily: 'Poppins' }}>
-          Your response helps us improve the interview experience.
+          {t('feedback.thanks_desc')}
         </Typography>
       </Box>
     );
@@ -73,10 +75,10 @@ const InterviewFeedback: React.FC<InterviewFeedbackProps> = ({ interviewId }) =>
       <Typography
         sx={{ fontWeight: 700, fontSize: '1rem', color: '#111827', mb: 0.5, fontFamily: 'Poppins' }}
       >
-        How was your interview experience?
+        {t('feedback.title')}
       </Typography>
       <Typography sx={{ fontSize: '0.82rem', color: '#6B7280', mb: 2.5, fontFamily: 'Poppins' }}>
-        Your feedback is anonymous and helps us improve.
+        {t('feedback.subtitle')}
       </Typography>
 
       {/* Star rating */}
@@ -113,7 +115,7 @@ const InterviewFeedback: React.FC<InterviewFeedbackProps> = ({ interviewId }) =>
             multiline
             rows={3}
             fullWidth
-            placeholder="Share your thoughts..."
+            placeholder={t('feedback.placeholder')}
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             inputProps={{ maxLength: 1000 }}
@@ -159,7 +161,7 @@ const InterviewFeedback: React.FC<InterviewFeedbackProps> = ({ interviewId }) =>
           '&.Mui-disabled': { bgcolor: '#E5E7EB', color: '#9CA3AF' },
         }}
       >
-        {submitting ? <CircularProgress size={18} sx={{ color: '#fff' }} /> : 'Submit Feedback'}
+        {submitting ? <CircularProgress size={18} sx={{ color: '#fff' }} /> : t('feedback.submit')}
       </Button>
     </Box>
   );
