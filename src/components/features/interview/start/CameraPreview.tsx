@@ -4,6 +4,7 @@ import VideocamOffIcon from '@mui/icons-material/VideocamOff';
 import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
 import { CameraStatus, InterviewStatus } from '@/types/interview';
+import { useTranslation } from 'react-i18next';
 
 const BAR_COUNT = 28;
 
@@ -26,6 +27,7 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
   audioContextRef,
   attachStream,
 }) => {
+  const { t } = useTranslation('interview');
   const isActive = interviewStatus === 'active';
 
   useEffect(() => {
@@ -63,9 +65,9 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
         }));
       } else {
         frame++;
-        const t = frame / 10;
+        const time = frame / 10;
         setBars(Array.from({ length: BAR_COUNT }, (_, i) => {
-          const h = 3 + Math.abs(Math.sin(t + i * 0.4) * 18 + Math.sin(t * 1.4 + i * 0.9) * 10);
+          const h = 3 + Math.abs(Math.sin(time + i * 0.4) * 18 + Math.sin(time * 1.4 + i * 0.9) * 10);
           return Math.round(h);
         }));
       }
@@ -115,7 +117,7 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
               <>
                 <CircularProgress size={32} sx={{ color: '#8310FF' }} />
                 <Typography sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', fontFamily: 'Poppins' }}>
-                  Requesting camera access…
+                  {t('camera.requesting')}
                 </Typography>
               </>
             ) : (
@@ -135,7 +137,7 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
                   textAlign: 'center',
                   px: 3,
                 }}>
-                  {cameraStatus === 'denied' ? 'Camera access denied' : cameraError || 'Camera unavailable'}
+                  {cameraStatus === 'denied' ? t('camera.denied') : cameraError || t('camera.unavailable')}
                 </Typography>
                 {(cameraStatus === 'denied' || cameraStatus === 'error') && (
                   <Button
@@ -149,7 +151,7 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
                       '&:hover': { borderColor: '#8310FF', color: '#c084fc' },
                     }}
                   >
-                    Retry
+                    {t('camera.retry')}
                   </Button>
                 )}
               </>
@@ -168,7 +170,7 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
           }}>
             <CircularProgress size={11} sx={{ color: '#8310FF' }} />
             <Typography sx={{ fontSize: '0.68rem', fontFamily: 'Poppins', color: '#fff', fontWeight: 700 }}>
-              Connecting…
+              {t('camera.connecting')}
             </Typography>
           </Box>
         )}
@@ -187,7 +189,7 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
               '@keyframes recPulse': { '0%,100%': { opacity: 1 }, '50%': { opacity: 0.25 } },
             }} />
             <Typography sx={{ color: '#fff', fontSize: '0.65rem', fontWeight: 800, fontFamily: 'Poppins', letterSpacing: '0.1em' }}>
-              REC
+              {t('camera.rec')}
             </Typography>
           </Box>
         )}
@@ -210,7 +212,7 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
               }
             </Box>
             <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.75rem', color: '#374151' }}>
-              Microphone
+              {t('camera.microphone')}
             </Typography>
           </Box>
           <Box sx={{
@@ -223,7 +225,7 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
               color: isActive ? '#16a34a' : '#9ca3af',
               textTransform: 'uppercase', letterSpacing: '0.06em',
             }}>
-              {isActive ? 'Active' : 'Inactive'}
+              {isActive ? t('camera.mic_active') : t('camera.mic_inactive')}
             </Typography>
           </Box>
         </Box>
@@ -253,10 +255,10 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
           textAlign: 'center', lineHeight: 1.4,
         }}>
           {isActive
-            ? 'Speak clearly — your voice is being captured'
+            ? t('camera.speak_clearly')
             : cameraStatus === 'granted'
-            ? 'Start the interview to enable recording'
-            : 'Allow camera & microphone access to begin'}
+            ? t('camera.start_to_record')
+            : t('camera.allow_access')}
         </Typography>
       </Box>
     </Box>

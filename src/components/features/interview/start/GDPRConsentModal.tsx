@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Typography, Button, Modal } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import { useTranslation } from 'react-i18next';
 
 const PURPLE = '#8310FF';
 
@@ -12,6 +13,8 @@ interface GDPRConsentModalProps {
 }
 
 const GDPRConsentModal: React.FC<GDPRConsentModalProps> = ({ open, onAccept, onDecline }) => {
+  const { t } = useTranslation('interview');
+
   return (
     <Modal open={open} disableEscapeKeyDown>
       <Box sx={{
@@ -37,10 +40,10 @@ const GDPRConsentModal: React.FC<GDPRConsentModalProps> = ({ open, onAccept, onD
           </Box>
           <Box>
             <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1rem', color: '#fff', lineHeight: 1.25 }}>
-              Your privacy is protected.
+              {t('gdpr.privacy_title')}
             </Typography>
             <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.78rem', color: 'rgba(255,255,255,0.82)', mt: 0.2 }}>
-              Your integrity matters.
+              {t('gdpr.integrity_title')}
             </Typography>
           </Box>
         </Box>
@@ -49,7 +52,7 @@ const GDPRConsentModal: React.FC<GDPRConsentModalProps> = ({ open, onAccept, onD
         <Box sx={{ px: 3.5, pt: 2.5, pb: 2 }}>
 
           <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#374151', lineHeight: 1.75, mb: 2 }}>
-            This interview is conducted by an AI agent that analyzes your responses in real time — including verbal and non-verbal communication — to assess your fit for this position.
+            {t('gdpr.body')}
           </Typography>
 
           {/* Bullet points */}
@@ -57,13 +60,13 @@ const GDPRConsentModal: React.FC<GDPRConsentModalProps> = ({ open, onAccept, onD
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
               <CheckCircleOutlineIcon sx={{ fontSize: 16, color: PURPLE, flexShrink: 0, mt: '2px' }} />
               <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.8rem', color: '#374151', lineHeight: 1.7 }}>
-                Your session data (video, audio, and transcript) is securely stored for the duration of the active recruitment campaign only. It is accessible exclusively to the hiring team and will be permanently deleted once the job post is closed.
+                {t('gdpr.bullet_data')}
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
               <CheckCircleOutlineIcon sx={{ fontSize: 16, color: PURPLE, flexShrink: 0, mt: '2px' }} />
               <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.8rem', color: '#374151', lineHeight: 1.7 }}>
-                TalentAI does not share, sell, or transfer your personal data to any third party. All data is processed in compliance with GDPR and applicable data protection regulations.
+                {t('gdpr.bullet_privacy')}
               </Typography>
             </Box>
           </Box>
@@ -71,7 +74,7 @@ const GDPRConsentModal: React.FC<GDPRConsentModalProps> = ({ open, onAccept, onD
           {/* Confirmation box */}
           <Box sx={{ bgcolor: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '10px', px: 2.5, py: 1.75 }}>
             <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.78rem', color: '#4B5563', lineHeight: 1.65 }}>
-              By continuing, you confirm that you are the person listed in your application and that your responses are your own.
+              {t('gdpr.confirmation')}
             </Typography>
           </Box>
         </Box>
@@ -93,7 +96,7 @@ const GDPRConsentModal: React.FC<GDPRConsentModalProps> = ({ open, onAccept, onD
               '&:hover': { borderColor: '#D1D5DB', bgcolor: '#F9FAFB' },
             }}
           >
-            Decline
+            {t('gdpr.decline')}
           </Button>
           <Button
             variant="contained"
@@ -108,7 +111,7 @@ const GDPRConsentModal: React.FC<GDPRConsentModalProps> = ({ open, onAccept, onD
               '&:hover': { bgcolor: '#6d0ee0 !important', boxShadow: 'none' },
             }}
           >
-            Accept & Continue
+            {t('gdpr.accept_btn')}
           </Button>
         </Box>
       </Box>

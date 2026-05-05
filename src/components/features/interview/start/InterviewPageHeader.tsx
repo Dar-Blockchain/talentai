@@ -6,6 +6,7 @@ import StopOutlined               from '@mui/icons-material/Stop';
 import { Campaign }               from '@/types/campaign';
 import { Coverage }               from '@/types/interview';
 import { getModuleMeta }          from './interviewMeta';
+import { useTranslation }         from 'react-i18next';
 
 interface Props {
   campaign:        Campaign;
@@ -21,15 +22,18 @@ interface Props {
 const InterviewPageHeader: React.FC<Props> = ({
   campaign, moduleType, interviewStatus, isVoiceActive, agentState, coverage, onBack, onEnd,
 }) => {
+  const { t } = useTranslation('interview');
   const meta     = getModuleMeta(moduleType);
   const ModIcon  = meta.icon;
   const isActive = interviewStatus === 'active';
 
   const statusLabel =
-    interviewStatus === 'idle'       ? 'Ready'       :
-    interviewStatus === 'connecting' ? 'Connecting…' :
-    isActive                         ? '● Live'      :
-    interviewStatus === 'ended'      ? 'Completed'   : interviewStatus;
+    interviewStatus === 'idle'       ? t('page_header.status_ready')     :
+    interviewStatus === 'connecting' ? t('start.connecting')             :
+    isActive                         ? t('page_header.status_live')      :
+    interviewStatus === 'ended'      ? t('page_header.status_completed') : interviewStatus;
+
+  const moduleLabel = t(`start.module.${moduleType}`, { defaultValue: meta.label });
 
   return (
     <Box sx={{
@@ -60,7 +64,7 @@ const InterviewPageHeader: React.FC<Props> = ({
               {campaign.title}
             </Typography>
             <Typography sx={{ fontSize: 11, color: '#6B7280' }}>
-              {meta.label}
+              {moduleLabel}
               {moduleType === 'SKILL_TEST' && (campaign.module as any)?.config?.skill
                 ? ` · ${(campaign.module as any).config.skill}`
                 : ''}
@@ -81,10 +85,10 @@ const InterviewPageHeader: React.FC<Props> = ({
           />
 
           {isVoiceActive && (
-            <Chip size="small" label="🎤 Speaking" sx={{ bgcolor: '#EFF6FF', color: '#2563EB', fontSize: 11, height: 22 }} />
+            <Chip size="small" label={t('page_header.speaking')} sx={{ bgcolor: '#EFF6FF', color: '#2563EB', fontSize: 11, height: 22 }} />
           )}
           {agentState === 'thinking' && (
-            <Chip size="small" label="🧠 AI Thinking" sx={{ bgcolor: '#FFFBEB', color: '#D97706', fontSize: 11, height: 22 }} />
+            <Chip size="small" label={t('page_header.ai_thinking')} sx={{ bgcolor: '#FFFBEB', color: '#D97706', fontSize: 11, height: 22 }} />
           )}
 
           {isActive && coverage && (
@@ -109,7 +113,7 @@ const InterviewPageHeader: React.FC<Props> = ({
                 '&:hover': { bgcolor: '#FEE2E2' },
               }}
             >
-              End
+              {t('page_header.end_btn')}
             </Button>
           )}
         </Box>

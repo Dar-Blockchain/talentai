@@ -1,0 +1,45 @@
+{
+  "back_to_dashboard": "Back to Dashboard",
+  "errors": {
+    "no_data": "No interview data found. Please complete an interview first.",
+    "no_analysis": "No interview data available to perform analysis."
+  },
+  "save": {
+    "duplicate": "This interview has already been saved.",
+    "success": "Interview saved successfully",
+    "failed": "Failed to save interview"
+  },
+  "header": {
+    "complete": "Interview Complete!",
+    "level": "Level:",
+    "score": "SCORE"
+  },
+  "strengths": {
+    "title": "Key Strengths",
+    "empty": "No specific strengths were identified during this interview."
+  },
+  "improvements": {
+    "title": "Areas for Improvement",
+    "empty": "No specific areas for improvement were identified."
+  },
+  "coverage": {
+    "title": "Detailed Coverage Analysis"
+  },
+  "feedback": {
+    "question_bad": "What went wrong?",
+    "question_good": "What did you like most?",
+    "thanks_title": "Thank you for your feedback!",
+    "thanks_desc": "Your response helps us improve the interview experience.",
+    "title": "How was your interview experience?",
+    "subtitle": "Your feedback is anonymous and helps us improve.",
+    "placeholder": "Share your thoughts...",
+    "submit": "Submit Feedback"
+  },
+  "loading": "Loading your results...",
+  "error": {
+    "title": "No Analysis Data Available",
+    "fallback_desc": "No interview data found. This could be because the interview was not completed or the session has expired.",
+    "return_btn": "Return to Dashboard",
+    "new_interview_btn": "Take New Interview"
+  }
+}
