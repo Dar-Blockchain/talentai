@@ -36,16 +36,20 @@ const ACCENT = "#0D9488";
 const ACCENT2 = "#059669";
 
 const fieldSx = {
-  "& .MuiInputLabel-root": { color: "#6B7280", fontFamily: "Poppins", fontSize: "0.95rem", fontWeight: 500 },
+  "& .MuiInputLabel-root": { color: "#6B7280", fontFamily: "Poppins", fontWeight: 500, fontSize: { xs: "0.8125rem", sm: "0.875rem", md: "0.95rem" } },
   "& .MuiInputLabel-root.Mui-focused": { color: ACCENT },
-  "& .MuiInputBase-input": { fontSize: "1rem", fontFamily: "Poppins" },
-  "& .MuiInputBase-input::placeholder": { fontSize: "0.82rem", opacity: 1, color: "#C4CAD4" },
-  "& .MuiFormHelperText-root": { fontSize: "0.75rem" },
+  "& .MuiInputBase-input": {
+    fontSize: { xs: "0.875rem", sm: "0.9375rem", md: "1rem" },
+    fontFamily: "Poppins",
+  },
+  "& .MuiInputBase-input::placeholder": { fontSize: { xs: "0.73rem", sm: "0.78rem", md: "0.82rem" }, opacity: 1, color: "#C4CAD4" },
+  "& .MuiFormHelperText-root": { fontSize: { xs: "0.6875rem", sm: "0.72rem", md: "0.75rem" } },
   "& .MuiOutlinedInput-root": {
     borderRadius: "14px",
-    fontSize: "1rem",
     fontFamily: "Poppins",
+    fontSize: { xs: "0.875rem", sm: "0.9375rem", md: "1rem" },
     bgcolor: "#F9FAFB",
+    minHeight: { xs: "48px", sm: "52px", md: "56px" },
     "& fieldset": { borderColor: "#E5E7EB" },
     "&:hover fieldset": { borderColor: "#D1D5DB" },
     "&:hover": { bgcolor: "#F3F4F6" },
@@ -54,7 +58,11 @@ const fieldSx = {
   },
 };
 
-const half = { flex: { xs: "1 1 100%", md: "1 1 calc(50% - 12px)" }, minWidth: 0 };
+const half = {
+  flex: "1 1 100%",
+  minWidth: 0,
+  "@media (min-width:1025px)": { flex: "1 1 calc(50% - 12px)" },
+};
 const full = { flex: "1 1 100%" };
 
 const selectMenuProps = {
@@ -63,7 +71,8 @@ const selectMenuProps = {
       mt: 0.5, borderRadius: 2, boxShadow: "0px 4px 20px rgba(0,0,0,0.08)", border: "1px solid rgba(0,0,0,0.06)",
       "& .MuiList-root": { py: 0.5 },
       "& .MuiMenuItem-root": {
-        fontSize: "0.9rem", py: 0.75, px: 1.5, borderRadius: 1, mx: 0.5, color: "#444", fontFamily: "Poppins", transition: "background 0.15s",
+        fontSize: { xs: "0.84rem", sm: "0.87rem", md: "0.9rem" },
+        py: 0.75, px: 1.5, borderRadius: 1, mx: 0.5, color: "#444", fontFamily: "Poppins", transition: "background 0.15s",
         "&:hover": { background: `rgba(13,148,136,0.08)`, color: "#222" },
         "&.Mui-selected": { background: `rgba(13,148,136,0.12)`, color: ACCENT, fontWeight: 600, "&:hover": { background: `rgba(13,148,136,0.18)` } },
       },
@@ -82,9 +91,13 @@ type FormValues = {
 interface Props { onStepChange?: (step: 1 | 2) => void; onEmailChange?: (email: string) => void; }
 
 const submitBtnSx = {
-  textTransform: "none", fontFamily: "Poppins", fontWeight: 700, borderRadius: "14px", height: 56,
+  textTransform: "none", fontFamily: "Poppins", fontWeight: 700, borderRadius: "14px",
+  height: { xs: 48, sm: 52, md: 56 },
+  px: { xs: 1.5, sm: 2, md: 2.25 },
   background: `linear-gradient(135deg, ${ACCENT} 0%, ${ACCENT2} 100%)`, color: "#fff",
-  boxShadow: `0 4px 20px ${ACCENT}50`, letterSpacing: "0.01em", fontSize: "1rem", transition: "all 0.2s",
+  boxShadow: `0 4px 20px ${ACCENT}50`, letterSpacing: "0.01em",
+  fontSize: { xs: "0.875rem", sm: "0.9375rem", md: "1rem" },
+  transition: "all 0.2s",
   "&:hover": { background: `linear-gradient(135deg, #0caa9d 0%, ${ACCENT2} 100%)`, boxShadow: `0 8px 28px ${ACCENT}60`, transform: "translateY(-1px)" },
   "&:active": { transform: "translateY(0)" },
   "&.Mui-disabled": { background: "#F3F4F6", color: "#9CA3AF", boxShadow: "none" },
@@ -177,13 +190,13 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) =
     <Box>
       {/* STEP 1 – Info Form */}
       {step === 1 && (
-        <Box component="form" onSubmit={handleSubmit(handleSendCode)} sx={{ mb: 2, textAlign: "left", display: "flex", flexWrap: "wrap", gap: 3 }}>
+        <Box component="form" onSubmit={handleSubmit(handleSendCode)} sx={{ mb: 2, textAlign: "left", display: "flex", flexWrap: "wrap", gap: { xs: 2.25, sm: 2.75, md: 3 } }}>
 
           <Box sx={half}>
             <TextField
               label={t("company_form.company_name")} placeholder="Acme Corp" fullWidth disabled={loading}
               error={!!errors.name} helperText={errors.name?.message}
-              InputProps={{ startAdornment: <InputAdornment position="start"><BusinessIcon sx={{ fontSize: 20, color: "#9CA3AF" }} /></InputAdornment> }}
+              InputProps={{ startAdornment: <InputAdornment position="start"><BusinessIcon sx={{ fontSize: { xs: 18, md: 20 }, color: "#9CA3AF" }} /></InputAdornment> }}
               sx={fieldSx}
               {...register("name", { required: t("company_form.validation.company_name_required") })}
             />
@@ -192,7 +205,7 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) =
             <TextField
               label={t("company_form.work_email")} placeholder="contact@company.com" fullWidth type="email" disabled={loading}
               error={!!errors.email} helperText={errors.email?.message}
-              InputProps={{ startAdornment: <InputAdornment position="start"><EmailIcon sx={{ fontSize: 20, color: "#9CA3AF" }} /></InputAdornment> }}
+              InputProps={{ startAdornment: <InputAdornment position="start"><EmailIcon sx={{ fontSize: { xs: 18, md: 20 }, color: "#9CA3AF" }} /></InputAdornment> }}
               sx={fieldSx}
               {...register("email", {
                 required: t("company_form.validation.email_required"),
@@ -209,7 +222,7 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) =
                 <TextField
                   {...field} label={t("company_form.industry")} fullWidth select disabled={loading}
                   error={!!errors.industry} helperText={errors.industry?.message}
-                  InputProps={{ startAdornment: <InputAdornment position="start"><CategoryIcon sx={{ fontSize: 20, color: "#9CA3AF" }} /></InputAdornment> }}
+                  InputProps={{ startAdornment: <InputAdornment position="start"><CategoryIcon sx={{ fontSize: { xs: 18, md: 20 }, color: "#9CA3AF" }} /></InputAdornment> }}
                   SelectProps={{
                     MenuProps: selectMenuProps, displayEmpty: true,
                     renderValue: (value: any) =>
@@ -230,7 +243,7 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) =
                 <TextField
                   {...field} label={t("company_form.company_size")} fullWidth select disabled={loading}
                   error={!!errors.size} helperText={errors.size?.message}
-                  InputProps={{ startAdornment: <InputAdornment position="start"><PeopleIcon sx={{ fontSize: 20, color: "#9CA3AF" }} /></InputAdornment> }}
+                  InputProps={{ startAdornment: <InputAdornment position="start"><PeopleIcon sx={{ fontSize: { xs: 18, md: 20 }, color: "#9CA3AF" }} /></InputAdornment> }}
                   SelectProps={{
                     MenuProps: selectMenuProps, displayEmpty: true,
                     renderValue: (value: any) =>
@@ -248,7 +261,7 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) =
             <TextField
               label={t("company_form.location")} placeholder="e.g. Paris, France" fullWidth disabled={loading}
               error={!!errors.location} helperText={errors.location?.message}
-              InputProps={{ startAdornment: <InputAdornment position="start"><LocationOnIcon sx={{ fontSize: 20, color: "#9CA3AF" }} /></InputAdornment> }}
+              InputProps={{ startAdornment: <InputAdornment position="start"><LocationOnIcon sx={{ fontSize: { xs: 18, md: 20 }, color: "#9CA3AF" }} /></InputAdornment> }}
               sx={fieldSx}
               {...register("location", { required: t("company_form.validation.location_required") })}
             />
@@ -257,7 +270,7 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) =
             <TextField
               label={t("company_form.website")} placeholder="https://yourcompany.com" fullWidth disabled={loading}
               error={!!errors.website} helperText={errors.website?.message}
-              InputProps={{ startAdornment: <InputAdornment position="start"><LanguageIcon sx={{ fontSize: 20, color: "#9CA3AF" }} /></InputAdornment> }}
+              InputProps={{ startAdornment: <InputAdornment position="start"><LanguageIcon sx={{ fontSize: { xs: 18, md: 20 }, color: "#9CA3AF" }} /></InputAdornment> }}
               sx={fieldSx}
               {...register("website", {
                 validate: (value) => {
@@ -277,7 +290,7 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) =
             <TextField
               label={t("company_form.linkedin")} placeholder="https://linkedin.com/company/..." fullWidth disabled={loading}
               error={!!errors.linkedin} helperText={errors.linkedin?.message}
-              InputProps={{ startAdornment: <InputAdornment position="start"><LinkedInIcon sx={{ fontSize: 20, color: "#9CA3AF" }} /></InputAdornment> }}
+              InputProps={{ startAdornment: <InputAdornment position="start"><LinkedInIcon sx={{ fontSize: { xs: 18, md: 20 }, color: "#9CA3AF" }} /></InputAdornment> }}
               sx={fieldSx}
               {...register("linkedin", {
                 validate: (value) => {
@@ -297,7 +310,7 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) =
           <Box sx={full}>
             <Button
               type="submit" fullWidth variant="contained" disabled={loading}
-              endIcon={!loading && <ArrowForwardIcon sx={{ fontSize: 18 }} />}
+              endIcon={!loading && <ArrowForwardIcon sx={{ fontSize: { xs: 16, md: 18 } }} />}
               startIcon={loading ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : undefined}
               sx={submitBtnSx}
             >
@@ -310,23 +323,35 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) =
       {/* STEP 2 – OTP */}
       {step === 2 && (
         <Box sx={{ mb: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, bgcolor: `${ACCENT}0A`, border: `1px solid ${ACCENT}22`, borderRadius: "12px", px: 2, py: 1.5, mb: 3 }}>
-            <EmailIcon sx={{ fontSize: 18, color: ACCENT, flexShrink: 0 }} />
-            <Box>
-              <Typography sx={{ fontSize: "0.78rem", color: "#6B7280", fontFamily: "Poppins" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, bgcolor: `${ACCENT}0A`, border: `1px solid ${ACCENT}22`, borderRadius: "12px", px: { xs: 1.5, md: 2 }, py: { xs: 1.25, md: 1.5 }, mb: 3 }}>
+            <EmailIcon sx={{ fontSize: { xs: 16, md: 18 }, color: ACCENT, flexShrink: 0 }} />
+            <Box sx={{ minWidth: 0 }}>
+              <Typography sx={{ fontSize: { xs: "0.73rem", sm: "0.76rem", md: "0.78rem" }, color: "#6B7280", fontFamily: "Poppins", lineHeight: 1.35 }}>
                 {t("company_form.code_sent_to")}
               </Typography>
-              <Typography sx={{ fontSize: "0.88rem", color: "#0F172A", fontFamily: "Poppins", fontWeight: 700 }}>
+              <Typography sx={{ fontSize: { xs: "0.8rem", sm: "0.84rem", md: "0.88rem" }, color: "#0F172A", fontFamily: "Poppins", fontWeight: 700, overflowWrap: "break-word", wordBreak: "break-all" }}>
                 {savedEmail}
               </Typography>
             </Box>
           </Box>
 
-          <Stack direction="row" spacing={1.5} justifyContent="center">
+          <Stack direction="row" spacing={{ xs: 1, sm: 1.25, md: 1.5 }} justifyContent="center" sx={{ flexWrap: { xs: "wrap", sm: "nowrap" } }}>
             {otpCode.map((digit, index) => (
               <Box
                 key={index}
-                sx={{ width: 58, height: 68, borderRadius: "14px", border: `1.5px solid ${digit ? ACCENT : "#D1FAF5"}`, bgcolor: digit ? `${ACCENT}0C` : "#F8FFFE", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s", "&:focus-within": { borderColor: ACCENT, bgcolor: "#fff", boxShadow: `0 0 0 4px ${ACCENT}18` } }}
+                sx={{
+                  width: { xs: 48, sm: 52, md: 58 },
+                  height: { xs: 56, sm: 62, md: 68 },
+                  borderRadius: "14px",
+                  border: `1.5px solid ${digit ? ACCENT : "#D1FAF5"}`,
+                  bgcolor: digit ? `${ACCENT}0C` : "#F8FFFE",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.15s",
+                  flexShrink: 0,
+                  "&:focus-within": { borderColor: ACCENT, bgcolor: "#fff", boxShadow: `0 0 0 4px ${ACCENT}18` },
+                }}
               >
                 <Box
                   component="input"
@@ -335,7 +360,19 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) =
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleOtpChange(index, e.target.value)}
                   onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => handleOtpKeyDown(index, e)}
                   onPaste={index === 0 ? (handleOtpPaste as any) : undefined}
-                  sx={{ width: "100%", height: "100%", border: "none", outline: "none", background: "transparent", textAlign: "center", fontSize: "1.6rem", fontWeight: 700, color: "#0F172A", fontFamily: "Poppins", cursor: "text" }}
+                  sx={{
+                    width: "100%",
+                    height: "100%",
+                    border: "none",
+                    outline: "none",
+                    background: "transparent",
+                    textAlign: "center",
+                    fontSize: { xs: "1.25rem", sm: "1.42rem", md: "1.6rem" },
+                    fontWeight: 700,
+                    color: "#0F172A",
+                    fontFamily: "Poppins",
+                    cursor: "text",
+                  }}
                 />
               </Box>
             ))}
@@ -343,7 +380,7 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) =
 
           {(isExpired || isRunning) && (
             <Box sx={{ textAlign: "center", mt: 1.5 }}>
-              <Typography sx={{ fontSize: "0.8rem", fontFamily: "Poppins", fontWeight: 500, color: secondsLeft > 60 ? "#9CA3AF" : secondsLeft > 0 ? "#F59E0B" : "#EF4444", transition: "color 0.3s" }}>
+              <Typography sx={{ fontSize: { xs: "0.7375rem", sm: "0.77rem", md: "0.8rem" }, fontFamily: "Poppins", fontWeight: 500, color: secondsLeft > 60 ? "#9CA3AF" : secondsLeft > 0 ? "#F59E0B" : "#EF4444", transition: "color 0.3s", px: { xs: 0.25, md: 0 } }}>
                 {secondsLeft > 0
                   ? t("company_form.code_expires", { time: formatTimeLeft(secondsLeft) })
                   : t("company_form.code_expired")}
@@ -355,7 +392,7 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) =
             fullWidth variant="contained"
             onClick={isExpired ? () => handleSendCode(getValues()) : handleVerifyAndRegister}
             disabled={loading || (!isExpired && otpCode.join("").length < CODE_LENGTH)}
-            endIcon={!loading && <ArrowForwardIcon sx={{ fontSize: 18 }} />}
+            endIcon={!loading && <ArrowForwardIcon sx={{ fontSize: { xs: 16, md: 18 } }} />}
             startIcon={loading ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : undefined}
             sx={{ ...submitBtnSx, mt: 3 }}
           >

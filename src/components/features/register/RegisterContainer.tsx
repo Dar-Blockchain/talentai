@@ -1,4 +1,4 @@
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, useMediaQuery, useTheme } from "@mui/material";
 import Image from "next/image";
 import NextLink from "next/link";
 import { useTranslation } from "react-i18next";
@@ -7,14 +7,33 @@ const ACCENT = "#0D9488";
 
 const RegisterContainer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { t } = useTranslation("auth");
+  const theme = useTheme();
+  const smMin = `${theme.breakpoints.values.sm}px`;
+  const mqTabletForm = `(min-width:${smMin}) and (max-width:1024px)`;
+  const mqSplitDesktop = `(min-width:1025px)`;
+  const isTabletFormBand = useMediaQuery(mqTabletForm, { noSsr: true });
+  const isSplitDesktop = useMediaQuery(mqSplitDesktop, { noSsr: true });
+  const isLeftPanelWideSplit = useMediaQuery(theme.breakpoints.up("lg"), { noSsr: true });
+
+  const edgeMargins = "clamp(40px, 8vh, 80px)";
+  const contentOuterMarginSx = isSplitDesktop
+    ? { mt: edgeMargins, mb: edgeMargins }
+    : isTabletFormBand
+      ? { mt: 0, mb: theme.spacing(7) }
+      : { mt: 0, mb: edgeMargins };
 
   return (
-    <Box sx={{ height: "100vh", display: "flex", flexDirection: { xs: "column", md: "row" }, overflow: "hidden" }}>
+    <Box sx={{
+      height: "100vh",
+      display: "flex",
+      flexDirection: isSplitDesktop ? "row" : "column",
+      overflow: "hidden",
+    }}>
 
-      {/* ── Left panel ── */}
+      {/* ── Left panel (brand); hidden below sm and from sm–1024px tablet band; visible ≥1025px */}
       <Box sx={{
-        display: { xs: "none", md: "flex" },
-        flex: { md: "0 0 45%", lg: "0 0 50%" },
+        display: isSplitDesktop ? "flex" : "none",
+        flex: isSplitDesktop ? (isLeftPanelWideSplit ? "0 0 50%" : "0 0 45%") : undefined,
         flexDirection: "column",
         justifyContent: "center",
         px: "clamp(32px, 5vw, 64px)",
@@ -116,20 +135,32 @@ const RegisterContainer: React.FC<{ children: React.ReactNode }> = ({ children }
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          justifyContent: "center",
+          justifyContent: "flex-start",
           px: { xs: 2, sm: 3, md: 4, lg: 5 },
-          py: { xs: 2, sm: 3 },
+          pt: 0,
+          pb: 0,
           position: "relative",
           zIndex: 1,
         }}>
-          {/* Mobile logo */}
-          <Box sx={{ display: { xs: "flex", md: "none" }, justifyContent: "center", mb: 2.5, flexShrink: 0 }}>
+          {/* Logo when split illustration is hidden (xs tablet band + xs phone) */}
+          <Box sx={{
+            display: isSplitDesktop ? "none" : "flex",
+            justifyContent: "center",
+            flexShrink: 0,
+            pt: { xs: 1.5, sm: 2, md: 2.5 },
+            mb: { xs: 1.25, sm: 1.75, md: 2.5 },
+          }}>
             <NextLink href="/home/company" style={{ textDecoration: "none" }}>
               <Image src="/logo.svg" alt="TalentAI" width={110} height={28} style={{ objectFit: "contain" }} />
             </NextLink>
           </Box>
 
-          <Box sx={{ width: "100%", maxWidth: { xs: 480, sm: 560, md: 600, lg: 640 } }}>
+          <Box sx={{
+            width: "100%",
+            maxWidth: { xs: 480, sm: 560, md: 600, lg: 640 },
+            flexShrink: 0,
+            ...contentOuterMarginSx,
+          }}>
             {/* Card */}
             <Box sx={{
               bgcolor: "#fff",
@@ -144,7 +175,7 @@ const RegisterContainer: React.FC<{ children: React.ReactNode }> = ({ children }
             </Box>
 
             {/* Footer */}
-            <Typography sx={{ mt: { xs: 1.5, sm: 2 }, fontSize: "11.5px", color: "#9CA3AF", fontFamily: "Poppins", textAlign: "center", lineHeight: 1.8 }}>
+            <Typography sx={{ mt: { xs: 1.5, sm: 2 }, fontSize: { xs: "10.25px", sm: "10.875px", md: "11.5px" }, color: "#9CA3AF", fontFamily: "Poppins", textAlign: "center", lineHeight: 1.75, px: { xs: 0.5, md: 0 }, overflowWrap: "break-word" }}>
               {t("register_panel.footer_prefix")}{" "}
               <NextLink href="/terms" style={{ color: ACCENT, textDecoration: "none", fontWeight: 600 }}>{t("register_panel.terms")}</NextLink>
               {" "}{t("register_panel.footer_and")}{" "}
