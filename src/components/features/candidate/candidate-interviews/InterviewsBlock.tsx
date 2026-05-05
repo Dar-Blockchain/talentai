@@ -28,11 +28,11 @@ import {
   SkillInterviewAssessment,
 } from "@/store/slices/interviewSlice";
 
-const T   = "#0D9488";
-const TBG = "#F0FDFA";
-const TBD = "#99F6E4";
+const T    = "#0D9488";
+const TBG  = "#F0FDFA";
+const TBD  = "#99F6E4";
+const NAVY = "#0D1B2A";
 
-type Tab = "job" | "technical" | "soft";
 interface GroupedAssessment { post: any; assessments: any[]; candidatePostStepProgress: any }
 
 const getScoreColor = (s: number) =>
@@ -48,7 +48,7 @@ const getLevelLabel = (s: number) =>
   s >= 20 ? { label: "Junior", color: "#EA580C" } :
              { label: "Entry",  color: "#64748B" };
 
-// ── Job Interview card (skill-card style) ────────────────────
+// ── Job Interview card ───────────────────────────────────────
 const JobRow: React.FC<{
   assessment: PostAssessment; quota: number;
   onViewDetails: (id: string) => void; onContinueTest: (a: PostAssessment) => void;
@@ -74,8 +74,6 @@ const JobRow: React.FC<{
       transition: "all 0.18s",
       "&:hover": { borderColor: statusColor, boxShadow: `0 4px 16px ${statusColor}18`, transform: "translateY(-1px)" },
     }}>
-
-      {/* Top: avatar + title + status badge */}
       <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.25 }}>
         <Avatar src={logoUrl} variant="rounded" sx={{
           width: 36, height: 36, borderRadius: "10px", flexShrink: 0,
@@ -84,16 +82,14 @@ const JobRow: React.FC<{
         }}>
           <BusinessOutlined sx={{ fontSize: 17, color: statusColor }} />
         </Avatar>
-
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#0F172A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1.3 }}>
+          <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: NAVY, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1.3 }}>
             {jobTitle}
           </Typography>
           {companyName && (
             <Typography sx={{ fontSize: "0.63rem", color: "#94A3B8", mt: 0.15 }}>{companyName}</Typography>
           )}
         </Box>
-
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.4, px: 0.8, py: 0.25, borderRadius: "20px", bgcolor: accentBg, border: `1px solid ${accentBd}`, flexShrink: 0 }}>
           {completed
             ? <CheckCircleOutlined sx={{ fontSize: 9, color: statusColor }} />
@@ -102,7 +98,6 @@ const JobRow: React.FC<{
         </Box>
       </Box>
 
-      {/* Score bar */}
       <Box>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.5 }}>
           <Typography sx={{ fontSize: "0.62rem", color: "#94A3B8", fontWeight: 500 }}>
@@ -114,10 +109,8 @@ const JobRow: React.FC<{
           sx={{ height: 5, borderRadius: "99px", bgcolor: "#F1F5F9", "& .MuiLinearProgress-bar": { borderRadius: "99px", bgcolor: score > 0 ? getScoreColor(score) : "#E2E8F0" } }} />
       </Box>
 
-      {/* Bottom: time + action */}
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <Typography sx={{ fontSize: "0.6rem", color: "#CBD5E1" }}>{timeAgo || "Just added"}</Typography>
-
         {pending ? (
           <Tooltip title={quotaFull ? "Monthly limit reached (5/5)" : ""} arrow>
             <span>
@@ -139,9 +132,9 @@ const JobRow: React.FC<{
   );
 };
 
-// ── Skill row ────────────────────────────────────────────────
-const SkillRow: React.FC<{ assessment: SkillInterviewAssessment; last: boolean; accentColor: string; Icon: React.ElementType }> =
-  ({ assessment, last, accentColor, Icon }) => {
+// ── Skill card ───────────────────────────────────────────────
+const SkillRow: React.FC<{ assessment: SkillInterviewAssessment; accentColor: string; Icon: React.ElementType }> =
+  ({ assessment, accentColor, Icon }) => {
     const router  = useRouter();
     const score   = getSkillScore(assessment);
     const lvl     = getLevelLabel(score);
@@ -150,52 +143,79 @@ const SkillRow: React.FC<{ assessment: SkillInterviewAssessment; last: boolean; 
 
     return (
       <Box sx={{ bgcolor: "#fff", border: "1px solid #E2E8F0", borderRadius: "14px", p: 1.75, display: "flex", flexDirection: "column", gap: 1.25, transition: "all 0.18s", "&:hover": { borderColor: accentColor, boxShadow: `0 4px 16px ${accentColor}18`, transform: "translateY(-1px)" } }}>
-        {/* Top: icon + name + level badge */}
-      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.25 }}>
-        <Box sx={{ width: 36, height: 36, borderRadius: "10px", bgcolor: `${accentColor}0F`, border: `1px solid ${accentColor}20`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <Icon sx={{ fontSize: 17, color: accentColor }} />
+        <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.25 }}>
+          <Box sx={{ width: 36, height: 36, borderRadius: "10px", bgcolor: `${accentColor}0F`, border: `1px solid ${accentColor}20`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Icon sx={{ fontSize: 17, color: accentColor }} />
+          </Box>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: NAVY, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1.3 }}>
+              {assessment.skill || "Skill Assessment"}
+            </Typography>
+          </Box>
+          <Box sx={{ px: 0.85, py: 0.25, borderRadius: "20px", bgcolor: `${lvl.color}12`, border: `1px solid ${lvl.color}25`, flexShrink: 0 }}>
+            <Typography sx={{ fontSize: "0.6rem", fontWeight: 700, color: lvl.color }}>{lvl.label}</Typography>
+          </Box>
         </Box>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#0F172A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1.3 }}>
-            {assessment.skill || "Skill Assessment"}
-          </Typography>
-        </Box>
-        <Box sx={{ px: 0.85, py: 0.25, borderRadius: "20px", bgcolor: `${lvl.color}12`, border: `1px solid ${lvl.color}25`, flexShrink: 0 }}>
-          <Typography sx={{ fontSize: "0.6rem", fontWeight: 700, color: lvl.color }}>{lvl.label}</Typography>
-        </Box>
-      </Box>
 
-      {/* Score bar */}
-      <Box>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.5 }}>
-          <Typography sx={{ fontSize: "0.62rem", color: "#94A3B8", fontWeight: 500 }}>{score > 0 ? "Score" : "Not tested yet"}</Typography>
-          {score > 0 && <Typography sx={{ fontSize: "0.72rem", fontWeight: 800, color: getScoreColor(score) }}>{score}%</Typography>}
+        <Box>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.5 }}>
+            <Typography sx={{ fontSize: "0.62rem", color: "#94A3B8", fontWeight: 500 }}>{score > 0 ? "Score" : "Not tested yet"}</Typography>
+            {score > 0 && <Typography sx={{ fontSize: "0.72rem", fontWeight: 800, color: getScoreColor(score) }}>{score}%</Typography>}
+          </Box>
+          <LinearProgress variant="determinate" value={Math.min(score, 100)}
+            sx={{ height: 5, borderRadius: "99px", bgcolor: "#F1F5F9", "& .MuiLinearProgress-bar": { borderRadius: "99px", bgcolor: score > 0 ? getScoreColor(score) : "#E2E8F0" } }} />
         </Box>
-        <LinearProgress variant="determinate" value={Math.min(score, 100)}
-          sx={{ height: 5, borderRadius: "99px", bgcolor: "#F1F5F9", "& .MuiLinearProgress-bar": { borderRadius: "99px", bgcolor: score > 0 ? getScoreColor(score) : "#E2E8F0" } }} />
-      </Box>
 
-      {/* Bottom: time + report */}
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Typography sx={{ fontSize: "0.6rem", color: "#CBD5E1" }}>{timeAgo || "Just added"}</Typography>
-        {score > 0 && (
-          <Button onClick={() => router.push(`/interview/report/${assessment._id}`)} endIcon={<OpenInNewOutlined sx={{ fontSize: "11px !important" }} />}
-            sx={{ textTransform: "none", fontWeight: 700, fontSize: "0.68rem", color: "#059669", bgcolor: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: "8px", px: 1.25, py: 0.35, minWidth: 0, boxShadow: "none", "&:hover": { bgcolor: "#DCFCE7" } }}>
-            Report
-          </Button>
-        )}
-      </Box>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Typography sx={{ fontSize: "0.6rem", color: "#CBD5E1" }}>{timeAgo || "Just added"}</Typography>
+          {score > 0 && (
+            <Button onClick={() => router.push(`/interview/report/${assessment._id}`)} endIcon={<OpenInNewOutlined sx={{ fontSize: "11px !important" }} />}
+              sx={{ textTransform: "none", fontWeight: 700, fontSize: "0.68rem", color: "#059669", bgcolor: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: "8px", px: 1.25, py: 0.35, minWidth: 0, boxShadow: "none", "&:hover": { bgcolor: "#DCFCE7" } }}>
+              Report
+            </Button>
+          )}
+        </Box>
       </Box>
     );
   };
 
-// ── Empty state ──────────────────────────────────────────────
-const Empty: React.FC<{ icon: React.ElementType; text: string }> = ({ icon: Icon, text }) => (
-  <Box sx={{ py: 7, textAlign: "center" }}>
-    <Box sx={{ width: 52, height: 52, borderRadius: "50%", bgcolor: "#F8FAFC", border: "1px solid #E2E8F0", display: "flex", alignItems: "center", justifyContent: "center", mx: "auto", mb: 1.5 }}>
-      <Icon sx={{ fontSize: 24, color: "#CBD5E1" }} />
+// ── Section block ────────────────────────────────────────────
+const SectionBlock: React.FC<{
+  icon: React.ElementType; label: string; count: number;
+  color: string; bg: string; border: string;
+  loading: boolean; children: React.ReactNode; emptyText: string; emptyIcon: React.ElementType;
+}> = ({ icon: Icon, label, count, color, bg, border, loading, children, emptyText, emptyIcon: EmptyIcon }) => (
+  <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E2E8F0", overflow: "hidden" }}>
+    {/* Header */}
+    <Box sx={{ px: 2.5, py: 1.75, borderBottom: "1px solid #F1F5F9", display: "flex", alignItems: "center", gap: 1 }}>
+      <Box sx={{ width: 30, height: 30, borderRadius: "8px", bgcolor: bg, border: `1px solid ${border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Icon sx={{ fontSize: 15, color }} />
+      </Box>
+      <Typography sx={{ fontSize: "0.88rem", fontWeight: 700, color: NAVY, flex: 1 }}>{label}</Typography>
+      {count > 0 && (
+        <Box sx={{ px: 0.9, py: 0.2, borderRadius: "99px", bgcolor: bg, border: `1px solid ${border}` }}>
+          <Typography sx={{ fontSize: "0.68rem", fontWeight: 700, color }}>{count}</Typography>
+        </Box>
+      )}
     </Box>
-    <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#94A3B8" }}>{text}</Typography>
+
+    {/* Body */}
+    {loading ? (
+      <Box sx={{ display: "flex", justifyContent: "center", py: 5 }}>
+        <CircularProgress size={22} sx={{ color }} />
+      </Box>
+    ) : count === 0 ? (
+      <Box sx={{ py: 6, textAlign: "center" }}>
+        <Box sx={{ width: 48, height: 48, borderRadius: "50%", bgcolor: "#F8FAFC", border: "1px solid #E2E8F0", display: "flex", alignItems: "center", justifyContent: "center", mx: "auto", mb: 1.25 }}>
+          <EmptyIcon sx={{ fontSize: 22, color: "#CBD5E1" }} />
+        </Box>
+        <Typography sx={{ fontSize: "0.8rem", fontWeight: 600, color: "#94A3B8" }}>{emptyText}</Typography>
+      </Box>
+    ) : (
+      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5, p: 2 }}>
+        {children}
+      </Box>
+    )}
   </Box>
 );
 
@@ -205,7 +225,6 @@ const InterviewsBlock: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const quota    = useSelector((s: RootState) => s.user.connectedUser.profile?.quota || 0);
 
-  const [tab, setTab]                = useState<Tab>("job");
   const [stepModalOpen, setStep]     = useState(false);
   const [selectedAssmt, setSelected] = useState<PostAssessment | null>(null);
 
@@ -233,93 +252,41 @@ const InterviewsBlock: React.FC = () => {
     if (postId && step) { setStep(false); router.push(`/interview/hr?jobId=${postId}&stepId=${step._id}&pipeline=true`); }
   };
 
-  const TABS: { id: Tab; label: string; icon: React.ElementType; count: number; color: string; bg: string; border: string }[] = [
-    { id: "job",       label: "Job Interviews", icon: AssignmentOutlined, count: jobAssessments.length,  color: T,         bg: TBG,       border: TBD       },
-    { id: "technical", label: "Technical",      icon: CodeOutlined,       count: techAssessments.length, color: "#2563EB", bg: "#EFF6FF", border: "#BFDBFE" },
-    { id: "soft",      label: "Soft Skills",    icon: PeopleOutlined,     count: softAssessments.length, color: "#D97706", bg: "#FFFBEB", border: "#FDE68A" },
-  ];
-
-  const activeTab = TABS.find(t => t.id === tab)!;
-  const loading   = tab === "job" ? jobLoading : tab === "technical" ? techLoading : softLoading;
-
   return (
-    <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E2E8F0", overflow: "hidden" }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
 
-      {/* ── Header ── */}
-      <Box sx={{ px: 2.5, pt: 2, pb: 0, borderBottom: "1px solid #F1F5F9" }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Box sx={{ width: 30, height: 30, borderRadius: "8px", bgcolor: `${activeTab.color}12`, border: `1px solid ${activeTab.color}25`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <activeTab.icon sx={{ fontSize: 15, color: activeTab.color }} />
-            </Box>
-            <Typography sx={{ fontSize: "0.95rem", fontWeight: 800, color: "#0F172A" }}>Interviews & Assessments</Typography>
-          </Box>
-        </Box>
+      {/* Job Interviews block */}
+      <SectionBlock
+        icon={AssignmentOutlined} label="Job Interviews" count={jobAssessments.length}
+        color={T} bg={TBG} border={TBD}
+        loading={jobLoading} emptyText="No job interviews yet" emptyIcon={WorkOutlineOutlined}
+      >
+        {jobAssessments.map(a => (
+          <JobRow key={a._id} assessment={a} quota={quota} onViewDetails={handleViewDetails} onContinueTest={handleContinueTest} />
+        ))}
+      </SectionBlock>
 
-        {/* Tabs row */}
-        <Box sx={{ display: "flex", gap: 0 }}>
-          {TABS.map((t, idx) => {
-            const active  = tab === t.id;
-            const TabIcon = t.icon;
-            return (
-              <Box
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                sx={{
-                  flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 0.6,
-                  py: 1.1, px: 1,
-                  cursor: "pointer",
-                  borderBottom: active ? `2.5px solid ${t.color}` : "2.5px solid transparent",
-                  borderRight: idx < TABS.length - 1 ? "1px solid #F1F5F9" : "none",
-                  transition: "all 0.15s",
-                  "&:hover": { bgcolor: `${t.color}06` },
-                }}
-              >
-                <TabIcon sx={{ fontSize: 14, color: active ? t.color : "#94A3B8" }} />
-                <Typography sx={{ fontSize: "0.78rem", fontWeight: active ? 700 : 500, color: active ? t.color : "#94A3B8", whiteSpace: "nowrap" }}>
-                  {t.label}
-                </Typography>
-                {t.count > 0 && (
-                  <Box sx={{ px: 0.7, py: 0.1, borderRadius: "99px", bgcolor: active ? `${t.color}15` : "#F1F5F9" }}>
-                    <Typography sx={{ fontSize: "0.6rem", fontWeight: 700, color: active ? t.color : "#94A3B8" }}>{t.count}</Typography>
-                  </Box>
-                )}
-              </Box>
-            );
-          })}
-        </Box>
-      </Box>
+      {/* Technical block */}
+      <SectionBlock
+        icon={CodeOutlined} label="Technical" count={techAssessments.length}
+        color="#2563EB" bg="#EFF6FF" border="#BFDBFE"
+        loading={techLoading} emptyText="No technical assessments yet" emptyIcon={CodeOutlined}
+      >
+        {techAssessments.map(a => (
+          <SkillRow key={a._id} assessment={a} accentColor="#2563EB" Icon={CodeOutlined} />
+        ))}
+      </SectionBlock>
 
-      {/* ── Body ── */}
-      {loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
-          <CircularProgress size={22} sx={{ color: activeTab.color }} />
-        </Box>
-      ) : tab === "job" ? (
-        jobAssessments.length === 0
-          ? <Empty icon={WorkOutlineOutlined} text="No job interviews yet" />
-          : (
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5, p: 2 }}>
-              {jobAssessments.map(a => <JobRow key={a._id} assessment={a} quota={quota} onViewDetails={handleViewDetails} onContinueTest={handleContinueTest} />)}
-            </Box>
-          )
-      ) : tab === "technical" ? (
-        techAssessments.length === 0
-          ? <Empty icon={CodeOutlined} text="No technical assessments yet" />
-          : (
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5, p: 2 }}>
-              {techAssessments.map(a => <SkillRow key={a._id} assessment={a} last={false} accentColor="#2563EB" Icon={CodeOutlined} />)}
-            </Box>
-          )
-      ) : (
-        softAssessments.length === 0
-          ? <Empty icon={PeopleOutlined} text="No soft assessments yet" />
-          : (
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5, p: 2 }}>
-              {softAssessments.map(a => <SkillRow key={a._id} assessment={a} last={false} accentColor="#D97706" Icon={PeopleOutlined} />)}
-            </Box>
-          )
-      )}
+      {/* Soft Skills block */}
+      <SectionBlock
+        icon={PeopleOutlined} label="Soft Skills" count={softAssessments.length}
+        color="#D97706" bg="#FFFBEB" border="#FDE68A"
+        loading={softLoading} emptyText="No soft assessments yet" emptyIcon={PeopleOutlined}
+      >
+        {softAssessments.map(a => (
+          <SkillRow key={a._id} assessment={a} accentColor="#D97706" Icon={PeopleOutlined} />
+        ))}
+      </SectionBlock>
 
       <StepInfoModal open={stepModalOpen} onClose={() => setStep(false)} onStart={handleStartStep} assessment={selectedAssmt} quota={quota} />
     </Box>
