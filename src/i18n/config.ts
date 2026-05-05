@@ -15,6 +15,7 @@ import enDepartments from '../../public/locales/en/modules/departments/departmen
 import enSubscription from '../../public/locales/en/modules/company/subscription.json';
 import enInterviewHr from '../../public/locales/en/modules/interview/interview.json';
 import enInterviewResults from '../../public/locales/en/modules/interview/results.json';
+import enInterviewApply from '../../public/locales/en/modules/interview/apply.json';
 
 // ── FR ──────────────────────────────────────────────
 import frCommon     from '../../public/locales/fr/shared/common.json';
@@ -29,6 +30,7 @@ import frDepartments from '../../public/locales/fr/modules/departments/departmen
 import frSubscription from '../../public/locales/fr/modules/company/subscription.json';
 import frInterviewHr from '../../public/locales/fr/modules/interview/interview.json';
 import frInterviewResults from '../../public/locales/fr/modules/interview/results.json';
+import frInterviewApply from '../../public/locales/fr/modules/interview/apply.json';
 
 export const SUPPORTED_LANGUAGES = ['en', 'fr'] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
@@ -78,6 +80,7 @@ const options: InitOptions = {
       home:      enHome,
       'modules/interview/hr':      enInterviewHr,
       'modules/interview/results': enInterviewResults,
+      'modules/interview/apply':   enInterviewApply,
     },
     fr: {
       common:    frCommon,
@@ -88,6 +91,7 @@ const options: InitOptions = {
       home:      frHome,
       'modules/interview/hr':      frInterviewHr,
       'modules/interview/results': frInterviewResults,
+      'modules/interview/apply':   frInterviewApply,
     },
   },
 

@@ -191,5 +191,16 @@
     "speaking": "🎤 Speaking",
     "ai_thinking": "🧠 AI Thinking",
     "end_btn": "End"
+  },
+  "lang_modal": {
+    "title_multi": "Choose Your Interview Language",
+    "title_single": "Interview Language",
+    "desc_multi": "This interview is available in multiple languages. Select the one you're most comfortable with.",
+    "desc_single": "This interview will be conducted in the language shown below.",
+    "interviewing_in": "You will be interviewed in {{language}}",
+    "single_lang_note": "This interview is configured in this language only.",
+    "btn_back": "Back",
+    "btn_start_in": "Start in {{language}}",
+    "btn_start": "Start Interview"
   }
 }
