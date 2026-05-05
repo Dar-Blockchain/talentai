@@ -206,11 +206,13 @@ const PostsPage: React.FC = () => {
     dispatch(updatePostStatus({ postId: publishConfirmId, status: "open" }))
       .unwrap()
       .then(() => {
+        setPublishConfirmId(null);
         showToast({ message: t("publish_success"), severity: "success" });
-        dispatch(fetchMyPosts({ page, limit: 12, search, sort: apiSort, status: apiStatus, creationType: typeFilter !== "all" ? typeFilter : "" }));
+        dispatch(fetchMyPosts({ page, limit: 8, search, sort: apiSort, status: apiStatus, creationType: typeFilter !== "all" ? typeFilter : undefined }));
       })
-      .catch(() => showToast({ message: t("publish_error"), severity: "error" }));
-  }, [dispatch, page, search, apiSort, apiStatus, typeFilter, t]);
+      .catch(() => showToast({ message: t("publish_error"), severity: "error" }))
+      .finally(() => setPublishing(false));
+  }, [dispatch, publishConfirmId, page, search, apiSort, apiStatus, typeFilter, t]);
 
   const handleCreateClick = () => {
     if (postsAtLimit) return;

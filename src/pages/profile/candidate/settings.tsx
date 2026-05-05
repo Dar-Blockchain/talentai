@@ -3,6 +3,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import { Box, Typography, Avatar, Divider } from "@mui/material";
 import { useSelector } from "react-redux";
 import { useRouter } from "next/router";
+import { useTranslation } from "react-i18next";
 import { RootState } from "@/store/store";
 import axios from "axios";
 import Header from "@/components/layout/dashboard/Header";
@@ -23,15 +24,21 @@ const TBG  = "#F0FDFA";
 const TBRD = "#99F6E4";
 const NAVY = "#0D1B2A";
 
-const TABS = [
-  { id: "personal",      label: "Personal Info",    icon: PersonOutlined },
-  { id: "contact",       label: "Contact",           icon: ContactMailOutlined },
-  { id: "notifications", label: "Notifications",     icon: NotificationsOutlined },
-  { id: "visibility",    label: "Public Profile",    icon: VisibilityOutlined },
+const TAB_IDS = [
+  { id: "personal",      key: "personal",      icon: PersonOutlined },
+  { id: "contact",       key: "contact",        icon: ContactMailOutlined },
+  { id: "notifications", key: "notifications",  icon: NotificationsOutlined },
+  { id: "visibility",    key: "visibility",     icon: VisibilityOutlined },
 ];
 
 const CandidateSettingsPage: React.FC = () => {
+  const { t } = useTranslation("dashboard");
   const router = useRouter();
+
+  const TABS = TAB_IDS.map(tab => ({
+    ...tab,
+    label: t(`candidate_settings.tabs.${tab.key}`),
+  }));
   const {
     activeTab, isEditing, profile, loading, error,
     uploadingImage, saveSuccess, userId, fieldErrors,
@@ -108,7 +115,7 @@ const CandidateSettingsPage: React.FC = () => {
 
             {/* Tab nav */}
             <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 1.25, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-              <Typography sx={{ fontSize: "0.65rem", fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.06em", px: 1, pb: 1 }}>Settings</Typography>
+              <Typography sx={{ fontSize: "0.65rem", fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.06em", px: 1, pb: 1 }}>{t("candidate_settings.tabs.settings_label")}</Typography>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
                 {TABS.map(({ id, label, icon: Icon }) => {
                   const active = activeTab === id;

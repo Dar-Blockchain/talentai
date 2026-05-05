@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import { Box, Typography, Avatar, LinearProgress, Button, Divider, Chip } from "@mui/material";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import Header from "@/components/layout/dashboard/Header";
@@ -41,19 +42,19 @@ const StatPill: React.FC<{ label: string; value: number | string; color: string;
   </Box>
 );
 
-const HideBar: React.FC<{ onHide: () => void }> = ({ onHide }) => (
+const HideBar: React.FC<{ onHide: () => void; label: string }> = ({ onHide, label }) => (
   <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
     <Button size="small" startIcon={<ChevronLeftOutlined sx={{ fontSize: "14px !important" }} />} onClick={onHide}
       sx={{ textTransform: "none", fontWeight: 700, fontSize: "0.72rem", color: "#6B7280", bgcolor: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "10px", px: 1.5, py: 0.5, "&:hover": { bgcolor: "#F3F4F6" } }}>
-      Hide
+      {label}
     </Button>
   </Box>
 );
 
 const CollapsedRow: React.FC<{
   icon: React.ReactNode; iconBg: string; iconBorder: string;
-  title: string; subtitle: string; color: string; onExpand: () => void;
-}> = ({ icon, iconBg, iconBorder, title, subtitle, color, onExpand }) => (
+  title: string; subtitle: string; color: string; viewAllLabel: string; onExpand: () => void;
+}> = ({ icon, iconBg, iconBorder, title, subtitle, color, viewAllLabel, onExpand }) => (
   <Box onClick={onExpand} sx={{
     display: "flex", alignItems: "center", justifyContent: "space-between",
     bgcolor: "#fff", borderRadius: "14px", border: "1px solid #E5E7EB",
@@ -71,7 +72,7 @@ const CollapsedRow: React.FC<{
       </Box>
     </Box>
     <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, px: 1.25, py: 0.5, borderRadius: "8px", bgcolor: `${color}10`, border: `1px solid ${color}30` }}>
-      <Typography sx={{ fontSize: "0.72rem", fontWeight: 700, color }}>View All</Typography>
+      <Typography sx={{ fontSize: "0.72rem", fontWeight: 700, color }}>{viewAllLabel}</Typography>
       <ExpandMoreOutlined sx={{ fontSize: 14, color }} />
     </Box>
   </Box>
@@ -100,14 +101,14 @@ const QuickNavItem: React.FC<{
   </Box>
 );
 
-const DisabledAction: React.FC<{ icon: React.ElementType; label: string }> = ({ icon: Icon, label }) => (
+const DisabledAction: React.FC<{ icon: React.ElementType; label: string; sublabel: string }> = ({ icon: Icon, label, sublabel }) => (
   <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, borderRadius: "10px", border: "1px solid #E5E7EB", bgcolor: "#F9FAFB", px: 1.5, py: 1, cursor: "not-allowed", opacity: 0.55 }}>
     <Box sx={{ width: 28, height: 28, borderRadius: "8px", bgcolor: "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
       <Icon sx={{ fontSize: 15, color: "#9CA3AF" }} />
     </Box>
     <Box sx={{ flex: 1, minWidth: 0 }}>
       <Typography sx={{ fontWeight: 700, fontSize: "0.78rem", color: "#9CA3AF", lineHeight: 1.2 }}>{label}</Typography>
-      <Typography sx={{ fontSize: "0.62rem", color: "#9CA3AF" }}>Coming soon</Typography>
+      <Typography sx={{ fontSize: "0.62rem", color: "#9CA3AF" }}>{sublabel}</Typography>
     </Box>
     <LockOutlined sx={{ fontSize: 13, color: "#9CA3AF", flexShrink: 0 }} />
   </Box>
@@ -118,7 +119,8 @@ const DisabledAction: React.FC<{ icon: React.ElementType; label: string }> = ({ 
 const ProfileCard: React.FC<{
   displayName: string; email?: string; initial: string; avatarUrl?: string;
   targetRole?: string; experienceLevel?: string; totalApplications: number; totalInterviews: number;
-}> = ({ displayName, email, initial, avatarUrl, targetRole, experienceLevel, totalApplications, totalInterviews }) => (
+  labelApplications: string; labelInterviews: string;
+}> = ({ displayName, email, initial, avatarUrl, targetRole, experienceLevel, totalApplications, totalInterviews, labelApplications, labelInterviews }) => (
   <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
     <Box sx={{ height: 56, background: `linear-gradient(135deg, ${NAVY} 0%, ${T} 100%)`, position: "relative" }}>
       <Box sx={{ position: "absolute", top: "50%", right: 16, transform: "translateY(-50%)", width: 32, height: 32, borderRadius: "50%", bgcolor: `${TL}30`, border: `1px solid ${TL}40` }} />
@@ -140,14 +142,14 @@ const ProfileCard: React.FC<{
       )}
       <Divider sx={{ my: 1.5 }} />
       <Box sx={{ display: "flex", gap: 1 }}>
-        <StatPill label="Applications" value={totalApplications} color="#7C3AED" bg="#F5F3FF" border="#DDD6FE" />
-        <StatPill label="Interviews"   value={totalInterviews}   color={T}        bg={TBG}    border={TBRD}    />
+        <StatPill label={labelApplications} value={totalApplications} color="#7C3AED" bg="#F5F3FF" border="#DDD6FE" />
+        <StatPill label={labelInterviews}   value={totalInterviews}   color={T}        bg={TBG}    border={TBRD}    />
       </Box>
     </Box>
   </Box>
 );
 
-const QuotaCard: React.FC<{ quota: number }> = ({ quota }) => {
+const QuotaCard: React.FC<{ quota: number; labelTitle: string; labelMaxed: string; labelLeft: string }> = ({ quota, labelTitle, labelMaxed, labelLeft }) => {
   const quotaData = [
     { name: "Used",      value: quota,                  fill: T         },
     { name: "Remaining", value: Math.max(0, 5 - quota), fill: "#E5E7EB" },
@@ -156,8 +158,8 @@ const QuotaCard: React.FC<{ quota: number }> = ({ quota }) => {
     <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 2, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
         <QuizOutlined sx={{ fontSize: 16, color: T }} />
-        <Typography sx={{ fontWeight: 700, fontSize: "0.82rem", color: NAVY }}>Monthly Tests</Typography>
-        <Chip label={quota >= 5 ? "Maxed" : `${5 - quota} left`} size="small"
+        <Typography sx={{ fontWeight: 700, fontSize: "0.82rem", color: NAVY }}>{labelTitle}</Typography>
+        <Chip label={quota >= 5 ? labelMaxed : labelLeft} size="small"
           sx={{ ml: "auto", fontSize: "0.6rem", height: 18, fontWeight: 700, bgcolor: quota >= 5 ? "#FEF2F2" : TBG, color: quota >= 5 ? "#DC2626" : T, border: `1px solid ${quota >= 5 ? "#FECACA" : TBRD}` }} />
       </Box>
       <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -185,11 +187,11 @@ const QuotaCard: React.FC<{ quota: number }> = ({ quota }) => {
   );
 };
 
-const ProfileStrengthCard: React.FC<{ checklist: { label: string; done: boolean }[] }> = ({ checklist }) => (
+const ProfileStrengthCard: React.FC<{ checklist: { label: string; done: boolean }[]; label: string }> = ({ checklist, label }) => (
   <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 2, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
       <TrendingUpOutlined sx={{ fontSize: 16, color: "#7C3AED" }} />
-      <Typography sx={{ fontWeight: 700, fontSize: "0.82rem", color: NAVY }}>Profile Strength</Typography>
+      <Typography sx={{ fontWeight: 700, fontSize: "0.82rem", color: NAVY }}>{label}</Typography>
     </Box>
     <LinearProgress variant="determinate"
       value={Math.round((checklist.filter(c => c.done).length / checklist.length) * 100)}
@@ -209,14 +211,14 @@ const ProfileStrengthCard: React.FC<{ checklist: { label: string; done: boolean 
   </Box>
 );
 
-const QuotaBar: React.FC<{ quota: number }> = ({ quota }) => (
+const QuotaBar: React.FC<{ quota: number; label: string }> = ({ quota, label }) => (
   <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, borderRadius: "10px", border: `1px solid ${quota >= 5 ? "#FECACA" : TBRD}`, bgcolor: quota >= 5 ? "#FEF2F2" : TBG, px: 1.5, py: 1 }}>
     <Box sx={{ width: 28, height: 28, borderRadius: "8px", bgcolor: quota >= 5 ? "#FEE2E2" : "#CCFBF1", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
       <QuizOutlined sx={{ fontSize: 15, color: quota >= 5 ? "#DC2626" : T }} />
     </Box>
     <Box sx={{ flex: 1, minWidth: 0 }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.4 }}>
-        <Typography sx={{ fontWeight: 700, fontSize: "0.78rem", color: quota >= 5 ? "#991B1B" : NAVY, lineHeight: 1 }}>Monthly Quota</Typography>
+        <Typography sx={{ fontWeight: 700, fontSize: "0.78rem", color: quota >= 5 ? "#991B1B" : NAVY, lineHeight: 1 }}>{label}</Typography>
         <Typography sx={{ fontSize: "0.65rem", fontWeight: 700, color: quota >= 5 ? "#DC2626" : T }}>{quota}/5</Typography>
       </Box>
       <Box sx={{ display: "flex", gap: 0.4 }}>
@@ -230,14 +232,8 @@ const QuotaBar: React.FC<{ quota: number }> = ({ quota }) => (
 
 // ── Page ─────────────────────────────────────────────────────
 
-const QUICK_LINKS: { icon: React.ElementType; label: string; sublabel: string; view: ActiveView; color: string; bg: string; border: string }[] = [
-  { icon: DashboardOutlined,  label: "Dashboard",    sublabel: "Overview",         view: null,           color: T,         bg: TBG,       border: TBRD      },
-  { icon: AssignmentOutlined, label: "Applications", sublabel: "Your job applies", view: "applications", color: "#7C3AED", bg: "#F5F3FF", border: "#DDD6FE" },
-  { icon: PsychologyOutlined, label: "Skills",       sublabel: "Tech & soft",      view: "skills",       color: "#2563EB", bg: "#EFF6FF", border: "#BFDBFE" },
-  { icon: SchoolOutlined,     label: "Interviews",   sublabel: "All assessments",  view: "interviews",   color: "#D97706", bg: "#FFFBEB", border: "#FDE68A" },
-];
-
 const DashboardCandidate: React.FC = () => {
+  const { t } = useTranslation("dashboard");
   const dispatch = useDispatch<AppDispatch>();
   const profile  = useSelector((state: RootState) => state.user.connectedUser.profile);
   const user     = useSelector((state: RootState) => state.user.connectedUser.user);
@@ -260,11 +256,18 @@ const DashboardCandidate: React.FC = () => {
     : undefined;
 
   const checklist = [
-    { label: "Complete your profile",      done: !!(profile?.firstName && profile?.lastName) },
-    { label: "Add a target role",          done: !!profile?.targetRole                       },
-    { label: "Set experience level",       done: !!profile?.requiredExperienceLevel          },
-    { label: "Take your first skill test", done: quota > 0                                   },
-    { label: "Submit an application",      done: totalApplications > 0                       },
+    { label: t("candidate.checklist.complete_profile"), done: !!(profile?.firstName && profile?.lastName) },
+    { label: t("candidate.checklist.add_target_role"),  done: !!profile?.targetRole                       },
+    { label: t("candidate.checklist.set_experience"),   done: !!profile?.requiredExperienceLevel          },
+    { label: t("candidate.checklist.first_skill_test"), done: quota > 0                                   },
+    { label: t("candidate.checklist.first_application"),done: totalApplications > 0                       },
+  ];
+
+  const quickLinks: { icon: React.ElementType; label: string; sublabel: string; view: ActiveView; color: string; bg: string; border: string }[] = [
+    { icon: DashboardOutlined,  label: t("candidate.nav.dashboard"),    sublabel: t("candidate.nav.overview"),         view: null,           color: T,         bg: TBG,       border: TBRD      },
+    { icon: AssignmentOutlined, label: t("candidate.nav.applications"), sublabel: t("candidate.nav.your_job_applies"), view: "applications", color: "#7C3AED", bg: "#F5F3FF", border: "#DDD6FE" },
+    { icon: PsychologyOutlined, label: t("candidate.nav.skills"),       sublabel: t("candidate.nav.tech_and_soft"),    view: "skills",       color: "#2563EB", bg: "#EFF6FF", border: "#BFDBFE" },
+    { icon: SchoolOutlined,     label: t("candidate.nav.interviews"),   sublabel: t("candidate.nav.all_assessments"),  view: "interviews",   color: "#D97706", bg: "#FFFBEB", border: "#FDE68A" },
   ];
 
   const expand = (view: ActiveView) => setActiveView(view);
@@ -273,7 +276,7 @@ const DashboardCandidate: React.FC = () => {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", bgcolor: "rgb(249 250 251)" }}>
       <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1200 }}>
-        <Header breadcrumb="Dashboard" onOpenMobile={() => {}} />
+        <Header breadcrumb={t("candidate.nav.dashboard")} onOpenMobile={() => {}} />
       </Box>
 
       <Box sx={{ flex: 1, mt: "64px", overflowY: "auto", overflowX: "hidden", p: { xs: 1.5, sm: 2.5, md: 3 } }} className="custom-scrollbar">
@@ -285,9 +288,15 @@ const DashboardCandidate: React.FC = () => {
               displayName={displayName} email={user?.email} initial={initial} avatarUrl={avatarUrl}
               targetRole={profile?.targetRole} experienceLevel={profile?.requiredExperienceLevel}
               totalApplications={totalApplications} totalInterviews={totalInterviews}
+              labelApplications={t("candidate.profile.applications")}
+              labelInterviews={t("candidate.profile.interviews")}
             />
-            <QuotaCard quota={quota} />
-            <ProfileStrengthCard checklist={checklist} />
+            <QuotaCard quota={quota}
+              labelTitle={t("candidate.profile.monthly_tests")}
+              labelMaxed={t("candidate.profile.maxed")}
+              labelLeft={t("candidate.profile.left", { count: 5 - quota })}
+            />
+            <ProfileStrengthCard checklist={checklist} label={t("candidate.profile.profile_strength")} />
           </Box>
 
           {/* ── CENTER ── */}
@@ -296,16 +305,16 @@ const DashboardCandidate: React.FC = () => {
             {/* Action bar */}
             <Box sx={{ bgcolor: "#fff", borderRadius: "14px", border: "1px solid #E5E7EB", px: 2, py: 1.5, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
               <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr 1fr" }, gap: 1.25 }}>
-                <DisabledAction icon={CodeOutlined}            label="Skill Interview" />
-                <DisabledAction icon={RecordVoiceOverOutlined} label="HR Interview"    />
-                <QuotaBar quota={quota} />
+                <DisabledAction icon={CodeOutlined}            label={t("candidate.actions.skill_interview")} sublabel={t("candidate.actions.coming_soon")} />
+                <DisabledAction icon={RecordVoiceOverOutlined} label={t("candidate.actions.hr_interview")}    sublabel={t("candidate.actions.coming_soon")} />
+                <QuotaBar quota={quota} label={t("candidate.actions.monthly_quota")} />
               </Box>
             </Box>
 
             {/* Applications */}
             {activeView === "applications" ? (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                <HideBar onHide={hide} />
+                <HideBar onHide={hide} label={t("candidate.actions.hide")} />
                 <CandidateApplications />
               </Box>
             ) : (
@@ -315,30 +324,32 @@ const DashboardCandidate: React.FC = () => {
             {/* Skills */}
             {activeView === "skills" ? (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                <HideBar onHide={hide} />
+                <HideBar onHide={hide} label={t("candidate.actions.hide")} />
                 <CandidateSkills />
               </Box>
             ) : activeView === null && (
               <CollapsedRow
                 icon={<PsychologyOutlined sx={{ fontSize: 16, color: "#2563EB" }} />}
                 iconBg="#EFF6FF" iconBorder="#BFDBFE"
-                title="Skills & Expertise" subtitle="Your technical and soft skills"
+                title={t("candidate.sections.skills_title")} subtitle={t("candidate.sections.skills_subtitle")}
                 color="#2563EB" onExpand={() => expand("skills")}
+                viewAllLabel={t("candidate.actions.view_all")}
               />
             )}
 
             {/* Interviews */}
             {activeView === "interviews" ? (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                <HideBar onHide={hide} />
+                <HideBar onHide={hide} label={t("candidate.actions.hide")} />
                 <InterviewsBlock />
               </Box>
             ) : activeView === null && (
               <CollapsedRow
                 icon={<SchoolOutlined sx={{ fontSize: 16, color: "#D97706" }} />}
                 iconBg="#FFFBEB" iconBorder="#FDE68A"
-                title="Interviews & Assessments" subtitle="Job interviews, technical & soft"
+                title={t("candidate.sections.interviews_title")} subtitle={t("candidate.sections.interviews_subtitle")}
                 color="#D97706" onExpand={() => expand("interviews")}
+                viewAllLabel={t("candidate.actions.view_all")}
               />
             )}
           </Box>
@@ -346,9 +357,9 @@ const DashboardCandidate: React.FC = () => {
           {/* ── RIGHT — Quick nav ── */}
           <Box sx={{ display: { xs: "none", lg: "flex" }, flexDirection: "column", gap: 2, position: "sticky", top: 16 }}>
             <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 2, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-              <Typography sx={{ fontSize: "0.72rem", fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.06em", mb: 1.25 }}>Navigation</Typography>
+              <Typography sx={{ fontSize: "0.72rem", fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.06em", mb: 1.25 }}>{t("candidate.nav.navigation")}</Typography>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
-                {QUICK_LINKS.map(link => (
+                {quickLinks.map(link => (
                   <QuickNavItem
                     key={link.label}
                     icon={link.icon} label={link.label} sublabel={link.sublabel}

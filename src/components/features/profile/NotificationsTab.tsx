@@ -21,6 +21,7 @@ import {
   selectArchivedCount,
   selectNonArchivedCount,
 } from '@/store/slices/notificationSlice';
+import { useTranslation } from 'react-i18next';
 
 const T    = "#0D9488";
 const TBG  = "#F0FDFA";
@@ -34,6 +35,8 @@ interface NotificationsTabProps {
 const NotificationsTab: React.FC<NotificationsTabProps> = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [activeTab, setActiveTab] = useState(0);
+  const { t } = useTranslation('dashboard');
+  const s = (k: string) => t(`candidate_settings.notifications.${k}`);
 
   const {
     notifications, unreadCount,
@@ -79,10 +82,10 @@ const NotificationsTab: React.FC<NotificationsTabProps> = () => {
   const isLoading            = activeTab === 1 && archivedLoading;
 
   const statItems = [
-    { label: "Total",     value: totalNotifications,    color: T },
-    { label: "Unread",    value: unreadCount,           color: "#7C3AED" },
-    { label: "This Week", value: thisWeekNotifications, color: "#0891B2" },
-    { label: "Important", value: importantNotifications,color: "#D97706" },
+    { label: s('stat_total'),     value: totalNotifications,    color: T },
+    { label: s('stat_unread'),    value: unreadCount,           color: "#7C3AED" },
+    { label: s('stat_this_week'), value: thisWeekNotifications, color: "#0891B2" },
+    { label: s('stat_important'), value: importantNotifications,color: "#D97706" },
   ];
 
   return (
@@ -91,13 +94,13 @@ const NotificationsTab: React.FC<NotificationsTabProps> = () => {
         {/* Header */}
         <Box sx={{ px: 2.5, py: 2, borderBottom: "1px solid #F1F5F9", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
           <Box>
-            <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", color: NAVY }}>Notification History</Typography>
-            <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8", mt: 0.25 }}>View and manage all your notifications</Typography>
+            <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", color: NAVY }}>{s('title')}</Typography>
+            <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8", mt: 0.25 }}>{s('subtitle')}</Typography>
           </Box>
           <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
             <Chip
               icon={isConnected ? <WifiIcon sx={{ fontSize: "14px !important" }} /> : <WifiOffIcon sx={{ fontSize: "14px !important" }} />}
-              label={isConnected ? "Connected" : "Disconnected"}
+              label={isConnected ? s('connected') : s('disconnected')}
               size="small"
               color={isConnected ? "success" : "error"}
               sx={{ fontWeight: 600, fontSize: "0.72rem" }}
@@ -107,12 +110,12 @@ const NotificationsTab: React.FC<NotificationsTabProps> = () => {
                 {unreadCount > 0 && (
                   <Button size="small" startIcon={<MarkEmailReadIcon sx={{ fontSize: "14px !important" }} />} onClick={markAllAsRead}
                     sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.75rem", color: T, bgcolor: TBG, border: `1px solid ${TBRD}`, borderRadius: "8px", px: 1.5, "&:hover": { bgcolor: "#CCFBF1" } }}>
-                    Mark all read
+                    {s('mark_all_read')}
                   </Button>
                 )}
                 <Button size="small" startIcon={<ArchiveIcon sx={{ fontSize: "14px !important" }} />} onClick={archiveAll}
                   sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.75rem", color: "#6B7280", bgcolor: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "8px", px: 1.5, "&:hover": { bgcolor: "#F3F4F6" } }}>
-                  Archive all
+                  {s('archive_all')}
                 </Button>
               </>
             )}
@@ -142,8 +145,8 @@ const NotificationsTab: React.FC<NotificationsTabProps> = () => {
                 "& .MuiTabs-indicator": { backgroundColor: T, height: 2 },
               }}
             >
-              <Tab label={`Active (${nonArchivedCount || notifications.length})`} />
-              <Tab label={`Archived (${archivedCount || archivedNotifications.length})`} />
+              <Tab label={t('candidate_settings.notifications.tab_active', { count: nonArchivedCount || notifications.length })} />
+              <Tab label={t('candidate_settings.notifications.tab_archived', { count: archivedCount || archivedNotifications.length })} />
             </Tabs>
           </Box>
 
@@ -159,12 +162,12 @@ const NotificationsTab: React.FC<NotificationsTabProps> = () => {
                   <InfoIcon sx={{ fontSize: 28, color: "#CBD5E1" }} />
                 </Box>
                 <Typography sx={{ fontWeight: 600, fontSize: "0.9rem", color: NAVY, mb: 0.5 }}>
-                  {activeTab === 0 ? "No notifications yet" : "No archived notifications"}
+                  {activeTab === 0 ? s('empty_title') : s('empty_archived_title')}
                 </Typography>
                 <Typography sx={{ fontSize: "0.78rem", color: "#94A3B8" }}>
                   {activeTab === 0
-                    ? (isConnected ? "You're all caught up!" : "Connecting to notification service...")
-                    : "You haven't archived any notifications yet."}
+                    ? (isConnected ? s('empty_subtitle') : s('empty_connecting'))
+                    : s('empty_archived_subtitle')}
                 </Typography>
               </Box>
             ) : (
@@ -198,7 +201,7 @@ const NotificationsTab: React.FC<NotificationsTabProps> = () => {
                       <Typography sx={{ fontSize: "0.78rem", color: "#6B7280", mb: 0.5 }}>{notification.message}</Typography>
                       {!notification.isRead && (
                         <Typography sx={{ fontSize: "0.68rem", fontWeight: 700, color: T, bgcolor: TBG, border: `1px solid ${TBRD}`, px: 1, py: 0.25, borderRadius: "6px", display: "inline-block" }}>
-                          NEW
+                          {s('badge_new')}
                         </Typography>
                       )}
                     </Box>
