@@ -62,8 +62,10 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
           </IconButton>
         )}
 
-        {/* Logo */}
-        <Image src="/logo.svg" alt="TalentAI" width={120} height={32} style={{ objectFit: "contain" }} />
+        {/* Logo — candidates only */}
+        {isCandidate && (
+          <Image src="/logo.svg" alt="TalentAI" width={120} height={32} style={{ objectFit: "contain" }} />
+        )}
       </Box>
 
       {/* ── Right: search + actions + user ── */}

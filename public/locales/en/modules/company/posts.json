@@ -195,13 +195,14 @@
       "btn_generating": "Generating…"
     },
     "interview_lang_modal": {
-      "title": "Interview languages",
-      "subtitle": "Candidates will be able to conduct their interview in the selected languages",
-      "hint_one": "1 language selected — add more if needed",
-      "hint_other": "{{count}} languages selected",
+      "title": "Interview Language(s)",
+      "subtitle": "Select the language(s) candidates can use for their AI interview. If you pick more than one, each candidate will choose their preferred language when they start.",
+      "select_label": "Available languages",
+      "hint_one": "Only 1 language — all candidates will interview in this language. Add another to give them a choice.",
+      "hint_other": "{{count}} languages selected — each candidate will pick their preferred one when they start.",
       "btn_cancel": "Cancel",
-      "btn_save": "Save as Draft",
-      "btn_update": "Update Languages"
+      "btn_save": "Confirm",
+      "btn_update": "Save Changes"
     },
     "preview": {
       "loading": "Generating job post… please wait",

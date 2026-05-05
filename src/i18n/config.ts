@@ -3,28 +3,28 @@ import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
 // ── EN ──────────────────────────────────────────────
-import enCommon     from '../../public/locales/en/common.json';
-import enAuth       from '../../public/locales/en/auth.json';
-import enDashboard  from '../../public/locales/en/dashboard.json';
-import enPosts      from '../../public/locales/en/posts.json';
-import enCampaign   from '../../public/locales/en/campaign.json';
-import enInterview  from '../../public/locales/en/interview.json';
-import enHome       from '../../public/locales/en/home.json';
-import enEmployees  from '../../public/locales/en/employees.json';
-import enDepartments from '../../public/locales/en/departments.json';
-import enSubscription from '../../public/locales/en/subscription.json';
+import enCommon     from '../../public/locales/en/shared/common.json';
+import enAuth       from '../../public/locales/en/shared/auth.json';
+import enDashboard  from '../../public/locales/en/shared/dashboard.json';
+import enPosts      from '../../public/locales/en/modules/company/posts.json';
+import enCampaign   from '../../public/locales/en/modules/campaigns/campaign.json';
+import enInterview  from '../../public/locales/en/shared/interview.json';
+import enHome       from '../../public/locales/en/shared/home.json';
+import enEmployees  from '../../public/locales/en/modules/employees/employees.json';
+import enDepartments from '../../public/locales/en/modules/departments/departments.json';
+import enSubscription from '../../public/locales/en/modules/company/subscription.json';
 
 // ── FR ──────────────────────────────────────────────
-import frCommon     from '../../public/locales/fr/common.json';
-import frAuth       from '../../public/locales/fr/auth.json';
-import frDashboard  from '../../public/locales/fr/dashboard.json';
-import frPosts      from '../../public/locales/fr/posts.json';
-import frCampaign   from '../../public/locales/fr/campaign.json';
-import frInterview  from '../../public/locales/fr/interview.json';
-import frHome       from '../../public/locales/fr/home.json';
-import frEmployees  from '../../public/locales/fr/employees.json';
-import frDepartments from '../../public/locales/fr/departments.json';
-import frSubscription from '../../public/locales/fr/subscription.json';
+import frCommon     from '../../public/locales/fr/shared/common.json';
+import frAuth       from '../../public/locales/fr/shared/auth.json';
+import frDashboard  from '../../public/locales/fr/shared/dashboard.json';
+import frPosts      from '../../public/locales/fr/modules/company/posts.json';
+import frCampaign   from '../../public/locales/fr/modules/campaigns/campaign.json';
+import frInterview  from '../../public/locales/fr/shared/interview.json';
+import frHome       from '../../public/locales/fr/shared/home.json';
+import frEmployees  from '../../public/locales/fr/modules/employees/employees.json';
+import frDepartments from '../../public/locales/fr/modules/departments/departments.json';
+import frSubscription from '../../public/locales/fr/modules/company/subscription.json';
 
 export const SUPPORTED_LANGUAGES = ['en', 'fr'] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
@@ -38,9 +38,11 @@ export type Namespace = (typeof NAMESPACES)[number];
 export const RTL_LANGUAGES: SupportedLanguage[] = [];
 
 /**
- * Per-locale JSON under `public/locales/{lng}/` merges into `dashboard.pages`.
- * e.g. `employees.json` → `pages.employees`, `departments.json` → `pages.departments`,
- * `campaign.json` → `pages.campaigns`, `subscription.json` → `pages.subscription`.
+ * Per-locale JSON under `public/locales/{lng}/modules/` merges into `dashboard.pages`.
+ * e.g. `modules/employees/employees.json` → `pages.employees`,
+ * `modules/departments/departments.json` → `pages.departments`,
+ * `modules/campaigns/campaign.json` → `pages.campaigns`,
+ * `modules/company/subscription.json` → `pages.subscription`.
  */
 function mergeDashboardPageBundles<D extends { pages: Record<string, unknown> }>(
   dashboard: D,
