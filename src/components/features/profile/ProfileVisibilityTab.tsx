@@ -11,6 +11,7 @@ import {
   Info as InfoIcon,
 } from '@mui/icons-material';
 import { useToast } from '@/hooks/useToast';
+import { useTranslation } from 'react-i18next';
 
 const T    = "#0D9488";
 const TBG  = "#F0FDFA";
@@ -28,6 +29,9 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({
   userId, isPublicProfile, onToggleVisibility, hasMembership = false,
 }) => {
   const { showToast } = useToast();
+  const { t } = useTranslation('dashboard');
+  const s = (k: string) => t(`candidate_settings.visibility.${k}`);
+
   const [isPublic, setIsPublic] = useState(isPublicProfile);
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState<string | null>(null);
@@ -50,9 +54,7 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({
       const newVisibility = !isPublic;
       await onToggleVisibility(newVisibility);
       setIsPublic(newVisibility);
-      const msg = newVisibility
-        ? 'Your profile is now public and can be viewed by anyone with the link'
-        : 'Your profile is now private and hidden from public view';
+      const msg = newVisibility ? s('success_public') : s('success_private');
       setSuccess(msg);
       showToast({ message: msg, severity: 'success' });
     } catch (err: any) {
@@ -67,7 +69,7 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({
   const handleCopyLink = useCallback(() => {
     navigator.clipboard.writeText(publicProfileUrl);
     setCopied(true);
-    showToast({ message: 'Profile link copied to clipboard!', severity: 'success' });
+    showToast({ message: s('copied_toast'), severity: 'success' });
     setTimeout(() => setCopied(false), 2000);
   }, [publicProfileUrl, showToast]);
 
@@ -75,19 +77,26 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({
     window.open(publicProfileUrl, '_blank');
   }, [publicProfileUrl]);
 
+  const privacyItems = [
+    s('privacy_item_1'),
+    s('privacy_item_2'),
+    s('privacy_item_3'),
+    s('privacy_item_4'),
+  ];
+
   return (
     <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
       {/* Header */}
       <Box sx={{ px: 2.5, py: 2, borderBottom: "1px solid #F1F5F9" }}>
-        <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", color: NAVY }}>Public Profile Visibility</Typography>
-        <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8", mt: 0.25 }}>Control who can view your profile information</Typography>
+        <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", color: NAVY }}>{s('title')}</Typography>
+        <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8", mt: 0.25 }}>{s('subtitle')}</Typography>
       </Box>
 
       <Box sx={{ p: 2.5 }}>
         {hasMembership && (
           <Alert severity="info" sx={{ mb: 2.5, borderRadius: "10px", fontSize: "0.8rem", bgcolor: TBG, border: `1px solid ${TBRD}`, "& .MuiAlert-icon": { color: T } }}>
-            <Typography sx={{ fontWeight: 600, fontSize: "0.82rem", color: NAVY }}>Visibility managed by your company membership.</Typography>
-            <Typography sx={{ fontSize: "0.78rem", color: "#6B7280", mt: 0.25 }}>As a company member, your profile is automatically set to private.</Typography>
+            <Typography sx={{ fontWeight: 600, fontSize: "0.82rem", color: NAVY }}>{s('membership_title')}</Typography>
+            <Typography sx={{ fontSize: "0.78rem", color: "#6B7280", mt: 0.25 }}>{s('membership_subtitle')}</Typography>
           </Alert>
         )}
 
@@ -117,17 +126,15 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({
           </Box>
           <Box sx={{ flex: 1 }}>
             <Typography sx={{ fontWeight: 700, fontSize: "0.88rem", color: NAVY }}>
-              {isPublic ? "Profile is Public" : "Profile is Private"}
+              {isPublic ? s('status_public') : s('status_private')}
             </Typography>
             <Typography sx={{ fontSize: "0.75rem", color: "#6B7280", mt: 0.25 }}>
-              {isPublic
-                ? "Anyone with the link can view your profile"
-                : "Your profile is hidden from public view"}
+              {isPublic ? s('desc_public') : s('desc_private')}
             </Typography>
             {loading && (
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.75 }}>
                 <CircularProgress size={12} sx={{ color: T }} />
-                <Typography sx={{ fontSize: "0.72rem", color: "#6B7280" }}>Updating...</Typography>
+                <Typography sx={{ fontSize: "0.72rem", color: "#6B7280" }}>{s('updating')}</Typography>
               </Box>
             )}
           </Box>
@@ -147,8 +154,8 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({
         {/* URL section */}
         <Box sx={{ mb: 2.5 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 1.25 }}>
-            <Typography sx={{ fontWeight: 700, fontSize: "0.88rem", color: NAVY }}>Public Profile URL</Typography>
-            <Tooltip title="Share this link to allow others to view your public profile">
+            <Typography sx={{ fontWeight: 700, fontSize: "0.88rem", color: NAVY }}>{s('url_title')}</Typography>
+            <Tooltip title={s('url_tooltip')}>
               <IconButton size="small">
                 <InfoIcon sx={{ fontSize: 15, color: "#CBD5E1" }} />
               </IconButton>
@@ -165,12 +172,12 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({
             <Button size="small" variant="outlined" startIcon={<ContentCopyIcon sx={{ fontSize: "14px !important" }} />}
               onClick={handleCopyLink} disabled={!isPublic}
               sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.75rem", borderRadius: "8px", px: 1.5, borderColor: "#E5E7EB", color: "#6B7280", "&:hover": { borderColor: T, bgcolor: TBG, color: T }, "&.Mui-disabled": { borderColor: "#F1F5F9", color: "#CBD5E1" } }}>
-              {copied ? "Copied!" : "Copy Link"}
+              {copied ? s('copied') : s('copy_link')}
             </Button>
             <Button size="small" variant="contained" startIcon={<OpenInNewIcon sx={{ fontSize: "14px !important" }} />}
               onClick={handleViewProfile} disabled={!isPublic}
               sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.75rem", borderRadius: "8px", px: 1.5, bgcolor: T, color: "#fff", "&:hover": { bgcolor: "#0F766E" }, "&.Mui-disabled": { bgcolor: "#F1F5F9", color: "#CBD5E1" } }}>
-              View Profile
+              {s('view_profile')}
             </Button>
           </Box>
         </Box>
@@ -179,24 +186,19 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({
 
         {/* Privacy info */}
         <Box sx={{ p: 2, borderRadius: "12px", bgcolor: "#FFFBEB", border: "1px solid #FEF3C7" }}>
-          <Typography sx={{ fontWeight: 700, fontSize: "0.82rem", color: "#92400E", mb: 0.75 }}>Privacy Information</Typography>
+          <Typography sx={{ fontWeight: 700, fontSize: "0.82rem", color: "#92400E", mb: 0.75 }}>{s('privacy_title')}</Typography>
           <Typography sx={{ fontSize: "0.78rem", color: "#78350F", mb: 1, lineHeight: 1.6 }}>
-            When your profile is public, these details will be visible to anyone with the link:
+            {s('privacy_intro')}
           </Typography>
           <Box component="ul" sx={{ m: 0, pl: 2.5, color: "#78350F" }}>
-            {[
-              "Profile picture and basic information (name, title, location)",
-              "Skills and experience level",
-              "Work preferences and education",
-              "Public contact information (if provided)",
-            ].map(item => (
+            {privacyItems.map(item => (
               <li key={item}>
                 <Typography sx={{ fontSize: "0.78rem", mb: 0.4 }}>{item}</Typography>
               </li>
             ))}
           </Box>
           <Typography sx={{ fontSize: "0.78rem", color: "#78350F", mt: 1, fontWeight: 600 }}>
-            Your email and sensitive information are never publicly visible.
+            {s('privacy_footer')}
           </Typography>
         </Box>
       </Box>
