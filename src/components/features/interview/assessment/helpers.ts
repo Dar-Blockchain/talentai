@@ -1,27 +1,27 @@
 export const CHART_COLORS = ['#10b981', '#6366f1', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6'];
 
 export const sectionStyle = {
-  border: '1px solid rgba(98, 111, 134, 0.18)',
-  backgroundColor: 'rgba(253, 253, 253, 1)',
-  borderRadius: '12px',
-  px: 2,
-  py: 1.5,
+  bgcolor: '#fff',
+  borderRadius: '16px',
+  border: '1px solid #E5E7EB',
+  p: 2.5,
+  boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
 };
 
 export const sectionTitleStyle = (accentColor: string = 'rgba(41, 210, 145, 0.83)') => ({
   position: 'relative' as const,
-  fontWeight: 600,
-  fontSize: '20px',
-  lineHeight: '35px',
-  color: 'rgba(23, 43, 77, 1)',
-  mb: 2,
+  fontWeight: 800,
+  fontSize: '0.95rem',
+  lineHeight: 1.3,
+  color: 'rgba(15, 23, 42, 1)',
+  mb: 1.75,
   '&::after': {
     content: '""',
     position: 'absolute',
     left: 0,
-    bottom: 0,
-    width: '38px',
-    height: '5px',
+    bottom: -8,
+    width: '32px',
+    height: '4px',
     backgroundColor: accentColor,
     borderRadius: '2px',
   },

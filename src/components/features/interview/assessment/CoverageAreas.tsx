@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography, Chip, LinearProgress } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import WorkIcon from '@mui/icons-material/Work';
 import { sectionStyle, sectionTitleStyle, formatAreaName, CHART_COLORS } from './helpers';
 
@@ -8,12 +9,14 @@ interface CoverageAreasProps {
 }
 
 const CoverageAreas: React.FC<CoverageAreasProps> = ({ coverageAreas }) => {
+  const { t } = useTranslation('dashboard');
+  const s = (k: string, opts?: any) => t(`candidate.assessment_detail.${k}`, opts) as string;
   const entries = Object.entries(coverageAreas);
   if (entries.length === 0) return null;
 
   return (
     <Box sx={sectionStyle}>
-      <Typography variant="h5" sx={sectionTitleStyle()}>Coverage Areas</Typography>
+      <Typography variant="h5" sx={sectionTitleStyle()}>{s('coverage_areas.title')}</Typography>
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
         {entries.map(([areaKey, areaData]: [string, any], index) => (
@@ -28,13 +31,13 @@ const CoverageAreas: React.FC<CoverageAreasProps> = ({ coverageAreas }) => {
                     {formatAreaName(areaKey)}
                   </Typography>
                   <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '11px' }}>
-                    {areaData.depth} | {areaData.questionsAsked || 0} questions
+                    {s('coverage_areas.meta', { depth: areaData.depth, count: areaData.questionsAsked || 0 })}
                   </Typography>
                 </Box>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Chip
-                  label={areaData.completed ? 'Completed' : 'In Progress'}
+                  label={areaData.completed ? s('coverage_areas.completed') : s('coverage_areas.in_progress')}
                   size="small"
                   sx={{
                     backgroundColor: areaData.completed ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
