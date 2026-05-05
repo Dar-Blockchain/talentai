@@ -27,7 +27,6 @@ const ROLE_ROUTES: { prefix: string; roles: string[] }[] = [
   { prefix: "/company",             roles: ["Company", "Employee"] },
   { prefix: "/profile/company",     roles: ["Company"] },
   { prefix: "/dashboard/candidate", roles: ["Candidate"] },
-  { prefix: "/dashboard/member",    roles: ["Candidate"] },
   { prefix: "/profile/candidate",   roles: ["Candidate"] },
   { prefix: "/interview/report",    roles: ["Company", "Admin"] },
   { prefix: "/chat",                roles: ["Candidate", "Company"] },

@@ -191,5 +191,16 @@
     "speaking": "🎤 En train de parler",
     "ai_thinking": "🧠 IA réfléchit",
     "end_btn": "Terminer"
+  },
+  "lang_modal": {
+    "title_multi": "Choisissez la langue de l'entretien",
+    "title_single": "Langue de l'entretien",
+    "desc_multi": "Cet entretien est disponible en plusieurs langues. Sélectionnez celle avec laquelle vous êtes le plus à l'aise.",
+    "desc_single": "Cet entretien se déroulera dans la langue indiquée ci-dessous.",
+    "interviewing_in": "Vous serez interrogé(e) en {{language}}",
+    "single_lang_note": "Cet entretien est configuré dans cette langue uniquement.",
+    "btn_back": "Retour",
+    "btn_start_in": "Commencer en {{language}}",
+    "btn_start": "Démarrer l'entretien"
   }
 }
