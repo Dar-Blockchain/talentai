@@ -139,6 +139,31 @@
       "skills_subtitle": "Vos compétences techniques et comportementales",
       "interviews_title": "Entretiens & Évaluations",
       "interviews_subtitle": "Entretiens, technique & soft skills"
+    },
+    "my_applications": {
+      "title": "Mes candidatures",
+      "view_all": "Voir tout →",
+      "search_placeholder": "Rechercher emplois ou entreprises…",
+      "status": {
+        "applied": "Candidaté",
+        "pending": "En attente",
+        "shortlisted": "Présélectionné",
+        "accepted": "Accepté",
+        "rejected": "Refusé",
+        "withdrawn": "Retiré",
+        "interview_scheduled": "Entretien planifié",
+        "interview_completed": "Entretien terminé",
+        "viewed": "Vu",
+        "visited": "Visité",
+        "all": "Tous"
+      },
+      "match": "{{score}}% de correspondance",
+      "applied_date": "Candidaté le {{date}}",
+      "empty_title": "Aucune candidature",
+      "empty_subtitle": "Postulez à des offres pour les suivre ici",
+      "show_less": "Voir moins",
+      "show_more": "Voir {{count}} de plus",
+      "page_of": "Page {{current}} sur {{total}}"
     }
   },
   "overview": {

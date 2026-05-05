@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Box, Typography, Avatar, Button, InputBase, Skeleton, Collapse } from "@mui/material";
 import ExpandMoreOutlined from "@mui/icons-material/ExpandMoreOutlined";
 import ExpandLessOutlined from "@mui/icons-material/ExpandLessOutlined";
@@ -26,16 +27,17 @@ const NAVY = "#0F172A";
 
 const PAGE_SIZE = 9;
 
-const STATUS: Record<string, { color: string; bg: string; border: string; label: string }> = {
-  applied:             { color: "#2563EB", bg: "#EFF6FF", border: "#BFDBFE", label: "Applied"             },
-  pending:             { color: "#D97706", bg: "#FFFBEB", border: "#FDE68A", label: "Pending"             },
-  shortlisted:         { color: "#16A34A", bg: "#F0FDF4", border: "#BBF7D0", label: "Shortlisted"         },
-  accepted:            { color: T,         bg: TBG,       border: TBD,       label: "Accepted"            },
-  rejected:            { color: "#DC2626", bg: "#FEF2F2", border: "#FECACA", label: "Rejected"            },
-  withdrawn:           { color: "#6B7280", bg: "#F3F4F6", border: "#E5E7EB", label: "Withdrawn"           },
-  interview_scheduled: { color: "#7C3AED", bg: "#F5F3FF", border: "#DDD6FE", label: "Interview Scheduled" },
-  interview_completed: { color: "#059669", bg: "#ECFDF5", border: "#A7F3D0", label: "Interview Completed" },
-  viewed:              { color: "#475569", bg: "#F8FAFC", border: "#CBD5E1", label: "Viewed"              },
+const STATUS_COLORS: Record<string, { color: string; bg: string; border: string }> = {
+  applied:             { color: "#2563EB", bg: "#EFF6FF", border: "#BFDBFE" },
+  pending:             { color: "#D97706", bg: "#FFFBEB", border: "#FDE68A" },
+  shortlisted:         { color: "#16A34A", bg: "#F0FDF4", border: "#BBF7D0" },
+  accepted:            { color: T,         bg: TBG,       border: TBD       },
+  rejected:            { color: "#DC2626", bg: "#FEF2F2", border: "#FECACA" },
+  withdrawn:           { color: "#6B7280", bg: "#F3F4F6", border: "#E5E7EB" },
+  interview_scheduled: { color: "#7C3AED", bg: "#F5F3FF", border: "#DDD6FE" },
+  interview_completed: { color: "#059669", bg: "#ECFDF5", border: "#A7F3D0" },
+  viewed:              { color: "#475569", bg: "#F8FAFC", border: "#CBD5E1" },
+  visited:             { color: "#475569", bg: "#F8FAFC", border: "#CBD5E1" },
 };
 
 const fmtDate = (iso?: string) =>
@@ -66,7 +68,7 @@ const CardSkeleton = () => (
 );
 
 // ── Application card ─────────────────────────────────────────
-const AppCard: React.FC<{ app: any; onClick: () => void; last: boolean }> = ({ app, onClick, last }) => {
+const AppCard: React.FC<{ app: any; onClick: () => void; last: boolean; s: (k: string, opts?: any) => string }> = ({ app, onClick, last, s }) => {
   const post    = app.post    || {};
   const company = app.company || {};
   const jd      = post.jobDetails || {};
@@ -78,7 +80,10 @@ const AppCard: React.FC<{ app: any; onClick: () => void; last: boolean }> = ({ a
   const matchScore  = app.matchScore != null ? Math.round(app.matchScore) : null;
   const appliedDate = fmtDate(app.appliedAt || app.createdAt);
   const rawStatus   = (app.status || "applied").toLowerCase();
-  const sc          = STATUS[rawStatus] ?? STATUS.applied;
+  const sc          = STATUS_COLORS[rawStatus] ?? STATUS_COLORS.applied;
+  const statusKey = `candidate.my_applications.status.${rawStatus}`;
+  const statusCandidate = s(`status.${rawStatus}`);
+  const statusLabel = statusCandidate === statusKey ? rawStatus : statusCandidate;
   const logoUrl     = company.logo
     ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Companies/${company.logo}`
     : undefined;
@@ -116,7 +121,7 @@ const AppCard: React.FC<{ app: any; onClick: () => void; last: boolean }> = ({ a
           {/* Status badge */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.4, px: 1, py: 0.3, borderRadius: "20px", bgcolor: sc.bg, border: `1px solid ${sc.border}`, flexShrink: 0 }}>
             <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: sc.color }} />
-            <Typography sx={{ fontSize: "0.6rem", fontWeight: 700, color: sc.color, whiteSpace: "nowrap" }}>{sc.label}</Typography>
+            <Typography sx={{ fontSize: "0.6rem", fontWeight: 700, color: sc.color, whiteSpace: "nowrap" }}>{statusLabel}</Typography>
           </Box>
         </Box>
 
@@ -147,13 +152,13 @@ const AppCard: React.FC<{ app: any; onClick: () => void; last: boolean }> = ({ a
           {matchScore !== null && (
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.3 }}>
               <TrendingUpOutlined sx={{ fontSize: 11, color: getScoreColor(matchScore) }} />
-              <Typography sx={{ fontSize: "0.72rem", fontWeight: 600, color: getScoreColor(matchScore) }}>{matchScore}% match</Typography>
+              <Typography sx={{ fontSize: "0.72rem", fontWeight: 600, color: getScoreColor(matchScore) }}>{s("match", { score: matchScore })}</Typography>
             </Box>
           )}
           {appliedDate && (
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.3 }}>
               <AccessTimeOutlined sx={{ fontSize: 11, color: "#94A3B8" }} />
-              <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8" }}>Applied {appliedDate}</Typography>
+              <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8" }}>{s("applied_date", { date: appliedDate })}</Typography>
             </Box>
           )}
         </Box>
@@ -169,6 +174,14 @@ interface CandidateApplicationsProps {
 }
 
 const CandidateApplications: React.FC<CandidateApplicationsProps> = ({ previewCount, onViewAll }) => {
+  const { t } = useTranslation("dashboard");
+  const s = (k: string, opts?: any): string => t(`candidate.my_applications.${k}`, opts) as string;
+  const statusLabel = (st: string) => {
+    const key = `candidate.my_applications.status.${st}`;
+    const res = t(key) as string;
+    return res === key ? st : res;
+  };
+
   const dispatch     = useDispatch<AppDispatch>();
   const router       = useRouter();
   const applications = useSelector(selectCandidateApplications);
@@ -191,8 +204,8 @@ const CandidateApplications: React.FC<CandidateApplicationsProps> = ({ previewCo
     dispatch(fetchCandidateApplications({ page: p, limit: fetchLimit }));
 
   const statusCounts = applications.reduce<Record<string, number>>((acc, app) => {
-    const s = (app.status || "applied").toLowerCase();
-    acc[s] = (acc[s] || 0) + 1;
+    const st = (app.status || "applied").toLowerCase();
+    acc[st] = (acc[st] || 0) + 1;
     return acc;
   }, {});
 
@@ -208,9 +221,9 @@ const CandidateApplications: React.FC<CandidateApplicationsProps> = ({ previewCo
   const displayed = previewCount != null ? filtered.slice(0, previewCount) : filtered;
 
   const filterOptions = [
-    { key: "all", label: "All", count: totalCount, color: T },
-    ...Object.keys(statusCounts).map(s => ({
-      key: s, label: STATUS[s]?.label || s, count: statusCounts[s], color: STATUS[s]?.color || T,
+    { key: "all", label: s("status.all"), count: totalCount, color: T },
+    ...Object.keys(statusCounts).map(key => ({
+      key, label: statusLabel(key), count: statusCounts[key], color: STATUS_COLORS[key]?.color || T,
     })),
   ];
 
@@ -222,7 +235,7 @@ const CandidateApplications: React.FC<CandidateApplicationsProps> = ({ previewCo
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <WorkOutlineOutlined sx={{ fontSize: 18, color: T }} />
-            <Typography sx={{ fontSize: "0.95rem", fontWeight: 700, color: NAVY }}>My Applications</Typography>
+            <Typography sx={{ fontSize: "0.95rem", fontWeight: 700, color: NAVY }}>{s("title")}</Typography>
             <Box sx={{ px: 1, py: 0.15, borderRadius: "20px", bgcolor: TBG, border: `1px solid ${TBD}` }}>
               <Typography sx={{ fontSize: "0.7rem", fontWeight: 700, color: T }}>{totalCount}</Typography>
             </Box>
@@ -233,7 +246,7 @@ const CandidateApplications: React.FC<CandidateApplicationsProps> = ({ previewCo
               onClick={onViewAll}
               sx={{ fontSize: "0.78rem", fontWeight: 600, color: T, cursor: "pointer", "&:hover": { textDecoration: "underline" } }}
             >
-              View all →
+              {s("view_all")}
             </Typography>
           )}
         </Box>
@@ -248,7 +261,7 @@ const CandidateApplications: React.FC<CandidateApplicationsProps> = ({ previewCo
               "&:focus-within": { borderColor: T, bgcolor: "#fff" }, transition: "all 0.15s",
             }}>
               <SearchOutlined sx={{ fontSize: 14, color: "#94A3B8" }} />
-              <InputBase placeholder="Search jobs or companies…" value={search}
+              <InputBase placeholder={s("search_placeholder")} value={search}
                 onChange={e => setSearch(e.target.value)}
                 sx={{ fontSize: "0.75rem", flex: 1, "& input::placeholder": { color: "#94A3B8" } }} />
             </Box>
@@ -284,8 +297,8 @@ const CandidateApplications: React.FC<CandidateApplicationsProps> = ({ previewCo
           <Box sx={{ width: 48, height: 48, borderRadius: "50%", bgcolor: "#F8FAFC", border: "1px solid #E2E8F0", display: "flex", alignItems: "center", justifyContent: "center", mx: "auto", mb: 1.5 }}>
             <WorkOutlineOutlined sx={{ fontSize: 22, color: "#94A3B8" }} />
           </Box>
-          <Typography sx={{ fontWeight: 600, color: NAVY, fontSize: "0.85rem", mb: 0.4 }}>No applications yet</Typography>
-          <Typography sx={{ color: "#94A3B8", fontSize: "0.75rem" }}>Apply to jobs to track them here</Typography>
+          <Typography sx={{ fontWeight: 600, color: NAVY, fontSize: "0.85rem", mb: 0.4 }}>{s("empty_title")}</Typography>
+          <Typography sx={{ color: "#94A3B8", fontSize: "0.75rem" }}>{s("empty_subtitle")}</Typography>
         </Box>
       ) : (
         <Box>
@@ -296,6 +309,7 @@ const CandidateApplications: React.FC<CandidateApplicationsProps> = ({ previewCo
               app={app}
               last={!expanded && i === Math.min(COLLAPSE_SIZE, displayed.length) - 1}
               onClick={() => router.push(`/dashboard/candidate/applications/${app._id}`)}
+              s={s}
             />
           ))}
 
@@ -308,6 +322,7 @@ const CandidateApplications: React.FC<CandidateApplicationsProps> = ({ previewCo
                   app={app}
                   last={i === displayed.length - COLLAPSE_SIZE - 1}
                   onClick={() => router.push(`/dashboard/candidate/applications/${app._id}`)}
+                  s={s}
                 />
               ))}
             </Collapse>
@@ -328,7 +343,7 @@ const CandidateApplications: React.FC<CandidateApplicationsProps> = ({ previewCo
                 ? <ExpandLessOutlined sx={{ fontSize: 16, color: T }} />
                 : <ExpandMoreOutlined sx={{ fontSize: 16, color: T }} />}
               <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: T }}>
-                {expanded ? "Show less" : `Show ${displayed.length - COLLAPSE_SIZE} more`}
+                {expanded ? s("show_less") : s("show_more", { count: displayed.length - COLLAPSE_SIZE })}
               </Typography>
             </Box>
           )}
@@ -339,7 +354,7 @@ const CandidateApplications: React.FC<CandidateApplicationsProps> = ({ previewCo
       {previewCount == null && totalPages > 1 && (
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 2.5, py: 1.5, borderTop: "1px solid #F1F5F9" }}>
           <Typography sx={{ fontSize: "0.7rem", color: "#94A3B8" }}>
-            Page <b>{currentPage}</b> of <b>{totalPages}</b>
+            {s("page_of", { current: currentPage, total: totalPages })}
           </Typography>
           <Box sx={{ display: "flex", gap: 0.5 }}>
             <Button size="small" disabled={currentPage === 1} onClick={() => goToPage(currentPage - 1)}

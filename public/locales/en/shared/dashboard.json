@@ -139,6 +139,31 @@
       "skills_subtitle": "Your technical and soft skills",
       "interviews_title": "Interviews & Assessments",
       "interviews_subtitle": "Job interviews, technical & soft"
+    },
+    "my_applications": {
+      "title": "My Applications",
+      "view_all": "View all →",
+      "search_placeholder": "Search jobs or companies…",
+      "status": {
+        "applied": "Applied",
+        "pending": "Pending",
+        "shortlisted": "Shortlisted",
+        "accepted": "Accepted",
+        "rejected": "Rejected",
+        "withdrawn": "Withdrawn",
+        "interview_scheduled": "Interview Scheduled",
+        "interview_completed": "Interview Completed",
+        "viewed": "Viewed",
+        "visited": "Visited",
+        "all": "All"
+      },
+      "match": "{{score}}% match",
+      "applied_date": "Applied {{date}}",
+      "empty_title": "No applications yet",
+      "empty_subtitle": "Apply to jobs to track them here",
+      "show_less": "Show less",
+      "show_more": "Show {{count}} more",
+      "page_of": "Page {{current}} of {{total}}"
     }
   },
   "overview": {
