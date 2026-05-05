@@ -3,7 +3,6 @@ import { Box, Typography } from "@mui/material";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import CodeOutlined from "@mui/icons-material/CodeOutlined";
-import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
 import BoltOutlined from "@mui/icons-material/BoltOutlined";
 import TechnicalSkills from "./TechnicalSkills";
 import SoftSkills from "./SoftSkills";
