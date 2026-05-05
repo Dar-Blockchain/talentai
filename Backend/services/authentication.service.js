@@ -3,7 +3,6 @@ const Profile = require("../models/Profile.model");
 const { sendOTP } = require("../utils/email-service");
 const { generateOTP } = require("../utils/one-time-password");
 const { generateToken } = require("../utils/generate-token");
-const { getGmailByToken } = require("../utils/google-auth.service");
 const { extractUsernameFromEmail, formatLocation } = require("../helpers/auth-validation.helpers");
 
 const assignFreePlanToProfile = async (profileId) => {
