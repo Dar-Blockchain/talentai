@@ -3,7 +3,7 @@ import { Box, Typography, CircularProgress, LinearProgress, Avatar, Button, Tool
 import dynamic from "next/dynamic";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { formatDistanceToNowStrict } from "date-fns";
+import dayjs from "@/lib/dayjs";
 import AssignmentOutlined from "@mui/icons-material/AssignmentOutlined";
 import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
 import HourglassEmptyOutlined from "@mui/icons-material/HourglassEmptyOutlined";
@@ -61,8 +61,9 @@ const JobRow: React.FC<{
   const company     = assessment.company as any;
   const companyName = company?.companyName || company?.username || assessment.post?.user?.companyName || "";
   const logoUrl     = company?.logo ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Companies/${company.logo}` : undefined;
-  const timeAgo     = (assessment.updatedAt || assessment.createdAt)
-    ? formatDistanceToNowStrict(new Date(assessment.updatedAt || assessment.createdAt), { addSuffix: true }) : "";
+  const timeAgo = (assessment.updatedAt || assessment.createdAt)
+  ? dayjs(assessment.updatedAt || assessment.createdAt).fromNow()
+  : "";
   const statusColor = completed ? "#059669" : "#D97706";
   const accentBg    = completed ? "#ECFDF5" : "#FFFBEB";
   const accentBd    = completed ? "#A7F3D0" : "#FDE68A";
@@ -138,8 +139,11 @@ const SkillRow: React.FC<{ assessment: SkillInterviewAssessment; accentColor: st
     const router  = useRouter();
     const score   = getSkillScore(assessment);
     const lvl     = getLevelLabel(score);
-    const timeAgo = (assessment.updatedAt || assessment.createdAt)
-      ? formatDistanceToNowStrict(new Date(assessment.updatedAt || assessment.createdAt), { addSuffix: true }) : "";
+    const date = assessment.updatedAt || assessment.createdAt;
+
+    const timeAgo = date
+      ? dayjs(date).fromNow()
+      : "";
 
     return (
       <Box sx={{ bgcolor: "#fff", border: "1px solid #E2E8F0", borderRadius: "14px", p: 1.75, display: "flex", flexDirection: "column", gap: 1.25, transition: "all 0.18s", "&:hover": { borderColor: accentColor, boxShadow: `0 4px 16px ${accentColor}18`, transform: "translateY(-1px)" } }}>
