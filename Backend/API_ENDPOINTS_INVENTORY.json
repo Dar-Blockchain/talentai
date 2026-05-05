@@ -1,0 +1,1529 @@
+{
+  "metadata": {
+    "application": "TalentAI Backend API",
+    "generatedAt": "2026-05-05",
+    "purpose": "Complete inventory of all API endpoints for frontend verification",
+    "instructions": "Compare the endpoints called in your frontend code with this list to identify unused APIs"
+  },
+  "totals": {
+    "totalEndpoints": 156,
+    "totalModules": 33
+  },
+  "endpoints": {
+    "authentication": {
+      "baseUrl": "/auth",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/auth/register",
+          "description": "Create new user account",
+          "auth": "public",
+          "body": {
+            "Candidate": ["email", "roleType: 'Candidate'", "firstName (REQUIRED)", "lastName (REQUIRED)", "phone (optional)", "resume (optional file)"],
+            "Company": ["email", "roleType: 'Company'", "name (optional)", "companyDetails (optional)"]
+          },
+          "notes": "Sends OTP, analyzes resume for Candidates"
+        },
+        {
+          "method": "POST",
+          "path": "/auth/login",
+          "description": "Login user with email",
+          "auth": "public",
+          "body": ["email"]
+        },
+        {
+          "method": "POST",
+          "path": "/auth/verify-otp",
+          "description": "Verify OTP code",
+          "auth": "public",
+          "body": ["email", "otp"]
+        },
+        {
+          "method": "POST",
+          "path": "/auth/resend-otp",
+          "description": "Resend OTP code (valid 5 minutes)",
+          "auth": "public",
+          "body": ["email"]
+        },
+        {
+          "method": "POST",
+          "path": "/auth/analyze",
+          "description": "Analyze resume via Bedrock",
+          "auth": "public",
+          "body": ["filePath: string", "saveToDatabase: boolean (optional)"]
+        },
+        {
+          "method": "GET",
+          "path": "/auth/warnUser",
+          "description": "Notify logged-in user",
+          "auth": "required"
+        },
+        {
+          "method": "POST",
+          "path": "/auth/logout",
+          "description": "Invalidate session/token",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/auth/check-role?email=...",
+          "description": "Get user role by email",
+          "auth": "public",
+          "query": ["email"]
+        }
+      ]
+    },
+    "profile": {
+      "baseUrl": "/profiles",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/profiles/me",
+          "description": "Get current user profile",
+          "auth": "required"
+        },
+        {
+          "method": "POST",
+          "path": "/profiles/createOrUpdateProfile",
+          "description": "Create or update user profile",
+          "auth": "required"
+        },
+        {
+          "method": "PUT",
+          "path": "/profiles/updateProfileVisibility",
+          "description": "Update profile visibility (public/private)",
+          "auth": "required"
+        },
+        {
+          "method": "PUT",
+          "path": "/profiles/:userId",
+          "description": "Update profile (fields, image, type)",
+          "auth": "required",
+          "params": ["userId"],
+          "multipart": "user_image"
+        },
+        {
+          "method": "POST",
+          "path": "/profiles/createOrUpdateCompanyProfile",
+          "description": "Create or update company profile",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/profiles/search/skills",
+          "description": "Search profiles by skills",
+          "auth": "required"
+        },
+        {
+          "method": "POST",
+          "path": "/profiles/addSoftSkills",
+          "description": "Add soft skills to profile",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/profiles/getSoftSkills",
+          "description": "Get current user soft skills",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/profiles/getSoftSkillsById/:userId",
+          "description": "Get soft skills for specific user",
+          "auth": "required",
+          "params": ["userId"]
+        },
+        {
+          "method": "DELETE",
+          "path": "/profiles/deleteHardSkill",
+          "description": "Delete hard skill",
+          "auth": "required"
+        },
+        {
+          "method": "DELETE",
+          "path": "/profiles/deleteSoftSkills",
+          "description": "Delete soft skill",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/profiles/getCompanyWithAssessments",
+          "description": "Get company with assessments",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/profiles/:profileId/payments",
+          "description": "Get all payments for profile",
+          "auth": "required",
+          "params": ["profileId"]
+        },
+        {
+          "method": "GET",
+          "path": "/profiles/:profileId/payments/active",
+          "description": "Get active payment for profile",
+          "auth": "required",
+          "params": ["profileId"]
+        },
+        {
+          "method": "POST",
+          "path": "/profiles/:profileId/payments/add",
+          "description": "Add payment to profile",
+          "auth": "required",
+          "params": ["profileId"]
+        },
+        {
+          "method": "PUT",
+          "path": "/profiles/updateFinalBid",
+          "description": "Update final bid",
+          "auth": "optional"
+        },
+        {
+          "method": "GET",
+          "path": "/profiles/:userId",
+          "description": "Get profile by user ID (public)",
+          "auth": "public",
+          "params": ["userId"]
+        }
+      ]
+    },
+    "posts": {
+      "baseUrl": "/post",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/post/search",
+          "description": "Get all posts with search and filters (public)",
+          "auth": "public",
+          "query": ["search", "filters", "pagination"]
+        },
+        {
+          "method": "GET",
+          "path": "/post/details/:id",
+          "description": "Get post details by ID (public)",
+          "auth": "public",
+          "params": ["id"]
+        },
+        {
+          "method": "GET",
+          "path": "/post/public-stats",
+          "description": "Get public statistics (users, posts, companies)",
+          "auth": "public"
+        },
+        {
+          "method": "POST",
+          "path": "/post/save-post",
+          "description": "Create new post",
+          "auth": "required",
+          "scope": "write:posts"
+        },
+        {
+          "method": "GET",
+          "path": "/post/get-all-posts",
+          "description": "Get all posts",
+          "auth": "required",
+          "scope": "read:posts"
+        },
+        {
+          "method": "GET",
+          "path": "/post/my-posts",
+          "description": "Get current user posts",
+          "auth": "required",
+          "scope": "read:posts"
+        },
+        {
+          "method": "GET",
+          "path": "/post/metrics",
+          "description": "Get post metrics (total, active, draft, expired, closed, cancelled)",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/post/getPostById/:id",
+          "description": "Get post details",
+          "auth": "required",
+          "scope": "read:posts",
+          "params": ["id"]
+        },
+        {
+          "method": "PUT",
+          "path": "/post/updatePost/:id",
+          "description": "Update post",
+          "auth": "required",
+          "scope": "write:posts",
+          "params": ["id"]
+        },
+        {
+          "method": "PATCH",
+          "path": "/post/updatePostStatus/:id",
+          "description": "Update post status",
+          "auth": "required",
+          "scope": "write:posts",
+          "params": ["id"]
+        },
+        {
+          "method": "DELETE",
+          "path": "/post/deletePost/:id",
+          "description": "Delete post",
+          "auth": "required",
+          "scope": "delete:posts",
+          "params": ["id"]
+        },
+        {
+          "method": "POST",
+          "path": "/post/generate-job-post",
+          "description": "Generate job post using AI",
+          "auth": "required",
+          "role": "Company"
+        }
+      ]
+    },
+    "jobApplications": {
+      "baseUrl": "/job-applications",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/job-applications/post/:postId",
+          "description": "Get all applications for a post (public)",
+          "auth": "public",
+          "params": ["postId"]
+        },
+        {
+          "method": "POST",
+          "path": "/job-applications",
+          "description": "Create new application",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/job-applications",
+          "description": "Get all applications (admin/global)",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/job-applications/candidate/my",
+          "description": "Get applications for authenticated candidate",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/job-applications/candidate/my/stats",
+          "description": "Get dashboard stats for candidate",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/job-applications/company/my",
+          "description": "Get applications for authenticated company",
+          "auth": "required",
+          "query": ["page", "limit", "post", "status", "search", "skills"]
+        },
+        {
+          "method": "POST",
+          "path": "/job-applications/contact-candidate",
+          "description": "Send direct email to candidate",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/job-applications/post/:postId/summary",
+          "description": "Get flat summary for post applications",
+          "auth": "required",
+          "query": ["status", "search", "matchScoreMin", "matchScoreMax", "interviewScoreMin", "interviewScoreMax", "dateFrom", "dateTo", "sort", "page", "limit"]
+        },
+        {
+          "method": "GET",
+          "path": "/job-applications/company/my/summary",
+          "description": "Get flat summary for company applications",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/job-applications/company/my/metrics",
+          "description": "Get application metrics for company",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/job-applications/company/my/cvs/download",
+          "description": "Download all matching CVs as ZIP",
+          "auth": "required"
+        },
+        {
+          "method": "POST",
+          "path": "/job-applications/auto-invite/trigger",
+          "description": "Trigger auto-invite (nudge #1)",
+          "auth": "required"
+        },
+        {
+          "method": "POST",
+          "path": "/job-applications/reminder/trigger",
+          "description": "Trigger reminder (nudge #2/#3)",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/job-applications/:applicationId",
+          "description": "Get single application by ID",
+          "auth": "required",
+          "params": ["applicationId"]
+        },
+        {
+          "method": "PATCH",
+          "path": "/job-applications/:applicationId",
+          "description": "Update application",
+          "auth": "required",
+          "params": ["applicationId"]
+        },
+        {
+          "method": "POST",
+          "path": "/job-applications/:applicationId/withdraw",
+          "description": "Withdraw application",
+          "auth": "required",
+          "params": ["applicationId"]
+        },
+        {
+          "method": "POST",
+          "path": "/job-applications/:applicationId/archive",
+          "description": "Archive application",
+          "auth": "required",
+          "params": ["applicationId"]
+        },
+        {
+          "method": "POST",
+          "path": "/job-applications/:applicationId/invite-to-interview",
+          "description": "Send interview invitation email",
+          "auth": "required",
+          "params": ["applicationId"]
+        }
+      ]
+    },
+    "postSteps": {
+      "baseUrl": "/post-steps",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/post-steps/post/:postId/steps",
+          "description": "Add steps to post",
+          "auth": "required",
+          "params": ["postId"]
+        },
+        {
+          "method": "PUT",
+          "path": "/post-steps/node/:nodeId/submit-task",
+          "description": "Submit task with GitHub link",
+          "auth": "required",
+          "params": ["nodeId"],
+          "body": ["githubLink: string"]
+        }
+      ]
+    },
+    "candidateProgress": {
+      "baseUrl": "/candidate-progress",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/candidate-progress/getUserProgress",
+          "description": "Get current user progress",
+          "auth": "required"
+        },
+        {
+          "method": "POST",
+          "path": "/candidate-progress",
+          "description": "Create progress record",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/candidate-progress",
+          "description": "Get all progress records",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/candidate-progress/:id",
+          "description": "Get progress by ID",
+          "auth": "required",
+          "params": ["id"]
+        },
+        {
+          "method": "PUT",
+          "path": "/candidate-progress/:id",
+          "description": "Update progress",
+          "auth": "required",
+          "params": ["id"]
+        },
+        {
+          "method": "DELETE",
+          "path": "/candidate-progress/:id",
+          "description": "Delete progress",
+          "auth": "required",
+          "params": ["id"]
+        },
+        {
+          "method": "GET",
+          "path": "/candidate-progress/candidate/:candidateId",
+          "description": "Get progress by candidate",
+          "auth": "required",
+          "params": ["candidateId"]
+        },
+        {
+          "method": "GET",
+          "path": "/candidate-progress/post/:postId",
+          "description": "Get progress by post",
+          "auth": "required",
+          "params": ["postId"]
+        },
+        {
+          "method": "GET",
+          "path": "/candidate-progress/status/:status",
+          "description": "Get progress by status",
+          "auth": "required",
+          "params": ["status"]
+        },
+        {
+          "method": "GET",
+          "path": "/candidate-progress/candidate/:candidateId/post/:postId",
+          "description": "Get progress for candidate and post",
+          "auth": "required",
+          "params": ["candidateId", "postId"]
+        },
+        {
+          "method": "PUT",
+          "path": "/candidate-progress/candidate/:candidateId/post/:postId",
+          "description": "Update progress for candidate and post",
+          "auth": "required",
+          "params": ["candidateId", "postId"]
+        },
+        {
+          "method": "DELETE",
+          "path": "/candidate-progress/candidate/:candidateId/post/:postId",
+          "description": "Delete progress for candidate and post",
+          "auth": "required",
+          "params": ["candidateId", "postId"]
+        },
+        {
+          "method": "POST",
+          "path": "/candidate-progress/candidate/:candidateId/post/:postId/upsert",
+          "description": "Create or update progress",
+          "auth": "required",
+          "params": ["candidateId", "postId"]
+        }
+      ]
+    },
+    "chat": {
+      "baseUrl": "/chat",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/chat/conversations",
+          "description": "Find or create conversation",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/chat/conversations",
+          "description": "Get user conversations",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/chat/conversations/search",
+          "description": "Search conversations",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/chat/conversations/unread-count",
+          "description": "Get total unread count",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/chat/conversations/:conversationId",
+          "description": "Get conversation by ID",
+          "auth": "required",
+          "params": ["conversationId"]
+        },
+        {
+          "method": "PUT",
+          "path": "/chat/conversations/:conversationId/read",
+          "description": "Mark conversation as read",
+          "auth": "required",
+          "params": ["conversationId"]
+        },
+        {
+          "method": "PUT",
+          "path": "/chat/conversations/:conversationId/archive",
+          "description": "Archive conversation",
+          "auth": "required",
+          "params": ["conversationId"]
+        },
+        {
+          "method": "PUT",
+          "path": "/chat/conversations/:conversationId/unarchive",
+          "description": "Unarchive conversation",
+          "auth": "required",
+          "params": ["conversationId"]
+        },
+        {
+          "method": "PUT",
+          "path": "/chat/conversations/:conversationId/block",
+          "description": "Block conversation",
+          "auth": "required",
+          "params": ["conversationId"]
+        },
+        {
+          "method": "PUT",
+          "path": "/chat/conversations/:conversationId/unblock",
+          "description": "Unblock conversation",
+          "auth": "required",
+          "params": ["conversationId"]
+        },
+        {
+          "method": "DELETE",
+          "path": "/chat/conversations/:conversationId",
+          "description": "Delete conversation",
+          "auth": "required",
+          "params": ["conversationId"]
+        },
+        {
+          "method": "GET",
+          "path": "/chat/unread-count",
+          "description": "Get total unread count",
+          "auth": "required"
+        },
+        {
+          "method": "POST",
+          "path": "/chat/messages",
+          "description": "Send message",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/chat/messages/:conversationId",
+          "description": "Get conversation messages",
+          "auth": "required",
+          "params": ["conversationId"]
+        },
+        {
+          "method": "GET",
+          "path": "/chat/messages/:conversationId/unread",
+          "description": "Get unread messages",
+          "auth": "required",
+          "params": ["conversationId"]
+        },
+        {
+          "method": "GET",
+          "path": "/chat/messages/:conversationId/search",
+          "description": "Search messages in conversation",
+          "auth": "required",
+          "params": ["conversationId"]
+        },
+        {
+          "method": "GET",
+          "path": "/chat/messages/single/:messageId",
+          "description": "Get message by ID",
+          "auth": "required",
+          "params": ["messageId"]
+        },
+        {
+          "method": "PUT",
+          "path": "/chat/messages/:messageId/read",
+          "description": "Mark message as read",
+          "auth": "required",
+          "params": ["messageId"]
+        },
+        {
+          "method": "PUT",
+          "path": "/chat/messages/:conversationId/read-all",
+          "description": "Mark all messages as read",
+          "auth": "required",
+          "params": ["conversationId"]
+        },
+        {
+          "method": "DELETE",
+          "path": "/chat/messages/:messageId",
+          "description": "Delete message",
+          "auth": "required",
+          "params": ["messageId"]
+        },
+        {
+          "method": "POST",
+          "path": "/chat/messages/:messageId/reaction",
+          "description": "Add reaction to message",
+          "auth": "required",
+          "params": ["messageId"]
+        },
+        {
+          "method": "DELETE",
+          "path": "/chat/messages/:messageId/reaction",
+          "description": "Remove reaction from message",
+          "auth": "required",
+          "params": ["messageId"]
+        }
+      ]
+    },
+    "skillInterviewAssessments": {
+      "baseUrl": "/skill-interview-assessments",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/skill-interview-assessments",
+          "description": "Create new assessment",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/skill-interview-assessments/my",
+          "description": "Get current user assessments",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/skill-interview-assessments/:id",
+          "description": "Get assessment by ID",
+          "auth": "required",
+          "params": ["id"]
+        },
+        {
+          "method": "GET",
+          "path": "/skill-interview-assessments",
+          "description": "Get all assessments",
+          "auth": "required",
+          "query": ["page", "limit", "interviewType", "candidateId", "interviewerId"]
+        }
+      ]
+    },
+    "postInterviewAssessments": {
+      "baseUrl": "/post-interview-assessments",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/post-interview-assessments/post/:postId",
+          "description": "Get assessments for post (public)",
+          "auth": "public",
+          "params": ["postId"]
+        },
+        {
+          "method": "GET",
+          "path": "/post-interview-assessments/post/:postId/candidate/:candidateUserId",
+          "description": "Get assessment for candidate and post (public)",
+          "auth": "public",
+          "params": ["postId", "candidateUserId"]
+        },
+        {
+          "method": "GET",
+          "path": "/post-interview-assessments/check/:postId",
+          "description": "Check if candidate has assessment",
+          "auth": "required",
+          "params": ["postId"]
+        },
+        {
+          "method": "GET",
+          "path": "/post-interview-assessments/matching/:postId",
+          "description": "Get matching details for candidate and post",
+          "auth": "required",
+          "params": ["postId"]
+        },
+        {
+          "method": "GET",
+          "path": "/post-interview-assessments",
+          "description": "Get all assessments",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/post-interview-assessments/company/mine",
+          "description": "Get assessments for authenticated company",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/post-interview-assessments/company/mine/metrics",
+          "description": "Get interview metrics for company",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/post-interview-assessments/candidate/my",
+          "description": "Get assessments for candidate",
+          "auth": "required"
+        },
+        {
+          "method": "POST",
+          "path": "/post-interview-assessments",
+          "description": "Create new assessment",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/post-interview-assessments/:assessmentId",
+          "description": "Get assessment by ID",
+          "auth": "required",
+          "params": ["assessmentId"]
+        }
+      ]
+    },
+    "pipelineInterview": {
+      "baseUrl": "/api/pipeline-interview",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/api/pipeline-interview/params/:jobId/:stepNumber",
+          "description": "Get interview parameters for specific step",
+          "auth": "optional",
+          "params": ["jobId", "stepNumber"]
+        },
+        {
+          "method": "GET",
+          "path": "/api/pipeline-interview/steps/:jobId",
+          "description": "Get all interview steps for job",
+          "auth": "optional",
+          "params": ["jobId"]
+        },
+        {
+          "method": "POST",
+          "path": "/api/pipeline-interview/progress/initialize",
+          "description": "Initialize candidate progress",
+          "auth": "optional"
+        },
+        {
+          "method": "GET",
+          "path": "/api/pipeline-interview/progress/:candidateId/:jobId",
+          "description": "Get candidate progress",
+          "auth": "optional",
+          "params": ["candidateId", "jobId"]
+        },
+        {
+          "method": "PUT",
+          "path": "/api/pipeline-interview/progress/update-step",
+          "description": "Update step status after interview",
+          "auth": "optional"
+        },
+        {
+          "method": "POST",
+          "path": "/api/pipeline-interview/progress/next-step",
+          "description": "Move to next step",
+          "auth": "optional"
+        }
+      ]
+    },
+    "companyInvitations": {
+      "baseUrl": "/company-invitations",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/company-invitations/details/:invitationId",
+          "description": "Get invitation details (public)",
+          "auth": "public",
+          "params": ["invitationId"]
+        },
+        {
+          "method": "POST",
+          "path": "/company-invitations/respondInvitation/:invitationId",
+          "description": "Accept or reject invitation (public)",
+          "auth": "public",
+          "params": ["invitationId"]
+        },
+        {
+          "method": "POST",
+          "path": "/company-invitations/sentInvitation",
+          "description": "Send employee invitation",
+          "auth": "required"
+        },
+        {
+          "method": "POST",
+          "path": "/company-invitations/resendInvitation/:invitationId",
+          "description": "Resend invitation",
+          "auth": "required",
+          "params": ["invitationId"]
+        },
+        {
+          "method": "DELETE",
+          "path": "/company-invitations/deleteInvitation/:invitationId",
+          "description": "Delete/revoke invitation",
+          "auth": "required",
+          "params": ["invitationId"]
+        },
+        {
+          "method": "GET",
+          "path": "/company-invitations/myInvitations",
+          "description": "Get company invitations",
+          "auth": "required"
+        }
+      ]
+    },
+    "companyMemberships": {
+      "baseUrl": "/company-memberships",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/company-memberships/memberships/stats",
+          "description": "Get membership statistics",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/company-memberships/memberships",
+          "description": "Get company memberships",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/company-memberships/user/:userId",
+          "description": "Get membership by user ID",
+          "auth": "required",
+          "params": ["userId"]
+        },
+        {
+          "method": "DELETE",
+          "path": "/company-memberships/:membershipId",
+          "description": "Delete membership",
+          "auth": "required",
+          "params": ["membershipId"]
+        },
+        {
+          "method": "PATCH",
+          "path": "/company-memberships/:membershipId",
+          "description": "Update membership",
+          "auth": "required",
+          "params": ["membershipId"]
+        },
+        {
+          "method": "PATCH",
+          "path": "/company-memberships/:membershipId/role",
+          "description": "Update membership role",
+          "auth": "required",
+          "params": ["membershipId"]
+        },
+        {
+          "method": "PATCH",
+          "path": "/company-memberships/:membershipId/department",
+          "description": "Update membership department",
+          "auth": "required",
+          "params": ["membershipId"]
+        }
+      ]
+    },
+    "dashboard": {
+      "baseUrl": "/dashboard",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/dashboard/getAllUsers",
+          "description": "Get all users",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/dashboard/getCounts",
+          "description": "Get global counters",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/dashboard/statsCards",
+          "description": "Get dashboard statistics cards",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/dashboard/richStats",
+          "description": "Get rich statistics",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/dashboard/getUserCountsByDay",
+          "description": "Get daily user count evolution",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/dashboard/getUserCountsByLocation",
+          "description": "Get statistics by location",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/dashboard/job-assessment-results-grouped",
+          "description": "Get assessment results grouped by job",
+          "auth": "required"
+        },
+        {
+          "method": "POST",
+          "path": "/dashboard/getJobAssessmentsBySkill",
+          "description": "Get assessments by skill",
+          "auth": "required",
+          "body": ["skill: string"]
+        },
+        {
+          "method": "GET",
+          "path": "/dashboard/downloadUserExcel",
+          "description": "Download Excel export of users",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/dashboard/download-users-with-assessment-zero",
+          "description": "Download users without assessment",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/dashboard/download-users-with-assessment-Above50",
+          "description": "Download users with score > 50",
+          "auth": "required"
+        }
+      ]
+    },
+    "todo": {
+      "baseUrl": "/todo",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/todo/profile",
+          "description": "Generate todo list for profile",
+          "auth": "required",
+          "role": "Candidate"
+        },
+        {
+          "method": "GET",
+          "path": "/todo/profile",
+          "description": "Get profile todo list",
+          "auth": "required",
+          "role": "Candidate"
+        }
+      ]
+    },
+    "feedback": {
+      "baseUrl": "/feedback",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/feedback/addFeedback",
+          "description": "Add feedback",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/feedback/getAllFeedback",
+          "description": "Get all feedback",
+          "auth": "required",
+          "role": "Admin"
+        }
+      ]
+    },
+    "notifications": {
+      "baseUrl": "/notification-system",
+      "endpoints": [
+        {
+          "method": "NOTE",
+          "path": "See notificationSystem.routes.js",
+          "description": "Multiple notification endpoints",
+          "auth": "required"
+        }
+      ]
+    },
+    "logs": {
+      "baseUrl": "/logs",
+      "endpoints": [
+        {
+          "method": "NOTE",
+          "path": "See log.routes.js",
+          "description": "System logging endpoints",
+          "auth": "required"
+        }
+      ]
+    },
+    "tasks": {
+      "baseUrl": "/task",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/task/send-task",
+          "description": "Send technical test task via email",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/task/test-email",
+          "description": "Test email configuration",
+          "auth": "required"
+        }
+      ]
+    },
+    "backup": {
+      "baseUrl": "/admin/backups",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/admin/backups/perform",
+          "description": "Trigger database backup",
+          "auth": "required",
+          "role": "Admin"
+        },
+        {
+          "method": "GET",
+          "path": "/admin/backups/list",
+          "description": "List available backups",
+          "auth": "required",
+          "role": "Admin"
+        },
+        {
+          "method": "POST",
+          "path": "/admin/backups/restore/:backupName",
+          "description": "Restore database from backup",
+          "auth": "required",
+          "role": "Admin",
+          "params": ["backupName"],
+          "warning": "Overwrites current database"
+        },
+        {
+          "method": "DELETE",
+          "path": "/admin/backups/delete/:backupName",
+          "description": "Delete specific backup",
+          "auth": "required",
+          "role": "Admin",
+          "params": ["backupName"]
+        },
+        {
+          "method": "GET",
+          "path": "/admin/backups/info",
+          "description": "Get backup service information",
+          "auth": "required",
+          "role": "Admin"
+        }
+      ]
+    },
+    "stripe": {
+      "baseUrl": "/stripe",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/stripe/create-checkout-session",
+          "description": "Create Stripe payment session",
+          "auth": "required"
+        }
+      ]
+    },
+    "planLimits": {
+      "baseUrl": "/plan-limits",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/plan-limits",
+          "description": "Create new plan (Admin only)",
+          "auth": "required",
+          "role": "Admin"
+        },
+        {
+          "method": "GET",
+          "path": "/plan-limits",
+          "description": "Get all plans (public)",
+          "auth": "public"
+        },
+        {
+          "method": "GET",
+          "path": "/plan-limits/:id",
+          "description": "Get plan by ID (public)",
+          "auth": "public",
+          "params": ["id"]
+        },
+        {
+          "method": "PUT",
+          "path": "/plan-limits",
+          "description": "Update plan (Admin only)",
+          "auth": "required",
+          "role": "Admin"
+        }
+      ]
+    },
+    "subscriptions": {
+      "baseUrl": "/subscriptions",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/subscriptions/active",
+          "description": "Get active subscription",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/subscriptions/combined",
+          "description": "Get combined active details",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/subscriptions",
+          "description": "Get company subscriptions",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/subscriptions/:subscriptionId/details",
+          "description": "Get detailed subscription info",
+          "auth": "required",
+          "params": ["subscriptionId"]
+        },
+        {
+          "method": "GET",
+          "path": "/subscriptions/:companyProfileId/check-limit/:limitType",
+          "description": "Check subscription limit",
+          "auth": "required",
+          "params": ["companyProfileId", "limitType"],
+          "query": ["limitType: 'posts' or 'monthlyInterviews'"]
+        }
+      ]
+    },
+    "cvAnalysis": {
+      "baseUrl": "/cv-analysis",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/cv-analysis",
+          "description": "Create CV analysis record",
+          "auth": "optional"
+        },
+        {
+          "method": "GET",
+          "path": "/cv-analysis",
+          "description": "Get all CV analyses",
+          "auth": "optional",
+          "query": ["pagination", "filtering"]
+        },
+        {
+          "method": "GET",
+          "path": "/cv-analysis/stats",
+          "description": "Get CV analysis statistics",
+          "auth": "optional"
+        },
+        {
+          "method": "GET",
+          "path": "/cv-analysis/search",
+          "description": "Search CV analyses",
+          "auth": "optional"
+        },
+        {
+          "method": "GET",
+          "path": "/cv-analysis/:id",
+          "description": "Get CV analysis by ID",
+          "auth": "optional",
+          "params": ["id"]
+        },
+        {
+          "method": "PUT",
+          "path": "/cv-analysis/:id",
+          "description": "Update CV analysis",
+          "auth": "optional",
+          "params": ["id"]
+        },
+        {
+          "method": "DELETE",
+          "path": "/cv-analysis/:id",
+          "description": "Delete CV analysis",
+          "auth": "optional",
+          "params": ["id"]
+        },
+        {
+          "method": "GET",
+          "path": "/cv-analysis/user/:userId",
+          "description": "Get CV analyses for user",
+          "auth": "optional",
+          "params": ["userId"]
+        },
+        {
+          "method": "GET",
+          "path": "/cv-analysis/company/:companyId",
+          "description": "Get CV analyses for company",
+          "auth": "optional",
+          "params": ["companyId"]
+        },
+        {
+          "method": "GET",
+          "path": "/cv-analysis/seniority/:seniority",
+          "description": "Get CV analyses by seniority",
+          "auth": "optional",
+          "params": ["seniority"]
+        }
+      ]
+    },
+    "departments": {
+      "baseUrl": "/departments",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/departments",
+          "description": "Create department",
+          "auth": "required",
+          "role": "Company/Employee"
+        },
+        {
+          "method": "GET",
+          "path": "/departments",
+          "description": "Get company departments",
+          "auth": "required",
+          "query": ["search", "page", "limit"]
+        },
+        {
+          "method": "GET",
+          "path": "/departments/stats",
+          "description": "Get department statistics",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/departments/:id",
+          "description": "Get department by ID",
+          "auth": "required",
+          "params": ["id"]
+        },
+        {
+          "method": "PUT",
+          "path": "/departments/:id",
+          "description": "Update department",
+          "auth": "required",
+          "params": ["id"]
+        },
+        {
+          "method": "DELETE",
+          "path": "/departments/:id",
+          "description": "Delete department",
+          "auth": "required",
+          "params": ["id"]
+        }
+      ]
+    },
+    "contact": {
+      "baseUrl": "/contact",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/contact",
+          "description": "Submit contact form (public)",
+          "auth": "public"
+        },
+        {
+          "method": "POST",
+          "path": "/contact/enterprise",
+          "description": "Submit enterprise inquiry (public)",
+          "auth": "public"
+        },
+        {
+          "method": "GET",
+          "path": "/contact/status",
+          "description": "Check contact service status",
+          "auth": "required"
+        }
+      ]
+    },
+    "apiKeys": {
+      "baseUrl": "/api/api-keys",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/api/api-keys",
+          "description": "Create new API key",
+          "auth": "required",
+          "body": ["name", "serviceName?", "scopes?", "rateLimit?", "expiresAt?", "ipWhitelist?"]
+        },
+        {
+          "method": "GET",
+          "path": "/api/api-keys",
+          "description": "List API keys",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/api/api-keys/:id",
+          "description": "Get API key details",
+          "auth": "required",
+          "params": ["id"]
+        },
+        {
+          "method": "PUT",
+          "path": "/api/api-keys/:id",
+          "description": "Update API key",
+          "auth": "required",
+          "params": ["id"]
+        },
+        {
+          "method": "PATCH",
+          "path": "/api/api-keys/:id/toggle",
+          "description": "Toggle API key status",
+          "auth": "required",
+          "params": ["id"]
+        },
+        {
+          "method": "POST",
+          "path": "/api/api-keys/:id/regenerate",
+          "description": "Regenerate API key",
+          "auth": "required",
+          "params": ["id"]
+        },
+        {
+          "method": "DELETE",
+          "path": "/api/api-keys/:id",
+          "description": "Delete API key",
+          "auth": "required",
+          "params": ["id"]
+        }
+      ]
+    },
+    "campaignParticipants": {
+      "baseUrl": "/campaign-participants",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/campaign-participants/:campaignId/participants",
+          "description": "Add campaign participant",
+          "auth": "required",
+          "role": "Company",
+          "params": ["campaignId"]
+        },
+        {
+          "method": "GET",
+          "path": "/campaign-participants/:campaignId/participants",
+          "description": "Get campaign participants",
+          "auth": "required",
+          "role": "Company",
+          "params": ["campaignId"],
+          "query": ["status"]
+        },
+        {
+          "method": "GET",
+          "path": "/campaign-participants/:participantId",
+          "description": "Get participant by ID",
+          "auth": "required",
+          "role": "Company",
+          "params": ["participantId"]
+        },
+        {
+          "method": "GET",
+          "path": "/campaign-participants/token/:token",
+          "description": "Get participant by token (anonymous)",
+          "auth": "public",
+          "params": ["token"]
+        },
+        {
+          "method": "PUT",
+          "path": "/campaign-participants/:participantId",
+          "description": "Update participant",
+          "auth": "required",
+          "role": "Company",
+          "params": ["participantId"]
+        },
+        {
+          "method": "DELETE",
+          "path": "/campaign-participants/:participantId",
+          "description": "Delete participant",
+          "auth": "required",
+          "role": "Company",
+          "params": ["participantId"]
+        },
+        {
+          "method": "PATCH",
+          "path": "/campaign-participants/:participantId/drop",
+          "description": "Mark participant as dropped",
+          "auth": "required",
+          "role": "Company",
+          "params": ["participantId"]
+        }
+      ]
+    },
+    "internalCampaigns": {
+      "baseUrl": "/internal-campaigns",
+      "endpoints": [
+        {
+          "method": "NOTE",
+          "path": "See internalCampaign.routes.js",
+          "description": "Internal campaign management endpoints",
+          "auth": "required"
+        }
+      ]
+    },
+    "permissions": {
+      "baseUrl": "/permissions",
+      "endpoints": [
+        {
+          "method": "NOTE",
+          "path": "See permissions.routes.js",
+          "description": "General permissions management",
+          "auth": "required"
+        }
+      ]
+    },
+    "employeePermissions": {
+      "baseUrl": "/employee-permissions",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/employee-permissions/available",
+          "description": "Get available permissions",
+          "auth": "required"
+        },
+        {
+          "method": "GET",
+          "path": "/employee-permissions/:userId",
+          "description": "Get user permissions",
+          "auth": "required",
+          "params": ["userId"]
+        },
+        {
+          "method": "PUT",
+          "path": "/employee-permissions/:userId",
+          "description": "Update user permissions",
+          "auth": "required",
+          "params": ["userId"]
+        }
+      ]
+    },
+    "admin": {
+      "baseUrl": "/admin",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/admin/companies/:companyId/permissions",
+          "description": "Get company permissions",
+          "auth": "required",
+          "role": "Admin",
+          "params": ["companyId"]
+        },
+        {
+          "method": "POST",
+          "path": "/admin/companies/:companyId/permissions",
+          "description": "Update company permissions",
+          "auth": "required",
+          "role": "Admin",
+          "params": ["companyId"]
+        }
+      ]
+    },
+    "payments": {
+      "baseUrl": "/payments",
+      "endpoints": [
+        {
+          "method": "NOTE",
+          "path": "See payment.routes.js",
+          "description": "Payment management endpoints",
+          "auth": "required"
+        }
+      ]
+    }
+  },
+  "summary": {
+    "publicEndpoints": 15,
+    "protectedEndpoints": 141,
+    "rolesRequired": ["Candidate", "Company", "Employee", "Admin"],
+    "authenticationType": ["JWT Token", "API Key"],
+    "commonQueryParams": ["page", "limit", "search", "sort", "filter"],
+    "commonBodyParams": ["name", "email", "status", "description"]
+  },
+  "howToUse": {
+    "forFrontend": "Compare your frontend API calls with this file. Search for endpoints you use and mark them. Identify unused endpoints by looking for endpoints in this file that don't appear in your frontend code.",
+    "generatingUsageReport": "You can create a script to parse your frontend codebase and compare against this JSON file to automatically generate a report of unused APIs."
+  }
+}
