@@ -135,7 +135,7 @@ const RegisterContainer: React.FC<{ children: React.ReactNode }> = ({ children }
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          justifyContent: "flex-start",
+          justifyContent: "center",
           px: { xs: 2, sm: 3, md: 4, lg: 5 },
           pt: 0,
           pb: 0,
