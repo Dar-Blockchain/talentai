@@ -29,6 +29,7 @@ interface GroupedAssessment { post: any; assessments: any[]; candidatePostStepPr
 
 interface PostInterviewsProps {
   onViewAll?: () => void;
+  onBackToAll?: () => void;
   showViewAll?: boolean;
   initialDisplayCount?: number;
   previewCount?: number;
@@ -152,7 +153,11 @@ const InterviewRow: React.FC<{
 };
 
 const PostInterviews: React.FC<PostInterviewsProps> = ({
-  onViewAll, showViewAll = false, initialDisplayCount = 5, previewCount,
+  onViewAll,
+  onBackToAll,
+  showViewAll = false,
+  initialDisplayCount = 5,
+  previewCount,
 }) => {
   const router   = useRouter();
   const dispatch = useDispatch<AppDispatch>();
@@ -221,6 +226,14 @@ const PostInterviews: React.FC<PostInterviewsProps> = ({
                 sx={{ fontSize: "0.72rem", fontWeight: 700, color: T, cursor: "pointer", "&:hover": { textDecoration: "underline" } }}
               >
                 View all →
+              </Typography>
+            )}
+            {!showViewAll && onBackToAll && (
+              <Typography
+                onClick={onBackToAll}
+                sx={{ fontSize: "0.72rem", fontWeight: 700, color: T, cursor: "pointer", "&:hover": { textDecoration: "underline" } }}
+              >
+                ← Back
               </Typography>
             )}
           </Box>

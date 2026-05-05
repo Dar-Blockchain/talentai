@@ -9,17 +9,35 @@ import { useRouter } from "next/router";
 import RegisterContainer from "@/components/features/register/RegisterContainer";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
+import { registerMq } from "@/components/features/register/registerLayout";
 
 type UserType = "candidate" | "company";
 
 const ACCENT  = "#0D9488";
 const ACCENT2 = "#059669";
 
-const SignInLink = ({ returnUrl, label }: { returnUrl?: string; label: string }) => (
-  <Box sx={{ pt: 0.5 }}>
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+const SignInLink = ({
+  returnUrl,
+  label,
+  companyCompact,
+}: {
+  returnUrl?: string;
+  label: string;
+  companyCompact?: boolean;
+}) => (
+  <Box sx={{ pt: companyCompact ? { xs: 0.25, sm: 0.25, [registerMq.desktopUp]: 0.5 } : 0.5 }}>
+    <Box sx={{ display: "flex", alignItems: "center", gap: companyCompact ? { xs: 1, sm: 1, [registerMq.desktopUp]: 1.5 } : 1.5, mb: companyCompact ? { xs: 1, sm: 1, [registerMq.desktopUp]: 2 } : 2 }}>
       <Box sx={{ flex: 1, height: "1px", bgcolor: "#E5E7EB" }} />
-      <Typography sx={{ fontSize: "0.75rem", color: "#9CA3AF", fontFamily: "Poppins", whiteSpace: "nowrap" }}>
+      <Typography sx={{
+        fontSize: companyCompact ? { xs: "0.66rem", sm: "0.7rem", md: "0.73rem", [registerMq.desktopUp]: "0.75rem" } : "0.75rem",
+        ...(companyCompact && { [registerMq.tabletOnly]: { fontSize: "0.66rem" } }),
+        color: "#9CA3AF",
+        fontFamily: "Poppins",
+        whiteSpace: companyCompact ? { xs: "normal", sm: "normal", [registerMq.desktopUp]: "nowrap" } : "nowrap",
+        textAlign: "center",
+        lineHeight: 1.3,
+        maxWidth: companyCompact ? { xs: "46%", sm: "46%", [registerMq.desktopUp]: "none" } : "none",
+      }}>
         {label}
       </Typography>
       <Box sx={{ flex: 1, height: "1px", bgcolor: "#E5E7EB" }} />
@@ -27,9 +45,15 @@ const SignInLink = ({ returnUrl, label }: { returnUrl?: string; label: string })
     <Link href={returnUrl ? `/signin?returnUrl=${encodeURIComponent(returnUrl)}` : "/signin"} style={{ textDecoration: "none" }}>
       <Box sx={{
         display: "inline-flex", alignItems: "center", justifyContent: "center",
-        width: "100%", height: 48, borderRadius: "14px",
+        width: "100%",
+        minHeight: companyCompact ? { xs: 42, sm: 44, md: 46, [registerMq.desktopUp]: 48 } : 48,
+        py: companyCompact ? { xs: 0.75, sm: 0.75, [registerMq.desktopUp]: 0 } : 0,
+        px: 1,
+        borderRadius: "14px",
         border: `1.5px solid ${ACCENT}44`,
-        color: ACCENT, fontFamily: "Poppins", fontWeight: 700, fontSize: "0.95rem",
+        color: ACCENT, fontFamily: "Poppins", fontWeight: 700,
+        fontSize: companyCompact ? { xs: "0.82rem", sm: "0.86rem", md: "0.9rem", [registerMq.desktopUp]: "0.95rem" } : "0.95rem",
+        ...(companyCompact && { [registerMq.tabletOnly]: { fontSize: "0.82rem" } }),
         transition: "all 0.2s",
         "&:hover": { bgcolor: `${ACCENT}08`, borderColor: ACCENT },
       }}>
@@ -81,11 +105,12 @@ const Register = () => {
 
   const formConfig = userType ? FORM_TITLES[userType] : null;
 
+  const companyMobileLayout = !!userType && !showRoleSelect;
+
   return (
-    <RegisterContainer>
+    <RegisterContainer companyMobileLayout={companyMobileLayout}>
       {showRoleSelect ? (
         <>
-          {/* Header */}
           <Box sx={{ mb: 3.5, textAlign: "center" }}>
             <Typography sx={{ fontSize: "2.2rem", fontWeight: 800, fontFamily: "Poppins", color: "#0F172A", lineHeight: 1.1, mb: 0.75, letterSpacing: "-0.03em" }}>
               {t("register.get_started")}
@@ -102,7 +127,6 @@ const Register = () => {
             </Typography>
           </Box>
 
-          {/* Role cards */}
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mb: 3.5 }}>
             {ROLES.map(({ type, icon: Icon, label, description, accent, iconGradient, shadowColor, border }) => (
               <Box
@@ -157,31 +181,53 @@ const Register = () => {
         </>
       ) : (
         <>
-          {/* Form header */}
-          <Box sx={{ mb: 3, textAlign: "center" }}>
+          <Box sx={{
+            mb: userType === "company"
+              ? { xs: 2.25, sm: 2.25, [registerMq.desktopUp]: 3.5 }
+              : 3,
+            textAlign: "center",
+          }}>
             {!isOtpStep && !hasReturnUrl && (
               <Box
                 onClick={() => { setUserType(null); setFormStep(1); }}
                 sx={{
-                  display: "inline-flex", alignItems: "center", gap: 0.5, mb: 2.5,
+                  display: "inline-flex", alignItems: "center", gap: 0.5,
+                  mb: userType === "company" ? { xs: 1.25, sm: 1.25, [registerMq.desktopUp]: 2.5 } : 2.5,
+                  py: userType === "company" ? { xs: 0.5, sm: 0.5, [registerMq.desktopUp]: 0 } : 0,
+                  px: userType === "company" ? { xs: 0.75, sm: 0.75, [registerMq.desktopUp]: 0 } : 0,
                   cursor: "pointer", color: "#9CA3AF", fontFamily: "Poppins",
-                  fontSize: "0.8rem", fontWeight: 500,
+                  fontSize: userType === "company" ? { xs: "0.72rem", sm: "0.75rem", md: "0.78rem", [registerMq.desktopUp]: "0.8rem" } : "0.8rem",
+                  ...(userType === "company" && { [registerMq.tabletOnly]: { fontSize: "0.72rem" } }),
+                  fontWeight: 600,
                   "&:hover": { color: ACCENT },
                   transition: "color 0.2s",
                 }}
               >
-                <ArrowForwardOutlined sx={{ fontSize: 15, transform: "rotate(180deg)" }} />
+                <ArrowForwardOutlined sx={{ fontSize: userType === "company" ? { xs: 15, sm: 15, [registerMq.desktopUp]: 15 } : 15, transform: "rotate(180deg)" }} />
                 {t("register.change_role")}
               </Box>
             )}
 
             <Typography sx={{
-              fontSize: "1.9rem", fontWeight: 800, fontFamily: "Poppins", color: "#0F172A",
-              lineHeight: 1.15, mb: 0.75, letterSpacing: "-0.025em",
+              fontSize: userType === "company"
+                ? { xs: "1.2rem", sm: "1.28rem", md: "1.55rem", [registerMq.desktopUp]: "1.9rem" }
+                : "1.9rem",
+              ...(userType === "company" && { [registerMq.tabletOnly]: { fontSize: "1.2rem" } }),
+              fontWeight: 800, fontFamily: "Poppins", color: "#0F172A",
+              lineHeight: userType === "company" ? { xs: 1.12, sm: 1.12, [registerMq.desktopUp]: 1.15 } : 1.15,
+              mb: userType === "company" ? { xs: 0.4, sm: 0.4, [registerMq.desktopUp]: 0.75 } : 0.75,
+              letterSpacing: "-0.025em",
             }}>
               {isOtpStep ? t("register.check_inbox") : formConfig!.title}
             </Typography>
-            <Typography sx={{ fontSize: "0.95rem", color: "#6B7280", fontFamily: "Poppins", lineHeight: 1.6 }}>
+            <Typography sx={{
+              fontSize: userType === "company"
+                ? { xs: "0.82rem", sm: "0.86rem", md: "0.9rem", [registerMq.desktopUp]: "0.95rem" }
+                : "0.95rem",
+              ...(userType === "company" && { [registerMq.tabletOnly]: { fontSize: "0.82rem" } }),
+              color: "#6B7280", fontFamily: "Poppins",
+              lineHeight: userType === "company" ? { xs: 1.45, sm: 1.45, [registerMq.desktopUp]: 1.6 } : 1.6,
+            }}>
               {isOtpStep
                 ? <>{t("register.otp_sent_prefix")} <Box component="span" sx={{ color: ACCENT, fontWeight: 600 }}>{registeredEmail || t("register.otp_sent_accent")}</Box></>
                 : formConfig!.subtitle}
@@ -194,7 +240,9 @@ const Register = () => {
             <CompanyRegisterForm key="company" onStepChange={setFormStep} onEmailChange={setRegisteredEmail} />
           )}
 
-          {!isOtpStep && <SignInLink returnUrl={returnUrl} label={t("register.signin_link")} />}
+          {!isOtpStep && (
+            <SignInLink returnUrl={returnUrl} label={t("register.signin_link")} companyCompact={userType === "company"} />
+          )}
         </>
       )}
     </RegisterContainer>

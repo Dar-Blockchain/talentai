@@ -28,6 +28,7 @@ import { useRouter } from "next/router";
 import { formatTimeLeft } from "@/utils/functions";
 import { isInvitationUrl } from "@/utils/memberInvitation";
 import { useTranslation } from "react-i18next";
+import { registerMq } from "@/components/features/register/registerLayout";
 
 const CODE_LENGTH = 6;
 const CODE_TTL = 300;
@@ -37,14 +38,30 @@ const ACCENT = "#0D9488";
 const ACCENT2 = "#059669";
 
 const fieldSx = {
-  "& .MuiInputLabel-root": { color: "#6B7280", fontFamily: "Poppins", fontSize: "0.95rem", fontWeight: 500 },
+  "& .MuiInputLabel-root": {
+    color: "#6B7280",
+    fontFamily: "Poppins",
+    fontSize: { xs: "0.8rem", sm: "0.84rem", md: "0.9rem", [registerMq.desktopUp]: "0.95rem" },
+    fontWeight: 500,
+  },
   "& .MuiInputLabel-root.Mui-focused": { color: ACCENT },
-  "& .MuiInputBase-input": { fontSize: "1rem", fontFamily: "Poppins" },
-  "& .MuiInputBase-input::placeholder": { fontSize: "0.82rem", opacity: 1, color: "#C4CAD4" },
-  "& .MuiFormHelperText-root": { fontSize: "0.75rem" },
+  "& .MuiInputBase-input": {
+    fontSize: { xs: "0.84rem", sm: "0.9rem", md: "0.95rem", [registerMq.desktopUp]: "1rem" },
+    fontFamily: "Poppins",
+  },
+  "& .MuiInputBase-input::placeholder": {
+    fontSize: { xs: "0.74rem", sm: "0.78rem", md: "0.8rem", [registerMq.desktopUp]: "0.82rem" },
+    opacity: 1,
+    color: "#C4CAD4",
+  },
+  "& .MuiFormHelperText-root": {
+    fontSize: { xs: "0.68rem", sm: "0.72rem", md: "0.74rem", [registerMq.desktopUp]: "0.75rem" },
+    mx: 0,
+    mt: { xs: 0.35, sm: 0.35, [registerMq.desktopUp]: 0.5 },
+    lineHeight: 1.35,
+  },
   "& .MuiOutlinedInput-root": {
-    borderRadius: "14px",
-    fontSize: "1rem",
+    borderRadius: { xs: "11px", sm: "11px", [registerMq.desktopUp]: "14px" },
     fontFamily: "Poppins",
     bgcolor: "#F9FAFB",
     "& fieldset": { borderColor: "#E5E7EB" },
@@ -52,11 +69,30 @@ const fieldSx = {
     "&:hover": { bgcolor: "#F3F4F6" },
     "&.Mui-focused fieldset": { borderColor: ACCENT, borderWidth: "1.5px" },
     "&.Mui-focused": { bgcolor: "#fff" },
+    "& .MuiOutlinedInput-input": {
+      py: { xs: 0.85, sm: 0.95, md: 1.1, [registerMq.desktopUp]: 1.35 },
+      px: { xs: 0.35, sm: 0.35, [registerMq.desktopUp]: 0.5 },
+    },
+  },
+  [registerMq.tabletOnly]: {
+    "& .MuiInputLabel-root": { fontSize: "0.8rem" },
+    "& .MuiInputBase-input": { fontSize: "0.84rem" },
+    "& .MuiInputBase-input::placeholder": { fontSize: "0.74rem" },
+    "& .MuiFormHelperText-root": { fontSize: "0.68rem" },
+    "& .MuiOutlinedInput-root": { borderRadius: "14px" },
+    "& .MuiOutlinedInput-root .MuiOutlinedInput-input": { py: 1.05, px: 0.4 },
   },
 };
 
-const half = { flex: { xs: "1 1 100%", md: "1 1 calc(50% - 12px)" }, minWidth: 0 };
-const full = { flex: "1 1 100%" };
+const half = {
+  flex: { xs: "1 1 100%", [registerMq.desktopUp]: "1 1 calc(50% - 10px)", lg: "1 1 calc(50% - 14px)" },
+  minWidth: 0,
+  maxWidth: { xs: "100%", [registerMq.desktopUp]: "none" },
+  [registerMq.tabletOnly]: {
+    flex: "1 1 100%",
+  },
+};
+const full = { flex: "1 1 100%", minWidth: 0 };
 
 type FormValues = {
   firstName: string;
@@ -74,17 +110,18 @@ const submitBtnSx = {
   textTransform: "none",
   fontFamily: "Poppins",
   fontWeight: 700,
-  borderRadius: "14px",
-  height: 56,
+  borderRadius: { xs: "11px", sm: "11px", [registerMq.desktopUp]: "14px" },
+  minHeight: { xs: 44, sm: 46, md: 50, [registerMq.desktopUp]: 56 },
+  py: { xs: 0.8, sm: 0.9, md: 1.05, [registerMq.desktopUp]: 1.25 },
   background: `linear-gradient(135deg, ${ACCENT} 0%, ${ACCENT2} 100%)`,
   color: "#fff",
-  boxShadow: `0 4px 20px ${ACCENT}50`,
+  boxShadow: `0 4px 16px ${ACCENT}45`,
   letterSpacing: "0.01em",
-  fontSize: "1rem",
+  fontSize: { xs: "0.8rem", sm: "0.86rem", md: "0.92rem", [registerMq.desktopUp]: "1rem" },
   transition: "all 0.2s",
   "&:hover": {
     background: `linear-gradient(135deg, #0caa9d 0%, ${ACCENT2} 100%)`,
-    boxShadow: `0 8px 28px ${ACCENT}60`,
+    boxShadow: `0 6px 22px ${ACCENT}55`,
     transform: "translateY(-1px)",
   },
   "&:active": { transform: "translateY(0)" },
@@ -248,7 +285,18 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
         <Box
           component="form"
           onSubmit={handleSubmit(handleSendCode)}
-          sx={{ mb: 2, textAlign: "left", display: "flex", flexWrap: "wrap", gap: 3 }}
+          sx={{
+            mb: { xs: 1, sm: 1, [registerMq.desktopUp]: 2 },
+            textAlign: "left",
+            display: "flex",
+            flexWrap: "wrap",
+            columnGap: { xs: 1.6, sm: 2, md: 2.25, [registerMq.desktopUp]: 2.5, lg: 3.5 },
+            rowGap: { xs: 2, sm: 2.2, md: 2.5, [registerMq.desktopUp]: 2.75, lg: 3.5 },
+            [registerMq.tabletOnly]: {
+              columnGap: 0,
+              rowGap: 1.65,
+            },
+          }}
         >
           <Box sx={half}>
             <TextField
@@ -258,7 +306,13 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
               disabled={loading}
               error={!!errors.firstName}
               helperText={errors.firstName?.message}
-              InputProps={{ startAdornment: <InputAdornment position="start"><PersonIcon sx={{ fontSize: 20, color: "#9CA3AF" }} /></InputAdornment> }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start" sx={{ mr: { xs: -0.25, sm: -0.25, [registerMq.desktopUp]: 0 } }}>
+                    <PersonIcon sx={{ fontSize: { xs: 18, sm: 19, md: 19.5, [registerMq.desktopUp]: 20 }, color: "#9CA3AF" }} />
+                  </InputAdornment>
+                ),
+              }}
               sx={fieldSx}
               {...register("firstName", { required: t("candidate_form.validation.first_name_required") })}
             />
@@ -271,7 +325,13 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
               disabled={loading}
               error={!!errors.lastName}
               helperText={errors.lastName?.message}
-              InputProps={{ startAdornment: <InputAdornment position="start"><PersonIcon sx={{ fontSize: 20, color: "#9CA3AF" }} /></InputAdornment> }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start" sx={{ mr: { xs: -0.25, sm: -0.25, [registerMq.desktopUp]: 0 } }}>
+                    <PersonIcon sx={{ fontSize: { xs: 18, sm: 19, md: 19.5, [registerMq.desktopUp]: 20 }, color: "#9CA3AF" }} />
+                  </InputAdornment>
+                ),
+              }}
               sx={fieldSx}
               {...register("lastName", { required: t("candidate_form.validation.last_name_required") })}
             />
@@ -286,7 +346,13 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
               disabled={loading || !!invitationEmail}
               error={!!errors.email}
               helperText={invitationEmail ? t("candidate_form.email_prefilled") : errors.email?.message}
-              InputProps={{ startAdornment: <InputAdornment position="start"><EmailIcon sx={{ fontSize: 20, color: "#9CA3AF" }} /></InputAdornment> }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start" sx={{ mr: { xs: -0.25, sm: -0.25, [registerMq.desktopUp]: 0 } }}>
+                    <EmailIcon sx={{ fontSize: { xs: 18, sm: 19, md: 19.5, [registerMq.desktopUp]: 20 }, color: "#9CA3AF" }} />
+                  </InputAdornment>
+                ),
+              }}
               sx={fieldSx}
               {...register("email", {
                 required: t("candidate_form.validation.email_required"),
@@ -302,7 +368,13 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
               disabled={loading}
               error={!!errors.phone}
               helperText={errors.phone?.message}
-              InputProps={{ startAdornment: <InputAdornment position="start"><PhoneIcon sx={{ fontSize: 20, color: "#9CA3AF" }} /></InputAdornment> }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start" sx={{ mr: { xs: -0.25, sm: -0.25, [registerMq.desktopUp]: 0 } }}>
+                    <PhoneIcon sx={{ fontSize: { xs: 18, sm: 19, md: 19.5, [registerMq.desktopUp]: 20 }, color: "#9CA3AF" }} />
+                  </InputAdornment>
+                ),
+              }}
               sx={fieldSx}
               {...register("phone", {
                 required: t("candidate_form.validation.phone_required"),
@@ -455,24 +527,69 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
 
       {/* STEP 2 – OTP */}
       {step === 2 && (
-        <Box sx={{ mb: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, bgcolor: `${ACCENT}0A`, border: `1px solid ${ACCENT}22`, borderRadius: "12px", px: 2, py: 1.5, mb: 3 }}>
-            <EmailIcon sx={{ fontSize: 18, color: ACCENT, flexShrink: 0 }} />
-            <Box>
-              <Typography sx={{ fontSize: "0.78rem", color: "#6B7280", fontFamily: "Poppins" }}>
+        <Box sx={{ mb: { xs: 1, sm: 1, [registerMq.desktopUp]: 2 } }}>
+          <Box sx={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: { xs: 1, sm: 1, [registerMq.desktopUp]: 1.5 },
+            bgcolor: `${ACCENT}0A`,
+            border: `1px solid ${ACCENT}22`,
+            borderRadius: { xs: "11px", sm: "11px", [registerMq.desktopUp]: "12px" },
+            px: { xs: 1.35, sm: 1.35, [registerMq.desktopUp]: 2 },
+            py: { xs: 1.1, sm: 1.1, [registerMq.desktopUp]: 1.5 },
+            mb: { xs: 2, sm: 2, [registerMq.desktopUp]: 3 },
+            minWidth: 0,
+          }}>
+            <EmailIcon sx={{ fontSize: { xs: 18, sm: 18, [registerMq.desktopUp]: 18 }, color: ACCENT, flexShrink: 0, mt: 0.15 }} />
+            <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Typography sx={{ fontSize: { xs: "0.72rem", sm: "0.74rem", md: "0.76rem", [registerMq.desktopUp]: "0.78rem" }, color: "#6B7280", fontFamily: "Poppins" }}>
                 {t("candidate_form.code_sent_to")}
               </Typography>
-              <Typography sx={{ fontSize: "0.88rem", color: "#0F172A", fontFamily: "Poppins", fontWeight: 700 }}>
+              <Typography sx={{
+                fontSize: { xs: "0.84rem", sm: "0.86rem", md: "0.87rem", [registerMq.desktopUp]: "0.88rem" },
+                color: "#0F172A",
+                fontFamily: "Poppins",
+                fontWeight: 700,
+                overflowWrap: "anywhere",
+                wordBreak: "break-word",
+                lineHeight: 1.3,
+              }}>
                 {savedEmail}
               </Typography>
             </Box>
           </Box>
 
-          <Stack direction="row" spacing={1.5} justifyContent="center">
+          <Stack
+            direction="row"
+            justifyContent="center"
+            sx={{
+              width: "100%",
+              maxWidth: { xs: "100%", sm: "100%", [registerMq.desktopUp]: 380 },
+              mx: "auto",
+              gap: { xs: 0.55, sm: 0.55, [registerMq.desktopUp]: 1, lg: 1.5 },
+            }}
+          >
             {otpCode.map((digit, index) => (
               <Box
                 key={index}
-                sx={{ width: 58, height: 68, borderRadius: "14px", border: `1.5px solid ${digit ? ACCENT : "#D1FAF5"}`, bgcolor: digit ? `${ACCENT}0C` : "#F8FFFE", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s", "&:focus-within": { borderColor: ACCENT, bgcolor: "#fff", boxShadow: `0 0 0 4px ${ACCENT}18` } }}
+                sx={{
+                  flex: "1 1 0",
+                  minWidth: { xs: 28, sm: 28, [registerMq.desktopUp]: 36 },
+                  maxWidth: { xs: 46, sm: 46, [registerMq.desktopUp]: 54 },
+                  height: { xs: 44, sm: 44, [registerMq.desktopUp]: 54, lg: 62 },
+                  borderRadius: { xs: "11px", sm: "11px", [registerMq.desktopUp]: "12px", lg: "14px" },
+                  border: `1.5px solid ${digit ? ACCENT : "#E2E8F0"}`,
+                  bgcolor: digit ? `${ACCENT}10` : "#FAFAFA",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "border-color 0.15s, background-color 0.15s",
+                  "&:focus-within": {
+                    borderColor: ACCENT,
+                    bgcolor: "#fff",
+                    boxShadow: `0 0 0 3px ${ACCENT}20`,
+                  },
+                }}
               >
                 <Box
                   component="input"
@@ -482,15 +599,34 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleOtpChange(index, e.target.value)}
                   onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => handleOtpKeyDown(index, e)}
                   onPaste={index === 0 ? (handleOtpPaste as any) : undefined}
-                  sx={{ width: "100%", height: "100%", border: "none", outline: "none", background: "transparent", textAlign: "center", fontSize: "1.6rem", fontWeight: 700, color: "#0F172A", fontFamily: "Poppins", cursor: "text" }}
+                  sx={{
+                    width: "100%",
+                    height: "100%",
+                    border: "none",
+                    outline: "none",
+                    background: "transparent",
+                    textAlign: "center",
+                    fontSize: { xs: "1.15rem", sm: "1.22rem", md: "1.28rem", [registerMq.desktopUp]: "1.35rem", lg: "1.55rem" },
+                    fontWeight: 700,
+                    color: "#0F172A",
+                    fontFamily: "Poppins",
+                    minWidth: 0,
+                    cursor: "text",
+                  }}
                 />
               </Box>
             ))}
           </Stack>
 
           {(isExpired || isRunning) && (
-            <Box sx={{ textAlign: "center", mt: 1.5 }}>
-              <Typography sx={{ fontSize: "0.8rem", fontFamily: "Poppins", fontWeight: 500, color: secondsLeft > 60 ? "#9CA3AF" : secondsLeft > 0 ? "#F59E0B" : "#EF4444", transition: "color 0.3s" }}>
+            <Box sx={{ textAlign: "center", mt: { xs: 1, sm: 1, [registerMq.desktopUp]: 1.5 } }}>
+              <Typography sx={{
+                fontSize: { xs: "0.74rem", sm: "0.77rem", md: "0.79rem", [registerMq.desktopUp]: "0.8rem" },
+                fontFamily: "Poppins",
+                fontWeight: 500,
+                color: secondsLeft > 60 ? "#9CA3AF" : secondsLeft > 0 ? "#F59E0B" : "#EF4444",
+                transition: "color 0.3s",
+              }}>
                 {secondsLeft > 0
                   ? t("candidate_form.code_expires", { time: formatTimeLeft(secondsLeft) })
                   : t("candidate_form.code_expired")}
@@ -504,7 +640,7 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
             disabled={loading || isExpired || otpCode.join("").length < CODE_LENGTH}
             endIcon={!loading && <ArrowForwardIcon sx={{ fontSize: 18 }} />}
             startIcon={loading ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : undefined}
-            sx={{ ...submitBtnSx, mt: 3 }}
+            sx={{ ...submitBtnSx, mt: { xs: 2, sm: 2, [registerMq.desktopUp]: 3 } }}
           >
             {loading ? t("candidate_form.btn_creating") : t("candidate_form.btn_verify")}
           </Button>
