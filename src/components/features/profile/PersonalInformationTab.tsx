@@ -1,31 +1,30 @@
 import React from 'react';
 import {
-  Box,
-  Card,
-  CardContent,
-  TextField,
-  Button,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
-  CircularProgress,
-  Alert,
-  Divider,
-  Typography,
-  SelectChangeEvent,
+  Box, TextField, Button, MenuItem, Select, FormControl,
+  InputLabel, CircularProgress, Alert, Divider, Typography, SelectChangeEvent,
 } from '@mui/material';
 import { UserProfile } from '@/types/profile';
-import {
-  experienceLevels,
-  countries,
-  languages,
-  timezones,
-  employmentTypes,
-  companySizes,
-  industries,
-} from '@/constants/profile';
+import { experienceLevels, countries, languages, timezones } from '@/constants/profile';
 import ProfilePictureSection from './ProfilePictureSection';
+import EditOutlined from '@mui/icons-material/EditOutlined';
+import SaveOutlined from '@mui/icons-material/SaveOutlined';
+import CloseOutlined from '@mui/icons-material/CloseOutlined';
+
+const T    = "#0D9488";
+const TBG  = "#F0FDFA";
+const TBRD = "#99F6E4";
+const NAVY = "#0D1B2A";
+
+const fieldSx = {
+  '& .MuiOutlinedInput-root': {
+    borderRadius: "10px",
+    fontSize: "0.85rem",
+    '&.Mui-focused fieldset': { borderColor: T },
+    '&:hover fieldset': { borderColor: T },
+  },
+  '& .MuiInputLabel-root.Mui-focused': { color: T },
+  '& .MuiInputLabel-root': { fontSize: "0.85rem" },
+};
 
 interface PersonalInformationTabProps {
   profile: UserProfile;
@@ -44,364 +43,107 @@ interface PersonalInformationTabProps {
 }
 
 const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
-  profile,
-  isEditing,
-  loading,
-  saveSuccess,
-  error,
-  uploadingImage,
-  fieldErrors = {},
-  onInputChange,
-  onSelectChange,
-  onImageUpload,
-  onSave,
-  onCancel,
-  onEditToggle,
+  profile, isEditing, loading, saveSuccess, error, uploadingImage, fieldErrors = {},
+  onInputChange, onSelectChange, onImageUpload, onSave, onCancel, onEditToggle,
 }) => {
-  const fieldSx = {
-    '& .MuiOutlinedInput-root': {
-      '&.Mui-focused fieldset': {
-        borderColor: '#8310FF',
-      },
-    },
-    '& .MuiInputLabel-root.Mui-focused': {
-      color: '#8310FF',
-    },
-  };
-
-  const selectSx = {
-    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-      borderColor: '#8310FF',
-    },
-  };
-
-  // For company profiles, wait until company name is loaded
-  const isCompanyProfile = profile.profileType === 'Company';
-  const isLoadingCompanyData = isCompanyProfile && loading && !profile.name && !profile.companyName;
-  const isCandidateLoadingData = !isCompanyProfile && loading && !profile.username;
+  const isLoading = loading && !profile.firstName && !profile.username;
 
   return (
-    <Card sx={{ borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.08)', mb: 3 }}>
-      <CardContent sx={{ p: 4 }}>
-        {(isLoadingCompanyData || isCandidateLoadingData) ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px' }}>
-            <CircularProgress sx={{ color: '#8310FF' }} />
+    <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+      {/* Header */}
+      <Box sx={{ px: 2.5, py: 2, borderBottom: "1px solid #F1F5F9", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box>
+          <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", color: NAVY }}>Personal Information</Typography>
+          <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8", mt: 0.25 }}>Manage your profile details and preferences</Typography>
+        </Box>
+        {!isEditing ? (
+          <Button size="small" startIcon={<EditOutlined sx={{ fontSize: "14px !important" }} />} onClick={onEditToggle}
+            sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.75rem", color: T, bgcolor: TBG, border: `1px solid ${TBRD}`, borderRadius: "8px", px: 1.5, "&:hover": { bgcolor: "#CCFBF1" } }}>
+            Edit
+          </Button>
+        ) : (
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button size="small" startIcon={<CloseOutlined sx={{ fontSize: "14px !important" }} />} onClick={onCancel}
+              sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.75rem", color: "#6B7280", bgcolor: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "8px", px: 1.5 }}>
+              Cancel
+            </Button>
+            <Button size="small" startIcon={loading ? undefined : <SaveOutlined sx={{ fontSize: "14px !important" }} />} onClick={onSave} disabled={loading}
+              sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.75rem", color: "#fff", bgcolor: T, borderRadius: "8px", px: 1.5, "&:hover": { bgcolor: "#0F766E" } }}>
+              {loading ? <CircularProgress size={14} color="inherit" /> : "Save"}
+            </Button>
+          </Box>
+        )}
+      </Box>
+
+      <Box sx={{ p: 2.5 }}>
+        {isLoading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+            <CircularProgress sx={{ color: T }} size={28} />
           </Box>
         ) : (
           <>
-            {/* Header */}
-            <Box sx={{ backgroundColor: 'rgba(131, 16, 255, 0.04)', p: 3, borderRadius: 2, mb: 4 }}>
-              <Typography variant="h5" sx={{ fontWeight: 700, color: '#1a1a1a', mb: 0.5 }}>
-                {profile.profileType === 'Company' ? 'Company Information' : 'Personal Information'}
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#6b7280' }}>
-                {profile.profileType === 'Company'
-                  ? 'Manage your company profile and business details'
-                  : 'Manage your profile details and preferences'
-                }
-              </Typography>
+            {saveSuccess && <Alert severity="success" sx={{ mb: 2, borderRadius: "10px", fontSize: "0.8rem" }}>Profile updated successfully!</Alert>}
+            {error && <Alert severity="error" sx={{ mb: 2, borderRadius: "10px", fontSize: "0.8rem" }}>{error}</Alert>}
+
+            <ProfilePictureSection
+              profile={profile}
+              uploadingImage={uploadingImage}
+              isEditing={isEditing}
+              onImageUpload={onImageUpload}
+              onEditClick={onEditToggle}
+            />
+
+            <Divider sx={{ my: 2.5 }} />
+
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
+              <TextField label="Username" value={profile.username || ""} disabled fullWidth sx={fieldSx} />
+              <TextField label="Email" value={profile.email || ""} disabled fullWidth sx={fieldSx} />
+              <TextField label="First Name" value={profile.firstName || ""} onChange={e => onInputChange("firstName", e.target.value)} disabled={!isEditing} fullWidth sx={fieldSx} />
+              <TextField label="Last Name" value={profile.lastName || ""} onChange={e => onInputChange("lastName", e.target.value)} disabled={!isEditing} fullWidth sx={fieldSx} />
+
+              <FormControl fullWidth disabled={!isEditing} sx={fieldSx}>
+                <InputLabel>Gender</InputLabel>
+                <Select value={profile.gender || ""} onChange={e => onSelectChange(e, "gender")} label="Gender">
+                  <MenuItem value="Male">Male</MenuItem>
+                  <MenuItem value="Female">Female</MenuItem>
+                  <MenuItem value="Prefer not to say">Prefer not to say</MenuItem>
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth disabled={!isEditing} sx={fieldSx}>
+                <InputLabel>Country</InputLabel>
+                <Select value={profile.country || ""} onChange={e => onSelectChange(e, "country")} label="Country">
+                  {countries.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth disabled={!isEditing} sx={fieldSx}>
+                <InputLabel>Language</InputLabel>
+                <Select value={profile.language || ""} onChange={e => onSelectChange(e, "language")} label="Language">
+                  {languages.map(l => <MenuItem key={l} value={l}>{l}</MenuItem>)}
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth disabled={!isEditing} sx={fieldSx}>
+                <InputLabel>Time Zone</InputLabel>
+                <Select value={profile.timezone || ""} onChange={e => onSelectChange(e, "timezone")} label="Time Zone">
+                  {timezones.map(tz => <MenuItem key={tz} value={tz}>{tz}</MenuItem>)}
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth disabled={!isEditing} sx={fieldSx}>
+                <InputLabel>Experience Level</InputLabel>
+                <Select value={profile.requiredExperienceLevel || ""} onChange={e => onSelectChange(e, "requiredExperienceLevel")} label="Experience Level">
+                  {experienceLevels.map(l => <MenuItem key={l} value={l}>{l}</MenuItem>)}
+                </Select>
+              </FormControl>
+
+              <TextField label="Target Role" value={profile.targetRole || ""} onChange={e => onInputChange("targetRole", e.target.value)} disabled={!isEditing} fullWidth placeholder="e.g., Software Engineer" sx={fieldSx} />
             </Box>
-
-            {saveSuccess && (
-              <Alert severity="success" sx={{ mb: 3 }}>
-                Profile updated successfully!
-              </Alert>
-            )}
-
-            {error && (
-              <Alert severity="error" sx={{ mb: 3 }}>
-                {error}
-              </Alert>
-            )}
-
-            {/* Only show content when not in initial loading state */}
-            {(!loading || profile.firstName || profile.name || profile.companyName) && (
-              <>
-                {/* Profile Picture Section */}
-                <ProfilePictureSection
-                  profile={profile}
-                  uploadingImage={uploadingImage}
-                  isEditing={isEditing}
-                  onImageUpload={onImageUpload}
-                  onEditClick={onEditToggle}
-                />
-
-                <Divider sx={{ my: 3 }} />
-
-                {/* Form Fields - Different for Candidate vs Company */}
-                {profile.profileType === 'Candidate' ? (
-                  // Candidate Fields
-                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
-                    <TextField
-                      label="Username"
-                      value={profile.username}
-                      disabled={true}
-                      fullWidth
-                      sx={fieldSx}
-                    />
-
-                    <TextField
-                      label="Email"
-                      value={profile.email}
-                      disabled={true}
-                      fullWidth
-                      type="email"
-                      sx={fieldSx}
-                    />
-
-                    <TextField
-                      label="First Name"
-                      value={profile.firstName}
-                      onChange={(e) => onInputChange('firstName', e.target.value)}
-                      disabled={!isEditing}
-                      fullWidth
-                      sx={fieldSx}
-                    />
-
-                    <TextField
-                      label="Last Name"
-                      value={profile.lastName}
-                      onChange={(e) => onInputChange('lastName', e.target.value)}
-                      disabled={!isEditing}
-                      fullWidth
-                      sx={fieldSx}
-                    />
-
-                    <FormControl fullWidth disabled={!isEditing}>
-                      <InputLabel>Gender</InputLabel>
-                      <Select
-                        value={profile.gender}
-                        onChange={(e) => onSelectChange(e, 'gender')}
-                        label="Gender"
-                        sx={selectSx}
-                      >
-                        <MenuItem value="Male">Male</MenuItem>
-                        <MenuItem value="Female">Female</MenuItem>
-                        <MenuItem value="Prefer not to say">Prefer not to say</MenuItem>
-                      </Select>
-                    </FormControl>
-
-                    <FormControl fullWidth disabled={!isEditing}>
-                      <InputLabel>Country</InputLabel>
-                      <Select
-                        value={profile.country}
-                        onChange={(e) => onSelectChange(e, 'country')}
-                        label="Country"
-                        sx={selectSx}
-                      >
-                        {countries.map((country) => (
-                          <MenuItem key={country} value={country}>
-                            {country}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-
-                    <FormControl fullWidth disabled={!isEditing}>
-                      <InputLabel>Language</InputLabel>
-                      <Select
-                        value={profile.language}
-                        onChange={(e) => onSelectChange(e, 'language')}
-                        label="Language"
-                        sx={selectSx}
-                      >
-                        {languages.map((lang) => (
-                          <MenuItem key={lang} value={lang}>
-                            {lang}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-
-                    <FormControl fullWidth disabled={!isEditing}>
-                      <InputLabel>Time Zone</InputLabel>
-                      <Select
-                        value={profile.timezone}
-                        onChange={(e) => onSelectChange(e, 'timezone')}
-                        label="Time Zone"
-                        sx={selectSx}
-                      >
-                        {timezones.map((tz) => (
-                          <MenuItem key={tz} value={tz}>
-                            {tz}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-
-                    <FormControl fullWidth disabled={!isEditing}>
-                      <InputLabel>Experience Level</InputLabel>
-                      <Select
-                        value={profile.requiredExperienceLevel}
-                        onChange={(e) => onSelectChange(e, 'requiredExperienceLevel')}
-                        label="Experience Level"
-                        sx={selectSx}
-                      >
-                        {experienceLevels.map((level) => (
-                          <MenuItem key={level} value={level}>
-                            {level}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-
-                    <TextField
-                      label="Target Role"
-                      value={profile.targetRole}
-                      onChange={(e) => onInputChange('targetRole', e.target.value)}
-                      disabled={!isEditing}
-                      fullWidth
-                      placeholder="e.g., Software Engineer, Product Manager"
-                      sx={fieldSx}
-                    />
-                  </Box>
-                ) : (
-                  // Company Fields
-                  <>
-                    {/* Debug logging */}
-                    {console.log('🎨 [PersonalInformationTab] Rendering company fields:', {
-                      name: profile.name,
-                      companyName: profile.companyName,
-                      displayValue: profile.name || profile.companyName,
-                    })}
-                    {/* Editable Company Fields */}
-                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
-                      <TextField
-                        label="Company Name"
-                        value={profile.name || profile.companyName || ''}
-                        onChange={(e) => {
-                          onInputChange('name', e.target.value);
-                          onInputChange('companyName', e.target.value);
-                        }}
-                        disabled={!isEditing}
-                        fullWidth
-                        required
-                        error={!!fieldErrors.name || !!fieldErrors.companyName}
-                        helperText={fieldErrors.name || fieldErrors.companyName || ''}
-                        slotProps={{ htmlInput: { minLength: 2, maxLength: 100 } }}
-                        sx={{
-                          gridColumn: { xs: '1 / -1', sm: 'span 2' },
-                          ...fieldSx,
-                        }}
-                      />
-
-                      <TextField
-                        label="Company Email"
-                        value={profile.email}
-                        disabled={true}
-                        fullWidth
-                        type="email"
-                        sx={{
-                          gridColumn: { xs: '1 / -1', sm: 'span 2' },
-                          ...fieldSx,
-                        }}
-                      />
-{/* 
-                      <FormControl fullWidth disabled={!isEditing} sx={fieldSx}>
-                        <InputLabel>Industry</InputLabel>
-                        <Select
-                          value={profile.industry || ''}
-                          onChange={(e) => onSelectChange(e, 'industry')}
-                          label="Industry"
-                        >
-                          {industries.map((ind) => (
-                            <MenuItem key={ind} value={ind}>
-                              {ind}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-
-                      <FormControl fullWidth disabled={!isEditing} sx={fieldSx}>
-                        <InputLabel>Company Size</InputLabel>
-                        <Select
-                          value={profile.size || profile.companySize || ''}
-                          onChange={(e) => {
-                            onSelectChange(e, 'size');
-                            onSelectChange(e, 'companySize');
-                          }}
-                          label="Company Size"
-                        >
-                          {companySizes.map((size) => (
-                            <MenuItem key={size} value={size}>
-                              {size}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl> */}
-
-                      {/* <FormControl fullWidth disabled={!isEditing} sx={fieldSx}>
-                        <InputLabel>Employment Type</InputLabel>
-                        <Select
-                          value={profile.employmentType || 'Remote'}
-                          onChange={(e) => onSelectChange(e, 'employmentType')}
-                          label="Employment Type"
-                        >
-                          {employmentTypes.map((type) => (
-                            <MenuItem key={type} value={type}>
-                              {type}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl> */}
-
-                      <FormControl fullWidth disabled={!isEditing} sx={{ gridColumn: { xs: '1 / -1', sm: 'span 2' }, ...fieldSx }}>
-                        <InputLabel>Required Experience Level</InputLabel>
-                        <Select
-                          value={profile.requiredExperienceLevel || 'Mid Level'}
-                          onChange={(e) => onSelectChange(e, 'requiredExperienceLevel')}
-                          label="Required Experience Level"
-                        >
-                          {experienceLevels.map((level) => (
-                            <MenuItem key={level} value={level}>
-                              {level}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Box>
-                  </>
-                )}
-
-                {isEditing && (
-                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>
-                    <Button
-                      variant="outlined"
-                      onClick={onCancel}
-                      sx={{
-                        textTransform: 'none',
-                        borderColor: '#d1d5db',
-                        color: '#6b7280',
-                        '&:hover': {
-                          borderColor: '#9ca3af',
-                          backgroundColor: 'rgba(107, 114, 128, 0.04)',
-                        },
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      variant="contained"
-                      onClick={onSave}
-                      disabled={loading}
-                      sx={{
-                        textTransform: 'none',
-                        backgroundColor: '#8310FF',
-                        '&:hover': {
-                          backgroundColor: '#6a0dd4',
-                        },
-                      }}
-                    >
-                      {loading ? <CircularProgress size={24} color="inherit" /> : 'Save Changes'}
-                    </Button>
-                  </Box>
-                )}
-              </>
-            )}
           </>
         )}
-      </CardContent>
-    </Card>
+      </Box>
+    </Box>
   );
 };
 

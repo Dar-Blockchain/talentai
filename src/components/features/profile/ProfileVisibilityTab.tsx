@@ -1,16 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Switch,
-  Button,
-  Alert,
-  CircularProgress,
-  Divider,
-  IconButton,
-  Tooltip,
+  Box, Typography, Switch, Button, Alert, CircularProgress,
+  Divider, IconButton, Tooltip,
 } from '@mui/material';
 import {
   Visibility as VisibilityIcon,
@@ -21,6 +12,11 @@ import {
 } from '@mui/icons-material';
 import { useToast } from '@/hooks/useToast';
 
+const T    = "#0D9488";
+const TBG  = "#F0FDFA";
+const TBRD = "#99F6E4";
+const NAVY = "#0D1B2A";
+
 interface ProfileVisibilityTabProps {
   userId: string;
   isPublicProfile: boolean;
@@ -29,29 +25,19 @@ interface ProfileVisibilityTabProps {
 }
 
 const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({
-  userId,
-  isPublicProfile,
-  onToggleVisibility,
-  hasMembership = false,
+  userId, isPublicProfile, onToggleVisibility, hasMembership = false,
 }) => {
   const { showToast } = useToast();
   const [isPublic, setIsPublic] = useState(isPublicProfile);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState<string | null>(null);
+  const [success,  setSuccess]  = useState<string | null>(null);
+  const [copied,   setCopied]   = useState(false);
 
-  // Update local state when prop changes
-  // If user has membership, profile must always be private
   useEffect(() => {
-    if (hasMembership) {
-      setIsPublic(false);
-    } else {
-      setIsPublic(isPublicProfile);
-    }
+    setIsPublic(hasMembership ? false : isPublicProfile);
   }, [isPublicProfile, hasMembership]);
 
-  // Generate public profile URL
   const publicProfileUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/profile/candidate/${userId}`
     : '';
@@ -60,23 +46,19 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({
     setLoading(true);
     setError(null);
     setSuccess(null);
-
     try {
       const newVisibility = !isPublic;
       await onToggleVisibility(newVisibility);
       setIsPublic(newVisibility);
-
-      const successMessage = newVisibility
+      const msg = newVisibility
         ? 'Your profile is now public and can be viewed by anyone with the link'
         : 'Your profile is now private and hidden from public view';
-
-      setSuccess(successMessage);
-      showToast({ message: successMessage, severity: 'success' });
+      setSuccess(msg);
+      showToast({ message: msg, severity: 'success' });
     } catch (err: any) {
-      const errorMessage = err.message || 'Failed to update profile visibility';
-      setError(errorMessage);
-      console.error('Error updating visibility:', err);
-      showToast({ message: errorMessage, severity: 'error' });
+      const msg = err.message || 'Failed to update profile visibility';
+      setError(msg);
+      showToast({ message: msg, severity: 'error' });
     } finally {
       setLoading(false);
     }
@@ -94,265 +76,131 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({
   }, [publicProfileUrl]);
 
   return (
-    <Card sx={{ borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.08)', mb: 3 }}>
-      <CardContent sx={{ p: 4 }}>
-        {/* Header */}
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h5" sx={{ fontWeight: 700, color: '#1a1a1a', mb: 0.5 }}>
-            Public Profile Visibility
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#64748b' }}>
-            Control who can view your profile information
-          </Typography>
-        </Box>
+    <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+      {/* Header */}
+      <Box sx={{ px: 2.5, py: 2, borderBottom: "1px solid #F1F5F9" }}>
+        <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", color: NAVY }}>Public Profile Visibility</Typography>
+        <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8", mt: 0.25 }}>Control who can view your profile information</Typography>
+      </Box>
 
-        {/* Membership Notice */}
+      <Box sx={{ p: 2.5 }}>
         {hasMembership && (
-          <Alert
-            severity="info"
-            sx={{
-              mb: 3,
-              borderRadius: 2,
-              backgroundColor: 'rgba(131, 16, 255, 0.08)',
-              border: '1px solid rgba(131, 16, 255, 0.2)',
-              '& .MuiAlert-icon': {
-                color: '#8310FF',
-              },
-            }}
-          >
-            <Typography variant="body2" sx={{ fontWeight: 500, color: '#1a1a1a' }}>
-              Your profile visibility is managed by your company membership.
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#64748b', mt: 0.5 }}>
-              As a member of a company, your profile is automatically set to private and cannot be changed.
-            </Typography>
+          <Alert severity="info" sx={{ mb: 2.5, borderRadius: "10px", fontSize: "0.8rem", bgcolor: TBG, border: `1px solid ${TBRD}`, "& .MuiAlert-icon": { color: T } }}>
+            <Typography sx={{ fontWeight: 600, fontSize: "0.82rem", color: NAVY }}>Visibility managed by your company membership.</Typography>
+            <Typography sx={{ fontSize: "0.78rem", color: "#6B7280", mt: 0.25 }}>As a company member, your profile is automatically set to private.</Typography>
           </Alert>
         )}
 
-        {/* Error Alert */}
         {error && (
-          <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 3, borderRadius: 2 }}>
-            {error}
-          </Alert>
+          <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2, borderRadius: "10px", fontSize: "0.8rem" }}>{error}</Alert>
         )}
-
-        {/* Success Alert */}
         {success && (
-          <Alert severity="success" onClose={() => setSuccess(null)} sx={{ mb: 3, borderRadius: 2 }}>
-            {success}
-          </Alert>
+          <Alert severity="success" onClose={() => setSuccess(null)} sx={{ mb: 2, borderRadius: "10px", fontSize: "0.8rem" }}>{success}</Alert>
         )}
 
-        {/* Main Visibility Toggle */}
-        <Card
-          sx={{
-            mb: 3,
-            borderRadius: 2,
-            border: '1px solid #e5e7eb',
-            boxShadow: 'none',
-            background: isPublic
-              ? 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)'
-              : 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-          }}
-        >
-          <CardContent sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
-                <Box
-                  sx={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: 2,
-                    background: isPublic
-                      ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                      : 'linear-gradient(135deg, #64748b 0%, #475569 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {isPublic ? (
-                    <VisibilityIcon sx={{ fontSize: 28, color: 'white' }} />
-                  ) : (
-                    <VisibilityOffIcon sx={{ fontSize: 28, color: 'white' }} />
-                  )}
-                </Box>
-                <Box sx={{ flex: 1 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600, color: '#1a1a1a', mb: 0.5 }}>
-                    {isPublic ? 'Profile is Public' : 'Profile is Private'}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.9rem' }}>
-                    {isPublic
-                      ? 'Anyone with the link can view your profile information'
-                      : 'Your profile is hidden and cannot be viewed publicly'}
-                  </Typography>
-                </Box>
-              </Box>
-              <Switch
-                checked={isPublic}
-                onChange={handleToggleVisibility}
-                disabled={loading || hasMembership}
-                sx={{
-                  '& .MuiSwitch-switchBase.Mui-checked': {
-                    color: '#10b981',
-                    '&:hover': {
-                      backgroundColor: 'rgba(16, 185, 129, 0.08)',
-                    },
-                  },
-                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                    backgroundColor: '#10b981',
-                  },
-                }}
-              />
-            </Box>
-
+        {/* Toggle card */}
+        <Box sx={{
+          p: 2, mb: 2.5, borderRadius: "12px",
+          border: `1px solid ${isPublic ? TBRD : "#E5E7EB"}`,
+          bgcolor: isPublic ? TBG : "#F9FAFB",
+          display: "flex", alignItems: "center", gap: 2,
+        }}>
+          <Box sx={{
+            width: 44, height: 44, borderRadius: "12px", flexShrink: 0,
+            bgcolor: isPublic ? T : "#94A3B8",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            {isPublic
+              ? <VisibilityIcon    sx={{ fontSize: 22, color: "#fff" }} />
+              : <VisibilityOffIcon sx={{ fontSize: 22, color: "#fff" }} />
+            }
+          </Box>
+          <Box sx={{ flex: 1 }}>
+            <Typography sx={{ fontWeight: 700, fontSize: "0.88rem", color: NAVY }}>
+              {isPublic ? "Profile is Public" : "Profile is Private"}
+            </Typography>
+            <Typography sx={{ fontSize: "0.75rem", color: "#6B7280", mt: 0.25 }}>
+              {isPublic
+                ? "Anyone with the link can view your profile"
+                : "Your profile is hidden from public view"}
+            </Typography>
             {loading && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2 }}>
-                <CircularProgress size={16} sx={{ color: '#8310FF' }} />
-                <Typography variant="body2" sx={{ color: '#64748b' }}>
-                  Updating visibility...
-                </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.75 }}>
+                <CircularProgress size={12} sx={{ color: T }} />
+                <Typography sx={{ fontSize: "0.72rem", color: "#6B7280" }}>Updating...</Typography>
               </Box>
             )}
-          </CardContent>
-        </Card>
+          </Box>
+          <Switch
+            checked={isPublic}
+            onChange={handleToggleVisibility}
+            disabled={loading || hasMembership}
+            sx={{
+              "& .MuiSwitch-switchBase.Mui-checked": { color: T, "&:hover": { bgcolor: `${T}14` } },
+              "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { bgcolor: T },
+            }}
+          />
+        </Box>
 
-        <Divider sx={{ my: 3 }} />
+        <Divider sx={{ mb: 2.5 }} />
 
-        {/* Public Profile URL Section */}
-        <Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, color: '#1a1a1a' }}>
-              Public Profile URL
-            </Typography>
+        {/* URL section */}
+        <Box sx={{ mb: 2.5 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 1.25 }}>
+            <Typography sx={{ fontWeight: 700, fontSize: "0.88rem", color: NAVY }}>Public Profile URL</Typography>
             <Tooltip title="Share this link to allow others to view your public profile">
               <IconButton size="small">
-                <InfoIcon sx={{ fontSize: 18, color: '#64748b' }} />
+                <InfoIcon sx={{ fontSize: 15, color: "#CBD5E1" }} />
               </IconButton>
             </Tooltip>
           </Box>
 
-          <Box
-            sx={{
-              p: 2,
-              borderRadius: 2,
-              backgroundColor: '#f8fafc',
-              border: '1px solid #e5e7eb',
-              mb: 2,
-            }}
-          >
-            <Typography
-              variant="body2"
-              sx={{
-                color: isPublic ? '#1a1a1a' : '#94a3b8',
-                fontFamily: 'monospace',
-                wordBreak: 'break-all',
-                fontSize: '0.9rem',
-              }}
-            >
+          <Box sx={{ p: 1.5, borderRadius: "10px", bgcolor: "#F9FAFB", border: "1px solid #E5E7EB", mb: 1.5 }}>
+            <Typography sx={{ fontSize: "0.78rem", fontFamily: "monospace", color: isPublic ? NAVY : "#CBD5E1", wordBreak: "break-all" }}>
               {publicProfileUrl}
             </Typography>
           </Box>
 
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button
-              variant="outlined"
-              startIcon={<ContentCopyIcon />}
-              onClick={handleCopyLink}
-              disabled={!isPublic}
-              sx={{
-                textTransform: 'none',
-                fontWeight: 600,
-                borderRadius: 2,
-                px: 3,
-                borderColor: '#e5e7eb',
-                color: '#64748b',
-                '&:hover': {
-                  borderColor: '#8310FF',
-                  backgroundColor: 'rgba(131, 16, 255, 0.04)',
-                  color: '#8310FF',
-                },
-                '&.Mui-disabled': {
-                  borderColor: '#e5e7eb',
-                  color: '#cbd5e1',
-                },
-              }}
-            >
-              {copied ? 'Copied!' : 'Copy Link'}
+          <Box sx={{ display: "flex", gap: 1.5 }}>
+            <Button size="small" variant="outlined" startIcon={<ContentCopyIcon sx={{ fontSize: "14px !important" }} />}
+              onClick={handleCopyLink} disabled={!isPublic}
+              sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.75rem", borderRadius: "8px", px: 1.5, borderColor: "#E5E7EB", color: "#6B7280", "&:hover": { borderColor: T, bgcolor: TBG, color: T }, "&.Mui-disabled": { borderColor: "#F1F5F9", color: "#CBD5E1" } }}>
+              {copied ? "Copied!" : "Copy Link"}
             </Button>
-            <Button
-              variant="contained"
-              startIcon={<OpenInNewIcon />}
-              onClick={handleViewProfile}
-              disabled={!isPublic}
-              sx={{
-                textTransform: 'none',
-                fontWeight: 600,
-                borderRadius: 2,
-                color: 'white',
-                px: 3,
-                background: '#8310FF',
-                boxShadow: '0 4px 12px rgba(131, 16, 255, 0.3)',
-                '&:hover': {
-                  background: '#8310FF',
-                  boxShadow: '0 6px 16px rgba(131, 16, 255, 0.4)',
-                },
-                '&.Mui-disabled': {
-                  background: '#e2e8f0',
-                  color: '#94a3b8',
-                },
-              }}
-            >
-              View Public Profile
+            <Button size="small" variant="contained" startIcon={<OpenInNewIcon sx={{ fontSize: "14px !important" }} />}
+              onClick={handleViewProfile} disabled={!isPublic}
+              sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.75rem", borderRadius: "8px", px: 1.5, bgcolor: T, color: "#fff", "&:hover": { bgcolor: "#0F766E" }, "&.Mui-disabled": { bgcolor: "#F1F5F9", color: "#CBD5E1" } }}>
+              View Profile
             </Button>
           </Box>
         </Box>
 
-        <Divider sx={{ my: 3 }} />
+        <Divider sx={{ mb: 2.5 }} />
 
-        {/* Information Section */}
-        <Box
-          sx={{
-            p: 3,
-            borderRadius: 2,
-            backgroundColor: '#fffbeb',
-            border: '1px solid #fef3c7',
-          }}
-        >
-          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#92400e', mb: 1 }}>
-            Privacy Information
+        {/* Privacy info */}
+        <Box sx={{ p: 2, borderRadius: "12px", bgcolor: "#FFFBEB", border: "1px solid #FEF3C7" }}>
+          <Typography sx={{ fontWeight: 700, fontSize: "0.82rem", color: "#92400E", mb: 0.75 }}>Privacy Information</Typography>
+          <Typography sx={{ fontSize: "0.78rem", color: "#78350F", mb: 1, lineHeight: 1.6 }}>
+            When your profile is public, these details will be visible to anyone with the link:
           </Typography>
-          <Typography variant="body2" sx={{ color: '#78350f', mb: 2, lineHeight: 1.6 }}>
-            When your profile is public, the following information will be visible to anyone with the link:
-          </Typography>
-          <Box component="ul" sx={{ m: 0, pl: 3, color: '#78350f' }}>
-            <li>
-              <Typography variant="body2" sx={{ mb: 0.5 }}>
-                Profile picture and basic information (name, title, location)
-              </Typography>
-            </li>
-            <li>
-              <Typography variant="body2" sx={{ mb: 0.5 }}>
-                Skills and experience level
-              </Typography>
-            </li>
-            <li>
-              <Typography variant="body2" sx={{ mb: 0.5 }}>
-                Work preferences and education
-              </Typography>
-            </li>
-            <li>
-              <Typography variant="body2" sx={{ mb: 0.5 }}>
-                Public contact information (if provided)
-              </Typography>
-            </li>
+          <Box component="ul" sx={{ m: 0, pl: 2.5, color: "#78350F" }}>
+            {[
+              "Profile picture and basic information (name, title, location)",
+              "Skills and experience level",
+              "Work preferences and education",
+              "Public contact information (if provided)",
+            ].map(item => (
+              <li key={item}>
+                <Typography sx={{ fontSize: "0.78rem", mb: 0.4 }}>{item}</Typography>
+              </li>
+            ))}
           </Box>
-          <Typography variant="body2" sx={{ color: '#78350f', mt: 2, fontWeight: 500 }}>
-            Your email address and other sensitive information will never be publicly visible.
+          <Typography sx={{ fontSize: "0.78rem", color: "#78350F", mt: 1, fontWeight: 600 }}>
+            Your email and sensitive information are never publicly visible.
           </Typography>
         </Box>
-      </CardContent>
-    </Card>
+      </Box>
+    </Box>
   );
 };
 

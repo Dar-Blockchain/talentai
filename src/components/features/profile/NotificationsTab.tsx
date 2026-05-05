@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Card, CardContent, Typography, IconButton, Button, Chip, Tabs, Tab } from '@mui/material';
+import { Box, Typography, IconButton, Button, Chip, Tabs, Tab, CircularProgress } from '@mui/material';
 import {
   CheckCircle as CheckCircleIcon,
   Info as InfoIcon,
@@ -7,332 +7,214 @@ import {
   Error as ErrorIcon,
   AccessTime as AccessTimeIcon,
   MarkEmailRead as MarkEmailReadIcon,
-  Delete as DeleteIcon,
+  Archive as ArchiveIcon,
   Wifi as WifiIcon,
   WifiOff as WifiOffIcon,
-  Send as SendIcon,
-  Archive as ArchiveIcon,
 } from '@mui/icons-material';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '@/store/store';
 import {
-  createNotification,
   fetchArchivedNotifications,
   selectArchivedNotifications,
   selectArchivedLoading,
   selectArchivedCount,
-  selectNonArchivedCount
+  selectNonArchivedCount,
 } from '@/store/slices/notificationSlice';
-import NotificationSoundSettings from './NotificationSoundSettings';
+
+const T    = "#0D9488";
+const TBG  = "#F0FDFA";
+const TBRD = "#99F6E4";
+const NAVY = "#0D1B2A";
 
 interface NotificationsTabProps {
-  notifications?: any[]; // Keep for backwards compatibility but won't use it
+  notifications?: any[];
 }
 
 const NotificationsTab: React.FC<NotificationsTabProps> = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [activeTab, setActiveTab] = useState(0);
 
-  // Use real notifications from Socket.IO context
   const {
-    notifications,
-    unreadCount,
-    markAsRead,
-    markAllAsRead,
-    clearNotifications,
-    archive,
-    archiveAll,
+    notifications, unreadCount,
+    markAsRead, markAllAsRead,
+    archive, archiveAll,
     isConnected,
   } = useNotifications();
 
-  // Archived notifications from Redux
   const archivedNotifications = useSelector(selectArchivedNotifications);
-  const archivedLoading = useSelector(selectArchivedLoading);
-  const archivedCount = useSelector(selectArchivedCount);
-  const nonArchivedCount = useSelector(selectNonArchivedCount);
+  const archivedLoading       = useSelector(selectArchivedLoading);
+  const archivedCount         = useSelector(selectArchivedCount);
+  const nonArchivedCount      = useSelector(selectNonArchivedCount);
 
-  // Fetch archived notifications when switching to archived tab
   React.useEffect(() => {
-    if (activeTab === 1) {
-      dispatch(fetchArchivedNotifications());
-    }
+    if (activeTab === 1) dispatch(fetchArchivedNotifications());
   }, [activeTab, dispatch]);
 
-  const handleSendTestNotification = () => {
-    dispatch(createNotification({
-      type: 'success',
-      content: 'This is a test success notification! Everything is working perfectly. 🎉'
-    }));
-  };
-
-  const totalNotifications = notifications.length;
-  const unreadNotifications = unreadCount;
+  const totalNotifications    = notifications.length;
   const thisWeekNotifications = notifications.filter(n =>
     n.timestamp.includes('hour') || n.timestamp.includes('day') || n.timestamp.includes('days')
   ).length;
   const importantNotifications = notifications.filter(n => n.type === 'warning' || n.type === 'error').length;
 
   const getNotificationIcon = (type: string) => {
-    switch(type) {
-      case 'success': return <CheckCircleIcon />;
-      case 'warning': return <WarningIcon />;
-      case 'error': return <ErrorIcon />;
-      default: return <InfoIcon />;
+    switch (type) {
+      case 'success': return <CheckCircleIcon sx={{ fontSize: 18 }} />;
+      case 'warning': return <WarningIcon     sx={{ fontSize: 18 }} />;
+      case 'error':   return <ErrorIcon       sx={{ fontSize: 18 }} />;
+      default:        return <InfoIcon        sx={{ fontSize: 18 }} />;
     }
   };
 
   const getNotificationColor = (type: string) => {
-    switch(type) {
+    switch (type) {
       case 'success': return { bg: '#d1fae5', color: '#065f46', border: '#6ee7b7' };
       case 'warning': return { bg: '#fef3c7', color: '#92400e', border: '#fcd34d' };
-      case 'error': return { bg: '#fee2e2', color: '#991b1b', border: '#fca5a5' };
-      default: return { bg: '#dbeafe', color: '#1e40af', border: '#93c5fd' };
+      case 'error':   return { bg: '#fee2e2', color: '#991b1b', border: '#fca5a5' };
+      default:        return { bg: TBG,       color: T,         border: TBRD      };
     }
   };
 
   const displayNotifications = activeTab === 0 ? notifications : archivedNotifications;
-  const isLoading = activeTab === 1 && archivedLoading;
+  const isLoading            = activeTab === 1 && archivedLoading;
+
+  const statItems = [
+    { label: "Total",     value: totalNotifications,    color: T },
+    { label: "Unread",    value: unreadCount,           color: "#7C3AED" },
+    { label: "This Week", value: thisWeekNotifications, color: "#0891B2" },
+    { label: "Important", value: importantNotifications,color: "#D97706" },
+  ];
 
   return (
     <>
-      {/* Notification Sound Settings */}
-      <NotificationSoundSettings />
-
-      <Card sx={{ borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.08)', mb: 3 }}>
-        <CardContent sx={{ p: 4 }}>
+      <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", mb: 2 }}>
         {/* Header */}
-        <Box sx={{ backgroundColor: 'rgba(131, 16, 255, 0.04)', p: 3, borderRadius: 2, mb: 4 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-            <Box>
-              <Typography variant="h5" sx={{ fontWeight: 700, color: '#1a1a1a', mb: 0.5 }}>
-                Notification History
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#6b7280' }}>
-                View and manage all your notifications
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-              {/* Socket Connection Status */}
-              <Chip
-                icon={isConnected ? <WifiIcon /> : <WifiOffIcon />}
-                label={isConnected ? 'Connected' : 'Disconnected'}
-                size="small"
-                color={isConnected ? 'success' : 'error'}
-                sx={{ fontWeight: 600 }}
-              />
-              {/* Action Buttons - Only show for active tab */}
-              {activeTab === 0 && notifications.length > 0 && (
-                <>
-                  {/* Mark All As Read Button */}
-                  {unreadNotifications > 0 && (
-                    <Button
-                      size="small"
-                      startIcon={<MarkEmailReadIcon />}
-                      onClick={markAllAsRead}
-                      sx={{
-                        textTransform: 'none',
-                        color: '#8310FF',
-                        fontWeight: 600,
-                        '&:hover': {
-                          backgroundColor: 'rgba(131, 16, 255, 0.1)',
-                        },
-                      }}
-                    >
-                      Mark all as read
-                    </Button>
-                  )}
-                  {/* Archive All Button */}
-                  <Button
-                    size="small"
-                    startIcon={<ArchiveIcon />}
-                    onClick={archiveAll}
+        <Box sx={{ px: 2.5, py: 2, borderBottom: "1px solid #F1F5F9", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
+          <Box>
+            <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", color: NAVY }}>Notification History</Typography>
+            <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8", mt: 0.25 }}>View and manage all your notifications</Typography>
+          </Box>
+          <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
+            <Chip
+              icon={isConnected ? <WifiIcon sx={{ fontSize: "14px !important" }} /> : <WifiOffIcon sx={{ fontSize: "14px !important" }} />}
+              label={isConnected ? "Connected" : "Disconnected"}
+              size="small"
+              color={isConnected ? "success" : "error"}
+              sx={{ fontWeight: 600, fontSize: "0.72rem" }}
+            />
+            {activeTab === 0 && notifications.length > 0 && (
+              <>
+                {unreadCount > 0 && (
+                  <Button size="small" startIcon={<MarkEmailReadIcon sx={{ fontSize: "14px !important" }} />} onClick={markAllAsRead}
+                    sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.75rem", color: T, bgcolor: TBG, border: `1px solid ${TBRD}`, borderRadius: "8px", px: 1.5, "&:hover": { bgcolor: "#CCFBF1" } }}>
+                    Mark all read
+                  </Button>
+                )}
+                <Button size="small" startIcon={<ArchiveIcon sx={{ fontSize: "14px !important" }} />} onClick={archiveAll}
+                  sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.75rem", color: "#6B7280", bgcolor: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "8px", px: 1.5, "&:hover": { bgcolor: "#F3F4F6" } }}>
+                  Archive all
+                </Button>
+              </>
+            )}
+          </Box>
+        </Box>
+
+        <Box sx={{ p: 2.5 }}>
+          {/* Stats row */}
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 1.5, mb: 2.5 }}>
+            {statItems.map(({ label, value, color }) => (
+              <Box key={label} sx={{ textAlign: "center", p: 1.5, borderRadius: "12px", border: "1px solid #F1F5F9", bgcolor: "#FAFAFA" }}>
+                <Typography sx={{ fontWeight: 800, fontSize: "1.4rem", color, lineHeight: 1 }}>{value}</Typography>
+                <Typography sx={{ fontSize: "0.68rem", color: "#94A3B8", mt: 0.5, fontWeight: 600 }}>{label}</Typography>
+              </Box>
+            ))}
+          </Box>
+
+          {/* Tabs */}
+          <Box sx={{ borderBottom: "1px solid #F1F5F9", mb: 2 }}>
+            <Tabs
+              value={activeTab}
+              onChange={(_, v) => setActiveTab(v)}
+              sx={{
+                minHeight: 40,
+                "& .MuiTab-root": { textTransform: "none", fontWeight: 600, fontSize: "0.82rem", minHeight: 40, py: 0.5 },
+                "& .Mui-selected": { color: T },
+                "& .MuiTabs-indicator": { backgroundColor: T, height: 2 },
+              }}
+            >
+              <Tab label={`Active (${nonArchivedCount || notifications.length})`} />
+              <Tab label={`Archived (${archivedCount || archivedNotifications.length})`} />
+            </Tabs>
+          </Box>
+
+          {/* List */}
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+            {isLoading ? (
+              <Box sx={{ py: 6, textAlign: "center" }}>
+                <CircularProgress size={24} sx={{ color: T }} />
+              </Box>
+            ) : displayNotifications.length === 0 ? (
+              <Box sx={{ py: 6, textAlign: "center", border: "2px dashed #E5E7EB", borderRadius: "12px", bgcolor: "#FAFAFA" }}>
+                <Box sx={{ width: 56, height: 56, borderRadius: "50%", bgcolor: "#F1F5F9", display: "flex", alignItems: "center", justifyContent: "center", mx: "auto", mb: 1.5 }}>
+                  <InfoIcon sx={{ fontSize: 28, color: "#CBD5E1" }} />
+                </Box>
+                <Typography sx={{ fontWeight: 600, fontSize: "0.9rem", color: NAVY, mb: 0.5 }}>
+                  {activeTab === 0 ? "No notifications yet" : "No archived notifications"}
+                </Typography>
+                <Typography sx={{ fontSize: "0.78rem", color: "#94A3B8" }}>
+                  {activeTab === 0
+                    ? (isConnected ? "You're all caught up!" : "Connecting to notification service...")
+                    : "You haven't archived any notifications yet."}
+                </Typography>
+              </Box>
+            ) : (
+              displayNotifications.map((notification) => {
+                const colors = getNotificationColor(notification.type);
+                return (
+                  <Box
+                    key={notification.id}
+                    onClick={() => activeTab === 0 && !notification.isRead && markAsRead(notification.id)}
                     sx={{
-                      textTransform: 'none',
-                      color: '#6b7280',
-                      fontWeight: 600,
-                      '&:hover': {
-                        backgroundColor: 'rgba(107, 114, 128, 0.1)',
-                      },
+                      p: 2, borderRadius: "12px",
+                      border: `1px solid ${notification.isRead ? "#F1F5F9" : colors.border}`,
+                      bgcolor: notification.isRead ? "#FAFAFA" : colors.bg,
+                      display: "flex", gap: 1.5, alignItems: "flex-start",
+                      transition: "all 0.15s",
+                      cursor: activeTab === 0 && !notification.isRead ? "pointer" : "default",
+                      "&:hover": { boxShadow: "0 2px 8px rgba(0,0,0,0.06)" },
                     }}
                   >
-                    Archive all
-                  </Button>
-                </>
-              )}
-            </Box>
-          </Box>
-        </Box>
-
-        {/* Tabs */}
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-          <Tabs
-            value={activeTab}
-            onChange={(_, newValue) => setActiveTab(newValue)}
-            sx={{
-              '& .MuiTab-root': {
-                textTransform: 'none',
-                fontWeight: 600,
-                fontSize: '0.95rem',
-              },
-              '& .Mui-selected': {
-                color: '#8310FF',
-              },
-              '& .MuiTabs-indicator': {
-                backgroundColor: '#8310FF',
-              },
-            }}
-          >
-            <Tab label={`Active (${nonArchivedCount || notifications.length})`} />
-            <Tab label={`Archived (${archivedCount || archivedNotifications.length})`} />
-          </Tabs>
-        </Box>
-
-        {/* Notification Stats */}
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(4, 1fr)' }, gap: 2, mb: 4 }}>
-          <Box sx={{ p: 3, borderRadius: 2, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', textAlign: 'center' }}>
-            <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>{totalNotifications}</Typography>
-            <Typography variant="body2">Total</Typography>
-          </Box>
-          <Box sx={{ p: 3, borderRadius: 2, background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', color: 'white', textAlign: 'center' }}>
-            <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>{unreadNotifications}</Typography>
-            <Typography variant="body2">Unread</Typography>
-          </Box>
-          <Box sx={{ p: 3, borderRadius: 2, background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', color: 'white', textAlign: 'center' }}>
-            <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>{thisWeekNotifications}</Typography>
-            <Typography variant="body2">This Week</Typography>
-          </Box>
-          <Box sx={{ p: 3, borderRadius: 2, background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', color: 'white', textAlign: 'center' }}>
-            <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>{importantNotifications}</Typography>
-            <Typography variant="body2">Important</Typography>
-          </Box>
-        </Box>
-
-        {/* Notifications List */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {isLoading ? (
-            <Box sx={{
-              py: 8,
-              px: 3,
-              textAlign: 'center',
-            }}>
-              <Typography variant="body1" sx={{ color: '#6b7280' }}>
-                Loading archived notifications...
-              </Typography>
-            </Box>
-          ) : displayNotifications.length === 0 ? (
-            <Box sx={{
-              py: 8,
-              px: 3,
-              textAlign: 'center',
-              borderRadius: 2,
-              border: '2px dashed #e5e7eb',
-              backgroundColor: '#f9fafb',
-            }}>
-              <Box sx={{
-                width: 80,
-                height: 80,
-                borderRadius: '50%',
-                backgroundColor: '#e5e7eb',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto',
-                mb: 2
-              }}>
-                <InfoIcon sx={{ fontSize: 40, color: '#9ca3af' }} />
-              </Box>
-              <Typography variant="h6" sx={{ color: '#374151', fontWeight: 600, mb: 1 }}>
-                {activeTab === 0 ? 'No notifications yet' : 'No archived notifications'}
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#9ca3af' }}>
-                {activeTab === 0
-                  ? (isConnected
-                    ? "You're all caught up! We'll notify you when something arrives."
-                    : "Connecting to notification service...")
-                  : "You haven't archived any notifications yet."}
-              </Typography>
-            </Box>
-          ) : (
-            displayNotifications.map((notification) => {
-              const colors = getNotificationColor(notification.type);
-              return (
-                <Box
-                  key={notification.id}
-                  onClick={() => activeTab === 0 && !notification.isRead && markAsRead(notification.id)}
-                  sx={{
-                    p: 3,
-                    borderRadius: 2,
-                    border: `1px solid ${colors.border}`,
-                    backgroundColor: notification.isRead ? '#ffffff' : colors.bg,
-                    display: 'flex',
-                    gap: 2,
-                    transition: 'all 0.2s',
-                    cursor: (activeTab === 0 && !notification.isRead) ? 'pointer' : 'default',
-                    '&:hover': {
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                      transform: 'translateY(-2px)'
-                    }
-                  }}
-                >
-                  <Box sx={{ width: 48, height: 48, borderRadius: '50%', backgroundColor: colors.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: colors.color, flexShrink: 0 }}>
-                    {getNotificationIcon(notification.type)}
-                  </Box>
-                  <Box sx={{ flex: 1 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 0.5 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#1a1a1a' }}>
-                        {notification.title}
-                      </Typography>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: '#6b7280' }}>
-                        <AccessTimeIcon sx={{ fontSize: 16 }} />
-                        <Typography variant="caption">{notification.timestamp}</Typography>
-                      </Box>
+                    <Box sx={{ width: 36, height: 36, borderRadius: "10px", bgcolor: colors.bg, border: `1px solid ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: colors.color, flexShrink: 0 }}>
+                      {getNotificationIcon(notification.type)}
                     </Box>
-                    <Typography variant="body2" sx={{ color: '#6b7280', mb: 1 }}>
-                      {notification.message}
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1, mb: 0.25 }}>
+                        <Typography sx={{ fontWeight: 600, fontSize: "0.85rem", color: NAVY }}>{notification.title}</Typography>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, color: "#94A3B8", flexShrink: 0 }}>
+                          <AccessTimeIcon sx={{ fontSize: 13 }} />
+                          <Typography sx={{ fontSize: "0.7rem" }}>{notification.timestamp}</Typography>
+                        </Box>
+                      </Box>
+                      <Typography sx={{ fontSize: "0.78rem", color: "#6B7280", mb: 0.5 }}>{notification.message}</Typography>
                       {!notification.isRead && (
-                        <Typography
-                          variant="caption"
-                          sx={{ color: '#8310FF', fontWeight: 600, backgroundColor: 'rgba(131, 16, 255, 0.1)', px: 1.5, py: 0.5, borderRadius: 1, display: 'inline-block' }}
-                        >
+                        <Typography sx={{ fontSize: "0.68rem", fontWeight: 700, color: T, bgcolor: TBG, border: `1px solid ${TBRD}`, px: 1, py: 0.25, borderRadius: "6px", display: "inline-block" }}>
                           NEW
                         </Typography>
                       )}
-                      {!notification.isRead && (
-                        <Typography
-                          variant="caption"
-                          sx={{ color: '#6b7280', fontSize: '0.75rem' }}
-                        >
-                          Click to mark as read
-                        </Typography>
-                      )}
                     </Box>
+                    {activeTab === 0 && (
+                      <IconButton size="small" onClick={(e) => { e.stopPropagation(); archive(notification.id); }}
+                        sx={{ alignSelf: "flex-start", "&:hover": { bgcolor: "#F1F5F9" } }} title="Archive">
+                        <ArchiveIcon sx={{ fontSize: 17, color: "#CBD5E1" }} />
+                      </IconButton>
+                    )}
                   </Box>
-                  {activeTab === 0 && (
-                    <IconButton
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        archive(notification.id);
-                      }}
-                      sx={{
-                        alignSelf: 'flex-start',
-                        '&:hover': { backgroundColor: '#f3f4f6' }
-                      }}
-                      title="Archive notification"
-                    >
-                      <ArchiveIcon sx={{ fontSize: 20, color: '#9ca3af' }} />
-                    </IconButton>
-                  )}
-                </Box>
-              );
-            })
-          )}
+                );
+              })
+            )}
+          </Box>
         </Box>
-      </CardContent>
-    </Card>
+      </Box>
     </>
   );
 };

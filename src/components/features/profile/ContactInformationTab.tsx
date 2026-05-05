@@ -1,19 +1,29 @@
 import React, { useMemo } from 'react';
 import {
-  Box,
-  Card,
-  CardContent,
-  TextField,
-  Button,
-  CircularProgress,
-  Divider,
-  Typography,
-  MenuItem,
-  Autocomplete,
+  Box, TextField, Button, CircularProgress, Divider,
+  Typography, MenuItem, Autocomplete,
 } from '@mui/material';
-import { Edit as EditIcon } from '@mui/icons-material';
 import { UserProfile } from '@/types/profile';
 import { getAllCountryNames } from '@/utils/countryMappings';
+import EditOutlined from '@mui/icons-material/EditOutlined';
+import SaveOutlined from '@mui/icons-material/SaveOutlined';
+import CloseOutlined from '@mui/icons-material/CloseOutlined';
+
+const T    = "#0D9488";
+const TBG  = "#F0FDFA";
+const TBRD = "#99F6E4";
+const NAVY = "#0D1B2A";
+
+const fieldSx = {
+  '& .MuiOutlinedInput-root': {
+    borderRadius: "10px",
+    fontSize: "0.85rem",
+    '&.Mui-focused fieldset': { borderColor: T },
+    '&:hover fieldset': { borderColor: T },
+  },
+  '& .MuiInputLabel-root.Mui-focused': { color: T },
+  '& .MuiInputLabel-root': { fontSize: "0.85rem" },
+};
 
 interface ContactInformationTabProps {
   profile: UserProfile;
@@ -27,323 +37,77 @@ interface ContactInformationTabProps {
 }
 
 const ContactInformationTab: React.FC<ContactInformationTabProps> = ({
-  profile,
-  isEditing,
-  loading,
-  fieldErrors = {},
-  onInputChange,
-  onSave,
-  onCancel,
-  onEditToggle,
+  profile, isEditing, loading, fieldErrors = {},
+  onInputChange, onSave, onCancel, onEditToggle,
 }) => {
-  // Get countries list from i18n-iso-countries (excludes Israel)
   const countries = useMemo(() => getAllCountryNames(), []);
 
-  const fieldSx = {
-    '& .MuiOutlinedInput-root': {
-      '&.Mui-focused fieldset': {
-        borderColor: '#8310FF',
-      },
-    },
-    '& .MuiInputLabel-root.Mui-focused': {
-      color: '#8310FF',
-    },
-  };
-
   return (
-    <Card sx={{ borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.08)', mb: 3 }}>
-      <CardContent sx={{ p: 4 }}>
+    <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+      {/* Header */}
+      <Box sx={{ px: 2.5, py: 2, borderBottom: "1px solid #F1F5F9", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box>
+          <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", color: NAVY }}>Contact Information</Typography>
+          <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8", mt: 0.25 }}>Manage your contact details and social profiles</Typography>
+        </Box>
+        {!isEditing ? (
+          <Button size="small" startIcon={<EditOutlined sx={{ fontSize: "14px !important" }} />} onClick={onEditToggle}
+            sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.75rem", color: T, bgcolor: TBG, border: `1px solid ${TBRD}`, borderRadius: "8px", px: 1.5, "&:hover": { bgcolor: "#CCFBF1" } }}>
+            Edit
+          </Button>
+        ) : (
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button size="small" startIcon={<CloseOutlined sx={{ fontSize: "14px !important" }} />} onClick={onCancel}
+              sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.75rem", color: "#6B7280", bgcolor: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "8px", px: 1.5 }}>
+              Cancel
+            </Button>
+            <Button size="small" startIcon={loading ? undefined : <SaveOutlined sx={{ fontSize: "14px !important" }} />} onClick={onSave} disabled={loading}
+              sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.75rem", color: "#fff", bgcolor: T, borderRadius: "8px", px: 1.5, "&:hover": { bgcolor: "#0F766E" } }}>
+              {loading ? <CircularProgress size={14} color="inherit" /> : "Save"}
+            </Button>
+          </Box>
+        )}
+      </Box>
+
+      <Box sx={{ p: 2.5 }}>
         {loading && !profile.username ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px' }}>
-            <CircularProgress sx={{ color: '#8310FF' }} />
+          <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+            <CircularProgress sx={{ color: T }} size={28} />
           </Box>
         ) : (
-          <>
-            {/* Header */}
-            <Box sx={{ mb: 4 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6" sx={{ fontWeight: 600, color: '#111827' }}>
-                  Contact Information
-                </Typography>
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
+            <TextField label="Email" value={profile.email || ""} disabled fullWidth helperText="Email cannot be changed"
+              sx={{ gridColumn: { xs: "1 / -1", sm: "span 2" }, ...fieldSx }} />
 
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<EditIcon />}
-                  onClick={onEditToggle}
-                  sx={{
-                    borderColor: '#8310FF',
-                    color: '#8310FF',
-                    textTransform: 'none',
-                    '&:hover': {
-                      borderColor: '#6a0dd4',
-                      backgroundColor: 'rgba(131, 16, 255, 0.04)',
-                    },
-                  }}
-                >
-                  {isEditing ? 'Cancel' : 'Edit'}
-                </Button>
-              </Box>
-              <Typography variant="body2" sx={{ color: '#6b7280' }}>
-                {profile.profileType === 'Company'
-                  ? 'Manage your company contact details and professional presence'
-                  : 'Manage your contact details and social profiles'
-                }
-              </Typography>
-            </Box>
+            <TextField label="Phone Number" value={profile.phone || ""} onChange={e => onInputChange("phone", e.target.value)}
+              disabled={!isEditing} fullWidth placeholder="+33612345678"
+              error={!!fieldErrors.phone} helperText={fieldErrors.phone || ""} sx={fieldSx} />
 
-            <Divider sx={{ my: 3 }} />
+            <TextField label="Location" value={profile.location || ""} onChange={e => onInputChange("location", e.target.value)}
+              disabled={!isEditing} fullWidth placeholder="Paris, France" sx={fieldSx} />
 
-            {/* Contact Information Fields - Different for Candidate vs Company */}
-            {profile.profileType === 'Candidate' ? (
-              // Candidate Contact Fields
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
-                <TextField
-                  label="Email"
-                  value={profile.email}
-                  disabled
-                  fullWidth
-                  type="email"
-                  helperText="Email cannot be changed"
-                  sx={{
-                    gridColumn: { xs: '1 / -1', sm: 'span 2' },
-                    ...fieldSx,
-                  }}
-                />
+            <TextField label="Address" value={profile.address || ""} onChange={e => onInputChange("address", e.target.value)}
+              disabled={!isEditing} fullWidth multiline rows={2} placeholder="123 Rue de Paris"
+              sx={{ gridColumn: { xs: "1 / -1", sm: "span 2" }, ...fieldSx }} />
 
-                <TextField
-                  label="Phone Number"
-                  value={profile.phone}
-                  onChange={(e) => onInputChange('phone', e.target.value)}
-                  disabled={!isEditing}
-                  fullWidth
-                  type="tel"
-                  placeholder="+33612345678"
-                  error={!!fieldErrors.phone}
-                  helperText={fieldErrors.phone || ''}
-                  sx={fieldSx}
-                />
+            <TextField label="LinkedIn URL" value={profile.linkedinUrl || ""} onChange={e => onInputChange("linkedinUrl", e.target.value)}
+              disabled={!isEditing} fullWidth placeholder="https://linkedin.com/in/yourprofile"
+              error={!!fieldErrors.linkedinUrl} helperText={fieldErrors.linkedinUrl || ""}
+              sx={{ gridColumn: { xs: "1 / -1", sm: "span 2" }, ...fieldSx }} />
 
-                <TextField
-                  label="Location"
-                  value={profile.location}
-                  onChange={(e) => onInputChange('location', e.target.value)}
-                  disabled={!isEditing}
-                  fullWidth
-                  placeholder="Paris, France"
-                  sx={fieldSx}
-                />
+            <TextField label="GitHub URL" value={profile.githubUrl || ""} onChange={e => onInputChange("githubUrl", e.target.value)}
+              disabled={!isEditing} fullWidth placeholder="https://github.com/yourprofile"
+              error={!!fieldErrors.githubUrl} helperText={fieldErrors.githubUrl || ""}
+              sx={{ gridColumn: { xs: "1 / -1", sm: "span 2" }, ...fieldSx }} />
 
-                <TextField
-                  label="Address"
-                  value={profile.address}
-                  onChange={(e) => onInputChange('address', e.target.value)}
-                  disabled={!isEditing}
-                  fullWidth
-                  multiline
-                  rows={2}
-                  placeholder="123 Rue de Paris"
-                  sx={{
-                    gridColumn: { xs: '1 / -1', sm: 'span 2' },
-                    ...fieldSx,
-                  }}
-                />
-
-                <TextField
-                  label="LinkedIn URL"
-                  value={profile.linkedinUrl}
-                  onChange={(e) => onInputChange('linkedinUrl', e.target.value)}
-                  disabled={!isEditing}
-                  fullWidth
-                  type="url"
-                  placeholder="https://linkedin.com/in/yourprofile"
-                  error={!!fieldErrors.linkedinUrl}
-                  helperText={fieldErrors.linkedinUrl || ''}
-                  sx={{
-                    gridColumn: { xs: '1 / -1', sm: 'span 2' },
-                    ...fieldSx,
-                  }}
-                />
-
-                <TextField
-                  label="GitHub URL"
-                  value={profile.githubUrl}
-                  onChange={(e) => onInputChange('githubUrl', e.target.value)}
-                  disabled={!isEditing}
-                  fullWidth
-                  type="url"
-                  placeholder="https://github.com/yourprofile"
-                  error={!!fieldErrors.githubUrl}
-                  helperText={fieldErrors.githubUrl || ''}
-                  sx={{
-                    gridColumn: { xs: '1 / -1', sm: 'span 2' },
-                    ...fieldSx,
-                  }}
-                />
-
-                <TextField
-                  label="Personal Website"
-                  value={profile.personalWebsite}
-                  onChange={(e) => onInputChange('personalWebsite', e.target.value)}
-                  disabled={!isEditing}
-                  fullWidth
-                  type="url"
-                  placeholder="https://yourwebsite.com"
-                  error={!!fieldErrors.personalWebsite}
-                  helperText={fieldErrors.personalWebsite || ''}
-                  sx={{
-                    gridColumn: { xs: '1 / -1', sm: 'span 2' },
-                    ...fieldSx,
-                  }}
-                />
-              </Box>
-            ) : (
-              // Company Contact Fields
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
-                <TextField
-                  label="Company Email"
-                  value={profile.email}
-                  disabled
-                  fullWidth
-                  type="email"
-                  helperText="Email cannot be changed"
-                  sx={{
-                    gridColumn: { xs: '1 / -1', sm: 'span 2' },
-                    ...fieldSx,
-                  }}
-                />
-                <Autocomplete
-                  options={countries}
-                  value={profile.location || null}
-                  onChange={(_, value) => onInputChange('location', value || '')}
-                  disabled={!isEditing}
-                  fullWidth
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Location"
-                      placeholder="Select country"
-                      sx={fieldSx}
-                    />
-                  )}
-                  sx={{
-                    '& .MuiAutocomplete-popupIndicator': {
-                      color: '#6b7280',
-                    },
-                  }}
-                />
-                <TextField
-                  select
-                  label="Employment Type"
-                  value={profile.employmentType}
-                  onChange={(e) => onInputChange('employmentType', e.target.value)}
-                  disabled={!isEditing}
-                  fullWidth
-                  sx={fieldSx}
-                >
-                  <MenuItem value="Remote">Remote</MenuItem>
-                  <MenuItem value="On-site">On-site</MenuItem>
-                  <MenuItem value="Hybrid">Hybrid</MenuItem>
-                </TextField>
-                <TextField
-                  label="Industry"
-                  value={profile.industry}
-                  onChange={(e) => onInputChange('industry', e.target.value)}
-                  disabled={!isEditing}
-                  fullWidth
-                  error={!!fieldErrors.industry}
-                  helperText={fieldErrors.industry || ''}
-                  placeholder="Finance, Technology, Healthcare..."
-                  sx={fieldSx}
-                />
-                <TextField
-                  select
-                  label="Company Size"
-                  value={profile.size}
-                  onChange={(e) => onInputChange('size', e.target.value)}
-                  disabled={!isEditing}
-                  fullWidth
-                  error={!!fieldErrors.size}
-                  helperText={fieldErrors.size || ''}
-                  sx={fieldSx}
-                >
-                  <MenuItem value="1-10">1–10</MenuItem>
-                  <MenuItem value="11-50">11–50</MenuItem>
-                  <MenuItem value="51-200">51–200</MenuItem>
-                  <MenuItem value="201-500">201–500</MenuItem>
-                  <MenuItem value="500+">500+</MenuItem>
-                </TextField>
-
-                <TextField
-                  value={profile.linkedin}
-                  onChange={(e) => onInputChange('linkedin', e.target.value)}
-                  disabled={!isEditing}
-                  fullWidth
-                  type="url"
-                  placeholder="https://linkedin.com/company/yourcompany"
-
-                  error={!!fieldErrors.linkedin}
-                  helperText={fieldErrors.linkedin || ''}
-                  sx={{
-                    gridColumn: { xs: '1 / -1', sm: 'span 2' },
-                    ...fieldSx,
-                  }}
-                />
-
-                <TextField
-                  value={profile.website}
-                  onChange={(e) => onInputChange('website', e.target.value)}
-                  disabled={!isEditing}
-                  fullWidth
-                  type="url"
-                  placeholder="https://yourcompany.com"
-                  error={!!fieldErrors.website}
-                  helperText={fieldErrors.website || ''}
-                  sx={{
-                    gridColumn: { xs: '1 / -1', sm: 'span 2' },
-                    ...fieldSx,
-                  }}
-                />
-              </Box>
-            )}
-
-            {isEditing && (
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>
-                <Button
-                  variant="outlined"
-                  onClick={onCancel}
-                  sx={{
-                    textTransform: 'none',
-                    borderColor: '#d1d5db',
-                    color: '#6b7280',
-                    '&:hover': {
-                      borderColor: '#9ca3af',
-                      backgroundColor: 'rgba(107, 114, 128, 0.04)',
-                    },
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="contained"
-                  onClick={onSave}
-                  disabled={loading}
-                  sx={{
-                    textTransform: 'none',
-                    backgroundColor: '#8310FF',
-                    '&:hover': {
-                      backgroundColor: '#6a0dd4',
-                    },
-                  }}
-                >
-                  {loading ? <CircularProgress size={24} color="inherit" /> : 'Save Changes'}
-                </Button>
-              </Box>
-            )}
-          </>
+            <TextField label="Personal Website" value={profile.personalWebsite || ""} onChange={e => onInputChange("personalWebsite", e.target.value)}
+              disabled={!isEditing} fullWidth placeholder="https://yourwebsite.com"
+              error={!!fieldErrors.personalWebsite} helperText={fieldErrors.personalWebsite || ""}
+              sx={{ gridColumn: { xs: "1 / -1", sm: "span 2" }, ...fieldSx }} />
+          </Box>
         )}
-      </CardContent>
-    </Card>
+      </Box>
+    </Box>
   );
 };
 
