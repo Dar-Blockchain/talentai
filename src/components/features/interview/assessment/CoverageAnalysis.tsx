@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Box, Typography } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import {
   ResponsiveContainer,
   BarChart,
@@ -23,6 +24,8 @@ interface CoverageAnalysisProps {
 }
 
 const CoverageAnalysis: React.FC<CoverageAnalysisProps> = ({ coverageAreas }) => {
+  const { t } = useTranslation('dashboard');
+  const s = (k: string, opts?: any) => t(`candidate.assessment_detail.${k}`, opts) as string;
   const chartData = useMemo(
     () => Object.entries(coverageAreas).map(([key, data]: [string, any]) => ({
       name: formatAreaName(key),
@@ -45,13 +48,13 @@ const CoverageAnalysis: React.FC<CoverageAnalysisProps> = ({ coverageAreas }) =>
   return (
     <Box sx={sectionStyle}>
       <Typography variant="h5" sx={{ ...sectionTitleStyle(), mb: 3 }}>
-        Coverage Analysis
+        {s('coverage_analysis.title')}
       </Typography>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
         <Box>
           <Typography variant="subtitle2" sx={{ color: 'rgba(98, 111, 134, 1)', fontSize: '14px', fontWeight: 500, mb: 2 }}>
-            Coverage by Area
+            {s('coverage_analysis.by_area')}
           </Typography>
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 40 }}>
@@ -59,7 +62,7 @@ const CoverageAnalysis: React.FC<CoverageAnalysisProps> = ({ coverageAreas }) =>
               <XAxis dataKey="name" angle={-35} textAnchor="end" height={60} tick={{ fontSize: 11, fill: '#6b7280' }} interval={0} />
               <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
               <RechartsTooltip
-                formatter={(value: any) => [`${value}%`, 'Coverage']}
+                formatter={(value: any) => [`${value}%`, s('header.coverage')]}
                 contentStyle={{ backgroundColor: 'rgba(255,255,255,0.95)', border: '1px solid #e5e7eb', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
               />
               <Bar dataKey="percentage" radius={[4, 4, 0, 0]}>
@@ -73,14 +76,14 @@ const CoverageAnalysis: React.FC<CoverageAnalysisProps> = ({ coverageAreas }) =>
 
         <Box>
           <Typography variant="subtitle2" sx={{ color: 'rgba(98, 111, 134, 1)', fontSize: '14px', fontWeight: 500, mb: 2 }}>
-            Skills Radar
+            {s('coverage_analysis.radar')}
           </Typography>
           <ResponsiveContainer width="100%" height={280}>
             <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
               <PolarGrid stroke="#e5e7eb" />
               <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fill: '#6b7280' }} />
               <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 10, fill: '#9ca3af' }} />
-              <Radar name="Coverage" dataKey="score" stroke="#8310FF" fill="#8310FF" fillOpacity={0.3} strokeWidth={2} />
+              <Radar name={s('header.coverage')} dataKey="score" stroke="#8310FF" fill="#8310FF" fillOpacity={0.3} strokeWidth={2} />
               <Legend wrapperStyle={{ fontSize: '12px' }} />
             </RadarChart>
           </ResponsiveContainer>

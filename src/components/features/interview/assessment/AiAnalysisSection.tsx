@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { sectionStyle, sectionTitleStyle, formatAreaName } from './helpers';
 
 interface AiAnalysisSectionProps {
@@ -11,17 +12,19 @@ interface AiAnalysisSectionProps {
 }
 
 const AiAnalysisSection: React.FC<AiAnalysisSectionProps> = ({ aiAnalysis }) => {
+  const { t } = useTranslation('dashboard');
+  const s = (k: string, opts?: any) => t(`candidate.assessment_detail.${k}`, opts) as string;
   const hasData = aiAnalysis.strongestAreas?.length || aiAnalysis.weakestAreas?.length || aiAnalysis.recommendedFocus?.length;
   if (!hasData) return null;
 
   return (
     <Box sx={sectionStyle}>
-      <Typography variant="h5" sx={sectionTitleStyle('rgba(131, 16, 255, 0.83)')}>AI Analysis</Typography>
+      <Typography variant="h5" sx={sectionTitleStyle('rgba(131, 16, 255, 0.83)')}>{s('ai_analysis.title')}</Typography>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 2 }}>
         {aiAnalysis.strongestAreas && aiAnalysis.strongestAreas.length > 0 && (
           <AnalysisCard
-            title="Strongest Areas"
+            title={s('ai_analysis.strongest_areas')}
             items={aiAnalysis.strongestAreas}
             bg="rgba(16, 185, 129, 0.06)" border="rgba(16, 185, 129, 0.15)"
             titleColor="#065f46" itemColor="#047857"
@@ -29,7 +32,7 @@ const AiAnalysisSection: React.FC<AiAnalysisSectionProps> = ({ aiAnalysis }) => 
         )}
         {aiAnalysis.weakestAreas && aiAnalysis.weakestAreas.length > 0 && (
           <AnalysisCard
-            title="Areas for Improvement"
+            title={s('ai_analysis.areas_for_improvement')}
             items={aiAnalysis.weakestAreas}
             bg="rgba(239, 68, 68, 0.06)" border="rgba(239, 68, 68, 0.15)"
             titleColor="#991b1b" itemColor="#b91c1c"
@@ -37,7 +40,7 @@ const AiAnalysisSection: React.FC<AiAnalysisSectionProps> = ({ aiAnalysis }) => 
         )}
         {aiAnalysis.recommendedFocus && aiAnalysis.recommendedFocus.length > 0 && (
           <AnalysisCard
-            title="Recommended Focus"
+            title={s('ai_analysis.recommended_focus')}
             items={aiAnalysis.recommendedFocus}
             bg="rgba(245, 158, 11, 0.06)" border="rgba(245, 158, 11, 0.15)"
             titleColor="#92400e" itemColor="#a16207"

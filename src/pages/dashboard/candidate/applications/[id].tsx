@@ -29,14 +29,17 @@ const TBG  = "#F0FDFA";
 const TBRD = "#99F6E4";
 const NAVY = "#0D1B2A";
 
-const STATUS_STYLE: Record<string, { bg: string; color: string; border: string; label: string }> = {
-  applied:             { bg: "#EFF6FF", color: "#2563EB", border: "#BFDBFE", label: "Applied" },
-  pending:             { bg: "#FFFBEB", color: "#D97706", border: "#FDE68A", label: "Pending" },
-  shortlisted:         { bg: "#F0FDF4", color: "#16A34A", border: "#BBF7D0", label: "Shortlisted" },
-  accepted:            { bg: TBG,       color: T,         border: TBRD,      label: "Accepted" },
-  rejected:            { bg: "#FEF2F2", color: "#DC2626", border: "#FECACA", label: "Rejected" },
-  withdrawn:           { bg: "#F3F4F6", color: "#6B7280", border: "#E5E7EB", label: "Withdrawn" },
-  interview_scheduled: { bg: TBG,       color: T,         border: TBRD,      label: "Interview Scheduled" },
+const STATUS_STYLE: Record<string, { bg: string; color: string; border: string }> = {
+  applied:             { bg: "#EFF6FF", color: "#2563EB", border: "#BFDBFE" },
+  pending:             { bg: "#FFFBEB", color: "#D97706", border: "#FDE68A" },
+  shortlisted:         { bg: "#F0FDF4", color: "#16A34A", border: "#BBF7D0" },
+  accepted:            { bg: TBG,       color: T,         border: TBRD      },
+  rejected:            { bg: "#FEF2F2", color: "#DC2626", border: "#FECACA" },
+  withdrawn:           { bg: "#F3F4F6", color: "#6B7280", border: "#E5E7EB" },
+  interview_scheduled: { bg: TBG,       color: T,         border: TBRD      },
+  interview_completed: { bg: "#ECFDF5", color: "#059669", border: "#A7F3D0" },
+  viewed:              { bg: "#F8FAFC", color: "#475569", border: "#CBD5E1" },
+  visited:             { bg: "#F8FAFC", color: "#475569", border: "#CBD5E1" },
 };
 
 const fmtDate = (iso?: string) =>
@@ -54,7 +57,8 @@ const StatPill: React.FC<{ label: string; value: number | string; color: string;
 const ProfileCard: React.FC<{
   displayName: string; email?: string; initial: string; avatarUrl?: string;
   targetRole?: string; experienceLevel?: string; totalApplications: number;
-}> = ({ displayName, email, initial, avatarUrl, targetRole, experienceLevel, totalApplications }) => (
+  t: (k: string, opts?: any) => string;
+}> = ({ displayName, email, initial, avatarUrl, targetRole, experienceLevel, totalApplications, t }) => (
   <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
     <Box sx={{ height: 56, background: `linear-gradient(135deg, ${NAVY} 0%, ${T} 100%)`, position: "relative" }}>
       <Box sx={{ position: "absolute", top: "50%", right: 16, transform: "translateY(-50%)", width: 32, height: 32, borderRadius: "50%", bgcolor: `${TL}30`, border: `1px solid ${TL}40` }} />
@@ -76,18 +80,18 @@ const ProfileCard: React.FC<{
       )}
       <Divider sx={{ my: 1.5 }} />
       <Box sx={{ display: "flex", gap: 1 }}>
-        <StatPill label="Applications" value={totalApplications} color="#7C3AED" bg="#F5F3FF" border="#DDD6FE" />
-        <StatPill label="Active"       value={1}                 color={T}        bg={TBG}    border={TBRD}    />
+        <StatPill label={t("profile.applications")} value={totalApplications} color="#7C3AED" bg="#F5F3FF" border="#DDD6FE" />
+        <StatPill label={t("profile.active")}       value={1}                 color={T}        bg={TBG}    border={TBRD}    />
       </Box>
     </Box>
   </Box>
 );
 
-const ProfileStrengthCard: React.FC<{ checklist: { label: string; done: boolean }[] }> = ({ checklist }) => (
+const ProfileStrengthCard: React.FC<{ title: string; checklist: { label: string; done: boolean }[] }> = ({ title, checklist }) => (
   <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 2, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
       <TrendingUpOutlined sx={{ fontSize: 16, color: "#7C3AED" }} />
-      <Typography sx={{ fontWeight: 700, fontSize: "0.82rem", color: NAVY }}>Profile Strength</Typography>
+      <Typography sx={{ fontWeight: 700, fontSize: "0.82rem", color: NAVY }}>{title}</Typography>
     </Box>
     <LinearProgress variant="determinate"
       value={Math.round((checklist.filter(c => c.done).length / checklist.length) * 100)}
@@ -109,13 +113,13 @@ const ProfileStrengthCard: React.FC<{ checklist: { label: string; done: boolean 
 
 // ── Right panel: Application status timeline ─────────────────
 
-const StatusTimeline: React.FC<{ rawStatus: string }> = ({ rawStatus }) => {
+const StatusTimeline: React.FC<{ rawStatus: string; t: (k: string, opts?: any) => string }> = ({ rawStatus, t }) => {
   const steps = [
-    { key: "applied",             label: "Applied",    color: "#2563EB" },
-    { key: "pending",             label: "Under Review", color: "#D97706" },
-    { key: "shortlisted",         label: "Shortlisted", color: "#16A34A" },
-    { key: "interview_scheduled", label: "Interview",  color: T         },
-    { key: "accepted",            label: "Accepted",   color: T         },
+    { key: "applied",             label: t("timeline.applied"),             color: "#2563EB" },
+    { key: "pending",             label: t("timeline.under_review"),        color: "#D97706" },
+    { key: "shortlisted",         label: t("timeline.shortlisted"),         color: "#16A34A" },
+    { key: "interview_scheduled", label: t("timeline.interview"),           color: T         },
+    { key: "accepted",            label: t("timeline.accepted"),            color: T         },
   ];
   const activeIndex = steps.findIndex(s => s.key === rawStatus);
   const isRejected  = rawStatus === "rejected" || rawStatus === "withdrawn";
@@ -123,15 +127,15 @@ const StatusTimeline: React.FC<{ rawStatus: string }> = ({ rawStatus }) => {
   return (
     <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 2, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
       <Typography sx={{ fontSize: "0.72rem", fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.06em", mb: 1.5 }}>
-        Application Status
+        {t("timeline.title")}
       </Typography>
 
       {isRejected ? (
         <Box sx={{ p: 1.5, borderRadius: "10px", bgcolor: "#FEF2F2", border: "1px solid #FECACA", textAlign: "center" }}>
           <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: "#DC2626" }}>
-            {rawStatus === "withdrawn" ? "Withdrawn" : "Not Selected"}
+            {rawStatus === "withdrawn" ? t("timeline.withdrawn") : t("timeline.not_selected")}
           </Typography>
-          <Typography sx={{ fontSize: "0.68rem", color: "#9CA3AF", mt: 0.25 }}>This application is closed</Typography>
+          <Typography sx={{ fontSize: "0.68rem", color: "#9CA3AF", mt: 0.25 }}>{t("timeline.closed")}</Typography>
         </Box>
       ) : (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 0 }}>
@@ -158,7 +162,7 @@ const StatusTimeline: React.FC<{ rawStatus: string }> = ({ rawStatus }) => {
                     {step.label}
                   </Typography>
                   {active && (
-                    <Typography sx={{ fontSize: "0.65rem", color: step.color, fontWeight: 600, mt: 0.1 }}>Current stage</Typography>
+                    <Typography sx={{ fontSize: "0.65rem", color: step.color, fontWeight: 600, mt: 0.1 }}>{t("timeline.current_stage")}</Typography>
                   )}
                 </Box>
               </Box>
@@ -188,6 +192,12 @@ const CandidateApplicationDetailPage: React.FC = () => {
   const router  = useRouter();
   const { id }  = router.query;
   const { t }   = useTranslation("dashboard");
+  const s = (k: string, opts?: any) => t(`candidate.application_detail.${k}`, opts) as string;
+  const statusLabel = (st: string) => {
+    const key = `candidate.my_applications.status.${st}`;
+    const res = t(key) as string;
+    return res === key ? st : res;
+  };
   const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
   const user    = useSelector((state: RootState) => state.user.connectedUser.user);
 
@@ -217,10 +227,10 @@ const CandidateApplicationDetailPage: React.FC = () => {
     : undefined;
   const quota = profile?.quota ?? 0;
   const checklist = [
-    { label: "Complete profile",   done: !!(profile?.firstName && profile?.lastName) },
-    { label: "Add target role",    done: !!profile?.targetRole                       },
-    { label: "Set experience",     done: !!profile?.requiredExperienceLevel          },
-    { label: "First skill test",   done: quota > 0                                   },
+    { label: s("checklist.complete_profile"), done: !!(profile?.firstName && profile?.lastName) },
+    { label: s("checklist.add_target_role"),  done: !!profile?.targetRole                       },
+    { label: s("checklist.set_experience"),   done: !!profile?.requiredExperienceLevel          },
+    { label: s("checklist.first_skill_test"), done: quota > 0                                   },
   ];
 
   // Application data
@@ -256,8 +266,9 @@ const CandidateApplicationDetailPage: React.FC = () => {
               displayName={displayName} email={user?.email} initial={initial} avatarUrl={avatarUrl}
               targetRole={profile?.targetRole} experienceLevel={profile?.requiredExperienceLevel}
               totalApplications={1}
+              t={(k, opts) => t(`candidate.application_detail.${k}`, opts) as string}
             />
-            <ProfileStrengthCard checklist={checklist} />
+            <ProfileStrengthCard title={s("profile_strength")} checklist={checklist} />
           </Box>
 
           {/* ── CENTER: main content ── */}
@@ -271,14 +282,14 @@ const CandidateApplicationDetailPage: React.FC = () => {
                 onClick={() => router.push("/dashboard/candidate")}
                 sx={{ textTransform: "none", fontWeight: 700, fontSize: "0.72rem", color: "#6B7280", bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "10px", px: 1.5, py: 0.5, "&:hover": { bgcolor: "#F3F4F6" }, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
               >
-                Back to Dashboard
+                {s("back_to_dashboard")}
               </Button>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, fontSize: "0.72rem", color: "#94A3B8" }}>
-                <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8" }}>Dashboard</Typography>
+                <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8" }}>{t("candidate.nav.dashboard")}</Typography>
                 <Typography sx={{ fontSize: "0.72rem", color: "#CBD5E1" }}>›</Typography>
-                <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8" }}>Applications</Typography>
+                <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8" }}>{t("candidate.nav.applications")}</Typography>
                 <Typography sx={{ fontSize: "0.72rem", color: "#CBD5E1" }}>›</Typography>
-                <Typography sx={{ fontSize: "0.72rem", fontWeight: 600, color: NAVY }}>{loading ? "..." : title}</Typography>
+                <Typography sx={{ fontSize: "0.72rem", fontWeight: 600, color: NAVY }}>{loading ? s("loading_title") : title}</Typography>
               </Box>
             </Box>
 
@@ -291,7 +302,7 @@ const CandidateApplicationDetailPage: React.FC = () => {
             ) : !app ? (
               <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", py: 10, textAlign: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
                 <AssignmentOutlined sx={{ fontSize: 40, color: "#D1D5DB", mb: 1 }} />
-                <Typography sx={{ color: "#9CA3AF", fontWeight: 600 }}>Application not found</Typography>
+                <Typography sx={{ color: "#9CA3AF", fontWeight: 600 }}>{s("not_found")}</Typography>
               </Box>
             ) : (
               <>
@@ -300,7 +311,7 @@ const CandidateApplicationDetailPage: React.FC = () => {
                   <Box sx={{ bgcolor: T, borderRadius: "16px", p: 2.5, display: "flex", flexWrap: "wrap", gap: 2, alignItems: "center", boxShadow: `0 4px 16px ${T}40` }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <VideoCallOutlined sx={{ fontSize: 22, color: "#fff" }} />
-                      <Typography sx={{ fontWeight: 700, color: "#fff", fontSize: "1rem" }}>Your interview is scheduled!</Typography>
+                      <Typography sx={{ fontWeight: 700, color: "#fff", fontSize: "1rem" }}>{s("interview_banner.title")}</Typography>
                     </Box>
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, ml: { xs: 0, sm: "auto" } }}>
                       {interviewDate && (
@@ -321,7 +332,7 @@ const CandidateApplicationDetailPage: React.FC = () => {
                           onClick={() => window.open(interviewLink, "_blank")}
                           sx={{ textTransform: "none", fontWeight: 700, fontSize: "0.78rem", bgcolor: "#fff", color: T, borderRadius: "8px", boxShadow: "none", px: 1.5, "&:hover": { bgcolor: TBG, boxShadow: "none" } }}
                         >
-                          Join Interview
+                          {s("interview_banner.join")}
                         </Button>
                       )}
                     </Box>
@@ -339,7 +350,7 @@ const CandidateApplicationDetailPage: React.FC = () => {
                       <Box sx={{ flex: 1, minWidth: 200 }}>
                         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap", mb: 0.5 }}>
                           <Typography sx={{ fontSize: "1.15rem", fontWeight: 800, color: NAVY }}>{title}</Typography>
-                          <Chip label={sc.label} size="small" sx={{ height: 22, fontSize: "0.68rem", fontWeight: 700, bgcolor: sc.bg, color: sc.color, border: `1px solid ${sc.border}` }} />
+                          <Chip label={statusLabel(rawStatus)} size="small" sx={{ height: 22, fontSize: "0.68rem", fontWeight: 700, bgcolor: sc.bg, color: sc.color, border: `1px solid ${sc.border}` }} />
                         </Box>
                         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mt: 0.5 }}>
                           {location && (
@@ -352,7 +363,7 @@ const CandidateApplicationDetailPage: React.FC = () => {
                           {workMode && <Chip label={workMode} size="small" sx={{ height: 20, fontSize: "0.67rem", bgcolor: "#F3F4F6", color: "#374151" }} />}
                           <Box sx={{ display: "flex", alignItems: "center", gap: 0.4, ml: "auto" }}>
                             <CalendarTodayOutlined sx={{ fontSize: 12, color: "#9CA3AF" }} />
-                            <Typography sx={{ fontSize: "0.72rem", color: "#9CA3AF" }}>Applied {fmtDate(app.appliedAt || app.createdAt)}</Typography>
+                            <Typography sx={{ fontSize: "0.72rem", color: "#9CA3AF" }}>{s("applied_on", { date: fmtDate(app.appliedAt || app.createdAt) })}</Typography>
                           </Box>
                         </Box>
                       </Box>
@@ -379,7 +390,7 @@ const CandidateApplicationDetailPage: React.FC = () => {
                   const r = 34; const circ = 2 * Math.PI * r;
                   const filled = (Math.min(score, 100) / 100) * circ;
                   return (
-                    <Section icon={<BusinessCenterOutlined sx={{ fontSize: 14, color: T }} />} title="CV Match Score">
+                    <Section icon={<BusinessCenterOutlined sx={{ fontSize: 14, color: T }} />} title={s("cv_match_score.title")}>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 2.5 }}>
                         <Box sx={{ position: "relative", width: 80, height: 80, flexShrink: 0 }}>
                           <svg width={80} height={80} style={{ transform: "rotate(-90deg)" }}>
@@ -393,10 +404,10 @@ const CandidateApplicationDetailPage: React.FC = () => {
                         </Box>
                         <Box>
                           <Typography sx={{ fontSize: "0.9rem", fontWeight: 700, color: NAVY }}>
-                            {score >= 70 ? "Strong Match" : score >= 50 ? "Good Match" : "Low Match"}
+                            {score >= 70 ? s("cv_match_score.strong") : score >= 50 ? s("cv_match_score.good") : s("cv_match_score.low")}
                           </Typography>
                           <Typography sx={{ fontSize: "0.8rem", color: "#6B7280", mt: 0.5 }}>
-                            Your profile matches {score}% of the job requirements.
+                            {s("cv_match_score.subtitle", { score })}
                           </Typography>
                         </Box>
                       </Box>
@@ -406,14 +417,14 @@ const CandidateApplicationDetailPage: React.FC = () => {
 
                 {/* Job description */}
                 {description && (
-                  <Section icon={<WorkOutlineOutlined sx={{ fontSize: 14, color: T }} />} title="Job Description">
+                  <Section icon={<WorkOutlineOutlined sx={{ fontSize: 14, color: T }} />} title={s("job_description")}>
                     <Typography sx={{ fontSize: "0.85rem", color: "#4B5563", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>{description}</Typography>
                   </Section>
                 )}
 
                 {/* Requirements */}
                 {requirements.length > 0 && (
-                  <Section icon={<BusinessCenterOutlined sx={{ fontSize: 14, color: T }} />} title="Requirements">
+                  <Section icon={<BusinessCenterOutlined sx={{ fontSize: 14, color: T }} />} title={s("requirements")}>
                     <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
                       {requirements.map((r: string, i: number) => (
                         <Box component="li" key={i} sx={{ fontSize: "0.85rem", color: "#4B5563", lineHeight: 1.8 }}>{r}</Box>
@@ -427,13 +438,13 @@ const CandidateApplicationDetailPage: React.FC = () => {
 
           {/* ── RIGHT: status timeline ── */}
           <Box sx={{ display: { xs: "none", lg: "flex" }, flexDirection: "column", gap: 2, position: "sticky", top: 16 }}>
-            {app && !loading && <StatusTimeline rawStatus={rawStatus} />}
+            {app && !loading && <StatusTimeline rawStatus={rawStatus} t={(k, opts) => t(`candidate.application_detail.${k}`, opts) as string} />}
 
             {/* Quick info card */}
             {app && !loading && (
               <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 2, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
                 <Typography sx={{ fontSize: "0.72rem", fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.06em", mb: 1.25 }}>
-                  Details
+                  {s("details")}
                 </Typography>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
                   {location && (
@@ -457,7 +468,7 @@ const CandidateApplicationDetailPage: React.FC = () => {
                   <Divider />
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <CalendarTodayOutlined sx={{ fontSize: 14, color: "#9CA3AF", flexShrink: 0 }} />
-                    <Typography sx={{ fontSize: "0.75rem", color: "#6B7280" }}>Applied {fmtDate(app.appliedAt || app.createdAt)}</Typography>
+                    <Typography sx={{ fontSize: "0.75rem", color: "#6B7280" }}>{s("applied_on", { date: fmtDate(app.appliedAt || app.createdAt) })}</Typography>
                   </Box>
                 </Box>
               </Box>
