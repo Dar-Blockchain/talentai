@@ -9,12 +9,12 @@ import axios from "axios";
 import Header from "@/components/layout/dashboard/Header";
 import NotificationsTab from "@/components/features/profile/NotificationsTab";
 import PersonalInformationTab from "@/components/features/profile/PersonalInformationTab";
-import ContactInformationTab from "@/components/features/profile/ContactInformationTab";
 import ProfileVisibilityTab from "@/components/features/profile/ProfileVisibilityTab";
 import SnackbarNotifications from "@/components/features/profile/SnackbarNotifications";
+import LanguageTab from "@/components/features/company/settings/LanguageTab";
 import { useProfileManagement } from "@/hooks/useProfileManagement";
 import PersonOutlined from "@mui/icons-material/PersonOutlined";
-import ContactMailOutlined from "@mui/icons-material/ContactMailOutlined";
+import LanguageIcon from "@mui/icons-material/Language";
 import NotificationsOutlined from "@mui/icons-material/NotificationsOutlined";
 import VisibilityOutlined from "@mui/icons-material/VisibilityOutlined";
 
@@ -26,7 +26,7 @@ const NAVY = "#0D1B2A";
 
 const TAB_IDS = [
   { id: "personal",      key: "personal",      icon: PersonOutlined },
-  { id: "contact",       key: "contact",        icon: ContactMailOutlined },
+  { id: "language",      key: "language",       icon: LanguageIcon },
   { id: "notifications", key: "notifications",  icon: NotificationsOutlined },
   { id: "visibility",    key: "visibility",     icon: VisibilityOutlined },
 ];
@@ -41,10 +41,10 @@ const CandidateSettingsPage: React.FC = () => {
   }));
   const {
     activeTab, isEditing, profile, loading, error,
-    uploadingImage, saveSuccess, userId, fieldErrors,
+    uploadingImage, saveSuccess, userId,
     setActiveTab, setIsEditing,
-    handleInputChange, handleSelectChange, handleImageUpload,
-    handleSaveProfile, handleCancel, handleDismissError, handleDismissSuccess,
+    handleInputChange, handleImageUpload,
+    handleSaveProfile, handleSaveLanguage, handleCancel, handleDismissError, handleDismissSuccess,
   } = useProfileManagement();
 
   const { profile: reduxProfile, companyMembership } = useSelector((state: RootState) => state.user.connectedUser);
@@ -152,24 +152,18 @@ const CandidateSettingsPage: React.FC = () => {
                 saveSuccess={saveSuccess}
                 error={error || null}
                 uploadingImage={uploadingImage}
-                onInputChange={handleInputChange}
-                onSelectChange={handleSelectChange}
                 onImageUpload={handleImageUpload}
                 onSave={handleSaveProfile}
                 onCancel={handleCancel}
                 onEditToggle={() => setIsEditing(!isEditing)}
               />
             )}
-            {activeTab === "contact" && (
-              <ContactInformationTab
-                profile={profile}
-                isEditing={isEditing}
-                loading={loading}
-                fieldErrors={fieldErrors}
-                onInputChange={handleInputChange}
-                onSave={handleSaveProfile}
-                onCancel={handleCancel}
-                onEditToggle={() => setIsEditing(!isEditing)}
+            {activeTab === "language" && (
+              <LanguageTab
+                onInputChange={(key, value) => handleInputChange(key as keyof typeof profile, value)}
+                onSaveLanguage={handleSaveLanguage}
+                showGenerateLanguage={false}
+                centerInterfaceVertically={true}
               />
             )}
             {activeTab === "notifications" && <NotificationsTab />}

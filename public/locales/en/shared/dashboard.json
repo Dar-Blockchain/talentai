@@ -5,6 +5,7 @@
     "tabs": {
       "personal": "Personal Info",
       "contact": "Contact",
+      "language": "Language",
       "notifications": "Notifications",
       "visibility": "Public Profile",
       "settings_label": "Settings"

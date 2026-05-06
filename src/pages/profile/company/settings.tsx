@@ -5,7 +5,6 @@ import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import Header from "@/components/layout/Header";
 import ProfileSidebar from "@/components/features/profile/ProfileSidebar";
 import PersonalInformationTab from "@/components/features/profile/PersonalInformationTab";
-import ContactInformationTab from "@/components/features/profile/ContactInformationTab";
 import SnackbarNotifications from "@/components/features/profile/SnackbarNotifications";
 import { useCompanyProfileManagement } from "@/hooks/useCompanyProfileManagement";
 import PageContainer from "@/components/layout/PageContainer";
@@ -97,21 +96,8 @@ const CompanySettingsPage: React.FC = () => {
             />
           )}
 
-          {activeTab === "contact" && (
-            <ContactInformationTab
-              profile={profile}
-              isEditing={isEditing}
-              loading={loading}
-              fieldErrors={fieldErrors}
-              onInputChange={handleInputChange}
-              onSave={handleSaveProfile}
-              onCancel={handleCancel}
-              onEditToggle={() => setIsEditing(!isEditing)}
-            />
-          )}
-
           {activeTab !== "personal" &&
-            activeTab !== "contact" && (
+            (
               <Card
                 sx={{
                   borderRadius: 3,
