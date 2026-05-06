@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
-import axiosInstance from "@/utils/axiosInstance";
+import { userService } from "@/services/userService";
 
 interface UserState {
   connectedUser: {
@@ -49,14 +49,8 @@ export const createOrUpdateProfile = createAsyncThunk<
   any,
   { rejectValue: string }
 >("user/createOrUpdateProfile", async (profileData, { rejectWithValue }) => {
-  const endpoint =
-    profileData.type === "company"
-      ? "profiles/createOrUpdateCompanyProfile"
-      : "profiles/createOrUpdateProfile";
-
   try {
-    const response = await axiosInstance.post(endpoint, profileData);
-    return response.data;
+    return await userService.createOrUpdateProfile(profileData);
   } catch (error: any) {
     return rejectWithValue(
       error.response?.data?.message || "An error occurred while creating/updating profile"
@@ -73,8 +67,7 @@ export const updateProfile = createAsyncThunk<
     const state = getState() as any;
     const connectedUser = state.user.connectedUser.user;
     const userId = targetUserId || connectedUser?._id || connectedUser?.id;
-    const response = await axiosInstance.put(`profiles/${userId}`, updatePayload);
-    return response.data;
+    return await userService.updateProfile(userId, updatePayload);
   } catch (error: any) {
     return rejectWithValue(
       error.response?.data?.message || "An error occurred while updating profile"
@@ -88,8 +81,7 @@ export const getMyProfile = createAsyncThunk<
   { rejectValue: string }
 >("user/getMyProfile", async (_, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get("profiles/me");
-    return response.data;
+    return await userService.getMyProfile();
   } catch (error: any) {
     return rejectWithValue(
       error.response?.data?.message || "An error occurred while fetching profile"
@@ -106,13 +98,7 @@ export const uploadProfileImage = createAsyncThunk<
     const state = getState() as any;
     const connectedUser = state.user.connectedUser.user;
     const userId = targetUserId || connectedUser?._id || connectedUser?.id;
-    const formData = new FormData();
-    formData.append("user_image", file);
-
-    const response = await axiosInstance.put(`profiles/${userId}`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    return response.data;
+    return await userService.uploadProfileImage(userId, file);
   } catch (error: any) {
     return rejectWithValue(
       error.response?.data?.message || "An error occurred while uploading profile image"
@@ -126,8 +112,7 @@ export const getProfileById = createAsyncThunk<
   { rejectValue: string; state: RootState }
 >("user/getProfileById", async (userId, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get(`profiles/${userId}`);
-    return response.data;
+    return await userService.getProfileById(userId);
   } catch (error: any) {
     return rejectWithValue(
       error.response?.data?.message || "An error occurred while fetching profile"
@@ -145,10 +130,6 @@ const userSlice = createSlice({
       state.connectedUser.planLimits = action.payload.planLimits;
       state.connectedUser.companyMembership = action.payload.companyMembership;
     },
-    setTargetUser(state, action: PayloadAction<any>) {
-      state.targetUser.user = action.payload.user;
-      state.targetUser.profile = action.payload.profile;
-    },
     clearConnectedUser(state) {
       state.connectedUser.user = null;
       state.connectedUser.profile = null;
@@ -161,9 +142,6 @@ const userSlice = createSlice({
     },
     setUserType(state, action: PayloadAction<"company" | "candidate" | "employee">) {
       state.userType = action.payload;
-    },
-    setCurrentSpace(state, action: PayloadAction<"personal" | "membership">) {
-      state.currentSpace = action.payload;
     },
     updateProfileQuota(state, action: PayloadAction<number>) {
       if (state?.connectedUser?.profile?.quota !== undefined) {
@@ -295,11 +273,9 @@ const userSlice = createSlice({
 
 export const {
   setConnectedUser,
-  setTargetUser,
   clearConnectedUser,
   clearTargetUser,
   setUserType,
-  setCurrentSpace,
   updateProfileQuota,
   updateProfileSoftSkill,
   updateProfileSkills,

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axiosInstance from '@/utils/axiosInstance';
+import { jobApplicationService } from '@/services/jobApplicationService';
 
 interface ApplicationMetrics {
   totalApplicants: number;
@@ -89,19 +89,7 @@ export const fetchCompanyApplications = createAsyncThunk(
     limit?: number;
     page?: number;
   } = {}) => {
-    const query = new URLSearchParams();
-    if (params.candidateName) query.set('candidateName', params.candidateName);
-    if (params.skill) query.set('skill', params.skill);
-    if (params.postId) query.set('postId', params.postId);
-    if (params.scoreMin !== undefined && params.scoreMin > 0) query.set('scoreMin', String(params.scoreMin));
-    if (params.scoreMax !== undefined && params.scoreMax < 100) query.set('scoreMax', String(params.scoreMax));
-    if (params.dateFrom) query.set('dateFrom', params.dateFrom);
-    if (params.dateTo) query.set('dateTo', params.dateTo);
-    if (params.limit !== undefined) query.set('limit', String(params.limit));
-    if (params.page !== undefined) query.set('page', String(params.page));
-    const url = `job-applications/company/my${query.toString() ? `?${query}` : ''}`;
-    const res = await axiosInstance.get(url);
-    return (Array.isArray(res.data?.data) ? res.data.data : Array.isArray(res.data) ? res.data : []) as any[];
+    return await jobApplicationService.fetchCompanyApplications(params);
   }
 );
 
@@ -121,17 +109,8 @@ export const fetchPostApplicationsSummary = createAsyncThunk(
     page?: number;
     limit?: number;
   }) => {
-    const { postId, ...rest } = params;
-    const query = new URLSearchParams();
-    Object.entries(rest).forEach(([k, v]) => {
-      if (v !== undefined && v !== null && v !== '') query.set(k, String(v));
-    });
-    const url = `job-applications/post/${postId}/summary${query.toString() ? `?${query}` : ''}`;
-    const res = await axiosInstance.get(url);
-    return {
-      data: (res.data?.data ?? []) as ApplicationSummaryItem[],
-      pagination: res.data?.pagination ?? {},
-    };
+    const result = await jobApplicationService.fetchPostApplicationsSummary(params);
+    return { data: result.data as ApplicationSummaryItem[], pagination: result.pagination };
   }
 );
 
@@ -151,15 +130,8 @@ export const fetchCompanyApplicationsSummary = createAsyncThunk(
     page?: number;
     limit?: number;
   } = {}) => {
-    const query = new URLSearchParams();
-    Object.entries(params).forEach(([k, v]) => {
-      if (v !== undefined && v !== null && v !== '') query.set(k, String(v));
-    });
-    const res = await axiosInstance.get(`job-applications/company/my/summary${query.toString() ? `?${query}` : ''}`);
-    return {
-      data: (res.data?.data ?? []) as ApplicationSummaryItem[],
-      pagination: res.data?.pagination ?? {},
-    };
+    const result = await jobApplicationService.fetchCompanyApplicationsSummary(params);
+    return { data: result.data as ApplicationSummaryItem[], pagination: result.pagination };
   }
 );
 
@@ -167,11 +139,7 @@ export const inviteToInterview = createAsyncThunk(
   'jobApplications/inviteToInterview',
   async (params: { applicationId: string; interviewLink: string }, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.post(
-        `job-applications/${params.applicationId}/invite-to-interview`,
-        { interviewLink: params.interviewLink }
-      );
-      return res.data;
+      return await jobApplicationService.inviteToInterview(params.applicationId, params.interviewLink);
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error ?? 'Failed to send invitation');
     }
@@ -181,30 +149,22 @@ export const inviteToInterview = createAsyncThunk(
 export const fetchCompanyApplicationMetrics = createAsyncThunk(
   'jobApplications/fetchMetrics',
   async () => {
-    const res = await axiosInstance.get('job-applications/company/my/metrics');
-    return res.data?.data as ApplicationMetrics;
+    return await jobApplicationService.fetchCompanyApplicationMetrics() as ApplicationMetrics;
   }
 );
 
 export const fetchCandidateApplications = createAsyncThunk(
   'jobApplications/fetchCandidateList',
   async (params: { page?: number; limit?: number } = {}) => {
-    const query = new URLSearchParams();
-    if (params.page)  query.set('page',  String(params.page));
-    if (params.limit) query.set('limit', String(params.limit));
-    const res = await axiosInstance.get(`job-applications/candidate/my${query.toString() ? `?${query}` : ''}`);
-    return {
-      data: (Array.isArray(res.data?.data) ? res.data.data : []) as any[],
-      pagination: res.data?.pagination ?? {},
-    };
+    const result = await jobApplicationService.fetchCandidateApplications(params);
+    return { data: result.data as any[], pagination: result.pagination };
   }
 );
 
 export const fetchCandidateStats = createAsyncThunk(
   'jobApplications/fetchCandidateStats',
   async () => {
-    const res = await axiosInstance.get('job-applications/candidate/my/stats');
-    return res.data as CandidateStats & { success: boolean };
+    return await jobApplicationService.fetchCandidateStats() as CandidateStats & { success: boolean };
   }
 );
 

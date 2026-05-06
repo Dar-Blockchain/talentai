@@ -1,8 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
-import Cookies from 'js-cookie';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+import { feedbackService } from '@/services/feedbackService';
 
 interface FeedbackState {
   submitting: boolean;
@@ -16,9 +13,6 @@ const initialState: FeedbackState = {
   error: null,
 };
 
-const isMongoObjectId = (id?: string | null): boolean =>
-  !!id && /^[a-f\d]{24}$/i.test(id);
-
 export const submitFeedback = createAsyncThunk(
   'feedback/submit',
   async (
@@ -26,20 +20,7 @@ export const submitFeedback = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const token = localStorage.getItem('api_token') || Cookies.get('api_token');
-      const body: { rating: number; comment: string; interviewId?: string } = {
-        rating: payload.rating,
-        comment: payload.comment,
-      };
-      if (isMongoObjectId(payload.interviewId)) {
-        body.interviewId = payload.interviewId;
-      }
-      const response = await axios.post(
-        `${API_BASE_URL}feedback/addFeedback`,
-        body,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      return response.data;
+      return await feedbackService.submitFeedback(payload);
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data?.message || error.message || 'Failed to submit feedback'

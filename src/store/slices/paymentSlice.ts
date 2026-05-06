@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axiosInstance from "@/utils/axiosInstance";
+import { paymentService } from "@/services/paymentService";
 import { RootState } from "../store";
 
 export interface Payment {
@@ -136,8 +136,7 @@ export const verifyPayment = createAsyncThunk<Payment, { sessionId: string }, { 
   "payment/verify",
   async ({ sessionId }, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.post("payments/verify", { sessionId });
-      return res.data.data as Payment;
+      return await paymentService.verifyPayment(sessionId) as Payment;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || "Failed to verify payment");
     }
@@ -148,7 +147,7 @@ export const cancelSubscription = createAsyncThunk<void, { subscriptionId: strin
   "payment/cancel",
   async ({ subscriptionId, reason }, { rejectWithValue }) => {
     try {
-      await axiosInstance.post(`subscriptions/${subscriptionId}/cancel`, { reason: reason || "" });
+      await paymentService.cancelSubscription(subscriptionId, reason);
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || "Failed to cancel subscription");
     }
@@ -159,7 +158,7 @@ export const enableAutoRenew = createAsyncThunk<void, { subscriptionId: string }
   "payment/enableAutoRenew",
   async ({ subscriptionId }, { rejectWithValue }) => {
     try {
-      await axiosInstance.post(`subscriptions/${subscriptionId}/enable-auto-renew`);
+      await paymentService.enableAutoRenew(subscriptionId);
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || "Failed to enable auto-renewal");
     }
@@ -170,8 +169,7 @@ export const fetchCompanyPaymentHistory = createAsyncThunk<Payment[], void, { re
   "payment/fetchCompanyHistory",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.get("payments/user/history");
-      return (res.data.data || res.data) as Payment[];
+      return await paymentService.fetchCompanyPaymentHistory() as Payment[];
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || "Failed to fetch payment history");
     }
@@ -182,8 +180,7 @@ export const fetchActiveSubscription = createAsyncThunk<ActiveSubscription, void
   "payment/fetchActiveSubscription",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.get("subscriptions/active");
-      return res.data.data as ActiveSubscription;
+      return await paymentService.fetchActiveSubscription() as ActiveSubscription;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || "No active subscription");
     }
@@ -205,8 +202,7 @@ export const fetchCompanySubscriptions = createAsyncThunk<CompanySubscription[],
   "payment/fetchCompanySubscriptions",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.get("subscriptions/");
-      return (res.data.data || []) as CompanySubscription[];
+      return await paymentService.fetchCompanySubscriptions() as CompanySubscription[];
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || "Failed to fetch subscriptions");
     }
@@ -217,8 +213,7 @@ export const fetchCombinedSubscriptionDetails = createAsyncThunk<CombinedSubscri
   "payment/fetchCombinedDetails",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.get("subscriptions/combined");
-      return res.data.data as CombinedSubscriptionDetails;
+      return await paymentService.fetchCombinedSubscriptionDetails() as CombinedSubscriptionDetails;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || "No active subscriptions");
     }
@@ -229,8 +224,7 @@ export const fetchSubscriptionDetails = createAsyncThunk<SubscriptionDetails, st
   "payment/fetchSubscriptionDetails",
   async (subscriptionId, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.get(`subscriptions/${subscriptionId}/details`);
-      return res.data.data as SubscriptionDetails;
+      return await paymentService.fetchSubscriptionDetails(subscriptionId) as SubscriptionDetails;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || "Failed to fetch subscription details");
     }
@@ -245,8 +239,7 @@ export const checkSubscriptionLimit = createAsyncThunk<
   "payment/checkLimit",
   async ({ companyProfileId, limitType }, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.get(`subscriptions/${companyProfileId}/check-limit/${limitType}`);
-      return res.data as LimitCheck;
+      return await paymentService.checkSubscriptionLimit(companyProfileId, limitType) as LimitCheck;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || "Failed to check limit");
     }
@@ -261,11 +254,7 @@ export const updatePaymentStatus = createAsyncThunk<
   "payment/updateStatus",
   async ({ paymentId, status, additionalData }, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.put(`payments/${paymentId}/status`, {
-        status,
-        ...(additionalData ? { additionalData } : {}),
-      });
-      return res.data.data as Payment;
+      return await paymentService.updatePaymentStatus(paymentId, status, additionalData) as Payment;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || "Failed to update payment status");
     }
@@ -275,9 +264,7 @@ export const updatePaymentStatus = createAsyncThunk<
 const paymentSlice = createSlice({
   name: "payment",
   initialState,
-  reducers: {
-    clearPaymentError: (state) => { state.error = null; },
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(verifyPayment.pending, (state) => { state.loading = true; state.error = null; })
@@ -358,5 +345,4 @@ export const selectSubscriptionDetailsLoading = (state: RootState) => state.paym
 export const selectLimitCheck = (state: RootState) => state.payment.limitCheck;
 export const selectLimitCheckLoading = (state: RootState) => state.payment.limitCheckLoading;
 
-export const { clearPaymentError } = paymentSlice.actions;
 export default paymentSlice.reducer;

@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../store';
-import axiosInstance from '@/utils/axiosInstance';
+import { interviewService } from '@/services/interviewService';
 
 export interface SkillInterviewAssessment {
   _id: string;
@@ -143,31 +143,9 @@ export const saveInterviewAssessment = createAsyncThunk<
   { rejectValue: string }
 >(
   'interview/saveAssessment',
-  async ({ skill, proficiency, interviewData, skillType }, { rejectWithValue }) => {
-    // Normalise legacy interviewType values to the enum the backend model accepts
-    const interviewTypeMap: Record<string, string> = {
-      TECHNICAL_SKILL:  'TECHNICAL_INTERVIEW',
-      SOFT_SKILL:       'ASSESSMENT',
-      SALARY_INTERVIEW: 'HR_INTERVIEW',
-      PSYCHOTECHNIC:    'EVALUATION',
-    };
-    const normalizedInterviewData = interviewData?.interviewType
-      ? {
-          ...interviewData,
-          interviewType:
-            interviewTypeMap[interviewData.interviewType] ??
-            interviewData.interviewType,
-        }
-      : interviewData;
-
+  async (params, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('skill-interview-assessments/', {
-        skill,
-        proficiency,
-        interviewData: normalizedInterviewData,
-        skillType,
-      });
-      return response.data;
+      return await interviewService.saveAssessment(params);
     } catch (error: any) {
       return rejectWithValue(error.message || 'Error saving interview assessment');
     }
@@ -183,39 +161,10 @@ export const fetchInterviewAssessments = createAsyncThunk<
   { rejectValue: string }
 >(
   'interview/fetchAssessments',
-  async ({ type, page, limit, candidateId }, { rejectWithValue }) => {
-    console.log('🔄 [InterviewSlice] fetchInterviewAssessments CALLED:', { type, page, limit, candidateId });
-
+  async (params, { rejectWithValue }) => {
     try {
-      console.log('📡 [InterviewSlice] Making HTTP request to skill-interview-assessments/my');
-
-      const response = await axiosInstance.get('skill-interview-assessments/my', {
-        params: { page: page + 1, limit, candidateId },
-      });
-
-      const json = response.data;
-      console.log('📦 [InterviewSlice] Raw API Response:', json);
-
-      const results = Array.isArray(json.results)
-        ? json.results
-        : Array.isArray(json.data)
-        ? json.data
-        : [];
-
-      const inferredTotal =
-        typeof json.total === 'number' && json.total >= 0
-          ? json.total
-          : typeof json.count === 'number' && json.count >= 0
-          ? json.count
-          : typeof json.totalCount === 'number' && json.totalCount >= 0
-          ? json.totalCount
-          : results.length;
-
-      console.log('✅ [InterviewSlice] Data loaded successfully:', results.length, 'items');
-
-      return { results, total: inferredTotal };
+      return await interviewService.fetchAssessments(params);
     } catch (error: any) {
-      console.error('❌ [InterviewSlice] Exception:', error);
       return rejectWithValue(error.message || 'An error occurred while fetching data');
     }
   }
@@ -230,15 +179,9 @@ export const fetchSkillAssessmentsByType = createAsyncThunk<
   { rejectValue: string }
 >(
   'interview/fetchSkillAssessmentsByType',
-  async ({ skillType, limit = 20 }, { rejectWithValue }) => {
+  async (params, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get('skill-interview-assessments/my', {
-        params: { skillType, limit },
-      });
-      const data = response.data;
-      const results = data.data || data.results || [];
-      const total = data.pagination?.totalCount || data.total || results.length;
-      return { results, total, skillType };
+      return await interviewService.fetchSkillAssessmentsByType(params);
     } catch (error: any) {
       return rejectWithValue(error.message || 'Error fetching skill assessments');
     }
@@ -256,8 +199,7 @@ export const fetchInterviewReport = createAsyncThunk<
   'interview/fetchReport',
   async (id, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`skill-interview-assessments/${id}`);
-      return response.data.data;
+      return await interviewService.fetchReport(id);
     } catch (error: any) {
       return rejectWithValue(error.message || 'Error fetching data');
     }
@@ -275,12 +217,7 @@ export const fetchInterviewDetailsById = createAsyncThunk<
   'interview/fetchDetailsById',
   async (interviewId, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`interview-details/getInterviewDetailsById/${interviewId}`);
-      const data = response.data;
-      if (data.success && data.data) {
-        return data.data;
-      }
-      return rejectWithValue('No interview data found');
+      return await interviewService.fetchDetailsById(interviewId);
     } catch (error: any) {
       return rejectWithValue(error.message || 'Error fetching interview details');
     }
@@ -298,14 +235,7 @@ export const fetchCompanyInterviewMetrics = createAsyncThunk<
   'interview/fetchCompanyInterviewMetrics',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get('post-interview-assessments/company/mine/metrics');
-      const d = response.data.data ?? {};
-      return {
-        total:     typeof d.total    === 'number' ? d.total    : 0,
-        needWork:  typeof d.needWork === 'number' ? d.needWork : 0,
-        excellent: typeof d.excellent === 'number' ? d.excellent : 0,
-        avgScore:  typeof d.avgScore  === 'number' ? d.avgScore  : 0,
-      };
+      return await interviewService.fetchCompanyInterviewMetrics();
     } catch (error: any) {
       return rejectWithValue(error.message || 'Error fetching interview metrics');
     }
@@ -323,8 +253,7 @@ export const checkPostInterviewAssessment = createAsyncThunk<
   'interview/checkPostAssessment',
   async (postId, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`post-interview-assessments/check/${postId}`);
-      return { exists: !!response.data?.exists };
+      return await interviewService.checkPostAssessment(postId);
     } catch (error: any) {
       const msg: string = error?.response?.data?.message || error.message || '';
       if (msg.toLowerCase().includes('company')) {
@@ -347,39 +276,9 @@ export const fetchCompanyInterviews = createAsyncThunk<
   { rejectValue: string }
 >(
   'interview/fetchCompanyInterviews',
-  async ({ search, page = 1, limit = 12 }, { rejectWithValue }) => {
+  async (params, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get('post-interview-assessments/company/mine', {
-        params: {
-          page,
-          limit,
-          ...(search ? { search } : {}),
-        },
-      });
-
-      const json = response.data;
-
-      // Response shape: { data: [ { post, assessments: [ { assessment, candidatePostStepProgress } ] } ] }
-      let items: any[] = [];
-      if (Array.isArray(json.data)) {
-        json.data.forEach((group: any) => {
-          if (Array.isArray(group.assessments)) {
-            group.assessments.forEach((entry: any) => {
-              if (entry.assessment) {
-                items.push(entry.assessment);
-              }
-            });
-          }
-        });
-      }
-
-      const total = typeof json.count === 'number' ? json.count
-        : typeof json.total === 'number' ? json.total
-        : items.length;
-
-      const totalPages = json.pagination?.totalPages ?? (Math.ceil(total / limit) || 1);
-
-      return { items, total, totalPages };
+      return await interviewService.fetchCompanyInterviews(params);
     } catch (error: any) {
       return rejectWithValue(error.message || 'Error fetching company interviews');
     }
@@ -397,10 +296,7 @@ export const fetchInterviewById = createAsyncThunk<
   'interview/fetchInterviewById',
   async (id, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`post-interview-assessments/${id}`);
-      // API returns { success, data: { assessment, stepsData, hasSteps } }
-      const d = response.data?.data;
-      return { assessment: d?.assessment || d, stepsData: d?.stepsData || null, hasSteps: d?.hasSteps || false };
+      return await interviewService.fetchInterviewById(id);
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || 'Error fetching interview');
     }
@@ -418,16 +314,7 @@ const interviewSlice = createSlice({
       state.rowsPerPage = action.payload;
       state.page = 0; // Reset to first page when changing rows per page
     },
-    setCurrentTab: (state, action: PayloadAction<string>) => {
-      state.currentTab = action.payload;
-      state.page = 0; // Reset to first page when changing tab
-    },
     clearError: (state) => {
-      state.error = null;
-    },
-    clearInterviewData: (state) => {
-      state.data = [];
-      state.total = 0;
       state.error = null;
     },
     clearReport: (state) => {
@@ -536,9 +423,7 @@ const interviewSlice = createSlice({
 export const {
   setPage,
   setRowsPerPage,
-  setCurrentTab,
   clearError,
-  clearInterviewData,
   clearReport,
 } = interviewSlice.actions;
 

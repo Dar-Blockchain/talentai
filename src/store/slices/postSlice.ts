@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import axiosInstance from "@/utils/axiosInstance";
+import { postService } from "@/services/postService";
 // import { broadcastSystemNotification } from "./notificationSlice";
 
 interface RecruitmentFlowState {
@@ -184,18 +184,7 @@ export const savePost = createAsyncThunk(
   "post/savePost",
   async (jobData: any, { rejectWithValue }) => {
     try {
-      if (!jobData) {
-        throw new Error("No job data available");
-      }
-
-      const res = await axiosInstance.post("post/save-post", jobData);
-      const saved = res.data;
-      const job = saved.data || saved;
-      return {
-        success: true,
-        jobData: job,
-        planUsage: saved.planUsage || null,
-      };
+      return await postService.savePost(jobData);
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || err.message || "Error saving job");
     }
@@ -209,24 +198,8 @@ export const updatePost = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      if (!jobData || !jobId) {
-        throw new Error("Job ID or data is missing");
-      }
-
-      console.log("📤 updatePost - jobId:", jobId);
-      console.log("📤 updatePost - jobData:", JSON.stringify(jobData, null, 2));
-
-      const res = await axiosInstance.put(`post/updatePost/${jobId}`, jobData);
-      const responseData = res.data;
-      console.log("📥 updatePost - response:", responseData);
-
-      const job = responseData.data || responseData;
-      return {
-        success: true,
-        jobData: job,
-      };
+      return await postService.updatePost(jobId, jobData);
     } catch (err: any) {
-      console.error("❌ updatePost - error:", err);
       return rejectWithValue(err.response?.data?.message || err.message || "Error updating job");
     }
   }
@@ -235,20 +208,9 @@ export const updatePost = createAsyncThunk(
 // Async thunk: Recommended posts
 export const fetchRecommendedPosts = createAsyncThunk(
   "post/fetchRecommendedPosts",
-  async (    params: {
-      page?: number;
-      limit?: number;
-    } = {},
-    { rejectWithValue }) => {
+  async (params: { page?: number; limit?: number } = {}, { rejectWithValue }) => {
     try {
-      const { page = 1, limit = 10} = params;
-      const queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-      });
-
-      const response = await axiosInstance.get(`post/adsPost?${queryParams}`);
-      return response.data;
+      return await postService.fetchRecommendedPosts(params);
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data?.message || error.message || "An error occurred while fetching recommended posts"
@@ -265,8 +227,7 @@ export const postRecruitmentSteps = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const response = await axiosInstance.post(`post-steps/post/${postId}/steps`, steps);
-      return response.data;
+      return await postService.postRecruitmentSteps(postId, steps);
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data?.message || error.message || "An error occurred while posting recruitment steps"
@@ -278,42 +239,9 @@ export const postRecruitmentSteps = createAsyncThunk(
 // Async thunk to fetch company posts (my posts)
 export const fetchMyPosts = createAsyncThunk(
   "post/fetchMyPosts",
-  async (
-    params: {
-      page?: number;
-      limit?: number;
-      search?: string;
-      sort?: string;
-      status?: string;
-      creationType?: string;
-    } = {},
-    { rejectWithValue }
-  ) => {
+  async (params = {}, { rejectWithValue }) => {
     try {
-      const { page = 1, limit = 12, search = "", sort = "newest", status, creationType } = params;
-
-      const queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-        ...(search && { search }),
-        sort,
-        ...(status && status !== "all" && { status }),
-        ...(creationType && creationType !== "all" && { creationType }),
-      });
-
-      const response = await axiosInstance.get(`post/my-posts?${queryParams}`);
-      const data = response.data;
-      return {
-        posts: data.results || [],
-        pagination: {
-          total: data.total || 0,
-          page: data.page || 1,
-          limit: data.limit || 10,
-          totalPages: data.totalPages || 1,
-          hasNextPage: data.hasNextPage || false,
-          hasPrevPage: data.hasPrevPage || false,
-        },
-      };
+      return await postService.fetchMyPosts(params);
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data?.message || error.message || "An error occurred while fetching posts"
@@ -330,8 +258,7 @@ export const deletePost = createAsyncThunk(
   "post/deletePost",
   async (jobId: string, { rejectWithValue }) => {
     try {
-      await axiosInstance.delete(`post/deletePost/${jobId}`);
-      return jobId;
+      return await postService.deletePost(jobId);
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data?.message || error.message || "An error occurred while deleting post"
@@ -346,8 +273,7 @@ export const fetchJobById = createAsyncThunk(
   "post/fetchJobById",
   async (jobId: string, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`post/details/${jobId}`);
-      return response.data?.data;
+      return await postService.fetchJobById(jobId);
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data?.message || error.message || "An error occurred while fetching the job"
@@ -363,8 +289,7 @@ export const updatePostStatus = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const response = await axiosInstance.patch(`post/updatePostStatus/${postId}`, { status });
-      return response.data;
+      return await postService.updatePostStatus(postId, status);
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || "Error updating post status");
     }
@@ -379,27 +304,7 @@ export const savePostInterviewAssessment = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      // Normalise legacy interviewType values to the enum the backend model accepts
-      const interviewTypeMap: Record<string, string> = {
-        TECHNICAL_SKILL: "TECHNICAL_INTERVIEW",
-        SOFT_SKILL:      "ASSESSMENT",
-        SALARY_INTERVIEW: "HR_INTERVIEW",
-        PSYCHOTECHNIC:   "EVALUATION",
-      };
-      const normalizedInterviewData = interviewData?.interviewType
-        ? {
-            ...interviewData,
-            interviewType:
-              interviewTypeMap[interviewData.interviewType] ??
-              interviewData.interviewType,
-          }
-        : interviewData;
-
-      const response = await axiosInstance.post("post-interview-assessments", {
-        post: postId,
-        interviewData: normalizedInterviewData,
-      });
-      return response.data;
+      return await postService.savePostInterviewAssessment(postId, interviewData);
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || "Error saving post interview assessment");
     }
@@ -409,41 +314,9 @@ export const savePostInterviewAssessment = createAsyncThunk(
 // Async thunk to fetch candidate's post interview assessments
 export const fetchCandidateAssessments = createAsyncThunk(
   "post/fetchCandidateAssessments",
-  async (
-    params: { page?: number; limit?: number } = {},
-    { rejectWithValue }
-  ) => {
+  async (params: { page?: number; limit?: number } = {}, { rejectWithValue }) => {
     try {
-      const { page = 1, limit = 10 } = params;
-
-      const queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-      });
-
-      const response = await axiosInstance.get(`post-interview-assessments/candidate/my?${queryParams}`);
-      const data = response.data;
-
-      // Handle API response: { success, message, count, data: [{ post, assessments: [...], candidatePostStepProgress }] }
-      // Keep the grouped structure as-is
-      let results: any[] = [];
-      if (Array.isArray(data?.data)) {
-        results = data.data;
-      } else if (Array.isArray(data)) {
-        results = data;
-      }
-
-      return {
-        items: results,
-        pagination: {
-          total: data.pagination?.totalCount || data.total || data.count || results.length,
-          page: data.pagination?.page || page,
-          limit: data.pagination?.limit || limit,
-          totalPages: data.pagination?.totalPages || Math.ceil((data.count || results.length) / limit),
-          hasNextPage: data.pagination?.hasNextPage || false,
-          hasPrevPage: data.pagination?.hasPrevPage || false,
-        },
-      };
+      return await postService.fetchCandidateAssessments(params);
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || "Error fetching candidate assessments");
     }
@@ -453,89 +326,9 @@ export const fetchCandidateAssessments = createAsyncThunk(
 // Async thunk to fetch company's post interview assessments (grouped by post)
 export const fetchCompanyAssessments = createAsyncThunk(
   "post/fetchCompanyAssessments",
-  async (
-    params: { page?: number; limit?: number } = {},
-    { rejectWithValue }
-  ) => {
+  async (params: { page?: number; limit?: number } = {}, { rejectWithValue }) => {
     try {
-      const { page = 1, limit = 50 } = params;
-
-      const response = await axiosInstance.get("post-interview-assessments/company/mine");
-      const data = response.data;
-      const rawData = data?.data || data;
-      let normalized: any[] = [];
-
-      if (Array.isArray(rawData)) {
-        if (rawData.length > 0 && rawData[0]?.assessments && rawData[0]?.post) {
-          // Grouped format: one row per post, using the latest assessment
-          rawData.forEach((group: any) => {
-            const post = group.post;
-            const assessments = group.assessments || [];
-            if (assessments.length === 0) return;
-
-            const sorted = [...assessments].sort((a: any, b: any) => {
-              const aDate = new Date(a.createdAt || a.assessment?.createdAt || 0).getTime();
-              const bDate = new Date(b.createdAt || b.assessment?.createdAt || 0).getTime();
-              return bDate - aDate;
-            });
-
-            const latest = sorted[0];
-            const a = latest.assessment || latest;
-
-            normalized.push({
-              ...a,
-              post: a.post || post,
-              candidatePostStepProgress: latest.candidatePostStepProgress || null,
-              assessmentsCount: assessments.length,
-            });
-          });
-        } else {
-          normalized = rawData;
-        }
-      } else if (Array.isArray(rawData?.results)) {
-        normalized = rawData.results;
-      } else if (Array.isArray(rawData?.assessments)) {
-        normalized = rawData.assessments;
-      }
-
-      // Map to consistent format
-      const mappedAssessments = normalized.map((a: any) => ({
-        _id: a._id,
-        candidate: a.candidate,
-        candidateName: a.candidate?.username || "",
-        candidateEmail: a.candidate?.email || "",
-        post: a.post,
-        jobTitle: a.post?.jobDetails?.title || "",
-        jobStatus: a.post?.status || "",
-        interviewData: a.interviewData,
-        interviewType: a.interviewData?.interviewType || "HR_INTERVIEW",
-        coverageScore: a.interviewData?.finalReport?.coverage?.overall || 0,
-        analytics: a.interviewData?.analytics,
-        duration: a.interviewData?.analytics?.duration || 0,
-        messageCount: a.interviewData?.analytics?.messageCount || 0,
-        timestamp: a.createdAt || a.timestamp,
-        createdAt: a.createdAt,
-        updatedAt: a.updatedAt,
-        summary: a.interviewData?.finalReport?.summary || "",
-        recommendations: a.interviewData?.finalReport?.recommendations || [],
-        coverageAreas: a.interviewData?.finalReport?.coverage?.areas || {},
-        aiAnalysis: a.interviewData?.finalReport?.aiAnalysis || {},
-        completed: a.completed,
-        candidatePostStepProgress: a.candidatePostStepProgress,
-        assessmentsCount: a.assessmentsCount,
-      }));
-
-      return {
-        items: mappedAssessments,
-        pagination: {
-          total: data.count || mappedAssessments.length,
-          page,
-          limit,
-          totalPages: Math.ceil((data.count || mappedAssessments.length) / limit),
-          hasNextPage: false,
-          hasPrevPage: false,
-        },
-      };
+      return await postService.fetchCompanyAssessments(params);
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || "Error fetching company assessments");
     }
@@ -551,11 +344,7 @@ export const fetchAssessmentDetails = createAsyncThunk<
   "post/fetchAssessmentDetails",
   async (id, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`post-interview-assessments/${id}`);
-      const responseData = response.data.data || response.data;
-      const assessment = responseData.assessment || responseData;
-      const stepsData = responseData.stepsData || null;
-      return { assessment, stepsData };
+      return await postService.fetchAssessmentDetails(id);
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || "Failed to load assessment");
     }
@@ -566,8 +355,7 @@ export const fetchPostMetrics = createAsyncThunk(
   "post/fetchPostMetrics",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.get("post/metrics");
-      return res.data.data as PostMetrics;
+      return await postService.fetchPostMetrics() as PostMetrics;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || "Failed to fetch post metrics");
     }
@@ -585,33 +373,11 @@ const postSlice = createSlice({
       state.savePost.error = null;
       state.savePost.savedPost = null;
     },
-    setSavedPost: (state, action: PayloadAction<any>) => {
-      state.savePost.savedPost = action.payload;
-    },
     clearError: (state) => {
       state.error = null;
       state.postStepsError = null;
       state.currentJobError = null;
       state.recommended.error = null;
-    },
-    setSteps: (state, action: PayloadAction<any[]>) => {
-      state.steps = action.payload;
-    },
-    addStep: (state, action: PayloadAction<any>) => {
-      state.steps.push(action.payload);
-    },
-    updateStep: (
-      state,
-      action: PayloadAction<{ id: string; updates: Partial<any> }>
-    ) => {
-      const { id, updates } = action.payload;
-      const stepIndex = state.steps.findIndex((step) => step.id === id);
-      if (stepIndex !== -1) {
-        state.steps[stepIndex] = { ...state.steps[stepIndex], ...updates };
-      }
-    },
-    removeStep: (state, action: PayloadAction<string>) => {
-      state.steps = state.steps.filter((step) => step.id !== action.payload);
     },
     setFlowNodes(state, action) {
       state.recruitmentFlow.nodes = action.payload;
@@ -813,16 +579,10 @@ const postSlice = createSlice({
 // Export actions
 export const {
   resetSavePost,
-  setSavedPost,
   clearError,
-  setSteps,
-  addStep,
-  updateStep,
-  removeStep,
   setFlowNodes,
   setFlowEdges,
   resetFlow,
-
   clearAssessmentDetails,
 } = postSlice.actions;
 

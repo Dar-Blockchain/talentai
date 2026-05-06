@@ -40,7 +40,7 @@ export interface EmployeeCampaignEntry {
   totalParticipants?: number;
 }
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import axiosInstance from "@/utils/axiosInstance";
+import { campaignService } from "@/services/campaignService";
 
 // ─── Thunks ───────────────────────────────────────────────────────────────────
 
@@ -50,14 +50,7 @@ export const fetchCampaigns = createAsyncThunk<
   { rejectValue: string }
 >("campaign/fetchCampaigns", async (params, { rejectWithValue }) => {
   try {
-    const p: Record<string, any> = {};
-    if (params?.status) p.status = params.status;
-    if (params?.page)   p.page   = params.page;
-    if (params?.limit)  p.limit  = params.limit;
-    if (params?.search) p.search = params.search;
-    if (params?.period) p.period = params.period;
-    const response = await axiosInstance.get("internal-campaigns", { params: p });
-    return response.data as CampaignsResponse;
+    return await campaignService.fetchCampaigns(params) as CampaignsResponse;
   } catch (err: any) {
     return rejectWithValue(err.message);
   }
@@ -69,8 +62,7 @@ export const createCampaign = createAsyncThunk<
   { rejectValue: string }
 >("campaign/createCampaign", async (payload, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.post("internal-campaigns", payload);
-    return response.data.data as Campaign;
+    return await campaignService.createCampaign(payload) as Campaign;
   } catch (err: any) {
     return rejectWithValue(err.message);
   }
@@ -84,8 +76,7 @@ export const updateCampaignStatus = createAsyncThunk<
   "campaign/updateStatus",
   async ({ campaignId, status }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.patch(`internal-campaigns/${campaignId}/status`, { status });
-      return response.data.data as Campaign;
+      return await campaignService.updateCampaignStatus(campaignId, status) as Campaign;
     } catch (err: any) {
       return rejectWithValue(err.message);
     }
@@ -98,8 +89,7 @@ export const deleteCampaign = createAsyncThunk<
   { rejectValue: string }
 >("campaign/deleteCampaign", async (campaignId, { rejectWithValue }) => {
   try {
-    await axiosInstance.delete(`internal-campaigns/${campaignId}`);
-    return campaignId;
+    return await campaignService.deleteCampaign(campaignId);
   } catch (err: any) {
     return rejectWithValue(err.message);
   }
@@ -113,11 +103,7 @@ export const fetchCampaignById = createAsyncThunk<
   try {
     const campaignId = typeof arg === 'string' ? arg : arg.campaignId;
     const userId     = typeof arg === 'string' ? undefined : arg.userId;
-    const url        = userId
-      ? `internal-campaigns/${campaignId}?userId=${userId}`
-      : `internal-campaigns/${campaignId}`;
-    const response = await axiosInstance.get(url);
-    return response.data.data as Campaign;
+    return await campaignService.fetchCampaignById(campaignId, userId) as Campaign;
   } catch (err: any) {
     return rejectWithValue(err.message);
   }
@@ -131,8 +117,7 @@ export const updateCampaign = createAsyncThunk<
   "campaign/updateCampaign",
   async ({ campaignId, updatePayload }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.put(`internal-campaigns/${campaignId}`, { ...updatePayload });
-      return response.data.data as Campaign;
+      return await campaignService.updateCampaign(campaignId, updatePayload) as Campaign;
     } catch (err: any) {
       const msg = err.response?.data?.error || err.response?.data?.message || err.message;
       return rejectWithValue(msg);
@@ -146,8 +131,7 @@ export const fetchCampaignMetrics = createAsyncThunk<
   { rejectValue: string }
 >("campaign/fetchMetrics", async (_, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get("internal-campaigns/metrics");
-    return response.data.data as CampaignMetrics;
+    return await campaignService.fetchMetrics() as CampaignMetrics;
   } catch (err: any) {
     return rejectWithValue(err.message);
   }
@@ -159,9 +143,7 @@ export const fetchCampaignParticipants = createAsyncThunk<
   { rejectValue: string }
 >("campaign/fetchParticipants", async ({ campaignId, ...params }, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get(`internal-campaigns/${campaignId}/participants`, { params });
-    const payload = response.data.data; // { total, page, limit, pages, data: [...] }
-    return { data: payload.data as CampaignParticipant[], total: payload.total ?? payload.data?.length ?? 0 };
+    return await campaignService.fetchParticipants(campaignId, params) as { data: CampaignParticipant[]; total: number };
   } catch (err: any) {
     return rejectWithValue(err.message);
   }
@@ -173,8 +155,7 @@ export const fetchCampaignSessions = createAsyncThunk<
   { rejectValue: string }
 >("campaign/fetchSessions", async ({ campaignId, ...params }, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get(`internal-campaigns/${campaignId}/sessions`, { params });
-    return { data: response.data.data as CampaignSession[], total: response.data.total ?? response.data.data?.length ?? 0 };
+    return await campaignService.fetchSessions(campaignId, params) as { data: CampaignSession[]; total: number };
   } catch (err: any) {
     return rejectWithValue(err.message);
   }
@@ -193,21 +174,9 @@ export const fetchEmployeeCampaigns = createAsyncThunk<
   { data: EmployeeCampaignEntry[]; total: number; pages: number; page: number; limit: number },
   EmployeeCampaignFilters,
   { rejectValue: string }
->("campaign/fetchEmployeeCampaigns", async ({ userId, search, participantStatus, period, page = 1, limit = 10 }, { rejectWithValue }) => {
+>("campaign/fetchEmployeeCampaigns", async (params, { rejectWithValue }) => {
   try {
-    const params: Record<string, string> = { page: String(page), limit: String(limit) };
-    if (search)            params.search            = search;
-    if (participantStatus) params.participantStatus = participantStatus;
-    if (period)            params.period            = period;
-    const response = await axiosInstance.get(`internal-campaigns/employee/${userId}`, { params });
-    const json = response.data;
-    return {
-      data:  json.data as EmployeeCampaignEntry[],
-      total: json.pagination?.total ?? json.data?.length ?? 0,
-      pages: json.pagination?.pages ?? 1,
-      page:  json.pagination?.page  ?? page,
-      limit: json.pagination?.limit ?? limit,
-    };
+    return await campaignService.fetchEmployeeCampaigns(params) as { data: EmployeeCampaignEntry[]; total: number; pages: number; page: number; limit: number };
   } catch (err: any) {
     return rejectWithValue(err.message);
   }
@@ -219,8 +188,7 @@ export const fetchEmployeeCampaignMetrics = createAsyncThunk<
   { rejectValue: string }
 >("campaign/fetchEmployeeCampaignMetrics", async (userId, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get(`internal-campaigns/employee/${userId}/metrics`);
-    return response.data.data;
+    return await campaignService.fetchEmployeeCampaignMetrics(userId);
   } catch (err: any) {
     return rejectWithValue(err.message);
   }
@@ -241,9 +209,7 @@ export const fetchNonParticipants = createAsyncThunk<
   { rejectValue: string }
 >("campaign/fetchNonParticipants", async ({ campaignId, ...params }, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get(`internal-campaigns/${campaignId}/non-participants`, { params });
-    const payload = response.data.data;
-    return { data: payload.data as NonParticipant[], total: payload.total ?? 0 };
+    return await campaignService.fetchNonParticipants(campaignId, params) as { data: NonParticipant[]; total: number };
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.message ?? err.message);
   }
@@ -255,13 +221,7 @@ export const addCampaignParticipant = createAsyncThunk<
   { rejectValue: string }
 >("campaign/addParticipant", async ({ campaignId, employeeId }, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.post(`internal-campaigns/${campaignId}/participate/${employeeId}`);
-    const data = response.data.data as CampaignParticipant;
-    // For anonymous campaigns, persist the token in localStorage so the assessment page can retrieve it
-    if (data.anonymousToken) {
-      localStorage.setItem(`anon_token_${campaignId}`, data.anonymousToken);
-    }
-    return data;
+    return await campaignService.addParticipant(campaignId, employeeId) as CampaignParticipant;
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.message ?? err.message);
   }
@@ -273,8 +233,7 @@ export const removeCampaignParticipant = createAsyncThunk<
   { rejectValue: string }
 >("campaign/removeParticipant", async ({ campaignId, participantId }, { rejectWithValue }) => {
   try {
-    await axiosInstance.delete(`internal-campaigns/${campaignId}/participate/${participantId}`);
-    return participantId;
+    return await campaignService.removeParticipant(campaignId, participantId);
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.message ?? err.message);
   }
@@ -311,8 +270,7 @@ export const fetchParticipantResults = createAsyncThunk<
   { rejectValue: string }
 >("campaign/fetchParticipantResults", async ({ campaignId, participantId }, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get(`internal-campaigns/${campaignId}/results/${participantId}`);
-    return response.data.data as ParticipantResultsData;
+    return await campaignService.fetchParticipantResults(campaignId, participantId) as ParticipantResultsData;
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.error ?? err.message);
   }
@@ -326,8 +284,7 @@ export const fetchCampaignByLinkToken = createAsyncThunk<
   { rejectValue: string }
 >("campaign/fetchByLinkToken", async (token, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get(`internal-campaigns/link/${token}`);
-    return response.data.data as Campaign;
+    return await campaignService.fetchByLinkToken(token) as Campaign;
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.error ?? err.message);
   }
@@ -339,18 +296,7 @@ export const joinCampaignByLink = createAsyncThunk<
   { rejectValue: string }
 >("campaign/joinByLink", async ({ token, name, email }, { rejectWithValue }) => {
   try {
-    const body: Record<string, string> = {};
-    if (name)  body.name  = name;
-    if (email) body.email = email;
-    const response = await axiosInstance.post(`internal-campaigns/link/${token}/join`, body);
-    const data = response.data.data as { campaignId: string; anonymousToken?: string; linkAccessToken?: string; participantId?: string };
-    if (data.anonymousToken) {
-      localStorage.setItem(`anon_token_${data.campaignId}`, data.anonymousToken);
-    }
-    if (data.linkAccessToken) {
-      localStorage.setItem(`link_token_${data.campaignId}`, data.linkAccessToken);
-    }
-    return data;
+    return await campaignService.joinByLink(token, name, email) as { campaignId: string; anonymousToken?: string; linkAccessToken?: string; participantId?: string };
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.error ?? err.message);
   }
@@ -480,9 +426,6 @@ const campaignSlice = createSlice({
   reducers: {
     setPage(state, action: PayloadAction<number>) {
       state.page = action.payload;
-    },
-    setLimit(state, action: PayloadAction<number>) {
-      state.limit = action.payload;
     },
     clearCreateStatus(state) {
       state.createSuccess = false;
@@ -756,7 +699,7 @@ const campaignSlice = createSlice({
   },
 });
 
-export const { clearCreateStatus, clearError, clearSelectedCampaign, setPage, setLimit } =
+export const { clearCreateStatus, clearError, clearSelectedCampaign, setPage } =
   campaignSlice.actions;
 
 // ─── Selectors ────────────────────────────────────────────────────────────────

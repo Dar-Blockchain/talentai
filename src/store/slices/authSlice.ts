@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axiosInstance, { setAxiosLoggingOut } from "@/utils/axiosInstance";
+import { setAxiosLoggingOut } from "@/utils/axiosInstance";
 import Cookies from "js-cookie";
+import { authService } from "@/services/authService";
 import { createNotification } from "./notificationSlice";
 import { clearConnectedUser, setConnectedUser } from "./userSlice";
 
@@ -29,8 +30,7 @@ export const signinUser = createAsyncThunk(
   "auth/signin",
   async (email: string, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('auth', { email });
-      return response.data;
+      return await authService.signin(email);
     } catch (error: any) {
       if (error.response) {
         return rejectWithValue(
@@ -50,23 +50,17 @@ export const registerUser = createAsyncThunk(
   "auth/register",
   async (payload: FormData | Record<string, any>, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('auth/register', payload);
-      return response.data;
+      return await authService.register(payload);
     } catch (error: any) {
-      console.error("Registration error:", error);
-
       if (error.response) {
-        // Server responded with error status
         const message =
           error.response.data?.message ||
           error.response.data?.error ||
           `Server error: ${error.response.status}`;
         return rejectWithValue(message);
       } else if (error.request) {
-        // Request was made but no response received
         return rejectWithValue("Network error: Unable to connect to server");
       } else {
-        // Something else happened
         return rejectWithValue(
           error.message || "Registration failed. Please try again."
         );
@@ -82,17 +76,9 @@ export const verifyOTP = createAsyncThunk(
     { rejectWithValue, dispatch }
   ) => {
     try {
-      const response = await axiosInstance.post(
-        'auth/verify-otp',
-        { email, otp, location },
-        {
-          validateStatus: (status) => status >= 200 && status < 500,
-        }
-      );
+      const response = await authService.verifyOTP(email, otp, location);
 
-      // Check if response was successful
       if (response.status >= 200 && response.status < 300) {
-        // Store token in localStorage
         if (response.data.token) {
           localStorage.setItem("token", response.data.token);
           localStorage.setItem("api_token", response.data.token);
@@ -111,26 +97,20 @@ export const verifyOTP = createAsyncThunk(
         );
         return response.data;
       } else {
-        // Handle 4xx errors (like 400 Bad Request)
         const message =
           response.data?.message ||
           `Verification failed: ${response.statusText}`;
         return rejectWithValue(message);
       }
     } catch (error: any) {
-      console.error("OTP verification error:", error);
-
       if (error.response) {
-        // Server responded with error status
         const message =
           error.response.data?.message ||
           `Server error: ${error.response.status}`;
         return rejectWithValue(message);
       } else if (error.request) {
-        // Request was made but no response received
         return rejectWithValue("Network error: Unable to connect to server");
       } else {
-        // Something else happened
         return rejectWithValue(
           error.message || "Verification failed. Please try again."
         );
@@ -143,8 +123,7 @@ export const resendOTP = createAsyncThunk(
   "auth/resendOTP",
   async (email: string, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post("auth/resend-otp", { email });
-      return response.data;
+      return await authService.resendOTP(email);
     } catch (error: any) {
       if (error.response) {
         return rejectWithValue(
@@ -205,10 +184,6 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.error = null;
       state.token = null;
-    },
-    loginAsGuest: (state, action) => {
-      state.isAuthenticated = true;
-      state.token = action.payload.token;
     },
   },
   extraReducers: (builder) => {
@@ -301,5 +276,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearError, clearAuth, loginAsGuest } = authSlice.actions;
+export const { clearError, clearAuth } = authSlice.actions;
 export default authSlice.reducer;

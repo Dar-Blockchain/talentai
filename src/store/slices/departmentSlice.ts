@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import axiosInstance from "@/utils/axiosInstance";
+import { departmentService } from "@/services/departmentService";
 import { DEPARTMENT_API_ERROR_I18N, extractAxiosErrorMessage } from "@/utils/departmentI18n";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -52,14 +52,7 @@ export const fetchDepartments = createAsyncThunk<
   { rejectValue: string }
 >("department/fetchAll", async (params, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get("departments", {
-      params: {
-        ...(params?.page ? { page: params.page } : {}),
-        ...(params?.limit ? { limit: params.limit } : {}),
-        ...(params?.search ? { search: params.search } : {}),
-      },
-    });
-    return response.data as DepartmentsResponse;
+    return await departmentService.fetchDepartments(params) as DepartmentsResponse;
   } catch (err: unknown) {
     return rejectWithValue(
       extractAxiosErrorMessage(err) ?? DEPARTMENT_API_ERROR_I18N.fetchList,
@@ -73,8 +66,7 @@ export const createDepartment = createAsyncThunk<
   { rejectValue: string }
 >("department/create", async (payload, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.post("departments", payload);
-    return response.data.data as Department;
+    return await departmentService.createDepartment(payload) as Department;
   } catch (err: unknown) {
     return rejectWithValue(
       extractAxiosErrorMessage(err) ?? DEPARTMENT_API_ERROR_I18N.create,
@@ -88,8 +80,7 @@ export const updateDepartment = createAsyncThunk<
   { rejectValue: string }
 >("department/update", async ({ departmentId, ...body }, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.put(`departments/${departmentId}`, body);
-    return response.data.data as Department;
+    return await departmentService.updateDepartment(departmentId, body) as Department;
   } catch (err: unknown) {
     return rejectWithValue(
       extractAxiosErrorMessage(err) ?? DEPARTMENT_API_ERROR_I18N.update,
@@ -103,8 +94,7 @@ export const fetchDepartmentById = createAsyncThunk<
   { rejectValue: string }
 >("department/fetchById", async (departmentId, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get(`departments/${departmentId}`);
-    return (response.data.data || response.data) as Department;
+    return await departmentService.fetchDepartmentById(departmentId) as Department;
   } catch (err: unknown) {
     return rejectWithValue(
       extractAxiosErrorMessage(err) ?? "Error fetching department",
@@ -123,20 +113,9 @@ export const fetchDepartmentMembers = createAsyncThunk<
   { members: DepartmentMember[]; total: number },
   FetchDepartmentMembersParams,
   { rejectValue: string }
->("department/fetchMembers", async ({ departmentId, search, page, limit }, { rejectWithValue }) => {
+>("department/fetchMembers", async (params, { rejectWithValue }) => {
   try {
-    const params: Record<string, any> = {};
-    if (search) params.search = search;
-    if (page)   params.page   = page;
-    if (limit)  params.limit  = limit;
-    const response = await axiosInstance.get(
-      `company-memberships/memberships/department/${departmentId}`,
-      { params },
-    );
-    return {
-      members: response.data.memberships || [],
-      total: response.data.pagination?.total ?? 0,
-    };
+    return await departmentService.fetchDepartmentMembers(params) as { members: DepartmentMember[]; total: number };
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.message || "Error fetching department members");
   }
@@ -148,7 +127,7 @@ export const deleteDepartment = createAsyncThunk<
   { rejectValue: string }
 >("department/delete", async (departmentId, { rejectWithValue }) => {
   try {
-    await axiosInstance.delete(`departments/${departmentId}`);
+    await departmentService.deleteDepartment(departmentId);
     return departmentId;
   } catch (err: unknown) {
     return rejectWithValue(
@@ -169,8 +148,7 @@ export const fetchDepartmentStats = createAsyncThunk<
   { rejectValue: string }
 >("department/fetchStats", async (_, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get("departments/stats");
-    return response.data.data as DepartmentStats;
+    return await departmentService.fetchDepartmentStats() as DepartmentStats;
   } catch (err: any) {
     return rejectWithValue(err.message);
   }

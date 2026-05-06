@@ -1,7 +1,7 @@
 // postGenerationSlice.ts
 
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import axiosInstance from "@/utils/axiosInstance";
+import { postGenerationService } from "@/services/postGenerationService";
 
 // ------------------------------------------------------
 // Types
@@ -132,29 +132,7 @@ export const generatePost = createAsyncThunk<
   { rejectValue: string }
 >("postGeneration/generatePost", async (payload, { rejectWithValue }) => {
   try {
-    const { jobDescription, salary, contractType, workMode, language } = payload;
-
-    const salaryText = `\n\nSalary Range: ${
-      salary.currency
-    }${salary.min.toLocaleString()} - ${
-      salary.currency
-    }${salary.max.toLocaleString()}`;
-    const contractTypeText = contractType
-      ? `\nContract Type: ${contractType}`
-      : "";
-    const workModeText = workMode ? `\nWork Mode: ${workMode}` : "";
-
-    const descriptionWithDetails =
-      jobDescription + salaryText + contractTypeText + workModeText;
-
-    const res = await axiosInstance.post("post/generate-job-post", {
-      description: descriptionWithDetails,
-      contractType,
-      workMode,
-      language,
-    });
-
-    return res.data;
+    return await postGenerationService.generatePost(payload) as PostGenerationResponse;
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.message || err.message);
   }
@@ -214,10 +192,6 @@ const postGenerationSlice = createSlice({
       if (state.generatedPost) {
         state.generatedPost.expirationDate = action.payload;
       }
-    },
-
-    setSalary(state, action: PayloadAction<Salary>) {
-      state.salary = action.payload;
     },
 
     updateSalaryField(
@@ -375,7 +349,6 @@ export const {
   setWorkMode,
   setEmploymentType,
   setExpirationDate,
-  setSalary,
   updateSalaryField,
   editHardSkill,
   deleteHardSkill,

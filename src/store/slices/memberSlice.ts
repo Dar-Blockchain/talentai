@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
-import axiosInstance from "@/utils/axiosInstance";
+import { memberService } from "@/services/memberService";
 import { EmployeePermission } from "@/types/employeePermissions";
 
 // Type definitions based on your API response
@@ -161,26 +161,9 @@ export const addEmployee = createAsyncThunk<
   AddMemberPayload,
   { rejectValue: string }
 >("member/addEmployee", async (payload, { rejectWithValue }) => {
-  console.log(`🔑 [MemberSlice] addEmployee CALLED with payload:`, payload);
-
   try {
-    console.log(`📡 [MemberSlice] Sending invitation via API...`);
-
-    const apiPayload: { email: string; role: string; departmentId?: string } = {
-      email: payload.email,
-      role: payload.role,
-      ...(payload.departmentId && { departmentId: payload.departmentId }),
-    };
-
-    console.log(`📡 [MemberSlice] Sending invitation payload:`, apiPayload);
-
-    const response = await axiosInstance.post("company-invitations/sentInvitation", apiPayload);
-
-    console.log(`✅ [MemberSlice] Employee added successfully`, response.data);
-    return response.data;
+    return await memberService.addEmployee(payload);
   } catch (error: any) {
-
-    console.error(`❌ [MemberSlice] Exception:`, error);
     return rejectWithValue(error.response?.data?.message || "An error occurred while adding employee");
   }
 });
@@ -191,24 +174,9 @@ export const updateMemberRole = createAsyncThunk<
   UpdateRolePayload,
   { rejectValue: string }
 >("member/updateMemberRole", async (payload, { rejectWithValue }) => {
-  console.log(`🔑 [MemberSlice] updateMemberRole CALLED with payload:`, payload);
-
-
-
   try {
-    console.log(`📡 [MemberSlice] Updating member role via API...`);
-
-    const apiPayload: { role: string; departmentId?: string } = { role: payload.role };
-    if (payload.departmentId !== undefined) apiPayload.departmentId = payload.departmentId || undefined;
-
-    const response = await axiosInstance.patch(`company-memberships/${payload.membershipId}`, apiPayload);
-
-
-    console.log(`✅ [MemberSlice] Role updated successfully`, response.data);
-    return response.data.updated || response.data;
+    return await memberService.updateMemberRole(payload);
   } catch (error: any) {
-
-    console.error(`❌ [MemberSlice] Exception:`, error);
     return rejectWithValue(error.response?.data?.message || "An error occurred while updating role");
   }
 });
@@ -219,20 +187,9 @@ export const deleteMember = createAsyncThunk<
   DeleteMemberPayload,
   { rejectValue: string }
 >("member/deleteMember", async (payload, { rejectWithValue }) => {
-  console.log(`🔑 [MemberSlice] deleteMember CALLED with payload:`, payload);
-
-
-
   try {
-
-    const response = await axiosInstance.delete(`company-memberships/${payload.membershipId}`);
-
-
-    console.log(`✅ [MemberSlice] Member deleted successfully`, response.data);
-    return { membershipId: payload.membershipId };
+    return await memberService.deleteMember(payload.membershipId);
   } catch (error: any) {
-
-    console.error(`❌ [MemberSlice] Exception:`, error);
     return rejectWithValue(error.response?.data?.message || "An error occurred while deleting member");
   }
 });
@@ -244,8 +201,7 @@ export const fetchMemberById = createAsyncThunk<
   { rejectValue: string }
 >("member/fetchMemberById", async (userId, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get(`company-memberships/user/${userId}`);
-    return response.data.membership || response.data;
+    return await memberService.fetchMemberById(userId);
   } catch (error: any) {
     return rejectWithValue(error.response?.data?.message || "Failed to fetch member");
   }
@@ -258,21 +214,7 @@ export const fetchMembers = createAsyncThunk<
   { rejectValue: string }
 >("member/fetchMembers", async (params, { rejectWithValue }) => {
   try {
-    const query = new URLSearchParams();
-    if (params?.search)       query.set("search",      params.search);
-    if (params?.departmentId) query.set("departmentId", params.departmentId);
-    if (params?.role)         query.set("role",         params.role);
-    if (params?.sortBy)       query.set("sortBy",       params.sortBy);
-    if (params?.order)        query.set("order",        params.order);
-    if (params?.page)         query.set("page",         String(params.page));
-    if (params?.limit)        query.set("limit",        String(params.limit));
-
-    const qs = query.toString();
-    const response = await axiosInstance.get(`company-memberships/memberships${qs ? `?${qs}` : ""}`);
-    return {
-      members: response.data.memberships || response.data.members || [],
-      total: response.data.total ?? response.data.pagination?.total ?? 0,
-    };
+    return await memberService.fetchMembers(params);
   } catch (error: any) {
     return rejectWithValue(error.response?.data?.message || "An error occurred while fetching members");
   }
@@ -285,17 +227,7 @@ export const fetchMembersPage = createAsyncThunk<
   { rejectValue: string }
 >("member/fetchMembersPage", async (params, { rejectWithValue }) => {
   try {
-    const query = new URLSearchParams();
-    query.set("page", String(params.page));
-    query.set("limit", String(params.limit));
-    if (params.search) query.set("search", params.search);
-    if (params.departmentIds?.length) query.set("departmentId", params.departmentIds.join(","));
-
-    const response = await axiosInstance.get(`company-memberships/memberships?${query.toString()}`);
-    return {
-      members: response.data.memberships || response.data.members || [],
-      total: response.data.total ?? response.data.pagination?.total ?? 0,
-    };
+    return await memberService.fetchMembersPage(params);
   } catch (error: any) {
     return rejectWithValue(error.response?.data?.message || "An error occurred while fetching members");
   }
@@ -307,20 +239,9 @@ export const fetchInvitations = createAsyncThunk<
   void,
   { rejectValue: string }
 >("member/fetchInvitations", async (_, { rejectWithValue }) => {
-  console.log(`🔑 [MemberSlice] fetchInvitations CALLED`);
-
-
   try {
-    console.log(`📡 [MemberSlice] Fetching invitations from API...`);
-    const response = await axiosInstance.get("company-invitations/myInvitations");
-
-
-
-    console.log(`✅ [MemberSlice] Invitations fetched successfully`, response.data);
-    return response.data.invitations || [];
+    return await memberService.fetchInvitations() as Invitation[];
   } catch (error: any) {
-
-    console.error(`❌ [MemberSlice] Exception:`, error);
     return rejectWithValue(error.response?.data?.message || "An error occurred while fetching invitations");
   }
 });
@@ -331,21 +252,9 @@ export const resendInvitation = createAsyncThunk<
   string,
   { rejectValue: string }
 >("member/resendInvitation", async (invitationId, { rejectWithValue }) => {
-  console.log(`🔑 [MemberSlice] resendInvitation CALLED with id:`, invitationId);
-
-
-
   try {
-    console.log(`📡 [MemberSlice] Resending invitation via API...`);
-    const response = await axiosInstance.post(`company-invitations/resendInvitation/${invitationId}`);
-
-
-
-    console.log(`✅ [MemberSlice] Invitation resent successfully`, response.data);
-    return response.data.updated;
+    return await memberService.resendInvitation(invitationId) as Invitation;
   } catch (error: any) {
- 
-    console.error(`❌ [MemberSlice] Exception:`, error);
     return rejectWithValue(error.response?.data?.message || "An error occurred while resending invitation");
   }
 });
@@ -356,21 +265,9 @@ export const cancelInvitation = createAsyncThunk<
   string,
   { rejectValue: string }
 >("member/cancelInvitation", async (invitationId, { rejectWithValue }) => {
-  console.log(`🔑 [MemberSlice] cancelInvitation CALLED with id:`, invitationId);
-
-
-
   try {
-    console.log(`📡 [MemberSlice] Deleting invitation via API...`);
-    const response = await axiosInstance.delete(`company-invitations/deleteInvitation/${invitationId}`);
-
-
-
-    console.log(`✅ [MemberSlice] Invitation deleted successfully`, response.data);
-    return invitationId;
+    return await memberService.cancelInvitation(invitationId);
   } catch (error: any) {
-
-    console.error(`❌ [MemberSlice] Exception:`, error);
     return rejectWithValue(error.response?.data?.message || "An error occurred while deleting invitation");
   }
 });
@@ -381,20 +278,14 @@ export const respondToInvitation = createAsyncThunk<
   { success: boolean; action: string; token?: string; user?: any },
   { invitationId: string; action: 'accept' | 'reject'; token?: string; firstName?: string; lastName?: string },
   { rejectValue: string }
->("member/respondToInvitation", async ({ invitationId, action, token, firstName, lastName }, { rejectWithValue }) => {
+>("member/respondToInvitation", async (params, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.post(`company-invitations/respondInvitation/${invitationId}`, {
-      action,
-      ...(token && { token }),
-      ...(firstName && { firstName }),
-      ...(lastName && { lastName }),
-    });
-    return response.data;
+    return await memberService.respondToInvitation(params);
   } catch (error: any) {
     if (error.response?.status === 404) {
       return rejectWithValue("Invitation not found or has expired");
     }
-    return rejectWithValue(error.response?.data?.message || `An error occurred while ${action}ing invitation`);
+    return rejectWithValue(error.response?.data?.message || `An error occurred while ${params.action}ing invitation`);
   }
 });
 
@@ -405,8 +296,7 @@ export const fetchInvitationsByDepartment = createAsyncThunk<
   { rejectValue: string }
 >("member/fetchInvitationsByDepartment", async (departmentId, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get(`company-invitations/byDepartment/${departmentId}`);
-    return response.data.invitations || [];
+    return await memberService.fetchInvitationsByDepartment(departmentId) as Invitation[];
   } catch (error: any) {
     return rejectWithValue(error.response?.data?.message || "Failed to fetch invitations");
   }
@@ -419,8 +309,7 @@ export const fetchMemberStats = createAsyncThunk<
   { rejectValue: string }
 >("member/fetchMemberStats", async (_, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get("company-memberships/memberships/stats");
-    return response.data.stats as MemberStats;
+    return await memberService.fetchMemberStats() as MemberStats;
   } catch (error: any) {
     return rejectWithValue(error.response?.data?.message || "An error occurred while fetching stats");
   }
@@ -432,17 +321,12 @@ export const fetchInvitationDetails = createAsyncThunk<
   string,
   { rejectValue: string }
 >("member/fetchInvitationDetails", async (invitationId, { rejectWithValue }) => {
-  console.log(`🔑 [MemberSlice] fetchInvitationDetails CALLED with id:`, invitationId);
   try {
-    console.log(`📡 [MemberSlice] Fetching invitation details from API...`);
-    const response = await axiosInstance.get(`company-invitations/details/${invitationId}`);
-    console.log(`✅ [MemberSlice] Invitation details fetched successfully`, response.data);
-    return response.data.invitation || response.data;
+    return await memberService.fetchInvitationDetails(invitationId);
   } catch (error: any) {
     if (error.response?.status === 404) {
       return rejectWithValue("Invitation not found or has expired");
     }
-    console.error(`❌ [MemberSlice] Exception:`, error);
     return rejectWithValue(error.response?.data?.message || "An error occurred while fetching invitation details");
   }
 });
@@ -454,8 +338,7 @@ export const fetchEmployeePermissions = createAsyncThunk<
   { rejectValue: string }
 >("member/fetchEmployeePermissions", async (memberId, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get(`employee-permissions/${memberId}`);
-    return response.data.data || response.data;
+    return await memberService.fetchEmployeePermissions(memberId) as EmployeePermission;
   } catch (error: any) {
     return rejectWithValue(error.response?.data?.message || "Failed to fetch permissions");
   }
@@ -468,8 +351,7 @@ export const updateEmployeePermissions = createAsyncThunk<
   { rejectValue: string }
 >("member/updateEmployeePermissions", async ({ memberId, permissions }, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.put(`employee-permissions/${memberId}`, permissions);
-    return response.data.data || response.data;
+    return await memberService.updateEmployeePermissions(memberId, permissions) as EmployeePermission;
   } catch (error: any) {
     return rejectWithValue(error.response?.data?.message || "Failed to update permissions");
   }
@@ -480,10 +362,9 @@ export const acceptInvitationAsNewUser = createAsyncThunk<
   { token: string; user: any },
   { invitationId: string; token: string; firstName: string; lastName: string },
   { rejectValue: string }
->("member/acceptInvitationAsNewUser", async ({ invitationId, token, firstName, lastName }, { rejectWithValue }) => {
+>("member/acceptInvitationAsNewUser", async (params, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.post(`company-invitations/registerAndAccept/${invitationId}`, { token, firstName, lastName });
-    return response.data;
+    return await memberService.acceptInvitationAsNewUser(params);
   } catch (error: any) {
     return rejectWithValue(error.response?.data?.message || "Failed to accept invitation");
   }
@@ -493,10 +374,6 @@ const memberSlice = createSlice({
   name: "member",
   initialState,
   reducers: {
-    clearMembers: (state: MemberState) => {
-      state.members = [];
-      state.error = null;
-    },
     clearError: (state: MemberState) => {
       state.error = null;
     },
@@ -800,7 +677,7 @@ const memberSlice = createSlice({
   },
 });
 
-export const { clearMembers, clearError, clearAddMemberSuccess, clearUpdateRoleSuccess, clearDeleteMemberSuccess } = memberSlice.actions;
+export const { clearError, clearAddMemberSuccess, clearUpdateRoleSuccess, clearDeleteMemberSuccess } = memberSlice.actions;
 
 export const selectMembers = (state: RootState) => ({
   members: state.member.members,

@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { Job, transformJobData } from '@/utils/jobHelpers';
-import axiosInstance from '@/utils/axiosInstance';
+import { jobDetailsService } from '@/services/jobDetailsService';
 
 // ─── Search params ────────────────────────────────────────
 export interface SearchJobsParams {
@@ -48,27 +48,7 @@ export const searchJobs = createAsyncThunk<
   'jobDetails/searchJobs',
   async (params, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get('post/search', {
-        params: {
-          page: params.page || 1,
-          limit: params.limit || 6,
-          ...(params.search ? { search: params.search } : {}),
-          ...(params.location && params.location !== 'All Locations' ? { location: params.location } : {}),
-        },
-      });
-
-      const data = response.data;
-
-      if (data.success) {
-        const jobs = (data.results || []).map(transformJobData);
-        return {
-          jobs,
-          totalPages: data.totalPages || 1,
-          total: data.total || 0,
-        };
-      } else {
-        return rejectWithValue(data.message || 'Failed to fetch jobs');
-      }
+      return await jobDetailsService.searchJobs(params) as { jobs: Job[]; totalPages: number; total: number };
     } catch (err: any) {
       return rejectWithValue(err.message || 'Error loading jobs. Please try again later.');
     }
@@ -84,24 +64,7 @@ export const fetchJobDetails = createAsyncThunk<
   'jobDetails/fetchJobDetails',
   async (jobId: string, { rejectWithValue }) => {
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
-      const apiUrl = `${baseUrl}post/details/${jobId}`;
-
-      console.log('🔍 Fetching job details from:', apiUrl);
-
-      const response = await fetch(apiUrl);
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch job details');
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
-        return data.data;
-      } else {
-        return rejectWithValue(data.error || 'Failed to fetch job details');
-      }
+      return await jobDetailsService.fetchJobDetails(jobId);
     } catch (err: any) {
       return rejectWithValue(err.message || 'Error loading job details. Please try again later.');
     }
@@ -112,10 +75,6 @@ const jobDetailsSlice = createSlice({
   name: 'jobDetails',
   initialState,
   reducers: {
-    clearJobDetails: (state) => {
-      state.jobDetails = null;
-      state.error = null;
-    },
     clearError: (state) => {
       state.error = null;
     },
@@ -153,7 +112,7 @@ const jobDetailsSlice = createSlice({
   },
 });
 
-export const { clearJobDetails, clearError } = jobDetailsSlice.actions;
+export const { clearError } = jobDetailsSlice.actions;
 export default jobDetailsSlice.reducer;
 
 // ─── Selectors ───────────────────────────────────────────
