@@ -192,5 +192,69 @@
       "soft": "Soft skills",
       "suggested": "Compétences suggérées"
     }
+  },
+  "skills": {
+    "title": "Compétences & Expertise",
+    "subtitle": "{{count}} compétences au total",
+    "quota": "{{used}}/5 tests",
+    "quota_used": "{{used}}/5 utilisés",
+    "monthly_quota": "Quota mensuel de tests",
+    "quota_limit": "Limite mensuelle atteinte — les tests se réinitialisent en début de mois.",
+    "technical": "Technique",
+    "soft": "Soft Skills",
+    "score": "Score",
+    "not_tested": "Non testé",
+    "just_added": "Ajouté récemment",
+    "test": "Tester",
+    "retest": "Retester",
+    "locked": "Verrouillé",
+    "limit_tooltip": "Limite mensuelle atteinte (5/5)",
+    "show_more": "Voir {{count}} de plus",
+    "levels": {
+      "entry": "Débutant",
+      "junior": "Junior",
+      "mid": "Intermédiaire",
+      "senior": "Senior",
+      "expert": "Expert",
+      "new": "Nouveau"
+    },
+    "empty": {
+      "technical_title": "Aucune compétence technique",
+      "technical_desc": "Ajoutez vos compétences techniques pour être mis en relation avec des opportunités pertinentes.",
+      "technical_btn": "Ajouter une compétence technique",
+      "soft_title": "Aucune soft skill",
+      "soft_desc": "Mettez en avant vos compétences interpersonnelles pour vous démarquer.",
+      "soft_btn": "Ajouter une soft skill"
+    }
+  },
+  "interviews": {
+    "job_interviews": "Entretiens d'embauche",
+    "technical": "Technique",
+    "soft_skills": "Soft Skills",
+    "empty_job": "Aucun entretien d'embauche",
+    "empty_technical": "Aucune évaluation technique",
+    "empty_soft": "Aucune évaluation soft skills",
+    "job_application": "Offre d'emploi",
+    "skill_assessment": "Évaluation de compétence",
+    "score": "Score",
+    "not_started": "Pas encore commencé",
+    "not_tested": "Non testé",
+    "just_added": "Ajouté récemment",
+    "progress": "Progression",
+    "done": "Terminé",
+    "ongoing": "En cours",
+    "completed": "Terminé",
+    "continue": "Continuer",
+    "report": "Rapport",
+    "view_report": "Voir le rapport",
+    "limit_tooltip": "Limite mensuelle atteinte (5/5)",
+    "limit_tooltip_long": "Limite mensuelle atteinte (5/5).",
+    "levels": {
+      "expert": "Expert",
+      "senior": "Senior",
+      "mid": "Intermédiaire",
+      "junior": "Junior",
+      "entry": "Débutant"
+    }
   }
 }

@@ -1,5 +1,6 @@
 import React, { useCallback } from "react";
 import { Box, Typography, LinearProgress, Tooltip, Button } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import dayjs from "@/lib/dayjs";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
@@ -15,24 +16,36 @@ interface SkillCardProps {
   last: boolean;
 }
 
-const LEVELS: Record<number, { label: string; color: string; bg: string }> = {
-  1: { label: "Entry",  color: "#64748B", bg: "#F1F5F9" },
-  2: { label: "Junior", color: "#D97706", bg: "#FFFBEB" },
-  3: { label: "Mid",    color: "#2563EB", bg: "#EFF6FF" },
-  4: { label: "Senior", color: "#7C3AED", bg: "#F5F3FF" },
-  5: { label: "Expert", color: "#059669", bg: "#F0FDF4" },
+const LEVEL_KEYS: Record<number, string> = {
+  1: "entry",
+  2: "junior",
+  3: "mid",
+  4: "senior",
+  5: "expert",
 };
 
-const getLevel = (n: number) => LEVELS[n] ?? { label: "New", color: "#94A3B8", bg: "#F8FAFC" };
+const LEVEL_STYLES: Record<string, { color: string; bg: string }> = {
+  entry:  { color: "#64748B", bg: "#F1F5F9" },
+  junior: { color: "#D97706", bg: "#FFFBEB" },
+  mid:    { color: "#2563EB", bg: "#EFF6FF" },
+  senior: { color: "#7C3AED", bg: "#F5F3FF" },
+  expert: { color: "#059669", bg: "#F0FDF4" },
+  new:    { color: "#94A3B8", bg: "#F8FAFC" },
+};
 
 const getScoreColor = (s: number) =>
   s >= 80 ? "#059669" : s >= 60 ? "#0D9488" : s >= 40 ? "#D97706" : "#DC2626";
 
 const SkillCard: React.FC<SkillCardProps> = ({ skill, type }) => {
+  const { t } = useTranslation("dashboard");
+  const s = (k: string, opts?: any) => t(`candidate.skills.${k}`, opts) as string;
+
   const router    = useRouter();
   const profile   = useSelector((state: RootState) => state.user.connectedUser.profile);
   const score     = skill.ScoreTest ?? 0;
-  const lvl       = getLevel(skill.Levelconfirmed);
+  const levelKey  = LEVEL_KEYS[skill.Levelconfirmed] ?? "new";
+  const lvlStyle  = LEVEL_STYLES[levelKey];
+  const lvlLabel  = s(`levels.${levelKey}`);
   const quotaFull = (profile?.quota ?? 0) >= 5;
   const timeAgo   = skill?.updatedAt ? dayjs(skill.updatedAt).fromNow() : null;
 
@@ -92,8 +105,8 @@ const SkillCard: React.FC<SkillCardProps> = ({ skill, type }) => {
           )}
         </Box>
 
-        <Box sx={{ px: 0.85, py: 0.25, borderRadius: "20px", bgcolor: lvl.bg, border: `1px solid ${lvl.color}30`, flexShrink: 0 }}>
-          <Typography sx={{ fontSize: "0.6rem", fontWeight: 700, color: lvl.color }}>{lvl.label}</Typography>
+        <Box sx={{ px: 0.85, py: 0.25, borderRadius: "20px", bgcolor: lvlStyle.bg, border: `1px solid ${lvlStyle.color}30`, flexShrink: 0 }}>
+          <Typography sx={{ fontSize: "0.6rem", fontWeight: 700, color: lvlStyle.color }}>{lvlLabel}</Typography>
         </Box>
       </Box>
 
@@ -101,7 +114,7 @@ const SkillCard: React.FC<SkillCardProps> = ({ skill, type }) => {
       <Box>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.5 }}>
           <Typography sx={{ fontSize: "0.62rem", color: "#94A3B8", fontWeight: 500 }}>
-            {score > 0 ? "Score" : "Not tested yet"}
+            {score > 0 ? s("score") : s("not_tested")}
           </Typography>
           {score > 0 && (
             <Typography sx={{ fontSize: "0.72rem", fontWeight: 800, color: getScoreColor(score) }}>
@@ -126,10 +139,10 @@ const SkillCard: React.FC<SkillCardProps> = ({ skill, type }) => {
       {/* Bottom row: time + test button */}
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 0.25 }}>
         <Typography sx={{ fontSize: "0.6rem", color: "#CBD5E1" }}>
-          {timeAgo ?? "Just added"}
+          {timeAgo ?? s("just_added")}
         </Typography>
 
-        <Tooltip title={quotaFull ? "Monthly limit reached (5/5)" : ""} arrow placement="top">
+        <Tooltip title={quotaFull ? s("limit_tooltip") : ""} arrow placement="top">
           <span>
             <Button
               size="small"
@@ -149,7 +162,7 @@ const SkillCard: React.FC<SkillCardProps> = ({ skill, type }) => {
                 "&.Mui-disabled": { color: "#94A3B8", bgcolor: "#F8FAFC" },
               }}
             >
-              {quotaFull ? "Locked" : score > 0 ? "Retest" : "Test"}
+              {quotaFull ? s("locked") : score > 0 ? s("retest") : s("test")}
             </Button>
           </span>
         </Tooltip>
