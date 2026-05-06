@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Avatar, Box, Chip, CircularProgress, Dialog, DialogContent,
   Divider, IconButton, LinearProgress, Tab, Tabs, Typography,
@@ -92,6 +93,7 @@ interface AssessmentDetailsModalProps {
 // ── Main component ─────────────────────────────────────────────────────────────
 
 const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({ open, target, onClose }) => {
+  const { t } = useTranslation("dashboard");
   const [loading, setLoading] = useState(false);
   const [assessment, setAssessment] = useState<any>(null);
   const [error, setError] = useState("");
@@ -129,7 +131,7 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({ open, t
   const aiAnalysis   = finalReport?.aiAnalysis ?? {};
   const [g1, g2]     = pickGradient(email || name);
 
-  const verdict      = overallScore >= 70 ? "Passed" : overallScore >= 50 ? "In Review" : "Needs Work";
+  const verdict      = overallScore >= 70 ? t("pages.applications.assessment_modal.verdict_passed") : overallScore >= 50 ? t("pages.applications.assessment_modal.verdict_review") : t("pages.applications.assessment_modal.verdict_needs_work");
   const verdictColor = overallScore >= 70 ? TEAL : overallScore >= 50 ? "#D97706" : "#DC2626";
   const verdictBg    = overallScore >= 70 ? TEAL_BG : overallScore >= 50 ? "#FFFBEB" : "#FEF2F2";
 
@@ -170,7 +172,7 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({ open, t
         </Box>
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography sx={{ fontSize: "14px", fontWeight: 700, color: "#111827" }}>{name}</Typography>
-          <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>Interview Assessment Results</Typography>
+          <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>{t("pages.applications.assessment_modal.subtitle")}</Typography>
         </Box>
         <IconButton size="small" onClick={onClose} sx={{ color: "#9CA3AF", borderRadius: "8px", "&:hover": { bgcolor: "#F3F4F6", color: "#374151" } }}>
           <CloseOutlined sx={{ fontSize: 16 }} />
@@ -183,7 +185,7 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({ open, t
         {loading && (
           <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", py: 8, gap: 2 }}>
             <CircularProgress size={32} sx={{ color: "#7C3AED" }} />
-            <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>Loading assessment…</Typography>
+            <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>{t("pages.applications.assessment_modal.loading")}</Typography>
           </Box>
         )}
 
@@ -191,7 +193,7 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({ open, t
         {!loading && error && (
           <Box sx={{ textAlign: "center", py: 8 }}>
             <AssessmentOutlined sx={{ fontSize: 40, color: "#E5E7EB", mb: 1.5 }} />
-            <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#374151" }}>Assessment not found</Typography>
+            <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#374151" }}>{t("pages.applications.assessment_modal.not_found")}</Typography>
             <Typography sx={{ fontSize: "12px", color: "#9CA3AF", mt: 0.5 }}>{error}</Typography>
           </Box>
         )}
@@ -242,7 +244,7 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({ open, t
                   <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
                     <AccessTimeOutlined sx={{ fontSize: 13, color: "#9CA3AF" }} />
                     <Typography sx={{ fontSize: "0.73rem", color: "#6B7280" }}>
-                      Duration: <strong style={{ color: "#374151" }}>{fmtDuration(analytics.duration)}</strong>
+                      {t("pages.applications.assessment_modal.duration")} <strong style={{ color: "#374151" }}>{fmtDuration(analytics.duration)}</strong>
                     </Typography>
                   </Box>
                 )}
@@ -250,7 +252,7 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({ open, t
                   <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
                     <ChatBubbleOutlineOutlined sx={{ fontSize: 13, color: "#9CA3AF" }} />
                     <Typography sx={{ fontSize: "0.73rem", color: "#6B7280" }}>
-                      Responses: <strong style={{ color: "#374151" }}>{analytics.messageCount}</strong>
+                      {t("pages.applications.assessment_modal.responses")} <strong style={{ color: "#374151" }}>{analytics.messageCount}</strong>
                     </Typography>
                   </Box>
                 )}
@@ -271,9 +273,9 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({ open, t
                     "& .MuiTabs-indicator": { bgcolor: TEAL, height: 2 },
                   }}
                 >
-                  <Tab label="Scores" />
-                  {hasAreas && <Tab label="Coverage" />}
-                  {(hasSummary || hasRecs) && <Tab label="AI Report" />}
+                  <Tab label={t("pages.applications.assessment_modal.tab_scores")} />
+                  {hasAreas && <Tab label={t("pages.applications.assessment_modal.tab_coverage")} />}
+                  {(hasSummary || hasRecs) && <Tab label={t("pages.applications.assessment_modal.tab_ai_report")} />}
                 </Tabs>
               </Box>
 
@@ -282,9 +284,9 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({ open, t
                 <Box sx={{ p: 3 }}>
                   {/* Score rings */}
                   <Box sx={{ display: "flex", gap: 4, mb: 3, justifyContent: "center", flexWrap: "wrap" }}>
-                    <ScoreRing value={overallScore} color={sc.color} size={90} label="Overall" />
+                    <ScoreRing value={overallScore} color={sc.color} size={90} label={t("pages.applications.assessment_modal.score_overall")} />
                     {analytics?.coveragePercentage !== undefined && (
-                      <ScoreRing value={analytics.coveragePercentage} color="#0891B2" size={90} label="Coverage" />
+                      <ScoreRing value={analytics.coveragePercentage} color="#0891B2" size={90} label={t("pages.applications.assessment_modal.score_coverage")} />
                     )}
                   </Box>
 
@@ -293,15 +295,15 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({ open, t
                     <>
                       <Divider sx={{ mb: 2.5, borderColor: "#F3F4F6" }} />
                       <Typography sx={{ fontSize: "0.65rem", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em", mb: 1.5 }}>
-                        Score Breakdown
+                        {t("pages.applications.assessment_modal.score_breakdown")}
                       </Typography>
                       <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                         {[
-                          { key: "communication",    label: "Communication",    color: "#3B82F6" },
-                          { key: "technical_depth",  label: "Technical Depth",  color: "#8B5CF6" },
-                          { key: "problem_approach", label: "Problem Approach", color: "#F59E0B" },
-                          { key: "learning_ability", label: "Learning Ability", color: "#10B981" },
-                        ].map(({ key, label, color }) => {
+                          { key: "communication",    labelKey: "pages.applications.assessment_modal.score_communication",    color: "#3B82F6" },
+                          { key: "technical_depth",  labelKey: "pages.applications.assessment_modal.score_technical_depth",  color: "#8B5CF6" },
+                          { key: "problem_approach", labelKey: "pages.applications.assessment_modal.score_problem_approach", color: "#F59E0B" },
+                          { key: "learning_ability", labelKey: "pages.applications.assessment_modal.score_learning_ability", color: "#10B981" },
+                        ].map(({ key, labelKey, color }) => {
                           const val = finalReport.scores?.[key];
                           if (val === undefined) return null;
                           const pct = Math.min(Math.round(val), 100);
@@ -309,7 +311,7 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({ open, t
                           return (
                             <Box key={key}>
                               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.5 }}>
-                                <Typography sx={{ fontSize: "0.78rem", fontWeight: 500, color: "#374151" }}>{label}</Typography>
+                                <Typography sx={{ fontSize: "0.78rem", fontWeight: 500, color: "#374151" }}>{t(labelKey)}</Typography>
                                 <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: tColor }}>{pct}%</Typography>
                               </Box>
                               <Bar value={pct} color={color} />
@@ -328,7 +330,7 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({ open, t
                         {aiAnalysis.strongestAreas?.length > 0 && (
                           <Box sx={{ flex: 1, bgcolor: "#F0FDF4", borderRadius: "12px", border: "1px solid #BBF7D0", p: 1.75 }}>
                             <Typography sx={{ fontSize: "0.65rem", fontWeight: 700, color: "#059669", textTransform: "uppercase", letterSpacing: "0.04em", mb: 0.75 }}>
-                              Strengths
+                              {t("pages.applications.assessment_modal.strengths")}
                             </Typography>
                             <Box sx={{ display: "flex", flexDirection: "column", gap: 0.4 }}>
                               {aiAnalysis.strongestAreas.map((a: string, i: number) => (
@@ -340,7 +342,7 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({ open, t
                         {aiAnalysis.weakestAreas?.length > 0 && (
                           <Box sx={{ flex: 1, bgcolor: "#FFF7ED", borderRadius: "12px", border: "1px solid #FED7AA", p: 1.75 }}>
                             <Typography sx={{ fontSize: "0.65rem", fontWeight: 700, color: "#D97706", textTransform: "uppercase", letterSpacing: "0.04em", mb: 0.75 }}>
-                              Weak Areas
+                              {t("pages.applications.assessment_modal.weak_areas")}
                             </Typography>
                             <Box sx={{ display: "flex", flexDirection: "column", gap: 0.4 }}>
                               {aiAnalysis.weakestAreas.map((a: string, i: number) => (
@@ -363,7 +365,7 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({ open, t
                   {finalReport?.coverage?.overall !== undefined && (
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Typography sx={{ fontSize: "0.65rem", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                        Overall Coverage
+                        {t("pages.applications.assessment_modal.overall_coverage")}
                       </Typography>
                       <Chip label={`${Math.round(finalReport.coverage.overall)}%`} size="small"
                         sx={{ bgcolor: `${TEAL}12`, color: TEAL, fontWeight: 700, fontSize: "0.72rem", height: 20 }} />
@@ -413,7 +415,7 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({ open, t
                         <Box sx={{ width: 26, height: 26, borderRadius: "8px", bgcolor: "#F0FDF4", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           <PersonOutlined sx={{ fontSize: 14, color: "#10B981" }} />
                         </Box>
-                        <Typography sx={{ fontWeight: 700, fontSize: "0.85rem", color: "#111827" }}>AI Assessment Summary</Typography>
+                        <Typography sx={{ fontWeight: 700, fontSize: "0.85rem", color: "#111827" }}>{t("pages.applications.assessment_modal.ai_summary_title")}</Typography>
                       </Box>
                       <Box sx={{ p: 2.5, borderRadius: "12px", bgcolor: "#F0FDF4", border: "1px solid #D1FAE5" }}>
                         <Typography sx={{ fontSize: "0.82rem", color: "#374151", lineHeight: 1.8 }}>{summary}</Typography>
@@ -428,7 +430,7 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({ open, t
                         <Box sx={{ width: 26, height: 26, borderRadius: "8px", bgcolor: "#FFFBEB", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           <LightbulbOutlined sx={{ fontSize: 14, color: "#F59E0B" }} />
                         </Box>
-                        <Typography sx={{ fontWeight: 700, fontSize: "0.85rem", color: "#111827" }}>Recommendations</Typography>
+                        <Typography sx={{ fontWeight: 700, fontSize: "0.85rem", color: "#111827" }}>{t("pages.applications.assessment_modal.recommendations_title")}</Typography>
                       </Box>
                       <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                         {recommendations.map((rec: string, i: number) => (

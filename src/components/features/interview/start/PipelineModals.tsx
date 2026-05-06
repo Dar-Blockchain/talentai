@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 import WarningIcon from '@mui/icons-material/Warning';
 import ErrorIcon from '@mui/icons-material/Error';
+import { useTranslation } from 'react-i18next';
 
 interface PipelineModalsProps {
   pipelineLoading: boolean;
@@ -27,6 +28,8 @@ const PipelineModals: React.FC<PipelineModalsProps> = ({
   blockMessage,
   onReturnToDashboard,
 }) => {
+  const { t } = useTranslation('interview');
+
   return (
     <>
       {/* Pipeline Loading Modal */}
@@ -34,10 +37,10 @@ const PipelineModals: React.FC<PipelineModalsProps> = ({
         <DialogContent sx={{ textAlign: 'center', py: 4 }}>
           <CircularProgress size={60} sx={{ mb: 2 }} />
           <Typography variant="h6" gutterBottom>
-            Loading Your Interview Step...
+            {t('pipeline.loading_title')}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Please wait while we prepare your interview
+            {t('pipeline.loading_subtitle')}
           </Typography>
         </DialogContent>
       </Dialog>
@@ -46,14 +49,14 @@ const PipelineModals: React.FC<PipelineModalsProps> = ({
       <Dialog open={showBlockedModal} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ bgcolor: 'warning.light', display: 'flex', alignItems: 'center', gap: 1 }}>
           <WarningIcon />
-          <Typography variant="h6">Wrong Step</Typography>
+          <Typography variant="h6">{t('pipeline.wrong_step_title')}</Typography>
         </DialogTitle>
         <DialogContent sx={{ mt: 2 }}>
           <Alert severity="warning" sx={{ mb: 2 }}>
             {blockMessage}
           </Alert>
           <Typography variant="body1">
-            You will be redirected to your current step automatically.
+            {t('pipeline.wrong_step_desc')}
           </Typography>
         </DialogContent>
       </Dialog>
@@ -67,18 +70,17 @@ const PipelineModals: React.FC<PipelineModalsProps> = ({
       >
         <DialogTitle sx={{ bgcolor: 'error.light', display: 'flex', alignItems: 'center', gap: 1 }}>
           <ErrorIcon />
-          <Typography variant="h6">Cannot Continue</Typography>
+          <Typography variant="h6">{t('pipeline.blocked_title')}</Typography>
         </DialogTitle>
         <DialogContent sx={{ mt: 2 }}>
           <Alert severity="error" sx={{ mb: 2 }}>
             {blockMessage}
           </Alert>
           <Typography variant="body1" paragraph>
-            Unfortunately, you did not pass a previous step in this pipeline.
-            The interview cannot be started.
+            {t('pipeline.blocked_desc')}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Please contact the company if you believe this is an error.
+            {t('pipeline.blocked_contact')}
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -88,7 +90,7 @@ const PipelineModals: React.FC<PipelineModalsProps> = ({
             onClick={onReturnToDashboard}
             fullWidth
           >
-            Return to Dashboard
+            {t('pipeline.return_dashboard')}
           </Button>
         </DialogActions>
       </Dialog>

@@ -35,11 +35,13 @@ import {
 } from "@/store/slices/memberSlice";
 import { RootState } from "@/store/store";
 import { useToast } from "@/hooks/useToast";
+import { useTranslation } from "react-i18next";
 
 const DepartmentDetailPage: React.FC = () => {
   const router   = useRouter();
   const { id }   = router.query;
   const dispatch = useDispatch<AppDispatch>();
+  const { t }    = useTranslation("dashboard");
 
   const user      = useSelector((state: RootState) => state.user.connectedUser.user);
   const empPerms  = useSelector(selectEmployeePermissions);
@@ -103,9 +105,9 @@ const DepartmentDetailPage: React.FC = () => {
       setMemberEditOpen(false);
       setSelectedMember(null);
       dispatch(clearUpdateRoleSuccess());
-      showToast({ message: "Member role updated successfully!", severity: "success" });
+      showToast({ message: t("pages.employees.role_updated"), severity: "success" });
     }
-  }, [updateRoleSuccess, dispatch, showToast]);
+  }, [updateRoleSuccess, dispatch, showToast, t]);
 
   // Member delete
   const handleConfirmMemberDelete = useCallback(async () => {
@@ -119,18 +121,18 @@ const DepartmentDetailPage: React.FC = () => {
       setMemberDeleteOpen(false);
       setSelectedMember(null);
       dispatch(clearDeleteMemberSuccess());
-      showToast({ message: "Team member removed successfully!", severity: "success" });
+      showToast({ message: t("pages.employees.deleted_success"), severity: "success" });
     }
-  }, [deleteMemberSuccess, dispatch, showToast]);
+  }, [deleteMemberSuccess, dispatch, showToast, t]);
 
   if (deptError) {
     return (
       <DashboardLayout>
         <Box sx={{ textAlign: "center", py: 12 }}>
           <BusinessOutlined sx={{ fontSize: 52, color: "#D1D5DB", mb: 2 }} />
-          <Typography sx={{ fontWeight: 700, fontSize: "1.1rem", color: "#374151" }}>Department not found</Typography>
+          <Typography sx={{ fontWeight: 700, fontSize: "1.1rem", color: "#374151" }}>{t("pages.departments.detail.not_found_title")}</Typography>
           <Typography sx={{ fontSize: "0.875rem", color: "#9CA3AF", mt: 0.5 }}>
-            This department may have been deleted.
+            {t("pages.departments.detail.not_found_subtitle")}
           </Typography>
         </Box>
       </DashboardLayout>

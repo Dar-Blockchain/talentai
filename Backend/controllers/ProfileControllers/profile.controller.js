@@ -1,4 +1,5 @@
 const profileService = require("../../services/ProfileService/profile.service");
+const User = require("../../models/User.model.js");
 const {
   VALIDATION,
   buildUpdateData,
@@ -454,6 +455,20 @@ module.exports.updateProfileComplete = async (req, res) => {
       "📁 [updateProfileComplete] File provided:",
       file ? `${file.filename} (${file.size} bytes)` : "None",
     );
+
+    // Update user language if provided
+    if (profileData.language) {
+      if (!['fr', 'en'].includes(profileData.language)) {
+        console.log("❌ [updateProfileComplete] Language validation failed");
+        return res.status(400).json({
+          success: false,
+          error: "Invalid language. Must be 'fr' or 'en'."
+        });
+      }
+      console.log("🌐 [updateProfileComplete] Updating language:", profileData.language);
+      await User.findByIdAndUpdate(userId, { language: profileData.language });
+      console.log("✅ [updateProfileComplete] Language updated successfully");
+    }
 
     // Update user image if provided
     if (file) {

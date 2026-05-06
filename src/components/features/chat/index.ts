@@ -3,6 +3,8 @@ export { default as ConversationHeader } from './ConversationHeader';
 export { default as MessageList } from './MessageList';
 export { default as MessageInput } from './MessageInput';
 export { default as DeleteConversationDialog } from './DeleteConversationDialog';
+export { default as ChatShell } from './ChatShell';
+export type { ChatShellProps, ReturnToPost } from './ChatShell';
 export {
   getParticipantDisplayName,
   getParticipantInitial,

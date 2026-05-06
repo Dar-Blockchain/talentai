@@ -185,6 +185,21 @@ module.exports.getJobApplicationById = async (req, res) => {
   }
 };
 
+// ========== READ - Get candidate dashboard stats ==========
+module.exports.getCandidateStats = async (req, res) => {
+  try {
+    const candidateId = req.user._id;
+    const profileResult = await profileService.getProfileByUserId(candidateId);
+    const profile = profileResult.profile;
+    if (!profile) return res.status(404).json({ success: false, error: "Candidate profile not found" });
+
+    const stats = await jobApplicationService.getCandidateStats(profile._id);
+    res.status(200).json({ success: true, ...stats });
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
 // ========== READ - Get applications by candidate ==========
 module.exports.getApplicationsByCandidate = async (req, res) => {
   try {

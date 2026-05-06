@@ -1,11 +1,14 @@
 import { Box, Typography, Stack } from '@mui/material';
 import { CheckCircle as CheckCircleIcon } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 interface KeyStrengthsProps {
   strengths: string[];
 }
 
 export default function KeyStrengths({ strengths }: KeyStrengthsProps) {
+  const { t } = useTranslation('modules/interview/results');
+
   return (
     <Box
       sx={{
@@ -37,12 +40,12 @@ export default function KeyStrengths({ strengths }: KeyStrengthsProps) {
           },
         }}
       >
-        Key Strengths
+        {t('strengths.title')}
       </Typography>
 
       {strengths.length === 0 ? (
         <Typography variant="body2" sx={{ color: '#9e9e9e', fontStyle: 'italic', py: 2 }}>
-          No specific strengths were identified during this interview.
+          {t('strengths.empty')}
         </Typography>
       ) : (
         <Stack spacing={2}>

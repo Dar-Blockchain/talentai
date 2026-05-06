@@ -1,22 +1,25 @@
 import { Box, Typography } from "@mui/material";
 import Image from "next/image";
 import NextLink from "next/link";
+import { useTranslation } from "react-i18next";
 
 const ACCENT = "#0D9488";
 const ACCENT2 = "#059669";
 
 const SigninContainer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { t } = useTranslation("auth");
+
   return (
-    <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: { xs: "column", md: "row" } }}>
+    <Box sx={{ height: "100vh", display: "flex", flexDirection: { xs: "column", md: "row" }, overflow: "hidden" }}>
 
       {/* ── Left panel ── */}
       <Box sx={{
         display: { xs: "none", md: "flex" },
-        flex: "0 0 50%",
+        flex: { md: "0 0 45%", lg: "0 0 50%" },
         flexDirection: "column",
         justifyContent: "center",
-        px: 8,
-        py: 6,
+        px: "clamp(32px, 5vw, 64px)",
+        py: "clamp(24px, 5vh, 48px)",
         background: "linear-gradient(155deg, #052e2b 0%, #08504a 45%, #0a6b62 100%)",
         position: "relative",
         overflow: "hidden",
@@ -28,7 +31,7 @@ const SigninContainer: React.FC<{ children: React.ReactNode }> = ({ children }) 
         {/* Grid overlay */}
         <Box sx={{ position: "absolute", inset: 0, pointerEvents: "none", opacity: 0.06, backgroundImage: "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)", backgroundSize: "48px 48px" }} />
 
-        {/* Decorative concentric rings — right side */}
+        {/* Decorative concentric rings */}
         {[480, 360, 250, 150].map((size, i) => (
           <Box key={size} sx={{
             position: "absolute",
@@ -43,50 +46,59 @@ const SigninContainer: React.FC<{ children: React.ReactNode }> = ({ children }) 
           }} />
         ))}
 
-        {/* Small floating dot accents */}
+        {/* Floating dots */}
         <Box sx={{ position: "absolute", top: "28%", right: "22%", width: 8, height: 8, borderRadius: "50%", bgcolor: "rgba(94,234,212,0.5)", pointerEvents: "none" }} />
         <Box sx={{ position: "absolute", top: "62%", right: "34%", width: 5, height: 5, borderRadius: "50%", bgcolor: "rgba(94,234,212,0.35)", pointerEvents: "none" }} />
         <Box sx={{ position: "absolute", top: "42%", right: "14%", width: 6, height: 6, borderRadius: "50%", bgcolor: "rgba(167,243,208,0.4)", pointerEvents: "none" }} />
 
         {/* Logo */}
-        <Box sx={{ position: "absolute", top: 40, left: 64, zIndex: 1 }}>
+        <Box sx={{ position: "absolute", top: "clamp(24px, 4vh, 40px)", left: "clamp(32px, 4vw, 64px)", zIndex: 1 }}>
           <NextLink href="/home/company" style={{ textDecoration: "none", display: "inline-block" }}>
-            <Image src="/images/home/TalentAiLogo.png" alt="TalentAI" width={140} height={36} style={{ objectFit: "contain" }} />
+            <Image
+              src="/images/home/TalentAiLogo.png"
+              alt="TalentAI"
+              width={140}
+              height={36}
+              style={{ objectFit: "contain", width: "clamp(100px, 10vw, 140px)", height: "auto" }}
+            />
           </NextLink>
         </Box>
 
         {/* Centre content */}
-        <Box sx={{ position: "relative", zIndex: 1, maxWidth: 400 }}>
+        <Box sx={{ position: "relative", zIndex: 1, maxWidth: "clamp(240px, 34vw, 440px)" }}>
+          {/* Badge */}
           <Box sx={{
             display: "inline-flex", alignItems: "center", gap: 1,
             px: 1.5, py: 0.6, borderRadius: "20px",
             bgcolor: "rgba(94,234,212,0.1)", border: "1px solid rgba(94,234,212,0.2)",
-            mb: 3,
+            mb: "clamp(10px, 2vh, 24px)",
           }}>
-            <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#5eead4" }} />
-            <Typography sx={{ fontSize: "0.75rem", fontWeight: 600, color: "#5eead4", fontFamily: "Poppins", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-              AI-Powered Recruitment
+            <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#5eead4", flexShrink: 0 }} />
+            <Typography sx={{ fontSize: "clamp(0.6rem, 0.65vw, 0.78rem)", fontWeight: 600, color: "#5eead4", fontFamily: "Poppins", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+              {t("signin_panel.badge")}
             </Typography>
           </Box>
 
-          <Typography sx={{ fontSize: "4.5rem", fontWeight: 800, color: "#fff", fontFamily: "Poppins", lineHeight: 1.08, mb: 3 }}>
-            Hire smarter,<br />
+          {/* Headline */}
+          <Typography sx={{ fontSize: "clamp(1.8rem, 3.6vw, 4.5rem)", fontWeight: 800, color: "#fff", fontFamily: "Poppins", lineHeight: 1.08, mb: "clamp(10px, 2vh, 24px)" }}>
+            {t("signin_panel.headline_1")}<br />
             <Box component="span" sx={{ background: "linear-gradient(90deg, #5eead4 0%, #a7f3d0 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              hire faster.
+              {t("signin_panel.headline_2")}
             </Box>
           </Typography>
 
-          {/* Divider */}
-          <Box sx={{ width: 56, height: 3, borderRadius: 2, background: "linear-gradient(90deg, #5eead4, transparent)", mb: 3 }} />
+          {/* Divider bar */}
+          <Box sx={{ width: "clamp(36px, 4vw, 56px)", height: 3, borderRadius: 2, background: "linear-gradient(90deg, #5eead4, transparent)", mb: "clamp(10px, 2vh, 24px)" }} />
 
-          <Typography sx={{ fontSize: "1.1rem", color: "rgba(255,255,255,0.5)", fontFamily: "Poppins", lineHeight: 1.9 }}>
-            AI-powered recruitment that interviews, scores, and verifies candidates — automatically.
+          {/* Body */}
+          <Typography sx={{ fontSize: "clamp(0.78rem, 0.88vw, 1.05rem)", color: "rgba(255,255,255,0.5)", fontFamily: "Poppins", lineHeight: 1.85 }}>
+            {t("signin_panel.body")}
           </Typography>
         </Box>
 
-        {/* Bottom copyright */}
-        <Typography sx={{ position: "absolute", bottom: 32, left: 64, fontSize: "0.75rem", color: "rgba(255,255,255,0.2)", fontFamily: "Poppins", zIndex: 1 }}>
-          © 2026 TalentAI Inc.
+        {/* Copyright */}
+        <Typography sx={{ position: "absolute", bottom: "clamp(18px, 3vh, 32px)", left: "clamp(32px, 4vw, 64px)", fontSize: "clamp(0.6rem, 0.65vw, 0.75rem)", color: "rgba(255,255,255,0.2)", fontFamily: "Poppins", zIndex: 1 }}>
+          {t("signin_panel.copyright")}
         </Typography>
       </Box>
 
@@ -97,41 +109,38 @@ const SigninContainer: React.FC<{ children: React.ReactNode }> = ({ children }) 
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        background: "linear-gradient(160deg, #f0fdfb 0%, #f7fffe 60%, #ffffff 100%)",
-        px: { xs: 3, sm: 5 },
-        py: { xs: 5, md: 6 },
-        minHeight: { xs: "100vh", md: "unset" },
+        background: "#F7F8FA",
+        px: { xs: 2, sm: 4, md: 5, lg: 6 },
+        py: 0,
+        overflow: "hidden",
         position: "relative",
       }}>
-        {/* Dot pattern */}
+        {/* Subtle bottom radial accent */}
         <Box sx={{
-          position: "absolute", inset: 0, pointerEvents: "none", opacity: 0.45,
-          backgroundImage: `radial-gradient(${ACCENT}18 1.5px, transparent 1.5px)`,
-          backgroundSize: "32px 32px",
+          position: "absolute", inset: 0, pointerEvents: "none",
+          background: "radial-gradient(ellipse 80% 40% at 50% 100%, rgba(13,148,136,0.05) 0%, transparent 60%)",
         }} />
 
-        <Box sx={{ width: "100%", maxWidth: 560, position: "relative", zIndex: 1 }}>
+        <Box sx={{ width: "100%", maxWidth: { xs: 380, sm: 440, md: 456, lg: 476 }, position: "relative", zIndex: 1 }}>
           {/* Card */}
           <Box sx={{
             bgcolor: "#fff",
-            borderRadius: "28px",
-            border: "1px solid rgba(13,148,136,0.12)",
-            boxShadow: `0 0 0 4px rgba(13,148,136,0.04), 0 20px 60px -12px rgba(0,0,0,0.12)`,
+            borderRadius: { xs: "18px", md: "20px" },
+            boxShadow: "0 0 0 1px rgba(0,0,0,0.06), 0 4px 6px -1px rgba(0,0,0,0.04), 0 12px 40px -4px rgba(0,0,0,0.06)",
             overflow: "hidden",
           }}>
-            {/* Teal accent bar */}
-            <Box sx={{ height: 4, background: `linear-gradient(90deg, ${ACCENT} 0%, #34D399 100%)` }} />
-            <Box sx={{ px: { xs: 4, sm: 5.5 }, pt: 5, pb: 5.5 }}>
+            <Box sx={{ height: 2, bgcolor: ACCENT }} />
+            <Box sx={{ px: { xs: 3, sm: 4, md: 4.5 }, pt: { xs: 3.5, sm: 4 }, pb: { xs: 3.5, sm: 4 } }}>
               {children}
             </Box>
           </Box>
 
           {/* Footer note */}
-          <Typography sx={{ mt: 3, fontSize: "12px", color: "#9CA3AF", fontFamily: "Poppins", textAlign: "center", lineHeight: 1.8 }}>
-            By signing in you agree to our{" "}
-            <NextLink href="/terms" style={{ color: ACCENT, textDecoration: "none", fontWeight: 600 }}>Terms of Use</NextLink>
-            {" "}and{" "}
-            <NextLink href="/privacy" style={{ color: ACCENT, textDecoration: "none", fontWeight: 600 }}>Privacy Policy</NextLink>
+          <Typography sx={{ mt: { xs: 1.75, md: 2 }, fontSize: "11.5px", color: "#9CA3AF", fontFamily: "Poppins", textAlign: "center", lineHeight: 1.8 }}>
+            {t("signin_panel.footer_prefix")}{" "}
+            <NextLink href="/terms" style={{ color: ACCENT, textDecoration: "none", fontWeight: 600 }}>{t("signin_panel.terms")}</NextLink>
+            {" "}{t("signin_panel.footer_and")}{" "}
+            <NextLink href="/privacy" style={{ color: ACCENT, textDecoration: "none", fontWeight: 600 }}>{t("signin_panel.privacy")}</NextLink>
           </Typography>
         </Box>
       </Box>

@@ -284,32 +284,6 @@ module.exports.resendOTP = async (req, res) => {
   }
 };
 
-// Connexion avec Gmail
-module.exports.connectWithGmail = async (req, res) => {
-  try {
-    const { id_token } = req.body;
-
-    // Validate token
-    const validToken = validateIdToken(id_token);
-
-    const result = await authService.connectWithGmail(validToken);
-
-    res.cookie("jwt_token", result.token, {
-      httpOnly: false,
-      maxAge: 5 * 365 * 24 * 60 * 60 * 1000,
-    });
-
-    res.status(200).json({
-      success: true,
-      message: result.message,
-      user: result.user,
-      token: result.token,
-    });
-  } catch (error) {
-    handleError(res, error, 400);
-  }
-};
-
 // Logout route
 module.exports.logout = (req, res) => {
   try {

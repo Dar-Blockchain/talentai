@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { RootState } from "../store";
-import axiosInstance from "@/utils/axiosInstance";
+import { planLimitsService } from "@/services/planLimitsService";
 
 // ─── Types ───────────────────────────────────────────────
 
@@ -45,12 +45,7 @@ export const fetchPlanLimits = createAsyncThunk<
   { rejectValue: string }
 >("planLimits/fetchAll", async (_, { rejectWithValue }) => {
   try {
-    const res = await axiosInstance.get("plan-limits");
-    const data = res.data;
-    if (data.success && data.data) {
-      return data.data as PlanLimit[];
-    }
-    return [];
+    return await planLimitsService.fetchAll() as PlanLimit[];
   } catch (error: any) {
     return rejectWithValue(error.response?.data?.message || error.message || "Error fetching plan limits");
   }
@@ -62,12 +57,7 @@ export const fetchPlanLimitById = createAsyncThunk<
   { rejectValue: string }
 >("planLimits/fetchById", async (planLimitId, { rejectWithValue }) => {
   try {
-    const res = await axiosInstance.get(`plan-limits/${planLimitId}`);
-    const data = res.data;
-    if (data.success && data.data) {
-      return data.data as PlanLimit;
-    }
-    throw new Error("Failed to fetch plan limit");
+    return await planLimitsService.fetchById(planLimitId) as PlanLimit;
   } catch (error: any) {
     return rejectWithValue(error.response?.data?.message || error.message || "Error fetching plan limit");
   }
@@ -79,12 +69,7 @@ export const updatePlanLimits = createAsyncThunk<
   { rejectValue: string }
 >("planLimits/update", async ({ id, updates }, { rejectWithValue }) => {
   try {
-    const res = await axiosInstance.put("plan-limits", { ...updates, _id: id });
-    const data = res.data;
-    if (data.success && data.data) {
-      return data.data as PlanLimit;
-    }
-    throw new Error("Failed to update plan limits");
+    return await planLimitsService.update(id, updates) as PlanLimit;
   } catch (error: any) {
     return rejectWithValue(error.response?.data?.message || error.message || "Error updating plan limits");
   }
@@ -95,12 +80,7 @@ export const updatePlanLimits = createAsyncThunk<
 const planLimitsSlice = createSlice({
   name: "planLimits",
   initialState,
-  reducers: {
-    clearPlanLimitsError: (state) => {
-      state.error = null;
-      state.updateError = null;
-    },
-  },
+  reducers: {},
   extraReducers: (builder) => {
     // Fetch plan limits
     builder
@@ -161,7 +141,5 @@ export const selectPlanLimitsLoading = (state: RootState) => state.planLimits.lo
 export const selectPlanLimitsError = (state: RootState) => state.planLimits.error;
 export const selectPlanLimitsUpdating = (state: RootState) => state.planLimits.updating;
 export const selectPlanLimitsUpdateError = (state: RootState) => state.planLimits.updateError;
-
-export const { clearPlanLimitsError } = planLimitsSlice.actions;
 
 export default planLimitsSlice.reducer;

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Avatar, Box, Button, CircularProgress, Dialog, DialogContent,
@@ -44,24 +45,24 @@ export interface ContactCandidateModalProps {
 type ContactMode = "email" | "chat";
 
 const MODES: Record<ContactMode, {
-  label: string;
-  sublabel: string;
+  labelKey: string;
+  sublabelKey: string;
   Icon: React.ElementType;
   color: string;
   lightBg: string;
   activeBorder: string;
 }> = {
   email: {
-    label: "Email",
-    sublabel: "Send via email",
+    labelKey: "pages.applications.contact_modal.mode_email_label",
+    sublabelKey: "pages.applications.contact_modal.mode_email_sublabel",
     Icon: EmailOutlined,
     color: "#2563EB",
     lightBg: "#EFF6FF",
     activeBorder: "#BFDBFE",
   },
   chat: {
-    label: "Internal Chat",
-    sublabel: "Send via platform chat",
+    labelKey: "pages.applications.contact_modal.mode_chat_label",
+    sublabelKey: "pages.applications.contact_modal.mode_chat_sublabel",
     Icon: ChatBubbleOutlineOutlined,
     color: TEAL,
     lightBg: `${TEAL}0F`,
@@ -72,6 +73,7 @@ const MODES: Record<ContactMode, {
 // ── Component ──────────────────────────────────────────────────────────────────
 
 const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, target, onClose }) => {
+  const { t } = useTranslation("dashboard");
   const dispatch    = useDispatch<AppDispatch>();
   const companyId   = useSelector((s: RootState) => s.user.connectedUser?.user?._id as string | undefined);
   const chatSending = useSelector(selectSendingMessage);
@@ -108,22 +110,22 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
       setSent(true);
       setTimeout(onClose, 2000);
     } catch (e: any) {
-      setError(e.response?.data?.error || e.message || "Failed to send. Please try again.");
+      setError(e.response?.data?.error || e.message || t("pages.applications.contact_modal.error_email"));
     } finally {
       setSending(false);
     }
   };
 
   const handleSendChat = async () => {
-    if (!message.trim()) { setError("Please write a message."); return; }
+    if (!message.trim()) { setError(t("pages.applications.contact_modal.error_empty")); return; }
     if (!target?.candidateUserId || !companyId) {
-      setError("Cannot start chat — missing user info.");
+      setError(t("pages.applications.contact_modal.error_no_user"));
       return;
     }
     setError("");
     const conv = await dispatch(createOrFindConversation({ candidateId: target.candidateUserId, companyId }));
     if (!createOrFindConversation.fulfilled.match(conv)) {
-      setError("Failed to start conversation. Please try again.");
+      setError(t("pages.applications.contact_modal.error_conv"));
       return;
     }
     const result = await dispatch(
@@ -133,7 +135,7 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
       setSent(true);
       setTimeout(onClose, 2000);
     } else {
-      setError("Failed to send message. Please try again.");
+      setError(t("pages.applications.contact_modal.error_msg"));
     }
   };
 
@@ -223,10 +225,10 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
                 </Box>
                 <Box>
                   <Typography sx={{ fontSize: "12px", fontWeight: 700, color: active ? c.color : "#374151", lineHeight: 1.2 }}>
-                    {c.label}
+                    {t(c.labelKey)}
                   </Typography>
                   <Typography sx={{ fontSize: "10px", color: "#9CA3AF", lineHeight: 1.2 }}>
-                    {c.sublabel}
+                    {t(c.sublabelKey)}
                   </Typography>
                 </Box>
               </Box>
@@ -245,12 +247,12 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
               <CheckCircleOutlineOutlined sx={{ fontSize: 30, color: TEAL }} />
             </Box>
             <Typography sx={{ fontSize: "16px", fontWeight: 700, color: "#111827", mb: 0.5 }}>
-              {mode === "email" ? "Email sent!" : "Message sent!"}
+              {mode === "email" ? t("pages.applications.contact_modal.success_email_title") : t("pages.applications.contact_modal.success_chat_title")}
             </Typography>
             <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>
               {mode === "email"
-                ? `Your email was delivered to ${target.name}.`
-                : `${target.name} will see your message in the chat.`}
+                ? t("pages.applications.contact_modal.success_email_body", { name: target.name })
+                : t("pages.applications.contact_modal.success_chat_body", { name: target.name })}
             </Typography>
           </Box>
         ) : (
@@ -259,7 +261,7 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
             {/* Subject (email only) */}
             {mode === "email" && (
               <TextField
-                placeholder="Subject"
+                placeholder={t("pages.applications.contact_modal.subject_placeholder")}
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 fullWidth
@@ -278,15 +280,14 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
               }}>
                 <ChatBubbleOutlineOutlined sx={{ fontSize: 13, color: TEAL, mt: 0.2, flexShrink: 0 }} />
                 <Typography sx={{ fontSize: "11.5px", color: "#0F766E", lineHeight: 1.5 }}>
-                  This message will appear in the platform inbox.{" "}
-                  <strong>{target.name}</strong> will be notified immediately.
+                  {t("pages.applications.contact_modal.chat_banner", { name: target.name })}
                 </Typography>
               </Box>
             )}
 
             {/* Message */}
             <TextField
-              placeholder={mode === "email" ? `Hi ${firstName},\n\nWe reviewed your application and…` : "Write your message…"}
+              placeholder={mode === "email" ? t("pages.applications.contact_modal.msg_placeholder_email", { firstName }) : t("pages.applications.contact_modal.msg_placeholder_chat")}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               fullWidth
@@ -320,7 +321,7 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
                   "&:hover": { borderColor: "#D1D5DB", bgcolor: "#F9FAFB" },
                 }}
               >
-                Cancel
+                {t("pages.applications.contact_modal.cancel")}
               </Button>
               <Button
                 variant="contained"
@@ -340,7 +341,7 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
                   "&.Mui-disabled": { bgcolor: "#E5E7EB", color: "#9CA3AF" },
                 }}
               >
-                {isBusy ? "Sending…" : mode === "email" ? "Send Email" : "Send Message"}
+                {isBusy ? t("pages.applications.contact_modal.sending") : mode === "email" ? t("pages.applications.contact_modal.send_email") : t("pages.applications.contact_modal.send_message")}
               </Button>
             </Box>
           </Box>

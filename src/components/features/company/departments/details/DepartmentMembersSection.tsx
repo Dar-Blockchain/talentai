@@ -6,6 +6,7 @@ import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
 import PersonAddOutlined  from "@mui/icons-material/PersonAddOutlined";
 import EmailOutlined      from "@mui/icons-material/EmailOutlined";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import { AppDispatch } from "@/store/store";
 import {
   fetchMembers, selectMembers, addEmployee,
@@ -91,6 +92,7 @@ const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({
   onEdit, onDelete,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
+  const { t } = useTranslation("dashboard");
   const { showToast } = useToast();
   const { members, pageTotal, loading, error } = useSelector(selectMembers);
 
@@ -141,22 +143,22 @@ const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({
   const handleInvite = useCallback(async (email: string, role: string, deptId?: string) => {
     await dispatch(addEmployee({ email, role, departmentId: deptId || departmentId })).unwrap();
     setInviteOpen(false);
-    showToast({ message: "Invitation sent successfully!", severity: "success" });
+    showToast({ message: t("pages.departments.members_panel.toast_invite_sent"), severity: "success" });
     refreshMembers();
     loadInvitations();
-  }, [dispatch, departmentId, refreshMembers, loadInvitations, showToast]);
+  }, [dispatch, departmentId, refreshMembers, loadInvitations, showToast, t]);
 
   const handleResend = useCallback(async (id: string) => {
     await dispatch(resendInvitation(id)).unwrap();
-    showToast({ message: "Invitation resent!", severity: "success" });
+    showToast({ message: t("pages.departments.members_panel.toast_invite_resent"), severity: "success" });
     loadInvitations();
-  }, [dispatch, showToast, loadInvitations]);
+  }, [dispatch, showToast, loadInvitations, t]);
 
   const handleCancel = useCallback(async (id: string) => {
     await dispatch(cancelInvitation(id)).unwrap();
     setInvitations((prev) => prev.filter((i) => i._id !== id));
-    showToast({ message: "Invitation cancelled", severity: "info" });
-  }, [dispatch, showToast]);
+    showToast({ message: t("pages.departments.members_panel.toast_invite_cancelled"), severity: "info" });
+  }, [dispatch, showToast, t]);
 
   return (
     <Box>
@@ -167,17 +169,17 @@ const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({
         <Box sx={{ display: "inline-flex", alignItems: "center", bgcolor: "#F3F4F6", borderRadius: "12px", p: 0.5, gap: 0.5, flexShrink: 0 }}>
           <TabPill
             active={tab === "members"}
-            label="Members"
+            label={t("pages.departments.members_panel.tab_members")}
             icon={<PeopleAltOutlined sx={{ fontSize: 16 }} />}
-            count={loading ? "…" : pageTotal}
+            count={loading ? t("pages.departments.detail.loading_short") : pageTotal}
             color={PURPLE}
             onClick={() => setTab("members")}
           />
           <TabPill
             active={tab === "invitations"}
-            label="Invitations"
+            label={t("pages.departments.members_panel.tab_invitations")}
             icon={<EmailOutlined sx={{ fontSize: 16 }} />}
-            count={invLoading ? "…" : invitations.length}
+            count={invLoading ? t("pages.departments.detail.loading_short") : invitations.length}
             color={AMBER}
             pulse={invitations.length > 0}
             onClick={() => setTab("invitations")}
@@ -201,7 +203,7 @@ const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({
         {canManage && (
           <Box sx={{ ml: "auto" }}>
             <AppButton
-              label="Invite Employee"
+              label={t("pages.departments.members_panel.invite_employee")}
               variant="contained"
               size="small"
               startIcon={<PersonAddOutlined sx={{ fontSize: 15 }} />}
@@ -226,12 +228,12 @@ const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({
             <Box sx={{ textAlign: "center", py: 10 }}>
               <PeopleAltOutlined sx={{ fontSize: 48, color: "#D1D5DB", mb: 2 }} />
               <Typography sx={{ fontSize: "15px", fontWeight: 600, color: "#374151" }}>
-                {search || roleFilter !== "all" ? "No members match your filters" : "No members yet"}
+                {search || roleFilter !== "all" ? t("pages.departments.members_panel.empty_members_filtered_title") : t("pages.departments.members_panel.empty_members_title")}
               </Typography>
               <Typography sx={{ fontSize: "13px", color: "#9CA3AF", mt: 0.5 }}>
                 {search || roleFilter !== "all"
-                  ? "Try adjusting your filters."
-                  : "Assign employees to this department to see them here."}
+                  ? t("pages.departments.members_panel.empty_members_filtered_hint")
+                  : t("pages.departments.members_panel.empty_members_hint")}
               </Typography>
             </Box>
           ) : (
@@ -262,10 +264,10 @@ const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({
             <Box sx={{ textAlign: "center", py: 10 }}>
               <EmailOutlined sx={{ fontSize: 48, color: "#D1D5DB", mb: 2 }} />
               <Typography sx={{ fontSize: "15px", fontWeight: 600, color: "#374151" }}>
-                No pending invitations
+                {t("pages.departments.members_panel.empty_invitations_title")}
               </Typography>
               <Typography sx={{ fontSize: "13px", color: "#9CA3AF", mt: 0.5 }}>
-                Invitations you send for this department will appear here.
+                {t("pages.departments.members_panel.empty_invitations_hint")}
               </Typography>
             </Box>
           ) : (

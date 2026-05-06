@@ -17,49 +17,49 @@ require("dotenv").config();
 const defaultPlans = [
   {
     name: "Trial",
-    postsLimit: 5,
-    monthlyInterviewLimit: 15,
+    postsLimit: 1,
+    monthlyInterviewLimit: 5,
     durationDays: 30,
     priceUsd: 0,
-    description: "Trial plan for new users",
+    description: "Get started for free with basic hiring features",
     isActive: true,
   },
   {
-    name: "Standard",
-    postsLimit: 20,
-    monthlyInterviewLimit: 50,
+    name: "Starter",
+    postsLimit: 3,
+    monthlyInterviewLimit: 15,
     durationDays: 30,
     priceUsd: 99,
-    description: "Standard plan for growing teams",
+    description: "Perfect for small teams getting started with AI hiring",
     isActive: true,
   },
   {
-    name: "Gold",
-    postsLimit: 50,
-    monthlyInterviewLimit: 120,
+    name: "Pro",
+    postsLimit: 10,
+    monthlyInterviewLimit: 50,
     durationDays: 30,
-    priceUsd: 499,
-    description: "Gold plan for larger teams",
+    priceUsd: 299,
+    description: "For growing teams with structured hiring needs",
     isActive: true,
   },
   {
-    name: "Platinum",
-    postsLimit: 100,
-    monthlyInterviewLimit: 250,
+    name: "Business",
+    postsLimit: 25,
+    monthlyInterviewLimit: 150,
     durationDays: 30,
-    priceUsd: 999,
-    description: "Platinum plan for enterprise customers",
+    priceUsd: 749,
+    description: "For scaling companies with high-volume recruitment",
     isActive: true,
   },
   {
-    name: "Diamond",
-    postsLimit: 200,
-    monthlyInterviewLimit: 500,
+    name: "Unlimited",
+    postsLimit: -1,
+    monthlyInterviewLimit: 700,
     durationDays: 30,
     priceUsd: 1499,
-    description: "Diamond plan for large enterprises",
+    description: "Unlimited posts and pipelines for enterprise teams",
     isActive: true,
-  }  
+  },
 ];
 
 // Connect to MongoDB (only if needed)
@@ -91,8 +91,12 @@ const seedDefaultPlans = async () => {
 
     console.log("🌱 Starting PlanLimits seeding...");
 
-    console.log("📝 Upserting default plans...");
+    // Remove plans that are no longer in defaultPlans (stale plans like Diamond, Gold, etc.)
+    const validNames = defaultPlans.map((p) => p.name);
+    await PlanLimits.deleteMany({ name: { $nin: validNames } });
+    console.log("🗑️  Removed stale plans");
 
+    // Upsert each plan by name — preserves existing _id so subscriptions stay valid
     for (const plan of defaultPlans) {
       await PlanLimits.findOneAndUpdate(
         { name: plan.name },

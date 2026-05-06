@@ -5,7 +5,9 @@ import SendOutlined from "@mui/icons-material/SendOutlined";
 import DeleteOutlined from "@mui/icons-material/DeleteOutlined";
 import { Invitation } from "@/types/employee";
 import { ROLES } from "@/constants/employee";
-import { ROLE_LABELS, ROLE_STYLES } from "./EmployeeCard";
+import { ROLE_STYLES } from "./EmployeeCard";
+import { getRoleLabel } from "@/utils/employeeRoleI18n";
+import { useTranslation } from "react-i18next";
 import { AMBER } from "./constants";
 
 interface Props {
@@ -15,6 +17,7 @@ interface Props {
 }
 
 const InvitationCard: React.FC<Props> = ({ invitation, onResend, onCancel }) => {
+  const { t, i18n } = useTranslation("dashboard");
   const [busy, setBusy] = useState(false);
   const [busyAction, setBusyAction] = useState<"resend" | "cancel" | null>(null);
 
@@ -22,12 +25,12 @@ const InvitationCard: React.FC<Props> = ({ invitation, onResend, onCancel }) => 
   const roleStyle = roleEntry
     ? { color: roleEntry.color, bg: `${roleEntry.color}12` }
     : (ROLE_STYLES[invitation.role] ?? { color: AMBER, bg: "#FFFBEB" });
-  const roleLabel = roleEntry?.label ?? ROLE_LABELS[invitation.role] ?? invitation.role;
+  const roleLabel = getRoleLabel(invitation.role, t);
   const RoleIcon  = roleEntry?.icon ?? null;
   const letter    = invitation.email[0]?.toUpperCase() || "?";
 
   const sentDate = (invitation as any).createdAt
-    ? new Date((invitation as any).createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    ? new Date((invitation as any).createdAt).toLocaleDateString(i18n.language?.startsWith("fr") ? "fr-FR" : "en-US", { month: "short", day: "numeric" })
     : null;
 
   const handleResend = useCallback(async () => {
@@ -81,7 +84,7 @@ const InvitationCard: React.FC<Props> = ({ invitation, onResend, onCancel }) => 
             "@keyframes invPulse": { "0%,100%": { opacity: 1 }, "50%": { opacity: 0.35 } },
           }} />
           <Typography sx={{ fontSize: "10px", fontWeight: 700, color: "#A87000", letterSpacing: "0.03em" }}>
-            PENDING
+            {t("pages.employees.invitation.pending")}
           </Typography>
         </Box>
 
@@ -112,7 +115,7 @@ const InvitationCard: React.FC<Props> = ({ invitation, onResend, onCancel }) => 
           </Typography>
           {sentDate && (
             <Typography sx={{ fontSize: "12px", color: "#B0B7C3", mt: 0.4, letterSpacing: "0.01em" }}>
-              Sent {sentDate}
+              {t("pages.employees.invitation.sent", { date: sentDate })}
             </Typography>
           )}
         </Box>
@@ -124,7 +127,7 @@ const InvitationCard: React.FC<Props> = ({ invitation, onResend, onCancel }) => 
         {/* Role */}
         <Box sx={{ bgcolor: "#F7F7F8", borderRadius: "12px", border: "1px solid #EBEBEB", px: 1.5, py: 1.25, display: "flex", flexDirection: "column", gap: 0.4 }}>
           <Typography sx={{ fontSize: "10px", fontWeight: 600, color: "#B0B7C3", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-            Invited as
+            {t("pages.employees.invitation.invited_as")}
           </Typography>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
             {RoleIcon && (
@@ -154,7 +157,7 @@ const InvitationCard: React.FC<Props> = ({ invitation, onResend, onCancel }) => 
               ? <CircularProgress size={12} sx={{ color: "#6B7280" }} />
               : <SendOutlined sx={{ fontSize: 13, color: "#6B7280" }} />
             }
-            <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#374151" }}>Resend</Typography>
+            <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#374151" }}>{t("pages.employees.invitation.resend")}</Typography>
           </Box>
 
           <Box
@@ -173,7 +176,7 @@ const InvitationCard: React.FC<Props> = ({ invitation, onResend, onCancel }) => 
               ? <CircularProgress size={12} sx={{ color: "#B45454" }} />
               : <DeleteOutlined sx={{ fontSize: 13, color: "#B45454" }} />
             }
-            <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#B45454" }}>Cancel</Typography>
+            <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#B45454" }}>{t("pages.employees.invitation.cancel")}</Typography>
           </Box>
         </Box>
       </Box>

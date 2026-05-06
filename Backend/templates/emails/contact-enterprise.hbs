@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enterprise Inquiry — TalentAI</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f0f4f8; font-family:'Segoe UI', Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f4f8; padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table width="620" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+          <!-- Logo header -->
+          <tr>
+            <td style="background-color:#ffffff; padding:20px 28px; border-bottom:1px solid #E5E7EB;">
+              <table cellpadding="0" cellspacing="0" style="background-color:#141415; border-radius:24px; width:115px; height:30px;">
+                <tr>
+                  <td align="center" valign="middle" style="padding:0 12px;">
+                    <img src="cid:logocompany" alt="TalentAI" height="20" style="display:block; margin:0 auto; border:0; outline:none;">
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Title -->
+          <tr>
+            <td style="padding:36px 36px 8px 36px;">
+              <h1 style="margin:0; font-size:28px; font-weight:700; color:#4F5A68; line-height:1.2; font-family:'Segoe UI', Arial, sans-serif;">
+                New Enterprise Inquiry
+              </h1>
+              <p style="margin:8px 0 0 0; font-size:14px; color:#9CA3AF; font-family:'Segoe UI', Arial, sans-serif;">
+                Someone is interested in the <strong style="color:#D97706;">Unlimited</strong> plan
+              </p>
+            </td>
+          </tr>
+
+          <!-- Details box -->
+          <tr>
+            <td style="padding:24px 36px 8px 36px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f9fafb; border-radius:10px; border:1px solid #e5e7eb;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding-bottom:14px;">
+                          <p style="margin:0 0 3px 0; font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.5px; font-family:'Segoe UI', Arial, sans-serif;">Name</p>
+                          <p style="margin:0; font-size:15px; font-weight:700; color:#4F5A68; font-family:'Segoe UI', Arial, sans-serif;">{{name}}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding-bottom:14px;">
+                          <p style="margin:0 0 3px 0; font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.5px; font-family:'Segoe UI', Arial, sans-serif;">Email</p>
+                          <p style="margin:0; font-size:15px; font-weight:700; color:#0ea5a0; font-family:'Segoe UI', Arial, sans-serif;">
+                            <a href="mailto:{{email}}" style="color:#0ea5a0; text-decoration:none;">{{email}}</a>
+                          </p>
+                        </td>
+                      </tr>
+                      {{#if company}}
+                      <tr>
+                        <td style="padding-bottom:14px;">
+                          <p style="margin:0 0 3px 0; font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.5px; font-family:'Segoe UI', Arial, sans-serif;">Company</p>
+                          <p style="margin:0; font-size:15px; font-weight:700; color:#4F5A68; font-family:'Segoe UI', Arial, sans-serif;">{{company}}</p>
+                        </td>
+                      </tr>
+                      {{/if}}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          {{#if message}}
+          <!-- Message -->
+          <tr>
+            <td style="padding:16px 36px 8px 36px;">
+              <p style="margin:0 0 8px 0; font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.5px; font-family:'Segoe UI', Arial, sans-serif;">Message</p>
+              <div style="background-color:#f9fafb; border-radius:10px; border:1px solid #e5e7eb; padding:16px 20px;">
+                <p style="margin:0; font-size:14px; color:#4F5A68; line-height:1.7; white-space:pre-wrap; font-family:'Segoe UI', Arial, sans-serif;">{{message}}</p>
+              </div>
+            </td>
+          </tr>
+          {{/if}}
+
+          <!-- Reply CTA -->
+          <tr>
+            <td align="center" style="padding:28px 36px;">
+              <table cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="background-color:#D97706; border-radius:8px;">
+                    <a href="mailto:{{email}}" style="display:inline-block; padding:14px 36px; font-size:15px; font-weight:700; color:#ffffff; text-decoration:none; font-family:'Segoe UI', Arial, sans-serif;">
+                      Reply to {{name}}
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr>
+            <td style="padding:0 36px;">
+              <hr style="border:none; border-top:1px solid #e5e7eb; margin:0;">
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#f9fafb; padding:20px 36px; border-radius:0 0 12px 12px;">
+              <p style="margin:0; font-size:13px; color:#6b7280; font-family:'Segoe UI', Arial, sans-serif;">
+                This inquiry was submitted via the TalentAI Enterprise plans page.
+              </p>
+              <p style="margin:10px 0 0 0; font-size:12px; color:#9ca3af; font-family:'Segoe UI', Arial, sans-serif;">
+                &copy; {{year}} TalentAI. All rights reserved.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

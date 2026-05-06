@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import Image from "next/image";
 import {
   Box,
@@ -39,6 +40,7 @@ const FooterLink: React.FC<{ children: React.ReactNode; href?: string }> = ({
 );
 
 const Footer: React.FC = () => {
+  const { t } = useTranslation("common");
   return (
     <Box
       sx={{
@@ -75,7 +77,7 @@ const Footer: React.FC = () => {
               verticalAlign: "middle",
             }}
           >
-            Copyright © 2026. TalentAI Inc. All rights reserved.
+            {t("footer.copyright")}
           </Typography>
           <Typography
             variant="body2"
@@ -88,9 +90,9 @@ const Footer: React.FC = () => {
               mt: 0.5,
             }}
           >
-            By using TalentAI, you agree to our{" "}
-            <Link href="/terms" sx={{ color: "rgba(255,255,255,0.5)", textDecoration: "underline", "&:hover": { color: "rgba(255,255,255,0.8)" } }}>Terms of Use</Link>.
-            {" "}TalentAI provides AI-powered hiring insights and candidate evaluations designed to support recruitment decisions. All final hiring decisions remain the sole responsibility of the employer.
+            {t("footer.disclaimer_prefix")}{" "}
+            <Link href="/terms" sx={{ color: "rgba(255,255,255,0.5)", textDecoration: "underline", "&:hover": { color: "rgba(255,255,255,0.8)" } }}>{t("footer.terms_of_use")}</Link>.
+            {" "}{t("footer.disclaimer_suffix")}
           </Typography>
           {/* <Typography variant="caption" sx={{ color: '#D1D5DB', fontSize: '0.75rem', lineHeight: 1.5 }}>
             *Numbers on this page are based on internal data compiled from existing customer base and speed assumption is based on the fact that standard onboarding may take 30 days and Remote's average onboarding time is 2.3 days.
@@ -112,8 +114,8 @@ const Footer: React.FC = () => {
         >
           {/* Policy Links */}
           <Stack direction="row" spacing={3} flexWrap="wrap">
-            <FooterLink href="/terms">Terms of Use</FooterLink>
-            <FooterLink href="/privacy">Privacy Policy</FooterLink>
+            <FooterLink href="/terms">{t("footer.terms_of_use")}</FooterLink>
+            <FooterLink href="/privacy">{t("footer.privacy_policy")}</FooterLink>
           </Stack>
 
           {/* Contact email */}

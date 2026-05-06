@@ -1,7 +1,7 @@
 // postGenerationSlice.ts
 
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import axiosInstance from "@/utils/axiosInstance";
+import { postGenerationService } from "@/services/postGenerationService";
 
 // ------------------------------------------------------
 // Types
@@ -82,6 +82,8 @@ export interface PostGenerationState {
   salary: Salary;
   expirationDate: string;
 
+  interviewLanguages: string[];
+
   loading: boolean;
   error: string | null;
 
@@ -107,6 +109,8 @@ const initialState: PostGenerationState = {
   salary: { min: null, max: null, currency: "USD" },
   expirationDate: getDefaultExpirationDate(),
 
+  interviewLanguages: ["en"],
+
   loading: false,
   error: null,
   generatedAt: null,
@@ -123,32 +127,12 @@ export const generatePost = createAsyncThunk<
     salary: Salary;
     contractType?: string;
     workMode?: string;
+    language?: string;
   },
   { rejectValue: string }
 >("postGeneration/generatePost", async (payload, { rejectWithValue }) => {
   try {
-    const { jobDescription, salary, contractType, workMode } = payload;
-
-    const salaryText = `\n\nSalary Range: ${
-      salary.currency
-    }${salary.min.toLocaleString()} - ${
-      salary.currency
-    }${salary.max.toLocaleString()}`;
-    const contractTypeText = contractType
-      ? `\nContract Type: ${contractType}`
-      : "";
-    const workModeText = workMode ? `\nWork Mode: ${workMode}` : "";
-
-    const descriptionWithDetails =
-      jobDescription + salaryText + contractTypeText + workModeText;
-
-    const res = await axiosInstance.post("linkedinPost/generate-job-post", {
-      description: descriptionWithDetails,
-      contractType,
-      workMode,
-    });
-
-    return res.data;
+    return await postGenerationService.generatePost(payload) as PostGenerationResponse;
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.message || err.message);
   }
@@ -173,8 +157,13 @@ const postGenerationSlice = createSlice({
       state.employmentType = "";
       state.salary = { min: null, max: null, currency: "USD" };
       state.expirationDate = getDefaultExpirationDate();
+      state.interviewLanguages = ["en"];
 
       state.loading = false;
+    },
+
+    setInterviewLanguages(state, action: PayloadAction<string[]>) {
+      state.interviewLanguages = action.payload;
     },
 
     setCreationType(state, action: PayloadAction<"ai" | "manual" | null>) {
@@ -203,10 +192,6 @@ const postGenerationSlice = createSlice({
       if (state.generatedPost) {
         state.generatedPost.expirationDate = action.payload;
       }
-    },
-
-    setSalary(state, action: PayloadAction<Salary>) {
-      state.salary = action.payload;
     },
 
     updateSalaryField(
@@ -364,7 +349,6 @@ export const {
   setWorkMode,
   setEmploymentType,
   setExpirationDate,
-  setSalary,
   updateSalaryField,
   editHardSkill,
   deleteHardSkill,
@@ -376,6 +360,7 @@ export const {
   updateJobSalaryField,
   updateRequirements,
   updateResponsibilities,
+  setInterviewLanguages,
 } = postGenerationSlice.actions;
 
 // ------------------------------------------------------

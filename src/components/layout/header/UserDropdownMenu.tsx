@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Menu, Box, Typography, Avatar } from "@mui/material";
 import type { MenuProps } from "@mui/material";
 import { useRouter } from "next/router";
@@ -12,14 +13,15 @@ import SwapHorizOutlined from "@mui/icons-material/SwapHorizOutlined";
 import LogoutOutlined    from "@mui/icons-material/LogoutOutlined";
 
 interface UserDropdownMenuProps extends Omit<MenuProps, "children"> {
-  onLogout?:    () => void;
-  displayName?: string;
-  email?:       string;
-  avatarUrl?:   string | null;
-  initials?:    string;
-  isCompany?:   boolean;
-  isEmployee?:  boolean;
-  onDashboard?: () => void;
+  onLogout?:     () => void;
+  displayName?:  string;
+  email?:        string;
+  avatarUrl?:    string | null;
+  initials?:     string;
+  isCompany?:    boolean;
+  isEmployee?:   boolean;
+  isCandidate?:  boolean;
+  onDashboard?:  () => void;
 }
 
 const Item: React.FC<{
@@ -84,11 +86,13 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
   email,
   avatarUrl,
   initials = "U",
-  isCompany  = false,
-  isEmployee = false,
+  isCompany   = false,
+  isEmployee  = false,
+  isCandidate = false,
   onDashboard,
   ...menuProps
 }) => {
+  const { t }    = useTranslation("common");
   const dispatch = useDispatch<AppDispatch>();
   const router   = useRouter();
 
@@ -179,23 +183,23 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
       <Box sx={{ py: 0.75 }}>
         <Item
           icon={<DashboardOutlined />}
-          label="Dashboard"
-          sub="Go to your workspace"
+          label={t("header.dashboard")}
+          sub={t("header.go_to_workspace")}
           onClick={() => { onDashboard?.(); close(); }}
         />
-        {!isCompany && !isEmployee && (
+        {!isCompany && !isEmployee && !isCandidate && (
           <Item
             icon={<PersonOutlined />}
-            label="View Profile"
-            sub="See your public profile"
+            label={t("header.view_profile")}
+            sub={t("header.public_profile")}
             onClick={() => { router.push("/profile/candidate/" + user?._id); close(); }}
           />
         )}
         {!isEmployee && (
           <Item
             icon={<SettingsOutlined />}
-            label="Settings"
-            sub="Account & preferences"
+            label={t("header.settings")}
+            sub={t("header.account_prefs")}
             onClick={() => {
               router.push(isCompany ? "/company/settings" : "/profile/candidate/settings");
               close();
@@ -208,7 +212,7 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
       <Box sx={{ borderTop: "1px solid #F3F4F6", py: 0.75 }}>
         <Item
           icon={<LogoutOutlined />}
-          label="Log out"
+          label={t("header.logout")}
           danger
           onClick={handleLogout}
         />

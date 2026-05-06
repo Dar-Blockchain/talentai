@@ -1,0 +1,206 @@
+{
+  "gdpr": {
+    "title": "Before we begin",
+    "message": "This interview will be recorded and analysed by AI. Your responses will be used solely to evaluate your candidacy for this assessment.",
+    "accept": "I agree, start interview",
+    "decline": "Decline",
+    "privacy_title": "Your privacy is protected.",
+    "integrity_title": "Your integrity matters.",
+    "body": "This interview is conducted by an AI agent that analyzes your responses in real time — including verbal and non-verbal communication — to assess your fit for this position.",
+    "bullet_data": "Your session data (video, audio, and transcript) is securely stored for the duration of the active recruitment campaign only. It is accessible exclusively to the hiring team and will be permanently deleted once the job post is closed.",
+    "bullet_privacy": "TalentAI does not share, sell, or transfer your personal data to any third party. All data is processed in compliance with GDPR and applicable data protection regulations.",
+    "confirmation": "By continuing, you confirm that you are the person listed in your application and that your responses are your own.",
+    "accept_btn": "Accept & Continue"
+  },
+  "start": {
+    "title": "Ready to begin?",
+    "description": "This is a live AI interview. Speak your answers clearly and at a natural pace.",
+    "module": {
+      "AI_INTERVIEW": "AI Interview",
+      "SKILL_TEST": "Skill Assessment"
+    },
+    "tips": {
+      "title": "Tips for a great interview",
+      "quiet": "Find a quiet, well-lit space",
+      "camera": "Enable your camera",
+      "mic": "Use headphones if possible",
+      "natural": "Speak naturally — pauses are fine"
+    },
+    "btn_start": "Start Interview",
+    "connecting": "Connecting…"
+  },
+  "intro": {
+    "step1_label": "Overview",
+    "step2_label": "AI Interview",
+    "about_role": "About the role",
+    "key_skills": "Key skills",
+    "voice_video_desc": "Answer questions via voice & video. The AI will adapt based on your responses.",
+    "before_start": "Before you start",
+    "video_label": "Video",
+    "voice_label": "Voice",
+    "tip1": "Find a quiet place with good lighting",
+    "tip2": "Ensure mic & camera are working",
+    "tip3": "Speak clearly — take time to think",
+    "tip4": "You can ask the AI to repeat a question",
+    "checking": "Checking eligibility…"
+  },
+  "container": {
+    "check_camera": "Camera access",
+    "check_system": "System connected",
+    "check_loaded": "Page loaded",
+    "ready_title": "Ready to begin?",
+    "ready_subtitle": "Your AI interviewer is ready and waiting.",
+    "check_ok": "OK",
+    "check_waiting": "Waiting",
+    "camera_warning": "Camera permission required",
+    "starting_title": "Starting interview…",
+    "starting_subtitle": "Please wait while we connect you to your AI interviewer.",
+    "thinking": "AI is thinking…",
+    "processing": "Processing your answer…",
+    "recording": "Recording your response",
+    "wait": "Please wait…",
+    "listening": "Listening to your answer…",
+    "speech_placeholder": "Waiting for speech…",
+    "analyzing_title": "Analyzing your results",
+    "analyzing_subtitle": "Please wait while we prepare your report."
+  },
+  "agent": {
+    "processing": "Processing…",
+    "listening": "Listening…",
+    "submit": "Submit & Continue"
+  },
+  "camera": {
+    "requesting": "Requesting camera access…",
+    "denied": "Camera access denied",
+    "unavailable": "Camera unavailable",
+    "retry": "Retry",
+    "connecting": "Connecting…",
+    "rec": "REC",
+    "microphone": "Microphone",
+    "mic_active": "Active",
+    "mic_inactive": "Inactive",
+    "speak_clearly": "Speak clearly — your voice is being captured",
+    "start_to_record": "Start the interview to enable recording",
+    "allow_access": "Allow camera & microphone access to begin"
+  },
+  "question": {
+    "label": "Question",
+    "label_numbered": "Question {{number}}",
+    "getting_next": "Getting next question…"
+  },
+  "coverage_dashboard": {
+    "title": "Coverage Report",
+    "subtitle": "Post-interview competency analysis",
+    "overall": "Overall completion",
+    "breakdown": "Competency Breakdown",
+    "strong": "Strong",
+    "moderate": "Moderate",
+    "needs_work": "Needs work"
+  },
+  "pipeline": {
+    "loading_title": "Loading Your Interview Step...",
+    "loading_subtitle": "Please wait while we prepare your interview",
+    "wrong_step_title": "Wrong Step",
+    "wrong_step_desc": "You will be redirected to your current step automatically.",
+    "blocked_title": "Cannot Continue",
+    "blocked_desc": "Unfortunately, you did not pass a previous step in this pipeline. The interview cannot be started.",
+    "blocked_contact": "Please contact the company if you believe this is an error.",
+    "return_dashboard": "Return to Dashboard"
+  },
+  "security": {
+    "warning_title": "Security Warning",
+    "warning_desc": "was detected. This interview is monitored. Please stay focused and keep this window active.",
+    "violations_label": "Violations",
+    "warnings_left_one": "{{count}} warning left",
+    "warnings_left_other": "{{count}} warnings left",
+    "no_warnings_left": "Next violation ends the interview",
+    "prohibited_title": "Prohibited during the interview:",
+    "prohibited_copy": "Copy, cut, or paste any text",
+    "prohibited_tabs": "Switching tabs or applications",
+    "prohibited_rightclick": "Right-clicking the page",
+    "prohibited_screenshot": "Taking screenshots",
+    "prohibited_devtools": "Opening developer tools",
+    "understand_btn": "I Understand — Continue Interview",
+    "terminated_title": "Interview Terminated",
+    "terminated_desc": "Multiple security violations were detected. The interview has been automatically terminated and the hiring team has been notified.",
+    "return_dashboard": "Return to Dashboard"
+  },
+  "active": {
+    "listening": "Listening…",
+    "thinking": "Processing your answer…",
+    "waiting": "Waiting for your answer…",
+    "reading_time": "Reading time: {{seconds}}s",
+    "time_remaining": "{{time}} remaining",
+    "question_number": "Question {{current}}",
+    "coverage": "Completion"
+  },
+  "end": {
+    "btn_end": "End Interview",
+    "confirm_title": "End Interview?",
+    "confirm_message": "This assessment can only be taken once. Are you sure you want to end it now?",
+    "confirm_yes": "Yes, end interview",
+    "confirm_cancel": "Continue interview"
+  },
+  "ended": {
+    "title": "Interview Complete",
+    "subtitle": "Thank you for completing this assessment.",
+    "saving": "Saving your results…",
+    "redirect": "You'll be redirected automatically once they're ready.",
+    "btn_view_results": "View Results"
+  },
+  "scores": {
+    "overall": "Overall Score",
+    "communication": "Communication",
+    "confidence": "Confidence",
+    "clarity": "Clarity",
+    "engagement": "Engagement"
+  },
+  "coverage": {
+    "title": "Interview completion",
+    "areas": {
+      "experience": "Experience",
+      "competencies": "Competencies",
+      "motivation": "Motivation",
+      "situational": "Situational",
+      "fundamentals": "Fundamentals",
+      "practical_usage": "Practical Usage",
+      "advanced_topics": "Advanced Topics",
+      "best_practices": "Best Practices"
+    }
+  },
+  "connection": {
+    "connecting": "Connecting to interview system…",
+    "reconnecting": "Disconnected — attempting to reconnect…",
+    "error": "Connection error — please refresh"
+  },
+  "errors": {
+    "connection": "Connection lost. Please refresh the page.",
+    "microphone": "Could not access your microphone. Please check browser permissions.",
+    "camera": "Could not access your camera.",
+    "session_expired": "Your session has expired. Please rejoin via the campaign link.",
+    "start_failed": "Failed to start assessment. Please try again."
+  },
+  "transcript": {
+    "ai_label": "AI",
+    "you_label": "You"
+  },
+  "page_header": {
+    "status_ready": "Ready",
+    "status_live": "● Live",
+    "status_completed": "Completed",
+    "speaking": "🎤 Speaking",
+    "ai_thinking": "🧠 AI Thinking",
+    "end_btn": "End"
+  },
+  "lang_modal": {
+    "title_multi": "Choose Your Interview Language",
+    "title_single": "Interview Language",
+    "desc_multi": "This interview is available in multiple languages. Select the one you're most comfortable with.",
+    "desc_single": "This interview will be conducted in the language shown below.",
+    "interviewing_in": "You will be interviewed in {{language}}",
+    "single_lang_note": "This interview is configured in this language only.",
+    "btn_back": "Back",
+    "btn_start_in": "Start in {{language}}",
+    "btn_start": "Start Interview"
+  }
+}

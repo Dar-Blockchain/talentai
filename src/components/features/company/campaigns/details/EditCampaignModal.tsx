@@ -19,6 +19,7 @@ import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import { updateCampaign } from "@/store/slices/campaignSlice";
 import { MODULE_CONFIG } from "@/constants/campaign";
+import { useTranslation, Trans } from "react-i18next";
 
 const PURPLE = "#8310FF";
 
@@ -39,6 +40,8 @@ const FieldLabel: React.FC<{ label: string; required?: boolean }> = ({ label, re
 
 const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }) => {
   const dispatch = useDispatch<AppDispatch>();
+  const { t } = useTranslation("dashboard");
+  const m = "pages.campaigns.detail.edit_modal";
 
   const [title,         setTitle]         = useState("");
   const [description,   setDescription]   = useState("");
@@ -65,7 +68,7 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
   }, [open, campaign]);
 
   const handleSave = async () => {
-    if (!title.trim()) { setError("Title is required."); return; }
+    if (!title.trim()) { setError(t(`${m}.error_title_required`)); return; }
     setSaving(true);
     setError(null);
     try {
@@ -87,7 +90,7 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
         onSaved(result.payload);
         onClose();
       } else {
-        setError((result.payload as string) || "Failed to save changes.");
+        setError((result.payload as string) || t(`${m}.error_save_failed`));
       }
     } finally {
       setSaving(false);
@@ -129,8 +132,8 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
             <EditOutlined sx={{ fontSize: 17, color: PURPLE }} />
           </Box>
           <Box>
-            <Typography sx={{ fontSize: "15px", fontWeight: 800, color: "#0F172A" }}>Edit Campaign</Typography>
-            <Typography sx={{ fontSize: "11px", color: "#94A3B8" }}>Only available while the campaign is in Draft</Typography>
+            <Typography sx={{ fontSize: "15px", fontWeight: 800, color: "#0F172A" }}>{t(`${m}.title`)}</Typography>
+            <Typography sx={{ fontSize: "11px", color: "#94A3B8" }}>{t(`${m}.subtitle`)}</Typography>
           </Box>
         </Box>
         <IconButton size="small" onClick={onClose} sx={{ color: "#94A3B8" }}>
@@ -143,29 +146,29 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
 
           {/* Title */}
           <Box>
-            <FieldLabel label="Title" required />
+            <FieldLabel label={t(`${m}.title_label`)} required />
             <TextField
               fullWidth size="small" value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Campaign title"
+              placeholder={t(`${m}.title_placeholder`)}
               sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px", fontSize: "13.5px" } }}
             />
           </Box>
 
           {/* Description */}
           <Box>
-            <FieldLabel label="Description" />
+            <FieldLabel label={t(`${m}.description_label`)} />
             <TextField
               fullWidth size="small" multiline minRows={2} maxRows={4}
               value={description} onChange={(e) => setDescription(e.target.value)}
-              placeholder="Optional description…"
+              placeholder={t(`${m}.description_placeholder`)}
               sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px", fontSize: "13px" } }}
             />
           </Box>
 
           {/* Deadline */}
           <Box>
-            <FieldLabel label="Deadline" />
+            <FieldLabel label={t(`${m}.deadline_label`)} />
             <TextField
               fullWidth size="small" type="date" value={deadline}
               onChange={(e) => setDeadline(e.target.value)}
@@ -176,12 +179,13 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
 
           {/* Module type */}
           <Box>
-            <FieldLabel label="Module Type" />
+            <FieldLabel label={t(`${m}.module_type_label`)} />
             <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
               {MODULE_TYPES.map((mt) => {
                 const cfg        = MODULE_CONFIG[mt];
                 const Icon       = cfg.icon;
                 const selected   = moduleType === mt;
+                const moduleTitle = t(`pages.campaigns.module.${mt}`);
                 const comingSoon = mt === "TRAINING_PATH";
                 return (
                   <Box
@@ -207,11 +211,11 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
                     </Box>
                     <Box>
                       <Typography sx={{ fontSize: "12.5px", fontWeight: 700, color: selected ? "#111827" : "#6B7280", lineHeight: 1.2 }}>
-                        {cfg.label}
+                        {moduleTitle}
                       </Typography>
                       {comingSoon && (
                         <Typography sx={{ fontSize: "9px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: 0.5 }}>
-                          Coming Soon
+                          {t(`${m}.coming_soon`)}
                         </Typography>
                       )}
                     </Box>
@@ -229,7 +233,7 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
               }}>
                 <WarningAmberOutlined sx={{ fontSize: 14, color: "#D97706", flexShrink: 0, mt: "1px" }} />
                 <Typography sx={{ fontSize: "11.5px", color: "#92400E", lineHeight: 1.5 }}>
-                  Changing the module type will <strong>reset the current configuration</strong>. You'll need to reconfigure it after saving.
+                  <Trans i18nKey="pages.campaigns.detail.edit_modal.module_change_warning" components={{ strong: <strong /> }} />
                 </Typography>
               </Box>
             )}
@@ -237,7 +241,7 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
 
           {/* Anonymity mode */}
           <Box>
-            <FieldLabel label="Anonymity" />
+            <FieldLabel label={t(`${m}.anonymity_label`)} />
             <ToggleButtonGroup
               exclusive value={anonymityMode}
               onChange={(_, v) => v && setAnonymityMode(v)}
@@ -245,18 +249,18 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
             >
               <ToggleButton value="NOMINATIVE" sx={toggleSx}>
                 <LockOpenOutlined sx={{ fontSize: 14 }} />
-                Nominative
+                {t(`pages.campaigns.detail.nominative`)}
               </ToggleButton>
               <ToggleButton value="ANONYMOUS" sx={toggleSx}>
                 <LockOutlined sx={{ fontSize: 14 }} />
-                Anonymous
+                {t(`pages.campaigns.detail.anonymous`)}
               </ToggleButton>
             </ToggleButtonGroup>
           </Box>
 
           {/* Access method */}
           <Box>
-            <FieldLabel label="Access Method" />
+            <FieldLabel label={t(`${m}.access_method_label`)} />
             <ToggleButtonGroup
               exclusive value={accessMethod}
               onChange={(_, v) => v && setAccessMethod(v)}
@@ -264,11 +268,11 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
             >
               <ToggleButton value="ACCOUNTS" sx={toggleSx}>
                 <AccountCircleOutlined sx={{ fontSize: 14 }} />
-                Accounts Only
+                {t(`${m}.accounts_only`)}
               </ToggleButton>
               <ToggleButton value="LINK" sx={toggleSx}>
                 <LinkOutlined sx={{ fontSize: 14 }} />
-                Public Link
+                {t(`${m}.public_link`)}
               </ToggleButton>
             </ToggleButtonGroup>
           </Box>
@@ -283,9 +287,9 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2.5, gap: 1 }}>
-        <AppButton label="Cancel" variant="outlined" size="medium" onClick={onClose} disabled={saving} />
+        <AppButton label={t(`${m}.cancel`)} variant="outlined" size="medium" onClick={onClose} disabled={saving} />
         <AppButton
-          label={saving ? "Saving…" : "Save Changes"}
+          label={saving ? t(`${m}.saving`) : t(`${m}.save`)}
           variant="contained"
           size="medium"
           onClick={handleSave}

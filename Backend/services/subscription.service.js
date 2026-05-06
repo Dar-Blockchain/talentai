@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Subscription = require("../models/Subscription.model");
 const Profile = require("../models/Profile.model");
 const PlanLimits = require("../models/PlanLimits.model");
@@ -100,31 +101,58 @@ module.exports.checkSubscriptionLimit = async (companyProfileId, limitType) => {
       endDate: { $gt: new Date() },
     }).populate("planId");
 
-    const subscriptions = allActive.filter((s) => s.planId?.name !== "Trial");
-    const active = subscriptions.length ? subscriptions : allActive;
+    const valid = allActive.filter((s) => s.planId != null);
 
-    if (!active.length) {
+    if (!allActive.length) {
       return { canUse: false, message: "No active subscription found", limitData: null };
     }
+
+    // If all subscriptions are orphaned (planId deleted), auto-repair by re-linking to Free plan
+    if (!valid.length && allActive.length) {
+      try {
+        const freePlan = await require("../models/PlanLimits.model").findOne({ name: "Trial", isActive: true });
+        if (freePlan) {
+          await require("../models/Subscription.model").updateMany(
+            { _id: { $in: allActive.map((s) => s._id) } },
+            { planId: freePlan._id }
+          );
+          // Re-fetch with repaired planId
+          const repaired = await Subscription.find({
+            companyProfileId,
+            status: "active",
+            endDate: { $gt: new Date() },
+          }).populate("planId");
+          valid.push(...repaired.filter((s) => s.planId != null));
+        }
+      } catch (repairErr) {
+        console.error("Auto-repair orphaned subscriptions failed:", repairErr.message);
+      }
+    }
+
+    // Use all valid subscriptions so Free + paid limits are combined
+    const active = valid.length ? valid : allActive;
 
     let used = 0;
     let limit = 0;
 
     if (limitType === "posts") {
       used  = active.reduce((sum, s) => sum + (s.postsUsed || 0), 0);
-      limit = active.reduce((sum, s) => sum + (s.planId?.postsLimit || 0), 0);
+      limit = active.some((s) => s.planId?.postsLimit === -1)
+        ? -1
+        : active.reduce((sum, s) => sum + (s.planId?.postsLimit || 0), 0);
     } else if (limitType === "monthlyInterviews") {
-      // Reset monthly counters if needed before summing
       await Promise.all(active.map((s) => module.exports.resetMonthlyInterviewIfNeeded(s._id)));
       const refreshed = await Subscription.find({ _id: { $in: active.map((s) => s._id) } });
       used  = refreshed.reduce((sum, s) => sum + (s.monthlyInterviewsUsed || 0), 0);
-      limit = active.reduce((sum, s) => sum + (s.planId?.monthlyInterviewLimit || 0), 0);
+      limit = active.some((s) => s.planId?.monthlyInterviewLimit === -1)
+        ? -1
+        : active.reduce((sum, s) => sum + (s.planId?.monthlyInterviewLimit || 0), 0);
     } else {
       throw new Error("Invalid limit type");
     }
 
-    const canUse = used < limit;
-    const remaining = Math.max(0, limit - used);
+    const canUse = limit === -1 || used < limit;
+    const remaining = limit === -1 ? -1 : Math.max(0, limit - used);
     const planNames = [...new Set(active.map((s) => s.planId?.name).filter(Boolean))].join(" + ");
 
     return {
@@ -494,18 +522,64 @@ module.exports.getCombinedActiveDetails = async (companyProfileId) => {
       endDate: { $gt: new Date() },
     }).populate("planId").sort({ createdAt: -1 });
 
-    const paid = allActive.filter((s) => s.planId?.name !== "Trial");
-    const subscriptions = paid.length ? paid : allActive;
+    // Filter out orphaned subscriptions (planId no longer exists in DB)
+    let valid = allActive.filter((s) => s.planId != null);
 
-    if (!subscriptions.length) {
+    // Auto-repair orphaned subscriptions by matching payment plan name to current PlanLimits
+    if (!valid.length && allActive.length) {
+      console.log(`⚠️  [getCombinedActiveDetails] All ${allActive.length} subs are orphaned — attempting repair via Payment records`);
+      const Payment = mongoose.model("Payment");
+      const PlanLimits = mongoose.model("PlanLimits");
+
+      for (const sub of allActive) {
+        try {
+          // Find the payment that created this subscription
+          const payment = await Payment.findOne({ subscriptionId: sub._id }).select("planName planId");
+          let planDoc = null;
+          if (payment?.planName) {
+            planDoc = await PlanLimits.findOne({ name: payment.planName, isActive: true });
+          }
+          if (!planDoc && payment?.planId) {
+            // planId on payment may still be valid even if sub.planId is gone
+            planDoc = await PlanLimits.findById(payment.planId);
+          }
+          if (planDoc) {
+            await Subscription.findByIdAndUpdate(sub._id, { planId: planDoc._id });
+            sub.planId = planDoc;
+            console.log(`✅ Repaired sub ${sub._id} → plan "${planDoc.name}"`);
+          }
+        } catch (repairErr) {
+          console.error(`⚠️  Could not repair sub ${sub._id}:`, repairErr.message);
+        }
+      }
+      valid = allActive.filter((s) => s.planId != null);
+
+      // Last-resort: link all orphaned subs to Free plan
+      if (!valid.length) {
+        const freePlan = await mongoose.model("PlanLimits").findOne({ name: "Trial", isActive: true });
+        if (freePlan) {
+          await Subscription.updateMany({ _id: { $in: allActive.map((s) => s._id) } }, { planId: freePlan._id });
+          const repaired = await Subscription.find({ companyProfileId, status: "active", endDate: { $gt: new Date() } }).populate("planId");
+          valid.push(...repaired.filter((s) => s.planId != null));
+          console.log(`✅ Last-resort: linked ${valid.length} subs to Free plan`);
+        }
+      }
+    }
+
+    // Use all valid subscriptions so Free + paid limits are combined
+    const subscriptions = valid.length ? valid : allActive;
+
+    if (!subscriptions.length || subscriptions.every((s) => !s.planId)) {
       const err = new Error("No active subscription found");
       err.status = 404;
       throw err;
     }
 
     const now = new Date();
-    const totalPostsLimit     = subscriptions.reduce((sum, s) => sum + (s.planId?.postsLimit || 0), 0);
-    const totalInterviewLimit = subscriptions.reduce((sum, s) => sum + (s.planId?.monthlyInterviewLimit || 0), 0);
+    const hasUnlimitedPosts     = subscriptions.some((s) => s.planId?.postsLimit === -1);
+    const hasUnlimitedInterviews = subscriptions.some((s) => s.planId?.monthlyInterviewLimit === -1);
+    const totalPostsLimit     = hasUnlimitedPosts ? -1 : subscriptions.reduce((sum, s) => sum + (s.planId?.postsLimit || 0), 0);
+    const totalInterviewLimit = hasUnlimitedInterviews ? -1 : subscriptions.reduce((sum, s) => sum + (s.planId?.monthlyInterviewLimit || 0), 0);
     const totalPostsUsed      = subscriptions.reduce((sum, s) => sum + (s.postsUsed || 0), 0);
     const totalInterviewsUsed = subscriptions.reduce((sum, s) => sum + (s.monthlyInterviewsUsed || 0), 0);
     // Earliest end date across all active subs (the one expiring soonest)
@@ -535,12 +609,12 @@ module.exports.getCombinedActiveDetails = async (companyProfileId) => {
             posts: {
               used: totalPostsUsed,
               limit: totalPostsLimit,
-              remaining: Math.max(0, totalPostsLimit - totalPostsUsed),
+              remaining: totalPostsLimit === -1 ? -1 : Math.max(0, totalPostsLimit - totalPostsUsed),
             },
             monthlyInterviews: {
               used: totalInterviewsUsed,
               limit: totalInterviewLimit,
-              remaining: Math.max(0, totalInterviewLimit - totalInterviewsUsed),
+              remaining: totalInterviewLimit === -1 ? -1 : Math.max(0, totalInterviewLimit - totalInterviewsUsed),
             },
           },
         },

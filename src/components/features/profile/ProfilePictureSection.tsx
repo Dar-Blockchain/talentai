@@ -1,7 +1,10 @@
 import React from 'react';
-import { Box, Avatar, IconButton, Typography, Button, CircularProgress } from '@mui/material';
-import { PhotoCamera as PhotoCameraIcon, Edit as EditIcon } from '@mui/icons-material';
+import { Box, Avatar, IconButton, Typography, CircularProgress } from '@mui/material';
+import { PhotoCamera as PhotoCameraIcon } from '@mui/icons-material';
 import { UserProfile } from '@/types/profile';
+
+const T    = "#0D9488";
+const NAVY = "#0D1B2A";
 
 interface ProfilePictureSectionProps {
   profile: UserProfile;
@@ -12,53 +15,25 @@ interface ProfilePictureSectionProps {
 }
 
 const ProfilePictureSection: React.FC<ProfilePictureSectionProps> = ({
-  profile,
-  uploadingImage,
-  isEditing,
-  onImageUpload,
-  onEditClick,
+  profile, uploadingImage, isEditing, onImageUpload,
 }) => {
-  const getDisplayName = () => {
-    if (profile.profileType === 'Company') {
-      return profile.name || profile.companyName || 'Company Name';
-    }
-    return `${profile.firstName} ${profile.lastName}`;
-  };
+  const displayName = profile.profileType === 'Company'
+    ? (profile.name || profile.companyName || 'Company')
+    : `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || profile.username || '';
 
-  const getAvatarInitials = () => {
-    if (profile.profileType === 'Company') {
-      return (profile.name || profile.companyName)?.charAt(0)?.toUpperCase() || 'C';
-    }
-    return `${profile.firstName?.charAt(0)}${profile.lastName?.charAt(0)}`;
-  };
-
-  const getCompanyDetails = () => {
-    if (profile.profileType !== 'Company') return null;
-
-    const details = [];
-    if (profile.industry) details.push({ label: 'Industry', value: profile.industry });
-    if (profile.size || profile.companySize) details.push({ label: 'Size', value: profile.size || profile.companySize });
-    if (profile.location) details.push({ label: 'Location', value: profile.location });
-    if (profile.employmentType) details.push({ label: 'Type', value: profile.employmentType });
-    if (profile.requiredExperienceLevel) details.push({ label: 'Experience', value: profile.requiredExperienceLevel });
-
-    return details;
-  };
+  const initials = profile.profileType === 'Company'
+    ? (profile.name || profile.companyName)?.charAt(0)?.toUpperCase() || 'C'
+    : `${profile.firstName?.charAt(0) || ''}${profile.lastName?.charAt(0) || ''}`.toUpperCase();
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 4 }}>
-      <Box sx={{ position: 'relative' }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Box sx={{ position: 'relative', flexShrink: 0 }}>
         <Avatar
           src={profile.avatar}
-          alt={getDisplayName()}
-          sx={{
-            width: 100,
-            height: 100,
-            border: '4px solid #8310FF',
-            boxShadow: '0 4px 12px rgba(131, 16, 255, 0.2)',
-          }}
+          alt={displayName}
+          sx={{ width: 72, height: 72, bgcolor: T, fontSize: "1.4rem", fontWeight: 700, border: "2.5px solid #fff", boxShadow: "0 2px 8px rgba(13,148,136,0.18)" }}
         >
-          {getAvatarInitials()}
+          {initials}
         </Avatar>
         <input
           accept="image/*"
@@ -73,70 +48,28 @@ const ProfilePictureSection: React.FC<ProfilePictureSectionProps> = ({
             component="span"
             disabled={uploadingImage}
             sx={{
-              position: 'absolute',
-              bottom: -5,
-              right: -5,
-              backgroundColor: '#8310FF',
-              color: 'white',
-              width: 36,
-              height: 36,
-              '&:hover': {
-                backgroundColor: '#6a0dd4',
-              },
-              '&.Mui-disabled': {
-                backgroundColor: '#9ca3af',
-              },
+              position: 'absolute', bottom: -4, right: -4,
+              bgcolor: T, color: '#fff', width: 26, height: 26,
+              '&:hover': { bgcolor: '#0F766E' },
+              '&.Mui-disabled': { bgcolor: '#9CA3AF' },
             }}
           >
-            {uploadingImage ? (
-              <CircularProgress size={18} sx={{ color: 'white' }} />
-            ) : (
-              <PhotoCameraIcon sx={{ fontSize: 18 }} />
-            )}
+            {uploadingImage
+              ? <CircularProgress size={13} sx={{ color: '#fff' }} />
+              : <PhotoCameraIcon sx={{ fontSize: 13 }} />
+            }
           </IconButton>
         </label>
       </Box>
-      <Box sx={{ flex: 1 }}>
-        <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
-          {getDisplayName()}
-        </Typography>
-        <Typography variant="body2" sx={{ color: '#6b7280', mb: 1 }}>
-          {profile.email}
-        </Typography>
 
-        {/* Company-specific details */}
-        {profile.profileType === 'Company' && getCompanyDetails() && (
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 1 }}>
-            {getCompanyDetails()?.map((detail, index) => (
-              <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <Typography variant="caption" sx={{ color: '#9ca3af', fontWeight: 500 }}>
-                  {detail.label}:
-                </Typography>
-                <Typography variant="caption" sx={{ color: '#6b7280', fontWeight: 600 }}>
-                  {detail.value}
-                </Typography>
-              </Box>
-            ))}
-          </Box>
+      <Box>
+        <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", color: NAVY }}>{displayName}</Typography>
+        {profile.email && (
+          <Typography sx={{ fontSize: "0.75rem", color: "#94A3B8", mt: 0.25 }}>{profile.email}</Typography>
         )}
-
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<EditIcon />}
-          onClick={onEditClick}
-          sx={{
-            borderColor: '#8310FF',
-            color: '#8310FF',
-            textTransform: 'none',
-            '&:hover': {
-              borderColor: '#6a0dd4',
-              backgroundColor: 'rgba(131, 16, 255, 0.04)',
-            },
-          }}
-        >
-          {isEditing ? 'Cancel' : 'Edit'}
-        </Button>
+        <Typography sx={{ fontSize: "0.72rem", color: "#CBD5E1", mt: 0.5 }}>
+          {isEditing ? "Click the camera icon to change your photo" : "Click Edit to update your photo"}
+        </Typography>
       </Box>
     </Box>
   );

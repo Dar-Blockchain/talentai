@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { Dialog, DialogContent, DialogActions, Button, Typography, Box } from '@mui/material';
 import DeleteOutlineOutlined from '@mui/icons-material/DeleteOutlineOutlined';
 import WarningAmberOutlined from '@mui/icons-material/WarningAmberOutlined';
+import { useTranslation } from 'react-i18next';
 
 interface DeleteMemberDialogProps {
   open: boolean;
@@ -10,8 +11,11 @@ interface DeleteMemberDialogProps {
   onConfirm: () => void;
 }
 
-const DeleteMemberDialog: React.FC<DeleteMemberDialogProps> = ({ open, memberName, onCancel, onConfirm }) => (
-  <Dialog
+const DeleteMemberDialog: React.FC<DeleteMemberDialogProps> = ({ open, memberName, onCancel, onConfirm }) => {
+  const { t } = useTranslation('dashboard');
+  const m = (key: string) => t(`pages.employees.modals.delete.${key}`);
+  return (
+    <Dialog
     open={open}
     onClose={onCancel}
     maxWidth="xs"
@@ -47,10 +51,10 @@ const DeleteMemberDialog: React.FC<DeleteMemberDialogProps> = ({ open, memberNam
 
         <Box sx={{ textAlign: 'center' }}>
           <Typography sx={{ fontWeight: 800, fontSize: '1.05rem', color: '#0F172A', lineHeight: 1.3 }}>
-            Remove Team Member
+            {m('title')}
           </Typography>
           <Typography sx={{ fontSize: '0.775rem', color: '#94A3B8', mt: 0.4 }}>
-            This action is permanent and cannot be undone
+            {m('subtitle')}
           </Typography>
         </Box>
       </Box>
@@ -58,9 +62,9 @@ const DeleteMemberDialog: React.FC<DeleteMemberDialogProps> = ({ open, memberNam
       {/* Body */}
       <Box sx={{ px: 3, pt: 2.5, pb: 2 }}>
         <Typography sx={{ fontSize: '0.875rem', color: '#475569', textAlign: 'center', lineHeight: 1.65 }}>
-          You're about to remove{' '}
+          {m('body_pre')}{' '}
           <Box component="span" sx={{ fontWeight: 700, color: '#0F172A' }}>{memberName}</Box>
-          {' '}from your team. They will lose access to all resources immediately.
+          {' '}{m('body_post')}
         </Typography>
 
         {/* Warning callout */}
@@ -71,7 +75,7 @@ const DeleteMemberDialog: React.FC<DeleteMemberDialogProps> = ({ open, memberNam
         }}>
           <WarningAmberOutlined sx={{ fontSize: 15, color: '#CA8A04', mt: '1px', flexShrink: 0 }} />
           <Typography sx={{ fontSize: '0.75rem', color: '#92400E', lineHeight: 1.5 }}>
-            Any pending tasks or assignments linked to this member will remain but become unassigned.
+            {m('warning')}
           </Typography>
         </Box>
       </Box>
@@ -89,7 +93,7 @@ const DeleteMemberDialog: React.FC<DeleteMemberDialogProps> = ({ open, memberNam
           transition: 'all 0.15s',
         }}
       >
-        Cancel
+        {m('cancel')}
       </Button>
       <Button
         onClick={onConfirm}
@@ -105,10 +109,11 @@ const DeleteMemberDialog: React.FC<DeleteMemberDialogProps> = ({ open, memberNam
           transition: 'all 0.15s',
         }}
       >
-        Yes, Remove Member
+        {m('confirm')}
       </Button>
     </DialogActions>
   </Dialog>
-);
+  );
+};
 
 export default memo(DeleteMemberDialog);

@@ -14,17 +14,11 @@ const initialState: CandidateState = {
 const candidateSlice = createSlice({
   name: "candidate",
   initialState,
-  reducers: {
-    clearCandidateError: (state) => {
-      state.error = null;
-    },
-  },
+  reducers: {},
 });
 
 /* -------------------------------------------------------------
    Exports
 ------------------------------------------------------------- */
-
-export const { clearCandidateError } = candidateSlice.actions;
 
 export default candidateSlice.reducer;

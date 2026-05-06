@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axiosInstance from "@/utils/axiosInstance";
+import { companyService } from "@/services/companyService";
 
 interface DashboardStats {
   totalEmployees: number;
@@ -30,8 +30,7 @@ export const fetchDashboardStats = createAsyncThunk(
   "company/fetchDashboardStats",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get("dashboard/statsCards");
-      return response.data.data as DashboardStats;
+      return await companyService.fetchDashboardStats() as DashboardStats;
     } catch (error: any) {
       return rejectWithValue(error.message || "Failed to fetch dashboard stats");
     }
@@ -42,8 +41,7 @@ export const fetchRichStats = createAsyncThunk(
   "company/fetchRichStats",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get("dashboard/richStats");
-      return response.data.data as RichStats;
+      return await companyService.fetchRichStats() as RichStats;
     } catch (error: any) {
       return rejectWithValue(error.message || "Failed to fetch rich stats");
     }

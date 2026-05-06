@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axiosInstance from '@/utils/axiosInstance';
+import { jobApplicationService } from '@/services/jobApplicationService';
 
 interface ApplicationMetrics {
   totalApplicants: number;
@@ -33,6 +33,21 @@ interface SummaryState {
   totalCount: number;
 }
 
+interface CandidateStats {
+  totalApplications: number;
+  totalInterviews: number;
+  statusCounts: Record<string, number>;
+  monthly: { month: string; applications: number }[];
+}
+
+interface CandidateListState {
+  data: any[];
+  loading: boolean;
+  currentPage: number;
+  totalPages: number;
+  totalCount: number;
+}
+
 interface JobApplicationState {
   applications: any[];
   allApplications: any[];
@@ -41,6 +56,9 @@ interface JobApplicationState {
   metricsLoading: boolean;
   postSummary: SummaryState;
   companySummary: SummaryState;
+  candidateList: CandidateListState;
+  candidateStats: CandidateStats | null;
+  candidateStatsLoading: boolean;
 }
 
 const emptySummary: SummaryState = { data: [], loading: false, currentPage: 1, totalPages: 1, totalCount: 0 };
@@ -53,6 +71,9 @@ const initialState: JobApplicationState = {
   metricsLoading: false,
   postSummary: { ...emptySummary },
   companySummary: { ...emptySummary },
+  candidateList: { data: [], loading: false, currentPage: 1, totalPages: 1, totalCount: 0 },
+  candidateStats: null,
+  candidateStatsLoading: false,
 };
 
 export const fetchCompanyApplications = createAsyncThunk(
@@ -68,19 +89,7 @@ export const fetchCompanyApplications = createAsyncThunk(
     limit?: number;
     page?: number;
   } = {}) => {
-    const query = new URLSearchParams();
-    if (params.candidateName) query.set('candidateName', params.candidateName);
-    if (params.skill) query.set('skill', params.skill);
-    if (params.postId) query.set('postId', params.postId);
-    if (params.scoreMin !== undefined && params.scoreMin > 0) query.set('scoreMin', String(params.scoreMin));
-    if (params.scoreMax !== undefined && params.scoreMax < 100) query.set('scoreMax', String(params.scoreMax));
-    if (params.dateFrom) query.set('dateFrom', params.dateFrom);
-    if (params.dateTo) query.set('dateTo', params.dateTo);
-    if (params.limit !== undefined) query.set('limit', String(params.limit));
-    if (params.page !== undefined) query.set('page', String(params.page));
-    const url = `job-applications/company/my${query.toString() ? `?${query}` : ''}`;
-    const res = await axiosInstance.get(url);
-    return (Array.isArray(res.data?.data) ? res.data.data : Array.isArray(res.data) ? res.data : []) as any[];
+    return await jobApplicationService.fetchCompanyApplications(params);
   }
 );
 
@@ -100,17 +109,8 @@ export const fetchPostApplicationsSummary = createAsyncThunk(
     page?: number;
     limit?: number;
   }) => {
-    const { postId, ...rest } = params;
-    const query = new URLSearchParams();
-    Object.entries(rest).forEach(([k, v]) => {
-      if (v !== undefined && v !== null && v !== '') query.set(k, String(v));
-    });
-    const url = `job-applications/post/${postId}/summary${query.toString() ? `?${query}` : ''}`;
-    const res = await axiosInstance.get(url);
-    return {
-      data: (res.data?.data ?? []) as ApplicationSummaryItem[],
-      pagination: res.data?.pagination ?? {},
-    };
+    const result = await jobApplicationService.fetchPostApplicationsSummary(params);
+    return { data: result.data as ApplicationSummaryItem[], pagination: result.pagination };
   }
 );
 
@@ -130,15 +130,8 @@ export const fetchCompanyApplicationsSummary = createAsyncThunk(
     page?: number;
     limit?: number;
   } = {}) => {
-    const query = new URLSearchParams();
-    Object.entries(params).forEach(([k, v]) => {
-      if (v !== undefined && v !== null && v !== '') query.set(k, String(v));
-    });
-    const res = await axiosInstance.get(`job-applications/company/my/summary${query.toString() ? `?${query}` : ''}`);
-    return {
-      data: (res.data?.data ?? []) as ApplicationSummaryItem[],
-      pagination: res.data?.pagination ?? {},
-    };
+    const result = await jobApplicationService.fetchCompanyApplicationsSummary(params);
+    return { data: result.data as ApplicationSummaryItem[], pagination: result.pagination };
   }
 );
 
@@ -146,11 +139,7 @@ export const inviteToInterview = createAsyncThunk(
   'jobApplications/inviteToInterview',
   async (params: { applicationId: string; interviewLink: string }, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.post(
-        `job-applications/${params.applicationId}/invite-to-interview`,
-        { interviewLink: params.interviewLink }
-      );
-      return res.data;
+      return await jobApplicationService.inviteToInterview(params.applicationId, params.interviewLink);
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error ?? 'Failed to send invitation');
     }
@@ -160,8 +149,22 @@ export const inviteToInterview = createAsyncThunk(
 export const fetchCompanyApplicationMetrics = createAsyncThunk(
   'jobApplications/fetchMetrics',
   async () => {
-    const res = await axiosInstance.get('job-applications/company/my/metrics');
-    return res.data?.data as ApplicationMetrics;
+    return await jobApplicationService.fetchCompanyApplicationMetrics() as ApplicationMetrics;
+  }
+);
+
+export const fetchCandidateApplications = createAsyncThunk(
+  'jobApplications/fetchCandidateList',
+  async (params: { page?: number; limit?: number } = {}) => {
+    const result = await jobApplicationService.fetchCandidateApplications(params);
+    return { data: result.data as any[], pagination: result.pagination };
+  }
+);
+
+export const fetchCandidateStats = createAsyncThunk(
+  'jobApplications/fetchCandidateStats',
+  async () => {
+    return await jobApplicationService.fetchCandidateStats() as CandidateStats & { success: boolean };
   }
 );
 
@@ -223,6 +226,34 @@ const jobApplicationSlice = createSlice({
       })
       .addCase(fetchCompanyApplicationMetrics.rejected, (state) => {
         state.metricsLoading = false;
+      })
+      .addCase(fetchCandidateApplications.pending, (state) => {
+        state.candidateList.loading = true;
+      })
+      .addCase(fetchCandidateApplications.fulfilled, (state, action) => {
+        state.candidateList.loading = false;
+        state.candidateList.data = action.payload.data;
+        state.candidateList.currentPage = action.payload.pagination.currentPage ?? 1;
+        state.candidateList.totalPages  = action.payload.pagination.totalPages  ?? 1;
+        state.candidateList.totalCount  = action.payload.pagination.totalCount  ?? 0;
+      })
+      .addCase(fetchCandidateApplications.rejected, (state) => {
+        state.candidateList.loading = false;
+      })
+      .addCase(fetchCandidateStats.pending, (state) => {
+        state.candidateStatsLoading = true;
+      })
+      .addCase(fetchCandidateStats.fulfilled, (state, action) => {
+        state.candidateStatsLoading = false;
+        state.candidateStats = {
+          totalApplications: action.payload.totalApplications,
+          totalInterviews:   action.payload.totalInterviews,
+          statusCounts:      action.payload.statusCounts,
+          monthly:           action.payload.monthly,
+        };
+      })
+      .addCase(fetchCandidateStats.rejected, (state) => {
+        state.candidateStatsLoading = false;
       });
   },
 });
@@ -249,3 +280,13 @@ export const selectCompanySummaryPagination = (state: { jobApplications: JobAppl
   totalPages: state.jobApplications.companySummary.totalPages,
   totalCount: state.jobApplications.companySummary.totalCount,
 });
+
+export const selectCandidateApplications        = (state: { jobApplications: JobApplicationState }) => state.jobApplications.candidateList.data;
+export const selectCandidateApplicationsLoading = (state: { jobApplications: JobApplicationState }) => state.jobApplications.candidateList.loading;
+export const selectCandidateApplicationsPagination = (state: { jobApplications: JobApplicationState }) => ({
+  currentPage: state.jobApplications.candidateList.currentPage,
+  totalPages:  state.jobApplications.candidateList.totalPages,
+  totalCount:  state.jobApplications.candidateList.totalCount,
+});
+export const selectCandidateStats        = (state: { jobApplications: JobApplicationState }) => state.jobApplications.candidateStats;
+export const selectCandidateStatsLoading = (state: { jobApplications: JobApplicationState }) => state.jobApplications.candidateStatsLoading;

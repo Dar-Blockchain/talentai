@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Box,
   Typography,
@@ -87,6 +88,8 @@ const JobPostsList = memo<JobPostsListProps>(({
   canCreate = true,
   canDelete = true,
 }) => {
+  const { t } = useTranslation("posts");
+
   if (loading) {
     return (
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "minmax(0,1fr)", sm: "repeat(2, minmax(0,1fr))", lg: "repeat(3, minmax(0,1fr))" }, gap: { xs: 1.5, md: 2 } }}>
@@ -108,12 +111,12 @@ const JobPostsList = memo<JobPostsListProps>(({
       <Box sx={{ py: 12, textAlign: "center", border: "1.5px dashed #E5E7EB", borderRadius: "12px", bgcolor: "#FAFAFA" }}>
         <WorkOutlined sx={{ fontSize: 44, color: "#D1D5DB", mb: 1.5 }} />
         <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#374151", mb: 0.5 }}>
-          {hasFilters ? "No posts match your filters" : "No job posts yet"}
+          {hasFilters ? t("empty.no_match") : t("empty.no_posts")}
         </Typography>
         <Typography sx={{ fontSize: "13px", color: "#9CA3AF", mb: hasFilters ? 0 : 2 }}>
           {hasFilters
-            ? "Try different keywords or clear the filters."
-            : "Create your first job post to start attracting candidates."}
+            ? t("empty.no_match_hint")
+            : t("empty.no_posts_hint")}
         </Typography>
         {!hasFilters && (
           <Button
@@ -122,7 +125,7 @@ const JobPostsList = memo<JobPostsListProps>(({
             onClick={onCreateClick}
             sx={{ textTransform: "none", fontWeight: 700, color: "#fff", bgcolor: TEAL, "&:hover": { bgcolor: "#0F766E" }, borderRadius: "10px" }}
           >
-            Create Job Post
+            {t("empty.create_btn")}
           </Button>
         )}
       </Box>

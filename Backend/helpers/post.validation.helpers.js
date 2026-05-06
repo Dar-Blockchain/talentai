@@ -82,7 +82,7 @@ const validatePostData = (postData) => {
 };
 
 /**
- * Safely parse skillAnalysis and matchingConfig from form-data
+ * Safely parse JSON fields from form-data
  * @param {Object} data - Request body data
  * @returns {Object} Data with parsed JSON fields
  */
@@ -95,17 +95,6 @@ const parseJsonFields = (data) => {
       result.skillAnalysis = JSON.parse(result.skillAnalysis);
     } catch (err) {
       const parseErr = new Error('Invalid JSON in skillAnalysis field');
-      parseErr.status = 400;
-      throw parseErr;
-    }
-  }
-
-  // Parse matchingConfig if it's a string
-  if (typeof result.matchingConfig === 'string') {
-    try {
-      result.matchingConfig = JSON.parse(result.matchingConfig);
-    } catch (err) {
-      const parseErr = new Error('Invalid JSON in matchingConfig field');
       parseErr.status = 400;
       throw parseErr;
     }

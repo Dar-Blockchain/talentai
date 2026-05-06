@@ -2,38 +2,36 @@ import React from "react";
 import { Box, Typography } from "@mui/material";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { useTranslation } from "react-i18next";
 
 type Props = { themeColors: any };
 
-const ACCENT = "#0D9488";
-
 const BackToLandingButton: React.FC<Props> = ({ themeColors }) => {
+  const { t } = useTranslation("auth");
   const router = useRouter();
   const returnUrl = router.query.returnUrl as string | undefined;
   const registerHref = returnUrl ? `/register?returnUrl=${encodeURIComponent(returnUrl)}` : "/register";
 
   return (
-    <Box sx={{
-      textAlign: "center",
-      pt: 0.5,
-    }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
-        <Box sx={{ flex: 1, height: "1px", bgcolor: "#E5E7EB" }} />
-        <Typography sx={{ fontSize: "0.75rem", color: "#9CA3AF", fontFamily: "Poppins", whiteSpace: "nowrap" }}>
-          New to TalentAI?
+    <Box sx={{ pt: 0.25 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.75 }}>
+        <Box sx={{ flex: 1, height: "1px", bgcolor: "#F1F5F9" }} />
+        <Typography sx={{ fontSize: { xs: "0.7rem", sm: "0.72rem" }, color: "#C4C9D4", fontFamily: "Poppins", whiteSpace: "nowrap" }}>
+          {t("signin.new_here")}
         </Typography>
-        <Box sx={{ flex: 1, height: "1px", bgcolor: "#E5E7EB" }} />
+        <Box sx={{ flex: 1, height: "1px", bgcolor: "#F1F5F9" }} />
       </Box>
       <Link href={registerHref} style={{ textDecoration: "none" }}>
         <Box sx={{
           display: "inline-flex", alignItems: "center", justifyContent: "center",
-          width: "100%", height: 48, borderRadius: "14px",
-          border: `1.5px solid ${ACCENT}44`,
-          color: ACCENT, fontFamily: "Poppins", fontWeight: 700, fontSize: "0.95rem",
-          transition: "all 0.2s",
-          "&:hover": { bgcolor: `${ACCENT}08`, borderColor: ACCENT },
+          width: "100%", height: { xs: 42, sm: 44 }, borderRadius: "12px",
+          border: "1.5px solid #E5E7EB",
+          color: "#374151", fontFamily: "Poppins", fontWeight: 600,
+          fontSize: { xs: "0.83rem", sm: "0.87rem" },
+          transition: "all 0.15s",
+          "&:hover": { bgcolor: "#F9FAFB", borderColor: "#D1D5DB" },
         }}>
-          Create a free account
+          {t("signin.create_account")}
         </Box>
       </Link>
     </Box>

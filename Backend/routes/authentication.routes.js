@@ -50,12 +50,6 @@ router.post("/verify-otp", authController.verifyOTP);
 // Description: Sends a new OTP code to user via email (valid for 5 minutes)
 router.post("/resend-otp", authController.resendOTP);
 
-// POST /auth/connect-gmail
-// Access: Public
-// Expected body: { tokenGoogle | codeOAuth }
-// Description: Connects user via Google and returns an application token
-router.post("/connect-gmail", authController.connectWithGmail);
-
 // GET /auth/warnUser
 // Access: Protected (Authenticated user)
 // Description: Notifies/warns the logged-in user (internal use)

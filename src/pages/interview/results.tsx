@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 import { Box, Button } from '@mui/material';
 import { Home as HomeIcon } from '@mui/icons-material';
@@ -31,6 +32,7 @@ import {
 export default function InterviewResults() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
+  const { t } = useTranslation('modules/interview/results');
   const { showToast } = useToast();
   const [analysis, setAnalysis] = useState<InterviewAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
@@ -115,7 +117,7 @@ export default function InterviewResults() {
           // Check for duplicate session error
           if (errorMsg?.includes('already exists') || errorMsg?.includes('DUPLICATE')) {
             if (showStatus) {
-              showToast({ message: 'This interview has already been saved.', severity: 'info' });
+              showToast({ message: t('save.duplicate'), severity: 'info' });
             }
             return; // Don't throw, just return - the results are still valid
           }
@@ -126,7 +128,7 @@ export default function InterviewResults() {
             return;
           }
 
-          showToast({ message: errorMsg || 'Failed to save interview', severity: 'error' });
+          showToast({ message: errorMsg || t('save.failed'), severity: 'error' });
           return;
         }
 
@@ -147,7 +149,7 @@ export default function InterviewResults() {
           // Check for duplicate session error
           if (errorMsg?.includes('already exists') || errorMsg?.includes('DUPLICATE')) {
             if (showStatus) {
-              showToast({ message: 'This interview has already been saved.', severity: 'info' });
+              showToast({ message: t('save.duplicate'), severity: 'info' });
             }
             return;
           }
@@ -158,7 +160,7 @@ export default function InterviewResults() {
             return;
           }
 
-          showToast({ message: errorMsg || 'Failed to save interview', severity: 'error' });
+          showToast({ message: errorMsg || t('save.failed'), severity: 'error' });
           return;
         }
 
@@ -223,7 +225,7 @@ export default function InterviewResults() {
       }
 
       if (showStatus) {
-        showToast({ message: 'Interview saved successfully', severity: 'success' });
+        showToast({ message: t('save.success'), severity: 'success' });
       }
 
       return result;
@@ -276,7 +278,7 @@ export default function InterviewResults() {
       const interviewId = router.query.id || localStorage.getItem('last_interview_id');
 
       if (!interviewId) {
-        setError('No interview data found. Please complete an interview first.');
+        setError(t('errors.no_data'));
         setLoading(false);
         return;
       }
@@ -297,7 +299,7 @@ export default function InterviewResults() {
         console.log('⚠️ [Results] API call failed:', apiError);
       }
 
-      setError('No interview data available to perform analysis.');
+      setError(t('errors.no_analysis'));
 
     } catch (err: any) {
       console.error('❌ [Results] Error fetching analysis:', err);
@@ -542,7 +544,7 @@ export default function InterviewResults() {
             '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' },
           }}
         >
-          Back to Dashboard
+          {t('back_to_dashboard')}
         </Button>
       </Box>
     </PageContainer>

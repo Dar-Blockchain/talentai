@@ -1,101 +1,52 @@
 import React, { useState } from "react";
-import { Paper, Typography, Button } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
+import { Box, Typography, Button } from "@mui/material";
+import { useTranslation } from "react-i18next";
+import AddOutlined from "@mui/icons-material/AddOutlined";
+import CodeOutlined from "@mui/icons-material/CodeOutlined";
+import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
 import AssessmentModal from "../AssessmentModal";
 
 type SkillType = "technical" | "soft";
 
-interface EmptySkillsProps {
-  type: SkillType;
-}
+const CONFIG = {
+  technical: { Icon: CodeOutlined, color: "#2563EB", bg: "#EFF6FF", border: "#BFDBFE" },
+  soft:      { Icon: PeopleOutlined, color: "#D97706", bg: "#FFFBEB", border: "#FDE68A" },
+};
 
-const EmptySkills: React.FC<EmptySkillsProps> = ({ type }) => {
-    const [openModal, setOpenModal] = useState(false)
+const EmptySkills: React.FC<{ type: SkillType }> = ({ type }) => {
+  const { t } = useTranslation("dashboard");
+  const s = (k: string) => t(`candidate.skills.empty.${k}`) as string;
+  const [openModal, setOpenModal] = useState(false);
+  const { Icon, color, bg, border } = CONFIG[type];
 
-  const isTechnical = type === "technical";
-
-  const message = isTechnical
-    ? "No Technical Skills Added"
-    : "No Soft Skills Added";
-
-  const subtext = isTechnical
-    ? "Add your technical skills to get matched with relevant job opportunities."
-    : "Add your soft skills to showcase how you collaborate and communicate.";
-
-  const buttonBackground = isTechnical
-    ? "rgba(11, 82, 198, 0.08)"
-    : "rgba(250, 180, 70, 0.08)";
-    
-  const buttonColor = isTechnical
-    ? "rgba(11, 82, 198, 1)"
-    : "rgba(250, 180, 70, 1)";
-
-  const buttonBackgroundHover = isTechnical
-    ? "rgba(11, 82, 198, 0.06)"
-    : "rgba(250, 180, 70, 0.06)";
+  const title = type === "technical" ? s("technical_title") : s("soft_title");
+  const desc  = type === "technical" ? s("technical_desc")  : s("soft_desc");
+  const btn   = type === "technical" ? s("technical_btn")   : s("soft_btn");
 
   return (
-    <Paper
-      elevation={0}
-      sx={{
-        p: 4,
-        borderRadius: "12px",
-        background: "rgba(26, 26, 26, 0.03)",
-        border: "1px solid rgba(157, 61, 255, 0.18)",
-        textAlign: "center",
-      }}
-    >
-      <Typography
-        variant="h6"
-        sx={{
-          fontWeight: 500,
-          color: "rgba(56, 68, 85, 1)",
-          fontSize: "16px",
-          mb: 1,
-        }}
-      >
-        {message}
-      </Typography>
-
-      <Typography
-        variant="body2"
-        sx={{
-          color: "rgba(118, 128, 142, 1)",
-          fontSize: "14px",
-          fontWeight: 500,
-          mb: 3,
-        }}
-      >
-        {subtext}
-      </Typography>
-      <Button
-                onClick={() => setOpenModal(true)}
-        disabled
-        variant="outlined"
-        startIcon={<AddIcon sx={{ color: buttonColor }} />}
-        sx={{
-          background: buttonBackground,
-          border: `1px solid ${buttonColor}`,
-          color: buttonColor,
-          borderRadius: "38px",
-          px: 2,
-          py: 1,
-          textTransform: "none",
-          fontWeight: 600,
-          fontSize: "0.875rem",
-          "&:hover": {
-            background: buttonBackgroundHover,
-          },
-        }}
-      >
-        Add Your First {isTechnical ? "Technical" : "Soft"} Skill
-      </Button>
-                  <AssessmentModal
-        type={isTechnical ? "technical" : "soft"}
-        open={openModal}
-        onClose={() => setOpenModal(false)}
-      />
-    </Paper>
+    <>
+      <Box sx={{ py: 6, px: 3, textAlign: "center", borderRadius: "14px", border: `1.5px dashed ${border}`, bgcolor: bg }}>
+        <Box sx={{ width: 56, height: 56, borderRadius: "50%", bgcolor: "#fff", border: `1.5px solid ${border}`, display: "flex", alignItems: "center", justifyContent: "center", mx: "auto", mb: 2, boxShadow: `0 4px 12px ${color}15` }}>
+          <Icon sx={{ fontSize: 26, color }} />
+        </Box>
+        <Typography sx={{ fontWeight: 800, color: "#111827", fontSize: "0.9rem", mb: 0.5 }}>{title}</Typography>
+        <Typography sx={{ color: "#9CA3AF", fontSize: "0.78rem", mb: 2.5, maxWidth: 320, mx: "auto" }}>{desc}</Typography>
+        <Button
+          disabled
+          startIcon={<AddOutlined />}
+          onClick={() => setOpenModal(true)}
+          sx={{
+            textTransform: "none", fontWeight: 700, fontSize: "0.78rem",
+            color, bgcolor: "#fff", border: `1.5px solid ${color}`,
+            borderRadius: "10px", px: 2.5, py: 0.75,
+            "&.Mui-disabled": { color: "#9CA3AF", border: "1.5px solid #E5E7EB", bgcolor: "#F9FAFB" },
+          }}
+        >
+          {btn}
+        </Button>
+      </Box>
+      <AssessmentModal type={type} open={openModal} onClose={() => setOpenModal(false)} />
+    </>
   );
 };
 

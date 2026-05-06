@@ -1,0 +1,45 @@
+{
+  "back_to_dashboard": "Retour au tableau de bord",
+  "errors": {
+    "no_data": "Aucune donnée d'entretien trouvée. Veuillez d'abord compléter un entretien.",
+    "no_analysis": "Aucune donnée d'entretien disponible pour effectuer l'analyse."
+  },
+  "save": {
+    "duplicate": "Cet entretien a déjà été sauvegardé.",
+    "success": "Entretien sauvegardé avec succès",
+    "failed": "Échec de la sauvegarde de l'entretien"
+  },
+  "header": {
+    "complete": "Entretien terminé !",
+    "level": "Niveau :",
+    "score": "SCORE"
+  },
+  "strengths": {
+    "title": "Points forts",
+    "empty": "Aucun point fort spécifique n'a été identifié lors de cet entretien."
+  },
+  "improvements": {
+    "title": "Axes d'amélioration",
+    "empty": "Aucun axe d'amélioration spécifique n'a été identifié."
+  },
+  "coverage": {
+    "title": "Analyse détaillée de la couverture"
+  },
+  "feedback": {
+    "question_bad": "Qu'est-ce qui n'a pas fonctionné ?",
+    "question_good": "Qu'avez-vous le plus apprécié ?",
+    "thanks_title": "Merci pour votre retour !",
+    "thanks_desc": "Votre réponse nous aide à améliorer l'expérience d'entretien.",
+    "title": "Comment s'est passé votre entretien ?",
+    "subtitle": "Votre retour est anonyme et nous aide à nous améliorer.",
+    "placeholder": "Partagez vos impressions...",
+    "submit": "Envoyer le retour"
+  },
+  "loading": "Chargement de vos résultats...",
+  "error": {
+    "title": "Aucune donnée d'analyse disponible",
+    "fallback_desc": "Aucune donnée d'entretien trouvée. Cela peut être dû au fait que l'entretien n'a pas été complété ou que la session a expiré.",
+    "return_btn": "Retour au tableau de bord",
+    "new_interview_btn": "Passer un nouvel entretien"
+  }
+}

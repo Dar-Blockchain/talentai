@@ -6,14 +6,12 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { InterviewStatus, Coverage, RealTimeReport } from '@/types/interview';
+import { useTranslation } from 'react-i18next';
 
 const PURPLE = '#8310FF';
 
 const scoreColor = (pct: number) =>
   pct >= 80 ? '#22c55e' : pct >= 50 ? '#f59e0b' : '#ef4444';
-
-const scoreLabel = (pct: number) =>
-  pct >= 80 ? 'Strong' : pct >= 50 ? 'Moderate' : 'Needs work';
 
 interface CoverageDashboardProps {
   interviewStatus: InterviewStatus;
@@ -25,12 +23,16 @@ interface CoverageDashboardProps {
 }
 
 const CoverageDashboard: React.FC<CoverageDashboardProps> = ({ coverage }) => {
+  const { t } = useTranslation('interview');
   const [open, setOpen] = useState(true);
 
   if (!coverage) return null;
 
   const overall = Math.round(coverage.overall || 0);
   const areas = coverage.areas ? Object.entries(coverage.areas) : [];
+
+  const scoreLabel = (pct: number) =>
+    pct >= 80 ? t('coverage_dashboard.strong') : pct >= 50 ? t('coverage_dashboard.moderate') : t('coverage_dashboard.needs_work');
 
   return (
     <Box
@@ -68,10 +70,10 @@ const CoverageDashboard: React.FC<CoverageDashboardProps> = ({ coverage }) => {
           </Box>
           <Box>
             <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.95rem', color: '#111827', lineHeight: 1.2 }}>
-              Coverage Report
+              {t('coverage_dashboard.title')}
             </Typography>
             <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', color: '#9ca3af', mt: 0.2 }}>
-              Post-interview competency analysis
+              {t('coverage_dashboard.subtitle')}
             </Typography>
           </Box>
         </Box>
@@ -108,7 +110,7 @@ const CoverageDashboard: React.FC<CoverageDashboardProps> = ({ coverage }) => {
         <Box>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.75}>
             <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.78rem', color: '#374151' }}>
-              Overall completion
+              {t('coverage_dashboard.overall')}
             </Typography>
             <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.78rem', color: scoreColor(overall) }}>
               {overall}%
@@ -137,7 +139,7 @@ const CoverageDashboard: React.FC<CoverageDashboardProps> = ({ coverage }) => {
         {areas.length > 0 && (
           <Box>
             <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.82rem', color: '#111827', mb: 1.5 }}>
-              Competency Breakdown
+              {t('coverage_dashboard.breakdown')}
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
               {areas.map(([areaName, areaData]: [string, any], idx) => {

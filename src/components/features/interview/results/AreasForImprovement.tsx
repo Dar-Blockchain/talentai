@@ -1,10 +1,13 @@
 import { Box, Typography, Stack } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 interface AreasForImprovementProps {
   weaknesses: string[];
 }
 
 export default function AreasForImprovement({ weaknesses }: AreasForImprovementProps) {
+  const { t } = useTranslation('modules/interview/results');
+
   return (
     <Box
       sx={{
@@ -36,12 +39,12 @@ export default function AreasForImprovement({ weaknesses }: AreasForImprovementP
           },
         }}
       >
-        Areas for Improvement
+        {t('improvements.title')}
       </Typography>
 
       {weaknesses.length === 0 ? (
         <Typography variant="body2" sx={{ color: '#9e9e9e', fontStyle: 'italic', py: 2 }}>
-          No specific areas for improvement were identified.
+          {t('improvements.empty')}
         </Typography>
       ) : (
         <Stack spacing={2}>

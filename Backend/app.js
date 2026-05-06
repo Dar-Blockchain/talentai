@@ -60,18 +60,6 @@ process.on("warning", (warning) => {
 const io = socket.init(server);
 initializeSocketServer(io);
 
-/**
- * Initialize default plan limits
- */
-const initializePlanLimits = async () => {
-  logger.section("Initializing default plans...");
-  try {
-    await seedDefaultPlans();
-    logger.success("PlanLimits initialization completed");
-  } catch (error) {
-    logger.warn("PlanLimits seeding failed but application will continue");
-  }
-};
 
 /**
  * Application initialization sequence
@@ -101,9 +89,20 @@ const initializeApp = async () => {
       logger.warn('InterviewApplicant dedup failed: ' + e.message);
     }
 
-    // Step 1.5: Seed PlanLimits if table is empty
-    logger.section("Initializing default plans...");
-    await initializePlanLimits();
+    // Step 1.5: Seed PlanLimits only if DB has no plans yet
+    try {
+      const PlanLimits = require("./models/PlanLimits.model");
+      const count = await PlanLimits.countDocuments();
+      if (count === 0) {
+        logger.section("No plans found — seeding default plans...");
+        await seedDefaultPlans();
+        logger.success("PlanLimits seeded");
+      } else {
+        logger.info(`Plans already exist (${count}) — skipping seed`);
+      }
+    } catch (e) {
+      logger.warn("PlanLimits seed check failed: " + e.message);
+    }
 
     // Step 2: Initialize scheduler
     //await initializeAgenda();

@@ -3,6 +3,7 @@ import { Box, Typography, Chip } from '@mui/material';
 import TimerIcon from '@mui/icons-material/Timer';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { InterviewMessage } from '@/types/interview';
+import { useTranslation } from 'react-i18next';
 
 interface QuestionPanelProps {
   currentMessage: InterviewMessage;
@@ -19,6 +20,8 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
   questionHighlight,
   questionNumber,
 }) => {
+  const { t } = useTranslation('interview');
+
   return (
     <Box
       sx={{
@@ -61,7 +64,7 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
               letterSpacing: '0.12em',
               textTransform: 'uppercase',
             }}>
-              {questionNumber ? `Question ${questionNumber}` : 'Question'}
+              {questionNumber ? t('question.label_numbered', { number: questionNumber }) : t('question.label')}
             </Typography>
           </Box>
 
@@ -72,7 +75,7 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
             lineHeight: 1.7,
             color: '#111827',
           }}>
-            {currentMessage.content || 'Getting next question…'}
+            {currentMessage.content || t('question.getting_next')}
           </Typography>
 
           {currentMessage.reasoning && (

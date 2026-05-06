@@ -71,7 +71,6 @@ export interface ManualPostState {
   jobDetails: JobDetails;
   skillAnalysis: SkillAnalysis;
   linkedinPost: LinkedinPost;
-  matchingConfig: any;
   creationType: "manual";
   expirationDate: string;
 }
@@ -152,27 +151,6 @@ const initialState: ManualPostState = {
     },
     finalPost: "",
   },
-  matchingConfig: {
-    weights: {
-      hardSkill: 50,
-      SoftSkill: 10,
-      experience: 20,
-      salary: 5,
-      workMode: 5,
-      contract: 10,
-    },
-    importanceWeight: {
-      Junior: 1.5,
-      Mid_Level: 1.2,
-      Senior: 1,
-      Expert: 0.8,
-    },
-    exchangeRates: {
-      USD: 1,
-      EUR: 1.09,
-      TND: 0.33,
-    },
-  },
 
   creationType: "manual",
   expirationDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
@@ -184,19 +162,8 @@ const manualPostSlice = createSlice({
   name: "manualPost",
   initialState,
   reducers: {
-    setManualPostData: (_, action: PayloadAction<ManualPostState>) => {
-      return action.payload;
-    },
-
     updateJobDetails: (state, action: PayloadAction<Partial<JobDetails>>) => {
       state.jobDetails = { ...state.jobDetails, ...action.payload };
-    },
-
-    updateSkillAnalysis: (
-      state,
-      action: PayloadAction<Partial<SkillAnalysis>>
-    ) => {
-      state.skillAnalysis = { ...state.skillAnalysis, ...action.payload };
     },
 
     updateLinkedinPost: (
@@ -204,9 +171,6 @@ const manualPostSlice = createSlice({
       action: PayloadAction<Partial<LinkedinPost>>
     ) => {
       state.linkedinPost = { ...state.linkedinPost, ...action.payload };
-    },
-    updateMatchingConfig: (state, action: PayloadAction<any>) => {
-      state.matchingConfig = { ...state.matchingConfig, ...action.payload };
     },
     setManualExpirationDate: (state, action: PayloadAction<string>) => {
       state.expirationDate = action.payload;
@@ -218,11 +182,8 @@ const manualPostSlice = createSlice({
 /* ========= Exports ========= */
 
 export const {
-  setManualPostData,
   updateJobDetails,
-  updateSkillAnalysis,
   updateLinkedinPost,
-  updateMatchingConfig,
   setManualExpirationDate,
   resetManualPost,
 } = manualPostSlice.actions;

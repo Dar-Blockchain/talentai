@@ -1,0 +1,45 @@
+{
+  "loading": "Chargement de l'entretien…",
+  "company_only": {
+    "title": "Cet entretien est réservé aux candidats",
+    "redirecting": "Redirection vers votre tableau de bord…"
+  },
+  "archived": {
+    "title": "Ce poste n'est plus disponible",
+    "desc": "Cette offre d'emploi a été archivée par l'entreprise et n'accepte plus de nouveaux entretiens."
+  },
+  "expired": {
+    "title": "Ce poste n'accepte plus de candidatures",
+    "desc": "Cette offre d'emploi a dépassé sa date d'expiration et n'est plus ouverte aux entretiens."
+  },
+  "completed": {
+    "title": "Vous avez déjà complété cet entretien",
+    "desc_pre": "Votre évaluation pour",
+    "desc_post": "a déjà été soumise. L'équipe de recrutement examinera vos résultats et reviendra vers vous."
+  },
+  "limit": {
+    "badge": "Entretiens suspendus",
+    "title": "Entretien indisponible",
+    "desc": "L'entreprise a atteint son quota mensuel d'entretiens. De nouveaux créneaux s'ouvrent au début du mois prochain.",
+    "contact": "Si vous pensez qu'il s'agit d'une erreur, veuillez contacter le recruteur directement.",
+    "go_back": "← Retour",
+    "go_home": "Accueil"
+  },
+  "back_to_dashboard": "Retour au tableau de bord",
+  "connection": {
+    "connecting": "Connexion au système d'entretien…",
+    "error": "Erreur de connexion — veuillez actualiser",
+    "reconnecting": "Déconnecté — tentative de reconnexion…"
+  },
+  "step": "Étape {{current}} / {{total}}",
+  "end_interview": "Terminer l'entretien",
+  "interview_completion": "Avancement de l'entretien",
+  "ai_powered": "Entretien propulsé par l'IA",
+  "interview_types": {
+    "technical": "Entretien technique",
+    "technical_role": "Entretien {{role}}",
+    "assessment": "Évaluation des compétences comportementales",
+    "evaluation": "Évaluation psychotechnique",
+    "hr": "Entretien RH"
+  }
+}

@@ -558,6 +558,47 @@ module.exports.getJobApplicationById = async (applicationId) => {
   }
 };
 
+// ========== READ - Get candidate application stats ==========
+module.exports.getCandidateStats = async (profileId) => {
+  if (!profileId) {
+    const error = new Error("Profile ID is required");
+    error.status = 400;
+    throw error;
+  }
+
+  const baseQuery = { profile: profileId, isWithdrawn: false };
+
+  const [totalApplications, totalInterviews, statusBreakdown, monthlyRaw] = await Promise.all([
+    JobApplication.countDocuments(baseQuery),
+    JobApplication.countDocuments({ ...baseQuery, status: { $in: ["interview_scheduled", "interview_completed"] } }),
+    JobApplication.aggregate([
+      { $match: baseQuery },
+      { $group: { _id: "$status", count: { $sum: 1 } } },
+    ]),
+    JobApplication.aggregate([
+      { $match: { ...baseQuery, appliedAt: { $gte: new Date(new Date().setMonth(new Date().getMonth() - 5, 1)) } } },
+      { $group: { _id: { year: { $year: "$appliedAt" }, month: { $month: "$appliedAt" } }, count: { $sum: 1 } } },
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
+    ]),
+  ]);
+
+  const statusCounts = {};
+  statusBreakdown.forEach(({ _id, count }) => { statusCounts[_id] = count; });
+
+  const now = new Date();
+  const monthly = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const found = monthlyRaw.find(m => m._id.year === d.getFullYear() && m._id.month === d.getMonth() + 1);
+    monthly.push({
+      month: d.toLocaleDateString("en-US", { month: "short" }),
+      applications: found ? found.count : 0,
+    });
+  }
+
+  return { totalApplications, totalInterviews, statusCounts, monthly };
+};
+
 // ========== READ - Get applications by candidate ==========
 module.exports.getApplicationsByCandidate = async (profileId, filters = {}, page = 1, limit = 10) => {
   try {

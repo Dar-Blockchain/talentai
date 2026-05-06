@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -8,11 +8,13 @@ import {
   DialogContent,
   DialogActions,
 } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import AppButton from "@/components/ui/AppButton";
 import DeptFormFields from "../shared/DeptFormFields";
 import CorporateFareOutlined from "@mui/icons-material/CorporateFareOutlined";
 import AddOutlined from "@mui/icons-material/AddOutlined";
 import CloseOutlined from "@mui/icons-material/CloseOutlined";
+import { resolveDepartmentApiMessage } from "@/utils/departmentI18n";
 
 const TEAL = "#0D9488";
 const TEAL_LIGHT = "#F0FDFA";
@@ -32,9 +34,15 @@ const CreateDepartmentModal: React.FC<CreateDepartmentModalProps> = ({
   saving,
   error,
 }) => {
+  const { t } = useTranslation("dashboard");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [nameError, setNameError] = useState("");
+
+  const displayApiError = useMemo(
+    () => resolveDepartmentApiMessage(error, t),
+    [error, t],
+  );
 
   // Reset form whenever the modal opens
   useEffect(() => {
@@ -47,7 +55,7 @@ const CreateDepartmentModal: React.FC<CreateDepartmentModalProps> = ({
 
   const handleSave = () => {
     if (!name.trim()) {
-      setNameError("Department name is required.");
+      setNameError(t("pages.departments.form.name_required"));
       return;
     }
     onSave(name.trim(), description.trim());
@@ -78,7 +86,7 @@ const CreateDepartmentModal: React.FC<CreateDepartmentModalProps> = ({
             <CorporateFareOutlined sx={{ fontSize: 17, color: TEAL }} />
           </Box>
           <Typography sx={{ fontSize: "16px", fontWeight: 700, color: "#111827" }}>
-            New Department
+            {t("pages.departments.modals.create.title")}
           </Typography>
         </Box>
         <IconButton size="small" onClick={onClose} disabled={saving}>
@@ -96,20 +104,20 @@ const CreateDepartmentModal: React.FC<CreateDepartmentModalProps> = ({
             if (nameError) setNameError("");
           }}
           onDescChange={setDescription}
-          apiError={error}
+          apiError={displayApiError}
         />
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
         <AppButton
-          label="Cancel"
+          label={t("pages.departments.modals.create.cancel")}
           variant="outlined"
           size="medium"
           onClick={onClose}
           disabled={saving}
         />
         <AppButton
-          label="Create Department"
+          label={t("pages.departments.modals.create.submit")}
           variant="contained"
           size="medium"
           startIcon={<AddOutlined />}

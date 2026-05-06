@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
-const TodoList = require("./todoList.model");
-const PlanLimits = require("./PlanLimits.model");
+const TodoList = require("./TodoList.model");
 
 // Sub-schemas for skills and softSkills to enable per-item timestamps
 const skillSchema = new mongoose.Schema(
@@ -182,48 +181,6 @@ profileSchema.post("save", async function (doc) {
       });
     }
 
-    // ========== CREATE TRIAL SUBSCRIPTION FOR COMPANIES ==========
-    if ((doc.type === "Company" || doc.type === "Member") && !doc.activeSubscription) {
-      try {
-        // Get the Trial plan
-        const trialPlan = await PlanLimits.findOne({ name: "Trial" });
-
-        if (!trialPlan) {
-          console.warn(`⚠️  Trial plan not found. ${doc.type} profile ${doc._id} was not assigned a plan.`);
-          return;
-        }
-
-        // Create a trial subscription (30 days from now)
-        const Subscription = mongoose.model("Subscription");
-        const startDate = new Date();
-        const endDate = new Date();
-        endDate.setDate(endDate.getDate() + (trialPlan.durationDays || 30));
-
-        const subscription = await Subscription.create({
-          companyProfileId: doc._id,
-          planId: trialPlan._id,
-          startDate,
-          endDate,
-          status: "active",
-          autoRenew: false, // Trial doesn't auto-renew
-        });
-
-        // Update profile with active subscription
-        await mongoose.model("Profile").findByIdAndUpdate(
-          doc._id,
-          {
-            activeSubscription: subscription._id,
-            subscriptions: [subscription._id],
-            planLimits: trialPlan._id, // Keep for backward compatibility
-          },
-          { runValidators: false }
-        );
-
-        console.log(`✅ Trial subscription created for ${doc.type.toLowerCase()} profile: ${doc._id}`);
-      } catch (subscriptionError) {
-        console.error(`⚠️  Error creating trial subscription: ${subscriptionError.message}`);
-      }
-    }
   } catch (error) {
     console.error("Error in Profile post-save hook:", error);
   }

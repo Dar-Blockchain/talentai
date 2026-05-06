@@ -136,7 +136,7 @@ export default function TermsOfUse() {
                 <Li>Automated candidate scoring and evaluation based on interview performance</Li>
                 <Li>Blockchain-verified interview credentials issued to candidates</Li>
                 <Li>Recruitment campaign management and team collaboration tools</Li>
-                <Li>CV analysis, job post generation, and matching engine</Li>
+                <Li>CV analysis and job post generation</Li>
               </Box>
               <InfoBox color="amber">
                 TalentAI is a decision-support tool. <strong>All final hiring decisions remain the sole responsibility of the employer.</strong> No recruitment decision may be based exclusively on AI-generated results.
