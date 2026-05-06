@@ -890,20 +890,13 @@ Return JSON exactly:
   "aiSummary": "<2-3 sentence summary of the respondent's overall performance>"
 }`;
 
-    const OpenAI = require("openai");
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const { content: rawContent } = await bedrock.callLLM({
+      systemPrompt,
+      messages: [{ role: "user", content: userMessage }],
       temperature: 0.3,
-      max_tokens: 512,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user",   content: userMessage },
-      ],
+      maxTokens: 512,
+      useFastModel: true,
     });
-
-    const rawContent = completion.choices?.[0]?.message?.content ?? "";
     console.log(`🤖 scoreQuestionnaireAsync LLM raw response: ${rawContent.substring(0, 200)}`);
 
     // Extract JSON object — handles markdown fences and extra text
