@@ -1,5 +1,6 @@
 import React from "react";
 import { Box, Button, Typography, LinearProgress, Tooltip, Avatar } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import dayjs from "@/lib/dayjs";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
 import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
@@ -66,12 +67,15 @@ const getScoreColor = (s: number) =>
   s >= 80 ? "#059669" : s >= 60 ? "#0D9488" : s >= 40 ? "#D97706" : "#DC2626";
 
 const AssessmentCard: React.FC<AssessmentCardProps> = ({ assessment, onViewDetails, onContinueTest, quota = 0 }) => {
+  const { t } = useTranslation("dashboard");
+  const s = (k: string) => t(`candidate.interviews.${k}`) as string;
+
   const score      = getScore(assessment);
   const completed  = isCompleted(assessment);
   const pending    = hasPendingSteps(assessment);
   const quotaFull  = quota >= 5;
 
-  const jobTitle    = assessment.post?.jobDetails?.title || "Job Application";
+  const jobTitle    = assessment.post?.jobDetails?.title || s("job_application");
   const company     = assessment.company as any;
   const companyName = company?.companyName || company?.username || assessment.post?.user?.companyName || "";
   const logoUrl     = company?.logo ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Companies/${company.logo}` : undefined;
@@ -115,7 +119,9 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({ assessment, onViewDetai
               {completed
                 ? <CheckCircleOutlined sx={{ fontSize: 11, color: "#059669" }} />
                 : <HourglassEmptyOutlined sx={{ fontSize: 11, color: "#D97706" }} />}
-              <Typography sx={{ fontSize: "0.62rem", fontWeight: 700, color: statusColor }}>{completed ? "Completed" : "Ongoing"}</Typography>
+              <Typography sx={{ fontSize: "0.62rem", fontWeight: 700, color: statusColor }}>
+                {completed ? s("completed") : s("ongoing")}
+              </Typography>
             </Box>
           </Box>
 
@@ -134,7 +140,7 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({ assessment, onViewDetai
 
           <Box>
             <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.4 }}>
-              <Typography sx={{ fontSize: "0.62rem", color: "#9CA3AF" }}>Progress</Typography>
+              <Typography sx={{ fontSize: "0.62rem", color: "#9CA3AF" }}>{s("progress")}</Typography>
               {score > 0 && <Typography sx={{ fontSize: "0.68rem", fontWeight: 800, color: scoreColor }}>{score}%</Typography>}
             </Box>
             <LinearProgress
@@ -150,7 +156,7 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({ assessment, onViewDetai
 
         <Box sx={{ flexShrink: 0 }}>
           {pending ? (
-            <Tooltip title={quotaFull ? "Monthly test limit reached (5/5)." : ""} arrow>
+            <Tooltip title={quotaFull ? s("limit_tooltip_long") : ""} arrow>
               <span>
                 <Button
                   onClick={() => onContinueTest(assessment)}
@@ -164,7 +170,7 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({ assessment, onViewDetai
                     "&.Mui-disabled": { bgcolor: "#E5E7EB", color: "#9CA3AF" },
                   }}
                 >
-                  Continue
+                  {s("continue")}
                 </Button>
               </span>
             </Tooltip>
@@ -181,7 +187,7 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({ assessment, onViewDetai
                 "&:hover": { bgcolor: completed ? "#D1FAE5" : "#F3F4F6" },
               }}
             >
-              View Report
+              {s("view_report")}
             </Button>
           )}
         </Box>
