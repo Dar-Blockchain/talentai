@@ -520,6 +520,12 @@
         "lang_desc_en": "Toujours générer en anglais",
         "lang_desc_fr": "Toujours générer en français",
         "save_hint": "Cette préférence est sauvegardée localement sur cet appareil. Les changements prennent effet immédiatement."
+      },
+      "stats": {
+        "company_name": "Nom de la société",
+        "industry": "Secteur",
+        "location": "Localisation",
+        "team_size": "Taille de l'équipe"
       }
     }
   }

@@ -3,7 +3,6 @@ import dynamic from "next/dynamic";
 import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import { Box, Typography, Avatar, LinearProgress, Button, Divider, Chip } from "@mui/material";
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import Header from "@/components/layout/dashboard/Header";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchCandidateStats, selectCandidateStats } from "@/store/slices/jobApplicationSlice";
@@ -15,7 +14,6 @@ import PsychologyOutlined from "@mui/icons-material/PsychologyOutlined";
 import SchoolOutlined from "@mui/icons-material/SchoolOutlined";
 import TrendingUpOutlined from "@mui/icons-material/TrendingUpOutlined";
 import EmojiEventsOutlined from "@mui/icons-material/EmojiEventsOutlined";
-import QuizOutlined from "@mui/icons-material/QuizOutlined";
 import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
 import RadioButtonUncheckedOutlined from "@mui/icons-material/RadioButtonUncheckedOutlined";
 import ExpandMoreOutlined from "@mui/icons-material/ExpandMoreOutlined";
@@ -141,51 +139,30 @@ const ProfileCard: React.FC<{
         </Box>
       )}
       <Divider sx={{ my: 1.5 }} />
-      <Box sx={{ display: "flex", gap: 1 }}>
-        <StatPill label={labelApplications} value={totalApplications} color="#7C3AED" bg="#F5F3FF" border="#DDD6FE" />
-        <StatPill label={labelInterviews}   value={totalInterviews}   color={T}        bg={TBG}    border={TBRD}    />
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 1.5, py: 1, borderRadius: "10px", bgcolor: "#F5F3FF", border: "1px solid #DDD6FE" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ width: 28, height: 28, borderRadius: "8px", bgcolor: "#EDE9FE", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <AssignmentOutlined sx={{ fontSize: 14, color: "#7C3AED" }} />
+            </Box>
+            <Typography sx={{ fontSize: "0.78rem", fontWeight: 600, color: "#374151" }}>{labelApplications}</Typography>
+          </Box>
+          <Typography sx={{ fontSize: "1.1rem", fontWeight: 900, color: "#7C3AED" }}>{totalApplications}</Typography>
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 1.5, py: 1, borderRadius: "10px", bgcolor: TBG, border: `1px solid ${TBRD}` }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ width: 28, height: 28, borderRadius: "8px", bgcolor: "#CCFBF1", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <SchoolOutlined sx={{ fontSize: 14, color: T }} />
+            </Box>
+            <Typography sx={{ fontSize: "0.78rem", fontWeight: 600, color: "#374151" }}>{labelInterviews}</Typography>
+          </Box>
+          <Typography sx={{ fontSize: "1.1rem", fontWeight: 900, color: T }}>{totalInterviews}</Typography>
+        </Box>
       </Box>
     </Box>
   </Box>
 );
 
-const QuotaCard: React.FC<{ quota: number; labelTitle: string; labelMaxed: string; labelLeft: string }> = ({ quota, labelTitle, labelMaxed, labelLeft }) => {
-  const quotaData = [
-    { name: "Used",      value: quota,                  fill: T         },
-    { name: "Remaining", value: Math.max(0, 5 - quota), fill: "#E5E7EB" },
-  ];
-  return (
-    <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 2, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
-        <QuizOutlined sx={{ fontSize: 16, color: T }} />
-        <Typography sx={{ fontWeight: 700, fontSize: "0.82rem", color: NAVY }}>{labelTitle}</Typography>
-        <Chip label={quota >= 5 ? labelMaxed : labelLeft} size="small"
-          sx={{ ml: "auto", fontSize: "0.6rem", height: 18, fontWeight: 700, bgcolor: quota >= 5 ? "#FEF2F2" : TBG, color: quota >= 5 ? "#DC2626" : T, border: `1px solid ${quota >= 5 ? "#FECACA" : TBRD}` }} />
-      </Box>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-        <ResponsiveContainer width={70} height={70}>
-          <PieChart>
-            <Pie data={quotaData} cx="50%" cy="50%" innerRadius={22} outerRadius={32} startAngle={90} endAngle={-270} dataKey="value" paddingAngle={2}>
-              {quotaData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
-            </Pie>
-            <text x="50%" y="46%" textAnchor="middle" dominantBaseline="middle" style={{ fontSize: 14, fontWeight: 800, fill: NAVY }}>{quota}</text>
-            <text x="50%" y="65%" textAnchor="middle" dominantBaseline="middle" style={{ fontSize: 8, fill: "#9CA3AF" }}>of 5</text>
-          </PieChart>
-        </ResponsiveContainer>
-        <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 0.6 }}>
-          {[1, 2, 3, 4, 5].map(n => (
-            <Box key={n} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: n <= quota ? T : "#E5E7EB", transition: "all 0.3s" }} />
-              <Box sx={{ flex: 1, height: 4, borderRadius: "99px", bgcolor: "#F3F4F6", overflow: "hidden" }}>
-                <Box sx={{ height: "100%", borderRadius: "99px", bgcolor: n <= quota ? T : "transparent", width: n <= quota ? "100%" : "0%", transition: "width 0.6s ease" }} />
-              </Box>
-            </Box>
-          ))}
-        </Box>
-      </Box>
-    </Box>
-  );
-};
 
 const ProfileStrengthCard: React.FC<{ checklist: { label: string; done: boolean }[]; label: string }> = ({ checklist, label }) => (
   <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 2, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
@@ -211,24 +188,6 @@ const ProfileStrengthCard: React.FC<{ checklist: { label: string; done: boolean 
   </Box>
 );
 
-const QuotaBar: React.FC<{ quota: number; label: string }> = ({ quota, label }) => (
-  <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, borderRadius: "10px", border: `1px solid ${quota >= 5 ? "#FECACA" : TBRD}`, bgcolor: quota >= 5 ? "#FEF2F2" : TBG, px: 1.5, py: 1 }}>
-    <Box sx={{ width: 28, height: 28, borderRadius: "8px", bgcolor: quota >= 5 ? "#FEE2E2" : "#CCFBF1", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-      <QuizOutlined sx={{ fontSize: 15, color: quota >= 5 ? "#DC2626" : T }} />
-    </Box>
-    <Box sx={{ flex: 1, minWidth: 0 }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.4 }}>
-        <Typography sx={{ fontWeight: 700, fontSize: "0.78rem", color: quota >= 5 ? "#991B1B" : NAVY, lineHeight: 1 }}>{label}</Typography>
-        <Typography sx={{ fontSize: "0.65rem", fontWeight: 700, color: quota >= 5 ? "#DC2626" : T }}>{quota}/5</Typography>
-      </Box>
-      <Box sx={{ display: "flex", gap: 0.4 }}>
-        {[1, 2, 3, 4, 5].map(n => (
-          <Box key={n} sx={{ flex: 1, height: 4, borderRadius: "99px", bgcolor: n <= quota ? (quota >= 5 ? "#DC2626" : T) : "#E5E7EB" }} />
-        ))}
-      </Box>
-    </Box>
-  </Box>
-);
 
 // ── Page ─────────────────────────────────────────────────────
 
@@ -238,7 +197,6 @@ const DashboardCandidate: React.FC = () => {
   const profile  = useSelector((state: RootState) => state.user.connectedUser.profile);
   const user     = useSelector((state: RootState) => state.user.connectedUser.user);
   const stats    = useSelector(selectCandidateStats);
-  const quota    = profile?.quota ?? 0;
 
   const [activeView, setActiveView] = useState<ActiveView>(null);
 
@@ -259,7 +217,6 @@ const DashboardCandidate: React.FC = () => {
     { label: t("candidate.checklist.complete_profile"), done: !!(profile?.firstName && profile?.lastName) },
     { label: t("candidate.checklist.add_target_role"),  done: !!profile?.targetRole                       },
     { label: t("candidate.checklist.set_experience"),   done: !!profile?.requiredExperienceLevel          },
-    { label: t("candidate.checklist.first_skill_test"), done: quota > 0                                   },
     { label: t("candidate.checklist.first_application"),done: totalApplications > 0                       },
   ];
 
@@ -291,11 +248,6 @@ const DashboardCandidate: React.FC = () => {
               labelApplications={t("candidate.profile.applications")}
               labelInterviews={t("candidate.profile.interviews")}
             />
-            <QuotaCard quota={quota}
-              labelTitle={t("candidate.profile.monthly_tests")}
-              labelMaxed={t("candidate.profile.maxed")}
-              labelLeft={t("candidate.profile.left", { count: 5 - quota })}
-            />
             <ProfileStrengthCard checklist={checklist} label={t("candidate.profile.profile_strength")} />
           </Box>
 
@@ -304,10 +256,9 @@ const DashboardCandidate: React.FC = () => {
 
             {/* Action bar */}
             <Box sx={{ bgcolor: "#fff", borderRadius: "14px", border: "1px solid #E5E7EB", px: 2, py: 1.5, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
-              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr 1fr" }, gap: 1.25 }}>
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1.25 }}>
                 <DisabledAction icon={CodeOutlined}            label={t("candidate.actions.skill_interview")} sublabel={t("candidate.actions.coming_soon")} />
                 <DisabledAction icon={RecordVoiceOverOutlined} label={t("candidate.actions.hr_interview")}    sublabel={t("candidate.actions.coming_soon")} />
-                <QuotaBar quota={quota} label={t("candidate.actions.monthly_quota")} />
               </Box>
             </Box>
 

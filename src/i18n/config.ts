@@ -6,7 +6,7 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import enCommon     from '../../public/locales/en/shared/common.json';
 import enAuth       from '../../public/locales/en/shared/auth.json';
 import enDashboard  from '../../public/locales/en/shared/dashboard.json';
-import enDashboardCandidate from '../../public/locales/en/shared/dashboard/candidate.json';
+import enDashboardCandidate from '../../public/locales/en/modules/candidates/candidate.json';
 import enPosts      from '../../public/locales/en/modules/company/posts.json';
 import enCampaign   from '../../public/locales/en/modules/campaigns/campaign.json';
 import enInterview  from '../../public/locales/en/shared/interview.json';
@@ -22,7 +22,7 @@ import enInterviewApply from '../../public/locales/en/modules/interview/apply.js
 import frCommon     from '../../public/locales/fr/shared/common.json';
 import frAuth       from '../../public/locales/fr/shared/auth.json';
 import frDashboard  from '../../public/locales/fr/shared/dashboard.json';
-import frDashboardCandidate from '../../public/locales/fr/shared/dashboard/candidate.json';
+import frDashboardCandidate from '../../public/locales/fr/modules/candidates/candidate.json';
 import frPosts      from '../../public/locales/fr/modules/company/posts.json';
 import frCampaign   from '../../public/locales/fr/modules/campaigns/campaign.json';
 import frInterview  from '../../public/locales/fr/shared/interview.json';
