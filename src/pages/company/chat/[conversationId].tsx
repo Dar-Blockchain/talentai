@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useRouter } from "next/router";
 import { Box } from "@mui/material";
 import ChatLayout from "@/components/layout/dashboard/ChatLayout";
@@ -14,11 +14,6 @@ const CompanyConversationPage: React.FC = () => {
     deleteRedirectRoute:   "/company/chat",
     onConversationChange:  (id) => window.history.replaceState(null, "", `/company/chat/${id}`),
   });
-
-  useEffect(() => {
-    if (routeId && !session.activeConversationId)
-      session.setActiveConversationId(routeId as string);
-  }, [routeId]);
 
   return (
     <ChatLayout>

@@ -58,10 +58,12 @@ const HeaderMessagesDropdown: React.FC<HeaderMessagesDropdownProps> = ({
 
   const getDisplayName = (participant: any) => {
     if (!participant) return "Unknown User";
-    if (participant.firstName && participant.lastName) {
-      return `${participant.firstName} ${participant.lastName}`;
+    if (participant.profile?.type === "Company" && participant.profile?.companyDetails?.name) {
+      return participant.profile.companyDetails.name;
     }
-    if (participant.username) return participant.username;
+    const firstName = participant.profile?.firstName || participant.firstName || "";
+    const lastName  = participant.profile?.lastName  || participant.lastName  || "";
+    if (firstName || lastName) return `${firstName} ${lastName}`.trim();
     if (participant.email) {
       const emailName = participant.email.split("@")[0];
       return emailName.charAt(0).toUpperCase() + emailName.slice(1);
@@ -71,8 +73,8 @@ const HeaderMessagesDropdown: React.FC<HeaderMessagesDropdownProps> = ({
 
   const getInitial = (participant: any) => {
     if (!participant) return "U";
-    if (participant.firstName) return participant.firstName.charAt(0).toUpperCase();
-    if (participant.username) return participant.username.charAt(0).toUpperCase();
+    const firstName = participant.profile?.firstName || participant.firstName || "";
+    if (firstName) return firstName.charAt(0).toUpperCase();
     if (participant.email) return participant.email.charAt(0).toUpperCase();
     return "U";
   };
