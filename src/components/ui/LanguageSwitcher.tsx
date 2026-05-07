@@ -62,6 +62,7 @@ const LanguageSwitcher: React.FC<Props> = ({ variant = 'full', size = 'small' })
         anchorEl={anchor}
         open={!!anchor}
         onClose={close}
+        disableScrollLock
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         slotProps={{

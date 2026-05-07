@@ -69,7 +69,8 @@
     "qr": {
       "show": "Afficher le QR",
       "title": "Partager via code QR",
-      "scan_hint": "Scannez ce code avec votre téléphone pour ouvrir le lien d'entretien."
+      "scan_hint": "Scannez ce code avec votre téléphone pour ouvrir le lien d'entretien.",
+      "download": "Télécharger le QR"
     },
     "menu": {
       "header_fallback": "Actions",
@@ -248,7 +249,8 @@
     },
     "qr": {
       "title": "Partager via code QR",
-      "scan_hint": "Scannez ce code avec votre téléphone pour ouvrir le lien d'entretien."
+      "scan_hint": "Scannez ce code avec votre téléphone pour ouvrir le lien d'entretien.",
+      "download": "Télécharger le QR"
     },
     "tooltips": {
       "cannot_edit_published": "Modification impossible — l'offre est déjà publiée",
