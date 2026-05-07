@@ -15,7 +15,7 @@ import ChatBubbleOutlineRoundedIcon from "@mui/icons-material/ChatBubbleOutlineR
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch } from "@/store/store";
+import { AppDispatch, RootState } from "@/store/store";
 import {
   fetchConversations,
   selectConversations,
@@ -35,6 +35,9 @@ const HeaderMessagesDropdown: React.FC<HeaderMessagesDropdownProps> = ({
   const dispatch = useDispatch<AppDispatch>();
   const conversations = useSelector(selectConversations);
   const loadingConversations = useSelector(selectConversationsLoading);
+  const profileType = useSelector((state: RootState) => state.user.connectedUser.profile?.type);
+  const isCompany = profileType === "Company" || profileType === "Employee";
+  const chatBase = isCompany ? "/company/chat" : "/candidate/chat";
   const [messagesAnchorEl, setMessagesAnchorEl] = useState<HTMLElement | null>(null);
 
   const messagesOpen = Boolean(messagesAnchorEl);
@@ -222,7 +225,7 @@ const HeaderMessagesDropdown: React.FC<HeaderMessagesDropdownProps> = ({
                   key={conversation._id}
                   onClick={() => {
                     handleMessagesClose();
-                    router.push(`/chat/${conversation._id}`);
+                    router.push(`${chatBase}/${conversation._id}`);
                   }}
                   sx={{
                     px: 2,
@@ -320,7 +323,7 @@ const HeaderMessagesDropdown: React.FC<HeaderMessagesDropdownProps> = ({
             fullWidth
             onClick={() => {
               handleMessagesClose();
-              router.push("/candidate/chat");
+              router.push(chatBase);
             }}
             endIcon={<OpenInNewIcon sx={{ fontSize: 16 }} />}
             sx={{

@@ -5,14 +5,14 @@ import ChatLayout from "@/components/layout/dashboard/ChatLayout";
 import { useChatSession } from "@/hooks/useChatSession";
 import ChatShell from "@/components/features/chat/ChatShell";
 
-const ConversationPage: React.FC = () => {
+const CompanyConversationPage: React.FC = () => {
   const router  = useRouter();
   const { conversationId: routeId } = router.query;
 
   const session = useChatSession({
     initialConversationId: typeof routeId === "string" ? routeId : null,
-    deleteRedirectRoute:   "/candidate/chat",
-    onConversationChange:  (id) => window.history.replaceState(null, "", `/candidate/chat/${id}`),
+    deleteRedirectRoute:   "/company/chat",
+    onConversationChange:  (id) => window.history.replaceState(null, "", `/company/chat/${id}`),
   });
 
   useEffect(() => {
@@ -32,7 +32,7 @@ const ConversationPage: React.FC = () => {
           otherUser={session.otherUser}
           loading={session.loading}
           sending={session.sending}
-          isCompany={false}
+          isCompany={true}
           newMessage={session.newMessage}
           setNewMessage={session.setNewMessage}
           onSend={session.handleSendMessage}
@@ -49,4 +49,4 @@ const ConversationPage: React.FC = () => {
   );
 };
 
-export default ConversationPage;
+export default CompanyConversationPage;
