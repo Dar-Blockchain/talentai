@@ -550,7 +550,7 @@ const IntelligentInterviewTest = () => {
   return (
     <>
       <style jsx global>{GlobalStyles}</style>
-      <Box sx={{ minHeight: '100vh', bgcolor: '#fff', userSelect: 'none', WebkitUserSelect: 'none' }}>
+      <Box sx={{ minHeight: '100vh', bgcolor: '#fff', userSelect: 'none', WebkitUserSelect: 'none', pt: '64px' }}>
         <Header />
 
         {socket.isHydrated && socket.connectionStatus !== 'connected' && (
