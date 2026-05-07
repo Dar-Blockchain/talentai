@@ -8,6 +8,7 @@ export interface ConnectedUserEntity {
   username?: string;
   email?: string;
   user_image?: string;
+  role?: string;
 }
 
 export interface ConnectedUserProfile {
