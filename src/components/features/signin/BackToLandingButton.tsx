@@ -14,7 +14,7 @@ const BackToLandingButton: React.FC<Props> = ({ themeColors }) => {
 
   return (
     <Box sx={{ pt: 0.25 }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.75 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.25 }}>
         <Box sx={{ flex: 1, height: "1px", bgcolor: "#F1F5F9" }} />
         <Typography sx={{ fontSize: { xs: "0.7rem", sm: "0.72rem" }, color: "#C4C9D4", fontFamily: "Poppins", whiteSpace: "nowrap" }}>
           {t("signin.new_here")}
@@ -24,7 +24,7 @@ const BackToLandingButton: React.FC<Props> = ({ themeColors }) => {
       <Link href={registerHref} style={{ textDecoration: "none" }}>
         <Box sx={{
           display: "inline-flex", alignItems: "center", justifyContent: "center",
-          width: "100%", height: { xs: 42, sm: 44 }, borderRadius: "12px",
+          width: "100%", height: { xs: 38, sm: 40 }, borderRadius: "10px",
           border: "1.5px solid #E5E7EB",
           color: "#374151", fontFamily: "Poppins", fontWeight: 600,
           fontSize: { xs: "0.83rem", sm: "0.87rem" },
