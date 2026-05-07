@@ -159,7 +159,7 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
       {step === 2 && (
         <Box>
           {/* Clean header */}
-          <Box sx={{ textAlign: "center", mb: { xs: 2, sm: 2.5 } }}>
+          <Box sx={{ textAlign: "center", mb: { xs: 2, sm: 2.25, md: 2.25 } }}>
             <Box sx={{
               width: 40, height: 40, borderRadius: "11px",
               bgcolor: `${ACCENT}0F`,
@@ -179,7 +179,7 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
           </Box>
 
           {/* OTP boxes */}
-          <Stack direction="row" spacing={{ xs: 0.75, sm: 1 }} justifyContent="center">
+          <Stack direction="row" spacing={{ xs: 0.75, sm: 1, md: 1 }} justifyContent="center">
             {Array.from({ length: CODE_LENGTH }).map((_, i) => {
               const filled = !!codeValue[i];
               return (
@@ -268,7 +268,7 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
         endIcon={!loading && <ArrowForwardIcon sx={{ fontSize: 15 }} />}
         startIcon={loading ? <CircularProgress size={14} sx={{ color: "#fff" }} /> : undefined}
         sx={{
-          mt: { xs: 1.5, sm: 2 },
+          mt: { xs: 1.5, sm: 1.75, md: 1.75 },
           height: { xs: 44, sm: 46 },
           borderRadius: "10px",
           textTransform: "none",
