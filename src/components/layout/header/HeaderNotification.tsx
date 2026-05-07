@@ -43,7 +43,7 @@ const HeaderNotification = () => {
     router.push(
       isCompany
         ? "/company/notifications"
-        : "/profile/candidate/settings?tab=notifications"
+        : "/candidate/profile/settings?tab=notifications"
     );
   }, [router, isCompany]);
 

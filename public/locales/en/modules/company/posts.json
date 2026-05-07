@@ -66,6 +66,12 @@
       "pipeline": "Pipeline",
       "manual": "Manual"
     },
+    "qr": {
+      "show": "Show QR",
+      "title": "Share via QR code",
+      "scan_hint": "Scan this code with your phone to open the interview link.",
+      "download": "Download QR"
+    },
     "menu": {
       "header_fallback": "Post actions",
       "view_title": "View Details",
@@ -238,7 +244,13 @@
     "actions": {
       "publish": "Publish Post",
       "copy_link": "Copy Link",
+      "qr_link": "QR Link",
       "edit_languages": "Interview Languages"
+    },
+    "qr": {
+      "title": "Share via QR code",
+      "scan_hint": "Scan this code with your phone to open the interview link.",
+      "download": "Download QR"
     },
     "tooltips": {
       "cannot_edit_published": "Cannot edit — post is already published",

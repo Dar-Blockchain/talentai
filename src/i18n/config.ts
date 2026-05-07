@@ -6,10 +6,12 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import enCommon     from '../../public/locales/en/shared/common.json';
 import enAuth       from '../../public/locales/en/shared/auth.json';
 import enDashboard  from '../../public/locales/en/shared/dashboard.json';
+import enDashboardCandidate from '../../public/locales/en/modules/candidates/candidate.json';
 import enPosts      from '../../public/locales/en/modules/company/posts.json';
 import enCampaign   from '../../public/locales/en/modules/campaigns/campaign.json';
 import enInterview  from '../../public/locales/en/shared/interview.json';
 import enHome       from '../../public/locales/en/shared/home.json';
+import enLegal      from '../../public/locales/en/shared/legal.json';
 import enEmployees  from '../../public/locales/en/modules/employees/employees.json';
 import enDepartments from '../../public/locales/en/modules/departments/departments.json';
 import enSubscription from '../../public/locales/en/modules/company/subscription.json';
@@ -21,10 +23,12 @@ import enInterviewApply from '../../public/locales/en/modules/interview/apply.js
 import frCommon     from '../../public/locales/fr/shared/common.json';
 import frAuth       from '../../public/locales/fr/shared/auth.json';
 import frDashboard  from '../../public/locales/fr/shared/dashboard.json';
+import frDashboardCandidate from '../../public/locales/fr/modules/candidates/candidate.json';
 import frPosts      from '../../public/locales/fr/modules/company/posts.json';
 import frCampaign   from '../../public/locales/fr/modules/campaigns/campaign.json';
 import frInterview  from '../../public/locales/fr/shared/interview.json';
 import frHome       from '../../public/locales/fr/shared/home.json';
+import frLegal      from '../../public/locales/fr/shared/legal.json';
 import frEmployees  from '../../public/locales/fr/modules/employees/employees.json';
 import frDepartments from '../../public/locales/fr/modules/departments/departments.json';
 import frSubscription from '../../public/locales/fr/modules/company/subscription.json';
@@ -37,7 +41,7 @@ export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
 export const LANGUAGE_COOKIE = 'talentai_lang';
 
-export const NAMESPACES = ['common', 'auth', 'dashboard', 'posts', 'interview', 'home'] as const;
+export const NAMESPACES = ['common', 'auth', 'dashboard', 'posts', 'interview', 'home', 'legal'] as const;
 export type Namespace = (typeof NAMESPACES)[number];
 
 // RTL languages — extend this list when Arabic is added: ['ar']
@@ -56,9 +60,11 @@ function mergeDashboardPageBundles<D extends { pages: Record<string, unknown> }>
   departments: Record<string, unknown>,
   campaigns: Record<string, unknown>,
   subscription: Record<string, unknown>,
+  candidate: Record<string, unknown>,
 ): D {
   return {
     ...dashboard,
+    candidate,
     pages: {
       ...dashboard.pages,
       employees,
@@ -74,10 +80,11 @@ const options: InitOptions = {
     en: {
       common:    enCommon,
       auth:      enAuth,
-      dashboard: mergeDashboardPageBundles(enDashboard, enEmployees, enDepartments, enCampaign, enSubscription),
+      dashboard: mergeDashboardPageBundles(enDashboard, enEmployees, enDepartments, enCampaign, enSubscription, enDashboardCandidate),
       posts:     enPosts,
       interview: enInterview,
       home:      enHome,
+      legal:     enLegal,
       'modules/interview/hr':      enInterviewHr,
       'modules/interview/results': enInterviewResults,
       'modules/interview/apply':   enInterviewApply,
@@ -85,10 +92,11 @@ const options: InitOptions = {
     fr: {
       common:    frCommon,
       auth:      frAuth,
-      dashboard: mergeDashboardPageBundles(frDashboard, frEmployees, frDepartments, frCampaign, frSubscription),
+      dashboard: mergeDashboardPageBundles(frDashboard, frEmployees, frDepartments, frCampaign, frSubscription, frDashboardCandidate),
       posts:     frPosts,
       interview: frInterview,
       home:      frHome,
+      legal:     frLegal,
       'modules/interview/hr':      frInterviewHr,
       'modules/interview/results': frInterviewResults,
       'modules/interview/apply':   frInterviewApply,

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Box, Button } from "@mui/material";
 import { useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import { RootState } from "@/store/store";
 import ExpandMoreOutlined from "@mui/icons-material/ExpandMoreOutlined";
 import SkillCard from "./SkillCard";
@@ -9,6 +10,9 @@ import EmptySkills from "./EmptySkills";
 const PAGE_SIZE = 8;
 
 function TechnicalSkills() {
+  const { t } = useTranslation("dashboard");
+  const s = (k: string, opts?: any) => t(`candidate.skills.${k}`, opts) as string;
+
   const { profile } = useSelector((state: RootState) => state.user.connectedUser);
   const skills = profile?.skills ?? [];
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
@@ -37,7 +41,7 @@ function TechnicalSkills() {
               "&:hover": { bgcolor: "#DBEAFE" },
             }}
           >
-            Show {remaining} more
+            {s("show_more", { count: remaining })}
           </Button>
         </Box>
       )}

@@ -118,7 +118,7 @@ const RegisterContainer: React.FC<{ children: React.ReactNode }> = ({ children }
       {/* ── Right panel ── */}
       <Box sx={{
         flex: 1,
-        overflow: "hidden",
+        overflowY: "auto",
         background: "#F7F8FA",
         position: "relative",
       }}>
@@ -128,17 +128,15 @@ const RegisterContainer: React.FC<{ children: React.ReactNode }> = ({ children }
           background: "radial-gradient(ellipse 80% 40% at 50% 100%, rgba(13,148,136,0.05) 0%, transparent 60%)",
         }} />
 
-        {/* Scrollable inner */}
+        {/* Scrollable inner — minHeight instead of height so content expands the container */}
         <Box sx={{
-          height: "100%",
-          overflowY: "auto",
+          minHeight: "100%",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
           px: { xs: 2, sm: 3, md: 4, lg: 5 },
-          pt: 0,
-          pb: 0,
+          py: { xs: 3, sm: 4 },
           position: "relative",
           zIndex: 1,
         }}>

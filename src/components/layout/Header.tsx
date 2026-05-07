@@ -26,7 +26,7 @@ const Header = () => {
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
 
   const showHeaderNavMenu = useMemo(() => (
-    router.pathname === "/home/company" || router.pathname === "/home/candidate"
+    router.pathname === "/home/company" || router.pathname === "/home/candidate" || router.pathname === "/candidate/home"
   ), [router.pathname]);
 
   useEffect(() => {
@@ -66,7 +66,7 @@ const Header = () => {
     return () => { socket.disconnect(); };
   }, [userId, isAuthenticated]);
 
-  const isLandingPage = router.pathname === "/home/company" || router.pathname === "/home/candidate";
+  const isLandingPage = router.pathname === "/home/company" || router.pathname === "/home/candidate" || router.pathname === "/candidate/home";
   const isCompact     = scrolled || !isLandingPage;
 
   return (

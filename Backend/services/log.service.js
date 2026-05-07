@@ -27,13 +27,3 @@ module.exports.getAllLogs = async (options = {}) => {
     throw new Error('Error retrieving logs');
   }
 };
-
-// Function to retrieve total log count
-module.exports.getTotalLogsCount = async () => {
-  try {
-    const count = await Log.getTotalLogsCount();  // Use static method defined in model
-    return count;
-  } catch (error) {
-    throw new Error('Error retrieving total log count');
-  }
-};

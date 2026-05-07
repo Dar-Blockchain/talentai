@@ -5,6 +5,7 @@
     "tabs": {
       "personal": "Personal Info",
       "contact": "Contact",
+      "language": "Language",
       "notifications": "Notifications",
       "visibility": "Public Profile",
       "settings_label": "Settings"
@@ -97,202 +98,6 @@
       "privacy_item_2": "Skills and experience level",
       "privacy_item_3": "Work preferences and education",
       "privacy_item_4": "Public contact information (if provided)"
-    }
-  },
-  "candidate": {
-    "nav": {
-      "dashboard": "Dashboard",
-      "overview": "Overview",
-      "applications": "Applications",
-      "your_job_applies": "Your job applies",
-      "skills": "Skills",
-      "tech_and_soft": "Tech & soft",
-      "interviews": "Interviews",
-      "all_assessments": "All assessments",
-      "navigation": "Navigation"
-    },
-    "profile": {
-      "applications": "Applications",
-      "interviews": "Interviews",
-      "monthly_tests": "Monthly Tests",
-      "maxed": "Maxed",
-      "left": "{{count}} left",
-      "profile_strength": "Profile Strength"
-    },
-    "checklist": {
-      "complete_profile": "Complete your profile",
-      "add_target_role": "Add a target role",
-      "set_experience": "Set experience level",
-      "first_skill_test": "Take your first skill test",
-      "first_application": "Submit an application"
-    },
-    "actions": {
-      "skill_interview": "Skill Interview",
-      "hr_interview": "HR Interview",
-      "coming_soon": "Coming soon",
-      "monthly_quota": "Monthly Quota",
-      "hide": "Hide",
-      "view_all": "View All"
-    },
-    "sections": {
-      "skills_title": "Skills & Expertise",
-      "skills_subtitle": "Your technical and soft skills",
-      "interviews_title": "Interviews & Assessments",
-      "interviews_subtitle": "Job interviews, technical & soft"
-    },
-    "my_applications": {
-      "title": "My Applications",
-      "view_all": "View all →",
-      "search_placeholder": "Search jobs or companies…",
-      "status": {
-        "applied": "Applied",
-        "pending": "Pending",
-        "shortlisted": "Shortlisted",
-        "accepted": "Accepted",
-        "rejected": "Rejected",
-        "withdrawn": "Withdrawn",
-        "interview_scheduled": "Interview Scheduled",
-        "interview_completed": "Interview Completed",
-        "viewed": "Viewed",
-        "visited": "Visited",
-        "all": "All"
-      },
-      "match": "{{score}}% match",
-      "applied_date": "Applied {{date}}",
-      "empty_title": "No applications yet",
-      "empty_subtitle": "Apply to jobs to track them here",
-      "show_less": "Show less",
-      "show_more": "Show {{count}} more",
-      "page_of": "Page {{current}} of {{total}}"
-    },
-    "application_detail": {
-      "back_to_dashboard": "Back to Dashboard",
-      "loading_title": "…",
-      "not_found": "Application not found",
-      "details": "Details",
-      "applied_on": "Applied {{date}}",
-      "job_description": "Job Description",
-      "requirements": "Requirements",
-      "profile_strength": "Profile Strength",
-      "profile": {
-        "applications": "Applications",
-        "active": "Active"
-      },
-      "checklist": {
-        "complete_profile": "Complete profile",
-        "add_target_role": "Add target role",
-        "set_experience": "Set experience",
-        "first_skill_test": "First skill test"
-      },
-      "interview_banner": {
-        "title": "Your interview is scheduled!",
-        "join": "Join Interview"
-      },
-      "cv_match_score": {
-        "title": "CV Match Score",
-        "strong": "Strong Match",
-        "good": "Good Match",
-        "low": "Low Match",
-        "subtitle": "Your profile matches {{score}}% of the job requirements."
-      },
-      "timeline": {
-        "title": "Application Status",
-        "applied": "Applied",
-        "under_review": "Under Review",
-        "shortlisted": "Shortlisted",
-        "interview": "Interview",
-        "accepted": "Accepted",
-        "withdrawn": "Withdrawn",
-        "not_selected": "Not Selected",
-        "closed": "This application is closed",
-        "current_stage": "Current stage"
-      }
-    },
-    "assessment_detail": {
-      "back_to_dashboard": "Back to Dashboard",
-      "loading_title": "…",
-      "default_title": "Assessment",
-      "candidate_fallback": "Candidate",
-      "error_title": "Failed to load assessment",
-      "not_found": "Assessment not found",
-      "unknown_user": "Unknown user",
-      "unknown_job": "Unknown job",
-      "sidebar": {
-        "score": "Score",
-        "assessment": "Assessment",
-        "profile_strength": "Profile Strength"
-      },
-      "checklist": {
-        "complete_profile": "Complete profile",
-        "add_target_role": "Add target role",
-        "set_experience": "Set experience",
-        "first_skill_test": "First skill test"
-      },
-      "header": {
-        "title": "Interview Assessment",
-        "overall_score": "Overall Score",
-        "details": "Assessment Details",
-        "analytics": "Interview Analytics",
-        "coverage": "Coverage"
-      },
-      "summary": {
-        "overall_score": "Overall Score",
-        "strong": "Strong",
-        "good": "Good",
-        "needs_work": "Needs Work",
-        "coverage_performance": "Coverage performance",
-        "interview_stats": "Interview Stats",
-        "duration": "Duration",
-        "messages": "Messages",
-        "areas_covered": "Areas Covered",
-        "job": "Job"
-      },
-      "pipeline_steps": {
-        "title": "Pipeline Steps",
-        "completed": "{{completed}} / {{total}} Steps Completed",
-        "interview_details": "Interview Details",
-        "coverage_areas": "Coverage Areas",
-        "strengths": "Strengths",
-        "needs_improvement": "Needs Improvement",
-        "status": {
-          "completed": "Completed",
-          "in_progress": "In Progress",
-          "pending": "Pending"
-        }
-      },
-      "coverage_areas": {
-        "title": "Coverage Areas",
-        "meta": "{{depth}} | {{count}} questions",
-        "completed": "Completed",
-        "in_progress": "In Progress"
-      },
-      "job_details": {
-        "description": "Job Description",
-        "requirements": "Requirements",
-        "responsibilities": "Responsibilities"
-      },
-      "summary_section": {
-        "title": "Summary"
-      },
-      "recommendations": {
-        "title": "Recommendations ({{count}})"
-      },
-      "coverage_analysis": {
-        "title": "Coverage Analysis",
-        "by_area": "Coverage by Area",
-        "radar": "Skills Radar"
-      },
-      "ai_analysis": {
-        "title": "AI Analysis",
-        "strongest_areas": "Strongest Areas",
-        "areas_for_improvement": "Areas for Improvement",
-        "recommended_focus": "Recommended Focus"
-      },
-      "skills": {
-        "required": "Required Skills",
-        "soft": "Soft Skills",
-        "suggested": "Suggested Skills"
-      }
     }
   },
   "overview": {
@@ -716,6 +521,12 @@
         "lang_desc_en": "Always generate in English",
         "lang_desc_fr": "Always generate in French",
         "save_hint": "This preference is saved locally on this device. Changes take effect immediately."
+      },
+      "stats": {
+        "company_name": "Company Name",
+        "industry": "Industry",
+        "location": "Location",
+        "team_size": "Team Size"
       }
     }
   }

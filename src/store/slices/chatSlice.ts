@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import axiosInstance from "@/utils/axiosInstance";
+import { chatService } from "@/services/chatService";
 
 // ─── Types ───────────────────────────────────────────────
 
@@ -86,10 +86,7 @@ export const fetchConversations = createAsyncThunk(
   "chat/fetchConversations",
   async (params: { limit?: number } | undefined, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get("chat/conversations", {
-        params: params?.limit ? { limit: params.limit } : {},
-      });
-      return response.data.data as Conversation[];
+      return await chatService.fetchConversations(params) as Conversation[];
     } catch (error: any) {
       return rejectWithValue(error.message || "Error fetching conversations");
     }
@@ -101,8 +98,7 @@ export const fetchConversation = createAsyncThunk(
   "chat/fetchConversation",
   async (conversationId: string, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`chat/conversations/${conversationId}`);
-      return response.data.data as Conversation;
+      return await chatService.fetchConversation(conversationId) as Conversation;
     } catch (error: any) {
       return rejectWithValue(error.message || "Error fetching conversation");
     }
@@ -114,8 +110,7 @@ export const fetchMessages = createAsyncThunk(
   "chat/fetchMessages",
   async (conversationId: string, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`chat/messages/${conversationId}`);
-      return response.data.data as Message[];
+      return await chatService.fetchMessages(conversationId) as Message[];
     } catch (error: any) {
       return rejectWithValue(error.message || "Error fetching messages");
     }
@@ -130,8 +125,7 @@ export const sendMessage = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const response = await axiosInstance.post("chat/messages", payload);
-      return response.data.data || response.data;
+      return await chatService.sendMessage(payload);
     } catch (error: any) {
       return rejectWithValue(error.message || "Error sending message");
     }
@@ -143,8 +137,7 @@ export const markConversationRead = createAsyncThunk(
   "chat/markConversationRead",
   async (conversationId: string, { rejectWithValue }) => {
     try {
-      await axiosInstance.put(`chat/conversations/${conversationId}/read`);
-      return conversationId;
+      return await chatService.markConversationRead(conversationId);
     } catch (error: any) {
       return rejectWithValue(error.message || "Error marking conversation as read");
     }
@@ -156,8 +149,7 @@ export const deleteMessage = createAsyncThunk(
   "chat/deleteMessage",
   async (messageId: string, { rejectWithValue }) => {
     try {
-      await axiosInstance.delete(`chat/messages/${messageId}`);
-      return messageId;
+      return await chatService.deleteMessage(messageId);
     } catch (error: any) {
       return rejectWithValue(error.message || "Error deleting message");
     }
@@ -169,8 +161,7 @@ export const deleteConversation = createAsyncThunk(
   "chat/deleteConversation",
   async (conversationId: string, { rejectWithValue }) => {
     try {
-      await axiosInstance.delete(`chat/conversations/${conversationId}`);
-      return conversationId;
+      return await chatService.deleteConversation(conversationId);
     } catch (error: any) {
       return rejectWithValue(error.message || "Error deleting conversation");
     }
@@ -186,12 +177,7 @@ export const createOrFindConversation = createAsyncThunk<
   "chat/createOrFindConversation",
   async ({ candidateId, companyId }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post("chat/conversations", { candidateId, companyId });
-      const data = response.data;
-      if (data.success && data.data?._id) {
-        return data.data;
-      }
-      throw new Error("Failed to create conversation");
+      return await chatService.createOrFindConversation(candidateId, companyId);
     } catch (error: any) {
       return rejectWithValue(error.message || "Error creating conversation");
     }
@@ -207,12 +193,13 @@ const chatSlice = createSlice({
     // WebSocket: add incoming message (avoids duplicates)
     addMessage: (state, action: PayloadAction<Message>) => {
       const msg = action.payload;
-      if (!state.messages.some((m) => m._id === msg._id)) {
+      const msgId = String(msg._id);
+      if (!state.messages.some((m) => String(m._id) === msgId)) {
         state.messages.push(msg);
       }
       // Update conversations list last message
-      const convId = msg.conversationId || (msg as any).conversation;
-      const conv = state.conversations.find((c) => c._id === convId);
+      const convId = String(msg.conversationId || (msg as any).conversation || "");
+      const conv = state.conversations.find((c) => String(c._id) === convId);
       if (conv) {
         conv.lastMessage = { text: msg.text, timestamp: msg.createdAt };
         conv.updatedAt = msg.createdAt;
@@ -308,7 +295,7 @@ const chatSlice = createSlice({
       })
       .addCase(sendMessage.fulfilled, (state) => {
         state.sendingMessage = false;
-        // Message added via WebSocket addMessage action, not here
+        // Message added via explicit dispatch(addMessage(result)) in useChatSession
       })
       .addCase(sendMessage.rejected, (state, action) => {
         state.sendingMessage = false;

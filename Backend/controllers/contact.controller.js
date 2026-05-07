@@ -60,26 +60,6 @@ class ContactController {
       });
     }
   }
-
-  /**
-   * Get contact form status/health
-   * GET /contact/status
-   * (Optional endpoint for checking if contact service is working)
-   */
-  static async getContactStatus(req, res) {
-    try {
-      return res.json({
-        success: true,
-        message: "Contact service is operational",
-        status: "active",
-      });
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: "Contact service is unavailable",
-      });
-    }
-  }
 }
 
 module.exports = ContactController;

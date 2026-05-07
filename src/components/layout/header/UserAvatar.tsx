@@ -61,7 +61,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
     if (isAdmin)         router.push("/dashboard/admin");
     else if (isEmployee) router.push("/employee/dashboard");
     else if (isCompany)  router.push("/company/dashboard");
-    else                 router.push("/dashboard/candidate");
+    else                 router.push("/candidate/dashboard");
   }, [isAdmin, isEmployee, isCompany, router]);
 
   return (

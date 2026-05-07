@@ -11,7 +11,7 @@ const HeaderLogo = () => {
   const { user }       = useSelector((state: RootState) => state.user.connectedUser);
 
   const userType =
-    router.pathname === "/home/candidate" || router.pathname === "/home/company"
+    router.pathname === "/home/candidate" || router.pathname === "/candidate/home" || router.pathname === "/home/company"
       ? storedUserType
       : user?.role?.toLowerCase() ?? storedUserType ?? "candidate";
 

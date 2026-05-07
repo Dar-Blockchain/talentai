@@ -1,0 +1,308 @@
+{
+  "common": {
+    "backToHome": "Back to home",
+    "lastUpdated": "Last updated: {{date}}",
+    "footerCopyright": "© 2026 TalentAI Inc. All rights reserved.",
+    "termsOfUse": "Terms of Use",
+    "privacyPolicy": "Privacy Policy"
+  },
+  "terms": {
+    "meta": {
+      "title": "Terms of Use — TalentAI",
+      "description": "Read TalentAI's Terms of Use including EU AI Act compliance disclosures. Understand your rights when using our AI-powered recruitment platform."
+    },
+    "title": "Terms of Use",
+    "chip": "EU AI Act Compliant",
+    "lastUpdated": "April 1, 2026",
+    "notice": "<b>EU AI Act Notice — Regulation (EU) 2024/1689:</b> TalentAI operates a system classified as a <b>high-risk AI system</b> under Annex III, point 4 of the EU AI Act, as it is used in the recruitment and evaluation of candidates. As a user, you benefit from specific rights detailed in these Terms.",
+    "intro": "Welcome to TalentAI. By accessing or using our platform at <site>app.talentai.bid</site>, you agree to be bound by these Terms of Use. Please read them carefully before using the service.",
+    "sections": {
+      "acceptance": {
+        "title": "1. Acceptance of Terms",
+        "p1": "By creating an account, accessing, or using TalentAI in any way, you confirm that you have read, understood, and agree to these Terms. If you do not agree, please do not use the platform.",
+        "p2": "These Terms apply to all users of the platform, including companies (employers), candidates, team members, and visitors."
+      },
+      "service": {
+        "title": "2. Description of Service",
+        "p1": "TalentAI is an AI-powered recruitment platform that helps companies automate hiring workflows. Our services include:",
+        "items": [
+          "AI-conducted video interviews that guide candidates through role-specific questions",
+          "Automated candidate scoring and evaluation based on interview performance",
+          "Blockchain-verified interview credentials issued to candidates",
+          "Recruitment campaign management and team collaboration tools",
+          "CV analysis and job post generation"
+        ],
+        "notice": "TalentAI is a decision-support tool. <b>All final hiring decisions remain the sole responsibility of the employer.</b> No recruitment decision may be based exclusively on AI-generated results."
+      },
+      "ai": {
+        "title": "3. High-Risk AI System — EU AI Act Compliance",
+        "classification": {
+          "title": "3.1 System Classification",
+          "p1": "Under <b>Article 6 and Annex III, point 4 of Regulation (EU) 2024/1689</b> (the \"AI Act\"), TalentAI's AI system is classified as a <b>high-risk AI system</b> because it is used in:",
+          "items": [
+            "Recruitment or selection of natural persons, in particular to evaluate candidates",
+            "Decisions affecting employment conditions, promotion, or termination of work relationships"
+          ]
+        },
+        "transparency": {
+          "title": "3.2 Transparency towards Candidates (Articles 13 & 50)",
+          "p1": "Before any AI interview, candidates are clearly and explicitly informed of:",
+          "items": [
+            "The interview being conducted by an AI system, not a human recruiter",
+            "The nature of data collected (video, audio, text responses, behavioural signals)",
+            "The evaluation criteria used by the system to score responses",
+            "The identity of the company accessing the results",
+            "The right to request human review of the evaluation"
+          ]
+        },
+        "explanation": {
+          "title": "3.3 Right to Explanation (Article 86)",
+          "notice": "Every candidate has the right to obtain a <b>clear explanation</b> of the role played by the AI system in any decision made about them, including the main criteria considered and how the overall score was determined.",
+          "p1": "To exercise this right, contact us at <contact>contact@talentai.bid</contact>. We commit to responding within <b>15 business days</b>."
+        },
+        "oversight": {
+          "title": "3.4 Human Oversight (Article 14)",
+          "p1": "TalentAI guarantees that:",
+          "items": [
+            "Employers retain the ability to review, override, or disregard any AI-generated evaluation",
+            "No hiring decision is made in a fully automated manner without the possibility of human intervention",
+            "Technical measures allow the system to be stopped or suspended in case of unexpected behaviour"
+          ]
+        },
+        "contest": {
+          "title": "3.5 Right to Contest",
+          "p1": "Any candidate who believes an AI evaluation was incorrect, biased, or conducted unfairly may:",
+          "items": [
+            "Contact TalentAI at <contact>contact@talentai.bid</contact> to request a review",
+            "Request that the hiring company provide human review of their application",
+            "File a complaint with the relevant national data protection authority"
+          ]
+        },
+        "risk": {
+          "title": "3.6 Risk Management and Testing (Article 9)",
+          "p1": "TalentAI maintains a risk management system covering:",
+          "items": [
+            "Regular audits of algorithmic bias in evaluation outputs",
+            "Robustness and performance testing of AI models",
+            "Automatic logging of AI system decisions (logs retained per Article 12)",
+            "Update and correction processes upon detection of anomalies"
+          ]
+        }
+      },
+      "accounts": {
+        "title": "4. User Accounts",
+        "p1": "To use certain features, you must create an account and provide accurate, complete information. You are responsible for:",
+        "items": [
+          "Keeping your login credentials confidential",
+          "All activity that occurs under your account",
+          "Notifying us immediately of any unauthorised access at <contact>contact@talentai.bid</contact>"
+        ],
+        "p2": "We reserve the right to suspend or terminate accounts that violate these Terms or engage in fraudulent, abusive, or harmful behaviour."
+      },
+      "candidateRights": {
+        "title": "5. Candidate Interviews — Rights",
+        "p1": "When you participate in an AI interview on TalentAI, you acknowledge that:",
+        "itemsA": [
+          "The interview is conducted by an AI system, not a human recruiter",
+          "Your responses, video, and audio may be recorded, analysed, and shared with the hiring company",
+          "Results may be stored and referenced in future applications unless you request deletion",
+          "You must have the legal right to work in the jurisdiction you are applying in"
+        ],
+        "p2": "You hold the following rights:",
+        "itemsB": [
+          "Right to explanation (Art. 86 AI Act) — obtain a clear account of how your score was determined",
+          "Right to contest — request human review of your evaluation",
+          "Right of access & rectification (Art. 15–16 GDPR) — access your data and request corrections",
+          "Right to erasure (Art. 17 GDPR) — request deletion of your personal data",
+          "Right to object (Art. 21 GDPR) — object to automated processing of your data"
+        ]
+      },
+      "employerResponsibilities": {
+        "title": "6. Employer Responsibilities",
+        "p1": "As a company using TalentAI to recruit, you agree to:",
+        "items": [
+          "Use the platform in compliance with applicable employment and data protection laws",
+          "Not use AI evaluation results as the sole basis for any employment decision",
+          "Inform candidates that their interview will be conducted and evaluated by AI (Article 50 AI Act)",
+          "Not post misleading, discriminatory, or illegal job listings",
+          "Maintain confidentiality of candidate data obtained through the platform",
+          "Retain AI system usage logs as required under Article 26 of the AI Act"
+        ],
+        "notice": "As a deployer of a high-risk AI system under the AI Act, your organisation assumes <b>specific legal obligations</b> regarding human oversight and incident reporting. Technical documentation required under Article 13 is available upon request."
+      },
+      "nonDiscrimination": {
+        "title": "7. Non-Discrimination and Algorithmic Bias",
+        "notice": "TalentAI is committed to designing and maintaining its AI system to <b>minimise discriminatory bias</b> related to gender, ethnic origin, age, disability, or any other characteristic protected by law. Per Article 10 of the AI Act, representative training data and regular audits are implemented.",
+        "p1": "If you believe you have been discriminated against by the AI system, please report it to <contact>contact@talentai.bid</contact> or to the relevant national supervisory authority."
+      },
+      "ip": {
+        "title": "8. Intellectual Property",
+        "p1": "All content, technology, trademarks, and materials on TalentAI — including AI models, interface design, and software — are owned by TalentAI Inc. and protected by applicable intellectual property laws.",
+        "p2": "You may not copy, modify, distribute, sell, or create derivative works from any part of our platform without our prior written consent."
+      },
+      "prohibitedUses": {
+        "title": "9. Prohibited Uses",
+        "p1": "You agree not to:",
+        "items": [
+          "Attempt to reverse-engineer, scrape, or extract data from the platform",
+          "Use automated tools, bots, or scripts to interact with the service",
+          "Impersonate another person or entity",
+          "Submit false or misleading information during an interview",
+          "Interfere with the security, integrity, or availability of the platform",
+          "Use the platform for any unlawful purpose or in violation of any regulation"
+        ]
+      },
+      "blockchain": {
+        "title": "10. Blockchain Credentials",
+        "p1": "TalentAI issues interview completion credentials on the Hedera blockchain. These credentials are:",
+        "items": [
+          "Immutable once issued — they cannot be altered or deleted",
+          "Verifiable by third parties who hold the credential identifier",
+          "Not a guarantee of employment or a formal qualification"
+        ]
+      },
+      "liability": {
+        "title": "11. Limitation of Liability",
+        "p1": "TalentAI is provided \"as is\" without warranties of any kind. To the maximum extent permitted by law, TalentAI Inc. shall not be liable for:",
+        "items": [
+          "Any indirect, incidental, or consequential damages arising from your use of the platform",
+          "Hiring outcomes or decisions made based on AI evaluations",
+          "Loss of data, revenue, or business opportunities",
+          "Any service interruption or technical failure"
+        ]
+      },
+      "modifications": {
+        "title": "12. Modifications to Terms",
+        "p1": "We may update these Terms from time to time. We will notify registered users of material changes via email or an in-app notice. Continued use of the platform after changes take effect constitutes acceptance of the revised Terms."
+      },
+      "governingLaw": {
+        "title": "13. Governing Law",
+        "p1": "These Terms are governed by applicable law, including Regulation (EU) 2024/1689 (AI Act), Regulation (EU) 2016/679 (GDPR), and relevant national legislation. Any disputes shall first be addressed through good-faith negotiation, and if unresolved, through the competent jurisdiction."
+      },
+      "contact": {
+        "title": "14. Contact & Exercise of Rights",
+        "p1": "For questions about these Terms or to exercise any right (explanation, contest, access, erasure, objection), contact us:",
+        "responseTime": "Response time: 15 business days for AI Act-related requests"
+      }
+    }
+  },
+  "privacy": {
+    "meta": {
+      "title": "Privacy Policy — TalentAI",
+      "description": "Read TalentAI's Privacy Policy. Learn how we collect, use, and protect your personal data on our AI-powered recruitment platform."
+    },
+    "title": "Privacy Policy",
+    "lastUpdated": "April 1, 2026",
+    "intro": "TalentAI Inc. (\"TalentAI\", \"we\", \"our\", or \"us\") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, store, and share your personal data when you use our platform at <site>app.talentai.bid</site>.",
+    "sections": {
+      "appliesTo": {
+        "title": "1. Who This Policy Applies To",
+        "p1": "This policy applies to all users of TalentAI, including:",
+        "items": [
+          "Candidates — individuals who apply for jobs and complete AI interviews",
+          "Employers — companies and recruiters who use TalentAI to hire",
+          "Team Members — employees invited to a company account",
+          "Visitors — anyone browsing our website"
+        ]
+      },
+      "dataCollected": {
+        "title": "2. Data We Collect",
+        "fromCandidates": "From Candidates:",
+        "candidateItems": [
+          "Personal identifiers: name, email address, phone number",
+          "Resume / CV documents and the data extracted from them",
+          "Video and audio recordings from AI interview sessions",
+          "Interview responses, AI evaluation scores, and matching results",
+          "Skills, work experience, and education history from your profile",
+          "Device information, IP address, and browser data (collected automatically)"
+        ],
+        "fromEmployers": "From Employers:",
+        "employerItems": [
+          "Company name, website, and contact details",
+          "Account credentials and billing information",
+          "Job post content, recruitment campaign data, and interview configurations",
+          "Usage data and feature interaction logs"
+        ]
+      },
+      "dataUse": {
+        "title": "3. How We Use Your Data",
+        "p1": "We use the data we collect to:",
+        "items": [
+          "Operate and improve the TalentAI platform",
+          "Conduct AI-powered interviews and generate evaluation results",
+          "Match candidates with relevant job opportunities",
+          "Issue and verify blockchain-based interview credentials",
+          "Send transactional emails (interview invitations, reminders, account notifications)",
+          "Prevent fraud, abuse, and unauthorised access",
+          "Comply with legal obligations",
+          "Conduct analytics to improve our service (aggregated and anonymised where possible)"
+        ],
+        "p2": "We do not sell your personal data to third parties."
+      },
+      "aiProcessing": {
+        "title": "4. AI Processing and Automated Decisions",
+        "p1": "TalentAI uses artificial intelligence to analyse candidate responses, generate interview scores, and produce matching assessments. You have the right to:",
+        "items": [
+          "Be informed that automated processing is taking place (as disclosed at the point of interview)",
+          "Request human review of any automated decision that significantly affects you",
+          "Object to solely automated decision-making where required by applicable law"
+        ],
+        "p2": "All AI-generated evaluations are provided as decision-support tools. Final hiring decisions are made by the employer, not TalentAI."
+      },
+      "dataSharing": {
+        "title": "5. Data Sharing",
+        "p1": "We may share your data with:",
+        "items": [
+          "Hiring companies — employers receive candidate profiles, interview recordings, and evaluation scores for roles you applied to",
+          "Service providers — trusted third parties who process data on our behalf (cloud infrastructure, email delivery, payment processing) under strict data protection agreements",
+          "Hedera network — anonymised credential hashes are recorded on the Hedera public blockchain for verification purposes",
+          "Legal authorities — where required by law, court order, or to protect the rights and safety of our users"
+        ]
+      },
+      "retention": {
+        "title": "6. Data Retention",
+        "p1": "We retain your personal data for as long as your account is active or as needed to provide our services. Specifically:",
+        "items": [
+          "Interview recordings and scores are retained for up to 24 months after the application",
+          "Account data is retained until account deletion is requested",
+          "Blockchain credential hashes are permanent and cannot be deleted by nature of the technology",
+          "Billing records are retained as required by applicable tax law"
+        ],
+        "p2": "You may request deletion of your personal data at any time by contacting us at <contact>contact@talentai.bid</contact>. Deletion requests will be processed within 30 days, subject to legal retention requirements."
+      },
+      "rights": {
+        "title": "7. Your Rights",
+        "p1": "Depending on your location, you may have the right to:",
+        "items": [
+          "Access — request a copy of the personal data we hold about you",
+          "Rectification — ask us to correct inaccurate or incomplete data",
+          "Erasure — request deletion of your data (\"right to be forgotten\")",
+          "Portability — receive your data in a machine-readable format",
+          "Objection — object to certain types of processing, including automated decisions",
+          "Restriction — request that we limit how we use your data"
+        ],
+        "p2": "To exercise any of these rights, contact us at <contact>contact@talentai.bid</contact>."
+      },
+      "cookies": {
+        "title": "8. Cookies and Tracking",
+        "p1": "TalentAI uses cookies and similar technologies to keep you logged in, remember your preferences, and understand how you use the platform. You can control cookie settings through your browser. Disabling certain cookies may affect platform functionality."
+      },
+      "security": {
+        "title": "9. Data Security",
+        "p1": "We implement industry-standard security measures including encryption in transit (TLS), access controls, and secure cloud infrastructure. However, no method of transmission or storage is 100% secure. We encourage you to use a strong, unique password and to report any suspected security issues to <contact>contact@talentai.bid</contact>."
+      },
+      "transfers": {
+        "title": "10. International Data Transfers",
+        "p1": "TalentAI operates globally. Your data may be processed in countries outside your own. Where we transfer data internationally, we ensure appropriate safeguards are in place in accordance with applicable data protection law."
+      },
+      "changes": {
+        "title": "11. Changes to This Policy",
+        "p1": "We may update this Privacy Policy from time to time. We will notify you of significant changes via email or an in-app notice. The \"Last updated\" date at the top of this page will always reflect the most recent version."
+      },
+      "contact": {
+        "title": "12. Contact Us",
+        "p1": "For any privacy-related questions, requests, or concerns, please contact our team at: <contact>contact@talentai.bid</contact>"
+      }
+    }
+  }
+}

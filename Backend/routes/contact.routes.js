@@ -16,10 +16,4 @@ router.post("/", ContactController.submitContactForm);
 // POST /contact/enterprise — same handler, public
 router.post("/enterprise", ContactController.submitContactForm);
 
-router.use(requireAuth);
-
-// GET /contact/status
-// Description: Check if contact service is operational
-router.get("/status", ContactController.getContactStatus);
-
 module.exports = router;

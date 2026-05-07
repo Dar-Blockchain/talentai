@@ -16,12 +16,15 @@ import ApiKeysTab from "@/components/features/company/settings/ApiKeysTab";
 import LanguageTab from "@/components/features/company/settings/LanguageTab";
 import { TEAL } from "@/components/features/company/settings/settingsConstants";
 import AppButton from "@/components/ui/AppButton";
+import StatCard from "@/components/ui/StatCard";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
 import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
-import KeyOutlined from "@mui/icons-material/KeyOutlined";
+import KeyOutlined from "@mui/icons-material/KeyOutlined"; // used in Tabs
 import CreditCardOutlined from "@mui/icons-material/CreditCardOutlined";
 import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
 import LanguageIcon from "@mui/icons-material/Language";
+import GroupsOutlined from "@mui/icons-material/GroupsOutlined";
+import CategoryOutlined from "@mui/icons-material/CategoryOutlined";
 
 const SettingsPage: React.FC = () => {
   const { t } = useTranslation("dashboard");
@@ -57,6 +60,34 @@ const SettingsPage: React.FC = () => {
           </Link>,
         ]}
       />
+
+      {/* Stats grid */}
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 2, mb: 3 }}>
+        <StatCard
+          icon={<BusinessOutlined />}
+          label={t("pages.settings.stats.company_name")}
+          value={profile?.companyName || profile?.name || "—"}
+          color="#0D9488"
+        />
+        <StatCard
+          icon={<CategoryOutlined />}
+          label={t("pages.settings.stats.industry")}
+          value={profile?.industry || "—"}
+          color="#7C3AED"
+        />
+        <StatCard
+          icon={<LocationOnOutlined />}
+          label={t("pages.settings.stats.location")}
+          value={profile?.country || profile?.location || "—"}
+          color="#0891B2"
+        />
+        <StatCard
+          icon={<GroupsOutlined />}
+          label={t("pages.settings.stats.team_size")}
+          value={profile?.companySize || profile?.size ? `${profile?.companySize || profile?.size} ${t("pages.settings.employees_suffix")}` : "—"}
+          color="#D97706"
+        />
+      </Box>
 
       {/* Main settings card */}
       <Box sx={{ bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "16px", overflow: "hidden" }}>

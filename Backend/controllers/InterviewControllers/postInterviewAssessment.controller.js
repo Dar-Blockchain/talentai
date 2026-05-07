@@ -350,40 +350,6 @@ module.exports.getPostInterviewAssessmentById = async (req, res) => {
   }
 };
 
-// ========== READ - Get all for a post ==========
-module.exports.getAssessmentsByPost = async (req, res) => {
-  try {
-    const { postId } = req.params;
-    const filters = req.query;
-
-    if (!postId) {
-      return res.status(400).json({
-        success: false,
-        message: "Post ID is required",
-      });
-    }
-
-    const assessments =
-      await postInterviewAssessmentService.getAssessmentsByPost(
-        postId,
-        filters,
-      );
-
-    res.status(200).json({
-      success: true,
-      message: "Assessments retrieved successfully",
-      count: assessments.length,
-      data: assessments,
-    });
-  } catch (error) {
-    console.error("Error getting assessments by post:", error);
-    res.status(error.status || 500).json({
-      success: false,
-      message: error.message || "Error retrieving assessments",
-    });
-  }
-};
-
 // ========== READ - Get all for a candidate ==========
 module.exports.getAssessmentsByCandidate = async (req, res) => {
   try {

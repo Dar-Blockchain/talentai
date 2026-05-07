@@ -162,19 +162,8 @@ const manualPostSlice = createSlice({
   name: "manualPost",
   initialState,
   reducers: {
-    setManualPostData: (_, action: PayloadAction<ManualPostState>) => {
-      return action.payload;
-    },
-
     updateJobDetails: (state, action: PayloadAction<Partial<JobDetails>>) => {
       state.jobDetails = { ...state.jobDetails, ...action.payload };
-    },
-
-    updateSkillAnalysis: (
-      state,
-      action: PayloadAction<Partial<SkillAnalysis>>
-    ) => {
-      state.skillAnalysis = { ...state.skillAnalysis, ...action.payload };
     },
 
     updateLinkedinPost: (
@@ -193,9 +182,7 @@ const manualPostSlice = createSlice({
 /* ========= Exports ========= */
 
 export const {
-  setManualPostData,
   updateJobDetails,
-  updateSkillAnalysis,
   updateLinkedinPost,
   setManualExpirationDate,
   resetManualPost,

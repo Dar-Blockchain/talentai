@@ -1,6 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axiosInstance from '@/utils/axiosInstance';
-import { getToken } from '@/utils/tokenUtils';
+import { apiKeyService } from '@/services/apiKeyService';
 
 export interface ApiKey {
   id: string;
@@ -33,45 +32,34 @@ const initialState: ApiKeyState = {
   newKey: null,
 };
 
-const authHeaders = () => {
-  const token = getToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
-
 export const fetchApiKeys = createAsyncThunk('apiKeys/fetchAll', async () => {
-  const res = await axiosInstance.get('api/api-keys', { headers: authHeaders() });
-  return (res.data?.data ?? res.data) as ApiKey[];
+  return await apiKeyService.fetchAll() as ApiKey[];
 });
 
 export const createApiKey = createAsyncThunk(
   'apiKeys/create',
   async (payload: { name: string; serviceName: string; scopes: string[]; rateLimit: number; expiresAt: string; ipWhitelist?: string[] }) => {
-    const res = await axiosInstance.post('api/api-keys', payload, { headers: authHeaders() });
-    return (res.data?.data ?? res.data) as ApiKey;
+    return await apiKeyService.create(payload) as ApiKey;
   }
 );
 
 export const deleteApiKey = createAsyncThunk('apiKeys/delete', async (id: string) => {
-  await axiosInstance.delete(`api/api-keys/${id}`, { headers: authHeaders() });
-  return id;
+  return await apiKeyService.delete(id);
 });
 
 export const toggleApiKey = createAsyncThunk('apiKeys/toggle', async (id: string) => {
-  const res = await axiosInstance.patch(`api/api-keys/${id}/toggle`, {}, { headers: authHeaders() });
-  return (res.data?.data ?? res.data) as { id: string; isActive: boolean };
+  return await apiKeyService.toggle(id) as { id: string; isActive: boolean };
 });
 
 export const updateApiKey = createAsyncThunk(
   'apiKeys/update',
   async ({ id, data }: { id: string; data: Partial<Pick<ApiKey, 'name' | 'serviceName' | 'scopes' | 'rateLimit' | 'expiresAt' | 'ipWhitelist'>> }) => {
-    const res = await axiosInstance.put(`api/api-keys/${id}`, data, { headers: authHeaders() });
-    return (res.data?.data ?? res.data) as ApiKey;
+    return await apiKeyService.update(id, data) as ApiKey;
   }
 );
 
 export const regenerateApiKey = createAsyncThunk('apiKeys/regenerate', async (id: string) => {
-  const res = await axiosInstance.post(`api/api-keys/${id}/regenerate`, {}, { headers: authHeaders() });
-  return (res.data?.data ?? res.data) as { id: string; name: string; key: string };
+  return await apiKeyService.regenerate(id) as { id: string; name: string; key: string };
 });
 
 const apiKeySlice = createSlice({

@@ -17,8 +17,7 @@
     "step2_sub": "Format PDF, obligatoire",
     "step3_label": "Démarrez l'entretien IA",
     "step3_sub": "Environ 20 minutes",
-    "btn": "Postuler maintenant",
-    "disclaimer": "Aucun compte requis · Environ 20 min"
+    "btn": "Postuler maintenant"
   },
   "onboarding": {
     "branding": "Recrutement Professionnel",

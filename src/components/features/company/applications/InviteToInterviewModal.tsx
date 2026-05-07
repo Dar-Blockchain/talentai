@@ -41,7 +41,7 @@ const InviteToInterviewModal: React.FC<Props> = ({ open, target, onClose, onSucc
   }, [open]);
 
   const interviewLink = target?.postId
-    ? `${typeof window !== "undefined" ? window.location.origin : ""}/interview/hr?jobId=${target.postId}`
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/candidate/interview/hr?jobId=${target.postId}`
     : "";
 
   const handleSend = async () => {

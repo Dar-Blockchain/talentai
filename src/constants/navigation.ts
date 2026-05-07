@@ -41,7 +41,7 @@ export const candidateNavGroups: CandidateNavGroup[] = [
   {
     group: "Overview",
     items: [
-      { id: "candidate-dashboard", icon: DashboardOutlined, label: "Dashboard", href: "/dashboard/candidate" },
+      { id: "candidate-dashboard", icon: DashboardOutlined, label: "Dashboard", href: "/candidate/dashboard" },
     ],
   },
 ];

@@ -1,8 +1,11 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useDispatch, useSelector } from 'react-redux';
 import { setCookie } from 'cookies-next';
 import { LANGUAGE_COOKIE, RTL_LANGUAGES, SUPPORTED_LANGUAGES, type SupportedLanguage } from '@/i18n/config';
 import { SUPPORTED_LANGS } from '@/constants/languages';
+import { updateProfile } from '@/store/slices/userSlice';
+import type { RootState } from '@/store/store';
 
 export interface LanguageOption {
   code:  SupportedLanguage;
@@ -30,6 +33,8 @@ export function normalizeLangCode(raw?: string | null): SupportedLanguage | null
 
 export function useLanguage() {
   const { i18n } = useTranslation();
+  const dispatch = useDispatch<any>();
+  const user = useSelector((state: RootState) => state.user.connectedUser.user);
 
   const raw = i18n.language ?? 'en';
   const base = raw.split('-')[0]?.toLowerCase();
@@ -47,19 +52,20 @@ export function useLanguage() {
     async (lang: SupportedLanguage) => {
       await i18n.changeLanguage(lang);
 
-      // Persist in cookie (works with cookies-next SSR-compat signature)
       setCookie(LANGUAGE_COOKIE, lang, { path: '/', sameSite: 'lax', maxAge: 60 * 60 * 24 * 365 });
 
-      // Mark that this was a manual user choice — DB sync will not override this
       if (typeof window !== 'undefined') {
         localStorage.setItem(MANUAL_LANG_KEY, lang);
       }
 
-      // Apply RTL direction to <html> — MUI reads this automatically
       document.documentElement.dir  = RTL_LANGUAGES.includes(lang) ? 'rtl' : 'ltr';
       document.documentElement.lang = lang;
+
+      if (user) {
+        dispatch(updateProfile({ payload: { language: lang } }));
+      }
     },
-    [i18n],
+    [i18n, dispatch, user],
   );
 
   return { currentLang, isRTL, changeLanguage, languages: LANGUAGE_OPTIONS };

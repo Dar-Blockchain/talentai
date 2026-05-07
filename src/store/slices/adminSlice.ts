@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { RootState } from "../store";
-import axiosInstance from "@/utils/axiosInstance";
+import { adminService } from "@/services/adminService";
 
 // ─── Types ───────────────────────────────────────────────
 
@@ -141,27 +141,7 @@ export const fetchAdminStats = createAsyncThunk<
   { rejectValue: string }
 >("admin/fetchStats", async (_, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get("dashboard/getCounts");
-    const data = response.data;
-    if (data.success && data.data) {
-      return {
-        users: data.data.users || 0,
-        posts: data.data.posts || 0,
-        jobAssessments: data.data.jobAssessments || 0,
-        jobAssessmentsWithScore: data.data.jobAssessmentsWithScore || 0,
-        jobAssessmentsWithScorePercentage:
-          data.data.jobAssessmentsWithScorePercentage || 0,
-        feedback: data.data.feedback || 0,
-        avgOverallScore: data.data.avgOverallScore || 0,
-        totalSkills: data.data.totalSkills || 0,
-        totalHardSkills: data.data.totalHardSkills || 0,
-        totalSoftSkills: data.data.totalSoftSkills || 0,
-        hardSkillsPercentage: data.data.hardSkillsPercentage || 0,
-        softSkillsPercentage: data.data.softSkillsPercentage || 0,
-        topSkills: data.data.topSkills || [],
-      } as DashboardStats;
-    }
-    return defaultStats;
+    return (await adminService.fetchStats() ?? defaultStats) as DashboardStats;
   } catch (error: any) {
     return rejectWithValue(error.message || "Error fetching stats");
   }
@@ -173,8 +153,7 @@ export const fetchAllUsersForMap = createAsyncThunk<
   { rejectValue: string }
 >("admin/fetchAllUsersForMap", async (_, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get("dashboard/getAllUsers", { params: { limit: 1000 } });
-    return response.data?.users || [];
+    return await adminService.fetchAllUsersForMap() as AdminUser[];
   } catch (error: any) {
     return rejectWithValue(error.message || "Error fetching users for map");
   }
@@ -186,74 +165,7 @@ export const fetchUserGrowthData = createAsyncThunk<
   { rejectValue: string }
 >("admin/fetchUserGrowthData", async (_, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get("dashboard/getUserCountsByDay");
-    const data = response.data;
-    if (data.success && data.data) {
-      const processedData = data.data.usersCreatedByDay.map((item: any) => ({
-        day: new Date(item.day).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        }),
-        users: item.userCount,
-        posts: 0,
-        assessments: 0,
-        fullDate: item.day,
-      }));
-
-      if (data.data.postsCreatedByDay) {
-        data.data.postsCreatedByDay.forEach((postItem: any) => {
-          const existingDay = processedData.find(
-            (item: any) => item.fullDate === postItem.day
-          );
-          if (existingDay) {
-            existingDay.posts = postItem.postCount;
-          } else {
-            processedData.push({
-              day: new Date(postItem.day).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-              }),
-              users: 0,
-              posts: postItem.postCount,
-              assessments: 0,
-              fullDate: postItem.day,
-            });
-          }
-        });
-      }
-
-      if (data.data.jobAssessmentsCreatedByDay) {
-        data.data.jobAssessmentsCreatedByDay.forEach(
-          (assessmentItem: any) => {
-            const existingDay = processedData.find(
-              (item: any) => item.fullDate === assessmentItem.day
-            );
-            if (existingDay) {
-              existingDay.assessments = assessmentItem.jobAssessmentCount;
-            } else {
-              processedData.push({
-                day: new Date(assessmentItem.day).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                }),
-                users: 0,
-                posts: 0,
-                assessments: assessmentItem.jobAssessmentCount,
-                fullDate: assessmentItem.day,
-              });
-            }
-          }
-        );
-      }
-
-      processedData.sort(
-        (a: any, b: any) =>
-          new Date(a.fullDate).getTime() - new Date(b.fullDate).getTime()
-      );
-
-      return processedData;
-    }
-    return [];
+    return await adminService.fetchUserGrowthData();
   } catch (error: any) {
     return rejectWithValue(error.message || "Error fetching user growth data");
   }
@@ -265,19 +177,7 @@ export const fetchAdminPostAssessments = createAsyncThunk<
   { rejectValue: string }
 >("admin/fetchPostAssessments", async (params, { rejectWithValue }) => {
   try {
-    const { page = 1, limit = 10, company } = params;
-    const response = await axiosInstance.get("post-interview-assessments", {
-      params: { page, limit, ...(company ? { company } : {}) },
-    });
-    const data = response.data;
-    const assessments = data.data || data.results || [];
-    const total =
-      data.pagination?.totalCount ||
-      data.total ||
-      data.count ||
-      data.totalCount ||
-      assessments.length;
-    return { items: assessments, total };
+    return await adminService.fetchPostAssessments(params);
   } catch (error: any) {
     return rejectWithValue(error.message || "Error fetching admin assessments");
   }
@@ -287,23 +187,9 @@ export const fetchAdminSkillAssessments = createAsyncThunk<
   { results: any[]; total: number },
   { page: number; limit: number; skill?: string },
   { rejectValue: string }
->("admin/fetchSkillAssessments", async ({ page, limit, skill }, { rejectWithValue }) => {
+>("admin/fetchSkillAssessments", async (params, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get("skill-interview-assessments", {
-      params: { page: page + 1, limit, ...(skill ? { skill } : {}) },
-    });
-    const data = response.data;
-    if (data.success || data.data || data.results) {
-      const results = data.data || data.results || [];
-      const total =
-        data.pagination?.totalCount ||
-        data.total ||
-        data.count ||
-        data.totalCount ||
-        results.length;
-      return { results, total };
-    }
-    return rejectWithValue("Failed to fetch skill interview assessments");
+    return await adminService.fetchSkillAssessments(params);
   } catch (error: any) {
     return rejectWithValue(
       error.message || "Error fetching skill interview assessments"
@@ -317,21 +203,7 @@ export const fetchAdminUsers = createAsyncThunk<
   { rejectValue: string }
 >("admin/fetchUsers", async (params, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get("dashboard/getAllUsers", {
-      params: {
-        page: params.page ?? 1,
-        limit: params.limit ?? 10,
-        ...(params.username ? { username: params.username } : {}),
-        ...(params.email ? { email: params.email } : {}),
-        ...(params.role ? { role: params.role } : {}),
-        ...(params.status ? { status: params.status } : {}),
-      },
-    });
-    const data = response.data;
-    return {
-      users: data.users || [],
-      total: data.pagination?.totalUsers ?? data.total ?? 0,
-    };
+    return await adminService.fetchUsers(params);
   } catch (error: any) {
     return rejectWithValue(error.message || "Error fetching users");
   }
@@ -345,11 +217,7 @@ export const saveCompanyPermissions = createAsyncThunk<
   "admin/saveCompanyPermissions",
   async ({ companyId, permissions }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post(
-        `admin/companies/${companyId}/permissions`,
-        { permissions }
-      );
-      return response.data;
+      return await adminService.saveCompanyPermissions(companyId, permissions);
     } catch (error: any) {
       return rejectWithValue(error.message || "Error saving permissions");
     }

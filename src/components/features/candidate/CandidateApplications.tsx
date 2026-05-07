@@ -308,7 +308,7 @@ const CandidateApplications: React.FC<CandidateApplicationsProps> = ({ previewCo
               key={app._id || i}
               app={app}
               last={!expanded && i === Math.min(COLLAPSE_SIZE, displayed.length) - 1}
-              onClick={() => router.push(`/dashboard/candidate/applications/${app._id}`)}
+              onClick={() => router.push(`/candidate/dashboard/applications/${app._id}`)}
               s={s}
             />
           ))}
@@ -321,7 +321,7 @@ const CandidateApplications: React.FC<CandidateApplicationsProps> = ({ previewCo
                   key={app._id || i}
                   app={app}
                   last={i === displayed.length - COLLAPSE_SIZE - 1}
-                  onClick={() => router.push(`/dashboard/candidate/applications/${app._id}`)}
+                  onClick={() => router.push(`/candidate/dashboard/applications/${app._id}`)}
                   s={s}
                 />
               ))}

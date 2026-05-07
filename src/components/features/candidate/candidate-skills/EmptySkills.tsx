@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Box, Typography, Button } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import AddOutlined from "@mui/icons-material/AddOutlined";
 import CodeOutlined from "@mui/icons-material/CodeOutlined";
 import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
@@ -8,25 +9,19 @@ import AssessmentModal from "../AssessmentModal";
 type SkillType = "technical" | "soft";
 
 const CONFIG = {
-  technical: {
-    Icon: CodeOutlined,
-    color: "#2563EB", bg: "#EFF6FF", border: "#BFDBFE",
-    title: "No Technical Skills Yet",
-    desc: "Add your technical skills to get matched with relevant job opportunities.",
-    btn: "Add Technical Skill",
-  },
-  soft: {
-    Icon: PeopleOutlined,
-    color: "#D97706", bg: "#FFFBEB", border: "#FDE68A",
-    title: "No Soft Skills Yet",
-    desc: "Showcase your interpersonal and communication skills to stand out.",
-    btn: "Add Soft Skill",
-  },
+  technical: { Icon: CodeOutlined, color: "#2563EB", bg: "#EFF6FF", border: "#BFDBFE" },
+  soft:      { Icon: PeopleOutlined, color: "#D97706", bg: "#FFFBEB", border: "#FDE68A" },
 };
 
 const EmptySkills: React.FC<{ type: SkillType }> = ({ type }) => {
+  const { t } = useTranslation("dashboard");
+  const s = (k: string) => t(`candidate.skills.empty.${k}`) as string;
   const [openModal, setOpenModal] = useState(false);
-  const { Icon, color, bg, border, title, desc, btn } = CONFIG[type];
+  const { Icon, color, bg, border } = CONFIG[type];
+
+  const title = type === "technical" ? s("technical_title") : s("soft_title");
+  const desc  = type === "technical" ? s("technical_desc")  : s("soft_desc");
+  const btn   = type === "technical" ? s("technical_btn")   : s("soft_btn");
 
   return (
     <>

@@ -1,0 +1,260 @@
+{
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "overview": "Aperçu",
+    "applications": "Candidatures",
+    "your_job_applies": "Vos candidatures",
+    "skills": "Compétences",
+    "tech_and_soft": "Tech & soft",
+    "interviews": "Entretiens",
+    "all_assessments": "Tous les examens",
+    "navigation": "Navigation"
+  },
+  "profile": {
+    "applications": "Candidatures",
+    "interviews": "Entretiens",
+    "monthly_tests": "Tests mensuels",
+    "maxed": "Maximum atteint",
+    "left": "{{count}} restant",
+    "profile_strength": "Force du profil"
+  },
+  "checklist": {
+    "complete_profile": "Compléter votre profil",
+    "add_target_role": "Ajouter un rôle cible",
+    "set_experience": "Définir votre niveau",
+    "first_skill_test": "Passer votre premier test",
+    "first_application": "Soumettre une candidature"
+  },
+  "actions": {
+    "skill_interview": "Entretien de compétences",
+    "hr_interview": "Entretien RH",
+    "coming_soon": "Bientôt disponible",
+    "monthly_quota": "Quota mensuel",
+    "hide": "Masquer",
+    "view_all": "Voir tout"
+  },
+  "sections": {
+    "skills_title": "Compétences & Expertise",
+    "skills_subtitle": "Vos compétences techniques et comportementales",
+    "interviews_title": "Entretiens & Évaluations",
+    "interviews_subtitle": "Entretiens, technique & soft skills"
+  },
+  "my_applications": {
+    "title": "Mes candidatures",
+    "view_all": "Voir tout →",
+    "search_placeholder": "Rechercher emplois ou entreprises…",
+    "status": {
+      "applied": "Candidaté",
+      "pending": "En attente",
+      "shortlisted": "Présélectionné",
+      "accepted": "Accepté",
+      "rejected": "Refusé",
+      "withdrawn": "Retiré",
+      "interview_scheduled": "Entretien planifié",
+      "interview_completed": "Entretien terminé",
+      "viewed": "Vu",
+      "visited": "Visité",
+      "all": "Tous"
+    },
+    "match": "{{score}}% de correspondance",
+    "applied_date": "Candidaté le {{date}}",
+    "empty_title": "Aucune candidature",
+    "empty_subtitle": "Postulez à des offres pour les suivre ici",
+    "show_less": "Voir moins",
+    "show_more": "Voir {{count}} de plus",
+    "page_of": "Page {{current}} sur {{total}}"
+  },
+  "application_detail": {
+    "back_to_dashboard": "Retour au tableau de bord",
+    "loading_title": "…",
+    "not_found": "Candidature introuvable",
+    "details": "Détails",
+    "applied_on": "Candidaté le {{date}}",
+    "job_description": "Description du poste",
+    "requirements": "Exigences",
+    "profile_strength": "Force du profil",
+    "profile": {
+      "applications": "Candidatures",
+      "active": "Actif"
+    },
+    "checklist": {
+      "complete_profile": "Compléter le profil",
+      "add_target_role": "Ajouter un poste cible",
+      "set_experience": "Définir l’expérience",
+      "first_skill_test": "Premier test de compétences"
+    },
+    "interview_banner": {
+      "title": "Votre entretien est planifié !",
+      "join": "Rejoindre l’entretien"
+    },
+    "cv_match_score": {
+      "title": "Score de correspondance CV",
+      "strong": "Excellente correspondance",
+      "good": "Bonne correspondance",
+      "low": "Faible correspondance",
+      "subtitle": "Votre profil correspond à {{score}}% des exigences du poste."
+    },
+    "timeline": {
+      "title": "Statut de la candidature",
+      "applied": "Candidature envoyée",
+      "under_review": "En cours d’examen",
+      "shortlisted": "Présélectionné",
+      "interview": "Entretien",
+      "accepted": "Accepté",
+      "withdrawn": "Retiré",
+      "not_selected": "Non retenu",
+      "closed": "Cette candidature est clôturée",
+      "current_stage": "Étape actuelle"
+    }
+  },
+  "assessment_detail": {
+    "back_to_dashboard": "Retour au tableau de bord",
+    "loading_title": "…",
+    "default_title": "Évaluation",
+    "candidate_fallback": "Candidat",
+    "error_title": "Échec du chargement de l’évaluation",
+    "not_found": "Évaluation introuvable",
+    "unknown_user": "Utilisateur inconnu",
+    "unknown_job": "Poste inconnu",
+    "sidebar": {
+      "score": "Score",
+      "assessment": "Évaluation",
+      "profile_strength": "Force du profil"
+    },
+    "checklist": {
+      "complete_profile": "Compléter le profil",
+      "add_target_role": "Ajouter un poste cible",
+      "set_experience": "Définir l’expérience",
+      "first_skill_test": "Premier test de compétences"
+    },
+    "header": {
+      "title": "Évaluation d’entretien",
+      "overall_score": "Score global",
+      "details": "Détails de l’évaluation",
+      "analytics": "Analytique de l’entretien",
+      "coverage": "Couverture"
+    },
+    "summary": {
+      "overall_score": "Score global",
+      "strong": "Excellent",
+      "good": "Bon",
+      "needs_work": "À améliorer",
+      "coverage_performance": "Performance de couverture",
+      "interview_stats": "Statistiques",
+      "duration": "Durée",
+      "messages": "Messages",
+      "areas_covered": "Zones couvertes",
+      "job": "Poste"
+    },
+    "pipeline_steps": {
+      "title": "Étapes du pipeline",
+      "completed": "{{completed}} / {{total}} étapes terminées",
+      "interview_details": "Détails de l’entretien",
+      "coverage_areas": "Zones couvertes",
+      "strengths": "Points forts",
+      "needs_improvement": "Axes d’amélioration",
+      "status": {
+        "completed": "Terminé",
+        "in_progress": "En cours",
+        "pending": "En attente"
+      }
+    },
+    "coverage_areas": {
+      "title": "Zones couvertes",
+      "meta": "{{depth}} | {{count}} questions",
+      "completed": "Terminé",
+      "in_progress": "En cours"
+    },
+    "job_details": {
+      "description": "Description du poste",
+      "requirements": "Exigences",
+      "responsibilities": "Responsabilités"
+    },
+    "summary_section": {
+      "title": "Résumé"
+    },
+    "recommendations": {
+      "title": "Recommandations ({{count}})"
+    },
+    "coverage_analysis": {
+      "title": "Analyse de la couverture",
+      "by_area": "Couverture par zone",
+      "radar": "Radar des compétences"
+    },
+    "ai_analysis": {
+      "title": "Analyse IA",
+      "strongest_areas": "Zones les plus fortes",
+      "areas_for_improvement": "Zones à améliorer",
+      "recommended_focus": "Axes recommandés"
+    },
+    "skills": {
+      "required": "Compétences requises",
+      "soft": "Soft skills",
+      "suggested": "Compétences suggérées"
+    }
+  },
+  "skills": {
+    "title": "Compétences & Expertise",
+    "subtitle": "{{count}} compétences au total",
+    "quota": "{{used}}/5 tests",
+    "quota_used": "{{used}}/5 utilisés",
+    "monthly_quota": "Quota mensuel de tests",
+    "quota_limit": "Limite mensuelle atteinte — les tests se réinitialisent en début de mois.",
+    "technical": "Technique",
+    "soft": "Soft Skills",
+    "score": "Score",
+    "not_tested": "Non testé",
+    "just_added": "Ajouté récemment",
+    "test": "Tester",
+    "retest": "Retester",
+    "locked": "Verrouillé",
+    "limit_tooltip": "Limite mensuelle atteinte (5/5)",
+    "show_more": "Voir {{count}} de plus",
+    "levels": {
+      "entry": "Débutant",
+      "junior": "Junior",
+      "mid": "Intermédiaire",
+      "senior": "Senior",
+      "expert": "Expert",
+      "new": "Nouveau"
+    },
+    "empty": {
+      "technical_title": "Aucune compétence technique",
+      "technical_desc": "Ajoutez vos compétences techniques pour être mis en relation avec des opportunités pertinentes.",
+      "technical_btn": "Ajouter une compétence technique",
+      "soft_title": "Aucune soft skill",
+      "soft_desc": "Mettez en avant vos compétences interpersonnelles pour vous démarquer.",
+      "soft_btn": "Ajouter une soft skill"
+    }
+  },
+  "interviews": {
+    "job_interviews": "Entretiens d'embauche",
+    "technical": "Technique",
+    "soft_skills": "Soft Skills",
+    "empty_job": "Aucun entretien d'embauche",
+    "empty_technical": "Aucune évaluation technique",
+    "empty_soft": "Aucune évaluation soft skills",
+    "job_application": "Offre d'emploi",
+    "skill_assessment": "Évaluation de compétence",
+    "score": "Score",
+    "not_started": "Pas encore commencé",
+    "not_tested": "Non testé",
+    "just_added": "Ajouté récemment",
+    "progress": "Progression",
+    "done": "Terminé",
+    "ongoing": "En cours",
+    "completed": "Terminé",
+    "continue": "Continuer",
+    "report": "Rapport",
+    "view_report": "Voir le rapport",
+    "limit_tooltip": "Limite mensuelle atteinte (5/5)",
+    "limit_tooltip_long": "Limite mensuelle atteinte (5/5).",
+    "levels": {
+      "expert": "Expert",
+      "senior": "Senior",
+      "mid": "Intermédiaire",
+      "junior": "Junior",
+      "entry": "Débutant"
+    }
+  }
+}

@@ -1,7 +1,8 @@
 // postGenerationSlice.ts
 
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import axiosInstance from "@/utils/axiosInstance";
+import { postGenerationService } from "@/services/postGenerationService";
+import { inferExperienceLevelFromText, isKnownExperienceLevel, normalizeExperienceLevel } from "@/utils/postFormI18n";
 
 // ------------------------------------------------------
 // Types
@@ -75,6 +76,7 @@ export interface PostGenerationResponse {
 
 export interface PostGenerationState {
   generatedPost: PostGenerationResponse | null;
+  generatedLanguage: string;
   creationType: "ai" | "manual" | null;
   promptDescription: string;
   workMode: string;
@@ -102,6 +104,7 @@ const getDefaultExpirationDate = () => {
 
 const initialState: PostGenerationState = {
   generatedPost: null,
+  generatedLanguage: "en",
   creationType: null,
   promptDescription: "",
   workMode: "",
@@ -132,29 +135,7 @@ export const generatePost = createAsyncThunk<
   { rejectValue: string }
 >("postGeneration/generatePost", async (payload, { rejectWithValue }) => {
   try {
-    const { jobDescription, salary, contractType, workMode, language } = payload;
-
-    const salaryText = `\n\nSalary Range: ${
-      salary.currency
-    }${salary.min.toLocaleString()} - ${
-      salary.currency
-    }${salary.max.toLocaleString()}`;
-    const contractTypeText = contractType
-      ? `\nContract Type: ${contractType}`
-      : "";
-    const workModeText = workMode ? `\nWork Mode: ${workMode}` : "";
-
-    const descriptionWithDetails =
-      jobDescription + salaryText + contractTypeText + workModeText;
-
-    const res = await axiosInstance.post("post/generate-job-post", {
-      description: descriptionWithDetails,
-      contractType,
-      workMode,
-      language,
-    });
-
-    return res.data;
+    return await postGenerationService.generatePost(payload) as PostGenerationResponse;
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.message || err.message);
   }
@@ -171,6 +152,7 @@ const postGenerationSlice = createSlice({
   reducers: {
     clearPost(state) {
       state.generatedPost = null;
+      state.generatedLanguage = "en";
       state.error = null;
       state.generatedAt = null;
       state.creationType = null;
@@ -214,10 +196,6 @@ const postGenerationSlice = createSlice({
       if (state.generatedPost) {
         state.generatedPost.expirationDate = action.payload;
       }
-    },
-
-    setSalary(state, action: PayloadAction<Salary>) {
-      state.salary = action.payload;
     },
 
     updateSalaryField(
@@ -347,10 +325,27 @@ const postGenerationSlice = createSlice({
 
       .addCase(
         generatePost.fulfilled,
-        (state, action: PayloadAction<PostGenerationResponse>) => {
+        (state, action) => {
           state.loading = false;
+          state.generatedLanguage = action.meta.arg.language || "en";
+          const payload = action.payload as PostGenerationResponse;
+          const currentExperienceLevel = payload.jobDetails?.experienceLevel ?? "";
+          const normalizedExperienceLevel = normalizeExperienceLevel(currentExperienceLevel);
+          const inferredExperienceLevel = inferExperienceLevelFromText([
+            payload.jobDetails?.title,
+            payload.jobDetails?.description,
+            ...(payload.jobDetails?.requirements ?? []),
+            ...(payload.jobDetails?.responsibilities ?? []),
+          ].filter(Boolean).join(" "));
+
           state.generatedPost = {
-            ...action.payload,
+            ...payload,
+            jobDetails: {
+              ...payload.jobDetails,
+              experienceLevel: isKnownExperienceLevel(normalizedExperienceLevel)
+                ? normalizedExperienceLevel
+                : inferredExperienceLevel,
+            },
             expirationDate: state.expirationDate,
           };
           state.generatedAt = Date.now();
@@ -375,7 +370,6 @@ export const {
   setWorkMode,
   setEmploymentType,
   setExpirationDate,
-  setSalary,
   updateSalaryField,
   editHardSkill,
   deleteHardSkill,
