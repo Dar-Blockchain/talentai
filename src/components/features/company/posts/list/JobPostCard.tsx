@@ -1,6 +1,6 @@
-import { memo, useState } from "react";
+import { memo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Box, Typography, IconButton, Menu, MenuItem, Tooltip, Dialog, DialogTitle, DialogContent } from "@mui/material";
+import { Box, Typography, IconButton, Menu, MenuItem, Tooltip, Dialog, DialogTitle, DialogContent, Button } from "@mui/material";
 import { motion } from "framer-motion";
 import { useRouter } from "next/router";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutlineOutlined";
@@ -15,7 +15,8 @@ import QrCode2Outlined from "@mui/icons-material/QrCode2Outlined";
 import PublishOutlined from "@mui/icons-material/PublishOutlined";
 import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
 import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
-import { QRCodeSVG } from "qrcode.react";
+import DownloadOutlined from "@mui/icons-material/DownloadOutlined";
+import { QRCodeCanvas } from "qrcode.react";
 
 const fmtDate = (d: string) =>
   new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
@@ -54,6 +55,7 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [copied, setCopied] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
+  const qrCanvasRef = useRef<HTMLDivElement | null>(null);
 
   const jd       = job.jobDetails || {};
   const isDraft  = job.status === "draft";
@@ -84,6 +86,17 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
     e.stopPropagation();
     setMenuAnchor(null);
     setQrOpen(true);
+  };
+
+  const handleDownloadQr = () => {
+    const canvas = qrCanvasRef.current?.querySelector("canvas");
+    if (!canvas) return;
+
+    const pngUrl = canvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.href = pngUrl;
+    link.download = `job-post-${job._id}-qr.png`;
+    link.click();
   };
 
   const shareLink = getShareLink();
@@ -425,11 +438,25 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
           <DialogContent>
             <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5, pb: 1 }}>
               <Box sx={{ p: 1.5, border: "1px solid #E5E7EB", borderRadius: "12px", bgcolor: "#fff" }}>
-                <QRCodeSVG value={shareLink} size={220} />
+                <Box ref={qrCanvasRef}>
+                  <QRCodeCanvas value={shareLink} size={220} />
+                </Box>
               </Box>
               <Typography sx={{ fontSize: "12px", color: "#6B7280", textAlign: "center" }}>
                 {t("card.qr.scan_hint")}
               </Typography>
+              <Button
+                onClick={handleDownloadQr}
+                variant="outlined"
+                startIcon={<DownloadOutlined sx={{ fontSize: 16 }} />}
+                sx={{
+                  textTransform: "none",
+                  borderRadius: "10px",
+                  fontWeight: 600,
+                }}
+              >
+                {t("card.qr.download")}
+              </Button>
             </Box>
           </DialogContent>
         </Dialog>

@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import { Box, Alert, Breadcrumbs, Chip, Dialog, DialogContent, DialogTitle, IconButton, Link as MuiLink, Menu, MenuItem, Tabs, Tab, Tooltip, Typography } from "@mui/material";
+import { Box, Alert, Breadcrumbs, Button, Chip, Dialog, DialogContent, DialogTitle, IconButton, Link as MuiLink, Menu, MenuItem, Tabs, Tab, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
@@ -37,7 +37,8 @@ import SignalCellularAltOutlined from "@mui/icons-material/SignalCellularAlt";
 import LaptopOutlined from "@mui/icons-material/LaptopOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import MicOutlined from "@mui/icons-material/MicOutlined";
-import { QRCodeSVG } from "qrcode.react";
+import DownloadOutlined from "@mui/icons-material/DownloadOutlined";
+import { QRCodeCanvas } from "qrcode.react";
 
 const TEAL = "#0D9488";
 
@@ -62,6 +63,7 @@ const PostDetailsPage: React.FC = () => {
   const [langModalOpen, setLangModalOpen] = useState(false);
   const [savingLanguages, setSavingLanguages] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
+  const qrCanvasRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -142,6 +144,17 @@ const PostDetailsPage: React.FC = () => {
       })
       .catch(() => showToast({ message: t("detail.toast.languages_error"), severity: "error" }))
       .finally(() => setSavingLanguages(false));
+  };
+
+  const handleDownloadQr = () => {
+    const canvas = qrCanvasRef.current?.querySelector("canvas");
+    if (!canvas || !job?._id) return;
+
+    const pngUrl = canvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.href = pngUrl;
+    link.download = `job-post-${job._id}-qr.png`;
+    link.click();
   };
 
   const jd = job?.jobDetails || {};
@@ -487,11 +500,25 @@ const PostDetailsPage: React.FC = () => {
             <DialogContent>
               <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5, pb: 1 }}>
                 <Box sx={{ p: 1.5, border: "1px solid #E5E7EB", borderRadius: "12px", bgcolor: "#fff" }}>
-                  <QRCodeSVG value={getInterviewLink()} size={220} />
+                  <Box ref={qrCanvasRef}>
+                    <QRCodeCanvas value={getInterviewLink()} size={220} />
+                  </Box>
                 </Box>
                 <Typography sx={{ fontSize: "12px", color: "#6B7280", textAlign: "center" }}>
                   {t("detail.qr.scan_hint")}
                 </Typography>
+                <Button
+                  onClick={handleDownloadQr}
+                  variant="outlined"
+                  startIcon={<DownloadOutlined sx={{ fontSize: 16 }} />}
+                  sx={{
+                    textTransform: "none",
+                    borderRadius: "10px",
+                    fontWeight: 600,
+                  }}
+                >
+                  {t("detail.qr.download")}
+                </Button>
               </Box>
             </DialogContent>
           </Dialog>
