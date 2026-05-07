@@ -237,7 +237,7 @@ const EmployeeDashboardOverview: React.FC = () => {
   const router   = useRouter();
 
   const userId           = useSelector((state: RootState) => state.user.connectedUser.user?._id);
-  const user             = useSelector((state: RootState) => state.user.connectedUser.user);
+  const user            = useSelector((state: RootState) => state.user.connectedUser.user);
   const profile          = useSelector((state: RootState) => state.user.connectedUser.profile);
   const companyMembership = useSelector((state: RootState) => state.user.connectedUser.companyMembership);
   const metrics          = useSelector((state: RootState) => state.campaign.employeeMetrics);
@@ -260,7 +260,7 @@ const EmployeeDashboardOverview: React.FC = () => {
     return Math.round(scored.reduce((s, c) => s + (c as any).score, 0) / scored.length);
   }, [scored]);
 
-  const fullName   = `${user?.firstName || profile?.firstName || ""} ${user?.lastName || profile?.lastName || ""}`.trim() || user?.username || "there";
+  const fullName   = `${ profile?.firstName || ""} ${ profile?.lastName || ""}`.trim() || user?.username || "there";
   const companyName = companyMembership?.company?.profile?.companyDetails?.name || companyMembership?.company?.username || null;
 
   if (campaignsLoading && !campaigns.length) {

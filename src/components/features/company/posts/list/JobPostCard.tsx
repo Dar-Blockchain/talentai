@@ -427,7 +427,7 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
       {!isDraft && (
         <Dialog
           open={qrOpen}
-          onClose={(e) => { e.stopPropagation?.(); setQrOpen(false); }}
+          onClose={(e: any) => { e.stopPropagation?.(); setQrOpen(false); }}
           maxWidth="xs"
           fullWidth
           PaperProps={{ sx: { borderRadius: "14px", p: 0.5 } }}

@@ -239,7 +239,7 @@ export const postRecruitmentSteps = createAsyncThunk(
 // Async thunk to fetch company posts (my posts)
 export const fetchMyPosts = createAsyncThunk(
   "post/fetchMyPosts",
-  async (params = {}, { rejectWithValue }) => {
+  async (params: { page?: number; limit?: number; search?: string; sort?: string; status?: string; creationType?: string; } = {}, { rejectWithValue }) => {
     try {
       return await postService.fetchMyPosts(params);
     } catch (error: any) {

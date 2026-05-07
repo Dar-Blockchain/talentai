@@ -10,12 +10,16 @@ export interface ConnectedUserEntity {
   user_image?: string;
   role?: string;
   trafficCounter?: number;
+  firstName?: string;
+  lastName?: string;
 }
 
 export interface ConnectedUserProfile {
   userId?: ConnectedUserEntity;
   user_image?: string;
   type?: string;
+  name?: string;
+  email?: string;
   requiredExperienceLevel?: string;
   targetRole?: string;
   firstName?: string;
@@ -27,10 +31,15 @@ export interface ConnectedUserProfile {
   timezone?: string;
   phone?: string;
   address?: string;
+  linkedin?: string;
   linkedinUrl?: string;
   githubUrl?: string;
   personalWebsite?: string;
   location?: string;
+  website?: string;
+  industry?: string;
+  size?: string;
+  employmentType?: string;
   contactInformation?: {
     phone?: string;
     location?: string;
@@ -41,9 +50,19 @@ export interface ConnectedUserProfile {
   };
   companyDetails?: {
     name?: string;
+    email?: string;
     industry?: string;
     size?: string;
     employmentType?: string;
+    location?: string;
+    website?: string;
+    linkedin?: string;
+    phone?: string;
+    address?: string;
+    personalWebsite?: string;
+    requiredExperienceLevel?: string;
+    requiredSkills?: string[];
+    language?: string;
   };
   requiredSkills?: string[];
   quota?: number;
