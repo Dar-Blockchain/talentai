@@ -177,7 +177,7 @@ const SkillRow: React.FC<{
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <Typography sx={{ fontSize: "0.6rem", color: "#CBD5E1" }}>{timeAgo || s("just_added")}</Typography>
         {score > 0 && (
-          <Button onClick={() => router.push(`/interview/report/${assessment._id}`)} endIcon={<OpenInNewOutlined sx={{ fontSize: "11px !important" }} />}
+          <Button onClick={() => router.push(`/candidate/interview/report/${assessment._id}`)} endIcon={<OpenInNewOutlined sx={{ fontSize: "11px !important" }} />}
             sx={{ textTransform: "none", fontWeight: 700, fontSize: "0.68rem", color: "#059669", bgcolor: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: "8px", px: 1.25, py: 0.35, minWidth: 0, boxShadow: "none", "&:hover": { bgcolor: "#DCFCE7" } }}>
             {s("report")}
           </Button>
@@ -252,13 +252,13 @@ const InterviewsBlock: React.FC = () => {
       return { ...latest, _id: latest._id || group.post?._id, post: latest.post || group.post, company: latest.company, candidatePostStepProgress: group.candidatePostStepProgress } as PostAssessment;
     }), [groupedData]);
 
-  const handleViewDetails  = (id: string) => router.push(`/assessment/${id}`);
+  const handleViewDetails  = (id: string) => router.push(`/candidate/assessment/${id}`);
   const handleContinueTest = (a: PostAssessment) => { setSelected(a); setStep(true); };
   const handleStartStep    = () => {
     if (!selectedAssmt) return;
     const postId = selectedAssmt.post?._id;
     const step   = selectedAssmt.candidatePostStepProgress?.currentStep;
-    if (postId && step) { setStep(false); router.push(`/interview/hr?jobId=${postId}&stepId=${step._id}&pipeline=true`); }
+    if (postId && step) { setStep(false); router.push(`/candidate/interview/hr?jobId=${postId}&stepId=${step._id}&pipeline=true`); }
   };
 
   return (

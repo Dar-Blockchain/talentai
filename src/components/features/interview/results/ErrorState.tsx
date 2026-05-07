@@ -50,7 +50,7 @@ export default function ErrorState({ error }: ErrorStateProps) {
             variant="contained"
             startIcon={<HomeIcon />}
             onClick={() => {
-              window.location.href = '/dashboard/candidate';
+              window.location.href = '/candidate/dashboard';
             }}
             sx={{
               background: 'rgba(163, 98, 239, 1)',

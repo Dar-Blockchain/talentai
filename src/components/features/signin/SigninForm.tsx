@@ -96,7 +96,7 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
     if (returnUrl) { router.replace(decodeURIComponent(returnUrl)); return; }
     if (role === "Employee") { router.replace("/employee/dashboard"); return; }
     if (role === "Company") { router.replace("/company/dashboard"); return; }
-    router.replace("/dashboard/candidate");
+    router.replace("/candidate/dashboard");
   };
 
   const onSubmit = async (data: FormValues) => {

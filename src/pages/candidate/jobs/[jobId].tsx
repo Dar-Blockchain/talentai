@@ -32,8 +32,6 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
 const SectionCard: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <Box sx={{ bgcolor: '#fff', border: '1px solid #E5E7EB', borderRadius: '16px', p: { xs: 2.5, md: 3 } }}>
     {children}
@@ -58,11 +56,6 @@ const MetaBadge: React.FC<{ icon: React.ReactNode; label: string; color: string;
   </Box>
 );
 
-// ─── Onboarding Modal ─────────────────────────────────────────────────────────
-
-
-// ─── Main Page ────────────────────────────────────────────────────────────────
-
 const JobLandingPage: React.FC = () => {
   const { t } = useTranslation('modules/interview/apply');
   const router = useRouter();
@@ -81,15 +74,11 @@ const JobLandingPage: React.FC = () => {
   }, [router.isReady, jobId]);
 
   const handleApplySuccess = async (token: string, user: any, profile: any) => {
-    // 1. Set cookies + localStorage token keys
     localStorage.setItem('token', token);
     localStorage.setItem('api_token', token);
     Cookies.set('api_token', token, { expires: 30, path: '/', sameSite: 'lax' });
     Cookies.set('user_role', user?.role || 'Candidate', { expires: 30, path: '/', sameSite: 'lax' });
 
-    // 2. Directly write the persisted Redux state to localStorage so that
-    //    PersistGate rehydrates the next page with the correct authenticated state.
-    //    This avoids the race condition between dispatch() and persistor.flush().
     const authState = {
       isAuthenticated: true,
       token,
@@ -117,7 +106,6 @@ const JobLandingPage: React.FC = () => {
       userType: 'candidate',
       currentSpace: null,
     };
-    // Read existing persist:root to preserve other slices (planLimits, etc.)
     let existing: Record<string, string> = {};
     try {
       const raw = localStorage.getItem('persist:root');
@@ -129,12 +117,11 @@ const JobLandingPage: React.FC = () => {
       user: JSON.stringify(userState),
     }));
 
-    // 3. Also hydrate the live Redux store for the current page
     dispatch(setConnectedUser({ user, profile, planLimits: null, companyMembership: null }));
 
     const companyId = jobDetails?.user?._id || jobDetails?.user || '';
     setModalOpen(false);
-    router.push(`/interview/hr?jobId=${jobId}${companyId ? `&companyId=${companyId}` : ''}&ref=link`);
+    router.push(`/candidate/interview/hr?jobId=${jobId}${companyId ? `&companyId=${companyId}` : ''}&ref=link`);
   };
 
   if (!router.isReady || loading) {
@@ -174,7 +161,7 @@ const JobLandingPage: React.FC = () => {
       <Box sx={{ bgcolor: '#F8F9FA', minHeight: 'calc(100vh - 56px)', py: { xs: 3, md: 5 } }}>
         <Box sx={{ maxWidth: 1100, mx: 'auto', px: { xs: 2, md: 4 }, display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' }, alignItems: { xs: 'stretch', md: 'flex-start' } }}>
 
-          {/* ── Left: Job details ── */}
+          {/* Left: Job details */}
           <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
 
             <SectionCard>
@@ -241,7 +228,7 @@ const JobLandingPage: React.FC = () => {
             )}
           </Box>
 
-          {/* ── Right: Sticky apply panel ── */}
+          {/* Right: Sticky apply panel */}
           <Box sx={{ width: { xs: '100%', md: 320 }, flexShrink: 0, position: { md: 'sticky' }, top: { md: 24 } }}>
             <SectionCard>
               <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.05rem', color: '#111827', mb: 0.5 }}>{t('apply_panel.title')}</Typography>

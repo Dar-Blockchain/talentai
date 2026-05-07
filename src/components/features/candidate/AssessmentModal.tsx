@@ -79,7 +79,7 @@ const AssessmentModal = ({ type, open, onClose }: any) => {
           };
 
     handleClose();
-    router.push(`/interview/hr?${new URLSearchParams(query)}`);
+    router.push(`/candidate/interview/hr?${new URLSearchParams(query)}`);
   };
 
   const handleClose = () => {

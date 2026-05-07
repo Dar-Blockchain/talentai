@@ -58,10 +58,10 @@ const SkillCard: React.FC<SkillCardProps> = ({ skill, type }) => {
   const handleTest = useCallback(() => {
     if (quotaFull) return;
     if (isTech) {
-      router.push(`/interview/hr/?type=technical&skill=${encodeURIComponent(skill.name)}&proficiency=${skill.proficiencyLevel || 1}`);
+      router.push(`/candidate/interview/hr/?type=technical&skill=${encodeURIComponent(skill.name)}&proficiency=${skill.proficiencyLevel || 1}`);
     } else {
       const map: Record<string, number> = { "Entry Level": 1, Junior: 2, "Mid Level": 3, Senior: 4, Expert: 5 };
-      router.push(`/interview/hr/?type=soft&skill=${encodeURIComponent(skill.name)}&category=${encodeURIComponent(skill.category)}&proficiency=${map[skill.experienceLevel] || 1}`);
+      router.push(`/candidate/interview/hr/?type=soft&skill=${encodeURIComponent(skill.name)}&category=${encodeURIComponent(skill.category)}&proficiency=${map[skill.experienceLevel] || 1}`);
     }
   }, [router, skill, type, quotaFull, isTech]);
 

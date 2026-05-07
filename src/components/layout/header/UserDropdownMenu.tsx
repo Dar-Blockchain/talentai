@@ -192,7 +192,7 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
             icon={<PersonOutlined />}
             label={t("header.view_profile")}
             sub={t("header.public_profile")}
-            onClick={() => { router.push("/profile/candidate/" + user?._id); close(); }}
+            onClick={() => { router.push("/candidate/profile/" + user?._id); close(); }}
           />
         )}
         {!isEmployee && (

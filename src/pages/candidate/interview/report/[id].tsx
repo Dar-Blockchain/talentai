@@ -36,7 +36,6 @@ const SECONDARY_COLOR = 'rgba(11, 82, 198, 1)';
 const SUCCESS_COLOR = 'rgba(62, 180, 137, 1)';
 const WARNING_COLOR = 'rgba(250, 180, 70, 1)';
 
-// Utility function to detect and convert URLs to clickable links
 const LinkifiedText = ({ text, ...props }: { text: string } & any) => {
     if (!text) return null;
 
@@ -89,7 +88,6 @@ const LinkifiedText = ({ text, ...props }: { text: string } & any) => {
     );
 };
 
-// Component to render list items with clickable links
 const LinkifiedListItem = ({ text, style }: { text: string; style?: React.CSSProperties }) => {
     if (!text) return null;
 
@@ -142,7 +140,6 @@ const LinkifiedListItem = ({ text, style }: { text: string; style?: React.CSSPro
     );
 };
 
-// Card wrapper component matching dashboard style
 const ReportCard = ({ children, title, titleColor = '#000000' }: { children: React.ReactNode; title?: string; titleColor?: string }) => (
     <Box
         sx={{
@@ -182,7 +179,6 @@ const ReportCard = ({ children, title, titleColor = '#000000' }: { children: Rea
     </Box>
 );
 
-// Stats card matching dashboard design with icon support
 const StatsCard = ({
     label,
     value,
@@ -309,7 +305,7 @@ function CandidateInterviewDetailPage() {
                     <Box>
                         <Button
                             startIcon={<ArrowBackIcon />}
-                            onClick={() => router.push('/dashboard/candidate')}
+                            onClick={() => router.push('/candidate/dashboard')}
                             sx={{
                                 color: PRIMARY_COLOR,
                                 fontWeight: 600,
@@ -579,9 +575,6 @@ function CandidateInterviewDetailPage() {
                                                         </Box>
                                                     </Box>
                                                 </Box>
-
-                                                {/* AI Analysis */}
-
 
                                                 {/* Indicators */}
                                                 {areaData.indicators && areaData.indicators.length > 0 && (

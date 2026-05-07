@@ -25,7 +25,7 @@ const ChatIndexPage: React.FC = () => {
 
   useEffect(() => {
     if (!loading && conversations.length > 0)
-      router.replace(`/chat/${conversations[0]._id}`);
+      router.replace(`/candidate/chat/${conversations[0]._id}`);
   }, [loading, conversations]);
 
   return (
@@ -33,7 +33,7 @@ const ChatIndexPage: React.FC = () => {
       <PageHeader
         title="Messages"
         subtitle="Your conversations"
-        breadcrumbs={[{ label: "Dashboard", href: "/dashboard/candidate" }, { label: "Messages" }]}
+        breadcrumbs={[{ label: "Dashboard", href: "/candidate/dashboard" }, { label: "Messages" }]}
         icon={ChatOutlined}
       />
       <Box sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 300, gap: 2 }}>

@@ -5,14 +5,14 @@ import type { NextRequest } from "next/server";
 const PUBLIC_PATHS = [
   "/signin",
   "/register",
-  "/home/candidate",
+  "/candidate/home",
   "/home/company",
   "/unauthorized",
-  "/interview/results",
+  "/candidate/interview/results",
   "/invitation",
   "/campaign",
-  "/interview/hr",  // public interview links (ref=link) — auth handled inside the page
-  "/jobs",          // public job landing pages
+  "/candidate/interview/hr",
+  "/candidate/jobs",
 ];
 
 const PUBLIC_PREFIXES = ["/api/", "/_next/", "/favicon", "/logo", "/static/"];
@@ -26,11 +26,7 @@ const ROLE_ROUTES: { prefix: string; roles: string[] }[] = [
   { prefix: "/dashboard/admin",     roles: ["Admin"] },
   { prefix: "/company",             roles: ["Company", "Employee"] },
   { prefix: "/profile/company",     roles: ["Company"] },
-  { prefix: "/dashboard/candidate", roles: ["Candidate"] },
-  { prefix: "/profile/candidate",   roles: ["Candidate"] },
-  { prefix: "/interview/report",    roles: ["Company", "Admin"] },
-  { prefix: "/chat",                roles: ["Candidate", "Company"] },
-  { prefix: "/assessment",          roles: ["Candidate"] },
+  { prefix: "/candidate",           roles: ["Candidate"] },
   { prefix: "/employee",            roles: ["Employee"] },
 ];
 
@@ -129,7 +125,7 @@ export function middleware(request: NextRequest) {
       ? "/company/dashboard"
       : role === "Employee"
       ? "/employee/dashboard"
-      : "/dashboard/candidate";
+      : "/candidate/dashboard";
     return NextResponse.redirect(new URL(destination, request.url));
   }
 

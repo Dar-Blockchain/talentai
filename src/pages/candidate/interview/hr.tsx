@@ -37,8 +37,6 @@ import { useInterviewConfig } from '@/hooks/useInterviewConfig';
 import { useInterviewSocket, InterviewStartedData, InterviewEndedData, SilenceResponseData } from '@/hooks/useInterviewSocket';
 import { useAudioTranscription } from '@/hooks/useAudioTranscription';
 
-// Icons
-
 // Layout
 import Header from '@/components/layout/Header';
 
@@ -78,7 +76,6 @@ const IntelligentInterviewTest = () => {
   const [isArchived, setIsArchived] = useState(false);
   const [companyBlocked, setCompanyBlocked] = useState(false);
 
-  // Once router is ready: show overview only if jobId is in the URL, otherwise skip straight to interview
   const hasJobId = router.isReady && typeof router.query.jobId === 'string' && !!router.query.jobId;
   const jobId = router.isReady ? (router.query.jobId as string | undefined) : undefined;
   const refParam = router.isReady ? (router.query.ref as string | undefined) : undefined;
@@ -92,14 +89,12 @@ const IntelligentInterviewTest = () => {
     const ref = router.query.ref as string | undefined;
     const isPublicLink = ref === 'link';
 
-    // No token + public link → redirect to job landing page
     if (!token && isPublicLink) {
-      router.replace(`/jobs/${postId}`);
+      router.replace(`/candidate/jobs/${postId}`);
       return;
     }
 
     if (authUser && token) {
-      // Auto-create job application only for candidates
       if (authUser.role !== 'Company' && authUser.role !== 'Employee') {
         fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}job-applications/`, {
           method: 'POST',
@@ -116,7 +111,6 @@ const IntelligentInterviewTest = () => {
         }
       }).finally(() => setAssessmentChecking(false));
     } else {
-      // Guest (no token) — skip all auth-required checks
       setAssessmentChecking(false);
     }
   }, [router.isReady, router.query.jobId]);
@@ -151,7 +145,6 @@ const IntelligentInterviewTest = () => {
     timer.startTimer(data.config.duration || 20);
     timer.setDuration(data.config.duration * 60 * 1000);
 
-    // Update config with real company name from backend
     if (data.targetCompany) {
       setInterviewConfig({
         ...interviewConfig,
@@ -159,7 +152,6 @@ const IntelligentInterviewTest = () => {
       });
     }
 
-    // Configure backend silence intelligence
     if (data.config.silenceIntelligence) {
       audio.setBackendSilenceConfig(data.config.silenceIntelligence);
       const typeThreshold = data.config.silenceIntelligence.threshold || 5000;
@@ -286,7 +278,7 @@ const IntelligentInterviewTest = () => {
   const security = useSecurityMonitoring({
     interviewStatus: socket.interviewStatus,
     onTerminate: () => endInterviewRef.current(),
-    enabled: interviewConfig.enableSecurity !== false, // default ON unless explicitly false
+    enabled: interviewConfig.enableSecurity !== false,
   });
 
   const startInterview = useCallback(async () => {
@@ -317,7 +309,7 @@ const IntelligentInterviewTest = () => {
 
   const handleViewResults = useCallback(() => {
     const jobId = localStorage.getItem('interview_jobId');
-    router.push(jobId ? `/interview/results?jobId=${jobId}` : '/interview/results');
+    router.push(jobId ? `/candidate/interview/results?jobId=${jobId}` : '/candidate/interview/results');
   }, [router]);
 
   const jobPostTitle = jobData?.jobDetails?.title || jobData?.title;
@@ -333,7 +325,6 @@ const IntelligentInterviewTest = () => {
 
   const isActive = socket.interviewStatus === 'active';
 
-  /* ── Checking assessment status / loading config ── */
   if (!limitReached && (assessmentChecking || (hasJobId && configLoading))) {
     return (
       <>
@@ -351,7 +342,6 @@ const IntelligentInterviewTest = () => {
     );
   }
 
-  /* ── Company blocked ── */
   if (companyBlocked) {
     return (
       <>
@@ -371,7 +361,6 @@ const IntelligentInterviewTest = () => {
     );
   }
 
-  /* ── Post archived ── */
   if (isArchived) {
     return (
       <>
@@ -391,7 +380,7 @@ const IntelligentInterviewTest = () => {
               </Typography>
               <Button
                 variant="contained"
-                onClick={() => router.push('/dashboard/candidate')}
+                onClick={() => router.push('/candidate/dashboard')}
                 sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', bgcolor: '#8310FF', color: '#fff', borderRadius: '10px', px: 3, py: 1.2, boxShadow: 'none', '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' } }}
               >
                 {t('back_to_dashboard')}
@@ -403,7 +392,6 @@ const IntelligentInterviewTest = () => {
     );
   }
 
-  /* ── Post expired ── */
   if (isExpired) {
     return (
       <>
@@ -423,7 +411,7 @@ const IntelligentInterviewTest = () => {
               </Typography>
               <Button
                 variant="contained"
-                onClick={() => router.push('/dashboard/candidate')}
+                onClick={() => router.push('/candidate/dashboard')}
                 sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', bgcolor: '#8310FF', color: '#fff', borderRadius: '10px', px: 3, py: 1.2, boxShadow: 'none', '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' } }}
               >
                 {t('back_to_dashboard')}
@@ -435,7 +423,6 @@ const IntelligentInterviewTest = () => {
     );
   }
 
-  /* ── Already completed ── */
   if (alreadyCompleted) {
     const jobTitle = jobData?.jobDetails?.title || jobData?.title || 'this position';
     const company = jobData?.companyName || '';
@@ -462,7 +449,7 @@ const IntelligentInterviewTest = () => {
               </Typography>
               <Button
                 variant="contained"
-                onClick={() => router.push('/dashboard/candidate')}
+                onClick={() => router.push('/candidate/dashboard')}
                 sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', bgcolor: '#8310FF', color: '#fff', borderRadius: '10px', px: 3, py: 1.2, boxShadow: 'none', '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' } }}
               >
                 {t('back_to_dashboard')}
@@ -474,7 +461,6 @@ const IntelligentInterviewTest = () => {
     );
   }
 
-  /* ── Interview limit reached ── */
   if (limitReached) {
     return (
       <>
@@ -482,96 +468,35 @@ const IntelligentInterviewTest = () => {
         <Box sx={{ minHeight: '100vh', bgcolor: '#F1F5F9', display: 'flex', flexDirection: 'column' }}>
           <Header />
           <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', px: 2, py: { xs: 5, md: 8 } }}>
-            <Box sx={{
-              width: '100%', maxWidth: 480,
-              bgcolor: '#fff', borderRadius: '24px',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)',
-              overflow: 'hidden',
-            }}>
-              {/* Top accent bar — red gradient */}
+            <Box sx={{ width: '100%', maxWidth: 480, bgcolor: '#fff', borderRadius: '24px', boxShadow: '0 20px 60px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
               <Box sx={{ height: 6, background: 'linear-gradient(90deg, #EF4444 0%, #F97316 100%)' }} />
-
               <Box sx={{ p: { xs: 4, md: 5 }, textAlign: 'center' }}>
-                {/* Icon circle */}
-                <Box sx={{
-                  width: 80, height: 80, borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #FEE2E2 0%, #FFEDD5 100%)',
-                  border: '2px solid #FECACA',
-                  boxShadow: '0 4px 16px rgba(239,68,68,0.15)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  mx: 'auto', mb: 2.5,
-                }}>
+                <Box sx={{ width: 80, height: 80, borderRadius: '50%', background: 'linear-gradient(135deg, #FEE2E2 0%, #FFEDD5 100%)', border: '2px solid #FECACA', boxShadow: '0 4px 16px rgba(239,68,68,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2.5 }}>
                   <Typography sx={{ fontSize: '2rem', lineHeight: 1, userSelect: 'none' }}>🔒</Typography>
                 </Box>
-
-                {/* Status badge */}
-                <Box sx={{
-                  display: 'inline-flex', alignItems: 'center', gap: 0.8,
-                  bgcolor: '#FEF2F2', border: '1px solid #FECACA',
-                  borderRadius: '20px', px: 1.8, py: 0.5, mb: 2.5,
-                }}>
+                <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.8, bgcolor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '20px', px: 1.8, py: 0.5, mb: 2.5 }}>
                   <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: '#EF4444', flexShrink: 0 }} />
                   <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: '#DC2626', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                     {t('limit.badge')}
                   </Typography>
                 </Box>
-
-                {/* Heading */}
                 <Typography sx={{ fontWeight: 800, fontSize: '1.45rem', color: '#0F172A', lineHeight: 1.25, mb: 1.5, letterSpacing: '-0.01em' }}>
                   {t('limit.title')}
                 </Typography>
-
-                {/* Job title pill */}
                 {limitJobTitle && (
-                  <Box sx={{
-                    display: 'inline-flex', alignItems: 'center', gap: 1,
-                    bgcolor: '#F8FAFC', border: '1px solid #E2E8F0',
-                    borderRadius: '10px', px: 2, py: 0.7, mb: 2.5,
-                  }}>
+                  <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, bgcolor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', px: 2, py: 0.7, mb: 2.5 }}>
                     <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#94A3B8', flexShrink: 0 }} />
-                    <Typography sx={{ fontSize: '0.83rem', fontWeight: 600, color: '#475569' }}>
-                      {limitJobTitle}
-                    </Typography>
+                    <Typography sx={{ fontSize: '0.83rem', fontWeight: 600, color: '#475569' }}>{limitJobTitle}</Typography>
                   </Box>
                 )}
-
-                {/* Divider */}
                 <Box sx={{ height: '1px', bgcolor: '#F1F5F9', mb: 2.5 }} />
-
-                {/* Description */}
-                <Typography sx={{ fontSize: '0.9rem', color: '#475569', lineHeight: 1.8, mb: 1.5 }}>
-                  {t('limit.desc')}
-                </Typography>
-                <Typography sx={{ fontSize: '0.82rem', color: '#94A3B8', lineHeight: 1.7, mb: 4 }}>
-                  {t('limit.contact')}
-                </Typography>
-
-                {/* Buttons */}
+                <Typography sx={{ fontSize: '0.9rem', color: '#475569', lineHeight: 1.8, mb: 1.5 }}>{t('limit.desc')}</Typography>
+                <Typography sx={{ fontSize: '0.82rem', color: '#94A3B8', lineHeight: 1.7, mb: 4 }}>{t('limit.contact')}</Typography>
                 <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center', flexWrap: 'wrap' }}>
-                  <Button
-                    variant="outlined"
-                    onClick={() => router.back()}
-                    sx={{
-                      textTransform: 'none', fontWeight: 600, fontSize: '0.875rem',
-                      borderRadius: '12px', px: 3, py: 1.2,
-                      borderColor: '#E2E8F0', color: '#475569',
-                      '&:hover': { borderColor: '#CBD5E1', bgcolor: '#F8FAFC' },
-                    }}
-                  >
+                  <Button variant="outlined" onClick={() => router.back()} sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.875rem', borderRadius: '12px', px: 3, py: 1.2, borderColor: '#E2E8F0', color: '#475569', '&:hover': { borderColor: '#CBD5E1', bgcolor: '#F8FAFC' } }}>
                     {t('limit.go_back')}
                   </Button>
-                  <Button
-                    variant="contained"
-                    onClick={() => router.push('/')}
-                    sx={{
-                      textTransform: 'none', fontWeight: 700, fontSize: '0.875rem',
-                      borderRadius: '12px', px: 3, py: 1.2,
-                      background: 'linear-gradient(135deg, #0D9488 0%, #0891B2 100%)',
-                      color: '#fff',
-                      boxShadow: '0 4px 12px rgba(13,148,136,0.25)',
-                      '&:hover': { background: 'linear-gradient(135deg, #0F766E 0%, #0E7490 100%)', boxShadow: '0 6px 16px rgba(13,148,136,0.35)', color: '#fff' },
-                    }}
-                  >
+                  <Button variant="contained" onClick={() => router.push('/')} sx={{ textTransform: 'none', fontWeight: 700, fontSize: '0.875rem', borderRadius: '12px', px: 3, py: 1.2, background: 'linear-gradient(135deg, #0D9488 0%, #0891B2 100%)', color: '#fff', boxShadow: '0 4px 12px rgba(13,148,136,0.25)', '&:hover': { background: 'linear-gradient(135deg, #0F766E 0%, #0E7490 100%)', boxShadow: '0 6px 16px rgba(13,148,136,0.35)', color: '#fff' } }}>
                     {t('limit.go_home')}
                   </Button>
                 </Box>
@@ -600,7 +525,6 @@ const IntelligentInterviewTest = () => {
     setStep('interview');
   };
 
-  /* ── Step 1: Introduction ── */
   if (step === 'intro') {
     return (
       <>
@@ -629,7 +553,6 @@ const IntelligentInterviewTest = () => {
       <Box sx={{ minHeight: '100vh', bgcolor: '#fff', userSelect: 'none', WebkitUserSelect: 'none' }}>
         <Header />
 
-        {/* ── Connection warning banner ── */}
         {socket.isHydrated && socket.connectionStatus !== 'connected' && (
           <Box sx={{ bgcolor: '#fefce8', borderBottom: '1px solid #fde047', px: { xs: 2, md: 4 }, py: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
             <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#ca8a04' }} />
@@ -639,22 +562,9 @@ const IntelligentInterviewTest = () => {
           </Box>
         )}
 
-        {/* ── Main content ── */}
         <Container maxWidth="lg" sx={{ py: { xs: 3, md: 4 } }}>
 
-          {/* ── Title card ── */}
-          <Box
-            sx={{
-              bgcolor: '#fff',
-              borderRadius: '20px',
-              border: '1px solid #e8e2f5',
-              boxShadow: 'none',
-              px: { xs: 2.5, md: 3.5 },
-              py: { xs: 2, md: 2.5 },
-              mb: 3,
-            }}
-          >
-            {/* Top row */}
+          <Box sx={{ bgcolor: '#fff', borderRadius: '20px', border: '1px solid #e8e2f5', boxShadow: 'none', px: { xs: 2.5, md: 3.5 }, py: { xs: 2, md: 2.5 }, mb: 3 }}>
             <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1.5}>
               <Box display="flex" alignItems="center" gap={1.5}>
                 <Box>
@@ -674,7 +584,6 @@ const IntelligentInterviewTest = () => {
               </Box>
 
               <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
-                {/* Pipeline step chip */}
                 {isPipelineJob && currentPipelineStep && candidateProgress && (
                   <Box display="flex" alignItems="center" gap={1}>
                     <Chip
@@ -685,37 +594,21 @@ const IntelligentInterviewTest = () => {
                   </Box>
                 )}
 
-                {/* End button — active only */}
                 {isActive && (
                   <Button
                     variant="contained"
                     onClick={endInterview}
-                    sx={{
-                      fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.92rem', textTransform: 'none',
-                      bgcolor: '#fef2f2', color: '#ef4444', borderRadius: '12px', px: 3, py: 1.25,
-                      boxShadow: 'none', border: '1px solid rgba(239,68,68,0.2)',
-                      '&:hover': { bgcolor: '#fee2e2', boxShadow: 'none' },
-                    }}
+                    sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.92rem', textTransform: 'none', bgcolor: '#fef2f2', color: '#ef4444', borderRadius: '12px', px: 3, py: 1.25, boxShadow: 'none', border: '1px solid rgba(239,68,68,0.2)', '&:hover': { bgcolor: '#fee2e2', boxShadow: 'none' } }}
                   >
                     {t('end_interview')}
                   </Button>
                 )}
               </Box>
             </Box>
-
           </Box>
 
-          {/* ── Interview completion block ── */}
           {isActive && (
-            <Box sx={{
-              bgcolor: '#fff',
-              borderRadius: '16px',
-              border: '1px solid #e8e2f5',
-              boxShadow: 'none',
-              px: { xs: 2.5, md: 3.5 },
-              py: 2,
-              mb: 3,
-            }}>
+            <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #e8e2f5', boxShadow: 'none', px: { xs: 2.5, md: 3.5 }, py: 2, mb: 3 }}>
               <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
                 <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.82rem', color: '#374151' }}>
                   {t('interview_completion')}
@@ -727,26 +620,12 @@ const IntelligentInterviewTest = () => {
               <LinearProgress
                 variant="determinate"
                 value={Math.min(coverage?.overall ?? 0, 100)}
-                sx={{
-                  height: 6, borderRadius: 4,
-                  bgcolor: 'rgba(131,16,255,0.08)',
-                  '& .MuiLinearProgress-bar': { background: 'linear-gradient(90deg,#8310FF,#a855f7)', borderRadius: 4 },
-                }}
+                sx={{ height: 6, borderRadius: 4, bgcolor: 'rgba(131,16,255,0.08)', '& .MuiLinearProgress-bar': { background: 'linear-gradient(90deg,#8310FF,#a855f7)', borderRadius: 4 } }}
               />
             </Box>
           )}
 
-          {/* ── Main card wrapping everything ── */}
-          <Box
-            sx={{
-              bgcolor: '#fff',
-              borderRadius: '20px',
-              border: '1px solid #e8e2f5',
-              boxShadow: 'none',
-              overflow: 'hidden',
-            }}
-          >
-            {/* Question panel (full-width, active only) */}
+          <Box sx={{ bgcolor: '#fff', borderRadius: '20px', border: '1px solid #e8e2f5', boxShadow: 'none', overflow: 'hidden' }}>
             {isActive && (() => {
               const allMsgs = audio.conversationHistory.filter(m => m.type !== 'system');
               const lastMsg = allMsgs.slice(-1)[0];
@@ -764,15 +643,7 @@ const IntelligentInterviewTest = () => {
               );
             })()}
 
-            {/* Two-column grid: camera LEFT · controls RIGHT */}
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', md: '7fr 3fr' },
-                gap: 0,
-              }}
-            >
-              {/* LEFT: Camera — border-right divider */}
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '7fr 3fr' }, gap: 0 }}>
               <Box sx={{ borderRight: { md: '1px solid #f0edf8' }, p: 2.5 }}>
                 <CameraPreview
                   videoRef={camera.videoRef}
@@ -785,7 +656,6 @@ const IntelligentInterviewTest = () => {
                 />
               </Box>
 
-              {/* RIGHT: Interview controls + agent status */}
               <Box sx={{ p: 2.5, display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <InterviewContainer
                   interviewStatus={socket.interviewStatus}
@@ -809,7 +679,6 @@ const IntelligentInterviewTest = () => {
             </Box>
           </Box>
 
-          {/* ── Coverage Dashboard (shown after interview ends) ── */}
           {coverage && (
             <CoverageDashboard
               interviewStatus={socket.interviewStatus}
@@ -823,14 +692,12 @@ const IntelligentInterviewTest = () => {
 
         </Container>
 
-        {/* ── GDPR Consent Modal ── */}
         <GDPRConsentModal
           open={!camera.consentGiven}
           onAccept={camera.giveConsent}
           onDecline={() => router.back()}
         />
 
-        {/* ── Notifications & modals ── */}
         <Snackbar open={notification.open} autoHideDuration={4000} onClose={hideNotification} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
           <Alert severity={notification.severity} onClose={hideNotification}>{notification.message}</Alert>
         </Snackbar>
@@ -850,7 +717,7 @@ const IntelligentInterviewTest = () => {
           securityViolationCount={security.securityViolationCount}
           onDismissFirst={() => security.setShowFirstViolationModal(false)}
           onDismissSecond={() => security.setShowSecurityModal(false)}
-          onReturnToDashboard={() => router.push('/dashboard/candidate')}
+          onReturnToDashboard={() => router.push('/candidate/dashboard')}
         />
 
         {isActive && (

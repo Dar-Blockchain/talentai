@@ -18,8 +18,8 @@ const ConversationPage: React.FC = () => {
 
   const session = useChatSession({
     initialConversationId: typeof routeId === "string" ? routeId : null,
-    deleteRedirectRoute:   "/chat",
-    onConversationChange:  (id) => window.history.replaceState(null, "", `/chat/${id}`),
+    deleteRedirectRoute:   "/candidate/chat",
+    onConversationChange:  (id) => window.history.replaceState(null, "", `/candidate/chat/${id}`),
   });
 
   useEffect(() => {
@@ -37,7 +37,7 @@ const ConversationPage: React.FC = () => {
         title="Messages"
         subtitle={subtitle}
         breadcrumbs={[
-          { label: "Dashboard", href: isCompany ? "/company/dashboard" : "/dashboard/candidate" },
+          { label: "Dashboard", href: isCompany ? "/company/dashboard" : "/candidate/dashboard" },
           { label: "Messages" },
         ]}
         icon={ChatOutlined}

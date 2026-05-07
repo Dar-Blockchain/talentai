@@ -206,7 +206,7 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
         setLoading(false);
         return;
       }
-      router.replace(returnUrl ? decodeURIComponent(returnUrl) : "/dashboard/candidate");
+      router.replace(returnUrl ? decodeURIComponent(returnUrl) : "/candidate/dashboard");
     } catch {
       showToast({ message: "Invalid code. Please try again.", severity: "error" });
       setLoading(false);

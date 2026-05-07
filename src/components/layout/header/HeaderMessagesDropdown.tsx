@@ -320,7 +320,7 @@ const HeaderMessagesDropdown: React.FC<HeaderMessagesDropdownProps> = ({
             fullWidth
             onClick={() => {
               handleMessagesClose();
-              router.push("/chat");
+              router.push("/candidate/chat");
             }}
             endIcon={<OpenInNewIcon sx={{ fontSize: 16 }} />}
             sx={{

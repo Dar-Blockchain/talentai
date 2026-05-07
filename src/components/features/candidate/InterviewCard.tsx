@@ -294,7 +294,7 @@ const InterviewCard: React.FC<InterviewCardProps> = ({ row, type, level, color, 
         {/* View Details Button */}
         <Stack direction="row" justifyContent="flex-end" sx={{ mt: 0.5 }}>
           <Button
-            onClick={() => router.push(`/interview/report/${row._id || row.id}`)}
+            onClick={() => router.push(`/candidate/interview/report/${row._id || row.id}`)}
             size="small"
             variant="contained"
             sx={{
