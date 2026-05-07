@@ -262,9 +262,6 @@ const JobLandingPage: React.FC = () => {
                 }}>
                 {t('apply_panel.btn')}
               </Button>
-              <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', color: '#9CA3AF', textAlign: 'center', mt: 1.25 }}>
-                {t('apply_panel.disclaimer')}
-              </Typography>
             </SectionCard>
           </Box>
         </Box>
