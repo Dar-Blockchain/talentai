@@ -75,6 +75,7 @@ export interface PostGenerationResponse {
 
 export interface PostGenerationState {
   generatedPost: PostGenerationResponse | null;
+  generatedLanguage: string;
   creationType: "ai" | "manual" | null;
   promptDescription: string;
   workMode: string;
@@ -102,6 +103,7 @@ const getDefaultExpirationDate = () => {
 
 const initialState: PostGenerationState = {
   generatedPost: null,
+  generatedLanguage: "en",
   creationType: null,
   promptDescription: "",
   workMode: "",
@@ -149,6 +151,7 @@ const postGenerationSlice = createSlice({
   reducers: {
     clearPost(state) {
       state.generatedPost = null;
+      state.generatedLanguage = "en";
       state.error = null;
       state.generatedAt = null;
       state.creationType = null;
@@ -321,10 +324,11 @@ const postGenerationSlice = createSlice({
 
       .addCase(
         generatePost.fulfilled,
-        (state, action: PayloadAction<PostGenerationResponse>) => {
+        (state, action) => {
           state.loading = false;
+          state.generatedLanguage = action.meta.arg.language || "en";
           state.generatedPost = {
-            ...action.payload,
+            ...(action.payload as PostGenerationResponse),
             expirationDate: state.expirationDate,
           };
           state.generatedAt = Date.now();
