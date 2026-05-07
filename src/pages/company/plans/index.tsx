@@ -285,14 +285,7 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
     setLoading(true);
     setError(null);
     try {
-      if (isTrial) {
-        await import("@/utils/axiosInstance").then(({ default: axiosInstance }) =>
-          axiosInstance.post("subscriptions/activate-free", { planId: plan._id })
-        );
-        onActivateFree();
-      } else {
-        await payWithCard(plan._id);
-      }
+      await payWithCard(plan._id);
     } catch (err: any) {
       setError(err?.message || t("pages.subscription.card.payment_error"));
     } finally {
@@ -501,9 +494,9 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
               }}
             />
           )
-        ) : !currentPlanName ? (
+        ) : (isUpgrade || !currentPlanName) ? (
           <AppButton
-            label={loading ? t("pages.subscription.card.redirecting") : isTrial ? t("pages.subscription.card.get_started_free") : t("pages.subscription.card.get_started")}
+            label={loading ? t("pages.subscription.card.redirecting") : t("pages.subscription.card.get_started", "Upgrade")}
             variant="contained"
             fullWidth
             disabled={loading}
