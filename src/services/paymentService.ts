@@ -49,6 +49,15 @@ export const paymentService = {
     return res.data;
   },
 
+  createCheckoutSession: async (planId: string) => {
+    const res = await axiosInstance.post('stripe/create-checkout-session', { planId });
+    const { url, sessionId, paymentId } = res.data;
+    if (!url) throw new Error('Stripe session URL missing');
+    if (paymentId) localStorage.setItem('pending_payment_id', paymentId);
+    window.open(url, '_blank', 'noopener,noreferrer');
+    return { url, sessionId, paymentId };
+  },
+
   updatePaymentStatus: async (paymentId: string, status: string, additionalData?: Record<string, any>) => {
     const res = await axiosInstance.put(`payments/${paymentId}/status`, {
       status,

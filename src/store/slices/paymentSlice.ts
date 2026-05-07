@@ -257,6 +257,21 @@ export const checkSubscriptionLimit = createAsyncThunk<
   }
 );
 
+export const createCheckoutSession = createAsyncThunk<
+  { url: string; sessionId: string; paymentId: string },
+  string,
+  { rejectValue: string }
+>(
+  "payment/createCheckoutSession",
+  async (planId, { rejectWithValue }) => {
+    try {
+      return await paymentService.createCheckoutSession(planId) as { url: string; sessionId: string; paymentId: string };
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || error.message || "Failed to create checkout session");
+    }
+  }
+);
+
 export const updatePaymentStatus = createAsyncThunk<
   Payment,
   { paymentId: string; status: Payment["status"]; additionalData?: Record<string, any> },
@@ -336,6 +351,11 @@ const paymentSlice = createSlice({
       .addCase(checkSubscriptionLimit.pending, (state) => { state.limitCheckLoading = true; })
       .addCase(checkSubscriptionLimit.fulfilled, (state, action) => { state.limitCheckLoading = false; state.limitCheck = action.payload; })
       .addCase(checkSubscriptionLimit.rejected, (state) => { state.limitCheckLoading = false; state.limitCheck = null; });
+
+    builder
+      .addCase(createCheckoutSession.pending, (state) => { state.loading = true; state.error = null; })
+      .addCase(createCheckoutSession.fulfilled, (state) => { state.loading = false; })
+      .addCase(createCheckoutSession.rejected, (state, action) => { state.loading = false; state.error = action.payload || "Failed to create checkout session"; });
 
     builder
       .addCase(updatePaymentStatus.pending, (state) => { state.loading = true; state.error = null; })

@@ -10,10 +10,10 @@ import PageHeader from "@/components/layout/dashboard/PageHeader";
 import { AppDispatch } from "@/store/store";
 import { fetchPlanLimits, selectPlanLimits, selectPlanLimitsLoading, selectCurrentPlanLimit, PlanLimit } from "@/store/slices/planLimitsSlice";
 import { getMyProfile } from "@/store/slices/userSlice";
-import { payWithCard } from "@/services/stripeService";
 import {
   verifyPayment, cancelSubscription, enableAutoRenew, selectCancellingSubscription,
   fetchCombinedSubscriptionDetails, selectCombinedDetails, selectCombinedDetailsLoading,
+  createCheckoutSession,
 } from "@/store/slices/paymentSlice";
 import {
   Box, Grid, Typography, Chip, Divider, CircularProgress, Alert, Snackbar,
@@ -255,10 +255,10 @@ interface PlanCardProps {
   onEnableAutoRenewClick: (subscriptionId: string) => void;
   onContactUs: () => void;
   onDowngradeClick: (plan: PlanLimit, currentSubId: string) => void;
-  onActivateFree: () => void;
+  onSubscribe: (planId: string) => Promise<any>;
 }
 
-const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRenew, cancelling, currentPlanName, currentSubId, currentAutoRenew, onCancelClick, onEnableAutoRenewClick, onContactUs, onDowngradeClick, onActivateFree }) => {
+const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRenew, cancelling, currentPlanName, currentSubId, currentAutoRenew, onCancelClick, onEnableAutoRenewClick, onContactUs, onDowngradeClick, onSubscribe }) => {
   const { t, i18n } = useTranslation("dashboard");
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState<string | null>(null);
@@ -285,7 +285,7 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
     setLoading(true);
     setError(null);
     try {
-      await payWithCard(plan._id);
+      await onSubscribe(plan._id);
     } catch (err: any) {
       setError(err?.message || t("pages.subscription.card.payment_error"));
     } finally {
@@ -769,7 +769,7 @@ const PlansPage: React.FC = () => {
                 onEnableAutoRenewClick={handleEnableAutoRenew}
                 onContactUs={() => setContactOpen(true)}
                 onDowngradeClick={handleDowngradeClick}
-                onActivateFree={refreshAll}
+                onSubscribe={(planId) => dispatch(createCheckoutSession(planId)).unwrap()}
               />
             </Grid>
           ))}
