@@ -165,6 +165,17 @@ export const enableAutoRenew = createAsyncThunk<void, { subscriptionId: string }
   }
 );
 
+export const scheduleDowngrade = createAsyncThunk<void, { subscriptionId: string; newPlanId: string }, { rejectValue: string }>(
+  "payment/scheduleDowngrade",
+  async ({ subscriptionId, newPlanId }, { rejectWithValue }) => {
+    try {
+      await paymentService.scheduleDowngrade(subscriptionId, newPlanId);
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || error.message || "Failed to schedule downgrade");
+    }
+  }
+);
+
 export const fetchCompanyPaymentHistory = createAsyncThunk<Payment[], void, { rejectValue: string }>(
   "payment/fetchCompanyHistory",
   async (_, { rejectWithValue }) => {
@@ -290,6 +301,11 @@ const paymentSlice = createSlice({
         state.combinedDetails = null;
       })
       .addCase(enableAutoRenew.rejected, (state, action) => { state.cancelling = false; state.error = action.payload || "Failed to enable auto-renewal"; });
+
+    builder
+      .addCase(scheduleDowngrade.pending, (state) => { state.cancelling = true; state.error = null; })
+      .addCase(scheduleDowngrade.fulfilled, (state) => { state.cancelling = false; })
+      .addCase(scheduleDowngrade.rejected, (state, action) => { state.cancelling = false; state.error = action.payload || "Failed to schedule downgrade"; });
 
     builder
       .addCase(fetchCompanyPaymentHistory.pending, (state) => { state.historyLoading = true; })
