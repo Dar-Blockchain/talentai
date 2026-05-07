@@ -264,6 +264,7 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
               label={t("candidate_form.first_name")}
               placeholder="John"
               fullWidth
+              required
               disabled={loading}
               error={!!errors.firstName}
               helperText={errors.firstName?.message}
@@ -277,6 +278,7 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
               label={t("candidate_form.last_name")}
               placeholder="Doe"
               fullWidth
+              required
               disabled={loading}
               error={!!errors.lastName}
               helperText={errors.lastName?.message}
@@ -291,6 +293,7 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
               label={t("candidate_form.email")}
               placeholder="john@example.com"
               fullWidth
+              required
               type="email"
               disabled={loading || !!invitationEmail}
               error={!!errors.email}
@@ -308,6 +311,7 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
               label={t("candidate_form.phone")}
               placeholder="+1 234 567 890"
               fullWidth
+              required
               disabled={loading}
               error={!!errors.phone}
               helperText={errors.phone?.message}
@@ -325,6 +329,9 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
           {/* CV Upload */}
           {!isJoinTeam && (
             <Box sx={full}>
+              <Typography sx={{ fontFamily: "Poppins", fontSize: { xs: "0.8125rem", sm: "0.875rem", md: "0.95rem" }, fontWeight: 500, color: "#6B7280", mb: 0.75 }}>
+                {t("candidate_form.cv_label")}<Box component="span" sx={{ color: "#EF4444", ml: 0.25 }}>*</Box>
+              </Typography>
               <input
                 ref={fileInputRef}
                 type="file"
