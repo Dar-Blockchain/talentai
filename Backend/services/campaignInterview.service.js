@@ -256,7 +256,8 @@ class CampaignInterviewService {
   // ── Start interview ─────────────────────────────────────────────────────────
 
   async startInterview(sessionId, config, candidateId, onGreetingChunk = null) {
-    const { campaignId, moduleType, duration = 20 } = config;
+    const { campaignId, moduleType } = config;
+    const duration = config.duration ?? config.sessionSettings?.duration ?? 20;
 
     // 1. Fetch campaign
     const campaign = await Campaign.findById(campaignId).lean();

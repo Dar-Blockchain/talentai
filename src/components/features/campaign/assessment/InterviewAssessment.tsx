@@ -158,7 +158,9 @@ const InterviewAssessment: React.FC<InterviewAssessmentProps> = ({
       await audio.initializeAudio();
       socket.socketRef.current.emit('start_interview', {
         config: {
-          ...interviewConfig, campaignId, participantId, moduleType,
+          ...interviewConfig,
+          duration: interviewConfig.sessionSettings?.duration,
+          campaignId, participantId, moduleType,
           silenceIntelligence: {
             interviewType: interviewConfig.interviewType,
             candidateBehavior: { interactionStyle: 'balanced', confidenceLevel: 'medium', communicationStyle: 'mixed' },
@@ -350,6 +352,7 @@ const InterviewAssessment: React.FC<InterviewAssessmentProps> = ({
                 interviewStatus={socket.interviewStatus}
                 agentState={audio.agentState}
                 isVoiceActive={audio.speechPhase === 'speaking'}
+                currentTranscript={audio.accumulatedTranscript || audio.currentTranscript}
                 onSubmitAnswer={audio.sendAccumulatedAnswer}
               />
             </Box>

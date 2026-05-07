@@ -42,6 +42,8 @@ const interviewNudge1Template        = compileTemplate("interview-nudge-1.hbs");
 const interviewNudge2Template        = compileTemplate("interview-nudge-2.hbs");
 const interviewNudge3Template        = compileTemplate("interview-nudge-3.hbs");
 const contactEnterpriseTemplate      = compileTemplate("contact-enterprise.hbs");
+const campaignInviteTemplate         = compileTemplate("campaign-invite.hbs");
+const campaignDeadlineReminderTemplate = compileTemplate("campaign-deadline-reminder.hbs");
 
 // Format role: "project_manager" → "Project Manager"
 const formatRole = (role) =>
@@ -250,6 +252,44 @@ const sendPlanUpgradeReminder = async (companyEmail, companyName) => {
   }
 };
 
+// ─── Send Campaign Invitation ────────────────────────────────────────────────
+const sendCampaignInvitation = async (to, { participantName, companyName, campaignTitle, moduleLabel, deadline, campaignDescription, assessmentLink }) => {
+  const mailOptions = {
+    from: FROM_ADDRESS,
+    to,
+    subject: `You've been assigned to a campaign — ${campaignTitle}`,
+    html: campaignInviteTemplate({ participantName, companyName, campaignTitle, moduleLabel, deadline, campaignDescription, assessmentLink, year }),
+    attachments: [logoAttachment],
+  };
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Campaign invitation sent to ${to}`);
+    return true;
+  } catch (error) {
+    console.error("❌ Campaign invitation failed:", error.message);
+    return false;
+  }
+};
+
+// ─── Send Campaign Deadline Reminder ─────────────────────────────────────────
+const sendCampaignDeadlineReminder = async (to, { participantName, companyName, campaignTitle, moduleLabel, deadline, hoursLeft, assessmentLink }) => {
+  const mailOptions = {
+    from: FROM_ADDRESS,
+    to,
+    subject: `⏰ Deadline in ${hoursLeft}h — complete your assessment for ${campaignTitle}`,
+    html: campaignDeadlineReminderTemplate({ participantName, companyName, campaignTitle, moduleLabel, deadline, hoursLeft, assessmentLink, year }),
+    attachments: [logoAttachment],
+  };
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Campaign deadline reminder sent to ${to}`);
+    return true;
+  } catch (error) {
+    console.error("❌ Campaign deadline reminder failed:", error.message);
+    return false;
+  }
+};
+
 // ─── Send Enterprise Inquiry (to TalentAI team) ──────────────────────────────
 const sendEnterpriseInquiry = async ({ name, email, company, message }) => {
   const mailOptions = {
@@ -280,5 +320,7 @@ module.exports = {
   sendCandidateEmail,
   sendPlanUpgradeReminder,
   sendEnterpriseInquiry,
+  sendCampaignInvitation,
+  sendCampaignDeadlineReminder,
   transporter,
 };

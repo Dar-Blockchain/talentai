@@ -91,8 +91,18 @@ const CampaignJoinPage: React.FC = () => {
     setJoining(true); setJoinErr(null);
     try {
       const r = await dispatch(joinCampaignByLink({ token, ...opts })).unwrap();
-      if (r.anonymousToken || r.linkAccessToken) router.push(`/campaign/assessment/${r.campaignId}`);
-      else router.push(`/employee/campaigns/${r.campaignId}/assessment`);
+      if (r.linkAccessToken) {
+        localStorage.setItem(`link_token_${r.campaignId}`, r.linkAccessToken);
+      } else if (r.anonymousToken) {
+        localStorage.setItem(`anon_token_${r.campaignId}`, r.anonymousToken);
+      } else if (user?._id) {
+        // Logged-in user (any role: Company, Employee, …) — store their userId so the
+        // backend can find their participant record via `employee: userId`.
+        localStorage.setItem(`link_token_${r.campaignId}`, String(user._id));
+      }
+      // Always use the public assessment page for link-based access.
+      // /employee/* routes are role-restricted and not reachable by Company users.
+      router.push(`/campaign/assessment/${r.campaignId}`);
     } catch (e: any) { setJoinErr(e); setJoining(false); }
   };
 

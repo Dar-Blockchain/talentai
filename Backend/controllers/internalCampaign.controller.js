@@ -8,6 +8,14 @@ const CompanyMembership = require("../models/CompanyMembership.model");
 const Profile = require("../models/Profile.model");
 const User = require("../models/User.model");
 const bedrock = require("../helpers/bedrock.helpers");
+const { sendCampaignInvitation } = require("../utils/email-service");
+
+const MODULE_LABELS = {
+  QUESTIONNAIRE: "Questionnaire",
+  AI_INTERVIEW: "AI Interview",
+  SKILL_TEST: "Skill Test",
+  TRAINING_PATH: "Training Path",
+};
 const {
   createCampaign,
   getCampaignById,
@@ -141,6 +149,49 @@ exports.createInternalCampaign = async (req, res) => {
         console.log(
           `✅ Created ${participants.length} campaign participants with emails`,
         );
+
+        // Send invitation emails fire-and-forget (only when campaign is already ACTIVE)
+        const emailable = campaign.status === "ACTIVE" ? createdParticipants.filter((p) => p.email) : [];
+        if (emailable.length > 0) {
+          (async () => {
+            try {
+              const userIds = emailable.map((p) => p.employee).filter(Boolean);
+              const [profiles, companyProfile] = await Promise.all([
+                Profile.find({ userId: { $in: userIds } }).select("userId firstName lastName").lean(),
+                Profile.findOne({ userId: companyId }).select("companyDetails.name").lean(),
+              ]);
+              const profileMap = profiles.reduce((acc, p) => {
+                acc[p.userId.toString()] = [p.firstName, p.lastName].filter(Boolean).join(" ") || "Participant";
+                return acc;
+              }, {});
+              const companyName = companyProfile?.companyDetails?.name || "Your company";
+              const assessmentLink = `${process.env.BASE_URL}/employee/campaigns/${campaign._id}/assessment`;
+              const deadlineStr = deadline
+                ? new Date(deadline).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+                : null;
+
+              const results = await Promise.allSettled(
+                emailable.map((p) =>
+                  sendCampaignInvitation(p.email, {
+                    participantName: profileMap[p.employee?.toString()] || "Participant",
+                    companyName,
+                    campaignTitle: title,
+                    moduleLabel: MODULE_LABELS[module?.type] || module?.type || "Assessment",
+                    deadline: deadlineStr,
+                    campaignDescription: description || null,
+                    assessmentLink,
+                  }).then((sent) =>
+                    sent && CampaignParticipant.findByIdAndUpdate(p._id, { invitationSentAt: new Date() })
+                  )
+                )
+              );
+              const sent = results.filter((r) => r.status === "fulfilled").length;
+              console.log(`📧 Campaign invitation emails sent: ${sent}/${emailable.length}`);
+            } catch (err) {
+              console.warn("⚠️ Campaign bulk invitation emails failed:", err.message);
+            }
+          })();
+        }
 
         // Add participant IDs to campaign
         const participantIds = createdParticipants.map((p) => p._id);
@@ -639,6 +690,57 @@ exports.updateCampaignStatus = async (req, res) => {
     const actorId = req.auth?.companyId || req.user._id;
     await verifyOwnership(campaignId, actorId, req.user._id);
     const campaign = await updateCampaignStatus(campaignId, status);
+
+    // When campaign is activated, send invitation emails to all uninvited participants
+    if (status === "ACTIVE") {
+      (async () => {
+        try {
+          const participants = await CampaignParticipant.find({
+            campaign: campaignId,
+            email: { $ne: null },
+            invitationSentAt: null,
+          }).lean();
+
+          if (participants.length === 0) return;
+
+          const employeeIds = participants.map((p) => p.employee).filter(Boolean);
+          const [profiles, companyProfile] = await Promise.all([
+            Profile.find({ userId: { $in: employeeIds } }).select("userId firstName lastName").lean(),
+            Profile.findOne({ userId: campaign.company?._id ?? campaign.company }).select("companyDetails.name").lean(),
+          ]);
+          const profileMap = profiles.reduce((acc, p) => {
+            acc[p.userId.toString()] = [p.firstName, p.lastName].filter(Boolean).join(" ") || "Participant";
+            return acc;
+          }, {});
+          const companyName = companyProfile?.companyDetails?.name || "Your company";
+          const assessmentLink = `${process.env.BASE_URL}/employee/campaigns/${campaignId}/assessment`;
+          const deadlineStr = campaign.deadline
+            ? new Date(campaign.deadline).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+            : null;
+
+          const results = await Promise.allSettled(
+            participants.map((p) =>
+              sendCampaignInvitation(p.email, {
+                participantName: profileMap[p.employee?.toString()] || p.providerName || "Participant",
+                companyName,
+                campaignTitle: campaign.title,
+                moduleLabel: MODULE_LABELS[campaign.module?.type] || campaign.module?.type || "Assessment",
+                deadline: deadlineStr,
+                campaignDescription: campaign.description || null,
+                assessmentLink,
+              }).then((sent) =>
+                sent && CampaignParticipant.findByIdAndUpdate(p._id, { invitationSentAt: new Date() })
+              )
+            )
+          );
+          const sent = results.filter((r) => r.status === "fulfilled").length;
+          console.log(`📧 Campaign activation: invitation emails sent to ${sent}/${participants.length} participant(s)`);
+        } catch (err) {
+          console.warn("⚠️ Campaign activation emails failed:", err.message);
+        }
+      })();
+    }
+
     res.status(200).json({
       success: true,
       message: "Campaign status updated successfully",

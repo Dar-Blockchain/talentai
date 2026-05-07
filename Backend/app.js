@@ -31,6 +31,7 @@ const chatSocketHandler = require("./socket-handlers/chatSocketHandler");
 const { seedDefaultPlans } = require("./seeders/planLimits.seeder");
 const { scheduleAutoInvites } = require("./cron/autoInviteScheduler.cron");
 const { scheduleReminders } = require("./cron/reminderScheduler.cron");
+const { scheduleCampaignReminders } = require("./cron/campaignReminderScheduler.cron");
 //const backupService = require('./services/backupService');
 //const { scheduleDailyBackup } = require('./cron/dailyBackup');
 
@@ -188,6 +189,11 @@ const initializeApp = async () => {
       logger.section("Initializing interview reminder scheduler...");
       scheduleReminders();
       logger.success("Interview reminder scheduler initialized (24h + 48h reminders)");
+
+      // Step 11: Initialize campaign deadline reminder scheduler
+      logger.section("Initializing campaign reminder scheduler...");
+      scheduleCampaignReminders();
+      logger.success("Campaign reminder scheduler initialized (48h deadline reminders)");
     });
   } catch (error) {
     logger.error("Failed to initialize application", error.message);
