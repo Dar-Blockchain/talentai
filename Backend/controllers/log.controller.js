@@ -19,13 +19,3 @@ module.exports.getAllLogs = async (req, res) => {
     res.status(500).json({ message: error.message }); // Return an error if retrieval fails
   }
 };
-
-// Function to retrieve total log count
-module.exports.getTotalLogsCount = async (req, res) => {
-  try {
-    const count = await logService.getTotalLogsCount(); // Call service function to retrieve total logs
-    res.status(200).json({ totalLogs: count }); // Return total log count
-  } catch (error) {
-    res.status(500).json({ message: error.message }); // Return an error if retrieval fails
-  }
-};
