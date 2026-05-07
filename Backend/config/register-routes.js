@@ -70,21 +70,21 @@ function registerRoutes(app) {
   //app.use('/notifications', notificationSystemRouter); //✅ Notification System -> notifications
 
   // Candidate Management
-  app.use("/candidate-progress", candidatePostStepProgressRouter); //✅ Candidate Post Step Progress -> candidate-progress
+  //app.use("/candidate-progress", candidatePostStepProgressRouter); //✅ Candidate Post Step Progress -> candidate-progress
   app.use("/job-applications", jobApplicationRouter); //✅ Job Applications -> job-applications
 
   // Utility & Management
-// app.use("/todo", todoRouter); //✅ To-Do Management -> todos
+  // app.use("/todo", todoRouter); //✅ To-Do Management -> todos
   app.use("/feedback", feedbackRouter); //✅ Feedback Management -> feedbacks
-  app.use("/logs", logRoutes); //✅ System Logs Management -> logs
-//app.use("/task", taskRouter); //✅ Task Management -> tasks
+  app.use("/logs", logRoutes); //✅ System Logs Management -> logs  
+  //app.use("/task", taskRouter); //✅ Task Management -> tasks
   app.use('/admin/backups', backupRouter); //✅ Database Backup Management -> admin/backups
 
   // Billing
   app.use("/stripe", stripRouter); //✅ Stripe Integration -> api/stripe
 
   // Pipeline Interview
-  app.use("/api/pipeline-interview", pipelineInterviewRoutes); // Pipeline Interview Routes -> /interview-pipelines
+  //app.use("/api/pipeline-interview", pipelineInterviewRoutes); // Pipeline Interview Routes -> /interview-pipelines
 
   //payment
   app.use("/payments", paymentRouter); //✅ Payment Management -> payments
