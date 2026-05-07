@@ -13,14 +13,8 @@ const { controledAcces } = require('../middleware/authorize.middleware.js');
 
 // Plans Management Routes (Public Read, Auth Required for Write)
 
-// POST /planLimits - Create a new plan (Admin only)
-router.post("/", requireAuth, authLogMiddleware("planLimits"),planLimitsController.createPlan);
-
 // GET /planLimits - Get all plans (Public)
 router.get("/", planLimitsController.getAllPlans);
-
-// GET /planLimits/:id - Get plan by ID (Public)
-router.get("/:id", planLimitsController.getPlanById);
 
 router.use(requireAuth,authLogMiddleware("planLimits"),controledAcces('Admin'));
 
