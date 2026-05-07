@@ -14,6 +14,11 @@ export const paymentService = {
     await axiosInstance.post(`subscriptions/${subscriptionId}/enable-auto-renew`);
   },
 
+  scheduleDowngrade: async (subscriptionId: string, newPlanId: string) => {
+    const res = await axiosInstance.post(`subscriptions/${subscriptionId}/schedule-downgrade`, { newPlanId });
+    return res.data.data;
+  },
+
   fetchCompanyPaymentHistory: async () => {
     const res = await axiosInstance.get('payments/user/history');
     return res.data.data || res.data;

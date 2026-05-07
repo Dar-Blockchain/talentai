@@ -10,7 +10,12 @@ const SigninContainer: React.FC<{ children: React.ReactNode }> = ({ children }) 
   const { t } = useTranslation("auth");
 
   return (
-    <Box sx={{ height: "100vh", display: "flex", flexDirection: { xs: "column", md: "row" }, overflow: "hidden" }}>
+    <Box sx={{
+      minHeight: "100dvh",
+      display: "flex",
+      flexDirection: { xs: "column", md: "row" },
+      overflowX: "hidden",
+    }}>
 
       {/* ── Left panel ── */}
       <Box sx={{
@@ -105,14 +110,9 @@ const SigninContainer: React.FC<{ children: React.ReactNode }> = ({ children }) 
       {/* ── Right panel ── */}
       <Box sx={{
         flex: 1,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
+        overflowY: "auto",
+        scrollBehavior: "smooth",
         background: "#F7F8FA",
-        px: { xs: 2, sm: 4, md: 5, lg: 6 },
-        py: 0,
-        overflow: "hidden",
         position: "relative",
       }}>
         {/* Subtle bottom radial accent */}
@@ -121,27 +121,40 @@ const SigninContainer: React.FC<{ children: React.ReactNode }> = ({ children }) 
           background: "radial-gradient(ellipse 80% 40% at 50% 100%, rgba(13,148,136,0.05) 0%, transparent 60%)",
         }} />
 
-        <Box sx={{ width: "100%", maxWidth: { xs: 380, sm: 440, md: 456, lg: 476 }, position: "relative", zIndex: 1 }}>
+        <Box sx={{
+          minHeight: { xs: "100%", md: "100dvh" },
+          boxSizing: "border-box",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          px: { xs: 2, sm: 4, md: 4.5, lg: 5 },
+          py: { xs: 2, sm: 2.5, md: 2.5, lg: 3 },
+          position: "relative",
+          zIndex: 1,
+        }}>
+        <Box sx={{ width: "100%", maxWidth: { xs: 360, sm: 400, md: 420 } }}>
           {/* Card */}
           <Box sx={{
             bgcolor: "#fff",
-            borderRadius: { xs: "18px", md: "20px" },
+            borderRadius: { xs: "16px", md: "18px" },
             boxShadow: "0 0 0 1px rgba(0,0,0,0.06), 0 4px 6px -1px rgba(0,0,0,0.04), 0 12px 40px -4px rgba(0,0,0,0.06)",
             overflow: "hidden",
           }}>
             <Box sx={{ height: 2, bgcolor: ACCENT }} />
-            <Box sx={{ px: { xs: 3, sm: 4, md: 4.5 }, pt: { xs: 3.5, sm: 4 }, pb: { xs: 3.5, sm: 4 } }}>
+            <Box sx={{ px: { xs: 2.5, sm: 3 }, pt: { xs: 2.5, sm: 2.75 }, pb: { xs: 2.5, sm: 2.75 } }}>
               {children}
             </Box>
           </Box>
 
           {/* Footer note */}
-          <Typography sx={{ mt: { xs: 1.75, md: 2 }, fontSize: "11.5px", color: "#9CA3AF", fontFamily: "Poppins", textAlign: "center", lineHeight: 1.8 }}>
+          <Typography sx={{ mt: { xs: 1.25, md: 1.25 }, px: { xs: 0.5, md: 0.75 }, fontSize: "11px", color: "#9CA3AF", fontFamily: "Poppins", textAlign: "center", lineHeight: 1.55 }}>
             {t("signin_panel.footer_prefix")}{" "}
             <NextLink href="/terms" style={{ color: ACCENT, textDecoration: "none", fontWeight: 600 }}>{t("signin_panel.terms")}</NextLink>
             {" "}{t("signin_panel.footer_and")}{" "}
             <NextLink href="/privacy" style={{ color: ACCENT, textDecoration: "none", fontWeight: 600 }}>{t("signin_panel.privacy")}</NextLink>
           </Typography>
+        </Box>
         </Box>
       </Box>
     </Box>

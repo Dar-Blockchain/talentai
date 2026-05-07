@@ -11,7 +11,7 @@ const T       = "#0D9488";
 const TBG     = "#F0FDFA";
 const TBORDER = "#99F6E4";
 
-const ChatIndexPage: React.FC = () => {
+const CompanyChatIndexPage: React.FC = () => {
   const router        = useRouter();
   const dispatch      = useDispatch<AppDispatch>();
   const currentUserId = useSelector((state: RootState) => state.user?.connectedUser?.user?._id);
@@ -24,7 +24,7 @@ const ChatIndexPage: React.FC = () => {
 
   useEffect(() => {
     if (!loading && conversations.length > 0)
-      router.replace(`/candidate/chat/${conversations[0]._id}`);
+      router.replace(`/company/chat/${conversations[0]._id}`);
   }, [loading, conversations]);
 
   return (
@@ -39,7 +39,7 @@ const ChatIndexPage: React.FC = () => {
             </Box>
             <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>No conversations yet</Typography>
             <Typography sx={{ fontSize: "13px", color: "#6B7280", textAlign: "center", maxWidth: 300 }}>
-              Start chatting by contacting a company or candidate.
+              Start chatting by contacting a candidate via the Applications page.
             </Typography>
           </>
         ) : (
@@ -50,4 +50,4 @@ const ChatIndexPage: React.FC = () => {
   );
 };
 
-export default ChatIndexPage;
+export default CompanyChatIndexPage;

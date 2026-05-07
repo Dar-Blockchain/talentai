@@ -79,7 +79,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unre
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const { user, profile } = useSelector((state: RootState) => state.user.connectedUser);
 
-  const isCompany = profile?.type?.toLowerCase() === "company";
+  const isCompany = profile?.type === "Company" || profile?.type === "Employee";
   const isAdmin   = profile?.type?.toLowerCase() === "admin";
 
   const displayName = (() => {
@@ -210,9 +210,9 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unre
                     onClick={() => go("/candidate/profile/" + user?._id)} />
                 )}
                 <Row icon={<ChatBubbleOutlineOutlined />} label={t("header.messages")}
-                  badge={unreadMessageCount} onClick={() => go("/chat")} />
+                  badge={unreadMessageCount} onClick={() => go(isCompany ? "/company/chat" : "/candidate/chat")} />
                 <Row icon={<NotificationsOutlined />} label={t("header.notifications")}
-                  onClick={() => go(isCompany ? "/company/notifications" : "/company/notifications")} />
+                  onClick={() => go(isCompany ? "/company/notifications" : "/candidate/notifications")} />
                 <Row icon={<SettingsOutlined />} label={t("header.settings")}
                   onClick={() => go(isCompany ? "/company/settings" : "/candidate/profile/settings")} />
               </Box>

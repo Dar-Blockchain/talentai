@@ -41,6 +41,9 @@ import {
   EMPLOYMENT_OPTION_KEY,
   EXPERIENCE_OPTION_KEY,
   WORK_MODE_OPTION_KEY,
+  normalizeEmploymentType,
+  normalizeExperienceLevel,
+  normalizeWorkMode,
   optionLabel,
   hardSkillLevelLabel,
   softSkillLevelLabel,
@@ -74,8 +77,8 @@ const inputSx = {
 
 const PostPreview = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { t } = useTranslation("posts");
-  const { generatedPost, loading } = useSelector((state: any) => state.postGeneration);
+  const { t, i18n } = useTranslation("posts");
+  const { generatedPost, generatedLanguage, loading } = useSelector((state: any) => state.postGeneration);
 
   const {
     title = "",
@@ -90,6 +93,11 @@ const PostPreview = () => {
 
   const hardSkills: HardSkill[] = generatedPost?.skillAnalysis?.requiredSkills || [];
   const softSkills: SoftSkill[] = generatedPost?.skillAnalysis?.softSkills || [];
+  const labelLanguage = generatedLanguage === "fr" ? "fr" : i18n.language;
+  const labelT = i18n.getFixedT(labelLanguage, "posts");
+  const normalizedEmploymentType = normalizeEmploymentType(employmentType);
+  const normalizedWorkMode = normalizeWorkMode(workMode);
+  const normalizedExperienceLevel = normalizeExperienceLevel(experienceLevel);
 
   const [open, setOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -168,12 +176,12 @@ const PostPreview = () => {
               <WorkOutlined sx={{ fontSize: 14 }} />
               {t("create.post_form.labels.employment_type")}
             </Typography>
-            <TextField select fullWidth value={employmentType}
+            <TextField select fullWidth value={normalizedEmploymentType}
               onChange={(e) => dispatch(updateJobField({ field: "employmentType", value: e.target.value }))}
               sx={inputSx}
             >
               <MenuItem disabled value=""><Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>{t("create.post_form.placeholders.select_employment_type")}</Typography></MenuItem>
-              {contractTypes.map((c) => <MenuItem key={c} value={c} sx={{ fontSize: "13px" }}>{optionLabel(t, c, EMPLOYMENT_OPTION_KEY)}</MenuItem>)}
+              {contractTypes.map((c) => <MenuItem key={c} value={c} sx={{ fontSize: "13px" }}>{optionLabel(labelT, c, EMPLOYMENT_OPTION_KEY)}</MenuItem>)}
             </TextField>
           </Box>
           <Box>
@@ -181,12 +189,12 @@ const PostPreview = () => {
               <LocationOnOutlined sx={{ fontSize: 14 }} />
               {t("create.post_form.labels.work_mode")}
             </Typography>
-            <TextField select fullWidth value={workMode}
+            <TextField select fullWidth value={normalizedWorkMode}
               onChange={(e) => dispatch(updateJobField({ field: "workMode", value: e.target.value }))}
               sx={inputSx}
             >
               <MenuItem disabled value=""><Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>{t("create.post_form.placeholders.select_work_mode")}</Typography></MenuItem>
-              {workModes.map((m) => <MenuItem key={m} value={m} sx={{ fontSize: "13px" }}>{optionLabel(t, m, WORK_MODE_OPTION_KEY)}</MenuItem>)}
+              {workModes.map((m) => <MenuItem key={m} value={m} sx={{ fontSize: "13px" }}>{optionLabel(labelT, m, WORK_MODE_OPTION_KEY)}</MenuItem>)}
             </TextField>
           </Box>
         </Box>
@@ -196,13 +204,13 @@ const PostPreview = () => {
             <TrendingUpIcon sx={{ fontSize: 14 }} />
             {t("create.post_form.labels.experience_level")}
           </Typography>
-          <TextField select fullWidth value={experienceLevel}
+          <TextField select fullWidth value={normalizedExperienceLevel}
             onChange={(e) => dispatch(updateJobField({ field: "experienceLevel", value: e.target.value }))}
             sx={inputSx}
             InputProps={{ startAdornment: <InputAdornment position="start"><TrendingUpIcon sx={{ fontSize: 16, color: "#9CA3AF" }} /></InputAdornment> }}
           >
             <MenuItem disabled value=""><Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>{t("create.post_form.placeholders.select_experience_level")}</Typography></MenuItem>
-            {experienceLevels.map((l) => <MenuItem key={l} value={l} sx={{ fontSize: "13px" }}>{optionLabel(t, l, EXPERIENCE_OPTION_KEY)}</MenuItem>)}
+            {experienceLevels.map((l) => <MenuItem key={l} value={l} sx={{ fontSize: "13px" }}>{optionLabel(labelT, l, EXPERIENCE_OPTION_KEY)}</MenuItem>)}
           </TextField>
         </Box>
 

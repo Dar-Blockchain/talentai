@@ -218,7 +218,7 @@ const ApplicationDetailPage: React.FC = () => {
                       const candidateEmail = (app?.profile?.userId as any)?.email || app?.profile?.contactInformation?.email || "";
                       const base = typeof window !== "undefined" ? window.location.origin : "";
                       const ref = candidateEmail ? encodeURIComponent(candidateEmail) : "link";
-                      setInviteLink(postId ? `${base}/interview/hr/?jobId=${postId}&companyId=${companyId}&ref=${ref}` : "");
+                      setInviteLink(postId ? `${base}/candidate/interview/hr?jobId=${postId}&companyId=${companyId}&ref=${ref}` : "");
                       setInviteOpen(true);
                     }}
                     sx={{

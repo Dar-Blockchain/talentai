@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import { Box, Alert, Breadcrumbs, Chip, IconButton, Link as MuiLink, Menu, MenuItem, Tabs, Tab, Tooltip, Typography } from "@mui/material";
+import { Box, Alert, Breadcrumbs, Chip, Dialog, DialogContent, DialogTitle, IconButton, Link as MuiLink, Menu, MenuItem, Tabs, Tab, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
@@ -26,6 +26,7 @@ import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import EditOutlined from "@mui/icons-material/EditOutlined";
 import PublishOutlined from "@mui/icons-material/PublishOutlined";
 import ContentCopyOutlined from "@mui/icons-material/ContentCopyOutlined";
+import QrCode2Outlined from "@mui/icons-material/QrCode2Outlined";
 import MoreVertOutlined from "@mui/icons-material/MoreVert";
 import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutline";
@@ -36,6 +37,7 @@ import SignalCellularAltOutlined from "@mui/icons-material/SignalCellularAlt";
 import LaptopOutlined from "@mui/icons-material/LaptopOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import MicOutlined from "@mui/icons-material/MicOutlined";
+import { QRCodeSVG } from "qrcode.react";
 
 const TEAL = "#0D9488";
 
@@ -59,6 +61,7 @@ const PostDetailsPage: React.FC = () => {
   const [publishing, setPublishing] = useState(false);
   const [langModalOpen, setLangModalOpen] = useState(false);
   const [savingLanguages, setSavingLanguages] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -112,11 +115,17 @@ const PostDetailsPage: React.FC = () => {
       .finally(() => setPublishing(false));
   };
 
+  const getInterviewLink = () => {
+    if (!job?._id || typeof window === "undefined") return "";
+    const companyId = job.user?._id || connectedUser?._id || "";
+    return `${window.location.origin}/candidate/interview/hr?jobId=${job._id}${companyId ? `&companyId=${companyId}` : ""}&ref=link`;
+  };
+
   const handleCopyLink = () => {
-    if (!job?._id) return;
-    const companyId = job.user?._id || connectedUser?._id || '';
+    const link = getInterviewLink();
+    if (!link) return;
     navigator.clipboard
-      .writeText(`${window.location.origin}/interview/hr?jobId=${job._id}${companyId ? `&companyId=${companyId}` : ''}&ref=link`)
+      .writeText(link)
       .then(() => showToast({ message: t("detail.toast.link_copied"), severity: "success" }))
       .catch(() => showToast({ message: t("detail.toast.link_copy_error"), severity: "error" }));
   };
@@ -297,21 +306,39 @@ const PostDetailsPage: React.FC = () => {
 
                       {/* Copy Interview Link */}
                       {!isDraft && (
-                        <Box
-                          onClick={handleCopyLink}
-                          sx={{
-                            display: "flex", alignItems: "center", gap: 0.75,
-                            px: 1.75, height: 36, borderRadius: "10px", cursor: "pointer",
-                            border: "1.5px solid #A7F3D0", bgcolor: "#F0FDF4",
-                            transition: "border-color 0.15s, background 0.15s",
-                            "&:hover": { borderColor: "#6EE7B7", bgcolor: "#DCFCE7" },
-                          }}
-                        >
-                          <ContentCopyOutlined sx={{ fontSize: 14, color: "#059669" }} />
-                          <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#059669", lineHeight: 1 }}>
-                            {t("detail.actions.copy_link")}
-                          </Typography>
-                        </Box>
+                        <>
+                          <Box
+                            onClick={() => setQrOpen(true)}
+                            sx={{
+                              display: "flex", alignItems: "center", gap: 0.75,
+                              px: 1.25, height: 36, borderRadius: "10px", cursor: "pointer",
+                              border: "1.5px solid #A7F3D0", bgcolor: "#F0FDF4",
+                              transition: "border-color 0.15s, background 0.15s",
+                              "&:hover": { borderColor: "#6EE7B7", bgcolor: "#DCFCE7" },
+                            }}
+                          >
+                            <QrCode2Outlined sx={{ fontSize: 14, color: "#059669" }} />
+                            <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#059669", lineHeight: 1 }}>
+                              {t("detail.actions.qr_link")}
+                            </Typography>
+                          </Box>
+
+                          <Box
+                            onClick={handleCopyLink}
+                            sx={{
+                              display: "flex", alignItems: "center", gap: 0.75,
+                              px: 1.75, height: 36, borderRadius: "10px", cursor: "pointer",
+                              border: "1.5px solid #A7F3D0", bgcolor: "#F0FDF4",
+                              transition: "border-color 0.15s, background 0.15s",
+                              "&:hover": { borderColor: "#6EE7B7", bgcolor: "#DCFCE7" },
+                            }}
+                          >
+                            <ContentCopyOutlined sx={{ fontSize: 14, color: "#059669" }} />
+                            <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#059669", lineHeight: 1 }}>
+                              {t("detail.actions.copy_link")}
+                            </Typography>
+                          </Box>
+                        </>
                       )}
 
                       {/* Three-dot menu (Edit + Delete) */}
@@ -446,6 +473,28 @@ const PostDetailsPage: React.FC = () => {
             onConfirm={handleUpdateLanguages}
             onClose={() => setLangModalOpen(false)}
           />
+
+          <Dialog
+            open={qrOpen}
+            onClose={() => setQrOpen(false)}
+            maxWidth="xs"
+            fullWidth
+            PaperProps={{ sx: { borderRadius: "14px", p: 0.5 } }}
+          >
+            <DialogTitle sx={{ fontSize: "16px", fontWeight: 700, pb: 1.25 }}>
+              {t("detail.qr.title")}
+            </DialogTitle>
+            <DialogContent>
+              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5, pb: 1 }}>
+                <Box sx={{ p: 1.5, border: "1px solid #E5E7EB", borderRadius: "12px", bgcolor: "#fff" }}>
+                  <QRCodeSVG value={getInterviewLink()} size={220} />
+                </Box>
+                <Typography sx={{ fontSize: "12px", color: "#6B7280", textAlign: "center" }}>
+                  {t("detail.qr.scan_hint")}
+                </Typography>
+              </Box>
+            </DialogContent>
+          </Dialog>
         </Box>
       </DashboardLayout>
   );

@@ -1,6 +1,6 @@
 import { memo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Box, Typography, IconButton, Menu, MenuItem, Tooltip } from "@mui/material";
+import { Box, Typography, IconButton, Menu, MenuItem, Tooltip, Dialog, DialogTitle, DialogContent } from "@mui/material";
 import { motion } from "framer-motion";
 import { useRouter } from "next/router";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutlineOutlined";
@@ -11,9 +11,11 @@ import MoreVertOutlined from "@mui/icons-material/MoreVert";
 import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
 import OpenInNewOutlined from "@mui/icons-material/OpenInNewOutlined";
 import ContentCopyOutlined from "@mui/icons-material/ContentCopyOutlined";
+import QrCode2Outlined from "@mui/icons-material/QrCode2Outlined";
 import PublishOutlined from "@mui/icons-material/PublishOutlined";
 import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
 import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
+import { QRCodeSVG } from "qrcode.react";
 
 const fmtDate = (d: string) =>
   new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
@@ -51,6 +53,7 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
   const router = useRouter();
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [copied, setCopied] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
 
   const jd       = job.jobDetails || {};
   const isDraft  = job.status === "draft";
@@ -61,17 +64,29 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
 
   const statusKey   = isDraft ? "draft" : isExpired ? "expired" : job.status === "closed" ? "closed" : "active";
   const statusStyle = STATUS_STYLES[statusKey] ?? STATUS_STYLES.active;
+  const getShareLink = () => {
+    if (typeof window === "undefined") return "";
+    const companyId = job.user?._id || "";
+    return `${window.location.origin}/candidate/interview/hr?jobId=${job._id}${companyId ? `&companyId=${companyId}` : ""}&ref=link`;
+  };
 
   const handleCopyLink = (e: React.MouseEvent) => {
     e.stopPropagation();
     setMenuAnchor(null);
-    const companyId = job.user?._id || '';
-    const link = `${window.location.origin}/interview/hr?jobId=${job._id}${companyId ? `&companyId=${companyId}` : ''}&ref=link`;
+    const link = getShareLink();
     navigator.clipboard.writeText(link).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
   };
+
+  const handleOpenQr = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setMenuAnchor(null);
+    setQrOpen(true);
+  };
+
+  const shareLink = getShareLink();
 
   return (
     <motion.div
@@ -323,23 +338,42 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
             </Box>
 
             {!isDraft && (
-              <Tooltip title={copied ? t("card.copied") : t("card.menu.share_title")} placement="top">
-                <IconButton
-                  size="small"
-                  onClick={handleCopyLink}
-                  sx={{
-                    p: 0.75, borderRadius: "8px",
-                    color: copied ? "#374151" : "#9CA3AF",
-                    bgcolor: copied ? "#F3F4F6" : "transparent",
-                    border: "1px solid",
-                    borderColor: "#E5E7EB",
-                    transition: "all 0.18s",
-                    "&:hover": { color: "#374151", bgcolor: "#F3F4F6" },
-                  }}
-                >
-                  <ContentCopyOutlined sx={{ fontSize: 14 }} />
-                </IconButton>
-              </Tooltip>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                <Tooltip title={t("card.qr.show")} placement="top">
+                  <IconButton
+                    size="small"
+                    onClick={handleOpenQr}
+                    sx={{
+                      p: 0.75, borderRadius: "8px",
+                      color: "#9CA3AF",
+                      border: "1px solid",
+                      borderColor: "#E5E7EB",
+                      transition: "all 0.18s",
+                      "&:hover": { color: "#374151", bgcolor: "#F3F4F6" },
+                    }}
+                  >
+                    <QrCode2Outlined sx={{ fontSize: 14 }} />
+                  </IconButton>
+                </Tooltip>
+
+                <Tooltip title={copied ? t("card.copied") : t("card.menu.share_title")} placement="top">
+                  <IconButton
+                    size="small"
+                    onClick={handleCopyLink}
+                    sx={{
+                      p: 0.75, borderRadius: "8px",
+                      color: copied ? "#374151" : "#9CA3AF",
+                      bgcolor: copied ? "#F3F4F6" : "transparent",
+                      border: "1px solid",
+                      borderColor: "#E5E7EB",
+                      transition: "all 0.18s",
+                      "&:hover": { color: "#374151", bgcolor: "#F3F4F6" },
+                    }}
+                  >
+                    <ContentCopyOutlined sx={{ fontSize: 14 }} />
+                  </IconButton>
+                </Tooltip>
+              </Box>
             )}
           </Box>
         </Box>
@@ -376,6 +410,30 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
           </Box>
         )}
       </Box>
+
+      {!isDraft && (
+        <Dialog
+          open={qrOpen}
+          onClose={(e) => { e.stopPropagation?.(); setQrOpen(false); }}
+          maxWidth="xs"
+          fullWidth
+          PaperProps={{ sx: { borderRadius: "14px", p: 0.5 } }}
+        >
+          <DialogTitle sx={{ fontSize: "16px", fontWeight: 700, pb: 1.25 }}>
+            {t("card.qr.title")}
+          </DialogTitle>
+          <DialogContent>
+            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5, pb: 1 }}>
+              <Box sx={{ p: 1.5, border: "1px solid #E5E7EB", borderRadius: "12px", bgcolor: "#fff" }}>
+                <QRCodeSVG value={shareLink} size={220} />
+              </Box>
+              <Typography sx={{ fontSize: "12px", color: "#6B7280", textAlign: "center" }}>
+                {t("card.qr.scan_hint")}
+              </Typography>
+            </Box>
+          </DialogContent>
+        </Dialog>
+      )}
     </motion.div>
   );
 });

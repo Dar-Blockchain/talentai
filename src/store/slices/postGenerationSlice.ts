@@ -2,6 +2,7 @@
 
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { postGenerationService } from "@/services/postGenerationService";
+import { inferExperienceLevelFromText, isKnownExperienceLevel, normalizeExperienceLevel } from "@/utils/postFormI18n";
 
 // ------------------------------------------------------
 // Types
@@ -75,6 +76,7 @@ export interface PostGenerationResponse {
 
 export interface PostGenerationState {
   generatedPost: PostGenerationResponse | null;
+  generatedLanguage: string;
   creationType: "ai" | "manual" | null;
   promptDescription: string;
   workMode: string;
@@ -102,6 +104,7 @@ const getDefaultExpirationDate = () => {
 
 const initialState: PostGenerationState = {
   generatedPost: null,
+  generatedLanguage: "en",
   creationType: null,
   promptDescription: "",
   workMode: "",
@@ -149,6 +152,7 @@ const postGenerationSlice = createSlice({
   reducers: {
     clearPost(state) {
       state.generatedPost = null;
+      state.generatedLanguage = "en";
       state.error = null;
       state.generatedAt = null;
       state.creationType = null;
@@ -321,10 +325,27 @@ const postGenerationSlice = createSlice({
 
       .addCase(
         generatePost.fulfilled,
-        (state, action: PayloadAction<PostGenerationResponse>) => {
+        (state, action) => {
           state.loading = false;
+          state.generatedLanguage = action.meta.arg.language || "en";
+          const payload = action.payload as PostGenerationResponse;
+          const currentExperienceLevel = payload.jobDetails?.experienceLevel ?? "";
+          const normalizedExperienceLevel = normalizeExperienceLevel(currentExperienceLevel);
+          const inferredExperienceLevel = inferExperienceLevelFromText([
+            payload.jobDetails?.title,
+            payload.jobDetails?.description,
+            ...(payload.jobDetails?.requirements ?? []),
+            ...(payload.jobDetails?.responsibilities ?? []),
+          ].filter(Boolean).join(" "));
+
           state.generatedPost = {
-            ...action.payload,
+            ...payload,
+            jobDetails: {
+              ...payload.jobDetails,
+              experienceLevel: isKnownExperienceLevel(normalizedExperienceLevel)
+                ? normalizedExperienceLevel
+                : inferredExperienceLevel,
+            },
             expirationDate: state.expirationDate,
           };
           state.generatedAt = Date.now();

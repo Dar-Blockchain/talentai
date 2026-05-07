@@ -80,7 +80,8 @@ const MessageList: React.FC<MessageListProps> = ({
         </Box>
       ) : (
         messages.map((message) => {
-          const isOwn = message.sender._id === currentUserId;
+          const senderId = typeof message.sender === "string" ? message.sender : message.sender._id;
+          const isOwn = String(senderId) === String(currentUserId);
 
           return (
             <Box
