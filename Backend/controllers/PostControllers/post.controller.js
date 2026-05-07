@@ -131,6 +131,22 @@ exports.createPost = async (req, res) => {
 };
 
 // Retrieve all posts
+exports.getAllPosts = async (req, res) => {
+  try {
+    const filters = {};
+    if (req.query.status) {
+      filters.status = req.query.status;
+    }
+
+    const posts = await postService.getAllPosts(filters);
+    res.status(200).json({
+      success: true,
+      data: posts,
+    });
+  } catch (error) {
+    handleError(res, error, 400);
+  }
+};
 
 // Retrieve all posts with search, filters and pagination
 exports.getAllPostsWithSearch = async (req, res) => {

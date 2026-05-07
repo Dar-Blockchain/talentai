@@ -346,6 +346,36 @@ module.exports.deleteSoftSkill = async (req, res) => {
   }
 };
 
+// Update finalBid
+module.exports.updateFinalBid = async (req, res) => {
+  try {
+    const { newBid, userId, postId, companyId } = req.body;
+
+    //const companyId = req.user._id;
+
+    if (typeof newBid !== "number" || newBid <= 0) {
+      return res
+        .status(401)
+        .json({ message: "The bid must be a positive number" });
+    }
+
+    const profile = await profileService.updateFinalBid(
+      userId,
+      newBid,
+      companyId,
+      postId,
+    );
+
+    res.status(200).json({
+      message: "Bid updated successfully",
+      profile,
+    });
+  } catch (error) {
+    console.error("Error updating bid:", error);
+    res.status(500).json({ message: error.message || "Error updating bid" });
+  }
+};
+
 exports.getCompanyWithAssessments = async (req, res) => {
   try {
     const { id } = req.user.profile;

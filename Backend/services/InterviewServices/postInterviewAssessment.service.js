@@ -119,6 +119,71 @@ module.exports.hasExistingAssessment = async (candidateId, postId) => {
   }
 };
 
+// ========== GET MATCHING DETAILS ==========
+module.exports.getMatchingDetails = async (candidateId, postId) => {
+  try {
+    console.log(`\n📊 [MATCHING DETAILS] - Getting match score and threshold for candidate`);
+    
+    // Check if post exists and is not archived
+    const post = await Post.findById(postId).select("thresholdScore archived");
+
+    if (!post) {
+      throw new Error("Post not found");
+    }
+
+    // Check if post is archived
+    if (post.archived) {
+      throw new Error("This post is archived and cannot accept assessments");
+    }
+
+    // Get candidate profile
+    const Profile = require("../../models/Profile.model");
+    const candidateProfile = await Profile.findOne({ userId: candidateId });
+    
+    if (!candidateProfile) {
+      throw new Error("Candidate profile not found");
+    }
+
+    // Get threshold score — if 0 or not set, no restriction applies
+    const thresholdScore = post.thresholdScore || 0;
+    if (!thresholdScore) {
+      return { matchScore: null, thresholdScore: 0, meetsThreshold: true, message: "No threshold set for this position" };
+    }
+
+    // Get JobApplication to retrieve matchScore
+    const JobApplication = require("../../models/JobApplication.model");
+    const application = await JobApplication.findOne({
+      profile: candidateProfile._id,
+      post: postId
+    });
+
+    // No application yet — fail open (let them proceed)
+    if (!application) {
+      return { matchScore: null, thresholdScore, meetsThreshold: true, message: "No application found — access granted" };
+    }
+
+    const matchScore = application.matchScore || 0;
+    const meetsThreshold = matchScore >= thresholdScore;
+
+    console.log(`✅ Matching Details Retrieved:`);
+    console.log(`   Match Score: ${matchScore}/100`);
+    console.log(`   Threshold Score: ${thresholdScore}/100`);
+    console.log(`   Meets Threshold: ${meetsThreshold}`);
+
+    return {
+      matchScore,
+      thresholdScore,
+      meetsThreshold,
+      message: meetsThreshold 
+        ? "Your match score meets the required threshold" 
+        : `Your match score (${matchScore}/100) is below the minimum required score (${thresholdScore}/100)`
+    };
+  } catch (error) {
+    console.error("Error getting matching details:", error.message);
+    throw error;
+  }
+};
+
 // ========== CREATE ==========
 module.exports.createPostInterviewAssessment = async (assessmentData) => {
   try {

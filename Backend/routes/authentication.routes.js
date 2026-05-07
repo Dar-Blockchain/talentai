@@ -26,7 +26,7 @@ router.use(authLogMiddleware("Auth"));
 // Description: Creates a new user and profile according to roleType, then sends an OTP. For Candidates, the resume is automatically analyzed and stored in CVAnalysis model. FirstName and lastName are required for Candidate. Resume can be uploaded for Candidates.
 router.post("/register", uploadfile.single('resume'), authController.register);
 
-// POST /auth
+// POST /auth/login
 // Access: Public
 // Expected body: { email }
 // Description: Sends an OTP to an existing user to log in
@@ -36,7 +36,7 @@ router.post("/", authController.login);
 // Access: Public
 // Expected body: { filePath: "public/images/Users/resume.pdf", saveToDatabase?: true }
 // Description: Analyzes a stored resume, extracts information via Bedrock and stores it in CVAnalysis model
-// router.post("/analyze", authController.parseCV);
+router.post("/analyze", authController.parseCV);
 
 // POST /auth/verify-otp
 // Access: Public
@@ -64,5 +64,5 @@ router.post("/logout", requireAuth, authController.logout);
 // Access: Public
 // Description: Returns the role of a user by email (used by job application modal to block non-candidates)
 router.get("/check-role", authController.checkRole);
-    
+
 module.exports = router;

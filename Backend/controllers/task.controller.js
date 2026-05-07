@@ -44,3 +44,20 @@ exports.sendTask = async (req, res) => {
     });
   }
 };
+
+// GET /task/test-email
+exports.testEmail = async (req, res) => {
+  try {
+    const result = await taskService.testEmailConfig();
+    res.status(200).json({
+      success: true,
+      message: "Email configuration is valid and working",
+      email: result.email,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      error: `Email configuration test failed: ${error.message}`,
+    });
+  }
+};
