@@ -163,7 +163,7 @@ const CandidateSettingsPage: React.FC = () => {
                 onInputChange={(key, value) => handleInputChange(key as keyof typeof profile, value)}
                 onSaveLanguage={handleSaveLanguage}
                 showGenerateLanguage={false}
-                centerInterfaceVertically={true}
+                centerInterfaceVertically={false}
               />
             )}
             {activeTab === "notifications" && <NotificationsTab />}

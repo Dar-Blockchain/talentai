@@ -2,18 +2,66 @@ import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
 import { userService } from "@/services/userService";
 
+export interface ConnectedUserEntity {
+  _id?: string;
+  id?: string;
+  username?: string;
+  email?: string;
+  user_image?: string;
+}
+
+export interface ConnectedUserProfile {
+  userId?: ConnectedUserEntity;
+  user_image?: string;
+  type?: string;
+  requiredExperienceLevel?: string;
+  targetRole?: string;
+  firstName?: string;
+  lastName?: string;
+  gender?: string;
+  country?: string;
+  language?: string;
+  timeZone?: string;
+  timezone?: string;
+  phone?: string;
+  address?: string;
+  linkedinUrl?: string;
+  githubUrl?: string;
+  personalWebsite?: string;
+  location?: string;
+  contactInformation?: {
+    phone?: string;
+    location?: string;
+    address?: string;
+    linkedinUrl?: string;
+    githubUrl?: string;
+    personalWebsite?: string;
+  };
+  companyDetails?: {
+    name?: string;
+    industry?: string;
+    size?: string;
+    employmentType?: string;
+  };
+  requiredSkills?: string[];
+  quota?: number;
+  skills?: string[] | null;
+  softSkills?: string[] | null;
+  planUsage?: any;
+}
+
 interface UserState {
   connectedUser: {
-    user: any | null;
-    profile: any | null;
+    user: ConnectedUserEntity | null;
+    profile: ConnectedUserProfile | null;
     planLimits: any | null;
     companyMembership: any | null;
     loading: boolean;
     error: string | null;
   };
   targetUser: {
-    user: any | null;
-    profile: any | null;
+    user: ConnectedUserEntity | null;
+    profile: ConnectedUserProfile | null;
     planLimits: any | null;
     companyMembership: any | null;
     loading: boolean;

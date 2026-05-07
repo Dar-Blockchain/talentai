@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { UserProfile } from '@/types/profile';
-import { experienceLevels, countries, timezones } from '@/constants/profile';
+import { experienceLevels, timezones } from '@/constants/profile';
 import ProfilePictureSection from './ProfilePictureSection';
 import EditOutlined from '@mui/icons-material/EditOutlined';
 import SaveOutlined from '@mui/icons-material/SaveOutlined';
@@ -15,32 +15,74 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { PersonalInformationFormValues, personalInformationSchema } from '@/validations/profileSchemas';
 
 const T = '#0D9488';
-const TBG = '#F0FDFA';
-const TBRD = '#99F6E4';
-const NAVY = '#0D1B2A';
+const T_DARK = '#0F766E';
+const T_LIGHT = '#F0FDFA';
+const T_BORDER = '#99F6E4';
+const NAVY = '#0F172A';
 const SLATE = '#64748B';
+const CARD_BORDER = '#E2E8F0';
+const PAGE_BG = '#F8FAFC';
 
 const fieldSx = {
-  '& .MuiInputBase-root': { transition: 'all 0.2s ease' },
+  '& .MuiInputBase-root': { transition: 'all 0.24s cubic-bezier(0.4, 0, 0.2, 1)' },
   '& .MuiOutlinedInput-root': {
-    borderRadius: '13px',
-    fontSize: '0.8rem',
-    background: '#fff',
-    minHeight: 38,
-    '&.Mui-focused fieldset': { borderColor: T, borderWidth: 1.2 },
-    '&:hover fieldset': { borderColor: T },
+    borderRadius: '16px',
+    fontSize: { xs: '0.86rem', md: '0.9rem' },
+    fontWeight: 500,
+    background: 'linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)',
+    minHeight: 48,
+    '& input, & textarea': {
+      paddingTop: '13px',
+      paddingBottom: '13px',
+      letterSpacing: '0.01em',
+      color: '#0F172A',
+    },
+    '& textarea::placeholder, & input::placeholder': {
+      color: '#94A3B8',
+      opacity: 1,
+      fontWeight: 400,
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#2DD4BF',
+      borderWidth: 1.2,
+    },
+    '&:hover fieldset': { borderColor: '#99F6E4' },
     '& fieldset': { borderColor: '#E2E8F0' },
-    '&.Mui-disabled': { background: '#F8FAFC' },
+    '&.Mui-disabled': {
+      background: 'linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%)',
+      color: '#94A3B8',
+    },
   },
   '& .MuiOutlinedInput-root:not(.Mui-disabled):hover': {
-    boxShadow: '0 3px 12px rgba(13,148,136,0.10)',
+    boxShadow: '0 6px 18px rgba(15,23,42,0.07), 0 2px 8px rgba(45,212,191,0.08)',
   },
   '& .MuiOutlinedInput-root.Mui-focused': {
-    boxShadow: '0 0 0 4px rgba(20,184,166,0.12)',
+    boxShadow: '0 0 0 4px rgba(45,212,191,0.18), 0 10px 24px rgba(15,23,42,0.08)',
   },
-  '& .MuiInputLabel-root.Mui-focused': { color: T },
-  '& .MuiInputLabel-root': { fontSize: '0.76rem', color: SLATE },
-  '& .MuiFormHelperText-root': { marginLeft: 0, fontSize: '0.68rem', lineHeight: 1.2 },
+  '& .MuiInputLabel-root.Mui-focused': { color: T_DARK },
+  '& .MuiInputLabel-root': {
+    fontSize: '0.76rem',
+    color: '#64748B',
+    fontWeight: 600,
+    letterSpacing: '0.01em',
+  },
+  '& .MuiFormHelperText-root': {
+    marginLeft: 2,
+    marginTop: 0.5,
+    fontSize: '0.72rem',
+    lineHeight: 1.3,
+  },
+  '& .MuiFormHelperText-root.Mui-error': {
+    color: '#DC2626',
+    fontWeight: 500,
+  },
+  '& .MuiSvgIcon-root': {
+    color: '#64748B',
+    transition: 'color 0.2s ease',
+  },
+  '& .Mui-focused .MuiSvgIcon-root': {
+    color: T_DARK,
+  },
 };
 
 type TextFieldKey =
@@ -54,7 +96,7 @@ type TextFieldKey =
   | 'githubUrl'
   | 'personalWebsite';
 
-type SelectFieldKey = 'gender' | 'country' | 'timezone' | 'requiredExperienceLevel';
+type SelectFieldKey = 'gender' | 'timezone' | 'requiredExperienceLevel';
 type FieldScope = 'personal' | 'contact';
 
 interface PersonalInformationTabProps {
@@ -89,7 +131,6 @@ const getPersonalFormDefaults = (profile: UserProfile): PersonalInformationFormV
   firstName: profile.firstName || '',
   lastName: profile.lastName || '',
   gender: profile.gender || 'Male',
-  country: profile.country || 'Tunisia',
   timezone: profile.timezone || 'UTC+01:00',
   requiredExperienceLevel: profile.requiredExperienceLevel || 'Mid Level',
   targetRole: profile.targetRole || '',
@@ -148,16 +189,16 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
   const personalTextFields: SharedTextFieldConfig[] = [
     { key: 'firstName', labelKey: 'first_name', scope: 'personal' },
     { key: 'lastName', labelKey: 'last_name', scope: 'personal' },
-    { key: 'targetRole', labelKey: 'target_role', placeholderKey: 'target_role_placeholder', fullWidth: true, scope: 'personal' },
+    { key: 'targetRole', labelKey: 'target_role', placeholderKey: 'target_role_placeholder', scope: 'personal' },
   ];
 
   const contactTextFields: SharedTextFieldConfig[] = [
     { key: 'phone', labelKey: 'phone', scope: 'contact' },
     { key: 'location', labelKey: 'location', scope: 'contact' },
-    { key: 'address', labelKey: 'address', scope: 'contact', fullWidth: true },
+    { key: 'address', labelKey: 'address', scope: 'contact' },
     { key: 'linkedinUrl', labelKey: 'linkedin', scope: 'contact' },
     { key: 'githubUrl', labelKey: 'github', scope: 'contact' },
-    { key: 'personalWebsite', labelKey: 'website', scope: 'contact', fullWidth: true },
+    { key: 'personalWebsite', labelKey: 'website', scope: 'contact' },
   ];
 
   const personalSelectFields: SharedSelectFieldConfig[] = [
@@ -167,7 +208,6 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
       options: ['Male', 'Female', 'Prefer not to say'],
       optionLabelMap: { Male: 'gender_male', Female: 'gender_female', 'Prefer not to say': 'gender_other' },
     },
-    { key: 'country', labelKey: 'country', options: countries },
     { key: 'timezone', labelKey: 'timezone', options: timezones },
     { key: 'requiredExperienceLevel', labelKey: 'experience_level', options: experienceLevels },
   ];
@@ -192,6 +232,32 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
     />
   );
 
+  const selectMenuProps = {
+    PaperProps: {
+      sx: {
+        mt: 0.8,
+        borderRadius: '14px',
+        border: '1px solid #E2E8F0',
+        boxShadow: '0 14px 32px rgba(15,23,42,0.12)',
+        p: 0.4,
+        '& .MuiMenuItem-root': {
+          fontSize: '0.86rem',
+          py: 1,
+          px: 1.2,
+          borderRadius: '8px',
+          transition: 'all 0.16s ease',
+        },
+        '& .MuiMenuItem-root:hover': { bgcolor: '#F0FDFA' },
+        '& .MuiMenuItem-root.Mui-selected': {
+          bgcolor: '#CCFBF1',
+          color: '#0F766E',
+          fontWeight: 700,
+        },
+        '& .MuiMenuItem-root.Mui-selected:hover': { bgcolor: '#99F6E4' },
+      },
+    },
+  };
+
   const renderSharedSelectField = (item: SharedSelectFieldConfig) => (
     <FormControl key={item.key} fullWidth disabled={!isEditing} sx={fieldSx} error={!!errors[item.key]}>
       <InputLabel>{s(item.labelKey)}</InputLabel>
@@ -202,6 +268,7 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
           <Select
             {...field}
             label={s(item.labelKey)}
+            MenuProps={selectMenuProps}
             renderValue={
               item.key === 'requiredExperienceLevel'
                 ? (selected) => (/^not\s+working$/i.test(selected) ? s('experience_not_currently_employed') : selected)
@@ -230,7 +297,19 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
           size="small"
           startIcon={<EditOutlined sx={{ fontSize: '14px !important' }} />}
           onClick={onEditToggle}
-          sx={{ textTransform: 'none', fontWeight: 700, fontSize: '0.72rem', color: T, bgcolor: TBG, border: `1px solid ${TBRD}`, borderRadius: '10px', px: 1.5, '&:hover': { bgcolor: '#CCFBF1' } }}
+          sx={{
+            textTransform: 'none',
+            fontWeight: 700,
+            fontSize: '0.76rem',
+            color: T_DARK,
+            bgcolor: T_LIGHT,
+            border: `1px solid ${T_BORDER}`,
+            borderRadius: '11px',
+            px: 1.7,
+            py: 0.5,
+            transition: 'all 0.2s ease',
+            '&:hover': { bgcolor: '#CCFBF1', transform: 'translateY(-1px)' },
+          }}
         >
           {s('edit')}
         </Button>
@@ -243,7 +322,19 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
           size="small"
           startIcon={<CloseOutlined sx={{ fontSize: '14px !important' }} />}
           onClick={onCancel}
-          sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.72rem', color: '#6B7280', bgcolor: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '10px', px: 1.45 }}
+          sx={{
+            textTransform: 'none',
+            fontWeight: 600,
+            fontSize: '0.76rem',
+            color: '#475569',
+            bgcolor: '#FFFFFF',
+            border: '1px solid #CBD5E1',
+            borderRadius: '11px',
+            px: 1.7,
+            py: 0.5,
+            transition: 'all 0.2s ease',
+            '&:hover': { bgcolor: '#F8FAFC', borderColor: '#94A3B8' },
+          }}
         >
           {s('cancel')}
         </Button>
@@ -252,7 +343,18 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
           startIcon={loading ? undefined : <SaveOutlined sx={{ fontSize: '14px !important' }} />}
           onClick={handleSubmit(handleValidSubmit, handleInvalidSubmit)}
           disabled={loading}
-          sx={{ textTransform: 'none', fontWeight: 700, fontSize: '0.72rem', color: '#fff', bgcolor: T, borderRadius: '10px', px: 1.6, '&:hover': { bgcolor: '#0F766E' } }}
+          sx={{
+            textTransform: 'none',
+            fontWeight: 700,
+            fontSize: '0.76rem',
+            color: '#fff',
+            bgcolor: T,
+            borderRadius: '11px',
+            px: 1.8,
+            py: 0.5,
+            transition: 'all 0.2s ease',
+            '&:hover': { bgcolor: T_DARK, transform: 'translateY(-1px)' },
+          }}
         >
           {loading ? <CircularProgress size={14} color="inherit" /> : s('save')}
         </Button>
@@ -261,23 +363,24 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
   };
 
   const sectionTitleSx = {
-    mb: 0.75,
-    mt: 1.3,
-    fontSize: '0.66rem',
-    fontWeight: 800,
+    mb: 1,
+    mt: 2.2,
+    fontSize: '0.72rem',
+    fontWeight: 700,
     color: SLATE,
     textTransform: 'uppercase',
-    letterSpacing: '0.07em',
+    letterSpacing: '0.09em',
   };
 
   const sectionBoxSx = {
     display: 'grid',
     gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-    gap: 1.2,
-    p: 1,
-    border: '1px solid #ECF2F8',
-    borderRadius: '14px',
+    gap: { xs: 1.3, md: 1.6 },
+    p: { xs: 1.4, md: 1.8 },
+    border: `1px solid ${CARD_BORDER}`,
+    borderRadius: '16px',
     bgcolor: '#FFFFFF',
+    boxShadow: '0 8px 24px rgba(15,23,42,0.05)',
   };
 
   const renderSection = (title: string, content: React.ReactNode, options?: { tinted?: boolean; first?: boolean }) => (
@@ -290,16 +393,29 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
   );
 
   return (
-    <Box sx={{ bgcolor: '#fff', borderRadius: '20px', border: '1px solid #E5E7EB', overflow: 'hidden', boxShadow: '0 14px 32px rgba(2,6,23,0.07)' }}>
-      <Box sx={{ px: { xs: 2, md: 2.6 }, py: 1.5, borderBottom: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <Box sx={{ bgcolor: PAGE_BG, p: { xs: 1, sm: 1.5, md: 2 } }}>
+      <Box sx={{ bgcolor: '#fff', borderRadius: '22px', border: `1px solid ${CARD_BORDER}`, overflow: 'hidden', boxShadow: '0 20px 45px rgba(15,23,42,0.08)' }}>
+      <Box
+        sx={{
+          px: { xs: 1.8, md: 2.6 },
+          py: 1.7,
+          borderBottom: '1px solid #E2E8F0',
+          display: 'flex',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          justifyContent: 'space-between',
+          gap: 1,
+          flexDirection: { xs: 'column', sm: 'row' },
+          background: 'linear-gradient(180deg, #FFFFFF 0%, #FAFCFF 100%)',
+        }}
+      >
         <Box>
-          <Typography sx={{ fontWeight: 800, fontSize: '0.94rem', color: NAVY, letterSpacing: '-0.01em' }}>{s('title')}</Typography>
-          <Typography sx={{ fontSize: '0.7rem', color: '#94A3B8', mt: 0.2 }}>{s('subtitle')}</Typography>
+          <Typography sx={{ fontWeight: 800, fontSize: { xs: '0.95rem', md: '1rem' }, color: NAVY, letterSpacing: '-0.01em' }}>{s('title')}</Typography>
+          <Typography sx={{ fontSize: '0.78rem', color: '#64748B', mt: 0.35, maxWidth: 560 }}>{s('subtitle')}</Typography>
         </Box>
         {renderHeaderActions()}
       </Box>
 
-      <Box sx={{ p: { xs: 1.5, md: 2 }, background: 'linear-gradient(180deg, #FFFFFF 0%, #F8FCFC 100%)' }}>
+      <Box sx={{ p: { xs: 1.4, md: 2.2 }, background: 'linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)' }}>
         {isLoading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
             <CircularProgress sx={{ color: T }} size={28} />
@@ -344,6 +460,7 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
           </>
         )}
       </Box>
+    </Box>
     </Box>
   );
 };

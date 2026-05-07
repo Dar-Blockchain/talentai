@@ -13,10 +13,6 @@ const personalInformationBaseSchema = z.object({
     .string()
     .trim()
     .min(1, 'Gender is required'),
-  country: z
-    .string()
-    .trim()
-    .min(1, 'Country is required'),
   timezone: z
     .string()
     .trim()

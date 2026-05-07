@@ -5,98 +5,17 @@ import { useToast } from '@/hooks/useToast';
 import { RootState, AppDispatch } from '@/store/store';
 import { UserProfile } from '@/types/profile';
 import { updateProfile as updateProfileAction, getMyProfile, uploadProfileImage } from '@/store/slices/userSlice';
-import { contactInformationSchema } from '@/validations/profileSchemas';
-
-const VALID_TABS = ['personal', 'contact', 'preferences', 'language', 'notifications', 'visibility'];
-
-const initialProfile: UserProfile = {
-  username: '',
-  email: '',
-  requiredExperienceLevel: 'Mid Level',
-  targetRole: '',
-  firstName: '',
-  lastName: '',
-  gender: 'Male',
-  country: 'Tunisia',
-  language: 'English',
-  timezone: 'UTC+01:00',
-  phone: '',
-  address: '',
-  linkedinUrl: '',
-  githubUrl: '',
-  personalWebsite: '',
-  location: '',
-  avatar: '',
-  profileType: 'Candidate',
-  companyName: '',
-  name: '',
-  industry: '',
-  companySize: '',
-  size: '',
-  employmentType: 'Remote',
-  requiredSkills: [],
-};
-
-const trimValue = (value?: string) => value?.trim() || '';
-const areStringValuesEqual = (a?: string, b?: string) => trimValue(a) === trimValue(b);
-const areStringArraysEqual = (a: string[] = [], b: string[] = []) => (
-  a.length === b.length && a.every((value, index) => value === b[index])
-);
-
-const mapZodIssuesToErrors = (issues: Array<{ path: (string | number)[]; message: string }>) => {
-  const nextErrors: Record<string, string> = {};
-  issues.forEach((issue) => {
-    const key = issue.path[0];
-    if (typeof key === 'string' && !nextErrors[key]) {
-      nextErrors[key] = issue.message;
-    }
-  });
-  return nextErrors;
-};
-
-const getAvatarUrl = (reduxProfile: any, userData: any) => {
-  const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-  if (reduxProfile?.user_image) {
-    return `${base}images/Users/${reduxProfile.user_image}`;
-  }
-  if (userData?.user_image) {
-    return `${base}images/Users/${userData.user_image}`;
-  }
-  return '';
-};
-
-const buildSyncedProfile = (reduxProfile: any, user: any): UserProfile => {
-  const userData = reduxProfile?.userId;
-  const isCompany = reduxProfile?.type === 'Company';
-
-  return {
-    username: userData?.username || user?.username || '',
-    email: userData?.email || user?.email || '',
-    requiredExperienceLevel: reduxProfile?.requiredExperienceLevel || 'Mid Level',
-    targetRole: reduxProfile?.targetRole ?? '',
-    firstName: reduxProfile?.firstName ?? '',
-    lastName: reduxProfile?.lastName ?? '',
-    gender: reduxProfile?.gender || 'Male',
-    country: reduxProfile?.country || 'Tunisia',
-    language: reduxProfile?.language || 'English',
-    timezone: reduxProfile?.timeZone || reduxProfile?.timezone || 'UTC+01:00',
-    phone: reduxProfile?.phone || reduxProfile?.contactInformation?.phone || '',
-    address: reduxProfile?.address || reduxProfile?.contactInformation?.address || '',
-    linkedinUrl: reduxProfile?.linkedinUrl || reduxProfile?.contactInformation?.linkedinUrl || '',
-    githubUrl: reduxProfile?.githubUrl || reduxProfile?.contactInformation?.githubUrl || '',
-    personalWebsite: reduxProfile?.personalWebsite || reduxProfile?.contactInformation?.personalWebsite || '',
-    location: reduxProfile?.location || reduxProfile?.contactInformation?.location || '',
-    avatar: getAvatarUrl(reduxProfile, userData),
-    profileType: (isCompany ? 'Company' : 'Candidate') as 'Candidate' | 'Company',
-    companyName: reduxProfile?.companyDetails?.name || '',
-    name: reduxProfile?.companyDetails?.name || '',
-    industry: reduxProfile?.companyDetails?.industry || '',
-    companySize: reduxProfile?.companyDetails?.size || '',
-    size: reduxProfile?.companyDetails?.size || '',
-    employmentType: reduxProfile?.companyDetails?.employmentType || 'Remote',
-    requiredSkills: reduxProfile?.requiredSkills || [],
-  };
-};
+import {
+  VALID_TABS,
+  initialProfile,
+  trimValue,
+  areStringValuesEqual,
+  areStringArraysEqual,
+  validateContactInformation,
+  buildContactInformation,
+  hasCandidateContactChanges,
+  buildSyncedProfile,
+} from '@/hooks/profileManagement.utils';
 
 export const useProfileManagement = () => {
   const router = useRouter();
@@ -182,31 +101,16 @@ export const useProfileManagement = () => {
     if (trimValue(source.firstName)) payload.firstName = trimValue(source.firstName);
     if (trimValue(source.lastName)) payload.lastName = trimValue(source.lastName);
     if (source.gender) payload.gender = source.gender;
-    if (source.country) payload.country = source.country;
     if (source.timezone) payload.timeZone = source.timezone;
     if (source.requiredExperienceLevel) payload.requiredExperienceLevel = source.requiredExperienceLevel;
     if (trimValue(source.targetRole)) payload.targetRole = trimValue(source.targetRole);
 
-    const contactValidation = contactInformationSchema.safeParse({
-      phone: source.phone || '',
-      location: source.location || '',
-      address: source.address || '',
-      linkedinUrl: source.linkedinUrl || '',
-      githubUrl: source.githubUrl || '',
-      personalWebsite: source.personalWebsite || '',
-    });
-
-    if (!contactValidation.success) {
-      return { errors: mapZodIssuesToErrors(contactValidation.error.issues), payload: null };
+    const contactValidation = validateContactInformation(source);
+    if (!contactValidation.isValid) {
+      return { errors: contactValidation.errors, payload: null };
     }
 
-    const contactInformation: Record<string, string> = {};
-    if (trimValue(source.phone)) contactInformation.phone = trimValue(source.phone);
-    if (trimValue(source.location)) contactInformation.location = trimValue(source.location);
-    if (trimValue(source.address)) contactInformation.address = trimValue(source.address);
-    if (trimValue(source.linkedinUrl)) contactInformation.linkedinUrl = trimValue(source.linkedinUrl);
-    if (trimValue(source.githubUrl)) contactInformation.githubUrl = trimValue(source.githubUrl);
-    if (trimValue(source.personalWebsite)) contactInformation.personalWebsite = trimValue(source.personalWebsite);
+    const contactInformation = buildContactInformation(source);
 
     if (Object.keys(contactInformation).length > 0) {
       payload.contactInformation = contactInformation;
@@ -216,27 +120,12 @@ export const useProfileManagement = () => {
   };
 
   const buildCandidateContactPayload = (source: UserProfile) => {
-    const validation = contactInformationSchema.safeParse({
-      phone: source.phone || '',
-      location: source.location || '',
-      address: source.address || '',
-      linkedinUrl: source.linkedinUrl || '',
-      githubUrl: source.githubUrl || '',
-      personalWebsite: source.personalWebsite || '',
-    });
-
-    if (!validation.success) {
-      return { errors: mapZodIssuesToErrors(validation.error.issues), payload: null };
+    const validation = validateContactInformation(source);
+    if (!validation.isValid) {
+      return { errors: validation.errors, payload: null };
     }
 
-    const contactInformation: Record<string, string> = {};
-    if (trimValue(source.email)) contactInformation.email = trimValue(source.email);
-    if (trimValue(source.phone)) contactInformation.phone = trimValue(source.phone);
-    if (trimValue(source.location)) contactInformation.location = trimValue(source.location);
-    if (trimValue(source.address)) contactInformation.address = trimValue(source.address);
-    if (trimValue(source.linkedinUrl)) contactInformation.linkedinUrl = trimValue(source.linkedinUrl);
-    if (trimValue(source.githubUrl)) contactInformation.githubUrl = trimValue(source.githubUrl);
-    if (trimValue(source.personalWebsite)) contactInformation.personalWebsite = trimValue(source.personalWebsite);
+    const contactInformation = buildContactInformation(source, { includeEmail: true });
 
     return {
       errors: null,
@@ -275,31 +164,18 @@ export const useProfileManagement = () => {
           !areStringValuesEqual(current.firstName, saved.firstName) ||
           !areStringValuesEqual(current.lastName, saved.lastName) ||
           current.gender !== saved.gender ||
-          current.country !== saved.country ||
           current.timezone !== saved.timezone ||
           current.requiredExperienceLevel !== saved.requiredExperienceLevel ||
           !areStringValuesEqual(current.targetRole, saved.targetRole);
 
         const contactChanged =
-          !areStringValuesEqual(current.phone, saved.phone) ||
-          !areStringValuesEqual(current.location, saved.location) ||
-          !areStringValuesEqual(current.address, saved.address) ||
-          !areStringValuesEqual(current.linkedinUrl, saved.linkedinUrl) ||
-          !areStringValuesEqual(current.githubUrl, saved.githubUrl) ||
-          !areStringValuesEqual(current.personalWebsite, saved.personalWebsite);
+          hasCandidateContactChanges(current, saved);
 
         return personalChanged || contactChanged;
       }
 
       if (activeTab === 'contact') {
-        return (
-          !areStringValuesEqual(current.phone, saved.phone) ||
-          !areStringValuesEqual(current.location, saved.location) ||
-          !areStringValuesEqual(current.address, saved.address) ||
-          !areStringValuesEqual(current.linkedinUrl, saved.linkedinUrl) ||
-          !areStringValuesEqual(current.githubUrl, saved.githubUrl) ||
-          !areStringValuesEqual(current.personalWebsite, saved.personalWebsite)
-        );
+        return hasCandidateContactChanges(current, saved);
       }
     }
 
