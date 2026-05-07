@@ -11,23 +11,6 @@ const handleError = (res, error, defaultStatus = 500) => {
 };
 
 /**
- * GET /subscriptions/active/:companyProfileId
- * Get active subscription for a company
- */
-module.exports.getActiveSubscription = async (req, res) => {
-  try {
-    const companyProfileId = req.user.profile;
-    console.log(`Fetching active subscription for company profile: ${req.user}`);
-
-    const result = await subscriptionService.getActiveSubscription(companyProfileId);
-
-    res.status(200).json(result);
-  } catch (error) {
-    handleError(res, error, 404);
-  }
-};
-
-/**
  * GET /subscriptions
  * Get all subscriptions for a company
  */
@@ -42,24 +25,6 @@ module.exports.getCompanySubscriptions = async (req, res) => {
     res.status(200).json(result);
   } catch (error) {
     handleError(res, error);
-  }
-};
-
-/**
- * GET /subscriptions/:subscriptionId/details
- * Get detailed subscription info
- */
-module.exports.getSubscriptionDetails = async (req, res) => {
-  try {
-    const { subscriptionId } = req.params;
-
-    const result = await subscriptionService.getSubscriptionDetails(
-      subscriptionId
-    );
-
-    res.status(200).json(result);
-  } catch (error) {
-    handleError(res, error, 404);
   }
 };
 
@@ -116,28 +81,6 @@ module.exports.renewSubscription = async (req, res) => {
     res.status(200).json(result);
   } catch (error) {
     handleError(res, error, 404);
-  }
-};
-
-/**
- * GET /subscriptions/:companyProfileId/check-limit/:limitType
- * Check if company can perform an action (posts or monthlyInterviews)
- */
-module.exports.checkLimit = async (req, res) => {
-  try {
-    const { companyProfileId, limitType } = req.params;
-
-    const result = await subscriptionService.checkSubscriptionLimit(
-      companyProfileId,
-      limitType
-    );
-
-    res.status(200).json({
-      success: true,
-      data: result,
-    });
-  } catch (error) {
-    handleError(res, error, 400);
   }
 };
 

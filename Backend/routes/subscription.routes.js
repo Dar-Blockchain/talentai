@@ -13,18 +13,6 @@ const authLogMiddleware = require("../middleware/security/request-log.middleware
 
 // ========== PUBLIC ROUTES ==========
 
-/**
- * GET /subscriptions/active
- * Get active subscription for a company
- * Auth: Required (user must be the company or admin)
- */
-router.get(
-  "/active",
-  requireAuth,
-  authLogMiddleware("subscription"),
-  subscriptionController.getActiveSubscription
-);
-
 router.get(
   "/combined",
   requireAuth,
@@ -42,33 +30,6 @@ router.get(
   requireAuth,
   authLogMiddleware("subscription"),
   subscriptionController.getCompanySubscriptions
-);
-
-/**
- * GET /subscriptions/:subscriptionId/details
- * Get detailed subscription info with usage stats
- * Auth: Required
- */
-router.get(
-  "/:subscriptionId/details",
-  requireAuth,
-  authLogMiddleware("subscription"),
-  subscriptionController.getSubscriptionDetails
-);
-
-/**
- * GET /subscriptions/:companyProfileId/check-limit/:limitType
- * Check if company can perform an action (posts or monthlyInterviews)
- * Auth: Required
- * 
- * Query params:
- * - limitType: 'posts' or 'monthlyInterviews'
- */
-router.get(
-  "/:companyProfileId/check-limit/:limitType",
-  requireAuth,
-  authLogMiddleware("subscription"),
-  subscriptionController.checkLimit
 );
 
 // ========== MANAGEMENT ROUTES (Auth Required) ==========
