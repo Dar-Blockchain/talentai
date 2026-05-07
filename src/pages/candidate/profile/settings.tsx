@@ -94,7 +94,7 @@ const CandidateSettingsPage: React.FC = () => {
       <Box sx={{ flex: 1, mt: "64px", overflowY: "auto", overflowX: "hidden", p: { xs: 1.5, sm: 2.5, md: 3 } }} className="custom-scrollbar">
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "220px 1fr" }, gap: 2.5, alignItems: "start" }}>
 
-          {/* ── LEFT: Profile + Nav ── */}
+          {/* LEFT: Profile + Nav */}
           <Box sx={{ display: { xs: "none", md: "flex" }, flexDirection: "column", gap: 2, position: "sticky", top: 16 }}>
 
             {/* Profile card */}
@@ -142,7 +142,7 @@ const CandidateSettingsPage: React.FC = () => {
             </Box>
           </Box>
 
-          {/* ── RIGHT: Tab content ── */}
+          {/* RIGHT: Tab content */}
           <Box>
             {activeTab === "personal" && (
               <PersonalInformationTab
@@ -163,7 +163,7 @@ const CandidateSettingsPage: React.FC = () => {
                 onInputChange={(key, value) => handleInputChange(key as keyof typeof profile, value)}
                 onSaveLanguage={handleSaveLanguage}
                 showGenerateLanguage={false}
-                centerInterfaceVertically={false}
+                centerInterfaceVertically={true}
               />
             )}
             {activeTab === "notifications" && <NotificationsTab />}

@@ -45,9 +45,14 @@ export interface ConnectedUserProfile {
   };
   requiredSkills?: string[];
   quota?: number;
-  skills?: string[] | null;
-  softSkills?: string[] | null;
+  skills?: any[] | null;
+  softSkills?: any[] | null;
   planUsage?: any;
+  overallScore?: number;
+  interviewDetails?: any[];
+  isPublicProfile?: boolean;
+  createdAt?: string;
+  _id?: string;
 }
 
 interface UserState {

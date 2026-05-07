@@ -191,7 +191,7 @@ const CandidateProfile: React.FC = () => {
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <Typography variant="h4" fontWeight={700}>{profileData.name}</Typography>
               {isOwnProfile && (
-                <Button size="small" startIcon={<Settings />} onClick={() => router.push("/profile/candidate/settings")} sx={{ textTransform: "none", color: CANDIDATE }}>
+                <Button size="small" startIcon={<Settings />} onClick={() => router.push("/candidate/profile/settings")} sx={{ textTransform: "none", color: CANDIDATE }}>
                   Settings
                 </Button>
               )}
