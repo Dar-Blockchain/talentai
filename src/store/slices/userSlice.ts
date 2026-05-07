@@ -9,6 +9,7 @@ export interface ConnectedUserEntity {
   email?: string;
   user_image?: string;
   role?: string;
+  trafficCounter?: number;
 }
 
 export interface ConnectedUserProfile {
