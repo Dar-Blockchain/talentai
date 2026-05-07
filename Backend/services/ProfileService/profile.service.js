@@ -334,7 +334,18 @@ module.exports.getProfileByUserId = async (userId) => {
     let planLimits = null;
     if (profile && profile.planLimits) {
       planLimits = profile.planLimits;
-      // Keep planLimits inside profile so callers receive it as part of the profile object
+    }
+
+    // Auto-assign Trial plan for Company profiles that have no plan yet
+    if (profile && !planLimits && user.role === 'Company') {
+      try {
+        const { assignFreePlanToProfile } = require('../authentication.service');
+        await assignFreePlanToProfile(profile._id);
+        const refreshed = await Profile.findById(profile._id).populate('planLimits');
+        planLimits = refreshed?.planLimits || null;
+      } catch (e) {
+        console.warn('Auto-assign Trial on getMyProfile failed:', e.message);
+      }
     }
 
     return {

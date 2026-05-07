@@ -255,17 +255,19 @@ interface PlanCardProps {
   onEnableAutoRenewClick: (subscriptionId: string) => void;
   onContactUs: () => void;
   onDowngradeClick: (plan: PlanLimit, currentSubId: string) => void;
+  onActivateFree: () => void;
 }
 
-const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRenew, cancelling, currentPlanName, currentSubId, currentAutoRenew, onCancelClick, onEnableAutoRenewClick, onContactUs, onDowngradeClick }) => {
+const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRenew, cancelling, currentPlanName, currentSubId, currentAutoRenew, onCancelClick, onEnableAutoRenewClick, onContactUs, onDowngradeClick, onActivateFree }) => {
   const { t, i18n } = useTranslation("dashboard");
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState<string | null>(null);
   const cfg         = PLAN_CONFIG[plan.name] ?? { color: "#6b7280" };
-  const isActive    = !!activeSubscriptionId;
+  const isTrial     = plan.priceUsd === 0;
+  // Trial is auto-assigned by backend with no subscription record — treat as active when it's the current plan
+  const isActive    = !!activeSubscriptionId || (isTrial && currentPlanName === "Trial");
   const isPopular   = cfg.badge === "Popular";
   const isEnterprise = plan.name === "Unlimited";
-  const isTrial     = plan.priceUsd === 0;
 
   const currentIdx = currentPlanName ? ORDERED_PLANS.indexOf(currentPlanName) : -1;
   const thisIdx    = ORDERED_PLANS.indexOf(plan.name);
@@ -283,7 +285,14 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
     setLoading(true);
     setError(null);
     try {
-      await payWithCard(plan._id);
+      if (isTrial) {
+        await import("@/utils/axiosInstance").then(({ default: axiosInstance }) =>
+          axiosInstance.post("subscriptions/activate-free", { planId: plan._id })
+        );
+        onActivateFree();
+      } else {
+        await payWithCard(plan._id);
+      }
     } catch (err: any) {
       setError(err?.message || t("pages.subscription.card.payment_error"));
     } finally {
@@ -521,8 +530,10 @@ const PlansPage: React.FC = () => {
   const plans        = useSelector(selectPlanLimits);
   const plansLoading = useSelector(selectPlanLimitsLoading);
   const cancelling   = useSelector(selectCancellingSubscription);
-  const combined     = useSelector(selectCombinedDetails);
-  const userPlanLimits = useSelector((state: any) => state.user?.connectedUser?.planLimits);
+  const combined           = useSelector(selectCombinedDetails);
+  const combinedLoading    = useSelector(selectCombinedDetailsLoading);
+  const profileLoading     = useSelector((state: any) => state.user?.connectedUser?.loading);
+  const userPlanLimits     = useSelector((state: any) => state.user?.connectedUser?.planLimits);
 
   const [snackbar, setSnackbar]             = useState<{ open: boolean; message: string; severity: "success" | "error" }>({ open: false, message: "", severity: "success" });
   const [confirmOpen, setConfirmOpen]       = useState(false);
@@ -540,6 +551,7 @@ const PlansPage: React.FC = () => {
   };
 
   useEffect(() => {
+    dispatch(getMyProfile());
     dispatch(fetchPlanLimits());
     dispatch(fetchCombinedSubscriptionDetails());
   }, [dispatch]);
@@ -633,22 +645,37 @@ const PlansPage: React.FC = () => {
   // Current plan name — use userPlanLimits (from profile) as primary source,
   // fall back to highest-tier active subscription from combined data
   const currentPlanName = React.useMemo(() => {
-    // userPlanLimits may be the plan object directly or nested
-    const fromProfile = userPlanLimits?.name || userPlanLimits?.planName || userPlanLimits?.plan?.name || null;
+    // 1. Try to extract name from userPlanLimits (various backend shapes)
+    const fromProfile =
+      userPlanLimits?.name ||
+      userPlanLimits?.planName ||
+      userPlanLimits?.plan?.name ||
+      userPlanLimits?.planId?.name ||
+      null;
     if (fromProfile && ORDERED_PLANS.includes(fromProfile)) return fromProfile;
 
-    // Fall back: highest-tier name from active subscriptions
+    // 2. Fall back to active subscriptions from combined data
     const names = Object.keys(activeSubByPlanName);
-    if (!names.length) return null;
-    return names.sort((a, b) => ORDERED_PLANS.indexOf(b) - ORDERED_PLANS.indexOf(a))[0];
-  }, [activeSubByPlanName, userPlanLimits]);
+    if (names.length) return names.sort((a, b) => ORDERED_PLANS.indexOf(b) - ORDERED_PLANS.indexOf(a))[0];
+
+    // 3. Try combined.combined.planNames (backend may list Trial here)
+    const combinedNames = combined?.combined?.planNames ?? [];
+    if (combinedNames.length) {
+      const validName = combinedNames.find((n: string) => ORDERED_PLANS.includes(n));
+      if (validName) return validName;
+    }
+
+    // 4. If profile has any planLimits set, backend auto-assigned Trial — treat as Trial
+    if (userPlanLimits) return "Trial";
+
+    return null;
+  }, [activeSubByPlanName, userPlanLimits, combined]);
 
   if (process.env.NODE_ENV === "development") {
     console.log("[Plans] userPlanLimits:", userPlanLimits, "| currentPlanName:", currentPlanName, "| activeSubByPlanName:", activeSubByPlanName);
   }
 
   const sortedPlans = [...plans]
-    .filter((p) => p.name !== "Trial")
     .sort((a, b) => (ORDERED_PLANS.indexOf(a.name) ?? 99) - (ORDERED_PLANS.indexOf(b.name) ?? 99));
 
   return (
@@ -729,7 +756,7 @@ const PlansPage: React.FC = () => {
       {/* Combined subscription usage banner */}
       <SubscriptionBanner />
 
-      {plansLoading ? (
+      {plansLoading || combinedLoading || profileLoading ? (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
           <CircularProgress />
         </Box>
@@ -749,6 +776,7 @@ const PlansPage: React.FC = () => {
                 onEnableAutoRenewClick={handleEnableAutoRenew}
                 onContactUs={() => setContactOpen(true)}
                 onDowngradeClick={handleDowngradeClick}
+                onActivateFree={refreshAll}
               />
             </Grid>
           ))}

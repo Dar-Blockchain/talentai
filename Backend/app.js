@@ -89,17 +89,10 @@ const initializeApp = async () => {
       logger.warn('InterviewApplicant dedup failed: ' + e.message);
     }
 
-    // Step 1.5: Seed PlanLimits only if DB has no plans yet
+    // Step 1.5: Seed PlanLimits — always upsert so Trial plan is never missing
     try {
-      const PlanLimits = require("./models/PlanLimits.model");
-      const count = await PlanLimits.countDocuments();
-      if (count === 0) {
-        logger.section("No plans found — seeding default plans...");
-        await seedDefaultPlans();
-        logger.success("PlanLimits seeded");
-      } else {
-        logger.info(`Plans already exist (${count}) — skipping seed`);
-      }
+      await seedDefaultPlans();
+      logger.success("PlanLimits seeded");
     } catch (e) {
       logger.warn("PlanLimits seed check failed: " + e.message);
     }
