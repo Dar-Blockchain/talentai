@@ -17,8 +17,7 @@
     "step2_sub": "PDF format, required",
     "step3_label": "Start AI Interview",
     "step3_sub": "Takes ~20 minutes",
-    "btn": "Apply Now",
-    "disclaimer": "No account required · Takes ~20 min"
+    "btn": "Apply Now"
   },
   "onboarding": {
     "branding": "Professional Recruitment",
