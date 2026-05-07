@@ -43,11 +43,6 @@ router.post("/generate-job-post",controledAcces('Company'), resolveCompanyActor,
 // Required scopes: write:posts
 router.post("/save-post", checkScope(['write:posts']), resolveCompanyActor, postController.createPost);
 
-// GET /post/get-all-posts
-// Description: Returns all posts
-// Required scopes: read:posts
-router.get("/get-all-posts", checkScope(['read:posts']), postController.getAllPosts);
-
 // GET /post/my-posts
 // Description: Posts of current user
 // Required scopes: read:posts

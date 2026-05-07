@@ -74,7 +74,7 @@ function registerRoutes(app) {
   app.use("/job-applications", jobApplicationRouter); //✅ Job Applications -> job-applications
 
   // Utility & Management
-  app.use("/todo", todoRouter); //✅ To-Do Management -> todos
+ // app.use("/todo", todoRouter); //✅ To-Do Management -> todos
   app.use("/feedback", feedbackRouter); //✅ Feedback Management -> feedbacks
   app.use("/logs", logRoutes); //✅ System Logs Management -> logs
   app.use("/task", taskRouter); //✅ Task Management -> tasks

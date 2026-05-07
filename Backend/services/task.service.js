@@ -8,12 +8,5 @@ async function sendTask({ postId, token, candidateEmail, candidateName, stepId, 
 
 const { getMailTransportOptions } = require('../utils/mail-transport-options');
 
-async function testEmailConfig() {
-  const transporter = nodemailer.createTransport(getMailTransportOptions());
-
-  await transporter.verify();
-  return { email: 'contact@talentai.bid' };
-}
-
-module.exports = { sendTask, testEmailConfig };
+module.exports = { sendTask };
 

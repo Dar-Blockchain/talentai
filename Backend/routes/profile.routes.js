@@ -14,8 +14,6 @@ const { requireAuth } = require('../middleware/security/auth.middleware');
 const authLogMiddleware = require("../middleware/security/request-log.middleware")
 const uploadfile = require('../middleware/file-upload.middleware');
 
-router.put('/updateFinalBid', profileController.updateFinalBid);
-
 
 // Auth obligatoire + logs pour toutes les routes
 router.use(requireAuth,authLogMiddleware("Profile"));

@@ -239,47 +239,6 @@ module.exports.checkCandidateAssessmentExists = async (req, res) => {
   }
 };
 
-// ========== GET MATCHING DETAILS ==========
-module.exports.getMatchingDetails = async (req, res) => {
-  try {
-    const { postId } = req.params;
-    const candidateId = req.user._id;
-    const userRole = req.user.role;
-
-    if (!postId) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing required parameter: postId",
-      });
-    }
-
-    // Check if user is a Company - Companies cannot check matching details for themselves
-    if (userRole === "Company") {
-      return res.status(403).json({
-        success: false,
-        message: "Company accounts cannot check interview matching details",
-      });
-    }
-
-    const matchingDetails = await postInterviewAssessmentService.getMatchingDetails(
-      candidateId,
-      postId
-    );
-
-    return res.status(200).json({
-      success: true,
-      data: matchingDetails,
-      message: "Matching details retrieved successfully",
-    });
-  } catch (error) {
-    console.error("❌ Controller error:", error);
-    return res.status(error.status || 500).json({
-      success: false,
-      message: error.message || "Error retrieving matching details",
-    });
-  }
-};
-
 // ========== READ - Get all assessments ==========
 module.exports.getAllPostInterviewAssessments = async (req, res) => {
   try {
