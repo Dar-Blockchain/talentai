@@ -30,9 +30,6 @@ router.use(requireAuth,authLogMiddleware("PostInterviewAssessment"));
 // GET /post-interview-assessments/check/:postId — Check if candidate has assessment for post
 router.get('/check/:postId', postInterviewAssessmentController.checkCandidateAssessmentExists);
 
-// GET /post-interview-assessments/matching/:postId — Get matching details for candidate and post
-router.get('/matching/:postId', postInterviewAssessmentController.getMatchingDetails);
-
 // GET /post-interview-assessments — Get all assessments
 router.get('/', postInterviewAssessmentController.getAllPostInterviewAssessments);
 

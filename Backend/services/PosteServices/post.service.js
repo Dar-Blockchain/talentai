@@ -99,50 +99,6 @@ module.exports.createPostWithSideEffects = async (postData, token, userProfile) 
   }
 };
 
-// Get all posts with advanced filters
-module.exports.getAllPosts = async (filters = {}) => {
-  try {
-    let query = {};
-
-    // Filters for status
-    if (filters.status) {
-      query.status = filters.status;
-    }
-
-    // Filters for employment type
-    if (filters.employmentType) {
-      query["jobDetails.employmentType"] = filters.employmentType;
-    }
-
-    // Filters for experience level
-    if (filters.experienceLevel) {
-      query["jobDetails.experienceLevel"] = filters.experienceLevel;
-    }
-
-    // Filters for skills
-    if (filters.skills) {
-      query["skillAnalysis.requiredSkills.name"] = { $in: filters.skills };
-    }
-
-    // Filters for salary range
-    if (filters.salary) {
-      if (filters.salary.min) {
-        query["jobDetails.salary.min"] = { $gte: filters.salary.min };
-      }
-      if (filters.salary.max) {
-        query["jobDetails.salary.max"] = { $lte: filters.salary.max };
-      }
-    }
-
-    return await Post.find(query)
-      .select('-MatchingConfig')
-      .populate("user", "username email companyDetails")
-      .sort({ createdAt: -1 });
-  } catch (error) {
-    throw new Error(`Error fetching posts: ${error.message}`);
-  }
-};
-
 // Get all posts with search, filters and pagination
 module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6) => {
   try {

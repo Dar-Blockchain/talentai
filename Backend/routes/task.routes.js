@@ -18,8 +18,4 @@ router.use(requireAuth, authLogMiddleware("Task"));
 // Description: Send technical test task via email with PDF
 router.post("/send-task", taskController.sendTask);
 
-// GET /task/test-email
-// Description: Test email configuration
-router.get("/test-email", taskController.testEmail);
-
 module.exports = router;
