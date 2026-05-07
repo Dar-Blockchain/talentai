@@ -193,12 +193,13 @@ const chatSlice = createSlice({
     // WebSocket: add incoming message (avoids duplicates)
     addMessage: (state, action: PayloadAction<Message>) => {
       const msg = action.payload;
-      if (!state.messages.some((m) => m._id === msg._id)) {
+      const msgId = String(msg._id);
+      if (!state.messages.some((m) => String(m._id) === msgId)) {
         state.messages.push(msg);
       }
       // Update conversations list last message
-      const convId = msg.conversationId || (msg as any).conversation;
-      const conv = state.conversations.find((c) => c._id === convId);
+      const convId = String(msg.conversationId || (msg as any).conversation || "");
+      const conv = state.conversations.find((c) => String(c._id) === convId);
       if (conv) {
         conv.lastMessage = { text: msg.text, timestamp: msg.createdAt };
         conv.updatedAt = msg.createdAt;
@@ -294,7 +295,7 @@ const chatSlice = createSlice({
       })
       .addCase(sendMessage.fulfilled, (state) => {
         state.sendingMessage = false;
-        // Message added via WebSocket addMessage action, not here
+        // Message added via explicit dispatch(addMessage(result)) in useChatSession
       })
       .addCase(sendMessage.rejected, (state, action) => {
         state.sendingMessage = false;

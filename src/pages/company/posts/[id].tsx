@@ -116,7 +116,7 @@ const PostDetailsPage: React.FC = () => {
     if (!job?._id) return;
     const companyId = job.user?._id || connectedUser?._id || '';
     navigator.clipboard
-      .writeText(`${window.location.origin}/interview/hr?jobId=${job._id}${companyId ? `&companyId=${companyId}` : ''}&ref=link`)
+      .writeText(`${window.location.origin}/candidate/interview/hr?jobId=${job._id}${companyId ? `&companyId=${companyId}` : ''}&ref=link`)
       .then(() => showToast({ message: t("detail.toast.link_copied"), severity: "success" }))
       .catch(() => showToast({ message: t("detail.toast.link_copy_error"), severity: "error" }));
   };

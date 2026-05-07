@@ -70,10 +70,19 @@ export const useChatSession = ({
   const loading             = conversationLoading || messagesLoading;
 
   const [activeConversationId, setActiveConversationId] = useState<string | null>(initialConversationId);
+
+  // Sync when the URL param arrives (Next.js router.query is empty on first render)
+  useEffect(() => {
+    if (initialConversationId && !activeConversationId) {
+      setActiveConversationId(initialConversationId);
+    }
+  }, [initialConversationId]);
   const [newMessage,           setNewMessage]           = useState("");
   const [deleteDialogOpen,     setDeleteDialogOpen]     = useState(false);
   const [isDeleting,           setIsDeleting]           = useState(false);
   const socketRef = useRef<Socket | null>(null);
+
+  const activeConversationIdRef = useRef<string | null>(initialConversationId);
 
   // ── Socket — one connection per session ─────────────────
   useEffect(() => {
@@ -87,9 +96,17 @@ export const useChatSession = ({
     );
     socketRef.current = socket;
 
+    // Join whichever conversation is active when the socket connects
+    socket.on("connect", () => {
+      if (activeConversationIdRef.current) {
+        socket.emit("join_conversation", { conversationId: activeConversationIdRef.current });
+      }
+    });
+
     socket.on("new_message", (msg: any) => {
       dispatch(addMessage(msg));
-      if (msg.sender !== currentUserId) playNotificationSound();
+      const senderId = msg.sender?._id || msg.sender;
+      if (senderId !== currentUserId) playNotificationSound();
     });
     socket.on("message_read",  ({ messageId, conversationId: cid }: any) =>
       dispatch(markMessageRead({ messageId, conversationId: cid })));
@@ -108,6 +125,7 @@ export const useChatSession = ({
 
   // ── Join / leave room when active conversation changes ───
   useEffect(() => {
+    activeConversationIdRef.current = activeConversationId;
     const s = socketRef.current;
     if (!s || !activeConversationId) return;
     s.emit("join_conversation", { conversationId: activeConversationId });
@@ -156,11 +174,13 @@ export const useChatSession = ({
     }
 
     try {
-      await dispatch(sendMessage({
+      const result = await dispatch(sendMessage({
         conversationId: activeConversationId,
         receiverId: other._id,
         text: newMessage,
       })).unwrap();
+      // Explicitly add to messages state — don't rely solely on WebSocket echo
+      if (result?._id) dispatch(addMessage(result));
       setNewMessage("");
     } catch (err: any) {
       showToast({ message: `Failed to send: ${err || "Unknown error"}`, severity: "error" });

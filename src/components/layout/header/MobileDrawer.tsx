@@ -79,7 +79,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unre
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const { user, profile } = useSelector((state: RootState) => state.user.connectedUser);
 
-  const isCompany = profile?.type?.toLowerCase() === "company";
+  const isCompany = profile?.type === "Company" || profile?.type === "Employee";
   const isAdmin   = profile?.type?.toLowerCase() === "admin";
 
   const displayName = (() => {

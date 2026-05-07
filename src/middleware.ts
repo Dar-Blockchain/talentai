@@ -12,6 +12,7 @@ const PUBLIC_PATHS = [
   "/invitation",
   "/campaign",
   "/candidate/interview/hr",
+  "/interview/hr",
   "/candidate/jobs",
 ];
 

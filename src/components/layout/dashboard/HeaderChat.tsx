@@ -149,7 +149,10 @@ const HeaderChat: React.FC = () => {
             conversations.slice(0, 8).map((conv, i) => {
               const other   = conv.participants?.find((p: any) => p._id !== (currentUser?._id || currentUser?.id));
               const name    = other
-                ? `${other.firstName || ""} ${other.lastName || ""}`.trim() || other.email || "Unknown"
+                ? `${other.profile?.firstName || other.firstName || ""} ${other.profile?.lastName || other.lastName || ""}`.trim()
+                  || other.profile?.companyDetails?.name
+                  || other.email
+                  || "Unknown"
                 : "Unknown";
               const initial = name[0]?.toUpperCase() || "?";
               const lastMsg = conv.lastMessage;
