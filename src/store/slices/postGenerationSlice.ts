@@ -2,6 +2,7 @@
 
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { postGenerationService } from "@/services/postGenerationService";
+import { inferExperienceLevelFromText, isKnownExperienceLevel, normalizeExperienceLevel } from "@/utils/postFormI18n";
 
 // ------------------------------------------------------
 // Types
@@ -327,8 +328,24 @@ const postGenerationSlice = createSlice({
         (state, action) => {
           state.loading = false;
           state.generatedLanguage = action.meta.arg.language || "en";
+          const payload = action.payload as PostGenerationResponse;
+          const currentExperienceLevel = payload.jobDetails?.experienceLevel ?? "";
+          const normalizedExperienceLevel = normalizeExperienceLevel(currentExperienceLevel);
+          const inferredExperienceLevel = inferExperienceLevelFromText([
+            payload.jobDetails?.title,
+            payload.jobDetails?.description,
+            ...(payload.jobDetails?.requirements ?? []),
+            ...(payload.jobDetails?.responsibilities ?? []),
+          ].filter(Boolean).join(" "));
+
           state.generatedPost = {
-            ...(action.payload as PostGenerationResponse),
+            ...payload,
+            jobDetails: {
+              ...payload.jobDetails,
+              experienceLevel: isKnownExperienceLevel(normalizedExperienceLevel)
+                ? normalizedExperienceLevel
+                : inferredExperienceLevel,
+            },
             expirationDate: state.expirationDate,
           };
           state.generatedAt = Date.now();
