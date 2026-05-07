@@ -682,3 +682,97 @@ module.exports.updateProfileComplete = async (req, res) => {
     });
   }
 };
+
+// ========== PAYMENT MANAGEMENT CONTROLLERS ==========
+
+/**
+ * Get all payments for a profile
+ * GET /profile/:profileId/payments
+ */
+module.exports.getProfilePayments = async (req, res) => {
+  try {
+    const { profileId } = req.params;
+
+    if (!profileId) {
+      return res.status(400).json({
+        success: false,
+        message: "Profile ID is required",
+      });
+    }
+
+    const result = await profileService.getProfilePayments(profileId);
+
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error("Error retrieving profile payments:", error);
+    const statusCode = error.status || 500;
+    return res.status(statusCode).json({
+      success: false,
+      message: error.message || "Failed to retrieve profile payments",
+    });
+  }
+};
+
+/**
+ * Get active payment for a profile (most recent completed)
+ * GET /profile/:profileId/payments/active
+ */
+module.exports.getActiveProfilePayment = async (req, res) => {
+  try {
+    const { profileId } = req.params;
+
+    if (!profileId) {
+      return res.status(400).json({
+        success: false,
+        message: "Profile ID is required",
+      });
+    }
+
+    const result = await profileService.getActiveProfilePayment(profileId);
+
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error("Error retrieving active profile payment:", error);
+    const statusCode = error.status || 500;
+    return res.status(statusCode).json({
+      success: false,
+      message: error.message || "Failed to retrieve active profile payment",
+    });
+  }
+};
+
+/**
+ * Add payment to profile
+ * POST /profile/:profileId/payments/add
+ */
+module.exports.addPaymentToProfile = async (req, res) => {
+  try {
+    const { profileId } = req.params;
+    const { paymentId } = req.body;
+
+    if (!profileId) {
+      return res.status(400).json({
+        success: false,
+        message: "Profile ID is required",
+      });
+    }
+
+    if (!paymentId) {
+      return res.status(400).json({
+        success: false,
+        message: "Payment ID is required",
+      });
+    }
+
+    const result = await profileService.addPaymentToProfile(profileId, paymentId);
+
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error("Error adding payment to profile:", error);
+    const statusCode = error.status || 500;
+    return res.status(statusCode).json({
+      success: false,
+      message: error.message || "Failed to add payment to profile",
+    });
+  }
+};
