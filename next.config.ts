@@ -42,15 +42,6 @@ const nextConfig: NextConfig = {
   },
   trailingSlash: true,
 
-  async redirects() {
-    return [
-      {
-        source: '/',
-        destination: '/home/company',
-        permanent: true, // use false if it's temporary
-      },
-    ];
-  },
 };
 
 export default nextConfig;

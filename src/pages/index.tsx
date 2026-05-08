@@ -14,7 +14,7 @@ import { Box } from "@mui/material";
 import { setUserType } from "@/store/slices/userSlice";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
-import dynamic from 'next/dynamic';
+import dynamic from "next/dynamic";
 
 const HomePage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -22,9 +22,7 @@ const HomePage: React.FC = () => {
   useEffect(() => {
     localStorage.setItem("userType", "company");
     dispatch(setUserType("company"));
-    
   }, [dispatch]);
-
 
   return (
     <LandingPageLayout
@@ -36,47 +34,38 @@ const HomePage: React.FC = () => {
       heroSubtitle="AI-Powered Intelligence"
       backgroundColor="#F2F3F4"
     >
-      {/* Block 1 — Stats & Trust (light grey) */}
       <Box sx={{ background: "#F2F3F4", py: { xs: 5, md: 7 } }}>
         <GlobalCompanies />
       </Box>
 
-      {/* Block 2 — Problem (dark) */}
       <Box sx={{ background: "#111827", py: { xs: 6, md: 9 } }}>
         <AISpotlight />
       </Box>
 
-      {/* Block 3 — Solution (white) */}
       <Box sx={{ background: "#ffffff", py: { xs: 6, md: 9 } }}>
         <BiasFreeEvaluation />
       </Box>
 
-      {/* Block 4 — Stakes (dark) */}
       <Box sx={{ background: "#111827", py: { xs: 6, md: 9 } }}>
         <StakesSection />
       </Box>
 
-      {/* Block 5 — The Plan / 3 Steps (light grey) */}
       <Box sx={{ background: "#F2F3F4", py: { xs: 6, md: 9 } }}>
         <SolutionsSection />
       </Box>
 
-      {/* Block 6 — Before / After (white) */}
       <Box sx={{ background: "#ffffff", py: { xs: 6, md: 9 } }}>
         <SuccessSection />
       </Box>
 
-      {/* Block 7 — Final CTA (dark) */}
       <Box sx={{ background: "#111827" }}>
         <FinalCTA />
       </Box>
 
-      {/* Block 8 — FAQ (light grey) */}
       <Box sx={{ background: "#F2F3F4" }}>
         <FAQSection />
       </Box>
 
-      {/* Block 9 — Contact (white) */}
       <Box sx={{ background: "#ffffff", py: { xs: 6, md: 9 } }}>
         <ContactSection />
       </Box>
@@ -86,7 +75,6 @@ const HomePage: React.FC = () => {
   );
 };
 
-// Export with dynamic import to prevent SSR issues
 export default dynamic(() => Promise.resolve(HomePage), {
-  ssr: false
+  ssr: false,
 });

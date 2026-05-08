@@ -57,8 +57,8 @@ const SigninContainer: React.FC<{ children: React.ReactNode }> = ({ children }) 
         <Box sx={{ position: "absolute", top: "42%", right: "14%", width: 6, height: 6, borderRadius: "50%", bgcolor: "rgba(167,243,208,0.4)", pointerEvents: "none" }} />
 
         {/* Logo */}
-        <Box sx={{ position: "absolute", top: "clamp(24px, 4vh, 40px)", left: "clamp(32px, 4vw, 64px)", zIndex: 1 }}>
-          <NextLink href="/home/company" style={{ textDecoration: "none", display: "inline-block" }}>
+        <Box sx={{ position: "absolute", top: "clamp(24px, 4vh, 40px)", left: "clamp(32px, 4vw, 64px)", zIndex: 10 }}>
+          <NextLink href="/" style={{ textDecoration: "none", display: "inline-flex", cursor: "pointer" }}>
             <Image
               src="/images/home/TalentAiLogo.png"
               alt="TalentAI"

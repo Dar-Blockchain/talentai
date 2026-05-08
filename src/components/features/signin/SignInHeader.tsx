@@ -1,5 +1,6 @@
 import { RootState } from "@/store/store";
 import { Box, Typography } from "@mui/material";
+import NextLink from "next/link";
 import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 
@@ -14,12 +15,14 @@ const SignInHeader: React.FC<Props> = ({ themeColors }) => {
   return (
     <Box sx={{ mb: { xs: 1.75, sm: 2 }, textAlign: "center" }}>
       {/* Mobile-only logo */}
-      <Box
-        component="img"
-        src={userType === "company" ? "/logo.svg" : "/logo-purple.svg"}
-        alt="TalentAI Logo"
-        sx={{ height: { xs: 20, sm: 22 }, display: { xs: "block", md: "none" }, mb: 1.75, mx: "auto" }}
-      />
+      <NextLink href="/" style={{ display: "inline-block" }}>
+        <Box
+          component="img"
+          src={userType === "company" ? "/logo.svg" : "/logo-purple.svg"}
+          alt="TalentAI Logo"
+          sx={{ height: { xs: 20, sm: 22 }, display: { xs: "block", md: "none" }, mb: 1.75, mx: "auto", cursor: "pointer" }}
+        />
+      </NextLink>
 
       <Typography sx={{
         fontSize: { xs: "1.25rem", sm: "1.4rem", md: "1.5rem" },

@@ -65,6 +65,8 @@ const JobLandingPage: React.FC = () => {
   const jobDetails = useSelector((state: RootState) => state.jobDetails.jobDetails);
   const loading = useSelector((state: RootState) => state.jobDetails.loading);
   const error = useSelector((state: RootState) => state.jobDetails.error);
+  const userRole = useSelector((state: RootState) => state.user?.connectedUser?.user?.role ?? null);
+  const isCompany = userRole === 'Company';
 
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -254,14 +256,22 @@ const JobLandingPage: React.FC = () => {
 
               <Divider sx={{ my: 2 }} />
 
-              <Button variant="contained" fullWidth onClick={() => setModalOpen(true)} endIcon={<ArrowForwardIcon />}
-                sx={{
-                  bgcolor: PURPLE, color: '#fff', fontWeight: 700, fontFamily: 'Poppins',
-                  fontSize: '0.95rem', py: 1.5, borderRadius: '12px', textTransform: 'none',
-                  boxShadow: 'none', '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' },
-                }}>
-                {t('apply_panel.btn')}
-              </Button>
+              {isCompany ? (
+                <Box sx={{ textAlign: 'center', py: 1.5, px: 2, borderRadius: '12px', bgcolor: '#FEF2F2', border: '1px solid #FECACA' }}>
+                  <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.85rem', color: '#DC2626' }}>
+                    Company accounts cannot apply to job postings.
+                  </Typography>
+                </Box>
+              ) : (
+                <Button variant="contained" fullWidth onClick={() => setModalOpen(true)} endIcon={<ArrowForwardIcon />}
+                  sx={{
+                    bgcolor: PURPLE, color: '#fff', fontWeight: 700, fontFamily: 'Poppins',
+                    fontSize: '0.95rem', py: 1.5, borderRadius: '12px', textTransform: 'none',
+                    boxShadow: 'none', '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' },
+                  }}>
+                  {t('apply_panel.btn')}
+                </Button>
+              )}
             </SectionCard>
           </Box>
         </Box>

@@ -67,6 +67,7 @@ function DbLanguageSync() {
 
 function AuthWrapper({ children }: { children: React.ReactNode }) {
   const { user } = useSelector((state: RootState) => state.user.connectedUser);
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const dispatch = useDispatch<typeof store.dispatch>();
   const router = useRouter();
   const { t } = useTranslation('auth');
@@ -82,6 +83,40 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
       router.replace("/signin");
     });
   }, [router.query.force_logout]);
+
+  // Keep auth state in sync across tabs.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const hasLocalToken = () => {
+      const token = localStorage.getItem("api_token") || localStorage.getItem("token");
+      return !!token;
+    };
+
+    const syncAuthFromStorage = () => {
+      if (!hasLocalToken() && isAuthenticated) {
+        dispatch(clearAuth());
+        dispatch(clearConnectedUser());
+      }
+    };
+
+    const onStorage = (event: StorageEvent) => {
+      // localStorage.clear() from another tab sets key to null.
+      if (!event.key || event.key === "api_token" || event.key === "token" || event.key === "persist:root") {
+        syncAuthFromStorage();
+      }
+    };
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", syncAuthFromStorage);
+    document.addEventListener("visibilitychange", syncAuthFromStorage);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("focus", syncAuthFromStorage);
+      document.removeEventListener("visibilitychange", syncAuthFromStorage);
+    };
+  }, [dispatch, isAuthenticated]);
 
   return (
     <NotificationProvider userId={userId}>

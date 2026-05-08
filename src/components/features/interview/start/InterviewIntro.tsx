@@ -49,9 +49,9 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
   const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
 
   const handleNext = () => {
-    const firstName = profile?.firstName || profile?.name?.split(' ')[0] || authUser?.username || 'Unknown';
-    const lastName = profile?.lastName || profile?.name?.split(' ').slice(1).join(' ') || '';
-    const email = authUser?.email || profile?.email || '';
+    const firstName = profile?.firstName || authUser?.username || 'Unknown';
+    const lastName = profile?.lastName || '';
+    const email = authUser?.email || '';
     onNext({ firstName, lastName, email, applicantId: '' });
   };
 
