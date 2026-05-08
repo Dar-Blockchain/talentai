@@ -1,23 +1,28 @@
 import React from "react";
 import { useRouter } from "next/router";
 import { Box } from "@mui/material";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import { useChatSession } from "@/hooks/useChatSession";
 import ChatShell from "@/components/features/chat/ChatShell";
 
-export default function CompanyConversationPage() {
+interface Props {
+  basePath: string;
+  isCompany: boolean;
+  layout: React.FC<{ children: React.ReactNode }>;
+}
+
+const SharedChatConversationPage: React.FC<Props> = ({ basePath, isCompany, layout: Layout }) => {
   const router = useRouter();
   const { conversationId: routeId } = router.query;
 
   const session = useChatSession({
     initialConversationId: typeof routeId === "string" ? routeId : null,
-    deleteRedirectRoute:   "/company/chat",
-    onConversationChange:  (id) => window.history.replaceState(null, "", `/company/chat/${id}`),
+    deleteRedirectRoute:   basePath,
+    onConversationChange:  (id) => window.history.replaceState(null, "", `${basePath}/${id}`),
   });
 
   return (
-    <DashboardLayout>
-      <Box sx={{ display: "flex", flexDirection: "column", height: "calc(100vh - 100px)" }}>
+    <Layout>
+      <Box sx={{ flex: 1, display: "flex", minHeight: 0, p: { xs: 1, sm: 2 } }}>
         <ChatShell
           conversations={session.conversations}
           conversation={session.conversation}
@@ -27,7 +32,7 @@ export default function CompanyConversationPage() {
           otherUser={session.otherUser}
           loading={session.loading}
           sending={session.sending}
-          isCompany
+          isCompany={isCompany}
           newMessage={session.newMessage}
           setNewMessage={session.setNewMessage}
           onSend={session.handleSendMessage}
@@ -40,6 +45,8 @@ export default function CompanyConversationPage() {
           onSelectConversation={session.handleSelectConversation}
         />
       </Box>
-    </DashboardLayout>
+    </Layout>
   );
-}
+};
+
+export default SharedChatConversationPage;
