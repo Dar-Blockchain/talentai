@@ -47,8 +47,6 @@ const ConversationHeader: React.FC<ConversationHeaderProps> = ({
           sx={{
             color: '#9CA3AF',
             fontSize: '12px',
-            filter: 'blur(4px)',
-            userSelect: 'none',
           }}
         >
           {otherUser?.email}
