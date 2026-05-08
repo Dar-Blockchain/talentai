@@ -15,7 +15,7 @@ const JobSeekerLanding: React.FC = () => {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace("/home/company");
+    router.replace("/");
   }, [router]);
 
   return null;

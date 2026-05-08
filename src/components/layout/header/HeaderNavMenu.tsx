@@ -28,7 +28,6 @@ const HeaderNavMenu: React.FC<HeaderNavMenuProps> = ({ direction = "row", invert
     if (userType === "candidate") return [
       { label: t("nav.find_jobs"),      href: "/posts/"        },
       { label: t("nav.how_it_works"),   id:   "howitworks"     },
-      { label: t("nav.are_you_hiring"), href: "/home/company/" },
     ];
     return [
       { label: t("nav.features"), id: "features" },

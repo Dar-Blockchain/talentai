@@ -72,6 +72,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
         sx={{
           display: "flex",
           alignItems: "center",
+          cursor: "pointer",
           color: '#374151',
           bgcolor: 'transparent',
           border: '1px solid #E5E7EB',

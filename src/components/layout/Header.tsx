@@ -25,9 +25,14 @@ const Header = () => {
   const userId          = connectedUser?._id;
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
 
+  const landingLikePaths = useMemo(
+    () => ["/", "/home/candidate", "/candidate/home", "/terms", "/privacy"],
+    []
+  );
+
   const showHeaderNavMenu = useMemo(() => (
-    router.pathname === "/home/company" || router.pathname === "/home/candidate" || router.pathname === "/candidate/home"
-  ), [router.pathname]);
+    landingLikePaths.includes(router.pathname)
+  ), [router.pathname, landingLikePaths]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
@@ -66,7 +71,7 @@ const Header = () => {
     return () => { socket.disconnect(); };
   }, [userId, isAuthenticated]);
 
-  const isLandingPage = router.pathname === "/home/company" || router.pathname === "/home/candidate" || router.pathname === "/candidate/home";
+  const isLandingPage = landingLikePaths.includes(router.pathname);
   const isCompact     = scrolled || !isLandingPage;
 
   return (

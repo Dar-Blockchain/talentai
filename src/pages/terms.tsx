@@ -1,11 +1,10 @@
 import Head from "next/head";
 import { Box, Container, Typography, Divider, Link, Chip } from "@mui/material";
 import NextLink from "next/link";
-import Image from "next/image";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { Trans, useTranslation } from "react-i18next";
+import Header from "@/components/layout/Header";
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <Box sx={{ mb: 4.5 }}>
@@ -74,21 +73,16 @@ export default function TermsOfUse() {
         <link rel="canonical" href="https://app.talentai.bid/terms" />
       </Head>
 
-      {/* Header */}
-      <Box sx={{ bgcolor: "#111827", py: 2.5, px: 3 }}>
-        <Box sx={{ maxWidth: 860, mx: "auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <NextLink href="/home/company" style={{ textDecoration: "none" }}>
-            <Image src="/images/home/TalentAiLogo.png" alt="TalentAI" width={110} height={28} style={{ objectFit: "contain" }} />
-          </NextLink>
-          <NextLink href="/home/company" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 6, color: "rgba(255,255,255,0.7)", fontSize: "13px", fontFamily: "Poppins" }}>
-            <ArrowBackIcon sx={{ fontSize: 16 }} />
-            {t("common.backToHome")}
-          </NextLink>
-        </Box>
-      </Box>
+      <Header />
 
       {/* Content */}
-      <Box sx={{ bgcolor: "#F9FAFB", minHeight: "100vh", py: { xs: 5, md: 8 } }}>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          py: { xs: 5, md: 8 },
+          background: "linear-gradient(180deg, #111827 0px, #111827 120px, #F9FAFB 120px, #F9FAFB 100%)",
+        }}
+      >
         <Container maxWidth="md">
           <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", px: { xs: 3, md: 6 }, py: { xs: 4, md: 6 } }}>
 
