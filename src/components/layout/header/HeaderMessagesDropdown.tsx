@@ -136,6 +136,7 @@ const HeaderMessagesDropdown: React.FC<HeaderMessagesDropdownProps> = ({
         open={messagesOpen}
         anchorEl={messagesAnchorEl}
         onClose={handleMessagesClose}
+        disableScrollLock
         anchorOrigin={{
           vertical: "bottom",
           horizontal: "right",
