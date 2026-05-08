@@ -49,6 +49,14 @@ module.exports.createJobApplication = async (req, res) => {
       }
     }
 
+    // Block company accounts from applying to jobs
+    if (req.user.role === "Company") {
+      return res.status(403).json({
+        success: false,
+        error: "Company accounts cannot apply to job postings.",
+      });
+    }
+
     // Get candidate profile from current user
     console.log(`🔍 Fetching candidate profile for user: ${userId}`);
     const profileResult = await profileService.getProfileByUserId(userId);
@@ -568,7 +576,10 @@ module.exports.inviteToInterview = async (req, res) => {
     }
 
     const candidateEmail = candidateProfile.userId.email;
-    const candidateName = `${candidateProfile.firstName} ${candidateProfile.lastName}`;
+    const candidateName =
+      candidateProfile.type === "Company"
+        ? (candidateProfile.companyDetails?.name || candidateProfile.userId.username || "Company")
+        : [candidateProfile.firstName, candidateProfile.lastName].filter(Boolean).join(" ") || candidateProfile.userId.username || "Candidate";
 
     console.log(`✅ Candidate profile found`);
     console.log(`   - Email: ${candidateEmail}`);
