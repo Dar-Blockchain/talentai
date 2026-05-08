@@ -625,7 +625,7 @@ const IntelligentInterviewTest = () => {
             </Box>
           )}
 
-          <Box sx={{ bgcolor: '#fff', borderRadius: '20px', border: '1px solid #e8e2f5', boxShadow: 'none', overflow: 'hidden' }}>
+          <Box sx={{ bgcolor: '#fff', borderRadius: '20px', border: '1px solid #e8e2f5', boxShadow: 'none' }}>
             {isActive && (() => {
               const allMsgs = audio.conversationHistory.filter(m => m.type !== 'system');
               const lastMsg = allMsgs.slice(-1)[0];
