@@ -28,6 +28,7 @@ import { useRouter } from "next/router";
 import { formatTimeLeft } from "@/utils/functions";
 import { isInvitationUrl } from "@/utils/memberInvitation";
 import { useTranslation } from "react-i18next";
+import { compactFieldSx, compactSubmitBtnSx } from "./registerFormStyles";
 
 const CODE_LENGTH = 6;
 const CODE_TTL = 300;
@@ -36,28 +37,6 @@ const CODE_EXPIRY_KEY = "candidate_reg_code_expires_at";
 const ACCENT = "#0D9488";
 const ACCENT2 = "#059669";
 
-const fieldSx = {
-  "& .MuiInputLabel-root": { color: "#6B7280", fontFamily: "Poppins", fontWeight: 500, fontSize: { xs: "0.8125rem", sm: "0.875rem", md: "0.95rem" } },
-  "& .MuiInputLabel-root.Mui-focused": { color: ACCENT },
-  "& .MuiInputBase-input": {
-    fontSize: { xs: "0.875rem", sm: "0.9375rem", md: "1rem" },
-    fontFamily: "Poppins",
-  },
-  "& .MuiInputBase-input::placeholder": { fontSize: { xs: "0.73rem", sm: "0.78rem", md: "0.82rem" }, opacity: 1, color: "#C4CAD4" },
-  "& .MuiFormHelperText-root": { fontSize: { xs: "0.6875rem", sm: "0.72rem", md: "0.75rem" } },
-  "& .MuiOutlinedInput-root": {
-    borderRadius: "14px",
-    fontFamily: "Poppins",
-    fontSize: { xs: "0.875rem", sm: "0.9375rem", md: "1rem" },
-    bgcolor: "#F9FAFB",
-    minHeight: { xs: "48px", sm: "52px", md: "56px" },
-    "& fieldset": { borderColor: "#E5E7EB" },
-    "&:hover fieldset": { borderColor: "#D1D5DB" },
-    "&:hover": { bgcolor: "#F3F4F6" },
-    "&.Mui-focused fieldset": { borderColor: ACCENT, borderWidth: "1.5px" },
-    "&.Mui-focused": { bgcolor: "#fff" },
-  },
-};
 
 const half = {
   flex: "1 1 100%",
@@ -77,28 +56,6 @@ interface Props {
   onStepChange?: (step: 1 | 2) => void;
   onEmailChange?: (email: string) => void;
 }
-
-const submitBtnSx = {
-  textTransform: "none",
-  fontFamily: "Poppins",
-  fontWeight: 700,
-  borderRadius: "14px",
-  height: { xs: 48, sm: 52, md: 56 },
-  px: { xs: 1.5, sm: 2, md: 2.25 },
-  background: `linear-gradient(135deg, ${ACCENT} 0%, ${ACCENT2} 100%)`,
-  color: "#fff",
-  boxShadow: `0 4px 20px ${ACCENT}50`,
-  letterSpacing: "0.01em",
-  fontSize: { xs: "0.875rem", sm: "0.9375rem", md: "1rem" },
-  transition: "all 0.2s",
-  "&:hover": {
-    background: `linear-gradient(135deg, #0caa9d 0%, ${ACCENT2} 100%)`,
-    boxShadow: `0 8px 28px ${ACCENT}60`,
-    transform: "translateY(-1px)",
-  },
-  "&:active": { transform: "translateY(0)" },
-  "&.Mui-disabled": { background: "#F3F4F6", color: "#9CA3AF", boxShadow: "none" },
-};
 
 const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) => {
   const { t } = useTranslation("auth");
@@ -269,7 +226,7 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
               error={!!errors.firstName}
               helperText={errors.firstName?.message}
               InputProps={{ startAdornment: <InputAdornment position="start"><PersonIcon sx={{ fontSize: { xs: 18, md: 20 }, color: "#9CA3AF" }} /></InputAdornment> }}
-              sx={fieldSx}
+              sx={compactFieldSx}
               {...register("firstName", { required: t("candidate_form.validation.first_name_required") })}
             />
           </Box>
@@ -283,7 +240,7 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
               error={!!errors.lastName}
               helperText={errors.lastName?.message}
               InputProps={{ startAdornment: <InputAdornment position="start"><PersonIcon sx={{ fontSize: { xs: 18, md: 20 }, color: "#9CA3AF" }} /></InputAdornment> }}
-              sx={fieldSx}
+              sx={compactFieldSx}
               {...register("lastName", { required: t("candidate_form.validation.last_name_required") })}
             />
           </Box>
@@ -299,7 +256,7 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
               error={!!errors.email}
               helperText={invitationEmail ? t("candidate_form.email_prefilled") : errors.email?.message}
               InputProps={{ startAdornment: <InputAdornment position="start"><EmailIcon sx={{ fontSize: { xs: 18, md: 20 }, color: "#9CA3AF" }} /></InputAdornment> }}
-              sx={fieldSx}
+              sx={compactFieldSx}
               {...register("email", {
                 required: t("candidate_form.validation.email_required"),
                 pattern: { value: /^\S+@\S+\.\S+$/, message: t("candidate_form.validation.email_invalid") },
@@ -316,7 +273,7 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
               error={!!errors.phone}
               helperText={errors.phone?.message}
               InputProps={{ startAdornment: <InputAdornment position="start"><PhoneIcon sx={{ fontSize: { xs: 18, md: 20 }, color: "#9CA3AF" }} /></InputAdornment> }}
-              sx={fieldSx}
+              sx={compactFieldSx}
               {...register("phone", {
                 required: t("candidate_form.validation.phone_required"),
                 validate: (v) =>
@@ -407,7 +364,7 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
               onClick={() => { if (!isJoinTeam && !cvFile) setCvError(true); }}
               endIcon={!loading && <ArrowForwardIcon sx={{ fontSize: { xs: 16, md: 18 } }} />}
               startIcon={loading ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : undefined}
-              sx={submitBtnSx}
+              sx={compactSubmitBtnSx}
             >
               {loading ? t("candidate_form.btn_sending") : t("candidate_form.btn_continue")}
             </Button>
@@ -544,7 +501,7 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange })
             disabled={loading || isExpired || otpCode.join("").length < CODE_LENGTH}
             endIcon={!loading && <ArrowForwardIcon sx={{ fontSize: { xs: 16, md: 18 } }} />}
             startIcon={loading ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : undefined}
-            sx={{ ...submitBtnSx, mt: 3 }}
+            sx={{ ...compactSubmitBtnSx, mt: 3 }}
           >
             {loading ? t("candidate_form.btn_creating") : t("candidate_form.btn_verify")}
           </Button>

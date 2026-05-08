@@ -11,23 +11,15 @@ const RegisterContainer: React.FC<{ children: React.ReactNode }> = ({ children }
   const smMin = `${theme.breakpoints.values.sm}px`;
   const mqTabletForm = `(min-width:${smMin}) and (max-width:1024px)`;
   const mqSplitDesktop = `(min-width:1025px)`;
-  const isTabletFormBand = useMediaQuery(mqTabletForm, { noSsr: true });
   const isSplitDesktop = useMediaQuery(mqSplitDesktop, { noSsr: true });
   const isLeftPanelWideSplit = useMediaQuery(theme.breakpoints.up("lg"), { noSsr: true });
 
-  const edgeMargins = "clamp(40px, 8vh, 80px)";
-  const contentOuterMarginSx = isSplitDesktop
-    ? { mt: edgeMargins, mb: edgeMargins }
-    : isTabletFormBand
-      ? { mt: 0, mb: theme.spacing(7) }
-      : { mt: 0, mb: edgeMargins };
-
   return (
     <Box sx={{
-      height: "100vh",
+      minHeight: "100dvh",
       display: "flex",
       flexDirection: isSplitDesktop ? "row" : "column",
-      overflow: "hidden",
+      overflowX: "hidden",
     }}>
 
       {/* ── Left panel (brand); hidden below sm and from sm–1024px tablet band; visible ≥1025px */}
@@ -130,7 +122,7 @@ const RegisterContainer: React.FC<{ children: React.ReactNode }> = ({ children }
 
         {/* Scrollable inner — minHeight instead of height so content expands the container */}
         <Box sx={{
-          minHeight: "100%",
+          minHeight: "100dvh",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -157,7 +149,6 @@ const RegisterContainer: React.FC<{ children: React.ReactNode }> = ({ children }
             width: "100%",
             maxWidth: { xs: 480, sm: 560, md: 600, lg: 640 },
             flexShrink: 0,
-            ...contentOuterMarginSx,
           }}>
             {/* Card */}
             <Box sx={{
@@ -167,7 +158,15 @@ const RegisterContainer: React.FC<{ children: React.ReactNode }> = ({ children }
               overflow: "hidden",
             }}>
               <Box sx={{ height: 2, bgcolor: ACCENT }} />
-              <Box sx={{ px: { xs: 3, sm: 4, md: 4.5 }, pt: { xs: 3, sm: 3.5 }, pb: { xs: 3, sm: 3.5 } }}>
+              <Box sx={{
+                minHeight: "50dvh",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                px: { xs: 3, sm: 4, md: 4.5 },
+                pt: { xs: 3, sm: 3.5 },
+                pb: { xs: 3, sm: 3.5 },
+              }}>
                 {children}
               </Box>
             </Box>
