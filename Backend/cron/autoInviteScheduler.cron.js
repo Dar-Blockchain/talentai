@@ -62,7 +62,7 @@ const sendAutoInvitation = async (application) => {
     const jobTitle = post.jobDetails?.title || 'Position';
     const companyProfile = await Profile.findOne({ userId: post.user }).select('companyDetails').lean();
     const companyName = companyProfile?.companyDetails?.name || company.username || company.email || 'Our Company';
-    const interviewLink = `${process.env.BASE_URL}interview/hr/?jobId=${post._id}&companyId=${post.user}&ref=link`;
+    const interviewLink = `${process.env.BASE_URL}candidate/interview/hr/?jobId=${post._id}&companyId=${post.user}&ref=link`;
 
     logger.debug(`   📧 To: ${candidateEmail}`);
     logger.debug(`   👤 Candidate: ${firstName}`);

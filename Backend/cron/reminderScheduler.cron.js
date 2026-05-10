@@ -101,7 +101,7 @@ const sendReminderEmail = async (application, post, reminderType) => {
     const jobTitle = post.jobDetails?.title || 'Position';
     const companyProfile = await Profile.findOne({ userId: post.user }).select('companyDetails').lean();
     const companyName = companyProfile?.companyDetails?.name || company.username || company.email || 'Our Company';
-    const interviewLink = `${process.env.BASE_URL}interview/hr/?jobId=${post._id}&companyId=${post.user}&ref=link`;
+    const interviewLink = `${process.env.BASE_URL}candidate/interview/hr/?jobId=${post._id}&companyId=${post.user}&ref=link`;
     const deadline = post.expirationDate
       ? new Date(post.expirationDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
       : null;
