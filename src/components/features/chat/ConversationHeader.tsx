@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Typography, Avatar, IconButton } from '@mui/material';
 import DeleteOutlined from '@mui/icons-material/DeleteOutlined';
+import { useTranslation } from 'react-i18next';
 import { Participant, getParticipantDisplayName, getParticipantInitial } from './helpers';
 
 const TEAL = '#0D9488';
@@ -16,6 +17,7 @@ const ConversationHeader: React.FC<ConversationHeaderProps> = ({
   isCompany,
   onDeleteConversation,
 }) => {
+  const { t } = useTranslation('modules/chat/chat');
   return (
     <Box
       sx={{
@@ -63,7 +65,7 @@ const ConversationHeader: React.FC<ConversationHeaderProps> = ({
         >
           <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: '#10B981' }} />
           <Typography sx={{ color: '#10B981', fontWeight: 500, fontSize: '11px' }}>
-            Active
+            {t('header.active')}
           </Typography>
         </Box>
 

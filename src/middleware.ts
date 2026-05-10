@@ -9,10 +9,9 @@ const PUBLIC_PATHS = [
   "/candidate/home",
   "/unauthorized",
   "/candidate/interview/results",
-  "/invitation",
+  "/employee/invitation",
   "/campaign",
   "/candidate/interview/hr",
-  "/candidate/jobs",
 ];
 
 const PUBLIC_PREFIXES = ["/api/", "/_next/", "/favicon", "/logo", "/static/"];
@@ -23,12 +22,13 @@ const AUTH_ONLY_PATHS = ["/signin", "/register"];
 // ─── Role-based route protection ────────────────────────────────────────────
 // Each entry: path prefix → allowed roles (empty means any authenticated role)
 const ROLE_ROUTES: { prefix: string; roles: string[] }[] = [
-  { prefix: "/dashboard/admin",          roles: ["Admin"] },
+  { prefix: "/admin/dashboard",          roles: ["Admin"] },
   { prefix: "/company",                  roles: ["Company", "Employee"] },
   { prefix: "/profile/company",          roles: ["Company"] },
   // Allow Employee so the page component can show a graceful message before redirecting
   { prefix: "/candidate/interview/hr",   roles: ["Candidate", "Employee"] },
   { prefix: "/candidate",                roles: ["Candidate"] },
+  { prefix: "/employee/invitation",       roles: ["Admin", "Company", "Employee", "Candidate"] },
   { prefix: "/employee",                 roles: ["Employee"] },
 ];
 
@@ -105,7 +105,7 @@ function getAllowedRoles(pathname: string): string[] | null {
 }
 
 function getDashboardByRole(role: string): string {
-  if (role === "Admin") return "/dashboard/admin";
+  if (role === "Admin") return "/admin/dashboard";
   if (role === "Company") return "/company/dashboard";
   if (role === "Employee") return "/employee/dashboard";
   return "/candidate/dashboard";

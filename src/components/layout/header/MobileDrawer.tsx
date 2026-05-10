@@ -110,7 +110,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unre
   }, [dispatch, onClose, router]);
 
   const goDashboard = () => {
-    if (isAdmin)        go("/dashboard/admin");
+    if (isAdmin)        go("/admin/dashboard");
     else if (isCompany) go("/company/dashboard");
     else                go("/candidate/dashboard");
   };
@@ -210,7 +210,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unre
                     onClick={() => go("/candidate/profile/" + user?._id)} />
                 )}
                 <Row icon={<ChatBubbleOutlineOutlined />} label={t("header.messages")}
-                  badge={unreadMessageCount} onClick={() => go(isCompany ? "/company/chat" : "/candidate/chat")} />
+                  badge={unreadMessageCount} onClick={() => go("/chat")} />
                 <Row icon={<NotificationsOutlined />} label={t("header.notifications")}
                   onClick={() => go(isCompany ? "/company/notifications" : "/candidate/notifications")} />
                 <Row icon={<SettingsOutlined />} label={t("header.settings")}

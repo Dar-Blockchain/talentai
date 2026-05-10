@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, TextField, IconButton, CircularProgress } from '@mui/material';
 import SendOutlined from '@mui/icons-material/SendOutlined';
+import { useTranslation } from 'react-i18next';
 
 const TEAL = '#0D9488';
 
@@ -19,6 +20,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
   onKeyDown,
   sending,
 }) => {
+  const { t } = useTranslation('modules/chat/chat');
   return (
     <Box
       sx={{
@@ -38,7 +40,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={onKeyDown}
-        placeholder="Type a message… (Enter to send)"
+        placeholder={t('input.placeholder')}
         disabled={sending}
         size="small"
         sx={{

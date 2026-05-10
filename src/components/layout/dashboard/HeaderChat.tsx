@@ -38,8 +38,6 @@ const HeaderChat: React.FC = () => {
   const profile       = useSelector((state: RootState) => state.user.connectedUser.profile);
   const currentUser   = useSelector((state: RootState) => state.user.connectedUser.user);
   const conversations = useSelector(selectConversations);
-  const isCompany     = profile?.type === "Company" || profile?.type === "Employee";
-  const chatBase      = isCompany ? "/company/chat" : "/candidate/chat";
 
   const [anchor, setAnchor] = useState<null | HTMLElement>(null);
 
@@ -161,7 +159,7 @@ const HeaderChat: React.FC = () => {
               return (
                 <React.Fragment key={conv._id}>
                   <Box
-                    onClick={() => { router.push(`${chatBase}/${conv._id}`); close(); }}
+                    onClick={() => { router.push(`/chat/${conv._id}`); close(); }}
                     sx={{
                       display: "flex",
                       gap: 1.5,
@@ -236,7 +234,7 @@ const HeaderChat: React.FC = () => {
           <Button
             fullWidth
             size="small"
-            onClick={() => { router.push(chatBase); close(); }}
+            onClick={() => { router.push("/chat"); close(); }}
             sx={{
               textTransform: "none",
               fontWeight: 600,

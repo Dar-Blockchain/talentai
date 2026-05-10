@@ -12,6 +12,7 @@ import {
   Divider,
 } from '@mui/material';
 import ChatOutlined from '@mui/icons-material/ChatOutlined';
+import { useTranslation } from 'react-i18next';
 import { Participant, getParticipantDisplayName, getParticipantInitial, formatListTime } from './helpers';
 
 const TEAL    = '#0D9488';
@@ -41,6 +42,7 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
   currentUserId,
   onSelectConversation,
 }) => {
+  const { t } = useTranslation('modules/chat/chat');
   const getOtherParticipant = (conv: Conversation) =>
     conv.participants.find((p) => p._id !== currentUserId);
 
@@ -59,10 +61,10 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
             <ChatOutlined sx={{ fontSize: 28, color: TEAL }} />
           </Box>
           <Typography sx={{ fontWeight: 600, color: '#111827', fontSize: '13px', mb: 0.5 }}>
-            No conversations yet
+            {t('sidebar.no_conversations')}
           </Typography>
           <Typography sx={{ fontSize: '12px', color: '#9CA3AF' }}>
-            Start chatting with candidates
+            {t('sidebar.start_chatting')}
           </Typography>
         </Box>
       ) : (
@@ -142,7 +144,7 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
                             fontWeight: hasUnread ? 500 : 400,
                           }}
                         >
-                          {conv.lastMessage?.text || 'No messages yet'}
+                          {conv.lastMessage?.text || t('sidebar.no_messages')}
                         </Typography>
                       }
                     />

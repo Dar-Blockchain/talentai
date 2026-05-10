@@ -1,0 +1,43 @@
+{
+  "sidebar": {
+    "all_conversations": "Toutes les conversations ({{count}})",
+    "no_conversations": "Aucune conversation",
+    "start_chatting": "Commencez à discuter avec des candidats",
+    "no_messages": "Aucun message"
+  },
+  "panel": {
+    "select_conversation": "Sélectionner une conversation",
+    "no_conversations": "Aucune conversation",
+    "choose_from_sidebar": "Choisissez une conversation dans la barre latérale",
+    "contact_candidate": "Contactez un candidat pour commencer à discuter",
+    "back_to_conversations": "Retour aux conversations"
+  },
+  "header": {
+    "active": "Actif"
+  },
+  "messages": {
+    "no_messages": "Aucun message",
+    "start_conversation": "Commencez la conversation en envoyant un message ci-dessous"
+  },
+  "input": {
+    "placeholder": "Tapez un message… (Entrée pour envoyer)"
+  },
+  "delete_dialog": {
+    "title": "Supprimer la conversation",
+    "description": "Êtes-vous sûr de vouloir supprimer toute cette conversation ? Cette action est irréversible.",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "deleting": "Suppression..."
+  },
+  "banner": {
+    "chatting_about": "Discussion sur :",
+    "return_to_post": "Retour à l'offre",
+    "job_post": "Offre d'emploi"
+  },
+  "index": {
+    "no_conversations": "Aucune conversation",
+    "empty_company": "Commencez à discuter en contactant un candidat via la page Candidatures.",
+    "empty_employee": "Commencez à discuter avec votre équipe.",
+    "empty_candidate": "Votre recruteur vous contactera ici une fois votre candidature en cours d'examen."
+  }
+}

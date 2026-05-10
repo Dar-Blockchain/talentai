@@ -1,2 +1,4 @@
 export const isInvitationUrl = (url?: string) =>
-  !!url && decodeURIComponent(url).includes("/invitation/joinTeam");
+  !!url &&
+  (decodeURIComponent(url).includes("/employee/invitation/joinTeam") ||
+    decodeURIComponent(url).includes("/invitation/joinTeam"));

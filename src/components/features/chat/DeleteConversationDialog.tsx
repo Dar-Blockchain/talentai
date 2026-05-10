@@ -7,6 +7,7 @@ import {
   DialogActions,
   Button,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 interface DeleteConversationDialogProps {
   open: boolean;
@@ -21,6 +22,7 @@ const DeleteConversationDialog: React.FC<DeleteConversationDialogProps> = ({
   onConfirm,
   isDeleting,
 }) => {
+  const { t } = useTranslation('modules/chat/chat');
   return (
     <Dialog
       open={open}
@@ -33,11 +35,11 @@ const DeleteConversationDialog: React.FC<DeleteConversationDialogProps> = ({
       }}
     >
       <DialogTitle sx={{ fontWeight: 600, color: '#000', fontSize: '16px' }}>
-        Delete Conversation
+        {t('delete_dialog.title')}
       </DialogTitle>
       <DialogContent>
         <DialogContentText sx={{ color: 'rgba(84,98,116,0.8)', fontSize: '13px' }}>
-          Are you sure you want to delete this entire conversation? This action cannot be undone.
+          {t('delete_dialog.description')}
         </DialogContentText>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
@@ -54,7 +56,7 @@ const DeleteConversationDialog: React.FC<DeleteConversationDialogProps> = ({
             },
           }}
         >
-          Cancel
+          {t('delete_dialog.cancel')}
         </Button>
         <Button
           onClick={onConfirm}
@@ -74,7 +76,7 @@ const DeleteConversationDialog: React.FC<DeleteConversationDialogProps> = ({
             },
           }}
         >
-          {isDeleting ? 'Deleting...' : 'Delete'}
+          {isDeleting ? t('delete_dialog.deleting') : t('delete_dialog.delete')}
         </Button>
       </DialogActions>
     </Dialog>
