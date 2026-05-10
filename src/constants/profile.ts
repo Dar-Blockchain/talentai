@@ -1,3 +1,5 @@
+import { getAllCountryNames } from '@/utils/countryMappings';
+
 export const experienceLevels = [
   'Entry Level',
   'Junior',
@@ -6,12 +8,7 @@ export const experienceLevels = [
   'Expert'
 ];
 
-export const countries = [
-  'United States', 'Canada', 'United Kingdom', 'Australia', 'Germany',
-  'France', 'Spain', 'Italy', 'Netherlands', 'Sweden', 'Norway', 'Denmark',
-  'Tunisia', 'Morocco', 'Egypt', 'Algeria', 'Libya', 'Saudi Arabia', 'UAE',
-  'Other'
-];
+export const countries = getAllCountryNames();
 
 export const languages = [
   'English', 'French', 'Spanish', 'German', 'Arabic', 'Chinese', 'Japanese',

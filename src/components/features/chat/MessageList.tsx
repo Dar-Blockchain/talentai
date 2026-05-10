@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
 import ChatOutlined from '@mui/icons-material/ChatOutlined';
 import DeleteOutlined from '@mui/icons-material/DeleteOutlined';
+import { useTranslation } from 'react-i18next';
 import { formatTime } from './helpers';
 
 const TEAL = '#0D9488';
@@ -36,6 +37,7 @@ const MessageList: React.FC<MessageListProps> = ({
   isCompany,
   onDeleteMessage,
 }) => {
+  const { t } = useTranslation('modules/chat/chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -72,15 +74,16 @@ const MessageList: React.FC<MessageListProps> = ({
             <ChatOutlined sx={{ fontSize: 28, color: TEAL }} />
           </Box>
           <Typography sx={{ color: '#111827', fontWeight: 600, fontSize: '14px' }}>
-            No messages yet
+            {t('messages.no_messages')}
           </Typography>
           <Typography sx={{ color: '#9CA3AF', fontSize: '12px', textAlign: 'center' }}>
-            Start the conversation by sending a message below
+            {t('messages.start_conversation')}
           </Typography>
         </Box>
       ) : (
         messages.map((message) => {
-          const isOwn = message.sender._id === currentUserId;
+          const senderId = typeof message.sender === "string" ? message.sender : message.sender._id;
+          const isOwn = String(senderId) === String(currentUserId);
 
           return (
             <Box

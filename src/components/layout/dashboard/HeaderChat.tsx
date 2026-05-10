@@ -36,6 +36,7 @@ const HeaderChat: React.FC = () => {
   const router   = useRouter();
 
   const profile       = useSelector((state: RootState) => state.user.connectedUser.profile);
+  const currentUser   = useSelector((state: RootState) => state.user.connectedUser.user);
   const conversations = useSelector(selectConversations);
 
   const [anchor, setAnchor] = useState<null | HTMLElement>(null);
@@ -144,9 +145,12 @@ const HeaderChat: React.FC = () => {
             </Box>
           ) : (
             conversations.slice(0, 8).map((conv, i) => {
-              const other   = conv.participants?.find((p: any) => p._id !== profile?._id);
+              const other   = conv.participants?.find((p: any) => p._id !== (currentUser?._id || currentUser?.id));
               const name    = other
-                ? `${other.firstName || ""} ${other.lastName || ""}`.trim() || other.email || "Unknown"
+                ? `${other.profile?.firstName || other.firstName || ""} ${other.profile?.lastName || other.lastName || ""}`.trim()
+                  || other.profile?.companyDetails?.name
+                  || other.email
+                  || "Unknown"
                 : "Unknown";
               const initial = name[0]?.toUpperCase() || "?";
               const lastMsg = conv.lastMessage;
@@ -155,7 +159,7 @@ const HeaderChat: React.FC = () => {
               return (
                 <React.Fragment key={conv._id}>
                   <Box
-                    onClick={() => { router.push(`/company/messages/${conv._id}`); close(); }}
+                    onClick={() => { router.push(`/chat/${conv._id}`); close(); }}
                     sx={{
                       display: "flex",
                       gap: 1.5,
@@ -230,7 +234,7 @@ const HeaderChat: React.FC = () => {
           <Button
             fullWidth
             size="small"
-            onClick={() => { router.push("/company/messages"); close(); }}
+            onClick={() => { router.push("/chat"); close(); }}
             sx={{
               textTransform: "none",
               fontWeight: 600,

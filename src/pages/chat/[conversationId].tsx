@@ -1,20 +1,20 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useRouter } from "next/router";
-import { useSelector } from "react-redux";
 import { Box } from "@mui/material";
-import ChatOutlined from "@mui/icons-material/ChatOutlined";
+import { useSelector } from "react-redux";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import PageHeader from "@/components/layout/dashboard/PageHeader";
-import { RootState } from "@/store/store";
+import ChatLayout from "@/components/layout/dashboard/ChatLayout";
 import { useChatSession } from "@/hooks/useChatSession";
 import ChatShell from "@/components/features/chat/ChatShell";
+import { RootState } from "@/store/store";
 
-const ConversationPage: React.FC = () => {
-  const router  = useRouter();
+export default function ChatConversationPage() {
+  const router = useRouter();
   const { conversationId: routeId } = router.query;
-
-  const profile   = useSelector((state: RootState) => state.user?.connectedUser?.profile);
-  const isCompany = profile?.type === "Company";
+  const role = useSelector((state: RootState) => state.user.connectedUser.user?.role);
+  // Company and Employee are on the recruiter side — they can delete conversations/messages
+  const isCompany = role === "Company" || role === "Employee";
+  const Layout = isCompany ? DashboardLayout : ChatLayout;
 
   const session = useChatSession({
     initialConversationId: typeof routeId === "string" ? routeId : null,
@@ -22,27 +22,9 @@ const ConversationPage: React.FC = () => {
     onConversationChange:  (id) => window.history.replaceState(null, "", `/chat/${id}`),
   });
 
-  useEffect(() => {
-    if (routeId && !session.activeConversationId)
-      session.setActiveConversationId(routeId as string);
-  }, [routeId]);
-
-  const totalConvs = session.conversations.length;
-  const unread     = session.totalUnread;
-  const subtitle   = `${totalConvs} conversation${totalConvs !== 1 ? "s" : ""}${unread > 0 ? ` · ${unread} unread` : ""}`;
-
   return (
-    <DashboardLayout>
-      <PageHeader
-        title="Messages"
-        subtitle={subtitle}
-        breadcrumbs={[
-          { label: "Dashboard", href: isCompany ? "/company/dashboard" : "/dashboard/candidate" },
-          { label: "Messages" },
-        ]}
-        icon={ChatOutlined}
-      />
-      <Box sx={{ height: "calc(100vh - 180px)", display: "flex" }}>
+    <Layout>
+      <Box sx={{ display: "flex", flexDirection: "column", height: "calc(100vh - 100px)" }}>
         <ChatShell
           conversations={session.conversations}
           conversation={session.conversation}
@@ -65,8 +47,6 @@ const ConversationPage: React.FC = () => {
           onSelectConversation={session.handleSelectConversation}
         />
       </Box>
-    </DashboardLayout>
+    </Layout>
   );
-};
-
-export default ConversationPage;
+}

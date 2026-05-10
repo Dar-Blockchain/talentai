@@ -133,7 +133,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const displayInitial = displayName[0]?.toUpperCase() || "E";
   const displayEmail = user?.role === "Employee" || user?.role === "Admin" || user?.role === "Candidate"
     ? user?.email
-    : profile?.companyDetails?.email;
+    : "";
 
   const companyEmail = profile?.companyDetails?.email || "";
   const initial = companyName ? companyName[0]?.toUpperCase() || "C" : "C";

@@ -43,8 +43,6 @@ const TBG  = '#F0FDFA';
 const TBRD = '#99F6E4';
 const NAVY = '#0D1B2A';
 
-// ── Left sidebar ─────────────────────────────────────────────
-
 const StatPill: React.FC<{ label: string; value: number | string; color: string; bg: string; border: string }> = ({ label, value, color, bg, border }) => (
   <Box sx={{ flex: 1, px: 1.5, py: 1.25, borderRadius: '10px', bgcolor: bg, border: `1px solid ${border}`, textAlign: 'center' }}>
     <Typography sx={{ fontSize: '1.3rem', fontWeight: 900, color, lineHeight: 1 }}>{value}</Typography>
@@ -110,8 +108,6 @@ const ProfileStrengthCard: React.FC<{ title: string; checklist: { label: string;
   </Box>
 );
 
-// ── Right panel: assessment summary ──────────────────────────
-
 const ScoreRing: React.FC<{ score: number; size?: number }> = ({ score, size = 80 }) => {
   const color = score >= 70 ? '#059669' : score >= 50 ? '#D97706' : '#DC2626';
   const r = (size / 2) - 8;
@@ -140,7 +136,6 @@ const AssessmentSummaryPanel: React.FC<{ assessment: any; analytics: any }> = ({
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {/* Overall score */}
       <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', p: 2, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
         <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', mb: 1.5 }}>
           {s('summary.overall_score')}
@@ -154,7 +149,6 @@ const AssessmentSummaryPanel: React.FC<{ assessment: any; analytics: any }> = ({
         </Box>
       </Box>
 
-      {/* Quick stats */}
       <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', p: 2, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
         <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', mb: 1.25 }}>
           {s('summary.interview_stats')}
@@ -209,8 +203,6 @@ const AssessmentSummaryPanel: React.FC<{ assessment: any; analytics: any }> = ({
   );
 };
 
-// ── Page ─────────────────────────────────────────────────────
-
 const AssessmentDetailsPage = () => {
   const router    = useRouter();
   const { id }    = router.query;
@@ -244,7 +236,6 @@ const AssessmentDetailsPage = () => {
   const analytics           = useMemo(() => assessment?.interviewData?.analytics || {}, [assessment]);
   const coverageScore       = useMemo(() => assessment?.interviewData?.finalReport?.coverage?.overall || 0, [assessment]);
 
-  // Profile sidebar data
   const displayName = profile?.firstName
     ? `${profile.firstName}${profile.lastName ? ` ${profile.lastName}` : ''}`
     : user?.username || s('candidate_fallback');
@@ -265,7 +256,6 @@ const AssessmentDetailsPage = () => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', bgcolor: 'rgb(249 250 251)' }}>
-      {/* Fixed header */}
       <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1200 }}>
         <Header breadcrumb={t('candidate.nav.dashboard')} onOpenMobile={() => {}} />
       </Box>
@@ -293,7 +283,7 @@ const AssessmentDetailsPage = () => {
               <Button
                 size="small"
                 startIcon={<ChevronLeftOutlined sx={{ fontSize: '14px !important' }} />}
-                onClick={() => router.push('/dashboard/candidate')}
+                onClick={() => router.push('/candidate/dashboard')}
                 sx={{ textTransform: 'none', fontWeight: 700, fontSize: '0.72rem', color: '#6B7280', bgcolor: '#fff', border: '1px solid #E5E7EB', borderRadius: '10px', px: 1.5, py: 0.5, '&:hover': { bgcolor: '#F3F4F6' }, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
               >
                 {s('back_to_dashboard')}
@@ -307,7 +297,6 @@ const AssessmentDetailsPage = () => {
               </Box>
             </Box>
 
-            {/* Loading */}
             {loading && (
               <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', p: 3, boxShadow: '0 1px 4px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Skeleton variant="text" width="50%" height={28} />
@@ -317,7 +306,6 @@ const AssessmentDetailsPage = () => {
               </Box>
             )}
 
-            {/* Error */}
             {!loading && error && (
               <Box sx={{ bgcolor: '#FEF2F2', borderRadius: '16px', border: '1px solid #FECACA', p: 3, textAlign: 'center' }}>
                 <AssessmentOutlined sx={{ fontSize: 40, color: '#FECACA', mb: 1 }} />
@@ -326,7 +314,6 @@ const AssessmentDetailsPage = () => {
               </Box>
             )}
 
-            {/* Not found */}
             {!loading && !error && !assessment && (
               <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', py: 10, textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
                 <AssessmentOutlined sx={{ fontSize: 40, color: '#D1D5DB', mb: 1 }} />
@@ -334,7 +321,6 @@ const AssessmentDetailsPage = () => {
               </Box>
             )}
 
-            {/* Main content — wrapped in dashboard-style cards */}
             {!loading && !error && assessment && (
               <>
                 <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
@@ -344,46 +330,25 @@ const AssessmentDetailsPage = () => {
                   </Box>
                 </Box>
 
-                {stepsData?.steps?.length > 0 && (
-                  <PipelineSteps stepsData={stepsData} />
-                )}
-
-                {Object.keys(coverageAreas).length > 0 && (
-                  <CoverageAnalysis coverageAreas={coverageAreas} />
-                )}
-
-                {Object.keys(coverageAreas).length > 0 && (
-                  <CoverageAreas coverageAreas={coverageAreas} />
-                )}
-
-                {Object.keys(aiAnalysis).length > 0 && (
-                  <AiAnalysisSection aiAnalysis={aiAnalysis} />
-                )}
-
+                {stepsData?.steps?.length > 0 && <PipelineSteps stepsData={stepsData} />}
+                {Object.keys(coverageAreas).length > 0 && <CoverageAnalysis coverageAreas={coverageAreas} />}
+                {Object.keys(coverageAreas).length > 0 && <CoverageAreas coverageAreas={coverageAreas} />}
+                {Object.keys(aiAnalysis).length > 0 && <AiAnalysisSection aiAnalysis={aiAnalysis} />}
                 {(requiredSkills.length > 0 || softSkills.length > 0) && (
                   <SkillsSection requiredSkills={requiredSkills} softSkills={softSkills} suggestedSkills={suggestedSkills} />
                 )}
-
-                {summary && (
-                  <SummarySection summary={summary} />
-                )}
-
+                {summary && <SummarySection summary={summary} />}
                 {(jobDescription || jobRequirements?.length > 0) && (
                   <JobDetailsSection description={jobDescription} requirements={jobRequirements} responsibilities={jobResponsibilities} />
                 )}
-
-                {recommendations.length > 0 && (
-                  <RecommendationsSection recommendations={recommendations} />
-                )}
+                {recommendations.length > 0 && <RecommendationsSection recommendations={recommendations} />}
               </>
             )}
           </Box>
 
           {/* ── RIGHT: assessment summary panel ── */}
           <Box sx={{ display: { xs: 'none', lg: 'flex' }, flexDirection: 'column', gap: 2, position: 'sticky', top: 16 }}>
-            {!loading && assessment && (
-              <AssessmentSummaryPanel assessment={assessment} analytics={analytics} />
-            )}
+            {!loading && assessment && <AssessmentSummaryPanel assessment={assessment} analytics={analytics} />}
             {loading && (
               <>
                 <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', p: 2, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>

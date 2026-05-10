@@ -8,12 +8,12 @@ import Link from "next/link";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import { AppDispatch } from "@/store/store";
-import { fetchPlanLimits, selectPlanLimits, selectPlanLimitsLoading, PlanLimit } from "@/store/slices/planLimitsSlice";
+import { fetchPlanLimits, selectPlanLimits, selectPlanLimitsLoading, selectCurrentPlanLimit, PlanLimit } from "@/store/slices/planLimitsSlice";
 import { getMyProfile } from "@/store/slices/userSlice";
-import { payWithCard } from "@/services/stripeService";
 import {
   verifyPayment, cancelSubscription, enableAutoRenew, selectCancellingSubscription,
   fetchCombinedSubscriptionDetails, selectCombinedDetails, selectCombinedDetailsLoading,
+  createCheckoutSession,
 } from "@/store/slices/paymentSlice";
 import {
   Box, Grid, Typography, Chip, Divider, CircularProgress, Alert, Snackbar,
@@ -30,6 +30,7 @@ const CheckCircleOutlined   = dynamic(() => import("@mui/icons-material/CheckCir
 const CalendarTodayOutlined = dynamic(() => import("@mui/icons-material/CalendarTodayOutlined"));
 const AddCircleOutlined        = dynamic(() => import("@mui/icons-material/AddCircleOutlined"));
 const NotificationsOffOutlined = dynamic(() => import("@mui/icons-material/NotificationsOffOutlined"));
+const ArrowDownwardOutlined    = dynamic(() => import("@mui/icons-material/ArrowDownwardOutlined"));
 
 // ─── Constants ───────────────────────────────────────────
 
@@ -247,20 +248,31 @@ interface PlanCardProps {
   activeSubscriptionId: string | null;
   autoRenew: boolean;
   cancelling: boolean;
+  currentPlanName: string | null;
+  currentSubId: string | null;
+  currentAutoRenew: boolean;
   onCancelClick: (subscriptionId: string) => void;
   onEnableAutoRenewClick: (subscriptionId: string) => void;
   onContactUs: () => void;
+  onDowngradeClick: (plan: PlanLimit, currentSubId: string) => void;
+  onSubscribe: (planId: string) => Promise<any>;
 }
 
-const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRenew, cancelling, onCancelClick, onEnableAutoRenewClick, onContactUs }) => {
+const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRenew, cancelling, currentPlanName, currentSubId, currentAutoRenew, onCancelClick, onEnableAutoRenewClick, onContactUs, onDowngradeClick, onSubscribe }) => {
   const { t, i18n } = useTranslation("dashboard");
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState<string | null>(null);
   const cfg         = PLAN_CONFIG[plan.name] ?? { color: "#6b7280" };
-  const isActive    = !!activeSubscriptionId;
+  const isTrial     = plan.priceUsd === 0;
+  // Trial is auto-assigned by backend with no subscription record — treat as active when it's the current plan
+  const isActive    = !!activeSubscriptionId || (isTrial && currentPlanName === "Trial");
   const isPopular   = cfg.badge === "Popular";
   const isEnterprise = plan.name === "Unlimited";
-  const isTrial     = plan.priceUsd === 0;
+
+  const currentIdx = currentPlanName ? ORDERED_PLANS.indexOf(currentPlanName) : -1;
+  const thisIdx    = ORDERED_PLANS.indexOf(plan.name);
+  const isDowngrade = !isActive && currentIdx !== -1 && thisIdx !== -1 && thisIdx < currentIdx;
+  const isUpgrade   = !isActive && currentIdx !== -1 && thisIdx !== -1 && thisIdx > currentIdx;
 
   const priceLocale = i18n.language?.startsWith("fr") ? "fr-FR" : "en-US";
   const priceLabel = isTrial
@@ -273,7 +285,7 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
     setLoading(true);
     setError(null);
     try {
-      await payWithCard(plan._id);
+      await onSubscribe(plan._id);
     } catch (err: any) {
       setError(err?.message || t("pages.subscription.card.payment_error"));
     } finally {
@@ -449,9 +461,42 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
               boxShadow: `0 4px 14px ${cfg.color}30`, textTransform: "none",
             }}
           />
-        ) : (
+        ) : isDowngrade ? (
+          currentAutoRenew === false ? (
+            <Box sx={{
+              display: "flex", alignItems: "flex-start", gap: 1,
+              px: 1.5, py: 1.25, borderRadius: "10px",
+              bgcolor: "#FFFBEB", border: "1px solid #FDE68A",
+            }}>
+              <ArrowDownwardOutlined sx={{ fontSize: 16, color: "#D97706", flexShrink: 0, mt: 0.2 }} />
+              <Box>
+                <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: "#92400E" }}>
+                  Downgrade scheduled
+                </Typography>
+                <Typography sx={{ fontSize: "0.68rem", color: "#B45309", lineHeight: 1.4 }}>
+                  This plan activates when your current plan expires.
+                </Typography>
+              </Box>
+            </Box>
+          ) : (
+            <AppButton
+              label={loading ? t("pages.subscription.card.redirecting") : "Downgrade to this plan"}
+              variant="outlined"
+              fullWidth
+              disabled={loading}
+              startIcon={loading ? <CircularProgress size={15} color="inherit" /> : <ArrowDownwardOutlined sx={{ fontSize: "16px !important" }} />}
+              onClick={() => onDowngradeClick(plan, currentSubId!)}
+              sx={{
+                borderColor: "#D97706", color: "#D97706",
+                "&:hover": { bgcolor: "#FFFBEB", borderColor: "#B45309", color: "#B45309" },
+                fontWeight: 700, borderRadius: "10px", py: 1.1, fontSize: "0.85rem",
+                textTransform: "none",
+              }}
+            />
+          )
+        ) : (isUpgrade || !currentPlanName) ? (
           <AppButton
-            label={loading ? t("pages.subscription.card.redirecting") : isTrial ? t("pages.subscription.card.get_started_free") : t("pages.subscription.card.get_started")}
+            label={loading ? t("pages.subscription.card.redirecting") : t("pages.subscription.card.get_started", "Upgrade")}
             variant="contained"
             fullWidth
             disabled={loading}
@@ -463,7 +508,7 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
               boxShadow: `0 4px 14px ${cfg.color}30`, textTransform: "none",
             }}
           />
-        )}
+        ) : null}
       </Box>
     </Box>
   );
@@ -478,12 +523,16 @@ const PlansPage: React.FC = () => {
   const plans        = useSelector(selectPlanLimits);
   const plansLoading = useSelector(selectPlanLimitsLoading);
   const cancelling   = useSelector(selectCancellingSubscription);
-  const combined     = useSelector(selectCombinedDetails);
+  const combined           = useSelector(selectCombinedDetails);
+  const combinedLoading    = useSelector(selectCombinedDetailsLoading);
+  const profileLoading     = useSelector((state: any) => state.user?.connectedUser?.loading);
+  const userPlanLimits     = useSelector((state: any) => state.user?.connectedUser?.planLimits);
 
-  const [snackbar, setSnackbar]         = useState<{ open: boolean; message: string; severity: "success" | "error" }>({ open: false, message: "", severity: "success" });
-  const [confirmOpen, setConfirmOpen]   = useState(false);
-  const [cancelSubId, setCancelSubId]   = useState<string | null>(null);
-  const [contactOpen, setContactOpen]   = useState(false);
+  const [snackbar, setSnackbar]             = useState<{ open: boolean; message: string; severity: "success" | "error" }>({ open: false, message: "", severity: "success" });
+  const [confirmOpen, setConfirmOpen]       = useState(false);
+  const [cancelSubId, setCancelSubId]       = useState<string | null>(null);
+  const [contactOpen, setContactOpen]       = useState(false);
+  const [downgradePlan, setDowngradePlan]   = useState<{ plan: PlanLimit; currentSubId: string } | null>(null);
 
   const showSnack = (message: string, severity: "success" | "error") =>
     setSnackbar({ open: true, message, severity });
@@ -495,6 +544,7 @@ const PlansPage: React.FC = () => {
   };
 
   useEffect(() => {
+    dispatch(getMyProfile());
     dispatch(fetchPlanLimits());
     dispatch(fetchCombinedSubscriptionDetails());
   }, [dispatch]);
@@ -550,6 +600,28 @@ const PlansPage: React.FC = () => {
       });
   };
 
+  const handleDowngradeClick = (plan: PlanLimit, currentSubId: string) =>
+    setDowngradePlan({ plan, currentSubId });
+
+  const handleConfirmDowngrade = async () => {
+    if (!downgradePlan) return;
+    const { currentSubId } = downgradePlan;
+    setDowngradePlan(null);
+    try {
+      const currentAutoRenew = currentPlanName ? activeSubByPlanName[currentPlanName]?.autoRenew : true;
+      if (currentAutoRenew !== false) {
+        await dispatch(cancelSubscription({ subscriptionId: currentSubId, reason: "downgrade" })).unwrap();
+      }
+      showSnack(
+        t("pages.subscription.snack.downgrade_scheduled", "Downgrade scheduled. Your current plan stays active until it expires, then the lower plan applies."),
+        "success"
+      );
+      refreshAll();
+    } catch (err: any) {
+      showSnack(typeof err === "string" ? err : err?.message || t("pages.subscription.snack.downgrade_error", "Failed to schedule downgrade"), "error");
+    }
+  };
+
   // Build planName → { id, autoRenew } map from combined data
   const activeSubByPlanName = React.useMemo(() => {
     const map: Record<string, { id: string; autoRenew: boolean }> = {};
@@ -563,12 +635,70 @@ const PlansPage: React.FC = () => {
     ? combined?.subscriptions.find((s) => s.id === cancelSubId)?.planName ?? t("pages.subscription.this_plan")
     : t("pages.subscription.this_plan");
 
+  // Current plan name — use userPlanLimits (from profile) as primary source,
+  // fall back to highest-tier active subscription from combined data
+  const currentPlanName = React.useMemo(() => {
+    // 1. Try to extract name from userPlanLimits (various backend shapes)
+    const fromProfile =
+      userPlanLimits?.name ||
+      userPlanLimits?.planName ||
+      userPlanLimits?.plan?.name ||
+      userPlanLimits?.planId?.name ||
+      null;
+    if (fromProfile && ORDERED_PLANS.includes(fromProfile)) return fromProfile;
+
+    // 2. Fall back to active subscriptions from combined data
+    const names = Object.keys(activeSubByPlanName);
+    if (names.length) return names.sort((a, b) => ORDERED_PLANS.indexOf(b) - ORDERED_PLANS.indexOf(a))[0];
+
+    // 3. Try combined.combined.planNames (backend may list Trial here)
+    const combinedNames = combined?.combined?.planNames ?? [];
+    if (combinedNames.length) {
+      const validName = combinedNames.find((n: string) => ORDERED_PLANS.includes(n));
+      if (validName) return validName;
+    }
+
+    // 4. If profile has any planLimits set, backend auto-assigned Trial — treat as Trial
+    if (userPlanLimits) return "Trial";
+
+    return null;
+  }, [activeSubByPlanName, userPlanLimits, combined]);
+
+  if (process.env.NODE_ENV === "development") {
+    console.log("[Plans] userPlanLimits:", userPlanLimits, "| currentPlanName:", currentPlanName, "| activeSubByPlanName:", activeSubByPlanName);
+  }
+
   const sortedPlans = [...plans]
-    .filter((p) => p.name !== "Trial")
     .sort((a, b) => (ORDERED_PLANS.indexOf(a.name) ?? 99) - (ORDERED_PLANS.indexOf(b.name) ?? 99));
 
   return (
     <DashboardLayout>
+      {/* Downgrade confirm dialog */}
+      <Dialog open={!!downgradePlan} onClose={() => setDowngradePlan(null)} PaperProps={{ sx: { borderRadius: "16px" } }}>
+        <DialogTitle sx={{ fontWeight: 700 }}>
+          {t("pages.subscription.downgrade_dialog.title", "Downgrade Plan?")}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {t("pages.subscription.downgrade_dialog.text", {
+              plan: downgradePlan?.plan?.name ?? "",
+              defaultValue: `Your current plan will stay active until it expires. After that, the {{plan}} plan limits will apply. No charge until your next billing cycle.`,
+            })}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <AppButton label={t("pages.subscription.dialog.keep", "Keep Current")} variant="outlined" onClick={() => setDowngradePlan(null)} />
+          <AppButton
+            label={cancelling ? t("pages.subscription.card.processing") : t("pages.subscription.downgrade_dialog.confirm", "Confirm Downgrade")}
+            variant="contained"
+            disabled={cancelling}
+            startIcon={cancelling ? <CircularProgress size={14} color="inherit" /> : undefined}
+            onClick={handleConfirmDowngrade}
+            sx={{ bgcolor: "#D97706", "&:hover": { bgcolor: "#B45309" } }}
+          />
+        </DialogActions>
+      </Dialog>
+
       {/* Cancel confirm dialog */}
       <Dialog open={confirmOpen} onClose={() => { setConfirmOpen(false); setCancelSubId(null); }}>
         <DialogTitle sx={{ fontWeight: 700 }}>{t("pages.subscription.dialog.title")}</DialogTitle>
@@ -619,7 +749,7 @@ const PlansPage: React.FC = () => {
       {/* Combined subscription usage banner */}
       <SubscriptionBanner />
 
-      {plansLoading ? (
+      {plansLoading || combinedLoading || profileLoading ? (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
           <CircularProgress />
         </Box>
@@ -632,9 +762,14 @@ const PlansPage: React.FC = () => {
                 activeSubscriptionId={activeSubByPlanName[plan.name]?.id ?? null}
                 autoRenew={activeSubByPlanName[plan.name]?.autoRenew ?? true}
                 cancelling={cancelling}
+                currentPlanName={currentPlanName}
+                currentSubId={currentPlanName ? (activeSubByPlanName[currentPlanName]?.id ?? null) : null}
+                currentAutoRenew={currentPlanName ? (activeSubByPlanName[currentPlanName]?.autoRenew ?? true) : true}
                 onCancelClick={handleCancelClick}
                 onEnableAutoRenewClick={handleEnableAutoRenew}
                 onContactUs={() => setContactOpen(true)}
+                onDowngradeClick={handleDowngradeClick}
+                onSubscribe={(planId) => dispatch(createCheckoutSession(planId)).unwrap()}
               />
             </Grid>
           ))}

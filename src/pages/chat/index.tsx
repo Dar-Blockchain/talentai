@@ -1,60 +1,26 @@
-import { useEffect } from "react";
-import { useRouter } from "next/router";
-import { useSelector, useDispatch } from "react-redux";
-import { Box, Typography, CircularProgress } from "@mui/material";
-import ChatOutlined from "@mui/icons-material/ChatOutlined";
+import { useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import PageHeader from "@/components/layout/dashboard/PageHeader";
-import { RootState, AppDispatch } from "@/store/store";
-import { fetchConversations, selectConversations, selectConversationsLoading } from "@/store/slices/chatSlice";
+import ChatLayout from "@/components/layout/dashboard/ChatLayout";
+import SharedChatIndexPage from "@/components/features/chat/SharedChatIndexPage";
+import { RootState } from "@/store/store";
 
-const T      = "#0D9488";
-const TBG    = "#F0FDFA";
-const TBORDER = "#99F6E4";
-
-const ChatIndexPage: React.FC = () => {
-  const router        = useRouter();
-  const dispatch      = useDispatch<AppDispatch>();
-  const currentUserId = useSelector((state: RootState) => state.user?.connectedUser?.user?._id);
-  const conversations = useSelector(selectConversations);
-  const loading       = useSelector(selectConversationsLoading);
-
-  useEffect(() => {
-    if (currentUserId) dispatch(fetchConversations(undefined));
-  }, [currentUserId, dispatch]);
-
-  useEffect(() => {
-    if (!loading && conversations.length > 0)
-      router.replace(`/chat/${conversations[0]._id}`);
-  }, [loading, conversations]);
+export default function ChatIndexPage() {
+  const { t } = useTranslation("modules/chat/chat");
+  const role = useSelector((state: RootState) => state.user.connectedUser.user?.role);
+  const isCompany = role === "Company" || role === "Employee";
+  const emptyText =
+    role === "Company"
+      ? t("index.empty_company")
+      : role === "Employee"
+        ? t("index.empty_employee")
+        : t("index.empty_candidate");
 
   return (
-    <DashboardLayout>
-      <PageHeader
-        title="Messages"
-        subtitle="Your conversations"
-        breadcrumbs={[{ label: "Dashboard", href: "/dashboard/candidate" }, { label: "Messages" }]}
-        icon={ChatOutlined}
-      />
-      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 300, gap: 2 }}>
-        {loading ? (
-          <CircularProgress sx={{ color: T }} />
-        ) : conversations.length === 0 ? (
-          <>
-            <Box sx={{ width: 64, height: 64, borderRadius: "50%", bgcolor: TBG, border: `1px solid ${TBORDER}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <ChatOutlined sx={{ fontSize: 30, color: T }} />
-            </Box>
-            <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>No conversations yet</Typography>
-            <Typography sx={{ fontSize: "13px", color: "#6B7280", textAlign: "center", maxWidth: 300 }}>
-              Start chatting by contacting a company or candidate.
-            </Typography>
-          </>
-        ) : (
-          <CircularProgress sx={{ color: T }} />
-        )}
-      </Box>
-    </DashboardLayout>
+    <SharedChatIndexPage
+      basePath="/chat"
+      emptyText={emptyText}
+      layout={isCompany ? DashboardLayout : ChatLayout}
+    />
   );
-};
-
-export default ChatIndexPage;
+}

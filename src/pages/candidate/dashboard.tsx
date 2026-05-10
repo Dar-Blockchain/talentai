@@ -31,8 +31,6 @@ const NAVY = "#0D1B2A";
 
 type ActiveView = "applications" | "skills" | "interviews" | null;
 
-// ── Primitives ────────────────────────────────────────────────
-
 const StatPill: React.FC<{ label: string; value: number | string; color: string; bg: string; border: string }> = ({ label, value, color, bg, border }) => (
   <Box sx={{ flex: 1, px: 1.5, py: 1.25, borderRadius: "10px", bgcolor: bg, border: `1px solid ${border}`, textAlign: "center" }}>
     <Typography sx={{ fontSize: "1.3rem", fontWeight: 900, color, lineHeight: 1 }}>{value}</Typography>
@@ -112,8 +110,6 @@ const DisabledAction: React.FC<{ icon: React.ElementType; label: string; sublabe
   </Box>
 );
 
-// ── Left sidebar cards ────────────────────────────────────────
-
 const ProfileCard: React.FC<{
   displayName: string; email?: string; initial: string; avatarUrl?: string;
   targetRole?: string; experienceLevel?: string; totalApplications: number; totalInterviews: number;
@@ -163,7 +159,6 @@ const ProfileCard: React.FC<{
   </Box>
 );
 
-
 const ProfileStrengthCard: React.FC<{ checklist: { label: string; done: boolean }[]; label: string }> = ({ checklist, label }) => (
   <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 2, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
@@ -187,9 +182,6 @@ const ProfileStrengthCard: React.FC<{ checklist: { label: string; done: boolean 
     </Box>
   </Box>
 );
-
-
-// ── Page ─────────────────────────────────────────────────────
 
 const DashboardCandidate: React.FC = () => {
   const { t } = useTranslation("dashboard");

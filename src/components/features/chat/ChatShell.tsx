@@ -6,6 +6,7 @@ import {
 import ChatOutlined      from "@mui/icons-material/ChatOutlined";
 import ArrowBackOutlined from "@mui/icons-material/ArrowBackOutlined";
 import WorkOutlined      from "@mui/icons-material/WorkOutlined";
+import { useTranslation } from "react-i18next";
 import type { Participant } from "./helpers";
 import ConversationSidebar      from "./ConversationSidebar";
 import ConversationHeader       from "./ConversationHeader";
@@ -78,12 +79,14 @@ const ChatShell: React.FC<ChatShellProps> = (p) => {
         {p.returnTo && <ReturnBanner {...p.returnTo} />}
 
         <Box sx={{ display: "flex", gap: 2, flex: 1, minHeight: 0 }}>
-          <Sidebar
-            conversations={p.conversations}
-            activeConversationId={p.activeConversationId}
-            currentUserId={p.currentUserId}
-            onSelect={handleSelect}
-          />
+          {p.isCompany && (
+            <Sidebar
+              conversations={p.conversations}
+              activeConversationId={p.activeConversationId}
+              currentUserId={p.currentUserId}
+              onSelect={handleSelect}
+            />
+          )}
           <Panel
             conversations={p.conversations}
             conversation={p.conversation}
@@ -114,28 +117,32 @@ const ChatShell: React.FC<ChatShellProps> = (p) => {
 };
 
 // ── Return-to-post banner ─────────────────────────────────
-const ReturnBanner: React.FC<ReturnToPost> = ({ jobTitle, onReturn }) => (
-  <Box sx={{
-    display: "flex", alignItems: "center", justifyContent: "space-between",
-    bgcolor: TL, border: `1px solid ${TB}`, borderRadius: 2,
-    px: 2, py: 1, mb: 2, gap: 2, flexWrap: "wrap",
-  }}>
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-      <WorkOutlined sx={{ fontSize: 16, color: T }} />
-      <Typography sx={{ fontSize: "13px", fontWeight: 600, color: T }}>
-        Chatting about: <Box component="span" sx={{ fontWeight: 700 }}>{jobTitle || "Job Post"}</Box>
-      </Typography>
+const ReturnBanner: React.FC<ReturnToPost> = ({ jobTitle, onReturn }) => {
+  const { t } = useTranslation("modules/chat/chat");
+  return (
+    <Box sx={{
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      bgcolor: TL, border: `1px solid ${TB}`, borderRadius: 2,
+      px: 2, py: 1, mb: 2, gap: 2, flexWrap: "wrap",
+    }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <WorkOutlined sx={{ fontSize: 16, color: T }} />
+        <Typography sx={{ fontSize: "13px", fontWeight: 600, color: T }}>
+          {t("banner.chatting_about")}{" "}
+          <Box component="span" sx={{ fontWeight: 700 }}>{jobTitle || t("banner.job_post")}</Box>
+        </Typography>
+      </Box>
+      <Button size="small" startIcon={<ArrowBackOutlined sx={{ fontSize: 14 }} />} onClick={onReturn}
+        sx={{
+          textTransform: "none", fontWeight: 600, fontSize: "12px",
+          color: T, border: `1px solid ${TB}`, borderRadius: 2,
+          px: 1.5, py: 0.5, "&:hover": { bgcolor: "#CCFBF1" },
+        }}>
+        {t("banner.return_to_post")}
+      </Button>
     </Box>
-    <Button size="small" startIcon={<ArrowBackOutlined sx={{ fontSize: 14 }} />} onClick={onReturn}
-      sx={{
-        textTransform: "none", fontWeight: 600, fontSize: "12px",
-        color: T, border: `1px solid ${TB}`, borderRadius: 2,
-        px: 1.5, py: 0.5, "&:hover": { bgcolor: "#CCFBF1" },
-      }}>
-      Return to Post
-    </Button>
-  </Box>
-);
+  );
+};
 
 // ── Sidebar ───────────────────────────────────────────────
 const Sidebar: React.FC<{
@@ -145,6 +152,7 @@ const Sidebar: React.FC<{
   onSelect: (id: string) => void;
 }> = ({ conversations, activeConversationId, currentUserId, onSelect }) => {
   const { isMobile, showChat } = useShell();
+  const { t } = useTranslation("modules/chat/chat");
   return (
     <Box sx={{
       width: { xs: "100%", md: 280 }, flexShrink: 0,
@@ -154,7 +162,7 @@ const Sidebar: React.FC<{
     }}>
       <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid #F3F4F6" }}>
         <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#374151" }}>
-          All Conversations ({conversations.length})
+          {t("sidebar.all_conversations", { count: conversations.length })}
         </Typography>
       </Box>
       <ConversationSidebar
@@ -236,6 +244,7 @@ const Panel: React.FC<PanelProps> = (p) => {
 // ── Empty state ───────────────────────────────────────────
 const EmptyPanel: React.FC<{ hasConversations: boolean }> = ({ hasConversations }) => {
   const { isMobile, setShowChat } = useShell();
+  const { t } = useTranslation("modules/chat/chat");
   return (
     <Box sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, p: 4 }}>
       <Box sx={{
@@ -246,15 +255,15 @@ const EmptyPanel: React.FC<{ hasConversations: boolean }> = ({ hasConversations 
         <ChatOutlined sx={{ fontSize: 32, color: T }} />
       </Box>
       <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#111827" }}>
-        {hasConversations ? "Select a conversation" : "No conversations yet"}
+        {hasConversations ? t("panel.select_conversation") : t("panel.no_conversations")}
       </Typography>
       <Typography sx={{ fontSize: "13px", color: "#6B7280", textAlign: "center", maxWidth: 280 }}>
-        {hasConversations ? "Choose a conversation from the sidebar" : "Contact a candidate to start chatting"}
+        {hasConversations ? t("panel.choose_from_sidebar") : t("panel.contact_candidate")}
       </Typography>
       {isMobile && (
         <Button startIcon={<ArrowBackOutlined />} onClick={() => setShowChat(false)}
           sx={{ textTransform: "none", color: T, fontWeight: 600 }}>
-          Back to conversations
+          {t("panel.back_to_conversations")}
         </Button>
       )}
     </Box>

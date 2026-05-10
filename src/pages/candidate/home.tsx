@@ -15,34 +15,12 @@ const JobSeekerLanding: React.FC = () => {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace("/home/company");
+    router.replace("/");
   }, [router]);
-
-  // useEffect(() => {
-  //   localStorage.setItem("userType", "candidate");
-  //   dispatch(setUserType("candidate"));
-  // }, [dispatch]);
-
-  // return (
-  //   <LandingPageLayout
-  //     logo="/images/home/logocandidate.png"
-  //     type="candidate"
-  //     color="#8310FF"
-  //     headerLink="Are you hiring?"
-  //     heroTitle="Get Hired"
-  //     heroSubtitle="For Who You Really Are"
-  //   >
-  //     <HowItWorksSection />
-  //     <CandidateRewardsSection />
-  //     <JobListingsSection />
-  //     <Footer />
-  //   </LandingPageLayout>
-  // );
 
   return null;
 };
 
-// Export with dynamic import to prevent SSR issues
 export default dynamic(() => Promise.resolve(JobSeekerLanding), {
   ssr: false
 });

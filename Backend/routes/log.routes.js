@@ -23,8 +23,4 @@ router.use(requireAuth, controledAcces('Admin'), authLogMiddleware("Log"));
 // Description: Retrieves all logs with pagination/filtering according to implementation
 router.get('/getAllLogs', logController.getAllLogs);
 
-// GET /logs/logs/count
-// Description: Returns the total number of logs
-router.get('/logs/count', logController.getTotalLogsCount);
-
 module.exports = router;

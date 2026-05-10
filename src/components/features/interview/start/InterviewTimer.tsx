@@ -16,10 +16,10 @@ const InterviewTimer: React.FC<InterviewTimerProps> = ({
     <Box
       sx={{
         position: 'fixed',
-        top: 20,
+        top: 72,
         left: '50%',
         transform: 'translateX(-50%)',
-        zIndex: 1200,
+        zIndex: 1050,
       }}
     >
       <Box

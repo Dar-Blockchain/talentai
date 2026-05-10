@@ -481,22 +481,6 @@ module.exports.getPostInterviewAssessmentById = async (assessmentId) => {
   }
 };
 
-// ========== READ - Get all for a post ==========
-module.exports.getAssessmentsByPost = async (postId, filters = {}) => {
-  try {
-    const query = { post: postId };
-
-    const assessments = await PostInterviewAssessment.find(query)
-      .populate('candidate', 'username email role')
-      .populate('company', 'username email role')
-      .sort({ createdAt: -1 });
-
-    return assessments;
-  } catch (error) {
-    console.error('❌ Error getting assessments by post:', error.message);
-    throw error;
-  }
-};
 
 // ========== READ - Get all for a candidate ==========
 module.exports.getAssessmentsByCandidate = async (candidateId, filters = {}) => {

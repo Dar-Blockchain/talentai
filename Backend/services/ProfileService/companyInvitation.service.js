@@ -48,7 +48,7 @@ const _generateTokenAndExpiration = (userEmail, role) => {
  * @returns {string} The complete invitation URL
  */
 const _buildInvitationLink = (token, invitationId, company) =>
-  `${FRONTEND_BASE_URL}/invitation/joinTeam/?token=${token}&invitationId=${invitationId}&company=${company}`;
+  `${FRONTEND_BASE_URL}employee/invitation/joinTeam/?token=${token}&invitationId=${invitationId}&company=${company}`;
 
 /**
  * Send invitation email with error handling

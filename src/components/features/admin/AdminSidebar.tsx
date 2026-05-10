@@ -13,6 +13,7 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import Link from 'next/link';
 import {
   Dashboard as DashboardIcon,
   People as PeopleIcon,
@@ -104,11 +105,13 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1, px: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <img
-              src="/logo-purple.svg"
-              alt="TalentAI"
-              style={{ height: 32, width: 'auto' }}
-            />
+            <Link href="/" style={{ display: 'inline-block' }}>
+              <img
+                src="/logo-purple.svg"
+                alt="TalentAI"
+                style={{ height: 32, width: 'auto', cursor: 'pointer' }}
+              />
+            </Link>
           </Box>
           {isMobile && (
             <IconButton onClick={onDrawerClose} size="small">

@@ -2,18 +2,92 @@ import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
 import { userService } from "@/services/userService";
 
+export interface ConnectedUserEntity {
+  _id?: string;
+  id?: string;
+  username?: string;
+  email?: string;
+  user_image?: string;
+  role?: string;
+  trafficCounter?: number;
+  firstName?: string;
+  lastName?: string;
+}
+
+export interface ConnectedUserProfile {
+  userId?: ConnectedUserEntity;
+  user_image?: string;
+  type?: string;
+  name?: string;
+  email?: string;
+  requiredExperienceLevel?: string;
+  targetRole?: string;
+  firstName?: string;
+  lastName?: string;
+  gender?: string;
+  country?: string;
+  language?: string;
+  timeZone?: string;
+  timezone?: string;
+  phone?: string;
+  address?: string;
+  linkedin?: string;
+  linkedinUrl?: string;
+  githubUrl?: string;
+  personalWebsite?: string;
+  location?: string;
+  website?: string;
+  industry?: string;
+  size?: string;
+  employmentType?: string;
+  contactInformation?: {
+    phone?: string;
+    location?: string;
+    address?: string;
+    linkedinUrl?: string;
+    githubUrl?: string;
+    personalWebsite?: string;
+  };
+  companyDetails?: {
+    name?: string;
+    email?: string;
+    industry?: string;
+    size?: string;
+    employmentType?: string;
+    location?: string;
+    website?: string;
+    linkedin?: string;
+    phone?: string;
+    address?: string;
+    personalWebsite?: string;
+    requiredExperienceLevel?: string;
+    requiredSkills?: string[];
+    language?: string;
+  };
+  requiredSkills?: string[];
+  quota?: number;
+  skills?: any[] | null;
+  softSkills?: any[] | null;
+  planUsage?: any;
+  overallScore?: number;
+  interviewDetails?: any[];
+  isPublicProfile?: boolean;
+  createdAt?: string;
+  _id?: string;
+}
+
 interface UserState {
   connectedUser: {
-    user: any | null;
-    profile: any | null;
+    user: ConnectedUserEntity | null;
+    profile: ConnectedUserProfile | null;
     planLimits: any | null;
     companyMembership: any | null;
     loading: boolean;
     error: string | null;
   };
   targetUser: {
-    user: any | null;
-    profile: any | null;
+    user: ConnectedUserEntity | null;
+    profile: ConnectedUserProfile | null;
     planLimits: any | null;
     companyMembership: any | null;
     loading: boolean;

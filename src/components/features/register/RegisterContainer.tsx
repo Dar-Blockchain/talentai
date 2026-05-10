@@ -70,7 +70,7 @@ const RegisterContainer: React.FC<{ children: React.ReactNode }> = ({ children }
 
         {/* Logo */}
         <Box sx={{ position: "absolute", top: "clamp(24px, 4vh, 40px)", left: "clamp(32px, 4vw, 64px)", zIndex: 1 }}>
-          <NextLink href="/home/company" style={{ textDecoration: "none", display: "inline-block" }}>
+          <NextLink href="/" style={{ textDecoration: "none", display: "inline-block" }}>
             <Image
               src="/images/home/TalentAiLogo.png"
               alt="TalentAI"
@@ -118,7 +118,7 @@ const RegisterContainer: React.FC<{ children: React.ReactNode }> = ({ children }
       {/* ── Right panel ── */}
       <Box sx={{
         flex: 1,
-        overflow: "hidden",
+        overflowY: "auto",
         background: "#F7F8FA",
         position: "relative",
       }}>
@@ -128,17 +128,15 @@ const RegisterContainer: React.FC<{ children: React.ReactNode }> = ({ children }
           background: "radial-gradient(ellipse 80% 40% at 50% 100%, rgba(13,148,136,0.05) 0%, transparent 60%)",
         }} />
 
-        {/* Scrollable inner */}
+        {/* Scrollable inner — minHeight instead of height so content expands the container */}
         <Box sx={{
-          height: "100%",
-          overflowY: "auto",
+          minHeight: "100%",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
           px: { xs: 2, sm: 3, md: 4, lg: 5 },
-          pt: 0,
-          pb: 0,
+          py: { xs: 3, sm: 4 },
           position: "relative",
           zIndex: 1,
         }}>
@@ -150,7 +148,7 @@ const RegisterContainer: React.FC<{ children: React.ReactNode }> = ({ children }
             pt: { xs: 1.5, sm: 2, md: 2.5 },
             mb: { xs: 1.25, sm: 1.75, md: 2.5 },
           }}>
-            <NextLink href="/home/company" style={{ textDecoration: "none" }}>
+            <NextLink href="/" style={{ textDecoration: "none" }}>
               <Image src="/logo.svg" alt="TalentAI" width={110} height={28} style={{ objectFit: "contain" }} />
             </NextLink>
           </Box>

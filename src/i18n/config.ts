@@ -11,12 +11,14 @@ import enPosts      from '../../public/locales/en/modules/company/posts.json';
 import enCampaign   from '../../public/locales/en/modules/campaigns/campaign.json';
 import enInterview  from '../../public/locales/en/shared/interview.json';
 import enHome       from '../../public/locales/en/shared/home.json';
+import enLegal      from '../../public/locales/en/shared/legal.json';
 import enEmployees  from '../../public/locales/en/modules/employees/employees.json';
 import enDepartments from '../../public/locales/en/modules/departments/departments.json';
 import enSubscription from '../../public/locales/en/modules/company/subscription.json';
 import enInterviewHr from '../../public/locales/en/modules/interview/interview.json';
 import enInterviewResults from '../../public/locales/en/modules/interview/results.json';
 import enInterviewApply from '../../public/locales/en/modules/interview/apply.json';
+import enChat from '../../public/locales/en/modules/chat/chat.json';
 
 // ── FR ──────────────────────────────────────────────
 import frCommon     from '../../public/locales/fr/shared/common.json';
@@ -27,19 +29,21 @@ import frPosts      from '../../public/locales/fr/modules/company/posts.json';
 import frCampaign   from '../../public/locales/fr/modules/campaigns/campaign.json';
 import frInterview  from '../../public/locales/fr/shared/interview.json';
 import frHome       from '../../public/locales/fr/shared/home.json';
+import frLegal      from '../../public/locales/fr/shared/legal.json';
 import frEmployees  from '../../public/locales/fr/modules/employees/employees.json';
 import frDepartments from '../../public/locales/fr/modules/departments/departments.json';
 import frSubscription from '../../public/locales/fr/modules/company/subscription.json';
 import frInterviewHr from '../../public/locales/fr/modules/interview/interview.json';
 import frInterviewResults from '../../public/locales/fr/modules/interview/results.json';
 import frInterviewApply from '../../public/locales/fr/modules/interview/apply.json';
+import frChat from '../../public/locales/fr/modules/chat/chat.json';
 
 export const SUPPORTED_LANGUAGES = ['en', 'fr'] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
 export const LANGUAGE_COOKIE = 'talentai_lang';
 
-export const NAMESPACES = ['common', 'auth', 'dashboard', 'posts', 'interview', 'home'] as const;
+export const NAMESPACES = ['common', 'auth', 'dashboard', 'posts', 'interview', 'home', 'legal'] as const;
 export type Namespace = (typeof NAMESPACES)[number];
 
 // RTL languages — extend this list when Arabic is added: ['ar']
@@ -82,9 +86,11 @@ const options: InitOptions = {
       posts:     enPosts,
       interview: enInterview,
       home:      enHome,
+      legal:     enLegal,
       'modules/interview/hr':      enInterviewHr,
       'modules/interview/results': enInterviewResults,
       'modules/interview/apply':   enInterviewApply,
+      'modules/chat/chat':         enChat,
     },
     fr: {
       common:    frCommon,
@@ -93,9 +99,11 @@ const options: InitOptions = {
       posts:     frPosts,
       interview: frInterview,
       home:      frHome,
+      legal:     frLegal,
       'modules/interview/hr':      frInterviewHr,
       'modules/interview/results': frInterviewResults,
       'modules/interview/apply':   frInterviewApply,
+      'modules/chat/chat':         frChat,
     },
   },
 

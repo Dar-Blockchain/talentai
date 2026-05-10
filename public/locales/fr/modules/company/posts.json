@@ -66,6 +66,12 @@
       "pipeline": "Pipeline",
       "manual": "Manuel"
     },
+    "qr": {
+      "show": "Afficher le QR",
+      "title": "Partager via code QR",
+      "scan_hint": "Scannez ce code avec votre téléphone pour ouvrir le lien d'entretien.",
+      "download": "Télécharger le QR"
+    },
     "menu": {
       "header_fallback": "Actions",
       "view_title": "Voir les détails",
@@ -238,7 +244,13 @@
     "actions": {
       "publish": "Publier l'offre",
       "copy_link": "Copier le lien",
+      "qr_link": "Lien QR",
       "edit_languages": "Langues d'entretien"
+    },
+    "qr": {
+      "title": "Partager via code QR",
+      "scan_hint": "Scannez ce code avec votre téléphone pour ouvrir le lien d'entretien.",
+      "download": "Télécharger le QR"
     },
     "tooltips": {
       "cannot_edit_published": "Modification impossible — l'offre est déjà publiée",

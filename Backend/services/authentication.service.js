@@ -5,7 +5,7 @@ const { generateOTP } = require("../utils/one-time-password");
 const { generateToken } = require("../utils/generate-token");
 const { extractUsernameFromEmail, formatLocation } = require("../helpers/auth-validation.helpers");
 
-const assignFreePlanToProfile = async (profileId) => {
+const assignFreePlanToProfile = module.exports.assignFreePlanToProfile = async (profileId) => {
   try {
     const PlanLimits = require("../models/PlanLimits.model");
     const Subscription = require("../models/Subscription.model");

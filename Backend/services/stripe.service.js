@@ -26,8 +26,8 @@ exports.createCheckoutSession = async ({ planId, baseUrl, userId, companyProfile
     const currency = "usd";
 
     const normalizedBase = (baseUrl || "").replace(/\/+$/, "");
-    const success_url = `${normalizedBase}/payment/result?status=success&session_id={CHECKOUT_SESSION_ID}`;
-    const cancel_url = `${normalizedBase}/payment/result?status=cancel`;
+    const success_url = `${normalizedBase}/payments/stripe/callback?status=success&session_id={CHECKOUT_SESSION_ID}`;
+    const cancel_url = `${normalizedBase}/payments/stripe/callback?status=cancel`;
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",

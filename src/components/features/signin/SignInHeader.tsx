@@ -1,5 +1,6 @@
 import { RootState } from "@/store/store";
 import { Box, Typography } from "@mui/material";
+import NextLink from "next/link";
 import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 
@@ -12,39 +13,34 @@ const SignInHeader: React.FC<Props> = ({ themeColors }) => {
   const userType = useSelector((state: RootState) => state.user.userType);
 
   return (
-    <Box sx={{ mb: { xs: 2.5, sm: 3 }, textAlign: "center" }}>
+    <Box sx={{ mb: { xs: 1.75, sm: 2 }, textAlign: "center" }}>
       {/* Mobile-only logo */}
-      <Box
-        component="img"
-        src={userType === "company" ? "/logo.svg" : "/logo-purple.svg"}
-        alt="TalentAI Logo"
-        sx={{ height: { xs: 22, sm: 24 }, display: { xs: "block", md: "none" }, mb: 2.5, mx: "auto" }}
-      />
-
-      {/* Teal accent marks */}
-      {/* <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "5px", mb: 1.75 }}>
-        <Box sx={{ width: 4, height: 4, borderRadius: "50%", bgcolor: `${ACCENT}55` }} />
-        <Box sx={{ width: 22, height: "2.5px", borderRadius: "2px", bgcolor: ACCENT }} />
-        <Box sx={{ width: 4, height: 4, borderRadius: "50%", bgcolor: `${ACCENT}55` }} />
-      </Box> */}
+      <NextLink href="/" style={{ display: "inline-block" }}>
+        <Box
+          component="img"
+          src={userType === "company" ? "/logo.svg" : "/logo-purple.svg"}
+          alt="TalentAI Logo"
+          sx={{ height: { xs: 20, sm: 22 }, display: { xs: "block", md: "none" }, mb: 1.75, mx: "auto", cursor: "pointer" }}
+        />
+      </NextLink>
 
       <Typography sx={{
-        fontSize: { xs: "1.45rem", sm: "1.6rem", md: "1.75rem" },
+        fontSize: { xs: "1.25rem", sm: "1.4rem", md: "1.5rem" },
         fontWeight: 700,
         fontFamily: "Poppins",
         color: "#0F172A",
         lineHeight: 1.15,
-        mb: 0.75,
+        mb: 0.5,
         letterSpacing: "-0.022em",
       }}>
         {t("signin.title")}
       </Typography>
 
       <Typography sx={{
-        fontSize: { xs: "0.83rem", sm: "0.87rem", md: "0.9rem" },
+        fontSize: { xs: "0.78rem", sm: "0.82rem" },
         color: "#6B7280",
         fontFamily: "Poppins",
-        lineHeight: 1.6,
+        lineHeight: 1.5,
       }}>
         {t("signin.subtitle_prefix")}
         <Box component="span" sx={{ color: ACCENT, fontWeight: 600 }}>TalentAI</Box>

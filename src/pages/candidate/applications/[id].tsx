@@ -45,8 +45,6 @@ const STATUS_STYLE: Record<string, { bg: string; color: string; border: string }
 const fmtDate = (iso?: string) =>
   iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
 
-// ── Left sidebar reused primitives ──────────────────────────
-
 const StatPill: React.FC<{ label: string; value: number | string; color: string; bg: string; border: string }> = ({ label, value, color, bg, border }) => (
   <Box sx={{ flex: 1, px: 1.5, py: 1.25, borderRadius: "10px", bgcolor: bg, border: `1px solid ${border}`, textAlign: "center" }}>
     <Typography sx={{ fontSize: "1.3rem", fontWeight: 900, color, lineHeight: 1 }}>{value}</Typography>
@@ -111,15 +109,13 @@ const ProfileStrengthCard: React.FC<{ title: string; checklist: { label: string;
   </Box>
 );
 
-// ── Right panel: Application status timeline ─────────────────
-
 const StatusTimeline: React.FC<{ rawStatus: string; t: (k: string, opts?: any) => string }> = ({ rawStatus, t }) => {
   const steps = [
-    { key: "applied",             label: t("timeline.applied"),             color: "#2563EB" },
-    { key: "pending",             label: t("timeline.under_review"),        color: "#D97706" },
-    { key: "shortlisted",         label: t("timeline.shortlisted"),         color: "#16A34A" },
-    { key: "interview_scheduled", label: t("timeline.interview"),           color: T         },
-    { key: "accepted",            label: t("timeline.accepted"),            color: T         },
+    { key: "applied",             label: t("timeline.applied"),      color: "#2563EB" },
+    { key: "pending",             label: t("timeline.under_review"), color: "#D97706" },
+    { key: "shortlisted",         label: t("timeline.shortlisted"),  color: "#16A34A" },
+    { key: "interview_scheduled", label: t("timeline.interview"),    color: T         },
+    { key: "accepted",            label: t("timeline.accepted"),     color: T         },
   ];
   const activeIndex = steps.findIndex(s => s.key === rawStatus);
   const isRejected  = rawStatus === "rejected" || rawStatus === "withdrawn";
@@ -174,8 +170,6 @@ const StatusTimeline: React.FC<{ rawStatus: string; t: (k: string, opts?: any) =
   );
 };
 
-// ── Section card ─────────────────────────────────────────────
-
 const Section: React.FC<{ icon: React.ReactNode; title: string; children: React.ReactNode }> = ({ icon, title, children }) => (
   <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 2.5, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
@@ -185,8 +179,6 @@ const Section: React.FC<{ icon: React.ReactNode; title: string; children: React.
     {children}
   </Box>
 );
-
-// ── Page ─────────────────────────────────────────────────────
 
 const CandidateApplicationDetailPage: React.FC = () => {
   const router  = useRouter();
@@ -217,7 +209,6 @@ const CandidateApplicationDetailPage: React.FC = () => {
       .finally(() => setLoading(false));
   }, [id]);
 
-  // Profile data
   const displayName = profile?.firstName
     ? `${profile.firstName}${profile.lastName ? ` ${profile.lastName}` : ""}`
     : user?.username || "Candidate";
@@ -233,7 +224,6 @@ const CandidateApplicationDetailPage: React.FC = () => {
     { label: s("checklist.first_skill_test"), done: quota > 0                                   },
   ];
 
-  // Application data
   const post           = app?.post || {};
   const jd             = post.jobDetails || {};
   const title          = jd.title || "—";
@@ -252,7 +242,6 @@ const CandidateApplicationDetailPage: React.FC = () => {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", bgcolor: "rgb(249 250 251)" }}>
-      {/* Fixed header */}
       <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1200 }}>
         <Header breadcrumb={t("candidate.nav.dashboard")} onOpenMobile={() => {}} />
       </Box>
@@ -279,7 +268,7 @@ const CandidateApplicationDetailPage: React.FC = () => {
               <Button
                 size="small"
                 startIcon={<ChevronLeftOutlined sx={{ fontSize: "14px !important" }} />}
-                onClick={() => router.push("/dashboard/candidate")}
+                onClick={() => router.push("/candidate/dashboard")}
                 sx={{ textTransform: "none", fontWeight: 700, fontSize: "0.72rem", color: "#6B7280", bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "10px", px: 1.5, py: 0.5, "&:hover": { bgcolor: "#F3F4F6" }, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
               >
                 {s("back_to_dashboard")}
@@ -306,7 +295,6 @@ const CandidateApplicationDetailPage: React.FC = () => {
               </Box>
             ) : (
               <>
-                {/* Interview scheduled banner */}
                 {isScheduled && (
                   <Box sx={{ bgcolor: T, borderRadius: "16px", p: 2.5, display: "flex", flexWrap: "wrap", gap: 2, alignItems: "center", boxShadow: `0 4px 16px ${T}40` }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -339,7 +327,6 @@ const CandidateApplicationDetailPage: React.FC = () => {
                   </Box>
                 )}
 
-                {/* Job header card */}
                 <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
                   <Box sx={{ height: 4, background: `linear-gradient(90deg, ${T}, ${TL})` }} />
                   <Box sx={{ p: 2.5 }}>
@@ -383,7 +370,6 @@ const CandidateApplicationDetailPage: React.FC = () => {
                   </Box>
                 </Box>
 
-                {/* CV Match Score */}
                 {(app.matchScore != null || app.cvAnalysis?.analysisScore != null) && (() => {
                   const score = app.matchScore ?? app.cvAnalysis?.analysisScore;
                   const scoreColor = score >= 70 ? "#059669" : score >= 50 ? "#D97706" : "#DC2626";
@@ -415,14 +401,12 @@ const CandidateApplicationDetailPage: React.FC = () => {
                   );
                 })()}
 
-                {/* Job description */}
                 {description && (
                   <Section icon={<WorkOutlineOutlined sx={{ fontSize: 14, color: T }} />} title={s("job_description")}>
                     <Typography sx={{ fontSize: "0.85rem", color: "#4B5563", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>{description}</Typography>
                   </Section>
                 )}
 
-                {/* Requirements */}
                 {requirements.length > 0 && (
                   <Section icon={<BusinessCenterOutlined sx={{ fontSize: 14, color: T }} />} title={s("requirements")}>
                     <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
@@ -440,7 +424,6 @@ const CandidateApplicationDetailPage: React.FC = () => {
           <Box sx={{ display: { xs: "none", lg: "flex" }, flexDirection: "column", gap: 2, position: "sticky", top: 16 }}>
             {app && !loading && <StatusTimeline rawStatus={rawStatus} t={(k, opts) => t(`candidate.application_detail.${k}`, opts) as string} />}
 
-            {/* Quick info card */}
             {app && !loading && (
               <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 2, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
                 <Typography sx={{ fontSize: "0.72rem", fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.06em", mb: 1.25 }}>

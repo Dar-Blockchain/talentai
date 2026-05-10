@@ -26,7 +26,7 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
     <Box
       sx={{
         position: 'sticky',
-        top: 0,
+        top: 64,
         zIndex: 1000,
         bgcolor: '#fff',
         px: { xs: 2.5, md: 4 },
