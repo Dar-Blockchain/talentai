@@ -28,7 +28,7 @@
     "subtitle_form": "Creating account for {{email}}",
     "subtitle_otp": "Enter the code sent to {{email}}",
     "email_label": "Email Address",
-    "company_email_error": "This email is registered as a company account. Please use a personal email to apply.",
+    "company_email_error": "This email is associated with a company or employee account. Only candidate accounts can apply for positions.",
     "checking": "Checking...",
     "continue": "Continue",
     "first_name": "First name",
