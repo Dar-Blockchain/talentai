@@ -16,6 +16,7 @@ import GlobalSearch from "./GlobalSearch";
 import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
 import UserAvatar from "../header/UserAvatar";
 import Image from "next/image";
+import Link from "next/link";
 
 interface HeaderProps {
   onOpenMobile: () => void;
@@ -64,7 +65,9 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
 
         {/* Logo — candidates only */}
         {isCandidate && (
-          <Image src="/logo.svg" alt="TalentAI" width={120} height={32} style={{ objectFit: "contain" }} />
+          <Link href="/" style={{ display: "inline-block" }}>
+            <Image src="/logo.svg" alt="TalentAI" width={120} height={32} style={{ objectFit: "contain", cursor: "pointer" }} />
+          </Link>
         )}
       </Box>
 

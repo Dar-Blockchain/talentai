@@ -3,17 +3,15 @@ import type { NextRequest } from "next/server";
 
 // ─── Public paths (no auth required) ────────────────────────────────────────
 const PUBLIC_PATHS = [
+  "/",
   "/signin",
   "/register",
   "/candidate/home",
-  "/home/company",
   "/unauthorized",
   "/candidate/interview/results",
-  "/invitation",
+  "/employee/invitation",
   "/campaign",
   "/candidate/interview/hr",
-  "/interview/hr",
-  "/candidate/jobs",
 ];
 
 const PUBLIC_PREFIXES = ["/api/", "/_next/", "/favicon", "/logo", "/static/"];
@@ -24,11 +22,14 @@ const AUTH_ONLY_PATHS = ["/signin", "/register"];
 // ─── Role-based route protection ────────────────────────────────────────────
 // Each entry: path prefix → allowed roles (empty means any authenticated role)
 const ROLE_ROUTES: { prefix: string; roles: string[] }[] = [
-  { prefix: "/dashboard/admin",     roles: ["Admin"] },
-  { prefix: "/company",             roles: ["Company", "Employee"] },
-  { prefix: "/profile/company",     roles: ["Company"] },
-  { prefix: "/candidate",           roles: ["Candidate"] },
-  { prefix: "/employee",            roles: ["Employee"] },
+  { prefix: "/admin/dashboard",          roles: ["Admin"] },
+  { prefix: "/company",                  roles: ["Company", "Employee"] },
+  { prefix: "/profile/company",          roles: ["Company"] },
+  // Allow Employee so the page component can show a graceful message before redirecting
+  { prefix: "/candidate/interview/hr",   roles: ["Candidate", "Employee"] },
+  { prefix: "/candidate",                roles: ["Candidate"] },
+  { prefix: "/employee/invitation",       roles: ["Admin", "Company", "Employee", "Candidate"] },
+  { prefix: "/employee",                 roles: ["Employee"] },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -46,6 +47,11 @@ function isPublic(pathname: string): boolean {
 function isAuthOnly(pathname: string): boolean {
   const p = clean(pathname);
   return AUTH_ONLY_PATHS.some((pub) => p === pub || p.startsWith(pub + "/"));
+}
+
+function isAllowedForUnauthenticated(pathname: string): boolean {
+  const p = clean(pathname);
+  return p === "/" || isAuthOnly(p);
 }
 
 // Only these values are valid auth roles
@@ -98,9 +104,16 @@ function getAllowedRoles(pathname: string): string[] | null {
   return match ? match.roles : null;
 }
 
+function getDashboardByRole(role: string): string {
+  if (role === "Admin") return "/admin/dashboard";
+  if (role === "Company") return "/company/dashboard";
+  if (role === "Employee") return "/employee/dashboard";
+  return "/candidate/dashboard";
+}
+
 // ─── Middleware ───────────────────────────────────────────────────────────────
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const pathname = clean(request.nextUrl.pathname);
 
   // Always pass through static assets and API routes
   if (PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
@@ -120,21 +133,13 @@ export function middleware(request: NextRequest) {
 
   // Authenticated user on signin/register → redirect to their landing
   if (isAuthenticated && isAuthOnly(pathname)) {
-    const destination = role === "Admin"
-      ? "/dashboard/admin"
-      : role === "Company"
-      ? "/company/dashboard"
-      : role === "Employee"
-      ? "/employee/dashboard"
-      : "/candidate/dashboard";
+    const destination = getDashboardByRole(role);
     return NextResponse.redirect(new URL(destination, request.url));
   }
 
-  // Unauthenticated user on protected route → signin with returnUrl
+  // Unauthenticated users can access any path listed in PUBLIC_PATHS / PUBLIC_PREFIXES
   if (!isAuthenticated && !isPublic(pathname)) {
-    const fullUrl = request.nextUrl.pathname + request.nextUrl.search;
-    const returnUrl = encodeURIComponent(fullUrl);
-    return NextResponse.redirect(new URL(`/signin?returnUrl=${returnUrl}`, request.url));
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   // Role check for authenticated users — fail closed if role cannot be determined

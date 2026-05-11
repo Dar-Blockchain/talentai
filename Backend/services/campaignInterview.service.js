@@ -17,47 +17,123 @@ const Campaign = require("../models/InternalCampaign.model");
 const CampaignResponse = require("../models/CampaignResponse.model");
 const CampaignParticipant = require("../models/CampaignParticipant.model");
 require("dotenv").config();
-// ── Helper to build mixed-question prompt ──────────────────────────────────────
+// ── Phase-aware, diversity-enforcing question prompt ──────────────────────────
 function buildMixedQuestionPrompt({
   transcript,
   conversationSummary,
+  lastQuestion,
   coverage,
   shouldEnd,
+  questionsAsked,
+  maxQuestions,
+  usedQuestionTypes = [],
+  moduleType,
+  interviewTopic,
 }) {
+  const totalProgress   = Math.round((questionsAsked / Math.max(maxQuestions, 1)) * 100);
+  const phase =
+    totalProgress < 25 ? "warm-up"
+    : totalProgress < 60 ? "exploration"
+    : totalProgress < 85 ? "deep-dive"
+    : "closing";
+
   const remainingTopics = Object.entries(coverage.areas)
     .filter(([_, v]) => v.percentage < 75)
-    .map(([k]) => k);
+    .sort((a, b) => a[1].percentage - b[1].percentage)
+    .map(([k, v]) => `${k} (${Math.round(v.percentage)}% covered)`);
 
-  const areasNeedingFollowup = Object.entries(coverage.areas)
-    .filter(([_, v]) => v.questionsAsked > 0 && v.percentage < 50)
-    .map(([k]) => k);
-
-  const previouslyAsked = Object.entries(coverage.areas)
+  const topicsCovered = Object.entries(coverage.areas)
     .filter(([_, v]) => v.questionsAsked > 0)
-    .map(([k]) => k);
+    .map(([k, v]) => `${k}: ${Math.round(v.percentage)}% (${v.questionsAsked}q)`);
+
+  const coverageLine = Object.entries(coverage.areas)
+    .map(([k, v]) => `${k}=${Math.round(v.percentage)}%`)
+    .join(" | ");
+
+  const allTypes = ["behavioral", "situational", "technical", "problem-solving", "motivational"];
+  const recentTypes = usedQuestionTypes.slice(-2);
+  const recommendedType = allTypes.find(t => !recentTypes.includes(t)) || "situational";
+
+  const phaseGuide = {
+    "warm-up":     "Build rapport. Keep questions broad and welcoming. Ask about background and overall experience. No pressure.",
+    "exploration": "Dig into specific skills and past experiences. Mix behavioral (STAR method) and situational questions. Introduce topic variety.",
+    "deep-dive":   "Push for depth. Explore trade-offs, challenges, and advanced knowledge. Connect to specific points from earlier answers.",
+    "closing":     "Wrap up gracefully. Cover any significant coverage gaps. One final meaningful question, then prepare to close.",
+  };
 
   return `
-Candidate answered the last question: "${transcript}"
+You are conducting a live interview. Use the full context below to generate your next move.
 
-Previously covered areas: ${previouslyAsked.join(", ") || "none"}
-Areas needing follow-up due to partial/incomplete answers: ${areasNeedingFollowup.join(", ") || "none"}
-Remaining areas not yet covered: ${remainingTopics.join(", ") || "none"}
+════ INTERVIEW TOPIC ════
+${interviewTopic || "General assessment"}
+Every question you ask MUST be directly relevant to this topic. Do not ask generic questions unrelated to it.
 
-Instructions:
-- Decide whether to ask a follow-up or move to a new topic.
-- If follow-up is needed, base it on the candidate's last answer.
-- If moving to a new topic, pick one from remaining areas.
-- Ensure overall coverage is balanced across all areas.
-- Respond with a single clear question, not a list.
-- Return JSON in this format:
+════ CONVERSATION HISTORY (last 4 turns) ════
+${conversationSummary || "(interview just started — this is the first question after the greeting)"}
+
+════ CANDIDATE'S LATEST ANSWER ════
+"${transcript}"
+
+════ LAST QUESTION YOU ASKED ════
+${lastQuestion ? `"${lastQuestion}"` : "(none yet — you just gave the opening greeting)"}
+
+════ INTERVIEW PROGRESS ════
+Questions asked: ${questionsAsked} / ${maxQuestions} | Phase: ${phase.toUpperCase()} (${totalProgress}% through)
+Coverage: ${coverageLine}
+Topics explored so far: ${topicsCovered.join(", ") || "none yet"}
+Topics still needed (priority order): ${remainingTopics.join(", ") || "all areas sufficiently covered"}
+Question types recently used: ${recentTypes.join(", ") || "none"}
+Recommended next type (for variety): ${recommendedType}
+
+════ PHASE STRATEGY ════
+${phaseGuide[phase]}
+
+════ YOUR TASK ════
+Step 1 — Evaluate the candidate's latest answer honestly.
+Step 2 — Decide your next move:
+  • "follow_up"      → if the answer was vague, incomplete, or skipped a key detail that needs probing
+  • "next_question"  → if the answer was sufficient and you should move to a new topic or angle
+  • "end_interview"  → ONLY if SHOULD_END is true OR overall coverage across all areas ≥ 75%
+Step 3 — Generate the next question or closing statement following ALL of these rules:
+  ✓ Use a DIFFERENT question type than the last 2 (avoid: ${recentTypes.join(", ") || "none"})
+  ✓ One question only — never compound questions or sub-questions
+  ✓ Human and conversational — no robotic phrasing
+  ✓ For "follow_up": acknowledge something specific the candidate said, then probe deeper on that exact point
+  ✓ For "next_question": one brief natural transition phrase, then the question
+  ✓ For "end_interview": warm, professional closing statement — not a question
+  ✓ Match the tone and depth to the "${phase}" phase
+
+SHOULD END: ${shouldEnd}
+
+Return ONLY valid JSON — no extra text, no markdown:
 {
-  "decision": "next_question|follow_up|end_interview",
-  "nextQuestion": "<question text>",
+  "analysis": {
+    "quality": "poor|fair|good|excellent",
+    "score": <0-100>,
+    "completeness": "complete|partial|minimal|avoided",
+    "keyPoints": ["<key observation 1>", "<key observation 2>"]
+  },
   "coverageUpdates": [
     { "area": "<area_key>", "increase": <0-25> }
-  ]
+  ],
+  "decision": "next_question|follow_up|end_interview",
+  "questionType": "behavioral|situational|technical|problem-solving|motivational|closing",
+  "nextQuestion": "<next question or closing statement>",
+  "report": {
+    "strengths": ["<strength observed>"],
+    "areasForImprovement": ["<area to develop>"],
+    "overallProgress": <0-100>
+  }
 }
-- If SHOULD_END is true or all areas >= 75%, decision must be "end_interview" with a professional closing statement.
+
+Coverage increase guide:
+  0     = answer was off-topic, avoided, or empty
+  5–10  = partial or shallow answer — touched the area but lacked depth
+  10–15 = reasonable answer with some substance
+  15–20 = solid, well-articulated answer
+  20–25 = expert-level, detailed, insightful answer
+
+If SHOULD END is true OR all areas have coverage ≥ 75%, decision MUST be "end_interview".
 `;
 }
 // ─── JSON helpers ─────────────────────────────────────────────────────────────
@@ -180,7 +256,7 @@ class CampaignInterviewService {
   // ── Start interview ─────────────────────────────────────────────────────────
 
   async startInterview(sessionId, config, candidateId, onGreetingChunk = null) {
-    const { campaignId, moduleType, duration = 20 } = config;
+    const { campaignId, moduleType } = config;
 
     // 1. Fetch campaign
     const campaign = await Campaign.findById(campaignId).lean();
@@ -189,6 +265,7 @@ class CampaignInterviewService {
     const moduleConfig = campaign.module?.config || {};
     const agentPrompt = moduleConfig.agentPrompt || null;
     const skill = moduleConfig.skill || null;
+    const duration = config?.duration ?? config.sessionSettings?.duration ?? 20;
 
     // 2. Build context for this interview type
     const context =
@@ -212,6 +289,7 @@ class CampaignInterviewService {
       coverage: { overall: 0, areas: coverageAreas },
       questionsAsked: 0,
       maxQuestions: Math.max(5, Math.round(duration * 0.6)),
+      usedQuestionTypes: [],
       config: { duration, interviewType: moduleType },
       startedAt: new Date().toISOString(),
       candidateId,
@@ -266,6 +344,7 @@ class CampaignInterviewService {
       coverage,
       questionsAsked,
       maxQuestions,
+      usedQuestionTypes = [],
       conversation,
     } = session;
 
@@ -292,7 +371,15 @@ class CampaignInterviewService {
       lastQuestion,
       coverage,
       shouldEnd,
+      newCount,
+      maxQuestions,
+      usedQuestionTypes,
     );
+
+    // Track question type for anti-repetition
+    const updatedQuestionTypes = result.questionType
+      ? [...usedQuestionTypes, result.questionType].slice(-10)
+      : usedQuestionTypes;
 
     // Update coverage
     const updatedCoverage = this._applyCoverageUpdates(
@@ -301,6 +388,7 @@ class CampaignInterviewService {
     );
     await this.sessionManager.updateSession(sessionId, {
       coverage: updatedCoverage,
+      usedQuestionTypes: updatedQuestionTypes,
     });
 
     return {
@@ -323,12 +411,14 @@ class CampaignInterviewService {
 
     const finalReport = await this._generateFinalReport(session);
 
-    // Persist results to MongoDB
+    // Persist results to MongoDB — throw so the caller can surface the error
+    await this._persistResults(session, finalReport);
+
+    // Delete session from Redis after successful save to prevent double-processing
     try {
-      await this._persistResults(session, finalReport);
-    } catch (err) {
-      console.error(`❌ [CampaignInterview] persistResults failed for ${sessionId}: ${err.message}`, err);
-    }
+      const key = this.sessionManager.sessionPrefix + sessionId;
+      await this.sessionManager.client.del(key);
+    } catch (_) { /* non-critical — TTL will expire it anyway */ }
 
     return {
       success: true,
@@ -354,14 +444,22 @@ class CampaignInterviewService {
     }
 
     // Look up the CampaignParticipant by (campaign, employee user _id)
-    const participant = await CampaignParticipant.findOne({
+    let participant = await CampaignParticipant.findOne({
       campaign: campaignId,
       employee: candidateId,
     });
 
     if (!participant) {
-      console.warn(`⚠️ [CampaignInterview] No participant found for campaign=${campaignId} employee=${candidateId}`);
-      return;
+      // Employee started the interview without a pre-registered participant record.
+      // Use findOneAndUpdate + upsert (idempotent) to avoid duplicate-key races
+      // with the frontend's addCampaignParticipant call.
+      console.warn(`⚠️ [CampaignInterview] No participant found for campaign=${campaignId} employee=${candidateId} — upserting`);
+      participant = await CampaignParticipant.findOneAndUpdate(
+        { campaign: campaignId, employee: candidateId },
+        { $setOnInsert: { campaign: campaignId, employee: candidateId, status: 'IN_PROGRESS' } },
+        { upsert: true, new: true, setDefaultsOnInsert: true },
+      );
+      console.log(`✅ [CampaignInterview] Upserted participant ${participant._id}`);
     }
 
     console.log(`📝 [CampaignInterview] Found participant ${participant._id}, building response...`);
@@ -418,19 +516,20 @@ class CampaignInterviewService {
       };
     }
 
+    console.log(`📝 [CampaignInterview] Upserting CampaignResponse — campaign=${campaignId} participant=${participant._id} moduleType=${moduleType} aiScore=${aiScore} turns=${interviewTranscript.length}`);
+
     // Upsert CampaignResponse
     const savedResponse = await CampaignResponse.findOneAndUpdate(
       { campaign: campaignId, participant: participant._id, moduleType },
       { $set: $setData },
-      { upsert: true, new: true }
+      { upsert: true, new: true, runValidators: false },
     );
 
-    // Mark participant COMPLETED + update moduleProgress
-    if (participant.status !== "COMPLETED") {
-      participant.status      = "COMPLETED";
-      participant.completedAt = new Date();
-    }
+    console.log(`✅ [CampaignInterview] CampaignResponse saved — _id=${savedResponse._id}`);
 
+    // Mark participant COMPLETED + update moduleProgress
+    participant.status         = "COMPLETED";
+    participant.completedAt    = new Date();
     participant.moduleProgress = {
       moduleType,
       status:      "COMPLETED",
@@ -440,7 +539,7 @@ class CampaignInterviewService {
 
     await participant.save();
 
-    console.log(`✅ [CampaignInterview] Saved — participant=${participant._id} moduleType=${moduleType} aiScore=${aiScore} transcript=${interviewTranscript.length} turns`);
+    console.log(`✅ [CampaignInterview] Participant updated — _id=${participant._id} status=COMPLETED`);
   }
 
   // ── Session storage ─────────────────────────────────────────────────────────
@@ -465,44 +564,142 @@ class CampaignInterviewService {
   // ── Private helpers ─────────────────────────────────────────────────────────
 
   _buildSkillContext(skill) {
+    const s = skill || "General Programming";
     return {
       type: "SKILL_TEST",
-      skill: skill || "General Programming",
-      systemPrompt: `You are a senior interviewer conducting a ${skill || "technical"} skill assessment.
-Your goal is to evaluate the candidate's overall proficiency in ${skill || "the relevant skill"} across multiple dimensions, including fundamentals, practical usage, advanced patterns, and best practices.
+      skill: s,
+      topic: s,
+      systemPrompt: `You are a senior technical interviewer conducting a rigorous ${s} skill assessment.
 
-For example:
-- For technical skills (React, Node.js, Python), include questions on core concepts, practical implementation, best practices, performance, and common pitfalls.
-- For soft skills (communication, leadership, marketing, HR), include questions on theory, scenario-based problem solving, interpersonal strategies, and situational judgment.
-- For business skills, include questions on strategy, analysis, decision making, and process optimization.
+ROLE
+Act as a knowledgeable, professional, and empathetic interviewer — like a senior engineer interviewing a peer. Your tone should be encouraging yet evaluative. Make the candidate feel at ease while genuinely testing their depth.
 
-Do not focus solely on one topic or example. Rotate questions across **different areas** relevant to the skill.
-Be concise, professional, and adapt question difficulty based on the candidate’s answers.
-Ensure variety in question topics to cover a well-rounded assessment.`,
+INTERVIEW PROGRESSION
+Phase 1 – Warm-up (first 2 questions):
+  Broad, approachable questions about experience level and general familiarity with ${s}.
+  Goal: break the ice, calibrate seniority level.
+  Example style: "How long have you been working with ${s} and what kinds of projects have you used it on?"
+
+Phase 2 – Exploration (next 2–3 questions):
+  Core concepts, common patterns, and practical application.
+  Mix conceptual understanding with real-world usage.
+  Example styles: "How does X work internally?", "How have you used Y in a production context?"
+
+Phase 3 – Deep-dive (next 2–3 questions):
+  Advanced topics, edge cases, performance considerations, architectural trade-offs.
+  Push for genuine depth — probe if answers are shallow.
+  Example styles: "What would happen if...?", "How would you approach optimizing...?"
+
+Phase 4 – Closing (last 1–2 questions):
+  Reflection, best practices, lessons learned.
+  Example styles: "What’s a mistake you made with ${s} and what did you learn?", "What advice would you give a junior developer starting with ${s}?"
+
+QUESTION TYPE ROTATION — always vary across:
+  • Conceptual   → test understanding of how/why things work
+  • Applied      → test hands-on experience with real projects
+  • Scenario     → present a problem and ask how they’d solve it
+  • Best-practice → probe for quality standards and code hygiene
+  • Problem-solving → give a challenge and evaluate their reasoning
+
+ANTI-REPETITION RULES
+  – Never ask two conceptual questions in a row
+  – Never reuse the same example, framework feature, or scenario
+  – If a candidate gave an excellent answer, build on it — don’t repeat the same angle
+  – If a candidate gave a poor answer, simplify slightly and try a different angle, don’t abandon the area
+
+RESPONSE QUALITY ADAPTATION
+  – Excellent answer → increase difficulty, go deeper, ask about edge cases
+  – Good answer → probe one specific detail further before moving on
+  – Fair answer → stay at the same level, try a different angle
+  – Poor/avoided → give a simpler follow-up or pivot to a related area
+
+STYLE
+  – Concise, clear questions (one thing at a time — no compound questions)
+  – Brief acknowledgment of the previous answer before each new question (1 phrase max)
+  – Professional but never cold or robotic`,
     };
   }
 
   _buildAgentContext(agentPrompt, campaign) {
-    const defaultPrompt = `You are an experienced interviewer conducting a structured assessment for "${campaign.title}".
-Evaluate the candidate across experience, competencies, motivation, and situational judgment.
-Keep questions focused, professional, and relevant to the campaign objectives.`;
+    const rawInput    = agentPrompt?.trim() || "";
+    const topic       = rawInput || campaign.title || "general assessment";
+    // A real behavioral prompt has instructions; a short title does not
+    const isRealPrompt = rawInput.length > 120;
+
+    const conductRules = `
+INTERVIEW CONDUCT RULES
+- Ask one question at a time — no compound questions.
+- Vary question types every turn: behavioral, situational, technical (if relevant), motivational, problem-solving.
+- Acknowledge the candidate’s previous answer with one brief phrase before each new question.
+- Adapt difficulty based on answer quality (deeper if excellent, simpler if poor).
+- Never repeat the same angle, example, or scenario twice.
+- Every question must be directly relevant to the interview topic: "${topic}".`;
+
+    let systemPrompt;
+
+    if (isRealPrompt) {
+      // The agent prompt is a real behavioral brief — append conduct rules to it
+      systemPrompt = `${rawInput}\n\n---\n${conductRules}`;
+    } else {
+      // Short title (e.g. "React Test", "Leadership") — build a complete topic-focused prompt
+      systemPrompt = `You are an experienced interviewer conducting a structured assessment on the topic: "${topic}".
+Campaign: "${campaign.title}"
+
+INTERVIEW FOCUS
+Every single question you ask must be directly and specifically about "${topic}".
+Do not ask generic HR questions unrelated to this topic unless used as a brief warm-up opener.
+
+ROLE
+Act as a knowledgeable, professional, and empathetic interviewer. Your tone is encouraging yet evaluative.
+You combine behavioral, situational, technical, and problem-solving questions to build a complete picture of the candidate’s capabilities in "${topic}".
+
+INTERVIEW PROGRESSION
+Phase 1 – Warm-up: Ask about the candidate’s overall experience with "${topic}" — how long, in what context.
+Phase 2 – Exploration: Probe specific knowledge, past projects, and practical application of "${topic}".
+Phase 3 – Deep-dive: Test advanced understanding, trade-offs, edge cases, and design decisions related to "${topic}".
+Phase 4 – Closing: Ask about best practices, lessons learned, or an achievement they’re proud of involving "${topic}".
+
+QUESTION TYPE ROTATION (always vary):
+  • Conceptual     → "How does X work in the context of ${topic}?"
+  • Applied        → "Tell me about a project where you used ${topic}. What did you build?"
+  • Behavioral     → "Tell me about a challenge you faced with ${topic} and how you solved it."
+  • Situational    → "If you had to use ${topic} to solve [problem], how would you approach it?"
+  • Best-practice  → "What are the most common mistakes people make with ${topic}?"
+
+${conductRules}`;
+    }
+
     return {
-      type: "AI_INTERVIEW",
-      systemPrompt: agentPrompt || defaultPrompt,
+      type:          "AI_INTERVIEW",
+      topic,
+      systemPrompt,
       campaignTitle: campaign.title,
     };
   }
 
   async _generateGreeting(context, moduleType, skill, onChunk) {
     const systemPrompt = context.systemPrompt;
+    const topic        = context.topic || skill || "this subject";
     const userMsg =
       moduleType === "SKILL_TEST"
-        ? `Generate a warm, professional greeting to start a ${skill} technical assessment.
-         Introduce yourself briefly, explain what you'll cover, and ask the candidate to introduce themselves or confirm they're ready.
-         Keep it under 3 sentences.`
-        : `Generate a warm, professional greeting to start this interview session.
-         Introduce yourself briefly, mention you'll have a conversation to get to know them better, and ask them to start with a brief self-introduction.
-         Keep it under 3 sentences.`;
+        ? `Generate a warm, professional opening message to start a ${topic} skill assessment.
+The message must:
+1. Greet the candidate using "I" — do NOT include any name, placeholder, or bracket like [Your Name]. Just say "I" or "I'm your interviewer today".
+2. Set expectations briefly — mention it will be a conversational assessment covering ${topic} from fundamentals to advanced topics.
+3. End with a natural warm-up question asking about their experience level with ${topic} and the kinds of projects they've used it on.
+
+IMPORTANT: Never output placeholders like [Your Name], [Name], or any text in square brackets.
+Tone: encouraging, professional, human. Not robotic.
+Length: 3–4 sentences maximum. No bullet points, no headers.`
+        : `Generate a warm, professional opening message to start an interview on the topic: "${topic}".
+The message must:
+1. Greet the candidate using "I" — do NOT include any name, placeholder, or bracket like [Your Name]. Just say "I" or "I'm your interviewer today".
+2. Briefly mention the interview will focus on "${topic}" and that it's a conversation, not a test.
+3. End with an open warm-up question related to "${topic}" — for example, asking about their overall experience with it or how they've worked with it in the past.
+
+IMPORTANT: Never output placeholders like [Your Name], [Name], or any text in square brackets.
+Tone: warm, welcoming, professional. Not robotic or formal.
+Length: 3–4 sentences maximum. No bullet points, no headers.`;
 
     try {
       const res = await bedrock.callLLM({
@@ -525,102 +722,12 @@ Keep questions focused, professional, and relevant to the campaign objectives.`;
   }
 
   _fallbackGreeting(moduleType, skill) {
+    const topic = skill || "technical";
     return moduleType === "SKILL_TEST"
-      ? `Welcome! I'm here to conduct your ${skill || "technical"} assessment today. We'll go through a series of questions covering fundamentals and practical usage. Please go ahead and introduce yourself when you're ready.`
-      : `Welcome! I'm glad you're here for this interview session. We'll have a conversation to learn more about your background and experience. Please start by telling me a bit about yourself.`;
+      ? `Welcome! I'm your interviewer today and I'll be guiding you through a ${topic} assessment. We'll cover a range of topics from fundamentals to practical usage. To get started, could you tell me about your experience with ${topic} and the kinds of projects you've worked on?`
+      : `Welcome! I'm your interviewer today. This will be a relaxed conversation — not a test — so feel free to speak freely. To kick things off, could you give me a quick overview of your background and what you've been working on recently?`;
   }
 
-  async _combinedTurn1(
-    context,
-    moduleType,
-    conversation,
-    transcript,
-    lastQuestion,
-    coverage,
-    shouldEnd,
-  ) {
-    const coverageAreas = Object.entries(coverage.areas)
-      .map(([k, v]) => `${k}: ${Math.round(v.percentage || 0)}%`)
-      .join(", ");
-
-    const conversationSummary = conversation
-      .slice(-6)
-      .map(
-        (e) =>
-          `${e.type === "interviewer" ? "Interviewer" : "Candidate"}: ${e.content}`,
-      )
-      .join("\n");
-
-    const systemPrompt = context.systemPrompt;
-
-    const userMsg = `
-CONVERSATION HISTORY (last 6 turns):
-${conversationSummary || "(interview just started)"}
-
-CANDIDATE'S LATEST RESPONSE:
-"${transcript}"
-
-COVERAGE STATUS: ${coverageAreas}
-SHOULD END INTERVIEW: ${shouldEnd}
-
-Respond with a single JSON object:
-{
-  "analysis": {
-    "quality": "poor|fair|good|excellent",
-    "score": <0-100>,
-    "completeness": "complete|partial|minimal|avoided",
-    "keyPoints": ["..."]
-  },
-  "coverageUpdates": [
-    { "area": "<area_key>", "increase": <0-25> }
-  ],
-  "decision": "next_question|follow_up|end_interview",
-  "nextQuestion": "<the next question to ask, or a closing statement if ending>",
-  "report": {
-    "strengths": ["..."],
-    "areasForImprovement": ["..."],
-    "overallProgress": <0-100>
-  }
-}
-
-RULES:
-- If SHOULD END is true OR overall coverage across all areas >= 75%, set decision to "end_interview" and nextQuestion to a professional closing statement.
-- Use "follow_up" if the candidate gave a vague or incomplete answer that needs clarification.
-- Use "next_question" to move to a new topic/area.
-- coverageUpdates: only include areas genuinely discussed; increase should reflect answer quality (0 for avoided/off-topic, up to 25 for deep expert answer).
-- nextQuestion must be a single, clear, conversational question. No bullet lists.
-`;
-
-    const fallback = {
-      analysis: {
-        quality: "fair",
-        score: 50,
-        completeness: "partial",
-        keyPoints: [],
-      },
-      coverageUpdates: [],
-      decision: shouldEnd ? "end_interview" : "next_question",
-      nextQuestion: shouldEnd
-        ? "Thank you for your time today. That concludes our session!"
-        : "Can you tell me more about your experience in this area?",
-      report: { strengths: [], areasForImprovement: [], overallProgress: 30 },
-    };
-
-    try {
-      const res = await bedrock.callLLM({
-        systemPrompt,
-        messages: [{ role: "user", content: userMsg }],
-        temperature: 0.5,
-        maxTokens: 600,
-        timeout: 30000,
-        useFastModel: false,
-      });
-      return parseJSON(res.content, fallback);
-    } catch (e) {
-      console.warn("⚠️ [CampaignInterview] Combined turn failed:", e.message);
-      return fallback;
-    }
-  }
 
   _applyCoverageUpdates(coverage, updates = []) {
     const areas = { ...coverage.areas };
@@ -661,36 +768,56 @@ RULES:
       )
       .join("\n");
 
+    const coverageLines = Object.entries(coverage.areas)
+      .map(([k, v]) => `  ${k}: ${Math.round(v.percentage || 0)}% (${v.questionsAsked || 0} questions)`)
+      .join("\n");
+
     const userMsg = `
-Based on this interview conversation, generate a concise final assessment report.
+You are generating a final assessment report based on the completed interview below.
+Be objective, evidence-based, and specific — reference actual things the candidate said, not generic observations.
 
-INTERVIEW TYPE: ${moduleType}
-COVERAGE: ${Object.entries(coverage.areas)
-      .map(([k, v]) => `${k}: ${Math.round(v.percentage || 0)}%`)
-      .join(", ")}
+════ INTERVIEW TYPE ════
+${moduleType}
 
-CONVERSATION:
-${conversationText.slice(0, 4000)}
+════ COVERAGE ACHIEVED ════
+${coverageLines}
+Overall: ${Math.round(coverage.overall || 0)}%
 
-Respond with JSON:
+════ FULL CONVERSATION ════
+${conversationText.slice(0, 4500)}
+
+════ SCORING GUIDELINES ════
+overallScore (0–100):
+  90–100 = Exceptional — would hire immediately, clear standout
+  75–89  = Strong — above expectations, recommend hire
+  60–74  = Solid — meets expectations with some gaps
+  45–59  = Mixed — some good areas but significant gaps
+  0–44   = Below bar — does not meet expectations
+
+communicationScore: clarity, structure, and effectiveness of expression
+confidenceScore: how decisive and self-assured responses were (not arrogance)
+clarityScore: how precise, focused, and well-organized answers were
+engagementScore: enthusiasm, curiosity, and active participation
+
+recommendation rules:
+  strong_hire → overallScore ≥ 85
+  hire        → overallScore 70–84
+  consider    → overallScore 50–69
+  reject      → overallScore < 50
+
+Respond ONLY with valid JSON — no markdown, no extra text:
 {
   "overallScore": <0-100>,
-  "summary": "2-3 sentence overall assessment of the candidate",
-  "strengths": ["3-5 specific strengths observed"],
-  "areasForImprovement": ["2-4 areas to develop"],
-  "recommendation": "hire|strong_hire|consider|reject",
-  "coverageSummary": { <area_key>: <0-100> },
+  "summary": "<2–3 sentences: what stood out most — both positive and developmental — grounded in specific answers they gave>",
+  "strengths": ["<3–5 specific, evidence-based strengths observed during the interview>"],
+  "areasForImprovement": ["<2–4 concrete, actionable areas to develop>"],
+  "recommendation": "strong_hire|hire|consider|reject",
+  "coverageSummary": { "<area_key>": <0-100> },
   "communicationScore": <0-100>,
   "confidenceScore": <0-100>,
   "clarityScore": <0-100>,
   "engagementScore": <0-100>
 }
-
-Score guidelines:
-- communicationScore: how clearly and effectively the candidate expressed their ideas
-- confidenceScore: how confident and assertive the candidate appeared in their answers
-- clarityScore: how precise and structured the answers were (avoid vague or rambling)
-- engagementScore: how engaged, enthusiastic, and interactive the candidate was
 `;
 
     const base = Math.round(coverage.overall || 50);
@@ -735,36 +862,38 @@ Score guidelines:
     lastQuestion,
     coverage,
     shouldEnd,
+    questionsAsked = 1,
+    maxQuestions = 10,
+    usedQuestionTypes = [],
   ) {
-    // Short conversation summary to avoid topic anchoring
     const conversationSummary = conversation
       .slice(-4)
-      .map(
-        (e) =>
-          `${e.type === "interviewer" ? "Interviewer" : "Candidate"}: ${e.content}`,
-      )
+      .map((e) => `${e.type === "interviewer" ? "Interviewer" : "Candidate"}: ${e.content}`)
       .join("\n");
 
-    const systemPrompt = context.systemPrompt;
+    const systemPrompt  = context.systemPrompt;
+    const interviewTopic = context.topic || context.skill || context.campaignTitle || "this assessment";
     const userMsg = buildMixedQuestionPrompt({
       transcript,
       conversationSummary,
+      lastQuestion,
       coverage,
       shouldEnd,
+      questionsAsked,
+      maxQuestions,
+      usedQuestionTypes,
+      moduleType,
+      interviewTopic,
     });
 
     const fallback = {
-      analysis: {
-        quality: "fair",
-        score: 50,
-        completeness: "partial",
-        keyPoints: [],
-      },
+      analysis: { quality: "fair", score: 50, completeness: "partial", keyPoints: [] },
       coverageUpdates: [],
       decision: shouldEnd ? "end_interview" : "next_question",
+      questionType: "situational",
       nextQuestion: shouldEnd
-        ? "Thank you for your time today. That concludes our session!"
-        : "Can you elaborate on another aspect of your experience?",
+        ? "Thank you so much for your time today — I really enjoyed our conversation. That brings us to the end of this session."
+        : "That's interesting. Could you walk me through a specific situation where you had to apply that in practice?",
       report: { strengths: [], areasForImprovement: [], overallProgress: 30 },
     };
 
@@ -772,8 +901,8 @@ Score guidelines:
       const res = await bedrock.callLLM({
         systemPrompt,
         messages: [{ role: "user", content: userMsg }],
-        temperature: 0.6,
-        maxTokens: 600,
+        temperature: 0.65,
+        maxTokens: 700,
         timeout: 30000,
         useFastModel: false,
       });

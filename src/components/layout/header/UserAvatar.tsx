@@ -58,7 +58,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
   }, [dispatch, router]);
 
   const goToDashboard = useCallback(() => {
-    if (isAdmin)         router.push("/dashboard/admin");
+    if (isAdmin)         router.push("/admin/dashboard");
     else if (isEmployee) router.push("/employee/dashboard");
     else if (isCompany)  router.push("/company/dashboard");
     else                 router.push("/candidate/dashboard");
@@ -72,6 +72,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
         sx={{
           display: "flex",
           alignItems: "center",
+          cursor: "pointer",
           color: '#374151',
           bgcolor: 'transparent',
           border: '1px solid #E5E7EB',

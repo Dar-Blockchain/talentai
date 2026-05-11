@@ -81,7 +81,7 @@ exports.getInterviewParamsForStep = async (req, res) => {
         stepTitle: targetStep.data.label || `Step ${stepNumber}`,
         interviewParams: interviewParams,
         queryString: queryString,
-        fullUrl: `/interview/hr?${queryString}&jobId=${jobId}&stepNumber=${stepNumber}&source=pipeline`,
+        fullUrl: `/candidate/interview/hr?${queryString}&jobId=${jobId}&stepNumber=${stepNumber}&source=pipeline`,
         jobDetails: {
           jobId: post._id,
           title: post.title,

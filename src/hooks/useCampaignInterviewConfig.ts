@@ -42,9 +42,8 @@ function buildConfigFromCampaign(campaign: Campaign): InterviewConfig {
     models: DEFAULT_MODELS,
     sessionSettings: {
       ...DEFAULT_SESSION,
-      duration:   moduleCfg.durationMinutes ?? DEFAULT_SESSION.duration,
-      language:   moduleCfg.language        ?? DEFAULT_SESSION.language,
-      difficulty: moduleCfg.difficulty      ?? DEFAULT_SESSION.difficulty,
+      language:   moduleCfg.language   ?? DEFAULT_SESSION.language,
+      difficulty: moduleCfg.difficulty ?? DEFAULT_SESSION.difficulty,
     },
   };
 }

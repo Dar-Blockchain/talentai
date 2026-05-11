@@ -61,8 +61,10 @@ const campaignParticipantSchema = new mongoose.Schema(
       },
     },
 
-    accessedAt: { type: Date, default: null },
-    completedAt: { type: Date, default: null },
+    accessedAt:        { type: Date, default: null },
+    completedAt:       { type: Date, default: null },
+    invitationSentAt:  { type: Date, default: null },
+    reminderSentAt:    { type: Date, default: null },
   },
   { timestamps: true }
 );

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
@@ -74,7 +74,7 @@ const ScoreBadge: React.FC<{ score: number | null; size?: 'sm' | 'lg' }> = ({ sc
 
 // ─── QuestionnaireResults ──────────────────────────────────────────────────────
 
-export const QuestionnaireResults: React.FC<{ data: ResultsData }> = ({ data }) => {
+export const QuestionnaireResults: React.FC<{ data: ResultsData; scoringTimedOut?: boolean }> = ({ data, scoringTimedOut = false }) => {
   const { t } = useTranslation('dashboard');
   const rq = 'pages.campaigns.detail.results_view.questionnaire';
   const questions: { question: string; type: string; options?: string[] }[] =
@@ -108,18 +108,6 @@ export const QuestionnaireResults: React.FC<{ data: ResultsData }> = ({ data }) 
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {aiScore === null && (
-        <Box sx={{
-          ...CARD, p: 2.5,
-          display: 'flex', alignItems: 'center', gap: 1.5,
-          bgcolor: '#FFFBEB', border: '1px solid #FDE68A',
-        }}>
-          <CircularProgress size={16} sx={{ color: '#D97706', flexShrink: 0 }} />
-          <Typography sx={{ fontSize: 13, color: '#92400E', fontWeight: 500 }}>
-            {t(`${rq}.ai_short`)}
-          </Typography>
-        </Box>
-      )}
       {aiScore !== null ? (
         <Box sx={{ ...CARD, p: 3, display: 'flex', gap: 3, alignItems: 'flex-start' }}>
           <Box sx={{
@@ -141,6 +129,12 @@ export const QuestionnaireResults: React.FC<{ data: ResultsData }> = ({ data }) 
               <Typography sx={{ fontSize: 13, color: '#374151', lineHeight: 1.7 }}>{aiSummary}</Typography>
             )}
           </Box>
+        </Box>
+      ) : scoringTimedOut ? (
+        <Box sx={{ ...CARD, p: 2.5, display: 'flex', alignItems: 'center', gap: 1.5, bgcolor: '#F9FAFB', border: '1px solid #E2E8F0' }}>
+          <Typography sx={{ fontSize: 13, color: '#6B7280', fontWeight: 500 }}>
+            {t(`${rq}.ai_score_unavailable`, { defaultValue: 'AI score is not available for this submission.' })}
+          </Typography>
         </Box>
       ) : (
         <Box sx={{ ...CARD, p: 2.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -373,6 +367,7 @@ const CampaignResultsView: React.FC<Props> = ({ campaignId, participantId, bread
   const loading = useSelector(selectResultsLoading);
   const error   = useSelector(selectResultsError);
 
+  const [scoringTimedOut, setScoringTimedOut] = useState(false);
   const pollRef      = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollCountRef = useRef(0);
   const MAX_POLLS    = 24; // 24 × 5s = 2 min max
@@ -399,7 +394,8 @@ const CampaignResultsView: React.FC<Props> = ({ campaignId, participantId, bread
           pollRef.current = setInterval(() => {
             pollCountRef.current += 1;
             if (pollCountRef.current >= MAX_POLLS) {
-              stopPolling(); // Give up after 2 min — show results without score
+              stopPolling();
+              setScoringTimedOut(true);
               return;
             }
             load().then((a) => {
@@ -463,7 +459,7 @@ const CampaignResultsView: React.FC<Props> = ({ campaignId, participantId, bread
 
           {/* Results body */}
           {moduleType === 'QUESTIONNAIRE'
-            ? <QuestionnaireResults data={data} />
+            ? <QuestionnaireResults data={data} scoringTimedOut={scoringTimedOut} />
             : <InterviewResults data={data} />
           }
 

@@ -28,7 +28,7 @@
     "subtitle_form": "Création du compte pour {{email}}",
     "subtitle_otp": "Entrez le code envoyé à {{email}}",
     "email_label": "Adresse e-mail",
-    "company_email_error": "Cet e-mail est associé à un compte entreprise. Veuillez utiliser un e-mail personnel pour postuler.",
+    "company_email_error": "Cet e-mail est associé à un compte entreprise ou employé. Seuls les comptes candidats peuvent postuler à des offres.",
     "checking": "Vérification...",
     "continue": "Continuer",
     "first_name": "Prénom",

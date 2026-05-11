@@ -15,6 +15,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import BlockedScreen from '@/components/ui/BlockedScreen';
 import Cookies from 'js-cookie';
 import { RootState, AppDispatch } from '@/store/store';
 import { useSelector, useDispatch } from 'react-redux';
@@ -52,6 +53,7 @@ import {
 } from '@/components/features/interview/start';
 import InterviewIntro from '@/components/features/interview/start/InterviewIntro';
 import GDPRConsentModal from '@/components/features/interview/start/GDPRConsentModal';
+import JobPreviewPanel from '@/components/features/interview/start/JobPreviewPanel';
 import InterviewLanguageModal from '@/components/features/candidate/candidate-interviews/InterviewLanguageModal';
 import CoverageDashboard from '@/components/features/interview/start/CoverageDashboard';
 
@@ -75,6 +77,7 @@ const IntelligentInterviewTest = () => {
   const [alreadyCompleted, setAlreadyCompleted] = useState(false);
   const [isArchived, setIsArchived] = useState(false);
   const [companyBlocked, setCompanyBlocked] = useState(false);
+  const [isEmployeeBlocked, setIsEmployeeBlocked] = useState(false);
 
   const hasJobId = router.isReady && typeof router.query.jobId === 'string' && !!router.query.jobId;
   const jobId = router.isReady ? (router.query.jobId as string | undefined) : undefined;
@@ -82,17 +85,19 @@ const IntelligentInterviewTest = () => {
 
   useEffect(() => {
     if (!router.isReady) return;
+
+    if (authUser?.role === 'Employee') {
+      setIsEmployeeBlocked(true);
+      setAssessmentChecking(false);
+      return;
+    }
+
     if (!router.query.jobId) { setStep('interview'); setAssessmentChecking(false); return; }
 
     const postId = router.query.jobId as string;
     const token = Cookies.get('api_token');
     const ref = router.query.ref as string | undefined;
     const isPublicLink = ref === 'link';
-
-    if (!token && isPublicLink) {
-      router.replace(`/candidate/jobs/${postId}`);
-      return;
-    }
 
     if (authUser && token) {
       if (authUser.role !== 'Company' && authUser.role !== 'Employee') {
@@ -113,7 +118,7 @@ const IntelligentInterviewTest = () => {
     } else {
       setAssessmentChecking(false);
     }
-  }, [router.isReady, router.query.jobId]);
+  }, [router.isReady, router.query.jobId, authUser?.role]);
 
   const { notification, showNotification, hideNotification } = useNotification();
 
@@ -361,33 +366,39 @@ const IntelligentInterviewTest = () => {
     );
   }
 
+  if (isEmployeeBlocked) {
+    return (
+      <>
+        <style jsx global>{GlobalStyles}</style>
+        <BlockedScreen
+          variant="card"
+          accentGradient="linear-gradient(90deg, #8310FF 0%, #a855f7 100%)"
+          icon="🔒"
+          iconBg="linear-gradient(135deg, #ede9fe 0%, #f3e8ff 100%)"
+          iconBorderColor="rgba(131,16,255,0.15)"
+          iconShadow="0 4px 16px rgba(131,16,255,0.12)"
+          badge={{ label: 'Candidates only', color: PURPLE, bgColor: '#f5f3ff', borderColor: 'rgba(131,16,255,0.2)' }}
+          title="This page is not available for your account"
+          description={<>The interview flow is designed for <strong style={{ color: '#111827' }}>Candidate</strong> accounts. Your employee account does not have access to this section.</>}
+          actions={[{ label: 'Go to my dashboard', onClick: () => router.replace('/employee/dashboard'), color: 'linear-gradient(135deg, #8310FF 0%, #a855f7 100%)', hoverColor: 'linear-gradient(135deg, #6d0ee0 0%, #9333ea 100%)' }]}
+        />
+      </>
+    );
+  }
+
   if (isArchived) {
     return (
       <>
         <style jsx global>{GlobalStyles}</style>
-        <Box sx={{ minHeight: '100vh', bgcolor: '#F8F9FA' }}>
-          <Header />
-          <Container maxWidth="sm" sx={{ py: { xs: 6, md: 10 } }}>
-            <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', p: { xs: 4, md: 5 }, textAlign: 'center' }}>
-              <Box sx={{ width: 72, height: 72, borderRadius: '50%', bgcolor: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 3 }}>
-                <Typography sx={{ fontSize: 32 }}>📦</Typography>
-              </Box>
-              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.3rem', color: '#111827', mb: 1 }}>
-                {t('archived.title')}
-              </Typography>
-              <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280', lineHeight: 1.7, mb: 3.5 }}>
-                {t('archived.desc')}
-              </Typography>
-              <Button
-                variant="contained"
-                onClick={() => router.push('/candidate/dashboard')}
-                sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', bgcolor: '#8310FF', color: '#fff', borderRadius: '10px', px: 3, py: 1.2, boxShadow: 'none', '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' } }}
-              >
-                {t('back_to_dashboard')}
-              </Button>
-            </Box>
-          </Container>
-        </Box>
+        <BlockedScreen
+          variant="bordered"
+          icon="📦"
+          iconBg="#F3F4F6"
+          iconBorderColor="transparent"
+          title={t('archived.title')}
+          description={t('archived.desc')}
+          actions={[{ label: t('back_to_dashboard'), onClick: () => router.push('/candidate/dashboard'), color: PURPLE, hoverColor: '#6d0ee0' }]}
+        />
       </>
     );
   }
@@ -396,29 +407,16 @@ const IntelligentInterviewTest = () => {
     return (
       <>
         <style jsx global>{GlobalStyles}</style>
-        <Box sx={{ minHeight: '100vh', bgcolor: '#F8F9FA' }}>
-          <Header />
-          <Container maxWidth="sm" sx={{ py: { xs: 6, md: 10 } }}>
-            <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #FED7AA', p: { xs: 4, md: 5 }, textAlign: 'center' }}>
-              <Box sx={{ width: 72, height: 72, borderRadius: '50%', bgcolor: '#FFF7ED', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 3 }}>
-                <Typography sx={{ fontSize: 32 }}>⏰</Typography>
-              </Box>
-              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.3rem', color: '#111827', mb: 1 }}>
-                {t('expired.title')}
-              </Typography>
-              <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280', lineHeight: 1.7, mb: 3.5 }}>
-                {t('expired.desc')}
-              </Typography>
-              <Button
-                variant="contained"
-                onClick={() => router.push('/candidate/dashboard')}
-                sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', bgcolor: '#8310FF', color: '#fff', borderRadius: '10px', px: 3, py: 1.2, boxShadow: 'none', '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' } }}
-              >
-                {t('back_to_dashboard')}
-              </Button>
-            </Box>
-          </Container>
-        </Box>
+        <BlockedScreen
+          variant="bordered"
+          icon="⏰"
+          iconBg="#FFF7ED"
+          iconBorderColor="#FED7AA"
+          borderColor="#FED7AA"
+          title={t('expired.title')}
+          description={t('expired.desc')}
+          actions={[{ label: t('back_to_dashboard'), onClick: () => router.push('/candidate/dashboard'), color: PURPLE, hoverColor: '#6d0ee0' }]}
+        />
       </>
     );
   }
@@ -429,34 +427,16 @@ const IntelligentInterviewTest = () => {
     return (
       <>
         <style jsx global>{GlobalStyles}</style>
-        <Box sx={{ minHeight: '100vh', bgcolor: '#F8F9FA' }}>
-          <Header />
-          <Container maxWidth="sm" sx={{ py: { xs: 6, md: 10 } }}>
-            <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', p: { xs: 4, md: 5 }, textAlign: 'center' }}>
-              <Box sx={{ width: 72, height: 72, borderRadius: '50%', bgcolor: 'rgba(131,16,255,0.08)', border: '2px solid rgba(131,16,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 3 }}>
-                <CheckCircleIcon sx={{ fontSize: 36, color: '#8310FF' }} />
-              </Box>
-              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.3rem', color: '#111827', mb: 1 }}>
-                {t('completed.title')}
-              </Typography>
-              {company && (
-                <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#8310FF', fontWeight: 600, mb: 1 }}>
-                  {company}
-                </Typography>
-              )}
-              <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280', lineHeight: 1.7, mb: 3.5 }}>
-                {t('completed.desc_pre')} <strong style={{ color: '#111827' }}>{jobTitle}</strong> {t('completed.desc_post')}
-              </Typography>
-              <Button
-                variant="contained"
-                onClick={() => router.push('/candidate/dashboard')}
-                sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', bgcolor: '#8310FF', color: '#fff', borderRadius: '10px', px: 3, py: 1.2, boxShadow: 'none', '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' } }}
-              >
-                {t('back_to_dashboard')}
-              </Button>
-            </Box>
-          </Container>
-        </Box>
+        <BlockedScreen
+          variant="bordered"
+          icon={<CheckCircleIcon sx={{ fontSize: 36, color: PURPLE }} />}
+          iconBg="rgba(131,16,255,0.08)"
+          iconBorderColor="rgba(131,16,255,0.2)"
+          title={t('completed.title')}
+          subtitle={company ? <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: PURPLE, fontWeight: 600 }}>{company}</Typography> : undefined}
+          description={<>{t('completed.desc_pre')} <strong style={{ color: '#111827' }}>{jobTitle}</strong> {t('completed.desc_post')}</>}
+          actions={[{ label: t('back_to_dashboard'), onClick: () => router.push('/candidate/dashboard'), color: PURPLE, hoverColor: '#6d0ee0' }]}
+        />
       </>
     );
   }
@@ -465,45 +445,31 @@ const IntelligentInterviewTest = () => {
     return (
       <>
         <style jsx global>{GlobalStyles}</style>
-        <Box sx={{ minHeight: '100vh', bgcolor: '#F1F5F9', display: 'flex', flexDirection: 'column' }}>
-          <Header />
-          <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', px: 2, py: { xs: 5, md: 8 } }}>
-            <Box sx={{ width: '100%', maxWidth: 480, bgcolor: '#fff', borderRadius: '24px', boxShadow: '0 20px 60px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
-              <Box sx={{ height: 6, background: 'linear-gradient(90deg, #EF4444 0%, #F97316 100%)' }} />
-              <Box sx={{ p: { xs: 4, md: 5 }, textAlign: 'center' }}>
-                <Box sx={{ width: 80, height: 80, borderRadius: '50%', background: 'linear-gradient(135deg, #FEE2E2 0%, #FFEDD5 100%)', border: '2px solid #FECACA', boxShadow: '0 4px 16px rgba(239,68,68,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2.5 }}>
-                  <Typography sx={{ fontSize: '2rem', lineHeight: 1, userSelect: 'none' }}>🔒</Typography>
-                </Box>
-                <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.8, bgcolor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '20px', px: 1.8, py: 0.5, mb: 2.5 }}>
-                  <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: '#EF4444', flexShrink: 0 }} />
-                  <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: '#DC2626', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                    {t('limit.badge')}
-                  </Typography>
-                </Box>
-                <Typography sx={{ fontWeight: 800, fontSize: '1.45rem', color: '#0F172A', lineHeight: 1.25, mb: 1.5, letterSpacing: '-0.01em' }}>
-                  {t('limit.title')}
-                </Typography>
-                {limitJobTitle && (
-                  <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, bgcolor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', px: 2, py: 0.7, mb: 2.5 }}>
-                    <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#94A3B8', flexShrink: 0 }} />
-                    <Typography sx={{ fontSize: '0.83rem', fontWeight: 600, color: '#475569' }}>{limitJobTitle}</Typography>
-                  </Box>
-                )}
-                <Box sx={{ height: '1px', bgcolor: '#F1F5F9', mb: 2.5 }} />
-                <Typography sx={{ fontSize: '0.9rem', color: '#475569', lineHeight: 1.8, mb: 1.5 }}>{t('limit.desc')}</Typography>
-                <Typography sx={{ fontSize: '0.82rem', color: '#94A3B8', lineHeight: 1.7, mb: 4 }}>{t('limit.contact')}</Typography>
-                <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center', flexWrap: 'wrap' }}>
-                  <Button variant="outlined" onClick={() => router.back()} sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.875rem', borderRadius: '12px', px: 3, py: 1.2, borderColor: '#E2E8F0', color: '#475569', '&:hover': { borderColor: '#CBD5E1', bgcolor: '#F8FAFC' } }}>
-                    {t('limit.go_back')}
-                  </Button>
-                  <Button variant="contained" onClick={() => router.push('/')} sx={{ textTransform: 'none', fontWeight: 700, fontSize: '0.875rem', borderRadius: '12px', px: 3, py: 1.2, background: 'linear-gradient(135deg, #0D9488 0%, #0891B2 100%)', color: '#fff', boxShadow: '0 4px 12px rgba(13,148,136,0.25)', '&:hover': { background: 'linear-gradient(135deg, #0F766E 0%, #0E7490 100%)', boxShadow: '0 6px 16px rgba(13,148,136,0.35)', color: '#fff' } }}>
-                    {t('limit.go_home')}
-                  </Button>
-                </Box>
-              </Box>
+        <BlockedScreen
+          variant="card"
+          accentGradient="linear-gradient(90deg, #EF4444 0%, #F97316 100%)"
+          icon="🔒"
+          iconBg="linear-gradient(135deg, #FEE2E2 0%, #FFEDD5 100%)"
+          iconBorderColor="#FECACA"
+          iconShadow="0 4px 16px rgba(239,68,68,0.15)"
+          badge={{ label: t('limit.badge'), color: '#DC2626', bgColor: '#FEF2F2', borderColor: '#FECACA' }}
+          title={t('limit.title')}
+          maxWidth={480}
+          actions={[
+            { label: t('limit.go_back'), onClick: () => router.back(), variant: 'outlined' },
+            { label: t('limit.go_home'), onClick: () => router.push('/'), color: 'linear-gradient(135deg, #0D9488 0%, #0891B2 100%)', hoverColor: 'linear-gradient(135deg, #0F766E 0%, #0E7490 100%)' },
+          ]}
+        >
+          {limitJobTitle && (
+            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, bgcolor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', px: 2, py: 0.7, mb: 2.5, mt: 1.5 }}>
+              <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#94A3B8', flexShrink: 0 }} />
+              <Typography sx={{ fontSize: '0.83rem', fontWeight: 600, color: '#475569' }}>{limitJobTitle}</Typography>
             </Box>
-          </Box>
-        </Box>
+          )}
+          <Box sx={{ height: '1px', bgcolor: '#F1F5F9', mb: 2.5 }} />
+          <Typography sx={{ fontSize: '0.9rem', color: '#475569', lineHeight: 1.8, mb: 1.5 }}>{t('limit.desc')}</Typography>
+          <Typography sx={{ fontSize: '0.82rem', color: '#94A3B8', lineHeight: 1.7 }}>{t('limit.contact')}</Typography>
+        </BlockedScreen>
       </>
     );
   }
@@ -524,6 +490,20 @@ const IntelligentInterviewTest = () => {
     setLangPickerOpen(false);
     setStep('interview');
   };
+
+  // Unauthenticated user with a valid (non-expired) job post — show job details and sign-in prompt
+  if (!authUser && hasJobId && jobData) {
+    return (
+      <>
+        <style jsx global>{GlobalStyles}</style>
+        <JobPreviewPanel
+          jobData={jobData}
+          jobId={jobId as string}
+          companyId={router.query.companyId as string | undefined}
+        />
+      </>
+    );
+  }
 
   if (step === 'intro') {
     return (
@@ -625,7 +605,7 @@ const IntelligentInterviewTest = () => {
             </Box>
           )}
 
-          <Box sx={{ bgcolor: '#fff', borderRadius: '20px', border: '1px solid #e8e2f5', boxShadow: 'none', overflow: 'hidden' }}>
+          <Box sx={{ bgcolor: '#fff', borderRadius: '20px', border: '1px solid #e8e2f5', boxShadow: 'none' }}>
             {isActive && (() => {
               const allMsgs = audio.conversationHistory.filter(m => m.type !== 'system');
               const lastMsg = allMsgs.slice(-1)[0];

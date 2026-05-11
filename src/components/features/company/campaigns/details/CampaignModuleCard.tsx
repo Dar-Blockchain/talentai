@@ -3,9 +3,7 @@ import { Box, Typography } from "@mui/material";
 import SettingsOutlined              from "@mui/icons-material/SettingsOutlined";
 import CheckCircleOutlined           from "@mui/icons-material/CheckCircleOutlined";
 import RadioButtonUncheckedOutlined  from "@mui/icons-material/RadioButtonUncheckedOutlined";
-import AccessTimeOutlined            from "@mui/icons-material/AccessTimeOutlined";
 import QuizOutlined                  from "@mui/icons-material/QuizOutlined";
-import EmojiEventsOutlined           from "@mui/icons-material/EmojiEventsOutlined";
 import InfoOutlined                  from "@mui/icons-material/InfoOutlined";
 import { Campaign, CampaignModule, ModuleType } from "@/types/campaign";
 import { MODULE_CONFIG } from "@/constants/campaign";
@@ -106,7 +104,7 @@ const CampaignModuleCard: React.FC<Props> = ({
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.5, py: 1.25, borderRadius: "10px", bgcolor: "#FFFBEB", border: "1px solid #FDE68A" }}>
             <RadioButtonUncheckedOutlined sx={{ fontSize: 15, color: "#D97706", flexShrink: 0 }} />
             <Typography sx={{ fontSize: "12px", color: "#92400E" }}>
-              <Trans i18nKey="pages.campaigns.detail.module_not_configured_notice" components={{ strong: <strong /> }} />
+              <Trans ns="dashboard" i18nKey="pages.campaigns.detail.module_not_configured_notice" components={{ strong: <strong /> }} />
             </Typography>
           </Box>
         )}
@@ -159,45 +157,10 @@ const EmployeeModuleDetails: React.FC<{ mod: CampaignModule; color: string }> = 
     });
   }
 
-  if (mod.type === "AI_INTERVIEW") {
-    if (mod.config.durationMinutes) {
-      pills.push({
-        icon: AccessTimeOutlined,
-        key: "dur",
-        label: t(`${d}.pill_duration`),
-        value: t(`${d}.pill_duration_min`, { count: mod.config.durationMinutes }),
-      });
-    }
-    const critLen = mod.config.scoringCriteria?.length ?? 0;
-    if (critLen) {
-      pills.push({
-        icon: EmojiEventsOutlined,
-        key: "score",
-        label: t(`${d}.pill_scoring`),
-        value: t(`${d}.pill_criteria_count`, { count: critLen }),
-      });
-    }
-  }
 
   if (mod.type === "SKILL_TEST") {
     if (mod.config.skill) {
       pills.push({ icon: InfoOutlined, key: "skill", label: t(`${d}.pill_skill`), value: mod.config.skill });
-    }
-    if (mod.config.passingScore !== undefined) {
-      pills.push({
-        icon: EmojiEventsOutlined,
-        key: "pass",
-        label: t(`${d}.pill_pass_mark`),
-        value: t(`${d}.pill_pass_pct`, { count: mod.config.passingScore }),
-      });
-    }
-    if (mod.config.durationMinutes) {
-      pills.push({
-        icon: AccessTimeOutlined,
-        key: "dur2",
-        label: t(`${d}.pill_duration`),
-        value: t(`${d}.pill_duration_min`, { count: mod.config.durationMinutes }),
-      });
     }
   }
 
@@ -255,28 +218,17 @@ const ConfigDetails: React.FC<{ mod: CampaignModule; color: string }> = ({ mod, 
           );
         })()}
 
-        {mod.type === "AI_INTERVIEW" && (() => {
-          const { durationMinutes, scoringCriteria } = mod.config!;
-          return (<>
-            {durationMinutes && <ConfigRow label={t(`${d}.config_duration`)} value={t(`${d}.config_duration_minutes`, { count: durationMinutes })} />}
-            {scoringCriteria && scoringCriteria.length > 0 && (
-              <ConfigRow label={t(`${d}.config_scoring_criteria`)} value={t(`${d}.pill_criteria_count`, { count: scoringCriteria.length })} />
-            )}
-            {mod.config!.agentPrompt && (
-              <ConfigRow
-                label={t(`${d}.config_agent_prompt`)}
-                value={<Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#0F172A", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{mod.config!.agentPrompt}</Typography>}
-              />
-            )}
-          </>);
-        })()}
+        {mod.type === "AI_INTERVIEW" && mod.config!.agentPrompt && (
+          <ConfigRow
+            label={t(`${d}.config_agent_prompt`)}
+            value={<Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#0F172A", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{mod.config!.agentPrompt}</Typography>}
+          />
+        )}
 
         {mod.type === "SKILL_TEST" && (() => {
-          const { skill, passingScore, maxAttempts } = mod.config!;
+          const { skill } = mod.config!;
           return (<>
             {skill && <ConfigRow label={t(`${d}.config_skill`)} value={skill} />}
-            {passingScore !== undefined && <ConfigRow label={t(`${d}.config_passing_score`)} value={`${passingScore}%`} />}
-            {maxAttempts  !== undefined && <ConfigRow label={t(`${d}.config_max_attempts`)}  value={String(maxAttempts)} />}
           </>);
         })()}
 

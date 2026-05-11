@@ -35,9 +35,6 @@ const HeaderMessagesDropdown: React.FC<HeaderMessagesDropdownProps> = ({
   const dispatch = useDispatch<AppDispatch>();
   const conversations = useSelector(selectConversations);
   const loadingConversations = useSelector(selectConversationsLoading);
-  const profileType = useSelector((state: RootState) => state.user.connectedUser.profile?.type);
-  const isCompany = profileType === "Company" || profileType === "Employee";
-  const chatBase = isCompany ? "/company/chat" : "/candidate/chat";
   const [messagesAnchorEl, setMessagesAnchorEl] = useState<HTMLElement | null>(null);
 
   const messagesOpen = Boolean(messagesAnchorEl);
@@ -227,7 +224,7 @@ const HeaderMessagesDropdown: React.FC<HeaderMessagesDropdownProps> = ({
                   key={conversation._id}
                   onClick={() => {
                     handleMessagesClose();
-                    router.push(`${chatBase}/${conversation._id}`);
+                    router.push(`/chat/${conversation._id}`);
                   }}
                   sx={{
                     px: 2,
@@ -325,7 +322,7 @@ const HeaderMessagesDropdown: React.FC<HeaderMessagesDropdownProps> = ({
             fullWidth
             onClick={() => {
               handleMessagesClose();
-              router.push(chatBase);
+              router.push("/chat");
             }}
             endIcon={<OpenInNewIcon sx={{ fontSize: 16 }} />}
             sx={{

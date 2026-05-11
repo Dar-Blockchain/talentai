@@ -1,22 +1,27 @@
 import React from "react";
 import { useRouter } from "next/router";
 import { Box } from "@mui/material";
-import ChatLayout from "@/components/layout/dashboard/ChatLayout";
 import { useChatSession } from "@/hooks/useChatSession";
 import ChatShell from "@/components/features/chat/ChatShell";
 
-const ConversationPage: React.FC = () => {
-  const router  = useRouter();
+interface Props {
+  basePath: string;
+  isCompany: boolean;
+  layout: React.FC<{ children: React.ReactNode }>;
+}
+
+const SharedChatConversationPage: React.FC<Props> = ({ basePath, isCompany, layout: Layout }) => {
+  const router = useRouter();
   const { conversationId: routeId } = router.query;
 
   const session = useChatSession({
     initialConversationId: typeof routeId === "string" ? routeId : null,
-    deleteRedirectRoute:   "/candidate/chat",
-    onConversationChange:  (id) => window.history.replaceState(null, "", `/candidate/chat/${id}`),
+    deleteRedirectRoute:   basePath,
+    onConversationChange:  (id) => window.history.replaceState(null, "", `${basePath}/${id}`),
   });
 
   return (
-    <ChatLayout>
+    <Layout>
       <Box sx={{ flex: 1, display: "flex", minHeight: 0, p: { xs: 1, sm: 2 } }}>
         <ChatShell
           conversations={session.conversations}
@@ -27,7 +32,7 @@ const ConversationPage: React.FC = () => {
           otherUser={session.otherUser}
           loading={session.loading}
           sending={session.sending}
-          isCompany={false}
+          isCompany={isCompany}
           newMessage={session.newMessage}
           setNewMessage={session.setNewMessage}
           onSend={session.handleSendMessage}
@@ -40,8 +45,8 @@ const ConversationPage: React.FC = () => {
           onSelectConversation={session.handleSelectConversation}
         />
       </Box>
-    </ChatLayout>
+    </Layout>
   );
 };
 
-export default ConversationPage;
+export default SharedChatConversationPage;

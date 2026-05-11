@@ -857,7 +857,6 @@ const CampaignParticipantsTab: React.FC<Props> = ({ campaignId, mode = "company"
               sx={{
                 fontSize: "10px", fontWeight: 800, color: "#94A3B8",
                 textTransform: "uppercase", letterSpacing: "0.08em",
-                // #=center, Participant=left, Status=center, Role=center, Actions=center
                 textAlign: i === 1 ? "left" : "center",
               }}
             >

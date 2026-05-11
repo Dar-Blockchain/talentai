@@ -9,9 +9,10 @@ const HeaderLogo = () => {
   const router         = useRouter();
   const storedUserType = useSelector((state: RootState) => state.user.userType);
   const { user }       = useSelector((state: RootState) => state.user.connectedUser);
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
 
   const userType =
-    router.pathname === "/home/candidate" || router.pathname === "/candidate/home" || router.pathname === "/home/company"
+    router.pathname === "/" || router.pathname === "/home/candidate" || router.pathname === "/candidate/home"
       ? storedUserType
       : user?.role?.toLowerCase() ?? storedUserType ?? "candidate";
 
@@ -22,8 +23,7 @@ const HeaderLogo = () => {
     [userType]
   );
 
-  const homeRoute  = useMemo(() => userType === "company" ? "/" : "/home/candidate", [userType]);
-  const goHome     = useCallback(() => router.push(homeRoute), [router, homeRoute]);
+  const goHome = useCallback(() => router.push("/"), [router]);
 
   return (
     <Box

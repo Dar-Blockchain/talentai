@@ -3,7 +3,7 @@ User-agent: *
 Allow: /
 
 # Disallow admin and private areas
-Disallow: /dashboard/admin
+Disallow: /admin/dashboard
 Disallow: /api/
 Disallow: /_next/
 Disallow: /admin/

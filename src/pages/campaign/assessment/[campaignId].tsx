@@ -21,10 +21,10 @@ const PublicAssessmentPage: React.FC = () => {
   const router      = useRouter();
   const { campaignId } = router.query as { campaignId?: string };
 
-  const [campaign,        setCampaign]        = useState<Campaign | null>(null);
-  const [loading,         setLoading]         = useState(true);
-  const [error,           setError]           = useState<string | null>(null);
-  const [waitingResults,  setWaitingResults]  = useState(false);
+  const [campaign,          setCampaign]          = useState<Campaign | null>(null);
+  const [loading,           setLoading]           = useState(true);
+  const [error,             setError]             = useState<string | null>(null);
+  const [waitingResults,    setWaitingResults]    = useState(false);
   const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Resolve participantId from localStorage once the campaignId is available

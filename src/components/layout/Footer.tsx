@@ -1,6 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import Image from "next/image";
+import NextLink from "next/link";
 import {
   Box,
   Link,
@@ -21,6 +22,7 @@ const FooterLink: React.FC<{ children: React.ReactNode; href?: string }> = ({
   href = "#",
 }) => (
   <Link
+    component={NextLink}
     href={href}
     underline="none"
     sx={{
@@ -56,13 +58,15 @@ const Footer: React.FC = () => {
         <Box sx={{ mb: 1 }}>
           {/* Logo */}
           <Box sx={{ mb: 1.5 }}>
-            <Image
-              src="/images/home/TalentAiLogo.png"
-              alt="TalentAI"
-              width={120}
-              height={32}
-              style={{ objectFit: "contain" }}
-            />
+            <NextLink href="/" style={{ display: "inline-block" }}>
+              <Image
+                src="/images/home/TalentAiLogo.png"
+                alt="TalentAI"
+                width={120}
+                height={32}
+                style={{ objectFit: "contain", cursor: "pointer" }}
+              />
+            </NextLink>
           </Box>
           <Typography
             variant="body2"
@@ -91,7 +95,9 @@ const Footer: React.FC = () => {
             }}
           >
             {t("footer.disclaimer_prefix")}{" "}
-            <Link href="/terms" sx={{ color: "rgba(255,255,255,0.5)", textDecoration: "underline", "&:hover": { color: "rgba(255,255,255,0.8)" } }}>{t("footer.terms_of_use")}</Link>.
+            <Link component={NextLink} href="/terms" sx={{ color: "rgba(255,255,255,0.5)", textDecoration: "underline", "&:hover": { color: "rgba(255,255,255,0.8)" } }}>{t("footer.terms_of_use")}</Link>
+            {" "}·{" "}
+            <Link component={NextLink} href="/privacy" sx={{ color: "rgba(255,255,255,0.5)", textDecoration: "underline", "&:hover": { color: "rgba(255,255,255,0.8)" } }}>{t("footer.privacy_policy")}</Link>.
             {" "}{t("footer.disclaimer_suffix")}
           </Typography>
           {/* <Typography variant="caption" sx={{ color: '#D1D5DB', fontSize: '0.75rem', lineHeight: 1.5 }}>
