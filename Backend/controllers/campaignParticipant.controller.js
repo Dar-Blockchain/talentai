@@ -1,7 +1,16 @@
 require("dotenv").config();
 const CampaignParticipant = require("../models/CampaignParticipant.model");
 const InternalCampaign = require("../models/InternalCampaign.model");
+const Profile = require("../models/Profile.model");
 const campaignParticipantService = require("../services/campaignParticipant.service");
+const { sendCampaignInvitation } = require("../utils/email-service");
+
+const MODULE_LABELS = {
+  QUESTIONNAIRE: "Questionnaire",
+  AI_INTERVIEW: "AI Interview",
+  SKILL_TEST: "Skill Test",
+  TRAINING_PATH: "Training Path",
+};
 /*
   addParticipant,
   getParticipantById,
@@ -39,6 +48,41 @@ exports.addCampaignParticipant = async (req, res) => {
       email: email || null,
       anonymousToken: anonymousToken || null,
     });
+
+    // Send invitation email fire-and-forget (only for active campaigns)
+    const recipientEmail = participant.email;
+    if (recipientEmail && campaign.status === "ACTIVE") {
+      (async () => {
+        try {
+          let participantName = "Participant";
+          if (employeeId) {
+            const profile = await Profile.findOne({ userId: employeeId }).select("firstName lastName").lean();
+            participantName = [profile?.firstName, profile?.lastName].filter(Boolean).join(" ") || "Participant";
+          }
+          const companyProfile = await Profile.findOne({ userId: campaign.company }).select("companyDetails.name").lean();
+          const companyName = companyProfile?.companyDetails?.name || "Your company";
+          const assessmentLink = `${process.env.BASE_URL}/employee/campaigns/${campaignId}/assessment`;
+          const deadlineStr = campaign.deadline
+            ? new Date(campaign.deadline).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+            : null;
+
+          const sent = await sendCampaignInvitation(recipientEmail, {
+            participantName,
+            companyName,
+            campaignTitle: campaign.title,
+            moduleLabel: MODULE_LABELS[campaign.module?.type] || campaign.module?.type || "Assessment",
+            deadline: deadlineStr,
+            campaignDescription: campaign.description || null,
+            assessmentLink,
+          });
+          if (sent) {
+            await CampaignParticipant.findByIdAndUpdate(participant._id, { invitationSentAt: new Date() });
+          }
+        } catch (err) {
+          console.warn("⚠️ Campaign invitation email failed:", err.message);
+        }
+      })();
+    }
 
     res.status(201).json({
       success: true,

@@ -125,6 +125,17 @@ export const useInterviewConfig = ({
       // post/details wraps in data.data, post/getPostById wraps in data.data or data.post
       const post = postData.data?.data || postData.data || postData.post || postData;
       setJobData(post);
+
+      // Check expiry from post data directly — same logic as the backend controller.
+      // This fires for both authenticated and unauthenticated users before any
+      // further API calls, so the expired screen is always shown.
+      if (post.expirationDate && new Date(post.expirationDate) < new Date()) {
+        setIsExpired(true);
+        setPipelineLoading(false);
+        setConfigLoading(false);
+        return;
+      }
+
       const isPipeline = post?.creationType === 'pipeline';
 
       console.log('📋 Job detection:', {

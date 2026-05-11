@@ -37,7 +37,6 @@ const CODE_EXPIRY_KEY = "candidate_reg_code_expires_at";
 const ACCENT = "#0D9488";
 const ACCENT2 = "#059669";
 
-
 const half = {
   flex: "1 1 100%",
   minWidth: 0,

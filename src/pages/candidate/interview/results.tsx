@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
-import { Box, Button } from '@mui/material';
-import { Home as HomeIcon } from '@mui/icons-material';
+import { Box, Button, Typography } from '@mui/material';
+import { Home as HomeIcon, CheckCircleOutline as CheckCircleIcon } from '@mui/icons-material';
 import { useToast } from '@/hooks/useToast';
 import Cookies from 'js-cookie';
 import { logInterviewDataToConsole } from '@/utils/exportInterviewData';
@@ -37,6 +37,7 @@ export default function InterviewResults() {
   const [analysis, setAnalysis] = useState<InterviewAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isJobInterview, setIsJobInterview] = useState(false);
 
   useEffect(() => {
     if (router.isReady) {
@@ -180,6 +181,10 @@ export default function InterviewResults() {
     try {
       setLoading(true);
 
+      const urlParams = new URLSearchParams(window.location.search);
+      const jobId = urlParams.get('jobId') || localStorage.getItem('interview_jobId');
+      if (jobId) setIsJobInterview(true);
+
       const storedAnalysis = localStorage.getItem('last_interview_analysis');
 
       if (storedAnalysis) {
@@ -316,6 +321,43 @@ export default function InterviewResults() {
 
   if (loading) return <LoadingState />;
   if (error || !analysis) return <ErrorState error={error} />;
+
+  if (isJobInterview) {
+    return (
+      <PageContainer>
+        <Header />
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '70vh', px: 2 }}>
+          <Box sx={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+            bgcolor: '#fff', borderRadius: '20px', border: '1px solid #E5E7EB',
+            boxShadow: '0 4px 32px rgba(0,0,0,0.08)', px: { xs: 4, sm: 6 }, py: { xs: 5, sm: 6 },
+            maxWidth: 480, width: '100%', textAlign: 'center',
+          }}>
+            <Box sx={{ width: 80, height: 80, borderRadius: '50%', bgcolor: '#F0FDF4', border: '2px solid #BBF7D0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <CheckCircleIcon sx={{ fontSize: 44, color: '#16A34A' }} />
+            </Box>
+            <Box>
+              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: { xs: '1.3rem', sm: '1.6rem' }, color: '#111827', mb: 1 }}>
+                {t('success_title')}
+              </Typography>
+              <Typography sx={{ fontFamily: 'Poppins', fontSize: { xs: '0.88rem', sm: '0.95rem' }, color: '#6B7280', lineHeight: 1.6 }}>
+                {t('success_message')}
+              </Typography>
+            </Box>
+            <Button
+              variant="contained"
+              startIcon={<HomeIcon />}
+              onClick={() => { window.location.href = '/candidate/dashboard'; }}
+              fullWidth
+              sx={{ bgcolor: '#0D9488', color: '#fff', fontWeight: 600, borderRadius: '10px', px: 4, py: 1.5, textTransform: 'none', boxShadow: 'none', fontFamily: 'Poppins', fontSize: '0.95rem', '&:hover': { bgcolor: '#0F766E', boxShadow: 'none' } }}
+            >
+              {t('back_to_dashboard')}
+            </Button>
+          </Box>
+        </Box>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer>

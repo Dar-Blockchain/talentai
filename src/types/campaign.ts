@@ -112,8 +112,6 @@ export interface AIInterviewModule {
   type: "AI_INTERVIEW";
   config: {
     agentPrompt: string;
-    durationMinutes?: number;
-    scoringCriteria?: string[];
   } | null;
 }
 
@@ -121,9 +119,6 @@ export interface SkillTestModule {
   type: "SKILL_TEST";
   config: {
     skill: string;
-    passingScore?: number;
-    maxAttempts?: number;
-    durationMinutes?: number;
   } | null;
 }
 
@@ -200,5 +195,4 @@ export interface CampaignSession {
   startedAt?: string;
   completedAt?: string;
   score?: number;
-  durationMinutes?: number;
 }

@@ -308,7 +308,13 @@ const CandidateApplications: React.FC<CandidateApplicationsProps> = ({ previewCo
               key={app._id || i}
               app={app}
               last={!expanded && i === Math.min(COLLAPSE_SIZE, displayed.length) - 1}
-              onClick={() => router.push(`/candidate/dashboard/applications/${app._id}`)}
+              onClick={() => {
+                const status = (app.status || "").toLowerCase();
+                if (status === "visited" && app.post?._id)
+                  router.push(`/candidate/interview/hr?jobId=${app.post._id}`);
+                else
+                  router.push(`/candidate/applications/${app._id}`);
+              }}
               s={s}
             />
           ))}
@@ -321,7 +327,13 @@ const CandidateApplications: React.FC<CandidateApplicationsProps> = ({ previewCo
                   key={app._id || i}
                   app={app}
                   last={i === displayed.length - COLLAPSE_SIZE - 1}
-                  onClick={() => router.push(`/candidate/dashboard/applications/${app._id}`)}
+                  onClick={() => {
+                    const status = (app.status || "").toLowerCase();
+                    if (status === "visited" && app.post?._id)
+                      router.push(`/candidate/interview/hr?jobId=${app.post._id}`);
+                    else
+                      router.push(`/candidate/applications/${app._id}`);
+                  }}
                   s={s}
                 />
               ))}

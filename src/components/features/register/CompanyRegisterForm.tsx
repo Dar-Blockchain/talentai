@@ -147,7 +147,7 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) =
 
           <Box sx={half}>
             <TextField
-              label={t("company_form.company_name")} placeholder="Acme Corp" fullWidth disabled={loading}
+              label={t("company_form.company_name")} placeholder="Acme Corp" fullWidth required disabled={loading}
               error={!!errors.name} helperText={errors.name?.message}
               InputProps={{ startAdornment: <InputAdornment position="start"><BusinessIcon sx={{ fontSize: { xs: 18, md: 20 }, color: "#9CA3AF" }} /></InputAdornment> }}
               sx={compactFieldSx}
@@ -156,7 +156,7 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) =
           </Box>
           <Box sx={half}>
             <TextField
-              label={t("company_form.work_email")} placeholder="contact@company.com" fullWidth type="email" disabled={loading}
+              label={t("company_form.work_email")} placeholder="contact@company.com" fullWidth required type="email" disabled={loading}
               error={!!errors.email} helperText={errors.email?.message}
               InputProps={{ startAdornment: <InputAdornment position="start"><EmailIcon sx={{ fontSize: { xs: 18, md: 20 }, color: "#9CA3AF" }} /></InputAdornment> }}
               sx={compactFieldSx}
@@ -173,7 +173,7 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) =
               rules={{ required: t("company_form.validation.industry_required") }}
               render={({ field }) => (
                 <TextField
-                  {...field} label={t("company_form.industry")} fullWidth select disabled={loading}
+                  {...field} label={t("company_form.industry")} fullWidth required select disabled={loading}
                   error={!!errors.industry} helperText={errors.industry?.message}
                   InputProps={{ startAdornment: <InputAdornment position="start"><CategoryIcon sx={{ fontSize: { xs: 18, md: 20 }, color: "#9CA3AF" }} /></InputAdornment> }}
                   SelectProps={{
@@ -194,7 +194,7 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) =
               rules={{ required: t("company_form.validation.size_required") }}
               render={({ field }) => (
                 <TextField
-                  {...field} label={t("company_form.company_size")} fullWidth select disabled={loading}
+                  {...field} label={t("company_form.company_size")} fullWidth required select disabled={loading}
                   error={!!errors.size} helperText={errors.size?.message}
                   InputProps={{ startAdornment: <InputAdornment position="start"><PeopleIcon sx={{ fontSize: { xs: 18, md: 20 }, color: "#9CA3AF" }} /></InputAdornment> }}
                   SelectProps={{
@@ -212,7 +212,7 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) =
 
           <Box sx={half}>
             <TextField
-              label={t("company_form.location")} placeholder="e.g. Paris, France" fullWidth disabled={loading}
+              label={t("company_form.location")} placeholder="e.g. Paris, France" fullWidth required disabled={loading}
               error={!!errors.location} helperText={errors.location?.message}
               InputProps={{ startAdornment: <InputAdornment position="start"><LocationOnIcon sx={{ fontSize: { xs: 18, md: 20 }, color: "#9CA3AF" }} /></InputAdornment> }}
               sx={compactFieldSx}

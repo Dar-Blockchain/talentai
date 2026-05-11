@@ -1,22 +1,29 @@
 import React from "react";
 import { useRouter } from "next/router";
 import { Box } from "@mui/material";
+import { useSelector } from "react-redux";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
+import ChatLayout from "@/components/layout/dashboard/ChatLayout";
 import { useChatSession } from "@/hooks/useChatSession";
 import ChatShell from "@/components/features/chat/ChatShell";
+import { RootState } from "@/store/store";
 
-export default function CompanyConversationPage() {
+export default function ChatConversationPage() {
   const router = useRouter();
   const { conversationId: routeId } = router.query;
+  const role = useSelector((state: RootState) => state.user.connectedUser.user?.role);
+  // Company and Employee are on the recruiter side — they can delete conversations/messages
+  const isCompany = role === "Company" || role === "Employee";
+  const Layout = isCompany ? DashboardLayout : ChatLayout;
 
   const session = useChatSession({
     initialConversationId: typeof routeId === "string" ? routeId : null,
-    deleteRedirectRoute:   "/company/chat",
-    onConversationChange:  (id) => window.history.replaceState(null, "", `/company/chat/${id}`),
+    deleteRedirectRoute:   "/chat",
+    onConversationChange:  (id) => window.history.replaceState(null, "", `/chat/${id}`),
   });
 
   return (
-    <DashboardLayout>
+    <Layout>
       <Box sx={{ display: "flex", flexDirection: "column", height: "calc(100vh - 100px)" }}>
         <ChatShell
           conversations={session.conversations}
@@ -27,7 +34,7 @@ export default function CompanyConversationPage() {
           otherUser={session.otherUser}
           loading={session.loading}
           sending={session.sending}
-          isCompany
+          isCompany={isCompany}
           newMessage={session.newMessage}
           setNewMessage={session.setNewMessage}
           onSend={session.handleSendMessage}
@@ -40,6 +47,6 @@ export default function CompanyConversationPage() {
           onSelectConversation={session.handleSelectConversation}
         />
       </Box>
-    </DashboardLayout>
+    </Layout>
   );
 }

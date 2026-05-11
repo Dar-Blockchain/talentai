@@ -12,15 +12,12 @@ import {
 } from "@mui/material";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
-import EmojiEventsOutlined from "@mui/icons-material/EmojiEventsOutlined";
-import RepeatOutlined from "@mui/icons-material/RepeatOutlined";
 import CodeIcon from "@mui/icons-material/Code";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
 import CampaignIcon from "@mui/icons-material/Campaign";
 import BugReportIcon from "@mui/icons-material/BugReport";
 import BusinessCenterIcon from "@mui/icons-material/BusinessCenter";
-import AppInput from "@/components/ui/AppInput";
 import { ALL_SKILLS } from "@/constants/skills";
 import { useTranslation } from "react-i18next";
 
@@ -28,8 +25,6 @@ import { useTranslation } from "react-i18next";
 
 export interface SkillTestConfig {
   skill: string;
-  passingScore?: number;
-  maxAttempts?: number;
 }
 
 interface Props {
@@ -259,60 +254,6 @@ const SkillTestForm: React.FC<Props> = ({ config, onChange }) => {
         </FormControl>
       </Box>
 
-      {/* ── Score + Attempts ─────────────────────────────────── */}
-      <Box sx={{
-        display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2,
-        p: 2, borderRadius: "10px",
-        bgcolor: "#F9FAFB", border: "1px solid #F3F4F6",
-      }}>
-        {/* Passing Score */}
-        <Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.6, mb: 1 }}>
-            <EmojiEventsOutlined sx={{ fontSize: 14, color: "#F59E0B" }} />
-            <Typography sx={{ fontSize: "11.5px", fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              {t(`${cf}.passing_score`)}
-            </Typography>
-          </Box>
-          <AppInput
-            label=""
-            type="number"
-            placeholder={t(`${cf}.ph_score`)}
-            value={String(config.passingScore ?? "")}
-            onChange={(e) =>
-              onChange({
-                ...config,
-                passingScore: e.target.value ? Number(e.target.value) : undefined,
-              })
-            }
-          />
-          <Typography sx={{ fontSize: "10.5px", color: "#9CA3AF", mt: 0.5 }}>
-            {t(`${cf}.passing_hint`)}
-          </Typography>
-        </Box>
-
-        {/* Max Attempts */}
-        <Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.6, mb: 1 }}>
-            <RepeatOutlined sx={{ fontSize: 14, color: "#3B82F6" }} />
-            <Typography sx={{ fontSize: "11.5px", fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              {t(`${cf}.max_attempts`)}
-            </Typography>
-          </Box>
-          <AppInput
-            label=""
-            type="number"
-            placeholder={t(`${cf}.ph_attempts`)}
-            value={String(config.maxAttempts ?? "")}
-            onChange={(e) => {
-              const n = e.target.value ? Number(e.target.value) : undefined;
-              onChange({ ...config, maxAttempts: n !== undefined ? Math.max(1, n) : undefined });
-            }}
-          />
-          <Typography sx={{ fontSize: "10.5px", color: "#9CA3AF", mt: 0.5 }}>
-            {t(`${cf}.unlimited_hint`)}
-          </Typography>
-        </Box>
-      </Box>
     </Box>
   );
 };

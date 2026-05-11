@@ -31,13 +31,12 @@ const chatSocketHandler = require("./socket-handlers/chatSocketHandler");
 const { seedDefaultPlans } = require("./seeders/planLimits.seeder");
 const { scheduleAutoInvites } = require("./cron/autoInviteScheduler.cron");
 const { scheduleReminders } = require("./cron/reminderScheduler.cron");
+const { scheduleCampaignReminders } = require("./cron/campaignReminderScheduler.cron");
 //const backupService = require('./services/backupService');
 //const { scheduleDailyBackup } = require('./cron/dailyBackup');
 
-// Auto-load CRON jobs
-// ⛔ DISABLED: All cron jobs disabled
+// Auto-load CRON jobs — initialized after DB connects (see initializeApp)
 const { initializeCronJobs } = require("./cron");
-initializeCronJobs();
 
 /**
  * Suppress deprecation warnings for punycode module
@@ -72,6 +71,9 @@ const initializeApp = async () => {
     // Step 1: Connect to database
     logger.section("Connecting to database...");
     await connectDB();
+
+    // Step 1.1: Initialize cron jobs now that DB is connected
+    initializeCronJobs();
 
     // Step 1.2: Deduplicate InterviewApplicant records (one-time fix)
     try {
@@ -181,6 +183,11 @@ const initializeApp = async () => {
       logger.section("Initializing interview reminder scheduler...");
       scheduleReminders();
       logger.success("Interview reminder scheduler initialized (24h + 48h reminders)");
+
+      // Step 11: Initialize campaign deadline reminder scheduler
+      logger.section("Initializing campaign reminder scheduler...");
+      scheduleCampaignReminders();
+      logger.success("Campaign reminder scheduler initialized (48h deadline reminders)");
     });
   } catch (error) {
     logger.error("Failed to initialize application", error.message);

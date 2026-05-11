@@ -92,7 +92,7 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
 
   const handleRedirectTo = (user: any, profile: any) => {
     const role = user?.role;
-    if (role === "Admin") { router.replace("/dashboard/admin"); return; }
+    if (role === "Admin") { router.replace("/admin/dashboard"); return; }
     if (!profile?._id) { router.replace(returnUrl ? `/register?returnUrl=${encodeURIComponent(returnUrl)}` : "/register"); return; }
     if (returnUrl) { router.replace(decodeURIComponent(returnUrl)); return; }
     if (role === "Employee") { router.replace("/employee/dashboard"); return; }

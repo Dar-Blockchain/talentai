@@ -573,7 +573,11 @@ const CampaignDetail: React.FC<Props> = ({
           )}
 
           {tab === "participants" && (
-            <CampaignParticipantsTab campaignId={campaign._id} mode={mode} anonymityMode={campaign.anonymityMode} />
+            <CampaignParticipantsTab
+              campaignId={campaign._id}
+              mode={mode}
+              anonymityMode={campaign.anonymityMode}
+            />
           )}
 
           {tab === "sessions" && (
