@@ -39,6 +39,7 @@ const ACCENT2 = "#059669";
 const fieldSx = {
   "& .MuiInputLabel-root": { color: "#6B7280", fontFamily: "Poppins", fontWeight: 500, fontSize: { xs: "0.8125rem", sm: "0.875rem", md: "0.95rem" } },
   "& .MuiInputLabel-root.Mui-focused": { color: ACCENT },
+  "& .MuiFormLabel-asterisk": { color: "#EF4444" },
   "& .MuiInputBase-input": {
     fontSize: { xs: "0.875rem", sm: "0.9375rem", md: "1rem" },
     fontFamily: "Poppins",
