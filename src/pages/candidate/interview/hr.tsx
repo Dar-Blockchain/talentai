@@ -21,6 +21,7 @@ import { RootState, AppDispatch } from '@/store/store';
 import { useSelector, useDispatch } from 'react-redux';
 import dynamic from 'next/dynamic';
 import { checkPostInterviewAssessment } from '@/store/slices/interviewSlice';
+import { createJobApplication } from '@/store/slices/jobApplicationSlice';
 
 
 // Types
@@ -103,11 +104,7 @@ const IntelligentInterviewTest = () => {
 
     if (authUser && token) {
       if (authUser.role !== 'Company' && authUser.role !== 'Employee') {
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}job-applications/`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ post: postId }),
-        }).catch(() => {});
+        dispatch(createJobApplication(postId));
       }
 
       dispatch(checkPostInterviewAssessment(postId)).then((result) => {
