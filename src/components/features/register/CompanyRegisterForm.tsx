@@ -27,37 +27,17 @@ import { useToast } from "@/hooks/useToast";
 import { useRouter } from "next/router";
 import { formatTimeLeft } from "@/utils/functions";
 import { useTranslation } from "react-i18next";
+import {
+  ACCENT,
+  ACCENT2,
+  compactFieldSx,
+  compactSubmitBtnSx,
+  selectMenuProps,
+} from "./registerFormStyles";
 
 const CODE_LENGTH = 6;
 const CODE_TTL = 300;
 const CODE_EXPIRY_KEY = "company_reg_code_expires_at";
-
-const ACCENT = "#0D9488";
-const ACCENT2 = "#059669";
-
-const fieldSx = {
-  "& .MuiInputLabel-root": { color: "#6B7280", fontFamily: "Poppins", fontWeight: 500, fontSize: { xs: "0.8125rem", sm: "0.875rem", md: "0.95rem" } },
-  "& .MuiInputLabel-root.Mui-focused": { color: ACCENT },
-  "& .MuiFormLabel-asterisk": { color: "#EF4444" },
-  "& .MuiInputBase-input": {
-    fontSize: { xs: "0.875rem", sm: "0.9375rem", md: "1rem" },
-    fontFamily: "Poppins",
-  },
-  "& .MuiInputBase-input::placeholder": { fontSize: { xs: "0.73rem", sm: "0.78rem", md: "0.82rem" }, opacity: 1, color: "#C4CAD4" },
-  "& .MuiFormHelperText-root": { fontSize: { xs: "0.6875rem", sm: "0.72rem", md: "0.75rem" } },
-  "& .MuiOutlinedInput-root": {
-    borderRadius: "14px",
-    fontFamily: "Poppins",
-    fontSize: { xs: "0.875rem", sm: "0.9375rem", md: "1rem" },
-    bgcolor: "#F9FAFB",
-    minHeight: { xs: "48px", sm: "52px", md: "56px" },
-    "& fieldset": { borderColor: "#E5E7EB" },
-    "&:hover fieldset": { borderColor: "#D1D5DB" },
-    "&:hover": { bgcolor: "#F3F4F6" },
-    "&.Mui-focused fieldset": { borderColor: ACCENT, borderWidth: "1.5px" },
-    "&.Mui-focused": { bgcolor: "#fff" },
-  },
-};
 
 const half = {
   flex: "1 1 100%",
@@ -65,21 +45,6 @@ const half = {
   "@media (min-width:1025px)": { flex: "1 1 calc(50% - 12px)" },
 };
 const full = { flex: "1 1 100%" };
-
-const selectMenuProps = {
-  PaperProps: {
-    sx: {
-      mt: 0.5, borderRadius: 2, boxShadow: "0px 4px 20px rgba(0,0,0,0.08)", border: "1px solid rgba(0,0,0,0.06)",
-      "& .MuiList-root": { py: 0.5 },
-      "& .MuiMenuItem-root": {
-        fontSize: { xs: "0.84rem", sm: "0.87rem", md: "0.9rem" },
-        py: 0.75, px: 1.5, borderRadius: 1, mx: 0.5, color: "#444", fontFamily: "Poppins", transition: "background 0.15s",
-        "&:hover": { background: `rgba(13,148,136,0.08)`, color: "#222" },
-        "&.Mui-selected": { background: `rgba(13,148,136,0.12)`, color: ACCENT, fontWeight: 600, "&:hover": { background: `rgba(13,148,136,0.18)` } },
-      },
-    },
-  },
-};
 
 const COMPANY_SIZES = ["1–10 employees", "10–50 employees", "50–200 employees", "200–500 employees", "500+ employees"];
 const INDUSTRIES    = ["Technology", "Finance", "Healthcare", "Education", "Other"];
@@ -90,19 +55,6 @@ type FormValues = {
 };
 
 interface Props { onStepChange?: (step: 1 | 2) => void; onEmailChange?: (email: string) => void; }
-
-const submitBtnSx = {
-  textTransform: "none", fontFamily: "Poppins", fontWeight: 700, borderRadius: "14px",
-  height: { xs: 48, sm: 52, md: 56 },
-  px: { xs: 1.5, sm: 2, md: 2.25 },
-  background: `linear-gradient(135deg, ${ACCENT} 0%, ${ACCENT2} 100%)`, color: "#fff",
-  boxShadow: `0 4px 20px ${ACCENT}50`, letterSpacing: "0.01em",
-  fontSize: { xs: "0.875rem", sm: "0.9375rem", md: "1rem" },
-  transition: "all 0.2s",
-  "&:hover": { background: `linear-gradient(135deg, #0caa9d 0%, ${ACCENT2} 100%)`, boxShadow: `0 8px 28px ${ACCENT}60`, transform: "translateY(-1px)" },
-  "&:active": { transform: "translateY(0)" },
-  "&.Mui-disabled": { background: "#F3F4F6", color: "#9CA3AF", boxShadow: "none" },
-};
 
 const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) => {
   const { t } = useTranslation("auth");
@@ -198,7 +150,7 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) =
               label={t("company_form.company_name")} placeholder="Acme Corp" fullWidth required disabled={loading}
               error={!!errors.name} helperText={errors.name?.message}
               InputProps={{ startAdornment: <InputAdornment position="start"><BusinessIcon sx={{ fontSize: { xs: 18, md: 20 }, color: "#9CA3AF" }} /></InputAdornment> }}
-              sx={fieldSx}
+              sx={compactFieldSx}
               {...register("name", { required: t("company_form.validation.company_name_required") })}
             />
           </Box>
@@ -207,7 +159,7 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) =
               label={t("company_form.work_email")} placeholder="contact@company.com" fullWidth required type="email" disabled={loading}
               error={!!errors.email} helperText={errors.email?.message}
               InputProps={{ startAdornment: <InputAdornment position="start"><EmailIcon sx={{ fontSize: { xs: 18, md: 20 }, color: "#9CA3AF" }} /></InputAdornment> }}
-              sx={fieldSx}
+              sx={compactFieldSx}
               {...register("email", {
                 required: t("company_form.validation.email_required"),
                 pattern: { value: /^\S+@\S+\.\S+$/, message: t("company_form.validation.email_invalid") },
@@ -229,7 +181,7 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) =
                     renderValue: (value: any) =>
                       value ? value : <span style={{ color: "#C4CAD4", fontSize: "0.82rem", fontFamily: "Poppins" }}>{t("company_form.select_industry")}</span>,
                   }}
-                  sx={fieldSx}
+                  sx={compactFieldSx}
                 >
                   {INDUSTRIES.map((ind) => <MenuItem key={ind} value={ind}>{ind}</MenuItem>)}
                 </TextField>
@@ -250,7 +202,7 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) =
                     renderValue: (value: any) =>
                       value ? value : <span style={{ color: "#C4CAD4", fontSize: "0.82rem", fontFamily: "Poppins" }}>{t("company_form.select_size")}</span>,
                   }}
-                  sx={fieldSx}
+                  sx={compactFieldSx}
                 >
                   {COMPANY_SIZES.map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
                 </TextField>
@@ -263,7 +215,7 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) =
               label={t("company_form.location")} placeholder="e.g. Paris, France" fullWidth required disabled={loading}
               error={!!errors.location} helperText={errors.location?.message}
               InputProps={{ startAdornment: <InputAdornment position="start"><LocationOnIcon sx={{ fontSize: { xs: 18, md: 20 }, color: "#9CA3AF" }} /></InputAdornment> }}
-              sx={fieldSx}
+              sx={compactFieldSx}
               {...register("location", { required: t("company_form.validation.location_required") })}
             />
           </Box>
@@ -272,7 +224,7 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) =
               label={t("company_form.website")} placeholder="https://yourcompany.com" fullWidth disabled={loading}
               error={!!errors.website} helperText={errors.website?.message}
               InputProps={{ startAdornment: <InputAdornment position="start"><LanguageIcon sx={{ fontSize: { xs: 18, md: 20 }, color: "#9CA3AF" }} /></InputAdornment> }}
-              sx={fieldSx}
+              sx={compactFieldSx}
               {...register("website", {
                 validate: (value) => {
                   if (!value) return true;
@@ -292,7 +244,7 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) =
               label={t("company_form.linkedin")} placeholder="https://linkedin.com/company/..." fullWidth disabled={loading}
               error={!!errors.linkedin} helperText={errors.linkedin?.message}
               InputProps={{ startAdornment: <InputAdornment position="start"><LinkedInIcon sx={{ fontSize: { xs: 18, md: 20 }, color: "#9CA3AF" }} /></InputAdornment> }}
-              sx={fieldSx}
+              sx={compactFieldSx}
               {...register("linkedin", {
                 validate: (value) => {
                   if (!value) return true;
@@ -313,7 +265,7 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) =
               type="submit" fullWidth variant="contained" disabled={loading}
               endIcon={!loading && <ArrowForwardIcon sx={{ fontSize: { xs: 16, md: 18 } }} />}
               startIcon={loading ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : undefined}
-              sx={submitBtnSx}
+              sx={compactSubmitBtnSx}
             >
               {loading ? t("company_form.btn_sending") : t("company_form.btn_continue")}
             </Button>
@@ -395,7 +347,7 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) =
             disabled={loading || (!isExpired && otpCode.join("").length < CODE_LENGTH)}
             endIcon={!loading && <ArrowForwardIcon sx={{ fontSize: { xs: 16, md: 18 } }} />}
             startIcon={loading ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : undefined}
-            sx={{ ...submitBtnSx, mt: 3 }}
+            sx={{ ...compactSubmitBtnSx, mt: 3 }}
           >
             {loading
               ? isExpired ? t("company_form.btn_resending") : t("company_form.btn_creating")

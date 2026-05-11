@@ -77,6 +77,14 @@ const Sidebar: React.FC<SidebarProps> = ({
     router.push("/signin");
   }, [dispatch, router]);
 
+  const handleGoHome = useCallback(() => {
+    if (router.pathname === "/") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    router.push("/");
+  }, [router]);
+
   const profile           = useSelector((state: RootState) => state.user.connectedUser.profile);
   const user              = useSelector((state: RootState) => state.user.connectedUser.user);
   const companyMembership = useSelector((state: RootState) => state.user.connectedUser.companyMembership);
@@ -135,8 +143,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     ? user?.email
     : "";
 
-  const companyEmail = profile?.companyDetails?.email || "";
-  const initial = companyName ? companyName[0]?.toUpperCase() || "C" : "C";
   const avatarUrl = profile?.user_image
     ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${profile.user_image}`
     : null;
@@ -225,9 +231,9 @@ const Sidebar: React.FC<SidebarProps> = ({
           {!isCollapsed && (
             <Box
               component="img"
-              src="/images/home/logocompany.png"
+              src="/images/home/logoDark.svg"
               alt="TalentAI"
-              onClick={() => router.push("/")}
+              onClick={handleGoHome}
               sx={{ height: 20, cursor: "pointer" }}
             />
           )}
