@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Invitation to join {{orgName}}</title>
+  <title>Interview Assessment Completed</title>
 </head>
 <body style="margin:0; padding:0; background-color:#f0f4f8; font-family:'Segoe UI', Arial, sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f4f8; padding:32px 0;">
@@ -28,7 +28,7 @@
           <tr>
             <td style="padding:36px 36px 8px 36px;">
               <h1 style="margin:0; font-size:30px; font-weight:700; color:#4F5A68; line-height:1.2; font-family:'Segoe UI', Arial, sans-serif;">
-                You're Invited!
+                Assessment Completed
               </h1>
             </td>
           </tr>
@@ -36,59 +36,48 @@
           <!-- Body text -->
           <tr>
             <td style="padding:20px 36px 0 36px;">
-              <p style="margin:0 0 10px 0; font-size:16px; color:#4F5A68; font-family:'Segoe UI', Arial, sans-serif;">Hello,</p>
+              <p style="margin:0 0 10px 0; font-size:16px; color:#4F5A68; font-family:'Segoe UI', Arial, sans-serif;">Hello {{candidateName}},</p>
               <p style="margin:0; font-size:16px; color:#4F5A68; line-height:1.6; font-family:'Segoe UI', Arial, sans-serif;">
-                You have been invited to join a company on TalentAI. Please confirm your participation by clicking the button below. The invitation expires in <strong>48 hours</strong>.
+                Your interview assessment has been successfully completed and recorded. The hiring team will review your responses shortly.
               </p>
             </td>
           </tr>
 
-          <!-- Details box -->
+          <!-- Success badge -->
           <tr>
             <td style="padding:24px 36px 8px 36px;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f9fafb; border-radius:10px; border:1px solid #e5e7eb;">
+              <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td style="padding:20px 24px;">
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="padding-bottom:12px;">
-                          <p style="margin:0 0 3px 0; font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.5px; font-family:'Segoe UI', Arial, sans-serif;">Company</p>
-                          <p style="margin:0; font-size:15px; font-weight:700; color:#4F5A68; font-family:'Segoe UI', Arial, sans-serif;">{{orgName}}</p>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>
-                          <p style="margin:0 0 3px 0; font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.5px; font-family:'Segoe UI', Arial, sans-serif;">Role</p>
-                          <p style="margin:0; font-size:15px; font-weight:700; color:#0ea5a0; font-family:'Segoe UI', Arial, sans-serif;">{{role}}</p>
-                        </td>
-                      </tr>
-                    </table>
+                  <td align="center" style="background-color:#ecfdf5; border:1.5px solid #6ee7b7; border-radius:10px; padding:18px 24px;">
+                    <p style="margin:0; font-size:20px; font-weight:700; color:#059669; font-family:'Segoe UI', Arial, sans-serif;">
+                      ✓ &nbsp;Assessment Recorded
+                    </p>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
-          <!-- CTA Button -->
+          <!-- Position box -->
           <tr>
-            <td align="center" style="padding:28px 36px;">
-              <table cellpadding="0" cellspacing="0">
+            <td style="padding:16px 36px 28px 36px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td align="center" style="background-color:#0ea5a0; border-radius:8px;">
-                    <a href="{{invitationLink}}" target="_blank" style="display:inline-block; padding:14px 36px; font-size:15px; font-weight:700; color:#ffffff; text-decoration:none; font-family:'Segoe UI', Arial, sans-serif;">
-                      Accept Invitation
-                    </a>
+                  <td style="background-color:#f9fafb; border-radius:10px; border:1px solid #e5e7eb; padding:16px 20px;">
+                    <p style="margin:0 0 4px 0; font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.5px; font-family:'Segoe UI', Arial, sans-serif;">Position</p>
+                    <p style="margin:0; font-size:15px; font-weight:700; color:#4F5A68; font-family:'Segoe UI', Arial, sans-serif;">{{postTitle}}</p>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
-          <!-- Fallback link -->
+          <!-- Note -->
           <tr>
             <td style="padding:0 36px 28px 36px;">
-              <p style="margin:0 0 6px 0; font-size:13px; color:#4F5A6899; font-family:'Segoe UI', Arial, sans-serif;">If the button doesn't work, copy and paste this link into your browser:</p>
-              <p style="margin:0; font-size:12px; color:#0ea5a0; word-break:break-all; font-family:'Segoe UI', Arial, sans-serif;">{{invitationLink}}</p>
+              <p style="margin:0; font-size:14px; color:#4F5A6899; line-height:1.6; font-family:'Segoe UI', Arial, sans-serif;">
+                You will be notified about the next steps in the hiring process. If you have any questions, feel free to reach out.
+              </p>
             </td>
           </tr>
 
@@ -103,8 +92,7 @@
           <tr>
             <td style="background-color:#f9fafb; padding:20px 36px; border-radius:0 0 12px 12px;">
               <p style="margin:0; font-size:13px; color:#6b7280; font-family:'Segoe UI', Arial, sans-serif;">
-                If you did not expect this invitation, you may safely ignore this message. For support, contact
-                <a href="mailto:contact@talentai.bid" style="color:#0ea5a0; text-decoration:none;">contact@talentai.bid</a>
+                This is an automated no-reply email — please do not reply to this message.
               </p>
               <p style="margin:10px 0 0 0; font-size:12px; color:#9ca3af; font-family:'Segoe UI', Arial, sans-serif;">
                 &copy; {{year}} TalentAI. All rights reserved.
