@@ -19,20 +19,23 @@
 
 | Document | Type | Durée | Description |
 |----------|------|-------|-------------|
-| [API_JOB_APPLICATION_RECRUITER_DECISION.md](./API_JOB_APPLICATION_RECRUITER_DECISION.md) | 📚 Complète | 20 min | Documentation exhaustive de tous les endpoints |
+| [API_JOB_APPLICATION_RECRUITER_DECISION.md](./API_JOB_APPLICATION_RECRUITER_DECISION.md) | 📚 Complète | 20 min | Documentation exhaustive de tous les endpoints Job Application |
+| [API_UNREVIEWED_INTERVIEWS_KPI.md](./API_UNREVIEWED_INTERVIEWS_KPI.md) | 📚 Complète | 15 min | API KPI: Interviews IA non reviewés > 48h |
 | [VISUAL_REFERENCE.md](./VISUAL_REFERENCE.md) | 📊 Visual | 5 min | Diagrammes ASCII, workflows, et formule de données |
 
 ### 💻 Code & Implémentation
 
 | Document | Type | Langue | Description |
 |----------|------|--------|-------------|
-| [REACT_IMPLEMENTATION_EXAMPLE.ts](./REACT_IMPLEMENTATION_EXAMPLE.ts) | 💾 Code | TypeScript | Service class + React hooks + Composants exemples |
+| [REACT_IMPLEMENTATION_EXAMPLE.ts](./REACT_IMPLEMENTATION_EXAMPLE.ts) | 💾 Code | TypeScript | Service class + React hooks + Composants exemples (Job Application) |
+| [IMPLEMENTATION_UNREVIEWED_INTERVIEWS_KPI.md](./IMPLEMENTATION_UNREVIEWED_INTERVIEWS_KPI.md) | 📖 Guide | TypeScript | Guide complet implémentation React pour Interviews KPI |
 
 ### 🧪 Tests & Postman
 
 | Document | Type | Format | Description |
 |----------|------|--------|-------------|
-| [postman_collection_job_application.json](./postman_collection_job_application.json) | 📬 Collection | JSON | 6 requêtes prêtes à tester dans Postman |
+| [postman_collection_job_application.json](./postman_collection_job_application.json) | 📬 Collection | JSON | 6 requêtes Job Application prêtes à tester |
+| [postman_unreviewed_interviews_kpi.json](./postman_unreviewed_interviews_kpi.json) | 📬 Collection | JSON | 5 requêtes Interviews KPI prêtes à tester |
 
 ---
 
@@ -64,7 +67,7 @@
 
 ## 📊 Vue d'ensemble des APIs
 
-### 7 Endpoints créés
+### 7 Endpoints créés (Job Application)
 
 ```javascript
 // 1. KPI - Compter les en attente
@@ -89,6 +92,16 @@ GET /job-applications/company/my/rejected
 
 // 7. Consultation - Par décision (générique)
 GET /job-applications/company/my/by-decision?decision=shortlisted
+```
+
+### 2 Endpoints créés (Interviews KPI)
+
+```javascript
+// 1. KPI - Compter les interviews non reviewés > 48h
+GET /post-interview-assessments/company/mine/kpi/unreviewed-48h
+
+// 2. KPI - Détails paginés des interviews non reviewés > 48h
+GET /post-interview-assessments/company/mine/kpi/unreviewed-48h/details?page=1&limit=10
 ```
 
 ---
@@ -156,22 +169,28 @@ GET /job-applications/company/my/by-decision?decision=shortlisted
 
 ## 🎯 Cas d'usage principaux
 
-### Récruteur veut voir les candidats en attente
+### Recruiter veut voir les candidats en attente
 ```
 1. GET /kpi/pending-shortlists          → Afficher "12 en attente"
 2. GET /kpi/pending-shortlists/details  → Afficher la liste paginée
 ```
 
-### Récruteur veut shortlister un candidat
+### Recruiter veut shortlister un candidat
 ```
 1. PATCH /:id/recruiter-decision        → Marquer shortlisté
 2. GET /company/my/shortlisted          → Voir les shortlistés
 ```
 
-### Récruteur veut voir les décisions prises
+### Recruiter veut voir les décisions prises
 ```
 1. GET /company/my/shortlisted          → Voir les shortlistés
 2. GET /company/my/rejected             → Voir les rejetés
+```
+
+### Manager veut voir les interviews IA à reviewer
+```
+1. GET /company/mine/kpi/unreviewed-48h              → Afficher "12 interviews, 3 urgents"
+2. GET /company/mine/kpi/unreviewed-48h/details     → Afficher la liste paginée
 ```
 
 ---
@@ -232,12 +251,16 @@ GET /job-applications/company/my/by-decision?decision=shortlisted
 
 | Métrique | Valeur |
 |----------|--------|
-| Endpoints créés | 7 |
-| Documentation pages | 6 |
-| Exemples de code | 3+ |
-| Postman requêtes | 6 |
-| Seuil shortlist | 60/100 |
-| Temps d'implémentation estimé | 3-5 jours |
+| Endpoints créés (Job Application) | 7 |
+| Endpoints créés (Interviews KPI) | 2 |
+| **Total Endpoints** | **9** |
+| Documentation pages | 8 |
+| Exemples de code | 4+ |
+| Postman requêtes | 11 |
+| Seuil shortlist (Job App) | 60/100 |
+| Seuil urgence (Interviews) | 72h |
+| Seuil attention (Interviews) | 48h |
+| Temps d'implémentation estimé | 4-6 jours |
 
 ---
 

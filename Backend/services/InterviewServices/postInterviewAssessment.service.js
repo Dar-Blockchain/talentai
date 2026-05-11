@@ -183,7 +183,154 @@ module.exports.getMatchingDetails = async (candidateId, postId) => {
     throw error;
   }
 };
+// ========== KPI - Unreviewed AI Interviews > 48h ==========
+/**
+ * Count AI-generated interviews that have NOT been reviewed by recruiter for more than 48 hours
+ * 
+ * Note: All records in PostInterviewAssessment are AI-generated interviews (not human-conducted)
+ * The 'completed_at' date is the createdAt timestamp
+ * 'Not reviewed' means recruiterFeedback is null/empty
+ * 
+ * @param {string} companyId - Company ID
+ * @param {string} postId - Optional post ID filter
+ * @returns {Promise<{count: number, urgent: number}>}
+ * - count: Total unreviewed interviews > 48h
+ * - urgent: Unreviewed interviews > 72h
+ */
+module.exports.getUnreviewedInterviewsOver48Hours = async (companyId, postId = null) => {
+  try {
+    console.log(`\n📊 [UNREVIEWED INTERVIEWS KPI] - Fetching unreviewed AI interviews > 48h for company ${companyId}`);
+    
+    // Calculate 48h and 72h ago timestamps
+    const now = new Date();
+    const hours48Ago = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+    const hours72Ago = new Date(now.getTime() - 72 * 60 * 60 * 1000);
 
+    // Base query: company + not archived + completed + no recruiter feedback
+    const baseQuery = {
+      company: companyId,
+      archived: { $ne: true },
+      completed: true,
+      recruiterFeedback: { $in: [null, ''] },
+      createdAt: { $lt: hours48Ago } // Created more than 48h ago
+    };
+
+    // Add post filter if provided
+    if (postId) {
+      baseQuery.post = postId;
+    }
+
+    // Count total unreviewed > 48h
+    const count = await PostInterviewAssessment.countDocuments(baseQuery);
+
+    // Count urgent unreviewed > 72h
+    const urgentQuery = { ...baseQuery, createdAt: { $lt: hours72Ago } };
+    const urgent = await PostInterviewAssessment.countDocuments(urgentQuery);
+
+    console.log(`✅ Unreviewed AI Interviews Retrieved:`);
+    console.log(`   Total unreviewed > 48h: ${count}`);
+    console.log(`   Urgent unreviewed > 72h: ${urgent}`);
+
+    return {
+      count,
+      urgent,
+      lastCheck: now,
+      message: `${count} AI interviews pending recruiter review (${urgent} urgent - over 72h)`
+    };
+  } catch (error) {
+    console.error('❌ Error getting unreviewed interviews KPI:', error.message);
+    throw error;
+  }
+};
+
+/**
+ * Get detailed list of unreviewed AI interviews > 48h with pagination
+ * 
+ * @param {string} companyId - Company ID
+ * @param {number} page - Page number (default: 1)
+ * @param {number} limit - Records per page (default: 10)
+ * @param {string} postId - Optional post ID filter
+ * @returns {Promise<{interviews: Array, pagination: Object}>}
+ */
+module.exports.getUnreviewedInterviewsDetails = async (companyId, page = 1, limit = 10, postId = null) => {
+  try {
+    console.log(`\n📋 [UNREVIEWED INTERVIEWS DETAILS] - Fetching page ${page} for company ${companyId}`);
+    
+    // Calculate 48h ago timestamp
+    const now = new Date();
+    const hours48Ago = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+
+    // Build query
+    const query = {
+      company: companyId,
+      archived: { $ne: true },
+      completed: true,
+      recruiterFeedback: { $in: [null, ''] },
+      createdAt: { $lt: hours48Ago }
+    };
+
+    if (postId) {
+      query.post = postId;
+    }
+
+    // Get total count
+    const totalCount = await PostInterviewAssessment.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / limit);
+    const skip = (page - 1) * limit;
+
+    // Fetch interviews with full details
+    const interviews = await PostInterviewAssessment.find(query)
+      .populate({
+        path: 'candidate',
+        populate: { path: 'profile', model: 'Profile' }
+      })
+      .populate('post')
+      .select('_id completed createdAt interviewData.finalReport.scores recruiterFeedback')
+      .sort({ createdAt: 1 }) // Oldest first (most urgent)
+      .skip(skip)
+      .limit(limit);
+
+    // Calculate hours pending for each
+    const interviewsWithMetadata = interviews.map(interview => {
+      const hoursPending = Math.floor((now - interview.createdAt) / (1000 * 60 * 60));
+      const isUrgent = hoursPending > 72;
+      
+      return {
+        _id: interview._id,
+        candidateName: interview.candidate?.profile?.firstName + ' ' + interview.candidate?.profile?.lastName || 'N/A',
+        candidateEmail: interview.candidate?.email,
+        postTitle: interview.post?.title || 'N/A',
+        completedAt: interview.createdAt,
+        hoursPending,
+        isUrgent,
+        overallScore: interview.interviewData?.finalReport?.scores?.overall || 0,
+        aiGenerated: true // All interviews in PostInterviewAssessment are AI-generated
+      };
+    });
+
+    console.log(`✅ Unreviewed Interviews Details Retrieved:`);
+    console.log(`   Page: ${page}/${totalPages}`);
+    console.log(`   Total records: ${totalCount}`);
+
+    return {
+      interviews: interviewsWithMetadata,
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages
+      },
+      metadata: {
+        timestamp: now,
+        allInterviewsAreAIGenerated: true,
+        sortedByOldestFirst: true
+      }
+    };
+  } catch (error) {
+    console.error('❌ Error getting unreviewed interviews details:', error.message);
+    throw error;
+  }
+};
 // ========== CREATE ==========
 module.exports.createPostInterviewAssessment = async (assessmentData) => {
   try {

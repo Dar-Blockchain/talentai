@@ -39,6 +39,12 @@ router.get('/company/mine', resolveCompanyActor, postInterviewAssessmentControll
 // GET /post-interview-assessments/company/mine/metrics — Get interview metrics for authenticated company
 router.get('/company/mine/metrics', resolveCompanyActor, postInterviewAssessmentController.getInterviewMetricsForCompany);
 
+// GET /post-interview-assessments/company/mine/kpi/unreviewed-48h — Get KPI count of unreviewed AI interviews > 48h
+router.get('/company/mine/kpi/unreviewed-48h', resolveCompanyActor, postInterviewAssessmentController.getUnreviewedInterviewsKPI);
+
+// GET /post-interview-assessments/company/mine/kpi/unreviewed-48h/details — Get details of unreviewed AI interviews > 48h
+router.get('/company/mine/kpi/unreviewed-48h/details', resolveCompanyActor, postInterviewAssessmentController.getUnreviewedInterviewsDetails);
+
 // GET /post-interview-assessments/candidate — Get all assessments for a candidate
 router.get('/candidate/my', postInterviewAssessmentController.getAssessmentsByCandidate);
 
