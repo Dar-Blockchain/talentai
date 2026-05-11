@@ -257,7 +257,6 @@ class CampaignInterviewService {
 
   async startInterview(sessionId, config, candidateId, onGreetingChunk = null) {
     const { campaignId, moduleType } = config;
-    const duration = config.duration ?? config.sessionSettings?.duration ?? 20;
 
     // 1. Fetch campaign
     const campaign = await Campaign.findById(campaignId).lean();
@@ -266,6 +265,7 @@ class CampaignInterviewService {
     const moduleConfig = campaign.module?.config || {};
     const agentPrompt = moduleConfig.agentPrompt || null;
     const skill = moduleConfig.skill || null;
+    const duration = config?.duration ?? config.sessionSettings?.duration ?? 20;
 
     // 2. Build context for this interview type
     const context =

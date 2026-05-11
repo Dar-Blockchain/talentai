@@ -266,20 +266,6 @@ const SessionsView: React.FC<{ campaignId: string }> = ({ campaignId }) => {
                   )}
                 </Box>
 
-                {/* Duration */}
-                <Box>
-                  {s.durationMinutes ? (
-                    <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.4 }}>
-                      <TimerOutlined sx={{ fontSize: 12, color: "#9CA3AF" }} />
-                      <Typography sx={{ fontSize: "12px", color: "#374151", fontWeight: 500 }}>
-                        {t(`${sp}.duration_minutes`, { n: s.durationMinutes })}
-                      </Typography>
-                    </Box>
-                  ) : (
-                    <Typography sx={{ fontSize: "12px", color: "#D1D5DB" }}>—</Typography>
-                  )}
-                </Box>
-
                 {/* Completed date */}
                 <Typography sx={{ fontSize: "12px", color: "#6B7280" }}>{fmtDate(s.completedAt || s.startedAt, i18n.language)}</Typography>
 
