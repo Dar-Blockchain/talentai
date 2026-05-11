@@ -77,6 +77,14 @@ const Sidebar: React.FC<SidebarProps> = ({
     router.push("/signin");
   }, [dispatch, router]);
 
+  const handleGoHome = useCallback(() => {
+    if (router.pathname === "/") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    router.push("/");
+  }, [router]);
+
   const profile           = useSelector((state: RootState) => state.user.connectedUser.profile);
   const user              = useSelector((state: RootState) => state.user.connectedUser.user);
   const companyMembership = useSelector((state: RootState) => state.user.connectedUser.companyMembership);
@@ -227,7 +235,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               component="img"
               src="/images/home/logocompany.png"
               alt="TalentAI"
-              onClick={() => router.push("/")}
+              onClick={handleGoHome}
               sx={{ height: 20, cursor: "pointer" }}
             />
           )}

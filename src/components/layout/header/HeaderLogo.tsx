@@ -23,7 +23,13 @@ const HeaderLogo = () => {
     [userType]
   );
 
-  const goHome = useCallback(() => router.push("/"), [router]);
+  const goHome = useCallback(() => {
+    if (router.pathname === "/") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    router.push("/");
+  }, [router]);
 
   return (
     <Box
