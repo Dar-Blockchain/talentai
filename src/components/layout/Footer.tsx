@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import Image from "next/image";
 import NextLink from "next/link";
@@ -16,6 +16,7 @@ import TwitterIcon from "@mui/icons-material/Twitter";
 import InstagramIcon from "@mui/icons-material/Instagram";
 import FacebookIcon from "@mui/icons-material/Facebook";
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
+import { useRouter } from "next/router";
 
 const FooterLink: React.FC<{ children: React.ReactNode; href?: string }> = ({
   children,
@@ -43,6 +44,16 @@ const FooterLink: React.FC<{ children: React.ReactNode; href?: string }> = ({
 
 const Footer: React.FC = () => {
   const { t } = useTranslation("common");
+  const router = useRouter();
+
+  const goHome = useCallback(() => {
+    if (router.pathname === "/") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    router.push("/");
+  }, [router]);
+
   return (
     <Box
       sx={{
@@ -58,15 +69,14 @@ const Footer: React.FC = () => {
         <Box sx={{ mb: 1 }}>
           {/* Logo */}
           <Box sx={{ mb: 1.5 }}>
-            <NextLink href="/" style={{ display: "inline-block" }}>
-              <Image
-                src="/images/home/logoDark.svg"
-                alt="TalentAI"
-                width={140}
-                height={40}
-                style={{ objectFit: "contain", cursor: "pointer" }}
-              />
-            </NextLink>
+            <Image
+              onClick={goHome}
+              src="/images/home/logoDark.svg"
+              alt="TalentAI"
+              width={140}
+              height={40}
+              style={{ objectFit: "contain", cursor: "pointer" }}
+            />
           </Box>
           <Typography
             variant="body2"
@@ -95,10 +105,30 @@ const Footer: React.FC = () => {
             }}
           >
             {t("footer.disclaimer_prefix")}{" "}
-            <Link component={NextLink} href="/terms" sx={{ color: "rgba(255,255,255,0.5)", textDecoration: "underline", "&:hover": { color: "rgba(255,255,255,0.8)" } }}>{t("footer.terms_of_use")}</Link>
-            {" "}·{" "}
-            <Link component={NextLink} href="/privacy" sx={{ color: "rgba(255,255,255,0.5)", textDecoration: "underline", "&:hover": { color: "rgba(255,255,255,0.8)" } }}>{t("footer.privacy_policy")}</Link>.
-            {" "}{t("footer.disclaimer_suffix")}
+            <Link
+              component={NextLink}
+              href="/terms"
+              sx={{
+                color: "rgba(255,255,255,0.5)",
+                textDecoration: "underline",
+                "&:hover": { color: "rgba(255,255,255,0.8)" },
+              }}
+            >
+              {t("footer.terms_of_use")}
+            </Link>{" "}
+            ·{" "}
+            <Link
+              component={NextLink}
+              href="/privacy"
+              sx={{
+                color: "rgba(255,255,255,0.5)",
+                textDecoration: "underline",
+                "&:hover": { color: "rgba(255,255,255,0.8)" },
+              }}
+            >
+              {t("footer.privacy_policy")}
+            </Link>
+            . {t("footer.disclaimer_suffix")}
           </Typography>
           {/* <Typography variant="caption" sx={{ color: '#D1D5DB', fontSize: '0.75rem', lineHeight: 1.5 }}>
             *Numbers on this page are based on internal data compiled from existing customer base and speed assumption is based on the fact that standard onboarding may take 30 days and Remote's average onboarding time is 2.3 days.
@@ -121,14 +151,23 @@ const Footer: React.FC = () => {
           {/* Policy Links */}
           <Stack direction="row" spacing={3} flexWrap="wrap">
             <FooterLink href="/terms">{t("footer.terms_of_use")}</FooterLink>
-            <FooterLink href="/privacy">{t("footer.privacy_policy")}</FooterLink>
+            <FooterLink href="/privacy">
+              {t("footer.privacy_policy")}
+            </FooterLink>
           </Stack>
 
           {/* Contact email */}
           <Link
             href="mailto:contact@talent-ai.com"
             underline="none"
-            sx={{ display: "flex", alignItems: "center", gap: 0.75, color: "rgba(255,255,255,0.7)", fontSize: "12px", "&:hover": { color: "#fff" } }}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 0.75,
+              color: "rgba(255,255,255,0.7)",
+              fontSize: "12px",
+              "&:hover": { color: "#fff" },
+            }}
           >
             <EmailOutlinedIcon sx={{ fontSize: 16 }} />
             contact@talentai.bid

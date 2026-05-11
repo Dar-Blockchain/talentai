@@ -122,7 +122,7 @@ const SigninContainer: React.FC<{ children: React.ReactNode }> = ({ children }) 
         }} />
 
         <Box sx={{
-          minHeight: { xs: "100%", md: "100dvh" },
+          minHeight: "100dvh",
           boxSizing: "border-box",
           display: "flex",
           flexDirection: "column",
@@ -142,7 +142,15 @@ const SigninContainer: React.FC<{ children: React.ReactNode }> = ({ children }) 
             overflow: "hidden",
           }}>
             <Box sx={{ height: 2, bgcolor: ACCENT }} />
-            <Box sx={{ px: { xs: 2.5, sm: 3 }, pt: { xs: 2.5, sm: 2.75 }, pb: { xs: 2.5, sm: 2.75 } }}>
+            <Box sx={{
+              minHeight: "50dvh",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              px: { xs: 2.5, sm: 3 },
+              pt: { xs: 2.5, sm: 2.75 },
+              pb: { xs: 2.5, sm: 2.75 },
+            }}>
               {children}
             </Box>
           </Box>

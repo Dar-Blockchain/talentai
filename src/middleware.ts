@@ -6,6 +6,10 @@ const PUBLIC_PATHS = [
   "/",
   "/signin",
   "/register",
+  "/terms",
+  "/privacy",
+  "/terms-of-use",
+  "/privacy-policy",
   "/candidate/home",
   "/unauthorized",
   "/candidate/interview/results",
@@ -51,7 +55,7 @@ function isAuthOnly(pathname: string): boolean {
 
 function isAllowedForUnauthenticated(pathname: string): boolean {
   const p = clean(pathname);
-  return p === "/" || isAuthOnly(p);
+  return isPublic(p);
 }
 
 // Only these values are valid auth roles

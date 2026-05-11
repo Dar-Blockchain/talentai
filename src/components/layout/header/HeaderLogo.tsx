@@ -1,22 +1,18 @@
 "use client";
 import React, { useCallback } from "react";
 import { Box } from "@mui/material";
-import { useSelector } from "react-redux";
-import { RootState } from "@/store/store";
 import { useRouter } from "next/router";
 
 const HeaderLogo = () => {
-  const router         = useRouter();
-  const storedUserType = useSelector((state: RootState) => state.user.userType);
-  const { user }       = useSelector((state: RootState) => state.user.connectedUser);
-  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const router = useRouter();
 
-  const userType =
-    router.pathname === "/" || router.pathname === "/home/candidate" || router.pathname === "/candidate/home"
-      ? storedUserType
-      : user?.role?.toLowerCase() ?? storedUserType ?? "candidate";
-
-  const goHome = useCallback(() => router.push("/"), [router]);
+  const goHome = useCallback(() => {
+    if (router.pathname === "/") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    router.push("/");
+  }, [router]);
 
   return (
     <Box
