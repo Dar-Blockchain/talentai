@@ -34,10 +34,8 @@ const { scheduleReminders } = require("./cron/reminderScheduler.cron");
 //const backupService = require('./services/backupService');
 //const { scheduleDailyBackup } = require('./cron/dailyBackup');
 
-// Auto-load CRON jobs
-// ⛔ DISABLED: All cron jobs disabled
+// Auto-load CRON jobs — initialized after DB connects (see initializeApp)
 const { initializeCronJobs } = require("./cron");
-initializeCronJobs();
 
 /**
  * Suppress deprecation warnings for punycode module
@@ -72,6 +70,9 @@ const initializeApp = async () => {
     // Step 1: Connect to database
     logger.section("Connecting to database...");
     await connectDB();
+
+    // Step 1.1: Initialize cron jobs now that DB is connected
+    initializeCronJobs();
 
     // Step 1.2: Deduplicate InterviewApplicant records (one-time fix)
     try {
