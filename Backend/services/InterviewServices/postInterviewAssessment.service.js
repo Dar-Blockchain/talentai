@@ -206,12 +206,18 @@ module.exports.getUnreviewedInterviewsOver48Hours = async (companyId, postId = n
     const hours48Ago = new Date(now.getTime() - 48 * 60 * 60 * 1000);
     const hours72Ago = new Date(now.getTime() - 72 * 60 * 60 * 1000);
 
-    // Base query: company + not archived + completed + no recruiter feedback
+    // Base query: company + not archived + HAS finalReport (AI analysis done) + no recruiter feedback
+    // NOTE: We check for finalReport.summary existence instead of "completed" flag
+    // because finalReport indicates the AI analysis has completed
     const baseQuery = {
       company: companyId,
       archived: { $ne: true },
-      completed: true,
-      recruiterFeedback: { $in: [null, ''] },
+      'interviewData.finalReport.summary': { $exists: true, $ne: null },  // AI has generated report
+      $or: [
+        { recruiterFeedback: { $exists: false } },  // Field doesn't exist
+        { recruiterFeedback: null },                 // Field is null
+        { recruiterFeedback: '' }                    // Field is empty
+      ],
       createdAt: { $lt: hours48Ago } // Created more than 48h ago
     };
 
@@ -220,16 +226,26 @@ module.exports.getUnreviewedInterviewsOver48Hours = async (companyId, postId = n
       baseQuery.post = postId;
     }
 
+    console.log(`📋 Query used:`, JSON.stringify(baseQuery));
+
     // Count total unreviewed > 48h
     const count = await PostInterviewAssessment.countDocuments(baseQuery);
 
     // Count urgent unreviewed > 72h
-    const urgentQuery = { ...baseQuery, createdAt: { $lt: hours72Ago } };
+    const urgentQuery = { 
+      ...baseQuery, 
+      createdAt: { $lt: hours72Ago },
+      $or: baseQuery.$or  // Preserve the $or condition
+    };
+    delete urgentQuery.createdAt;  // Remove old createdAt
+    urgentQuery.createdAt = { $lt: hours72Ago };  // Add new one with 72h
+
     const urgent = await PostInterviewAssessment.countDocuments(urgentQuery);
 
     console.log(`✅ Unreviewed AI Interviews Retrieved:`);
     console.log(`   Total unreviewed > 48h: ${count}`);
     console.log(`   Urgent unreviewed > 72h: ${urgent}`);
+    console.log(`   Query matched ${count} documents`);
 
     return {
       count,
@@ -260,18 +276,25 @@ module.exports.getUnreviewedInterviewsDetails = async (companyId, page = 1, limi
     const now = new Date();
     const hours48Ago = new Date(now.getTime() - 48 * 60 * 60 * 1000);
 
-    // Build query
+    // Build query: same logic as KPI count
+    // Look for interviews that have a finalReport (AI has generated) and no recruiter feedback
     const query = {
       company: companyId,
       archived: { $ne: true },
-      completed: true,
-      recruiterFeedback: { $in: [null, ''] },
+      'interviewData.finalReport.summary': { $exists: true, $ne: null },  // AI analysis done
+      $or: [
+        { recruiterFeedback: { $exists: false } },  // Field doesn't exist
+        { recruiterFeedback: null },                 // Field is null
+        { recruiterFeedback: '' }                    // Field is empty
+      ],
       createdAt: { $lt: hours48Ago }
     };
 
     if (postId) {
       query.post = postId;
     }
+
+    console.log(`📋 Query used:`, JSON.stringify(query));
 
     // Get total count
     const totalCount = await PostInterviewAssessment.countDocuments(query);
@@ -289,6 +312,8 @@ module.exports.getUnreviewedInterviewsDetails = async (companyId, page = 1, limi
       .sort({ createdAt: 1 }) // Oldest first (most urgent)
       .skip(skip)
       .limit(limit);
+
+    console.log(`📋 Found ${interviews.length} interviews on page ${page}`);
 
     // Calculate hours pending for each
     const interviewsWithMetadata = interviews.map(interview => {
