@@ -60,10 +60,10 @@ const Footer: React.FC = () => {
           <Box sx={{ mb: 1.5 }}>
             <NextLink href="/" style={{ display: "inline-block" }}>
               <Image
-                src="/images/home/TalentAiLogo.png"
+                src="/images/home/logoDark.svg"
                 alt="TalentAI"
-                width={120}
-                height={32}
+                width={140}
+                height={40}
                 style={{ objectFit: "contain", cursor: "pointer" }}
               />
             </NextLink>

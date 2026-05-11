@@ -26,7 +26,7 @@ const HomePage: React.FC = () => {
 
   return (
     <LandingPageLayout
-      logo="/images/home/logocompany.png"
+      logo="/images/home/logo.svg"
       type="company"
       color="#0D9488"
       headerLink="Are you a Job Seeker?"

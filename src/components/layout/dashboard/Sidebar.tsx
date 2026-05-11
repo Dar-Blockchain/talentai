@@ -225,10 +225,10 @@ const Sidebar: React.FC<SidebarProps> = ({
           {!isCollapsed && (
             <Box
               component="img"
-              src="/images/home/logocompany.png"
+              src="/images/home/logoDark.svg"
               alt="TalentAI"
               onClick={() => router.push("/")}
-              sx={{ height: 20, cursor: "pointer" }}
+              sx={{ height: 28, cursor: "pointer" }}
             />
           )}
 

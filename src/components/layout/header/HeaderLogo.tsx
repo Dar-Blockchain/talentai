@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useCallback } from "react";
+import React, { useCallback } from "react";
 import { Box } from "@mui/material";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
@@ -16,13 +16,6 @@ const HeaderLogo = () => {
       ? storedUserType
       : user?.role?.toLowerCase() ?? storedUserType ?? "candidate";
 
-  const logoSrc = useMemo(
-    () => userType === "candidate"
-      ? "/images/home/logocandidate.png"
-      : "/images/home/logocompany.png",
-    [userType]
-  );
-
   const goHome = useCallback(() => router.push("/"), [router]);
 
   return (
@@ -32,10 +25,6 @@ const HeaderLogo = () => {
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
-        bgcolor: "#111",
-        borderRadius: "10px",
-        px: 1.5,
-        py: 0.6,
         cursor: "pointer",
         transition: "opacity 0.2s",
         "&:hover": { opacity: 0.82 },
@@ -43,9 +32,9 @@ const HeaderLogo = () => {
     >
       <Box
         component="img"
-        src={logoSrc}
+        src="/images/home/logo.svg"
         alt="TalentAI"
-        sx={{ height: 22, display: "block", userSelect: "none" }}
+        sx={{ height: 36, display: "block", userSelect: "none" }}
       />
     </Box>
   );

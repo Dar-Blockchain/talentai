@@ -72,11 +72,11 @@ const RegisterContainer: React.FC<{ children: React.ReactNode }> = ({ children }
         <Box sx={{ position: "absolute", top: "clamp(24px, 4vh, 40px)", left: "clamp(32px, 4vw, 64px)", zIndex: 1 }}>
           <NextLink href="/" style={{ textDecoration: "none", display: "inline-block" }}>
             <Image
-              src="/images/home/TalentAiLogo.png"
+              src="/images/home/logoDark.svg"
               alt="TalentAI"
-              width={140}
-              height={36}
-              style={{ objectFit: "contain", width: "clamp(100px, 10vw, 140px)", height: "auto" }}
+              width={160}
+              height={44}
+              style={{ objectFit: "contain", width: "clamp(110px, 11vw, 160px)", height: "auto" }}
             />
           </NextLink>
         </Box>
@@ -149,7 +149,7 @@ const RegisterContainer: React.FC<{ children: React.ReactNode }> = ({ children }
             mb: { xs: 1.25, sm: 1.75, md: 2.5 },
           }}>
             <NextLink href="/" style={{ textDecoration: "none" }}>
-              <Image src="/logo.svg" alt="TalentAI" width={110} height={28} style={{ objectFit: "contain" }} />
+              <Image src="/images/home/logo.svg" alt="TalentAI" width={140} height={38} style={{ objectFit: "contain" }} />
             </NextLink>
           </Box>
 
