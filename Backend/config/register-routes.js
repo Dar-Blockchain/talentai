@@ -12,7 +12,6 @@ const postInterviewAssessmentRouter = require("../routes/postInterviewAssessment
 const notificationSystemRouter = require("../routes/notificationSystem.routes");
 const postStepsRouter = require("../routes/postSteps.routes");
 const candidatePostStepProgressRouter = require("../routes/candidatePostStepProgress.routes");
-const taskRouter = require("../routes/task.routes");
 const stripRouter = require("../routes/strip.routes");
 const SkillInterviewAssessmentRoutes = require("../routes/skillInterviewAssessment.routes");
 const pipelineInterviewRoutes = require("../routes/pipelineInterview.routes");
@@ -77,7 +76,6 @@ function registerRoutes(app) {
   // app.use("/todo", todoRouter); //✅ To-Do Management -> todos
   app.use("/feedback", feedbackRouter); //✅ Feedback Management -> feedbacks
   app.use("/logs", logRoutes); //✅ System Logs Management -> logs  
-  //app.use("/task", taskRouter); //✅ Task Management -> tasks
   app.use('/admin/backups', backupRouter); //✅ Database Backup Management -> admin/backups
 
   // Billing

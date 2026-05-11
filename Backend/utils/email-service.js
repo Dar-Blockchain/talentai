@@ -17,7 +17,7 @@ const transporter = nodemailer.createTransport(getMailTransportOptions());
 // "From" must match the SMTP authenticated address (EMAIL_USER), otherwise providers
 // reject the message (553 not owned). The display name signals no-reply to recipients.
 const FROM_ADDRESS =
-  `"TalentAI (no-reply)" <${process.env.NO_REPLY_EMAIL || process.env.EMAIL_USER || "contact@talentai.bid"}>`;
+  `"TalentAI" <${process.env.NO_REPLY_EMAIL || process.env.EMAIL_USER || "contact@talentai.bid"}>`;
 
 // Verify SMTP at startup so misconfigurations are visible immediately
 transporter
@@ -185,7 +185,7 @@ const sendInterviewNudge = async (candidateEmail, { firstName, jobTitle, company
 
 // ─── Send Direct Message to Candidate (from company) ─────────────────────────
 const sendCandidateEmail = async (to, candidateName, fromCompanyName, subject, message) => {
-  const senderAddr = process.env.EMAIL_USER || "contact@talentai.bid";
+  const senderAddr = process.env.NO_REPLY_EMAIL;
   const mailOptions = {
     from: `"${fromCompanyName} via TalentAI" <${senderAddr}>`,
     to,
@@ -264,7 +264,7 @@ const sendCampaignDeadlineReminder = async (to, { participantName, companyName, 
 // ─── Send Enterprise Inquiry (to TalentAI team) ──────────────────────────────
 const sendEnterpriseInquiry = async ({ name, email, company, message }) => {
   const mailOptions = {
-    from: FROM_ADDRESS,
+    from: `"TalentAI" <${process.env.EMAIL_USER || "contact@talentai.bid"}>`,
     to: process.env.EMAIL_USER || "contact@talentai.bid",
     replyTo: email,
     subject: `[TalentAI Enterprise] ${name}${company ? ` — ${company}` : ""}`,
