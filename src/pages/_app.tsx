@@ -172,7 +172,7 @@ export default function App({ Component, pageProps }: AppProps) {
             <meta property="og:title" content="TalentAI — AI Agents That Interview Candidates For You" />
             <meta property="og:description" content="Automate screening, interviews, and evaluation with conversational AI. Reduce hiring time by 75%. Trusted by NVIDIA Inception & built on Hedera." />
             <meta property="og:type" content="website" />
-            <link rel="icon" href="/favicon.ico" />
+            <link rel="icon" href="/images/home/favico.png" type="image/png" />
           </Head>
           <main className={poppins.variable}>
             <ToastProvider>
