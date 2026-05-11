@@ -23,7 +23,7 @@ const connectDB = async () => {
       heartbeatFrequencyMS: 10000, // How often to check server status
 
       // Buffer settings (using supported options for Mongoose 8.x)
-      bufferCommands: false, // Disable mongoose buffering
+      bufferCommands: true, // Buffer commands until connection is established
 
       // Other optimizations
       maxIdleTimeMS: 30000, // Close connections after 30 seconds of inactivity
