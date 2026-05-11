@@ -78,6 +78,8 @@ const IntelligentInterviewTest = () => {
   const [isArchived, setIsArchived] = useState(false);
   const [companyBlocked, setCompanyBlocked] = useState(false);
   const [isEmployeeBlocked, setIsEmployeeBlocked] = useState(false);
+  const [underThreshold, setUnderThreshold] = useState(false);
+  const [thresholdInfo, setThresholdInfo] = useState<{ required: number; score: number } | null>(null);
 
   const hasJobId = router.isReady && typeof router.query.jobId === 'string' && !!router.query.jobId;
   const jobId = router.isReady ? (router.query.jobId as string | undefined) : undefined;
@@ -113,6 +115,10 @@ const IntelligentInterviewTest = () => {
           if (result.payload.isCompanyBlocked) { setCompanyBlocked(true); setTimeout(() => router.replace('/company/dashboard'), 3000); return; }
           else if (result.payload.isArchived) setIsArchived(true);
           else if (result.payload.exists) setAlreadyCompleted(true);
+          else if (result.payload.underThreshold) {
+            setUnderThreshold(true);
+            setThresholdInfo({ required: result.payload.thresholdScore ?? 0, score: result.payload.matchScore ?? 0 });
+          }
         }
       }).finally(() => setAssessmentChecking(false));
     } else {
@@ -436,6 +442,27 @@ const IntelligentInterviewTest = () => {
           subtitle={company ? <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: PURPLE, fontWeight: 600 }}>{company}</Typography> : undefined}
           description={<>{t('completed.desc_pre')} <strong style={{ color: '#111827' }}>{jobTitle}</strong> {t('completed.desc_post')}</>}
           actions={[{ label: t('back_to_dashboard'), onClick: () => router.push('/candidate/dashboard'), color: PURPLE, hoverColor: '#6d0ee0' }]}
+        />
+      </>
+    );
+  }
+
+  if (underThreshold) {
+    return (
+      <>
+        <style jsx global>{GlobalStyles}</style>
+        <BlockedScreen
+          variant="bordered"
+          icon={<Box component="span" sx={{ fontSize: 36 }}>🔒</Box>}
+          iconBg="rgba(220,38,38,0.08)"
+          iconBorderColor="rgba(220,38,38,0.2)"
+          title="Interview Not Available"
+          description={
+            <>
+              Your CV match score (<strong style={{ color: '#DC2626' }}>{thresholdInfo?.score ?? 0}%</strong>) is below the minimum required score of <strong style={{ color: '#111827' }}>{thresholdInfo?.required ?? 0}%</strong> for this position. Only candidates who meet the threshold can proceed to the interview.
+            </>
+          }
+          actions={[{ label: t('back_to_dashboard'), onClick: () => router.push('/candidate/dashboard'), color: '#DC2626', hoverColor: '#B91C1C' }]}
         />
       </>
     );
