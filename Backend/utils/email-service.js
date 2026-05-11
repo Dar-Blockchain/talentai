@@ -17,7 +17,7 @@ const transporter = nodemailer.createTransport(getMailTransportOptions());
 // "From" must match the SMTP authenticated address (EMAIL_USER), otherwise providers
 // reject the message (553 not owned). The display name signals no-reply to recipients.
 const FROM_ADDRESS =
-  `"TalentAI (no-reply)" <${process.env.NO_REPLY_EMAIL || "contact@talentai.bid"}>`;
+  `"TalentAI (no-reply)" <${process.env.NO_REPLY_EMAIL || process.env.EMAIL_USER || "contact@talentai.bid"}>`;
 
 // Verify SMTP at startup so misconfigurations are visible immediately
 transporter
@@ -205,7 +205,7 @@ const sendCandidateEmail = async (to, candidateName, fromCompanyName, subject, m
 
 // ─── Send Plan Upgrade Reminder to Company ───────────────────────────────────
 const sendPlanUpgradeReminder = async (companyEmail, companyName) => {
-  const upgradeUrl = `${process.env.FRONTEND_URL || 'https://talentai.bid/'}company/plans`;
+  const upgradeUrl = `${process.env.FRONTEND_URL}company/plans`;
   const mailOptions = {
     from: FROM_ADDRESS,
     to: companyEmail,
