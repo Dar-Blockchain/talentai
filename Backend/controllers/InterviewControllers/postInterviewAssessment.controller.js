@@ -186,7 +186,7 @@ module.exports.checkCandidateAssessmentExists = async (req, res) => {
     );
 
     // ===== CHECK THRESHOLD SCORE =====
-    let underThreshold = false;
+    let underThreshold = true; // Default to true - if we can't check, we assume under threshold to be safe
     let thresholdScore = null;
     let matchScore = null;
 
@@ -208,11 +208,10 @@ module.exports.checkCandidateAssessmentExists = async (req, res) => {
         
         if (jobApplication && jobApplication.matchScore !== null) {
           matchScore = jobApplication.matchScore;
-          
+          console.log(`🔍 Threshold Score: ${thresholdScore}, Candidate's Match Score: ${matchScore}`);
           // Check if matchScore is under thresholdScore
-          if (thresholdScore !== null && matchScore < thresholdScore) {
-            underThreshold = true;
-          }
+          underThreshold = matchScore < thresholdScore;
+          console.log(`⚠️ Candidate is ${underThreshold ? 'UNDER' : 'OVER'} the threshold score`);
         }
       }
     } catch (thresholdError) {
