@@ -12,19 +12,21 @@ const KpiHiringVelocity    = dynamic(() => import("@/components/features/company
 const KpiCandidateQuality  = dynamic(() => import("@/components/features/company/kpi/KpiCandidateQuality"));
 const KpiRoiSavings        = dynamic(() => import("@/components/features/company/kpi/KpiRoiSavings"));
 
-const CompanyDashboard: React.FC = () => (
-  <DashboardLayout>
-    <Box sx={{ maxWidth: 1440, mx: "auto" }}>
-      <KpiStatCards />
-      <KpiFiltersBar />
-      <KpiActionsToTake />
-      <KpiPostsOverview />
-      <KpiRecruitmentFunnel />
-      <KpiHiringVelocity />
-      <KpiCandidateQuality />
-      <KpiRoiSavings />
-    </Box>
-  </DashboardLayout>
-);
+const CompanyDashboard: React.FC = () => {
+  return (
+    <DashboardLayout>
+      <Box sx={{ maxWidth: 1440, mx: "auto" }}>
+        <KpiStatCards />
+        <KpiFiltersBar />
+        <KpiActionsToTake />
+        <KpiPostsOverview />
+        <KpiRecruitmentFunnel />
+        <KpiHiringVelocity />
+        <KpiCandidateQuality />
+        <KpiRoiSavings />
+      </Box>
+    </DashboardLayout>
+  );
+};
 
 export default CompanyDashboard;

@@ -20,6 +20,18 @@ import GroupsOutlined from "@mui/icons-material/GroupsOutlined";
 const TEAL = "#0D9488";
 const TEAL_BG = "#F0FDFA";
 
+const StatCardSkeleton: React.FC = () => (
+  <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 2 }}>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+      <Skeleton variant="rounded" width={40} height={40} sx={{ borderRadius: "10px", flexShrink: 0 }} />
+      <Box sx={{ minWidth: 0, flex: 1 }}>
+        <Skeleton variant="text" width="50%" height={28} />
+        <Skeleton variant="text" width="80%" height={14} sx={{ mt: 0.3 }} />
+      </Box>
+    </Box>
+  </Box>
+);
+
 const StatCard: React.FC<{
   icon: React.ElementType;
   color: string;
@@ -28,32 +40,32 @@ const StatCard: React.FC<{
   label: string;
   loading: boolean;
   onClick?: () => void;
-}> = ({ icon: Icon, color, bg, value, label, loading, onClick }) => (
-  <Box
-    onClick={onClick}
-    sx={{
-      bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB",
-      p: 2, cursor: onClick ? "pointer" : "default",
-      transition: "box-shadow 0.2s",
-      "&:hover": { boxShadow: onClick ? "0 2px 12px rgba(0,0,0,0.07)" : "none" },
-    }}
-  >
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-      <Box sx={{ width: 40, height: 40, borderRadius: "10px", bgcolor: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        <Icon sx={{ fontSize: 20, color }} />
-      </Box>
-      <Box sx={{ minWidth: 0 }}>
-        {loading
-          ? <Skeleton variant="text" width={40} height={22} />
-          : <Box sx={{ fontSize: "1.4rem", fontWeight: 800, color: "#111827", lineHeight: 1 }}>{value}</Box>
-        }
-        <Typography sx={{ fontSize: "0.67rem", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.04em", mt: 0.3, whiteSpace: "nowrap" }}>
-          {label}
-        </Typography>
+}> = ({ icon: Icon, color, bg, value, label, loading, onClick }) => {
+  if (loading) return <StatCardSkeleton />;
+  return (
+    <Box
+      onClick={onClick}
+      sx={{
+        bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB",
+        p: 2, cursor: onClick ? "pointer" : "default",
+        transition: "box-shadow 0.2s",
+        "&:hover": { boxShadow: onClick ? "0 2px 12px rgba(0,0,0,0.07)" : "none" },
+      }}
+    >
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+        <Box sx={{ width: 40, height: 40, borderRadius: "10px", bgcolor: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <Icon sx={{ fontSize: 20, color }} />
+        </Box>
+        <Box sx={{ minWidth: 0 }}>
+          <Box sx={{ fontSize: "1.4rem", fontWeight: 800, color: "#111827", lineHeight: 1 }}>{value}</Box>
+          <Typography sx={{ fontSize: "0.67rem", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.04em", mt: 0.3, whiteSpace: "nowrap" }}>
+            {label}
+          </Typography>
+        </Box>
       </Box>
     </Box>
-  </Box>
-);
+  );
+};
 
 const KpiStatCards: React.FC = () => {
   const { t } = useTranslation("dashboard");
