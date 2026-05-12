@@ -187,7 +187,7 @@ export const fetchRoi = createAsyncThunk(
 
 export const fetchPostsStatus = createAsyncThunk(
   'kpi/fetchPostsStatus',
-  async (params: { page?: number; limit?: number } = {}) => {
+  async (params: { page?: number; limit?: number; postId?: string } = {}) => {
     return await kpiService.fetchPostsStatusKPI(params);
   }
 );

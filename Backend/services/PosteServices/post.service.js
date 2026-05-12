@@ -1104,15 +1104,18 @@ module.exports.getPostsInAlertKPI = async (userId) => {
 
 // ========== KPI - STATUS BY POST (Zone 2) ==========
 // Returns paginated per-post: shortlisted count, velocity (avg days appliedAt→recruiterDecisionAt), coverage, deadline
-module.exports.getPostsStatusKPI = async (userId, page = 1, limit = 3) => {
+module.exports.getPostsStatusKPI = async (userId, page = 1, limit = 3, postId = null) => {
   try {
     const now = new Date();
 
-    const posts = await Post.find({
+    const postQuery = {
       user: userId,
       status: 'open',
       archived: { $ne: true },
-    }).select('_id jobDetails expirationDate').lean();
+    };
+    if (postId) postQuery._id = postId;
+
+    const posts = await Post.find(postQuery).select('_id jobDetails expirationDate').lean();
 
     if (!posts.length) {
       return { data: [], pagination: { currentPage: 1, totalPages: 0, totalCount: 0 } };

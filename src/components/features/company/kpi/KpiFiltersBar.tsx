@@ -51,7 +51,7 @@ const KpiFiltersBar: React.FC = () => {
     dispatch(fetchUnreviewedInterviews(p));
     dispatch(fetchNoshows(p));
     dispatch(fetchPostsInAlert());
-    dispatch(fetchPostsStatus({ page: 1, limit: PAGE_SIZE }));
+    dispatch(fetchPostsStatus({ page: 1, limit: PAGE_SIZE, ...(newPostId ? { postId: newPostId } : {}) }));
     dispatch(fetchFunnel(p));
     dispatch(fetchVelocity(p));
     dispatch(fetchSourcing(p));

@@ -767,8 +767,9 @@ exports.getPostsStatusKPI = async (req, res) => {
     const userId = req.user._id;
     const page   = Math.max(1, parseInt(req.query.page)  || 1);
     const limit  = Math.max(1, parseInt(req.query.limit) || 3);
+    const postId = req.query.postId || null;
 
-    const result = await postService.getPostsStatusKPI(userId, page, limit);
+    const result = await postService.getPostsStatusKPI(userId, page, limit, postId);
 
     res.status(200).json({
       success: true,

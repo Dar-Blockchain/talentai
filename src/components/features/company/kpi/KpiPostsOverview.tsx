@@ -50,11 +50,11 @@ const KpiZone2: React.FC = () => {
   const postId      = useSelector(selectKpiPostId);
 
   useEffect(() => {
-    dispatch(fetchPostsStatus({ page: 1, limit: PAGE_SIZE }));
+    dispatch(fetchPostsStatus({ page: 1, limit: PAGE_SIZE, ...(postId ? { postId } : {}) }));
   }, [dispatch, postId]);
 
   const goTo = (page: number) => {
-    dispatch(fetchPostsStatus({ page, limit: PAGE_SIZE }));
+    dispatch(fetchPostsStatus({ page, limit: PAGE_SIZE, ...(postId ? { postId } : {}) }));
   };
 
   const headers = [
