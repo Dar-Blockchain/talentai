@@ -100,4 +100,5 @@ export const jobApplicationService = {
     const res = await axiosInstance.post('job-applications/', { post: postId });
     return res.data;
   },
+
 };

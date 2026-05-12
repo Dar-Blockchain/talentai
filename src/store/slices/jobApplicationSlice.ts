@@ -179,6 +179,7 @@ export const createJobApplication = createAsyncThunk(
   }
 );
 
+
 const jobApplicationSlice = createSlice({
   name: 'jobApplications',
   initialState,
