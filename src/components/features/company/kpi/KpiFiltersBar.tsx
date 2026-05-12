@@ -1,20 +1,83 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Box, Typography, Paper, Chip, Divider, FormControl, InputLabel, Select, MenuItem, OutlinedInput } from "@mui/material";
+import { useDispatch, useSelector } from "react-redux";
+import { Box, Typography, Paper, Divider, Chip, FormControl, InputLabel, Select, MenuItem, OutlinedInput } from "@mui/material";
 import FilterListOutlined from "@mui/icons-material/FilterListOutlined";
-import { BORDER, GRAY, GRAY2, LGRAY, NAVY, POSTS_DATA, T, T_DARK, WHITE } from "./kpiTokens";
+import { BORDER, GRAY, LGRAY, NAVY, T, T_DARK, WHITE } from "./kpiTokens";
+import { AppDispatch } from "@/store/store";
+import {
+  fetchMyPostsForFilter,
+  setKpiFilter,
+  selectKpiPostId,
+  selectKpiDateFrom,
+  selectKpiAvailablePosts,
+  fetchPendingShortlists,
+  fetchUnreviewedInterviews,
+  fetchNoshows,
+  fetchPostsInAlert,
+  fetchPostsStatus,
+  fetchFunnel,
+  fetchVelocity,
+  fetchSourcing,
+} from "@/store/slices/kpiSlice";
 
-const PERIODS = ["7j", "30j", "90j", "Trimestre", "Custom"];
+const PAGE_SIZE = 3;
+
+const PERIODS: { label: string; days: number | null }[] = [
+  { label: "7d",  days: 7  },
+  { label: "30d", days: 30 },
+  { label: "90d", days: 90 },
+  { label: "All", days: null },
+];
 
 const KpiFiltersBar: React.FC = () => {
   const { t } = useTranslation("dashboard");
-  const [period, setPeriod] = useState("30j");
-  const [posts, setPosts] = useState<string[]>([]);
-  const [recruiter, setRecruiter] = useState<string[]>([]);
+  const dispatch = useDispatch<AppDispatch>();
 
-  const postLabel = t("pages.kpi.post");
-  const recruiterLabel = t("pages.kpi.recruiter");
+  const postId         = useSelector(selectKpiPostId);
+  const dateFrom       = useSelector(selectKpiDateFrom);
+  const availablePosts = useSelector(selectKpiAvailablePosts);
+
+  useEffect(() => {
+    dispatch(fetchMyPostsForFilter());
+  }, [dispatch]);
+
+  const refetchAll = (newPostId: string | null, newDateFrom: string | null) => {
+    const p: Record<string, string> = {};
+    if (newPostId)   p.postId   = newPostId;
+    if (newDateFrom) p.dateFrom = newDateFrom;
+    dispatch(fetchPendingShortlists(p));
+    dispatch(fetchUnreviewedInterviews(p));
+    dispatch(fetchNoshows(p));
+    dispatch(fetchPostsInAlert());
+    dispatch(fetchPostsStatus({ page: 1, limit: PAGE_SIZE }));
+    dispatch(fetchFunnel(p));
+    dispatch(fetchVelocity(p));
+    dispatch(fetchSourcing(p));
+  };
+
+  const handlePostChange = (value: string) => {
+    const newPostId = value === "" ? null : value;
+    dispatch(setKpiFilter({ postId: newPostId }));
+    refetchAll(newPostId, dateFrom);
+  };
+
+  const handlePeriodChange = (days: number | null) => {
+    const newDateFrom = days
+      ? new Date(Date.now() - days * 86400000).toISOString()
+      : null;
+    dispatch(setKpiFilter({ dateFrom: newDateFrom }));
+    refetchAll(postId, newDateFrom);
+  };
+
+  const activeDays = dateFrom
+    ? Math.round((Date.now() - new Date(dateFrom).getTime()) / 86400000)
+    : null;
+
+  const activePeriod = PERIODS.find(p =>
+    p.days === null ? activeDays === null : activeDays !== null && Math.abs(activeDays - p.days) <= 1
+  )?.days ?? null;
 
   return (
     <Paper elevation={0} sx={{
@@ -31,45 +94,51 @@ const KpiFiltersBar: React.FC = () => {
 
       <Divider orientation="vertical" flexItem sx={{ borderColor: BORDER, display: { xs: "none", sm: "block" } }} />
 
+      {/* Period chips */}
       <Box sx={{ display: "flex", gap: 0.6, flexWrap: "wrap" }}>
-        {PERIODS.map(p => (
-          <Chip key={p} label={p} size="small" onClick={() => setPeriod(p)} sx={{
-            fontFamily: "Poppins", fontWeight: 600, fontSize: "0.7rem", height: 26,
-            bgcolor: period === p ? T : LGRAY,
-            color: period === p ? WHITE : GRAY,
-            border: `1px solid ${period === p ? T : BORDER}`,
-            cursor: "pointer", transition: "all 0.15s",
-            "&:hover": { bgcolor: period === p ? T_DARK : "#F1F5F9" },
-            "& .MuiChip-label": { px: 1.25 },
-          }} />
-        ))}
+        {PERIODS.map(p => {
+          const active = p.days === activePeriod && (p.days !== null || activeDays === null);
+          return (
+            <Chip
+              key={p.label}
+              label={p.label}
+              size="small"
+              onClick={() => handlePeriodChange(p.days)}
+              sx={{
+                fontFamily: "Poppins", fontWeight: 600, fontSize: "0.7rem", height: 26,
+                bgcolor: active ? T : LGRAY,
+                color:   active ? WHITE : GRAY,
+                border: `1px solid ${active ? T : BORDER}`,
+                cursor: "pointer", transition: "all 0.15s",
+                "&:hover": { bgcolor: active ? T_DARK : "#F1F5F9" },
+                "& .MuiChip-label": { px: 1.25 },
+              }}
+            />
+          );
+        })}
       </Box>
 
-      <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", ml: { sm: "auto" } }}>
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel sx={{ fontFamily: "Poppins", fontSize: "0.75rem" }}>{postLabel}</InputLabel>
-          <Select
-            multiple value={posts} onChange={e => setPosts(e.target.value as string[])}
-            input={<OutlinedInput label={postLabel} />}
-            renderValue={s => s.length === 0 ? t("pages.kpi.all_posts") : `${s.length} sélectionné(s)`}
-            sx={{ fontFamily: "Poppins", fontSize: "0.78rem", borderRadius: "10px", "& .MuiOutlinedInput-notchedOutline": { borderColor: BORDER } }}
-          >
-            {POSTS_DATA.map(p => (
-              <MenuItem key={p.title} value={p.title} sx={{ fontFamily: "Poppins", fontSize: "0.78rem" }}>{p.title}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+      <Divider orientation="vertical" flexItem sx={{ borderColor: BORDER, display: { xs: "none", sm: "block" } }} />
 
-        <FormControl size="small" sx={{ minWidth: 130 }}>
-          <InputLabel sx={{ fontFamily: "Poppins", fontSize: "0.75rem" }}>{recruiterLabel}</InputLabel>
+      {/* Post dropdown */}
+      <Box sx={{ ml: { sm: "auto" } }}>
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel sx={{ fontFamily: "Poppins", fontSize: "0.75rem" }}>
+            {t("pages.kpi.post")}
+          </InputLabel>
           <Select
-            multiple value={recruiter} onChange={e => setRecruiter(e.target.value as string[])}
-            input={<OutlinedInput label={recruiterLabel} />}
-            renderValue={s => s.join(", ")}
+            value={postId ?? ""}
+            onChange={e => handlePostChange(e.target.value as string)}
+            input={<OutlinedInput label={t("pages.kpi.post")} />}
             sx={{ fontFamily: "Poppins", fontSize: "0.78rem", borderRadius: "10px", "& .MuiOutlinedInput-notchedOutline": { borderColor: BORDER } }}
           >
-            {["Moi", "Équipe"].map(r => (
-              <MenuItem key={r} value={r} sx={{ fontFamily: "Poppins", fontSize: "0.78rem" }}>{r}</MenuItem>
+            <MenuItem value="" sx={{ fontFamily: "Poppins", fontSize: "0.78rem", color: GRAY }}>
+              {t("pages.kpi.all_posts")}
+            </MenuItem>
+            {availablePosts.map(p => (
+              <MenuItem key={p.id} value={p.id} sx={{ fontFamily: "Poppins", fontSize: "0.78rem" }}>
+                {p.title}
+              </MenuItem>
             ))}
           </Select>
         </FormControl>

@@ -186,37 +186,33 @@ module.exports.checkCandidateAssessmentExists = async (req, res) => {
     );
 
     // ===== CHECK THRESHOLD SCORE =====
-    let underThreshold = true; // Default to true - if we can't check, we assume under threshold to be safe
+    // Only block when we have BOTH a threshold AND a score that falls below it.
+    // If matchScore is null (CV not yet scored), let the candidate through.
+    let underThreshold = false;
     let thresholdScore = null;
     let matchScore = null;
 
     try {
-      // Get the post to retrieve thresholdScore
       const post = await Post.findById(postId).select('thresholdScore');
       if (post) {
         thresholdScore = post.thresholdScore;
       }
 
-      // Get the candidate's profile
       const candidateProfile = await Profile.findOne({ userId: candidateId }).select('_id');
       if (candidateProfile) {
-        // Get JobApplication to retrieve matchScore
         const jobApplication = await JobApplication.findOne({
           profile: candidateProfile._id,
           post: postId
         }).select('matchScore');
-        
+
         if (jobApplication && jobApplication.matchScore !== null) {
           matchScore = jobApplication.matchScore;
-          console.log(`🔍 Threshold Score: ${thresholdScore}, Candidate's Match Score: ${matchScore}`);
-          // Check if matchScore is under thresholdScore
-          underThreshold = matchScore < thresholdScore;
-          console.log(`⚠️ Candidate is ${underThreshold ? 'UNDER' : 'OVER'} the threshold score`);
+          underThreshold = thresholdScore !== null && matchScore < thresholdScore;
+          console.log(`🔍 Threshold: ${thresholdScore}, Score: ${matchScore}, Blocked: ${underThreshold}`);
         }
       }
     } catch (thresholdError) {
       console.warn('⚠️ Warning: Could not check threshold score:', thresholdError.message);
-      // Don't block response if threshold check fails
     }
 
     return res.status(200).json({
@@ -578,12 +574,12 @@ module.exports.getAssessmentByPostAndCandidate = async (req, res) => {
 module.exports.getUnreviewedInterviewsKPI = async (req, res) => {
   try {
     const companyId = req.user._id;
-    const { postId } = req.query;
+    const { postId, dateFrom } = req.query;
 
     console.log(`\n📊 [API] Get Unreviewed Interviews KPI for company: ${companyId}`);
 
     const result = await require("../../services/InterviewServices/postInterviewAssessment.service")
-      .getUnreviewedInterviewsOver48Hours(companyId, postId || null);
+      .getUnreviewedInterviewsOver48Hours(companyId, postId || null, dateFrom || null);
 
     res.status(200).json({
       success: true,

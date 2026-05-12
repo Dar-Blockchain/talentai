@@ -13,11 +13,19 @@ import { AppDispatch } from "@/store/store";
 import {
   fetchPendingShortlists,
   fetchUnreviewedInterviews,
+  fetchNoshows,
+  fetchPostsInAlert,
   selectPendingShortlistsCount,
   selectPendingShortlistsLoading,
   selectUnreviewedCount,
   selectUnreviewedUrgent,
   selectUnreviewedLoading,
+  selectNoshowsCount,
+  selectNoshowsLoading,
+  selectPostsInAlertCount,
+  selectPostsInAlertLoading,
+  selectKpiPostId,
+  selectKpiDateFrom,
 } from "@/store/slices/kpiSlice";
 
 const CardSkeleton: React.FC = () => (
@@ -36,16 +44,27 @@ const KpiZone1: React.FC = () => {
   const { t } = useTranslation("dashboard");
   const dispatch = useDispatch<AppDispatch>();
 
-  const pendingCount      = useSelector(selectPendingShortlistsCount);
-  const pendingLoading    = useSelector(selectPendingShortlistsLoading);
-  const unreviewedCount   = useSelector(selectUnreviewedCount);
-  const unreviewedUrgent  = useSelector(selectUnreviewedUrgent);
-  const unreviewedLoading = useSelector(selectUnreviewedLoading);
+  const pendingCount       = useSelector(selectPendingShortlistsCount);
+  const pendingLoading     = useSelector(selectPendingShortlistsLoading);
+  const unreviewedCount    = useSelector(selectUnreviewedCount);
+  const unreviewedUrgent   = useSelector(selectUnreviewedUrgent);
+  const unreviewedLoading  = useSelector(selectUnreviewedLoading);
+  const noshowsCount       = useSelector(selectNoshowsCount);
+  const noshowsLoading     = useSelector(selectNoshowsLoading);
+  const postsAlertCount    = useSelector(selectPostsInAlertCount);
+  const postsAlertLoading  = useSelector(selectPostsInAlertLoading);
+  const postId             = useSelector(selectKpiPostId);
+  const dateFrom           = useSelector(selectKpiDateFrom);
 
   useEffect(() => {
-    dispatch(fetchPendingShortlists({}));
-    dispatch(fetchUnreviewedInterviews({}));
-  }, [dispatch]);
+    const p: Record<string, string> = {};
+    if (postId)   p.postId   = postId;
+    if (dateFrom) p.dateFrom = dateFrom;
+    dispatch(fetchPendingShortlists(p));
+    dispatch(fetchUnreviewedInterviews(p));
+    dispatch(fetchNoshows(p));
+    dispatch(fetchPostsInAlert());
+  }, [dispatch, postId, dateFrom]);
 
   const urgentNote = unreviewedUrgent
     ? `${unreviewedUrgent} urgent (>72h)`
@@ -54,8 +73,8 @@ const KpiZone1: React.FC = () => {
   const cards = [
     { icon: AssignmentOutlined,   label: t("pages.kpi.shortlists_pending"),    value: pendingCount    ?? 0, color: "#7C3AED", bg: "#F5F3FF", trend: 0, note: t("pages.kpi.decision_required"), loading: pendingLoading    },
     { icon: AccessTimeOutlined,   label: t("pages.kpi.interviews_unreviewed"), value: unreviewedCount ?? 0, color: "#EF4444", bg: "#FEF2F2", trend: 0, note: urgentNote,                       loading: unreviewedLoading },
-    { icon: PersonOffOutlined,    label: t("pages.kpi.noshows"),               value: 0,                   color: "#F59E0B", bg: "#FFFBEB", trend: 0, note: t("pages.kpi.invited_5d"),        loading: false             },
-    { icon: WarningAmberOutlined, label: t("pages.kpi.posts_alert"),           value: 0,                   color: "#EF4444", bg: "#FEF2F2", trend: 0, note: t("pages.kpi.deadline_14d"),      loading: false             },
+    { icon: PersonOffOutlined,    label: t("pages.kpi.noshows"),               value: noshowsCount    ?? 0, color: "#F59E0B", bg: "#FFFBEB", trend: 0, note: t("pages.kpi.invited_5d"),   loading: noshowsLoading    },
+    { icon: WarningAmberOutlined, label: t("pages.kpi.posts_alert"),           value: postsAlertCount ?? 0, color: "#EF4444", bg: "#FEF2F2", trend: 0, note: t("pages.kpi.deadline_14d"), loading: postsAlertLoading },
   ];
 
   return (

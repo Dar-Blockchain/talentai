@@ -65,6 +65,23 @@ router.get("/company/my/kpi/pending-shortlists", jobApplicationController.getPen
 // Query params: postId (optional), page, limit
 router.get("/company/my/kpi/pending-shortlists/details", jobApplicationController.getPendingShortlistDetails);
 
+// GET /job-applications/company/my/kpi/sourcing — Get KPI: Sourcing quality (Zone 5)
+router.get("/company/my/kpi/sourcing", jobApplicationController.getSourcingKPI);
+
+// GET /job-applications/company/my/kpi/velocity — Get KPI: TTS + TTH trend (Zone 4)
+router.get("/company/my/kpi/velocity", jobApplicationController.getVelocityKPI);
+
+// GET /job-applications/company/my/kpi/funnel — Get KPI: Global funnel counts
+// Query params: postId (optional)
+router.get("/company/my/kpi/funnel", jobApplicationController.getFunnelKPI);
+
+// GET /job-applications/company/my/kpi/noshows — Get KPI: No-shows (invited > 5d, not completed)
+// Query params: postId (optional)
+router.get("/company/my/kpi/noshows", jobApplicationController.getNoshowsKPI);
+
+// GET /job-applications/company/my/kpi/roi — Get KPI: Reporting & ROI (Zone 7)
+router.get("/company/my/kpi/roi", jobApplicationController.getRoiKPI);
+
 // GET /job-applications/company/my/shortlisted — Get all shortlisted candidates
 // Query params: postId (optional), page, limit
 router.get("/company/my/shortlisted", jobApplicationController.getShortlistedCandidates);

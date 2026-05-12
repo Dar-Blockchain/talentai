@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { PDFParse } = require("pdf-parse");
 const JobApplication = require("../models/JobApplication.model");
+const PostInterviewAssessment = require("../models/PostInterviewAssessment.model");
 const Profile = require("../models/Profile.model");
 const Post = require("../models/Post.model");
 const { callLLM } = require("../helpers/bedrock.helpers");
@@ -1276,14 +1277,14 @@ module.exports.downloadCVsByCompany = async (companyId, filters = {}) => {
 
 // ========== KPI - PENDING SHORTLISTS ==========
 // Definition: Count candidates WHERE matchScore >= SHORTLIST_THRESHOLD AND recruiterDecision IS NULL
-module.exports.getPendingShortlistsKPI = async (companyId, postId = null) => {
+module.exports.getPendingShortlistsKPI = async (companyId, postId = null, dateFrom = null) => {
   try {
     const SHORTLIST_THRESHOLD = 60; // Score minimum for shortlist consideration
-    
+
     console.log("\n" + "═".repeat(80));
     console.log("📊 [KPI] PENDING SHORTLISTS - CALCULATING");
     console.log("═".repeat(80));
-    
+
     const baseQuery = {
       company: companyId,
       matchScore: { $gte: SHORTLIST_THRESHOLD },
@@ -1291,6 +1292,8 @@ module.exports.getPendingShortlistsKPI = async (companyId, postId = null) => {
       isWithdrawn: false,
       isArchived: false,
     };
+
+    if (dateFrom) baseQuery.appliedAt = { $gte: new Date(dateFrom) };
 
     // Add post filter if specified
     if (postId) {
@@ -1384,6 +1387,386 @@ module.exports.getPendingShortlistDetails = async (companyId, postId = null, pag
     };
   } catch (error) {
     console.error(`\n❌ Error fetching pending shortlist details:`, error.message);
+    error.status = error.status || 500;
+    throw error;
+  }
+};
+
+// ========== KPI - NO-SHOWS TO FOLLOW UP ==========
+// Candidates invited > 5 days ago who haven't completed the interview
+module.exports.getNoshowsKPI = async (companyId, postId = null, dateFrom = null) => {
+  try {
+    const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+
+    const baseQuery = {
+      company: companyId,
+      firstInvitationSentAt: { $lt: fiveDaysAgo, $ne: null },
+      status: "visited",
+      recruiterDecision: null,
+      isArchived: false,
+    };
+
+    if (postId) baseQuery.post = postId;
+    if (dateFrom) baseQuery.appliedAt = { $gte: new Date(dateFrom) };
+
+    const count = await JobApplication.countDocuments(baseQuery);
+
+    return { count };
+  } catch (error) {
+    error.status = error.status || 500;
+    throw error;
+  }
+};
+
+// ========== KPI - SOURCING QUALITY (Zone 5) ==========
+// Top 10 sourced from JobApplication (completed/shortlisted), score joined from PostInterviewAssessment
+module.exports.getSourcingKPI = async (companyId, postId = null, dateFrom = null) => {
+  try {
+    const mongoose = require('mongoose');
+
+    const now = new Date();
+    const d30 = new Date(now - 30 * 86400000);
+    const d60 = new Date(now - 60 * 86400000);
+
+    // ── Top 10: applications that completed or were shortlisted ─────────────────
+    // JobApplication: profile → Profile (has userId, firstName, lastName)
+    // PostInterviewAssessment: candidate → User (userId matches Profile.userId)
+    const appFilter = {
+      company: companyId,
+      $or: [
+        { status: 'interview_completed' },
+        { recruiterDecision: 'shortlisted' },
+      ],
+    };
+    if (postId) appFilter.post = new mongoose.Types.ObjectId(postId);
+    if (dateFrom) appFilter.appliedAt = { $gte: new Date(dateFrom) };
+
+    const completedApps = await JobApplication.find(appFilter)
+      .select('post profile recruiterDecision')
+      .populate('post', 'jobDetails')
+      .populate('profile', 'userId firstName lastName')
+      .lean();
+
+    // Build a map: profileId → userId so we can look up assessments by candidate (User ref)
+    const profileIdToUserId = {};
+    completedApps.forEach(a => {
+      if (a.profile?._id && a.profile?.userId) {
+        profileIdToUserId[String(a.profile._id)] = String(a.profile.userId);
+      }
+    });
+
+    const userIds = Object.values(profileIdToUserId);
+    const postIds = completedApps.map(a => a.post?._id).filter(Boolean);
+
+    // Fetch all assessments for these candidates+posts
+    const assessments = await PostInterviewAssessment.find({
+      company:   companyId,
+      candidate: { $in: userIds },
+      post:      { $in: postIds },
+    }).select('candidate post interviewData.finalReport.scores.overall').lean();
+
+    // scoreMap key: postId_userId
+    const scoreMap = {};
+    assessments.forEach(a => {
+      const key = `${String(a.post)}_${String(a.candidate)}`;
+      scoreMap[key] = a.interviewData?.finalReport?.scores?.overall ?? 0;
+    });
+
+    // Build ranked list
+    const ranked = completedApps.map(a => {
+      const userId    = profileIdToUserId[String(a.profile?._id)] || '';
+      const postIdStr = String(a.post?._id || '');
+      const score     = scoreMap[`${postIdStr}_${userId}`] ?? 0;
+      return {
+        firstName: a.profile?.firstName || '—',
+        lastName:  a.profile?.lastName  || '',
+        postTitle: a.post?.jobDetails?.title || '—',
+        score,
+        status: a.recruiterDecision === 'shortlisted' ? 'shortlisted' : 'completed',
+      };
+    });
+
+    ranked.sort((a, b) => b.score - a.score);
+    const top10 = ranked.slice(0, 10).map((r, i) => ({ rank: i + 1, ...r }));
+
+    // ── Avg score (only assessments with score > 0) ──────────────────────────────
+    const assessBase = { company: companyId, 'interviewData.finalReport.scores.overall': { $gt: 0 } };
+    if (postId) assessBase.post = new mongoose.Types.ObjectId(postId);
+
+    const avg = (arr) => arr.length
+      ? Math.round(arr.reduce((s, a) => s + (a.interviewData?.finalReport?.scores?.overall || 0), 0) / arr.length)
+      : null;
+
+    const [curScores, prevScores] = await Promise.all([
+      PostInterviewAssessment.find({ ...assessBase, updatedAt: { $gte: d30 } })
+        .select('interviewData.finalReport.scores.overall').lean(),
+      PostInterviewAssessment.find({ ...assessBase, updatedAt: { $gte: d60, $lt: d30 } })
+        .select('interviewData.finalReport.scores.overall').lean(),
+    ]);
+
+    const avgCurrent  = avg(curScores);
+    const avgPrevious = avg(prevScores);
+    const avgDelta    = avgCurrent !== null && avgPrevious !== null
+      ? avgCurrent - avgPrevious
+      : null;
+
+    // ── By post: top 5 posts by avg score ───────────────────────────────────────
+    const byPostAgg = await PostInterviewAssessment.aggregate([
+      { $match: assessBase },
+      {
+        $group: {
+          _id:      '$post',
+          avgScore: { $avg: '$interviewData.finalReport.scores.overall' },
+        },
+      },
+      { $sort: { avgScore: -1 } },
+      { $limit: 5 },
+      { $lookup: { from: 'posts', localField: '_id', foreignField: '_id', as: 'postDoc' } },
+      { $unwind: { path: '$postDoc', preserveNullAndEmptyArrays: true } },
+    ]);
+
+    const COLORS = ["#0D9488", "#0891B2", "#7C3AED", "#D97706", "#DC2626"];
+    const byPost = byPostAgg.map((r, i) => ({
+      label: r.postDoc?.jobDetails?.title || '—',
+      score: Math.round(r.avgScore),
+      color: COLORS[i] || "#94A3B8",
+    }));
+
+    return { avgCurrent, avgDelta, byPost, top10 };
+  } catch (error) {
+    error.status = error.status || 500;
+    throw error;
+  }
+};
+
+// ========== KPI - VELOCITY (Zone 4) ==========
+// TTS: firstInvitationSentAt → interview completion date (updatedAt when status=interview_completed)
+// TTH: post.createdAt → interview completion date
+// Uses interview_completed OR shortlisted apps so data shows even without recruiter decisions
+module.exports.getVelocityKPI = async (companyId, postId = null, dateFrom = null) => {
+  try {
+    const base = {
+      company: companyId,
+      isArchived: false,
+      $or: [
+        { status: 'interview_completed' },
+        { recruiterDecision: 'shortlisted' },
+      ],
+    };
+    if (postId) base.post = postId;
+    if (dateFrom) base.appliedAt = { $gte: new Date(dateFrom) };
+
+    // Get last 6 calendar months
+    const now = new Date();
+    const months = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({
+        year:  d.getFullYear(),
+        month: d.getMonth() + 1,
+        label: d.toLocaleString('en', { month: 'short' }),
+      });
+    }
+
+    const apps = await JobApplication.find(base)
+      .select('appliedAt firstInvitationSentAt recruiterDecisionAt updatedAt post status')
+      .populate('post', 'createdAt')
+      .lean();
+
+    // Group by month — use recruiterDecisionAt if set, else updatedAt (interview completion time)
+    const byMonth = {};
+    months.forEach(m => { byMonth[`${m.year}-${m.month}`] = { tts: [], tth: [] }; });
+
+    apps.forEach(app => {
+      const endDate = app.recruiterDecisionAt
+        ? new Date(app.recruiterDecisionAt)
+        : new Date(app.updatedAt);
+
+      const key = `${endDate.getFullYear()}-${endDate.getMonth() + 1}`;
+      if (!byMonth[key]) return;
+
+      // TTS: invitation → decision (or completion). Fall back to appliedAt if no invitation.
+      const startTts = app.firstInvitationSentAt
+        ? new Date(app.firstInvitationSentAt)
+        : app.appliedAt ? new Date(app.appliedAt) : null;
+      if (startTts) {
+        const tts = (endDate - startTts) / 86400000;
+        if (tts >= 0) byMonth[key].tts.push(tts);
+      }
+
+      // TTH: post created → decision/completion
+      const postCreated = app.post?.createdAt;
+      if (postCreated) {
+        const tth = (endDate - new Date(postCreated)) / 86400000;
+        if (tth >= 0) byMonth[key].tth.push(tth);
+      }
+    });
+
+    const median = (arr) => {
+      if (!arr.length) return null;
+      const sorted = [...arr].sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      return sorted.length % 2 === 0
+        ? Math.round((sorted[mid - 1] + sorted[mid]) / 2 * 10) / 10
+        : Math.round(sorted[mid] * 10) / 10;
+    };
+
+    const trend = months.map(m => ({
+      period: m.label,
+      tts: median(byMonth[`${m.year}-${m.month}`].tts),
+      tth: median(byMonth[`${m.year}-${m.month}`].tth),
+    }));
+
+    // Overall median across all data (not just last month)
+    const allTts = apps.map(app => {
+      const endDate  = app.recruiterDecisionAt ? new Date(app.recruiterDecisionAt) : new Date(app.updatedAt);
+      const startTts = app.firstInvitationSentAt ? new Date(app.firstInvitationSentAt) : app.appliedAt ? new Date(app.appliedAt) : null;
+      if (!startTts) return null;
+      const v = (endDate - startTts) / 86400000;
+      return v >= 0 ? v : null;
+    }).filter(v => v !== null);
+
+    const allTth = apps.map(app => {
+      const endDate    = app.recruiterDecisionAt ? new Date(app.recruiterDecisionAt) : new Date(app.updatedAt);
+      const postCreated = app.post?.createdAt;
+      if (!postCreated) return null;
+      const v = (endDate - new Date(postCreated)) / 86400000;
+      return v >= 0 ? v : null;
+    }).filter(v => v !== null);
+
+    // For delta: compare last two months with data
+    const withTts = trend.filter(r => r.tts !== null);
+    const withTth = trend.filter(r => r.tth !== null);
+    const prevTts = withTts.length > 1 ? withTts[withTts.length - 2].tts : null;
+    const prevTth = withTth.length > 1 ? withTth[withTth.length - 2].tth : null;
+    const currentTts = median(allTts);
+    const currentTth = median(allTth);
+
+    const delta = (cur, prev) =>
+      cur !== null && prev !== null ? Math.round((cur - prev) * 10) / 10 : null;
+
+    return {
+      tts:      currentTts,
+      ttsDelta: delta(currentTts, prevTts),
+      tth:      currentTth,
+      tthDelta: delta(currentTth, prevTth),
+      trend,
+    };
+  } catch (error) {
+    error.status = error.status || 500;
+    throw error;
+  }
+};
+
+// ========== KPI - REPORTING & ROI (Zone 7) ==========
+// savedHours, subscriptionCost, costPerHire, costPerShortlisted, tth trend 12 months
+module.exports.getRoiKPI = async (companyId) => {
+  try {
+    const Payment      = require('../models/Payment.model');
+    const Profile      = require('../models/Profile.model');
+
+    const base = { company: companyId, isArchived: false };
+
+    // ── Counts ──────────────────────────────────────────────────────────────────
+    const [completed, shortlisted] = await Promise.all([
+      JobApplication.countDocuments({ ...base, status: 'interview_completed' }),
+      JobApplication.countDocuments({ ...base, recruiterDecision: 'shortlisted' }),
+    ]);
+
+    // Hours saved: each completed interview saves 30 min of manual screening
+    const savedHours = Math.round(completed * 0.5);
+
+    // ── Subscription cost (sum of all payments for this company) ─────────────
+    const companyProfile = await Profile.findOne({ userId: companyId }).select('_id').lean();
+    let subscriptionCost = 0;
+    if (companyProfile) {
+      const payments = await Payment.find({ companyProfileId: companyProfile._id })
+        .select('planPrice').lean();
+      subscriptionCost = payments.reduce((s, p) => s + (p.planPrice || 0), 0);
+    }
+
+    const costPerHire       = shortlisted > 0 ? Math.round(subscriptionCost / shortlisted) : null;
+    const costPerShortlisted = shortlisted > 0 ? Math.round(subscriptionCost / shortlisted) : null;
+
+    // ── TTH trend: last 12 months (post.createdAt → completion/decision) ────────
+    const now    = new Date();
+    const months = [];
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({
+        year:  d.getFullYear(),
+        month: d.getMonth() + 1,
+        label: d.toLocaleString('en', { month: 'short' }),
+      });
+    }
+
+    const apps = await JobApplication.find({
+      ...base,
+      $or: [{ status: 'interview_completed' }, { recruiterDecision: 'shortlisted' }],
+    })
+      .select('recruiterDecisionAt updatedAt post')
+      .populate('post', 'createdAt')
+      .lean();
+
+    const byMonth = {};
+    months.forEach(m => { byMonth[`${m.year}-${m.month}`] = []; });
+
+    apps.forEach(app => {
+      const endDate     = app.recruiterDecisionAt ? new Date(app.recruiterDecisionAt) : new Date(app.updatedAt);
+      const postCreated = app.post?.createdAt;
+      if (!postCreated) return;
+      const tth = (endDate - new Date(postCreated)) / 86400000;
+      if (tth < 0) return;
+      const key = `${endDate.getFullYear()}-${endDate.getMonth() + 1}`;
+      if (byMonth[key] !== undefined) byMonth[key].push(tth);
+    });
+
+    const median = (arr) => {
+      if (!arr.length) return null;
+      const sorted = [...arr].sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      return sorted.length % 2 === 0
+        ? Math.round((sorted[mid - 1] + sorted[mid]) / 2 * 10) / 10
+        : Math.round(sorted[mid] * 10) / 10;
+    };
+
+    const trend = months.map(m => ({
+      month: m.label,
+      tth:   median(byMonth[`${m.year}-${m.month}`]),
+    }));
+
+    return {
+      savedHours,
+      completedInterviews: completed,
+      subscriptionCost,
+      costPerHire,
+      costPerShortlisted,
+      shortlisted,
+      trend,
+    };
+  } catch (error) {
+    error.status = error.status || 500;
+    throw error;
+  }
+};
+
+// ========== KPI - GLOBAL FUNNEL (Zone 3) ==========
+// Applied → Invited → Completed → Shortlisted
+module.exports.getFunnelKPI = async (companyId, postId = null, dateFrom = null) => {
+  try {
+    const base = { company: companyId, isArchived: false };
+    if (postId) base.post = postId;
+    if (dateFrom) base.appliedAt = { $gte: new Date(dateFrom) };
+
+    const [applied, invited, completed, shortlisted] = await Promise.all([
+      JobApplication.countDocuments({ ...base }),
+      JobApplication.countDocuments({ ...base, firstInvitationSentAt: { $ne: null } }),
+      JobApplication.countDocuments({ ...base, status: 'interview_completed' }),
+      JobApplication.countDocuments({ ...base, recruiterDecision: 'shortlisted' }),
+    ]);
+
+    return { applied, invited, completed, shortlisted };
+  } catch (error) {
     error.status = error.status || 500;
     throw error;
   }

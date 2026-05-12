@@ -913,7 +913,7 @@ module.exports.downloadCVsByCompany = async (req, res) => {
 module.exports.getPendingShortlistsKPI = async (req, res) => {
   try {
     const companyId = req.user._id;
-    const { postId } = req.query;
+    const { postId, dateFrom } = req.query;
 
     if (!companyId) {
       return res.status(400).json({
@@ -930,7 +930,8 @@ module.exports.getPendingShortlistsKPI = async (req, res) => {
 
     const kpiData = await jobApplicationService.getPendingShortlistsKPI(
       companyId,
-      postId || null
+      postId || null,
+      dateFrom || null
     );
 
     console.log(`✅ KPI calculated successfully`);
@@ -989,6 +990,75 @@ module.exports.getPendingShortlistDetails = async (req, res) => {
     });
   } catch (error) {
     console.error(`\n❌ [ERROR] Error in getPendingShortlistDetails: ${error.message}`);
+    handleError(res, error);
+  }
+};
+
+// ========== KPI - SOURCING QUALITY ==========
+module.exports.getSourcingKPI = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const { postId, dateFrom } = req.query;
+    const data = await jobApplicationService.getSourcingKPI(companyId, postId || null, dateFrom || null);
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
+// ========== KPI - VELOCITY ==========
+module.exports.getVelocityKPI = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const { postId, dateFrom } = req.query;
+    const data = await jobApplicationService.getVelocityKPI(companyId, postId || null, dateFrom || null);
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
+// ========== KPI - GLOBAL FUNNEL ==========
+module.exports.getFunnelKPI = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const { postId, dateFrom } = req.query;
+    const data = await jobApplicationService.getFunnelKPI(companyId, postId || null, dateFrom || null);
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
+// ========== KPI - NO-SHOWS TO FOLLOW UP ==========
+module.exports.getNoshowsKPI = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const { postId, dateFrom } = req.query;
+
+    if (!companyId) {
+      return res.status(400).json({ success: false, error: "Company ID is required" });
+    }
+
+    const data = await jobApplicationService.getNoshowsKPI(companyId, postId || null, dateFrom || null);
+
+    res.status(200).json({
+      success: true,
+      message: "No-shows KPI retrieved successfully",
+      data,
+    });
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
+// ========== KPI - REPORTING & ROI ==========
+module.exports.getRoiKPI = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const data = await jobApplicationService.getRoiKPI(companyId);
+    res.status(200).json({ success: true, data });
+  } catch (error) {
     handleError(res, error);
   }
 };
