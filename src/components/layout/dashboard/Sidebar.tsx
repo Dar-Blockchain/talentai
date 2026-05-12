@@ -234,7 +234,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               src="/images/home/logoDark.svg"
               alt="TalentAI"
               onClick={handleGoHome}
-              sx={{ height: 20, cursor: "pointer" }}
+              sx={{ height: 32, cursor: "pointer" }}
             />
           )}
 
