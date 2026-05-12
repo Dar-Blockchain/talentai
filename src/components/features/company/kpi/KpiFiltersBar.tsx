@@ -9,18 +9,14 @@ import { AppDispatch } from "@/store/store";
 import {
   fetchMyPostsForFilter,
   setKpiFilter,
-  selectKpiPostId,
-  selectKpiDateFrom,
   selectKpiAvailablePosts,
-  fetchPendingShortlists,
-  fetchUnreviewedInterviews,
-  fetchNoshows,
-  fetchPostsInAlert,
+  fetchActions,
   fetchPostsStatus,
   fetchFunnel,
   fetchVelocity,
   fetchSourcing,
 } from "@/store/slices/kpiSlice";
+import { useKpiParams } from "./useKpiParams";
 
 const PAGE_SIZE = 3;
 
@@ -35,8 +31,7 @@ const KpiFiltersBar: React.FC = () => {
   const { t } = useTranslation("dashboard");
   const dispatch = useDispatch<AppDispatch>();
 
-  const postId         = useSelector(selectKpiPostId);
-  const dateFrom       = useSelector(selectKpiDateFrom);
+  const { postId, dateFrom } = useKpiParams();
   const availablePosts = useSelector(selectKpiAvailablePosts);
 
   useEffect(() => {
@@ -47,10 +42,7 @@ const KpiFiltersBar: React.FC = () => {
     const p: Record<string, string> = {};
     if (newPostId)   p.postId   = newPostId;
     if (newDateFrom) p.dateFrom = newDateFrom;
-    dispatch(fetchPendingShortlists(p));
-    dispatch(fetchUnreviewedInterviews(p));
-    dispatch(fetchNoshows(p));
-    dispatch(fetchPostsInAlert());
+    dispatch(fetchActions(p));
     dispatch(fetchPostsStatus({ page: 1, limit: PAGE_SIZE, ...(newPostId ? { postId: newPostId } : {}) }));
     dispatch(fetchFunnel(p));
     dispatch(fetchVelocity(p));
@@ -64,9 +56,7 @@ const KpiFiltersBar: React.FC = () => {
   };
 
   const handlePeriodChange = (days: number | null) => {
-    const newDateFrom = days
-      ? new Date(Date.now() - days * 86400000).toISOString()
-      : null;
+    const newDateFrom = days ? new Date(Date.now() - days * 86400000).toISOString() : null;
     dispatch(setKpiFilter({ dateFrom: newDateFrom }));
     refetchAll(postId, newDateFrom);
   };

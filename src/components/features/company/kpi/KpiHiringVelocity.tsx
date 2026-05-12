@@ -14,7 +14,8 @@ import {
 import { ZoneHeading, KpiCard } from "./KpiAtoms";
 import { BORDER, ChartTooltip, GRAY, GRAY2, LGRAY, T, WHITE } from "./kpiTokens";
 import { AppDispatch } from "@/store/store";
-import { fetchVelocity, selectVelocity, selectVelocityLoading, selectKpiPostId, selectKpiDateFrom } from "@/store/slices/kpiSlice";
+import { fetchVelocity, selectVelocity, selectVelocityLoading } from "@/store/slices/kpiSlice";
+import { useKpiParams } from "./useKpiParams";
 
 const VelocityCard: React.FC<{
   title: string;
@@ -123,15 +124,11 @@ const KpiZone4: React.FC = () => {
 
   const velocity = useSelector(selectVelocity);
   const loading  = useSelector(selectVelocityLoading);
-  const postId   = useSelector(selectKpiPostId);
-  const dateFrom = useSelector(selectKpiDateFrom);
+  const { postId, dateFrom, params } = useKpiParams();
 
   useEffect(() => {
-    const p: Record<string, string> = {};
-    if (postId)   p.postId   = postId;
-    if (dateFrom) p.dateFrom = dateFrom;
-    dispatch(fetchVelocity(p));
-  }, [dispatch, postId, dateFrom]);
+    dispatch(fetchVelocity(params));
+  }, [dispatch, postId, dateFrom]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>

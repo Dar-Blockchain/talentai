@@ -57,13 +57,9 @@ router.get("/company/my/metrics", jobApplicationController.getApplicationMetrics
 // GET /job-applications/company/my/cvs/download — Download all matching CVs as a ZIP
 router.get("/company/my/cvs/download", jobApplicationController.downloadCVsByCompany);
 
-// GET /job-applications/company/my/kpi/pending-shortlists — Get KPI: Pending shortlists count
-// Query params: postId (optional - filter by specific post)
-router.get("/company/my/kpi/pending-shortlists", jobApplicationController.getPendingShortlistsKPI);
-
-// GET /job-applications/company/my/kpi/pending-shortlists/details — Get detailed list of pending shortlists
-// Query params: postId (optional), page, limit
-router.get("/company/my/kpi/pending-shortlists/details", jobApplicationController.getPendingShortlistDetails);
+// GET /job-applications/company/my/kpi/actions — Get all Zone 1 action counts in one call
+// Query params: postId (optional), dateFrom (optional)
+router.get("/company/my/kpi/actions", jobApplicationController.getActionsKPI);
 
 // GET /job-applications/company/my/kpi/sourcing — Get KPI: Sourcing quality (Zone 5)
 router.get("/company/my/kpi/sourcing", jobApplicationController.getSourcingKPI);
@@ -74,10 +70,6 @@ router.get("/company/my/kpi/velocity", jobApplicationController.getVelocityKPI);
 // GET /job-applications/company/my/kpi/funnel — Get KPI: Global funnel counts
 // Query params: postId (optional)
 router.get("/company/my/kpi/funnel", jobApplicationController.getFunnelKPI);
-
-// GET /job-applications/company/my/kpi/noshows — Get KPI: No-shows (invited > 5d, not completed)
-// Query params: postId (optional)
-router.get("/company/my/kpi/noshows", jobApplicationController.getNoshowsKPI);
 
 // GET /job-applications/company/my/kpi/roi — Get KPI: Reporting & ROI (Zone 7)
 router.get("/company/my/kpi/roi", jobApplicationController.getRoiKPI);

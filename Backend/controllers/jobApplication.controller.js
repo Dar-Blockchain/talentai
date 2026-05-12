@@ -910,6 +910,35 @@ module.exports.downloadCVsByCompany = async (req, res) => {
 };
 
 // ========== KPI - GET PENDING SHORTLISTS COUNT ==========
+// ========== KPI - ACTIONS TO TAKE (Zone 1 — combined) ==========
+module.exports.getActionsKPI = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const { postId = null, dateFrom = null } = req.query;
+    const assessmentService = require("../services/InterviewServices/postInterviewAssessment.service");
+
+    const [pending, unreviewed, noshows, postsInAlert] = await Promise.all([
+      jobApplicationService.getPendingShortlistsKPI(companyId, postId, dateFrom),
+      assessmentService.getUnreviewedInterviewsOver48Hours(companyId, postId, dateFrom),
+      jobApplicationService.getNoshowsKPI(companyId, postId, dateFrom),
+      postService.getPostsInAlertKPI(companyId),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        pendingShortlists: pending.pendingShortlistsCount ?? 0,
+        unreviewed:        unreviewed.count  ?? 0,
+        unreviewedUrgent:  unreviewed.urgent ?? 0,
+        noshows:           noshows.count     ?? 0,
+        postsInAlert:      postsInAlert.count ?? 0,
+      },
+    });
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
 module.exports.getPendingShortlistsKPI = async (req, res) => {
   try {
     const companyId = req.user._id;

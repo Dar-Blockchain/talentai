@@ -11,7 +11,8 @@ import {
 import { ZoneHeading, KpiCard, Delta, MetricRow } from "./KpiAtoms";
 import { BORDER, ChartTooltip, GRAY, GRAY2, LGRAY, NAVY, T, WHITE, passRate } from "./kpiTokens";
 import { AppDispatch } from "@/store/store";
-import { fetchFunnel, selectFunnel, selectFunnelLoading, selectKpiPostId, selectKpiDateFrom } from "@/store/slices/kpiSlice";
+import { fetchFunnel, selectFunnel, selectFunnelLoading } from "@/store/slices/kpiSlice";
+import { useKpiParams } from "./useKpiParams";
 
 const OPACITIES = ["FF", "CC", "AA", "77"];
 
@@ -33,17 +34,13 @@ const KpiZone3: React.FC = () => {
   const { t } = useTranslation("dashboard");
   const dispatch = useDispatch<AppDispatch>();
 
-  const funnel   = useSelector(selectFunnel);
-  const loading  = useSelector(selectFunnelLoading);
-  const postId   = useSelector(selectKpiPostId);
-  const dateFrom = useSelector(selectKpiDateFrom);
+  const funnel = useSelector(selectFunnel);
+  const loading = useSelector(selectFunnelLoading);
+  const { postId, dateFrom, params } = useKpiParams();
 
   useEffect(() => {
-    const p: Record<string, string> = {};
-    if (postId)   p.postId   = postId;
-    if (dateFrom) p.dateFrom = dateFrom;
-    dispatch(fetchFunnel(p));
-  }, [dispatch, postId, dateFrom]);
+    dispatch(fetchFunnel(params));
+  }, [dispatch, postId, dateFrom]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const applied     = funnel.applied     ?? 0;
   const invited     = funnel.invited     ?? 0;

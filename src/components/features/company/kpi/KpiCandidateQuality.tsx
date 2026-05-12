@@ -11,7 +11,8 @@ import StarOutlined from "@mui/icons-material/StarOutlined";
 import { ZoneHeading, KpiCard } from "./KpiAtoms";
 import { BORDER, GRAY, GRAY2, LGRAY, NAVY2, T, T_BG, T_BRD, T_DARK, WHITE } from "./kpiTokens";
 import { AppDispatch } from "@/store/store";
-import { fetchSourcing, selectSourcing, selectSourcingLoading, selectKpiPostId, selectKpiDateFrom } from "@/store/slices/kpiSlice";
+import { fetchSourcing, selectSourcing, selectSourcingLoading } from "@/store/slices/kpiSlice";
+import { useKpiParams } from "./useKpiParams";
 
 const KpiZone5: React.FC = () => {
   const { t } = useTranslation("dashboard");
@@ -19,15 +20,11 @@ const KpiZone5: React.FC = () => {
 
   const sourcing = useSelector(selectSourcing);
   const loading  = useSelector(selectSourcingLoading);
-  const postId   = useSelector(selectKpiPostId);
-  const dateFrom = useSelector(selectKpiDateFrom);
+  const { postId, dateFrom, params } = useKpiParams();
 
   useEffect(() => {
-    const p: Record<string, string> = {};
-    if (postId)   p.postId   = postId;
-    if (dateFrom) p.dateFrom = dateFrom;
-    dispatch(fetchSourcing(p));
-  }, [dispatch, postId, dateFrom]);
+    dispatch(fetchSourcing(params));
+  }, [dispatch, postId, dateFrom]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const tableHeaders = [
     "#",

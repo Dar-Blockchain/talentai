@@ -3,15 +3,13 @@ import { kpiService } from '@/services/kpiService';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-interface KpiCountState {
-  count:   number | null;
-  loading: boolean;
-}
-
-interface UnreviewedState {
-  count:   number | null;
-  urgent:  number | null;
-  loading: boolean;
+interface ActionsState {
+  pendingShortlists: number | null;
+  unreviewed:        number | null;
+  unreviewedUrgent:  number | null;
+  noshows:           number | null;
+  postsInAlert:      number | null;
+  loading:           boolean;
 }
 
 export interface PostStatusRow {
@@ -95,11 +93,8 @@ interface KpiFilterState {
 }
 
 interface KpiState {
-  pendingShortlists:    KpiCountState;
-  unreviewedInterviews: UnreviewedState;
-  noshows:              KpiCountState;
-  postsInAlert:         KpiCountState;
-  postsStatus:          PostsStatusState;
+  actions:     ActionsState;
+  postsStatus: PostsStatusState;
   funnel:               FunnelState;
   velocity:             VelocityState;
   sourcing:             SourcingState;
@@ -108,10 +103,7 @@ interface KpiState {
 }
 
 const initialState: KpiState = {
-  pendingShortlists:    { count: null, loading: false },
-  unreviewedInterviews: { count: null, urgent: null, loading: false },
-  noshows:              { count: null, loading: false },
-  postsInAlert:         { count: null, loading: false },
+  actions:     { pendingShortlists: null, unreviewed: null, unreviewedUrgent: null, noshows: null, postsInAlert: null, loading: false },
   postsStatus:          { rows: [], loading: false, currentPage: 1, totalPages: 1, totalCount: 0 },
   funnel:               { applied: null, invited: null, completed: null, shortlisted: null, loading: false },
   velocity:             { tts: null, ttsDelta: null, tth: null, tthDelta: null, trend: [], loading: false },
@@ -122,38 +114,17 @@ const initialState: KpiState = {
 
 // ── Thunks ─────────────────────────────────────────────────────────────────────
 
+export const fetchActions = createAsyncThunk(
+  'kpi/fetchActions',
+  async (params: { postId?: string; dateFrom?: string } = {}) => {
+    return await kpiService.fetchActions(params);
+  }
+);
+
 export const fetchMyPostsForFilter = createAsyncThunk(
   'kpi/fetchMyPostsForFilter',
   async () => {
     return await kpiService.fetchMyPostsForFilter();
-  }
-);
-
-export const fetchPendingShortlists = createAsyncThunk(
-  'kpi/fetchPendingShortlists',
-  async (params: { postId?: string; dateFrom?: string; page?: number; limit?: number } = {}) => {
-    return await kpiService.fetchPendingShortlists(params);
-  }
-);
-
-export const fetchUnreviewedInterviews = createAsyncThunk(
-  'kpi/fetchUnreviewedInterviews',
-  async (params: { postId?: string; dateFrom?: string } = {}) => {
-    return await kpiService.fetchUnreviewedInterviews(params);
-  }
-);
-
-export const fetchNoshows = createAsyncThunk(
-  'kpi/fetchNoshows',
-  async (params: { postId?: string; dateFrom?: string } = {}) => {
-    return await kpiService.fetchNoshows(params);
-  }
-);
-
-export const fetchPostsInAlert = createAsyncThunk(
-  'kpi/fetchPostsInAlert',
-  async () => {
-    return await kpiService.fetchPostsInAlert();
   }
 );
 
@@ -205,49 +176,19 @@ const kpiSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchPendingShortlists.pending, (state) => {
-        state.pendingShortlists.loading = true;
+      .addCase(fetchActions.pending, (state) => {
+        state.actions.loading = true;
       })
-      .addCase(fetchPendingShortlists.fulfilled, (state, action) => {
-        state.pendingShortlists.loading = false;
-        state.pendingShortlists.count   = action.payload?.pendingShortlistsCount ?? 0;
+      .addCase(fetchActions.fulfilled, (state, action) => {
+        state.actions.loading          = false;
+        state.actions.pendingShortlists = action.payload?.pendingShortlists ?? 0;
+        state.actions.unreviewed        = action.payload?.unreviewed        ?? 0;
+        state.actions.unreviewedUrgent  = action.payload?.unreviewedUrgent  ?? 0;
+        state.actions.noshows           = action.payload?.noshows           ?? 0;
+        state.actions.postsInAlert      = action.payload?.postsInAlert      ?? 0;
       })
-      .addCase(fetchPendingShortlists.rejected, (state) => {
-        state.pendingShortlists.loading = false;
-      })
-
-      .addCase(fetchUnreviewedInterviews.pending, (state) => {
-        state.unreviewedInterviews.loading = true;
-      })
-      .addCase(fetchUnreviewedInterviews.fulfilled, (state, action) => {
-        state.unreviewedInterviews.loading = false;
-        state.unreviewedInterviews.count  = action.payload?.count  ?? 0;
-        state.unreviewedInterviews.urgent = action.payload?.urgent ?? 0;
-      })
-      .addCase(fetchUnreviewedInterviews.rejected, (state) => {
-        state.unreviewedInterviews.loading = false;
-      })
-
-      .addCase(fetchNoshows.pending, (state) => {
-        state.noshows.loading = true;
-      })
-      .addCase(fetchNoshows.fulfilled, (state, action) => {
-        state.noshows.loading = false;
-        state.noshows.count   = action.payload?.count ?? 0;
-      })
-      .addCase(fetchNoshows.rejected, (state) => {
-        state.noshows.loading = false;
-      })
-
-      .addCase(fetchPostsInAlert.pending, (state) => {
-        state.postsInAlert.loading = true;
-      })
-      .addCase(fetchPostsInAlert.fulfilled, (state, action) => {
-        state.postsInAlert.loading = false;
-        state.postsInAlert.count   = action.payload?.count ?? 0;
-      })
-      .addCase(fetchPostsInAlert.rejected, (state) => {
-        state.postsInAlert.loading = false;
+      .addCase(fetchActions.rejected, (state) => {
+        state.actions.loading = false;
       })
 
       .addCase(fetchPostsStatus.pending, (state) => {
@@ -344,15 +285,9 @@ export default kpiSlice.reducer;
 
 type S = { kpi: KpiState };
 
-export const selectPendingShortlistsCount   = (s: S) => s.kpi.pendingShortlists.count;
-export const selectPendingShortlistsLoading = (s: S) => s.kpi.pendingShortlists.loading;
-export const selectUnreviewedCount   = (s: S) => s.kpi.unreviewedInterviews.count;
-export const selectUnreviewedUrgent  = (s: S) => s.kpi.unreviewedInterviews.urgent;
-export const selectUnreviewedLoading = (s: S) => s.kpi.unreviewedInterviews.loading;
-export const selectNoshowsCount   = (s: S) => s.kpi.noshows.count;
-export const selectNoshowsLoading = (s: S) => s.kpi.noshows.loading;
-export const selectPostsInAlertCount   = (s: S) => s.kpi.postsInAlert.count;
-export const selectPostsInAlertLoading = (s: S) => s.kpi.postsInAlert.loading;
+export const selectActions        = (s: S) => s.kpi.actions;
+export const selectActionsLoading = (s: S) => s.kpi.actions.loading;
+
 export const selectSourcing        = (s: S) => s.kpi.sourcing;
 export const selectSourcingLoading = (s: S) => s.kpi.sourcing.loading;
 export const selectVelocity        = (s: S) => s.kpi.velocity;
