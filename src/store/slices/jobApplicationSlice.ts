@@ -168,6 +168,17 @@ export const fetchCandidateStats = createAsyncThunk(
   }
 );
 
+export const createJobApplication = createAsyncThunk(
+  'jobApplications/create',
+  async (postId: string, { rejectWithValue }) => {
+    try {
+      return await jobApplicationService.createApplication(postId);
+    } catch (error: any) {
+      return rejectWithValue(error?.response?.data?.message || error.message || 'Failed to create application');
+    }
+  }
+);
+
 const jobApplicationSlice = createSlice({
   name: 'jobApplications',
   initialState,

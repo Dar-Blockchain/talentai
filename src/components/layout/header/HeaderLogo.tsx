@@ -1,29 +1,18 @@
 "use client";
-import React, { useMemo, useCallback } from "react";
+import React, { useCallback } from "react";
 import { Box } from "@mui/material";
-import { useSelector } from "react-redux";
-import { RootState } from "@/store/store";
 import { useRouter } from "next/router";
 
 const HeaderLogo = () => {
-  const router         = useRouter();
-  const storedUserType = useSelector((state: RootState) => state.user.userType);
-  const { user }       = useSelector((state: RootState) => state.user.connectedUser);
-  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const router = useRouter();
 
-  const userType =
-    router.pathname === "/" || router.pathname === "/home/candidate" || router.pathname === "/candidate/home"
-      ? storedUserType
-      : user?.role?.toLowerCase() ?? storedUserType ?? "candidate";
-
-  const logoSrc = useMemo(
-    () => userType === "candidate"
-      ? "/images/home/logocandidate.png"
-      : "/images/home/logocompany.png",
-    [userType]
-  );
-
-  const goHome = useCallback(() => router.push("/"), [router]);
+  const goHome = useCallback(() => {
+    if (router.pathname === "/") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    router.push("/");
+  }, [router]);
 
   return (
     <Box
@@ -32,10 +21,6 @@ const HeaderLogo = () => {
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
-        bgcolor: "#111",
-        borderRadius: "10px",
-        px: 1.5,
-        py: 0.6,
         cursor: "pointer",
         transition: "opacity 0.2s",
         "&:hover": { opacity: 0.82 },
@@ -43,9 +28,9 @@ const HeaderLogo = () => {
     >
       <Box
         component="img"
-        src={logoSrc}
+        src="/images/home/logo.svg"
         alt="TalentAI"
-        sx={{ height: 22, display: "block", userSelect: "none" }}
+        sx={{ height: 36, display: "block", userSelect: "none" }}
       />
     </Box>
   );

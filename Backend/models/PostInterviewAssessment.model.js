@@ -171,6 +171,19 @@ const postInterviewAssessmentSchema = new mongoose.Schema({
     default: null,
     description: 'Timestamp when assessment was archived'
   },
+  // ========== RECRUITER FEEDBACK ==========
+  // Note: This field tracks if recruiter has reviewed the AI-generated interview assessment
+  recruiterFeedback: {
+    type: String,
+    default: null,
+    description: 'Feedback from recruiter after reviewing AI interview - null means not yet reviewed',
+    index: true
+  },
+  recruiterFeedbackAt: {
+    type: Date,
+    default: null,
+    description: 'Timestamp when recruiter reviewed the interview'
+  },
 }, {
   timestamps: true,
   collection: 'PostInterviewAssessment'
