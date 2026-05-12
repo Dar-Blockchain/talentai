@@ -15,6 +15,11 @@ import ChatOutlined from "@mui/icons-material/ChatOutlined";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchConversations, selectConversations } from "@/store/slices/chatSlice";
+import {
+  selectTeamConversations,
+} from "@/modules/team-chat/store/teamChatSlice";
+import { useTeamConversationsQuery } from "@/modules/team-chat/queries/useTeamChatQueries";
+import { getTeamChatBasePath, getTeamChatConversationPath } from "@/modules/team-chat/utils/routes";
 import { useRouter } from "next/router";
 
 const TEAL    = "#0D9488";
@@ -31,21 +36,31 @@ const fmtTime = (iso?: string): string => {
   return d.toLocaleDateString([], { month: "short", day: "numeric" });
 };
 
+import { getParticipantDisplayName } from "@/components/features/chat/helpers";
+
 const HeaderChat: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const router   = useRouter();
 
-  const profile       = useSelector((state: RootState) => state.user.connectedUser.profile);
-  const currentUser   = useSelector((state: RootState) => state.user.connectedUser.user);
-  const conversations = useSelector(selectConversations);
+  const currentUser = useSelector((state: RootState) => state.user.connectedUser.user);
+  const role = currentUser?.role;
+  const isTeamChatUser = role === "Company" || role === "Employee";
+
+  const candidateConversations = useSelector(selectConversations);
+  const teamConversations = useSelector(selectTeamConversations);
+  useTeamConversationsQuery(undefined, { enabled: isTeamChatUser && !!currentUser?._id });
+
+  const conversations = isTeamChatUser ? teamConversations : candidateConversations;
+  const teamChatBasePath = getTeamChatBasePath(role);
 
   const [anchor, setAnchor] = useState<null | HTMLElement>(null);
 
-  const totalUnread = conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
+  const totalBadge = conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
 
   useEffect(() => {
+    if (!currentUser?._id || isTeamChatUser) return;
     dispatch(fetchConversations({}));
-  }, [dispatch]);
+  }, [currentUser?._id, dispatch, isTeamChatUser]);
 
   const close = () => setAnchor(null);
 
@@ -56,7 +71,7 @@ const HeaderChat: React.FC = () => {
         sx={{ color: "#6B7280" }}
       >
         <Badge
-          badgeContent={totalUnread > 9 ? "9+" : totalUnread || undefined}
+          badgeContent={totalBadge > 9 ? "9+" : totalBadge || undefined}
           sx={{
             "& .MuiBadge-badge": {
               bgcolor: "#EF4444",
@@ -91,7 +106,6 @@ const HeaderChat: React.FC = () => {
           },
         }}
       >
-        {/* Header */}
         <Box
           sx={{
             px: 2.5,
@@ -104,9 +118,9 @@ const HeaderChat: React.FC = () => {
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>
-              Messages
+              {isTeamChatUser ? "Team chat" : "Messages"}
             </Typography>
-            {totalUnread > 0 && (
+            {totalBadge > 0 && (
               <Box
                 sx={{
                   bgcolor: TEAL,
@@ -121,13 +135,12 @@ const HeaderChat: React.FC = () => {
                   fontWeight: 700,
                 }}
               >
-                {totalUnread > 9 ? "9+" : totalUnread}
+                {totalBadge > 9 ? "9+" : totalBadge}
               </Box>
             )}
           </Box>
         </Box>
 
-        {/* Conversation list */}
         <Box
           sx={{
             maxHeight: 340,
@@ -140,26 +153,24 @@ const HeaderChat: React.FC = () => {
             <Box sx={{ py: 6, textAlign: "center" }}>
               <ChatOutlined sx={{ fontSize: 40, color: "#D1D5DB", mb: 1 }} />
               <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>
-                No conversations yet
+                {isTeamChatUser ? "No team conversations yet." : "No conversations yet"}
               </Typography>
             </Box>
           ) : (
             conversations.slice(0, 8).map((conv, i) => {
-              const other   = conv.participants?.find((p: any) => p._id !== (currentUser?._id || currentUser?.id));
-              const name    = other
-                ? `${other.profile?.firstName || other.firstName || ""} ${other.profile?.lastName || other.lastName || ""}`.trim()
-                  || other.profile?.companyDetails?.name
-                  || other.email
-                  || "Unknown"
-                : "Unknown";
+              const other = conv.participants?.find((p: any) => p._id !== (currentUser?._id || currentUser?.id));
+              const name = getParticipantDisplayName(other);
               const initial = name[0]?.toUpperCase() || "?";
               const lastMsg = conv.lastMessage;
               const hasUnread = (conv.unreadCount || 0) > 0;
+              const conversationPath = isTeamChatUser
+                ? getTeamChatConversationPath(role, conv._id)
+                : `/chat/${conv._id}`;
 
               return (
                 <React.Fragment key={conv._id}>
                   <Box
-                    onClick={() => { router.push(`/chat/${conv._id}`); close(); }}
+                    onClick={() => { router.push(conversationPath); close(); }}
                     sx={{
                       display: "flex",
                       gap: 1.5,
@@ -229,12 +240,14 @@ const HeaderChat: React.FC = () => {
           )}
         </Box>
 
-        {/* Footer */}
         <Box sx={{ borderTop: "1px solid #E5E7EB", p: 1.5 }}>
           <Button
             fullWidth
             size="small"
-            onClick={() => { router.push("/chat"); close(); }}
+            onClick={() => {
+              router.push(isTeamChatUser ? teamChatBasePath : "/chat");
+              close();
+            }}
             sx={{
               textTransform: "none",
               fontWeight: 600,
@@ -243,7 +256,7 @@ const HeaderChat: React.FC = () => {
               "&:hover": { bgcolor: TEAL_BG },
             }}
           >
-            Open Messages
+            {isTeamChatUser ? "Open team chat" : "Open Messages"}
           </Button>
         </Box>
       </Popover>

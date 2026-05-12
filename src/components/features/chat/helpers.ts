@@ -2,6 +2,7 @@ export interface Participant {
   _id: string;
   firstName?: string;
   lastName?: string;
+  displayName?: string;
   email: string;
   profile?: {
     _id?: string;
@@ -16,6 +17,10 @@ export interface Participant {
 
 export const getParticipantDisplayName = (participant: Participant | undefined): string => {
   if (!participant) return 'Unknown';
+
+  if (participant.displayName?.trim()) {
+    return participant.displayName.trim();
+  }
 
   if (participant.profile?.type === 'Company' && participant.profile?.companyDetails?.name) {
     return participant.profile.companyDetails.name;

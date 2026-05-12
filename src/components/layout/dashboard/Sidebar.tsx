@@ -53,7 +53,7 @@ const GROUPS = [
   { groupKey: "main", ids: ["dashboard"] },
   { groupKey: "jobs", ids: ["posts", "applications"] },
   { groupKey: "campaigns", ids: ["campaigns"] },
-  { groupKey: "team", ids: ["employees", "departments"] },
+  { groupKey: "team", ids: ["employees", "team-chat", "departments"] },
   { groupKey: "account", ids: ["settings", "subscription"] },
 ];
 

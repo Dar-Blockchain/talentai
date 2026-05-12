@@ -1,0 +1,36 @@
+{
+  "title": "Team chat",
+  "subtitle": "Message colleagues in your company workspace.",
+  "tabs": {
+    "messages": "Messages",
+    "requests": "Requests",
+    "colleagues": "Colleagues"
+  },
+  "colleagues": {
+    "title": "Company colleagues",
+    "subtitle": "Pick a teammate to open a direct chat.",
+    "search_placeholder": "Search by name or username",
+    "clear_search": "Clear search",
+    "count": "{{count}} colleagues",
+    "available": "{{count}} available",
+    "filter_all": "All roles",
+    "empty": "No active colleagues found.",
+    "no_results": "No colleagues match your search.",
+    "no_results_hint": "Try another name or username.",
+    "message": "Message",
+    "company_default": "Company",
+    "company_role": "Company"
+  },
+  "requests": {
+    "incoming_title": "Incoming requests",
+    "outgoing_title": "Sent requests",
+    "empty_incoming": "No pending requests.",
+    "empty_outgoing": "No sent requests waiting for a response.",
+    "pending_banner": "You have {{count}} pending chat request(s). Open the Requests tab to accept before messaging.",
+    "accept": "Accept",
+    "reject": "Reject",
+    "pending": "Pending",
+    "accepted": "Accepted",
+    "rejected": "Rejected"
+  }
+}

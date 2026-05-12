@@ -5,6 +5,10 @@ import {
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "next/router";
+import { useSelector } from "react-redux";
+import ChatBubbleOutlineOutlined from "@mui/icons-material/ChatBubbleOutlineOutlined";
+import { RootState } from "@/store/store";
+import { useStartTeamChat } from "@/modules/team-chat";
 import EditOutlined from "@mui/icons-material/EditOutlined";
 import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
 import OpenInNewOutlined from "@mui/icons-material/OpenInNewOutlined";
@@ -61,6 +65,8 @@ interface EmployeeCardProps {
 
 const EmployeeCard: React.FC<EmployeeCardProps> = memo(({ member, index = 0, onEdit, onDelete, onSelect, canAssignRoles = true, canRemove = true }) => {
   const router = useRouter();
+  const startTeamChat = useStartTeamChat();
+  const currentUserId = useSelector((state: RootState) => state.user.connectedUser.user?._id);
   const { t, i18n } = useTranslation("dashboard");
   const fmtDate = (iso?: string) => {
     if (!iso) return null;
@@ -268,6 +274,26 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({ member, index = 0, onE
               transition: "all 0.22s cubic-bezier(.4,0,.2,1)",
             }}
           >
+            {member.status === "active" && member.userId !== currentUserId && (
+              <Tooltip title={t("pages.employees.card.tooltip_message")} placement="top" arrow>
+                <Box
+                  onClick={() => { void startTeamChat(member.userId); }}
+                  sx={{
+                    flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5,
+                    py: 0.875, borderRadius: "10px",
+                    bgcolor: "#F0FDFA", border: "1px solid #CCFBF1",
+                    cursor: "pointer", transition: "all 0.15s",
+                    "&:hover": { bgcolor: "#CCFBF1", borderColor: "#99F6E4" },
+                  }}
+                >
+                  <ChatBubbleOutlineOutlined sx={{ fontSize: 13, color: "#0D9488" }} />
+                  <Typography sx={{ fontSize: "11.5px", fontWeight: 600, color: "#0F766E" }}>
+                    {t("pages.employees.card.message")}
+                  </Typography>
+                </Box>
+              </Tooltip>
+            )}
+
             {/* View */}
             <Tooltip title={t("pages.employees.card.tooltip_view")} placement="top" arrow>
               <Box

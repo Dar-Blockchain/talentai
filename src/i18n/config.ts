@@ -19,6 +19,7 @@ import enInterviewHr from '../../public/locales/en/modules/interview/interview.j
 import enInterviewResults from '../../public/locales/en/modules/interview/results.json';
 import enInterviewApply from '../../public/locales/en/modules/interview/apply.json';
 import enChat from '../../public/locales/en/modules/chat/chat.json';
+import enTeamChat from '../../public/locales/en/modules/teamChat/teamChat.json';
 
 // ── FR ──────────────────────────────────────────────
 import frCommon     from '../../public/locales/fr/shared/common.json';
@@ -37,6 +38,7 @@ import frInterviewHr from '../../public/locales/fr/modules/interview/interview.j
 import frInterviewResults from '../../public/locales/fr/modules/interview/results.json';
 import frInterviewApply from '../../public/locales/fr/modules/interview/apply.json';
 import frChat from '../../public/locales/fr/modules/chat/chat.json';
+import frTeamChat from '../../public/locales/fr/modules/teamChat/teamChat.json';
 
 export const SUPPORTED_LANGUAGES = ['en', 'fr'] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
@@ -91,6 +93,7 @@ const options: InitOptions = {
       'modules/interview/results': enInterviewResults,
       'modules/interview/apply':   enInterviewApply,
       'modules/chat/chat':         enChat,
+      'modules/teamChat/teamChat':   enTeamChat,
     },
     fr: {
       common:    frCommon,
@@ -104,6 +107,7 @@ const options: InitOptions = {
       'modules/interview/results': frInterviewResults,
       'modules/interview/apply':   frInterviewApply,
       'modules/chat/chat':         frChat,
+      'modules/teamChat/teamChat':   frTeamChat,
     },
   },
 

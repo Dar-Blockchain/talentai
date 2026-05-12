@@ -37,6 +37,7 @@ export interface ChatShellProps {
   loading:              boolean;
   sending:              boolean;
   isCompany:            boolean;
+  enableDeletes?:       boolean;
   newMessage:           string;
   setNewMessage:        (v: string) => void;
   deleteDialogOpen:     boolean;
@@ -66,6 +67,7 @@ const ChatShell: React.FC<ChatShellProps> = (p) => {
   const theme    = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [showChat, setShowChat] = useState(!!p.activeConversationId);
+  const enableDeletes = p.enableDeletes ?? true;
 
   const handleSelect = (id: string) => {
     p.onSelectConversation(id);
@@ -102,15 +104,18 @@ const ChatShell: React.FC<ChatShellProps> = (p) => {
             onKeyDown={p.onKeyDown}
             onDeleteMessage={p.onDeleteMessage}
             onDeleteConversation={() => p.setDeleteDialogOpen(true)}
+            enableDeletes={enableDeletes}
           />
         </Box>
 
-        <DeleteConversationDialog
-          open={p.deleteDialogOpen}
-          onClose={() => p.setDeleteDialogOpen(false)}
-          onConfirm={p.onConfirmDelete}
-          isDeleting={p.isDeleting}
-        />
+        {enableDeletes && (
+          <DeleteConversationDialog
+            open={p.deleteDialogOpen}
+            onClose={() => p.setDeleteDialogOpen(false)}
+            onConfirm={p.onConfirmDelete}
+            isDeleting={p.isDeleting}
+          />
+        )}
       </Box>
     </ShellCtx.Provider>
   );
@@ -191,6 +196,7 @@ interface PanelProps {
   onKeyDown:      (e: React.KeyboardEvent) => void;
   onDeleteMessage:(id: string) => void;
   onDeleteConversation: () => void;
+  enableDeletes: boolean;
 }
 
 const Panel: React.FC<PanelProps> = (p) => {
@@ -221,12 +227,14 @@ const Panel: React.FC<PanelProps> = (p) => {
             otherUser={p.otherUser}
             isCompany={p.isCompany}
             onDeleteConversation={p.onDeleteConversation}
+            enableDeletes={p.enableDeletes}
           />
           <MessageList
             messages={p.messages}
             currentUserId={p.currentUserId}
             isCompany={p.isCompany}
             onDeleteMessage={p.onDeleteMessage}
+            enableDeletes={p.enableDeletes}
           />
           <MessageInput
             value={p.newMessage}

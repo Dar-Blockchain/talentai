@@ -1,0 +1,36 @@
+{
+  "title": "Chat d'équipe",
+  "subtitle": "Échangez avec les collègues de votre entreprise.",
+  "tabs": {
+    "messages": "Messages",
+    "requests": "Demandes",
+    "colleagues": "Collègues"
+  },
+  "colleagues": {
+    "title": "Collègues de l'entreprise",
+    "subtitle": "Choisissez un collègue pour ouvrir un chat direct.",
+    "search_placeholder": "Rechercher par nom ou nom d'utilisateur",
+    "clear_search": "Effacer la recherche",
+    "count": "{{count}} collègues",
+    "available": "{{count}} disponibles",
+    "filter_all": "Tous les rôles",
+    "empty": "Aucun collègue actif trouvé.",
+    "no_results": "Aucun collègue ne correspond à votre recherche.",
+    "no_results_hint": "Essayez un autre nom ou nom d'utilisateur.",
+    "message": "Message",
+    "company_default": "Entreprise",
+    "company_role": "Entreprise"
+  },
+  "requests": {
+    "incoming_title": "Demandes reçues",
+    "outgoing_title": "Demandes envoyées",
+    "empty_incoming": "Aucune demande en attente.",
+    "empty_outgoing": "Aucune demande envoyée en attente de réponse.",
+    "pending_banner": "Vous avez {{count}} demande(s) de chat en attente. Ouvrez l'onglet Demandes pour accepter avant d'échanger des messages.",
+    "accept": "Accepter",
+    "reject": "Refuser",
+    "pending": "En attente",
+    "accepted": "Acceptée",
+    "rejected": "Refusée"
+  }
+}

@@ -14,12 +14,14 @@ import { Poppins } from "next/font/google";
 import MuiToast from "@/components/ui/Toast";
 import { useToast, ToastProvider } from "@/hooks/useToast";
 import { NotificationProvider } from "@/contexts/NotificationContext";
+import TeamChatRealtimeBridge from "@/modules/team-chat/components/TeamChatRealtimeBridge";
 import LoadingScreen from "@/components/ui/LoadingScreen";
 import { isLoggingOutCheck, clearAuth, logout } from "@/store/slices/authSlice";
 import { clearConnectedUser } from "@/store/slices/userSlice";
 import { setToastHandler } from "@/utils/toastEmitter";
 import { setSessionExpiredHandler } from "@/utils/storeEmitter";
 import { useTranslation } from "react-i18next";
+import { ReactQueryProvider } from "@/providers/ReactQueryProvider";
 import { normalizeLangCode, MANUAL_LANG_KEY } from "@/hooks/useLanguage";
 
 const poppins = Poppins({
@@ -120,6 +122,7 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
 
   return (
     <NotificationProvider userId={userId}>
+      <TeamChatRealtimeBridge />
       <DbLanguageSync />
       {children}
       <Dialog
@@ -163,6 +166,7 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <Provider store={store}>
       <PersistGate loading={<LoadingScreen />} persistor={persistor}>
+        <ReactQueryProvider>
         <ThemeProvider theme={theme}>
           <CssBaseline />
           <Head>
@@ -184,6 +188,7 @@ export default function App({ Component, pageProps }: AppProps) {
             </ToastProvider>
           </main>
         </ThemeProvider>
+        </ReactQueryProvider>
       </PersistGate>
     </Provider>
   );

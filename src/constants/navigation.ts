@@ -9,6 +9,7 @@ import {
   DashboardOutlined,
   SettingsOutlined,
   CreditCardOutlined,
+  ChatBubbleOutlineOutlined,
 } from "@mui/icons-material";
 import { EmployeePermissionKey } from "@/types/employeePermissions";
 
@@ -17,6 +18,7 @@ export const navigation = [
   { id: "campaigns",    icon: CampaignOutlined,       label: "Campaigns",    href: "/company/campaigns" },
   { id: "posts",        icon: WorkOutlineOutlined,    label: "Posts",        href: "/company/posts" },
   { id: "employees",    icon: GroupsOutlined,         label: "Employees",    href: "/company/employees" },
+  { id: "team-chat",    icon: ChatBubbleOutlineOutlined, label: "Team chat", href: "/company/team-chat" },
   { id: "departments",  icon: CorporateFareOutlined,  label: "Departments",  href: "/company/departments" },
   { id: "applications", icon: PeopleAltOutlined,      label: "Applications", href: "/company/applications" },
   { id: "settings",     icon: TuneOutlined,           label: "Settings",     href: "/company/settings" },
@@ -67,6 +69,7 @@ export const employeeNavGroups: EmployeeNavGroup[] = [
     items: [
       { id: "dashboard",    icon: DashboardOutlined, label: "Dashboard",    href: "/employee/dashboard" },
       { id: "my-campaigns", icon: CampaignOutlined,  label: "My Campaigns", href: "/employee/campaigns" },
+      { id: "team-chat",    icon: ChatBubbleOutlineOutlined, label: "Team chat", href: "/employee/team-chat" },
     ],
   },
   {

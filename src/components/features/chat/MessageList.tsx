@@ -29,6 +29,7 @@ interface MessageListProps {
   currentUserId: string | undefined;
   isCompany: boolean;
   onDeleteMessage: (messageId: string) => void;
+  enableDeletes?: boolean;
 }
 
 const MessageList: React.FC<MessageListProps> = ({
@@ -36,6 +37,7 @@ const MessageList: React.FC<MessageListProps> = ({
   currentUserId,
   isCompany,
   onDeleteMessage,
+  enableDeletes = true,
 }) => {
   const { t } = useTranslation('modules/chat/chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -97,7 +99,7 @@ const MessageList: React.FC<MessageListProps> = ({
                 '&:hover .delete-btn': { opacity: 1 },
               }}
             >
-              {isCompany && isOwn && (
+              {isCompany && enableDeletes && isOwn && (
                 <IconButton
                   className="delete-btn"
                   onClick={() => onDeleteMessage(message._id)}

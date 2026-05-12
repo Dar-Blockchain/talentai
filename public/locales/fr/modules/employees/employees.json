@@ -62,6 +62,8 @@
     "status_pending": "En attente",
     "status_inactive": "Inactif",
     "tooltip_view": "Voir le profil",
+    "tooltip_message": "Envoyer une demande de chat d'équipe",
+    "message": "Message",
     "view": "Voir",
     "tooltip_edit": "Modifier le rôle",
     "edit": "Modifier",
