@@ -1,0 +1,292 @@
+{
+  "info": {
+    "name": "Job Application - Recruiter Decision APIs",
+    "description": "Collection complète des APIs pour la gestion des candidats et des décisions de recrutement",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0",
+    "updated": "2026-05-11"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "YOUR_JWT_TOKEN_HERE",
+      "type": "string"
+    },
+    {
+      "key": "applicationId",
+      "value": "APPLICATION_ID_HERE",
+      "type": "string"
+    },
+    {
+      "key": "postId",
+      "value": "POST_ID_HERE",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "KPI - Shortlists en attente",
+      "item": [
+        {
+          "name": "1. Compter les shortlists en attente (tous les postes)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/job-applications/company/my/kpi/pending-shortlists",
+              "host": ["{{baseUrl}}"],
+              "path": ["job-applications", "company", "my", "kpi", "pending-shortlists"]
+            },
+            "description": "Retourne le nombre de candidats avec score >= 60 et décision du recruteur = null"
+          },
+          "response": []
+        },
+        {
+          "name": "1b. Compter les shortlists en attente (poste spécifique)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/job-applications/company/my/kpi/pending-shortlists?postId={{postId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["job-applications", "company", "my", "kpi", "pending-shortlists"],
+              "query": [
+                {
+                  "key": "postId",
+                  "value": "{{postId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Détails des shortlists en attente (page 1)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/job-applications/company/my/kpi/pending-shortlists/details?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["job-applications", "company", "my", "kpi", "pending-shortlists", "details"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "postId",
+                  "value": "{{postId}}",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Recruiter Decision - Mise à jour",
+      "item": [
+        {
+          "name": "3. Shortlister un candidat",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"decision\": \"shortlisted\", \"rejectionReason\": \"Excellent profil technique\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/job-applications/{{applicationId}}/recruiter-decision",
+              "host": ["{{baseUrl}}"],
+              "path": ["job-applications", "{{applicationId}}", "recruiter-decision"]
+            },
+            "description": "Marquer un candidat comme shortlisté"
+          },
+          "response": []
+        },
+        {
+          "name": "3b. Rejeter un candidat",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"decision\": \"rejected\", \"rejectionReason\": \"Expérience insuffisante en React\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/job-applications/{{applicationId}}/recruiter-decision",
+              "host": ["{{baseUrl}}"],
+              "path": ["job-applications", "{{applicationId}}", "recruiter-decision"]
+            },
+            "description": "Marquer un candidat comme rejeté avec raison"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Recruiter Decision - Consultation",
+      "item": [
+        {
+          "name": "4. Lister les candidats shortlistés",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/job-applications/company/my/shortlisted?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["job-applications", "company", "my", "shortlisted"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "postId",
+                  "value": "{{postId}}",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5. Lister les candidats rejetés",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/job-applications/company/my/rejected?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["job-applications", "company", "my", "rejected"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "postId",
+                  "value": "{{postId}}",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6. Lister par décision (générique)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/job-applications/company/my/by-decision?decision=shortlisted&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["job-applications", "company", "my", "by-decision"],
+              "query": [
+                {
+                  "key": "decision",
+                  "value": "shortlisted",
+                  "description": "shortlisted ou rejected"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "postId",
+                  "value": "{{postId}}",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

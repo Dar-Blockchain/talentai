@@ -908,3 +908,277 @@ module.exports.downloadCVsByCompany = async (req, res) => {
     handleError(res, error);
   }
 };
+
+// ========== KPI - GET PENDING SHORTLISTS COUNT ==========
+module.exports.getPendingShortlistsKPI = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const { postId } = req.query;
+
+    if (!companyId) {
+      return res.status(400).json({
+        success: false,
+        error: "Company ID is required",
+      });
+    }
+
+    console.log("\n" + "=".repeat(80));
+    console.log("📊 [KPI API] PENDING SHORTLISTS - REQUEST RECEIVED");
+    console.log("=".repeat(80));
+    console.log(`👤 Company ID: ${companyId}`);
+    if (postId) console.log(`📄 Post ID: ${postId}`);
+
+    const kpiData = await jobApplicationService.getPendingShortlistsKPI(
+      companyId,
+      postId || null
+    );
+
+    console.log(`✅ KPI calculated successfully`);
+    console.log(`   Pending Shortlists: ${kpiData.pendingShortlistsCount}`);
+    console.log("=".repeat(80) + "\n");
+
+    res.status(200).json({
+      success: true,
+      message: "Pending shortlists KPI retrieved successfully",
+      data: kpiData,
+    });
+  } catch (error) {
+    console.error(`\n❌ [ERROR] Error in getPendingShortlistsKPI: ${error.message}`);
+    handleError(res, error);
+  }
+};
+
+// ========== KPI - GET PENDING SHORTLIST CANDIDATES DETAILS ==========
+module.exports.getPendingShortlistDetails = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const { postId, page = 1, limit = 20 } = req.query;
+
+    if (!companyId) {
+      return res.status(400).json({
+        success: false,
+        error: "Company ID is required",
+      });
+    }
+
+    console.log("\n" + "=".repeat(80));
+    console.log("📋 [KPI API] PENDING SHORTLIST DETAILS - REQUEST RECEIVED");
+    console.log("=".repeat(80));
+    console.log(`👤 Company ID: ${companyId}`);
+    console.log(`📄 Post ID: ${postId || "All posts"}`);
+    console.log(`📊 Pagination: page ${page}, limit ${limit}`);
+
+    const result = await jobApplicationService.getPendingShortlistDetails(
+      companyId,
+      postId || null,
+      parseInt(page),
+      parseInt(limit)
+    );
+
+    console.log(`✅ Details retrieved successfully`);
+    console.log(`   Total Pending: ${result.pagination.totalCount}`);
+    console.log(`   Current Page: ${result.pagination.currentPage}/${result.pagination.totalPages}`);
+    console.log("=".repeat(80) + "\n");
+
+    res.status(200).json({
+      success: true,
+      message: "Pending shortlist candidates retrieved successfully",
+      data: result.data,
+      pagination: result.pagination,
+      threshold: result.threshold,
+    });
+  } catch (error) {
+    console.error(`\n❌ [ERROR] Error in getPendingShortlistDetails: ${error.message}`);
+    handleError(res, error);
+  }
+};
+
+// ========== UPDATE RECRUITER DECISION ==========
+module.exports.updateRecruiterDecision = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    const { decision, rejectionReason } = req.body;
+    const companyId = req.user._id;
+
+    console.log("\n" + "=".repeat(80));
+    console.log("🎯 [RECRUITER DECISION] UPDATE - REQUEST RECEIVED");
+    console.log("=".repeat(80));
+    console.log(`👤 Company ID: ${companyId}`);
+    console.log(`📋 Application ID: ${applicationId}`);
+    console.log(`🔄 Decision: ${decision}`);
+
+    // Validate required fields
+    if (!applicationId) {
+      return res.status(400).json({
+        success: false,
+        error: "Application ID is required",
+      });
+    }
+
+    if (!decision || !["shortlisted", "rejected"].includes(decision)) {
+      return res.status(400).json({
+        success: false,
+        error: "Decision must be 'shortlisted' or 'rejected'",
+      });
+    }
+
+    // Verify ownership
+    const application = await jobApplicationService.getJobApplicationById(applicationId);
+    if (application.company._id.toString() !== companyId.toString()) {
+      return res.status(403).json({
+        success: false,
+        error: "You are not authorized to update this application",
+      });
+    }
+
+    const updatedApp = await jobApplicationService.updateRecruiterDecision(
+      applicationId,
+      decision,
+      rejectionReason || null
+    );
+
+    console.log(`✅ Decision updated successfully`);
+    console.log("=".repeat(80) + "\n");
+
+    res.status(200).json({
+      success: true,
+      message: `Application ${decision} successfully`,
+      data: updatedApp,
+    });
+  } catch (error) {
+    console.error(`\n❌ [ERROR] Error in updateRecruiterDecision: ${error.message}`);
+    handleError(res, error);
+  }
+};
+
+// ========== GET SHORTLISTED CANDIDATES ==========
+module.exports.getShortlistedCandidates = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const { postId, page = 1, limit = 20 } = req.query;
+
+    if (!companyId) {
+      return res.status(400).json({
+        success: false,
+        error: "Company ID is required",
+      });
+    }
+
+    console.log("\n" + "=".repeat(80));
+    console.log("⭐ [SHORTLISTED] GET CANDIDATES - REQUEST RECEIVED");
+    console.log("=".repeat(80));
+    console.log(`👤 Company ID: ${companyId}`);
+    if (postId) console.log(`📄 Post ID: ${postId}`);
+
+    const result = await jobApplicationService.getShortlistedCandidates(
+      companyId,
+      postId || null,
+      parseInt(page),
+      parseInt(limit)
+    );
+
+    console.log(`✅ Retrieved ${result.pagination.totalCount} shortlisted candidates`);
+    console.log("=".repeat(80) + "\n");
+
+    res.status(200).json({
+      success: true,
+      message: "Shortlisted candidates retrieved successfully",
+      data: result.data,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    console.error(`\n❌ [ERROR] Error in getShortlistedCandidates: ${error.message}`);
+    handleError(res, error);
+  }
+};
+
+// ========== GET REJECTED CANDIDATES ==========
+module.exports.getRejectedCandidates = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const { postId, page = 1, limit = 20 } = req.query;
+
+    if (!companyId) {
+      return res.status(400).json({
+        success: false,
+        error: "Company ID is required",
+      });
+    }
+
+    console.log("\n" + "=".repeat(80));
+    console.log("❌ [REJECTED] GET CANDIDATES - REQUEST RECEIVED");
+    console.log("=".repeat(80));
+    console.log(`👤 Company ID: ${companyId}`);
+    if (postId) console.log(`📄 Post ID: ${postId}`);
+
+    const result = await jobApplicationService.getRejectedCandidates(
+      companyId,
+      postId || null,
+      parseInt(page),
+      parseInt(limit)
+    );
+
+    console.log(`✅ Retrieved ${result.pagination.totalCount} rejected candidates`);
+    console.log("=".repeat(80) + "\n");
+
+    res.status(200).json({
+      success: true,
+      message: "Rejected candidates retrieved successfully",
+      data: result.data,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    console.error(`\n❌ [ERROR] Error in getRejectedCandidates: ${error.message}`);
+    handleError(res, error);
+  }
+};
+
+// ========== GET CANDIDATES BY DECISION ==========
+module.exports.getCandidatesByDecision = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const { decision, postId, page = 1, limit = 20 } = req.query;
+
+    if (!companyId) {
+      return res.status(400).json({
+        success: false,
+        error: "Company ID is required",
+      });
+    }
+
+    if (!decision || !["shortlisted", "rejected"].includes(decision)) {
+      return res.status(400).json({
+        success: false,
+        error: "Decision query param must be 'shortlisted' or 'rejected'",
+      });
+    }
+
+    console.log("\n" + "=".repeat(80));
+    console.log(`📋 [DECISION: ${decision.toUpperCase()}] GET CANDIDATES - REQUEST RECEIVED`);
+    console.log("=".repeat(80));
+    console.log(`👤 Company ID: ${companyId}`);
+    console.log(`🔍 Decision: ${decision}`);
+    if (postId) console.log(`📄 Post ID: ${postId}`);
+
+    const result = await jobApplicationService.getCandidatesByDecision(
+      companyId,
+      decision,
+      postId || null,
+      parseInt(page),
+      parseInt(limit)
+    );
+
+    console.log(`✅ Retrieved ${result.pagination.totalCount} candidates`);
+    console.log("=".repeat(80) + "\n");
+
+    res.status(200).json({
+      success: true,
+      message: `Candidates with decision '${decision}' retrieved successfully`,
+      data: result.data,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    console.error(`\n❌ [ERROR] Error in getCandidatesByDecision: ${error.message}`);
+    handleError(res, error);
+  }
+};

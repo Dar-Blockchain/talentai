@@ -1,0 +1,371 @@
+{
+  "info": {
+    "name": "Unreviewed Interviews KPI API",
+    "description": "Collection for testing AI-generated Interviews unreviewed for 48+ hours KPI endpoints",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1️⃣ KPI - Count Unreviewed (> 48h)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/post-interview-assessments/company/mine/kpi/unreviewed-48h",
+          "host": ["{{baseUrl}}"],
+          "path": [
+            "post-interview-assessments",
+            "company",
+            "mine",
+            "kpi",
+            "unreviewed-48h"
+          ]
+        },
+        "description": "Get count of AI-generated interviews that haven't been reviewed for 48+ hours\n\nResponse includes:\n- count: Total unreviewed > 48h\n- urgent: Unreviewed > 72h (very urgent)\n- lastCheck: Timestamp of check\n\nNote: All interviews in PostInterviewAssessment are AI-generated"
+      },
+      "response": [
+        {
+          "name": "Success - Has Unreviewed Interviews",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post-interview-assessments/company/mine/kpi/unreviewed-48h",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "post-interview-assessments",
+                "company",
+                "mine",
+                "kpi",
+                "unreviewed-48h"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"success\": true,\n  \"message\": \"12 AI interviews pending recruiter review (3 urgent - over 72h)\",\n  \"data\": {\n    \"count\": 12,\n    \"urgent\": 3,\n    \"lastCheck\": \"2026-05-11T14:30:00.000Z\",\n    \"description\": \"AI-generated interviews pending recruiter feedback for 48+ hours\"\n  }\n}\n"
+        }
+      ]
+    },
+    {
+      "name": "2️⃣ KPI - Get Details (Page 1)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/post-interview-assessments/company/mine/kpi/unreviewed-48h/details?page=1&limit=10",
+          "host": ["{{baseUrl}}"],
+          "path": [
+            "post-interview-assessments",
+            "company",
+            "mine",
+            "kpi",
+            "unreviewed-48h",
+            "details"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            }
+          ]
+        },
+        "description": "Get paginated list of AI interviews unreviewed for 48+ hours\n\nQuery params:\n- page: Page number (default 1)\n- limit: Records per page (default 10)\n- postId: (optional) Filter by specific post\n\nResponse includes each interview with:\n- candidateName, candidateEmail\n- postTitle\n- completedAt: Interview end date\n- hoursPending: Hours since completion\n- isUrgent: true if > 72h\n- overallScore: AI score 0-100\n- aiGenerated: Always true (AI interviews only)"
+      },
+      "response": [
+        {
+          "name": "Success - Paginated List",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post-interview-assessments/company/mine/kpi/unreviewed-48h/details?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "post-interview-assessments",
+                "company",
+                "mine",
+                "kpi",
+                "unreviewed-48h",
+                "details"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"success\": true,\n  \"message\": \"Unreviewed interviews retrieved successfully\",\n  \"data\": [\n    {\n      \"_id\": \"507f1f77bcf86cd799439011\",\n      \"candidateName\": \"Jean Dupont\",\n      \"candidateEmail\": \"jean@example.com\",\n      \"postTitle\": \"Senior Developer\",\n      \"completedAt\": \"2026-05-09T10:30:00.000Z\",\n      \"hoursPending\": 52,\n      \"isUrgent\": false,\n      \"overallScore\": 78,\n      \"aiGenerated\": true\n    },\n    {\n      \"_id\": \"507f1f77bcf86cd799439012\",\n      \"candidateName\": \"Marie Martin\",\n      \"candidateEmail\": \"marie@example.com\",\n      \"postTitle\": \"Product Manager\",\n      \"completedAt\": \"2026-05-08T14:15:00.000Z\",\n      \"hoursPending\": 74,\n      \"isUrgent\": true,\n      \"overallScore\": 82,\n      \"aiGenerated\": true\n    },\n    {\n      \"_id\": \"507f1f77bcf86cd799439013\",\n      \"candidateName\": \"Pierre Bernard\",\n      \"candidateEmail\": \"pierre@example.com\",\n      \"postTitle\": \"Data Scientist\",\n      \"completedAt\": \"2026-05-07T09:00:00.000Z\",\n      \"hoursPending\": 101,\n      \"isUrgent\": true,\n      \"overallScore\": 85,\n      \"aiGenerated\": true\n    }\n  ],\n  \"pagination\": {\n    \"page\": 1,\n    \"limit\": 10,\n    \"totalCount\": 12,\n    \"totalPages\": 2\n  },\n  \"metadata\": {\n    \"timestamp\": \"2026-05-11T14:30:00.000Z\",\n    \"allInterviewsAreAIGenerated\": true,\n    \"sortedByOldestFirst\": true\n  }\n}\n"
+        }
+      ]
+    },
+    {
+      "name": "3️⃣ KPI - Get Details by Post (Filter)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/post-interview-assessments/company/mine/kpi/unreviewed-48h/details?postId={{postId}}&page=1&limit=10",
+          "host": ["{{baseUrl}}"],
+          "path": [
+            "post-interview-assessments",
+            "company",
+            "mine",
+            "kpi",
+            "unreviewed-48h",
+            "details"
+          ],
+          "query": [
+            {
+              "key": "postId",
+              "value": "{{postId}}"
+            },
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            }
+          ]
+        },
+        "description": "Get unreviewed interviews for a specific post only\n\nNote: Set {{postId}} variable first or replace with actual post ID\n\nThis filters the results to show only unreviewed interviews from one job posting"
+      },
+      "response": []
+    },
+    {
+      "name": "4️⃣ KPI - Get Details (Page 2)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/post-interview-assessments/company/mine/kpi/unreviewed-48h/details?page=2&limit=10",
+          "host": ["{{baseUrl}}"],
+          "path": [
+            "post-interview-assessments",
+            "company",
+            "mine",
+            "kpi",
+            "unreviewed-48h",
+            "details"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "2"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            }
+          ]
+        },
+        "description": "Get second page of unreviewed interviews with 10 records per page"
+      },
+      "response": []
+    },
+    {
+      "name": "5️⃣ KPI - Large Page Size",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/post-interview-assessments/company/mine/kpi/unreviewed-48h/details?page=1&limit=50",
+          "host": ["{{baseUrl}}"],
+          "path": [
+            "post-interview-assessments",
+            "company",
+            "mine",
+            "kpi",
+            "unreviewed-48h",
+            "details"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "50"
+            }
+          ]
+        },
+        "description": "Get all unreviewed interviews (or many) in one request with limit=50"
+      },
+      "response": []
+    },
+    {
+      "name": "❌ Error - Missing Token",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/post-interview-assessments/company/mine/kpi/unreviewed-48h",
+          "host": ["{{baseUrl}}"],
+          "path": [
+            "post-interview-assessments",
+            "company",
+            "mine",
+            "kpi",
+            "unreviewed-48h"
+          ]
+        },
+        "description": "This request will fail with 401 - no Authorization header\n\nExpected Error: \"Authorization failed\""
+      },
+      "response": [
+        {
+          "name": "Error - Unauthorized (401)",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/post-interview-assessments/company/mine/kpi/unreviewed-48h",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "post-interview-assessments",
+                "company",
+                "mine",
+                "kpi",
+                "unreviewed-48h"
+              ]
+            }
+          },
+          "status": "Unauthorized",
+          "code": 401,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"success\": false,\n  \"message\": \"Authorization failed\"\n}\n"
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string",
+      "description": "JWT Bearer token for authentication - get this from login response"
+    },
+    {
+      "key": "postId",
+      "value": "",
+      "type": "string",
+      "description": "Optional - Post ID for filtering results"
+    }
+  ]
+}

@@ -105,6 +105,20 @@ const jobApplicationSchema = new mongoose.Schema(
       description: "Timestamp when 48h/expiration reminder was sent"
     },
 
+    // ========== RECRUITER DECISION ==========
+    recruiterDecision: {
+      type: String,
+      enum: ["shortlisted", "rejected", null],
+      default: null,
+      index: true,
+      description: "Recruiter's decision on the candidate (shortlisted, rejected, or pending)"
+    },
+    recruiterDecisionAt: {
+      type: Date,
+      default: null,
+      description: "Timestamp when recruiter made the decision"
+    },
+
     // ========== NOTES & FEEDBACK ==========
     companyNotes: {
       type: String,

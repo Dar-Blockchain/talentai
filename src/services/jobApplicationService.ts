@@ -95,4 +95,9 @@ export const jobApplicationService = {
     const res = await axiosInstance.get('job-applications/candidate/my/stats');
     return res.data;
   },
+
+  createApplication: async (postId: string) => {
+    const res = await axiosInstance.post('job-applications/', { post: postId });
+    return res.data;
+  },
 };
