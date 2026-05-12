@@ -19,6 +19,7 @@ const pipelineInterviewRoutes = require("../routes/pipelineInterview.routes");
 const CompanyInvitationRouters = require("../routes/companyInvitation.routes");
 const CompanyMembershipRoutes = require("../routes/companyMembership.routes");
 const chatRouter = require("../routes/chat.routes");
+const teamChatRouter = require("../routes/teamChat.routes");
 const planLimitsRouter = require("../routes/planLimits.routes");
 const subscriptionRouter = require("../routes/subscription.routes");
 const internalCampaignRoutes = require('../routes/internalCampaign.routes');
@@ -64,6 +65,7 @@ function registerRoutes(app) {
 
   // Chat & Messaging
   app.use("/chat", chatRouter); //✅ Chat functionalities chat -> chats (to be checked)
+  app.use("/team-chat", teamChatRouter); // Internal company team chat (1:1)
 
   // Notifications
   app.use("/notification-system", notificationSystemRouter); // Notification System -> notifications
