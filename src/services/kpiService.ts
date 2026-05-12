@@ -19,9 +19,11 @@ export const kpiService = {
     return { data: res.data?.data ?? [], pagination: res.data?.pagination ?? {} };
   },
 
-  fetchUnreviewedInterviews: async () => {
-    const res = await axiosInstance.get('post-interview-assessments/company/mine/kpi/unreviewed-48h');
-    return res.data?.data as { unreviewedCount: number; threshold: number; filters: Record<string, any> };
+  fetchUnreviewedInterviews: async (params: { postId?: string } = {}) => {
+    const query = new URLSearchParams();
+    if (params.postId) query.set('postId', params.postId);
+    const res = await axiosInstance.get(`post-interview-assessments/company/mine/kpi/unreviewed-48h${query.toString() ? `?${query}` : ''}`);
+    return res.data?.data as { count: number; urgent: number; lastCheck: string; description: string };
   },
 
   fetchUnreviewedInterviewsDetails: async (params: { page?: number; limit?: number } = {}) => {

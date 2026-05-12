@@ -4,20 +4,24 @@ import { kpiService } from '@/services/kpiService';
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 interface KpiCountState {
-  count: number | null;
+  count:   number | null;
+  loading: boolean;
+}
+
+interface UnreviewedState {
+  count:   number | null;
+  urgent:  number | null;
   loading: boolean;
 }
 
 interface KpiState {
-  pendingShortlists:     KpiCountState;
-  unreviewedInterviews:  KpiCountState;
+  pendingShortlists:    KpiCountState;
+  unreviewedInterviews: UnreviewedState;
 }
 
-const emptyCount = (): KpiCountState => ({ count: null, loading: false });
-
 const initialState: KpiState = {
-  pendingShortlists:    emptyCount(),
-  unreviewedInterviews: emptyCount(),
+  pendingShortlists:    { count: null, loading: false },
+  unreviewedInterviews: { count: null, urgent: null, loading: false },
 };
 
 // ── Thunks ─────────────────────────────────────────────────────────────────────
@@ -31,8 +35,8 @@ export const fetchPendingShortlists = createAsyncThunk(
 
 export const fetchUnreviewedInterviews = createAsyncThunk(
   'kpi/fetchUnreviewedInterviews',
-  async () => {
-    return await kpiService.fetchUnreviewedInterviews();
+  async (params: { postId?: string } = {}) => {
+    return await kpiService.fetchUnreviewedInterviews(params);
   }
 );
 
@@ -60,7 +64,8 @@ const kpiSlice = createSlice({
       })
       .addCase(fetchUnreviewedInterviews.fulfilled, (state, action) => {
         state.unreviewedInterviews.loading = false;
-        state.unreviewedInterviews.count   = action.payload?.unreviewedCount ?? 0;
+        state.unreviewedInterviews.count  = action.payload?.count  ?? 0;
+        state.unreviewedInterviews.urgent = action.payload?.urgent ?? 0;
       })
       .addCase(fetchUnreviewedInterviews.rejected, (state) => {
         state.unreviewedInterviews.loading = false;
@@ -76,5 +81,6 @@ type S = { kpi: KpiState };
 
 export const selectPendingShortlistsCount   = (s: S) => s.kpi.pendingShortlists.count;
 export const selectPendingShortlistsLoading = (s: S) => s.kpi.pendingShortlists.loading;
-export const selectUnreviewedCount          = (s: S) => s.kpi.unreviewedInterviews.count;
-export const selectUnreviewedLoading        = (s: S) => s.kpi.unreviewedInterviews.loading;
+export const selectUnreviewedCount   = (s: S) => s.kpi.unreviewedInterviews.count;
+export const selectUnreviewedUrgent  = (s: S) => s.kpi.unreviewedInterviews.urgent;
+export const selectUnreviewedLoading = (s: S) => s.kpi.unreviewedInterviews.loading;
