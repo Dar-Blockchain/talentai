@@ -62,7 +62,7 @@ Return ONLY this JSON — no markdown, no extra text outside the object:
       "note": "<one sentence justification>"
     }
   ],
-  "reasoning": "<2–4 sentences: candidate strengths, gaps, and why this recommendation>"
+  "reasoning": "<2–4 sentences in English: candidate strengths, gaps, and why this recommendation>"
 }`;
 };
 
