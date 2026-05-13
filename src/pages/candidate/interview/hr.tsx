@@ -32,6 +32,7 @@ import {
 
 // Hooks
 import { useNotification } from '@/hooks/useNotification';
+import { getToken } from '@/utils/tokenUtils';
 import { useInterviewTimer } from '@/hooks/useInterviewTimer';
 import { useCamera } from '@/hooks/useCamera';
 import { useSecurityMonitoring } from '@/hooks/useSecurityMonitoring';
@@ -88,7 +89,6 @@ const IntelligentInterviewTest = () => {
 
   useEffect(() => {
     if (!router.isReady) return;
-
     if (authUser?.role === 'Employee') {
       setIsEmployeeBlocked(true);
       setAssessmentChecking(false);
@@ -98,9 +98,7 @@ const IntelligentInterviewTest = () => {
     if (!router.query.jobId) { setStep('interview'); setAssessmentChecking(false); return; }
 
     const postId = router.query.jobId as string;
-    const token = Cookies.get('api_token');
-    const ref = router.query.ref as string | undefined;
-    const isPublicLink = ref === 'link';
+    const token = getToken();
 
     if (authUser && token) {
       if (authUser.role !== 'Company' && authUser.role !== 'Employee') {
