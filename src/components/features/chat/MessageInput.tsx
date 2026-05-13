@@ -20,7 +20,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
   onKeyDown,
   sending,
 }) => {
-  const { t } = useTranslation('modules/chat/chat');
+  const { t } = useTranslation('shared/chat');
   return (
     <Box
       sx={{

@@ -14,13 +14,15 @@ import ChatIcon from "@mui/icons-material/Chat";
 import ChatBubbleOutlineRoundedIcon from "@mui/icons-material/ChatBubbleOutlineRounded";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { useRouter } from "next/router";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "@/store/store";
+import { useTranslation } from "react-i18next";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
+import { selectCandidateConversations } from "@/modules/candidate-chat/store/candidateChatSlice";
+import { useCandidateConversationsQuery } from "@/modules/candidate-chat/queries/useCandidateChatQueries";
 import {
-  fetchConversations,
-  selectConversations,
-  selectConversationsLoading,
-} from "@/store/slices/chatSlice";
+  getCandidateChatBasePath,
+  getCandidateChatConversationPath,
+} from "@/modules/candidate-chat/utils/routes";
 
 interface HeaderMessagesDropdownProps {
   userId: string | undefined;
@@ -32,16 +34,19 @@ const HeaderMessagesDropdown: React.FC<HeaderMessagesDropdownProps> = ({
   unreadMessageCount,
 }) => {
   const router = useRouter();
-  const dispatch = useDispatch<AppDispatch>();
-  const conversations = useSelector(selectConversations);
-  const loadingConversations = useSelector(selectConversationsLoading);
+  const { t } = useTranslation("modules/candidates/candidateChat");
+  const { t: tShared } = useTranslation("shared/chat");
+  const role = useSelector((state: RootState) => state.user.connectedUser.user?.role);
+  const conversations = useSelector(selectCandidateConversations);
+  const conversationsQuery = useCandidateConversationsQuery({ limit: 5 }, { enabled: !!userId });
+  const loadingConversations = conversationsQuery.isLoading;
   const [messagesAnchorEl, setMessagesAnchorEl] = useState<HTMLElement | null>(null);
 
   const messagesOpen = Boolean(messagesAnchorEl);
 
   const handleMessagesClick = (event: React.MouseEvent<HTMLElement>) => {
     setMessagesAnchorEl(event.currentTarget);
-    dispatch(fetchConversations({ limit: 5 }));
+    conversationsQuery.refetch();
   };
 
   const handleMessagesClose = () => {
@@ -211,7 +216,7 @@ const HeaderMessagesDropdown: React.FC<HeaderMessagesDropdownProps> = ({
             >
               <ChatIcon sx={{ fontSize: 40, color: "#d1d5db", mb: 1 }} />
               <Typography sx={{ color: "#6b7280", fontSize: "14px" }}>
-                No conversations yet
+                {t("dropdown.empty")}
               </Typography>
             </Box>
           ) : (
@@ -225,7 +230,7 @@ const HeaderMessagesDropdown: React.FC<HeaderMessagesDropdownProps> = ({
                   key={conversation._id}
                   onClick={() => {
                     handleMessagesClose();
-                    router.push(`/chat/${conversation._id}`);
+                    router.push(getCandidateChatConversationPath(role, conversation._id));
                   }}
                   sx={{
                     px: 2,
@@ -307,7 +312,7 @@ const HeaderMessagesDropdown: React.FC<HeaderMessagesDropdownProps> = ({
                         whiteSpace: "nowrap",
                       }}
                     >
-                      {lastMessage?.text || "No messages yet"}
+                      {lastMessage?.text || tShared("header.no_messages_yet")}
                     </Typography>
                   </Box>
                 </Box>
@@ -323,7 +328,7 @@ const HeaderMessagesDropdown: React.FC<HeaderMessagesDropdownProps> = ({
             fullWidth
             onClick={() => {
               handleMessagesClose();
-              router.push("/chat");
+              router.push(getCandidateChatBasePath(role));
             }}
             endIcon={<OpenInNewIcon sx={{ fontSize: 16 }} />}
             sx={{
@@ -337,7 +342,7 @@ const HeaderMessagesDropdown: React.FC<HeaderMessagesDropdownProps> = ({
               },
             }}
           >
-            View All Messages
+            {t("dropdown.view_all")}
           </Button>
         </Box>
       </Popover>

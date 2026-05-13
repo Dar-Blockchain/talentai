@@ -9,11 +9,14 @@
     "select_conversation": "Sélectionner une conversation",
     "no_conversations": "Aucune conversation",
     "choose_from_sidebar": "Choisissez une conversation dans la barre latérale",
-    "contact_candidate": "Contactez un candidat pour commencer à discuter",
     "back_to_conversations": "Retour aux conversations"
   },
   "header": {
-    "active": "Actif"
+    "active": "Actif",
+    "empty": "Aucune conversation pour le moment.",
+    "open": "Ouvrir les messages",
+    "no_messages_yet": "Aucun message pour le moment",
+    "yesterday": "Hier"
   },
   "messages": {
     "no_messages": "Aucun message",
@@ -35,9 +38,6 @@
     "job_post": "Offre d'emploi"
   },
   "index": {
-    "no_conversations": "Aucune conversation",
-    "empty_company": "Commencez à discuter en contactant un candidat via la page Candidatures.",
-    "empty_employee": "Commencez à discuter avec votre équipe.",
-    "empty_candidate": "Votre recruteur vous contactera ici une fois votre candidature en cours d'examen."
+    "no_conversations": "Aucune conversation"
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Avatar,
   Badge,
@@ -12,56 +12,67 @@ import {
   Typography,
 } from "@mui/material";
 import ChatOutlined from "@mui/icons-material/ChatOutlined";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "@/store/store";
-import { fetchConversations, selectConversations } from "@/store/slices/chatSlice";
-import {
-  selectTeamConversations,
-} from "@/modules/team-chat/store/teamChatSlice";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
+import { selectCandidateConversations } from "@/modules/candidate-chat/store/candidateChatSlice";
+import { useCandidateConversationsQuery } from "@/modules/candidate-chat/queries/useCandidateChatQueries";
+import { selectTeamConversations } from "@/modules/team-chat/store/teamChatSlice";
 import { useTeamConversationsQuery } from "@/modules/team-chat/queries/useTeamChatQueries";
 import { getTeamChatBasePath, getTeamChatConversationPath } from "@/modules/team-chat/utils/routes";
+import {
+  getCandidateChatBasePath,
+  getCandidateChatConversationPath,
+} from "@/modules/candidate-chat/utils/routes";
 import { useRouter } from "next/router";
+import { useTranslation } from "react-i18next";
+import { useChatUnreadBadges } from "@/modules/shared/chat/hooks/useChatUnreadBadges";
+import { getParticipantDisplayName } from "@/components/features/chat/helpers";
 
 const TEAL    = "#0D9488";
 const TEAL_BG = "#F0FDFA";
 
-const fmtTime = (iso?: string): string => {
-  if (!iso) return "";
-  const d    = new Date(iso);
-  const now  = new Date();
-  const diff = Math.floor((now.getTime() - d.getTime()) / 86400000);
-  if (diff === 0) return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  if (diff === 1) return "Yesterday";
-  if (diff < 7)  return d.toLocaleDateString([], { weekday: "short" });
-  return d.toLocaleDateString([], { month: "short", day: "numeric" });
-};
-
-import { getParticipantDisplayName } from "@/components/features/chat/helpers";
-
 const HeaderChat: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
   const router   = useRouter();
-
+  const { t: tShared, i18n } = useTranslation("shared/chat");
+  const { t: tTeam } = useTranslation("modules/company/teamChat");
+  const { t: tCandidate } = useTranslation("modules/candidates/candidateChat");
+  const { t: tCompanyHub } = useTranslation("modules/company/companyChat");
   const currentUser = useSelector((state: RootState) => state.user.connectedUser.user);
   const role = currentUser?.role;
-  const isTeamChatUser = role === "Company" || role === "Employee";
+  const isEmployee = role === "Employee";
+  const usesCandidateChat = role === "Company" || role === "Candidate";
 
-  const candidateConversations = useSelector(selectConversations);
+  const candidateConversations = useSelector(selectCandidateConversations);
   const teamConversations = useSelector(selectTeamConversations);
-  useTeamConversationsQuery(undefined, { enabled: isTeamChatUser && !!currentUser?._id });
+  useTeamConversationsQuery(undefined, { enabled: isEmployee && !!currentUser?._id });
+  useCandidateConversationsQuery(undefined, { enabled: usesCandidateChat && !!currentUser?._id });
 
-  const conversations = isTeamChatUser ? teamConversations : candidateConversations;
+  const conversations = isEmployee ? teamConversations : candidateConversations;
+  const { activeModuleUnread } = useChatUnreadBadges();
   const teamChatBasePath = getTeamChatBasePath(role);
+  const candidateChatBasePath = getCandidateChatBasePath(role);
+  const headerTitle = isEmployee
+    ? tTeam("header.team")
+    : role === "Company"
+      ? tCompanyHub("header.company")
+      : tCandidate("header.candidate");
+  const emptyLabel = isEmployee ? tTeam("header.empty_team") : tShared("header.empty");
+  const openLabel = isEmployee ? tTeam("header.open_team") : tShared("header.open");
+
+  const fmtTime = (iso?: string): string => {
+    if (!iso) return "";
+    const d    = new Date(iso);
+    const now  = new Date();
+    const diff = Math.floor((now.getTime() - d.getTime()) / 86400000);
+    const locale = i18n.language?.startsWith("fr") ? "fr-FR" : "en-US";
+    if (diff === 0) return d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
+    if (diff === 1) return tShared("header.yesterday");
+    if (diff < 7) return d.toLocaleDateString(locale, { weekday: "short" });
+    return d.toLocaleDateString(locale, { month: "short", day: "numeric" });
+  };
 
   const [anchor, setAnchor] = useState<null | HTMLElement>(null);
-
-  const totalBadge = conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
-
-  useEffect(() => {
-    if (!currentUser?._id || isTeamChatUser) return;
-    dispatch(fetchConversations({}));
-  }, [currentUser?._id, dispatch, isTeamChatUser]);
-
+  const totalBadge = activeModuleUnread;
   const close = () => setAnchor(null);
 
   return (
@@ -118,7 +129,7 @@ const HeaderChat: React.FC = () => {
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>
-              {isTeamChatUser ? "Team chat" : "Messages"}
+              {headerTitle}
             </Typography>
             {totalBadge > 0 && (
               <Box
@@ -153,19 +164,19 @@ const HeaderChat: React.FC = () => {
             <Box sx={{ py: 6, textAlign: "center" }}>
               <ChatOutlined sx={{ fontSize: 40, color: "#D1D5DB", mb: 1 }} />
               <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>
-                {isTeamChatUser ? "No team conversations yet." : "No conversations yet"}
+                {emptyLabel}
               </Typography>
             </Box>
           ) : (
             conversations.slice(0, 8).map((conv, i) => {
-              const other = conv.participants?.find((p: any) => p._id !== (currentUser?._id || currentUser?.id));
+              const other = conv.participants?.find((p) => p._id !== (currentUser?._id || currentUser?.id));
               const name = getParticipantDisplayName(other);
               const initial = name[0]?.toUpperCase() || "?";
               const lastMsg = conv.lastMessage;
               const hasUnread = (conv.unreadCount || 0) > 0;
-              const conversationPath = isTeamChatUser
+              const conversationPath = isEmployee
                 ? getTeamChatConversationPath(role, conv._id)
-                : `/chat/${conv._id}`;
+                : getCandidateChatConversationPath(role, conv._id);
 
               return (
                 <React.Fragment key={conv._id}>
@@ -229,7 +240,7 @@ const HeaderChat: React.FC = () => {
                           fontWeight: hasUnread ? 600 : 400,
                         }}
                       >
-                        {lastMsg?.text || "No messages yet"}
+                        {lastMsg?.text || tShared("header.no_messages_yet")}
                       </Typography>
                     </Box>
                   </Box>
@@ -245,7 +256,7 @@ const HeaderChat: React.FC = () => {
             fullWidth
             size="small"
             onClick={() => {
-              router.push(isTeamChatUser ? teamChatBasePath : "/chat");
+              router.push(isEmployee ? teamChatBasePath : candidateChatBasePath);
               close();
             }}
             sx={{
@@ -256,7 +267,7 @@ const HeaderChat: React.FC = () => {
               "&:hover": { bgcolor: TEAL_BG },
             }}
           >
-            {isTeamChatUser ? "Open team chat" : "Open Messages"}
+            {openLabel}
           </Button>
         </Box>
       </Popover>

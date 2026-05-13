@@ -1,19 +1,13 @@
-import React from "react";
 import { useRouter } from "next/router";
-import { Box } from "@mui/material";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import TeamChatPageContent from "@/modules/team-chat/components/TeamChatPageContent";
+import { useLegacyRouteRedirect } from "@/modules/shared/chat/hooks/useLegacyRouteRedirect";
+import { MESSAGES_BASE_PATH } from "@/modules/shared/chat/constants/messagesRoutes";
 
-export default function EmployeeTeamChatConversationPage() {
+export default function LegacyEmployeeTeamChatConversationRedirectPage() {
   const router = useRouter();
   const { conversationId } = router.query;
-  const routeId = typeof conversationId === "string" ? conversationId : null;
+  const routeId = typeof conversationId === "string" ? conversationId : "";
+  const target = routeId ? `${MESSAGES_BASE_PATH}/${routeId}` : MESSAGES_BASE_PATH;
 
-  return (
-    <DashboardLayout>
-      <Box sx={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
-        <TeamChatPageContent initialConversationId={routeId} />
-      </Box>
-    </DashboardLayout>
-  );
+  useLegacyRouteRedirect(target);
+  return null;
 }

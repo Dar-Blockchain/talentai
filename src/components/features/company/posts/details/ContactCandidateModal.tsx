@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
+import { useRouter } from "next/router";
 import {
   Avatar, Box, Button, CircularProgress, Dialog, DialogContent,
   Divider, IconButton, TextField, Typography,
@@ -11,12 +12,12 @@ import CloseOutlined from "@mui/icons-material/CloseOutlined";
 import SendOutlined from "@mui/icons-material/Send";
 import CheckCircleOutlineOutlined from "@mui/icons-material/CheckCircleOutline";
 import axiosInstance from "@/utils/axiosInstance";
-import { AppDispatch, RootState } from "@/store/store";
+import { RootState } from "@/store/store";
 import {
-  createOrFindConversation,
-  sendMessage,
-  selectSendingMessage,
-} from "@/store/slices/chatSlice";
+  useCreateCandidateConversationMutation,
+  useSendCandidateMessageMutation,
+} from "@/modules/candidate-chat/queries/useCandidateChatQueries";
+import { getCandidateChatConversationPath } from "@/modules/candidate-chat/utils/routes";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -74,9 +75,11 @@ const MODES: Record<ContactMode, {
 
 const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, target, onClose }) => {
   const { t } = useTranslation("dashboard");
-  const dispatch    = useDispatch<AppDispatch>();
+  const router = useRouter();
   const companyId   = useSelector((s: RootState) => s.user.connectedUser?.user?._id as string | undefined);
-  const chatSending = useSelector(selectSendingMessage);
+  const companyRole = useSelector((s: RootState) => s.user.connectedUser?.user?.role);
+  const createConversationMutation = useCreateCandidateConversationMutation();
+  const sendMessageMutation = useSendCandidateMessageMutation();
 
   const [mode, setMode]       = useState<ContactMode>("email");
   const [subject, setSubject] = useState("");
@@ -123,18 +126,19 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
       return;
     }
     setError("");
-    const conv = await dispatch(createOrFindConversation({ candidateId: target.candidateUserId, companyId }));
-    if (!createOrFindConversation.fulfilled.match(conv)) {
-      setError(t("pages.applications.contact_modal.error_conv"));
-      return;
-    }
-    const result = await dispatch(
-      sendMessage({ conversationId: conv.payload._id, receiverId: target.candidateUserId, text: message })
-    );
-    if (sendMessage.fulfilled.match(result)) {
-      setSent(true);
-      setTimeout(onClose, 2000);
-    } else {
+    try {
+      const conversation = await createConversationMutation.mutateAsync({
+        candidateId: target.candidateUserId,
+        companyId,
+      });
+      await sendMessageMutation.mutateAsync({
+        conversationId: conversation._id,
+        receiverId: target.candidateUserId,
+        text: message,
+      });
+      onClose();
+      await router.push(getCandidateChatConversationPath(companyRole, conversation._id));
+    } catch {
       setError(t("pages.applications.contact_modal.error_msg"));
     }
   };
@@ -143,7 +147,7 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
 
   const cfg     = MODES[mode];
   const isValid = message.trim().length > 0 && (mode === "chat" || subject.trim().length > 0);
-  const isBusy  = sending || chatSending;
+  const isBusy  = sending || createConversationMutation.isPending || sendMessageMutation.isPending;
   const [firstName, ...rest] = target.name.split(" ");
 
   return (

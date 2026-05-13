@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
 import { useToast } from "@/hooks/useToast";
+import { getBlockedMessageReason } from "@/modules/shared/chat";
 import {
   addTeamMessage,
   clearTeamCurrentConversation,
@@ -85,11 +86,12 @@ export const useTeamChatSession = ({
   const handleSendMessage = useCallback(async () => {
     if (!newMessage.trim() || !conversation || !currentUserId || !activeConversationId) return;
 
-    if (/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(newMessage)) {
+    const blockedReason = getBlockedMessageReason(newMessage);
+    if (blockedReason === "email") {
       showToast({ message: "Sharing email addresses is not allowed.", severity: "error" });
       return;
     }
-    if (/(\+?\d{1,4}[\s-]?)?\(?\d{1,4}\)?[\s-]?\d{1,4}[\s-]?\d{1,9}|\d{10,}/.test(newMessage)) {
+    if (blockedReason === "phone") {
       showToast({ message: "Sharing phone numbers is not allowed.", severity: "error" });
       return;
     }

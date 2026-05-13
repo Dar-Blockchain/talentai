@@ -15,6 +15,8 @@ import MuiToast from "@/components/ui/Toast";
 import { useToast, ToastProvider } from "@/hooks/useToast";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import TeamChatRealtimeBridge from "@/modules/team-chat/components/TeamChatRealtimeBridge";
+import CandidateChatRealtimeBridge from "@/modules/candidate-chat/components/CandidateChatRealtimeBridge";
+import ChatUnreadSyncBridge from "@/modules/shared/chat/components/ChatUnreadSyncBridge";
 import LoadingScreen from "@/components/ui/LoadingScreen";
 import { isLoggingOutCheck, clearAuth, logout } from "@/store/slices/authSlice";
 import { clearConnectedUser } from "@/store/slices/userSlice";
@@ -123,6 +125,8 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
   return (
     <NotificationProvider userId={userId}>
       <TeamChatRealtimeBridge />
+      <CandidateChatRealtimeBridge />
+      <ChatUnreadSyncBridge />
       <DbLanguageSync />
       {children}
       <Dialog

@@ -41,9 +41,11 @@ export {
   toChatShellConversation,
   toChatShellMessage,
   toParticipant,
-  type ChatShellConversation,
-  type ChatShellMessage,
 } from "@/modules/team-chat/utils/mappers";
+export type {
+  ChatShellConversation,
+  ChatShellMessage,
+} from "@/modules/shared/chat";
 export { getTeamChatBasePath, getTeamChatConversationPath } from "@/modules/team-chat/utils/routes";
 export { default as TeamChatPageContent } from "@/modules/team-chat/components/TeamChatPageContent";
 export { default as TeamChatColleaguesPanel } from "@/modules/team-chat/components/TeamChatColleaguesPanel";

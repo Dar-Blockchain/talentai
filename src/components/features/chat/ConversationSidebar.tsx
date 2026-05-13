@@ -42,7 +42,7 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
   currentUserId,
   onSelectConversation,
 }) => {
-  const { t } = useTranslation('modules/chat/chat');
+  const { t } = useTranslation('shared/chat');
   const getOtherParticipant = (conv: Conversation) =>
     conv.participants.find((p) => p._id !== currentUserId);
 

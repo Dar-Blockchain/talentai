@@ -18,7 +18,7 @@ interface Props {
 }
 
 const SharedChatIndexPage: React.FC<Props> = ({ basePath, emptyText, layout: Layout }) => {
-  const { t }         = useTranslation("modules/chat/chat");
+  const { t }         = useTranslation("shared/chat");
   const router        = useRouter();
   const dispatch      = useDispatch<AppDispatch>();
   const currentUserId = useSelector((state: RootState) => state.user?.connectedUser?.user?._id);

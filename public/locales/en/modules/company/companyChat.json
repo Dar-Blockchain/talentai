@@ -1,0 +1,35 @@
+{
+  "hub": {
+    "eyebrow": "Messages"
+  },
+  "top_nav": {
+    "team": "Team chat",
+    "candidate": "Candidate chat"
+  },
+  "channels": {
+    "team": {
+      "title": "Team chat",
+      "subtitle": "Message colleagues in your company workspace."
+    },
+    "candidate": {
+      "title": "Candidate chat",
+      "subtitle": "Chat with candidates about applications and job opportunities."
+    }
+  },
+  "side_nav": {
+    "section": "Messages",
+    "team": "Team chat",
+    "candidate": "Candidate chat",
+    "team_short": "Team",
+    "candidate_short": "Candidates"
+  },
+  "header": {
+    "company": "Candidate messages"
+  },
+  "panel": {
+    "contact_candidate": "Contact a candidate to start chatting"
+  },
+  "index": {
+    "empty_company": "Start chatting by contacting a candidate via the Applications page."
+  }
+}

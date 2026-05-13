@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import { Box, Typography, Avatar, LinearProgress, Button, Divider, Chip } from "@mui/material";
-import Header from "@/components/layout/dashboard/Header";
+import CandidateWorkspaceLayout from "@/components/layout/candidate/CandidateWorkspaceLayout";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchCandidateStats, selectCandidateStats } from "@/store/slices/jobApplicationSlice";
 import CandidateApplications from "@/components/features/candidate/CandidateApplications";
@@ -21,7 +22,6 @@ import ChevronLeftOutlined from "@mui/icons-material/ChevronLeftOutlined";
 import RecordVoiceOverOutlined from "@mui/icons-material/RecordVoiceOverOutlined";
 import CodeOutlined from "@mui/icons-material/CodeOutlined";
 import LockOutlined from "@mui/icons-material/LockOutlined";
-import { DashboardOutlined } from "@mui/icons-material";
 
 const T    = "#0D9488";
 const TL   = "#14B8A6";
@@ -71,29 +71,6 @@ const CollapsedRow: React.FC<{
       <Typography sx={{ fontSize: "0.72rem", fontWeight: 700, color }}>{viewAllLabel}</Typography>
       <ExpandMoreOutlined sx={{ fontSize: 14, color }} />
     </Box>
-  </Box>
-);
-
-const QuickNavItem: React.FC<{
-  icon: React.ElementType; label: string; sublabel?: string;
-  color: string; bg: string; border: string; active: boolean; onExpand: () => void;
-}> = ({ icon: Icon, label, sublabel, color, bg, border, active, onExpand }) => (
-  <Box onClick={onExpand} sx={{
-    display: "flex", alignItems: "center", gap: 1.25, px: 1.5, py: 1.1,
-    borderRadius: "12px", cursor: "pointer",
-    border: `1px solid ${active ? border : "#E5E7EB"}`,
-    bgcolor: active ? bg : "#FAFAFA",
-    transition: "all 0.18s ease",
-    "&:hover": { borderColor: border, bgcolor: bg },
-  }}>
-    <Box sx={{ width: 32, height: 32, borderRadius: "9px", bgcolor: active ? `${color}18` : "#fff", border: `1px solid ${active ? border : "#E5E7EB"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-      <Icon sx={{ fontSize: 16, color: active ? color : "#6B7280" }} />
-    </Box>
-    <Box sx={{ flex: 1, minWidth: 0 }}>
-      <Typography sx={{ fontSize: "0.82rem", fontWeight: active ? 700 : 500, color: active ? color : "#374151", lineHeight: 1.2 }}>{label}</Typography>
-      {sublabel && <Typography sx={{ fontSize: "0.62rem", color: "#94A3B8" }}>{sublabel}</Typography>}
-    </Box>
-    {active && <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: color, flexShrink: 0 }} />}
   </Box>
 );
 
@@ -185,6 +162,7 @@ const ProfileStrengthCard: React.FC<{ checklist: { label: string; done: boolean 
 
 const DashboardCandidate: React.FC = () => {
   const { t } = useTranslation("dashboard");
+  const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const profile  = useSelector((state: RootState) => state.user.connectedUser.profile);
   const user     = useSelector((state: RootState) => state.user.connectedUser.user);
@@ -193,6 +171,15 @@ const DashboardCandidate: React.FC = () => {
   const [activeView, setActiveView] = useState<ActiveView>(null);
 
   useEffect(() => { dispatch(fetchCandidateStats()); }, [dispatch]);
+
+  useEffect(() => {
+    const view = router.query.view;
+    if (view === "applications" || view === "skills" || view === "interviews") {
+      setActiveView(view);
+      return;
+    }
+    setActiveView(null);
+  }, [router.query.view]);
 
   const totalApplications = stats?.totalApplications ?? 0;
   const totalInterviews   = stats?.totalInterviews   ?? 0;
@@ -212,24 +199,20 @@ const DashboardCandidate: React.FC = () => {
     { label: t("candidate.checklist.first_application"),done: totalApplications > 0                       },
   ];
 
-  const quickLinks: { icon: React.ElementType; label: string; sublabel: string; view: ActiveView; color: string; bg: string; border: string }[] = [
-    { icon: DashboardOutlined,  label: t("candidate.nav.dashboard"),    sublabel: t("candidate.nav.overview"),         view: null,           color: T,         bg: TBG,       border: TBRD      },
-    { icon: AssignmentOutlined, label: t("candidate.nav.applications"), sublabel: t("candidate.nav.your_job_applies"), view: "applications", color: "#7C3AED", bg: "#F5F3FF", border: "#DDD6FE" },
-    { icon: PsychologyOutlined, label: t("candidate.nav.skills"),       sublabel: t("candidate.nav.tech_and_soft"),    view: "skills",       color: "#2563EB", bg: "#EFF6FF", border: "#BFDBFE" },
-    { icon: SchoolOutlined,     label: t("candidate.nav.interviews"),   sublabel: t("candidate.nav.all_assessments"),  view: "interviews",   color: "#D97706", bg: "#FFFBEB", border: "#FDE68A" },
-  ];
-
-  const expand = (view: ActiveView) => setActiveView(view);
-  const hide   = () => setActiveView(null);
+  const expand = (view: ActiveView) => {
+    if (!view) {
+      setActiveView(null);
+      router.replace("/candidate/dashboard", undefined, { shallow: true });
+      return;
+    }
+    setActiveView(view);
+    router.replace(`/candidate/dashboard?view=${view}`, undefined, { shallow: true });
+  };
+  const hide = () => expand(null);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", bgcolor: "rgb(249 250 251)" }}>
-      <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1200 }}>
-        <Header breadcrumb={t("candidate.nav.dashboard")} onOpenMobile={() => {}} />
-      </Box>
-
-      <Box sx={{ flex: 1, mt: "64px", overflowY: "auto", overflowX: "hidden", p: { xs: 1.5, sm: 2.5, md: 3 } }} className="custom-scrollbar">
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "240px 1fr", lg: "260px 1fr 240px" }, gap: 2.5, alignItems: "start" }}>
+    <CandidateWorkspaceLayout breadcrumb={t("candidate.nav.dashboard")}>
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "240px 1fr" }, gap: 2.5, alignItems: "start" }}>
 
           {/* ── LEFT ── */}
           <Box sx={{ display: { xs: "none", md: "flex" }, flexDirection: "column", gap: 2, position: "sticky", top: 16, maxHeight: "calc(100vh - 96px)", overflowY: "auto" }} className="custom-scrollbar">
@@ -296,28 +279,8 @@ const DashboardCandidate: React.FC = () => {
               />
             )}
           </Box>
-
-          {/* ── RIGHT — Quick nav ── */}
-          <Box sx={{ display: { xs: "none", lg: "flex" }, flexDirection: "column", gap: 2, position: "sticky", top: 16 }}>
-            <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 2, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-              <Typography sx={{ fontSize: "0.72rem", fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.06em", mb: 1.25 }}>{t("candidate.nav.navigation")}</Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
-                {quickLinks.map(link => (
-                  <QuickNavItem
-                    key={link.label}
-                    icon={link.icon} label={link.label} sublabel={link.sublabel}
-                    color={link.color} bg={link.bg} border={link.border}
-                    active={activeView === link.view}
-                    onExpand={() => link.view === null ? hide() : expand(link.view)}
-                  />
-                ))}
-              </Box>
-            </Box>
-          </Box>
-
         </Box>
-      </Box>
-    </Box>
+    </CandidateWorkspaceLayout>
   );
 };
 

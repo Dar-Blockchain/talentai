@@ -67,7 +67,8 @@
     "view": "View",
     "tooltip_edit": "Edit role",
     "edit": "Edit",
-    "tooltip_remove": "Remove member"
+    "tooltip_remove": "Remove member",
+    "actions_menu": "More actions"
   },
   "invitation": {
     "pending": "PENDING",

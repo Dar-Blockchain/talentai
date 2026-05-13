@@ -1,5 +1,8 @@
-export const getTeamChatBasePath = (role?: string | null) =>
-  role === "Employee" ? "/employee/team-chat" : "/company/team-chat";
+import { MESSAGES_BASE_PATH } from "@/modules/shared/chat/constants/messagesRoutes";
 
-export const getTeamChatConversationPath = (role: string | null | undefined, conversationId: string) =>
-  `${getTeamChatBasePath(role)}/${conversationId}`;
+export const getTeamChatBasePath = (_role?: string | null) => MESSAGES_BASE_PATH;
+
+export const getTeamChatConversationPath = (
+  role: string | null | undefined,
+  conversationId: string,
+) => `${getTeamChatBasePath(role)}/${conversationId}`;

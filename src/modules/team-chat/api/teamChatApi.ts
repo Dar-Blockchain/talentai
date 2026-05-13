@@ -1,4 +1,5 @@
 import axiosInstance from "@/utils/axiosInstance";
+import { getApiErrorMessage } from "@/modules/shared/chat";
 import type {
   SendTeamMessagePayload,
   TeamChatConversationsParams,
@@ -6,11 +7,6 @@ import type {
   TeamConversation,
   TeamMessage,
 } from "@/modules/team-chat/types";
-
-const getErrorMessage = (error: unknown, fallback: string) => {
-  const err = error as { response?: { data?: { message?: string } }; message?: string };
-  return err?.response?.data?.message || err?.message || fallback;
-};
 
 export const teamChatApi = {
   openConversation: async (targetUserId: string) => {
@@ -49,4 +45,4 @@ export const teamChatApi = {
   },
 };
 
-export { getErrorMessage as getTeamChatErrorMessage };
+export { getApiErrorMessage as getTeamChatErrorMessage };

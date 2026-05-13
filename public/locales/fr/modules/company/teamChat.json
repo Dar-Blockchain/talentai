@@ -32,5 +32,13 @@
     "pending": "En attente",
     "accepted": "Acceptée",
     "rejected": "Refusée"
+  },
+  "header": {
+    "team": "Chat équipe",
+    "empty_team": "Aucune conversation d'équipe pour le moment.",
+    "open_team": "Ouvrir le chat équipe"
+  },
+  "index": {
+    "empty_employee": "Commencez à discuter avec votre équipe."
   }
 }

@@ -224,7 +224,7 @@ const ColleagueRow: React.FC<ColleagueRowProps> = ({
 const TeamChatColleaguesPanel: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const startTeamChat = useStartTeamChat();
-  const { t } = useTranslation("modules/teamChat/teamChat");
+  const { t } = useTranslation("modules/company/teamChat");
   const { t: tDashboard } = useTranslation("dashboard");
 
   const currentUserId = useSelector((state: RootState) => state.user.connectedUser.user?._id);

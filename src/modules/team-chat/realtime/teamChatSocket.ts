@@ -1,52 +1,25 @@
-import { io, Socket } from "socket.io-client";
+import {
+  createNamespaceSocket,
+  type ChatConversationRoomConfig,
+} from "@/modules/shared/chat";
 
-let socket: Socket | null = null;
-let connectedUserId: string | null = null;
+const teamChatSocket = createNamespaceSocket({ namespacePath: "/team-chat" });
 
-const getTeamChatSocketUrl = () =>
-  `${process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "")}/team-chat`;
+export const connectTeamChatSocket = teamChatSocket.connect;
+export const getTeamChatSocket = teamChatSocket.getSocket;
+export const disconnectTeamChatSocket = teamChatSocket.disconnect;
 
-const getAuthToken = () =>
-  localStorage.getItem("api_token") || localStorage.getItem("token") || "";
-
-export const connectTeamChatSocket = (userId: string) => {
-  const token = getAuthToken();
-  if (!userId || !token) return null;
-
-  if (socket && connectedUserId === userId) {
-    if (!socket.connected) socket.connect();
-    return socket;
-  }
-
-  if (socket) {
-    socket.removeAllListeners();
-    socket.disconnect();
-  }
-
-  socket = io(getTeamChatSocketUrl(), {
-    auth: { userId, token },
-    transports: ["websocket", "polling"],
-  });
-  connectedUserId = userId;
-  return socket;
-};
-
-export const getTeamChatSocket = () => socket;
-
-export const disconnectTeamChatSocket = () => {
-  if (!socket) return;
-  socket.removeAllListeners();
-  socket.disconnect();
-  socket = null;
-  connectedUserId = null;
+export const teamChatRoomConfig: ChatConversationRoomConfig = {
+  joinEvent: "join_team_conversation",
+  leaveEvent: "leave_team_conversation",
+  buildJoinPayload: (conversationId) => ({ conversationId }),
+  buildLeavePayload: (conversationId) => ({ conversationId }),
 };
 
 export const joinTeamConversationRoom = (conversationId: string) => {
-  if (!conversationId || !socket?.connected) return;
-  socket.emit("join_team_conversation", { conversationId });
+  teamChatSocket.joinConversationRoom(conversationId, teamChatRoomConfig);
 };
 
 export const leaveTeamConversationRoom = (conversationId: string) => {
-  if (!conversationId || !socket?.connected) return;
-  socket.emit("leave_team_conversation", { conversationId });
+  teamChatSocket.leaveConversationRoom(conversationId, teamChatRoomConfig);
 };

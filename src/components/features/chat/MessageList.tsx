@@ -39,7 +39,7 @@ const MessageList: React.FC<MessageListProps> = ({
   onDeleteMessage,
   enableDeletes = true,
 }) => {
-  const { t } = useTranslation('modules/chat/chat');
+  const { t } = useTranslation('shared/chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

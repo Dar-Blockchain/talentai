@@ -1,26 +1,12 @@
 import type { Participant } from "@/components/features/chat/helpers";
 import type { TeamChatParticipant, TeamConversation, TeamMessage } from "@/modules/team-chat/types";
+import {
+  normalizeId,
+  type ChatShellConversation,
+  type ChatShellMessage,
+} from "@/modules/shared/chat";
 
-export interface ChatShellConversation {
-  _id: string;
-  participants: Participant[];
-  lastMessage?: {
-    text: string;
-    timestamp: string;
-  };
-  unreadCount: number;
-  updatedAt: string;
-}
-
-export interface ChatShellMessage {
-  _id: string;
-  text: string;
-  sender: { _id: string };
-  receiver: { _id: string };
-  isRead: boolean;
-  createdAt: string;
-  conversationId?: string;
-}
+export type { ChatShellConversation, ChatShellMessage };
 
 export const toParticipant = (user?: TeamChatParticipant): Participant | undefined => {
   if (!user?._id) return undefined;
@@ -49,15 +35,6 @@ export const toParticipant = (user?: TeamChatParticipant): Participant | undefin
   };
 
   return participant;
-};
-
-const normalizeId = (value: unknown): string => {
-  if (!value) return "";
-  if (typeof value === "string") return value;
-  if (typeof value === "object" && value !== null && "_id" in value) {
-    return normalizeId((value as { _id?: unknown })._id);
-  }
-  return String(value);
 };
 
 export const toChatShellConversation = (conversation: TeamConversation): ChatShellConversation => {

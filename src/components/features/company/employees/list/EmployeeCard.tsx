@@ -1,6 +1,6 @@
-import React, { memo } from "react";
+import React, { memo, useState } from "react";
 import {
-  Box, Typography, Avatar, Tooltip,
+  Box, Typography, Avatar, IconButton, Menu, MenuItem, ListItemIcon, ListItemText,
 } from "@mui/material";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
@@ -12,6 +12,7 @@ import { useStartTeamChat } from "@/modules/team-chat";
 import EditOutlined from "@mui/icons-material/EditOutlined";
 import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
 import OpenInNewOutlined from "@mui/icons-material/OpenInNewOutlined";
+import MoreVertOutlined from "@mui/icons-material/MoreVertOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
 import { Member } from "@/store/slices/memberSlice";
@@ -66,6 +67,7 @@ interface EmployeeCardProps {
 const EmployeeCard: React.FC<EmployeeCardProps> = memo(({ member, index = 0, onEdit, onDelete, onSelect, canAssignRoles = true, canRemove = true }) => {
   const router = useRouter();
   const startTeamChat = useStartTeamChat();
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const currentUserId = useSelector((state: RootState) => state.user.connectedUser.user?._id);
   const { t, i18n } = useTranslation("dashboard");
   const fmtDate = (iso?: string) => {
@@ -94,6 +96,33 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({ member, index = 0, onE
   const status = statusOf(member.status);
   const joinedDate = fmtDate((member as any).createdAt);
   const dept       = (member as any).department?.name ?? (member as any).departmentName ?? null;
+  const canMessage = member.status === "active" && member.userId !== currentUserId;
+
+  const closeMenu = () => setMenuAnchor(null);
+
+  const handleMessage = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    closeMenu();
+    void startTeamChat(member.userId);
+  };
+
+  const handleView = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    closeMenu();
+    router.push(`/company/employees/${member.userId}`);
+  };
+
+  const handleEdit = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    closeMenu();
+    onEdit(member);
+  };
+
+  const handleDelete = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    closeMenu();
+    onDelete(member);
+  };
 
   return (
     <motion.div
@@ -108,6 +137,7 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({ member, index = 0, onE
           height: "100%",
           display: "flex",
           flexDirection: "column",
+          position: "relative",
           borderRadius: "20px",
           cursor: "pointer",
           bgcolor: "#fff",
@@ -119,12 +149,97 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({ member, index = 0, onE
             borderColor: `${palette.to}50`,
             boxShadow: `0 16px 40px rgba(0,0,0,0.10), 0 0 0 1px ${palette.to}20`,
             transform: "translateY(-5px)",
-            "& .card-actions": { opacity: 1, transform: "translateY(0px)" },
             "& .top-strip": { opacity: 1 },
           },
         }}
       >
-        {/* ── Top gradient strip ───────────────────────────────── */}
+        <IconButton
+          size="small"
+          aria-label={t("pages.employees.card.actions_menu")}
+          onClick={(event) => {
+            event.stopPropagation();
+            setMenuAnchor(event.currentTarget);
+          }}
+          sx={{
+            position: "absolute",
+            top: 12,
+            right: 12,
+            zIndex: 2,
+            color: "#64748B",
+            bgcolor: "rgba(255,255,255,0.96)",
+            border: "1px solid #E8EAED",
+            boxShadow: "0 2px 8px rgba(15,23,42,0.08)",
+            "&:hover": { bgcolor: "#F8FAFC" },
+          }}
+        >
+          <MoreVertOutlined sx={{ fontSize: 18 }} />
+        </IconButton>
+
+        <Menu
+          anchorEl={menuAnchor}
+          open={Boolean(menuAnchor)}
+          onClose={(event: Event | React.SyntheticEvent) => {
+            event.stopPropagation();
+            closeMenu();
+          }}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+          transformOrigin={{ vertical: "top", horizontal: "right" }}
+          slotProps={{
+            paper: {
+              sx: {
+                mt: 0.5,
+                minWidth: 188,
+                borderRadius: "14px",
+                border: "1px solid #E8EAED",
+                boxShadow: "0 16px 40px rgba(15,23,42,0.12)",
+              },
+            },
+          }}
+        >
+          {canMessage && (
+            <MenuItem onClick={handleMessage}>
+              <ListItemIcon sx={{ minWidth: 32 }}>
+                <ChatBubbleOutlineOutlined sx={{ fontSize: 18, color: "#0D9488" }} />
+              </ListItemIcon>
+              <ListItemText
+                primary={t("pages.employees.card.message")}
+                primaryTypographyProps={{ fontSize: "13px", fontWeight: 600 }}
+              />
+            </MenuItem>
+          )}
+          <MenuItem onClick={handleView}>
+            <ListItemIcon sx={{ minWidth: 32 }}>
+              <OpenInNewOutlined sx={{ fontSize: 18, color: "#64748B" }} />
+            </ListItemIcon>
+            <ListItemText
+              primary={t("pages.employees.card.view")}
+              primaryTypographyProps={{ fontSize: "13px", fontWeight: 600 }}
+            />
+          </MenuItem>
+          {canAssignRoles && (
+            <MenuItem onClick={handleEdit}>
+              <ListItemIcon sx={{ minWidth: 32 }}>
+                <EditOutlined sx={{ fontSize: 18, color: PURPLE }} />
+              </ListItemIcon>
+              <ListItemText
+                primary={t("pages.employees.card.edit")}
+                primaryTypographyProps={{ fontSize: "13px", fontWeight: 600 }}
+              />
+            </MenuItem>
+          )}
+          {canRemove && (
+            <MenuItem onClick={handleDelete} sx={{ color: "#DC2626" }}>
+              <ListItemIcon sx={{ minWidth: 32 }}>
+                <DeleteOutlineOutlined sx={{ fontSize: 18, color: "#DC2626" }} />
+              </ListItemIcon>
+              <ListItemText
+                primary={t("pages.employees.card.tooltip_remove")}
+                primaryTypographyProps={{ fontSize: "13px", fontWeight: 600, color: "#DC2626" }}
+              />
+            </MenuItem>
+          )}
+        </Menu>
+
         <Box
           className="top-strip"
           sx={{
@@ -135,15 +250,11 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({ member, index = 0, onE
           }}
         />
 
-        {/* ── Header ───────────────────────────────────────────── */}
         <Box sx={{
           px: 2.5, pt: 2.5, pb: 2,
           display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5,
-          position: "relative",
           background: `radial-gradient(ellipse 160% 100% at 50% 0%, ${palette.from}0A 0%, transparent 65%)`,
         }}>
-
-          {/* Avatar with gradient ring */}
           <Box sx={{ position: "relative", mt: 0.5 }}>
             <Box sx={{
               width: 76, height: 76, borderRadius: "50%",
@@ -160,7 +271,6 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({ member, index = 0, onE
                 {letter}
               </Avatar>
             </Box>
-            {/* Status dot */}
             <Box sx={{
               position: "absolute", bottom: 3, right: 3,
               width: 14, height: 14, borderRadius: "50%",
@@ -169,7 +279,6 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({ member, index = 0, onE
             }} />
           </Box>
 
-          {/* Name + email */}
           <Box sx={{ textAlign: "center", width: "100%", px: 0.5 }}>
             <Typography sx={{
               fontSize: "15px", fontWeight: 700, color: "#0F172A",
@@ -186,7 +295,6 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({ member, index = 0, onE
             </Typography>
           </Box>
 
-          {/* Role pill */}
           <Box sx={{
             display: "inline-flex", alignItems: "center", gap: 0.6,
             px: 1.5, py: "5px", borderRadius: "999px",
@@ -203,13 +311,9 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({ member, index = 0, onE
           </Box>
         </Box>
 
-        {/* ── Divider ───────────────────────────────────────────── */}
         <Box sx={{ mx: 2.5, height: "1px", bgcolor: "#F1F5F9" }} />
 
-        {/* ── Body ─────────────────────────────────────────────── */}
         <Box sx={{ px: 2.5, pt: 1.75, pb: 2, display: "flex", flexDirection: "column", gap: 1.5, flex: 1 }}>
-
-          {/* Department */}
           <Box
             onClick={(e) => {
               const deptId = (member as any).department?._id;
@@ -238,7 +342,6 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({ member, index = 0, onE
             </Typography>
           </Box>
 
-          {/* Footer: status pill + date */}
           <Box sx={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
             mt: "auto", pt: dept ? 0 : 0.5,
@@ -260,92 +363,6 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({ member, index = 0, onE
                   {joinedDate}
                 </Typography>
               </Box>
-            )}
-          </Box>
-
-          {/* ── Action buttons (revealed on hover) ─────────────── */}
-          <Box
-            className="card-actions"
-            onClick={(e) => e.stopPropagation()}
-            sx={{
-              display: "flex", gap: 0.75,
-              opacity: 0,
-              transform: "translateY(6px)",
-              transition: "all 0.22s cubic-bezier(.4,0,.2,1)",
-            }}
-          >
-            {member.status === "active" && member.userId !== currentUserId && (
-              <Tooltip title={t("pages.employees.card.tooltip_message")} placement="top" arrow>
-                <Box
-                  onClick={() => { void startTeamChat(member.userId); }}
-                  sx={{
-                    flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5,
-                    py: 0.875, borderRadius: "10px",
-                    bgcolor: "#F0FDFA", border: "1px solid #CCFBF1",
-                    cursor: "pointer", transition: "all 0.15s",
-                    "&:hover": { bgcolor: "#CCFBF1", borderColor: "#99F6E4" },
-                  }}
-                >
-                  <ChatBubbleOutlineOutlined sx={{ fontSize: 13, color: "#0D9488" }} />
-                  <Typography sx={{ fontSize: "11.5px", fontWeight: 600, color: "#0F766E" }}>
-                    {t("pages.employees.card.message")}
-                  </Typography>
-                </Box>
-              </Tooltip>
-            )}
-
-            {/* View */}
-            <Tooltip title={t("pages.employees.card.tooltip_view")} placement="top" arrow>
-              <Box
-                onClick={() => router.push(`/company/employees/${member.userId}`)}
-                sx={{
-                  flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5,
-                  py: 0.875, borderRadius: "10px",
-                  bgcolor: "#F8FAFC", border: "1px solid #E8EAED",
-                  cursor: "pointer", transition: "all 0.15s",
-                  "&:hover": { bgcolor: "#F1F5F9", borderColor: "#CBD5E1" },
-                }}
-              >
-                <OpenInNewOutlined sx={{ fontSize: 13, color: "#64748B" }} />
-                <Typography sx={{ fontSize: "11.5px", fontWeight: 600, color: "#475569" }}>{t("pages.employees.card.view")}</Typography>
-              </Box>
-            </Tooltip>
-
-            {/* Edit */}
-            {canAssignRoles && (
-              <Tooltip title={t("pages.employees.card.tooltip_edit")} placement="top" arrow>
-                <Box
-                  onClick={() => onEdit(member)}
-                  sx={{
-                    flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5,
-                    py: 0.875, borderRadius: "10px",
-                    bgcolor: `${PURPLE}08`, border: `1px solid ${PURPLE}20`,
-                    cursor: "pointer", transition: "all 0.15s",
-                    "&:hover": { bgcolor: `${PURPLE}15`, borderColor: `${PURPLE}40` },
-                  }}
-                >
-                  <EditOutlined sx={{ fontSize: 13, color: PURPLE }} />
-                  <Typography sx={{ fontSize: "11.5px", fontWeight: 600, color: PURPLE }}>{t("pages.employees.card.edit")}</Typography>
-                </Box>
-              </Tooltip>
-            )}
-
-            {/* Delete */}
-            {canRemove && (
-              <Tooltip title={t("pages.employees.card.tooltip_remove")} placement="top" arrow>
-                <Box
-                  onClick={() => onDelete(member)}
-                  sx={{
-                    width: 34, display: "flex", alignItems: "center", justifyContent: "center",
-                    py: 0.875, borderRadius: "10px",
-                    bgcolor: "#FEF2F2", border: "1px solid #FECACA",
-                    cursor: "pointer", transition: "all 0.15s", flexShrink: 0,
-                    "&:hover": { bgcolor: "#FEE2E2", borderColor: "#FCA5A5" },
-                  }}
-                >
-                  <DeleteOutlineOutlined sx={{ fontSize: 14, color: "#EF4444" }} />
-                </Box>
-              </Tooltip>
             )}
           </Box>
         </Box>

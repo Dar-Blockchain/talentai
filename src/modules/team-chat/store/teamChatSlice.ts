@@ -2,10 +2,15 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import type { RootState } from "@/store/store";
 import type { TeamConversation, TeamMessage } from "@/modules/team-chat/types";
 import {
-  toChatShellConversation,
-  toChatShellMessage,
+  applyIncomingMessage,
+  dedupeMessages,
+  resolveMessagePayload,
   type ChatShellConversation,
   type ChatShellMessage,
+} from "@/modules/shared/chat";
+import {
+  toChatShellConversation,
+  toChatShellMessage,
 } from "@/modules/team-chat/utils/mappers";
 
 interface TeamChatState {
@@ -21,18 +26,9 @@ type TeamChatMessagePayload =
   | {
       message: ChatShellMessage | TeamMessage;
       viewerUserId: string;
+      viewerIsViewingConversation?: boolean;
     };
 
-const resolveTeamChatMessage = (payload: TeamChatMessagePayload) => {
-  if (typeof payload === "object" && payload !== null && "message" in payload) {
-    return {
-      message: payload.message,
-      viewerUserId: payload.viewerUserId,
-    };
-  }
-
-  return { message: payload, viewerUserId: undefined as string | undefined };
-};
 const initialState: TeamChatState = {
   conversations: [],
   currentConversation: null,
@@ -51,51 +47,17 @@ const teamChatSlice = createSlice({
       state.currentConversation = action.payload;
     },
     setTeamMessages: (state, action: PayloadAction<ChatShellMessage[]>) => {
-      const seen = new Set<string>();
-      state.messages = action.payload.filter((message) => {
-        const id = String(message._id);
-        if (!id || seen.has(id)) return false;
-        seen.add(id);
-        return true;
-      });
+      state.messages = dedupeMessages(action.payload);
     },
     setTeamTotalUnread: (state, action: PayloadAction<number>) => {
       state.totalUnread = action.payload;
     },
     addTeamMessage: (state, action: PayloadAction<TeamChatMessagePayload>) => {
-      const { message: raw, viewerUserId } = resolveTeamChatMessage(action.payload);
+      const { message: raw, viewerUserId, viewerIsViewingConversation } = resolveMessagePayload(action.payload);
       const msg: ChatShellMessage = "senderId" in raw
         ? toChatShellMessage(raw as TeamMessage)
         : raw as ChatShellMessage;
-      const msgId = String(msg._id);
-      const convId = String(msg.conversationId || "");
-      const isActiveConversation = String(state.currentConversation?._id || "") === convId;
-      const isIncoming = viewerUserId
-        ? String(msg.sender._id) !== String(viewerUserId)
-        : false;
-
-      if (isActiveConversation && msgId && !state.messages.some((m) => String(m._id) === msgId)) {
-        state.messages.push(msg);
-      }
-
-      const conv = state.conversations.find((c) => String(c._id) === convId);
-      if (conv) {
-        conv.lastMessage = { text: msg.text, timestamp: msg.createdAt };
-        conv.updatedAt = msg.createdAt;
-        if (isIncoming && !isActiveConversation) {
-          conv.unreadCount = (conv.unreadCount || 0) + 1;
-        }
-      }
-
-      if (isIncoming && !isActiveConversation) {
-        state.totalUnread += 1;
-      }
-
-      state.conversations.sort((a, b) => {
-        const aTime = new Date(a.lastMessage?.timestamp || a.updatedAt).getTime();
-        const bTime = new Date(b.lastMessage?.timestamp || b.updatedAt).getTime();
-        return bTime - aTime;
-      });
+      applyIncomingMessage(state, msg, viewerUserId, viewerIsViewingConversation);
     },
     clearTeamCurrentConversation: (state) => {
       state.currentConversation = null;

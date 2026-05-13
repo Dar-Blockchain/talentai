@@ -1,14 +1,7 @@
-import React from "react";
-import { Box } from "@mui/material";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import TeamChatPageContent from "@/modules/team-chat/components/TeamChatPageContent";
+import { useLegacyRouteRedirect } from "@/modules/shared/chat/hooks/useLegacyRouteRedirect";
+import { MESSAGES_BASE_PATH } from "@/modules/shared/chat/constants/messagesRoutes";
 
-export default function CompanyTeamChatIndexPage() {
-  return (
-    <DashboardLayout>
-      <Box sx={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
-        <TeamChatPageContent initialConversationId={null} />
-      </Box>
-    </DashboardLayout>
-  );
+export default function LegacyCompanyTeamChatRedirectPage() {
+  useLegacyRouteRedirect(MESSAGES_BASE_PATH);
+  return null;
 }

@@ -1,0 +1,23 @@
+{
+  "candidate": {
+    "title": "Messages",
+    "subtitle": "Chat with companies about your applications and job opportunities."
+  },
+  "header": {
+    "candidate": "Messages"
+  },
+  "panel": {
+    "contact_recruiter": "When a company messages you, the conversation will appear here."
+  },
+  "realtime": {
+    "new_message": "New message: {{preview}}",
+    "new_message_fallback": "You have a new message."
+  },
+  "dropdown": {
+    "empty": "No conversations yet",
+    "view_all": "View all messages"
+  },
+  "index": {
+    "empty_candidate": "Your recruiter will reach out to you here once your application is in review."
+  }
+}

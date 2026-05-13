@@ -9,11 +9,14 @@
     "select_conversation": "Select a conversation",
     "no_conversations": "No conversations yet",
     "choose_from_sidebar": "Choose a conversation from the sidebar",
-    "contact_candidate": "Contact a candidate to start chatting",
     "back_to_conversations": "Back to conversations"
   },
   "header": {
-    "active": "Active"
+    "active": "Active",
+    "empty": "No conversations yet.",
+    "open": "Open messages",
+    "no_messages_yet": "No messages yet",
+    "yesterday": "Yesterday"
   },
   "messages": {
     "no_messages": "No messages yet",
@@ -35,9 +38,6 @@
     "job_post": "Job Post"
   },
   "index": {
-    "no_conversations": "No conversations yet",
-    "empty_company": "Start chatting by contacting a candidate via the Applications page.",
-    "empty_employee": "Start chatting with your team.",
-    "empty_candidate": "Your recruiter will reach out to you here once your application is in review."
+    "no_conversations": "No conversations yet"
   }
 }

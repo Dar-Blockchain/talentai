@@ -37,6 +37,7 @@ export interface ChatShellProps {
   loading:              boolean;
   sending:              boolean;
   isCompany:            boolean;
+  showConversationSidebar?: boolean;
   enableDeletes?:       boolean;
   newMessage:           string;
   setNewMessage:        (v: string) => void;
@@ -68,6 +69,7 @@ const ChatShell: React.FC<ChatShellProps> = (p) => {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [showChat, setShowChat] = useState(!!p.activeConversationId);
   const enableDeletes = p.enableDeletes ?? true;
+  const showConversationSidebar = p.showConversationSidebar ?? p.isCompany;
 
   const handleSelect = (id: string) => {
     p.onSelectConversation(id);
@@ -81,7 +83,7 @@ const ChatShell: React.FC<ChatShellProps> = (p) => {
         {p.returnTo && <ReturnBanner {...p.returnTo} />}
 
         <Box sx={{ display: "flex", gap: 2, flex: 1, minHeight: 0 }}>
-          {p.isCompany && (
+          {showConversationSidebar && (
             <Sidebar
               conversations={p.conversations}
               activeConversationId={p.activeConversationId}
@@ -123,7 +125,7 @@ const ChatShell: React.FC<ChatShellProps> = (p) => {
 
 // ── Return-to-post banner ─────────────────────────────────
 const ReturnBanner: React.FC<ReturnToPost> = ({ jobTitle, onReturn }) => {
-  const { t } = useTranslation("modules/chat/chat");
+  const { t } = useTranslation("shared/chat");
   return (
     <Box sx={{
       display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -157,7 +159,7 @@ const Sidebar: React.FC<{
   onSelect: (id: string) => void;
 }> = ({ conversations, activeConversationId, currentUserId, onSelect }) => {
   const { isMobile, showChat } = useShell();
-  const { t } = useTranslation("modules/chat/chat");
+  const { t } = useTranslation("shared/chat");
   return (
     <Box sx={{
       width: { xs: "100%", md: 280 }, flexShrink: 0,
@@ -214,7 +216,7 @@ const Panel: React.FC<PanelProps> = (p) => {
           <CircularProgress sx={{ color: T }} />
         </Box>
       ) : !p.conversation ? (
-        <EmptyPanel hasConversations={p.conversations.length > 0} />
+        <EmptyPanel hasConversations={p.conversations.length > 0} isCompany={p.isCompany} />
       ) : (
         <>
           {isMobile && (
@@ -250,9 +252,14 @@ const Panel: React.FC<PanelProps> = (p) => {
 };
 
 // ── Empty state ───────────────────────────────────────────
-const EmptyPanel: React.FC<{ hasConversations: boolean }> = ({ hasConversations }) => {
+const EmptyPanel: React.FC<{ hasConversations: boolean; isCompany: boolean }> = ({
+  hasConversations,
+  isCompany,
+}) => {
   const { isMobile, setShowChat } = useShell();
-  const { t } = useTranslation("modules/chat/chat");
+  const { t } = useTranslation("shared/chat");
+  const { t: tCandidate } = useTranslation("modules/candidates/candidateChat");
+  const { t: tCompanyHub } = useTranslation("modules/company/companyChat");
   return (
     <Box sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, p: 4 }}>
       <Box sx={{
@@ -266,7 +273,9 @@ const EmptyPanel: React.FC<{ hasConversations: boolean }> = ({ hasConversations 
         {hasConversations ? t("panel.select_conversation") : t("panel.no_conversations")}
       </Typography>
       <Typography sx={{ fontSize: "13px", color: "#6B7280", textAlign: "center", maxWidth: 280 }}>
-        {hasConversations ? t("panel.choose_from_sidebar") : t("panel.contact_candidate")}
+        {hasConversations
+          ? t("panel.choose_from_sidebar")
+          : (isCompany ? tCompanyHub("panel.contact_candidate") : tCandidate("panel.contact_recruiter"))}
       </Typography>
       {isMobile && (
         <Button startIcon={<ArrowBackOutlined />} onClick={() => setShowChat(false)}

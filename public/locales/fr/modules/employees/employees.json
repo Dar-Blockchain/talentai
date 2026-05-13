@@ -67,7 +67,8 @@
     "view": "Voir",
     "tooltip_edit": "Modifier le rôle",
     "edit": "Modifier",
-    "tooltip_remove": "Retirer le membre"
+    "tooltip_remove": "Retirer le membre",
+    "actions_menu": "Plus d'actions"
   },
   "invitation": {
     "pending": "EN ATTENTE",

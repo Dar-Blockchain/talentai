@@ -26,6 +26,8 @@ import ChevronLeftOutlined from "@mui/icons-material/ChevronLeftOutlined";
 import ChevronRightOutlined from "@mui/icons-material/ChevronRightOutlined";
 import LogoutProgressModal from "@/components/ui/LogoutProgressModal";
 import { useTranslation } from "react-i18next";
+import { useChatUnreadBadges } from "@/modules/shared/chat/hooks/useChatUnreadBadges";
+import ChatUnreadBadge from "@/modules/shared/chat/components/ChatUnreadBadge";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -53,7 +55,7 @@ const GROUPS = [
   { groupKey: "main", ids: ["dashboard"] },
   { groupKey: "jobs", ids: ["posts", "applications"] },
   { groupKey: "campaigns", ids: ["campaigns"] },
-  { groupKey: "team", ids: ["employees", "team-chat", "departments"] },
+  { groupKey: "team", ids: ["employees", "messages", "departments"] },
   { groupKey: "account", ids: ["settings", "subscription"] },
 ];
 
@@ -151,9 +153,22 @@ const Sidebar: React.FC<SidebarProps> = ({
   const handleToggle = useCallback(() => setCollapsed((c) => !c), [setCollapsed]);
 
   const settingsHref = isEmployee ? "/employee/dashboard" : "/company/settings";
+  const { teamChatUnread, companyMessagesUnread } = useChatUnreadBadges();
+
+  const getNavUnreadCount = (itemId: string) => {
+    if (itemId !== "messages") return 0;
+    return isEmployee ? teamChatUnread : companyMessagesUnread;
+  };
 
   const renderNavItem = (item: { id: string; icon: React.ElementType; label: string; href: string }, isCollapsed: boolean) => {
-    const isActive = router.pathname === item.href || router.pathname.startsWith(item.href + "/");
+    const unreadCount = getNavUnreadCount(item.id);
+    const isMessagesHub = item.id === "messages";
+    const isActive = isMessagesHub
+      ? router.pathname === "/messages"
+        || router.pathname.startsWith("/messages/")
+        || router.pathname.startsWith("/company/team-chat")
+        || router.pathname.startsWith("/company/candidate-chat")
+      : router.pathname === item.href || router.pathname.startsWith(item.href + "/");
     const translatedLabel = t(`sidebar.nav.${item.id}`, { defaultValue: item.label });
     const btn = (
       <Link key={item.id} href={item.href} passHref style={{ textDecoration: "none" }}>
@@ -189,9 +204,12 @@ const Sidebar: React.FC<SidebarProps> = ({
             <item.icon sx={{ fontSize: isCollapsed ? 18 : 16 }} />
           </Box>
           {!isCollapsed && (
-            <Typography sx={{ fontSize: "13px", fontWeight: isActive ? 600 : 400, color: "inherit", lineHeight: 1 }}>
+            <Typography sx={{ fontSize: "13px", fontWeight: isActive ? 600 : 400, color: "inherit", lineHeight: 1, flex: 1 }}>
               {translatedLabel}
             </Typography>
+          )}
+          {!isCollapsed && unreadCount > 0 && (
+            <ChatUnreadBadge count={unreadCount} />
           )}
         </Box>
       </Link>

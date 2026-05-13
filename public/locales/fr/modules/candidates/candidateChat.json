@@ -1,0 +1,23 @@
+{
+  "candidate": {
+    "title": "Messages",
+    "subtitle": "Discutez avec les entreprises au sujet de vos candidatures et des offres."
+  },
+  "header": {
+    "candidate": "Messages"
+  },
+  "panel": {
+    "contact_recruiter": "Lorsqu'une entreprise vous écrit, la conversation apparaîtra ici."
+  },
+  "realtime": {
+    "new_message": "Nouveau message : {{preview}}",
+    "new_message_fallback": "Vous avez un nouveau message."
+  },
+  "dropdown": {
+    "empty": "Aucune conversation pour le moment",
+    "view_all": "Voir tous les messages"
+  },
+  "index": {
+    "empty_candidate": "Votre recruteur vous contactera ici une fois votre candidature en cours d'examen."
+  }
+}

@@ -22,7 +22,7 @@ const DeleteConversationDialog: React.FC<DeleteConversationDialogProps> = ({
   onConfirm,
   isDeleting,
 }) => {
-  const { t } = useTranslation('modules/chat/chat');
+  const { t } = useTranslation('shared/chat');
   return (
     <Dialog
       open={open}
