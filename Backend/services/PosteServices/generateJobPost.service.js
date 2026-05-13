@@ -83,6 +83,45 @@ async function generateJobPost(description, user, overrides = {}) {
         console.log("✅ contractType (employmentType) overridden to:", contractType);
       }
 
+      // Normalize skill percentages to ensure total is always 100%
+      if (result?.skillAnalysis?.requiredSkills || result?.skillAnalysis?.softSkills) {
+        const requiredSkills = result.skillAnalysis.requiredSkills || [];
+        const softSkills = result.skillAnalysis.softSkills || [];
+
+        // Calculate current total
+        let totalPercentage = 0;
+        requiredSkills.forEach((skill) => {
+          totalPercentage += skill.percentage || 0;
+        });
+        softSkills.forEach((skill) => {
+          totalPercentage += skill.percentage || 0;
+        });
+
+        // If total is not 100, normalize proportionally
+        if (totalPercentage !== 100 && totalPercentage > 0) {
+          const normalizationFactor = 100 / totalPercentage;
+          
+          requiredSkills.forEach((skill) => {
+            skill.percentage = Math.round(skill.percentage * normalizationFactor * 100) / 100;
+          });
+          
+          softSkills.forEach((skill) => {
+            skill.percentage = Math.round(skill.percentage * normalizationFactor * 100) / 100;
+          });
+
+          // Adjust last skill to ensure exactly 100%
+          const allSkills = [...requiredSkills, ...softSkills];
+          if (allSkills.length > 0) {
+            const currentSum = allSkills.reduce((sum, skill) => sum + skill.percentage, 0);
+            const difference = 100 - currentSum;
+            allSkills[allSkills.length - 1].percentage += difference;
+            allSkills[allSkills.length - 1].percentage = Math.round(allSkills[allSkills.length - 1].percentage * 100) / 100;
+          }
+
+          console.log(`✅ Skill percentages normalized to 100% (was ${totalPercentage}%)`);
+        }
+      }
+
       // Build finalPost if needed
       if (!result?.linkedinPost?.finalPost) {
         try {
