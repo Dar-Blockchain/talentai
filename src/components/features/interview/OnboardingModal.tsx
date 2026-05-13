@@ -48,13 +48,12 @@ const fieldSx = {
 
 export interface OnboardingModalProps {
   open: boolean;
-  jobId: string;
   jobTitle: string;
   onClose: () => void;
   onSuccess: (token: string, user: any, profile: any) => void;
 }
 
-const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobId, jobTitle, onClose, onSuccess }) => {
+const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClose, onSuccess }) => {
   const { t } = useTranslation('modules/interview/apply');
   const dispatch = useDispatch<AppDispatch>();
 
@@ -230,22 +229,6 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobId, jobTitle
         location: userLocation,
       })).unwrap();
       if (!response.token) throw new Error('No token received');
-      // Register as interview applicant (best-effort)
-      try {
-        await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}interview-applicants`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${response.token}` },
-          body: JSON.stringify({
-            jobId,
-            firstName: form.firstName.trim() || response.profile?.firstName || '',
-            lastName: form.lastName.trim() || response.profile?.lastName || '',
-            email: email.trim().toLowerCase(),
-            phone: form.phone.trim() || '',
-            linkedin: form.linkedin.trim() || undefined,
-            ref: 'link',
-          }),
-        });
-      } catch { /* ignore */ }
       clearTimer();
       onSuccess(response.token, response.user, response.profile);
     } catch {

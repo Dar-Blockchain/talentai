@@ -254,7 +254,6 @@ const JobPreviewPanel: React.FC<JobPreviewPanelProps> = ({ jobData, jobId, compa
 
       <OnboardingModal
         open={modalOpen}
-        jobId={jobId}
         jobTitle={jobTitle}
         onClose={() => setModalOpen(false)}
         onSuccess={handleApplySuccess}
