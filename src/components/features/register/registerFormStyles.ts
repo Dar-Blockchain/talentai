@@ -8,6 +8,7 @@ export const compactFieldSx = {
     fontWeight: 500,
     fontSize: { xs: "0.73rem", sm: "0.75rem" },
   },
+  "& .MuiFormLabel-asterisk": { color: "#EF4444" },
   "& .MuiInputLabel-root.Mui-focused": { color: ACCENT },
   "& .MuiInputBase-input": {
     fontSize: { xs: "0.85rem", sm: "0.88rem" },
