@@ -28,6 +28,7 @@ export interface PostAssessment {
   interviewData?: {
     interviewType?: string;
     finalReport?: {
+      scores?: { overall?: number };
       coverage?: { overall?: number; areas?: Record<string, any> };
       summary?: string;
       recommendations?: string[];
@@ -49,7 +50,7 @@ interface AssessmentCardProps {
 }
 
 export const getScore = (a: PostAssessment): number =>
-  a.interviewData?.finalReport?.coverage?.overall ?? a.interviewData?.analytics?.coveragePercentage ?? 0;
+  a.interviewData?.finalReport?.scores?.overall ?? a.interviewData?.finalReport?.coverage?.overall ?? a.interviewData?.analytics?.coveragePercentage ?? 0;
 
 export const hasPendingSteps = (a: PostAssessment): boolean =>
   a.candidatePostStepProgress?.steps?.some((s: any) => s.status === "pending" || s.status === "inProgress") ?? false;
