@@ -18,6 +18,7 @@ Rules:
 - Use resumeText and resumeAnalysis as the primary evidence source — they show real work, not just claimed skills.
 - Declared skills and profile data are secondary signals.
 - Do NOT penalize for skills or experience the job does not ask for.
+- **CRITICAL: Experience level alignment is VERY IMPORTANT. If the job requires "Junior", a Junior candidate with the right skills must score HIGHER than an Expert. If the job requires "Senior", a Senior candidate must score HIGHER than a Junior. Over-qualification or under-qualification relative to the role MUST negatively impact the score. Always include an "experience_level_alignment" criterion.**
 - Each criterion must have a short descriptive key (snake_case, no spaces), a human-readable label, a max score, and the score you award.
 
 ---
@@ -31,9 +32,9 @@ ${JSON.stringify(jobData, null, 2)}
 ---
 SCORING PROCESS
 
-Step 1 — Read the job description and identify what matters most for this specific role.
-Step 2 — Define 4–6 criteria relevant to this job. Distribute 100 points across them by importance.
-Step 3 — Score the candidate on each criterion based on evidence.
+Step 1 — Read the job description and identify what matters most for this specific role. **Pay special attention to the required experience level (Junior, Mid-level, Senior, etc.).**
+Step 2 — Define 4–6 criteria relevant to this job. Distribute 100 points across them by importance. **One criterion MUST be "experience_level_alignment" with significant weight (15-30 points) to ensure candidates match the expected seniority level.**
+Step 3 — Score the candidate on each criterion based on evidence. **For experience level: reward candidates at or near the required level, and penalize those significantly over or under-qualified.**
 Step 4 — Sum all scores → matchScore (0–100).
 Step 5 — Apply the recommendation threshold:
   85–100 → "Top candidat"
@@ -41,6 +42,11 @@ Step 5 — Apply the recommendation threshold:
   50–69  → "À considérer"
   30–49  → "Non retenu"
    0–29  → "Hors profil"
+
+Example: If the job requires "Junior Developer" with 0-2 years of experience:
+- A Junior with 1-2 years → High score on experience_level_alignment
+- A Senior with 10 years → Low score on experience_level_alignment (over-qualified, may leave quickly)
+- A candidate with 3-5 years (Mid-level) → Medium score on experience_level_alignment (slightly over-qualified)
 
 ---
 Return ONLY this JSON — no markdown, no extra text outside the object:
