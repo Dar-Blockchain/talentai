@@ -1463,13 +1463,13 @@ module.exports.getSourcingKPI = async (companyId, postId = null, dateFrom = null
       company:   companyId,
       candidate: { $in: userIds },
       post:      { $in: postIds },
-    }).select('candidate post interviewData.finalReport.scores.overall').lean();
+    }).select('candidate post interviewData.finalReport.scores').lean();
 
-    // scoreMap key: postId_userId
+    // scoreMap key: postId_userId — use scores.overall (AI quality score, not coverage)
     const scoreMap = {};
     assessments.forEach(a => {
       const key = `${String(a.post)}_${String(a.candidate)}`;
-      scoreMap[key] = a.interviewData?.finalReport?.scores?.overall ?? 0;
+      scoreMap[key] = Math.round(a.interviewData?.finalReport?.scores?.overall ?? 0);
     });
 
     // Build ranked list

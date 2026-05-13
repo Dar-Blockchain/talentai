@@ -35,7 +35,6 @@ import CheckCircleOutlined from '@mui/icons-material/CheckCircleOutlined';
 import RadioButtonUncheckedOutlined from '@mui/icons-material/RadioButtonUncheckedOutlined';
 import AccessTimeOutlined from '@mui/icons-material/AccessTime';
 import ChatOutlined from '@mui/icons-material/ChatOutlined';
-import WorkOutlineOutlined from '@mui/icons-material/WorkOutline';
 import CalendarTodayOutlined from '@mui/icons-material/CalendarTodayOutlined';
 
 const T     = '#0D9488';
@@ -72,19 +71,6 @@ const ScoreRing: React.FC<{ score: number; size?: number }> = ({ score, size = 8
   );
 };
 
-// ── Stat item (right sidebar) ──────────────────────────────────────────────────
-const StatItem: React.FC<{ icon: React.ReactNode; label: string; value: React.ReactNode; iconBg: string; iconColor: string }> =
-  ({ icon, label, value, iconBg, iconColor }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-    <Box sx={{ width: 32, height: 32, borderRadius: '9px', bgcolor: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-      <Box sx={{ fontSize: 15, color: iconColor, display: 'flex' }}>{icon}</Box>
-    </Box>
-    <Box sx={{ minWidth: 0 }}>
-      <Typography sx={{ fontSize: '0.68rem', color: GRAY2, fontWeight: 500 }}>{label}</Typography>
-      <Typography sx={{ fontSize: '0.82rem', fontWeight: 700, color: NAVY, lineHeight: 1.2 }}>{value}</Typography>
-    </Box>
-  </Box>
-);
 
 // ── Left score block (top of left sidebar) ────────────────────────────────────
 const ScoreBlock: React.FC<{ score: number; assessmentTypeLabel: string }> = ({ score, assessmentTypeLabel }) => {
@@ -188,8 +174,8 @@ const ProfileStrengthCard: React.FC<{ title: string; checklist: { label: string;
 };
 
 // ── Right summary panel ────────────────────────────────────────────────────────
-const AssessmentSummaryPanel: React.FC<{ assessment: any; analytics: any; coverageAreas: Record<string, any> }> = ({
-  assessment, analytics, coverageAreas,
+const AssessmentSummaryPanel: React.FC<{ analytics: any; coverageAreas: Record<string, any> }> = ({
+  analytics, coverageAreas,
 }) => {
   const { t } = useTranslation('dashboard');
   const s = (k: string) => t(`candidate.assessment_detail.${k}`) as string;
@@ -328,7 +314,7 @@ const AssessmentDetailsPage = () => {
   const jobRequirements     = useMemo(() => assessment?.post?.jobDetails?.requirements, [assessment]);
   const jobResponsibilities = useMemo(() => assessment?.post?.jobDetails?.responsibilities, [assessment]);
   const analytics           = useMemo(() => assessment?.interviewData?.analytics || {}, [assessment]);
-  const coverageScore       = useMemo(() => assessment?.interviewData?.finalReport?.coverage?.overall || 0, [assessment]);
+  const coverageScore       = useMemo(() => assessment?.interviewData?.finalReport?.scores?.overall || 0, [assessment]);
 
   const displayName = profile?.firstName
     ? `${profile.firstName}${profile.lastName ? ` ${profile.lastName}` : ''}`
@@ -492,7 +478,7 @@ const AssessmentDetailsPage = () => {
               ) : assessment ? (
                 <>
                   <ScoreBlock score={coverageScore} assessmentTypeLabel={assessmentTypeLabel} />
-                  <AssessmentSummaryPanel assessment={assessment} analytics={analytics} coverageAreas={coverageAreas} />
+                  <AssessmentSummaryPanel analytics={analytics} coverageAreas={coverageAreas} />
                 </>
               ) : null}
             </Box>
