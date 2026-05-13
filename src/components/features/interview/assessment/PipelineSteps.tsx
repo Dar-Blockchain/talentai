@@ -4,13 +4,10 @@ import { useTranslation } from 'react-i18next';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import AccountTreeOutlined from '@mui/icons-material/AccountTreeOutlined';
 import {
-  sectionStyle,
-  sectionTitleStyle,
-  formatDuration,
-  formatAreaName,
-  getStepStatusColor,
-  CHART_COLORS,
+  formatDuration, formatAreaName, getStepStatusColor,
+  CHART_COLORS, NAVY, NAVY2, GRAY, GRAY2, BORDER,
 } from './helpers';
 import i18n from '@/i18n/config';
 
@@ -39,37 +36,49 @@ const PipelineSteps: React.FC<PipelineStepsProps> = ({ stepsData }) => {
 
   if (sortedSteps.length === 0) return null;
 
+  const progressPct = (completedCount / sortedSteps.length) * 100;
+
   return (
-    <Box sx={sectionStyle}>
-      <Typography variant="h5" sx={sectionTitleStyle('#8310FF')}>
-        {s('pipeline_steps.title')}
-      </Typography>
+    <Box sx={{ bgcolor: '#fff', borderRadius: '18px', border: `1px solid ${BORDER}`, overflow: 'hidden', boxShadow: '0 1px 6px rgba(0,0,0,0.05)' }}>
+      <Box sx={{ height: 3, background: 'linear-gradient(90deg, #7C3AED, #6366f1)' }} />
+      <Box sx={{ p: 2.5 }}>
+        {/* Header */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+          <Box sx={{ width: 30, height: 30, borderRadius: '9px', bgcolor: '#F5F3FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <AccountTreeOutlined sx={{ fontSize: 16, color: '#7C3AED' }} />
+          </Box>
+          <Typography sx={{ fontWeight: 800, fontSize: '0.88rem', color: NAVY }}>{s('pipeline_steps.title')}</Typography>
+          <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography sx={{ fontSize: '0.72rem', color: GRAY2, fontWeight: 600 }}>
+              {s('pipeline_steps.completed', { completed: completedCount, total: sortedSteps.length })}
+            </Typography>
+          </Box>
+        </Box>
 
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-        <Typography variant="body2" sx={{ color: '#6b7280', fontWeight: 500 }}>
-          {s('pipeline_steps.completed', { completed: completedCount, total: sortedSteps.length })}
-        </Typography>
-        <LinearProgress
-          variant="determinate"
-          value={(completedCount / sortedSteps.length) * 100}
-          sx={{
-            flex: 1, height: 8, borderRadius: 4,
-            backgroundColor: '#f3f4f6',
-            '& .MuiLinearProgress-bar': { backgroundColor: '#8310FF', borderRadius: 4 },
-          }}
-        />
-      </Box>
-
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-        {sortedSteps.map((step: any, index: number) => (
-          <StepCard
-            key={step._id || `step-${index}`}
-            step={step}
-            index={index}
-            isExpanded={expandedSteps[step._id || `step-${index}`] || false}
-            onToggle={toggleStep}
+        {/* Progress */}
+        <Box sx={{ mb: 2 }}>
+          <LinearProgress
+            variant="determinate"
+            value={progressPct}
+            sx={{
+              height: 5, borderRadius: '99px', bgcolor: '#F1F5F9',
+              '& .MuiLinearProgress-bar': { borderRadius: '99px', bgcolor: '#7C3AED' },
+            }}
           />
-        ))}
+        </Box>
+
+        {/* Steps */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          {sortedSteps.map((step: any, index: number) => (
+            <StepCard
+              key={step._id || `step-${index}`}
+              step={step}
+              index={index}
+              isExpanded={expandedSteps[step._id || `step-${index}`] || false}
+              onToggle={toggleStep}
+            />
+          ))}
+        </Box>
       </Box>
     </Box>
   );
@@ -86,74 +95,64 @@ const StepCard: React.FC<StepCardProps> = React.memo(({ step, index, isExpanded,
   const { t } = useTranslation('dashboard');
   const s = (k: string, opts?: any) => t(`candidate.assessment_detail.${k}`, opts) as string;
   const statusColors = getStepStatusColor(step.status);
-  const stepLabel = step.stepId?.data?.label || step.stepId?.data?.config?.title || `Step ${index + 1}`;
-  const stepType = step.stepId?.data?.type || 'interview';
-  const stepKey = step._id || `step-${index}`;
-  const interviewDetails = step.interviewDetails;
-  const hasDetails = !!interviewDetails?.interviewData;
-  const statusLabel =
-    step.status === 'done' || step.status === 'passed'
-      ? s('pipeline_steps.status.completed')
-      : step.status === 'inProgress'
-        ? s('pipeline_steps.status.in_progress')
-        : s('pipeline_steps.status.pending');
+  const stepLabel    = step.stepId?.data?.label || step.stepId?.data?.config?.title || `Step ${index + 1}`;
+  const stepType     = step.stepId?.data?.type || 'interview';
+  const stepKey      = step._id || `step-${index}`;
+  const hasDetails   = !!step.interviewDetails?.interviewData;
+
+  const isDone = step.status === 'done' || step.status === 'passed';
+  const statusLabel = isDone
+    ? s('pipeline_steps.status.completed')
+    : step.status === 'inProgress'
+      ? s('pipeline_steps.status.in_progress')
+      : s('pipeline_steps.status.pending');
 
   return (
     <Box>
       <Box
         onClick={() => hasDetails && onToggle(stepKey)}
         sx={{
-          backgroundColor: '#ffffff',
-          borderRadius: '10px',
-          padding: '16px',
-          border: `1px solid ${isExpanded ? statusColors.border : 'rgba(238, 240, 242, 1)'}`,
+          borderRadius: '12px', p: '12px 14px',
+          bgcolor: isExpanded ? `${statusColors.bg}` : '#FAFAFA',
+          border: `1px solid ${isExpanded ? statusColors.border : BORDER}`,
           cursor: hasDetails ? 'pointer' : 'default',
-          transition: 'all 0.2s ease',
-          '&:hover': hasDetails ? { borderColor: statusColors.border, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' } : {},
+          transition: 'all 0.15s',
+          '&:hover': hasDetails ? { bgcolor: `${statusColors.bg}`, borderColor: statusColors.border, boxShadow: '0 2px 8px rgba(0,0,0,0.05)' } : {},
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Box
-              sx={{
-                width: 40, height: 40, borderRadius: '10px',
-                backgroundColor: step.status === 'done' || step.status === 'passed'
-                  ? 'rgba(16, 185, 129, 0.1)'
-                  : step.status === 'inProgress' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(107, 114, 128, 0.1)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}
-            >
-              {step.status === 'done' || step.status === 'passed' ? (
-                <CheckCircleOutlineIcon sx={{ fontSize: 22, color: '#10b981' }} />
-              ) : (
-                <Typography sx={{ fontWeight: 700, fontSize: '14px', color: statusColors.color }}>{index + 1}</Typography>
-              )}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+            <Box sx={{
+              width: 34, height: 34, borderRadius: '10px', flexShrink: 0,
+              bgcolor: isDone ? 'rgba(16,185,129,0.1)' : step.status === 'inProgress' ? 'rgba(245,158,11,0.1)' : '#F1F5F9',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              {isDone
+                ? <CheckCircleOutlineIcon sx={{ fontSize: 18, color: '#10b981' }} />
+                : <Typography sx={{ fontWeight: 800, fontSize: '0.78rem', color: statusColors.color }}>{index + 1}</Typography>
+              }
             </Box>
             <Box>
-              <Typography sx={{ fontWeight: 600, color: '#111827', fontSize: '14px' }}>{stepLabel}</Typography>
-              <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '11px', textTransform: 'capitalize' }}>
+              <Typography sx={{ fontWeight: 700, color: NAVY2, fontSize: '0.82rem' }}>{stepLabel}</Typography>
+              <Typography sx={{ fontSize: '0.65rem', color: GRAY2, textTransform: 'capitalize' }}>
                 {stepType}
-                {step.completedAt && ` - ${new Date(step.completedAt).toLocaleDateString(i18n.language || 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
+                {step.completedAt && ` · ${new Date(step.completedAt).toLocaleDateString(i18n.language || 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
               </Typography>
             </Box>
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {step.score !== undefined && step.score !== null && (
-              <Typography sx={{ fontWeight: 700, fontSize: '14px', color: statusColors.color }}>{Math.round(step.score)}%</Typography>
+              <Typography sx={{ fontWeight: 800, fontSize: '0.82rem', color: statusColors.color }}>{Math.round(step.score)}%</Typography>
             )}
             <Chip
               label={statusLabel}
               size="small"
-              sx={{
-                backgroundColor: statusColors.bg, color: statusColors.color,
-                fontWeight: 600, fontSize: '0.7rem', height: 22,
-                border: `1px solid ${statusColors.border}`,
-              }}
+              sx={{ height: 20, fontSize: '0.62rem', fontWeight: 700, bgcolor: statusColors.bg, color: statusColors.color, border: `1px solid ${statusColors.border}` }}
             />
             {hasDetails && (
-              <IconButton size="small" sx={{ color: '#6b7280' }}>
-                {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              <IconButton size="small" sx={{ color: GRAY2, p: 0.25 }}>
+                {isExpanded ? <ExpandLessIcon sx={{ fontSize: 16 }} /> : <ExpandMoreIcon sx={{ fontSize: 16 }} />}
               </IconButton>
             )}
           </Box>
@@ -161,49 +160,62 @@ const StepCard: React.FC<StepCardProps> = React.memo(({ step, index, isExpanded,
       </Box>
 
       <Collapse in={isExpanded}>
-        {hasDetails && <StepInterviewDetails interviewDetails={interviewDetails} />}
+        {hasDetails && <StepInterviewDetails interviewDetails={step.interviewDetails} />}
       </Collapse>
     </Box>
   );
 });
 
+StepCard.displayName = 'StepCard';
+
 const StepInterviewDetails: React.FC<{ interviewDetails: any }> = React.memo(({ interviewDetails }) => {
-  const { t, i18n } = useTranslation('dashboard');
+  const { t, i18n: i18nInstance } = useTranslation('dashboard');
   const s = (k: string, opts?: any) => t(`candidate.assessment_detail.${k}`, opts) as string;
-  const data = interviewDetails.interviewData;
-  const areas = data?.finalReport?.coverage?.areas;
+  const data       = interviewDetails.interviewData;
+  const areas      = data?.finalReport?.coverage?.areas;
   const aiAnalysis = data?.finalReport?.aiAnalysis;
 
   return (
-    <Box sx={{ ml: 3, mt: 1, p: 2, backgroundColor: 'rgba(248, 249, 252, 1)', borderRadius: '10px', border: '1px solid rgba(238, 240, 242, 1)' }}>
-      <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'rgba(23, 43, 77, 1)', fontSize: '13px', mb: 1.5 }}>
+    <Box sx={{ ml: 2.5, mt: 0.75, p: 2, borderRadius: '12px', bgcolor: '#F8FAFC', border: `1px solid ${BORDER}` }}>
+      <Typography sx={{ fontWeight: 700, color: NAVY2, fontSize: '0.78rem', mb: 1.5 }}>
         {s('pipeline_steps.interview_details')}
       </Typography>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1.5, mb: 2 }}>
-        <MiniStat value={`${Math.round(data?.finalReport?.coverage?.overall || 0)}%`} label={s('header.coverage')} color="#8310FF" />
-        <MiniStat value={formatDuration(data?.analytics?.duration || 0)} label={s('summary.duration')} color="#6366f1" />
-        <MiniStat value={data?.analytics?.messageCount || 0} label={s('summary.messages')} color="#10b981" />
+      {/* Mini stats */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, mb: areas || aiAnalysis ? 1.75 : 0 }}>
+        {[
+          { value: `${Math.round(data?.finalReport?.coverage?.overall || 0)}%`, label: s('header.coverage'), color: '#7C3AED' },
+          { value: formatDuration(data?.analytics?.duration || 0),              label: s('summary.duration'), color: '#6366f1' },
+          { value: data?.analytics?.messageCount || 0,                          label: s('summary.messages'), color: '#0D9488' },
+        ].map((stat, i) => (
+          <Box key={i} sx={{ textAlign: 'center', p: '8px 6px', bgcolor: '#fff', borderRadius: '10px', border: `1px solid ${BORDER}` }}>
+            <Typography sx={{ fontWeight: 800, fontSize: '0.88rem', color: stat.color, lineHeight: 1 }}>{stat.value}</Typography>
+            <Typography sx={{ fontSize: '0.62rem', color: GRAY2, mt: 0.25 }}>{stat.label}</Typography>
+          </Box>
+        ))}
       </Box>
 
+      {/* Coverage area bars */}
       {areas && Object.keys(areas).length > 0 && (
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#374151', fontSize: '12px', mb: 1 }}>{s('pipeline_steps.coverage_areas')}</Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Box sx={{ mb: aiAnalysis ? 1.5 : 0 }}>
+          <Typography sx={{ fontWeight: 700, fontSize: '0.72rem', color: GRAY2, textTransform: 'uppercase', letterSpacing: '0.06em', mb: 1 }}>
+            {s('pipeline_steps.coverage_areas')}
+          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
             {Object.entries(areas).map(([areaKey, areaData]: [string, any], idx: number) => (
-              <Box key={areaKey} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Typography sx={{ fontSize: '12px', color: '#374151', fontWeight: 500, minWidth: 120, textTransform: 'capitalize' }}>
+              <Box key={areaKey} sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+                <Typography sx={{ fontSize: '0.72rem', color: NAVY2, fontWeight: 600, minWidth: 110, textTransform: 'capitalize' }}>
                   {formatAreaName(areaKey)}
                 </Typography>
                 <LinearProgress
                   variant="determinate"
                   value={areaData.percentage || 0}
                   sx={{
-                    flex: 1, height: 6, borderRadius: 3, backgroundColor: '#e5e7eb',
-                    '& .MuiLinearProgress-bar': { backgroundColor: CHART_COLORS[idx % CHART_COLORS.length], borderRadius: 3 },
+                    flex: 1, height: 5, borderRadius: '99px', bgcolor: '#E2E8F0',
+                    '& .MuiLinearProgress-bar': { borderRadius: '99px', bgcolor: CHART_COLORS[idx % CHART_COLORS.length] },
                   }}
                 />
-                <Typography sx={{ fontSize: '12px', fontWeight: 600, color: CHART_COLORS[idx % CHART_COLORS.length], minWidth: 35 }}>
+                <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: CHART_COLORS[idx % CHART_COLORS.length], minWidth: 30, textAlign: 'right' }}>
                   {Math.round(areaData.percentage || 0)}%
                 </Typography>
               </Box>
@@ -212,42 +224,37 @@ const StepInterviewDetails: React.FC<{ interviewDetails: any }> = React.memo(({ 
         </Box>
       )}
 
+      {/* AI analysis mini cards */}
       {aiAnalysis && (
-        <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
           {aiAnalysis.strongestAreas?.length > 0 && (
-            <AnalysisBox title={s('pipeline_steps.strengths')} items={aiAnalysis.strongestAreas} bg="rgba(16, 185, 129, 0.06)" border="rgba(16, 185, 129, 0.15)" titleColor="#065f46" itemColor="#047857" />
+            <Box sx={{ flex: 1, minWidth: 130, p: '8px 10px', borderRadius: '10px', bgcolor: '#F0FDF4', border: '1px solid #BBF7D0' }}>
+              <Typography sx={{ fontWeight: 700, color: '#065f46', fontSize: '0.68rem', mb: 0.5 }}>{s('pipeline_steps.strengths')}</Typography>
+              {aiAnalysis.strongestAreas.map((area: string, idx: number) => (
+                <Typography key={idx} sx={{ color: '#047857', fontSize: '0.68rem' }}>{formatAreaName(area)}</Typography>
+              ))}
+            </Box>
           )}
           {aiAnalysis.weakestAreas?.length > 0 && (
-            <AnalysisBox title={s('pipeline_steps.needs_improvement')} items={aiAnalysis.weakestAreas} bg="rgba(239, 68, 68, 0.06)" border="rgba(239, 68, 68, 0.15)" titleColor="#991b1b" itemColor="#b91c1c" />
+            <Box sx={{ flex: 1, minWidth: 130, p: '8px 10px', borderRadius: '10px', bgcolor: '#FEF2F2', border: '1px solid #FECACA' }}>
+              <Typography sx={{ fontWeight: 700, color: '#991b1b', fontSize: '0.68rem', mb: 0.5 }}>{s('pipeline_steps.needs_improvement')}</Typography>
+              {aiAnalysis.weakestAreas.map((area: string, idx: number) => (
+                <Typography key={idx} sx={{ color: '#b91c1c', fontSize: '0.68rem' }}>{formatAreaName(area)}</Typography>
+              ))}
+            </Box>
           )}
         </Box>
       )}
 
       {data?.finalReport?.summary && (
-        <Box sx={{ mt: 1.5 }}>
-          <Typography variant="body2" sx={{ color: '#374151', fontSize: '12px', lineHeight: 1.5 }}>{data.finalReport.summary}</Typography>
+        <Box sx={{ mt: 1.5, p: '8px 12px', borderRadius: '10px', bgcolor: '#fff', border: `1px solid ${BORDER}` }}>
+          <Typography sx={{ color: GRAY, fontSize: '0.75rem', lineHeight: 1.6 }}>{data.finalReport.summary}</Typography>
         </Box>
       )}
     </Box>
   );
 });
 
-const MiniStat: React.FC<{ value: string | number; label: string; color: string }> = ({ value, label, color }) => (
-  <Box sx={{ textAlign: 'center', p: 1, backgroundColor: '#fff', borderRadius: '8px', border: '1px solid rgba(238,240,242,1)' }}>
-    <Typography sx={{ fontWeight: 700, fontSize: '16px', color }}>{value}</Typography>
-    <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '10px' }}>{label}</Typography>
-  </Box>
-);
-
-const AnalysisBox: React.FC<{ title: string; items: string[]; bg: string; border: string; titleColor: string; itemColor: string }> = ({
-  title, items, bg, border, titleColor, itemColor,
-}) => (
-  <Box sx={{ flex: 1, minWidth: 150, p: 1, backgroundColor: bg, borderRadius: '8px', border: `1px solid ${border}` }}>
-    <Typography sx={{ fontWeight: 600, color: titleColor, fontSize: '11px', mb: 0.5 }}>{title}</Typography>
-    {items.map((area: string, idx: number) => (
-      <Typography key={idx} sx={{ color: itemColor, fontSize: '11px' }}>{formatAreaName(area)}</Typography>
-    ))}
-  </Box>
-);
+StepInterviewDetails.displayName = 'StepInterviewDetails';
 
 export default React.memo(PipelineSteps);

@@ -41,7 +41,7 @@ export const kpiService = {
 
   fetchFunnel: async (params: { postId?: string; dateFrom?: string } = {}) => {
     const res = await axiosInstance.get(`job-applications/company/my/kpi/funnel${qs({ postId: params.postId, dateFrom: params.dateFrom })}`);
-    return res.data?.data as { invited: number; started: number; completed: number; shortlisted: number };
+    return res.data?.data as { applied: number; invited: number; completed: number; shortlisted: number };
   },
 
   fetchMyPostsForFilter: async () => {

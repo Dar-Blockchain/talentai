@@ -115,7 +115,16 @@ const AppCard: React.FC<{ app: any; onClick: () => void; last: boolean; s: (k: s
       <Box sx={{ flex: 1, minWidth: 0 }}>
         {/* Title row */}
         <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1, mb: 0.4 }}>
-          <Typography sx={{ fontSize: "0.9rem", fontWeight: 700, color: NAVY, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <Typography
+            onClick={(e) => { e.stopPropagation(); onClick(); }}
+            sx={{
+              fontSize: "0.9rem", fontWeight: 700, color: NAVY, lineHeight: 1.3,
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              cursor: "pointer",
+              "&:hover": { color: T, textDecoration: "underline" },
+              transition: "color 0.15s",
+            }}
+          >
             {title}
           </Typography>
           {/* Status badge */}
