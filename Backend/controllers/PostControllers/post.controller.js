@@ -545,7 +545,7 @@ exports.getJobInterviewConfig = async (req, res) => {
     // Check if post has expired
     if (post.expirationDate && new Date(post.expirationDate) < new Date()) {
       console.log("❌ Job post has expired");
-      return res.status(410).json({
+      return res.status(404).json({
         success: false,
         error: "Job post has expired",
         message:
