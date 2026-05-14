@@ -26,6 +26,9 @@ const AUTH_ONLY_PATHS = ["/signin", "/register"];
 // ─── Role-based route protection ────────────────────────────────────────────
 // Each entry: path prefix → allowed roles (empty means any authenticated role)
 const ROLE_ROUTES: { prefix: string; roles: string[] }[] = [
+  { prefix: "/messages/candidates", roles: ["Company"] },
+  { prefix: "/messages", roles: ["Candidate", "Employee", "Company"] },
+  { prefix: "/chat", roles: ["Candidate", "Employee", "Company"] },
   { prefix: "/admin/dashboard",          roles: ["Admin"] },
   { prefix: "/company",                  roles: ["Company", "Employee"] },
   { prefix: "/profile/company",          roles: ["Company"] },

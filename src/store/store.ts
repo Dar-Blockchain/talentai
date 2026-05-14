@@ -21,6 +21,8 @@ import manualPostReducer from './slices/manualPostSlice';
 import notificationReducer from './slices/notificationSlice';
 import memberReducer from './slices/memberSlice';
 import chatReducer from './slices/chatSlice';
+import teamChatReducer from '@/modules/team-chat/store/teamChatSlice';
+import candidateChatReducer from '@/modules/candidate-chat/store/candidateChatSlice';
 import adminReducer from './slices/adminSlice';
 import planLimitsReducer from './slices/planLimitsSlice';
 import campaignReducer from './slices/campaignSlice';
@@ -45,6 +47,8 @@ const rootReducer = combineReducers({
   notifications: notificationReducer,
   member: memberReducer,
   chat: chatReducer,
+  teamChat: teamChatReducer,
+  candidateChat: candidateChatReducer,
   admin: adminReducer,
   planLimits: planLimitsReducer,
   campaign: campaignReducer,

@@ -65,6 +65,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ children }) => {
         backgroundColor: "rgb(249 250 251)",
         display: "flex",
         flexDirection: "column",
+        p: { xs: 1.5, sm: 2.5, md: 3 },
       }}>
         {children}
       </Box>

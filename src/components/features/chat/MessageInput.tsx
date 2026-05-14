@@ -1,9 +1,17 @@
-import React from 'react';
-import { Box, TextField, IconButton, CircularProgress } from '@mui/material';
-import SendOutlined from '@mui/icons-material/SendOutlined';
-import { useTranslation } from 'react-i18next';
-
-const TEAL = '#0D9488';
+import React from "react";
+import {
+  TextField,
+  IconButton,
+  CircularProgress,
+  Stack,
+  Paper,
+  useTheme,
+  alpha,
+  Tooltip,
+} from "@mui/material";
+import SendRounded from "@mui/icons-material/SendRounded";
+import { useTranslation } from "react-i18next";
+import { safeAlpha } from "@/utils/safeMuiAlpha";
 
 interface MessageInputProps {
   value: string;
@@ -11,6 +19,10 @@ interface MessageInputProps {
   onSend: () => void;
   onKeyDown: (e: React.KeyboardEvent) => void;
   sending: boolean;
+  /** Tighter footer padding (e.g. team chat in dashboard frame). */
+  compact?: boolean;
+  /** Team chat: light mint composer chrome. */
+  mintLightTeamUi?: boolean;
 }
 
 const MessageInput: React.FC<MessageInputProps> = ({
@@ -19,61 +31,140 @@ const MessageInput: React.FC<MessageInputProps> = ({
   onSend,
   onKeyDown,
   sending,
+  compact = false,
+  mintLightTeamUi = false,
 }) => {
-  const { t } = useTranslation('modules/chat/chat');
+  const theme = useTheme();
+  const { t } = useTranslation("shared/chat");
+  const isDark = theme.palette.mode === "dark";
+  const canSend = !!value.trim() && !sending;
+  const ease = "cubic-bezier(0.4, 0, 0.2, 1)";
+  const mintPrimary = "#34D399";
+  const mintPrimaryHover = "#10B981";
+
   return (
-    <Box
+    <Paper
+      component="footer"
+      elevation={0}
+      square={false}
       sx={{
-        px: 2.5,
-        py: 1.5,
-        borderTop: '1px solid #E5E7EB',
-        bgcolor: '#fff',
-        display: 'flex',
-        gap: 1.5,
-        alignItems: 'flex-end',
+        flexShrink: 0,
+        px: compact ? { xs: 1.25, sm: 1.5 } : { xs: 1.5, sm: 2 },
+        ...(compact
+          ? {
+              py: 0,
+              pt: { xs: 0.75, sm: 1 },
+              pb: { xs: 0.5, sm: 0.75 },
+            }
+          : { py: 1.5 }),
+        borderTop: mintLightTeamUi ? "1px solid #E5E7EB" : `1px solid ${theme.palette.divider}`,
+        bgcolor: mintLightTeamUi ? "#FFFFFF" : theme.palette.background.paper,
+        backgroundImage: mintLightTeamUi
+          ? "none"
+          : isDark
+            ? `linear-gradient(180deg, ${safeAlpha(theme.palette.background.paper, 0.92)} 0%, ${theme.palette.background.paper} 100%)`
+            : `linear-gradient(180deg, ${safeAlpha(theme.palette.common.white, 0.98)} 0%, ${theme.palette.background.paper} 100%)`,
+        position: "sticky",
+        bottom: 0,
+        zIndex: 3,
+        transition: `box-shadow 0.28s ${ease}, border-color 0.28s ${ease}`,
+        "@media (hover: hover)": {
+          "&:hover": {
+            boxShadow: mintLightTeamUi ? "0 -6px 24px rgba(15, 23, 42, 0.05)" : `0 -8px 28px ${safeAlpha(theme.palette.common.black, isDark ? 0.35 : 0.06)}`,
+            borderTopColor: mintLightTeamUi ? "rgba(52, 211, 153, 0.25)" : alpha(theme.palette.primary.main, isDark ? 0.35 : 0.2),
+          },
+        },
       }}
     >
-      <TextField
-        fullWidth
-        multiline
-        maxRows={4}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyDown={onKeyDown}
-        placeholder={t('input.placeholder')}
-        disabled={sending}
-        size="small"
-        sx={{
-          '& .MuiOutlinedInput-root': {
-            borderRadius: '12px',
-            bgcolor: '#F9FAFB',
-            fontSize: '13px',
-            '& fieldset': { borderColor: '#E5E7EB' },
-            '&:hover fieldset': { borderColor: TEAL },
-            '&.Mui-focused fieldset': { borderColor: TEAL, borderWidth: '1.5px' },
-          },
-        }}
-      />
-      <IconButton
-        onClick={onSend}
-        disabled={!value.trim() || sending}
-        sx={{
-          bgcolor: TEAL,
-          color: '#fff',
-          width: 40,
-          height: 40,
-          borderRadius: '12px',
-          flexShrink: 0,
-          '&:hover': { bgcolor: '#0F766E' },
-          '&:disabled': { bgcolor: '#E5E7EB', color: '#9CA3AF' },
-        }}
-      >
-        {sending
-          ? <CircularProgress size={16} sx={{ color: '#fff' }} />
-          : <SendOutlined sx={{ fontSize: 18 }} />
-        }
-      </IconButton>
-    </Box>
+      <Stack direction="row" spacing={1.25} alignItems="flex-end">
+        <TextField
+          fullWidth
+          multiline
+          maxRows={5}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={onKeyDown}
+          placeholder={t("input.placeholder")}
+          disabled={sending}
+          size="small"
+          variant="outlined"
+          sx={{
+            "& .MuiOutlinedInput-root": {
+              borderRadius: mintLightTeamUi ? "18px" : "22px",
+              fontSize: "0.8125rem",
+              lineHeight: 1.45,
+              bgcolor: mintLightTeamUi ? "#F8FAFC" : (isDark ? safeAlpha(theme.palette.common.white, 0.04) : alpha(theme.palette.grey[100], 0.9)),
+              transition: "background-color 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease",
+              "&:hover": {
+                bgcolor: mintLightTeamUi ? "#FFFFFF" : (isDark ? safeAlpha(theme.palette.common.white, 0.09) : alpha(theme.palette.grey[100], 1)),
+              },
+              "&.Mui-focused": {
+                boxShadow: mintLightTeamUi
+                  ? "0 0 0 3px rgba(52, 211, 153, 0.2)"
+                  : `0 0 0 3px ${alpha(theme.palette.primary.main, 0.18)}`,
+              },
+              "& fieldset": {
+                borderColor: mintLightTeamUi ? "#E5E7EB" : alpha(theme.palette.divider, isDark ? 0.5 : 0.9),
+              },
+              "&:hover fieldset": {
+                borderColor: mintLightTeamUi ? "rgba(52, 211, 153, 0.35)" : alpha(theme.palette.primary.main, 0.45),
+              },
+              "&.Mui-focused fieldset": {
+                borderColor: mintLightTeamUi ? mintPrimary : theme.palette.primary.main,
+                borderWidth: "1px",
+              },
+            },
+          }}
+        />
+        <Tooltip title={t("input.send")}>
+          <span>
+            <IconButton
+              onClick={onSend}
+              disabled={!canSend}
+              color="primary"
+              sx={{
+                width: 44,
+                height: 44,
+                borderRadius: "14px",
+                bgcolor: canSend
+                  ? (mintLightTeamUi ? mintPrimary : theme.palette.primary.main)
+                  : alpha(theme.palette.action.disabledBackground, 0.5),
+                color: "#fff",
+                flexShrink: 0,
+                transition: `transform 0.2s ${ease}, background-color 0.2s ${ease}, box-shadow 0.2s ${ease}`,
+                boxShadow: canSend
+                  ? (mintLightTeamUi ? "0 4px 16px rgba(52, 211, 153, 0.35)" : `0 4px 14px ${alpha(theme.palette.primary.main, 0.35)}`)
+                  : "none",
+                "@media (hover: hover)": {
+                  "&:hover": {
+                    bgcolor: canSend
+                      ? (mintLightTeamUi ? mintPrimaryHover : theme.palette.primary.dark)
+                      : undefined,
+                    transform: canSend ? "scale(1.06) translateY(-1px)" : undefined,
+                    boxShadow: canSend
+                      ? (mintLightTeamUi ? "0 8px 22px rgba(16, 185, 129, 0.38)" : `0 8px 22px ${alpha(theme.palette.primary.main, 0.42)}`)
+                      : "none",
+                  },
+                },
+                "&:active": {
+                  transform: canSend ? "scale(0.98)" : undefined,
+                },
+                "&:disabled": {
+                  color: theme.palette.action.disabled,
+                },
+              }}
+              aria-label={t("input.send")}
+            >
+              {sending ? (
+                <CircularProgress size={20} sx={{ color: "inherit" }} />
+              ) : (
+                <SendRounded sx={{ fontSize: 22 }} />
+              )}
+            </IconButton>
+          </span>
+        </Tooltip>
+      </Stack>
+    </Paper>
   );
 };
 

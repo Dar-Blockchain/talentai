@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import ArrowBackOutlined from "@mui/icons-material/ArrowBackOutlined";
 import EditOutlined from "@mui/icons-material/EditOutlined";
 import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
+import ChatBubbleOutlineOutlined from "@mui/icons-material/ChatBubbleOutlineOutlined";
+import { useStartTeamChat } from "@/modules/team-chat";
 import EmailOutlined from "@mui/icons-material/EmailOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
@@ -156,6 +158,7 @@ interface EmployeeDetailProps {
 
 /* ── Component ────────────────────────────────────────── */
 const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ member, onBack, onEdit, onDelete, canAssignRoles = true, canRemove = true, canManagePermissions = true, isOwner = false, isSelf = false }) => {
+  const startTeamChat = useStartTeamChat();
   const dispatch = useDispatch<AppDispatch>();
   const updatingPerms = useSelector(selectUpdatingPermissions);
   const { t } = useTranslation("dashboard");
@@ -239,6 +242,21 @@ const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ member, onBack, onEdit,
             </Box>
 
             <Box sx={{ display: "flex", gap: 0.875 }}>
+              {!isSelf && member.status === "active" && (
+                <Box
+                  onClick={() => { void startTeamChat(member.userId); }}
+                  sx={{
+                    display: "flex", alignItems: "center", gap: 0.625,
+                    px: 1.625, py: 0.75, borderRadius: "10px", cursor: "pointer",
+                    border: "1px solid #CCFBF1", bgcolor: "#F0FDFA",
+                    transition: "all 0.15s",
+                    "&:hover": { bgcolor: "#CCFBF1", borderColor: "#99F6E4", "& *": { color: "#0F766E" } },
+                  }}
+                >
+                  <ChatBubbleOutlineOutlined sx={{ fontSize: 14, color: "#0D9488" }} />
+                  <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#0F766E" }}>Message</Typography>
+                </Box>
+              )}
               {canAssignRoles && (
                 <Box
                   onClick={() => onEdit(member)}

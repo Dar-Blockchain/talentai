@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Dialog,
   DialogTitle,
@@ -6,14 +6,20 @@ import {
   DialogContentText,
   DialogActions,
   Button,
-} from '@mui/material';
-import { useTranslation } from 'react-i18next';
+  CircularProgress,
+  useTheme,
+  alpha,
+} from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 interface DeleteConversationDialogProps {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
   isDeleting: boolean;
+  title?: string;
+  /** Overrides default i18n description (e.g. team chat "delete for me only") */
+  description?: string;
 }
 
 const DeleteConversationDialog: React.FC<DeleteConversationDialogProps> = ({
@@ -21,62 +27,73 @@ const DeleteConversationDialog: React.FC<DeleteConversationDialogProps> = ({
   onClose,
   onConfirm,
   isDeleting,
+  title,
+  description,
 }) => {
-  const { t } = useTranslation('modules/chat/chat');
+  const { t } = useTranslation("shared/chat");
+  const theme = useTheme();
+  const err = theme.palette.error;
+
   return (
     <Dialog
       open={open}
       onClose={() => !isDeleting && onClose()}
-      PaperProps={{
-        sx: {
-          borderRadius: '12px',
-          minWidth: 380,
+      slotProps={{
+        paper: {
+          elevation: 12,
+          sx: {
+            borderRadius: 2,
+            minWidth: { xs: "min(100%, 360px)", sm: 400 },
+            border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === "dark" ? 0.4 : 0.9)}`,
+          },
         },
       }}
     >
-      <DialogTitle sx={{ fontWeight: 600, color: '#000', fontSize: '16px' }}>
-        {t('delete_dialog.title')}
+      <DialogTitle sx={{ fontWeight: 700, color: "text.primary", fontSize: "1rem", pb: 0.5 }}>
+        {title ?? t("delete_dialog.title")}
       </DialogTitle>
       <DialogContent>
-        <DialogContentText sx={{ color: 'rgba(84,98,116,0.8)', fontSize: '13px' }}>
-          {t('delete_dialog.description')}
+        <DialogContentText sx={{ color: "text.secondary", fontSize: "0.8125rem", lineHeight: 1.55, mt: 0.5 }}>
+          {description ?? t("delete_dialog.description")}
         </DialogContentText>
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+      <DialogActions sx={{ px: 2.5, pb: 2, pt: 0.5, gap: 1 }}>
         <Button
           onClick={onClose}
           disabled={isDeleting}
+          color="inherit"
           sx={{
-            color: 'rgba(84,98,116,0.8)',
-            fontWeight: 500,
-            textTransform: 'none',
-            borderRadius: '38px',
-            '&:hover': {
-              backgroundColor: 'rgba(243, 245, 247, 1)',
-            },
+            fontWeight: 600,
+            textTransform: "none",
+            borderRadius: 3,
+            px: 2,
           }}
         >
-          {t('delete_dialog.cancel')}
+          {t("delete_dialog.cancel")}
         </Button>
         <Button
           onClick={onConfirm}
           disabled={isDeleting}
           variant="contained"
+          color="error"
+          disableElevation
           sx={{
-            backgroundColor: 'rgba(220, 38, 38, 1)',
-            fontWeight: 600,
-            textTransform: 'none',
-            borderRadius: '38px',
-            boxShadow: 'none',
-            '&:hover': {
-              backgroundColor: 'rgba(185, 28, 28, 1)',
-            },
-            '&:disabled': {
-              backgroundColor: 'rgba(252, 165, 165, 1)',
+            fontWeight: 700,
+            textTransform: "none",
+            borderRadius: 3,
+            px: 2.5,
+            minWidth: 120,
+            boxShadow: "none",
+            "&:hover": {
+              boxShadow: `0 4px 14px ${alpha(err.main, 0.35)}`,
             },
           }}
         >
-          {isDeleting ? t('delete_dialog.deleting') : t('delete_dialog.delete')}
+          {isDeleting ? (
+            <CircularProgress size={20} color="inherit" thickness={4} />
+          ) : (
+            t("delete_dialog.delete")
+          )}
         </Button>
       </DialogActions>
     </Dialog>

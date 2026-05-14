@@ -5,6 +5,10 @@ require("dotenv").config();
 
 // Core setup
 const app = express();
+// Disable Express's automatic ETag generation so chat (and other live)
+// endpoints never reply with 304 — 304 strips the body and, in some setups,
+// surfaces as a CORS error in the browser when the client expects JSON.
+app.set("etag", false);
 const server = http.createServer(app);
 
 // Import utilities & logger
@@ -28,6 +32,7 @@ const intelligentInterviewController = require("./controllers/intelligentIntervi
 const campaignInterviewService = require("./services/campaignInterview.service");
 const campaignInterviewController = require("./controllers/campaignInterview.controller");
 const chatSocketHandler = require("./socket-handlers/chatSocketHandler");
+const teamChatSocketHandler = require("./socket-handlers/teamChatSocketHandler");
 const { seedDefaultPlans } = require("./seeders/planLimits.seeder");
 const { scheduleAutoInvites } = require("./cron/autoInviteScheduler.cron");
 const { scheduleReminders } = require("./cron/reminderScheduler.cron");
@@ -162,6 +167,9 @@ const initializeApp = async () => {
       // Initialize chat namespace
       chatSocketHandler.initializeChatNamespace(io);
       logger.success("Chat namespace /chat initialized and ready");
+
+      teamChatSocketHandler.initializeTeamChatNamespace(io);
+      logger.success("Team chat namespace /team-chat initialized and ready");
 
       // Initialize interview namespace
       intelligentInterviewController.initializeHandlers(io);

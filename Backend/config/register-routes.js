@@ -18,6 +18,7 @@ const pipelineInterviewRoutes = require("../routes/pipelineInterview.routes");
 const CompanyInvitationRouters = require("../routes/companyInvitation.routes");
 const CompanyMembershipRoutes = require("../routes/companyMembership.routes");
 const chatRouter = require("../routes/chat.routes");
+const teamChatRouter = require("../routes/teamChat.routes");
 const planLimitsRouter = require("../routes/planLimits.routes");
 const subscriptionRouter = require("../routes/subscription.routes");
 const internalCampaignRoutes = require('../routes/internalCampaign.routes');
@@ -62,7 +63,17 @@ function registerRoutes(app) {
   app.use("/post-steps", postStepsRouter); //✅ Post Steps Management -> post-steps
 
   // Chat & Messaging
-  app.use("/chat", chatRouter); //✅ Chat functionalities chat -> chats (to be checked)
+  // Chat is a live realtime surface: disable HTTP caching + ETag so the client
+  // never receives a 304 (which strips body/headers and was causing perceived
+  // "CORS error" + empty inbox after refresh in some browsers).
+  const noChatCache = (req, res, next) => {
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
+    res.set("Pragma", "no-cache");
+    res.set("Expires", "0");
+    next();
+  };
+  app.use("/chat", noChatCache, chatRouter); //✅ Chat functionalities chat -> chats (to be checked)
+  app.use("/team-chat", noChatCache, teamChatRouter); // Internal company team chat (1:1)
 
   // Notifications
   app.use("/notification-system", notificationSystemRouter); // Notification System -> notifications

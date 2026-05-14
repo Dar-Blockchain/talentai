@@ -1,9 +1,11 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/router";
+import { useTranslation } from "react-i18next";
 import { io, Socket } from "socket.io-client";
 import { RootState, AppDispatch } from "@/store/store";
 import { useToast } from "@/hooks/useToast";
+import { deliveryBlockedToastMessage } from "@/modules/shared/chat";
 import {
   fetchConversations,
   fetchConversation,
@@ -58,6 +60,7 @@ export const useChatSession = ({
   const dispatch    = useDispatch<AppDispatch>();
   const router      = useRouter();
   const { showToast } = useToast();
+  const { t } = useTranslation("shared/chat");
 
   const currentUserId = useSelector((state: RootState) => state.user?.connectedUser?.user?._id);
 
@@ -104,8 +107,9 @@ export const useChatSession = ({
     });
 
     socket.on("new_message", (msg: any) => {
-      dispatch(addMessage(msg));
       const senderId = msg.sender?._id || msg.sender;
+      if (msg.deliveryBlocked && String(senderId) !== String(currentUserId)) return;
+      dispatch(addMessage(msg));
       if (senderId !== currentUserId) playNotificationSound();
     });
     socket.on("message_read",  ({ messageId, conversationId: cid }: any) =>
@@ -148,24 +152,34 @@ export const useChatSession = ({
 
   // ── Handlers ─────────────────────────────────────────────
 
-  const handleSelectConversation = useCallback((id: string) => {
-    if (id === activeConversationId) return;
-    setNewMessage("");
-    setActiveConversationId(id);
-    onConversationChange?.(id);
-  }, [activeConversationId, onConversationChange]);
+  const handleSelectConversation = useCallback(
+    (id: string) => {
+      const idStr = String(id);
+      const activeStr = activeConversationId != null ? String(activeConversationId) : "";
+      const convIdStr = conversation?._id != null ? String(conversation._id) : "";
+
+      const alreadyShowingThisChat = idStr === activeStr && idStr === convIdStr;
+      if (alreadyShowingThisChat) return;
+
+      setNewMessage("");
+
+      if (idStr === activeStr && idStr !== convIdStr) {
+        setActiveConversationId(null);
+        queueMicrotask(() => {
+          setActiveConversationId(idStr);
+          onConversationChange?.(idStr);
+        });
+        return;
+      }
+
+      setActiveConversationId(idStr);
+      onConversationChange?.(idStr);
+    },
+    [activeConversationId, conversation, onConversationChange],
+  );
 
   const handleSendMessage = useCallback(async () => {
     if (!newMessage.trim() || !conversation || !currentUserId || !activeConversationId) return;
-
-    if (/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(newMessage)) {
-      showToast({ message: "Sharing email addresses is not allowed.", severity: "error" });
-      return;
-    }
-    if (/(\+?\d{1,4}[\s-]?)?\(?\d{1,4}\)?[\s-]?\d{1,4}[\s-]?\d{1,9}|\d{10,}/.test(newMessage)) {
-      showToast({ message: "Sharing phone numbers is not allowed.", severity: "error" });
-      return;
-    }
 
     const other = conversation.participants.find((p: any) => p._id !== currentUserId);
     if (!other) {
@@ -181,11 +195,17 @@ export const useChatSession = ({
       })).unwrap();
       // Explicitly add to messages state — don't rely solely on WebSocket echo
       if (result?._id) dispatch(addMessage(result));
+      if (result?.deliveryBlocked) {
+        showToast({
+          message: deliveryBlockedToastMessage(result.blockedReason, t),
+          severity: "warning",
+        });
+      }
       setNewMessage("");
     } catch (err: any) {
       showToast({ message: `Failed to send: ${err || "Unknown error"}`, severity: "error" });
     }
-  }, [newMessage, conversation, currentUserId, activeConversationId, dispatch, showToast]);
+  }, [newMessage, conversation, currentUserId, activeConversationId, dispatch, showToast, t]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendMessage(); }
@@ -207,6 +227,7 @@ export const useChatSession = ({
       await dispatch(deleteConversationThunk(activeConversationId)).unwrap();
       showToast({ message: "Conversation deleted", severity: "success" });
       setDeleteDialogOpen(false);
+      setActiveConversationId(null);
       router.push(deleteRedirectRoute);
     } catch (err: any) {
       showToast({ message: `Failed to delete: ${err || "Unknown error"}`, severity: "error" });

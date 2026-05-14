@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Avatar,
   Badge,
@@ -12,41 +12,69 @@ import {
   Typography,
 } from "@mui/material";
 import ChatOutlined from "@mui/icons-material/ChatOutlined";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "@/store/store";
-import { fetchConversations, selectConversations } from "@/store/slices/chatSlice";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
+import { selectCandidateConversations } from "@/modules/candidate-chat/store/candidateChatSlice";
+import { useCandidateConversationsQuery } from "@/modules/candidate-chat/queries/useCandidateChatQueries";
+import { selectTeamConversations } from "@/modules/team-chat/store/teamChatSlice";
+import { useTeamConversationsQuery } from "@/modules/team-chat/queries/useTeamChatQueries";
+import { getTeamChatBasePath, getTeamChatConversationPath } from "@/modules/team-chat/utils/routes";
+import {
+  getCandidateChatBasePath,
+  getCandidateChatConversationPath,
+} from "@/modules/candidate-chat/utils/routes";
 import { useRouter } from "next/router";
+import { useTranslation } from "react-i18next";
+import { useChatUnreadBadges } from "@/modules/shared/chat/hooks/useChatUnreadBadges";
+import { normalizeConversationUnreadCount } from "@/modules/shared/chat/utils/normalizeConversationUnread";
+import { getParticipantDisplayName } from "@/components/features/chat/helpers";
+import { TEAM_LAST_MESSAGE_DELETED_SENTINEL } from "@/modules/team-chat/constants/lastMessagePreview";
 
 const TEAL    = "#0D9488";
 const TEAL_BG = "#F0FDFA";
 
-const fmtTime = (iso?: string): string => {
-  if (!iso) return "";
-  const d    = new Date(iso);
-  const now  = new Date();
-  const diff = Math.floor((now.getTime() - d.getTime()) / 86400000);
-  if (diff === 0) return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  if (diff === 1) return "Yesterday";
-  if (diff < 7)  return d.toLocaleDateString([], { weekday: "short" });
-  return d.toLocaleDateString([], { month: "short", day: "numeric" });
-};
-
 const HeaderChat: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
   const router   = useRouter();
+  const { t: tShared, i18n } = useTranslation("shared/chat");
+  const { t: tTeam } = useTranslation("modules/company/teamChat");
+  const { t: tCandidate } = useTranslation("modules/candidates/candidateChat");
+  const { t: tCompanyHub } = useTranslation("modules/company/companyChat");
+  const currentUser = useSelector((state: RootState) => state.user.connectedUser.user);
+  const role = currentUser?.role;
+  const isEmployee = role === "Employee";
+  const usesCandidateChat = role === "Company" || role === "Candidate";
 
-  const profile       = useSelector((state: RootState) => state.user.connectedUser.profile);
-  const currentUser   = useSelector((state: RootState) => state.user.connectedUser.user);
-  const conversations = useSelector(selectConversations);
+  const candidateConversations = useSelector(selectCandidateConversations);
+  const teamConversations = useSelector(selectTeamConversations);
+  useTeamConversationsQuery(undefined, { enabled: isEmployee && !!currentUser?._id });
+  useCandidateConversationsQuery(undefined, { enabled: usesCandidateChat && !!currentUser?._id });
+
+  const conversations = isEmployee ? teamConversations : candidateConversations;
+  const { activeModuleUnread } = useChatUnreadBadges();
+  const teamChatBasePath = getTeamChatBasePath(role);
+  const candidateChatBasePath = getCandidateChatBasePath(role);
+  const headerTitle = isEmployee
+    ? tTeam("header.team")
+    : role === "Company"
+      ? tCompanyHub("header.company")
+      : tCandidate("header.candidate");
+  const emptyLabel = isEmployee ? tTeam("header.empty_team") : tShared("header.empty");
+  const openLabel = isEmployee ? tTeam("header.open_team") : tShared("header.open");
+
+  const fmtTime = (iso?: string): string => {
+    if (!iso) return "";
+    const d    = new Date(iso);
+    const now  = new Date();
+    const diff = Math.floor((now.getTime() - d.getTime()) / 86400000);
+    const locale = i18n.language?.startsWith("fr") ? "fr-FR" : "en-US";
+    if (diff === 0) return d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
+    if (diff === 1) return tShared("header.yesterday");
+    if (diff < 7) return d.toLocaleDateString(locale, { weekday: "short" });
+    return d.toLocaleDateString(locale, { month: "short", day: "numeric" });
+  };
 
   const [anchor, setAnchor] = useState<null | HTMLElement>(null);
-
-  const totalUnread = conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
-
-  useEffect(() => {
-    dispatch(fetchConversations({}));
-  }, [dispatch]);
-
+  const totalBadge = activeModuleUnread;
   const close = () => setAnchor(null);
 
   return (
@@ -56,7 +84,7 @@ const HeaderChat: React.FC = () => {
         sx={{ color: "#6B7280" }}
       >
         <Badge
-          badgeContent={totalUnread > 9 ? "9+" : totalUnread || undefined}
+          badgeContent={totalBadge > 9 ? "9+" : totalBadge || undefined}
           sx={{
             "& .MuiBadge-badge": {
               bgcolor: "#EF4444",
@@ -91,7 +119,6 @@ const HeaderChat: React.FC = () => {
           },
         }}
       >
-        {/* Header */}
         <Box
           sx={{
             px: 2.5,
@@ -104,9 +131,9 @@ const HeaderChat: React.FC = () => {
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>
-              Messages
+              {headerTitle}
             </Typography>
-            {totalUnread > 0 && (
+            {totalBadge > 0 && (
               <Box
                 sx={{
                   bgcolor: TEAL,
@@ -121,13 +148,12 @@ const HeaderChat: React.FC = () => {
                   fontWeight: 700,
                 }}
               >
-                {totalUnread > 9 ? "9+" : totalUnread}
+                {totalBadge > 9 ? "9+" : totalBadge}
               </Box>
             )}
           </Box>
         </Box>
 
-        {/* Conversation list */}
         <Box
           sx={{
             maxHeight: 340,
@@ -140,26 +166,30 @@ const HeaderChat: React.FC = () => {
             <Box sx={{ py: 6, textAlign: "center" }}>
               <ChatOutlined sx={{ fontSize: 40, color: "#D1D5DB", mb: 1 }} />
               <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>
-                No conversations yet
+                {emptyLabel}
               </Typography>
             </Box>
           ) : (
             conversations.slice(0, 8).map((conv, i) => {
-              const other   = conv.participants?.find((p: any) => p._id !== (currentUser?._id || currentUser?.id));
-              const name    = other
-                ? `${other.profile?.firstName || other.firstName || ""} ${other.profile?.lastName || other.lastName || ""}`.trim()
-                  || other.profile?.companyDetails?.name
-                  || other.email
-                  || "Unknown"
-                : "Unknown";
+              const uid = currentUser?._id != null ? String(currentUser._id) : "";
+              const other = conv.participants?.find((p) => String(p._id) !== uid);
+              const name = getParticipantDisplayName(other);
               const initial = name[0]?.toUpperCase() || "?";
               const lastMsg = conv.lastMessage;
-              const hasUnread = (conv.unreadCount || 0) > 0;
+              const unreadN = normalizeConversationUnreadCount(conv.unreadCount, uid || undefined);
+              const teamLastPreviewDeleted =
+                isEmployee
+                && (!!lastMsg?.isDeletedForEveryone
+                  || lastMsg?.text === TEAM_LAST_MESSAGE_DELETED_SENTINEL);
+              const hasUnread = unreadN > 0;
+              const conversationPath = isEmployee
+                ? getTeamChatConversationPath(role, conv._id)
+                : getCandidateChatConversationPath(role, conv._id);
 
               return (
                 <React.Fragment key={conv._id}>
                   <Box
-                    onClick={() => { router.push(`/chat/${conv._id}`); close(); }}
+                    onClick={() => { router.push(conversationPath); close(); }}
                     sx={{
                       display: "flex",
                       gap: 1.5,
@@ -174,7 +204,7 @@ const HeaderChat: React.FC = () => {
                     <Badge
                       overlap="circular"
                       anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                      badgeContent={conv.unreadCount > 0 ? conv.unreadCount : 0}
+                      badgeContent={unreadN > 0 ? unreadN : 0}
                       sx={{
                         "& .MuiBadge-badge": {
                           bgcolor: TEAL,
@@ -216,9 +246,12 @@ const HeaderChat: React.FC = () => {
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
                           fontWeight: hasUnread ? 600 : 400,
+                          fontStyle: teamLastPreviewDeleted ? "italic" : undefined,
                         }}
                       >
-                        {lastMsg?.text || "No messages yet"}
+                        {teamLastPreviewDeleted
+                          ? tShared("messages.this_message_was_deleted")
+                          : lastMsg?.text || tShared("header.no_messages_yet")}
                       </Typography>
                     </Box>
                   </Box>
@@ -229,12 +262,14 @@ const HeaderChat: React.FC = () => {
           )}
         </Box>
 
-        {/* Footer */}
         <Box sx={{ borderTop: "1px solid #E5E7EB", p: 1.5 }}>
           <Button
             fullWidth
             size="small"
-            onClick={() => { router.push("/chat"); close(); }}
+            onClick={() => {
+              router.push(isEmployee ? teamChatBasePath : candidateChatBasePath);
+              close();
+            }}
             sx={{
               textTransform: "none",
               fontWeight: 600,
@@ -243,7 +278,7 @@ const HeaderChat: React.FC = () => {
               "&:hover": { bgcolor: TEAL_BG },
             }}
           >
-            Open Messages
+            {openLabel}
           </Button>
         </Box>
       </Popover>
