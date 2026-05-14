@@ -410,6 +410,20 @@ module.exports.createJobApplication = async (applicationData) => {
     cleanData.matchReasoning = matchResult.reasoning;
     cleanData.status = "visited";
 
+    // ========== AUTO-REJECT IF MATCH SCORE BELOW THRESHOLD ==========
+    // Fetch the post to get the threshold score
+    const post = await Post.findById(cleanData.post);
+    const thresholdScore = post?.thresholdScore || 60; // Default threshold is 60
+
+    if (cleanData.matchScore < thresholdScore) {
+      console.log(`\n⚠️  [AUTO-REJECT TRIGGERED] Match Score (${cleanData.matchScore}) is below threshold (${thresholdScore})`);
+      cleanData.recruiterDecision = "rejected";
+      cleanData.recruiterDecisionAt = new Date();
+      cleanData.rejectionReason = `Candidate's match score (${cleanData.matchScore}/100) is below the required threshold (${thresholdScore}/100). Automatic rejection based on qualification mismatch.`;
+      console.log(`   ✓ Auto-rejection applied`);
+      console.log(`   ✓ Rejection Reason: ${cleanData.rejectionReason}`);
+    }
+
     const application = await JobApplication.create(cleanData);
 
     // Populate references
