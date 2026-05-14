@@ -66,7 +66,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
         {/* Logo — candidates only */}
         {isCandidate && (
           <Link href="/" style={{ display: "inline-block" }}>
-            <Image src="/logo.svg" alt="TalentAI" width={120} height={32} style={{ objectFit: "contain", cursor: "pointer" }} />
+            <Image src="/images/home/logo.svg" alt="TalentAI" width={140} height={38} style={{ objectFit: "contain", cursor: "pointer" }} />
           </Link>
         )}
       </Box>

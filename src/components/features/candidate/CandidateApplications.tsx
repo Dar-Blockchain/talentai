@@ -115,7 +115,16 @@ const AppCard: React.FC<{ app: any; onClick: () => void; last: boolean; s: (k: s
       <Box sx={{ flex: 1, minWidth: 0 }}>
         {/* Title row */}
         <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1, mb: 0.4 }}>
-          <Typography sx={{ fontSize: "0.9rem", fontWeight: 700, color: NAVY, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <Typography
+            onClick={(e) => { e.stopPropagation(); onClick(); }}
+            sx={{
+              fontSize: "0.9rem", fontWeight: 700, color: NAVY, lineHeight: 1.3,
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              cursor: "pointer",
+              "&:hover": { color: T, textDecoration: "underline" },
+              transition: "color 0.15s",
+            }}
+          >
             {title}
           </Typography>
           {/* Status badge */}
@@ -308,7 +317,13 @@ const CandidateApplications: React.FC<CandidateApplicationsProps> = ({ previewCo
               key={app._id || i}
               app={app}
               last={!expanded && i === Math.min(COLLAPSE_SIZE, displayed.length) - 1}
-              onClick={() => router.push(`/candidate/applications/${app._id}`)}
+              onClick={() => {
+                const status = (app.status || "").toLowerCase();
+                if (status === "visited" && app.post?._id)
+                  router.push(`/candidate/interview/hr?jobId=${app.post._id}`);
+                else
+                  router.push(`/candidate/applications/${app._id}`);
+              }}
               s={s}
             />
           ))}
@@ -321,7 +336,13 @@ const CandidateApplications: React.FC<CandidateApplicationsProps> = ({ previewCo
                   key={app._id || i}
                   app={app}
                   last={i === displayed.length - COLLAPSE_SIZE - 1}
-                  onClick={() => router.push(`/candidate/applications/${app._id}`)}
+                  onClick={() => {
+                    const status = (app.status || "").toLowerCase();
+                    if (status === "visited" && app.post?._id)
+                      router.push(`/candidate/interview/hr?jobId=${app.post._id}`);
+                    else
+                      router.push(`/candidate/applications/${app._id}`);
+                  }}
                   s={s}
                 />
               ))}

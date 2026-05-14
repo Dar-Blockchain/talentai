@@ -21,6 +21,7 @@ import { RootState, AppDispatch } from '@/store/store';
 import { useSelector, useDispatch } from 'react-redux';
 import dynamic from 'next/dynamic';
 import { checkPostInterviewAssessment } from '@/store/slices/interviewSlice';
+import { createJobApplication } from '@/store/slices/jobApplicationSlice';
 
 
 // Types
@@ -31,6 +32,7 @@ import {
 
 // Hooks
 import { useNotification } from '@/hooks/useNotification';
+import { getToken } from '@/utils/tokenUtils';
 import { useInterviewTimer } from '@/hooks/useInterviewTimer';
 import { useCamera } from '@/hooks/useCamera';
 import { useSecurityMonitoring } from '@/hooks/useSecurityMonitoring';
@@ -78,6 +80,8 @@ const IntelligentInterviewTest = () => {
   const [isArchived, setIsArchived] = useState(false);
   const [companyBlocked, setCompanyBlocked] = useState(false);
   const [isEmployeeBlocked, setIsEmployeeBlocked] = useState(false);
+  const [underThreshold, setUnderThreshold] = useState(false);
+  const [thresholdInfo, setThresholdInfo] = useState<{ required: number; score: number } | null>(null);
 
   const hasJobId = router.isReady && typeof router.query.jobId === 'string' && !!router.query.jobId;
   const jobId = router.isReady ? (router.query.jobId as string | undefined) : undefined;
@@ -85,7 +89,6 @@ const IntelligentInterviewTest = () => {
 
   useEffect(() => {
     if (!router.isReady) return;
-
     if (authUser?.role === 'Employee') {
       setIsEmployeeBlocked(true);
       setAssessmentChecking(false);
@@ -95,17 +98,11 @@ const IntelligentInterviewTest = () => {
     if (!router.query.jobId) { setStep('interview'); setAssessmentChecking(false); return; }
 
     const postId = router.query.jobId as string;
-    const token = Cookies.get('api_token');
-    const ref = router.query.ref as string | undefined;
-    const isPublicLink = ref === 'link';
+    const token = getToken();
 
     if (authUser && token) {
       if (authUser.role !== 'Company' && authUser.role !== 'Employee') {
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}job-applications/`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ post: postId }),
-        }).catch(() => {});
+        dispatch(createJobApplication(postId));
       }
 
       dispatch(checkPostInterviewAssessment(postId)).then((result) => {
@@ -113,6 +110,10 @@ const IntelligentInterviewTest = () => {
           if (result.payload.isCompanyBlocked) { setCompanyBlocked(true); setTimeout(() => router.replace('/company/dashboard'), 3000); return; }
           else if (result.payload.isArchived) setIsArchived(true);
           else if (result.payload.exists) setAlreadyCompleted(true);
+          else if (result.payload.underThreshold) {
+            setUnderThreshold(true);
+            setThresholdInfo({ required: result.payload.thresholdScore ?? 0, score: result.payload.matchScore ?? 0 });
+          }
         }
       }).finally(() => setAssessmentChecking(false));
     } else {
@@ -441,6 +442,27 @@ const IntelligentInterviewTest = () => {
     );
   }
 
+  if (underThreshold) {
+    return (
+      <>
+        <style jsx global>{GlobalStyles}</style>
+        <BlockedScreen
+          variant="bordered"
+          icon={<Box component="span" sx={{ fontSize: 36 }}>🔒</Box>}
+          iconBg="rgba(220,38,38,0.08)"
+          iconBorderColor="rgba(220,38,38,0.2)"
+          title="Interview Not Available"
+          description={
+            <>
+              Your CV match score (<strong style={{ color: '#DC2626' }}>{thresholdInfo?.score ?? 0}%</strong>) is below the minimum required score of <strong style={{ color: '#111827' }}>{thresholdInfo?.required ?? 0}%</strong> for this position. Only candidates who meet the threshold can proceed to the interview.
+            </>
+          }
+          actions={[{ label: t('back_to_dashboard'), onClick: () => router.push('/candidate/dashboard'), color: '#DC2626', hoverColor: '#B91C1C' }]}
+        />
+      </>
+    );
+  }
+
   if (limitReached) {
     return (
       <>
@@ -575,6 +597,10 @@ const IntelligentInterviewTest = () => {
                 )}
 
                 {isActive && (
+                  <InterviewTimer elapsedTime={timer.elapsedTime} timeWarning={timer.timeWarning} />
+                )}
+
+                {isActive && (
                   <Button
                     variant="contained"
                     onClick={endInterview}
@@ -700,9 +726,6 @@ const IntelligentInterviewTest = () => {
           onReturnToDashboard={() => router.push('/candidate/dashboard')}
         />
 
-        {isActive && (
-          <InterviewTimer elapsedTime={timer.elapsedTime} timeWarning={timer.timeWarning} />
-        )}
       </Box>
     </>
   );

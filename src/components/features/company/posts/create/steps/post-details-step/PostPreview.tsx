@@ -42,7 +42,6 @@ import {
   EXPERIENCE_OPTION_KEY,
   WORK_MODE_OPTION_KEY,
   normalizeEmploymentType,
-  normalizeExperienceLevel,
   normalizeWorkMode,
   optionLabel,
   hardSkillLevelLabel,
@@ -97,7 +96,6 @@ const PostPreview = () => {
   const labelT = i18n.getFixedT(labelLanguage, "posts");
   const normalizedEmploymentType = normalizeEmploymentType(employmentType);
   const normalizedWorkMode = normalizeWorkMode(workMode);
-  const normalizedExperienceLevel = normalizeExperienceLevel(experienceLevel);
 
   const [open, setOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -204,7 +202,7 @@ const PostPreview = () => {
             <TrendingUpIcon sx={{ fontSize: 14 }} />
             {t("create.post_form.labels.experience_level")}
           </Typography>
-          <TextField select fullWidth value={normalizedExperienceLevel}
+          <TextField select fullWidth value={experienceLevel}
             onChange={(e) => dispatch(updateJobField({ field: "experienceLevel", value: e.target.value }))}
             sx={inputSx}
             InputProps={{ startAdornment: <InputAdornment position="start"><TrendingUpIcon sx={{ fontSize: 16, color: "#9CA3AF" }} /></InputAdornment> }}

@@ -159,7 +159,7 @@ const ProfileCard: React.FC<{
   </Box>
 );
 
-const ProfileStrengthCard: React.FC<{ checklist: { label: string; done: boolean }[]; label: string }> = ({ checklist, label }) => (
+const ProfileStrengthCard: React.FC<{ checklist: { label: string; done: boolean; href?: string }[]; label: string }> = ({ checklist, label }) => (
   <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 2, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
       <TrendingUpOutlined sx={{ fontSize: 16, color: "#7C3AED" }} />
@@ -169,16 +169,33 @@ const ProfileStrengthCard: React.FC<{ checklist: { label: string; done: boolean 
       value={Math.round((checklist.filter(c => c.done).length / checklist.length) * 100)}
       sx={{ height: 5, borderRadius: "99px", bgcolor: "#F3F4F6", mb: 1.5, "& .MuiLinearProgress-bar": { borderRadius: "99px", bgcolor: "#7C3AED" } }} />
     <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
-      {checklist.map((item, i) => (
-        <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          {item.done
-            ? <CheckCircleOutlined sx={{ fontSize: 14, color: "#059669" }} />
-            : <RadioButtonUncheckedOutlined sx={{ fontSize: 14, color: "#D1D5DB" }} />}
-          <Typography sx={{ fontSize: "0.72rem", color: item.done ? "#374151" : "#9CA3AF", fontWeight: item.done ? 500 : 400 }}>
-            {item.label}
-          </Typography>
-        </Box>
-      ))}
+      {checklist.map((item, i) => {
+        const clickable = !item.done && !!item.href;
+        return (
+          <Box
+            key={i}
+            component={clickable ? "a" : "div"}
+            href={clickable ? item.href : undefined}
+            sx={{
+              display: "flex", alignItems: "center", gap: 1,
+              borderRadius: "8px", px: 0.75, py: 0.4, mx: -0.75,
+              textDecoration: "none",
+              cursor: clickable ? "pointer" : "default",
+              transition: "background 0.15s",
+              ...(clickable && {
+                "&:hover": { bgcolor: "#F5F3FF", "& .item-label": { color: "#7C3AED", textDecoration: "underline" } },
+              }),
+            }}
+          >
+            {item.done
+              ? <CheckCircleOutlined sx={{ fontSize: 14, color: "#059669", flexShrink: 0 }} />
+              : <RadioButtonUncheckedOutlined sx={{ fontSize: 14, color: "#D1D5DB", flexShrink: 0 }} />}
+            <Typography className="item-label" sx={{ fontSize: "0.72rem", color: item.done ? "#374151" : "#9CA3AF", fontWeight: item.done ? 500 : 400, transition: "color 0.15s" }}>
+              {item.label}
+            </Typography>
+          </Box>
+        );
+      })}
     </Box>
   </Box>
 );
@@ -206,10 +223,10 @@ const DashboardCandidate: React.FC = () => {
     : undefined;
 
   const checklist = [
-    { label: t("candidate.checklist.complete_profile"), done: !!(profile?.firstName && profile?.lastName) },
-    { label: t("candidate.checklist.add_target_role"),  done: !!profile?.targetRole                       },
-    { label: t("candidate.checklist.set_experience"),   done: !!profile?.requiredExperienceLevel          },
-    { label: t("candidate.checklist.first_application"),done: totalApplications > 0                       },
+    { label: t("candidate.checklist.complete_profile"), done: !!(profile?.firstName && profile?.lastName), href: "/candidate/profile/settings" },
+    { label: t("candidate.checklist.add_target_role"),  done: !!profile?.targetRole,                        href: "/candidate/profile/settings" },
+    { label: t("candidate.checklist.set_experience"),   done: !!profile?.requiredExperienceLevel,           href: "/candidate/profile/settings" },
+    { label: t("candidate.checklist.first_application"),done: totalApplications > 0,                        href: "/candidate/dashboard"        },
   ];
 
   const quickLinks: { icon: React.ElementType; label: string; sublabel: string; view: ActiveView; color: string; bg: string; border: string }[] = [

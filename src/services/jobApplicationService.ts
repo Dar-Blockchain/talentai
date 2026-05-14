@@ -95,4 +95,15 @@ export const jobApplicationService = {
     const res = await axiosInstance.get('job-applications/candidate/my/stats');
     return res.data;
   },
+
+  createApplication: async (postId: string) => {
+    const res = await axiosInstance.post('job-applications/', { post: postId });
+    return res.data;
+  },
+
+  updateRecruiterDecision: async (applicationId: string, decision: 'shortlisted' | 'rejected', rejectionReason?: string) => {
+    const res = await axiosInstance.patch(`job-applications/${applicationId}/recruiter-decision`, { decision, rejectionReason });
+    return res.data;
+  },
+
 };

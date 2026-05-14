@@ -1,4 +1,6 @@
 {
+  "success_title": "Entretien complété avec succès !",
+  "success_message": "Bravo ! Votre entretien a été soumis et vos résultats ont été sauvegardés. Vous pouvez consulter vos performances dans votre tableau de bord.",
   "back_to_dashboard": "Retour au tableau de bord",
   "errors": {
     "no_data": "Aucune donnée d'entretien trouvée. Veuillez d'abord compléter un entretien.",

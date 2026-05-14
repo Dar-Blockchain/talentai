@@ -49,7 +49,7 @@ Return the response in the following JSON format:
         "location": "Job location",
         "workMode": "Remote/On-site/Hybrid",
         "employmentType": "Full-time/Part-time/Contract",
-        "experienceLevel": "Required experience level",
+        "experienceLevel": "Junior/Mid-level/Senior/Expert",
         "salary": {
           "min": 0,
           "max": 0,

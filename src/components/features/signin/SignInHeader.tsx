@@ -18,9 +18,9 @@ const SignInHeader: React.FC<Props> = ({ themeColors }) => {
       <NextLink href="/" style={{ display: "inline-block" }}>
         <Box
           component="img"
-          src={userType === "company" ? "/logo.svg" : "/logo-purple.svg"}
+          src="/images/home/logo.svg"
           alt="TalentAI Logo"
-          sx={{ height: { xs: 20, sm: 22 }, display: { xs: "block", md: "none" }, mb: 1.75, mx: "auto", cursor: "pointer" }}
+          sx={{ height: { xs: 28, sm: 32 }, display: { xs: "block", md: "none" }, mb: 1.75, mx: "auto", cursor: "pointer" }}
         />
       </NextLink>
 

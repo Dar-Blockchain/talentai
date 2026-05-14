@@ -77,7 +77,12 @@ export const interviewService = {
 
   checkPostAssessment: async (postId: string) => {
     const res = await axiosInstance.get(`post-interview-assessments/check/${postId}`);
-    return { exists: !!res.data?.exists };
+    return {
+      exists: !!res.data?.exists,
+      underThreshold: !!res.data?.underThreshold,
+      thresholdScore: res.data?.thresholdScore ?? null,
+      matchScore: res.data?.matchScore ?? null,
+    };
   },
 
   fetchCompanyInterviews: async (params: { search?: string; page?: number; limit?: number }) => {

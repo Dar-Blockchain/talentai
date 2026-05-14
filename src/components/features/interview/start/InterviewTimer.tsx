@@ -15,42 +15,30 @@ const InterviewTimer: React.FC<InterviewTimerProps> = ({
   return (
     <Box
       sx={{
-        position: 'fixed',
-        top: 72,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        zIndex: 1050,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 0.75,
+        bgcolor: timeWarning ? 'rgba(239,68,68,0.1)' : 'rgba(11,11,15,0.06)',
+        border: `1px solid ${timeWarning ? 'rgba(239,68,68,0.3)' : 'rgba(0,0,0,0.1)'}`,
+        borderRadius: '40px',
+        px: 1.75,
+        py: 0.6,
       }}
     >
-      <Box
+      {timeWarning
+        ? <WarningIcon sx={{ fontSize: 14, color: '#ef4444' }} />
+        : <AccessTimeIcon sx={{ fontSize: 14, color: '#6B7280' }} />}
+      <Typography
         sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1,
-          bgcolor: timeWarning ? 'rgba(239,68,68,0.92)' : 'rgba(11,11,15,0.88)',
-          backdropFilter: 'blur(12px)',
-          border: `1px solid ${timeWarning ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.1)'}`,
-          borderRadius: '40px',
-          px: 2.5,
-          py: 1,
-          boxShadow: timeWarning ? '0 4px 20px rgba(239,68,68,0.35)' : '0 4px 20px rgba(0,0,0,0.25)',
+          fontFamily: 'Poppins',
+          fontWeight: 700,
+          fontSize: '0.88rem',
+          color: timeWarning ? '#ef4444' : '#374151',
+          letterSpacing: '0.04em',
         }}
       >
-        {timeWarning
-          ? <WarningIcon sx={{ fontSize: 16, color: '#fff' }} />
-          : <AccessTimeIcon sx={{ fontSize: 16, color: 'rgba(255,255,255,0.6)' }} />}
-        <Typography
-          sx={{
-            fontFamily: 'Poppins',
-            fontWeight: 700,
-            fontSize: '0.95rem',
-            color: '#fff',
-            letterSpacing: '0.04em',
-          }}
-        >
-          {Math.floor(elapsedTime / 60)}:{String(elapsedTime % 60).padStart(2, '0')}
-        </Typography>
-      </Box>
+        {Math.floor(elapsedTime / 60)}:{String(elapsedTime % 60).padStart(2, '0')}
+      </Typography>
     </Box>
   );
 };

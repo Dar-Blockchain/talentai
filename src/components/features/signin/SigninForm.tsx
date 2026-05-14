@@ -55,6 +55,7 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
 
   const codeValue = watch("code");
   const emailValue = watch("email");
+  const isOtpLocked = step === 2 && loading;
 
   useEffect(() => {
     if (invitationEmail) setValue("email", invitationEmail);
@@ -117,6 +118,13 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
       "&:hover": { bgcolor: "#F3F4F6" },
       "&.Mui-focused fieldset": { borderColor: ACCENT, borderWidth: "1.5px" },
       "&.Mui-focused": { bgcolor: "#fff" },
+      "& input:-webkit-autofill, & input:-webkit-autofill:hover, & input:-webkit-autofill:focus, & input:-webkit-autofill:active": {
+        WebkitBoxShadow: "0 0 0 1000px #F9FAFB inset",
+        WebkitTextFillColor: "#0F172A",
+        caretColor: "#0F172A",
+        transition: "background-color 9999s ease-out 0s",
+        borderRadius: "inherit",
+      },
     },
     "& .MuiFormHelperText-root": { fontFamily: "Poppins", fontSize: "0.7rem", mt: 0.5 },
   };
@@ -204,8 +212,10 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
                     component="input"
                     ref={(el: unknown) => { codeInputsRef.current[i] = el as HTMLInputElement | null; }}
                     value={codeValue[i] || ""}
+                    disabled={isOtpLocked}
                     maxLength={1}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      if (isOtpLocked) return;
                       const raw = e.target.value.replace(/\D/g, "");
                       const cur = getValues("code");
                       if (!raw) { const arr = cur.split(""); arr[i] = ""; setValue("code", arr.join("")); return; }
@@ -213,6 +223,7 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
                       if (i < CODE_LENGTH - 1) codeInputsRef.current[i + 1]?.focus();
                     }}
                     onPaste={(e: React.ClipboardEvent<HTMLInputElement>) => {
+                      if (isOtpLocked) return;
                       e.preventDefault();
                       const paste = e.clipboardData.getData("text").replace(/\D/g, "");
                       if (!paste) return;
@@ -223,13 +234,15 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
                       codeInputsRef.current[Math.min(paste.length, CODE_LENGTH - 1)]?.focus();
                     }}
                     onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                      if (isOtpLocked) return;
                       if (e.key === "Backspace" && !getValues("code")[i] && i > 0) codeInputsRef.current[i - 1]?.focus();
                     }}
                     sx={{
                       width: "100%", height: "100%", border: "none", outline: "none",
                       background: "transparent", textAlign: "center",
                       fontSize: { xs: "1.2rem", sm: "1.35rem" }, fontWeight: 700, color: "#0F172A",
-                      fontFamily: "Poppins", cursor: "text",
+                      fontFamily: "Poppins",
+                      cursor: isOtpLocked ? "not-allowed" : "text",
                     }}
                   />
                 </Box>

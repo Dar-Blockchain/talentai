@@ -441,7 +441,7 @@ module.exports.checkRole = async (req, res) => {
     if (!email) return res.status(400).json({ error: "Email is required" });
 
     const user = await User.findOne({ email }).select("role").lean();
-    if (!user) return res.status(404).json({ role: null, exists: false });
+    if (!user) return res.status(401).json({ role: null, exists: false });
 
     res.json({ role: user.role, exists: true });
   } catch (error) {

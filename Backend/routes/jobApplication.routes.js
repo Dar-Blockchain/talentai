@@ -57,11 +57,36 @@ router.get("/company/my/metrics", jobApplicationController.getApplicationMetrics
 // GET /job-applications/company/my/cvs/download — Download all matching CVs as a ZIP
 router.get("/company/my/cvs/download", jobApplicationController.downloadCVsByCompany);
 
+// GET /job-applications/company/my/kpi/actions — Get all Zone 1 action counts in one call
+// Query params: postId (optional), dateFrom (optional)
+router.get("/company/my/kpi/actions", jobApplicationController.getActionsKPI);
+
+// GET /job-applications/company/my/kpi/sourcing — Get KPI: Sourcing quality (Zone 5)
+router.get("/company/my/kpi/sourcing", jobApplicationController.getSourcingKPI);
+
+// GET /job-applications/company/my/kpi/velocity — Get KPI: TTS + TTH trend (Zone 4)
+router.get("/company/my/kpi/velocity", jobApplicationController.getVelocityKPI);
+
+// GET /job-applications/company/my/kpi/funnel — Get KPI: Global funnel counts
+// Query params: postId (optional)
+router.get("/company/my/kpi/funnel", jobApplicationController.getFunnelKPI);
+
+// GET /job-applications/company/my/kpi/roi — Get KPI: Reporting & ROI (Zone 7)
+router.get("/company/my/kpi/roi", jobApplicationController.getRoiKPI);
+
+// GET /job-applications/company/my/by-decision — Get candidates by recruiter decision
+// Query params: decision (required: shortlisted|rejected), postId (optional), page, limit
+router.get("/company/my/by-decision", jobApplicationController.getCandidatesByDecision);
+
 // POST /job-applications/auto-invite/trigger — Trigger auto-invite (nudge #1), bypasses time window
 router.post("/auto-invite/trigger", jobApplicationController.triggerAutoInvite);
 
 // POST /job-applications/reminder/trigger — Trigger reminder (nudge #2 / #3), bypasses time window
 router.post("/reminder/trigger", jobApplicationController.triggerReminder);
+
+// PATCH /job-applications/:applicationId/recruiter-decision — Update recruiter's decision (shortlist/reject)
+// Body: { decision: "shortlisted" | "rejected", rejectionReason: "optional reason" }
+router.patch("/:applicationId/recruiter-decision", jobApplicationController.updateRecruiterDecision);
 
 // GET /job-applications/:applicationId — Get single application by ID
 router.get("/:applicationId", jobApplicationController.getJobApplicationById);

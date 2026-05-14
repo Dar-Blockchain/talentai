@@ -246,7 +246,7 @@ export const fetchCompanyInterviewMetrics = createAsyncThunk<
  * Check if candidate already completed an assessment for a given post
  */
 export const checkPostInterviewAssessment = createAsyncThunk<
-  { exists: boolean; isCompanyBlocked?: boolean; isArchived?: boolean },
+  { exists: boolean; isCompanyBlocked?: boolean; isArchived?: boolean; underThreshold?: boolean; thresholdScore?: number; matchScore?: number },
   string,
   { rejectValue: string }
 >(

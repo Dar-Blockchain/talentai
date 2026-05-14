@@ -1,4 +1,6 @@
 {
+  "success_title": "Interview Completed Successfully!",
+  "success_message": "Great job! Your interview has been submitted and your results have been saved. You can view your performance in your dashboard.",
   "back_to_dashboard": "Back to Dashboard",
   "errors": {
     "no_data": "No interview data found. Please complete an interview first.",

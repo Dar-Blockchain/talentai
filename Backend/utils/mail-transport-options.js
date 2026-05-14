@@ -20,8 +20,8 @@ function getMailTransportOptions() {
     port,
     secure,
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD,
+      user: process.env.NO_REPLY_EMAIL || process.env.EMAIL_USER,
+      pass: process.env.NO_REPLY_EMAIL_PASSWORD || process.env.EMAIL_PASSWORD,
     },
   };
 

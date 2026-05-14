@@ -81,6 +81,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
       open={open}
       anchorEl={anchorEl}
       onClose={onClose}
+      disableScrollLock
       anchorOrigin={{
         vertical: 'bottom',
         horizontal: 'right',
