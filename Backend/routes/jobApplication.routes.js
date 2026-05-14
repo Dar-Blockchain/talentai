@@ -74,14 +74,6 @@ router.get("/company/my/kpi/funnel", jobApplicationController.getFunnelKPI);
 // GET /job-applications/company/my/kpi/roi — Get KPI: Reporting & ROI (Zone 7)
 router.get("/company/my/kpi/roi", jobApplicationController.getRoiKPI);
 
-// GET /job-applications/company/my/shortlisted — Get all shortlisted candidates
-// Query params: postId (optional), page, limit
-router.get("/company/my/shortlisted", jobApplicationController.getShortlistedCandidates);
-
-// GET /job-applications/company/my/rejected — Get all rejected candidates
-// Query params: postId (optional), page, limit
-router.get("/company/my/rejected", jobApplicationController.getRejectedCandidates);
-
 // GET /job-applications/company/my/by-decision — Get candidates by recruiter decision
 // Query params: decision (required: shortlisted|rejected), postId (optional), page, limit
 router.get("/company/my/by-decision", jobApplicationController.getCandidatesByDecision);

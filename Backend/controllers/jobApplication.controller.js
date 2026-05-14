@@ -1156,87 +1156,8 @@ module.exports.updateRecruiterDecision = async (req, res) => {
   }
 };
 
-// ========== GET SHORTLISTED CANDIDATES ==========
-module.exports.getShortlistedCandidates = async (req, res) => {
-  try {
-    const companyId = req.user._id;
-    const { postId, page = 1, limit = 20 } = req.query;
 
-    if (!companyId) {
-      return res.status(400).json({
-        success: false,
-        error: "Company ID is required",
-      });
-    }
 
-    console.log("\n" + "=".repeat(80));
-    console.log("⭐ [SHORTLISTED] GET CANDIDATES - REQUEST RECEIVED");
-    console.log("=".repeat(80));
-    console.log(`👤 Company ID: ${companyId}`);
-    if (postId) console.log(`📄 Post ID: ${postId}`);
-
-    const result = await jobApplicationService.getShortlistedCandidates(
-      companyId,
-      postId || null,
-      parseInt(page),
-      parseInt(limit)
-    );
-
-    console.log(`✅ Retrieved ${result.pagination.totalCount} shortlisted candidates`);
-    console.log("=".repeat(80) + "\n");
-
-    res.status(200).json({
-      success: true,
-      message: "Shortlisted candidates retrieved successfully",
-      data: result.data,
-      pagination: result.pagination,
-    });
-  } catch (error) {
-    console.error(`\n❌ [ERROR] Error in getShortlistedCandidates: ${error.message}`);
-    handleError(res, error);
-  }
-};
-
-// ========== GET REJECTED CANDIDATES ==========
-module.exports.getRejectedCandidates = async (req, res) => {
-  try {
-    const companyId = req.user._id;
-    const { postId, page = 1, limit = 20 } = req.query;
-
-    if (!companyId) {
-      return res.status(400).json({
-        success: false,
-        error: "Company ID is required",
-      });
-    }
-
-    console.log("\n" + "=".repeat(80));
-    console.log("❌ [REJECTED] GET CANDIDATES - REQUEST RECEIVED");
-    console.log("=".repeat(80));
-    console.log(`👤 Company ID: ${companyId}`);
-    if (postId) console.log(`📄 Post ID: ${postId}`);
-
-    const result = await jobApplicationService.getRejectedCandidates(
-      companyId,
-      postId || null,
-      parseInt(page),
-      parseInt(limit)
-    );
-
-    console.log(`✅ Retrieved ${result.pagination.totalCount} rejected candidates`);
-    console.log("=".repeat(80) + "\n");
-
-    res.status(200).json({
-      success: true,
-      message: "Rejected candidates retrieved successfully",
-      data: result.data,
-      pagination: result.pagination,
-    });
-  } catch (error) {
-    console.error(`\n❌ [ERROR] Error in getRejectedCandidates: ${error.message}`);
-    handleError(res, error);
-  }
-};
 
 // ========== GET CANDIDATES BY DECISION ==========
 module.exports.getCandidatesByDecision = async (req, res) => {
