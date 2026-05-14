@@ -545,7 +545,7 @@ exports.getJobInterviewConfig = async (req, res) => {
     // Check if post has expired
     if (post.expirationDate && new Date(post.expirationDate) < new Date()) {
       console.log("❌ Job post has expired");
-      return res.status(410).json({
+      return res.status(404).json({
         success: false,
         error: "Job post has expired",
         message:
@@ -738,6 +738,44 @@ exports.getPostMetrics = async (req, res) => {
     res.status(200).json({
       success: true,
       data: metrics,
+    });
+  } catch (error) {
+    handleError(res, error, 500);
+  }
+};
+
+// ========== KPI - POSTS IN ALERT ==========
+exports.getPostsInAlertKPI = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const data = await postService.getPostsInAlertKPI(userId);
+
+    res.status(200).json({
+      success: true,
+      message: "Posts in alert KPI retrieved successfully",
+      data,
+    });
+  } catch (error) {
+    handleError(res, error, 500);
+  }
+};
+
+// ========== KPI - STATUS BY POST (Zone 2) ==========
+exports.getPostsStatusKPI = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const page   = Math.max(1, parseInt(req.query.page)  || 1);
+    const limit  = Math.max(1, parseInt(req.query.limit) || 3);
+    const postId = req.query.postId || null;
+
+    const result = await postService.getPostsStatusKPI(userId, page, limit, postId);
+
+    res.status(200).json({
+      success: true,
+      message: "Posts status KPI retrieved successfully",
+      data:       result.data,
+      pagination: result.pagination,
     });
   } catch (error) {
     handleError(res, error, 500);

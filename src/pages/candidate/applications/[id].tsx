@@ -109,66 +109,6 @@ const ProfileStrengthCard: React.FC<{ title: string; checklist: { label: string;
   </Box>
 );
 
-const StatusTimeline: React.FC<{ rawStatus: string; t: (k: string, opts?: any) => string }> = ({ rawStatus, t }) => {
-  const steps = [
-    { key: "applied",             label: t("timeline.applied"),      color: "#2563EB" },
-    { key: "pending",             label: t("timeline.under_review"), color: "#D97706" },
-    { key: "shortlisted",         label: t("timeline.shortlisted"),  color: "#16A34A" },
-    { key: "interview_scheduled", label: t("timeline.interview"),    color: T         },
-    { key: "accepted",            label: t("timeline.accepted"),     color: T         },
-  ];
-  const activeIndex = steps.findIndex(s => s.key === rawStatus);
-  const isRejected  = rawStatus === "rejected" || rawStatus === "withdrawn";
-
-  return (
-    <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 2, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-      <Typography sx={{ fontSize: "0.72rem", fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.06em", mb: 1.5 }}>
-        {t("timeline.title")}
-      </Typography>
-
-      {isRejected ? (
-        <Box sx={{ p: 1.5, borderRadius: "10px", bgcolor: "#FEF2F2", border: "1px solid #FECACA", textAlign: "center" }}>
-          <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: "#DC2626" }}>
-            {rawStatus === "withdrawn" ? t("timeline.withdrawn") : t("timeline.not_selected")}
-          </Typography>
-          <Typography sx={{ fontSize: "0.68rem", color: "#9CA3AF", mt: 0.25 }}>{t("timeline.closed")}</Typography>
-        </Box>
-      ) : (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 0 }}>
-          {steps.map((step, i) => {
-            const done    = activeIndex >= i;
-            const active  = activeIndex === i;
-            const isLast  = i === steps.length - 1;
-            return (
-              <Box key={step.key} sx={{ display: "flex", gap: 1.25 }}>
-                <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", width: 20, flexShrink: 0 }}>
-                  <Box sx={{
-                    width: 16, height: 16, borderRadius: "50%", flexShrink: 0, mt: 0.25,
-                    bgcolor: done ? step.color : "#E5E7EB",
-                    border: `2px solid ${done ? step.color : "#E5E7EB"}`,
-                    boxShadow: active ? `0 0 0 3px ${step.color}28` : "none",
-                    transition: "all 0.3s",
-                  }} />
-                  {!isLast && (
-                    <Box sx={{ width: 2, flex: 1, minHeight: 14, bgcolor: done && activeIndex > i ? step.color : "#E5E7EB", transition: "all 0.3s", mt: 0.25 }} />
-                  )}
-                </Box>
-                <Box sx={{ pb: isLast ? 0 : 1.5 }}>
-                  <Typography sx={{ fontSize: "0.78rem", fontWeight: active ? 700 : done ? 600 : 400, color: done ? NAVY : "#9CA3AF", lineHeight: 1.3 }}>
-                    {step.label}
-                  </Typography>
-                  {active && (
-                    <Typography sx={{ fontSize: "0.65rem", color: step.color, fontWeight: 600, mt: 0.1 }}>{t("timeline.current_stage")}</Typography>
-                  )}
-                </Box>
-              </Box>
-            );
-          })}
-        </Box>
-      )}
-    </Box>
-  );
-};
 
 const Section: React.FC<{ icon: React.ReactNode; title: string; children: React.ReactNode }> = ({ icon, title, children }) => (
   <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 2.5, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
@@ -422,7 +362,6 @@ const CandidateApplicationDetailPage: React.FC = () => {
 
           {/* ── RIGHT: status timeline ── */}
           <Box sx={{ display: { xs: "none", lg: "flex" }, flexDirection: "column", gap: 2, position: "sticky", top: 16 }}>
-            {app && !loading && <StatusTimeline rawStatus={rawStatus} t={(k, opts) => t(`candidate.application_detail.${k}`, opts) as string} />}
 
             {app && !loading && (
               <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 2, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>

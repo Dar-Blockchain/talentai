@@ -197,7 +197,7 @@ module.exports.getMatchingDetails = async (candidateId, postId) => {
  * - count: Total unreviewed interviews > 48h
  * - urgent: Unreviewed interviews > 72h
  */
-module.exports.getUnreviewedInterviewsOver48Hours = async (companyId, postId = null) => {
+module.exports.getUnreviewedInterviewsOver48Hours = async (companyId, postId = null, dateFrom = null) => {
   try {
     console.log(`\n📊 [UNREVIEWED INTERVIEWS KPI] - Fetching unreviewed AI interviews > 48h for company ${companyId}`);
     
@@ -221,10 +221,8 @@ module.exports.getUnreviewedInterviewsOver48Hours = async (companyId, postId = n
       createdAt: { $lt: hours48Ago } // Created more than 48h ago
     };
 
-    // Add post filter if provided
-    if (postId) {
-      baseQuery.post = postId;
-    }
+    if (postId) baseQuery.post = postId;
+    if (dateFrom) baseQuery.createdAt = { ...baseQuery.createdAt, $gte: new Date(dateFrom) };
 
     console.log(`📋 Query used:`, JSON.stringify(baseQuery));
 

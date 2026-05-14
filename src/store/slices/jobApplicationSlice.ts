@@ -23,6 +23,7 @@ export interface ApplicationSummaryItem {
   postId?: string | null;
   postTitle?: string | null;
   resumeFile?: string | null;
+  recruiterDecision?: 'shortlisted' | 'rejected' | null;
 }
 
 interface SummaryState {
@@ -179,10 +180,30 @@ export const createJobApplication = createAsyncThunk(
   }
 );
 
+export const updateRecruiterDecision = createAsyncThunk(
+  'jobApplications/updateRecruiterDecision',
+  async (params: { applicationId: string; decision: 'shortlisted' | 'rejected'; rejectionReason?: string }, { rejectWithValue }) => {
+    try {
+      return await jobApplicationService.updateRecruiterDecision(params.applicationId, params.decision, params.rejectionReason);
+    } catch (error: any) {
+      return rejectWithValue(error?.response?.data?.error || error.message || 'Failed to update decision');
+    }
+  }
+);
+
+
 const jobApplicationSlice = createSlice({
   name: 'jobApplications',
   initialState,
-  reducers: {},
+  reducers: {
+    updateLocalDecision(state, action: { payload: { applicationId: string; decision: 'shortlisted' | 'rejected' } }) {
+      const { applicationId, decision } = action.payload;
+      const item = state.companySummary.data.find(a => String(a.id) === applicationId);
+      if (item) item.recruiterDecision = decision;
+      const item2 = state.postSummary.data.find(a => String(a.id) === applicationId);
+      if (item2) item2.recruiterDecision = decision;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchCompanyApplications.pending, (state, action) => {
@@ -269,6 +290,7 @@ const jobApplicationSlice = createSlice({
   },
 });
 
+export const { updateLocalDecision } = jobApplicationSlice.actions;
 export default jobApplicationSlice.reducer;
 
 // Selectors
