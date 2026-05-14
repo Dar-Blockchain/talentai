@@ -44,7 +44,6 @@ export interface ApplicationCardProps {
   onContact: (target: ContactTarget) => void;
   onAssessment: (target: AssessmentTarget) => void;
   onInvite: (target: InviteTarget) => void;
-  onDecisionSuccess?: () => void;
 }
 
 const ApplicationCard: React.FC<ApplicationCardProps> = ({
@@ -54,7 +53,6 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
   onContact,
   onAssessment,
   onInvite,
-  onDecisionSuccess,
 }) => {
   const { t } = useTranslation("dashboard");
   const router = useRouter();
@@ -155,7 +153,6 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
           });
         }}
         onInvite={() => onInvite({ applicationId: appId, name, postTitle: app.postTitle || "", postId })}
-        onDecisionSuccess={onDecisionSuccess}
       />
     </Paper>
   );

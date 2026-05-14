@@ -16,7 +16,7 @@ import StarOutlined from "@mui/icons-material/StarOutlined";
 import CancelOutlined from "@mui/icons-material/CancelOutlined";
 import { useRouter } from "next/router";
 import { AppDispatch } from "@/store/store";
-import { ApplicationSummaryItem, updateRecruiterDecision } from "@/store/slices/jobApplicationSlice";
+import { ApplicationSummaryItem, updateRecruiterDecision, updateLocalDecision } from "@/store/slices/jobApplicationSlice";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const TEAL   = "#0D9488";
@@ -68,7 +68,6 @@ export interface ApplicationCardActionsProps {
   onContact: () => void;
   onAssessment: () => void;
   onInvite: () => void;
-  onDecisionSuccess?: () => void;
 }
 
 // ── menuItemSx helper ──────────────────────────────────────────────────────────
@@ -82,7 +81,7 @@ const menuItemSx = (color: string) => ({
 const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
   app, name, appId, postId, avatarUrl, bgColor,
   menuAnchorEl, menuOpen, onMenuOpen, onMenuClose,
-  onContact, onAssessment, onInvite, onDecisionSuccess,
+  onContact, onAssessment, onInvite,
 }) => {
   const { t } = useTranslation("dashboard");
   const router       = useRouter();
@@ -100,7 +99,7 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
     else setDecidingReject(true);
     try {
       await dispatch(updateRecruiterDecision({ applicationId: appId, decision })).unwrap();
-      onDecisionSuccess?.();
+      dispatch(updateLocalDecision({ applicationId: appId, decision }));
     } finally {
       setDecidingShortlist(false);
       setDecidingReject(false);

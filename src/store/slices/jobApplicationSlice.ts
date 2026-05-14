@@ -195,7 +195,15 @@ export const updateRecruiterDecision = createAsyncThunk(
 const jobApplicationSlice = createSlice({
   name: 'jobApplications',
   initialState,
-  reducers: {},
+  reducers: {
+    updateLocalDecision(state, action: { payload: { applicationId: string; decision: 'shortlisted' | 'rejected' } }) {
+      const { applicationId, decision } = action.payload;
+      const item = state.companySummary.data.find(a => String(a.id) === applicationId);
+      if (item) item.recruiterDecision = decision;
+      const item2 = state.postSummary.data.find(a => String(a.id) === applicationId);
+      if (item2) item2.recruiterDecision = decision;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchCompanyApplications.pending, (state, action) => {
@@ -282,6 +290,7 @@ const jobApplicationSlice = createSlice({
   },
 });
 
+export const { updateLocalDecision } = jobApplicationSlice.actions;
 export default jobApplicationSlice.reducer;
 
 // Selectors
