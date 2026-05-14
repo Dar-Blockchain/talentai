@@ -175,24 +175,6 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
           </Box>
         )}
 
-        {/* REC badge */}
-        {isActive && cameraStatus === 'granted' && (
-          <Box sx={{
-            position: 'absolute', top: 12, left: 12,
-            display: 'flex', alignItems: 'center', gap: 0.6,
-            bgcolor: 'rgba(239,68,68,0.85)', backdropFilter: 'blur(4px)',
-            px: 1.25, py: 0.4, borderRadius: '6px',
-          }}>
-            <Box sx={{
-              width: 6, height: 6, borderRadius: '50%', bgcolor: '#fff',
-              animation: 'recPulse 1.2s infinite',
-              '@keyframes recPulse': { '0%,100%': { opacity: 1 }, '50%': { opacity: 0.25 } },
-            }} />
-            <Typography sx={{ color: '#fff', fontSize: '0.65rem', fontWeight: 800, fontFamily: 'Poppins', letterSpacing: '0.1em' }}>
-              {t('camera.rec')}
-            </Typography>
-          </Box>
-        )}
       </Box>
 
       {/* ── Waveform bar ── */}

@@ -597,6 +597,10 @@ const IntelligentInterviewTest = () => {
                 )}
 
                 {isActive && (
+                  <InterviewTimer elapsedTime={timer.elapsedTime} timeWarning={timer.timeWarning} />
+                )}
+
+                {isActive && (
                   <Button
                     variant="contained"
                     onClick={endInterview}
@@ -722,9 +726,6 @@ const IntelligentInterviewTest = () => {
           onReturnToDashboard={() => router.push('/candidate/dashboard')}
         />
 
-        {isActive && (
-          <InterviewTimer elapsedTime={timer.elapsedTime} timeWarning={timer.timeWarning} />
-        )}
       </Box>
     </>
   );
