@@ -18,6 +18,7 @@ export interface TeamConversation {
     text: string;
     senderId?: string;
     timestamp: string;
+    isDeletedForEveryone?: boolean;
   } | null;
   unreadCount: number;
   status: string;
@@ -35,6 +36,11 @@ export interface TeamMessage {
   isRead: boolean;
   readAt?: string | null;
   createdAt: string;
+  isDeletedForEveryone?: boolean;
+  deletedAt?: string | null;
+  deletedForEveryoneBy?: string;
+  deliveryBlocked?: boolean;
+  blockedReason?: "email" | "phone";
 }
 
 export interface TeamChatConversationsParams {

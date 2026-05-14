@@ -12,6 +12,7 @@ import {
   addCandidateMessage,
   removeCandidateConversation,
   removeCandidateMessage,
+  upsertCandidateMessage,
 } from "@/modules/candidate-chat/store/candidateChatSlice";
 import { candidateChatKeys } from "@/modules/candidate-chat/queries/keys";
 import { useCandidateConversationsQuery } from "@/modules/candidate-chat/queries/useCandidateChatQueries";
@@ -22,6 +23,8 @@ import {
   leaveCandidateConversationRoom,
 } from "@/modules/candidate-chat/realtime/candidateChatSocket";
 import { normalizeCandidateSocketMessage } from "@/modules/candidate-chat/realtime/normalizeSocketMessage";
+import { toChatShellMessage } from "@/modules/candidate-chat/utils/mappers";
+import type { CandidateMessage } from "@/modules/candidate-chat/types";
 
 const isCandidateChatUser = (role?: string | null) =>
   role === "Company" || role === "Candidate";
@@ -54,13 +57,23 @@ export const useCandidateChatRealtime = () => {
       return;
     }
 
-    const socket = connectCandidateChatSocket(currentUserId);
+    const socket = connectCandidateChatSocket(String(currentUserId));
     if (!socket) return;
 
     const handleIncomingMessage = (payload: unknown) => {
       const normalized = normalizeCandidateSocketMessage(payload as Parameters<typeof normalizeCandidateSocketMessage>[0]);
+      const msgId = String(normalized._id || "");
+      if (
+        msgId
+        && store.getState().candidateChat.messages.some((m) => String(m._id) === msgId)
+      ) {
+        return;
+      }
+
       const senderId = String(normalized.sender._id);
       const isIncoming = senderId !== String(currentUserId);
+      if (normalized.deliveryBlocked && isIncoming) return;
+
       const openConversationId = store.getState().candidateChat.currentConversation?._id || null;
       const conversationId = String(normalized.conversationId || "");
       const { viewerIsViewingConversation, shouldNotify } = getIncomingMessageFlags({
@@ -72,17 +85,20 @@ export const useCandidateChatRealtime = () => {
         message: normalized,
         conversationId,
       });
-      const alreadyVisible = store.getState().candidateChat.messages.some(
-        (message) => String(message._id) === String(normalized._id),
-      );
-
-      if (!isIncoming && alreadyVisible) return;
 
       dispatch(addCandidateMessage({
         message: normalized,
         viewerUserId: String(currentUserId),
         viewerIsViewingConversation,
       }));
+
+      queryClient.invalidateQueries({ queryKey: candidateChatKeys.unreadCount() });
+      queryClient.invalidateQueries({ queryKey: [...candidateChatKeys.all, "conversations"] });
+      if (conversationId) {
+        queryClient.invalidateQueries({
+          queryKey: candidateChatKeys.messages(conversationId),
+        });
+      }
 
       if (!shouldNotify) return;
 
@@ -96,30 +112,88 @@ export const useCandidateChatRealtime = () => {
             })
           : t("realtime.new_message_fallback"),
       });
-
-      queryClient.invalidateQueries({ queryKey: candidateChatKeys.unreadCount() });
-      queryClient.invalidateQueries({ queryKey: candidateChatKeys.conversations() });
     };
 
-    const handleMessageDeleted = ({ messageId }: { messageId: string }) => {
-      dispatch(removeCandidateMessage(messageId));
+    const handleMessageDeleted = async (payload: {
+      messageId?: string;
+      conversationId?: string;
+    }) => {
+      if (!payload?.messageId) return;
+      const cid = payload.conversationId ? String(payload.conversationId) : "";
+      if (cid) {
+        await queryClient.cancelQueries({
+          queryKey: candidateChatKeys.messages(cid),
+        });
+        queryClient.setQueriesData(
+          { queryKey: candidateChatKeys.messages(cid) },
+          (old) => {
+            if (!Array.isArray(old)) return old;
+            return old.filter((m) => String(m._id) !== String(payload.messageId));
+          },
+        );
+      }
+      dispatch(removeCandidateMessage(String(payload.messageId)));
+      await queryClient.invalidateQueries({
+        queryKey: [...candidateChatKeys.all, "conversations"],
+      });
+      if (cid) {
+        await queryClient.invalidateQueries({
+          queryKey: candidateChatKeys.messages(cid),
+        });
+      }
+      await queryClient.invalidateQueries({ queryKey: candidateChatKeys.unreadCount() });
+    };
+
+    const handleMessageUpdated = async (payload: {
+      message?: CandidateMessage;
+      conversationId?: string;
+    }) => {
+      if (!payload?.message?._id) return;
+      const merged: CandidateMessage = {
+        ...payload.message,
+        conversationId: payload.message.conversationId ?? payload.conversationId,
+      };
+      const mapped = toChatShellMessage(merged);
+      const cid = merged.conversationId ? String(merged.conversationId) : "";
+      if (cid) {
+        await queryClient.cancelQueries({ queryKey: candidateChatKeys.messages(cid) });
+        queryClient.setQueriesData({ queryKey: candidateChatKeys.messages(cid) }, (old) => {
+          if (!Array.isArray(old)) return old;
+          const id = String(mapped._id);
+          const idx = old.findIndex((m) => String(m._id) === id);
+          if (idx < 0) return old;
+          const next = [...old];
+          next[idx] = mapped;
+          return next;
+        });
+      }
+      dispatch(upsertCandidateMessage(mapped));
+      await queryClient.invalidateQueries({
+        queryKey: [...candidateChatKeys.all, "conversations"],
+      });
+      if (cid) {
+        await queryClient.invalidateQueries({ queryKey: candidateChatKeys.messages(cid) });
+      }
+      await queryClient.invalidateQueries({ queryKey: candidateChatKeys.unreadCount() });
     };
 
     const handleConversationDeleted = ({ conversationId }: { conversationId: string }) => {
       dispatch(removeCandidateConversation(conversationId));
-      queryClient.invalidateQueries({ queryKey: candidateChatKeys.conversations() });
+      queryClient.invalidateQueries({ queryKey: [...candidateChatKeys.all, "conversations"] });
       queryClient.invalidateQueries({ queryKey: candidateChatKeys.unreadCount() });
     };
 
     socket.on("new_message", handleIncomingMessage);
     socket.on("message_notification", handleIncomingMessage);
     socket.on("message_deleted", handleMessageDeleted);
+    socket.on("message_updated", handleMessageUpdated);
     socket.on("conversation_deleted", handleConversationDeleted);
 
     return () => {
       socket.off("new_message", handleIncomingMessage);
       socket.off("message_notification", handleIncomingMessage);
       socket.off("message_deleted", handleMessageDeleted);
+      socket.off("message_updated", handleMessageUpdated);
       socket.off("conversation_deleted", handleConversationDeleted);
     };
   }, [currentUserId, dispatch, enabled, queryClient, t]);
@@ -136,13 +210,14 @@ export const useCandidateChatConversationRoom = (conversationId: string | null) 
   useEffect(() => {
     if (!enabled || !currentUser?._id || !conversationId) return;
 
-    connectCandidateChatSocket(currentUser._id);
+    const uid = String(currentUser._id);
+    connectCandidateChatSocket(uid);
     const joinRoom = () => {
       if (conversationId) joinCandidateConversationRoom(conversationId);
     };
 
     joinRoom();
-    const socket = connectCandidateChatSocket(currentUser._id);
+    const socket = connectCandidateChatSocket(uid);
     socket?.on("connect", joinRoom);
 
     return () => {

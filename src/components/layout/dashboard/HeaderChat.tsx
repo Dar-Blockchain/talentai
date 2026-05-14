@@ -26,7 +26,9 @@ import {
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import { useChatUnreadBadges } from "@/modules/shared/chat/hooks/useChatUnreadBadges";
+import { normalizeConversationUnreadCount } from "@/modules/shared/chat/utils/normalizeConversationUnread";
 import { getParticipantDisplayName } from "@/components/features/chat/helpers";
+import { TEAM_LAST_MESSAGE_DELETED_SENTINEL } from "@/modules/team-chat/constants/lastMessagePreview";
 
 const TEAL    = "#0D9488";
 const TEAL_BG = "#F0FDFA";
@@ -169,11 +171,17 @@ const HeaderChat: React.FC = () => {
             </Box>
           ) : (
             conversations.slice(0, 8).map((conv, i) => {
-              const other = conv.participants?.find((p) => p._id !== (currentUser?._id || currentUser?.id));
+              const uid = currentUser?._id != null ? String(currentUser._id) : "";
+              const other = conv.participants?.find((p) => String(p._id) !== uid);
               const name = getParticipantDisplayName(other);
               const initial = name[0]?.toUpperCase() || "?";
               const lastMsg = conv.lastMessage;
-              const hasUnread = (conv.unreadCount || 0) > 0;
+              const unreadN = normalizeConversationUnreadCount(conv.unreadCount, uid || undefined);
+              const teamLastPreviewDeleted =
+                isEmployee
+                && (!!lastMsg?.isDeletedForEveryone
+                  || lastMsg?.text === TEAM_LAST_MESSAGE_DELETED_SENTINEL);
+              const hasUnread = unreadN > 0;
               const conversationPath = isEmployee
                 ? getTeamChatConversationPath(role, conv._id)
                 : getCandidateChatConversationPath(role, conv._id);
@@ -196,7 +204,7 @@ const HeaderChat: React.FC = () => {
                     <Badge
                       overlap="circular"
                       anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                      badgeContent={conv.unreadCount > 0 ? conv.unreadCount : 0}
+                      badgeContent={unreadN > 0 ? unreadN : 0}
                       sx={{
                         "& .MuiBadge-badge": {
                           bgcolor: TEAL,
@@ -238,9 +246,12 @@ const HeaderChat: React.FC = () => {
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
                           fontWeight: hasUnread ? 600 : 400,
+                          fontStyle: teamLastPreviewDeleted ? "italic" : undefined,
                         }}
                       >
-                        {lastMsg?.text || tShared("header.no_messages_yet")}
+                        {teamLastPreviewDeleted
+                          ? tShared("messages.this_message_was_deleted")
+                          : lastMsg?.text || tShared("header.no_messages_yet")}
                       </Typography>
                     </Box>
                   </Box>

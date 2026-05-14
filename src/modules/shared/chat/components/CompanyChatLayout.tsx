@@ -10,7 +10,12 @@ interface CompanyChatLayoutProps {
 }
 
 const CompanyChatLayout: React.FC<CompanyChatLayoutProps> = ({ activeChannel, children }) => (
-  <Box sx={companyChatSx.workspace}>
+  <Box
+    sx={{
+      ...companyChatSx.workspace,
+      ...(activeChannel === "team" ? companyChatSx.workspaceTeamDense : {}),
+    }}
+  >
     <CompanyChatTopNav activeChannel={activeChannel} />
     <Box sx={companyChatSx.content}>{children}</Box>
   </Box>

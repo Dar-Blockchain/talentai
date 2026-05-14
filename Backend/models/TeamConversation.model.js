@@ -43,6 +43,23 @@ const teamConversationSchema = new mongoose.Schema(
       default: "active",
       index: true,
     },
+    /** Users who removed this chat from their list only (WhatsApp "delete for me") */
+    hiddenForParticipants: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    /**
+     * Per user: after "delete conversation for me", only messages with createdAt > this
+     * are returned to that user until they explicitly reopen (cleared in createOrGetConversation).
+     * Legacy key messageVisibilityCutoffByParticipant is still read in helpers for old documents.
+     */
+    clearedAtForUsers: {
+      type: Map,
+      of: Date,
+      default: () => new Map(),
+    },
   },
   { timestamps: true },
 );
@@ -67,6 +84,22 @@ teamConversationSchema.methods.incrementUnreadCount = async function (userId) {
 
 teamConversationSchema.methods.resetUnreadCount = async function (userId) {
   this.unreadCount.set(userId.toString(), 0);
+  await this.save();
+};
+
+teamConversationSchema.methods.hideForParticipant = async function (userId) {
+  const id = userId._id ? userId._id : userId;
+  const idStr = id.toString();
+  if (!this.hiddenForParticipants) {
+    this.hiddenForParticipants = [];
+  }
+  if (!this.hiddenForParticipants.some((p) => p.toString() === idStr)) {
+    this.hiddenForParticipants.push(id);
+  }
+  if (!this.clearedAtForUsers) {
+    this.clearedAtForUsers = new Map();
+  }
+  this.clearedAtForUsers.set(idStr, new Date());
   await this.save();
 };
 

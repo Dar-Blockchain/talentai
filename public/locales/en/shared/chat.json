@@ -3,7 +3,10 @@
     "all_conversations": "All Conversations ({{count}})",
     "no_conversations": "No conversations yet",
     "start_chatting": "Start chatting with candidates",
-    "no_messages": "No messages yet"
+    "start_chatting_candidate": "When a company messages you, the conversation will appear here.",
+    "no_messages": "No messages yet",
+    "conversation_menu_aria": "Conversation options",
+    "delete_conversation_menu": "Remove chat"
   },
   "panel": {
     "select_conversation": "Select a conversation",
@@ -20,10 +23,29 @@
   },
   "messages": {
     "no_messages": "No messages yet",
-    "start_conversation": "Start the conversation by sending a message below"
+    "start_conversation": "Start the conversation by sending a message below",
+    "this_message_was_deleted": "This message was deleted",
+    "not_delivered_preview": "Not delivered",
+    "delivery_blocked_email": "This message was not sent to the recipient because it contains an email address.",
+    "delivery_blocked_phone": "This message was not sent to the recipient because it contains a phone number.",
+    "date_today": "Today",
+    "date_yesterday": "Yesterday"
+  },
+  "toast": {
+    "contact_not_delivered_email": "Message saved, but not delivered: email addresses cannot be shared in chat.",
+    "contact_not_delivered_phone": "Message saved, but not delivered: phone numbers cannot be shared in chat.",
+    "recipient_not_found": "Could not find recipient.",
+    "message_deleted": "Message deleted",
+    "conversation_removed_list": "Chat removed from your list",
+    "failed_send": "Failed to send",
+    "failed_delete_message": "Failed to delete message",
+    "failed_delete_conversation": "Failed to delete conversation",
+    "message_removed_for_me": "Message removed from your view",
+    "message_deleted_for_everyone": "Message deleted for everyone"
   },
   "input": {
-    "placeholder": "Type a message… (Enter to send)"
+    "placeholder": "Type a message… (Enter to send)",
+    "send": "Send"
   },
   "delete_dialog": {
     "title": "Delete Conversation",

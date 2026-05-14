@@ -9,13 +9,15 @@ export const useChatUnreadBadges = () => {
   useChatUnreadQuerySync();
 
   const role = useSelector((state: RootState) => state.user.connectedUser.user?.role);
+  const viewerId = useSelector((state: RootState) => state.user.connectedUser.user?._id);
+  const vid = viewerId != null ? String(viewerId) : undefined;
   const teamConversations = useSelector(selectTeamConversations);
   const candidateConversations = useSelector(selectCandidateConversations);
   const teamTotalUnread = useSelector(selectTeamTotalUnread);
   const candidateTotalUnread = useSelector(selectCandidateTotalUnread);
 
-  const teamConversationUnread = sumConversationUnread(teamConversations);
-  const candidateConversationUnread = sumConversationUnread(candidateConversations);
+  const teamConversationUnread = sumConversationUnread(teamConversations, vid);
+  const candidateConversationUnread = sumConversationUnread(candidateConversations, vid);
   const teamChatUnread = Math.max(teamTotalUnread, teamConversationUnread);
   const candidateChatUnread = Math.max(candidateTotalUnread, candidateConversationUnread);
   const companyMessagesUnread = teamChatUnread + candidateChatUnread;

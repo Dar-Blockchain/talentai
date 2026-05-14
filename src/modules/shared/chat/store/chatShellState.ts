@@ -1,4 +1,14 @@
 import type { ChatShellConversation, ChatShellMessage } from "@/modules/shared/chat/types/shell";
+import type { Participant } from "@/components/features/chat/helpers";
+import { CHAT_LAST_MESSAGE_BLOCKED_PREVIEW } from "@/modules/shared/chat/constants/contactPolicy";
+import { normalizeConversationUnreadCount } from "@/modules/shared/chat/utils/normalizeConversationUnread";
+
+const minimalParticipant = (_id: string): Participant => ({
+  _id,
+  firstName: "",
+  lastName: "",
+  email: "",
+});
 
 export const dedupeMessages = (messages: ChatShellMessage[]) => {
   const seen = new Set<string>();
@@ -10,12 +20,14 @@ export const dedupeMessages = (messages: ChatShellMessage[]) => {
   });
 };
 
+const sortTime = (c: ChatShellConversation) => {
+  const raw = c.lastMessage?.timestamp ?? c.updatedAt;
+  const t = new Date(raw as string | number | Date).getTime();
+  return Number.isFinite(t) ? t : 0;
+};
+
 export const sortConversationsByRecent = (conversations: ChatShellConversation[]) => {
-  conversations.sort((a, b) => {
-    const aTime = new Date(a.lastMessage?.timestamp || a.updatedAt).getTime();
-    const bTime = new Date(b.lastMessage?.timestamp || b.updatedAt).getTime();
-    return bTime - aTime;
-  });
+  conversations.sort((a, b) => sortTime(b) - sortTime(a));
 };
 
 interface ChatShellState {
@@ -33,27 +45,55 @@ export const applyIncomingMessage = (
 ) => {
   const msgId = String(message._id);
   const convId = String(message.conversationId || "");
-  const isActiveConversation = typeof viewerIsViewingConversation === "boolean"
-    ? viewerIsViewingConversation
-    : String(state.currentConversation?._id || "") === convId;
+  const storeMatchesOpenThread = String(state.currentConversation?._id || "") === convId;
+  const pathSaysViewingThread = viewerIsViewingConversation === true;
+  const isActiveConversation = storeMatchesOpenThread || pathSaysViewingThread;
   const isIncoming = viewerUserId
     ? String(message.sender._id) !== String(viewerUserId)
     : false;
+
+  let conversation = state.conversations.find((item) => String(item._id) === convId);
+  if (!conversation && convId && viewerUserId) {
+    const vid = String(viewerUserId);
+    const sid = String(message.sender?._id ?? "");
+    const rid = String(message.receiver?._id ?? "");
+    const otherId = sid && rid ? (sid === vid ? rid : sid) : "";
+    if (otherId) {
+      conversation = {
+        _id: convId,
+        participants: [minimalParticipant(vid), minimalParticipant(otherId)],
+        unreadCount: 0,
+        updatedAt: message.createdAt || new Date().toISOString(),
+      };
+      state.conversations.unshift(conversation);
+    }
+  }
 
   if (isActiveConversation && msgId && !state.messages.some((item) => String(item._id) === msgId)) {
     state.messages.push(message);
   }
 
-  const conversation = state.conversations.find((item) => String(item._id) === convId);
   if (conversation) {
-    conversation.lastMessage = { text: message.text, timestamp: message.createdAt };
+    const deletedForEveryone = !!message.isDeletedForEveryone;
+    const blocked = !!message.deliveryBlocked;
+    const previewText = deletedForEveryone
+      ? ""
+      : blocked
+        ? CHAT_LAST_MESSAGE_BLOCKED_PREVIEW
+        : message.text;
+    conversation.lastMessage = {
+      text: previewText,
+      timestamp: message.createdAt,
+      isDeletedForEveryone: deletedForEveryone,
+    };
     conversation.updatedAt = message.createdAt;
-    if (isIncoming && !isActiveConversation) {
-      conversation.unreadCount = (conversation.unreadCount || 0) + 1;
+    if (isIncoming && !isActiveConversation && !blocked) {
+      const prev = normalizeConversationUnreadCount(conversation.unreadCount, viewerUserId);
+      conversation.unreadCount = prev + 1;
     }
   }
 
-  if (isIncoming && !isActiveConversation) {
+  if (isIncoming && !isActiveConversation && !message.deliveryBlocked) {
     state.totalUnread += 1;
   }
 

@@ -101,6 +101,41 @@ conversationSchema.index({ participants: 1, status: 1, updatedAt: -1 });
 // Static Methods
 
 /**
+ * Conversations visible in the inbox for `userId` (same rules for list + unread badge).
+ * Excludes threads this user has archived for themselves via {@link archiveForUser}
+ * (e.g. candidate "delete chat for me").
+ */
+conversationSchema.statics.buildInboxQuery = function (userId, options = {}) {
+  const { includeArchived = false, status = 'active' } = options;
+
+  // Always cast to ObjectId so participant + archive matching is reliable even
+  // when `userId` arrives as a string (req.user._id can be either depending on
+  // upstream code paths).
+  const idStr = String(userId);
+  const participantOid = mongoose.Types.ObjectId.isValid(idStr)
+    ? new mongoose.Types.ObjectId(idStr)
+    : userId;
+
+  const query = {
+    participants: participantOid,
+  };
+
+  if (!includeArchived) {
+    // `$nin` against an array field excludes only documents whose `archivedBy`
+    // contains the user; missing field / empty array still match. This avoids
+    // the previous `$or` permutations that could drop conversations under
+    // certain Mongoose / ObjectId casting edge cases.
+    query.archivedBy = { $nin: [participantOid] };
+  }
+
+  if (status) {
+    query.status = status;
+  }
+
+  return query;
+};
+
+/**
  * Find or create conversation between candidate and company
  */
 conversationSchema.statics.findOrCreateConversation = async function (
@@ -184,21 +219,7 @@ conversationSchema.statics.getUserConversations = async function (
     includeArchived = false,
   } = options;
 
-  const query = {
-    participants: userId,
-  };
-
-  if (!includeArchived) {
-    query.$or = [
-      { archivedBy: { $ne: userId } },
-      { archivedBy: { $exists: false } },
-      { archivedBy: [] },
-    ];
-  }
-
-  if (status) {
-    query.status = status;
-  }
+  const query = this.buildInboxQuery(userId, { includeArchived, status });
 
   const conversations = await this.find(query)
     .populate({
@@ -239,10 +260,11 @@ conversationSchema.statics.getUserConversations = async function (
  * Get unread count for user across all conversations
  */
 conversationSchema.statics.getTotalUnreadCount = async function (userId) {
-  const conversations = await this.find({
-    participants: userId,
+  const query = this.buildInboxQuery(userId, {
+    includeArchived: false,
     status: 'active',
-  }).lean();
+  });
+  const conversations = await this.find(query).lean();
 
   let totalUnread = 0;
   conversations.forEach((conv) => {
@@ -292,8 +314,10 @@ conversationSchema.methods.resetUnreadCount = async function (userId) {
 conversationSchema.methods.archiveForUser = async function (userId) {
   if (!this.archivedBy.includes(userId)) {
     this.archivedBy.push(userId);
-    await this.save();
   }
+  // Keep inbox badge in sync: archived threads must not still count as unread for this user.
+  this.unreadCount.set(userId.toString(), 0);
+  await this.save();
 };
 
 /**

@@ -1,5 +1,5 @@
 {
-  "title": "Team chat",
+  "title": "Team Chat",
   "subtitle": "Message colleagues in your company workspace.",
   "tabs": {
     "messages": "Messages",
@@ -8,7 +8,6 @@
   },
   "colleagues": {
     "title": "Company colleagues",
-    "subtitle": "Pick a teammate to open a direct chat.",
     "search_placeholder": "Search by name or username",
     "clear_search": "Clear search",
     "count": "{{count}} colleagues",
@@ -40,5 +39,15 @@
   },
   "index": {
     "empty_employee": "Start chatting with your team."
+  },
+  "delete_chat_title": "Remove chat",
+  "delete_chat_for_me_body": "This removes the chat from your list only. Your teammate keeps the conversation and messages.",
+  "message": {
+    "actions": "Message options",
+    "delete_for_me": "Delete for me",
+    "delete_for_everyone": "Delete for everyone",
+    "this_message_was_deleted": "This message was deleted",
+    "you_deleted_this_message": "You deleted this message",
+    "peer_deleted_this_message": "{{name}} deleted this message"
   }
 }

@@ -1,6 +1,9 @@
 const messageService = require("../../services/ChatServices/message.service");
 const socket = require("../../socket");
 
+const senderRoomDiffersFromReceiver = (senderStr, receiverStr) =>
+  senderStr && receiverStr && senderStr !== receiverStr;
+
 /**
  * Send message
  * POST /chat/messages
@@ -26,26 +29,24 @@ module.exports.sendMessage = async (req, res) => {
       { type, attachment, replyTo },
     );
 
-    // Emit WebSocket event to notify all participants in the conversation
+    // Emit per-user rooms (mirrors team-chat behaviour). Every socket auto-joins
+    // `user:${userId}`, so this delivers reliably even when the receiver has not
+    // yet opened the conversation (no `conversation:` room join required).
     try {
       const io = socket.getIO();
       const chatNamespace = io.of("/chat");
+      const senderStr = senderId.toString();
+      const receiverStr = receiverId.toString();
+      const payload = { message, conversationId };
 
-      // Emit to conversation room (all participants including sender)
-      chatNamespace
-        .to(`conversation:${conversationId}`)
-        .emit("new_message", message);
-
-      // Also emit to receiver's personal room for notifications
-      chatNamespace.to(`user:${receiverId}`).emit("message_notification", {
-        message,
-        conversationId,
-        sender: {
-          _id: senderId,
-          firstName: message.sender.firstName,
-          lastName: message.sender.lastName,
-        },
-      });
+      if (message.deliveryBlocked) {
+        chatNamespace.to(`user:${senderStr}`).emit("new_message", payload);
+      } else if (senderRoomDiffersFromReceiver(senderStr, receiverStr)) {
+        chatNamespace.to(`user:${senderStr}`).emit("new_message", payload);
+        chatNamespace.to(`user:${receiverStr}`).emit("new_message", payload);
+      } else {
+        chatNamespace.to(`user:${senderStr}`).emit("new_message", payload);
+      }
 
       console.log(
         `📨 Message broadcast via WebSocket to conversation ${conversationId}`,
@@ -78,9 +79,11 @@ module.exports.getConversationMessages = async (req, res) => {
     const userId = req.user._id;
     const { page = 1, limit = 50, before } = req.query;
 
+    const pageNum = Number.parseInt(String(page), 10);
+    const limitNum = Number.parseInt(String(limit), 10);
     const options = {
-      page: parseInt(page),
-      limit: parseInt(limit),
+      page: Number.isFinite(pageNum) && pageNum > 0 ? pageNum : 1,
+      limit: Number.isFinite(limitNum) && limitNum > 0 ? Math.min(limitNum, 100) : 50,
       before,
     };
 
@@ -154,17 +157,25 @@ module.exports.markAllMessagesAsRead = async (req, res) => {
 
 /**
  * Delete message
- * DELETE /chat/messages/:messageId
+ * DELETE /chat/messages/:messageId?scope=me|everyone
+ *
+ * scope=me       → hide message for the caller only.
+ * scope=everyone → tombstone the message for both participants (sender only).
+ *
+ * Socket protocol (mirrors team-chat):
+ *  - scope=me       → emit `message_deleted` to the caller's user room only.
+ *  - scope=everyone → emit `message_updated` (with the tombstone row) to every
+ *                     participant so the UI can swap the message in-place to a
+ *                     "This message was deleted" placeholder.
  */
 module.exports.deleteMessage = async (req, res) => {
   try {
     const { messageId } = req.params;
     const userId = req.user._id;
+    const userIdStr = userId.toString();
 
-    // Get message details before deletion for socket notification
     const Message = require("../../models/Message.model");
     const message = await Message.findById(messageId);
-
     if (!message) {
       return res.status(404).json({
         success: false,
@@ -172,38 +183,56 @@ module.exports.deleteMessage = async (req, res) => {
       });
     }
 
-    const conversationId = message.conversation;
-    const result = await messageService.deleteMessage(messageId, userId);
+    const conversationIdRaw = message.conversation;
+    const conversationId = conversationIdRaw ? conversationIdRaw.toString() : conversationIdRaw;
+    const senderId = message.sender ? message.sender.toString() : null;
+    const receiverId = message.receiver ? message.receiver.toString() : null;
 
-    // Emit WebSocket event to notify other participant
+    const scopeRaw = req.query.scope;
+    const scope =
+      scopeRaw === "me" || scopeRaw === "everyone" ? scopeRaw : undefined;
+
+    const result = await messageService.deleteMessage(messageId, userId, { scope });
+
     try {
       const io = socket.getIO();
       const chatNamespace = io.of("/chat");
 
-      // Emit to conversation room to update all participants
-      chatNamespace
-        .to(`conversation:${conversationId}`)
-        .emit("message_deleted", {
+      if (result.scope === "everyone") {
+        const payload = {
+          message: result.message,
+          conversationId,
+        };
+        const targets = new Set(
+          [senderId, receiverId].filter((id) => typeof id === "string" && id.length > 0),
+        );
+        targets.forEach((participantId) => {
+          chatNamespace.to(`user:${participantId}`).emit("message_updated", payload);
+        });
+      } else {
+        chatNamespace.to(`user:${userIdStr}`).emit("message_deleted", {
           messageId,
           conversationId,
-          deletedBy: userId,
+          scope: "me",
+          deletedBy: userIdStr,
         });
-
-      console.log(
-        `📨 Message deletion broadcast via WebSocket to conversation ${conversationId}`,
-      );
+      }
     } catch (socketError) {
       console.error("Error emitting WebSocket event:", socketError);
-      // Don't fail the request if WebSocket broadcast fails
     }
 
     res.status(200).json({
       success: true,
-      message: result.message,
+      message:
+        result.scope === "everyone"
+          ? "Message deleted for everyone"
+          : "Message removed from your view",
+      data: result,
     });
   } catch (error) {
     console.error("Error in deleteMessage controller:", error);
-    res.status(500).json({
+    const status = error.status || 500;
+    res.status(status).json({
       success: false,
       message: error.message || "Failed to delete message",
     });

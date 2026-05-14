@@ -64,8 +64,17 @@ function registerRoutes(app) {
   app.use("/post-steps", postStepsRouter); //✅ Post Steps Management -> post-steps
 
   // Chat & Messaging
-  app.use("/chat", chatRouter); //✅ Chat functionalities chat -> chats (to be checked)
-  app.use("/team-chat", teamChatRouter); // Internal company team chat (1:1)
+  // Chat is a live realtime surface: disable HTTP caching + ETag so the client
+  // never receives a 304 (which strips body/headers and was causing perceived
+  // "CORS error" + empty inbox after refresh in some browsers).
+  const noChatCache = (req, res, next) => {
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
+    res.set("Pragma", "no-cache");
+    res.set("Expires", "0");
+    next();
+  };
+  app.use("/chat", noChatCache, chatRouter); //✅ Chat functionalities chat -> chats (to be checked)
+  app.use("/team-chat", noChatCache, teamChatRouter); // Internal company team chat (1:1)
 
   // Notifications
   app.use("/notification-system", notificationSystemRouter); // Notification System -> notifications

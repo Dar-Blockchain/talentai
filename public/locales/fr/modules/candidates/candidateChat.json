@@ -19,5 +19,7 @@
   },
   "index": {
     "empty_candidate": "Votre recruteur vous contactera ici une fois votre candidature en cours d'examen."
-  }
+  },
+  "delete_chat_title": "Retirer la conversation",
+  "delete_chat_for_me_body": "Cela retire la conversation de votre liste uniquement. L'entreprise conserve la conversation et les messages."
 }

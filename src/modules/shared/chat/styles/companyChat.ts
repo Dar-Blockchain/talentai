@@ -3,8 +3,15 @@ export const companyChatSx = {
     display: "flex",
     flexDirection: "column",
     gap: 1.5,
-    height: "calc(100vh - 100px)",
+    flex: 1,
     minHeight: 0,
+    height: "100%",
+    maxHeight: "100%",
+    overflow: "hidden",
+  },
+  /** Tighter stack under dashboard (team chat aligned with employee messages). */
+  workspaceTeamDense: {
+    gap: 1,
   },
   hubHeader: {
     borderRadius: "18px",
@@ -19,17 +26,36 @@ export const companyChatSx = {
     flexWrap: "wrap",
     boxShadow: "0 8px 24px rgba(15, 23, 42, 0.04)",
   },
+  /** Team channel hub card — matches dense `ChatModulePageFrame` header spacing. */
+  hubHeaderTeamDense: {
+    px: { xs: 1.5, sm: 1.75 },
+    py: { xs: 1.25, sm: 1.5 },
+    gap: 1.25,
+    boxShadow: "0 2px 12px rgba(15, 23, 42, 0.04)",
+  },
+  hubTitleTeamDense: {
+    fontSize: { xs: "1.125rem", sm: "1.3125rem" },
+    fontWeight: 800,
+    letterSpacing: "-0.02em",
+    lineHeight: 1.2,
+    color: "#0F172A",
+  },
+  teamTitleIconWrap: {
+    flexShrink: 0,
+    width: 36,
+    height: 36,
+    borderRadius: "10px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#0D9488",
+    bgcolor: "rgba(13, 148, 136, 0.1)",
+    border: "1px solid rgba(13, 148, 136, 0.22)",
+    boxShadow: "0 1px 2px rgba(15, 118, 110, 0.08)",
+  },
   hubIntro: {
     flex: "1 1 220px",
     minWidth: 0,
-  },
-  hubEyebrow: {
-    fontSize: "11px",
-    fontWeight: 700,
-    letterSpacing: "0.08em",
-    textTransform: "uppercase",
-    color: "#9CA3AF",
-    mb: 0.5,
   },
   hubTitle: {
     fontSize: { xs: "1.1rem", sm: "1.25rem" },

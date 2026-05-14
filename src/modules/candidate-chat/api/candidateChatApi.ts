@@ -9,10 +9,25 @@ import type {
   SendCandidateMessagePayload,
 } from "@/modules/candidate-chat/types";
 
+// Note: cache-control headers are intentionally NOT sent from the client.
+// They would trigger a CORS preflight that fails unless the server explicitly
+// allows them via Access-Control-Allow-Headers. The chat namespace already
+// disables ETag + sets `Cache-Control: no-store` server-side, so freshness
+// is guaranteed without any client-side hint.
+
+function extractList<T>(res: { data?: { data?: unknown; success?: boolean } }): T[] {
+  const raw = res.data?.data;
+  if (Array.isArray(raw)) return raw as T[];
+  if (raw && typeof raw === "object" && Array.isArray((raw as { messages?: unknown }).messages)) {
+    return (raw as { messages: T[] }).messages;
+  }
+  return [];
+}
+
 export const candidateChatApi = {
   fetchConversations: async (params?: CandidateChatConversationsParams) => {
     const res = await axiosInstance.get("chat/conversations", { params });
-    return res.data.data as CandidateConversation[];
+    return extractList<CandidateConversation>(res);
   },
 
   fetchConversation: async (conversationId: string) => {
@@ -22,7 +37,7 @@ export const candidateChatApi = {
 
   fetchMessages: async (conversationId: string, params?: CandidateChatMessagesParams) => {
     const res = await axiosInstance.get(`chat/messages/${conversationId}`, { params });
-    return res.data.data as CandidateMessage[];
+    return extractList<CandidateMessage>(res);
   },
 
   sendMessage: async (payload: SendCandidateMessagePayload) => {
@@ -47,9 +62,10 @@ export const candidateChatApi = {
     throw new Error("Failed to create conversation");
   },
 
-  deleteMessage: async (messageId: string) => {
-    await axiosInstance.delete(`chat/messages/${messageId}`);
-    return messageId;
+  deleteMessage: async (messageId: string, scope?: "me" | "everyone") => {
+    await axiosInstance.delete(`chat/messages/${messageId}`, {
+      params: scope ? { scope } : {},
+    });
   },
 
   deleteConversation: async (conversationId: string) => {

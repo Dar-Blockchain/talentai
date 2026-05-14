@@ -4,6 +4,7 @@ export { default as MessageList } from './MessageList';
 export { default as MessageInput } from './MessageInput';
 export { default as DeleteConversationDialog } from './DeleteConversationDialog';
 export { default as ChatShell } from './ChatShell';
+export { default as ChatContextMenuTrigger } from './ChatContextMenuTrigger';
 export type { ChatShellProps, ReturnToPost } from './ChatShell';
 export {
   getParticipantDisplayName,

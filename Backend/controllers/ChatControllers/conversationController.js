@@ -18,6 +18,23 @@ module.exports.findOrCreateConversation = async (req, res) => {
       });
     }
 
+    // Conversations are company-initiated: a candidate may only resume an
+    // existing thread, never create one. This keeps the candidate inbox
+    // restricted to companies that have already reached out.
+    if (req.user.role === "Candidate") {
+      const Conversation = require("../../models/Conversations.model");
+      const existing = await Conversation.findOne({
+        candidateId,
+        companyId,
+      });
+      if (!existing) {
+        return res.status(403).json({
+          success: false,
+          message: "Candidates cannot start a new conversation",
+        });
+      }
+    }
+
     const conversation = await conversationService.findOrCreateConversation(
       candidateId,
       companyId,
@@ -46,9 +63,14 @@ module.exports.getUserConversations = async (req, res) => {
     const userId = req.user._id;
     const { page = 1, limit = 20, status, includeArchived } = req.query;
 
+    const pageNum = Number.parseInt(String(page), 10);
+    const limitNum = Number.parseInt(String(limit), 10);
+    const safePage = Number.isFinite(pageNum) && pageNum > 0 ? pageNum : 1;
+    const safeLimit = Number.isFinite(limitNum) && limitNum > 0 ? Math.min(limitNum, 100) : 20;
+
     const options = {
-      page: parseInt(page),
-      limit: parseInt(limit),
+      page: safePage,
+      limit: safeLimit,
       status,
       includeArchived: includeArchived === "true",
     };
@@ -58,6 +80,7 @@ module.exports.getUserConversations = async (req, res) => {
       options,
     );
 
+    res.set("Cache-Control", "private, no-store, must-revalidate");
     res.status(200).json({
       success: true,
       data: result.conversations,
@@ -289,6 +312,7 @@ module.exports.getTotalUnreadCount = async (req, res) => {
 
     const totalUnread = await conversationService.getTotalUnreadCount(userId);
 
+    res.set("Cache-Control", "private, no-store, must-revalidate");
     res.status(200).json({
       success: true,
       data: { totalUnread },

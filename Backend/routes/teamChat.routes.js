@@ -25,6 +25,18 @@ router.put(
   teamChatConversationController.markConversationAsRead,
 );
 
+router.post(
+  "/conversations/:conversationId/hide-for-me",
+  teamChatConversationController.deleteConversation,
+);
+
+router.delete(
+  "/conversations/:conversationId",
+  teamChatConversationController.deleteConversation,
+);
+
+router.delete("/messages/:messageId", teamChatMessageController.deleteMessage);
+
 router.get(
   "/messages/:conversationId",
   teamChatMessageController.getConversationMessages,

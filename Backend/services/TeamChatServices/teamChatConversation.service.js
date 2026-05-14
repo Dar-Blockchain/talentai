@@ -6,6 +6,8 @@ const {
   buildParticipantKey,
   populateParticipantSummary,
   createHttpError,
+  assertValidObjectId,
+  assertConversationNotHiddenForUser,
 } = require("../../helpers/teamChatAccess.helper");
 
 const getUnreadCountForUser = (conversation, userId) => {
@@ -17,6 +19,8 @@ const getUnreadCountForUser = (conversation, userId) => {
   return unreadCountMap[userId.toString()] || 0;
 };
 
+const LAST_MESSAGE_DELETED_SENTINEL = "__DELETED__";
+
 const formatConversation = async (conversation, viewerUserId) => {
   const participantIds = conversation.participants.map((participant) =>
     participant.toString(),
@@ -25,16 +29,20 @@ const formatConversation = async (conversation, viewerUserId) => {
     (participantId) => participantId !== viewerUserId.toString(),
   );
 
+  const last = conversation.lastMessage;
+  const lastIsDeletedPreview = last?.text === LAST_MESSAGE_DELETED_SENTINEL;
+
   return {
     _id: conversation._id,
     companyId: conversation.companyId,
     participants: participantIds,
     otherParticipant: await populateParticipantSummary(otherUserId),
-    lastMessage: conversation.lastMessage
+    lastMessage: last
       ? {
-          text: conversation.lastMessage.text,
-          senderId: conversation.lastMessage.senderId,
-          timestamp: conversation.lastMessage.timestamp,
+          text: lastIsDeletedPreview ? "" : last.text,
+          senderId: last.senderId,
+          timestamp: last.timestamp,
+          isDeletedForEveryone: lastIsDeletedPreview,
         }
       : null,
     unreadCount: getUnreadCountForUser(conversation, viewerUserId),
@@ -51,6 +59,7 @@ const listConversations = async (currentUser, auth = null, options = {}) => {
     companyId,
     participants: currentUser._id,
     status: "active",
+    hiddenForParticipants: { $nin: [currentUser._id] },
   };
 
   const conversations = await TeamConversation.find(query)
@@ -77,6 +86,7 @@ const listConversations = async (currentUser, auth = null, options = {}) => {
 
 const getConversationById = async (currentUser, conversationId, auth = null) => {
   await resolveAndAssertCompanyContext(currentUser, auth);
+  assertValidObjectId(conversationId, "conversationId");
 
   const conversation = await TeamConversation.findById(conversationId);
   if (!conversation) {
@@ -91,7 +101,31 @@ const getConversationById = async (currentUser, conversationId, auth = null) => 
     throw createHttpError("Unauthorized access to conversation", 403);
   }
 
+  assertConversationNotHiddenForUser(conversation, currentUser);
+
   return formatConversation(conversation, currentUser._id);
+};
+
+/** Remove this conversation from the current user's list only (WhatsApp "delete chat for me"). */
+const hideConversationForCurrentUser = async (currentUser, conversationId, auth = null) => {
+  await resolveAndAssertCompanyContext(currentUser, auth);
+  assertValidObjectId(conversationId, "conversationId");
+
+  const conversation = await TeamConversation.findById(conversationId);
+  if (!conversation) {
+    throw createHttpError("Conversation not found", 404);
+  }
+
+  const isParticipant = conversation.participants.some(
+    (participant) => participant.toString() === currentUser._id.toString(),
+  );
+
+  if (!isParticipant) {
+    throw createHttpError("Unauthorized access to conversation", 403);
+  }
+
+  await conversation.hideForParticipant(currentUser._id);
+  return { success: true, conversationId: String(conversation._id) };
 };
 
 const markConversationAsRead = async (currentUser, conversationId, auth = null) => {
@@ -109,6 +143,8 @@ const markConversationAsRead = async (currentUser, conversationId, auth = null) 
   if (!isParticipant) {
     throw createHttpError("Unauthorized access to conversation", 403);
   }
+
+  assertConversationNotHiddenForUser(conversation, currentUser);
 
   await TeamMessage.markConversationAsRead(conversationId, currentUser._id);
   await conversation.resetUnreadCount(currentUser._id);
@@ -153,7 +189,23 @@ const createOrGetConversation = async (currentUser, targetUserId, auth = null) =
     }
   }
 
-  return formatConversation(conversation, currentUser._id);
+  await TeamConversation.updateOne(
+    { _id: conversation._id },
+    {
+      $pull: { hiddenForParticipants: currentUser._id },
+      $unset: {
+        [`clearedAtForUsers.${currentUserId}`]: "",
+        [`messageVisibilityCutoffByParticipant.${currentUserId}`]: "",
+      },
+    },
+  );
+
+  const refreshed = await TeamConversation.findById(conversation._id);
+  if (!refreshed) {
+    throw createHttpError("Conversation not found", 404);
+  }
+
+  return formatConversation(refreshed, currentUser._id);
 };
 
 const getTotalUnreadCount = async (currentUser, auth = null) => {
@@ -163,6 +215,7 @@ const getTotalUnreadCount = async (currentUser, auth = null) => {
     companyId,
     participants: currentUser._id,
     status: "active",
+    hiddenForParticipants: { $nin: [currentUser._id] },
   });
 
   return conversations.reduce(
@@ -175,6 +228,7 @@ module.exports = {
   listConversations,
   getConversationById,
   markConversationAsRead,
+  hideConversationForCurrentUser,
   getTotalUnreadCount,
   createOrGetConversation,
   formatConversation,

@@ -1,5 +1,5 @@
 {
-  "title": "Chat d'équipe",
+  "title": "Chat d’équipe",
   "subtitle": "Échangez avec les collègues de votre entreprise.",
   "tabs": {
     "messages": "Messages",
@@ -8,7 +8,6 @@
   },
   "colleagues": {
     "title": "Collègues de l'entreprise",
-    "subtitle": "Choisissez un collègue pour ouvrir un chat direct.",
     "search_placeholder": "Rechercher par nom ou nom d'utilisateur",
     "clear_search": "Effacer la recherche",
     "count": "{{count}} collègues",
@@ -40,5 +39,15 @@
   },
   "index": {
     "empty_employee": "Commencez à discuter avec votre équipe."
+  },
+  "delete_chat_title": "Retirer la conversation",
+  "delete_chat_for_me_body": "La conversation disparaît de votre liste uniquement. Votre collègue conserve la conversation et les messages.",
+  "message": {
+    "actions": "Options du message",
+    "delete_for_me": "Supprimer pour moi",
+    "delete_for_everyone": "Supprimer pour tout le monde",
+    "this_message_was_deleted": "Ce message a été supprimé",
+    "you_deleted_this_message": "Vous avez supprimé ce message",
+    "peer_deleted_this_message": "{{name}} a supprimé ce message"
   }
 }

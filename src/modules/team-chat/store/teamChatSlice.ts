@@ -5,9 +5,11 @@ import {
   applyIncomingMessage,
   dedupeMessages,
   resolveMessagePayload,
+  sortConversationsByRecent,
   type ChatShellConversation,
   type ChatShellMessage,
 } from "@/modules/shared/chat";
+import { CHAT_LAST_MESSAGE_BLOCKED_PREVIEW } from "@/modules/shared/chat/constants/contactPolicy";
 import {
   toChatShellConversation,
   toChatShellMessage,
@@ -34,6 +36,17 @@ const initialState: TeamChatState = {
   currentConversation: null,
   messages: [],
   totalUnread: 0,
+};
+
+/** Immer-safe: sync sidebar / header preview from a message row. */
+const applyLastMessagePreviewFromMessage = (conv: ChatShellConversation, next: ChatShellMessage) => {
+  const del = !!next.isDeletedForEveryone;
+  const blocked = !!next.deliveryBlocked;
+  conv.lastMessage = {
+    text: del ? "" : blocked ? CHAT_LAST_MESSAGE_BLOCKED_PREVIEW : next.text,
+    timestamp: next.createdAt,
+    isDeletedForEveryone: del,
+  };
 };
 
 const teamChatSlice = createSlice({
@@ -79,6 +92,48 @@ const teamChatSlice = createSlice({
         state.currentConversation.unreadCount = 0;
       }
     },
+    removeTeamMessage: (state, action: PayloadAction<string>) => {
+      const id = String(action.payload);
+      state.messages = state.messages.filter((m) => String(m._id) !== id);
+    },
+    upsertTeamMessage: (state, action: PayloadAction<ChatShellMessage>) => {
+      const next = action.payload;
+      const id = String(next._id);
+      const idx = state.messages.findIndex((m) => String(m._id) === id);
+      if (idx >= 0) {
+        state.messages[idx] = next;
+      } else {
+        state.messages.push(next);
+        state.messages.sort(
+          (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+        );
+      }
+      let convId = next.conversationId ? String(next.conversationId) : "";
+      if (!convId && state.currentConversation?._id) {
+        const cur = String(state.currentConversation._id);
+        if (state.messages.some((m) => String(m._id) === id)) {
+          convId = cur;
+        }
+      }
+      if (convId) {
+        const conv = state.conversations.find((c) => String(c._id) === convId);
+        if (conv) {
+          applyLastMessagePreviewFromMessage(conv, next);
+          sortConversationsByRecent(state.conversations);
+        }
+        if (state.currentConversation && String(state.currentConversation._id) === convId) {
+          applyLastMessagePreviewFromMessage(state.currentConversation, next);
+        }
+      }
+    },
+    removeTeamConversation: (state, action: PayloadAction<string>) => {
+      const id = String(action.payload);
+      state.conversations = state.conversations.filter((c) => String(c._id) !== id);
+      if (state.currentConversation && String(state.currentConversation._id) === id) {
+        state.currentConversation = null;
+        state.messages = [];
+      }
+    },
   },
 });
 
@@ -91,6 +146,9 @@ export const {
   clearTeamCurrentConversation,
   upsertTeamConversation,
   markTeamConversationReadLocal,
+  removeTeamMessage,
+  upsertTeamMessage,
+  removeTeamConversation,
 } = teamChatSlice.actions;
 
 export const selectTeamConversations = (state: RootState) => state.teamChat.conversations;

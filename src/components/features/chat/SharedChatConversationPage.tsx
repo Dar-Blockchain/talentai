@@ -17,7 +17,9 @@ const SharedChatConversationPage: React.FC<Props> = ({ basePath, isCompany, layo
   const session = useChatSession({
     initialConversationId: typeof routeId === "string" ? routeId : null,
     deleteRedirectRoute:   basePath,
-    onConversationChange:  (id) => window.history.replaceState(null, "", `${basePath}/${id}`),
+    onConversationChange: (id) => {
+      void router.replace(`${basePath}/${id}`, undefined, { scroll: false });
+    },
   });
 
   return (

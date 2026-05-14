@@ -1,12 +1,12 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/router";
+import { useTranslation } from "react-i18next";
 import { RootState, AppDispatch } from "@/store/store";
 import { useToast } from "@/hooks/useToast";
-import { getBlockedMessageReason } from "@/modules/shared/chat";
+import { deliveryBlockedToastMessage } from "@/modules/shared/chat";
 import {
   addCandidateMessage,
-  clearCandidateCurrentConversation,
   setCandidateCurrentConversation,
   selectCandidateConversations,
   selectCandidateCurrentConversation,
@@ -25,8 +25,10 @@ import {
 } from "@/modules/candidate-chat/queries/useCandidateChatQueries";
 import { useCandidateChatConversationRoom } from "@/modules/candidate-chat/hooks/useCandidateChatRealtime";
 import { toChatShellMessage } from "@/modules/candidate-chat/utils/mappers";
+import { normalizeConversationUnreadCount } from "@/modules/shared/chat/utils/normalizeConversationUnread";
 
 export interface UseCandidateChatSessionOptions {
+  /** Conversation id from the URL; `null` when on the inbox route without a thread. */
   initialConversationId: string | null;
   deleteRedirectRoute: string;
   enableDeletes?: boolean;
@@ -42,24 +44,26 @@ export const useCandidateChatSession = ({
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const { showToast } = useToast();
+  const { t } = useTranslation("shared/chat");
 
   const currentUserId = useSelector((state: RootState) => state.user?.connectedUser?.user?._id);
+  const userRole = useSelector((state: RootState) => state.user?.connectedUser?.user?.role);
   const conversations = useSelector(selectCandidateConversations);
   const conversation = useSelector(selectCandidateCurrentConversation);
   const messages = useSelector(selectCandidateMessages);
 
   const [activeConversationId, setActiveConversationId] = useState<string | null>(initialConversationId);
 
+  // Sync active thread when the route param changes (including `null` when leaving a thread).
   useEffect(() => {
-    if (initialConversationId && initialConversationId !== activeConversationId) {
-      setActiveConversationId(initialConversationId);
-    }
-  }, [initialConversationId, activeConversationId]);
+    setActiveConversationId(initialConversationId);
+  }, [initialConversationId]);
 
   const [newMessage, setNewMessage] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const activeConversationIdRef = useRef<string | null>(initialConversationId);
+  const deleteConversationTargetIdRef = useRef<string | null>(null);
 
   const conversationsQuery = useCandidateConversationsQuery(undefined, { enabled: !!currentUserId });
   useCandidateUnreadCountQuery({ enabled: !!currentUserId });
@@ -79,8 +83,9 @@ export const useCandidateChatSession = ({
 
   useEffect(() => {
     if (!activeConversationId) return;
-    const selected = conversations.find((item) => item._id === activeConversationId);
-    if (selected && conversation?._id !== activeConversationId) {
+    const idStr = String(activeConversationId);
+    const selected = conversations.find((item) => String(item._id) === idStr);
+    if (selected && String(conversation?._id ?? "") !== idStr) {
       dispatch(setCandidateCurrentConversation(selected));
     }
   }, [activeConversationId, conversation?._id, conversations, dispatch]);
@@ -91,39 +96,49 @@ export const useCandidateChatSession = ({
 
   useEffect(() => {
     if (!activeConversationId || !currentUserId) return;
-    markReadMutation.mutate(activeConversationId);
-    return () => {
-      dispatch(clearCandidateCurrentConversation());
-    };
-  }, [activeConversationId, currentUserId, dispatch]);
+    markReadMutation.mutate(String(activeConversationId));
+    // Intentionally omit `markReadMutation` from deps: including the mutation object can retrigger
+    // this effect on unrelated renders and was previously paired with a destructive cleanup.
+  }, [activeConversationId, currentUserId]);
 
-  const handleSelectConversation = useCallback((id: string) => {
-    if (id === activeConversationId) return;
-    const selected = conversations.find((item) => item._id === id);
-    if (selected) {
-      dispatch(setCandidateCurrentConversation(selected));
-    }
-    setNewMessage("");
-    setActiveConversationId(id);
-    onConversationChange?.(id);
-  }, [activeConversationId, conversations, dispatch, onConversationChange]);
+  const handleSelectConversation = useCallback(
+    (id: string) => {
+      const idStr = String(id);
+      const activeStr = activeConversationId != null ? String(activeConversationId) : "";
+      const convIdStr = conversation?._id != null ? String(conversation._id) : "";
+
+      const alreadyShowingThisChat = idStr === activeStr && idStr === convIdStr;
+      if (alreadyShowingThisChat) return;
+
+      const selected = conversations.find((item) => String(item._id) === idStr);
+      if (selected) {
+        dispatch(setCandidateCurrentConversation(selected));
+      }
+
+      setNewMessage("");
+
+      if (idStr === activeStr && idStr !== convIdStr) {
+        setActiveConversationId(null);
+        queueMicrotask(() => {
+          setActiveConversationId(idStr);
+          onConversationChange?.(idStr);
+        });
+        return;
+      }
+
+      setActiveConversationId(idStr);
+      onConversationChange?.(idStr);
+    },
+    [activeConversationId, conversation?._id, conversations, dispatch, onConversationChange],
+  );
 
   const handleSendMessage = useCallback(async () => {
     if (!newMessage.trim() || !conversation || !currentUserId || !activeConversationId) return;
 
-    const blockedReason = getBlockedMessageReason(newMessage);
-    if (blockedReason === "email") {
-      showToast({ message: "Sharing email addresses is not allowed.", severity: "error" });
-      return;
-    }
-    if (blockedReason === "phone") {
-      showToast({ message: "Sharing phone numbers is not allowed.", severity: "error" });
-      return;
-    }
-
-    const other = conversation.participants.find((participant) => participant._id !== currentUserId);
+    const uid = String(currentUserId);
+    const other = conversation.participants.find((p) => String(p._id) !== uid);
     if (!other) {
-      showToast({ message: "Could not find recipient.", severity: "error" });
+      showToast({ message: t("toast.recipient_not_found"), severity: "error" });
       return;
     }
 
@@ -140,10 +155,16 @@ export const useCandidateChatSession = ({
         message: toChatShellMessage(message),
         viewerUserId: String(currentUserId),
       }));
+      if (message.deliveryBlocked) {
+        showToast({
+          message: deliveryBlockedToastMessage(message.blockedReason, t),
+          severity: "warning",
+        });
+      }
     } catch (error) {
       setNewMessage(text);
       showToast({
-        message: `Failed to send: ${getCandidateChatMutationError(error, "Unknown error")}`,
+        message: `${t("toast.failed_send")}: ${getCandidateChatMutationError(error, "Unknown error")}`,
         severity: "error",
       });
     }
@@ -155,6 +176,7 @@ export const useCandidateChatSession = ({
     dispatch,
     sendMessageMutation,
     showToast,
+    t,
   ]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -164,39 +186,88 @@ export const useCandidateChatSession = ({
     }
   }, [handleSendMessage]);
 
-  const handleDeleteMessage = useCallback(async (messageId: string) => {
-    if (!enableDeletes) return;
+  const handleDeleteMessage = useCallback(async (messageId: string, scope?: "me" | "everyone") => {
+    if (!enableDeletes || !activeConversationId) return;
+    const effectiveScope: "me" | "everyone" =
+      scope ?? (userRole === "Company" ? "everyone" : "me");
     try {
-      await deleteMessageMutation.mutateAsync(messageId);
-      showToast({ message: "Message deleted", severity: "success" });
+      await deleteMessageMutation.mutateAsync({
+        messageId,
+        scope: effectiveScope,
+        conversationId: activeConversationId,
+      });
+      showToast({
+        message:
+          effectiveScope === "everyone"
+            ? t("toast.message_deleted_for_everyone")
+            : t("toast.message_removed_for_me"),
+        severity: "success",
+      });
     } catch (error) {
       showToast({
-        message: `Failed to delete: ${getCandidateChatMutationError(error, "Unknown error")}`,
+        message: `${t("toast.failed_delete_message")}: ${getCandidateChatMutationError(error, "Unknown error")}`,
         severity: "error",
       });
     }
-  }, [deleteMessageMutation, enableDeletes, showToast]);
+  }, [
+    deleteMessageMutation,
+    enableDeletes,
+    activeConversationId,
+    showToast,
+    t,
+    userRole,
+  ]);
+
+  const requestDeleteConversation = useCallback((conversationId: string) => {
+    deleteConversationTargetIdRef.current = String(conversationId);
+    setDeleteDialogOpen(true);
+  }, []);
+
+  const resetDeleteConversationTarget = useCallback(() => {
+    deleteConversationTargetIdRef.current = null;
+  }, []);
 
   const handleConfirmDeleteConversation = useCallback(async () => {
-    if (!enableDeletes || !activeConversationId) return;
+    const targetId = deleteConversationTargetIdRef.current ?? activeConversationId;
+    if (!targetId) {
+      setDeleteDialogOpen(false);
+      deleteConversationTargetIdRef.current = null;
+      return;
+    }
     setIsDeleting(true);
     try {
-      await deleteConversationMutation.mutateAsync(activeConversationId);
-      showToast({ message: "Conversation deleted", severity: "success" });
+      await deleteConversationMutation.mutateAsync(targetId);
+      showToast({ message: t("toast.conversation_removed_list"), severity: "success" });
       setDeleteDialogOpen(false);
-      router.push(deleteRedirectRoute);
+      deleteConversationTargetIdRef.current = null;
+
+      const wasActive =
+        activeConversationId != null && String(activeConversationId) === String(targetId);
+      if (wasActive) {
+        setActiveConversationId(null);
+        router.push(deleteRedirectRoute);
+      }
     } catch (error) {
       showToast({
-        message: `Failed to delete: ${getCandidateChatMutationError(error, "Unknown error")}`,
+        message: `${t("toast.failed_delete_conversation")}: ${getCandidateChatMutationError(error, "Unknown error")}`,
         severity: "error",
       });
     } finally {
       setIsDeleting(false);
     }
-  }, [activeConversationId, deleteConversationMutation, deleteRedirectRoute, enableDeletes, router, showToast]);
+  }, [activeConversationId, deleteConversationMutation, deleteRedirectRoute, router, showToast, t]);
 
-  const totalUnread = conversations.reduce((acc, conversationItem) => acc + (conversationItem.unreadCount || 0), 0);
-  const otherUser = conversation?.participants?.find((participant) => participant._id !== currentUserId);
+  const totalUnread = conversations.reduce(
+    (acc, conversationItem) =>
+      acc + normalizeConversationUnreadCount(
+        conversationItem.unreadCount,
+        currentUserId != null ? String(currentUserId) : undefined,
+      ),
+    0,
+  );
+  const otherUser = conversation?.participants?.find(
+    (participant) => String(participant._id) !== String(currentUserId ?? ""),
+  );
 
   return {
     currentUserId,
@@ -219,5 +290,7 @@ export const useCandidateChatSession = ({
     handleKeyDown,
     handleDeleteMessage,
     handleConfirmDeleteConversation,
+    requestDeleteConversation,
+    resetDeleteConversationTarget,
   };
 };

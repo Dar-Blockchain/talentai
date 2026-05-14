@@ -83,19 +83,34 @@ const messageSchema = new mongoose.Schema(
       index: true,
     },
 
-    // Deleted status (soft delete)
+    // Deleted status (soft delete; both participants removed for themselves)
     isDeleted: {
       type: Boolean,
       default: false,
     },
 
-    // Who deleted (for one-sided deletion)
+    // Who deleted (per-user soft delete; "delete for me")
     deletedBy: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
       },
     ],
+
+    // Whatsapp-style "delete for everyone": message is kept but body is
+    // replaced by a tombstone and UI shows "This message was deleted".
+    isDeletedForEveryone: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
+    },
+    deletedForEveryoneBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
 
     // Reply to another message (thread support)
     replyTo: {
@@ -123,6 +138,17 @@ const messageSchema = new mongoose.Schema(
       action: String, // e.g., 'conversation_created', 'user_joined', etc.
       data: mongoose.Schema.Types.Mixed,
     },
+
+    deliveryBlocked: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    blockedReason: {
+      type: String,
+      enum: ["email", "phone"],
+      default: undefined,
+    },
   },
   {
     timestamps: true,
@@ -148,15 +174,46 @@ messageSchema.statics.getConversationMessages = async function (
   userId,
   options = {}
 ) {
-  const { page = 1, limit = 50, before = null } = options;
+  const { page: rawPage = 1, limit: rawLimit = 50, before = null } = options;
+  const page =
+    Number.isFinite(Number(rawPage)) && Number(rawPage) > 0
+      ? Math.floor(Number(rawPage))
+      : 1;
+  const limit =
+    Number.isFinite(Number(rawLimit)) && Number(rawLimit) > 0
+      ? Math.min(Math.floor(Number(rawLimit)), 100)
+      : 50;
 
-  const query = {
-    conversation: conversationId,
-    isDeleted: false,
-    deletedBy: { $ne: userId },
+  const toObjectId = (value) => {
+    const str = String(value);
+    return mongoose.Types.ObjectId.isValid(str)
+      ? new mongoose.Types.ObjectId(str)
+      : value;
   };
 
-  // If "before" timestamp provided, get messages before that time
+  const convOid = toObjectId(conversationId);
+  const viewerOid = toObjectId(userId);
+
+  // deletedBy is an array: $nin matches when no element equals viewer (and matches missing/empty).
+  // Note: "delete for everyone" rows (isDeletedForEveryone:true) MUST stay visible —
+  // the UI renders them as a placeholder ("This message was deleted") just like
+  // team-chat does. Only "fully deleted" rows (isDeleted:true) and per-user
+  // hides (deletedBy contains viewer) are filtered out.
+  const query = {
+    conversation: convOid,
+    isDeleted: { $ne: true },
+    deletedBy: { $nin: [viewerOid] },
+  };
+
+  query.$and = [
+    {
+      $or: [
+        { deliveryBlocked: { $ne: true } },
+        { deliveryBlocked: true, sender: viewerOid },
+      ],
+    },
+  ];
+
   if (before) {
     query.createdAt = { $lt: new Date(before) };
   }
@@ -220,7 +277,7 @@ messageSchema.statics.getUnreadMessages = async function (
     conversation: conversationId,
     receiver: userId,
     isRead: false,
-    isDeleted: false,
+    isDeleted: { $ne: true },
   })
     .populate({
       path: 'sender',
@@ -284,7 +341,7 @@ messageSchema.statics.searchMessages = async function (
   return await this.find({
     conversation: conversationId,
     text: { $regex: searchTerm, $options: 'i' },
-    isDeleted: false,
+    isDeleted: { $ne: true },
     deletedBy: { $ne: userId },
   })
     .populate({
@@ -370,12 +427,16 @@ messageSchema.methods.removeReaction = async function (userId) {
 };
 
 /**
- * Check if message belongs to user
+ * Check if message belongs to user (sender or receiver).
+ * Works when sender/receiver are ObjectIds or populated User docs.
  */
 messageSchema.methods.belongsToUser = function (userId) {
+  const uid = userId?.toString?.() ?? String(userId);
+  const senderId = this.sender?._id ?? this.sender;
+  const receiverId = this.receiver?._id ?? this.receiver;
   return (
-    this.sender.toString() === userId.toString() ||
-    this.receiver.toString() === userId.toString()
+    senderId?.toString() === uid ||
+    receiverId?.toString() === uid
   );
 };
 

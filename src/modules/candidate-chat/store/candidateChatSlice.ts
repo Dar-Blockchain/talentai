@@ -3,8 +3,10 @@ import type { RootState } from "@/store/store";
 import type { CandidateConversation, CandidateMessage } from "@/modules/candidate-chat/types";
 import {
   applyIncomingMessage,
+  CHAT_LAST_MESSAGE_BLOCKED_PREVIEW,
   dedupeMessages,
   resolveMessagePayload,
+  sortConversationsByRecent,
   type ChatShellConversation,
   type ChatShellMessage,
 } from "@/modules/shared/chat";
@@ -36,6 +38,21 @@ const initialState: CandidateChatState = {
   totalUnread: 0,
 };
 
+/** Immer-safe: sync sidebar / header preview from a message row. */
+const applyLastMessagePreviewFromMessage = (
+  conv: ChatShellConversation,
+  next: ChatShellMessage,
+) => {
+  const del = !!next.isDeletedForEveryone;
+  const blocked = !!next.deliveryBlocked;
+  conv.lastMessage = {
+    text: del ? "" : blocked ? CHAT_LAST_MESSAGE_BLOCKED_PREVIEW : next.text,
+    timestamp: next.createdAt,
+    isDeletedForEveryone: del,
+    ...(next.sender?._id ? { senderId: String(next.sender._id) } : {}),
+  };
+};
+
 const candidateChatSlice = createSlice({
   name: "candidateChat",
   initialState,
@@ -64,12 +81,7 @@ const candidateChatSlice = createSlice({
       state.messages = [];
     },
     upsertCandidateConversation: (state, action: PayloadAction<CandidateConversation | ChatShellConversation>) => {
-      const next = Array.isArray(action.payload.participants)
-        && action.payload.participants.length > 0
-        && typeof action.payload.participants[0] === "object"
-        && "email" in action.payload.participants[0]
-        ? toChatShellConversation(action.payload as CandidateConversation)
-        : action.payload as ChatShellConversation;
+      const next = toChatShellConversation(action.payload as CandidateConversation, undefined);
       const idx = state.conversations.findIndex((c) => c._id === next._id);
       if (idx >= 0) state.conversations[idx] = next;
       else state.conversations.unshift(next);
@@ -83,6 +95,38 @@ const candidateChatSlice = createSlice({
     },
     removeCandidateMessage: (state, action: PayloadAction<string>) => {
       state.messages = state.messages.filter((message) => String(message._id) !== action.payload);
+    },
+    upsertCandidateMessage: (state, action: PayloadAction<ChatShellMessage>) => {
+      const next = action.payload;
+      const id = String(next._id);
+      const idx = state.messages.findIndex((m) => String(m._id) === id);
+      if (idx >= 0) {
+        state.messages[idx] = next;
+      } else {
+        state.messages.push(next);
+        state.messages.sort(
+          (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+        );
+      }
+
+      // Refresh sidebar & header previews if this row is the newest visible one.
+      let convId = next.conversationId ? String(next.conversationId) : "";
+      if (!convId && state.currentConversation?._id) {
+        const cur = String(state.currentConversation._id);
+        if (state.messages.some((m) => String(m._id) === id)) {
+          convId = cur;
+        }
+      }
+      if (convId) {
+        const conv = state.conversations.find((c) => String(c._id) === convId);
+        if (conv) {
+          applyLastMessagePreviewFromMessage(conv, next);
+          sortConversationsByRecent(state.conversations);
+        }
+        if (state.currentConversation && String(state.currentConversation._id) === convId) {
+          applyLastMessagePreviewFromMessage(state.currentConversation, next);
+        }
+      }
     },
     removeCandidateConversation: (state, action: PayloadAction<string>) => {
       state.conversations = state.conversations.filter((conversation) => conversation._id !== action.payload);
@@ -104,6 +148,7 @@ export const {
   upsertCandidateConversation,
   markCandidateConversationReadLocal,
   removeCandidateMessage,
+  upsertCandidateMessage,
   removeCandidateConversation,
 } = candidateChatSlice.actions;
 

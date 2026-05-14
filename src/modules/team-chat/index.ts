@@ -18,6 +18,8 @@ export {
   useMarkTeamConversationReadMutation,
   useSendTeamMessageMutation,
   useOpenTeamConversationMutation,
+  useDeleteTeamMessageMutation,
+  useDeleteTeamConversationMutation,
   getTeamChatMutationError,
 } from "@/modules/team-chat/queries/useTeamChatQueries";
 export {
@@ -29,6 +31,8 @@ export {
   clearTeamCurrentConversation,
   upsertTeamConversation,
   markTeamConversationReadLocal,
+  removeTeamMessage,
+  removeTeamConversation,
   selectTeamConversations,
   selectTeamCurrentConversation,
   selectTeamMessages,

@@ -80,3 +80,42 @@ module.exports.getTotalUnreadCount = async (req, res) => {
     return handleError(res, error);
   }
 };
+
+/**
+ * DELETE /team-chat/conversations/:conversationId
+ * POST /team-chat/conversations/:conversationId/hide-for-me
+ * Removes the chat from the current user's list only.
+ */
+module.exports.deleteConversation = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const userId = req.user._id.toString();
+
+    const result = await teamChatConversationService.hideConversationForCurrentUser(
+      req.user,
+      conversationId,
+      req.auth,
+    );
+
+    try {
+      const socket = require("../../socket");
+      const io = socket.getIO();
+      const teamChatNamespace = io.of("/team-chat");
+      teamChatNamespace.to(`user:${userId}`).emit("team_conversation_hidden", {
+        conversationId: result.conversationId,
+        hiddenBy: userId,
+      });
+    } catch (socketError) {
+      console.error("Team chat conversation hide socket emit failed:", socketError);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Conversation removed from your list",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Error in deleteConversation:", error);
+    return handleError(res, error);
+  }
+};

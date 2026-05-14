@@ -19,5 +19,7 @@
   },
   "index": {
     "empty_candidate": "Your recruiter will reach out to you here once your application is in review."
-  }
+  },
+  "delete_chat_title": "Remove chat",
+  "delete_chat_for_me_body": "This removes the chat from your list only. The company keeps the conversation and messages."
 }

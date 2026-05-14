@@ -13,7 +13,8 @@ export const useMessagesRouteAccess = (surface: MessagesRouteSurface) => {
   const loading = useSelector((state: RootState) => state.user.connectedUser.loading);
   const role = user?.role ?? null;
   const allowed = isRoleAllowedOnMessagesSurface(role, surface);
-  const checking = !router.isReady || loading || !user || !allowed;
+  /** Only block on `loading` while we still have no user (initial auth/profile fetch). If `user` exists, background updates (e.g. `updateProfile` for language) must not swap the whole page for a spinner. */
+  const checking = !router.isReady || (!user && loading) || !user || !allowed;
 
   useEffect(() => {
     if (!router.isReady || loading) return;

@@ -1,6 +1,50 @@
+const mongoose = require('mongoose');
 const Message = require('../../models/Message.model');
 const Conversation = require('../../models/Conversations.model');
-const User = require('../../models/User.model');
+const { detectContactSharing } = require('../../helpers/messageContactPolicy');
+
+const LAST_MESSAGE_BLOCKED_PREVIEW = '[Not delivered]';
+/** Sidebar preview sentinel when newest visible row is "deleted for everyone". */
+const LAST_MESSAGE_DELETED_SENTINEL = '__DELETED__';
+/** Non-empty body stored on disk after delete-for-everyone (schema requires text). */
+const MESSAGE_BODY_TOMBSTONE = '__CHAT_MESSAGE_DELETED__';
+
+/**
+ * Recompute `lastMessage` on a conversation after a deletion. Mirrors
+ * team-chat's `recomputeConversationLastMessage` so sidebars stay in sync
+ * (e.g. when the newest message gets deleted for everyone).
+ */
+async function recomputeConversationLastMessage(conversationId) {
+  const newest = await Message.findOne({
+    conversation: conversationId,
+    $or: [
+      { isDeletedForEveryone: true },
+      { isDeleted: { $ne: true } },
+    ],
+  })
+    .sort({ createdAt: -1 })
+    .lean();
+  const conv = await Conversation.findById(conversationId);
+  if (!conv) return;
+  if (!newest) {
+    conv.lastMessage = undefined;
+    await conv.save();
+    return;
+  }
+  const previewText = newest.isDeletedForEveryone
+    ? LAST_MESSAGE_DELETED_SENTINEL
+    : newest.deliveryBlocked
+      ? LAST_MESSAGE_BLOCKED_PREVIEW
+      : newest.text;
+  await conv.updateLastMessage({
+    text: previewText,
+    sender: newest.sender,
+    createdAt: newest.createdAt,
+  });
+  // updateLastMessage increments messageCount; undo (we didn't add a new row).
+  conv.messageCount = Math.max(0, (conv.messageCount || 1) - 1);
+  await conv.save();
+}
 
 /**
  * Send a new message
@@ -8,18 +52,7 @@ const User = require('../../models/User.model');
 module.exports.sendMessage = async (conversationId, senderId, receiverId, text, options = {}) => {
   try {
     const { type = 'text', attachment = null, replyTo = null } = options;
-
-    // Validate message content - block emails and phone numbers
-    const emailPattern = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
-    const phonePattern = /(\+?\d{1,4}[\s-]?)?\(?\d{1,4}\)?[\s-]?\d{1,4}[\s-]?\d{1,9}|\d{10,}/;
-
-    if (emailPattern.test(text)) {
-      throw new Error('You cannot share email addresses in messages. Please use the platform\'s communication features.');
-    }
-
-    if (phonePattern.test(text)) {
-      throw new Error('You cannot share phone numbers in messages. Please use the platform\'s communication features.');
-    }
+    const contactCheck = detectContactSharing(text);
 
     // Verify conversation exists and user is participant
     const conversation = await Conversation.findById(conversationId);
@@ -41,7 +74,7 @@ module.exports.sendMessage = async (conversationId, senderId, receiverId, text, 
       throw new Error('Cannot send message: Conversation is blocked');
     }
 
-    // Create message
+    // Create message (contact sharing: saved for sender, not delivered to peer)
     const message = await Message.create({
       conversation: conversationId,
       sender: senderId,
@@ -51,6 +84,8 @@ module.exports.sendMessage = async (conversationId, senderId, receiverId, text, 
       attachment,
       replyTo,
       status: 'sent',
+      deliveryBlocked: contactCheck.blocked,
+      ...(contactCheck.blocked ? { blockedReason: contactCheck.reason } : {}),
     });
 
     // Populate sender and receiver with profile for firstName/lastName
@@ -86,15 +121,20 @@ module.exports.sendMessage = async (conversationId, senderId, receiverId, text, 
       });
     }
 
-    // Update conversation's last message
-    await conversation.updateLastMessage({
-      text,
-      sender: senderId,
-      createdAt: message.createdAt,
-    });
-
-    // Increment unread count for receiver
-    await conversation.incrementUnreadCount(receiverId);
+    if (!contactCheck.blocked) {
+      await conversation.updateLastMessage({
+        text,
+        sender: senderId,
+        createdAt: message.createdAt,
+      });
+      await conversation.incrementUnreadCount(receiverId);
+    } else {
+      await conversation.updateLastMessage({
+        text: LAST_MESSAGE_BLOCKED_PREVIEW,
+        sender: senderId,
+        createdAt: message.createdAt,
+      });
+    }
 
     return message;
   } catch (error) {
@@ -104,11 +144,29 @@ module.exports.sendMessage = async (conversationId, senderId, receiverId, text, 
 };
 
 /**
+ * Sanitize a raw lean Message document before returning it to the client:
+ * blank out the body when the row is a delete-for-everyone tombstone and
+ * surface the boolean flag so the UI can render a placeholder row.
+ */
+function formatMessageForClient(message) {
+  if (!message) return message;
+  const delEveryone = !!message.isDeletedForEveryone;
+  return {
+    ...message,
+    text: delEveryone ? '' : message.text,
+    isDeletedForEveryone: delEveryone,
+    deletedAt: message.deletedAt || null,
+    deletedForEveryoneBy: message.deletedForEveryoneBy
+      ? String(message.deletedForEveryoneBy)
+      : undefined,
+  };
+}
+
+/**
  * Get messages for a conversation
  */
 module.exports.getConversationMessages = async (conversationId, userId, options = {}) => {
   try {
-    // Verify user is participant
     const conversation = await Conversation.findById(conversationId);
 
     if (!conversation) {
@@ -123,10 +181,12 @@ module.exports.getConversationMessages = async (conversationId, userId, options 
       throw new Error('Unauthorized access to messages');
     }
 
-    // Get messages
     const result = await Message.getConversationMessages(conversationId, userId, options);
 
-    return result;
+    return {
+      ...result,
+      messages: (result.messages || []).map(formatMessageForClient),
+    };
   } catch (error) {
     console.error('Error in getConversationMessages service:', error);
     throw error;
@@ -174,49 +234,94 @@ module.exports.markAllMessagesAsRead = async (conversationId, userId) => {
 };
 
 /**
- * Delete message for user
- * If user is a Company, delete for both participants (hard delete)
- * If user is a Candidate, only soft delete for themselves
+ * Delete message (WhatsApp / team-chat style; applies to company ↔ candidate chat).
+ *
+ * - `scope=me`     → soft delete for the caller only (any participant).
+ * - `scope=everyone` → tombstone for both participants. Allowed only for the
+ *                      sender. Body is replaced by a non-empty sentinel so
+ *                      Mongoose's `text: required` constraint holds; the
+ *                      `getConversationMessages` formatter blanks it before
+ *                      sending it to the client.
+ *
+ * Returns `{ scope, messageId, conversationId, message? }`. When the scope is
+ * "everyone", `message` carries the formatted tombstone row so the controller
+ * can broadcast it via WebSocket and clients can replace the row in-place
+ * (instead of removing it). This mirrors team-chat exactly.
  */
-module.exports.deleteMessage = async (messageId, userId) => {
+module.exports.deleteMessage = async (messageId, userId, options = {}) => {
   try {
-    const message = await Message.findById(messageId).populate('sender receiver');
+    const rawScope = options.scope;
+    const scope =
+      String(rawScope || "me").toLowerCase() === "everyone" ? "everyone" : "me";
 
+    const message = await Message.findById(messageId);
     if (!message) {
-      throw new Error('Message not found');
+      throw new Error("Message not found");
     }
 
-    // Verify user is sender or receiver
     if (!message.belongsToUser(userId)) {
-      throw new Error('Unauthorized: You can only delete your own messages');
+      throw new Error("Unauthorized: You can only delete messages you are part of");
     }
 
-    // Get the user to check their role
-    const user = await User.findById(userId);
+    const conversationId = String(message.conversation);
 
-    if (!user) {
-      throw new Error('User not found');
+    if (scope === "everyone") {
+      const senderId =
+        (message.sender && message.sender._id ? message.sender._id : message.sender)?.toString();
+      if (senderId !== userId.toString()) {
+        const err = new Error("Only the sender can delete this message for everyone");
+        err.status = 403;
+        throw err;
+      }
+      if (message.isDeletedForEveryone) {
+        return {
+          success: true,
+          scope: "everyone",
+          messageId: String(message._id),
+          conversationId,
+          message: formatMessageForClient(message.toObject ? message.toObject() : message),
+        };
+      }
+
+      // Use the native collection driver to bypass Mongoose validation of
+      // required `text`; we still write a non-empty sentinel so any code that
+      // accidentally reads the raw body sees something predictable.
+      await Message.collection.updateOne(
+        { _id: new mongoose.Types.ObjectId(String(message._id)) },
+        {
+          $set: {
+            isDeletedForEveryone: true,
+            deletedAt: new Date(),
+            deletedForEveryoneBy: new mongoose.Types.ObjectId(String(userId)),
+            text: MESSAGE_BODY_TOMBSTONE,
+          },
+        },
+      );
+
+      await recomputeConversationLastMessage(conversationId);
+
+      const fresh = await Message.findById(messageId).lean();
+      return {
+        success: true,
+        scope: "everyone",
+        messageId: String(message._id),
+        conversationId,
+        message: formatMessageForClient(fresh),
+      };
     }
 
-    // If user is a Company, perform hard delete for both users
-    if (user.role === 'Company') {
-      // Mark message as fully deleted and add both participants to deletedBy
-      message.isDeleted = true;
-      message.deletedBy = [message.sender._id, message.receiver._id];
-      await message.save();
+    // scope = "me": per-user soft delete. If both participants have hidden the
+    // message, mark it fully deleted so it falls out of every query.
+    await message.deleteForUser(userId);
 
-      console.log(`Company ${userId} deleted message ${messageId} for both participants`);
-      return { success: true, message: 'Message deleted successfully for all participants' };
-    }
-    // If user is a Candidate, only soft delete for themselves
-    else {
-      await message.deleteForUser(userId);
-
-      console.log(`Candidate ${userId} deleted message ${messageId} for themselves only`);
-      return { success: true, message: 'Message deleted successfully' };
-    }
+    return {
+      success: true,
+      scope: "me",
+      messageId: String(message._id),
+      conversationId,
+    };
   } catch (error) {
-    console.error('Error in deleteMessage service:', error);
+    console.error("Error in deleteMessage service:", error);
     throw error;
   }
 };

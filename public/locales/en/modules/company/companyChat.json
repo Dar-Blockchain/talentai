@@ -1,14 +1,11 @@
 {
-  "hub": {
-    "eyebrow": "Messages"
-  },
   "top_nav": {
-    "team": "Team chat",
+    "team": "Team Chat",
     "candidate": "Candidate chat"
   },
   "channels": {
     "team": {
-      "title": "Team chat",
+      "title": "Team Chat",
       "subtitle": "Message colleagues in your company workspace."
     },
     "candidate": {
@@ -16,9 +13,11 @@
       "subtitle": "Chat with candidates about applications and job opportunities."
     }
   },
+  "delete_chat_title": "Remove chat",
+  "delete_chat_for_me_body": "This removes the chat from your list only. The candidate keeps the conversation and messages.",
   "side_nav": {
     "section": "Messages",
-    "team": "Team chat",
+    "team": "Team Chat",
     "candidate": "Candidate chat",
     "team_short": "Team",
     "candidate_short": "Candidates"

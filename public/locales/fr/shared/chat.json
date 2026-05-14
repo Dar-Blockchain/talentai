@@ -3,7 +3,10 @@
     "all_conversations": "Toutes les conversations ({{count}})",
     "no_conversations": "Aucune conversation",
     "start_chatting": "Commencez à discuter avec des candidats",
-    "no_messages": "Aucun message"
+    "start_chatting_candidate": "Lorsqu'une entreprise vous écrit, la conversation apparaîtra ici.",
+    "no_messages": "Aucun message",
+    "conversation_menu_aria": "Options de la conversation",
+    "delete_conversation_menu": "Retirer la conversation"
   },
   "panel": {
     "select_conversation": "Sélectionner une conversation",
@@ -20,10 +23,29 @@
   },
   "messages": {
     "no_messages": "Aucun message",
-    "start_conversation": "Commencez la conversation en envoyant un message ci-dessous"
+    "start_conversation": "Commencez la conversation en envoyant un message ci-dessous",
+    "this_message_was_deleted": "Ce message a été supprimé",
+    "not_delivered_preview": "Non délivré",
+    "delivery_blocked_email": "Ce message n'a pas été envoyé au destinataire car il contient une adresse e-mail.",
+    "delivery_blocked_phone": "Ce message n'a pas été envoyé au destinataire car il contient un numéro de téléphone.",
+    "date_today": "Aujourd'hui",
+    "date_yesterday": "Hier"
+  },
+  "toast": {
+    "contact_not_delivered_email": "Message enregistré, mais non délivré : les adresses e-mail ne peuvent pas être partagées dans le chat.",
+    "contact_not_delivered_phone": "Message enregistré, mais non délivré : les numéros de téléphone ne peuvent pas être partagés dans le chat.",
+    "recipient_not_found": "Destinataire introuvable.",
+    "message_deleted": "Message supprimé",
+    "conversation_removed_list": "Conversation retirée de votre liste",
+    "failed_send": "Échec de l'envoi",
+    "failed_delete_message": "Échec de la suppression du message",
+    "failed_delete_conversation": "Échec de la suppression de la conversation",
+    "message_removed_for_me": "Message retiré de votre vue",
+    "message_deleted_for_everyone": "Message supprimé pour tout le monde"
   },
   "input": {
-    "placeholder": "Tapez un message… (Entrée pour envoyer)"
+    "placeholder": "Tapez un message… (Entrée pour envoyer)",
+    "send": "Envoyer"
   },
   "delete_dialog": {
     "title": "Supprimer la conversation",

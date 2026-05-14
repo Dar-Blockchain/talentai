@@ -1,14 +1,11 @@
 {
-  "hub": {
-    "eyebrow": "Messages"
-  },
   "top_nav": {
     "team": "Chat équipe",
     "candidate": "Chat candidats"
   },
   "channels": {
     "team": {
-      "title": "Chat équipe",
+      "title": "Chat d’équipe",
       "subtitle": "Discutez avec vos collègues dans l'espace de travail de l'entreprise."
     },
     "candidate": {
@@ -16,6 +13,8 @@
       "subtitle": "Discutez avec les candidats au sujet des candidatures et des offres."
     }
   },
+  "delete_chat_title": "Retirer la conversation",
+  "delete_chat_for_me_body": "La conversation disparaît de votre liste uniquement. Le candidat conserve la conversation et les messages.",
   "side_nav": {
     "section": "Messages",
     "team": "Chat équipe",

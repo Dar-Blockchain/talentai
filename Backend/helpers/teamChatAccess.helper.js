@@ -131,6 +131,46 @@ const assertValidObjectId = (value, label) => {
   }
 };
 
+/** After "delete chat for me", the conversation must not be re-opened by passive GET polling. */
+const assertConversationNotHiddenForUser = (conversation, currentUser) => {
+  const uid = currentUser._id.toString();
+  const hidden = (conversation.hiddenForParticipants || []).some(
+    (id) => id.toString() === uid,
+  );
+  if (hidden) {
+    throw createHttpError("Conversation not found", 404);
+  }
+};
+
+/** Timestamp after which messages are visible to this user (set on "delete conversation for me"). */
+const getClearedAtForUser = (conversation, userId) => {
+  const uid = userId?._id ? userId._id.toString() : String(userId);
+  const readMap = (mapLike) => {
+    if (!mapLike) return null;
+    if (typeof mapLike.get === "function") {
+      let d = mapLike.get(uid);
+      if (d) return new Date(d);
+      if (typeof mapLike.entries === "function") {
+        for (const [k, v] of mapLike.entries()) {
+          if (String(k) === uid && v != null) return new Date(v);
+        }
+      }
+      return null;
+    }
+    if (typeof mapLike === "object") {
+      const d = mapLike[uid];
+      if (d) return new Date(d);
+      for (const k of Object.keys(mapLike)) {
+        if (String(k) === uid && mapLike[k] != null) return new Date(mapLike[k]);
+      }
+    }
+    return null;
+  };
+  const fromNew = readMap(conversation?.clearedAtForUsers);
+  if (fromNew) return fromNew;
+  return readMap(conversation?.messageVisibilityCutoffByParticipant);
+};
+
 module.exports = {
   buildParticipantKey,
   resolveCompanyId,
@@ -140,5 +180,7 @@ module.exports = {
   formatParticipantSummary,
   populateParticipantSummary,
   assertValidObjectId,
+  assertConversationNotHiddenForUser,
+  getClearedAtForUser,
   createHttpError,
 };

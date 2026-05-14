@@ -5,6 +5,10 @@ require("dotenv").config();
 
 // Core setup
 const app = express();
+// Disable Express's automatic ETag generation so chat (and other live)
+// endpoints never reply with 304 — 304 strips the body and, in some setups,
+// surfaces as a CORS error in the browser when the client expects JSON.
+app.set("etag", false);
 const server = http.createServer(app);
 
 // Import utilities & logger

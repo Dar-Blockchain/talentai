@@ -2,6 +2,7 @@ import React from "react";
 import NextLink from "next/link";
 import { Box, Paper, Typography } from "@mui/material";
 import GroupsOutlined from "@mui/icons-material/GroupsOutlined";
+import GroupsRounded from "@mui/icons-material/GroupsRounded";
 import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
 import { useTranslation } from "react-i18next";
 import { useChatUnreadBadges } from "@/modules/shared/chat/hooks/useChatUnreadBadges";
@@ -44,13 +45,45 @@ const CompanyChatTopNav: React.FC<CompanyChatTopNavProps> = ({ activeChannel }) 
     team: teamChatUnread,
     candidate: candidateChatUnread,
   };
+  const teamDense = activeChannel === "team";
 
   return (
-    <Paper elevation={0} sx={companyChatSx.hubHeader}>
+    <Paper
+      elevation={0}
+      sx={{
+        ...companyChatSx.hubHeader,
+        ...(teamDense ? companyChatSx.hubHeaderTeamDense : {}),
+      }}
+    >
       <Box sx={companyChatSx.hubIntro}>
-        <Typography sx={companyChatSx.hubEyebrow}>{t("hub.eyebrow")}</Typography>
-        <Typography sx={companyChatSx.hubTitle}>{t(`channels.${activeChannel}.title`)}</Typography>
-        <Typography sx={companyChatSx.hubSubtitle}>{t(`channels.${activeChannel}.subtitle`)}</Typography>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: teamDense ? 1.25 : 1.5,
+            minWidth: 0,
+            mt: 0.25,
+          }}
+        >
+          {teamDense && (
+            <Box aria-hidden sx={companyChatSx.teamTitleIconWrap}>
+              <GroupsRounded sx={{ fontSize: 20 }} />
+            </Box>
+          )}
+          <Box sx={{ minWidth: 0 }}>
+            <Typography
+              sx={{
+                ...companyChatSx.hubTitle,
+                ...(teamDense ? companyChatSx.hubTitleTeamDense : {}),
+              }}
+            >
+              {t(`channels.${activeChannel}.title`)}
+            </Typography>
+            {!teamDense ? (
+              <Typography sx={companyChatSx.hubSubtitle}>{t(`channels.${activeChannel}.subtitle`)}</Typography>
+            ) : null}
+          </Box>
+        </Box>
       </Box>
 
       <Box sx={companyChatSx.hubNavWrap}>

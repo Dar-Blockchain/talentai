@@ -22,6 +22,11 @@ export interface CandidateConversation {
   lastMessage?: {
     text: string;
     timestamp: string;
+    /** True when the newest visible row is a "deleted for everyone" placeholder. */
+    isDeletedForEveryone?: boolean;
+    /** Last message author (used to align deleted placeholders in the sidebar). */
+    senderId?: string;
+    sender?: string | { _id?: string };
   };
   unreadCount: number;
   updatedAt: string;
@@ -44,6 +49,12 @@ export interface CandidateMessage {
   createdAt: string;
   conversationId?: string;
   conversation?: string;
+  deliveryBlocked?: boolean;
+  blockedReason?: "email" | "phone";
+  /** WhatsApp-style "delete for everyone" — UI renders placeholder row. */
+  isDeletedForEveryone?: boolean;
+  deletedAt?: string | null;
+  deletedForEveryoneBy?: string;
 }
 
 export interface CandidateChatConversationsParams {

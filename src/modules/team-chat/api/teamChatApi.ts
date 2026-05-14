@@ -43,6 +43,25 @@ export const teamChatApi = {
     const res = await axiosInstance.get("team-chat/unread-count");
     return res.data.data.totalUnread as number;
   },
+
+  deleteMessage: async (messageId: string, scope: "me" | "everyone" = "me") => {
+    const res = await axiosInstance.delete(`team-chat/messages/${messageId}`, {
+      params: { scope },
+    });
+    return res.data.data as {
+      messageId: string;
+      conversationId: string;
+      scope: "me" | "everyone";
+      message?: TeamMessage;
+    };
+  },
+
+  deleteConversation: async (conversationId: string) => {
+    await axiosInstance.post(
+      `team-chat/conversations/${conversationId}/hide-for-me`,
+    );
+    return conversationId;
+  },
 };
 
 export { getApiErrorMessage as getTeamChatErrorMessage };

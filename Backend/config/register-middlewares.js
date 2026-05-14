@@ -36,6 +36,12 @@ function registerMiddlewares(app) {
         "Content-Type",
         "Accept",
         "Authorization",
+        // Allow cache-busting headers from clients (legacy chat APIs send
+        // these); without listing them, the preflight is rejected and the
+        // browser surfaces a CORS error before the request reaches Express.
+        "Cache-Control",
+        "Pragma",
+        "Expires",
       ],
       credentials: true,
       preflightContinue: false,
