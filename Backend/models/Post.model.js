@@ -28,15 +28,6 @@ const skillSchema = new mongoose.Schema({
   },
 });
 
-const suggestedSkillSchema = new mongoose.Schema({
-  name: { type: String },
-  reason: String,
-  category: String,
-  priority: String,
-  relatedTo: String,
-  purpose: String,
-});
-
 const softSkillSchema = new mongoose.Schema({
   name: { type: String },
   level: { type: String },
@@ -68,50 +59,13 @@ const jobDetailsSchema = new mongoose.Schema({
 
 const skillAnalysisSchema = new mongoose.Schema({
   requiredSkills: [skillSchema],
-  suggestedSkills: {
-    technical: [suggestedSkillSchema],
-    frameworks: [suggestedSkillSchema],
-    tools: [suggestedSkillSchema],
-  },
   softSkills: [softSkillSchema],
-  skillSummary: {
-    mainTechnologies: [String],
-    complementarySkills: [String],
-    learningPath: [String],
-    stackComplexity: String,
-  },
-});
-
-const linkedinPostSchema = new mongoose.Schema({
-  formattedContent: {
-    headline: String,
-    introduction: String,
-    companyPitch: String,
-    roleOverview: String,
-    keyPoints: [String],
-    skillsRequired: String,
-    benefitsSection: String,
-    callToAction: String,
-  },
-  hashtags: [String],
-  formatting: {
-    emojis: {
-      company: String,
-      location: String,
-      salary: String,
-      requirements: String,
-      skills: String,
-      benefits: String,
-      apply: String,
-    },
-  },
-  finalPost: String,
 });
 
 const postSchema = new mongoose.Schema({
   jobDetails: { type: jobDetailsSchema, required: true },
   skillAnalysis: { type: skillAnalysisSchema, required: true },
-  linkedinPost: { type: linkedinPostSchema, required: true },
+
   // status: {
   //   type: String,
   //   enum: ["drafts", "posted", "scheduled"],

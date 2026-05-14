@@ -11,7 +11,7 @@ const validatePostData = (postData) => {
     throw err;
   }
 
-  const { jobDetails, skillAnalysis, linkedinPost } = postData;
+  const { jobDetails, skillAnalysis } = postData;
 
   // Validate jobDetails
   if (!jobDetails || typeof jobDetails !== 'object') {
@@ -55,25 +55,6 @@ const validatePostData = (postData) => {
 
   if (!Array.isArray(skillAnalysis.requiredSkills) || skillAnalysis.requiredSkills.length === 0) {
     const err = new Error('At least one required skill must be specified');
-    err.status = 400;
-    throw err;
-  }
-
-  // Validate linkedinPost
-  if (!linkedinPost || typeof linkedinPost !== 'object') {
-    const err = new Error('linkedinPost is required and must be an object');
-    err.status = 400;
-    throw err;
-  }
-
-  if (!linkedinPost.formattedContent?.headline || typeof linkedinPost.formattedContent.headline !== 'string') {
-    const err = new Error('LinkedIn post headline is required');
-    err.status = 400;
-    throw err;
-  }
-
-  if (!linkedinPost.finalPost || typeof linkedinPost.finalPost !== 'string') {
-    const err = new Error('LinkedIn post content is required');
     err.status = 400;
     throw err;
   }
