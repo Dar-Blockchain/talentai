@@ -54,9 +54,9 @@ const formatRole = (role) =>
 
 // Shared inline logo attachment
 const logoAttachment = {
-  filename: "logocompany.png",
-  path: path.join(__dirname, "../templates/images/logocompany.png"),
-  cid: "logocompany",
+  filename: "logo.png",
+  path: path.join(__dirname, "../templates/images/logo.png"),
+  cid: "logo",
 };
 
 const year = new Date().getFullYear();
