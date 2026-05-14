@@ -55,7 +55,7 @@ router.get("/my-posts", resolveCompanyActor, postController.getUserPosts);
 
 // GET /post/metrics
 // Description: Returns post metrics (total, active, draft, expired, closed, cancelled)
-router.get("/metrics", postController.getPostMetrics);
+router.get("/metrics", resolveCompanyActor, postController.getPostMetrics);
 
 // GET /post/kpi/status-by-post — KPI Zone 2: per-post shortlisted/velocity/coverage/deadline
 router.get("/kpi/status-by-post", postController.getPostsStatusKPI);

@@ -2055,13 +2055,14 @@ exports.joinCampaignByLink = async (req, res) => {
           error: "This campaign is not currently active",
         });
     }
-    if (
-      campaign.deadline &&
-      new Date(campaign.deadline).getTime() < Date.now()
-    ) {
-      return res
-        .status(403)
-        .json({ success: false, error: "This campaign has expired" });
+    if (campaign.deadline) {
+      const dl = new Date(campaign.deadline);
+      const deadlineEnd = new Date(Date.UTC(dl.getUTCFullYear(), dl.getUTCMonth(), dl.getUTCDate(), 23, 59, 59, 999));
+      if (deadlineEnd.getTime() < Date.now()) {
+        return res
+          .status(403)
+          .json({ success: false, error: "This campaign has expired" });
+      }
     }
     if (campaign.accessMethod === "ACCOUNTS") {
       return res
