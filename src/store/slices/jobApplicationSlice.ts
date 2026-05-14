@@ -23,6 +23,7 @@ export interface ApplicationSummaryItem {
   postId?: string | null;
   postTitle?: string | null;
   resumeFile?: string | null;
+  recruiterDecision?: 'shortlisted' | 'rejected' | null;
 }
 
 interface SummaryState {
@@ -175,6 +176,17 @@ export const createJobApplication = createAsyncThunk(
       return await jobApplicationService.createApplication(postId);
     } catch (error: any) {
       return rejectWithValue(error?.response?.data?.message || error.message || 'Failed to create application');
+    }
+  }
+);
+
+export const updateRecruiterDecision = createAsyncThunk(
+  'jobApplications/updateRecruiterDecision',
+  async (params: { applicationId: string; decision: 'shortlisted' | 'rejected'; rejectionReason?: string }, { rejectWithValue }) => {
+    try {
+      return await jobApplicationService.updateRecruiterDecision(params.applicationId, params.decision, params.rejectionReason);
+    } catch (error: any) {
+      return rejectWithValue(error?.response?.data?.error || error.message || 'Failed to update decision');
     }
   }
 );

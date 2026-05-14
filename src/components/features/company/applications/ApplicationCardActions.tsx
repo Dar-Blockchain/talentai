@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useDispatch } from "react-redux";
 import {
-  Box, Divider, IconButton, ListItemIcon, Menu, MenuItem, Typography,
+  Box, CircularProgress, Divider, IconButton, ListItemIcon, Menu, MenuItem, Typography,
 } from "@mui/material";
 import EmailOutlined from "@mui/icons-material/EmailOutlined";
 import AccountCircleOutlined from "@mui/icons-material/AccountCircleOutlined";
@@ -11,8 +12,11 @@ import AssessmentOutlined from "@mui/icons-material/AssessmentOutlined";
 import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
 import VideoCallOutlined from "@mui/icons-material/VideoCallOutlined";
 import MoreVertOutlined from "@mui/icons-material/MoreVert";
+import StarOutlined from "@mui/icons-material/StarOutlined";
+import CancelOutlined from "@mui/icons-material/CancelOutlined";
 import { useRouter } from "next/router";
-import { ApplicationSummaryItem } from "@/store/slices/jobApplicationSlice";
+import { AppDispatch } from "@/store/store";
+import { ApplicationSummaryItem, updateRecruiterDecision } from "@/store/slices/jobApplicationSlice";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const TEAL   = "#0D9488";
@@ -64,6 +68,7 @@ export interface ApplicationCardActionsProps {
   onContact: () => void;
   onAssessment: () => void;
   onInvite: () => void;
+  onDecisionSuccess?: () => void;
 }
 
 // ── menuItemSx helper ──────────────────────────────────────────────────────────
@@ -77,12 +82,30 @@ const menuItemSx = (color: string) => ({
 const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
   app, name, appId, postId, avatarUrl, bgColor,
   menuAnchorEl, menuOpen, onMenuOpen, onMenuClose,
-  onContact, onAssessment, onInvite,
+  onContact, onAssessment, onInvite, onDecisionSuccess,
 }) => {
   const { t } = useTranslation("dashboard");
   const router       = useRouter();
+  const dispatch     = useDispatch<AppDispatch>();
   const hasInterview = !!app.completedAt;
   const isVisited    = app.status === "visited";
+  const [decidingShortlist, setDecidingShortlist] = useState(false);
+  const [decidingReject,    setDecidingReject]    = useState(false);
+  const isShortlisted = app.recruiterDecision === "shortlisted";
+  const isRejected    = app.recruiterDecision === "rejected";
+
+  const handleDecision = async (decision: "shortlisted" | "rejected") => {
+    onMenuClose();
+    if (decision === "shortlisted") setDecidingShortlist(true);
+    else setDecidingReject(true);
+    try {
+      await dispatch(updateRecruiterDecision({ applicationId: appId, decision })).unwrap();
+      onDecisionSuccess?.();
+    } finally {
+      setDecidingShortlist(false);
+      setDecidingReject(false);
+    }
+  };
 
   const handleDownloadCV = () => {
     if (!app.resumeFile) return;
@@ -101,6 +124,55 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
       <Box sx={{ display: "flex", gap: 2.5, flexShrink: 0 }}>
         <ScoreCircle value={app.matchScore}     label={t("pages.applications.actions.score_match")} />
         <ScoreCircle value={app.interviewScore} label={t("pages.applications.actions.score_interview")} />
+      </Box>
+
+      {/* Shortlist / Reject quick buttons */}
+      <Box sx={{ display: "flex", gap: 0.75, flexShrink: 0 }}>
+        <Box
+          component="button"
+          onClick={() => !isShortlisted && handleDecision("shortlisted")}
+          disabled={decidingShortlist}
+          title={isShortlisted ? "Shortlisted" : "Shortlist"}
+          sx={{
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5,
+            height: 28, px: 1.1, outline: "none", borderRadius: "7px", cursor: isShortlisted ? "default" : "pointer",
+            border: `1px solid ${isShortlisted ? "#059669" : "#D1D5DB"}`,
+            bgcolor: isShortlisted ? "#ECFDF5" : "#F9FAFB",
+            color: isShortlisted ? "#059669" : "#6B7280",
+            transition: "all 0.15s",
+            "&:hover:not(:disabled)": !isShortlisted ? { borderColor: "#059669", bgcolor: "#F0FDF4", color: "#059669" } : {},
+          }}
+        >
+          {decidingShortlist
+            ? <CircularProgress size={11} sx={{ color: "inherit" }} />
+            : <StarOutlined sx={{ fontSize: 13 }} />}
+          <Typography sx={{ fontSize: "11px", fontWeight: 600, color: "inherit", lineHeight: 1 }}>
+            {isShortlisted ? "Shortlisted" : "Shortlist"}
+          </Typography>
+        </Box>
+
+        <Box
+          component="button"
+          onClick={() => !isRejected && handleDecision("rejected")}
+          disabled={decidingReject}
+          title={isRejected ? "Rejected" : "Reject"}
+          sx={{
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5,
+            height: 28, px: 1.1, outline: "none", borderRadius: "7px", cursor: isRejected ? "default" : "pointer",
+            border: `1px solid ${isRejected ? "#DC2626" : "#D1D5DB"}`,
+            bgcolor: isRejected ? "#FEF2F2" : "#F9FAFB",
+            color: isRejected ? "#DC2626" : "#6B7280",
+            transition: "all 0.15s",
+            "&:hover:not(:disabled)": !isRejected ? { borderColor: "#DC2626", bgcolor: "#FEF2F2", color: "#DC2626" } : {},
+          }}
+        >
+          {decidingReject
+            ? <CircularProgress size={11} sx={{ color: "inherit" }} />
+            : <CancelOutlined sx={{ fontSize: 13 }} />}
+          <Typography sx={{ fontSize: "11px", fontWeight: 600, color: "inherit", lineHeight: 1 }}>
+            {isRejected ? "Rejected" : "Reject"}
+          </Typography>
+        </Box>
       </Box>
 
       {/* Divider */}

@@ -300,6 +300,7 @@ const ApplicationsPage: React.FC = () => {
               onContact={setContactTarget}
               onAssessment={setAssessmentTarget}
               onInvite={setInviteTarget}
+              onDecisionSuccess={load}
             />
           ))}
 

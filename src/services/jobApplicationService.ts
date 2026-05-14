@@ -101,4 +101,9 @@ export const jobApplicationService = {
     return res.data;
   },
 
+  updateRecruiterDecision: async (applicationId: string, decision: 'shortlisted' | 'rejected', rejectionReason?: string) => {
+    const res = await axiosInstance.patch(`job-applications/${applicationId}/recruiter-decision`, { decision, rejectionReason });
+    return res.data;
+  },
+
 };

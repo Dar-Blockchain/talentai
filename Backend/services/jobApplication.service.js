@@ -1013,7 +1013,7 @@ module.exports.getApplicationsSummaryByPost = async (postId, filters = {}, page 
 
     // ── Fetch applications (all, for in-memory interviewScore sort/filter) ───
     const applications = await JobApplication.find(query)
-      .select("_id status matchScore appliedAt profile")
+      .select("_id status matchScore appliedAt profile recruiterDecision")
       .populate({
         path: "profile",
         select: "firstName lastName email user_image userId resume",
@@ -1051,6 +1051,7 @@ module.exports.getApplicationsSummaryByPost = async (postId, filters = {}, page 
         completedAt: assessment?.createdAt || null,
         status: app.status,
         resumeFile: p.resume || null,
+        recruiterDecision: app.recruiterDecision ?? null,
       };
     });
 
@@ -1136,7 +1137,7 @@ module.exports.getApplicationsSummaryByCompany = async (companyId, filters = {},
     }
 
     const applications = await JobApplication.find(query)
-      .select("_id status matchScore appliedAt profile post")
+      .select("_id status matchScore appliedAt profile post recruiterDecision")
       .populate({
         path: "profile",
         select: "firstName lastName email user_image userId resume",
@@ -1177,6 +1178,7 @@ module.exports.getApplicationsSummaryByCompany = async (companyId, filters = {},
         postId: postId || null,
         postTitle: app.post?.jobDetails?.title || null,
         resumeFile: p.resume || null,
+        recruiterDecision: app.recruiterDecision ?? null,
       };
     });
 
