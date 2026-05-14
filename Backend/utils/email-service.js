@@ -45,6 +45,7 @@ const contactEnterpriseTemplate      = compileTemplate("contact/contact-enterpri
 const campaignInviteTemplate           = compileTemplate("campaign/campaign-invite.hbs");
 const campaignDeadlineReminderTemplate = compileTemplate("campaign/campaign-deadline-reminder.hbs");
 const planUpgradeReminderTemplate      = compileTemplate("company/plan-upgrade-reminder.hbs");
+const jobMatchTemplate                 = compileTemplate("job/job-match.hbs");
 
 // Format role: "project_manager" → "Project Manager"
 const formatRole = (role) =>
@@ -281,6 +282,25 @@ const sendEnterpriseInquiry = async ({ name, email, company, message }) => {
   }
 };
 
+// ─── Send Job Match Email (to candidate when a new matching post is published) ──
+const sendJobMatchEmail = async (candidateEmail, { candidateName, jobTitle, companyName, experienceLevel, workMode, matchedSkills, matchScore, jobLink }) => {
+  const mailOptions = {
+    from: FROM_ADDRESS,
+    to: candidateEmail,
+    subject: `🎯 New job match: ${jobTitle} at ${companyName}`,
+    html: jobMatchTemplate({ candidateName, jobTitle, companyName, experienceLevel, workMode, matchedSkills, matchScore, jobLink, year }),
+    attachments: [logoAttachment],
+  };
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Job match email sent to ${candidateEmail} (${jobTitle})`);
+    return true;
+  } catch (error) {
+    console.error(`❌ Job match email failed for ${candidateEmail}:`, error.message);
+    return false;
+  }
+};
+
 module.exports = {
   sendOTP,
   sendCompanyInvitation,
@@ -293,5 +313,6 @@ module.exports = {
   sendEnterpriseInquiry,
   sendCampaignInvitation,
   sendCampaignDeadlineReminder,
+  sendJobMatchEmail,
   transporter,
 };
