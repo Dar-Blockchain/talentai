@@ -116,7 +116,6 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel, onSaveSucce
         jobData: {
           jobDetails: values.jobDetails,
           skillAnalysis: values.skillAnalysis,
-          linkedinPost: job?.linkedinPost,
           expirationDate: values.expirationDate || undefined,
         },
       })).unwrap();

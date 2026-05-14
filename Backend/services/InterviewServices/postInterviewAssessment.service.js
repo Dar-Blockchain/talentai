@@ -729,7 +729,6 @@ module.exports.getAssessmentsByCompany = async (
       $project: {
         'candidate.authHistory': 0,
         'candidate.notifications': 0,
-        'post.linkedinPost': 0,
       },
     });
 

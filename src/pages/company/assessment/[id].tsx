@@ -72,7 +72,6 @@ const CompanyAssessmentPage: React.FC = () => {
   );
   const requiredSkills  = useMemo(() => assessment?.post?.skillAnalysis?.requiredSkills  || [], [assessment]);
   const softSkills      = useMemo(() => assessment?.post?.skillAnalysis?.softSkills      || [], [assessment]);
-  const suggestedSkills = useMemo(() => assessment?.post?.skillAnalysis?.suggestedSkills || {}, [assessment]);
   const summary         = useMemo(() => assessment?.interviewData?.finalReport?.summary  || "", [assessment]);
   const recommendations = useMemo(() => assessment?.interviewData?.finalReport?.recommendations || [], [assessment]);
   const jobDescription      = useMemo(() => assessment?.post?.jobDetails?.description       || "", [assessment]);
@@ -191,7 +190,6 @@ const CompanyAssessmentPage: React.FC = () => {
                   <SkillsSection
                     requiredSkills={requiredSkills}
                     softSkills={softSkills}
-                    suggestedSkills={suggestedSkills}
                   />
                 </SectionCard>
               )}

@@ -28,49 +28,11 @@ interface JobDetails {
 interface SkillAnalysis {
   requiredSkills: Skill[];
   softSkills: Skill[];
-  suggestedSkills: {
-    technical: string[];
-    frameworks: string[];
-    tools: string[];
-  };
-  skillSummary: {
-    mainTechnologies: string[];
-    complementarySkills: string[];
-    learningPath: string[];
-    stackComplexity: string;
-  };
-}
-
-interface LinkedinPost {
-  formattedContent: {
-    headline: string;
-    introduction: string;
-    companyPitch: string;
-    roleOverview: string;
-    keyPoints: string[];
-    skillsRequired: string;
-    benefitsSection: string;
-    callToAction: string;
-  };
-  hashtags: string[];
-  formatting: {
-    emojis: {
-      company: string;
-      location: string;
-      salary: string;
-      requirements: string;
-      skills: string;
-      benefits: string;
-      apply: string;
-    };
-  };
-  finalPost: string;
 }
 
 export interface ManualPostState {
   jobDetails: JobDetails;
   skillAnalysis: SkillAnalysis;
-  linkedinPost: LinkedinPost;
   creationType: "manual";
   expirationDate: string;
 }
@@ -113,43 +75,6 @@ const initialState: ManualPostState = {
       { name: "Teamwork", level: "Intermediate" },
       { name: "Adaptability", level: "Intermediate" },
     ],
-    suggestedSkills: {
-      technical: [],
-      frameworks: [],
-      tools: [],
-    },
-    skillSummary: {
-      mainTechnologies: [],
-      complementarySkills: [],
-      learningPath: [],
-      stackComplexity: "Moderate",
-    },
-  },
-
-  linkedinPost: {
-    formattedContent: {
-      headline: "",
-      introduction: "",
-      companyPitch: "Join our innovative team",
-      roleOverview: "",
-      keyPoints: [],
-      skillsRequired: "To be defined in recruitment pipeline",
-      benefitsSection: "Competitive salary and benefits package",
-      callToAction: "Apply now to join our team!",
-    },
-    hashtags: ["#Hiring", "#JobOpening"],
-    formatting: {
-      emojis: {
-        company: "🏢",
-        location: "📍",
-        salary: "💰",
-        requirements: "📋",
-        skills: "💻",
-        benefits: "🎯",
-        apply: "✨",
-      },
-    },
-    finalPost: "",
   },
 
   creationType: "manual",
@@ -166,12 +91,6 @@ const manualPostSlice = createSlice({
       state.jobDetails = { ...state.jobDetails, ...action.payload };
     },
 
-    updateLinkedinPost: (
-      state,
-      action: PayloadAction<Partial<LinkedinPost>>
-    ) => {
-      state.linkedinPost = { ...state.linkedinPost, ...action.payload };
-    },
     setManualExpirationDate: (state, action: PayloadAction<string>) => {
       state.expirationDate = action.payload;
     },
@@ -183,7 +102,6 @@ const manualPostSlice = createSlice({
 
 export const {
   updateJobDetails,
-  updateLinkedinPost,
   setManualExpirationDate,
   resetManualPost,
 } = manualPostSlice.actions;

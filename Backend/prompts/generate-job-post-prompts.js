@@ -44,90 +44,34 @@ Return the response in the following JSON format:
   "jobDetails": {
     "title": "Job title",
     "description": "A concise, professional summary of the role (2-4 sentences). Must clearly state what the role is about, the team/product context, and the impact the hire will have. Do NOT repeat requirements or responsibilities here.",
-        "requirements": ["Each requirement must be specific, measurable, and directly relevant to the role. Use concrete technologies, years of experience, degrees, or certifications. Avoid vague terms like 'good knowledge of' or 'familiarity with'. Example: '3+ years of production experience with React.js and TypeScript' instead of 'Experience with frontend frameworks'."],
-        "responsibilities": ["Each responsibility must describe a concrete, actionable task the candidate will perform daily or regularly. Use strong action verbs (design, implement, optimize, lead, build, deploy, review, mentor). Avoid generic filler like 'Work with the team' or 'Participate in meetings'. Example: 'Design and implement RESTful APIs serving 10K+ requests/min using Node.js and Express' instead of 'Develop backend services'."],
-        "location": "Job location",
-        "workMode": "Remote/On-site/Hybrid",
-        "employmentType": "Full-time/Part-time/Contract",
-        "experienceLevel": "Junior/Mid-level/Senior/Expert",
-        "salary": {
-          "min": 0,
-          "max": 0,
-          "currency": "USD"
-        }
-      },
-      "skillAnalysis": {
-      "requiredSkills": [
-        {
-          "name": "Skill 1",
-          "level": "Required level (1-5) based on years of experience",
-          "category": "Frontend/Backend/DevOps/etc.",
-          "percentage": 0
-        }
-      ],
-      "softSkills": [
-        {
-          "name": "Soft Skill 1",
-          "level": "Required level (1-5) based on needs",
-          "percentage": 0
-        }
-      ],
-      "suggestedSkills": {
-        "technical": [
-          {
-            "name": "Skill name",
-            "reason": "Why this skill is relevant",
-            "category": "Frontend/Backend/DevOps/etc.",
-            "priority": "Senior/Mid_Level/Junior"
-          }
-        ],
-        "frameworks": [
-          {
-            "name": "Framework name",
-            "relatedTo": "Related technology",
-            "priority": "Senior/Mid_Level/Junior"
-          }
-        ],
-        "tools": [
-          {
-            "name": "Tool name",
-            "purpose": "What it's used for",
-            "category": "Version Control/CI-CD/Testing/etc."
-          }
-        ]
-      },
-      "skillSummary": {
-        "mainTechnologies": ["Core technologies required"],
-        "complementarySkills": ["Skills that would add value"],
-        "learningPath": ["Suggested skills to learn"],
-        "stackComplexity": "Simple/Moderate/Complex"
-      }
-    },
-    "linkedinPost": {
-      "formattedContent": {
-        "headline": "Attention-grabbing headline",
-        "introduction": "Engaging opening paragraph",
-        "companyPitch": "Brief compelling pitch",
-        "roleOverview": "Clear role description",
-        "keyPoints": ["Bullet points of key aspects"],
-        "skillsRequired": "Formatted skills section",
-        "benefitsSection": "What we offer",
-        "callToAction": "Engaging call to action"
-      },
-      "hashtags": ["Relevant", "Hashtags"],
-      "formatting": {
-        "emojis": {
-          "company": "🏢",
-          "location": "📍",
-          "salary": "💰",
-          "requirements": "📋",
-          "skills": "💻",
-          "benefits": "🎯",
-          "apply": "✨"
-        }
-      },
-      "finalPost": "The complete formatted post ready for LinkedIn"
+    "requirements": ["Each requirement must be specific, measurable, and directly relevant to the role. Use concrete technologies, years of experience, degrees, or certifications. Avoid vague terms like 'good knowledge of' or 'familiarity with'. Example: '3+ years of production experience with React.js and TypeScript' instead of 'Experience with frontend frameworks'."],
+    "responsibilities": ["Each responsibility must describe a concrete, actionable task the candidate will perform daily or regularly. Use strong action verbs (design, implement, optimize, lead, build, deploy, review, mentor). Avoid generic filler like 'Work with the team' or 'Participate in meetings'. Example: 'Design and implement RESTful APIs serving 10K+ requests/min using Node.js and Express' instead of 'Develop backend services'."],
+    "location": "Job location",
+    "workMode": "Remote/On-site/Hybrid",
+    "employmentType": "Full-time/Part-time/Contract",
+    "experienceLevel": "Junior/Mid-level/Senior/Expert",
+    "salary": {
+      "min": 0,
+      "max": 0,
+      "currency": "USD"
     }
+  },
+  "skillAnalysis": {
+    "requiredSkills": [
+      {
+        "name": "Skill 1",
+        "level": "Required level (1-5) based on years of experience",
+        "category": "Frontend/Backend/DevOps/etc.",
+        "percentage": 0
+      }
+    ],
+    "softSkills": [
+      {
+        "name": "Soft Skill 1",
+        "level": "Required level (1-5) based on needs",
+        "percentage": 0
+      }
+    ]
   }
 }
 

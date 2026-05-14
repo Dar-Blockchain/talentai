@@ -93,10 +93,6 @@ export interface JobDetails {
 }
 
 export interface SkillAnalysis {
-  skillSummary?: {
-    mainTechnologies?: string[];
-    stackComplexity?: string;
-  };
 }
 
 export interface Post {

@@ -122,45 +122,7 @@ async function generateJobPost(description, user, overrides = {}) {
         }
       }
 
-      // Build finalPost if needed
-      if (!result?.linkedinPost?.finalPost) {
-        try {
-          const format = result.linkedinPost.formatting.emojis;
-          result.linkedinPost.finalPost = `${
-            result.linkedinPost.formattedContent.headline
-          }
-
-${format.company} ${result.linkedinPost.formattedContent.introduction}
-
-${result.linkedinPost.formattedContent.companyPitch}
-
-${format.requirements} Role Overview:
-${result.linkedinPost.formattedContent.roleOverview}
-
-${format.requirements} Key Points:
-${result.linkedinPost.formattedContent.keyPoints
-  .map((point) => `• ${point}`)
-  .join("\n")}
-
-${format.skills} Required Skills:
-${result.linkedinPost.formattedContent.skillsRequired}
-
-${format.benefits} What We Offer:
-${result.linkedinPost.formattedContent.benefitsSection}
-
-${format.location} Location: ${result.jobDetails.location}
-${format.salary} Salary: ${result.jobDetails.salary.currency}${
-            result.jobDetails.salary.min
-          }-${result.jobDetails.salary.max}
-
-${format.apply} ${result.linkedinPost.formattedContent.callToAction}
-
-${result.linkedinPost.hashtags.map((tag) => "#" + tag).join(" ")}`;
-        } catch (inner) {
-          // If building finalPost fails, ignore and return whatever parsed result we have
-          console.warn("Could not build finalPost:", inner.message || inner);
-        }
-      }
+      return result;
     } catch (e) {
       const err = new Error(
         `Failed to parse response from LLM: ${e.message || e}`

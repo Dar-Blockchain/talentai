@@ -109,13 +109,7 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
   const skillAnalysis = assessment.post?.skillAnalysis;
   const requiredSkills = skillAnalysis?.requiredSkills || [];
   const softSkills = skillAnalysis?.softSkills || [];
-  const suggestedSkills = skillAnalysis?.suggestedSkills || {};
-  const hasSkills =
-    requiredSkills.length > 0 ||
-    softSkills.length > 0 ||
-    (suggestedSkills.technical?.length || 0) > 0 ||
-    (suggestedSkills.frameworks?.length || 0) > 0 ||
-    (suggestedSkills.tools?.length || 0) > 0;
+  const hasSkills = requiredSkills.length > 0 || softSkills.length > 0;
 
   return (
     <Dialog
@@ -389,64 +383,6 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
               </Box>
             )}
 
-            {(suggestedSkills.technical?.length > 0 ||
-              suggestedSkills.frameworks?.length > 0 ||
-              suggestedSkills.tools?.length > 0) && (
-              <Box>
-                <Typography
-                  sx={{ fontSize: "11px", fontWeight: 500, color: "#6b7280", mb: 0.5 }}
-                >
-                  Suggested Skills
-                </Typography>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                  {suggestedSkills.technical?.map((s: any, i: number) => (
-                    <Chip
-                      key={`tech-${i}`}
-                      label={s.name}
-                      size="small"
-                      sx={{
-                        backgroundColor: "rgba(139, 92, 246, 0.08)",
-                        color: "#8b5cf6",
-                        fontWeight: 500,
-                        fontSize: "0.7rem",
-                        height: 22,
-                        border: "1px solid rgba(139, 92, 246, 0.2)",
-                      }}
-                    />
-                  ))}
-                  {suggestedSkills.frameworks?.map((s: any, i: number) => (
-                    <Chip
-                      key={`fw-${i}`}
-                      label={s.name}
-                      size="small"
-                      sx={{
-                        backgroundColor: "rgba(245, 158, 11, 0.08)",
-                        color: "#f59e0b",
-                        fontWeight: 500,
-                        fontSize: "0.7rem",
-                        height: 22,
-                        border: "1px solid rgba(245, 158, 11, 0.2)",
-                      }}
-                    />
-                  ))}
-                  {suggestedSkills.tools?.map((s: any, i: number) => (
-                    <Chip
-                      key={`tool-${i}`}
-                      label={s.name}
-                      size="small"
-                      sx={{
-                        backgroundColor: "rgba(20, 184, 166, 0.08)",
-                        color: "#14b8a6",
-                        fontWeight: 500,
-                        fontSize: "0.7rem",
-                        height: 22,
-                        border: "1px solid rgba(20, 184, 166, 0.2)",
-                      }}
-                    />
-                  ))}
-                </Box>
-              </Box>
-            )}
           </Box>
         )}
 

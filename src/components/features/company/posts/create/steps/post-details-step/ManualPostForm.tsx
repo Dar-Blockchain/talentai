@@ -16,7 +16,6 @@ import {
 import SalaryRange from "./SalaryRange";
 import {
   updateJobDetails,
-  updateLinkedinPost,
   setManualExpirationDate,
 } from "@/store/slices/manualPostSlice";
 import { useEffect } from "react";
@@ -66,27 +65,6 @@ const ManualPostForm = () => {
   useEffect(() => {
     dispatch(updateJobDetails({
       description: `${title} - ${employmentType} position. ${location} work arrangement. Competitive salary package offered.`,
-    }));
-    dispatch(updateLinkedinPost({
-      formattedContent: {
-        headline: `We're Hiring: ${title}`,
-        introduction: `Exciting opportunity for a ${title}`,
-        companyPitch: "Join our innovative team",
-        roleOverview: `As a ${title}, you'll be at the heart of our team`,
-        keyPoints: [
-          `${location} work`,
-          `${employmentType} position`,
-          `Salary: ${salary?.currency}${salary?.min?.toLocaleString()} - ${salary?.currency}${salary?.max?.toLocaleString()}`,
-        ],
-        skillsRequired: "To be defined in recruitment pipeline",
-        benefitsSection: "Competitive salary and benefits package",
-        callToAction: "Apply now to join our team!",
-      },
-      hashtags: ["#Hiring", "#JobOpening", `#${title.replace(/\s+/g, "")}`],
-      formatting: {
-        emojis: { company: "🏢", location: "📍", salary: "💰", requirements: "📋", skills: "💻", benefits: "🎯", apply: "✨" },
-      },
-      finalPost: `We're Hiring: ${title}\n\n${location} | ${employmentType}\nSalary: ${salary?.currency}${salary?.min?.toLocaleString()} - ${salary?.currency}${salary?.max?.toLocaleString()}`,
     }));
   }, [title, employmentType, location, salary]);
 

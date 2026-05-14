@@ -7,7 +7,7 @@ const nodemailer = require('nodemailer');
 
 // Validate post data
 const validatePostData = (postData) => {
-  const { jobDetails, skillAnalysis, linkedinPost } = postData;
+  const { jobDetails, skillAnalysis } = postData;
 
   // Validate jobDetails
   if (!jobDetails?.title || !jobDetails?.description) {
@@ -24,11 +24,6 @@ const validatePostData = (postData) => {
   // Validate required skills
   if (!skillAnalysis?.requiredSkills?.length) {
     throw new Error("At least one required skill must be specified");
-  }
-
-  // Validate LinkedIn post
-  if (!linkedinPost?.formattedContent?.headline || !linkedinPost?.finalPost) {
-    throw new Error("LinkedIn post content is required");
   }
 
   return true;
@@ -368,7 +363,6 @@ module.exports.getPipelineJobDetails = async (postId) => {
         _id: post._id,
         jobDetails: post.jobDetails,
         skillAnalysis: post.skillAnalysis,
-        linkedinPost: post.linkedinPost,
         companyName: post.companyName,
         status: post.status,
         creationType: post.creationType,
@@ -542,8 +536,7 @@ module.exports.updatePost = async (postId, userId, updateData) => {
     // Validate data if a full update is provided
     if (
       updateData.jobDetails ||
-      updateData.skillAnalysis ||
-      updateData.linkedinPost
+      updateData.skillAnalysis
     ) {
       validatePostData(updateData);
     }
