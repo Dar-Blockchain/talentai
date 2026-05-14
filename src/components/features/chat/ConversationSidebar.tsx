@@ -122,6 +122,8 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
         avatarMt: 0.25,
       };
 
+    console.log("conversations",conversations);
+
   return (
     <Box
       sx={{
@@ -154,7 +156,7 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
       }}
     >
       {conversations.length === 0 ? (
-          <Stack alignItems="center" spacing={1.5} sx={{ p: 4, textAlign: "center" }}>
+          <Stack id="chat-sidebar-empty-state" alignItems="center" spacing={1.5} sx={{ p: 4, textAlign: "center" }}>
           <Box
             sx={{
               width: 56,
@@ -178,7 +180,7 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
           </Typography>
         </Stack>
       ) : (
-        <List sx={{ p: 0 }}>
+        <List id="chat-conversations-list" sx={{ p: 0 }}>
           {conversations.map((conv, index) => {
             const otherUser = getOtherParticipant(conv);
             const isActive = conv._id === currentConversationId;
@@ -192,6 +194,7 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
             return (
               <React.Fragment key={conv._id}>
                 <ListItem
+                  id={`chat-conv-item-${conv._id}`}
                   disablePadding
                   sx={{
                     px: mintLightTeamUi ? 1.25 : 1,

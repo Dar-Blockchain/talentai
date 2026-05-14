@@ -72,6 +72,11 @@ export const candidateChatApi = {
     await axiosInstance.delete(`chat/conversations/${conversationId}`);
     return conversationId;
   },
+
+  unarchiveAllConversations: async () => {
+    const res = await axiosInstance.post("chat/conversations/unarchive-all");
+    return (res.data.data?.modifiedCount ?? 0) as number;
+  },
 };
 
 export { getApiErrorMessage as getCandidateChatErrorMessage };

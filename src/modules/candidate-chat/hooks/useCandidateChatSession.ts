@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useCallback, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/useToast";
 import { deliveryBlockedToastMessage } from "@/modules/shared/chat";
 import {
   addCandidateMessage,
+  clearCandidateCurrentConversation,
   setCandidateCurrentConversation,
   selectCandidateConversations,
   selectCandidateCurrentConversation,
@@ -81,8 +82,21 @@ export const useCandidateChatSession = ({
     || (messagesQuery.isLoading && messages.length === 0);
   const sending = sendMessageMutation.isPending;
 
+  // While the conversations list is still loading/empty but a specific
+  // conversation is already loaded (e.g. direct URL access before the list
+  // query resolves), surface that conversation so the sidebar isn't blank.
+  const effectiveConversations = useMemo(() => {
+    if (conversations.length > 0 || !conversation || !activeConversationId) {
+      return conversations;
+    }
+    return [conversation];
+  }, [activeConversationId, conversation, conversations]);
+
   useEffect(() => {
-    if (!activeConversationId) return;
+    if (!activeConversationId) {
+      dispatch(clearCandidateCurrentConversation());
+      return;
+    }
     const idStr = String(activeConversationId);
     const selected = conversations.find((item) => String(item._id) === idStr);
     if (selected && String(conversation?._id ?? "") !== idStr) {
@@ -257,6 +271,16 @@ export const useCandidateChatSession = ({
     }
   }, [activeConversationId, deleteConversationMutation, deleteRedirectRoute, router, showToast, t]);
 
+  console.log(
+    "[DIAG][useCandidateChatSession]",
+    "currentUserId=", currentUserId,
+    "conversations.length=", conversations.length,
+    "effectiveConversations.length=", effectiveConversations.length,
+    "activeConversationId=", activeConversationId,
+    "queryStatus=", conversationsQuery.status,
+    "fetchStatus=", conversationsQuery.fetchStatus,
+  );
+
   const totalUnread = conversations.reduce(
     (acc, conversationItem) =>
       acc + normalizeConversationUnreadCount(
@@ -271,7 +295,7 @@ export const useCandidateChatSession = ({
 
   return {
     currentUserId,
-    conversations,
+    conversations: effectiveConversations,
     conversation,
     messages,
     loading,

@@ -23,6 +23,9 @@ router.get('/conversations/search', conversationController.searchConversations);
 // GET /chat/conversations/unread-count - Get total unread count
 router.get('/conversations/unread-count', conversationController.getTotalUnreadCount);
 
+// POST /chat/conversations/unarchive-all - Remove current user from archivedBy on all their conversations
+router.post('/conversations/unarchive-all', conversationController.unarchiveAllConversations);
+
 // GET /chat/conversations/:conversationId - Get conversation by ID
 router.get('/conversations/:conversationId', conversationController.getConversationById);
 

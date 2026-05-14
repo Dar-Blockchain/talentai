@@ -254,6 +254,7 @@ const Sidebar: React.FC<{
   const theme = useTheme();
   return (
     <Paper
+      id="chat-conversations-sidebar"
       elevation={0}
       sx={{
         width: { xs: "100%", md: 300 },
@@ -270,6 +271,7 @@ const Sidebar: React.FC<{
       }}
     >
       <Box
+        id="chat-sidebar-header"
         sx={{
           px: compact ? 1.5 : 2,
           py: compact ? 1 : 1.5,
@@ -278,6 +280,7 @@ const Sidebar: React.FC<{
         }}
       >
         <Typography
+          id="chat-sidebar-title"
           variant="subtitle2"
           fontWeight={700}
           sx={{ color: mintLightTeamUi ? "#111827" : "text.primary", fontSize: mintLightTeamUi ? "0.8125rem" : undefined, letterSpacing: mintLightTeamUi ? "-0.02em" : undefined }}
@@ -328,6 +331,7 @@ const Panel: React.FC<PanelProps> = (p) => {
   const theme = useTheme();
   return (
     <Paper
+      id="chat-message-panel"
       elevation={0}
       sx={{
         flex: 1,

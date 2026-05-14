@@ -129,7 +129,14 @@ conversationSchema.statics.buildInboxQuery = function (userId, options = {}) {
   }
 
   if (status) {
-    query.status = status;
+    // Also include conversations created before the `status` field was added to
+    // the schema — those documents have no `status` key in MongoDB and would be
+    // silently excluded by an equality filter, making the inbox appear empty.
+    query.$or = [
+      { status: status },
+      { status: { $exists: false } },
+      { status: null },
+    ];
   }
 
   return query;
@@ -274,6 +281,26 @@ conversationSchema.statics.getTotalUnreadCount = async function (userId) {
   });
 
   return totalUnread;
+};
+
+/**
+ * Remove userId from archivedBy across all conversations they are a participant in.
+ * Called when a candidate's inbox is empty but conversations exist in the database
+ * (e.g. after soft-deletes during development / testing, or when a delete was
+ * accidentally triggered).
+ */
+conversationSchema.statics.unarchiveAllForUser = async function (userId) {
+  const idStr = String(userId);
+  const oid = mongoose.Types.ObjectId.isValid(idStr)
+    ? new mongoose.Types.ObjectId(idStr)
+    : userId;
+
+  const result = await this.updateMany(
+    { participants: oid, archivedBy: oid },
+    { $pull: { archivedBy: oid } }
+  );
+
+  return result.modifiedCount;
 };
 
 // Instance Methods

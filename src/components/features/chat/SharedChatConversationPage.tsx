@@ -21,7 +21,7 @@ const SharedChatConversationPage: React.FC<Props> = ({ basePath, isCompany, layo
       void router.replace(`${basePath}/${id}`, undefined, { scroll: false });
     },
   });
-
+console.log("session.conversations" ,session.conversations )
   return (
     <Layout>
       <Box sx={{ flex: 1, display: "flex", minHeight: 0, p: { xs: 1, sm: 2 } }}>

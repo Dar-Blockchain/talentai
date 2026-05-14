@@ -37,10 +37,23 @@ export const useCandidateConversationsQuery = (
   const dispatch = useDispatch<AppDispatch>();
   const viewerId = useSelector((s: RootState) => s.user.connectedUser.user?._id);
   const viewerKey = viewerId != null ? String(viewerId) : "";
+
   const query = useQuery({
     queryKey: [...candidateChatKeys.conversations(params), viewerKey],
     queryFn: async () => {
       const conversations = await candidateChatApi.fetchConversations(params);
+
+      // If the inbox came back empty, the candidate may have soft-deleted (archived)
+      // all their conversations during a previous session (e.g. testing).
+      // Auto-restore them once so the inbox is not permanently blank.
+      if (conversations.length === 0 && viewerKey) {
+        const restored = await candidateChatApi.unarchiveAllConversations();
+        if (restored > 0) {
+          const recovered = await candidateChatApi.fetchConversations(params);
+          return recovered.map((c) => toChatShellConversation(c, viewerKey || undefined));
+        }
+      }
+
       return conversations.map((c) => toChatShellConversation(c, viewerKey || undefined));
     },
     enabled: options?.enabled ?? true,
