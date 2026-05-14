@@ -3,13 +3,11 @@ import { Box, Typography, Chip } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import CodeOutlined from '@mui/icons-material/CodeOutlined';
 import PeopleOutlined from '@mui/icons-material/PeopleOutlined';
-import LightbulbOutlined from '@mui/icons-material/LightbulbOutlined';
-import { NAVY, NAVY2, GRAY, GRAY2, BORDER, T, TL, TBG, TBRD } from './helpers';
+import { NAVY, NAVY2, GRAY2, BORDER, T, TBG, TBRD } from './helpers';
 
 interface SkillsSectionProps {
   requiredSkills: any[];
   softSkills: any[];
-  suggestedSkills: { technical?: any[]; frameworks?: any[]; tools?: any[] };
 }
 
 const SKILL_COLORS = [
@@ -20,11 +18,10 @@ const SKILL_COLORS = [
   { bg: '#FFF1F2', border: '#FECDD3',  color: '#E11D48',  accent: '#BE123C' },
 ];
 
-const SkillsSection: React.FC<SkillsSectionProps> = ({ requiredSkills, softSkills, suggestedSkills }) => {
+const SkillsSection: React.FC<SkillsSectionProps> = ({ requiredSkills, softSkills }) => {
   const { t } = useTranslation('dashboard');
   const s = (k: string, opts?: any) => t(`candidate.assessment_detail.${k}`, opts) as string;
-  const hasSuggested = suggestedSkills.technical?.length || suggestedSkills.frameworks?.length || suggestedSkills.tools?.length;
-  if (requiredSkills.length === 0 && softSkills.length === 0 && !hasSuggested) return null;
+  if (requiredSkills.length === 0 && softSkills.length === 0) return null;
 
   return (
     <Box sx={{ bgcolor: '#fff', borderRadius: '18px', border: `1px solid ${BORDER}`, overflow: 'hidden', boxShadow: '0 1px 6px rgba(0,0,0,0.05)' }}>
@@ -33,7 +30,7 @@ const SkillsSection: React.FC<SkillsSectionProps> = ({ requiredSkills, softSkill
 
         {/* Required Skills */}
         {requiredSkills.length > 0 && (
-          <Box sx={{ mb: softSkills.length > 0 || hasSuggested ? 2.5 : 0 }}>
+          <Box sx={{ mb: softSkills.length > 0 ? 2.5 : 0 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.75 }}>
               <Box sx={{ width: 30, height: 30, borderRadius: '9px', bgcolor: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <CodeOutlined sx={{ fontSize: 16, color: '#6366f1' }} />
@@ -73,7 +70,7 @@ const SkillsSection: React.FC<SkillsSectionProps> = ({ requiredSkills, softSkill
 
         {/* Soft Skills */}
         {softSkills.length > 0 && (
-          <Box sx={{ mb: hasSuggested ? 2.5 : 0 }}>
+          <Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
               <Box sx={{ width: 30, height: 30, borderRadius: '9px', bgcolor: '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <PeopleOutlined sx={{ fontSize: 16, color: '#059669' }} />
@@ -93,28 +90,6 @@ const SkillsSection: React.FC<SkillsSectionProps> = ({ requiredSkills, softSkill
           </Box>
         )}
 
-        {/* Suggested Skills */}
-        {hasSuggested && (
-          <Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-              <Box sx={{ width: 30, height: 30, borderRadius: '9px', bgcolor: '#FFFBEB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <LightbulbOutlined sx={{ fontSize: 16, color: '#D97706' }} />
-              </Box>
-              <Typography sx={{ fontWeight: 800, fontSize: '0.88rem', color: NAVY }}>{s('skills.suggested')}</Typography>
-            </Box>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-              {suggestedSkills.technical?.map((sk: any, i: number) => (
-                <Chip key={`tech-${i}`} label={sk.name} size="small" sx={{ height: 26, fontSize: '0.72rem', fontWeight: 600, bgcolor: '#F5F3FF', color: '#7C3AED', border: '1px solid #DDD6FE' }} />
-              ))}
-              {suggestedSkills.frameworks?.map((sk: any, i: number) => (
-                <Chip key={`fw-${i}`} label={sk.name} size="small" sx={{ height: 26, fontSize: '0.72rem', fontWeight: 600, bgcolor: '#FFFBEB', color: '#D97706', border: '1px solid #FDE68A' }} />
-              ))}
-              {suggestedSkills.tools?.map((sk: any, i: number) => (
-                <Chip key={`tool-${i}`} label={sk.name} size="small" sx={{ height: 26, fontSize: '0.72rem', fontWeight: 600, bgcolor: TBG, color: T, border: `1px solid ${TBRD}` }} />
-              ))}
-            </Box>
-          </Box>
-        )}
 
       </Box>
     </Box>

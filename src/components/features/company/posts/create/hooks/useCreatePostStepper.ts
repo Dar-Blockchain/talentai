@@ -101,7 +101,6 @@ export const useCreatePostStepper = (
       const updatePayload: any = {
         creationType: "pipeline",
         jobDetails,
-        linkedinPost: savedPost.jobData.linkedinPost,
       };
 
       if (technicalSkills.length > 0 || softSkills.length > 0) {
