@@ -62,29 +62,6 @@ export const fetchCandidateProgress = async (token: string): Promise<CandidatePr
 };
 
 /**
- * Send task email with PDF to candidate
- */
-export const sendTaskEmail = async (taskData: SendTaskPayload, token: string): Promise<void> => {
-  const apiUrl = `${API_BASE_URL}task/send-task`;
-
-  const response = await fetch(apiUrl, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(taskData),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || 'Failed to send task');
-  }
-
-  return response.json();
-};
-
-/**
  * Submit task with GitHub link
  */
 export const submitTask = async (
