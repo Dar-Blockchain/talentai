@@ -101,21 +101,23 @@ const IntelligentInterviewTest = () => {
     const token = getToken();
 
     if (authUser && token) {
-      if (authUser.role !== 'Company' && authUser.role !== 'Employee') {
-        dispatch(createJobApplication(postId));
-      }
-
-      dispatch(checkPostInterviewAssessment(postId)).then((result) => {
-        if (checkPostInterviewAssessment.fulfilled.match(result)) {
-          if (result.payload.isCompanyBlocked) { setCompanyBlocked(true); setTimeout(() => router.replace('/company/dashboard'), 3000); return; }
-          else if (result.payload.isArchived) setIsArchived(true);
-          else if (result.payload.exists) setAlreadyCompleted(true);
-          else if (result.payload.underThreshold) {
-            setUnderThreshold(true);
-            setThresholdInfo({ required: result.payload.thresholdScore ?? 0, score: result.payload.matchScore ?? 0 });
-          }
+      void (async () => {
+        if (authUser.role !== 'Company' && authUser.role !== 'Employee') {
+          await dispatch(createJobApplication(postId));
         }
-      }).finally(() => setAssessmentChecking(false));
+
+        dispatch(checkPostInterviewAssessment(postId)).then((result) => {
+          if (checkPostInterviewAssessment.fulfilled.match(result)) {
+            if (result.payload.isCompanyBlocked) { setCompanyBlocked(true); setTimeout(() => router.replace('/company/dashboard'), 3000); return; }
+            else if (result.payload.isArchived) setIsArchived(true);
+            else if (result.payload.exists) setAlreadyCompleted(true);
+            else if (result.payload.underThreshold) {
+              setUnderThreshold(true);
+              setThresholdInfo({ required: result.payload.thresholdScore ?? 0, score: result.payload.matchScore ?? 0 });
+            }
+          }
+        }).finally(() => setAssessmentChecking(false));
+      })();
     } else {
       setAssessmentChecking(false);
     }
