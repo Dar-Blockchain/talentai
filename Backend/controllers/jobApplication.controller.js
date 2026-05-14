@@ -117,11 +117,17 @@ module.exports.createJobApplication = async (req, res) => {
     console.log(`   - Application ID: ${application._id}`);
     console.log(`   - Match Score: ${application.matchScore}/100`);
     console.log(`   - Status: ${application.status}`);
+    console.log(`   - Recruiter Decision: ${application.recruiterDecision || "Pending"}`);
+    if (application.recruiterDecision === "rejected") {
+      console.log(`   - Rejection Reason: ${application.rejectionReason}`);
+    }
     console.log("=".repeat(80) + "\n");
 
     res.status(201).json({
       success: true,
-      message: "Job application created successfully (match score calculated by AI)",
+      message: application.recruiterDecision === "rejected" 
+        ? "Job application created but automatically rejected due to low match score" 
+        : "Job application created successfully (match score calculated by AI)",
       data: application,
     });
   } catch (error) {
