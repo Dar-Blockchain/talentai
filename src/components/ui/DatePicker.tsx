@@ -50,7 +50,7 @@ export const AppDatePicker: React.FC<AppDatePickerProps> = ({
   const [open, setOpen] = React.useState(false);
 
   const handleChange = (newValue: Dayjs | null) => {
-    onChange(newValue ? newValue.toISOString() : null);
+    onChange(newValue ? newValue.format('YYYY-MM-DD') : null);
   };
 
   const handleClear = (e: React.MouseEvent) => {
