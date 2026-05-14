@@ -152,10 +152,14 @@ const KpiZone5: React.FC = () => {
                           <TableCell sx={{ fontWeight: 600 }}>{c.firstName} {c.lastName}</TableCell>
                           <TableCell sx={{ color: GRAY }}>{c.postTitle}</TableCell>
                           <TableCell align="center">
-                            <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.4 }}>
-                              <StarOutlined sx={{ fontSize: 13, color: "#F59E0B" }} />
-                              <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "0.82rem", color: T }}>{c.score}</Typography>
-                            </Box>
+                            {c.score !== null ? (
+                              <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.4 }}>
+                                <StarOutlined sx={{ fontSize: 13, color: "#F59E0B" }} />
+                                <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "0.82rem", color: T }}>{c.score}</Typography>
+                              </Box>
+                            ) : (
+                              <Typography sx={{ fontFamily: "Poppins", fontSize: "0.82rem", color: GRAY2 }}>—</Typography>
+                            )}
                           </TableCell>
                           <TableCell align="center">
                             <Chip
