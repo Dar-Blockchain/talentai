@@ -205,10 +205,13 @@ module.exports.checkCandidateAssessmentExists = async (req, res) => {
           post: postId
         }).select('matchScore');
 
-        if (jobApplication && jobApplication.matchScore !== null) {
-          matchScore = jobApplication.matchScore;
-          underThreshold = thresholdScore !== null && matchScore < thresholdScore;
-          console.log(`🔍 Threshold: ${thresholdScore}, Score: ${matchScore}, Blocked: ${underThreshold}`);
+        if (jobApplication) {
+          matchScore = jobApplication.matchScore; // Assign even if null
+          // Only apply threshold check if both threshold and score exist
+          if (thresholdScore !== null && matchScore !== null) {
+            underThreshold = matchScore < thresholdScore;
+            console.log(`🔍 Threshold: ${thresholdScore}, Score: ${matchScore}, Blocked: ${underThreshold}`);
+          }
         }
       }
     } catch (thresholdError) {
