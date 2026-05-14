@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invitation to join {{orgName}}</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f0f4f8; font-family:'Segoe UI', Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f4f8; padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table width="620" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+          <!-- Logo header -->
+          <tr>
+            <td style="background-color:#ffffff; padding:20px 28px; border-bottom:1px solid #E5E7EB;">
+              <table cellpadding="0" cellspacing="0" style="background-color:#141415; border-radius:24px; width:115px; height:30px;">
+                <tr>
+                  <td align="center" valign="middle" style="padding:0 12px;">
+                    <img src="cid:logocompany" alt="TalentAI" height="20" style="display:block; margin:0 auto; border:0; outline:none;">
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Title -->
+          <tr>
+            <td style="padding:36px 36px 8px 36px;">
+              <h1 style="margin:0; font-size:30px; font-weight:700; color:#4F5A68; line-height:1.2; font-family:'Segoe UI', Arial, sans-serif;">
+                You're Invited!
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Body text -->
+          <tr>
+            <td style="padding:20px 36px 0 36px;">
+              <p style="margin:0 0 10px 0; font-size:16px; color:#4F5A68; font-family:'Segoe UI', Arial, sans-serif;">Hello,</p>
+              <p style="margin:0; font-size:16px; color:#4F5A68; line-height:1.6; font-family:'Segoe UI', Arial, sans-serif;">
+                You have been invited to join a company on TalentAI. Please confirm your participation by clicking the button below. The invitation expires in <strong>48 hours</strong>.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Details box -->
+          <tr>
+            <td style="padding:24px 36px 8px 36px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f9fafb; border-radius:10px; border:1px solid #e5e7eb;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding-bottom:12px;">
+                          <p style="margin:0 0 3px 0; font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.5px; font-family:'Segoe UI', Arial, sans-serif;">Company</p>
+                          <p style="margin:0; font-size:15px; font-weight:700; color:#4F5A68; font-family:'Segoe UI', Arial, sans-serif;">{{orgName}}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <p style="margin:0 0 3px 0; font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.5px; font-family:'Segoe UI', Arial, sans-serif;">Role</p>
+                          <p style="margin:0; font-size:15px; font-weight:700; color:#0ea5a0; font-family:'Segoe UI', Arial, sans-serif;">{{role}}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- CTA Button -->
+          <tr>
+            <td align="center" style="padding:28px 36px;">
+              <table cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="background-color:#0ea5a0; border-radius:8px;">
+                    <a href="{{invitationLink}}" target="_blank" style="display:inline-block; padding:14px 36px; font-size:15px; font-weight:700; color:#ffffff; text-decoration:none; font-family:'Segoe UI', Arial, sans-serif;">
+                      Accept Invitation
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Fallback link -->
+          <tr>
+            <td style="padding:0 36px 28px 36px;">
+              <p style="margin:0 0 6px 0; font-size:13px; color:#4F5A6899; font-family:'Segoe UI', Arial, sans-serif;">If the button doesn't work, copy and paste this link into your browser:</p>
+              <p style="margin:0; font-size:12px; color:#0ea5a0; word-break:break-all; font-family:'Segoe UI', Arial, sans-serif;">{{invitationLink}}</p>
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr>
+            <td style="padding:0 36px;">
+              <hr style="border:none; border-top:1px solid #e5e7eb; margin:0;">
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#f9fafb; padding:20px 36px; border-radius:0 0 12px 12px;">
+              <p style="margin:0; font-size:13px; color:#6b7280; font-family:'Segoe UI', Arial, sans-serif;">
+                If you did not expect this invitation, you may safely ignore this message. This is an automated no-reply email.
+              </p>
+              <p style="margin:10px 0 0 0; font-size:12px; color:#9ca3af; font-family:'Segoe UI', Arial, sans-serif;">
+                &copy; {{year}} TalentAI. All rights reserved.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

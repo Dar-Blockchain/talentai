@@ -183,7 +183,7 @@ const ContactUsModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open
     if (!form.name || !form.email) return;
     setSending(true);
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}contact/enterprise`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}contact`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, plan: "Unlimited" }),
