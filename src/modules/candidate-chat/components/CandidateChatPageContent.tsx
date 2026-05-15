@@ -135,6 +135,7 @@ const CandidateChatPageContent: React.FC<CandidateChatPageContentProps> = ({
     >
       <CompanyHubMintChatShell
         isCompany={false}
+        teamScopedMessageDeletes
         conversations={session.conversations}
         conversation={session.conversation}
         messages={session.messages}
