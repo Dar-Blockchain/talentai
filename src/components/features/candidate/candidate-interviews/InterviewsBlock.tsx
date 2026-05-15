@@ -126,12 +126,7 @@ const JobRow: React.FC<{
               </Button>
             </span>
           </Tooltip>
-        ) : (
-          <Button onClick={() => onViewDetails(assessment._id)} endIcon={<OpenInNewOutlined sx={{ fontSize: "11px !important" }} />}
-            sx={{ textTransform: "none", fontWeight: 700, fontSize: "0.68rem", color: statusColor, bgcolor: accentBg, border: `1px solid ${accentBd}`, borderRadius: "8px", px: 1.25, py: 0.35, minWidth: 0, boxShadow: "none", "&:hover": { filter: "brightness(0.95)" } }}>
-            {s("report")}
-          </Button>
-        )}
+        ) : null}
       </Box>
     </Box>
   );
