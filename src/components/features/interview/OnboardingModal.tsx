@@ -140,9 +140,13 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
 
   const validateForm = () => {
     const e: Record<string, string> = {};
-    if (!form.firstName.trim()) e.firstName = t('onboarding.error_required');
-    if (!form.lastName.trim()) e.lastName = t('onboarding.error_required');
-    if (!form.phone.trim()) e.phone = t('onboarding.error_required');
+    if (!form.firstName.trim()) e.firstName = t('onboarding.error_first_name_required');
+    if (!form.lastName.trim()) e.lastName = t('onboarding.error_last_name_required');
+    if (!form.phone.trim()) {
+      e.phone = t('onboarding.error_phone_required');
+    } else if (!/^\+?[1-9]\d{6,14}$/.test(form.phone.trim().replace(/[\s\-().]/g, ''))) {
+      e.phone = t('onboarding.error_phone_invalid');
+    }
     if (!cvFile) e.cv = t('onboarding.error_cv_required');
     setFormErrors(e);
     return Object.keys(e).length === 0;
@@ -335,12 +339,18 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
             <Box sx={{ textAlign: 'left' }}>
               <Stack spacing={2}>
                 <Stack direction="row" spacing={1.5}>
-                  <TextField label={t('onboarding.first_name')} value={form.firstName} onChange={handleChange('firstName')}
+                  <TextField
+                    label={<>{t('onboarding.first_name')}<Box component="span" sx={{ color: '#DC2626', ml: 0.25 }}>*</Box></>}
+                    value={form.firstName} onChange={handleChange('firstName')}
                     error={!!formErrors.firstName} helperText={formErrors.firstName} fullWidth sx={inputSx} />
-                  <TextField label={t('onboarding.last_name')} value={form.lastName} onChange={handleChange('lastName')}
+                  <TextField
+                    label={<>{t('onboarding.last_name')}<Box component="span" sx={{ color: '#DC2626', ml: 0.25 }}>*</Box></>}
+                    value={form.lastName} onChange={handleChange('lastName')}
                     error={!!formErrors.lastName} helperText={formErrors.lastName} fullWidth sx={inputSx} />
                 </Stack>
-                <TextField label={t('onboarding.phone')} value={form.phone} onChange={handleChange('phone')}
+                <TextField
+                  label={<>{t('onboarding.phone')}<Box component="span" sx={{ color: '#DC2626', ml: 0.25 }}>*</Box></>}
+                  value={form.phone} onChange={handleChange('phone')}
                   error={!!formErrors.phone} helperText={formErrors.phone} fullWidth sx={inputSx} />
                 <TextField label={t('onboarding.linkedin')} value={form.linkedin} onChange={handleChange('linkedin')}
                   fullWidth placeholder="https://linkedin.com/in/yourname" sx={inputSx} />
