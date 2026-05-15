@@ -17,8 +17,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { softSkills } from "@/constants/skills";
 import { experienceLevels } from "@/constants/profile";
-
-const TEAL = "#0D9488";
+import { TEAL } from '@/constants/colors';
 const TEAL_BG = "#F0FDFA";
 const TEAL_BORDER = "#99F6E4";
 

@@ -10,8 +10,7 @@ import { getAllCountryNames } from "@/utils/countryMappings";
 import { UserProfile } from "@/types/profile";
 import SectionCard from "@/components/ui/SectionCard";
 import SectionHeader from "@/components/ui/SectionHeader";
-
-const TEAL = "#0D9488";
+import { TEAL } from '@/constants/colors';
 
 const fieldSx = {
   "& .MuiOutlinedInput-root": {

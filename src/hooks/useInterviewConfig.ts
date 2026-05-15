@@ -98,8 +98,6 @@ export const useInterviewConfig = ({
 
       setPipelineLoading(true);
 
-      console.log('🔍 Fetching interview config for jobId:', jobId);
-
       // 1. Check if this is a pipeline job
       // Guests (no token) use the public endpoint; authenticated users use the protected one
       const postUrl = token
@@ -121,7 +119,6 @@ export const useInterviewConfig = ({
       }
 
       const postData = await postResponse.json();
-      console.log('📋 Raw post data:', postData);
       // post/details wraps in data.data, post/getPostById wraps in data.data or data.post
       const post = postData.data?.data || postData.data || postData.post || postData;
       setJobData(post);
@@ -138,14 +135,6 @@ export const useInterviewConfig = ({
 
       const isPipeline = post?.creationType === 'pipeline';
 
-      console.log('📋 Job detection:', {
-        postId: post._id,
-        creationType: post.creationType,
-        isPipeline: isPipeline,
-        hasPostSteps: !!post.PostSteps,
-        postStepsCount: post.PostSteps?.length || 0
-      });
-      console.log('📋 Job type:', isPipeline ? 'Pipeline ⚡' : 'Regular');
       setIsPipelineJob(isPipeline);
 
       if (isPipeline) {
@@ -154,8 +143,6 @@ export const useInterviewConfig = ({
         if (!candidateId) {
           throw new Error('Pipeline jobs require authentication. Please log in to start the interview.');
         }
-
-        console.log('🔍 Fetching candidate progress for candidateId (User ID):', candidateId);
 
         let progressResponse = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}api/pipeline-interview/progress/${candidateId}/${jobId}`,
@@ -170,8 +157,6 @@ export const useInterviewConfig = ({
         let progressData;
 
         if (!progressResponse.ok) {
-          console.log('📋 No existing progress found, initializing...');
-
           const initResponse = await fetch(
             `${process.env.NEXT_PUBLIC_API_BASE_URL}api/pipeline-interview/progress/initialize`,
             {
@@ -192,8 +177,7 @@ export const useInterviewConfig = ({
             throw new Error(errorData.message || 'Failed to initialize interview progress.');
           }
 
-          const initData = await initResponse.json();
-          console.log('✅ Progress initialized:', initData.isNew ? 'new record' : 'existing record');
+          await initResponse.json();
 
           progressResponse = await fetch(
             `${process.env.NEXT_PUBLIC_API_BASE_URL}api/pipeline-interview/progress/${candidateId}/${jobId}`,
@@ -211,17 +195,8 @@ export const useInterviewConfig = ({
         }
 
         progressData = await progressResponse.json();
-        console.log('✅ Progress fetched - current step:', progressData.currentStep?.stepNumber);
 
         const currentStep = progressData.currentStep;
-
-        console.log('🎯 Current step config:', {
-          stepNumber: currentStep.stepNumber,
-          stepType: currentStep.stepType,
-          hasSkills: !!currentStep.interviewParams.skills,
-          hasSoftSkills: !!currentStep.interviewParams.softSkills,
-          passThreshold: currentStep.passThreshold
-        });
 
         const dynamicConfig = buildInterviewConfigFromURL({
           type: currentStep.stepType,
@@ -236,7 +211,6 @@ export const useInterviewConfig = ({
         setInterviewConfig(dynamicConfig);
         setCandidateProgress(progressData.progress);
         setCurrentPipelineStep(currentStep.stepNumber);
-        console.log('step4444', currentStep.stepNumber);
 
         localStorage.setItem('interview_jobId', jobId);
         localStorage.setItem('interview_stepId', currentStep.stepId);
@@ -244,10 +218,7 @@ export const useInterviewConfig = ({
         localStorage.setItem('interview_passThreshold', (currentStep.passThreshold || 70).toString());
         localStorage.setItem('interview_source', 'pipeline');
 
-        console.log('✅ Pipeline interview configured');
-
       } else {
-        console.log('📋 Regular interview - fetching standard config...');
 
         const configHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
         if (token) configHeaders['Authorization'] = `Bearer ${token}`;
@@ -299,7 +270,6 @@ export const useInterviewConfig = ({
         }
 
         const config = await response.json();
-        console.log('✅ Fetched standard interview config');
 
         setInterviewConfig(config);
 
@@ -327,7 +297,6 @@ export const useInterviewConfig = ({
     const { jobId } = router.query;
 
     if (jobId && typeof jobId === 'string') {
-      console.log('🎯 Job-based interview detected, jobId:', jobId);
       fetchJobInterviewConfig(jobId);
       return;
     }
@@ -345,11 +314,8 @@ export const useInterviewConfig = ({
       deep: router.query.deep as string,
     };
 
-    console.log('📋 Building interview config from URL params:', urlParams);
-
     if (urlParams.type || urlParams.skill) {
       const dynamicConfig = buildInterviewConfigFromURL(urlParams);
-      console.log('✅ Generated dynamic interview config:', dynamicConfig);
       setInterviewConfig(dynamicConfig);
 
       localStorage.removeItem('interview_type');
@@ -361,27 +327,21 @@ export const useInterviewConfig = ({
 
       if (urlParams.type) {
         localStorage.setItem('interview_type', urlParams.type);
-        console.log('💾 Stored type in localStorage:', urlParams.type);
       }
       if (urlParams.skill) {
         localStorage.setItem('interview_skill', urlParams.skill);
-        console.log('💾 Stored skill in localStorage:', urlParams.skill);
       }
       if (urlParams.category) {
         localStorage.setItem('interview_category', urlParams.category);
-        console.log('💾 Stored category in localStorage:', urlParams.category);
       }
       if (urlParams.proficiency) {
         localStorage.setItem('interview_proficiency', urlParams.proficiency);
-        console.log('💾 Stored proficiency in localStorage:', urlParams.proficiency);
       }
       if (urlParams.role) {
         localStorage.setItem('interview_role', urlParams.role);
-        console.log('💾 Stored role in localStorage:', urlParams.role);
       }
-    } else {
-      console.log('ℹ️  No URL params detected, using default HR interview config');
     }
+
   }, [router.isReady, router.query]);
 
   return {

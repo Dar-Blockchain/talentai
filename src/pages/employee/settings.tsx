@@ -1,4 +1,5 @@
 import React, { useRef, useState } from "react";
+import { getImageUrl } from "@/utils/apiConfig";
 import {
   Box, Typography, Avatar, TextField, Button,
   CircularProgress, Divider, Chip,
@@ -19,8 +20,7 @@ import { AppDispatch, RootState } from "@/store/store";
 import { uploadProfileImage, getMyProfile } from "@/store/slices/userSlice";
 import axiosInstance from "@/utils/axiosInstance";
 import dynamic from "next/dynamic";
-
-const TEAL = "#0D9488";
+import { TEAL } from '@/constants/colors';
 
 const fieldSx = {
   "& .MuiInputLabel-root": { color: "#6B7280", fontFamily: "Poppins", fontSize: "0.9rem" },
@@ -89,7 +89,7 @@ const EmployeeSettingsPage: React.FC = () => {
     : user?.username || "";
 
   const avatarUrl = (profile?.user_image || user?.user_image)
-    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${profile?.user_image || user?.user_image}`
+    ? getImageUrl('Users', profile?.user_image || user?.user_image)
     : null;
 
   const initials = displayName

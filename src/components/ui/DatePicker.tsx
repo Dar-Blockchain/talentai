@@ -72,7 +72,7 @@ export const AppDatePicker: React.FC<AppDatePickerProps> = ({
           variant="subtitle2"
         >
           {label}
-          {required && <span style={{ color: "#EF4444", marginLeft: 2 }}>*</span>}
+          {required && <Box component="span" sx={{ color: "#EF4444", ml: "2px" }}>*</Box>}
         </Typography>
       )}
 

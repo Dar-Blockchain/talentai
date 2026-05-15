@@ -196,7 +196,6 @@ const NewCampaignPage: React.FC = () => {
     mode: "onChange",
     defaultValues: {
       title: "",
-      // type: "" as CampaignType, // TODO: re-enable
       description: "",
       anonymityMode: "" as "NOMINATIVE" | "ANONYMOUS",
       accessMethod: "" as "LINK" | "ACCOUNTS",
@@ -207,13 +206,10 @@ const NewCampaignPage: React.FC = () => {
 
   const accessMethod = watch("accessMethod");
   const isAccounts   = accessMethod === "ACCOUNTS";
-  // const selectedType = watch("type"); // TODO: re-enable
-
   const handleNext = async () => {
     const fields: (keyof CreateCampaignForm)[] = [
       "title",
       "description",
-      // "type", // TODO: re-enable
       "module",
       "anonymityMode",
       "accessMethod",

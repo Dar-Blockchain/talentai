@@ -33,39 +33,39 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
 
   // Fetch real statistics
   useEffect(() => {
+    const controller = new AbortController();
+
     const fetchStats = async () => {
       try {
-        const baseUrl =
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
-        const response = await fetch(`${baseUrl}post/public-stats`);
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
+        const response = await fetch(`${baseUrl}post/public-stats`, { signal: controller.signal });
 
         if (response.ok) {
           const data = await response.json();
           if (data.success && data.data) {
             const { users, posts, companies } = data.data;
 
-            // Format numbers to match the desired style
             const formatNumber = (num: number, prefix: boolean = false) => {
-              if (num >= 1000) {
-                const formatted = Math.floor(num / 1000);
-                return `${formatted}K+`;
-              }
+              if (num >= 1000) return `${Math.floor(num / 1000)}K+`;
               return prefix ? `+${num}` : `${num}+`;
             };
 
             setStats({
-              users: formatNumber(users, false), // e.g., "100K+" or "500+"
-              jobs: formatNumber(posts, false), // e.g., "20K+" or "150+"
-              companies: formatNumber(companies, true), // e.g., "+500" or "2K+"
+              users: formatNumber(users, false),
+              jobs: formatNumber(posts, false),
+              companies: formatNumber(companies, true),
             });
           }
         }
       } catch (error) {
-        console.error("Error fetching stats:", error);
+        if ((error as Error).name !== 'AbortError') {
+          console.error("Error fetching stats:", error);
+        }
       }
     };
 
     fetchStats();
+    return () => controller.abort();
   }, []);
 
   // Handle job search
@@ -123,7 +123,7 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
               }}
             >
               {title}
-              <span style={{ color: "rgba(163, 98, 239, 1)" }}>.</span>
+              <Box component="span" sx={{ color: "rgba(163, 98, 239, 1)" }}>.</Box>
             </Typography>
             <Typography
               sx={{
@@ -138,7 +138,7 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
               }}
             >
               {subtitle}
-              <span style={{ color: "rgba(163, 98, 239, 1)" }}>.</span>
+              <Box component="span" sx={{ color: "rgba(163, 98, 239, 1)" }}>.</Box>
             </Typography>
             <Typography
               variant="body1"
@@ -493,10 +493,11 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
                 px: { xs: 2, sm: 4, lg: 0 },
               }}
             >
-              <img
+              <Box
+                component="img"
                 src="/images/jobseeker_landing/Hero_Image.png"
                 alt="Get Hired - TalentAI Platform"
-                style={{
+                sx={{
                   width: "100%",
                   height: "auto",
                   borderRadius: "16px",

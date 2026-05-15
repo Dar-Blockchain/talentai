@@ -745,21 +745,21 @@ function CandidateInterviewDetailPage() {
                                                 {skill.strengths?.length > 0 && (
                                                     <Box sx={{ mb: 1 }}>
                                                         <Typography variant="body2" sx={{ color: SUCCESS_COLOR, fontWeight: 500, mb: 0.5 }}>Strengths:</Typography>
-                                                        <ul style={{ margin: 0, paddingLeft: 20 }}>
+                                                        <Box component="ul" sx={{ margin: 0, paddingLeft: "20px" }}>
                                                             {skill.strengths.map((str: string, i: number) => (
                                                                 <LinkifiedListItem key={i} text={str} style={{ color: 'rgba(100, 113, 131, 1)' }} />
                                                             ))}
-                                                        </ul>
+                                                        </Box>
                                                     </Box>
                                                 )}
                                                 {skill.weaknesses?.length > 0 && (
                                                     <Box>
                                                         <Typography variant="body2" sx={{ color: '#d32f2f', fontWeight: 500, mb: 0.5 }}>Weaknesses:</Typography>
-                                                        <ul style={{ margin: 0, paddingLeft: 20 }}>
+                                                        <Box component="ul" sx={{ margin: 0, paddingLeft: "20px" }}>
                                                             {skill.weaknesses.map((w: string, i: number) => (
                                                                 <LinkifiedListItem key={i} text={w} style={{ color: 'rgba(100, 113, 131, 1)' }} />
                                                             ))}
-                                                        </ul>
+                                                        </Box>
                                                     </Box>
                                                 )}
                                             </Box>
@@ -770,33 +770,33 @@ function CandidateInterviewDetailPage() {
                                 {Array.isArray(data.jobAssessmentResult.analysis.recommendations) && data.jobAssessmentResult.analysis.recommendations.length > 0 && (
                                     <Box sx={{ mt: 3, p: 3, background: 'rgba(11, 82, 198, 0.08)', borderRadius: '8px', border: `1px solid ${SECONDARY_COLOR}` }}>
                                         <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#000000' }}>Recommendations</Typography>
-                                        <ul style={{ margin: 0, paddingLeft: 20 }}>
+                                        <Box component="ul" sx={{ margin: 0, paddingLeft: "20px" }}>
                                             {data.jobAssessmentResult.analysis.recommendations.map((rec: string, idx: number) => (
                                                 <LinkifiedListItem key={idx} text={rec} style={{ color: 'rgba(100, 113, 131, 1)', marginBottom: 4 }} />
                                             ))}
-                                        </ul>
+                                        </Box>
                                     </Box>
                                 )}
 
                                 {Array.isArray(data.jobAssessmentResult.analysis.nextSteps) && data.jobAssessmentResult.analysis.nextSteps.length > 0 && (
                                     <Box sx={{ mt: 3, p: 3, background: 'rgba(62, 180, 137, 0.08)', borderRadius: '8px', border: `1px solid ${SUCCESS_COLOR}` }}>
                                         <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#000000' }}>Next Steps</Typography>
-                                        <ul style={{ margin: 0, paddingLeft: 20 }}>
+                                        <Box component="ul" sx={{ margin: 0, paddingLeft: "20px" }}>
                                             {data.jobAssessmentResult.analysis.nextSteps.map((step: string, idx: number) => (
                                                 <LinkifiedListItem key={idx} text={step} style={{ color: 'rgba(100, 113, 131, 1)', marginBottom: 4 }} />
                                             ))}
-                                        </ul>
+                                        </Box>
                                     </Box>
                                 )}
 
                                 {Array.isArray(data.jobAssessmentResult.analysis.jobMatch?.keyGaps) && data.jobAssessmentResult.analysis.jobMatch.keyGaps.length > 0 && (
                                     <Box sx={{ mt: 3, p: 3, background: 'rgba(211, 47, 47, 0.08)', borderRadius: '8px', border: '1px solid #d32f2f' }}>
                                         <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#000000' }}>Key Gaps</Typography>
-                                        <ul style={{ margin: 0, paddingLeft: 20 }}>
+                                        <Box component="ul" sx={{ margin: 0, paddingLeft: "20px" }}>
                                             {data.jobAssessmentResult.analysis.jobMatch.keyGaps.map((gap: string, idx: number) => (
                                                 <LinkifiedListItem key={idx} text={gap} style={{ color: 'rgba(100, 113, 131, 1)', marginBottom: 4 }} />
                                             ))}
-                                        </ul>
+                                        </Box>
                                     </Box>
                                 )}
                             </ReportCard>

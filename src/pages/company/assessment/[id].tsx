@@ -30,8 +30,8 @@ import {
   RecommendationsSection,
   PipelineSteps,
 } from "@/components/features/interview/assessment";
+import { TEAL } from '@/constants/colors';
 
-const TEAL        = "#0D9488";
 const TEAL_BG     = "#F0FDFA";
 const TEAL_BORDER = "#99F6E4";
 

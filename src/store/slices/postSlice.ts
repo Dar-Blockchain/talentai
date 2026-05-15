@@ -2,19 +2,33 @@ import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { postService } from "@/services/postService";
 // import { broadcastSystemNotification } from "./notificationSlice";
 
+interface FlowNode {
+  id: string;
+  type: string;
+  position: { x: number; y: number };
+  data: Record<string, unknown>;
+}
+
+interface FlowEdge {
+  id: string;
+  source: string;
+  target: string;
+  type?: string;
+}
+
 interface RecruitmentFlowState {
-  nodes: any[];
-  edges: any[];
+  nodes: FlowNode[];
+  edges: FlowEdge[];
 }
 
 interface SavePostState {
   loading: boolean;
   error: string | null;
-  savedPost: any;
+  savedPost: Record<string, unknown> | null;
 }
 
 interface RecommendedState {
-  items: any[];
+  items: Record<string, unknown>[];
   loading: boolean;
   error: string | null;
   pagination: PaginationState;
@@ -34,22 +48,22 @@ interface PaginationState {
 }
 
 interface CandidateAssessmentsState {
-  items: any[];
+  items: Record<string, unknown>[];
   loading: boolean;
   error: string | null;
   pagination: PaginationState;
 }
 
 interface CompanyAssessmentsState {
-  items: any[];
+  items: Record<string, unknown>[];
   loading: boolean;
   error: string | null;
   pagination: PaginationState;
 }
 
 interface AssessmentDetailsState {
-  assessment: any | null;
-  stepsData: any | null;
+  assessment: Record<string, unknown> | null;
+  stepsData: Record<string, unknown> | null;
   loading: boolean;
   error: string | null;
 }
@@ -68,18 +82,18 @@ interface PostMetricsState {
 }
 
 interface PostState {
-  steps: any[];
+  steps: Record<string, unknown>[];
   loading: boolean;
   error: string | null;
   postStepsLoading: boolean;
   postStepsError: string | null;
-  myPosts: any[];
+  myPosts: Record<string, unknown>[];
   myPostsLoading: boolean;
   myPostsError: string | null;
   myPostsPagination: PaginationState;
   deletePostLoading: boolean;
   deletePostError: string | null;
-  currentJob: any | null;
+  currentJob: Record<string, unknown> | null;
   currentJobLoading: boolean;
   currentJobError: string | null;
   recommended: RecommendedState;
@@ -182,7 +196,7 @@ const initialState: PostState = {
 
 export const savePost = createAsyncThunk(
   "post/savePost",
-  async (jobData: any, { rejectWithValue }) => {
+  async (jobData: Record<string, unknown>, { rejectWithValue }) => {
     try {
       return await postService.savePost(jobData);
     } catch (err: any) {
@@ -194,7 +208,7 @@ export const savePost = createAsyncThunk(
 export const updatePost = createAsyncThunk(
   "post/updatePost",
   async (
-    { jobId, jobData }: { jobId: string | number; jobData: any },
+    { jobId, jobData }: { jobId: string | number; jobData: Record<string, unknown> },
     { rejectWithValue }
   ) => {
     try {
@@ -223,7 +237,7 @@ export const fetchRecommendedPosts = createAsyncThunk(
 export const postRecruitmentSteps = createAsyncThunk(
   "post/postRecruitmentSteps",
   async (
-    { postId, steps }: { postId: string; steps: any[] },
+    { postId, steps }: { postId: string; steps: Record<string, unknown>[] },
     { rejectWithValue }
   ) => {
     try {
@@ -251,7 +265,7 @@ export const fetchMyPosts = createAsyncThunk(
 );
 
 // Track ongoing fetches to prevent duplicates at thunk level
-const ongoingFetches = new Map<string, Promise<any>>();
+const ongoingFetches = new Map<string, Promise<unknown>>();
 
 // Async thunk to delete a post by id
 export const deletePost = createAsyncThunk(
@@ -300,7 +314,7 @@ export const updatePostStatus = createAsyncThunk(
 export const savePostInterviewAssessment = createAsyncThunk(
   "post/savePostInterviewAssessment",
   async (
-    { postId, interviewData }: { postId: string; interviewData: any },
+    { postId, interviewData }: { postId: string; interviewData: Record<string, unknown> },
     { rejectWithValue }
   ) => {
     try {
@@ -337,7 +351,7 @@ export const fetchCompanyAssessments = createAsyncThunk(
 
 // Async thunk to fetch a single post-interview assessment by ID
 export const fetchAssessmentDetails = createAsyncThunk<
-  { assessment: any; stepsData: any },
+  { assessment: Record<string, unknown>; stepsData: Record<string, unknown> },
   string,
   { rejectValue: string }
 >(
@@ -447,7 +461,7 @@ const postSlice = createSlice({
         state.myPostsLoading = true;
         state.myPostsError = null;
       })
-      .addCase(fetchMyPosts.fulfilled, (state, action: PayloadAction<any>) => {
+      .addCase(fetchMyPosts.fulfilled, (state, action) => {
         state.myPostsLoading = false;
         state.myPosts = action.payload.posts || [];
         state.myPostsPagination = action.payload.pagination;
@@ -464,7 +478,7 @@ const postSlice = createSlice({
       .addCase(deletePost.fulfilled, (state, action: PayloadAction<string>) => {
         state.deletePostLoading = false;
         state.myPosts = state.myPosts.filter(
-          (p: any) => (p._id || p.id) !== action.payload
+          (p) => ((p._id || p.id) as string) !== action.payload
         );
       })
       .addCase(deletePost.rejected, (state, action) => {
@@ -477,7 +491,7 @@ const postSlice = createSlice({
         state.currentJobError = null;
         state.currentJob = null;
       })
-      .addCase(fetchJobById.fulfilled, (state, action: PayloadAction<any>) => {
+      .addCase(fetchJobById.fulfilled, (state, action) => {
         state.currentJobLoading = false;
         state.currentJob = action.payload;
       })
@@ -507,7 +521,6 @@ const postSlice = createSlice({
         state.updatePostStatus.error = null;
       })
       .addCase(updatePostStatus.fulfilled, (state, action) => {
-        console.log("updatePostStatus", action.payload)
         state.updatePostStatus.loading = false;
         if(state.currentJob){
           state.currentJob.status = action.payload.data?.status;
@@ -618,7 +631,7 @@ export const selectMyPostsPagination = (state: { post: PostState }) =>
 
 // Selector to get a job from myPosts by ID (if already loaded)
 export const selectJobById = (jobId: string) => (state: { post: PostState }) =>
-  state.post.myPosts.find((job: any) => (job._id || job.id) === jobId);
+  state.post.myPosts.find((job) => ((job._id || job.id) as string) === jobId);
 
 export const selectRecommended = (state: { post: PostState }) => ({
   items: state.post.recommended.items,

@@ -208,10 +208,11 @@ const CompanyHeroSection = () => {
         {/* RIGHT column */}
         <motion.div {...fadeRight(0.18)} style={{ display: "flex", justifyContent: "flex-end" }}>
           <Box sx={{ display: { xs: "none", md: "block" }, position: "relative", width: "110%", ml: "auto" }}>
-            <img
+            <Box
+              component="img"
               src="/images/home/HeroSectionLanding.png"
               alt="TalentAI Dashboard"
-              style={{ width: "100%", height: "auto", borderRadius: "12px", display: "block" }}
+              sx={{ width: "100%", height: "auto", borderRadius: "12px", display: "block" }}
             />
           </Box>
         </motion.div>

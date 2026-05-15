@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "next/router";
+import { getImageUrl } from "@/utils/apiConfig";
 import { Avatar, Box, Chip, Paper, Typography } from "@mui/material";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutline";
 import { ApplicationSummaryItem } from "@/store/slices/jobApplicationSlice";
@@ -10,8 +11,7 @@ import { ContactTarget } from "@/components/features/company/posts/details/Conta
 import { AssessmentTarget } from "@/components/features/company/posts/details/AssessmentDetailsModal";
 import { InviteTarget } from "./InviteToInterviewModal";
 import ApplicationCardActions from "./ApplicationCardActions";
-
-const TEAL = "#0D9488";
+import { TEAL } from '@/constants/colors';
 
 export const STATUS_STYLE: Record<string, { i18nKey: string; bg: string; color: string }> = {
   visited:             { i18nKey: "pages.applications.status.visited",             bg: "#EFF6FF", color: "#2563EB" },
@@ -61,7 +61,7 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
   const name      = `${app.firstName ?? ""} ${app.lastName ?? ""}`.trim() || "Unknown";
   const bgColor   = avatarColor(name);
   const avatarUrl = app.userImage
-    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${app.userImage}`
+    ? getImageUrl('Users', app.userImage)
     : undefined;
   const appId = String(app.id);
   const statusDef = STATUS_STYLE[app.status] ?? STATUS_STYLE.visited;
@@ -103,7 +103,7 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
             <Chip
               label={app.postTitle}
               size="small"
-              icon={<WorkOutlineOutlined style={{ fontSize: 10 }} />}
+              icon={<WorkOutlineOutlined sx={{ fontSize: 10 }} />}
               onClick={() => app.postId && router.push(`/company/posts/${app.postId}`)}
               sx={{
                 bgcolor: `${TEAL}0F`, color: TEAL, fontWeight: 600, fontSize: "10px",

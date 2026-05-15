@@ -25,7 +25,6 @@ import {
   Payment,
 } from "@/store/slices/paymentSlice";
 import { AppDispatch } from "@/store/store";
-import { jsPDF } from "jspdf";
 
 // ─── Config ──────────────────────────────────────────────
 
@@ -63,6 +62,7 @@ const loadLogoDataUrl = (): Promise<string> => {
 };
 
 const downloadInvoice = async (payment: Payment) => {
+  const { jsPDF } = await import("jspdf");
   const logoDataUrl = await loadLogoDataUrl();
   const subtotal  = payment.amountCents ? payment.amountCents / 100 : (payment.planPrice || 0);
   const total     = subtotal;

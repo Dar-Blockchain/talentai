@@ -13,7 +13,7 @@ import { STATUS_COLORS } from "@/constants/campaign";
 import { fmtDate } from "@/utils/functions";
 import { useTranslation } from "react-i18next";
 
-const TEAL  = "#0D9488";
+import { TEAL } from '@/constants/colors';
 const CARD  = {
   bgcolor: "#fff",
   border: "1px solid #EDEEF0",

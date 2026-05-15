@@ -30,7 +30,7 @@ import { normalizeConversationUnreadCount } from "@/modules/shared/chat/utils/no
 import { getParticipantDisplayName } from "@/components/features/chat/helpers";
 import { TEAM_LAST_MESSAGE_DELETED_SENTINEL } from "@/modules/team-chat/constants/lastMessagePreview";
 
-const TEAL    = "#0D9488";
+import { TEAL } from '@/constants/colors';
 const TEAL_BG = "#F0FDFA";
 
 const HeaderChat: React.FC = () => {

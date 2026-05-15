@@ -3,7 +3,7 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  reactStrictMode: false, // Temporarily disabled to debug duplicate API calls
+  reactStrictMode: true,
   output: 'standalone',
   outputFileTracingRoot: process.cwd(),
   devIndicators: {
@@ -14,6 +14,11 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'app.talentai.bid',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'flagcdn.com',
         pathname: '/**',
       },
     ],

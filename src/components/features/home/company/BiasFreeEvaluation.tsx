@@ -114,10 +114,11 @@ const BiasFreeEvaluation: React.FC = () => {
                 },
               }}
             >
-              <img
+              <Box
+                component="img"
                 src="/images/home/Iframe.png"
                 alt="AI Interview Demo"
-                style={{ width: "100%", height: "auto", display: "block" }}
+                sx={{ width: "100%", height: "auto", display: "block" }}
               />
               <Box sx={{
                 position: "absolute", inset: 0,

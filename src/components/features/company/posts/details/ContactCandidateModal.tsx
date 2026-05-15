@@ -18,10 +18,9 @@ import {
   useSendCandidateMessageMutation,
 } from "@/modules/candidate-chat/queries/useCandidateChatQueries";
 import { getCandidateChatConversationPath } from "@/modules/candidate-chat/utils/routes";
+import { TEAL } from '@/constants/colors';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
-
-const TEAL = "#0D9488";
 
 function initials(first?: string | null, last?: string | null) {
   return `${first?.[0] ?? ""}${last?.[0] ?? ""}`.toUpperCase() || "?";

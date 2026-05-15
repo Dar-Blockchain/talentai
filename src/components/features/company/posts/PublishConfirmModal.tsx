@@ -48,7 +48,7 @@ const PublishConfirmModal: React.FC<PublishConfirmModalProps> = ({ open, publish
       </Typography>
       <Typography sx={{ fontSize: "13px", color: "#6B7280", lineHeight: 1.65, mb: 2.5 }}>
         {t("detail.publish_modal.body_pre")}{" "}
-        <strong style={{ color: "#111827" }}>{t("detail.publish_modal.body_highlight")}</strong>{" "}
+        <Box component="strong" sx={{ color: "#111827" }}>{t("detail.publish_modal.body_highlight")}</Box>{" "}
         {t("detail.publish_modal.body_post")}
       </Typography>
 

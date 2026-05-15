@@ -24,11 +24,12 @@ const DemoVideoModal: React.FC<DemoVideoModalProps> = ({ open, onClose }) => (
       </IconButton>
     </Box>
     <DialogContent sx={{ p: 0, bgcolor: "#000" }}>
-      <iframe
+      <Box
+        component="iframe"
         src={DEMO_VIDEO_SRC}
         width="100%"
         allow="autoplay"
-        style={{ border: "none", display: "block", aspectRatio: "16/9" }}
+        sx={{ border: "none", display: "block", aspectRatio: "16/9" }}
         allowFullScreen
       />
     </DialogContent>

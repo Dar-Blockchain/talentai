@@ -8,8 +8,7 @@ import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
 import EditNoteOutlined from "@mui/icons-material/EditNoteOutlined";
 import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
 import { WorkOutlineOutlined } from "@mui/icons-material";
-
-const TEAL = "#0D9488";
+import { TEAL } from '@/constants/colors';
 
 interface JobPostsHeaderProps {
   total: number;

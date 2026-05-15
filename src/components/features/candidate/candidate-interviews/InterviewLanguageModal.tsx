@@ -6,8 +6,7 @@ import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
 import LockOutlined from "@mui/icons-material/LockOutlined";
 import { LANG_META } from "@/constants/languages";
 import { useTranslation } from "react-i18next";
-
-const TEAL    = "#0D9488";
+import { TEAL } from '@/constants/colors';
 const TEAL_BG = "#F0FDFA";
 
 interface Props {
@@ -84,12 +83,13 @@ const InterviewLanguageModal: React.FC<Props> = ({ open, languages, onConfirm, o
                         <CheckOutlined sx={{ fontSize: 11, color: "#fff" }} />
                       </Box>
                     )}
-                    <img
+                    <Box
+                      component="img"
                       src={`https://flagcdn.com/w40/${meta.flag}.png`}
                       srcSet={`https://flagcdn.com/w80/${meta.flag}.png 2x`}
                       width={36} height={26}
                       alt={meta.label}
-                      style={{ borderRadius: 4, display: "block", boxShadow: "0 1px 4px rgba(0,0,0,0.12)" }}
+                      sx={{ borderRadius: "4px", display: "block", boxShadow: "0 1px 4px rgba(0,0,0,0.12)" }}
                     />
                     <Box sx={{ textAlign: "center" }}>
                       <Typography sx={{ fontSize: "12.5px", fontWeight: active ? 800 : 600, color: active ? TEAL : "#111827", lineHeight: 1.2 }}>
@@ -106,12 +106,13 @@ const InterviewLanguageModal: React.FC<Props> = ({ open, languages, onConfirm, o
 
             {selectedMeta && (
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, px: 1.5, py: 1, borderRadius: "10px", bgcolor: "#F8FAFC", border: "1px solid #E2E8F0", mb: 2.5 }}>
-                <img
+                <Box
+                  component="img"
                   src={`https://flagcdn.com/w40/${selectedMeta.flag}.png`}
                   srcSet={`https://flagcdn.com/w80/${selectedMeta.flag}.png 2x`}
                   width={22} height={16}
                   alt={selectedMeta.label}
-                  style={{ borderRadius: 2, display: "block", flexShrink: 0 }}
+                  sx={{ borderRadius: "2px", display: "block", flexShrink: 0 }}
                 />
                 <Typography sx={{ fontSize: "12px", color: "#374151", flex: 1 }}>
                   {t('lang_modal.interviewing_in', { language: selectedMeta.label })}
@@ -125,12 +126,13 @@ const InterviewLanguageModal: React.FC<Props> = ({ open, languages, onConfirm, o
         {/* ── Single: info card ── */}
         {!isMulti && singleLang && (
           <Box sx={{ display: "flex", alignItems: "center", gap: 2, p: 2, mb: 2.5, borderRadius: "14px", bgcolor: TEAL_BG, border: "1.5px solid #99F6E4" }}>
-            <img
+            <Box
+              component="img"
               src={`https://flagcdn.com/w40/${singleLang.flag}.png`}
               srcSet={`https://flagcdn.com/w80/${singleLang.flag}.png 2x`}
               width={40} height={29}
               alt={singleLang.label}
-              style={{ borderRadius: 4, display: "block", flexShrink: 0, boxShadow: "0 1px 4px rgba(0,0,0,0.12)" }}
+              sx={{ borderRadius: "4px", display: "block", flexShrink: 0, boxShadow: "0 1px 4px rgba(0,0,0,0.12)" }}
             />
             <Box sx={{ flex: 1 }}>
               <Typography sx={{ fontSize: "14px", fontWeight: 800, color: TEAL, lineHeight: 1.2 }}>

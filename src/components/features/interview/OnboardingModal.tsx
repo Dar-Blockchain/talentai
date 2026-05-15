@@ -19,7 +19,7 @@ import { formatTimeLeft } from '@/utils/functions';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 
-const PURPLE = '#8310FF';
+import { PURPLE } from '@/constants/colors';
 const PURPLE_LIGHT = 'rgba(131,16,255,0.08)';
 const CODE_LENGTH = 6;
 const CODE_TTL = 300;

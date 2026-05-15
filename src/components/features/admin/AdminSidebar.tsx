@@ -23,9 +23,9 @@ import {
   Psychology as SkillIcon,
   Settings as SettingsIcon,
 } from '@mui/icons-material';
+import { PURPLE } from '@/constants/colors';
 
 const DRAWER_WIDTH = 260;
-const PRIMARY = '#8310FF';
 
 const SidebarItem = styled(ListItemButton)(({ theme }) => ({
   borderRadius: '12px',
@@ -39,10 +39,10 @@ const SidebarItem = styled(ListItemButton)(({ theme }) => ({
   },
   '&.Mui-selected': {
     backgroundColor: '#f5f3ff',
-    color: PRIMARY,
-    borderLeft: `3px solid ${PRIMARY}`,
+    color: PURPLE,
+    borderLeft: `3px solid ${PURPLE}`,
     '& .MuiListItemIcon-root': {
-      color: PRIMARY,
+      color: PURPLE,
     },
     '&:hover': {
       backgroundColor: '#ece6fa',
@@ -52,7 +52,7 @@ const SidebarItem = styled(ListItemButton)(({ theme }) => ({
     backgroundColor: '#f5f3ff',
     color: '#1a1a2e',
     '& .MuiListItemIcon-root': {
-      color: PRIMARY,
+      color: PURPLE,
     },
   },
 }));

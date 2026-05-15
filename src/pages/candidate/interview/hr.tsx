@@ -61,8 +61,7 @@ import CoverageDashboard from '@/components/features/interview/start/CoverageDas
 
 // Styles
 import { GlobalStyles } from '@/components/features/interview/start/styles';
-
-const PURPLE = '#8310FF';
+import { PURPLE } from '@/constants/colors';
 
 const IntelligentInterviewTest = () => {
   const router = useRouter();
@@ -382,7 +381,7 @@ const IntelligentInterviewTest = () => {
           iconShadow="0 4px 16px rgba(131,16,255,0.12)"
           badge={{ label: 'Candidates only', color: PURPLE, bgColor: '#f5f3ff', borderColor: 'rgba(131,16,255,0.2)' }}
           title="This page is not available for your account"
-          description={<>The interview flow is designed for <strong style={{ color: '#111827' }}>Candidate</strong> accounts. Your employee account does not have access to this section.</>}
+          description={<>The interview flow is designed for <Box component="strong" sx={{ color: '#111827' }}>Candidate</Box> accounts. Your employee account does not have access to this section.</>}
           actions={[{ label: 'Go to my dashboard', onClick: () => router.replace('/employee/dashboard'), color: 'linear-gradient(135deg, #8310FF 0%, #a855f7 100%)', hoverColor: 'linear-gradient(135deg, #6d0ee0 0%, #9333ea 100%)' }]}
         />
       </>
@@ -437,7 +436,7 @@ const IntelligentInterviewTest = () => {
           iconBorderColor="rgba(131,16,255,0.2)"
           title={t('completed.title')}
           subtitle={company ? <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: PURPLE, fontWeight: 600 }}>{company}</Typography> : undefined}
-          description={<>{t('completed.desc_pre')} <strong style={{ color: '#111827' }}>{jobTitle}</strong> {t('completed.desc_post')}</>}
+          description={<>{t('completed.desc_pre')} <Box component="strong" sx={{ color: '#111827' }}>{jobTitle}</Box> {t('completed.desc_post')}</>}
           actions={[{ label: t('back_to_dashboard'), onClick: () => router.push('/candidate/dashboard'), color: PURPLE, hoverColor: '#6d0ee0' }]}
         />
       </>
@@ -456,7 +455,7 @@ const IntelligentInterviewTest = () => {
           title="Interview Not Available"
           description={
             <>
-              Your CV match score (<strong style={{ color: '#DC2626' }}>{thresholdInfo?.score ?? 0}%</strong>) is below the minimum required score of <strong style={{ color: '#111827' }}>{thresholdInfo?.required ?? 0}%</strong> for this position. Only candidates who meet the threshold can proceed to the interview.
+              Your CV match score (<Box component="strong" sx={{ color: '#DC2626' }}>{thresholdInfo?.score ?? 0}%</Box>) is below the minimum required score of <Box component="strong" sx={{ color: '#111827' }}>{thresholdInfo?.required ?? 0}%</Box> for this position. Only candidates who meet the threshold can proceed to the interview.
             </>
           }
           actions={[{ label: t('back_to_dashboard'), onClick: () => router.push('/candidate/dashboard'), color: '#DC2626', hoverColor: '#B91C1C' }]}

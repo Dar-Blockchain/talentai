@@ -47,7 +47,7 @@ export interface DeleteMemberPayload {
 export interface Invitation {
   _id: string;
   email: string;
-  company?: any;
+  company?: string | { _id: string; name: string };
   user?: {
     _id: string;
     username: string;
@@ -275,7 +275,7 @@ export const cancelInvitation = createAsyncThunk<
 // Respond to invitation (accept or reject)
 // For new users (no account): pass firstName + lastName → backend registers + accepts in one step
 export const respondToInvitation = createAsyncThunk<
-  { success: boolean; action: string; token?: string; user?: any },
+  { success: boolean; action: string; token?: string; user?: { _id: string; email: string; username?: string } },
   { invitationId: string; action: 'accept' | 'reject'; token?: string; firstName?: string; lastName?: string },
   { rejectValue: string }
 >("member/respondToInvitation", async (params, { rejectWithValue }) => {
@@ -359,7 +359,7 @@ export const updateEmployeePermissions = createAsyncThunk<
 
 // Register as new user and accept invitation in one step
 export const acceptInvitationAsNewUser = createAsyncThunk<
-  { token: string; user: any },
+  { token: string; user: { _id: string; email: string; username?: string } },
   { invitationId: string; token: string; firstName: string; lastName: string },
   { rejectValue: string }
 >("member/acceptInvitationAsNewUser", async (params, { rejectWithValue }) => {
@@ -397,12 +397,11 @@ const memberSlice = createSlice({
       })
       .addCase(
         addEmployee.fulfilled,
-        (state: MemberState, action: PayloadAction<any>) => {
+        (state: MemberState, action: PayloadAction<Member>) => {
           state.addingMember = false;
           state.addMemberSuccess = true;
-          console.log('✅ [MemberSlice] Member added successfully:', action.payload);
           // The API might return the member directly or wrapped in an object
-          const newMember = action.payload.member || action.payload;
+          const newMember = (action.payload as unknown as { member?: Member }).member || action.payload;
           if (newMember && newMember._id) {
             state.members.push(newMember);
           }
@@ -424,12 +423,11 @@ const memberSlice = createSlice({
       })
       .addCase(
         updateMemberRole.fulfilled,
-        (state: MemberState, action: PayloadAction<any>) => {
+        (state: MemberState, action: PayloadAction<Member>) => {
           state.updatingRole = false;
           state.updateRoleSuccess = true;
-          console.log('✅ [MemberSlice] Role updated successfully:', action.payload);
           // Update the member in the list
-          const updatedMember = action.payload.member || action.payload;
+          const updatedMember = (action.payload as unknown as { member?: Member }).member || action.payload;
           if (updatedMember && updatedMember._id) {
             const index = state.members.findIndex(m => m._id === updatedMember._id);
             if (index !== -1) {
@@ -457,7 +455,6 @@ const memberSlice = createSlice({
         (state: MemberState, action: PayloadAction<{ membershipId: string }>) => {
           state.deletingMember = false;
           state.deleteMemberSuccess = true;
-          console.log('✅ [MemberSlice] Member deleted successfully');
           // Remove the member from the list by membership ID
           state.members = state.members.filter(m => m._id !== action.payload.membershipId);
         }
@@ -511,7 +508,6 @@ const memberSlice = createSlice({
         (state: MemberState, action: PayloadAction<Invitation[]>) => {
           state.fetchingInvitations = false;
           state.invitations = action.payload;
-          console.log('✅ [MemberSlice] Invitations fetched successfully');
         }
       )
       .addCase(
@@ -530,7 +526,6 @@ const memberSlice = createSlice({
         resendInvitation.fulfilled,
         (state: MemberState, action: PayloadAction<Invitation>) => {
           state.resendingInvitation = false;
-          console.log('✅ [MemberSlice] Invitation resent successfully');
           // Update the invitation in the list
           const index = state.invitations.findIndex(inv => inv._id === action.payload._id);
           if (index !== -1) {
@@ -554,7 +549,6 @@ const memberSlice = createSlice({
         cancelInvitation.fulfilled,
         (state: MemberState, action: PayloadAction<string>) => {
           state.cancellingInvitation = false;
-          console.log('✅ [MemberSlice] Invitation cancelled successfully');
           // Remove the invitation from the list
           state.invitations = state.invitations.filter(inv => inv._id !== action.payload);
         }
@@ -580,7 +574,6 @@ const memberSlice = createSlice({
             success: true,
             action: action.meta.arg.action,
           };
-          console.log('✅ [MemberSlice] Invitation response successful');
         }
       )
       .addCase(
@@ -612,7 +605,6 @@ const memberSlice = createSlice({
         (state: MemberState, action: PayloadAction<Invitation & { organization?: { _id: string; name: string } }>) => {
           state.fetchingInvitationDetails = false;
           state.currentInvitation = action.payload;
-          console.log('✅ [MemberSlice] Invitation details fetched successfully');
         }
       )
       .addCase(

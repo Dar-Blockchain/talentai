@@ -44,13 +44,12 @@ import {
   selectAdminAssessmentsLoading,
   selectAdminAssessmentsTotal,
 } from '@/store/slices/adminSlice';
-
-const PRIMARY = '#8310FF';
+import { PURPLE } from '@/constants/colors';
 
 const StyledTabs = styled(Tabs)({
   minHeight: 40,
   '& .MuiTabs-indicator': {
-    backgroundColor: PRIMARY,
+    backgroundColor: PURPLE,
     height: 3,
     borderRadius: '3px 3px 0 0',
   },
@@ -64,7 +63,7 @@ const StyledTab = styled(Tab)({
   color: '#6c6c80',
   padding: '8px 16px',
   '&.Mui-selected': {
-    color: PRIMARY,
+    color: PURPLE,
   },
 });
 
@@ -333,7 +332,7 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
               ))}
             </Select>
           </FormControl>
-          {loading && <CircularProgress size={20} sx={{ color: PRIMARY }} />}
+          {loading && <CircularProgress size={20} sx={{ color: PURPLE }} />}
           <Box sx={{ flex: 1 }} />
           <Typography variant="body2" sx={{ color: '#6c6c80' }}>
             {filteredResults.length} of {totalCount}
@@ -420,7 +419,7 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
                         <IconButton
                           size="small"
                           onClick={() => handleViewDetails(assessment)}
-                          sx={{ color: PRIMARY }}
+                          sx={{ color: PURPLE }}
                         >
                           <VisibilityIcon fontSize="small" />
                         </IconButton>
@@ -458,7 +457,7 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
           return (
             <>
               {/* Header */}
-              <Box sx={{ background: `linear-gradient(135deg, ${PRIMARY} 0%, #6a0dad 100%)`, px: 3, pt: 3, pb: 4, position: 'relative' }}>
+              <Box sx={{ background: `linear-gradient(135deg, ${PURPLE} 0%, #6a0dad 100%)`, px: 3, pt: 3, pb: 4, position: 'relative' }}>
                 <IconButton onClick={() => setDetailsDialogOpen(false)} sx={{ position: 'absolute', top: 12, right: 12, color: 'rgba(255,255,255,0.7)', '&:hover': { color: 'white' } }}>
                   <CloseIcon fontSize="small" />
                 </IconButton>
@@ -541,7 +540,7 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
                     <Typography variant="overline" sx={{ color: '#6c6c80', letterSpacing: 1.2, fontSize: '0.65rem' }}>Skills</Typography>
                     <Box sx={{ display: 'flex', gap: 1, mt: 0.5, flexWrap: 'wrap' }}>
                       {selectedAssessment.metadata.skill && (
-                        <Chip label={selectedAssessment.metadata.skill} size="small" sx={{ backgroundColor: '#ece6fa', color: PRIMARY, fontWeight: 600 }} />
+                        <Chip label={selectedAssessment.metadata.skill} size="small" sx={{ backgroundColor: '#ece6fa', color: PURPLE, fontWeight: 600 }} />
                       )}
                       {selectedAssessment.metadata.proficiency && (
                         <Chip label={selectedAssessment.metadata.proficiency} size="small" variant="outlined" sx={{ borderColor: '#ece6fa', color: '#6c6c80' }} />

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
+import { getImageUrl } from "@/utils/apiConfig";
 import {
   Box,
   Drawer,
@@ -38,7 +39,7 @@ interface SidebarProps {
 
 const DRAWER_WIDTH = 240;
 const COLLAPSED_WIDTH = 64;
-const TEAL = "#0D9488";
+import { TEAL } from '@/constants/colors';
 const TEAL_LIGHT = "#14B8A6";
 
 // Dark sidebar palette — teal-tinted navy, matches brand
@@ -146,7 +147,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     : "";
 
   const avatarUrl = profile?.user_image
-    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${profile.user_image}`
+    ? getImageUrl('Users', profile.user_image)
     : null;
 
   const drawerWidth  = collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH;

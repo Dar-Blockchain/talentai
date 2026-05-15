@@ -121,7 +121,7 @@ const SubscriptionBanner: React.FC = () => {
             <Box>
               <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
                 <Typography sx={{ fontSize: "0.75rem", color: "#6b7280", fontWeight: 500 }}>
-                  {t("pages.subscription.banner.job_posts_used")} {multiPlan && <span style={{ color: "#9ca3af" }}>{t("pages.subscription.banner.combined")}</span>}
+                  {t("pages.subscription.banner.job_posts_used")} {multiPlan && <Box component="span" sx={{ color: "#9ca3af" }}>{t("pages.subscription.banner.combined")}</Box>}
                 </Typography>
                 <Typography sx={{ fontSize: "0.75rem", color: primaryColor, fontWeight: 700 }}>
                 {c.usage.posts.limit === -1 ? "∞" : `${postsPct}%`}
@@ -144,7 +144,7 @@ const SubscriptionBanner: React.FC = () => {
             <Box>
               <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
                 <Typography sx={{ fontSize: "0.75rem", color: "#6b7280", fontWeight: 500 }}>
-                  {t("pages.subscription.banner.interviews_month")} {multiPlan && <span style={{ color: "#9ca3af" }}>{t("pages.subscription.banner.combined")}</span>}
+                  {t("pages.subscription.banner.interviews_month")} {multiPlan && <Box component="span" sx={{ color: "#9ca3af" }}>{t("pages.subscription.banner.combined")}</Box>}
                 </Typography>
                 <Typography sx={{ fontSize: "0.75rem", color: intPct >= 90 ? "#ef4444" : primaryColor, fontWeight: 700 }}>
                 {c.usage.monthlyInterviews.limit === -1 ? "∞" : `${intPct}%`}
@@ -663,10 +663,6 @@ const PlansPage: React.FC = () => {
 
     return null;
   }, [activeSubByPlanName, userPlanLimits, combined]);
-
-  if (process.env.NODE_ENV === "development") {
-    console.log("[Plans] userPlanLimits:", userPlanLimits, "| currentPlanName:", currentPlanName, "| activeSubByPlanName:", activeSubByPlanName);
-  }
 
   const sortedPlans = [...plans]
     .sort((a, b) => (ORDERED_PLANS.indexOf(a.name) ?? 99) - (ORDERED_PLANS.indexOf(b.name) ?? 99));

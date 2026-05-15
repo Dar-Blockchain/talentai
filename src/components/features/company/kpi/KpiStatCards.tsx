@@ -17,7 +17,7 @@ import CampaignOutlined from "@mui/icons-material/CampaignOutlined";
 import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
 import GroupsOutlined from "@mui/icons-material/GroupsOutlined";
 
-const TEAL = "#0D9488";
+import { TEAL } from '@/constants/colors';
 const TEAL_BG = "#F0FDFA";
 
 const StatCardSkeleton: React.FC = () => (

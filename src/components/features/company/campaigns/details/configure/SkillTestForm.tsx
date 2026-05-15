@@ -20,6 +20,7 @@ import BugReportIcon from "@mui/icons-material/BugReport";
 import BusinessCenterIcon from "@mui/icons-material/BusinessCenter";
 import { ALL_SKILLS } from "@/constants/skills";
 import { useTranslation } from "react-i18next";
+import { PURPLE } from '@/constants/colors';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -33,8 +34,6 @@ interface Props {
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-
-const PURPLE = "#8310FF";
 
 const CATEGORY_META: Record<string, { icon: React.ElementType; color: string }> = {
   development: { icon: CodeIcon, color: "#3B82F6" },

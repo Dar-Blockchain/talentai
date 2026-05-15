@@ -6,8 +6,7 @@ import type { RootState } from "@/store/store";
 import TourCard from "./tour/TourCard";
 import { STEPS, TOTAL } from "./tour/tourSteps";
 import { resolveRect, popoverStyle } from "./tour/tourUtils";
-
-const TEAL = "#0D9488";
+import { TEAL } from '@/constants/colors';
 
 const OnboardingTour: React.FC = () => {
   const [active, setActive] = useState(false);

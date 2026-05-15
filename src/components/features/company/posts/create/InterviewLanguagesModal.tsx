@@ -1,11 +1,11 @@
 import React, { useState } from "react";
+import Image from "next/image";
 import { Box, Button, Dialog, Typography } from "@mui/material";
 import MicOutlined from "@mui/icons-material/MicOutlined";
 import CheckOutlined from "@mui/icons-material/CheckOutlined";
 import { useTranslation } from "react-i18next";
 import { SUPPORTED_LANGS } from "@/constants/languages";
-
-const TEAL    = "#0D9488";
+import { TEAL } from '@/constants/colors';
 const TEAL_BG = "#F0FDFA";
 
 
@@ -80,6 +80,9 @@ const InterviewLanguagesModal: React.FC<Props> = ({ open, onConfirm, onClose, in
             <Box
               key={lang.code}
               onClick={() => toggle(lang.code)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') toggle(lang.code); }}
               sx={{
                 cursor: "pointer",
                 border: `1.5px solid ${active ? TEAL : "#E5E7EB"}`,
@@ -107,7 +110,7 @@ const InterviewLanguagesModal: React.FC<Props> = ({ open, onConfirm, onClose, in
                   <CheckOutlined sx={{ fontSize: 10, color: "#fff" }} />
                 </Box>
               )}
-              <img src={`https://flagcdn.com/w40/${lang.flag}.png`} srcSet={`https://flagcdn.com/w80/${lang.flag}.png 2x`} width={28} height={20} alt={lang.label} style={{ borderRadius: 2, display: "block" }} />
+              <Image src={`https://flagcdn.com/w40/${lang.flag}.png`} width={28} height={20} alt={lang.label} unoptimized style={{ borderRadius: 2, display: "block" }} />
               <Typography
                 sx={{
                   fontSize: "11.5px", fontWeight: active ? 700 : 500,

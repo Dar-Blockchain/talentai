@@ -2,8 +2,7 @@ import React from 'react';
 import { Box, Typography, Button, Modal } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-
-const PURPLE = '#8310FF';
+import { PURPLE } from '@/constants/colors';
 
 interface GDPRConsentModalProps {
   open: boolean;

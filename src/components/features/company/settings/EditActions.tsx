@@ -3,8 +3,7 @@ import { Box, Button, CircularProgress } from "@mui/material";
 import EditOutlined from "@mui/icons-material/EditOutlined";
 import SaveOutlined from "@mui/icons-material/SaveOutlined";
 import CloseOutlined from "@mui/icons-material/CloseOutlined";
-
-const TEAL        = "#0D9488";
+import { TEAL } from '@/constants/colors';
 const TEAL_BG     = "#F0FDFA";
 const TEAL_BORDER = "#99F6E4";
 

@@ -79,8 +79,8 @@ const InviteToInterviewModal: React.FC<Props> = ({ open, target, onClose, onSucc
             </Typography>
             {target && (
               <Typography sx={{ fontSize: "12px", color: "#6B7280", mt: 0.25 }}>
-                {t("pages.applications.invite_modal.to_label")} <strong style={{ color: "#374151" }}>{target.name}</strong>
-                {target.postTitle ? <> · <span style={{ color: "#9CA3AF" }}>{target.postTitle}</span></> : null}
+                {t("pages.applications.invite_modal.to_label")} <Box component="strong" sx={{ color: "#374151" }}>{target.name}</Box>
+                {target.postTitle ? <> · <Box component="span" sx={{ color: "#9CA3AF" }}>{target.postTitle}</Box></> : null}
               </Typography>
             )}
           </Box>
@@ -105,7 +105,7 @@ const InviteToInterviewModal: React.FC<Props> = ({ open, target, onClose, onSucc
         ) : (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1.75, pt: 0.5 }}>
             <Typography sx={{ fontSize: "13px", color: "#4B5563", lineHeight: 1.7 }}>
-              {t("pages.applications.invite_modal.body_pre")}<strong style={{ color: "#111827" }}>{target?.name}</strong>{t("pages.applications.invite_modal.body_post")}
+              {t("pages.applications.invite_modal.body_pre")}<Box component="strong" sx={{ color: "#111827" }}>{target?.name}</Box>{t("pages.applications.invite_modal.body_post")}
             </Typography>
 
             {/* Link preview */}

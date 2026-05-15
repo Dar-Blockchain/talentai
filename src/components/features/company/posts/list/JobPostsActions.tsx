@@ -2,8 +2,7 @@ import React from "react";
 import { Box, Button, Menu, MenuItem } from "@mui/material";
 import AddOutlined from "@mui/icons-material/AddOutlined";
 import SortOutlined from "@mui/icons-material/SortOutlined";
-
-const TEAL = "#0D9488";
+import { TEAL } from '@/constants/colors';
 
 type SortOption = "newest" | "oldest" | "title-asc" | "title-desc";
 

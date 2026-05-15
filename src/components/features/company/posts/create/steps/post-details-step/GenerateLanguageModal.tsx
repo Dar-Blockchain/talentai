@@ -6,10 +6,10 @@ import CheckBoxOutlineBlankOutlined from "@mui/icons-material/CheckBoxOutlineBla
 import CircularProgress from "@mui/material/CircularProgress";
 import { useTranslation } from "react-i18next";
 import { SUPPORTED_LANGS } from "@/constants/languages";
+import { TEAL } from '@/constants/colors';
 
 export const GENERATE_LANG_KEY = "talentai_generate_lang";
 
-const TEAL    = "#0D9488";
 const TEAL_BG = "#F0FDFA";
 
 interface Props {
@@ -94,11 +94,12 @@ const GenerateLanguageModal: React.FC<Props> = ({ open, loading, onConfirm, onCl
                 transition: "all 0.18s",
               }}
             >
-              <img
+              <Box
+                component="img"
                 src={`https://flagcdn.com/w40/${lang.flag}.png`}
                 srcSet={`https://flagcdn.com/w80/${lang.flag}.png 2x`}
                 width={24} height={16} alt={lang.label}
-                style={{ borderRadius: 2, display: "block" }}
+                sx={{ borderRadius: "2px", display: "block" }}
               />
               <Typography sx={{ fontSize: "13px", fontWeight: active ? 700 : 500, color: active ? "#111827" : "#6B7280" }}>
                 {lang.label}

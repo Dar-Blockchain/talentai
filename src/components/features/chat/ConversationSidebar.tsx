@@ -122,8 +122,6 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
         avatarMt: 0.25,
       };
 
-    console.log("conversations",conversations);
-
   return (
     <Box
       sx={{

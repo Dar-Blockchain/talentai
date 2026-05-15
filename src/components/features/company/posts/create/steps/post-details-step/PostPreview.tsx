@@ -48,7 +48,7 @@ import {
   softSkillLevelLabel,
 } from "@/utils/postFormI18n";
 
-const TEAL        = "#0D9488";
+import { TEAL } from '@/constants/colors';
 const TEAL_BG     = "#F0FDFA";
 const TEAL_BORDER = "#99F6E4";
 const INDIGO      = "#6366F1";

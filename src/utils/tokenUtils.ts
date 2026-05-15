@@ -165,7 +165,6 @@ export function clearTokens(): void {
   
   localStorage.removeItem('api_token');
   Cookies.remove('api_token');
-  console.log('🔒 Tokens cleared');
 }
 
 /**

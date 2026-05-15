@@ -42,8 +42,7 @@ import AssessmentDetailsModal, { AssessmentTarget } from "@/components/features/
 import ApplicationMetrics from "@/components/features/company/applications/ApplicationMetrics";
 import InviteToInterviewModal, { InviteTarget } from "@/components/features/company/applications/InviteToInterviewModal";
 import ApplicationCard from "@/components/features/company/applications/ApplicationCard";
-
-const TEAL = "#0D9488";
+import { TEAL } from '@/constants/colors';
 const PAGE_SIZE = 15;
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -180,7 +179,7 @@ const ApplicationsPage: React.FC = () => {
 
             <FormControl size="small">
               <Select value={status} onChange={(e) => setStatus(e.target.value)} displayEmpty sx={selectSx}>
-                <MenuItem value=""><em style={{ color: "#9CA3AF", fontStyle: "normal" }}>{t("pages.applications.status.all")}</em></MenuItem>
+                <MenuItem value=""><Box component="em" sx={{ color: "#9CA3AF", fontStyle: "normal" }}>{t("pages.applications.status.all")}</Box></MenuItem>
                 {Object.entries(STATUS_STYLE).map(([val, { label }]) => (
                   <MenuItem key={val} value={val} sx={{ fontSize: "13px" }}>{label}</MenuItem>
                 ))}

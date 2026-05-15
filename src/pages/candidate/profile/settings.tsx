@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useCallback, useEffect } from "react";
+import { getImageUrl } from "@/utils/apiConfig";
 import { Box, Typography, Avatar, Divider } from "@mui/material";
 import { useSelector } from "react-redux";
 import { useRouter } from "next/router";
@@ -18,11 +19,10 @@ import LanguageIcon from "@mui/icons-material/Language";
 import NotificationsOutlined from "@mui/icons-material/NotificationsOutlined";
 import VisibilityOutlined from "@mui/icons-material/VisibilityOutlined";
 
-const T    = "#0D9488";
+import { TEAL, NAVY } from '@/constants/colors';
 const TL   = "#14B8A6";
 const TBG  = "#F0FDFA";
 const TBRD = "#99F6E4";
-const NAVY = "#0D1B2A";
 
 const TAB_IDS = [
   { id: "personal",      key: "personal",      icon: PersonOutlined },
@@ -82,7 +82,7 @@ const CandidateSettingsPage: React.FC = () => {
     : user?.username || "Candidate";
   const initial  = displayName[0]?.toUpperCase() || "C";
   const avatarUrl = reduxProfile?.user_image
-    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${reduxProfile.user_image}`
+    ? getImageUrl('Users', reduxProfile.user_image)
     : undefined;
 
   return (
@@ -99,12 +99,12 @@ const CandidateSettingsPage: React.FC = () => {
 
             {/* Profile card */}
             <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-              <Box sx={{ height: 56, background: `linear-gradient(135deg, ${NAVY} 0%, ${T} 100%)`, position: "relative" }}>
+              <Box sx={{ height: 56, background: `linear-gradient(135deg, ${NAVY} 0%, ${TEAL} 100%)`, position: "relative" }}>
                 <Box sx={{ position: "absolute", top: "50%", right: 16, transform: "translateY(-50%)", width: 32, height: 32, borderRadius: "50%", bgcolor: `${TL}30`, border: `1px solid ${TL}40` }} />
               </Box>
               <Box sx={{ px: 2, pb: 2 }}>
                 <Box sx={{ mt: -3, mb: 1 }}>
-                  <Avatar src={avatarUrl} sx={{ width: 52, height: 52, bgcolor: T, fontSize: "1.2rem", fontWeight: 700, border: "2.5px solid #fff", boxShadow: "0 2px 8px rgba(0,0,0,0.12)" }}>
+                  <Avatar src={avatarUrl} sx={{ width: 52, height: 52, bgcolor: TEAL, fontSize: "1.2rem", fontWeight: 700, border: "2.5px solid #fff", boxShadow: "0 2px 8px rgba(0,0,0,0.12)" }}>
                     {initial}
                   </Avatar>
                 </Box>
@@ -132,9 +132,9 @@ const CandidateSettingsPage: React.FC = () => {
                         "&:hover": { bgcolor: active ? TBG : "#F8FAFC", borderColor: active ? TBRD : "#E5E7EB" },
                       }}
                     >
-                      <Icon sx={{ fontSize: 16, color: active ? T : "#6B7280" }} />
-                      <Typography sx={{ fontSize: "0.82rem", fontWeight: active ? 700 : 500, color: active ? T : "#374151" }}>{label}</Typography>
-                      {active && <Box sx={{ ml: "auto", width: 6, height: 6, borderRadius: "50%", bgcolor: T }} />}
+                      <Icon sx={{ fontSize: 16, color: active ? TEAL : "#6B7280" }} />
+                      <Typography sx={{ fontSize: "0.82rem", fontWeight: active ? 700 : 500, color: active ? TEAL : "#374151" }}>{label}</Typography>
+                      {active && <Box sx={{ ml: "auto", width: 6, height: 6, borderRadius: "50%", bgcolor: TEAL }} />}
                     </Box>
                   );
                 })}

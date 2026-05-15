@@ -15,6 +15,7 @@ import { fetchDepartments, selectDepartments, selectDepartmentsLoading } from '@
 import { useTranslation } from "react-i18next";
 import { ROLES } from '@/constants/employee';
 import { getRoleDescription, getRoleLabel, roleMatchesSearch } from '@/utils/employeeRoleI18n';
+import { PURPLE } from '@/constants/colors';
 
 interface EditRoleModalProps {
   open: boolean;
@@ -24,8 +25,6 @@ interface EditRoleModalProps {
   currentDepartmentId?: string;
   memberName: string;
 }
-
-const PURPLE = '#8310FF';
 
 const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
   open, onClose, onSave, currentRole, currentDepartmentId, memberName,
@@ -110,7 +109,7 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
               </Typography>
               <Typography sx={{ fontSize: '0.775rem', color: '#9CA3AF', mt: 0.25 }}>
                 {m('subtitle_intro')}{' '}
-                <strong style={{ color: '#374151' }}>{memberName}</strong>
+                <Box component="strong" sx={{ color: '#374151' }}>{memberName}</Box>
               </Typography>
             </Box>
           </Box>

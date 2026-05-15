@@ -30,9 +30,9 @@ const Counter: React.FC<{ target: number; prefix: string; suffix: string }> = ({
   }, [inView, raw, target]);
 
   return (
-    <span ref={ref} style={{ display: "inline-flex", alignItems: "baseline", gap: 1 }}>
+    <Box component="span" ref={ref} sx={{ display: "inline-flex", alignItems: "baseline", gap: 1 }}>
       {prefix}<motion.span>{num}</motion.span>{suffix}
-    </span>
+    </Box>
   );
 };
 

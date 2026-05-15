@@ -18,8 +18,7 @@ import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
 import { Member } from "@/store/slices/memberSlice";
 import { ROLES } from "@/constants/employee";
 import { getRoleLabel } from "@/utils/employeeRoleI18n";
-
-const PURPLE = "#8310FF";
+import { PURPLE } from '@/constants/colors';
 
 export const ROLE_LABELS: Record<string, string> = {
   RH: "HR", TechLead: "Technical Leader",

@@ -15,8 +15,7 @@ import RecruitmentFlowStep from "./steps/recruitment-flow-step/RecruitmentFlowSt
 import PipelineWarningDialog from "./steps/recruitment-flow-step/PipelineWarningModal";
 import InterviewLanguagesModal from "./InterviewLanguagesModal";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
-
-const TEAL = "#0D9488";
+import { TEAL } from '@/constants/colors';
 
 const CreateStepper: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();

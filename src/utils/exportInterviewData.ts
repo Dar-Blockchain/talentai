@@ -52,7 +52,6 @@ export function exportInterviewDataAsJSON(): void {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    console.log('✅ Interview data exported successfully');
   } catch (error) {
     console.error('❌ Error exporting interview data:', error);
     alert('Failed to export interview data');
@@ -102,7 +101,6 @@ export async function copyInterviewDataToClipboard(): Promise<boolean> {
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
       await navigator.clipboard.writeText(jsonString);
-      console.log('✅ Interview data copied to clipboard');
       return true;
     } else {
       // Fallback for older browsers
@@ -114,7 +112,6 @@ export async function copyInterviewDataToClipboard(): Promise<boolean> {
       textarea.select();
       document.execCommand('copy');
       document.body.removeChild(textarea);
-      console.log('✅ Interview data copied to clipboard (fallback method)');
       return true;
     }
   } catch (error) {
@@ -128,23 +125,7 @@ export async function copyInterviewDataToClipboard(): Promise<boolean> {
  */
 export function logInterviewDataToConsole(): void {
   try {
-    const jsonString = getInterviewDataJSON();
-
-    console.log('\n\n');
-    console.log('╔═══════════════════════════════════════════════════════════════╗');
-    console.log('║                    INTERVIEW DATA EXPORT                      ║');
-    console.log('╚═══════════════════════════════════════════════════════════════╝');
-    console.log('\n');
-    console.log('📋 COPY THE JSON BELOW:');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log(jsonString);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('\n');
-    console.log('💡 TO COPY:');
-    console.log('   • Select the JSON text above between the lines');
-    console.log('   • Or call: copyInterviewDataToClipboard()');
-    console.log('   • Or call: exportInterviewDataAsJSON() to download as file');
-    console.log('\n');
+    getInterviewDataJSON();
   } catch (error) {
     console.error('❌ Error logging interview data:', error);
   }

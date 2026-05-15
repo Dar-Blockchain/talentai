@@ -22,8 +22,7 @@ import { useEffect } from "react";
 import SectionCard from "@/components/ui/SectionCard";
 import { useTranslation } from "react-i18next";
 import { EMPLOYMENT_OPTION_KEY, WORK_MODE_OPTION_KEY, optionLabel } from "@/utils/postFormI18n";
-
-const TEAL        = "#0D9488";
+import { TEAL } from '@/constants/colors';
 const TEAL_BG     = "#F0FDFA";
 const TEAL_BORDER = "#99F6E4";
 const INDIGO      = "#6366F1";

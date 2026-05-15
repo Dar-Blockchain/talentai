@@ -15,7 +15,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import Header from '@/components/layout/Header';
 import { GlobalStyles } from './styles';
 
-const PURPLE = '#8310FF';
+import { PURPLE } from '@/constants/colors';
 const PURPLE_BG = 'rgba(244,235,255,1)';
 const PURPLE_BORDER = 'rgba(189,133,255,0.35)';
 

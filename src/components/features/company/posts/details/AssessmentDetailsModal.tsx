@@ -17,9 +17,9 @@ import LightbulbOutlined from "@mui/icons-material/LightbulbOutlined";
 import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
 import axiosInstance from "@/utils/axiosInstance";
 import { getScore, scoreStyle, fmtDate, fmtDuration } from "@/components/features/company/interviews/list/InterviewCard";
+import { TEAL } from '@/constants/colors';
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
-const TEAL        = "#0D9488";
 const TEAL_BG     = "#F0FDFA";
 const TEAL_BORDER = "#99F6E4";
 
@@ -221,10 +221,10 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({ open, t
                     <Typography sx={{ fontSize: "0.75rem", color: "#6B7280" }}>{email || "—"}</Typography>
                   </Box>
                   <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
-                    <Chip label={title} size="small" icon={<WorkOutlined style={{ fontSize: 11 }} />}
+                    <Chip label={title} size="small" icon={<WorkOutlined sx={{ fontSize: 11 }} />}
                       sx={{ bgcolor: TEAL_BG, color: TEAL, fontWeight: 600, fontSize: "0.68rem", height: 22, border: `1px solid ${TEAL_BORDER}`, "& .MuiChip-icon": { color: `${TEAL} !important` } }} />
                     {assessment.createdAt && (
-                      <Chip label={fmtDate(assessment.createdAt)} size="small" icon={<CalendarTodayOutlined style={{ fontSize: 11 }} />}
+                      <Chip label={fmtDate(assessment.createdAt)} size="small" icon={<CalendarTodayOutlined sx={{ fontSize: 11 }} />}
                         sx={{ bgcolor: "#F3F4F6", color: "#374151", fontWeight: 600, fontSize: "0.68rem", height: 22 }} />
                     )}
                   </Box>
@@ -244,7 +244,7 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({ open, t
                   <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
                     <AccessTimeOutlined sx={{ fontSize: 13, color: "#9CA3AF" }} />
                     <Typography sx={{ fontSize: "0.73rem", color: "#6B7280" }}>
-                      {t("pages.applications.assessment_modal.duration")} <strong style={{ color: "#374151" }}>{fmtDuration(analytics.duration)}</strong>
+                      {t("pages.applications.assessment_modal.duration")} <Box component="strong" sx={{ color: "#374151" }}>{fmtDuration(analytics.duration)}</Box>
                     </Typography>
                   </Box>
                 )}
@@ -252,7 +252,7 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({ open, t
                   <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
                     <ChatBubbleOutlineOutlined sx={{ fontSize: 13, color: "#9CA3AF" }} />
                     <Typography sx={{ fontSize: "0.73rem", color: "#6B7280" }}>
-                      {t("pages.applications.assessment_modal.responses")} <strong style={{ color: "#374151" }}>{analytics.messageCount}</strong>
+                      {t("pages.applications.assessment_modal.responses")} <Box component="strong" sx={{ color: "#374151" }}>{analytics.messageCount}</Box>
                     </Typography>
                   </Box>
                 )}

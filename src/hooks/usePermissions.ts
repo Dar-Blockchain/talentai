@@ -47,7 +47,6 @@ export const usePermissions = (userId?: string, profileId?: string): UsePermissi
 
       if (!response.ok) {
         // For any error status, use default permissions instead of throwing
-        console.log(`⚠️ [usePermissions] Status ${response.status}, using defaults`);
         const defaultPerms: Permission = {
           ...DEFAULT_PERMISSIONS,
           userId,
@@ -58,7 +57,6 @@ export const usePermissions = (userId?: string, profileId?: string): UsePermissi
       }
 
       const data = await response.json();
-      console.log('📦 [usePermissions] Fetched permissions:', data);
 
       if (data.success && data.permissions) {
         // Extract only the permission fields and add userId/profileId
@@ -73,11 +71,9 @@ export const usePermissions = (userId?: string, profileId?: string): UsePermissi
           canInviteMembers: data.permissions.canInviteMembers ?? true,
           canAssignRoles: data.permissions.canAssignRoles ?? true,
         };
-        console.log('✅ [usePermissions] Processed permissions:', perms);
         setPermissions(perms);
       } else {
         // Use default permissions if response is invalid
-        console.log('⚠️ [usePermissions] Invalid response, using defaults');
         const defaultPerms: Permission = {
           ...DEFAULT_PERMISSIONS,
           userId,

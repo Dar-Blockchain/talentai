@@ -20,8 +20,7 @@ import { AppDispatch } from "@/store/store";
 import { updateCampaign } from "@/store/slices/campaignSlice";
 import { MODULE_CONFIG } from "@/constants/campaign";
 import { useTranslation, Trans } from "react-i18next";
-
-const PURPLE = "#8310FF";
+import { PURPLE } from '@/constants/colors';
 
 const MODULE_TYPES: ModuleType[] = ["QUESTIONNAIRE", "AI_INTERVIEW", "SKILL_TEST", "TRAINING_PATH"];
 
@@ -34,7 +33,7 @@ interface Props {
 
 const FieldLabel: React.FC<{ label: string; required?: boolean }> = ({ label, required }) => (
   <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#374151", mb: 0.75 }}>
-    {label}{required && <span style={{ color: "#EF4444", marginLeft: 2 }}>*</span>}
+    {label}{required && <Box component="span" sx={{ color: "#EF4444", ml: "2px" }}>*</Box>}
   </Typography>
 );
 

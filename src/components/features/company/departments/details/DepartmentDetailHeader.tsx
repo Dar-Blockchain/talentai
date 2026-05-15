@@ -9,8 +9,7 @@ import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
 import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import { Department } from "@/store/slices/departmentSlice";
-
-const PURPLE = "#8310FF";
+import { PURPLE } from '@/constants/colors';
 
 function formatDetailDate(iso: string, locale: string) {
   const loc = locale.startsWith("fr") ? "fr-FR" : "en-US";

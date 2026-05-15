@@ -17,9 +17,9 @@ import CancelOutlined from "@mui/icons-material/CancelOutlined";
 import { useRouter } from "next/router";
 import { AppDispatch } from "@/store/store";
 import { ApplicationSummaryItem, updateRecruiterDecision, updateLocalDecision } from "@/store/slices/jobApplicationSlice";
+import { TEAL } from '@/constants/colors';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
-const TEAL   = "#0D9488";
 const PURPLE = "#7C3AED";
 
 // ── ScoreCircle ────────────────────────────────────────────────────────────────

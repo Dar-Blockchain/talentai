@@ -22,26 +22,6 @@ export const getScoreLabel = (score: number): string => {
   return 'Poor';
 };
 
-/**
- * Validate progress data structure
- */
-export const validateProgressData = (progress: CandidateProgress): string[] => {
-  const issues: string[] = [];
-
-  if (!progress.idPost?._id) {
-    issues.push('Post information is missing');
-  }
-
-  if (!progress.idCandidate?._id) {
-    issues.push('Candidate information is missing');
-  }
-
-  if (!progress.idCandidate?.email) {
-    issues.push('Candidate email is missing');
-  }
-
-  return issues;
-};
 
 /**
  * Calculate progress percentage based on completed steps
@@ -80,13 +60,6 @@ export const isTaskStep = (step: Step | null): boolean => {
   return step.stepId?.data?.type?.toLowerCase().includes('task') || false;
 };
 
-/**
- * Check if all steps are completed
- */
-export const areAllStepsCompleted = (steps: Step[]): boolean => {
-  if (!steps || steps.length === 0) return false;
-  return steps.every(step => step.status === 'done');
-};
 
 /**
  * Get candidate full name or fallback to username
@@ -96,41 +69,4 @@ export const getCandidateName = (candidate: CandidateProgress['idCandidate']): s
   return fullName || candidate?.username || 'Candidate';
 };
 
-/**
- * Format date to locale string
- */
-export const formatDate = (dateString: string | undefined): string => {
-  if (!dateString) return 'N/A';
-  try {
-    return new Date(dateString).toLocaleDateString();
-  } catch {
-    return 'Invalid Date';
-  }
-};
 
-/**
- * Format date time to locale string
- */
-export const formatDateTime = (dateString: string | undefined): string => {
-  if (!dateString) return 'N/A';
-  try {
-    return new Date(dateString).toLocaleString();
-  } catch {
-    return 'Invalid Date';
-  }
-};
-
-/**
- * Validate URL format
- */
-export const isValidUrl = (url: string): boolean => {
-  const urlPattern = /^(https?:\/\/)([\w.-]+)\.[a-z]{2,}.*$/i;
-  return urlPattern.test(url);
-};
-
-/**
- * Get step node key (id or _id)
- */
-export const getStepNodeKey = (step: Step): string => {
-  return (step.stepId as any)?.id || step.stepId?._id || '';
-};

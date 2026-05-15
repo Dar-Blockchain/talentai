@@ -4,10 +4,9 @@ import AddOutlined from "@mui/icons-material/AddOutlined";
 import Head from "next/head";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
-
-const ACCENT        = "#0D9488";
-const ACCENT_BG     = "rgba(13,148,136,0.08)";
-const ACCENT_BORDER = "rgba(13,148,136,0.35)";
+import { TEAL } from '@/constants/colors';
+const TEAL_BG     = "rgba(13,148,136,0.08)";
+const TEAL_BORDER = "rgba(13,148,136,0.35)";
 const VP   = { once: true, margin: "-80px" };
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -50,7 +49,7 @@ const FAQItem: React.FC<{
       {/* Teal left accent bar */}
       <Box sx={{
         position: "absolute", left: 0, top: 0, bottom: 0, width: "3px",
-        bgcolor: open ? ACCENT : "transparent",
+        bgcolor: open ? TEAL : "transparent",
         borderRadius: "16px 0 0 16px",
         transition: "background 0.2s",
       }} />
@@ -63,13 +62,13 @@ const FAQItem: React.FC<{
         {/* Index badge */}
         <Box sx={{
           width: 32, height: 32, borderRadius: "10px", flexShrink: 0,
-          bgcolor: open ? ACCENT_BG : "rgba(0,0,0,0.04)",
+          bgcolor: open ? TEAL_BG : "rgba(0,0,0,0.04)",
           display: "flex", alignItems: "center", justifyContent: "center",
           transition: "background 0.2s",
         }}>
           <Typography sx={{
             fontFamily: "Poppins", fontSize: "11px", fontWeight: 800,
-            color: open ? ACCENT : "#9CA3AF", letterSpacing: "0.5px",
+            color: open ? TEAL : "#9CA3AF", letterSpacing: "0.5px",
           }}>
             {String(index + 1).padStart(2, "0")}
           </Typography>
@@ -94,7 +93,7 @@ const FAQItem: React.FC<{
         >
           <Box sx={{
             width: 30, height: 30, borderRadius: "50%",
-            bgcolor: open ? ACCENT : "rgba(0,0,0,0.05)",
+            bgcolor: open ? TEAL : "rgba(0,0,0,0.05)",
             display: "flex", alignItems: "center", justifyContent: "center",
             transition: "background 0.2s",
           }}>
@@ -157,10 +156,7 @@ const FAQSection: React.FC = () => {
   return (
     <>
       <Head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
-        />
+        <script type="application/ld+json">{JSON.stringify(faqSchema)}</script>
       </Head>
 
       <Box sx={{ position: "relative", overflow: "hidden", py: { xs: 6, md: 9 } }}>
@@ -236,12 +232,12 @@ const FAQSection: React.FC = () => {
             <Box sx={{ textAlign: "center", mb: { xs: 6, md: 8 } }}>
               <Box sx={{
                 display: "inline-flex", alignItems: "center",
-                bgcolor: ACCENT_BG, border: `1.5px solid ${ACCENT_BORDER}`,
+                bgcolor: TEAL_BG, border: `1.5px solid ${TEAL_BORDER}`,
                 borderRadius: "24px", px: 2.5, py: 0.9, mb: 3,
               }}>
                 <Typography sx={{
                   fontFamily: "Poppins", fontSize: "11px", fontWeight: 700,
-                  color: ACCENT, letterSpacing: "1.2px", textTransform: "uppercase",
+                  color: TEAL, letterSpacing: "1.2px", textTransform: "uppercase",
                 }}>
                   {t("faq.overline")}
                 </Typography>
@@ -254,7 +250,7 @@ const FAQSection: React.FC = () => {
                 letterSpacing: "-0.5px",
               }}>
                 {t("faq.headline_1")}{" "}
-                <Box component="span" sx={{ color: ACCENT }}>{t("faq.headline_accent")}</Box>
+                <Box component="span" sx={{ color: TEAL }}>{t("faq.headline_accent")}</Box>
               </Typography>
 
               <Typography sx={{

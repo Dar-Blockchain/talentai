@@ -89,8 +89,6 @@ export const useCreatePostStepper = (
 
       const { technicalSkills, softSkills } = extractSkillsFromPipeline(nodes);
 
-      console.log("📦 Pipeline skills extracted:", { technicalSkills, softSkills });
-
       // Build update payload with required fields from backend validation
       const jobDetails = { ...savedPost.jobData.jobDetails };
       // Ensure workMode has a valid value
@@ -114,8 +112,6 @@ export const useCreatePostStepper = (
           updatePayload.skillAnalysis.softSkills = softSkills;
         }
       }
-
-      console.log("📤 Update payload:", JSON.stringify(updatePayload, null, 2));
 
       await dispatch(
         updatePost({

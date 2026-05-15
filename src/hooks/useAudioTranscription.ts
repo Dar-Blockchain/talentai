@@ -179,20 +179,16 @@ export const useAudioTranscription = ({
     const timestamp = new Date().toLocaleTimeString();
     const logEntry = `[${timestamp}] ${message}`;
     setSilenceDebugLog(prev => [...prev.slice(-19), logEntry]);
-    console.log('🔍 SILENCE DEBUG:', logEntry);
   }, []);
 
   const addTranscriptDebugLog = useCallback((message: string) => {
     const timestamp = new Date().toLocaleTimeString();
     const logEntry = `[${timestamp}] ${message}`;
     setTranscriptDebugLog(prev => [...prev.slice(-19), logEntry]);
-    console.log('🔍 TRANSCRIPT DEBUG:', logEntry);
   }, []);
 
   // Generate temporary token for Assembly AI streaming
   const generateStreamingToken = async (): Promise<string> => {
-    console.log('🔑 [INIT-1] Requesting AssemblyAI V3 temporary token...');
-
     try {
       const response = await fetch('/api/session', {
         method: 'POST',
@@ -209,7 +205,6 @@ export const useAudioTranscription = ({
       }
 
       const { token } = await response.json();
-      console.log('✅ [INIT-1-SUCCESS] Token received, length:', token?.length || 0);
       return token;
     } catch (error) {
       console.error('❌ [INIT-1-ERROR] Exception during token generation:', error);
@@ -299,16 +294,10 @@ export const useAudioTranscription = ({
     const turns = accumulatedTurnsRef.current;
 
     if (turns.length === 0) {
-      console.log('⚠️ No accumulated turns to send');
       return;
     }
 
     const completeAnswer = turns.join(' ');
-
-    console.log(`📤 [ACCUMULATION] Sending accumulated answer:`);
-    console.log(`   - Turn count: ${turns.length}`);
-    console.log(`   - Total length: ${completeAnswer.length} chars`);
-    console.log(`   - Content preview: "${completeAnswer.substring(0, 100)}..."`);
 
     if (socketRef.current?.connected && sessionIdRef.current) {
       setFinalTranscriptSent(true);
@@ -389,55 +378,37 @@ export const useAudioTranscription = ({
     }
 
     setAdaptiveSilenceThreshold(Math.min(newThreshold, 10000));
-    console.log('🎯 Adaptive threshold adjusted to:', newThreshold, 'ms');
   }, [baseSilenceThreshold]);
 
   // Setup Assembly AI streaming transcription
   const setupStreamingTranscription = async (stream: MediaStream) => {
     try {
-      console.log('🔧 [INIT-B] Starting AssemblyAI V3 streaming setup...');
       setIsConnecting(true);
       mediaStreamRef.current = stream;
 
       const tempToken = await generateStreamingToken();
 
-      console.log('🔧 [INIT-B-2] Creating AssemblyAI client...');
       const client = new AssemblyAI({
         apiKey: 'dummy'
       });
-      console.log('✅ [INIT-B-2] AssemblyAI client created');
 
-      console.log('🔊 [INIT-B-3] Setting up audio context...');
       const isReusingContext = !!audioContextRef.current;
       const audioContext = audioContextRef.current || new (window.AudioContext || (window as any).webkitAudioContext)({
         sampleRate: 16000,
       });
 
       if (isReusingContext) {
-        console.log('✅ [INIT-B-3] REUSING existing AudioContext (correct!)');
-        console.log('   - Context state:', audioContext.state);
-        console.log('   - Sample rate:', audioContext.sampleRate);
       } else {
-        console.log('⚠️ [INIT-B-3] Creating NEW AudioContext (unexpected - may cause conflicts)');
         audioContextRef.current = audioContext;
       }
 
-      console.log('🎚️ [INIT-B-4] Creating audio processing chain...');
       const source = audioContext.createMediaStreamSource(stream);
       const processor = audioContext.createScriptProcessor(4096, 1, 1);
       processorRef.current = processor;
-      console.log('✅ [INIT-B-4] Audio processing chain created');
 
-      console.log('⚙️ [INIT-B-5] Configuring turn detection...');
       const turnDetectionConfig = getTurnDetectionConfig(currentMessage?.type || 'general');
-      console.log('   - Turn detection config:', turnDetectionConfig);
 
       const actualSampleRate = audioContextRef.current?.sampleRate || 16000;
-      console.log('⚠️ [INIT-B-5.5] CRITICAL - Sample rate configuration:');
-      console.log(`   - Browser AudioContext rate: ${audioContextRef.current?.sampleRate || 'unknown'} Hz`);
-      console.log(`   - AssemblyAI will receive: ${actualSampleRate} Hz`);
-
-      console.log('📡 [INIT-B-6] Creating STREAMING transcriber (V3 API)...');
 
       const interviewLang = interviewConfig.sessionSettings?.language || 'en';
       const isEnglish = interviewLang === 'en';
@@ -455,19 +426,11 @@ export const useAudioTranscription = ({
       });
 
       transcriberRef.current = transcriber;
-      console.log('✅ [INIT-B-6] Transcriber created and stored in ref');
-
-      console.log('📎 [INIT-B-7] Attaching event handlers...');
 
       // Handle turn events from V3 streaming API
       transcriber.on('turn', (turn: any) => {
         const text = turn.transcript?.trim();
         if (!text) return;
-
-        console.log('📝 [TURN] Turn event received:');
-        console.log('   - Text:', text.slice(0, 100));
-        console.log('   - End of turn:', turn.end_of_turn);
-        console.log('   - Confidence:', turn.end_of_turn_confidence);
 
         if (!speakingStartTimeRef.current) {
           const now = Date.now();
@@ -475,7 +438,6 @@ export const useAudioTranscription = ({
           speakingStartTimeRef.current = now;
           setQuestionReadingTime(null);
           setIsInReadingTime(false);
-          console.log('🎤 Speaking started - reading time cancelled');
         }
         setLastSpeakingTime(Date.now());
 
@@ -483,10 +445,7 @@ export const useAudioTranscription = ({
         if (speakingStartTimeRef.current) {
           const currentSpeakingDuration = Date.now() - speakingStartTimeRef.current;
           if (currentSpeakingDuration > MAX_SPEAKING_DURATION) {
-            console.warn(`⏱️  Speaking too long: ${Math.round(currentSpeakingDuration / 1000)}s - sending accumulated answer + interrupt`);
-
             if (accumulatedTurnsRef.current.length > 0) {
-              console.log(`📤 Sending ${accumulatedTurnsRef.current.length} accumulated turns before interrupt`);
               sendAccumulatedAnswer();
             }
 
@@ -513,10 +472,6 @@ export const useAudioTranscription = ({
           const now = Date.now();
           const speakingDuration = speakingStartTimeRef.current ? now - speakingStartTimeRef.current : 0;
 
-          console.log('🎯 [TURN-COMPLETE] End of turn detected!');
-          console.log('   - Final text length:', finalText.length);
-          console.log('   - Confidence:', turn.end_of_turn_confidence);
-          console.log('   - Speaking duration:', speakingDuration, 'ms');
           addTranscriptDebugLog(`✅ Turn complete: conf=${(turn.end_of_turn_confidence * 100).toFixed(1)}%`);
 
           if (speakingDuration < minimumSpeakingDuration) {
@@ -538,19 +493,16 @@ export const useAudioTranscription = ({
           }
 
           if (turn.end_of_turn_confidence < 0.6) {
-            console.log(`ℹ️ Accepted turn with moderate confidence: ${(turn.end_of_turn_confidence * 100).toFixed(1)}%`);
             addTranscriptDebugLog(`✓ Accepted: ${(turn.end_of_turn_confidence * 100).toFixed(1)}% confidence`);
           }
 
           if (finalTranscriptSent) {
-            console.log('⚠️ [TURN-SKIP] Already processed this turn');
             return;
           }
 
           const isInReadingTimeNow = questionReadingTime && (now - questionReadingTime < readingTimeBuffer);
 
           if (isInReadingTimeNow) {
-            console.log('📖 Still in reading time, transcript saved but not sent');
             setAccumulatedTranscript(finalText);
             setCurrentTranscript(finalText);
             setAgentState('waiting');
@@ -558,10 +510,6 @@ export const useAudioTranscription = ({
             setSpeechPhase('reading');
             return;
           }
-
-          console.log('✅ [ACCUMULATION] Turn complete - adding to accumulation buffer');
-          console.log(`   - Current buffer size: ${accumulatedTurnsRef.current.length} turns`);
-          console.log(`   - This turn length: ${finalText.length} chars`);
 
           const newTurns = [...accumulatedTurnsRef.current, finalText];
           setAccumulatedTurns(newTurns);
@@ -578,28 +526,21 @@ export const useAudioTranscription = ({
           addTranscriptDebugLog(`📥 Turn ${accumulatedTurnsRef.current.length} accumulated (${finalText.length} chars)`);
 
           if (accumulatedTurnsRef.current.length >= MAX_ACCUMULATED_TURNS) {
-            console.warn(`⚠️  Max accumulated turns reached (${MAX_ACCUMULATED_TURNS}) - forcing send`);
             addTranscriptDebugLog(`⚠️ Max turns reached - forcing send`);
             sendAccumulatedAnswer();
             return;
           }
         }
       });
-      console.log('   ✓ turn handler attached');
 
       let audioPacketsSent = 0;
       let lastLogTime = Date.now();
 
       transcriber.on('open', ({ id: aaiSessionId, expires_at }: any) => {
-        console.log('🎉 [CONNECTED] AssemblyAI Streaming WebSocket connected!');
-        console.log('   - Session ID:', aaiSessionId);
-        console.log('   - Expires at:', new Date(expires_at * 1000).toISOString());
         setIsConnecting(false);
 
-        console.log('🔗 [AUDIO-CHAIN] Connecting audio processing chain...');
         source.connect(processor);
         processor.connect(audioContext.destination);
-        console.log('✅ [AUDIO-CHAIN] Audio chain connected');
 
         processor.onaudioprocess = (event) => {
           if (transcriber) {
@@ -614,16 +555,13 @@ export const useAudioTranscription = ({
 
             const now = Date.now();
             if (now - lastLogTime > 5000) {
-              console.log(`📡 [AUDIO-STREAM] Streaming active - ${audioPacketsSent} packets sent`);
               lastLogTime = now;
             }
           }
         };
 
-        console.log('🎧 [AUDIO-PROCESS] Audio processor started - sending data to AssemblyAI');
         addTranscriptDebugLog('🎤 Streaming started');
       });
-      console.log('   ✓ open handler attached');
 
       transcriber.on('error', (error: any) => {
         console.error('❌ [ERROR] AssemblyAI Error:', error);
@@ -631,31 +569,20 @@ export const useAudioTranscription = ({
         showNotification('Speech recognition error. Please try again.', 'error');
         addTranscriptDebugLog(`❌ Error: ${error.message || error}`);
       });
-      console.log('   ✓ error handler attached');
 
       transcriber.on('close', () => {
-        console.log('🔌 [CLOSED] AssemblyAI connection closed');
-        console.log('   - Total packets sent:', audioPacketsSent);
         setIsConnecting(false);
         addTranscriptDebugLog('🔌 Streaming stopped');
       });
-      console.log('   ✓ close handler attached');
 
-      console.log('✅ [INIT-B-7] All event handlers attached');
-
-      console.log('🚀 [INIT-B-8] Connecting to AssemblyAI WebSocket...');
       await transcriber.connect();
-      console.log('✅ [INIT-B-8] Connection initiated (waiting for "open" event)');
 
     } catch (error) {
-      console.error('❌ [INIT-B-ERROR] Setup failed at some step:', error);
       setIsConnecting(false);
       showNotification('Failed to setup speech recognition', 'error');
       addTranscriptDebugLog(`❌ Setup failed: ${(error as Error).message}`);
       throw error;
     }
-
-    console.log('✅ [INIT-B-COMPLETE] AssemblyAI V3 setup complete!');
   };
 
   // Cleanup Assembly AI connections
@@ -664,7 +591,6 @@ export const useAudioTranscription = ({
       if (transcriberRef.current) {
         try {
           await transcriberRef.current.close();
-          console.log('✅ AssemblyAI transcriber closed');
         } catch (error) {
           console.error('Error closing transcriber:', error);
         }
@@ -700,9 +626,7 @@ export const useAudioTranscription = ({
       }
 
       setIsConnecting(false);
-      console.log('🧹 AssemblyAI cleanup complete');
     } catch (error) {
-      console.error('⚠️ Error during Assembly AI cleanup:', error);
     }
   }, []);
 
@@ -720,9 +644,6 @@ export const useAudioTranscription = ({
   // Initialize audio for recording and voice activity detection
   const initializeAudio = useCallback(async () => {
     try {
-      console.log('🎤 [INIT-A] Starting audio initialization...');
-      console.log('🎤 [INIT-A-1] Requesting microphone access (getUserMedia)...');
-
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
@@ -732,46 +653,28 @@ export const useAudioTranscription = ({
         }
       });
 
-      console.log('✅ [INIT-A-1] Microphone access granted');
-      console.log('   - Audio tracks:', stream.getAudioTracks().length);
-      console.log('   - Track label:', stream.getAudioTracks()[0]?.label || 'unknown');
-      console.log('   - Track enabled:', stream.getAudioTracks()[0]?.enabled);
-
       audioStreamRef.current = stream;
 
-      console.log('🔊 [INIT-A-2] Creating AudioContext for voice activity detection...');
       const audioContext = new AudioContext();
       audioContextRef.current = audioContext;
-      console.log('✅ [INIT-A-2] AudioContext created');
-      console.log('   - Sample rate:', audioContext.sampleRate);
-      console.log('   - State:', audioContext.state);
 
-      console.log('📊 [INIT-A-3] Setting up audio analyser...');
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
       analyserRef.current = analyser;
 
       const source = audioContext.createMediaStreamSource(stream);
       source.connect(analyser);
-      console.log('✅ [INIT-A-3] Audio analyser connected');
 
       setIsRecording(true);
-      console.log('🔍 [INIT-A-4] Starting voice activity detection...');
       startVoiceActivityDetection();
 
-      console.log('🚀 [INIT-A-5] Initializing AssemblyAI V3 transcription...');
       try {
         await setupStreamingTranscription(stream);
-        console.log('✅ [INIT-A-5] AssemblyAI transcription initialized successfully');
       } catch (transcriptionError) {
-        console.error('❌ [INIT-A-5-FAIL] AssemblyAI setup failed:', transcriptionError);
         showNotification('Transcription service unavailable, but interview can continue', 'warning');
       }
 
-      console.log('✅ [INIT-A-COMPLETE] Audio initialization complete');
-
     } catch (error) {
-      console.error('❌ [INIT-A-ERROR] Failed to initialize audio:', error);
       throw error;
     }
   }, [interviewConfig, showNotification]);

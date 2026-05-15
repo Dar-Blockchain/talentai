@@ -44,13 +44,12 @@ import {
   selectAdminSkillAssessmentsLoading,
   selectAdminSkillAssessmentsTotal,
 } from '@/store/slices/adminSlice';
-
-const PRIMARY = '#8310FF';
+import { PURPLE } from '@/constants/colors';
 
 const StyledTabs = styled(Tabs)({
   minHeight: 40,
   '& .MuiTabs-indicator': {
-    backgroundColor: PRIMARY,
+    backgroundColor: PURPLE,
     height: 3,
     borderRadius: '3px 3px 0 0',
   },
@@ -64,7 +63,7 @@ const StyledTab = styled(Tab)({
   color: '#6c6c80',
   padding: '8px 16px',
   '&.Mui-selected': {
-    color: PRIMARY,
+    color: PURPLE,
   },
 });
 
@@ -378,7 +377,7 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
               ))}
             </Select>
           </FormControl>
-          {loading && <CircularProgress size={20} sx={{ color: PRIMARY }} />}
+          {loading && <CircularProgress size={20} sx={{ color: PURPLE }} />}
           <Box sx={{ flex: 1 }} />
           <Typography variant="body2" sx={{ color: '#6c6c80' }}>
             {filteredResults.length} of {totalCount}
@@ -445,7 +444,7 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
                         size="small"
                         sx={{
                           backgroundColor: '#ece6fa',
-                          color: PRIMARY,
+                          color: PURPLE,
                           fontWeight: 600,
                         }}
                       />
@@ -479,7 +478,7 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
                         <IconButton
                           size="small"
                           onClick={() => handleViewDetails(assessment)}
-                          sx={{ color: PRIMARY }}
+                          sx={{ color: PURPLE }}
                         >
                           <VisibilityIcon fontSize="small" />
                         </IconButton>
@@ -517,7 +516,7 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
           return (
             <>
               {/* Header */}
-              <Box sx={{ background: `linear-gradient(135deg, ${PRIMARY} 0%, #6a0dad 100%)`, px: 3, pt: 3, pb: 4, position: 'relative' }}>
+              <Box sx={{ background: `linear-gradient(135deg, ${PURPLE} 0%, #6a0dad 100%)`, px: 3, pt: 3, pb: 4, position: 'relative' }}>
                 <IconButton onClick={() => setDetailsDialogOpen(false)} sx={{ position: 'absolute', top: 12, right: 12, color: 'rgba(255,255,255,0.7)', '&:hover': { color: 'white' } }}>
                   <CloseIcon fontSize="small" />
                 </IconButton>
@@ -690,7 +689,7 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
                     <Box sx={{ mt: 0.5, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                       {selectedAssessment.interviewData.finalReport.recommendations.map((rec, idx) => (
                         <Typography key={idx} variant="body2" sx={{ color: '#444', display: 'flex', alignItems: 'flex-start', gap: 1, lineHeight: 1.5 }}>
-                          <span style={{ color: PRIMARY, fontWeight: 700 }}>•</span> {rec}
+                          <Box component="span" sx={{ color: PURPLE, fontWeight: 700 }}>•</Box> {rec}
                         </Typography>
                       ))}
                     </Box>

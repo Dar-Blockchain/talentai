@@ -52,13 +52,12 @@ import { User, UserFilters } from '../../../types/admin';
 import { usePagination } from '../../../hooks/usePagination';
 // Utils
 import { getRoleColor } from '../../../utils/colorMappings';
-
-const PRIMARY = '#8310FF';
+import { PURPLE } from '@/constants/colors';
 
 const StyledTabs = styled(Tabs)({
   minHeight: 40,
   '& .MuiTabs-indicator': {
-    backgroundColor: PRIMARY,
+    backgroundColor: PURPLE,
     height: 3,
     borderRadius: '3px 3px 0 0',
   },
@@ -72,7 +71,7 @@ const StyledTab = styled(Tab)({
   color: '#6c6c80',
   padding: '8px 16px',
   '&.Mui-selected': {
-    color: PRIMARY,
+    color: PURPLE,
   },
 });
 
@@ -212,7 +211,7 @@ const UserManagement: React.FC<UserManagementProps> = ({
             variant="contained"
             onClick={handleApplyFilters}
             disableElevation
-            sx={{ backgroundColor: PRIMARY, textTransform: 'none', '&:hover': { backgroundColor: '#6a0dad' } }}
+            sx={{ backgroundColor: PURPLE, textTransform: 'none', '&:hover': { backgroundColor: '#6a0dad' } }}
           >
             Search
           </Button>
@@ -274,7 +273,7 @@ const UserManagement: React.FC<UserManagementProps> = ({
                 <TableRow key={user._id} hover>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Avatar sx={{ mr: 2, bgcolor: PRIMARY, width: 36, height: 36, fontSize: '0.9rem' }}>
+                      <Avatar sx={{ mr: 2, bgcolor: PURPLE, width: 36, height: 36, fontSize: '0.9rem' }}>
                         {user.username.charAt(0).toUpperCase()}
                       </Avatar>
                       <Box>
@@ -339,7 +338,7 @@ const UserManagement: React.FC<UserManagementProps> = ({
                   <TableCell>
                     <Stack direction="row" spacing={0.5}>
                       <Tooltip title="View">
-                        <IconButton size="small" onClick={() => onUserSelect?.(user)} sx={{ color: PRIMARY }}>
+                        <IconButton size="small" onClick={() => onUserSelect?.(user)} sx={{ color: PURPLE }}>
                           <VisibilityIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
@@ -350,7 +349,7 @@ const UserManagement: React.FC<UserManagementProps> = ({
                       </Tooltip>
                       {user.role === 'Company' && onManagePermissions && (
                         <Tooltip title="Permissions">
-                          <IconButton size="small" onClick={() => onManagePermissions(user)} sx={{ color: PRIMARY }}>
+                          <IconButton size="small" onClick={() => onManagePermissions(user)} sx={{ color: PURPLE }}>
                             <SecurityIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>

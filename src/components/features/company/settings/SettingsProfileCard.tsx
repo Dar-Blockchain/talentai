@@ -5,8 +5,7 @@ import GroupsOutlined from "@mui/icons-material/GroupsOutlined";
 import CloudUploadOutlined from "@mui/icons-material/CloudUploadOutlined";
 import { UserProfile } from "@/types/profile";
 import SectionCard from "@/components/ui/SectionCard";
-
-const TEAL        = "#0D9488";
+import { TEAL } from '@/constants/colors';
 const TEAL_BG     = "#F0FDFA";
 const TEAL_BORDER = "#99F6E4";
 

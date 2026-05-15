@@ -25,11 +25,9 @@ import {
   selectNonArchivedCount,
 } from '@/store/slices/notificationSlice';
 import { useTranslation } from 'react-i18next';
-
-const T    = '#0D9488';
+import { TEAL, NAVY } from '@/constants/colors';
 const TBG  = '#F0FDFA';
 const TBRD = '#99F6E4';
-const NAVY = '#0D1B2A';
 const PAGE_SIZE = 10;
 
 const getIcon = (type: string) => {
@@ -46,7 +44,7 @@ const getColors = (type: string) => {
     case 'success': return { bg: '#d1fae5', color: '#065f46', border: '#6ee7b7' };
     case 'warning': return { bg: '#fef3c7', color: '#92400e', border: '#fcd34d' };
     case 'error':   return { bg: '#fee2e2', color: '#991b1b', border: '#fca5a5' };
-    default:        return { bg: TBG,       color: T,         border: TBRD      };
+    default:        return { bg: TBG,       color: TEAL,         border: TBRD      };
   }
 };
 
@@ -104,7 +102,7 @@ const NotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
   const importantCount = notifications.filter(n => n.type === 'warning' || n.type === 'error').length;
 
   const statItems = [
-    { label: s('stat_total'),     value: notifications.length, color: T },
+    { label: s('stat_total'),     value: notifications.length, color: TEAL },
     { label: s('stat_unread'),    value: unreadCount,          color: '#7C3AED' },
     { label: s('stat_this_week'), value: thisWeekCount,        color: '#0891B2' },
     { label: s('stat_important'), value: importantCount,       color: '#D97706' },
@@ -118,7 +116,7 @@ const NotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
           onClick={markAllAsRead}
           sx={{
             textTransform: 'none', fontWeight: 600, fontSize: isPage ? 13 : '0.75rem',
-            color: T, ...(isPage ? { borderRadius: 2 } : { bgcolor: TBG, border: `1px solid ${TBRD}`, borderRadius: '8px', px: 1.5, '&:hover': { bgcolor: '#CCFBF1' } }),
+            color: TEAL, ...(isPage ? { borderRadius: 2 } : { bgcolor: TBG, border: `1px solid ${TBRD}`, borderRadius: '8px', px: 1.5, '&:hover': { bgcolor: '#CCFBF1' } }),
           }}>
           {s('mark_all_read')}
         </Button>
@@ -186,7 +184,7 @@ const NotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
                   <Chip label={isPage ? 'New' : s('badge_new')} size="small" sx={{
                     height: 18, fontSize: '0.65rem', fontWeight: 700,
                     bgcolor: isPage ? '#EFF6FF' : TBG,
-                    color: isPage ? '#1D4ED8' : T,
+                    color: isPage ? '#1D4ED8' : TEAL,
                     border: `1px solid ${isPage ? '#BFDBFE' : TBRD}`,
                   }} />
                 )}
@@ -258,8 +256,8 @@ const NotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
               sx={{
                 minHeight: 40,
                 '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '0.82rem', minHeight: 40, py: 0.5 },
-                '& .Mui-selected': { color: T },
-                '& .MuiTabs-indicator': { backgroundColor: T, height: 2 },
+                '& .Mui-selected': { color: TEAL },
+                '& .MuiTabs-indicator': { backgroundColor: TEAL, height: 2 },
               }}>
               <Tab label={t('candidate_settings.notifications.tab_active', { count: nonArchivedCount || notifications.length })} />
               <Tab label={t('candidate_settings.notifications.tab_archived', { count: archivedCount || archivedNotifications.length })} />
@@ -271,7 +269,7 @@ const NotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: isPage ? 0 : 1.5 }}>
           {isLoading ? (
             <Box sx={{ py: 6, textAlign: 'center' }}>
-              <CircularProgress size={24} sx={{ color: T }} />
+              <CircularProgress size={24} sx={{ color: TEAL }} />
             </Box>
           ) : pagedNotifications.length === 0 ? emptyState
             : notificationList(pagedNotifications)

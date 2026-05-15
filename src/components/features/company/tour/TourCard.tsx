@@ -6,8 +6,7 @@ import ArrowBackOutlined from "@mui/icons-material/ArrowBackOutlined";
 import CheckOutlined from "@mui/icons-material/CheckOutlined";
 import { STEPS, TOTAL, type Step } from "./tourSteps";
 import { W } from "./tourUtils";
-
-const TEAL = "#0D9488";
+import { TEAL } from '@/constants/colors';
 
 interface TourCardProps {
   step: number;

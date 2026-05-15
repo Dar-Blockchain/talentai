@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { RootState, AppDispatch } from "@/store/store";
 import { fetchConversations, selectConversations, selectConversationsLoading } from "@/store/slices/chatSlice";
 
-const T       = "#0D9488";
+import { TEAL } from '@/constants/colors';
 const TBG     = "#F0FDFA";
 const TBORDER = "#99F6E4";
 
@@ -38,11 +38,11 @@ const SharedChatIndexPage: React.FC<Props> = ({ basePath, emptyText, layout: Lay
     <Layout>
       <Box sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 300, gap: 2 }}>
         {loading ? (
-          <CircularProgress sx={{ color: T }} />
+          <CircularProgress sx={{ color: TEAL }} />
         ) : conversations.length === 0 ? (
           <>
             <Box sx={{ width: 64, height: 64, borderRadius: "50%", bgcolor: TBG, border: `1px solid ${TBORDER}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <ChatOutlined sx={{ fontSize: 30, color: T }} />
+              <ChatOutlined sx={{ fontSize: 30, color: TEAL }} />
             </Box>
             <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>{t("index.no_conversations")}</Typography>
             <Typography sx={{ fontSize: "13px", color: "#6B7280", textAlign: "center", maxWidth: 300 }}>
@@ -50,7 +50,7 @@ const SharedChatIndexPage: React.FC<Props> = ({ basePath, emptyText, layout: Lay
             </Typography>
           </>
         ) : (
-          <CircularProgress sx={{ color: T }} />
+          <CircularProgress sx={{ color: TEAL }} />
         )}
       </Box>
     </Layout>

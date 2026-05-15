@@ -118,9 +118,9 @@ const MuiToast: React.FC<MuiToastProps> = ({
         </IconButton>
       }
     >
-      <span style={{ whiteSpace: "pre-line" }}>
+      <Box component="span" sx={{ whiteSpace: "pre-line" }}>
         {message.length > 100 ? message.slice(0, 100).trimEnd() + "…" : message}
-      </span>
+      </Box>
     </Alert>
   </Snackbar>
 );

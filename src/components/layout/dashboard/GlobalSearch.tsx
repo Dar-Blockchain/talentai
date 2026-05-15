@@ -18,8 +18,7 @@ import TuneOutlined from "@mui/icons-material/TuneOutlined";
 import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
 import { useRouter } from "next/router";
 import axiosInstance from "@/utils/axiosInstance";
-
-const TEAL = "#0D9488";
+import { TEAL } from '@/constants/colors';
 
 const STATUS_COLOR: Record<string, string> = {
   active: "#059669", open: "#059669", draft: "#D97706",
@@ -174,7 +173,7 @@ const GlobalSearch: React.FC = () => {
         open={open}
         anchorEl={anchorRef.current}
         placement="bottom-start"
-        style={{ zIndex: 1400, width: anchorRef.current?.offsetWidth ? Math.max(anchorRef.current.offsetWidth, 420) : 420 }}
+        sx={{ zIndex: 1400, width: anchorRef.current?.offsetWidth ? Math.max(anchorRef.current.offsetWidth, 420) : 420 }}
         modifiers={[{ name: "offset", options: { offset: [0, 6] } }]}
       >
         <ClickAwayListener onClickAway={() => { setOpen(false); setQuery(""); setFocused(-1); }}>

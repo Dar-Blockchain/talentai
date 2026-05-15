@@ -39,8 +39,7 @@ import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import MicOutlined from "@mui/icons-material/MicOutlined";
 import DownloadOutlined from "@mui/icons-material/DownloadOutlined";
 import { QRCodeCanvas } from "qrcode.react";
-
-const TEAL = "#0D9488";
+import { TEAL } from '@/constants/colors';
 
 const PostDetailsPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();

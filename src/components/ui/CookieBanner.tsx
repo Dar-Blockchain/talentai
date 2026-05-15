@@ -17,8 +17,8 @@ import AdsClickOutlined from "@mui/icons-material/AdsClick";
 import KeyboardArrowDownOutlined from "@mui/icons-material/KeyboardArrowDownOutlined";
 import KeyboardArrowUpOutlined from "@mui/icons-material/KeyboardArrowUpOutlined";
 
+import { TEAL } from '@/constants/colors';
 const COOKIE_KEY = "talentai_cookie_consent";
-const TEAL = "#0D9488";
 
 interface CookiePrefs {
   analytics: boolean;
@@ -234,9 +234,9 @@ const CookieBanner: React.FC = () => {
                 We value your privacy
               </Typography>
               <Typography sx={{ fontFamily: "Poppins", fontSize: "0.76rem", color: "#9CA3AF", lineHeight: 1.6, maxWidth: 700 }}>
-                TalentAI uses <strong style={{ color: "#D1D5DB" }}>essential</strong>,{" "}
-                <strong style={{ color: "#D1D5DB" }}>analytics</strong>, and{" "}
-                <strong style={{ color: "#D1D5DB" }}>marketing</strong> cookies to ensure the platform works,
+                TalentAI uses <Box component="strong" sx={{ color: "#D1D5DB" }}>essential</Box>,{" "}
+                <Box component="strong" sx={{ color: "#D1D5DB" }}>analytics</Box>, and{" "}
+                <Box component="strong" sx={{ color: "#D1D5DB" }}>marketing</Box> cookies to ensure the platform works,
                 improve your experience, and personalise job recommendations. Accept all or manage your preferences.
               </Typography>
             </Box>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { getImageUrl } from "@/utils/apiConfig";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
@@ -23,11 +24,10 @@ import RecordVoiceOverOutlined from "@mui/icons-material/RecordVoiceOverOutlined
 import CodeOutlined from "@mui/icons-material/CodeOutlined";
 import LockOutlined from "@mui/icons-material/LockOutlined";
 
-const T    = "#0D9488";
+import { TEAL, NAVY } from '@/constants/colors';
 const TL   = "#14B8A6";
 const TBG  = "#F0FDFA";
 const TBRD = "#99F6E4";
-const NAVY = "#0D1B2A";
 
 type ActiveView = "applications" | "skills" | "interviews" | null;
 
@@ -93,18 +93,18 @@ const ProfileCard: React.FC<{
   labelApplications: string; labelInterviews: string;
 }> = ({ displayName, email, initial, avatarUrl, targetRole, experienceLevel, totalApplications, totalInterviews, labelApplications, labelInterviews }) => (
   <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-    <Box sx={{ height: 56, background: `linear-gradient(135deg, ${NAVY} 0%, ${T} 100%)`, position: "relative" }}>
+    <Box sx={{ height: 56, background: `linear-gradient(135deg, ${NAVY} 0%, ${TEAL} 100%)`, position: "relative" }}>
       <Box sx={{ position: "absolute", top: "50%", right: 16, transform: "translateY(-50%)", width: 32, height: 32, borderRadius: "50%", bgcolor: `${TL}30`, border: `1px solid ${TL}40` }} />
     </Box>
     <Box sx={{ px: 2, pb: 2 }}>
       <Box sx={{ mt: -3, mb: 1 }}>
-        <Avatar src={avatarUrl} sx={{ width: 52, height: 52, bgcolor: T, fontSize: "1.2rem", fontWeight: 700, border: "2.5px solid #fff", boxShadow: "0 2px 8px rgba(0,0,0,0.12)" }}>
+        <Avatar src={avatarUrl} sx={{ width: 52, height: 52, bgcolor: TEAL, fontSize: "1.2rem", fontWeight: 700, border: "2.5px solid #fff", boxShadow: "0 2px 8px rgba(0,0,0,0.12)" }}>
           {initial}
         </Avatar>
       </Box>
       <Typography sx={{ fontWeight: 800, fontSize: "0.95rem", color: NAVY, lineHeight: 1.2 }}>{displayName}</Typography>
       {email && <Typography sx={{ fontSize: "0.72rem", color: "#9CA3AF", mt: 0.25, mb: 1 }}>{email}</Typography>}
-      {targetRole && <Chip label={targetRole} size="small" sx={{ fontSize: "0.65rem", height: 20, bgcolor: TBG, border: `1px solid ${TBRD}`, color: T, fontWeight: 600, mb: 1 }} />}
+      {targetRole && <Chip label={targetRole} size="small" sx={{ fontSize: "0.65rem", height: 20, bgcolor: TBG, border: `1px solid ${TBRD}`, color: TEAL, fontWeight: 600, mb: 1 }} />}
       {experienceLevel && (
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
           <EmojiEventsOutlined sx={{ fontSize: 12, color: "#D97706" }} />
@@ -125,11 +125,11 @@ const ProfileCard: React.FC<{
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 1.5, py: 1, borderRadius: "10px", bgcolor: TBG, border: `1px solid ${TBRD}` }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Box sx={{ width: 28, height: 28, borderRadius: "8px", bgcolor: "#CCFBF1", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <SchoolOutlined sx={{ fontSize: 14, color: T }} />
+              <SchoolOutlined sx={{ fontSize: 14, color: TEAL }} />
             </Box>
             <Typography sx={{ fontSize: "0.78rem", fontWeight: 600, color: "#374151" }}>{labelInterviews}</Typography>
           </Box>
-          <Typography sx={{ fontSize: "1.1rem", fontWeight: 900, color: T }}>{totalInterviews}</Typography>
+          <Typography sx={{ fontSize: "1.1rem", fontWeight: 900, color: TEAL }}>{totalInterviews}</Typography>
         </Box>
       </Box>
     </Box>
@@ -206,7 +206,7 @@ const DashboardCandidate: React.FC = () => {
     : user?.username || "Candidate";
   const initial   = displayName[0]?.toUpperCase() || "C";
   const avatarUrl = profile?.user_image
-    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${profile.user_image}`
+    ? getImageUrl('Users', profile.user_image)
     : undefined;
 
   const checklist = [

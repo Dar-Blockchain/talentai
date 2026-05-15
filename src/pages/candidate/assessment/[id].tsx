@@ -1,4 +1,5 @@
 import { useRouter } from 'next/router';
+import { getImageUrl } from '@/utils/apiConfig';
 import { useEffect, useMemo } from 'react';
 import {
   Box, Typography, Chip, Skeleton, Button, Avatar, LinearProgress, Divider,
@@ -320,7 +321,7 @@ const AssessmentDetailsPage = () => {
     : user?.username || s('candidate_fallback');
   const initial   = displayName[0]?.toUpperCase() || 'C';
   const avatarUrl = profile?.user_image
-    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${profile.user_image}`
+    ? getImageUrl('Users', profile.user_image)
     : undefined;
 
   const checklist = [

@@ -175,10 +175,11 @@ const HowItWorksSection = () => {
                 boxShadow: '0 6px 20px rgba(0,0,0,0.4)',
               }}
             >
-              <img
+              <Box
+                component="img"
                 src={step.img}
                 alt={`Step ${index + 1}`}
-                style={{
+                sx={{
                   width: '100%',
                   height: '100%',
                   objectFit: 'contain',

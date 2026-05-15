@@ -63,7 +63,7 @@ const SecurityModals: React.FC<SecurityModalsProps> = ({
           </Typography>
 
           <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#4B5563', textAlign: 'center', lineHeight: 1.7, mb: 2.5 }}>
-            <strong style={{ color: '#D97706' }}>{violationType || 'A restricted action'}</strong> {t('security.warning_desc')}
+            <Box component="strong" sx={{ color: '#D97706' }}>{violationType || 'A restricted action'}</Box> {t('security.warning_desc')}
           </Typography>
 
           {/* Warning counter bar */}

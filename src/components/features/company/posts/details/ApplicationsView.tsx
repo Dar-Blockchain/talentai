@@ -24,8 +24,7 @@ import ContactCandidateModal, { ContactTarget } from "./ContactCandidateModal";
 import AssessmentDetailsModal, { AssessmentTarget } from "./AssessmentDetailsModal";
 import InviteToInterviewModal, { InviteTarget } from "@/components/features/company/applications/InviteToInterviewModal";
 import ApplicationCard from "@/components/features/company/applications/ApplicationCard";
-
-const TEAL = "#0D9488";
+import { TEAL } from '@/constants/colors';
 const PAGE_SIZE = 10;
 
 const STATUS_I18N_KEYS: Record<string, string> = {
@@ -148,7 +147,7 @@ const ApplicationsView: React.FC<Props> = ({ jobId }) => {
               displayEmpty
               sx={selectSx}
             >
-              <MenuItem value=""><em style={{ color: "#9CA3AF", fontStyle: "normal" }}>{t("pages.applications.status.all")}</em></MenuItem>
+              <MenuItem value=""><Box component="em" sx={{ color: "#9CA3AF", fontStyle: "normal" }}>{t("pages.applications.status.all")}</Box></MenuItem>
               {Object.entries(STATUS_I18N_KEYS).map(([val, key]) => (
                 <MenuItem key={val} value={val} sx={{ fontSize: "13px" }}>{t(key)}</MenuItem>
               ))}

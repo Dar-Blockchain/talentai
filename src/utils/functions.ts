@@ -8,9 +8,6 @@ export const formatNumber = (num: any) => {
   return num.toString();
 };
 
-export const calculateTaiTokens = (price: number) => {
-  return price ? Math.floor(price * 1000) : 0;
-};
 
 export const stringToColor = (string: string) => {
   let hash = 0;
@@ -46,11 +43,6 @@ export const formatDate = (dateString: string) => {
   });
 };
 
-export const isEmpty = (value: any) =>
-  value === undefined || value === null || value === "";
-
-export const isInvalidNumber = (value: any) =>
-  isEmpty(value) || isNaN(Number(value));
 
 export const isDeadlinePassed = (deadline?: string): boolean => {
   if (!deadline) return false;

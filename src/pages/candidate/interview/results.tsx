@@ -55,7 +55,6 @@ export default function InterviewResults() {
     try {
       const storedAnalysis = localStorage.getItem('last_interview_analysis');
       if (!storedAnalysis) {
-        console.log('⚠️ [Save] No interview data to save');
         if (showStatus) showToast({ message: 'No interview data to save', severity: 'error' });
         return;
       }
@@ -130,11 +129,8 @@ export default function InterviewResults() {
         result = actionResult.payload;
       }
 
-      console.log('✅ [Save] Interview saved successfully:', result.data);
-
       const candidateData = result.data?.candidateId || result.data?.candidate;
       const profileData = candidateData?.profile || candidateData;
-      console.log('🔄 [Save] Updating candidate profile with data:', profileData);
       if (profileData?.quota !== undefined) dispatch(updateProfileQuota(profileData.quota));
       if (profileData?.softSkills) dispatch(updateProfileSoftSkill(profileData.softSkills));
       if (profileData?.skills) dispatch(updateProfileSkills(profileData.skills));
@@ -229,7 +225,6 @@ export default function InterviewResults() {
           }
         }
       } catch (apiError) {
-        console.log('⚠️ [Results] API call failed:', apiError);
       }
 
       setError(t('errors.no_analysis'));

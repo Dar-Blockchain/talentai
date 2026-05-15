@@ -179,7 +179,7 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) =
                   SelectProps={{
                     MenuProps: selectMenuProps, displayEmpty: true,
                     renderValue: (value: any) =>
-                      value ? value : <span style={{ color: "#C4CAD4", fontSize: "0.82rem", fontFamily: "Poppins" }}>{t("company_form.select_industry")}</span>,
+                      value ? value : <Box component="span" sx={{ color: "#C4CAD4", fontSize: "0.82rem", fontFamily: "Poppins" }}>{t("company_form.select_industry")}</Box>,
                   }}
                   sx={compactFieldSx}
                 >
@@ -200,7 +200,7 @@ const CompanyRegisterForm: React.FC<Props> = ({ onStepChange, onEmailChange }) =
                   SelectProps={{
                     MenuProps: selectMenuProps, displayEmpty: true,
                     renderValue: (value: any) =>
-                      value ? value : <span style={{ color: "#C4CAD4", fontSize: "0.82rem", fontFamily: "Poppins" }}>{t("company_form.select_size")}</span>,
+                      value ? value : <Box component="span" sx={{ color: "#C4CAD4", fontSize: "0.82rem", fontFamily: "Poppins" }}>{t("company_form.select_size")}</Box>,
                   }}
                   sx={compactFieldSx}
                 >

@@ -19,8 +19,7 @@ import {
   Security as SecurityIcon,
 } from '@mui/icons-material';
 import { Permission, DEFAULT_PERMISSIONS } from '@/types/permissions';
-
-const PRIMARY = '#8310FF';
+import { PURPLE } from '@/constants/colors';
 
 // Type for the permissions object (without metadata fields)
 export type CompanyPermissions = Omit<Permission, '_id' | 'userId' | 'profileId' | 'lastModifiedBy' | 'notes' | 'createdAt' | 'updatedAt'>;
@@ -174,7 +173,7 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
       {/* Header */}
       <Box
         sx={{
-          background: `linear-gradient(135deg, ${PRIMARY} 0%, #6a0dad 100%)`,
+          background: `linear-gradient(135deg, ${PURPLE} 0%, #6a0dad 100%)`,
           px: 3,
           pt: 3,
           pb: 3,
@@ -218,7 +217,7 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
               onClick={handleSelectAll}
               sx={{
                 backgroundColor: 'white',
-                color: PRIMARY,
+                color: PURPLE,
                 fontWeight: 600,
                 border: '1px solid #ece6fa',
                 cursor: 'pointer',
@@ -230,7 +229,7 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
 
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-            <CircularProgress sx={{ color: PRIMARY }} />
+            <CircularProgress sx={{ color: PURPLE }} />
           </Box>
         ) : (
           <Box sx={{ px: 2, py: 1.5 }}>
@@ -261,12 +260,12 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
                     mb: 1,
                     borderRadius: '12px',
                     border: '1.5px solid',
-                    borderColor: isEnabled ? PRIMARY : '#ece6fa',
+                    borderColor: isEnabled ? PURPLE : '#ece6fa',
                     backgroundColor: isEnabled ? '#f5f3ff' : 'white',
                     cursor: 'pointer',
                     transition: 'all 0.15s ease',
                     '&:hover': {
-                      borderColor: PRIMARY,
+                      borderColor: PURPLE,
                       backgroundColor: '#f5f3ff',
                     },
                   }}
@@ -287,7 +286,7 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
                         size="small"
                         sx={{
                           color: '#ece6fa',
-                          '&.Mui-checked': { color: PRIMARY },
+                          '&.Mui-checked': { color: PURPLE },
                           p: 0,
                         }}
                       />
@@ -326,7 +325,7 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
           startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SecurityIcon />}
           sx={{
             textTransform: 'none',
-            backgroundColor: PRIMARY,
+            backgroundColor: PURPLE,
             borderRadius: '10px',
             fontWeight: 600,
             '&:hover': { backgroundColor: '#6a0dad' },

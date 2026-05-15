@@ -98,17 +98,25 @@ const LanguageTab: React.FC<Props> = ({
           const active = selected === lang.code;
           const loading = saving === lang.code;
           return (
-            <Box key={lang.code} onClick={() => handleSelect(lang.code)} sx={cardSx(active)}>
+            <Box
+              key={lang.code}
+              onClick={() => handleSelect(lang.code)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleSelect(lang.code); }}
+              sx={cardSx(active)}
+            >
               <Box sx={{ position: "absolute", top: 10, right: 10 }}>
                 {loading
                   ? <CircularProgress size={16} sx={{ color: TEAL }} />
                   : active && <CheckCircleOutlined sx={{ fontSize: 18, color: TEAL }} />}
               </Box>
-              <img
+              <Box
+                component="img"
                 src={`https://flagcdn.com/w80/${lang.flag}.png`}
                 srcSet={`https://flagcdn.com/w160/${lang.flag}.png 2x`}
                 width={48} height={32} alt={lang.label}
-                style={{ borderRadius: 4, display: "block" }}
+                sx={{ borderRadius: "4px", display: "block" }}
               />
               <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", color: active ? TEAL : "#111827" }}>
                 {lang.label}
@@ -148,7 +156,13 @@ const LanguageTab: React.FC<Props> = ({
 
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
             {/* Always ask option */}
-            <Box onClick={() => handleSetGenerateLang(null)} sx={cardSx(generateLang === null)}>
+            <Box
+              onClick={() => handleSetGenerateLang(null)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleSetGenerateLang(null); }}
+              sx={cardSx(generateLang === null)}
+            >
               {generateLang === null && (
                 <CheckCircleOutlined sx={{ position: "absolute", top: 10, right: 10, fontSize: 18, color: TEAL }} />
               )}
@@ -173,15 +187,23 @@ const LanguageTab: React.FC<Props> = ({
             {SUPPORTED_LANGS.map((lang) => {
               const active = generateLang === lang.code;
               return (
-                <Box key={lang.code} onClick={() => handleSetGenerateLang(lang.code)} sx={cardSx(active)}>
+                <Box
+                  key={lang.code}
+                  onClick={() => handleSetGenerateLang(lang.code)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleSetGenerateLang(lang.code); }}
+                  sx={cardSx(active)}
+                >
                   {active && (
                     <CheckCircleOutlined sx={{ position: "absolute", top: 10, right: 10, fontSize: 18, color: TEAL }} />
                   )}
-                  <img
+                  <Box
+                    component="img"
                     src={`https://flagcdn.com/w80/${lang.flag}.png`}
                     srcSet={`https://flagcdn.com/w160/${lang.flag}.png 2x`}
                     width={48} height={32} alt={lang.label}
-                    style={{ borderRadius: 4, display: "block" }}
+                    sx={{ borderRadius: "4px", display: "block" }}
                   />
                   <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", color: active ? TEAL : "#111827" }}>
                     {lang.label}

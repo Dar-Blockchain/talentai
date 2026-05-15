@@ -44,10 +44,10 @@ import { CampaignParticipant, NonParticipant, ParticipantStatus } from "@/types/
 import Pagination from "@/components/ui/Pagination";
 import { ROLES } from "@/constants/employee";
 import { useTranslation } from "react-i18next";
+import { PURPLE } from '@/constants/colors';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const PURPLE    = "#8310FF";
 const PAGE_SIZE = 10;
 const PICKER_PAGE_SIZE = 8;
 

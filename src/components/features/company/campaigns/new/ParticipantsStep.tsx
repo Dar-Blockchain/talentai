@@ -15,8 +15,7 @@ import EmployeesFilterBar from "@/components/features/company/employees/list/Emp
 import { RoleFilter, SortOption } from "@/components/features/company/employees/list/EmployeesList";
 import { ROLE_LABELS, ROLE_STYLES } from "@/components/features/company/employees/list/EmployeeCard";
 import { ROLES } from "@/constants/employee";
-
-const PURPLE = "#8310FF";
+import { PURPLE } from '@/constants/colors';
 const PAGE_SIZE = 10;
 
 const SORT_MAP: Record<SortOption, Pick<FetchMembersFilters, "sortBy" | "order">> = {

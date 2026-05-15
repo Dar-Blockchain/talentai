@@ -1,4 +1,4 @@
-export const T      = "#0D9488";
+export { TEAL as T } from '@/constants/colors';
 export const T_DARK = "#0A7B6E";
 export const T_BG   = "#F0FDFA";
 export const T_BRD  = "#CCFBF1";

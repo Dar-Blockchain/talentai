@@ -31,8 +31,7 @@ import { ROLES } from "@/constants/employee";
 import { getRoleLabel } from "@/utils/employeeRoleI18n";
 import { EmployeePermission, DEFAULT_EMPLOYEE_PERMISSIONS } from "@/types/employeePermissions";
 import PermissionsPanel from "../permissions/PermissionsPanel";
-
-const PURPLE = "#8310FF";
+import { PURPLE } from '@/constants/colors';
 
 /* ── helpers ─────────────────────────────────────────── */
 const ROLE_STYLES: Record<string, { color: string; bg: string }> = {
@@ -483,7 +482,7 @@ const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ member, onBack, onEdit,
                   Member Permissions
                 </Typography>
                 <Typography sx={{ fontSize: "0.775rem", color: "#94A3B8", mt: 0.25 }}>
-                  Control what <strong style={{ color: "#475569" }}>{name}</strong> can access and modify in the workspace.
+                  Control what <Box component="strong" sx={{ color: "#475569" }}>{name}</Box> can access and modify in the workspace.
                 </Typography>
               </Box>
 

@@ -18,39 +18,6 @@ export interface Job {
   logo?: string;
 }
 
-export const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    month: "2-digit",
-    day: "2-digit",
-    year: "numeric",
-  });
-};
-
-export const getJobTypeColor = (type: string): string => {
-  switch (type) {
-    case "On-Site":
-      return "#e3f2fd";
-    case "Remote":
-      return "#e8f5e8";
-    case "Hybrid":
-      return "#fff3e0";
-    default:
-      return "#f5f5f5";
-  }
-};
-
-export const getJobTypeTextColor = (type: string): string => {
-  switch (type) {
-    case "On-Site":
-      return "#1976d2";
-    case "Remote":
-      return "#2e7d32";
-    case "Hybrid":
-      return "#f57c00";
-    default:
-      return "#666";
-  }
-};
 
 export const transformJobData = (job: any): Job => {
   return {

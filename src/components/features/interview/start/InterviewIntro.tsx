@@ -13,7 +13,7 @@ import Header from '@/components/layout/Header';
 import { GlobalStyles } from './styles';
 import { useTranslation } from 'react-i18next';
 
-const PURPLE = '#8310FF';
+import { PURPLE } from '@/constants/colors';
 const PURPLE_BG = 'rgba(244,235,255,1)';
 const PURPLE_BORDER = 'rgba(189,133,255,0.35)';
 

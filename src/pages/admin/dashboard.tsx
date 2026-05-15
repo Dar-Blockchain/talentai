@@ -22,8 +22,7 @@ import SkillInterviewAssessments from '@/components/features/admin/SkillIntervie
 import CompanyConfig from '@/components/features/admin/CompanyConfig';
 import CompanyPermissionsModal, { CompanyPermissions } from '@/components/features/admin/CompanyPermissionsModal';
 import dynamic from 'next/dynamic';
-
-const PRIMARY = '#8310FF';
+import { PURPLE } from '@/constants/colors';
 
 const VALID_TABS = ['dashboard', 'users', 'post-interview', 'skill-interview', 'company-config'] as const;
 type TabName = typeof VALID_TABS[number];
@@ -124,7 +123,7 @@ const DashboardAdmin = () => {
               <IconButton onClick={() => setDrawerOpen(true)} sx={{ mr: 2 }}>
                 <MenuIcon />
               </IconButton>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: PRIMARY }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: PURPLE }}>
                 TalentAI Admin
               </Typography>
             </Box>
@@ -159,7 +158,6 @@ const DashboardAdmin = () => {
                     setUserDialogOpen(true);
                   }}
                   onUserDelete={(userId) => {
-                    console.log('Delete user:', userId);
                   }}
                   onManagePermissions={(user) => {
                     setSelectedCompany(user);
@@ -180,7 +178,6 @@ const DashboardAdmin = () => {
           user={selectedUser}
           onClose={() => setUserDialogOpen(false)}
           onEdit={(user) => {
-            console.log('Edit user:', user);
           }}
         />
         <AssessmentDetailsDialog
@@ -188,7 +185,6 @@ const DashboardAdmin = () => {
           assessment={selectedAssessment}
           onClose={() => setAssessmentDialogOpen(false)}
           onEdit={(assessment) => {
-            console.log('Edit assessment:', assessment);
           }}
         />
         <CompanyPermissionsModal

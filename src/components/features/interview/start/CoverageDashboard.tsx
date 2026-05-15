@@ -7,8 +7,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { InterviewStatus, Coverage, RealTimeReport } from '@/types/interview';
 import { useTranslation } from 'react-i18next';
-
-const PURPLE = '#8310FF';
+import { PURPLE } from '@/constants/colors';
 
 const scoreColor = (pct: number) =>
   pct >= 80 ? '#22c55e' : pct >= 50 ? '#f59e0b' : '#ef4444';

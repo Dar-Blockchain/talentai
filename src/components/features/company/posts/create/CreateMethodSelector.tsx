@@ -11,8 +11,7 @@ import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import { setCreationType } from "@/store/slices/postGenerationSlice";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
-
-const TEAL = "#0D9488";
+import { TEAL } from '@/constants/colors';
 
 interface MethodCardProps {
   title: string;

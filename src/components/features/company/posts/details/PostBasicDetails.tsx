@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
 import { selectCurrentJob } from "@/store/slices/postSlice";
@@ -14,7 +15,7 @@ import SectionCard from "@/components/ui/SectionCard";
 import { formatSalary, getLevelFromNumber, getPostSkills, getSoftSkillLevelLabel, Skill } from "@/utils/postHelpers";
 import { formatDate } from "@/utils/functions";
 
-const TEAL        = "#0D9488";
+import { TEAL } from '@/constants/colors';
 const TEAL_BG     = "#F0FDFA";
 const TEAL_BORDER = "#99F6E4";
 
@@ -102,7 +103,7 @@ const PostBasicDetails: React.FC<Props> = () => {
                     bgcolor: "#F0FDFA", border: "1px solid #99F6E4",
                   }}
                 >
-                  <img src={`https://flagcdn.com/w40/${meta.flag}.png`} srcSet={`https://flagcdn.com/w80/${meta.flag}.png 2x`} width={20} height={14} alt={meta.label} style={{ borderRadius: 2, display: "block" }} />
+                  <Image src={`https://flagcdn.com/w40/${meta.flag}.png`} width={20} height={14} alt={meta.label} unoptimized style={{ borderRadius: 2, display: "block" }} />
                   <Typography sx={{ fontSize: "11.5px", fontWeight: 600, color: "#0D9488" }}>{meta.label}</Typography>
                 </Box>
               );

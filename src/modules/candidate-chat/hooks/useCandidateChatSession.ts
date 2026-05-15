@@ -271,16 +271,6 @@ export const useCandidateChatSession = ({
     }
   }, [activeConversationId, deleteConversationMutation, deleteRedirectRoute, router, showToast, t]);
 
-  console.log(
-    "[DIAG][useCandidateChatSession]",
-    "currentUserId=", currentUserId,
-    "conversations.length=", conversations.length,
-    "effectiveConversations.length=", effectiveConversations.length,
-    "activeConversationId=", activeConversationId,
-    "queryStatus=", conversationsQuery.status,
-    "fetchStatus=", conversationsQuery.fetchStatus,
-  );
-
   const totalUnread = conversations.reduce(
     (acc, conversationItem) =>
       acc + normalizeConversationUnreadCount(

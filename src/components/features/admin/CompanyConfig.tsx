@@ -30,8 +30,7 @@ import {
   selectPlanLimitsUpdating,
   PlanLimit,
 } from '@/store/slices/planLimitsSlice';
-
-const PRIMARY = '#8310FF';
+import { PURPLE } from '@/constants/colors';
 
 interface EditableConfig {
   postsLimit: number;
@@ -92,14 +91,14 @@ const CompanyConfig: React.FC = () => {
       key: 'postsLimit' as keyof EditableConfig,
       label: 'Posts Limit',
       description: 'Maximum number of job posts a company can create',
-      icon: <PostIcon sx={{ color: PRIMARY }} />,
+      icon: <PostIcon sx={{ color: PURPLE }} />,
       placeholder: 'Enter post limit',
     },
     {
       key: 'monthlyInterviewLimit' as keyof EditableConfig,
       label: 'Monthly Interview Limit',
       description: 'Maximum number of interviews allowed per month',
-      icon: <InterviewIcon sx={{ color: PRIMARY }} />,
+      icon: <InterviewIcon sx={{ color: PURPLE }} />,
       placeholder: 'Enter monthly interview limit',
     },
   ];
@@ -107,7 +106,7 @@ const CompanyConfig: React.FC = () => {
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-        <CircularProgress sx={{ color: PRIMARY }} />
+        <CircularProgress sx={{ color: PURPLE }} />
       </Box>
     );
   }
@@ -206,7 +205,7 @@ const CompanyConfig: React.FC = () => {
                     height: '100%',
                     transition: 'all 0.2s ease',
                     '&:hover': {
-                      borderColor: PRIMARY,
+                      borderColor: PURPLE,
                       boxShadow: `0 4px 12px rgba(131, 16, 255, 0.1)`,
                     },
                   }}
@@ -269,10 +268,10 @@ const CompanyConfig: React.FC = () => {
                           borderColor: '#ece6fa',
                         },
                         '&:hover fieldset': {
-                          borderColor: PRIMARY,
+                          borderColor: PURPLE,
                         },
                         '&.Mui-focused fieldset': {
-                          borderColor: PRIMARY,
+                          borderColor: PURPLE,
                         },
                       },
                       '& input': {
@@ -294,7 +293,7 @@ const CompanyConfig: React.FC = () => {
               onClick={() => handleSave(plan)}
               disabled={updating}
               sx={{
-                bgcolor: PRIMARY,
+                bgcolor: PURPLE,
                 borderRadius: '10px',
                 px: 4,
                 py: 1.5,
@@ -331,7 +330,7 @@ const CompanyConfig: React.FC = () => {
           bgcolor: '#f5f3ff',
           border: '1px solid #ece6fa',
           '& .MuiAlert-icon': {
-            color: PRIMARY,
+            color: PURPLE,
           },
         }}
       >

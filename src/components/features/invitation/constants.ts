@@ -1,5 +1,5 @@
-export const PURPLE = '#8310FF';
-export const TEAL   = '#0D9488';
+import { PURPLE, TEAL } from '@/constants/colors';
+export { PURPLE, TEAL };
 
 export const ROLE_LABELS: Record<string, string> = {
   RH: 'HR',

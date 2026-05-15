@@ -2,8 +2,7 @@ import React from "react";
 import { Box, TextField, InputAdornment } from "@mui/material";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import TabBar from "@/components/ui/TabBar";
-
-const TEAL = "#0D9488";
+import { TEAL } from '@/constants/colors';
 
 type TabType = "all" | "open" | "draft" | "expired";
 

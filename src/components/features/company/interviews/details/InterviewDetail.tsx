@@ -19,9 +19,9 @@ import MailOutlineOutlined from "@mui/icons-material/MailOutline";
 import PsychologyOutlined from "@mui/icons-material/PsychologyOutlined";
 import RadioButtonCheckedOutlined from "@mui/icons-material/RadioButtonChecked";
 import { InterviewAssessment, getScore, scoreStyle, fmtDate, fmtDuration } from "../list/InterviewCard";
+import { TEAL } from '@/constants/colors';
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
-const TEAL        = "#0D9488";
 const TEAL_BG     = "#F0FDFA";
 const TEAL_BORDER = "#99F6E4";
 
@@ -178,13 +178,13 @@ const InterviewDetail: React.FC<InterviewDetailProps> = ({ assessment, stepsData
               <Typography sx={{ fontSize: "0.8rem", color: "#6B7280" }}>{email || "—"}</Typography>
             </Box>
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
-              <Chip label={title} size="small" icon={<WorkOutlined style={{ fontSize: 12 }} />}
+              <Chip label={title} size="small" icon={<WorkOutlined sx={{ fontSize: 12 }} />}
                 sx={{ bgcolor: TEAL_BG, color: TEAL, fontWeight: 600, fontSize: "0.72rem", height: 24, border: `1px solid ${TEAL_BORDER}`, "& .MuiChip-icon": { color: `${TEAL} !important` } }} />
               {jd?.location && (
-                <Chip label={jd.location} size="small" icon={<LocationOnOutlined style={{ fontSize: 12 }} />}
+                <Chip label={jd.location} size="small" icon={<LocationOnOutlined sx={{ fontSize: 12 }} />}
                   sx={{ bgcolor: "#F3F4F6", color: "#374151", fontWeight: 600, fontSize: "0.72rem", height: 24 }} />
               )}
-              <Chip label={fmtDate(assessment.createdAt)} size="small" icon={<CalendarTodayOutlined style={{ fontSize: 12 }} />}
+              <Chip label={fmtDate(assessment.createdAt)} size="small" icon={<CalendarTodayOutlined sx={{ fontSize: 12 }} />}
                 sx={{ bgcolor: "#F3F4F6", color: "#374151", fontWeight: 600, fontSize: "0.72rem", height: 24 }} />
             </Box>
           </Box>
@@ -202,19 +202,19 @@ const InterviewDetail: React.FC<InterviewDetailProps> = ({ assessment, stepsData
           {analytics?.duration !== undefined && (
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
               <AccessTimeOutlined sx={{ fontSize: 14, color: "#9CA3AF" }} />
-              <Typography sx={{ fontSize: "0.78rem", color: "#6B7280" }}>Duration: <strong style={{ color: "#374151" }}>{fmtDuration(analytics.duration)}</strong></Typography>
+              <Typography sx={{ fontSize: "0.78rem", color: "#6B7280" }}>Duration: <Box component="strong" sx={{ color: "#374151" }}>{fmtDuration(analytics.duration)}</Box></Typography>
             </Box>
           )}
           {analytics?.messageCount !== undefined && (
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
               <ChatBubbleOutlineOutlined sx={{ fontSize: 14, color: "#9CA3AF" }} />
-              <Typography sx={{ fontSize: "0.78rem", color: "#6B7280" }}>Responses: <strong style={{ color: "#374151" }}>{analytics.messageCount}</strong></Typography>
+              <Typography sx={{ fontSize: "0.78rem", color: "#6B7280" }}>Responses: <Box component="strong" sx={{ color: "#374151" }}>{analytics.messageCount}</Box></Typography>
             </Box>
           )}
           {jd?.employmentType && (
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
               <WorkOutlined sx={{ fontSize: 14, color: "#9CA3AF" }} />
-              <Typography sx={{ fontSize: "0.78rem", color: "#6B7280" }}>Employment: <strong style={{ color: "#374151" }}>{jd.employmentType}</strong></Typography>
+              <Typography sx={{ fontSize: "0.78rem", color: "#6B7280" }}>Employment: <Box component="strong" sx={{ color: "#374151" }}>{jd.employmentType}</Box></Typography>
             </Box>
           )}
         </Box>
@@ -511,12 +511,12 @@ const InterviewDetail: React.FC<InterviewDetailProps> = ({ assessment, stepsData
                         <Box sx={{ display: "flex", gap: 2, mt: 1, flexWrap: "wrap" }}>
                           {step.attempts > 0 && (
                             <Typography sx={{ fontSize: "0.7rem", color: "#9CA3AF" }}>
-                              Attempts: <strong style={{ color: "#6B7280" }}>{step.attempts}</strong>
+                              Attempts: <Box component="strong" sx={{ color: "#6B7280" }}>{step.attempts}</Box>
                             </Typography>
                           )}
                           {step.completedAt && (
                             <Typography sx={{ fontSize: "0.7rem", color: "#9CA3AF" }}>
-                              Completed: <strong style={{ color: "#6B7280" }}>{fmtDate(step.completedAt)}</strong>
+                              Completed: <Box component="strong" sx={{ color: "#6B7280" }}>{fmtDate(step.completedAt)}</Box>
                             </Typography>
                           )}
                         </Box>

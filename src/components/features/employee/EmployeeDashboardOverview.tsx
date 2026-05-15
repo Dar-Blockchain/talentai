@@ -26,10 +26,9 @@ import {
 } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import { Campaign, ModuleType, ParticipantStatus } from "@/types/campaign";
+import { TEAL } from '@/constants/colors';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-
-const TEAL   = "#0D9488";
 const PURPLE = "#8B5CF6";
 const BLUE   = "#3B82F6";
 const AMBER  = "#F59E0B";

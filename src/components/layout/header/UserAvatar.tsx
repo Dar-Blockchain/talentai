@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useMemo, useCallback } from "react";
+import { getImageUrl } from "@/utils/apiConfig";
 import { Avatar, Box, Typography } from "@mui/material";
 import KeyboardArrowDownRounded from "@mui/icons-material/KeyboardArrowDownRounded";
 import UserDropdownMenu from "./UserDropdownMenu";
@@ -41,7 +42,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
 
   const avatarUrl = useMemo(() => {
     const img = profile?.user_image || user?.user_image || profile?.userId?.user_image;
-    return img ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${img}` : null;
+    return img ? getImageUrl('Users', img) : null;
   }, [profile?.user_image, profile?.userId?.user_image, user?.user_image]);
 
   const initials = useMemo(() => {

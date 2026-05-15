@@ -12,11 +12,9 @@ import {
 } from '@mui/icons-material';
 import { useToast } from '@/hooks/useToast';
 import { useTranslation } from 'react-i18next';
-
-const T    = "#0D9488";
+import { TEAL, NAVY } from '@/constants/colors';
 const TBG  = "#F0FDFA";
 const TBRD = "#99F6E4";
-const NAVY = "#0D1B2A";
 
 interface ProfileVisibilityTabProps {
   userId: string;
@@ -94,7 +92,7 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({
 
       <Box sx={{ p: 2.5 }}>
         {hasMembership && (
-          <Alert severity="info" sx={{ mb: 2.5, borderRadius: "10px", fontSize: "0.8rem", bgcolor: TBG, border: `1px solid ${TBRD}`, "& .MuiAlert-icon": { color: T } }}>
+          <Alert severity="info" sx={{ mb: 2.5, borderRadius: "10px", fontSize: "0.8rem", bgcolor: TBG, border: `1px solid ${TBRD}`, "& .MuiAlert-icon": { color: TEAL } }}>
             <Typography sx={{ fontWeight: 600, fontSize: "0.82rem", color: NAVY }}>{s('membership_title')}</Typography>
             <Typography sx={{ fontSize: "0.78rem", color: "#6B7280", mt: 0.25 }}>{s('membership_subtitle')}</Typography>
           </Alert>
@@ -116,7 +114,7 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({
         }}>
           <Box sx={{
             width: 44, height: 44, borderRadius: "12px", flexShrink: 0,
-            bgcolor: isPublic ? T : "#94A3B8",
+            bgcolor: isPublic ? TEAL : "#94A3B8",
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
             {isPublic
@@ -133,7 +131,7 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({
             </Typography>
             {loading && (
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.75 }}>
-                <CircularProgress size={12} sx={{ color: T }} />
+                <CircularProgress size={12} sx={{ color: TEAL }} />
                 <Typography sx={{ fontSize: "0.72rem", color: "#6B7280" }}>{s('updating')}</Typography>
               </Box>
             )}
@@ -143,8 +141,8 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({
             onChange={handleToggleVisibility}
             disabled={loading || hasMembership}
             sx={{
-              "& .MuiSwitch-switchBase.Mui-checked": { color: T, "&:hover": { bgcolor: `${T}14` } },
-              "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { bgcolor: T },
+              "& .MuiSwitch-switchBase.Mui-checked": { color: TEAL, "&:hover": { bgcolor: `${TEAL}14` } },
+              "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { bgcolor: TEAL },
             }}
           />
         </Box>
@@ -171,12 +169,12 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({
           <Box sx={{ display: "flex", gap: 1.5 }}>
             <Button size="small" variant="outlined" startIcon={<ContentCopyIcon sx={{ fontSize: "14px !important" }} />}
               onClick={handleCopyLink} disabled={!isPublic}
-              sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.75rem", borderRadius: "8px", px: 1.5, borderColor: "#E5E7EB", color: "#6B7280", "&:hover": { borderColor: T, bgcolor: TBG, color: T }, "&.Mui-disabled": { borderColor: "#F1F5F9", color: "#CBD5E1" } }}>
+              sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.75rem", borderRadius: "8px", px: 1.5, borderColor: "#E5E7EB", color: "#6B7280", "&:hover": { borderColor: TEAL, bgcolor: TBG, color: TEAL }, "&.Mui-disabled": { borderColor: "#F1F5F9", color: "#CBD5E1" } }}>
               {copied ? s('copied') : s('copy_link')}
             </Button>
             <Button size="small" variant="contained" startIcon={<OpenInNewIcon sx={{ fontSize: "14px !important" }} />}
               onClick={handleViewProfile} disabled={!isPublic}
-              sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.75rem", borderRadius: "8px", px: 1.5, bgcolor: T, color: "#fff", "&:hover": { bgcolor: "#0F766E" }, "&.Mui-disabled": { bgcolor: "#F1F5F9", color: "#CBD5E1" } }}>
+              sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.75rem", borderRadius: "8px", px: 1.5, bgcolor: TEAL, color: "#fff", "&:hover": { bgcolor: "#0F766E" }, "&.Mui-disabled": { bgcolor: "#F1F5F9", color: "#CBD5E1" } }}>
               {s('view_profile')}
             </Button>
           </Box>

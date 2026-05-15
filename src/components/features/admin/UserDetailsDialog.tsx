@@ -22,8 +22,7 @@ import {
   Badge as BadgeIcon,
 } from '@mui/icons-material';
 import { User } from '../../../types/admin';
-
-const PRIMARY = '#8310FF';
+import { PURPLE } from '@/constants/colors';
 
 interface UserDetailsDialogProps {
   open: boolean;
@@ -100,7 +99,7 @@ const UserDetailsDialog: React.FC<UserDetailsDialogProps> = ({ open, user, onClo
       {/* Header */}
       <Box
         sx={{
-          background: `linear-gradient(135deg, ${PRIMARY} 0%, #6a0dad 100%)`,
+          background: `linear-gradient(135deg, ${PURPLE} 0%, #6a0dad 100%)`,
           px: 3,
           pt: 3,
           pb: 5,
@@ -144,7 +143,7 @@ const UserDetailsDialog: React.FC<UserDetailsDialogProps> = ({ open, user, onClo
             size="small"
             sx={{
               backgroundColor: 'white',
-              color: PRIMARY,
+              color: PURPLE,
               fontWeight: 700,
               fontSize: '0.75rem',
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
@@ -169,32 +168,32 @@ const UserDetailsDialog: React.FC<UserDetailsDialogProps> = ({ open, user, onClo
         {/* Info List */}
         <Box sx={{ px: 3, pt: 2, pb: 1 }}>
           <InfoRow
-            icon={<EmailIcon sx={{ fontSize: 18, color: PRIMARY }} />}
+            icon={<EmailIcon sx={{ fontSize: 18, color: PURPLE }} />}
             label="Email"
             value={user.email}
           />
           <InfoRow
-            icon={<CalendarIcon sx={{ fontSize: 18, color: PRIMARY }} />}
+            icon={<CalendarIcon sx={{ fontSize: 18, color: PURPLE }} />}
             label="Joined"
             value={new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
           />
           {user.lastLogin && (
             <InfoRow
-              icon={<LoginIcon sx={{ fontSize: 18, color: PRIMARY }} />}
+              icon={<LoginIcon sx={{ fontSize: 18, color: PURPLE }} />}
               label="Last Login"
               value={new Date(user.lastLogin).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
             />
           )}
           {user.Localisation && (
             <InfoRow
-              icon={<LanguageIcon sx={{ fontSize: 18, color: PRIMARY }} />}
+              icon={<LanguageIcon sx={{ fontSize: 18, color: PURPLE }} />}
               label="Location"
               value={user.Localisation}
             />
           )}
           {user.ip && (
             <InfoRow
-              icon={<LanguageIcon sx={{ fontSize: 18, color: PRIMARY }} />}
+              icon={<LanguageIcon sx={{ fontSize: 18, color: PURPLE }} />}
               label="IP Address"
               value={user.ip}
               mono
@@ -211,28 +210,28 @@ const UserDetailsDialog: React.FC<UserDetailsDialogProps> = ({ open, user, onClo
               </Typography>
               {user.profile.phone && (
                 <InfoRow
-                  icon={<PhoneIcon sx={{ fontSize: 18, color: PRIMARY }} />}
+                  icon={<PhoneIcon sx={{ fontSize: 18, color: PURPLE }} />}
                   label="Phone"
                   value={user.profile.phone}
                 />
               )}
               {user.profile.location && (
                 <InfoRow
-                  icon={<LocationIcon sx={{ fontSize: 18, color: PRIMARY }} />}
+                  icon={<LocationIcon sx={{ fontSize: 18, color: PURPLE }} />}
                   label="Location"
                   value={user.profile.location}
                 />
               )}
               {user.profile.company && (
                 <InfoRow
-                  icon={<BusinessIcon sx={{ fontSize: 18, color: PRIMARY }} />}
+                  icon={<BusinessIcon sx={{ fontSize: 18, color: PURPLE }} />}
                   label="Company"
                   value={user.profile.company}
                 />
               )}
               {user.profile.position && (
                 <InfoRow
-                  icon={<BadgeIcon sx={{ fontSize: 18, color: PRIMARY }} />}
+                  icon={<BadgeIcon sx={{ fontSize: 18, color: PURPLE }} />}
                   label="Position"
                   value={user.profile.position}
                 />

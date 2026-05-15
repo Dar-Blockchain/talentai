@@ -6,8 +6,7 @@ import FilterListOutlined from "@mui/icons-material/FilterListOutlined";
 import SortOutlined from "@mui/icons-material/SortOutlined";
 import KeyboardArrowDownOutlined from "@mui/icons-material/KeyboardArrowDownOutlined";
 import InterviewCard, { InterviewAssessment } from "./InterviewCard";
-
-const PURPLE = "#8310FF";
+import { PURPLE } from '@/constants/colors';
 
 export type ScoreFilter = "all" | "excellent" | "satisfactory" | "needs-work";
 export type SortOption  = "newest" | "highest" | "lowest";

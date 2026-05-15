@@ -15,8 +15,7 @@ import { Department } from "@/store/slices/departmentSlice";
 import EditOutlined from "@mui/icons-material/EditOutlined";
 import CloseOutlined from "@mui/icons-material/CloseOutlined";
 import { resolveDepartmentApiMessage } from "@/utils/departmentI18n";
-
-const TEAL = "#0D9488";
+import { TEAL } from '@/constants/colors';
 const TEAL_LIGHT = "#F0FDFA";
 
 export interface EditDepartmentModalProps {

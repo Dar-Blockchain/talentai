@@ -41,6 +41,7 @@ export interface EmployeeCampaignEntry {
 }
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { campaignService } from "@/services/campaignService";
+import type { RootState } from "@/store/store";
 
 // ─── Thunks ───────────────────────────────────────────────────────────────────
 
@@ -246,7 +247,7 @@ export interface ParticipantResultsData {
     _id: string;
     title: string;
     type: string;
-    module: { type: string; config: any } | null;
+    module: { type: string; config: Record<string, unknown> } | null;
   };
   participant: {
     _id: string;
@@ -255,10 +256,10 @@ export interface ParticipantResultsData {
     score: number | null;
   };
   response: {
-    answers:             { questionId: string; answer: any; score?: number }[];
+    answers:             { questionId: string; answer: string | number | boolean | string[]; score?: number }[];
     aiScore:             number | null;
     aiSummary:           string | null;
-    testResults:         { score: number; maxScore: number; breakdown: any } | null;
+    testResults:         { score: number; maxScore: number; breakdown: Record<string, unknown> } | null;
     moduleType:          string;
     interviewTranscript: { role: string; message: string; timestamp: string }[];
   } | null;
@@ -704,96 +705,96 @@ export const { clearCreateStatus, clearError, clearSelectedCampaign, setPage } =
 
 // ─── Selectors ────────────────────────────────────────────────────────────────
 
-export const selectCampaigns = (state: any) =>
+export const selectCampaigns = (state: RootState) =>
   state.campaign.campaigns as Campaign[];
-export const selectCampaignLoading = (state: any) =>
+export const selectCampaignLoading = (state: RootState) =>
   state.campaign.loading as boolean;
-export const selectCampaignCreating = (state: any) =>
+export const selectCampaignCreating = (state: RootState) =>
   state.campaign.creating as boolean;
-export const selectCampaignError = (state: any) =>
+export const selectCampaignError = (state: RootState) =>
   state.campaign.error as string | null;
-export const selectCreateSuccess = (state: any) =>
+export const selectCreateSuccess = (state: RootState) =>
   state.campaign.createSuccess as boolean;
-export const selectCreateError = (state: any) =>
+export const selectCreateError = (state: RootState) =>
   state.campaign.createError as string | null;
-export const selectSelectedCampaign = (state: any) =>
+export const selectSelectedCampaign = (state: RootState) =>
   state.campaign.selectedCampaign as Campaign | null;
-export const selectDetailLoading = (state: any) =>
+export const selectDetailLoading = (state: RootState) =>
   state.campaign.detailLoading as boolean;
-export const selectDetailError = (state: any) =>
+export const selectDetailError = (state: RootState) =>
   state.campaign.detailError as string | null;
-export const selectCampaignDeleteLoading = (state: any) =>
+export const selectCampaignDeleteLoading = (state: RootState) =>
   state.campaign.deleteLoading as boolean;
 
-export const selectCampaignPage = (state: any) => state.campaign.page as number;
-export const selectCampaignLimit = (state: any) => state.campaign.limit as number;
-export const selectCampaignCount = (state: any) => state.campaign.count as number;
+export const selectCampaignPage = (state: RootState) => state.campaign.page as number;
+export const selectCampaignLimit = (state: RootState) => state.campaign.limit as number;
+export const selectCampaignCount = (state: RootState) => state.campaign.count as number;
 
-export const selectCampaignMetrics = (state: any) =>
+export const selectCampaignMetrics = (state: RootState) =>
   state.campaign.metrics as CampaignMetrics | null;
 
-export const selectCampaignMetricsLoading = (state: any) =>
+export const selectCampaignMetricsLoading = (state: RootState) =>
   state.campaign.metricsLoading as boolean;
 
-export const selectCampaignMetricsError = (state: any) =>
+export const selectCampaignMetricsError = (state: RootState) =>
   state.campaign.metricsError as string | null;
 
-export const selectSavingLoading = (state: any) =>
+export const selectSavingLoading = (state: RootState) =>
   state.campaign.savingLoading as boolean;
 
-export const selectSaveError = (state: any) =>
+export const selectSaveError = (state: RootState) =>
   state.campaign.saveError as string | null;
 
-export const selectCampaignParticipants = (state: any) =>
+export const selectCampaignParticipants = (state: RootState) =>
   state.campaign.participants as CampaignParticipant[];
-export const selectCampaignParticipantsLoading = (state: any) =>
+export const selectCampaignParticipantsLoading = (state: RootState) =>
   state.campaign.participantsLoading as boolean;
-export const selectCampaignParticipantsError = (state: any) =>
+export const selectCampaignParticipantsError = (state: RootState) =>
   state.campaign.participantsError as string | null;
-export const selectCampaignParticipantsTotal = (state: any) =>
+export const selectCampaignParticipantsTotal = (state: RootState) =>
   state.campaign.participantsTotal as number;
 
-export const selectCampaignSessions = (state: any) =>
+export const selectCampaignSessions = (state: RootState) =>
   state.campaign.sessions as CampaignSession[];
-export const selectCampaignSessionsLoading = (state: any) =>
+export const selectCampaignSessionsLoading = (state: RootState) =>
   state.campaign.sessionsLoading as boolean;
-export const selectCampaignSessionsError = (state: any) =>
+export const selectCampaignSessionsError = (state: RootState) =>
   state.campaign.sessionsError as string | null;
-export const selectCampaignSessionsTotal = (state: any) =>
+export const selectCampaignSessionsTotal = (state: RootState) =>
   state.campaign.sessionsTotal as number;
 
-export const selectEmployeeCampaigns = (state: any) =>
+export const selectEmployeeCampaigns = (state: RootState) =>
   state.campaign.employeeCampaigns as Campaign[];
-export const selectEmployeeCampaignsLoading = (state: any) =>
+export const selectEmployeeCampaignsLoading = (state: RootState) =>
   state.campaign.employeeCampaignsLoading as boolean;
-export const selectEmployeeCampaignsError = (state: any) =>
+export const selectEmployeeCampaignsError = (state: RootState) =>
   state.campaign.employeeCampaignsError as string | null;
-export const selectEmployeeCampaignsTotal = (state: any) =>
+export const selectEmployeeCampaignsTotal = (state: RootState) =>
   state.campaign.employeeCampaignsTotal as number;
-export const selectEmployeeCampaignsPages = (state: any) =>
+export const selectEmployeeCampaignsPages = (state: RootState) =>
   state.campaign.employeeCampaignsPages as number;
-export const selectEmployeeCampaignsPage = (state: any) =>
+export const selectEmployeeCampaignsPage = (state: RootState) =>
   state.campaign.employeeCampaignsPage as number;
 
-export const selectParticipantActionLoading = (state: any) =>
+export const selectParticipantActionLoading = (state: RootState) =>
   state.campaign.participantActionLoading as boolean;
-export const selectParticipantActionError = (state: any) =>
+export const selectParticipantActionError = (state: RootState) =>
   state.campaign.participantActionError as string | null;
 
-export const selectNonParticipants = (state: any) =>
+export const selectNonParticipants = (state: RootState) =>
   state.campaign.nonParticipants as NonParticipant[];
-export const selectNonParticipantsLoading = (state: any) =>
+export const selectNonParticipantsLoading = (state: RootState) =>
   state.campaign.nonParticipantsLoading as boolean;
-export const selectNonParticipantsError = (state: any) =>
+export const selectNonParticipantsError = (state: RootState) =>
   state.campaign.nonParticipantsError as string | null;
-export const selectNonParticipantsTotal = (state: any) =>
+export const selectNonParticipantsTotal = (state: RootState) =>
   state.campaign.nonParticipantsTotal as number;
 
-export const selectParticipantResults = (state: any) =>
+export const selectParticipantResults = (state: RootState) =>
   state.campaign.participantResults as ParticipantResultsData | null;
-export const selectResultsLoading = (state: any) =>
+export const selectResultsLoading = (state: RootState) =>
   state.campaign.resultsLoading as boolean;
-export const selectResultsError = (state: any) =>
+export const selectResultsError = (state: RootState) =>
   state.campaign.resultsError as string | null;
 
 export default campaignSlice.reducer;

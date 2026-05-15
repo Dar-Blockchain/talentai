@@ -2,9 +2,7 @@ import React from 'react';
 import { Box, Avatar, IconButton, Typography, CircularProgress } from '@mui/material';
 import { PhotoCamera as PhotoCameraIcon } from '@mui/icons-material';
 import { UserProfile } from '@/types/profile';
-
-const T    = "#0D9488";
-const NAVY = "#0D1B2A";
+import { TEAL, NAVY } from '@/constants/colors';
 
 interface ProfilePictureSectionProps {
   profile: UserProfile;
@@ -31,7 +29,7 @@ const ProfilePictureSection: React.FC<ProfilePictureSectionProps> = ({
         <Avatar
           src={profile.avatar}
           alt={displayName}
-          sx={{ width: 72, height: 72, bgcolor: T, fontSize: "1.4rem", fontWeight: 700, border: "2.5px solid #fff", boxShadow: "0 2px 8px rgba(13,148,136,0.18)" }}
+          sx={{ width: 72, height: 72, bgcolor: TEAL, fontSize: "1.4rem", fontWeight: 700, border: "2.5px solid #fff", boxShadow: "0 2px 8px rgba(13,148,136,0.18)" }}
         >
           {initials}
         </Avatar>
@@ -49,7 +47,7 @@ const ProfilePictureSection: React.FC<ProfilePictureSectionProps> = ({
             disabled={uploadingImage}
             sx={{
               position: 'absolute', bottom: -4, right: -4,
-              bgcolor: T, color: '#fff', width: 26, height: 26,
+              bgcolor: TEAL, color: '#fff', width: 26, height: 26,
               '&:hover': { bgcolor: '#0F766E' },
               '&.Mui-disabled': { bgcolor: '#9CA3AF' },
             }}

@@ -35,7 +35,7 @@ import VisibilityOffOutlined   from "@mui/icons-material/VisibilityOffOutlined";
 import { MODULE_CONFIG } from "@/constants/campaign";
 import { daysLeft, isDeadlinePassed } from "@/utils/functions";
 
-const PURPLE = "#8310FF";
+import { PURPLE } from '@/constants/colors';
 const CARD = { bgcolor: "#fff", border: "1px solid #EDEEF0", borderRadius: "18px", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" } as const;
 
 const PARTICIPANT_STATUS_STYLE: Record<ParticipantStatus, { color: string; bg: string }> = {

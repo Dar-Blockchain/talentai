@@ -17,8 +17,7 @@ import {
   Quiz as QuizIcon,
   Repeat as RepeatIcon,
 } from '@mui/icons-material';
-
-const PRIMARY = '#8310FF';
+import { PURPLE } from '@/constants/colors';
 
 interface AssessmentDetailsDialogProps {
   open: boolean;
@@ -55,7 +54,7 @@ const AssessmentDetailsDialog: React.FC<AssessmentDetailsDialogProps> = ({
       {/* Header */}
       <Box
         sx={{
-          background: `linear-gradient(135deg, ${PRIMARY} 0%, #6a0dad 100%)`,
+          background: `linear-gradient(135deg, ${PURPLE} 0%, #6a0dad 100%)`,
           px: 3,
           pt: 3,
           pb: 4,
@@ -160,7 +159,7 @@ const AssessmentDetailsDialog: React.FC<AssessmentDetailsDialogProps> = ({
               textAlign: 'center',
             }}
           >
-            <RepeatIcon sx={{ color: PRIMARY, fontSize: 22, mb: 0.5 }} />
+            <RepeatIcon sx={{ color: PURPLE, fontSize: 22, mb: 0.5 }} />
             <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a1a2e' }}>
               {assessment.numberOfAttempts || 0}
             </Typography>
@@ -177,7 +176,7 @@ const AssessmentDetailsDialog: React.FC<AssessmentDetailsDialogProps> = ({
               textAlign: 'center',
             }}
           >
-            <QuizIcon sx={{ color: PRIMARY, fontSize: 22, mb: 0.5 }} />
+            <QuizIcon sx={{ color: PURPLE, fontSize: 22, mb: 0.5 }} />
             <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a1a2e' }}>
               {assessment.totalQuestions || 'N/A'}
             </Typography>
@@ -194,7 +193,7 @@ const AssessmentDetailsDialog: React.FC<AssessmentDetailsDialogProps> = ({
               textAlign: 'center',
             }}
           >
-            <TrendingUpIcon sx={{ color: PRIMARY, fontSize: 22, mb: 0.5 }} />
+            <TrendingUpIcon sx={{ color: PURPLE, fontSize: 22, mb: 0.5 }} />
             <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a1a2e' }}>
               {score >= 70 ? 'High' : score >= 50 ? 'Mid' : 'Low'}
             </Typography>

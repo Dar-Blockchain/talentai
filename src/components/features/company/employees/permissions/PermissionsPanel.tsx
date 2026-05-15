@@ -13,8 +13,7 @@ import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
 import CampaignOutlined from "@mui/icons-material/CampaignOutlined";
 import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
 import { EmployeePermission, EmployeePermissionKey, EMPLOYEE_PERMISSION_GROUPS, EMPLOYEE_PERMISSION_CATEGORIES } from "@/types/employeePermissions";
-
-const PURPLE = "#8310FF";
+import { PURPLE } from '@/constants/colors';
 
 // Packs: multiple keys rendered as a single toggle row.
 // primaryKey is what gets rendered; the rest are hidden and follow it.

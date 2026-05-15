@@ -1,7 +1,6 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
-
-const PURPLE = "#8310FF";
+import { PURPLE } from '@/constants/colors';
 
 interface PaginationProps {
   page: number;
@@ -69,16 +68,23 @@ const Pagination: React.FC<PaginationProps> = ({ page, total, pageSize, onPageCh
           }
 
           return (
-            <Box key={p} onClick={() => onPageChange(p)} sx={{
-              minWidth: 32, height: 32, px: 0.75, borderRadius: "9px",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              bgcolor: isActive ? PURPLE : "#fff",
-              border: `1px solid ${isActive ? PURPLE : "#E5E7EB"}`,
-              cursor: "pointer",
-              userSelect: "none",
-              transition: "all 0.15s",
-              "&:hover": !isActive ? { bgcolor: "#F3F4F6", borderColor: "#D1D5DB" } : {},
-            }}>
+            <Box
+              key={p}
+              onClick={() => onPageChange(p)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onPageChange(p); }}
+              sx={{
+                minWidth: 32, height: 32, px: 0.75, borderRadius: "9px",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                bgcolor: isActive ? PURPLE : "#fff",
+                border: `1px solid ${isActive ? PURPLE : "#E5E7EB"}`,
+                cursor: "pointer",
+                userSelect: "none",
+                transition: "all 0.15s",
+                "&:hover": !isActive ? { bgcolor: "#F3F4F6", borderColor: "#D1D5DB" } : {},
+              }}
+            >
               <Typography sx={{ fontSize: "13px", fontWeight: 700, color: isActive ? "#fff" : "#374151" }}>{p}</Typography>
             </Box>
           );

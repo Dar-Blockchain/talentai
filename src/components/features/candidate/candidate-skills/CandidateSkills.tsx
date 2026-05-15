@@ -8,7 +8,7 @@ import BoltOutlined from "@mui/icons-material/BoltOutlined";
 import TechnicalSkills from "./TechnicalSkills";
 import SoftSkills from "./SoftSkills";
 
-const T   = "#0D9488";
+import { TEAL } from '@/constants/colors';
 const TBG = "#F0FDFA";
 const TBD = "#99F6E4";
 
@@ -30,7 +30,7 @@ function CandidateSkills() {
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Box sx={{ width: 32, height: 32, borderRadius: "9px", bgcolor: TBG, border: `1px solid ${TBD}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <CodeOutlined sx={{ fontSize: 16, color: T }} />
+              <CodeOutlined sx={{ fontSize: 16, color: TEAL }} />
             </Box>
             <Box>
               <Typography sx={{ fontSize: "0.95rem", fontWeight: 800, color: "#0F172A", lineHeight: 1.2 }}>{s("title")}</Typography>
@@ -44,8 +44,8 @@ function CandidateSkills() {
             bgcolor: quotaFull ? "#FEF2F2" : TBG,
             border: `1px solid ${quotaFull ? "#FECACA" : TBD}`,
           }}>
-            <BoltOutlined sx={{ fontSize: 13, color: quotaFull ? "#DC2626" : T }} />
-            <Typography sx={{ fontSize: "0.68rem", fontWeight: 700, color: quotaFull ? "#DC2626" : T }}>
+            <BoltOutlined sx={{ fontSize: 13, color: quotaFull ? "#DC2626" : TEAL }} />
+            <Typography sx={{ fontSize: "0.68rem", fontWeight: 700, color: quotaFull ? "#DC2626" : TEAL }}>
               {s("quota", { used: quota })}
             </Typography>
           </Box>

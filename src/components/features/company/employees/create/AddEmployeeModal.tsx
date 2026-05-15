@@ -26,8 +26,8 @@ interface AddEmployeeModalProps {
   defaultDepartmentId?: string;
 }
 
+import { PURPLE } from '@/constants/colors';
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PURPLE = '#8310FF';
 
 const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, onClose, onSave, defaultDepartmentId }) => {
   const { t } = useTranslation("dashboard");

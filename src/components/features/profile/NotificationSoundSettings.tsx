@@ -2,11 +2,9 @@ import React from 'react';
 import { Box, Typography, Switch, Slider, Chip } from '@mui/material';
 import { VolumeUp as VolumeUpIcon, VolumeOff as VolumeOffIcon, Info as InfoIcon } from '@mui/icons-material';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
-
-const T    = "#0D9488";
+import { TEAL, NAVY } from '@/constants/colors';
 const TBG  = "#F0FDFA";
 const TBRD = "#99F6E4";
-const NAVY = "#0D1B2A";
 
 const NotificationSoundSettings: React.FC = () => {
   const { enabled, volume, setEnabled, setVolume } = useNotificationSound();
@@ -28,7 +26,7 @@ const NotificationSoundSettings: React.FC = () => {
           border: `1px solid ${enabled ? TBRD : "#E5E7EB"}`,
         }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Box sx={{ width: 36, height: 36, borderRadius: "10px", bgcolor: enabled ? T : "#94A3B8", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Box sx={{ width: 36, height: 36, borderRadius: "10px", bgcolor: enabled ? TEAL : "#94A3B8", display: "flex", alignItems: "center", justifyContent: "center" }}>
               {enabled
                 ? <VolumeUpIcon  sx={{ fontSize: 18, color: "#fff" }} />
                 : <VolumeOffIcon sx={{ fontSize: 18, color: "#fff" }} />
@@ -45,8 +43,8 @@ const NotificationSoundSettings: React.FC = () => {
             checked={enabled}
             onChange={e => setEnabled(e.target.checked)}
             sx={{
-              "& .MuiSwitch-switchBase.Mui-checked": { color: T, "&:hover": { bgcolor: `${T}14` } },
-              "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { bgcolor: T },
+              "& .MuiSwitch-switchBase.Mui-checked": { color: TEAL, "&:hover": { bgcolor: `${TEAL}14` } },
+              "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { bgcolor: TEAL },
             }}
           />
         </Box>
@@ -56,15 +54,15 @@ const NotificationSoundSettings: React.FC = () => {
           <Box sx={{ mb: 2 }}>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
               <Typography sx={{ fontWeight: 600, fontSize: "0.82rem", color: NAVY }}>Volume</Typography>
-              <Chip label={`${volume}%`} size="small" sx={{ bgcolor: TBG, color: T, fontWeight: 700, fontSize: "0.72rem", border: `1px solid ${TBRD}` }} />
+              <Chip label={`${volume}%`} size="small" sx={{ bgcolor: TBG, color: TEAL, fontWeight: 700, fontSize: "0.72rem", border: `1px solid ${TBRD}` }} />
             </Box>
             <Slider
               value={volume}
               onChange={(_, v) => setVolume(v as number)}
               min={0} max={100}
               sx={{
-                color: T,
-                "& .MuiSlider-thumb": { "&:hover, &.Mui-focusVisible": { boxShadow: `0 0 0 8px ${T}29` } },
+                color: TEAL,
+                "& .MuiSlider-thumb": { "&:hover, &.Mui-focusVisible": { boxShadow: `0 0 0 8px ${TEAL}29` } },
               }}
             />
           </Box>
@@ -72,8 +70,8 @@ const NotificationSoundSettings: React.FC = () => {
 
         {/* Info note */}
         <Box sx={{ p: 1.5, borderRadius: "10px", bgcolor: TBG, border: `1px solid ${TBRD}`, display: "flex", alignItems: "center", gap: 1 }}>
-          <InfoIcon sx={{ fontSize: 15, color: T, flexShrink: 0 }} />
-          <Typography sx={{ fontSize: "0.75rem", color: T }}>
+          <InfoIcon sx={{ fontSize: 15, color: TEAL, flexShrink: 0 }} />
+          <Typography sx={{ fontSize: "0.75rem", color: TEAL }}>
             Sounds play automatically with each new notification, even when the tab is in the background
           </Typography>
         </Box>

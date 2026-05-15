@@ -49,10 +49,10 @@ const AppSelect: React.FC<AppSelectProps> = ({
 
   const renderValue = (selected: any) => {
     if (multiple) {
-      if (!selected || (selected as string[]).length === 0) return <span style={{ color: "#9CA3AF" }}>{placeholder}</span>;
+      if (!selected || (selected as string[]).length === 0) return <Box component="span" sx={{ color: "#9CA3AF" }}>{placeholder}</Box>;
       return (selected as string[]).map((v) => options.find((o) => o.value === v)?.label).filter(Boolean).join(", ");
     } else {
-      if (!selected) return <span style={{ color: "#9CA3AF" }}>{placeholder}</span>;
+      if (!selected) return <Box component="span" sx={{ color: "#9CA3AF" }}>{placeholder}</Box>;
       return options.find((o) => o.value === selected)?.label || selected;
     }
   };
@@ -78,7 +78,7 @@ const AppSelect: React.FC<AppSelectProps> = ({
           }}
         >
           {label}
-          {required && <span style={{ color: "#EF4444", marginLeft: 2 }}>*</span>}
+          {required && <Box component="span" sx={{ color: "#EF4444", ml: "2px" }}>*</Box>}
         </Typography>
       )}
 
@@ -119,7 +119,7 @@ const AppSelect: React.FC<AppSelectProps> = ({
         >
           {!multiple && (
             <MenuItem value="">
-              <span style={{ color: "#9CA3AF" }}>{placeholder}</span>
+              <Box component="span" sx={{ color: "#9CA3AF" }}>{placeholder}</Box>
             </MenuItem>
           )}
           {options.map((option) => (

@@ -22,7 +22,7 @@ import {
 } from "@/store/slices/postGenerationSlice";
 import { AppDispatch } from "@/store/store";
 
-const TEAL        = "#0D9488";
+import { TEAL } from '@/constants/colors';
 const TEAL_BG     = "#F0FDFA";
 const TEAL_BORDER = "#D1FAE5";
 

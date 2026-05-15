@@ -1,6 +1,5 @@
 import { SortOption } from "./EmployeesList";
-
-export const PURPLE = "#8310FF";
+export { PURPLE } from '@/constants/colors';
 export const AMBER  = "#D97706";
 
 /** Sort keys used with `dashboard:pages.employees.filters.sort.{key}` */

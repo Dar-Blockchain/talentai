@@ -19,21 +19,21 @@ const FilterChips: React.FC<Props> = ({ search, onClearSearch, selectedRole, onC
 
     {search && (
       <Chip size="small" label={`"${search}"`} onDelete={onClearSearch}
-        deleteIcon={<CloseOutlined style={{ fontSize: 11 }} />}
+        deleteIcon={<CloseOutlined sx={{ fontSize: 11 }} />}
         sx={{ height: 24, fontSize: "11px", fontWeight: 600, bgcolor: "#F3F4F6", color: "#374151", border: "1px solid #E5E7EB", "& .MuiChip-label": { px: 1 }, "& .MuiChip-deleteIcon": { color: "#9CA3AF", "&:hover": { color: "#374151" }, mr: 0.5 } }}
       />
     )}
 
     {selectedRole && (
       <Chip size="small" label={selectedRole.label} onDelete={onClearRole}
-        deleteIcon={<CloseOutlined style={{ fontSize: 11 }} />}
+        deleteIcon={<CloseOutlined sx={{ fontSize: 11 }} />}
         sx={{ height: 24, fontSize: "11px", fontWeight: 700, bgcolor: `${selectedRole.color}12`, color: selectedRole.color, border: `1px solid ${selectedRole.color}30`, "& .MuiChip-label": { px: 1 }, "& .MuiChip-deleteIcon": { color: selectedRole.color, opacity: 0.6, "&:hover": { opacity: 1 }, mr: 0.5 } }}
       />
     )}
 
     {selectedDept && (
       <Chip size="small" label={selectedDept.name} onDelete={onClearDept}
-        deleteIcon={<CloseOutlined style={{ fontSize: 11 }} />}
+        deleteIcon={<CloseOutlined sx={{ fontSize: 11 }} />}
         sx={{ height: 24, fontSize: "11px", fontWeight: 700, bgcolor: "#EFF6FF", color: "#0891B2", border: "1px solid #BAE6FD", "& .MuiChip-label": { px: 1 }, "& .MuiChip-deleteIcon": { color: "#0891B2", opacity: 0.6, "&:hover": { opacity: 1 }, mr: 0.5 } }}
       />
     )}

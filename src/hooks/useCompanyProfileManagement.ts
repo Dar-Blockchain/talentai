@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { getImageUrl } from '@/utils/apiConfig';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/router';
 import { SelectChangeEvent } from '@mui/material';
@@ -95,7 +96,7 @@ export const useCompanyProfileManagement = () => {
       const normalizedSize = normalizeCompanySize(companyData?.size);
       const companyName = companyData?.name || companyUser?.username || '';
       const avatarUrl = companyUser?.user_image
-        ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${companyUser.user_image}`
+        ? getImageUrl('Users', companyUser.user_image)
         : '';
 
       setProfile({
@@ -130,9 +131,9 @@ export const useCompanyProfileManagement = () => {
       // For company owner: use their own profile
       let avatarUrl = '';
       if (reduxProfile.user_image) {
-        avatarUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${reduxProfile.user_image}`;
+        avatarUrl = getImageUrl('Users', reduxProfile.user_image);
       } else if (user?.user_image) {
-        avatarUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${user.user_image}`;
+        avatarUrl = getImageUrl('Users', user.user_image);
       }
 
       const companyData = reduxProfile.companyDetails || reduxProfile;
@@ -261,10 +262,8 @@ export const useCompanyProfileManagement = () => {
 
 
   const handleInputChange = useCallback((field: keyof UserProfile, value: string) => {
-    console.log('🟡 [handleInputChange] Field:', field, 'Value:', value);
     setProfile(prev => {
       const updated = { ...prev, [field]: value };
-      console.log('🟡 [handleInputChange] Updated profile:', { name: updated.name, companyName: updated.companyName });
       return updated;
     });
 

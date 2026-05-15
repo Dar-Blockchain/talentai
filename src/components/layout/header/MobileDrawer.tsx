@@ -1,5 +1,6 @@
 "use client";
 import React, { useCallback, useState } from "react";
+import { getImageUrl } from "@/utils/apiConfig";
 import { Drawer, Box, Typography, Divider, Avatar } from "@mui/material";
 import { useSelector, useDispatch } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
@@ -96,7 +97,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unre
 
   const avatarUrl = (() => {
     const img = profile?.user_image || user?.user_image || profile?.userId?.user_image;
-    return img ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${img}` : null;
+    return img ? getImageUrl('Users', img) : null;
   })();
 
   const [loggingOut, setLoggingOut] = useState(false);

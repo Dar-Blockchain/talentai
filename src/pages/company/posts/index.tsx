@@ -56,8 +56,7 @@ import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
 import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
 import EditNoteOutlined from "@mui/icons-material/EditNoteOutlined";
 import FilterListOutlined from "@mui/icons-material/FilterListOutlined";
-
-const TEAL = "#0D9488";
+import { TEAL } from '@/constants/colors';
 
 type TypeFilter = "all" | "ai" | "pipeline" | "manual";
 

@@ -10,8 +10,7 @@ import {
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import AddOutlined from "@mui/icons-material/AddOutlined";
 import JobPostCard from "./JobPostCard";
-
-const TEAL = "#0D9488";
+import { TEAL } from '@/constants/colors';
 
 export type StatusFilter = "all" | "active" | "draft" | "expired";
 export type SortOption   = "newest" | "oldest" | "title-asc" | "title-desc";
