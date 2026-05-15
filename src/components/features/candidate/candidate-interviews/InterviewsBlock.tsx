@@ -1,27 +1,14 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Box, Typography, CircularProgress, LinearProgress, Avatar, Button, Tooltip } from "@mui/material";
+import React, { useEffect } from "react";
+import { Box, Typography, CircularProgress, LinearProgress, Button } from "@mui/material";
 import dynamic from "next/dynamic";
 import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
-import { AppDispatch, RootState } from "@/store/store";
+import { AppDispatch } from "@/store/store";
 import dayjs from "@/lib/dayjs";
-import AssignmentOutlined from "@mui/icons-material/AssignmentOutlined";
-import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
-import HourglassEmptyOutlined from "@mui/icons-material/HourglassEmptyOutlined";
-import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
-import PlayArrowOutlined from "@mui/icons-material/PlayArrowOutlined";
 import OpenInNewOutlined from "@mui/icons-material/OpenInNew";
 import CodeOutlined from "@mui/icons-material/CodeOutlined";
 import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
-import WorkOutlineOutlined from "@mui/icons-material/WorkOutlineOutlined";
 import { useRouter } from "next/router";
-import StepInfoModal from "./StepInfoModal";
-import { PostAssessment, getScore as getPostScore, isCompleted, hasPendingSteps } from "./AssessmentCard";
-import {
-  fetchCandidateAssessments,
-  selectCandidateAssessments,
-  selectCandidateAssessmentsLoading,
-} from "@/store/slices/postSlice";
 import {
   fetchSkillAssessmentsByType,
   selectTechnicalAssessments,
@@ -29,12 +16,7 @@ import {
   SkillInterviewAssessment,
 } from "@/store/slices/interviewSlice";
 
-const T    = "#0D9488";
-const TBG  = "#F0FDFA";
-const TBD  = "#99F6E4";
 const NAVY = "#0D1B2A";
-
-interface GroupedAssessment { post: any; assessments: any[]; candidatePostStepProgress: any }
 
 const getScoreColor = (s: number) =>
   s >= 80 ? "#059669" : s >= 60 ? "#0D9488" : s >= 40 ? "#D97706" : "#DC2626";
@@ -47,89 +29,6 @@ const getLevelKey = (s: number) =>
 
 const LEVEL_COLORS: Record<string, string> = {
   expert: "#059669", senior: "#2563EB", mid: "#D97706", junior: "#EA580C", entry: "#64748B",
-};
-
-// ── Job Interview card ───────────────────────────────────────
-const JobRow: React.FC<{
-  assessment: PostAssessment; quota: number;
-  onViewDetails: (id: string) => void; onContinueTest: (a: PostAssessment) => void;
-  s: (k: string, opts?: any) => string;
-}> = ({ assessment, quota, onViewDetails, onContinueTest, s }) => {
-  const score       = getPostScore(assessment);
-  const completed   = isCompleted(assessment);
-  const pending     = hasPendingSteps(assessment);
-  const quotaFull   = quota >= 5;
-  const jobTitle    = assessment.post?.jobDetails?.title || s("job_application");
-  const company     = assessment.company as any;
-  const companyName = company?.companyName || company?.username || assessment.post?.user?.companyName || "";
-  const logoUrl     = company?.logo ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Companies/${company.logo}` : undefined;
-  const timeAgo = (assessment.updatedAt || assessment.createdAt)
-    ? dayjs(assessment.updatedAt || assessment.createdAt).fromNow()
-    : "";
-  const statusColor = completed ? "#059669" : "#D97706";
-  const accentBg    = completed ? "#ECFDF5" : "#FFFBEB";
-  const accentBd    = completed ? "#A7F3D0" : "#FDE68A";
-
-  return (
-    <Box sx={{
-      bgcolor: "#fff", border: "1px solid #E2E8F0", borderRadius: "14px",
-      p: 1.75, display: "flex", flexDirection: "column", gap: 1.25,
-      transition: "all 0.18s",
-      "&:hover": { borderColor: statusColor, boxShadow: `0 4px 16px ${statusColor}18`, transform: "translateY(-1px)" },
-    }}>
-      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.25 }}>
-        <Avatar src={logoUrl} variant="rounded" sx={{
-          width: 36, height: 36, borderRadius: "10px", flexShrink: 0,
-          bgcolor: accentBg, border: `1px solid ${accentBd}`,
-          "& img": { objectFit: "contain", p: "3px" },
-        }}>
-          <BusinessOutlined sx={{ fontSize: 17, color: statusColor }} />
-        </Avatar>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: NAVY, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1.3 }}>
-            {jobTitle}
-          </Typography>
-          {companyName && (
-            <Typography sx={{ fontSize: "0.63rem", color: "#94A3B8", mt: 0.15 }}>{companyName}</Typography>
-          )}
-        </Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.4, px: 0.8, py: 0.25, borderRadius: "20px", bgcolor: accentBg, border: `1px solid ${accentBd}`, flexShrink: 0 }}>
-          {completed
-            ? <CheckCircleOutlined sx={{ fontSize: 9, color: statusColor }} />
-            : <HourglassEmptyOutlined sx={{ fontSize: 9, color: statusColor }} />}
-          <Typography sx={{ fontSize: "0.6rem", fontWeight: 700, color: statusColor }}>
-            {completed ? s("done") : s("ongoing")}
-          </Typography>
-        </Box>
-      </Box>
-
-      <Box>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.5 }}>
-          <Typography sx={{ fontSize: "0.62rem", color: "#94A3B8", fontWeight: 500 }}>
-            {score > 0 ? s("score") : s("not_started")}
-          </Typography>
-          {score > 0 && <Typography sx={{ fontSize: "0.72rem", fontWeight: 800, color: getScoreColor(score) }}>{score}%</Typography>}
-        </Box>
-        <LinearProgress variant="determinate" value={Math.min(score, 100)}
-          sx={{ height: 5, borderRadius: "99px", bgcolor: "#F1F5F9", "& .MuiLinearProgress-bar": { borderRadius: "99px", bgcolor: score > 0 ? getScoreColor(score) : "#E2E8F0" } }} />
-      </Box>
-
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Typography sx={{ fontSize: "0.6rem", color: "#CBD5E1" }}>{timeAgo || s("just_added")}</Typography>
-        {pending ? (
-          <Tooltip title={quotaFull ? s("limit_tooltip") : ""} arrow>
-            <span>
-              <Button onClick={() => onContinueTest(assessment)} disabled={quotaFull}
-                startIcon={<PlayArrowOutlined sx={{ fontSize: "12px !important" }} />}
-                sx={{ textTransform: "none", fontWeight: 700, fontSize: "0.68rem", color: "#fff", bgcolor: "#7C3AED", borderRadius: "8px", px: 1.25, py: 0.35, minWidth: 0, boxShadow: "none", "&:hover": { bgcolor: "#6D28D9" }, "&.Mui-disabled": { bgcolor: "#E2E8F0", color: "#94A3B8" } }}>
-                {s("continue")}
-              </Button>
-            </span>
-          </Tooltip>
-        ) : null}
-      </Box>
-    </Box>
-  );
 };
 
 // ── Skill card ───────────────────────────────────────────────
@@ -225,49 +124,16 @@ const InterviewsBlock: React.FC = () => {
   const { t } = useTranslation("dashboard");
   const s = (k: string, opts?: any) => t(`candidate.interviews.${k}`, opts) as string;
 
-  const router   = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const quota    = useSelector((st: RootState) => st.user.connectedUser.profile?.quota || 0);
 
-  const [stepModalOpen, setStep]     = useState(false);
-  const [selectedAssmt, setSelected] = useState<PostAssessment | null>(null);
-
-  const groupedData  = useSelector(selectCandidateAssessments) as GroupedAssessment[];
-  const jobLoading   = useSelector(selectCandidateAssessmentsLoading);
   const { data: techAssessments, loading: techLoading } = useSelector(selectTechnicalAssessments);
   const { data: softAssessments, loading: softLoading } = useSelector(selectSoftAssessments);
 
-  useEffect(() => { dispatch(fetchCandidateAssessments({ page: 1, limit: 20 })); }, [dispatch]);
   useEffect(() => { dispatch(fetchSkillAssessmentsByType({ skillType: "technical" })); }, [dispatch]);
   useEffect(() => { dispatch(fetchSkillAssessmentsByType({ skillType: "soft" })); }, [dispatch]);
 
-  const jobAssessments = useMemo(() =>
-    groupedData.map(group => {
-      const latest = [...(group.assessments || [])].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] || {};
-      return { ...latest, _id: latest._id || group.post?._id, post: latest.post || group.post, company: latest.company, candidatePostStepProgress: group.candidatePostStepProgress } as PostAssessment;
-    }), [groupedData]);
-
-  const handleViewDetails  = (id: string) => router.push(`/candidate/assessment/${id}`);
-  const handleContinueTest = (a: PostAssessment) => { setSelected(a); setStep(true); };
-  const handleStartStep    = () => {
-    if (!selectedAssmt) return;
-    const postId = selectedAssmt.post?._id;
-    const step   = selectedAssmt.candidatePostStepProgress?.currentStep;
-    if (postId && step) { setStep(false); router.push(`/candidate/interview/hr?jobId=${postId}&stepId=${step._id}&pipeline=true`); }
-  };
-
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-
-      <SectionBlock
-        icon={AssignmentOutlined} label={s("job_interviews")} count={jobAssessments.length}
-        color={T} bg={TBG} border={TBD}
-        loading={jobLoading} emptyText={s("empty_job")} emptyIcon={WorkOutlineOutlined}
-      >
-        {jobAssessments.map(a => (
-          <JobRow key={a._id} assessment={a} quota={quota} onViewDetails={handleViewDetails} onContinueTest={handleContinueTest} s={s} />
-        ))}
-      </SectionBlock>
 
       <SectionBlock
         icon={CodeOutlined} label={s("technical")} count={techAssessments.length}
@@ -289,7 +155,6 @@ const InterviewsBlock: React.FC = () => {
         ))}
       </SectionBlock>
 
-      <StepInfoModal open={stepModalOpen} onClose={() => setStep(false)} onStart={handleStartStep} assessment={selectedAssmt} quota={quota} />
     </Box>
   );
 };
