@@ -52,10 +52,10 @@ const HOVER_TXT = "#E8F6F9"; // hover text — near white
 const LABEL_C = "#a3aed1"; // section label — visible
 
 const GROUPS = [
-  { groupKey: "main", ids: ["dashboard"] },
+  { groupKey: "main", ids: ["dashboard", "messages"] },
   { groupKey: "jobs", ids: ["posts", "applications"] },
   { groupKey: "campaigns", ids: ["campaigns"] },
-  { groupKey: "team", ids: ["employees", "messages", "departments"] },
+  { groupKey: "team", ids: ["employees", "departments"] },
   { groupKey: "account", ids: ["settings", "subscription"] },
 ];
 
