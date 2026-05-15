@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import ScrollToTop from "@/components/ui/ScrollToTop";
+import CookieBanner from "@/components/ui/CookieBanner";
 import { Poppins } from "next/font/google";
 import MuiToast from "@/components/ui/Toast";
 import { useToast, ToastProvider } from "@/hooks/useToast";
@@ -188,6 +189,7 @@ export default function App({ Component, pageProps }: AppProps) {
               <AuthWrapper>
                 <Component {...pageProps} />
                 <ScrollToTop />
+                <CookieBanner />
               </AuthWrapper>
             </ToastProvider>
           </main>
