@@ -9,7 +9,6 @@ import {
   type ChatShellConversation,
   type ChatShellMessage,
 } from "@/modules/shared/chat";
-import { CHAT_LAST_MESSAGE_BLOCKED_PREVIEW } from "@/modules/shared/chat/constants/contactPolicy";
 import {
   toChatShellConversation,
   toChatShellMessage,
@@ -40,10 +39,10 @@ const initialState: TeamChatState = {
 
 /** Immer-safe: sync sidebar / header preview from a message row. */
 const applyLastMessagePreviewFromMessage = (conv: ChatShellConversation, next: ChatShellMessage) => {
+  if (next.deliveryBlocked) return;
   const del = !!next.isDeletedForEveryone;
-  const blocked = !!next.deliveryBlocked;
   conv.lastMessage = {
-    text: del ? "" : blocked ? CHAT_LAST_MESSAGE_BLOCKED_PREVIEW : next.text,
+    text: del ? "" : next.text,
     timestamp: next.createdAt,
     isDeletedForEveryone: del,
   };
@@ -54,7 +53,13 @@ const teamChatSlice = createSlice({
   initialState,
   reducers: {
     setTeamConversations: (state, action: PayloadAction<ChatShellConversation[]>) => {
-      state.conversations = action.payload;
+      state.conversations = action.payload.map((conv) => {
+        if (!conv.lastMessage) {
+          const existing = state.conversations.find((c) => c._id === conv._id);
+          if (existing?.lastMessage) return { ...conv, lastMessage: existing.lastMessage };
+        }
+        return conv;
+      });
     },
     setTeamCurrentConversation: (state, action: PayloadAction<ChatShellConversation | null>) => {
       state.currentConversation = action.payload;

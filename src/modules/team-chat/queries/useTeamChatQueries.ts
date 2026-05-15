@@ -122,19 +122,9 @@ export const useMarkTeamConversationReadMutation = () => {
 };
 
 export const useSendTeamMessageMutation = () => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (payload: SendTeamMessagePayload) => teamChatApi.sendMessage(payload),
-    onSuccess: (message) => {
-      const convId = message?.conversationId ? String(message.conversationId) : null;
-      queryClient.invalidateQueries({ queryKey: teamChatKeys.conversations() });
-      queryClient.invalidateQueries({ queryKey: teamChatKeys.unreadCount() });
-      if (convId) {
-        queryClient.invalidateQueries({ queryKey: teamChatKeys.messages(convId) });
-      }
-      return toChatShellMessage(message);
-    },
+    onSuccess: (message) => toChatShellMessage(message),
     meta: {
       errorMessage: "Error sending team message",
     },

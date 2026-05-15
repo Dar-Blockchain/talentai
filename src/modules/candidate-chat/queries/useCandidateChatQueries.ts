@@ -105,7 +105,9 @@ export const useCandidateMessagesQuery = (
     queryKey: [...candidateChatKeys.messages(conversationId || "none", params), viewerKey],
     queryFn: async () => {
       const messages = await candidateChatApi.fetchMessages(conversationId as string, params);
-      return messages.map(toChatShellMessage);
+      return messages
+        .map(toChatShellMessage)
+        .filter((msg) => !msg.deliveryBlocked || !viewerKey || String(msg.sender._id) === viewerKey);
     },
     enabled,
     staleTime: 0,
@@ -157,18 +159,8 @@ export const useMarkCandidateConversationReadMutation = () => {
 };
 
 export const useSendCandidateMessageMutation = () => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (payload: SendCandidateMessagePayload) => candidateChatApi.sendMessage(payload),
-    onSuccess: (_data, variables) => {
-      const convId = variables.conversationId ? String(variables.conversationId) : "";
-      queryClient.invalidateQueries({ queryKey: [...candidateChatKeys.all, "conversations"] });
-      queryClient.invalidateQueries({ queryKey: candidateChatKeys.unreadCount() });
-      if (convId) {
-        queryClient.invalidateQueries({ queryKey: candidateChatKeys.messages(convId) });
-      }
-    },
   });
 };
 

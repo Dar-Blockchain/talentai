@@ -27,6 +27,8 @@ export interface CandidateConversation {
     /** Last message author (used to align deleted placeholders in the sidebar). */
     senderId?: string;
     sender?: string | { _id?: string };
+    /** Blocked from delivery (email/phone policy) — visible to sender only. */
+    deliveryBlocked?: boolean;
   };
   unreadCount: number;
   updatedAt: string;

@@ -292,21 +292,19 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
                         previewDeleted
                           ? t("messages.this_message_was_deleted")
                           : previewBlocked
-                            ? t("messages.not_delivered_preview")
+                            ? ""
                             : conv.lastMessage?.text || t("sidebar.no_messages")
                       }
                       secondaryTypographyProps={{
                         noWrap: true,
                         fontSize: row.previewFont,
-                        fontStyle: previewDeleted || previewBlocked ? "italic" : undefined,
-                        fontWeight: hasUnread && !previewDeleted && !previewBlocked ? 500 : 400,
+                        fontStyle: previewDeleted ? "italic" : undefined,
+                        fontWeight: hasUnread && !previewDeleted ? 500 : 400,
                         color: previewDeleted
                           ? "text.disabled"
-                          : previewBlocked
-                            ? "error.main"
-                            : hasUnread
-                              ? (mintLightTeamUi ? "#111827" : "text.primary")
-                              : (mintLightTeamUi ? "#6B7280" : "text.secondary"),
+                          : hasUnread
+                            ? (mintLightTeamUi ? "#111827" : "text.primary")
+                            : (mintLightTeamUi ? "#6B7280" : "text.secondary"),
                         sx: { mt: compact ? 0.15 : 0.25, display: "block" },
                       }}
                       sx={{ my: 0 }}

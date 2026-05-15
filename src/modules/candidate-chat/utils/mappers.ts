@@ -8,6 +8,7 @@ import {
   normalizeId,
   normalizeConversationUnreadCount,
   CHAT_LAST_MESSAGE_DELETED_SENTINEL,
+  CHAT_LAST_MESSAGE_BLOCKED_PREVIEW,
   CHAT_MESSAGE_BODY_TOMBSTONE,
   type ChatShellConversation,
   type ChatShellMessage,
@@ -64,6 +65,18 @@ export const toChatShellConversation = (
     lm.senderId
     || (typeof lm.sender === "string" ? lm.sender : lm.sender?._id)
     || undefined;
+
+  if (!!lm.deliveryBlocked || rawText === CHAT_LAST_MESSAGE_BLOCKED_PREVIEW) {
+    return {
+      _id: normalizeId(conversation._id),
+      participants: (conversation.participants || [])
+        .map(toParticipant)
+        .filter((participant): participant is Participant => !!participant),
+      unreadCount: normalizeConversationUnreadCount(conversation.unreadCount, viewerUserId),
+      updatedAt: conversation.updatedAt,
+    };
+  }
+
   return {
     _id: normalizeId(conversation._id),
     participants: (conversation.participants || [])
