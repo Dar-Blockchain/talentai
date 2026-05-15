@@ -57,7 +57,13 @@ const candidateChatSlice = createSlice({
   initialState,
   reducers: {
     setCandidateConversations: (state, action: PayloadAction<ChatShellConversation[]>) => {
-      state.conversations = action.payload;
+      state.conversations = action.payload.map((conv) => {
+        if (!conv.lastMessage) {
+          const existing = state.conversations.find((c) => c._id === conv._id);
+          if (existing?.lastMessage) return { ...conv, lastMessage: existing.lastMessage };
+        }
+        return conv;
+      });
     },
     setCandidateCurrentConversation: (state, action: PayloadAction<ChatShellConversation | null>) => {
       state.currentConversation = action.payload;

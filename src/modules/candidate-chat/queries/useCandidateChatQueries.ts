@@ -159,18 +159,8 @@ export const useMarkCandidateConversationReadMutation = () => {
 };
 
 export const useSendCandidateMessageMutation = () => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (payload: SendCandidateMessagePayload) => candidateChatApi.sendMessage(payload),
-    onSuccess: (_data, variables) => {
-      const convId = variables.conversationId ? String(variables.conversationId) : "";
-      queryClient.invalidateQueries({ queryKey: [...candidateChatKeys.all, "conversations"] });
-      queryClient.invalidateQueries({ queryKey: candidateChatKeys.unreadCount() });
-      if (convId) {
-        queryClient.invalidateQueries({ queryKey: candidateChatKeys.messages(convId) });
-      }
-    },
   });
 };
 
