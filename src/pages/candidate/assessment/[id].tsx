@@ -307,7 +307,6 @@ const AssessmentDetailsPage = () => {
   const aiAnalysis          = useMemo(() => assessment?.interviewData?.finalReport?.aiAnalysis || {}, [assessment]);
   const requiredSkills      = useMemo(() => assessment?.post?.skillAnalysis?.requiredSkills || [], [assessment]);
   const softSkills          = useMemo(() => assessment?.post?.skillAnalysis?.softSkills || [], [assessment]);
-  const suggestedSkills     = useMemo(() => assessment?.post?.skillAnalysis?.suggestedSkills || {}, [assessment]);
   const summary             = useMemo(() => assessment?.interviewData?.finalReport?.summary || '', [assessment]);
   const recommendations     = useMemo(() => assessment?.interviewData?.finalReport?.recommendations || [], [assessment]);
   const jobDescription      = useMemo(() => assessment?.post?.jobDetails?.description || '', [assessment]);
@@ -447,7 +446,7 @@ const AssessmentDetailsPage = () => {
                   {Object.keys(coverageAreas).length > 0 && <CoverageAreas coverageAreas={coverageAreas} />}
                   {Object.keys(aiAnalysis).length > 0 && <AiAnalysisSection aiAnalysis={aiAnalysis} />}
                   {(requiredSkills.length > 0 || softSkills.length > 0) && (
-                    <SkillsSection requiredSkills={requiredSkills} softSkills={softSkills} suggestedSkills={suggestedSkills} />
+                    <SkillsSection requiredSkills={requiredSkills} softSkills={softSkills} />
                   )}
                   {summary && <SummarySection summary={summary} />}
                   {(jobDescription || jobRequirements?.length > 0) && (

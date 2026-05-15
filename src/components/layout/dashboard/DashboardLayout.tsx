@@ -14,13 +14,27 @@ import OnboardingTour from "@/components/features/company/OnboardingTour";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
+  /** Less top padding on the main scroll area (full-height chat, etc.). */
+  tightenMainPaddingTop?: boolean;
+  /** Less bottom padding so full-height chat uses more of the viewport. */
+  tightenMainPaddingBottom?: boolean;
+  /**
+   * Main column becomes a flex viewport (overflow hidden); children use flex:1 to fill under the header.
+   * Use with team messages + `chatDashboardShellFlexSx` so chat reaches the bottom with no dead gap.
+   */
+  fillMainHeight?: boolean;
 }
 
 const DRAWER_WIDTH = 240;
 const COLLAPSED_WIDTH = 72;
 const HEADER_HEIGHT = 64;
 
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({
+  children,
+  tightenMainPaddingTop = false,
+  tightenMainPaddingBottom = false,
+  fillMainHeight = false,
+}) => {
   const { t } = useTranslation("auth");
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -113,18 +127,33 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           <Header breadcrumb={breadcrumb} onOpenMobile={() => setMobileOpen(true)} />
         </Box>
 
-        {/* Scrollable content container */}
+        {/* Main content: scrollable dashboard pages, or flex viewport for full-height chat */}
         <Box
           sx={{
             flex: 1,
+            minHeight: 0,
             mt: `${HEADER_HEIGHT}px`,
-            height: `calc(100vh - ${HEADER_HEIGHT}px)`,
-            overflowY: "auto",
-            overflowX: "hidden",
+            ...(fillMainHeight
+              ? {
+                  display: "flex",
+                  flexDirection: "column",
+                  overflow: "hidden",
+                }
+              : {
+                  height: `calc(100vh - ${HEADER_HEIGHT}px)`,
+                  overflowY: "auto",
+                  overflowX: "hidden",
+                }),
             backgroundColor: "rgb(249 250 251)!important",
-            p: { xs: 1.5, sm: 2.5, md: 3 },
+            px: { xs: 1.5, sm: 2.5, md: 3 },
+            pb: tightenMainPaddingBottom
+              ? { xs: 1, sm: 1.25 }
+              : { xs: 1.5, sm: 2.5, md: 3 },
+            pt: tightenMainPaddingTop
+              ? { xs: 0.5, sm: 1, md: 1 }
+              : { xs: 1.5, sm: 2.5, md: 3 },
           }}
-          className="custom-scrollbar"
+          className={fillMainHeight ? undefined : "custom-scrollbar"}
         >
           {children}
         </Box>

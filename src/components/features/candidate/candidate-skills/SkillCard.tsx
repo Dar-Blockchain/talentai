@@ -1,14 +1,9 @@
-import React, { useCallback } from "react";
-import { Box, Typography, LinearProgress, Tooltip, Button } from "@mui/material";
+import React from "react";
+import { Box, Typography, LinearProgress } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import dayjs from "@/lib/dayjs";
-import { useRouter } from "next/router";
-import { useSelector } from "react-redux";
-import { RootState } from "@/store/store";
 import CodeOutlined from "@mui/icons-material/CodeOutlined";
 import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
-import FlashOnOutlined from "@mui/icons-material/FlashOnOutlined";
-import LockOutlined from "@mui/icons-material/LockOutlined";
 
 interface SkillCardProps {
   type: "technical" | "soft";
@@ -40,13 +35,10 @@ const SkillCard: React.FC<SkillCardProps> = ({ skill, type }) => {
   const { t } = useTranslation("dashboard");
   const s = (k: string, opts?: any) => t(`candidate.skills.${k}`, opts) as string;
 
-  const router    = useRouter();
-  const profile   = useSelector((state: RootState) => state.user.connectedUser.profile);
   const score     = skill.ScoreTest ?? 0;
   const levelKey  = LEVEL_KEYS[skill.Levelconfirmed] ?? "new";
   const lvlStyle  = LEVEL_STYLES[levelKey];
   const lvlLabel  = s(`levels.${levelKey}`);
-  const quotaFull = (profile?.quota ?? 0) >= 5;
   const timeAgo   = skill?.updatedAt ? dayjs(skill.updatedAt).fromNow() : null;
 
   const isTech      = type === "technical";
@@ -54,16 +46,6 @@ const SkillCard: React.FC<SkillCardProps> = ({ skill, type }) => {
   const accentBg    = isTech ? "#EFF6FF" : "#FFFBEB";
   const accentBd    = isTech ? "#BFDBFE" : "#FDE68A";
   const Icon        = isTech ? CodeOutlined : PeopleOutlined;
-
-  const handleTest = useCallback(() => {
-    if (quotaFull) return;
-    if (isTech) {
-      router.push(`/candidate/interview/hr/?type=technical&skill=${encodeURIComponent(skill.name)}&proficiency=${skill.proficiencyLevel || 1}`);
-    } else {
-      const map: Record<string, number> = { "Entry Level": 1, Junior: 2, "Mid Level": 3, Senior: 4, Expert: 5 };
-      router.push(`/candidate/interview/hr/?type=soft&skill=${encodeURIComponent(skill.name)}&category=${encodeURIComponent(skill.category)}&proficiency=${map[skill.experienceLevel] || 1}`);
-    }
-  }, [router, skill, type, quotaFull, isTech]);
 
   return (
     <Box sx={{
@@ -75,12 +57,11 @@ const SkillCard: React.FC<SkillCardProps> = ({ skill, type }) => {
       flexDirection: "column",
       gap: 1.25,
       transition: "all 0.18s",
-      cursor: quotaFull ? "not-allowed" : "default",
-      "&:hover": !quotaFull ? {
+      "&:hover": {
         borderColor: accentColor,
         boxShadow: `0 4px 16px ${accentColor}18`,
         transform: "translateY(-1px)",
-      } : { opacity: 0.75 },
+      },
     }}>
 
       {/* Top row: icon + name + level badge */}
@@ -136,36 +117,11 @@ const SkillCard: React.FC<SkillCardProps> = ({ skill, type }) => {
         />
       </Box>
 
-      {/* Bottom row: time + test button */}
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 0.25 }}>
+      {/* Bottom row: time */}
+      <Box sx={{ display: "flex", alignItems: "center", mt: 0.25 }}>
         <Typography sx={{ fontSize: "0.6rem", color: "#CBD5E1" }}>
           {timeAgo ?? s("just_added")}
         </Typography>
-
-        <Tooltip title={quotaFull ? s("limit_tooltip") : ""} arrow placement="top">
-          <span>
-            <Button
-              size="small"
-              onClick={handleTest}
-              disabled={quotaFull}
-              startIcon={quotaFull
-                ? <LockOutlined sx={{ fontSize: "12px !important" }} />
-                : <FlashOnOutlined sx={{ fontSize: "12px !important" }} />}
-              sx={{
-                textTransform: "none", fontWeight: 700, fontSize: "0.68rem",
-                color: quotaFull ? "#94A3B8" : accentColor,
-                bgcolor: quotaFull ? "#F8FAFC" : accentBg,
-                border: `1px solid ${quotaFull ? "#E2E8F0" : accentBd}`,
-                borderRadius: "8px", px: 1.25, py: 0.35,
-                minWidth: 0, boxShadow: "none",
-                "&:hover": { bgcolor: quotaFull ? "#F8FAFC" : `${accentColor}20` },
-                "&.Mui-disabled": { color: "#94A3B8", bgcolor: "#F8FAFC" },
-              }}
-            >
-              {quotaFull ? s("locked") : score > 0 ? s("retest") : s("test")}
-            </Button>
-          </span>
-        </Tooltip>
       </Box>
 
     </Box>

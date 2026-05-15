@@ -18,6 +18,23 @@ module.exports.findOrCreateConversation = async (req, res) => {
       });
     }
 
+    // Conversations are company-initiated: a candidate may only resume an
+    // existing thread, never create one. This keeps the candidate inbox
+    // restricted to companies that have already reached out.
+    if (req.user.role === "Candidate") {
+      const Conversation = require("../../models/Conversations.model");
+      const existing = await Conversation.findOne({
+        candidateId,
+        companyId,
+      });
+      if (!existing) {
+        return res.status(403).json({
+          success: false,
+          message: "Candidates cannot start a new conversation",
+        });
+      }
+    }
+
     const conversation = await conversationService.findOrCreateConversation(
       candidateId,
       companyId,
@@ -46,9 +63,14 @@ module.exports.getUserConversations = async (req, res) => {
     const userId = req.user._id;
     const { page = 1, limit = 20, status, includeArchived } = req.query;
 
+    const pageNum = Number.parseInt(String(page), 10);
+    const limitNum = Number.parseInt(String(limit), 10);
+    const safePage = Number.isFinite(pageNum) && pageNum > 0 ? pageNum : 1;
+    const safeLimit = Number.isFinite(limitNum) && limitNum > 0 ? Math.min(limitNum, 100) : 20;
+
     const options = {
-      page: parseInt(page),
-      limit: parseInt(limit),
+      page: safePage,
+      limit: safeLimit,
       status,
       includeArchived: includeArchived === "true",
     };
@@ -58,6 +80,7 @@ module.exports.getUserConversations = async (req, res) => {
       options,
     );
 
+    res.set("Cache-Control", "private, no-store, must-revalidate");
     res.status(200).json({
       success: true,
       data: result.conversations,
@@ -245,13 +268,20 @@ module.exports.deleteConversation = async (req, res) => {
       userId,
     );
 
-    // Emit WebSocket event to notify all participants
+    // Emit WebSocket event to notify participants.
+    // Company performs a hard delete (removes for everyone) → notify all participants.
+    // Candidate performs a soft delete (archive for themselves only) → notify only
+    // the candidate so the company's inbox is not incorrectly cleared.
     try {
       const io = socket.getIO();
       const chatNamespace = io.of("/chat");
 
-      // Emit to all participants
-      participants.forEach((participantId) => {
+      const isCompanyDelete = req.user.role === "Company";
+      const recipientIds = isCompanyDelete
+        ? participants
+        : [userId.toString()];
+
+      recipientIds.forEach((participantId) => {
         chatNamespace.to(`user:${participantId}`).emit("conversation_deleted", {
           conversationId,
           deletedBy: userId.toString(),
@@ -259,7 +289,7 @@ module.exports.deleteConversation = async (req, res) => {
       });
 
       console.log(
-        `📨 Conversation deletion broadcast via WebSocket to participants`,
+        `📨 Conversation deletion broadcast via WebSocket to ${recipientIds.length} participant(s)`,
       );
     } catch (socketError) {
       console.error("Error emitting WebSocket event:", socketError);
@@ -289,6 +319,7 @@ module.exports.getTotalUnreadCount = async (req, res) => {
 
     const totalUnread = await conversationService.getTotalUnreadCount(userId);
 
+    res.set("Cache-Control", "private, no-store, must-revalidate");
     res.status(200).json({
       success: true,
       data: { totalUnread },
@@ -298,6 +329,32 @@ module.exports.getTotalUnreadCount = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || "Failed to get unread count",
+    });
+  }
+};
+
+/**
+ * Unarchive all conversations for the current user.
+ * Removes the user's ID from archivedBy on every conversation they participate in.
+ * POST /chat/conversations/unarchive-all
+ */
+module.exports.unarchiveAllConversations = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const Conversation = require("../../models/Conversations.model");
+
+    const modifiedCount = await Conversation.unarchiveAllForUser(userId);
+
+    res.status(200).json({
+      success: true,
+      data: { modifiedCount },
+      message: `Unarchived ${modifiedCount} conversation(s)`,
+    });
+  } catch (error) {
+    console.error("Error in unarchiveAllConversations controller:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to unarchive conversations",
     });
   }
 };

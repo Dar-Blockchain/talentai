@@ -34,7 +34,7 @@ export interface SourcingCandidate {
   firstName: string;
   lastName:  string;
   postTitle: string;
-  score:     number;
+  score:     number | null;
   status:    'shortlisted' | 'completed';
 }
 

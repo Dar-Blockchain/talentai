@@ -5,6 +5,7 @@ const {
   parseJsonFields,
 } = require("../../helpers/post.validation.helpers");
 const Profile = require("../../models/Profile.model");
+const { notifyMatchingCandidates } = require("../../services/jobMatch.service");
 
 // Centralized error handler
 const handleError = (res, error, defaultStatus = 500) => {
@@ -122,6 +123,13 @@ exports.createPost = async (req, res) => {
       token,
       userProfile,
     );
+
+    // Notify matching candidates when post is published immediately
+    if (post?.status === POST_STATUS.OPEN) {
+      notifyMatchingCandidates(String(post._id)).catch(err =>
+        console.error("Job match email error:", err.message)
+      );
+    }
 
     // ========== 5. RETURN RESPONSE ==========
     res.status(201).json({ success: true, data: post });
@@ -430,6 +438,14 @@ exports.updatePostStatus = async (req, res) => {
       status,
       updatedBy,
     );
+
+    // Notify matching candidates when a post is published
+    if (status === POST_STATUS.OPEN) {
+      notifyMatchingCandidates(req.params.id).catch(err =>
+        console.error("Job match email error:", err.message)
+      );
+    }
+
     res.status(200).json({ success: true, data: post });
   } catch (error) {
     handleError(res, error, 400);

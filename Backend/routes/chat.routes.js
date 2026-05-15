@@ -23,6 +23,9 @@ router.get('/conversations/search', conversationController.searchConversations);
 // GET /chat/conversations/unread-count - Get total unread count
 router.get('/conversations/unread-count', conversationController.getTotalUnreadCount);
 
+// POST /chat/conversations/unarchive-all - Remove current user from archivedBy on all their conversations
+router.post('/conversations/unarchive-all', conversationController.unarchiveAllConversations);
+
 // GET /chat/conversations/:conversationId - Get conversation by ID
 router.get('/conversations/:conversationId', conversationController.getConversationById);
 
@@ -54,8 +57,10 @@ router.get('/unread-count', conversationController.getTotalUnreadCount);
 // POST /chat/messages - Send message
 router.post('/messages', messageController.sendMessage);
 
-// GET /chat/messages/:conversationId - Get conversation messages
-router.get('/messages/:conversationId', messageController.getConversationMessages);
+// Static path segments must be registered before `/messages/:conversationId` or Express
+// will treat e.g. `single` as a conversationId.
+// GET /chat/messages/single/:messageId - Get message by ID
+router.get('/messages/single/:messageId', messageController.getMessageById);
 
 // GET /chat/messages/:conversationId/unread - Get unread messages
 router.get('/messages/:conversationId/unread', messageController.getUnreadMessages);
@@ -63,8 +68,8 @@ router.get('/messages/:conversationId/unread', messageController.getUnreadMessag
 // GET /chat/messages/:conversationId/search - Search messages in conversation
 router.get('/messages/:conversationId/search', messageController.searchMessages);
 
-// GET /chat/messages/single/:messageId - Get message by ID
-router.get('/messages/single/:messageId', messageController.getMessageById);
+// GET /chat/messages/:conversationId - Get conversation messages
+router.get('/messages/:conversationId', messageController.getConversationMessages);
 
 // PUT /chat/messages/:messageId/read - Mark message as read
 router.put('/messages/:messageId/read', messageController.markMessageAsRead);

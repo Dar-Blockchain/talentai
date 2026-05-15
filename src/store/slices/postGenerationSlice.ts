@@ -38,35 +38,15 @@ export interface JobDetails {
   salary: Salary;
 }
 
-export interface SuggestedSkills {
-  technical: string[];
-  frameworks: string[];
-  tools: string[];
-}
-
-export interface SkillSummary {
-  mainTechnologies: string[];
-  complementarySkills: string[];
-  learningPath: string[];
-  stackComplexity: string;
-}
-
 export interface SkillAnalysis {
   requiredSkills: HardSkill[];
   softSkills: SoftSkill[];
-  suggestedSkills: SuggestedSkills;
-  skillSummary: SkillSummary;
-}
-
-export interface LinkedinPost {
-  finalPost: string;
 }
 
 export interface PostGenerationResponse {
   creationType: "ai" | "manual" | null;
   jobDetails: JobDetails;
   skillAnalysis: SkillAnalysis;
-  linkedinPost: LinkedinPost;
   expirationDate: string | null;
 }
 
@@ -398,9 +378,6 @@ export const selectHardSkills = (state: any) =>
 
 export const selectSoftSkills = (state: any) =>
   state.postGeneration.generatedPost?.skillAnalysis.softSkills ?? [];
-
-export const selectLinkedinPost = (state: any) =>
-  state.postGeneration.generatedPost?.linkedinPost.finalPost;
 
 export const selectLoading = (state: any) => state.postGeneration.loading;
 

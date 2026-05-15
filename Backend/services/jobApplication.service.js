@@ -1481,18 +1481,22 @@ module.exports.getSourcingKPI = async (companyId, postId = null, dateFrom = null
       post:      { $in: postIds },
     }).select('candidate post interviewData.finalReport.scores').lean();
 
-    // scoreMap key: postId_userId — use scores.overall (AI quality score, not coverage)
+    // scoreMap key: postId_userId — only store entries with a real score > 0
     const scoreMap = {};
     assessments.forEach(a => {
-      const key = `${String(a.post)}_${String(a.candidate)}`;
-      scoreMap[key] = Math.round(a.interviewData?.finalReport?.scores?.overall ?? 0);
+      const raw = a.interviewData?.finalReport?.scores?.overall;
+      if (raw != null && raw > 0) {
+        const key = `${String(a.post)}_${String(a.candidate)}`;
+        scoreMap[key] = Math.round(raw);
+      }
     });
 
-    // Build ranked list
+    // Build ranked list — score is null if no assessment exists (not 0)
     const ranked = completedApps.map(a => {
       const userId    = profileIdToUserId[String(a.profile?._id)] || '';
       const postIdStr = String(a.post?._id || '');
-      const score     = scoreMap[`${postIdStr}_${userId}`] ?? 0;
+      const key       = `${postIdStr}_${userId}`;
+      const score     = key in scoreMap ? scoreMap[key] : null;
       return {
         firstName: a.profile?.firstName || '—',
         lastName:  a.profile?.lastName  || '',
@@ -1502,33 +1506,37 @@ module.exports.getSourcingKPI = async (companyId, postId = null, dateFrom = null
       };
     });
 
-    ranked.sort((a, b) => b.score - a.score);
+    // Scored entries first (desc), then unscored entries after
+    ranked.sort((a, b) => {
+      if (a.score !== null && b.score !== null) return b.score - a.score;
+      if (a.score !== null) return -1;
+      if (b.score !== null) return 1;
+      return 0;
+    });
     const top10 = ranked.slice(0, 10).map((r, i) => ({ rank: i + 1, ...r }));
 
-    // ── Avg score (only assessments with score > 0) ──────────────────────────────
-    const assessBase = { company: companyId, 'interviewData.finalReport.scores.overall': { $gt: 0 } };
-    if (postId) assessBase.post = new mongoose.Types.ObjectId(postId);
-
-    const avg = (arr) => arr.length
-      ? Math.round(arr.reduce((s, a) => s + (a.interviewData?.finalReport?.scores?.overall || 0), 0) / arr.length)
+    // ── Avg score: all completed/shortlisted candidates, score=0 for those without interview ──
+    const avgCurrent = ranked.length
+      ? Math.round(ranked.reduce((s, r) => s + (r.score ?? 0), 0) / ranked.length)
       : null;
 
-    const [curScores, prevScores] = await Promise.all([
-      PostInterviewAssessment.find({ ...assessBase, updatedAt: { $gte: d30 } })
-        .select('interviewData.finalReport.scores.overall').lean(),
-      PostInterviewAssessment.find({ ...assessBase, updatedAt: { $gte: d60, $lt: d30 } })
-        .select('interviewData.finalReport.scores.overall').lean(),
-    ]);
+    // ── Previous period avg for delta ────────────────────────────────────────────
+    const assessBasePrev = { company: companyId, createdAt: { $gte: d60, $lt: d30 }, 'interviewData.finalReport.scores.overall': { $exists: true } };
+    if (postId) assessBasePrev.post = new mongoose.Types.ObjectId(postId);
+    const prevDocs = await PostInterviewAssessment.find(assessBasePrev).select('interviewData.finalReport.scores.overall').lean();
+    const avgPrevious = prevDocs.length
+      ? Math.round(prevDocs.reduce((s, a) => s + (a.interviewData?.finalReport?.scores?.overall ?? 0), 0) / prevDocs.length)
+      : null;
 
-    const avgCurrent  = avg(curScores);
-    const avgPrevious = avg(prevScores);
-    const avgDelta    = avgCurrent !== null && avgPrevious !== null
+    const avgDelta = avgCurrent !== null && avgPrevious !== null
       ? avgCurrent - avgPrevious
       : null;
 
-    // ── By post: top 5 posts by avg score ───────────────────────────────────────
+    // ── By post: avg score per post across completed/shortlisted candidates ────
+    const byPostMatch = { company: companyId, 'interviewData.finalReport.scores.overall': { $exists: true } };
+    if (postId) byPostMatch.post = new mongoose.Types.ObjectId(postId);
     const byPostAgg = await PostInterviewAssessment.aggregate([
-      { $match: assessBase },
+      { $match: byPostMatch },
       {
         $group: {
           _id:      '$post',
