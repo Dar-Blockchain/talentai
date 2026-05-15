@@ -76,16 +76,13 @@ export const applyIncomingMessage = (
   if (conversation) {
     const deletedForEveryone = !!message.isDeletedForEveryone;
     const blocked = !!message.deliveryBlocked;
-    const previewText = deletedForEveryone
-      ? ""
-      : blocked
-        ? CHAT_LAST_MESSAGE_BLOCKED_PREVIEW
-        : message.text;
-    conversation.lastMessage = {
-      text: previewText,
-      timestamp: message.createdAt,
-      isDeletedForEveryone: deletedForEveryone,
-    };
+    if (!blocked) {
+      conversation.lastMessage = {
+        text: deletedForEveryone ? "" : message.text,
+        timestamp: message.createdAt,
+        isDeletedForEveryone: deletedForEveryone,
+      };
+    }
     conversation.updatedAt = message.createdAt;
     if (isIncoming && !isActiveConversation && !blocked) {
       const prev = normalizeConversationUnreadCount(conversation.unreadCount, viewerUserId);

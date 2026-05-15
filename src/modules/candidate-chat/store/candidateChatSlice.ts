@@ -3,7 +3,6 @@ import type { RootState } from "@/store/store";
 import type { CandidateConversation, CandidateMessage } from "@/modules/candidate-chat/types";
 import {
   applyIncomingMessage,
-  CHAT_LAST_MESSAGE_BLOCKED_PREVIEW,
   dedupeMessages,
   resolveMessagePayload,
   sortConversationsByRecent,
@@ -43,10 +42,10 @@ const applyLastMessagePreviewFromMessage = (
   conv: ChatShellConversation,
   next: ChatShellMessage,
 ) => {
+  if (next.deliveryBlocked) return;
   const del = !!next.isDeletedForEveryone;
-  const blocked = !!next.deliveryBlocked;
   conv.lastMessage = {
-    text: del ? "" : blocked ? CHAT_LAST_MESSAGE_BLOCKED_PREVIEW : next.text,
+    text: del ? "" : next.text,
     timestamp: next.createdAt,
     isDeletedForEveryone: del,
     ...(next.sender?._id ? { senderId: String(next.sender._id) } : {}),

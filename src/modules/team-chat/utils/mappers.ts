@@ -3,6 +3,7 @@ import type { TeamChatParticipant, TeamConversation, TeamMessage } from "@/modul
 import { TEAM_LAST_MESSAGE_DELETED_SENTINEL, TEAM_MESSAGE_BODY_TOMBSTONE } from "@/modules/team-chat/constants/lastMessagePreview";
 import {
   normalizeId,
+  CHAT_LAST_MESSAGE_BLOCKED_PREVIEW,
   type ChatShellConversation,
   type ChatShellMessage,
 } from "@/modules/shared/chat";
@@ -52,6 +53,16 @@ export const toChatShellConversation = (conversation: TeamConversation): ChatShe
   const rawText = lm.text ?? "";
   const fromSentinel = rawText === TEAM_LAST_MESSAGE_DELETED_SENTINEL;
   const deleted = !!lm.isDeletedForEveryone || fromSentinel;
+
+  if (rawText === CHAT_LAST_MESSAGE_BLOCKED_PREVIEW) {
+    return {
+      _id: normalizeId(conversation._id),
+      participants: other ? [other] : [],
+      unreadCount: conversation.unreadCount || 0,
+      updatedAt: conversation.updatedAt,
+    };
+  }
+
   return {
     _id: normalizeId(conversation._id),
     participants: other ? [other] : [],

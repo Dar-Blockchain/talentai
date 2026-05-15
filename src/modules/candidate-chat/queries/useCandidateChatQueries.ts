@@ -105,7 +105,9 @@ export const useCandidateMessagesQuery = (
     queryKey: [...candidateChatKeys.messages(conversationId || "none", params), viewerKey],
     queryFn: async () => {
       const messages = await candidateChatApi.fetchMessages(conversationId as string, params);
-      return messages.map(toChatShellMessage);
+      return messages
+        .map(toChatShellMessage)
+        .filter((msg) => !msg.deliveryBlocked || !viewerKey || String(msg.sender._id) === viewerKey);
     },
     enabled,
     staleTime: 0,
