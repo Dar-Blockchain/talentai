@@ -77,8 +77,7 @@ const ScoreBadge: React.FC<{ score: number | null; size?: 'sm' | 'lg' }> = ({ sc
 export const QuestionnaireResults: React.FC<{ data: ResultsData; scoringTimedOut?: boolean }> = ({ data, scoringTimedOut = false }) => {
   const { t } = useTranslation('dashboard');
   const rq = 'pages.campaigns.detail.results_view.questionnaire';
-  const questions: { question: string; type: string; options?: string[] }[] =
-    data.campaign.module?.config?.questions ?? [];
+  const questions = (data.campaign.module?.config?.questions ?? []) as { question: string; type: string; options?: string[] }[];
   const answers = data.response?.answers ?? [];
   const answerMap: Record<string, any> = {};
   answers.forEach(a => { answerMap[a.questionId] = a.answer; });

@@ -764,7 +764,7 @@ export const selectCampaignSessionsTotal = (state: RootState) =>
   state.campaign.sessionsTotal as number;
 
 export const selectEmployeeCampaigns = (state: RootState) =>
-  state.campaign.employeeCampaigns as Campaign[];
+  state.campaign.employeeCampaigns as unknown as Campaign[];
 export const selectEmployeeCampaignsLoading = (state: RootState) =>
   state.campaign.employeeCampaignsLoading as boolean;
 export const selectEmployeeCampaignsError = (state: RootState) =>

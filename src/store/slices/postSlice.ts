@@ -24,11 +24,13 @@ interface RecruitmentFlowState {
 interface SavePostState {
   loading: boolean;
   error: string | null;
-  savedPost: Record<string, unknown> | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  savedPost: any;
 }
 
 interface RecommendedState {
-  items: Record<string, unknown>[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  items: any[];
   loading: boolean;
   error: string | null;
   pagination: PaginationState;
@@ -48,22 +50,26 @@ interface PaginationState {
 }
 
 interface CandidateAssessmentsState {
-  items: Record<string, unknown>[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  items: any[];
   loading: boolean;
   error: string | null;
   pagination: PaginationState;
 }
 
 interface CompanyAssessmentsState {
-  items: Record<string, unknown>[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  items: any[];
   loading: boolean;
   error: string | null;
   pagination: PaginationState;
 }
 
 interface AssessmentDetailsState {
-  assessment: Record<string, unknown> | null;
-  stepsData: Record<string, unknown> | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  assessment: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  stepsData: any;
   loading: boolean;
   error: string | null;
 }
@@ -82,18 +88,21 @@ interface PostMetricsState {
 }
 
 interface PostState {
-  steps: Record<string, unknown>[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  steps: any[];
   loading: boolean;
   error: string | null;
   postStepsLoading: boolean;
   postStepsError: string | null;
-  myPosts: Record<string, unknown>[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  myPosts: any[];
   myPostsLoading: boolean;
   myPostsError: string | null;
   myPostsPagination: PaginationState;
   deletePostLoading: boolean;
   deletePostError: string | null;
-  currentJob: Record<string, unknown> | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  currentJob: any;
   currentJobLoading: boolean;
   currentJobError: string | null;
   recommended: RecommendedState;
@@ -196,7 +205,8 @@ const initialState: PostState = {
 
 export const savePost = createAsyncThunk(
   "post/savePost",
-  async (jobData: Record<string, unknown>, { rejectWithValue }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async (jobData: any, { rejectWithValue }) => {
     try {
       return await postService.savePost(jobData);
     } catch (err: any) {
@@ -208,7 +218,8 @@ export const savePost = createAsyncThunk(
 export const updatePost = createAsyncThunk(
   "post/updatePost",
   async (
-    { jobId, jobData }: { jobId: string | number; jobData: Record<string, unknown> },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    { jobId, jobData }: { jobId: string | number; jobData: any },
     { rejectWithValue }
   ) => {
     try {
@@ -237,7 +248,8 @@ export const fetchRecommendedPosts = createAsyncThunk(
 export const postRecruitmentSteps = createAsyncThunk(
   "post/postRecruitmentSteps",
   async (
-    { postId, steps }: { postId: string; steps: Record<string, unknown>[] },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    { postId, steps }: { postId: string; steps: any[] },
     { rejectWithValue }
   ) => {
     try {
@@ -314,7 +326,8 @@ export const updatePostStatus = createAsyncThunk(
 export const savePostInterviewAssessment = createAsyncThunk(
   "post/savePostInterviewAssessment",
   async (
-    { postId, interviewData }: { postId: string; interviewData: Record<string, unknown> },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    { postId, interviewData }: { postId: string; interviewData: any },
     { rejectWithValue }
   ) => {
     try {
@@ -351,7 +364,8 @@ export const fetchCompanyAssessments = createAsyncThunk(
 
 // Async thunk to fetch a single post-interview assessment by ID
 export const fetchAssessmentDetails = createAsyncThunk<
-  { assessment: Record<string, unknown>; stepsData: Record<string, unknown> },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  { assessment: any; stepsData: any },
   string,
   { rejectValue: string }
 >(

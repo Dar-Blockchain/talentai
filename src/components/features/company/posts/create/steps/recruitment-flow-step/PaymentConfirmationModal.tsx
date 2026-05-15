@@ -65,7 +65,7 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
       setIsPublishing(true);
       setError(null);
       await dispatch(
-        updatePostStatus({ postId: (savedPost as Record<string, Record<string, string>>)?.jobData?._id, status: "open" })
+        updatePostStatus({ postId: savedPost?.jobData?._id, status: "open" })
       ).unwrap();
       setPublishSuccess(true);
     } catch (err: unknown) {
