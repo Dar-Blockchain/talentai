@@ -115,6 +115,18 @@ export const useCandidateChatSession = ({
     // this effect on unrelated renders and was previously paired with a destructive cleanup.
   }, [activeConversationId, currentUserId]);
 
+  // Mark conversation read when user returns to the tab while already inside a thread.
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible" && activeConversationIdRef.current && currentUserId) {
+        markReadMutation.mutate(String(activeConversationIdRef.current));
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUserId]);
+
   const handleSelectConversation = useCallback(
     (id: string) => {
       const idStr = String(id);
