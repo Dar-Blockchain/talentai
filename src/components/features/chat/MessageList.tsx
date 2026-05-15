@@ -16,7 +16,7 @@ import {
 import { keyframes } from "@mui/system";
 import ChatOutlined from "@mui/icons-material/ChatOutlined";
 import DeleteOutlined from "@mui/icons-material/DeleteOutlined";
-import ErrorOutline from "@mui/icons-material/ErrorOutline";
+import CancelOutlined from "@mui/icons-material/CancelOutlined";
 import MoreVert from "@mui/icons-material/MoreVert";
 import { useTranslation } from "react-i18next";
 import { formatTime, getParticipantDisplayName, isSameCalendarDay, messageDayKey, chatContextMenuPaperSlotProps, chatContextMenuItemSx } from "./helpers";
@@ -141,14 +141,20 @@ const MessageBubble = memo(function MessageBubble({
     ? "rgba(243, 244, 246, 0.95)"
     : (isDark ? alpha(theme.palette.action.hover, 0.35) : alpha(theme.palette.grey[500], 0.08));
 
+  const blockedBg = mintLightTeamUi
+    ? "rgba(254, 226, 226, 0.9)"
+    : (isDark ? alpha(theme.palette.error.main, 0.18) : alpha(theme.palette.error.main, 0.07));
+
   const ownBubbleGradient = mintLightTeamUi ? TEAM_MINT_UI.ownBubbleGradient : undefined;
 
   const bubbleSurface =
     showDeleted
       ? { bgcolor: deletedPaper, backgroundImage: "none" }
-      : mintLightTeamUi && isOwn
-        ? { bgcolor: "transparent", backgroundImage: ownBubbleGradient }
-        : { bgcolor: isOwn ? ownBg : otherBg, backgroundImage: "none" };
+      : showDeliveryBlocked
+        ? { bgcolor: blockedBg, backgroundImage: "none" }
+        : mintLightTeamUi && isOwn
+          ? { bgcolor: "transparent", backgroundImage: ownBubbleGradient }
+          : { bgcolor: isOwn ? ownBg : otherBg, backgroundImage: "none" };
 
   return (
     <Paper
@@ -163,13 +169,15 @@ const MessageBubble = memo(function MessageBubble({
         ...bubbleSurface,
         color: showDeleted
           ? (mintLightTeamUi ? TEAM_MINT_UI.textSecondary : theme.palette.text.secondary)
-          : isOwn
-            ? ownColor
-            : otherColor,
+          : showDeliveryBlocked
+            ? (isDark ? alpha(theme.palette.error.light, 0.92) : theme.palette.text.primary)
+            : isOwn
+              ? ownColor
+              : otherColor,
         border: showDeleted
           ? `1px solid ${mintLightTeamUi ? TEAM_MINT_UI.border : alpha(theme.palette.divider, isDark ? 0.25 : 0.5)}`
           : showDeliveryBlocked
-            ? `2px solid ${alpha(theme.palette.error.main, isDark ? 0.65 : 0.5)}`
+            ? `2px solid ${alpha(theme.palette.error.main, isDark ? 0.7 : 0.55)}`
             : isOwn
               ? "none"
               : borderOther,
@@ -191,18 +199,22 @@ const MessageBubble = memo(function MessageBubble({
             filter: showDeleted || !isOwn ? "none" : mintLightTeamUi ? "brightness(1.02)" : (isDark ? "brightness(1.06)" : "brightness(1.03)"),
             boxShadow: showDeleted
               ? `0 1px 8px ${safeAlpha(theme.palette.common.black, mintLightTeamUi ? 0.04 : (isDark ? 0.2 : 0.04))}`
-              : mintLightTeamUi
-                ? (isOwn ? "0 8px 28px rgba(16, 185, 129, 0.32)" : TEAM_MINT_UI.shadowLift)
-                : isOwn
-                  ? `0 8px 24px ${alpha(primary, isDark ? 0.5 : 0.38)}`
-                  : isDark
-                    ? `0 6px 20px ${alpha("#000", 0.42)}`
-                    : `0 6px 20px ${alpha("#000", 0.09)}`,
+              : showDeliveryBlocked
+                ? `0 6px 20px ${alpha(theme.palette.error.main, isDark ? 0.38 : 0.22)}`
+                : mintLightTeamUi
+                  ? (isOwn ? "0 8px 28px rgba(16, 185, 129, 0.32)" : TEAM_MINT_UI.shadowLift)
+                  : isOwn
+                    ? `0 8px 24px ${alpha(primary, isDark ? 0.5 : 0.38)}`
+                    : isDark
+                      ? `0 6px 20px ${alpha("#000", 0.42)}`
+                      : `0 6px 20px ${alpha("#000", 0.09)}`,
             bgcolor: showDeleted
               ? (mintLightTeamUi ? "rgba(243, 244, 246, 1)" : (isDark ? alpha(theme.palette.action.hover, 0.5) : alpha(theme.palette.grey[500], 0.11)))
-              : mintLightTeamUi && isOwn && !showDeleted
-                ? "transparent"
-                : undefined,
+              : showDeliveryBlocked
+                ? undefined
+                : mintLightTeamUi && isOwn && !showDeleted
+                  ? "transparent"
+                  : undefined,
             borderColor: showDeleted ? (mintLightTeamUi ? TEAM_MINT_UI.border : alpha(theme.palette.divider, isDark ? 0.45 : 0.65)) : undefined,
             "& .chat-bubble-time": {
               opacity: showDeleted ? 0.78 : isOwn ? 0.95 : 0.72,
@@ -241,10 +253,10 @@ const MessageBubble = memo(function MessageBubble({
       )}
       {showDeliveryBlocked && deliveryBlockedCaption ? (
         <Stack direction="row" spacing={0.75} alignItems="flex-start" sx={{ mt: 0.75 }}>
-          <ErrorOutline
+          <CancelOutlined
             sx={{
               fontSize: 16,
-              color: mintLightTeamUi && isOwn ? "rgba(255,255,255,0.9)" : alpha(theme.palette.primary.contrastText, 0.88),
+              color: isDark ? alpha(theme.palette.error.light, 0.9) : theme.palette.error.main,
               mt: "1px",
               flexShrink: 0,
             }}
@@ -256,8 +268,8 @@ const MessageBubble = memo(function MessageBubble({
               m: 0,
               fontSize: "0.6875rem",
               lineHeight: 1.45,
-              fontWeight: 500,
-              color: mintLightTeamUi && isOwn ? "rgba(255,255,255,0.92)" : alpha(theme.palette.primary.contrastText, 0.92),
+              fontWeight: 600,
+              color: isDark ? alpha(theme.palette.error.light, 0.85) : theme.palette.error.dark,
             }}
           >
             {deliveryBlockedCaption}
