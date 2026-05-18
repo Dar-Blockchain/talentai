@@ -1,5 +1,10 @@
 {
   "loading": "Chargement de l'entretien…",
+  "no_link": {
+    "title": "Aucun lien d'entretien fourni",
+    "desc": "Cette page nécessite un lien d'entretien valide. Veuillez utiliser le lien fourni par l'entreprise pour accéder à votre entretien.",
+    "action": "Accéder au tableau de bord"
+  },
   "company_only": {
     "title": "Cet entretien est réservé aux candidats",
     "redirecting": "Redirection vers votre tableau de bord…",

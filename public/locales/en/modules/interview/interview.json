@@ -1,5 +1,10 @@
 {
   "loading": "Loading interview…",
+  "no_link": {
+    "title": "No interview link provided",
+    "desc": "This page requires a valid interview link. Please use the link provided by the company to access your interview.",
+    "action": "Go to dashboard"
+  },
   "company_only": {
     "title": "This interview is for candidates only",
     "redirecting": "Redirecting you to the dashboard…",

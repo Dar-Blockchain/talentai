@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 import { useNotification } from "@/hooks/useNotification";
@@ -50,11 +50,6 @@ export default function InterviewFlow() {
     jobData,
     notify: showNotification,
   });
-
-  // Skip intro when there is no job context (free practice mode)
-  useEffect(() => {
-    if (!hasJobId && router.isReady) setStep("interview");
-  }, [hasJobId, router.isReady]);
 
   // Unauthenticated visitor with a job link — wait for jobData, then show preview
   if (!authUser && hasJobId) {

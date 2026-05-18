@@ -23,7 +23,8 @@ export function useEligibilityCheck() {
   const rawStatus = data?.status;
   const eligibilityStatus: EligibilityStatus =
     !router.isReady                                                   ? 'checking' :
-    !router.query.jobId || !authUser || !token                        ? 'eligible' :
+    !router.query.jobId                                               ? 'no_link'  :
+    !authUser || !token                                               ? 'eligible' :
     isLoading                                                         ? 'checking' :
     !rawStatus || rawStatus === 'not_found' || rawStatus === 'error'  ? 'eligible' :
     rawStatus;

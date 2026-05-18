@@ -1,35 +1,31 @@
-import React, { useMemo } from 'react';
-import { useRouter } from 'next/router';
-import { useTranslation } from 'react-i18next';
+import React, { useMemo } from "react";
+import { useRouter } from "next/router";
+import { useTranslation } from "react-i18next";
+import { Box, Snackbar, Alert, Container } from "@mui/material";
+import Header from "@/components/layout/Header";
+import { GlobalStyles } from "../../styles/globalStyles";
+import QuestionPanel from "./QuestionPanel";
+import CameraPreview from "./CameraPreview";
+import AgentStatusPanel from "./AgentStatusPanel";
+import InterviewContainer from "./InterviewContainer";
+import InterviewConnectionBanner from "./InterviewConnectionBanner";
+import InterviewSessionHeader from "./InterviewSessionHeader";
+import InterviewProgressBar from "./InterviewProgressBar";
+import PipelineModals from "../modals/PipelineModals";
+import SecurityModals from "../modals/SecurityModals";
+import CoverageDashboard from "./CoverageDashboard";
+import GDPRConsentModal from "../modals/GDPRConsentModal";
 import {
-  Box,
-  Typography,
-  Chip,
-  LinearProgress,
-  Snackbar,
-  Alert,
-  Container,
-  Button,
-} from '@mui/material';
-import Header from '@/components/layout/Header';
-import { GlobalStyles } from '../../styles/globalStyles';
-import QuestionPanel from './QuestionPanel';
-import CameraPreview from './CameraPreview';
-import AgentStatusPanel from './AgentStatusPanel';
-import InterviewContainer from './InterviewContainer';
-import PipelineModals from '../modals/PipelineModals';
-import SecurityModals from '../modals/SecurityModals';
-import InterviewTimer from './InterviewTimer';
-import CoverageDashboard from './CoverageDashboard';
-import GDPRConsentModal from '../modals/GDPRConsentModal';
-import { PURPLE } from '../../constants/colors';
-import { type InterviewConfig, type Coverage, type InterviewMessage } from '../../types/interview';
-import { type JobPost, type PipelineProgress } from '../../types/api';
-import { type UseInterviewSocketReturn } from '../../hooks/useInterviewSocket';
-import { type UseAudioTranscriptionReturn } from '../../hooks/useAudioTranscription';
-import { type UseInterviewTimerReturn } from '../../hooks/useInterviewTimer';
-import { type UseCameraReturn } from '../../hooks/useCamera';
-import { type UseSecurityMonitoringReturn } from '../../hooks/useSecurityMonitoring';
+  type InterviewConfig,
+  type Coverage,
+  type InterviewMessage,
+} from "../../types/interview";
+import { type JobPost, type PipelineProgress } from "../../types/api";
+import { type UseInterviewSocketReturn } from "../../hooks/useInterviewSocket";
+import { type UseAudioTranscriptionReturn } from "../../hooks/useAudioTranscription";
+import { type UseInterviewTimerReturn } from "../../hooks/useInterviewTimer";
+import { type UseCameraReturn } from "../../hooks/useCamera";
+import { type UseSecurityMonitoringReturn } from "../../hooks/useSecurityMonitoring";
 
 interface InterviewScreenProps {
   session: {
@@ -40,7 +36,9 @@ interface InterviewScreenProps {
     security: UseSecurityMonitoringReturn;
     coverage: Coverage | null;
     coverageDashboardExpanded: boolean;
-    setCoverageDashboardExpanded: (v: boolean | ((p: boolean) => boolean)) => void;
+    setCoverageDashboardExpanded: (
+      v: boolean | ((p: boolean) => boolean),
+    ) => void;
     startInterview: () => Promise<void>;
     endInterview: () => void;
     handleViewResults: () => void;
@@ -56,144 +54,183 @@ interface InterviewScreenProps {
     blockMessage: string;
     jobData: JobPost | null;
   };
-  notification: { open: boolean; message: string; severity: 'success' | 'error' | 'warning' | 'info' };
+  notification: {
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "warning" | "info";
+  };
   hideNotification: () => void;
 }
 
-export default function InterviewScreen({ session, configData, notification, hideNotification }: InterviewScreenProps) {
+export default function InterviewScreen({
+  session,
+  configData,
+  notification,
+  hideNotification,
+}: InterviewScreenProps) {
   const router = useRouter();
-  const { t } = useTranslation('modules/interview/hr');
+  const { t } = useTranslation("modules/interview/hr");
 
   const {
-    socket, audio, timer, camera, security,
-    coverage, coverageDashboardExpanded, setCoverageDashboardExpanded,
-    startInterview, endInterview, handleViewResults,
+    socket,
+    audio,
+    timer,
+    camera,
+    security,
+    coverage,
+    coverageDashboardExpanded,
+    setCoverageDashboardExpanded,
+    startInterview,
+    endInterview,
+    handleViewResults,
   } = session;
 
   const {
-    interviewConfig, isPipelineJob, candidateProgress, currentPipelineStep,
-    pipelineLoading, showBlockedModal, showFailedModal, blockMessage, jobData,
+    interviewConfig,
+    isPipelineJob,
+    candidateProgress,
+    currentPipelineStep,
+    pipelineLoading,
+    showBlockedModal,
+    showFailedModal,
+    blockMessage,
+    jobData,
   } = configData;
 
-  const isActive = socket.interviewStatus === 'active';
+  const isActive = socket.interviewStatus === "active";
 
   const interviewLabel = useMemo(() => {
     const jobTitle = jobData?.jobDetails?.title || jobData?.title;
     if (jobTitle) return jobTitle;
     switch (interviewConfig?.interviewType) {
-      case 'TECHNICAL_INTERVIEW': return t('interview_types.technical_role', { role: interviewConfig.context?.targetRole || 'Technical' });
-      case 'ASSESSMENT':          return t('interview_types.assessment');
-      case 'EVALUATION':          return t('interview_types.evaluation');
-      default:                    return t('interview_types.hr');
+      case "TECHNICAL_INTERVIEW":
+        return t("interview_types.technical_role", {
+          role: interviewConfig.context?.targetRole || "Technical",
+        });
+      case "ASSESSMENT":
+        return t("interview_types.assessment");
+      case "EVALUATION":
+        return t("interview_types.evaluation");
+      default:
+        return t("interview_types.hr");
     }
   }, [jobData, interviewConfig, t]);
 
+  const subtitle = useMemo(() => {
+    if (jobData?.companyName)
+      return `${jobData.companyName} · ${t("ai_powered")}`;
+    if (interviewConfig?.interviewType === "TECHNICAL_INTERVIEW") {
+      return `${router.query.skill || "Technical"} · ${interviewConfig.context?.experienceLevel || ""}`;
+    }
+    return undefined;
+  }, [jobData, interviewConfig, router.query.skill, t]);
+
+  const stepChipLabel = useMemo(() => {
+    if (!isPipelineJob || !currentPipelineStep || !candidateProgress)
+      return undefined;
+    return t("step", {
+      current: currentPipelineStep,
+      total: candidateProgress.steps.length,
+    });
+  }, [isPipelineJob, currentPipelineStep, candidateProgress, t]);
+
   const connectionBannerText = useMemo(() => {
     switch (socket.connectionStatus) {
-      case 'connecting':    return t('connection.connecting');
-      case 'error':         return t('connection.error');
-      default:              return t('connection.reconnecting');
+      case "connecting":
+        return t("connection.connecting");
+      case "error":
+        return t("connection.error");
+      default:
+        return t("connection.reconnecting");
     }
   }, [socket.connectionStatus, t]);
 
   const lastQuestion = useMemo((): InterviewMessage | null => {
-    const visible = audio.conversationHistory.filter((m) => m.type !== 'system');
+    const visible = audio.conversationHistory.filter(
+      (m) => m.type !== "system",
+    );
     return visible.at(-1) ?? null;
   }, [audio.conversationHistory]);
 
   const questionCount = useMemo(
-    () => audio.conversationHistory.filter((m) => m.type === 'question' || m.type === 'follow_up').length,
+    () =>
+      audio.conversationHistory.filter(
+        (m) => m.type === "question" || m.type === "follow_up",
+      ).length,
     [audio.conversationHistory],
   );
 
   return (
-    <>
-      <style jsx global>{GlobalStyles}</style>
-      <Box sx={{ minHeight: '100vh', bgcolor: '#fff', userSelect: 'none', WebkitUserSelect: 'none', pt: '64px' }}>
-        <Header />
+      <Box
+        sx={{
+          minHeight: "100vh",
+          bgcolor: "#fff",
+          userSelect: "none",
+          WebkitUserSelect: "none",
+          pt: "64px",
+        }}
+      >
 
-        {socket.isHydrated && socket.connectionStatus !== 'connected' && (
-          <Box sx={{ bgcolor: '#fefce8', borderBottom: '1px solid #fde047', px: { xs: 2, md: 4 }, py: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#ca8a04', flexShrink: 0 }} />
-            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.8rem', color: '#854d0e' }}>
-              {connectionBannerText}
-            </Typography>
-          </Box>
+        {/* Yellow banner shown when the WebSocket is not yet connected or has dropped */}
+        {socket.isHydrated && socket.connectionStatus !== "connected" && (
+          <InterviewConnectionBanner text={connectionBannerText} />
         )}
 
         <Container maxWidth="lg" sx={{ py: { xs: 3, md: 4 } }}>
+          {/* Top bar: interview title, company subtitle, pipeline step chip, elapsed timer, end button */}
+          <InterviewSessionHeader
+            label={interviewLabel}
+            subtitle={subtitle}
+            stepChipLabel={stepChipLabel}
+            isActive={isActive}
+            elapsedTime={timer.elapsedTime}
+            timeWarning={timer.timeWarning}
+            onEndInterview={endInterview}
+            endInterviewLabel={t("end_interview")}
+          />
 
-          {/* Header bar — interview label, pipeline step, timer, end button */}
-          <Box sx={{ bgcolor: '#fff', borderRadius: '20px', border: '1px solid #e8e2f5', px: { xs: 2.5, md: 3.5 }, py: { xs: 2, md: 2.5 }, mb: 3 }}>
-            <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1.5}>
-              <Box>
-                <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.1rem', color: '#111827', lineHeight: 1.2 }}>
-                  {interviewLabel}
-                </Typography>
-                {(jobData?.companyName || interviewConfig?.interviewType === 'TECHNICAL_INTERVIEW') && (
-                  <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.78rem', color: '#6B7280', mt: 0.25 }}>
-                    {jobData?.companyName
-                      ? `${jobData.companyName} · ${t('ai_powered')}`
-                      : `${router.query.skill || 'Technical'} · ${interviewConfig.context?.experienceLevel || ''}`}
-                  </Typography>
-                )}
-              </Box>
-
-              <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
-                {isPipelineJob && currentPipelineStep && candidateProgress && (
-                  <Chip
-                    label={t('step', { current: currentPipelineStep, total: candidateProgress.steps.length })}
-                    size="small"
-                    sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.72rem', bgcolor: 'rgba(131,16,255,0.08)', color: PURPLE, border: '1px solid rgba(131,16,255,0.2)', height: 24 }}
-                  />
-                )}
-                {isActive && <InterviewTimer elapsedTime={timer.elapsedTime} timeWarning={timer.timeWarning} />}
-                {isActive && (
-                  <Button
-                    variant="contained"
-                    onClick={endInterview}
-                    sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.92rem', textTransform: 'none', bgcolor: '#fef2f2', color: '#ef4444', borderRadius: '12px', px: 3, py: 1.25, boxShadow: 'none', border: '1px solid rgba(239,68,68,0.2)', '&:hover': { bgcolor: '#fee2e2', boxShadow: 'none' } }}
-                  >
-                    {t('end_interview')}
-                  </Button>
-                )}
-              </Box>
-            </Box>
-          </Box>
-
-          {/* Coverage progress bar */}
+          {/* Coverage progress bar — shows overall topic completion percentage, visible only while active */}
           {isActive && (
-            <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #e8e2f5', px: { xs: 2.5, md: 3.5 }, py: 2, mb: 3 }}>
-              <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
-                <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.82rem', color: '#374151' }}>
-                  {t('interview_completion')}
-                </Typography>
-                <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.82rem', color: PURPLE }}>
-                  {Math.round(coverage?.overall ?? 0)}%
-                </Typography>
-              </Box>
-              <LinearProgress
-                variant="determinate"
-                value={Math.min(coverage?.overall ?? 0, 100)}
-                sx={{ height: 6, borderRadius: 4, bgcolor: 'rgba(131,16,255,0.08)', '& .MuiLinearProgress-bar': { background: 'linear-gradient(90deg,#8310FF,#a855f7)', borderRadius: 4 } }}
-              />
-            </Box>
+            <InterviewProgressBar
+              overall={coverage?.overall ?? 0}
+              label={t("interview_completion")}
+            />
           )}
 
-          {/* Main interview panel */}
-          <Box sx={{ bgcolor: '#fff', borderRadius: '20px', border: '1px solid #e8e2f5' }}>
+          {/* ── Main interview card ─────────────────────────────────────────── */}
+          <Box
+            sx={{
+              bgcolor: "#fff",
+              borderRadius: "20px",
+              border: "1px solid #e8e2f5",
+            }}
+          >
+            {/* Current question / follow-up text with reading countdown — hidden until interview starts */}
             {isActive && lastQuestion && (
               <QuestionPanel
                 currentMessage={lastQuestion}
                 isInReadingTime={audio.isInReadingTime}
                 readingTimeLeft={audio.readingTimeLeft}
                 questionHighlight={audio.questionHighlight}
-                questionNumber={lastQuestion.type === 'question' || lastQuestion.type === 'follow_up' ? questionCount : 0}
+                questionNumber={
+                  lastQuestion.type === "question" ||
+                  lastQuestion.type === "follow_up"
+                    ? questionCount
+                    : 0
+                }
               />
             )}
 
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '7fr 3fr' }, gap: 0 }}>
-              <Box sx={{ borderRight: { md: '1px solid #f0edf8' }, p: 2.5 }}>
+            {/* Two-column grid: camera feed (70%) | sidebar (30%) */}
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr", md: "7fr 3fr" },
+                gap: 0,
+              }}
+            >
+              {/* Left — live camera feed with mic-activity visualizer */}
+              <Box sx={{ borderRight: { md: "1px solid #f0edf8" }, p: 2.5 }}>
                 <CameraPreview
                   videoRef={camera.videoRef}
                   cameraStatus={camera.cameraStatus}
@@ -205,28 +242,41 @@ export default function InterviewScreen({ session, configData, notification, hid
                 />
               </Box>
 
-              <Box sx={{ p: 2.5, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {/* Right — start / end / results controls + live transcript + AI voice indicator */}
+              <Box
+                sx={{
+                  p: 2.5,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2,
+                }}
+              >
+                {/* State-driven panel: shows start button, live transcript, or results link */}
                 <InterviewContainer
                   interviewStatus={socket.interviewStatus}
                   isHydrated={socket.isHydrated}
                   connectionStatus={socket.connectionStatus}
                   cameraStatus={camera.cameraStatus}
                   agentState={audio.agentState}
-                  currentTranscript={audio.accumulatedTranscript || audio.currentTranscript}
+                  currentTranscript={
+                    audio.accumulatedTranscript || audio.currentTranscript
+                  }
                   onStartInterview={startInterview}
                   onEndInterview={endInterview}
                   onViewResults={handleViewResults}
                 />
+                {/* AI agent speaking / listening status and manual answer submit */}
                 <AgentStatusPanel
                   interviewStatus={socket.interviewStatus}
                   agentState={audio.agentState}
-                  isVoiceActive={audio.speechPhase === 'speaking'}
+                  isVoiceActive={audio.speechPhase === "speaking"}
                   onSubmitAnswer={audio.sendAccumulatedAnswer}
                 />
               </Box>
             </Box>
           </Box>
 
+          {/* Expandable topic-coverage breakdown — only rendered once coverage data arrives */}
           {coverage && (
             <CoverageDashboard
               interviewStatus={socket.interviewStatus}
@@ -237,27 +287,25 @@ export default function InterviewScreen({ session, configData, notification, hid
               onToggleExpand={() => setCoverageDashboardExpanded((p) => !p)}
             />
           )}
-
         </Container>
 
+        {/* GDPR consent gate — must be accepted before camera stream is attached */}
         <GDPRConsentModal
           open={!camera.consentGiven}
           onAccept={camera.giveConsent}
           onDecline={() => router.back()}
         />
 
-        <Snackbar open={notification.open} autoHideDuration={4000} onClose={hideNotification} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
-          <Alert severity={notification.severity} onClose={hideNotification}>{notification.message}</Alert>
-        </Snackbar>
-
+        {/* Pipeline-specific modals: loading spinner, blocked, and failed screens */}
         <PipelineModals
           pipelineLoading={pipelineLoading}
           showBlockedModal={showBlockedModal}
           showFailedModal={showFailedModal}
           blockMessage={blockMessage}
-          onReturnToDashboard={() => router.push('/dashboard')}
+          onReturnToDashboard={() => router.push("/dashboard")}
         />
 
+        {/* Tab-switch / copy-paste violation warnings; second modal force-ends the session */}
         <SecurityModals
           showFirstViolationModal={security.showFirstViolationModal}
           showSecurityModal={security.showSecurityModal}
@@ -265,10 +313,20 @@ export default function InterviewScreen({ session, configData, notification, hid
           securityViolationCount={security.securityViolationCount}
           onDismissFirst={() => security.setShowFirstViolationModal(false)}
           onDismissSecond={() => security.setShowSecurityModal(false)}
-          onReturnToDashboard={() => router.push('/candidate/dashboard')}
+          onReturnToDashboard={() => router.push("/candidate/dashboard")}
         />
 
+        {/* Bottom-center toast for transient success / error / warning messages */}
+        <Snackbar
+          open={notification.open}
+          autoHideDuration={4000}
+          onClose={hideNotification}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        >
+          <Alert severity={notification.severity} onClose={hideNotification}>
+            {notification.message}
+          </Alert>
+        </Snackbar>
       </Box>
-    </>
   );
 }

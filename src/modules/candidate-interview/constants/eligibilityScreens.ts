@@ -1,7 +1,7 @@
 import { type EligibilityStatus } from '../types/api';
 
 // Statuses that render a BlockedScreen (excludes checking / eligible)
-export type BlockableStatus = Exclude<EligibilityStatus, 'checking' | 'eligible'>;
+export type BlockableStatus = Exclude<EligibilityStatus, 'checking' | 'eligible' | 'no_link'>;
 
 export type ScreenEntry = {
   icon: string;

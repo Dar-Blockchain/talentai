@@ -54,6 +54,7 @@ export type { InterviewConfig };
 export type EligibilityStatus =
   | 'checking'
   | 'eligible'
+  | 'no_link'
   | 'company_blocked'
   | 'employee_blocked'
   | 'archived'

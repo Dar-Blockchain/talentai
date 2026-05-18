@@ -22,6 +22,17 @@ export default function EligibilityGate({ status, meta }: EligibilityGateProps) 
     return <LoadingState message={t("loading")} />;
   }
 
+  if (status === "no_link") {
+    return (
+      <EligibilityBlockedScreen
+        icon="🔗"
+        title={t("no_link.title")}
+        description={t("no_link.desc")}
+        actions={[{ label: t("no_link.action"), onClick: () => router.push("/candidate/dashboard") }]}
+      />
+    );
+  }
+
   const entry = ELIGIBILITY_SCREEN_CONFIG[status as BlockableStatus];
   const action = {
     label: entry.actionLabelKey ? t(entry.actionLabelKey) : t("back_to_dashboard"),
