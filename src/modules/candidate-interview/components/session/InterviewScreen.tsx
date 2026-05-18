@@ -32,13 +32,8 @@ interface InterviewScreenProps {
     camera: UseCameraReturn;
     security: UseSecurityMonitoringReturn;
     coverage: Coverage | null;
-    coverageDashboardExpanded: boolean;
-    setCoverageDashboardExpanded: (
-      v: boolean | ((p: boolean) => boolean),
-    ) => void;
     startInterview: () => Promise<void>;
     endInterview: () => void;
-    handleViewResults: () => void;
   };
   configData: {
     interviewConfig: InterviewConfig;
@@ -68,11 +63,8 @@ export default function InterviewScreen({
     camera,
     security,
     coverage,
-    coverageDashboardExpanded,
-    setCoverageDashboardExpanded,
     startInterview,
     endInterview,
-    handleViewResults,
   } = session;
 
   const { interviewConfig, jobData } = configData;
@@ -231,8 +223,6 @@ export default function InterviewScreen({
                   audio.accumulatedTranscript || audio.currentTranscript
                 }
                 onStartInterview={startInterview}
-                onEndInterview={endInterview}
-                onViewResults={handleViewResults}
               />
               {/* AI agent speaking / listening status and manual answer submit */}
               <AgentStatusPanel
@@ -248,12 +238,7 @@ export default function InterviewScreen({
         {/* Expandable topic-coverage breakdown — only rendered once coverage data arrives */}
         {coverage && (
           <CoverageDashboard
-            interviewStatus={socket.interviewStatus}
             coverage={coverage}
-            realTimeReport={null}
-            agentMessage=""
-            coverageDashboardExpanded={coverageDashboardExpanded}
-            onToggleExpand={() => setCoverageDashboardExpanded((p) => !p)}
           />
         )}
       </Container>
@@ -272,7 +257,6 @@ export default function InterviewScreen({
         violationType={security.violationType}
         securityViolationCount={security.securityViolationCount}
         onDismissFirst={() => security.setShowFirstViolationModal(false)}
-        onDismissSecond={() => security.setShowSecurityModal(false)}
         onReturnToDashboard={() => router.push("/candidate/dashboard")}
       />
 

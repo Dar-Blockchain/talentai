@@ -12,7 +12,6 @@ interface SecurityModalsProps {
   violationType: string;
   securityViolationCount: number;
   onDismissFirst: () => void;
-  onDismissSecond: () => void;
   onReturnToDashboard: () => void;
 }
 

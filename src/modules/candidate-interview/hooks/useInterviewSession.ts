@@ -179,11 +179,6 @@ export function useInterviewSession({
 
   endInterviewRef.current = endInterview;
 
-  const handleViewResults = useCallback(() => {
-    const jId = localStorage.getItem('interview_jobId');
-    router.push(jId ? `/candidate/interview/results?jobId=${jId}` : '/candidate/interview/results');
-  }, [router]);
-
   return {
     socket,
     audio,
@@ -195,6 +190,5 @@ export function useInterviewSession({
     setCoverageDashboardExpanded,
     startInterview,
     endInterview,
-    handleViewResults,
   };
 }

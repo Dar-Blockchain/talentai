@@ -25,8 +25,9 @@ export default function InterviewFlow() {
   const { notification, showNotification, hideNotification } =
     useNotification();
 
-  const { interviewConfig, setInterviewConfig, jobData } =
-    useInterviewConfig({ showNotification });
+  const { interviewConfig, setInterviewConfig, jobData } = useInterviewConfig({
+    showNotification,
+  });
 
   const session = useInterviewSession({
     interviewConfig,
