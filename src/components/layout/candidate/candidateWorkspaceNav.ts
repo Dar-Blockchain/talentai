@@ -89,7 +89,7 @@ export const isCandidateWorkspaceNavActive = (
   viewQuery: string | string[] | undefined,
 ) => {
   if (item.id === "messages") {
-    return isCandidateMessagesPath(pathname) || pathname === "/chat" || pathname.startsWith("/chat/");
+    return isCandidateMessagesPath(pathname);
   }
 
   if (item.id === "dashboard") {
