@@ -164,10 +164,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     const unreadCount = getNavUnreadCount(item.id);
     const isMessagesHub = item.id === "messages";
     const isActive = isMessagesHub
-      ? router.pathname === "/messages"
-        || router.pathname.startsWith("/messages/")
-        || router.pathname.startsWith("/company/team-chat")
-        || router.pathname.startsWith("/company/candidate-chat")
+      ? router.pathname === "/messages" || router.pathname.startsWith("/messages/")
       : router.pathname === item.href || router.pathname.startsWith(item.href + "/");
     const translatedLabel = t(`sidebar.nav.${item.id}`, { defaultValue: item.label });
     const btn = (
