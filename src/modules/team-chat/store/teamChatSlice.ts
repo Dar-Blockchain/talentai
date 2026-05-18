@@ -95,7 +95,9 @@ const teamChatSlice = createSlice({
       state.currentConversation = action.payload;
     },
     setTeamMessages: (state, action: PayloadAction<ChatShellMessage[]>) => {
-      state.messages = dedupeMessages(action.payload);
+      state.messages = dedupeMessages(action.payload).sort(
+        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      );
     },
     setTeamTotalUnread: (state, action: PayloadAction<number>) => {
       state.totalUnread = action.payload;
@@ -161,6 +163,36 @@ const teamChatSlice = createSlice({
         }
       }
     },
+    confirmTeamPendingMessage: (
+      state,
+      action: PayloadAction<{ tempId: string; message: ChatShellMessage }>,
+    ) => {
+      const { tempId, message } = action.payload;
+      const idx = state.messages.findIndex((m) => String(m._id) === tempId);
+      if (idx >= 0) {
+        state.messages[idx] = message;
+      } else {
+        const exists = state.messages.some((m) => String(m._id) === String(message._id));
+        if (!exists) {
+          state.messages.push(message);
+          state.messages.sort(
+            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+          );
+        }
+      }
+      const convId = message.conversationId
+        ? String(message.conversationId)
+        : (state.currentConversation ? String(state.currentConversation._id) : "");
+      if (!convId) return;
+      const conv = state.conversations.find((c) => String(c._id) === convId);
+      if (conv) {
+        applyLastMessagePreviewFromMessage(conv, message);
+        sortConversationsByRecent(state.conversations);
+      }
+      if (state.currentConversation && String(state.currentConversation._id) === convId) {
+        applyLastMessagePreviewFromMessage(state.currentConversation, message);
+      }
+    },
     removeTeamConversation: (state, action: PayloadAction<string>) => {
       const id = String(action.payload);
       state.conversations = state.conversations.filter((c) => String(c._id) !== id);
@@ -183,6 +215,7 @@ export const {
   markTeamConversationReadLocal,
   removeTeamMessage,
   upsertTeamMessage,
+  confirmTeamPendingMessage,
   removeTeamConversation,
 } = teamChatSlice.actions;
 

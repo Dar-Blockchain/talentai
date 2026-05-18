@@ -71,6 +71,9 @@ export const applyIncomingMessage = (
 
   if (isActiveConversation && msgId && !state.messages.some((item) => String(item._id) === msgId)) {
     state.messages.push(message);
+    state.messages.sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
   }
 
   if (conversation) {

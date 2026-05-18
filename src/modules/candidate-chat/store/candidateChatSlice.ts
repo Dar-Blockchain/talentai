@@ -101,7 +101,9 @@ const candidateChatSlice = createSlice({
       state.currentConversation = action.payload;
     },
     setCandidateMessages: (state, action: PayloadAction<ChatShellMessage[]>) => {
-      state.messages = dedupeMessages(action.payload);
+      state.messages = dedupeMessages(action.payload).sort(
+        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      );
     },
     setCandidateTotalUnread: (state, action: PayloadAction<number>) => {
       state.totalUnread = action.payload;
@@ -197,6 +199,40 @@ const candidateChatSlice = createSlice({
         }
       }
     },
+    confirmCandidatePendingMessage: (
+      state,
+      action: PayloadAction<{ tempId: string; message: ChatShellMessage }>,
+    ) => {
+      const { tempId, message } = action.payload;
+      const idx = state.messages.findIndex((m) => String(m._id) === tempId);
+      if (idx >= 0) {
+        // In-place replacement — same array slot, same stableKey → React reuses the
+        // MessageRow component instance: pending→confirmed is a CSS transition, not a remount.
+        state.messages[idx] = message;
+      } else {
+        // Temp was already gone (socket echo handled it) — ensure real message is present.
+        const exists = state.messages.some((m) => String(m._id) === String(message._id));
+        if (!exists) {
+          state.messages.push(message);
+          state.messages.sort(
+            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+          );
+        }
+      }
+      // Sync sidebar preview with the now-confirmed message.
+      const convId = message.conversationId
+        ? String(message.conversationId)
+        : (state.currentConversation ? String(state.currentConversation._id) : "");
+      if (!convId) return;
+      const conv = state.conversations.find((c) => String(c._id) === convId);
+      if (conv) {
+        applyLastMessagePreviewFromMessage(conv, message);
+        sortConversationsByRecent(state.conversations);
+      }
+      if (state.currentConversation && String(state.currentConversation._id) === convId) {
+        applyLastMessagePreviewFromMessage(state.currentConversation, message);
+      }
+    },
     removeCandidateConversation: (state, action: PayloadAction<string>) => {
       state.conversations = state.conversations.filter((conversation) => conversation._id !== action.payload);
       if (state.currentConversation?._id === action.payload) {
@@ -218,6 +254,7 @@ export const {
   markCandidateConversationReadLocal,
   removeCandidateMessage,
   upsertCandidateMessage,
+  confirmCandidatePendingMessage,
   removeCandidateConversation,
   syncConversationLastMessage,
 } = candidateChatSlice.actions;
