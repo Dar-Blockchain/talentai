@@ -32,7 +32,7 @@ const navItems: Array<{
   },
   {
     channel: "candidate",
-    href: COMPANY_CANDIDATE_CHAT_PATH,
+    href: `${COMPANY_TEAM_CHAT_PATH}?ch=candidate`,
     icon: PeopleAltOutlined,
     labelKey: "candidate",
   },

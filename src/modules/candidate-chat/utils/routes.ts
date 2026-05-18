@@ -5,8 +5,7 @@ import {
 
 export const CANDIDATE_MESSAGES_BASE_PATH = MESSAGES_BASE_PATH;
 
-export const getCandidateChatBasePath = (role?: string | null) =>
-  role === "Candidate" ? MESSAGES_BASE_PATH : MESSAGES_CANDIDATES_PATH;
+export const getCandidateChatBasePath = (_role?: string | null) => MESSAGES_BASE_PATH;
 
 export const getCandidateChatConversationPath = (
   role: string | null | undefined,

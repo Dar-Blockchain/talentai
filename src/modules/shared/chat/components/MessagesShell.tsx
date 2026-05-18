@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useSelector } from "react-redux";
+import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import { Box } from "@mui/material";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
@@ -9,7 +10,9 @@ import CandidateChatPageContent from "@/modules/candidate-chat/components/Candid
 import CompanyChatLayout from "@/modules/shared/chat/components/CompanyChatLayout";
 import MessagesRouteGuard from "@/modules/shared/chat/components/MessagesRouteGuard";
 import { chatDashboardShellFlexSx } from "@/modules/shared/chat/styles/modulePage";
+import { selectCandidateConversations } from "@/modules/candidate-chat/store/candidateChatSlice";
 import { RootState } from "@/store/store";
+import type { CompanyChatChannel } from "@/modules/shared/chat/constants/companyChannels";
 
 interface MessagesShellProps {
   conversationId: string | null;
@@ -17,7 +20,18 @@ interface MessagesShellProps {
 
 const MessagesShell: React.FC<MessagesShellProps> = ({ conversationId }) => {
   const { t } = useTranslation("dashboard");
+  const router = useRouter();
   const role = useSelector((state: RootState) => state.user.connectedUser.user?.role);
+  const candidateConversations = useSelector(selectCandidateConversations);
+
+  const companyActiveChannel = useMemo((): CompanyChatChannel => {
+    if (conversationId) {
+      return candidateConversations.some((c) => c._id === conversationId)
+        ? "candidate"
+        : "team";
+    }
+    return router.query.ch === "candidate" ? "candidate" : "team";
+  }, [conversationId, candidateConversations, router.query.ch]);
 
   return (
     <MessagesRouteGuard surface="team">
@@ -36,8 +50,12 @@ const MessagesShell: React.FC<MessagesShellProps> = ({ conversationId }) => {
       ) : (
         <DashboardLayout tightenMainPaddingTop tightenMainPaddingBottom fillMainHeight>
           <Box sx={chatDashboardShellFlexSx}>
-            <CompanyChatLayout activeChannel="team">
-              <TeamChatPageContent initialConversationId={conversationId} fillHeight embeddedInCompanyHub />
+            <CompanyChatLayout activeChannel={companyActiveChannel}>
+              {companyActiveChannel === "candidate" ? (
+                <CandidateChatPageContent initialConversationId={conversationId} isCompany fillHeight embeddedInCompanyHub />
+              ) : (
+                <TeamChatPageContent initialConversationId={conversationId} fillHeight embeddedInCompanyHub />
+              )}
             </CompanyChatLayout>
           </Box>
         </DashboardLayout>

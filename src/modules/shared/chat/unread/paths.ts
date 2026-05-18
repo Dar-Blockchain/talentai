@@ -1,7 +1,4 @@
-import {
-  MESSAGES_BASE_PATH,
-  MESSAGES_CANDIDATES_PATH,
-} from "@/modules/shared/chat/constants/messagesRoutes";
+import { MESSAGES_BASE_PATH } from "@/modules/shared/chat/constants/messagesRoutes";
 
 export type ChatUnreadModule = "team" | "candidate";
 
@@ -22,41 +19,29 @@ export const normalizeResolvedPath = (path: string): string => {
 const matchesPathPrefix = (pathname: string, prefix: string) =>
   pathname === prefix || pathname.startsWith(`${prefix}/`);
 
-const isMessagesCandidatesPath = (pathname: string) =>
-  matchesPathPrefix(pathname, MESSAGES_CANDIDATES_PATH);
-
 const isMessagesTeamHubPath = (pathname: string) =>
-  pathname === MESSAGES_BASE_PATH
-  || (pathname.startsWith(`${MESSAGES_BASE_PATH}/`) && !isMessagesCandidatesPath(pathname));
+  matchesPathPrefix(pathname, MESSAGES_BASE_PATH);
 
 export const isTeamChatPath = (path: string, role?: string | null) => {
   const pathname = normalizeResolvedPath(path);
-  if (isMessagesCandidatesPath(pathname)) return false;
 
   if (LEGACY_TEAM_CHAT_PATH_PREFIXES.some((prefix) => matchesPathPrefix(pathname, prefix))) {
     return true;
   }
 
   if (role === "Candidate") return false;
-  if (role === "Company" || role === "Employee") {
-    return isMessagesTeamHubPath(pathname);
-  }
-
   return isMessagesTeamHubPath(pathname);
 };
 
 export const isCandidateChatPath = (path: string, role?: string | null) => {
   const pathname = normalizeResolvedPath(path);
-  if (isMessagesCandidatesPath(pathname)) return true;
 
   if (LEGACY_CANDIDATE_CHAT_PATH_PREFIXES.some((prefix) => matchesPathPrefix(pathname, prefix))) {
     return true;
   }
 
   if (role === "Company" || role === "Employee") return false;
-  if (role === "Candidate") {
-    return isMessagesTeamHubPath(pathname);
-  }
+  if (role === "Candidate") return isMessagesTeamHubPath(pathname);
 
   return false;
 };
