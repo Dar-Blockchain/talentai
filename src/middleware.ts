@@ -16,6 +16,7 @@ const PUBLIC_PATHS = [
   "/employee/invitation",
   "/campaign",
   "/candidate/interview/hr",
+  "/candidate/interview",
 ];
 
 const PUBLIC_PREFIXES = ["/api/", "/_next/", "/favicon", "/logo", "/static/"];

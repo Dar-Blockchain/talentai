@@ -2,7 +2,13 @@
   "loading": "Loading interview…",
   "company_only": {
     "title": "This interview is for candidates only",
-    "redirecting": "Redirecting you to the dashboard…"
+    "redirecting": "Redirecting you to the dashboard…",
+    "action": "Go to dashboard"
+  },
+  "employee_blocked": {
+    "title": "This page is not available for your account",
+    "desc": "The interview flow is designed for Candidate accounts. Your employee account does not have access to this section.",
+    "action": "Go to my dashboard"
   },
   "archived": {
     "title": "This position is no longer available",
@@ -15,7 +21,14 @@
   "completed": {
     "title": "You've already completed this interview",
     "desc_pre": "Your assessment for",
-    "desc_post": "has already been submitted. The hiring team will review your results and get back to you."
+    "desc_post": "has already been submitted. The hiring team will review your results and get back to you.",
+    "fallback_position": "this position"
+  },
+  "under_threshold": {
+    "title": "Interview Not Available",
+    "desc_pre": "Your CV match score (",
+    "desc_mid": "%) is below the minimum required score of",
+    "desc_post": "% for this position. Only candidates who meet the threshold can proceed to the interview."
   },
   "limit": {
     "badge": "Interviews Paused",

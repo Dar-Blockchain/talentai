@@ -5,6 +5,8 @@ const User = require("../../models/User.model");
 const Profile = require("../../models/Profile.model");
 const JobApplication = require("../../models/JobApplication.model");
 const Post = require("../../models/Post.model");
+const subscriptionService = require("../../services/subscription.service");
+const jobApplicationService = require("../../services/jobApplication.service");
 const { sendInterviewAssessmentEmail, sendInterviewCompletionNotificationToCompany } = require("../../utils/email-service");
 
 // ========== CREATE ==========
@@ -637,5 +639,68 @@ module.exports.getUnreviewedInterviewsDetails = async (req, res) => {
       success: false,
       message: error.message || "Error retrieving unreviewed interviews details"
     });
+  }
+};
+
+// ========== CHECK INTERVIEW ELIGIBILITY ==========
+module.exports.checkInterviewEligibility = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const { _id: candidateId, role: userRole } = req.user;
+
+    if (userRole === "Company")  return res.json({ status: "company_blocked" });
+    if (userRole === "Employee") return res.json({ status: "employee_blocked" });
+
+    const post = await Post.findById(postId)
+      .select("archived expirationDate thresholdScore user jobDetails title");
+    if (!post) return res.status(404).json({ status: "not_found" });
+
+    if (post.archived) return res.json({ status: "archived" });
+
+    if (post.expirationDate && new Date(post.expirationDate) < new Date())
+      return res.json({ status: "expired" });
+
+    const companyProfile = await Profile.findOne({ userId: post.user }).select("_id activeSubscription");
+    if (companyProfile) {
+      const limitCheck = await subscriptionService.checkSubscriptionLimit(
+        companyProfile._id, "monthlyInterviews"
+      );
+      if (!limitCheck.canUse) {
+        const jobTitle = post.jobDetails?.title || "";
+        return res.json({ status: "limit_reached", meta: { jobTitle } });
+      }
+    }
+
+    // Create job application if it doesn't exist yet (idempotent — 409 is expected on repeat visits)
+    const candidateProfile = await Profile.findOne({ userId: candidateId }).select("_id");
+    if (candidateProfile) {
+      try {
+        await jobApplicationService.createJobApplication({
+          profile: candidateProfile._id,
+          post: postId,
+          company: post.user,
+        });
+      } catch (_) { /* already exists or non-fatal error */ }
+    }
+
+    const exists = await postInterviewAssessmentService.hasExistingAssessment(candidateId, postId);
+    if (exists) return res.json({ status: "completed", meta: { jobTitle: post.jobDetails?.title || post.title || "" } });
+    if (candidateProfile && post.thresholdScore != null) {
+      const app = await JobApplication.findOne({
+        profile: candidateProfile._id,
+        post: postId,
+      }).select("matchScore");
+      if (app?.matchScore != null && app.matchScore < post.thresholdScore) {
+        return res.json({
+          status: "under_threshold",
+          meta: { required: post.thresholdScore, score: app.matchScore },
+        });
+      }
+    }
+
+    return res.json({ status: "eligible" });
+  } catch (err) {
+    console.error("❌ checkInterviewEligibility error:", err);
+    return res.status(500).json({ status: "error", message: err.message });
   }
 };
