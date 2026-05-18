@@ -63,6 +63,7 @@ export const useTeamConversationQuery = (
       await teamChatApi.fetchConversation(conversationId as string),
     ),
     enabled,
+    staleTime: 30_000,
   });
 
   useEffect(() => {
@@ -294,10 +295,18 @@ export const useDeleteTeamConversationMutation = () => {
 
   return useMutation({
     mutationFn: (conversationId: string) => teamChatApi.deleteConversation(conversationId),
-    onSuccess: (_data, conversationId) => {
+    onSuccess: async (_data, conversationId) => {
+      // Cancel in-flight fetches first so they don't land after we clear the cache.
+      await queryClient.cancelQueries({ queryKey: teamChatKeys.conversation(conversationId) });
+      await queryClient.cancelQueries({ queryKey: teamChatKeys.messages(conversationId) });
+
+      // Set to null instead of removeQueries: an active observer seeing removeQueries will
+      // immediately schedule a new fetch (the cache is empty but enabled=true). setQueryData(null)
+      // marks the slot as having fresh data → no refetch → no 404 noise.
+      queryClient.setQueryData(teamChatKeys.conversation(conversationId), null);
+      queryClient.setQueryData(teamChatKeys.messages(conversationId, undefined), null);
+
       dispatch(removeTeamConversation(conversationId));
-      queryClient.removeQueries({ queryKey: teamChatKeys.messages(conversationId) });
-      queryClient.removeQueries({ queryKey: teamChatKeys.conversation(conversationId) });
       queryClient.setQueriesData(
         { queryKey: [...teamChatKeys.all, "conversations"] },
         (old) => {

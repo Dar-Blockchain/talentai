@@ -6,16 +6,14 @@ import {
   List,
   ListItem,
   ListItemButton,
-  ListItemText,
-  ListItemAvatar,
   ListItemIcon,
   Badge,
-  Divider,
   Stack,
   Menu,
   MenuItem,
   useTheme,
   alpha,
+  Chip,
 } from "@mui/material";
 import ChatOutlined from "@mui/icons-material/ChatOutlined";
 import MoreVert from "@mui/icons-material/MoreVert";
@@ -29,35 +27,44 @@ import { Participant, getParticipantDisplayName, getParticipantInitial, formatLi
 import ChatContextMenuTrigger from "./ChatContextMenuTrigger";
 import { safeAlpha } from "@/utils/safeMuiAlpha";
 
-// Stable module-level constants so ConversationRow never sees a new object reference.
+const ease = "cubic-bezier(0.4, 0, 0.2, 1)";
+
+// Avatar color palette — consistent per-initial, harmonises with mint theme
+const AVATAR_PALETTE = [
+  { bg: "#DBEAFE", color: "#1E40AF" }, // blue
+  { bg: "#FCE7F3", color: "#9D174D" }, // pink
+  { bg: "#FEF3C7", color: "#92400E" }, // amber
+  { bg: "#EDE9FE", color: "#5B21B6" }, // violet
+  { bg: "#FEE2E2", color: "#991B1B" }, // red
+  { bg: "#E0F2FE", color: "#0369A1" }, // sky
+  { bg: "#F0FDF4", color: "#065F46" }, // green
+  { bg: "#FFF7ED", color: "#9A3412" }, // orange
+] as const;
+
+const getAvatarColors = (name: string) => {
+  const code = (name.charCodeAt(0) || 65) + (name.charCodeAt(1) || 0);
+  return AVATAR_PALETTE[code % AVATAR_PALETTE.length];
+};
+
+// Stable sizing tokens
 const ROW_SIZING_COMPACT = {
-  listItemPy: 0,
-  btnPy: 0.65,
-  btnPx: 1.25,
+  py: 0.75,
+  px: 1.25,
   avatar: 34,
-  avatarMinW: 44,
   avatarFont: "0.75rem",
   nameFont: "0.75rem",
-  nameLine: 1.28,
   previewFont: "0.6875rem",
   timeFont: "0.625rem",
-  timeMt: 0.2,
-  avatarMt: 0.1,
 } as const;
 
 const ROW_SIZING_DEFAULT = {
-  listItemPy: 0.25,
-  btnPy: 1.25,
-  btnPx: 1.5,
-  avatar: 42,
-  avatarMinW: 52,
+  py: 1,
+  px: 1.5,
+  avatar: 40,
   avatarFont: "0.875rem",
   nameFont: "0.8125rem",
-  nameLine: 1.35,
   previewFont: "0.75rem",
-  timeFont: "0.65rem",
-  timeMt: 0.35,
-  avatarMt: 0.25,
+  timeFont: "0.6875rem",
 } as const;
 
 interface Conversation {
@@ -74,16 +81,13 @@ interface Conversation {
 
 interface ConversationRowProps {
   conv: Conversation;
-  /** Pre-computed so only the 2 affected rows rerender on conversation switch. */
   isActive: boolean;
-  /** String(currentUserId) or "" — stable primitive, no re-boxing needed. */
   me: string;
   onSelect: (id: string) => void;
   compact: boolean;
   mintLightTeamUi: boolean;
   showRowMenu: boolean;
   onRequestDeleteConversation?: (id: string) => void;
-  showDivider: boolean;
 }
 
 const ConversationRow = memo(function ConversationRow({
@@ -95,30 +99,41 @@ const ConversationRow = memo(function ConversationRow({
   mintLightTeamUi,
   showRowMenu,
   onRequestDeleteConversation,
-  showDivider,
 }: ConversationRowProps) {
   const theme = useTheme();
   const { t } = useTranslation("shared/chat");
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+  const [hovered, setHovered] = useState(false);
 
   const row = compact ? ROW_SIZING_COMPACT : ROW_SIZING_DEFAULT;
   const primary = theme.palette.primary.main;
   const isDark = theme.palette.mode === "dark";
-  const ease = "cubic-bezier(0.4, 0, 0.2, 1)";
-  const activeRowBg = mintLightTeamUi
-    ? "#ECFDF5"
-    : isDark ? alpha(primary, 0.12) : alpha(primary, 0.07);
-  const hoverRowBg = mintLightTeamUi
-    ? "#F8FAFC"
-    : isDark ? safeAlpha(theme.palette.common.white, 0.05) : safeAlpha(theme.palette.common.black, 0.04);
 
   const otherUser = conv.participants.find((p) => String(p._id) !== me);
+  const displayName = getParticipantDisplayName(otherUser);
+  const initial = getParticipantInitial(otherUser);
+  const avatarColors = getAvatarColors(displayName);
+
   const unreadN = normalizeConversationUnreadCount(conv.unreadCount, me || undefined);
   const hasUnread = unreadN > 0 && !isActive;
+
   const previewDeleted =
     !!conv.lastMessage?.isDeletedForEveryone
     || conv.lastMessage?.text === TEAM_LAST_MESSAGE_DELETED_SENTINEL;
   const previewBlocked = conv.lastMessage?.text === CHAT_LAST_MESSAGE_BLOCKED_PREVIEW;
+  const hasNoMessages = !conv.lastMessage?.text;
+
+  const previewText = previewDeleted
+    ? t("messages.this_message_was_deleted")
+    : previewBlocked
+      ? ""
+      : hasNoMessages
+        ? t("sidebar.no_messages")
+        : conv.lastMessage!.text;
+
+  const timeStr = conv.lastMessage?.timestamp
+    ? formatListTime(conv.lastMessage.timestamp)
+    : formatListTime(conv.updatedAt);
 
   const handleRowClick = useCallback(() => onSelect(conv._id), [onSelect, conv._id]);
   const handleMenuOpen = useCallback((e: React.MouseEvent<HTMLElement>) => {
@@ -132,154 +147,201 @@ const ConversationRow = memo(function ConversationRow({
     setMenuAnchor(null);
   }, [onRequestDeleteConversation, conv._id]);
 
+  // Mint active/hover backgrounds
+  const activeBg = mintLightTeamUi
+    ? "linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)"
+    : isDark ? alpha(primary, 0.12) : alpha(primary, 0.07);
+  const hoverBg = mintLightTeamUi
+    ? "#DEEBEB"
+    : isDark ? safeAlpha(theme.palette.common.white, 0.05) : safeAlpha(theme.palette.common.black, 0.04);
+
   return (
-    <React.Fragment>
-      <ListItem
-        id={`chat-conv-item-${conv._id}`}
-        disablePadding
+    <ListItem
+      id={`chat-conv-item-${conv._id}`}
+      disablePadding
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      sx={{
+        px: mintLightTeamUi ? 1 : 0.75,
+        py: 0.3,
+        display: "flex",
+        alignItems: "stretch",
+      }}
+    >
+      <ListItemButton
+        onClick={handleRowClick}
         sx={{
-          px: mintLightTeamUi ? 1.25 : 1,
-          py: row.listItemPy,
-          display: "flex",
-          alignItems: "stretch",
-          gap: 0,
+          flex: 1,
+          minWidth: 0,
+          py: row.py,
+          px: row.px,
+          borderRadius: mintLightTeamUi ? "14px" : "10px",
+          alignItems: "center",
+          gap: 1.25,
+          background: isActive
+            ? activeBg
+            : "transparent",
+          border: mintLightTeamUi
+            ? `1px solid ${isActive ? "rgba(52, 211, 153, 0.4)" : "transparent"}`
+            : `1px solid ${isActive ? alpha(primary, 0.2) : "transparent"}`,
+          boxShadow: isActive && mintLightTeamUi
+            ? "0 2px 12px rgba(16, 185, 129, 0.12)"
+            : "none",
+          transition: `all 0.18s ${ease}`,
+          "@media (hover: hover)": {
+            "&:hover": {
+              background: isActive ? activeBg : hoverBg,
+              border: `1px solid ${mintLightTeamUi ? "rgba(52,211,153,0.2)" : alpha(primary, 0.1)}`,
+              transform: isActive ? "none" : "translateX(2px)",
+            },
+          },
         }}
       >
-        <ListItemButton
-          onClick={handleRowClick}
-          sx={{
-            flex: 1,
-            minWidth: 0,
-            py: mintLightTeamUi ? (compact ? 0.75 : 1) : row.btnPy,
-            px: row.btnPx,
-            borderRadius: mintLightTeamUi ? "14px" : 2,
-            alignItems: "flex-start",
-            bgcolor: isActive ? activeRowBg : "transparent",
-            border: mintLightTeamUi ? `1px solid ${isActive ? "rgba(52, 211, 153, 0.35)" : "transparent"}` : undefined,
-            borderLeft: mintLightTeamUi ? undefined : (isActive ? `3px solid ${primary}` : "3px solid transparent"),
-            boxShadow: mintLightTeamUi && isActive ? "0 4px 16px rgba(15, 23, 42, 0.06)" : undefined,
-            transition: mintLightTeamUi ? `all 0.2s ${ease}` : `background-color 0.18s ${ease}`,
-            "@media (hover: hover)": {
-              "&:hover": {
-                bgcolor: isActive ? activeRowBg : hoverRowBg,
-                ...(mintLightTeamUi && !isActive ? { boxShadow: "0 4px 20px rgba(15, 23, 42, 0.05)" } : {}),
-                ...(mintLightTeamUi && !isActive ? { transform: "translateY(-1px)" } : {}),
-              },
-            },
-          }}
-        >
-          <ListItemAvatar sx={{ minWidth: row.avatarMinW, mt: row.avatarMt }}>
-            <Badge
-              overlap="circular"
-              anchorOrigin={{ vertical: "top", horizontal: "right" }}
-              badgeContent={unreadN}
-              invisible={!hasUnread}
-              sx={{
-                mr: hasUnread ? 1.25 : 0,
-                "& .MuiBadge-badge": {
-                  bgcolor: mintLightTeamUi ? "#34D399" : theme.palette.error.main,
-                  color: "#fff",
-                  fontWeight: 700,
-                  fontSize: compact ? "0.6rem" : "0.625rem",
-                  lineHeight: 1,
-                  minWidth: compact ? 18 : 20,
-                  height: compact ? 18 : 20,
-                  px: 0.5,
-                  borderRadius: 999,
-                  right: compact ? "5px" : "7px",
-                  top: compact ? "4px" : "5px",
-                  boxSizing: "border-box",
-                },
-              }}
-            >
-              <Avatar
-                sx={{
-                  width: row.avatar,
-                  height: row.avatar,
-                  bgcolor: isActive
-                    ? (mintLightTeamUi ? "#10B981" : primary)
-                    : alpha(theme.palette.text.primary, isDark ? 0.12 : 0.08),
-                  color: isActive ? "#fff" : theme.palette.text.secondary,
-                  fontSize: row.avatarFont,
-                  fontWeight: 700,
-                  boxShadow: isActive
-                    ? (mintLightTeamUi ? "0 2px 8px rgba(16, 185, 129, 0.35)" : `0 1px 4px ${alpha(primary, 0.25)}`)
-                    : "none",
-                }}
-              >
-                {getParticipantInitial(otherUser)}
-              </Avatar>
-            </Badge>
-          </ListItemAvatar>
-          <ListItemText
-            primary={
-              <Typography
-                fontWeight={hasUnread ? 700 : 600}
-                sx={{
-                  color: isActive
-                    ? (mintLightTeamUi ? "#065F46" : primary)
-                    : (mintLightTeamUi ? "#111827" : "text.primary"),
-                }}
-                fontSize={row.nameFont}
-                lineHeight={row.nameLine}
-                noWrap
-              >
-                {getParticipantDisplayName(otherUser)}
-              </Typography>
-            }
-            secondary={
-              previewDeleted
-                ? t("messages.this_message_was_deleted")
-                : previewBlocked
-                  ? ""
-                  : conv.lastMessage?.text || t("sidebar.no_messages")
-            }
-            secondaryTypographyProps={{
-              noWrap: true,
-              fontSize: row.previewFont,
-              fontStyle: previewDeleted ? "italic" : undefined,
-              fontWeight: hasUnread && !previewDeleted ? 500 : 400,
-              color: previewDeleted
-                ? "text.disabled"
-                : hasUnread
-                  ? (mintLightTeamUi ? "#111827" : "text.primary")
-                  : (mintLightTeamUi ? "#6B7280" : "text.secondary"),
-              sx: { mt: compact ? 0.15 : 0.25, display: "block" },
-            }}
-            sx={{ my: 0 }}
-          />
-          <Typography
-            variant="caption"
-            color={isActive ? primary : "text.secondary"}
+        {/* Avatar with colored background */}
+        <Box sx={{ position: "relative", flexShrink: 0 }}>
+          <Badge
+            overlap="circular"
+            anchorOrigin={{ vertical: "top", horizontal: "right" }}
+            badgeContent={hasUnread ? unreadN : 0}
+            invisible={!hasUnread}
             sx={{
-              flexShrink: 0,
-              ml: 1,
-              mt: row.timeMt,
-              fontWeight: isActive ? 700 : 500,
-              fontSize: row.timeFont,
+              "& .MuiBadge-badge": {
+                bgcolor: mintLightTeamUi ? "#10B981" : theme.palette.error.main,
+                color: "#fff",
+                fontWeight: 700,
+                fontSize: compact ? "0.5625rem" : "0.5625rem",
+                minWidth: compact ? 17 : 18,
+                height: compact ? 17 : 18,
+                px: 0.5,
+                borderRadius: 999,
+                right: compact ? 1 : 2,
+                top: compact ? 1 : 2,
+                border: "2px solid #fff",
+                boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
+              },
             }}
           >
-            {conv.lastMessage?.timestamp
-              ? formatListTime(conv.lastMessage.timestamp)
-              : formatListTime(conv.updatedAt)}
-          </Typography>
-        </ListItemButton>
-        {showRowMenu && (
-          <Box sx={{ display: "flex", alignItems: "center", flexShrink: 0, pr: 0.25 }}>
-            <ChatContextMenuTrigger
-              visibility="always"
-              menuOpen={Boolean(menuAnchor)}
-              aria-label={t("sidebar.conversation_menu_aria")}
-              onClick={handleMenuOpen}
+            <Avatar
+              sx={{
+                width: row.avatar,
+                height: row.avatar,
+                fontSize: row.avatarFont,
+                fontWeight: 700,
+                bgcolor: isActive
+                  ? (mintLightTeamUi ? "#10B981" : primary)
+                  : (isDark ? alpha(theme.palette.text.primary, 0.12) : avatarColors.bg),
+                color: isActive
+                  ? "#fff"
+                  : (isDark ? theme.palette.text.secondary : avatarColors.color),
+                boxShadow: isActive
+                  ? (mintLightTeamUi ? "0 2px 10px rgba(16,185,129,0.4)" : `0 2px 8px ${alpha(primary, 0.35)}`)
+                  : "0 1px 4px rgba(0,0,0,0.08)",
+                transition: `all 0.18s ${ease}`,
+                letterSpacing: "-0.01em",
+              }}
             >
-              <MoreVert sx={{ fontSize: 20 }} />
-            </ChatContextMenuTrigger>
-          </Box>
-        )}
-      </ListItem>
-      {showDivider && (
-        <Divider sx={{ mx: 1.5, borderColor: alpha(theme.palette.divider, isDark ? 0.25 : 0.5) }} />
+              {initial}
+            </Avatar>
+          </Badge>
+        </Box>
+
+        {/* Text content */}
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 0.2 }}>
+            <Typography
+              noWrap
+              sx={{
+                fontSize: row.nameFont,
+                fontWeight: hasUnread ? 700 : isActive ? 700 : 600,
+                color: isActive
+                  ? (mintLightTeamUi ? "#065F46" : primary)
+                  : (mintLightTeamUi ? "#111827" : "text.primary"),
+                letterSpacing: "-0.02em",
+                lineHeight: 1.3,
+                flex: 1,
+                minWidth: 0,
+                mr: 0.75,
+              }}
+            >
+              {displayName}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: row.timeFont,
+                fontWeight: isActive || hasUnread ? 600 : 400,
+                color: isActive
+                  ? (mintLightTeamUi ? "#10B981" : primary)
+                  : hasUnread
+                    ? (mintLightTeamUi ? "#059669" : "text.primary")
+                    : (mintLightTeamUi ? "#9CA3AF" : "text.secondary"),
+                flexShrink: 0,
+                letterSpacing: "0.01em",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {timeStr}
+            </Typography>
+          </Stack>
+
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Typography
+              noWrap
+              sx={{
+                fontSize: row.previewFont,
+                fontWeight: hasUnread ? 600 : 400,
+                fontStyle: previewDeleted || hasNoMessages ? "italic" : "normal",
+                color: previewDeleted || hasNoMessages
+                  ? (mintLightTeamUi ? "#D1D5DB" : "text.disabled")
+                  : hasUnread
+                    ? (mintLightTeamUi ? "#374151" : "text.primary")
+                    : (mintLightTeamUi ? "#6B7280" : "text.secondary"),
+                flex: 1,
+                minWidth: 0,
+                lineHeight: 1.4,
+              }}
+            >
+              {previewText}
+            </Typography>
+            {hasUnread && unreadN > 1 && (
+              <Box
+                sx={{
+                  ml: 0.75,
+                  flexShrink: 0,
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  bgcolor: mintLightTeamUi ? "#10B981" : primary,
+                  boxShadow: mintLightTeamUi ? "0 0 6px rgba(16,185,129,0.5)" : undefined,
+                }}
+              />
+            )}
+          </Stack>
+        </Box>
+      </ListItemButton>
+
+      {/* Three-dot menu trigger — only visible on hover */}
+      {showRowMenu && (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            flexShrink: 0,
+            pr: 0.5,
+            opacity: hovered || Boolean(menuAnchor) ? 1 : 0,
+            transition: `opacity 0.18s ${ease}`,
+          }}
+        >
+          <ChatContextMenuTrigger
+            visibility="always"
+            menuOpen={Boolean(menuAnchor)}
+            aria-label={t("sidebar.conversation_menu_aria")}
+            onClick={handleMenuOpen}
+          >
+            <MoreVert sx={{ fontSize: 18 }} />
+          </ChatContextMenuTrigger>
+        </Box>
       )}
+
       {showRowMenu && (
         <Menu
           anchorEl={menuAnchor}
@@ -309,7 +371,7 @@ const ConversationRow = memo(function ConversationRow({
           </MenuItem>
         </Menu>
       )}
-    </React.Fragment>
+    </ListItem>
   );
 });
 
@@ -318,14 +380,10 @@ interface ConversationSidebarProps {
   currentConversationId: string | undefined;
   currentUserId: string | undefined;
   onSelectConversation: (conversationId: string) => void;
-  /** Row three-dot menu with delete (e.g. team chat). */
   conversationMenuDelete?: boolean;
   onRequestDeleteConversation?: (conversationId: string) => void;
-  /** Denser list rows (team chat in module frame). */
   compact?: boolean;
-  /** Team chat: light mint SaaS styling (fixed light palette on rows). */
   mintLightTeamUi?: boolean;
-  /** Company vs candidate/recruiter copy for empty-state hint under the list. */
   viewerIsCompany?: boolean;
 }
 
@@ -383,7 +441,7 @@ const ConversationSidebar = memo(function ConversationSidebar({
       }}
     >
       {conversations.length === 0 ? (
-          <Stack id="chat-sidebar-empty-state" alignItems="center" spacing={1.5} sx={{ p: 4, textAlign: "center" }}>
+        <Stack id="chat-sidebar-empty-state" alignItems="center" spacing={1.5} sx={{ p: 4, textAlign: "center" }}>
           <Box
             sx={{
               width: 56,
@@ -407,8 +465,8 @@ const ConversationSidebar = memo(function ConversationSidebar({
           </Typography>
         </Stack>
       ) : (
-        <List id="chat-conversations-list" sx={{ p: 0 }}>
-          {conversations.map((conv, index) => (
+        <List id="chat-conversations-list" sx={{ p: compact ? 0.5 : 0.75, pt: compact ? 0.75 : 1 }}>
+          {conversations.map((conv) => (
             <ConversationRow
               key={conv._id}
               conv={conv}
@@ -419,7 +477,6 @@ const ConversationSidebar = memo(function ConversationSidebar({
               mintLightTeamUi={mintLightTeamUi}
               showRowMenu={showRowMenu}
               onRequestDeleteConversation={onRequestDeleteConversation}
-              showDivider={index < conversations.length - 1}
             />
           ))}
         </List>

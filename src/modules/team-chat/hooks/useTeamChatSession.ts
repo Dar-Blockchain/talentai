@@ -87,9 +87,7 @@ export const useTeamChatSession = ({
     // Do not add `markReadMutation` to deps — its identity can change after cache updates, re-running
     // cleanup and clearing the open thread while the same conversation is still active (infinite loop).
     return () => {
-      /** Leaving this thread: sync read state so server + list badges do not "catch up" later when refetching. */
       dispatch(markTeamConversationReadLocal(convId));
-      markReadMutation.mutate(convId);
       dispatch(clearTeamCurrentConversation());
     };
   }, [activeConversationId, currentUserId, dispatch]);
@@ -198,16 +196,19 @@ export const useTeamChatSession = ({
   );
 
   const executeDeleteConversation = useCallback(async (targetId: string) => {
+    const wasActive =
+      activeConversationId != null && String(activeConversationId) === String(targetId);
+    // Clear active ID before the API call so conversation/messages queries become disabled
+    // before onSuccess fires — this prevents React Query from re-fetching a deleted resource.
+    if (wasActive) setActiveConversationId(null);
     try {
       await deleteConversationMutation.mutateAsync(targetId);
       showToast({ message: t("toast.conversation_removed_list"), severity: "success" });
-      const wasActive =
-        activeConversationId != null && String(activeConversationId) === String(targetId);
       if (wasActive) {
-        setActiveConversationId(null);
         router.push(deleteRedirectRoute);
       }
     } catch (error) {
+      if (wasActive) setActiveConversationId(targetId);
       showToast({
         message: `${t("toast.failed_delete_conversation")}: ${getTeamChatMutationError(error, "Unknown error")}`,
         severity: "error",

@@ -14,7 +14,7 @@ const CompanyHubMintChatShell: React.FC<ChatShellProps> = (props) => (
     showConversationSidebar={props.showConversationSidebar ?? true}
     enableDeletes={props.enableDeletes ?? true}
     showDeleteConversation={props.showDeleteConversation ?? true}
-    deleteConversationFromSidebar={props.deleteConversationFromSidebar ?? true}
+    deleteConversationFromSidebar={props.deleteConversationFromSidebar ?? false}
   />
 );
 

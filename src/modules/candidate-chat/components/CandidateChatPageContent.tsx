@@ -95,8 +95,7 @@ const CandidateChatPageContent = memo(function CandidateChatPageContent({
     return (
       <CompanyHubChatFrame
         title={tCompanyHub("channels.candidate.title")}
-        subtitle={tCompanyHub("channels.candidate.subtitle")}
-        titleStartAdornment={companyTitleIcon}
+titleStartAdornment={companyTitleIcon}
         fillHeight={fillHeight}
         embeddedInCompanyHub={embedded}
       >
@@ -125,7 +124,6 @@ const CandidateChatPageContent = memo(function CandidateChatPageContent({
   return (
     <CompanyHubChatFrame
       title={tCandidate("candidate.title")}
-      subtitle={tCandidate("candidate.subtitle")}
       titleStartAdornment={candidateTitleIcon}
       fillHeight={fillHeight}
       embeddedInCompanyHub={embeddedInCompanyHub}

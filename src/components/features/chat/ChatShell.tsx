@@ -10,6 +10,7 @@ import {
   alpha,
   Paper,
   Stack,
+  Chip,
 } from "@mui/material";
 import ChatOutlined      from "@mui/icons-material/ChatOutlined";
 import ArrowBackOutlined from "@mui/icons-material/ArrowBackOutlined";
@@ -56,6 +57,10 @@ export interface ChatShellProps {
   deleteConversationTitle?: string;
   /** Team chat: light mint / SaaS-style surfaces (does not affect candidate DMs). */
   mintLightTeamUi?: boolean;
+  /** Node rendered at the bottom of the conversations sidebar (e.g. Colleagues button). */
+  sidebarFooter?: React.ReactNode;
+  /** When set, replaces the right-side chat panel content (e.g. Colleagues panel). */
+  overridePanel?: React.ReactNode;
   // handlers
   onSend:               (text: string) => Promise<void>;
   onDeleteMessage:      (id: string, scope?: "me" | "everyone") => void;
@@ -158,6 +163,7 @@ const ChatShell: React.FC<ChatShellProps> = (p) => {
               onRequestDeleteConversation={sidebarDeleteMenu ? requestDeleteConversation : undefined}
               mintLightTeamUi={mintLightTeamUi}
               viewerIsCompany={p.isCompany}
+              footer={p.sidebarFooter}
             />
           )}
           <Panel
@@ -177,6 +183,7 @@ const ChatShell: React.FC<ChatShellProps> = (p) => {
             showDeleteConversation={headerShowDeleteConversation}
             compactFooter={compactInFrame}
             mintLightTeamUi={mintLightTeamUi}
+            overrideContent={p.overridePanel}
           />
         </Box>
 
@@ -257,6 +264,7 @@ interface SidebarProps {
   onRequestDeleteConversation?: (conversationId: string) => void;
   mintLightTeamUi?: boolean;
   viewerIsCompany: boolean;
+  footer?: React.ReactNode;
 }
 
 const Sidebar = memo(function Sidebar({
@@ -269,6 +277,7 @@ const Sidebar = memo(function Sidebar({
   onRequestDeleteConversation,
   mintLightTeamUi = false,
   viewerIsCompany,
+  footer,
 }: SidebarProps) {
   const { isMobile, showChat } = useShell();
   const { t } = useTranslation("shared/chat");
@@ -295,19 +304,44 @@ const Sidebar = memo(function Sidebar({
         id="chat-sidebar-header"
         sx={{
           px: compact ? 1.5 : 2,
-          py: compact ? 1 : 1.5,
+          py: compact ? 0.9 : 1.25,
           borderBottom: mintLightTeamUi ? "1px solid #E5E7EB" : `1px solid ${theme.palette.divider}`,
           bgcolor: mintLightTeamUi ? "#FFFFFF" : alpha(theme.palette.primary.main, theme.palette.mode === "dark" ? 0.08 : 0.04),
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 1,
         }}
       >
         <Typography
           id="chat-sidebar-title"
-          variant="subtitle2"
-          fontWeight={700}
-          sx={{ color: mintLightTeamUi ? "#111827" : "text.primary", fontSize: mintLightTeamUi ? "0.8125rem" : undefined, letterSpacing: mintLightTeamUi ? "-0.02em" : undefined }}
+          sx={{
+            fontWeight: 800,
+            fontSize: compact ? "0.8125rem" : "0.875rem",
+            letterSpacing: "-0.03em",
+            color: mintLightTeamUi ? "#111827" : "text.primary",
+            lineHeight: 1.2,
+          }}
         >
-          {t("sidebar.all_conversations", { count: conversations.length })}
+          {t("sidebar.title", { defaultValue: "Conversations" })}
         </Typography>
+        {conversations.length > 0 && (
+          <Chip
+            label={conversations.length}
+            size="small"
+            sx={{
+              height: 22,
+              minWidth: 28,
+              fontWeight: 700,
+              fontSize: "0.6875rem",
+              letterSpacing: "0.01em",
+              bgcolor: mintLightTeamUi ? "#ECFDF5" : alpha(theme.palette.primary.main, 0.1),
+              color: mintLightTeamUi ? "#059669" : theme.palette.primary.main,
+              border: mintLightTeamUi ? "1px solid rgba(52,211,153,0.3)" : `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+              "& .MuiChip-label": { px: 1 },
+            }}
+          />
+        )}
       </Box>
       <ConversationSidebar
         conversations={conversations}
@@ -320,6 +354,21 @@ const Sidebar = memo(function Sidebar({
         mintLightTeamUi={mintLightTeamUi}
         viewerIsCompany={viewerIsCompany}
       />
+      {footer && (
+        <Box
+          sx={{
+            flexShrink: 0,
+            px: compact ? 1.25 : 1.5,
+            py: compact ? 1 : 1.25,
+            borderTop: mintLightTeamUi ? "1px solid #E5E7EB" : `1px solid ${theme.palette.divider}`,
+            bgcolor: mintLightTeamUi ? "#FFFFFF" : undefined,
+            display: "flex",
+            justifyContent: "flex-end",
+          }}
+        >
+          {footer}
+        </Box>
+      )}
     </Paper>
   );
 });
@@ -342,6 +391,7 @@ interface PanelProps {
   showDeleteConversation?: boolean;
   compactFooter?: boolean;
   mintLightTeamUi?: boolean;
+  overrideContent?: React.ReactNode;
 }
 
 const Panel = memo(function Panel(p: PanelProps) {
@@ -366,7 +416,9 @@ const Panel = memo(function Panel(p: PanelProps) {
         alignSelf: "stretch",
       }}
     >
-      {p.loading ? (
+      {p.overrideContent ? (
+        <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>{p.overrideContent}</Box>
+      ) : p.loading ? (
         <Stack flex={1} alignItems="center" justifyContent="center" minHeight={200}>
           <CircularProgress size={36} thickness={4} />
         </Stack>

@@ -9,8 +9,7 @@
       "subtitle": "Discutez avec vos collègues dans l'espace de travail de l'entreprise."
     },
     "candidate": {
-      "title": "Chat candidats",
-      "subtitle": "Discutez avec les candidats au sujet des candidatures et des offres."
+      "title": "Chat candidats"
     }
   },
   "delete_chat_title": "Retirer la conversation",

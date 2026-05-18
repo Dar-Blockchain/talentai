@@ -3,8 +3,6 @@ import {
   Box,
   Typography,
   IconButton,
-  Menu,
-  MenuItem,
   Paper,
   Stack,
   useTheme,
@@ -12,6 +10,9 @@ import {
   Fade,
   Grow,
   Tooltip,
+  Menu,
+  MenuItem,
+  ListItemIcon,
 } from "@mui/material";
 import { keyframes } from "@mui/system";
 import ChatOutlined from "@mui/icons-material/ChatOutlined";
@@ -23,7 +24,6 @@ import { formatTime, getParticipantDisplayName, isSameCalendarDay, messageDayKey
 import type { Participant } from "./helpers";
 import type { ChatShellConversation } from "@/modules/shared/chat/types/shell";
 import { TEAM_LAST_MESSAGE_DELETED_SENTINEL } from "@/modules/team-chat/constants/lastMessagePreview";
-import ChatContextMenuTrigger from "./ChatContextMenuTrigger";
 import { safeAlpha } from "@/utils/safeMuiAlpha";
 import { TEAM_MINT_UI, TEAM_MINT_SCROLLBAR_SX } from "@/modules/shared/chat/constants/teamMintUi";
 
@@ -374,7 +374,6 @@ const MessageRow = memo(function MessageRow({
   const { t } = useTranslation("shared/chat");
   const { t: tTeam } = useTranslation("modules/company/teamChat");
   const isDark = theme.palette.mode === "dark";
-  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
   // Decide at mount time whether to animate in. `appear` on <Grow> only fires once
   // (at mount), so this never needs to change — using useState initializer avoids
@@ -412,39 +411,15 @@ const MessageRow = memo(function MessageRow({
     return tTeam("message.this_message_was_deleted", { defaultValue: "This message was deleted" });
   }, [teamScopedDeletes, isDeletedForEveryone, message.deletedForEveryoneBy, currentUserId, otherUser, t, tTeam]);
 
-  const handleMenuOpen = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
-    setMenuAnchor(e.currentTarget);
-  }, []);
-
+  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+  const handleMenuOpen = useCallback((e: React.MouseEvent<HTMLButtonElement>) => setMenuAnchor(e.currentTarget), []);
   const handleMenuClose = useCallback(() => setMenuAnchor(null), []);
-
-  const handleDeleteForMe = useCallback(() => {
-    onDeleteMessage(message._id, "me");
-    setMenuAnchor(null);
-  }, [onDeleteMessage, message._id]);
-
-  const handleDeleteForEveryone = useCallback(() => {
-    onDeleteMessage(message._id, "everyone");
-    setMenuAnchor(null);
-  }, [onDeleteMessage, message._id]);
+  const handleDeleteForMe = useCallback(() => { handleMenuClose(); onDeleteMessage(message._id, "me"); }, [handleMenuClose, onDeleteMessage, message._id]);
+  const handleDeleteForEveryone = useCallback(() => { handleMenuClose(); onDeleteMessage(message._id, "everyone"); }, [handleMenuClose, onDeleteMessage, message._id]);
 
   const handleDeleteSingle = useCallback(() => {
     onDeleteMessage(message._id);
   }, [onDeleteMessage, message._id]);
-
-  const menuButton = teamScopedDeletes && enableDeletes && !isDeletedForEveryone && !message.pending ? (
-    <ChatContextMenuTrigger
-      key="msg-menu"
-      className="delete-btn"
-      visibility="fadeOnRowHover"
-      menuOpen={Boolean(menuAnchor)}
-      tooltipTitle={tTeam("message.actions")}
-      onClick={handleMenuOpen}
-      aria-label={tTeam("message.actions")}
-    >
-      <MoreVert sx={{ fontSize: 20 }} />
-    </ChatContextMenuTrigger>
-  ) : null;
 
   const bubble = (
     <MessageBubble
@@ -465,6 +440,58 @@ const MessageRow = memo(function MessageRow({
       }
     />
   );
+
+  const menuButton = teamScopedDeletes && enableDeletes && !isSyntheticDeleted && !message.pending ? (
+    <>
+      <Tooltip title={t("messages.more_actions", { defaultValue: "More actions" })}>
+        <IconButton
+          className="delete-btn"
+          onClick={handleMenuOpen}
+          size="small"
+          sx={{
+            opacity: 0,
+            transition: `opacity 0.22s ${easeOut}, transform 0.2s ${easeOut}`,
+            color: mintLightTeamUi ? "#6B7280" : "text.secondary",
+            p: "4px",
+            borderRadius: "8px",
+            "&:hover": {
+              bgcolor: mintLightTeamUi ? "#F3F4F6" : alpha(theme.palette.action.hover, 0.08),
+              transform: "scale(1.08)",
+            },
+          }}
+        >
+          <MoreVert sx={{ fontSize: 18 }} />
+        </IconButton>
+      </Tooltip>
+      <Menu
+        anchorEl={menuAnchor}
+        open={Boolean(menuAnchor)}
+        onClose={handleMenuClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: isOwn ? "right" : "left" }}
+        transformOrigin={{ vertical: "top", horizontal: isOwn ? "right" : "left" }}
+        slotProps={{ paper: chatContextMenuPaperSlotProps }}
+        MenuListProps={{ dense: true, sx: { py: 0.5 } }}
+      >
+        <MenuItem onClick={handleDeleteForMe} sx={chatContextMenuItemSx}>
+          <ListItemIcon sx={{ minWidth: 32 }}>
+            <DeleteOutlined fontSize="small" />
+          </ListItemIcon>
+          {tTeam("message.delete_for_me", { defaultValue: "Delete for me" })}
+        </MenuItem>
+        {isOwn && (
+          <MenuItem
+            onClick={handleDeleteForEveryone}
+            sx={{ ...chatContextMenuItemSx, color: "error.main", fontWeight: 600, "&:hover": { bgcolor: alpha(theme.palette.error.main, 0.08) } }}
+          >
+            <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}>
+              <DeleteOutlined fontSize="small" />
+            </ListItemIcon>
+            {tTeam("message.delete_for_everyone", { defaultValue: "Delete for everyone" })}
+          </MenuItem>
+        )}
+      </Menu>
+    </>
+  ) : null;
 
   const messageRow = (
     <Stack
@@ -487,63 +514,41 @@ const MessageRow = memo(function MessageRow({
         "&:hover .delete-btn": { opacity: 1 },
       }}
     >
-      {teamScopedDeletes && enableDeletes
-        ? (isOwn ? [bubble, menuButton] : [menuButton, bubble])
-        : (
-          <>
-            {!teamScopedDeletes && isCompany && enableDeletes && isOwn && !isSyntheticDeleted && !message.pending && (
-              <Tooltip title={t("delete_dialog.delete")}>
-                <IconButton
-                  className="delete-btn"
-                  onClick={handleDeleteSingle}
-                  size="small"
-                  sx={{
-                    opacity: 0,
-                    transition: `opacity 0.22s ${easeOut}, transform 0.2s ${easeOut}`,
-                    color: theme.palette.error.main,
-                    p: "6px",
-                    "&:hover": {
-                      bgcolor: alpha(theme.palette.error.main, 0.12),
-                      transform: "scale(1.08)",
-                    },
-                  }}
-                >
-                  <DeleteOutlined sx={{ fontSize: 18 }} />
-                </IconButton>
-              </Tooltip>
-            )}
-            {bubble}
-          </>
-        )}
+      {teamScopedDeletes && enableDeletes && !isSyntheticDeleted && !message.pending ? (
+        isOwn ? <>{bubble}{menuButton}</> : <>{menuButton}{bubble}</>
+      ) : (
+        <>
+          {!teamScopedDeletes && isCompany && enableDeletes && isOwn && !isSyntheticDeleted && !message.pending && (
+            <Tooltip title={t("delete_dialog.delete")}>
+              <IconButton
+                className="delete-btn"
+                onClick={handleDeleteSingle}
+                size="small"
+                sx={{
+                  opacity: 0,
+                  transition: `opacity 0.22s ${easeOut}, transform 0.2s ${easeOut}`,
+                  color: theme.palette.error.main,
+                  p: "6px",
+                  "&:hover": {
+                    bgcolor: alpha(theme.palette.error.main, 0.12),
+                    transform: "scale(1.08)",
+                  },
+                }}
+              >
+                <DeleteOutlined sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
+          )}
+          {bubble}
+        </>
+      )}
     </Stack>
   );
 
   return (
-    <React.Fragment>
-      <Grow in timeout={240} appear={shouldAnimateIn}>
-        <Box sx={{ width: "100%" }}>{messageRow}</Box>
-      </Grow>
-      {teamScopedDeletes && enableDeletes && (
-        <Menu
-          anchorEl={menuAnchor}
-          open={Boolean(menuAnchor)}
-          onClose={handleMenuClose}
-          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-          transformOrigin={{ vertical: "top", horizontal: "right" }}
-          slotProps={{ paper: chatContextMenuPaperSlotProps }}
-          MenuListProps={{ dense: true, sx: { py: 0.5 } }}
-        >
-          <MenuItem onClick={handleDeleteForMe} sx={chatContextMenuItemSx}>
-            {tTeam("message.delete_for_me")}
-          </MenuItem>
-          {isOwn && (
-            <MenuItem onClick={handleDeleteForEveryone} sx={chatContextMenuItemSx}>
-              {tTeam("message.delete_for_everyone")}
-            </MenuItem>
-          )}
-        </Menu>
-      )}
-    </React.Fragment>
+    <Grow in timeout={240} appear={shouldAnimateIn}>
+      <Box sx={{ width: "100%" }}>{messageRow}</Box>
+    </Grow>
   );
 });
 

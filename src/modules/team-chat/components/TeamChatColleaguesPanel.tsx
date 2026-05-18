@@ -3,8 +3,8 @@ import {
   Alert,
   Avatar,
   Box,
-  Button,
   Chip,
+  CircularProgress,
   IconButton,
   InputAdornment,
   Paper,
@@ -16,7 +16,6 @@ import {
 import { alpha } from "@mui/material/styles";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import CloseRounded from "@mui/icons-material/CloseRounded";
-import ChatBubbleOutlineOutlined from "@mui/icons-material/ChatBubbleOutlineOutlined";
 import PeopleOutlineOutlined from "@mui/icons-material/PeopleOutlineOutlined";
 import SearchOffOutlined from "@mui/icons-material/SearchOffOutlined";
 import { useDispatch, useSelector } from "react-redux";
@@ -36,10 +35,9 @@ const getMemberName = (member: Member) => {
 };
 
 const colleaguesGridSx = {
-  display: "grid",
-  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  display: "flex",
+  flexDirection: "column",
   gap: 1,
-  alignItems: "stretch",
 } as const;
 
 const ColleagueSkeleton: React.FC = () => (
@@ -73,16 +71,16 @@ interface CompanyContactRowProps {
   name: string;
   username?: string;
   roleLabel: string;
-  messageLabel: string;
   onMessage: () => void;
+  isLoading?: boolean;
 }
 
 const CompanyContactRow: React.FC<CompanyContactRowProps> = ({
   name,
   username,
   roleLabel,
-  messageLabel,
   onMessage,
+  isLoading = false,
 }) => {
   const initial = name[0]?.toUpperCase() || "C";
 
@@ -90,11 +88,14 @@ const CompanyContactRow: React.FC<CompanyContactRowProps> = ({
     <Paper
       elevation={0}
       component="article"
+      onClick={isLoading ? undefined : onMessage}
       sx={{
         display: "flex",
-        flexDirection: "column",
-        gap: 0.75,
-        p: 1,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 1.5,
+        px: 1.25,
+        py: 0.9,
         borderRadius: "12px",
         position: "relative",
         overflow: "hidden",
@@ -103,11 +104,13 @@ const CompanyContactRow: React.FC<CompanyContactRowProps> = ({
         boxShadow: M.shadowSoft,
         transition: M.transition,
         minWidth: 0,
-        height: "100%",
+        cursor: isLoading ? "default" : "pointer",
+        opacity: isLoading ? 0.75 : 1,
         "@media (hover: hover)": {
-          "&:hover": {
+          "&:hover": isLoading ? {} : {
             borderColor: alpha(M.primary, 0.35),
             boxShadow: M.shadowLift,
+            bgcolor: alpha(M.primary, 0.08),
           },
         },
       }}
@@ -117,83 +120,55 @@ const CompanyContactRow: React.FC<CompanyContactRowProps> = ({
         sx={{
           position: "absolute",
           left: 0,
-          top: 10,
-          bottom: 10,
+          top: 8,
+          bottom: 8,
           width: 3,
           borderRadius: "0 4px 4px 0",
           bgcolor: M.primary,
         }}
       />
-      <Stack direction="row" spacing={1} alignItems="center" sx={{ pl: 0.5, minWidth: 0 }}>
-        <Avatar
-          sx={{
-            width: 32,
-            height: 32,
-            fontSize: "0.75rem",
-            fontWeight: 700,
-            bgcolor: alpha(M.primary, 0.15),
-            color: M.primaryHover,
-            boxShadow: `0 0 0 2px ${M.bgCard}`,
-          }}
-        >
-          {initial}
-        </Avatar>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography
-            sx={{
-              fontWeight: 700,
-              fontSize: "0.75rem",
-              letterSpacing: "-0.02em",
-              color: M.textPrimary,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {name}
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: "0.65rem",
-              color: M.textSecondary,
-              mt: 0.15,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {username ? `@${username}` : roleLabel}
-            {username ? ` · ${roleLabel}` : ""}
-          </Typography>
-        </Box>
-      </Stack>
-
-      <Button
-        size="small"
-        variant="contained"
-        disableElevation
-        fullWidth
-        startIcon={<ChatBubbleOutlineOutlined sx={{ fontSize: 16 }} />}
-        onClick={onMessage}
+      <Avatar
         sx={{
-          textTransform: "none",
-          fontWeight: 600,
-          py: 0.35,
-          minHeight: 28,
-          fontSize: "0.7rem",
-          borderRadius: "10px",
-          bgcolor: M.primary,
-          color: "#fff",
-          boxShadow: "none",
-          transition: M.transition,
-          "&:hover": {
-            bgcolor: M.primaryHover,
-            boxShadow: `0 4px 12px ${alpha(M.primary, 0.3)}`,
-          },
+          width: 34,
+          height: 34,
+          fontSize: "0.8rem",
+          fontWeight: 700,
+          flexShrink: 0,
+          bgcolor: alpha(M.primary, 0.15),
+          color: M.primaryHover,
+          boxShadow: `0 0 0 2px ${M.bgCard}`,
+          ml: 0.5,
         }}
       >
-        {messageLabel}
-      </Button>
+        {initial}
+      </Avatar>
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography
+          sx={{
+            fontWeight: 700,
+            fontSize: "0.8125rem",
+            letterSpacing: "-0.02em",
+            color: M.textPrimary,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {name}
+        </Typography>
+        <Typography
+          sx={{
+            fontSize: "0.6875rem",
+            color: M.textSecondary,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {username ? `@${username} · ${roleLabel}` : roleLabel}
+        </Typography>
+      </Box>
+      {isLoading && <CircularProgress size={18} thickness={4} sx={{ color: M.primary, flexShrink: 0 }} />}
     </Paper>
   );
 };
@@ -201,15 +176,15 @@ const CompanyContactRow: React.FC<CompanyContactRowProps> = ({
 interface ColleagueRowProps {
   member: Member;
   roleLabel: string;
-  messageLabel: string;
   onMessage: (userId: string) => void;
+  isLoading?: boolean;
 }
 
 const ColleagueRow: React.FC<ColleagueRowProps> = ({
   member,
   roleLabel,
-  messageLabel,
   onMessage,
+  isLoading = false,
 }) => {
   const name = getMemberName(member);
   const initial = name[0]?.toUpperCase() || "U";
@@ -218,97 +193,72 @@ const ColleagueRow: React.FC<ColleagueRowProps> = ({
     <Paper
       elevation={0}
       component="article"
+      onClick={isLoading ? undefined : () => { onMessage(member.userId); }}
       sx={{
         display: "flex",
-        flexDirection: "column",
-        gap: 0.75,
-        p: 1,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 1.5,
+        px: 1.25,
+        py: 0.9,
         borderRadius: "12px",
         border: `1px solid ${M.border}`,
         bgcolor: M.bgCard,
         boxShadow: M.shadowSoft,
         transition: M.transition,
-        height: "100%",
         minWidth: 0,
+        cursor: isLoading ? "default" : "pointer",
+        opacity: isLoading ? 0.75 : 1,
         "@media (hover: hover)": {
-          "&:hover": {
+          "&:hover": isLoading ? {} : {
             borderColor: alpha(M.primary, 0.25),
             boxShadow: M.shadowLift,
-            bgcolor: "#FDFEFE",
+            bgcolor: alpha(M.primary, 0.04),
           },
         },
       }}
     >
-      <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
-        <Avatar
-          sx={{
-            width: 32,
-            height: 32,
-            fontSize: "0.75rem",
-            fontWeight: 700,
-            bgcolor: alpha(M.textPrimary, 0.06),
-            color: M.textSecondary,
-            boxShadow: `0 0 0 2px ${alpha(M.bgCard, 1)}`,
-          }}
-        >
-          {initial}
-        </Avatar>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography
-            sx={{
-              fontWeight: 700,
-              fontSize: "0.75rem",
-              letterSpacing: "-0.02em",
-              color: M.textPrimary,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {name}
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: "0.65rem",
-              color: M.textSecondary,
-              mt: 0.15,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {member.username ? `@${member.username}` : roleLabel}
-            {member.username ? ` · ${roleLabel}` : ""}
-          </Typography>
-        </Box>
-      </Stack>
-
-      <Button
-        size="small"
-        variant="contained"
-        disableElevation
-        fullWidth
-        startIcon={<ChatBubbleOutlineOutlined sx={{ fontSize: 16 }} />}
-        onClick={() => { onMessage(member.userId); }}
+      <Avatar
         sx={{
-          textTransform: "none",
-          fontWeight: 600,
-          py: 0.35,
-          minHeight: 28,
-          fontSize: "0.7rem",
-          borderRadius: "10px",
-          bgcolor: M.primary,
-          color: "#fff",
-          boxShadow: "none",
-          transition: M.transition,
-          "&:hover": {
-            bgcolor: M.primaryHover,
-            boxShadow: `0 4px 12px ${alpha(M.primary, 0.28)}`,
-          },
+          width: 34,
+          height: 34,
+          fontSize: "0.8rem",
+          fontWeight: 700,
+          flexShrink: 0,
+          bgcolor: alpha(M.textPrimary, 0.06),
+          color: M.textSecondary,
+          boxShadow: `0 0 0 2px ${alpha(M.bgCard, 1)}`,
         }}
       >
-        {messageLabel}
-      </Button>
+        {initial}
+      </Avatar>
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography
+          sx={{
+            fontWeight: 700,
+            fontSize: "0.8125rem",
+            letterSpacing: "-0.02em",
+            color: M.textPrimary,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {name}
+        </Typography>
+        <Typography
+          sx={{
+            fontSize: "0.6875rem",
+            color: M.textSecondary,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {member.username ? `@${member.username} · ${roleLabel}` : roleLabel}
+        </Typography>
+      </Box>
+      {isLoading && <CircularProgress size={18} thickness={4} sx={{ color: M.primary, flexShrink: 0 }} />}
     </Paper>
   );
 };
@@ -351,7 +301,11 @@ const EmptyState: React.FC<{ title: string; subtitle?: string; icon: "people" | 
   );
 };
 
-const TeamChatColleaguesPanel: React.FC = () => {
+interface TeamChatColleaguesPanelProps {
+  onClose?: () => void;
+}
+
+const TeamChatColleaguesPanel: React.FC<TeamChatColleaguesPanelProps> = ({ onClose }) => {
   const dispatch = useDispatch<AppDispatch>();
   const startTeamChat = useStartTeamChat();
   const { t } = useTranslation("modules/company/teamChat");
@@ -362,9 +316,21 @@ const TeamChatColleaguesPanel: React.FC = () => {
   const companyMembership = useSelector((state: RootState) => state.user.connectedUser.companyMembership);
   const { members, loading, error } = useSelector(selectMembers);
 
+  const [loadingUserId, setLoadingUserId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleStartChat = useCallback(async (userId: string) => {
+    if (loadingUserId) return;
+    setLoadingUserId(userId);
+    try {
+      await startTeamChat(userId);
+      onClose?.();
+    } finally {
+      setLoadingUserId(null);
+    }
+  }, [loadingUserId, startTeamChat, onClose]);
 
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
@@ -574,23 +540,21 @@ const TeamChatColleaguesPanel: React.FC = () => {
           ) : (
             <Box sx={colleaguesGridSx}>
               {showCompanyContact && companyContact && (
-                <Box sx={{ gridColumn: "1 / -1" }}>
-                  <CompanyContactRow
-                    name={companyContact.name}
-                    username={companyContact.username}
-                    roleLabel={t("colleagues.company_role")}
-                    messageLabel={t("colleagues.message")}
-                    onMessage={() => { void startTeamChat(companyContact.id); }}
-                  />
-                </Box>
+                <CompanyContactRow
+                  name={companyContact.name}
+                  username={companyContact.username}
+                  roleLabel={t("colleagues.company_role")}
+                  onMessage={() => { void handleStartChat(companyContact.id); }}
+                  isLoading={loadingUserId === companyContact.id}
+                />
               )}
               {colleagues.map((member) => (
                 <ColleagueRow
                   key={member._id}
                   member={member}
                   roleLabel={getRoleLabel(member.role, tDashboard)}
-                  messageLabel={t("colleagues.message")}
-                  onMessage={(userId) => { void startTeamChat(userId); }}
+                  onMessage={(userId) => { void handleStartChat(userId); }}
+                  isLoading={loadingUserId === member.userId}
                 />
               ))}
             </Box>
