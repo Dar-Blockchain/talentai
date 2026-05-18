@@ -15,6 +15,7 @@ import CodeOutlined from "@mui/icons-material/CodeOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
 import VideoCallOutlined from "@mui/icons-material/VideoCallOutlined";
+import TrendingUpOutlined from "@mui/icons-material/TrendingUpOutlined";
 import axiosInstance from "@/utils/axiosInstance";
 import { emitToast } from "@/utils/toastEmitter";
 
@@ -45,6 +46,42 @@ const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
   accepted:    { bg: "#F0FDFA", color: "#0D9488" },
   rejected:    { bg: "#FEF2F2", color: "#DC2626" },
   withdrawn:   { bg: "#F3F4F6", color: "#6B7280" },
+};
+
+const ScoreReasonBadge: React.FC<{ label: string; positive: boolean }> = ({ label, positive }) => (
+  <Box sx={{
+    display: "inline-flex", alignItems: "center", gap: 0.5,
+    px: 1.2, py: 0.4, borderRadius: "8px",
+    bgcolor: positive ? "#F0FDF4" : "#FEF2F2",
+    border: `1px solid ${positive ? "#BBF7D0" : "#FECACA"}`,
+  }}>
+    <Typography sx={{ fontSize: "0.7rem", fontWeight: 600, color: positive ? "#16A34A" : "#DC2626" }}>
+      {positive ? "✓" : "✗"} {label}
+    </Typography>
+  </Box>
+);
+
+const buildScoreReasons = (cv: any, app: any, postTitle: string) => {
+  const reasons: { label: string; positive: boolean }[] = [];
+  if (cv.title && postTitle && postTitle !== "—") {
+    const titleMatch = cv.title.toLowerCase().split(" ").some((w: string) =>
+      postTitle.toLowerCase().includes(w) && w.length > 3
+    );
+    reasons.push({ label: titleMatch ? "Title matches position" : "Title differs from position", positive: titleMatch });
+  }
+  const expYears = (cv.experience || []).length;
+  if (expYears > 0) reasons.push({ label: `${expYears} experience entr${expYears > 1 ? "ies" : "y"} on CV`, positive: expYears >= 2 });
+  const skillCount = (cv.skills || []).length;
+  if (skillCount > 0) reasons.push({ label: `${skillCount} skill${skillCount > 1 ? "s" : ""} listed`, positive: skillCount >= 3 });
+  if ((cv.education || []).length > 0) reasons.push({ label: "Education background present", positive: true });
+  if (cv.summary) reasons.push({ label: "Professional summary included", positive: true });
+  const score = app?.matchScore ?? cv.analysisScore ?? null;
+  if (score != null) {
+    if (score >= 70) reasons.push({ label: "Strong overall match", positive: true });
+    else if (score >= 50) reasons.push({ label: "Moderate match", positive: false });
+    else reasons.push({ label: "Weak match for this role", positive: false });
+  }
+  return reasons;
 };
 
 const Section: React.FC<{ icon: React.ReactNode; title: string; children: React.ReactNode }> = ({ icon, title, children }) => (
@@ -106,6 +143,7 @@ const ApplicationDetailPage: React.FC = () => {
   const experience = cv.experience || [];
   const education = cv.education || [];
   const cvScore = app?.matchScore ?? cv.analysisScore ?? null;
+  const matchReasoning: string = app?.matchReasoning || "";
   const postTitle = app?.post?.jobDetails?.title || "—";
   const status = (app?.status || "applied").toLowerCase();
   const sc = STATUS_STYLE[status] ?? STATUS_STYLE.applied;
@@ -234,6 +272,51 @@ const ApplicationDetailPage: React.FC = () => {
               </Box>
             </Box>
           </Box>
+
+          {/* CV Score Reason */}
+          {cvScore != null && (() => {
+            const scoreColor = cvScore >= 70 ? "#059669" : cvScore >= 50 ? "#D97706" : "#DC2626";
+            const scoreBg   = cvScore >= 70 ? "#F0FDF4" : cvScore >= 50 ? "#FFFBEB" : "#FEF2F2";
+            const reasons = buildScoreReasons(cv, app, postTitle);
+            return (
+              <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 3, mb: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+                  <TrendingUpOutlined sx={{ fontSize: 16, color: "#9CA3AF" }} />
+                  <Typography sx={{ fontSize: "0.8rem", fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: "0.06em" }}>CV Score Breakdown</Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: matchReasoning || reasons.length > 0 ? 2 : 0, p: 2, bgcolor: scoreBg, borderRadius: "12px", border: `1px solid ${scoreColor}22` }}>
+                  <Box sx={{ position: "relative", width: 56, height: 56, flexShrink: 0 }}>
+                    <svg width={56} height={56} style={{ transform: "rotate(-90deg)" }}>
+                      <circle cx={28} cy={28} r={22} fill="none" stroke={`${scoreColor}20`} strokeWidth={5} />
+                      <circle cx={28} cy={28} r={22} fill="none" stroke={scoreColor} strokeWidth={5}
+                        strokeDasharray={`${(Math.min(cvScore, 100) / 100) * (2 * Math.PI * 22)} ${2 * Math.PI * 22}`}
+                        strokeLinecap="round" />
+                    </svg>
+                    <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Typography sx={{ fontSize: "0.85rem", fontWeight: 900, color: scoreColor, lineHeight: 1 }}>{cvScore}%</Typography>
+                    </Box>
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography sx={{ fontSize: "0.92rem", fontWeight: 700, color: scoreColor }}>
+                      {cvScore >= 70 ? "Strong Candidate" : cvScore >= 50 ? "Moderate Fit" : "Weak Match"}
+                    </Typography>
+                    <Typography sx={{ fontSize: "0.78rem", color: "#6B7280", mt: 0.25, lineHeight: 1.6 }}>
+                      {matchReasoning || (cvScore >= 70
+                        ? "This candidate's profile aligns well with the job requirements."
+                        : cvScore >= 50
+                        ? "This candidate partially meets the role's requirements."
+                        : "This candidate's profile has limited alignment with the job requirements.")}
+                    </Typography>
+                  </Box>
+                </Box>
+                {!matchReasoning && reasons.length > 0 && (
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
+                    {reasons.map((r, i) => <ScoreReasonBadge key={i} label={r.label} positive={r.positive} />)}
+                  </Box>
+                )}
+              </Box>
+            );
+          })()}
 
           {/* Summary */}
           {summary && (
