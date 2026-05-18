@@ -1,6 +1,5 @@
 import React, { useMemo } from "react";
 import { Box } from "@mui/material";
-import Header from "@/components/layout/Header";
 import { getPostSkills, type Skill } from "@/utils/postHelpers";
 import JobHeaderCard from "./JobHeaderCard";
 import JobDetailsColumn from "./JobDetailsColumn";
@@ -27,45 +26,42 @@ export default function JobInterviewPanel({ jobData }: JobPreviewPanelProps) {
   );
 
   return (
-    <>
-      <Header />
+    <Box
+      sx={{
+        bgcolor: "#F8F9FA",
+        minHeight: "calc(100vh - 56px)",
+        py: { xs: 3, md: 5 },
+      }}
+    >
       <Box
         sx={{
-          bgcolor: "#F8F9FA",
-          minHeight: "calc(100vh - 56px)",
-          py: { xs: 3, md: 5 },
+          maxWidth: 1100,
+          mx: "auto",
+          px: { xs: 2, md: 4 },
+          display: "flex",
+          gap: 3,
+          flexDirection: { xs: "column", md: "row" },
+          alignItems: { xs: "stretch", md: "flex-start" },
         }}
       >
         <Box
-          sx={{
-            maxWidth: 1100,
-            mx: "auto",
-            px: { xs: 2, md: 4 },
-            display: "flex",
-            gap: 3,
-            flexDirection: { xs: "column", md: "row" },
-            alignItems: { xs: "stretch", md: "flex-start" },
-          }}
+          sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2.5 }}
         >
-          <Box
-            sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2.5 }}
-          >
-            <JobHeaderCard
-              jobTitle={jobTitle}
-              companyName={companyName}
-              jd={jd}
-              createdAt={jobData?.createdAt}
-            />
-            <JobDetailsColumn
-              jd={jd}
-              technicalSkills={technicalSkills}
-              softSkills={softSkills}
-            />
-          </Box>
-
-          <JobApplyPanel jobTitle={jobTitle} />
+          <JobHeaderCard
+            jobTitle={jobTitle}
+            companyName={companyName}
+            jd={jd}
+            createdAt={jobData?.createdAt}
+          />
+          <JobDetailsColumn
+            jd={jd}
+            technicalSkills={technicalSkills}
+            softSkills={softSkills}
+          />
         </Box>
+
+        <JobApplyPanel jobTitle={jobTitle} />
       </Box>
-    </>
+    </Box>
   );
 }
