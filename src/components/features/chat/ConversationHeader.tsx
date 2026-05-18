@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import {
   Box,
   Typography,
@@ -29,7 +29,7 @@ interface ConversationHeaderProps {
   mintLightTeamUi?: boolean;
 }
 
-const ConversationHeader: React.FC<ConversationHeaderProps> = ({
+const ConversationHeader = memo(function ConversationHeader({
   otherUser,
   isCompany,
   onDeleteConversation,
@@ -37,7 +37,7 @@ const ConversationHeader: React.FC<ConversationHeaderProps> = ({
   showDeleteConversation,
   compact = false,
   mintLightTeamUi = false,
-}) => {
+}: ConversationHeaderProps) {
   const theme = useTheme();
   const { t } = useTranslation("shared/chat");
   const showTrash =
@@ -141,6 +141,6 @@ const ConversationHeader: React.FC<ConversationHeaderProps> = ({
       </Stack>
     </Box>
   );
-};
+});
 
 export default ConversationHeader;

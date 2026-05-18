@@ -1,12 +1,11 @@
 import { useEffect, useRef, useCallback, useState, useMemo } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import { RootState, AppDispatch } from "@/store/store";
 import { useToast } from "@/hooks/useToast";
 import { deliveryBlockedToastMessage } from "@/modules/shared/chat";
 import {
-  addCandidateMessage,
   clearCandidateCurrentConversation,
   setCandidateCurrentConversation,
   selectCandidateConversations,
@@ -25,8 +24,8 @@ import {
   getCandidateChatMutationError,
 } from "@/modules/candidate-chat/queries/useCandidateChatQueries";
 import { useCandidateChatConversationRoom } from "@/modules/candidate-chat/hooks/useCandidateChatRealtime";
-import { toChatShellMessage } from "@/modules/candidate-chat/utils/mappers";
 import { normalizeConversationUnreadCount } from "@/modules/shared/chat/utils/normalizeConversationUnread";
+import type { ChatShellConversation } from "@/modules/shared/chat/types/shell";
 
 export interface UseCandidateChatSessionOptions {
   /** Conversation id from the URL; `null` when on the inbox route without a thread. */
@@ -49,9 +48,9 @@ export const useCandidateChatSession = ({
 
   const currentUserId = useSelector((state: RootState) => state.user?.connectedUser?.user?._id);
   const userRole = useSelector((state: RootState) => state.user?.connectedUser?.user?.role);
-  const conversations = useSelector(selectCandidateConversations);
+  const conversations = useSelector(selectCandidateConversations, shallowEqual);
   const conversation = useSelector(selectCandidateCurrentConversation);
-  const messages = useSelector(selectCandidateMessages);
+  const messages = useSelector(selectCandidateMessages, shallowEqual);
 
   const [activeConversationId, setActiveConversationId] = useState<string | null>(initialConversationId);
 
@@ -60,11 +59,7 @@ export const useCandidateChatSession = ({
     setActiveConversationId(initialConversationId);
   }, [initialConversationId]);
 
-  const [newMessage, setNewMessage] = useState("");
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const activeConversationIdRef = useRef<string | null>(initialConversationId);
-  const deleteConversationTargetIdRef = useRef<string | null>(null);
 
   const conversationsQuery = useCandidateConversationsQuery(undefined, { enabled: !!currentUserId });
   useCandidateUnreadCountQuery({ enabled: !!currentUserId });
@@ -98,7 +93,7 @@ export const useCandidateChatSession = ({
       return;
     }
     const idStr = String(activeConversationId);
-    const selected = conversations.find((item) => String(item._id) === idStr);
+    const selected = conversations.find((item: ChatShellConversation) => String(item._id) === idStr);
     if (selected && String(conversation?._id ?? "") !== idStr) {
       dispatch(setCandidateCurrentConversation(selected));
     }
@@ -136,12 +131,10 @@ export const useCandidateChatSession = ({
       const alreadyShowingThisChat = idStr === activeStr && idStr === convIdStr;
       if (alreadyShowingThisChat) return;
 
-      const selected = conversations.find((item) => String(item._id) === idStr);
+      const selected = conversations.find((item: ChatShellConversation) => String(item._id) === idStr);
       if (selected) {
         dispatch(setCandidateCurrentConversation(selected));
       }
-
-      setNewMessage("");
 
       if (idStr === activeStr && idStr !== convIdStr) {
         setActiveConversationId(null);
@@ -158,8 +151,9 @@ export const useCandidateChatSession = ({
     [activeConversationId, conversation?._id, conversations, dispatch, onConversationChange],
   );
 
-  const handleSendMessage = useCallback(async () => {
-    if (!newMessage.trim() || !conversation || !currentUserId || !activeConversationId) return;
+  const handleSendMessage = useCallback(async (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed || !conversation || !currentUserId || !activeConversationId) return;
 
     const uid = String(currentUserId);
     const other = conversation.participants.find((p) => String(p._id) !== uid);
@@ -168,19 +162,13 @@ export const useCandidateChatSession = ({
       return;
     }
 
-    const text = newMessage.trim();
-    setNewMessage("");
-
     try {
       const message = await sendMessageMutation.mutateAsync({
         conversationId: activeConversationId,
         receiverId: other._id,
-        text,
+        text: trimmed,
       });
-      dispatch(addCandidateMessage({
-        message: toChatShellMessage(message),
-        viewerUserId: String(currentUserId),
-      }));
+      // Mutation's onMutate/onSuccess handles Redux updates optimistically.
       if (message.deliveryBlocked) {
         showToast({
           message: deliveryBlockedToastMessage(message.blockedReason, t),
@@ -188,14 +176,13 @@ export const useCandidateChatSession = ({
         });
       }
     } catch (error) {
-      setNewMessage(text);
       showToast({
         message: `${t("toast.failed_send")}: ${getCandidateChatMutationError(error, "Unknown error")}`,
         severity: "error",
       });
+      throw error;
     }
   }, [
-    newMessage,
     conversation,
     currentUserId,
     activeConversationId,
@@ -204,13 +191,6 @@ export const useCandidateChatSession = ({
     showToast,
     t,
   ]);
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  }, [handleSendMessage]);
 
   const handleDeleteMessage = useCallback(async (messageId: string, scope?: "me" | "everyone") => {
     if (!enableDeletes || !activeConversationId) return;
@@ -244,29 +224,10 @@ export const useCandidateChatSession = ({
     userRole,
   ]);
 
-  const requestDeleteConversation = useCallback((conversationId: string) => {
-    deleteConversationTargetIdRef.current = String(conversationId);
-    setDeleteDialogOpen(true);
-  }, []);
-
-  const resetDeleteConversationTarget = useCallback(() => {
-    deleteConversationTargetIdRef.current = null;
-  }, []);
-
-  const handleConfirmDeleteConversation = useCallback(async () => {
-    const targetId = deleteConversationTargetIdRef.current ?? activeConversationId;
-    if (!targetId) {
-      setDeleteDialogOpen(false);
-      deleteConversationTargetIdRef.current = null;
-      return;
-    }
-    setIsDeleting(true);
+  const executeDeleteConversation = useCallback(async (targetId: string) => {
     try {
       await deleteConversationMutation.mutateAsync(targetId);
       showToast({ message: t("toast.conversation_removed_list"), severity: "success" });
-      setDeleteDialogOpen(false);
-      deleteConversationTargetIdRef.current = null;
-
       const wasActive =
         activeConversationId != null && String(activeConversationId) === String(targetId);
       if (wasActive) {
@@ -278,31 +239,26 @@ export const useCandidateChatSession = ({
         message: `${t("toast.failed_delete_conversation")}: ${getCandidateChatMutationError(error, "Unknown error")}`,
         severity: "error",
       });
-    } finally {
-      setIsDeleting(false);
+      throw error;
     }
   }, [activeConversationId, deleteConversationMutation, deleteRedirectRoute, router, showToast, t]);
 
-  console.log(
-    "[DIAG][useCandidateChatSession]",
-    "currentUserId=", currentUserId,
-    "conversations.length=", conversations.length,
-    "effectiveConversations.length=", effectiveConversations.length,
-    "activeConversationId=", activeConversationId,
-    "queryStatus=", conversationsQuery.status,
-    "fetchStatus=", conversationsQuery.fetchStatus,
+  const totalUnread = useMemo(
+    () => conversations.reduce(
+      (acc: number, conversationItem: ChatShellConversation) =>
+        acc + normalizeConversationUnreadCount(
+          conversationItem.unreadCount,
+          currentUserId != null ? String(currentUserId) : undefined,
+        ),
+      0,
+    ),
+    [conversations, currentUserId],
   );
-
-  const totalUnread = conversations.reduce(
-    (acc, conversationItem) =>
-      acc + normalizeConversationUnreadCount(
-        conversationItem.unreadCount,
-        currentUserId != null ? String(currentUserId) : undefined,
-      ),
-    0,
-  );
-  const otherUser = conversation?.participants?.find(
-    (participant) => String(participant._id) !== String(currentUserId ?? ""),
+  const otherUser = useMemo(
+    () => conversation?.participants?.find(
+      (participant) => String(participant._id) !== String(currentUserId ?? ""),
+    ),
+    [conversation, currentUserId],
   );
 
   return {
@@ -316,17 +272,9 @@ export const useCandidateChatSession = ({
     totalUnread,
     activeConversationId,
     setActiveConversationId,
-    newMessage,
-    setNewMessage,
-    deleteDialogOpen,
-    setDeleteDialogOpen,
-    isDeleting,
     handleSelectConversation,
     handleSendMessage,
-    handleKeyDown,
     handleDeleteMessage,
-    handleConfirmDeleteConversation,
-    requestDeleteConversation,
-    resetDeleteConversationTarget,
+    executeDeleteConversation,
   };
 };

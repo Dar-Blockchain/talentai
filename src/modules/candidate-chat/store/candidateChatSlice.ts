@@ -57,13 +57,45 @@ const candidateChatSlice = createSlice({
   initialState,
   reducers: {
     setCandidateConversations: (state, action: PayloadAction<ChatShellConversation[]>) => {
-      state.conversations = action.payload.map((conv) => {
-        if (!conv.lastMessage) {
-          const existing = state.conversations.find((c) => c._id === conv._id);
-          if (existing?.lastMessage) return { ...conv, lastMessage: existing.lastMessage };
+      const incoming = action.payload;
+      const existingById = new Map(state.conversations.map((c) => [c._id, c]));
+      const hasStructuralChange =
+        incoming.length !== state.conversations.length
+        || incoming.some((c) => !existingById.has(c._id));
+
+      if (hasStructuralChange) {
+        // Set of conversations changed — full replacement, preserve cached lastMessages
+        state.conversations = incoming.map((conv) => {
+          if (!conv.lastMessage) {
+            const cur = existingById.get(conv._id);
+            if (cur?.lastMessage) return { ...conv, lastMessage: cur.lastMessage };
+          }
+          return conv;
+        });
+        return;
+      }
+
+      // Same set of conversations — merge field-by-field to preserve object identity
+      // Immer only creates a new array reference if something actually changes here
+      for (const conv of incoming) {
+        const cur = existingById.get(conv._id)!;
+        if (cur.unreadCount !== conv.unreadCount) cur.unreadCount = conv.unreadCount;
+        if (cur.updatedAt !== conv.updatedAt) cur.updatedAt = conv.updatedAt;
+
+        const lm = conv.lastMessage;
+        const curLm = cur.lastMessage;
+        if (!lm) {
+          // Incoming has no lastMessage — keep existing (WebSocket may have set a newer one)
+        } else if (
+          !curLm
+          || curLm.text !== lm.text
+          || curLm.timestamp !== lm.timestamp
+          || curLm.isDeletedForEveryone !== lm.isDeletedForEveryone
+          || curLm.senderId !== lm.senderId
+        ) {
+          cur.lastMessage = lm;
         }
-        return conv;
-      });
+      }
     },
     setCandidateCurrentConversation: (state, action: PayloadAction<ChatShellConversation | null>) => {
       state.currentConversation = action.payload;

@@ -89,13 +89,9 @@ export const useTeamChatRealtime = () => {
         viewerIsViewingConversation,
       }));
 
+      // addTeamMessage already updates conversations and messages in Redux via applyIncomingMessage.
+      // Only invalidate unreadCount to sync the server total.
       queryClient.invalidateQueries({ queryKey: teamChatKeys.unreadCount() });
-      queryClient.invalidateQueries({ queryKey: teamChatKeys.conversations() });
-      if (conversationId) {
-        queryClient.invalidateQueries({
-          queryKey: teamChatKeys.messages(conversationId),
-        });
-      }
 
       if (!shouldNotify) return;
 
@@ -128,12 +124,7 @@ export const useTeamChatRealtime = () => {
         );
       }
       dispatch(removeTeamMessage(String(payload.messageId)));
-      await queryClient.invalidateQueries({ queryKey: teamChatKeys.conversations() });
-      if (cid) {
-        await queryClient.invalidateQueries({
-          queryKey: [...teamChatKeys.all, "messages", cid],
-        });
-      }
+      // setQueriesData above and Redux dispatch already handle messages and conversation previews.
       await queryClient.invalidateQueries({ queryKey: teamChatKeys.unreadCount() });
     };
 
@@ -146,7 +137,13 @@ export const useTeamChatRealtime = () => {
       dispatch(removeTeamConversation(id));
       queryClient.removeQueries({ queryKey: teamChatKeys.messages(id) });
       queryClient.removeQueries({ queryKey: teamChatKeys.conversation(id) });
-      queryClient.invalidateQueries({ queryKey: teamChatKeys.conversations() });
+      queryClient.setQueriesData(
+        { queryKey: [...teamChatKeys.all, "conversations"] },
+        (old) => {
+          if (!Array.isArray(old)) return old;
+          return old.filter((c: any) => String(c._id) !== id);
+        },
+      );
       queryClient.invalidateQueries({ queryKey: teamChatKeys.unreadCount() });
     };
 
@@ -176,12 +173,7 @@ export const useTeamChatRealtime = () => {
         });
       }
       dispatch(upsertTeamMessage(mapped));
-      await queryClient.invalidateQueries({ queryKey: teamChatKeys.conversations() });
-      if (cid) {
-        await queryClient.invalidateQueries({
-          queryKey: [...teamChatKeys.all, "messages", cid],
-        });
-      }
+      // setQueriesData above and Redux dispatch already handle messages and conversation previews.
       await queryClient.invalidateQueries({ queryKey: teamChatKeys.unreadCount() });
     };
 

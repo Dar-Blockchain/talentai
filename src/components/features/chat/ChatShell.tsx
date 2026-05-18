@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useCallback, useMemo, memo, useRef } from "react";
 import {
   Box,
   Typography,
@@ -56,22 +56,13 @@ export interface ChatShellProps {
   deleteConversationTitle?: string;
   /** Team chat: light mint / SaaS-style surfaces (does not affect candidate DMs). */
   mintLightTeamUi?: boolean;
-  newMessage:           string;
-  setNewMessage:        (v: string) => void;
-  deleteDialogOpen:     boolean;
-  setDeleteDialogOpen:  (v: boolean) => void;
-  isDeleting:           boolean;
   // handlers
-  onSend:               () => void;
-  onKeyDown:            (e: React.KeyboardEvent) => void;
+  onSend:               (text: string) => Promise<void>;
   onDeleteMessage:      (id: string, scope?: "me" | "everyone") => void;
-  onConfirmDelete:      () => void;
+  onDeleteConversation: (targetId: string) => Promise<void>;
   onSelectConversation: (id: string) => void;
   /** Team chat: delete from sidebar row menu instead of header trash. */
   deleteConversationFromSidebar?: boolean;
-  onRequestDeleteConversation?: (conversationId: string) => void;
-  /** Clears pending delete target when dialog closes without confirming. */
-  resetDeleteConversationTarget?: () => void;
   // optional
   returnTo?: ReturnToPost;
 }
@@ -94,18 +85,53 @@ const ChatShell: React.FC<ChatShellProps> = (p) => {
   const showConversationSidebar = p.showConversationSidebar ?? p.isCompany;
   const compactInFrame = p.compactInFrame ?? false;
   const mintLightTeamUi = p.mintLightTeamUi ?? false;
-  const sidebarDeleteMenu = Boolean(
-    p.deleteConversationFromSidebar && p.onRequestDeleteConversation,
-  );
+  const sidebarDeleteMenu = Boolean(p.deleteConversationFromSidebar);
   const headerShowDeleteConversation = sidebarDeleteMenu ? false : p.showDeleteConversation;
 
-  const handleSelect = (id: string) => {
+  const deleteTargetRef = useRef<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleSelect = useCallback((id: string) => {
     p.onSelectConversation(id);
     if (isMobile) setShowChat(true);
-  };
+  }, [p.onSelectConversation, isMobile]);
+
+  const requestDeleteConversation = useCallback((conversationId: string) => {
+    deleteTargetRef.current = conversationId;
+    setDeleteDialogOpen(true);
+  }, []);
+
+  const handleOpenDeleteDialog = useCallback(() => {
+    if (p.activeConversationId) requestDeleteConversation(p.activeConversationId);
+  }, [p.activeConversationId, requestDeleteConversation]);
+
+  const handleCloseDeleteDialog = useCallback(() => {
+    if (isDeleting) return;
+    deleteTargetRef.current = null;
+    setDeleteDialogOpen(false);
+  }, [isDeleting]);
+
+  const handleConfirmDelete = useCallback(async () => {
+    const targetId = deleteTargetRef.current;
+    if (!targetId) return;
+    setIsDeleting(true);
+    try {
+      await p.onDeleteConversation(targetId);
+      setDeleteDialogOpen(false);
+      deleteTargetRef.current = null;
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [p.onDeleteConversation]);
+
+  const ctxValue = useMemo(
+    () => ({ isMobile, showChat, setShowChat }),
+    [isMobile, showChat],
+  );
 
   return (
-    <ShellCtx.Provider value={{ isMobile, showChat, setShowChat }}>
+    <ShellCtx.Provider value={ctxValue}>
       <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, height: "100%", overflow: "hidden" }}>
 
         {p.returnTo && <ReturnBanner {...p.returnTo} />}
@@ -129,13 +155,13 @@ const ChatShell: React.FC<ChatShellProps> = (p) => {
               onSelect={handleSelect}
               compact={compactInFrame}
               conversationMenuDelete={sidebarDeleteMenu}
-              onRequestDeleteConversation={p.onRequestDeleteConversation}
+              onRequestDeleteConversation={sidebarDeleteMenu ? requestDeleteConversation : undefined}
               mintLightTeamUi={mintLightTeamUi}
               viewerIsCompany={p.isCompany}
             />
           )}
           <Panel
-            conversations={p.conversations}
+            hasConversations={p.conversations.length > 0}
             conversation={p.conversation}
             messages={p.messages}
             currentUserId={p.currentUserId}
@@ -143,12 +169,9 @@ const ChatShell: React.FC<ChatShellProps> = (p) => {
             loading={p.loading}
             sending={p.sending}
             isCompany={p.isCompany}
-            newMessage={p.newMessage}
-            setNewMessage={p.setNewMessage}
             onSend={p.onSend}
-            onKeyDown={p.onKeyDown}
             onDeleteMessage={p.onDeleteMessage}
-            onDeleteConversation={() => p.setDeleteDialogOpen(true)}
+            onDeleteConversation={handleOpenDeleteDialog}
             enableDeletes={enableDeletes}
             teamScopedMessageDeletes={p.teamScopedMessageDeletes}
             showDeleteConversation={headerShowDeleteConversation}
@@ -159,14 +182,10 @@ const ChatShell: React.FC<ChatShellProps> = (p) => {
 
         {enableDeletes && (
           <DeleteConversationDialog
-            open={p.deleteDialogOpen}
-            onClose={() => {
-              if (p.isDeleting) return;
-              p.resetDeleteConversationTarget?.();
-              p.setDeleteDialogOpen(false);
-            }}
-            onConfirm={p.onConfirmDelete}
-            isDeleting={p.isDeleting}
+            open={deleteDialogOpen}
+            onClose={handleCloseDeleteDialog}
+            onConfirm={handleConfirmDelete}
+            isDeleting={isDeleting}
             description={p.deleteConversationDescription}
             title={p.deleteConversationTitle}
           />
@@ -177,7 +196,7 @@ const ChatShell: React.FC<ChatShellProps> = (p) => {
 };
 
 // ── Return-to-post banner ─────────────────────────────────
-const ReturnBanner: React.FC<ReturnToPost> = ({ jobTitle, onReturn }) => {
+const ReturnBanner = memo(function ReturnBanner({ jobTitle, onReturn }: ReturnToPost) {
   const { t } = useTranslation("shared/chat");
   const theme = useTheme();
   return (
@@ -225,10 +244,10 @@ const ReturnBanner: React.FC<ReturnToPost> = ({ jobTitle, onReturn }) => {
       </Button>
     </Paper>
   );
-};
+});
 
 // ── Sidebar ───────────────────────────────────────────────
-const Sidebar: React.FC<{
+interface SidebarProps {
   conversations: any[];
   activeConversationId: string | null;
   currentUserId: string | undefined;
@@ -238,7 +257,9 @@ const Sidebar: React.FC<{
   onRequestDeleteConversation?: (conversationId: string) => void;
   mintLightTeamUi?: boolean;
   viewerIsCompany: boolean;
-}> = ({
+}
+
+const Sidebar = memo(function Sidebar({
   conversations,
   activeConversationId,
   currentUserId,
@@ -248,7 +269,7 @@ const Sidebar: React.FC<{
   onRequestDeleteConversation,
   mintLightTeamUi = false,
   viewerIsCompany,
-}) => {
+}: SidebarProps) {
   const { isMobile, showChat } = useShell();
   const { t } = useTranslation("shared/chat");
   const theme = useTheme();
@@ -301,11 +322,11 @@ const Sidebar: React.FC<{
       />
     </Paper>
   );
-};
+});
 
 // ── Chat panel ────────────────────────────────────────────
 interface PanelProps {
-  conversations:  any[];
+  hasConversations: boolean;
   conversation:   any;
   messages:       any[];
   currentUserId:  string | undefined;
@@ -313,10 +334,7 @@ interface PanelProps {
   loading:        boolean;
   sending:        boolean;
   isCompany:      boolean;
-  newMessage:     string;
-  setNewMessage:  (v: string) => void;
-  onSend:         () => void;
-  onKeyDown:      (e: React.KeyboardEvent) => void;
+  onSend:         (text: string) => Promise<void>;
   onDeleteMessage:(id: string, scope?: "me" | "everyone") => void;
   onDeleteConversation: () => void;
   enableDeletes: boolean;
@@ -326,9 +344,10 @@ interface PanelProps {
   mintLightTeamUi?: boolean;
 }
 
-const Panel: React.FC<PanelProps> = (p) => {
+const Panel = memo(function Panel(p: PanelProps) {
   const { isMobile, showChat, setShowChat } = useShell();
   const theme = useTheme();
+  const handleBack = useCallback(() => setShowChat(false), [setShowChat]);
   return (
     <Paper
       id="chat-message-panel"
@@ -352,13 +371,13 @@ const Panel: React.FC<PanelProps> = (p) => {
           <CircularProgress size={36} thickness={4} />
         </Stack>
       ) : !p.conversation ? (
-        <EmptyPanel hasConversations={p.conversations.length > 0} isCompany={p.isCompany} mintLightTeamUi={p.mintLightTeamUi} />
+        <EmptyPanel hasConversations={p.hasConversations} isCompany={p.isCompany} mintLightTeamUi={p.mintLightTeamUi} />
       ) : (
         <Stack direction="column" sx={{ flex: 1, minHeight: 0 }}>
           {isMobile && (
             <IconButton
               size="small"
-              onClick={() => setShowChat(false)}
+              onClick={handleBack}
               sx={{ alignSelf: "flex-start", m: 0.5, color: "text.secondary" }}
               aria-label="Back"
             >
@@ -387,11 +406,10 @@ const Panel: React.FC<PanelProps> = (p) => {
               mintLightTeamUi={p.mintLightTeamUi}
             />
           </Box>
+          {/* key resets the internal input state when switching conversations */}
           <MessageInput
-            value={p.newMessage}
-            onChange={p.setNewMessage}
+            key={p.conversation._id}
             onSend={p.onSend}
-            onKeyDown={p.onKeyDown}
             sending={p.sending}
             compact={p.compactFooter}
             mintLightTeamUi={p.mintLightTeamUi}
@@ -400,15 +418,16 @@ const Panel: React.FC<PanelProps> = (p) => {
       )}
     </Paper>
   );
-};
+});
 
 // ── Empty state ───────────────────────────────────────────
-const EmptyPanel: React.FC<{ hasConversations: boolean; isCompany: boolean; mintLightTeamUi?: boolean }> = ({
+const EmptyPanel = memo(function EmptyPanel({
   hasConversations,
   isCompany,
   mintLightTeamUi = false,
-}) => {
+}: { hasConversations: boolean; isCompany: boolean; mintLightTeamUi?: boolean }) {
   const { isMobile, setShowChat } = useShell();
+  const handleBack = useCallback(() => setShowChat(false), [setShowChat]);
   const { t } = useTranslation("shared/chat");
   const { t: tCandidate } = useTranslation("modules/candidates/candidateChat");
   const { t: tCompanyHub } = useTranslation("modules/company/companyChat");
@@ -441,7 +460,7 @@ const EmptyPanel: React.FC<{ hasConversations: boolean; isCompany: boolean; mint
       {isMobile && (
         <Button
           startIcon={<ArrowBackOutlined />}
-          onClick={() => setShowChat(false)}
+          onClick={handleBack}
           sx={{ textTransform: "none", fontWeight: 600 }}
         >
           {t("panel.back_to_conversations")}
@@ -449,6 +468,6 @@ const EmptyPanel: React.FC<{ hasConversations: boolean; isCompany: boolean; mint
       )}
     </Stack>
   );
-};
+});
 
 export default ChatShell;

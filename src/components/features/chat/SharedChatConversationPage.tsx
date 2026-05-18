@@ -21,7 +21,6 @@ const SharedChatConversationPage: React.FC<Props> = ({ basePath, isCompany, layo
       void router.replace(`${basePath}/${id}`, undefined, { scroll: false });
     },
   });
-console.log("session.conversations" ,session.conversations )
   return (
     <Layout>
       <Box sx={{ flex: 1, display: "flex", minHeight: 0, p: { xs: 1, sm: 2 } }}>
@@ -35,15 +34,9 @@ console.log("session.conversations" ,session.conversations )
           loading={session.loading}
           sending={session.sending}
           isCompany={isCompany}
-          newMessage={session.newMessage}
-          setNewMessage={session.setNewMessage}
           onSend={session.handleSendMessage}
-          onKeyDown={session.handleKeyDown}
-          deleteDialogOpen={session.deleteDialogOpen}
-          setDeleteDialogOpen={session.setDeleteDialogOpen}
-          isDeleting={session.isDeleting}
           onDeleteMessage={session.handleDeleteMessage}
-          onConfirmDelete={session.handleConfirmDeleteConversation}
+          onDeleteConversation={session.executeDeleteConversation}
           onSelectConversation={session.handleSelectConversation}
         />
       </Box>
