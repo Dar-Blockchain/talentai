@@ -63,6 +63,18 @@ export const useStartTeamChat = () => {
       return;
     }
 
+    // Check cache synchronously — zero latency for existing conversations.
+    const cached = queryClient.getQueryData<ChatShellConversation[]>(teamChatKeys.conversations());
+    const existingConv = cached ? findConversationForUser(cached, targetUserId) : null;
+
+    if (existingConv?._id) {
+      // Navigate instantly, then fire openConversation in the background to keep server state in sync.
+      void router.push(getTeamChatConversationPath(currentUser?.role, String(existingConv._id)));
+      openConversationMutation.mutate(targetUserId);
+      return;
+    }
+
+    // New conversation — must wait for the API to obtain the conversation ID.
     try {
       const conversation = await openConversationMutation.mutateAsync(targetUserId);
       await navigateToConversation(targetUserId, conversation);
@@ -91,5 +103,5 @@ export const useStartTeamChat = () => {
         severity: "error",
       });
     }
-  }, [currentUserId, navigateToConversation, openConversationMutation, queryClient, showToast]);
+  }, [currentUser?.role, currentUserId, navigateToConversation, openConversationMutation, queryClient, router, showToast]);
 };

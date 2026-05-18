@@ -79,9 +79,6 @@ const CompanyChatTopNav: React.FC<CompanyChatTopNavProps> = ({ activeChannel }) 
             >
               {t(`channels.${activeChannel}.title`)}
             </Typography>
-            {!teamDense ? (
-              <Typography sx={companyChatSx.hubSubtitle}>{t(`channels.${activeChannel}.subtitle`)}</Typography>
-            ) : null}
           </Box>
         </Box>
       </Box>

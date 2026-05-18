@@ -54,7 +54,7 @@ const ConversationHeader = memo(function ConversationHeader({
 
   const h = compact
     ? {
-        py: { xs: 0.5, sm: 0.65 },
+        py: { xs: 1, sm: 1.25 },
         px: { xs: 1.25, sm: 1.75 },
         stackGap: 1.25,
         avatar: 36,
@@ -65,7 +65,7 @@ const ConversationHeader = memo(function ConversationHeader({
         trashIcon: 20,
       }
     : {
-        py: 1.25,
+        py: 1.75,
         px: { xs: 1.5, sm: 2.5 },
         stackGap: 1.5,
         avatar: 44,

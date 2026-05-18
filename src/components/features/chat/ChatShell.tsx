@@ -304,7 +304,7 @@ const Sidebar = memo(function Sidebar({
         id="chat-sidebar-header"
         sx={{
           px: compact ? 1.5 : 2,
-          py: compact ? 0.9 : 1.25,
+          py: compact ? 1.25 : 1.75,
           borderBottom: mintLightTeamUi ? "1px solid #E5E7EB" : `1px solid ${theme.palette.divider}`,
           bgcolor: mintLightTeamUi ? "#FFFFFF" : alpha(theme.palette.primary.main, theme.palette.mode === "dark" ? 0.08 : 0.04),
           display: "flex",
