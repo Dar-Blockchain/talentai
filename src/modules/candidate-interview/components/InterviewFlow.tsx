@@ -14,9 +14,6 @@ export default function InterviewFlow() {
   const authUser = useSelector(
     (state: RootState) => state.user.connectedUser.user,
   );
-  const profile = useSelector(
-    (state: RootState) => state.user.connectedUser.profile,
-  );
 
   const hasJobId =
     router.isReady &&
@@ -28,24 +25,12 @@ export default function InterviewFlow() {
   const { notification, showNotification, hideNotification } =
     useNotification();
 
-  const {
-    interviewConfig,
-    setInterviewConfig,
-    isPipelineJob,
-    candidateProgress,
-    currentPipelineStep,
-    pipelineLoading,
-    showBlockedModal,
-    showFailedModal,
-    blockMessage,
-    jobData,
-  } = useInterviewConfig({ showNotification });
+  const { interviewConfig, setInterviewConfig, jobData } =
+    useInterviewConfig({ showNotification });
 
   const session = useInterviewSession({
     interviewConfig,
     setInterviewConfig,
-    isPipelineJob,
-    profile,
     authUser,
     jobData,
     notify: showNotification,
@@ -71,17 +56,7 @@ export default function InterviewFlow() {
   return (
     <InterviewScreen
       session={session}
-      configData={{
-        interviewConfig,
-        isPipelineJob,
-        candidateProgress,
-        currentPipelineStep,
-        pipelineLoading,
-        showBlockedModal,
-        showFailedModal,
-        blockMessage,
-        jobData,
-      }}
+      configData={{ interviewConfig, jobData }}
       notification={notification}
       hideNotification={hideNotification}
     />

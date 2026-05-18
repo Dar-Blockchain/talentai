@@ -1,25 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store/store';
 import { InterviewConfig } from '../types/interview';
-import { type JobPost, type PipelineProgress } from '../types/api';
+import { type JobPost } from '../types/api';
 import { buildInterviewConfigFromURL, URLParams } from '@/utils/interviewConfigBuilder';
 import { getToken } from '@/utils/tokenUtils';
 import { useJobPostQuery } from '../queries/useJobPostQuery';
-import { usePipelineProgressQuery } from '../queries/usePipelineProgressQuery';
 import { useInterviewConfigQuery } from '../queries/useInterviewConfigQuery';
 
 export interface UseInterviewConfigReturn {
   interviewConfig: InterviewConfig;
   setInterviewConfig: (config: InterviewConfig) => void;
-  isPipelineJob: boolean;
-  candidateProgress: PipelineProgress | null;
-  currentPipelineStep: number | null;
-  pipelineLoading: boolean;
-  showBlockedModal: boolean;
-  showFailedModal: boolean;
-  blockMessage: string;
   jobData: JobPost | null;
 }
 
@@ -57,73 +47,32 @@ const DEFAULT_CONFIG: InterviewConfig = {
 };
 
 export const useInterviewConfig = ({ showNotification }: UseInterviewConfigOptions): UseInterviewConfigReturn => {
-  const router   = useRouter();
-  const authUser = useSelector((state: RootState) => state.user.connectedUser.user);
-  const profile  = useSelector((state: RootState) => state.user.connectedUser.profile);
-  const jobId = router.isReady && typeof router.query.jobId === 'string'
+  const router = useRouter();
+  const jobId  = router.isReady && typeof router.query.jobId === 'string'
     ? router.query.jobId
     : null;
 
   const [interviewConfig, setInterviewConfig] = useState<InterviewConfig>(DEFAULT_CONFIG);
-  const [blockMessage]                         = useState('');
 
   // ── 1. Fetch job post ────────────────────────────────────────────────────────
-  const {
-    data: jobData,
-    isLoading: postLoading,
-  } = useJobPostQuery(jobId);
+  const { data: jobData } = useJobPostQuery(jobId);
 
-  const isPipelineJob = jobData?.creationType === 'pipeline';
-  const candidateId   = profile?.userId?._id || profile?.userId || authUser?._id;
-
-  // ── 2a. Pipeline: progress (with auto-initialize on 404) ────────────────────
-  const {
-    data: progressData,
-    isLoading: progressLoading,
-  } = usePipelineProgressQuery(
-    isPipelineJob && candidateId ? String(candidateId) : null,
-    isPipelineJob ? jobId : null,
+  // ── 2. Fetch interview config (requires auth token) ──────────────────────────
+  const { data: configData, error: configError } = useInterviewConfigQuery(
+    !!jobData && !!getToken() ? jobId : null,
   );
 
-  // ── 2b. Regular: interview config (requires auth) ───────────────────────────
-  const {
-    data: configData,
-    error: configError,
-    isLoading: configLoading,
-  } = useInterviewConfigQuery(
-    !isPipelineJob && !!jobData && !!getToken() ? jobId : null,
-  );
-
-  // ── Notify on config fetch error ─────────────────────────────────────────────
   useEffect(() => {
     if (configError) showNotification('Failed to load interview configuration', 'error');
   }, [configError]);
 
-  // ── Apply pipeline config → interviewConfig ──────────────────────────────────
+  // ── Apply fetched config ─────────────────────────────────────────────────────
   useEffect(() => {
-    if (!isPipelineJob || !progressData) return;
-    const currentStep   = progressData.currentStep;
-    const dynamicConfig = buildInterviewConfigFromURL({
-      type: currentStep.stepType,
-      ...currentStep.interviewParams,
-      passThreshold: currentStep.interviewParams.passThreshold || currentStep.passThreshold,
-    } as any);
-    setInterviewConfig(dynamicConfig);
-
-    localStorage.setItem('interview_jobId',       jobId!);
-    localStorage.setItem('interview_stepId',      currentStep.stepId);
-    localStorage.setItem('interview_stepNumber',  currentStep.stepNumber.toString());
-    localStorage.setItem('interview_passThreshold', (currentStep.passThreshold || 70).toString());
-    localStorage.setItem('interview_source',      'pipeline');
-  }, [isPipelineJob, progressData]);
-
-  // ── Apply regular config → interviewConfig ───────────────────────────────────
-  useEffect(() => {
-    if (isPipelineJob || !configData) return;
+    if (!configData) return;
     setInterviewConfig(configData);
-    localStorage.setItem('interview_jobId',  jobId!);
-    localStorage.setItem('interview_type',   'hr');
-  }, [isPipelineJob, configData]);
+    localStorage.setItem('interview_jobId', jobId!);
+    localStorage.setItem('interview_type',  'hr');
+  }, [configData]);
 
   // ── URL-param mode (no jobId) ─────────────────────────────────────────────────
   useEffect(() => {
@@ -159,18 +108,9 @@ export const useInterviewConfig = ({ showNotification }: UseInterviewConfigOptio
     if (urlParams.role)        localStorage.setItem('interview_role',        urlParams.role);
   }, [router.isReady, router.query, jobId]);
 
-  const pipelineLoading = postLoading || progressLoading || configLoading;
-
   return {
     interviewConfig,
     setInterviewConfig,
-    isPipelineJob,
-    candidateProgress:    progressData?.progress ?? null,
-    currentPipelineStep:  progressData?.currentStep?.stepNumber ?? null,
-    pipelineLoading,
-    showBlockedModal: false,
-    showFailedModal:  false,
-    blockMessage,
     jobData: jobData ?? null,
   };
 };

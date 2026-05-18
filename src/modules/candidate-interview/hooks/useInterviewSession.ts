@@ -7,13 +7,10 @@ import { useAudioTranscription } from './useAudioTranscription';
 import { useInterviewTimer } from './useInterviewTimer';
 import { useCamera } from './useCamera';
 import { useSecurityMonitoring } from './useSecurityMonitoring';
-import { updatePipelineStep, fetchPipelineProgress } from '../api/pipelineProgress.api';
 
 export interface UseInterviewSessionOptions {
   interviewConfig: InterviewConfig;
   setInterviewConfig: (config: InterviewConfig) => void;
-  isPipelineJob: boolean;
-  profile: any;
   authUser: any;
   jobData: any;
   notify: (message: string, severity: 'success' | 'error' | 'warning' | 'info') => void;
@@ -22,8 +19,6 @@ export interface UseInterviewSessionOptions {
 export function useInterviewSession({
   interviewConfig,
   setInterviewConfig,
-  isPipelineJob,
-  profile,
   authUser,
   jobData,
   notify,
@@ -101,39 +96,7 @@ export function useInterviewSession({
         timestamp: new Date().toISOString(),
       }));
     }
-    const candidateId = profile?.userId?._id || profile?.userId || authUser?._id;
-    if (isPipelineJob && candidateId) {
-      try {
-        const jobId = localStorage.getItem('interview_jobId');
-        const stepId = localStorage.getItem('interview_stepId');
-        const passThreshold = parseInt(localStorage.getItem('interview_passThreshold') || '70');
-        const finalScore = data.finalReport?.overallScore || data.analytics?.overallScore || data.analytics?.totalScore || 0;
-        const passed = finalScore >= passThreshold;
-        if (jobId && stepId) {
-          await updatePipelineStep({ candidateId: String(candidateId), jobId, stepId, passed, finalScore });
-          const progressData = await fetchPipelineProgress(String(candidateId), jobId);
-          const completedSteps = progressData.stats?.completedSteps || 0;
-          const totalSteps = progressData.stats?.totalSteps || 0;
-          if (passed) {
-            if (completedSteps < totalSteps) {
-              localStorage.setItem('pipeline_has_next_step', 'true');
-              localStorage.setItem('pipeline_next_step', progressData.currentStep?.stepNumber?.toString() || '');
-            } else {
-              localStorage.setItem('pipeline_has_next_step', 'false');
-              localStorage.setItem('pipeline_complete', 'true');
-            }
-          } else {
-            localStorage.setItem('pipeline_has_next_step', 'false');
-            localStorage.setItem('pipeline_failed', 'true');
-            localStorage.setItem('pipeline_failed_score', finalScore.toString());
-            localStorage.setItem('pipeline_required_score', passThreshold.toString());
-          }
-        }
-      } catch (error) {
-        console.error('Error updating pipeline progress:', error);
-      }
-    }
-  }, [interviewConfig, isPipelineJob, profile, authUser]);
+  }, [interviewConfig]);
 
   const handleInterviewError = useCallback((error: { message: string }) => {
     audioRef.current?.setAgentState('waiting');

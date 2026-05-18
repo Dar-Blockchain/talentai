@@ -1,12 +1,10 @@
 import React from 'react';
-import { Box, Typography, Chip, Button } from '@mui/material';
+import { Box, Typography, Button } from '@mui/material';
 import InterviewTimer from './InterviewTimer';
-import { PURPLE } from '../../constants/colors';
 
 interface Props {
   label: string;
   subtitle?: string;
-  stepChipLabel?: string;
   isActive: boolean;
   elapsedTime?: number;
   timeWarning?: boolean;
@@ -17,7 +15,6 @@ interface Props {
 export default function InterviewSessionHeader({
   label,
   subtitle,
-  stepChipLabel,
   isActive,
   elapsedTime,
   timeWarning,
@@ -39,13 +36,6 @@ export default function InterviewSessionHeader({
         </Box>
 
         <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
-          {stepChipLabel && (
-            <Chip
-              label={stepChipLabel}
-              size="small"
-              sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.72rem', bgcolor: 'rgba(131,16,255,0.08)', color: PURPLE, border: '1px solid rgba(131,16,255,0.2)', height: 24 }}
-            />
-          )}
           {isActive && elapsedTime !== undefined && (
             <InterviewTimer elapsedTime={elapsedTime} timeWarning={timeWarning ?? false} />
           )}
