@@ -110,16 +110,13 @@ export const useCandidateChatRealtime = () => {
       });
     };
 
-    const handleMessageDeleted = async (payload: {
+    const handleMessageDeleted = (payload: {
       messageId?: string;
       conversationId?: string;
     }) => {
       if (!payload?.messageId) return;
       const cid = payload.conversationId ? String(payload.conversationId) : "";
       if (cid) {
-        await queryClient.cancelQueries({
-          queryKey: candidateChatKeys.messages(cid),
-        });
         queryClient.setQueriesData(
           { queryKey: candidateChatKeys.messages(cid) },
           (old) => {
@@ -129,11 +126,9 @@ export const useCandidateChatRealtime = () => {
         );
       }
       dispatch(removeCandidateMessage(String(payload.messageId)));
-      // setQueriesData above and Redux dispatch already handle messages and conversation previews.
-      await queryClient.invalidateQueries({ queryKey: candidateChatKeys.unreadCount() });
     };
 
-    const handleMessageUpdated = async (payload: {
+    const handleMessageUpdated = (payload: {
       message?: CandidateMessage;
       conversationId?: string;
     }) => {
@@ -145,7 +140,6 @@ export const useCandidateChatRealtime = () => {
       const mapped = toChatShellMessage(merged);
       const cid = merged.conversationId ? String(merged.conversationId) : "";
       if (cid) {
-        await queryClient.cancelQueries({ queryKey: candidateChatKeys.messages(cid) });
         queryClient.setQueriesData({ queryKey: candidateChatKeys.messages(cid) }, (old) => {
           if (!Array.isArray(old)) return old;
           const id = String(mapped._id);
@@ -157,8 +151,6 @@ export const useCandidateChatRealtime = () => {
         });
       }
       dispatch(upsertCandidateMessage(mapped));
-      // setQueriesData above and Redux dispatch already handle messages and conversation previews.
-      await queryClient.invalidateQueries({ queryKey: candidateChatKeys.unreadCount() });
     };
 
     const handleConversationDeleted = ({ conversationId }: { conversationId: string }) => {

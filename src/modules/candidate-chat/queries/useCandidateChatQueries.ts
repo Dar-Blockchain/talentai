@@ -273,8 +273,8 @@ export const useDeleteCandidateMessageMutation = () => {
           const mapped = toChatShellMessage({
             _id: variables.messageId,
             conversationId: variables.conversationId,
-            senderId: String(prev.sender._id),
-            receiverId: String(prev.receiver._id),
+            sender: { _id: String(prev.sender._id) },
+            receiver: { _id: String(prev.receiver._id) },
             isRead: prev.isRead,
             createdAt: prev.createdAt,
             isDeletedForEveryone: true,
