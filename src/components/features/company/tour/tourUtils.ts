@@ -20,13 +20,18 @@ export function popoverStyle(rect: DOMRect | null, position: Step["position"]) {
       pointerEvents: "none" as const,
     };
   }
+  const vh = window.innerHeight;
+  const CARD_H = Math.min(420, vh - 80);
   const clampX = (x: number) => Math.min(Math.max(x, 12), window.innerWidth - W - 12);
-  const clampY = (y: number) => Math.min(y, window.innerHeight - 280);
   const cx = rect.left + rect.width / 2 - W / 2;
+
+  // Keep card fully inside the viewport: prefer aligning with target, pull up if needed
+  const sideTop = (ideal: number) => Math.max(12, Math.min(ideal, vh - CARD_H - 12));
+
   switch (position) {
-    case "right": return { position: "fixed" as const, top: clampY(rect.top), left: rect.right + GAP, width: W };
-    case "left":  return { position: "fixed" as const, top: clampY(rect.top), left: rect.left - W - GAP, width: W };
-    case "top":   return { position: "fixed" as const, bottom: window.innerHeight - rect.top + GAP, left: clampX(cx), width: W };
-    default:      return { position: "fixed" as const, top: rect.bottom + GAP, left: clampX(cx), width: W };
+    case "right": return { position: "fixed" as const, top: sideTop(rect.top), left: rect.right + GAP, width: W, maxHeight: CARD_H };
+    case "left":  return { position: "fixed" as const, top: sideTop(rect.top), left: rect.left - W - GAP, width: W, maxHeight: CARD_H };
+    case "top":   return { position: "fixed" as const, top: sideTop(rect.top - CARD_H - GAP), left: clampX(cx), width: W, maxHeight: CARD_H };
+    default:      return { position: "fixed" as const, top: sideTop(rect.bottom + GAP), left: clampX(cx), width: W, maxHeight: CARD_H };
   }
 }

@@ -2,15 +2,18 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Box, Backdrop } from "@mui/material";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import type { RootState } from "@/store/store";
 import TourCard from "./tour/TourCard";
-import { STEPS, TOTAL } from "./tour/tourSteps";
+import { getSteps, TOTAL } from "./tour/tourSteps";
 import { resolveRect, popoverStyle } from "./tour/tourUtils";
 import { TEAL } from '@/constants/colors';
 
 const OnboardingTour: React.FC = () => {
   const [active, setActive] = useState(false);
   const [step, setStep] = useState(0);
+  const { t } = useTranslation("dashboard");
+  const STEPS = useMemo(() => getSteps(t), [t]);
 
   const trafficCounter = useSelector(
     (state: RootState) => state.user.connectedUser.user?.trafficCounter ?? 0
@@ -18,8 +21,8 @@ const OnboardingTour: React.FC = () => {
 
   useEffect(() => {
     if (trafficCounter === 1 && !localStorage.getItem("tour_shown")) {
-      const t = setTimeout(() => setActive(true), 600);
-      return () => clearTimeout(t);
+      const timer = setTimeout(() => setActive(true), 600);
+      return () => clearTimeout(timer);
     }
   }, [trafficCounter]);
 
@@ -51,7 +54,7 @@ const OnboardingTour: React.FC = () => {
 
       <AnimatePresence mode="wait">
         <motion.div key={step} initial={{ opacity: 0, scale: 0.94, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.94, y: 10 }} transition={{ duration: 0.2, ease: "easeOut" }} style={{ ...style, zIndex: 9999 }}>
-          <TourCard step={step} current={current} onPrev={prev} onNext={next} onFinish={finish} onJump={jump} />
+          <TourCard step={step} current={current} steps={STEPS} onPrev={prev} onNext={next} onFinish={finish} onJump={jump} />
         </motion.div>
       </AnimatePresence>
     </>
