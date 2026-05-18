@@ -67,7 +67,6 @@ export const defaultCurrencies = [
   { value: "HTG", label: "HTG – Haitian Gourde" },
   { value: "HUF", label: "HUF – Hungarian Forint" },
   { value: "IDR", label: "IDR – Indonesian Rupiah" },
-  { value: "ILS", label: "ILS – Israeli New Shekel" },
   { value: "INR", label: "INR – Indian Rupee" },
   { value: "IQD", label: "IQD – Iraqi Dinar" },
   { value: "IRR", label: "IRR – Iranian Rial" },
