@@ -16,6 +16,7 @@ import {
   setCandidateCurrentConversation,
   setCandidateMessages,
   setCandidateTotalUnread,
+  syncConversationLastMessage,
   upsertCandidateConversation,
   upsertCandidateMessage,
 } from "@/modules/candidate-chat/store/candidateChatSlice";
@@ -295,6 +296,9 @@ export const useDeleteCandidateMessageMutation = () => {
         }
       } else {
         dispatch(removeCandidateMessage(variables.messageId));
+        // After removal, recompute the conversation's sidebar preview from the
+        // remaining messages so the deleted row no longer appears as lastMessage.
+        dispatch(syncConversationLastMessage(variables.conversationId));
         queryClient.setQueriesData({ queryKey: messagesKey }, (old) => {
           if (!Array.isArray(old)) return old;
           return old.filter((m: any) => String(m._id) !== String(variables.messageId));

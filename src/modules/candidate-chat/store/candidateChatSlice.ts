@@ -165,6 +165,38 @@ const candidateChatSlice = createSlice({
         }
       }
     },
+    syncConversationLastMessage: (state, action: PayloadAction<string>) => {
+      const convId = action.payload;
+
+      // Messages are sorted ascending by createdAt. Walk backwards for the last
+      // non-pending, non-blocked message (matches applyLastMessagePreviewFromMessage rules).
+      let lastVisible: ChatShellMessage | undefined;
+      for (let i = state.messages.length - 1; i >= 0; i--) {
+        const m = state.messages[i];
+        if (!m.pending && !m.deliveryBlocked) {
+          lastVisible = m;
+          break;
+        }
+      }
+
+      const conv = state.conversations.find((c) => String(c._id) === convId);
+      if (conv) {
+        if (lastVisible) {
+          applyLastMessagePreviewFromMessage(conv, lastVisible);
+        } else {
+          conv.lastMessage = undefined;
+        }
+        sortConversationsByRecent(state.conversations);
+      }
+
+      if (state.currentConversation && String(state.currentConversation._id) === convId) {
+        if (lastVisible) {
+          applyLastMessagePreviewFromMessage(state.currentConversation, lastVisible);
+        } else {
+          state.currentConversation.lastMessage = undefined;
+        }
+      }
+    },
     removeCandidateConversation: (state, action: PayloadAction<string>) => {
       state.conversations = state.conversations.filter((conversation) => conversation._id !== action.payload);
       if (state.currentConversation?._id === action.payload) {
@@ -187,6 +219,7 @@ export const {
   removeCandidateMessage,
   upsertCandidateMessage,
   removeCandidateConversation,
+  syncConversationLastMessage,
 } = candidateChatSlice.actions;
 
 export const selectCandidateConversations = (state: RootState) => state.candidateChat.conversations;
