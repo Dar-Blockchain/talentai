@@ -1,6 +1,6 @@
 export interface ChatShellConversation {
   _id: string;
-  participants: import("@/components/features/chat/helpers").Participant[];
+  participants: import("@/modules/shared/chat/components/helpers").Participant[];
   lastMessage?: {
     text: string;
     timestamp: string;

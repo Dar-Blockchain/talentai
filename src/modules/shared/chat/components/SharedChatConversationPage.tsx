@@ -2,7 +2,7 @@ import React from "react";
 import { useRouter } from "next/router";
 import { Box } from "@mui/material";
 import { useChatSession } from "@/hooks/useChatSession";
-import ChatShell from "@/components/features/chat/ChatShell";
+import ChatShell from "./ChatShell";
 
 interface Props {
   basePath: string;

@@ -27,7 +27,7 @@ import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import { useChatUnreadBadges } from "@/modules/shared/chat/hooks/useChatUnreadBadges";
 import { normalizeConversationUnreadCount } from "@/modules/shared/chat/utils/normalizeConversationUnread";
-import { getParticipantDisplayName } from "@/components/features/chat/helpers";
+import { getParticipantDisplayName } from "@/modules/shared/chat/components/helpers";
 import { TEAM_LAST_MESSAGE_DELETED_SENTINEL } from "@/modules/team-chat/constants/lastMessagePreview";
 
 const TEAL    = "#0D9488";

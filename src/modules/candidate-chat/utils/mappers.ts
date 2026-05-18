@@ -1,4 +1,4 @@
-import type { Participant } from "@/components/features/chat/helpers";
+import type { Participant } from "@/modules/shared/chat/components/helpers";
 import type {
   CandidateChatParticipant,
   CandidateConversation,

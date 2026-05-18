@@ -1,5 +1,5 @@
 import React from "react";
-import ChatShell, { type ChatShellProps } from "@/components/features/chat/ChatShell";
+import ChatShell, { type ChatShellProps } from "./ChatShell";
 
 /**
  * Company-side messages shell: same compact mint chrome as team chat.

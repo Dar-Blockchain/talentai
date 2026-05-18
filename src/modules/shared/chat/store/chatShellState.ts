@@ -1,5 +1,5 @@
 import type { ChatShellConversation, ChatShellMessage } from "@/modules/shared/chat/types/shell";
-import type { Participant } from "@/components/features/chat/helpers";
+import type { Participant } from "@/modules/shared/chat/components/helpers";
 import { CHAT_LAST_MESSAGE_BLOCKED_PREVIEW } from "@/modules/shared/chat/constants/contactPolicy";
 import { normalizeConversationUnreadCount } from "@/modules/shared/chat/utils/normalizeConversationUnread";
 

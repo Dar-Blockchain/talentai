@@ -1,4 +1,4 @@
-import type { Participant } from "@/components/features/chat/helpers";
+import type { Participant } from "@/modules/shared/chat/components/helpers";
 import type { TeamChatParticipant, TeamConversation, TeamMessage } from "@/modules/team-chat/types";
 import { TEAM_LAST_MESSAGE_DELETED_SENTINEL, TEAM_MESSAGE_BODY_TOMBSTONE } from "@/modules/team-chat/constants/lastMessagePreview";
 import {
