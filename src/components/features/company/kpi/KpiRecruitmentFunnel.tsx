@@ -63,8 +63,7 @@ const KpiZone3: React.FC = () => {
           {loading
             ? Array.from({ length: 4 }).map((_, i) => <StepSkeleton key={i} />)
             : STEPS.map((step, i) => {
-                const prevVal = i > 0 ? STEPS[i - 1].value : null;
-                const rate    = (prevVal && prevVal > 0) ? Math.round((step.value / prevVal) * 100) : null;
+                const rate    = (i > 0 && applied > 0) ? Math.min(Math.round((step.value / applied) * 100), 100) : null;
                 const fillPct = applied > 0 ? Math.round((step.value / applied) * 100) : 0;
                 const color   = `${T}${OPACITIES[i]}`;
                 return (
@@ -139,21 +138,23 @@ const KpiZone3: React.FC = () => {
               {t("pages.kpi.key_metrics")}
             </Typography>
             {loading ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <Box key={i} sx={{ py: 1.1, borderBottom: i < 3 ? `1px solid ${BORDER}` : "none" }}>
+              Array.from({ length: 5 }).map((_, i) => (
+                <Box key={i} sx={{ py: 1.1, borderBottom: i < 4 ? `1px solid ${BORDER}` : "none" }}>
                   <Skeleton variant="text" width="100%" height={20} />
                 </Box>
               ))
             ) : (
               <>
-                {/* no-show = invited but never completed / invited */}
-                <MetricRow label={t("pages.kpi.noshow_rate")}     value={passRate(invited - completed, invited)}  color="#EF4444" />
-                {/* completion = completed / applied (overall funnel drop) */}
-                <MetricRow label={t("pages.kpi.completion_rate")} value={passRate(completed, applied)}            color={T} />
-                {/* shortlist rate = shortlisted / completed */}
-                <MetricRow label={t("pages.kpi.shortlist_rate")}  value={passRate(shortlisted, completed)}        color="#7C3AED" />
+                {/* no-show = (invited - completed) / invited */}
+                <MetricRow label={t("pages.kpi.noshow_rate")}     value={passRate(invited - completed, invited)}                                                          color="#EF4444" />
+                {/* invite rate = invited / applied */}
+                <MetricRow label={t("pages.kpi.completion_rate")} value={passRate(invited, applied)}                                                                      color={T} />
+                {/* interview completed / applied */}
+                <MetricRow label={t("pages.kpi.completed_rate")}  value={passRate(completed, applied)}                                                                    color="#7C3AED" />
+                {/* shortlisted / applied */}
+                <MetricRow label={t("pages.kpi.shortlist_rate")}  value={passRate(shortlisted, applied)}  color="#F59E0B" />
                 {/* overall conversion = shortlisted / applied */}
-                <MetricRow label={t("pages.kpi.hire_conversion")} value={passRate(shortlisted, applied)}          color="#10B981" last />
+                <MetricRow label={t("pages.kpi.hire_conversion")} value={passRate(shortlisted, applied)}                                                                  color="#10B981" last />
               </>
             )}
           </Box>
