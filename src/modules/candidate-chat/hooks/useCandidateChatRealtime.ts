@@ -92,13 +92,9 @@ export const useCandidateChatRealtime = () => {
         viewerIsViewingConversation,
       }));
 
+      // addCandidateMessage already updates conversations (lastMessage preview, sort order,
+      // unreadCount) and messages in Redux. Only invalidate unreadCount to sync the server total.
       queryClient.invalidateQueries({ queryKey: candidateChatKeys.unreadCount() });
-      queryClient.invalidateQueries({ queryKey: [...candidateChatKeys.all, "conversations"] });
-      if (conversationId) {
-        queryClient.invalidateQueries({
-          queryKey: candidateChatKeys.messages(conversationId),
-        });
-      }
 
       if (!shouldNotify) return;
 
@@ -133,14 +129,7 @@ export const useCandidateChatRealtime = () => {
         );
       }
       dispatch(removeCandidateMessage(String(payload.messageId)));
-      await queryClient.invalidateQueries({
-        queryKey: [...candidateChatKeys.all, "conversations"],
-      });
-      if (cid) {
-        await queryClient.invalidateQueries({
-          queryKey: candidateChatKeys.messages(cid),
-        });
-      }
+      // setQueriesData above and Redux dispatch already handle messages and conversation previews.
       await queryClient.invalidateQueries({ queryKey: candidateChatKeys.unreadCount() });
     };
 
@@ -168,18 +157,19 @@ export const useCandidateChatRealtime = () => {
         });
       }
       dispatch(upsertCandidateMessage(mapped));
-      await queryClient.invalidateQueries({
-        queryKey: [...candidateChatKeys.all, "conversations"],
-      });
-      if (cid) {
-        await queryClient.invalidateQueries({ queryKey: candidateChatKeys.messages(cid) });
-      }
+      // setQueriesData above and Redux dispatch already handle messages and conversation previews.
       await queryClient.invalidateQueries({ queryKey: candidateChatKeys.unreadCount() });
     };
 
     const handleConversationDeleted = ({ conversationId }: { conversationId: string }) => {
       dispatch(removeCandidateConversation(conversationId));
-      queryClient.invalidateQueries({ queryKey: [...candidateChatKeys.all, "conversations"] });
+      queryClient.setQueriesData(
+        { queryKey: [...candidateChatKeys.all, "conversations"] },
+        (old) => {
+          if (!Array.isArray(old)) return old;
+          return old.filter((c: any) => String(c._id) !== String(conversationId));
+        },
+      );
       queryClient.invalidateQueries({ queryKey: candidateChatKeys.unreadCount() });
     };
 

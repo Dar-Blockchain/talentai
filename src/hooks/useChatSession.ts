@@ -1,5 +1,5 @@
-import { useEffect, useRef, useCallback, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useEffect, useRef, useCallback, useState, useMemo } from "react";
+import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import { io, Socket } from "socket.io-client";
@@ -64,10 +64,10 @@ export const useChatSession = ({
 
   const currentUserId = useSelector((state: RootState) => state.user?.connectedUser?.user?._id);
 
-  const conversations       = useSelector(selectConversations);
+  const conversations       = useSelector(selectConversations, shallowEqual);
   const conversation        = useSelector(selectCurrentConversation);
   const conversationLoading = useSelector(selectCurrentConversationLoading);
-  const messages            = useSelector(selectMessages);
+  const messages            = useSelector(selectMessages, shallowEqual);
   const messagesLoading     = useSelector(selectMessagesLoading);
   const sending             = useSelector(selectSendingMessage);
   const loading             = conversationLoading || messagesLoading;
@@ -80,9 +80,6 @@ export const useChatSession = ({
       setActiveConversationId(initialConversationId);
     }
   }, [initialConversationId]);
-  const [newMessage,           setNewMessage]           = useState("");
-  const [deleteDialogOpen,     setDeleteDialogOpen]     = useState(false);
-  const [isDeleting,           setIsDeleting]           = useState(false);
   const socketRef = useRef<Socket | null>(null);
 
   const activeConversationIdRef = useRef<string | null>(initialConversationId);
@@ -161,8 +158,6 @@ export const useChatSession = ({
       const alreadyShowingThisChat = idStr === activeStr && idStr === convIdStr;
       if (alreadyShowingThisChat) return;
 
-      setNewMessage("");
-
       if (idStr === activeStr && idStr !== convIdStr) {
         setActiveConversationId(null);
         queueMicrotask(() => {
@@ -178,8 +173,9 @@ export const useChatSession = ({
     [activeConversationId, conversation, onConversationChange],
   );
 
-  const handleSendMessage = useCallback(async () => {
-    if (!newMessage.trim() || !conversation || !currentUserId || !activeConversationId) return;
+  const handleSendMessage = useCallback(async (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed || !conversation || !currentUserId || !activeConversationId) return;
 
     const other = conversation.participants.find((p: any) => p._id !== currentUserId);
     if (!other) {
@@ -191,7 +187,7 @@ export const useChatSession = ({
       const result = await dispatch(sendMessage({
         conversationId: activeConversationId,
         receiverId: other._id,
-        text: newMessage,
+        text: trimmed,
       })).unwrap();
       // Explicitly add to messages state — don't rely solely on WebSocket echo
       if (result?._id) dispatch(addMessage(result));
@@ -201,15 +197,11 @@ export const useChatSession = ({
           severity: "warning",
         });
       }
-      setNewMessage("");
     } catch (err: any) {
       showToast({ message: `Failed to send: ${err || "Unknown error"}`, severity: "error" });
+      throw err;
     }
-  }, [newMessage, conversation, currentUserId, activeConversationId, dispatch, showToast, t]);
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendMessage(); }
-  }, [handleSendMessage]);
+  }, [conversation, currentUserId, activeConversationId, dispatch, showToast, t]);
 
   const handleDeleteMessage = useCallback(async (messageId: string) => {
     try {
@@ -220,24 +212,29 @@ export const useChatSession = ({
     }
   }, [dispatch, showToast]);
 
-  const handleConfirmDeleteConversation = useCallback(async () => {
-    if (!activeConversationId) return;
-    setIsDeleting(true);
+  const executeDeleteConversation = useCallback(async (targetId: string) => {
     try {
-      await dispatch(deleteConversationThunk(activeConversationId)).unwrap();
+      await dispatch(deleteConversationThunk(targetId)).unwrap();
       showToast({ message: "Conversation deleted", severity: "success" });
-      setDeleteDialogOpen(false);
-      setActiveConversationId(null);
-      router.push(deleteRedirectRoute);
+      const wasActive = activeConversationId != null && String(activeConversationId) === String(targetId);
+      if (wasActive) {
+        setActiveConversationId(null);
+        router.push(deleteRedirectRoute);
+      }
     } catch (err: any) {
       showToast({ message: `Failed to delete: ${err || "Unknown error"}`, severity: "error" });
-    } finally {
-      setIsDeleting(false);
+      throw err;
     }
   }, [activeConversationId, dispatch, showToast, router, deleteRedirectRoute]);
 
-  const totalUnread = conversations.reduce((acc: number, c: any) => acc + (c.unreadCount || 0), 0);
-  const otherUser   = conversation?.participants?.find((p: any) => p._id !== currentUserId);
+  const totalUnread = useMemo(
+    () => conversations.reduce((acc: number, c: any) => acc + (c.unreadCount || 0), 0),
+    [conversations],
+  );
+  const otherUser = useMemo(
+    () => conversation?.participants?.find((p: any) => p._id !== currentUserId),
+    [conversation, currentUserId],
+  );
 
   return {
     // data
@@ -252,18 +249,10 @@ export const useChatSession = ({
     // active conversation
     activeConversationId,
     setActiveConversationId,
-    // message input
-    newMessage,
-    setNewMessage,
-    // delete dialog
-    deleteDialogOpen,
-    setDeleteDialogOpen,
-    isDeleting,
     // handlers
     handleSelectConversation,
     handleSendMessage,
-    handleKeyDown,
     handleDeleteMessage,
-    handleConfirmDeleteConversation,
+    executeDeleteConversation,
   };
 };

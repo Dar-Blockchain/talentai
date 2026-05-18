@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useMemo, useRef, useState } from "react";
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
   Typography,
@@ -37,6 +37,50 @@ const easeOut = "cubic-bezier(0.4, 0, 0.2, 1)";
 /** Synthetic row when API returns no messages but conversation tail is "deleted for everyone" (e.g. clearedAt / race). */
 const THREAD_DELETED_PLACEHOLDER_ID = "__thread_deleted_placeholder__";
 
+/** Messages created within this window are considered "just arrived" and get a mount animation. */
+const ANIMATE_IN_THRESHOLD_MS = 30_000;
+
+const DaySeparator = memo(function DaySeparator({
+  label,
+  mintLightTeamUi,
+}: {
+  label: string;
+  mintLightTeamUi: boolean;
+}) {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
+  return (
+    <Box sx={{ display: "flex", justifyContent: "center", py: mintLightTeamUi ? 1 : 1.25 }}>
+      <Paper
+        elevation={0}
+        sx={{
+          px: 1.75,
+          py: 0.5,
+          borderRadius: 999,
+          bgcolor: mintLightTeamUi
+            ? TEAM_MINT_UI.bgCard
+            : (isDark ? safeAlpha(theme.palette.background.paper, 0.85) : theme.palette.background.paper),
+          border: mintLightTeamUi
+            ? `1px solid ${TEAM_MINT_UI.border}`
+            : `1px solid ${alpha(theme.palette.divider, isDark ? 0.35 : 0.8)}`,
+          boxShadow: mintLightTeamUi
+            ? TEAM_MINT_UI.shadowSoft
+            : (isDark ? `0 1px 6px ${alpha("#000", 0.35)}` : `0 1px 4px ${alpha("#000", 0.05)}`),
+        }}
+      >
+        <Typography
+          variant="caption"
+          fontWeight={600}
+          letterSpacing={0.02}
+          sx={{ color: mintLightTeamUi ? TEAM_MINT_UI.textSecondary : undefined }}
+        >
+          {label}
+        </Typography>
+      </Paper>
+    </Box>
+  );
+});
+
 interface Message {
   _id: string;
   text: string;
@@ -57,6 +101,7 @@ interface Message {
   deletedForEveryoneBy?: string;
   deliveryBlocked?: boolean;
   blockedReason?: "email" | "phone";
+  pending?: boolean;
 }
 
 interface MessageListProps {
@@ -104,6 +149,7 @@ interface BubbleProps {
   /** Own message blocked from delivery (contact policy). */
   deliveryBlockedCaption?: string;
   mintLightTeamUi?: boolean;
+  isPending?: boolean;
 }
 
 const MessageBubble = memo(function MessageBubble({
@@ -115,6 +161,7 @@ const MessageBubble = memo(function MessageBubble({
   timeLabel,
   deliveryBlockedCaption,
   mintLightTeamUi = false,
+  isPending = false,
 }: BubbleProps) {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
@@ -190,8 +237,9 @@ const MessageBubble = memo(function MessageBubble({
               : isDark
                 ? `0 1px 4px ${alpha("#000", 0.35)}`
                 : `0 1px 4px ${alpha("#000", 0.06)}`,
-        transition: `box-shadow 0.2s ${easeOut}, transform 0.2s ${easeOut}, background-color 0.2s ${easeOut}, border-color 0.2s ${easeOut}, filter 0.2s ${easeOut}`,
+        transition: `box-shadow 0.2s ${easeOut}, transform 0.2s ${easeOut}, background-color 0.2s ${easeOut}, border-color 0.2s ${easeOut}, filter 0.2s ${easeOut}, opacity 0.2s ${easeOut}`,
         animation: `${bubbleIn} 0.22s ease-out both`,
+        opacity: isPending ? 0.65 : 1,
         cursor: "default",
         "@media (hover: hover)": {
           "&:hover": {
@@ -290,13 +338,216 @@ const MessageBubble = memo(function MessageBubble({
           transition: `opacity 0.22s ${easeOut}`,
         }}
       >
-        {timeLabel}
+        {isPending ? "···" : timeLabel}
       </Typography>
     </Paper>
   );
 });
 
-const MessageList: React.FC<MessageListProps> = ({
+interface MessageRowProps {
+  message: Message;
+  /** Pre-computed so only the 2 affected rows rerender on isOwn change. */
+  isOwn: boolean;
+  isSyntheticDeleted: boolean;
+  currentUserId: string | undefined;
+  otherUser?: Participant;
+  isCompany: boolean;
+  onDeleteMessage: (id: string, scope?: "me" | "everyone") => void;
+  enableDeletes: boolean;
+  teamScopedDeletes: boolean;
+  mintLightTeamUi: boolean;
+}
+
+const MessageRow = memo(function MessageRow({
+  message,
+  isOwn,
+  isSyntheticDeleted,
+  currentUserId,
+  otherUser,
+  isCompany,
+  onDeleteMessage,
+  enableDeletes,
+  teamScopedDeletes,
+  mintLightTeamUi,
+}: MessageRowProps) {
+  const theme = useTheme();
+  const { t } = useTranslation("shared/chat");
+  const { t: tTeam } = useTranslation("modules/company/teamChat");
+  const isDark = theme.palette.mode === "dark";
+  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+
+  // Decide at mount time whether to animate in. `appear` on <Grow> only fires once
+  // (at mount), so this never needs to change — using useState initializer avoids
+  // the need for `isLatest` prop which would flip true→false on the previous-last row
+  // every time a new message arrives (causing a wasted rerender with no visual change).
+  const [shouldAnimateIn] = useState(
+    () => !!message.pending || (Date.now() - new Date(message.createdAt).getTime()) < ANIMATE_IN_THRESHOLD_MS,
+  );
+
+  const textEmpty = !String(message.text ?? "").trim();
+  const isDeletedForEveryone =
+    !!message.isDeletedForEveryone
+    || (textEmpty && (!!message.deletedAt || !!message.deletedForEveryoneBy))
+    || (teamScopedDeletes && textEmpty && !isSyntheticDeleted);
+
+  const deletedBubbleLabel = useMemo(() => {
+    if (!teamScopedDeletes) {
+      return t("messages.this_message_was_deleted", { defaultValue: "This message was deleted" });
+    }
+    if (!isDeletedForEveryone) {
+      return tTeam("message.this_message_was_deleted", { defaultValue: "This message was deleted" });
+    }
+    const deleterId = message.deletedForEveryoneBy ? String(message.deletedForEveryoneBy) : "";
+    const viewerId = currentUserId ? String(currentUserId) : "";
+    if (deleterId && viewerId && deleterId === viewerId) {
+      return tTeam("message.you_deleted_this_message", { defaultValue: "You deleted this message" });
+    }
+    if (deleterId && otherUser && deleterId === String(otherUser._id)) {
+      const name = getParticipantDisplayName(otherUser);
+      return tTeam("message.peer_deleted_this_message", {
+        name,
+        defaultValue: "{{name}} deleted this message",
+      });
+    }
+    return tTeam("message.this_message_was_deleted", { defaultValue: "This message was deleted" });
+  }, [teamScopedDeletes, isDeletedForEveryone, message.deletedForEveryoneBy, currentUserId, otherUser, t, tTeam]);
+
+  const handleMenuOpen = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    setMenuAnchor(e.currentTarget);
+  }, []);
+
+  const handleMenuClose = useCallback(() => setMenuAnchor(null), []);
+
+  const handleDeleteForMe = useCallback(() => {
+    onDeleteMessage(message._id, "me");
+    setMenuAnchor(null);
+  }, [onDeleteMessage, message._id]);
+
+  const handleDeleteForEveryone = useCallback(() => {
+    onDeleteMessage(message._id, "everyone");
+    setMenuAnchor(null);
+  }, [onDeleteMessage, message._id]);
+
+  const handleDeleteSingle = useCallback(() => {
+    onDeleteMessage(message._id);
+  }, [onDeleteMessage, message._id]);
+
+  const menuButton = teamScopedDeletes && enableDeletes && !isDeletedForEveryone && !message.pending ? (
+    <ChatContextMenuTrigger
+      key="msg-menu"
+      className="delete-btn"
+      visibility="fadeOnRowHover"
+      menuOpen={Boolean(menuAnchor)}
+      tooltipTitle={tTeam("message.actions")}
+      onClick={handleMenuOpen}
+      aria-label={tTeam("message.actions")}
+    >
+      <MoreVert sx={{ fontSize: 20 }} />
+    </ChatContextMenuTrigger>
+  ) : null;
+
+  const bubble = (
+    <MessageBubble
+      message={message}
+      isOwn={isOwn}
+      isDeletedForEveryone={isDeletedForEveryone}
+      assumeEmptyMeansDeleted={teamScopedDeletes}
+      deletedLabel={deletedBubbleLabel}
+      timeLabel={formatTime(message.createdAt)}
+      mintLightTeamUi={mintLightTeamUi}
+      isPending={!!message.pending}
+      deliveryBlockedCaption={
+        isOwn && message.deliveryBlocked
+          ? message.blockedReason === "phone"
+            ? t("messages.delivery_blocked_phone")
+            : t("messages.delivery_blocked_email")
+          : undefined
+      }
+    />
+  );
+
+  const messageRow = (
+    <Stack
+      direction="row"
+      spacing={0.5}
+      justifyContent={isOwn ? "flex-end" : "flex-start"}
+      alignItems="flex-end"
+      sx={{
+        py: mintLightTeamUi ? 0.2 : 0.35,
+        px: { xs: 0.25, sm: 0.5 },
+        mx: { xs: -0.25, sm: -0.5 },
+        borderRadius: mintLightTeamUi ? "14px" : 2,
+        transition: `background-color 0.2s ${easeOut}, box-shadow 0.2s ${easeOut}`,
+        "@media (hover: hover)": {
+          "&:hover": {
+            bgcolor: mintLightTeamUi ? "rgba(236, 253, 245, 0.55)" : alpha(theme.palette.primary.main, isDark ? 0.04 : 0.03),
+            boxShadow: mintLightTeamUi ? "none" : `inset 0 0 0 1px ${alpha(theme.palette.divider, isDark ? 0.12 : 0.06)}`,
+          },
+        },
+        "&:hover .delete-btn": { opacity: 1 },
+      }}
+    >
+      {teamScopedDeletes && enableDeletes
+        ? (isOwn ? [bubble, menuButton] : [menuButton, bubble])
+        : (
+          <>
+            {!teamScopedDeletes && isCompany && enableDeletes && isOwn && !isSyntheticDeleted && !message.pending && (
+              <Tooltip title={t("delete_dialog.delete")}>
+                <IconButton
+                  className="delete-btn"
+                  onClick={handleDeleteSingle}
+                  size="small"
+                  sx={{
+                    opacity: 0,
+                    transition: `opacity 0.22s ${easeOut}, transform 0.2s ${easeOut}`,
+                    color: theme.palette.error.main,
+                    p: "6px",
+                    "&:hover": {
+                      bgcolor: alpha(theme.palette.error.main, 0.12),
+                      transform: "scale(1.08)",
+                    },
+                  }}
+                >
+                  <DeleteOutlined sx={{ fontSize: 18 }} />
+                </IconButton>
+              </Tooltip>
+            )}
+            {bubble}
+          </>
+        )}
+    </Stack>
+  );
+
+  return (
+    <React.Fragment>
+      <Grow in timeout={240} appear={shouldAnimateIn}>
+        <Box sx={{ width: "100%" }}>{messageRow}</Box>
+      </Grow>
+      {teamScopedDeletes && enableDeletes && (
+        <Menu
+          anchorEl={menuAnchor}
+          open={Boolean(menuAnchor)}
+          onClose={handleMenuClose}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+          transformOrigin={{ vertical: "top", horizontal: "right" }}
+          slotProps={{ paper: chatContextMenuPaperSlotProps }}
+          MenuListProps={{ dense: true, sx: { py: 0.5 } }}
+        >
+          <MenuItem onClick={handleDeleteForMe} sx={chatContextMenuItemSx}>
+            {tTeam("message.delete_for_me")}
+          </MenuItem>
+          {isOwn && (
+            <MenuItem onClick={handleDeleteForEveryone} sx={chatContextMenuItemSx}>
+              {tTeam("message.delete_for_everyone")}
+            </MenuItem>
+          )}
+        </Menu>
+      )}
+    </React.Fragment>
+  );
+});
+
+const MessageList = memo(function MessageList({
   messages,
   threadLastMessage,
   currentUserId,
@@ -306,18 +557,11 @@ const MessageList: React.FC<MessageListProps> = ({
   enableDeletes = true,
   teamScopedDeletes = false,
   mintLightTeamUi = false,
-}) => {
+}: MessageListProps) {
   const theme = useTheme();
   const { t, i18n } = useTranslation("shared/chat");
-  const { t: tTeam } = useTranslation("modules/company/teamChat");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const [menu, setMenu] = useState<{
-    anchor: HTMLElement;
-    messageId: string;
-    isOwn: boolean;
-  } | null>(null);
-
   const effectiveMessages = useMemo((): Message[] => {
     if (messages.length > 0) return messages;
     const lm = threadLastMessage;
@@ -371,7 +615,6 @@ const MessageList: React.FC<MessageListProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [effectiveMessages.length, lastMsgId]);
 
-  const closeMenu = () => setMenu(null);
   const isDark = theme.palette.mode === "dark";
   const surface = mintLightTeamUi
     ? TEAM_MINT_UI.bgMain
@@ -449,213 +692,39 @@ const MessageList: React.FC<MessageListProps> = ({
           {rows.map((row) => {
             if (row.kind === "separator") {
               return (
-                <Box
+                <DaySeparator
                   key={`sep-${row.dayKey}`}
-                  sx={{
-                    display: "flex",
-                    justifyContent: "center",
-                    py: mintLightTeamUi ? 1 : 1.25,
-                  }}
-                >
-                  <Paper
-                    elevation={0}
-                    sx={{
-                      px: 1.75,
-                      py: 0.5,
-                      borderRadius: 999,
-                      bgcolor: mintLightTeamUi ? TEAM_MINT_UI.bgCard : (isDark ? safeAlpha(theme.palette.background.paper, 0.85) : theme.palette.background.paper),
-                      border: mintLightTeamUi ? `1px solid ${TEAM_MINT_UI.border}` : `1px solid ${alpha(theme.palette.divider, isDark ? 0.35 : 0.8)}`,
-                      boxShadow: mintLightTeamUi ? TEAM_MINT_UI.shadowSoft : (isDark ? `0 1px 6px ${alpha("#000", 0.35)}` : `0 1px 4px ${alpha("#000", 0.05)}`),
-                    }}
-                  >
-                    <Typography
-                      variant="caption"
-                      fontWeight={600}
-                      letterSpacing={0.02}
-                      sx={{ color: mintLightTeamUi ? TEAM_MINT_UI.textSecondary : undefined }}
-                    >
-                      {row.label}
-                    </Typography>
-                  </Paper>
-                </Box>
+                  label={row.label}
+                  mintLightTeamUi={mintLightTeamUi}
+                />
               );
             }
 
             const message = row.message;
-            const isSyntheticDeleted = message._id === THREAD_DELETED_PLACEHOLDER_ID;
             const senderId = typeof message.sender === "string" ? message.sender : message.sender._id;
             const isOwn = String(senderId) === String(currentUserId);
-            const textEmpty = !String(message.text ?? "").trim();
-            const isDeletedForEveryone =
-              !!message.isDeletedForEveryone
-              || (textEmpty && (!!message.deletedAt || !!message.deletedForEveryoneBy))
-              || (teamScopedDeletes && textEmpty && !isSyntheticDeleted);
-            const deletedBubbleLabel = (() => {
-              if (!teamScopedDeletes) {
-                return t("messages.this_message_was_deleted", { defaultValue: "This message was deleted" });
-              }
-              if (!isDeletedForEveryone) {
-                return tTeam("message.this_message_was_deleted", { defaultValue: "This message was deleted" });
-              }
-              const deleterId = message.deletedForEveryoneBy ? String(message.deletedForEveryoneBy) : "";
-              const viewerId = currentUserId ? String(currentUserId) : "";
-              if (deleterId && viewerId && deleterId === viewerId) {
-                return tTeam("message.you_deleted_this_message", { defaultValue: "You deleted this message" });
-              }
-              if (deleterId && otherUser && deleterId === String(otherUser._id)) {
-                const name = getParticipantDisplayName(otherUser);
-                return tTeam("message.peer_deleted_this_message", {
-                  name,
-                  defaultValue: "{{name}} deleted this message",
-                });
-              }
-              return tTeam("message.this_message_was_deleted", { defaultValue: "This message was deleted" });
-            })();
-
-            const menuOpenThis = menu?.messageId === message._id;
-
-            const menuButton = teamScopedDeletes && enableDeletes && !isDeletedForEveryone ? (
-              <ChatContextMenuTrigger
-                key="msg-menu"
-                className="delete-btn"
-                visibility="fadeOnRowHover"
-                menuOpen={menuOpenThis}
-                tooltipTitle={tTeam("message.actions")}
-                onClick={(e) =>
-                  setMenu({
-                    anchor: e.currentTarget,
-                    messageId: message._id,
-                    isOwn,
-                  })}
-                aria-label={tTeam("message.actions")}
-              >
-                <MoreVert sx={{ fontSize: 20 }} />
-              </ChatContextMenuTrigger>
-            ) : null;
-
-            const bubble = (
-              <MessageBubble
+            const isSyntheticDeleted = message._id === THREAD_DELETED_PLACEHOLDER_ID;
+            return (
+              <MessageRow
+                key={message._id}
                 message={message}
                 isOwn={isOwn}
-                isDeletedForEveryone={isDeletedForEveryone}
-                assumeEmptyMeansDeleted={teamScopedDeletes}
-                deletedLabel={deletedBubbleLabel}
-                timeLabel={formatTime(message.createdAt)}
+                isSyntheticDeleted={isSyntheticDeleted}
+                currentUserId={currentUserId}
+                otherUser={otherUser}
+                isCompany={isCompany}
+                onDeleteMessage={onDeleteMessage}
+                enableDeletes={enableDeletes}
+                teamScopedDeletes={teamScopedDeletes}
                 mintLightTeamUi={mintLightTeamUi}
-                deliveryBlockedCaption={
-                  isOwn && message.deliveryBlocked
-                    ? message.blockedReason === "phone"
-                      ? t("messages.delivery_blocked_phone")
-                      : t("messages.delivery_blocked_email")
-                    : undefined
-                }
               />
-            );
-
-            const messageRow = (
-              <Stack
-                direction="row"
-                spacing={0.5}
-                justifyContent={isOwn ? "flex-end" : "flex-start"}
-                alignItems="flex-end"
-                sx={{
-                  py: mintLightTeamUi ? 0.2 : 0.35,
-                  px: { xs: 0.25, sm: 0.5 },
-                  mx: { xs: -0.25, sm: -0.5 },
-                  borderRadius: mintLightTeamUi ? "14px" : 2,
-                  transition: `background-color 0.2s ${easeOut}, box-shadow 0.2s ${easeOut}`,
-                  "@media (hover: hover)": {
-                    "&:hover": {
-                      bgcolor: mintLightTeamUi ? "rgba(236, 253, 245, 0.55)" : alpha(theme.palette.primary.main, isDark ? 0.04 : 0.03),
-                      boxShadow: mintLightTeamUi ? "none" : `inset 0 0 0 1px ${alpha(theme.palette.divider, isDark ? 0.12 : 0.06)}`,
-                    },
-                  },
-                  "&:hover .delete-btn": { opacity: 1 },
-                }}
-              >
-                {teamScopedDeletes && enableDeletes
-                  ? (isOwn ? [bubble, menuButton] : [menuButton, bubble])
-                  : (
-                    <>
-                      {!teamScopedDeletes && isCompany && enableDeletes && isOwn && !isSyntheticDeleted && (
-                        <Tooltip title={t("delete_dialog.delete")}>
-                          <IconButton
-                            className="delete-btn"
-                            onClick={() => onDeleteMessage(message._id)}
-                            size="small"
-                            sx={{
-                              opacity: 0,
-                              transition: `opacity 0.22s ${easeOut}, transform 0.2s ${easeOut}`,
-                              color: theme.palette.error.main,
-                              p: "6px",
-                              "&:hover": {
-                                bgcolor: alpha(theme.palette.error.main, 0.12),
-                                transform: "scale(1.08)",
-                              },
-                            }}
-                          >
-                            <DeleteOutlined sx={{ fontSize: 18 }} />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                      {bubble}
-                    </>
-                  )}
-              </Stack>
-            );
-
-            const isLatest = message._id === lastMsgId;
-
-            return isLatest ? (
-              <Grow key={message._id} in timeout={240} appear>
-                <Box sx={{ width: "100%" }}>{messageRow}</Box>
-              </Grow>
-            ) : (
-              <Box key={message._id} sx={{ width: "100%" }}>
-                {messageRow}
-              </Box>
             );
           })}
         </Stack>
       )}
-      <Menu
-        anchorEl={menu?.anchor ?? null}
-        open={!!menu}
-        onClose={closeMenu}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        transformOrigin={{ vertical: "top", horizontal: "right" }}
-        slotProps={{
-          paper: chatContextMenuPaperSlotProps,
-        }}
-        MenuListProps={{
-          dense: true,
-          sx: { py: 0.5 },
-        }}
-      >
-        <MenuItem
-          onClick={() => {
-            if (menu) onDeleteMessage(menu.messageId, "me");
-            closeMenu();
-          }}
-          sx={chatContextMenuItemSx}
-        >
-          {tTeam("message.delete_for_me")}
-        </MenuItem>
-        {menu?.isOwn && (
-          <MenuItem
-            onClick={() => {
-              if (menu) onDeleteMessage(menu.messageId, "everyone");
-              closeMenu();
-            }}
-            sx={chatContextMenuItemSx}
-          >
-            {tTeam("message.delete_for_everyone")}
-          </MenuItem>
-        )}
-      </Menu>
       <div ref={messagesEndRef} />
     </Box>
   );
-};
+});
 
 export default MessageList;

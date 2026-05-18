@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { IconButton, Tooltip, useTheme } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { CHAT_CONTEXT_MENU_EASE } from "./helpers";
@@ -22,7 +22,7 @@ export interface ChatContextMenuTriggerProps {
 /**
  * Shared ⋮ trigger — same surface / hover / open state as team message row menus.
  */
-const ChatContextMenuTrigger: React.FC<ChatContextMenuTriggerProps> = ({
+const ChatContextMenuTrigger = memo(function ChatContextMenuTrigger({
   onClick,
   "aria-label": ariaLabel,
   menuOpen = false,
@@ -30,7 +30,7 @@ const ChatContextMenuTrigger: React.FC<ChatContextMenuTriggerProps> = ({
   className,
   tooltipTitle,
   children,
-}) => {
+}: ChatContextMenuTriggerProps) {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const primary = theme.palette.primary.main;
@@ -97,6 +97,6 @@ const ChatContextMenuTrigger: React.FC<ChatContextMenuTriggerProps> = ({
   }
 
   return button;
-};
+});
 
 export default ChatContextMenuTrigger;

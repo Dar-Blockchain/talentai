@@ -5,6 +5,7 @@ import { AppDispatch, store } from "@/store/store";
 import { getTeamChatErrorMessage, teamChatApi } from "@/modules/team-chat/api/teamChatApi";
 import { teamChatKeys } from "@/modules/team-chat/queries/keys";
 import {
+  addTeamMessage,
   markTeamConversationReadLocal,
   removeTeamConversation,
   removeTeamMessage,
@@ -15,6 +16,7 @@ import {
   upsertTeamConversation,
   upsertTeamMessage,
 } from "@/modules/team-chat/store/teamChatSlice";
+import type { ChatShellMessage } from "@/modules/shared/chat/types/shell";
 import type {
   SendTeamMessagePayload,
   TeamChatConversationsParams,
@@ -39,6 +41,7 @@ export const useTeamConversationsQuery = (
       return conversations.map(toChatShellConversation);
     },
     enabled: options?.enabled ?? true,
+    staleTime: 30_000,
   });
 
   useEffect(() => {
@@ -83,6 +86,7 @@ export const useTeamMessagesQuery = (
       return messages.map(toChatShellMessage);
     },
     enabled,
+    staleTime: 30_000,
   });
 
   useEffect(() => {
@@ -98,6 +102,7 @@ export const useTeamUnreadCountQuery = (options?: { enabled?: boolean }) => {
     queryKey: teamChatKeys.unreadCount(),
     queryFn: () => teamChatApi.fetchUnreadCount(),
     enabled: options?.enabled ?? true,
+    staleTime: 60_000,
   });
 
   useEffect(() => {
@@ -114,19 +119,79 @@ export const useMarkTeamConversationReadMutation = () => {
   return useMutation({
     mutationFn: (conversationId: string) => teamChatApi.markConversationRead(conversationId),
     onSuccess: (conversationId) => {
+      // markTeamConversationReadLocal zeros out the badge in Redux immediately.
+      // Conversations list invalidation is skipped — the local update is sufficient for the UI.
       dispatch(markTeamConversationReadLocal(conversationId));
-      queryClient.invalidateQueries({ queryKey: teamChatKeys.conversations() });
       queryClient.invalidateQueries({ queryKey: teamChatKeys.unreadCount() });
     },
   });
 };
 
 export const useSendTeamMessageMutation = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: (payload: SendTeamMessagePayload) => teamChatApi.sendMessage(payload),
-    onSuccess: (message) => toChatShellMessage(message),
-    meta: {
-      errorMessage: "Error sending team message",
+    onMutate: (variables) => {
+      const tempId = `temp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      const currentUserId = store.getState().user?.connectedUser?.user?._id;
+      if (!currentUserId) return { tempId };
+
+      const tempMessage: ChatShellMessage = {
+        _id: tempId,
+        text: variables.text,
+        sender: { _id: String(currentUserId) },
+        receiver: { _id: variables.receiverId },
+        isRead: false,
+        createdAt: new Date().toISOString(),
+        conversationId: variables.conversationId,
+        pending: true,
+      };
+
+      dispatch(addTeamMessage({
+        message: tempMessage,
+        viewerUserId: String(currentUserId),
+        viewerIsViewingConversation: true,
+      }));
+
+      queryClient.setQueriesData(
+        { queryKey: teamChatKeys.messages(variables.conversationId) },
+        (old) => Array.isArray(old) ? [...old, tempMessage] : old,
+      );
+
+      return { tempId };
+    },
+    onSuccess: (message, variables, context) => {
+      if (!context?.tempId) return;
+      const mapped = toChatShellMessage(message);
+      const currentUserId = store.getState().user?.connectedUser?.user?._id;
+
+      dispatch(removeTeamMessage(context.tempId));
+      dispatch(addTeamMessage({
+        message: mapped,
+        viewerUserId: String(currentUserId ?? ""),
+        viewerIsViewingConversation: true,
+      }));
+
+      queryClient.setQueriesData(
+        { queryKey: teamChatKeys.messages(variables.conversationId) },
+        (old) => {
+          if (!Array.isArray(old)) return old;
+          return [...old.filter((m: any) => String(m._id) !== context.tempId), mapped];
+        },
+      );
+    },
+    onError: (_err, variables, context) => {
+      if (!context?.tempId) return;
+      dispatch(removeTeamMessage(context.tempId));
+      queryClient.setQueriesData(
+        { queryKey: teamChatKeys.messages(variables.conversationId) },
+        (old) => Array.isArray(old)
+          ? old.filter((m: any) => String(m._id) !== context.tempId)
+          : old,
+      );
+      queryClient.invalidateQueries({ queryKey: [...teamChatKeys.all, "conversations"] });
     },
   });
 };
@@ -216,8 +281,8 @@ export const useDeleteTeamMessageMutation = () => {
         });
       }
 
-      await queryClient.invalidateQueries({ queryKey: teamChatKeys.conversations() });
-      await queryClient.invalidateQueries({ queryKey: messagesPrefix });
+      // setQueriesData above and Redux dispatch (upsertTeamMessage / removeTeamMessage) already handle
+      // messages and conversation lastMessage previews — no full refetch needed.
       await queryClient.invalidateQueries({ queryKey: teamChatKeys.unreadCount() });
     },
   });
@@ -231,10 +296,15 @@ export const useDeleteTeamConversationMutation = () => {
     mutationFn: (conversationId: string) => teamChatApi.deleteConversation(conversationId),
     onSuccess: (_data, conversationId) => {
       dispatch(removeTeamConversation(conversationId));
-      // Drop cached messages/conversation so reopening refetches with clearedAt filter (not stale full history).
       queryClient.removeQueries({ queryKey: teamChatKeys.messages(conversationId) });
       queryClient.removeQueries({ queryKey: teamChatKeys.conversation(conversationId) });
-      queryClient.invalidateQueries({ queryKey: teamChatKeys.conversations() });
+      queryClient.setQueriesData(
+        { queryKey: [...teamChatKeys.all, "conversations"] },
+        (old) => {
+          if (!Array.isArray(old)) return old;
+          return old.filter((c: any) => String(c._id) !== String(conversationId));
+        },
+      );
       queryClient.invalidateQueries({ queryKey: teamChatKeys.unreadCount() });
     },
   });

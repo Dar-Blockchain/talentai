@@ -1,18 +1,18 @@
-import { useEffect, useRef, useCallback, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useEffect, useRef, useCallback, useState, useMemo } from "react";
+import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import { RootState, AppDispatch } from "@/store/store";
 import { useToast } from "@/hooks/useToast";
 import { deliveryBlockedToastMessage } from "@/modules/shared/chat";
 import {
-  addTeamMessage,
   clearTeamCurrentConversation,
   markTeamConversationReadLocal,
   selectTeamConversations,
   selectTeamCurrentConversation,
   selectTeamMessages,
 } from "@/modules/team-chat/store/teamChatSlice";
+import type { ChatShellConversation } from "@/modules/shared/chat/types/shell";
 import {
   useDeleteTeamConversationMutation,
   useDeleteTeamMessageMutation,
@@ -25,7 +25,6 @@ import {
   getTeamChatMutationError,
 } from "@/modules/team-chat/queries/useTeamChatQueries";
 import { useTeamChatConversationRoom } from "@/modules/team-chat/hooks/useTeamChatRealtime";
-import { toChatShellMessage } from "@/modules/team-chat/utils/mappers";
 
 export interface UseTeamChatSessionOptions {
   initialConversationId: string | null;
@@ -44,9 +43,9 @@ export const useTeamChatSession = ({
   const { t } = useTranslation("shared/chat");
 
   const currentUserId = useSelector((state: RootState) => state.user?.connectedUser?.user?._id);
-  const conversations = useSelector(selectTeamConversations);
+  const conversations = useSelector(selectTeamConversations, shallowEqual);
   const conversation = useSelector(selectTeamCurrentConversation);
-  const messages = useSelector(selectTeamMessages);
+  const messages = useSelector(selectTeamMessages, shallowEqual);
 
   const [activeConversationId, setActiveConversationId] = useState<string | null>(initialConversationId);
 
@@ -59,11 +58,7 @@ export const useTeamChatSession = ({
     }
   }, [initialConversationId]);
 
-  const [newMessage, setNewMessage] = useState("");
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const activeConversationIdRef = useRef<string | null>(initialConversationId);
-  const deleteConversationTargetIdRef = useRef<string | null>(null);
 
   const conversationsQuery = useTeamConversationsQuery(undefined, { enabled: !!currentUserId });
   useTeamUnreadCountQuery({ enabled: !!currentUserId });
@@ -120,8 +115,6 @@ export const useTeamChatSession = ({
       const alreadyShowingThisChat = idStr === activeStr && idStr === convIdStr;
       if (alreadyShowingThisChat) return;
 
-      setNewMessage("");
-
       // After hide/delete, active id can still match the row while Redux/query cleared — must bump state so queries refetch.
       if (idStr === activeStr && idStr !== convIdStr) {
         setActiveConversationId(null);
@@ -138,8 +131,9 @@ export const useTeamChatSession = ({
     [activeConversationId, conversation?._id, onConversationChange],
   );
 
-  const handleSendMessage = useCallback(async () => {
-    if (!newMessage.trim() || !conversation || !currentUserId || !activeConversationId) return;
+  const handleSendMessage = useCallback(async (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed || !conversation || !currentUserId || !activeConversationId) return;
 
     const other = conversation.participants.find((p) => p._id !== currentUserId);
     if (!other) {
@@ -147,19 +141,13 @@ export const useTeamChatSession = ({
       return;
     }
 
-    const text = newMessage.trim();
-    setNewMessage("");
-
     try {
       const message = await sendMessageMutation.mutateAsync({
         conversationId: activeConversationId,
         receiverId: other._id,
-        text,
+        text: trimmed,
       });
-      dispatch(addTeamMessage({
-        message: toChatShellMessage(message),
-        viewerUserId: String(currentUserId),
-      }));
+      // Mutation's onMutate/onSuccess handles Redux updates optimistically.
       if (message.deliveryBlocked) {
         showToast({
           message: deliveryBlockedToastMessage(message.blockedReason, t),
@@ -167,14 +155,13 @@ export const useTeamChatSession = ({
         });
       }
     } catch (error) {
-      setNewMessage(text);
       showToast({
         message: `${t("toast.failed_send")}: ${getTeamChatMutationError(error, "Unknown error")}`,
         severity: "error",
       });
+      throw error;
     }
   }, [
-    newMessage,
     conversation,
     currentUserId,
     activeConversationId,
@@ -183,13 +170,6 @@ export const useTeamChatSession = ({
     showToast,
     t,
   ]);
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  }, [handleSendMessage]);
 
   const handleDeleteMessage = useCallback(
     async (messageId: string, scope: "me" | "everyone" = "me") => {
@@ -217,29 +197,10 @@ export const useTeamChatSession = ({
     [activeConversationId, deleteMessageMutation, showToast, t],
   );
 
-  const requestDeleteConversation = useCallback((conversationId: string) => {
-    deleteConversationTargetIdRef.current = String(conversationId);
-    setDeleteDialogOpen(true);
-  }, []);
-
-  const resetDeleteConversationTarget = useCallback(() => {
-    deleteConversationTargetIdRef.current = null;
-  }, []);
-
-  const handleConfirmDeleteConversation = useCallback(async () => {
-    const targetId = deleteConversationTargetIdRef.current ?? activeConversationId;
-    if (!targetId) {
-      setDeleteDialogOpen(false);
-      deleteConversationTargetIdRef.current = null;
-      return;
-    }
-    setIsDeleting(true);
+  const executeDeleteConversation = useCallback(async (targetId: string) => {
     try {
       await deleteConversationMutation.mutateAsync(targetId);
       showToast({ message: t("toast.conversation_removed_list"), severity: "success" });
-      setDeleteDialogOpen(false);
-      deleteConversationTargetIdRef.current = null;
-
       const wasActive =
         activeConversationId != null && String(activeConversationId) === String(targetId);
       if (wasActive) {
@@ -251,20 +212,18 @@ export const useTeamChatSession = ({
         message: `${t("toast.failed_delete_conversation")}: ${getTeamChatMutationError(error, "Unknown error")}`,
         severity: "error",
       });
-    } finally {
-      setIsDeleting(false);
+      throw error;
     }
-  }, [
-    activeConversationId,
-    deleteConversationMutation,
-    deleteRedirectRoute,
-    router,
-    showToast,
-    t,
-  ]);
+  }, [activeConversationId, deleteConversationMutation, deleteRedirectRoute, router, showToast, t]);
 
-  const totalUnread = conversations.reduce((acc, c) => acc + (c.unreadCount || 0), 0);
-  const otherUser = conversation?.participants?.find((p) => p._id !== currentUserId);
+  const totalUnread = useMemo(
+    () => conversations.reduce((acc: number, c: ChatShellConversation) => acc + (c.unreadCount || 0), 0),
+    [conversations],
+  );
+  const otherUser = useMemo(
+    () => conversation?.participants?.find((p) => p._id !== currentUserId),
+    [conversation, currentUserId],
+  );
 
   return {
     currentUserId,
@@ -277,17 +236,9 @@ export const useTeamChatSession = ({
     totalUnread,
     activeConversationId,
     setActiveConversationId,
-    newMessage,
-    setNewMessage,
-    deleteDialogOpen,
-    setDeleteDialogOpen,
-    requestDeleteConversation,
-    resetDeleteConversationTarget,
-    isDeleting,
     handleSelectConversation,
     handleSendMessage,
-    handleKeyDown,
     handleDeleteMessage,
-    handleConfirmDeleteConversation,
+    executeDeleteConversation,
   };
 };

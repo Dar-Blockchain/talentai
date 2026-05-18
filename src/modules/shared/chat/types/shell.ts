@@ -28,6 +28,8 @@ export interface ChatShellMessage {
   isDeletedForEveryone?: boolean;
   deletedAt?: string | null;
   deletedForEveryoneBy?: string;
+  /** Optimistic placeholder — true until the server confirms the send. */
+  pending?: boolean;
 }
 
 export interface ChatShellMessagePayload<TMessage = ChatShellMessage> {

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
@@ -11,6 +11,47 @@ import CompanyHubMintChatShell from "@/modules/shared/chat/components/CompanyHub
 import { useCandidateChatSession } from "@/modules/candidate-chat/hooks/useCandidateChatSession";
 import { getCandidateChatBasePath } from "@/modules/candidate-chat/utils/routes";
 
+// Static icon nodes — defined outside the component so they never get recreated.
+const companyTitleIcon = (
+  <Box
+    aria-hidden
+    sx={{
+      width: 36,
+      height: 36,
+      borderRadius: "12px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      color: "#10B981",
+      bgcolor: "#ECFDF5",
+      border: "1px solid rgba(52, 211, 153, 0.25)",
+      boxShadow: "0 4px 20px rgba(15, 23, 42, 0.05)",
+    }}
+  >
+    <PersonSearchOutlined sx={{ fontSize: 20 }} />
+  </Box>
+);
+
+const candidateTitleIcon = (
+  <Box
+    aria-hidden
+    sx={{
+      width: 36,
+      height: 36,
+      borderRadius: "12px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      color: "#10B981",
+      bgcolor: "#ECFDF5",
+      border: "1px solid rgba(52, 211, 153, 0.25)",
+      boxShadow: "0 4px 20px rgba(15, 23, 42, 0.05)",
+    }}
+  >
+    <ForumOutlined sx={{ fontSize: 20 }} />
+  </Box>
+);
+
 interface CandidateChatPageContentProps {
   initialConversationId: string | null;
   isCompany: boolean;
@@ -20,70 +61,34 @@ interface CandidateChatPageContentProps {
   onConversationChange?: (id: string) => void;
 }
 
-const CandidateChatPageContent: React.FC<CandidateChatPageContentProps> = ({
+const CandidateChatPageContent = memo(function CandidateChatPageContent({
   initialConversationId,
   isCompany,
   enableDeletes,
   fillHeight = false,
   embeddedInCompanyHub = false,
   onConversationChange,
-}) => {
+}: CandidateChatPageContentProps) {
   const router = useRouter();
   const { t: tCandidate } = useTranslation("modules/candidates/candidateChat");
   const { t: tCompanyHub } = useTranslation("modules/company/companyChat");
   const role = useSelector((state: RootState) => state.user.connectedUser.user?.role);
   const basePath = getCandidateChatBasePath(role);
 
+  const handleConversationChange = useCallback(
+    (id: string) => {
+      onConversationChange?.(id);
+      void router.replace(`${basePath}/${id}`, undefined, { scroll: false });
+    },
+    [onConversationChange, basePath, router],
+  );
+
   const session = useCandidateChatSession({
     initialConversationId,
     deleteRedirectRoute: basePath,
     enableDeletes: enableDeletes ?? true,
-    onConversationChange: (id) => {
-      onConversationChange?.(id);
-      const href = `${basePath}/${id}`;
-      void router.replace(href, undefined, { scroll: false });
-    },
+    onConversationChange: handleConversationChange,
   });
-
-  const companyTitleIcon = (
-    <Box
-      aria-hidden
-      sx={{
-        width: 36,
-        height: 36,
-        borderRadius: "12px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "#10B981",
-        bgcolor: "#ECFDF5",
-        border: "1px solid rgba(52, 211, 153, 0.25)",
-        boxShadow: "0 4px 20px rgba(15, 23, 42, 0.05)",
-      }}
-    >
-      <PersonSearchOutlined sx={{ fontSize: 20 }} />
-    </Box>
-  );
-
-  const candidateTitleIcon = (
-    <Box
-      aria-hidden
-      sx={{
-        width: 36,
-        height: 36,
-        borderRadius: "12px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "#10B981",
-        bgcolor: "#ECFDF5",
-        border: "1px solid rgba(52, 211, 153, 0.25)",
-        boxShadow: "0 4px 20px rgba(15, 23, 42, 0.05)",
-      }}
-    >
-      <ForumOutlined sx={{ fontSize: 20 }} />
-    </Box>
-  );
 
   if (isCompany) {
     const embedded = embeddedInCompanyHub || isCompany;
@@ -108,18 +113,10 @@ const CandidateChatPageContent: React.FC<CandidateChatPageContentProps> = ({
           sending={session.sending}
           deleteConversationTitle={tCompanyHub("delete_chat_title")}
           deleteConversationDescription={tCompanyHub("delete_chat_for_me_body")}
-          newMessage={session.newMessage}
-          setNewMessage={session.setNewMessage}
           onSend={session.handleSendMessage}
-          onKeyDown={session.handleKeyDown}
-          deleteDialogOpen={session.deleteDialogOpen}
-          setDeleteDialogOpen={session.setDeleteDialogOpen}
-          isDeleting={session.isDeleting}
           onDeleteMessage={session.handleDeleteMessage}
-          onConfirmDelete={session.handleConfirmDeleteConversation}
+          onDeleteConversation={session.executeDeleteConversation}
           onSelectConversation={session.handleSelectConversation}
-          onRequestDeleteConversation={session.requestDeleteConversation}
-          resetDeleteConversationTarget={session.resetDeleteConversationTarget}
         />
       </CompanyHubChatFrame>
     );
@@ -147,21 +144,13 @@ const CandidateChatPageContent: React.FC<CandidateChatPageContentProps> = ({
         enableDeletes={enableDeletes ?? true}
         deleteConversationTitle={tCandidate("delete_chat_title")}
         deleteConversationDescription={tCandidate("delete_chat_for_me_body")}
-        newMessage={session.newMessage}
-        setNewMessage={session.setNewMessage}
         onSend={session.handleSendMessage}
-        onKeyDown={session.handleKeyDown}
-        deleteDialogOpen={session.deleteDialogOpen}
-        setDeleteDialogOpen={session.setDeleteDialogOpen}
-        isDeleting={session.isDeleting}
         onDeleteMessage={session.handleDeleteMessage}
-        onConfirmDelete={session.handleConfirmDeleteConversation}
+        onDeleteConversation={session.executeDeleteConversation}
         onSelectConversation={session.handleSelectConversation}
-        onRequestDeleteConversation={session.requestDeleteConversation}
-        resetDeleteConversationTarget={session.resetDeleteConversationTarget}
       />
     </CompanyHubChatFrame>
   );
-};
+});
 
 export default CandidateChatPageContent;

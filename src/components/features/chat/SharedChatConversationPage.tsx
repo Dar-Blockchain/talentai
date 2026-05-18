@@ -34,15 +34,9 @@ const SharedChatConversationPage: React.FC<Props> = ({ basePath, isCompany, layo
           loading={session.loading}
           sending={session.sending}
           isCompany={isCompany}
-          newMessage={session.newMessage}
-          setNewMessage={session.setNewMessage}
           onSend={session.handleSendMessage}
-          onKeyDown={session.handleKeyDown}
-          deleteDialogOpen={session.deleteDialogOpen}
-          setDeleteDialogOpen={session.setDeleteDialogOpen}
-          isDeleting={session.isDeleting}
           onDeleteMessage={session.handleDeleteMessage}
-          onConfirmDelete={session.handleConfirmDeleteConversation}
+          onDeleteConversation={session.executeDeleteConversation}
           onSelectConversation={session.handleSelectConversation}
         />
       </Box>

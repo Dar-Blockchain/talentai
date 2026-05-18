@@ -1,20 +1,25 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AppDispatch, RootState } from "@/store/store";
+import { AppDispatch, RootState, store } from "@/store/store";
 import {
   candidateChatApi,
   getCandidateChatErrorMessage,
 } from "@/modules/candidate-chat/api/candidateChatApi";
 import { candidateChatKeys } from "@/modules/candidate-chat/queries/keys";
 import {
+  addCandidateMessage,
   markCandidateConversationReadLocal,
+  removeCandidateConversation,
+  removeCandidateMessage,
   setCandidateConversations,
   setCandidateCurrentConversation,
   setCandidateMessages,
   setCandidateTotalUnread,
   upsertCandidateConversation,
+  upsertCandidateMessage,
 } from "@/modules/candidate-chat/store/candidateChatSlice";
+import type { ChatShellMessage } from "@/modules/shared/chat/types/shell";
 import type {
   CandidateChatConversationsParams,
   CandidateChatMessagesParams,
@@ -57,8 +62,7 @@ export const useCandidateConversationsQuery = (
       return conversations.map((c) => toChatShellConversation(c, viewerKey || undefined));
     },
     enabled: options?.enabled ?? true,
-    staleTime: 0,
-    refetchOnMount: "always",
+    staleTime: 30_000,
   });
 
   useEffect(() => {
@@ -110,8 +114,7 @@ export const useCandidateMessagesQuery = (
         .filter((msg) => !msg.deliveryBlocked || !viewerKey || String(msg.sender._id) === viewerKey);
     },
     enabled,
-    staleTime: 0,
-    refetchOnMount: "always",
+    staleTime: 30_000,
   });
 
   useEffect(() => {
@@ -133,8 +136,7 @@ export const useCandidateUnreadCountQuery = (options?: { enabled?: boolean }) =>
     queryKey: candidateChatKeys.unreadCount(),
     queryFn: () => candidateChatApi.fetchUnreadCount(),
     enabled: options?.enabled ?? true,
-    staleTime: 0,
-    refetchOnMount: "always",
+    staleTime: 60_000,
   });
 
   useEffect(() => {
@@ -151,16 +153,81 @@ export const useMarkCandidateConversationReadMutation = () => {
   return useMutation({
     mutationFn: (conversationId: string) => candidateChatApi.markConversationRead(conversationId),
     onSuccess: (conversationId) => {
+      // markCandidateConversationReadLocal zeros out the badge in Redux immediately.
+      // Conversations list invalidation is skipped — the local update is sufficient for the UI.
       dispatch(markCandidateConversationReadLocal(conversationId));
-      queryClient.invalidateQueries({ queryKey: [...candidateChatKeys.all, "conversations"] });
       queryClient.invalidateQueries({ queryKey: candidateChatKeys.unreadCount() });
     },
   });
 };
 
 export const useSendCandidateMessageMutation = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: (payload: SendCandidateMessagePayload) => candidateChatApi.sendMessage(payload),
+    onMutate: (variables) => {
+      const tempId = `temp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      const currentUserId = store.getState().user?.connectedUser?.user?._id;
+      if (!currentUserId) return { tempId };
+
+      const tempMessage: ChatShellMessage = {
+        _id: tempId,
+        text: variables.text,
+        sender: { _id: String(currentUserId) },
+        receiver: { _id: variables.receiverId },
+        isRead: false,
+        createdAt: new Date().toISOString(),
+        conversationId: variables.conversationId,
+        pending: true,
+      };
+
+      dispatch(addCandidateMessage({
+        message: tempMessage,
+        viewerUserId: String(currentUserId),
+        viewerIsViewingConversation: true,
+      }));
+
+      queryClient.setQueriesData(
+        { queryKey: candidateChatKeys.messages(variables.conversationId) },
+        (old) => Array.isArray(old) ? [...old, tempMessage] : old,
+      );
+
+      return { tempId };
+    },
+    onSuccess: (message, variables, context) => {
+      if (!context?.tempId) return;
+      const mapped = toChatShellMessage(message);
+      const currentUserId = store.getState().user?.connectedUser?.user?._id;
+
+      dispatch(removeCandidateMessage(context.tempId));
+      dispatch(addCandidateMessage({
+        message: mapped,
+        viewerUserId: String(currentUserId ?? ""),
+        viewerIsViewingConversation: true,
+      }));
+
+      queryClient.setQueriesData(
+        { queryKey: candidateChatKeys.messages(variables.conversationId) },
+        (old) => {
+          if (!Array.isArray(old)) return old;
+          return [...old.filter((m: any) => String(m._id) !== context.tempId), mapped];
+        },
+      );
+    },
+    onError: (_err, variables, context) => {
+      if (!context?.tempId) return;
+      dispatch(removeCandidateMessage(context.tempId));
+      queryClient.setQueriesData(
+        { queryKey: candidateChatKeys.messages(variables.conversationId) },
+        (old) => Array.isArray(old)
+          ? old.filter((m: any) => String(m._id) !== context.tempId)
+          : old,
+      );
+      // Restore the correct lastMessage preview that the temp message set optimistically.
+      queryClient.invalidateQueries({ queryKey: [...candidateChatKeys.all, "conversations"] });
+    },
   });
 };
 
@@ -181,6 +248,7 @@ export const useCreateCandidateConversationMutation = () => {
 };
 
 export const useDeleteCandidateMessageMutation = () => {
+  const dispatch = useDispatch<AppDispatch>();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -195,23 +263,66 @@ export const useDeleteCandidateMessageMutation = () => {
     onSuccess: async (_, variables) => {
       const messagesKey = candidateChatKeys.messages(variables.conversationId);
       await queryClient.cancelQueries({ queryKey: messagesKey });
-      // Socket will broadcast `message_updated` (everyone) or `message_deleted`
-      // (me) and patch the cache in place — we just trigger a fresh fetch as a
-      // safety net for the case where the sender is offline / disconnected.
-      queryClient.invalidateQueries({ queryKey: [...candidateChatKeys.all, "conversations"] });
+
+      if (variables.scope === "everyone") {
+        const prev = store.getState().candidateChat.messages.find(
+          (m) => String(m._id) === String(variables.messageId),
+        );
+        if (prev) {
+          const deleterId = store.getState().user?.connectedUser?.user?._id;
+          const mapped = toChatShellMessage({
+            _id: variables.messageId,
+            conversationId: variables.conversationId,
+            senderId: String(prev.sender._id),
+            receiverId: String(prev.receiver._id),
+            isRead: prev.isRead,
+            createdAt: prev.createdAt,
+            isDeletedForEveryone: true,
+            text: "",
+            deletedAt: new Date().toISOString(),
+            ...(deleterId != null ? { deletedForEveryoneBy: String(deleterId) } : {}),
+          } as any);
+          dispatch(upsertCandidateMessage(mapped));
+          queryClient.setQueriesData({ queryKey: messagesKey }, (old) => {
+            if (!Array.isArray(old)) return old;
+            const id = String(variables.messageId);
+            const idx = old.findIndex((m: any) => String(m._id) === id);
+            if (idx < 0) return old;
+            const next = [...old];
+            next[idx] = mapped;
+            return next;
+          });
+        }
+      } else {
+        dispatch(removeCandidateMessage(variables.messageId));
+        queryClient.setQueriesData({ queryKey: messagesKey }, (old) => {
+          if (!Array.isArray(old)) return old;
+          return old.filter((m: any) => String(m._id) !== String(variables.messageId));
+        });
+      }
+      // Only refresh the server unread total; Redux already handles conversations and messages.
       queryClient.invalidateQueries({ queryKey: candidateChatKeys.unreadCount() });
-      queryClient.invalidateQueries({ queryKey: messagesKey });
     },
   });
 };
 
 export const useDeleteCandidateConversationMutation = () => {
+  const dispatch = useDispatch<AppDispatch>();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (conversationId: string) => candidateChatApi.deleteConversation(conversationId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [...candidateChatKeys.all, "conversations"] });
+    onSuccess: (_data, conversationId) => {
+      dispatch(removeCandidateConversation(conversationId));
+      queryClient.removeQueries({ queryKey: candidateChatKeys.messages(conversationId) });
+      queryClient.removeQueries({ queryKey: candidateChatKeys.conversation(conversationId) });
+      queryClient.setQueriesData(
+        { queryKey: [...candidateChatKeys.all, "conversations"] },
+        (old) => {
+          if (!Array.isArray(old)) return old;
+          return old.filter((c: any) => String(c._id) !== String(conversationId));
+        },
+      );
       queryClient.invalidateQueries({ queryKey: candidateChatKeys.unreadCount() });
     },
   });

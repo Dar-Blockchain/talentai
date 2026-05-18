@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo, useState, useCallback, useRef } from "react";
 import {
   TextField,
   IconButton,
@@ -14,10 +14,8 @@ import { useTranslation } from "react-i18next";
 import { safeAlpha } from "@/utils/safeMuiAlpha";
 
 interface MessageInputProps {
-  value: string;
-  onChange: (value: string) => void;
-  onSend: () => void;
-  onKeyDown: (e: React.KeyboardEvent) => void;
+  /** Called with the trimmed message text when the user sends. Reject the returned Promise to restore the input value on failure. */
+  onSend: (text: string) => Promise<void>;
   sending: boolean;
   /** Tighter footer padding (e.g. team chat in dashboard frame). */
   compact?: boolean;
@@ -25,15 +23,13 @@ interface MessageInputProps {
   mintLightTeamUi?: boolean;
 }
 
-const MessageInput: React.FC<MessageInputProps> = ({
-  value,
-  onChange,
+const MessageInput = memo(function MessageInput({
   onSend,
-  onKeyDown,
   sending,
   compact = false,
   mintLightTeamUi = false,
-}) => {
+}: MessageInputProps) {
+  const [value, setValue] = useState("");
   const theme = useTheme();
   const { t } = useTranslation("shared/chat");
   const isDark = theme.palette.mode === "dark";
@@ -41,6 +37,35 @@ const MessageInput: React.FC<MessageInputProps> = ({
   const ease = "cubic-bezier(0.4, 0, 0.2, 1)";
   const mintPrimary = "#34D399";
   const mintPrimaryHover = "#10B981";
+
+  // Keep a ref in sync so handleSend can read the latest value without
+  // including `value` in its dep array (which would recreate it on every keystroke).
+  const valueRef = useRef(value);
+  valueRef.current = value;
+
+  const handleSend = useCallback(async () => {
+    const text = valueRef.current.trim();
+    if (!text || sending) return;
+    setValue("");
+    try {
+      await onSend(text);
+    } catch {
+      setValue(text);
+    }
+  }, [sending, onSend]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      void handleSend();
+    }
+  }, [handleSend]);
+
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setValue(e.target.value);
+  }, []);
+
+  const handleSendClick = useCallback(() => { void handleSend(); }, [handleSend]);
 
   return (
     <Paper
@@ -82,8 +107,8 @@ const MessageInput: React.FC<MessageInputProps> = ({
           multiline
           maxRows={5}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={onKeyDown}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
           placeholder={t("input.placeholder")}
           disabled={sending}
           size="small"
@@ -119,7 +144,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
         <Tooltip title={t("input.send")}>
           <span>
             <IconButton
-              onClick={onSend}
+              onClick={handleSendClick}
               disabled={!canSend}
               color="primary"
               sx={{
@@ -166,6 +191,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
       </Stack>
     </Paper>
   );
-};
+});
 
 export default MessageInput;

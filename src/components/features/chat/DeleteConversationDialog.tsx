@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo, useCallback } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -22,22 +22,25 @@ interface DeleteConversationDialogProps {
   description?: string;
 }
 
-const DeleteConversationDialog: React.FC<DeleteConversationDialogProps> = ({
+const DeleteConversationDialog = memo(function DeleteConversationDialog({
   open,
   onClose,
   onConfirm,
   isDeleting,
   title,
   description,
-}) => {
+}: DeleteConversationDialogProps) {
   const { t } = useTranslation("shared/chat");
   const theme = useTheme();
   const err = theme.palette.error;
+  const handleClose = useCallback(() => {
+    if (!isDeleting) onClose();
+  }, [isDeleting, onClose]);
 
   return (
     <Dialog
       open={open}
-      onClose={() => !isDeleting && onClose()}
+      onClose={handleClose}
       slotProps={{
         paper: {
           elevation: 12,
@@ -98,6 +101,6 @@ const DeleteConversationDialog: React.FC<DeleteConversationDialogProps> = ({
       </DialogActions>
     </Dialog>
   );
-};
+});
 
 export default DeleteConversationDialog;
