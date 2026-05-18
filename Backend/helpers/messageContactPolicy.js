@@ -24,13 +24,25 @@ const PHONE_PATTERNS = [
   /\b\d{2}[\s.-]\d{3}[\s.-]?\d{2}[\s.-]?\d{2}[\s.-]?\d{2}\b/,
   // Plain 7+ digits
   /\b\d{7,}\b/,
+  // Spaced/dashed groups: 216 53 508 615 / 216-53-508-615
+  /\b\d{3,4}(?:[\s\-.]\d{2,4}){2,}\b/,
 ];
 
 const matchesPhonePattern = (text) => PHONE_PATTERNS.some((re) => re.test(text));
 
+// Catches +/00 prefixed numbers where digits are spread across space-separated groups.
+// Extracts every +/00 sequence, strips non-digits, and checks for 7+ total digits.
+const hasIntlPhoneByDigitCount = (text) => {
+  const segs = String(text || "").match(/(?:\+|00)[\d\s.\-]{5,30}/g) || [];
+  return segs.some((s) => (s.match(/\d/g) || []).length >= 7);
+};
+
 const detectEmail = (text) => EMAIL_PATTERN.test(String(text || ""));
 
-const detectPhone = (text) => matchesPhonePattern(String(text || ""));
+const detectPhone = (text) => {
+  const raw = String(text || "");
+  return matchesPhonePattern(raw) || hasIntlPhoneByDigitCount(raw);
+};
 
 /**
  * @param {string} text

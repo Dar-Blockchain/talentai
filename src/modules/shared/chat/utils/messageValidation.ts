@@ -15,12 +15,21 @@ const PHONE_PATTERNS: RegExp[] = [
   /\b\d{2}[\s.-]\d{3}[\s.-]?\d{2}[\s.-]?\d{2}[\s.-]?\d{2}\b/,
   // Plain 7+ digits
   /\b\d{7,}\b/,
+  // Spaced/dashed groups: 216 53 508 615 / 216-53-508-615
+  /\b\d{3,4}(?:[\s\-.]\d{2,4}){2,}\b/,
 ];
+
+const hasIntlPhoneByDigitCount = (text: string): boolean => {
+  const matches = String(text || "").match(/(?:\+|00)[\d\s.\-]{5,30}/g) || [];
+  return matches.some((m) => (m.match(/\d/g) || []).length >= 7);
+};
 
 export const containsEmailAddress = (text: string) => EMAIL_PATTERN.test(String(text || ""));
 
-export const containsPhoneNumber = (text: string) =>
-  PHONE_PATTERNS.some((re) => re.test(String(text || "")));
+export const containsPhoneNumber = (text: string): boolean => {
+  const raw = String(text || "");
+  return PHONE_PATTERNS.some((re) => re.test(raw)) || hasIntlPhoneByDigitCount(raw);
+};
 
 export const getBlockedMessageReason = (text: string): "email" | "phone" | null => {
   if (containsEmailAddress(text)) return "email";
