@@ -11,8 +11,10 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import EmailIcon from '@mui/icons-material/Email';
 import { useDispatch } from 'react-redux';
+import { useQueryClient } from '@tanstack/react-query';
 import { AppDispatch } from '@/store/store';
 import { signinUser, verifyOTP, registerUser } from '@/store/slices/authSlice';
+import { checkEligibility } from '../../api/eligibility.api';
 import { usePersistentCountdown } from '@/hooks/usePersistentCountdown';
 import { getUserLocation } from '@/utils/api';
 import { formatTimeLeft } from '@/utils/functions';
@@ -54,7 +56,10 @@ export interface OnboardingModalProps {
 
 const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClose }) => {
   const { t } = useTranslation('modules/interview/apply');
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch     = useDispatch<AppDispatch>();
+  const queryClient  = useQueryClient();
+  const isMountedRef = useRef(true);
+  useEffect(() => () => { isMountedRef.current = false; }, []);
 
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
@@ -219,10 +224,25 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
         location: userLocation,
       })).unwrap();
       if (!response.token) throw new Error('No token received');
-      clearTimer();
+
+      // Pre-populate the eligibility cache so index.tsx gets the result immediately after auth.
+      // The component may unmount during this await (Redux update triggers re-render), but
+      // prefetchQuery is a queryClient operation and continues regardless of mount state.
+      const postId = typeof router.query.jobId === 'string' ? router.query.jobId : null;
+      if (postId) {
+        await queryClient.prefetchQuery({
+          queryKey: ['eligibility', postId],
+          queryFn:  () => checkEligibility(postId),
+          staleTime: 0,
+        });
+      }
+
+      if (isMountedRef.current) clearTimer();
     } catch {
-      setApiError(t('onboarding.error_code'));
-      setLoading(false);
+      if (isMountedRef.current) {
+        setApiError(t('onboarding.error_code'));
+        setLoading(false);
+      }
     }
   };
 

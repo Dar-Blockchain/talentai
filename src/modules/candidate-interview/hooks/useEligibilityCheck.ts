@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { useSelector } from 'react-redux';
 import { getToken } from '@/utils/tokenUtils';
+import { type RootState } from '@/store/store';
 import { useEligibilityQuery } from '../queries/useEligibilityQuery';
 import { type EligibilityStatus, type EligibilityMeta } from '../types/api';
 
@@ -8,27 +9,23 @@ import { type EligibilityStatus, type EligibilityMeta } from '../types/api';
 export type { EligibilityStatus, EligibilityMeta };
 
 export function useEligibilityCheck() {
-  const router = useRouter();
-  const token  = getToken();
+  const router   = useRouter();
+  const token    = getToken();
+  const authUser = useSelector((state: RootState) => state.user.connectedUser.user);
 
-  const postId = router.isReady && typeof router.query.jobId === 'string' && token
+  // Require both authUser (Redux — reliable after login) and token (cookie — needed for the request)
+  const postId = router.isReady && typeof router.query.jobId === 'string' && !!authUser && !!token
     ? (router.query.jobId as string)
     : null;
 
   const { data, isLoading } = useEligibilityQuery(postId);
 
-  useEffect(() => {
-    if (data?.status === 'company_blocked') {
-      setTimeout(() => router.replace('/company/dashboard'), 3000);
-    }
-  }, [data?.status]);
-
   const rawStatus = data?.status;
   const eligibilityStatus: EligibilityStatus =
-    !router.isReady                                               ? 'checking' :
-    !router.query.jobId || !token                                 ? 'eligible' :
-    isLoading                                                     ? 'checking' :
-    !rawStatus || rawStatus === 'not_found' || rawStatus === 'error' ? 'eligible' :
+    !router.isReady                                                   ? 'checking' :
+    !router.query.jobId || !authUser || !token                        ? 'eligible' :
+    isLoading                                                         ? 'checking' :
+    !rawStatus || rawStatus === 'not_found' || rawStatus === 'error'  ? 'eligible' :
     rawStatus;
 
   return { eligibilityStatus, eligibilityMeta: data?.meta ?? null };
