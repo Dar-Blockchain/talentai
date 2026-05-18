@@ -1,6 +1,7 @@
 "use client";
 
 import { Box, Button, CircularProgress, Divider, MenuItem, TextField, Typography } from "@mui/material";
+import { CurrencyDropdown } from "./SalaryRange";
 import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
@@ -153,6 +154,31 @@ const PostDescription = () => {
         {/* Prompt textarea */}
         <Box>
           <FieldLabel label={t("create.form.prompt_label")} />
+
+          {/* What to include — hint chips */}
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mb: 1.25 }}>
+            {[
+              { icon: "🏢", text: t("create.form.hint_company") },
+              { icon: "🎯", text: t("create.form.hint_role") },
+              { icon: "📋", text: t("create.form.hint_requirements") },
+              { icon: "✅", text: t("create.form.hint_responsibilities") },
+              { icon: "💰", text: t("create.form.hint_benefits") },
+            ].map((chip) => (
+              <Box
+                key={chip.text}
+                sx={{
+                  display: "flex", alignItems: "center", gap: 0.5,
+                  px: 1, py: 0.4,
+                  bgcolor: "#F0FDF4", border: "1px solid #BBF7D0",
+                  borderRadius: "20px", fontSize: "11px", color: "#166534",
+                  fontWeight: 500, whiteSpace: "nowrap",
+                }}
+              >
+                <span>{chip.icon}</span> {chip.text}
+              </Box>
+            ))}
+          </Box>
+
           <TextField
             value={promptDescription}
             onChange={(e) => { dispatch(setPromptDescription(e.target.value)); clear("promptDescription"); }}
@@ -166,13 +192,41 @@ const PostDescription = () => {
             sx={{
               "& .MuiInputBase-root": {
                 fontSize: "13px", borderRadius: "10px",
-                bgcolor: "#FAFAFA", lineHeight: 1.65,
+                bgcolor: "#FAFAFA", lineHeight: 1.75,
               },
               "& .MuiOutlinedInput-notchedOutline": { borderColor: "#E5E7EB" },
               "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: TEAL },
+              "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: TEAL },
+              "& textarea": {
+                "&::-webkit-scrollbar": { width: "5px" },
+                "&::-webkit-scrollbar-track": { background: "transparent", borderRadius: "10px" },
+                "&::-webkit-scrollbar-thumb": {
+                  background: "#D1D5DB",
+                  borderRadius: "10px",
+                  "&:hover": { background: "#9CA3AF" },
+                },
+                scrollbarWidth: "thin",
+                scrollbarColor: "#D1D5DB transparent",
+              },
             }}
             FormHelperTextProps={{ sx: { ml: 0, fontSize: "11px" } }}
           />
+
+          {/* Character count */}
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 0.5 }}>
+            <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>
+              {t("create.form.prompt_hint")}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "11px",
+                color: promptDescription.length < 50 ? "#F59E0B" : "#10B981",
+                fontWeight: 500,
+              }}
+            >
+              {promptDescription.length} {t("create.form.prompt_chars")}
+            </Typography>
+          </Box>
         </Box>
 
         <Divider sx={{ borderColor: "#F3F4F6" }} />
@@ -245,17 +299,12 @@ const PostDescription = () => {
           <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1.4fr 1.4fr", gap: 1.5 }}>
             <Box>
               <FieldLabel icon={AttachMoneyOutlined} label={t("create.post_form.labels.currency")} />
-              <TextField
-                select fullWidth
+              <CurrencyDropdown
+                currencies={defaultCurrencies}
                 value={salary.currency || ""}
-                onChange={(e) => handleSalaryChange("currency", e.target.value)}
-                sx={fieldSx}
-              >
-                <MenuItem disabled value="" sx={{ fontSize: "12px" }}>{t("create.post_form.placeholders.select_currency")}</MenuItem>
-                {defaultCurrencies.map((c: any) => (
-                  <MenuItem key={c.value} value={c.value} sx={{ fontSize: "12px" }}>{c.label}</MenuItem>
-                ))}
-              </TextField>
+                onChange={(code) => handleSalaryChange("currency", code)}
+                placeholder={t("create.post_form.placeholders.select_currency")}
+              />
             </Box>
 
             <Box>
