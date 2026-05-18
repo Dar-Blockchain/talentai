@@ -42,7 +42,7 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
   ], [cameraStatus, connectionStatus, isHydrated, t]);
 
   return (
-    <Box sx={{ bgcolor: 'transparent', borderRadius: '16px', border: '1px solid #ede9f8', overflow: 'hidden' }}>
+    <Box sx={{ bgcolor: 'transparent', borderRadius: '16px', border: '1px solid #d1f5e7', overflow: 'hidden' }}>
 
       {interviewStatus === 'active' && <AgentHeader agentState={agentState} />}
 
@@ -58,7 +58,7 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
 
         {interviewStatus === 'connecting' && (
           <Box sx={{ textAlign: 'center', py: 2 }}>
-            <CircularProgress size={48} sx={{ color: '#8310FF', mb: 2 }} />
+            <CircularProgress size={48} sx={{ color: '#6AD39C', mb: 2 }} />
             <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1rem', color: '#111827', mb: 0.5 }}>{t('container.starting_title')}</Typography>
             <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#6b7280' }}>{t('container.starting_subtitle')}</Typography>
           </Box>
@@ -82,16 +82,16 @@ const AgentHeader: React.FC<{ agentState: AgentState }> = ({ agentState }) => {
   const isProcessing = agentState === 'thinking' || agentState === 'processing';
 
   return (
-    <Box sx={{ bgcolor: '#fff', borderBottom: '1px solid #ede9f8', px: 2.5, py: 1.75, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+    <Box sx={{ bgcolor: '#fff', borderBottom: '1px solid #d1f5e7', px: 2.5, py: 1.75, display: 'flex', alignItems: 'center', gap: 1.5 }}>
       <Box sx={{
         width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
-        bgcolor: isProcessing ? 'rgba(245,158,11,0.1)' : 'rgba(131,16,255,0.08)',
-        border: `1px solid ${isProcessing ? 'rgba(245,158,11,0.2)' : 'rgba(131,16,255,0.15)'}`,
+        bgcolor: isProcessing ? 'rgba(245,158,11,0.1)' : 'rgba(106,211,156,0.08)',
+        border: `1px solid ${isProcessing ? 'rgba(245,158,11,0.2)' : 'rgba(106,211,156,0.15)'}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         {isProcessing
           ? <AutorenewIcon sx={{ fontSize: 20, color: '#d97706', animation: 'spin 1.2s linear infinite', '@keyframes spin': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } } }} />
-          : <KeyboardVoiceIcon sx={{ fontSize: 20, color: '#8310FF' }} />
+          : <KeyboardVoiceIcon sx={{ fontSize: 20, color: '#6AD39C' }} />
         }
       </Box>
       <Box>
@@ -119,8 +119,8 @@ const ReadinessChecklist: React.FC<ReadinessChecklistProps> = ({ checks, allRead
 
   return (
     <Box sx={{ textAlign: 'center' }}>
-      <Box sx={{ width: 72, height: 72, borderRadius: '50%', bgcolor: 'rgba(131,16,255,0.08)', border: '2px solid rgba(131,16,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2 }}>
-        <PlayArrowIcon sx={{ fontSize: 36, color: '#8310FF' }} />
+      <Box sx={{ width: 72, height: 72, borderRadius: '50%', bgcolor: 'rgba(106,211,156,0.08)', border: '2px solid rgba(106,211,156,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2 }}>
+        <PlayArrowIcon sx={{ fontSize: 36, color: '#6AD39C' }} />
       </Box>
       <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.2rem', color: '#111827', mb: 0.5 }}>{t('container.ready_title')}</Typography>
       <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#6b7280', mb: 3, lineHeight: 1.6 }}>{t('container.ready_subtitle')}</Typography>
@@ -140,7 +140,7 @@ const ReadinessChecklist: React.FC<ReadinessChecklistProps> = ({ checks, allRead
       </Box>
 
       <Button variant="contained" fullWidth onClick={onStartInterview} disabled={!allReady} startIcon={<PlayArrowIcon />}
-        sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.92rem', py: 1.5, borderRadius: '12px', bgcolor: allReady ? '#8310FF' : '#e5e7eb', color: '#fff', textTransform: 'none', boxShadow: 'none', '&:hover': { bgcolor: allReady ? '#6d0ee0' : '#e5e7eb', boxShadow: 'none' }, '&.Mui-disabled': { bgcolor: '#f3f4f6', color: '#9ca3af', boxShadow: 'none' } }}>
+        sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.92rem', py: 1.5, borderRadius: '12px', bgcolor: allReady ? '#6AD39C' : '#e5e7eb', color: '#fff', textTransform: 'none', boxShadow: 'none', '&:hover': { bgcolor: allReady ? '#10453F' : '#e5e7eb', boxShadow: 'none' }, '&.Mui-disabled': { bgcolor: '#f3f4f6', color: '#9ca3af', boxShadow: 'none' } }}>
         {t('start.btn_start')}
       </Button>
 
@@ -162,7 +162,7 @@ const LiveTranscript: React.FC<{ currentTranscript?: string }> = ({ currentTrans
     <Box sx={{ py: 1 }}>
       <Box
         id="transcript-scroll"
-        sx={{ maxHeight: 200, overflowY: 'auto', mb: 2, pr: 0.5, '&::-webkit-scrollbar': { width: 4 }, '&::-webkit-scrollbar-track': { bgcolor: 'transparent' }, '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(131,16,255,0.2)', borderRadius: 2 } }}
+        sx={{ maxHeight: 200, overflowY: 'auto', mb: 2, pr: 0.5, '&::-webkit-scrollbar': { width: 4 }, '&::-webkit-scrollbar-track': { bgcolor: 'transparent' }, '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(106,211,156,0.2)', borderRadius: 2 } }}
         ref={(el: HTMLDivElement | null) => { if (el) el.scrollTop = el.scrollHeight; }}
       >
         <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: currentTranscript ? '#374151' : '#9ca3af', fontStyle: currentTranscript ? 'normal' : 'italic', lineHeight: 1.7, minHeight: 80 }}>
@@ -179,7 +179,7 @@ const AnalyzingSpinner: React.FC<{ waitDots: string }> = ({ waitDots }) => {
 
   return (
     <Box sx={{ textAlign: 'center', py: 2 }}>
-      <CircularProgress size={48} sx={{ color: '#8310FF', mb: 2 }} />
+      <CircularProgress size={48} sx={{ color: '#6AD39C', mb: 2 }} />
       <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1rem', color: '#111827', mb: 0.5 }}>{t('container.analyzing_title')}{waitDots}</Typography>
       <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#6b7280' }}>{t('container.analyzing_subtitle')}</Typography>
     </Box>

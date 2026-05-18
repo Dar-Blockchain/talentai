@@ -16,7 +16,7 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
-import { PostAssessment } from "../dashboard/AssessmentCard";
+import { PostAssessment } from "../../types/api";
 
 interface StepInfoModalProps {
   open: boolean;
@@ -180,7 +180,7 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
               Overall Progress
             </Typography>
             <Typography
-              sx={{ fontSize: "12px", fontWeight: 600, color: "rgba(189, 133, 255, 1)" }}
+              sx={{ fontSize: "12px", fontWeight: 600, color: "#6AD39C" }}
             >
               {completedSteps}/{steps.length} completed
             </Typography>
@@ -194,7 +194,7 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
               backgroundColor: "rgba(243, 245, 247, 1)",
               "& .MuiLinearProgress-bar": {
                 borderRadius: 3,
-                backgroundColor: "rgba(189, 133, 255, 1)",
+                backgroundColor: "#6AD39C",
               },
             }}
           />
@@ -223,10 +223,10 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
                   p: 1.5,
                   borderRadius: "10px",
                   border: isCurrentStep
-                    ? "1.5px solid rgba(189, 133, 255, 0.5)"
+                    ? "1.5px solid rgba(106, 211, 156, 0.5)"
                     : "1px solid rgba(211, 224, 245, 0.5)",
                   backgroundColor: isCurrentStep
-                    ? "rgba(189, 133, 255, 0.04)"
+                    ? "rgba(106, 211, 156, 0.04)"
                     : "transparent",
                 }}
               >
@@ -240,7 +240,7 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
                       step.status === "done" || step.status === "passed"
                         ? "rgba(16, 185, 129, 0.1)"
                         : isCurrentStep
-                        ? "rgba(189, 133, 255, 0.1)"
+                        ? "rgba(106, 211, 156, 0.1)"
                         : "rgba(243, 245, 247, 1)",
                     display: "flex",
                     alignItems: "center",
@@ -256,7 +256,7 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
                         fontWeight: 700,
                         fontSize: "13px",
                         color: isCurrentStep
-                          ? "rgba(189, 133, 255, 1)"
+                          ? "#6AD39C"
                           : "#9ca3af",
                       }}
                     >
@@ -299,10 +299,10 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
                   size="small"
                   sx={{
                     backgroundColor: isCurrentStep && step.status !== "done" && step.status !== "passed"
-                      ? "rgba(189, 133, 255, 0.12)"
+                      ? "rgba(106, 211, 156, 0.12)"
                       : statusColors.bg,
                     color: isCurrentStep && step.status !== "done" && step.status !== "passed"
-                      ? "rgba(189, 133, 255, 1)"
+                      ? "#6AD39C"
                       : statusColors.color,
                     fontWeight: 600,
                     fontSize: "0.7rem",
@@ -392,9 +392,9 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
             sx={{
               mt: 2.5,
               p: 2,
-              backgroundColor: "rgba(189, 133, 255, 0.04)",
+              backgroundColor: "rgba(106, 211, 156, 0.04)",
               borderRadius: "10px",
-              border: "1px solid rgba(189, 133, 255, 0.15)",
+              border: "1px solid rgba(106, 211, 156, 0.15)",
             }}
           >
             <Typography
@@ -460,7 +460,7 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
               startIcon={<PlayArrowIcon />}
               sx={{
                 textTransform: "none",
-                backgroundColor: "rgba(189, 133, 255, 1)",
+                backgroundColor: "#6AD39C",
                 color: "white",
                 fontWeight: 600,
                 fontSize: "0.875rem",
@@ -469,11 +469,11 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
                 height: "42px",
                 boxShadow: "none",
                 "&:hover": {
-                  backgroundColor: "rgba(160, 100, 230, 1)",
+                  backgroundColor: "#10453F",
                   boxShadow: "none",
                 },
                 "&.Mui-disabled": {
-                  backgroundColor: "rgba(189, 133, 255, 0.3)",
+                  backgroundColor: "rgba(106, 211, 156, 0.3)",
                   color: "rgba(255, 255, 255, 0.6)",
                 },
               }}

@@ -22,7 +22,7 @@ export default function InterviewSessionHeader({
   endInterviewLabel,
 }: Props) {
   return (
-    <Box sx={{ bgcolor: '#fff', borderRadius: '20px', border: '1px solid #e8e2f5', px: { xs: 2.5, md: 3.5 }, py: { xs: 2, md: 2.5 }, mb: 3 }}>
+    <Box sx={{ bgcolor: '#fff', borderRadius: '20px', border: '1px solid #c8eedd', px: { xs: 2.5, md: 3.5 }, py: { xs: 2, md: 2.5 }, mb: 3 }}>
       <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1.5}>
         <Box>
           <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.1rem', color: '#111827', lineHeight: 1.2 }}>

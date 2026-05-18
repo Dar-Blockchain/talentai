@@ -1,6 +1,5 @@
 import React from "react";
 import { Box, Typography, Button } from "@mui/material";
-import Header from "@/components/layout/Header";
 
 interface Action {
   label: string;
@@ -28,9 +27,7 @@ export default function EligibilityBlockedScreen({
   maxWidth = 460,
 }: EligibilityBlockedScreenProps) {
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#F1F5F9", display: "flex", flexDirection: "column" }}>
-      <Header />
-      <Box sx={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", px: 2, py: { xs: 5, md: 8 } }}>
+    <Box sx={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", px: 2, py: { xs: 5, md: 8 } }}>
         <Box sx={{ width: "100%", maxWidth, bgcolor: "#fff", borderRadius: "24px", boxShadow: "0 20px 60px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)", overflow: "hidden" }}>
           <Box sx={{ p: { xs: 4, md: 5 }, textAlign: "center" }}>
 
@@ -84,6 +81,5 @@ export default function EligibilityBlockedScreen({
           </Box>
         </Box>
       </Box>
-    </Box>
   );
 }

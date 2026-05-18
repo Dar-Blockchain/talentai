@@ -46,7 +46,7 @@ const CoverageDashboard: React.FC<CoverageDashboardProps> = ({ coverage }) => {
       sx={{
         bgcolor: "#fff",
         borderRadius: "16px",
-        border: "1px solid #ede9f8",
+        border: "1px solid #d1f5e7",
         overflow: "hidden",
         mt: 2,
       }}
@@ -54,7 +54,7 @@ const CoverageDashboard: React.FC<CoverageDashboardProps> = ({ coverage }) => {
       <Box
         sx={{
           bgcolor: "#fff",
-          borderBottom: "1px solid #ede9f8",
+          borderBottom: "1px solid #d1f5e7",
           px: 2.5,
           py: 1.75,
           display: "flex",
@@ -68,8 +68,8 @@ const CoverageDashboard: React.FC<CoverageDashboardProps> = ({ coverage }) => {
               width: 40,
               height: 40,
               borderRadius: "50%",
-              bgcolor: "rgba(131,16,255,0.08)",
-              border: "1px solid rgba(131,16,255,0.15)",
+              bgcolor: "rgba(106,211,156,0.08)",
+              border: "1px solid rgba(106,211,156,0.15)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -198,9 +198,9 @@ const CoverageDashboard: React.FC<CoverageDashboardProps> = ({ coverage }) => {
               sx={{
                 height: 8,
                 borderRadius: 4,
-                bgcolor: "rgba(131,16,255,0.07)",
+                bgcolor: "rgba(106,211,156,0.07)",
                 "& .MuiLinearProgress-bar": {
-                  background: `linear-gradient(90deg, ${PURPLE}, #a855f7)`,
+                  background: `linear-gradient(90deg, ${PURPLE}, #10453F)`,
                   borderRadius: 4,
                 },
               }}

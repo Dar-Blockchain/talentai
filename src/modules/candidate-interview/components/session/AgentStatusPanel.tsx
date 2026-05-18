@@ -38,10 +38,10 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
         sx={{
           fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.88rem', py: 1.4,
           borderRadius: '12px', textTransform: 'none',
-          bgcolor: isDisabled ? '#f3f4f6' : '#8310FF',
+          bgcolor: isDisabled ? '#f3f4f6' : '#6AD39C',
           color: isDisabled ? '#9ca3af' : '#fff',
           boxShadow: 'none',
-          '&:hover': { bgcolor: isDisabled ? '#f3f4f6' : '#6d0ee0', boxShadow: 'none' },
+          '&:hover': { bgcolor: isDisabled ? '#f3f4f6' : '#10453F', boxShadow: 'none' },
           '&.Mui-disabled': { bgcolor: '#f3f4f6', color: '#9ca3af', boxShadow: 'none' },
         }}
       >

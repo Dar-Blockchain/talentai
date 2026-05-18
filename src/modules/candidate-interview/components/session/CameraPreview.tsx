@@ -79,7 +79,7 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 0 }}>
 
       {/* Video area */}
-      <Box sx={{ position: 'relative', width: '100%', aspectRatio: '16/9', bgcolor: '#1a1040', borderRadius: '14px', overflow: 'hidden', flexShrink: 0, border: '1px solid #e8e2f5' }}>
+      <Box sx={{ position: 'relative', width: '100%', aspectRatio: '16/9', bgcolor: '#0d3b33', borderRadius: '14px', overflow: 'hidden', flexShrink: 0, border: '1px solid #c8eedd' }}>
         <video
           ref={videoRef}
           autoPlay
@@ -89,10 +89,10 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
         />
 
         {cameraStatus !== 'granted' && (
-          <Box sx={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, background: 'linear-gradient(135deg,#1a1040,#2d1b69)' }}>
+          <Box sx={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, background: 'linear-gradient(135deg,#0d3b33,#0a2520)' }}>
             {cameraStatus === 'requesting' ? (
               <>
-                <CircularProgress size={32} sx={{ color: '#8310FF' }} />
+                <CircularProgress size={32} sx={{ color: '#6AD39C' }} />
                 <Typography sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', fontFamily: 'Poppins' }}>{t('camera.requesting')}</Typography>
               </>
             ) : (
@@ -104,7 +104,7 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
                   {cameraStatus === 'denied' ? t('camera.denied') : cameraError || t('camera.unavailable')}
                 </Typography>
                 {(cameraStatus === 'denied' || cameraStatus === 'error') && (
-                  <Button size="small" variant="outlined" onClick={() => window.location.reload()} sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', textTransform: 'none', color: 'rgba(255,255,255,0.7)', borderColor: 'rgba(255,255,255,0.2)', borderRadius: '8px', '&:hover': { borderColor: '#8310FF', color: '#c084fc' } }}>
+                  <Button size="small" variant="outlined" onClick={() => window.location.reload()} sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', textTransform: 'none', color: 'rgba(255,255,255,0.7)', borderColor: 'rgba(255,255,255,0.2)', borderRadius: '8px', '&:hover': { borderColor: '#6AD39C', color: '#6AD39C' } }}>
                     {t('camera.retry')}
                   </Button>
                 )}
@@ -115,7 +115,7 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
 
         {isConnecting && cameraStatus === 'granted' && (
           <Box sx={{ position: 'absolute', top: 12, right: 12, display: 'flex', alignItems: 'center', gap: 0.75, bgcolor: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', px: 1.5, py: 0.5, borderRadius: '8px', border: '1px solid rgba(255,255,255,0.12)' }}>
-            <CircularProgress size={11} sx={{ color: '#8310FF' }} />
+            <CircularProgress size={11} sx={{ color: '#6AD39C' }} />
             <Typography sx={{ fontSize: '0.68rem', fontFamily: 'Poppins', color: '#fff', fontWeight: 700 }}>{t('camera.connecting')}</Typography>
           </Box>
         )}

@@ -6,7 +6,7 @@ import CodeIcon from '@mui/icons-material/Code';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import { getLevelFromNumber, getSoftSkillLevelLabel, type Skill } from '@/utils/postHelpers';
 import { useTranslation } from 'react-i18next';
-import { PURPLE, PURPLE_LIGHT, PURPLE_BORDER } from '../../constants';
+import { PURPLE_LIGHT, PURPLE_BORDER } from '../../constants';
 import { SectionCard, SectionTitle } from './JobPanelShared';
 
 interface JobDetailsColumnProps {
@@ -50,7 +50,7 @@ export default function JobDetailsColumn({ jd, technicalSkills, softSkills }: Jo
                   {technicalSkills.map((skill, i) => (
                     <Chip key={i} size="small"
                       label={`${skill.name}${skill.level ? ` · ${getLevelFromNumber(skill.level)}` : ''}`}
-                      sx={{ fontSize: '11px', fontWeight: 600, height: 24, bgcolor: PURPLE_LIGHT, color: PURPLE, border: `1px solid ${PURPLE_BORDER}`, fontFamily: 'Poppins' }} />
+                      sx={{ fontSize: '11px', fontWeight: 600, height: 24, bgcolor: PURPLE_LIGHT, color: '#16A34A', border: `1px solid ${PURPLE_BORDER}`, fontFamily: 'Poppins' }} />
                   ))}
                 </Box>
               </Box>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { InterviewConfig } from '../types/interview';
+import { DEFAULT_INTERVIEW_CONFIG } from '../constants';
 import { buildInterviewConfigFromURL, URLParams } from '@/utils/interviewConfigBuilder';
 import { getToken } from '@/utils/tokenUtils';
 import { useJobPostQuery } from '../queries/useJobPostQuery';
@@ -9,42 +10,13 @@ import type { UseInterviewConfigReturn, UseInterviewConfigOptions } from '../typ
 
 export type { UseInterviewConfigReturn, UseInterviewConfigOptions };
 
-const DEFAULT_CONFIG: InterviewConfig = {
-  interviewType: 'HR_INTERVIEW',
-  testReason: 'Preparing for software engineer behavioral interview',
-  context: {
-    targetCompany: 'Google',
-    targetRole: 'Software Engineer',
-    experienceLevel: 'Mid-Level',
-    interviewGoal: 'Assess behavioral competencies and cultural fit',
-  },
-  models: {
-    fastModel: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
-    thinkingModel: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
-    analysisModel: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
-  },
-  sessionSettings: {
-    duration: 30,
-    language: 'en',
-    difficulty: 'intermediate',
-    silenceTimeout: 5,
-    silenceIntelligence: {
-      enabled: true,
-      adaptiveThresholds: true,
-      maxSilencePrompts: 3,
-      naturalPauseDetection: true,
-      contextAwareThresholds: true,
-    },
-  },
-};
-
 export const useInterviewConfig = ({ showNotification }: UseInterviewConfigOptions): UseInterviewConfigReturn => {
   const router = useRouter();
   const jobId  = router.isReady && typeof router.query.jobId === 'string'
     ? router.query.jobId
     : null;
 
-  const [interviewConfig, setInterviewConfig] = useState<InterviewConfig>(DEFAULT_CONFIG);
+  const [interviewConfig, setInterviewConfig] = useState<InterviewConfig>(DEFAULT_INTERVIEW_CONFIG);
 
   // ── 1. Fetch job post ────────────────────────────────────────────────────────
   const { data: jobData } = useJobPostQuery(jobId);

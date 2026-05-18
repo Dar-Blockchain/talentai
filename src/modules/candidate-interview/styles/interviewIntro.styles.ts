@@ -1,7 +1,7 @@
 import { PURPLE, PURPLE_DARK } from '../constants';
 
-export const PURPLE_BG     = 'rgba(244,235,255,1)';
-export const PURPLE_BORDER = 'rgba(189,133,255,0.35)';
+export const PURPLE_BG     = 'rgba(225,248,237,1)';
+export const PURPLE_BORDER = 'rgba(106,211,156,0.35)';
 
 export const SX = {
   sectionHeading: { fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.83rem', color: '#111827', mb: 1 },

@@ -163,7 +163,7 @@ export default function InterviewScreen({
           sx={{
             bgcolor: "#fff",
             borderRadius: "20px",
-            border: "1px solid #e8e2f5",
+            border: "1px solid #c8eedd",
           }}
         >
           {/* Current question / follow-up text with reading countdown — hidden until interview starts */}
@@ -191,7 +191,7 @@ export default function InterviewScreen({
             }}
           >
             {/* Left — live camera feed with mic-activity visualizer */}
-            <Box sx={{ borderRight: { md: "1px solid #f0edf8" }, p: 2.5 }}>
+            <Box sx={{ borderRight: { md: "1px solid #e6f8f1" }, p: 2.5 }}>
               <CameraPreview
                 videoRef={camera.videoRef}
                 cameraStatus={camera.cameraStatus}

@@ -44,6 +44,40 @@ export interface JobPost {
   updatedAt?: string;
 }
 
+// ─── Post Assessment (dashboard listing) ──────────────────────────────────────
+
+export interface PostAssessment {
+  _id: string;
+  candidate?: string | { _id: string; username?: string; email?: string };
+  company?: { _id: string; username?: string; email?: string; role?: string; companyName?: string; logo?: string };
+  post?: {
+    _id: string;
+    jobDetails?: { title?: string; description?: string };
+    skillAnalysis?: {
+      requiredSkills?: { name: string; category?: string; level?: string; importance?: string }[];
+      softSkills?: { name: string; level?: string }[];
+    };
+    user?: { companyName?: string };
+    status?: string;
+  };
+  skillType?: string;
+  interviewData?: {
+    interviewType?: string;
+    finalReport?: {
+      scores?: { overall?: number };
+      coverage?: { overall?: number; areas?: Record<string, any> };
+      summary?: string;
+      recommendations?: string[];
+      aiAnalysis?: { strongestAreas?: string[]; weakestAreas?: string[]; recommendedFocus?: string[] };
+    };
+    analytics?: { duration?: number; messageCount?: number; completedAreas?: number; totalAreas?: number; coveragePercentage?: number };
+  };
+  candidatePostStepProgress?: any;
+  createdAt: string;
+  updatedAt?: string;
+  assessmentsCount?: number;
+}
+
 // ─── Interview Config ──────────────────────────────────────────────────────────
 
 export type { InterviewConfig };

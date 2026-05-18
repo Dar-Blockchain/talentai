@@ -49,7 +49,7 @@ const GDPRConsentModal: React.FC<GDPRConsentModalProps> = ({ open, onAccept, onD
           <Button variant="outlined" onClick={onDecline} sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.82rem', textTransform: 'none', borderRadius: '10px', color: '#6B7280', borderColor: '#E5E7EB', px: 2.5, py: 1, '&:hover': { borderColor: '#D1D5DB', bgcolor: '#F9FAFB' } }}>
             {t('gdpr.decline')}
           </Button>
-          <Button variant="contained" onClick={onAccept} sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.82rem', textTransform: 'none', borderRadius: '10px', bgcolor: `${PURPLE} !important`, color: '#fff !important', boxShadow: 'none', px: 3, py: 1, '&:hover': { bgcolor: '#6d0ee0 !important', boxShadow: 'none' } }}>
+          <Button variant="contained" onClick={onAccept} sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.82rem', textTransform: 'none', borderRadius: '10px', bgcolor: `${PURPLE} !important`, color: '#fff !important', boxShadow: 'none', px: 3, py: 1, '&:hover': { bgcolor: '#10453F !important', boxShadow: 'none' } }}>
             {t('gdpr.accept_btn')}
           </Button>
         </Box>

@@ -4,7 +4,6 @@ import {
   Dialog, DialogContent, TextField, IconButton,
   Alert, Stack, LinearProgress, Card,
 } from '@mui/material';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -21,8 +20,8 @@ import { formatTimeLeft } from '@/utils/functions';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 
-const PURPLE = '#8310FF';
-const PURPLE_LIGHT = 'rgba(131,16,255,0.08)';
+const PURPLE = '#6AD39C';
+const PURPLE_LIGHT = 'rgba(106,211,156,0.08)';
 const CODE_LENGTH = 6;
 const CODE_TTL = 300;
 const CODE_EXPIRY_KEY = 'job_apply_code_expires_at';
@@ -36,17 +35,6 @@ type Step = 'email' | 'form' | 'otp';
 function validateEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
-
-const fieldSx = {
-  '& .MuiOutlinedInput-root': {
-    borderRadius: '10px', fontFamily: 'Poppins', fontSize: '0.88rem',
-    '& fieldset': { borderColor: '#E5E7EB' },
-    '&:hover fieldset': { borderColor: '#9CA3AF' },
-    '&.Mui-focused fieldset': { borderColor: PURPLE },
-  },
-  '& .MuiInputLabel-root': { fontFamily: 'Poppins', fontSize: '0.88rem' },
-  '& .MuiFormHelperText-root': { fontFamily: 'Poppins' },
-};
 
 export interface OnboardingModalProps {
   open: boolean;
@@ -264,7 +252,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
     mt: 3, textTransform: 'none' as const, fontWeight: 600, borderRadius: '38px',
     padding: '12px 24px', height: 42, maxWidth: '100%',
     background: PURPLE, color: '#ffffff', letterSpacing: 0.3, boxShadow: 'none',
-    '&:hover': { background: '#6d0ee0', boxShadow: 'none' },
+    '&:hover': { background: '#10453F', boxShadow: 'none' },
     '&.Mui-disabled': { background: 'rgba(0,0,0,0.12)', color: 'rgba(0,0,0,0.26)' },
   };
 
@@ -305,20 +293,36 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
 
           {/* Logo + branding */}
           <Box sx={{ mb: 3, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Box component="img" src="/logo-purple.svg" alt="TalentAI Logo"
-              sx={{ height: 32, cursor: 'pointer' }} onClick={() => router.push('/')} />
-            <Typography variant="caption" sx={{ color: '#000', letterSpacing: '0.2em', textTransform: 'uppercase', fontSize: '0.7rem', mt: 0.5 }}>
-              {t('onboarding.branding')}
-            </Typography>
+            <Box component="img" src="/images/home/logo.svg" alt="TalentAI Logo"
+              sx={{ height: 32, cursor: 'pointer', objectFit: 'contain' }} onClick={() => router.push('/')} />
           </Box>
 
           {/* Title */}
-          <Typography variant="h5" fontWeight={600} sx={{ background: 'linear-gradient(135deg, rgba(131,16,255,0.33), #8310FF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', mb: 1, letterSpacing: '-0.01em' }}>
+          <Typography variant="h5" fontWeight={800} sx={{ color: '#0F172A', mb: 0.75, letterSpacing: '-0.025em', lineHeight: 1.15, fontFamily: 'Poppins' }}>
             {step === 'email' ? t('onboarding.title_email') : step === 'form' ? t('onboarding.title_form') : t('onboarding.title_otp')}
           </Typography>
-          <Typography variant="body2" sx={{ color: '#000', mb: 3, lineHeight: 1.6 }}>
-            {step === 'email' ? jobTitle : step === 'form' ? t('onboarding.subtitle_form', { email }) : t('onboarding.subtitle_otp', { email })}
+
+          {/* Descriptor */}
+          <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#64748B', lineHeight: 1.65, mb: step === 'email' ? 1.5 : 3 }}>
+            {step === 'email' ? t('onboarding.desc_email') : step === 'form' ? t('onboarding.desc_form') : t('onboarding.desc_otp')}
           </Typography>
+
+          {/* Job title badge — email step only */}
+          {step === 'email' && (
+            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, px: 1.5, py: 0.5, bgcolor: 'rgba(106,211,156,0.08)', border: '1px solid rgba(106,211,156,0.25)', borderRadius: '8px', mb: 3 }}>
+              <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#6AD39C', flexShrink: 0 }} />
+              <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.78rem', fontWeight: 600, color: '#10453F' }}>
+                {jobTitle}
+              </Typography>
+            </Box>
+          )}
+
+          {/* Subtitle for form/otp steps */}
+          {step !== 'email' && (
+            <Typography variant="body2" sx={{ color: '#94A3B8', mb: 3, lineHeight: 1.6, fontFamily: 'Poppins', fontSize: '0.78rem' }}>
+              {step === 'form' ? t('onboarding.subtitle_form', { email }) : t('onboarding.subtitle_otp', { email })}
+            </Typography>
+          )}
 
           {/* ── STEP: email ── */}
           {step === 'email' && (
@@ -442,11 +446,11 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
       </Dialog>
 
       {/* ── CV Analysis Modal (same as register page) ── */}
-      <Dialog open={analyzingCv} disableEscapeKeyDown PaperProps={{ sx: { borderRadius: 4, p: 0, minWidth: 340, maxWidth: 380, overflow: 'hidden', boxShadow: '0 24px 60px rgba(131,16,255,0.15)' } }}>
-        <Box sx={{ height: 4, background: `linear-gradient(90deg, ${PURPLE} ${cvProgress}%, rgba(131,16,255,0.15) ${cvProgress}%)`, transition: 'background 0.4s ease' }} />
+      <Dialog open={analyzingCv} disableEscapeKeyDown PaperProps={{ sx: { borderRadius: 4, p: 0, minWidth: 340, maxWidth: 380, overflow: 'hidden', boxShadow: '0 24px 60px rgba(106,211,156,0.15)' } }}>
+        <Box sx={{ height: 4, background: `linear-gradient(90deg, ${PURPLE} ${cvProgress}%, rgba(106,211,156,0.15) ${cvProgress}%)`, transition: 'background 0.4s ease' }} />
         <DialogContent sx={{ px: 4, py: 3.5, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box sx={{ width: 44, height: 44, borderRadius: '12px', background: 'rgba(131,16,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Box sx={{ width: 44, height: 44, borderRadius: '12px', background: 'rgba(106,211,156,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <CircularProgress size={22} thickness={5} sx={{ color: PURPLE }} />
             </Box>
             <Box>
@@ -465,7 +469,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
             { label: t('onboarding.cv_step3'), threshold: 65 },
           ].map(({ label, threshold }) => (
             <Box key={label} sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
-              <Box sx={{ width: 18, height: 18, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: cvProgress > threshold ? 'rgba(131,16,255,0.1)' : 'rgba(0,0,0,0.04)', transition: 'background 0.4s' }}>
+              <Box sx={{ width: 18, height: 18, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: cvProgress > threshold ? 'rgba(106,211,156,0.1)' : 'rgba(0,0,0,0.04)', transition: 'background 0.4s' }}>
                 {cvProgress > threshold
                   ? <CheckCircleOutlineIcon sx={{ fontSize: 13, color: PURPLE }} />
                   : <CircularProgress size={10} thickness={5} sx={{ color: cvProgress >= threshold ? PURPLE : '#ccc' }} />
@@ -482,7 +486,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
               <Typography variant="caption" sx={{ color: '#999', fontSize: '0.65rem', fontFamily: 'Poppins' }}>{t('onboarding.cv_processing')}</Typography>
               <Typography variant="caption" sx={{ color: PURPLE, fontWeight: 700, fontSize: '0.65rem', fontFamily: 'Poppins' }}>{cvProgress}%</Typography>
             </Box>
-            <LinearProgress variant="determinate" value={cvProgress} sx={{ height: 6, borderRadius: 3, backgroundColor: 'rgba(131,16,255,0.1)', '& .MuiLinearProgress-bar': { borderRadius: 3, background: `linear-gradient(90deg, ${PURPLE}, rgba(131,16,255,0.6))` } }} />
+            <LinearProgress variant="determinate" value={cvProgress} sx={{ height: 6, borderRadius: 3, backgroundColor: 'rgba(106,211,156,0.1)', '& .MuiLinearProgress-bar': { borderRadius: 3, background: `linear-gradient(90deg, ${PURPLE}, rgba(106,211,156,0.6))` } }} />
           </Box>
 
           <Typography variant="caption" sx={{ color: '#bbb', textAlign: 'center', mt: -1, fontFamily: 'Poppins' }}>

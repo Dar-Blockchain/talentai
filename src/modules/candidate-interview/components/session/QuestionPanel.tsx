@@ -32,7 +32,7 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
         px: { xs: 2.5, md: 4 },
         py: { xs: 2.5, md: 3 },
         mb: 0,
-        borderBottom: '1px solid #f0edf8',
+        borderBottom: '1px solid #e6f8f1',
         transform: questionHighlight ? 'translateY(1px)' : 'none',
         transition: 'transform 0.3s ease',
         userSelect: 'none',
@@ -42,10 +42,10 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
       <Box display="flex" alignItems="flex-start" justifyContent="space-between" gap={2}>
         <Box flex={1} minWidth={0}>
           <Box display="flex" alignItems="center" gap={1} mb={1.5}>
-            <Box sx={{ width: 24, height: 24, borderRadius: '6px', background: 'linear-gradient(135deg,#8310FF,#a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Box sx={{ width: 24, height: 24, borderRadius: '6px', background: 'linear-gradient(135deg,#6AD39C,#10453F)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <AutoAwesomeIcon sx={{ fontSize: 13, color: '#fff' }} />
             </Box>
-            <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.65rem', color: '#8310FF', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+            <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.65rem', color: '#6AD39C', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
               {questionNumber ? t('question.label_numbered', { number: questionNumber }) : t('question.label')}
             </Typography>
           </Box>
@@ -55,7 +55,7 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
           </Typography>
 
           {currentMessage.reasoning && (
-            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.78rem', color: '#6b7280', fontStyle: 'italic', mt: 1.5, pl: 1.5, borderLeft: '2px solid rgba(131,16,255,0.3)', lineHeight: 1.6 }}>
+            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.78rem', color: '#6b7280', fontStyle: 'italic', mt: 1.5, pl: 1.5, borderLeft: '2px solid rgba(106,211,156,0.3)', lineHeight: 1.6 }}>
               {currentMessage.reasoning}
             </Typography>
           )}

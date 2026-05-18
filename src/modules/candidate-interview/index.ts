@@ -21,9 +21,9 @@ export * from "./hooks/useEligibilityCheck";
 export * from "./hooks/useInterviewSession";
 
 // ─── Components ───────────────────────────────────────────────────────────────
-export { default as AssessmentCard } from "./components/dashboard/AssessmentCard";
+export { default as AssessmentCard } from "@/components/features/candidate/candidate-interviews/AssessmentCard";
 export { default as InterviewLanguageModal } from "./components/intro/InterviewLanguageModal";
-export { default as InterviewsBlock } from "./components/dashboard/InterviewsBlock";
+export { default as InterviewsBlock } from "@/components/features/candidate/candidate-interviews/InterviewsBlock";
 export { default as StepInfoModal } from "./components/modals/StepInfoModal";
 export { default as OnboardingModal } from "./components/modals/OnboardingModal";
 export { default as EligibilityGate } from "./components/eligibility/EligibilityGate";
