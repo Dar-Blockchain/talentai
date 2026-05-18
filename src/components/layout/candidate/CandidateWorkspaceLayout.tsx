@@ -103,7 +103,9 @@ const CandidateWorkspaceLayout: React.FC<CandidateWorkspaceLayoutProps> = ({
           mt: `${HEADER_HEIGHT}px`,
           height: `calc(100vh - ${HEADER_HEIGHT}px)`,
           overflow: fillHeight ? "hidden" : "auto",
-          p: { xs: 1.5, sm: 2.5, md: 3 },
+          px: { xs: 1.5, sm: 2.5, md: 3 },
+          pb: { xs: 1.5, sm: 2.5, md: 3 },
+          pt: { xs: 0.5, sm: 1, md: 1 },
         }}
         className={fillHeight ? undefined : "custom-scrollbar"}
       >

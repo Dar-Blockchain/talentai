@@ -29,7 +29,6 @@ export const companyChatSx = {
   /** Team channel hub card — matches dense `ChatModulePageFrame` header spacing. */
   hubHeaderTeamDense: {
     px: { xs: 1.5, sm: 1.75 },
-    py: { xs: 1.25, sm: 1.5 },
     gap: 1.25,
     boxShadow: "0 2px 12px rgba(15, 23, 42, 0.04)",
   },

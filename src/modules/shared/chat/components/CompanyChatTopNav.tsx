@@ -60,16 +60,16 @@ const CompanyChatTopNav: React.FC<CompanyChatTopNavProps> = ({ activeChannel }) 
           sx={{
             display: "flex",
             alignItems: "center",
-            gap: teamDense ? 1.25 : 1.5,
+            gap: 1.25,
             minWidth: 0,
             mt: 0.25,
           }}
         >
-          {teamDense && (
-            <Box aria-hidden sx={companyChatSx.teamTitleIconWrap}>
-              <GroupsRounded sx={{ fontSize: 20 }} />
-            </Box>
-          )}
+          <Box aria-hidden sx={companyChatSx.teamTitleIconWrap}>
+            {activeChannel === "team"
+              ? <GroupsRounded sx={{ fontSize: 20 }} />
+              : <PeopleAltOutlined sx={{ fontSize: 20 }} />}
+          </Box>
           <Box sx={{ minWidth: 0 }}>
             <Typography
               sx={{
