@@ -1,63 +1,25 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { io } from 'socket.io-client';
 import {
-  InterviewConfig,
   InterviewMessage,
   ConnectionStatus,
   InterviewStatus,
-  Coverage,
-  RealTimeReport,
 } from '../types/interview';
+import type {
+  InterviewStartedData,
+  InterviewEndedData,
+  SilenceResponseData,
+  UseInterviewSocketCallbacks,
+  UseInterviewSocketReturn,
+} from '../types/hooks';
 
-export interface InterviewStartedData {
-  sessionId: string;
-  targetCompany?: string;
-  config: {
-    duration: number;
-    interviewType: string;
-    silenceIntelligence?: any;
-  };
-}
-
-export interface InterviewEndedData {
-  sessionId?: string;
-  finalReport?: any;
-  analytics?: any;
-}
-
-export interface SilenceResponseData {
-  silenceCount: number;
-  action: string;
-  content?: string;
-  timestamp?: string;
-  silenceIntelligence?: any;
-}
-
-export interface UseInterviewSocketCallbacks {
-  onNotification: (message: string, severity: 'success' | 'error' | 'warning' | 'info') => void;
-  onInterviewStarted: (data: InterviewStartedData) => void;
-  onInterviewMessage: (message: InterviewMessage) => void;
-  onCoverageUpdate: (coverage: Coverage) => void;
-  onReportUpdate?: (report: RealTimeReport) => void;
-  onSilenceResponse: (data: SilenceResponseData) => void;
-  onVoiceActivity: (data: { isActive: boolean }) => void;
-  onInterviewEnded: (data: InterviewEndedData) => void;
-  onInterviewError: (error: { message: string }) => void;
-  /** Socket.IO namespace to connect to. Defaults to '/interview'. */
-  namespace?: string;
-}
-
-export interface UseInterviewSocketReturn {
-  socketRef: React.MutableRefObject<any>;
-  isConnected: boolean;
-  connectionStatus: ConnectionStatus;
-  sessionId: string | null;
-  sessionIdRef: React.MutableRefObject<string | null>;
-  isHydrated: boolean;
-  setSessionId: (id: string | null) => void;
-  setInterviewStatus: (status: InterviewStatus) => void;
-  interviewStatus: InterviewStatus;
-}
+export type {
+  InterviewStartedData,
+  InterviewEndedData,
+  SilenceResponseData,
+  UseInterviewSocketCallbacks,
+  UseInterviewSocketReturn,
+};
 
 export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseInterviewSocketReturn => {
   const socketRef = useRef<any>(null);

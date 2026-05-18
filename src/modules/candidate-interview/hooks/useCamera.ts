@@ -1,19 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { CameraStatus } from '../types/interview';
+import type { UseCameraReturn, UseCameraOptions } from '../types/hooks';
 
-export interface UseCameraReturn {
-  videoRef: React.RefObject<HTMLVideoElement>;
-  cameraStatus: CameraStatus;
-  cameraError: string;
-  streamRef: React.MutableRefObject<MediaStream | null>;
-  attachStream: () => void;
-  consentGiven: boolean;
-  giveConsent: () => void;
-}
-
-export interface UseCameraOptions {
-  showNotification: (message: string, severity: 'warning' | 'error') => void;
-}
+export type { UseCameraReturn, UseCameraOptions };
 
 export const useCamera = ({ showNotification }: UseCameraOptions): UseCameraReturn => {
   const videoRef = useRef<HTMLVideoElement>(null);

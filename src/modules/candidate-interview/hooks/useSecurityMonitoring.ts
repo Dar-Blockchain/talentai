@@ -1,20 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { InterviewStatus } from '../types/interview';
 
-export interface UseSecurityMonitoringReturn {
-  securityViolationCount: number;
-  showSecurityModal: boolean;
-  showFirstViolationModal: boolean;
-  violationType: string;
-  setShowSecurityModal: (show: boolean) => void;
-  setShowFirstViolationModal: (show: boolean) => void;
-}
+import type { UseSecurityMonitoringReturn, UseSecurityMonitoringOptions } from '../types/hooks';
 
-export interface UseSecurityMonitoringOptions {
-  interviewStatus: InterviewStatus;
-  onTerminate?: () => void;
-  enabled?: boolean; // default true — set false to disable all security monitoring
-}
+export type { UseSecurityMonitoringReturn, UseSecurityMonitoringOptions };
 
 const MAX_WARNINGS = 2; // 3rd violation terminates
 

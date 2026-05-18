@@ -1,21 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { InterviewConfig } from '../types/interview';
-import { type JobPost } from '../types/api';
 import { buildInterviewConfigFromURL, URLParams } from '@/utils/interviewConfigBuilder';
 import { getToken } from '@/utils/tokenUtils';
 import { useJobPostQuery } from '../queries/useJobPostQuery';
 import { useInterviewConfigQuery } from '../queries/useInterviewConfigQuery';
+import type { UseInterviewConfigReturn, UseInterviewConfigOptions } from '../types/hooks';
 
-export interface UseInterviewConfigReturn {
-  interviewConfig: InterviewConfig;
-  setInterviewConfig: (config: InterviewConfig) => void;
-  jobData: JobPost | null;
-}
-
-export interface UseInterviewConfigOptions {
-  showNotification: (message: string, severity: 'error' | 'warning' | 'info') => void;
-}
+export type { UseInterviewConfigReturn, UseInterviewConfigOptions };
 
 const DEFAULT_CONFIG: InterviewConfig = {
   interviewType: 'HR_INTERVIEW',

@@ -1,22 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { InterviewStatus } from '../types/interview';
 
-export interface UseInterviewTimerReturn {
-  elapsedTime: number;
-  timeWarning: boolean;
-  duration: number;
-  setDuration: (ms: number) => void;
-  startTimer: (maxMinutes: number) => void;
-  stopTimer: () => void;
-  formatTime: (milliseconds: number) => string;
-  getProgressPercentage: () => number;
-}
+import type { UseInterviewTimerReturn, UseInterviewTimerOptions } from '../types/hooks';
 
-export interface UseInterviewTimerOptions {
-  interviewStatus: InterviewStatus;
-  onTimeUp: () => void;
-  showNotification: (message: string, severity: 'warning') => void;
-}
+export type { UseInterviewTimerReturn, UseInterviewTimerOptions };
 
 export const useInterviewTimer = ({
   interviewStatus,

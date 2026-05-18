@@ -1,20 +1,20 @@
 import { useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
 
-import { Coverage, InterviewConfig, InterviewMessage } from '../types/interview';
-import { useInterviewSocket, InterviewStartedData, InterviewEndedData, SilenceResponseData } from './useInterviewSocket';
+import { Coverage, InterviewMessage } from '../types/interview';
+import type {
+  InterviewStartedData,
+  InterviewEndedData,
+  SilenceResponseData,
+  UseInterviewSessionOptions,
+} from '../types/hooks';
+import { useInterviewSocket } from './useInterviewSocket';
 import { useAudioTranscription } from './useAudioTranscription';
 import { useInterviewTimer } from './useInterviewTimer';
 import { useCamera } from './useCamera';
 import { useSecurityMonitoring } from './useSecurityMonitoring';
 
-export interface UseInterviewSessionOptions {
-  interviewConfig: InterviewConfig;
-  setInterviewConfig: (config: InterviewConfig) => void;
-  authUser: any;
-  jobData: any;
-  notify: (message: string, severity: 'success' | 'error' | 'warning' | 'info') => void;
-}
+export type { UseInterviewSessionOptions };
 
 export function useInterviewSession({
   interviewConfig,
