@@ -283,12 +283,10 @@ const IntelligentInterviewTest = () => {
 
   const camera = useCamera({ showNotification: notify as any });
 
-  // Security monitoring disabled — candidates are allowed to switch tabs freely
-  useSecurityMonitoring({
+  const security = useSecurityMonitoring({
     interviewStatus: socket.interviewStatus,
     onTerminate: () => endInterviewRef.current(),
-    // enabled: interviewConfig.enableSecurity !== false,
-    enabled: false,
+    enabled: true,
   });
 
   const startInterview = useCallback(async () => {
@@ -720,7 +718,7 @@ const IntelligentInterviewTest = () => {
           onReturnToDashboard={() => router.push('/dashboard')}
         />
 
-        {/* <SecurityModals
+        <SecurityModals
           showFirstViolationModal={security.showFirstViolationModal}
           showSecurityModal={security.showSecurityModal}
           violationType={security.violationType}
@@ -728,7 +726,7 @@ const IntelligentInterviewTest = () => {
           onDismissFirst={() => security.setShowFirstViolationModal(false)}
           onDismissSecond={() => security.setShowSecurityModal(false)}
           onReturnToDashboard={() => router.push('/candidate/dashboard')}
-        /> */}
+        />
 
       </Box>
     </>
