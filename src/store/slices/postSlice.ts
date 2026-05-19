@@ -665,4 +665,10 @@ export const selectPostMetricsLoading = (state: { post: PostState }) =>
 export const selectPostMetricsError = (state: { post: PostState }) =>
   state.post.postMetrics.error;
 
+// Save Post Selectors
+export const selectSavePostLoading = (state: { post: PostState }) =>
+  state.post.savePost.loading;
+export const selectSavedPostId = (state: { post: PostState }) =>
+  (state.post.savePost.savedPost?.jobData?._id as string) ?? null;
+
 
