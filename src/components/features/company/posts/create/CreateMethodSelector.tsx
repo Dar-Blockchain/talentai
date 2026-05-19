@@ -2,11 +2,9 @@ import React from "react";
 import { Box, Typography } from "@mui/material";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutlineOutlined";
 import SmartToyOutlined from "@mui/icons-material/SmartToyOutlined";
-import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
 import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesome";
 import CheckOutlined from "@mui/icons-material/CheckOutlined";
 import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
-import EditNoteOutlined from "@mui/icons-material/EditNoteOutlined";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import { setCreationType } from "@/store/slices/postGenerationSlice";
@@ -174,25 +172,6 @@ const METHODS: (Omit<MethodCardProps, "onClick"> & { id: string; type: "ai" | "m
       { text: "Smart candidate matching" },
     ],
   },
-  {
-    id: "manual",
-    type: "manual",
-    enabled: false,
-    title: "Custom Pipeline",
-    subtitle: "Full control — 2 steps",
-    description: "Design your own recruitment workflow with custom tests, interviews, and evaluation conditions. Perfect for structured hiring processes.",
-    icon: AccountTreeOutlined,
-    badge: { label: "Advanced", color: "#6366F1", bg: "#EEF2FF" },
-    accentColor: "#6366F1",
-    accentBg: "#EEF2FF",
-    accentBorder: "#C7D2FE",
-    accentBarColor: "#818CF8",
-    features: [
-      { text: "Visual pipeline builder", note: "Drag-and-drop step configuration" },
-      { text: "Custom evaluation steps" },
-      { text: "Multi-stage interview flows" },
-    ],
-  },
 ];
 
 const CreateMethodSelector: React.FC = () => {
@@ -244,15 +223,6 @@ const CreateMethodSelector: React.FC = () => {
           </Box>
         </Box>
 
-        {/* Bottom hint — only when multiple methods */}
-        {hasChoice && (
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1, mt: 3.5 }}>
-            <EditNoteOutlined sx={{ fontSize: 14, color: "#9CA3AF" }} />
-            <Typography sx={{ fontSize: "12px", color: "#9CA3AF" }}>
-              Both methods let you fully edit all details before publishing.
-            </Typography>
-          </Box>
-        )}
       </Box>
     </Box>
   );
