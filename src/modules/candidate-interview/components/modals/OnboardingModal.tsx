@@ -225,7 +225,10 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
         });
       }
 
-      if (isMountedRef.current) clearTimer();
+      if (isMountedRef.current) {
+        clearTimer();
+        onClose();
+      }
     } catch {
       if (isMountedRef.current) {
         setApiError(t('onboarding.error_code'));

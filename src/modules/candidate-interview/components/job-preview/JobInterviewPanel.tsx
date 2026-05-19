@@ -7,9 +7,10 @@ import JobApplyPanel from "./JobApplyPanel";
 
 export interface JobPreviewPanelProps {
   jobData: any;
+  onStartInterview?: () => void;
 }
 
-export default function JobInterviewPanel({ jobData }: JobPreviewPanelProps) {
+export default function JobInterviewPanel({ jobData, onStartInterview }: JobPreviewPanelProps) {
   const jd = jobData?.jobDetails || {};
   const companyName =
     jobData?.user?.companyName || jobData?.companyName || "Company";
@@ -60,7 +61,7 @@ export default function JobInterviewPanel({ jobData }: JobPreviewPanelProps) {
           />
         </Box>
 
-        <JobApplyPanel jobTitle={jobTitle} />
+        <JobApplyPanel jobTitle={jobTitle} onStartInterview={onStartInterview} />
       </Box>
     </Box>
   );

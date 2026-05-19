@@ -25,12 +25,9 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
   return (
     <Box
       sx={{
-        position: 'sticky',
-        top: 64,
-        zIndex: 1000,
         bgcolor: '#fff',
-        px: { xs: 2.5, md: 4 },
-        py: { xs: 2.5, md: 3 },
+        px: { xs: 1.5, md: 2 },
+        py: { xs: 1, md: 1.25 },
         mb: 0,
         borderBottom: '1px solid #e6f8f1',
         transform: questionHighlight ? 'translateY(1px)' : 'none',
@@ -41,21 +38,21 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
     >
       <Box display="flex" alignItems="flex-start" justifyContent="space-between" gap={2}>
         <Box flex={1} minWidth={0}>
-          <Box display="flex" alignItems="center" gap={1} mb={1.5}>
-            <Box sx={{ width: 24, height: 24, borderRadius: '6px', background: 'linear-gradient(135deg,#6AD39C,#10453F)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <AutoAwesomeIcon sx={{ fontSize: 13, color: '#fff' }} />
+          <Box display="flex" alignItems="center" gap={0.75} mb={0.75}>
+            <Box sx={{ width: 18, height: 18, borderRadius: '5px', background: 'linear-gradient(135deg,#6AD39C,#10453F)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <AutoAwesomeIcon sx={{ fontSize: 10, color: '#fff' }} />
             </Box>
             <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.65rem', color: '#6AD39C', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
               {questionNumber ? t('question.label_numbered', { number: questionNumber }) : t('question.label')}
             </Typography>
           </Box>
 
-          <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: { xs: '1rem', md: '1.15rem' }, lineHeight: 1.7, color: '#111827' }}>
+          <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: { xs: '0.82rem', md: '0.9rem' }, lineHeight: 1.55, color: '#111827' }}>
             {currentMessage.content || t('question.getting_next')}
           </Typography>
 
           {currentMessage.reasoning && (
-            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.78rem', color: '#6b7280', fontStyle: 'italic', mt: 1.5, pl: 1.5, borderLeft: '2px solid rgba(106,211,156,0.3)', lineHeight: 1.6 }}>
+            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.68rem', color: '#6b7280', fontStyle: 'italic', mt: 0.75, pl: 1, borderLeft: '2px solid rgba(106,211,156,0.3)', lineHeight: 1.5 }}>
               {currentMessage.reasoning}
             </Typography>
           )}

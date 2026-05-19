@@ -45,11 +45,11 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
   ], [cameraStatus, connectionStatus, isHydrated, t]);
 
   return (
-    <Box sx={{ bgcolor: 'transparent', borderRadius: '16px', border: '1px solid #d1f5e7', overflow: 'hidden' }}>
+    <Box sx={{ bgcolor: 'transparent', borderRadius: '16px', border: '1px solid #d1f5e7', overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}>
 
       {interviewStatus === 'active' && <AgentHeader agentState={agentState} />}
 
-      <Box sx={{ p: { xs: 2.5, md: 3.5 } }}>
+      <Box sx={{ p: { xs: 1.5, md: 2 }, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         {interviewStatus === 'idle' && (
           <ReadinessChecklist
             checks={checks}
@@ -60,10 +60,10 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
         )}
 
         {interviewStatus === 'connecting' && (
-          <Box sx={{ textAlign: 'center', py: 2 }}>
-            <CircularProgress size={48} sx={{ color: '#6AD39C', mb: 2 }} />
-            <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1rem', color: '#111827', mb: 0.5 }}>{t('container.starting_title')}</Typography>
-            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#6b7280' }}>{t('container.starting_subtitle')}</Typography>
+          <Box sx={{ textAlign: 'center', py: 1 }}>
+            <CircularProgress size={36} sx={{ color: '#6AD39C', mb: 1.25 }} />
+            <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.88rem', color: '#111827', mb: 0.35 }}>{t('container.starting_title')}</Typography>
+            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', color: '#6b7280' }}>{t('container.starting_subtitle')}</Typography>
           </Box>
         )}
 
@@ -85,23 +85,23 @@ const AgentHeader: React.FC<{ agentState: AgentState }> = ({ agentState }) => {
   const isProcessing = agentState === 'thinking' || agentState === 'processing';
 
   return (
-    <Box sx={{ bgcolor: '#fff', borderBottom: '1px solid #d1f5e7', px: 2.5, py: 1.75, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+    <Box sx={{ bgcolor: '#fff', borderBottom: '1px solid #d1f5e7', px: 1.75, py: 1.25, display: 'flex', alignItems: 'center', gap: 1.25 }}>
       <Box sx={{
-        width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
+        width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
         bgcolor: isProcessing ? 'rgba(245,158,11,0.1)' : 'rgba(106,211,156,0.08)',
         border: `1px solid ${isProcessing ? 'rgba(245,158,11,0.2)' : 'rgba(106,211,156,0.15)'}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         {isProcessing
-          ? <AutorenewIcon sx={{ fontSize: 20, color: '#d97706', animation: 'spin 1.2s linear infinite', '@keyframes spin': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } } }} />
-          : <KeyboardVoiceIcon sx={{ fontSize: 20, color: '#6AD39C' }} />
+          ? <AutorenewIcon sx={{ fontSize: 16, color: '#d97706', animation: 'spin 1.2s linear infinite', '@keyframes spin': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } } }} />
+          : <KeyboardVoiceIcon sx={{ fontSize: 16, color: '#6AD39C' }} />
         }
       </Box>
       <Box>
-        <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.95rem', color: '#111827', lineHeight: 1.2 }}>
+        <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.8rem', color: '#111827', lineHeight: 1.2 }}>
           {agentState === 'thinking' ? t('container.thinking') : agentState === 'processing' ? t('container.processing') : t('container.recording')}
         </Typography>
-        <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', color: '#9ca3af', mt: 0.2 }}>
+        <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.65rem', color: '#9ca3af', mt: 0.1 }}>
           {isProcessing ? t('container.wait') : t('container.listening')}
         </Typography>
       </Box>
@@ -122,20 +122,20 @@ const ReadinessChecklist: React.FC<ReadinessChecklistProps> = ({ checks, allRead
 
   return (
     <Box sx={{ textAlign: 'center' }}>
-      <Box sx={{ width: 72, height: 72, borderRadius: '50%', bgcolor: 'rgba(106,211,156,0.08)', border: '2px solid rgba(106,211,156,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2 }}>
-        <PlayArrowIcon sx={{ fontSize: 36, color: '#6AD39C' }} />
+      <Box sx={{ width: 52, height: 52, borderRadius: '50%', bgcolor: 'rgba(106,211,156,0.08)', border: '2px solid rgba(106,211,156,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 1.25 }}>
+        <PlayArrowIcon sx={{ fontSize: 26, color: '#6AD39C' }} />
       </Box>
-      <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.2rem', color: '#111827', mb: 0.5 }}>{t('container.ready_title')}</Typography>
-      <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#6b7280', mb: 3, lineHeight: 1.6 }}>{t('container.ready_subtitle')}</Typography>
+      <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.95rem', color: '#111827', mb: 0.35 }}>{t('container.ready_title')}</Typography>
+      <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', color: '#6b7280', mb: 1.75, lineHeight: 1.5 }}>{t('container.ready_subtitle')}</Typography>
 
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 1.75 }}>
         {checks.map(({ label, ok }) => (
           <Box key={label} display="flex" alignItems="center" gap={1.25} sx={{ py: 0.6, borderBottom: '1px solid #f3f4f6', '&:last-child': { borderBottom: 'none' } }}>
             {ok
               ? <CheckCircleIcon sx={{ fontSize: 17, color: '#22c55e', flexShrink: 0 }} />
               : <RadioButtonUncheckedIcon sx={{ fontSize: 17, color: '#d1d5db', flexShrink: 0 }} />}
-            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: ok ? '#374151' : '#9ca3af', flex: 1, textAlign: 'left' }}>{label}</Typography>
-            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', fontWeight: 600, color: ok ? '#22c55e' : '#f59e0b' }}>
+            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', color: ok ? '#374151' : '#9ca3af', flex: 1, textAlign: 'left' }}>{label}</Typography>
+            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.65rem', fontWeight: 600, color: ok ? '#22c55e' : '#f59e0b' }}>
               {ok ? t('container.check_ok') : t('container.check_waiting')}
             </Typography>
           </Box>
@@ -143,7 +143,7 @@ const ReadinessChecklist: React.FC<ReadinessChecklistProps> = ({ checks, allRead
       </Box>
 
       <Button variant="contained" fullWidth onClick={onStartInterview} disabled={!allReady} startIcon={<PlayArrowIcon />}
-        sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.92rem', py: 1.5, borderRadius: '12px', bgcolor: allReady ? '#6AD39C' : '#e5e7eb', color: '#fff', textTransform: 'none', boxShadow: 'none', '&:hover': { bgcolor: allReady ? '#10453F' : '#e5e7eb', boxShadow: 'none' }, '&.Mui-disabled': { bgcolor: '#f3f4f6', color: '#9ca3af', boxShadow: 'none' } }}>
+        sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.82rem', py: 1.1, borderRadius: '12px', bgcolor: allReady ? '#6AD39C' : '#e5e7eb', color: '#fff', textTransform: 'none', boxShadow: 'none', '&:hover': { bgcolor: allReady ? '#10453F' : '#e5e7eb', boxShadow: 'none' }, '&.Mui-disabled': { bgcolor: '#f3f4f6', color: '#9ca3af', boxShadow: 'none' } }}>
         {t('start.btn_start')}
       </Button>
 
@@ -165,10 +165,10 @@ const LiveTranscript: React.FC<{ currentTranscript?: string }> = ({ currentTrans
     <Box sx={{ py: 1 }}>
       <Box
         id="transcript-scroll"
-        sx={{ maxHeight: 200, overflowY: 'auto', mb: 2, pr: 0.5, '&::-webkit-scrollbar': { width: 4 }, '&::-webkit-scrollbar-track': { bgcolor: 'transparent' }, '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(106,211,156,0.2)', borderRadius: 2 } }}
+        sx={{ maxHeight: 140, overflowY: 'auto', mb: 1, pr: 0.5, '&::-webkit-scrollbar': { width: 4 }, '&::-webkit-scrollbar-track': { bgcolor: 'transparent' }, '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(106,211,156,0.2)', borderRadius: 2 } }}
         ref={(el: HTMLDivElement | null) => { if (el) el.scrollTop = el.scrollHeight; }}
       >
-        <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: currentTranscript ? '#374151' : '#9ca3af', fontStyle: currentTranscript ? 'normal' : 'italic', lineHeight: 1.7, minHeight: 80 }}>
+        <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.78rem', color: currentTranscript ? '#374151' : '#9ca3af', fontStyle: currentTranscript ? 'normal' : 'italic', lineHeight: 1.6, minHeight: 60 }}>
           {currentTranscript || t('container.speech_placeholder')}
         </Typography>
       </Box>
@@ -181,10 +181,10 @@ const AnalyzingSpinner: React.FC<{ waitDots: string }> = ({ waitDots }) => {
   const { t } = useTranslation('interview');
 
   return (
-    <Box sx={{ textAlign: 'center', py: 2 }}>
-      <CircularProgress size={48} sx={{ color: '#6AD39C', mb: 2 }} />
-      <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1rem', color: '#111827', mb: 0.5 }}>{t('container.analyzing_title')}{waitDots}</Typography>
-      <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#6b7280' }}>{t('container.analyzing_subtitle')}</Typography>
+    <Box sx={{ textAlign: 'center', py: 1 }}>
+      <CircularProgress size={36} sx={{ color: '#6AD39C', mb: 1.25 }} />
+      <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.88rem', color: '#111827', mb: 0.35 }}>{t('container.analyzing_title')}{waitDots}</Typography>
+      <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', color: '#6b7280' }}>{t('container.analyzing_subtitle')}</Typography>
     </Box>
   );
 };
@@ -194,26 +194,26 @@ const CompletionCard: React.FC = () => {
   const { t } = useTranslation('interview');
 
   return (
-    <Box sx={{ textAlign: 'center', py: 2.5 }}>
+    <Box sx={{ textAlign: 'center', py: 1 }}>
       <Box sx={{
-        width: 64, height: 64, borderRadius: '50%', mx: 'auto', mb: 2,
+        width: 48, height: 48, borderRadius: '50%', mx: 'auto', mb: 1.25,
         bgcolor: 'rgba(106,211,156,0.1)',
         border: '2px solid rgba(106,211,156,0.3)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        <CheckCircleOutlineIcon sx={{ fontSize: 36, color: '#6AD39C' }} />
+        <CheckCircleOutlineIcon sx={{ fontSize: 28, color: '#6AD39C' }} />
       </Box>
-      <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1rem', color: '#111827', mb: 0.5 }}>
+      <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.88rem', color: '#111827', mb: 0.35 }}>
         {t('ended.title')}
       </Typography>
-      <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#6b7280', lineHeight: 1.6 }}>
+      <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', color: '#6b7280', lineHeight: 1.5 }}>
         {t('ended.subtitle')}
       </Typography>
       <Box sx={{
-        mt: 2, px: 2, py: 1.25, borderRadius: '10px',
+        mt: 1.25, px: 1.5, py: 0.875, borderRadius: '10px',
         bgcolor: 'rgba(106,211,156,0.06)', border: '1px solid rgba(106,211,156,0.2)',
       }}>
-        <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', color: '#10453F' }}>
+        <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.7rem', color: '#10453F' }}>
           {t('ended.redirect')}
         </Typography>
       </Box>

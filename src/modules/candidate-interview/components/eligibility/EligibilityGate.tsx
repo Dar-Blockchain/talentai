@@ -6,6 +6,7 @@ import LoadingState from "@/components/ui/LoadingState";
 import EligibilityBlockedScreen from "./EligibilityBlockedScreen";
 import { type EligibilityStatus, type EligibilityMeta } from "../../types/api";
 import { RED, RED_DARK, ELIGIBILITY_SCREEN_CONFIG, type BlockableStatus } from "../../constants";
+import { eligibilityGateSx as sx } from "../../styles/eligibilityGate.styles";
 
 interface EligibilityGateProps {
   status: EligibilityStatus;
@@ -93,14 +94,14 @@ export default function EligibilityGate({ status, meta }: EligibilityGateProps) 
           ]}
         >
           {meta?.jobTitle && (
-            <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1, bgcolor: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "10px", px: 2, py: 0.7, mb: 2.5, mt: 1.5 }}>
-              <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#94A3B8", flexShrink: 0 }} />
-              <Typography sx={{ fontSize: "0.83rem", fontWeight: 600, color: "#475569" }}>{meta.jobTitle}</Typography>
+            <Box sx={sx.jobTitleBadge}>
+              <Box sx={sx.jobTitleDot} />
+              <Typography sx={sx.jobTitleText}>{meta.jobTitle}</Typography>
             </Box>
           )}
-          <Box sx={{ height: "1px", bgcolor: "#F1F5F9", mb: 2.5 }} />
-          <Typography sx={{ fontSize: "0.9rem", color: "#475569", lineHeight: 1.8, mb: 1.5 }}>{t("limit.desc")}</Typography>
-          <Typography sx={{ fontSize: "0.82rem", color: "#94A3B8", lineHeight: 1.7 }}>{t("limit.contact")}</Typography>
+          <Box sx={sx.divider} />
+          <Typography sx={sx.limitDesc}>{t("limit.desc")}</Typography>
+          <Typography sx={sx.limitContact}>{t("limit.contact")}</Typography>
         </EligibilityBlockedScreen>
       );
 

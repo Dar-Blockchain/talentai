@@ -12,7 +12,7 @@ const CandidateInterview = () => {
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#F1F5F9' }}>
       <InterviewHeader />
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        {eligibilityStatus !== 'eligible'
+        {eligibilityStatus !== 'eligible' && eligibilityStatus !== 'checking'
           ? <EligibilityGate status={eligibilityStatus} meta={eligibilityMeta} />
           : <InterviewFlow />}
       </Box>

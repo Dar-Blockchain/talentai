@@ -30,15 +30,15 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
   const isDisabled    = isProcessing || isSpeaking || !hasTranscript;
 
   return (
-    <Box sx={{ p: { xs: 1, md: 1.5 } }}>
+    <Box sx={{ p: { xs: 0.75, md: 1 } }}>
       <Button
         variant="contained"
         fullWidth
         onClick={onSubmitAnswer}
         disabled={isDisabled}
-        endIcon={!isDisabled && <SendIcon sx={{ fontSize: '16px !important' }} />}
+        endIcon={!isDisabled && <SendIcon sx={{ fontSize: '14px !important' }} />}
         sx={{
-          fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.88rem', py: 1.4,
+          fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.8rem', py: 1,
           borderRadius: '12px', textTransform: 'none',
           bgcolor: isDisabled ? '#f3f4f6' : '#6AD39C',
           color: isDisabled ? '#9ca3af' : '#fff',
@@ -61,7 +61,7 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
         onClick={onSkipQuestion}
         disabled={isProcessing}
         sx={{
-          fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.8rem', mt: 0.5,
+          fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.72rem', mt: 0.25,
           color: isProcessing ? '#d1d5db' : '#9ca3af',
           textTransform: 'none',
           '&:hover': { color: '#6b7280', bgcolor: 'transparent' },

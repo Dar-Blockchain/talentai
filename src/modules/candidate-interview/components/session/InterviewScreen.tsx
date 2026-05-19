@@ -1,21 +1,16 @@
-﻿import React, { useMemo } from "react";
+import React, { useMemo } from "react";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import { Box, Snackbar, Alert, Container } from "@mui/material";
 import QuestionPanel from "./QuestionPanel";
 import CameraPreview from "./CameraPreview";
-import AgentStatusPanel from "./AgentStatusPanel";
-import InterviewContainer from "./InterviewContainer";
+import InterviewControlsPanel from "./InterviewControlsPanel";
 import InterviewConnectionBanner from "./InterviewConnectionBanner";
 import InterviewSessionHeader from "./InterviewSessionHeader";
-import InterviewProgressBar from "./InterviewProgressBar";
-import SecurityModals from "../modals/SecurityModals";
 import CoverageDashboard from "./CoverageDashboard";
 import GDPRConsentModal from "../modals/GDPRConsentModal";
-import {
-  type Coverage,
-  type InterviewMessage,
-} from "../../types/interview";
+import { interviewScreenSx } from "../../styles/interviewScreen.styles";
+import { type Coverage, type InterviewMessage } from "../../types/interview";
 import { type JobPost } from "../../types/api";
 import { type InterviewConfig } from "../../types/interview";
 import { type UseInterviewSocketReturn } from "../../hooks/useInterviewSocket";
@@ -63,7 +58,6 @@ export default function InterviewScreen({
     audio,
     timer,
     camera,
-    security,
     coverage,
     resultsReady,
     startInterview,
@@ -74,8 +68,6 @@ export default function InterviewScreen({
   const { jobData, interviewConfig } = configData;
 
   const isActive = socket.interviewStatus === "active";
-
-  console.log("jobData:", jobData);
 
   const connectionBannerText = useMemo(() => {
     switch (socket.connectionStatus) {
@@ -104,22 +96,16 @@ export default function InterviewScreen({
   );
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        bgcolor: "#fff",
-        userSelect: "none",
-        WebkitUserSelect: "none",
-        pt: 6,
-      }}
-    >
-      {/* Yellow banner shown when the WebSocket is not yet connected or has dropped */}
+    /* Root — locks to viewport, no page scroll on md+ */
+    <Box sx={interviewScreenSx.root}>
+      {/* Connection warning banner */}
       {socket.isHydrated && socket.connectionStatus !== "connected" && (
         <InterviewConnectionBanner text={connectionBannerText} />
       )}
 
-      <Container maxWidth="lg" sx={{ py: { xs: 3, md: 2 } }}>
-        {/* Top bar: interview title, company subtitle, elapsed timer, end button */}
+      {/* Main content fills remaining height */}
+      <Container maxWidth="xl" sx={interviewScreenSx.container}>
+        {/* ── Header ──────────────────────────────────────────────────────── */}
         <InterviewSessionHeader
           jobData={jobData}
           interviewConfig={interviewConfig}
@@ -130,115 +116,62 @@ export default function InterviewScreen({
           endInterviewLabel={t("end_interview")}
         />
 
-        {/* Coverage progress bar â€” shows overall topic completion percentage, visible only while active */}
-        {isActive && (
-          <InterviewProgressBar
-            overall={coverage?.overall ?? 0}
-            label={t("interview_completion")}
+        {/* ── Question strip (active only) ─────────────────────────────── */}
+        {isActive && lastQuestion && (
+          <QuestionPanel
+            currentMessage={lastQuestion}
+            isInReadingTime={audio.isInReadingTime}
+            readingTimeLeft={audio.readingTimeLeft}
+            questionHighlight={audio.questionHighlight}
+            questionNumber={
+              lastQuestion.type === "question" ||
+              lastQuestion.type === "follow_up"
+                ? questionCount
+                : 0
+            }
           />
         )}
 
-        {/* â”€â”€ Main interview card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-        <Box
-          sx={{
-            bgcolor: "#fff",
-            borderRadius: "20px",
-            border: "1px solid #c8eedd",
-          }}
-        >
-          {/* Current question / follow-up text with reading countdown â€” hidden until interview starts */}
-          {isActive && lastQuestion && (
-            <QuestionPanel
-              currentMessage={lastQuestion}
-              isInReadingTime={audio.isInReadingTime}
-              readingTimeLeft={audio.readingTimeLeft}
-              questionHighlight={audio.questionHighlight}
-              questionNumber={
-                lastQuestion.type === "question" ||
-                lastQuestion.type === "follow_up"
-                  ? questionCount
-                  : 0
-              }
-            />
-          )}
+        {/* ── 3-column grid — fills remaining space, capped so columns aren't too tall ── */}
+        <Box sx={interviewScreenSx.grid(!!coverage)}>
+          {/* LEFT — Coverage (only shown when data is available) */}
+          {coverage && <CoverageDashboard coverage={coverage} />}
 
-          {/* Two-column grid: camera feed (70%) | sidebar (30%) */}
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: { xs: "1fr", md: "7fr 3fr" },
-              gap: 0,
-            }}
-          >
-            {/* Left â€” live camera feed with mic-activity visualizer */}
-            <Box sx={{ borderRight: { md: "1px solid #e6f8f1" }, p: 2.5 }}>
-              <CameraPreview
-                videoRef={camera.videoRef}
-                cameraStatus={camera.cameraStatus}
-                cameraError={camera.cameraError}
-                isConnecting={audio.isConnecting}
-                interviewStatus={socket.interviewStatus}
-                audioContextRef={audio.audioContextRef}
-                attachStream={camera.attachStream}
-              />
-            </Box>
+          <CameraPreview
+            videoRef={camera.videoRef}
+            cameraStatus={camera.cameraStatus}
+            cameraError={camera.cameraError}
+            isConnecting={audio.isConnecting}
+            interviewStatus={socket.interviewStatus}
+            audioContextRef={audio.audioContextRef}
+            attachStream={camera.attachStream}
+          />
 
-            {/* Right â€” start / end / results controls + live transcript + AI voice indicator */}
-            <Box
-              sx={{
-                p: 2.5,
-                display: "flex",
-                flexDirection: "column",
-                gap: 2,
-              }}
-            >
-              {/* State-driven panel: shows start button, live transcript, or results link */}
-              <InterviewContainer
-                interviewStatus={socket.interviewStatus}
-                isHydrated={socket.isHydrated}
-                connectionStatus={socket.connectionStatus}
-                cameraStatus={camera.cameraStatus}
-                agentState={audio.agentState}
-                currentTranscript={
-                  audio.accumulatedTranscript || audio.currentTranscript
-                }
-                resultsReady={resultsReady}
-                onStartInterview={startInterview}
-              />
-              {/* AI agent speaking / listening status and manual answer submit */}
-              <AgentStatusPanel
-                interviewStatus={socket.interviewStatus}
-                agentState={audio.agentState}
-                isVoiceActive={audio.speechPhase === "speaking"}
-                onSubmitAnswer={audio.sendAccumulatedAnswer}
-                onSkipQuestion={skipQuestion}
-              />
-            </Box>
-          </Box>
+          {/* RIGHT — AI controls */}
+          <InterviewControlsPanel
+            interviewStatus={socket.interviewStatus}
+            isHydrated={socket.isHydrated}
+            connectionStatus={socket.connectionStatus}
+            cameraStatus={camera.cameraStatus}
+            agentState={audio.agentState}
+            currentTranscript={
+              audio.accumulatedTranscript || audio.currentTranscript
+            }
+            resultsReady={resultsReady}
+            isVoiceActive={audio.speechPhase === "speaking"}
+            onStartInterview={startInterview}
+            onSubmitAnswer={audio.sendAccumulatedAnswer}
+            onSkipQuestion={skipQuestion}
+          />
         </Box>
-
-        {/* Expandable topic-coverage breakdown â€” only rendered once coverage data arrives */}
-        {coverage && <CoverageDashboard coverage={coverage} />}
       </Container>
 
-      {/* GDPR consent gate â€” must be accepted before camera stream is attached */}
       <GDPRConsentModal
         open={!camera.consentGiven}
         onAccept={camera.giveConsent}
         onDecline={() => router.back()}
       />
 
-      {/* Tab-switch / copy-paste violation warnings; second modal force-ends the session */}
-      {/* <SecurityModals
-        showFirstViolationModal={security.showFirstViolationModal}
-        showSecurityModal={security.showSecurityModal}
-        violationType={security.violationType}
-        securityViolationCount={security.securityViolationCount}
-        onDismissFirst={() => security.setShowFirstViolationModal(false)}
-        onReturnToDashboard={() => router.push("/candidate/dashboard")}
-      /> */}
-
-      {/* Bottom-center toast for transient success / error / warning messages */}
       <Snackbar
         open={notification.open}
         autoHideDuration={4000}

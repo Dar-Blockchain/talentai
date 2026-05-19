@@ -50,9 +50,9 @@ export default function InterviewSessionHeader({
         bgcolor: "#fff",
         borderRadius: "20px",
         border: "1px solid #c8eedd",
-        px: { xs: 2.5, md: 3.5 },
-        py: { xs: 2, md: 2.5 },
-        mb: 3,
+        px: { xs: 1.5, md: 2 },
+        py: { xs: 1, md: 1.25 },
+        mb: 1,
       }}
     >
       <Box
@@ -63,12 +63,12 @@ export default function InterviewSessionHeader({
         gap={1.5}
       >
         {/* Left — job icon + title + company meta */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
           <Box
             sx={{
-              width: 42,
-              height: 42,
-              borderRadius: "10px",
+              width: 34,
+              height: 34,
+              borderRadius: "8px",
               bgcolor: PURPLE_BG,
               border: `1px solid ${PURPLE_BORDER}`,
               display: "flex",
@@ -77,24 +77,24 @@ export default function InterviewSessionHeader({
               flexShrink: 0,
             }}
           >
-            <VideocamOutlinedIcon sx={{ color: PURPLE, fontSize: 20 }} />
+            <VideocamOutlinedIcon sx={{ color: PURPLE, fontSize: 16 }} />
           </Box>
           <Box>
             <Typography
               sx={{
                 fontFamily: "Poppins",
                 fontWeight: 700,
-                fontSize: "1.1rem",
+                fontSize: "0.9rem",
                 color: "#111827",
                 lineHeight: 1.25,
               }}
             >
               {jobTitle}
             </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.3 }}>
-              <TimerOutlinedIcon sx={{ fontSize: 13, color: "#6B7280" }} />
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.2 }}>
+              <TimerOutlinedIcon sx={{ fontSize: 11, color: "#6B7280" }} />
               <Typography
-                sx={{ fontFamily: "Poppins", fontSize: "0.79rem", color: "#6B7280" }}
+                sx={{ fontFamily: "Poppins", fontSize: "0.7rem", color: "#6B7280" }}
               >
                 {companyName ? `${companyName} · ` : ""}AI-powered · Video & Voice
               </Typography>
@@ -117,13 +117,13 @@ export default function InterviewSessionHeader({
               sx={{
                 fontFamily: "Poppins",
                 fontWeight: 700,
-                fontSize: "0.92rem",
+                fontSize: "0.78rem",
                 textTransform: "none",
                 bgcolor: "#fef2f2",
                 color: "#ef4444",
-                borderRadius: "12px",
-                px: 3,
-                py: 1.25,
+                borderRadius: "10px",
+                px: 2,
+                py: 0.75,
                 boxShadow: "none",
                 border: "1px solid rgba(239,68,68,0.2)",
                 "&:hover": { bgcolor: "#fee2e2", boxShadow: "none" },
