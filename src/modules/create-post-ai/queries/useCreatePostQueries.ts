@@ -9,7 +9,7 @@ import {
 } from "../store/createPostSlice";
 import { getMyProfile } from "@/store/slices/userSlice";
 import { generatePost, savePost, updatePost, type GeneratePostPayload } from "../api";
-import { inferExperienceLevelFromText, isKnownExperienceLevel } from "@/utils/postFormI18n";
+import { inferExperienceLevelFromText, isKnownExperienceLevel } from "../utils";
 
 // ── Generate ──────────────────────────────────────────────────────────────────
 

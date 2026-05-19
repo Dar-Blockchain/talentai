@@ -1,5 +1,5 @@
 import axiosInstance from "@/utils/axiosInstance";
-import { SavePostResponse } from "@/types/post";
+import { SavePostResponse } from "../types";
 import { PostGenerationResponse, Salary } from "../store/createPostSlice";
 
 export interface GeneratePostPayload {

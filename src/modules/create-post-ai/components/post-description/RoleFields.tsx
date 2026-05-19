@@ -4,7 +4,7 @@ import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import { useTranslation } from "react-i18next";
 import { contractTypes, workModes } from "@/constants/candidate";
-import { EMPLOYMENT_OPTION_KEY, optionLabel, WORK_MODE_OPTION_KEY } from "@/utils/postFormI18n";
+import { EMPLOYMENT_OPTION_KEY, optionLabel, WORK_MODE_OPTION_KEY } from "../../utils";
 import FieldLabel from "./FieldLabel";
 import SectionLabel from "./SectionLabel";
 import { fieldSx } from "./styles";

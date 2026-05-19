@@ -8,7 +8,7 @@ import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import { updateJobField, updateJobSalaryField } from "../../store/createPostSlice";
 import { contractTypes, workModes, experienceLevels } from "@/constants/candidate";
-import { EMPLOYMENT_OPTION_KEY, EXPERIENCE_OPTION_KEY, WORK_MODE_OPTION_KEY, optionLabel } from "@/utils/postFormI18n";
+import { EMPLOYMENT_OPTION_KEY, EXPERIENCE_OPTION_KEY, WORK_MODE_OPTION_KEY, optionLabel } from "../../utils";
 import SectionCard from "@/components/ui/SectionCard";
 import SalaryRange from "../SalaryRange";
 import { labelSx, inputSx } from "./styles";

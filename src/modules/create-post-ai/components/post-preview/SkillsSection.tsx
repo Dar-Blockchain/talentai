@@ -4,7 +4,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import { HardSkill, SoftSkill, deleteHardSkill, deleteSoftSkill } from "../../store/createPostSlice";
-import { hardSkillLevelLabel, softSkillLevelLabel } from "@/utils/postFormI18n";
+import { hardSkillLevelLabel, softSkillLevelLabel } from "../../utils";
 import SectionCard from "@/components/ui/SectionCard";
 import SkillChip from "./SkillChip";
 import AddSkillButton from "./AddSkillButton";
