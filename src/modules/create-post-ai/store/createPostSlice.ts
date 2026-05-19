@@ -162,25 +162,18 @@ const createPostSlice = createSlice({
     updateRequirements(state, action: PayloadAction<string>) {
       if (state.generatedPost) {
         state.generatedPost.jobDetails.requirements = action.payload
-          .split("\n")
-          .map((r) => r.trim())
-          .filter((r) => r);
+          .split("\n").map((r) => r.trim()).filter((r) => r);
       }
     },
 
     updateResponsibilities(state, action: PayloadAction<string>) {
       if (state.generatedPost) {
         state.generatedPost.jobDetails.responsibilities = action.payload
-          .split("\n")
-          .map((r) => r.trim())
-          .filter((r) => r);
+          .split("\n").map((r) => r.trim()).filter((r) => r);
       }
     },
 
-    editHardSkill(
-      state,
-      action: PayloadAction<{ index: number; updated: Partial<HardSkill> }>,
-    ) {
+    editHardSkill(state, action: PayloadAction<{ index: number; updated: Partial<HardSkill> }>) {
       if (state.generatedPost) {
         const list = state.generatedPost.skillAnalysis.requiredSkills;
         if (list[action.payload.index]) {
@@ -202,10 +195,7 @@ const createPostSlice = createSlice({
       }
     },
 
-    editSoftSkill(
-      state,
-      action: PayloadAction<{ index: number; updated: Partial<SoftSkill> }>,
-    ) {
+    editSoftSkill(state, action: PayloadAction<{ index: number; updated: Partial<SoftSkill> }>) {
       if (state.generatedPost) {
         const list = state.generatedPost.skillAnalysis.softSkills;
         if (list[action.payload.index]) {
@@ -232,35 +222,20 @@ const createPostSlice = createSlice({
 // ─── Actions ──────────────────────────────────────────────────────────────────
 
 export const {
-  clearPost,
-  setGeneratedPost,
-  setCreationType,
-  setPromptDescription,
-  setWorkMode,
-  setEmploymentType,
-  setExpirationDate,
-  updateSalaryField,
-  updateJobField,
-  updateJobSalaryField,
-  updateRequirements,
-  updateResponsibilities,
-  editHardSkill,
-  deleteHardSkill,
-  addHardSkill,
-  editSoftSkill,
-  deleteSoftSkill,
-  addSoftSkill,
+  clearPost, setGeneratedPost, setCreationType, setPromptDescription,
+  setWorkMode, setEmploymentType, setExpirationDate, updateSalaryField,
+  updateJobField, updateJobSalaryField, updateRequirements, updateResponsibilities,
+  editHardSkill, deleteHardSkill, addHardSkill,
+  editSoftSkill, deleteSoftSkill, addSoftSkill,
   setInterviewLanguages,
 } = createPostSlice.actions;
 
 // ─── Selectors ────────────────────────────────────────────────────────────────
 
 export const selectGeneratedPost = (state: any) => state.postGeneration.generatedPost;
-export const selectJobDetails = (state: any) => state.postGeneration.generatedPost?.jobDetails;
-export const selectHardSkills = (state: any) =>
-  state.postGeneration.generatedPost?.skillAnalysis.requiredSkills ?? [];
-export const selectSoftSkills = (state: any) =>
-  state.postGeneration.generatedPost?.skillAnalysis.softSkills ?? [];
-export const selectCreationType = (state: any) => state.postGeneration?.creationType;
+export const selectJobDetails    = (state: any) => state.postGeneration.generatedPost?.jobDetails;
+export const selectHardSkills    = (state: any) => state.postGeneration.generatedPost?.skillAnalysis.requiredSkills ?? [];
+export const selectSoftSkills    = (state: any) => state.postGeneration.generatedPost?.skillAnalysis.softSkills ?? [];
+export const selectCreationType  = (state: any) => state.postGeneration?.creationType;
 
 export default createPostSlice.reducer;

@@ -14,17 +14,13 @@ export interface GeneratePostPayload {
 export async function generatePost(payload: GeneratePostPayload): Promise<PostGenerationResponse> {
   const { jobDescription, salary, contractType, workMode, language, interviewLanguages } = payload;
 
-  const salaryText = `\n\nSalary Range: ${salary.currency}${salary.min?.toLocaleString()} - ${salary.currency}${salary.max?.toLocaleString()}`;
-  const contractTypeText = contractType ? `\nContract Type: ${contractType}` : "";
-  const workModeText = workMode ? `\nWork Mode: ${workMode}` : "";
-  const description = jobDescription + salaryText + contractTypeText + workModeText;
+  const salaryText   = `\n\nSalary Range: ${salary.currency}${salary.min?.toLocaleString()} - ${salary.currency}${salary.max?.toLocaleString()}`;
+  const contractText = contractType ? `\nContract Type: ${contractType}` : "";
+  const workModeText = workMode     ? `\nWork Mode: ${workMode}`         : "";
+  const description  = jobDescription + salaryText + contractText + workModeText;
 
   const res = await axiosInstance.post("post/generate-job-post", {
-    description,
-    contractType,
-    workMode,
-    language,
-    interviewLanguages,
+    description, contractType, workMode, language, interviewLanguages,
   });
   return res.data;
 }
@@ -32,18 +28,16 @@ export async function generatePost(payload: GeneratePostPayload): Promise<PostGe
 export async function savePost(
   jobData: PostGenerationResponse & { interviewLanguages: string[] },
 ): Promise<SavePostResponse> {
-  const res = await axiosInstance.post("post/save-post", jobData);
+  const res  = await axiosInstance.post("post/save-post", jobData);
   const saved = res.data;
-  const job = saved.data || saved;
-  return { success: true, jobData: job, planUsage: saved.planUsage ?? null };
+  return { success: true, jobData: saved.data || saved, planUsage: saved.planUsage ?? null };
 }
 
 export async function updatePost(
   jobId: string,
   jobData: PostGenerationResponse & { interviewLanguages: string[] },
 ): Promise<SavePostResponse> {
-  const res = await axiosInstance.put(`post/updatePost/${jobId}`, jobData);
+  const res  = await axiosInstance.put(`post/updatePost/${jobId}`, jobData);
   const data = res.data;
-  const job = data.data || data;
-  return { success: true, jobData: job, planUsage: null };
+  return { success: true, jobData: data.data || data, planUsage: null };
 }
