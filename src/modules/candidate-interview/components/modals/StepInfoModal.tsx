@@ -302,7 +302,7 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
                       ? "rgba(106, 211, 156, 0.12)"
                       : statusColors.bg,
                     color: isCurrentStep && step.status !== "done" && step.status !== "passed"
-                      ? "#6AD39C"
+                      ? "#16A34A"
                       : statusColors.color,
                     fontWeight: 600,
                     fontSize: "0.7rem",
@@ -343,12 +343,12 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
                       label={skill.name}
                       size="small"
                       sx={{
-                        backgroundColor: "rgba(99, 102, 241, 0.08)",
-                        color: "#6366f1",
+                        backgroundColor: "rgba(106, 211, 156, 0.08)",
+                        color: "#16A34A",
                         fontWeight: 500,
                         fontSize: "0.7rem",
                         height: 22,
-                        border: "1px solid rgba(99, 102, 241, 0.2)",
+                        border: "1px solid rgba(106, 211, 156, 0.2)",
                       }}
                     />
                   ))}
@@ -370,12 +370,12 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
                       label={skill.name}
                       size="small"
                       sx={{
-                        backgroundColor: "rgba(16, 185, 129, 0.08)",
-                        color: "#10b981",
+                        backgroundColor: "#F0FDF4",
+                        color: "#16A34A",
                         fontWeight: 500,
                         fontSize: "0.7rem",
                         height: 22,
-                        border: "1px solid rgba(16, 185, 129, 0.2)",
+                        border: "1px solid #BBF7D0",
                       }}
                     />
                   ))}

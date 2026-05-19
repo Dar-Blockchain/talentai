@@ -32,7 +32,8 @@ export interface JobPost {
   _id: string;
   title?: string;
   companyName?: string;
-  user?: { _id: string; companyName?: string };
+  user?: { _id: string; username?: string; companyName?: string };
+  company?: { _id?: string; companyName?: string };
   profile?: { _id: string };
   jobDetails?: JobDetails;
   creationType?: 'pipeline' | 'regular' | 'standard';

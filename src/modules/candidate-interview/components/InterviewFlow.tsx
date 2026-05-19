@@ -57,7 +57,7 @@ export default function InterviewFlow() {
   return (
     <InterviewScreen
       session={session}
-      configData={{ interviewConfig, jobData }}
+      configData={{ jobData, interviewConfig }}
       notification={notification}
       hideNotification={hideNotification}
     />

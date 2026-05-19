@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+﻿import React, { useMemo } from "react";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import { Box, Snackbar, Alert, Container } from "@mui/material";
@@ -13,11 +13,11 @@ import SecurityModals from "../modals/SecurityModals";
 import CoverageDashboard from "./CoverageDashboard";
 import GDPRConsentModal from "../modals/GDPRConsentModal";
 import {
-  type InterviewConfig,
   type Coverage,
   type InterviewMessage,
 } from "../../types/interview";
 import { type JobPost } from "../../types/api";
+import { type InterviewConfig } from "../../types/interview";
 import { type UseInterviewSocketReturn } from "../../hooks/useInterviewSocket";
 import { type UseAudioTranscriptionReturn } from "../../hooks/useAudioTranscription";
 import { type UseInterviewTimerReturn } from "../../hooks/useInterviewTimer";
@@ -36,8 +36,8 @@ interface InterviewScreenProps {
     endInterview: () => void;
   };
   configData: {
-    interviewConfig: InterviewConfig;
     jobData: JobPost | null;
+    interviewConfig: InterviewConfig | null;
   };
   notification: {
     open: boolean;
@@ -67,35 +67,11 @@ export default function InterviewScreen({
     endInterview,
   } = session;
 
-  const { interviewConfig, jobData } = configData;
+  const { jobData, interviewConfig } = configData;
 
   const isActive = socket.interviewStatus === "active";
 
-  const interviewLabel = useMemo(() => {
-    const jobTitle = jobData?.jobDetails?.title || jobData?.title;
-    if (jobTitle) return jobTitle;
-    switch (interviewConfig?.interviewType) {
-      case "TECHNICAL_INTERVIEW":
-        return t("interview_types.technical_role", {
-          role: interviewConfig.context?.targetRole || "Technical",
-        });
-      case "ASSESSMENT":
-        return t("interview_types.assessment");
-      case "EVALUATION":
-        return t("interview_types.evaluation");
-      default:
-        return t("interview_types.hr");
-    }
-  }, [jobData, interviewConfig, t]);
-
-  const subtitle = useMemo(() => {
-    if (jobData?.companyName)
-      return `${jobData.companyName} · ${t("ai_powered")}`;
-    if (interviewConfig?.interviewType === "TECHNICAL_INTERVIEW") {
-      return `${router.query.skill || "Technical"} · ${interviewConfig.context?.experienceLevel || ""}`;
-    }
-    return undefined;
-  }, [jobData, interviewConfig, router.query.skill, t]);
+  console.log("jobData:", jobData);
 
   const connectionBannerText = useMemo(() => {
     switch (socket.connectionStatus) {
@@ -130,7 +106,7 @@ export default function InterviewScreen({
         bgcolor: "#fff",
         userSelect: "none",
         WebkitUserSelect: "none",
-        pt: "64px",
+        pt: 6,
       }}
     >
       {/* Yellow banner shown when the WebSocket is not yet connected or has dropped */}
@@ -138,11 +114,11 @@ export default function InterviewScreen({
         <InterviewConnectionBanner text={connectionBannerText} />
       )}
 
-      <Container maxWidth="lg" sx={{ py: { xs: 3, md: 4 } }}>
+      <Container maxWidth="lg" sx={{ py: { xs: 3, md: 2 } }}>
         {/* Top bar: interview title, company subtitle, elapsed timer, end button */}
         <InterviewSessionHeader
-          label={interviewLabel}
-          subtitle={subtitle}
+          jobData={jobData}
+          interviewConfig={interviewConfig}
           isActive={isActive}
           elapsedTime={timer.elapsedTime}
           timeWarning={timer.timeWarning}
@@ -150,7 +126,7 @@ export default function InterviewScreen({
           endInterviewLabel={t("end_interview")}
         />
 
-        {/* Coverage progress bar — shows overall topic completion percentage, visible only while active */}
+        {/* Coverage progress bar â€” shows overall topic completion percentage, visible only while active */}
         {isActive && (
           <InterviewProgressBar
             overall={coverage?.overall ?? 0}
@@ -158,7 +134,7 @@ export default function InterviewScreen({
           />
         )}
 
-        {/* ── Main interview card ─────────────────────────────────────────── */}
+        {/* â”€â”€ Main interview card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <Box
           sx={{
             bgcolor: "#fff",
@@ -166,7 +142,7 @@ export default function InterviewScreen({
             border: "1px solid #c8eedd",
           }}
         >
-          {/* Current question / follow-up text with reading countdown — hidden until interview starts */}
+          {/* Current question / follow-up text with reading countdown â€” hidden until interview starts */}
           {isActive && lastQuestion && (
             <QuestionPanel
               currentMessage={lastQuestion}
@@ -190,7 +166,7 @@ export default function InterviewScreen({
               gap: 0,
             }}
           >
-            {/* Left — live camera feed with mic-activity visualizer */}
+            {/* Left â€” live camera feed with mic-activity visualizer */}
             <Box sx={{ borderRight: { md: "1px solid #e6f8f1" }, p: 2.5 }}>
               <CameraPreview
                 videoRef={camera.videoRef}
@@ -203,7 +179,7 @@ export default function InterviewScreen({
               />
             </Box>
 
-            {/* Right — start / end / results controls + live transcript + AI voice indicator */}
+            {/* Right â€” start / end / results controls + live transcript + AI voice indicator */}
             <Box
               sx={{
                 p: 2.5,
@@ -235,15 +211,11 @@ export default function InterviewScreen({
           </Box>
         </Box>
 
-        {/* Expandable topic-coverage breakdown — only rendered once coverage data arrives */}
-        {coverage && (
-          <CoverageDashboard
-            coverage={coverage}
-          />
-        )}
+        {/* Expandable topic-coverage breakdown â€” only rendered once coverage data arrives */}
+        {coverage && <CoverageDashboard coverage={coverage} />}
       </Container>
 
-      {/* GDPR consent gate — must be accepted before camera stream is attached */}
+      {/* GDPR consent gate â€” must be accepted before camera stream is attached */}
       <GDPRConsentModal
         open={!camera.consentGiven}
         onAccept={camera.giveConsent}
