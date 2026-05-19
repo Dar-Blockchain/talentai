@@ -61,7 +61,6 @@ export interface PostAssessment {
     user?: { companyName?: string };
     status?: string;
   };
-  skillType?: string;
   interviewData?: {
     interviewType?: string;
     finalReport?: {

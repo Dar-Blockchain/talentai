@@ -4,7 +4,39 @@
  */
 
 const intelligentInterviewService = require("../services/intelligentInterview.service");
+const PostInterviewAssessment = require("../models/PostInterviewAssessment.model");
 const { v4: uuidv4 } = require("uuid");
+
+// Persist finalReport, analytics, and Q&A conversation to the PostInterviewAssessment document.
+// Looks up by candidate+post (the reliable keys) and falls back to the WebSocket sessionId.
+async function persistInterviewResults(sessionId, result, candidateId, postId) {
+  try {
+    const query = (candidateId && postId)
+      ? { candidate: candidateId, post: postId }
+      : { 'interviewData.sessionId': sessionId };
+
+    const updated = await PostInterviewAssessment.findOneAndUpdate(
+      query,
+      {
+        $set: {
+          completed: true,
+          'interviewData.finalReport': result.finalReport,
+          'interviewData.analytics': result.sessionAnalytics,
+          'interviewData.conversation': result.conversation || [],
+        },
+      },
+      { new: false }
+    );
+
+    if (updated) {
+      console.log(`✅ [DB] Interview results saved — candidate: ${candidateId}, post: ${postId}`);
+    } else {
+      console.warn(`⚠️ [DB] No assessment found for candidate: ${candidateId}, post: ${postId}, session: ${sessionId}`);
+    }
+  } catch (err) {
+    console.error(`⚠️ [DB] Failed to save interview results for session ${sessionId}:`, err.message);
+  }
+}
 
 class IntelligentInterviewController {
   constructor() {
@@ -36,11 +68,15 @@ class IntelligentInterviewController {
       // Start interview session
       socket.on("start_interview", async (data) => {
         try {
-          const { config, candidateId } = data;
+          const { config, candidateId, postId } = data;
           const sessionId = uuidv4();
 
+          // Persist lookup keys on the socket for use when the interview ends
+          socket.candidateId = candidateId || null;
+          socket.postId = postId || null;
+
           console.log(
-            `🚀 [Controller] Starting interview session: ${sessionId} for candidate: ${candidateId}`,
+            `🚀 [Controller] Starting interview session: ${sessionId} for candidate: ${candidateId}, post: ${postId}`,
           );
           console.log(`📋 [Controller] Config received:`, {
             interviewType: config.interviewType,
@@ -93,6 +129,18 @@ class IntelligentInterviewController {
             targetCompany: result.targetCompany,
           });
           console.log(`✅ [Controller] interview_started event emitted`);
+
+          // Create the PostInterviewAssessment record (fire-and-forget — does not block the interview)
+          if (socket.postId && socket.candidateId) {
+            const postInterviewAssessmentService = require('../services/InterviewServices/postInterviewAssessment.service');
+            postInterviewAssessmentService.createPostInterviewAssessment({
+              post: socket.postId,
+              candidate: socket.candidateId,
+              interviewData: { interviewType: config.interviewType || 'HR_INTERVIEW' },
+            }).catch(err => {
+              console.warn(`⚠️ [DB] Assessment creation failed for session ${sessionId}:`, err.message);
+            });
+          }
 
           // Send initial greeting message (full content for clients that don't support streaming)
           this.safeEmit(socket, "interviewer_message", {
@@ -214,6 +262,45 @@ class IntelligentInterviewController {
         }
       });
 
+      // Handle candidate skipping the current question
+      socket.on("skip_question", async (data) => {
+        try {
+          const sessionId = socket.sessionId;
+          if (!sessionId) {
+            this.safeEmit(socket, "interview_error", { error: "No active session" });
+            return;
+          }
+
+          console.log(`⏭️ Candidate skipped question in session: ${sessionId}`);
+
+          this.safeEmit(socket, "interviewer_typing", { sessionId, status: "thinking" });
+          this.resetInterTurnPauseTimer(socket, sessionId);
+
+          const decision = await this.service.processCandidateResponseIntelligently(
+            sessionId,
+            "[SKIPPED]",
+            { skipped: true },
+          );
+
+          await this.handleAIDecision(socket, sessionId, decision);
+
+          this.safeEmit(socket, "response_processed", {
+            status: "success",
+            transcript: "[SKIPPED]",
+            decisionType: decision.type || "continue",
+            timestamp: new Date().toISOString(),
+          });
+
+          this.startIntelligentSilenceMonitoring(socket, sessionId, decision);
+        } catch (error) {
+          console.error("❌ Failed to process skip:", error.message);
+          this.safeEmit(socket, "interview_error", {
+            error: "Failed to skip question",
+            message: error.message,
+          });
+        }
+      });
+
       // REMOVED: Automatic silence detection - using manual "Next" button only for MVP
       // socket.on('silence_detected', async (data) => { ... });
 
@@ -314,6 +401,9 @@ class IntelligentInterviewController {
 
           // End interview with AI service
           const result = await this.service.endInterview(sessionId);
+
+          // Persist to MongoDB (best-effort, non-blocking)
+          persistInterviewResults(sessionId, result, socket.candidateId, socket.postId);
 
           // Send final report
           this.safeEmit(socket, "interview_ended", {
@@ -439,35 +529,37 @@ class IntelligentInterviewController {
         );
 
         if (socket.sessionId) {
+          const sessionId = socket.sessionId;
           try {
             // Clean up inter-turn pause timer
-            this.resetInterTurnPauseTimer(socket, socket.sessionId);
+            this.resetInterTurnPauseTimer(socket, sessionId);
 
-            // Mark session as interrupted
-            const session = await this.service.sessionManager.getSession(
-              socket.sessionId,
-            );
+            const session = await this.service.sessionManager.getSession(sessionId);
+
             if (session && session.status === "active") {
-              await this.service.sessionManager.updateSession(
-                socket.sessionId,
-                {
+              // Session still active — candidate left the page without ending the interview.
+              // Generate the final report and persist to DB so the data is not lost.
+              console.log(`⚡ Auto-ending active session on disconnect: ${sessionId}`);
+              try {
+                const result = await this.service.endInterview(sessionId);
+                persistInterviewResults(sessionId, result, socket.candidateId, socket.postId);
+                console.log(`✅ Interview auto-ended and saved on disconnect: ${sessionId}`);
+              } catch (endErr) {
+                console.warn(`⚠️ Auto-end on disconnect failed for ${sessionId}:`, endErr.message);
+                // Fallback: mark as interrupted so it is not left in a stale active state
+                await this.service.sessionManager.updateSession(sessionId, {
                   status: "interrupted",
                   disconnectReason: reason,
                   disconnectTime: new Date().toISOString(),
-                },
-              );
+                }).catch(() => {});
+              }
             }
 
             // Clean up session mapping
-            this.activeSessions.delete(socket.sessionId);
-            console.log(
-              `🧹 Cleaned up session mapping for: ${socket.sessionId}`,
-            );
+            this.activeSessions.delete(sessionId);
+            console.log(`🧹 Cleaned up session mapping for: ${sessionId}`);
           } catch (error) {
-            console.error(
-              "❌ Failed to handle disconnect cleanup:",
-              error.message,
-            );
+            console.error("❌ Failed to handle disconnect cleanup:", error.message);
           }
         }
       });
@@ -594,6 +686,8 @@ class IntelligentInterviewController {
           // Auto-generate final report and properly close the session
           try {
             const result = await this.service.endInterview(sessionId);
+            // Persist to MongoDB (best-effort, non-blocking)
+            persistInterviewResults(sessionId, result, socket.candidateId, socket.postId);
             this.safeEmit(socket, "interview_ended", {
               finalReport: result.finalReport,
               analytics: result.sessionAnalytics,

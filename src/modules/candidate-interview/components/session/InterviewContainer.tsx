@@ -5,6 +5,7 @@ import KeyboardVoiceIcon from '@mui/icons-material/KeyboardVoice';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import { useTranslation } from 'react-i18next';
 import { type InterviewStatus, type ConnectionStatus, type CameraStatus, type AgentState } from '../../types/interview';
@@ -18,6 +19,7 @@ interface InterviewContainerProps {
   cameraStatus: CameraStatus;
   agentState: AgentState;
   currentTranscript?: string;
+  resultsReady: boolean;
   onStartInterview: () => void;
 }
 
@@ -28,6 +30,7 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
   cameraStatus,
   agentState,
   currentTranscript,
+  resultsReady,
   onStartInterview,
 }) => {
   const { t } = useTranslation('interview');
@@ -65,7 +68,7 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
         )}
 
         {interviewStatus === 'active'  && <LiveTranscript currentTranscript={currentTranscript} />}
-        {interviewStatus === 'ended'   && <AnalyzingSpinner waitDots={waitDots} />}
+        {interviewStatus === 'ended'   && (resultsReady ? <CompletionCard /> : <AnalyzingSpinner waitDots={waitDots} />)}
       </Box>
 
     </Box>
@@ -173,7 +176,7 @@ const LiveTranscript: React.FC<{ currentTranscript?: string }> = ({ currentTrans
   );
 };
 
-/** Spinner + animated dots shown while the backend generates the interview report. */
+/** Spinner shown while the backend generates the interview report. */
 const AnalyzingSpinner: React.FC<{ waitDots: string }> = ({ waitDots }) => {
   const { t } = useTranslation('interview');
 
@@ -182,6 +185,38 @@ const AnalyzingSpinner: React.FC<{ waitDots: string }> = ({ waitDots }) => {
       <CircularProgress size={48} sx={{ color: '#6AD39C', mb: 2 }} />
       <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1rem', color: '#111827', mb: 0.5 }}>{t('container.analyzing_title')}{waitDots}</Typography>
       <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#6b7280' }}>{t('container.analyzing_subtitle')}</Typography>
+    </Box>
+  );
+};
+
+/** Success card shown once the interview results have been saved. */
+const CompletionCard: React.FC = () => {
+  const { t } = useTranslation('interview');
+
+  return (
+    <Box sx={{ textAlign: 'center', py: 2.5 }}>
+      <Box sx={{
+        width: 64, height: 64, borderRadius: '50%', mx: 'auto', mb: 2,
+        bgcolor: 'rgba(106,211,156,0.1)',
+        border: '2px solid rgba(106,211,156,0.3)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <CheckCircleOutlineIcon sx={{ fontSize: 36, color: '#6AD39C' }} />
+      </Box>
+      <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1rem', color: '#111827', mb: 0.5 }}>
+        {t('ended.title')}
+      </Typography>
+      <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#6b7280', lineHeight: 1.6 }}>
+        {t('ended.subtitle')}
+      </Typography>
+      <Box sx={{
+        mt: 2, px: 2, py: 1.25, borderRadius: '10px',
+        bgcolor: 'rgba(106,211,156,0.06)', border: '1px solid rgba(106,211,156,0.2)',
+      }}>
+        <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', color: '#10453F' }}>
+          {t('ended.redirect')}
+        </Typography>
+      </Box>
     </Box>
   );
 };

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/router';
 
 import { Coverage, InterviewMessage } from '../types/interview';
@@ -26,6 +26,7 @@ export function useInterviewSession({
   const router = useRouter();
   const [coverage, setCoverage] = useState<Coverage | null>(null);
   const [coverageDashboardExpanded, setCoverageDashboardExpanded] = useState(true);
+  const [resultsReady, setResultsReady] = useState(false);
   const endInterviewRef = useRef<() => void>(() => {});
 
   // Refs to break forward-reference: handlers are defined before audio/timer hooks are called,
@@ -50,6 +51,7 @@ export function useInterviewSession({
     audioRef.current?.setQuestionHighlight(true);
     setTimeout(() => audioRef.current?.setQuestionHighlight(false), 600);
     if (message.type === 'question' || message.type === 'follow_up') {
+      audioRef.current?.resetSkipGuard?.();
       audioRef.current?.setQuestionReadingTime(Date.now());
       audioRef.current?.setAgentState('waiting');
       audioRef.current?.setAgentMessage('Waiting for you to read the question...');
@@ -96,6 +98,7 @@ export function useInterviewSession({
         timestamp: new Date().toISOString(),
       }));
     }
+    setResultsReady(true);
   }, [interviewConfig]);
 
   const handleInterviewError = useCallback((error: { message: string }) => {
@@ -135,18 +138,22 @@ export function useInterviewSession({
   const security = useSecurityMonitoring({
     interviewStatus: socket.interviewStatus,
     onTerminate: () => endInterviewRef.current(),
-    enabled: interviewConfig.enableSecurity !== false,
+    // enabled: interviewConfig.enableSecurity !== false,
+    enabled: false
   });
 
   // Sync refs after all hooks initialize so forward-reference callbacks resolve correctly
   audioRef.current = audio;
   timerRef.current = timer;
 
+  const skipQuestion = useCallback(() => { audioRef.current?.skipQuestion(); }, []);
+
   const startInterview = useCallback(async () => {
     if (!socket.socketRef.current || !socket.isConnected) { notify('Not connected to interview system', 'error'); return; }
     try {
       socket.setInterviewStatus('connecting');
-      const candidateId = authUser?.email || 'anonymous';
+      const candidateId = authUser?._id || authUser?.email || 'anonymous';
+      const postId = jobData?._id || null;
       await audio.initializeAudio();
       socket.socketRef.current.emit('start_interview', {
         config: {
@@ -159,6 +166,7 @@ export function useInterviewSession({
           },
         },
         candidateId,
+        postId,
       });
     } catch (error) {
       console.error('Failed to start interview:', error);
@@ -179,6 +187,33 @@ export function useInterviewSession({
 
   endInterviewRef.current = endInterview;
 
+  // Track interview status in a ref so event listeners always see the current value
+  const interviewStatusRef = useRef(socket.interviewStatus);
+  interviewStatusRef.current = socket.interviewStatus;
+
+  // Emit end_interview and show browser confirmation when the tab/window is closed
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (interviewStatusRef.current !== 'active') return;
+      if (socket.socketRef.current?.connected && socket.sessionIdRef.current) {
+        socket.socketRef.current.emit('end_interview', { sessionId: socket.sessionIdRef.current });
+      }
+      e.preventDefault();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [socket.socketRef, socket.sessionIdRef]);
+
+  // End interview when navigating away within the Next.js app (SPA route change)
+  useEffect(() => {
+    const handleRouteChange = () => {
+      if (interviewStatusRef.current !== 'active') return;
+      endInterviewRef.current();
+    };
+    router.events.on('routeChangeStart', handleRouteChange);
+    return () => router.events.off('routeChangeStart', handleRouteChange);
+  }, [router.events]);
+
   return {
     socket,
     audio,
@@ -186,9 +221,11 @@ export function useInterviewSession({
     camera,
     security,
     coverage,
+    resultsReady,
     coverageDashboardExpanded,
     setCoverageDashboardExpanded,
     startInterview,
     endInterview,
+    skipQuestion,
   };
 }

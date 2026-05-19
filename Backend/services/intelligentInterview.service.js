@@ -2186,8 +2186,11 @@ Determine if interview objectives have been sufficiently met to end the session.
 
       // ── STEP 1: Combined Analysis (ONE Nova Lite call, ~2-3s) ──
       const step1Start = Date.now();
-      const analysis = await this.combinedAnalysis(transcript, session, lastQuestion, targetArea);
-      console.log(`⚡ [Step 1] Combined analysis: ${Date.now() - step1Start}ms — quality: ${analysis.quality?.score}/100, depth: ${analysis.quality?.depthLevel}`);
+      const isSkipped = transcript === '[SKIPPED]' || audioMetadata?.skipped === true;
+      const analysis = isSkipped
+        ? { quality: { answeredQuestion: false, completeness: 'avoided', score: 0, depthLevel: 'none' }, topics: [], areasImpacted: [], candidateBehavior: { interactionStyle: 'minimal' } }
+        : await this.combinedAnalysis(transcript, session, lastQuestion, targetArea);
+      if (!isSkipped) console.log(`⚡ [Step 1] Combined analysis: ${Date.now() - step1Start}ms — quality: ${analysis.quality?.score}/100, depth: ${analysis.quality?.depthLevel}`);
 
       // ── STEP 2: Update Candidate Profile (pure logic, ~0ms) ──
       const turnNumber = Math.floor((session.conversation?.length || 0) / 2);
@@ -3306,13 +3309,38 @@ Rephrase this question to help the candidate answer it.`;
       // Generate comprehensive final report
       const finalReport = await this.generateFinalReport(session);
 
+      // Extract Q&A pairs with AI evaluation from the raw conversation log
+      const qaConversation = [];
+      const conv = session.conversation || [];
+      for (let i = 0; i < conv.length; i++) {
+        const entry = conv[i];
+        if (entry.type === 'interviewer' && entry.content) {
+          const next = conv[i + 1];
+          if (next?.type === 'candidate') {
+            qaConversation.push({
+              question: entry.content,
+              response: next.content,
+              targetArea: entry.metadata?.targetAreas?.[0] || null,
+              timestamp: entry.timestamp,
+              evaluation: {
+                qualityScore: next.metadata?.qualityScore ?? null,
+                answeredQuestion: next.metadata?.answeredQuestion ?? null,
+                completeness: next.metadata?.completeness ?? null,
+                depthLevel: next.metadata?.depthLevel ?? null,
+              }
+            });
+          }
+        }
+      }
+
       // End session in Redis
       await this.sessionManager.endSession(sessionId, finalReport);
 
       return {
         success: true,
         finalReport,
-        sessionAnalytics: await this.sessionManager.getSessionAnalytics(sessionId)
+        sessionAnalytics: await this.sessionManager.getSessionAnalytics(sessionId),
+        conversation: qaConversation,
       };
     } catch (error) {
       console.error('❌ Failed to end interview:', error.message);

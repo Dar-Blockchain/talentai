@@ -40,6 +40,7 @@ export interface InterviewMessage {
 
 export interface CoverageArea {
   area: string;
+  label?: string;
   percentage: number;
   indicators: Array<{
     name: string;

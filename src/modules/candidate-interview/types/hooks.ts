@@ -51,6 +51,8 @@ export interface UseAudioTranscriptionReturn {
   setLastVoiceActivity: (val: number) => void;
   coverageDashboardExpanded: boolean;
   setCoverageDashboardExpanded: (val: boolean) => void;
+  skipQuestion: () => void;
+  resetSkipGuard: () => void;
 }
 
 export interface UseAudioTranscriptionOptions {

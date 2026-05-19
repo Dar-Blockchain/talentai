@@ -32,8 +32,10 @@ interface InterviewScreenProps {
     camera: UseCameraReturn;
     security: UseSecurityMonitoringReturn;
     coverage: Coverage | null;
+    resultsReady: boolean;
     startInterview: () => Promise<void>;
     endInterview: () => void;
+    skipQuestion: () => void;
   };
   configData: {
     jobData: JobPost | null;
@@ -63,8 +65,10 @@ export default function InterviewScreen({
     camera,
     security,
     coverage,
+    resultsReady,
     startInterview,
     endInterview,
+    skipQuestion,
   } = session;
 
   const { jobData, interviewConfig } = configData;
@@ -198,6 +202,7 @@ export default function InterviewScreen({
                 currentTranscript={
                   audio.accumulatedTranscript || audio.currentTranscript
                 }
+                resultsReady={resultsReady}
                 onStartInterview={startInterview}
               />
               {/* AI agent speaking / listening status and manual answer submit */}
@@ -206,6 +211,7 @@ export default function InterviewScreen({
                 agentState={audio.agentState}
                 isVoiceActive={audio.speechPhase === "speaking"}
                 onSubmitAnswer={audio.sendAccumulatedAnswer}
+                onSkipQuestion={skipQuestion}
               />
             </Box>
           </Box>
@@ -223,14 +229,14 @@ export default function InterviewScreen({
       />
 
       {/* Tab-switch / copy-paste violation warnings; second modal force-ends the session */}
-      <SecurityModals
+      {/* <SecurityModals
         showFirstViolationModal={security.showFirstViolationModal}
         showSecurityModal={security.showSecurityModal}
         violationType={security.violationType}
         securityViolationCount={security.securityViolationCount}
         onDismissFirst={() => security.setShowFirstViolationModal(false)}
         onReturnToDashboard={() => router.push("/candidate/dashboard")}
-      />
+      /> */}
 
       {/* Bottom-center toast for transient success / error / warning messages */}
       <Snackbar

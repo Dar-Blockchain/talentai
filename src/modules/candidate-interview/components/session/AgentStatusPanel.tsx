@@ -10,6 +10,7 @@ interface AgentStatusPanelProps {
   isVoiceActive?: boolean;
   currentTranscript?: string;
   onSubmitAnswer: () => void;
+  onSkipQuestion: () => void;
 }
 
 const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
@@ -18,6 +19,7 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
   isVoiceActive,
   currentTranscript,
   onSubmitAnswer,
+  onSkipQuestion,
 }) => {
   const { t } = useTranslation('interview');
   if (interviewStatus !== 'active') return null;
@@ -52,6 +54,21 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
           : !hasTranscript
           ? t('agent.waiting_for_speech', { defaultValue: 'Speak your answer…' })
           : t('agent.submit')}
+      </Button>
+      <Button
+        variant="text"
+        fullWidth
+        onClick={onSkipQuestion}
+        disabled={isProcessing}
+        sx={{
+          fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.8rem', mt: 0.5,
+          color: isProcessing ? '#d1d5db' : '#9ca3af',
+          textTransform: 'none',
+          '&:hover': { color: '#6b7280', bgcolor: 'transparent' },
+          '&.Mui-disabled': { color: '#d1d5db' },
+        }}
+      >
+        {t('agent.skip_question', { defaultValue: 'Skip question' })}
       </Button>
     </Box>
   );

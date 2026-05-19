@@ -1,5 +1,19 @@
 const mongoose = require('mongoose');
 
+// Schema for a single Q&A turn with AI evaluation
+const conversationTurnSchema = new mongoose.Schema({
+  question: String,
+  response: String,
+  targetArea: String,
+  timestamp: String,
+  evaluation: {
+    qualityScore: Number,
+    answeredQuestion: Boolean,
+    completeness: String,
+    depthLevel: String,
+  }
+}, { _id: false });
+
 // Schema for individual indicators
 const indicatorSchema = new mongoose.Schema({
   name: {
@@ -88,12 +102,6 @@ const postInterviewAssessmentSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  // ========== SKILL INFO ==========
-  skillType : {
-    type: String,
-    enum: ['technical','soft'],
-    default: 'technical'
-  },
   skill: String,
   // ========== INTERVIEW DATA ==========
   interviewData: {
@@ -138,6 +146,8 @@ const postInterviewAssessmentSchema = new mongoose.Schema({
       averageResponseLength: Number,
       interactionStyle: String
     },
+
+    conversation: [conversationTurnSchema],
 
     sessionId: {
       type: String,

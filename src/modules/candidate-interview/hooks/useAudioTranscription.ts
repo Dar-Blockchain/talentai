@@ -151,6 +151,37 @@ export const useAudioTranscription = ({
     return   { end_of_turn_confidence_threshold: 0.78, min_end_of_turn_silence_when_confident: 800, max_turn_silence: 8000  };
   };
 
+  // ── Skip guard (prevents double-fire) ────────────────────────────────────────
+
+  const skipGuardRef = useRef(false);
+
+  const skipQuestion = useCallback(() => {
+    if (skipGuardRef.current) return;
+    if (!socketRef.current?.connected || !sessionIdRef.current) return;
+
+    skipGuardRef.current = true;
+
+    setCurrentTranscript('');
+    setAccumulatedTranscript('');
+    accumulatedTurnsRef.current = [];
+    setFinalTranscriptSent(false);
+
+    setAgentState('thinking');
+    setAgentMessage('Skipping to next question…');
+
+    socketRef.current.emit('skip_question', {
+      sessionId: sessionIdRef.current,
+      timestamp: new Date().toISOString(),
+    });
+
+    setConversationHistory(prev => [
+      ...prev,
+      { type: 'system' as const, content: '(Question skipped)', timestamp: new Date().toISOString() },
+    ]);
+  }, [socketRef, sessionIdRef]);
+
+  const resetSkipGuard = useCallback(() => { skipGuardRef.current = false; }, []);
+
   // ── Send accumulated turns to backend ────────────────────────────────────────
 
   const sendAccumulatedAnswer = useCallback(() => {
@@ -490,5 +521,7 @@ export const useAudioTranscription = ({
     conversationHistory, setConversationHistory,
     lastVoiceActivity, setLastVoiceActivity,
     coverageDashboardExpanded, setCoverageDashboardExpanded,
+    skipQuestion,
+    resetSkipGuard,
   };
 };

@@ -21,6 +21,27 @@ import {
 const scoreColor = (pct: number) =>
   pct >= 80 ? "#22c55e" : pct >= 50 ? "#f59e0b" : "#ef4444";
 
+const TECH_LABELS: Record<string, string> = {
+  reactjs: 'ReactJS', nodejs: 'Node.js', expressjs: 'ExpressJS', nextjs: 'Next.js',
+  vuejs: 'Vue.js', angularjs: 'AngularJS', typescript: 'TypeScript', javascript: 'JavaScript',
+  python: 'Python', java: 'Java', golang: 'Go', rust: 'Rust', ruby: 'Ruby',
+  css: 'CSS', html: 'HTML', html5: 'HTML5', css3: 'CSS3',
+  api: 'API', rest: 'REST', graphql: 'GraphQL', http: 'HTTP',
+  sql: 'SQL', nosql: 'NoSQL', mongodb: 'MongoDB', postgresql: 'PostgreSQL',
+  mysql: 'MySQL', redis: 'Redis', aws: 'AWS', gcp: 'GCP', azure: 'Azure',
+  docker: 'Docker', kubernetes: 'Kubernetes', devops: 'DevOps',
+  ui: 'UI', ux: 'UX', oop: 'OOP', ai: 'AI', ml: 'ML',
+  blockchain: 'Blockchain', web3: 'Web3',
+  kotlin: 'Kotlin', swift: 'Swift', flutter: 'Flutter',
+};
+
+function formatAreaLabel(key: string): string {
+  return key
+    .split('_')
+    .map(w => TECH_LABELS[w.toLowerCase()] ?? (w.charAt(0).toUpperCase() + w.slice(1)))
+    .join(' ');
+}
+
 interface CoverageDashboardProps {
   coverage: Coverage | null;
 }
@@ -275,7 +296,7 @@ const CoverageDashboard: React.FC<CoverageDashboardProps> = ({ coverage }) => {
                                 textOverflow: "ellipsis",
                               }}
                             >
-                              {areaName}
+                              {areaData.label || formatAreaLabel(areaName)}
                             </Typography>
                             <Typography
                               sx={{
