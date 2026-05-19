@@ -15,12 +15,11 @@ import { normalizeLangCode } from '@/hooks/useLanguage';
 const initialProfile: UserProfile = {
   username: '',
   email: '',
-  requiredExperienceLevel: 'Mid Level',
   targetRole: '',
   firstName: '',
   lastName: '',
   gender: 'Male',
-  country: 'Tunisia',
+  country: '',
   language: 'en',
   timezone: 'UTC+01:00',
   phone: '',
@@ -101,12 +100,11 @@ export const useCompanyProfileManagement = () => {
       setProfile({
         username: companyUser.username || '',
         email: companyUser.email || companyData?.email || '',
-        requiredExperienceLevel: companyProfile?.requiredExperienceLevel || companyData?.requiredExperienceLevel || 'Mid Level',
         targetRole: companyProfile?.targetRole || '',
         firstName: '',
         lastName: '',
         gender: 'Male',
-        country: companyData?.location || 'Tunisia',
+        country: companyData?.location || '',
         language: normalizeLangCode(companyProfile?.language || companyData?.language) ?? 'en',
         timezone: 'UTC+01:00',
         phone: companyData?.phone || '',
@@ -147,7 +145,7 @@ export const useCompanyProfileManagement = () => {
         firstName: '',
         lastName: '',
         gender: 'Male',
-        country: companyData?.location || 'Tunisia',
+        country: companyData?.location || '',
         language: normalizeLangCode(reduxProfile?.language || companyData?.language) ?? 'en',
         timezone: 'UTC+01:00',
         phone: reduxProfile.companyDetails?.phone || '',
@@ -365,27 +363,16 @@ const handleSaveProfile = useCallback(async () => {
     updatePayload.size = profile.size;
     updatePayload.employmentType = profile.employmentType;
     updatePayload.requiredSkills = profile.requiredSkills || [];
-    updatePayload.requiredExperienceLevel = profile.requiredExperienceLevel;
     updatePayload.language = profile.language || 'en';
-  }
 
-  if (activeTab === 'contact') {
     const contactInfo: any = {};
-
-    if (profile.phone) contactInfo.phone = profile.phone;
     if (profile.location) contactInfo.location = profile.location;
     if (profile.linkedin) contactInfo.linkedin = profile.linkedin;
     if (profile.website) contactInfo.website = profile.website;
-    if (profile.employmentType) contactInfo.employmentType = profile.employmentType;
-    if (profile.size) contactInfo.size = profile.size;
-    if (profile.industry) contactInfo.industry = profile.industry;
-
-    if (Object.keys(contactInfo).length === 0) {
-      showToast({ message: 'Please fill in at least one field to update', severity: 'warning' });
-      return;
+    if (profile.phone) contactInfo.phone = profile.phone;
+    if (Object.keys(contactInfo).length > 0) {
+      updatePayload.companyDetails = contactInfo;
     }
-
-    updatePayload.companyDetails = contactInfo;
   }
 
   // 3️⃣ API CALL (ONLY HERE)

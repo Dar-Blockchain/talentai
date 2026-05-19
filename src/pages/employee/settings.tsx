@@ -19,8 +19,7 @@ import { AppDispatch, RootState } from "@/store/store";
 import { uploadProfileImage, getMyProfile } from "@/store/slices/userSlice";
 import axiosInstance from "@/utils/axiosInstance";
 import dynamic from "next/dynamic";
-
-const TEAL = "#0D9488";
+import { Section, InfoRow, TEAL } from "@/modules/settings/shared";
 
 const fieldSx = {
   "& .MuiInputLabel-root": { color: "#6B7280", fontFamily: "Poppins", fontSize: "0.9rem" },
@@ -36,49 +35,6 @@ const fieldSx = {
   },
 };
 
-const Section: React.FC<{ title: string; subtitle?: string; children: React.ReactNode }> = ({ title, subtitle, children }) => (
-  <Box sx={{ bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "16px", overflow: "hidden", mb: 3 }}>
-    <Box sx={{ px: 3, py: 2.5, borderBottom: "1px solid #F3F4F6" }}>
-      <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "0.95rem", color: "#111827" }}>
-        {title}
-      </Typography>
-      {subtitle && (
-        <Typography sx={{ fontFamily: "Poppins", fontSize: "0.8rem", color: "#9CA3AF", mt: 0.25 }}>
-          {subtitle}
-        </Typography>
-      )}
-    </Box>
-    <Box sx={{ px: 3, py: 3 }}>{children}</Box>
-  </Box>
-);
-
-const InfoRow: React.FC<{
-  icon: React.ReactNode;
-  iconBg: string;
-  iconBorder: string;
-  label: string;
-  value: string;
-  chip?: React.ReactNode;
-}> = ({ icon, iconBg, iconBorder, label, value, chip }) => (
-  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-    <Box sx={{
-      width: 40, height: 40, borderRadius: "10px", flexShrink: 0,
-      bgcolor: iconBg, border: `1px solid ${iconBorder}`,
-      display: "flex", alignItems: "center", justifyContent: "center",
-    }}>
-      {icon}
-    </Box>
-    <Box sx={{ flex: 1 }}>
-      <Typography sx={{ fontFamily: "Poppins", fontSize: "0.78rem", color: "#9CA3AF", mb: 0.25 }}>
-        {label}
-      </Typography>
-      <Typography sx={{ fontFamily: "Poppins", fontWeight: 600, fontSize: "0.9rem", color: "#111827" }}>
-        {value}
-      </Typography>
-    </Box>
-    {chip}
-  </Box>
-);
 
 const EmployeeSettingsPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();

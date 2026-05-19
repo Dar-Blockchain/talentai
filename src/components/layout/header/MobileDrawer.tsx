@@ -9,7 +9,7 @@ import HeaderLogo from "./HeaderLogo";
 import HeaderNavMenu from "./HeaderNavMenu";
 import { useTranslation } from "react-i18next";
 import LogoutProgressModal from "@/components/ui/LogoutProgressModal";
-import { getCandidateChatBasePath } from "@/modules/candidate-chat/utils/routes";
+import { getCandidateChatBasePath } from "@/modules/chat/candidate-chat/utils/routes";
 import DashboardOutlined   from "@mui/icons-material/DashboardOutlined";
 import ChatBubbleOutlineOutlined from "@mui/icons-material/ChatBubbleOutlineOutlined";
 import NotificationsOutlined from "@mui/icons-material/NotificationsOutlined";

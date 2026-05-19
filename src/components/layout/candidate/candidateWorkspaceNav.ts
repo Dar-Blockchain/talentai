@@ -7,7 +7,7 @@ import SchoolOutlined from "@mui/icons-material/SchoolOutlined";
 import {
   CANDIDATE_MESSAGES_BASE_PATH,
   isCandidateMessagesPath,
-} from "@/modules/candidate-chat/utils/routes";
+} from "@/modules/chat/candidate-chat/utils/routes";
 
 export type CandidateWorkspaceView = "applications" | "skills" | "interviews";
 

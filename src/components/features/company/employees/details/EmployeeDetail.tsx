@@ -7,7 +7,7 @@ import ArrowBackOutlined from "@mui/icons-material/ArrowBackOutlined";
 import EditOutlined from "@mui/icons-material/EditOutlined";
 import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
 import ChatBubbleOutlineOutlined from "@mui/icons-material/ChatBubbleOutlineOutlined";
-import { useStartTeamChat } from "@/modules/team-chat";
+import { useStartTeamChat } from "@/modules/chat/team-chat";
 import EmailOutlined from "@mui/icons-material/EmailOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";

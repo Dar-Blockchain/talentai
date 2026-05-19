@@ -7,21 +7,15 @@ import { useTranslation } from "react-i18next";
 import { RootState } from "@/store/store";
 import axios from "axios";
 import Header from "@/components/layout/dashboard/Header";
-import NotificationsTab from "@/components/features/profile/NotificationsTab";
-import PersonalInformationTab from "@/components/features/profile/PersonalInformationTab";
-import ProfileVisibilityTab from "@/components/features/profile/ProfileVisibilityTab";
-import SnackbarNotifications from "@/components/features/profile/SnackbarNotifications";
-import LanguageTab from "@/components/features/company/settings/LanguageTab";
-import { useProfileManagement } from "@/hooks/useProfileManagement";
+import { NotificationsTab, PersonalInformationTab, ProfileVisibilityTab, SnackbarNotifications, LanguageTab, useProfileManagement } from "@/modules/settings/candidate";
 import PersonOutlined from "@mui/icons-material/PersonOutlined";
 import LanguageIcon from "@mui/icons-material/Language";
 import NotificationsOutlined from "@mui/icons-material/NotificationsOutlined";
 import VisibilityOutlined from "@mui/icons-material/VisibilityOutlined";
 
-const T    = "#0D9488";
+import { TEAL as T, TEAL_BG as TBG, TEAL_BORDER as TBRD } from "@/modules/settings/shared";
+
 const TL   = "#14B8A6";
-const TBG  = "#F0FDFA";
-const TBRD = "#99F6E4";
 const NAVY = "#0D1B2A";
 
 const TAB_IDS = [

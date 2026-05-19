@@ -12,8 +12,8 @@ import {
   ChatBubbleOutlineOutlined,
 } from "@mui/icons-material";
 import { EmployeePermissionKey } from "@/types/employeePermissions";
-import { CANDIDATE_MESSAGES_BASE_PATH } from "@/modules/candidate-chat/utils/routes";
-import { MESSAGES_BASE_PATH } from "@/modules/shared/chat/constants/messagesRoutes";
+import { CANDIDATE_MESSAGES_BASE_PATH } from "@/modules/chat/candidate-chat/utils/routes";
+import { MESSAGES_BASE_PATH } from "@/modules/chat/shared/constants/messagesRoutes";
 
 export const navigation = [
   { id: "dashboard",    icon: SpaceDashboardOutlined, label: "Dashboard",    href: "/company/dashboard" },

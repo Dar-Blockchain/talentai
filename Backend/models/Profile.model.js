@@ -158,10 +158,6 @@ const profileSchema = new mongoose.Schema(
       },
     },
     requiredSkills: [String],
-    requiredExperienceLevel: {
-      type: String,
-      enum: ["Entry Level", "Junior", "Mid Level", "Senior", "Expert"],
-    },
     targetRole: {
       type: String,
       default: "",
