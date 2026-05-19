@@ -4,7 +4,7 @@ import { Box, Divider } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { generatePost, setEmploymentType, setExpirationDate, setPromptDescription, setWorkMode, updateSalaryField } from "@/store/slices/postGenerationSlice";
+import { setEmploymentType, setExpirationDate, setPromptDescription, setWorkMode, updateSalaryField } from "../store/createPostSlice";
 import { AppDispatch } from "@/store/store";
 import GenerateLanguageModal, { GENERATE_LANG_KEY } from "./GenerateLanguageModal";
 import CardHeader from "./post-description/CardHeader";
@@ -12,13 +12,17 @@ import PromptField from "./post-description/PromptField";
 import RoleFields from "./post-description/RoleFields";
 import SalaryFields from "./post-description/SalaryFields";
 import GenerateButton from "./post-description/GenerateButton";
+import { useGeneratePostMutation } from "../queries/useCreatePostQueries";
 
 const PostDescription = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { promptDescription, salary, workMode, employmentType, expirationDate, loading } = useSelector(
+  const { promptDescription, salary, workMode, employmentType, expirationDate, interviewLanguages } = useSelector(
     (state: any) => state.postGeneration
   );
   const { t } = useTranslation("posts");
+
+  const generateMutation = useGeneratePostMutation();
+  const loading = generateMutation.isPending;
 
   const [errors, setErrors] = useState({ promptDescription: "", salary: "", employmentType: "", workMode: "" });
   const [langModalOpen, setLangModalOpen] = useState(false);
@@ -40,7 +44,7 @@ const PostDescription = () => {
   };
 
   const handleConfirmLanguage = (language: string) => {
-    dispatch(generatePost({ jobDescription: promptDescription, salary, workMode, contractType: employmentType, language }));
+    generateMutation.mutate({ jobDescription: promptDescription, salary, workMode, contractType: employmentType, language, interviewLanguages });
     setLangModalOpen(false);
   };
 

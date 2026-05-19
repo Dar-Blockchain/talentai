@@ -2,7 +2,7 @@ import { Box, TextField, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
-import { updateJobField, updateRequirements, updateResponsibilities } from "@/store/slices/postGenerationSlice";
+import { updateJobField, updateRequirements, updateResponsibilities } from "../../store/createPostSlice";
 import SectionCard from "@/components/ui/SectionCard";
 import { labelSx, textareaSx } from "./styles";
 

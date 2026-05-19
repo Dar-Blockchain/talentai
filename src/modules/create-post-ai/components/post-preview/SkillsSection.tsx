@@ -3,7 +3,7 @@ import InfoOutlined from "@mui/icons-material/InfoOutlined";
 import { Trans, useTranslation } from "react-i18next";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
-import { HardSkill, SoftSkill, deleteHardSkill, deleteSoftSkill } from "@/store/slices/postGenerationSlice";
+import { HardSkill, SoftSkill, deleteHardSkill, deleteSoftSkill } from "../../store/createPostSlice";
 import { hardSkillLevelLabel, softSkillLevelLabel } from "@/utils/postFormI18n";
 import SectionCard from "@/components/ui/SectionCard";
 import SkillChip from "./SkillChip";

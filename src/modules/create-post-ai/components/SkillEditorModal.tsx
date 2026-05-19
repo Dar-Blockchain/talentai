@@ -2,7 +2,7 @@
 import React from "react";
 import { Dialog, DialogContent, Box } from "@mui/material";
 import { useDispatch } from "react-redux";
-import { editHardSkill, editSoftSkill, addHardSkill, addSoftSkill } from "@/store/slices/postGenerationSlice";
+import { editHardSkill, editSoftSkill, addHardSkill, addSoftSkill } from "../store/createPostSlice";
 import ModalHeader from "./skill-editor/ModalHeader";
 import SkillNameField from "./skill-editor/SkillNameField";
 import LevelField from "./skill-editor/LevelField";

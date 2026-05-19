@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/useToast";
 import { useDeletePost } from "@/components/features/company/posts/details/useDeletePost";
 import DeletePostModal from "@/components/features/company/posts/details/DeletePostModal";
 import PublishConfirmModal from "@/components/features/company/posts/PublishConfirmModal";
-import InterviewLanguagesModal from "@/components/features/company/posts/create/InterviewLanguagesModal";
+import InterviewLanguagesModal from "@/modules/create-post-ai/components/InterviewLanguagesModal";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
 import JobDetailContent from "@/components/features/company/posts/details/JobDetailContent";
 import ApplicationsView from "@/components/features/company/posts/details/ApplicationsView";
@@ -55,7 +55,7 @@ const PostDetailsPage: React.FC = () => {
   const error = useSelector(selectCurrentJobError);
   const connectedUser        = useSelector((state: RootState) => state.user.connectedUser.user);
   const companyMembership    = useSelector((state: RootState) => state.user.connectedUser.companyMembership);
-  const [activeEdit, setActiveEdit] = useState<"post" | "recruitment" | null>(null);
+  const [activeEdit, setActiveEdit] = useState<"post" | null>(null);
   const [activeTab, setActiveTab] = useState<"details" | "applications">("details");
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
@@ -453,7 +453,6 @@ const PostDetailsPage: React.FC = () => {
                   isOwner={isOwner}
                   creationType={job.creationType}
                   onEditPost={() => setActiveEdit("post")}
-                  onEditRecruitment={() => setActiveEdit("recruitment")}
                   onCancelEdit={() => setActiveEdit(null)}
                   onSaveSuccess={handleSaveSuccess}
                 />

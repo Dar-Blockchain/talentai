@@ -216,7 +216,7 @@ const PostsPage: React.FC = () => {
 
   const handleCreateClick = () => {
     if (postsAtLimit) return;
-    router.push("/company/posts/create-ai");
+    router.push("/company/posts/create");
   };
 
   return (

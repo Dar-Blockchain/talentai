@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Box } from "@mui/material";
 import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
-import { HardSkill, SoftSkill } from "@/store/slices/postGenerationSlice";
+import { HardSkill, SoftSkill } from "../store/createPostSlice";
 import { normalizeEmploymentType, normalizeWorkMode } from "@/utils/postFormI18n";
 import SkillEditorModal from "./SkillEditorModal";
 import PreviewHeader from "./post-preview/PreviewHeader";

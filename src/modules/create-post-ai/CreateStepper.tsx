@@ -4,7 +4,7 @@ import WorkOutlineOutlined from "@mui/icons-material/WorkOutlineOutlined";
 import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { setInterviewLanguages, selectGeneratedPost } from "@/store/slices/postGenerationSlice";
+import { setInterviewLanguages, selectGeneratedPost } from "./store/createPostSlice";
 import { selectSavedPostId } from "@/store/slices/postSlice";
 import { useAiPostStepper } from "./hooks";
 import PostDetailsStep from "./components/PostDetailsStep";
