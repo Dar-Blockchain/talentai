@@ -72,6 +72,7 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
       profile.language = profileData.language || profile.language;
       profile.timeZone = profileData.timeZone || profile.timeZone;
       profile.targetRole = profileData.targetRole || profile.targetRole;
+      profile.requiredExperienceLevel = profileData.requiredExperienceLevel || profile.requiredExperienceLevel;
       // Update salary expectations
       if (profileData.expectedSalary) {
         console.log("💰 [createOrUpdateProfile] Updating expectedSalary:", profileData.expectedSalary);
@@ -188,9 +189,11 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
         employmentType: companyDetailsInput.employmentType || profileData.employmentType,
       },
       requiredSkills: profileData.requiredSkills || [],
+      requiredExperienceLevel: profileData.requiredExperienceLevel || "Entry Level",
     };
 
     console.log("📊 [createOrUpdateCompanyProfile] Profile data to save:", JSON.stringify(profileDataToSave, null, 2));
+    console.log("🎯 [createOrUpdateCompanyProfile] requiredExperienceLevel value:", profileDataToSave.requiredExperienceLevel);
     console.log("📧 [createOrUpdateCompanyProfile] contactInformation value:", profileDataToSave.contactInformation);
 
     if (profile) {
@@ -213,6 +216,8 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
       };
 
       profile.requiredSkills = profileData.requiredSkills || profile.requiredSkills;
+      profile.requiredExperienceLevel = profileData.requiredExperienceLevel || profile.requiredExperienceLevel;
+      console.log("📝 [createOrUpdateCompanyProfile] After update - requiredExperienceLevel:", profile.requiredExperienceLevel);
       console.log("🏢 [createOrUpdateCompanyProfile] Company details updated:", JSON.stringify(profile.companyDetails, null, 2));
 
       await profile.save();

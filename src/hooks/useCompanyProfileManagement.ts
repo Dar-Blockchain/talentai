@@ -15,6 +15,7 @@ import { normalizeLangCode } from '@/hooks/useLanguage';
 const initialProfile: UserProfile = {
   username: '',
   email: '',
+  requiredExperienceLevel: 'Mid Level',
   targetRole: '',
   firstName: '',
   lastName: '',
@@ -100,6 +101,7 @@ export const useCompanyProfileManagement = () => {
       setProfile({
         username: companyUser.username || '',
         email: companyUser.email || companyData?.email || '',
+        requiredExperienceLevel: companyProfile?.requiredExperienceLevel || companyData?.requiredExperienceLevel || 'Mid Level',
         targetRole: companyProfile?.targetRole || '',
         firstName: '',
         lastName: '',
@@ -363,6 +365,7 @@ const handleSaveProfile = useCallback(async () => {
     updatePayload.size = profile.size;
     updatePayload.employmentType = profile.employmentType;
     updatePayload.requiredSkills = profile.requiredSkills || [];
+    updatePayload.requiredExperienceLevel = profile.requiredExperienceLevel;
     updatePayload.language = profile.language || 'en';
 
     const contactInfo: any = {};

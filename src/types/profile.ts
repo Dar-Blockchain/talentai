@@ -6,7 +6,7 @@ export interface UserProfile {
   // Editable fields
   username: string;
   email: string;
-  requiredExperienceLevel?: string;
+  requiredExperienceLevel: string;
   targetRole: string;
   firstName: string;
   lastName: string;
