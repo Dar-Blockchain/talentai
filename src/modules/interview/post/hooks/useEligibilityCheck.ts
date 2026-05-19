@@ -18,7 +18,7 @@ export function useEligibilityCheck() {
     ? (router.query.jobId as string)
     : null;
 
-  const { data, isLoading } = useEligibilityQuery(postId);
+  const { data, isLoading } = useEligibilityQuery(postId, authUser?._id);
 
   const rawStatus = data?.status;
   const eligibilityStatus: EligibilityStatus =
