@@ -9,6 +9,7 @@ import {
 import { candidateChatKeys } from "@/modules/candidate-chat/queries/keys";
 import {
   addCandidateMessage,
+  confirmCandidatePendingMessage,
   markCandidateConversationReadLocal,
   removeCandidateConversation,
   removeCandidateMessage,
@@ -16,6 +17,7 @@ import {
   setCandidateCurrentConversation,
   setCandidateMessages,
   setCandidateTotalUnread,
+  syncConversationLastMessage,
   upsertCandidateConversation,
   upsertCandidateMessage,
 } from "@/modules/candidate-chat/store/candidateChatSlice";
@@ -44,7 +46,7 @@ export const useCandidateConversationsQuery = (
   const viewerKey = viewerId != null ? String(viewerId) : "";
 
   const query = useQuery({
-    queryKey: [...candidateChatKeys.conversations(params), viewerKey],
+    queryKey: candidateChatKeys.conversations(params),
     queryFn: async () => {
       const conversations = await candidateChatApi.fetchConversations(params);
 
@@ -81,7 +83,7 @@ export const useCandidateConversationQuery = (
   const viewerKey = viewerId != null ? String(viewerId) : "";
   const enabled = (options?.enabled ?? true) && !!conversationId;
   const query = useQuery({
-    queryKey: [...candidateChatKeys.conversation(conversationId || "none"), viewerKey],
+    queryKey: candidateChatKeys.conversation(conversationId || "none"),
     queryFn: async () => toChatShellConversation(
       await candidateChatApi.fetchConversation(conversationId as string),
       viewerKey || undefined,
@@ -106,15 +108,37 @@ export const useCandidateMessagesQuery = (
   const viewerKey = viewerId != null ? String(viewerId) : "";
   const enabled = (options?.enabled ?? true) && !!conversationId;
   const query = useQuery({
-    queryKey: [...candidateChatKeys.messages(conversationId || "none", params), viewerKey],
+    // viewerKey is intentionally NOT part of the query key. The queryFn already filters
+    // by viewer via closure. Including viewerKey caused setQueriesData callers (which omit it)
+    // to silently miss the cache and leave optimistic/socket updates unwritten.
+    queryKey: candidateChatKeys.messages(conversationId || "none", params),
     queryFn: async () => {
-      const messages = await candidateChatApi.fetchMessages(conversationId as string, params);
-      return messages
-        .map(toChatShellMessage)
-        .filter((msg) => !msg.deliveryBlocked || !viewerKey || String(msg.sender._id) === viewerKey);
+      try {
+        const messages = await candidateChatApi.fetchMessages(conversationId as string, params);
+        return messages
+          .map(toChatShellMessage)
+          .filter((msg) => !msg.deliveryBlocked || !viewerKey || String(msg.sender._id) === viewerKey);
+      } catch (err: any) {
+        // 404 means the conversation has no messages yet or was just created.
+        // Treat it as an empty list so the chat opens cleanly instead of erroring.
+        const status = err?.response?.status ?? err?.status;
+        if (status === 404) return [] as ReturnType<typeof toChatShellMessage>[];
+        throw err;
+      }
     },
     enabled,
-    staleTime: 30_000,
+    // Socket events keep the message cache fresh in real-time via setQueryData/dispatch.
+    // Allowing React Query to background-refetch overwrites socket updates and causes
+    // messages to disappear on window focus or stale-time expiry.
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    // Retry once after a short delay for transient server errors (e.g. backend not yet ready).
+    retry: (failureCount, err: any) => {
+      const status = err?.response?.status ?? err?.status;
+      if (status === 404 || status === 403) return false; // handled above or auth issue
+      return failureCount < 1;
+    },
   });
 
   useEffect(() => {
@@ -124,7 +148,16 @@ export const useCandidateMessagesQuery = (
   useEffect(() => {
     if (!conversationId || !enabled) return;
     if (!query.isFetched || !query.isSuccess) return;
-    dispatch(setCandidateMessages(Array.isArray(query.data) ? query.data : []));
+    const apiMessages = Array.isArray(query.data) ? query.data : [];
+    // Merge API data with any socket-received messages that arrived while the
+    // fetch was in-flight. Without this, the dispatch overwrites them and the
+    // other user's messages disappear until the next socket event.
+    const current = store.getState().candidateChat.messages;
+    const apiIds = new Set(apiMessages.map((m) => String(m._id)));
+    const socketOnly = current.filter(
+      (m) => !apiIds.has(String(m._id)) && !String(m._id).startsWith("temp_"),
+    );
+    dispatch(setCandidateMessages([...apiMessages, ...socketOnly]));
   }, [conversationId, dispatch, enabled, query.data, query.isFetched, query.isSuccess]);
 
   return query;
@@ -174,6 +207,10 @@ export const useSendCandidateMessageMutation = () => {
 
       const tempMessage: ChatShellMessage = {
         _id: tempId,
+        // stableKey persists across the temp→confirmed transition so MessageList
+        // reuses the same component instance (smooth CSS opacity/time transition,
+        // no remount animation replay).
+        stableKey: tempId,
         text: variables.text,
         sender: { _id: String(currentUserId) },
         receiver: { _id: variables.receiverId },
@@ -199,14 +236,14 @@ export const useSendCandidateMessageMutation = () => {
     onSuccess: (message, variables, context) => {
       if (!context?.tempId) return;
       const mapped = toChatShellMessage(message);
-      const currentUserId = store.getState().user?.connectedUser?.user?._id;
+      // Carry the stableKey forward so the MessageRow key stays "temp_xxx" in both
+      // the temp and confirmed states — React reuses the component, no remount.
+      mapped.stableKey = context.tempId;
 
-      dispatch(removeCandidateMessage(context.tempId));
-      dispatch(addCandidateMessage({
-        message: mapped,
-        viewerUserId: String(currentUserId ?? ""),
-        viewerIsViewingConversation: true,
-      }));
+      // In-place replacement: finds the temp slot and replaces it atomically.
+      // Avoids the remove→add two-step that changes the React key and triggers
+      // an unwanted remount + bubbleIn animation on the confirmed message.
+      dispatch(confirmCandidatePendingMessage({ tempId: context.tempId, message: mapped }));
 
       queryClient.setQueriesData(
         { queryKey: candidateChatKeys.messages(variables.conversationId) },
@@ -260,9 +297,24 @@ export const useDeleteCandidateMessageMutation = () => {
       scope: "me" | "everyone";
       conversationId: string;
     }) => candidateChatApi.deleteMessage(messageId, scope),
+    onMutate: async (variables) => {
+      const messagesKey = candidateChatKeys.messages(variables.conversationId);
+      // Cancel any in-flight refetch before the delete so a stale response
+      // can't land after we clear the cache and put the deleted row back.
+      await queryClient.cancelQueries({ queryKey: messagesKey });
+      const snapshot = queryClient.getQueryData(messagesKey);
+      return { snapshot };
+    },
+    onError: (_err, variables, context) => {
+      if (context?.snapshot !== undefined) {
+        queryClient.setQueryData(
+          candidateChatKeys.messages(variables.conversationId),
+          context.snapshot,
+        );
+      }
+    },
     onSuccess: async (_, variables) => {
       const messagesKey = candidateChatKeys.messages(variables.conversationId);
-      await queryClient.cancelQueries({ queryKey: messagesKey });
 
       if (variables.scope === "everyone") {
         const prev = store.getState().candidateChat.messages.find(
@@ -273,8 +325,8 @@ export const useDeleteCandidateMessageMutation = () => {
           const mapped = toChatShellMessage({
             _id: variables.messageId,
             conversationId: variables.conversationId,
-            senderId: String(prev.sender._id),
-            receiverId: String(prev.receiver._id),
+            sender: { _id: String(prev.sender._id) },
+            receiver: { _id: String(prev.receiver._id) },
             isRead: prev.isRead,
             createdAt: prev.createdAt,
             isDeletedForEveryone: true,
@@ -295,6 +347,9 @@ export const useDeleteCandidateMessageMutation = () => {
         }
       } else {
         dispatch(removeCandidateMessage(variables.messageId));
+        // After removal, recompute the conversation's sidebar preview from the
+        // remaining messages so the deleted row no longer appears as lastMessage.
+        dispatch(syncConversationLastMessage(variables.conversationId));
         queryClient.setQueriesData({ queryKey: messagesKey }, (old) => {
           if (!Array.isArray(old)) return old;
           return old.filter((m: any) => String(m._id) !== String(variables.messageId));

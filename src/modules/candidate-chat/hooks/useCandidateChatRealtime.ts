@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/router";
@@ -35,19 +35,32 @@ export const useCandidateChatRealtime = () => {
   const router = useRouter();
   const { t } = useTranslation("modules/candidates/candidateChat");
   const currentUser = useSelector((state: RootState) => state.user.connectedUser.user);
-  const routeContextRef = useRef({
-    pathname: normalizeResolvedPath(router.asPath),
-    role: currentUser?.role ?? null,
-  });
   const currentUserId = currentUser?._id;
   const enabled = isCandidateChatUser(currentUser?.role);
 
-  useEffect(() => {
-    routeContextRef.current = {
+  // All values that change between renders live in a ref so socket handlers
+  // always read the latest value without the effect being torn down and re-registered.
+  const latestRef = useRef({
+    t,
+    pathname: normalizeResolvedPath(router.asPath),
+    role: currentUser?.role ?? null,
+    currentUserId,
+    dispatch,
+    queryClient,
+  });
+
+  // useLayoutEffect keeps the ref in sync before any paint so handlers never
+  // close over a stale value even on the same render cycle.
+  useLayoutEffect(() => {
+    latestRef.current = {
+      t,
       pathname: normalizeResolvedPath(router.asPath),
       role: currentUser?.role ?? null,
+      currentUserId,
+      dispatch,
+      queryClient,
     };
-  }, [currentUser?.role, router.asPath]);
+  });
 
   useCandidateConversationsQuery(undefined, { enabled: enabled && !!currentUserId });
 
@@ -61,6 +74,10 @@ export const useCandidateChatRealtime = () => {
     if (!socket) return;
 
     const handleIncomingMessage = (payload: unknown) => {
+      // Always read from ref — never from stale closure
+      const { currentUserId: uid, pathname, role, dispatch: d, queryClient: qc, t: translate } = latestRef.current;
+      if (!uid) return;
+
       const normalized = normalizeCandidateSocketMessage(payload as Parameters<typeof normalizeCandidateSocketMessage>[0]);
       const msgId = String(normalized._id || "");
       if (
@@ -71,30 +88,42 @@ export const useCandidateChatRealtime = () => {
       }
 
       const senderId = String(normalized.sender._id);
-      const isIncoming = senderId !== String(currentUserId);
+      const isIncoming = senderId !== String(uid);
       if (normalized.deliveryBlocked && isIncoming) return;
+
+      // For own messages: if there is already a pending (optimistic) temp in Redux,
+      // the send mutation's onSuccess will handle the temp→confirmed transition via
+      // confirmCandidatePendingMessage. Processing the socket echo here would add
+      // a second confirmed bubble alongside the temp — causing a double-bubble flash.
+      // Skip unless there is no pending temp (e.g., another tab sent the message).
+      if (!isIncoming) {
+        const hasPendingFromSelf = store.getState().candidateChat.messages.some(
+          (m) => m.pending && String(m.sender._id) === senderId,
+        );
+        if (hasPendingFromSelf) return;
+      }
 
       const openConversationId = store.getState().candidateChat.currentConversation?._id || null;
       const conversationId = String(normalized.conversationId || "");
       const { viewerIsViewingConversation, shouldNotify } = getIncomingMessageFlags({
         module: "candidate",
-        pathname: routeContextRef.current.pathname,
-        role: routeContextRef.current.role,
+        pathname,
+        role,
         openConversationId,
-        currentUserId: String(currentUserId),
+        currentUserId: String(uid),
         message: normalized,
         conversationId,
       });
 
-      dispatch(addCandidateMessage({
+      d(addCandidateMessage({
         message: normalized,
-        viewerUserId: String(currentUserId),
+        viewerUserId: String(uid),
         viewerIsViewingConversation,
       }));
 
       // addCandidateMessage already updates conversations (lastMessage preview, sort order,
       // unreadCount) and messages in Redux. Only invalidate unreadCount to sync the server total.
-      queryClient.invalidateQueries({ queryKey: candidateChatKeys.unreadCount() });
+      qc.invalidateQueries({ queryKey: candidateChatKeys.unreadCount() });
 
       if (!shouldNotify) return;
 
@@ -103,24 +132,22 @@ export const useCandidateChatRealtime = () => {
       emitToast({
         severity: "info",
         message: preview
-          ? t("realtime.new_message", {
+          ? translate("realtime.new_message", {
               preview: preview.length > 80 ? `${preview.slice(0, 80)}...` : preview,
             })
-          : t("realtime.new_message_fallback"),
+          : translate("realtime.new_message_fallback"),
       });
     };
 
-    const handleMessageDeleted = async (payload: {
+    const handleMessageDeleted = (payload: {
       messageId?: string;
       conversationId?: string;
     }) => {
+      const { dispatch: d, queryClient: qc } = latestRef.current;
       if (!payload?.messageId) return;
       const cid = payload.conversationId ? String(payload.conversationId) : "";
       if (cid) {
-        await queryClient.cancelQueries({
-          queryKey: candidateChatKeys.messages(cid),
-        });
-        queryClient.setQueriesData(
+        qc.setQueriesData(
           { queryKey: candidateChatKeys.messages(cid) },
           (old) => {
             if (!Array.isArray(old)) return old;
@@ -128,15 +155,14 @@ export const useCandidateChatRealtime = () => {
           },
         );
       }
-      dispatch(removeCandidateMessage(String(payload.messageId)));
-      // setQueriesData above and Redux dispatch already handle messages and conversation previews.
-      await queryClient.invalidateQueries({ queryKey: candidateChatKeys.unreadCount() });
+      d(removeCandidateMessage(String(payload.messageId)));
     };
 
-    const handleMessageUpdated = async (payload: {
+    const handleMessageUpdated = (payload: {
       message?: CandidateMessage;
       conversationId?: string;
     }) => {
+      const { dispatch: d, queryClient: qc } = latestRef.current;
       if (!payload?.message?._id) return;
       const merged: CandidateMessage = {
         ...payload.message,
@@ -145,8 +171,7 @@ export const useCandidateChatRealtime = () => {
       const mapped = toChatShellMessage(merged);
       const cid = merged.conversationId ? String(merged.conversationId) : "";
       if (cid) {
-        await queryClient.cancelQueries({ queryKey: candidateChatKeys.messages(cid) });
-        queryClient.setQueriesData({ queryKey: candidateChatKeys.messages(cid) }, (old) => {
+        qc.setQueriesData({ queryKey: candidateChatKeys.messages(cid) }, (old) => {
           if (!Array.isArray(old)) return old;
           const id = String(mapped._id);
           const idx = old.findIndex((m) => String(m._id) === id);
@@ -156,21 +181,33 @@ export const useCandidateChatRealtime = () => {
           return next;
         });
       }
-      dispatch(upsertCandidateMessage(mapped));
-      // setQueriesData above and Redux dispatch already handle messages and conversation previews.
-      await queryClient.invalidateQueries({ queryKey: candidateChatKeys.unreadCount() });
+      d(upsertCandidateMessage(mapped));
     };
 
     const handleConversationDeleted = ({ conversationId }: { conversationId: string }) => {
-      dispatch(removeCandidateConversation(conversationId));
-      queryClient.setQueriesData(
-        { queryKey: [...candidateChatKeys.all, "conversations"] },
-        (old) => {
-          if (!Array.isArray(old)) return old;
-          return old.filter((c: any) => String(c._id) !== String(conversationId));
-        },
-      );
-      queryClient.invalidateQueries({ queryKey: candidateChatKeys.unreadCount() });
+      const { dispatch: d, queryClient: qc } = latestRef.current;
+      const isActive = store.getState().candidateChat.currentConversation?._id === conversationId;
+
+      if (isActive) {
+        // Don't nuke the conversation while the user is viewing it — the backend may
+        // emit conversation_deleted when all messages are cleared, not just on true deletion.
+        // Clear the message cache and let the next conversations fetch reconcile the truth.
+        qc.setQueriesData(
+          { queryKey: candidateChatKeys.messages(conversationId) },
+          () => [],
+        );
+        qc.invalidateQueries({ queryKey: [...candidateChatKeys.all, "conversations"] });
+      } else {
+        d(removeCandidateConversation(conversationId));
+        qc.setQueriesData(
+          { queryKey: [...candidateChatKeys.all, "conversations"] },
+          (old) => {
+            if (!Array.isArray(old)) return old;
+            return old.filter((c: any) => String(c._id) !== String(conversationId));
+          },
+        );
+      }
+      qc.invalidateQueries({ queryKey: candidateChatKeys.unreadCount() });
     };
 
     socket.on("new_message", handleIncomingMessage);
@@ -186,7 +223,9 @@ export const useCandidateChatRealtime = () => {
       socket.off("message_updated", handleMessageUpdated);
       socket.off("conversation_deleted", handleConversationDeleted);
     };
-  }, [currentUserId, dispatch, enabled, queryClient, t]);
+  // Only re-register listeners when the user identity or enabled flag changes.
+  // All other values (t, queryClient, dispatch, router) are read from latestRef.
+  }, [currentUserId, enabled]);
 
   useEffect(() => () => {
     if (!enabled) disconnectCandidateChatSocket();

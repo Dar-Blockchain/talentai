@@ -101,7 +101,9 @@ const candidateChatSlice = createSlice({
       state.currentConversation = action.payload;
     },
     setCandidateMessages: (state, action: PayloadAction<ChatShellMessage[]>) => {
-      state.messages = dedupeMessages(action.payload);
+      state.messages = dedupeMessages(action.payload).sort(
+        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      );
     },
     setCandidateTotalUnread: (state, action: PayloadAction<number>) => {
       state.totalUnread = action.payload;
@@ -165,6 +167,72 @@ const candidateChatSlice = createSlice({
         }
       }
     },
+    syncConversationLastMessage: (state, action: PayloadAction<string>) => {
+      const convId = action.payload;
+
+      // Messages are sorted ascending by createdAt. Walk backwards for the last
+      // non-pending, non-blocked message (matches applyLastMessagePreviewFromMessage rules).
+      let lastVisible: ChatShellMessage | undefined;
+      for (let i = state.messages.length - 1; i >= 0; i--) {
+        const m = state.messages[i];
+        if (!m.pending && !m.deliveryBlocked) {
+          lastVisible = m;
+          break;
+        }
+      }
+
+      const conv = state.conversations.find((c) => String(c._id) === convId);
+      if (conv) {
+        if (lastVisible) {
+          applyLastMessagePreviewFromMessage(conv, lastVisible);
+        } else {
+          conv.lastMessage = undefined;
+        }
+        sortConversationsByRecent(state.conversations);
+      }
+
+      if (state.currentConversation && String(state.currentConversation._id) === convId) {
+        if (lastVisible) {
+          applyLastMessagePreviewFromMessage(state.currentConversation, lastVisible);
+        } else {
+          state.currentConversation.lastMessage = undefined;
+        }
+      }
+    },
+    confirmCandidatePendingMessage: (
+      state,
+      action: PayloadAction<{ tempId: string; message: ChatShellMessage }>,
+    ) => {
+      const { tempId, message } = action.payload;
+      const idx = state.messages.findIndex((m) => String(m._id) === tempId);
+      if (idx >= 0) {
+        // In-place replacement — same array slot, same stableKey → React reuses the
+        // MessageRow component instance: pending→confirmed is a CSS transition, not a remount.
+        state.messages[idx] = message;
+      } else {
+        // Temp was already gone (socket echo handled it) — ensure real message is present.
+        const exists = state.messages.some((m) => String(m._id) === String(message._id));
+        if (!exists) {
+          state.messages.push(message);
+          state.messages.sort(
+            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+          );
+        }
+      }
+      // Sync sidebar preview with the now-confirmed message.
+      const convId = message.conversationId
+        ? String(message.conversationId)
+        : (state.currentConversation ? String(state.currentConversation._id) : "");
+      if (!convId) return;
+      const conv = state.conversations.find((c) => String(c._id) === convId);
+      if (conv) {
+        applyLastMessagePreviewFromMessage(conv, message);
+        sortConversationsByRecent(state.conversations);
+      }
+      if (state.currentConversation && String(state.currentConversation._id) === convId) {
+        applyLastMessagePreviewFromMessage(state.currentConversation, message);
+      }
+    },
     removeCandidateConversation: (state, action: PayloadAction<string>) => {
       state.conversations = state.conversations.filter((conversation) => conversation._id !== action.payload);
       if (state.currentConversation?._id === action.payload) {
@@ -186,7 +254,9 @@ export const {
   markCandidateConversationReadLocal,
   removeCandidateMessage,
   upsertCandidateMessage,
+  confirmCandidatePendingMessage,
   removeCandidateConversation,
+  syncConversationLastMessage,
 } = candidateChatSlice.actions;
 
 export const selectCandidateConversations = (state: RootState) => state.candidateChat.conversations;

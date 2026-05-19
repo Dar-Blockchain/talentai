@@ -30,6 +30,13 @@ export interface ChatShellMessage {
   deletedForEveryoneBy?: string;
   /** Optimistic placeholder — true until the server confirms the send. */
   pending?: boolean;
+  /**
+   * Stable React key that persists across the temp→confirmed transition.
+   * Set to tempId in onMutate, carried forward in onSuccess so MessageList
+   * never unmounts/remounts the bubble — the pending→confirmed change is a
+   * smooth CSS transition (opacity, time label) rather than a re-mount animation.
+   */
+  stableKey?: string;
 }
 
 export interface ChatShellMessagePayload<TMessage = ChatShellMessage> {

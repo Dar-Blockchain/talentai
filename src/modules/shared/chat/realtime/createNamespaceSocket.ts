@@ -17,9 +17,19 @@ export interface ChatConversationRoomConfig {
 export const createNamespaceSocket = ({ namespacePath }: ChatNamespaceSocketConfig) => {
   let socket: Socket | null = null;
   let connectedUserId: string | null = null;
+  // Tracks which rooms this client has requested to join.
+  // Used to re-join automatically on reconnect so no messages are missed.
+  let pendingRooms: Map<string, ChatConversationRoomConfig> = new Map();
 
   const getSocketUrl = () =>
     `${process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "")}${namespacePath}`;
+
+  const drainPendingRooms = () => {
+    if (!socket?.connected) return;
+    for (const [conversationId, roomConfig] of pendingRooms) {
+      socket.emit(roomConfig.joinEvent, roomConfig.buildJoinPayload(conversationId));
+    }
+  };
 
   const connect = (userId: string) => {
     const token = getAuthToken();
@@ -40,6 +50,12 @@ export const createNamespaceSocket = ({ namespacePath }: ChatNamespaceSocketConf
       transports: ["websocket", "polling"],
     });
     connectedUserId = userId;
+
+    // On every successful connect (initial + reconnects), re-join all requested rooms.
+    // This ensures no join is silently lost when the socket was still connecting
+    // at the time joinConversationRoom was called.
+    socket.on("connect", drainPendingRooms);
+
     return socket;
   };
 
@@ -51,21 +67,29 @@ export const createNamespaceSocket = ({ namespacePath }: ChatNamespaceSocketConf
     socket.disconnect();
     socket = null;
     connectedUserId = null;
+    pendingRooms = new Map();
   };
 
   const joinConversationRoom = (
     conversationId: string,
     roomConfig: ChatConversationRoomConfig,
   ) => {
-    if (!conversationId || !socket?.connected) return;
-    socket.emit(roomConfig.joinEvent, roomConfig.buildJoinPayload(conversationId));
+    if (!conversationId) return;
+    // Always register in pendingRooms first so reconnects re-join automatically.
+    pendingRooms.set(conversationId, roomConfig);
+    // If already connected, emit immediately; otherwise drainPendingRooms fires on "connect".
+    if (socket?.connected) {
+      socket.emit(roomConfig.joinEvent, roomConfig.buildJoinPayload(conversationId));
+    }
   };
 
   const leaveConversationRoom = (
     conversationId: string,
     roomConfig: ChatConversationRoomConfig,
   ) => {
-    if (!conversationId || !socket?.connected) return;
+    if (!conversationId) return;
+    pendingRooms.delete(conversationId);
+    if (!socket?.connected) return;
     const payload = roomConfig.buildLeavePayload
       ? roomConfig.buildLeavePayload(conversationId)
       : roomConfig.buildJoinPayload(conversationId);

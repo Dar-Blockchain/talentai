@@ -102,6 +102,10 @@ interface Message {
   deliveryBlocked?: boolean;
   blockedReason?: "email" | "phone";
   pending?: boolean;
+  /** Stable React key: set to tempId on send, carried forward on confirm so the
+   *  MessageRow component is REUSED across the temp→confirmed transition instead of
+   *  being remounted — prevents the double bubbleIn animation. */
+  stableKey?: string;
 }
 
 interface MessageListProps {
@@ -379,9 +383,16 @@ const MessageRow = memo(function MessageRow({
   // (at mount), so this never needs to change — using useState initializer avoids
   // the need for `isLatest` prop which would flip true→false on the previous-last row
   // every time a new message arrives (causing a wasted rerender with no visual change).
-  const [shouldAnimateIn] = useState(
-    () => !!message.pending || (Date.now() - new Date(message.createdAt).getTime()) < ANIMATE_IN_THRESHOLD_MS,
-  );
+  const [shouldAnimateIn] = useState(() => {
+    // Pending (optimistic) messages always animate in — they're just sent.
+    if (message.pending) return true;
+    // Messages with a stableKey are confirmed sends: they were already animated
+    // as the temp (pending) bubble. Suppressing here avoids a second animation
+    // if React ever does remount this component (defensive, should not happen).
+    if (message.stableKey) return false;
+    // Incoming messages received within the threshold animate in.
+    return (Date.now() - new Date(message.createdAt).getTime()) < ANIMATE_IN_THRESHOLD_MS;
+  });
 
   const textEmpty = !String(message.text ?? "").trim();
   const isDeletedForEveryone =
@@ -711,7 +722,7 @@ const MessageList = memo(function MessageList({
             const isSyntheticDeleted = message._id === THREAD_DELETED_PLACEHOLDER_ID;
             return (
               <MessageRow
-                key={message._id}
+                key={message.stableKey ?? message._id}
                 message={message}
                 isOwn={isOwn}
                 isSyntheticDeleted={isSyntheticDeleted}

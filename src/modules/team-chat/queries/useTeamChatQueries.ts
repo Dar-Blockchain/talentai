@@ -6,6 +6,7 @@ import { getTeamChatErrorMessage, teamChatApi } from "@/modules/team-chat/api/te
 import { teamChatKeys } from "@/modules/team-chat/queries/keys";
 import {
   addTeamMessage,
+  confirmTeamPendingMessage,
   markTeamConversationReadLocal,
   removeTeamConversation,
   removeTeamMessage,
@@ -83,16 +84,52 @@ export const useTeamMessagesQuery = (
   const query = useQuery({
     queryKey: teamChatKeys.messages(conversationId || "none", params),
     queryFn: async () => {
-      const messages = await teamChatApi.fetchMessages(conversationId as string, params);
-      return messages.map(toChatShellMessage);
+      try {
+        const messages = await teamChatApi.fetchMessages(conversationId as string, params);
+        return messages.map(toChatShellMessage);
+      } catch (err: any) {
+        // 404 means the conversation has no messages yet or was just created.
+        // Treat it as an empty list so the chat opens cleanly instead of erroring.
+        const status = err?.response?.status ?? err?.status;
+        if (status === 404) return [] as ReturnType<typeof toChatShellMessage>[];
+        throw err;
+      }
     },
     enabled,
-    staleTime: 30_000,
+    // Socket events keep the message cache fresh in real-time via setQueryData/dispatch.
+    // Allowing React Query to background-refetch overwrites socket updates and causes
+    // messages to disappear on window focus or stale-time expiry.
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    // Retry once after a short delay for transient server errors (e.g. backend not yet ready).
+    retry: (failureCount, err: any) => {
+      const status = err?.response?.status ?? err?.status;
+      if (status === 404 || status === 403) return false; // handled above or auth issue — don't retry
+      return failureCount < 1;
+    },
   });
 
+  // Clear messages immediately when switching conversations so stale messages
+  // from the previous conversation don't flash before the new fetch completes.
   useEffect(() => {
-    if (query.data) dispatch(setTeamMessages(query.data));
-  }, [dispatch, query.data]);
+    dispatch(setTeamMessages([]));
+  }, [conversationId, dispatch]);
+
+  useEffect(() => {
+    if (!conversationId || !enabled) return;
+    if (!query.isFetched || !query.isSuccess) return;
+    const apiMessages = Array.isArray(query.data) ? query.data : [];
+    // Merge API data with any socket-received messages that arrived while the
+    // fetch was in-flight. Without this, the dispatch overwrites them and the
+    // other user's messages disappear until the next socket event.
+    const current = store.getState().teamChat.messages;
+    const apiIds = new Set(apiMessages.map((m) => String(m._id)));
+    const socketOnly = current.filter(
+      (m) => !apiIds.has(String(m._id)) && !String(m._id).startsWith("temp_"),
+    );
+    dispatch(setTeamMessages([...apiMessages, ...socketOnly]));
+  }, [conversationId, dispatch, enabled, query.data, query.isFetched, query.isSuccess]);
 
   return query;
 };
@@ -141,6 +178,7 @@ export const useSendTeamMessageMutation = () => {
 
       const tempMessage: ChatShellMessage = {
         _id: tempId,
+        stableKey: tempId,
         text: variables.text,
         sender: { _id: String(currentUserId) },
         receiver: { _id: variables.receiverId },
@@ -166,14 +204,9 @@ export const useSendTeamMessageMutation = () => {
     onSuccess: (message, variables, context) => {
       if (!context?.tempId) return;
       const mapped = toChatShellMessage(message);
-      const currentUserId = store.getState().user?.connectedUser?.user?._id;
+      mapped.stableKey = context.tempId;
 
-      dispatch(removeTeamMessage(context.tempId));
-      dispatch(addTeamMessage({
-        message: mapped,
-        viewerUserId: String(currentUserId ?? ""),
-        viewerIsViewingConversation: true,
-      }));
+      dispatch(confirmTeamPendingMessage({ tempId: context.tempId, message: mapped }));
 
       queryClient.setQueriesData(
         { queryKey: teamChatKeys.messages(variables.conversationId) },
@@ -226,11 +259,22 @@ export const useDeleteTeamMessageMutation = () => {
       scope: "me" | "everyone";
       conversationId: string;
     }) => teamChatApi.deleteMessage(messageId, scope),
+    onMutate: async (variables) => {
+      const messagesPrefix = [...teamChatKeys.all, "messages", variables.conversationId] as const;
+      // Cancel in-flight fetches before the delete so a stale response can't
+      // land after we clear the cache and put the deleted row back.
+      await queryClient.cancelQueries({ queryKey: messagesPrefix });
+      const snapshot = queryClient.getQueryData(messagesPrefix);
+      return { snapshot };
+    },
+    onError: (_err, variables, context) => {
+      if (context?.snapshot !== undefined) {
+        const messagesPrefix = [...teamChatKeys.all, "messages", variables.conversationId] as const;
+        queryClient.setQueryData(messagesPrefix, context.snapshot);
+      }
+    },
     onSuccess: async (data, variables) => {
       const messagesPrefix = [...teamChatKeys.all, "messages", variables.conversationId] as const;
-      // Drop in-flight message list fetches (started before delete); otherwise a stale
-      // response can finish last and put the deleted row back in cache → Redux resyncs it.
-      await queryClient.cancelQueries({ queryKey: messagesPrefix });
 
       if (data.scope === "everyone") {
         let mapped: ReturnType<typeof toChatShellMessage> | null = null;
