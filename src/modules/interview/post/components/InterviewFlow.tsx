@@ -7,8 +7,12 @@ import { useInterviewConfig } from "../hooks/useInterviewConfig";
 import { useInterviewSession } from "../hooks/useInterviewSession";
 import InterviewScreen from "./session/InterviewScreen";
 import JobPreviewPanel from "./job-preview/JobInterviewPanel";
+import LoadingState from "@/components/ui/LoadingState";
+import { useTranslation } from "react-i18next";
 
 export default function InterviewFlow() {
+  const { t } = useTranslation("modules/interview/hr");
+  
   const router = useRouter();
   const authUser = useSelector(
     (state: RootState) => state.user.connectedUser.user,
@@ -46,7 +50,11 @@ export default function InterviewFlow() {
     setStep("interview");
   }, [jobData, interviewConfig, setInterviewConfig]);
 
-  // Show job preview when there is a jobId and the interview hasn't started
+  // Guard: router.query is empty on the first SSR/hydration render.
+  // Returning null here prevents InterviewScreen from flashing before the
+  // router resolves the jobId and the correct view is determined.
+  if (!router.isReady) return <LoadingState message={t("loading")} />;
+
   if (hasJobId && step !== "interview") {
     if (!jobData) return null;
     return (

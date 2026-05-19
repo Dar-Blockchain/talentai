@@ -2,8 +2,8 @@
 
 import dynamic from 'next/dynamic';
 import { Box } from '@mui/material';
-import InterviewHeader from '@/modules/candidate-interview/components/layout/InterviewHeader';
-import { useEligibilityCheck, EligibilityGate, InterviewFlow } from '@/modules/candidate-interview';
+import { EligibilityGate, InterviewFlow, useEligibilityCheck } from '@/modules/interview/post';
+import InterviewHeader from '@/modules/interview/post/components/layout/InterviewHeader';
 
 const CandidateInterview = () => {
   const { eligibilityStatus, eligibilityMeta } = useEligibilityCheck();

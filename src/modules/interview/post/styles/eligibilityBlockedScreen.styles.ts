@@ -80,6 +80,7 @@ export const eligibilityBlockedScreenSx = {
       fontSize: "0.9rem",
       textTransform: "none",
       borderRadius: "12px",
+      color: "#fff",
       py: 1.3,
       ...(color
         ? isGradient
