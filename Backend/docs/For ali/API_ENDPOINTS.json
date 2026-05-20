@@ -1,0 +1,3172 @@
+[
+  {
+    "routeFile": "authentication.routes.js",
+    "basePrefix": "/auth",
+    "endpoints": [
+      {
+        "method": "POST",
+        "path": "/auth/register",
+        "description": "Create a new user and profile (Candidate or Company role), send OTP. For Candidates, resume is analyzed automatically.",
+        "authentication": "Public",
+        "requiredHeaders": ["Content-Type"],
+        "requestBody": {
+          "type": "multipart/form-data or application/json",
+          "properties": {
+            "email": { "type": "string", "required": true },
+            "roleType": { "type": "string", "enum": ["Candidate", "Company"], "required": true },
+            "firstName": { "type": "string", "description": "REQUIRED for Candidate" },
+            "lastName": { "type": "string", "description": "REQUIRED for Candidate" },
+            "phone": { "type": "string", "optional": true },
+            "name": { "type": "string", "description": "Company name (optional for Company)" },
+            "companyDetails": { "type": "object", "optional": true },
+            "resume": { "type": "file", "optional": true, "description": "Resume file for Candidates" }
+          },
+          "example": {
+            "email": "john@example.com",
+            "roleType": "Candidate",
+            "firstName": "John",
+            "lastName": "Doe",
+            "phone": "+1234567890"
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object", "properties": { "success": "boolean", "userId": "string", "message": "string" } }
+      },
+      {
+        "method": "POST",
+        "path": "/auth/",
+        "description": "Send OTP to an existing user for login",
+        "authentication": "Public",
+        "requiredHeaders": ["Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "email": { "type": "string", "required": true }
+          },
+          "example": { "email": "john@example.com" }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/auth/analyze",
+        "description": "Analyze a stored resume and extract information via Bedrock",
+        "authentication": "Public",
+        "requiredHeaders": ["Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "filePath": { "type": "string", "required": true, "description": "e.g., public/images/Users/resume.pdf" },
+            "saveToDatabase": { "type": "boolean", "optional": true }
+          },
+          "example": { "filePath": "public/images/Users/resume.pdf", "saveToDatabase": true }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/auth/verify-otp",
+        "description": "Verify OTP code to activate/validate account",
+        "authentication": "Public",
+        "requiredHeaders": ["Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "email": { "type": "string", "required": true },
+            "otp": { "type": "string", "required": true }
+          },
+          "example": { "email": "john@example.com", "otp": "123456" }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/auth/resend-otp",
+        "description": "Send a new OTP code to user via email (valid for 5 minutes)",
+        "authentication": "Public",
+        "requiredHeaders": ["Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "email": { "type": "string", "required": true }
+          },
+          "example": { "email": "john@example.com" }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/auth/warnUser",
+        "description": "Notify/warn the logged-in user (internal use)",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/auth/logout",
+        "description": "Invalidate session/token on server side",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/auth/check-role",
+        "description": "Return the role of a user by email",
+        "authentication": "Public",
+        "requiredHeaders": [],
+        "requestBody": null,
+        "queryParameters": [
+          { "name": "email", "type": "string", "required": true }
+        ],
+        "responseSchema": { "type": "object", "properties": { "role": "string" } }
+      }
+    ]
+  },
+  {
+    "routeFile": "apiKeys.routes.js",
+    "basePrefix": "/api/api-keys",
+    "endpoints": [
+      {
+        "method": "POST",
+        "path": "/api/api-keys",
+        "description": "Create a new API key",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "name": { "type": "string", "required": true },
+            "serviceName": { "type": "string", "optional": true },
+            "scopes": { "type": "array", "optional": true },
+            "rateLimit": { "type": "number", "optional": true },
+            "expiresAt": { "type": "string", "optional": true },
+            "ipWhitelist": { "type": "array", "optional": true }
+          },
+          "example": { "name": "Production API Key", "serviceName": "recruitment", "scopes": ["read:posts", "write:posts"] }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object", "properties": { "apiKey": "string", "id": "string" } }
+      },
+      {
+        "method": "GET",
+        "path": "/api/api-keys",
+        "description": "List all API keys for the user",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/api/api-keys/:id",
+        "description": "Get details of an API key",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PUT",
+        "path": "/api/api-keys/:id",
+        "description": "Update an API key",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "name": { "type": "string", "optional": true },
+            "serviceName": { "type": "string", "optional": true },
+            "scopes": { "type": "array", "optional": true },
+            "rateLimit": { "type": "number", "optional": true },
+            "expiresAt": { "type": "string", "optional": true },
+            "ipWhitelist": { "type": "array", "optional": true },
+            "isActive": { "type": "boolean", "optional": true }
+          },
+          "example": { "name": "Updated Key Name", "isActive": true }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/api-keys/:id/toggle",
+        "description": "Disable/re-enable an API key",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/api/api-keys/:id/regenerate",
+        "description": "Regenerate an API key (create a new one)",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object", "properties": { "newApiKey": "string" } }
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/api-keys/:id",
+        "description": "Delete an API key",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      }
+    ]
+  },
+  {
+    "routeFile": "backup.routes.js",
+    "basePrefix": "/admin/backups",
+    "endpoints": [
+      {
+        "method": "POST",
+        "path": "/admin/backups/perform",
+        "description": "Manually trigger a database backup",
+        "authentication": "Protected (Admin)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/admin/backups/list",
+        "description": "List all available backups",
+        "authentication": "Protected (Admin)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "POST",
+        "path": "/admin/backups/restore/:backupName",
+        "description": "Restore database from a specific backup (WARNING: overwrites current database)",
+        "authentication": "Protected (Admin)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "DELETE",
+        "path": "/admin/backups/delete/:backupName",
+        "description": "Delete a specific backup by name",
+        "authentication": "Protected (Admin)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/admin/backups/info",
+        "description": "Get backup service information",
+        "authentication": "Protected (Admin)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      }
+    ]
+  },
+  {
+    "routeFile": "campaignParticipant.routes.js",
+    "basePrefix": "/campaigns",
+    "endpoints": [
+      {
+        "method": "POST",
+        "path": "/campaigns/:campaignId/participants",
+        "description": "Add a participant to a campaign",
+        "authentication": "Protected (Company)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "email": { "type": "string", "optional": true },
+            "employeeId": { "type": "string", "optional": true },
+            "anonymousToken": { "type": "string", "optional": true }
+          },
+          "example": { "email": "john@company.com" }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/campaigns/:campaignId/participants",
+        "description": "Retrieve all participants in a campaign",
+        "authentication": "Protected (Company)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [
+          { "name": "status", "type": "string", "description": "INVITED|IN_PROGRESS|COMPLETED|DROPPED" }
+        ],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/participants/:participantId",
+        "description": "Retrieve a specific participant",
+        "authentication": "Protected (Company)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/participants/token/:token",
+        "description": "Retrieve participant by anonymous token (public for anonymous campaigns)",
+        "authentication": "Public",
+        "requiredHeaders": [],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PUT",
+        "path": "/participants/:participantId",
+        "description": "Update a participant",
+        "authentication": "Protected (Company)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "status": { "type": "string", "optional": true },
+            "accessedAt": { "type": "string", "optional": true },
+            "completedAt": { "type": "string", "optional": true }
+          },
+          "example": { "status": "COMPLETED" }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "DELETE",
+        "path": "/participants/:participantId",
+        "description": "Delete a participant",
+        "authentication": "Protected (Company)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PATCH",
+        "path": "/participants/:participantId/drop",
+        "description": "Mark participant as dropped",
+        "authentication": "Protected (Company)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "reason": { "type": "string", "optional": true }
+          },
+          "example": { "reason": "Not interested" }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/campaigns/:campaignId/participants/bulk",
+        "description": "Add multiple participants in bulk",
+        "authentication": "Protected (Company)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "participants": { "type": "array", "required": true, "description": "Array of participant objects" }
+          },
+          "example": {
+            "participants": [
+              { "email": "john@company.com", "employeeId": "emp123" },
+              { "email": "jane@company.com", "anonymousToken": "token456" }
+            ]
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      }
+    ]
+  },
+  {
+    "routeFile": "candidatePostStepProgress.routes.js",
+    "basePrefix": "/candidate-post-step-progress",
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/candidate-post-step-progress/getUserProgress",
+        "description": "Get progression of the current user",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/candidate-post-step-progress",
+        "description": "Create progress record",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {},
+          "example": {}
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/candidate-post-step-progress",
+        "description": "Get all progress records",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/candidate-post-step-progress/:id",
+        "description": "Get progress by ID",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PUT",
+        "path": "/candidate-post-step-progress/:id",
+        "description": "Update progress",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": { "type": "application/json" },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "DELETE",
+        "path": "/candidate-post-step-progress/:id",
+        "description": "Delete progress",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/candidate-post-step-progress/candidate/:candidateId",
+        "description": "Get progress by candidate",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/candidate-post-step-progress/post/:postId",
+        "description": "Get progress by post",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/candidate-post-step-progress/status/:status",
+        "description": "Get progress by status",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/candidate-post-step-progress/candidate/:candidateId/post/:postId",
+        "description": "Get progress by candidate and post",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PUT",
+        "path": "/candidate-post-step-progress/candidate/:candidateId/post/:postId",
+        "description": "Update progress by candidate and post",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": { "type": "application/json" },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "DELETE",
+        "path": "/candidate-post-step-progress/candidate/:candidateId/post/:postId",
+        "description": "Delete progress by candidate and post",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/candidate-post-step-progress/candidate/:candidateId/post/:postId/upsert",
+        "description": "Create or update progress (upsert)",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": { "type": "application/json" },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      }
+    ]
+  },
+  {
+    "routeFile": "chat.routes.js",
+    "basePrefix": "/chat",
+    "endpoints": [
+      {
+        "method": "POST",
+        "path": "/chat/conversations",
+        "description": "Find or create conversation",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "participantId": { "type": "string", "optional": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/chat/conversations",
+        "description": "Get user's conversations",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/chat/conversations/search",
+        "description": "Search conversations",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [
+          { "name": "q", "type": "string", "description": "Search query" }
+        ],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/chat/conversations/unread-count",
+        "description": "Get total unread count",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object", "properties": { "unreadCount": "number" } }
+      },
+      {
+        "method": "POST",
+        "path": "/chat/conversations/unarchive-all",
+        "description": "Remove current user from archivedBy on all conversations",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/chat/conversations/:conversationId",
+        "description": "Get conversation by ID",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PUT",
+        "path": "/chat/conversations/:conversationId/read",
+        "description": "Mark conversation as read",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PUT",
+        "path": "/chat/conversations/:conversationId/archive",
+        "description": "Archive conversation",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PUT",
+        "path": "/chat/conversations/:conversationId/unarchive",
+        "description": "Unarchive conversation",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PUT",
+        "path": "/chat/conversations/:conversationId/block",
+        "description": "Block conversation",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PUT",
+        "path": "/chat/conversations/:conversationId/unblock",
+        "description": "Unblock conversation",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "DELETE",
+        "path": "/chat/conversations/:conversationId",
+        "description": "Delete conversation",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/chat/messages",
+        "description": "Send message",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "conversationId": { "type": "string", "required": true },
+            "content": { "type": "string", "required": true },
+            "attachments": { "type": "array", "optional": true }
+          },
+          "example": { "conversationId": "conv123", "content": "Hello!" }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/chat/messages/single/:messageId",
+        "description": "Get message by ID",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/chat/messages/:conversationId/unread",
+        "description": "Get unread messages",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/chat/messages/:conversationId/search",
+        "description": "Search messages in conversation",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [
+          { "name": "q", "type": "string", "description": "Search query" }
+        ],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/chat/messages/:conversationId",
+        "description": "Get conversation messages",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [
+          { "name": "page", "type": "number", "optional": true },
+          { "name": "limit", "type": "number", "optional": true }
+        ],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "PUT",
+        "path": "/chat/messages/:messageId/read",
+        "description": "Mark message as read",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PUT",
+        "path": "/chat/messages/:conversationId/read-all",
+        "description": "Mark all messages as read",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "DELETE",
+        "path": "/chat/messages/:messageId",
+        "description": "Delete message",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/chat/messages/:messageId/reaction",
+        "description": "Add reaction to message",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "emoji": { "type": "string", "required": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "DELETE",
+        "path": "/chat/messages/:messageId/reaction",
+        "description": "Remove reaction from message",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      }
+    ]
+  },
+  {
+    "routeFile": "companyInvitation.routes.js",
+    "basePrefix": "/company-invitations",
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/company-invitations/details/:invitationId",
+        "description": "Get invitation details by ID (public for unauthenticated users)",
+        "authentication": "Public",
+        "requiredHeaders": [],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/company-invitations/respondInvitation/:invitationId",
+        "description": "Accept or reject an invitation (public for invitee)",
+        "authentication": "Public",
+        "requiredHeaders": ["Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "response": { "type": "string", "enum": ["accepted", "rejected"], "required": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/company-invitations/sentInvitation",
+        "description": "Add a new employee to a Company account",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "email": { "type": "string", "required": true },
+            "departmentId": { "type": "string", "optional": true },
+            "role": { "type": "string", "optional": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/company-invitations/resendInvitation/:invitationId",
+        "description": "Resend an invitation (regenerate token and reset expiration)",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "DELETE",
+        "path": "/company-invitations/deleteInvitation/:invitationId",
+        "description": "Delete/revoke an invitation",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/company-invitations/myInvitations",
+        "description": "Get all invitations for companies owned by current user",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/company-invitations/byDepartment/:departmentId",
+        "description": "Get all pending invitations for a specific department",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      }
+    ]
+  },
+  {
+    "routeFile": "companyMembership.routes.js",
+    "basePrefix": "/company-memberships",
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/company-memberships/memberships/stats",
+        "description": "Get statistics for a company's memberships (counts by role/status)",
+        "authentication": "Protected (Company/Employee)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/company-memberships/memberships",
+        "description": "Get all memberships for a company owned by the user",
+        "authentication": "Protected (Company/Employee)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/company-memberships/user/:userId",
+        "description": "Get membership by userId",
+        "authentication": "Protected (Company/Employee)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "DELETE",
+        "path": "/company-memberships/:membershipId",
+        "description": "Delete a membership",
+        "authentication": "Protected (Company/Employee)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PATCH",
+        "path": "/company-memberships/:membershipId",
+        "description": "Update membership (role and/or department)",
+        "authentication": "Protected (Company/Employee)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "role": { "type": "string", "optional": true },
+            "departmentId": { "type": "string", "optional": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PATCH",
+        "path": "/company-memberships/:membershipId/role",
+        "description": "Update membership role",
+        "authentication": "Protected (Company/Employee)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "role": { "type": "string", "required": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PATCH",
+        "path": "/company-memberships/:membershipId/department",
+        "description": "Update membership department (assign or unassign)",
+        "authentication": "Protected (Company/Employee)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "departmentId": { "type": "string", "optional": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      }
+    ]
+  },
+  {
+    "routeFile": "companyPermissions.routes.js",
+    "basePrefix": "/admin/companies",
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/admin/companies/:companyId/permissions",
+        "description": "Retrieve permissions for a specific company",
+        "authentication": "Protected (Admin)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/admin/companies/:companyId/permissions",
+        "description": "Update permissions for a specific company",
+        "authentication": "Protected (Admin)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "permissions": { "type": "object", "required": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      }
+    ]
+  },
+  {
+    "routeFile": "contact.routes.js",
+    "basePrefix": "/contact",
+    "endpoints": [
+      {
+        "method": "POST",
+        "path": "/contact",
+        "description": "Submit contact form (enterprise inquiry)",
+        "authentication": "Public",
+        "requiredHeaders": ["Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "name": { "type": "string", "required": true },
+            "email": { "type": "string", "required": true },
+            "message": { "type": "string", "required": true },
+            "company": { "type": "string", "optional": true }
+          },
+          "example": { "name": "John Doe", "email": "john@example.com", "message": "I need more info..." }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      }
+    ]
+  },
+  {
+    "routeFile": "cvAnalysis.routes.js",
+    "basePrefix": "/cv-analysis",
+    "endpoints": [
+      {
+        "method": "POST",
+        "path": "/cv-analysis",
+        "description": "Create a new CV analysis record",
+        "authentication": "Public (default)",
+        "requiredHeaders": ["Content-Type"],
+        "requestBody": { "type": "application/json" },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/cv-analysis",
+        "description": "Get all CV analyses with pagination and filtering",
+        "authentication": "Public (default)",
+        "requiredHeaders": [],
+        "requestBody": null,
+        "queryParameters": [
+          { "name": "page", "type": "number", "optional": true },
+          { "name": "limit", "type": "number", "optional": true },
+          { "name": "search", "type": "string", "optional": true }
+        ],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/cv-analysis/stats",
+        "description": "Get CV analysis statistics",
+        "authentication": "Public (default)",
+        "requiredHeaders": [],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/cv-analysis/search",
+        "description": "Search CV analyses",
+        "authentication": "Public (default)",
+        "requiredHeaders": [],
+        "requestBody": null,
+        "queryParameters": [
+          { "name": "q", "type": "string", "description": "Search query" }
+        ],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/cv-analysis/:id",
+        "description": "Get a specific CV analysis by ID",
+        "authentication": "Public (default)",
+        "requiredHeaders": [],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PUT",
+        "path": "/cv-analysis/:id",
+        "description": "Update a CV analysis by ID",
+        "authentication": "Public (default)",
+        "requiredHeaders": ["Content-Type"],
+        "requestBody": { "type": "application/json" },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "DELETE",
+        "path": "/cv-analysis/:id",
+        "description": "Delete a CV analysis by ID",
+        "authentication": "Public (default)",
+        "requiredHeaders": [],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/cv-analysis/user/:userId",
+        "description": "Get all CV analyses for a specific user",
+        "authentication": "Public (default)",
+        "requiredHeaders": [],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/cv-analysis/company/:companyId",
+        "description": "Get all CV analyses for a specific company",
+        "authentication": "Public (default)",
+        "requiredHeaders": [],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/cv-analysis/seniority/:seniority",
+        "description": "Get CV analyses filtered by seniority level",
+        "authentication": "Public (default)",
+        "requiredHeaders": [],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      }
+    ]
+  },
+  {
+    "routeFile": "dashboard.routes.js",
+    "basePrefix": "/dashboard",
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/dashboard/getAllUsers",
+        "description": "Retrieve the list of all users",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/dashboard/getCounts",
+        "description": "Retrieve global counters (users, etc.)",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/dashboard/statsCards",
+        "description": "Retrieve statistics displayed as cards on dashboard",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/dashboard/richStats",
+        "description": "Retrieve rich statistics",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/dashboard/getUserCountsByDay",
+        "description": "Retrieve daily evolution of user count",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/dashboard/getUserCountsByLocation",
+        "description": "Statistics by location",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/dashboard/job-assessment-results-grouped",
+        "description": "Assessment results grouped by jobId",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/dashboard/getJobAssessmentsBySkill",
+        "description": "Retrieve assessments by skill",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "skill": { "type": "string", "required": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/dashboard/downloadUserExcel",
+        "description": "Download an Excel export of users",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "file", "format": "xlsx" }
+      },
+      {
+        "method": "GET",
+        "path": "/dashboard/download-users-with-assessment-zero",
+        "description": "Download users without assessment",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "file", "format": "xlsx" }
+      },
+      {
+        "method": "GET",
+        "path": "/dashboard/download-users-with-assessment-Above50",
+        "description": "Download users with score > 50",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "file", "format": "xlsx" }
+      }
+    ]
+  },
+  {
+    "routeFile": "department.routes.js",
+    "basePrefix": "/departments",
+    "endpoints": [
+      {
+        "method": "POST",
+        "path": "/departments",
+        "description": "Create a department",
+        "authentication": "Protected (Company/Employee)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "name": { "type": "string", "required": true },
+            "description": { "type": "string", "optional": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/departments",
+        "description": "List company departments with optional name search and pagination",
+        "authentication": "Protected (Company/Employee)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [
+          { "name": "search", "type": "string", "optional": true },
+          { "name": "page", "type": "number", "optional": true },
+          { "name": "limit", "type": "number", "optional": true }
+        ],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/departments/stats",
+        "description": "Get department statistics",
+        "authentication": "Protected (Company/Employee)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/departments/:id",
+        "description": "Get a specific department",
+        "authentication": "Protected (Company/Employee)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PUT",
+        "path": "/departments/:id",
+        "description": "Update a department",
+        "authentication": "Protected (Company/Employee)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "name": { "type": "string", "optional": true },
+            "description": { "type": "string", "optional": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "DELETE",
+        "path": "/departments/:id",
+        "description": "Delete a department",
+        "authentication": "Protected (Company/Employee)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      }
+    ]
+  },
+  {
+    "routeFile": "employeePermissions.routes.js",
+    "basePrefix": "/employee-permissions",
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/employee-permissions/available",
+        "description": "Get all available permissions",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/employee-permissions/:userId",
+        "description": "Get permissions for a user",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PUT",
+        "path": "/employee-permissions/:userId",
+        "description": "Update user's permissions",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {}
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      }
+    ]
+  },
+  {
+    "routeFile": "feedback.routes.js",
+    "basePrefix": "/feedback",
+    "endpoints": [
+      {
+        "method": "POST",
+        "path": "/feedback/addFeedback",
+        "description": "Create feedback (any authenticated user)",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "title": { "type": "string", "optional": true },
+            "content": { "type": "string", "required": true },
+            "rating": { "type": "number", "optional": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/feedback/getAllFeedback",
+        "description": "Get all feedback (Admin only)",
+        "authentication": "Protected (Admin)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      }
+    ]
+  },
+  {
+    "routeFile": "internalCampaign.routes.js",
+    "basePrefix": "/internal-campaigns",
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/internal-campaigns/admin/all",
+        "description": "Get all campaigns (Admin only)",
+        "authentication": "Protected (Admin)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/internal-campaigns/employee/:userId",
+        "description": "Get campaigns for a specific user (campaigns where user is participant)",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/internal-campaigns/employee/:userId/metrics",
+        "description": "Get employee campaign metrics (total, invited, inProgress, completed)",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/internal-campaigns/:campaignId/participate/:userId",
+        "description": "Employee joins/participates in a campaign",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "DELETE",
+        "path": "/internal-campaigns/:campaignId/participate/:participantId",
+        "description": "Remove a participant from campaign",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/internal-campaigns/metrics",
+        "description": "Get campaign metrics",
+        "authentication": "Protected (Company/Employee)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/internal-campaigns/:campaignId",
+        "description": "Get a specific campaign",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": [],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/internal-campaigns/:campaignId/participants",
+        "description": "Get campaign participants (accessible to authenticated employees who participate)",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      }
+    ]
+  },
+  {
+    "routeFile": "interviewDetails.routes.js",
+    "basePrefix": "/interview-details",
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/interview-details",
+        "description": "Retrieve the list of all interviews",
+        "authentication": "Protected (Candidate)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/interview-details/getInterviewDetailsById/:id",
+        "description": "Retrieve interview details by identifier",
+        "authentication": "Protected (Candidate)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/interview-details",
+        "description": "Add interview details (converts new format to old)",
+        "authentication": "Protected (Candidate)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "newInterviewData": { "type": "object", "required": true },
+            "profileId": { "type": "string", "required": true },
+            "userId": { "type": "string", "optional": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      }
+    ]
+  },
+  {
+    "routeFile": "jobApplication.routes.js",
+    "basePrefix": "/job-applications",
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/job-applications/post/:postId",
+        "description": "Get all applications for a post (public)",
+        "authentication": "Public",
+        "requiredHeaders": [],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "POST",
+        "path": "/job-applications",
+        "description": "Create new application",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "postId": { "type": "string", "required": true },
+            "candidateId": { "type": "string", "optional": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/job-applications",
+        "description": "Get all applications (admin/global)",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/job-applications/candidate/my",
+        "description": "Get all applications for authenticated candidate",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/job-applications/candidate/my/stats",
+        "description": "Get dashboard stats for authenticated candidate",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/job-applications/company/my",
+        "description": "Get all applications for authenticated company",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [
+          { "name": "page", "type": "number", "optional": true },
+          { "name": "limit", "type": "number", "optional": true },
+          { "name": "post", "type": "string", "optional": true },
+          { "name": "status", "type": "string", "optional": true },
+          { "name": "candidateName", "type": "string", "optional": true },
+          { "name": "skills", "type": "array", "optional": true }
+        ],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "POST",
+        "path": "/job-applications/contact-candidate",
+        "description": "Send a direct email to a candidate",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "candidateId": { "type": "string", "required": true },
+            "subject": { "type": "string", "required": true },
+            "message": { "type": "string", "required": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/job-applications/post/:postId/summary",
+        "description": "Flat summary list for a post (company only)",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [
+          { "name": "status", "type": "string", "optional": true },
+          { "name": "search", "type": "string", "optional": true },
+          { "name": "matchScoreMin", "type": "number", "optional": true },
+          { "name": "matchScoreMax", "type": "number", "optional": true },
+          { "name": "interviewScoreMin", "type": "number", "optional": true },
+          { "name": "interviewScoreMax", "type": "number", "optional": true },
+          { "name": "dateFrom", "type": "string", "optional": true },
+          { "name": "dateTo", "type": "string", "optional": true },
+          { "name": "sort", "type": "string", "description": "appliedAt_desc|appliedAt_asc|matchScore_desc|matchScore_asc|interviewScore_desc|interviewScore_asc|name_asc|name_desc", "optional": true },
+          { "name": "page", "type": "number", "optional": true },
+          { "name": "limit", "type": "number", "optional": true }
+        ],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/job-applications/company/my/summary",
+        "description": "Flat summary list for all company applications",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/job-applications/company/my/metrics",
+        "description": "Get application metrics for authenticated company",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/job-applications/company/my/cvs/download",
+        "description": "Download all matching CVs as a ZIP",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "file", "format": "zip" }
+      },
+      {
+        "method": "GET",
+        "path": "/job-applications/company/my/kpi/actions",
+        "description": "Get all Zone 1 action counts",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [
+          { "name": "postId", "type": "string", "optional": true },
+          { "name": "dateFrom", "type": "string", "optional": true }
+        ],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/job-applications/company/my/kpi/sourcing",
+        "description": "Get KPI: Sourcing quality (Zone 5)",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/job-applications/company/my/kpi/velocity",
+        "description": "Get KPI: TTS + TTH trend (Zone 4)",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/job-applications/company/my/kpi/funnel",
+        "description": "Get KPI: Global funnel counts",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [
+          { "name": "postId", "type": "string", "optional": true }
+        ],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/job-applications/company/my/kpi/roi",
+        "description": "Get KPI: Reporting & ROI (Zone 7)",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/job-applications/company/my/by-decision",
+        "description": "Get candidates by recruiter decision",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [
+          { "name": "decision", "type": "string", "required": true, "description": "shortlisted|rejected" },
+          { "name": "postId", "type": "string", "optional": true },
+          { "name": "page", "type": "number", "optional": true },
+          { "name": "limit", "type": "number", "optional": true }
+        ],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "POST",
+        "path": "/job-applications/auto-invite/trigger",
+        "description": "Trigger auto-invite (nudge #1), bypasses time window",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/job-applications/reminder/trigger",
+        "description": "Trigger reminder (nudge #2 / #3), bypasses time window",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PATCH",
+        "path": "/job-applications/:applicationId/recruiter-decision",
+        "description": "Update recruiter's decision (shortlist/reject)",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "decision": { "type": "string", "enum": ["shortlisted", "rejected"], "required": true },
+            "rejectionReason": { "type": "string", "optional": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/job-applications/:applicationId",
+        "description": "Get single application by ID",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PATCH",
+        "path": "/job-applications/:applicationId",
+        "description": "Update application",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": { "type": "application/json" },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/job-applications/:applicationId/withdraw",
+        "description": "Withdraw application",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/job-applications/:applicationId/archive",
+        "description": "Archive application",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/job-applications/:applicationId/invite-to-interview",
+        "description": "Send interview invitation email",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "DELETE",
+        "path": "/job-applications/:applicationId",
+        "description": "Delete application",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      }
+    ]
+  },
+  {
+    "routeFile": "log.routes.js",
+    "basePrefix": "/logs",
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/logs/getAllLogs",
+        "description": "Retrieve all logs with pagination/filtering",
+        "authentication": "Protected (Admin)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [
+          { "name": "page", "type": "number", "optional": true },
+          { "name": "limit", "type": "number", "optional": true },
+          { "name": "filter", "type": "string", "optional": true }
+        ],
+        "responseSchema": { "type": "array" }
+      }
+    ]
+  },
+  {
+    "routeFile": "notificationSystem.routes.js",
+    "basePrefix": "/notification-system",
+    "endpoints": [
+      {
+        "method": "POST",
+        "path": "/notification-system/AddNotification",
+        "description": "Create a system notification",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "userId": { "type": "string", "required": true },
+            "title": { "type": "string", "required": true },
+            "message": { "type": "string", "required": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/notification-system/AddNotification/info",
+        "description": "Create info notification",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {}
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/notification-system/AddNotification/success",
+        "description": "Create success notification",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": { "type": "application/json" },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/notification-system/AddNotification/warning",
+        "description": "Create warning notification",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": { "type": "application/json" },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/notification-system/AddNotification/error",
+        "description": "Create error notification",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": { "type": "application/json" },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/notification-system/AddNotification/custom",
+        "description": "Create custom notification",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": { "type": "application/json" },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/notification-system/broadcastSystemNotification",
+        "description": "Broadcast notification to all users",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": { "type": "application/json" },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/notification-system/GetMyNotification",
+        "description": "List system notifications for current user",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "PATCH",
+        "path": "/notification-system/markAsRead/:id/read",
+        "description": "Mark notification as read",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PATCH",
+        "path": "/notification-system/mark-all-read",
+        "description": "Mark all notifications as read for user",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PATCH",
+        "path": "/notification-system/archiveNotification/:id",
+        "description": "Archive a notification",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PATCH",
+        "path": "/notification-system/archive-all",
+        "description": "Archive all notifications for current user",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "DELETE",
+        "path": "/notification-system/deleteNotification/:id",
+        "description": "Delete a notification",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      }
+    ]
+  },
+  {
+    "routeFile": "payment.routes.js",
+    "basePrefix": "/payments",
+    "endpoints": [
+      {
+        "method": "POST",
+        "path": "/payments/verify",
+        "description": "Verify and update payment status after successful checkout",
+        "authentication": "Public",
+        "requiredHeaders": ["Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "sessionId": { "type": "string", "required": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/payments/user/history",
+        "description": "Get current user's payment history",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      }
+    ]
+  },
+  {
+    "routeFile": "permissions.routes.js",
+    "basePrefix": "/permissions",
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/permissions/me",
+        "description": "Get current user's own permissions",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      }
+    ]
+  },
+  {
+    "routeFile": "pipelineInterview.routes.js",
+    "basePrefix": "/pipeline-interview",
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/pipeline-interview/params/:jobId/:stepNumber",
+        "description": "Get interview parameters for a specific step",
+        "authentication": "Public (default)",
+        "requiredHeaders": [],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/pipeline-interview/steps/:jobId",
+        "description": "Get all interview steps for a job",
+        "authentication": "Public (default)",
+        "requiredHeaders": [],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "POST",
+        "path": "/pipeline-interview/progress/initialize",
+        "description": "Initialize or get candidate progress",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "candidateId": { "type": "string", "required": true },
+            "jobId": { "type": "string", "required": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/pipeline-interview/progress/:candidateId/:jobId",
+        "description": "Get candidate progress",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PUT",
+        "path": "/pipeline-interview/progress/update-step",
+        "description": "Update step status after interview completion",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "candidateId": { "type": "string", "required": true },
+            "jobId": { "type": "string", "required": true },
+            "stepNumber": { "type": "number", "required": true },
+            "status": { "type": "string", "required": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/pipeline-interview/progress/next-step",
+        "description": "Move to next step",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "candidateId": { "type": "string", "required": true },
+            "jobId": { "type": "string", "required": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      }
+    ]
+  },
+  {
+    "routeFile": "planLimits.routes.js",
+    "basePrefix": "/planLimits",
+    "endpoints": [
+      {
+        "method": "POST",
+        "path": "/planLimits",
+        "description": "Create a new plan (Admin only)",
+        "authentication": "Protected (Admin)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "name": { "type": "string", "required": true },
+            "maxPosts": { "type": "number", "required": true },
+            "maxInterviews": { "type": "number", "required": true },
+            "price": { "type": "number", "required": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/planLimits",
+        "description": "Get all plans (Public)",
+        "authentication": "Public",
+        "requiredHeaders": [],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/planLimits/:id",
+        "description": "Get plan by ID (Public)",
+        "authentication": "Public",
+        "requiredHeaders": [],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PUT",
+        "path": "/planLimits",
+        "description": "Update plan by name (Admin only)",
+        "authentication": "Protected (Admin)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "name": { "type": "string", "required": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      }
+    ]
+  },
+  {
+    "routeFile": "post.routes.js",
+    "basePrefix": "/post",
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/post/search",
+        "description": "Return all posts with search, filters and pagination (public)",
+        "authentication": "Public",
+        "requiredHeaders": [],
+        "requestBody": null,
+        "queryParameters": [
+          { "name": "search", "type": "string", "optional": true },
+          { "name": "page", "type": "number", "optional": true },
+          { "name": "limit", "type": "number", "optional": true }
+        ],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/post/details/:id",
+        "description": "Return post details by ID (public)",
+        "authentication": "Public",
+        "requiredHeaders": [],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/post/public-stats",
+        "description": "Return public statistics (number of users, posts, companies)",
+        "authentication": "Public",
+        "requiredHeaders": [],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/post/generate-job-post",
+        "description": "Generate a job post (Company only)",
+        "authentication": "Protected (Company)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "title": { "type": "string", "required": true },
+            "description": { "type": "string", "optional": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/post/save-post",
+        "description": "Create a post (requires write:posts scope)",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "title": { "type": "string", "required": true },
+            "description": { "type": "string", "required": true },
+            "skills": { "type": "array", "optional": true },
+            "salary": { "type": "object", "optional": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/post/get-all-posts",
+        "description": "Return all posts (requires read:posts scope)",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/post/my-posts",
+        "description": "Posts of current user (requires read:posts scope)",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/post/metrics",
+        "description": "Return post metrics (total, active, draft, expired, closed, cancelled)",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/post/kpi/status-by-post",
+        "description": "KPI Zone 2: per-post shortlisted/velocity/coverage/deadline",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/post/getPostById/:id",
+        "description": "Post details (requires read:posts scope)",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PUT",
+        "path": "/post/updatePost/:id",
+        "description": "Update a post (requires write:posts scope)",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": { "type": "application/json" },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PATCH",
+        "path": "/post/updatePostStatus/:id",
+        "description": "Change post status (requires write:posts scope)",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "status": { "type": "string", "required": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "DELETE",
+        "path": "/post/deletePost/:id",
+        "description": "Delete a post (requires delete:posts scope)",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/post/adsPost",
+        "description": "3 posts suggested from top 3 profile skills + pagination",
+        "authentication": "Public",
+        "requiredHeaders": [],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/post/DetailsPost/:id",
+        "description": "Post detail alias",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/post/interview-config/:jobId",
+        "description": "Get interview configuration for job-based HR interview (prompt flow)",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      }
+    ]
+  },
+  {
+    "routeFile": "postInterviewAssessment.routes.js",
+    "basePrefix": "/post-interview-assessments",
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/post-interview-assessments/post/:postId/candidate/:candidateUserId",
+        "description": "Get assessment for one candidate (public)",
+        "authentication": "Public",
+        "requiredHeaders": [],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/post-interview-assessments/check/:postId",
+        "description": "Check if candidate has assessment for post",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/post-interview-assessments/matching/:postId",
+        "description": "Get matching details for candidate and post",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/post-interview-assessments",
+        "description": "Get all assessments",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/post-interview-assessments/company/mine",
+        "description": "Get all assessments for authenticated company",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/post-interview-assessments/company/mine/metrics",
+        "description": "Get interview metrics for authenticated company",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/post-interview-assessments/company/mine/kpi/unreviewed-48h",
+        "description": "Get KPI count of unreviewed AI interviews > 48h",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/post-interview-assessments/company/mine/kpi/unreviewed-48h/details",
+        "description": "Get details of unreviewed AI interviews > 48h",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/post-interview-assessments/candidate/my",
+        "description": "Get all assessments for a candidate",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "POST",
+        "path": "/post-interview-assessments",
+        "description": "Create new assessment",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "postId": { "type": "string", "required": true },
+            "candidateId": { "type": "string", "required": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/post-interview-assessments/:assessmentId",
+        "description": "Get single assessment",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      }
+    ]
+  },
+  {
+    "routeFile": "postSteps.routes.js",
+    "basePrefix": "/post-steps",
+    "endpoints": [
+      {
+        "method": "POST",
+        "path": "/post-steps/post/:postId/steps",
+        "description": "Add steps to post",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "steps": { "type": "array", "required": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PUT",
+        "path": "/post-steps/node/:nodeId/submit-task",
+        "description": "Submit task",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "githubLink": { "type": "string", "required": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      }
+    ]
+  },
+  {
+    "routeFile": "profile.routes.js",
+    "basePrefix": "/profile",
+    "endpoints": [
+      {
+        "method": "PUT",
+        "path": "/profile/updateFinalBid",
+        "description": "Update final bid (public route)",
+        "authentication": "Public",
+        "requiredHeaders": ["Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {}
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/profile/me",
+        "description": "Get profile of current user",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/profile/createOrUpdateProfile",
+        "description": "Create or update user profile",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "firstName": { "type": "string", "optional": true },
+            "lastName": { "type": "string", "optional": true },
+            "bio": { "type": "string", "optional": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PUT",
+        "path": "/profile/updateProfileVisibility",
+        "description": "Update profile visibility (public/private)",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "visibility": { "type": "string", "enum": ["public", "private"], "required": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PUT",
+        "path": "/profile/:userId",
+        "description": "Update profile (fields + image + type)",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": {
+          "type": "multipart/form-data",
+          "properties": {
+            "user_image": { "type": "file", "optional": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/profile/createOrUpdateCompanyProfile",
+        "description": "Create or update company profile",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "companyName": { "type": "string", "optional": true },
+            "industry": { "type": "string", "optional": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/profile/search/skills",
+        "description": "Search by skills",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [
+          { "name": "skill", "type": "string", "required": true }
+        ],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "POST",
+        "path": "/profile/addSoftSkills",
+        "description": "Add soft skills",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "skills": { "type": "array", "required": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/profile/getSoftSkills",
+        "description": "Get soft skills of current user",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/profile/getSoftSkillsById/:userId",
+        "description": "Get soft skills by user ID",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "DELETE",
+        "path": "/profile/deleteHardSkill",
+        "description": "Delete a hard skill",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "DELETE",
+        "path": "/profile/deleteSoftSkills",
+        "description": "Delete soft skills",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/profile/getCompanyWithAssessments",
+        "description": "Get company with assessments",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/profile/:profileId/payments",
+        "description": "Get all payments for a profile",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/profile/:profileId/payments/active",
+        "description": "Get active (most recent completed) payment",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/profile/:profileId/payments/add",
+        "description": "Add payment to profile",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {}
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/profile/:userId",
+        "description": "Get profile by ID (public - no auth required)",
+        "authentication": "Public",
+        "requiredHeaders": [],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      }
+    ]
+  },
+  {
+    "routeFile": "skillInterviewAssessment.routes.js",
+    "basePrefix": "/skill-interview-assessments",
+    "endpoints": [
+      {
+        "method": "POST",
+        "path": "/skill-interview-assessments",
+        "description": "Create skill interview assessment",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "skill": { "type": "string", "required": true },
+            "level": { "type": "string", "required": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/skill-interview-assessments/my",
+        "description": "Get my skill interview assessments",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/skill-interview-assessments/:id",
+        "description": "Get skill interview assessment by ID",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/skill-interview-assessments",
+        "description": "Get all skill interview assessments",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [
+          { "name": "page", "type": "number", "optional": true },
+          { "name": "limit", "type": "number", "optional": true },
+          { "name": "interviewType", "type": "string", "optional": true },
+          { "name": "candidateId", "type": "string", "optional": true },
+          { "name": "interviewerId", "type": "string", "optional": true }
+        ],
+        "responseSchema": { "type": "array" }
+      }
+    ]
+  },
+  {
+    "routeFile": "strip.routes.js",
+    "basePrefix": "/stripe",
+    "endpoints": [
+      {
+        "method": "POST",
+        "path": "/stripe/create-checkout-session",
+        "description": "Create a Stripe payment session",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "planId": { "type": "string", "required": true },
+            "companyId": { "type": "string", "optional": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object", "properties": { "sessionUrl": "string" } }
+      }
+    ]
+  },
+  {
+    "routeFile": "subscription.routes.js",
+    "basePrefix": "/subscriptions",
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/subscriptions/active",
+        "description": "Get active subscription for a company",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/subscriptions/combined",
+        "description": "Get combined active subscription details",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/subscriptions",
+        "description": "Get all subscriptions for a company",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/subscriptions/:subscriptionId/details",
+        "description": "Get detailed subscription info with usage stats",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/subscriptions/:companyProfileId/check-limit/:limitType",
+        "description": "Check if company can perform an action",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [
+          { "name": "limitType", "type": "string", "required": true, "description": "posts or monthlyInterviews" }
+        ],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/subscriptions/:subscriptionId/cancel",
+        "description": "Cancel a subscription",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "reason": { "type": "string", "optional": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/subscriptions/:subscriptionId/enable-auto-renew",
+        "description": "Re-enable auto-renewal on a subscription",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/subscriptions/:subscriptionId/extend",
+        "description": "Extend subscription end date",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "additionalDays": { "type": "number", "optional": true, "default": 30 }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/subscriptions/:subscriptionId/renew",
+        "description": "Renew subscription (create new from same plan)",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/subscriptions/:subscriptionId/increment-usage",
+        "description": "Increment usage counter",
+        "authentication": "Protected (JWT)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "usageType": { "type": "string", "required": true, "description": "postsUsed or monthlyInterviewsUsed" },
+            "amount": { "type": "number", "optional": true, "default": 1 }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      }
+    ]
+  },
+  {
+    "routeFile": "teamChat.routes.js",
+    "basePrefix": "/team-chat",
+    "endpoints": [
+      {
+        "method": "POST",
+        "path": "/team-chat/requests",
+        "description": "Create a team chat request",
+        "authentication": "Protected (Company/Employee)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "recipientId": { "type": "string", "required": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/team-chat/requests/incoming",
+        "description": "List incoming team chat requests",
+        "authentication": "Protected (Company/Employee)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/team-chat/requests/outgoing",
+        "description": "List outgoing team chat requests",
+        "authentication": "Protected (Company/Employee)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "POST",
+        "path": "/team-chat/requests/:requestId/accept",
+        "description": "Accept a team chat request",
+        "authentication": "Protected (Company/Employee)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/team-chat/requests/:requestId/reject",
+        "description": "Reject a team chat request",
+        "authentication": "Protected (Company/Employee)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/team-chat/conversations",
+        "description": "List team chat conversations",
+        "authentication": "Protected (Company/Employee)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "GET",
+        "path": "/team-chat/unread-count",
+        "description": "Get total unread count",
+        "authentication": "Protected (Company/Employee)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/team-chat/conversations/:conversationId",
+        "description": "Get team chat conversation by ID",
+        "authentication": "Protected (Company/Employee)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "PUT",
+        "path": "/team-chat/conversations/:conversationId/read",
+        "description": "Mark team chat conversation as read",
+        "authentication": "Protected (Company/Employee)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "POST",
+        "path": "/team-chat/conversations/:conversationId/hide-for-me",
+        "description": "Hide conversation for current user",
+        "authentication": "Protected (Company/Employee)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "DELETE",
+        "path": "/team-chat/conversations/:conversationId",
+        "description": "Delete team chat conversation",
+        "authentication": "Protected (Company/Employee)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "DELETE",
+        "path": "/team-chat/messages/:messageId",
+        "description": "Delete team chat message",
+        "authentication": "Protected (Company/Employee)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/team-chat/messages/:conversationId",
+        "description": "Get team chat messages",
+        "authentication": "Protected (Company/Employee)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      },
+      {
+        "method": "POST",
+        "path": "/team-chat/messages",
+        "description": "Send team chat message",
+        "authentication": "Protected (Company/Employee)",
+        "requiredHeaders": ["Authorization", "Content-Type"],
+        "requestBody": {
+          "type": "application/json",
+          "properties": {
+            "conversationId": { "type": "string", "required": true },
+            "content": { "type": "string", "required": true }
+          }
+        },
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      }
+    ]
+  },
+  {
+    "routeFile": "todo.routes.js",
+    "basePrefix": "/todo",
+    "endpoints": [
+      {
+        "method": "POST",
+        "path": "/todo/profile",
+        "description": "Generate a todo list for user profile",
+        "authentication": "Protected (Candidate)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "object" }
+      },
+      {
+        "method": "GET",
+        "path": "/todo/profile",
+        "description": "Retrieve the user profile todo list",
+        "authentication": "Protected (Candidate)",
+        "requiredHeaders": ["Authorization"],
+        "requestBody": null,
+        "queryParameters": [],
+        "responseSchema": { "type": "array" }
+      }
+    ]
+  }
+]
