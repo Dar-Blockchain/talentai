@@ -277,10 +277,10 @@ export default function TermsOfUse() {
               </Box>
             </Section>
 
-            <Section title={t("terms.sections.blockchain.title")}>
-              <P>{t("terms.sections.blockchain.p1")}</P>
+            <Section title={t("terms.sections.reports.title")}>
+              <P>{t("terms.sections.reports.p1")}</P>
               <Box component="ul" sx={{ pl: 0, listStyle: "disc", mb: 1.5 }}>
-                {list("terms.sections.blockchain.items").map((item) => (
+                {list("terms.sections.reports.items").map((item) => (
                   <Li key={item}>{item}</Li>
                 ))}
               </Box>

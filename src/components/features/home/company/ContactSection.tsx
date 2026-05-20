@@ -108,7 +108,7 @@ const ContactSection: React.FC = () => {
   const FEATURES = [
     t("contact.feature_screening"),
     t("contact.feature_bias"),
-    t("contact.feature_blockchain"),
+    t("contact.feature_scoring"),
   ];
 
   return (

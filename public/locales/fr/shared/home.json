@@ -49,7 +49,7 @@
     "overline": "La solution",
     "headline_1": "Fini les approximations.",
     "headline_accent": "Recrutez avec confiance.",
-    "body": "Entretiens pilotés par IA et preuves vérifiées par blockchain — chaque recrutement basé sur la performance, pas sur la paperasse.",
+    "body": "Entretiens pilotés par IA, scoring transparent et auditable — chaque recrutement basé sur la performance et les compétences.",
     "demo_badge": "DÉMO EN DIRECT",
     "stats": {
       "less_work": "de travail en moins",
@@ -100,7 +100,7 @@
     "step_2_desc": "Votre recruteur IA tourne 24h/24 — évaluant la profondeur technique, les soft skills et la culture d'entreprise via une conversation naturelle, à grande échelle, sans biais.",
     "step_3_tag": "Décision",
     "step_3_label": "Évaluer & recruter",
-    "step_3_desc": "Recevez des shortlists auto-classées avec des accréditations vérifiées par blockchain. Comparez les candidats côte à côte et faites vos offres en toute confiance."
+    "step_3_desc": "Recevez des shortlists auto-classées avec des scores explicables et auditables. Comparez les candidats côte à côte et faites vos offres en toute confiance."
   },
   "transformation": {
     "overline": "La transformation",
@@ -141,17 +141,15 @@
     "headline_accent": "Nous avons les réponses.",
     "body": "Tout ce que vous devez savoir sur le recrutement IA avec TalentAI.",
     "q1": "Qu'est-ce que TalentAI ?",
-    "a1": "TalentAI est une plateforme d'automatisation du recrutement par IA qui remplace les processus d'embauche manuels par des pipelines intelligents et personnalisables. La plateforme déploie des agents IA conversationnels spécialisés — dont Olga (évaluation technique), Sinda (évaluation des soft skills) et Yuka (coordination du processus) — pour conduire des entretiens vidéo naturels, noter les candidats sur plusieurs dimensions et délivrer des accréditations vérifiées par blockchain sur le réseau Hedera. Les entreprises utilisent TalentAI pour réduire leur cycle de recrutement moyen de 42 jours jusqu'à 75 %.",
+    "a1": "TalentAI est une plateforme d'automatisation du recrutement par IA qui remplace les processus d'embauche manuels par des pipelines intelligents et personnalisables. La plateforme déploie des agents IA conversationnels spécialisés pour conduire des entretiens vidéo naturels, noter les candidats sur les dimensions techniques, comportementales et culturelles, et délivrer des rapports explicables aux recruteurs. Les entreprises utilisent TalentAI pour réduire leur cycle de recrutement moyen de 42 jours jusqu'à 75 %.",
     "q2": "Comment fonctionnent les entretiens IA ?",
-    "a2": "Les agents IA de TalentAI conduisent des entretiens vidéo en direct grâce au traitement du langage naturel et à une synthèse vocale au rendu authentiquement humain. Chaque agent est spécialisé : Olga gère les évaluations techniques via des discussions de codage interactives, Sinda évalue les soft skills à travers des conversations comportementales, et Yuka coordonne l'ensemble du pipeline. Les agents adaptent leurs questions en temps réel selon les réponses des candidats, évaluent les indices verbaux et non-verbaux, et produisent des rapports d'évaluation multidimensionnels — sans aucune intervention humaine.",
+    "a2": "Les agents IA de TalentAI conduisent des entretiens vidéo en direct grâce au traitement du langage naturel et à une synthèse vocale au rendu authentiquement humain. Les agents adaptent leurs questions en temps réel selon les réponses des candidats, évaluent les indices verbaux et non-verbaux, et produisent des rapports d'évaluation multidimensionnels — sans aucune intervention humaine.",
     "q3": "Le recrutement par IA est-il biaisé ?",
-    "a3": "TalentAI est spécifiquement conçu pour éliminer les biais inconscients dans le recrutement. Chaque candidat reçoit les mêmes critères d'évaluation, les mêmes questions standardisées et un scoring objectif — quel que soit son nom, son origine ou son apparence. Toutes les données d'évaluation sont enregistrées de façon immuable sur la blockchain Hedera, créant une piste d'audit transparente qui garantit la conformité aux normes d'égalité des chances et aux exigences du RGPD.",
+    "a3": "TalentAI est spécifiquement conçu pour éliminer les biais inconscients dans le recrutement. Chaque candidat reçoit les mêmes critères d'évaluation, les mêmes questions standardisées et un scoring objectif — quel que soit son nom, son origine ou son apparence. Toutes les données d'évaluation sont journalisées et auditables, créant une piste de traçabilité transparente qui garantit la conformité aux normes d'égalité des chances et aux exigences du RGPD.",
     "q4": "Quels modules d'évaluation sont disponibles ?",
     "a4": "TalentAI propose 8 modules d'évaluation préconstruits : Évaluation des compétences techniques, Évaluation des soft skills, Analyse de l'adéquation culturelle, Test de maîtrise linguistique, Missions pratiques, Défis de résolution de problèmes, Entretiens comportementaux et Vérification des références. Chaque module peut être configuré avec des seuils de réussite personnalisés, un scoring pondéré, des limites de temps et des règles de progression automatique. Les entreprises combinent les modules pour créer des pipelines uniques adaptés à différents rôles, départements ou niveaux de séniorité.",
     "q5": "Combien coûte TalentAI ?",
-    "a5": "TalentAI propose des tarifs flexibles à partir de seulement 8 $ par entretien IA, sans engagement — payez uniquement ce que vous utilisez. Pour les équipes avec des besoins récurrents, les abonnements commencent à 99 $/mois (Starter, 15 entretiens) et montent jusqu'à 1 499 $/mois (Illimité, 700 entretiens avec support 24/7 dédié et benchmarks BI). Chaque plan inclut l'IA d'entretien avec scoring et rapports, la création de fiches de poste par IA, et un pipeline builder personnalisable. Les entretiens supplémentaires sont facturés de 8 $ à 4 $ selon le niveau. Une solution entreprise en marque blanche est également disponible avec infrastructure dédiée et SLA.",
-    "q6": "Qu'est-ce que le token TAI ?",
-    "a6": "Le token TAI est le token utilitaire natif de TalentAI, construit sur le réseau Hedera Hashgraph (HTS). Il alimente toutes les transactions de la plateforme, des frais de pipeline d'évaluation à l'émission d'accréditations blockchain. Les abonnés reçoivent des tokens TAI avec leur plan, et les candidats en gagnent grâce au modèle Interview-to-Earn lorsqu'ils complètent des évaluations IA vérifiées. Le token offre également des droits de gouvernance et des récompenses de staking au sein de l'écosystème TalentAI."
+    "a5": "TalentAI propose des tarifs flexibles à partir de seulement 8 $ par entretien IA, sans engagement — payez uniquement ce que vous utilisez. Pour les équipes avec des besoins récurrents, les abonnements commencent à 99 $/mois (Starter, 15 entretiens) et montent jusqu'à 1 499 $/mois (Illimité, 700 entretiens avec support 24/7 dédié et benchmarks BI). Chaque plan inclut l'IA d'entretien avec scoring et rapports, la création de fiches de poste par IA, et un pipeline builder personnalisable. Les entretiens supplémentaires sont facturés de 8 $ à 4 $ selon le niveau. Une solution entreprise en marque blanche est également disponible avec infrastructure dédiée et SLA."
   },
   "contact": {
     "overline": "Parlons-en",
@@ -162,7 +160,7 @@
     "left_headline_accent": "peut être fière.",
     "feature_screening": "Pipeline de présélection entièrement automatisé",
     "feature_bias": "Évaluations IA sans biais",
-    "feature_blockchain": "Accréditations vérifiées par blockchain",
+    "feature_scoring": "Scoring explicable et auditable",
     "trust_reply_label": "Réponse < 24h",
     "trust_reply_desc": "Sans détour",
     "trust_team_label": "Équipe dédiée",
