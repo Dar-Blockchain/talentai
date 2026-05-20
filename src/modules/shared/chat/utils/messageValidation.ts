@@ -20,7 +20,7 @@ const PHONE_PATTERNS: RegExp[] = [
 ];
 
 const hasIntlPhoneByDigitCount = (text: string): boolean => {
-  const matches = String(text || "").match(/(?:\+|00)[\d\s.\-]{5,30}/g) || [];
+  const matches: string[] = String(text || "").match(/(?:\+|00)[\d\s.\-]{5,30}/g) || [];
   return matches.some((m) => (m.match(/\d/g) || []).length >= 7);
 };
 
