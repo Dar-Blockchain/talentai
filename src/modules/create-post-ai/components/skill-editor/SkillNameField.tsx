@@ -1,8 +1,14 @@
-import { Box, Typography, TextField } from "@mui/material";
-import { Autocomplete } from "@mui/material";
+import { Box, Typography, TextField, Autocomplete, Chip } from "@mui/material";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import { useTranslation } from "react-i18next";
 import { ALL_SKILLS, SOFT_SKILLS } from "@/constants/skills";
 import { inputStyle, labelSx } from "./styles";
+
+interface SkillOption {
+  label: string;
+  category?: string;
+  isCustom?: boolean;
+}
 
 interface Props {
   skillType: "hard" | "soft";
@@ -10,18 +16,84 @@ interface Props {
   onChange: (value: string) => void;
 }
 
+const TEAL = "#0D9488";
+
 const SkillNameField = ({ skillType, value, onChange }: Props) => {
   const { t } = useTranslation("posts");
+  const baseOptions: SkillOption[] = skillType === "hard" ? ALL_SKILLS : SOFT_SKILLS;
 
   return (
     <Box sx={{ flex: 1, mb: 1 }}>
       <Typography sx={labelSx}>{t("create.post_form.labels.skill_name")}</Typography>
       <Autocomplete
         freeSolo
-        options={skillType === "hard" ? ALL_SKILLS : SOFT_SKILLS}
-        value={value || ""}
+        disableClearable
+        options={baseOptions}
+        inputValue={value}
+        getOptionLabel={(opt) => (typeof opt === "string" ? opt : opt.label)}
+        filterOptions={(options, { inputValue }) => {
+          const q = inputValue.toLowerCase().trim();
+          const filtered = q
+            ? options.filter((o) => o.label.toLowerCase().includes(q))
+            : options;
+          const exactMatch = options.some((o) => o.label.toLowerCase() === q);
+          if (q && !exactMatch) {
+            filtered.push({ label: inputValue, isCustom: true });
+          }
+          return filtered;
+        }}
         onInputChange={(_, newValue) => onChange(newValue)}
-        getOptionLabel={(opt) => (typeof opt === "string" ? opt : (opt as any).label)}
+        onChange={(_, newValue) => {
+          if (!newValue) { onChange(""); return; }
+          onChange(typeof newValue === "string" ? newValue : newValue.label);
+        }}
+        renderOption={(props, option) => {
+          const { key, ...rest } = props as any;
+          if (option.isCustom) {
+            return (
+              <Box
+                key={key}
+                component="li"
+                {...rest}
+                sx={{
+                  display: "flex", alignItems: "center", gap: 1,
+                  px: 2, py: 1.25, cursor: "pointer",
+                  borderTop: "1px solid #F3F4F6",
+                  "&:hover": { bgcolor: "#F0FDFA" },
+                }}
+              >
+                <AddCircleOutlineIcon sx={{ fontSize: 16, color: TEAL }} />
+                <Box>
+                  <Typography sx={{ fontSize: "12px", color: TEAL, fontWeight: 600 }}>
+                    Add &quot;{option.label}&quot;
+                  </Typography>
+                  <Typography sx={{ fontSize: "10.5px", color: "#9CA3AF" }}>
+                    Add as custom skill
+                  </Typography>
+                </Box>
+              </Box>
+            );
+          }
+          return (
+            <Box
+              key={key}
+              component="li"
+              {...rest}
+              sx={{
+                display: "flex", alignItems: "center", gap: 1,
+                px: 2, py: 1, cursor: "pointer",
+                "&:hover": { bgcolor: "#F9FAFB" },
+              }}
+            >
+              <Chip
+                label={option.category}
+                size="small"
+                sx={{ fontSize: "9px", height: 16, bgcolor: "#F3F4F6", color: "#6B7280", borderRadius: "4px" }}
+              />
+              <Typography sx={{ fontSize: "12.5px", color: "#111827" }}>{option.label}</Typography>
+            </Box>
+          );
+        }}
         renderInput={(params) => (
           <TextField
             {...params}
