@@ -29,13 +29,14 @@ import campaignReducer from './slices/campaignSlice';
 import companyReducer from './slices/companySlice';
 import departmentReducer from './slices/departmentSlice';
 import jobApplicationReducer from './slices/jobApplicationSlice';
-import apiKeyReducer from './slices/apiKeySlice';
 import feedbackReducer from './slices/feedbackSlice';
 import paymentReducer from './slices/paymentSlice';
 import kpiReducer from './slices/kpiSlice';
 import { socketMiddleware } from './middleware/socketMiddleware';
+import { settingsReducer } from '@/modules/settings/company/store';
 
 const rootReducer = combineReducers({
+  settings: settingsReducer,
   user: userReducer,
   auth: authReducer,
   post: postReducer,
@@ -56,7 +57,6 @@ const rootReducer = combineReducers({
   department: departmentReducer,
   jobApplications: jobApplicationReducer,
   kpi: kpiReducer,
-  apiKeys: apiKeyReducer,
   feedback: feedbackReducer,
   payment: paymentReducer,
 });

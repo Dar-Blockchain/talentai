@@ -5,9 +5,8 @@ import { useSelector } from "react-redux";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import { RootState } from "@/store/store";
-import axios from "axios";
 import Header from "@/components/layout/dashboard/Header";
-import { NotificationsTab, PersonalInformationTab, ProfileVisibilityTab, SnackbarNotifications, LanguageTab, useProfileManagement } from "@/modules/settings/candidate";
+import { NotificationsTab, PersonalInformationTab, ProfileVisibilityTab, SnackbarNotifications, LanguageTab, useProfileManagement, useUpdateCandidateVisibility } from "@/modules/settings/candidate";
 import PersonOutlined from "@mui/icons-material/PersonOutlined";
 import LanguageIcon from "@mui/icons-material/Language";
 import NotificationsOutlined from "@mui/icons-material/NotificationsOutlined";
@@ -45,6 +44,7 @@ const CandidateSettingsPage: React.FC = () => {
   const user = useSelector((state: RootState) => state.user.connectedUser.user);
   const hasMembership = !!companyMembership?._id;
 
+  const updateVisibilityMutation = useUpdateCandidateVisibility();
   const [isPublicProfile, setIsPublicProfile] = useState(reduxProfile?.isPublicProfile || false);
 
   React.useEffect(() => {
@@ -57,19 +57,9 @@ const CandidateSettingsPage: React.FC = () => {
   }, [router.query.tab]);
 
   const handleToggleVisibility = useCallback(async (newVisibility: boolean) => {
-    try {
-      const token = localStorage.getItem("api_token");
-      const res = await axios.put(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/updateProfileVisibility`,
-        { isPublicProfile: newVisibility },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (res.data.success) setIsPublicProfile(newVisibility);
-      else throw new Error(res.data.message || "Failed");
-    } catch (err: any) {
-      throw new Error(err.response?.data?.message || "Failed to update profile visibility");
-    }
-  }, []);
+    await updateVisibilityMutation.mutateAsync(newVisibility);
+    setIsPublicProfile(newVisibility);
+  }, [updateVisibilityMutation]);
 
   const displayName = reduxProfile?.firstName
     ? `${reduxProfile.firstName}${reduxProfile.lastName ? ` ${reduxProfile.lastName}` : ""}`

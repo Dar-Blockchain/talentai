@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React from "react";
 import {
   Box, Typography, Avatar, TextField, Button,
   CircularProgress, Divider, Chip,
@@ -11,15 +11,11 @@ import EmailOutlined from "@mui/icons-material/EmailOutlined";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
-import { ROLE_LABELS, ROLE_STYLES } from "@/components/features/company/employees/list/EmployeeCard";
 import CameraAltOutlined from "@mui/icons-material/CameraAltOutlined";
 import CheckOutlined from "@mui/icons-material/CheckOutlined";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "@/store/store";
-import { uploadProfileImage, getMyProfile } from "@/store/slices/userSlice";
-import axiosInstance from "@/utils/axiosInstance";
 import dynamic from "next/dynamic";
-import { Section, InfoRow, TEAL } from "@/modules/settings/shared";
+import { ROLE_LABELS, ROLE_STYLES } from "@/components/features/company/employees/list/EmployeeCard";
+import { Section, InfoRow, TEAL, useEmployeeSettings } from "@/modules/settings/employee";
 
 const fieldSx = {
   "& .MuiInputLabel-root": { color: "#6B7280", fontFamily: "Poppins", fontSize: "0.9rem" },
@@ -35,57 +31,14 @@ const fieldSx = {
   },
 };
 
-
 const EmployeeSettingsPage: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const { user, profile, companyMembership } = useSelector((state: RootState) => state.user.connectedUser);
-
-  const displayName = profile
-    ? `${profile.firstName || ""} ${profile.lastName || ""}`.trim() || user?.username || ""
-    : user?.username || "";
-
-  const avatarUrl = (profile?.user_image || user?.user_image)
-    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${profile?.user_image || user?.user_image}`
-    : null;
-
-  const initials = displayName
-    ? displayName.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()
-    : (user?.email?.[0] || "E").toUpperCase();
-
-  const [username, setUsername] = useState(user?.username || "");
-  const [savingName, setSavingName] = useState(false);
-  const [nameSaved, setNameSaved]   = useState(false);
-  const [nameError, setNameError]   = useState("");
-
-  const [uploadingImg, setUploadingImg] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  const handleSaveName = async () => {
-    if (!username.trim()) { setNameError("Name cannot be empty"); return; }
-    setNameError("");
-    setSavingName(true);
-    try {
-      await axiosInstance.put(`users/${user?._id}`, { username: username.trim() });
-      await dispatch(getMyProfile());
-      setNameSaved(true);
-      setTimeout(() => setNameSaved(false), 2500);
-    } catch {
-      setNameError("Failed to save. Please try again.");
-    } finally {
-      setSavingName(false);
-    }
-  };
-
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploadingImg(true);
-    try {
-      await dispatch(uploadProfileImage({ file })).unwrap();
-      await dispatch(getMyProfile());
-    } catch {}
-    finally { setUploadingImg(false); }
-  };
+  const {
+    user, companyMembership, fileRef,
+    displayName, avatarUrl, initials,
+    username, savingName, nameSaved, nameError, uploadingImg,
+    setUsername, setNameError,
+    handleSaveName, handleAvatarChange,
+  } = useEmployeeSettings();
 
   return (
     <DashboardLayout>
@@ -206,7 +159,6 @@ const EmployeeSettingsPage: React.FC = () => {
               <>
                 <Divider sx={{ borderColor: "#F3F4F6" }} />
 
-                {/* Company */}
                 <InfoRow
                   icon={<BusinessOutlined sx={{ fontSize: 18, color: TEAL }} />}
                   iconBg="#F0FDF9"
@@ -220,12 +172,10 @@ const EmployeeSettingsPage: React.FC = () => {
                   }
                 />
 
-                {/* Role */}
                 {companyMembership?.role && (() => {
-                  const roleKey = companyMembership.role as string;
+                  const roleKey   = companyMembership.role as string;
                   const formatRole = (r: string) =>
-                    r.replace(/_/g, " ").replace(/([a-z])([A-Z])/g, "$1 $2")
-                     .replace(/\b\w/g, (c) => c.toUpperCase());
+                    r.replace(/_/g, " ").replace(/([a-z])([A-Z])/g, "$1 $2").replace(/\b\w/g, (c) => c.toUpperCase());
                   const roleLabel = ROLE_LABELS[roleKey] ?? formatRole(roleKey);
                   const roleStyle = ROLE_STYLES[roleKey] ?? { color: "#6B7280", bg: "#F3F4F6" };
                   return (
@@ -250,7 +200,6 @@ const EmployeeSettingsPage: React.FC = () => {
                   );
                 })()}
 
-                {/* Department */}
                 {companyMembership?.department?.name && (
                   <InfoRow
                     icon={<AccountTreeOutlined sx={{ fontSize: 18, color: "#7C3AED" }} />}

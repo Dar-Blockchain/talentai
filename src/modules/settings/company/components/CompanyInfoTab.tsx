@@ -1,19 +1,19 @@
 import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Box, Typography, Divider } from "@mui/material";
-import { COMPANY_SIZES, EXPERIENCE_LEVELS, EMPLOYMENT_TYPES } from "@/modules/settings/shared/constants";
-import { COMPANY_INFO_FIELDS, COMPANY_SELECT_FIELDS, EXP_LEVEL_KEYS, CONTACT_INPUT_FIELDS, CONTACT_SELECT_FIELDS, EMP_TYPE_KEYS } from "../data/companyInfoData";
+import { Box, Divider, Typography } from "@mui/material";
+import { Controller, Control } from "react-hook-form";
+import { COMPANY_SIZES } from "@/modules/settings/shared/constants";
 import { getAllCountryNames } from "@/utils/countryMappings";
 import AppInput from "@/modules/shared/ui/AppInput";
 import AppSelect from "@/modules/shared/ui/AppSelect";
 import AppAutocomplete from "@/modules/shared/ui/AppAutocomplete";
 import { UserProfile } from "@/types/profile";
+import { CompanyProfileFormValues } from "../schemas/companyProfileSchema";
 
 interface Props {
   profile: UserProfile;
   isEditing: boolean;
-  fieldErrors: Record<string, string>;
-  onInputChange: (key: keyof UserProfile, value: string) => void;
+  control: Control<CompanyProfileFormValues>;
 }
 
 const SectionHeader = ({ title, subtitle }: { title: string; subtitle: string }) => (
@@ -32,31 +32,18 @@ const SectionHeader = ({ title, subtitle }: { title: string; subtitle: string })
   </Box>
 );
 
-const SubTitle = ({ label }: { label: string }) => (
-  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-    <Typography sx={{ fontSize: 11, fontWeight: 700, color: "#6B7280", textTransform: "uppercase", letterSpacing: 0.8, whiteSpace: "nowrap" }}>
-      {label}
-    </Typography>
-    <Divider sx={{ flex: 1, borderColor: "#E5E7EB" }} />
-  </Box>
-);
-
-const CompanyInfoTab: React.FC<Props> = ({ profile, isEditing, fieldErrors, onInputChange }) => {
+const CompanyInfoTab: React.FC<Props> = ({ profile, isEditing, control }) => {
   const { t } = useTranslation("dashboard");
   const countries = useMemo(() => getAllCountryNames(), []);
 
-  const selectOptions = useMemo(
-    () => [
-      ...COMPANY_SELECT_FIELDS.map((field) => ({
-        key: field.key,
-        options: field.getOptions(t, COMPANY_SIZES, EXPERIENCE_LEVELS, EXP_LEVEL_KEYS),
-      })),
-      ...CONTACT_SELECT_FIELDS.map((field) => ({
-        key: field.key,
-        options: field.getOptions(t),
-      })),
-    ],
+  const sizeOptions = useMemo(
+    () => COMPANY_SIZES.map((s) => ({ label: `${s} ${t("pages.settings.employees_suffix")}`, value: s })),
     [t]
+  );
+
+  const industryOptions = useMemo(
+    () => ["Technology", "Finance", "Healthcare", "Education", "Other"].map((v) => ({ label: v, value: v })),
+    []
   );
 
   return (
@@ -68,39 +55,68 @@ const CompanyInfoTab: React.FC<Props> = ({ profile, isEditing, fieldErrors, onIn
           title={t("pages.settings.company_info.title")}
           subtitle={t("pages.settings.company_info.subtitle")}
         />
+
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2.5 }}>
-          {COMPANY_INFO_FIELDS.map((field) => (
-            <AppInput
-              key={field.key}
-              label={t(field.labelKey)}
-              value={field.key === "name" ? (profile.name || profile.companyName || "") : (profile[field.key] as string) || ""}
-              onChange={(e) => {
-                if (field.onChange) {
-                  field.onChange(e.target.value, onInputChange);
-                } else {
-                  onInputChange(field.key, e.target.value);
-                }
-              }}
-              disabled={field.disabled || !isEditing}
-              required={field.required}
-              placeholder={field.placeholderKey ? t(field.placeholderKey) : ""}
-              error={fieldErrors[field.key] || (field.key === "name" ? fieldErrors.companyName : "") || ""}
-              sx={{ gridColumn: field.gridColumn }}
-            />
-          ))}
-          {COMPANY_SELECT_FIELDS.map((field) => (
-            <AppSelect
-              key={field.key}
-              label={t(field.labelKey)}
-              value={field.getValue(profile)}
-              onChange={(val) => field.onChange(val as string, onInputChange)}
-              options={selectOptions.find((o) => o.key === field.key)?.options ?? []}
-              disabled={!isEditing}
-              error={fieldErrors[field.key] || ""}
-              columns={field.columns}
-              sx={{ gridColumn: field.gridColumn }}
-            />
-          ))}
+          {/* Email — read-only, not managed by RHF */}
+          <AppInput
+            label={t("pages.settings.company_info.email_label")}
+            value={profile.email || ""}
+            disabled
+            sx={{ gridColumn: "1 / -1" }}
+          />
+
+          {/* Company Name */}
+          <Controller
+            name="name"
+            control={control}
+            render={({ field, fieldState }) => (
+              <AppInput
+                label={t("pages.settings.company_info.name_label")}
+                value={field.value}
+                onChange={(e) => field.onChange(e.target.value)}
+                disabled={!isEditing}
+                placeholder={t("pages.settings.company_info.name_placeholder")}
+                error={fieldState.error?.message || ""}
+                sx={{ gridColumn: "1 / -1" }}
+              />
+            )}
+          />
+
+          {/* Industry */}
+          <Controller
+            name="industry"
+            control={control}
+            render={({ field, fieldState }) => (
+              <AppSelect
+                label={t("pages.settings.company_info.industry_label")}
+                value={field.value}
+                onChange={(val) => field.onChange(val)}
+                options={industryOptions}
+                disabled={!isEditing}
+                placeholder={t("pages.settings.company_info.industry_placeholder")}
+                error={fieldState.error?.message || ""}
+                sx={{ gridColumn: { xs: "1 / -1", sm: "auto" } }}
+              />
+            )}
+          />
+
+          {/* Company Size */}
+          <Controller
+            name="size"
+            control={control}
+            render={({ field, fieldState }) => (
+              <AppSelect
+                label={t("pages.settings.company_info.size_label")}
+                value={field.value}
+                onChange={(val) => field.onChange(val)}
+                options={sizeOptions}
+                disabled={!isEditing}
+                error={fieldState.error?.message || ""}
+                columns={3}
+                sx={{ gridColumn: { xs: "1 / -1", sm: "auto" } }}
+              />
+            )}
+          />
         </Box>
       </Box>
 
@@ -113,53 +129,59 @@ const CompanyInfoTab: React.FC<Props> = ({ profile, isEditing, fieldErrors, onIn
           subtitle="Location, social links, and work preferences"
         />
 
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <AppAutocomplete
-            label={t("pages.settings.contact.country_label")}
-            value={profile.location || null}
-            onChange={(v) => { onInputChange("location", v ?? ""); onInputChange("country", v ?? ""); }}
-            options={countries}
-            placeholder={t("pages.settings.contact.country_placeholder")}
-            disabled={!isEditing}
-            error={fieldErrors.location || ""}
+        {/* Location */}
+        <Controller
+          name="location"
+          control={control}
+          render={({ field, fieldState }) => (
+            <AppAutocomplete
+              label={t("pages.settings.contact.country_label")}
+              value={field.value || null}
+              onChange={(v) => field.onChange(v ?? "")}
+              options={countries}
+              placeholder={t("pages.settings.contact.country_placeholder")}
+              disabled={!isEditing}
+              error={fieldState.error?.message || ""}
+            />
+          )}
+        />
+
+        {/* LinkedIn & Website */}
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2.5 }}>
+          <Controller
+            name="linkedin"
+            control={control}
+            render={({ field, fieldState }) => (
+              <AppInput
+                label={t("pages.settings.contact.linkedin_label")}
+                value={field.value}
+                onChange={(e) => field.onChange(e.target.value)}
+                disabled={!isEditing}
+                placeholder="https://linkedin.com/company/yourcompany"
+                type="url"
+                error={fieldState.error?.message || ""}
+                sx={{ gridColumn: "1 / -1" }}
+              />
+            )}
+          />
+
+          <Controller
+            name="website"
+            control={control}
+            render={({ field, fieldState }) => (
+              <AppInput
+                label={t("pages.settings.contact.website_label")}
+                value={field.value}
+                onChange={(e) => field.onChange(e.target.value)}
+                disabled={!isEditing}
+                placeholder="https://yourcompany.com"
+                type="url"
+                error={fieldState.error?.message || ""}
+                sx={{ gridColumn: "1 / -1" }}
+              />
+            )}
           />
         </Box>
-
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2.5 }}>
-            {CONTACT_SELECT_FIELDS.map((field) => (
-              <AppSelect
-                key={field.key}
-                label={t(field.labelKey)}
-                value={field.getValue(profile)}
-                onChange={(val) => field.onChange(val as string, onInputChange)}
-                options={selectOptions.find((o) => o.key === field.key)?.options ?? []}
-                disabled={!isEditing}
-                error={fieldErrors[field.key] || ""}
-                sx={{ gridColumn: field.gridColumn }}
-              />
-            ))}
-          </Box>
-        </Box>
-
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2.5 }}>
-            {CONTACT_INPUT_FIELDS.map((field) => (
-              <AppInput
-                key={field.key}
-                label={t(field.labelKey)}
-                value={(profile[field.key] as string) || ""}
-                onChange={(e) => onInputChange(field.key, e.target.value)}
-                disabled={!isEditing}
-                placeholder={field.placeholder}
-                type={field.type}
-                error={fieldErrors[field.key] || ""}
-                sx={{ gridColumn: field.gridColumn }}
-              />
-            ))}
-          </Box>
-        </Box>
-
       </Box>
     </Box>
   );

@@ -6,7 +6,7 @@ import Link from "next/link";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import { useCompanyAccess } from "@/hooks/useCompanyAccess";
-import { useCompanyProfileManagement } from "@/hooks/useCompanyProfileManagement";
+import { useCompanyProfileManagement } from "@/modules/settings/company/hooks";
 import { selectEmployeePermissions } from "@/store/slices/memberSlice";
 import { Box, Tabs, Tab } from "@mui/material";
 import { ProfileBanner, CompanyInfoTab, ApiKeysTab } from "@/modules/settings/company";
@@ -27,13 +27,18 @@ const SettingsPage: React.FC = () => {
   useCompanyAccess("canViewCompanyProfile");
   const empPerms = useSelector(selectEmployeePermissions);
   const {
-    profile, loading, uploadingImage, fieldErrors, isEmployee,
+    profile, loading, uploadingImage, isEmployee, control,
     handleInputChange, handleImageUpload, handleSaveProfile, handleSaveLanguage, handleCancel,
   } = useCompanyProfileManagement();
 
   const canEdit = !isEmployee || !!empPerms?.canEditCompanyProfile;
   const [isEditing, setEditing] = useState(false);
   const [tab, setTab] = useState(0);
+
+  const handleTabChange = (_: React.SyntheticEvent, v: number) => {
+    if (isEditing) { setEditing(false); handleCancel(); }
+    setTab(v);
+  };
 
   return (
     <DashboardLayout>
@@ -93,16 +98,17 @@ const SettingsPage: React.FC = () => {
           loading={loading}
           uploadingImage={uploadingImage}
           isEditing={isEditing}
-          onStartEdit={() => { if (canEdit) setEditing(true); }}
+          showEditActions={tab === 0 && canEdit}
+          onStartEdit={() => setEditing(true)}
           onCancelEdit={() => { setEditing(false); handleCancel(); }}
-          onSaveEdit={async () => { await handleSaveProfile(); setEditing(false); }}
+          onSaveEdit={async () => { const ok = await handleSaveProfile(); if (ok) setEditing(false); }}
           onImageUpload={handleImageUpload}
         />
 
         <Box sx={{ borderBottom: "1px solid #F3F4F6", px: 3 }}>
           <Tabs
             value={tab}
-            onChange={(_, v) => setTab(v)}
+            onChange={handleTabChange}
             sx={{
               minHeight: 48,
               "& .MuiTab-root": { textTransform: "none", fontWeight: 600, fontSize: "0.82rem", minHeight: 48, color: "#374151", px: 1.5, mr: 1 },
@@ -116,7 +122,7 @@ const SettingsPage: React.FC = () => {
           </Tabs>
         </Box>
 
-        {tab === 0 && <CompanyInfoTab profile={profile} isEditing={isEditing} fieldErrors={fieldErrors} onInputChange={handleInputChange} />}
+        {tab === 0 && <CompanyInfoTab profile={profile} isEditing={isEditing} control={control} />}
         {tab === 1 && <ApiKeysTab />}
         {tab === 2 && <LanguageTab onInputChange={handleInputChange} onSaveLanguage={handleSaveLanguage} />}
       </Box>

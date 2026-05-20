@@ -1,1 +1,1 @@
-export { useProfileManagement } from "@/hooks/useProfileManagement";
+export { useProfileManagement } from "./useProfileManagement";

@@ -1,56 +1,15 @@
-import React from 'react';
-import {
-  Box, TextField, Button, MenuItem, Select, FormControl,
-  InputLabel, CircularProgress, Alert, Divider, Typography, FormHelperText,
-} from '@mui/material';
+import React, { useMemo } from 'react';
+import { Box, Alert, Divider, Typography, CircularProgress } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { UserProfile } from '@/types/profile';
 import { experienceLevels, timezones } from '@/constants/profile';
 import ProfilePictureSection from '@/components/features/profile/ProfilePictureSection';
-import EditOutlined from '@mui/icons-material/EditOutlined';
-import SaveOutlined from '@mui/icons-material/SaveOutlined';
-import CloseOutlined from '@mui/icons-material/CloseOutlined';
 import { Controller, SubmitErrorHandler, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PersonalInformationFormValues, personalInformationSchema } from '@/validations/profileSchemas';
-
-const T = '#0D9488';
-const T_DARK = '#0F766E';
-const T_LIGHT = '#F0FDFA';
-const T_BORDER = '#99F6E4';
-const NAVY = '#0F172A';
-const SLATE = '#64748B';
-const CARD_BORDER = '#E2E8F0';
-const PAGE_BG = '#F8FAFC';
-
-const fieldSx = {
-  '& .MuiInputBase-root': { transition: 'all 0.24s cubic-bezier(0.4, 0, 0.2, 1)' },
-  '& .MuiOutlinedInput-root': {
-    borderRadius: '16px',
-    fontSize: { xs: '0.86rem', md: '0.9rem' },
-    fontWeight: 500,
-    background: 'linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)',
-    minHeight: 48,
-    '& input, & textarea': { paddingTop: '13px', paddingBottom: '13px', letterSpacing: '0.01em', color: '#0F172A' },
-    '& textarea::placeholder, & input::placeholder': { color: '#94A3B8', opacity: 1, fontWeight: 400 },
-    '&.Mui-focused fieldset': { borderColor: '#2DD4BF', borderWidth: 1.2 },
-    '&:hover fieldset': { borderColor: '#99F6E4' },
-    '& fieldset': { borderColor: '#E2E8F0' },
-    '&.Mui-disabled': { background: 'linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%)', color: '#94A3B8' },
-  },
-  '& .MuiOutlinedInput-root:not(.Mui-disabled):hover': { boxShadow: '0 6px 18px rgba(15,23,42,0.07), 0 2px 8px rgba(45,212,191,0.08)' },
-  '& .MuiOutlinedInput-root.Mui-focused': { boxShadow: '0 0 0 4px rgba(45,212,191,0.18), 0 10px 24px rgba(15,23,42,0.08)' },
-  '& .MuiInputLabel-root.Mui-focused': { color: T_DARK },
-  '& .MuiInputLabel-root': { fontSize: '0.76rem', color: '#64748B', fontWeight: 600, letterSpacing: '0.01em' },
-  '& .MuiFormHelperText-root': { marginLeft: 2, marginTop: 0.5, fontSize: '0.72rem', lineHeight: 1.3 },
-  '& .MuiFormHelperText-root.Mui-error': { color: '#DC2626', fontWeight: 500 },
-  '& .MuiSvgIcon-root': { color: '#64748B', transition: 'color 0.2s ease' },
-  '& .Mui-focused .MuiSvgIcon-root': { color: T_DARK },
-};
-
-type TextFieldKey = 'firstName' | 'lastName' | 'targetRole' | 'phone' | 'location' | 'address' | 'linkedinUrl' | 'githubUrl' | 'personalWebsite';
-type SelectFieldKey = 'gender' | 'timezone' | 'requiredExperienceLevel';
-type FieldScope = 'personal' | 'contact';
+import AppInput from '@/modules/shared/ui/AppInput';
+import AppSelect from '@/modules/shared/ui/AppSelect';
+import { EditActions } from '@/modules/settings/shared/components';
 
 interface PersonalInformationTabProps {
   profile: UserProfile;
@@ -64,9 +23,6 @@ interface PersonalInformationTabProps {
   onCancel: () => void;
   onEditToggle: () => void;
 }
-
-interface SharedTextFieldConfig { key: TextFieldKey; labelKey: string; scope: FieldScope; placeholderKey?: string; fullWidth?: boolean; }
-interface SharedSelectFieldConfig { key: SelectFieldKey; labelKey: string; options: string[]; optionLabelMap?: Record<string, string>; }
 
 const getPersonalFormDefaults = (profile: UserProfile): PersonalInformationFormValues => ({
   firstName: profile.firstName || '',
@@ -83,6 +39,22 @@ const getPersonalFormDefaults = (profile: UserProfile): PersonalInformationFormV
   personalWebsite: profile.personalWebsite || '',
 });
 
+const SectionHeader = ({ title, subtitle }: { title: string; subtitle: string }) => (
+  <Box
+    sx={{
+      px: 2,
+      py: 1.5,
+      bgcolor: '#F9FAFB',
+      border: '1px solid #E5E7EB',
+      borderRadius: 2,
+      borderLeft: '3px solid #0D9488',
+    }}
+  >
+    <Typography sx={{ fontSize: '0.9rem', fontWeight: 700, color: '#111827' }}>{title}</Typography>
+    <Typography sx={{ fontSize: '0.78rem', color: '#9CA3AF', mt: 0.25 }}>{subtitle}</Typography>
+  </Box>
+);
+
 const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
   profile, isEditing, loading, saveSuccess, error,
   uploadingImage, onImageUpload, onSave, onCancel, onEditToggle,
@@ -90,8 +62,6 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
   const { t } = useTranslation('dashboard');
   const s = (k: string) => t(`candidate_settings.personal.${k}`);
   const c = (k: string) => t(`candidate_settings.contact.${k}`);
-  const labelByScope = (scope: FieldScope, labelKey: string) => scope === 'personal' ? s(labelKey) : c(labelKey);
-  const placeholderByScope = (scope: FieldScope, placeholderKey?: string) => placeholderKey ? (scope === 'personal' ? s(placeholderKey) : c(placeholderKey)) : undefined;
 
   const isLoading = loading && !profile.firstName && !profile.username;
   const isNotWorkingValue = /^not\s+working$/i.test(profile.requiredExperienceLevel || '');
@@ -111,129 +81,162 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
     setSubmitErrorMessage(firstError?.message || s('validation_fix_fields'));
   };
 
-  const personalTextFields: SharedTextFieldConfig[] = [
-    { key: 'firstName', labelKey: 'first_name', scope: 'personal' },
-    { key: 'lastName', labelKey: 'last_name', scope: 'personal' },
-    { key: 'targetRole', labelKey: 'target_role', placeholderKey: 'target_role_placeholder', scope: 'personal' },
-  ];
-  const contactTextFields: SharedTextFieldConfig[] = [
-    { key: 'phone', labelKey: 'phone', scope: 'contact' },
-    { key: 'location', labelKey: 'location', scope: 'contact' },
-    { key: 'address', labelKey: 'address', scope: 'contact' },
-    { key: 'linkedinUrl', labelKey: 'linkedin', scope: 'contact' },
-    { key: 'githubUrl', labelKey: 'github', scope: 'contact' },
-    { key: 'personalWebsite', labelKey: 'website', scope: 'contact' },
-  ];
-  const personalSelectFields: SharedSelectFieldConfig[] = [
-    { key: 'gender', labelKey: 'gender', options: ['Male', 'Female', 'Prefer not to say'], optionLabelMap: { Male: 'gender_male', Female: 'gender_female', 'Prefer not to say': 'gender_other' } },
-    { key: 'timezone', labelKey: 'timezone', options: timezones },
-    { key: 'requiredExperienceLevel', labelKey: 'experience_level', options: experienceLevels },
-  ];
+  const genderOptions = useMemo(() => [
+    { value: 'Male', label: s('gender_male') },
+    { value: 'Female', label: s('gender_female') },
+    { value: 'Prefer not to say', label: s('gender_other') },
+  ], [t]);
 
-  const renderSharedTextField = (item: SharedTextFieldConfig) => (
-    <Controller key={item.key} name={item.key} control={control}
-      render={({ field }) => (
-        <TextField {...field} label={labelByScope(item.scope, item.labelKey)} placeholder={placeholderByScope(item.scope, item.placeholderKey)}
-          disabled={!isEditing} fullWidth error={!!errors[item.key]} helperText={errors[item.key]?.message || ''}
-          sx={item.fullWidth ? { gridColumn: { xs: '1 / -1', sm: 'span 2' }, ...fieldSx } : fieldSx} />
-      )}
-    />
-  );
+  const timezoneOptions = useMemo(() => timezones.map((tz) => ({ value: tz, label: tz })), []);
 
-  const selectMenuProps = {
-    PaperProps: {
-      sx: {
-        mt: 0.8, borderRadius: '14px', border: '1px solid #E2E8F0', boxShadow: '0 14px 32px rgba(15,23,42,0.12)', p: 0.4,
-        '& .MuiMenuItem-root': { fontSize: '0.86rem', py: 1, px: 1.2, borderRadius: '8px', transition: 'all 0.16s ease' },
-        '& .MuiMenuItem-root:hover': { bgcolor: '#F0FDFA' },
-        '& .MuiMenuItem-root.Mui-selected': { bgcolor: '#CCFBF1', color: '#0F766E', fontWeight: 700 },
-        '& .MuiMenuItem-root.Mui-selected:hover': { bgcolor: '#99F6E4' },
-      },
-    },
-  };
-
-  const renderSharedSelectField = (item: SharedSelectFieldConfig) => (
-    <FormControl key={item.key} fullWidth disabled={!isEditing} sx={fieldSx} error={!!errors[item.key]}>
-      <InputLabel>{s(item.labelKey)}</InputLabel>
-      <Controller name={item.key} control={control}
-        render={({ field }) => (
-          <Select {...field} label={s(item.labelKey)} MenuProps={selectMenuProps}
-            renderValue={item.key === 'requiredExperienceLevel' ? (selected) => (/^not\s+working$/i.test(selected) ? s('experience_not_currently_employed') : selected) : undefined}
-          >
-            {item.options.map((opt) => (
-              <MenuItem key={opt} value={opt}>{item.optionLabelMap ? s(item.optionLabelMap[opt]) : opt}</MenuItem>
-            ))}
-            {item.key === 'requiredExperienceLevel' && !experienceLevels.includes('Not working') && isNotWorkingValue && (
-              <MenuItem value={profile.requiredExperienceLevel}>{s('experience_not_currently_employed')}</MenuItem>
-            )}
-          </Select>
-        )}
-      />
-      <FormHelperText>{errors[item.key]?.message || ''}</FormHelperText>
-    </FormControl>
-  );
-
-  const renderHeaderActions = () => {
-    if (!isEditing) {
-      return (
-        <Button size="small" startIcon={<EditOutlined sx={{ fontSize: '14px !important' }} />} onClick={onEditToggle}
-          sx={{ textTransform: 'none', fontWeight: 700, fontSize: '0.76rem', color: T_DARK, bgcolor: T_LIGHT, border: `1px solid ${T_BORDER}`, borderRadius: '11px', px: 1.7, py: 0.5, transition: 'all 0.2s ease', '&:hover': { bgcolor: '#CCFBF1', transform: 'translateY(-1px)' } }}>
-          {s('edit')}
-        </Button>
-      );
+  const experienceOptions = useMemo(() => {
+    const opts = experienceLevels.map((el) => ({ value: el, label: el }));
+    if (isNotWorkingValue && !experienceLevels.includes('Not working') && profile.requiredExperienceLevel) {
+      opts.push({ value: profile.requiredExperienceLevel, label: s('experience_not_currently_employed') });
     }
-    return (
-      <Box sx={{ display: 'flex', gap: 1 }}>
-        <Button size="small" startIcon={<CloseOutlined sx={{ fontSize: '14px !important' }} />} onClick={onCancel}
-          sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.76rem', color: '#475569', bgcolor: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '11px', px: 1.7, py: 0.5, transition: 'all 0.2s ease', '&:hover': { bgcolor: '#F8FAFC', borderColor: '#94A3B8' } }}>
-          {s('cancel')}
-        </Button>
-        <Button size="small" startIcon={loading ? undefined : <SaveOutlined sx={{ fontSize: '14px !important' }} />}
-          onClick={handleSubmit(handleValidSubmit, handleInvalidSubmit)} disabled={loading}
-          sx={{ textTransform: 'none', fontWeight: 700, fontSize: '0.76rem', color: '#fff', bgcolor: T, borderRadius: '11px', px: 1.8, py: 0.5, transition: 'all 0.2s ease', '&:hover': { bgcolor: T_DARK, transform: 'translateY(-1px)' } }}>
-          {loading ? <CircularProgress size={14} color="inherit" /> : s('save')}
-        </Button>
-      </Box>
-    );
-  };
-
-  const sectionTitleSx = { mb: 1, mt: 2.2, fontSize: '0.72rem', fontWeight: 700, color: SLATE, textTransform: 'uppercase', letterSpacing: '0.09em' };
-  const sectionBoxSx = { display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: { xs: 1.3, md: 1.6 }, p: { xs: 1.4, md: 1.8 }, border: `1px solid ${CARD_BORDER}`, borderRadius: '16px', bgcolor: '#FFFFFF', boxShadow: '0 8px 24px rgba(15,23,42,0.05)' };
-
-  const renderSection = (title: string, content: React.ReactNode, options?: { tinted?: boolean; first?: boolean }) => (
-    <>
-      <Typography sx={{ ...sectionTitleSx, mt: options?.first ? 0 : sectionTitleSx.mt }}>{title}</Typography>
-      <Box sx={{ ...sectionBoxSx, ...(options?.tinted ? { bgcolor: '#FAFDFC' } : {}) }}>{content}</Box>
-    </>
-  );
+    return opts;
+  }, [isNotWorkingValue, profile.requiredExperienceLevel, t]);
 
   return (
-    <Box sx={{ bgcolor: PAGE_BG, p: { xs: 1, sm: 1.5, md: 2 } }}>
-      <Box sx={{ bgcolor: '#fff', borderRadius: '22px', border: `1px solid ${CARD_BORDER}`, overflow: 'hidden', boxShadow: '0 20px 45px rgba(15,23,42,0.08)' }}>
-        <Box sx={{ px: { xs: 1.8, md: 2.6 }, py: 1.7, borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', gap: 1, flexDirection: { xs: 'column', sm: 'row' }, background: 'linear-gradient(180deg, #FFFFFF 0%, #FAFCFF 100%)' }}>
-          <Box>
-            <Typography sx={{ fontWeight: 800, fontSize: { xs: '0.95rem', md: '1rem' }, color: NAVY, letterSpacing: '-0.01em' }}>{s('title')}</Typography>
-            <Typography sx={{ fontSize: '0.78rem', color: '#64748B', mt: 0.35, maxWidth: 560 }}>{s('subtitle')}</Typography>
-          </Box>
-          {renderHeaderActions()}
-        </Box>
+    <Box sx={{ bgcolor: '#fff', border: '1px solid #E5E7EB', borderRadius: '16px', overflow: 'hidden' }}>
 
-        <Box sx={{ p: { xs: 1.4, md: 2.2 }, background: 'linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)' }}>
-          {isLoading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress sx={{ color: T }} size={28} /></Box>
-          ) : (
-            <>
-              {saveSuccess && <Alert severity="success" sx={{ mb: 1.5, borderRadius: '10px', fontSize: '0.8rem' }}>{s('save_success')}</Alert>}
-              {error && <Alert severity="error" sx={{ mb: 1.5, borderRadius: '10px', fontSize: '0.8rem' }}>{error}</Alert>}
-              {submitErrorMessage && <Alert severity="error" sx={{ mb: 1.5, borderRadius: '10px', fontSize: '0.8rem' }}>{submitErrorMessage}</Alert>}
-              <ProfilePictureSection profile={profile} uploadingImage={uploadingImage} isEditing={isEditing} onImageUpload={onImageUpload} onEditClick={onEditToggle} />
-              <Divider sx={{ my: 1.2 }} />
-              {renderSection('Account', <><TextField label={s('username')} value={profile.username || ''} disabled fullWidth sx={fieldSx} /><TextField label={s('email')} value={profile.email || ''} disabled fullWidth sx={fieldSx} /></>, { tinted: true, first: true })}
-              {renderSection('Profile Details', <>{personalTextFields.map(renderSharedTextField)}{personalSelectFields.map(renderSharedSelectField)}</>)}
-              {renderSection(t('candidate_settings.contact.title'), <>{contactTextFields.map(renderSharedTextField)}</>)}
-            </>
-          )}
+      {/* Header */}
+      <Box sx={{ px: { xs: 2, md: 3 }, py: 2, borderBottom: '1px solid #F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' }}>
+        <Box>
+          <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', color: '#111827' }}>{s('title')}</Typography>
+          <Typography sx={{ fontSize: '0.78rem', color: '#9CA3AF', mt: 0.25 }}>{s('subtitle')}</Typography>
         </Box>
+        <EditActions
+          isEditing={isEditing}
+          loading={loading}
+          onEdit={onEditToggle}
+          onCancel={onCancel}
+          onSave={() => handleSubmit(handleValidSubmit, handleInvalidSubmit)()}
+        />
+      </Box>
+
+      {/* Content */}
+      <Box sx={{ p: { xs: 2, md: 3 }, display: 'flex', flexDirection: 'column', gap: 3 }}>
+        {isLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+            <CircularProgress size={28} sx={{ color: '#0D9488' }} />
+          </Box>
+        ) : (
+          <>
+            {saveSuccess && <Alert severity="success" sx={{ borderRadius: '10px', fontSize: '0.8rem' }}>{s('save_success')}</Alert>}
+            {error && <Alert severity="error" sx={{ borderRadius: '10px', fontSize: '0.8rem' }}>{error}</Alert>}
+            {submitErrorMessage && <Alert severity="error" sx={{ borderRadius: '10px', fontSize: '0.8rem' }}>{submitErrorMessage}</Alert>}
+
+            <ProfilePictureSection
+              profile={profile}
+              uploadingImage={uploadingImage}
+              isEditing={isEditing}
+              onImageUpload={onImageUpload}
+              onEditClick={onEditToggle}
+            />
+
+            <Divider sx={{ borderColor: '#E5E7EB' }} />
+
+            {/* ── Account ── */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+              <SectionHeader title="Account" subtitle="Your login credentials" />
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2.5 }}>
+                <AppInput label={s('username')} value={profile.username || ''} disabled />
+                <AppInput label={s('email')} value={profile.email || ''} disabled />
+              </Box>
+            </Box>
+
+            <Divider sx={{ borderColor: '#E5E7EB' }} />
+
+            {/* ── Profile Details ── */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+              <SectionHeader title="Profile Details" subtitle="Your personal and professional information" />
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2.5 }}>
+
+                <Controller name="firstName" control={control}
+                  render={({ field, fieldState }) => (
+                    <AppInput label={s('first_name')} value={field.value} onChange={(e) => field.onChange(e.target.value)} disabled={!isEditing} error={fieldState.error?.message} />
+                  )}
+                />
+
+                <Controller name="lastName" control={control}
+                  render={({ field, fieldState }) => (
+                    <AppInput label={s('last_name')} value={field.value} onChange={(e) => field.onChange(e.target.value)} disabled={!isEditing} error={fieldState.error?.message} />
+                  )}
+                />
+
+                <Controller name="targetRole" control={control}
+                  render={({ field, fieldState }) => (
+                    <AppInput label={s('target_role')} value={field.value} onChange={(e) => field.onChange(e.target.value)} disabled={!isEditing} placeholder={s('target_role_placeholder')} error={fieldState.error?.message} sx={{ gridColumn: { xs: '1 / -1', sm: 'span 2' } }} />
+                  )}
+                />
+
+                <Controller name="gender" control={control}
+                  render={({ field, fieldState }) => (
+                    <AppSelect label={s('gender')} value={field.value} onChange={(val) => field.onChange(val)} options={genderOptions} disabled={!isEditing} error={fieldState.error?.message} />
+                  )}
+                />
+
+                <Controller name="timezone" control={control}
+                  render={({ field, fieldState }) => (
+                    <AppSelect label={s('timezone')} value={field.value} onChange={(val) => field.onChange(val)} options={timezoneOptions} disabled={!isEditing} error={fieldState.error?.message} />
+                  )}
+                />
+
+                <Controller name="requiredExperienceLevel" control={control}
+                  render={({ field, fieldState }) => (
+                    <AppSelect label={s('experience_level')} value={field.value} onChange={(val) => field.onChange(val)} options={experienceOptions} disabled={!isEditing} error={fieldState.error?.message} sx={{ gridColumn: { xs: '1 / -1', sm: 'span 2' } }} />
+                  )}
+                />
+              </Box>
+            </Box>
+
+            <Divider sx={{ borderColor: '#E5E7EB' }} />
+
+            {/* ── Contact Information ── */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+              <SectionHeader title={t('candidate_settings.contact.title')} subtitle={c('subtitle')} />
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2.5 }}>
+
+                <Controller name="phone" control={control}
+                  render={({ field, fieldState }) => (
+                    <AppInput label={c('phone')} value={field.value} onChange={(e) => field.onChange(e.target.value)} disabled={!isEditing} error={fieldState.error?.message} />
+                  )}
+                />
+
+                <Controller name="location" control={control}
+                  render={({ field, fieldState }) => (
+                    <AppInput label={c('location')} value={field.value} onChange={(e) => field.onChange(e.target.value)} disabled={!isEditing} error={fieldState.error?.message} />
+                  )}
+                />
+
+                <Controller name="address" control={control}
+                  render={({ field, fieldState }) => (
+                    <AppInput label={c('address')} value={field.value} onChange={(e) => field.onChange(e.target.value)} disabled={!isEditing} error={fieldState.error?.message} sx={{ gridColumn: { xs: '1 / -1', sm: 'span 2' } }} />
+                  )}
+                />
+
+                <Controller name="linkedinUrl" control={control}
+                  render={({ field, fieldState }) => (
+                    <AppInput label={c('linkedin')} value={field.value} onChange={(e) => field.onChange(e.target.value)} disabled={!isEditing} placeholder="https://linkedin.com/in/yourprofile" type="url" error={fieldState.error?.message} />
+                  )}
+                />
+
+                <Controller name="githubUrl" control={control}
+                  render={({ field, fieldState }) => (
+                    <AppInput label={c('github')} value={field.value} onChange={(e) => field.onChange(e.target.value)} disabled={!isEditing} placeholder="https://github.com/yourprofile" type="url" error={fieldState.error?.message} />
+                  )}
+                />
+
+                <Controller name="personalWebsite" control={control}
+                  render={({ field, fieldState }) => (
+                    <AppInput label={c('website')} value={field.value} onChange={(e) => field.onChange(e.target.value)} disabled={!isEditing} placeholder="https://yourwebsite.com" type="url" error={fieldState.error?.message} sx={{ gridColumn: { xs: '1 / -1', sm: 'span 2' } }} />
+                  )}
+                />
+              </Box>
+            </Box>
+          </>
+        )}
       </Box>
     </Box>
   );

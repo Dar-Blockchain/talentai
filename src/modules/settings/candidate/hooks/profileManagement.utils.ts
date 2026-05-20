@@ -94,12 +94,8 @@ export const hasCandidateContactChanges = (current: UserProfile, saved: UserProf
 
 const getAvatarUrl = (reduxProfile?: ConnectedUserProfile, userData?: ConnectedUserEntity) => {
   const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-  if (reduxProfile?.user_image) {
-    return `${base}images/Users/${reduxProfile.user_image}`;
-  }
-  if (userData?.user_image) {
-    return `${base}images/Users/${userData.user_image}`;
-  }
+  if (reduxProfile?.user_image) return `${base}images/Users/${reduxProfile.user_image}`;
+  if (userData?.user_image) return `${base}images/Users/${userData.user_image}`;
   return '';
 };
 
