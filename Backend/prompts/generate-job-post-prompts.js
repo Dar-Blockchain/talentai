@@ -77,7 +77,7 @@ Return the response in the following JSON format:
 
 STRICT SKILL RULES:
 - REQUIRED: Generate 1 to 3 skills in "requiredSkills" based on the actual requirements of the job description. Include only relevant and technical skills.
-    - NEVER generate general or non-technical skills such as “Web Development”, “Software Engineering”, “Programming”, or “Full Stack”.
+    - NEVER generate general or non-technical skills such as "Web Development", "Software Engineering", "Programming", or "Full Stack".
     - Skills MUST ALWAYS be specific and technical (e.g., React.js, Next.js, Node.js, Express.js, NestJS, MongoDB, PostgreSQL, REST APIs, HTML/CSS, TypeScript, Docker, AWS, Redis, CI/CD, PHPUnit, Laravel, Symfony).
     - The total percentage of requiredSkills and softSkills combined must equal 100%.
     - LIA must dynamically distribute the 90% among 1–3 requiredSkills and 1 soft skill based on importance, frequency, and context in the job description.
@@ -85,7 +85,7 @@ STRICT SKILL RULES:
     - If the job description is vague, infer the most relevant precise technologies instead of using generic terms.
     - Categorize each skill only as: "Frontend", "Backend", "Fullstack", "DevOps", or "Other".
     - Never invent unrealistic skills; remain consistent with standard industry technical stacks.
-    - The “name” field must always be a precise tool, language, framework, library, cloud service, or dev practice (NOT a job role).
+    - The "name" field must always be a precise tool, language, framework, library, cloud service, or dev practice (NOT a job role).
 
     STRICT DESCRIPTION RULES:
     - The "description" field must be a concise professional summary (2-4 sentences max).
@@ -95,11 +95,20 @@ STRICT SKILL RULES:
     - The description should feel unique to this specific role and company, not a copy-paste template.
 
     STRICT REQUIREMENTS RULES:
-    - Generate 4-8 specific, measurable requirements.
-    - Each requirement must mention concrete technologies, tools, years of experience, or qualifications.
-    - NEVER use vague phrases like "good understanding of", "familiarity with", "knowledge of modern frameworks".
-    - Instead use precise phrasing: "3+ years of production experience with React.js", "Bachelor's degree in Computer Science or equivalent", "Proficiency in SQL and database design with PostgreSQL or MySQL".
-    - Order requirements from most critical to nice-to-have.
+    - Generate 4-8 requirements. Every single one must be specific, verifiable, and directly extractable from the job description.
+    - MANDATORY FORMAT for each requirement — choose the most fitting pattern:
+        • Experience pattern   : "<N>+ years of hands-on experience with <specific technology/tool> in a production environment"
+        • Degree pattern       : "<Degree level> in <Field> or equivalent practical experience"
+        • Certification pattern: "Holding or actively pursuing <Certification name> (e.g., AWS Solutions Architect, PMP)"
+        • Skill pattern        : "Demonstrated proficiency in <specific tool/language/framework> through <shipped projects / open-source contributions / certifications>"
+        • Domain pattern       : "Proven experience building <specific system type> (e.g., payment systems, real-time APIs, CI/CD pipelines)"
+    - NEVER use vague openers such as: "good understanding of", "familiarity with", "knowledge of", "experience with modern", "awareness of best practices".
+    - NEVER write generic requirements like "Strong communication skills", "Team player", "Passion for technology", "Ability to work in a fast-paced environment" — those belong in soft skills or responsibilities, not here.
+    - If the job description mentions a technology without specifying years, default to "2+ years" for junior roles, "3+ years" for mid-level, "5+ years" for senior roles.
+    - If the job description is vague, infer the most relevant and realistic requirements based on the job title, responsibilities, and industry standards — but flag inferred requirements with the prefix "[Inferred]".
+    - Order requirements from most critical (must-have) to least critical (nice-to-have).
+    - Each requirement must be a standalone, self-contained sentence. No bullet sub-points, no conjunctions joining two separate skills into one requirement.
+    - Avoid repeating the same technology across multiple requirements. If a technology appears more than once in the source description, consolidate it into a single precise requirement.
 
     STRICT RESPONSIBILITIES RULES:
     - Generate 4-8 specific, actionable responsibilities.

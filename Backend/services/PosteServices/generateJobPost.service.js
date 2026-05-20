@@ -102,11 +102,11 @@ async function generateJobPost(description, user, overrides = {}) {
           const normalizationFactor = 100 / totalPercentage;
           
           requiredSkills.forEach((skill) => {
-            skill.percentage = Math.round(skill.percentage * normalizationFactor * 100) / 100;
+            skill.percentage = Math.round(skill.percentage * normalizationFactor);
           });
           
           softSkills.forEach((skill) => {
-            skill.percentage = Math.round(skill.percentage * normalizationFactor * 100) / 100;
+            skill.percentage = Math.round(skill.percentage * normalizationFactor);
           });
 
           // Adjust last skill to ensure exactly 100%
@@ -115,7 +115,7 @@ async function generateJobPost(description, user, overrides = {}) {
             const currentSum = allSkills.reduce((sum, skill) => sum + skill.percentage, 0);
             const difference = 100 - currentSum;
             allSkills[allSkills.length - 1].percentage += difference;
-            allSkills[allSkills.length - 1].percentage = Math.round(allSkills[allSkills.length - 1].percentage * 100) / 100;
+            allSkills[allSkills.length - 1].percentage = Math.round(allSkills[allSkills.length - 1].percentage);
           }
 
           console.log(`✅ Skill percentages normalized to 100% (was ${totalPercentage}%)`);
