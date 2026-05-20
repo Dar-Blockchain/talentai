@@ -80,17 +80,25 @@ export default function InterviewSessionHeader({
             <VideocamOutlinedIcon sx={{ color: PURPLE, fontSize: 16 }} />
           </Box>
           <Box>
-            <Typography
-              sx={{
-                fontFamily: "Poppins",
-                fontWeight: 700,
-                fontSize: "0.9rem",
-                color: "#111827",
-                lineHeight: 1.25,
-              }}
-            >
-              {jobTitle}
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Typography
+                sx={{
+                  fontFamily: "Poppins",
+                  fontWeight: 700,
+                  fontSize: "0.9rem",
+                  color: "#111827",
+                  lineHeight: 1.25,
+                }}
+              >
+                {jobTitle}
+              </Typography>
+              {isActive && (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.4, px: 0.875, py: 0.2, borderRadius: "20px", bgcolor: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.18)" }}>
+                  <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: "#ef4444", animation: "liveBlink 1.6s ease-in-out infinite", "@keyframes liveBlink": { "0%,100%": { opacity: 1 }, "50%": { opacity: 0.25 } } }} />
+                  <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "0.58rem", color: "#ef4444", letterSpacing: "0.1em" }}>LIVE</Typography>
+                </Box>
+              )}
+            </Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.2 }}>
               <TimerOutlinedIcon sx={{ fontSize: 11, color: "#6B7280" }} />
               <Typography

@@ -1,5 +1,4 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { useRouter } from 'next/router';
 
 import { Coverage, InterviewMessage } from '../types/interview';
 import type {
@@ -23,7 +22,6 @@ export function useInterviewSession({
   jobData,
   notify,
 }: UseInterviewSessionOptions) {
-  const router = useRouter();
   const [coverage, setCoverage] = useState<Coverage | null>(null);
   const [coverageDashboardExpanded, setCoverageDashboardExpanded] = useState(true);
   const [resultsReady, setResultsReady] = useState(false);
@@ -203,16 +201,6 @@ export function useInterviewSession({
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [socket.socketRef, socket.sessionIdRef]);
-
-  // End interview when navigating away within the Next.js app (SPA route change)
-  useEffect(() => {
-    const handleRouteChange = () => {
-      if (interviewStatusRef.current !== 'active') return;
-      endInterviewRef.current();
-    };
-    router.events.on('routeChangeStart', handleRouteChange);
-    return () => router.events.off('routeChangeStart', handleRouteChange);
-  }, [router.events]);
 
   return {
     socket,

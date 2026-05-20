@@ -26,12 +26,19 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
     <Box
       sx={{
         bgcolor: '#fff',
+        borderRadius: '16px',
+        borderTop: '1px solid rgba(106,211,156,0.18)',
+        borderRight: '1px solid rgba(106,211,156,0.18)',
+        borderBottom: '1px solid rgba(106,211,156,0.18)',
+        borderLeft: '3px solid #6AD39C',
+        boxShadow: questionHighlight
+          ? '0 4px 24px rgba(106,211,156,0.18)'
+          : '0 2px 12px rgba(16,69,63,0.05)',
         px: { xs: 1.5, md: 2 },
-        py: { xs: 1, md: 1.25 },
-        mb: 0,
-        borderBottom: '1px solid #e6f8f1',
-        transform: questionHighlight ? 'translateY(1px)' : 'none',
-        transition: 'transform 0.3s ease',
+        py: { xs: 1.25, md: 1.5 },
+        mb: 1,
+        transform: questionHighlight ? 'translateY(-1px)' : 'none',
+        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
         userSelect: 'none',
         WebkitUserSelect: 'none',
       }}

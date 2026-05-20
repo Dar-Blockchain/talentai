@@ -32,7 +32,7 @@ export const useAudioTranscription = ({
   const accumulatedTurnsRef = useRef<string[]>([]);
   const speakingStartTimeRef = useRef<number | null>(null);
   const MAX_ACCUMULATED_TURNS = 10;
-  const minimumSpeakingDuration = 1000;
+  const minimumSpeakingDuration = 500;
 
   // ── Agent state ───────────────────────────────────────────────────────────────
   const [agentState, setAgentState]   = useState<AgentState>('idle');
@@ -140,15 +140,15 @@ export const useAudioTranscription = ({
 
   const getTurnDetectionConfig = (questionType: string = 'general') => {
     if (questionType === 'quick_response' || questionType === 'confirmation') {
-      return { end_of_turn_confidence_threshold: 0.7,  min_end_of_turn_silence_when_confident: 400, max_turn_silence: 2500  };
+      return { end_of_turn_confidence_threshold: 0.65, min_end_of_turn_silence_when_confident: 250, max_turn_silence: 2000 };
     }
     if (questionType === 'technical' || questionType === 'system_design' || questionType === 'coding') {
-      return { end_of_turn_confidence_threshold: 0.85, min_end_of_turn_silence_when_confident: 900, max_turn_silence: 10000 };
+      return { end_of_turn_confidence_threshold: 0.78, min_end_of_turn_silence_when_confident: 550, max_turn_silence: 8000 };
     }
     if (questionType === 'behavioral' || questionType === 'experience') {
-      return { end_of_turn_confidence_threshold: 0.75, min_end_of_turn_silence_when_confident: 700, max_turn_silence: 8000  };
+      return { end_of_turn_confidence_threshold: 0.72, min_end_of_turn_silence_when_confident: 400, max_turn_silence: 6000 };
     }
-    return   { end_of_turn_confidence_threshold: 0.78, min_end_of_turn_silence_when_confident: 800, max_turn_silence: 8000  };
+    return   { end_of_turn_confidence_threshold: 0.72, min_end_of_turn_silence_when_confident: 400, max_turn_silence: 6000 };
   };
 
   // ── Skip guard (prevents double-fire) ────────────────────────────────────────
@@ -244,7 +244,7 @@ export const useAudioTranscription = ({
       if (!audioContextRef.current) audioContextRef.current = audioContext;
 
       const source    = audioContext.createMediaStreamSource(stream);
-      const processor = audioContext.createScriptProcessor(4096, 1, 1);
+      const processor = audioContext.createScriptProcessor(1024, 1, 1);
       processorRef.current = processor;
 
       const turnCfg    = getTurnDetectionConfig(currentMessage?.type || 'general');
@@ -342,6 +342,14 @@ export const useAudioTranscription = ({
 
       let audioPacketsSent = 0;
       let lastLogTime = Date.now();
+      // VAD state — hysteresis prevents flickering on brief / ambient sounds
+      let prevVoiceActive  = false;
+      let speechFrames     = 0;  // consecutive frames above threshold
+      let silenceFrames    = 0;  // consecutive frames below threshold
+      // At 16 kHz / 1024 buffer each frame ≈ 64 ms
+      const SPEECH_THRESHOLD  = 0.022; // ~−33 dBFS — above ambient noise, below normal speech
+      const FRAMES_TO_ACTIVATE = 3;    // 3 × 64 ms = ~192 ms sustained to activate
+      const FRAMES_TO_RELEASE  = 6;    // 6 × 64 ms = ~384 ms of silence to deactivate
 
       transcriber.on('open', ({ id: aaiSessionId }: any) => {
         console.log('✅ AssemblyAI connected, session:', aaiSessionId);
@@ -352,6 +360,29 @@ export const useAudioTranscription = ({
 
         processor.onaudioprocess = (event) => {
           const inputBuffer = event.inputBuffer.getChannelData(0);
+
+          // ── Voice-activity detection: RMS + hysteresis ───────────────────
+          let sumSq = 0;
+          for (let i = 0; i < inputBuffer.length; i++) sumSq += inputBuffer[i] * inputBuffer[i];
+          const rms = Math.sqrt(sumSq / inputBuffer.length);
+
+          if (rms > SPEECH_THRESHOLD) {
+            speechFrames++;
+            silenceFrames = 0;
+            if (!prevVoiceActive && speechFrames >= FRAMES_TO_ACTIVATE) {
+              prevVoiceActive = true;
+              setIsVoiceActive(true);
+            }
+          } else {
+            silenceFrames++;
+            speechFrames = 0;
+            if (prevVoiceActive && silenceFrames >= FRAMES_TO_RELEASE) {
+              prevVoiceActive = false;
+              setIsVoiceActive(false);
+            }
+          }
+          // ─────────────────────────────────────────────────────────────────
+
           const int16Buffer = new Int16Array(inputBuffer.length);
           for (let i = 0; i < inputBuffer.length; i++) {
             int16Buffer[i] = Math.max(-32768, Math.min(32767, inputBuffer[i] * 32767));
@@ -396,7 +427,7 @@ export const useAudioTranscription = ({
     });
 
     audioStreamRef.current = stream;
-    audioContextRef.current = new AudioContext();
+    audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
     setIsRecording(true);
 
     try {
@@ -422,6 +453,7 @@ export const useAudioTranscription = ({
         try { await audioContextRef.current?.close(); } catch {}
         audioContextRef.current = null;
       }
+      setIsVoiceActive(false);
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach(t => t.stop());
         mediaStreamRef.current = null;

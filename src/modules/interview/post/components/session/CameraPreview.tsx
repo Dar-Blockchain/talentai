@@ -76,7 +76,7 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
   }, [isActive]);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 0 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
 
       {/* Video area */}
       <Box sx={{ position: 'relative', width: '100%', aspectRatio: '16/9', bgcolor: '#0d3b33', borderRadius: '14px', overflow: 'hidden', flexShrink: 0, border: '1px solid #c8eedd' }}>
@@ -121,8 +121,8 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
         )}
       </Box>
 
-      {/* Waveform */}
-      <Box sx={{ mt: 2.5, px: 0.5, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+      {/* Waveform — hidden during active interview; only useful as a setup guide */}
+      {!isActive && <Box sx={{ mt: 2.5, px: 0.5, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <Box display="flex" alignItems="center" gap={0.75}>
             <Box sx={{ width: 26, height: 26, borderRadius: '7px', bgcolor: '#f3f4f6', border: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -144,9 +144,9 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
         </Box>
 
         <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.7rem', color: '#9ca3af', textAlign: 'center', lineHeight: 1.4 }}>
-          {isActive ? t('camera.speak_clearly') : cameraStatus === 'granted' ? t('camera.start_to_record') : t('camera.allow_access')}
+          {cameraStatus === 'granted' ? t('camera.start_to_record') : t('camera.allow_access')}
         </Typography>
-      </Box>
+      </Box>}
     </Box>
   );
 };

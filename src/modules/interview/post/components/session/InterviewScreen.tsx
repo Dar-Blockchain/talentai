@@ -1,14 +1,16 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import { Box, Snackbar, Alert, Container } from "@mui/material";
 import QuestionPanel from "./QuestionPanel";
 import CameraPreview from "./CameraPreview";
 import InterviewControlsPanel from "./InterviewControlsPanel";
+import InterviewContainer from "./InterviewContainer";
 import InterviewConnectionBanner from "./InterviewConnectionBanner";
 import InterviewSessionHeader from "./InterviewSessionHeader";
 import CoverageDashboard from "./CoverageDashboard";
 import GDPRConsentModal from "../modals/GDPRConsentModal";
+import ConfirmLeaveModal from "./ConfirmLeaveModal";
 import { interviewScreenSx } from "../../styles/interviewScreen.styles";
 import { type Coverage, type InterviewMessage } from "../../types/interview";
 import { type JobPost } from "../../types/api";
@@ -69,6 +71,40 @@ export default function InterviewScreen({
 
   const isActive = socket.interviewStatus === "active";
 
+  // ── Confirm-leave modal ────────────────────────────────────────────────────
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const pendingUrlRef  = useRef<string | null>(null);
+  const confirmedRef   = useRef(false);
+
+  // Intercept Next.js client-side navigation while interview is active
+  useEffect(() => {
+    if (!isActive) return;
+    const handleRouteChange = (url: string) => {
+      if (confirmedRef.current) { confirmedRef.current = false; return; }
+      pendingUrlRef.current = url;
+      setConfirmOpen(true);
+      // Throwing cancels the navigation in Next.js router
+      throw new Error("interview-leave-cancelled");
+    };
+    router.events.on("routeChangeStart", handleRouteChange);
+    return () => router.events.off("routeChangeStart", handleRouteChange);
+  }, [isActive, router.events]);
+
+  const handleConfirmLeave = useCallback(() => {
+    confirmedRef.current = true;
+    setConfirmOpen(false);
+    endInterview();
+    const url = pendingUrlRef.current;
+    pendingUrlRef.current = null;
+    if (url) router.push(url);
+  }, [endInterview, router]);
+
+  const handleCancelLeave = useCallback(() => {
+    setConfirmOpen(false);
+    pendingUrlRef.current = null;
+  }, []);
+  // ──────────────────────────────────────────────────────────────────────────
+
   const connectionBannerText = useMemo(() => {
     switch (socket.connectionStatus) {
       case "connecting":
@@ -112,59 +148,106 @@ export default function InterviewScreen({
           isActive={isActive}
           elapsedTime={timer.elapsedTime}
           timeWarning={timer.timeWarning}
-          onEndInterview={endInterview}
+          onEndInterview={() => setConfirmOpen(true)}
           endInterviewLabel={t("end_interview")}
         />
 
-        {/* ── Question strip (active only) ─────────────────────────────── */}
-        {isActive && lastQuestion && (
-          <QuestionPanel
-            currentMessage={lastQuestion}
-            isInReadingTime={audio.isInReadingTime}
-            readingTimeLeft={audio.readingTimeLeft}
-            questionHighlight={audio.questionHighlight}
-            questionNumber={
-              lastQuestion.type === "question" ||
-              lastQuestion.type === "follow_up"
-                ? questionCount
-                : 0
-            }
-          />
+        {isActive ? (
+          <>
+            {/* ── Question strip ───────────────────────────────────────── */}
+            {lastQuestion && (
+              <QuestionPanel
+                currentMessage={lastQuestion}
+                isInReadingTime={audio.isInReadingTime}
+                readingTimeLeft={audio.readingTimeLeft}
+                questionHighlight={audio.questionHighlight}
+                questionNumber={
+                  lastQuestion.type === "question" ||
+                  lastQuestion.type === "follow_up"
+                    ? questionCount
+                    : 0
+                }
+              />
+            )}
+
+            {/* ── 3-column grid ────────────────────────────────────────── */}
+            <Box sx={interviewScreenSx.grid(!!coverage)}>
+              {coverage && <CoverageDashboard coverage={coverage} />}
+              {/* Camera — wrapped in a card for consistent elevation */}
+              <Box sx={{ bgcolor: "#fff", borderRadius: "20px", border: "1px solid rgba(106,211,156,0.15)", boxShadow: "0 2px 16px rgba(16,69,63,0.06)", p: { xs: 1.5, md: 1.75 }, display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
+                <CameraPreview
+                  videoRef={camera.videoRef}
+                  cameraStatus={camera.cameraStatus}
+                  cameraError={camera.cameraError}
+                  isConnecting={audio.isConnecting}
+                  interviewStatus={socket.interviewStatus}
+                  audioContextRef={audio.audioContextRef}
+                  attachStream={camera.attachStream}
+                />
+              </Box>
+              <InterviewControlsPanel
+                interviewStatus={socket.interviewStatus}
+                isHydrated={socket.isHydrated}
+                connectionStatus={socket.connectionStatus}
+                cameraStatus={camera.cameraStatus}
+                agentState={audio.agentState}
+                currentTranscript={
+                  audio.accumulatedTranscript || audio.currentTranscript
+                }
+                resultsReady={resultsReady}
+                isVoiceActive={audio.isVoiceActive}
+                onStartInterview={startInterview}
+                onSubmitAnswer={audio.sendAccumulatedAnswer}
+                onSkipQuestion={skipQuestion}
+              />
+            </Box>
+          </>
+        ) : (
+          /* ── Lobby (idle / connecting / ended) ───────────────────────── */
+          <Box sx={interviewScreenSx.lobbyWrapper}>
+            <Box sx={interviewScreenSx.lobbyGrid}>
+              {/* Camera card */}
+              <Box sx={{ ...interviewScreenSx.lobbyCard, p: { xs: 2, md: 2.5 } }}>
+                <CameraPreview
+                  videoRef={camera.videoRef}
+                  cameraStatus={camera.cameraStatus}
+                  cameraError={camera.cameraError}
+                  isConnecting={audio.isConnecting}
+                  interviewStatus={socket.interviewStatus}
+                  audioContextRef={audio.audioContextRef}
+                  attachStream={camera.attachStream}
+                />
+              </Box>
+
+              {/* Readiness card */}
+              <Box sx={{ ...interviewScreenSx.lobbyCard, overflow: "hidden" }}>
+                <Box sx={interviewScreenSx.lobbyAccentBar} />
+                <Box sx={{ p: { xs: 2, md: 2.5 } }}>
+                  <InterviewContainer
+                    noBorder
+                    interviewStatus={socket.interviewStatus}
+                    isHydrated={socket.isHydrated}
+                    connectionStatus={socket.connectionStatus}
+                    cameraStatus={camera.cameraStatus}
+                    agentState={audio.agentState}
+                    currentTranscript={
+                      audio.accumulatedTranscript || audio.currentTranscript
+                    }
+                    resultsReady={resultsReady}
+                    onStartInterview={startInterview}
+                  />
+                </Box>
+              </Box>
+            </Box>
+          </Box>
         )}
-
-        {/* ── 3-column grid — fills remaining space, capped so columns aren't too tall ── */}
-        <Box sx={interviewScreenSx.grid(!!coverage)}>
-          {/* LEFT — Coverage (only shown when data is available) */}
-          {coverage && <CoverageDashboard coverage={coverage} />}
-
-          <CameraPreview
-            videoRef={camera.videoRef}
-            cameraStatus={camera.cameraStatus}
-            cameraError={camera.cameraError}
-            isConnecting={audio.isConnecting}
-            interviewStatus={socket.interviewStatus}
-            audioContextRef={audio.audioContextRef}
-            attachStream={camera.attachStream}
-          />
-
-          {/* RIGHT — AI controls */}
-          <InterviewControlsPanel
-            interviewStatus={socket.interviewStatus}
-            isHydrated={socket.isHydrated}
-            connectionStatus={socket.connectionStatus}
-            cameraStatus={camera.cameraStatus}
-            agentState={audio.agentState}
-            currentTranscript={
-              audio.accumulatedTranscript || audio.currentTranscript
-            }
-            resultsReady={resultsReady}
-            isVoiceActive={audio.speechPhase === "speaking"}
-            onStartInterview={startInterview}
-            onSubmitAnswer={audio.sendAccumulatedAnswer}
-            onSkipQuestion={skipQuestion}
-          />
-        </Box>
       </Container>
+
+      <ConfirmLeaveModal
+        open={confirmOpen}
+        onConfirm={handleConfirmLeave}
+        onCancel={handleCancelLeave}
+      />
 
       <GDPRConsentModal
         open={!camera.consentGiven}

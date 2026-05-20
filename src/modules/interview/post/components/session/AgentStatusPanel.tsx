@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Button } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
+import GraphicEqIcon from '@mui/icons-material/GraphicEq';
 import { useTranslation } from 'react-i18next';
 import { type InterviewStatus, type AgentState } from '../../types/interview';
 
@@ -36,15 +37,39 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
         fullWidth
         onClick={onSubmitAnswer}
         disabled={isDisabled}
-        endIcon={!isDisabled && <SendIcon sx={{ fontSize: '14px !important' }} />}
+        endIcon={
+          isSpeaking
+            ? <GraphicEqIcon sx={{
+                fontSize: '17px !important',
+                color: '#22c55e !important',
+                animation: 'micPulse 0.5s ease-in-out infinite alternate',
+                '@keyframes micPulse': {
+                  from: { transform: 'scaleY(0.55)', opacity: 0.75 },
+                  to:   { transform: 'scaleY(1.3)',  opacity: 1 },
+                },
+              }} />
+            : !isDisabled
+            ? <SendIcon sx={{ fontSize: '14px !important' }} />
+            : undefined
+        }
         sx={{
           fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.8rem', py: 1,
           borderRadius: '12px', textTransform: 'none',
-          bgcolor: isDisabled ? '#f3f4f6' : '#6AD39C',
+          background: isDisabled ? '#f3f4f6' : 'linear-gradient(135deg, #6AD39C 0%, #10b981 100%)',
           color: isDisabled ? '#9ca3af' : '#fff',
-          boxShadow: 'none',
-          '&:hover': { bgcolor: isDisabled ? '#f3f4f6' : '#10453F', boxShadow: 'none' },
-          '&.Mui-disabled': { bgcolor: '#f3f4f6', color: '#9ca3af', boxShadow: 'none' },
+          boxShadow: isDisabled ? 'none' : '0 4px 16px rgba(106,211,156,0.32)',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            background: isDisabled ? '#f3f4f6' : 'linear-gradient(135deg, #10b981 0%, #10453F 100%)',
+            boxShadow: isDisabled ? 'none' : '0 6px 20px rgba(106,211,156,0.28)',
+          },
+          '&.Mui-disabled': {
+            background: isSpeaking
+              ? 'linear-gradient(135deg, rgba(106,211,156,0.1) 0%, rgba(34,197,94,0.07) 100%)'
+              : '#f3f4f6',
+            color: isSpeaking ? '#10453F' : '#9ca3af',
+            boxShadow: isSpeaking ? '0 0 0 1.5px rgba(106,211,156,0.3)' : 'none',
+          },
         }}
       >
         {isProcessing

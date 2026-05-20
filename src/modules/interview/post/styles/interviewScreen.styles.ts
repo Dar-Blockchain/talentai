@@ -35,4 +35,34 @@ export const interviewScreenSx = {
     mt: { xs: 1, md: 0.75 },
   }),
 
+  lobbyWrapper: {
+    flex: 1,
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "center",
+    pt: { xs: 1, md: 2 },
+    pb: { xs: 2, md: 2 },
+  } as SxProps<Theme>,
+
+  lobbyGrid: {
+    width: "100%",
+    maxWidth: 900,
+    display: "grid",
+    gridTemplateColumns: { xs: "1fr", md: "1.3fr 1fr" },
+    gap: { xs: 2, md: 2.5 },
+    alignItems: "start",
+  } as SxProps<Theme>,
+
+  lobbyCard: {
+    bgcolor: "#fff",
+    borderRadius: "20px",
+    border: "1px solid #e8f5f0",
+    boxShadow: "0 4px 24px rgba(16,69,63,0.07)",
+  } as SxProps<Theme>,
+
+  lobbyAccentBar: {
+    height: 4,
+    background: "linear-gradient(90deg, #6AD39C 0%, #10453F 100%)",
+  } as SxProps<Theme>,
+
 } as const;
