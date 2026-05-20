@@ -3,6 +3,7 @@ const postService = require("../../services/PosteServices/post.service");
 const subscriptionService = require("../../services/subscription.service");
 const {
   parseJsonFields,
+  flattenPost,
 } = require("../../helpers/post.validation.helpers");
 const Profile = require("../../models/Profile.model");
 const { notifyMatchingCandidates } = require("../../services/jobMatch.service");
@@ -132,7 +133,7 @@ exports.createPost = async (req, res) => {
     }
 
     // ========== 5. RETURN RESPONSE ==========
-    res.status(201).json({ success: true, data: post });
+    res.status(201).json({ success: true, data: flattenPost(post) });
   } catch (error) {
     handleError(res, error, 400);
   }
@@ -424,7 +425,7 @@ exports.updatePost = async (req, res) => {
       req.user._id,
       { ...updateData, updatedBy },
     );
-    res.status(200).json({ success: true, data: post });
+    res.status(200).json({ success: true, data: flattenPost(post) });
   } catch (error) {
     handleError(res, error, 400);
   }

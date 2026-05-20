@@ -16,14 +16,10 @@ export const useGeneratePostMutation = () => {
   return useMutation({
     mutationFn: (payload: GeneratePostInput) => generatePost(payload),
     onSuccess: (data, variables) => {
-      const experienceLevel = data.jobDetails?.experienceLevel ?? "";
+      const { requiredSkills, softSkills, ...jobDetails } = data;
+      const experienceLevel = jobDetails.experienceLevel ?? "";
       const inferred = inferExperienceLevelFromText(
-        [
-          data.jobDetails?.title,
-          data.jobDetails?.description,
-          ...(data.jobDetails?.requirements ?? []),
-          ...(data.jobDetails?.responsibilities ?? []),
-        ]
+        [jobDetails.title, jobDetails.description, ...(jobDetails.requirements ?? []), ...(jobDetails.responsibilities ?? [])]
           .filter(Boolean)
           .join(" "),
       );
@@ -31,12 +27,15 @@ export const useGeneratePostMutation = () => {
       dispatch(
         setGeneratedPost({
           post: {
-            ...data,
             creationType: "ai",
             expirationDate: null,
             jobDetails: {
-              ...data.jobDetails,
+              ...jobDetails,
               experienceLevel: isKnownExperienceLevel(experienceLevel) ? experienceLevel : inferred,
+            },
+            skillAnalysis: {
+              requiredSkills: requiredSkills ?? [],
+              softSkills: softSkills ?? [],
             },
           },
           language: variables.language ?? "en",

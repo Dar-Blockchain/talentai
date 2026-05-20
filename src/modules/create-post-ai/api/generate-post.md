@@ -14,35 +14,29 @@
 
 ```
 {
-  jobDetails: {
-    title:           string
-    description:     string
-    requirements:    string[]
-    responsibilities: string[]
-    location:        string
-    workMode:        string
-    employmentType:  string
-    experienceLevel: string
-    salary: {
-      min:      number
-      max:      number
-      currency: string
-    }
+  title:            string
+  description:      string
+  requirements:     string[]
+  responsibilities: string[]
+  location:         string
+  workMode:         string
+  employmentType:   string
+  experienceLevel:  string
+  salary: {
+    min:      number
+    max:      number
+    currency: string
   }
-  requiredSkills: RequiredSkill[]
-  softSkills:     SoftSkill[]
-
-  RequiredSkill {
+  requiredSkills: {
     name:       string
     level:      number
     category:   string
     percentage: number
-  }
-
-  SoftSkill {
+  }[]
+  softSkills: {
     name:       string
     level:      number
     percentage: number
-  }
+  }[]
 }
 ```

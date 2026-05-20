@@ -1,4 +1,5 @@
 const generateJobPostService = require("../../services/PosteServices/generateJobPost.service");
+const { flattenPost } = require("../../helpers/post.validation.helpers");
 
 module.exports.generateJobPost = async (req, res) => {
   try {
@@ -19,7 +20,14 @@ module.exports.generateJobPost = async (req, res) => {
       user,
       { workMode, contractType, language, interviewLanguages },
     );
-    res.json(result);
+
+    const { jobDetails, skillAnalysis, ...rest } = result;
+    res.json({
+      ...rest,
+      ...(jobDetails ?? {}),
+      requiredSkills: skillAnalysis?.requiredSkills ?? [],
+      softSkills: skillAnalysis?.softSkills ?? [],
+    });
   } catch (error) {
     console.error("Error in generateJobPost:", error);
     const status = error?.status || 500;

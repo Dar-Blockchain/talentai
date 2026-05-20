@@ -19,9 +19,9 @@ export interface GeneratePostPayload {
   interviewLanguages?: string[];
 }
 
-export interface GeneratePostResponse {
-  jobDetails: JobDetails;
-  skillAnalysis: SkillAnalysis;
+export interface GeneratePostResponse extends JobDetails {
+  requiredSkills: HardSkill[];
+  softSkills: SoftSkill[];
 }
 
 // ── POST /post/save-post ──────────────────────────────────────────────────────
