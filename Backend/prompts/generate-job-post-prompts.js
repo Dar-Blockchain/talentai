@@ -124,6 +124,18 @@ STRICT SKILL RULES:
     - The soft skill must include a "percentage" field.
     - Never use vague or irrelevant soft skills.
 
+    - If employmentType is "Internship" or experienceLevel is "Stage/Entry-level":
+    • NEVER require years of production experience in requirements.
+    • Use instead: "Basic knowledge of", "Academic or personal project experience with", "Exposure to X through coursework or self-learning".
+    • Requirements must reflect what a student or recent graduate can realistically have.
+    • Salary min and max must be set to 0 if not explicitly mentioned in the job description.
+
+    - If the job description mentions "stage", "internship", or "intern" anywhere:
+    • experienceLevel MUST be "Entry-level" — NEVER "Junior", "Mid-level", or "Senior".
+    • employmentType MUST be "Internship" — NEVER "Part-time" or "Full-time".
+    • If workMode is not explicitly stated, default to "Hybrid".
+    • salary min and max MUST be 0 if no salary is explicitly mentioned.
+    
     CRITICAL: Return ONLY the raw JSON object. Do NOT include any explanation, reasoning, or text before or after the JSON.
 `.trim();
 };
