@@ -1,8 +1,17 @@
 import axiosInstance from "@/utils/axiosInstance";
-import { SavePostResponse } from "../types";
-import { PostGenerationResponse, Salary } from "../store/createPostSlice";
+import type {
+  GeneratePostPayload,
+  GeneratePostResponse,
+  SavePostPayload,
+  SavePostResponse,
+  UpdatePostPayload,
+  UpdatePostResponse,
+} from "./types";
+import type { Salary } from "./types";
 
-export interface GeneratePostPayload {
+// ── Generate ──────────────────────────────────────────────────────────────────
+
+export interface GeneratePostInput {
   jobDescription: string;
   salary: Salary;
   contractType?: string;
@@ -11,33 +20,41 @@ export interface GeneratePostPayload {
   interviewLanguages?: string[];
 }
 
-export async function generatePost(payload: GeneratePostPayload): Promise<PostGenerationResponse> {
-  const { jobDescription, salary, contractType, workMode, language, interviewLanguages } = payload;
+export async function generatePost(input: GeneratePostInput): Promise<GeneratePostResponse> {
+  const { jobDescription, salary, contractType, workMode, language, interviewLanguages } = input;
 
   const salaryText   = `\n\nSalary Range: ${salary.currency}${salary.min?.toLocaleString()} - ${salary.currency}${salary.max?.toLocaleString()}`;
   const contractText = contractType ? `\nContract Type: ${contractType}` : "";
   const workModeText = workMode     ? `\nWork Mode: ${workMode}`         : "";
   const description  = jobDescription + salaryText + contractText + workModeText;
 
-  const res = await axiosInstance.post("post/generate-job-post", {
-    description, contractType, workMode, language, interviewLanguages,
-  });
-  return res.data;
+  const payload: GeneratePostPayload = { description, contractType, workMode, language, interviewLanguages };
+  const res = await axiosInstance.post("post/generate-job-post", payload);
+  return res.data as GeneratePostResponse;
 }
 
-export async function savePost(
-  jobData: PostGenerationResponse & { interviewLanguages: string[] },
-): Promise<SavePostResponse> {
-  const res  = await axiosInstance.post("post/save-post", jobData);
-  const saved = res.data;
-  return { success: true, jobData: saved.data || saved, planUsage: saved.planUsage ?? null };
+// ── Save ──────────────────────────────────────────────────────────────────────
+
+export async function savePost(jobData: SavePostPayload): Promise<SavePostResponse> {
+  const res = await axiosInstance.post("post/save-post", jobData);
+  const body = res.data;
+  return {
+    success: true,
+    data: body.data || body,
+    planUsage: body.planUsage ?? null,
+  };
 }
 
-export async function updatePost(
-  jobId: string,
-  jobData: PostGenerationResponse & { interviewLanguages: string[] },
-): Promise<SavePostResponse> {
-  const res  = await axiosInstance.put(`post/updatePost/${jobId}`, jobData);
-  const data = res.data;
-  return { success: true, jobData: data.data || data, planUsage: null };
+// ── Update ────────────────────────────────────────────────────────────────────
+
+export async function updatePost(jobId: string, jobData: UpdatePostPayload): Promise<UpdatePostResponse> {
+  const res = await axiosInstance.put(`post/updatePost/${jobId}`, jobData);
+  const body = res.data;
+  return {
+    success: true,
+    data: body.data || body,
+  };
 }
+
+export type { GeneratePostInput as GeneratePostPayload };
+export * from "./types";
