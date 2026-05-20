@@ -14,6 +14,7 @@ interface Props {
   isActive: boolean;
   elapsedTime?: number;
   timeWarning?: boolean;
+  coverage?: number | null;
   onEndInterview: () => void;
   endInterviewLabel: string;
 }
@@ -24,9 +25,25 @@ export default function InterviewSessionHeader({
   isActive,
   elapsedTime,
   timeWarning,
+  coverage,
   onEndInterview,
   endInterviewLabel,
 }: Props) {
+  const coverageColor =
+    coverage == null ? null
+    : coverage >= 80 ? "#16a34a"
+    : coverage >= 50 ? "#d97706"
+    : "#dc2626";
+
+  const coverageLabel =
+    coverage == null ? ""
+    : coverage >= 80 ? "Strong"
+    : coverage >= 50 ? "Moderate"
+    : "Building";
+
+  const ARC_R   = 9;
+  const ARC_C   = 2 * Math.PI * ARC_R;
+  const arcDash  = coverageColor != null ? ARC_C * (1 - (coverage ?? 0) / 100) : ARC_C;
   const { t } = useTranslation("modules/interview/hr");
 
   const jobTitle = useMemo(
@@ -110,8 +127,43 @@ export default function InterviewSessionHeader({
           </Box>
         </Box>
 
-        {/* Right — elapsed timer + end button */}
-        <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
+        {/* Right — coverage pill + elapsed timer + end button */}
+        <Box display="flex" alignItems="center" gap={1.5} flexWrap="wrap">
+          {isActive && coverageColor != null && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.875, px: 1.25, py: 0.5, borderRadius: "12px", bgcolor: `${coverageColor}0d`, border: `1px solid ${coverageColor}28` }}>
+              {/* Mini circular arc */}
+              <Box sx={{ position: "relative", width: 30, height: 30, flexShrink: 0 }}>
+                <svg width="30" height="30" viewBox="0 0 30 30">
+                  <circle cx="15" cy="15" r={ARC_R} fill="none" stroke={`${coverageColor}22`} strokeWidth="2.5" />
+                  <circle
+                    cx="15" cy="15" r={ARC_R}
+                    fill="none"
+                    stroke={coverageColor}
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeDasharray={ARC_C}
+                    strokeDashoffset={arcDash}
+                    transform="rotate(-90 15 15)"
+                    style={{ transition: "stroke-dashoffset 0.8s ease" }}
+                  />
+                </svg>
+                <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Typography sx={{ fontFamily: "Poppins", fontWeight: 800, fontSize: "0.5rem", color: coverageColor, lineHeight: 1 }}>
+                    {coverage}
+                  </Typography>
+                </Box>
+              </Box>
+              {/* Text */}
+              <Box>
+                <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "0.7rem", color: "#374151", lineHeight: 1.3 }}>
+                  {coverage}% covered
+                </Typography>
+                <Typography sx={{ fontFamily: "Poppins", fontSize: "0.6rem", color: "#9ca3af", lineHeight: 1 }}>
+                  {coverageLabel}
+                </Typography>
+              </Box>
+            </Box>
+          )}
           {isActive && elapsedTime !== undefined && (
             <InterviewTimer
               elapsedTime={elapsedTime}

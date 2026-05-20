@@ -50,9 +50,11 @@
     "check_loaded": "Page chargée",
     "ready_title": "Prêt à commencer ?",
     "ready_subtitle": "Votre intervieweur IA est prêt et vous attend.",
+    "ready_description": "Parlez naturellement et à un rythme confortable. L'IA s'adapte à vos réponses et vous guidera tout au long de chaque question.",
     "check_ok": "OK",
     "check_waiting": "En attente",
     "camera_warning": "Autorisation caméra requise",
+    "back_to_post": "Retour aux détails du poste",
     "starting_title": "Démarrage de l'entretien…",
     "starting_subtitle": "Veuillez patienter pendant que nous vous connectons à votre intervieweur IA.",
     "thinking": "L'IA réfléchit…",
@@ -67,7 +69,9 @@
   "agent": {
     "processing": "Traitement…",
     "listening": "En écoute…",
-    "submit": "Soumettre et continuer"
+    "submit": "Soumettre et continuer",
+    "skip_question": "Passer la question",
+    "waiting_for_speech": "Parlez votre réponse…"
   },
   "camera": {
     "requesting": "Demande d'accès caméra…",

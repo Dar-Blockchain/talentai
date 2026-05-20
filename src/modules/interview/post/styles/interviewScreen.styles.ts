@@ -21,36 +21,14 @@ export const interviewScreenSx = {
     px: { xs: 1.5, md: 3 },
   } as SxProps<Theme>,
 
-  grid: (hasCoverage: boolean): SxProps<Theme> => ({
+  grid: {
     flex: 1,
     minHeight: 0,
     maxHeight: { md: "min(500px, calc(100vh - 130px))" },
     display: "grid",
-    gridTemplateColumns: {
-      xs: "1fr",
-      sm: "1fr 1fr",
-      md: hasCoverage ? "1fr 2fr 1fr" : "2fr 1fr",
-    },
+    gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "2fr 1fr" },
     gap: { xs: 1.5, md: 1 },
     mt: { xs: 1, md: 0.75 },
-  }),
-
-  lobbyWrapper: {
-    flex: 1,
-    display: "flex",
-    alignItems: "flex-start",
-    justifyContent: "center",
-    pt: { xs: 1, md: 2 },
-    pb: { xs: 2, md: 2 },
-  } as SxProps<Theme>,
-
-  lobbyGrid: {
-    width: "100%",
-    maxWidth: 900,
-    display: "grid",
-    gridTemplateColumns: { xs: "1fr", md: "1.3fr 1fr" },
-    gap: { xs: 2, md: 2.5 },
-    alignItems: "start",
   } as SxProps<Theme>,
 
   lobbyCard: {

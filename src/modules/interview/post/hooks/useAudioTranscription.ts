@@ -423,7 +423,7 @@ export const useAudioTranscription = ({
 
   const initializeAudio = useCallback(async () => {
     const stream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 16000, channelCount: 1 },
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, sampleRate: 16000, channelCount: 1 },
     });
 
     audioStreamRef.current = stream;
@@ -446,6 +446,7 @@ export const useAudioTranscription = ({
         transcriberRef.current = null;
       }
       if (processorRef.current) {
+        processorRef.current.onaudioprocess = null;
         try { processorRef.current.disconnect(); } catch {}
         processorRef.current = null;
       }

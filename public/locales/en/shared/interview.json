@@ -50,9 +50,11 @@
     "check_loaded": "Page loaded",
     "ready_title": "Ready to begin?",
     "ready_subtitle": "Your AI interviewer is ready and waiting.",
+    "ready_description": "Speak naturally and at a comfortable pace. The AI adapts to your responses and will guide you through each question.",
     "check_ok": "OK",
     "check_waiting": "Waiting",
     "camera_warning": "Camera permission required",
+    "back_to_post": "Back to post details",
     "starting_title": "Starting interview…",
     "starting_subtitle": "Please wait while we connect you to your AI interviewer.",
     "thinking": "AI is thinking…",
@@ -67,7 +69,9 @@
   "agent": {
     "processing": "Processing…",
     "listening": "Listening…",
-    "submit": "Submit & Continue"
+    "submit": "Submit & Continue",
+    "skip_question": "Skip question",
+    "waiting_for_speech": "Speak your answer…"
   },
   "camera": {
     "requesting": "Requesting camera access…",

@@ -4,6 +4,7 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import KeyboardVoiceIcon from '@mui/icons-material/KeyboardVoice';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import VideocamIcon from '@mui/icons-material/Videocam';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
@@ -22,6 +23,9 @@ interface InterviewContainerProps {
   resultsReady: boolean;
   noBorder?: boolean;
   onStartInterview: () => void;
+  onBack?: () => void;
+  jobTitle?: string;
+  companyName?: string;
 }
 
 const InterviewContainer: React.FC<InterviewContainerProps> = ({
@@ -34,6 +38,9 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
   resultsReady,
   noBorder = false,
   onStartInterview,
+  onBack,
+  jobTitle,
+  companyName,
 }) => {
   const { t } = useTranslation('interview');
   const [waitDots] = useState('');
@@ -58,6 +65,9 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
             allReady={allReady}
             cameraStatus={cameraStatus}
             onStartInterview={onStartInterview}
+            onBack={onBack}
+            jobTitle={jobTitle}
+            companyName={companyName}
           />
         )}
 
@@ -125,69 +135,110 @@ interface ReadinessChecklistProps {
   allReady: boolean;
   cameraStatus: CameraStatus;
   onStartInterview: () => void;
+  onBack?: () => void;
+  jobTitle?: string;
+  companyName?: string;
 }
 
 /** Pre-flight checklist shown before the interview starts, with the start button. */
-const ReadinessChecklist: React.FC<ReadinessChecklistProps> = ({ checks, allReady, cameraStatus, onStartInterview }) => {
+const ReadinessChecklist: React.FC<ReadinessChecklistProps> = ({
+  checks, allReady, cameraStatus, onStartInterview, onBack, jobTitle, companyName,
+}) => {
   const { t } = useTranslation('interview');
 
   return (
-    <Box>
-      {/* Icon badge */}
-      <Box sx={{ width: 56, height: 56, borderRadius: '16px', background: 'linear-gradient(135deg, rgba(106,211,156,0.18), rgba(16,69,63,0.07))', border: '1.5px solid rgba(106,211,156,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-        <PlayArrowIcon sx={{ fontSize: 28, color: '#10453F' }} />
-      </Box>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 0 }}>
 
-      <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.05rem', color: '#0d1f1c', mb: 0.5, lineHeight: 1.3 }}>
-        {t('container.ready_title')}
-      </Typography>
-      <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.78rem', color: '#6b7280', mb: 2.5, lineHeight: 1.6 }}>
-        {t('container.ready_subtitle')}
-      </Typography>
+      {/* ── Job context header ──────────────────────────────────────────── */}
+      {(jobTitle || companyName) && (
+        <Box sx={{ mb: 2, pb: 2, borderBottom: '1px solid #f0f1f3' }}>
+          <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.95rem', color: '#111827', mb: 0.25, lineHeight: 1.3 }}>
+            {jobTitle}
+          </Typography>
+          {companyName && (
+            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', color: '#9ca3af' }}>
+              {companyName} · AI Interview
+            </Typography>
+          )}
+        </Box>
+      )}
 
-      {/* Checklist card */}
-      <Box sx={{ mb: 2.5, bgcolor: '#f8fdfb', borderRadius: '12px', border: '1px solid #e8f5f0', overflow: 'hidden' }}>
-        {checks.map(({ label, ok }, idx) => (
-          <Box key={label} display="flex" alignItems="center" gap={1.5}
-            sx={{ px: 1.5, py: 0.875, borderBottom: idx < checks.length - 1 ? '1px solid #e8f5f0' : 'none' }}>
+      {/* ── Status grid ────────────────────────────────────────────────── */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0.875, mb: 2.25 }}>
+        {checks.map(({ label, ok }) => (
+          <Box key={label} sx={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5,
+            py: 1.25, px: 0.5, borderRadius: '12px', textAlign: 'center',
+            bgcolor: ok ? 'rgba(34,197,94,0.05)' : '#f9fafb',
+            border: `1px solid ${ok ? 'rgba(34,197,94,0.18)' : '#f0f1f3'}`,
+          }}>
             {ok
-              ? <CheckCircleIcon sx={{ fontSize: 18, color: '#22c55e', flexShrink: 0 }} />
-              : <RadioButtonUncheckedIcon sx={{ fontSize: 18, color: '#d1d5db', flexShrink: 0 }} />}
-            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.78rem', color: ok ? '#1f2937' : '#9ca3af', flex: 1 }}>
+              ? <CheckCircleIcon sx={{ fontSize: 20, color: '#22c55e' }} />
+              : <RadioButtonUncheckedIcon sx={{ fontSize: 20, color: '#d1d5db' }} />}
+            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.6rem', fontWeight: 600, color: ok ? '#374151' : '#b0b7c3', lineHeight: 1.3 }}>
               {label}
             </Typography>
-            <Box sx={{ px: 0.875, py: 0.2, borderRadius: '20px', bgcolor: ok ? 'rgba(34,197,94,0.08)' : 'rgba(245,158,11,0.08)', border: `1px solid ${ok ? 'rgba(34,197,94,0.22)' : 'rgba(245,158,11,0.28)'}` }}>
-              <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.6rem', fontWeight: 700, color: ok ? '#16a34a' : '#d97706', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                {ok ? t('container.check_ok') : t('container.check_waiting')}
-              </Typography>
-            </Box>
           </Box>
         ))}
       </Box>
 
-      {/* Start button */}
-      <Button variant="contained" fullWidth onClick={onStartInterview} disabled={!allReady} startIcon={<PlayArrowIcon />}
-        sx={{
-          fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.88rem', py: 1.25,
-          borderRadius: '14px', textTransform: 'none',
-          background: allReady ? 'linear-gradient(135deg, #6AD39C 0%, #10b981 100%)' : '#e5e7eb',
-          color: allReady ? '#fff' : '#9ca3af',
-          boxShadow: allReady ? '0 4px 16px rgba(106,211,156,0.38)' : 'none',
-          '&:hover': { background: allReady ? 'linear-gradient(135deg, #10b981 0%, #10453F 100%)' : '#e5e7eb', boxShadow: allReady ? '0 6px 20px rgba(106,211,156,0.3)' : 'none' },
-          '&.Mui-disabled': { background: '#f3f4f6', color: '#9ca3af', boxShadow: 'none' },
-        }}>
-        {t('start.btn_start')}
-      </Button>
+      {/* ── Title + subtitle ───────────────────────────────────────────── */}
+      <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1rem', color: '#111827', mb: 0.4 }}>
+        {t('container.ready_title')}
+      </Typography>
+      <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', color: '#6b7280', lineHeight: 1.65, mb: 1 }}>
+        {t('container.ready_subtitle')}
+      </Typography>
+      <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.7rem', color: '#b0b7c3', lineHeight: 1.6, mb: 2.5 }}>
+        {t('container.ready_description')}
+      </Typography>
 
-      {cameraStatus !== 'granted' && cameraStatus !== 'requesting' && (
-        <Box display="flex" alignItems="center" justifyContent="center" gap={0.75}
-          sx={{ mt: 1.5, px: 1.5, py: 0.75, borderRadius: '10px', bgcolor: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)' }}>
-          <VideocamIcon sx={{ fontSize: 15, color: '#f59e0b' }} />
-          <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', color: '#d97706' }}>
-            {t('container.camera_warning')}
-          </Typography>
-        </Box>
-      )}
+      {/* ── Buttons — pushed to bottom ─────────────────────────────────── */}
+      <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', gap: 0.875 }}>
+        {cameraStatus !== 'granted' && cameraStatus !== 'requesting' && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, px: 1.25, py: 0.75, borderRadius: '10px', bgcolor: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.18)' }}>
+            <VideocamIcon sx={{ fontSize: 14, color: '#f59e0b', flexShrink: 0 }} />
+            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', color: '#d97706' }}>
+              {t('container.camera_warning')}
+            </Typography>
+          </Box>
+        )}
+
+        <Button
+          variant="contained"
+          fullWidth
+          onClick={onStartInterview}
+          disabled={!allReady}
+          startIcon={<PlayArrowIcon />}
+          sx={{
+            fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.88rem', py: 1.25,
+            borderRadius: '14px', textTransform: 'none',
+            background: allReady ? 'linear-gradient(135deg, #6AD39C 0%, #10b981 100%)' : undefined,
+            color: allReady ? '#fff' : undefined,
+            boxShadow: allReady ? '0 4px 16px rgba(106,211,156,0.35)' : 'none',
+            '&:hover': { background: allReady ? 'linear-gradient(135deg, #10b981 0%, #0d9265 100%)' : undefined, boxShadow: allReady ? '0 6px 20px rgba(106,211,156,0.28)' : 'none' },
+            '&.Mui-disabled': { background: '#f3f4f6', color: '#9ca3af', boxShadow: 'none' },
+          }}
+        >
+          {t('start.btn_start')}
+        </Button>
+
+        {onBack && (
+          <Button
+            variant="text"
+            fullWidth
+            onClick={onBack}
+            startIcon={<ArrowBackIcon sx={{ fontSize: 15 }} />}
+            sx={{
+              fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.78rem',
+              color: '#9ca3af', textTransform: 'none', py: 0.75,
+              '&:hover': { color: '#6b7280', bgcolor: '#f9fafb' },
+            }}
+          >
+            {t('container.back_to_post')}
+          </Button>
+        )}
+      </Box>
     </Box>
   );
 };

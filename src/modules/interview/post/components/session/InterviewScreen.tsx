@@ -8,7 +8,6 @@ import InterviewControlsPanel from "./InterviewControlsPanel";
 import InterviewContainer from "./InterviewContainer";
 import InterviewConnectionBanner from "./InterviewConnectionBanner";
 import InterviewSessionHeader from "./InterviewSessionHeader";
-import CoverageDashboard from "./CoverageDashboard";
 import GDPRConsentModal from "../modals/GDPRConsentModal";
 import ConfirmLeaveModal from "./ConfirmLeaveModal";
 import { interviewScreenSx } from "../../styles/interviewScreen.styles";
@@ -44,6 +43,7 @@ interface InterviewScreenProps {
     severity: "success" | "error" | "warning" | "info";
   };
   hideNotification: () => void;
+  onBack?: () => void;
 }
 
 export default function InterviewScreen({
@@ -51,9 +51,19 @@ export default function InterviewScreen({
   configData,
   notification,
   hideNotification,
+  onBack,
 }: InterviewScreenProps) {
   const router = useRouter();
   const { t } = useTranslation("modules/interview/hr");
+
+  const handleBack = onBack ?? (() => {
+    const ref = router.query.ref as string | undefined;
+    if (ref) {
+      router.push(ref, undefined, { shallow: false, scroll: false });
+    } else {
+      router.back();
+    }
+  });
 
   const {
     socket,
@@ -148,99 +158,89 @@ export default function InterviewScreen({
           isActive={isActive}
           elapsedTime={timer.elapsedTime}
           timeWarning={timer.timeWarning}
+          coverage={coverage ? Math.round(coverage.overall || 0) : null}
           onEndInterview={() => setConfirmOpen(true)}
           endInterviewLabel={t("end_interview")}
         />
 
-        {isActive ? (
-          <>
-            {/* ── Question strip ───────────────────────────────────────── */}
-            {lastQuestion && (
-              <QuestionPanel
-                currentMessage={lastQuestion}
-                isInReadingTime={audio.isInReadingTime}
-                readingTimeLeft={audio.readingTimeLeft}
-                questionHighlight={audio.questionHighlight}
-                questionNumber={
-                  lastQuestion.type === "question" ||
-                  lastQuestion.type === "follow_up"
-                    ? questionCount
-                    : 0
-                }
-              />
-            )}
-
-            {/* ── 3-column grid ────────────────────────────────────────── */}
-            <Box sx={interviewScreenSx.grid(!!coverage)}>
-              {coverage && <CoverageDashboard coverage={coverage} />}
-              {/* Camera — wrapped in a card for consistent elevation */}
-              <Box sx={{ bgcolor: "#fff", borderRadius: "20px", border: "1px solid rgba(106,211,156,0.15)", boxShadow: "0 2px 16px rgba(16,69,63,0.06)", p: { xs: 1.5, md: 1.75 }, display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
-                <CameraPreview
-                  videoRef={camera.videoRef}
-                  cameraStatus={camera.cameraStatus}
-                  cameraError={camera.cameraError}
-                  isConnecting={audio.isConnecting}
-                  interviewStatus={socket.interviewStatus}
-                  audioContextRef={audio.audioContextRef}
-                  attachStream={camera.attachStream}
-                />
-              </Box>
-              <InterviewControlsPanel
-                interviewStatus={socket.interviewStatus}
-                isHydrated={socket.isHydrated}
-                connectionStatus={socket.connectionStatus}
-                cameraStatus={camera.cameraStatus}
-                agentState={audio.agentState}
-                currentTranscript={
-                  audio.accumulatedTranscript || audio.currentTranscript
-                }
-                resultsReady={resultsReady}
-                isVoiceActive={audio.isVoiceActive}
-                onStartInterview={startInterview}
-                onSubmitAnswer={audio.sendAccumulatedAnswer}
-                onSkipQuestion={skipQuestion}
-              />
-            </Box>
-          </>
-        ) : (
-          /* ── Lobby (idle / connecting / ended) ───────────────────────── */
-          <Box sx={interviewScreenSx.lobbyWrapper}>
-            <Box sx={interviewScreenSx.lobbyGrid}>
-              {/* Camera card */}
-              <Box sx={{ ...interviewScreenSx.lobbyCard, p: { xs: 2, md: 2.5 } }}>
-                <CameraPreview
-                  videoRef={camera.videoRef}
-                  cameraStatus={camera.cameraStatus}
-                  cameraError={camera.cameraError}
-                  isConnecting={audio.isConnecting}
-                  interviewStatus={socket.interviewStatus}
-                  audioContextRef={audio.audioContextRef}
-                  attachStream={camera.attachStream}
-                />
-              </Box>
-
-              {/* Readiness card */}
-              <Box sx={{ ...interviewScreenSx.lobbyCard, overflow: "hidden" }}>
-                <Box sx={interviewScreenSx.lobbyAccentBar} />
-                <Box sx={{ p: { xs: 2, md: 2.5 } }}>
-                  <InterviewContainer
-                    noBorder
-                    interviewStatus={socket.interviewStatus}
-                    isHydrated={socket.isHydrated}
-                    connectionStatus={socket.connectionStatus}
-                    cameraStatus={camera.cameraStatus}
-                    agentState={audio.agentState}
-                    currentTranscript={
-                      audio.accumulatedTranscript || audio.currentTranscript
-                    }
-                    resultsReady={resultsReady}
-                    onStartInterview={startInterview}
-                  />
-                </Box>
-              </Box>
-            </Box>
-          </Box>
+        {/* ── Question strip (active only) ─────────────────────────────── */}
+        {isActive && lastQuestion && (
+          <QuestionPanel
+            currentMessage={lastQuestion}
+            isInReadingTime={audio.isInReadingTime}
+            readingTimeLeft={audio.readingTimeLeft}
+            questionHighlight={audio.questionHighlight}
+            questionNumber={
+              lastQuestion.type === "question" ||
+              lastQuestion.type === "follow_up"
+                ? questionCount
+                : 0
+            }
+          />
         )}
+
+        {/* ── 2-column grid — same layout in both active and lobby ─────── */}
+        <Box sx={interviewScreenSx.grid}>
+          {/* Left: Camera */}
+          <Box sx={{ bgcolor: "#fff", borderRadius: "20px", border: "1px solid rgba(106,211,156,0.15)", boxShadow: "0 2px 16px rgba(16,69,63,0.06)", p: { xs: 1.5, md: 1.75 }, display: "flex", flexDirection: "column", minHeight: 0, height: "100%" }}>
+            <CameraPreview
+              videoRef={camera.videoRef}
+              cameraStatus={camera.cameraStatus}
+              cameraError={camera.cameraError}
+              isConnecting={audio.isConnecting}
+              interviewStatus={socket.interviewStatus}
+              audioContextRef={audio.audioContextRef}
+              attachStream={camera.attachStream}
+            />
+          </Box>
+
+          {/* Right: controls when active, readiness card when lobby */}
+          {isActive ? (
+            <InterviewControlsPanel
+              interviewStatus={socket.interviewStatus}
+              isHydrated={socket.isHydrated}
+              connectionStatus={socket.connectionStatus}
+              cameraStatus={camera.cameraStatus}
+              agentState={audio.agentState}
+              currentTranscript={
+                audio.accumulatedTranscript || audio.currentTranscript
+              }
+              resultsReady={resultsReady}
+              isVoiceActive={audio.isVoiceActive}
+              onStartInterview={startInterview}
+              onSubmitAnswer={audio.sendAccumulatedAnswer}
+              onSkipQuestion={skipQuestion}
+            />
+          ) : (
+            <Box sx={{ ...interviewScreenSx.lobbyCard, overflow: "hidden" }}>
+              <Box sx={interviewScreenSx.lobbyAccentBar} />
+              <Box sx={{ p: { xs: 2, md: 2.5 } }}>
+                <InterviewContainer
+                  noBorder
+                  interviewStatus={socket.interviewStatus}
+                  isHydrated={socket.isHydrated}
+                  connectionStatus={socket.connectionStatus}
+                  cameraStatus={camera.cameraStatus}
+                  agentState={audio.agentState}
+                  currentTranscript={
+                    audio.accumulatedTranscript || audio.currentTranscript
+                  }
+                  resultsReady={resultsReady}
+                  onStartInterview={startInterview}
+                  onBack={handleBack}
+                  jobTitle={jobData?.jobDetails?.title || jobData?.title || ""}
+                  companyName={
+                    jobData?.companyName ||
+                    interviewConfig?.context?.targetCompany ||
+                    jobData?.user?.companyName ||
+                    jobData?.user?.username ||
+                    ""
+                  }
+                />
+              </Box>
+            </Box>
+          )}
+        </Box>
       </Container>
 
       <ConfirmLeaveModal

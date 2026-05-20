@@ -71,6 +71,7 @@ export default function InterviewFlow() {
       configData={{ jobData, interviewConfig }}
       notification={notification}
       hideNotification={hideNotification}
+      onBack={() => setStep("preview")}
     />
   );
 }

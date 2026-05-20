@@ -3,12 +3,12 @@
  * Core AI engine for adaptive interview management
  */
 
-const bedrock = require("../helpers/bedrock.helpers");
-const ragService = require("./rag.service");
-const configManager = require("../utils/config-manager");
-const { detectJobCategory, getEvaluationFramework } = require("../utils/config-manager");
-const redisSessionManager = require("../utils/redis-session-manager");
-const Post = require("../models/Post.model");
+const bedrock = require("../../helpers/bedrock.helpers");
+const ragService = require("../rag.service");
+const configManager = require("../../utils/config-manager");
+const { detectJobCategory, getEvaluationFramework } = require("../../utils/config-manager");
+const redisSessionManager = require("../../utils/redis-session-manager");
+const Post = require("../../models/Post.model");
 require('dotenv').config();
 
 /**
@@ -4038,6 +4038,72 @@ Update the real-time report with new AI-powered insights.`;
    */
   async processCandidateResponseIntelligently(sessionId, transcript, audioMetadata = {}) {
     return await this.processCandidateResponse(sessionId, transcript, audioMetadata);
+  }
+
+  /**
+   * Handles a candidate speaking too long: analyses coverage, generates next question,
+   * stores it in conversation history, and returns it to the controller for emitting.
+   */
+  async handleLongSpeaking(sessionId) {
+    const session = await this.sessionManager.getSession(sessionId);
+
+    const coverageAnalysis = await this.coverageAI.analyzeCoverageIntelligently(
+      '[LONG RESPONSE - TIME LIMIT]',
+      session.coverage,
+      session.config.intelligenceContext.focusAreas,
+      session.conversation,
+    );
+
+    const nextQuestion = await this.questionAI.generateIntelligentQuestion(
+      session,
+      coverageAnalysis,
+      { previousQuestions: session.conversation.filter(e => e.type === 'interviewer') },
+    );
+
+    await this.sessionManager.addConversationEntry(sessionId, {
+      type: 'interviewer',
+      content: nextQuestion.question,
+      timestamp: new Date().toISOString(),
+      metadata: { aiGenerated: true, targetAreas: nextQuestion.targetAreas, reasoning: 'Time limit reached' },
+    });
+
+    return { question: nextQuestion.question, targetAreas: nextQuestion.targetAreas };
+  }
+
+  /** Returns a unified status snapshot for the controller's get_session_status event. */
+  async getSessionStatus(sessionId) {
+    const [analytics, session] = await Promise.all([
+      this.sessionManager.getSessionAnalytics(sessionId),
+      this.sessionManager.getSession(sessionId),
+    ]);
+    return {
+      status: session?.status || 'unknown',
+      analytics,
+      coverage: session?.coverage,
+      realTimeReport: session?.realTimeReport,
+    };
+  }
+
+  /**
+   * Handles cleanup when a socket disconnects.
+   * Returns { wasActive, result } — result is only present when wasActive is true.
+   * Throws if the auto-end call fails (caller decides how to handle it).
+   */
+  async handleDisconnect(sessionId, reason) {
+    const session = await this.sessionManager.getSession(sessionId);
+    if (session?.status !== 'active') return { wasActive: false };
+
+    try {
+      const result = await this.endInterview(sessionId);
+      return { wasActive: true, result };
+    } catch (endErr) {
+      await this.sessionManager.updateSession(sessionId, {
+        status: 'interrupted',
+        disconnectReason: reason,
+        disconnectTime: new Date().toISOString(),
+      }).catch(() => {});
+      throw endErr;
+    }
   }
 }
 
