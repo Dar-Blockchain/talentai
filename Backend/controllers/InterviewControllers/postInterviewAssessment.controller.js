@@ -57,7 +57,7 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
           console.log(`  _id: ${existingApp._id}`);
         }
 
-        // 📉 CHECK OVERALL SCORE - Auto-reject if < 20%
+        // 📉 CHECK OVERALL SCORE - Auto-reject if below threshold
         let updateData = {
           status: "interview_completed",
           updatedAt: new Date()
@@ -66,11 +66,16 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
         const overallScore = assessment?.interviewData?.finalReport?.scores?.overall;
         console.log(`\n🎯 Interview Overall Score: ${overallScore}`);
 
-        if (overallScore !== null && overallScore !== undefined && overallScore < 20) {
-          console.log(`❌ SCORE BELOW 20% THRESHOLD - AUTO-REJECTING APPLICATION`);
+        // Fetch the post to get the interview score threshold
+        const post = await Post.findById(assessmentData.post).select('thresholdScoreInterview');
+        const thresholdScoreInterview = post?.thresholdScoreInterview || 20;
+        console.log(`📊 Interview Score Threshold: ${thresholdScoreInterview}%`);
+
+        if (overallScore !== null && overallScore !== undefined && overallScore < thresholdScoreInterview) {
+          console.log(`❌ SCORE BELOW ${thresholdScoreInterview}% THRESHOLD - AUTO-REJECTING APPLICATION`);
           updateData.recruiterDecision = "rejected";
           updateData.recruiterDecisionAt = new Date();
-          updateData.rejectionReason = `Automatic rejection based on interview assessment. Overall performance score: ${overallScore}% (below 20% threshold). The candidate did not meet the minimum performance requirements during the AI-conducted interview evaluation.`;
+          updateData.rejectionReason = `Automatic rejection based on interview assessment. Overall performance score: ${overallScore}% (below ${thresholdScoreInterview}% threshold). The candidate did not meet the minimum performance requirements during the AI-conducted interview evaluation.`;
         }
         
         const updatedApp = await JobApplication.findOneAndUpdate(
