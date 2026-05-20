@@ -49,7 +49,7 @@
     "overline": "The Solution",
     "headline_1": "Stop Guessing.",
     "headline_accent": "Start Hiring With Confidence.",
-    "body": "AI-driven interviews and blockchain-verified proof — every hire based on performance, not paperwork.",
+    "body": "AI-driven interviews with transparent, auditable scoring — every hire based on performance and skills.",
     "demo_badge": "LIVE DEMO",
     "stats": {
       "less_work": "less hiring work",
@@ -100,7 +100,7 @@
     "step_2_desc": "Your AI recruiter runs 24/7 — assessing technical depth, soft skills, and culture fit through natural conversation, at scale, without bias.",
     "step_3_tag": "Decision",
     "step_3_label": "Review & Hire",
-    "step_3_desc": "Receive auto-ranked shortlists with blockchain-verified credentials. Compare candidates side-by-side and extend offers with full confidence."
+    "step_3_desc": "Receive auto-ranked shortlists with explainable, auditable scores. Compare candidates side-by-side and extend offers with full confidence."
   },
   "transformation": {
     "overline": "The Transformation",
@@ -141,17 +141,15 @@
     "headline_accent": "We've got answers.",
     "body": "Everything you need to know about AI-powered hiring with TalentAI.",
     "q1": "What is TalentAI?",
-    "a1": "TalentAI is an AI-powered recruitment automation platform that replaces manual hiring processes with intelligent, customizable pipelines. The platform deploys specialized conversational AI agents — including Olga (Technical Assessment), Sinda (Soft Skills Evaluation), and Yuka (Process Coordination) — to conduct natural video interviews, score candidates across multiple dimensions, and issue blockchain-verified credentials on the Hedera network. Companies use TalentAI to reduce their average 42-day hiring cycle by up to 75%.",
+    "a1": "TalentAI is an AI-powered recruitment automation platform that replaces manual hiring processes with intelligent, customizable pipelines. The platform deploys specialized conversational AI agents to conduct natural video interviews, score candidates across technical, behavioral, and cultural dimensions, and deliver explainable reports to recruiters. Companies use TalentAI to reduce their average 42-day hiring cycle by up to 75%.",
     "q2": "How does AI interviewing work?",
-    "a2": "TalentAI's AI agents conduct live video interviews using natural language processing and voice synthesis that sounds genuinely human. Each agent is specialized: Olga handles technical evaluations through interactive coding discussions, Sinda assesses soft skills through behavioral conversation, and Yuka coordinates the entire pipeline. The agents adapt their questions in real time based on candidate responses, evaluate both verbal and non-verbal cues, and produce multi-dimensional assessment reports — all without human intervention.",
+    "a2": "TalentAI's AI agents conduct live video interviews using natural language processing and voice synthesis that sounds genuinely human. The agents adapt their questions in real time based on candidate responses, evaluate both verbal and non-verbal cues, and produce multi-dimensional assessment reports — all without human intervention.",
     "q3": "Is AI-powered hiring biased?",
-    "a3": "TalentAI is specifically designed to eliminate unconscious bias in hiring. Every candidate receives identical assessment criteria, standardized questions, and objective scoring — regardless of their name, background, or appearance. All evaluation data is immutably recorded on the Hedera blockchain, creating a transparent audit trail that ensures compliance with equal opportunity employment standards and GDPR requirements.",
+    "a3": "TalentAI is specifically designed to eliminate unconscious bias in hiring. Every candidate receives identical assessment criteria, standardized questions, and objective scoring — regardless of their name, background, or appearance. All evaluation data is logged and auditable, creating a transparent trail that ensures compliance with equal opportunity employment standards and GDPR requirements.",
     "q4": "What assessment modules are available?",
     "a4": "TalentAI offers 8 pre-built assessment modules: Technical Skills Evaluation, Soft Skills Assessment, Cultural Fit Analysis, Language Proficiency Testing, Practical Task Assignments, Problem-Solving Challenges, Behavioral Interviews, and Reference Verification. Each module can be configured with custom pass/fail thresholds, weighted scoring, time limits, and automatic progression rules. Companies mix and match modules to create unique pipelines for different roles, departments, or seniority levels.",
     "q5": "How much does TalentAI cost?",
-    "a5": "TalentAI offers flexible pricing starting at just $8 per AI interview with zero commitment — pay only for what you use. For teams with recurring hiring needs, subscription plans start at $99/month (Starter, 15 interviews) and scale to $1,499/month (Unlimited, 700 interviews with dedicated 24/7 support and BI benchmarks). Every plan includes Interview AI with scoring and reports, AI-powered job post creation, and a customizable pipeline builder. Extra interviews beyond your plan are discounted from $8 down to $4 depending on tier. A white-label enterprise solution is also available with custom infrastructure and SLA.",
-    "q6": "What is the TAI token?",
-    "a6": "The TAI token is TalentAI's native utility token built on the Hedera Hashgraph network (HTS). It powers all platform transactions, from assessment pipeline fees to blockchain credential issuance. Subscribers receive TAI tokens with their plan, and candidates earn tokens through the Interview-to-Earn model when they complete verified AI assessments. The token also enables governance rights and staking rewards within the TalentAI ecosystem."
+    "a5": "TalentAI offers flexible pricing starting at just $8 per AI interview with zero commitment — pay only for what you use. For teams with recurring hiring needs, subscription plans start at $99/month (Starter, 15 interviews) and scale to $1,499/month (Unlimited, 700 interviews with dedicated 24/7 support and BI benchmarks). Every plan includes Interview AI with scoring and reports, AI-powered job post creation, and a customizable pipeline builder. Extra interviews beyond your plan are discounted from $8 down to $4 depending on tier. A white-label enterprise solution is also available with custom infrastructure and SLA."
   },
   "contact": {
     "overline": "Let's Talk",
@@ -162,7 +160,7 @@
     "left_headline_accent": "is proud of.",
     "feature_screening": "Fully automated screening pipeline",
     "feature_bias": "Bias-free AI assessments",
-    "feature_blockchain": "Blockchain-verified credentials",
+    "feature_scoring": "Explainable, auditable scoring",
     "trust_reply_label": "< 24h reply",
     "trust_reply_desc": "No runaround",
     "trust_team_label": "Dedicated team",

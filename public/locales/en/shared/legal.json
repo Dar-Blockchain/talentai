@@ -28,7 +28,6 @@
         "items": [
           "AI-conducted video interviews that guide candidates through role-specific questions",
           "Automated candidate scoring and evaluation based on interview performance",
-          "Blockchain-verified interview credentials issued to candidates",
           "Recruitment campaign management and team collaboration tools",
           "CV analysis and job post generation"
         ],
@@ -152,12 +151,12 @@
           "Use the platform for any unlawful purpose or in violation of any regulation"
         ]
       },
-      "blockchain": {
-        "title": "10. Blockchain Credentials",
-        "p1": "TalentAI issues interview completion credentials on the Hedera blockchain. These credentials are:",
+      "reports": {
+        "title": "10. Evaluation Reports & Credentials",
+        "p1": "TalentAI issues AI-generated evaluation reports to candidates upon interview completion. These reports are:",
         "items": [
-          "Immutable once issued — they cannot be altered or deleted",
-          "Verifiable by third parties who hold the credential identifier",
+          "Based on objective, multi-dimensional scoring of interview performance",
+          "Shareable by the candidate with any third party who holds the report link",
           "Not a guarantee of employment or a formal qualification"
         ]
       },
@@ -231,7 +230,6 @@
           "Operate and improve the TalentAI platform",
           "Conduct AI-powered interviews and generate evaluation results",
           "Match candidates with relevant job opportunities",
-          "Issue and verify blockchain-based interview credentials",
           "Send transactional emails (interview invitations, reminders, account notifications)",
           "Prevent fraud, abuse, and unauthorised access",
           "Comply with legal obligations",
@@ -255,7 +253,6 @@
         "items": [
           "Hiring companies — employers receive candidate profiles, interview recordings, and evaluation scores for roles you applied to",
           "Service providers — trusted third parties who process data on our behalf (cloud infrastructure, email delivery, payment processing) under strict data protection agreements",
-          "Hedera network — anonymised credential hashes are recorded on the Hedera public blockchain for verification purposes",
           "Legal authorities — where required by law, court order, or to protect the rights and safety of our users"
         ]
       },
@@ -265,7 +262,6 @@
         "items": [
           "Interview recordings and scores are retained for up to 24 months after the application",
           "Account data is retained until account deletion is requested",
-          "Blockchain credential hashes are permanent and cannot be deleted by nature of the technology",
           "Billing records are retained as required by applicable tax law"
         ],
         "p2": "You may request deletion of your personal data at any time by contacting us at <contact>contact@talentai.bid</contact>. Deletion requests will be processed within 30 days, subject to legal retention requirements."
