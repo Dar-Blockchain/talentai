@@ -135,7 +135,13 @@ STRICT SKILL RULES:
     • employmentType MUST be "Internship" — NEVER "Part-time" or "Full-time".
     • If workMode is not explicitly stated, default to "Hybrid".
     • salary min and max MUST be 0 if no salary is explicitly mentioned.
-    
+
+    - If no salary is explicitly stated in the job description with a real number and currency,
+  salary MUST be exactly: { "min": 0, "max": 0, "currency": "USD" }.
+  NEVER infer, estimate, or generate a salary. Not even 1. Not even a symbolic value.
+
+  - For Internship roles, all skill levels (requiredSkills and softSkills) MUST be 1.
+  
     CRITICAL: Return ONLY the raw JSON object. Do NOT include any explanation, reasoning, or text before or after the JSON.
 `.trim();
 };
