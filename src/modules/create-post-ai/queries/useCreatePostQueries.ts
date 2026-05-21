@@ -24,6 +24,11 @@ export const useGeneratePostMutation = () => {
           .join(" "),
       );
 
+      const isInternship = variables.contractType === "Internship" || jobDetails.employmentType === "Internship";
+      const resolvedExperienceLevel =
+        isKnownExperienceLevel(experienceLevel) ? experienceLevel
+        : inferred || (isInternship ? "Entry-level" : "");
+
       dispatch(
         setGeneratedPost({
           post: {
@@ -31,7 +36,7 @@ export const useGeneratePostMutation = () => {
             expirationDate: null,
             jobDetails: {
               ...jobDetails,
-              experienceLevel: isKnownExperienceLevel(experienceLevel) ? experienceLevel : inferred,
+              experienceLevel: resolvedExperienceLevel,
             },
             skillAnalysis: {
               requiredSkills: requiredSkills ?? [],

@@ -62,7 +62,7 @@ const DetailsSection = ({ title, employmentType, workMode, experienceLevel, sala
         </TextField>
       </Box>
 
-      <SalaryRange salaryRange={salary as any} onSalaryChange={(field, value) => dispatch(updateJobSalaryField({ field, value }))} />
+      <SalaryRange salaryRange={salary as any} onSalaryChange={(field, value) => dispatch(updateJobSalaryField({ field, value }))} employmentType={employmentType} />
     </SectionCard>
   );
 };

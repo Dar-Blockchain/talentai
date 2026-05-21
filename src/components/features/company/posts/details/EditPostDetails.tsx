@@ -225,6 +225,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel, onSaveSucce
         <SalaryRange
           salaryRange={salary}
           onSalaryChange={(field, value) => setValue(`jobDetails.salary.${field}` as any, value)}
+          employmentType={watch("jobDetails.employmentType")}
         />
 
         <Box sx={{ mt: 2 }}>

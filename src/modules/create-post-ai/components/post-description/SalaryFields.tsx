@@ -1,3 +1,4 @@
+import React from "react";
 import { Box, TextField, Typography } from "@mui/material";
 import AttachMoneyOutlined from "@mui/icons-material/AttachMoneyOutlined";
 import { useTranslation } from "react-i18next";
@@ -11,10 +12,20 @@ interface Props {
   salary: { min: number | null; max: number | null; currency: string };
   error: string;
   onChange: (field: "min" | "max" | "currency", raw: string) => void;
+  employmentType?: string;
 }
 
-const SalaryFields = ({ salary, error, onChange }: Props) => {
+const SalaryFields = ({ salary, error, onChange, employmentType }: Props) => {
   const { t } = useTranslation("posts");
+  const isInternship = employmentType === "Internship";
+
+  const handleNumericChange = (field: "min" | "max") => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/\D/g, "");
+    // For non-internship, strip leading zeros and block pure "0"
+    const val = !isInternship ? digits.replace(/^0+/, "") : digits.replace(/^0+(\d)/, "$1");
+    onChange(field, val);
+  };
+
   return (
     <Box>
       <SectionLabel>{t("create.post_form.labels.salary_section")}</SectionLabel>
@@ -30,11 +41,11 @@ const SalaryFields = ({ salary, error, onChange }: Props) => {
         </Box>
         <Box>
           <FieldLabel label={t("create.post_form.labels.minimum")} />
-          <TextField type="text" fullWidth value={salary.min || ""} onChange={(e) => onChange("min", e.target.value)} placeholder={t("create.post_form.placeholders.min_salary_example")} sx={fieldSx} />
+          <TextField type="text" fullWidth value={salary.min === 0 && isInternship ? "0" : salary.min || ""} onChange={handleNumericChange("min")} placeholder={t("create.post_form.placeholders.min_salary_example")} sx={fieldSx} />
         </Box>
         <Box>
           <FieldLabel label={t("create.post_form.labels.maximum")} />
-          <TextField type="text" fullWidth value={salary.max || ""} onChange={(e) => onChange("max", e.target.value)} placeholder={t("create.post_form.placeholders.max_salary_example")} sx={fieldSx} />
+          <TextField type="text" fullWidth value={salary.max === 0 && isInternship ? "0" : salary.max || ""} onChange={handleNumericChange("max")} placeholder={t("create.post_form.placeholders.max_salary_example")} sx={fieldSx} />
         </Box>
       </Box>
       {error && <Typography sx={{ fontSize: "11px", color: "#EF4444", mt: 0.5 }}>{error}</Typography>}

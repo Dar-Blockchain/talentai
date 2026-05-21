@@ -38,9 +38,12 @@ const PostDescription = ({ onGeneratingChange }: PostDescriptionProps) => {
   const validate = () => {
     const e: Record<string, string> = {};
     if (!promptDescription.trim()) e.promptDescription = t("create.form.error_prompt");
-    if (!salary.min || !salary.max || !salary.currency) {
+    const isInternship = employmentType === "Internship";
+    const salaryMin = Number(salary.min);
+    const salaryMax = Number(salary.max);
+    if (!salary.currency || (!isInternship && (!salary.min || !salary.max))) {
       e.salary = t("create.form.error_salary_required");
-    } else if (Number(salary.max) <= Number(salary.min)) {
+    } else if (!isInternship && salaryMax <= salaryMin) {
       e.salary = t("create.form.error_salary_max");
     }
     if (!employmentType) e.employmentType = t("create.form.error_required");
@@ -108,6 +111,7 @@ const PostDescription = ({ onGeneratingChange }: PostDescriptionProps) => {
           salary={salary}
           error={errors.salary}
           onChange={handleSalaryChange}
+          employmentType={employmentType}
         />
       </Box>
 

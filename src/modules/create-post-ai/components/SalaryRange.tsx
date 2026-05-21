@@ -11,6 +11,7 @@ interface SalaryRangeProps {
   onSalaryChange: (field: "min" | "max" | "currency", value: number | string) => void;
   errors?: { currency?: string; min?: string; max?: string };
   currencies?: { value: string; label: string }[];
+  employmentType?: string;
 }
 
 export { default as CurrencyDropdown } from "./salary-range/CurrencyDropdown";
@@ -20,8 +21,10 @@ const SalaryRange: React.FC<SalaryRangeProps> = ({
   onSalaryChange,
   errors = {},
   currencies = defaultCurrencies,
+  employmentType,
 }) => {
   const { t } = useTranslation("posts");
+  const isInternship = employmentType === "Internship";
 
   const handleChange =
     (field: "min" | "max") =>
@@ -29,8 +32,12 @@ const SalaryRange: React.FC<SalaryRangeProps> = ({
       let value: string | number = e.target.value;
       value = value.replace(/\D/g, "");
       value = value.replace(/^0+/, "");
-      value = value === "" ? 0 : Number(value);
-      onSalaryChange(field, value);
+      // For non-internship roles, treat empty input as empty (not 0)
+      if (value === "") {
+        onSalaryChange(field, isInternship ? 0 : ("" as any));
+        return;
+      }
+      onSalaryChange(field, Number(value));
     };
 
   const currencyCode = salaryRange.currency || null;

@@ -36,8 +36,13 @@ const WORK_MODE_ALIASES: Record<string, string> = {
 };
 
 const EXPERIENCE_ALIASES: Record<string, string> = {
-  "entry level": "Junior",
-  entry: "Junior",
+  "entry level": "Entry-level",
+  "entry-level": "Entry-level",
+  entry: "Entry-level",
+  intern: "Entry-level",
+  internship: "Entry-level",
+  stage: "Entry-level",
+  stagiaire: "Entry-level",
   junior: "Junior",
   debutant: "Junior",
   "débutant": "Junior",
@@ -54,7 +59,7 @@ const EXPERIENCE_ALIASES: Record<string, string> = {
   "expérimenté": "Expert",
 };
 
-const EXPERIENCE_VALUES = ["Junior", "Mid-level", "Senior", "Expert"];
+const EXPERIENCE_VALUES = ["Entry-level", "Junior", "Mid-level", "Senior", "Expert"];
 
 const normalizeKey = (value: string) =>
   value.toLowerCase().replace(/[_-]/g, " ").replace(/\s+/g, " ").trim();
