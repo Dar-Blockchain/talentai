@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Box, Slider, Typography } from "@mui/material";
 import { TrackChangesOutlined } from "@mui/icons-material";
 import { useSelector, useDispatch, shallowEqual } from "react-redux";
+import type { RootState } from "@/store/store";
 import { useTranslation } from "react-i18next";
 import { HardSkill, SoftSkill, setThresholdScore } from "../store/createPostSlice";
 import { normalizeEmploymentType, normalizeWorkMode } from "../utils";
@@ -20,7 +21,7 @@ interface PostPreviewProps {
 const PostPreview = ({ generating = false }: PostPreviewProps) => {
   const { t, i18n } = useTranslation("posts");
   const dispatch = useDispatch();
-  const { generatedPost, generatedLanguage, thresholdScore } = useSelector((state: any) => state.postGeneration, shallowEqual);
+  const { generatedPost, generatedLanguage, thresholdScore } = useSelector((state: RootState) => state.postGeneration, shallowEqual);
 
   const [open, setOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -86,6 +87,8 @@ const PostPreview = ({ generating = false }: PostPreviewProps) => {
                 value={thresholdScore}
                 onChange={(_, v) => dispatch(setThresholdScore(v as number))}
                 min={0} max={100} step={5}
+                aria-label="Threshold score"
+                aria-valuetext={`${thresholdScore}%`}
                 marks={[{ value: 0, label: "0%" }, { value: 50, label: "50%" }, { value: 100, label: "100%" }]}
                 sx={{ color: sliderColor, "& .MuiSlider-thumb": { width: 18, height: 18 }, "& .MuiSlider-markLabel": { fontSize: "11px", color: "#9CA3AF" } }}
               />

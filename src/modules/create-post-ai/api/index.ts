@@ -23,8 +23,9 @@ export interface GeneratePostInput {
 export async function generatePost(input: GeneratePostInput): Promise<GeneratePostResponse> {
   const { jobDescription, salary, contractType, workMode, language, interviewLanguages } = input;
 
-  const salaryText   = salary.min != null && salary.max != null
-    ? `\n\nSalary Range: ${salary.currency}${salary.min.toLocaleString()} - ${salary.currency}${salary.max.toLocaleString()}`
+  // Format salary range for the prompt using locale-neutral number formatting
+  const salaryText = salary.min != null && salary.max != null
+    ? `\n\nSalary Range: ${salary.currency} ${new Intl.NumberFormat("en-US").format(salary.min)} - ${salary.currency} ${new Intl.NumberFormat("en-US").format(salary.max)}`
     : "";
   const contractText = contractType ? `\nContract Type: ${contractType}` : "";
   const workModeText = workMode     ? `\nWork Mode: ${workMode}`         : "";
@@ -39,10 +40,11 @@ export async function generatePost(input: GeneratePostInput): Promise<GeneratePo
 
 export async function savePost(jobData: SavePostPayload): Promise<SavePostResponse> {
   const res = await axiosInstance.post("post/save-post", jobData);
-  const body = res.data;
+  // Backend returns either { data, planUsage } or the payload directly
+  const body = res.data as { data?: SavePostResponse["data"]; planUsage?: number };
   return {
     success: true,
-    data: body.data || body,
+    data: (body.data ?? res.data) as SavePostResponse["data"],
     planUsage: body.planUsage ?? null,
   };
 }
@@ -51,12 +53,12 @@ export async function savePost(jobData: SavePostPayload): Promise<SavePostRespon
 
 export async function updatePost(jobId: string, jobData: UpdatePostPayload): Promise<UpdatePostResponse> {
   const res = await axiosInstance.put(`post/updatePost/${jobId}`, jobData);
-  const body = res.data;
+  // Backend returns either { data } or the payload directly
+  const body = res.data as { data?: UpdatePostResponse["data"] };
   return {
     success: true,
-    data: body.data || body,
+    data: (body.data ?? res.data) as UpdatePostResponse["data"],
   };
 }
 
-export type { GeneratePostInput as GeneratePostPayload };
 export * from "./types";

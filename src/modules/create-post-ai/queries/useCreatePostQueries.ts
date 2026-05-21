@@ -1,9 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { generatePost, savePost, updatePost } from "../api";
-import type { GeneratePostInput, SavePostPayload } from "../api";
+import type { GeneratePostInput, GeneratePostResponse, SavePostPayload } from "../api";
 import { PostGenerationResponse } from "../store/createPostSlice";
 import { inferExperienceLevelFromText, isKnownExperienceLevel } from "../utils";
 import axiosInstance from "@/utils/axiosInstance";
+
+const POST_CACHE_MS = 5 * 60 * 1000;
 
 // ── Query Keys ────────────────────────────────────────────────────────────────
 
@@ -35,8 +37,38 @@ export const useGetPostQuery = (postId: string | null) =>
       return res.data?.data ?? res.data;
     },
     enabled: !!postId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: POST_CACHE_MS,
   });
+
+// ── Normalization ─────────────────────────────────────────────────────────────
+
+function normalizeGeneratedPost(data: GeneratePostResponse, variables: GeneratePostInput): NormalizedGeneratedPost {
+  const { requiredSkills, softSkills, ...jobDetails } = data;
+  const experienceLevel = jobDetails.experienceLevel ?? "";
+  const inferred = inferExperienceLevelFromText(
+    [jobDetails.title, jobDetails.description, ...(jobDetails.requirements ?? []), ...(jobDetails.responsibilities ?? [])]
+      .filter(Boolean)
+      .join(" "),
+  );
+
+  const isInternship = variables.contractType === "Internship" || jobDetails.employmentType === "Internship";
+  const resolvedExperienceLevel =
+    isKnownExperienceLevel(experienceLevel) ? experienceLevel
+    : inferred || (isInternship ? "Entry-level" : "");
+
+  return {
+    post: {
+      creationType: "ai",
+      expirationDate: null,
+      jobDetails: { ...jobDetails, experienceLevel: resolvedExperienceLevel },
+      skillAnalysis: {
+        requiredSkills: requiredSkills ?? [],
+        softSkills: softSkills ?? [],
+      },
+    },
+    language: variables.language ?? "en",
+  };
+}
 
 // ── Generate ──────────────────────────────────────────────────────────────────
 
@@ -46,33 +78,7 @@ export const useGeneratePostMutation = () => {
   return useMutation({
     mutationFn: (payload: GeneratePostInput) => generatePost(payload),
     onSuccess: (data, variables) => {
-      const { requiredSkills, softSkills, ...jobDetails } = data;
-      const experienceLevel = jobDetails.experienceLevel ?? "";
-      const inferred = inferExperienceLevelFromText(
-        [jobDetails.title, jobDetails.description, ...(jobDetails.requirements ?? []), ...(jobDetails.responsibilities ?? [])]
-          .filter(Boolean)
-          .join(" "),
-      );
-
-      const isInternship = variables.contractType === "Internship" || jobDetails.employmentType === "Internship";
-      const resolvedExperienceLevel =
-        isKnownExperienceLevel(experienceLevel) ? experienceLevel
-        : inferred || (isInternship ? "Entry-level" : "");
-
-      const result: NormalizedGeneratedPost = {
-        post: {
-          creationType: "ai",
-          expirationDate: null,
-          jobDetails: { ...jobDetails, experienceLevel: resolvedExperienceLevel },
-          skillAnalysis: {
-            requiredSkills: requiredSkills ?? [],
-            softSkills: softSkills ?? [],
-          },
-        },
-        language: variables.language ?? "en",
-      };
-
-      // Cache the normalized result — consumers read it via onSuccess at call site
+      const result = normalizeGeneratedPost(data, variables);
       queryClient.setQueryData(postKeys.generated(), result);
     },
   });

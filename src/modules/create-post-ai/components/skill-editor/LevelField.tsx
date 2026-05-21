@@ -6,7 +6,7 @@ import { inputStyle, labelSx } from "./styles";
 
 interface Props {
   skillType: "hard" | "soft";
-  value: any;
+  value: string | number | null;
   onChange: (value: string) => void;
 }
 
@@ -28,6 +28,7 @@ const LevelField = ({ skillType, value, onChange }: Props) => {
         onChange={(e) => onChange(e.target.value)}
         fullWidth
         sx={inputStyle}
+        inputProps={{ "aria-label": t("create.post_form.skill_modal.experience_level") }}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">

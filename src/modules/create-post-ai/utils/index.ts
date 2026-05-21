@@ -21,22 +21,40 @@ export const EXPERIENCE_OPTION_KEY: Record<string, string> = {
   Expert: "experience_expert",
 };
 
-const EMPLOYMENT_ALIASES: Record<string, string> = {
+// Matches "X years", "X+ ans", "X annees experience", etc. in EN and FR
+const YEARS_EXPERIENCE_REGEX = /(\d+)\s*(?:\+|plus)?\s*(?:years?|ans?|annees?|annee|experience)/g;
+
+const normalizeKey = (value: string) =>
+  value.toLowerCase().replace(/[_-]/g, " ").replace(/\s+/g, " ").trim();
+
+const normalizeSearchText = (value: string) =>
+  // NFD decomposes accented chars (é → e + ́); the range strips the combining diacritical marks
+  normalizeKey(value.normalize("NFD").replace(/[̀-ͯ]/g, ""));
+
+const EXPERIENCE_VALUES = Object.keys(EXPERIENCE_OPTION_KEY);
+
+// ─── Normalizer factory ───────────────────────────────────────────────────────
+
+function createNormalizer(aliases: Record<string, string>) {
+  return (value = ""): string => aliases[normalizeKey(value)] || value;
+}
+
+export const normalizeEmploymentType = createNormalizer({
   "full time": "Full-time",
   fulltime: "Full-time",
   "part time": "Part-time",
   parttime: "Part-time",
   internship: "Internship",
-};
+});
 
-const WORK_MODE_ALIASES: Record<string, string> = {
+export const normalizeWorkMode = createNormalizer({
   onsite: "On-site",
   "on site": "On-site",
   remote: "Remote",
   hybrid: "Hybrid",
-};
+});
 
-const EXPERIENCE_ALIASES: Record<string, string> = {
+export const normalizeExperienceLevel = createNormalizer({
   "entry level": "Entry-level",
   "entry-level": "Entry-level",
   entry: "Entry-level",
@@ -58,31 +76,11 @@ const EXPERIENCE_ALIASES: Record<string, string> = {
   expert: "Expert",
   "experimente": "Expert",
   "expérimenté": "Expert",
-};
-
-const EXPERIENCE_VALUES = ["Entry-level", "Junior", "Mid-level", "Senior", "Expert"];
-
-const normalizeKey = (value: string) =>
-  value.toLowerCase().replace(/[_-]/g, " ").replace(/\s+/g, " ").trim();
-
-const normalizeSearchText = (value: string) =>
-  normalizeKey(value.normalize("NFD").replace(/[̀-ͯ]/g, ""));
+});
 
 export function optionLabel(t: TFunction<"posts">, value: string, map: Record<string, string>): string {
   const sub = map[value];
   return sub ? t(`create.post_form.options.${sub}`) : value;
-}
-
-export function normalizeEmploymentType(value = ""): string {
-  return EMPLOYMENT_ALIASES[normalizeKey(value)] || value;
-}
-
-export function normalizeWorkMode(value = ""): string {
-  return WORK_MODE_ALIASES[normalizeKey(value)] || value;
-}
-
-export function normalizeExperienceLevel(value = ""): string {
-  return EXPERIENCE_ALIASES[normalizeKey(value)] || value;
 }
 
 export function isKnownExperienceLevel(value = ""): boolean {
@@ -93,9 +91,7 @@ export function inferExperienceLevelFromText(text = ""): string {
   const normalized = normalizeSearchText(text);
   if (!normalized) return "";
 
-  const yearsMatches = Array.from(
-    normalized.matchAll(/(\d+)\s*(?:\+|plus)?\s*(?:years?|ans?|annees?|annee|experience)/g),
-  );
+  const yearsMatches = Array.from(normalized.matchAll(YEARS_EXPERIENCE_REGEX));
   const maxYears = yearsMatches.reduce((max, match) => Math.max(max, Number(match[1]) || 0), 0);
 
   if (maxYears >= 10) return "Expert";

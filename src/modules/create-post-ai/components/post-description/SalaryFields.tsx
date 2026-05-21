@@ -15,9 +15,16 @@ interface Props {
   employmentType?: string;
 }
 
+const formatSalaryDisplay = (value: number | null, isInternship: boolean): string => {
+  if (value === 0 && isInternship) return "0";
+  return value ? String(value) : "";
+};
+
+const INTERNSHIP = "Internship";
+
 const SalaryFields = ({ salary, error, onChange, employmentType }: Props) => {
   const { t } = useTranslation("posts");
-  const isInternship = employmentType === "Internship";
+  const isInternship = employmentType === INTERNSHIP;
 
   const handleNumericChange = (field: "min" | "max") => (e: React.ChangeEvent<HTMLInputElement>) => {
     const digits = e.target.value.replace(/\D/g, "");
@@ -41,11 +48,11 @@ const SalaryFields = ({ salary, error, onChange, employmentType }: Props) => {
         </Box>
         <Box>
           <FieldLabel label={t("create.post_form.labels.minimum")} />
-          <TextField type="text" fullWidth value={salary.min === 0 && isInternship ? "0" : salary.min || ""} onChange={handleNumericChange("min")} placeholder={t("create.post_form.placeholders.min_salary_example")} sx={fieldSx} />
+          <TextField type="text" fullWidth value={formatSalaryDisplay(salary.min, isInternship)} onChange={handleNumericChange("min")} placeholder={t("create.post_form.placeholders.min_salary_example")} sx={fieldSx} />
         </Box>
         <Box>
           <FieldLabel label={t("create.post_form.labels.maximum")} />
-          <TextField type="text" fullWidth value={salary.max === 0 && isInternship ? "0" : salary.max || ""} onChange={handleNumericChange("max")} placeholder={t("create.post_form.placeholders.max_salary_example")} sx={fieldSx} />
+          <TextField type="text" fullWidth value={formatSalaryDisplay(salary.max, isInternship)} onChange={handleNumericChange("max")} placeholder={t("create.post_form.placeholders.max_salary_example")} sx={fieldSx} />
         </Box>
       </Box>
       {error && <Typography sx={{ fontSize: "11px", color: "#EF4444", mt: 0.5 }}>{error}</Typography>}

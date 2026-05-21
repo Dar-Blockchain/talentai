@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import type { RootState } from "@/store/store";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -59,7 +60,12 @@ export interface PostGenerationState {
   generatedAt: number | null;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Defaults ─────────────────────────────────────────────────────────────────
+
+const DEFAULT_CURRENCY = "USD";
+const DEFAULT_THRESHOLD_SCORE = 60;
+const DEFAULT_LANGUAGES = ["en"];
+const DEFAULT_GENERATED_LANGUAGE = "en";
 
 const getDefaultExpirationDate = () => {
   const date = new Date();
@@ -71,15 +77,15 @@ const getDefaultExpirationDate = () => {
 
 const initialState: PostGenerationState = {
   generatedPost: null,
-  generatedLanguage: "en",
+  generatedLanguage: DEFAULT_GENERATED_LANGUAGE,
   creationType: null,
   promptDescription: "",
   workMode: "",
   employmentType: "",
-  salary: { min: null, max: null, currency: "USD" },
+  salary: { min: null, max: null, currency: DEFAULT_CURRENCY },
   expirationDate: getDefaultExpirationDate(),
-  interviewLanguages: ["en"],
-  thresholdScore: 60,
+  interviewLanguages: DEFAULT_LANGUAGES,
+  thresholdScore: DEFAULT_THRESHOLD_SCORE,
   generatedAt: null,
 };
 
@@ -91,16 +97,16 @@ const createPostSlice = createSlice({
   reducers: {
     clearPost(state) {
       state.generatedPost = null;
-      state.generatedLanguage = "en";
+      state.generatedLanguage = DEFAULT_GENERATED_LANGUAGE;
       state.generatedAt = null;
       state.creationType = null;
       state.promptDescription = "";
       state.workMode = "";
       state.employmentType = "";
-      state.salary = { min: null, max: null, currency: "USD" };
+      state.salary = { min: null, max: null, currency: DEFAULT_CURRENCY };
       state.expirationDate = getDefaultExpirationDate();
-      state.interviewLanguages = ["en"];
-      state.thresholdScore = 60;
+      state.interviewLanguages = DEFAULT_LANGUAGES;
+      state.thresholdScore = DEFAULT_THRESHOLD_SCORE;
     },
 
     setGeneratedPost(
@@ -144,26 +150,26 @@ const createPostSlice = createSlice({
 
     updateSalaryField(
       state,
-      action: PayloadAction<{ field: keyof Salary; value: number | string }>,
+      action: PayloadAction<{ field: keyof Salary; value: number | string | null }>,
     ) {
-      state.salary[action.payload.field] = action.payload.value as never;
+      (state.salary as Record<keyof Salary, number | string | null>)[action.payload.field] = action.payload.value;
     },
 
     updateJobField(
       state,
-      action: PayloadAction<{ field: keyof JobDetails; value: any }>,
+      action: PayloadAction<{ field: keyof JobDetails; value: JobDetails[keyof JobDetails] }>,
     ) {
       if (state.generatedPost) {
-        state.generatedPost.jobDetails[action.payload.field] = action.payload.value;
+        (state.generatedPost.jobDetails as Record<keyof JobDetails, JobDetails[keyof JobDetails]>)[action.payload.field] = action.payload.value;
       }
     },
 
     updateJobSalaryField(
       state,
-      action: PayloadAction<{ field: keyof Salary; value: number | string }>,
+      action: PayloadAction<{ field: keyof Salary; value: number | string | null }>,
     ) {
       if (state.generatedPost) {
-        state.generatedPost.jobDetails.salary[action.payload.field] = action.payload.value as never;
+        (state.generatedPost.jobDetails.salary as Record<keyof Salary, number | string | null>)[action.payload.field] = action.payload.value;
       }
     },
 
@@ -240,10 +246,10 @@ export const {
 
 // ─── Selectors ────────────────────────────────────────────────────────────────
 
-export const selectGeneratedPost = (state: any) => state.postGeneration.generatedPost;
-export const selectJobDetails    = (state: any) => state.postGeneration.generatedPost?.jobDetails;
-export const selectHardSkills    = (state: any) => state.postGeneration.generatedPost?.skillAnalysis.requiredSkills ?? [];
-export const selectSoftSkills    = (state: any) => state.postGeneration.generatedPost?.skillAnalysis.softSkills ?? [];
-export const selectCreationType  = (state: any) => state.postGeneration?.creationType;
+export const selectGeneratedPost = (state: RootState) => state.postGeneration.generatedPost;
+export const selectJobDetails    = (state: RootState) => state.postGeneration.generatedPost?.jobDetails;
+export const selectHardSkills    = (state: RootState) => state.postGeneration.generatedPost?.skillAnalysis.requiredSkills ?? [];
+export const selectSoftSkills    = (state: RootState) => state.postGeneration.generatedPost?.skillAnalysis.softSkills ?? [];
+export const selectCreationType  = (state: RootState) => state.postGeneration?.creationType;
 
 export default createPostSlice.reducer;

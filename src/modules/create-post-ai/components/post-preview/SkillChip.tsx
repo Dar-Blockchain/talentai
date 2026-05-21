@@ -1,3 +1,4 @@
+import React from "react";
 import { Chip } from "@mui/material";
 import CloseOutlined from "@mui/icons-material/CloseOutlined";
 import { TEAL } from "./styles";
@@ -14,7 +15,14 @@ const SkillChip: React.FC<Props> = ({ label, onDelete, onClick, sx }) => (
     label={label}
     onDelete={onDelete}
     onClick={onClick}
-    deleteIcon={onDelete ? <CloseOutlined sx={{ fontSize: "14px !important", color: "rgba(255,255,255,0.8)" }} /> : undefined}
+    deleteIcon={
+      onDelete
+        ? <CloseOutlined
+            aria-label={`Remove ${label}`}
+            sx={{ fontSize: "14px !important", color: "rgba(255,255,255,0.8)" }}
+          />
+        : undefined
+    }
     sx={{
       bgcolor: TEAL, color: "#fff",
       fontSize: "12px", fontWeight: 500,

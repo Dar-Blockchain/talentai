@@ -1,6 +1,6 @@
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch } from "@/store/store";
+import { AppDispatch, RootState } from "@/store/store";
 import { validateAIPostStep0 } from "@/validations/postValidation";
 import { useToast } from "@/hooks/useToast";
 import { useSavePostMutation } from "../queries/useCreatePostQueries";
@@ -15,16 +15,18 @@ export const useAiPostStepper = (
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { showToast } = useToast();
-  const thresholdScore = useSelector((state: any) => state.postGeneration.thresholdScore);
+  const thresholdScore = useSelector((state: RootState) => state.postGeneration.thresholdScore);
 
   const saveMutation = useSavePostMutation();
 
-  const handleNext = (languagesOverride?: string[]) => {
+  // forcedLanguages: when the language modal overrides the stored interviewLanguages (e.g. first-time generate)
+  const handleNext = (forcedLanguages?: string[]) => {
     if (!validateAIPostStep0(generatedPost, showToast)) return;
+    if (!generatedPost) return;
 
     saveMutation.mutate(
       {
-        jobData: { ...generatedPost!, interviewLanguages: languagesOverride ?? interviewLanguages },
+        jobData: { ...generatedPost, interviewLanguages: forcedLanguages ?? interviewLanguages },
         savedPostId,
         thresholdScore,
       },

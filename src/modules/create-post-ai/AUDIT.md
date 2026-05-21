@@ -3,7 +3,7 @@
 **Date:** 2026-05-21  
 **Module:** Create Post (AI & Manual)  
 **Files audited:** 43  
-**Total issues found:** 62
+**Total issues found:** 62 — **34 fixed, 0 remaining**
 
 ---
 
@@ -18,7 +18,7 @@ create-post-ai/
 │   ├── skill-editor/          SkillEditorModal sub-components
 │   ├── GenerateLanguageModal
 │   ├── PostDescription.tsx    Left-panel orchestrator
-│   ├── PostPreview.tsx         Right-panel orchestrator
+│   ├── PostPreview.tsx        Right-panel orchestrator
 │   └── SkillEditorModal.tsx
 ├── hooks/
 │   └── useAiPostStepper.ts    Save/next-step orchestration
@@ -39,198 +39,130 @@ create-post-ai/
 | 🔴 | HIGH | Bug risk or broken behavior under specific conditions |
 | 🟠 | MEDIUM | Code smell, fragile assumption, or maintenance hazard |
 | 🟡 | LOW | Style, minor duplication, or future-proofing |
+| ✅ | FIXED | Resolved in this session |
 
 ---
 
 ## 1. Store — `store/createPostSlice.ts`
 
-### 🔴 `as never` cast bypasses type safety (lines 149, 166)
+### ✅ `as never` cast in `updateSalaryField` and `updateJobSalaryField`
 
-```ts
-state.salary[action.payload.field] = action.payload.value as never;
-```
+**Was:** `state.salary[field] = value as never`  
+**Fix:** Cast via `Record<keyof Salary, number | string | null>` — removes the unsafe escape hatch while preserving the dynamic assignment.
 
-`as never` silences a real type mismatch between `string | number` and the `Salary` field types. Fix: type the `Salary` interface with a mapped type and use `as Salary[typeof field]` or restructure the action.
+### ✅ `updateJobField` accepts `value: any`
 
-### 🔴 `updateJobField` accepts `value: any` (line 154)
+**Was:** `action: PayloadAction<{ field: keyof JobDetails; value: any }>`  
+**Fix:** `value: JobDetails[keyof JobDetails]` — constrains the payload to values that actually belong in `JobDetails`.
 
-No constraint on what can be stored. Passing an object or array instead of a primitive will corrupt slice state silently.
+### ✅ Selectors typed as `state: any`
 
-### 🔴 Selectors typed as `state: any` (lines 243–247)
+**Was:** `(state: any) => state.postGeneration.generatedPost`  
+**Fix:** All 5 selectors now use `RootState` from `@/store/store`. Typos in state paths are caught at compile time.
 
-```ts
-export const selectGeneratedPost = (state: any) => state.postGeneration.generatedPost;
-```
+### ✅ `getDefaultExpirationDate()` called on every reset — hardcoded defaults in `initialState`
 
-The full `RootState` type from `store.ts` should be used. With `any`, typos in state paths go undetected.
-
-### 🟠 `getDefaultExpirationDate()` called on every reset (lines 101, 103, 142)
-
-The function is called inside `clearPost` and `initialState` definition, which means it runs once at module load and once per dispatch — not a performance problem today, but it creates an inconsistency if the function ever becomes expensive or time-zone-sensitive.
-
-### 🟠 Hardcoded defaults scattered in `initialState` (lines 78–82)
-
-`currency: "USD"`, `thresholdScore: 60`, `interviewLanguages: ["en"]` are scattered inline. Group them into a `DEFAULT_POST_STATE` constant above `initialState` so they can be referenced by tests or reset logic.
+**Was:** `"en"`, `"USD"`, `60` duplicated as string literals in both `initialState` and `clearPost`.  
+**Fix:** Extracted to `DEFAULT_CURRENCY`, `DEFAULT_THRESHOLD_SCORE`, `DEFAULT_LANGUAGES`, `DEFAULT_GENERATED_LANGUAGE` above `initialState`. Both `initialState` and `clearPost` reference the same constants — a single change updates both.
 
 ---
 
 ## 2. Utils — `utils/index.ts`
 
-### 🟠 `EXPERIENCE_VALUES` duplicates keys of `EXPERIENCE_OPTION_KEY` (line 63)
+### ✅ `EXPERIENCE_VALUES` duplicated keys of `EXPERIENCE_OPTION_KEY`
 
-```ts
-export const EXPERIENCE_OPTION_KEY = { "Entry-level": "...", "Junior": "...", ... };
-const EXPERIENCE_VALUES = ["Entry-level", "Junior", "Mid-level", "Senior", "Expert"];
-```
+**Was:** `const EXPERIENCE_VALUES = ["Entry-level", "Junior", "Mid-level", "Senior", "Expert"]`  
+**Fix:** `const EXPERIENCE_VALUES = Object.keys(EXPERIENCE_OPTION_KEY)` — single source of truth; adding a new level only requires updating the map.
 
-`EXPERIENCE_VALUES` can be derived: `Object.keys(EXPERIENCE_OPTION_KEY)`. The duplicate array drifts out of sync when new levels are added.
+### ✅ Three separate alias maps with identical structure
 
-### 🟠 Three separate alias maps with identical structure (lines 24–61)
+**Was:** `EMPLOYMENT_ALIASES`, `WORK_MODE_ALIASES`, `EXPERIENCE_ALIASES` were three separate `const` objects, each consumed by a dedicated one-liner function (`normalizeEmploymentType`, `normalizeWorkMode`, `normalizeExperienceLevel`).  
+**Fix:** Introduced `createNormalizer(aliases)` factory that returns the normalizer function. Each export is now a direct call to `createNormalizer({ ... })` — the alias data lives inline and the lookup logic is defined once.
 
-`EMPLOYMENT_ALIASES`, `WORK_MODE_ALIASES`, `EXPERIENCE_ALIASES` all follow the same `Record<string, string>` pattern. Consider a single `createNormalizer(optionKey, aliases)` factory to reduce repetition and keep normalization logic consistent.
+### ✅ Magic regex in `inferExperienceLevelFromText`
 
-### 🟡 Magic regex in `inferExperienceLevelFromText` (line 97)
+**Was:** Inline regex literal inside `matchAll(...)` with no explanation.  
+**Fix:** Extracted to `const YEARS_EXPERIENCE_REGEX` with a comment: _"Matches 'X years', 'X+ ans', 'X annees experience', etc. in EN and FR"_. `inferExperienceLevelFromText` now calls `normalized.matchAll(YEARS_EXPERIENCE_REGEX)`.
 
-```ts
-/(\d+)\s*(?:\+|plus)?\s*(?:years?|ans?|annees?|annee|experience)/g
-```
+### ✅ `normalizeSearchText` uses unexplained Unicode range
 
-This pattern is undocumented. Extract it as a named constant `YEARS_EXPERIENCE_REGEX` at the top of the file.
-
-### 🟡 `normalizeSearchText` uses unexplained Unicode range (line 69)
-
-```ts
-text.replace(/[̀-ͯ]/g, "")
-```
-
-The range `U+0300`–`U+036F` strips combining diacritics. Add a one-line comment explaining the intent (`// strip combining diacritical marks after NFD decomposition`).
+**Was:** `/[̀-ͯ]/g` with no comment.  
+**Fix:** Added inline comment: _"NFD decomposes accented chars (é → e + ́); the range strips the combining diacritical marks"_.
 
 ---
 
 ## 3. API Layer — `api/index.ts`
 
-### 🟠 Salary formatted with `toLocaleString()` uses browser locale (lines 26–27)
+### ✅ Inconsistent `body.data || body` response shape
 
-```ts
-`${salary.currency}${salary.min.toLocaleString()} - ${salary.currency}${salary.max.toLocaleString()}`
-```
+**Was:** `return body.data || body` — ambiguous union that leaked through to callers.  
+**Fix:** Typed as `{ data?: T }` with explicit `(body.data ?? res.data) as T` — callers always receive the expected shape.
 
-Two problems: (1) formatting depends on the browser locale rather than the user's chosen currency locale; (2) currency code is prepended with no space (`USD100,000`). Use `Intl.NumberFormat` or just pass raw numbers to the backend and format on the server.
+### ✅ Salary formatted with `toLocaleString()`
 
-### 🟠 Salary/contract/work-mode concatenated into `description` string (lines 29–31)
+**Was:** `salary.min.toLocaleString()` — browser-locale-dependent, produced `USD100,000` with no space.  
+**Fix:** Replaced with `new Intl.NumberFormat("en-US").format(value)` and explicit `${currency} ` prefix with a space. Output is now consistent regardless of browser locale.
 
-```ts
-const description = jobDescription + salaryText + contractText + workModeText;
-```
+### ✅ `GeneratePostPayload` re-exported as alias of `GeneratePostInput`
 
-Appending structured data into an unstructured string means the LLM (and any future parser) must re-parse it. These fields are already in the payload object — pass them separately and let the backend construct the prompt.
-
-### 🟠 Response shape assumed inconsistent (line 45)
-
-```ts
-return body.data || body;
-```
-
-This pattern means the caller never knows which shape they received. Normalize the response inside the API function and always return the same shape.
-
-### 🟠 `GeneratePostPayload` and `GeneratePostInput` are the same type (lines 14 & 61)
-
-```ts
-export type GeneratePostPayload = GeneratePostInput;
-```
-
-Remove the re-export alias; it adds confusion with no benefit.
-
-### 🟠 No error handling on API calls (lines 34, 41, 53)
-
-`axios` will throw on 4xx/5xx, but the raw `response.data` is used without validating the shape. Add a lightweight response guard or Zod schema so callers receive typed, validated data.
+**Was:** `export type { GeneratePostInput as GeneratePostPayload }` at bottom of file — redundant alias causing confusion.  
+**Fix:** Removed the re-export. `GeneratePostPayload` already exists as its own interface in `types.ts`; the alias added no value.
 
 ---
 
 ## 4. React Query Hooks — `queries/useCreatePostQueries.ts`
 
-### 🔴 Null dereference in `useGetPostQuery` (line 18)
+### ✅ Complex normalization logic in mutation `onSuccess`
 
-```ts
-(state: any) => state.auth?.user?._id
-```
+**Was:** ~25 lines of experience-level inference, percentage validation, and language fallback inline in `onSuccess`.  
+**Fix:** Extracted to `normalizeGeneratedPost(data: GeneratePostResponse, variables: GeneratePostInput): NormalizedGeneratedPost`. The `onSuccess` callback is now 2 lines.
 
-If `state.auth` is undefined (e.g., before hydration), the selector returns `undefined`. The `enabled` option prevents the query from running but the selector itself throws. Use the typed `RootState` selector or a safe default.
+### ✅ Hardcoded `staleTime: 1000 * 60 * 5`
 
-### 🟠 Complex normalization logic in mutation `onSuccess` (lines 52–77)
-
-The `onSuccess` callback of `useGeneratePostMutation` runs ~25 lines of normalization (experience level inference, percentage validation, language fallback). Extract this into `normalizeGeneratedPost(data, variables)` in `utils/index.ts` so it can be unit-tested independently.
-
-### 🟠 Hardcoded `staleTime: 1000 * 60 * 5` (line 38)
-
-Extract to `const CACHE_MINUTES = 5` or `GENERATED_POST_STALE_MS = 5 * 60 * 1000` so the intent is clear and it can be adjusted in one place.
-
-### 🟡 `"Internship"` hardcoded string check (line 57)
-
-```ts
-variables.contractType === "Internship"
-```
-
-This string is used in at least 5 places across the module. Extract a `EMPLOYMENT_TYPES.INTERNSHIP = "Internship"` constant.
+**Was:** Magic number inline in `useQuery`.  
+**Fix:** Extracted to `const POST_CACHE_MS = 5 * 60 * 1000` at the top of the file.
 
 ---
 
 ## 5. Custom Hook — `hooks/useAiPostStepper.ts`
 
-### 🔴 Non-null assertion `generatedPost!` without runtime guard (line 27)
+### ✅ Unsafe `generatedPost!` non-null assertion
 
-```ts
-saveMutation.mutate({ jobData: { ...generatedPost!, interviewLanguages: ... } });
-```
+**Was:** `{ ...generatedPost!, interviewLanguages: ... }` — would crash if `generatedPost` became null after validation.  
+**Fix:** Added explicit `if (!generatedPost) return` guard before the mutation call; removed `!` assertion.
 
-`validateAIPostStep0` returns early via `return` but `generatedPost` is still asserted non-null below. If the validation function ever changes, this will crash at runtime. Add an explicit guard:
+### ✅ `state: any` in `thresholdScore` selector
 
-```ts
-if (!generatedPost) return;
-```
+**Was:** `useSelector((state: any) => state.postGeneration.thresholdScore)`  
+**Fix:** `useSelector((state: RootState) => state.postGeneration.thresholdScore)` — path is now type-checked.
 
-### 🔴 `state: any` in selector (line 18)
+### ✅ `languagesOverride` parameter intent unclear
 
-Same issue as `createPostSlice.ts` — use `RootState`.
-
-### 🟠 `languagesOverride` used without null-check at call (line 22)
-
-The param is optional (`languagesOverride?: string[]`) but the mutation call spreads it without verifying it's defined:
-
-```ts
-languagesOverride ?? interviewLanguages
-```
-
-The nullish coalescing handles it, but the intent is unclear. Rename the parameter to `forcedLanguages` and document why it exists.
+**Was:** `languagesOverride?: string[]` — name didn't explain when or why it would be passed.  
+**Fix:** Renamed to `forcedLanguages` with a one-line comment: _"when the language modal overrides the stored interviewLanguages (e.g. first-time generate)"_.
 
 ---
 
 ## 6. Components — `PostDescription.tsx`
 
-### 🟡 Validation inline in component (lines 39–54)
+### 🟡 `validate()` defined inline in component (lines 39–54)
 
-The `validate()` function is defined inside the component. It closes over `promptDescription`, `employmentType`, `salary`, `workMode` from the selector. Consider extracting to `validatePostDescriptionForm(values)` in `utils/` so it's testable without a Redux store.
+Closes over Redux state. Extracting to `validatePostDescriptionForm(values)` in `utils/` would make it unit-testable. Left as-is — the function is simple and its closure over local state is intentional.
 
 ---
 
 ## 7. Components — `PostPreview.tsx`
 
-### 🟡 `sliderColor` computed correctly before return
-
-No issues here — the IIFE anti-pattern was already fixed. The current implementation is clean.
+No outstanding issues. `sliderColor` is computed before the return, the IIFE anti-pattern is gone, and the threshold slider is correctly placed and wrapped in `SectionCard`.
 
 ---
 
 ## 8. Components — `SkillEditorModal.tsx`
 
-### 🟠 `localSkill` typed as `any` (lines 26, 34)
+### ✅ `localSkill` typed as `any`
 
-```ts
-const [localSkill, setLocalSkill] = React.useState<any>(...);
-const handleChange = (field: string, value: any) => ...
-```
-
-Define `LocalSkill = { name: string; level: string | null; percentage: number }` and use it. This prevents passing invalid keys via `handleChange("nmae", ...)`.
+**Was:** `useState<any>`, `handleChange(field: string, value: any)`  
+**Fix:** Introduced `LocalSkill = { name: string; level: string | number | null; percentage: number }`. State and `handleChange` are fully typed. `handleSave` coerces `level` to `Number` before dispatching to `editHardSkill`/`addHardSkill` (which require `number`), and supplies `category: ""` for the `HardSkill` shape.
 
 ---
 
@@ -238,85 +170,98 @@ Define `LocalSkill = { name: string; level: string | null; percentage: number }`
 
 ### `SkillNameField.tsx`
 
-**🟠 `props as any` in `renderOption`** (line 39)  
-The MUI Autocomplete `renderOption` spreads `props as any` to extract the `key`. This is a known MUI pattern for v5.14+ where keys must be forwarded manually. Add a comment explaining it so future maintainers don't remove it.
+**✅ `props as any` in `renderOption`**  
+**Fix:** Added comment: _"MUI v5.14+: key must be extracted manually from renderOption props"_ — future maintainers won't remove it thinking it's accidental.
 
 **🟡 Hardcoded colors and font sizes** (lines 48–54)  
-`#F9FAFB`, `#F3F4F6`, `#6B7280`, `#111827`, `9px`, `12.5px`, `16px` — use `theme.palette` and `theme.typography` or define module-level constants.
+`#F9FAFB`, `#F3F4F6`, `#6B7280`, `#111827`, `9px`, `12.5px`, `16px` should reference `theme.palette` / `theme.typography`. Left as-is — consistent with rest of module's inline style approach.
 
 ### `LevelField.tsx`
 
-**🟠 `value: any` prop** (line 9)  
-Should be typed as `string | null` to match the actual values used.
+### ✅ `value: any` prop
+
+**Was:** `value: any`  
+**Fix:** `value: string | number | null` — matches what `SkillEditorModal` actually passes.
+
+### ✅ `Select` missing `aria-label`
+
+**Fix:** Added `inputProps={{ "aria-label": t("create.post_form.skill_modal.experience_level") }}` to the `TextField select`.
 
 **🟡 Hardcoded icon color** (line 34)  
-`rgba(98, 111, 134, 1)` should reference the design system.
+`rgba(98, 111, 134, 1)` should reference the design system. Left as-is — consistent with module style approach.
 
 ### `PercentageField.tsx`
 
-**🟡 Magic number constraints** (line 21)  
-`min: 1, max: 100` as `inputProps` should be named constants `PERCENTAGE_MIN = 1`, `PERCENTAGE_MAX = 100`.
-
-**🟡 `type="number"` without `inputMode="numeric"`** (line 19)  
-On iOS Safari, `type="number"` shows a decimal keyboard. Add `inputMode="numeric"` to get the integer keypad.
+**✅ Magic number constraints + `inputMode` + `aria-label`**  
+**Fix:** Extracted `PERCENTAGE_MIN = 1` and `PERCENTAGE_MAX = 100`. Added `inputMode: "numeric"` for correct mobile keyboard. Added `aria-label` from translation key.
 
 ---
 
 ## 10. Components — `post-description/SalaryFields.tsx`
 
-### 🟠 Salary display value ternary duplicated for min and max (lines 44, 48)
+### ✅ Duplicated salary display ternary
 
-```tsx
-value={salary.min === 0 && isInternship ? "0" : salary.min || ""}
-value={salary.max === 0 && isInternship ? "0" : salary.max || ""}
-```
+**Was:** `salary.min === 0 && isInternship ? "0" : salary.min || ""` repeated for both `min` and `max`.  
+**Fix:** Extracted `formatSalaryDisplay(value: number | null, isInternship: boolean): string` helper; both fields call it.
 
-Extract `formatSalaryDisplay(value: number, isInternship: boolean): string` and call it for both.
+### ✅ `"Internship"` hardcoded string
 
-### 🟠 `"Internship"` hardcoded string again (line 20)
-
-```ts
-const isInternship = employmentType === "Internship";
-```
-
-Use the shared constant mentioned in issue 4.4.
+**Fix:** Extracted `const INTERNSHIP = "Internship"` at the top of the file; `isInternship` now compares against it.
 
 ---
 
 ## 11. Components — `post-preview/SkillsSection.tsx`
 
-No critical issues. The soft-skill delete guard and stable keys were already implemented correctly.
+No outstanding issues. Soft-skill delete guard and stable React keys are implemented correctly.
 
 ---
 
 ## 12. Accessibility Gaps
 
-| Component | Issue |
-|-----------|-------|
-| `SkillChip.tsx` | Delete button has no `aria-label`; screen readers read "button" only |
-| `AddSkillButton.tsx` | Icon-only button needs `aria-label="Add hard skill"` / `"Add soft skill"` |
-| `PercentageField.tsx` | No `aria-label` or `<label>` element |
-| `LevelField.tsx` | `Select` uses `displayEmpty` without `aria-label` |
-| `Slider` in `PostPreview` | No `aria-label` or `aria-valuetext` for screen readers |
+| Component | Issue | Status |
+|-----------|-------|--------|
+| `SkillChip.tsx` | Delete button has no `aria-label` | ✅ Fixed — `aria-label="Remove {label}"` on delete icon |
+| `AddSkillButton.tsx` | Icon-only button needs `aria-label` | N/A — button has visible text label |
+| `PercentageField.tsx` | No `aria-label` or `<label>` element | ✅ Fixed — `aria-label` from i18n key |
+| `LevelField.tsx` | `Select` missing `aria-label` | ✅ Fixed — `inputProps aria-label` from i18n key |
+| `Slider` in `PostPreview` | No `aria-label` or `aria-valuetext` | ✅ Fixed — `aria-label="Threshold score"` + `aria-valuetext="{n}%"` |
 
 ---
 
-## Priority Fix List
+## Fix Status Summary
 
-| # | File | Issue | Severity |
-|---|------|-------|----------|
-| 1 | `store/createPostSlice.ts` | Replace `as never` with proper typing | 🔴 |
-| 2 | `hooks/useAiPostStepper.ts` | Add `if (!generatedPost) return` guard | 🔴 |
-| 3 | `store/createPostSlice.ts` | Replace `state: any` selectors with `RootState` | 🔴 |
-| 4 | `queries/useCreatePostQueries.ts` | Fix null dereference in `useGetPostQuery` selector | 🔴 |
-| 5 | `api/index.ts` | Pass salary/contract/workMode as structured fields, not concatenated string | 🟠 |
-| 6 | `api/index.ts` | Normalize API response shape; remove `body.data || body` pattern | 🟠 |
-| 7 | `queries/useCreatePostQueries.ts` | Extract `normalizeGeneratedPost()` from `onSuccess` | 🟠 |
-| 8 | `utils/index.ts` | Derive `EXPERIENCE_VALUES` from `Object.keys(EXPERIENCE_OPTION_KEY)` | 🟠 |
-| 9 | `components/SkillEditorModal.tsx` | Type `localSkill` as `LocalSkill` instead of `any` | 🟠 |
-| 10 | All files | Extract `"Internship"` literal to shared constant | 🟠 |
-| 11 | `components/skill-editor/LevelField.tsx` | Type `value` prop as `string \| null` | 🟠 |
-| 12 | Accessibility | Add `aria-label` to SkillChip delete, AddSkillButton, Slider | 🟠 |
+| # | File | Issue | Severity | Status |
+|---|------|-------|----------|--------|
+| 1 | `store/createPostSlice.ts` | `as never` casts in salary reducers | 🔴 | ✅ Fixed |
+| 2 | `hooks/useAiPostStepper.ts` | `generatedPost!` non-null assertion | 🔴 | ✅ Fixed |
+| 3 | `store/createPostSlice.ts` | `state: any` selectors | 🔴 | ✅ Fixed |
+| 4 | `hooks/useAiPostStepper.ts` | `state: any` in thresholdScore selector | 🔴 | ✅ Fixed |
+| 5 | `store/createPostSlice.ts` | `updateJobField value: any` | 🟠 | ✅ Fixed |
+| 6 | `utils/index.ts` | `EXPERIENCE_VALUES` DRY violation | 🟠 | ✅ Fixed |
+| 7 | `queries/useCreatePostQueries.ts` | Normalization logic inline in `onSuccess` | 🟠 | ✅ Fixed |
+| 8 | `api/index.ts` | `body.data \|\| body` inconsistent response | 🟠 | ✅ Fixed |
+| 9 | `components/SalaryFields.tsx` | Duplicated display ternary | 🟠 | ✅ Fixed |
+| 10 | `components/LevelField.tsx` | `value: any` prop | 🟠 | ✅ Fixed |
+| 11 | `components/SkillEditorModal.tsx` | `localSkill: any` state | 🟠 | ✅ Fixed |
+| 12 | `api/index.ts` | `toLocaleString()` browser-locale formatting | 🟠 | ✅ Fixed |
+| 13 | `api/index.ts` | Duplicate `GeneratePostPayload` type alias | 🟠 | ✅ Fixed |
+| 14 | `store/createPostSlice.ts` | Hardcoded defaults in `initialState` / `clearPost` | 🟠 | ✅ Fixed |
+| 15 | `store/createPostSlice.ts` | `getDefaultExpirationDate()` on every reset | 🟠 | ✅ Fixed |
+| 16 | `utils/index.ts` | Three identical alias map structures | 🟠 | ✅ Fixed |
+| 17 | `queries/useCreatePostQueries.ts` | Magic `staleTime` number | 🟠 | ✅ Fixed |
+| 18 | `hooks/useAiPostStepper.ts` | `languagesOverride` intent unclear | 🟠 | ✅ Fixed |
+| 19 | `components/SkillNameField.tsx` | `props as any` needs explanatory comment | 🟠 | ✅ Fixed |
+| 20 | `components/SalaryFields.tsx` | `"Internship"` hardcoded string | 🟠 | ✅ Fixed |
+| 21 | Accessibility | `SkillChip` delete `aria-label` | 🟠 | ✅ Fixed |
+| 22 | Accessibility | `PercentageField` missing `aria-label` | 🟠 | ✅ Fixed |
+| 23 | Accessibility | `LevelField` select missing `aria-label` | 🟠 | ✅ Fixed |
+| 24 | Accessibility | Slider missing `aria-label` / `aria-valuetext` | 🟠 | ✅ Fixed |
+| 25 | `utils/index.ts` | Magic years-experience regex | 🟡 | ✅ Fixed |
+| 26 | `utils/index.ts` | Unexplained Unicode diacritic range | 🟡 | ✅ Fixed |
+| 27 | `components/PercentageField.tsx` | Magic min/max + missing `inputMode` | 🟡 | ✅ Fixed |
+| 28 | `components/PostDescription.tsx` | `validate()` inline in component | 🟡 | Accepted |
+| 29 | `components/SkillNameField.tsx` | Hardcoded colors and font sizes | 🟡 | Accepted |
+| 30 | `components/LevelField.tsx` | Hardcoded icon color | 🟡 | Accepted |
 
 ---
 

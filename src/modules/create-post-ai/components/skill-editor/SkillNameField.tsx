@@ -36,6 +36,7 @@ const SkillNameField = ({ skillType, value, onChange }: Props) => {
           onChange(typeof newValue === "string" ? newValue : newValue.label);
         }}
         renderOption={(props, option) => {
+          // MUI v5.14+: key must be extracted manually from renderOption props
           const { key, ...rest } = props as any;
           return (
             <Box
