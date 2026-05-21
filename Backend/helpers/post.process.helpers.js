@@ -32,13 +32,27 @@ const postProcessJobDetails = (modelResponse, rawDescription) => {
     }
   }
 
-  // ─── RULE 3 — SALARY OVERRIDE ─────────────────────────────────────────────
-  const hasSalary =
-    /\d+[\s,.]?\d*\s*(USD|EUR|TND|DT|dollar|euro)/i.test(rawDescription);
-  if (!hasSalary) {
-    details.salary = { min: 0, max: 0, currency: "USD" };
+// ─── RULE 3 — SALARY OVERRIDE ─────────────────────────────────────────────
+if (isInternship) {
+  // Internship → always 0/0
+  details.salary = { min: 0, max: 0, currency: "USD" };
+} else {
+  // Extract salary from raw description if present
+  const salaryMatch = rawDescription.match(
+    /(?:USD|EUR|TND|DT|\$|€)?\s*(\d+[\s,.]?\d*)\s*[-–to]+\s*(?:USD|EUR|TND|DT|\$|€)?\s*(\d+[\s,.]?\d*)\s*(USD|EUR|TND|DT)?/i
+  );
+  if (salaryMatch) {
+    const min = parseFloat(salaryMatch[1].replace(/[,\s]/g, ""));
+    const max = parseFloat(salaryMatch[2].replace(/[,\s]/g, ""));
+    const currency = (salaryMatch[3] || "USD").toUpperCase();
+    details.salary = { min, max, currency };
+  } else {
+    // No salary found → keep model value or 0/0
+    if (!details.salary || details.salary.min == null) {
+      details.salary = { min: 0, max: 0, currency: "USD" };
+    }
   }
-
+}
   // ─── RULE 4 — SKILL PERCENTAGE PROPORTIONAL TO YEARS + CAP 55% ───────────
   const skills =
     modelResponse.skillAnalysis?.requiredSkills ||
