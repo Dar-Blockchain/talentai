@@ -14,6 +14,7 @@ export const WORK_MODE_OPTION_KEY: Record<string, string> = {
 };
 
 export const EXPERIENCE_OPTION_KEY: Record<string, string> = {
+  "Entry-level": "experience_entry_level",
   Junior: "experience_junior",
   "Mid-level": "experience_mid_level",
   Senior: "experience_senior",

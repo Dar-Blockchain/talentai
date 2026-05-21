@@ -53,7 +53,7 @@ const SkillsSection = ({ hardSkills, softSkills, onEdit, onAdd }: Props) => {
             <SkillChip
               key={index}
               label={`${skill.name} (${softSkillLevelLabel(t, Number(skill.level))}) · ${skill.percentage}%`}
-              onDelete={() => dispatch(deleteSoftSkill(index))}
+              onDelete={softSkills.length > 1 ? () => dispatch(deleteSoftSkill(index)) : undefined}
               onClick={() => onEdit({ name: skill.name, level: skill.level, percentage: skill.percentage }, index, "soft")}
             />
           ))}
