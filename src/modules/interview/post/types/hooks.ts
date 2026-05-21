@@ -86,6 +86,7 @@ export interface UseInterviewConfigReturn {
   interviewConfig: InterviewConfig;
   setInterviewConfig: (config: InterviewConfig) => void;
   jobData: JobPost | null;
+  isJobLoading: boolean;
 }
 
 export interface UseInterviewConfigOptions {

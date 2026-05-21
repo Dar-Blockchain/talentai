@@ -19,7 +19,7 @@ export const useInterviewConfig = ({ showNotification }: UseInterviewConfigOptio
   const [interviewConfig, setInterviewConfig] = useState<InterviewConfig>(DEFAULT_INTERVIEW_CONFIG);
 
   // ── 1. Fetch job post ────────────────────────────────────────────────────────
-  const { data: jobData } = useJobPostQuery(jobId);
+  const { data: jobData, isLoading: isJobLoading } = useJobPostQuery(jobId);
 
   // ── 2. Fetch interview config (requires auth token) ──────────────────────────
   const { data: configData, error: configError } = useInterviewConfigQuery(
@@ -76,5 +76,6 @@ export const useInterviewConfig = ({ showNotification }: UseInterviewConfigOptio
     interviewConfig,
     setInterviewConfig,
     jobData: jobData ?? null,
+    isJobLoading: !!jobId && isJobLoading,
   };
 };

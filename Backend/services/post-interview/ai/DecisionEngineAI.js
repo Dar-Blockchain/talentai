@@ -87,6 +87,26 @@ class DecisionEngineAI {
         }
       }
 
+      // ── Rule 3: No answer given (skip button OR verbal "I don't know") ────
+      // answeredQuestion: false is set by both the [SKIPPED] short-circuit and
+      // the combinedAnalysis LLM when the candidate admits they cannot answer.
+      const isNonAnswer = candidateResponse === '[SKIPPED]'
+        || allAnalyses?.quality?.answeredQuestion === false;
+      if (isNonAnswer && currentArea) {
+        const nextArea = findLeastAskedArea(session.coverage.areas, currentArea);
+        const reason   = candidateResponse === '[SKIPPED]' ? 'skipped' : 'could not answer';
+        console.log(`⏭️ [Non-Answer Rule] Candidate ${reason} "${currentArea}" — forcing move to "${nextArea}"`);
+        return {
+          decision: 'explore_new_area',
+          targetArea: nextArea,
+          reasoning: `Candidate ${reason} the question on "${currentArea}". Moving to "${nextArea}" — do NOT repeat this topic.`,
+          strategy: 'Candidate indicated they cannot answer — respect it, move to a fresh area immediately',
+          confidence: 99,
+          expectedDuration: '2-3 minutes',
+          forcedByNonAnswer: true,
+        };
+      }
+
       // ── LLM decision (no hard rule fired) ───────────────────────────────
       const userPrompt = `SESSION DATA:
 ${JSON.stringify({

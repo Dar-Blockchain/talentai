@@ -7,6 +7,7 @@ import { useInterviewConfig } from "../hooks/useInterviewConfig";
 import { useInterviewSession } from "../hooks/useInterviewSession";
 import InterviewScreen from "./session/InterviewScreen";
 import JobPreviewPanel from "./job-preview/JobInterviewPanel";
+import InterviewLoadingScreen from "./layout/InterviewLoadingScreen";
 import LoadingState from "@/components/ui/LoadingState";
 import { useTranslation } from "react-i18next";
 
@@ -28,7 +29,7 @@ export default function InterviewFlow() {
   const { notification, showNotification, hideNotification } =
     useNotification();
 
-  const { interviewConfig, setInterviewConfig, jobData } = useInterviewConfig({
+  const { interviewConfig, setInterviewConfig, jobData, isJobLoading } = useInterviewConfig({
     showNotification,
   });
 
@@ -56,7 +57,12 @@ export default function InterviewFlow() {
   if (!router.isReady) return <LoadingState message={t("loading")} />;
 
   if (hasJobId && step !== "interview") {
-    if (!jobData) return null;
+    if (!jobData) return (
+      <InterviewLoadingScreen
+        title="Loading interview"
+        subtitle="Fetching job details, please wait a moment."
+      />
+    );
     return (
       <JobPreviewPanel
         jobData={jobData}

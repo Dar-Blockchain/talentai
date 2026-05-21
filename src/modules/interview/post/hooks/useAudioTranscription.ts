@@ -16,7 +16,12 @@ export const useAudioTranscription = ({
   // ── Recording ────────────────────────────────────────────────────────────────
   const [isRecording, setIsRecording]               = useState(false);
   const [isMuted]                                   = useState(false);
-  const [currentTranscript, setCurrentTranscript]   = useState('');
+  const [currentTranscript, _setCurrentTranscript]  = useState('');
+  const currentTranscriptRef = useRef('');
+  const setCurrentTranscript = useCallback((val: string) => {
+    currentTranscriptRef.current = val;
+    _setCurrentTranscript(val);
+  }, []);
   const [accumulatedTranscript, setAccumulatedTranscript] = useState('');
   const [isVoiceActive, setIsVoiceActive]           = useState(false);
   const [isConnecting, setIsConnecting]             = useState(false);
@@ -185,7 +190,12 @@ export const useAudioTranscription = ({
   // ── Send accumulated turns to backend ────────────────────────────────────────
 
   const sendAccumulatedAnswer = useCallback(() => {
-    const turns = accumulatedTurnsRef.current;
+    // Use accumulated turns; fall back to currentTranscript (e.g. short "I don't know"
+    // that passed partial transcription but whose end_of_turn never fired in time).
+    let turns = accumulatedTurnsRef.current;
+    if (turns.length === 0 && currentTranscriptRef.current.trim()) {
+      turns = [currentTranscriptRef.current.trim()];
+    }
     if (turns.length === 0) return;
 
     const completeAnswer = turns.join(' ');
