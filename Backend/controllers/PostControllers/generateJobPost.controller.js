@@ -23,6 +23,7 @@ module.exports.generateJobPost = async (req, res) => {
 
     const { jobDetails, skillAnalysis, ...rest } = result;
     res.json({
+      success: true,
       ...rest,
       ...(jobDetails ?? {}),
       requiredSkills: skillAnalysis?.requiredSkills ?? [],

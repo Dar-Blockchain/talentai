@@ -6,6 +6,8 @@ const {
   flattenPost,
 } = require("../../helpers/post.validation.helpers");
 const Profile = require("../../models/Profile.model");
+const Subscription = require("../../models/Subscription.model");
+const PlanLimits = require("../../models/PlanLimits.model");
 const { notifyMatchingCandidates } = require("../../services/jobMatch.service");
 
 // Centralized error handler
@@ -25,31 +27,37 @@ exports.createPost = async (req, res) => {
     const token = req.headers.authorization?.replace("Bearer ", "");
     const userId = req.user._id;
 
-    // ========== 2. AUTHORIZATION & PROFILE CHECK ==========
-    const userProfile = await Profile.findOne({ userId }).populate(
-      "activeSubscription"
-    );
+    // Validate expiration date before any DB calls (sync, free)
+    let expirationDate;
+    if (parsedData.expirationDate) {
+      expirationDate = new Date(parsedData.expirationDate);
+      if (expirationDate <= new Date()) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid expiration date",
+          message: "Expiration date must be in the future",
+        });
+      }
+    }
+
+    // ========== 2. PROFILE CHECK ==========
+    const userProfile = await Profile.findOne({ userId })
+      .populate("activeSubscription")
+      .lean();
     if (!userProfile) {
-      return res.status(404).json({
-        success: false,
-        error: "User profile not found",
-      });
+      return res.status(404).json({ success: false, error: "User profile not found" });
     }
 
     // ========== 3. RESOURCE LIMIT CHECK ==========
     if (userProfile.type === "Company") {
       try {
-        // Auto-assign Free plan if company has no subscription yet
-        const existingSubCount = await require("../../models/Subscription.model").countDocuments({
+        const existingSubCount = await Subscription.countDocuments({
           companyProfileId: userProfile._id,
           status: "active",
           endDate: { $gt: new Date() },
         });
 
         if (existingSubCount === 0) {
-          const PlanLimits = require("../../models/PlanLimits.model");
-          const Subscription = require("../../models/Subscription.model");
-          const Profile = require("../../models/Profile.model");
           const freePlan = await PlanLimits.findOne({ name: "Trial", isActive: true });
           if (freePlan) {
             const endDate = new Date();
@@ -100,24 +108,8 @@ exports.createPost = async (req, res) => {
       ...parsedData,
       user: userId,
       createdBy: req.actualUser?._id || req.user._id,
+      ...(expirationDate && { expirationDate }),
     };
-
-    // Handle custom expiration date (optional)
-    if (parsedData.expirationDate) {
-      const expirationDate = new Date(parsedData.expirationDate);
-      const now = new Date();
-
-      // Validate expiration date is in the future
-      if (expirationDate <= now) {
-        return res.status(400).json({
-          success: false,
-          error: "Invalid expiration date",
-          message: "Expiration date must be in the future",
-        });
-      }
-
-      postData.expirationDate = expirationDate;
-    }
 
     const post = await postService.createPostWithSideEffects(
       postData,
@@ -125,7 +117,7 @@ exports.createPost = async (req, res) => {
       userProfile,
     );
 
-    // Notify matching candidates when post is published immediately
+    // Notify matching candidates when post is published immediately (fire-and-forget)
     if (post?.status === POST_STATUS.OPEN) {
       notifyMatchingCandidates(String(post._id)).catch(err =>
         console.error("Job match email error:", err.message)

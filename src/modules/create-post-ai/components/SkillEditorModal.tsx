@@ -36,7 +36,7 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
   };
 
   const isSaveDisabled =
-    !localSkill.name?.trim() || !localSkill.level || localSkill.percentage <= 0;
+    !localSkill.name?.trim() || !localSkill.level || localSkill.percentage == null;
 
   const handleSave = () => {
     if (onSave) {

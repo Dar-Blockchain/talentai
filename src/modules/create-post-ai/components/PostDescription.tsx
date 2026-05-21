@@ -13,14 +13,20 @@ import RoleFields from "./post-description/RoleFields";
 import SalaryFields from "./post-description/SalaryFields";
 import GenerateButton from "./post-description/GenerateButton";
 import { useGeneratePostMutation } from "../queries/useCreatePostQueries";
+import { useToast } from "@/hooks/useToast";
 
-const PostDescription = () => {
+interface PostDescriptionProps {
+  onGeneratingChange?: (generating: boolean) => void;
+}
+
+const PostDescription = ({ onGeneratingChange }: PostDescriptionProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const { promptDescription, salary, workMode, employmentType, expirationDate, interviewLanguages } = useSelector(
     (state: any) => state.postGeneration
   );
   const { t } = useTranslation("posts");
 
+  const { showToast } = useToast();
   const generateMutation = useGeneratePostMutation();
   const loading = generateMutation.isPending;
 
@@ -44,7 +50,17 @@ const PostDescription = () => {
   };
 
   const handleConfirmLanguage = (language: string) => {
-    generateMutation.mutate({ jobDescription: promptDescription, salary, workMode, contractType: employmentType, language, interviewLanguages });
+    onGeneratingChange?.(true);
+    generateMutation.mutate(
+      { jobDescription: promptDescription, salary, workMode, contractType: employmentType, language, interviewLanguages },
+      {
+        onSettled: () => onGeneratingChange?.(false),
+        onError: (err: unknown) => {
+          const message = err instanceof Error ? err.message : "Failed to generate job post. Please try again.";
+          showToast({ message, severity: "error" });
+        },
+      }
+    );
     setLangModalOpen(false);
   };
 

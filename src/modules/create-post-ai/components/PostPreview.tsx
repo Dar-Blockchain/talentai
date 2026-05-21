@@ -11,16 +11,20 @@ import DetailsSection from "./post-preview/DetailsSection";
 import SkillsSection from "./post-preview/SkillsSection";
 import ContentSection from "./post-preview/ContentSection";
 
-const PostPreview = () => {
+interface PostPreviewProps {
+  generating?: boolean;
+}
+
+const PostPreview = ({ generating = false }: PostPreviewProps) => {
   const { t, i18n } = useTranslation("posts");
-  const { generatedPost, generatedLanguage, loading } = useSelector((state: any) => state.postGeneration);
+  const { generatedPost, generatedLanguage } = useSelector((state: any) => state.postGeneration);
 
   const [open, setOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [selectedSkill, setSelectedSkill] = useState<any | null>(null);
   const [selectedType, setSelectedType] = useState<"soft" | "hard">("hard");
 
-  if (loading) return <LoadingState />;
+  if (generating) return <LoadingState />;
   if (!generatedPost) return <EmptyState />;
 
   const {

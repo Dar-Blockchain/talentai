@@ -23,7 +23,9 @@ export interface GeneratePostInput {
 export async function generatePost(input: GeneratePostInput): Promise<GeneratePostResponse> {
   const { jobDescription, salary, contractType, workMode, language, interviewLanguages } = input;
 
-  const salaryText   = `\n\nSalary Range: ${salary.currency}${salary.min?.toLocaleString()} - ${salary.currency}${salary.max?.toLocaleString()}`;
+  const salaryText   = salary.min != null && salary.max != null
+    ? `\n\nSalary Range: ${salary.currency}${salary.min.toLocaleString()} - ${salary.currency}${salary.max.toLocaleString()}`
+    : "";
   const contractText = contractType ? `\nContract Type: ${contractType}` : "";
   const workModeText = workMode     ? `\nWork Mode: ${workMode}`         : "";
   const description  = jobDescription + salaryText + contractText + workModeText;
