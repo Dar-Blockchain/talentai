@@ -202,9 +202,7 @@ export default function InterviewScreen({
               connectionStatus={socket.connectionStatus}
               cameraStatus={camera.cameraStatus}
               agentState={audio.agentState}
-              currentTranscript={
-                audio.accumulatedTranscript || audio.currentTranscript
-              }
+              currentTranscript={audio.currentTranscript}
               resultsReady={resultsReady}
               isVoiceActive={audio.isVoiceActive}
               onStartInterview={startInterview}
@@ -222,9 +220,7 @@ export default function InterviewScreen({
                   connectionStatus={socket.connectionStatus}
                   cameraStatus={camera.cameraStatus}
                   agentState={audio.agentState}
-                  currentTranscript={
-                    audio.accumulatedTranscript || audio.currentTranscript
-                  }
+                  currentTranscript={audio.currentTranscript}
                   resultsReady={resultsReady}
                   onStartInterview={startInterview}
                   onBack={handleBack}

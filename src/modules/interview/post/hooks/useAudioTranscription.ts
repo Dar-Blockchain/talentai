@@ -294,7 +294,9 @@ export const useAudioTranscription = ({
           return;
         }
 
-        setCurrentTranscript(text);
+        // Show accumulated turns + live partial so the user sees real-time text
+        const accumulated = accumulatedTurnsRef.current.join(' ');
+        setCurrentTranscript(accumulated ? `${accumulated} ${text}` : text);
         setSpeechPhase('speaking');
         setAgentState('waiting');
         setAgentMessage('Listening to your answer...');
