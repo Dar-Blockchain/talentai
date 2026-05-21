@@ -479,5 +479,12 @@ export const SOFT_SKILLS = [
   { label: "Scheduling", category: "soft-skills" },
   { label: "Deadline Management", category: "soft-skills" },
   { label: "Work-Life Balance", category: "soft-skills" },
+
+  // Sales
+  { label: "Lead Generation", category: "soft-skills" },
+  { label: "Sales Qualification", category: "soft-skills" },
+  { label: "Prospecting", category: "soft-skills" },
+  { label: "Cold Outreach", category: "soft-skills" },
+  { label: "Pipeline Management", category: "soft-skills" },
 ];
 
