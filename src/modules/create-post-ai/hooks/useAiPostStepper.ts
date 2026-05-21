@@ -1,9 +1,11 @@
 import { useRouter } from "next/router";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch } from "@/store/store";
 import { validateAIPostStep0 } from "@/validations/postValidation";
 import { useToast } from "@/hooks/useToast";
 import { useSavePostMutation } from "../queries/useCreatePostQueries";
-import { PostGenerationResponse } from "../store/createPostSlice";
+import { clearPost, PostGenerationResponse } from "../store/createPostSlice";
+import { getMyProfile } from "@/store/slices/userSlice";
 
 export const useAiPostStepper = (
   generatedPost: PostGenerationResponse | null,
@@ -11,9 +13,11 @@ export const useAiPostStepper = (
   interviewLanguages: string[]
 ) => {
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
   const { showToast } = useToast();
-  const saveMutation = useSavePostMutation();
   const thresholdScore = useSelector((state: any) => state.postGeneration.thresholdScore);
+
+  const saveMutation = useSavePostMutation();
 
   const handleNext = (languagesOverride?: string[]) => {
     if (!validateAIPostStep0(generatedPost, showToast)) return;
@@ -25,8 +29,12 @@ export const useAiPostStepper = (
         thresholdScore,
       },
       {
-        onSuccess: () =>
-          showToast({ message: "Job post saved as draft.", severity: "success" }),
+        onSuccess: (_data, { savedPostId: id }) => {
+          showToast({ message: "Job post saved as draft.", severity: "success" });
+          if (!id) dispatch(getMyProfile());
+          dispatch(clearPost());
+          router.push("/company/posts");
+        },
         onError: (err: unknown) => {
           const message =
             err instanceof Error ? err.message
