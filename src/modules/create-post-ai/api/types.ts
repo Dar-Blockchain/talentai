@@ -32,6 +32,7 @@ export interface SavePostPayload extends JobDetails {
   creationType: "ai" | "manual" | null;
   interviewLanguages: string[];
   expirationDate: string | null;
+  thresholdScore: number;
 }
 
 export interface SavePostResponse {

@@ -50,6 +50,7 @@ export const useGeneratePostMutation = () => {
 interface SaveMutationPayload {
   jobData: PostGenerationResponse & { interviewLanguages: string[] };
   savedPostId: string | null;
+  thresholdScore: number;
 }
 
 export const useSavePostMutation = () => {
@@ -57,7 +58,7 @@ export const useSavePostMutation = () => {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: ({ jobData, savedPostId }: SaveMutationPayload) => {
+    mutationFn: ({ jobData, savedPostId, thresholdScore }: SaveMutationPayload) => {
       const payload: SavePostPayload = {
         ...jobData.jobDetails,
         requiredSkills: jobData.skillAnalysis.requiredSkills,
@@ -65,6 +66,7 @@ export const useSavePostMutation = () => {
         creationType: jobData.creationType,
         interviewLanguages: jobData.interviewLanguages,
         expirationDate: jobData.expirationDate ?? null,
+        thresholdScore,
       };
       return savedPostId ? updatePost(savedPostId, payload) : savePost(payload);
     },

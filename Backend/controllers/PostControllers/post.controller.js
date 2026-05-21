@@ -40,6 +40,19 @@ exports.createPost = async (req, res) => {
       }
     }
 
+    // Validate thresholdScore if provided
+    if (parsedData.thresholdScore !== undefined) {
+      const score = Number(parsedData.thresholdScore);
+      if (isNaN(score) || score < 0 || score > 100) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid thresholdScore",
+          message: "thresholdScore must be a number between 0 and 100",
+        });
+      }
+      parsedData.thresholdScore = score;
+    }
+
     // ========== 2. PROFILE CHECK ==========
     const userProfile = await Profile.findOne({ userId })
       .populate("activeSubscription")

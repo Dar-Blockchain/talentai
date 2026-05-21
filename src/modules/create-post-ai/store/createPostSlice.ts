@@ -55,6 +55,7 @@ export interface PostGenerationState {
   salary: Salary;
   expirationDate: string;
   interviewLanguages: string[];
+  thresholdScore: number;
   generatedAt: number | null;
 }
 
@@ -78,6 +79,7 @@ const initialState: PostGenerationState = {
   salary: { min: null, max: null, currency: "USD" },
   expirationDate: getDefaultExpirationDate(),
   interviewLanguages: ["en"],
+  thresholdScore: 60,
   generatedAt: null,
 };
 
@@ -98,6 +100,7 @@ const createPostSlice = createSlice({
       state.salary = { min: null, max: null, currency: "USD" };
       state.expirationDate = getDefaultExpirationDate();
       state.interviewLanguages = ["en"];
+      state.thresholdScore = 60;
     },
 
     setGeneratedPost(
@@ -111,6 +114,10 @@ const createPostSlice = createSlice({
 
     setInterviewLanguages(state, action: PayloadAction<string[]>) {
       state.interviewLanguages = action.payload;
+    },
+
+    setThresholdScore(state, action: PayloadAction<number>) {
+      state.thresholdScore = action.payload;
     },
 
     setCreationType(state, action: PayloadAction<"ai" | "manual" | null>) {
@@ -228,7 +235,7 @@ export const {
   updateJobField, updateJobSalaryField, updateRequirements, updateResponsibilities,
   editHardSkill, deleteHardSkill, addHardSkill,
   editSoftSkill, deleteSoftSkill, addSoftSkill,
-  setInterviewLanguages,
+  setInterviewLanguages, setThresholdScore,
 } = createPostSlice.actions;
 
 // ─── Selectors ────────────────────────────────────────────────────────────────

@@ -1,4 +1,5 @@
 import { useRouter } from "next/router";
+import { useSelector } from "react-redux";
 import { validateAIPostStep0 } from "@/validations/postValidation";
 import { useToast } from "@/hooks/useToast";
 import { useSavePostMutation } from "../queries/useCreatePostQueries";
@@ -12,6 +13,7 @@ export const useAiPostStepper = (
   const router = useRouter();
   const { showToast } = useToast();
   const saveMutation = useSavePostMutation();
+  const thresholdScore = useSelector((state: any) => state.postGeneration.thresholdScore);
 
   const handleNext = (languagesOverride?: string[]) => {
     if (!validateAIPostStep0(generatedPost, showToast)) return;
@@ -20,6 +22,7 @@ export const useAiPostStepper = (
       {
         jobData: { ...generatedPost!, interviewLanguages: languagesOverride ?? interviewLanguages },
         savedPostId,
+        thresholdScore,
       },
       {
         onSuccess: () =>

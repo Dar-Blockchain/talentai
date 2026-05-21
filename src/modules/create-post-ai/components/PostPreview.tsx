@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Box } from "@mui/material";
-import { useSelector } from "react-redux";
+import { Box, Slider, Typography } from "@mui/material";
+import { TrackChangesOutlined } from "@mui/icons-material";
+import { useSelector, useDispatch } from "react-redux";
 import { useTranslation } from "react-i18next";
-import { HardSkill, SoftSkill } from "../store/createPostSlice";
+import { HardSkill, SoftSkill, setThresholdScore } from "../store/createPostSlice";
 import { normalizeEmploymentType, normalizeWorkMode } from "../utils";
 import SkillEditorModal from "./SkillEditorModal";
 import PreviewHeader from "./post-preview/PreviewHeader";
@@ -10,6 +11,7 @@ import { LoadingState, EmptyState } from "./post-preview/EmptyState";
 import DetailsSection from "./post-preview/DetailsSection";
 import SkillsSection from "./post-preview/SkillsSection";
 import ContentSection from "./post-preview/ContentSection";
+import SectionCard from "@/components/ui/SectionCard";
 
 interface PostPreviewProps {
   generating?: boolean;
@@ -17,7 +19,8 @@ interface PostPreviewProps {
 
 const PostPreview = ({ generating = false }: PostPreviewProps) => {
   const { t, i18n } = useTranslation("posts");
-  const { generatedPost, generatedLanguage } = useSelector((state: any) => state.postGeneration);
+  const dispatch = useDispatch();
+  const { generatedPost, generatedLanguage, thresholdScore } = useSelector((state: any) => state.postGeneration);
 
   const [open, setOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -65,6 +68,43 @@ const PostPreview = ({ generating = false }: PostPreviewProps) => {
         onEdit={handleEdit}
         onAdd={handleAdd}
       />
+
+      <SectionCard>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+          <TrackChangesOutlined sx={{ fontSize: 16, color: "#0D9488" }} />
+          <Typography variant="subtitle2" sx={{ color: "rgba(84, 98, 116, 1)", fontSize: "16px", fontWeight: 600 }}>
+            Threshold Score
+          </Typography>
+        </Box>
+        <Typography sx={{ fontSize: "12px", color: "rgba(84, 98, 116, 0.7)", mb: 2 }}>
+          Candidates scoring below this threshold are automatically flagged for review.
+        </Typography>
+        {(() => {
+          const color = thresholdScore >= 70 ? "#16A34A" : thresholdScore >= 40 ? "#D97706" : "#DC2626";
+          return (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+              <Box sx={{ flex: 1 }}>
+                <Slider
+                  value={thresholdScore}
+                  onChange={(_, v) => dispatch(setThresholdScore(v as number))}
+                  min={0}
+                  max={100}
+                  step={5}
+                  marks={[{ value: 0, label: "0%" }, { value: 50, label: "50%" }, { value: 100, label: "100%" }]}
+                  sx={{
+                    color,
+                    "& .MuiSlider-thumb": { width: 18, height: 18 },
+                    "& .MuiSlider-markLabel": { fontSize: "11px", color: "#9CA3AF" },
+                  }}
+                />
+              </Box>
+              <Box sx={{ minWidth: 52, textAlign: "center", bgcolor: `${color}15`, border: `1px solid ${color}40`, borderRadius: 2, px: 1.5, py: 0.75 }}>
+                <Typography sx={{ fontSize: "16px", fontWeight: 800, color }}>{thresholdScore}%</Typography>
+              </Box>
+            </Box>
+          );
+        })()}
+      </SectionCard>
 
       <ContentSection
         description={description}
