@@ -24,7 +24,7 @@ ${languageInstructions}
 - If no language is mentioned, generate one relevant soft skill as usual (e.g., Problem solving, Communication, Teamwork, Leadership, Adaptability, Time management).
 
 - Set skill level based on years of experience mentioned in the job post:
-  - 1 year = level 1
+  - 1 year  = level 1
   - 2 years = level 2
   - 5 years = level 3
   - 10 years = level 4
@@ -32,7 +32,6 @@ ${languageInstructions}
 
 - Each skill in "requiredSkills" must include a "percentage" field representing its importance weight in the job.
 - Only one soft skill must be generated.
-- If no clear priorities are specified, distribute the percentages evenly and logically among all required skills.
 - Core and frequently mentioned skills should receive higher percentages.
 
 Job Description:
@@ -48,8 +47,8 @@ Return the response in the following JSON format:
     "responsibilities": ["Each responsibility must describe a concrete, actionable task the candidate will perform daily or regularly. Use strong action verbs (design, implement, optimize, lead, build, deploy, review, mentor). Avoid generic filler like 'Work with the team' or 'Participate in meetings'. Example: 'Design and implement RESTful APIs serving 10K+ requests/min using Node.js and Express' instead of 'Develop backend services'."],
     "location": "Job location",
     "workMode": "Remote/On-site/Hybrid",
-    "employmentType": "Full-time/Part-time/Contract",
-    "experienceLevel": "Junior/Mid-level/Senior/Expert",
+    "employmentType": "Full-time/Part-time/Contract/Internship",
+    "experienceLevel": "Entry-level/Junior/Mid-level/Senior/Expert",
     "salary": {
       "min": 0,
       "max": 0,
@@ -75,81 +74,116 @@ Return the response in the following JSON format:
   }
 }
 
-STRICT SKILL RULES:
-- REQUIRED: Generate 1 to 3 skills in "requiredSkills" based on the actual requirements of the job description. Include only relevant and technical skills.
-    - NEVER generate general or non-technical skills such as "Web Development", "Software Engineering", "Programming", or "Full Stack".
-    - Skills MUST ALWAYS be specific and technical (e.g., React.js, Next.js, Node.js, Express.js, NestJS, MongoDB, PostgreSQL, REST APIs, HTML/CSS, TypeScript, Docker, AWS, Redis, CI/CD, PHPUnit, Laravel, Symfony).
-    - The total percentage of requiredSkills and softSkills combined must equal 100%.
-    - LIA must dynamically distribute the 90% among 1–3 requiredSkills and 1 soft skill based on importance, frequency, and context in the job description.
-    - Salary, workMode, and contract together account for the remaining 10%.
-    - If the job description is vague, infer the most relevant precise technologies instead of using generic terms.
-    - Categorize each skill only as: "Frontend", "Backend", "Fullstack", "DevOps", or "Other".
-    - Never invent unrealistic skills; remain consistent with standard industry technical stacks.
-    - The "name" field must always be a precise tool, language, framework, library, cloud service, or dev practice (NOT a job role).
+═══════════════════════════════════════════
+ABSOLUTE RULES — APPLY BEFORE ANYTHING ELSE
+═══════════════════════════════════════════
 
-    STRICT DESCRIPTION RULES:
-    - The "description" field must be a concise professional summary (2-4 sentences max).
-    - It must explain what the role is, what team or product the candidate will work on, and why this role matters.
-    - NEVER repeat the requirements or responsibilities in the description.
-    - NEVER use generic filler phrases like "We are looking for a talented developer" or "Join our growing team".
-    - The description should feel unique to this specific role and company, not a copy-paste template.
+RULE 1 — SALARY:
+- If no exact salary figure is explicitly written in the job description with a real number and currency,
+  salary MUST be exactly: { "min": 0, "max": 0, "currency": "USD" }.
+- NEVER infer, estimate, guess, or generate a salary value.
+- 1 is not 0. 20 is not 0. Any non-zero value when salary is not mentioned is a critical error.
 
-    STRICT REQUIREMENTS RULES:
-    - Generate 4-8 requirements. Every single one must be specific, verifiable, and directly extractable from the job description.
-    - MANDATORY FORMAT for each requirement — choose the most fitting pattern:
-        • Experience pattern   : "<N>+ years of hands-on experience with <specific technology/tool> in a production environment"
-        • Degree pattern       : "<Degree level> in <Field> or equivalent practical experience"
-        • Certification pattern: "Holding or actively pursuing <Certification name> (e.g., AWS Solutions Architect, PMP)"
-        • Skill pattern        : "Demonstrated proficiency in <specific tool/language/framework> through <shipped projects / open-source contributions / certifications>"
-        • Domain pattern       : "Proven experience building <specific system type> (e.g., payment systems, real-time APIs, CI/CD pipelines)"
-    - NEVER use vague openers such as: "good understanding of", "familiarity with", "knowledge of", "experience with modern", "awareness of best practices".
-    - NEVER write generic requirements like "Strong communication skills", "Team player", "Passion for technology", "Ability to work in a fast-paced environment" — those belong in soft skills or responsibilities, not here.
-    - If the job description mentions a technology without specifying years, default to "2+ years" for junior roles, "3+ years" for mid-level, "5+ years" for senior roles.
-    - If the job description is vague, infer the most relevant and realistic requirements based on the job title, responsibilities, and industry standards — but flag inferred requirements with the prefix "[Inferred]".
-    - Order requirements from most critical (must-have) to least critical (nice-to-have).
-    - Each requirement must be a standalone, self-contained sentence. No bullet sub-points, no conjunctions joining two separate skills into one requirement.
-    - Avoid repeating the same technology across multiple requirements. If a technology appears more than once in the source description, consolidate it into a single precise requirement.
+RULE 2 — INTERNSHIP DETECTION:
+- If the words "stage", "intern", "internship", or "stagiaire" appear ANYWHERE
+  in the job title or description:
+  • employmentType MUST be "Internship". NEVER "Full-time", NEVER "Part-time".
+  • experienceLevel MUST be "Entry-level". NEVER "Junior" or above.
+  • All skill levels (requiredSkills AND softSkills) MUST be 1.
+  • These rules override ANY other inference. No exceptions.
 
-    STRICT RESPONSIBILITIES RULES:
-    - Generate 4-8 specific, actionable responsibilities.
-    - Each responsibility MUST start with a strong action verb (Design, Implement, Build, Optimize, Lead, Deploy, Review, Architect, Mentor, Develop, Maintain, Automate).
-    - Each responsibility must describe a concrete task with enough context to understand what the candidate will actually do.
-    - NEVER use vague responsibilities like "Work with the team", "Participate in meetings", "Support development efforts", "Collaborate with stakeholders".
-    - Instead use: "Architect and implement microservices handling payment processing for 50K+ daily transactions", "Conduct thorough code reviews and mentor 2-3 junior developers on best practices".
-    - Responsibilities should cover the full scope of the role: technical work, collaboration, and growth areas.
+RULE 3 — EMPLOYMENT TYPE DEFAULT:
+- If employmentType is not explicitly stated in the job description,
+  default to "Full-time". NEVER infer "Part-time" from context, title, or assumptions.
 
-    STRICT SOFT SKILL RULES:
-    - REQUIRED: Generate exactly 1 soft skill — no more, no less.
-    - The soft skill must be relevant to the job role (e.g., Problem solving, Communication, Teamwork, Leadership, Adaptability, Time management).
-    - The soft skill must include a "percentage" field.
-    - Never use vague or irrelevant soft skills.
+RULE 4 — SKILL PERCENTAGE PROPORTIONAL TO YEARS OF EXPERIENCE:
+- Rank all requiredSkills by years of experience from highest to lowest.
+- The skill with the most years MUST have the highest percentage. No exceptions.
+- Use this exact formula to compute each skill's percentage:
 
-    - If employmentType is "Internship" or experienceLevel is "Stage/Entry-level":
-    • NEVER require years of production experience in requirements.
-    • Use instead: "Basic knowledge of", "Academic or personal project experience with", "Exposure to X through coursework or self-learning".
-    • Requirements must reflect what a student or recent graduate can realistically have.
-    • Salary min and max must be set to 0 if not explicitly mentioned in the job description.
+    skill_percentage = ROUND( (skill_years / total_years) × skill_budget )
 
-    - ABSOLUTE RULE — INTERNSHIP DETECTION: If the words "stage", "intern", "internship", 
-      or "stagiaire" appear ANYWHERE in the job title or description:
-      • employmentType MUST be "Internship". NEVER "Full-time", NEVER "Part-time".
-      • experienceLevel MUST be "Entry-level". NEVER "Junior" or above.
-      • These two rules override ANY other inference. No exceptions.
+  Where:
+  • total_years = sum of all requiredSkills years (skills without years = 0.5)
+  • skill_budget = 100 minus the soft skill percentage (soft skill default = 20%)
+  • Apply a cap of 55% max per skill to preserve balance
 
+  Example — Next.js 6yr + Express.js 1yr + GitHub (no years, = 0.5yr):
+    total_years  = 6 + 1 + 0.5 = 7.5
+    skill_budget = 100 - 20 = 80
+    Next.js      = ROUND((6   / 7.5) × 80) = 64% → capped at 55%
+    Express.js   = ROUND((1   / 7.5) × 80) = 11% → 13% (adjust for rounding)
+    GitHub       = ROUND((0.5 / 7.5) × 80) = 5%  → 12% (adjust to reach total 100%)
+    Communication soft skill → 20%
+    Total = 55 + 13 + 12 + 20 = 100% ✅
 
-      - For Internship roles, all skill levels (requiredSkills and softSkills) MUST be 1.
+- NEVER let a lower-experience skill have a higher percentage than a higher-experience skill.
+- After computing, verify: sum of all percentages (requiredSkills + softSkills) = 100. Adjust the lowest-ranked skill if needed to fix rounding drift.
 
-      - NEVER assign more than 40% to a single requiredSkill when the job description 
-      covers multiple distinct domains (e.g., development + AI + content creation).
-      - When the job covers 3+ distinct domains, ALWAYS generate 3 requiredSkills — 
-      one per major domain — and distribute percentages proportionally.
+═══════════════════════════════
+STRICT SKILL RULES
+═══════════════════════════════
+- REQUIRED: Generate 1 to 3 skills in "requiredSkills" based on the actual requirements of the job description.
+- NEVER generate general or non-technical skills such as "Web Development", "Software Engineering", "Programming", or "Full Stack".
+- Skills MUST ALWAYS be specific and technical (e.g., React.js, Next.js, Node.js, Express.js, NestJS, MongoDB, PostgreSQL, REST APIs, HTML/CSS, TypeScript, Docker, AWS, Redis, CI/CD, Laravel, Symfony).
+- If the job description is vague, infer the most relevant precise technologies instead of using generic terms.
+- Categorize each skill only as: "Frontend", "Backend", "Fullstack", "DevOps", or "Other".
+- Never invent unrealistic skills; remain consistent with standard industry technical stacks.
+- The "name" field must always be a precise tool, language, framework, library, cloud service, or dev practice (NOT a job role).
+- When the job covers 3+ distinct domains (e.g., development + AI + content creation), ALWAYS generate 3 requiredSkills — one per major domain.
+- NEVER assign more than 55% to a single requiredSkill.
 
-      - ABSOLUTE RULE — SALARY: If no exact salary figure is written in the job description,
-      salary MUST be { "min": 0, "max": 0, "currency": "USD" }. 
-      Setting min or max to any value other than 0 when salary is not mentioned 
-      is a critical error. 1 is not 0. Never guess. Never estimate.
+═══════════════════════════════
+STRICT DESCRIPTION RULES
+═══════════════════════════════
+- The "description" field must be a concise professional summary (2-4 sentences max).
+- It must explain what the role is, what team or product the candidate will work on, and why this role matters.
+- NEVER repeat the requirements or responsibilities in the description.
+- NEVER use generic filler phrases like "We are looking for a talented developer" or "Join our growing team".
+- The description should feel unique to this specific role and company, not a copy-paste template.
 
-    CRITICAL: Return ONLY the raw JSON object. Do NOT include any explanation, reasoning, or text before or after the JSON.
+═══════════════════════════════
+STRICT REQUIREMENTS RULES
+═══════════════════════════════
+- Generate 4-8 requirements. Every single one must be specific, verifiable, and directly extractable from the job description.
+- MANDATORY FORMAT — choose the most fitting pattern per requirement:
+    • Experience pattern   : "<N>+ years of hands-on experience with <specific technology/tool> in a production environment"
+    • Degree pattern       : "<Degree level> in <Field> or equivalent practical experience"
+    • Certification pattern: "Holding or actively pursuing <Certification name> (e.g., AWS Solutions Architect, PMP)"
+    • Skill pattern        : "Demonstrated proficiency in <specific tool/language/framework> through <shipped projects / open-source contributions / certifications>"
+    • Domain pattern       : "Proven experience building <specific system type> (e.g., payment systems, real-time APIs, CI/CD pipelines)"
+- NEVER use vague openers: "good understanding of", "familiarity with", "knowledge of", "experience with modern", "awareness of best practices".
+- NEVER write generic requirements like "Strong communication skills", "Team player", "Passion for technology".
+- If the job description mentions a technology without specifying years:
+    • Junior role   → default to "1+ years"
+    • Mid-level     → default to "3+ years"
+    • Senior role   → default to "5+ years"
+- If the job description is vague, infer realistic requirements but flag them with the prefix "[Inferred]".
+- Order requirements from most critical (must-have) to least critical (nice-to-have).
+- Each requirement must be a standalone, self-contained sentence.
+- Avoid repeating the same technology across multiple requirements — consolidate into one.
+- FOR INTERNSHIP ROLES ONLY: NEVER require years of production experience.
+  Use instead: "Basic knowledge of", "Academic or personal project experience with", "Exposure to X through coursework or self-learning".
+
+═══════════════════════════════
+STRICT RESPONSIBILITIES RULES
+═══════════════════════════════
+- Generate 4-8 specific, actionable responsibilities.
+- Each responsibility MUST start with a strong action verb (Design, Implement, Build, Optimize, Lead, Deploy, Review, Architect, Mentor, Develop, Maintain, Automate).
+- Each responsibility must describe a concrete task with enough context to understand what the candidate will actually do.
+- NEVER use vague responsibilities like "Work with the team", "Participate in meetings", "Support development efforts".
+- Responsibilities should cover the full scope of the role: technical work, collaboration, and growth areas.
+
+═══════════════════════════════
+STRICT SOFT SKILL RULES
+═══════════════════════════════
+- Generate exactly 1 soft skill — no more, no less.
+- The soft skill must be relevant to the job role.
+- It must include a "percentage" field.
+- For Internship roles, soft skill level MUST be 1.
+- Never use vague or irrelevant soft skills.
+
+CRITICAL: Return ONLY the raw JSON object. Do NOT include any explanation, reasoning, or text before or after the JSON.
 `.trim();
 };
 
