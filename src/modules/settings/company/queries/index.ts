@@ -1,31 +1,20 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDispatch } from 'react-redux';
 import { settingsApi, apiKeysApi } from '../api';
-import { settingsKeys, apiKeysKeys } from './keys';
+import { apiKeysKeys } from './keys';
+import { profileKeys } from '@/modules/settings/shared';
 import { setConnectedUser } from '@/store/slices/userSlice';
 import type { AppDispatch } from '@/store/store';
 import type { UpdateProfilePayload, CreateApiKeyPayload, UpdateApiKeyPayload } from '../types';
 
 // ─── Fetch profile ────────────────────────────────────────────────────────────
 
-export const useSettingsProfile = () => {
-  const dispatch = useDispatch<AppDispatch>();
-
-  return useQuery({
-    queryKey: settingsKeys.profile,
-    queryFn:  async () => {
-      const data = await settingsApi.fetchProfile();
-      dispatch(setConnectedUser({
-        user:              data.user,
-        profile:           data.profile,
-        planLimits:        data.planLimits,
-        companyMembership: data.companyMembership,
-      }));
-      return data;
-    },
+export const useSettingsProfile = () =>
+  useQuery({
+    queryKey: profileKeys.me,
+    queryFn:  () => settingsApi.fetchProfile(),
     staleTime: 5 * 60 * 1000,
   });
-};
 
 // ─── Update profile ───────────────────────────────────────────────────────────
 
@@ -43,7 +32,7 @@ export const useUpdateSettingsProfile = () => {
         planLimits:        data.planLimits        ?? null,
         companyMembership: data.companyMembership ?? null,
       }));
-      queryClient.invalidateQueries({ queryKey: settingsKeys.profile });
+      queryClient.invalidateQueries({ queryKey: profileKeys.me });
     },
   });
 };
@@ -59,12 +48,12 @@ export const useUploadSettingsAvatar = () => {
       settingsApi.uploadAvatar(userId, file),
     onSuccess: (data) => {
       dispatch(setConnectedUser({
-        user:              data.user,
-        profile:           data.profile,
-        planLimits:        null,
-        companyMembership: null,
+        user:              data?.user              ?? null,
+        profile:           data?.profile           ?? null,
+        planLimits:        data?.planLimits        ?? null,
+        companyMembership: data?.companyMembership ?? null,
       }));
-      queryClient.invalidateQueries({ queryKey: settingsKeys.profile });
+      queryClient.invalidateQueries({ queryKey: profileKeys.me });
     },
   });
 };

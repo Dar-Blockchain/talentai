@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Remove-Item \"C:\\\\Users\\\\Ali Al-Shanti\\\\Desktop\\\\talentai\\\\src\\\\validations\\\\profileSchemas.ts\" -Force)",
+      "Bash(Remove-Item \"C:\\\\Users\\\\Ali Al-Shanti\\\\Desktop\\\\talentai\\\\src\\\\modules\\\\settings\\\\types\\\\profile.ts\" -Force)",
+      "Bash(Remove-Item \"C:\\\\Users\\\\Ali Al-Shanti\\\\Desktop\\\\talentai\\\\src\\\\modules\\\\settings\\\\types\" -Force -ErrorAction SilentlyContinue)"
+    ]
+  }
+}

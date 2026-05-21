@@ -1,1 +1,1 @@
-export type { SettingsUserEntity, SettingsProfile, UpdateProfilePayload, ProfileApiResponse } from '../../company/types';
+export type { SettingsUserEntity, SettingsProfile, ProfileApiResponse } from '../../shared/types';

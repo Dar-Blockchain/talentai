@@ -27,16 +27,16 @@ const SettingsPage: React.FC = () => {
   useCompanyAccess("canViewCompanyProfile");
   const empPerms = useSelector(selectEmployeePermissions);
   const {
-    profile, loading, uploadingImage, isEmployee, control,
+    profile, loading, uploadingImage, isEmployee, isEditing, control,
     handleInputChange, handleImageUpload, handleSaveProfile, handleSaveLanguage, handleCancel,
+    setIsEditing,
   } = useCompanyProfileManagement();
 
   const canEdit = !isEmployee || !!empPerms?.canEditCompanyProfile;
-  const [isEditing, setEditing] = useState(false);
   const [tab, setTab] = useState(0);
 
   const handleTabChange = (_: React.SyntheticEvent, v: number) => {
-    if (isEditing) { setEditing(false); handleCancel(); }
+    if (isEditing) { setIsEditing(false); handleCancel(); }
     setTab(v);
   };
 
@@ -99,9 +99,9 @@ const SettingsPage: React.FC = () => {
           uploadingImage={uploadingImage}
           isEditing={isEditing}
           showEditActions={tab === 0 && canEdit}
-          onStartEdit={() => setEditing(true)}
-          onCancelEdit={() => { setEditing(false); handleCancel(); }}
-          onSaveEdit={async () => { const ok = await handleSaveProfile(); if (ok) setEditing(false); }}
+          onStartEdit={() => setIsEditing(true)}
+          onCancelEdit={() => { setIsEditing(false); handleCancel(); }}
+          onSaveEdit={async () => { const ok = await handleSaveProfile(); if (ok) setIsEditing(false); }}
           onImageUpload={handleImageUpload}
         />
 

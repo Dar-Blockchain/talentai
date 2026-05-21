@@ -33,10 +33,7 @@ import feedbackReducer from './slices/feedbackSlice';
 import paymentReducer from './slices/paymentSlice';
 import kpiReducer from './slices/kpiSlice';
 import { socketMiddleware } from './middleware/socketMiddleware';
-import { settingsReducer } from '@/modules/settings/company/store';
-
 const rootReducer = combineReducers({
-  settings: settingsReducer,
   user: userReducer,
   auth: authReducer,
   post: postReducer,

@@ -2,44 +2,48 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDispatch } from 'react-redux';
 import type { AppDispatch } from '@/store/store';
 import { setConnectedUser } from '@/store/slices/userSlice';
+import { profileKeys } from '@/modules/settings/shared';
 import { candidateApi } from '../api';
-import { candidateSettingsKeys } from './keys';
 
-export const useCandidateProfile = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  return useQuery({
-    queryKey: candidateSettingsKeys.profile,
-    queryFn: async () => {
-      const data = await candidateApi.fetchProfile();
-      if (data) dispatch(setConnectedUser(data));
-      return data;
-    },
+export const useCandidateProfile = () =>
+  useQuery({
+    queryKey: profileKeys.me,
+    queryFn:  () => candidateApi.fetchProfile(),
     staleTime: 5 * 60 * 1000,
   });
-};
 
 export const useUpdateCandidateProfile = () => {
   const queryClient = useQueryClient();
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch    = useDispatch<AppDispatch>();
   return useMutation({
     mutationFn: ({ userId, payload }: { userId: string; payload: Record<string, unknown> }) =>
       candidateApi.updateProfile(userId, payload),
     onSuccess: (data) => {
-      if (data) dispatch(setConnectedUser(data));
-      queryClient.invalidateQueries({ queryKey: candidateSettingsKeys.profile });
+      dispatch(setConnectedUser({
+        user:              data?.user              ?? null,
+        profile:           data?.profile           ?? null,
+        planLimits:        data?.planLimits        ?? null,
+        companyMembership: data?.companyMembership ?? null,
+      }));
+      queryClient.invalidateQueries({ queryKey: profileKeys.me });
     },
   });
 };
 
 export const useUploadCandidateAvatar = () => {
   const queryClient = useQueryClient();
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch    = useDispatch<AppDispatch>();
   return useMutation({
     mutationFn: ({ userId, file }: { userId: string; file: File }) =>
       candidateApi.uploadAvatar(userId, file),
     onSuccess: (data) => {
-      if (data) dispatch(setConnectedUser(data));
-      queryClient.invalidateQueries({ queryKey: candidateSettingsKeys.profile });
+      dispatch(setConnectedUser({
+        user:              data?.user              ?? null,
+        profile:           data?.profile           ?? null,
+        planLimits:        data?.planLimits        ?? null,
+        companyMembership: data?.companyMembership ?? null,
+      }));
+      queryClient.invalidateQueries({ queryKey: profileKeys.me });
     },
   });
 };
@@ -49,7 +53,7 @@ export const useUpdateCandidateVisibility = () => {
   return useMutation({
     mutationFn: (isPublicProfile: boolean) => candidateApi.updateVisibility(isPublicProfile),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: candidateSettingsKeys.profile });
+      queryClient.invalidateQueries({ queryKey: profileKeys.me });
     },
   });
 };

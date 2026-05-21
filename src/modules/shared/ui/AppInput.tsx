@@ -14,6 +14,7 @@ interface AppInputProps {
   label?: string;
   value?: string;
   onChange?: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onBlur?: React.FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
   placeholder?: string;
   disabled?: boolean;
   required?: boolean;
@@ -31,6 +32,7 @@ const AppInput = React.memo<AppInputProps>(({
   label,
   value,
   onChange,
+  onBlur,
   placeholder,
   disabled = false,
   required = false,
@@ -69,6 +71,7 @@ const AppInput = React.memo<AppInputProps>(({
         disabled={disabled}
         value={value}
         onChange={onChange}
+        onBlur={onBlur}
         fullWidth={fullWidth}
         error={Boolean(error)}
         multiline={multiline}

@@ -1,10 +1,7 @@
 "use client";
 import React, { useState, useCallback, useEffect } from "react";
 import { Box, Typography, Avatar } from "@mui/material";
-import { useSelector } from "react-redux";
-import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
-import { RootState } from "@/store/store";
 import CandidateWorkspaceLayout from "@/components/layout/candidate/CandidateWorkspaceLayout";
 import { NotificationsTab, PersonalInformationTab, ProfileVisibilityTab, SnackbarNotifications, LanguageTab, useProfileManagement, useUpdateCandidateVisibility } from "@/modules/settings/candidate";
 import PersonOutlined from "@mui/icons-material/PersonOutlined";
@@ -26,7 +23,6 @@ const TAB_IDS = [
 
 const CandidateSettingsPage: React.FC = () => {
   const { t } = useTranslation("dashboard");
-  const router = useRouter();
 
   const TABS = TAB_IDS.map(tab => ({
     ...tab,
@@ -35,39 +31,30 @@ const CandidateSettingsPage: React.FC = () => {
   const {
     activeTab, isEditing, profile, loading, error,
     uploadingImage, saveSuccess, userId,
+    companyMembership, isPublicProfile,
+    control, formErrors,
     setActiveTab, setIsEditing,
     handleInputChange, handleImageUpload,
     handleSaveProfile, handleSaveLanguage, handleCancel, handleDismissError, handleDismissSuccess,
   } = useProfileManagement();
 
-  const { profile: reduxProfile, companyMembership } = useSelector((state: RootState) => state.user.connectedUser);
-  const user = useSelector((state: RootState) => state.user.connectedUser.user);
   const hasMembership = !!companyMembership?._id;
 
   const updateVisibilityMutation = useUpdateCandidateVisibility();
-  const [isPublicProfile, setIsPublicProfile] = useState(reduxProfile?.isPublicProfile || false);
+  const [localIsPublic, setLocalIsPublic] = useState(isPublicProfile);
 
-  React.useEffect(() => {
-    if (reduxProfile?.isPublicProfile !== undefined) setIsPublicProfile(reduxProfile.isPublicProfile);
-  }, [reduxProfile?.isPublicProfile]);
-
-  useEffect(() => {
-    const tab = router.query.tab as string;
-    if (tab && TABS.some(t => t.id === tab)) setActiveTab(tab);
-  }, [router.query.tab]);
+  useEffect(() => { setLocalIsPublic(isPublicProfile); }, [isPublicProfile]);
 
   const handleToggleVisibility = useCallback(async (newVisibility: boolean) => {
+    setLocalIsPublic(newVisibility);
     await updateVisibilityMutation.mutateAsync(newVisibility);
-    setIsPublicProfile(newVisibility);
   }, [updateVisibilityMutation]);
 
-  const displayName = reduxProfile?.firstName
-    ? `${reduxProfile.firstName}${reduxProfile.lastName ? ` ${reduxProfile.lastName}` : ""}`
-    : user?.username || "Candidate";
-  const initial  = displayName[0]?.toUpperCase() || "C";
-  const avatarUrl = reduxProfile?.user_image
-    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${reduxProfile.user_image}`
-    : undefined;
+  const displayName = profile.firstName
+    ? `${profile.firstName}${profile.lastName ? ` ${profile.lastName}` : ""}`
+    : profile.username || "Candidate";
+  const initial   = displayName[0]?.toUpperCase() || "C";
+  const avatarUrl = profile.avatar || undefined;
 
   return (
     <CandidateWorkspaceLayout breadcrumb={t("candidate.nav.settings")}>
@@ -88,7 +75,7 @@ const CandidateSettingsPage: React.FC = () => {
                   </Avatar>
                 </Box>
                 <Typography sx={{ fontWeight: 800, fontSize: "0.95rem", color: NAVY, lineHeight: 1.2 }}>{displayName}</Typography>
-                {user?.email && <Typography sx={{ fontSize: "0.72rem", color: "#9CA3AF", mt: 0.25 }}>{user.email}</Typography>}
+                {profile.email && <Typography sx={{ fontSize: "0.72rem", color: "#9CA3AF", mt: 0.25 }}>{profile.email}</Typography>}
               </Box>
             </Box>
 
@@ -126,6 +113,8 @@ const CandidateSettingsPage: React.FC = () => {
             {activeTab === "personal" && (
               <PersonalInformationTab
                 profile={profile}
+                control={control}
+                formErrors={formErrors}
                 isEditing={isEditing}
                 loading={loading}
                 saveSuccess={saveSuccess}
@@ -149,7 +138,7 @@ const CandidateSettingsPage: React.FC = () => {
             {activeTab === "visibility" && (
               <ProfileVisibilityTab
                 userId={userId}
-                isPublicProfile={isPublicProfile}
+                effectiveIsPublicProfile={localIsPublic}
                 onToggleVisibility={handleToggleVisibility}
                 hasMembership={hasMembership}
               />

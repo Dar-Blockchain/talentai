@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box, Typography, Switch, Button, Alert, CircularProgress,
   Divider, IconButton, Tooltip,
@@ -18,32 +18,30 @@ const NAVY = "#0D1B2A";
 
 interface ProfileVisibilityTabProps {
   userId: string;
-  isPublicProfile: boolean;
-  onToggleVisibility: (isPublic: boolean) => Promise<void>;
+  effectiveIsPublicProfile: boolean;
+  onToggleVisibility: (effectiveIsPublic: boolean) => Promise<void>;
   hasMembership?: boolean;
 }
 
-const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({ userId, isPublicProfile, onToggleVisibility, hasMembership = false }) => {
+const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({ userId, effectiveIsPublicProfile, onToggleVisibility, hasMembership = false }) => {
   const { showToast } = useToast();
   const { t } = useTranslation('dashboard');
   const s = (k: string) => t(`candidate_settings.visibility.${k}`);
 
-  const [isPublic, setIsPublic] = useState(isPublicProfile);
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState<string | null>(null);
-  const [success,  setSuccess]  = useState<string | null>(null);
-  const [copied,   setCopied]   = useState(false);
+  const effectiveIsPublic = hasMembership ? false : effectiveIsPublicProfile;
 
-  useEffect(() => { setIsPublic(hasMembership ? false : isPublicProfile); }, [isPublicProfile, hasMembership]);
+  const [loading, setLoading] = useState(false);
+  const [error,   setError]   = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [copied,  setCopied]  = useState(false);
 
   const publicProfileUrl = typeof window !== 'undefined' ? `${window.location.origin}/profile/candidate/${userId}` : '';
 
   const handleToggleVisibility = useCallback(async () => {
     setLoading(true); setError(null); setSuccess(null);
     try {
-      const newVisibility = !isPublic;
+      const newVisibility = !effectiveIsPublic;
       await onToggleVisibility(newVisibility);
-      setIsPublic(newVisibility);
       const msg = newVisibility ? s('success_public') : s('success_private');
       setSuccess(msg);
       showToast({ message: msg, severity: 'success' });
@@ -52,7 +50,7 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({ userId, isP
       setError(msg);
       showToast({ message: msg, severity: 'error' });
     } finally { setLoading(false); }
-  }, [isPublic, onToggleVisibility, showToast]);
+  }, [effectiveIsPublic, onToggleVisibility, showToast]);
 
   const handleCopyLink = useCallback(() => {
     navigator.clipboard.writeText(publicProfileUrl);
@@ -81,16 +79,16 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({ userId, isP
         {error   && <Alert severity="error"   onClose={() => setError(null)}   sx={{ mb: 2, borderRadius: "10px", fontSize: "0.8rem" }}>{error}</Alert>}
         {success && <Alert severity="success" onClose={() => setSuccess(null)} sx={{ mb: 2, borderRadius: "10px", fontSize: "0.8rem" }}>{success}</Alert>}
 
-        <Box sx={{ p: 2, mb: 2.5, borderRadius: "12px", border: `1px solid ${isPublic ? TBRD : "#E5E7EB"}`, bgcolor: isPublic ? TBG : "#F9FAFB", display: "flex", alignItems: "center", gap: 2 }}>
-          <Box sx={{ width: 44, height: 44, borderRadius: "12px", flexShrink: 0, bgcolor: isPublic ? T : "#94A3B8", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {isPublic ? <VisibilityIcon sx={{ fontSize: 22, color: "#fff" }} /> : <VisibilityOffIcon sx={{ fontSize: 22, color: "#fff" }} />}
+        <Box sx={{ p: 2, mb: 2.5, borderRadius: "12px", border: `1px solid ${effectiveIsPublic ? TBRD : "#E5E7EB"}`, bgcolor: effectiveIsPublic ? TBG : "#F9FAFB", display: "flex", alignItems: "center", gap: 2 }}>
+          <Box sx={{ width: 44, height: 44, borderRadius: "12px", flexShrink: 0, bgcolor: effectiveIsPublic ? T : "#94A3B8", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {effectiveIsPublic ? <VisibilityIcon sx={{ fontSize: 22, color: "#fff" }} /> : <VisibilityOffIcon sx={{ fontSize: 22, color: "#fff" }} />}
           </Box>
           <Box sx={{ flex: 1 }}>
-            <Typography sx={{ fontWeight: 700, fontSize: "0.88rem", color: NAVY }}>{isPublic ? s('status_public') : s('status_private')}</Typography>
-            <Typography sx={{ fontSize: "0.75rem", color: "#6B7280", mt: 0.25 }}>{isPublic ? s('desc_public') : s('desc_private')}</Typography>
+            <Typography sx={{ fontWeight: 700, fontSize: "0.88rem", color: NAVY }}>{effectiveIsPublic ? s('status_public') : s('status_private')}</Typography>
+            <Typography sx={{ fontSize: "0.75rem", color: "#6B7280", mt: 0.25 }}>{effectiveIsPublic ? s('desc_public') : s('desc_private')}</Typography>
             {loading && <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.75 }}><CircularProgress size={12} sx={{ color: T }} /><Typography sx={{ fontSize: "0.72rem", color: "#6B7280" }}>{s('updating')}</Typography></Box>}
           </Box>
-          <Switch checked={isPublic} onChange={handleToggleVisibility} disabled={loading || hasMembership}
+          <Switch checked={effectiveIsPublic} onChange={handleToggleVisibility} disabled={loading || hasMembership}
             sx={{ "& .MuiSwitch-switchBase.Mui-checked": { color: T, "&:hover": { bgcolor: `${T}14` } }, "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { bgcolor: T } }} />
         </Box>
 
@@ -102,14 +100,14 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({ userId, isP
             <Tooltip title={s('url_tooltip')}><IconButton size="small"><InfoIcon sx={{ fontSize: 15, color: "#CBD5E1" }} /></IconButton></Tooltip>
           </Box>
           <Box sx={{ p: 1.5, borderRadius: "10px", bgcolor: "#F9FAFB", border: "1px solid #E5E7EB", mb: 1.5 }}>
-            <Typography sx={{ fontSize: "0.78rem", fontFamily: "monospace", color: isPublic ? NAVY : "#CBD5E1", wordBreak: "break-all" }}>{publicProfileUrl}</Typography>
+            <Typography sx={{ fontSize: "0.78rem", fontFamily: "monospace", color: effectiveIsPublic ? NAVY : "#CBD5E1", wordBreak: "break-all" }}>{publicProfileUrl}</Typography>
           </Box>
           <Box sx={{ display: "flex", gap: 1.5 }}>
-            <Button size="small" variant="outlined" startIcon={<ContentCopyIcon sx={{ fontSize: "14px !important" }} />} onClick={handleCopyLink} disabled={!isPublic}
+            <Button size="small" variant="outlined" startIcon={<ContentCopyIcon sx={{ fontSize: "14px !important" }} />} onClick={handleCopyLink} disabled={!effectiveIsPublic}
               sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.75rem", borderRadius: "8px", px: 1.5, borderColor: "#E5E7EB", color: "#6B7280", "&:hover": { borderColor: T, bgcolor: TBG, color: T }, "&.Mui-disabled": { borderColor: "#F1F5F9", color: "#CBD5E1" } }}>
               {copied ? s('copied') : s('copy_link')}
             </Button>
-            <Button size="small" variant="contained" startIcon={<OpenInNewIcon sx={{ fontSize: "14px !important" }} />} onClick={handleViewProfile} disabled={!isPublic}
+            <Button size="small" variant="contained" startIcon={<OpenInNewIcon sx={{ fontSize: "14px !important" }} />} onClick={handleViewProfile} disabled={!effectiveIsPublic}
               sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.75rem", borderRadius: "8px", px: 1.5, bgcolor: T, color: "#fff", "&:hover": { bgcolor: "#0F766E" }, "&.Mui-disabled": { bgcolor: "#F1F5F9", color: "#CBD5E1" } }}>
               {s('view_profile')}
             </Button>

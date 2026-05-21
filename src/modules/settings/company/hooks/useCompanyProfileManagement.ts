@@ -132,7 +132,7 @@ export const useCompanyProfileManagement = () => {
     }
   }, [router.isReady, router.query.tab]);
 
-  // Sync profile from React Query data → local state + RHF form
+  // Sync profile from React Query data → local state + RHF form, but only when not editing
   useEffect(() => {
     if (!user) return;
 
@@ -151,37 +151,33 @@ export const useCompanyProfileManagement = () => {
         requiredExperienceLevel: companyProfile?.requiredExperienceLevel,
         requiredSkills:          companyProfile?.requiredSkills || companyData?.requiredSkills,
       });
+    } else {
+      if (!reduxProfile) return;
 
-      setProfile(synced);
-      form.reset(toFormValues(synced));
-      return;
+      const companyData = reduxProfile.companyDetails || reduxProfile;
+      synced = buildSyncedProfile(companyData, {
+        username:                user.username || '',
+        email:                   user.email || companyData?.email || '',
+        avatarUrl:               buildAvatarUrl(reduxProfile.user_image, user.user_image),
+        requiredExperienceLevel: reduxProfile?.requiredExperienceLevel,
+        targetRole:              reduxProfile?.targetRole,
+        requiredSkills:          reduxProfile?.requiredSkills || companyData?.requiredSkills,
+        language:                reduxProfile?.language,
+        phone:                   reduxProfile.companyDetails?.phone,
+        address:                 reduxProfile.companyDetails?.address,
+        linkedin:                reduxProfile.companyDetails?.linkedin,
+        personalWebsite:         reduxProfile.companyDetails?.personalWebsite,
+        location:                reduxProfile.companyDetails?.location || companyData?.location,
+        website:                 reduxProfile.companyDetails?.website  || companyData?.website,
+      });
     }
-
-    if (!reduxProfile) return;
-
-    const companyData = reduxProfile.companyDetails || reduxProfile;
-    synced = buildSyncedProfile(companyData, {
-      username:                user.username || '',
-      email:                   user.email || companyData?.email || '',
-      avatarUrl:               buildAvatarUrl(reduxProfile.user_image, user.user_image),
-      requiredExperienceLevel: reduxProfile?.requiredExperienceLevel,
-      targetRole:              reduxProfile?.targetRole,
-      requiredSkills:          reduxProfile?.requiredSkills || companyData?.requiredSkills,
-      language:                reduxProfile?.language,
-      phone:                   reduxProfile.companyDetails?.phone,
-      address:                 reduxProfile.companyDetails?.address,
-      linkedin:                reduxProfile.companyDetails?.linkedin,
-      personalWebsite:         reduxProfile.companyDetails?.personalWebsite,
-      location:                reduxProfile.companyDetails?.location || companyData?.location,
-      website:                 reduxProfile.companyDetails?.website  || companyData?.website,
-    });
 
     setSavedProfile(synced);
     if (!isEditing) {
       setProfile(synced);
       form.reset(toFormValues(synced));
     }
-  }, [reduxProfile, companyMembership, user, isEmployee]);
+  }, [reduxProfile, companyMembership, user, isEmployee, isEditing]);
 
   useEffect(() => {
     if (!saveSuccess) return;

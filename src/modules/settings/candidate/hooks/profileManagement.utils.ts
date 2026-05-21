@@ -1,6 +1,6 @@
 import { UserProfile } from '@/types/profile';
 import { ConnectedUserEntity, ConnectedUserProfile } from '@/store/slices/userSlice';
-import { contactInformationSchema } from '@/validations/profileSchemas';
+import { contactInformationSchema } from '../schemas';
 
 export const VALID_TABS = ['personal', 'contact', 'preferences', 'language', 'notifications', 'visibility'];
 
