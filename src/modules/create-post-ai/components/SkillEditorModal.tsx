@@ -37,16 +37,17 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
 
   React.useEffect(() => {
     setLocalSkill(skill ?? DEFAULT_SKILL);
-  }, [open, skill]);
+  }, [open, skill, mode]);
 
   const handleChange = (field: keyof LocalSkill, value: LocalSkill[keyof LocalSkill]) => {
     setLocalSkill((prev) => ({ ...prev, [field]: value }));
   };
 
   const isSaveDisabled =
-    !localSkill.name?.trim() || !localSkill.level || localSkill.percentage == null;
+    !localSkill.name?.trim() || !localSkill.level || !localSkill.percentage || localSkill.percentage <= 0;
 
   const handleSave = () => {
+    if (mode === "edit" && index === undefined) return;
     const numericLevel = Number(localSkill.level);
     if (onSave) {
       onSave({ ...localSkill, level: numericLevel });
@@ -56,12 +57,12 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
     if (skillType === "hard") {
       const hardSkill = { name: localSkill.name, level: numericLevel, percentage: localSkill.percentage, category: "" };
       mode === "edit"
-        ? dispatch(editHardSkill({ index: index!, updated: hardSkill }))
+        ? dispatch(editHardSkill({ index: index as number, updated: hardSkill }))
         : dispatch(addHardSkill(hardSkill));
     } else {
       const softSkill = { name: localSkill.name, level: numericLevel, percentage: localSkill.percentage };
       mode === "edit"
-        ? dispatch(editSoftSkill({ index: index!, updated: softSkill }))
+        ? dispatch(editSoftSkill({ index: index as number, updated: softSkill }))
         : dispatch(addSoftSkill(softSkill));
     }
     onClose();

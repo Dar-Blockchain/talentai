@@ -22,7 +22,10 @@ const PercentageField = ({ value, onChange }: Props) => {
         value={value}
         type="number"
         inputProps={{ min: PERCENTAGE_MIN, max: PERCENTAGE_MAX, inputMode: "numeric", "aria-label": t("create.post_form.labels.percentage") }}
-        onChange={(e) => onChange(Number(e.target.value))}
+        onChange={(e) => {
+          const val = Number(e.target.value);
+          onChange(isNaN(val) ? PERCENTAGE_MIN : Math.max(PERCENTAGE_MIN, Math.min(PERCENTAGE_MAX, val)));
+        }}
         sx={inputStyle}
       />
     </Box>

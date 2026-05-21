@@ -25,7 +25,7 @@ const PostPreview = ({ generating = false }: PostPreviewProps) => {
 
   const [open, setOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [selectedSkill, setSelectedSkill] = useState<any | null>(null);
+  const [selectedSkill, setSelectedSkill] = useState<{ name: string; level: number; percentage: number } | null>(null);
   const [selectedType, setSelectedType] = useState<"soft" | "hard">("hard");
 
   if (generating) return <LoadingState />;
@@ -44,7 +44,7 @@ const PostPreview = ({ generating = false }: PostPreviewProps) => {
   const labelT = i18n.getFixedT(labelLanguage, "posts");
   const sliderColor = thresholdScore >= 70 ? "#16A34A" : thresholdScore >= 40 ? "#D97706" : "#DC2626";
 
-  const handleEdit = (skill: any, index: number, type: "hard" | "soft") => {
+  const handleEdit = (skill: { name: string; level: number; percentage: number }, index: number, type: "hard" | "soft") => {
     setSelectedSkill(skill); setSelectedIndex(index); setSelectedType(type); setOpen(true);
   };
   const handleAdd = (type: "hard" | "soft") => {

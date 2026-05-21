@@ -98,7 +98,13 @@ const CurrencyDropdown: React.FC<Props> = ({ currencies, value, onChange, placeh
     <>
       <Box ref={triggerRef} sx={{ position: "relative", width: "100%" }}>
         <Box
+          role="combobox"
+          tabIndex={0}
+          aria-expanded={open}
+          aria-haspopup="listbox"
+          aria-label={placeholder}
           onClick={() => (open ? setOpen(false) : openDropdown())}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open ? setOpen(false) : openDropdown(); } else if (e.key === "Escape") { setOpen(false); } }}
           sx={{
             height: 40,
             px: 1.5,
@@ -112,6 +118,7 @@ const CurrencyDropdown: React.FC<Props> = ({ currencies, value, onChange, placeh
             userSelect: "none",
             transition: "border 0.15s",
             "&:hover": { borderColor: open ? "#0891B2" : "#9CA3AF" },
+            "&:focus-visible": { outline: "2px solid #0891B2", outlineOffset: 2 },
           }}
         >
           {selected ? (

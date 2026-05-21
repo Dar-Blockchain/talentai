@@ -9,10 +9,16 @@ import SectionCard from "@/components/ui/SectionCard";
 import SkillChip from "./SkillChip";
 import AddSkillButton from "./AddSkillButton";
 
+interface EditableSkill {
+  name: string;
+  level: number;
+  percentage: number;
+}
+
 interface Props {
   hardSkills: HardSkill[];
   softSkills: SoftSkill[];
-  onEdit: (skill: any, index: number, type: "hard" | "soft") => void;
+  onEdit: (skill: EditableSkill, index: number, type: "hard" | "soft") => void;
   onAdd: (type: "hard" | "soft") => void;
 }
 

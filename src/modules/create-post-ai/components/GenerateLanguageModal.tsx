@@ -83,7 +83,12 @@ const GenerateLanguageModal: React.FC<Props> = ({ open, loading, onConfirm, onCl
           return (
             <Box
               key={lang.code}
+              role="button"
+              tabIndex={loading ? -1 : 0}
+              aria-pressed={active}
+              aria-label={lang.label}
               onClick={() => !loading && setSelected(lang.code)}
+              onKeyDown={(e) => { if (!loading && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); setSelected(lang.code); } }}
               sx={{
                 flex: 1,
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 0.75,
@@ -92,6 +97,7 @@ const GenerateLanguageModal: React.FC<Props> = ({ open, loading, onConfirm, onCl
                 bgcolor: active ? "#fff" : "transparent",
                 boxShadow: active ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
                 transition: "all 0.18s",
+                "&:focus-visible": { outline: "2px solid #0D9488", outlineOffset: 2 },
               }}
             >
               <img
@@ -110,7 +116,11 @@ const GenerateLanguageModal: React.FC<Props> = ({ open, loading, onConfirm, onCl
 
       {/* Save as default checkbox */}
       <Box
+        role="checkbox"
+        tabIndex={loading ? -1 : 0}
+        aria-checked={saveAsDefault}
         onClick={() => !loading && setSaveAsDefault((v) => !v)}
+        onKeyDown={(e) => { if (!loading && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); setSaveAsDefault((v) => !v); } }}
         sx={{
           display: "flex", alignItems: "center", gap: 1,
           cursor: loading ? "default" : "pointer",
@@ -120,6 +130,7 @@ const GenerateLanguageModal: React.FC<Props> = ({ open, loading, onConfirm, onCl
           bgcolor: saveAsDefault ? TEAL_BG : "#FAFAFA",
           transition: "all 0.15s",
           userSelect: "none",
+          "&:focus-visible": { outline: "2px solid #0D9488", outlineOffset: 2 },
         }}
       >
         {saveAsDefault

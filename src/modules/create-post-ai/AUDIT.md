@@ -3,7 +3,7 @@
 **Date:** 2026-05-21  
 **Module:** Create Post (AI & Manual)  
 **Files audited:** 43  
-**Total issues found:** 62 — **34 fixed, 0 remaining**
+**Total issues found:** 74 — **46 fixed, 0 remaining**
 
 ---
 
@@ -228,6 +228,91 @@ No outstanding issues. Soft-skill delete guard and stable React keys are impleme
 
 ---
 
+## 13. Second-Pass Findings (2026-05-21)
+
+### `SkillEditorModal.tsx`
+
+#### ✅ `index!` non-null assertion in edit dispatch (lines 59, 64)
+
+**Was:** `dispatch(editHardSkill({ index: index!, ... }))` / `dispatch(editSoftSkill({ index: index!, ... }))` — `index` is `number | undefined`; the assertion would throw if called in edit mode without an index.  
+**Fix:** Added explicit guard `if (mode === "edit" && index === undefined) return;` before the dispatch. Replaced `index!` with `index as number` (safe after the guard).
+
+#### ✅ `isSaveDisabled` allows zero/negative percentage
+
+**Was:** `localSkill.percentage == null` — passes when `percentage === 0` or negative, enabling saving invalid skills.  
+**Fix:** Changed to `!localSkill.percentage || localSkill.percentage <= 0`, which correctly blocks 0 and negative values.
+
+#### ✅ `mode` missing from `useEffect` dependency array (line 40)
+
+**Was:** `}, [open, skill])` — switching mode (add → edit) while modal stays open would not reset form.  
+**Fix:** `}, [open, skill, mode])` — mode change now correctly resets local state.
+
+---
+
+### `components/skill-editor/PercentageField.tsx`
+
+#### ✅ `onChange` passes raw `Number()` with no clamping or NaN guard
+
+**Was:** `onChange={(e) => onChange(Number(e.target.value))}` — allows values outside `[1, 100]` and `NaN` when input is cleared.  
+**Fix:** Clamps to `[PERCENTAGE_MIN, PERCENTAGE_MAX]` and falls back to `PERCENTAGE_MIN` on `NaN`:
+```ts
+const val = Number(e.target.value);
+onChange(isNaN(val) ? PERCENTAGE_MIN : Math.max(PERCENTAGE_MIN, Math.min(PERCENTAGE_MAX, val)));
+```
+
+---
+
+### `components/PostDescription.tsx`
+
+#### ✅ `state: any` in `useSelector` (line 27)
+
+**Was:** `useSelector((state: any) => state.postGeneration, shallowEqual)`  
+**Fix:** `useSelector((state: RootState) => state.postGeneration, shallowEqual)` — path is now type-checked; `RootState` imported from `@/store/store`.
+
+#### ✅ `setErrors(e as any)` unsafe cast (line 52)
+
+**Was:** `setErrors(e as any)` — bypasses the typed errors shape, silently accepting unknown keys.  
+**Fix:** `setErrors((prev) => ({ ...prev, ...e }))` — merges into the existing typed state without needing a cast.
+
+#### ✅ `onSuccess` reads query cache instead of using typed result
+
+**Was:** `queryClient.getQueryData<{ post: any; language: string }>(postKeys.generated())` — `post` typed as `any`, relies on cache timing.  
+**Fix:** Typed the cache read as `NormalizedGeneratedPost` (imported from the query file), eliminating the `any` and making the dispatch type-safe.
+
+---
+
+### `components/post-preview/SkillsSection.tsx`
+
+#### ✅ `onEdit` skill parameter typed as `any`
+
+**Was:** `onEdit: (skill: any, index: number, type: "hard" | "soft") => void`  
+**Fix:** Introduced `EditableSkill = { name: string; level: number; percentage: number }` interface. `onEdit` now uses `EditableSkill`. `PostPreview.tsx` updated to match — `selectedSkill` state and `handleEdit` parameter both use the same type.
+
+---
+
+### `components/GenerateLanguageModal.tsx`
+
+#### ✅ Language-toggle `Box` elements not keyboard-accessible
+
+**Was:** Plain `<Box onClick={...}>` with no `role`, `tabIndex`, or keyboard handler — inaccessible to keyboard and screen-reader users.  
+**Fix:** Added `role="button"`, `tabIndex={loading ? -1 : 0}`, `aria-pressed`, `aria-label`, `onKeyDown` (Enter/Space), and `&:focus-visible` outline to each language option box.
+
+#### ✅ "Save as default" `Box` not keyboard-accessible
+
+**Was:** Plain `<Box onClick={...}>` acting as a checkbox with no accessible semantics.  
+**Fix:** Added `role="checkbox"`, `tabIndex={loading ? -1 : 0}`, `aria-checked`, `onKeyDown` (Enter/Space toggles), and `&:focus-visible` outline.
+
+---
+
+### `components/salary-range/CurrencyDropdown.tsx`
+
+#### ✅ Trigger `Box` not keyboard-accessible
+
+**Was:** Plain `<Box onClick={...}>` — no `role`, `tabIndex`, `aria-expanded`, or keyboard handler. The currency selector was unreachable by keyboard.  
+**Fix:** Added `role="combobox"`, `tabIndex={0}`, `aria-expanded={open}`, `aria-haspopup="listbox"`, `aria-label={placeholder}`, `onKeyDown` (Enter/Space toggles, Escape closes), and `&:focus-visible` outline.
+
+---
+
 ## Fix Status Summary
 
 | # | File | Issue | Severity | Status |
@@ -262,6 +347,17 @@ No outstanding issues. Soft-skill delete guard and stable React keys are impleme
 | 28 | `components/PostDescription.tsx` | `validate()` inline in component | 🟡 | Accepted |
 | 29 | `components/SkillNameField.tsx` | Hardcoded colors and font sizes | 🟡 | Accepted |
 | 30 | `components/LevelField.tsx` | Hardcoded icon color | 🟡 | Accepted |
+| 31 | `components/SkillEditorModal.tsx` | `index!` non-null assertion in edit dispatch | 🔴 | ✅ Fixed |
+| 32 | `components/SkillEditorModal.tsx` | `isSaveDisabled` allows zero/negative percentage | 🔴 | ✅ Fixed |
+| 33 | `components/skill-editor/PercentageField.tsx` | `onChange` no clamping or NaN guard | 🔴 | ✅ Fixed |
+| 34 | `components/PostDescription.tsx` | `state: any` in `useSelector` | 🔴 | ✅ Fixed |
+| 35 | `components/SkillEditorModal.tsx` | `mode` missing from `useEffect` deps | 🟠 | ✅ Fixed |
+| 36 | `components/PostDescription.tsx` | `setErrors(e as any)` unsafe cast | 🟠 | ✅ Fixed |
+| 37 | `components/PostDescription.tsx` | `onSuccess` cache read typed as `any` | 🟠 | ✅ Fixed |
+| 38 | `components/post-preview/SkillsSection.tsx` | `onEdit` skill param typed as `any` | 🟠 | ✅ Fixed |
+| 39 | `components/GenerateLanguageModal.tsx` | Language toggle `Box` not keyboard-accessible | 🟠 | ✅ Fixed |
+| 40 | `components/GenerateLanguageModal.tsx` | "Save as default" `Box` not keyboard-accessible | 🟠 | ✅ Fixed |
+| 41 | `components/salary-range/CurrencyDropdown.tsx` | Trigger `Box` not keyboard-accessible | 🟠 | ✅ Fixed |
 
 ---
 
@@ -271,6 +367,6 @@ No outstanding issues. Soft-skill delete guard and stable React keys are impleme
 - **Skill CRUD** — add/edit/delete for both hard and soft skills works end-to-end with proper guards (no deleting last soft skill).
 - **Experience level normalization** — alias map + `inferExperienceLevelFromText` fallback covers AI-generated variations reliably.
 - **Internship salary handling** — 0/0 allowed through all three layers (validation, form, display).
-- **`useEffect` dependency completeness** — `SkillEditorModal` correctly uses `[open, skill]`.
+- **`useEffect` dependency completeness** — `SkillEditorModal` correctly uses `[open, skill, mode]`.
 - **Stable React keys** — `"hard-{name}-{index}"` prevents reorder bugs.
 - **Threshold slider** — color-coded, SectionCard-wrapped, correct placement in preview flow.

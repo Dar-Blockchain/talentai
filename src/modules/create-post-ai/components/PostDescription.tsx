@@ -6,14 +6,14 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { setEmploymentType, setExpirationDate, setPromptDescription, setWorkMode, updateSalaryField, setGeneratedPost } from "../store/createPostSlice";
-import { AppDispatch } from "@/store/store";
+import { AppDispatch, RootState } from "@/store/store";
 import GenerateLanguageModal, { GENERATE_LANG_KEY } from "./GenerateLanguageModal";
 import CardHeader from "./post-description/CardHeader";
 import PromptField from "./post-description/PromptField";
 import RoleFields from "./post-description/RoleFields";
 import SalaryFields from "./post-description/SalaryFields";
 import GenerateButton from "./post-description/GenerateButton";
-import { useGeneratePostMutation, postKeys } from "../queries/useCreatePostQueries";
+import { useGeneratePostMutation, postKeys, NormalizedGeneratedPost } from "../queries/useCreatePostQueries";
 import { useToast } from "@/hooks/useToast";
 
 interface PostDescriptionProps {
@@ -24,7 +24,7 @@ const PostDescription = ({ onGeneratingChange }: PostDescriptionProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const queryClient = useQueryClient();
   const { promptDescription, salary, workMode, employmentType, expirationDate, interviewLanguages } = useSelector(
-    (state: any) => state.postGeneration,
+    (state: RootState) => state.postGeneration,
     shallowEqual
   );
   const { t } = useTranslation("posts");
@@ -49,7 +49,7 @@ const PostDescription = ({ onGeneratingChange }: PostDescriptionProps) => {
     }
     if (!employmentType) e.employmentType = t("create.form.error_required");
     if (!workMode) e.workMode = t("create.form.error_required");
-    setErrors(e as any);
+    setErrors((prev) => ({ ...prev, ...e }));
     return Object.keys(e).length === 0;
   };
 
@@ -59,7 +59,8 @@ const PostDescription = ({ onGeneratingChange }: PostDescriptionProps) => {
       { jobDescription: promptDescription, salary, workMode, contractType: employmentType, language, interviewLanguages },
       {
         onSuccess: () => {
-          const cached = queryClient.getQueryData<{ post: any; language: string }>(postKeys.generated());
+          // mutation's own onSuccess sets cache first; read the normalized result from it
+          const cached = queryClient.getQueryData<NormalizedGeneratedPost>(postKeys.generated());
           if (cached) dispatch(setGeneratedPost({ post: cached.post, language: cached.language }));
         },
         onSettled: () => onGeneratingChange?.(false),
