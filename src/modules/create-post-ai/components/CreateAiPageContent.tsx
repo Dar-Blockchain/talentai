@@ -2,7 +2,7 @@ import React, { memo } from "react";
 import { Box, Typography } from "@mui/material";
 import LockOutlined from "@mui/icons-material/LockOutlined";
 import Link from "next/link";
-import CreateStepper from "../CreateStepper";
+import CreatePostPage from "./CreatePostPage";
 
 interface Props {
   postsUsed: number;
@@ -30,7 +30,7 @@ const CreateAiPageContent = memo(function CreateAiPageContent({ postsUsed, posts
     );
   }
 
-  return <CreateStepper />;
+  return <CreatePostPage />;
 });
 
 export default CreateAiPageContent;

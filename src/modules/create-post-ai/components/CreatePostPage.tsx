@@ -4,16 +4,16 @@ import WorkOutlineOutlined from "@mui/icons-material/WorkOutlineOutlined";
 import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { setInterviewLanguages, selectGeneratedPost } from "./store/createPostSlice";
+import { setInterviewLanguages, selectGeneratedPost } from "../store/createPostSlice";
 import { selectSavedPostId } from "@/store/slices/postSlice";
-import { useAiPostStepper } from "./hooks";
-import PostDetailsStep from "./components/PostDetailsStep";
-import InterviewLanguagesModal from "./components/InterviewLanguagesModal";
+import { useAiPostStepper } from "../hooks";
+import PostDetailsStep from "./PostDetailsStep";
+import InterviewLanguagesModal from "./InterviewLanguagesModal";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 
 const TEAL = "#0D9488";
 
-const CreateStepper: React.FC = () => {
+const CreatePostPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const generatedPost = useSelector(selectGeneratedPost);
   const interviewLanguages = useSelector((state: RootState) => state.postGeneration.interviewLanguages);
@@ -96,4 +96,4 @@ const CreateStepper: React.FC = () => {
   );
 };
 
-export default CreateStepper;
+export default CreatePostPage;
