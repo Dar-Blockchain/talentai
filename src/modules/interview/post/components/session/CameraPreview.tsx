@@ -1,12 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Box, Typography, CircularProgress, Button } from '@mui/material';
 import VideocamOffIcon from '@mui/icons-material/VideocamOff';
-import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
 import { useTranslation } from 'react-i18next';
 import { type CameraStatus, type InterviewStatus } from '../../types/interview';
 
-const BAR_COUNT = 28;
+const BAR_COUNT = 5;
+const BAR_MAX   = 22;
+const SPEAK_THRESHOLD = 7;
 
 interface CameraPreviewProps {
   videoRef: React.RefObject<HTMLVideoElement>;
@@ -36,6 +37,9 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
   const animFrameRef = useRef<number | null>(null);
   const analyserRef  = useRef<AnalyserNode | null>(null);
 
+  const avgHeight   = bars.reduce((a, b) => a + b, 0) / BAR_COUNT;
+  const isSpeaking  = isActive && avgHeight > SPEAK_THRESHOLD;
+
   useEffect(() => {
     if (!audioContextRef?.current || !isActive || analyserRef.current) return;
     const ctx      = audioContextRef.current;
@@ -59,13 +63,13 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
         setBars(Array.from({ length: BAR_COUNT }, (_, i) => {
           const slice = data.slice(i * binSize, (i + 1) * binSize);
           const avg   = slice.reduce((a, b) => a + b, 0) / slice.length;
-          return Math.max(3, Math.round((avg / 255) * 40));
+          return Math.max(3, Math.round((avg / 255) * BAR_MAX));
         }));
       } else {
         frame++;
-        const time = frame / 10;
+        const time = frame / 12;
         setBars(Array.from({ length: BAR_COUNT }, (_, i) => {
-          const h = 3 + Math.abs(Math.sin(time + i * 0.4) * 18 + Math.sin(time * 1.4 + i * 0.9) * 10);
+          const h = 3 + Math.abs(Math.sin(time + i * 0.85) * 10 + Math.sin(time * 1.6 + i * 0.55) * 6);
           return Math.round(h);
         }));
       }
@@ -122,7 +126,7 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
         {/* ── Overlays — always shown when camera is granted ────────────────── */}
         {cameraStatus === 'granted' && (<>
 
-          {/* Corner brackets — same in both states */}
+          {/* Corner brackets */}
           {([
             ['top',    'left',  '3px 0 0 0'],
             ['top',    'right', '0 3px 0 0'],
@@ -139,7 +143,7 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
             }} />
           ))}
 
-          {/* Top-left badge: REC when active, PREVIEW when lobby */}
+          {/* Top-left badge: REC / PREVIEW */}
           {!isConnecting && (
             isActive ? (
               <Box sx={{ position: 'absolute', top: 10, left: 10, display: 'flex', alignItems: 'center', gap: 0.5, bgcolor: 'rgba(0,0,0,0.52)', backdropFilter: 'blur(12px)', px: 0.875, py: 0.375, borderRadius: '6px', border: '1px solid rgba(255,255,255,0.07)' }}>
@@ -154,58 +158,53 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
             )
           )}
 
-          {/* Top-right badge: connecting spinner > waveform when active > mic-off when lobby */}
+          {/* ── Top-right: connecting spinner / audio bars / muted icon ──── */}
           {isConnecting ? (
             <Box sx={{ position: 'absolute', top: 10, right: 10, display: 'flex', alignItems: 'center', gap: 0.75, bgcolor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(16px)', px: 1.25, py: 0.625, borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)' }}>
               <CircularProgress size={9} sx={{ color: '#6AD39C' }} />
               <Typography sx={{ fontSize: '0.6rem', fontFamily: 'Poppins', color: 'rgba(255,255,255,0.75)', fontWeight: 600, letterSpacing: '0.06em' }}>{t('camera.connecting')}</Typography>
             </Box>
           ) : isActive ? (
-            /* ── Active: glowing pill with live waveform ─────────────────── */
+            /* ── Active: signal bars ──────────────────────────────────────── */
             <Box sx={{
               position: 'absolute', top: 10, right: 10,
-              display: 'flex', alignItems: 'center', gap: 0.875,
-              bgcolor: 'rgba(10,40,35,0.78)', backdropFilter: 'blur(16px)',
-              px: 1.125, py: 0.625, borderRadius: '20px',
-              border: '1px solid rgba(106,211,156,0.4)',
-              boxShadow: '0 0 14px rgba(106,211,156,0.22), inset 0 1px 0 rgba(255,255,255,0.06)',
+              display: 'flex', alignItems: 'center',
+              bgcolor: 'rgba(5,18,14,0.75)', backdropFilter: 'blur(20px)',
+              px: 1, py: 0.75, borderRadius: '10px',
+              border: `1px solid ${isSpeaking ? 'rgba(106,211,156,0.4)' : 'rgba(255,255,255,0.08)'}`,
+              boxShadow: isSpeaking
+                ? '0 0 14px rgba(106,211,156,0.22), inset 0 1px 0 rgba(255,255,255,0.06)'
+                : 'inset 0 1px 0 rgba(255,255,255,0.04)',
+              transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
             }}>
-              {/* Pulsing ring dot */}
-              <Box sx={{ position: 'relative', width: 8, height: 8, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Box sx={{ position: 'absolute', width: 8, height: 8, borderRadius: '50%', bgcolor: 'rgba(106,211,156,0.25)', animation: 'micRing 1.4s ease-out infinite', '@keyframes micRing': { '0%': { transform: 'scale(1)', opacity: 0.8 }, '100%': { transform: 'scale(2.4)', opacity: 0 } } }} />
-                <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#6AD39C', flexShrink: 0 }} />
-              </Box>
-              {/* Gradient bars */}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: '1.5px', height: 18, width: 44 }}>
-                {bars.map((h, i) => (
+              <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: '3px', height: BAR_MAX }}>
+              {bars.map((h, i) => {
+                const barH = Math.min(h, BAR_MAX);
+                const pct  = barH / BAR_MAX;
+                return (
                   <Box key={i} sx={{
-                    flex: 1, minWidth: 0,
-                    height: `${Math.min(h * 0.45, 18)}px`,
-                    borderRadius: '2px',
-                    background: `linear-gradient(to top, #10b981, #6AD39C)`,
-                    opacity: 0.85 + (Math.min(h * 0.45, 18) / 18) * 0.15,
-                    transition: 'height 0.07s ease',
+                    width: 4,
+                    height: `${barH}px`,
+                    borderRadius: '3px 3px 2px 2px',
+                    background: isSpeaking
+                      ? `linear-gradient(to top, #059669 0%, #10b981 50%, rgba(106,211,156,${0.7 + pct * 0.3}) 100%)`
+                      : `rgba(255,255,255,${0.15 + pct * 0.25})`,
+                    boxShadow: isSpeaking && pct > 0.55
+                      ? `0 0 8px rgba(106,211,156,${(pct - 0.55) * 0.7})`
+                      : 'none',
+                    transition: 'height 0.06s ease, background 0.18s ease',
                   }} />
-                ))}
+                );
+              })}
               </Box>
             </Box>
           ) : (
-            /* ── Lobby: muted pill ────────────────────────────────────────── */
-            <Box sx={{
-              position: 'absolute', top: 10, right: 10,
-              display: 'flex', alignItems: 'center', gap: 0.75,
-              bgcolor: 'rgba(0,0,0,0.48)', backdropFilter: 'blur(12px)',
-              px: 1.125, py: 0.625, borderRadius: '20px',
-              border: '1px solid rgba(255,255,255,0.07)',
-            }}>
-              <MicOffIcon sx={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
-              <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: '1.5px', height: 14, width: 36 }}>
-                {[3, 5, 4, 6, 4, 5, 3, 5, 6, 4, 5, 3].map((h, i) => (
-                  <Box key={i} sx={{ flex: 1, minWidth: 0, height: `${h}px`, borderRadius: '1.5px', background: 'rgba(255,255,255,0.12)' }} />
-                ))}
-              </Box>
+            /* ── Lobby: muted icon ────────────────────────────────────────── */
+            <Box sx={{ position: 'absolute', top: 10, right: 10, display: 'flex', alignItems: 'center', bgcolor: 'rgba(0,0,0,0.48)', backdropFilter: 'blur(12px)', p: 0.625, borderRadius: '8px', border: '1px solid rgba(255,255,255,0.07)' }}>
+              <MicOffIcon sx={{ fontSize: 12, color: 'rgba(255,255,255,0.28)' }} />
             </Box>
           )}
+
         </>)}
       </Box>
     </Box>

@@ -1,7 +1,8 @@
 import React from 'react';
-import { Box, Button } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import GraphicEqIcon from '@mui/icons-material/GraphicEq';
+import SkipNextIcon from '@mui/icons-material/SkipNext';
 import { useTranslation } from 'react-i18next';
 import { type InterviewStatus, type AgentState } from '../../types/interview';
 
@@ -31,7 +32,9 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
   const isDisabled    = isProcessing || isSpeaking || !hasTranscript;
 
   return (
-    <Box sx={{ p: { xs: 0.75, md: 1 } }}>
+    <Box sx={{ p: { xs: 0.75, md: 1 }, display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+
+      {/* ── Submit button ── */}
       <Button
         variant="contained"
         fullWidth
@@ -77,20 +80,32 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
           : isSpeaking
           ? t('agent.listening')
           : !hasTranscript
-          ? t('agent.waiting_for_speech', { defaultValue: 'Speak your answer…' })
+          ? t('agent.waiting', { defaultValue: 'Waiting…' })
           : t('agent.submit')}
       </Button>
+
+      {/* ── Skip button ── */}
       <Button
-        variant="text"
+        variant="outlined"
         fullWidth
         onClick={onSkipQuestion}
         disabled={isProcessing}
+        startIcon={<SkipNextIcon sx={{ fontSize: '15px !important' }} />}
         sx={{
-          fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.72rem', mt: 0.25,
+          fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.72rem',
+          py: 0.6, borderRadius: '10px', textTransform: 'none',
           color: isProcessing ? '#d1d5db' : '#9ca3af',
-          textTransform: 'none',
-          '&:hover': { color: '#6b7280', bgcolor: 'transparent' },
-          '&.Mui-disabled': { color: '#d1d5db' },
+          borderColor: isProcessing ? 'rgba(209,213,219,0.4)' : 'rgba(209,213,219,0.7)',
+          background: 'transparent',
+          '&:hover': {
+            color: '#6b7280',
+            borderColor: 'rgba(156,163,175,0.8)',
+            background: 'rgba(243,244,246,0.6)',
+          },
+          '&.Mui-disabled': {
+            color: '#d1d5db',
+            borderColor: 'rgba(209,213,219,0.3)',
+          },
         }}
       >
         {t('agent.skip_question', { defaultValue: 'Skip question' })}

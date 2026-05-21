@@ -58,7 +58,7 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
 
       {interviewStatus === 'active' && <AgentHeader agentState={agentState} />}
 
-      <Box sx={{ p: { xs: 1.5, md: 2 }, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+      <Box sx={{ p: { xs: 1.5, md: 2 }, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: interviewStatus === 'active' ? 'flex-start' : 'center' }}>
         {interviewStatus === 'idle' && (
           <ReadinessChecklist
             checks={checks}
@@ -72,10 +72,57 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
         )}
 
         {interviewStatus === 'connecting' && (
-          <Box sx={{ textAlign: 'center', py: 1 }}>
-            <CircularProgress size={36} sx={{ color: '#6AD39C', mb: 1.25 }} />
-            <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.88rem', color: '#111827', mb: 0.35 }}>{t('container.starting_title')}</Typography>
-            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', color: '#6b7280' }}>{t('container.starting_subtitle')}</Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', py: 1.5, gap: 0 }}>
+
+            {/* Layered spinner rings */}
+            <Box sx={{ position: 'relative', width: 68, height: 68, mb: 2.5, flexShrink: 0 }}>
+              <Box sx={{
+                position: 'absolute', inset: 0, borderRadius: '50%',
+                border: '2px solid rgba(106,211,156,0.12)',
+              }} />
+              <Box sx={{
+                position: 'absolute', inset: 0, borderRadius: '50%',
+                border: '2px solid transparent',
+                borderTopColor: '#6AD39C',
+                animation: 'spinOuter 1.1s linear infinite',
+                '@keyframes spinOuter': { to: { transform: 'rotate(360deg)' } },
+              }} />
+              <Box sx={{
+                position: 'absolute', inset: 10, borderRadius: '50%',
+                border: '2px solid transparent',
+                borderTopColor: 'rgba(106,211,156,0.45)',
+                animation: 'spinInner 0.75s linear infinite reverse',
+                '@keyframes spinInner': { to: { transform: 'rotate(360deg)' } },
+              }} />
+              <Box sx={{
+                position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Box sx={{
+                  width: 10, height: 10, borderRadius: '50%', bgcolor: '#6AD39C',
+                  animation: 'dotPulse 1.4s ease-in-out infinite',
+                  '@keyframes dotPulse': { '0%,100%': { opacity: 1, transform: 'scale(1)' }, '50%': { opacity: 0.4, transform: 'scale(0.6)' } },
+                }} />
+              </Box>
+            </Box>
+
+            <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1rem', color: '#0d1117', letterSpacing: '-0.01em', mb: 0.5 }}>
+              {t('container.starting_title')}
+            </Typography>
+            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.74rem', color: '#6b7280', lineHeight: 1.65, maxWidth: 210 }}>
+              {t('container.starting_subtitle')}
+            </Typography>
+
+            {/* Step dots */}
+            <Box sx={{ display: 'flex', gap: 0.75, mt: 2.5 }}>
+              {[0, 1, 2].map((i) => (
+                <Box key={i} sx={{
+                  width: 6, height: 6, borderRadius: '50%',
+                  bgcolor: '#6AD39C',
+                  animation: `stepDot 1.2s ease-in-out ${i * 0.2}s infinite`,
+                  '@keyframes stepDot': { '0%,100%': { opacity: 0.25, transform: 'scale(0.8)' }, '50%': { opacity: 1, transform: 'scale(1.2)' } },
+                }} />
+              ))}
+            </Box>
           </Box>
         )}
 
@@ -267,10 +314,74 @@ const AnalyzingSpinner: React.FC<{ waitDots: string }> = ({ waitDots }) => {
   const { t } = useTranslation('interview');
 
   return (
-    <Box sx={{ textAlign: 'center', py: 1 }}>
-      <CircularProgress size={36} sx={{ color: '#6AD39C', mb: 1.25 }} />
-      <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.88rem', color: '#111827', mb: 0.35 }}>{t('container.analyzing_title')}{waitDots}</Typography>
-      <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', color: '#6b7280' }}>{t('container.analyzing_subtitle')}</Typography>
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', py: 1.5, gap: 0 }}>
+
+      {/* Orbital rings */}
+      <Box sx={{ position: 'relative', width: 68, height: 68, mb: 2.5, flexShrink: 0 }}>
+        {/* Static track */}
+        <Box sx={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '2px solid rgba(106,211,156,0.1)' }} />
+        {/* Fast outer arc */}
+        <Box sx={{
+          position: 'absolute', inset: 0, borderRadius: '50%',
+          border: '2px solid transparent',
+          borderTopColor: '#10b981',
+          borderRightColor: 'rgba(106,211,156,0.3)',
+          animation: 'analyzeOuter 0.9s linear infinite',
+          '@keyframes analyzeOuter': { to: { transform: 'rotate(360deg)' } },
+        }} />
+        {/* Slow inner arc (opposite direction) */}
+        <Box sx={{
+          position: 'absolute', inset: 12, borderRadius: '50%',
+          border: '2px solid transparent',
+          borderTopColor: 'rgba(106,211,156,0.5)',
+          animation: 'analyzeInner 1.6s linear infinite reverse',
+          '@keyframes analyzeInner': { to: { transform: 'rotate(360deg)' } },
+        }} />
+        {/* Center AI chip */}
+        <Box sx={{
+          position: 'absolute', inset: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Box sx={{
+            width: 22, height: 22, borderRadius: '6px',
+            background: 'linear-gradient(135deg, #6AD39C 0%, #10453F 100%)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 0 12px rgba(106,211,156,0.4)',
+            animation: 'chipGlow 2s ease-in-out infinite',
+            '@keyframes chipGlow': { '0%,100%': { boxShadow: '0 0 8px rgba(106,211,156,0.3)' }, '50%': { boxShadow: '0 0 18px rgba(106,211,156,0.55)' } },
+          }}>
+            <AutorenewIcon sx={{ fontSize: 13, color: '#fff', animation: 'spin 2s linear infinite', '@keyframes spin': { to: { transform: 'rotate(360deg)' } } }} />
+          </Box>
+        </Box>
+      </Box>
+
+      <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1rem', color: '#0d1117', letterSpacing: '-0.01em', mb: 0.5 }}>
+        {t('container.analyzing_title')}{waitDots}
+      </Typography>
+      <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.74rem', color: '#6b7280', lineHeight: 1.65, maxWidth: 210, mb: 2.25 }}>
+        {t('container.analyzing_subtitle')}
+      </Typography>
+
+      {/* Progress steps */}
+      <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 0.875 }}>
+        {[
+          { label: 'Reviewing your answers', delay: '0s' },
+          { label: 'Scoring each response',  delay: '0.3s' },
+          { label: 'Building your report',   delay: '0.6s' },
+        ].map(({ label, delay }) => (
+          <Box key={label} sx={{ display: 'flex', alignItems: 'center', gap: 1.25, px: 1.25, py: 0.75, borderRadius: '10px', bgcolor: '#f9fafb', border: '1px solid #f0f1f3' }}>
+            <Box sx={{
+              width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+              bgcolor: '#6AD39C',
+              animation: `stepDot 1.4s ease-in-out ${delay} infinite`,
+              '@keyframes stepDot': { '0%,100%': { opacity: 0.3 }, '50%': { opacity: 1 } },
+            }} />
+            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.7rem', color: '#4b5563', lineHeight: 1 }}>
+              {label}
+            </Typography>
+          </Box>
+        ))}
+      </Box>
     </Box>
   );
 };
@@ -280,29 +391,83 @@ const CompletionCard: React.FC = () => {
   const { t } = useTranslation('interview');
 
   return (
-    <Box sx={{ textAlign: 'center', py: 1 }}>
-      <Box sx={{
-        width: 48, height: 48, borderRadius: '50%', mx: 'auto', mb: 1.25,
-        bgcolor: 'rgba(106,211,156,0.1)',
-        border: '2px solid rgba(106,211,156,0.3)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
-        <CheckCircleOutlineIcon sx={{ fontSize: 28, color: '#6AD39C' }} />
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', py: 1.5, gap: 0 }}>
+
+      {/* ── Animated success icon ── */}
+      <Box sx={{ position: 'relative', width: 72, height: 72, mb: 2, flexShrink: 0 }}>
+        {/* Outer pulsing ring */}
+        <Box sx={{
+          position: 'absolute', inset: -6,
+          borderRadius: '50%',
+          border: '1.5px solid rgba(106,211,156,0.3)',
+          animation: 'completionRing 2.4s ease-out infinite',
+          '@keyframes completionRing': {
+            '0%':   { transform: 'scale(0.85)', opacity: 0.8 },
+            '60%':  { transform: 'scale(1.12)', opacity: 0.15 },
+            '100%': { transform: 'scale(1.12)', opacity: 0 },
+          },
+        }} />
+        {/* Inner circle */}
+        <Box sx={{
+          width: '100%', height: '100%', borderRadius: '50%',
+          background: 'linear-gradient(135deg, rgba(106,211,156,0.18) 0%, rgba(16,185,129,0.1) 100%)',
+          border: '2px solid rgba(106,211,156,0.45)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 0 24px rgba(106,211,156,0.15)',
+        }}>
+          <CheckCircleOutlineIcon sx={{ fontSize: 34, color: '#10b981' }} />
+        </Box>
       </Box>
-      <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.88rem', color: '#111827', mb: 0.35 }}>
+
+      {/* ── Title ── */}
+      <Typography sx={{
+        fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.05rem',
+        color: '#0d1117', letterSpacing: '-0.01em', mb: 0.5,
+      }}>
         {t('ended.title')}
       </Typography>
-      <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', color: '#6b7280', lineHeight: 1.5 }}>
+
+      {/* ── Subtitle ── */}
+      <Typography sx={{
+        fontFamily: 'Poppins', fontSize: '0.75rem',
+        color: '#6b7280', lineHeight: 1.65, mb: 2.25,
+        maxWidth: 220,
+      }}>
         {t('ended.subtitle')}
       </Typography>
-      <Box sx={{
-        mt: 1.25, px: 1.5, py: 0.875, borderRadius: '10px',
-        bgcolor: 'rgba(106,211,156,0.06)', border: '1px solid rgba(106,211,156,0.2)',
-      }}>
-        <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.7rem', color: '#10453F' }}>
-          {t('ended.redirect')}
-        </Typography>
+
+      {/* ── Divider ── */}
+      <Box sx={{ width: '100%', height: '1px', bgcolor: '#f0f1f3', mb: 2.25 }} />
+
+      {/* ── What happens next ── */}
+      <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+        {[
+          { icon: '📊', label: 'Your answers are being analyzed by AI' },
+          { icon: '📩', label: 'Results will be sent to the recruiter' },
+          { icon: '✅', label: 'You\'ll be notified once reviewed' },
+        ].map(({ icon, label }) => (
+          <Box key={label} sx={{
+            display: 'flex', alignItems: 'center', gap: 1.25,
+            px: 1.25, py: 0.875, borderRadius: '10px',
+            bgcolor: '#f9fafb', border: '1px solid #f0f1f3',
+            textAlign: 'left',
+          }}>
+            <Typography sx={{ fontSize: '0.9rem', lineHeight: 1, flexShrink: 0 }}>{icon}</Typography>
+            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.7rem', color: '#4b5563', lineHeight: 1.5 }}>
+              {label}
+            </Typography>
+          </Box>
+        ))}
       </Box>
+
+      {/* ── Redirect notice ── */}
+      <Typography sx={{
+        fontFamily: 'Poppins', fontSize: '0.65rem', color: '#b0b7c3',
+        mt: 2, lineHeight: 1.5,
+      }}>
+        {t('ended.redirect')}
+      </Typography>
+
     </Box>
   );
 };

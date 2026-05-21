@@ -59,19 +59,32 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
 
           {/* Question text */}
           <Typography sx={{
-            fontFamily: '"Inter", "Poppins", sans-serif',
-            fontWeight: 500,
-            fontSize: { xs: '0.95rem', md: '1.05rem' },
-            lineHeight: 1.7,
-            color: '#0f172a',
-            letterSpacing: '0.01em',
+            fontFamily: '"Inter", sans-serif',
+            fontWeight: 600,
+            fontSize: { xs: '1rem', md: '1.08rem' },
+            lineHeight: 1.75,
+            color: '#0d1117',
+            letterSpacing: '-0.01em',
             wordBreak: 'break-word',
+            textRendering: 'optimizeLegibility',
+            WebkitFontSmoothing: 'antialiased',
           }}>
             {currentMessage.content || t('question.getting_next')}
           </Typography>
 
           {currentMessage.reasoning && (
-            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.7rem', color: '#6b7280', fontStyle: 'italic', mt: 1, pl: 1.25, borderLeft: '2px solid rgba(106,211,156,0.35)', lineHeight: 1.6 }}>
+            <Typography sx={{
+              fontFamily: '"Inter", sans-serif',
+              fontSize: '0.72rem',
+              fontWeight: 400,
+              color: '#6b7280',
+              fontStyle: 'italic',
+              mt: 1.25,
+              pl: 1.25,
+              borderLeft: '2px solid rgba(106,211,156,0.4)',
+              lineHeight: 1.65,
+              letterSpacing: '0.01em',
+            }}>
               {currentMessage.reasoning}
             </Typography>
           )}
