@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Box, Slider, Typography } from "@mui/material";
 import { TrackChangesOutlined } from "@mui/icons-material";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector, useDispatch, shallowEqual } from "react-redux";
 import { useTranslation } from "react-i18next";
 import { HardSkill, SoftSkill, setThresholdScore } from "../store/createPostSlice";
 import { normalizeEmploymentType, normalizeWorkMode } from "../utils";
@@ -20,7 +20,7 @@ interface PostPreviewProps {
 const PostPreview = ({ generating = false }: PostPreviewProps) => {
   const { t, i18n } = useTranslation("posts");
   const dispatch = useDispatch();
-  const { generatedPost, generatedLanguage, thresholdScore } = useSelector((state: any) => state.postGeneration);
+  const { generatedPost, generatedLanguage, thresholdScore } = useSelector((state: any) => state.postGeneration, shallowEqual);
 
   const [open, setOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -41,6 +41,7 @@ const PostPreview = ({ generating = false }: PostPreviewProps) => {
   const softSkills: SoftSkill[] = generatedPost.skillAnalysis?.softSkills || [];
   const labelLanguage = generatedLanguage === "fr" ? "fr" : i18n.language;
   const labelT = i18n.getFixedT(labelLanguage, "posts");
+  const sliderColor = thresholdScore >= 70 ? "#16A34A" : thresholdScore >= 40 ? "#D97706" : "#DC2626";
 
   const handleEdit = (skill: any, index: number, type: "hard" | "soft") => {
     setSelectedSkill(skill); setSelectedIndex(index); setSelectedType(type); setOpen(true);
@@ -79,31 +80,20 @@ const PostPreview = ({ generating = false }: PostPreviewProps) => {
         <Typography sx={{ fontSize: "12px", color: "rgba(84, 98, 116, 0.7)", mb: 2 }}>
           Candidates scoring below this threshold are automatically flagged for review.
         </Typography>
-        {(() => {
-          const color = thresholdScore >= 70 ? "#16A34A" : thresholdScore >= 40 ? "#D97706" : "#DC2626";
-          return (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
-              <Box sx={{ flex: 1 }}>
-                <Slider
-                  value={thresholdScore}
-                  onChange={(_, v) => dispatch(setThresholdScore(v as number))}
-                  min={0}
-                  max={100}
-                  step={5}
-                  marks={[{ value: 0, label: "0%" }, { value: 50, label: "50%" }, { value: 100, label: "100%" }]}
-                  sx={{
-                    color,
-                    "& .MuiSlider-thumb": { width: 18, height: 18 },
-                    "& .MuiSlider-markLabel": { fontSize: "11px", color: "#9CA3AF" },
-                  }}
-                />
-              </Box>
-              <Box sx={{ minWidth: 52, textAlign: "center", bgcolor: `${color}15`, border: `1px solid ${color}40`, borderRadius: 2, px: 1.5, py: 0.75 }}>
-                <Typography sx={{ fontSize: "16px", fontWeight: 800, color }}>{thresholdScore}%</Typography>
-              </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+            <Box sx={{ flex: 1 }}>
+              <Slider
+                value={thresholdScore}
+                onChange={(_, v) => dispatch(setThresholdScore(v as number))}
+                min={0} max={100} step={5}
+                marks={[{ value: 0, label: "0%" }, { value: 50, label: "50%" }, { value: 100, label: "100%" }]}
+                sx={{ color: sliderColor, "& .MuiSlider-thumb": { width: 18, height: 18 }, "& .MuiSlider-markLabel": { fontSize: "11px", color: "#9CA3AF" } }}
+              />
             </Box>
-          );
-        })()}
+            <Box sx={{ minWidth: 52, textAlign: "center", bgcolor: `${sliderColor}15`, border: `1px solid ${sliderColor}40`, borderRadius: 2, px: 1.5, py: 0.75 }}>
+              <Typography sx={{ fontSize: "16px", fontWeight: 800, color: sliderColor }}>{thresholdScore}%</Typography>
+            </Box>
+          </Box>
       </SectionCard>
 
       <ContentSection

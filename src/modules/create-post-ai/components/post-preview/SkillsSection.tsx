@@ -36,7 +36,7 @@ const SkillsSection = ({ hardSkills, softSkills, onEdit, onAdd }: Props) => {
         <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
           {hardSkills.map((skill, index) => (
             <SkillChip
-              key={index}
+              key={`hard-${skill.name}-${index}`}
               label={`${skill.name} (${hardSkillLevelLabel(t, Number(skill.level))}) · ${skill.percentage}%`}
               onDelete={() => dispatch(deleteHardSkill(index))}
               onClick={() => onEdit({ name: skill.name, level: skill.level, percentage: skill.percentage }, index, "hard")}
@@ -51,7 +51,7 @@ const SkillsSection = ({ hardSkills, softSkills, onEdit, onAdd }: Props) => {
         <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
           {softSkills.map((skill, index) => (
             <SkillChip
-              key={index}
+              key={`soft-${skill.name}-${index}`}
               label={`${skill.name} (${softSkillLevelLabel(t, Number(skill.level))}) · ${skill.percentage}%`}
               onDelete={softSkills.length > 1 ? () => dispatch(deleteSoftSkill(index)) : undefined}
               onClick={() => onEdit({ name: skill.name, level: skill.level, percentage: skill.percentage }, index, "soft")}

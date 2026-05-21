@@ -29,7 +29,7 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
 
   React.useEffect(() => {
     setLocalSkill(skill || { name: "", level: null, percentage: 0 });
-  }, [open]);
+  }, [open, skill]);
 
   const handleChange = (field: string, value: any) => {
     setLocalSkill((prev: any) => ({ ...prev, [field]: value }));

@@ -1,7 +1,7 @@
 "use client";
 
 import { Box, Divider } from "@mui/material";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
@@ -24,7 +24,8 @@ const PostDescription = ({ onGeneratingChange }: PostDescriptionProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const queryClient = useQueryClient();
   const { promptDescription, salary, workMode, employmentType, expirationDate, interviewLanguages } = useSelector(
-    (state: any) => state.postGeneration
+    (state: any) => state.postGeneration,
+    shallowEqual
   );
   const { t } = useTranslation("posts");
 
