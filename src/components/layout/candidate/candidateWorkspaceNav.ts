@@ -4,6 +4,7 @@ import ChatBubbleOutlineOutlined from "@mui/icons-material/ChatBubbleOutlineOutl
 import DashboardOutlined from "@mui/icons-material/DashboardOutlined";
 import PsychologyOutlined from "@mui/icons-material/PsychologyOutlined";
 import SchoolOutlined from "@mui/icons-material/SchoolOutlined";
+import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
 import {
   CANDIDATE_MESSAGES_BASE_PATH,
   isCandidateMessagesPath,
@@ -81,6 +82,16 @@ export const candidateWorkspaceNavItems: CandidateWorkspaceNavItem[] = [
     bg: "#FFFBEB",
     border: "#FDE68A",
   },
+  {
+    id: "settings",
+    icon: SettingsOutlined,
+    labelKey: "candidate.nav.settings",
+    sublabelKey: "candidate.nav.manage_profile",
+    href: "/candidate/profile/settings",
+    color: "#8B5CF6",
+    bg: "#F5F3FF",
+    border: "#EDE9FE",
+  },
 ];
 
 export const isCandidateWorkspaceNavActive = (
@@ -94,6 +105,10 @@ export const isCandidateWorkspaceNavActive = (
 
   if (item.id === "dashboard") {
     return pathname === "/candidate/dashboard" && !viewQuery;
+  }
+
+  if (item.id === "settings") {
+    return pathname === "/candidate/profile/settings" || pathname.startsWith("/candidate/profile/settings");
   }
 
   if (item.view) {

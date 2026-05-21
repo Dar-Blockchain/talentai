@@ -1,11 +1,11 @@
 "use client";
 import React, { useState, useCallback, useEffect } from "react";
-import { Box, Typography, Avatar, Divider } from "@mui/material";
+import { Box, Typography, Avatar } from "@mui/material";
 import { useSelector } from "react-redux";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import { RootState } from "@/store/store";
-import Header from "@/components/layout/dashboard/Header";
+import CandidateWorkspaceLayout from "@/components/layout/candidate/CandidateWorkspaceLayout";
 import { NotificationsTab, PersonalInformationTab, ProfileVisibilityTab, SnackbarNotifications, LanguageTab, useProfileManagement, useUpdateCandidateVisibility } from "@/modules/settings/candidate";
 import PersonOutlined from "@mui/icons-material/PersonOutlined";
 import LanguageIcon from "@mui/icons-material/Language";
@@ -70,16 +70,11 @@ const CandidateSettingsPage: React.FC = () => {
     : undefined;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", bgcolor: "rgb(249 250 251)" }}>
-      <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1200 }}>
-        <Header onOpenMobile={() => {}} />
-      </Box>
+    <CandidateWorkspaceLayout breadcrumb={t("candidate.nav.settings")}>
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "240px 1fr" }, gap: 2.5, alignItems: "start" }}>
 
-      <Box sx={{ flex: 1, mt: "64px", overflowY: "auto", overflowX: "hidden", p: { xs: 1.5, sm: 2.5, md: 3 } }} className="custom-scrollbar">
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "220px 1fr" }, gap: 2.5, alignItems: "start" }}>
-
-          {/* LEFT: Profile + Nav */}
-          <Box sx={{ display: { xs: "none", md: "flex" }, flexDirection: "column", gap: 2, position: "sticky", top: 16 }}>
+        {/* LEFT: Profile + Nav */}
+        <Box sx={{ display: { xs: "none", md: "flex" }, flexDirection: "column", gap: 2, position: "sticky", top: 16, maxHeight: "calc(100vh - 96px)", overflowY: "auto" }} className="custom-scrollbar">
 
             {/* Profile card */}
             <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
@@ -162,16 +157,15 @@ const CandidateSettingsPage: React.FC = () => {
           </Box>
 
         </Box>
-      </Box>
 
-      <SnackbarNotifications
-        error={error || null}
-        saveSuccess={saveSuccess}
-        onDismissError={handleDismissError}
-        onDismissSuccess={handleDismissSuccess}
-      />
-    </Box>
-  );
-};
+        <SnackbarNotifications
+          error={error || null}
+          saveSuccess={saveSuccess}
+          onDismissError={handleDismissError}
+          onDismissSuccess={handleDismissSuccess}
+        />
+      </CandidateWorkspaceLayout>
+    );
+  };
 
-export default CandidateSettingsPage;
+  export default CandidateSettingsPage;
