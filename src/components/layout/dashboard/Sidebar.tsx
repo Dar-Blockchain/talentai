@@ -152,7 +152,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const drawerWidth  = collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH;
   const handleToggle = useCallback(() => setCollapsed((c) => !c), [setCollapsed]);
 
-  const settingsHref = isEmployee ? "/employee/dashboard" : "/company/settings";
+  const settingsHref = "/settings";
   const { teamChatUnread, companyMessagesUnread } = useChatUnreadBadges();
 
   const getNavUnreadCount = (itemId: string) => {

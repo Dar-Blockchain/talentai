@@ -320,7 +320,7 @@ const CandidateRewardsSection: React.FC = () => {
         <Button
           variant="contained"
           size="large"
-          href="/candidate/profile/settings"
+          href="/settings"
           sx={{
             background: "linear-gradient(135deg, #8310FF 0%, #A855F7 100%)",
             color: "#fff",

@@ -13,7 +13,6 @@ import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
 import CameraAltOutlined from "@mui/icons-material/CameraAltOutlined";
 import CheckOutlined from "@mui/icons-material/CheckOutlined";
-import dynamic from "next/dynamic";
 import { ROLE_LABELS, ROLE_STYLES } from "@/components/features/company/employees/list/EmployeeCard";
 import { Section, InfoRow, TEAL, useEmployeeSettings } from "@/modules/settings/employee";
 
@@ -54,7 +53,6 @@ const EmployeeSettingsPage: React.FC = () => {
 
       <Box sx={{ maxWidth: 720 }}>
 
-        {/* Avatar */}
         <Section title="Profile Picture" subtitle="Update your display photo">
           <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
             <Box sx={{ position: "relative", flexShrink: 0 }}>
@@ -107,7 +105,6 @@ const EmployeeSettingsPage: React.FC = () => {
           </Box>
         </Section>
 
-        {/* Display name */}
         <Section title="Display Name" subtitle="This is how your name appears across the platform">
           <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start" }}>
             <TextField
@@ -143,7 +140,6 @@ const EmployeeSettingsPage: React.FC = () => {
           </Box>
         </Section>
 
-        {/* Account info */}
         <Section title="Account Information" subtitle="Read-only information about your account">
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <TextField
@@ -219,4 +215,4 @@ const EmployeeSettingsPage: React.FC = () => {
   );
 };
 
-export default dynamic(() => Promise.resolve(EmployeeSettingsPage), { ssr: false });
+export default EmployeeSettingsPage;

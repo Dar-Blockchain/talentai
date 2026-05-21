@@ -1,4 +1,3 @@
-'use client';
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
@@ -6,10 +5,12 @@ import Link from "next/link";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import { useCompanyAccess } from "@/hooks/useCompanyAccess";
-import { useCompanyProfileManagement } from "@/modules/settings/company/hooks";
+import { useCompanyProfileManagement } from "../hooks";
 import { selectEmployeePermissions } from "@/store/slices/memberSlice";
 import { Box, Tabs, Tab } from "@mui/material";
-import { ProfileBanner, CompanyInfoTab, ApiKeysTab } from "@/modules/settings/company";
+import ProfileBanner from "./ProfileBanner";
+import CompanyInfoTab from "./CompanyInfoTab";
+import ApiKeysTab from "./ApiKeysTab";
 import { LanguageTab, TEAL } from "@/modules/settings/shared";
 import AppButton from "@/components/ui/AppButton";
 import AppUserInfo from "@/modules/shared/ui/AppUserInfo";
@@ -22,7 +23,7 @@ import LanguageIcon from "@mui/icons-material/Language";
 import GroupsOutlined from "@mui/icons-material/GroupsOutlined";
 import CategoryOutlined from "@mui/icons-material/CategoryOutlined";
 
-const SettingsPage: React.FC = () => {
+const CompanySettingsPage: React.FC = () => {
   const { t } = useTranslation("dashboard");
   useCompanyAccess("canViewCompanyProfile");
   const empPerms = useSelector(selectEmployeePermissions);
@@ -62,7 +63,6 @@ const SettingsPage: React.FC = () => {
         ]}
       />
 
-      {/* Stats grid */}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 2, mb: 3 }}>
         {[
           { name: profile?.companyName || profile?.name || "—", subtitle: t("pages.settings.stats.company_name"), icon: <BusinessOutlined sx={{ fontSize: 20, color: "#0D9488" }} />, iconBgColor: "#F0FDFA" },
@@ -70,28 +70,12 @@ const SettingsPage: React.FC = () => {
           { name: profile?.country || profile?.location || "—", subtitle: t("pages.settings.stats.location"), icon: <LocationOnOutlined sx={{ fontSize: 20, color: "#0891B2" }} />, iconBgColor: "#F0F9FF" },
           { name: profile?.companySize || profile?.size ? `${profile?.companySize || profile?.size} ${t("pages.settings.employees_suffix")}` : "—", subtitle: t("pages.settings.stats.team_size"), icon: <GroupsOutlined sx={{ fontSize: 20, color: "#D97706" }} />, iconBgColor: "#FFFBEB" },
         ].map((item) => (
-          <Box
-            key={item.subtitle}
-            sx={{
-              bgcolor: "#fff",
-              border: "1px solid #F3F4F6",
-              borderRadius: 2.5,
-              px: 2,
-              py: 1.75,
-              boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-            }}
-          >
-            <AppUserInfo
-              name={item.name}
-              subtitle={item.subtitle}
-              icon={item.icon}
-              iconBgColor={item.iconBgColor}
-            />
+          <Box key={item.subtitle} sx={{ bgcolor: "#fff", border: "1px solid #F3F4F6", borderRadius: 2.5, px: 2, py: 1.75, boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+            <AppUserInfo name={item.name} subtitle={item.subtitle} icon={item.icon} iconBgColor={item.iconBgColor} />
           </Box>
         ))}
       </Box>
 
-      {/* Main settings card */}
       <Box sx={{ bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "16px", overflow: "hidden" }}>
         <ProfileBanner
           profile={profile}
@@ -116,9 +100,9 @@ const SettingsPage: React.FC = () => {
               "& .MuiTabs-indicator": { bgcolor: TEAL, height: 2 },
             }}
           >
-            <Tab label={t("pages.settings.tabs.company_info")} icon={<BusinessOutlined    sx={{ fontSize: 15 }} />} iconPosition="start" />
-            <Tab label={t("pages.settings.tabs.api_keys")}     icon={<KeyOutlined         sx={{ fontSize: 15 }} />} iconPosition="start" data-tour="settings-tab-apikeys" />
-            <Tab label={t("pages.settings.tabs.language")}     icon={<LanguageIcon        sx={{ fontSize: 15 }} />} iconPosition="start" />
+            <Tab label={t("pages.settings.tabs.company_info")} icon={<BusinessOutlined sx={{ fontSize: 15 }} />} iconPosition="start" />
+            <Tab label={t("pages.settings.tabs.api_keys")}     icon={<KeyOutlined      sx={{ fontSize: 15 }} />} iconPosition="start" data-tour="settings-tab-apikeys" />
+            <Tab label={t("pages.settings.tabs.language")}     icon={<LanguageIcon     sx={{ fontSize: 15 }} />} iconPosition="start" />
           </Tabs>
         </Box>
 
@@ -130,4 +114,4 @@ const SettingsPage: React.FC = () => {
   );
 };
 
-export default SettingsPage;
+export default CompanySettingsPage;

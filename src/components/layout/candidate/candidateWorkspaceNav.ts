@@ -87,7 +87,7 @@ export const candidateWorkspaceNavItems: CandidateWorkspaceNavItem[] = [
     icon: SettingsOutlined,
     labelKey: "candidate.nav.settings",
     sublabelKey: "candidate.nav.manage_profile",
-    href: "/candidate/profile/settings",
+    href: "/settings",
     color: "#8B5CF6",
     bg: "#F5F3FF",
     border: "#EDE9FE",
@@ -108,7 +108,7 @@ export const isCandidateWorkspaceNavActive = (
   }
 
   if (item.id === "settings") {
-    return pathname === "/candidate/profile/settings" || pathname.startsWith("/candidate/profile/settings");
+    return pathname === "/settings";
   }
 
   if (item.view) {

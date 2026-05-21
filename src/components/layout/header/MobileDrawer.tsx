@@ -215,7 +215,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unre
                 <Row icon={<NotificationsOutlined />} label={t("header.notifications")}
                   onClick={() => go(isCompany ? "/company/notifications" : "/candidate/notifications")} />
                 <Row icon={<SettingsOutlined />} label={t("header.settings")}
-                  onClick={() => go(isCompany ? "/company/settings" : "/candidate/profile/settings")} />
+                  onClick={() => go("/settings")} />
               </Box>
 
               <Divider sx={{ my: 1, borderColor: "rgba(13,148,136,0.08)" }} />

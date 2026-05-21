@@ -23,7 +23,7 @@ export const navigation = [
   { id: "messages",     icon: ChatBubbleOutlineOutlined, label: "Messages", href: MESSAGES_BASE_PATH },
   { id: "departments",  icon: CorporateFareOutlined,  label: "Departments",  href: "/company/departments" },
   { id: "applications", icon: PeopleAltOutlined,      label: "Applications", href: "/company/applications" },
-  { id: "settings",     icon: TuneOutlined,           label: "Settings",     href: "/company/settings" },
+  { id: "settings",     icon: TuneOutlined,           label: "Settings",     href: "/settings" },
   { id: "subscription", icon: CreditCardOutlined,     label: "Subscription", href: "/company/plans" },
 ];
 
@@ -82,7 +82,7 @@ export const employeeNavGroups: EmployeeNavGroup[] = [
       { id: "posts",       icon: WorkOutlineOutlined,   label: "Job Posts",   href: "/company/posts",       permission: "canViewJobPosts" },
       { id: "employees",   icon: GroupsOutlined,        label: "Team",        href: "/company/employees",   permission: "canManageTeam" },
       { id: "departments", icon: CorporateFareOutlined, label: "Departments", href: "/company/departments", permission: "canViewDepartments" },
-      { id: "settings",    icon: SettingsOutlined,      label: "Settings",    href: "/company/settings",    permission: "canViewCompanyProfile" },
+      { id: "settings",    icon: SettingsOutlined,      label: "Settings",    href: "/settings",            permission: "canViewCompanyProfile" },
     ],
   },
 ];
