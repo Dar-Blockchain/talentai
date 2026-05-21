@@ -41,6 +41,10 @@ export interface SavePostResponse {
   data: SavePostPayload & { _id: string };
 }
 
+// ── GET /post/details/:id ─────────────────────────────────────────────────────
+
+export type GetPostResponse = SavePostPayload & { _id: string };
+
 // ── PUT /post/updatePost/:id ──────────────────────────────────────────────────
 
 export type UpdatePostPayload = SavePostPayload;

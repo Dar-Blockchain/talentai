@@ -1,10 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { generatePost, savePost, updatePost } from "../api";
+import { generatePost, getPost, savePost, updatePost } from "../api";
 import type { GeneratePostInput, GeneratePostResponse, SavePostPayload } from "../api";
 import { PostGenerationResponse } from "../store/createPostSlice";
 import { inferExperienceLevelFromText, isKnownExperienceLevel } from "../utils";
-import axiosInstance from "@/utils/axiosInstance";
-
 const POST_CACHE_MS = 5 * 60 * 1000;
 
 // ── Query Keys ────────────────────────────────────────────────────────────────
@@ -32,10 +30,7 @@ export interface SaveMutationPayload {
 export const useGetPostQuery = (postId: string | null) =>
   useQuery({
     queryKey: postKeys.detail(postId ?? ""),
-    queryFn: async () => {
-      const res = await axiosInstance.get(`post/details/${postId}`);
-      return res.data?.data ?? res.data;
-    },
+    queryFn: () => getPost(postId!),
     enabled: !!postId,
     staleTime: POST_CACHE_MS,
   });

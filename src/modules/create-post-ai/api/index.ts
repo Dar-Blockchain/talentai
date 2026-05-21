@@ -2,6 +2,7 @@ import axiosInstance from "@/utils/axiosInstance";
 import type {
   GeneratePostPayload,
   GeneratePostResponse,
+  GetPostResponse,
   SavePostPayload,
   SavePostResponse,
   UpdatePostPayload,
@@ -47,6 +48,13 @@ export async function savePost(jobData: SavePostPayload): Promise<SavePostRespon
     data: (body.data ?? res.data) as SavePostResponse["data"],
     planUsage: body.planUsage ?? null,
   };
+}
+
+// ── Get ───────────────────────────────────────────────────────────────────────
+
+export async function getPost(postId: string): Promise<GetPostResponse> {
+  const res = await axiosInstance.get(`post/details/${postId}`);
+  return (res.data?.data ?? res.data) as GetPostResponse;
 }
 
 // ── Update ────────────────────────────────────────────────────────────────────
