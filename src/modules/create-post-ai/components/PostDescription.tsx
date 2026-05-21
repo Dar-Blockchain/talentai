@@ -4,7 +4,8 @@ import { Box, Divider } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { setEmploymentType, setExpirationDate, setPromptDescription, setWorkMode, updateSalaryField } from "../store/createPostSlice";
+import { useQueryClient } from "@tanstack/react-query";
+import { setEmploymentType, setExpirationDate, setPromptDescription, setWorkMode, updateSalaryField, setGeneratedPost } from "../store/createPostSlice";
 import { AppDispatch } from "@/store/store";
 import GenerateLanguageModal, { GENERATE_LANG_KEY } from "./GenerateLanguageModal";
 import CardHeader from "./post-description/CardHeader";
@@ -12,7 +13,7 @@ import PromptField from "./post-description/PromptField";
 import RoleFields from "./post-description/RoleFields";
 import SalaryFields from "./post-description/SalaryFields";
 import GenerateButton from "./post-description/GenerateButton";
-import { useGeneratePostMutation } from "../queries/useCreatePostQueries";
+import { useGeneratePostMutation, postKeys } from "../queries/useCreatePostQueries";
 import { useToast } from "@/hooks/useToast";
 
 interface PostDescriptionProps {
@@ -21,6 +22,7 @@ interface PostDescriptionProps {
 
 const PostDescription = ({ onGeneratingChange }: PostDescriptionProps) => {
   const dispatch = useDispatch<AppDispatch>();
+  const queryClient = useQueryClient();
   const { promptDescription, salary, workMode, employmentType, expirationDate, interviewLanguages } = useSelector(
     (state: any) => state.postGeneration
   );
@@ -29,10 +31,8 @@ const PostDescription = ({ onGeneratingChange }: PostDescriptionProps) => {
   const { showToast } = useToast();
   const generateMutation = useGeneratePostMutation();
   const loading = generateMutation.isPending;
-
   const [errors, setErrors] = useState({ promptDescription: "", salary: "", employmentType: "", workMode: "" });
   const [langModalOpen, setLangModalOpen] = useState(false);
-
   const clear = (key: string) => setErrors((prev) => ({ ...prev, [key]: "" }));
 
   const validate = () => {
@@ -57,6 +57,10 @@ const PostDescription = ({ onGeneratingChange }: PostDescriptionProps) => {
     generateMutation.mutate(
       { jobDescription: promptDescription, salary, workMode, contractType: employmentType, language, interviewLanguages },
       {
+        onSuccess: () => {
+          const cached = queryClient.getQueryData<{ post: any; language: string }>(postKeys.generated());
+          if (cached) dispatch(setGeneratedPost({ post: cached.post, language: cached.language }));
+        },
         onSettled: () => onGeneratingChange?.(false),
         onError: (err: unknown) => {
           const message = err instanceof Error ? err.message : "Failed to generate job post. Please try again.";

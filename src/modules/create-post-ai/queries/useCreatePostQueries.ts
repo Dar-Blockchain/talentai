@@ -1,17 +1,47 @@
-import { useMutation } from "@tanstack/react-query";
-import { useDispatch } from "react-redux";
-import { useRouter } from "next/router";
-import { AppDispatch } from "@/store/store";
-import { clearPost, setGeneratedPost, PostGenerationResponse } from "../store/createPostSlice";
-import { getMyProfile } from "@/store/slices/userSlice";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { generatePost, savePost, updatePost } from "../api";
 import type { GeneratePostInput, SavePostPayload } from "../api";
+import { PostGenerationResponse } from "../store/createPostSlice";
 import { inferExperienceLevelFromText, isKnownExperienceLevel } from "../utils";
+import axiosInstance from "@/utils/axiosInstance";
+
+// ── Query Keys ────────────────────────────────────────────────────────────────
+
+export const postKeys = {
+  detail: (id: string) => ["post", id] as const,
+  generated: () => ["post", "generated"] as const,
+};
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+export interface NormalizedGeneratedPost {
+  post: PostGenerationResponse;
+  language: string;
+}
+
+export interface SaveMutationPayload {
+  jobData: PostGenerationResponse & { interviewLanguages: string[] };
+  savedPostId: string | null;
+  thresholdScore: number;
+}
+
+// ── Fetch existing post by ID ─────────────────────────────────────────────────
+
+export const useGetPostQuery = (postId: string | null) =>
+  useQuery({
+    queryKey: postKeys.detail(postId ?? ""),
+    queryFn: async () => {
+      const res = await axiosInstance.get(`post/details/${postId}`);
+      return res.data?.data ?? res.data;
+    },
+    enabled: !!postId,
+    staleTime: 1000 * 60 * 5,
+  });
 
 // ── Generate ──────────────────────────────────────────────────────────────────
 
 export const useGeneratePostMutation = () => {
-  const dispatch = useDispatch<AppDispatch>();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (payload: GeneratePostInput) => generatePost(payload),
@@ -29,38 +59,29 @@ export const useGeneratePostMutation = () => {
         isKnownExperienceLevel(experienceLevel) ? experienceLevel
         : inferred || (isInternship ? "Entry-level" : "");
 
-      dispatch(
-        setGeneratedPost({
-          post: {
-            creationType: "ai",
-            expirationDate: null,
-            jobDetails: {
-              ...jobDetails,
-              experienceLevel: resolvedExperienceLevel,
-            },
-            skillAnalysis: {
-              requiredSkills: requiredSkills ?? [],
-              softSkills: softSkills ?? [],
-            },
+      const result: NormalizedGeneratedPost = {
+        post: {
+          creationType: "ai",
+          expirationDate: null,
+          jobDetails: { ...jobDetails, experienceLevel: resolvedExperienceLevel },
+          skillAnalysis: {
+            requiredSkills: requiredSkills ?? [],
+            softSkills: softSkills ?? [],
           },
-          language: variables.language ?? "en",
-        }),
-      );
+        },
+        language: variables.language ?? "en",
+      };
+
+      // Cache the normalized result — consumers read it via onSuccess at call site
+      queryClient.setQueryData(postKeys.generated(), result);
     },
   });
 };
 
 // ── Save / Update ─────────────────────────────────────────────────────────────
 
-interface SaveMutationPayload {
-  jobData: PostGenerationResponse & { interviewLanguages: string[] };
-  savedPostId: string | null;
-  thresholdScore: number;
-}
-
 export const useSavePostMutation = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const router = useRouter();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({ jobData, savedPostId, thresholdScore }: SaveMutationPayload) => {
@@ -76,9 +97,8 @@ export const useSavePostMutation = () => {
       return savedPostId ? updatePost(savedPostId, payload) : savePost(payload);
     },
     onSuccess: (_data, { savedPostId }) => {
-      if (!savedPostId) dispatch(getMyProfile());
-      dispatch(clearPost());
-      router.push("/company/posts");
+      if (savedPostId) queryClient.invalidateQueries({ queryKey: postKeys.detail(savedPostId) });
+      queryClient.removeQueries({ queryKey: postKeys.generated() });
     },
   });
 };
