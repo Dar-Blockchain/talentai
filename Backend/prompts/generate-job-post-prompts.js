@@ -23,12 +23,12 @@ ${languageInstructions}
 - If the job description explicitly mentions language (for example: English, French, Spanish), INCLUDE THAT LANGUAGE as the single soft skill. Assign the language a suitable "percentage" and "level".
 - If no language is mentioned, generate one relevant soft skill as usual (e.g., Problem solving, Communication, Teamwork, Leadership, Adaptability, Time management).
 
-- Set skill level based on years of experience mentioned in the job post:
-  - 1 year  = level 1
-  - 2 years = level 2
-  - 5 years = level 3
-  - 10 years = level 4
-  - 15+ years = level 5
+- Set skill level based on the seniority scale:
+  - Entry-level (0–1 year)   = level 1
+  - Junior      (1–3 years)  = level 2
+  - Mid-level   (3–6 years)  = level 3
+  - Senior      (6–10 years) = level 4
+  - Expert      (10+ years)  = level 5
 
 - Each skill in "requiredSkills" must include a "percentage" field representing its importance weight in the job.
 - Only one soft skill must be generated.
