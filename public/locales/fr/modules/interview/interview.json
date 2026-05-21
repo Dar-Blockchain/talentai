@@ -32,8 +32,8 @@
   "under_threshold": {
     "title": "Entretien non disponible",
     "desc_pre": "Votre score de correspondance CV (",
-    "desc_mid": "%) est inférieur au score minimum requis de",
-    "desc_post": "% pour ce poste. Seuls les candidats atteignant le seuil peuvent accéder à l'entretien."
+    "desc_mid": ") est inférieur au score minimum requis de ",
+    "desc_post": " pour ce poste. Seuls les candidats atteignant le seuil peuvent accéder à l'entretien."
   },
   "limit": {
     "badge": "Entretiens suspendus",

@@ -32,8 +32,8 @@
   "under_threshold": {
     "title": "Interview Not Available",
     "desc_pre": "Your CV match score (",
-    "desc_mid": "%) is below the minimum required score of",
-    "desc_post": "% for this position. Only candidates who meet the threshold can proceed to the interview."
+    "desc_mid": ") is below the minimum required score of ",
+    "desc_post": " for this position. Only candidates who meet the threshold can proceed to the interview."
   },
   "limit": {
     "badge": "Interviews Paused",
