@@ -1,7 +1,7 @@
 import React from "react";
 import { useRouter } from "next/router";
 import { Box, CircularProgress } from "@mui/material";
-import MessagesShell from "@/modules/shared/chat/components/MessagesShell";
+import MessagesShell from "@/modules/chat/shared/components/MessagesShell";
 
 export default function MessagesConversationPage() {
   const router = useRouter();

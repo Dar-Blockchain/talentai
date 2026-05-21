@@ -73,7 +73,6 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
       profile.timeZone = profileData.timeZone || profile.timeZone;
       profile.targetRole = profileData.targetRole || profile.targetRole;
       profile.requiredExperienceLevel = profileData.requiredExperienceLevel || profile.requiredExperienceLevel;
-
       // Update salary expectations
       if (profileData.expectedSalary) {
         console.log("💰 [createOrUpdateProfile] Updating expectedSalary:", profileData.expectedSalary);
@@ -200,7 +199,6 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
     if (profile) {
       // Update existing profile
       console.log("🔄 [createOrUpdateCompanyProfile] Updating existing company profile");
-      console.log("📝 [createOrUpdateCompanyProfile] Before update - requiredExperienceLevel:", profile.requiredExperienceLevel);
       console.log("📝 [createOrUpdateCompanyProfile] Before update - contactInformation:", profile.contactInformation);
 
       profile.type = "Company";
@@ -219,7 +217,6 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
 
       profile.requiredSkills = profileData.requiredSkills || profile.requiredSkills;
       profile.requiredExperienceLevel = profileData.requiredExperienceLevel || profile.requiredExperienceLevel;
-
       console.log("📝 [createOrUpdateCompanyProfile] After update - requiredExperienceLevel:", profile.requiredExperienceLevel);
       console.log("🏢 [createOrUpdateCompanyProfile] Company details updated:", JSON.stringify(profile.companyDetails, null, 2));
 
@@ -230,7 +227,6 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
       console.log("✨ [createOrUpdateCompanyProfile] Creating new company profile");
       profile = await Profile.create(profileDataToSave);
       console.log("✅ [createOrUpdateCompanyProfile] New profile created with ID:", profile._id);
-      console.log("🎯 [createOrUpdateCompanyProfile] Created profile requiredExperienceLevel:", profile.requiredExperienceLevel);
       console.log("📧 [createOrUpdateCompanyProfile] Created profile contactInformation:", profile.contactInformation);
     }
 
@@ -247,7 +243,6 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
       _id: profile._id,
       type: profile.type,
       companyName: profile.companyDetails.name,
-      requiredExperienceLevel: profile.requiredExperienceLevel,
       requiredSkills: profile.requiredSkills,
       employmentType: profile.companyDetails.employmentType
     });
