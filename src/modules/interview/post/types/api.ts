@@ -88,6 +88,7 @@ export type { InterviewConfig };
 export type EligibilityStatus =
   | 'checking'
   | 'eligible'
+  | 'error'
   | 'no_link'
   | 'company_blocked'
   | 'employee_blocked'
@@ -104,9 +105,9 @@ export interface EligibilityMeta {
   companyName?: string;
 }
 
-// Backend can also return not_found / error — hook falls back to 'eligible' on those
+// Backend can also return not_found (treated as eligible) or error (blocks access)
 export interface EligibilityResponse {
-  status: EligibilityStatus | 'not_found' | 'error';
+  status: EligibilityStatus | 'not_found';
   meta?: EligibilityMeta;
   message?: string;
 }

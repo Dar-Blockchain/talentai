@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Button, Typography } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import GraphicEqIcon from '@mui/icons-material/GraphicEq';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
@@ -26,7 +26,7 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
   const { t } = useTranslation('interview');
   if (interviewStatus !== 'active') return null;
 
-  const isProcessing  = agentState === 'thinking' || agentState === 'processing';
+  const isProcessing  = agentState === 'thinking' || agentState === 'processing' || agentState === 'finishing';
   const isSpeaking    = !!isVoiceActive;
   const hasTranscript = currentTranscript !== undefined ? Boolean(currentTranscript.trim()) : true;
   const isDisabled    = isProcessing || isSpeaking || !hasTranscript;

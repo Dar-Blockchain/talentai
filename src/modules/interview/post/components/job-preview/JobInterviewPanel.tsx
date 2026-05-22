@@ -8,9 +8,10 @@ import JobApplyPanel from "./JobApplyPanel";
 export interface JobPreviewPanelProps {
   jobData: any;
   onStartInterview?: () => void;
+  isConfigLoading?: boolean;
 }
 
-export default function JobInterviewPanel({ jobData, onStartInterview }: JobPreviewPanelProps) {
+export default function JobInterviewPanel({ jobData, isConfigLoading, onStartInterview }: JobPreviewPanelProps) {
   const jd = jobData?.jobDetails || {};
   const companyName =
     jobData?.user?.companyName || jobData?.companyName || "Company";
@@ -61,7 +62,7 @@ export default function JobInterviewPanel({ jobData, onStartInterview }: JobPrev
           />
         </Box>
 
-        <JobApplyPanel jobTitle={jobTitle} onStartInterview={onStartInterview} />
+        <JobApplyPanel jobTitle={jobTitle} isConfigLoading={isConfigLoading} onStartInterview={onStartInterview} />
       </Box>
     </Box>
   );

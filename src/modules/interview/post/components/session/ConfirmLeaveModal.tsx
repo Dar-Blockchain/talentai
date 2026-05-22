@@ -51,6 +51,7 @@ const ConfirmLeaveModal: React.FC<ConfirmLeaveModalProps> = ({ open, onConfirm, 
               fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.85rem',
               textTransform: 'none', py: 1.15, borderRadius: '12px',
               bgcolor: '#ef4444',
+              color: '#fff',
               boxShadow: '0 4px 12px rgba(239,68,68,0.25)',
               '&:hover': { bgcolor: '#dc2626', boxShadow: '0 6px 16px rgba(239,68,68,0.3)' },
             }}

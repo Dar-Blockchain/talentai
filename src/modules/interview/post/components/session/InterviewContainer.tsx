@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useRouter } from 'next/router';
 import { Box, Typography, Button, CircularProgress } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import KeyboardVoiceIcon from '@mui/icons-material/KeyboardVoice';
@@ -142,35 +143,43 @@ export default InterviewContainer;
 const AgentHeader: React.FC<{ agentState: AgentState }> = ({ agentState }) => {
   const { t } = useTranslation('interview');
   const isProcessing = agentState === 'thinking' || agentState === 'processing';
+  const isFinishing  = agentState === 'finishing';
+
+  const bgColor     = isFinishing ? 'linear-gradient(90deg, rgba(99,102,241,0.07) 0%, rgba(139,92,246,0.04) 100%)'
+                    : isProcessing ? 'linear-gradient(90deg, rgba(251,191,36,0.07) 0%, rgba(245,158,11,0.04) 100%)'
+                    : 'linear-gradient(90deg, rgba(106,211,156,0.07) 0%, rgba(16,69,63,0.04) 100%)';
+  const borderColor = isFinishing ? 'rgba(99,102,241,0.2)'
+                    : isProcessing ? 'rgba(245,158,11,0.18)'
+                    : 'rgba(106,211,156,0.18)';
+  const dotColor    = isFinishing ? '#818cf8' : isProcessing ? '#f59e0b' : '#22c55e';
+  const iconColor   = isFinishing ? '#818cf8' : '#f59e0b';
+
+  const title    = isFinishing  ? 'Interview complete'
+                 : agentState === 'thinking'  ? t('container.thinking')
+                 : agentState === 'processing' ? t('container.processing')
+                 : t('container.recording');
+  const subtitle = isFinishing  ? 'Preparing your results…'
+                 : isProcessing ? t('container.wait')
+                 : t('container.listening');
 
   return (
-    <Box sx={{
-      background: isProcessing
-        ? 'linear-gradient(90deg, rgba(251,191,36,0.07) 0%, rgba(245,158,11,0.04) 100%)'
-        : 'linear-gradient(90deg, rgba(106,211,156,0.07) 0%, rgba(16,69,63,0.04) 100%)',
-      borderBottom: `1px solid ${isProcessing ? 'rgba(245,158,11,0.18)' : 'rgba(106,211,156,0.18)'}`,
-      px: 1.75, py: 1.1,
-      display: 'flex', alignItems: 'center', gap: 1.25,
-    }}>
-      {/* Pulsing status dot */}
+    <Box sx={{ background: bgColor, borderBottom: `1px solid ${borderColor}`, px: 1.75, py: 1.1, display: 'flex', alignItems: 'center', gap: 1.25 }}>
       <Box sx={{
         width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-        bgcolor: isProcessing ? '#f59e0b' : '#22c55e',
+        bgcolor: dotColor,
         animation: 'statusPulse 1.8s ease-in-out infinite',
         '@keyframes statusPulse': { '0%,100%': { opacity: 1, transform: 'scale(1)' }, '50%': { opacity: 0.45, transform: 'scale(0.8)' } },
       }} />
-
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.8rem', color: '#111827', lineHeight: 1.2 }}>
-          {agentState === 'thinking' ? t('container.thinking') : agentState === 'processing' ? t('container.processing') : t('container.recording')}
+          {title}
         </Typography>
         <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.63rem', color: '#9ca3af', mt: 0.1 }}>
-          {isProcessing ? t('container.wait') : t('container.listening')}
+          {subtitle}
         </Typography>
       </Box>
-
-      {isProcessing
-        ? <AutorenewIcon sx={{ fontSize: 15, color: '#f59e0b', flexShrink: 0, animation: 'spin 1.2s linear infinite', '@keyframes spin': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } } }} />
+      {(isProcessing || isFinishing)
+        ? <AutorenewIcon sx={{ fontSize: 15, color: iconColor, flexShrink: 0, animation: 'spin 1.2s linear infinite', '@keyframes spin': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } } }} />
         : <KeyboardVoiceIcon sx={{ fontSize: 15, color: '#6AD39C', flexShrink: 0 }} />
       }
     </Box>
@@ -389,6 +398,7 @@ const AnalyzingSpinner: React.FC<{ waitDots: string }> = ({ waitDots }) => {
 /** Success card shown once the interview results have been saved. */
 const CompletionCard: React.FC = () => {
   const { t } = useTranslation('interview');
+  const router = useRouter();
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', py: 1.5, gap: 0 }}>
@@ -460,13 +470,27 @@ const CompletionCard: React.FC = () => {
         ))}
       </Box>
 
-      {/* ── Redirect notice ── */}
-      <Typography sx={{
-        fontFamily: 'Poppins', fontSize: '0.65rem', color: '#b0b7c3',
-        mt: 2, lineHeight: 1.5,
-      }}>
-        {t('ended.redirect')}
-      </Typography>
+      {/* ── Dashboard button ── */}
+      <Button
+        variant="contained"
+        fullWidth
+        onClick={() => router.push('/candidate/dashboard')}
+        sx={{
+          mt: 2.5,
+          bgcolor: '#10b981',
+          color: '#fff',
+          fontFamily: 'Poppins',
+          fontWeight: 700,
+          fontSize: '0.88rem',
+          py: 1.25,
+          borderRadius: '12px',
+          textTransform: 'none',
+          boxShadow: 'none',
+          '&:hover': { bgcolor: '#059669', boxShadow: 'none' },
+        }}
+      >
+        Go to Dashboard
+      </Button>
 
     </Box>
   );

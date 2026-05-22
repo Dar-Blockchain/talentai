@@ -15,12 +15,23 @@ interface EligibilityGateProps {
 
 export default function EligibilityGate({ status, meta }: EligibilityGateProps) {
   const router = useRouter();
-  const { t } = useTranslation("modules/interview/hr");
+  const { t } = useTranslation("modules/interview/interview");
 
   if (status === "eligible") return null;
 
   if (status === "checking") {
     return <LoadingState message={t("loading")} />;
+  }
+
+  if (status === "error") {
+    return (
+      <EligibilityBlockedScreen
+        icon="⚠️"
+        title="Unable to verify eligibility"
+        description="We couldn't confirm your access to this interview. Please refresh the page or try again later."
+        actions={[{ label: "Refresh", onClick: () => window.location.reload() }]}
+      />
+    );
   }
 
   if (status === "no_link") {

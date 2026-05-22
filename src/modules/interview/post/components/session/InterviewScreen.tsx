@@ -54,7 +54,7 @@ export default function InterviewScreen({
   onBack,
 }: InterviewScreenProps) {
   const router = useRouter();
-  const { t } = useTranslation("modules/interview/hr");
+  const { t } = useTranslation("modules/interview/interview");
 
   const handleBack = onBack ?? (() => {
     const ref = router.query.ref as string | undefined;

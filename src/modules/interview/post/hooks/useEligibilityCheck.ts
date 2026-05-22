@@ -18,15 +18,16 @@ export function useEligibilityCheck() {
     ? (router.query.jobId as string)
     : null;
 
-  const { data, isLoading } = useEligibilityQuery(postId, authUser?._id);
+  const { data, isLoading, isError } = useEligibilityQuery(postId, authUser?._id);
 
   const rawStatus = data?.status;
   const eligibilityStatus: EligibilityStatus =
-    !router.isReady                                                   ? 'checking' :
-    !router.query.jobId                                               ? 'no_link'  :
-    !authUser || !token                                               ? 'eligible' :
-    isLoading                                                         ? 'checking' :
-    !rawStatus || rawStatus === 'not_found' || rawStatus === 'error'  ? 'eligible' :
+    !router.isReady              ? 'checking' :
+    !router.query.jobId          ? 'no_link'  :
+    !authUser || !token          ? 'eligible' :
+    isLoading                    ? 'checking' :
+    isError || rawStatus === 'error' ? 'error' :
+    !rawStatus || rawStatus === 'not_found' ? 'eligible' :
     rawStatus;
 
   return { eligibilityStatus, eligibilityMeta: data?.meta ?? null };

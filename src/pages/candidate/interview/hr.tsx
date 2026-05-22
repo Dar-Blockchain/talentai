@@ -67,7 +67,7 @@ const PURPLE = '#8310FF';
 const IntelligentInterviewTest = () => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const { t } = useTranslation('modules/interview/hr');
+  const { t } = useTranslation('modules/interview/interview');
   const authUser = useSelector((state: RootState) => state.user.connectedUser.user);
   const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
 

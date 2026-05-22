@@ -87,6 +87,7 @@ export interface UseInterviewConfigReturn {
   setInterviewConfig: (config: InterviewConfig) => void;
   jobData: JobPost | null;
   isJobLoading: boolean;
+  isConfigLoading: boolean;
 }
 
 export interface UseInterviewConfigOptions {
@@ -129,6 +130,18 @@ export interface UseInterviewSocketCallbacks {
   onVoiceActivity: (data: { isActive: boolean }) => void;
   onInterviewEnded: (data: InterviewEndedData) => void;
   onInterviewError: (error: { message: string }) => void;
+  /** Streaming greeting text received chunk by chunk before interview_started. */
+  onGreetingChunk?: (data: { chunk: string; sessionId?: string }) => void;
+  /** Full greeting is ready — add it as a message to the conversation. */
+  onGreetingComplete?: (data: { text: string; sessionId?: string }) => void;
+  /** AI is processing the candidate's response (show "thinking" indicator). */
+  onInterviewerTyping?: (data: { typing: boolean }) => void;
+  /** Backend confirmed a topic change — useful for analytics / logging. */
+  onTopicChange?: (data: { from?: string; to?: string }) => void;
+  /** Interview entering wrap-up phase — final questions inbound. */
+  onInterviewWrapUp?: (data: { sessionId?: string }) => void;
+  /** Server reset the silence counter (sync frontend state). */
+  onSilenceReset?: () => void;
   /** Socket.IO namespace to connect to. Defaults to '/interview'. */
   namespace?: string;
 }

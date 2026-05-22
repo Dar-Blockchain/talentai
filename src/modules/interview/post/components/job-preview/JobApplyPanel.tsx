@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, Typography, Button, Divider, Chip } from "@mui/material";
+import { Box, Typography, Button, Divider, Chip, CircularProgress } from "@mui/material";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -13,9 +13,10 @@ import OnboardingModal from "../modals/OnboardingModal";
 interface JobApplyPanelProps {
   jobTitle: string;
   onStartInterview?: () => void;
+  isConfigLoading?: boolean;
 }
 
-export default function JobApplyPanel({ jobTitle, onStartInterview }: JobApplyPanelProps) {
+export default function JobApplyPanel({ jobTitle, onStartInterview, isConfigLoading }: JobApplyPanelProps) {
   const { t } = useTranslation("modules/interview/apply");
   const [modalOpen, setModalOpen] = useState(false);
   const authUser = useSelector((state: RootState) => state.user.connectedUser.user);
@@ -80,7 +81,11 @@ export default function JobApplyPanel({ jobTitle, onStartInterview }: JobApplyPa
               variant="contained"
               fullWidth
               onClick={onStartInterview}
-              startIcon={<PlayArrowIcon />}
+              disabled={isConfigLoading}
+              startIcon={isConfigLoading
+                ? <CircularProgress size={16} sx={{ color: "#fff" }} />
+                : <PlayArrowIcon />
+              }
               sx={{
                 bgcolor: PURPLE,
                 color: "#fff",
@@ -92,9 +97,10 @@ export default function JobApplyPanel({ jobTitle, onStartInterview }: JobApplyPa
                 textTransform: "none",
                 boxShadow: "none",
                 "&:hover": { bgcolor: PURPLE_DARK, boxShadow: "none" },
+                "&.Mui-disabled": { bgcolor: PURPLE, opacity: 0.65, color: "#fff" },
               }}
             >
-              Start Interview
+              {isConfigLoading ? "Preparing interview…" : "Start Interview"}
             </Button>
           </>
         ) : (

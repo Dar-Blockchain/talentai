@@ -44,7 +44,7 @@ export default function InterviewSessionHeader({
   const ARC_R   = 9;
   const ARC_C   = 2 * Math.PI * ARC_R;
   const arcDash  = coverageColor != null ? ARC_C * (1 - (coverage ?? 0) / 100) : ARC_C;
-  const { t } = useTranslation("modules/interview/hr");
+  const { t } = useTranslation("modules/interview/interview");
 
   const jobTitle = useMemo(
     () => jobData?.jobDetails?.title || jobData?.title || t("interview_types.hr"),

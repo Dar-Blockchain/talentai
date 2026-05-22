@@ -22,7 +22,7 @@ export const useInterviewConfig = ({ showNotification }: UseInterviewConfigOptio
   const { data: jobData, isLoading: isJobLoading } = useJobPostQuery(jobId);
 
   // ── 2. Fetch interview config (requires auth token) ──────────────────────────
-  const { data: configData, error: configError } = useInterviewConfigQuery(
+  const { data: configData, error: configError, isLoading: isConfigLoading } = useInterviewConfigQuery(
     !!jobData && !!getToken() ? jobId : null,
   );
 
@@ -77,5 +77,6 @@ export const useInterviewConfig = ({ showNotification }: UseInterviewConfigOptio
     setInterviewConfig,
     jobData: jobData ?? null,
     isJobLoading: !!jobId && isJobLoading,
+    isConfigLoading: !!jobId && !!getToken() && isConfigLoading,
   };
 };

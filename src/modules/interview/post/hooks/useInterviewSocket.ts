@@ -52,7 +52,13 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
     console.log('🔌 Initializing WebSocket connection...');
     connectionInitialized.current = true;
 
-    const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://172.23.207.114:5000').replace(/\/$/, '');
+    const rawBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!rawBase) {
+      console.error('NEXT_PUBLIC_API_BASE_URL is not set — cannot connect to interview server');
+      callbacksRef.current.onNotification('Interview server URL is not configured.', 'error');
+      return;
+    }
+    const baseUrl = rawBase.replace(/\/$/, '');
     console.log('🔗 Attempting to connect to:', `${baseUrl}${namespace}`);
     console.log('🔗 Socket.IO will connect to namespace:', namespace);
 
@@ -151,7 +157,8 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
 
     socket.on('interview_ended', (data: any) => {
       console.log('🏁 Interview ended:', data);
-      setInterviewStatus('ended');
+      // Status transition is the callback's responsibility — it may need to delay
+      // the change (e.g. to keep the farewell message visible for a few seconds).
       callbacksRef.current.onInterviewEnded(data);
     });
 
@@ -159,6 +166,54 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
       console.error('❌ Interview error:', error);
       callbacksRef.current.onInterviewError(error);
       callbacksRef.current.onNotification(`Interview error: ${error.message}`, 'error');
+    });
+
+    // ── Previously unhandled events ──────────────────────────────────────────
+
+    socket.on('greeting_chunk', (data: any) => {
+      callbacksRef.current.onGreetingChunk?.(data);
+    });
+
+    socket.on('greeting_complete', (data: any) => {
+      console.log('👋 Greeting complete');
+      callbacksRef.current.onGreetingComplete?.(data);
+    });
+
+    socket.on('interviewer_typing', (data: any) => {
+      callbacksRef.current.onInterviewerTyping?.(data);
+    });
+
+    socket.on('response_processed', (data: any) => {
+      console.log('✔️ Response processed by server:', data?.sessionId);
+    });
+
+    socket.on('topic_change', (data: any) => {
+      console.log('🔀 Topic change:', data?.from, '→', data?.to);
+      callbacksRef.current.onTopicChange?.(data);
+    });
+
+    socket.on('interview_wrap_up', (data: any) => {
+      console.log('🏁 Interview entering wrap-up phase');
+      callbacksRef.current.onInterviewWrapUp?.(data);
+    });
+
+    socket.on('silence_reset', () => {
+      console.log('🔇 Silence counter reset by server');
+      callbacksRef.current.onSilenceReset?.();
+    });
+
+    socket.on('session_status', (data: any) => {
+      console.log('💓 Session health ping:', data?.status);
+    });
+
+    socket.on('interview_paused', () => {
+      console.log('⏸️ Interview paused');
+      setInterviewStatus('paused');
+    });
+
+    socket.on('interview_resumed', () => {
+      console.log('▶️ Interview resumed');
+      setInterviewStatus('active');
     });
 
     socket.on('reconnect', () => {

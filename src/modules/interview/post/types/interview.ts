@@ -19,18 +19,21 @@ export interface InterviewConfig {
     difficulty?: string;
     silenceTimeout?: number;
     silenceIntelligence?: {
-      enabled: boolean;
-      adaptiveThresholds: boolean;
-      maxSilencePrompts: number;
-      naturalPauseDetection: boolean;
-      contextAwareThresholds: boolean;
+      interviewType?: string;
+      candidateBehavior?: {
+        interactionStyle?: string;
+        confidenceLevel?: string;
+        communicationStyle?: string;
+      };
+      adaptiveMode?: boolean;
+      contextualAdjustments?: boolean;
     };
   };
   enableSecurity?: boolean;
 }
 
 export interface InterviewMessage {
-  type: 'greeting' | 'question' | 'follow_up' | 'silence_prompt' | 'system';
+  type: 'greeting' | 'question' | 'follow_up' | 'silence_prompt' | 'system' | 'wrap_up' | 'end_interview';
   content: string;
   timestamp: string;
   sessionId?: string;
@@ -93,6 +96,6 @@ export interface JobQuestionsResponse {
 export type InterviewStatus = 'idle' | 'connecting' | 'active' | 'paused' | 'ended';
 export type ConnectionStatus = 'connecting' | 'connected' | 'error' | 'disconnected';
 export type CameraStatus = 'idle' | 'requesting' | 'granted' | 'denied' | 'error';
-export type AgentState = 'idle' | 'thinking' | 'waiting' | 'processing' | 'ready';
+export type AgentState = 'idle' | 'thinking' | 'waiting' | 'processing' | 'ready' | 'finishing';
 export type SpeechPhase = 'reading' | 'thinking' | 'speaking' | 'paused' | 'complete';
 export type AlertSeverity = 'success' | 'error' | 'warning' | 'info';

@@ -32,6 +32,11 @@ export function useInterviewSession({
   const timerRef = useRef<any>(null);
   const audioRef = useRef<any>(null);
 
+  // Tracks whether an end_interview message is already being displayed so that
+  // interview_ended (which fires simultaneously) doesn't collapse the UI early.
+  const isFinishingRef        = useRef(false);
+  const setInterviewStatusRef = useRef<(s: any) => void>(() => {});
+
   const handleInterviewStarted = useCallback((data: InterviewStartedData) => {
     timerRef.current?.startTimer(data.config.duration || 20);
     timerRef.current?.setDuration(data.config.duration * 60 * 1000);
@@ -45,10 +50,25 @@ export function useInterviewSession({
   }, [interviewConfig, setInterviewConfig]);
 
   const handleInterviewMessage = useCallback((message: InterviewMessage) => {
-    audioRef.current?.setConversationHistory((prev: InterviewMessage[]) => [...prev, message]);
+    // Strip internal AI reasoning — never expose scoring rationale to the candidate
+    const { reasoning: _reasoning, ...safeMessage } = message as any;
+
+    if (safeMessage.type === 'end_interview') {
+      isFinishingRef.current = true;
+      audioRef.current?.setConversationHistory((prev: InterviewMessage[]) => [...prev, safeMessage]);
+      audioRef.current?.setAgentState('finishing');
+      audioRef.current?.setAgentMessage('Interview finishing — preparing your results…');
+      setTimeout(() => {
+        isFinishingRef.current = false;
+        endInterviewRef.current();
+      }, 6000);
+      return;
+    }
+
+    audioRef.current?.setConversationHistory((prev: InterviewMessage[]) => [...prev, safeMessage]);
     audioRef.current?.setQuestionHighlight(true);
     setTimeout(() => audioRef.current?.setQuestionHighlight(false), 600);
-    if (message.type === 'question' || message.type === 'follow_up') {
+    if (safeMessage.type === 'question' || safeMessage.type === 'follow_up') {
       audioRef.current?.resetSkipGuard?.();
       audioRef.current?.setQuestionReadingTime(Date.now());
       audioRef.current?.setAgentState('waiting');
@@ -97,12 +117,44 @@ export function useInterviewSession({
       }));
     }
     setResultsReady(true);
+    // If the end_interview farewell message is still showing, keep the active UI
+    // alive — the 30 s timer in handleInterviewMessage will call setInterviewStatus.
+    // Otherwise transition immediately (e.g. manual end or time-up).
+    if (!isFinishingRef.current) {
+      setInterviewStatusRef.current('ended');
+    }
   }, [interviewConfig]);
 
   const handleInterviewError = useCallback((error: { message: string }) => {
     audioRef.current?.setAgentState('waiting');
     audioRef.current?.setAgentMessage('Something went wrong. You can re-submit your answer or continue.');
     console.error('Interview error received:', error.message);
+  }, []);
+
+  const handleGreetingComplete = useCallback((data: { text?: string; sessionId?: string }) => {
+    if (data.text) {
+      audioRef.current?.setConversationHistory((prev: InterviewMessage[]) => [
+        ...prev,
+        { type: 'greeting' as const, content: data.text!, timestamp: new Date().toISOString() },
+      ]);
+    }
+    audioRef.current?.setAgentState('waiting');
+    audioRef.current?.setAgentMessage('Interview is about to begin…');
+  }, []);
+
+  const handleInterviewerTyping = useCallback((data: { typing: boolean }) => {
+    if (data.typing) {
+      audioRef.current?.setAgentState('thinking');
+      audioRef.current?.setAgentMessage('AI is processing your response…');
+    }
+  }, []);
+
+  const handleInterviewWrapUp = useCallback(() => {
+    notify('The interview is entering the final stage.', 'info');
+  }, [notify]);
+
+  const handleSilenceReset = useCallback(() => {
+    audioRef.current?.setSilenceCount(0);
   }, []);
 
   const socket = useInterviewSocket({
@@ -114,6 +166,10 @@ export function useInterviewSession({
     onVoiceActivity: handleVoiceActivity,
     onInterviewEnded: handleInterviewEnded,
     onInterviewError: handleInterviewError,
+    onGreetingComplete: handleGreetingComplete,
+    onInterviewerTyping: handleInterviewerTyping,
+    onInterviewWrapUp: handleInterviewWrapUp,
+    onSilenceReset: handleSilenceReset,
   });
 
   const audio = useAudioTranscription({
@@ -136,13 +192,13 @@ export function useInterviewSession({
   const security = useSecurityMonitoring({
     interviewStatus: socket.interviewStatus,
     onTerminate: () => endInterviewRef.current(),
-    // enabled: interviewConfig.enableSecurity !== false,
-    enabled: false
+    enabled: interviewConfig.enableSecurity !== false,
   });
 
   // Sync refs after all hooks initialize so forward-reference callbacks resolve correctly
   audioRef.current = audio;
   timerRef.current = timer;
+  setInterviewStatusRef.current = socket.setInterviewStatus;
 
   const skipQuestion = useCallback(() => { audioRef.current?.skipQuestion(); }, []);
 

@@ -12,7 +12,7 @@ import LoadingState from "@/components/ui/LoadingState";
 import { useTranslation } from "react-i18next";
 
 export default function InterviewFlow() {
-  const { t } = useTranslation("modules/interview/hr");
+  const { t } = useTranslation("modules/interview/interview");
   
   const router = useRouter();
   const authUser = useSelector(
@@ -29,7 +29,7 @@ export default function InterviewFlow() {
   const { notification, showNotification, hideNotification } =
     useNotification();
 
-  const { interviewConfig, setInterviewConfig, jobData, isJobLoading } = useInterviewConfig({
+  const { interviewConfig, setInterviewConfig, jobData, isJobLoading, isConfigLoading } = useInterviewConfig({
     showNotification,
   });
 
@@ -66,6 +66,7 @@ export default function InterviewFlow() {
     return (
       <JobPreviewPanel
         jobData={jobData}
+        isConfigLoading={isConfigLoading}
         onStartInterview={authUser ? handleStartInterview : undefined}
       />
     );
