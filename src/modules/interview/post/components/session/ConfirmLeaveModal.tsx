@@ -10,7 +10,7 @@ interface ConfirmLeaveModalProps {
 }
 
 const ConfirmLeaveModal: React.FC<ConfirmLeaveModalProps> = ({ open, onConfirm, onCancel }) => {
-  const { t } = useTranslation('interview');
+  const { t } = useTranslation('modules/interview/interview');
 
   return (
     <Dialog

@@ -48,7 +48,12 @@ export const useAudioTranscription = ({
   const [lastVoiceActivity, setLastVoiceActivity]     = useState<number>(Date.now());
   const [currentSilenceDuration, setCurrentSilenceDuration] = useState(0);
   const [questionReadingTime, setQuestionReadingTime] = useState<number | null>(null);
-  const [speechPhase, setSpeechPhase]                 = useState<SpeechPhase>('reading');
+  const [speechPhase, _setSpeechPhase]                = useState<SpeechPhase>('reading');
+  const speechPhaseRef = useRef<SpeechPhase>('reading');
+  const setSpeechPhase = useCallback((phase: SpeechPhase) => {
+    speechPhaseRef.current = phase;
+    _setSpeechPhase(phase);
+  }, []);
   const [adaptiveSilenceThreshold, setAdaptiveSilenceThreshold] = useState(5000);
   const readingTimeBuffer = 10000;
 
@@ -97,7 +102,14 @@ export const useAudioTranscription = ({
 
   // ── Token ─────────────────────────────────────────────────────────────────────
 
+  const tokenRef       = useRef<string | null>(null);
+  const tokenFetchedAt = useRef<number>(0);
+  const TOKEN_TTL_MS   = 55_000; // AssemblyAI tokens expire at 60 s; re-fetch 5 s early
+
   const generateStreamingToken = async (): Promise<string> => {
+    const age = Date.now() - tokenFetchedAt.current;
+    if (tokenRef.current && age < TOKEN_TTL_MS) return tokenRef.current;
+
     const response = await fetch('/api/session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -108,6 +120,8 @@ export const useAudioTranscription = ({
       throw new Error(`Token generation failed: ${response.status} - ${text}`);
     }
     const { token } = await response.json();
+    tokenRef.current      = token;
+    tokenFetchedAt.current = Date.now();
     return token;
   };
 
@@ -190,10 +204,10 @@ export const useAudioTranscription = ({
   // ── Send accumulated turns to backend ────────────────────────────────────────
 
   const sendAccumulatedAnswer = useCallback(() => {
-    // Use accumulated turns; fall back to currentTranscript (e.g. short "I don't know"
-    // that passed partial transcription but whose end_of_turn never fired in time).
+    // Use accumulated turns; fall back to currentTranscript only when speech has
+    // genuinely paused — avoids capturing a mid-sentence partial as the answer.
     let turns = accumulatedTurnsRef.current;
-    if (turns.length === 0 && currentTranscriptRef.current.trim()) {
+    if (turns.length === 0 && speechPhaseRef.current === 'paused' && currentTranscriptRef.current.trim()) {
       turns = [currentTranscriptRef.current.trim()];
     }
     if (turns.length === 0) return;

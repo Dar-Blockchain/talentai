@@ -2,10 +2,10 @@ import { InterviewConfig } from '../types/interview';
 
 export const DEFAULT_INTERVIEW_CONFIG: InterviewConfig = {
   interviewType: 'HR_INTERVIEW',
-  testReason: 'Preparing for software engineer behavioral interview',
+  testReason: '',
   context: {
-    targetCompany: 'Google',
-    targetRole: 'Software Engineer',
+    targetCompany: '',
+    targetRole: '',
     experienceLevel: 'Mid-Level',
     interviewGoal: 'Assess behavioral competencies and cultural fit',
   },
@@ -20,11 +20,8 @@ export const DEFAULT_INTERVIEW_CONFIG: InterviewConfig = {
     difficulty: 'intermediate',
     silenceTimeout: 5,
     silenceIntelligence: {
-      enabled: true,
-      adaptiveThresholds: true,
-      maxSilencePrompts: 3,
-      naturalPauseDetection: true,
-      contextAwareThresholds: true,
+      adaptiveMode: true,
+      contextualAdjustments: true,
     },
   },
 };

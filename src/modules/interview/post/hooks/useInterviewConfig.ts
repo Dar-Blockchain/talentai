@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+
+import { safeSet, safeRemove } from '@/utils/safeStorage';
 import { useRouter } from 'next/router';
 import { InterviewConfig } from '../types/interview';
 import { DEFAULT_INTERVIEW_CONFIG } from '../constants';
@@ -34,8 +36,8 @@ export const useInterviewConfig = ({ showNotification }: UseInterviewConfigOptio
   useEffect(() => {
     if (!configData) return;
     setInterviewConfig(configData);
-    localStorage.setItem('interview_jobId', jobId!);
-    localStorage.setItem('interview_type',  'hr');
+    safeSet('interview_jobId', jobId!);
+    safeSet('interview_type',  'hr');
   }, [configData]);
 
   // ── URL-param mode (no jobId) ─────────────────────────────────────────────────
@@ -58,18 +60,18 @@ export const useInterviewConfig = ({ showNotification }: UseInterviewConfigOptio
     if (!urlParams.type && !urlParams.skill) return;
     setInterviewConfig(buildInterviewConfigFromURL(urlParams));
 
-    localStorage.removeItem('interview_type');
-    localStorage.removeItem('interview_skill');
-    localStorage.removeItem('interview_category');
-    localStorage.removeItem('interview_proficiency');
-    localStorage.removeItem('interview_role');
-    localStorage.removeItem('interview_jobId');
+    safeRemove('interview_type');
+    safeRemove('interview_skill');
+    safeRemove('interview_category');
+    safeRemove('interview_proficiency');
+    safeRemove('interview_role');
+    safeRemove('interview_jobId');
 
-    if (urlParams.type)        localStorage.setItem('interview_type',        urlParams.type);
-    if (urlParams.skill)       localStorage.setItem('interview_skill',       urlParams.skill);
-    if (urlParams.category)    localStorage.setItem('interview_category',    urlParams.category);
-    if (urlParams.proficiency) localStorage.setItem('interview_proficiency', urlParams.proficiency);
-    if (urlParams.role)        localStorage.setItem('interview_role',        urlParams.role);
+    if (urlParams.type)        safeSet('interview_type',        urlParams.type);
+    if (urlParams.skill)       safeSet('interview_skill',       urlParams.skill);
+    if (urlParams.category)    safeSet('interview_category',    urlParams.category);
+    if (urlParams.proficiency) safeSet('interview_proficiency', urlParams.proficiency);
+    if (urlParams.role)        safeSet('interview_role',        urlParams.role);
   }, [router.isReady, router.query, jobId]);
 
   return {

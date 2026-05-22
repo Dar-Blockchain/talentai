@@ -6,7 +6,8 @@ export function useInterviewConfigQuery(jobId: string | null) {
     queryKey: ['interviewConfig', jobId],
     queryFn:  () => fetchInterviewConfig(jobId!),
     enabled:  !!jobId,
-    retry:    false,
+    retry:      2,
+    retryDelay: (attempt: number) => Math.min(1000 * 2 ** attempt, 10_000),
     staleTime: 5 * 60 * 1000,
   });
 }

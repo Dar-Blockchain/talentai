@@ -6,7 +6,8 @@ export function useEligibilityQuery(postId: string | null, userId?: string | nul
     queryKey: ['eligibility', postId, userId],
     queryFn:  () => checkEligibility(postId!),
     enabled:  !!postId && !!userId,
-    retry:    false,
+    retry:      2,
+    retryDelay: (attempt: number) => Math.min(1000 * 2 ** attempt, 10_000),
     staleTime: 0,
   });
 }

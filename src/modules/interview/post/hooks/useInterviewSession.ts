@@ -1,17 +1,20 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-
 import { Coverage, InterviewMessage } from '../types/interview';
 import type {
   InterviewStartedData,
   InterviewEndedData,
   SilenceResponseData,
   UseInterviewSessionOptions,
+  UseAudioTranscriptionReturn,
+  UseInterviewTimerReturn,
 } from '../types/hooks';
 import { useInterviewSocket } from './useInterviewSocket';
 import { useAudioTranscription } from './useAudioTranscription';
 import { useInterviewTimer } from './useInterviewTimer';
 import { useCamera } from './useCamera';
 import { useSecurityMonitoring } from './useSecurityMonitoring';
+
+import { safeSet } from '@/utils/safeStorage';
 
 export type { UseInterviewSessionOptions };
 
@@ -29,12 +32,13 @@ export function useInterviewSession({
 
   // Refs to break forward-reference: handlers are defined before audio/timer hooks are called,
   // but the callbacks only execute after all hooks have initialized.
-  const timerRef = useRef<any>(null);
-  const audioRef = useRef<any>(null);
+  const timerRef = useRef<UseInterviewTimerReturn | null>(null);
+  const audioRef = useRef<UseAudioTranscriptionReturn | null>(null);
 
-  // Tracks whether an end_interview message is already being displayed so that
-  // interview_ended (which fires simultaneously) doesn't collapse the UI early.
+  // Tracks whether an end_interview farewell is showing so interview_ended
+  // doesn't collapse the UI before the 30s window expires.
   const isFinishingRef        = useRef(false);
+  const finishTimerRef        = useRef<ReturnType<typeof setTimeout> | null>(null);
   const setInterviewStatusRef = useRef<(s: any) => void>(() => {});
 
   const handleInterviewStarted = useCallback((data: InterviewStartedData) => {
@@ -58,8 +62,10 @@ export function useInterviewSession({
       audioRef.current?.setConversationHistory((prev: InterviewMessage[]) => [...prev, safeMessage]);
       audioRef.current?.setAgentState('finishing');
       audioRef.current?.setAgentMessage('Interview finishing — preparing your results…');
-      setTimeout(() => {
+      if (finishTimerRef.current) clearTimeout(finishTimerRef.current);
+      finishTimerRef.current = setTimeout(() => {
         isFinishingRef.current = false;
+        finishTimerRef.current = null;
         endInterviewRef.current();
       }, 6000);
       return;
@@ -106,9 +112,9 @@ export function useInterviewSession({
   const handleInterviewEnded = useCallback(async (data: InterviewEndedData) => {
     audioRef.current?.setIsRecording(false);
     timerRef.current?.stopTimer();
-    if (data.sessionId) localStorage.setItem('last_interview_id', data.sessionId);
+    if (data.sessionId) safeSet('last_interview_id', data.sessionId);
     if (data.finalReport || data.analytics) {
-      localStorage.setItem('last_interview_analysis', JSON.stringify({
+      safeSet('last_interview_analysis', JSON.stringify({
         finalReport: data.finalReport,
         analytics: data.analytics,
         sessionId: data.sessionId,
@@ -117,10 +123,17 @@ export function useInterviewSession({
       }));
     }
     setResultsReady(true);
-    // If the end_interview farewell message is still showing, keep the active UI
-    // alive — the 30 s timer in handleInterviewMessage will call setInterviewStatus.
-    // Otherwise transition immediately (e.g. manual end or time-up).
-    if (!isFinishingRef.current) {
+    if (isFinishingRef.current) {
+      // Farewell message is still showing — let finishTimer fire naturally.
+      // Hard cap: force the transition 1 s after the farewell timer would have fired.
+      setTimeout(() => {
+        if (isFinishingRef.current) {
+          isFinishingRef.current = false;
+          if (finishTimerRef.current) { clearTimeout(finishTimerRef.current); finishTimerRef.current = null; }
+          setInterviewStatusRef.current('ended');
+        }
+      }, 7000);
+    } else {
       setInterviewStatusRef.current('ended');
     }
   }, [interviewConfig]);
@@ -236,7 +249,7 @@ export function useInterviewSession({
     audio.cleanupAssemblyAI();
     audio.setIsRecording(false);
     socket.setInterviewStatus('ended');
-    if (socket.sessionId) localStorage.setItem('last_interview_id', socket.sessionId);
+    if (socket.sessionId) safeSet('last_interview_id', socket.sessionId);
   }, [socket.socketRef, socket.sessionId, socket.setInterviewStatus, audio]);
 
   endInterviewRef.current = endInterview;

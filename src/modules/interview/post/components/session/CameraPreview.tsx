@@ -16,6 +16,7 @@ interface CameraPreviewProps {
   isConnecting: boolean;
   interviewStatus: InterviewStatus;
   audioContextRef?: React.MutableRefObject<AudioContext | null>;
+  audioStreamRef?: React.MutableRefObject<MediaStream | null>;
   attachStream?: () => void;
 }
 
@@ -26,6 +27,7 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
   isConnecting,
   interviewStatus,
   audioContextRef,
+  audioStreamRef,
   attachStream,
 }) => {
   const { t } = useTranslation("interview");
@@ -48,12 +50,11 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
     const analyser = ctx.createAnalyser();
     analyser.fftSize = 64;
     analyserRef.current = analyser;
-    navigator.mediaDevices
-      .getUserMedia({ audio: true })
-      .then((stream) => {
-        ctx.createMediaStreamSource(stream).connect(analyser);
-      })
-      .catch(() => {});
+    // Reuse the interview's existing audio stream — never request a second capture.
+    const stream = audioStreamRef?.current;
+    if (stream) {
+      ctx.createMediaStreamSource(stream).connect(analyser);
+    }
     return () => {
       analyserRef.current = null;
     };

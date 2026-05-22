@@ -4,6 +4,43 @@ import type {
   Coverage, RealTimeReport, ConnectionStatus, InterviewStatus, CameraStatus,
 } from './interview';
 import type { JobPost } from './api';
+import type { Socket } from 'socket.io-client';
+import type { ConnectedUserEntity } from '@/store/slices/userSlice';
+
+export type AuthUser = ConnectedUserEntity;
+
+/** Shape that the backend sends inside silenceIntelligence on silence events. */
+export interface BackendSilenceConfig {
+  threshold?: number;
+  adaptiveThreshold?: number;
+  interviewType?: string;
+  candidateBehavior?: {
+    interactionStyle?: string;
+    confidenceLevel?: string;
+    communicationStyle?: string;
+  };
+  adaptiveMode?: boolean;
+  contextualAdjustments?: boolean;
+}
+
+/** Post-interview final report from the backend. */
+export interface FinalReport {
+  overallScore?: number;
+  strengths?: string[];
+  weaknesses?: string[];
+  recommendations?: string[];
+  summary?: string;
+  [key: string]: unknown;
+}
+
+/** Session analytics from the backend. */
+export interface SessionAnalytics {
+  duration?: number;
+  questionsAnswered?: number;
+  silenceCount?: number;
+  averageResponseTime?: number;
+  [key: string]: unknown;
+}
 
 // ─── useAudioTranscription ──────────────────────────────────────────────────────
 
@@ -38,12 +75,12 @@ export interface UseAudioTranscriptionReturn {
   cleanupAssemblyAI: () => Promise<void>;
   sendAccumulatedAnswer: () => void;
   resetSilenceDetection: () => void;
-  audioStreamRef: React.MutableRefObject<MediaStream | null>;
-  audioContextRef: React.MutableRefObject<AudioContext | null>;
+  audioStreamRef: React.RefObject<MediaStream | null>;
+  audioContextRef: React.RefObject<AudioContext | null>;
   questionHighlight: boolean;
   setQuestionHighlight: (val: boolean) => void;
-  backendSilenceConfig: any;
-  setBackendSilenceConfig: (val: any) => void;
+  backendSilenceConfig: BackendSilenceConfig | null;
+  setBackendSilenceConfig: (val: BackendSilenceConfig | null) => void;
   setAdaptiveSilenceThreshold: (val: number) => void;
   conversationHistory: InterviewMessage[];
   setConversationHistory: React.Dispatch<React.SetStateAction<InterviewMessage[]>>;
@@ -56,12 +93,12 @@ export interface UseAudioTranscriptionReturn {
 }
 
 export interface UseAudioTranscriptionOptions {
-  socketRef: React.MutableRefObject<any>;
-  sessionIdRef: React.MutableRefObject<string | null>;
+  socketRef: React.RefObject<Socket | null>;
+  sessionIdRef: React.RefObject<string | null>;
   interviewConfig: InterviewConfig;
   interviewStatus: string;
   showNotification: (message: string, severity: 'success' | 'error' | 'warning' | 'info') => void;
-  jobData?: any;
+  jobData?: JobPost | null;
 }
 
 // ─── useCamera ─────────────────────────────────────────────────────────────────
@@ -70,7 +107,7 @@ export interface UseCameraReturn {
   videoRef: React.RefObject<HTMLVideoElement>;
   cameraStatus: CameraStatus;
   cameraError: string;
-  streamRef: React.MutableRefObject<MediaStream | null>;
+  streamRef: React.RefObject<MediaStream | null>;
   attachStream: () => void;
   consentGiven: boolean;
   giveConsent: () => void;
@@ -102,14 +139,14 @@ export interface InterviewStartedData {
   config: {
     duration: number;
     interviewType: string;
-    silenceIntelligence?: any;
+    silenceIntelligence?: BackendSilenceConfig;
   };
 }
 
 export interface InterviewEndedData {
   sessionId?: string;
-  finalReport?: any;
-  analytics?: any;
+  finalReport?: FinalReport;
+  analytics?: SessionAnalytics;
 }
 
 export interface SilenceResponseData {
@@ -117,7 +154,7 @@ export interface SilenceResponseData {
   action: string;
   content?: string;
   timestamp?: string;
-  silenceIntelligence?: any;
+  silenceIntelligence?: BackendSilenceConfig;
 }
 
 export interface UseInterviewSocketCallbacks {
@@ -147,11 +184,11 @@ export interface UseInterviewSocketCallbacks {
 }
 
 export interface UseInterviewSocketReturn {
-  socketRef: React.MutableRefObject<any>;
+  socketRef: React.RefObject<Socket | null>;
   isConnected: boolean;
   connectionStatus: ConnectionStatus;
   sessionId: string | null;
-  sessionIdRef: React.MutableRefObject<string | null>;
+  sessionIdRef: React.RefObject<string | null>;
   isHydrated: boolean;
   setSessionId: (id: string | null) => void;
   setInterviewStatus: (status: InterviewStatus) => void;
@@ -200,7 +237,7 @@ export interface UseSecurityMonitoringOptions {
 export interface UseInterviewSessionOptions {
   interviewConfig: InterviewConfig;
   setInterviewConfig: (config: InterviewConfig) => void;
-  authUser: any;
-  jobData: any;
+  authUser: AuthUser | null;
+  jobData: JobPost | null;
   notify: (message: string, severity: 'success' | 'error' | 'warning' | 'info') => void;
 }

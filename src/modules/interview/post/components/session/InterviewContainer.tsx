@@ -27,6 +27,7 @@ interface InterviewContainerProps {
   onBack?: () => void;
   jobTitle?: string;
   companyName?: string;
+  dashboardPath?: string;
 }
 
 const InterviewContainer: React.FC<InterviewContainerProps> = ({
@@ -42,6 +43,7 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
   onBack,
   jobTitle,
   companyName,
+  dashboardPath = '/candidate/dashboard',
 }) => {
   const { t } = useTranslation('interview');
   const [waitDots] = useState('');
@@ -128,7 +130,7 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
         )}
 
         {interviewStatus === 'active'  && <LiveTranscript currentTranscript={currentTranscript} />}
-        {interviewStatus === 'ended'   && (resultsReady ? <CompletionCard /> : <AnalyzingSpinner waitDots={waitDots} />)}
+        {interviewStatus === 'ended'   && (resultsReady ? <CompletionCard dashboardPath={dashboardPath} /> : <AnalyzingSpinner waitDots={waitDots} />)}
       </Box>
 
     </Box>
@@ -396,7 +398,7 @@ const AnalyzingSpinner: React.FC<{ waitDots: string }> = ({ waitDots }) => {
 };
 
 /** Success card shown once the interview results have been saved. */
-const CompletionCard: React.FC = () => {
+const CompletionCard: React.FC<{ dashboardPath: string }> = ({ dashboardPath }) => {
   const { t } = useTranslation('interview');
   const router = useRouter();
 
@@ -474,7 +476,7 @@ const CompletionCard: React.FC = () => {
       <Button
         variant="contained"
         fullWidth
-        onClick={() => router.push('/candidate/dashboard')}
+        onClick={() => router.push(dashboardPath)}
         sx={{
           mt: 2.5,
           bgcolor: '#10b981',

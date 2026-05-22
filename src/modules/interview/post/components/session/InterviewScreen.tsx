@@ -1,6 +1,8 @@
 import React, { useMemo, useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/router";
+import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
+import { type RootState } from "@/store/store";
 import { Box, Snackbar, Alert, Container } from "@mui/material";
 import QuestionPanel from "./QuestionPanel";
 import CameraPreview from "./CameraPreview";
@@ -55,6 +57,12 @@ export default function InterviewScreen({
 }: InterviewScreenProps) {
   const router = useRouter();
   const { t } = useTranslation("modules/interview/interview");
+  const userRole = useSelector((state: RootState) => state.user.connectedUser.user?.role);
+  const dashboardPath =
+    userRole === 'Admin'    ? '/admin/dashboard'    :
+    userRole === 'Employee' ? '/employee/dashboard'  :
+    userRole === 'Company'  ? '/company/dashboard'   :
+                              '/candidate/dashboard';
 
   const handleBack = onBack ?? (() => {
     const ref = router.query.ref as string | undefined;
@@ -190,6 +198,7 @@ export default function InterviewScreen({
               isConnecting={audio.isConnecting}
               interviewStatus={socket.interviewStatus}
               audioContextRef={audio.audioContextRef}
+              audioStreamRef={audio.audioStreamRef}
               attachStream={camera.attachStream}
             />
           </Box>
@@ -224,6 +233,7 @@ export default function InterviewScreen({
                   resultsReady={resultsReady}
                   onStartInterview={startInterview}
                   onBack={handleBack}
+                  dashboardPath={dashboardPath}
                   jobTitle={jobData?.jobDetails?.title || jobData?.title || ""}
                   companyName={
                     jobData?.companyName ||
