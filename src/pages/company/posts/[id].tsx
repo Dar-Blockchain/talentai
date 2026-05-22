@@ -15,13 +15,13 @@ import {
 } from "@/store/slices/postSlice";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/useToast";
-import { useDeletePost } from "@/components/features/company/posts/details/useDeletePost";
-import DeletePostModal from "@/components/features/company/posts/details/DeletePostModal";
-import PublishConfirmModal from "@/components/features/company/posts/PublishConfirmModal";
+import { useDeletePost } from "@/modules/posts/hooks/useDeletePost";
+import DeletePostModal from "@/modules/posts/components/modals/DeletePostModal";
+import PublishConfirmModal from "@/modules/posts/components/modals/PublishConfirmModal";
 import InterviewLanguagesModal from "@/modules/create-post-ai/components/InterviewLanguagesModal";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
-import JobDetailContent from "@/components/features/company/posts/details/JobDetailContent";
-import ApplicationsView from "@/components/features/company/posts/details/ApplicationsView";
+import JobDetailContent from "@/modules/posts/components/details/JobDetailContent";
+import ApplicationsView from "@/modules/posts/components/details/ApplicationsView";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import EditOutlined from "@mui/icons-material/EditOutlined";
 import PublishOutlined from "@mui/icons-material/PublishOutlined";
@@ -87,13 +87,9 @@ const PostDetailsPage: React.FC = () => {
   }, [job, connectedUser, companyMembership]);
 
   const deletePost = useDeletePost({
-    postId: job?._id,
-    refetchAfterDelete: false,
-    onSuccess: () => {
-      showToast({ message: t("detail.toast.deleted"), severity: "success" });
-      router.push("/company/posts");
-    },
-    onError: () => showToast({ message: t("detail.toast.delete_error"), severity: "error" }),
+    redirectTo: "/company/posts",
+    onSuccess: () => showToast({ message: t("detail.toast.deleted"), severity: "success" }),
+    onError:   () => showToast({ message: t("detail.toast.delete_error"), severity: "error" }),
   });
 
   const handleSaveSuccess = () => {
@@ -405,7 +401,7 @@ const PostDetailsPage: React.FC = () => {
 
                             {/* Delete */}
                             <MenuItem
-                              onClick={() => { setMenuAnchor(null); deletePost.handleOpen(); }}
+                              onClick={() => { setMenuAnchor(null); deletePost.handleOpen(job._id); }}
                               sx={{ mx: 0.5, borderRadius: "8px", gap: 1.25, py: 1, px: 1.25, "&:hover": { bgcolor: "#FEF2F2" } }}
                             >
                               <Box sx={{ width: 28, height: 28, borderRadius: "7px", bgcolor: "#FEF2F2", display: "flex", alignItems: "center", justifyContent: "center" }}>
