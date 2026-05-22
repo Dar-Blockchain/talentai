@@ -5,10 +5,10 @@ import { Box } from "@mui/material";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import { selectCurrentJob } from "@/store/slices/postSlice";
 import { getPostSkills } from "@/utils/postHelpers";
-import ThresholdCard from "./components/overview/ThresholdCard";
-import OverviewCard from "./components/overview/OverviewCard";
-import SkillsCard from "./components/overview/SkillsCard";
-import BulletListCard from "./components/overview/BulletListCard";
+import ThresholdCard from "./overview/ThresholdCard";
+import OverviewCard from "./overview/OverviewCard";
+import SkillsCard from "./overview/SkillsCard";
+import BulletListCard from "./overview/BulletListCard";
 
 interface Props {
   canEdit: boolean;

@@ -1,5 +1,3 @@
-export type { PostsState, PostMetrics } from "../store/postSlice";
-
 export type StatusFilter = "all" | "active" | "draft" | "expired";
 export type SortOption   = "newest" | "oldest" | "title-asc" | "title-desc";
 export type TypeFilter   = "all" | "ai" | "pipeline" | "manual";

@@ -1,2 +1,4 @@
-// Re-export from module — do not add logic here
-export { postService } from "@/modules/posts/api/postService";
+import { postService as listService }    from "@/modules/posts/list/api/postService";
+import { postService as detailsService } from "@/modules/posts/details/api/postService";
+
+export const postService = { ...listService, ...detailsService };

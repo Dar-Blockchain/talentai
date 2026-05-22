@@ -4,7 +4,7 @@ import { Box, IconButton, Tooltip, Typography } from "@mui/material";
 import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
 import QrCode2Outlined from "@mui/icons-material/QrCode2Outlined";
 import ContentCopyOutlined from "@mui/icons-material/ContentCopyOutlined";
-import { fmtDate } from "../../../utils";
+import { fmtDate } from "../../utils";
 
 interface Props {
   isDraft: boolean;

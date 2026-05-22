@@ -8,14 +8,6 @@ const INTERVIEW_TYPE_MAP: Record<string, string> = {
 };
 
 export const postService = {
-  savePost: async (jobData: any) => {
-    if (!jobData) throw new Error("No job data available");
-    const res = await axiosInstance.post("post/save-post", jobData);
-    const saved = res.data;
-    const job = saved.data || saved;
-    return { success: true, jobData: job, planUsage: saved.planUsage || null };
-  },
-
   updatePost: async (jobId: string | number, jobData: any) => {
     if (!jobData || !jobId) throw new Error("Job ID or data is missing");
     const res = await axiosInstance.put(`post/updatePost/${jobId}`, jobData);
@@ -23,49 +15,13 @@ export const postService = {
     return { success: true, jobData: job };
   },
 
-  fetchRecommendedPosts: async (params: { page?: number; limit?: number } = {}) => {
-    const { page = 1, limit = 10 } = params;
-    const queryParams = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
-    const res = await axiosInstance.get(`post/adsPost?${queryParams}`);
-    return res.data;
-  },
-
-  postRecruitmentSteps: async (postId: string, steps: any[]) => {
-    const res = await axiosInstance.post(`post-steps/post/${postId}/steps`, steps);
-    return res.data;
-  },
-
-  fetchMyPosts: async (params: { page?: number; limit?: number; search?: string; sort?: string; status?: string; creationType?: string } = {}) => {
-    const { page = 1, limit = 12, search = "", sort = "newest", status, creationType } = params;
-    const queryParams = new URLSearchParams({
-      page: page.toString(), limit: limit.toString(),
-      ...(search && { search }), sort,
-      ...(status && status !== "all" && { status }),
-      ...(creationType && creationType !== "all" && { creationType }),
-    });
-    const res = await axiosInstance.get(`post/my-posts?${queryParams}`);
-    const data = res.data;
-    return {
-      posts: data.results || [],
-      pagination: {
-        total: data.total || 0, page: data.page || 1, limit: data.limit || 10,
-        totalPages: data.totalPages || 1, hasNextPage: data.hasNextPage || false, hasPrevPage: data.hasPrevPage || false,
-      },
-    };
-  },
-
-  deletePost: async (jobId: string) => {
-    await axiosInstance.delete(`post/deletePost/${jobId}`);
-    return jobId;
-  },
-
   fetchJobById: async (jobId: string) => {
     const res = await axiosInstance.get(`post/details/${jobId}`);
     return res.data?.data;
   },
 
-  updatePostStatus: async (postId: string, status: string) => {
-    const res = await axiosInstance.patch(`post/updatePostStatus/${postId}`, { status });
+  postRecruitmentSteps: async (postId: string, steps: any[]) => {
+    const res = await axiosInstance.post(`post-steps/post/${postId}/steps`, steps);
     return res.data;
   },
 
@@ -150,10 +106,5 @@ export const postService = {
     const res = await axiosInstance.get(`post-interview-assessments/${id}`);
     const responseData = res.data.data || res.data;
     return { assessment: responseData.assessment || responseData, stepsData: responseData.stepsData || null };
-  },
-
-  fetchPostMetrics: async () => {
-    const res = await axiosInstance.get("post/metrics");
-    return res.data.data;
   },
 };

@@ -1,15 +1,17 @@
-export { default as PostsPageContent } from "./components/PostsPageContent";
-export { default as JobDetailContent } from "./components/details/JobDetailContent";
-export { default as ApplicationsView } from "./components/details/ApplicationsView";
-export { default as PostBasicDetails } from "./components/details/PostBasicDetails";
-export { default as EditPostDetails, SkillChip } from "./components/details/EditPostDetails";
-export { default as RecruitmentFlowDetails } from "./components/details/RecruitmentFlowDetails";
-export { default as AssessmentDetailsModal, type AssessmentTarget } from "./components/details/AssessmentDetailsModal";
-export { default as ContactCandidateModal, type ContactTarget } from "./components/details/ContactCandidateModal";
-export { useDeletePost }   from "./hooks/useDeletePost";
-export { useMyPosts }      from "./hooks/useMyPosts";
-export { usePublishPost }  from "./hooks/usePublishPost";
-export { usePostMetrics }  from "./hooks/usePostMetrics";
-export * from "./store/postSlice";
-export * from "./types";
-export * from "./utils";
+// ── List sub-module ───────────────────────────────────────────────────────────
+export { default as PostsPageContent } from "./list/components/PostsPageContent";
+export { useDeletePost }   from "./list/hooks/useDeletePost";
+export { useMyPosts }      from "./list/hooks/useMyPosts";
+export { usePublishPost }  from "./list/hooks/usePublishPost";
+export * from "./list/types";
+export * from "./list/utils";
+
+// ── Details sub-module ────────────────────────────────────────────────────────
+export { default as JobDetailContent }      from "./details/components/JobDetailContent";
+export { default as ApplicationsView }      from "./details/components/ApplicationsView";
+export { default as PostBasicDetails }      from "./details/components/PostBasicDetails";
+export { default as EditPostDetails, SkillChip } from "./details/components/EditPostDetails";
+export { default as RecruitmentFlowDetails } from "./details/components/RecruitmentFlowDetails";
+export { default as AssessmentDetailsModal, type AssessmentTarget } from "./details/components/AssessmentDetailsModal";
+export { default as ContactCandidateModal, type ContactTarget }     from "./details/components/ContactCandidateModal";
+export { usePostMetrics }  from "./details/hooks/usePostMetrics";

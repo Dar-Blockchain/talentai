@@ -11,9 +11,9 @@ import {
 import ContactCandidateModal, { ContactTarget } from "./ContactCandidateModal";
 import AssessmentDetailsModal, { AssessmentTarget } from "./AssessmentDetailsModal";
 import InviteToInterviewModal, { InviteTarget } from "@/components/features/company/applications/InviteToInterviewModal";
-import ApplicationsToolbar from "./components/applications/ApplicationsToolbar";
-import ApplicationsEmptyState from "./components/applications/ApplicationsEmptyState";
-import ApplicationsList from "./components/applications/ApplicationsList";
+import ApplicationsToolbar from "./applications/ApplicationsToolbar";
+import ApplicationsEmptyState from "./applications/ApplicationsEmptyState";
+import ApplicationsList from "./applications/ApplicationsList";
 
 const TEAL     = "#0D9488";
 const PAGE_SIZE = 10;

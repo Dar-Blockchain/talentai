@@ -13,10 +13,10 @@ import EmailOutlined from "@mui/icons-material/EmailOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import axiosInstance from "@/utils/axiosInstance";
 import { getScore, scoreStyle, fmtDate, fmtDuration } from "@/components/features/company/interviews/list/InterviewCard";
-import ScoreRing from "./components/assessment/ScoreRing";
-import AssessmentScoresTab from "./components/assessment/AssessmentScoresTab";
-import AssessmentCoverageTab from "./components/assessment/AssessmentCoverageTab";
-import AssessmentAiReportTab from "./components/assessment/AssessmentAiReportTab";
+import ScoreRing from "./assessment/ScoreRing";
+import AssessmentScoresTab from "./assessment/AssessmentScoresTab";
+import AssessmentCoverageTab from "./assessment/AssessmentCoverageTab";
+import AssessmentAiReportTab from "./assessment/AssessmentAiReportTab";
 
 const TEAL        = "#0D9488";
 const TEAL_BG     = "#F0FDFA";

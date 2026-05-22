@@ -6,7 +6,7 @@ import { Box, Chip, Stack, Typography } from "@mui/material";
 import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
 import AssignmentLateOutlined from "@mui/icons-material/AssignmentLateOutlined";
 import SectionCard from "@/components/ui/SectionCard";
-import StepCard from "./components/pipeline/StepCard";
+import StepCard from "./pipeline/StepCard";
 
 const TEAL        = "#0D9488";
 const TEAL_BG     = "#F0FDFA";

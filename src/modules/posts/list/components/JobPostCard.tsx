@@ -1,11 +1,11 @@
 import { memo, useState } from "react";
 import { Box } from "@mui/material";
 import { motion } from "framer-motion";
-import CardHeader from "./components/CardHeader";
-import CardMeta from "./components/CardMeta";
-import CardFooter from "./components/CardFooter";
-import CardDraftBanner from "./components/CardDraftBanner";
-import CardQrDialog from "./components/CardQrDialog";
+import CardHeader from "./cards/CardHeader";
+import CardMeta from "./cards/CardMeta";
+import CardFooter from "./cards/CardFooter";
+import CardDraftBanner from "./cards/CardDraftBanner";
+import CardQrDialog from "./cards/CardQrDialog";
 
 const getDaysLeft = (expirationDate?: string) => {
   if (!expirationDate) return null;
