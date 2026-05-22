@@ -23,8 +23,10 @@ const SkillNameField = ({ skillType, value, onChange }: Props) => {
       <Typography sx={labelSx}>{t("create.post_form.labels.skill_name")}</Typography>
       <Autocomplete
         disableClearable
+        freeSolo
         options={baseOptions}
         inputValue={value}
+        value={baseOptions.find((o) => o.label === value) ?? null}
         getOptionLabel={(opt) => (typeof opt === "string" ? opt : opt.label)}
         filterOptions={(options, { inputValue }) => {
           const q = inputValue.toLowerCase().trim();
