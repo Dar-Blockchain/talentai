@@ -164,4 +164,4 @@ export const defaultCurrencies = [
   { value: "ZWL", label: "ZWL – Zimbabwean Dollar" },
 ];
 
-export const experienceLevels = ["Entry-level", "Junior", "Mid-level", "Senior", "Expert"];
+export const experienceLevels = ["Junior", "Mid-level", "Senior", "Expert"];

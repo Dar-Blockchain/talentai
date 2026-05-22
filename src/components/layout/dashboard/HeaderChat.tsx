@@ -14,21 +14,21 @@ import {
 import ChatOutlined from "@mui/icons-material/ChatOutlined";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
-import { selectCandidateConversations } from "@/modules/candidate-chat/store/candidateChatSlice";
-import { useCandidateConversationsQuery } from "@/modules/candidate-chat/queries/useCandidateChatQueries";
-import { selectTeamConversations } from "@/modules/team-chat/store/teamChatSlice";
-import { useTeamConversationsQuery } from "@/modules/team-chat/queries/useTeamChatQueries";
-import { getTeamChatBasePath, getTeamChatConversationPath } from "@/modules/team-chat/utils/routes";
+import { selectCandidateConversations } from "@/modules/chat/candidate-chat/store/candidateChatSlice";
+import { useCandidateConversationsQuery } from "@/modules/chat/candidate-chat/queries/useCandidateChatQueries";
+import { selectTeamConversations } from "@/modules/chat/team-chat/store/teamChatSlice";
+import { useTeamConversationsQuery } from "@/modules/chat/team-chat/queries/useTeamChatQueries";
+import { getTeamChatBasePath, getTeamChatConversationPath } from "@/modules/chat/team-chat/utils/routes";
 import {
   getCandidateChatBasePath,
   getCandidateChatConversationPath,
-} from "@/modules/candidate-chat/utils/routes";
+} from "@/modules/chat/candidate-chat/utils/routes";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
-import { useChatUnreadBadges } from "@/modules/shared/chat/hooks/useChatUnreadBadges";
-import { normalizeConversationUnreadCount } from "@/modules/shared/chat/utils/normalizeConversationUnread";
-import { getParticipantDisplayName } from "@/modules/shared/chat/components/helpers";
-import { TEAM_LAST_MESSAGE_DELETED_SENTINEL } from "@/modules/team-chat/constants/lastMessagePreview";
+import { useChatUnreadBadges } from "@/modules/chat/shared/hooks/useChatUnreadBadges";
+import { normalizeConversationUnreadCount } from "@/modules/chat/shared/utils/normalizeConversationUnread";
+import { getParticipantDisplayName } from "@/modules/chat/shared/components/helpers";
+import { TEAM_LAST_MESSAGE_DELETED_SENTINEL } from "@/modules/chat/team-chat/constants/lastMessagePreview";
 
 const TEAL    = "#0D9488";
 const TEAL_BG = "#F0FDFA";

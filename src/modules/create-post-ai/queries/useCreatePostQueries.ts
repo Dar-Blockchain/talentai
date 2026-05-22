@@ -49,7 +49,7 @@ function normalizeGeneratedPost(data: GeneratePostResponse, variables: GenerateP
   const isInternship = variables.contractType === "Internship" || jobDetails.employmentType === "Internship";
   const resolvedExperienceLevel =
     isKnownExperienceLevel(experienceLevel) ? experienceLevel
-    : inferred || (isInternship ? "Entry-level" : "");
+    : inferred || (isInternship ? "Junior" : "");
 
   return {
     post: {

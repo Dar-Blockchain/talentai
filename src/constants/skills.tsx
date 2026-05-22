@@ -295,14 +295,12 @@ export const softSkills: Skill[] = [
 ];
 
 export const hardSkillLevels = [
-  { label: "Entry Level", value: 1 },
   { label: "Junior", value: 2 },
   { label: "Mid Level", value: 3 },
   { label: "Senior", value: 4 },
   { label: "Expert", value: 5 },
 ];
 export const softSkillLevels = [
-  { label: "Entry-level", value: 1 },
   { label: "Junior", value: 2 },
   { label: "Mid-level", value: 3 },
   { label: "Senior", value: 4 },
