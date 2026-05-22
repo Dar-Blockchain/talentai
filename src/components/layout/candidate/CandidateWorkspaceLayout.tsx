@@ -128,6 +128,8 @@ const CandidateWorkspaceLayout: React.FC<CandidateWorkspaceLayoutProps> = ({
               flexDirection: "column",
               gap: 1.5,
               gridColumn: { xs: "1", md: "1" },
+              alignSelf: { xs: "start", md: "start" },
+              mt: { xs: 0, md: 2 },
             }}
           >
             <Box sx={{ display: { xs: "block", md: "none" } }}>

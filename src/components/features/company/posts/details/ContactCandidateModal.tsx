@@ -16,8 +16,8 @@ import { RootState } from "@/store/store";
 import {
   useCreateCandidateConversationMutation,
   useSendCandidateMessageMutation,
-} from "@/modules/candidate-chat/queries/useCandidateChatQueries";
-import { getCandidateChatConversationPath } from "@/modules/candidate-chat/utils/routes";
+} from "@/modules/chat/candidate-chat/queries/useCandidateChatQueries";
+import { getCandidateChatConversationPath } from "@/modules/chat/candidate-chat/utils/routes";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 

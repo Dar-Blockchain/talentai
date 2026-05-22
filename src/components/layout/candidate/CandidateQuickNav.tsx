@@ -6,8 +6,8 @@ import {
   candidateWorkspaceNavItems,
   isCandidateWorkspaceNavActive,
 } from "@/components/layout/candidate/candidateWorkspaceNav";
-import { useChatUnreadBadges } from "@/modules/shared/chat/hooks/useChatUnreadBadges";
-import ChatUnreadBadge from "@/modules/shared/chat/components/ChatUnreadBadge";
+import { useChatUnreadBadges } from "@/modules/chat/shared/hooks/useChatUnreadBadges";
+import ChatUnreadBadge from "@/modules/chat/shared/components/ChatUnreadBadge";
 
 interface CandidateQuickNavProps {
   variant?: "vertical" | "horizontal";

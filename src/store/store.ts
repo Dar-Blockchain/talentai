@@ -20,20 +20,18 @@ import jobDetailsReducer from './slices/jobDetailsSlice';
 import notificationReducer from './slices/notificationSlice';
 import memberReducer from './slices/memberSlice';
 import chatReducer from './slices/chatSlice';
-import teamChatReducer from '@/modules/team-chat/store/teamChatSlice';
-import candidateChatReducer from '@/modules/candidate-chat/store/candidateChatSlice';
+import teamChatReducer from '@/modules/chat/team-chat/store/teamChatSlice';
+import candidateChatReducer from '@/modules/chat/candidate-chat/store/candidateChatSlice';
 import adminReducer from './slices/adminSlice';
 import planLimitsReducer from './slices/planLimitsSlice';
 import campaignReducer from './slices/campaignSlice';
 import companyReducer from './slices/companySlice';
 import departmentReducer from './slices/departmentSlice';
 import jobApplicationReducer from './slices/jobApplicationSlice';
-import apiKeyReducer from './slices/apiKeySlice';
 import feedbackReducer from './slices/feedbackSlice';
 import paymentReducer from './slices/paymentSlice';
 import kpiReducer from './slices/kpiSlice';
 import { socketMiddleware } from './middleware/socketMiddleware';
-
 const rootReducer = combineReducers({
   user: userReducer,
   auth: authReducer,
@@ -54,7 +52,6 @@ const rootReducer = combineReducers({
   department: departmentReducer,
   jobApplications: jobApplicationReducer,
   kpi: kpiReducer,
-  apiKeys: apiKeyReducer,
   feedback: feedbackReducer,
   payment: paymentReducer,
 });

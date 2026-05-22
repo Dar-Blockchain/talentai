@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { io, Socket } from "socket.io-client";
 import { RootState, AppDispatch } from "@/store/store";
 import { useToast } from "@/hooks/useToast";
-import { deliveryBlockedToastMessage } from "@/modules/shared/chat";
+import { deliveryBlockedToastMessage } from "@/modules/chat/shared";
 import {
   fetchConversations,
   fetchConversation,
