@@ -1,5 +1,9 @@
 {
   "loading": "Chargement de l'entretien…",
+  "checking": {
+    "title": "Vérification de votre accès",
+    "subtitle": "Vérification de votre éligibilité avant le chargement de l'entretien."
+  },
   "no_link": {
     "title": "Aucun lien d'entretien fourni",
     "desc": "Cette page nécessite un lien d'entretien valide. Veuillez utiliser le lien fourni par l'entreprise pour accéder à votre entretien.",

@@ -2,11 +2,13 @@
 
 import dynamic from 'next/dynamic';
 import { Box } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { EligibilityGate, InterviewFlow, useEligibilityCheck } from '@/modules/interview/post';
 import InterviewHeader from '@/modules/interview/post/components/layout/InterviewHeader';
 import InterviewLoadingScreen from '@/modules/interview/post/components/layout/InterviewLoadingScreen';
 
 const CandidateInterview = () => {
+  const { t } = useTranslation('modules/interview/interview');
   const { eligibilityStatus, eligibilityMeta } = useEligibilityCheck();
 
   return (
@@ -17,8 +19,8 @@ const CandidateInterview = () => {
         {/* 1. Verifying eligibility */}
         {eligibilityStatus === 'checking' && (
           <InterviewLoadingScreen
-            title="Verifying your access"
-            subtitle="Checking your eligibility before loading the interview."
+            title={t('checking.title')}
+            subtitle={t('checking.subtitle')}
           />
         )}
 

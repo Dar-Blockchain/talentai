@@ -1,5 +1,9 @@
 {
   "loading": "Loading interview…",
+  "checking": {
+    "title": "Verifying your access",
+    "subtitle": "Checking your eligibility before loading the interview."
+  },
   "no_link": {
     "title": "No interview link provided",
     "desc": "This page requires a valid interview link. Please use the link provided by the company to access your interview.",
