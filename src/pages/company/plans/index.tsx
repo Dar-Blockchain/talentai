@@ -736,7 +736,7 @@ const PlansPage: React.FC = () => {
         subtitle={t("pages.subscription.subtitle")}
         breadcrumbs={[
           { label: t("pages.common.dashboard"), href: "/company/dashboard" },
-          { label: t("pages.subscription.settings_breadcrumb"), href: "/company/settings" },
+          { label: t("pages.subscription.settings_breadcrumb"), href: "/settings" },
           { label: t("pages.subscription.breadcrumb") },
         ]}
         actions={
