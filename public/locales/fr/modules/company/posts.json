@@ -170,6 +170,7 @@
         "work_on_site": "Sur site",
         "work_remote": "Télétravail",
         "work_hybrid": "Hybride",
+        "experience_entry_level": "Débutant",
         "experience_junior": "Junior",
         "experience_mid_level": "Intermédiaire",
         "experience_senior": "Senior",
@@ -183,11 +184,11 @@
         "5": "Expert"
       },
       "soft_skill_levels": {
-        "1": "1 / 5",
-        "2": "2 / 5",
-        "3": "3 / 5",
-        "4": "4 / 5",
-        "5": "5 / 5"
+        "1": "Débutant",
+        "2": "Junior",
+        "3": "Intermédiaire",
+        "4": "Senior",
+        "5": "Expert"
       },
       "skill_modal": {
         "title_add_hard": "Ajouter une compétence technique",

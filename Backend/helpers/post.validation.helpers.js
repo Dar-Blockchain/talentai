@@ -62,10 +62,14 @@ const validatePostData = (postData) => {
   return true;
 };
 
+const JOB_DETAIL_FIELDS = [
+  'title', 'description', 'requirements', 'responsibilities',
+  'location', 'workMode', 'employmentType', 'experienceLevel', 'salary',
+];
+
 /**
- * Safely parse JSON fields from form-data
- * @param {Object} data - Request body data
- * @returns {Object} Data with parsed JSON fields
+ * Reconstruct nested jobDetails + skillAnalysis from flat request body,
+ * or pass through if already nested.
  */
 const parseJsonFields = (data) => {
   const result = { ...data };
@@ -79,6 +83,28 @@ const parseJsonFields = (data) => {
       parseErr.status = 400;
       throw parseErr;
     }
+  }
+
+  // Reconstruct jobDetails from flat fields if not already nested
+  if (!result.jobDetails) {
+    const jobDetails = {};
+    for (const field of JOB_DETAIL_FIELDS) {
+      if (result[field] !== undefined) {
+        jobDetails[field] = result[field];
+        delete result[field];
+      }
+    }
+    if (Object.keys(jobDetails).length > 0) result.jobDetails = jobDetails;
+  }
+
+  // Reconstruct skillAnalysis from flat fields if not already nested
+  if (!result.skillAnalysis && (result.requiredSkills || result.softSkills)) {
+    result.skillAnalysis = {
+      requiredSkills: result.requiredSkills ?? [],
+      softSkills: result.softSkills ?? [],
+    };
+    delete result.requiredSkills;
+    delete result.softSkills;
   }
 
   return result;
@@ -120,8 +146,24 @@ const validatePostUpdate = (updateData, partial = true) => {
   return true;
 };
 
+/**
+ * Flatten a saved post document for API responses.
+ * Spreads jobDetails and skillAnalysis to the top level.
+ */
+const flattenPost = (post) => {
+  const obj = post?.toObject ? post.toObject() : { ...post };
+  const { jobDetails, skillAnalysis, ...rest } = obj;
+  return {
+    ...rest,
+    ...(jobDetails ?? {}),
+    requiredSkills: skillAnalysis?.requiredSkills ?? [],
+    softSkills: skillAnalysis?.softSkills ?? [],
+  };
+};
+
 module.exports = {
   validatePostData,
   parseJsonFields,
-  validatePostUpdate
+  validatePostUpdate,
+  flattenPost,
 };

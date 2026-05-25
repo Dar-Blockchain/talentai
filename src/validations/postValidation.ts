@@ -36,7 +36,7 @@ export const validateAIPostStep0 = (
     return false;
   }
 
-  if (!validateSalary(jobDetails?.salary, showToast)) return false;
+  if (!validateSalary(jobDetails?.salary, showToast, jobDetails?.employmentType)) return false;
 
   if (!hardSkills.length) {
     showToast({ message: "At least one hard skill is required", severity: "error" });
@@ -98,18 +98,17 @@ export const validateManualPostStep0 = (
     return false;
   }
 
-  return validateSalary(jobDetails?.salary, showToast);
+  return validateSalary(jobDetails?.salary, showToast, jobDetails?.employmentType);
 };
 
 /* =========================
    SHARED SALARY VALIDATION
 ========================= */
-const validateSalary = (salary: any, showToast: ToastFn): boolean => {
-  if (!salary?.min || !salary?.max || !salary?.currency) {
-    showToast({
-      message: "Salary minimum, maximum, and currency are required",
-      severity: "error",
-    });
+const validateSalary = (salary: any, showToast: ToastFn, employmentType?: string): boolean => {
+  const isInternship = employmentType === "Internship";
+
+  if (!salary?.currency) {
+    showToast({ message: "Salary currency is required", severity: "error" });
     return false;
   }
 
@@ -121,16 +120,20 @@ const validateSalary = (salary: any, showToast: ToastFn): boolean => {
     return false;
   }
 
-  if (min <= 0 || max <= 0) {
-    showToast({ message: "Salary must be greater than 0", severity: "error" });
+  if (min < 0 || max < 0) {
+    showToast({ message: "Salary cannot be negative", severity: "error" });
     return false;
   }
 
+  if (!isInternship) {
+    if (min === 0 || max === 0) {
+      showToast({ message: "Salary minimum and maximum are required", severity: "error" });
+      return false;
+    }
+  }
+
   if (min > max) {
-    showToast({
-      message: "Minimum salary cannot be greater than maximum salary",
-      severity: "error",
-    });
+    showToast({ message: "Minimum salary cannot be greater than maximum salary", severity: "error" });
     return false;
   }
 
@@ -175,7 +178,7 @@ export const validateEditPost = (
     return false;
   }
 
-  if (!validateSalary(jobDetails?.salary, showToast)) {
+  if (!validateSalary(jobDetails?.salary, showToast, jobDetails?.employmentType)) {
     return false;
   }
 

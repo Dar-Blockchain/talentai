@@ -25,8 +25,8 @@ import { getLevelFromNumber, Skill } from "@/utils/postHelpers";
 import { selectCurrentJob, updatePost } from "@/store/slices/postSlice";
 import { useToast } from "@/hooks/useToast";
 import { validateEditPost } from "@/validations/postValidation";
-import SalaryRange from "../create/steps/post-details-step/SalaryRange";
-import SkillEditorModal from "../create/steps/post-details-step/SkillEditorModal";
+import SalaryRange from "@/modules/create-post-ai/components/SalaryRange";
+import SkillEditorModal from "@/modules/create-post-ai/components/SkillEditorModal";
 import { contractTypes, experienceLevels, workModes } from "@/constants/candidate";
 
 const inputStyle = {
@@ -225,6 +225,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel, onSaveSucce
         <SalaryRange
           salaryRange={salary}
           onSalaryChange={(field, value) => setValue(`jobDetails.salary.${field}` as any, value)}
+          employmentType={watch("jobDetails.employmentType")}
         />
 
         <Box sx={{ mt: 2 }}>

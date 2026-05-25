@@ -37,8 +37,8 @@ import {
   selectMyPostsLoading,
   selectMyPostsPagination,
 } from "@/store/slices/postSlice";
-import ContactCandidateModal, { ContactTarget } from "@/components/features/company/posts/details/ContactCandidateModal";
-import AssessmentDetailsModal, { AssessmentTarget } from "@/components/features/company/posts/details/AssessmentDetailsModal";
+import ContactCandidateModal, { ContactTarget } from "@/modules/posts/details/components/ContactCandidateModal";
+import AssessmentDetailsModal, { AssessmentTarget } from "@/modules/posts/details/components/AssessmentDetailsModal";
 import ApplicationMetrics from "@/components/features/company/applications/ApplicationMetrics";
 import InviteToInterviewModal, { InviteTarget } from "@/components/features/company/applications/InviteToInterviewModal";
 import ApplicationCard from "@/components/features/company/applications/ApplicationCard";

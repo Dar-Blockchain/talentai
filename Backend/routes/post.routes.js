@@ -9,6 +9,8 @@
  */
 const express = require("express");
 const router = express.Router();
+const multer = require("multer");
+const path = require("path");
 const { requireAuth } = require("../middleware/security/auth.middleware");
 const { verifyApiKey, checkScope } = require("../middleware/security/api-key.middleware");
 const generateJobPostController = require("../controllers/PostControllers/generateJobPost.controller");
@@ -18,6 +20,21 @@ const postController = require("../controllers/PostControllers/post.controller")
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js")
 const { controledAcces } = require('../middleware/authorize.middleware.js'); // Importez le middleware
 const resolveCompanyActor = require("../middleware/resolve-company-actor.middleware");
+
+// Configure multer for file upload
+const upload = multer({
+  dest: path.join(__dirname, "../uploads/temp/"),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
+  fileFilter: (req, file, cb) => {
+    const allowedExtensions = [".json", ".csv", ".txt"];
+    const fileExtension = path.extname(file.originalname).toLowerCase();
+    if (allowedExtensions.includes(fileExtension)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Unsupported file format. Allowed: JSON, CSV, TXT"));
+    }
+  },
+});
 
 // Public routes - no authentication required
 
@@ -36,7 +53,7 @@ router.get("/public-stats", postController.getPublicStats);
 
 router.use(requireAuth,authLogMiddleware("Post"));
 
-router.post("/generate-job-post",controledAcces('Company'), resolveCompanyActor,generateJobPostController.generateJobPost);
+router.post("/generate-job-post", upload.single("file"), controledAcces('Company'), resolveCompanyActor, generateJobPostController.generateJobPost);
 
 // POST /post/save-post
 // Description: Creates a post
