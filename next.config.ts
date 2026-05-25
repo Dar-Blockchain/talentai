@@ -3,6 +3,15 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      {
+        source: "/company/posts/create-ai",
+        destination: "/company/posts/create",
+        permanent: true,
+      },
+    ];
+  },
   reactStrictMode: false, // Temporarily disabled to debug duplicate API calls
   output: 'standalone',
   outputFileTracingRoot: process.cwd(),

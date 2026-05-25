@@ -2,9 +2,9 @@ const mongoose = require("mongoose");
 const { POST_STATUS } = require("../constants/posts.constants");
 
 const salarySchema = new mongoose.Schema({
-  min: { type: Number, required: true },
-  max: { type: Number, required: true },
-  currency: { type: String, required: true },
+  min: { type: Number, required: false },
+  max: { type: Number, required: false },
+  currency: { type: String, required: false },
 });
 
 const skillSchema = new mongoose.Schema({
@@ -54,7 +54,12 @@ const jobDetailsSchema = new mongoose.Schema({
   employmentType: String,
   workMode: String,
   experienceLevel: String,
-  salary: salarySchema,
+  salary: {
+    type: salarySchema,
+    required: false,
+    default: null,
+    description: 'Optional salary information (min, max, currency)'
+  },
 });
 
 const skillAnalysisSchema = new mongoose.Schema({
@@ -152,6 +157,11 @@ const postSchema = new mongoose.Schema({
   },
 
 });
+
+postSchema.index({ user: 1, createdAt: -1 });
+postSchema.index({ user: 1, status: 1, archived: 1 });
+postSchema.index({ status: 1, archived: 1 });
+postSchema.index({ "skillAnalysis.requiredSkills.name": 1 });
 
 const Post = mongoose.models.Post || mongoose.model("Post", postSchema);
 module.exports = Post;

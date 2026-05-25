@@ -17,7 +17,6 @@ import candidateReducer from './slices/candidateSlice';
 import postGenerationReducer from './slices/postGenerationSlice';
 import interviewReducer from './slices/interviewSlice';
 import jobDetailsReducer from './slices/jobDetailsSlice';
-import manualPostReducer from './slices/manualPostSlice';
 import notificationReducer from './slices/notificationSlice';
 import memberReducer from './slices/memberSlice';
 import chatReducer from './slices/chatSlice';
@@ -32,7 +31,9 @@ import jobApplicationReducer from './slices/jobApplicationSlice';
 import feedbackReducer from './slices/feedbackSlice';
 import paymentReducer from './slices/paymentSlice';
 import kpiReducer from './slices/kpiSlice';
+import postDetailsReducer from '../modules/posts/details/store/postSlice';
 import { socketMiddleware } from './middleware/socketMiddleware';
+
 const rootReducer = combineReducers({
   user: userReducer,
   auth: authReducer,
@@ -41,7 +42,6 @@ const rootReducer = combineReducers({
   postGeneration: postGenerationReducer,
   interview: interviewReducer,
   jobDetails: jobDetailsReducer,
-  manualPost: manualPostReducer,
   notifications: notificationReducer,
   member: memberReducer,
   chat: chatReducer,
@@ -56,6 +56,7 @@ const rootReducer = combineReducers({
   kpi: kpiReducer,
   feedback: feedbackReducer,
   payment: paymentReducer,
+  postDetails: postDetailsReducer,
 });
 
 const persistConfig = {
