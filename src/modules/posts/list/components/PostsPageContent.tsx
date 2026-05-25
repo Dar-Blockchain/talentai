@@ -31,7 +31,7 @@ const PostsPageContent: React.FC = () => {
   const {
     posts, loading, error, pagination,
     page, search, statusFilter, typeFilter, sortBy,
-    hasFilters, setPage,
+    hasFilters, setPage, reload,
     handleSearchChange, handleStatusChange, handleTypeChange, handleSortChange,
   } = useMyPosts({ limit: 8 });
 
@@ -42,8 +42,11 @@ const PostsPageContent: React.FC = () => {
   });
 
   const publishHook = usePublishPost({
-    onSuccess: () => showToast({ message: t("publish_success"), severity: "success" }),
-    onError:   () => showToast({ message: t("publish_error"),   severity: "error"   }),
+    onSuccess: () => {
+      showToast({ message: t("publish_success"), severity: "success" });
+      reload();
+    },
+    onError: () => showToast({ message: t("publish_error"), severity: "error" }),
   });
 
   const handleCreateClick = () => { if (!postsAtLimit) router.push("/company/posts/create"); };

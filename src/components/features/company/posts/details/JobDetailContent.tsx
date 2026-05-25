@@ -3,13 +3,15 @@ import { Box } from "@mui/material";
 import PostBasicDetails from "./PostBasicDetails";
 import RecruitmentFlowDetails from "./RecruitmentFlowDetails";
 import EditPostDetails from "./EditPostDetails";
-type EditMode = "post" | null;
+
+type EditMode = "post" | "recruitment" | null;
 
 interface Props {
   activeEdit: EditMode;
   isOwner: boolean;
   creationType?: string;
   onEditPost: () => void;
+  onEditRecruitment: () => void;
   onCancelEdit: () => void;
   onSaveSuccess: () => void;
 }
@@ -19,6 +21,7 @@ const JobDetailContent: React.FC<Props> = ({
   isOwner,
   creationType,
   onEditPost,
+  onEditRecruitment,
   onCancelEdit,
   onSaveSuccess,
 }) => (
@@ -33,6 +36,9 @@ const JobDetailContent: React.FC<Props> = ({
           <RecruitmentFlowDetails canEdit={isOwner} />
         )}
       </>
+    )}
+    {activeEdit === "recruitment" && (
+      <RecruitmentFlowDetails canEdit={isOwner} />
     )}
   </Box>
 );
