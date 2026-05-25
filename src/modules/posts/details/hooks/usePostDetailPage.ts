@@ -3,8 +3,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import { AppDispatch, RootState } from "@/store/store";
-import { fetchJobById, selectCurrentJob, selectCurrentJobLoading, selectCurrentJobError } from "@/store/slices/postSlice";
-import { updatePostStatus, updateJobDetails } from "../store/postSlice";
+import { fetchJobById, selectCurrentJob, selectCurrentJobLoading, selectCurrentJobError, updatePostStatus } from "@/store/slices/postSlice";
+import { updateJobDetails } from "../store/postSlice";
 import { useDeletePost } from "@/modules/posts/list/hooks/useDeletePost";
 import { useToast } from "@/hooks/useToast";
 

@@ -2,8 +2,8 @@ import React from "react";
 import { Box, Pagination } from "@mui/material";
 import ApplicationCard from "@/components/features/company/applications/ApplicationCard";
 import { ApplicationSummaryItem } from "@/store/slices/jobApplicationSlice";
-import { ContactTarget } from "../../ContactCandidateModal";
-import { AssessmentTarget } from "../../AssessmentDetailsModal";
+import { ContactTarget } from "../ContactCandidateModal";
+import { AssessmentTarget } from "../AssessmentDetailsModal";
 import { InviteTarget } from "@/components/features/company/applications/InviteToInterviewModal";
 
 const TEAL = "#0D9488";

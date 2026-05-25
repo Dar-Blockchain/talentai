@@ -31,7 +31,7 @@ import jobApplicationReducer from './slices/jobApplicationSlice';
 import feedbackReducer from './slices/feedbackSlice';
 import paymentReducer from './slices/paymentSlice';
 import kpiReducer from './slices/kpiSlice';
-import postDetailsReducer from '@/modules/posts/details/store/postSlice';
+import postDetailsReducer from '../modules/posts/details/store/postSlice';
 import { socketMiddleware } from './middleware/socketMiddleware';
 
 const rootReducer = combineReducers({
