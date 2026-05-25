@@ -5,16 +5,9 @@ import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import AddOutlined from "@mui/icons-material/AddOutlined";
 import AppButton from "@/components/ui/AppButton";
 import JobPostCard from "./JobPostCard";
+import type { StatusFilter, SortOption, PaginationInfo } from "../types";
 
 const TEAL = "#0D9488";
-
-export type StatusFilter = "all" | "active" | "draft" | "expired";
-export type SortOption   = "newest" | "oldest" | "title-asc" | "title-desc";
-
-interface PaginationInfo {
-  totalPages: number;
-  total?: number;
-}
 
 interface JobPostsListProps {
   jobs: any[];
