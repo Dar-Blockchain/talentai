@@ -21,7 +21,7 @@ import InputAdornment from "@mui/material/InputAdornment";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import { Close } from "@mui/icons-material";
 import { Add as AddIcon } from "@mui/icons-material";
-import { getLevelFromNumber, Skill } from "@/utils/postHelpers";
+import { getLevelFromNumber } from "@/utils/postHelpers";
 import { selectCurrentJob, updatePost } from "@/store/slices/postSlice";
 import { useToast } from "@/hooks/useToast";
 import { validateEditPost } from "@/validations/postValidation";
@@ -99,7 +99,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel, onSaveSucce
     setValue(field as any, updated);
   };
 
-  const handleSaveSkill = (skill: Skill) => {
+  const handleSaveSkill = (skill: any) => {
     const field = selectedType === "hard" ? "skillAnalysis.requiredSkills" : "skillAnalysis.softSkills";
     const updated = selectedType === "hard" ? [...requiredSkills] : [...softSkills];
     if (selectedIndex === null) {

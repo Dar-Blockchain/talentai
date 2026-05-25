@@ -12,8 +12,7 @@ import {
 import storage from 'redux-persist/lib/storage';
 import authReducer from './slices/authSlice';
 import userReducer from './slices/userSlice';
-import postListReducer    from '@/modules/posts/list/store/postSlice';
-import postDetailsReducer from '@/modules/posts/details/store/postSlice';
+import postReducer from './slices/postSlice';
 import candidateReducer from './slices/candidateSlice';
 import postGenerationReducer from './slices/postGenerationSlice';
 import interviewReducer from './slices/interviewSlice';
@@ -33,11 +32,11 @@ import feedbackReducer from './slices/feedbackSlice';
 import paymentReducer from './slices/paymentSlice';
 import kpiReducer from './slices/kpiSlice';
 import { socketMiddleware } from './middleware/socketMiddleware';
+
 const rootReducer = combineReducers({
   user: userReducer,
   auth: authReducer,
-  postList: postListReducer,
-  postDetails: postDetailsReducer,
+  post: postReducer,
   candidate: candidateReducer,
   postGeneration: postGenerationReducer,
   interview: interviewReducer,
