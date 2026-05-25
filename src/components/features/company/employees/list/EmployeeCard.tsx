@@ -8,7 +8,7 @@ import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 import ChatBubbleOutlineOutlined from "@mui/icons-material/ChatBubbleOutlineOutlined";
 import { RootState } from "@/store/store";
-import { useStartTeamChat } from "@/modules/team-chat";
+import { useStartTeamChat } from "@/modules/chat/team-chat";
 import EditOutlined from "@mui/icons-material/EditOutlined";
 import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
 import OpenInNewOutlined from "@mui/icons-material/OpenInNewOutlined";

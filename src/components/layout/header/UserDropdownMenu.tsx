@@ -202,7 +202,7 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
             label={t("header.settings")}
             sub={t("header.account_prefs")}
             onClick={() => {
-              router.push(isCompany ? "/company/settings" : "/candidate/profile/settings");
+              router.push("/settings");
               close();
             }}
           />

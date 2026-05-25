@@ -1,66 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- Home Page -->
+
+  <!-- Company landing page (primary) -->
   <url>
-    <loc>https://app.talentai.bid/</loc>
-    <lastmod>2024-12-19</lastmod>
+    <loc>https://talentai.bid/</loc>
+    <lastmod>2026-05-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
 
-  <!-- Job Seeker Landing Page -->
+  <!-- Candidate landing page -->
   <url>
-    <loc>https://app.talentai.bid/home/candidate</loc>
-    <lastmod>2024-12-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <loc>https://talentai.bid/candidate</loc>
+    <lastmod>2026-05-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
 
-  <!-- Sign In Page -->
+  <!-- Resume builder (public tool) -->
   <url>
-    <loc>https://app.talentai.bid/signin</loc>
-    <lastmod>2024-12-19</lastmod>
+    <loc>https://talentai.bid/resume-builder</loc>
+    <lastmod>2026-05-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
-  <!-- Resume Builder -->
-  <url>
-    <loc>https://app.talentai.bid/resume-builder</loc>
-    <lastmod>2024-12-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <!-- Interview Test Page -->
-  <url>
-    <loc>https://app.talentai.bid/candidate/interview/hr</loc>
-    <lastmod>2024-12-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <!-- Chatbot Test Page -->
-  <url>
-    <loc>https://app.talentai.bid/resume-builder/chatbot</loc>
-    <lastmod>2024-12-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-
-  <!-- Auth Success Page -->
-  <url>
-    <loc>https://app.talentai.bid/linkedin-auth-callback</loc>
-    <lastmod>2024-12-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.4</priority>
-  </url>
-
-  <!-- Unauthorized Page -->
-  <url>
-    <loc>https://app.talentai.bid/unauthorized</loc>
-    <lastmod>2024-12-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.3</priority>
-  </url>
-</urlset> 
+</urlset>

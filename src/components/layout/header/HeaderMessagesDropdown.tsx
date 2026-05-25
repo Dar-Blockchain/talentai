@@ -17,12 +17,12 @@ import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
-import { selectCandidateConversations } from "@/modules/candidate-chat/store/candidateChatSlice";
-import { useCandidateConversationsQuery } from "@/modules/candidate-chat/queries/useCandidateChatQueries";
+import { selectCandidateConversations } from "@/modules/chat/candidate-chat/store/candidateChatSlice";
+import { useCandidateConversationsQuery } from "@/modules/chat/candidate-chat/queries/useCandidateChatQueries";
 import {
   getCandidateChatBasePath,
   getCandidateChatConversationPath,
-} from "@/modules/candidate-chat/utils/routes";
+} from "@/modules/chat/candidate-chat/utils/routes";
 
 interface HeaderMessagesDropdownProps {
   userId: string | undefined;

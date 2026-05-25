@@ -123,6 +123,12 @@ const postSchema = new mongoose.Schema({
   thresholdScore: {
     type: Number,
     default: 60,
+    description: 'Threshold for CV match score to proceed with interview'
+  },
+  thresholdScoreInterview: {
+    type: Number,
+    default: 20,
+    description: 'Minimum interview score threshold (percentage) - candidate below this score will be auto-rejected'
   },
 
   // Archive flag (soft delete)

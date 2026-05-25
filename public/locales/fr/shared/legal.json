@@ -28,7 +28,6 @@
         "items": [
           "Des entretiens vidéo menés par l'IA qui guident les candidats avec des questions spécifiques au poste",
           "Une notation et une évaluation automatisées des candidats selon leur performance en entretien",
-          "Des justificatifs d'entretien vérifiés par blockchain délivrés aux candidats",
           "Des outils de gestion de campagnes de recrutement et de collaboration d'équipe",
           "L'analyse de CV et la génération d'offres d'emploi"
         ],
@@ -152,12 +151,12 @@
           "Utiliser la plateforme à des fins illicites ou en violation d'une réglementation"
         ]
       },
-      "blockchain": {
-        "title": "10. Justificatifs blockchain",
-        "p1": "TalentAI délivre des justificatifs de fin d'entretien sur la blockchain Hedera. Ces justificatifs sont :",
+      "reports": {
+        "title": "10. Rapports d'évaluation & justificatifs",
+        "p1": "TalentAI délivre des rapports d'évaluation générés par l'IA aux candidats à l'issue de leur entretien. Ces rapports sont :",
         "items": [
-          "Immuables une fois émis — ils ne peuvent pas être modifiés ni supprimés",
-          "Vérifiables par des tiers disposant de l'identifiant du justificatif",
+          "Basés sur un scoring objectif et multidimensionnel de la performance en entretien",
+          "Partageables par le candidat avec tout tiers disposant du lien du rapport",
           "Ils ne constituent pas une garantie d'emploi ni une qualification formelle"
         ]
       },
@@ -231,7 +230,6 @@
           "Exploiter et améliorer la plateforme TalentAI",
           "Mener des entretiens propulsés par l'IA et générer des résultats d'évaluation",
           "Mettre en relation les candidats avec des opportunités d'emploi pertinentes",
-          "Émettre et vérifier des justificatifs d'entretien sur blockchain",
           "Envoyer des e-mails transactionnels (invitations, rappels, notifications de compte)",
           "Prévenir la fraude, les abus et les accès non autorisés",
           "Respecter nos obligations légales",
@@ -255,7 +253,6 @@
         "items": [
           "Entreprises recruteuses — les employeurs reçoivent les profils candidats, enregistrements d'entretien et scores d'évaluation pour les postes auxquels vous avez postulé",
           "Prestataires de services — des tiers de confiance traitant les données pour notre compte (infrastructure cloud, e-mail, paiement) dans le cadre d'accords stricts de protection des données",
-          "Réseau Hedera — des empreintes anonymisées de justificatifs sont enregistrées sur la blockchain publique Hedera à des fins de vérification",
           "Autorités légales — lorsque la loi, une décision de justice ou la protection des droits et de la sécurité de nos utilisateurs l'exigent"
         ]
       },
@@ -265,7 +262,6 @@
         "items": [
           "Les enregistrements et scores d'entretien sont conservés jusqu'à 24 mois après la candidature",
           "Les données de compte sont conservées jusqu'à demande de suppression du compte",
-          "Les empreintes de justificatifs blockchain sont permanentes et ne peuvent pas être supprimées du fait de la technologie",
           "Les enregistrements de facturation sont conservés conformément au droit fiscal applicable"
         ],
         "p2": "Vous pouvez demander la suppression de vos données personnelles à tout moment en nous contactant à <contact>contact@talentai.bid</contact>. Les demandes de suppression seront traitées dans un délai de 30 jours, sous réserve des obligations légales de conservation."

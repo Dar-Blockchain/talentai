@@ -26,8 +26,8 @@ import ChevronLeftOutlined from "@mui/icons-material/ChevronLeftOutlined";
 import ChevronRightOutlined from "@mui/icons-material/ChevronRightOutlined";
 import LogoutProgressModal from "@/components/ui/LogoutProgressModal";
 import { useTranslation } from "react-i18next";
-import { useChatUnreadBadges } from "@/modules/shared/chat/hooks/useChatUnreadBadges";
-import ChatUnreadBadge from "@/modules/shared/chat/components/ChatUnreadBadge";
+import { useChatUnreadBadges } from "@/modules/chat/shared/hooks/useChatUnreadBadges";
+import ChatUnreadBadge from "@/modules/chat/shared/components/ChatUnreadBadge";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -152,7 +152,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const drawerWidth  = collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH;
   const handleToggle = useCallback(() => setCollapsed((c) => !c), [setCollapsed]);
 
-  const settingsHref = isEmployee ? "/employee/dashboard" : "/company/settings";
+  const settingsHref = "/settings";
   const { teamChatUnread, companyMessagesUnread } = useChatUnreadBadges();
 
   const getNavUnreadCount = (itemId: string) => {

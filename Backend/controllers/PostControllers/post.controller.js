@@ -387,11 +387,42 @@ exports.updatePost = async (req, res) => {
         .json({ success: false, error: "Post ID is required" });
     }
 
+    const updateData = { ...req.body };
     const updatedBy = req.actualUser?._id || req.user._id;
+
+    // ========== VALIDATE THRESHOLD SCORES ==========
+    // Validate and sanitize thresholdScore (CV match score threshold)
+    if (updateData.thresholdScore !== undefined) {
+      const score = Number(updateData.thresholdScore);
+      if (isNaN(score) || score < 0 || score > 100) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid thresholdScore",
+          message: "thresholdScore must be a number between 0 and 100",
+        });
+      }
+      updateData.thresholdScore = score;
+      console.log(`📊 Updated thresholdScore to: ${score}`);
+    }
+
+    // Validate and sanitize thresholdScoreInterview (interview score threshold)
+    if (updateData.thresholdScoreInterview !== undefined) {
+      const score = Number(updateData.thresholdScoreInterview);
+      if (isNaN(score) || score < 0 || score > 100) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid thresholdScoreInterview",
+          message: "thresholdScoreInterview must be a number between 0 and 100",
+        });
+      }
+      updateData.thresholdScoreInterview = score;
+      console.log(`📊 Updated thresholdScoreInterview to: ${score}`);
+    }
+
     const post = await postService.updatePost(
       req.params.id,
       req.user._id,
-      { ...req.body, updatedBy },
+      { ...updateData, updatedBy },
     );
     res.status(200).json({ success: true, data: post });
   } catch (error) {
