@@ -9,7 +9,7 @@ import HeaderLogo from "./HeaderLogo";
 import HeaderNavMenu from "./HeaderNavMenu";
 import { useTranslation } from "react-i18next";
 import LogoutProgressModal from "@/components/ui/LogoutProgressModal";
-import { getCandidateChatBasePath } from "@/modules/candidate-chat/utils/routes";
+import { getCandidateChatBasePath } from "@/modules/chat/candidate-chat/utils/routes";
 import DashboardOutlined   from "@mui/icons-material/DashboardOutlined";
 import ChatBubbleOutlineOutlined from "@mui/icons-material/ChatBubbleOutlineOutlined";
 import NotificationsOutlined from "@mui/icons-material/NotificationsOutlined";
@@ -215,7 +215,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unre
                 <Row icon={<NotificationsOutlined />} label={t("header.notifications")}
                   onClick={() => go(isCompany ? "/company/notifications" : "/candidate/notifications")} />
                 <Row icon={<SettingsOutlined />} label={t("header.settings")}
-                  onClick={() => go(isCompany ? "/company/settings" : "/candidate/profile/settings")} />
+                  onClick={() => go("/settings")} />
               </Box>
 
               <Divider sx={{ my: 1, borderColor: "rgba(13,148,136,0.08)" }} />
