@@ -139,7 +139,7 @@ const CandidateSettingsPage: React.FC = () => {
           {activeTab === "visibility" && (
             <ProfileVisibilityTab
               userId={userId}
-              isPublicProfile={localIsPublic}
+              effectiveIsPublicProfile={localIsPublic}
               onToggleVisibility={handleToggleVisibility}
               hasMembership={hasMembership}
             />
