@@ -25,6 +25,7 @@ const { initializeSocketServer } = require("./socket-handlers/socket-server");
 
 // Import services
 const connectDB = require("./config/mongo.connection");
+const { dbReadyMiddleware } = require("./config/mongo.connection");
 const socket = require("./socket");
 //const { initializeAgenda } = require("./services/Agent&AgendaServices/agenda.service");
 const intelligentInterviewService = require("./services/intelligentInterview.service");
@@ -118,6 +119,10 @@ const initializeApp = async () => {
 
     // Step 3: Register middleware
     registerMiddlewares(app);
+
+    // Step 3.5: Block requests if DB connection dropped (readyState 0 or 3)
+    // readyState 2 (connecting) is safe — bufferCommands handles it
+    app.use(dbReadyMiddleware);
 
     // Step 4: Register routes
     registerRoutes(app);
