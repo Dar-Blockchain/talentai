@@ -18,7 +18,7 @@ import CallSplitOutlined from "@mui/icons-material/CallSplitOutlined";
 import MailOutlineOutlined from "@mui/icons-material/MailOutline";
 import PsychologyOutlined from "@mui/icons-material/PsychologyOutlined";
 import RadioButtonCheckedOutlined from "@mui/icons-material/RadioButtonChecked";
-import { InterviewAssessment, getScore, scoreStyle, fmtDate, fmtDuration } from "../list/InterviewCard";
+import { InterviewAssessment, getScore, scoreStyle, verdictStyle, fmtDate, fmtDuration } from "../list/InterviewCard";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const TEAL        = "#0D9488";
@@ -132,21 +132,32 @@ const InterviewDetail: React.FC<InterviewDetailProps> = ({ assessment, stepsData
   const softSkills   = assessment.post?.skillAnalysis?.softSkills || [];
   const [g1, g2]     = pickGradient(email || name);
 
-  const verdict      = overallScore >= 70 ? "Passed" : overallScore >= 50 ? "In Review" : "Needs Work";
-  const verdictColor = overallScore >= 70 ? TEAL : overallScore >= 50 ? "#D97706" : "#DC2626";
-  const verdictBg    = overallScore >= 70 ? TEAL_BG : overallScore >= 50 ? "#FFFBEB" : "#FEF2F2";
+  const scoreVerdict      = overallScore >= 70 ? "Passed" : overallScore >= 50 ? "In Review" : "Needs Work";
+  const scoreVerdictColor = overallScore >= 70 ? TEAL : overallScore >= 50 ? "#D97706" : "#DC2626";
+  const scoreVerdictBg    = overallScore >= 70 ? TEAL_BG : overallScore >= 50 ? "#FFFBEB" : "#FEF2F2";
+
+  const vs           = verdictStyle(finalReport?.recommendation);
+  const verdictColor = vs.label ? vs.color : scoreVerdictColor;
+  const verdictBg    = vs.label ? vs.bg    : scoreVerdictBg;
+  const verdict      = vs.label || scoreVerdict;
+
+  const strengths        = finalReport?.strengths ?? [];
+  const weaknesses       = finalReport?.weaknesses ?? [];
+  const reasoning        = finalReport?.reasoning;
+  const candidateProfile = finalReport?.candidateProfile;
 
   const hasAreas   = Object.keys(areas).length > 0;
   const hasSummary = !!summary;
   const hasRecs    = recommendations.length > 0;
   const hasSkills  = requiredSkills.length > 0 || softSkills.length > 0;
+  const hasAiData  = hasSummary || hasRecs || strengths.length > 0 || weaknesses.length > 0 || !!candidateProfile;
   const pipelineSteps: any[] = stepsData?.steps || [];
 
   // Compute dynamic tab indices
   let tabIdx = 0;
   const TAB_SCORES    = tabIdx++;
   const TAB_COVERAGE  = hasAreas ? tabIdx++ : -1;
-  const TAB_REPORT    = (hasSummary || hasRecs) ? tabIdx++ : -1;
+  const TAB_REPORT    = hasAiData ? tabIdx++ : -1;
   const TAB_SKILLS    = hasSkills ? tabIdx++ : -1;
   const TAB_PIPELINE  = hasSteps && pipelineSteps.length > 0 ? tabIdx++ : -1;
 
@@ -194,6 +205,11 @@ const InterviewDetail: React.FC<InterviewDetailProps> = ({ assessment, stepsData
             <ScoreRing value={overallScore} color={sc.color} size={96} />
             <Chip label={verdict} size="small"
               sx={{ bgcolor: verdictBg, color: verdictColor, fontWeight: 700, fontSize: "0.72rem", height: 22, px: 0.5, border: `1px solid ${verdictColor}30` }} />
+            {reasoning && (
+              <Typography sx={{ fontSize: "0.72rem", color: "#6B7280", mt: 0.25, maxWidth: 200, textAlign: "center", lineHeight: 1.4 }}>
+                {reasoning}
+              </Typography>
+            )}
           </Box>
         </Box>
 
@@ -234,7 +250,7 @@ const InterviewDetail: React.FC<InterviewDetailProps> = ({ assessment, stepsData
             }}>
             <Tab label="Scores" />
             {hasAreas && <Tab label="Coverage" />}
-            {(hasSummary || hasRecs) && <Tab label="AI Report" />}
+            {hasAiData && <Tab label="AI Report" />}
             {hasSkills && <Tab label="Skills" />}
             {TAB_PIPELINE !== -1 && <Tab label="Pipeline" />}
           </Tabs>
@@ -312,7 +328,7 @@ const InterviewDetail: React.FC<InterviewDetailProps> = ({ assessment, stepsData
         )}
 
         {/* ── Tab 2: AI Report ── */}
-        {tab === TAB_REPORT && (hasSummary || hasRecs) && (
+        {tab === TAB_REPORT && hasAiData && (
           <Box sx={{ p: { xs: 2.5, md: 3.5 }, display: "flex", flexDirection: "column", gap: 3 }}>
             {/* Summary */}
             {hasSummary && (
@@ -325,6 +341,103 @@ const InterviewDetail: React.FC<InterviewDetailProps> = ({ assessment, stepsData
                 </Box>
                 <Box sx={{ p: 2.5, borderRadius: "12px", bgcolor: "#F0FDF4", border: "1px solid #D1FAE5" }}>
                   <Typography sx={{ fontSize: "0.85rem", color: "#374151", lineHeight: 1.8 }}>{summary}</Typography>
+                </Box>
+              </Box>
+            )}
+
+            {/* Strengths */}
+            {strengths.length > 0 && (
+              <Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+                  <Box sx={{ width: 28, height: 28, borderRadius: "8px", bgcolor: "#F0FDF4", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <CheckCircleOutlined sx={{ fontSize: 15, color: "#10B981" }} />
+                  </Box>
+                  <Typography sx={{ fontWeight: 700, fontSize: "0.88rem", color: "#111827" }}>Strengths</Typography>
+                </Box>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
+                  {strengths.map((s: string, i: number) => (
+                    <Box key={i} sx={{ display: "flex", alignItems: "flex-start", gap: 1.25, p: 1.25, borderRadius: "10px", bgcolor: "#F0FDF4", border: "1px solid #D1FAE5" }}>
+                      <CheckCircleOutlined sx={{ color: "#10B981", fontSize: 15, mt: 0.1, flexShrink: 0 }} />
+                      <Typography sx={{ fontSize: "0.82rem", color: "#064E3B", lineHeight: 1.6 }}>{s}</Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            )}
+
+            {/* Weaknesses */}
+            {weaknesses.length > 0 && (
+              <Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+                  <Box sx={{ width: 28, height: 28, borderRadius: "8px", bgcolor: "#FFFBEB", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <RadioButtonCheckedOutlined sx={{ fontSize: 15, color: "#D97706" }} />
+                  </Box>
+                  <Typography sx={{ fontWeight: 700, fontSize: "0.88rem", color: "#111827" }}>Areas for Growth</Typography>
+                </Box>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
+                  {weaknesses.map((w: string, i: number) => (
+                    <Box key={i} sx={{ display: "flex", alignItems: "flex-start", gap: 1.25, p: 1.25, borderRadius: "10px", bgcolor: "#FFFBEB", border: "1px solid #FDE68A" }}>
+                      <RadioButtonCheckedOutlined sx={{ color: "#D97706", fontSize: 15, mt: 0.1, flexShrink: 0 }} />
+                      <Typography sx={{ fontSize: "0.82rem", color: "#78350F", lineHeight: 1.6 }}>{w}</Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            )}
+
+            {/* Candidate Profile */}
+            {candidateProfile && (
+              <Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+                  <Box sx={{ width: 28, height: 28, borderRadius: "8px", bgcolor: "#EFF6FF", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <PersonOutlined sx={{ fontSize: 15, color: "#3B82F6" }} />
+                  </Box>
+                  <Typography sx={{ fontWeight: 700, fontSize: "0.88rem", color: "#111827" }}>Candidate Profile</Typography>
+                </Box>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, p: 2, borderRadius: "12px", bgcolor: "#F8FAFC", border: "1px solid #E2E8F0" }}>
+                  {(candidateProfile.communicationStyle?.verbosity || candidateProfile.communicationStyle?.confidenceLevel) && (
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                      <Typography sx={{ fontSize: "0.72rem", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.05em", minWidth: 100 }}>Communication</Typography>
+                      <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
+                        {candidateProfile.communicationStyle?.verbosity && (
+                          <Chip label={candidateProfile.communicationStyle.verbosity} size="small"
+                            sx={{ height: 20, fontSize: "0.72rem", fontWeight: 600, bgcolor: "#EFF6FF", color: "#1D4ED8", border: "1px solid #BFDBFE", "& .MuiChip-label": { px: 1 } }} />
+                        )}
+                        {candidateProfile.communicationStyle?.confidenceLevel && (
+                          <Chip label={candidateProfile.communicationStyle.confidenceLevel} size="small"
+                            sx={{ height: 20, fontSize: "0.72rem", fontWeight: 600, bgcolor: "#F5F3FF", color: "#6D28D9", border: "1px solid #DDD6FE", "& .MuiChip-label": { px: 1 } }} />
+                        )}
+                      </Box>
+                    </Box>
+                  )}
+                  {candidateProfile.revealedExpertise && candidateProfile.revealedExpertise.length > 0 && (
+                    <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+                      <Typography sx={{ fontSize: "0.72rem", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.05em", minWidth: 100, pt: 0.25 }}>Expertise</Typography>
+                      <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
+                        {candidateProfile.revealedExpertise.slice(0, 6).map((e: string, i: number) => (
+                          <Chip key={i} label={e} size="small"
+                            sx={{ height: 20, fontSize: "0.72rem", fontWeight: 600, bgcolor: "#F0FDFA", color: "#0D9488", border: "1px solid #99F6E4", "& .MuiChip-label": { px: 1 } }} />
+                        ))}
+                      </Box>
+                    </Box>
+                  )}
+                  {candidateProfile.revealedGaps && candidateProfile.revealedGaps.length > 0 && (
+                    <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+                      <Typography sx={{ fontSize: "0.72rem", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.05em", minWidth: 100, pt: 0.25 }}>Gaps</Typography>
+                      <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
+                        {candidateProfile.revealedGaps.slice(0, 6).map((g: string, i: number) => (
+                          <Chip key={i} label={g} size="small"
+                            sx={{ height: 20, fontSize: "0.72rem", fontWeight: 600, bgcolor: "#FFFBEB", color: "#D97706", border: "1px solid #FDE68A", "& .MuiChip-label": { px: 1 } }} />
+                        ))}
+                      </Box>
+                    </Box>
+                  )}
+                  {candidateProfile.difficultyLevel && (
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                      <Typography sx={{ fontSize: "0.72rem", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.05em", minWidth: 100 }}>Difficulty</Typography>
+                      <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#374151", textTransform: "capitalize" }}>{candidateProfile.difficultyLevel}</Typography>
+                    </Box>
+                  )}
                 </Box>
               </Box>
             )}

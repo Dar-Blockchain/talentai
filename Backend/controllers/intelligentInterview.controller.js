@@ -10,6 +10,7 @@ const { handleEndInterview }      = require('../services/post-interview/handlers
 const { handleAudioStream }       = require('../services/post-interview/handlers/audioStream.handler');
 const { handleSessionStatus }     = require('../services/post-interview/handlers/sessionStatus.handler');
 const { handleDisconnect }        = require('../services/post-interview/handlers/disconnect.handler');
+const { handleSilenceDetected }   = require('../services/post-interview/handlers/silenceDetected.handler');
 
 class IntelligentInterviewController {
   constructor() {
@@ -37,6 +38,7 @@ class IntelligentInterviewController {
       socket.on('candidate_response', (data)   => handleCandidateResponse(socket, data, ctx));
       socket.on('skip_question',      ()       => handleSkipQuestion(socket, ctx));
       socket.on('speaking_too_long',  (data)   => handleSpeakingTooLong(socket, data, ctx));
+      socket.on('silence_detected',   (data)   => handleSilenceDetected(socket, data, ctx));
       socket.on('end_interview',      ()       => handleEndInterview(socket, ctx));
       socket.on('audio_stream',       (data)   => handleAudioStream(socket, data));
       socket.on('get_session_status', ()       => handleSessionStatus(socket, ctx));

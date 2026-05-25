@@ -56,4 +56,9 @@ export const ELIGIBILITY_SCREEN_CONFIG: Record<BlockableStatus, ScreenEntry> = {
     titleKey: 'limit.title',
     actionPath: '/',
   },
+  error: {
+    icon: '⚠️',
+    titleKey: 'no_link.title',
+    actionPath: '/candidate/dashboard',
+  },
 };

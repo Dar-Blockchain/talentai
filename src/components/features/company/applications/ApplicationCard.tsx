@@ -7,7 +7,7 @@ import { Avatar, Box, Chip, Paper, Typography } from "@mui/material";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutline";
 import { ApplicationSummaryItem } from "@/store/slices/jobApplicationSlice";
 import { ContactTarget } from "@/components/features/company/posts/details/ContactCandidateModal";
-import { AssessmentTarget } from "@/components/features/company/posts/details/AssessmentDetailsModal";
+import { AssessmentTarget } from "@/modules/assessments/post";
 import { InviteTarget } from "./InviteToInterviewModal";
 import ApplicationCardActions from "./ApplicationCardActions";
 

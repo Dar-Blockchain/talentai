@@ -24,7 +24,8 @@ export interface URLParams {
   focusAreas?: string[];                                  // HR interview focus areas
 }
 
-export type { InterviewConfig } from '@/modules/interview/post/types/interview';
+import type { InterviewConfig } from '@/modules/interview/post/types/interview';
+export type { InterviewConfig };
 
 /**
  * Proficiency level mapping

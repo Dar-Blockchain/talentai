@@ -1016,15 +1016,6 @@ Determine if interview objectives have been sufficiently met to end the session.
 
       console.log('ðŸ§  [Pipeline] Processing candidate response...');
 
-      // Store conversation entry (without separate AI analysis â€” combined analysis handles it)
-      const candidateEntry = {
-        type: 'candidate',
-        content: transcript,
-        timestamp: new Date().toISOString(),
-        metadata: audioMetadata
-      };
-      await this.sessionManager.addConversationEntry(sessionId, candidateEntry);
-
       // Get last interviewer question context
       const recentInterviewerMessages = session.conversation
         .filter(entry => entry.type === 'interviewer')
@@ -1049,15 +1040,20 @@ Determine if interview objectives have been sufficiently met to end the session.
       );
       await this.sessionManager.updateSession(sessionId, { candidateProfile: updatedProfile });
 
-      // Store quality metadata on the candidate entry
-      candidateEntry.metadata = {
-        ...candidateEntry.metadata,
-        qualityScore: analysis.quality?.score,
-        answeredQuestion: analysis.quality?.answeredQuestion,
-        completeness: analysis.quality?.completeness,
-        depthLevel: analysis.quality?.depthLevel || 'moderate',
-        targetArea
-      };
+      // Store candidate turn with quality evaluation included in metadata
+      await this.sessionManager.addConversationEntry(sessionId, {
+        type: 'candidate',
+        content: transcript,
+        timestamp: new Date().toISOString(),
+        metadata: {
+          ...audioMetadata,
+          qualityScore:      analysis.quality?.score            ?? null,
+          answeredQuestion:  analysis.quality?.answeredQuestion ?? null,
+          completeness:      analysis.quality?.completeness     ?? null,
+          depthLevel:        analysis.quality?.depthLevel       ?? null,
+          targetArea,
+        },
+      });
 
       // â”€â”€ STEP 3: Apply coverage updates from analysis (pure logic, ~0ms) â”€â”€
       let finalCoverage = { ...session.coverage };
@@ -1684,7 +1680,7 @@ Determine if interview objectives have been sufficiently met to end the session.
       // Generate comprehensive final report
       const finalReport = await this.generateFinalReport(session);
 
-      // Extract Q&A pairs with AI evaluation from the raw conversation log
+      // Extract Q&A pairs — only AI-generated questions (skips greeting and closing statement)
       const qaConversation = [];
       const conv = session.conversation || [];
       for (let i = 0; i < conv.length; i++) {
@@ -1693,16 +1689,16 @@ Determine if interview objectives have been sufficiently met to end the session.
           const next = conv[i + 1];
           if (next?.type === 'candidate') {
             qaConversation.push({
-              question: entry.content,
-              response: next.content,
+              question:   entry.content,
+              response:   next.content,
               targetArea: entry.metadata?.targetAreas?.[0] || null,
-              timestamp: entry.timestamp,
+              timestamp:  entry.timestamp,
               evaluation: {
-                qualityScore: next.metadata?.qualityScore ?? null,
+                qualityScore:     next.metadata?.qualityScore     ?? null,
                 answeredQuestion: next.metadata?.answeredQuestion ?? null,
-                completeness: next.metadata?.completeness ?? null,
-                depthLevel: next.metadata?.depthLevel ?? null,
-              }
+                completeness:     next.metadata?.completeness     ?? null,
+                depthLevel:       next.metadata?.depthLevel       ?? null,
+              },
             });
           }
         }
@@ -1734,6 +1730,24 @@ Determine if interview objectives have been sufficiently met to end the session.
     const demonstrated = candidateProfile.revealedExpertise || [];
     const gaps = candidateProfile.revealedGaps || [];
     const commStyle = candidateProfile.communicationStyle || {};
+
+    // ── Required skills audit (deterministic — no LLM) ─────────────────────────
+    const mustHavesCovered = mustHaves.filter(s => {
+      const sl = s.toLowerCase();
+      return demonstrated.some(d => {
+        const dl = d.toLowerCase();
+        return dl.includes(sl) || sl.includes(dl) ||
+          sl.split(/[\s,/]+/).some(w => w.length > 2 && dl.includes(w)) ||
+          dl.split(/[\s,/]+/).some(w => w.length > 2 && sl.includes(w));
+      });
+    });
+    const mustHavesMissed = mustHaves.filter(s => !mustHavesCovered.includes(s));
+
+    // ── Session metrics (deterministic) ────────────────────────────────────────
+    const totalResponses = conversation.filter(e => e.type === 'candidate').length;
+    const questionsPerArea = Object.fromEntries(
+      Object.entries(coverage.areas || {}).map(([k, a]) => [k, a.questionsAsked || 0])
+    );
 
     // â”€â”€ 1. Use pre-computed running score (source of truth) â”€â”€
     let finalScore, qualityScore, coverageScore, effectiveSkillsScore, effectiveDepthScore, effectiveCommunicationScore;
@@ -1812,7 +1826,7 @@ Determine if interview objectives have been sufficiently met to end the session.
     try {
       const responseQualities = candidateProfile.responseQualities || [];
       const areaScores = Object.entries(coverage.areas || {}).map(([a, d]) =>
-        `${a.replace(/_/g, ' ')}: ${d.percentage}% coverage`
+        `${a.replace(/_/g, ' ')}: ${d.percentage}% (weight ${d.weight || 0}%, ${d.questionsAsked || 0} questions, ${d.completed ? 'complete' : 'incomplete'})`
       ).join('\n');
 
       const conversationSummary = conversation
@@ -1821,10 +1835,7 @@ Determine if interview objectives have been sufficiently met to end the session.
         .join('\n');
 
       const summaryResponse = await bedrock.callLLM({
-        systemPrompt: `You are an expert recruiter writing a concise interview summary.
-Your job is ONLY to summarize what happened in the interview. Do NOT evaluate, give feedback, or generate strengths/weaknesses â€” those are already pre-computed.
-Just describe what topics were discussed and give a hiring recommendation based on the pre-computed score.
-Return ONLY valid JSON.`,
+        systemPrompt: `You are an expert recruiter writing a structured hiring report for a decision-maker. Summarize the interview and generate the required JSON fields. The scores are already pre-computed — do NOT re-evaluate them. Return ONLY valid JSON with all required fields.`,
         messages: [{ role: "user", content: buildFinalReportUser({
           persona,
           finalScore,
@@ -1835,11 +1846,15 @@ Return ONLY valid JSON.`,
           gaps,
           areaScores,
           conversationSummary,
+          mustHaveSkills: mustHaves,
+          mustHavesCovered,
+          mustHavesMissed,
+          totalResponses,
         }) }],
         temperature: 0.3,
-        maxTokens: 1500,
-        timeout: 20000,
-        useFastModel: false // gpt-oss needs higher maxTokens for reasoning + JSON
+        maxTokens: 2000,
+        timeout: 25000,
+        useFastModel: false
       });
 
       aiSummary = AIUtils.parseJSONResponse(summaryResponse.content, 'generateFinalReport');
@@ -1855,28 +1870,55 @@ Return ONLY valid JSON.`,
     }
 
     return {
-      summary: aiSummary.summary,
-      coverage,
+      // ── Executive summary & verdict ─────────────────────────────────────────
+      summary:           aiSummary.summary,
+      recommendation:    aiSummary.recommendation,
+      reasoning:         aiSummary.reasoning,
+
+      // ── LLM-generated decision support (distinct from strengths/weaknesses) ─
+      keyDecisionFactors: Array.isArray(aiSummary.keyDecisionFactors) ? aiSummary.keyDecisionFactors : [],
+      hiringRisks:        Array.isArray(aiSummary.hiringRisks)        ? aiSummary.hiringRisks        : [],
+      developmentAreas:   Array.isArray(aiSummary.developmentAreas)   ? aiSummary.developmentAreas   : [],
+
+      // ── Component scores ────────────────────────────────────────────────────
       scores: {
-        overall: finalScore,
-        quality: qualityScore,
-        coverage: coverageScore,
-        skills: effectiveSkillsScore,
-        depth: effectiveDepthScore,
+        overall:       finalScore,
+        quality:       qualityScore,
+        coverage:      coverageScore,
+        skills:        effectiveSkillsScore,
+        depth:         effectiveDepthScore,
         communication: effectiveCommunicationScore,
       },
-      strengths: finalStrengths,
+
+      // ── Deterministic strengths/weaknesses (from running score accumulation) ─
+      strengths:  finalStrengths,
       weaknesses: finalWeaknesses,
-      recommendation: aiSummary.recommendation,
-      reasoning: aiSummary.reasoning,
-      recommendations: runningData?.weaknesses || [],
+
+      // ── Required skills audit ───────────────────────────────────────────────
+      requiredSkills: {
+        all:         mustHaves,
+        demonstrated: mustHavesCovered,
+        missed:      mustHavesMissed,
+      },
+
+      // ── Coverage breakdown ──────────────────────────────────────────────────
+      coverage,
+
+      // ── Candidate behavioural profile ───────────────────────────────────────
       candidateProfile: {
         communicationStyle: commStyle,
-        revealedExpertise: demonstrated,
-        revealedGaps: gaps,
-        difficultyLevel: candidateProfile.currentDifficulty || 'intermediate',
+        revealedExpertise:  demonstrated,
+        revealedGaps:       gaps,
+        difficultyLevel:    candidateProfile.currentDifficulty || 'intermediate',
       },
-      timestamp: new Date().toISOString()
+
+      // ── Session metrics ─────────────────────────────────────────────────────
+      sessionMetrics: {
+        totalResponses,
+        questionsPerArea,
+      },
+
+      timestamp: new Date().toISOString(),
     };
   }
 

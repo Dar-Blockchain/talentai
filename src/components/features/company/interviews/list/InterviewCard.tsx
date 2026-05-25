@@ -35,6 +35,14 @@ export function scoreStyle(s: number): { color: string; bg: string; label: strin
   return { color: "#EF4444", bg: "#FEF2F2", label: "Needs Work" };
 }
 
+export function verdictStyle(r?: string): { color: string; bg: string; label: string; border: string } {
+  if (r === 'strong_hire') return { color: '#059669', bg: '#ECFDF5', label: 'Strong Hire',  border: '#6EE7B7' };
+  if (r === 'hire')        return { color: '#10B981', bg: '#F0FDF4', label: 'Hire',          border: '#A7F3D0' };
+  if (r === 'maybe')       return { color: '#D97706', bg: '#FFFBEB', label: 'Consider',      border: '#FDE68A' };
+  if (r === 'no_hire')     return { color: '#EF4444', bg: '#FEF2F2', label: 'Pass',           border: '#FECACA' };
+  return { color: '', bg: '', label: '', border: '' };
+}
+
 export function fmtDate(d: string) {
   try {
     return new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
@@ -83,6 +91,16 @@ export interface InterviewAssessment {
       scores?: Record<string, number>;
       recommendations?: string[];
       timestamp?: string;
+      recommendation?: 'hire' | 'maybe' | 'no_hire';
+      strengths?: string[];
+      weaknesses?: string[];
+      reasoning?: string;
+      candidateProfile?: {
+        communicationStyle?: { verbosity?: string; confidenceLevel?: string };
+        revealedExpertise?: string[];
+        revealedGaps?: string[];
+        difficultyLevel?: string;
+      };
     };
     analytics?: { duration?: number; messageCount?: number; coveragePercentage?: number };
     interviewType?: string;
@@ -108,6 +126,13 @@ const InterviewCard = memo<InterviewCardProps>(({ assessment, index = 0, onClick
   const title = assessment.post?.jobDetails?.title || "Untitled Position";
   const candidateId = assessment.candidate?._id;
   const postId = assessment.post?._id;
+  const finalReport = assessment.interviewData?.finalReport;
+  const recommendation = finalReport?.recommendation;
+  const vs = verdictStyle(recommendation);
+  const chipColor = vs.label ? vs.color : sc.color;
+  const chipBg    = vs.label ? vs.bg    : sc.bg;
+  const chipLabel = vs.label || sc.label;
+  const strengths = finalReport?.strengths?.slice(0, 2) ?? [];
 
   return (
     <motion.div
@@ -171,6 +196,20 @@ const InterviewCard = memo<InterviewCardProps>(({ assessment, index = 0, onClick
         {/* Score bar */}
         <ScoreBar value={score} color={sc.color} />
 
+        {/* Strengths preview */}
+        {strengths.length > 0 && (
+          <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
+            {strengths.map((s, i) => (
+              <Chip
+                key={i}
+                label={s.length > 24 ? s.slice(0, 24) + "…" : s}
+                size="small"
+                sx={{ height: 18, fontSize: "10px", bgcolor: "#F0FDFA", color: "#0D9488", border: "1px solid #99F6E4", borderRadius: "5px", "& .MuiChip-label": { px: 0.75 } }}
+              />
+            ))}
+          </Box>
+        )}
+
         {/* Job title */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1 }}>
           <Box sx={{ width: 30, height: 30, borderRadius: 1.5, bgcolor: "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -187,12 +226,12 @@ const InterviewCard = memo<InterviewCardProps>(({ assessment, index = 0, onClick
         {/* Footer: verdict chip + date */}
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pt: 1.5, borderTop: "1px solid #F3F4F6" }}>
           <Chip
-            label={sc.label}
+            label={chipLabel}
             size="small"
             sx={{
               fontWeight: 700, fontSize: "10px", height: 20,
-              color: sc.color, bgcolor: sc.bg,
-              border: `1px solid ${sc.color}25`, borderRadius: "6px",
+              color: chipColor, bgcolor: chipBg,
+              border: `1px solid ${chipColor}25`, borderRadius: "6px",
               "& .MuiChip-label": { px: 1 },
             }}
           />

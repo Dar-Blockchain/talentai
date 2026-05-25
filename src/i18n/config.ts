@@ -126,7 +126,7 @@ const options: InitOptions = {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   detection: {
-    order: ['cookie', 'localStorage', 'navigator'],
+    order: ['cookie', 'localStorage'],
     caches: ['cookie', 'localStorage'],
     cookieName: LANGUAGE_COOKIE,
     cookieOptions: { path: '/', sameSite: 'lax' },

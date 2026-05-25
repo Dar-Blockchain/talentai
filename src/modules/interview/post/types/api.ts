@@ -69,6 +69,16 @@ export interface PostAssessment {
       summary?: string;
       recommendations?: string[];
       aiAnalysis?: { strongestAreas?: string[]; weakestAreas?: string[]; recommendedFocus?: string[] };
+      recommendation?: 'hire' | 'maybe' | 'no_hire';
+      strengths?: string[];
+      weaknesses?: string[];
+      reasoning?: string;
+      candidateProfile?: {
+        communicationStyle?: { verbosity?: string; confidenceLevel?: string };
+        revealedExpertise?: string[];
+        revealedGaps?: string[];
+        difficultyLevel?: string;
+      };
     };
     analytics?: { duration?: number; messageCount?: number; completedAreas?: number; totalAreas?: number; coveragePercentage?: number };
   };

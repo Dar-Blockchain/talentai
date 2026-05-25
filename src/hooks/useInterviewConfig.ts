@@ -50,11 +50,8 @@ const DEFAULT_CONFIG: InterviewConfig = {
     difficulty: 'intermediate',
     silenceTimeout: 5,
     silenceIntelligence: {
-      enabled: true,
-      adaptiveThresholds: true,
-      maxSilencePrompts: 3,
-      naturalPauseDetection: true,
-      contextAwareThresholds: true
+      adaptiveMode: true,
+      contextualAdjustments: true,
     }
   }
 };

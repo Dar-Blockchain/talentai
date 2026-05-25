@@ -556,27 +556,34 @@ Example: "Take your time - there's no rush. Would you like me to rephrase the qu
 /**
  * User prompt for generateFinalReport LLM summary call.
  */
-function buildFinalReportUser({ persona, finalScore, qualityScore, responseQualities, coverageScore, demonstrated, gaps, areaScores, conversationSummary }) {
+function buildFinalReportUser({ persona, finalScore, qualityScore, responseQualities, coverageScore, demonstrated, gaps, areaScores, conversationSummary, mustHaveSkills, mustHavesCovered, mustHavesMissed, totalResponses }) {
+  const mustHaveBlock = mustHaveSkills.length > 0
+    ? `\nREQUIRED SKILLS AUDIT:\n- Role requires: ${mustHaveSkills.join(', ')}\n- Candidate demonstrated: ${mustHavesCovered.join(', ') || 'none'}\n- Not demonstrated: ${mustHavesMissed.join(', ') || 'none'}`
+    : '';
+
   return `Role: ${persona.job?.title || 'Unknown'} at ${persona.job?.company || 'Unknown'}
 
-PRE-COMPUTED DATA (use these directly, do not re-evaluate):
+PRE-COMPUTED DATA (use directly — do not re-score):
 - Overall Score: ${finalScore}/100
-- Quality Average: ${qualityScore}/100 (across ${responseQualities.length} responses)
-- Coverage: ${coverageScore}%
-- Skills Demonstrated: ${demonstrated.join(', ') || 'None identified'}
-- Skills Gaps: ${gaps.join(', ') || 'None identified'}
+- Response Quality: ${qualityScore}/100 (${totalResponses} candidate responses)
+- Topic Coverage: ${coverageScore}%
+- Demonstrated Skills: ${demonstrated.join(', ') || 'none identified'}
+- Skill Gaps: ${gaps.join(', ') || 'none identified'}${mustHaveBlock}
 
-AREA COVERAGE:
+COMPETENCY AREA BREAKDOWN:
 ${areaScores}
 
-CONVERSATION:
+RECENT CONVERSATION (last 20 exchanges):
 ${conversationSummary}
 
-Write JSON:
+Return ONLY valid JSON with ALL fields. Be specific and evidence-based — reference what the candidate actually said or demonstrated:
 {
-  "summary": "2-3 sentence summary of what was discussed in the interview, referencing specific topics. Do NOT give feedback or evaluate — just summarize.",
+  "summary": "2-3 sentences describing what topics were discussed and how the candidate engaged. Reference specific subjects covered. Do NOT evaluate — only summarize.",
   "recommendation": "strong_hire | hire | maybe | no_hire",
-  "reasoning": "1 sentence justification based on the pre-computed score and what was observed"
+  "reasoning": "3-5 sentences justifying the recommendation. Cite the pre-computed scores (quality=${qualityScore}, coverage=${coverageScore}, overall=${finalScore}) and concrete observations. Be honest about both strengths and gaps.",
+  "keyDecisionFactors": ["2-3 specific, evidence-based observations that most influenced this recommendation. Each must reference something concrete from the interview — not generic statements."],
+  "hiringRisks": ["1-3 concrete concerns a hiring manager should know, even for a hire recommendation — gaps in required skills, coverage blind spots, or behavioral concerns observed. Empty array if there are no meaningful risks."],
+  "developmentAreas": ["2-3 specific, actionable development areas tied to this role if the candidate is hired. Role-specific and concrete — not generic advice like 'improve communication'."]
 }`;
 }
 

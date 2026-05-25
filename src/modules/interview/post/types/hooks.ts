@@ -90,6 +90,7 @@ export interface UseAudioTranscriptionReturn {
   setCoverageDashboardExpanded: (val: boolean) => void;
   skipQuestion: () => void;
   resetSkipGuard: () => void;
+  silenceWarning: number | null;
 }
 
 export interface UseAudioTranscriptionOptions {

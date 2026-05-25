@@ -555,14 +555,160 @@ module.exports.getAssessmentByPostAndCandidate = async (req, res) => {
       return res.status(400).json({ success: false, message: "postId and candidateUserId are required." });
     }
     const PostInterviewAssessment = require("../../models/PostInterviewAssessment.model");
-    const assessment = await PostInterviewAssessment.findOne({ post: postId, candidate: candidateUserId })
-      .populate("candidate", "firstName lastName email username profile")
-      .populate("post", "jobDetails skillAnalysis")
+
+    const doc = await PostInterviewAssessment
+      .findOne({ post: postId, candidate: candidateUserId })
+      .select({
+        createdAt:                                               1,
+        // session metadata
+        'interviewData.interviewType':                           1,
+        // full analytics block
+        'interviewData.analytics':                               1,
+        // scores
+        'interviewData.finalReport.scores':                      1,
+        // coverage — full area objects (weight, questionsAsked, completed, indicators)
+        'interviewData.finalReport.coverage':                    1,
+        // qualitative AI assessment
+        'interviewData.finalReport.summary':                     1,
+        'interviewData.finalReport.recommendation':              1,
+        'interviewData.finalReport.reasoning':                   1,
+        'interviewData.finalReport.strengths':                   1,
+        'interviewData.finalReport.weaknesses':                  1,
+        'interviewData.finalReport.keyDecisionFactors':          1,
+        'interviewData.finalReport.hiringRisks':                 1,
+        'interviewData.finalReport.developmentAreas':            1,
+        'interviewData.finalReport.requiredSkills':              1,
+        'interviewData.finalReport.sessionMetrics':              1,
+        'interviewData.finalReport.candidateProfile':            1,
+        // conversation transcript
+        'interviewData.conversation':                            1,
+        // recruiter review
+        recruiterFeedback:                                       1,
+        recruiterFeedbackAt:                                     1,
+      })
+      .populate('post', 'jobDetails')
       .lean();
-    if (!assessment) {
+
+    if (!doc) {
       return res.status(404).json({ success: false, message: "Assessment not found." });
     }
-    res.status(200).json({ success: true, data: assessment });
+
+    const fr       = doc.interviewData?.finalReport ?? {};
+    const an       = doc.interviewData?.analytics   ?? {};
+    const rawAreas = fr.coverage?.areas             ?? {};
+
+    // Shape per-area data.
+    // Note: area.aiAnalysis is NEVER populated by the AI engine — omit it.
+    // area.depth comes from the static framework description string (not runtime AI).
+    const areas = Object.fromEntries(
+      Object.entries(rawAreas).map(([key, area]) => [key, {
+        percentage:     area.percentage     ?? 0,
+        weight:         area.weight         ?? 0,
+        questionsAsked: area.questionsAsked ?? 0,
+        completed:      area.completed      ?? false,
+        indicators: (area.indicators ?? []).map(({ name, covered, evidence }) => ({ name, covered, evidence })),
+      }])
+    );
+
+    // Derive strongest/weakest/focus from real coverage data (AI doesn't generate these directly)
+    const areaEntries = Object.entries(areas);
+    const strongestAreas   = areaEntries.filter(([, a]) => a.percentage >= 70).sort((a, b) => b[1].percentage - a[1].percentage).map(([k]) => k);
+    const weakestAreas     = areaEntries.filter(([, a]) => a.percentage <  50).sort((a, b) => a[1].percentage - b[1].percentage).map(([k]) => k);
+    const incompleteSorted = areaEntries.filter(([, a]) => !a.completed && a.percentage < 60).sort((a, b) => a[1].percentage - b[1].percentage);
+    const recommendedFocus = incompleteSorted.map(([k]) => k);
+    const nextRecommendedArea = incompleteSorted[0]?.[0] ?? null;
+    const completedAreasList  = areaEntries.filter(([, a]) => a.completed).map(([k]) => k);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        _id:           doc._id,
+        createdAt:     doc.createdAt,
+        jobId:         doc.post?._id              ?? null,
+        jobTitle:      doc.post?.jobDetails?.title ?? null,
+        interviewType: doc.interviewData?.interviewType ?? null,
+
+        // ── Executive verdict ─────────────────────────────────────────
+        verdict: {
+          recommendation: fr.recommendation ?? null,
+          overallScore:   fr.scores?.overall ?? fr.coverage?.overall ?? null,
+          reasoning:      fr.reasoning       ?? null,
+        },
+
+        // ── Component scores (actual keys saved by the AI engine) ─────
+        // overall     = composite weighted score
+        // quality     = average per-turn response quality (0–100)
+        // coverage    = topic coverage percentage (mirrors analytics)
+        // skills      = must-have skills match rate (0–100)
+        // depth       = answer depth score (surface/moderate/deep → 0–100)
+        // communication = communication style score (confidence + verbosity)
+        scores: {
+          overall:       fr.scores?.overall       ?? null,
+          quality:       fr.scores?.quality       ?? null,
+          coverage:      fr.scores?.coverage      ?? null,
+          skills:        fr.scores?.skills        ?? null,
+          depth:         fr.scores?.depth         ?? null,
+          communication: fr.scores?.communication ?? null,
+        },
+
+        // ── Session analytics ─────────────────────────────────────────
+        // duration is in milliseconds (Date subtraction in redis-session-manager)
+        analytics: {
+          duration:              an.duration,
+          messageCount:          an.messageCount,
+          silenceEvents:         an.silenceEvents,
+          coveragePercentage:    an.coveragePercentage,
+          completedAreas:        an.completedAreas,
+          totalAreas:            an.totalAreas,
+          averageResponseLength: an.averageResponseLength,
+          interactionStyle:      an.interactionStyle,
+        },
+
+        // ── Coverage breakdown ────────────────────────────────────────
+        coverage: {
+          overall:             fr.coverage?.overall ?? null,
+          completedAreas:      completedAreasList,
+          nextRecommendedArea: nextRecommendedArea,
+          areas,
+        },
+
+        // ── AI qualitative assessment ─────────────────────────────────
+        // strengths/weaknesses come from deterministic running-score accumulation.
+        // keyDecisionFactors/hiringRisks/developmentAreas are LLM-generated, distinct from each other.
+        // strongestAreas/weakestAreas/recommendedFocus are derived from coverage percentages.
+        aiAssessment: {
+          summary:            fr.summary             ?? null,
+          strengths:          fr.strengths            ?? [],
+          weaknesses:         fr.weaknesses           ?? [],
+          keyDecisionFactors: fr.keyDecisionFactors   ?? [],
+          hiringRisks:        fr.hiringRisks          ?? [],
+          developmentAreas:   fr.developmentAreas     ?? [],
+          strongestAreas,
+          weakestAreas,
+          recommendedFocus,
+        },
+
+        // ── Required skills audit ─────────────────────────────────────
+        // Shows which JD must-have skills were demonstrated vs missed.
+        requiredSkills: fr.requiredSkills ?? null,
+
+        // ── Session metrics ───────────────────────────────────────────
+        sessionMetrics: fr.sessionMetrics ?? null,
+
+        // ── Candidate behavioural profile ─────────────────────────────
+        candidateProfile: fr.candidateProfile ?? null,
+
+        // ── Recruiter review status ───────────────────────────────────
+        recruiterReview: {
+          reviewed:   !!doc.recruiterFeedback,
+          feedback:   doc.recruiterFeedback   ?? null,
+          reviewedAt: doc.recruiterFeedbackAt ?? null,
+        },
+
+        // ── Full transcript ───────────────────────────────────────────
+        conversation: doc.interviewData?.conversation ?? [],
+      },
+    });
   } catch (error) {
     console.error("Error getting assessment by post+candidate:", error);
     res.status(error.status || 500).json({ success: false, message: error.message || "Error retrieving assessment." });

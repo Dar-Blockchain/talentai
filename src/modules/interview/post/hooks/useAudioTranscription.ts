@@ -47,6 +47,9 @@ export const useAudioTranscription = ({
   const [silenceCount, setSilenceCount]               = useState(0);
   const [lastVoiceActivity, setLastVoiceActivity]     = useState<number>(Date.now());
   const [currentSilenceDuration, setCurrentSilenceDuration] = useState(0);
+  const [silenceWarning, setSilenceWarning]           = useState<number | null>(null);
+  const silenceTimerLastVoiceRef  = useRef<number>(Date.now());
+  const silenceAutoSkipFiredRef   = useRef(false);
   const [questionReadingTime, setQuestionReadingTime] = useState<number | null>(null);
   const [speechPhase, _setSpeechPhase]                = useState<SpeechPhase>('reading');
   const speechPhaseRef = useRef<SpeechPhase>('reading');
@@ -249,6 +252,9 @@ export const useAudioTranscription = ({
     speakingStartTimeRef.current = null;
     setAccumulatedTurns([]);
     accumulatedTurnsRef.current = [];
+    setSilenceWarning(null);
+    silenceTimerLastVoiceRef.current = Date.now();
+    silenceAutoSkipFiredRef.current = false;
     addSilenceDebugLog('🔄 State reset for new question');
   }, [addSilenceDebugLog]);
 
@@ -398,6 +404,9 @@ export const useAudioTranscription = ({
             if (!prevVoiceActive && speechFrames >= FRAMES_TO_ACTIVATE) {
               prevVoiceActive = true;
               setIsVoiceActive(true);
+              silenceTimerLastVoiceRef.current = Date.now();
+              setSilenceWarning(null);
+              silenceAutoSkipFiredRef.current = false;
             }
           } else {
             silenceFrames++;
@@ -504,6 +513,9 @@ export const useAudioTranscription = ({
     speakingStartTimeRef.current = null;
     setAccumulatedTurns([]);
     accumulatedTurnsRef.current = [];
+    setSilenceWarning(null);
+    silenceTimerLastVoiceRef.current = Date.now();
+    silenceAutoSkipFiredRef.current = false;
     addTranscriptDebugLog('🆕 New question — state reset');
   }, [currentMessage, addTranscriptDebugLog]);
 
@@ -541,6 +553,35 @@ export const useAudioTranscription = ({
 
     return () => clearInterval(timer);
   }, [questionReadingTime]);
+
+  // ── Auto-skip on 60 s silence (warn at 30 s) ─────────────────────────────────
+
+  useEffect(() => {
+    if (!isRecording) return;
+    const id = setInterval(() => {
+      if (isInReadingTime || agentState === 'thinking' || silenceAutoSkipFiredRef.current) {
+        setSilenceWarning(null);
+        return;
+      }
+      if (!socketRef.current?.connected || !sessionIdRef.current) return;
+      const silentMs = Date.now() - silenceTimerLastVoiceRef.current;
+      if (silentMs >= 60_000) {
+        silenceAutoSkipFiredRef.current = true;
+        setSilenceWarning(0); // 0 = "pending" — banner stays visible until question arrives
+        silenceTimerLastVoiceRef.current = Date.now();
+        socketRef.current.emit('silence_detected', {
+          sessionId: sessionIdRef.current,
+          durationSeconds: Math.round(silentMs / 1000),
+          timestamp: new Date().toISOString(),
+        });
+      } else if (silentMs >= 30_000) {
+        setSilenceWarning(Math.ceil((60_000 - silentMs) / 1000));
+      } else {
+        setSilenceWarning(null);
+      }
+    }, 500);
+    return () => clearInterval(id);
+  }, [isRecording, isInReadingTime, agentState, socketRef, sessionIdRef]);
 
   // ── Cleanup on unmount ────────────────────────────────────────────────────────
 
@@ -582,5 +623,6 @@ export const useAudioTranscription = ({
     coverageDashboardExpanded, setCoverageDashboardExpanded,
     skipQuestion,
     resetSkipGuard,
+    silenceWarning,
   };
 };

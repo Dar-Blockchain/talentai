@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import { type RootState } from "@/store/store";
-import { Box, Snackbar, Alert, Container } from "@mui/material";
+import { Box, Snackbar, Alert, Container, LinearProgress, Typography } from "@mui/material";
 import QuestionPanel from "./QuestionPanel";
 import CameraPreview from "./CameraPreview";
 import InterviewControlsPanel from "./InterviewControlsPanel";
@@ -185,6 +185,26 @@ export default function InterviewScreen({
                 : 0
             }
           />
+        )}
+
+        {/* ── Silence warning banner ───────────────────────────────────── */}
+        {isActive && audio.silenceWarning !== null && (
+          <Box sx={{ mb: 1, px: 2, py: 1.25, bgcolor: audio.silenceWarning === 0 ? '#F0FDF4' : '#FEF3C7', border: `1px solid ${audio.silenceWarning === 0 ? '#6EE7B7' : '#F59E0B'}`, borderRadius: '12px' }}>
+            <Typography sx={{ fontSize: '0.8rem', color: audio.silenceWarning === 0 ? '#065F46' : '#92400E', fontWeight: 600, mb: 0.75 }}>
+              {audio.silenceWarning === 0
+                ? 'Generating next question…'
+                : `Still silent? Moving to the next question in ${audio.silenceWarning}s`}
+            </Typography>
+            <LinearProgress
+              variant={audio.silenceWarning === 0 ? 'indeterminate' : 'determinate'}
+              value={audio.silenceWarning === 0 ? undefined : (audio.silenceWarning / 30) * 100}
+              sx={{
+                height: 4, borderRadius: 2,
+                bgcolor: audio.silenceWarning === 0 ? '#A7F3D0' : '#FDE68A',
+                '& .MuiLinearProgress-bar': { bgcolor: audio.silenceWarning === 0 ? '#10B981' : '#F59E0B' },
+              }}
+            />
+          </Box>
         )}
 
         {/* ── 2-column grid — same layout in both active and lobby ─────── */}

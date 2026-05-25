@@ -21,7 +21,7 @@ import {
   ApplicationSummaryItem,
 } from "@/store/slices/jobApplicationSlice";
 import ContactCandidateModal, { ContactTarget } from "./ContactCandidateModal";
-import AssessmentDetailsModal, { AssessmentTarget } from "./AssessmentDetailsModal";
+import { AssessmentDetailsModal, AssessmentTarget } from "@/modules/assessments/post";
 import InviteToInterviewModal, { InviteTarget } from "@/components/features/company/applications/InviteToInterviewModal";
 import ApplicationCard from "@/components/features/company/applications/ApplicationCard";
 
