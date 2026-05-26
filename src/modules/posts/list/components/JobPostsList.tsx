@@ -7,7 +7,7 @@ import AppButton from "@/components/ui/AppButton";
 import JobPostCard from "./JobPostCard";
 import type { StatusFilter, SortOption, PaginationInfo } from "../types";
 
-const TEAL = "#0D9488";
+import { TEAL } from "@/modules/posts/shared/constants";
 
 interface JobPostsListProps {
   jobs: any[];
