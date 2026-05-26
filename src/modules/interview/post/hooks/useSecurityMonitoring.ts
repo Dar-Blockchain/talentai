@@ -4,7 +4,7 @@ import type { UseSecurityMonitoringReturn, UseSecurityMonitoringOptions } from '
 
 export type { UseSecurityMonitoringReturn, UseSecurityMonitoringOptions };
 
-const MAX_WARNINGS = 2; // 3rd violation terminates
+const MAX_WARNINGS = 1; // 2nd violation terminates
 
 export const useSecurityMonitoring = ({
   interviewStatus,

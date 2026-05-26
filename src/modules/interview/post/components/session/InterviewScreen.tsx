@@ -11,6 +11,7 @@ import InterviewContainer from "./InterviewContainer";
 import InterviewConnectionBanner from "./InterviewConnectionBanner";
 import InterviewSessionHeader from "./InterviewSessionHeader";
 import GDPRConsentModal from "../modals/GDPRConsentModal";
+import SecurityModals from "../modals/SecurityModals";
 import ConfirmLeaveModal from "./ConfirmLeaveModal";
 import { interviewScreenSx } from "../../styles/interviewScreen.styles";
 import { type Coverage, type InterviewMessage } from "../../types/interview";
@@ -78,6 +79,7 @@ export default function InterviewScreen({
     audio,
     timer,
     camera,
+    security,
     coverage,
     resultsReady,
     startInterview,
@@ -275,6 +277,15 @@ export default function InterviewScreen({
         open={confirmOpen}
         onConfirm={handleConfirmLeave}
         onCancel={handleCancelLeave}
+      />
+
+      <SecurityModals
+        showFirstViolationModal={security.showFirstViolationModal}
+        showSecurityModal={security.showSecurityModal}
+        violationType={security.violationType}
+        securityViolationCount={security.securityViolationCount}
+        onDismissFirst={() => security.setShowFirstViolationModal(false)}
+        onReturnToDashboard={() => router.push(dashboardPath)}
       />
 
       <GDPRConsentModal

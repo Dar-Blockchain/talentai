@@ -4,7 +4,7 @@ import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import GppBadRoundedIcon from '@mui/icons-material/GppBadRounded';
 import { useTranslation } from 'react-i18next';
 
-const MAX_WARNINGS = 2;
+const MAX_WARNINGS = 1;
 
 interface SecurityModalsProps {
   showFirstViolationModal: boolean;
@@ -24,7 +24,7 @@ const SecurityModals: React.FC<SecurityModalsProps> = ({
   onReturnToDashboard,
 }) => {
   const { t } = useTranslation('interview');
-  const warningsLeft = MAX_WARNINGS - securityViolationCount + 1;
+  const warningsLeft = MAX_WARNINGS - securityViolationCount;
 
   const prohibitedRules = [
     t('security.prohibited_copy'),
@@ -37,7 +37,7 @@ const SecurityModals: React.FC<SecurityModalsProps> = ({
   return (
     <>
       {/* Warning modal (1st & 2nd violation) */}
-      <Dialog open={showFirstViolationModal} onClose={onDismissFirst} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: '20px', overflow: 'hidden' } }}>
+      <Dialog open={showFirstViolationModal && !showSecurityModal} onClose={onDismissFirst} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: '20px', overflow: 'hidden' } }}>
         <Box sx={{ height: 4, bgcolor: '#F59E0B' }} />
         <DialogContent sx={{ px: 3.5, pt: 3.5, pb: 3 }}>
           <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2.5 }}>
