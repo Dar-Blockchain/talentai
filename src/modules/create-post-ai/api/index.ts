@@ -28,9 +28,10 @@ export async function generatePost(input: GeneratePostInput): Promise<GeneratePo
   const salaryText = salary.min != null && salary.max != null
     ? `\n\nSalary Range: ${salary.currency} ${new Intl.NumberFormat("en-US").format(salary.min)} - ${salary.currency} ${new Intl.NumberFormat("en-US").format(salary.max)}`
     : "";
-  const contractText = contractType ? `\nContract Type: ${contractType}` : "";
+  // const contractText = contractType ? `\nContract Type: ${contractType}` : "";
   const workModeText = workMode     ? `\nWork Mode: ${workMode}`         : "";
-  const description  = jobDescription + salaryText + contractText + workModeText;
+  // const description  = jobDescription + salaryText + contractText + workModeText;
+  const description = jobDescription + salaryText + workModeText;
 
   const payload: GeneratePostPayload = { description, contractType, workMode, language, interviewLanguages };
   const res = await axiosInstance.post("post/generate-job-post", payload);

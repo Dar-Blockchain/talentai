@@ -1,189 +1,236 @@
-const getDetailedPrompt = (description, companyLocation, language = "en") => {
-  const languageInstructions = language === "fr" 
-    ? `Vous devez générer TOUT le contenu en FRANÇAIS (y compris les titres, descriptions, exigences, responsabilités, compétences et le post LinkedIn). Assurez-vous que chaque champ de texte est en français correctement formé.`
-    : `Generate ALL content in ENGLISH (including titles, descriptions, requirements, responsibilities, skills, and LinkedIn post). Ensure all text fields are in proper English.`;
+const getDetailedPrompt = (description, companyLocation, language = "en", employmentType = "Full-time") => {
+  const languageInstruction =
+    language === "fr"
+      ? "Generate ALL text fields in FRENCH only."
+      : "Generate ALL text fields in ENGLISH only.";
+
+  const isInternship = employmentType === "Internship";
+
+  const internshipInstruction = isInternship ? `
+━━━ INTERNSHIP MODE ━━━
+
+This is an internship role. Apply these rules without exception:
+- "employmentType" MUST be "Internship"
+- "experienceLevel" MUST be "Junior"
+- All skill levels (requiredSkills AND softSkills) MUST be 1
+- Requirements must NOT mention years of production experience.
+  Use instead: "Basic knowledge of", "Personal or academic project experience with", "Exposure to X through coursework or self-learning"
+- Responsibilities should reflect learning and contributing — not owning or leading
+` : "";
 
   return `
-As an expert technical recruiter and AI assistant, analyze this job description and generate a JSON object with only the following structure:
+You are a world-class recruiter with 15 years of experience writing job posts that attract top talent. You write for any industry — tech, marketing, sales, finance, operations, design, and more. Your writing is sharp, specific, and compelling — never generic.
 
-${languageInstructions}
+${languageInstruction}
 
-1. Create a professional job post
-2. Extract and suggest relevant skills
-3. Format it for LinkedIn
-4. Provide comprehensive skill analysis
+Analyze the job description below and return a single valid JSON object. No markdown, no explanation — raw JSON only.
 
-IMPORTANT:
-${languageInstructions}
-- Extract the exact salary range (min, max, currency) as specified in the job description. Do not estimate or change these values.
-- For the "location" field, extract the location from the job description if specified.
-- If no location is specified in the job description, use the company location: "${companyLocation}".
-- Always include "location" in the output.
-- **CRITICAL: The sum of all percentages in requiredSkills + softSkills must equal EXACTLY 100%**
-- If the job description explicitly mentions language (for example: English, French, Spanish), INCLUDE THAT LANGUAGE as the single soft skill. Assign the language a suitable "percentage" and "level".
-- If no language is mentioned, generate one relevant soft skill as usual (e.g., Problem solving, Communication, Teamwork, Leadership, Adaptability, Time management).
-
-- Set skill level based on the seniority scale:
-  - Entry-level (0–1 year)   = level 1
-  - Junior      (1–3 years)  = level 2
-  - Mid-level   (3–6 years)  = level 3
-  - Senior      (6–10 years) = level 4
-  - Expert      (10+ years)  = level 5
-
-- Each skill in "requiredSkills" must include a "percentage" field representing its importance weight in the job.
-- Only one soft skill must be generated.
-- Core and frequently mentioned skills should receive higher percentages.
-
-Job Description:
-${description}
-
-Return the response in the following JSON format:
+${internshipInstruction}
+━━━ OUTPUT STRUCTURE ━━━
 
 {
   "jobDetails": {
-    "title": "Job title",
-    "description": "A concise, professional summary of the role (2-4 sentences). Must clearly state what the role is about, the team/product context, and the impact the hire will have. Do NOT repeat requirements or responsibilities here.",
-    "requirements": ["Each requirement must be specific, measurable, and directly relevant to the role. Use concrete technologies, years of experience, degrees, or certifications. Avoid vague terms like 'good knowledge of' or 'familiarity with'. Example: '3+ years of production experience with React.js and TypeScript' instead of 'Experience with frontend frameworks'."],
-    "responsibilities": ["Each responsibility must describe a concrete, actionable task the candidate will perform daily or regularly. Use strong action verbs (design, implement, optimize, lead, build, deploy, review, mentor). Avoid generic filler like 'Work with the team' or 'Participate in meetings'. Example: 'Design and implement RESTful APIs serving 10K+ requests/min using Node.js and Express' instead of 'Develop backend services'."],
-    "location": "Job location",
-    "workMode": "Remote/On-site/Hybrid",
-    "employmentType": "Full-time/Part-time/Contract/Internship",
-    "experienceLevel": "Entry-level/Junior/Mid-level/Senior/Expert",
-    "salary": {
-      "min": 0,
-      "max": 0,
-      "currency": "USD"
-    }
+    "title": string,
+    "description": string,
+    "requirements": string[],
+    "responsibilities": string[],
+    "location": string,
+    "workMode": "Remote" | "On-site" | "Hybrid",
+    "employmentType": "${employmentType}",
+    "experienceLevel": ${isInternship ? '"Junior"' : '"Junior" | "Mid-level" | "Senior" | "Expert"'},
+    "salary": { "min": number, "max": number, "currency": string }
   },
   "skillAnalysis": {
     "requiredSkills": [
-      {
-        "name": "Skill 1",
-        "level": "Required level (1-5) based on years of experience",
-        "category": "Frontend/Backend/DevOps/etc.",
-        "percentage": 0
-      }
+      { "name": string, "level": ${isInternship ? "1" : "number (1–5)"}, "category": "Frontend"|"Backend"|"Fullstack"|"DevOps"|"Other"|"Marketing"|"Sales"|"Design"|"Finance"|"Operations", "percentage": number }
     ],
     "softSkills": [
-      {
-        "name": "Soft Skill 1",
-        "level": "Required level (1-5) based on needs",
-        "percentage": 0
-      }
+      { "name": string, "level": ${isInternship ? "1" : "number (1–5)"}, "percentage": number }
     ]
   }
 }
 
-═══════════════════════════════════════════
-ABSOLUTE RULES — APPLY BEFORE ANYTHING ELSE
-═══════════════════════════════════════════
+━━━ HOW TO THINK ━━━
 
-RULE 1 — SALARY:
-- If no exact salary figure is explicitly written in the job description with a real number and currency,
-  salary MUST be exactly: { "min": 0, "max": 0, "currency": "USD" }.
-- NEVER infer, estimate, guess, or generate a salary value.
-- 1 is not 0. 20 is not 0. Any non-zero value when salary is not mentioned is a critical error.
+Before writing anything, ask yourself:
+- What industry is this role in? (tech, marketing, sales, finance, design, operations?)
+- What does this person actually do every day — what do they produce or deliver?
+- What specific tools, platforms, or skills does this role depend on?
+- What seniority does the scope of work demand?
 
-RULE 2 — INTERNSHIP DETECTION:
-- If the words "stage", "intern", "internship", or "stagiaire" appear ANYWHERE
-  in the job title or description:
-  • employmentType MUST be "Internship". NEVER "Full-time", NEVER "Part-time".
-  • experienceLevel MUST be "Entry-level". NEVER "Junior" or above.
-  • All skill levels (requiredSkills AND softSkills) MUST be 1.
-  • These rules override ANY other inference. No exceptions.
+Then write as if you're describing a real position at a real company — not filling in a template.
 
-RULE 3 — EMPLOYMENT TYPE DEFAULT:
-- If employmentType is not explicitly stated in the job description,
-  default to "Full-time". NEVER infer "Part-time" from context, title, or assumptions.
+━━━ EXAMPLES — learn the style, not the content ━━━
 
-RULE 4 — SKILL PERCENTAGE PROPORTIONAL TO YEARS OF EXPERIENCE:
-- Rank all requiredSkills by years of experience from highest to lowest.
-- The skill with the most years MUST have the highest percentage. No exceptions.
-- Use this exact formula to compute each skill's percentage:
+EXAMPLE 1 — Senior Backend Role (Tech)
 
-    skill_percentage = ROUND( (skill_years / total_years) × skill_budget )
+Input: "Looking for a senior engineer to lead our payments microservices. 6+ years Node.js, experience with Kafka and PostgreSQL, will mentor junior devs."
 
-  Where:
-  • total_years = sum of all requiredSkills years (skills without years = 0.5)
-  • skill_budget = 100 minus the soft skill percentage (soft skill default = 20%)
-  • Apply a cap of 55% max per skill to preserve balance
+Output:
+{
+  "jobDetails": {
+    "title": "Senior Backend Engineer — Payments",
+    "description": "This role owns the payment infrastructure that processes millions of transactions monthly across our platform. You'll lead the architecture of a distributed microservices system, making decisions that directly affect reliability and scale. The right person has a strong opinion on system design and enjoys bringing junior engineers along for the journey.",
+    "requirements": [
+      "6+ years of production experience with Node.js in high-throughput environments",
+      "Hands-on experience designing event-driven systems with Kafka or equivalent",
+      "Deep knowledge of PostgreSQL including query optimization and schema design at scale",
+      "Track record of mentoring engineers and leading technical design discussions"
+    ],
+    "responsibilities": [
+      "Architect and own the end-to-end payment processing pipeline handling 5M+ monthly transactions",
+      "Lead technical design reviews and set engineering standards for the backend team",
+      "Optimize database performance and ensure system resilience across microservices",
+      "Mentor junior engineers through code reviews, pair programming, and weekly 1:1s"
+    ],
+    "location": "San Francisco, CA",
+    "workMode": "Hybrid",
+    "employmentType": "Full-time",
+    "experienceLevel": "Senior",
+    "salary": { "min": 0, "max": 0, "currency": "USD" }
+  },
+  "skillAnalysis": {
+    "requiredSkills": [
+      { "name": "Node.js", "level": 4, "category": "Backend", "percentage": 45 },
+      { "name": "Apache Kafka", "level": 4, "category": "Backend", "percentage": 20 },
+      { "name": "PostgreSQL", "level": 4, "category": "Backend", "percentage": 15 }
+    ],
+    "softSkills": [
+      { "name": "Technical Leadership", "level": 4, "percentage": 20 }
+    ]
+  }
+}
 
-  Example — Next.js 6yr + Express.js 1yr + GitHub (no years, = 0.5yr):
-    total_years  = 6 + 1 + 0.5 = 7.5
-    skill_budget = 100 - 20 = 80
-    Next.js      = ROUND((6   / 7.5) × 80) = 64% → capped at 55%
-    Express.js   = ROUND((1   / 7.5) × 80) = 11% → 13% (adjust for rounding)
-    GitHub       = ROUND((0.5 / 7.5) × 80) = 5%  → 12% (adjust to reach total 100%)
-    Communication soft skill → 20%
-    Total = 55 + 13 + 12 + 20 = 100% ✅
+---
 
-- NEVER let a lower-experience skill have a higher percentage than a higher-experience skill.
-- After computing, verify: sum of all percentages (requiredSkills + softSkills) = 100. Adjust the lowest-ranked skill if needed to fix rounding drift.
+EXAMPLE 2 — Internship Role (Tech)
 
-═══════════════════════════════
-STRICT SKILL RULES
-═══════════════════════════════
-- REQUIRED: Generate 1 to 3 skills in "requiredSkills" based on the actual requirements of the job description.
-- NEVER generate general or non-technical skills such as "Web Development", "Software Engineering", "Programming", or "Full Stack".
-- Skills MUST ALWAYS be specific and technical (e.g., React.js, Next.js, Node.js, Express.js, NestJS, MongoDB, PostgreSQL, REST APIs, HTML/CSS, TypeScript, Docker, AWS, Redis, CI/CD, Laravel, Symfony).
-- If the job description is vague, infer the most relevant precise technologies instead of using generic terms.
-- Categorize each skill only as: "Frontend", "Backend", "Fullstack", "DevOps", or "Other".
-- Never invent unrealistic skills; remain consistent with standard industry technical stacks.
-- The "name" field must always be a precise tool, language, framework, library, cloud service, or dev practice (NOT a job role).
-- When the job covers 3+ distinct domains (e.g., development + AI + content creation), ALWAYS generate 3 requiredSkills — one per major domain.
-- NEVER assign more than 55% to a single requiredSkill.
+Input: "We're looking for a frontend intern to join our product team for 6 months. Basic React knowledge, will assist with UI components and bug fixes."
 
-═══════════════════════════════
-STRICT DESCRIPTION RULES
-═══════════════════════════════
-- The "description" field must be a concise professional summary (2-4 sentences max).
-- It must explain what the role is, what team or product the candidate will work on, and why this role matters.
-- NEVER repeat the requirements or responsibilities in the description.
-- NEVER use generic filler phrases like "We are looking for a talented developer" or "Join our growing team".
-- The description should feel unique to this specific role and company, not a copy-paste template.
+Output:
+{
+  "jobDetails": {
+    "title": "Frontend Developer Intern",
+    "description": "You'll be embedded inside our product team for 6 months, working directly on the UI components that real users interact with every day. This is a hands-on internship where you'll write code, get feedback, and grow fast — not a coffee-and-slides experience. A great fit for someone eager to learn in a real product environment.",
+    "requirements": [
+      "Basic knowledge of React.js through personal or academic projects",
+      "Exposure to HTML, CSS, and JavaScript fundamentals through coursework or self-learning",
+      "Familiarity with Git for version control",
+      "Ability to read and understand existing codebases"
+    ],
+    "responsibilities": [
+      "Implement UI components under the guidance of senior frontend developers",
+      "Fix bugs and improve existing features in the product dashboard",
+      "Participate in code reviews to learn team standards and best practices",
+      "Collaborate with designers to translate mockups into working interfaces"
+    ],
+    "location": "Remote",
+    "workMode": "Remote",
+    "employmentType": "Internship",
+    "experienceLevel": "Junior",
+    "salary": { "min": 0, "max": 0, "currency": "USD" }
+  },
+  "skillAnalysis": {
+    "requiredSkills": [
+      { "name": "React.js", "level": 1, "category": "Frontend", "percentage": 55 },
+      { "name": "JavaScript", "level": 1, "category": "Frontend", "percentage": 25 }
+    ],
+    "softSkills": [
+      { "name": "Adaptability", "level": 1, "percentage": 20 }
+    ]
+  }
+}
 
-═══════════════════════════════
-STRICT REQUIREMENTS RULES
-═══════════════════════════════
-- Generate 4-8 requirements. Every single one must be specific, verifiable, and directly extractable from the job description.
-- MANDATORY FORMAT — choose the most fitting pattern per requirement:
-    • Experience pattern   : "<N>+ years of hands-on experience with <specific technology/tool> in a production environment"
-    • Degree pattern       : "<Degree level> in <Field> or equivalent practical experience"
-    • Certification pattern: "Holding or actively pursuing <Certification name> (e.g., AWS Solutions Architect, PMP)"
-    • Skill pattern        : "Demonstrated proficiency in <specific tool/language/framework> through <shipped projects / open-source contributions / certifications>"
-    • Domain pattern       : "Proven experience building <specific system type> (e.g., payment systems, real-time APIs, CI/CD pipelines)"
-- NEVER use vague openers: "good understanding of", "familiarity with", "knowledge of", "experience with modern", "awareness of best practices".
-- NEVER write generic requirements like "Strong communication skills", "Team player", "Passion for technology".
-- If the job description mentions a technology without specifying years:
-    • Junior role   → default to "1+ years"
-    • Mid-level     → default to "3+ years"
-    • Senior role   → default to "5+ years"
-- If the job description is vague, infer realistic requirements but flag them with the prefix "[Inferred]".
-- Order requirements from most critical (must-have) to least critical (nice-to-have).
-- Each requirement must be a standalone, self-contained sentence.
-- Avoid repeating the same technology across multiple requirements — consolidate into one.
-- FOR INTERNSHIP ROLES ONLY: NEVER require years of production experience.
-  Use instead: "Basic knowledge of", "Academic or personal project experience with", "Exposure to X through coursework or self-learning".
+---
 
-═══════════════════════════════
-STRICT RESPONSIBILITIES RULES
-═══════════════════════════════
-- Generate 4-8 specific, actionable responsibilities.
-- Each responsibility MUST start with a strong action verb (Design, Implement, Build, Optimize, Lead, Deploy, Review, Architect, Mentor, Develop, Maintain, Automate).
-- Each responsibility must describe a concrete task with enough context to understand what the candidate will actually do.
-- NEVER use vague responsibilities like "Work with the team", "Participate in meetings", "Support development efforts".
-- Responsibilities should cover the full scope of the role: technical work, collaboration, and growth areas.
+EXAMPLE 3 — Non-Tech Role (Marketing)
 
-═══════════════════════════════
-STRICT SOFT SKILL RULES
-═══════════════════════════════
-- Generate exactly 1 soft skill — no more, no less.
-- The soft skill must be relevant to the job role.
-- It must include a "percentage" field.
-- For Internship roles, soft skill level MUST be 1.
-- Never use vague or irrelevant soft skills.
+Input: "Looking for a mid-level performance marketer to own our paid acquisition across Google and Meta. 3+ years experience, strong with analytics and A/B testing."
 
-CRITICAL: Return ONLY the raw JSON object. Do NOT include any explanation, reasoning, or text before or after the JSON.
+Output:
+{
+  "jobDetails": {
+    "title": "Performance Marketing Manager",
+    "description": "This role owns our paid acquisition strategy across Google and Meta — the channels responsible for the majority of our new customer growth. You'll manage significant ad spend, run continuous experiments, and translate data into decisions that directly move revenue. The right person is equal parts creative and analytical, and thrives in a fast-moving environment.",
+    "requirements": [
+      "3+ years managing paid campaigns on Google Ads and Meta Ads in a performance-driven environment",
+      "Proven track record of running A/B tests and translating results into optimized campaigns",
+      "Strong proficiency with analytics platforms such as Google Analytics 4 or equivalent",
+      "Experience managing monthly ad budgets of $50K+ with clear ROAS accountability"
+    ],
+    "responsibilities": [
+      "Own and optimize paid acquisition campaigns across Google and Meta end-to-end",
+      "Design and run A/B experiments on creatives, audiences, and landing pages to improve conversion rates",
+      "Analyze campaign performance weekly and present findings and recommendations to leadership",
+      "Collaborate with the creative team to brief and iterate on ad assets based on performance data"
+    ],
+    "location": "New York, NY",
+    "workMode": "Hybrid",
+    "employmentType": "Full-time",
+    "experienceLevel": "Mid-level",
+    "salary": { "min": 0, "max": 0, "currency": "USD" }
+  },
+  "skillAnalysis": {
+    "requiredSkills": [
+      { "name": "Google Ads", "level": 3, "category": "Marketing", "percentage": 45 },
+      { "name": "Meta Ads", "level": 3, "category": "Marketing", "percentage": 20 },
+      { "name": "Google Analytics 4", "level": 3, "category": "Marketing", "percentage": 15 }
+    ],
+    "softSkills": [
+      { "name": "Analytical Thinking", "level": 3, "percentage": 20 }
+    ]
+  }
+}
+
+━━━ KEY PRINCIPLES ━━━
+
+description
+- Make it feel like a real person wrote it about a real job
+- Say what the person will own, build, or lead — not what the company wants
+- If you can swap the description into any other job post without it feeling wrong, rewrite it
+
+requirements
+- Be specific enough that a candidate can self-assess in 30 seconds
+- 4 to 8 items ordered from most critical to least critical
+- If salary is not explicitly stated with real numbers → { "min": 0, "max": 0, "currency": "USD" }
+- If location is not in the description → use: "${companyLocation || "Not specified"}"
+
+skills
+- Extract ALL specific named tools or platforms mentioned in the job description — no limit
+  Tech roles: React.js, Node.js, PostgreSQL, AWS…
+  Marketing roles: Google Ads, HubSpot, Salesforce…
+  Design roles: Figma, Adobe XD, Illustrator…
+  Finance roles: Excel, SAP, QuickBooks…
+  NEVER use generic terms like "Marketing", "Design", "Programming", "Communication Tools"
+- 1 soft skill that comes directly from what the job description says the person will do
+- Each skill level is based on the years mentioned for that specific skill:
+    0–1 year = 1, 1–3 years = 2, 3–5 years = 3, 5–8 years = 4, 8+ years = 5
+- If no years mentioned for a skill → level = 2 (Junior) always, and treat it as 1 year for percentage calculation.
+
+percentages — must sum to exactly 100:
+  softSkill is always 20%
+  skill_budget = 80
+  For each skill: extract years from description (use 1 if not mentioned)
+  total_years = sum of all skill years
+  Each skill percentage = ROUND((skill_years / total_years) × skill_budget), cap at 55%
+  Adjust the lowest skill up or down to fix rounding so total = exactly 100
+  Example: React 5yr + Node 4yr + PostgreSQL (no years = 1yr):
+    total = 10, budget = 80
+    React = ROUND((5/10) × 80) = 40%
+    Node  = ROUND((4/10) × 80) = 32%
+    PostgreSQL = ROUND((1/10) × 80) = 8%
+    Soft  = 20%
+    Total = 100% ✅
+
+experienceLevel
+- Junior: 1–3 years
+- Mid-level: 3–5 years
+- Senior: 5–8 years
+- Expert: 8+ years
+
+━━━ JOB DESCRIPTION ━━━
+
+${description}
 `.trim();
 };
 
