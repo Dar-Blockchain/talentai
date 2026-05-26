@@ -13,10 +13,9 @@ import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
 import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
 import EditNoteOutlined from "@mui/icons-material/EditNoteOutlined";
 import FilterListOutlined from "@mui/icons-material/FilterListOutlined";
-import type { StatusFilter, SortOption } from "./JobPostsList";
-import type { TypeFilter } from "../types";
+import type { StatusFilter, SortOption, TypeFilter } from "../types";
 
-const TEAL = "#0D9488";
+import { TEAL } from "@/modules/posts/shared/constants";
 
 const selectSx = {
   height: 34, fontSize: "13px", bgcolor: "#F9FAFB",

@@ -25,8 +25,8 @@ import { getLevelFromNumber } from "@/utils/postHelpers";
 import { selectCurrentJob, updatePost } from "@/store/slices/postSlice";
 import { useToast } from "@/hooks/useToast";
 import { validateEditPost } from "@/validations/postValidation";
-import SalaryRange from "@/modules/create-post-ai/components/SalaryRange";
-import SkillEditorModal from "@/modules/create-post-ai/components/SkillEditorModal";
+import SalaryRange from "@/modules/posts/create/components/SalaryRange";
+import SkillEditorModal from "@/modules/posts/create/components/SkillEditorModal";
 import { contractTypes, experienceLevels, workModes } from "@/constants/candidate";
 
 const inputStyle = {

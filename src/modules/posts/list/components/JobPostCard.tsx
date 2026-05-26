@@ -6,11 +6,7 @@ import CardMeta from "./cards/CardMeta";
 import CardFooter from "./cards/CardFooter";
 import CardDraftBanner from "./cards/CardDraftBanner";
 import CardQrDialog from "./cards/CardQrDialog";
-
-const getDaysLeft = (expirationDate?: string) => {
-  if (!expirationDate) return null;
-  return Math.ceil((new Date(expirationDate).getTime() - Date.now()) / 86400000);
-};
+import { getDaysLeft, getPostShareLink } from "../utils";
 
 interface JobPostCardProps {
   job: any;
@@ -32,16 +28,12 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
   const isExpired = daysLeft !== null && daysLeft <= 0;
   const statusKey = isDraft ? "draft" : isExpired ? "expired" : job.status === "closed" ? "closed" : "active";
 
-  const getShareLink = () => {
-    if (typeof window === "undefined") return "";
-    const companyId = job.user?._id || "";
-    return `${window.location.origin}/candidate/interview/hr?jobId=${job._id}${companyId ? `&companyId=${companyId}` : ""}&ref=link`;
-  };
+  const shareLink = getPostShareLink(job._id, job.user?._id);
 
   const handleCopyLink = (e: React.MouseEvent) => {
     e.stopPropagation();
     setMenuAnchor(null);
-    navigator.clipboard.writeText(getShareLink()).then(() => {
+    navigator.clipboard.writeText(shareLink).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
@@ -109,7 +101,7 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
         <CardQrDialog
           open={qrOpen}
           jobId={job._id}
-          shareLink={getShareLink()}
+          shareLink={shareLink}
           onClose={() => setQrOpen(false)}
         />
       )}

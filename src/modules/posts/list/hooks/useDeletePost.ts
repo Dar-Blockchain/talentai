@@ -7,11 +7,12 @@ import { deletePost, fetchMyPosts, selectDeletePostLoading } from "@/store/slice
 interface UseDeletePostOptions {
   redirectTo?: string;
   refetchAfterDelete?: boolean;
+  limit?: number;
   onSuccess?: () => void;
   onError?: (error: unknown) => void;
 }
 
-export const useDeletePost = ({ redirectTo, refetchAfterDelete = false, onSuccess, onError }: UseDeletePostOptions = {}) => {
+export const useDeletePost = ({ redirectTo, refetchAfterDelete = false, limit = 9, onSuccess, onError }: UseDeletePostOptions = {}) => {
   const dispatch   = useDispatch<AppDispatch>();
   const router     = useRouter();
   const isDeleting = useSelector(selectDeletePostLoading);
@@ -26,7 +27,7 @@ export const useDeletePost = ({ redirectTo, refetchAfterDelete = false, onSucces
       await dispatch(deletePost(pendingId)).unwrap();
       setPendingId(null);
       onSuccess?.();
-      if (refetchAfterDelete) { dispatch(fetchMyPosts({})); return; }
+      if (refetchAfterDelete) { dispatch(fetchMyPosts({ limit })); return; }
       if (redirectTo) router.push(redirectTo);
     } catch (error) {
       onError?.(error);
