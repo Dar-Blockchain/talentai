@@ -25,6 +25,9 @@ ${languageInstruction}
 
 Analyze the job description below and return a single valid JSON object. No markdown, no explanation — raw JSON only.
 
+If the input is not a valid job description (random words, gibberish, offensive content, or completely unrelated text) → return exactly this and nothing else:
+{ "error": "invalid_input" }
+
 ${internshipInstruction}
 ━━━ OUTPUT STRUCTURE ━━━
 
@@ -196,7 +199,7 @@ requirements
 - If location is not in the description → use: "${companyLocation || "Not specified"}"
 
 skills
-- Extract ALL specific named tools or platforms mentioned in the job description — no limit
+- Extract the 3 most important skills that define this role — the ones a hiring manager would test in an interview. Prioritize specialized tools over generic ones.
   Tech roles: React.js, Node.js, PostgreSQL, AWS…
   Marketing roles: Google Ads, HubSpot, Salesforce…
   Design roles: Figma, Adobe XD, Illustrator…

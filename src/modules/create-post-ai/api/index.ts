@@ -35,6 +35,9 @@ export async function generatePost(input: GeneratePostInput): Promise<GeneratePo
 
   const payload: GeneratePostPayload = { description, contractType, workMode, language, interviewLanguages };
   const res = await axiosInstance.post("post/generate-job-post", payload);
+  if ((res.data as any)?.error === "invalid_input") {
+    throw Object.assign(new Error("invalid_input"), { isInvalidInput: true });
+  }
   return res.data as GeneratePostResponse;
 }
 
