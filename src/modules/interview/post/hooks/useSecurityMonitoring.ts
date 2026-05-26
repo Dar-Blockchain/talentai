@@ -18,9 +18,10 @@ export const useSecurityMonitoring = ({
 
   const violationCountRef = useRef(0);
   const terminatedRef = useRef(false);
+  const modalOpenRef = useRef(false);
 
   const handleSecurityViolation = useCallback((type: string) => {
-    if (!enabled || interviewStatus !== 'active' || terminatedRef.current) return;
+    if (!enabled || interviewStatus !== 'active' || terminatedRef.current || modalOpenRef.current) return;
 
     violationCountRef.current += 1;
     const count = violationCountRef.current;
@@ -28,6 +29,7 @@ export const useSecurityMonitoring = ({
     setViolationType(type);
 
     if (count <= MAX_WARNINGS) {
+      modalOpenRef.current = true;
       setShowFirstViolationModal(true);
     } else {
       terminatedRef.current = true;
@@ -130,12 +132,17 @@ export const useSecurityMonitoring = ({
     };
   }, [interviewStatus, handleSecurityViolation]);
 
+  const dismissFirstViolationModal = useCallback(() => {
+    modalOpenRef.current = false;
+    setShowFirstViolationModal(false);
+  }, []);
+
   return {
     securityViolationCount,
     showSecurityModal,
     showFirstViolationModal,
     violationType,
     setShowSecurityModal,
-    setShowFirstViolationModal,
+    setShowFirstViolationModal: dismissFirstViolationModal,
   };
 };
