@@ -4,7 +4,6 @@ import ApplicationCard from "@/components/features/company/applications/Applicat
 import { ApplicationSummaryItem } from "@/store/slices/jobApplicationSlice";
 import { ContactTarget } from "../ContactCandidateModal";
 import { AssessmentTarget } from "../AssessmentDetailsModal";
-import { InviteTarget } from "@/components/features/company/applications/InviteToInterviewModal";
 
 const TEAL = "#0D9488";
 
@@ -16,10 +15,13 @@ interface Props {
   onPage: (page: number) => void;
   onContact: (t: ContactTarget) => void;
   onAssessment: (t: AssessmentTarget) => void;
-  onInvite: (t: InviteTarget) => void;
+  invitedIds: Set<string>;
+  onInviteSuccess: (appId: string) => void;
 }
 
-const ApplicationsList: React.FC<Props> = ({ rows, postId, page, pagination, onPage, onContact, onAssessment, onInvite }) => (
+const ApplicationsList: React.FC<Props> = ({
+  rows, postId, page, pagination, onPage, onContact, onAssessment, invitedIds, onInviteSuccess,
+}) => (
   <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
     {rows.map((app: ApplicationSummaryItem) => (
       <ApplicationCard
@@ -28,7 +30,8 @@ const ApplicationsList: React.FC<Props> = ({ rows, postId, page, pagination, onP
         postId={postId}
         onContact={onContact}
         onAssessment={onAssessment}
-        onInvite={onInvite}
+        invitedIds={invitedIds}
+        onInviteSuccess={onInviteSuccess}
       />
     ))}
     {pagination.totalPages > 1 && (

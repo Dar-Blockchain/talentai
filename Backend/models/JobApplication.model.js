@@ -89,6 +89,10 @@ const jobApplicationSchema = new mongoose.Schema(
     },
 
     // ========== REMINDER TRACKING ==========
+    invitedAt: {
+      type: Date,
+      default: null,
+    },
     firstInvitationSentAt: {
       type: Date,
       default: null,

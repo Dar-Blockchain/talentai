@@ -24,6 +24,7 @@ export interface ApplicationSummaryItem {
   postTitle?: string | null;
   resumeFile?: string | null;
   recruiterDecision?: 'shortlisted' | 'rejected' | null;
+  invitedAt?: string | null;
 }
 
 interface SummaryState {

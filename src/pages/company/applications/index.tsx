@@ -40,7 +40,6 @@ import {
 import ContactCandidateModal, { ContactTarget } from "@/modules/posts/details/components/ContactCandidateModal";
 import AssessmentDetailsModal, { AssessmentTarget } from "@/modules/posts/details/components/AssessmentDetailsModal";
 import ApplicationMetrics from "@/components/features/company/applications/ApplicationMetrics";
-import InviteToInterviewModal, { InviteTarget } from "@/components/features/company/applications/InviteToInterviewModal";
 import ApplicationCard from "@/components/features/company/applications/ApplicationCard";
 
 const TEAL = "#0D9488";
@@ -103,9 +102,26 @@ const ApplicationsPage: React.FC = () => {
   const [downloading, setDownloading]       = useState(false);
   const [sort, setSort]               = useState("appliedAt_desc");
   const [page, setPage]               = useState(1);
-  const [contactTarget, setContactTarget]     = useState<ContactTarget | null>(null);
+  const [contactTarget,    setContactTarget]    = useState<ContactTarget | null>(null);
   const [assessmentTarget, setAssessmentTarget] = useState<AssessmentTarget | null>(null);
-  const [inviteTarget, setInviteTarget]       = useState<InviteTarget | null>(null);
+  // Tracks which applicationIds have been invited this session — survives list re-fetches
+  const [invitedIds, setInvitedIds] = useState<Set<string>>(new Set());
+  const markInvited = useCallback((appId: string) => {
+    setInvitedIds(prev => new Set(prev).add(appId));
+  }, []);
+
+  // Seed invited state from server on every fetch (persists across refreshes)
+  useEffect(() => {
+    const fromServer = rows
+      .filter(r => !!r.invitedAt)
+      .map(r => String(r.id));
+    if (fromServer.length === 0) return;
+    setInvitedIds(prev => {
+      const merged = new Set(prev);
+      fromServer.forEach(id => merged.add(id));
+      return merged;
+    });
+  }, [rows]);
 
   useEffect(() => {
     dispatch(fetchCompanyApplicationMetrics());
@@ -299,7 +315,8 @@ const ApplicationsPage: React.FC = () => {
               showPostTitle
               onContact={setContactTarget}
               onAssessment={setAssessmentTarget}
-              onInvite={setInviteTarget}
+              invitedIds={invitedIds}
+              onInviteSuccess={markInvited}
             />
           ))}
 
@@ -323,12 +340,6 @@ const ApplicationsPage: React.FC = () => {
 
       <ContactCandidateModal open={!!contactTarget} target={contactTarget} onClose={() => setContactTarget(null)} />
       <AssessmentDetailsModal open={!!assessmentTarget} target={assessmentTarget} onClose={() => setAssessmentTarget(null)} />
-      <InviteToInterviewModal
-        open={!!inviteTarget}
-        target={inviteTarget}
-        onClose={() => setInviteTarget(null)}
-        onSuccess={load}
-      />
       <PostPickerModal
         open={postPickerOpen}
         selectedId={postId}

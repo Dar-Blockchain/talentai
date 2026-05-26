@@ -14,6 +14,7 @@ import VideoCallOutlined from "@mui/icons-material/VideoCallOutlined";
 import MoreVertOutlined from "@mui/icons-material/MoreVert";
 import StarOutlined from "@mui/icons-material/StarOutlined";
 import CancelOutlined from "@mui/icons-material/CancelOutlined";
+import CheckOutlined from "@mui/icons-material/CheckOutlined";
 import { useRouter } from "next/router";
 import { AppDispatch } from "@/store/store";
 import { ApplicationSummaryItem, updateRecruiterDecision, updateLocalDecision } from "@/store/slices/jobApplicationSlice";
@@ -68,6 +69,8 @@ export interface ApplicationCardActionsProps {
   onContact: () => void;
   onAssessment: () => void;
   onInvite: () => void;
+  /** Set of applicationIds that were already invited this session */
+  invitedIds?: Set<string>;
 }
 
 // ── menuItemSx helper ──────────────────────────────────────────────────────────
@@ -82,12 +85,14 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
   app, name, appId, postId, avatarUrl, bgColor,
   menuAnchorEl, menuOpen, onMenuOpen, onMenuClose,
   onContact, onAssessment, onInvite,
+  invitedIds,
 }) => {
   const { t } = useTranslation("dashboard");
-  const router       = useRouter();
-  const dispatch     = useDispatch<AppDispatch>();
-  const hasInterview = !!app.completedAt;
-  const isVisited    = app.status === "visited";
+  const router        = useRouter();
+  const dispatch      = useDispatch<AppDispatch>();
+  const hasInterview  = !!app.completedAt;
+  const isVisited     = app.status === "visited";
+  const isInvited     = invitedIds ? invitedIds.has(appId) : false;
   const [decidingShortlist, setDecidingShortlist] = useState(false);
   const [decidingReject,    setDecidingReject]    = useState(false);
   const isShortlisted = app.recruiterDecision === "shortlisted";
@@ -115,6 +120,74 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
     link.download = app.resumeFile;
     link.target = "_blank";
     link.click();
+  };
+
+  // ── Render invite / contact button ─────────────────────────────────────────
+  const renderActionButton = () => {
+    // Already sent this session → show disabled green badge
+    if (isInvited) {
+      return (
+        <Box sx={{
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 0.6,
+          height: 30, width: 108, flexShrink: 0,
+          border: "1px solid #6EE7B7", borderRadius: "8px",
+          bgcolor: "#ECFDF5", color: "#059669", cursor: "default",
+        }}>
+          <CheckOutlined sx={{ fontSize: 14 }} />
+          <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "inherit", lineHeight: 1, whiteSpace: "nowrap" }}>
+            Invited
+          </Typography>
+        </Box>
+      );
+    }
+
+    // Candidate visited but not yet invited
+    if (isVisited) {
+      return (
+        <Box
+          component="button"
+          onClick={onInvite}
+          sx={{
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 0.6,
+            height: 30, width: 108, flexShrink: 0, outline: "none",
+            border: "1px solid #DDD6FE", borderRadius: "8px",
+            cursor: "pointer", bgcolor: "#F5F3FF", color: PURPLE,
+            transition: "all 0.15s",
+            "&:hover": { bgcolor: "#EDE9FE", borderColor: "#A78BFA" },
+          }}
+        >
+          <VideoCallOutlined sx={{ fontSize: 14 }} />
+          <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "inherit", lineHeight: 1, whiteSpace: "nowrap" }}>
+            {t("pages.applications.actions.send_invite")}
+          </Typography>
+        </Box>
+      );
+    }
+
+    // Default: contact button
+    return (
+      <Box
+        component="button"
+        disabled={!app.email}
+        onClick={() => { if (app.email) onContact(); }}
+        sx={{
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 0.6,
+          height: 30, width: 108, flexShrink: 0, outline: "none",
+          border: "1px solid #BFDBFE", borderRadius: "8px",
+          cursor: app.email ? "pointer" : "not-allowed",
+          bgcolor: app.email ? "#EFF6FF" : "#F9FAFB",
+          color: app.email ? "#2563EB" : "#9CA3AF",
+          transition: "all 0.15s",
+          opacity: app.email ? 1 : 0.55,
+          "&:hover:not(:disabled)": { bgcolor: "#DBEAFE", borderColor: "#93C5FD" },
+        }}
+      >
+        <EmailOutlined sx={{ fontSize: 14, color: "inherit" }} />
+        <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "inherit", lineHeight: 1, whiteSpace: "nowrap" }}>
+          {t("pages.applications.actions.contact")}
+        </Typography>
+      </Box>
+    );
   };
 
   return (
@@ -177,48 +250,8 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
       {/* Divider */}
       <Box sx={{ width: "1px", height: 40, bgcolor: "#F3F4F6", flexShrink: 0 }} />
 
-      {/* Action button: Send Invite (visited) OR Contact (others) */}
-      {isVisited ? (
-        <Box
-          component="button"
-          onClick={onInvite}
-          sx={{
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 0.6,
-            height: 30, width: 108, flexShrink: 0, outline: "none",
-            border: "1px solid #DDD6FE", borderRadius: "8px",
-            cursor: "pointer", bgcolor: "#F5F3FF", color: PURPLE,
-            transition: "all 0.15s",
-            "&:hover": { bgcolor: "#EDE9FE", borderColor: "#A78BFA" },
-          }}
-        >
-          <VideoCallOutlined sx={{ fontSize: 14 }} />
-          <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "inherit", lineHeight: 1, whiteSpace: "nowrap" }}>
-            {t("pages.applications.actions.send_invite")}
-          </Typography>
-        </Box>
-      ) : (
-        <Box
-          component="button"
-          disabled={!app.email}
-          onClick={() => { if (app.email) onContact(); }}
-          sx={{
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 0.6,
-            height: 30, width: 108, flexShrink: 0, outline: "none",
-            border: "1px solid #BFDBFE", borderRadius: "8px",
-            cursor: app.email ? "pointer" : "not-allowed",
-            bgcolor: app.email ? "#EFF6FF" : "#F9FAFB",
-            color: app.email ? "#2563EB" : "#9CA3AF",
-            transition: "all 0.15s",
-            opacity: app.email ? 1 : 0.55,
-            "&:hover:not(:disabled)": { bgcolor: "#DBEAFE", borderColor: "#93C5FD" },
-          }}
-        >
-          <EmailOutlined sx={{ fontSize: 14, color: "inherit" }} />
-          <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "inherit", lineHeight: 1, whiteSpace: "nowrap" }}>
-            {t("pages.applications.actions.contact")}
-          </Typography>
-        </Box>
-      )}
+      {/* Action button */}
+      {renderActionButton()}
 
       {/* More menu button */}
       <IconButton
