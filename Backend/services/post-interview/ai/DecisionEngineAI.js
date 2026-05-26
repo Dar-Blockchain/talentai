@@ -3,7 +3,7 @@
 const bedrock  = require('../../../helpers/bedrock.helpers');
 const AIUtils  = require('./AIUtils');
 const { findLeastAskedArea, calculateAreaQualityAverage } = require('./coverageHelpers');
-const { DECISION_ENGINE_SYSTEM } = require('../interviewPrompts');
+const { DECISION_ENGINE_SYSTEM } = require('../prompts/analysisPrompts');
 
 // Quality thresholds for dynamic question-count limits per area
 const QUALITY_THRESHOLDS = { EXCELLENT: 75, GOOD: 60, MODERATE: 40, POOR: 30 };
@@ -87,26 +87,41 @@ class DecisionEngineAI {
         }
       }
 
-      // ── Rule 3: No answer given (skip button OR verbal "I don't know") ────
+      // ── Rule 3: Skip / non-answer — stay in area on 1st skip, move on 2nd ────────
       // answeredQuestion: false is set by both the [SKIPPED] short-circuit and
       // the combinedAnalysis LLM when the candidate admits they cannot answer.
       const isNonAnswer = candidateResponse === '[SKIPPED]'
         || allAnalyses?.quality?.answeredQuestion === false;
       if (isNonAnswer && currentArea) {
+        const areaSkipCount = session.coverage?.areas?.[currentArea]?.skipCount || 0;
+        const reason        = candidateResponse === '[SKIPPED]' ? 'skipped' : 'could not answer';
+
+        // First skip in this area: stay and try a different angle
+        if (areaSkipCount <= 1) {
+          console.log(`⏭️ [Skip Rule] Candidate ${reason} in "${currentArea}" (skip #${areaSkipCount}) — staying, different angle`);
+          return {
+            decision:     'continue_probing',
+            targetArea:   currentArea,
+            reasoning:    `Candidate ${reason} the question in "${currentArea}" (skip ${areaSkipCount}/2). Ask from a different angle — avoid the skipped question.`,
+            strategy:     'Different angle on same area — skip tracker active',
+            confidence:   90,
+            forcedBySkip: true,
+          };
+        }
+
+        // Second+ skip: give up on this area
         const nextArea = findLeastAskedArea(session.coverage.areas, currentArea);
-        const reason   = candidateResponse === '[SKIPPED]' ? 'skipped' : 'could not answer';
-        console.log(`⏭️ [Non-Answer Rule] Candidate ${reason} "${currentArea}" — forcing move to "${nextArea}"`);
+        console.log(`⏭️ [Skip Rule] Candidate ${reason} twice in "${currentArea}" — moving to "${nextArea}"`);
         return {
-          decision: 'explore_new_area',
-          targetArea: nextArea,
-          reasoning: `Candidate ${reason} the question on "${currentArea}". Moving to "${nextArea}" — do NOT repeat this topic.`,
-          strategy: 'Candidate indicated they cannot answer — respect it, move to a fresh area immediately',
-          confidence: 99,
+          decision:         'explore_new_area',
+          targetArea:       nextArea,
+          reasoning:        `Candidate ${reason} twice in "${currentArea}". Moving to "${nextArea}".`,
+          strategy:         'Area exhausted by repeated skips — move on',
+          confidence:       99,
           expectedDuration: '2-3 minutes',
           forcedByNonAnswer: true,
         };
       }
-
       // ── LLM decision (no hard rule fired) ───────────────────────────────
       const userPrompt = `SESSION DATA:
 ${JSON.stringify({

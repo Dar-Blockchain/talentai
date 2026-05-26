@@ -1,6 +1,5 @@
-const { withTimeout, safeEmit, AI_TIMEOUT_MS, RESPONSE_RATE_LIMIT_MS } = require('../interviewUtils');
-const { handleAIDecision } = require('../interviewDecisionHandler.service');
-const { resetInterTurnPauseTimer, startIntelligentSilenceMonitoring } = require('../silenceMonitor.service');
+const { withTimeout, safeEmit, AI_TIMEOUT_MS, RESPONSE_RATE_LIMIT_MS, resetInterTurnPauseTimer, startIntelligentSilenceMonitoring } = require('../interviewUtils');
+const { handleAIDecision } = require('./decision.handler');
 const logger = require('../../../utils/logger');
 
 async function handleCandidateResponse(socket, data, { service, processing }) {

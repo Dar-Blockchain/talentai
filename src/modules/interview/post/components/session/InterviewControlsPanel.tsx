@@ -18,6 +18,8 @@ interface InterviewControlsPanelProps {
   currentTranscript?: string;
   resultsReady: boolean;
   isVoiceActive: boolean;
+  isInReadingTime?: boolean;
+  readingTimeLeft?: number;
   onStartInterview: () => void;
   onSubmitAnswer: () => void;
   onSkipQuestion: () => void;
@@ -32,6 +34,8 @@ const InterviewControlsPanel: React.FC<InterviewControlsPanelProps> = ({
   currentTranscript,
   resultsReady,
   isVoiceActive,
+  isInReadingTime,
+  readingTimeLeft,
   onStartInterview,
   onSubmitAnswer,
   onSkipQuestion,
@@ -59,6 +63,8 @@ const InterviewControlsPanel: React.FC<InterviewControlsPanelProps> = ({
       interviewStatus={interviewStatus}
       agentState={agentState}
       isVoiceActive={isVoiceActive}
+      isInReadingTime={isInReadingTime}
+      readingTimeLeft={readingTimeLeft}
       onSubmitAnswer={onSubmitAnswer}
       onSkipQuestion={onSkipQuestion}
     />

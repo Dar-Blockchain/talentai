@@ -1,6 +1,6 @@
-const { persistInterviewResults } = require('./interviewPersistence.service');
-const { safeEmit } = require('./interviewUtils');
-const logger = require('../../utils/logger');
+const { persistInterviewResults } = require('../interviewPersistence.service');
+const { safeEmit } = require('../interviewUtils');
+const logger = require('../../../utils/logger');
 
 const FALLBACK_CONTENT = {
   end_interview: 'Thank you for your time. This concludes our interview.',

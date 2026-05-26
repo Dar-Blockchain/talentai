@@ -6,7 +6,7 @@ const {
   getLanguageInstruction,
   buildQuestionGeneratorSystem,
   buildTargetedQuestionSystem,
-} = require('../interviewPrompts');
+} = require('../prompts/generationPrompts');
 
 /**
  * QuestionGeneratorAI — generates the next interview question.
@@ -154,6 +154,13 @@ ${coveredSkills.join(', ') || 'none yet'}` : '';
       const recentContext    = session.conversation.slice(-6).map(e => `${e.type}: ${e.content}`).join('\n');
       const allAskedQuestions = session.conversation.filter(e => e.type === 'interviewer').map(e => `- ${e.content}`).join('\n');
 
+      // Collect all skipped questions across all areas (session-wide avoidance)
+      const allSkippedQuestions = Object.values(session.coverage?.areas || {})
+        .flatMap(a => a.skippedQuestions || []);
+      const skippedBlock = allSkippedQuestions.length > 0
+        ? `\nSKIPPED QUESTIONS — Do NOT ask anything similar to these (candidate passed on them):\n${allSkippedQuestions.map(q => `- ${q}`).join('\n')}\n`
+        : '';
+
       const userPrompt = `Role: ${session.config.context.targetRole} at ${session.config.context.targetCompany}
 
 COVERAGE: ${JSON.stringify(coverageSummary)}
@@ -174,6 +181,7 @@ ${allAskedQuestions || '(none yet)'}
 RECENT CONVERSATION:
 ${recentContext}
 
+${skippedBlock}
 Generate the next question.`;
 
       const systemPrompt = buildQuestionGeneratorSystem({

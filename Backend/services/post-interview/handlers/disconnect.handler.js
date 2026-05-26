@@ -1,5 +1,5 @@
 const { persistInterviewResults } = require('../interviewPersistence.service');
-const { resetInterTurnPauseTimer } = require('../silenceMonitor.service');
+const { resetInterTurnPauseTimer } = require('../interviewUtils');
 const logger = require('../../../utils/logger');
 
 async function handleDisconnect(socket, reason, { service, activeSessions, processing }) {

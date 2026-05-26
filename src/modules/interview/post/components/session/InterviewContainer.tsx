@@ -129,7 +129,7 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
           </Box>
         )}
 
-        {interviewStatus === 'active'  && <LiveTranscript currentTranscript={currentTranscript} />}
+        {interviewStatus === 'active' && agentState !== 'thinking' && agentState !== 'processing' && <LiveTranscript currentTranscript={currentTranscript} />}
         {interviewStatus === 'ended'   && (resultsReady ? <CompletionCard dashboardPath={dashboardPath} /> : <AnalyzingSpinner waitDots={waitDots} />)}
       </Box>
 

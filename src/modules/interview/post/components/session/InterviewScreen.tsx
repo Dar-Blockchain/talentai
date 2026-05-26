@@ -144,7 +144,7 @@ export default function InterviewScreen({
   const questionCount = useMemo(
     () =>
       audio.conversationHistory.filter(
-        (m) => m.type === "question" || m.type === "follow_up",
+        (m) => m.type === "question" || m.type === "follow_up" || m.type === "new_topic",
       ).length,
     [audio.conversationHistory],
   );
@@ -234,6 +234,8 @@ export default function InterviewScreen({
               currentTranscript={audio.currentTranscript}
               resultsReady={resultsReady}
               isVoiceActive={audio.isVoiceActive}
+              isInReadingTime={audio.isInReadingTime}
+              readingTimeLeft={audio.readingTimeLeft}
               onStartInterview={startInterview}
               onSubmitAnswer={audio.sendAccumulatedAnswer}
               onSkipQuestion={skipQuestion}

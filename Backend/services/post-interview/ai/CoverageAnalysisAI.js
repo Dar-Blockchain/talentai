@@ -2,7 +2,7 @@
 
 const bedrock  = require('../../../helpers/bedrock.helpers');
 const AIUtils  = require('./AIUtils');
-const { COVERAGE_ANALYSIS_SYSTEM } = require('../interviewPrompts');
+const { COVERAGE_ANALYSIS_SYSTEM } = require('../prompts/analysisPrompts');
 
 /**
  * CoverageAnalysisAI — evaluates how well the candidate has covered each focus area.

@@ -74,7 +74,7 @@ export function useInterviewSession({
     audioRef.current?.setConversationHistory((prev: InterviewMessage[]) => [...prev, safeMessage]);
     audioRef.current?.setQuestionHighlight(true);
     setTimeout(() => audioRef.current?.setQuestionHighlight(false), 600);
-    if (safeMessage.type === 'question' || safeMessage.type === 'follow_up') {
+    if (safeMessage.type === 'question' || safeMessage.type === 'follow_up' || safeMessage.type === 'new_topic') {
       audioRef.current?.resetSkipGuard?.();
       audioRef.current?.setQuestionReadingTime(Date.now());
       audioRef.current?.setAgentState('waiting');

@@ -41,7 +41,7 @@ export interface InterviewConfig {
 }
 
 export interface InterviewMessage {
-  type: 'greeting' | 'question' | 'follow_up' | 'silence_prompt' | 'system' | 'wrap_up' | 'end_interview';
+  type: 'greeting' | 'question' | 'follow_up' | 'new_topic' | 'intervention' | 'silence_prompt' | 'system' | 'wrap_up' | 'end_interview';
   content: string;
   timestamp: string;
   sessionId?: string;

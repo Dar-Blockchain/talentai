@@ -61,7 +61,12 @@ export const useAudioTranscription = ({
   const readingTimeBuffer = 10000;
 
   // ── Reading time ──────────────────────────────────────────────────────────────
-  const [isInReadingTime, setIsInReadingTime] = useState(false);
+  const [isInReadingTime, _setIsInReadingTime] = useState(false);
+  const isInReadingTimeRef = useRef(false);
+  const setIsInReadingTime = useCallback((val: boolean) => {
+    isInReadingTimeRef.current = val;
+    _setIsInReadingTime(val);
+  }, []);
   const [readingTimeLeft, setReadingTimeLeft] = useState(0);
 
   // ── UI helpers ────────────────────────────────────────────────────────────────
@@ -301,8 +306,6 @@ export const useAudioTranscription = ({
 
         if (!speakingStartTimeRef.current) {
           speakingStartTimeRef.current = Date.now();
-          setQuestionReadingTime(null);
-          setIsInReadingTime(false);
         }
 
         const MAX_SPEAKING_DURATION = 180000;
@@ -391,6 +394,8 @@ export const useAudioTranscription = ({
         processor.connect(audioContext.destination);
 
         processor.onaudioprocess = (event) => {
+          if (isInReadingTimeRef.current) return;
+
           const inputBuffer = event.inputBuffer.getChannelData(0);
 
           // ── Voice-activity detection: RMS + hysteresis ───────────────────
@@ -538,6 +543,7 @@ export const useAudioTranscription = ({
     }
 
     setIsInReadingTime(true);
+    setIsVoiceActive(false);
     setReadingTimeLeft(remaining);
 
     const timer = setInterval(() => {

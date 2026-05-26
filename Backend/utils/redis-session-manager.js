@@ -572,7 +572,9 @@ class RedisSessionManager {
         })),
         weight: area.weight,
         depth: area.depth,
-        completed: false
+        completed: false,
+        skipCount: 0,
+        skippedQuestions: [],
       };
     });
 
