@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server";
 // ─── Public paths (no auth required) ────────────────────────────────────────
 const PUBLIC_PATHS = [
   "/",
+  "/demo",
   "/signin",
   "/register",
   "/terms",
