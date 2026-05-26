@@ -33,7 +33,7 @@ const PostsPageContent: React.FC = () => {
     page, search, statusFilter, typeFilter, sortBy,
     hasFilters, setPage, reload,
     handleSearchChange, handleStatusChange, handleTypeChange, handleSortChange,
-  } = useMyPosts({ limit: 8 });
+  } = useMyPosts({ limit: 9 });
 
   const deleteHook = useDeletePost({
     refetchAfterDelete: true,

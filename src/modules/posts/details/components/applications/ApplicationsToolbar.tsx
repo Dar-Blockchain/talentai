@@ -12,7 +12,7 @@ import StarOutlineOutlined from "@mui/icons-material/StarOutlineOutlined";
 import PsychologyOutlined from "@mui/icons-material/PsychologyOutlined";
 import SortByAlphaOutlined from "@mui/icons-material/SortByAlphaOutlined";
 
-const TEAL = "#0D9488";
+import { TEAL } from "@/modules/posts/shared/constants";
 
 const STATUS_I18N_KEYS: Record<string, string> = {
   visited:             "pages.applications.status.visited",

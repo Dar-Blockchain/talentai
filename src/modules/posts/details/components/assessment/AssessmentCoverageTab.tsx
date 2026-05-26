@@ -8,7 +8,7 @@ const Bar: React.FC<{ value: number; color: string }> = ({ value, color }) => (
     sx={{ height: 6, borderRadius: 4, bgcolor: `${color}18`, "& .MuiLinearProgress-bar": { bgcolor: color, borderRadius: 4 } }} />
 );
 
-const TEAL = "#0D9488";
+import { TEAL } from "@/modules/posts/shared/constants";
 
 interface Props {
   areas: Record<string, any>;

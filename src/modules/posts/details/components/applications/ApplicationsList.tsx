@@ -5,7 +5,7 @@ import { ApplicationSummaryItem } from "@/store/slices/jobApplicationSlice";
 import { ContactTarget } from "../ContactCandidateModal";
 import { AssessmentTarget } from "../AssessmentDetailsModal";
 
-const TEAL = "#0D9488";
+import { TEAL } from "@/modules/posts/shared/constants";
 
 interface Props {
   rows: ApplicationSummaryItem[];

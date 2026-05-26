@@ -15,7 +15,7 @@ interface UseMyPostsOptions {
   limit?: number;
 }
 
-export const useMyPosts = ({ initialPage = 1, limit = 8 }: UseMyPostsOptions = {}) => {
+export const useMyPosts = ({ initialPage = 1, limit = 9 }: UseMyPostsOptions = {}) => {
   const dispatch   = useDispatch<AppDispatch>();
   const posts      = useSelector(selectMyPosts);
   const loading    = useSelector(selectMyPostsLoading);
