@@ -1,5 +1,6 @@
 const User    = require("../models/User.model");
 const Profile = require("../models/Profile.model");
+const logger  = require("../utils/logger");
 const { sendOTP }                  = require("../utils/email-service");
 const { generateOTP }              = require("../utils/one-time-password");
 const { generateToken }            = require("../utils/generate-token");
@@ -20,7 +21,7 @@ const assignFreePlanToProfile = module.exports.assignFreePlanToProfile = async (
     if (await Subscription.countDocuments({ companyProfileId: profileId })) return;
 
     const freePlan = await PlanLimits.findOne({ name: "Trial", isActive: true }).lean();
-    if (!freePlan) { console.warn("⚠️ Free plan not found — skipping auto-assign"); return; }
+    if (!freePlan) { logger.warn("⚠️ Free plan not found — skipping auto-assign"); return; }
 
     const startDate = new Date();
     const endDate   = new Date();
@@ -40,9 +41,9 @@ const assignFreePlanToProfile = module.exports.assignFreePlanToProfile = async (
       planLimits: freePlan._id,
     }, { runValidators: false });
 
-    console.log(`✅ Free plan auto-assigned to profile ${profileId}`);
+    logger.info(`✅ Free plan auto-assigned to profile ${profileId}`);
   } catch (err) {
-    console.error("❌ Failed to assign free plan:", err.message);
+    logger.error("❌ Failed to assign free plan:", err.message);
   }
 };
 

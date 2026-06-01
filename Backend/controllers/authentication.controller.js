@@ -2,6 +2,7 @@ const authService = require("../services/authentication.service");
 const CVAnalysisService = require("../services/cvAnalysis.service");
 const Profile = require("../models/Profile.model");
 const User = require("../models/User.model");
+const logger = require("../utils/logger");
 const {
   validateEmail,
   validateOTPInput,
@@ -13,11 +14,12 @@ const { analyzeCV } = require("../services/analyseResume.service");
 
 // Centralized error handler
 const handleError = (res, error, defaultStatus = 500) => {
-  console.error("Auth error:", error?.message || error);
-  const status = error?.status || defaultStatus;
-  res
-    .status(status)
-    .json({ success: false, error: error?.message || "Internal error" });
+  logger.error("Auth error:", error?.message || error);
+  const status  = error?.status || defaultStatus;
+  // Never expose raw error.message to clients — use the message only if it
+  // was explicitly set by application code (i.e. has a known status code).
+  const message = error?.status ? error.message : "Internal server error";
+  res.status(status).json({ success: false, error: message });
 };
 
 // Route d'inscription
@@ -45,7 +47,7 @@ module.exports.register = async (req, res) => {
       try {
         // Check if file still exists
         if (fs.existsSync(resumeFile.path)) {
-          console.log('📄 Analyzing CV from file:', resumeFile.path);
+          logger.info('📄 Analyzing CV from file:', resumeFile.path);
 
           // Analyze the CV
           const analyzedCV = await analyzeCV(resumeFile.path);
@@ -82,7 +84,7 @@ module.exports.register = async (req, res) => {
           );
           cvAnalysisData = saveCVResult.data;
 
-          console.log('✅ CV Analysis saved during registration:', cvAnalysisData._id);
+          logger.info('✅ CV Analysis saved during registration:', cvAnalysisData._id);
 
           // Prepare data to update in Profile
           const profileUpdateData = {};
@@ -105,9 +107,9 @@ module.exports.register = async (req, res) => {
                 },
               };
 
-              console.log(`✅ ${skillsFromCV.length} skills from CV prepared for profile`);
+              logger.info(`✅ ${skillsFromCV.length} skills from CV prepared for profile`);
             } catch (skillError) {
-              console.warn('⚠️ Error preparing skills:', skillError.message);
+              logger.warn('⚠️ Error preparing skills:', skillError.message);
             }
           }
 
@@ -122,9 +124,9 @@ module.exports.register = async (req, res) => {
                 $each: cvData.spokenLanguages,
               };
 
-              console.log(`✅ ${cvData.spokenLanguages.length} languages from CV prepared for profile`);
+              logger.info(`✅ ${cvData.spokenLanguages.length} languages from CV prepared for profile`);
             } catch (languageError) {
-              console.warn('⚠️ Error preparing languages:', languageError.message);
+              logger.warn('⚠️ Error preparing languages:', languageError.message);
             }
           }
 
@@ -151,9 +153,9 @@ module.exports.register = async (req, res) => {
                 timeZone: cvData.timeZone || '',
               };
 
-              console.log('✅ Contact information and personal details from CV prepared for profile');
+              logger.info('✅ Contact information and personal details from CV prepared for profile');
             } catch (contactError) {
-              console.warn('⚠️ Error preparing contact information:', contactError.message);
+              logger.warn('⚠️ Error preparing contact information:', contactError.message);
             }
           }
 
@@ -166,15 +168,15 @@ module.exports.register = async (req, res) => {
                 { new: true, runValidators: true }
               );
 
-              console.log('✅ Profile updated with CV data (skills, contact info, and personal details)');
+              logger.info('✅ Profile updated with CV data (skills, contact info, and personal details)');
             } catch (profileError) {
-              console.warn('⚠️ Failed to update profile with CV data:', profileError.message);
+              logger.warn('⚠️ Failed to update profile with CV data:', profileError.message);
               // Continue even if profile update fails
             }
           }
         }
       } catch (cvError) {
-        console.warn('⚠️ CV analysis during registration failed, but user was created:', cvError.message);
+        logger.warn('⚠️ CV analysis during registration failed, but user was created:', cvError.message);
         // Continue even if CV analysis fails - user is already created
       }
     }
@@ -200,9 +202,9 @@ module.exports.register = async (req, res) => {
     if (resumeFile && resumeFile.path) {
       fs.unlink(resumeFile.path, (err) => {
         if (err) {
-          console.error('Error deleting resume file after failed registration:', err);
+          logger.error('Error deleting resume file after failed registration:', err);
         } else {
-          console.log('📁 Resume file deleted after failed registration:', resumeFile.filename);
+          logger.info('📁 Resume file deleted after failed registration:', resumeFile.filename);
         }
       });
     }
@@ -393,7 +395,7 @@ module.exports.parseCV = async (req, res) => {
             const userProfile = await Profile.findOne({ userId: req.user._id });
             profileIdForUpdate = userProfile ? userProfile._id : null;
           } catch (profileFetchError) {
-            console.warn('⚠️ Could not fetch user profile:', profileFetchError.message);
+            logger.warn('⚠️ Could not fetch user profile:', profileFetchError.message);
           }
         }
 
@@ -403,9 +405,9 @@ module.exports.parseCV = async (req, res) => {
         );
         dbRecord = saveResult.data;
 
-        console.log('✅ CV Analysis saved to database:', dbRecord._id);
+        logger.info('✅ CV Analysis saved to database:', dbRecord._id);
       } catch (dbError) {
-        console.warn('⚠️ CV analysis saved but database storage failed:', dbError.message);
+        logger.warn('⚠️ CV analysis saved but database storage failed:', dbError.message);
         // Continue even if saving to database fails
       }
     }
@@ -421,7 +423,7 @@ module.exports.parseCV = async (req, res) => {
       message: dbRecord ? 'CV analyzed and saved to database successfully' : 'CV analyzed successfully'
     });
   } catch (error) {
-    console.error('Error parsing CV:', error);
+    logger.error('Error parsing CV:', error);
 
     // Handle region/country restriction errors
     if (error?.message?.includes('not allowed from unsupported countries') ||

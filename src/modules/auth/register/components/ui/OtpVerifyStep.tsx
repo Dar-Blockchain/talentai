@@ -46,14 +46,14 @@ const OtpVerifyStep: React.FC<Props> = ({
       {/* OTP boxes */}
       <Stack direction="row" spacing={{ xs: 1, sm: 1.25, md: 1.5 }} justifyContent="center" sx={{ flexWrap: { xs: "wrap", sm: "nowrap" } }}>
         {otp.otpCode.map((digit, i) => (
-          <Box key={i} sx={{ width: { xs: 48, sm: 52, md: 58 }, height: { xs: 56, sm: 62, md: 68 }, borderRadius: "14px", border: `1.5px solid ${digit ? ACCENT : "#D1FAF5"}`, bgcolor: digit ? `${ACCENT}0C` : "#F8FFFE", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s", flexShrink: 0, "&:focus-within": { borderColor: ACCENT, bgcolor: "#fff", boxShadow: `0 0 0 4px ${ACCENT}18` } }}>
+          <Box key={i} sx={{ width: { xs: 48, sm: 52, md: 58 }, height: { xs: 56, sm: 62, md: 68 }, borderRadius: "14px", border: `1.5px solid ${digit ? ACCENT : "#D1FAF5"}`, bgcolor: loading ? "#F3F4F6" : digit ? `${ACCENT}0C` : "#F8FFFE", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s", flexShrink: 0, opacity: loading ? 0.6 : 1, "&:focus-within": { borderColor: ACCENT, bgcolor: "#fff", boxShadow: `0 0 0 4px ${ACCENT}18` } }}>
             <Box component="input"
               ref={(el: unknown) => { otp.inputsRef.current[i] = el as HTMLInputElement | null; }}
-              value={digit} maxLength={1}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => otp.handleChange(i, e.target.value)}
-              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => otp.handleKeyDown(i, e)}
+              value={digit} maxLength={1} disabled={loading}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => { if (!loading) otp.handleChange(i, e.target.value); }}
+              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => { if (!loading) otp.handleKeyDown(i, e); }}
               onPaste={i === 0 ? (otp.handlePaste as any) : undefined}
-              sx={{ width: "100%", height: "100%", border: "none", outline: "none", background: "transparent", textAlign: "center", fontSize: { xs: "1.25rem", sm: "1.42rem", md: "1.6rem" }, fontWeight: 700, color: "#0F172A", fontFamily: "Poppins", cursor: "text" }}
+              sx={{ width: "100%", height: "100%", border: "none", outline: "none", background: "transparent", textAlign: "center", fontSize: { xs: "1.25rem", sm: "1.42rem", md: "1.6rem" }, fontWeight: 700, color: "#0F172A", fontFamily: "Poppins", cursor: loading ? "not-allowed" : "text" }}
             />
           </Box>
         ))}
