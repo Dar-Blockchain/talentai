@@ -1,7 +1,7 @@
 const bedrock = require("../../helpers/bedrock.helpers");
 require("dotenv").config();
 const Profile = require("../../models/Profile.model");
-const { generatePrompt } = require("../../prompts/generate-job-post-prompts");
+const { generatePrompt, normalizeSkillAnalysis } = require("../../prompts/generate-job-post-prompts");
 
 function parseLLMJson(raw) {
   const firstBrace = raw.indexOf("{");
@@ -69,8 +69,7 @@ async function generateJobPost(description, user, overrides = {}) {
     if (workMode     && result?.jobDetails) result.jobDetails.workMode       = workMode;
     if (contractType && result?.jobDetails) result.jobDetails.employmentType = contractType;
 
-    // NOTE: normalizeSkillPercentages removed — handled by postProcessJobDetails
-    return result;
+    return normalizeSkillAnalysis(result);
   };
 
   let lastError;
