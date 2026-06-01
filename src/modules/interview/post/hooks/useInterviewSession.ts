@@ -205,7 +205,8 @@ export function useInterviewSession({
   const security = useSecurityMonitoring({
     interviewStatus: socket.interviewStatus,
     onTerminate: () => endInterviewRef.current(),
-    enabled: interviewConfig.enableSecurity !== false,
+    // enabled: interviewConfig.enableSecurity !== false,
+    enabled: false, // Disable security monitoring for now to avoid false positives during development
   });
 
   // Sync refs after all hooks initialize so forward-reference callbacks resolve correctly
