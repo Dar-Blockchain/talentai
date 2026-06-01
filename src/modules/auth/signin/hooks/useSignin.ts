@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { useForm } from "react-hook-form";
+import { useDispatch } from "react-redux";
 import { useToast } from "@/hooks/useToast";
 import { getUserLocation } from "@/utils/api";
 import { fetchEmployeePermissions } from "@/store/slices/memberSlice";
-import { useDispatch } from "react-redux";
 import type { AppDispatch } from "@/store/store";
 import { useOtpTimer, useOtpInput } from "@/modules/auth/shared/hooks";
 import { extractInvitationEmail, resolveRedirectPath } from "@/modules/auth/shared/utils";
@@ -14,17 +14,18 @@ import { OTP_STORAGE_KEY } from "../utils";
 import type { SigninFormValues, SigninStep } from "../types";
 
 export function useSignin() {
-  const router   = useRouter();
-  const dispatch = useDispatch<AppDispatch>();
+  const router        = useRouter();
+  const dispatch      = useDispatch<AppDispatch>();
   const { showToast } = useToast();
-  const returnUrl = router.query.returnUrl as string | undefined;
+  const returnUrl     = router.query.returnUrl as string | undefined;
 
   const invitationEmail = useMemo(() => extractInvitationEmail(returnUrl), [returnUrl]);
 
   const [step, setStep] = useState<SigninStep>(1);
 
-  const timer = useOtpTimer(OTP_STORAGE_KEY);
-  const otp   = useOtpInput();
+  const abortRef = useRef<AbortController | null>(null);
+  const timer    = useOtpTimer(OTP_STORAGE_KEY);
+  const otp      = useOtpInput();
 
   const form = useForm<SigninFormValues>({
     defaultValues: { email: "", code: "" },
@@ -34,7 +35,7 @@ export function useSignin() {
   const emailValue = form.watch("email");
 
   useEffect(() => { if (invitationEmail) form.setValue("email", invitationEmail); }, [invitationEmail]);
-  useEffect(() => () => { timer.clear(); }, []);
+  useEffect(() => () => { timer.clear(); abortRef.current?.abort(); }, []);
 
   const sendMutation = useSendSigninCode();
   const verifyMutation = useVerifySigninOtp(async (data) => {
@@ -47,44 +48,53 @@ export function useSignin() {
   const loading = sendMutation.isPending || verifyMutation.isPending;
 
   const sendCode = async (email: string) => {
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
+
     try {
-      await sendMutation.mutateAsync(email.toLowerCase().trim());
+      await sendMutation.mutateAsync({ email: email.toLowerCase().trim(), signal: abortRef.current.signal });
       timer.start();
       setStep(2);
     } catch (err: any) {
-      showToast({ message: err?.message || "Sign in failed. Please try again.", severity: "error" });
+      if (err?.name !== "AbortError") {
+        showToast({ message: err?.message ?? "Sign in failed. Please try again.", severity: "error" });
+      }
     }
   };
 
   const verifyCode = async () => {
     const { email } = form.getValues();
-    const code = otp.otpCode.join("");
+    const code      = otp.otpCode.join("");
     if (code.length < OTP_CODE_LENGTH) return;
+
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
+
     try {
       timer.clear();
       const location = await getUserLocation();
       await verifyMutation.mutateAsync({ email: email.toLowerCase().trim(), otp: code, location });
-    } catch {
-      showToast({ message: "The code you entered didn't match. Please check and try again.", severity: "error" });
+    } catch (err: any) {
+      if (err?.name !== "AbortError") {
+        showToast({ message: err?.message ?? "The code you entered didn't match.", severity: "error" });
+      }
     }
   };
 
-  const onSubmit = async (data: SigninFormValues) => {
-    if (step === 1) await sendCode(data.email);
-    else await verifyCode();
+  const onSubmit = (data: SigninFormValues) => {
+    if (step === 1) sendCode(data.email);
+    else verifyCode();
   };
 
-  const resendCode = async () => {
-    const email = form.getValues("email");
+  const resendCode = () => {
     otp.reset();
-    await sendCode(email);
+    sendCode(form.getValues("email"));
   };
 
   const changeEmail = () => {
     timer.clear();
-    setStep(1);
     otp.reset();
-    form.setValue("code", "");
+    setStep(1);
   };
 
   return {

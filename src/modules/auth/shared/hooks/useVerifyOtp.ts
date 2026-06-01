@@ -1,37 +1,45 @@
+import { useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useDispatch } from "react-redux";
 import Cookies from "js-cookie";
 import type { AppDispatch } from "@/store/store";
 import { setConnectedUser } from "@/store/slices/userSlice";
 import { authApi } from "../api";
-import type { VerifyOtpResponse } from "../types";
+import type { VerifyOtpPayload, VerifyOtpResponse } from "../types";
+
+const TOKEN_KEY = "api_token";
+const ROLE_KEY  = "user_role";
+const COOKIE_OPTIONS = { expires: 30, path: "/", sameSite: "strict" } as const;
+
+function persistSession(token: string, role: string): void {
+  localStorage.setItem(TOKEN_KEY, token);
+  Cookies.set(TOKEN_KEY, token, COOKIE_OPTIONS);
+  Cookies.set(ROLE_KEY, role, COOKIE_OPTIONS);
+}
 
 export function useVerifyOtp(onSuccess?: (data: VerifyOtpResponse) => void) {
   const dispatch = useDispatch<AppDispatch>();
 
+  // Stable ref so changing the onSuccess callback never recreates the mutation
+  const onSuccessRef = useRef(onSuccess);
+  onSuccessRef.current = onSuccess;
+
   return useMutation({
-    mutationFn: ({ email, otp, location }: { email: string; otp: string; location?: any }) =>
-      authApi.verifyOtp(email, otp, location),
+    mutationFn: (payload: VerifyOtpPayload) => authApi.verifyOtp(payload),
+
     onSuccess: (data) => {
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("api_token", data.token);
-        Cookies.set("api_token", data.token, { expires: 30, path: "/", sameSite: "lax" });
-      }
-      if (data.user?.role) {
-        Cookies.set("user_role", data.user.role, { expires: 30, path: "/", sameSite: "lax" });
-      }
-      if (data.user) {
-        dispatch(
-          setConnectedUser({
-            user:              data.user,
-            profile:           data.profile           ?? null,
-            planLimits:        data.planLimits        ?? null,
-            companyMembership: data.companyMembership ?? null,
-          })
-        );
-      }
-      onSuccess?.(data);
+      persistSession(data.token, data.user.role);
+
+      dispatch(
+        setConnectedUser({
+          user:              data.user,
+          profile:           data.profile           ?? null,
+          planLimits:        data.planLimits         ?? null,
+          companyMembership: data.companyMembership  ?? null,
+        })
+      );
+
+      onSuccessRef.current?.(data);
     },
   });
 }

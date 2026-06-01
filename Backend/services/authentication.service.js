@@ -1,497 +1,280 @@
-const User = require("../models/User.model");
+const User    = require("../models/User.model");
 const Profile = require("../models/Profile.model");
-const { sendOTP } = require("../utils/email-service");
-const { generateOTP } = require("../utils/one-time-password");
-const { generateToken } = require("../utils/generate-token");
+const { sendOTP }                  = require("../utils/email-service");
+const { generateOTP }              = require("../utils/one-time-password");
+const { generateToken }            = require("../utils/generate-token");
 const { extractUsernameFromEmail, formatLocation } = require("../helpers/auth-validation.helpers");
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const OTP_EXPIRY_MS    = 5 * 60 * 1000; // 5 minutes
+const MAX_OTP_ATTEMPTS = 5;              // lock after 5 wrong codes
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const assignFreePlanToProfile = module.exports.assignFreePlanToProfile = async (profileId) => {
   try {
-    const PlanLimits = require("../models/PlanLimits.model");
+    const PlanLimits   = require("../models/PlanLimits.model");
     const Subscription = require("../models/Subscription.model");
 
-    const existing = await Subscription.countDocuments({ companyProfileId: profileId });
-    if (existing > 0) return;
+    if (await Subscription.countDocuments({ companyProfileId: profileId })) return;
 
-    const freePlan = await PlanLimits.findOne({ name: "Trial", isActive: true });
-    if (!freePlan) {
-      console.warn("⚠️ Free plan not found in DB — skipping auto-assign");
-      return;
-    }
+    const freePlan = await PlanLimits.findOne({ name: "Trial", isActive: true }).lean();
+    if (!freePlan) { console.warn("⚠️ Free plan not found — skipping auto-assign"); return; }
 
     const startDate = new Date();
-    const endDate = new Date();
+    const endDate   = new Date();
     endDate.setFullYear(endDate.getFullYear() + 100);
 
     const subscription = await Subscription.create({
       companyProfileId: profileId,
       planId: freePlan._id,
-      startDate,
-      endDate,
-      status: "active",
-      autoRenew: false,
-      postsUsed: 0,
-      monthlyInterviewsUsed: 0,
+      startDate, endDate,
+      status: "active", autoRenew: false,
+      postsUsed: 0, monthlyInterviewsUsed: 0,
     });
 
-    await Profile.findByIdAndUpdate(
-      profileId,
-      {
-        activeSubscription: subscription._id,
-        $addToSet: { subscriptions: subscription._id },
-        planLimits: freePlan._id,
-      },
-      { runValidators: false }
-    );
+    await Profile.findByIdAndUpdate(profileId, {
+      activeSubscription: subscription._id,
+      $addToSet: { subscriptions: subscription._id },
+      planLimits: freePlan._id,
+    }, { runValidators: false });
 
     console.log(`✅ Free plan auto-assigned to profile ${profileId}`);
   } catch (err) {
-    console.error("❌ Failed to assign Free plan:", err.message);
+    console.error("❌ Failed to assign free plan:", err.message);
   }
 };
 
-const OTP_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
+/** Issue a fresh OTP and save it to the user document. */
+const issueOtp = async (userId) => {
+  const code      = generateOTP();
+  const expiresAt = new Date(Date.now() + OTP_EXPIRY_MS);
+  await User.updateOne({ _id: userId }, { otp: { code, expiresAt }, otpAttempts: 0 });
+  return code;
+};
 
-// Service d'inscription
-module.exports.registerUser = async (email, roleType = 'Candidate', profileDataOptions = {}) => {
-  try {
-    if (!email || typeof email !== 'string') {
-      const err = new Error('Email is required');
-      err.status = 400;
-      throw err;
-    }
+/** Append an entry to the user's auth history. */
+const logAuthAttempt = (userId, location, status) =>
+  User.updateOne(
+    { _id: userId },
+    { $push: { authHistory: { date: new Date(), ip: location?.ip || "", localisation: formatLocation(location), method: "OTP", status } } }
+  );
 
-    let username = extractUsernameFromEmail(email);
-    const otp = generateOTP();
-    const otpExpiry = new Date(Date.now() + OTP_EXPIRY_MS);
+// ─── Register ─────────────────────────────────────────────────────────────────
 
-    // Check if user exists by email only
-    const existingUser = await User.findOne({ email }).select('_id isVerified');
+module.exports.registerUser = async (email, roleType = "Candidate", opts = {}) => {
+  if (!email) throw Object.assign(new Error("Email is required"), { status: 400 });
 
-    if (existingUser) {
-      if (existingUser.isVerified) {
-        // Fully registered user — block
-        const err = new Error('User already exists. Please use login instead.');
-        err.status = 409;
-        throw err;
-      }
-      // Unverified user — resend a fresh OTP so they can complete registration
-      await User.findByIdAndUpdate(existingUser._id, {
-        otp: { code: otp, expiresAt: otpExpiry },
+  const validRole = ["Company", "Member", "Employee"].includes(roleType) ? roleType : "Candidate";
+
+  // Re-send OTP to unverified users instead of blocking them
+  const existing = await User.findOne({ email }).select("_id isVerified username").lean();
+  if (existing) {
+    if (existing.isVerified) throw Object.assign(new Error("User already exists. Please sign in instead."), { status: 409 });
+    const code = await issueOtp(existing._id);
+    await sendOTP(email, code);
+    return { email, username: existing.username, message: "A new verification code has been sent to your email." };
+  }
+
+  // Unique username
+  let username = extractUsernameFromEmail(email);
+  const conflict = await User.findOne({ username }).lean().select("_id");
+  if (conflict) {
+    const count = await User.countDocuments({ username: new RegExp(`^${username}(\\d+)?$`) });
+    username = `${username}${count + 1}`;
+  }
+
+  const userRole = validRole === "Company" ? "Company"
+                 : validRole === "Member"  ? "Member"
+                 : validRole === "Employee" ? "Employee"
+                 : "Candidate";
+
+  const user = await User.create({
+    username, email,
+    FirstName: opts.firstName || "",
+    LastName:  opts.lastName  || "",
+    role: userRole,
+    otp: { code: generateOTP(), expiresAt: new Date(Date.now() + OTP_EXPIRY_MS) },
+    otpAttempts: 0,
+  });
+
+  // Create role-specific profile
+  let profile = null;
+  const resumePath = opts.resumeFile?.filename || "";
+
+  if (validRole === "Company") {
+    if (opts.name || opts.companyDetails?.name) {
+      profile = await Profile.create({
+        userId: user._id, type: "Company",
+        companyDetails: {
+          email:    opts.companyDetails?.email    || email,
+          name:     opts.companyDetails?.name     || opts.name || "",
+          industry: opts.companyDetails?.industry || "",
+          size:     opts.companyDetails?.size     || "",
+          location: opts.companyDetails?.location || "",
+          website:  opts.companyDetails?.website  || "",
+          linkedin: opts.companyDetails?.linkedin || "",
+        },
+        requiredSkills: [], requiredExperienceLevel: "Entry Level",
       });
-      const emailSent = await sendOTP(email, otp);
-      if (!emailSent) {
-        const err = new Error('Error sending OTP email');
-        err.status = 500;
-        throw err;
-      }
-      return {
-        email,
-        username: existingUser.username,
-        message: 'A new verification code has been sent to your email.',
-      };
+      await User.updateOne({ _id: user._id }, { profile: profile._id });
+      await assignFreePlanToProfile(profile._id);
     }
-
-    // If username is taken, append a number to make it unique
-    const usernameConflict = await User.findOne({ username }).lean().select('_id');
-    if (usernameConflict) {
-      const count = await User.countDocuments({ username: { $regex: `^${username}` } });
-      username = `${username}${count + 1}`;
-    }
-
-    // Determine user role
-    const userRole = roleType === 'Company' ? 'Company' : roleType === 'Member' || roleType === 'Employee' ? roleType : 'Candidate';
-
-    // Create new user
-    const user = new User({
-      username,
-      email,
-      FirstName: profileDataOptions.firstName || '',
-      LastName: profileDataOptions.lastName || '',
-      role: userRole,
-      otp: {
-        code: otp,
-        expiresAt: otpExpiry
-      }
+  } else if (validRole === "Member" || validRole === "Employee") {
+    profile = await Profile.create({
+      userId: user._id, type: validRole === "Employee" ? "Employee" : "Member",
+      firstName: opts.firstName, lastName: opts.lastName,
+      phone: opts.phone || "", skills: [], overallScore: 0,
     });
-
-    await user.save();
-
-    // Create profile based on roleType
-    let profile = null;
-
-    if (roleType === 'Company') {
-      // For Company: need at least email or name
-      if (profileDataOptions.name || profileDataOptions.companyDetails?.name) {
-        profile = await Profile.create({
-          userId: user._id,
-          type: 'Company',
-          companyDetails: {
-            email: profileDataOptions.companyDetails?.email || email,
-            name: profileDataOptions.companyDetails?.name || profileDataOptions.name || '',
-            industry: profileDataOptions.companyDetails?.industry || '',
-            size: profileDataOptions.companyDetails?.size || '',
-            location: profileDataOptions.companyDetails?.location || '',
-            website: profileDataOptions.companyDetails?.website || '',
-            linkedin: profileDataOptions.companyDetails?.linkedin || '',
-          },
-          requiredSkills: [],
-          requiredExperienceLevel: 'Entry Level',
-        });
-        console.log('✅ Company profile created during registration for userId:', user._id);
-
-        // Link profile to user as ObjectID
-        user.profile = profile._id;
-        await user.save();
-        console.log('🔗 Company profile linked to user - user.profile:', profile._id);
-
-        // Auto-assign Free plan immediately at registration
-        await assignFreePlanToProfile(profile._id);
-      }
-    } else if (roleType === 'Member' || roleType === 'Employee') {
-      // For Member and Employee: create profile similar to Candidate
-      profile = await Profile.create({
-        userId: user._id,
-        type: roleType === 'Employee' ? 'Employee' : 'Member',
-        firstName: profileDataOptions.firstName,
-        lastName: profileDataOptions.lastName,
-        phone: profileDataOptions.phone || '',
-        skills: [],
-        overallScore: 0,
-      });
-      console.log(`✅ ${roleType} profile created during registration for userId:`, user._id);
-
-      // Link profile to user as ObjectID
-      user.profile = profile._id;
-      await user.save();
-      console.log(`🔗 ${roleType} profile linked to user - user.profile:`, profile._id);
-    } else {
-      // For Candidate: create profile with firstName and lastName (now required)
-      const resumePath = profileDataOptions.resumeFile ? profileDataOptions.resumeFile.filename : '';
-
-      profile = await Profile.create({
-        userId: user._id,
-        type: 'Candidate',
-        firstName: profileDataOptions.firstName,
-        lastName: profileDataOptions.lastName,
-        phone: profileDataOptions.phone || '',
-        resume: resumePath,
-        skills: [],
-        overallScore: 0,
-      });
-      console.log('✅ Candidate profile created during registration for userId:', user._id);
-      if (resumePath) {
-        console.log('📄 Resume uploaded:', resumePath);
-      }
-
-      // Link profile to user as ObjectID
-      user.profile = profile._id;
-      await user.save();
-      console.log('🔗 Candidate profile linked to user - user.profile:', profile._id);
-    }
-
-    // Send OTP
-    const emailSent = await sendOTP(email, otp);
-    if (!emailSent) {
-      const err = new Error('Error sending OTP email');
-      err.status = 500;
-      throw err;
-    }
-
-    console.log('✅ User registered, OTP sent:', email);
-
-    return {
-      email,
-      username,
-      user: user.toObject ? user.toObject() : user,
-      profile: profile ? (profile.toObject ? profile.toObject() : profile) : null,
-      message: 'Registration successful. Please check your email for OTP code.'
-    };
-  } catch (error) {
-    error.status = error.status || 500;
-    throw error;
+    await User.updateOne({ _id: user._id }, { profile: profile._id });
+  } else {
+    profile = await Profile.create({
+      userId: user._id, type: "Candidate",
+      firstName: opts.firstName, lastName: opts.lastName,
+      phone: opts.phone || "", resume: resumePath, skills: [], overallScore: 0,
+    });
+    await User.updateOne({ _id: user._id }, { profile: profile._id });
   }
+
+  await sendOTP(email, user.otp.code);
+
+  return {
+    email, username,
+    user:    user.toObject(),
+    profile: profile?.toObject() ?? null,
+    message: "Registration successful. Please check your email for your verification code.",
+  };
 };
 
-// OTP verification service
-exports.verifyUserOTP = async (email, otp, location = null) => {
-  try {
-    if (!email || !otp) {
-      const err = new Error('Email and OTP are required');
-      err.status = 400;
-      throw err;
-    }
+// ─── Verify OTP ───────────────────────────────────────────────────────────────
 
-    const user = await User.findOne({ email });
+module.exports.verifyUserOTP = async (email, otp, location = null) => {
+  const user = await User.findOne({ email });
+  if (!user) throw Object.assign(new Error("User not found."), { status: 404 });
+  if (user.isBanned) {
+    await logAuthAttempt(user._id, location, "Failed");
+    throw Object.assign(new Error("Your account has been banned. Please contact support."), { status: 403 });
+  }
+  if (!user.otp?.code || !user.otp?.expiresAt) {
+    throw Object.assign(new Error("No active OTP. Please request a new one."), { status: 400 });
+  }
+  if (new Date() > user.otp.expiresAt) {
+    await logAuthAttempt(user._id, location, "Failed");
+    throw Object.assign(new Error("OTP has expired. Please request a new one."), { status: 401 });
+  }
 
-    if (!user) {
-      const err = new Error('User not found');
-      err.status = 404;
-      throw err;
-    }
-
-    // Helper: log auth attempt
-    const logAuthAttempt = async (status) => {
-      const authEntry = {
-        date: new Date(),
-        ip: location?.ip || '',
-        localisation: formatLocation(location),
-        method: 'OTP',
-        status
-      };
-      await User.updateOne(
-        { _id: user._id },
-        { $push: { authHistory: authEntry } }
-      );
-    };
-
-    // Check if banned
-    if (user.isBanned) {
-      await logAuthAttempt('Failed');
-      const err = new Error('User is banned. Please contact support.');
-      err.status = 403;
-      throw err;
-    }
-
-    // Check OTP exists
-    if (!user.otp?.code || !user.otp?.expiresAt) {
-      await logAuthAttempt('Failed');
-      const err = new Error('No OTP found');
-      err.status = 400;
-      throw err;
-    }
-
-    // Check OTP matches
-    if (user.otp.code !== otp) {
-      await logAuthAttempt('Failed');
-      const err = new Error('Invalid OTP code');
-      err.status = 401;
-      throw err;
-    }
-
-    // Check OTP expiry
-    if (new Date() > user.otp.expiresAt) {
-      await logAuthAttempt('Failed');
-      const err = new Error('OTP expired');
-      err.status = 401;
-      throw err;
-    }
-
-    // Update user: verify, clear OTP, update login info
-    user.isVerified = true;
-    user.otp = undefined;
-    user.lastLogin = new Date();
-    user.trafficCounter = (user.trafficCounter || 0) + 1;
-
-    if (location) {
-      user.ip = location.ip;
-      user.Localisation = formatLocation(location);
-    }
-
+  // Brute-force guard
+  const attempts = (user.otpAttempts || 0) + 1;
+  if (user.otp.code !== otp) {
     await Promise.all([
-      user.save(),
-      logAuthAttempt('Success')
+      User.updateOne({ _id: user._id }, { otpAttempts: attempts }),
+      logAuthAttempt(user._id, location, "Failed"),
     ]);
-
-    // Fetch updated user
-    const updatedUser = await User.findById(user._id);
-
-    // Fetch profile and companyMembership in parallel if exist
-    const [profile, companyMembership] = await Promise.all([
-      updatedUser.profile ? Profile.findById(updatedUser.profile) : null,
-      updatedUser.companyMembership
-        ? require('../models/CompanyMembership.model')
-            .findById(updatedUser.companyMembership)
-            .populate({
-              path: 'company',
-              select: 'Localisation createdAt email isVerified lastLogin username updatedAt user_image profile',
-              populate: { path: 'profile' }
-            })
-            .select('_id role updatedAt company')
-        : null
-    ]);
-
-    console.log('✅ OTP verified successfully for:', email);
-
-    // Generate token with company info if companyMembership exists
-    let token;
-    if (companyMembership) {
-      token = generateToken(updatedUser._id, companyMembership.company._id, updatedUser.role);
-    } else {
-      token = generateToken(updatedUser._id, null, updatedUser.role);
+    if (attempts >= MAX_OTP_ATTEMPTS) {
+      await User.updateOne({ _id: user._id }, { "otp.expiresAt": new Date(0) });
+      throw Object.assign(new Error("Too many incorrect attempts. Please request a new code."), { status: 429 });
     }
-    return { user: updatedUser, token, profile, companyMembership };
-  } catch (error) {
-    error.status = error.status || 500;
-    throw error;
+    throw Object.assign(new Error(`Invalid OTP code. ${MAX_OTP_ATTEMPTS - attempts} attempt(s) remaining.`), { status: 401 });
   }
+
+  // Success — clear OTP and update session data in one write
+  const updateData = {
+    isVerified:   true,
+    otp:          undefined,
+    otpAttempts:  0,
+    lastLogin:    new Date(),
+    trafficCounter: (user.trafficCounter || 0) + 1,
+  };
+  if (location) { updateData.ip = location.ip; updateData.Localisation = formatLocation(location); }
+
+  await Promise.all([
+    User.updateOne({ _id: user._id }, updateData),
+    logAuthAttempt(user._id, location, "Success"),
+  ]);
+
+  // Single read after update — select only what the frontend needs
+  const updatedUser = await User.findById(user._id)
+    .select("_id email username role user_image isVerified lastLogin")
+    .lean();
+
+  const CompanyMembership = require("../models/CompanyMembership.model");
+
+  const [profile, companyMembership] = await Promise.all([
+    user.profile
+      ? Profile.findById(user.profile).lean()
+      : null,
+    user.companyMembership
+      ? CompanyMembership.findById(user.companyMembership)
+          .populate({ path: "company", select: "username email user_image profile", populate: { path: "profile" } })
+          .select("_id role company")
+          .lean()
+      : null,
+  ]);
+
+  // Fetch planLimits if company profile has them
+  let planLimits = null;
+  if (profile?.planLimits) {
+    try {
+      const PlanLimits = require("../models/PlanLimits.model");
+      planLimits = await PlanLimits.findById(profile.planLimits)
+        .select("name postsLimit monthlyInterviewsLimit isActive")
+        .lean();
+    } catch { /* non-critical */ }
+  }
+
+  const token = generateToken(
+    updatedUser._id,
+    companyMembership?.company?._id ?? null,
+    updatedUser.role
+  );
+
+  return { user: updatedUser, token, profile, planLimits, companyMembership };
 };
 
-// Service de connexion (login) pour utilisateurs existants
+// ─── Login (send OTP) ─────────────────────────────────────────────────────────
+
 module.exports.loginUser = async (email) => {
-  try {
-    if (!email || typeof email !== 'string') {
-      const err = new Error('Email is required');
-      err.status = 400;
-      throw err;
-    }
+  const user = await User.findOne({ email }).select("_id username isBanned").lean();
+  if (!user)   throw Object.assign(new Error("No account found with this email. Please register first."), { status: 404 });
+  if (user.isBanned) throw Object.assign(new Error("Your account has been banned. Please contact support."), { status: 403 });
 
-    // Check if user exists
-    const user = await User.findOne({ email });
+  const code = await issueOtp(user._id);
+  const sent = await sendOTP(email, code);
+  if (!sent) throw Object.assign(new Error("Failed to send OTP email. Please try again."), { status: 500 });
 
-    if (!user) {
-      const err = new Error('User not found. Please register first.');
-      err.status = 404;
-      throw err;
-    }
-
-    // Generate new OTP
-    const otp = generateOTP();
-    const otpExpiry = new Date(Date.now() + OTP_EXPIRY_MS);
-
-    // Update user with new OTP
-    await User.updateOne(
-      { _id: user._id },
-      {
-        otp: {
-          code: otp,
-          expiresAt: otpExpiry
-        }
-      }
-    );
-
-    // Send OTP
-    const emailSent = await sendOTP(email, otp);
-    if (!emailSent) {
-      const err = new Error('Error sending OTP email');
-      err.status = 500;
-      throw err;
-    }
-
-    console.log('📧 Login OTP sent to:', email);
-
-    return {
-      email,
-      username: user.username,
-      message: 'OTP code sent to your email. Please verify to login.'
-    };
-  } catch (error) {
-    error.status = error.status || 500;
-    throw error;
-  }
+  return { email, username: user.username, message: "Verification code sent to your email." };
 };
 
-// Service de renvoi d'OTP
+// ─── Resend OTP ───────────────────────────────────────────────────────────────
+
 module.exports.resendOTP = async (email) => {
-  try {
-    if (!email || typeof email !== 'string') {
-      const err = new Error('Email is required');
-      err.status = 400;
-      throw err;
-    }
+  const user = await User.findOne({ email }).select("_id username isBanned").lean();
+  if (!user)   throw Object.assign(new Error("No account found with this email."), { status: 404 });
+  if (user.isBanned) throw Object.assign(new Error("Your account has been banned. Please contact support."), { status: 403 });
 
-    // Check if user exists
-    const user = await User.findOne({ email });
+  const code = await issueOtp(user._id);
+  const sent = await sendOTP(email, code);
+  if (!sent) throw Object.assign(new Error("Failed to send OTP email. Please try again."), { status: 500 });
 
-    if (!user) {
-      const err = new Error('User not found. Please register first.');
-      err.status = 404;
-      throw err;
-    }
-
-    // Check if user is banned
-    if (user.isBanned) {
-      const err = new Error('User is banned. Please contact support.');
-      err.status = 403;
-      throw err;
-    }
-
-    // Generate new OTP
-    const otp = generateOTP();
-    const otpExpiry = new Date(Date.now() + OTP_EXPIRY_MS);
-
-    // Update user with new OTP
-    await User.updateOne(
-      { _id: user._id },
-      {
-        otp: {
-          code: otp,
-          expiresAt: otpExpiry
-        }
-      }
-    );
-
-    // Send OTP
-    const emailSent = await sendOTP(email, otp);
-    if (!emailSent) {
-      const err = new Error('Error sending OTP email');
-      err.status = 500;
-      throw err;
-    }
-
-    console.log('📧 OTP resent to:', email);
-
-    return {
-      email,
-      username: user.username,
-      message: 'New OTP code has been sent to your email. OTP expires in 5 minutes.'
-    };
-  } catch (error) {
-    error.status = error.status || 500;
-    throw error;
-  }
+  return { email, username: user.username, message: "New verification code sent. Valid for 5 minutes." };
 };
+
+// ─── Warn user ────────────────────────────────────────────────────────────────
 
 module.exports.warnUser = async (email) => {
-  try {
-    if (!email || typeof email !== 'string') {
-      const err = new Error('Email is required');
-      err.status = 400;
-      throw err;
-    }
+  const user = await User.findOne({ email }).select("_id email warnings isBanned").lean();
+  if (!user) throw Object.assign(new Error("User not found."), { status: 404 });
+  if (user.isBanned) return { message: "User is already banned.", user };
 
-    const user = await User.findOne({ email });
+  const newWarnings = (user.warnings || 0) + 1;
+  const updateData  = { warnings: newWarnings, ...(newWarnings >= 3 && { isBanned: true }) };
 
-    if (!user) {
-      const err = new Error('User not found');
-      err.status = 404;
-      throw err;
-    }
+  const updated = await User.findByIdAndUpdate(user._id, updateData, { new: true })
+    .lean().select("_id email warnings isBanned");
 
-    if (user.isBanned) {
-      return {
-        message: 'User is already banned',
-        user: { _id: user._id, email: user.email, isBanned: true, warnings: user.warnings || 0 }
-      };
-    }
-
-    // Increment warnings
-    const newWarnings = (user.warnings || 0) + 1;
-    let updateData = { warnings: newWarnings };
-
-    // Ban if 3 warnings reached
-    if (newWarnings >= 3) {
-      updateData.isBanned = true;
-    }
-
-    const updatedUser = await User.findByIdAndUpdate(
-      user._id,
-      updateData,
-      { new: true }
-    ).lean().select('_id email warnings isBanned');
-
-    const message = newWarnings >= 3
-      ? 'User has been banned after receiving 3 warnings'
-      : `User has received warning ${newWarnings}/3`;
-
-    console.log(`⚠️ Warning issued to ${email}: ${newWarnings}/3`);
-
-    return {
-      message,
-      user: updatedUser
-    };
-  } catch (error) {
-    error.status = error.status || 500;
-    throw error;
-  }
+  return {
+    message: newWarnings >= 3 ? "User banned after 3 warnings." : `Warning ${newWarnings}/3 issued.`,
+    user: updated,
+  };
 };

@@ -5,7 +5,8 @@ import type { VerifyOtpResponse } from "@/modules/auth/shared/types";
 
 export const useRegisterMutation = () =>
   useMutation({
-    mutationFn: (payload: FormData | Record<string, any>) => authApi.register(payload),
+    mutationFn: ({ payload, signal }: { payload: FormData | Record<string, unknown>; signal?: AbortSignal }) =>
+      authApi.register(payload, signal),
   });
 
 export const useVerifyRegisterOtp = (onSuccess?: (data: VerifyOtpResponse) => void) =>
@@ -13,5 +14,6 @@ export const useVerifyRegisterOtp = (onSuccess?: (data: VerifyOtpResponse) => vo
 
 export const useResendRegisterOtp = () =>
   useMutation({
-    mutationFn: (email: string) => authApi.resendOtp(email),
+    mutationFn: ({ email, signal }: { email: string; signal?: AbortSignal }) =>
+      authApi.resendOtp(email, signal),
   });

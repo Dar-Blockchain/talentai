@@ -246,7 +246,9 @@ module.exports.verifyOTP = async (req, res) => {
     );
 
     res.cookie("jwt_token", result.token, {
-      httpOnly: false,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -256,6 +258,7 @@ module.exports.verifyOTP = async (req, res) => {
       user: result.user,
       token: result.token,
       profile: result.profile || null,
+      planLimits: result.planLimits || null,
       companyMembership: result.companyMembership || null,
     });
   } catch (error) {
@@ -441,7 +444,7 @@ module.exports.checkRole = async (req, res) => {
     if (!email) return res.status(400).json({ error: "Email is required" });
 
     const user = await User.findOne({ email }).select("role").lean();
-    if (!user) return res.status(401).json({ role: null, exists: false });
+    if (!user) return res.status(404).json({ role: null, exists: false });
 
     res.json({ role: user.role, exists: true });
   } catch (error) {
