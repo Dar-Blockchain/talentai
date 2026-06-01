@@ -4,13 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 
-type Props = { themeColors: any };
-
-const BackToLandingButton: React.FC<Props> = ({ themeColors }) => {
+const BackToLandingButton: React.FC = () => {
   const { t } = useTranslation("auth");
   const router = useRouter();
   const returnUrl = router.query.returnUrl as string | undefined;
-  const registerHref = returnUrl ? `/register?returnUrl=${encodeURIComponent(returnUrl)}` : "/register";
+  const href = returnUrl ? `/register?returnUrl=${encodeURIComponent(returnUrl)}` : "/register";
 
   return (
     <Box sx={{ pt: 0.25 }}>
@@ -21,16 +19,8 @@ const BackToLandingButton: React.FC<Props> = ({ themeColors }) => {
         </Typography>
         <Box sx={{ flex: 1, height: "1px", bgcolor: "#F1F5F9" }} />
       </Box>
-      <Link href={registerHref} style={{ textDecoration: "none" }}>
-        <Box sx={{
-          display: "inline-flex", alignItems: "center", justifyContent: "center",
-          width: "100%", height: { xs: 38, sm: 40 }, borderRadius: "10px",
-          border: "1.5px solid #E5E7EB",
-          color: "#374151", fontFamily: "Poppins", fontWeight: 600,
-          fontSize: { xs: "0.83rem", sm: "0.87rem" },
-          transition: "all 0.15s",
-          "&:hover": { bgcolor: "#F9FAFB", borderColor: "#D1D5DB" },
-        }}>
+      <Link href={href} style={{ textDecoration: "none" }}>
+        <Box sx={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "100%", height: { xs: 38, sm: 40 }, borderRadius: "10px", border: "1.5px solid #E5E7EB", color: "#374151", fontFamily: "Poppins", fontWeight: 600, fontSize: { xs: "0.83rem", sm: "0.87rem" }, transition: "all 0.15s", "&:hover": { bgcolor: "#F9FAFB", borderColor: "#D1D5DB" } }}>
           {t("signin.create_account")}
         </Box>
       </Link>
