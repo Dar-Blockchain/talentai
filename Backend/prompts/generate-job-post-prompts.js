@@ -33,6 +33,9 @@ Analyze the job description below and return a single valid JSON object. No mark
 If the input is not a valid job description (random words, gibberish, offensive content, or completely unrelated text) → return exactly this and nothing else:
 { "error": "invalid_input" }
 
+If the description is valid but too vague to generate a meaningful job post (e.g., only a job title with no context, fewer than 10 meaningful words, no indication of role scope or required skills) → return exactly this and nothing else:
+{ "error": "insufficient_detail" }
+
 ${internshipInstruction}
 ━━━ OUTPUT STRUCTURE ━━━
 
@@ -50,7 +53,7 @@ ${internshipInstruction}
   },
   "skillAnalysis": {
     "requiredSkills": [
-      { "name": string, "level": 1|2|3|4|5|null, "category": "Frontend"|"Backend"|"Fullstack"|"Mobile"|"DevOps"|"Cloud"|"Data"|"AI/ML"|"Security"|"QA"|"Blockchain"|"Product"|"Design"|"Marketing"|"Sales"|"Finance"|"Operations"|"Legal"|"HR"|"Other" }
+      { "name": string, "level": 1|2|3|4|5|null, "category": "Frontend"|"Backend"|"Fullstack"|"Mobile"|"DevOps"|"Cloud"|"Data"|"AI/ML"|"Security"|"QA"|"Blockchain"|"GameDev"|"Embedded"|"Product"|"Design"|"Marketing"|"Sales"|"Finance"|"Operations"|"Legal"|"HR"|"Other" }
     ],
     "softSkills": [
       { "name": string, "level": 1|2|3|4|5|null }
@@ -82,7 +85,8 @@ Output:
       { "name": "PostgreSQL", "level": null, "category": "Backend" }
     ],
     "softSkills": [
-      { "name": "Technical Leadership", "level": null }
+      { "name": "Technical Leadership", "level": null },
+      { "name": "Mentoring", "level": null }
     ]
   }
 }
@@ -101,11 +105,12 @@ requirements
 - If location is not in the description → use: "${companyLocation || "Not specified"}"
 
 skills
-- 1 to 3 required skills — only specific named tools or technologies explicitly mentioned in the description. Never invent a skill not present. If fewer than 3 are named, return only what exists. + 1 soft skill
+- 1 to 3 required skills — only specific named tools or technologies explicitly mentioned in the description. Never invent a skill not present. If fewer than 3 are named, return only what exists. + 1 to 2 soft skills
 - Prefer specific named tools over generic labels
   Frontend: React.js, Vue, Angular… | Backend: Node.js, Django, Spring… | Mobile: Swift, Kotlin, Flutter…
   DevOps/Cloud: Docker, Kubernetes, AWS, GCP… | Data: Spark, dbt, Airflow… | AI/ML: PyTorch, TensorFlow, LangChain…
   Security: Burp Suite, Splunk, IAM… | QA: Cypress, Selenium, Jest… | Blockchain: Solidity, Hardhat, Web3.js…
+  GameDev: Unity, Unreal Engine, Godot, C# (Unity)… | Embedded: C, C++, RTOS, Arduino, STM32, ROS…
   Product: Jira, Figma, Amplitude… | Marketing: Google Ads, HubSpot… | Finance: Excel, SAP, QuickBooks…
   NEVER use: "Programming", "Communication Tools", "Software", "Technology"
 
@@ -132,21 +137,30 @@ ${description}
 // ── Rank-based percentage table for up to 3 required skills (must sum to 80) ──
 const RANK_PCTS = [45, 20, 15];
 
-/**
- * Convert raw model JSON into the final shape the frontend expects.
- * The model never does arithmetic — level and percentage are computed here.
- *
- * Input per skill:  { name, category, yearsSignal, ...any extra model fields }
- * Output per skill: { name, category, level, percentage }            (no yearsSignal)
- * Output per soft:  { name, level, percentage }
- *
- * Guarantees: requiredSkills pcts sum to 80, softSkills pcts sum to 20, total = 100.
- *
- * Usage (in the service, after JSON.parse):
- *   const clean = normalizeSkillAnalysis(parseLLMJson(response.content));
- */
+
+const VALID_WORK_MODES       = ["Remote", "On-site", "Hybrid"];
+const VALID_EXPERIENCE_LEVELS = ["Junior", "Mid-level", "Senior", "Expert"];
+
 function normalizeSkillAnalysis(result) {
   if (!result || result.error || !result.skillAnalysis) return result;
+
+  // ── Sanitize jobDetails fields with safe defaults ─────────────────────────
+  if (result.jobDetails) {
+    const jd = result.jobDetails;
+    if (!jd.title        || typeof jd.title !== "string")          jd.title          = "Untitled Position";
+    if (!jd.description  || typeof jd.description !== "string")    jd.description    = "";
+    if (!Array.isArray(jd.requirements))                           jd.requirements   = [];
+    if (!Array.isArray(jd.responsibilities))                       jd.responsibilities = [];
+    if (!jd.location     || typeof jd.location !== "string")       jd.location       = "Not specified";
+    if (!VALID_WORK_MODES.includes(jd.workMode))                   jd.workMode       = "On-site";
+    if (!VALID_EXPERIENCE_LEVELS.includes(jd.experienceLevel))     jd.experienceLevel = "Mid-level";
+    const sal = jd.salary || {};
+    jd.salary = {
+      min:      typeof sal.min === "number" ? sal.min : 0,
+      max:      typeof sal.max === "number" ? sal.max : 0,
+      currency: typeof sal.currency === "string" && sal.currency ? sal.currency : "USD",
+    };
+  }
 
   const isInternship = result?.jobDetails?.employmentType === "Internship";
   const expFallback = { "Junior": 1, "Mid-level": 2, "Senior": 3, "Expert": 4 };
@@ -183,15 +197,17 @@ function normalizeSkillAnalysis(result) {
     percentage: requiredPcts[i],
   }));
 
-  // ── Soft skills: keep first 1, fixed at 20 % ─────────────────────────────
+  // ── Soft skills: keep first 2, split 20% evenly ──────────────────────────
   const rawSoft = Array.isArray(result.skillAnalysis.softSkills)
-    ? result.skillAnalysis.softSkills.slice(0, 1)
+    ? result.skillAnalysis.softSkills.slice(0, 2)
     : [];
 
-  const softSkills = rawSoft.map((skill) => ({
+  const softPct = rawSoft.length === 2 ? [10, 10] : [20];
+
+  const softSkills = rawSoft.map((skill, i) => ({
     name: skill.name,
     level: resolveLevel(skill.level),
-    percentage: 20,
+    percentage: softPct[i],
   }));
 
   return {
