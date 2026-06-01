@@ -101,7 +101,7 @@ requirements
 - If location is not in the description → use: "${companyLocation || "Not specified"}"
 
 skills
-- Exactly 3 required skills (the ones a hiring manager would test first) + 1 soft skill
+- 1 to 3 required skills — only specific named tools or technologies explicitly mentioned in the description. Never invent a skill not present. If fewer than 3 are named, return only what exists. + 1 soft skill
 - Prefer specific named tools over generic labels
   Frontend: React.js, Vue, Angular… | Backend: Node.js, Django, Spring… | Mobile: Swift, Kotlin, Flutter…
   DevOps/Cloud: Docker, Kubernetes, AWS, GCP… | Data: Spark, dbt, Airflow… | AI/ML: PyTorch, TensorFlow, LangChain…
