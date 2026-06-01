@@ -42,8 +42,6 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
         mb: 1,
         transform: questionHighlight ? 'translateY(-2px)' : 'none',
         transition: 'transform 0.3s ease, box-shadow 0.3s ease, border-color 0.4s ease',
-        userSelect: 'none',
-        WebkitUserSelect: 'none',
       }}
     >
       {/* Label row — icon + title on left, countdown badge on right */}

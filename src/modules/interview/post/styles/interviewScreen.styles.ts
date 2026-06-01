@@ -8,8 +8,6 @@ export const interviewScreenSx = {
     flexDirection: "column",
     overflow: { md: "hidden" },
     bgcolor: "#f8fdfb",
-    userSelect: "none",
-    WebkitUserSelect: "none",
   } as SxProps<Theme>,
 
   container: {
