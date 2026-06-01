@@ -5,7 +5,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import PhoneIcon from "@mui/icons-material/Phone";
 import { useTranslation } from "react-i18next";
 import type { UseFormRegister, FieldErrors } from "react-hook-form";
-import { compactFieldSx } from "../registerFormStyles";
+import { compactFieldSx } from "../styles/registerFormStyles";
 import type { CandidateFormValues } from "../../types";
 
 const half = { flex: "1 1 100%", minWidth: 0, "@media (min-width:1025px)": { flex: "1 1 calc(50% - 12px)" } };

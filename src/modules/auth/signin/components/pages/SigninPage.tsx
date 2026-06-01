@@ -1,9 +1,9 @@
 import React from "react";
 import { Divider } from "@mui/material";
-import SigninContainer from "./SigninContainer";
-import SignInHeader from "./SignInHeader";
-import SigninForm from "./SigninForm";
-import BackToLandingButton from "./BackToLandingButton";
+import SigninContainer from "../layout/SigninContainer";
+import SignInHeader from "../ui/SignInHeader";
+import SigninForm from "../form/SigninForm";
+import BackToLandingButton from "../ui/BackToLandingButton";
 
 const SigninPage: React.FC = () => (
   <SigninContainer>

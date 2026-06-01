@@ -7,7 +7,7 @@ import { formatTimeLeft } from "@/utils/functions";
 import { ACCENT, OTP_CODE_LENGTH } from "@/modules/auth/shared/types";
 import type { useOtpInput } from "@/modules/auth/shared/hooks";
 import type { useOtpTimer } from "@/modules/auth/shared/hooks";
-import { compactSubmitBtnSx } from "../registerFormStyles";
+import { compactSubmitBtnSx } from "../styles/registerFormStyles";
 
 type OtpInputReturn = ReturnType<typeof useOtpInput>;
 type OtpTimerReturn = ReturnType<typeof useOtpTimer>;

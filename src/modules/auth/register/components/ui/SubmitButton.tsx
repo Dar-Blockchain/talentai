@@ -1,7 +1,7 @@
 import React from "react";
 import { Button, CircularProgress } from "@mui/material";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import { compactSubmitBtnSx } from "../registerFormStyles";
+import { compactSubmitBtnSx } from "../styles/registerFormStyles";
 
 interface Props {
   loading: boolean;

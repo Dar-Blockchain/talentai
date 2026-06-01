@@ -2,13 +2,13 @@ import React, { useEffect } from "react";
 import { Box } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { useCandidateRegister } from "../hooks";
-import CandidateFields from "./ui/CandidateFields";
-import CvUpload from "./ui/CvUpload";
-import CvAnalysisDialog from "./ui/CvAnalysisDialog";
-import OtpVerifyStep from "./ui/OtpVerifyStep";
-import SubmitButton from "./ui/SubmitButton";
-import type { CandidateFormValues, RegisterFormProps } from "../types";
+import { useCandidateRegister } from "../../hooks";
+import CandidateFields from "../fields/CandidateFields";
+import CvUpload from "../cv/CvUpload";
+import CvAnalysisDialog from "../cv/CvAnalysisDialog";
+import OtpVerifyStep from "../otp/OtpVerifyStep";
+import SubmitButton from "../ui/SubmitButton";
+import type { CandidateFormValues, RegisterFormProps } from "../../types";
 
 const full = { flex: "1 1 100%" };
 

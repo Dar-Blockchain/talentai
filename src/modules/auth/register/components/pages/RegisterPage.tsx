@@ -4,13 +4,13 @@ import PersonOutlined from "@mui/icons-material/PersonOutlined";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
-import RegisterContainer from "./RegisterContainer";
-import CandidateRegisterForm from "./CandidateRegisterForm";
-import CompanyRegisterForm from "./CompanyRegisterForm";
-import SignInLink from "./ui/SignInLink";
-import RoleCard from "./ui/RoleCard";
-import RoleSelectHeader from "./ui/RoleSelectHeader";
-import FormHeader from "./ui/FormHeader";
+import RegisterContainer from "../layout/RegisterContainer";
+import CandidateRegisterForm from "../forms/CandidateRegisterForm";
+import CompanyRegisterForm from "../forms/CompanyRegisterForm";
+import SignInLink from "../ui/SignInLink";
+import RoleCard from "../ui/RoleCard";
+import RoleSelectHeader from "../ui/RoleSelectHeader";
+import FormHeader from "../ui/FormHeader";
 
 type UserType = "candidate" | "company";
 

@@ -10,7 +10,7 @@ import EmailIcon from "@mui/icons-material/Email";
 import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import type { Control, UseFormRegister, FieldErrors } from "react-hook-form";
-import { compactFieldSx, selectMenuProps } from "../registerFormStyles";
+import { compactFieldSx, selectMenuProps } from "../styles/registerFormStyles";
 import { COMPANY_SIZES, INDUSTRIES } from "../../utils";
 import type { CompanyFormValues } from "../../types";
 

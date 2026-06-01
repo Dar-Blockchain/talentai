@@ -5,9 +5,9 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { useTranslation } from "react-i18next";
 import { formatTimeLeft } from "@/utils/functions";
 import { ACCENT, OTP_CODE_LENGTH } from "@/modules/auth/shared/types";
-import { useSignin } from "../hooks";
-import EmailStep from "./ui/EmailStep";
-import OtpStep from "./ui/OtpStep";
+import { useSignin } from "../../hooks";
+import EmailStep from "../ui/EmailStep";
+import OtpStep from "../ui/OtpStep";
 
 const SigninForm: React.FC = () => {
   const { t } = useTranslation("auth");

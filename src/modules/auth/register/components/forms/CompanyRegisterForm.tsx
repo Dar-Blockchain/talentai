@@ -2,11 +2,11 @@ import React from "react";
 import { Box } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { useCompanyRegister } from "../hooks";
-import CompanyFields from "./ui/CompanyFields";
-import OtpVerifyStep from "./ui/OtpVerifyStep";
-import SubmitButton from "./ui/SubmitButton";
-import type { CompanyFormValues, RegisterFormProps } from "../types";
+import { useCompanyRegister } from "../../hooks";
+import CompanyFields from "../fields/CompanyFields";
+import OtpVerifyStep from "../otp/OtpVerifyStep";
+import SubmitButton from "../ui/SubmitButton";
+import type { CompanyFormValues, RegisterFormProps } from "../../types";
 
 const full = { flex: "1 1 100%" };
 
