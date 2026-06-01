@@ -115,47 +115,43 @@ module.exports.registerUser = async (email, roleType = "Candidate", opts = {}) =
     otpAttempts: 0,
   });
 
-  // Create profile + link user in parallel where possible
+  // Create role-specific profile then link it to the user
   let profile = null;
   const resumePath = opts.resumeFile?.filename || "";
 
-  if (validRole === "Company") {
-    if (opts.name || opts.companyDetails?.name) {
-      profile = await Profile.create({
-        userId: user._id, type: "Company",
-        companyDetails: {
-          email:    opts.companyDetails?.email    || email,
-          name:     opts.companyDetails?.name     || opts.name || "",
-          industry: opts.companyDetails?.industry || "",
-          size:     opts.companyDetails?.size     || "",
-          location: opts.companyDetails?.location || "",
-          website:  opts.companyDetails?.website  || "",
-          linkedin: opts.companyDetails?.linkedin || "",
-        },
-        requiredSkills: [], requiredExperienceLevel: "Entry Level",
-      });
-      // Link profile and kick off free plan in parallel
-      await Promise.all([
-        User.updateOne({ _id: user._id }, { profile: profile._id }),
-        assignFreePlanToProfile(profile._id),
-      ]);
-    }
+  if (validRole === "Company" && (opts.name || opts.companyDetails?.name)) {
+    profile = await Profile.create({
+      userId: user._id, type: "Company",
+      companyDetails: {
+        email:    opts.companyDetails?.email    || email,
+        name:     opts.companyDetails?.name     || opts.name || "",
+        industry: opts.companyDetails?.industry || "",
+        size:     opts.companyDetails?.size     || "",
+        location: opts.companyDetails?.location || "",
+        website:  opts.companyDetails?.website  || "",
+        linkedin: opts.companyDetails?.linkedin || "",
+      },
+      requiredSkills: [], requiredExperienceLevel: "Entry Level",
+    });
   } else if (validRole === "Member" || validRole === "Employee") {
     profile = await Profile.create({
-      userId: user._id,
-      type:   validRole === "Employee" ? "Employee" : "Member",
+      userId: user._id, type: validRole === "Employee" ? "Employee" : "Member",
       firstName: opts.firstName, lastName: opts.lastName,
       phone: opts.phone || "", skills: [], overallScore: 0,
     });
-    await User.updateOne({ _id: user._id }, { profile: profile._id });
-  } else {
-    // Candidate
+  } else if (validRole === "Candidate") {
     profile = await Profile.create({
       userId: user._id, type: "Candidate",
       firstName: opts.firstName, lastName: opts.lastName,
       phone: opts.phone || "", resume: resumePath, skills: [], overallScore: 0,
     });
-    await User.updateOne({ _id: user._id }, { profile: profile._id });
+  }
+
+  // Link profile and (for Company) assign free plan in parallel
+  if (profile) {
+    const tasks = [User.updateOne({ _id: user._id }, { profile: profile._id })];
+    if (validRole === "Company") tasks.push(assignFreePlanToProfile(profile._id));
+    await Promise.all(tasks);
   }
 
   await sendOTP(email, otpCode);

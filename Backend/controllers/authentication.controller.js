@@ -1,15 +1,15 @@
 const path = require("path");
 const fs   = require("fs");
 
-const authService      = require("../services/authentication.service");
+const authService       = require("../services/authentication.service");
 const CVAnalysisService = require("../services/cvAnalysis.service");
-const Profile          = require("../models/Profile.model");
-const User             = require("../models/User.model");
-const logger           = require("../utils/logger");
-const { analyzeCV }    = require("../services/analyseResume.service");
+const Profile           = require("../models/Profile.model");
+const User              = require("../models/User.model");
+const logger            = require("../utils/logger");
+const { analyzeCV }     = require("../services/analyseResume.service");
 const { validateEmail, validateOTPInput } = require("../helpers/auth-validation.helpers");
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Shared helpers ───────────────────────────────────────────────────────────
 
 const handleError = (res, error, defaultStatus = 500) => {
   logger.error("Auth error:", error?.message || error);
@@ -20,29 +20,31 @@ const handleError = (res, error, defaultStatus = 500) => {
 
 const deleteFile = (filePath) => {
   if (!filePath) return;
-  fs.unlink(filePath, (err) => {
-    if (err) logger.error("Failed to delete file:", err.message);
-  });
+  fs.unlink(filePath, (err) => { if (err) logger.error("Failed to delete file:", err.message); });
 };
 
-/**
- * Analyses a CV file and enriches the given profile with extracted data.
- * Non-blocking — all failures are logged and swallowed so registration succeeds
- * even when the AI service is unavailable.
- */
+const JWT_COOKIE = {
+  httpOnly: true,
+  secure:   process.env.NODE_ENV === "production",
+  sameSite: "strict",
+  maxAge:   7 * 24 * 60 * 60 * 1000,
+};
+
+// ─── CV analysis helper ───────────────────────────────────────────────────────
+
 const analyseCvAndEnrichProfile = async (resumeFile, validEmail, firstName, lastName, profileId, userId, req) => {
   if (!fs.existsSync(resumeFile.path)) return null;
 
   try {
     const cvData = JSON.parse(await analyzeCV(resumeFile.path));
 
-    const cvAnalysisPayload = {
+    const { data: saved } = await CVAnalysisService.createCVAnalysis({
       name:              cvData.name || `${firstName} ${lastName}` || "Unknown",
       email:             validEmail,
-      phone:             cvData.phone    || "",
-      location:          cvData.location || "",
-      title:             cvData.title    || "",
-      summary:           cvData.summary  || "",
+      phone:             cvData.phone             || "",
+      location:          cvData.location          || "",
+      title:             cvData.title             || "",
+      summary:           cvData.summary           || "",
       yearsOfExperience: cvData.yearsOfExperience || 0,
       seniority:         cvData.seniority         || "Entry-Level",
       skills:            cvData.skills            || [],
@@ -57,40 +59,32 @@ const analyseCvAndEnrichProfile = async (resumeFile, validEmail, firstName, last
       sourceUrl:         resumeFile.path,
       ipAddress:         req.ip,
       userAgent:         req.get("user-agent"),
-    };
+    }, profileId);
 
-    const { data: saved } = await CVAnalysisService.createCVAnalysis(cvAnalysisPayload, profileId);
-
-    // Build a single profile update from CV data
     const profileUpdate = {};
 
     if (cvData.skills?.length) {
       profileUpdate.$push = {
-        skills: {
-          $each: cvData.skills.map((name) => ({
-            name, proficiencyLevel: 0, experienceLevel: "",
-            NumberTestPassed: 0, ScoreTest: 0, Levelconfirmed: 0,
-          })),
-        },
+        skills: { $each: cvData.skills.map((name) => ({
+          name, proficiencyLevel: 0, experienceLevel: "",
+          NumberTestPassed: 0, ScoreTest: 0, Levelconfirmed: 0,
+        })) },
       };
     }
 
     if (cvData.spokenLanguages?.length) {
-      profileUpdate.$push = {
-        ...(profileUpdate.$push || {}),
-        spokenLanguages: { $each: cvData.spokenLanguages },
-      };
+      profileUpdate.$push = { ...(profileUpdate.$push || {}), spokenLanguages: { $each: cvData.spokenLanguages } };
     }
 
     if (cvData.email || cvData.links || cvData.location) {
       profileUpdate.$set = {
         contactInformation: {
-          email:           cvData.email             || "",
+          email:           cvData.email           || "",
           address:         "",
-          linkedinUrl:     cvData.links?.linkedin   || "",
-          githubUrl:       cvData.links?.github     || "",
-          personalWebsite: cvData.links?.portfolio  || "",
-          location:        cvData.location          || "",
+          linkedinUrl:     cvData.links?.linkedin || "",
+          githubUrl:       cvData.links?.github   || "",
+          personalWebsite: cvData.links?.portfolio|| "",
+          location:        cvData.location        || "",
         },
         phone:          cvData.phone          || "",
         educationLevel: cvData.educationLevel || "",
@@ -103,12 +97,12 @@ const analyseCvAndEnrichProfile = async (resumeFile, validEmail, firstName, last
     }
 
     return {
-      id:             saved._id,
-      analysisScore:  saved.analysisScore,
-      seniority:      saved.seniority,
-      skillsCount:    saved.skills.length,
+      id:              saved._id,
+      analysisScore:   saved.analysisScore,
+      seniority:       saved.seniority,
+      skillsCount:     saved.skills.length,
       softSkillsCount: saved.softSkills.length,
-      createdAt:      saved.createdAt,
+      createdAt:       saved.createdAt,
     };
   } catch (err) {
     logger.warn("⚠️ CV analysis failed (non-fatal):", err.message);
@@ -116,7 +110,7 @@ const analyseCvAndEnrichProfile = async (resumeFile, validEmail, firstName, last
   }
 };
 
-// ─── Routes ───────────────────────────────────────────────────────────────────
+// ─── Handlers ─────────────────────────────────────────────────────────────────
 
 module.exports.register = async (req, res) => {
   const resumeFile = req.file;
@@ -125,18 +119,13 @@ module.exports.register = async (req, res) => {
     const validEmail    = validateEmail(email);
     const validRoleType = roleType && ["Candidate", "Company", "Member"].includes(roleType) ? roleType : "Candidate";
 
-    const result = await authService.registerUser(
-      validEmail, validRoleType,
-      { firstName, lastName, name, companyDetails, phone, resumeFile }
-    );
+    const result = await authService.registerUser(validEmail, validRoleType, {
+      firstName, lastName, name, companyDetails, phone, resumeFile,
+    });
 
-    let cvAnalysis = null;
-    if (resumeFile?.path && validRoleType === "Candidate" && result.user) {
-      cvAnalysis = await analyseCvAndEnrichProfile(
-        resumeFile, validEmail, firstName, lastName,
-        result.profile?._id, result.user._id, req
-      );
-    }
+    const cvAnalysis = (resumeFile?.path && validRoleType === "Candidate" && result.user)
+      ? await analyseCvAndEnrichProfile(resumeFile, validEmail, firstName, lastName, result.profile?._id, result.user._id, req)
+      : null;
 
     res.status(201).json({
       success: true,
@@ -167,21 +156,16 @@ module.exports.verifyOTP = async (req, res) => {
     const { email: validEmail, otp: validOTP } = validateOTPInput(req.body.email, req.body.otp);
     const result = await authService.verifyUserOTP(validEmail, validOTP, req.body.location);
 
-    res.cookie("jwt_token", result.token, {
-      httpOnly: true,
-      secure:   process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge:   7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("jwt_token", result.token, JWT_COOKIE);
 
     res.status(200).json({
       success:           true,
       message:           "Email verified successfully",
       user:              result.user,
       token:             result.token,
-      profile:           result.profile           || null,
-      planLimits:        result.planLimits         || null,
-      companyMembership: result.companyMembership  || null,
+      profile:           result.profile          || null,
+      planLimits:        result.planLimits        || null,
+      companyMembership: result.companyMembership || null,
     });
   } catch (error) {
     handleError(res, error, 400);
@@ -231,7 +215,6 @@ module.exports.parseCV = async (req, res) => {
     const { filePath, saveToDatabase = true } = req.body || req.query;
     if (!filePath) return res.status(400).json({ success: false, error: "filePath is required" });
 
-    // Prevent path traversal — resolve and ensure it stays within the uploads directory
     const uploadsRoot  = path.resolve(__dirname, "..", "uploads");
     const resolvedPath = path.resolve(filePath);
     if (!resolvedPath.startsWith(uploadsRoot))
@@ -240,8 +223,8 @@ module.exports.parseCV = async (req, res) => {
     if (!fs.existsSync(resolvedPath))
       return res.status(404).json({ success: false, error: "CV file not found" });
 
-    const cvData  = JSON.parse(await analyzeCV(resolvedPath));
-    let dbRecord  = null;
+    const cvData = JSON.parse(await analyzeCV(resolvedPath));
+    let dbRecord = null;
 
     if (saveToDatabase) {
       try {
@@ -250,10 +233,13 @@ module.exports.parseCV = async (req, res) => {
           const p = await Profile.findOne({ userId: req.user._id }).lean().select("_id");
           profileId = p?._id ?? null;
         }
-        const { data } = await CVAnalysisService.createCVAnalysis(
-          { ...cvData, sourceUrl: resolvedPath, ipAddress: req.ip, userAgent: req.get("user-agent"), ...(req.user && { User: req.user._id }) },
-          profileId
-        );
+        const { data } = await CVAnalysisService.createCVAnalysis({
+          ...cvData,
+          sourceUrl: resolvedPath,
+          ipAddress: req.ip,
+          userAgent: req.get("user-agent"),
+          ...(req.user && { User: req.user._id }),
+        }, profileId);
         dbRecord = { id: data._id, analysisScore: data.analysisScore, createdAt: data.createdAt };
       } catch (err) {
         logger.warn("⚠️ CV analysis DB save failed:", err.message);

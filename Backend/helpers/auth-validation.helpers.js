@@ -20,12 +20,6 @@ const validateOTPInput = (email, otp) => {
   return { email: validEmail, otp: trimmed };
 };
 
-const validateIdToken = (id_token) => {
-  if (!id_token || typeof id_token !== "string" || !id_token.trim())
-    throw Object.assign(new Error("id_token is required."), { status: 400 });
-  return id_token.trim();
-};
-
 const extractUsernameFromEmail = (email) => {
   if (!email || typeof email !== "string")
     throw Object.assign(new Error("Email is required."), { status: 400 });
@@ -44,4 +38,4 @@ const formatLocation = (location) => {
   }
 };
 
-module.exports = { validateEmail, validateOTPInput, validateIdToken, extractUsernameFromEmail, formatLocation };
+module.exports = { validateEmail, validateOTPInput, extractUsernameFromEmail, formatLocation };
