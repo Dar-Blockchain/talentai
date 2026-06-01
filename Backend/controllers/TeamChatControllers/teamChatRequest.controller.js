@@ -1,5 +1,3 @@
-const TeamChatRequest = require("../../models/TeamChatRequest.model");
-const teamChatRequestService = require("../../services/TeamChatServices/teamChatRequest.service");
 const teamChatConversationService = require("../../services/TeamChatServices/teamChatConversation.service");
 
 const handleError = (res, error) => {
@@ -8,19 +6,6 @@ const handleError = (res, error) => {
     success: false,
     message: error.message || "Internal server error",
   });
-};
-
-const emitToUser = (userId, event, payload) => {
-  if (!userId) {
-    return;
-  }
-
-  try {
-    const io = socket.getIO();
-    io.of("/team-chat").to(`user:${userId}`).emit(event, payload);
-  } catch (socketError) {
-    console.error("Team chat socket emit failed:", socketError);
-  }
 };
 
 module.exports.createRequest = async (req, res) => {

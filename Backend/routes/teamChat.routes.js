@@ -115,26 +115,6 @@ router.post(
 
 /**
  * @openapi
- * /team-chat/conversations/{conversationId}:
- *   delete:
- *     tags: [Team Chat]
- *     summary: Delete a team chat conversation
- *     parameters:
- *       - in: path
- *         name: conversationId
- *         required: true
- *         schema: { type: string }
- *     responses:
- *       200:
- *         description: Conversation deleted
- */
-router.delete(
-  "/conversations/:conversationId",
-  teamChatConversationController.deleteConversation,
-);
-
-/**
- * @openapi
  * /team-chat/messages/{messageId}:
  *   delete:
  *     tags: [Team Chat]
