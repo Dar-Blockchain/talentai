@@ -24,7 +24,7 @@ const SigninForm: React.FC = () => {
       )}
 
       {step === 2 && (
-        <OtpStep emailValue={emailValue} otp={otp} isLocked={step === 2 && loading} />
+        <OtpStep emailValue={emailValue} otp={otp} isLocked={loading} />
       )}
 
       {/* Timer */}

@@ -14,12 +14,13 @@ import FormHeader from "./ui/FormHeader";
 
 type UserType = "candidate" | "company";
 
-const ROLES = (t: (key: string) => string) => [
+// Static config — no i18n keys, just visual/structural data
+const ROLE_CONFIG = [
   {
     type: "company" as UserType,
     icon: BusinessOutlined,
-    label: t("register.company_label"),
-    description: t("register.company_desc"),
+    tLabel: "register.company_label",
+    tDesc:  "register.company_desc",
     accent: "#0D9488",
     iconGradient: "linear-gradient(135deg, #0D9488 0%, #059669 100%)",
     shadowColor: "rgba(13,148,136,0.22)",
@@ -28,19 +29,19 @@ const ROLES = (t: (key: string) => string) => [
   {
     type: "candidate" as UserType,
     icon: PersonOutlined,
-    label: t("register.candidate_label"),
-    description: t("register.candidate_desc"),
+    tLabel: "register.candidate_label",
+    tDesc:  "register.candidate_desc",
     accent: "#7C3AED",
     iconGradient: "linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)",
     shadowColor: "rgba(124,58,237,0.2)",
     border: "rgba(124,58,237,0.14)",
   },
-];
+] as const;
 
-const FORM_TITLES = (t: (key: string) => string) => ({
-  company:   { title: t("register.company_title"),   subtitle: t("register.company_subtitle") },
-  candidate: { title: t("register.candidate_title"), subtitle: t("register.candidate_subtitle") },
-});
+const FORM_TITLE_KEYS: Record<UserType, { title: string; subtitle: string }> = {
+  company:   { title: "register.company_title",   subtitle: "register.company_subtitle"   },
+  candidate: { title: "register.candidate_title", subtitle: "register.candidate_subtitle" },
+};
 
 const RegisterPage = () => {
   const { t } = useTranslation("auth");
@@ -52,7 +53,7 @@ const RegisterPage = () => {
   const [registeredEmail, setRegisteredEmail] = useState("");
 
   const isOtpStep  = formStep === 2;
-  const formConfig = userType ? FORM_TITLES(t)[userType] : null;
+  const formConfig = userType ? FORM_TITLE_KEYS[userType] : null;
 
   const handleBack = () => { setUserType(null); setFormStep(1); };
 
@@ -62,8 +63,18 @@ const RegisterPage = () => {
         <>
           <RoleSelectHeader />
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mb: 3.5 }}>
-            {ROLES(t).map((role) => (
-              <RoleCard key={role.type} {...role} onClick={() => setUserType(role.type)} />
+            {ROLE_CONFIG.map((role) => (
+              <RoleCard
+                key={role.type}
+                icon={role.icon}
+                label={t(role.tLabel)}
+                description={t(role.tDesc)}
+                accent={role.accent}
+                iconGradient={role.iconGradient}
+                shadowColor={role.shadowColor}
+                border={role.border}
+                onClick={() => setUserType(role.type)}
+              />
             ))}
           </Box>
           <SignInLink returnUrl={returnUrl} label={t("register.already_account")} />
@@ -73,8 +84,8 @@ const RegisterPage = () => {
           <FormHeader
             isOtpStep={isOtpStep}
             hasReturnUrl={!!returnUrl}
-            title={formConfig!.title}
-            subtitle={formConfig!.subtitle}
+            title={t(formConfig!.title)}
+            subtitle={t(formConfig!.subtitle)}
             registeredEmail={registeredEmail}
             onBack={handleBack}
           />

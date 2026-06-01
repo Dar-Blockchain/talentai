@@ -4,11 +4,26 @@ import Image from "next/image";
 import NextLink from "next/link";
 import { useTranslation } from "react-i18next";
 
-const AuthLeftPanel: React.FC = () => {
+interface Props {
+  /** i18n namespace prefix: "register_panel" or "signin_panel" */
+  tKey: "register_panel" | "signin_panel";
+  flex?: string;
+}
+
+const RING_SIZES = [480, 360, 250, 150] as const;
+
+const BrandLeftPanel: React.FC<Props> = ({ tKey, flex = "0 0 45%" }) => {
   const { t } = useTranslation("auth");
 
   return (
-    <Box sx={{ display: { xs: "none", md: "flex" }, flex: { md: "0 0 45%", lg: "0 0 50%" }, flexDirection: "column", justifyContent: "center", px: "clamp(32px, 5vw, 64px)", py: "clamp(24px, 5vh, 48px)", background: "linear-gradient(155deg, #052e2b 0%, #08504a 45%, #0a6b62 100%)", position: "relative", overflow: "hidden" }}>
+    <Box sx={{
+      display: { xs: "none", md: "flex" },
+      flex: { md: flex, lg: "0 0 50%" },
+      flexDirection: "column", justifyContent: "center",
+      px: "clamp(32px, 5vw, 64px)", py: "clamp(24px, 5vh, 48px)",
+      background: "linear-gradient(155deg, #052e2b 0%, #08504a 45%, #0a6b62 100%)",
+      position: "relative", overflow: "hidden",
+    }}>
 
       {/* Glow orbs */}
       <Box sx={{ position: "absolute", top: -100, right: -80, width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(13,148,136,0.3) 0%, transparent 65%)", pointerEvents: "none" }} />
@@ -18,7 +33,7 @@ const AuthLeftPanel: React.FC = () => {
       <Box sx={{ position: "absolute", inset: 0, pointerEvents: "none", opacity: 0.06, backgroundImage: "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)", backgroundSize: "48px 48px" }} />
 
       {/* Concentric rings */}
-      {[480, 360, 250, 150].map((size, i) => (
+      {RING_SIZES.map((size, i) => (
         <Box key={size} sx={{ position: "absolute", right: -(size / 2.2), top: "50%", transform: "translateY(-50%)", width: size, height: size, borderRadius: "50%", border: `1px solid rgba(94,234,212,${0.12 - i * 0.025})`, pointerEvents: "none" }} />
       ))}
 
@@ -39,30 +54,30 @@ const AuthLeftPanel: React.FC = () => {
         <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1, px: 1.5, py: 0.6, borderRadius: "20px", bgcolor: "rgba(94,234,212,0.1)", border: "1px solid rgba(94,234,212,0.2)", mb: "clamp(10px, 2vh, 24px)" }}>
           <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#5eead4", flexShrink: 0 }} />
           <Typography sx={{ fontSize: "clamp(0.6rem, 0.65vw, 0.78rem)", fontWeight: 600, color: "#5eead4", fontFamily: "Poppins", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-            {t("signin_panel.badge")}
+            {t(`${tKey}.badge`)}
           </Typography>
         </Box>
 
-        <Typography sx={{ fontSize: "clamp(1.8rem, 3.6vw, 4.5rem)", fontWeight: 800, color: "#fff", fontFamily: "Poppins", lineHeight: 1.08, mb: "clamp(10px, 2vh, 24px)" }}>
-          {t("signin_panel.headline_1")}<br />
+        <Typography sx={{ fontSize: "clamp(1.6rem, 3.2vw, 4rem)", fontWeight: 800, color: "#fff", fontFamily: "Poppins", lineHeight: 1.08, mb: "clamp(10px, 2vh, 24px)" }}>
+          {t(`${tKey}.headline_1`)}<br />
           <Box component="span" sx={{ background: "linear-gradient(90deg, #5eead4 0%, #a7f3d0 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-            {t("signin_panel.headline_2")}
+            {t(`${tKey}.headline_2`)}
           </Box>
         </Typography>
 
         <Box sx={{ width: "clamp(36px, 4vw, 56px)", height: 3, borderRadius: 2, background: "linear-gradient(90deg, #5eead4, transparent)", mb: "clamp(10px, 2vh, 24px)" }} />
 
         <Typography sx={{ fontSize: "clamp(0.78rem, 0.88vw, 1.05rem)", color: "rgba(255,255,255,0.5)", fontFamily: "Poppins", lineHeight: 1.85 }}>
-          {t("signin_panel.body")}
+          {t(`${tKey}.body`)}
         </Typography>
       </Box>
 
       {/* Copyright */}
       <Typography sx={{ position: "absolute", bottom: "clamp(18px, 3vh, 32px)", left: "clamp(32px, 4vw, 64px)", fontSize: "clamp(0.6rem, 0.65vw, 0.75rem)", color: "rgba(255,255,255,0.2)", fontFamily: "Poppins", zIndex: 1 }}>
-        {t("signin_panel.copyright")}
+        {t(`${tKey}.copyright`)}
       </Typography>
     </Box>
   );
 };
 
-export default AuthLeftPanel;
+export default BrandLeftPanel;
