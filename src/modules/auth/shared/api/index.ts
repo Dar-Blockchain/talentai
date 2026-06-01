@@ -45,7 +45,7 @@ export const authApi = {
    * Verifies the OTP and returns the full session payload.
    * Always throws on non-2xx — callers never need to check res.data.token manually.
    */
-  verifyOtp: async ({ email, otp, location }: VerifyOtpPayload, signal?: AbortSignal): Promise<VerifyOtpResponse> => {
+  verifyOtp: async ({ email, otp, location, signal }: VerifyOtpPayload): Promise<VerifyOtpResponse> => {
     try {
       const res = await axiosInstance.post<VerifyOtpResponse>(
         "auth/verify-otp",

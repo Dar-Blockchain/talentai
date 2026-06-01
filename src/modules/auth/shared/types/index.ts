@@ -45,6 +45,7 @@ export interface VerifyOtpPayload {
   email: string;
   otp: string;
   location?: UserLocation;
+  signal?: AbortSignal;
 }
 
 // ─── API responses ────────────────────────────────────────────────────────────
