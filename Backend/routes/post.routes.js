@@ -36,81 +36,294 @@ const upload = multer({
   },
 });
 
-// Public routes - no authentication required
-
-// GET /post/search
-// Description: Returns all posts with search, filters and pagination (public)
+/**
+ * @openapi
+ * /post/search:
+ *   get:
+ *     tags: [Posts]
+ *     summary: Search / list all posts (public)
+ *     security: []
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         schema: { type: string }
+ *         description: Search keyword
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 10 }
+ *     responses:
+ *       200:
+ *         description: Paginated list of posts
+ */
 router.get("/search", postController.getAllPostsWithSearch);
 
-// GET /post/details/:id
-// Description: Returns post details by ID (public)
+/**
+ * @openapi
+ * /post/details/{id}:
+ *   get:
+ *     tags: [Posts]
+ *     summary: Get post details by ID (public)
+ *     security: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Post details
+ *       404:
+ *         description: Post not found
+ */
 router.get("/details/:id", postController.getPostDetailsPublic);
 
-// GET /post/public-stats
-// Description: Returns public statistics (number of users, posts, companies)
+/**
+ * @openapi
+ * /post/public-stats:
+ *   get:
+ *     tags: [Posts]
+ *     summary: Public platform statistics (users, posts, companies)
+ *     security: []
+ *     responses:
+ *       200:
+ *         description: Aggregated counts
+ */
 router.get("/public-stats", postController.getPublicStats);
 
 
 router.use(requireAuth,authLogMiddleware("Post"));
 
+/**
+ * @openapi
+ * /post/generate-job-post:
+ *   post:
+ *     tags: [Posts]
+ *     summary: AI-generate a job post draft (Company only)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *               jobTitle: { type: string }
+ *               description: { type: string }
+ *     responses:
+ *       200:
+ *         description: Generated job post draft
+ */
 router.post("/generate-job-post", upload.single("file"), controledAcces('Company'), resolveCompanyActor, generateJobPostController.generateJobPost);
 
-// POST /post/save-post
-// Description: Creates a post
-// Required scopes: write:posts
+/**
+ * @openapi
+ * /post/save-post:
+ *   post:
+ *     tags: [Posts]
+ *     summary: Create a job post
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [jobDetails]
+ *             properties:
+ *               jobDetails:
+ *                 type: object
+ *               status:
+ *                 type: string
+ *                 enum: [draft, open]
+ *     responses:
+ *       201:
+ *         description: Post created
+ */
 router.post("/save-post", checkScope(['write:posts']), resolveCompanyActor, postController.createPost);
 
-// GET /post/get-all-posts
-// Description: Returns all posts
-// Required scopes: read:posts
+/**
+ * @openapi
+ * /post/get-all-posts:
+ *   get:
+ *     tags: [Posts]
+ *     summary: Get all posts
+ *     responses:
+ *       200:
+ *         description: List of posts
+ */
 router.get("/get-all-posts", checkScope(['read:posts']), postController.getAllPosts);
 
-// GET /post/my-posts
-// Description: Posts of current user
-// Required scopes: read:posts
+/**
+ * @openapi
+ * /post/my-posts:
+ *   get:
+ *     tags: [Posts]
+ *     summary: Get posts belonging to current user/company
+ *     responses:
+ *       200:
+ *         description: List of user's posts
+ */
 router.get("/my-posts", resolveCompanyActor, postController.getUserPosts);
 
-// GET /post/metrics
-// Description: Returns post metrics (total, active, draft, expired, closed, cancelled)
+/**
+ * @openapi
+ * /post/metrics:
+ *   get:
+ *     tags: [Posts]
+ *     summary: Post metrics (total, active, draft, expired, closed, cancelled)
+ *     responses:
+ *       200:
+ *         description: Post metrics
+ */
 router.get("/metrics", resolveCompanyActor, postController.getPostMetrics);
 
-// GET /post/kpi/status-by-post — KPI Zone 2: per-post shortlisted/velocity/coverage/deadline
+/**
+ * @openapi
+ * /post/kpi/status-by-post:
+ *   get:
+ *     tags: [Posts]
+ *     summary: KPI — per-post shortlisted / velocity / coverage / deadline
+ *     responses:
+ *       200:
+ *         description: KPI data per post
+ */
 router.get("/kpi/status-by-post", postController.getPostsStatusKPI);
 
-// GET /post/getPostById/:id
-// Description: Post details
-// Required scopes: read:posts
+/**
+ * @openapi
+ * /post/getPostById/{id}:
+ *   get:
+ *     tags: [Posts]
+ *     summary: Get post by ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Post details
+ *       404:
+ *         description: Not found
+ */
 router.get("/getPostById/:id", checkScope(['read:posts']), postController.getPostById);
 
-// PUT /post/updatePost/:id
-// Description: Updates a post
-// Required scopes: write:posts
+/**
+ * @openapi
+ * /post/updatePost/{id}:
+ *   put:
+ *     tags: [Posts]
+ *     summary: Update a post
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Post updated
+ */
 router.put("/updatePost/:id", checkScope(['write:posts']), resolveCompanyActor,postController.updatePost);
 
-// PATCH /post/updatePostStatus/:id
-// Description: Changes post status (active/draft, etc.)
-// Required scopes: write:posts
+/**
+ * @openapi
+ * /post/updatePostStatus/{id}:
+ *   patch:
+ *     tags: [Posts]
+ *     summary: Change post status (open, draft, closed …)
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [status]
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [draft, open, closed, cancelled, expired]
+ *     responses:
+ *       200:
+ *         description: Status updated
+ */
 router.patch("/updatePostStatus/:id", checkScope(['write:posts']), resolveCompanyActor,postController.updatePostStatus);
 
-// DELETE /post/deletePost/:id
-// Description: Deletes a post
-// Required scopes: delete:posts
+/**
+ * @openapi
+ * /post/deletePost/{id}:
+ *   delete:
+ *     tags: [Posts]
+ *     summary: Delete a post
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Post deleted
+ */
 router.delete("/deletePost/:id", checkScope(['delete:posts']), resolveCompanyActor,postController.deletePost);
 
-// GET /post/adsPost
-// Description: 3 posts suggested from top 3 profile skills + pagination
+/**
+ * @openapi
+ * /post/adsPost:
+ *   get:
+ *     tags: [Posts]
+ *     summary: Suggested posts based on user's top 3 skills
+ *     responses:
+ *       200:
+ *         description: List of suggested posts
+ */
 router.get("/adsPost", postController.getPostsByUserTopSkills);
 
-// GET /post/DetailsPost/:id
-// Description: Post detail alias
+/**
+ * @openapi
+ * /post/DetailsPost/{id}:
+ *   get:
+ *     tags: [Posts]
+ *     summary: Post detail alias
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Post details
+ */
 router.get("/DetailsPost/:id", resolveCompanyActor,postController.getPostById);
 
-// ========================================
-// INTERVIEW CONFIGURATION ROUTES
-// ========================================
-
-// GET /post/interview-config/:jobId
-// Description: Get interview configuration for job-based HR interview (prompt flow)
+/**
+ * @openapi
+ * /post/interview-config/{jobId}:
+ *   get:
+ *     tags: [Posts]
+ *     summary: Get interview configuration for a job post
+ *     parameters:
+ *       - in: path
+ *         name: jobId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Interview configuration (prompt flow)
+ */
 router.get("/interview-config/:jobId",resolveCompanyActor, postController.getJobInterviewConfig);
 
 module.exports = router;

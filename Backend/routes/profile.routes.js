@@ -2,69 +2,127 @@
  * Routes de profil utilisateur et d'entreprise
  *
  * Global applied middlewares:
- * - requireAuthUser: requires an authenticated user
+ * - requireAuth: requires an authenticated user
  * - LogMiddleware("Profile"): logs profile requests
  */
 const express = require('express');
 const router = express.Router();
 const profileController = require('../controllers/ProfileControllers/profile.controller');
 
-// Import des middlewares
 const { requireAuth } = require('../middleware/security/auth.middleware');
 const authLogMiddleware = require("../middleware/security/request-log.middleware")
 const uploadfile = require('../middleware/file-upload.middleware');
 
-router.put('/updateFinalBid', profileController.updateFinalBid);
+// Auth required for all routes below
+router.use(requireAuth, authLogMiddleware("Profile"));
 
-
-// Auth obligatoire + logs pour toutes les routes
-router.use(requireAuth,authLogMiddleware("Profile"));
-
-// GET /profile/getMyProfile — profil de l'utilisateur courant
+/**
+ * @openapi
+ * /profiles/me:
+ *   get:
+ *     tags: [Profiles]
+ *     summary: Get current user's profile
+ *     responses:
+ *       200:
+ *         description: Current user's profile
+ */
 router.get('/me', profileController.getMyProfile);
 
-// POST /profile/createOrUpdateProfile — creates/updates user profile
-router.post('/createOrUpdateProfile',profileController.createOrUpdateProfile);
+/**
+ * @openapi
+ * /profiles/createOrUpdateProfile:
+ *   post:
+ *     tags: [Profiles]
+ *     summary: Create or update candidate profile
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Profile created or updated
+ */
+router.post('/createOrUpdateProfile', profileController.createOrUpdateProfile);
 
-// PUT /profile/updateProfileVisibility - Update profile visibility (public/private)
+/**
+ * @openapi
+ * /profiles/updateProfileVisibility:
+ *   put:
+ *     tags: [Profiles]
+ *     summary: Update profile visibility (public/private)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [isPublicProfile]
+ *             properties:
+ *               isPublicProfile: { type: boolean }
+ *     responses:
+ *       200:
+ *         description: Visibility updated
+ */
 router.put('/updateProfileVisibility', profileController.updateProfileVisibility);
 
-// PUT /profile/updateProfileComplete — unified API for all profile updates (fields + image + type)
-router.put('/:userId', uploadfile.single("user_image"), profileController.updateProfileComplete);
-
-// POST /profile/createOrUpdateCompanyProfile — creates/updates company profile
+/**
+ * @openapi
+ * /profiles/createOrUpdateCompanyProfile:
+ *   post:
+ *     tags: [Profiles]
+ *     summary: Create or update company profile
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Company profile created or updated
+ */
 router.post('/createOrUpdateCompanyProfile', profileController.createOrUpdateCompanyProfile);
 
-// GET /profile/search/skills — search by skills
-router.get('/search/skills', profileController.searchProfilesBySkills);
-
-// POST /profile/addSoftSkills — ajoute des soft skills
-router.post('/addSoftSkills', profileController.addSoftSkills);
-
-// GET /profile/getSoftSkills — soft skills courants
-router.get('/getSoftSkills',profileController.getSoftSkills);
-
-// GET /profile/getSoftSkillsById/:userId — soft skills par utilisateur
-router.get('/getSoftSkillsById/:userId', profileController.getSoftSkills);
-
-router.delete('/deleteHardSkill', profileController.deleteHardSkill);
-
-router.delete('/deleteSoftSkills', profileController.deleteSoftSkill);
-
-router.get('/getCompanyWithAssessments', profileController.getCompanyWithAssessments);
-
-// ========== PAYMENT MANAGEMENT ROUTES ==========
-
-// GET /profile/:profileId/payments — Get all payments for a profile
-router.get('/:profileId/payments', profileController.getProfilePayments);
-
-// GET /profile/:profileId/payments/active — Get active (most recent completed) payment
-router.get('/:profileId/payments/active', profileController.getActiveProfilePayment);
-
-// POST /profile/:profileId/payments/add — Add payment to profile
-router.post('/:profileId/payments/add', profileController.addPaymentToProfile);
-
-// GET /profiles/:userId — Public route (no auth required) — MUST be LAST to avoid catching other routes
+/**
+ * @openapi
+ * /profiles/{userId}:
+ *   put:
+ *     tags: [Profiles]
+ *     summary: Full profile update — fields, image, and/or type
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               user_image:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Profile updated
+ *   get:
+ *     tags: [Profiles]
+ *     summary: Get a profile by user ID
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Profile data
+ *       404:
+ *         description: Not found
+ */
+router.put('/:userId', uploadfile.single("user_image"), profileController.updateProfileComplete);
 router.get('/:userId', profileController.getProfileById);
 
 module.exports = router;

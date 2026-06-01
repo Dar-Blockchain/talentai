@@ -15,8 +15,16 @@ const { verifyApiKey, checkScope } = require("../middleware/security/api-key.mid
 
 router.use(requireAuth);
 
-// GET /permissions/me
-// Description: Get current user's own permissions
+/**
+ * @openapi
+ * /permissions/me:
+ *   get:
+ *     tags: [Permissions]
+ *     summary: Get current user's own permissions
+ *     responses:
+ *       200:
+ *         description: Permissions object for the authenticated user
+ */
 router.get("/me", companyPermissionsController.getMyPermissions);
 
 module.exports = router;

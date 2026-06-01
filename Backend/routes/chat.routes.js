@@ -11,79 +11,395 @@ router.use(requireAuth);
 // CONVERSATION ROUTES
 // ============================================
 
-// POST /chat/conversations - Find or create conversation
+/**
+ * @openapi
+ * /chat/conversations:
+ *   post:
+ *     tags: [Chat]
+ *     summary: Find or create a conversation
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [participantId]
+ *             properties:
+ *               participantId: { type: string }
+ *     responses:
+ *       200:
+ *         description: Conversation found or created
+ *   get:
+ *     tags: [Chat]
+ *     summary: Get all conversations for the current user
+ *     responses:
+ *       200:
+ *         description: List of conversations
+ */
 router.post('/conversations', conversationController.findOrCreateConversation);
-
-// GET /chat/conversations - Get user's conversations
 router.get('/conversations', conversationController.getUserConversations);
 
-// GET /chat/conversations/search - Search conversations
+/**
+ * @openapi
+ * /chat/conversations/search:
+ *   get:
+ *     tags: [Chat]
+ *     summary: Search conversations
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Matching conversations
+ */
 router.get('/conversations/search', conversationController.searchConversations);
 
-// GET /chat/conversations/unread-count - Get total unread count
+/**
+ * @openapi
+ * /chat/conversations/unread-count:
+ *   get:
+ *     tags: [Chat]
+ *     summary: Get total unread message count across all conversations
+ *     responses:
+ *       200:
+ *         description: Unread count
+ */
 router.get('/conversations/unread-count', conversationController.getTotalUnreadCount);
 
-// POST /chat/conversations/unarchive-all - Remove current user from archivedBy on all their conversations
+/**
+ * @openapi
+ * /chat/conversations/unarchive-all:
+ *   post:
+ *     tags: [Chat]
+ *     summary: Unarchive all conversations for current user
+ *     responses:
+ *       200:
+ *         description: All conversations unarchived
+ */
 router.post('/conversations/unarchive-all', conversationController.unarchiveAllConversations);
 
-// GET /chat/conversations/:conversationId - Get conversation by ID
+/**
+ * @openapi
+ * /chat/conversations/{conversationId}:
+ *   get:
+ *     tags: [Chat]
+ *     summary: Get a conversation by ID
+ *     parameters:
+ *       - in: path
+ *         name: conversationId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Conversation details
+ */
 router.get('/conversations/:conversationId', conversationController.getConversationById);
 
-// PUT /chat/conversations/:conversationId/read - Mark conversation as read
+/**
+ * @openapi
+ * /chat/conversations/{conversationId}/read:
+ *   put:
+ *     tags: [Chat]
+ *     summary: Mark a conversation as read
+ *     parameters:
+ *       - in: path
+ *         name: conversationId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Marked as read
+ */
 router.put('/conversations/:conversationId/read', conversationController.markConversationAsRead);
 
-// PUT /chat/conversations/:conversationId/archive - Archive conversation
+/**
+ * @openapi
+ * /chat/conversations/{conversationId}/archive:
+ *   put:
+ *     tags: [Chat]
+ *     summary: Archive a conversation
+ *     parameters:
+ *       - in: path
+ *         name: conversationId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Archived
+ */
 router.put('/conversations/:conversationId/archive', conversationController.archiveConversation);
 
-// PUT /chat/conversations/:conversationId/unarchive - Unarchive conversation
+/**
+ * @openapi
+ * /chat/conversations/{conversationId}/unarchive:
+ *   put:
+ *     tags: [Chat]
+ *     summary: Unarchive a conversation
+ *     parameters:
+ *       - in: path
+ *         name: conversationId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Unarchived
+ */
 router.put('/conversations/:conversationId/unarchive', conversationController.unarchiveConversation);
 
-// PUT /chat/conversations/:conversationId/block - Block conversation
+/**
+ * @openapi
+ * /chat/conversations/{conversationId}/block:
+ *   put:
+ *     tags: [Chat]
+ *     summary: Block a conversation
+ *     parameters:
+ *       - in: path
+ *         name: conversationId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Conversation blocked
+ */
 router.put('/conversations/:conversationId/block', conversationController.blockConversation);
 
-// PUT /chat/conversations/:conversationId/unblock - Unblock conversation
+/**
+ * @openapi
+ * /chat/conversations/{conversationId}/unblock:
+ *   put:
+ *     tags: [Chat]
+ *     summary: Unblock a conversation
+ *     parameters:
+ *       - in: path
+ *         name: conversationId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Conversation unblocked
+ */
 router.put('/conversations/:conversationId/unblock', conversationController.unblockConversation);
 
-// DELETE /chat/conversations/:conversationId - Delete conversation
+/**
+ * @openapi
+ * /chat/conversations/{conversationId}:
+ *   delete:
+ *     tags: [Chat]
+ *     summary: Delete a conversation
+ *     parameters:
+ *       - in: path
+ *         name: conversationId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Conversation deleted
+ */
 router.delete('/conversations/:conversationId', conversationController.deleteConversation);
 
-// GET /chat/unread-count - Get total unread count
+/**
+ * @openapi
+ * /chat/unread-count:
+ *   get:
+ *     tags: [Chat]
+ *     summary: Get total unread count (alias)
+ *     responses:
+ *       200:
+ *         description: Unread count
+ */
 router.get('/unread-count', conversationController.getTotalUnreadCount);
 
 // ============================================
 // MESSAGE ROUTES
 // ============================================
 
-// POST /chat/messages - Send message
+/**
+ * @openapi
+ * /chat/messages:
+ *   post:
+ *     tags: [Chat]
+ *     summary: Send a message
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [conversationId, content]
+ *             properties:
+ *               conversationId: { type: string }
+ *               content: { type: string }
+ *     responses:
+ *       201:
+ *         description: Message sent
+ */
 router.post('/messages', messageController.sendMessage);
 
-// Static path segments must be registered before `/messages/:conversationId` or Express
-// will treat e.g. `single` as a conversationId.
-// GET /chat/messages/single/:messageId - Get message by ID
+/**
+ * @openapi
+ * /chat/messages/single/{messageId}:
+ *   get:
+ *     tags: [Chat]
+ *     summary: Get a message by ID
+ *     parameters:
+ *       - in: path
+ *         name: messageId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Message details
+ */
 router.get('/messages/single/:messageId', messageController.getMessageById);
 
-// GET /chat/messages/:conversationId/unread - Get unread messages
+/**
+ * @openapi
+ * /chat/messages/{conversationId}/unread:
+ *   get:
+ *     tags: [Chat]
+ *     summary: Get unread messages in a conversation
+ *     parameters:
+ *       - in: path
+ *         name: conversationId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Unread messages
+ */
 router.get('/messages/:conversationId/unread', messageController.getUnreadMessages);
 
-// GET /chat/messages/:conversationId/search - Search messages in conversation
+/**
+ * @openapi
+ * /chat/messages/{conversationId}/search:
+ *   get:
+ *     tags: [Chat]
+ *     summary: Search messages in a conversation
+ *     parameters:
+ *       - in: path
+ *         name: conversationId
+ *         required: true
+ *         schema: { type: string }
+ *       - in: query
+ *         name: q
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Matching messages
+ */
 router.get('/messages/:conversationId/search', messageController.searchMessages);
 
-// GET /chat/messages/:conversationId - Get conversation messages
+/**
+ * @openapi
+ * /chat/messages/{conversationId}:
+ *   get:
+ *     tags: [Chat]
+ *     summary: Get all messages in a conversation
+ *     parameters:
+ *       - in: path
+ *         name: conversationId
+ *         required: true
+ *         schema: { type: string }
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 50 }
+ *     responses:
+ *       200:
+ *         description: List of messages
+ */
 router.get('/messages/:conversationId', messageController.getConversationMessages);
 
-// PUT /chat/messages/:messageId/read - Mark message as read
+/**
+ * @openapi
+ * /chat/messages/{messageId}/read:
+ *   put:
+ *     tags: [Chat]
+ *     summary: Mark a message as read
+ *     parameters:
+ *       - in: path
+ *         name: messageId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Marked as read
+ */
 router.put('/messages/:messageId/read', messageController.markMessageAsRead);
 
-// PUT /chat/messages/:conversationId/read-all - Mark all messages as read
+/**
+ * @openapi
+ * /chat/messages/{conversationId}/read-all:
+ *   put:
+ *     tags: [Chat]
+ *     summary: Mark all messages in a conversation as read
+ *     parameters:
+ *       - in: path
+ *         name: conversationId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: All messages marked as read
+ */
 router.put('/messages/:conversationId/read-all', messageController.markAllMessagesAsRead);
 
-// DELETE /chat/messages/:messageId - Delete message
+/**
+ * @openapi
+ * /chat/messages/{messageId}:
+ *   delete:
+ *     tags: [Chat]
+ *     summary: Delete a message
+ *     parameters:
+ *       - in: path
+ *         name: messageId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Message deleted
+ */
 router.delete('/messages/:messageId', messageController.deleteMessage);
 
-// POST /chat/messages/:messageId/reaction - Add reaction to message
+/**
+ * @openapi
+ * /chat/messages/{messageId}/reaction:
+ *   post:
+ *     tags: [Chat]
+ *     summary: Add a reaction to a message
+ *     parameters:
+ *       - in: path
+ *         name: messageId
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [emoji]
+ *             properties:
+ *               emoji: { type: string }
+ *     responses:
+ *       200:
+ *         description: Reaction added
+ *   delete:
+ *     tags: [Chat]
+ *     summary: Remove a reaction from a message
+ *     parameters:
+ *       - in: path
+ *         name: messageId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Reaction removed
+ */
 router.post('/messages/:messageId/reaction', messageController.addReaction);
-
-// DELETE /chat/messages/:messageId/reaction - Remove reaction from message
 router.delete('/messages/:messageId/reaction', messageController.removeReaction);
 
 module.exports = router;

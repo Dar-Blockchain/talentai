@@ -17,8 +17,44 @@ const authLogMiddleware = require("../middleware/security/request-log.middleware
 const { controledAcces } = require("../middleware/authorize.middleware.js");
 
 /**
- * POST /campaigns/:campaignId/participants — Ajouter un participant
- * Middleware: authentification requise + access company
+ * @openapi
+ * /campaign-participants/{campaignId}/participants:
+ *   post:
+ *     tags: [Campaign Participants]
+ *     summary: Add a participant to a campaign (Company)
+ *     parameters:
+ *       - in: path
+ *         name: campaignId
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email: { type: string, format: email }
+ *               employeeId: { type: string }
+ *     responses:
+ *       201:
+ *         description: Participant added
+ *   get:
+ *     tags: [Campaign Participants]
+ *     summary: Get all participants in a campaign (Company)
+ *     parameters:
+ *       - in: path
+ *         name: campaignId
+ *         required: true
+ *         schema: { type: string }
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [INVITED, IN_PROGRESS, COMPLETED, DROPPED]
+ *     responses:
+ *       200:
+ *         description: List of participants
  */
 router.post(
   "/:campaignId/participants",
@@ -27,12 +63,6 @@ router.post(
   authLogMiddleware("CampaignParticipant"),
   campaignParticipantController.addCampaignParticipant,
 );
-
-/**
- * GET /campaigns/:campaignId/participants — Retrieve all participants in a campaign
- * Query: ?status=INVITED|IN_PROGRESS|COMPLETED|DROPPED
- * Middleware: authentification requise + access company
- */
 router.get(
   "/:campaignId/participants",
   requireAuthUser,
@@ -42,20 +72,22 @@ router.get(
 );
 
 /**
- * GET /participants/:participantId — Retrieve a specific participant
- * Middleware: authentification requise + access company
- */
-router.get(
-  "/:participantId",
-  requireAuthUser,
-  controledAcces("Company"),
-  authLogMiddleware("CampaignParticipant"),
-  campaignParticipantController.getParticipant,
-);
-
-/**
- * GET /participants/token/:token — Retrieve participant by anonymous token
- * Note: Can be called without authentication for anonymous campaigns
+ * @openapi
+ * /campaign-participants/token/{token}:
+ *   get:
+ *     tags: [Campaign Participants]
+ *     summary: Get participant by anonymous token (public)
+ *     security: []
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Participant details
+ *       404:
+ *         description: Token not found
  */
 router.get(
   "/token/:token",
@@ -64,10 +96,59 @@ router.get(
 );
 
 /**
- * PUT /participants/:participantId - Update a participant
- * Body: { status, accessedAt, completedAt }
- * Middleware: authentification requise + access company
+ * @openapi
+ * /campaign-participants/{participantId}:
+ *   get:
+ *     tags: [Campaign Participants]
+ *     summary: Get a specific participant (Company)
+ *     parameters:
+ *       - in: path
+ *         name: participantId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Participant details
+ *   put:
+ *     tags: [Campaign Participants]
+ *     summary: Update a participant (Company)
+ *     parameters:
+ *       - in: path
+ *         name: participantId
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status: { type: string }
+ *               accessedAt: { type: string, format: date-time }
+ *               completedAt: { type: string, format: date-time }
+ *     responses:
+ *       200:
+ *         description: Participant updated
+ *   delete:
+ *     tags: [Campaign Participants]
+ *     summary: Delete a participant (Company)
+ *     parameters:
+ *       - in: path
+ *         name: participantId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Participant deleted
  */
+router.get(
+  "/:participantId",
+  requireAuthUser,
+  controledAcces("Company"),
+  authLogMiddleware("CampaignParticipant"),
+  campaignParticipantController.getParticipant,
+);
 router.put(
   "/:participantId",
   requireAuthUser,
@@ -75,11 +156,6 @@ router.put(
   authLogMiddleware("CampaignParticipant"),
   campaignParticipantController.updateCampaignParticipant,
 );
-
-/**
- * DELETE /participants/:participantId - Delete a participant
- * Middleware: authentification requise + access company
- */
 router.delete(
   "/:participantId",
   requireAuthUser,
@@ -88,11 +164,27 @@ router.delete(
   campaignParticipantController.deleteCampaignParticipant,
 );
 
-// Routes additionnelles (optionnelles)
-
 /**
- * PATCH /participants/:participantId/drop — Mark participant as dropped
- * Body: { reason (optionnel) }
+ * @openapi
+ * /campaign-participants/{participantId}/drop:
+ *   patch:
+ *     tags: [Campaign Participants]
+ *     summary: Mark a participant as dropped
+ *     parameters:
+ *       - in: path
+ *         name: participantId
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason: { type: string }
+ *     responses:
+ *       200:
+ *         description: Participant marked as dropped
  */
 router.patch(
   "/:participantId/drop",
@@ -126,8 +218,35 @@ router.patch(
 );
 
 /**
- * POST /campaigns/:campaignId/participants/bulk — Ajouter plusieurs participants en masse
- * Body: { participants: [{ email, employeeId, anonymousToken }] }
+ * @openapi
+ * /campaign-participants/{campaignId}/participants/bulk:
+ *   post:
+ *     tags: [Campaign Participants]
+ *     summary: Bulk-add participants to a campaign (Company)
+ *     parameters:
+ *       - in: path
+ *         name: campaignId
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [participants]
+ *             properties:
+ *               participants:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     email: { type: string, format: email }
+ *                     employeeId: { type: string }
+ *                     anonymousToken: { type: string }
+ *     responses:
+ *       201:
+ *         description: Participants added in bulk
  */
 router.post(
   "/:campaignId/participants/bulk",

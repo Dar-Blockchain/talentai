@@ -60,14 +60,6 @@ export const updateJobDetails = createAsyncThunk(
   }
 );
 
-export const postRecruitmentSteps = createAsyncThunk(
-  "postDetails/postRecruitmentSteps",
-  async ({ postId, steps }: { postId: string; steps: any[] }, { rejectWithValue }) => {
-    try { return await postService.postRecruitmentSteps(postId, steps); }
-    catch (err: any) { return rejectWithValue(err.response?.data?.message || err.message || "Error posting recruitment steps"); }
-  }
-);
-
 export const savePostInterviewAssessment = createAsyncThunk(
   "postDetails/savePostInterviewAssessment",
   async ({ postId, interviewData }: { postId: string; interviewData: any }, { rejectWithValue }) => {
@@ -121,13 +113,6 @@ const postDetailsSlice = createSlice({
       .addCase(updateJobDetails.pending,   (state) => { state.savePost.loading = true;  state.savePost.error = null; })
       .addCase(updateJobDetails.fulfilled, (state, action) => { state.savePost.loading = false; state.savePost.savedPost = action.payload; })
       .addCase(updateJobDetails.rejected,  (state, action) => { state.savePost.loading = false; state.savePost.error = action.payload as string; })
-
-      .addCase(postRecruitmentSteps.pending,   (state) => { state.postStepsLoading = true;  state.postStepsError = null; })
-      .addCase(postRecruitmentSteps.fulfilled, (state, action) => {
-        state.postStepsLoading = false;
-        if (action.payload.data) { state.steps = action.payload.data; if (state.currentJob) state.currentJob.PostSteps = action.payload.data; }
-      })
-      .addCase(postRecruitmentSteps.rejected,  (state, action) => { state.postStepsLoading = false; state.postStepsError = action.payload as string; })
 
       .addCase(savePostInterviewAssessment.pending,   () => {})
       .addCase(savePostInterviewAssessment.fulfilled, () => {})

@@ -1,4 +1,5 @@
 // Import all route modules
+const { registerSwagger } = require('./swagger');
 const authRouter = require("../routes/authentication.routes");
 const companyPermissionsRouter = require("../routes/companyPermissions.routes");
 const permissionsRouter = require("../routes/permissions.routes");
@@ -25,7 +26,6 @@ const internalCampaignRoutes = require('../routes/internalCampaign.routes');
 const campaignParticipantRoutes = require('../routes/campaignParticipant.routes');
 const departmentRoutes = require('../routes/department.routes');
 const contactRouter = require('../routes/contact.routes');
-const cvAnalysisRouter = require('../routes/cvAnalysis.routes');
 const employeePermissionsRouter = require('../routes/employeePermissions.routes');
 const jobApplicationRouter = require("../routes/jobApplication.routes");
 const apiKeyRouter = require('../routes/apiKeys.routes');
@@ -39,7 +39,9 @@ const backupRouter = require('../routes/backup.routes');
  * @param {Express} app - Express application instance
  */
 function registerRoutes(app) {
-  
+  // Swagger API docs at /api/docs
+  registerSwagger(app);
+
   // Authentication & Profile
   app.use("/auth", authRouter); //✅ authentication
   app.use("/admin", companyPermissionsRouter); // ✅ (admin company permissions) -> admin (to be checked)
@@ -103,9 +105,6 @@ function registerRoutes(app) {
   app.use('/campaign-participants', campaignParticipantRoutes);
   app.use('/departments', departmentRoutes);
   app.use('/contact', contactRouter);
-  // CV Analysis Routes
-  app.use('/cv-analysis', cvAnalysisRouter); //✅ CV Analysis Management -> cv-analysis
-
   // API Key Management
   app.use('/api/api-keys', apiKeyRouter); //✅ API Key Management -> api-keys
 

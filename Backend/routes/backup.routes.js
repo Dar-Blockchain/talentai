@@ -14,37 +14,77 @@ const backupController = require("../controllers/backup.controller");
 const { requireAuth } = require("../middleware/security/auth.middleware");
 const authLogMiddleware = require("../middleware/security/request-log.middleware");
 
-// All routes require admin authentication
 //router.use(requireAuth, authLogMiddleware("Backup"));
 
 /**
- * POST /admin/backups/perform
- * Manually trigger a database backup
+ * @openapi
+ * /admin/backups/perform:
+ *   post:
+ *     tags: [Admin — Backups]
+ *     summary: Manually trigger a database backup
+ *     responses:
+ *       200:
+ *         description: Backup performed
  */
 router.post("/perform", backupController.performBackup);
 
 /**
- * GET /admin/backups/list
- * List all available backups
+ * @openapi
+ * /admin/backups/list:
+ *   get:
+ *     tags: [Admin — Backups]
+ *     summary: List all available backups
+ *     responses:
+ *       200:
+ *         description: List of backup file names
  */
 router.get("/list", backupController.listBackups);
 
 /**
- * POST /admin/backups/restore/:backupName
- * Restore database from a specific backup
- * WARNING: This will overwrite current database
+ * @openapi
+ * /admin/backups/restore/{backupName}:
+ *   post:
+ *     tags: [Admin — Backups]
+ *     summary: Restore database from a backup (overwrites current data)
+ *     parameters:
+ *       - in: path
+ *         name: backupName
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Restore successful
+ *       500:
+ *         description: Restore failed
  */
 router.post("/restore/:backupName", backupController.restoreBackup);
 
 /**
- * DELETE /admin/backups/delete/:backupName
- * Delete a specific backup by name
+ * @openapi
+ * /admin/backups/delete/{backupName}:
+ *   delete:
+ *     tags: [Admin — Backups]
+ *     summary: Delete a specific backup file
+ *     parameters:
+ *       - in: path
+ *         name: backupName
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Backup deleted
  */
 router.delete("/delete/:backupName", backupController.deleteBackup);
 
 /**
- * GET /admin/backups/info
- * Get backup service information
+ * @openapi
+ * /admin/backups/info:
+ *   get:
+ *     tags: [Admin — Backups]
+ *     summary: Get backup service information
+ *     responses:
+ *       200:
+ *         description: Service info
  */
 router.get("/info", backupController.getBackupInfo);
 

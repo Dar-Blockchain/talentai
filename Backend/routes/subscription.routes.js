@@ -1,6 +1,6 @@
 /**
  * Routes for Subscription Management
- * 
+ *
  * This API manages subscriptions created from payments.
  * Subscriptions track plan usage, duration, and status.
  */
@@ -11,12 +11,15 @@ const subscriptionController = require("../controllers/subscription.controller")
 const { requireAuth } = require("../middleware/security/auth.middleware");
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js");
 
-// ========== PUBLIC ROUTES ==========
-
 /**
- * GET /subscriptions/active
- * Get active subscription for a company
- * Auth: Required (user must be the company or admin)
+ * @openapi
+ * /subscriptions/active:
+ *   get:
+ *     tags: [Subscriptions]
+ *     summary: Get the active subscription for the authenticated company
+ *     responses:
+ *       200:
+ *         description: Active subscription
  */
 router.get(
   "/active",
@@ -25,6 +28,16 @@ router.get(
   subscriptionController.getActiveSubscription
 );
 
+/**
+ * @openapi
+ * /subscriptions/combined:
+ *   get:
+ *     tags: [Subscriptions]
+ *     summary: Get combined active subscription details (plan + usage)
+ *     responses:
+ *       200:
+ *         description: Combined details
+ */
 router.get(
   "/combined",
   requireAuth,
@@ -33,9 +46,14 @@ router.get(
 );
 
 /**
- * GET /subscriptions
- * Get all subscriptions for a company (including expired/cancelled)
- * Auth: Required
+ * @openapi
+ * /subscriptions:
+ *   get:
+ *     tags: [Subscriptions]
+ *     summary: Get all subscriptions for the authenticated company (including expired/cancelled)
+ *     responses:
+ *       200:
+ *         description: List of subscriptions
  */
 router.get(
   "/",
@@ -45,9 +63,19 @@ router.get(
 );
 
 /**
- * GET /subscriptions/:subscriptionId/details
- * Get detailed subscription info with usage stats
- * Auth: Required
+ * @openapi
+ * /subscriptions/{subscriptionId}/details:
+ *   get:
+ *     tags: [Subscriptions]
+ *     summary: Get detailed subscription info with usage stats
+ *     parameters:
+ *       - in: path
+ *         name: subscriptionId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Subscription details with usage
  */
 router.get(
   "/:subscriptionId/details",
@@ -57,12 +85,25 @@ router.get(
 );
 
 /**
- * GET /subscriptions/:companyProfileId/check-limit/:limitType
- * Check if company can perform an action (posts or monthlyInterviews)
- * Auth: Required
- * 
- * Query params:
- * - limitType: 'posts' or 'monthlyInterviews'
+ * @openapi
+ * /subscriptions/{companyProfileId}/check-limit/{limitType}:
+ *   get:
+ *     tags: [Subscriptions]
+ *     summary: Check if company can perform an action within plan limits
+ *     parameters:
+ *       - in: path
+ *         name: companyProfileId
+ *         required: true
+ *         schema: { type: string }
+ *       - in: path
+ *         name: limitType
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [posts, monthlyInterviews]
+ *     responses:
+ *       200:
+ *         description: Limit check result
  */
 router.get(
   "/:companyProfileId/check-limit/:limitType",
@@ -71,17 +112,27 @@ router.get(
   subscriptionController.checkLimit
 );
 
-// ========== MANAGEMENT ROUTES (Auth Required) ==========
-
 /**
- * POST /subscriptions/:subscriptionId/cancel
- * Cancel a subscription
- * Auth: Required (company admin or super admin)
- * 
- * Body:
- * {
- *   "reason": "Optional cancellation reason"
- * }
+ * @openapi
+ * /subscriptions/{subscriptionId}/cancel:
+ *   post:
+ *     tags: [Subscriptions]
+ *     summary: Cancel a subscription
+ *     parameters:
+ *       - in: path
+ *         name: subscriptionId
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason: { type: string }
+ *     responses:
+ *       200:
+ *         description: Subscription cancelled
  */
 router.post(
   "/:subscriptionId/cancel",
@@ -91,9 +142,19 @@ router.post(
 );
 
 /**
- * POST /subscriptions/:subscriptionId/enable-auto-renew
- * Re-enable auto-renewal on a subscription
- * Auth: Required
+ * @openapi
+ * /subscriptions/{subscriptionId}/enable-auto-renew:
+ *   post:
+ *     tags: [Subscriptions]
+ *     summary: Re-enable auto-renewal on a subscription
+ *     parameters:
+ *       - in: path
+ *         name: subscriptionId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Auto-renewal enabled
  */
 router.post(
   "/:subscriptionId/enable-auto-renew",
@@ -103,14 +164,26 @@ router.post(
 );
 
 /**
- * POST /subscriptions/:subscriptionId/extend
- * Extend subscription end date
- * Auth: Required
- * 
- * Body:
- * {
- *   "additionalDays": 30  // Default: 30
- * }
+ * @openapi
+ * /subscriptions/{subscriptionId}/extend:
+ *   post:
+ *     tags: [Subscriptions]
+ *     summary: Extend subscription end date
+ *     parameters:
+ *       - in: path
+ *         name: subscriptionId
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               additionalDays: { type: integer, default: 30 }
+ *     responses:
+ *       200:
+ *         description: Subscription extended
  */
 router.post(
   "/:subscriptionId/extend",
@@ -120,9 +193,19 @@ router.post(
 );
 
 /**
- * POST /subscriptions/:subscriptionId/renew
- * Renew subscription (create a new one from same plan)
- * Auth: Required
+ * @openapi
+ * /subscriptions/{subscriptionId}/renew:
+ *   post:
+ *     tags: [Subscriptions]
+ *     summary: Renew subscription (creates a new one from the same plan)
+ *     parameters:
+ *       - in: path
+ *         name: subscriptionId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Subscription renewed
  */
 router.post(
   "/:subscriptionId/renew",
@@ -132,15 +215,31 @@ router.post(
 );
 
 /**
- * POST /subscriptions/:subscriptionId/increment-usage
- * Increment usage counter
- * Auth: Required (internal or admin)
- * 
- * Body:
- * {
- *   "usageType": "postsUsed" | "monthlyInterviewsUsed",
- *   "amount": 1  // Default: 1
- * }
+ * @openapi
+ * /subscriptions/{subscriptionId}/increment-usage:
+ *   post:
+ *     tags: [Subscriptions]
+ *     summary: Increment a usage counter
+ *     parameters:
+ *       - in: path
+ *         name: subscriptionId
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [usageType]
+ *             properties:
+ *               usageType:
+ *                 type: string
+ *                 enum: [postsUsed, monthlyInterviewsUsed]
+ *               amount: { type: integer, default: 1 }
+ *     responses:
+ *       200:
+ *         description: Usage incremented
  */
 router.post(
   "/:subscriptionId/increment-usage",
@@ -150,9 +249,19 @@ router.post(
 );
 
 /**
- * POST /subscriptions/:subscriptionId/reset-monthly-interview
- * Reset monthly interview counter if needed
- * Auth: Required
+ * @openapi
+ * /subscriptions/{subscriptionId}/reset-monthly-interview:
+ *   post:
+ *     tags: [Subscriptions]
+ *     summary: Reset the monthly interview counter
+ *     parameters:
+ *       - in: path
+ *         name: subscriptionId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Counter reset
  */
 router.post(
   "/:subscriptionId/reset-monthly-interview",

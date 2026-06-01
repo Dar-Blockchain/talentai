@@ -9,11 +9,105 @@ const resolveCompanyActor = require("../middleware/resolve-company-actor.middlew
 // all routes require authenticated company user
 router.use(requireAuth, controledAcces(['Company', 'Employee']), authLogMiddleware("Department"));
 
-// CRUD
+/**
+ * @openapi
+ * /departments:
+ *   post:
+ *     tags: [Departments]
+ *     summary: Create a department
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name]
+ *             properties:
+ *               name: { type: string }
+ *               description: { type: string }
+ *     responses:
+ *       201:
+ *         description: Department created
+ *   get:
+ *     tags: [Departments]
+ *     summary: List company departments (with optional search and pagination)
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema: { type: string }
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 20 }
+ *     responses:
+ *       200:
+ *         description: List of departments
+ */
 router.post("/", departmentController.createDepartment);
-// GET /departments?search=name&page=1&limit=20 — list company departments with optional name search and pagination
 router.get("/", departmentController.getCompanyDepartments);
+
+/**
+ * @openapi
+ * /departments/stats:
+ *   get:
+ *     tags: [Departments]
+ *     summary: Department statistics (member counts, etc.)
+ *     responses:
+ *       200:
+ *         description: Department stats
+ */
 router.get("/stats", departmentController.getDepartmentStats);
+
+/**
+ * @openapi
+ * /departments/{id}:
+ *   get:
+ *     tags: [Departments]
+ *     summary: Get a department by ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Department details
+ *       404:
+ *         description: Not found
+ *   put:
+ *     tags: [Departments]
+ *     summary: Update a department
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name: { type: string }
+ *               description: { type: string }
+ *     responses:
+ *       200:
+ *         description: Department updated
+ *   delete:
+ *     tags: [Departments]
+ *     summary: Delete a department
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Department deleted
+ */
 router.get("/:id", departmentController.getDepartment);
 router.put("/:id", departmentController.updateDepartment);
 router.delete("/:id", departmentController.deleteDepartment);

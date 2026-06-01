@@ -93,58 +93,6 @@ module.exports.saveMultipleNodes = async (req, res) => {
   }
 };
 
-// Add steps to a post with postId parameter
-module.exports.addStepsToPost = async (req, res) => {
-  try {
-    const { postId } = req.params;
-    const stepsData = req.body;
-
-    const result = await postStepsService.addStepsToPost(postId, stepsData);
-
-    if (result.success) {
-      const isMultiple = Array.isArray(stepsData);
-      let message = "";
-
-      if (isMultiple) {
-        if (result.created > 0 && result.updated > 0) {
-          message = `${result.created} steps created and ${result.updated} steps updated successfully`;
-        } else if (result.created > 0) {
-          message = `${result.created} steps created successfully`;
-        } else if (result.updated > 0) {
-          message = `${result.updated} steps updated successfully`;
-        }
-      } else {
-        if (result.updated > 0) {
-          message = "Step updated successfully";
-        } else {
-          message = "Step created successfully";
-        }
-      }
-
-      return res.status(200).json({
-        success: true,
-        message: message,
-        data: result.data,
-        count: result.count,
-        created: result.created,
-        updated: result.updated,
-      });
-    } else {
-      return res.status(400).json({
-        success: false,
-        message: "Error adding steps",
-        error: result.error,
-      });
-    }
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Server error",
-      error: error.message,
-    });
-  }
-};
-
 // Retrieve all post steps
 module.exports.getAllPostSteps = async (req, res) => {
   try {

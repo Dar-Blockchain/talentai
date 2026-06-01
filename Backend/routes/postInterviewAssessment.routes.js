@@ -18,40 +18,184 @@ const { verifyApiKey, checkScope } = require("../middleware/security/api-key.mid
 
 // ========== PUBLIC ROUTES (no auth required) ==========
 
-// GET /post-interview-assessments/post/:postId/candidate/:candidateUserId — Get assessment for one candidate
+/**
+ * @openapi
+ * /post-interview-assessments/post/{postId}/candidate/{candidateUserId}:
+ *   get:
+ *     tags: [Post Interview Assessments]
+ *     summary: Get assessment for one candidate on a post (public)
+ *     security: []
+ *     parameters:
+ *       - in: path
+ *         name: postId
+ *         required: true
+ *         schema: { type: string }
+ *       - in: path
+ *         name: candidateUserId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Assessment data
+ *       404:
+ *         description: Not found
+ */
 router.get('/post/:postId/candidate/:candidateUserId', postInterviewAssessmentController.getAssessmentByPostAndCandidate);
 
 // ========== AUTHENTICATED ROUTES ==========
 router.use(requireAuth,authLogMiddleware("PostInterviewAssessment"));
 
-// GET /post-interview-assessments/check/:postId — Check if candidate has assessment for post
+/**
+ * @openapi
+ * /post-interview-assessments/check/{postId}:
+ *   get:
+ *     tags: [Post Interview Assessments]
+ *     summary: Check if current candidate has an assessment for this post
+ *     parameters:
+ *       - in: path
+ *         name: postId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Existence flag
+ */
 router.get('/check/:postId', postInterviewAssessmentController.checkCandidateAssessmentExists);
 
-// GET /post-interview-assessments/matching/:postId — Get matching details for candidate and post
+/**
+ * @openapi
+ * /post-interview-assessments/matching/{postId}:
+ *   get:
+ *     tags: [Post Interview Assessments]
+ *     summary: Get matching details between current candidate and a post
+ *     parameters:
+ *       - in: path
+ *         name: postId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Matching details
+ */
 router.get('/matching/:postId', postInterviewAssessmentController.getMatchingDetails);
 
-// GET /post-interview-assessments — Get all assessments
+/**
+ * @openapi
+ * /post-interview-assessments:
+ *   get:
+ *     tags: [Post Interview Assessments]
+ *     summary: List all post interview assessments
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 10 }
+ *       - in: query
+ *         name: company
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Paginated assessments
+ */
 router.get('/', postInterviewAssessmentController.getAllPostInterviewAssessments);
 
-// GET /post-interview-assessments/company/mine — Get all assessments for authenticated company
+/**
+ * @openapi
+ * /post-interview-assessments/company/mine:
+ *   get:
+ *     tags: [Post Interview Assessments]
+ *     summary: All assessments for the authenticated company
+ *     responses:
+ *       200:
+ *         description: Company's assessments
+ */
 router.get('/company/mine', resolveCompanyActor, postInterviewAssessmentController.getAllPostInterviewAssessmentsForCompany);
 
-// GET /post-interview-assessments/company/mine/metrics — Get interview metrics for authenticated company
+/**
+ * @openapi
+ * /post-interview-assessments/company/mine/metrics:
+ *   get:
+ *     tags: [Post Interview Assessments]
+ *     summary: Interview metrics for the authenticated company
+ *     responses:
+ *       200:
+ *         description: Metrics data
+ */
 router.get('/company/mine/metrics', resolveCompanyActor, postInterviewAssessmentController.getInterviewMetricsForCompany);
 
-// GET /post-interview-assessments/company/mine/kpi/unreviewed-48h — Get KPI count of unreviewed AI interviews > 48h
+/**
+ * @openapi
+ * /post-interview-assessments/company/mine/kpi/unreviewed-48h:
+ *   get:
+ *     tags: [Post Interview Assessments]
+ *     summary: KPI count of unreviewed AI interviews older than 48 h
+ *     responses:
+ *       200:
+ *         description: Count
+ */
 router.get('/company/mine/kpi/unreviewed-48h', resolveCompanyActor, postInterviewAssessmentController.getUnreviewedInterviewsKPI);
 
-// GET /post-interview-assessments/company/mine/kpi/unreviewed-48h/details — Get details of unreviewed AI interviews > 48h
+/**
+ * @openapi
+ * /post-interview-assessments/company/mine/kpi/unreviewed-48h/details:
+ *   get:
+ *     tags: [Post Interview Assessments]
+ *     summary: Details of unreviewed AI interviews older than 48 h
+ *     responses:
+ *       200:
+ *         description: List of unreviewed interviews
+ */
 router.get('/company/mine/kpi/unreviewed-48h/details', resolveCompanyActor, postInterviewAssessmentController.getUnreviewedInterviewsDetails);
 
-// GET /post-interview-assessments/candidate — Get all assessments for a candidate
+/**
+ * @openapi
+ * /post-interview-assessments/candidate/my:
+ *   get:
+ *     tags: [Post Interview Assessments]
+ *     summary: Get all assessments for the authenticated candidate
+ *     responses:
+ *       200:
+ *         description: Candidate's assessments
+ */
 router.get('/candidate/my', postInterviewAssessmentController.getAssessmentsByCandidate);
 
-// POST /post-interview-assessments — Create new assessment
+/**
+ * @openapi
+ * /post-interview-assessments:
+ *   post:
+ *     tags: [Post Interview Assessments]
+ *     summary: Create a new post interview assessment
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       201:
+ *         description: Assessment created
+ */
 router.post('/', postInterviewAssessmentController.createPostInterviewAssessment);
 
-// GET /post-interview-assessments/:assessmentId — Get single assessment
+/**
+ * @openapi
+ * /post-interview-assessments/{assessmentId}:
+ *   get:
+ *     tags: [Post Interview Assessments]
+ *     summary: Get a single assessment by ID
+ *     parameters:
+ *       - in: path
+ *         name: assessmentId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Assessment details
+ *       404:
+ *         description: Not found
+ */
 router.get('/:assessmentId', postInterviewAssessmentController.getPostInterviewAssessmentById);
 
 module.exports = router;

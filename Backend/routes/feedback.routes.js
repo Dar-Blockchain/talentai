@@ -21,11 +21,40 @@ const authLogMiddleware = require("../middleware/security/request-log.middleware
 
 router.use(requireAuth, authLogMiddleware("Feedback"));
 
-// POST /feedback/addFeedback
-// Access: Any authenticated user (Candidate, Employee, etc.)
+/**
+ * @openapi
+ * /feedback/addFeedback:
+ *   post:
+ *     tags: [Feedback]
+ *     summary: Submit user feedback
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [message]
+ *             properties:
+ *               message: { type: string }
+ *               rating: { type: integer, minimum: 1, maximum: 5 }
+ *     responses:
+ *       201:
+ *         description: Feedback recorded
+ */
 router.post('/addFeedback', feedbackController.create);
-// GET /feedback/getAllFeedback
-// Access: Admin
+
+/**
+ * @openapi
+ * /feedback/getAllFeedback:
+ *   get:
+ *     tags: [Feedback]
+ *     summary: List all feedback entries (Admin only)
+ *     responses:
+ *       200:
+ *         description: List of feedback
+ *       403:
+ *         description: Forbidden — Admin role required
+ */
 router.get('/getAllFeedback', controledAcces('Admin'), feedbackController.getAllFeedback);
 
 module.exports = router;
