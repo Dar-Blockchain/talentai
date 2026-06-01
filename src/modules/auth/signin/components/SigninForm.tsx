@@ -42,11 +42,11 @@ const SigninForm: React.FC = () => {
       <Button
         type={step === 2 && timer.isExpired ? "button" : "submit"}
         fullWidth variant="contained"
-        disabled={loading || (step === 2 && !timer.isExpired && otp.otpCode.join("").length < OTP_CODE_LENGTH)}
+        disabled={!loading && (step === 2 && !timer.isExpired && otp.otpCode.join("").length < OTP_CODE_LENGTH)}
         onClick={step === 2 && timer.isExpired ? resendCode : undefined}
         endIcon={!loading && <ArrowForwardIcon sx={{ fontSize: 15 }} />}
         startIcon={loading ? <CircularProgress size={14} sx={{ color: "#fff" }} /> : undefined}
-        sx={{ mt: { xs: 1.5, sm: 1.75 }, height: { xs: 44, sm: 46 }, borderRadius: "10px", textTransform: "none", fontFamily: "Poppins", fontWeight: 600, fontSize: { xs: "0.88rem", sm: "0.92rem" }, bgcolor: ACCENT, color: "#fff", boxShadow: "none", transition: "background-color 0.15s", "&:hover": { bgcolor: "#0F766E", boxShadow: "none" }, "&:active": { bgcolor: "#0B6563" }, "&.Mui-disabled": { bgcolor: "#F3F4F6", color: "#9CA3AF", boxShadow: "none" } }}
+        sx={{ mt: { xs: 1.5, sm: 1.75 }, height: { xs: 44, sm: 46 }, borderRadius: "10px", textTransform: "none", fontFamily: "Poppins", fontWeight: 600, fontSize: { xs: "0.88rem", sm: "0.92rem" }, bgcolor: ACCENT, color: "#fff", boxShadow: "none", transition: "background-color 0.15s", "&:hover": { bgcolor: "#0F766E", boxShadow: "none" }, "&:active": { bgcolor: "#0B6563" }, "&.Mui-disabled": { bgcolor: "#F3F4F6", color: "#9CA3AF", boxShadow: "none" }, ...(loading && { pointerEvents: "none", opacity: 0.85 }) }}
       >
         {loading
           ? (step === 1 ? t("signin.btn_sending") : timer.isExpired ? t("signin.btn_resending") : t("signin.btn_verifying"))

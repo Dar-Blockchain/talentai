@@ -15,7 +15,7 @@ const full = { flex: "1 1 100%" };
 const CandidateRegisterForm: React.FC<RegisterFormProps> = ({ onStepChange, onEmailChange }) => {
   const { t } = useTranslation("auth");
   const {
-    step, loading, resendLoading, analyzingCv, cvProgress, setCvProgress,
+    step, loading, resendLoading, analyzingCv, cvProgress,
     cvFile, setCvFile, cvError, setCvError, isDragging, setIsDragging,
     savedEmail, otp, fileInputRef, isJoinTeam, invitationEmail, timer,
     sendCode, verifyCode, resendCode,
@@ -25,11 +25,6 @@ const CandidateRegisterForm: React.FC<RegisterFormProps> = ({ onStepChange, onEm
 
   useEffect(() => { if (invitationEmail) setValue("email", invitationEmail); }, [invitationEmail]);
 
-  useEffect(() => {
-    if (!analyzingCv) { setCvProgress(0); return; }
-    const id = setInterval(() => setCvProgress((p) => p >= 90 ? (clearInterval(id), 90) : p + (p < 60 ? 4 : 1)), 300);
-    return () => clearInterval(id);
-  }, [analyzingCv]);
 
   if (step === 2) return (
     <OtpVerifyStep

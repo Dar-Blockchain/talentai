@@ -1,31 +1,25 @@
-const jwt = require("jsonwebtoken");
+const jwt       = require("jsonwebtoken");
 const userModel = require("../../models/User.model");
 const ApiKey    = require("../../models/ApiKey.model");
+const logger    = require("../../utils/logger");
 const { getRedisClient, getClientIp, normalizeIp, enforceRateLimit } = require("./api-key.middleware");
 
-// ─── JWT revocation check ─────────────────────────────────────────────────────
-// Tokens are added to this blocklist via revokeToken() at logout / ban time.
-// Key: `revoked:<jti>`  Value: "1"  TTL: matches original token TTL (7d)
+// ─── JWT revocation ───────────────────────────────────────────────────────────
 
 const TOKEN_REVOKE_PREFIX = "revoked:";
-const TOKEN_TTL_SECONDS   = 7 * 24 * 60 * 60; // must match generateToken expiry
+const TOKEN_TTL_SECONDS   = 7 * 24 * 60 * 60;
 
 async function isTokenRevoked(jti) {
   if (!jti) return false;
   try {
     const { client, available } = await getRedisClient();
-    if (!available) return false; // fail-open for revocation: if Redis is down, trust the token
-    const val = await client.get(`${TOKEN_REVOKE_PREFIX}${jti}`);
-    return val !== null;
+    if (!available) return false;
+    return (await client.get(`${TOKEN_REVOKE_PREFIX}${jti}`)) !== null;
   } catch {
     return false;
   }
 }
 
-/**
- * Call this at logout or when banning a user to immediately invalidate their token.
- * `jti` comes from the decoded JWT payload.
- */
 async function revokeToken(jti) {
   if (!jti) return;
   try {
@@ -33,7 +27,7 @@ async function revokeToken(jti) {
     if (!available) return;
     await client.set(`${TOKEN_REVOKE_PREFIX}${jti}`, "1", { EX: TOKEN_TTL_SECONDS });
   } catch (err) {
-    console.error("Failed to revoke token:", err.message);
+    logger.error("Failed to revoke token:", err.message);
   }
 }
 
@@ -42,43 +36,45 @@ async function revokeToken(jti) {
 const requireAuthUser = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   const token = authHeader && authHeader.split(" ")[1];
-
   if (!token) return res.status(401).json({ code: "TOKEN_MISSING", message: "Authentication required" });
 
+  let decoded;
   try {
-    const decoded = jwt.verify(token, process.env.Net_Secret);
-
-    // Revocation check — blocks immediately invalidated tokens
-    if (await isTokenRevoked(decoded.jti)) {
-      return res.status(401).json({ code: "TOKEN_REVOKED", message: "Token has been revoked" });
-    }
-
-    const user = await userModel
-      .findById(decoded.id)
-      .populate("profile")
-      .populate("companyMembership");
-
-    if (!user) return res.status(401).json({ code: "TOKEN_INVALID", message: "Invalid or expired token" });
-
-    req.user = user;
-
-    if (decoded.companyId) {
-      const company = await userModel.findById(decoded.companyId).populate("profile");
-      if (!company) return res.status(401).json({ code: "TOKEN_INVALID", message: "Invalid or expired token" });
-      req.company = company;
-    }
-
-    req.auth = {
-      userId:    decoded.id,
-      companyId: decoded.companyId || null,
-      role:      decoded.role,
-      jti:       decoded.jti,
-    };
-
-    next();
-  } catch (error) {
+    decoded = jwt.verify(token, process.env.Net_Secret);
+  } catch {
     return res.status(401).json({ code: "TOKEN_INVALID", message: "Invalid or expired token" });
   }
+
+  // Revocation + user fetch in parallel — saves one round-trip
+  const [revoked, user] = await Promise.all([
+    isTokenRevoked(decoded.jti),
+    userModel
+      .findById(decoded.id)
+      // Lean projection — only fields auth logic actually needs
+      .select("_id email username role user_image isBanned profile companyMembership")
+      .populate({ path: "profile",           select: "_id type companyDetails planLimits" })
+      .populate({ path: "companyMembership", select: "_id role company" })
+      .lean(),
+  ]);
+
+  if (revoked) return res.status(401).json({ code: "TOKEN_REVOKED", message: "Token has been revoked" });
+  if (!user)   return res.status(401).json({ code: "TOKEN_INVALID", message: "Invalid or expired token" });
+
+  req.user = user;
+
+  // Company context — only when token carries a companyId and it differs from the user
+  if (decoded.companyId && decoded.companyId !== decoded.id) {
+    const company = await userModel
+      .findById(decoded.companyId)
+      .select("_id username email user_image profile")
+      .populate({ path: "profile", select: "_id companyDetails" })
+      .lean();
+    if (!company) return res.status(401).json({ code: "TOKEN_INVALID", message: "Invalid or expired token" });
+    req.company = company;
+  }
+
+  req.auth = { userId: decoded.id, companyId: decoded.companyId || null, role: decoded.role, jti: decoded.jti };
+  next();
 };
 
 // ─── requireAuth (API key OR JWT) ────────────────────────────────────────────
@@ -102,12 +98,13 @@ const requireAuth = async (req, res, next) => {
   if (apiKey && isApiKeyFormat) {
     try {
       const keyHash   = ApiKey.hashKey(apiKey);
-      const apiKeyDoc = await ApiKey.findOne({ keyHash });
+      const apiKeyDoc = await ApiKey.findOne({ keyHash })
+        .select("_id userId isActive expiresAt ipWhitelist rateLimit lastUsed scopes");
 
-      if (!apiKeyDoc)          return res.status(401).json({ success: false, message: "Invalid API key" });
-      if (!apiKeyDoc.isActive) return res.status(401).json({ success: false, message: "API key disabled" });
+      if (!apiKeyDoc)            return res.status(401).json({ success: false, message: "Invalid API key" });
+      if (!apiKeyDoc.isActive)   return res.status(401).json({ success: false, message: "API key disabled" });
       if (apiKeyDoc.expiresAt && new Date() > apiKeyDoc.expiresAt)
-                               return res.status(401).json({ success: false, message: "API key expired" });
+                                 return res.status(401).json({ success: false, message: "API key expired" });
 
       if (apiKeyDoc.ipWhitelist?.length) {
         const clientIp = normalizeIp(getClientIp(req));
@@ -115,14 +112,16 @@ const requireAuth = async (req, res, next) => {
           return res.status(403).json({ success: false, message: "IP not whitelisted" });
       }
 
-      // Shared rate-limit enforcement (fail-closed via in-process fallback)
       const allowed = await enforceRateLimit(req, res, apiKeyDoc);
       if (!allowed) return;
 
-      const user = await userModel.findById(apiKeyDoc.userId)
-        .populate("profile")
-        .populate("companyMembership")
-        .populate("notifications");
+      // User fetch — lean, select only what routes need
+      const user = await userModel
+        .findById(apiKeyDoc.userId)
+        .select("_id email username role user_image profile companyMembership")
+        .populate({ path: "profile",           select: "_id type companyDetails planLimits" })
+        .populate({ path: "companyMembership", select: "_id role company" })
+        .lean();
 
       req.isApiKeyAuth = true;
       req.apiKey       = apiKeyDoc;
@@ -130,12 +129,12 @@ const requireAuth = async (req, res, next) => {
       req.userId       = apiKeyDoc.userId.toString();
       req.user         = user;
 
-      apiKeyDoc.lastUsed = new Date();
-      await apiKeyDoc.save();
+      // Fire-and-forget lastUsed update — does not block the response
+      ApiKey.updateOne({ _id: apiKeyDoc._id }, { lastUsed: new Date() }).catch(() => {});
 
       return next();
     } catch (error) {
-      console.error("Error verifying API key:", error.message);
+      logger.error("Error verifying API key:", error.message);
       return res.status(500).json({ success: false, message: "Internal server error" });
     }
   }

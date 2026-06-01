@@ -70,12 +70,13 @@ const OtpVerifyStep: React.FC<Props> = ({
         </Box>
       )}
 
-      {/* Verify button */}
-      <Button fullWidth variant="contained" onClick={onVerify}
-        disabled={loading || timer.isExpired || otp.otpCode.join("").length < OTP_CODE_LENGTH}
+      {/* Verify button — disabled when code incomplete or expired, but NOT when loading
+          so the spinner stays visible while the API call is in-flight */}
+      <Button fullWidth variant="contained" onClick={!loading ? onVerify : undefined}
+        disabled={!loading && (timer.isExpired || otp.otpCode.join("").length < OTP_CODE_LENGTH)}
         endIcon={!loading && <ArrowForwardIcon sx={{ fontSize: { xs: 16, md: 18 } }} />}
         startIcon={loading ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : undefined}
-        sx={{ ...compactSubmitBtnSx, mt: 3 }}
+        sx={{ ...compactSubmitBtnSx, mt: 3, ...(loading && { pointerEvents: "none", opacity: 0.85 }) }}
       >
         {loading ? t(`${tPrefix}.btn_creating`) : t(`${tPrefix}.btn_verify`)}
       </Button>
