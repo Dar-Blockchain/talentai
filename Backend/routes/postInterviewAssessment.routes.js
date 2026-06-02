@@ -64,23 +64,6 @@ router.get('/check/:postId', postInterviewAssessmentController.checkCandidateAss
 
 /**
  * @openapi
- * /post-interview-assessments/matching/{postId}:
- *   get:
- *     tags: [Post Interview Assessments]
- *     summary: Get matching details between current candidate and a post
- *     parameters:
- *       - in: path
- *         name: postId
- *         required: true
- *         schema: { type: string }
- *     responses:
- *       200:
- *         description: Matching details
- */
-router.get('/matching/:postId', postInterviewAssessmentController.getMatchingDetails);
-
-/**
- * @openapi
  * /post-interview-assessments:
  *   get:
  *     tags: [Post Interview Assessments]
@@ -124,30 +107,6 @@ router.get('/company/mine', resolveCompanyActor, postInterviewAssessmentControll
  *         description: Metrics data
  */
 router.get('/company/mine/metrics', resolveCompanyActor, postInterviewAssessmentController.getInterviewMetricsForCompany);
-
-/**
- * @openapi
- * /post-interview-assessments/company/mine/kpi/unreviewed-48h:
- *   get:
- *     tags: [Post Interview Assessments]
- *     summary: KPI count of unreviewed AI interviews older than 48 h
- *     responses:
- *       200:
- *         description: Count
- */
-router.get('/company/mine/kpi/unreviewed-48h', resolveCompanyActor, postInterviewAssessmentController.getUnreviewedInterviewsKPI);
-
-/**
- * @openapi
- * /post-interview-assessments/company/mine/kpi/unreviewed-48h/details:
- *   get:
- *     tags: [Post Interview Assessments]
- *     summary: Details of unreviewed AI interviews older than 48 h
- *     responses:
- *       200:
- *         description: List of unreviewed interviews
- */
-router.get('/company/mine/kpi/unreviewed-48h/details', resolveCompanyActor, postInterviewAssessmentController.getUnreviewedInterviewsDetails);
 
 /**
  * @openapi

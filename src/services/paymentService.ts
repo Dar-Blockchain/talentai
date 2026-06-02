@@ -14,11 +14,6 @@ export const paymentService = {
     await axiosInstance.post(`subscriptions/${subscriptionId}/enable-auto-renew`);
   },
 
-  scheduleDowngrade: async (subscriptionId: string, newPlanId: string) => {
-    const res = await axiosInstance.post(`subscriptions/${subscriptionId}/schedule-downgrade`, { newPlanId });
-    return res.data.data;
-  },
-
   fetchCompanyPaymentHistory: async () => {
     const res = await axiosInstance.get('payments/user/history');
     return res.data.data || res.data;
@@ -56,13 +51,5 @@ export const paymentService = {
     if (paymentId) localStorage.setItem('pending_payment_id', paymentId);
     window.open(url, '_blank', 'noopener,noreferrer');
     return { url, sessionId, paymentId };
-  },
-
-  updatePaymentStatus: async (paymentId: string, status: string, additionalData?: Record<string, any>) => {
-    const res = await axiosInstance.put(`payments/${paymentId}/status`, {
-      status,
-      ...(additionalData ? { additionalData } : {}),
-    });
-    return res.data.data;
   },
 };

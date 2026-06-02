@@ -256,47 +256,6 @@ module.exports.checkCandidateAssessmentExists = async (req, res) => {
   }
 };
 
-// ========== GET MATCHING DETAILS ==========
-module.exports.getMatchingDetails = async (req, res) => {
-  try {
-    const { postId } = req.params;
-    const candidateId = req.user._id;
-    const userRole = req.user.role;
-
-    if (!postId) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing required parameter: postId",
-      });
-    }
-
-    // Check if user is a Company - Companies cannot check matching details for themselves
-    if (userRole === "Company") {
-      return res.status(403).json({
-        success: false,
-        message: "Company accounts cannot check interview matching details",
-      });
-    }
-
-    const matchingDetails = await postInterviewAssessmentService.getMatchingDetails(
-      candidateId,
-      postId
-    );
-
-    return res.status(200).json({
-      success: true,
-      data: matchingDetails,
-      message: "Matching details retrieved successfully",
-    });
-  } catch (error) {
-    console.error("❌ Controller error:", error);
-    return res.status(error.status || 500).json({
-      success: false,
-      message: error.message || "Error retrieving matching details",
-    });
-  }
-};
-
 // ========== READ - Get all assessments ==========
 module.exports.getAllPostInterviewAssessments = async (req, res) => {
   try {
@@ -583,78 +542,5 @@ module.exports.getAssessmentByPostAndCandidate = async (req, res) => {
   } catch (error) {
     console.error("Error getting assessment by post+candidate:", error);
     res.status(error.status || 500).json({ success: false, message: error.message || "Error retrieving assessment." });
-  }
-};
-
-// ========== KPI - Unreviewed AI Interviews > 48h ==========
-/**
- * GET /post-interview-assessments/company/mine/kpi/unreviewed-48h
- * 
- * Get count of AI-generated interviews that haven't been reviewed by recruiter for 48+ hours
- * All interviews in PostInterviewAssessment are AI-generated (not human-conducted)
- */
-module.exports.getUnreviewedInterviewsKPI = async (req, res) => {
-  try {
-    const companyId = req.user._id;
-    const { postId, dateFrom } = req.query;
-
-    console.log(`\n📊 [API] Get Unreviewed Interviews KPI for company: ${companyId}`);
-
-    const result = await require("../../services/InterviewServices/postInterviewAssessment.service")
-      .getUnreviewedInterviewsOver48Hours(companyId, postId || null, dateFrom || null);
-
-    res.status(200).json({
-      success: true,
-      message: result.message,
-      data: {
-        count: result.count,
-        urgent: result.urgent,
-        lastCheck: result.lastCheck,
-        description: "AI-generated interviews pending recruiter feedback for 48+ hours"
-      }
-    });
-  } catch (error) {
-    console.error("❌ Error getting unreviewed interviews KPI:", error);
-    res.status(error.status || 500).json({
-      success: false,
-      message: error.message || "Error retrieving unreviewed interviews KPI"
-    });
-  }
-};
-
-/**
- * GET /post-interview-assessments/company/mine/kpi/unreviewed-48h/details
- * 
- * Get paginated list of AI interviews unreviewed for 48+ hours with full details
- * Sorted by oldest first (most urgent)
- */
-module.exports.getUnreviewedInterviewsDetails = async (req, res) => {
-  try {
-    const companyId = req.user._id;
-    const { page = 1, limit = 10, postId } = req.query;
-
-    console.log(`\n📋 [API] Get Unreviewed Interviews Details - Page ${page} for company: ${companyId}`);
-
-    const result = await require("../../services/InterviewServices/postInterviewAssessment.service")
-      .getUnreviewedInterviewsDetails(
-        companyId,
-        parseInt(page),
-        parseInt(limit),
-        postId || null
-      );
-
-    res.status(200).json({
-      success: true,
-      message: "Unreviewed interviews retrieved successfully",
-      data: result.interviews,
-      pagination: result.pagination,
-      metadata: result.metadata
-    });
-  } catch (error) {
-    console.error("❌ Error getting unreviewed interviews details:", error);
-    res.status(error.status || 500).json({
-      success: false,
-      message: error.message || "Error retrieving unreviewed interviews details"
-    });
   }
 };

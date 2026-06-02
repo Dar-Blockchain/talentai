@@ -2,7 +2,7 @@
  * Job Application Routes
  *
  * Middlewares applied:
- * - requireAuthUser: requires authenticated user for protected routes
+ * - requireAuth: requires authenticated user for protected routes
  * - LogMiddleware("JobApplication"): logs application requests
  */
 
@@ -10,30 +10,8 @@ const express = require("express");
 const router = express.Router();
 const jobApplicationController = require("../controllers/jobApplication.controller");
 
-// Import middlewares
 const { requireAuth } = require("../middleware/security/auth.middleware");
 const authLogMiddleware = require("../middleware/security/request-log.middleware");
-const { verifyApiKey, checkScope } = require("../middleware/security/api-key.middleware");
-
-// ========== PUBLIC ROUTES (no auth required) ==========
-
-/**
- * @openapi
- * /job-applications/post/{postId}:
- *   get:
- *     tags: [Job Applications]
- *     summary: Get all applications for a post (public)
- *     security: []
- *     parameters:
- *       - in: path
- *         name: postId
- *         required: true
- *         schema: { type: string }
- *     responses:
- *       200:
- *         description: List of applications
- */
-router.get("/post/:postId", jobApplicationController.getApplicationsByPost);
 
 // ========== AUTHENTICATED ROUTES ==========
 router.use(requireAuth, authLogMiddleware("JobApplication"));
@@ -59,18 +37,6 @@ router.use(requireAuth, authLogMiddleware("JobApplication"));
  *         description: Application created
  */
 router.post("/", jobApplicationController.createJobApplication);
-
-/**
- * @openapi
- * /job-applications:
- *   get:
- *     tags: [Job Applications]
- *     summary: Get all applications (admin/global)
- *     responses:
- *       200:
- *         description: List of all applications
- */
-router.get("/", jobApplicationController.getAllJobApplications);
 
 /**
  * @openapi
@@ -117,9 +83,6 @@ router.get("/candidate/my/stats", jobApplicationController.getCandidateStats);
  *         schema: { type: string }
  *       - in: query
  *         name: search
- *         schema: { type: string }
- *       - in: query
- *         name: skills
  *         schema: { type: string }
  *     responses:
  *       200:
@@ -169,7 +132,7 @@ router.post("/contact-candidate", jobApplicationController.contactCandidate);
  *         schema: { type: string }
  *       - in: query
  *         name: sort
- *         schema: { type: string, enum: [appliedAt_desc, appliedAt_asc, matchScore_desc, matchScore_asc, interviewScore_desc, interviewScore_asc, name_asc, name_desc] }
+ *         schema: { type: string }
  *       - in: query
  *         name: page
  *         schema: { type: integer, default: 1 }
@@ -208,27 +171,10 @@ router.get("/company/my/metrics", jobApplicationController.getApplicationMetrics
 
 /**
  * @openapi
- * /job-applications/company/my/cvs/download:
- *   get:
- *     tags: [Job Applications]
- *     summary: Download all matching CVs as a ZIP archive
- *     responses:
- *       200:
- *         description: ZIP file
- *         content:
- *           application/zip:
- *             schema:
- *               type: string
- *               format: binary
- */
-router.get("/company/my/cvs/download", jobApplicationController.downloadCVsByCompany);
-
-/**
- * @openapi
  * /job-applications/company/my/kpi/actions:
  *   get:
  *     tags: [Job Applications]
- *     summary: Zone 1 action KPI counts in one call
+ *     summary: Zone 1 action KPI counts
  *     parameters:
  *       - in: query
  *         name: postId
@@ -247,7 +193,7 @@ router.get("/company/my/kpi/actions", jobApplicationController.getActionsKPI);
  * /job-applications/company/my/kpi/sourcing:
  *   get:
  *     tags: [Job Applications]
- *     summary: KPI — Sourcing quality (Zone 5)
+ *     summary: KPI — Sourcing quality
  *     responses:
  *       200:
  *         description: Sourcing KPI
@@ -259,7 +205,7 @@ router.get("/company/my/kpi/sourcing", jobApplicationController.getSourcingKPI);
  * /job-applications/company/my/kpi/velocity:
  *   get:
  *     tags: [Job Applications]
- *     summary: KPI — TTS + TTH trend (Zone 4)
+ *     summary: KPI — TTS + TTH trend
  *     responses:
  *       200:
  *         description: Velocity KPI
@@ -287,62 +233,12 @@ router.get("/company/my/kpi/funnel", jobApplicationController.getFunnelKPI);
  * /job-applications/company/my/kpi/roi:
  *   get:
  *     tags: [Job Applications]
- *     summary: KPI — Reporting & ROI (Zone 7)
+ *     summary: KPI — Reporting & ROI
  *     responses:
  *       200:
  *         description: ROI KPI
  */
 router.get("/company/my/kpi/roi", jobApplicationController.getRoiKPI);
-
-/**
- * @openapi
- * /job-applications/company/my/by-decision:
- *   get:
- *     tags: [Job Applications]
- *     summary: Get candidates by recruiter decision
- *     parameters:
- *       - in: query
- *         name: decision
- *         required: true
- *         schema: { type: string, enum: [shortlisted, rejected] }
- *       - in: query
- *         name: postId
- *         schema: { type: string }
- *       - in: query
- *         name: page
- *         schema: { type: integer, default: 1 }
- *       - in: query
- *         name: limit
- *         schema: { type: integer, default: 10 }
- *     responses:
- *       200:
- *         description: Paginated list
- */
-router.get("/company/my/by-decision", jobApplicationController.getCandidatesByDecision);
-
-/**
- * @openapi
- * /job-applications/auto-invite/trigger:
- *   post:
- *     tags: [Job Applications]
- *     summary: Trigger auto-invite nudge (bypasses time window)
- *     responses:
- *       200:
- *         description: Auto-invite triggered
- */
-router.post("/auto-invite/trigger", jobApplicationController.triggerAutoInvite);
-
-/**
- * @openapi
- * /job-applications/reminder/trigger:
- *   post:
- *     tags: [Job Applications]
- *     summary: Trigger reminder nudge (bypasses time window)
- *     responses:
- *       200:
- *         description: Reminder triggered
- */
-router.post("/reminder/trigger", jobApplicationController.triggerReminder);
 
 /**
  * @openapi
@@ -389,72 +285,8 @@ router.patch("/:applicationId/recruiter-decision", jobApplicationController.upda
  *         description: Application details
  *       404:
  *         description: Not found
- *   patch:
- *     tags: [Job Applications]
- *     summary: Update an application
- *     parameters:
- *       - in: path
- *         name: applicationId
- *         required: true
- *         schema: { type: string }
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *     responses:
- *       200:
- *         description: Application updated
- *   delete:
- *     tags: [Job Applications]
- *     summary: Delete an application
- *     parameters:
- *       - in: path
- *         name: applicationId
- *         required: true
- *         schema: { type: string }
- *     responses:
- *       200:
- *         description: Application deleted
  */
 router.get("/:applicationId", jobApplicationController.getJobApplicationById);
-router.patch("/:applicationId", jobApplicationController.updateJobApplication);
-router.delete("/:applicationId", jobApplicationController.deleteJobApplication);
-
-/**
- * @openapi
- * /job-applications/{applicationId}/withdraw:
- *   post:
- *     tags: [Job Applications]
- *     summary: Withdraw an application
- *     parameters:
- *       - in: path
- *         name: applicationId
- *         required: true
- *         schema: { type: string }
- *     responses:
- *       200:
- *         description: Application withdrawn
- */
-router.post("/:applicationId/withdraw", jobApplicationController.withdrawJobApplication);
-
-/**
- * @openapi
- * /job-applications/{applicationId}/archive:
- *   post:
- *     tags: [Job Applications]
- *     summary: Archive an application
- *     parameters:
- *       - in: path
- *         name: applicationId
- *         required: true
- *         schema: { type: string }
- *     responses:
- *       200:
- *         description: Application archived
- */
-router.post("/:applicationId/archive", jobApplicationController.archiveJobApplication);
 
 /**
  * @openapi

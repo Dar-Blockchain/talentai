@@ -2,7 +2,6 @@
 const { registerSwagger } = require('./swagger');
 const authRouter = require("../routes/authentication.routes");
 const companyPermissionsRouter = require("../routes/companyPermissions.routes");
-const permissionsRouter = require("../routes/permissions.routes");
 const dashboardRouter = require("../routes/dashboard.routes");
 const profileRouter = require("../routes/profile.routes");
 const postRouter = require("../routes/post.routes");
@@ -45,7 +44,6 @@ function registerRoutes(app) {
   // Authentication & Profile
   app.use("/auth", authRouter); //✅ authentication
   app.use("/admin", companyPermissionsRouter); // ✅ (admin company permissions) -> admin (to be checked)
-  app.use("/permissions", permissionsRouter); //✅ (general permissions management) -> permissions (to be checked)
   app.use("/employee-permissions", employeePermissionsRouter); //✅ Employee Permissions Management
   app.use("/dashboard", dashboardRouter); //✅ dashboard
   app.use("/profiles", profileRouter); //✅ profile management

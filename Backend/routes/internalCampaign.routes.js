@@ -17,26 +17,6 @@ const resolveCompanyActor = require("../middleware/resolve-company-actor.middlew
 
 /**
  * @openapi
- * /internal-campaigns/admin/all:
- *   get:
- *     tags: [Internal Campaigns]
- *     summary: Get all campaigns across all companies (Admin)
- *     responses:
- *       200:
- *         description: All campaigns
- *       403:
- *         description: Admin role required
- */
-router.get(
-  "/admin/all",
-  requireAuth,
-  controledAcces("Admin"),
-  authLogMiddleware("InternalCampaign"),
-  internalCampaignController.getAllCampaigns,
-);
-
-/**
- * @openapi
  * /internal-campaigns/employee/{userId}:
  *   get:
  *     tags: [Internal Campaigns]
@@ -370,28 +350,6 @@ router.get(
   internalCampaignController.getParticipantResults,
 );
 
-/**
- * @openapi
- * /internal-campaigns/{campaignId}/public:
- *   get:
- *     tags: [Internal Campaigns]
- *     summary: Get limited public campaign info (no auth)
- *     security: []
- *     parameters:
- *       - in: path
- *         name: campaignId
- *         required: true
- *         schema: { type: string }
- *     responses:
- *       200:
- *         description: Public campaign info
- */
-router.get(
-  "/:campaignId/public",
-  authLogMiddleware("InternalCampaign"),
-  internalCampaignController.getPublicCampaignInfo
-);
-
 // apply generic middlewares for company users on all remaining routes
 router.use(
   requireAuth,
@@ -428,24 +386,6 @@ router.use(
  */
 router.post("/", internalCampaignController.createInternalCampaign);
 router.get("/", internalCampaignController.getCompanyCampaigns);
-router.get("/metrics", internalCampaignController.getCampaignMetrics);
-
-/**
- * @openapi
- * /internal-campaigns/{campaignId}/stats:
- *   get:
- *     tags: [Internal Campaigns]
- *     summary: Get statistics for a campaign
- *     parameters:
- *       - in: path
- *         name: campaignId
- *         required: true
- *         schema: { type: string }
- *     responses:
- *       200:
- *         description: Campaign statistics
- */
-router.get("/:campaignId/stats", internalCampaignController.getCampaignStats);
 
 /**
  * @openapi
@@ -463,23 +403,6 @@ router.get("/:campaignId/stats", internalCampaignController.getCampaignStats);
  *         description: Sessions list
  */
 router.get("/:campaignId/sessions", internalCampaignController.getSessions);
-
-/**
- * @openapi
- * /internal-campaigns/{campaignId}/anonymous-scores:
- *   get:
- *     tags: [Internal Campaigns]
- *     summary: Get anonymous scores for a campaign
- *     parameters:
- *       - in: path
- *         name: campaignId
- *         required: true
- *         schema: { type: string }
- *     responses:
- *       200:
- *         description: Anonymous scores
- */
-router.get("/:campaignId/anonymous-scores", internalCampaignController.getAnonymousScores);
 
 /**
  * @openapi

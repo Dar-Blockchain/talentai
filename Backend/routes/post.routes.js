@@ -147,18 +147,6 @@ router.post("/save-post", checkScope(['write:posts']), resolveCompanyActor, post
 
 /**
  * @openapi
- * /post/get-all-posts:
- *   get:
- *     tags: [Posts]
- *     summary: Get all posts
- *     responses:
- *       200:
- *         description: List of posts
- */
-router.get("/get-all-posts", checkScope(['read:posts']), postController.getAllPosts);
-
-/**
- * @openapi
  * /post/my-posts:
  *   get:
  *     tags: [Posts]
@@ -291,23 +279,6 @@ router.delete("/deletePost/:id", checkScope(['delete:posts']), resolveCompanyAct
  *         description: List of suggested posts
  */
 router.get("/adsPost", postController.getPostsByUserTopSkills);
-
-/**
- * @openapi
- * /post/DetailsPost/{id}:
- *   get:
- *     tags: [Posts]
- *     summary: Post detail alias
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: string }
- *     responses:
- *       200:
- *         description: Post details
- */
-router.get("/DetailsPost/:id", resolveCompanyActor,postController.getPostById);
 
 /**
  * @openapi
