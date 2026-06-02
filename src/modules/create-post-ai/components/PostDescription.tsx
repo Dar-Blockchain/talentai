@@ -65,11 +65,7 @@ const PostDescription = ({ onGeneratingChange }: PostDescriptionProps) => {
         },
         onSettled: () => onGeneratingChange?.(false),
         onError: (err: unknown) => {
-          const isInvalidInput = (err as any)?.isInvalidInput;
-          const status = (err as any)?.response?.status;
-          const message = isInvalidInput || status === 400
-            ? "Please provide a clear and valid job description."
-            : "Failed to generate job post. Please try again.";
+          const message = err instanceof Error ? err.message : "Failed to generate job post. Please try again.";
           showToast({ message, severity: "error" });
         },
       }
