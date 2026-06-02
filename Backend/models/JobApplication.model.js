@@ -51,6 +51,24 @@ const jobApplicationSchema = new mongoose.Schema(
       default: null,
       description: "Detailed AI reasoning explaining how the match score was computed"
     },
+    matchRecommendation: {
+      type: String,
+      default: null,
+      description: "AI recommendation label: Top candidat | Recommandé | À considérer | Non retenu | Hors profil"
+    },
+    matchBreakdown: {
+      type: [
+        {
+          key:      { type: String },
+          label:    { type: String },
+          maxScore: { type: Number },
+          score:    { type: Number },
+          note:     { type: String },
+        }
+      ],
+      default: [],
+      description: "Per-criterion breakdown of the AI match score"
+    },
     appliedAt: {
       type: Date,
       default: Date.now,

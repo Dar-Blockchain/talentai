@@ -430,6 +430,8 @@ module.exports.createJobApplication = async (applicationData) => {
     // Add calculated match score and reasoning to application data
     cleanData.matchScore = matchResult.matchScore;
     cleanData.matchReasoning = matchResult.reasoning;
+    cleanData.matchRecommendation = matchResult.recommendation || null;
+    cleanData.matchBreakdown = Array.isArray(matchResult.breakdown) ? matchResult.breakdown : [];
     cleanData.status = "visited";
 
     // ========== AUTO-REJECT IF MATCH SCORE BELOW THRESHOLD ==========
