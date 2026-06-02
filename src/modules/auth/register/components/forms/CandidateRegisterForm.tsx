@@ -21,7 +21,7 @@ const CandidateRegisterForm: React.FC<RegisterFormProps> = ({ onStepChange, onEm
     sendCode, verifyCode, resendCode,
   } = useCandidateRegister({ onStepChange, onEmailChange });
 
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm<CandidateFormValues>({ mode: "onTouched" });
+  const { handleSubmit, control, setValue, formState: { errors } } = useForm<CandidateFormValues>({ mode: "onTouched" });
 
   useEffect(() => { if (invitationEmail) setValue("email", invitationEmail); }, [invitationEmail]);
 
@@ -40,7 +40,7 @@ const CandidateRegisterForm: React.FC<RegisterFormProps> = ({ onStepChange, onEm
       <Box component="form" onSubmit={handleSubmit(sendCode)}
         sx={{ mb: 2, textAlign: "left", display: "flex", flexWrap: "wrap", gap: { xs: 2.25, sm: 2.75, md: 3 } }}
       >
-        <CandidateFields register={register} errors={errors} loading={loading} invitationEmail={invitationEmail} />
+        <CandidateFields control={control} errors={errors} loading={loading} invitationEmail={invitationEmail} />
 
         {!isJoinTeam && (
           <Box sx={full}>

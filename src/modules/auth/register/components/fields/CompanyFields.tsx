@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, InputAdornment, MenuItem, TextField } from "@mui/material";
+import { Box } from "@mui/material";
 import BusinessIcon from "@mui/icons-material/Business";
 import PeopleIcon from "@mui/icons-material/People";
 import CategoryIcon from "@mui/icons-material/Category";
@@ -9,96 +9,126 @@ import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import EmailIcon from "@mui/icons-material/Email";
 import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import type { Control, UseFormRegister, FieldErrors } from "react-hook-form";
-import { compactFieldSx, selectMenuProps } from "../styles/registerFormStyles";
+import type { Control, FieldErrors } from "react-hook-form";
+import AppInput from "@/modules/shared/ui/AppInput";
+import AppSelect from "@/modules/shared/ui/AppSelect";
 import { COMPANY_SIZES, INDUSTRIES } from "../../utils";
 import type { CompanyFormValues } from "../../types";
 
 const half = { flex: "1 1 100%", minWidth: 0, "@media (min-width:1025px)": { flex: "1 1 calc(50% - 12px)" } };
 const full = { flex: "1 1 100%" };
 
-const placeholder = (text: string) => (
-  <span style={{ color: "#C4CAD4", fontSize: "0.82rem", fontFamily: "Poppins" }}>{text}</span>
-);
-
 interface Props {
-  register: UseFormRegister<CompanyFormValues>;
   control: Control<CompanyFormValues>;
   errors: FieldErrors<CompanyFormValues>;
   loading: boolean;
 }
 
-const CompanyFields: React.FC<Props> = ({ register, control, errors, loading }) => {
+const CompanyFields: React.FC<Props> = ({ control, errors, loading }) => {
   const { t } = useTranslation("auth");
 
   return (
     <>
       <Box sx={half}>
-        <TextField label={t("company_form.company_name")} placeholder="Acme Corp" fullWidth required disabled={loading}
-          error={!!errors.name} helperText={errors.name?.message}
-          slotProps={{ input: { startAdornment: <InputAdornment position="start"><BusinessIcon sx={{ fontSize: { xs: 18, md: 20 }, color: "#9CA3AF" }} /></InputAdornment> } }}
-          sx={compactFieldSx}
-          {...register("name", { required: t("company_form.validation.company_name_required") })}
+        <Controller name="name" control={control}
+          rules={{ required: t("company_form.validation.company_name_required") }}
+          render={({ field }) => (
+            <AppInput
+              label={t("company_form.company_name")}
+              placeholder="Acme Corp"
+              required
+              disabled={loading}
+              error={errors.name?.message}
+              startIcon={<BusinessIcon sx={{ fontSize: 18, color: "#9CA3AF" }} />}
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+            />
+          )}
         />
       </Box>
 
       <Box sx={half}>
-        <TextField label={t("company_form.work_email")} placeholder="contact@company.com" fullWidth required type="email" disabled={loading}
-          error={!!errors.email} helperText={errors.email?.message}
-          slotProps={{ input: { startAdornment: <InputAdornment position="start"><EmailIcon sx={{ fontSize: { xs: 18, md: 20 }, color: "#9CA3AF" }} /></InputAdornment> } }}
-          sx={compactFieldSx}
-          {...register("email", {
+        <Controller name="email" control={control}
+          rules={{
             required: t("company_form.validation.email_required"),
             pattern: { value: /^\S+@\S+\.\S+$/, message: t("company_form.validation.email_invalid") },
-          })}
-        />
-      </Box>
-
-      <Box sx={half}>
-        <Controller name="industry" control={control} rules={{ required: t("company_form.validation.industry_required") }}
+          }}
           render={({ field }) => (
-            <TextField {...field} label={t("company_form.industry")} fullWidth required select disabled={loading}
-              error={!!errors.industry} helperText={errors.industry?.message}
-              slotProps={{ input: { startAdornment: <InputAdornment position="start"><CategoryIcon sx={{ fontSize: { xs: 18, md: 20 }, color: "#9CA3AF" }} /></InputAdornment> } }}
-              SelectProps={{ MenuProps: selectMenuProps, displayEmpty: true, renderValue: (v: any) => v ? v : placeholder(t("company_form.select_industry")) }}
-              sx={compactFieldSx}
-            >
-              {INDUSTRIES.map((ind) => <MenuItem key={ind} value={ind}>{ind}</MenuItem>)}
-            </TextField>
+            <AppInput
+              label={t("company_form.work_email")}
+              placeholder="contact@company.com"
+              type="email"
+              required
+              disabled={loading}
+              error={errors.email?.message}
+              startIcon={<EmailIcon sx={{ fontSize: 18, color: "#9CA3AF" }} />}
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+            />
           )}
         />
       </Box>
 
       <Box sx={half}>
-        <Controller name="size" control={control} rules={{ required: t("company_form.validation.size_required") }}
+        <Controller name="industry" control={control}
+          rules={{ required: t("company_form.validation.industry_required") }}
           render={({ field }) => (
-            <TextField {...field} label={t("company_form.company_size")} fullWidth required select disabled={loading}
-              error={!!errors.size} helperText={errors.size?.message}
-              slotProps={{ input: { startAdornment: <InputAdornment position="start"><PeopleIcon sx={{ fontSize: { xs: 18, md: 20 }, color: "#9CA3AF" }} /></InputAdornment> } }}
-              SelectProps={{ MenuProps: selectMenuProps, displayEmpty: true, renderValue: (v: any) => v ? v : placeholder(t("company_form.select_size")) }}
-              sx={compactFieldSx}
-            >
-              {COMPANY_SIZES.map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
-            </TextField>
+            <AppSelect
+              label={t("company_form.industry")}
+              required
+              disabled={loading}
+              error={errors.industry?.message}
+              placeholder={t("company_form.select_industry")}
+              options={INDUSTRIES.map((i) => ({ label: i, value: i }))}
+              value={field.value ?? ""}
+              onChange={(v) => field.onChange(v)}
+            />
           )}
         />
       </Box>
 
       <Box sx={half}>
-        <TextField label={t("company_form.location")} placeholder="e.g. Paris, France" fullWidth required disabled={loading}
-          error={!!errors.location} helperText={errors.location?.message}
-          slotProps={{ input: { startAdornment: <InputAdornment position="start"><LocationOnIcon sx={{ fontSize: { xs: 18, md: 20 }, color: "#9CA3AF" }} /></InputAdornment> } }}
-          sx={compactFieldSx}
-          {...register("location", { required: t("company_form.validation.location_required") })}
+        <Controller name="size" control={control}
+          rules={{ required: t("company_form.validation.size_required") }}
+          render={({ field }) => (
+            <AppSelect
+              label={t("company_form.company_size")}
+              required
+              disabled={loading}
+              error={errors.size?.message}
+              placeholder={t("company_form.select_size")}
+              options={COMPANY_SIZES.map((s) => ({ label: s, value: s }))}
+              value={field.value ?? ""}
+              onChange={(v) => field.onChange(v)}
+            />
+          )}
         />
       </Box>
 
       <Box sx={half}>
-        <TextField label={t("company_form.website")} placeholder="https://yourcompany.com" fullWidth disabled={loading}
-          error={!!errors.website} helperText={errors.website?.message}
-          slotProps={{ input: { startAdornment: <InputAdornment position="start"><LanguageIcon sx={{ fontSize: { xs: 18, md: 20 }, color: "#9CA3AF" }} /></InputAdornment> } }}
-          sx={compactFieldSx}
-          {...register("website", {
+        <Controller name="location" control={control}
+          rules={{ required: t("company_form.validation.location_required") }}
+          render={({ field }) => (
+            <AppInput
+              label={t("company_form.location")}
+              placeholder="e.g. Paris, France"
+              required
+              disabled={loading}
+              error={errors.location?.message}
+              startIcon={<LocationOnIcon sx={{ fontSize: 18, color: "#9CA3AF" }} />}
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+            />
+          )}
+        />
+      </Box>
+
+      <Box sx={half}>
+        <Controller name="website" control={control}
+          rules={{
             validate: (v) => {
               if (!v) return true;
               try {
@@ -108,16 +138,25 @@ const CompanyFields: React.FC<Props> = ({ register, control, errors, loading }) 
                 return true;
               } catch { return t("company_form.validation.url_invalid"); }
             },
-          })}
+          }}
+          render={({ field }) => (
+            <AppInput
+              label={t("company_form.website")}
+              placeholder="https://yourcompany.com"
+              disabled={loading}
+              error={errors.website?.message}
+              startIcon={<LanguageIcon sx={{ fontSize: 18, color: "#9CA3AF" }} />}
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+            />
+          )}
         />
       </Box>
 
       <Box sx={full}>
-        <TextField label={t("company_form.linkedin")} placeholder="https://linkedin.com/company/..." fullWidth disabled={loading}
-          error={!!errors.linkedin} helperText={errors.linkedin?.message}
-          slotProps={{ input: { startAdornment: <InputAdornment position="start"><LinkedInIcon sx={{ fontSize: { xs: 18, md: 20 }, color: "#9CA3AF" }} /></InputAdornment> } }}
-          sx={compactFieldSx}
-          {...register("linkedin", {
+        <Controller name="linkedin" control={control}
+          rules={{
             validate: (v) => {
               if (!v) return true;
               try {
@@ -128,7 +167,19 @@ const CompanyFields: React.FC<Props> = ({ register, control, errors, loading }) 
                 return true;
               } catch { return t("company_form.validation.linkedin_protocol"); }
             },
-          })}
+          }}
+          render={({ field }) => (
+            <AppInput
+              label={t("company_form.linkedin")}
+              placeholder="https://linkedin.com/company/..."
+              disabled={loading}
+              error={errors.linkedin?.message}
+              startIcon={<LinkedInIcon sx={{ fontSize: 18, color: "#9CA3AF" }} />}
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+            />
+          )}
         />
       </Box>
     </>

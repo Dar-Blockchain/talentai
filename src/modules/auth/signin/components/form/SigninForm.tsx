@@ -18,7 +18,7 @@ const SigninForm: React.FC = () => {
 
       {step === 1 && (
         <EmailStep
-          register={form.register} errors={form.formState.errors}
+          control={form.control} errors={form.formState.errors}
           loading={loading} invitationEmail={invitationEmail}
         />
       )}

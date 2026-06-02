@@ -15,7 +15,7 @@ const CompanyRegisterForm: React.FC<RegisterFormProps> = ({ onStepChange, onEmai
   const { step, loading, savedEmail, otp, timer, sendCode, verifyCode } =
     useCompanyRegister({ onStepChange, onEmailChange });
 
-  const { register, handleSubmit, control, formState: { errors } } = useForm<CompanyFormValues>({
+  const { handleSubmit, control, formState: { errors } } = useForm<CompanyFormValues>({
     mode: "onTouched",
     defaultValues: { name: "", email: "", industry: "", size: "", location: "", website: "", linkedin: "" },
   });
@@ -33,7 +33,7 @@ const CompanyRegisterForm: React.FC<RegisterFormProps> = ({ onStepChange, onEmai
     <Box component="form" onSubmit={handleSubmit(sendCode)}
       sx={{ mb: 2, textAlign: "left", display: "flex", flexWrap: "wrap", gap: { xs: 2.25, sm: 2.75, md: 3 } }}
     >
-      <CompanyFields register={register} control={control} errors={errors} loading={loading} />
+      <CompanyFields control={control} errors={errors} loading={loading} />
 
       <Box sx={full}>
         <SubmitButton
