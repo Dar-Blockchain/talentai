@@ -170,54 +170,6 @@ module.exports.deleteMembership = async (membershipId, companyOwnerId) => {
   }
 };
 
-// Update the role of a membership
-module.exports.updateMembershipRole = async (membershipId, newRole, updatedBy = null) => {
-
-  const updateData = { role: newRole };
-  if (updatedBy) {
-    updateData.updatedBy = updatedBy;
-  }
-
-  const updated = await CompanyMembershipModel.findByIdAndUpdate(
-    membershipId,
-    updateData,
-    { new: true }
-  )
-    .populate({
-      path: "user",
-      select: "username email profile",
-      populate: { path: "profile", select: "firstName lastName" },
-    })
-    .populate("invitedBy", "username email");
-
-  if (!updated) throw new Error("Membership not found");
-  return updated;
-};
-
-// Update the department of a membership (assign or unassign from department)
-module.exports.updateMembershipDepartment = async (membershipId, departmentId, updatedBy = null) => {
-  const updateData = { department: departmentId || null };
-  if (updatedBy) {
-    updateData.updatedBy = updatedBy;
-  }
-
-  const updated = await CompanyMembershipModel.findByIdAndUpdate(
-    membershipId,
-    updateData,
-    { new: true }
-  )
-    .populate({
-      path: "user",
-      select: "username email profile",
-      populate: { path: "profile", select: "firstName lastName" },
-    })
-    .populate("department", "name description")
-    .populate("invitedBy", "username email");
-
-  if (!updated) throw new Error("Membership not found");
-  return updated;
-};
-
 // Update both role and department of a membership
 module.exports.updateMembership = async (membershipId, { role, departmentId, updatedBy }) => {
   // Build the update object

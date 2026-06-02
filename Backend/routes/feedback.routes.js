@@ -43,18 +43,4 @@ router.use(requireAuth, authLogMiddleware("Feedback"));
  */
 router.post('/addFeedback', feedbackController.create);
 
-/**
- * @openapi
- * /feedback/getAllFeedback:
- *   get:
- *     tags: [Feedback]
- *     summary: List all feedback entries (Admin only)
- *     responses:
- *       200:
- *         description: List of feedback
- *       403:
- *         description: Forbidden — Admin role required
- */
-router.get('/getAllFeedback', controledAcces('Admin'), feedbackController.getAllFeedback);
-
 module.exports = router;

@@ -307,6 +307,19 @@ module.exports.logout = (req, res) => {
   }
 };
 
+module.exports.checkRole = async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) return res.status(400).json({ success: false, message: 'email query param required' });
+    const User = require('../models/User.model');
+    const user = await User.findOne({ email: email.toLowerCase().trim() }).select('role').lean();
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    res.status(200).json({ success: true, role: user.role });
+  } catch (error) {
+    handleError(res, error, 500);
+  }
+};
+
 module.exports.warnUser = async (req, res) => {
   try {
     if (!req.user || !req.user.email) {
@@ -324,127 +337,5 @@ module.exports.warnUser = async (req, res) => {
     });
   } catch (error) {
     handleError(res, error, 400);
-  }
-};
-
-module.exports.parseCV = async (req, res) => {
-  try {
-    // Get the file path from request body or query parameter
-    const { filePath, saveToDatabase = true } = req.body || req.query;
-
-    // Validate that filePath is provided
-    if (!filePath) {
-      return res.status(400).json({
-        success: false,
-        error: 'filePath is required in request body or query parameter'
-      });
-    }
-
-    // Validate that file exists
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({
-        success: false,
-        error: `CV file not found at path: ${filePath}`
-      });
-    }
-
-    // Analyze the CV
-    const result = await analyzeCV(filePath);
-    const cvData = JSON.parse(result);
-
-    // Save to CVAnalysis database if needed
-    let dbRecord = null;
-    if (saveToDatabase) {
-      try {
-        const cvAnalysisData = {
-          name: cvData.name || 'Unknown',
-          email: cvData.email || '',
-          phone: cvData.phone || '',
-          location: cvData.location || '',
-          title: cvData.title || '',
-          summary: cvData.summary || '',
-          yearsOfExperience: cvData.yearsOfExperience || 0,
-          seniority: cvData.seniority || 'Entry-Level',
-          skills: cvData.skills || [],
-          softSkills: cvData.softSkills || [],
-          spokenLanguages: cvData.spokenLanguages || [],
-          experience: cvData.experience || [],
-          education: cvData.education || [],
-          certifications: cvData.certifications || [],
-          projects: cvData.projects || [],
-          links: cvData.links || { linkedin: '', github: '', portfolio: '' },
-          sourceUrl: filePath,
-          ipAddress: req.ip,
-          userAgent: req.get('user-agent'),
-        };
-
-        // Add user reference if authenticated
-        if (req.user) {
-          cvAnalysisData.User = req.user._id;
-        }
-
-        // Try to get profile ID if user is authenticated and has profile
-        let profileIdForUpdate = null;
-        if (req.user && req.user._id) {
-          try {
-            const userProfile = await Profile.findOne({ userId: req.user._id });
-            profileIdForUpdate = userProfile ? userProfile._id : null;
-          } catch (profileFetchError) {
-            console.warn('⚠️ Could not fetch user profile:', profileFetchError.message);
-          }
-        }
-
-        const saveResult = await CVAnalysisService.createCVAnalysis(
-          cvAnalysisData,
-          profileIdForUpdate
-        );
-        dbRecord = saveResult.data;
-
-        console.log('✅ CV Analysis saved to database:', dbRecord._id);
-      } catch (dbError) {
-        console.warn('⚠️ CV analysis saved but database storage failed:', dbError.message);
-        // Continue even if saving to database fails
-      }
-    }
-
-    res.status(200).json({
-      success: true,
-      data: cvData,
-      databaseRecord: dbRecord ? {
-        id: dbRecord._id,
-        analysisScore: dbRecord.analysisScore,
-        createdAt: dbRecord.createdAt
-      } : null,
-      message: dbRecord ? 'CV analyzed and saved to database successfully' : 'CV analyzed successfully'
-    });
-  } catch (error) {
-    console.error('Error parsing CV:', error);
-
-    // Handle region/country restriction errors
-    if (error?.message?.includes('not allowed from unsupported countries') ||
-        error?.message?.includes('Anthropic') ||
-        error?.message?.includes('AccessDenied')) {
-      return res.status(403).json({
-        success: false,
-        error: 'CV analysis service (Claude/Anthropic) is not available in your region. Please contact support for alternative solutions.'
-      });
-    }
-
-    handleError(res, error, 400);
-  }
-}
-
-// Check role by email — public endpoint used by the job application modal
-module.exports.checkRole = async (req, res) => {
-  try {
-    const email = (req.query.email || "").trim().toLowerCase();
-    if (!email) return res.status(400).json({ error: "Email is required" });
-
-    const user = await User.findOne({ email }).select("role").lean();
-    if (!user) return res.status(401).json({ role: null, exists: false });
-
-    res.json({ role: user.role, exists: true });
-  } catch (error) {
-    handleError(res, error);
   }
 };

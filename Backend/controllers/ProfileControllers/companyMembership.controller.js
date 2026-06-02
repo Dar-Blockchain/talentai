@@ -96,49 +96,6 @@ module.exports.deleteMembership = async (req, res) => {
   }
 };
 
-// Update membership role
-module.exports.updateMembershipRole = async (req, res) => {
-  try {
-    const { membershipId } = req.params;
-    const { role } = req.body;
-
-    if (!role || typeof role !== "string") {
-      return res.status(400).json({
-        success: false,
-        message: "Role is required and must be a string",
-      });
-    }
-
-    const updatedBy = req.actualUser?._id || req.user._id;
-    const updated = await CompanyMembershipService.updateMembershipRole(
-      membershipId,
-      role,
-      updatedBy,
-    );
-    res.json({ success: true, updated: flattenMembership(updated) });
-  } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
-  }
-};
-
-// Update membership department (assign or unassign from department)
-module.exports.updateMembershipDepartment = async (req, res) => {
-  try {
-    const { membershipId } = req.params;
-    const { departmentId } = req.body;
-
-    const updatedBy = req.actualUser?._id || req.user._id;
-    const updated = await CompanyMembershipService.updateMembershipDepartment(
-      membershipId,
-      departmentId,
-      updatedBy,
-    );
-    res.json({ success: true, updated: flattenMembership(updated) });
-  } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
-  }
-};
-
 // Update membership (role and/or department)
 module.exports.updateMembership = async (req, res) => {
   try {

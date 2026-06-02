@@ -5,16 +5,11 @@ const companyPermissionsRouter = require("../routes/companyPermissions.routes");
 const dashboardRouter = require("../routes/dashboard.routes");
 const profileRouter = require("../routes/profile.routes");
 const postRouter = require("../routes/post.routes");
-const todoRouter = require("../routes/todo.routes");
 const feedbackRouter = require("../routes/feedback.routes");
-const logRoutes = require("../routes/log.routes");
 const postInterviewAssessmentRouter = require("../routes/postInterviewAssessment.routes");
 const notificationSystemRouter = require("../routes/notificationSystem.routes");
-const postStepsRouter = require("../routes/postSteps.routes");
-const candidatePostStepProgressRouter = require("../routes/candidatePostStepProgress.routes");
 const stripRouter = require("../routes/strip.routes");
 const SkillInterviewAssessmentRoutes = require("../routes/skillInterviewAssessment.routes");
-const pipelineInterviewRoutes = require("../routes/pipelineInterview.routes");
 const CompanyInvitationRouters = require("../routes/companyInvitation.routes");
 const CompanyMembershipRoutes = require("../routes/companyMembership.routes");
 const chatRouter = require("../routes/chat.routes");
@@ -22,16 +17,12 @@ const teamChatRouter = require("../routes/teamChat.routes");
 const planLimitsRouter = require("../routes/planLimits.routes");
 const subscriptionRouter = require("../routes/subscription.routes");
 const internalCampaignRoutes = require('../routes/internalCampaign.routes');
-const campaignParticipantRoutes = require('../routes/campaignParticipant.routes');
 const departmentRoutes = require('../routes/department.routes');
 const contactRouter = require('../routes/contact.routes');
 const employeePermissionsRouter = require('../routes/employeePermissions.routes');
 const jobApplicationRouter = require("../routes/jobApplication.routes");
 const apiKeyRouter = require('../routes/apiKeys.routes');
 const paymentRouter = require('../routes/payment.routes');
-
-// const backupRouter = require('../routes/backupRouter');
-const backupRouter = require('../routes/backup.routes');
 
 /**
  * Register all routes on the Express app
@@ -42,70 +33,55 @@ function registerRoutes(app) {
   registerSwagger(app);
 
   // Authentication & Profile
-  app.use("/auth", authRouter); //✅ authentication
-  app.use("/admin", companyPermissionsRouter); // ✅ (admin company permissions) -> admin (to be checked)
-  app.use("/employee-permissions", employeePermissionsRouter); //✅ Employee Permissions Management
-  app.use("/dashboard", dashboardRouter); //✅ dashboard
-  app.use("/profiles", profileRouter); //✅ profile management
+  app.use("/auth", authRouter);
+  app.use("/admin", companyPermissionsRouter);
+  app.use("/employee-permissions", employeePermissionsRouter);
+  app.use("/dashboard", dashboardRouter);
+  app.use("/profiles", profileRouter);
 
   // Company Management
-  app.use("/plan-limits", planLimitsRouter); //✅ Plan Limits Management -> plan-limits
-  app.use("/subscriptions", subscriptionRouter); //✅ Subscription Management -> subscriptions
-  app.use('/company-invitations', CompanyInvitationRouters); //✅ Company Invitation Management
-  app.use('/company-memberships', CompanyMembershipRoutes); //✅ Company Membership Management
+  app.use("/plan-limits", planLimitsRouter);
+  app.use("/subscriptions", subscriptionRouter);
+  app.use('/company-invitations', CompanyInvitationRouters);
+  app.use('/company-memberships', CompanyMembershipRoutes);
 
   // Evaluation & Interview
-  app.use("/skill-interview-assessments", SkillInterviewAssessmentRoutes); //✅ Skill Interview Assessments -> skill-interview-assessments
-  app.use("/post-interview-assessments", postInterviewAssessmentRouter); //✅   Post Interview Assessments -> post-interview-assessments
+  app.use("/skill-interview-assessments", SkillInterviewAssessmentRoutes);
+  app.use("/post-interview-assessments", postInterviewAssessmentRouter);
 
   // Posts & Jobs
-  app.use("/post", postRouter); //✅ Post Management -> posts
-  app.use("/post-steps", postStepsRouter); //✅ Post Steps Management -> post-steps
+  app.use("/post", postRouter);
 
   // Chat & Messaging
-  // Chat is a live realtime surface: disable HTTP caching + ETag so the client
-  // never receives a 304 (which strips body/headers and was causing perceived
-  // "CORS error" + empty inbox after refresh in some browsers).
   const noChatCache = (req, res, next) => {
     res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
     res.set("Pragma", "no-cache");
     res.set("Expires", "0");
     next();
   };
-  app.use("/chat", noChatCache, chatRouter); //✅ Chat functionalities chat -> chats (to be checked)
-  app.use("/team-chat", noChatCache, teamChatRouter); // Internal company team chat (1:1)
+  app.use("/chat", noChatCache, chatRouter);
+  app.use("/team-chat", noChatCache, teamChatRouter);
 
   // Notifications
-  app.use("/notification-system", notificationSystemRouter); // Notification System -> notifications
-  //app.use('/notifications', notificationSystemRouter); //✅ Notification System -> notifications
+  app.use("/notification-system", notificationSystemRouter);
 
   // Candidate Management
-  //app.use("/candidate-progress", candidatePostStepProgressRouter); //✅ Candidate Post Step Progress -> candidate-progress
-  app.use("/job-applications", jobApplicationRouter); //✅ Job Applications -> job-applications
+  app.use("/job-applications", jobApplicationRouter);
 
-  // Utility & Management
-  // app.use("/todo", todoRouter); //✅ To-Do Management -> todos
-  app.use("/feedback", feedbackRouter); //✅ Feedback Management -> feedbacks
-  app.use("/logs", logRoutes); //✅ System Logs Management -> logs  
-  app.use('/admin/backups', backupRouter); //✅ Database Backup Management -> admin/backups
+  // Utility
+  app.use("/feedback", feedbackRouter);
 
   // Billing
-  app.use("/stripe", stripRouter); //✅ Stripe Integration -> api/stripe
+  app.use("/stripe", stripRouter);
+  app.use("/payments", paymentRouter);
 
-  // Pipeline Interview
-  //app.use("/api/pipeline-interview", pipelineInterviewRoutes); // Pipeline Interview Routes -> /interview-pipelines
-
-  //payment
-  app.use("/payments", paymentRouter); //✅ Payment Management -> payments
-
-  // Register internal campaign routes
+  // Internal Campaigns & Departments
   app.use('/internal-campaigns', internalCampaignRoutes);
-  app.use('/campaign-participants', campaignParticipantRoutes);
   app.use('/departments', departmentRoutes);
   app.use('/contact', contactRouter);
-  // API Key Management
-  app.use('/api/api-keys', apiKeyRouter); //✅ API Key Management -> api-keys
 
+  // API Key Management
+  app.use('/api/api-keys', apiKeyRouter);
 }
 
 module.exports = {

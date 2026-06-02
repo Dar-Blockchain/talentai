@@ -11,12 +11,3 @@ exports.create = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-
-exports.getAllFeedback = async (req, res) => {
-  try {
-    const feedbacks = await feedbackService.getAllFeedbacks();
-    res.json(feedbacks);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};

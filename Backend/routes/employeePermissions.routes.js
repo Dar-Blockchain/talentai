@@ -5,18 +5,6 @@ const { requireAuthUser } = require("../middleware/security/auth.middleware");
 
 /**
  * @openapi
- * /employee-permissions/available:
- *   get:
- *     tags: [Employee Permissions]
- *     summary: List all available permission keys
- *     responses:
- *       200:
- *         description: Array of available permissions
- */
-router.get("/available", requireAuthUser, employeePermissionsController.getAvailablePermissions);
-
-/**
- * @openapi
  * /employee-permissions/{userId}:
  *   get:
  *     tags: [Employee Permissions]

@@ -92,12 +92,6 @@ router.post("/register", uploadfile.single('resume'), authController.register);
  */
 router.post("/", authController.login);
 
-// POST /auth/analyze
-// Access: Public
-// Expected body: { filePath: "public/images/Users/resume.pdf", saveToDatabase?: true }
-// Description: Analyzes a stored resume, extracts information via Bedrock and stores it in CVAnalysis model
-router.post("/analyze", authController.parseCV);
-
 /**
  * @openapi
  * /auth/verify-otp:
