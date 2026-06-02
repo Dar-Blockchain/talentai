@@ -105,7 +105,8 @@ requirements
 - If location is not in the description → use: "${companyLocation || "Not specified"}"
 
 skills
-- 1 to 3 required skills — only specific named tools or technologies explicitly mentioned in the description. Never invent a skill not present. If fewer than 3 are named, return only what exists. + 1 to 2 soft skills
+- 1 to 3 required skills — extract skills explicitly mentioned first. If fewer than 3 are named, infer the most commonly required tools for this specific role and seniority level (e.g. a Senior Frontend Developer implies TypeScript, CSS; a Backend Node.js role implies REST APIs, SQL). Prefer specific named tools over generic terms.
+- softSkills MUST always contain at least 1 item — never return an empty array.
 - Prefer specific named tools over generic labels
   Frontend: React.js, Vue, Angular… | Backend: Node.js, Django, Spring… | Mobile: Swift, Kotlin, Flutter…
   DevOps/Cloud: Docker, Kubernetes, AWS, GCP… | Data: Spark, dbt, Airflow… | AI/ML: PyTorch, TensorFlow, LangChain…
@@ -125,7 +126,7 @@ skills
 
 
 experienceLevel
-- Default to "Mid-level" if the description gives no seniority or years signal
+- Default to "Junior" if the description gives no seniority or years signal
 - Junior: 1–3 yrs | Mid-level: 3–5 yrs | Senior: 5–8 yrs | Expert: 8+ yrs
 
 ━━━ JOB DESCRIPTION ━━━
@@ -167,11 +168,11 @@ function normalizeSkillAnalysis(result) {
   const nullFallback = expFallback[result?.jobDetails?.experienceLevel] || 2;
 
   function resolveLevel(modelLevel) {
-    if (isInternship) return 1;
+    if (isInternship) return 2;
     if (typeof modelLevel === "number" && modelLevel >= 1 && modelLevel <= 5) {
-      return Math.round(modelLevel);
+      return Math.max(2, Math.round(modelLevel));
     }
-    return nullFallback;
+    return Math.max(2, nullFallback);
   }
 
   // ── Required skills: keep first 3, assign rank-based percentages ──────────
@@ -197,10 +198,10 @@ function normalizeSkillAnalysis(result) {
     percentage: requiredPcts[i],
   }));
 
-  // ── Soft skills: keep first 2, split 20% evenly ──────────────────────────
-  const rawSoft = Array.isArray(result.skillAnalysis.softSkills)
+  // ── Soft skills: keep first 2, split 20% evenly — fallback if model returns none ──
+  const rawSoft = Array.isArray(result.skillAnalysis.softSkills) && result.skillAnalysis.softSkills.length > 0
     ? result.skillAnalysis.softSkills.slice(0, 2)
-    : [];
+    : [{ name: "Communication", level: null }];
 
   const softPct = rawSoft.length === 2 ? [10, 10] : [20];
 

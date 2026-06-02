@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { generatePost, getPost, savePost, updatePost } from "../api";
 import type { GeneratePostInput, GeneratePostResponse, SavePostPayload } from "../api";
 import { PostGenerationResponse } from "../store/createPostSlice";
-import { inferExperienceLevelFromText, isKnownExperienceLevel } from "../utils";
+import { inferExperienceLevelFromText, isKnownExperienceLevel, normalizeExperienceLevel } from "../utils";
 const POST_CACHE_MS = 5 * 60 * 1000;
 
 // ── Query Keys ────────────────────────────────────────────────────────────────
@@ -48,7 +48,7 @@ function normalizeGeneratedPost(data: GeneratePostResponse, variables: GenerateP
 
   const isInternship = variables.contractType === "Internship" || jobDetails.employmentType === "Internship";
   const resolvedExperienceLevel =
-    isKnownExperienceLevel(experienceLevel) ? experienceLevel
+    isKnownExperienceLevel(experienceLevel) ? normalizeExperienceLevel(experienceLevel)
     : inferred || (isInternship ? "Junior" : "");
 
   return {
