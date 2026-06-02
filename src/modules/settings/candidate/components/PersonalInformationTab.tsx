@@ -9,6 +9,7 @@ import ProfilePictureSection from '@/components/features/profile/ProfilePictureS
 import AppInput from '@/modules/shared/ui/AppInput';
 import AppSelect from '@/modules/shared/ui/AppSelect';
 import { EditActions } from '@/modules/settings/shared/components';
+import CvSection from './CvSection';
 
 interface PersonalInformationTabProps {
   profile:        UserProfile;
@@ -23,6 +24,8 @@ interface PersonalInformationTabProps {
   onSave:         () => void;
   onCancel:       () => void;
   onEditToggle:   () => void;
+  onCvUpdated:    (filename: string) => void;
+  onCvDeleted:    () => void;
 }
 
 const SectionHeader = ({ title, subtitle }: { title: string; subtitle: string }) => (
@@ -34,7 +37,7 @@ const SectionHeader = ({ title, subtitle }: { title: string; subtitle: string })
 
 const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
   profile, control, formErrors, isEditing, loading, saveSuccess, error,
-  uploadingImage, onImageUpload, onSave, onCancel, onEditToggle,
+  uploadingImage, onImageUpload, onSave, onCancel, onEditToggle, onCvUpdated, onCvDeleted,
 }) => {
   const { t } = useTranslation('dashboard');
   const s = (k: string) => t(`candidate_settings.personal.${k}`);
@@ -196,6 +199,15 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
                 />
               </Box>
             </Box>
+
+            <Divider sx={{ borderColor: '#E5E7EB' }} />
+
+            {/* ── Resume / CV ── */}
+            <CvSection
+              resumeFilename={profile.resume}
+              onUpdated={onCvUpdated}
+              onDeleted={onCvDeleted}
+            />
           </>
         )}
       </Box>

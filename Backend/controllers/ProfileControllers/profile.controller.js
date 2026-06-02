@@ -716,6 +716,66 @@ module.exports.updateProfileComplete = async (req, res) => {
 // ========== PAYMENT MANAGEMENT CONTROLLERS ==========
 
 /**
+ * Delete candidate resume
+ * DELETE /profiles/delete-resume
+ */
+module.exports.deleteResume = async (req, res) => {
+  try {
+    const userId  = req.user._id;
+    const fs      = require("fs");
+    const path    = require("path");
+    const Profile = require("../../models/Profile.model");
+
+    const profile = await Profile.findOne({ userId }).select("resume");
+    if (!profile) return res.status(404).json({ success: false, error: "Profile not found." });
+
+    if (profile.resume) {
+      const filePath = path.join(__dirname, "..", "..", "uploads", "resumes", profile.resume);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      await Profile.findOneAndUpdate({ userId }, { resume: "" });
+    }
+
+    return res.status(200).json({ success: true, message: "Resume deleted." });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+/**
+ * Update candidate resume
+ * PUT /profiles/update-resume
+ */
+module.exports.updateResume = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const file   = req.file;
+
+    if (!file) {
+      return res.status(400).json({ success: false, error: "No resume file provided." });
+    }
+
+    const Profile = require("../../models/Profile.model");
+    const profile = await Profile.findOneAndUpdate(
+      { userId },
+      { resume: file.filename },
+      { new: true }
+    ).select("_id resume firstName lastName");
+
+    if (!profile) {
+      return res.status(404).json({ success: false, error: "Profile not found." });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Resume updated successfully.",
+      data: { resume: profile.resume },
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+/**
  * Get all payments for a profile
  * GET /profile/:profileId/payments
  */
