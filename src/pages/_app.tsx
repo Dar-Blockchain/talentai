@@ -53,20 +53,28 @@ const theme = createTheme({
 
 function DbLanguageSync() {
   const user = useSelector((state: RootState) => state.user.connectedUser.user);
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const { i18n } = useTranslation();
 
   useEffect(() => {
-    if (!user) return;
-    // language is stored on the User document, not the Profile
-    const raw = (user as any)?.language;
-    const dbLang = normalizeLangCode(raw);
-    if (!dbLang) return;
-    // Always apply the account's saved language — clear any pre-login guest selection
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(MANUAL_LANG_KEY);
+    if (!isAuthenticated) {
+      if (typeof window !== 'undefined') localStorage.removeItem(MANUAL_LANG_KEY);
+      i18n.changeLanguage('en');
+      return;
     }
-    i18n.changeLanguage(dbLang);
-  }, [(user as any)?.language, (user as any)?._id]);
+
+    const dbLang = normalizeLangCode((user as any)?.language);
+    if (dbLang) {
+      if (typeof window !== 'undefined') localStorage.removeItem(MANUAL_LANG_KEY);
+      i18n.changeLanguage(dbLang);
+      return;
+    }
+
+    const manualLang = typeof window !== 'undefined'
+      ? normalizeLangCode(localStorage.getItem(MANUAL_LANG_KEY))
+      : null;
+    i18n.changeLanguage(manualLang ?? 'en');
+  }, [isAuthenticated, (user as any)?._id, (user as any)?.language]);
   return null;
 }
 
