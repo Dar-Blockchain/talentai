@@ -198,6 +198,14 @@ export const useProfileManagement = () => {
     handleSaveProfile,
     handleSaveLanguage,
     handleCancel,
+    handleCvUpdated:      useCallback((filename: string) => {
+      setProfile((prev) => ({ ...prev, resume: filename }));
+      setSavedProfile((prev) => ({ ...prev, resume: filename }));
+    }, []),
+    handleCvDeleted:      useCallback(() => {
+      setProfile((prev) => ({ ...prev, resume: "" }));
+      setSavedProfile((prev) => ({ ...prev, resume: "" }));
+    }, []),
     handleDismissError:   useCallback(() => setError(null), []),
     handleDismissSuccess: useCallback(() => setSaveSuccess(false), []),
   };

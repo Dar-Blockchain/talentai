@@ -3,6 +3,7 @@ import React, { useMemo, useEffect, useState, useRef } from "react";
 import { Box } from "@mui/material";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
+import { getToken } from "@/utils/tokenUtils";
 import HeaderLogo from "@/components/layout/header/HeaderLogo";
 import HeaderNotification from "@/components/layout/header/HeaderNotification";
 import UserAvatar from "@/components/layout/header/UserAvatar";
@@ -19,10 +20,18 @@ const Header = () => {
   const socketRef = useRef<Socket | null>(null);
   const [scrolled, setScrolled] = useState(false);
 
-  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
-  const connectedUser   = useSelector((state: RootState) => state.user?.connectedUser?.user);
-  const profile         = useSelector((state: RootState) => state.user?.connectedUser?.profile);
-  const userId          = connectedUser?._id;
+  const isAuthRedux   = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const connectedUser = useSelector((state: RootState) => state.user?.connectedUser?.user);
+  const profile       = useSelector((state: RootState) => state.user?.connectedUser?.profile);
+  const userId        = connectedUser?._id;
+
+  // Derive auth from token directly — covers the PersistGate rehydration window
+  // where isAuthRedux is still false even though a valid token exists.
+  const [hasToken, setHasToken] = useState(false);
+  useEffect(() => {
+    setHasToken(!!getToken());
+  }, [isAuthRedux]);
+  const isAuthenticated = isAuthRedux || hasToken;
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
 
   const landingLikePaths = useMemo(

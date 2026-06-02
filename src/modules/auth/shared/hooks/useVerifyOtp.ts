@@ -4,6 +4,7 @@ import { useDispatch } from "react-redux";
 import Cookies from "js-cookie";
 import type { AppDispatch } from "@/store/store";
 import { setConnectedUser } from "@/store/slices/userSlice";
+import { setAuthenticated } from "@/store/slices/authSlice";
 import { authApi } from "../api";
 import type { VerifyOtpPayload, VerifyOtpResponse } from "../types";
 
@@ -31,6 +32,7 @@ export function useVerifyOtp(onSuccess?: (data: VerifyOtpResponse) => void) {
     onSuccess: (data) => {
       persistSession(data.token, data.user.role);
 
+      dispatch(setAuthenticated(data.token));
       dispatch(setConnectedUser({
         user:              data.user,
         profile:           data.profile           ?? null,
