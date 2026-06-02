@@ -6,7 +6,7 @@ import { useCandidateRegister } from "../../hooks";
 import CandidateFields from "../fields/CandidateFields";
 import CvUpload from "../cv/CvUpload";
 import CvAnalysisDialog from "../cv/CvAnalysisDialog";
-import OtpVerifyStep from "../otp/OtpVerifyStep";
+import AppOtpVerifyStep from "@/modules/shared/ui/AppOtpVerifyStep";
 import SubmitButton from "../ui/SubmitButton";
 import type { CandidateFormValues, RegisterFormProps } from "../../types";
 
@@ -27,7 +27,7 @@ const CandidateRegisterForm: React.FC<RegisterFormProps> = ({ onStepChange, onEm
 
 
   if (step === 2) return (
-    <OtpVerifyStep
+    <AppOtpVerifyStep
       savedEmail={savedEmail} otp={otp} timer={timer}
       loading={loading} resendLoading={resendLoading}
       onVerify={verifyCode} onResend={resendCode}

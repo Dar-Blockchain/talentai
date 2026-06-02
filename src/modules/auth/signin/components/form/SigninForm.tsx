@@ -7,7 +7,7 @@ import { formatTimeLeft } from "@/utils/functions";
 import { ACCENT, OTP_CODE_LENGTH } from "@/modules/auth/shared/types";
 import { useSignin } from "../../hooks";
 import EmailStep from "../ui/EmailStep";
-import OtpStep from "../ui/OtpStep";
+import AppOtpVerifyStep from "@/modules/shared/ui/AppOtpVerifyStep";
 
 const SigninForm: React.FC = () => {
   const { t } = useTranslation("auth");
@@ -24,7 +24,7 @@ const SigninForm: React.FC = () => {
       )}
 
       {step === 2 && (
-        <OtpStep emailValue={emailValue} otp={otp} isLocked={loading} />
+        <AppOtpVerifyStep savedEmail={emailValue} otp={otp} loading={loading} tPrefix="signin" />
       )}
 
       {/* Timer */}

@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useCompanyRegister } from "../../hooks";
 import CompanyFields from "../fields/CompanyFields";
-import OtpVerifyStep from "../otp/OtpVerifyStep";
+import AppOtpVerifyStep from "@/modules/shared/ui/AppOtpVerifyStep";
 import SubmitButton from "../ui/SubmitButton";
 import type { CompanyFormValues, RegisterFormProps } from "../../types";
 
@@ -21,7 +21,7 @@ const CompanyRegisterForm: React.FC<RegisterFormProps> = ({ onStepChange, onEmai
   });
 
   if (step === 2) return (
-    <OtpVerifyStep
+    <AppOtpVerifyStep
       savedEmail={savedEmail} otp={otp} timer={timer}
       loading={loading}
       onVerify={verifyCode}
