@@ -241,8 +241,9 @@ module.exports.verifyUserOTP = async (email, otp, location = null) => {
       : null,
     user.companyMembership
       ? CompanyMembership.findById(user.companyMembership)
-          .populate({ path: "company", select: "username email user_image profile", populate: { path: "profile" } })
-          .select("_id role company")
+          .populate({ path: "company", select: "username email user_image" })
+          .populate({ path: "department", select: "name" })
+          .select("_id role company department")
           .lean()
       : null,
   ]);
@@ -251,7 +252,7 @@ module.exports.verifyUserOTP = async (email, otp, location = null) => {
   if (profile?.planLimits) {
     try {
       planLimits = await PlanLimits.findById(profile.planLimits)
-        .select("name postsLimit monthlyInterviewsLimit isActive")
+        .select("name postsLimit monthlyInterviewLimit")
         .lean();
     } catch { /* non-critical */ }
   }

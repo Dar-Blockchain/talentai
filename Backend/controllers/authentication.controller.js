@@ -175,8 +175,8 @@ module.exports.verifyOTP = async (req, res) => {
       companyDetails:          p.companyDetails,
       requiredExperienceLevel: p.requiredExperienceLevel,
       requiredSkills:          p.requiredSkills,
-      skills:                  p.skills,
-      softSkills:              p.softSkills,
+      skills:     (p.skills     || []).map(s => ({ _id: s._id, name: s.name, Levelconfirmed: s.Levelconfirmed })),
+      softSkills: (p.softSkills || []).map(s => ({ _id: s._id, name: s.name, category: s.category })),
     } : null;
 
     res.status(200).json({
