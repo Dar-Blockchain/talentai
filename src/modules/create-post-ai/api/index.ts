@@ -28,7 +28,7 @@ export async function generatePost(input: GeneratePostInput): Promise<GeneratePo
   const salaryText = salary.min != null && salary.max != null
     ? `\n\nSalary Range: ${salary.currency} ${new Intl.NumberFormat("en-US").format(salary.min)} - ${salary.currency} ${new Intl.NumberFormat("en-US").format(salary.max)}`
     : "";
-   const contractText = contractType ? `\nContract Type: ${contractType}` : "";
+  const contractText = contractType ? `\nContract Type: ${contractType}` : "";
   const workModeText = workMode     ? `\nWork Mode: ${workMode}`         : "";
   const description  = jobDescription + salaryText + contractText + workModeText;
 
