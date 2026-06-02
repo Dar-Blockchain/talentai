@@ -128,13 +128,10 @@ module.exports.register = async (req, res) => {
       : null;
 
     res.status(201).json({
-      success: true,
-      message: result.message,
-      email:   result.email,
+      success:  true,
+      message:  result.message,
+      email:    result.email,
       username: result.username,
-      user:    result.user    || null,
-      profile: result.profile || null,
-      cvAnalysis,
     });
   } catch (error) {
     deleteFile(resumeFile?.path);
@@ -158,12 +155,36 @@ module.exports.verifyOTP = async (req, res) => {
 
     res.cookie("jwt_token", result.token, JWT_COOKIE);
 
+    const p = result.profile;
+    const safeProfile = p ? {
+      _id:                     p._id,
+      userId:                  p.userId,
+      type:                    p.type,
+      firstName:               p.firstName,
+      lastName:                p.lastName,
+      user_image:              p.user_image,
+      phone:                   p.phone,
+      language:                p.language,
+      timeZone:                p.timeZone,
+      country:                 p.country,
+      isPublicProfile:         p.isPublicProfile,
+      quota:                   p.quota,
+      planUsage:               p.planUsage,
+      overallScore:            p.overallScore,
+      contactInformation:      p.contactInformation,
+      companyDetails:          p.companyDetails,
+      requiredExperienceLevel: p.requiredExperienceLevel,
+      requiredSkills:          p.requiredSkills,
+      skills:                  p.skills,
+      softSkills:              p.softSkills,
+    } : null;
+
     res.status(200).json({
       success:           true,
       message:           "Email verified successfully",
-      user:              result.user,
       token:             result.token,
-      profile:           result.profile          || null,
+      user:              result.user,
+      profile:           safeProfile,
       planLimits:        result.planLimits        || null,
       companyMembership: result.companyMembership || null,
     });

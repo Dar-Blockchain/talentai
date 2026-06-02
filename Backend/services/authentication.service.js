@@ -235,7 +235,9 @@ module.exports.verifyUserOTP = async (email, otp, location = null) => {
 
   const [profile, companyMembership] = await Promise.all([
     user.profile
-      ? Profile.findById(user.profile).lean()
+      ? Profile.findById(user.profile)
+          .select("_id userId type firstName lastName user_image phone language timeZone country isPublicProfile quota planUsage overallScore contactInformation companyDetails requiredExperienceLevel requiredSkills skills softSkills")
+          .lean()
       : null,
     user.companyMembership
       ? CompanyMembership.findById(user.companyMembership)
