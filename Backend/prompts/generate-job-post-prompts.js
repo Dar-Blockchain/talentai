@@ -106,7 +106,7 @@ requirements
 
 skills
 - 1 to 3 required skills — extract only skills explicitly mentioned or directly implied by the role (e.g. "React developer" implies React.js). Do NOT pad to reach 3 — if the description names 2 skills, return 2. If it names 1, return 1. Prefer specific named tools over generic terms.
-- softSkills MUST always contain at least 1 item — never return an empty array.
+- softSkills MUST contain 1 to 2 items — never return an empty array. Return 2 when the description clearly signals a second soft skill.
 - Prefer specific named tools over generic labels
   Frontend: React.js, Vue, Angular… | Backend: Node.js, Django, Spring… | Mobile: Swift, Kotlin, Flutter…
   DevOps/Cloud: Docker, Kubernetes, AWS, GCP… | Data: Spark, dbt, Airflow… | AI/ML: PyTorch, TensorFlow, LangChain…
