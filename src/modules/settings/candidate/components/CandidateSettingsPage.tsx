@@ -38,7 +38,7 @@ const CandidateSettingsPage: React.FC = () => {
     companyMembership, isPublicProfile,
     control, formErrors,
     setActiveTab, setIsEditing,
-    handleInputChange, handleImageUpload,
+    handleInputChange, handleImageUpload, handleCvUpdated, handleCvDeleted,
     handleSaveProfile, handleSaveLanguage, handleCancel, handleDismissError, handleDismissSuccess,
   } = useProfileManagement();
 
@@ -125,6 +125,8 @@ const CandidateSettingsPage: React.FC = () => {
               onSave={handleSaveProfile}
               onCancel={handleCancel}
               onEditToggle={() => setIsEditing(!isEditing)}
+              onCvUpdated={handleCvUpdated}
+              onCvDeleted={handleCvDeleted}
             />
           )}
           {activeTab === "language" && (

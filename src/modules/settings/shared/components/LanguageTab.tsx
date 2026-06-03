@@ -8,7 +8,7 @@ import SectionTitle from "./SectionTitle";
 import { TEAL, TEAL_BG, TEAL_BORDER } from "../constants";
 import { useLanguage } from "@/hooks/useLanguage";
 import { SUPPORTED_LANGS } from "@/constants/languages";
-import { GENERATE_LANG_KEY } from "@/modules/create-post-ai/components/GenerateLanguageModal";
+import { GENERATE_LANG_KEY } from "@/modules/posts/create/components/GenerateLanguageModal";
 
 interface Props {
   onInputChange: (key: string, value: string) => void;

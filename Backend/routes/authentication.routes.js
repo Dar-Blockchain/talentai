@@ -1,23 +1,24 @@
-/**
- * User authentication routes
- *
- * Global middlewares applied:
- * - LogMiddleware("Auth"): logs each auth-related request
- *
- * Note: some routes are public (registration, OTP, logins),
- * others require authentication via `requireAuthUser`.
- */
 const express = require("express");
-const router = express.Router();
-const authController = require("../controllers/authentication.controller");
+const router  = express.Router();
 
-const { requireAuth } = require("../middleware/security/auth.middleware");
-const authLogMiddleware = require("../middleware/security/request-log.middleware");
-const uploadfile = require("../middleware/fileResume-upload.middleware");
+const authController    = require("../controllers/authentication.controller");
+const { requireAuth }   = require("../middleware/security/auth.middleware");
+const authLog           = require("../middleware/security/request-log.middleware");
+const uploadfile        = require("../middleware/fileResume-upload.middleware");
 
+router.use(authLog("Auth"));
 
-// Logging all requests from this router
-router.use(authLogMiddleware("Auth"));
+// ── Public ────────────────────────────────────────────────────────────────────
+router.post("/register",    uploadfile.single("resume"), authController.register);
+router.post("/",            authController.login);
+router.post("/verify-otp",  authController.verifyOTP);
+router.post("/resend-otp",  authController.resendOTP);
+router.get( "/check-role",  authController.checkRole);
+
+// ── Protected ─────────────────────────────────────────────────────────────────
+router.post("/analyze",  requireAuth, authController.parseCV);
+router.post("/logout",   requireAuth, authController.logout);
+router.get( "/warnUser", requireAuth, authController.warnUser);
 
 /**
  * @openapi
@@ -64,7 +65,6 @@ router.use(authLogMiddleware("Auth"));
  *       409:
  *         description: Email already in use
  */
-router.post("/register", uploadfile.single('resume'), authController.register);
 
 /**
  * @openapi
@@ -90,7 +90,6 @@ router.post("/register", uploadfile.single('resume'), authController.register);
  *       404:
  *         description: User not found
  */
-router.post("/", authController.login);
 
 /**
  * @openapi
@@ -118,7 +117,6 @@ router.post("/", authController.login);
  *       400:
  *         description: Invalid or expired OTP
  */
-router.post("/verify-otp", authController.verifyOTP);
 
 /**
  * @openapi
@@ -144,12 +142,6 @@ router.post("/verify-otp", authController.verifyOTP);
  *       404:
  *         description: User not found
  */
-router.post("/resend-otp", authController.resendOTP);
-
-// GET /auth/warnUser
-// Access: Protected (Authenticated user)
-// Description: Notifies/warns the logged-in user (internal use)
-router.get("/warnUser", requireAuth, authController.warnUser);
 
 /**
  * @openapi
@@ -161,7 +153,6 @@ router.get("/warnUser", requireAuth, authController.warnUser);
  *       200:
  *         description: Logged out successfully
  */
-router.post("/logout", requireAuth, authController.logout);
 
 /**
  * @openapi
@@ -183,6 +174,5 @@ router.post("/logout", requireAuth, authController.logout);
  *       404:
  *         description: User not found
  */
-router.get("/check-role", authController.checkRole);
 
 module.exports = router;

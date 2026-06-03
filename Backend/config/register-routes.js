@@ -1,3 +1,6 @@
+const path = require("path");
+const express = require("express");
+
 // Import all route modules
 const { registerSwagger } = require('./swagger');
 const authRouter = require("../routes/authentication.routes");
@@ -31,6 +34,9 @@ const paymentRouter = require('../routes/payment.routes');
 function registerRoutes(app) {
   // Swagger API docs at /api/docs
   registerSwagger(app);
+
+  // Static file serving for resume uploads
+  app.use("/resume", express.static(path.join(__dirname, "../uploads/resumes")));
 
   // Authentication & Profile
   app.use("/auth", authRouter);

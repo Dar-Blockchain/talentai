@@ -19,8 +19,22 @@ export const candidateApi = {
 
   uploadAvatar: async (userId: string, file: File) => {
     const formData = new FormData();
-    formData.append('profile_image', file);
+    formData.append('user_image', file);
     const res = await axiosInstance.put(`profiles/${userId}`, formData, {
+      headers: { ...authHeaders(), 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data?.data ?? res.data;
+  },
+
+  deleteResume: async () => {
+    const res = await axiosInstance.delete('profiles/delete-resume', { headers: authHeaders() });
+    return res.data;
+  },
+
+  uploadResume: async (file: File) => {
+    const formData = new FormData();
+    formData.append('resume', file);
+    const res = await axiosInstance.put('profiles/update-resume', formData, {
       headers: { ...authHeaders(), 'Content-Type': 'multipart/form-data' },
     });
     return res.data?.data ?? res.data;

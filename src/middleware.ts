@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server";
 // ─── Public paths (no auth required) ────────────────────────────────────────
 const PUBLIC_PATHS = [
   "/",
+  "/demo",
   "/signin",
   "/register",
   "/terms",
@@ -16,6 +17,7 @@ const PUBLIC_PATHS = [
   "/employee/invitation",
   "/campaign",
   "/candidate/interview/hr",
+  "/payments/stripe/callback",
 ];
 
 const PUBLIC_PREFIXES = ["/api/", "/_next/", "/favicon", "/logo", "/static/"];

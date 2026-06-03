@@ -5,16 +5,9 @@ import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import AddOutlined from "@mui/icons-material/AddOutlined";
 import AppButton from "@/components/ui/AppButton";
 import JobPostCard from "./JobPostCard";
+import type { StatusFilter, SortOption, PaginationInfo } from "../types";
 
-const TEAL = "#0D9488";
-
-export type StatusFilter = "all" | "active" | "draft" | "expired";
-export type SortOption   = "newest" | "oldest" | "title-asc" | "title-desc";
-
-interface PaginationInfo {
-  totalPages: number;
-  total?: number;
-}
+import { TEAL } from "@/modules/posts/shared/constants";
 
 interface JobPostsListProps {
   jobs: any[];
@@ -71,7 +64,7 @@ const JobPostsList = memo<JobPostsListProps>(({
   if (loading) {
     return (
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "minmax(0,1fr)", sm: "repeat(2, minmax(0,1fr))", lg: "repeat(3, minmax(0,1fr))" }, gap: { xs: 1.5, md: 2 } }}>
-        {Array.from({ length: 6 }).map((_, i) => <JobPostSkeletonCard key={i} />)}
+        {Array.from({ length: 9 }).map((_, i) => <JobPostSkeletonCard key={i} />)}
       </Box>
     );
   }

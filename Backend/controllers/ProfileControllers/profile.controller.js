@@ -511,3 +511,116 @@ module.exports.updateProfileComplete = async (req, res) => {
   }
 };
 
+
+module.exports.deleteResume = async (req, res) => {
+  try {
+    const userId  = req.user._id;
+    const fs      = require("fs");
+    const path    = require("path");
+    const Profile = require("../../models/Profile.model");
+
+    const profile = await Profile.findOne({ userId }).select("resume");
+    if (!profile) return res.status(404).json({ success: false, error: "Profile not found." });
+
+    if (profile.resume) {
+      const filePath = path.join(__dirname, "..", "..", "uploads", "resumes", profile.resume);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      await Profile.findOneAndUpdate({ userId }, { resume: "" });
+    }
+
+    return res.status(200).json({ success: true, message: "Resume deleted." });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+module.exports.updateResume = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const file   = req.file;
+
+    if (!file) {
+      return res.status(400).json({ success: false, error: "No resume file provided." });
+    }
+
+    const Profile = require("../../models/Profile.model");
+    const profile = await Profile.findOneAndUpdate(
+      { userId },
+      { resume: file.filename },
+      { new: true }
+    ).select("_id resume firstName lastName");
+
+    if (!profile) {
+      return res.status(404).json({ success: false, error: "Profile not found." });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Resume updated successfully.",
+      data: { resume: profile.resume },
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+module.exports.getProfilePayments = async (req, res) => {
+  try {
+    const { profileId } = req.params;
+
+    if (!profileId) {
+      return res.status(400).json({ success: false, message: "Profile ID is required" });
+    }
+
+    const result = await profileService.getProfilePayments(profileId);
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error("Error retrieving profile payments:", error);
+    return res.status(error.status || 500).json({
+      success: false,
+      message: error.message || "Failed to retrieve profile payments",
+    });
+  }
+};
+
+module.exports.getActiveProfilePayment = async (req, res) => {
+  try {
+    const { profileId } = req.params;
+
+    if (!profileId) {
+      return res.status(400).json({ success: false, message: "Profile ID is required" });
+    }
+
+    const result = await profileService.getActiveProfilePayment(profileId);
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error("Error retrieving active profile payment:", error);
+    return res.status(error.status || 500).json({
+      success: false,
+      message: error.message || "Failed to retrieve active profile payment",
+    });
+  }
+};
+
+module.exports.addPaymentToProfile = async (req, res) => {
+  try {
+    const { profileId } = req.params;
+    const { paymentId } = req.body;
+
+    if (!profileId) {
+      return res.status(400).json({ success: false, message: "Profile ID is required" });
+    }
+    if (!paymentId) {
+      return res.status(400).json({ success: false, message: "Payment ID is required" });
+    }
+
+    const result = await profileService.addPaymentToProfile(profileId, paymentId);
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error("Error adding payment to profile:", error);
+    return res.status(error.status || 500).json({
+      success: false,
+      message: error.message || "Failed to add payment to profile",
+    });
+  }
+};

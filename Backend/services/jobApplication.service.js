@@ -47,12 +47,17 @@ const calculateMatchScoreWithBedrock = async (candidateProfile, jobPost, resumeA
       workModePreference: candidateProfile.workModePreference || "Not specified",
       contractPreference: candidateProfile.preferredContractType || "Not specified",
       yearsOfExperience: candidateProfile.yearsOfExperience || "Not specified",
+      // Professional Experience vs Internships/Stages
+      experience: resumeAnalysis?.experience || [],
+      stages: resumeAnalysis?.stages || [],
     };
     console.log(`    ✓ Name: ${candidateData.name}`);
     console.log(`    ✓ Technical Skills: ${candidateData.skills.length} skills extracted`);
     console.log(`    ✓ Soft Skills: ${candidateData.softSkills.length} skills extracted`);
     console.log(`    ✓ Resume Attached: ${candidateData.resumeFile !== "Not specified" ? "YES" : "NO"}`);
     console.log(`    ✓ Years of Experience: ${candidateData.yearsOfExperience}`);
+    console.log(`    ✓ Professional Experience Entries: ${candidateData.experience.length}`);
+    console.log(`    ✓ Internships/Stages: ${candidateData.stages.length}`);
 
     // ═══ STEP 2: Prepare job posting data ═══
     console.log("\n[2️⃣  STEP] Preparing JOB POSTING DATA for comparison...");
@@ -233,6 +238,7 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
     console.log(`     └─ Expected Salary: ${profile.expectedSalary?.min || "N/A"}-${profile.expectedSalary?.max || "N/A"} ${profile.expectedSalary?.currency || "N/A"}`);
     console.log(`     └─ Work Mode Preference: ${profile.workModePreference || "Not specified"}`);
     console.log(`     └─ Contract Type Preference: ${profile.preferredContractType || "Not specified"}`);
+    console.log(`     └─ Years of Experience: ${profile.yearsOfExperience || "N/A"}`);
     console.log(`     └─ CV/Resume File: ${profile.resume || "NOT UPLOADED"}`);
 
     // ═══ STEP 2: Fetch job post ═══
@@ -300,6 +306,7 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
         console.log(`     └─ Years of Experience: ${resumeAnalysis.yearsOfExperience || "N/A"}`);
         console.log(`     └─ Technical Skills Count: ${(resumeAnalysis.skills || []).length}`);
         console.log(`     └─ Work Experience Entries: ${(resumeAnalysis.experience || []).length}`);
+        console.log(`     └─ Internships/Stages: ${(resumeAnalysis.stages || []).length}`);
         console.log(`     └─ Education Entries: ${(resumeAnalysis.education || []).length}`);
         console.log(`     └─ Certifications: ${(resumeAnalysis.certifications || []).length}`);
       } catch (error) {
@@ -319,9 +326,24 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
     console.log("\n\n[STEP 4️⃣] INVOKE BEDROCK AI MATCHING ENGINE");
     console.log("─".repeat(100));
     console.log("🤖 Action: Sending all data to Bedrock AI for intelligent analysis");
-    console.log(`   Data being sent:`);
+    console.log(`\n   ⚠️  CRITICAL: Experience Level Calculation`);
+    console.log(`   The AI will distinguish between:`);
+    console.log(`     • Full-time PROFESSIONAL EXPERIENCE: Weighted 1.0x`);
+    console.log(`     • INTERNSHIPS/STAGES: Weighted 0.3x (partial experience)`);
+    if (resumeAnalysis) {
+      const totalExpYears = (resumeAnalysis.experience || []).reduce((sum, e) => sum + 1, 0);
+      const totalStageYears = ((resumeAnalysis.stages || []).reduce((sum, s) => sum + 0.3, 0)).toFixed(1);
+      const realExperience = (totalExpYears + parseFloat(totalStageYears)).toFixed(1);
+      console.log(`   Current Candidate Profile:`);
+      console.log(`     └─ Full-time roles: ${totalExpYears} entries (~${totalExpYears} real years)`);
+      console.log(`     └─ Internships/Stages: ${(resumeAnalysis.stages || []).length} entries (~${totalStageYears} real years)`);
+      console.log(`     └─ TOTAL REAL EXPERIENCE: ~${realExperience} years`);
+    }
+    console.log(`\n   Data being sent:`);
     console.log(`     • Candidate Profile: Name, skills, experience, preferences`);
     console.log(`     • Resume Analysis: ${resumeAnalysis ? "YES (structured data)" : "NO"}`);
+    console.log(`     • Professional Experience: ${resumeAnalysis ? `${(resumeAnalysis.experience || []).length} roles` : "N/A"}`);
+    console.log(`     • Internships/Stages: ${resumeAnalysis ? `${(resumeAnalysis.stages || []).length} entries` : "N/A"}`);
     console.log(`     • Resume Text: ${resumeText ? `YES (${resumeText.length} chars)` : "NO"}`);
     console.log(`     • Job Description: Title, requirements, compensation`);
 
@@ -408,6 +430,8 @@ module.exports.createJobApplication = async (applicationData) => {
     // Add calculated match score and reasoning to application data
     cleanData.matchScore = matchResult.matchScore;
     cleanData.matchReasoning = matchResult.reasoning;
+    cleanData.matchRecommendation = matchResult.recommendation || null;
+    cleanData.matchBreakdown = Array.isArray(matchResult.breakdown) ? matchResult.breakdown : [];
     cleanData.status = "visited";
 
     // ========== AUTO-REJECT IF MATCH SCORE BELOW THRESHOLD ==========
@@ -786,7 +810,7 @@ module.exports.getApplicationsSummaryByPost = async (postId, filters = {}, page 
 
     // ── Fetch applications (all, for in-memory interviewScore sort/filter) ───
     const applications = await JobApplication.find(query)
-      .select("_id status matchScore appliedAt profile recruiterDecision")
+      .select("_id status matchScore appliedAt profile recruiterDecision invitedAt")
       .populate({
         path: "profile",
         select: "firstName lastName email user_image userId resume",
@@ -825,6 +849,7 @@ module.exports.getApplicationsSummaryByPost = async (postId, filters = {}, page 
         status: app.status,
         resumeFile: p.resume || null,
         recruiterDecision: app.recruiterDecision ?? null,
+        invitedAt: app.invitedAt ?? null,
       };
     });
 
@@ -910,7 +935,7 @@ module.exports.getApplicationsSummaryByCompany = async (companyId, filters = {},
     }
 
     const applications = await JobApplication.find(query)
-      .select("_id status matchScore appliedAt profile post recruiterDecision")
+      .select("_id status matchScore appliedAt profile post recruiterDecision invitedAt")
       .populate({
         path: "profile",
         select: "firstName lastName email user_image userId resume",
@@ -952,6 +977,7 @@ module.exports.getApplicationsSummaryByCompany = async (companyId, filters = {},
         postTitle: app.post?.jobDetails?.title || null,
         resumeFile: p.resume || null,
         recruiterDecision: app.recruiterDecision ?? null,
+        invitedAt: app.invitedAt ?? null,
       };
     });
 

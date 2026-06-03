@@ -22,7 +22,6 @@ import {
 } from "@/store/slices/jobApplicationSlice";
 import ContactCandidateModal, { ContactTarget } from "./ContactCandidateModal";
 import AssessmentDetailsModal, { AssessmentTarget } from "./AssessmentDetailsModal";
-import InviteToInterviewModal, { InviteTarget } from "@/components/features/company/applications/InviteToInterviewModal";
 import ApplicationCard from "@/components/features/company/applications/ApplicationCard";
 
 const TEAL = "#0D9488";
@@ -76,9 +75,25 @@ const ApplicationsView: React.FC<Props> = ({ jobId }) => {
   const [status, setStatus]           = useState("");
   const [sort, setSort]               = useState("appliedAt_desc");
   const [page, setPage]               = useState(1);
-  const [contactTarget, setContactTarget]       = useState<ContactTarget | null>(null);
+  const [contactTarget,    setContactTarget]    = useState<ContactTarget | null>(null);
   const [assessmentTarget, setAssessmentTarget] = useState<AssessmentTarget | null>(null);
-  const [inviteTarget, setInviteTarget]         = useState<InviteTarget | null>(null);
+  const [invitedIds, setInvitedIds] = useState<Set<string>>(new Set());
+  const markInvited = useCallback((appId: string) => {
+    setInvitedIds(prev => new Set(prev).add(appId));
+  }, []);
+
+  // Seed invited state from server on every fetch (persists across refreshes)
+  useEffect(() => {
+    const fromServer = rows
+      .filter(r => !!r.invitedAt)
+      .map(r => String(r.id));
+    if (fromServer.length === 0) return;
+    setInvitedIds(prev => {
+      const merged = new Set(prev);
+      fromServer.forEach(id => merged.add(id));
+      return merged;
+    });
+  }, [rows]);
 
   useEffect(() => {
     const t = setTimeout(() => setSearch(searchInput), 350);
@@ -214,7 +229,8 @@ const ApplicationsView: React.FC<Props> = ({ jobId }) => {
               postId={jobId}
               onContact={setContactTarget}
               onAssessment={setAssessmentTarget}
-              onInvite={setInviteTarget}
+              invitedIds={invitedIds}
+              onInviteSuccess={markInvited}
             />
           ))}
 
@@ -247,13 +263,6 @@ const ApplicationsView: React.FC<Props> = ({ jobId }) => {
         open={!!assessmentTarget}
         target={assessmentTarget}
         onClose={() => setAssessmentTarget(null)}
-      />
-
-      <InviteToInterviewModal
-        open={!!inviteTarget}
-        target={inviteTarget}
-        onClose={() => setInviteTarget(null)}
-        onSuccess={() => load()}
       />
     </Box>
   );

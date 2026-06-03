@@ -451,6 +451,10 @@ module.exports.inviteToInterview = async (req, res) => {
     }
 
     console.log(`✅ Interview invitation email sent successfully`);
+
+    // Persist the manual invite timestamp so the UI can show "Invited" after refresh
+    await JobApplication.findByIdAndUpdate(applicationId, { invitedAt: new Date() });
+
     console.log("=".repeat(80) + "\n");
 
     res.status(200).json({
