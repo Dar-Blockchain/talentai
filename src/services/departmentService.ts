@@ -27,24 +27,6 @@ export const departmentService = {
     return res.data.data || res.data;
   },
 
-  fetchDepartmentMembers: async (params: {
-    departmentId: string;
-    search?: string;
-    page?: number;
-    limit?: number;
-  }) => {
-    const { departmentId, search, page, limit } = params;
-    const p: Record<string, any> = {};
-    if (search) p.search = search;
-    if (page)   p.page   = page;
-    if (limit)  p.limit  = limit;
-    const res = await axiosInstance.get(`company-memberships/memberships/department/${departmentId}`, { params: p });
-    return {
-      members: res.data.memberships || [],
-      total: res.data.pagination?.total ?? 0,
-    };
-  },
-
   deleteDepartment: async (departmentId: string) => {
     await axiosInstance.delete(`departments/${departmentId}`);
     return departmentId;
