@@ -12,10 +12,8 @@ const PUBLIC_PATHS = [
   "/privacy-policy",
   "/candidate/home",
   "/unauthorized",
-  "/candidate/interview/results",
   "/employee/invitation",
   "/campaign",
-  "/candidate/interview",
   "/candidate/interview",
 ];
 
@@ -141,7 +139,7 @@ export function middleware(request: NextRequest) {
 
   // Authenticated user on signin/register → redirect to their landing
   if (isAuthenticated && isAuthOnly(pathname)) {
-    const destination = getDashboardByRole(role);
+    const destination = getDashboardByRole(role!);
     return NextResponse.redirect(new URL(destination, request.url));
   }
 
