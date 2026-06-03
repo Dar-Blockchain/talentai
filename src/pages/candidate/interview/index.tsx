@@ -3,9 +3,9 @@
 import dynamic from 'next/dynamic';
 import { Box } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { EligibilityGate, InterviewFlow, useEligibilityCheck } from '@/modules/interview/post';
-import InterviewHeader from '@/modules/interview/post/components/layout/InterviewHeader';
-import InterviewLoadingScreen from '@/modules/interview/post/components/layout/InterviewLoadingScreen';
+import { EligibilityGate, InterviewFlow, useEligibilityCheck } from '@/modules/interviews/post-interview';
+import InterviewHeader from '@/modules/interviews/post-interview/components/layout/InterviewHeader';
+import InterviewLoadingScreen from '@/modules/interviews/post-interview/components/layout/InterviewLoadingScreen';
 
 const CandidateInterview = () => {
   const { t } = useTranslation('modules/interview/interview');
