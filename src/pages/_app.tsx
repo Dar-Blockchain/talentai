@@ -111,8 +111,11 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
     if (typeof window === "undefined") return;
 
     const hasLocalToken = () => {
-      const token = localStorage.getItem("api_token") || localStorage.getItem("token");
-      return !!token;
+      // Check localStorage first, then cookies (auth writes to both)
+      const lsToken = localStorage.getItem("api_token") || localStorage.getItem("token");
+      if (lsToken) return true;
+      const cookieToken = document.cookie.split(";").some((c) => c.trim().startsWith("api_token="));
+      return cookieToken;
     };
 
     const syncAuthFromStorage = () => {
