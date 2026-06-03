@@ -126,8 +126,7 @@ skills
 
   SENIORITY FLOOR — mandatory:
   If experienceLevel is "Senior" or "Expert", required technical skills MUST have a minimum level of 3 — unless the description explicitly marks them as secondary, optional, or "nice to have".
-
-  If two skills share the same years or same qualifier → assign them the same level AND the same importance score
+  The level mapping always takes priority when the description explicitly qualifies a skill (e.g., "basic", "familiarity with", "exposure to"). The Seniority Floor applies only when no qualifier is present.
 
 - importance: how critical this skill is to this specific role (1–10)
   This score is the ONLY input used to compute each skill's evaluation weight — set it with intent.
