@@ -21,6 +21,7 @@ import enChat from '../../public/locales/en/shared/chat.json';
 import enTeamChat from '../../public/locales/en/modules/company/teamChat.json';
 import enCandidateChat from '../../public/locales/en/modules/candidates/candidateChat.json';
 import enCompanyChat from '../../public/locales/en/modules/company/companyChat.json';
+import enNotifications from '../../public/locales/en/modules/notifications/notifications.json';
 
 // ── FR ──────────────────────────────────────────────
 import frCommon     from '../../public/locales/fr/shared/common.json';
@@ -42,6 +43,7 @@ import frChat from '../../public/locales/fr/shared/chat.json';
 import frTeamChat from '../../public/locales/fr/modules/company/teamChat.json';
 import frCandidateChat from '../../public/locales/fr/modules/candidates/candidateChat.json';
 import frCompanyChat from '../../public/locales/fr/modules/company/companyChat.json';
+import frNotifications from '../../public/locales/fr/modules/notifications/notifications.json';
 
 export const SUPPORTED_LANGUAGES = ['en', 'fr'] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
@@ -133,6 +135,7 @@ const options: InitOptions = {
       'modules/company/teamChat': enTeamChat,
       'modules/candidates/candidateChat': enCandidateChat,
       'modules/company/companyChat': enCompanyChat,
+      'modules/notifications/notifications': enNotifications,
     },
     fr: {
       common:    frCommon,
@@ -149,6 +152,7 @@ const options: InitOptions = {
       'modules/company/teamChat': frTeamChat,
       'modules/candidates/candidateChat': frCandidateChat,
       'modules/company/companyChat': frCompanyChat,
+      'modules/notifications/notifications': frNotifications,
     },
   },
 

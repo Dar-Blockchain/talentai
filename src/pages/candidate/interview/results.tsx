@@ -10,8 +10,9 @@ import Cookies from 'js-cookie';
 import { logInterviewDataToConsole } from '@/utils/exportInterviewData';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/store/store';
-import { notifySkillTestPassed, notifySkillLevelUp, notifySkillTestCompleted } from '@/utils/notificationHelpers';
-import { createNotification, broadcastSystemNotification } from '@/store/slices/notificationSlice';
+import { notifySkillTestCompleted, notifySkillTestPassed, notifySkillLevelUp } from '@/modules/notifications/utils/notificationHelpers';
+import { notificationApi } from '@/modules/notifications/api/notificationApi';
+import { notifMessages } from '@/modules/notifications/i18n/notificationMessages';
 import { updateProfileQuota, updateProfileSkills, updateProfileSoftSkill, getMyProfile } from '@/store/slices/userSlice';
 import { savePostInterviewAssessment } from '@/store/slices/postSlice';
 import { saveInterviewAssessment, fetchInterviewDetailsById } from '@/store/slices/interviewSlice';
@@ -144,10 +145,18 @@ export default function InterviewResults() {
 
       try {
         const skillName = effectiveSkill !== 'N/A' ? effectiveSkill : null;
-        notifySkillTestCompleted(dispatch, skillName || 'Interview');
+        const score = analysis?.overallScore ?? 0;
+        const level = analysis?.overallLevel ?? '';
+
+        if (score > 80) {
+          notifySkillTestPassed(skillName || 'Interview', Math.round(score)).catch(() => {});
+          if (skillName && level) notifySkillLevelUp(skillName, level).catch(() => {});
+        } else {
+          notifySkillTestCompleted(skillName || 'Interview');
+        }
 
         const interviewLabel = skillName ? `your ${skillName} interview` : 'your interview';
-        dispatch(createNotification({ type: 'success', content: `You completed ${interviewLabel}. Your results are now available in your dashboard.` }));
+        notificationApi.createNotification('success', notifMessages.interviewCompleted(interviewLabel)).catch(() => {});
 
         if (jobId) {
           try {
@@ -156,7 +165,7 @@ export default function InterviewResults() {
               const candidateName = `${profileData?.firstName || ''} ${profileData?.lastName || ''}`.trim() || 'A candidate';
               const jobTitle = result.data?.post?.jobDetails?.title || null;
               const companyInterviewLabel = jobTitle ? `the interview for "${jobTitle}"` : skillName ? `the ${skillName} interview` : 'an interview';
-              dispatch(broadcastSystemNotification({ content: `${candidateName} has just completed ${companyInterviewLabel}. Check your dashboard to review their results.`, recipientIds: [companyUserId] }));
+              notificationApi.broadcastNotification(`${candidateName} has just completed ${companyInterviewLabel}. Check your dashboard to review their results.`, [companyUserId]).catch(() => {});
             }
           } catch (companyNotifError) {
             console.error('❌ [Save] Error notifying company:', companyNotifError);

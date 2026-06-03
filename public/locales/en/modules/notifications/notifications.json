@@ -1,0 +1,19 @@
+{
+  "time_just_now": "Just now",
+  "time_minutes_ago_one": "1 minute ago",
+  "time_minutes_ago_other": "{{count}} minutes ago",
+  "time_hours_ago_one": "1 hour ago",
+  "time_hours_ago_other": "{{count}} hours ago",
+  "time_days_ago_one": "1 day ago",
+  "time_days_ago_other": "{{count}} days ago",
+  "time_weeks_ago_one": "1 week ago",
+  "time_weeks_ago_other": "{{count}} weeks ago",
+  "welcome": "Welcome to TalentAI! 🎉 We're excited to have you on board. Start exploring amazing opportunities and connect with top talent.",
+  "skillTestPassed": "Great job! You scored {{score}}% on the {{skillName}} test! 🎯",
+  "skillLevelUp": "🎉 Congratulations! You've achieved {{newLevel}} level in {{skillName}}! Keep it up! 🌟",
+  "skillTestCompleted": "You've completed the {{skillName}} test. Keep practicing to improve your score! 💪",
+  "candidateUnlocked": "Great news! A company has unlocked your profile and is interested in your qualifications. Check your dashboard for more details! 🎉",
+  "jobMatch": "🎯 Great news! Your profile matches {{jobTitle}}. A company is looking for candidates with your skills. Check it out now!",
+  "jobMatchDefault": "🎯 Great news! Your profile matches a new job opportunity. A company is looking for candidates with your skills. Check it out now!",
+  "interviewCompleted": "You completed {{interviewLabel}}. Your results are now available in your dashboard."
+}

@@ -1,4 +1,4 @@
-import NotificationsPanel from "@/components/features/notifications/NotificationsPanel";
+import NotificationsPanel from "@/modules/notifications/components/NotificationsPanel";
 
 export default function NotificationsTab() {
   return <NotificationsPanel variant="tab" />;

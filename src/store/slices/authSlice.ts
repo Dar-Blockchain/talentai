@@ -2,7 +2,10 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { setAxiosLoggingOut } from "@/utils/axiosInstance";
 import Cookies from "js-cookie";
 import { authService } from "@/services/authService";
-import { createNotification } from "./notificationSlice";
+import { notificationApi } from "@/modules/notifications/api/notificationApi";
+import { notifMessages } from "@/modules/notifications/i18n/notificationMessages";
+import i18n from "@/i18n/config";
+import { normalizeLangCode } from "@/hooks/useLanguage";
 import { clearConnectedUser, setConnectedUser } from "./userSlice";
 
 interface AuthState {
@@ -11,6 +14,7 @@ interface AuthState {
   isLoading: boolean;
   error: string | null;
   isLoggingOut: boolean;
+  pendingWelcome: boolean;
 }
 
 const initialState: AuthState = {
@@ -19,6 +23,7 @@ const initialState: AuthState = {
   isLoading: false,
   error: null,
   isLoggingOut: false,
+  pendingWelcome: false,
 };
 
 // Selector for logout state
@@ -73,7 +78,7 @@ export const verifyOTP = createAsyncThunk(
   "auth/verifyOTP",
   async (
     { email, otp, location }: { email: string; otp: string; location?: any },
-    { rejectWithValue, dispatch }
+    { rejectWithValue, dispatch, getState }
   ) => {
     try {
       const response = await authService.verifyOTP(email, otp, location);
@@ -88,13 +93,12 @@ export const verifyOTP = createAsyncThunk(
           dispatch(setConnectedUser(response.data));
         }
 
-        dispatch(
-          createNotification({
-            type: "success",
-            content:
-              "Welcome to TalentAI! 🎉 We're excited to have you on board. Start exploring amazing opportunities and connect with top talent.",
-          }) as any
-        );
+        const lang = normalizeLangCode((response.data.user as any)?.language);
+        if (lang) i18n.changeLanguage(lang);
+        const isNewUser = (getState() as any).auth.pendingWelcome;
+        if (isNewUser) {
+          notificationApi.createNotification("success", notifMessages.welcome()).catch(() => {});
+        }
         return response.data;
       } else {
         const message =
@@ -185,6 +189,9 @@ const authSlice = createSlice({
       state.error = null;
       state.token = null;
     },
+    setAuthenticated: (state, action: { payload: boolean }) => {
+      state.isAuthenticated = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -208,6 +215,7 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.isAuthenticated = false;
         state.error = null;
+        state.pendingWelcome = true;
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.isLoading = false;
@@ -220,6 +228,7 @@ const authSlice = createSlice({
       .addCase(verifyOTP.fulfilled, (state, action) => {
         state.isLoading = false;
         state.error = null;
+        state.pendingWelcome = false;
         state.token = action.payload.token;
         if (action.payload.user) {
           state.isAuthenticated = true;
@@ -276,5 +285,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearError, clearAuth } = authSlice.actions;
+export const { clearError, clearAuth, setAuthenticated } = authSlice.actions;
 export default authSlice.reducer;
