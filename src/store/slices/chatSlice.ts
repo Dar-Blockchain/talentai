@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { chatService } from "@/services/chatService";
-import { CHAT_LAST_MESSAGE_BLOCKED_PREVIEW } from "@/modules/shared/chat/constants/contactPolicy";
+import { CHAT_LAST_MESSAGE_BLOCKED_PREVIEW } from "@/modules/chat/shared/constants/contactPolicy";
 
 // ─── Types ───────────────────────────────────────────────
 
@@ -204,8 +204,9 @@ const chatSlice = createSlice({
       const convId = String(msg.conversationId || (msg as any).conversation || "");
       const conv = state.conversations.find((c) => String(c._id) === convId);
       if (conv) {
-        const previewText = msg.deliveryBlocked ? CHAT_LAST_MESSAGE_BLOCKED_PREVIEW : msg.text;
-        conv.lastMessage = { text: previewText, timestamp: msg.createdAt };
+        if (!msg.deliveryBlocked) {
+          conv.lastMessage = { text: msg.text, timestamp: msg.createdAt };
+        }
         conv.updatedAt = msg.createdAt;
       }
       // Sort conversations by most recent

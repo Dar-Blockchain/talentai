@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Box, Typography, TextField, Button, MenuItem, Stack } from "@mui/material";
 import CheckCircleOutlineIcon  from "@mui/icons-material/CheckCircleOutline";
 import EmailOutlinedIcon       from "@mui/icons-material/EmailOutlined";
@@ -42,6 +42,19 @@ const ContactSection: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending]     = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [teamSizeOpen, setTeamSizeOpen] = useState(false);
+
+  useEffect(() => {
+    if (!teamSizeOpen) return;
+    const close = () => setTeamSizeOpen(false);
+    // html element is the scroll container (globals.css: html { overflow-y: auto })
+    document.documentElement.addEventListener("scroll", close, { passive: true });
+    window.addEventListener("scroll", close, true);
+    return () => {
+      document.documentElement.removeEventListener("scroll", close);
+      window.removeEventListener("scroll", close, true);
+    };
+  }, [teamSizeOpen]);
 
   const validate = (): Errors => {
     const e: Errors = {};
@@ -95,7 +108,7 @@ const ContactSection: React.FC = () => {
   const FEATURES = [
     t("contact.feature_screening"),
     t("contact.feature_bias"),
-    t("contact.feature_blockchain"),
+    t("contact.feature_scoring"),
   ];
 
   return (
@@ -341,7 +354,7 @@ const ContactSection: React.FC = () => {
                       error={!!errors.company} helperText={errors.company} sx={FIELD_SX} />
                     <TextField label={t("contact.field_team_size")} size="small" fullWidth select
                       value={form.teamSize} onChange={handleChange("teamSize")} sx={FIELD_SX}
-                      SelectProps={{ MenuProps: { PaperProps: { sx: { bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "12px", boxShadow: "0 8px 24px rgba(0,0,0,0.10)", mt: 0.5 } } } }}
+                      SelectProps={{ open: teamSizeOpen, onOpen: () => setTeamSizeOpen(true), onClose: () => setTeamSizeOpen(false), MenuProps: { disableScrollLock: true, PaperProps: { sx: { bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "12px", boxShadow: "0 8px 24px rgba(0,0,0,0.10)", mt: 0.5 } } } }}
                     >
                       <MenuItem value="" disabled sx={{ fontFamily: "Poppins", fontSize: "13px", color: "#9CA3AF" }}>
                         {t("contact.field_select")}

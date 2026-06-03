@@ -251,6 +251,7 @@ interface PlanCardProps {
   currentPlanName: string | null;
   currentSubId: string | null;
   currentAutoRenew: boolean;
+  checkingOut: boolean;
   onCancelClick: (subscriptionId: string) => void;
   onEnableAutoRenewClick: (subscriptionId: string) => void;
   onContactUs: () => void;
@@ -258,7 +259,7 @@ interface PlanCardProps {
   onSubscribe: (planId: string) => Promise<any>;
 }
 
-const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRenew, cancelling, currentPlanName, currentSubId, currentAutoRenew, onCancelClick, onEnableAutoRenewClick, onContactUs, onDowngradeClick, onSubscribe }) => {
+const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRenew, cancelling, currentPlanName, currentSubId, currentAutoRenew, checkingOut, onCancelClick, onEnableAutoRenewClick, onContactUs, onDowngradeClick, onSubscribe }) => {
   const { t, i18n } = useTranslation("dashboard");
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState<string | null>(null);
@@ -272,7 +273,6 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
   const currentIdx = currentPlanName ? ORDERED_PLANS.indexOf(currentPlanName) : -1;
   const thisIdx    = ORDERED_PLANS.indexOf(plan.name);
   const isDowngrade = !isActive && currentIdx !== -1 && thisIdx !== -1 && thisIdx < currentIdx;
-  const isUpgrade   = !isActive && currentIdx !== -1 && thisIdx !== -1 && thisIdx > currentIdx;
 
   const priceLocale = i18n.language?.startsWith("fr") ? "fr-FR" : "en-US";
   const priceLabel = isTrial
@@ -461,53 +461,56 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
               boxShadow: `0 4px 14px ${cfg.color}30`, textTransform: "none",
             }}
           />
-        ) : isDowngrade ? (
-          currentAutoRenew === false ? (
-            <Box sx={{
-              display: "flex", alignItems: "flex-start", gap: 1,
-              px: 1.5, py: 1.25, borderRadius: "10px",
-              bgcolor: "#FFFBEB", border: "1px solid #FDE68A",
-            }}>
-              <ArrowDownwardOutlined sx={{ fontSize: 16, color: "#D97706", flexShrink: 0, mt: 0.2 }} />
-              <Box>
-                <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: "#92400E" }}>
-                  Downgrade scheduled
-                </Typography>
-                <Typography sx={{ fontSize: "0.68rem", color: "#B45309", lineHeight: 1.4 }}>
-                  This plan activates when your current plan expires.
-                </Typography>
-              </Box>
-            </Box>
-          ) : (
+        ) : !isTrial ? (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             <AppButton
-              label={loading ? t("pages.subscription.card.redirecting") : "Downgrade to this plan"}
-              variant="outlined"
+              label={loading ? t("pages.subscription.card.redirecting") : "Add Plan"}
+              variant="contained"
               fullWidth
-              disabled={loading}
-              startIcon={loading ? <CircularProgress size={15} color="inherit" /> : <ArrowDownwardOutlined sx={{ fontSize: "16px !important" }} />}
-              onClick={() => onDowngradeClick(plan, currentSubId!)}
+              disabled={loading || checkingOut}
+              startIcon={loading ? <CircularProgress size={15} color="inherit" /> : <CreditCardOutlined sx={{ fontSize: "16px !important" }} />}
+              onClick={handleSubscribe}
               sx={{
-                borderColor: "#D97706", color: "#D97706",
-                "&:hover": { bgcolor: "#FFFBEB", borderColor: "#B45309", color: "#B45309" },
+                bgcolor: cfg.color, "&:hover": { bgcolor: cfg.color, filter: "brightness(0.88)" },
                 fontWeight: 700, borderRadius: "10px", py: 1.1, fontSize: "0.85rem",
-                textTransform: "none",
+                boxShadow: `0 4px 14px ${cfg.color}30`, textTransform: "none",
               }}
             />
-          )
-        ) : (isUpgrade || !currentPlanName) ? (
-          <AppButton
-            label={loading ? t("pages.subscription.card.redirecting") : t("pages.subscription.card.get_started", "Upgrade")}
-            variant="contained"
-            fullWidth
-            disabled={loading}
-            startIcon={loading ? <CircularProgress size={15} color="inherit" /> : <CreditCardOutlined sx={{ fontSize: "16px !important" }} />}
-            onClick={handleSubscribe}
-            sx={{
-              bgcolor: cfg.color, "&:hover": { bgcolor: cfg.color, filter: "brightness(0.88)" },
-              fontWeight: 700, borderRadius: "10px", py: 1.1, fontSize: "0.85rem",
-              boxShadow: `0 4px 14px ${cfg.color}30`, textTransform: "none",
-            }}
-          />
+            {isDowngrade && currentSubId && (
+              currentAutoRenew === false ? (
+                <Box sx={{
+                  display: "flex", alignItems: "flex-start", gap: 1,
+                  px: 1.5, py: 1.25, borderRadius: "10px",
+                  bgcolor: "#FFFBEB", border: "1px solid #FDE68A",
+                }}>
+                  <ArrowDownwardOutlined sx={{ fontSize: 16, color: "#D97706", flexShrink: 0, mt: 0.2 }} />
+                  <Box>
+                    <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: "#92400E" }}>
+                      Downgrade scheduled
+                    </Typography>
+                    <Typography sx={{ fontSize: "0.68rem", color: "#B45309", lineHeight: 1.4 }}>
+                      This plan activates when your current plan expires.
+                    </Typography>
+                  </Box>
+                </Box>
+              ) : (
+                <AppButton
+                  label="Downgrade to this plan"
+                  variant="outlined"
+                  fullWidth
+                  disabled={loading || checkingOut}
+                  startIcon={<ArrowDownwardOutlined sx={{ fontSize: "16px !important" }} />}
+                  onClick={() => onDowngradeClick(plan, currentSubId)}
+                  sx={{
+                    borderColor: "#D97706", color: "#D97706",
+                    "&:hover": { bgcolor: "#FFFBEB", borderColor: "#B45309", color: "#B45309" },
+                    fontWeight: 700, borderRadius: "10px", py: 1.1, fontSize: "0.85rem",
+                    textTransform: "none",
+                  }}
+                />
+              )
+            )}
+          </Box>
         ) : null}
       </Box>
     </Box>
@@ -533,6 +536,7 @@ const PlansPage: React.FC = () => {
   const [cancelSubId, setCancelSubId]       = useState<string | null>(null);
   const [contactOpen, setContactOpen]       = useState(false);
   const [downgradePlan, setDowngradePlan]   = useState<{ plan: PlanLimit; currentSubId: string } | null>(null);
+  const [checkingOut, setCheckingOut]       = useState(false);
 
   const showSnack = (message: string, severity: "success" | "error") =>
     setSnackbar({ open: true, message, severity });
@@ -736,7 +740,7 @@ const PlansPage: React.FC = () => {
         subtitle={t("pages.subscription.subtitle")}
         breadcrumbs={[
           { label: t("pages.common.dashboard"), href: "/company/dashboard" },
-          { label: t("pages.subscription.settings_breadcrumb"), href: "/company/settings" },
+          { label: t("pages.subscription.settings_breadcrumb"), href: "/settings" },
           { label: t("pages.subscription.breadcrumb") },
         ]}
         actions={
@@ -765,11 +769,19 @@ const PlansPage: React.FC = () => {
                 currentPlanName={currentPlanName}
                 currentSubId={currentPlanName ? (activeSubByPlanName[currentPlanName]?.id ?? null) : null}
                 currentAutoRenew={currentPlanName ? (activeSubByPlanName[currentPlanName]?.autoRenew ?? true) : true}
+                checkingOut={checkingOut}
                 onCancelClick={handleCancelClick}
                 onEnableAutoRenewClick={handleEnableAutoRenew}
                 onContactUs={() => setContactOpen(true)}
                 onDowngradeClick={handleDowngradeClick}
-                onSubscribe={(planId) => dispatch(createCheckoutSession(planId)).unwrap()}
+                onSubscribe={async (planId) => {
+                  setCheckingOut(true);
+                  try {
+                    await dispatch(createCheckoutSession(planId)).unwrap();
+                  } finally {
+                    setCheckingOut(false);
+                  }
+                }}
               />
             </Grid>
           ))}

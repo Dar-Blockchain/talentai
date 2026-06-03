@@ -29,9 +29,9 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
   const isCandidate = useMemo(() => user?.role === "Candidate", [user?.role]);
 
   const displayName = useMemo(() => {
-    if (isCompany) return profile?.companyDetails?.name || profile?.userId?.username || "Company";
+    if (isCompany) return profile?.companyDetails?.name || profile?.userId?.username || user?.username || "Company";
     const name = `${profile?.firstName || ""} ${profile?.lastName || ""}`.trim();
-    return name || user?.email?.split("@")[0] || "User";
+    return name || user?.username || user?.email?.split("@")[0] || "…";
   }, [isCompany, profile, user]);
 
   const shortName = useMemo(() => {
@@ -45,10 +45,11 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
   }, [profile?.user_image, profile?.userId?.user_image, user?.user_image]);
 
   const initials = useMemo(() => {
-    if (isCompany) return (profile?.companyDetails?.name || "C")[0].toUpperCase();
+    if (isCompany) return (profile?.companyDetails?.name || user?.username || "C")[0].toUpperCase();
     const f = profile?.firstName?.[0] || "";
     const l = profile?.lastName?.[0]  || "";
-    return (f + l).toUpperCase() || (user?.email?.[0] || "U").toUpperCase();
+    if (f || l) return (f + l).toUpperCase();
+    return (user?.username || user?.email || "?")[0].toUpperCase();
   }, [isCompany, profile, user]);
 
   const handleLogout = useCallback(async () => {

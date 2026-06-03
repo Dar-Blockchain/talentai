@@ -11,7 +11,7 @@ const ACCENT_BORDER = "rgba(13,148,136,0.35)";
 const VP   = { once: true, margin: "-80px" };
 const ease = [0.22, 1, 0.36, 1] as const;
 
-const FAQ_KEYS = ["1", "2", "3", "4", "5", "6"] as const;
+const FAQ_KEYS = ["1", "2", "3", "4", "5"] as const;
 
 interface FaqItem { question: string; answer: string }
 

@@ -9,8 +9,7 @@
       "subtitle": "Message colleagues in your company workspace."
     },
     "candidate": {
-      "title": "Candidate chat",
-      "subtitle": "Chat with candidates about applications and job opportunities."
+      "title": "Candidate chat"
     }
   },
   "delete_chat_title": "Remove chat",

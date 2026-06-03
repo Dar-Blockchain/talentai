@@ -26,8 +26,8 @@ import ChevronLeftOutlined from "@mui/icons-material/ChevronLeftOutlined";
 import ChevronRightOutlined from "@mui/icons-material/ChevronRightOutlined";
 import LogoutProgressModal from "@/components/ui/LogoutProgressModal";
 import { useTranslation } from "react-i18next";
-import { useChatUnreadBadges } from "@/modules/shared/chat/hooks/useChatUnreadBadges";
-import ChatUnreadBadge from "@/modules/shared/chat/components/ChatUnreadBadge";
+import { useChatUnreadBadges } from "@/modules/chat/shared/hooks/useChatUnreadBadges";
+import ChatUnreadBadge from "@/modules/chat/shared/components/ChatUnreadBadge";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -52,10 +52,10 @@ const HOVER_TXT = "#E8F6F9"; // hover text — near white
 const LABEL_C = "#a3aed1"; // section label — visible
 
 const GROUPS = [
-  { groupKey: "main", ids: ["dashboard"] },
+  { groupKey: "main", ids: ["dashboard", "messages"] },
   { groupKey: "jobs", ids: ["posts", "applications"] },
   { groupKey: "campaigns", ids: ["campaigns"] },
-  { groupKey: "team", ids: ["employees", "messages", "departments"] },
+  { groupKey: "team", ids: ["employees", "departments"] },
   { groupKey: "account", ids: ["settings", "subscription"] },
 ];
 
@@ -152,7 +152,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const drawerWidth  = collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH;
   const handleToggle = useCallback(() => setCollapsed((c) => !c), [setCollapsed]);
 
-  const settingsHref = isEmployee ? "/employee/dashboard" : "/company/settings";
+  const settingsHref = "/settings";
   const { teamChatUnread, companyMessagesUnread } = useChatUnreadBadges();
 
   const getNavUnreadCount = (itemId: string) => {
@@ -164,10 +164,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     const unreadCount = getNavUnreadCount(item.id);
     const isMessagesHub = item.id === "messages";
     const isActive = isMessagesHub
-      ? router.pathname === "/messages"
-        || router.pathname.startsWith("/messages/")
-        || router.pathname.startsWith("/company/team-chat")
-        || router.pathname.startsWith("/company/candidate-chat")
+      ? router.pathname === "/messages" || router.pathname.startsWith("/messages/")
       : router.pathname === item.href || router.pathname.startsWith(item.href + "/");
     const translatedLabel = t(`sidebar.nav.${item.id}`, { defaultValue: item.label });
     const btn = (

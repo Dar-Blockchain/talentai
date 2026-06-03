@@ -1,1 +1,1 @@
-export * from "@/modules/shared/chat";
+export * from "@/modules/chat/shared";

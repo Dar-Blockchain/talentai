@@ -8,9 +8,11 @@ import {
   Button,
   Chip,
   MenuItem,
+  Slider,
   TextField,
   Typography,
 } from "@mui/material";
+import TrackChangesOutlined from "@mui/icons-material/TrackChangesOutlined";
 import { useForm, Controller } from "react-hook-form";
 import Image from "next/image";
 import { useSelector, useDispatch } from "react-redux";
@@ -19,12 +21,12 @@ import InputAdornment from "@mui/material/InputAdornment";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import { Close } from "@mui/icons-material";
 import { Add as AddIcon } from "@mui/icons-material";
-import { getLevelFromNumber, Skill } from "@/utils/postHelpers";
+import { getLevelFromNumber } from "@/utils/postHelpers";
 import { selectCurrentJob, updatePost } from "@/store/slices/postSlice";
 import { useToast } from "@/hooks/useToast";
 import { validateEditPost } from "@/validations/postValidation";
-import SalaryRange from "../create/steps/post-details-step/SalaryRange";
-import SkillEditorModal from "../create/steps/post-details-step/SkillEditorModal";
+import SalaryRange from "@/modules/posts/create/components/SalaryRange";
+import SkillEditorModal from "@/modules/posts/create/components/SkillEditorModal";
 import { contractTypes, experienceLevels, workModes } from "@/constants/candidate";
 
 const inputStyle = {
@@ -54,6 +56,7 @@ const getInitialValues = (job: any) => ({
   },
   skillAnalysis: job?.skillAnalysis || {},
   expirationDate: job?.expirationDate || "",
+  thresholdScore: job?.thresholdScore ?? 50,
 });
 
 const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel, onSaveSuccess }) => {
@@ -96,7 +99,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel, onSaveSucce
     setValue(field as any, updated);
   };
 
-  const handleSaveSkill = (skill: Skill) => {
+  const handleSaveSkill = (skill: any) => {
     const field = selectedType === "hard" ? "skillAnalysis.requiredSkills" : "skillAnalysis.softSkills";
     const updated = selectedType === "hard" ? [...requiredSkills] : [...softSkills];
     if (selectedIndex === null) {
@@ -117,6 +120,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel, onSaveSucce
           jobDetails: values.jobDetails,
           skillAnalysis: values.skillAnalysis,
           expirationDate: values.expirationDate || undefined,
+          thresholdScore: values.thresholdScore,
         },
       })).unwrap();
       reset();
@@ -221,6 +225,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel, onSaveSucce
         <SalaryRange
           salaryRange={salary}
           onSalaryChange={(field, value) => setValue(`jobDetails.salary.${field}` as any, value)}
+          employmentType={watch("jobDetails.employmentType")}
         />
 
         <Box sx={{ mt: 2 }}>
@@ -303,6 +308,48 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel, onSaveSucce
             />
           </Box>
         </Box>
+      </Box>
+
+      {/* Threshold Score */}
+      <Box sx={{ mt: 3 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+          <TrackChangesOutlined sx={{ fontSize: 16, color: "#0D9488" }} />
+          <Typography variant="subtitle2" sx={{ color: "rgba(84, 98, 116, 1)", fontSize: "16px", fontWeight: 600 }}>
+            Threshold Score
+          </Typography>
+        </Box>
+        <Typography sx={{ fontSize: "12px", color: "rgba(84, 98, 116, 0.7)", mb: 2 }}>
+          Candidates scoring below this threshold are automatically flagged for review.
+        </Typography>
+        <Controller
+          name="thresholdScore"
+          control={control}
+          render={({ field }) => {
+            const color = field.value >= 70 ? "#16A34A" : field.value >= 40 ? "#D97706" : "#DC2626";
+            return (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+                <Box sx={{ flex: 1 }}>
+                  <Slider
+                    value={field.value}
+                    onChange={(_, v) => field.onChange(v)}
+                    min={0}
+                    max={100}
+                    step={5}
+                    marks={[{ value: 0, label: "0%" }, { value: 50, label: "50%" }, { value: 100, label: "100%" }]}
+                    sx={{
+                      color,
+                      "& .MuiSlider-thumb": { width: 18, height: 18 },
+                      "& .MuiSlider-markLabel": { fontSize: "11px", color: "#9CA3AF" },
+                    }}
+                  />
+                </Box>
+                <Box sx={{ minWidth: 52, textAlign: "center", bgcolor: `${color}15`, border: `1px solid ${color}40`, borderRadius: 2, px: 1.5, py: 0.75 }}>
+                  <Typography sx={{ fontSize: "16px", fontWeight: 800, color }}>{field.value}%</Typography>
+                </Box>
+              </Box>
+            );
+          }}
+        />
       </Box>
 
       {open && (

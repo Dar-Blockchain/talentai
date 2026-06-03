@@ -1,3 +1,6 @@
+const path = require("path");
+const express = require("express");
+
 // Import all route modules
 const authRouter = require("../routes/authentication.routes");
 const companyPermissionsRouter = require("../routes/companyPermissions.routes");
@@ -40,6 +43,9 @@ const backupRouter = require('../routes/backup.routes');
  */
 function registerRoutes(app) {
   
+  // Static file serving for resume uploads
+  app.use("/resume", express.static(path.join(__dirname, "../uploads/resumes")));
+
   // Authentication & Profile
   app.use("/auth", authRouter); //✅ authentication
   app.use("/admin", companyPermissionsRouter); // ✅ (admin company permissions) -> admin (to be checked)

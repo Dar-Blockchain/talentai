@@ -6,7 +6,7 @@ import { Provider, useSelector, useDispatch } from "react-redux";
 import { store, persistor, RootState } from "../store/store";
 import { PersistGate } from "redux-persist/integration/react";
 import { ThemeProvider, createTheme, CssBaseline, Dialog, DialogContent, Box, Typography, CircularProgress } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import ScrollToTop from "@/components/ui/ScrollToTop";
@@ -15,12 +15,13 @@ import { Poppins } from "next/font/google";
 import MuiToast from "@/components/ui/Toast";
 import { useToast, ToastProvider } from "@/hooks/useToast";
 import { NotificationProvider } from "@/contexts/NotificationContext";
-import TeamChatRealtimeBridge from "@/modules/team-chat/components/TeamChatRealtimeBridge";
-import CandidateChatRealtimeBridge from "@/modules/candidate-chat/components/CandidateChatRealtimeBridge";
-import ChatUnreadSyncBridge from "@/modules/shared/chat/components/ChatUnreadSyncBridge";
+import TeamChatRealtimeBridge from "@/modules/chat/team-chat/components/TeamChatRealtimeBridge";
+import CandidateChatRealtimeBridge from "@/modules/chat/candidate-chat/components/CandidateChatRealtimeBridge";
+import ChatUnreadSyncBridge from "@/modules/chat/shared/components/ChatUnreadSyncBridge";
 import LoadingScreen from "@/components/ui/LoadingScreen";
 import { isLoggingOutCheck, clearAuth, logout } from "@/store/slices/authSlice";
-import { clearConnectedUser } from "@/store/slices/userSlice";
+import { clearConnectedUser, getMyProfile } from "@/store/slices/userSlice";
+import { getToken } from "@/utils/tokenUtils";
 import { setToastHandler } from "@/utils/toastEmitter";
 import { setSessionExpiredHandler } from "@/utils/storeEmitter";
 import { useTranslation } from "react-i18next";
@@ -53,20 +54,28 @@ const theme = createTheme({
 
 function DbLanguageSync() {
   const user = useSelector((state: RootState) => state.user.connectedUser.user);
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const { i18n } = useTranslation();
 
   useEffect(() => {
-    if (!user) return;
-    // language is stored on the User document, not the Profile
-    const raw = (user as any)?.language;
-    const dbLang = normalizeLangCode(raw);
-    if (!dbLang) return;
-    // Always apply the account's saved language — clear any pre-login guest selection
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(MANUAL_LANG_KEY);
+    if (!isAuthenticated) {
+      if (typeof window !== 'undefined') localStorage.removeItem(MANUAL_LANG_KEY);
+      i18n.changeLanguage('en');
+      return;
     }
-    i18n.changeLanguage(dbLang);
-  }, [(user as any)?.language, (user as any)?._id]);
+
+    const dbLang = normalizeLangCode((user as any)?.language);
+    if (dbLang) {
+      if (typeof window !== 'undefined') localStorage.removeItem(MANUAL_LANG_KEY);
+      i18n.changeLanguage(dbLang);
+      return;
+    }
+
+    const manualLang = typeof window !== 'undefined'
+      ? normalizeLangCode(localStorage.getItem(MANUAL_LANG_KEY))
+      : null;
+    i18n.changeLanguage(manualLang ?? 'en');
+  }, [isAuthenticated, (user as any)?._id, (user as any)?.language]);
   return null;
 }
 
@@ -79,6 +88,14 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
 
   const userId = user?._id;
   const isLoggingOut = useSelector(isLoggingOutCheck);
+
+  // If a token exists but connectedUser is empty (e.g. after hard reload before persist rehydrates),
+  // fetch the profile so the header shows the correct name immediately.
+  useEffect(() => {
+    if (user) return; // already populated
+    if (!getToken()) return; // not logged in
+    dispatch(getMyProfile());
+  }, []); // run once on mount
 
   // Force logout when middleware detected an invalid/role-less token
   useEffect(() => {
@@ -160,14 +177,6 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
 }
 
 export default function App({ Component, pageProps }: AppProps) {
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  if (!isClient) return null;
-
   return (
     <Provider store={store}>
       <PersistGate loading={<LoadingScreen />} persistor={persistor}>
@@ -177,9 +186,9 @@ export default function App({ Component, pageProps }: AppProps) {
           <Head>
             <title>TalentAI | AI Recruitment Platform — Hire 75% Faster with Conversational AI Agents</title>
             <meta name="viewport" content="initial-scale=1, width=device-width" />
-            <meta name="description" content="TalentAI automates your entire hiring pipeline with AI agents that conduct natural video interviews, score candidates objectively, and issue blockchain-verified credentials. Cut 42-day hiring cycles to under 10 days. AI interviews from $8 each. Plans from $99/mo." />
+            <meta name="description" content="TalentAI automates your entire hiring pipeline with AI agents that conduct natural video interviews, score candidates objectively, and deliver explainable evaluation reports. Cut 42-day hiring cycles to under 10 days. AI interviews from $8 each. Plans from $99/mo." />
             <meta property="og:title" content="TalentAI — AI Agents That Interview Candidates For You" />
-            <meta property="og:description" content="Automate screening, interviews, and evaluation with conversational AI. Reduce hiring time by 75%. Trusted by NVIDIA Inception & built on Hedera." />
+            <meta property="og:description" content="Automate screening, interviews, and evaluation with conversational AI. Reduce hiring time by 75%. Trusted by NVIDIA Inception." />
             <meta property="og:type" content="website" />
             <link rel="icon" href="/images/home/favico.png" type="image/png" />
           </Head>

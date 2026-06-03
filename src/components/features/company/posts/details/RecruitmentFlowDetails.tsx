@@ -50,7 +50,6 @@ const ConfigSection = ({ title, children }: { title: string; children: React.Rea
 
 interface Props {
   canEdit: boolean;
-  onEdit: () => void;
 }
 
 const RecruitmentFlowDetails: React.FC<Props> = ({ canEdit }) => {

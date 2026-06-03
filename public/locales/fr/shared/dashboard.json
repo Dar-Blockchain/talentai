@@ -296,7 +296,8 @@
       "key_metrics": "Métriques clés",
       "noshow_rate": "Taux de no-show",
       "completion_rate": "Taux complétion",
-      "shortlist_rate": "Shortlist / complétés",
+      "shortlist_rate": "Présélectionnés",
+      "completed_rate": "Entretiens complétés",
       "hire_conversion": "Conversion → hire",
       "zone4_title": "Vélocité",
       "tts_title": "Time-to-shortlist médian",
@@ -613,6 +614,28 @@
         "location": "Localisation",
         "team_size": "Taille de l'équipe"
       }
+    }
+  },
+  "tour": {
+    "nav": {
+      "back": "Retour",
+      "next": "Suivant",
+      "done": "Terminé !"
+    },
+    "steps": {
+      "welcome":          { "title": "Bienvenue sur TalentAI 👋",                    "description": "Laissez-nous vous guider à travers la plateforme en environ une minute. Nous couvrirons chaque fonctionnalité pour que vous puissiez commencer à recruter plus intelligemment dès maintenant." },
+      "dashboard":        { "title": "Tableau de bord 📊",                           "description": "Votre base de départ. En un coup d'œil, vous pouvez voir :\n\n• Offres d'emploi et campagnes actives\n• Nombre total de candidats sur toutes les offres\n• Activité d'entretiens des 30 derniers jours\n• Graphiques d'évolution des candidatures\n• Meilleures offres d'emploi par score candidat" },
+      "posts":            { "title": "Offres d'emploi",                              "description": "Créez et gérez vos postes ouverts ici.\n\n• Cliquez sur '+ Nouvelle offre' pour lancer l'assistant de création\n• Choisissez la saisie manuelle ou laissez l'IA générer l'offre\n• Les brouillons peuvent être repris à tout moment\n• Une fois publiée, la modification est désactivée si des candidats ont passé l'entretien" },
+      "applications":     { "title": "Candidatures",                                 "description": "Tous les candidats ayant postulé à vos offres apparaissent ici.\n\n• Filtrez par nom, compétence ou offre spécifique\n• Consultez le score CV, le statut et la date de candidature en un coup d'œil\n• Cliquez sur une carte pour ouvrir le profil complet et agir" },
+      "employees":        { "title": "Employés",                                     "description": "Gérez vos membres d'équipe et utilisateurs internes.\n\n• Invitez des employés par email et attribuez-leur des rôles\n• Définissez les permissions : Admin, Manager ou Lecteur\n• Les employés ont leur propre tableau de bord pour suivre les candidats assignés\n• Supprimez ou mettez à jour les rôles à tout moment" },
+      "campaigns":        { "title": "Campagnes",                                    "description": "Automatisez votre pipeline de recrutement de bout en bout.\n\n• Créez une campagne pour regrouper une offre et un flux d'entretiens\n• Configurez des emails d'invitation, rappels et délais automatiques\n• Suivez les taux de complétion et la progression des candidats en temps réel" },
+      "departments":      { "title": "Départements & Employés",                      "description": "Organisez la structure de votre entreprise.\n\n• Créez des départements et assignez des membres\n• Les membres peuvent accéder à leurs propres tableaux de bord d'entretiens\n• Utile pour le recrutement multi-équipe au sein de l'organisation" },
+      "settings_info":    { "title": "Paramètres — Informations entreprise",         "description": "Maintenez votre profil d'entreprise complet et à jour.\n\n• Nom, email, secteur et taille de l'entreprise\n• Niveau d'expérience requis pour les postes publiés\n• Un profil complet renforce la confiance des candidats" },
+      "settings_contact": { "title": "Paramètres — Contact & Présence",              "description": "Indiquez aux candidats où vous êtes et comment vous trouver.\n\n• Pays / localisation et type d'emploi (Télétravail, Présentiel, Hybride)\n• Page LinkedIn et site web de l'entreprise\n• Ces informations apparaissent sur votre profil public" },
+      "settings_api":     { "title": "Paramètres — Clés API",                        "description": "Intégrez TalentAI à vos propres outils et services.\n\n• Créez une clé avec un nom, un identifiant de service et des portées de permissions\n• Définissez une limite de débit (requêtes par seconde) et une date d'expiration\n• Activez/désactivez ou régénérez les clés à tout moment\n• La clé en clair n'est affichée qu'une seule fois à la création — copiez-la immédiatement" },
+      "chat":             { "title": "Messagerie 💬",                                "description": "Discutez directement avec les candidats.\n\nLes nouvelles notifications de messages apparaissent ici lorsque les candidats répondent aux invitations d'entretien ou vous contactent directement." },
+      "notifications":    { "title": "Notifications 🔔",                             "description": "Tous les événements importants apparaissent ici :\n\n• Complétion d'entretiens et scores\n• Nouvelles candidatures sur vos offres\n• Changements de statut du pipeline\n• Alertes système et rappels\n\nCliquez sur 'Voir toutes les notifications' pour consulter l'historique complet." },
+      "finish":           { "title": "Vous êtes prêt ! 🎉",                          "description": "Cela couvre tout ce qu'il y a sur TalentAI. Vous pouvez rejouer cette visite à tout moment en cliquant sur le bouton Aide dans Paramètres.\n\nBonne chance pour votre recrutement !" }
     }
   }
 }

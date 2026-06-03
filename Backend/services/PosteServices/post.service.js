@@ -3,7 +3,7 @@ const User = require("../../models/User.model");
 const Profile = require("../../models/Profile.model");
 const PostInterviewAssessmentModel = require("../../models/PostInterviewAssessment.model");
 const JobApplication = require("../../models/JobApplication.model");
-const nodemailer = require('nodemailer');
+const subscriptionService = require("../subscription.service");
 
 // Validate post data
 const validatePostData = (postData) => {
@@ -32,19 +32,13 @@ const validatePostData = (postData) => {
 // Create a new post
 module.exports.createPost = async (postData, token) => {
   try {
-    // Validate data
     validatePostData(postData);
 
     const post = new Post(postData);
-    const user = await User.findById(postData.user);
-    user.post.push(post._id);
-    await user.save();
-    await post.save();
-    console.log(post);
-    
-    //await schedulePostMatchingAgenda(post._id.toString(), {
-    //  requiredSkills: post.skillAnalysis.requiredSkills
-    //});
+    await Promise.all([
+      post.save(),
+      User.findByIdAndUpdate(postData.user, { $push: { post: post._id } }),
+    ]);
     return post;
   } catch (error) {
     throw new Error(`Error creating post: ${error.message}`);
@@ -75,7 +69,6 @@ module.exports.createPostWithSideEffects = async (postData, token, userProfile) 
     // ========== 3. INCREMENT USAGE (for companies only) ==========
     if (userProfile.type === 'Company' && userProfile.activeSubscription) {
       try {
-        const subscriptionService = require('../subscription.service');
         await subscriptionService.incrementUsage(
           userProfile.activeSubscription._id,
           'postsUsed',
@@ -133,7 +126,8 @@ module.exports.getAllPosts = async (filters = {}) => {
     return await Post.find(query)
       .select('-MatchingConfig')
       .populate("user", "username email companyDetails")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
   } catch (error) {
     throw new Error(`Error fetching posts: ${error.message}`);
   }
@@ -314,9 +308,7 @@ module.exports.getPipelineJobDetails = async (postId) => {
     const post = await Post.findById(postId)
       .select('-MatchingConfig')
       .populate("user", "username email")
-      .populate("PostSteps")
-      .populate()
-      .populate();
+      .populate("PostSteps");
 
     if (!post) {
       throw new Error("Post not found");
@@ -422,10 +414,9 @@ module.exports.getPostsByUserId = async (userId) => {
     return await Post.find({ user: userId })
       .select('-MatchingConfig')
       .populate("user", "username email")
-      .populate("PostSteps") // Populate the PostSteps reference
-      .populate()
-      .populate()
-      .sort({ createdAt: -1 });
+      .populate("PostSteps")
+      .sort({ createdAt: -1 })
+      .lean();
   } catch (error) {
     throw new Error(`Error fetching user posts: ${error.message}`);
   }
@@ -510,8 +501,6 @@ module.exports.getPostsByUserIdWithPagination = async (userId, page = 1, limit =
         .select('-MatchingConfig')
         .populate("user", "username email")
         .populate("PostSteps")
-        .populate()
-        .populate()
         .sort(sortObj)
         .skip(skip)
         .limit(limitNum)
@@ -817,57 +806,10 @@ module.exports.getPostMetrics = async (userId) => {
     const now = new Date();
 
     // Get all posts for the user including archived flag
-    const allPosts = await Post.find({ user: userId }).select(
-      'status expirationDate archived'
-    );
+    const allPosts = await Post.find({ user: userId })
+      .select('status expirationDate archived')
+      .lean();
 
-    // Initialize counters
-    const metrics = {
-      total: 0,
-      active: 0,
-      draft: 0,
-      closed: 0,
-      archived: 0,
-    };
-
-    // Count posts by status — archived posts excluded from total
-    allPosts.forEach((post) => {
-      if (post.archived) {
-        metrics.archived++;
-        return;
-      }
-      metrics.total++;
-      const isExpired = post.expirationDate && new Date(post.expirationDate) < now;
-      const s = post.status?.toLowerCase();
-
-      if (s === 'draft') {
-        metrics.draft++;
-      } else if (s === 'closed' || isExpired) {
-        metrics.closed++;
-      } else if (s === 'open') {
-        metrics.active++;
-      }
-    });
-
-    return metrics;
-  } catch (error) {
-    throw new Error(`Error getting post metrics: ${error.message}`);
-  }
-};
-
-/**
- * Get post metrics (count by status) for a user
- */
-module.exports.getPostMetrics = async (userId) => {
-  try {
-    const now = new Date();
-
-    // Get all posts for the user including archived flag
-    const allPosts = await Post.find({ user: userId }).select(
-      'status expirationDate archived'
-    );
-
-    // Initialize counters
     const metrics = {
       total: 0,
       active: 0,

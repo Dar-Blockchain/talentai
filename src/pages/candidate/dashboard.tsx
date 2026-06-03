@@ -210,9 +210,9 @@ const DashboardCandidate: React.FC = () => {
     : undefined;
 
   const checklist = [
-    { label: t("candidate.checklist.complete_profile"), done: !!(profile?.firstName && profile?.lastName), href: "/candidate/profile/settings" },
-    { label: t("candidate.checklist.add_target_role"),  done: !!profile?.targetRole,                        href: "/candidate/profile/settings" },
-    { label: t("candidate.checklist.set_experience"),   done: !!profile?.requiredExperienceLevel,           href: "/candidate/profile/settings" },
+    { label: t("candidate.checklist.complete_profile"), done: !!(profile?.firstName && profile?.lastName), href: "/settings" },
+    { label: t("candidate.checklist.add_target_role"),  done: !!profile?.targetRole,                        href: "/settings" },
+    { label: t("candidate.checklist.set_experience"),   done: !!profile?.requiredExperienceLevel,           href: "/settings" },
     { label: t("candidate.checklist.first_application"),done: totalApplications > 0,                        href: "/candidate/dashboard"        },
   ];
 

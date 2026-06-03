@@ -1,28 +1,38 @@
 const multer = require("multer");
-const path = require('path')
-const fs = require('fs')
-var storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'public/resume')
+const path   = require("path");
+const fs     = require("fs");
+const { randomUUID } = require("crypto");
+
+const UPLOAD_DIR = path.join(__dirname, "..", "uploads", "resumes");
+
+// Ensure upload directory exists (outside public/)
+if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+
+const ALLOWED_MIME = new Set([
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+]);
+
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
+  // Randomised filename — prevents path traversal and enumeration
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, `${randomUUID()}${ext}`);
   },
-  filename: function (req, file, cb) {
-    const uploadPath = 'public/resume';
-    const originalName = file.originalname;
-    console.log(file.originalname)
-    const fileExtension = path.extname(originalName);
-    let fileName = originalName;
+});
 
-    // Check if the file already exists
-    let fileIndex = 1;
-    while (fs.existsSync(path.join(uploadPath, fileName))) {
-      const baseName = path.basename(originalName, fileExtension);
-      fileName = `${baseName}_${fileIndex}${fileExtension}`;
-      fileIndex++;
+const uploadfile = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB max
+  fileFilter: (_req, file, cb) => {
+    if (ALLOWED_MIME.has(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(Object.assign(new Error("Only PDF, DOC, and DOCX files are allowed."), { status: 400 }));
     }
+  },
+});
 
-    cb(null, fileName);
-  }
-})
-
-var uploadfile = multer({ storage: storage });
 module.exports = uploadfile;

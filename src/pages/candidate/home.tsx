@@ -1,6 +1,4 @@
 import LandingPageLayout from "@/components/features/home/LandingPageLayout";
-import HowItWorksSection from "@/components/features/home/candidate/HowItWorksSection";
-import CandidateRewardsSection from "@/components/features/home/candidate/CandidateRewardsSection";
 import JobListingsSection from "@/components/features/home/candidate/JobListingsSection";
 import Footer from "@/components/layout/Footer";
 import { useEffect } from "react";

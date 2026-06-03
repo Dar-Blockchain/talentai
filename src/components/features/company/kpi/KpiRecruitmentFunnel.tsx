@@ -14,7 +14,7 @@ import { AppDispatch } from "@/store/store";
 import { fetchFunnel, selectFunnel, selectFunnelLoading } from "@/store/slices/kpiSlice";
 import { useKpiParams } from "./useKpiParams";
 
-const OPACITIES = ["FF", "CC", "AA", "77"];
+const OPACITIES = ["FF", "AA", "77"];
 
 const StepSkeleton: React.FC = () => (
   <Box sx={{ flex: "1 1 0", minWidth: { xs: "calc(50% - 8px)", md: 0 } }}>
@@ -43,13 +43,11 @@ const KpiZone3: React.FC = () => {
   }, [dispatch, postId, dateFrom]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const applied     = funnel.applied     ?? 0;
-  const invited     = funnel.invited     ?? 0;
   const completed   = funnel.completed   ?? 0;
   const shortlisted = funnel.shortlisted ?? 0;
 
   const STEPS = [
     { key: "funnel_applied",     value: applied     },
-    { key: "funnel_invited",     value: invited     },
     { key: "funnel_completed",   value: completed   },
     { key: "funnel_shortlisted", value: shortlisted },
   ];
@@ -61,10 +59,9 @@ const KpiZone3: React.FC = () => {
         {/* Funnel step cards */}
         <Box sx={{ display: "flex", gap: { xs: 1, sm: 1.5 }, mb: 3, flexWrap: { xs: "wrap", md: "nowrap" } }}>
           {loading
-            ? Array.from({ length: 4 }).map((_, i) => <StepSkeleton key={i} />)
+            ? Array.from({ length: 3 }).map((_, i) => <StepSkeleton key={i} />)
             : STEPS.map((step, i) => {
-                const prevVal = i > 0 ? STEPS[i - 1].value : null;
-                const rate    = (prevVal && prevVal > 0) ? Math.round((step.value / prevVal) * 100) : null;
+                const rate    = (i > 0 && applied > 0) ? Math.min(Math.round((step.value / applied) * 100), 100) : null;
                 const fillPct = applied > 0 ? Math.round((step.value / applied) * 100) : 0;
                 const color   = `${T}${OPACITIES[i]}`;
                 return (
@@ -72,7 +69,6 @@ const KpiZone3: React.FC = () => {
                     <Box sx={{
                       border: `1px solid ${BORDER}`, borderRadius: "14px",
                       p: { xs: 1.5, sm: 2 }, height: "100%",
-                      borderTop: `3px solid ${color}`,
                       bgcolor: i === 0 ? `${T}06` : WHITE,
                     }}>
                       <Typography sx={{ fontFamily: "Poppins", fontSize: "0.6rem", fontWeight: 700, color: GRAY2, textTransform: "uppercase", letterSpacing: "0.08em", mb: 0.75 }}>
@@ -139,21 +135,19 @@ const KpiZone3: React.FC = () => {
               {t("pages.kpi.key_metrics")}
             </Typography>
             {loading ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <Box key={i} sx={{ py: 1.1, borderBottom: i < 3 ? `1px solid ${BORDER}` : "none" }}>
+              Array.from({ length: 5 }).map((_, i) => (
+                <Box key={i} sx={{ py: 1.1, borderBottom: i < 4 ? `1px solid ${BORDER}` : "none" }}>
                   <Skeleton variant="text" width="100%" height={20} />
                 </Box>
               ))
             ) : (
               <>
-                {/* no-show = invited but never completed / invited */}
-                <MetricRow label={t("pages.kpi.noshow_rate")}     value={passRate(invited - completed, invited)}  color="#EF4444" />
-                {/* completion = completed / applied (overall funnel drop) */}
-                <MetricRow label={t("pages.kpi.completion_rate")} value={passRate(completed, applied)}            color={T} />
-                {/* shortlist rate = shortlisted / completed */}
-                <MetricRow label={t("pages.kpi.shortlist_rate")}  value={passRate(shortlisted, completed)}        color="#7C3AED" />
+                {/* interview completed / applied */}
+                <MetricRow label={t("pages.kpi.completed_rate")}  value={passRate(completed, applied)}   color="#7C3AED" />
+                {/* shortlisted / applied */}
+                <MetricRow label={t("pages.kpi.shortlist_rate")}  value={passRate(shortlisted, applied)} color="#F59E0B" />
                 {/* overall conversion = shortlisted / applied */}
-                <MetricRow label={t("pages.kpi.hire_conversion")} value={passRate(shortlisted, applied)}          color="#10B981" last />
+                <MetricRow label={t("pages.kpi.hire_conversion")} value={passRate(shortlisted, applied)} color="#10B981" last />
               </>
             )}
           </Box>

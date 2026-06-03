@@ -1,6 +1,5 @@
 import i18n, { type InitOptions } from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import LanguageDetector from 'i18next-browser-languagedetector';
 
 // ── EN ──────────────────────────────────────────────
 import enCommon     from '../../public/locales/en/shared/common.json';
@@ -83,6 +82,40 @@ function mergeDashboardPageBundles<D extends { pages: Record<string, unknown> }>
   };
 }
 
+/**
+ * Synchronously determine the correct starting language before React renders.
+ * - Guest (no auth token): always 'en'
+ * - Authenticated: user.language from persisted Redux state, then MANUAL_LANG_KEY, then 'en'
+ */
+function getInitialLanguage(): string {
+  if (typeof window === 'undefined') return 'en';
+
+  const hasToken = !!(
+    localStorage.getItem('api_token') ||
+    localStorage.getItem('token')
+  );
+  if (!hasToken) return 'en';
+
+  // Try to read from persisted Redux state (fastest — already in localStorage)
+  try {
+    const raw = localStorage.getItem('persist:root');
+    if (raw) {
+      const root = JSON.parse(raw);
+      if (root.user) {
+        const userState = JSON.parse(root.user);
+        const lang = userState?.connectedUser?.user?.language;
+        if (lang === 'fr' || lang === 'en') return lang;
+      }
+    }
+  } catch { /* ignore parse errors */ }
+
+  // Fall back to manually saved language key
+  const manual = localStorage.getItem('talentai_lang_manual');
+  if (manual === 'fr' || manual === 'en') return manual;
+
+  return 'en';
+}
+
 const options: InitOptions = {
   resources: {
     en: {
@@ -119,25 +152,11 @@ const options: InitOptions = {
     },
   },
 
+  lng: getInitialLanguage(),
   fallbackLng: 'en',
   supportedLngs: [...SUPPORTED_LANGUAGES],
   defaultNS: 'common',
   ns: [...NAMESPACES],
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  detection: {
-    order: ['cookie', 'localStorage'],
-    caches: ['cookie', 'localStorage'],
-    cookieName: LANGUAGE_COOKIE,
-    cookieOptions: { path: '/', sameSite: 'lax' },
-    lookupLocalStorage: LANGUAGE_COOKIE,
-    /** Map fr-FR / en-US → fr / en — resources are only registered under two-letter codes */
-    convertDetectedLanguage: (lng: string) => {
-      const base = lng.split("-")[0]?.toLowerCase();
-      if (base === "fr" || base === "en") return base;
-      return lng;
-    },
-  } as any,
 
   interpolation: {
     escapeValue: false,
@@ -150,7 +169,6 @@ const options: InitOptions = {
 
 if (!i18n.isInitialized) {
   i18n
-    .use(LanguageDetector)
     .use(initReactI18next)
     .init(options);
 } else {

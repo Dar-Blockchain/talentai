@@ -44,8 +44,11 @@ axiosInstance.interceptors.response.use(
     const isTokenInvalid =
       status === 401 &&
       (data?.code === 'TOKEN_INVALID' ||
+        data?.code === 'TOKEN_REVOKED' ||
+        data?.code === 'TOKEN_MISSING' ||
         data?.error === 'TOKEN_INVALID' ||
-        data?.message === 'Invalid or expired token' || 'Token missing');
+        data?.message === 'Invalid or expired token' ||
+        data?.message === 'Token has been revoked');
     if (isTokenInvalid && !_isLoggingOut) {
       clearTokens();
       emitSessionExpired();

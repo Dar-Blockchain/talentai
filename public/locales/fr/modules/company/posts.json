@@ -100,7 +100,14 @@
       "header_title": "Décrivez le poste",
       "header_subtitle": "Un prompt précis produit une meilleure offre — soyez spécifique",
       "prompt_label": "Description du poste",
-      "prompt_placeholder": "Exemple :\nNous recherchons un Développeur Full Stack Senior.\n- 5+ ans d'expérience avec React.js et Node.js\n- Bonne maîtrise de TypeScript\n- Pilotage du développement produit",
+      "prompt_placeholder": "Exemple :\nNous recherchons un Développeur Full Stack Senior pour rejoindre notre équipe produit.\n\n🏢 À propos : Startup SaaS en forte croissance, 50+ employés, culture remote-friendly.\n\n🎯 Rôle : Piloter le développement des fonctionnalités clés de notre plateforme avec React et Node.js.\n\n📋 Prérequis :\n- 5+ ans d'expérience avec React.js et Node.js\n- Bonne maîtrise de TypeScript\n- Expérience avec les API REST et PostgreSQL\n- Bon niveau de communication en français et/ou anglais\n\n✅ Responsabilités :\n- Concevoir et développer de nouvelles fonctionnalités de bout en bout\n- Revues de code et accompagnement des développeurs juniors\n- Collaboration avec les équipes design et produit\n\n💰 Avantages :\n- Salaire compétitif + équité\n- Horaires flexibles, full remote\n- Budget formation annuel",
+      "prompt_hint": "Plus vous donnez de détails, meilleur sera le résultat de l'IA",
+      "prompt_chars": "caractères",
+      "hint_company": "Contexte entreprise",
+      "hint_role": "Rôle & mission",
+      "hint_requirements": "Prérequis",
+      "hint_responsibilities": "Responsabilités",
+      "hint_benefits": "Avantages",
       "section_role": "Détails du poste",
       "section_salary": "Fourchette salariale / An",
       "label_type": "Type",
@@ -163,6 +170,7 @@
         "work_on_site": "Sur site",
         "work_remote": "Télétravail",
         "work_hybrid": "Hybride",
+        "experience_entry_level": "Débutant",
         "experience_junior": "Junior",
         "experience_mid_level": "Intermédiaire",
         "experience_senior": "Senior",
@@ -176,11 +184,11 @@
         "5": "Expert"
       },
       "soft_skill_levels": {
-        "1": "1 / 5",
-        "2": "2 / 5",
-        "3": "3 / 5",
-        "4": "4 / 5",
-        "5": "5 / 5"
+        "1": "Débutant",
+        "2": "Junior",
+        "3": "Intermédiaire",
+        "4": "Senior",
+        "5": "Expert"
       },
       "skill_modal": {
         "title_add_hard": "Ajouter une compétence technique",

@@ -30,7 +30,7 @@ const QUICK_LINKS = [
   { label: "Dashboard",    href: "/company/dashboard",    Icon: SpaceDashboardOutlined },
   { label: "Posts",        href: "/company/posts",        Icon: WorkOutlineOutlined },
   { label: "Applications", href: "/company/applications", Icon: PeopleAltOutlined },
-  { label: "Settings",     href: "/company/settings",     Icon: TuneOutlined },
+  { label: "Settings",     href: "/settings",             Icon: TuneOutlined },
 ];
 
 interface SearchResult {

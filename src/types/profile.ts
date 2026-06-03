@@ -25,6 +25,7 @@ export interface UserProfile {
   location?: string;
   // Display-only fields
   avatar?: string;
+  resume?: string;
   profileType?: 'Candidate' | 'Company';
   // Company-specific fields (all editable)
   companyName?: string;

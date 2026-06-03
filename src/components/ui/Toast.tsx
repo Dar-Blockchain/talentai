@@ -83,7 +83,12 @@ const MuiToast: React.FC<MuiToastProps> = ({
   severity = "info",
   onClose,
 }) => (
-  <Snackbar open={open} anchorOrigin={{ vertical: "top", horizontal: "right" }} onClose={onClose} >
+  <Snackbar
+    open={open}
+    autoHideDuration={3000}
+    anchorOrigin={{ vertical: "top", horizontal: "right" }}
+    onClose={(_, reason) => { if (reason !== "clickaway") onClose(); }}
+  >
     <Alert
       severity={severity}
       variant="filled"

@@ -3,7 +3,6 @@ import { Box } from "@mui/material";
 import PostBasicDetails from "./PostBasicDetails";
 import RecruitmentFlowDetails from "./RecruitmentFlowDetails";
 import EditPostDetails from "./EditPostDetails";
-import EditRecruitmentFlow from "./EditRecruitmentFlow";
 
 type EditMode = "post" | "recruitment" | null;
 
@@ -30,16 +29,16 @@ const JobDetailContent: React.FC<Props> = ({
     {activeEdit === "post" && (
       <EditPostDetails key="edit-post" onCancel={onCancelEdit} onSaveSuccess={onSaveSuccess} />
     )}
-    {activeEdit === "recruitment" && (
-      <EditRecruitmentFlow onCancel={onCancelEdit} />
-    )}
     {activeEdit === null && (
       <>
         <PostBasicDetails onEdit={onEditPost} canEdit={isOwner} />
         {creationType !== "ai" && (
-          <RecruitmentFlowDetails onEdit={onEditRecruitment} canEdit={isOwner} />
+          <RecruitmentFlowDetails canEdit={isOwner} />
         )}
       </>
+    )}
+    {activeEdit === "recruitment" && (
+      <RecruitmentFlowDetails canEdit={isOwner} />
     )}
   </Box>
 );
