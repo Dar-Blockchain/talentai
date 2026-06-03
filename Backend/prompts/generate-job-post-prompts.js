@@ -93,6 +93,10 @@ Output:
 
 ━━━ KEY PRINCIPLES ━━━
 
+title
+- MUST always be returned — never null or empty.
+- Derive it from the full job context: what the role actually does, the domain, and the seniority level. Never leave it empty.
+
 description
 - Make it feel like a real person wrote it about a real job
 - Say what the person will own, build, or lead — not what the company wants
@@ -105,7 +109,9 @@ requirements
 - If location is not in the description → use: "${companyLocation || "Not specified"}"
 
 skills
-- 1 to 3 required skills — extract only skills explicitly mentioned or directly implied by the role (e.g. "React developer" implies React.js). Do NOT pad to reach 3 — if the description names 2 skills, return 2. If it names 1, return 1. Prefer specific named tools over generic terms.
+- required skills — include EVERY skill explicitly named in the description (up to 3). When more than 3 skills are mentioned, always prioritize skills with explicit years or signals over skills with no years. NEVER drop a skill that has explicit years in favor of one that does not. Do NOT pad — if the description names 2, return 2. If it names 1, return 1. Prefer specific named tools over generic terms.
+
+- years parsing rule: when a years signal follows multiple skills (e.g. "Python and NestJS for 7 years"), apply the years ONLY to the last mentioned skill before them. The other skills in the group have no years signal — unless the description explicitly says "each" or "both" (e.g. "Python and NestJS, 7 years each").
 - softSkills MUST contain 1 to 2 items — never return an empty array. Return 2 when the description clearly signals a second soft skill.
 - Prefer specific named tools over generic labels
   Frontend: React.js, Vue, Angular… | Backend: Node.js, Django, Spring… | Mobile: Swift, Kotlin, Flutter…
@@ -129,21 +135,15 @@ skills
   The primary skill (highest importance score) must match the role seniority: Senior → level 4, Expert → level 5. All other required skills minimum level 3.
   The level mapping always takes priority when the description explicitly qualifies a skill (e.g., "basic", "familiarity with", "exposure to"). The Seniority Floor applies only when no qualifier is present.
 
-- importance: how critical this skill is to this specific role (1–10)
-  This score is the ONLY input used to compute each skill's evaluation weight — set it with intent.
-  10 = the role cannot function without it (e.g., React for a React Developer)
-  7–9 = strongly required, major differentiator between candidates
-  4–6 = secondary but expected for this level
-  1–3 = nice to have, rarely decisive
-
-  DIFFERENTIATION RULES — these are mandatory:
-  - Skills at different levels MUST have clearly different scores — never cluster them (8/7/7 is wrong, 9/6/4 is right)
-  - The primary skill must score at least 3 points above the lowest-scored skill
-  - Ask yourself: "If a candidate is completely missing this skill, how much does it hurt?" → score accordingly
-  - A score of 10 means the candidate cannot do the job without it. Use it only when truly the case.
+- importance: assign based on the years signal in the description (1–10).
+  More years = higher importance — a skill with more years MUST always score higher than one with fewer years.
+  Even a 1-year difference MUST result in a different importance score — no two skills with different year counts can share the same importance.
+  Skills with no years signal always score lower than those with explicit years.
+  Skills with only "knowledge", "basic", or "exposure" always score the lowest.
 
 
 experienceLevel
+- Set based on the HIGHEST years signal across all skills in the description — one skill with 8+ years makes the whole role Expert.
 - Default to "Junior" if the description gives no seniority or years signal
 - Junior: 1–3 yrs | Mid-level: 3–5 yrs | Senior: 5–8 yrs | Expert: 8+ yrs
 
@@ -201,32 +201,75 @@ function normalizeSkillAnalysis(result) {
     return typeof v === "number" && v >= 1 && v <= 10 ? v : (fallbacks[index] ?? 3);
   }
 
-  function distributePercentages(skills, total, fallbacks) {
+  function distributePercentages(skills, total, fallbacks, roundTo, minPct) {
     if (skills.length === 0) return [];
-    // Square weights to amplify differences between importance scores
-    const weights   = skills.map((s, i) => {
+    const units    = total / roundTo;
+    const minUnits = minPct / roundTo;
+
+    const weights = skills.map((s, i) => {
       const imp = getImportance(s, fallbacks, i);
       return imp * imp;
     });
     const weightSum = weights.reduce((a, b) => a + b, 0);
-    const pcts      = weights.map((w) => Math.round((w / weightSum) * total));
-    // Correct rounding drift on the highest-weight skill
-    pcts[0] += total - pcts.reduce((a, b) => a + b, 0);
+
+    let allocated = skills.map(() => minUnits);
+    let remaining = units - allocated.reduce((a, b) => a + b, 0);
+
+    if (remaining > 0) {
+      const proportional = weights.map(w => (w / weightSum) * remaining);
+      const floors       = proportional.map(p => Math.floor(p));
+      let leftover       = remaining - floors.reduce((a, b) => a + b, 0);
+      allocated          = allocated.map((a, i) => a + floors[i]);
+      const sorted       = weights.map((_, i) => i).sort((a, b) => weights[b] - weights[a]);
+      for (const i of sorted) {
+        if (leftover <= 0) break;
+        allocated[i]++;
+        leftover--;
+      }
+    } else {
+      const diff = units - allocated.reduce((a, b) => a + b, 0);
+      if (diff !== 0) allocated[weights.indexOf(Math.max(...weights))] += diff;
+    }
+
+    return allocated.map(u => u * roundTo);
+  }
+
+  function ensureUniquePcts(pcts, skills, fallbacks, roundTo, minPct) {
+    const imps  = skills.map((s, i) => getImportance(s, fallbacks, i));
+    const order = imps.map((_, i) => i).sort((a, b) => imps[b] - imps[a]);
+    for (let i = 0; i < order.length - 1; i++) {
+      for (let j = i + 1; j < order.length; j++) {
+        const hi = order[i], lo = order[j];
+        if (imps[hi] !== imps[lo] && pcts[hi] === pcts[lo] && pcts[lo] - roundTo >= minPct) {
+          pcts[hi] += roundTo;
+          pcts[lo] -= roundTo;
+        }
+      }
+    }
     return pcts;
   }
 
   // ── Collect skills ────────────────────────────────────────────────────────
   const rawRequired = Array.isArray(result.skillAnalysis.requiredSkills)
-    ? result.skillAnalysis.requiredSkills.slice(0, 3)
+    ? [...result.skillAnalysis.requiredSkills]
+        .sort((a, b) => (b.importance || 0) - (a.importance || 0))
+        .slice(0, 3)
     : [];
 
-  const rawSoft = Array.isArray(result.skillAnalysis.softSkills) && result.skillAnalysis.softSkills.length > 0
-    ? result.skillAnalysis.softSkills.slice(0, 2)
+  const validSoft = Array.isArray(result.skillAnalysis.softSkills)
+    ? result.skillAnalysis.softSkills.filter(s => s && typeof s.name === "string" && s.name.trim())
+    : [];
+
+  const rawSoft = validSoft.length > 0
+    ? validSoft.slice(0, 2)
     : [{ name: "Communication", level: null, importance: 5 }];
 
   // ── Distribute within each group (80 hard / 20 soft — fixed) ────────────
-  const requiredPcts = distributePercentages(rawRequired, REQUIRED_TOTAL, FALLBACK_IMPORTANCE.required);
-  const softPcts     = distributePercentages(rawSoft,     SOFT_TOTAL,     FALLBACK_IMPORTANCE.soft);
+  const requiredPcts = ensureUniquePcts(
+    distributePercentages(rawRequired, REQUIRED_TOTAL, FALLBACK_IMPORTANCE.required, 5, 15),
+    rawRequired, FALLBACK_IMPORTANCE.required, 5, 15
+  );
+  const softPcts     = distributePercentages(rawSoft,     SOFT_TOTAL,     FALLBACK_IMPORTANCE.soft,     10, 10);
 
   const requiredSkills = rawRequired.map((skill, i) => ({
     name:       skill.name,

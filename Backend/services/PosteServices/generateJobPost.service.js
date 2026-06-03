@@ -51,7 +51,7 @@ async function generateJobPost(description, user, overrides = {}) {
       systemPrompt:
         "You are an expert technical recruiter and AI assistant specializing in job analysis, skill extraction, and structured job post generation. Your output must always be a single valid JSON object — no extra text, no markdown, no explanations. Follow every rule in the user prompt exactly and consistently.",
       messages:    [{ role: "user", content: prompt }],
-      temperature: 0.1,
+      temperature: 0.3,
       maxTokens:   4096,
       timeout:     30000,
     });
