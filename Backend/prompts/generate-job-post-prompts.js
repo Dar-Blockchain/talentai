@@ -124,6 +124,9 @@ skills
   "8+ years", "expert", "mastery"                  → 5
   null → signal genuinely absent from description  → code defaults to Junior (2)
 
+  SENIORITY FLOOR — mandatory:
+  If experienceLevel is "Senior" or "Expert", required technical skills MUST have a minimum level of 3 — unless the description explicitly marks them as secondary, optional, or "nice to have".
+
   If two skills share the same years or same qualifier → assign them the same level AND the same importance score
 
 - importance: how critical this skill is to this specific role (1–10)
@@ -134,7 +137,6 @@ skills
   1–3 = nice to have, rarely decisive
 
   DIFFERENTIATION RULES — these are mandatory:
-  - Skills with the same years/signal MUST get the same importance score (e.g. both "1 year" → both get the same score)
   - Skills at different levels MUST have clearly different scores — never cluster them (8/7/7 is wrong, 9/6/4 is right)
   - The primary skill must score at least 3 points above the lowest-scored skill
   - Ask yourself: "If a candidate is completely missing this skill, how much does it hurt?" → score accordingly
@@ -219,29 +221,9 @@ function normalizeSkillAnalysis(result) {
     ? result.skillAnalysis.softSkills.slice(0, 2)
     : [{ name: "Communication", level: null, importance: 5 }];
 
-  // ── Equalize importance for skills with the same level ───────────────────
-  function equalizeByLevel(skills, fallbacks) {
-    const groups = {};
-    skills.forEach((s, i) => {
-      const lvl = resolveLevel(s.level);
-      if (!groups[lvl]) groups[lvl] = [];
-      groups[lvl].push({ i, imp: getImportance(s, fallbacks, i) });
-    });
-    const overrides = {};
-    Object.values(groups).forEach(group => {
-      if (group.length > 1) {
-        const avg = Math.round(group.reduce((sum, g) => sum + g.imp, 0) / group.length);
-        group.forEach(g => { overrides[g.i] = avg; });
-      }
-    });
-    return skills.map((s, i) =>
-      overrides[i] !== undefined ? { ...s, importance: overrides[i] } : s
-    );
-  }
-
   // ── Distribute within each group (80 hard / 20 soft — fixed) ────────────
-  const requiredPcts = distributePercentages(equalizeByLevel(rawRequired, FALLBACK_IMPORTANCE.required), REQUIRED_TOTAL, FALLBACK_IMPORTANCE.required);
-  const softPcts     = distributePercentages(equalizeByLevel(rawSoft,     FALLBACK_IMPORTANCE.soft),     SOFT_TOTAL,     FALLBACK_IMPORTANCE.soft);
+  const requiredPcts = distributePercentages(rawRequired, REQUIRED_TOTAL, FALLBACK_IMPORTANCE.required);
+  const softPcts     = distributePercentages(rawSoft,     SOFT_TOTAL,     FALLBACK_IMPORTANCE.soft);
 
   const requiredSkills = rawRequired.map((skill, i) => ({
     name:       skill.name,
