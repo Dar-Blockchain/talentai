@@ -96,18 +96,19 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
     <>
       <Paper
         elevation={0}
+        onClick={() => router.push(`/company/applications/${appId}`)}
         sx={{
           border: "1px solid #E5E7EB", borderRadius: "12px",
           p: "14px 16px", display: "flex", alignItems: "center", gap: 2,
           transition: "box-shadow 0.15s, border-color 0.15s",
-          "&:hover": { boxShadow: "0 2px 12px rgba(0,0,0,0.07)", borderColor: "#D1D5DB" },
+          cursor: "pointer",
+          "&:hover": { boxShadow: "0 2px 12px rgba(0,0,0,0.07)", borderColor: TEAL },
         }}
       >
         {/* Avatar */}
         <Avatar
           src={avatarUrl}
-          onClick={() => router.push(`/company/applications/${appId}`)}
-          sx={{ width: 40, height: 40, bgcolor: bgColor, fontSize: 13, fontWeight: 700, flexShrink: 0, cursor: "pointer", "&:hover": { opacity: 0.85 } }}
+          sx={{ width: 40, height: 40, bgcolor: bgColor, fontSize: 13, fontWeight: 700, flexShrink: 0 }}
         >
           {initials(app.firstName, app.lastName)}
         </Avatar>
@@ -116,8 +117,7 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
             <Typography
-              onClick={() => router.push(`/company/applications/${appId}`)}
-              sx={{ fontSize: "13px", fontWeight: 700, color: "#111827", lineHeight: 1.3, cursor: "pointer", "&:hover": { color: TEAL, textDecoration: "underline" } }}
+              sx={{ fontSize: "13px", fontWeight: 700, color: "#111827", lineHeight: 1.3 }}
             >
               {name}
             </Typography>
@@ -131,7 +131,7 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
                 label={app.postTitle}
                 size="small"
                 icon={<WorkOutlineOutlined style={{ fontSize: 10 }} />}
-                onClick={() => app.postId && router.push(`/company/posts/${app.postId}`)}
+                onClick={(e) => { e.stopPropagation(); if (app.postId) router.push(`/company/posts/${app.postId}`); }}
                 sx={{
                   bgcolor: `${TEAL}0F`, color: TEAL, fontWeight: 600, fontSize: "10px",
                   height: 18, borderRadius: "4px",

@@ -199,7 +199,7 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
       </Box>
 
       {/* Shortlist / Reject quick buttons */}
-      <Box sx={{ display: "flex", gap: 0.75, flexShrink: 0 }}>
+      <Box onClick={(e) => e.stopPropagation()} sx={{ display: "flex", gap: 0.75, flexShrink: 0 }}>
         <Box
           component="button"
           onClick={() => !isShortlisted && handleDecision("shortlisted")}
@@ -250,17 +250,17 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
       {/* Divider */}
       <Box sx={{ width: "1px", height: 40, bgcolor: "#F3F4F6", flexShrink: 0 }} />
 
-      {/* Action button */}
-      {renderActionButton()}
-
-      {/* More menu button */}
-      <IconButton
-        size="small"
-        onClick={onMenuOpen}
-        sx={{ flexShrink: 0, width: 30, height: 30, borderRadius: "8px", color: "#6B7280", "&:hover": { bgcolor: "#F3F4F6" } }}
-      >
-        <MoreVertOutlined sx={{ fontSize: 17 }} />
-      </IconButton>
+      {/* Action button + more menu — stop propagation so row click doesn't fire */}
+      <Box onClick={(e) => e.stopPropagation()} sx={{ display: "flex", alignItems: "center", gap: 0.75, flexShrink: 0 }}>
+        {renderActionButton()}
+        <IconButton
+          size="small"
+          onClick={onMenuOpen}
+          sx={{ flexShrink: 0, width: 30, height: 30, borderRadius: "8px", color: "#6B7280", "&:hover": { bgcolor: "#F3F4F6" } }}
+        >
+          <MoreVertOutlined sx={{ fontSize: 17 }} />
+        </IconButton>
+      </Box>
 
       {/* Dropdown menu */}
       <Menu
