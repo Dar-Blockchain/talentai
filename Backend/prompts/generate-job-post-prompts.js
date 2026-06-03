@@ -12,7 +12,7 @@ const getDetailedPrompt = (description, companyLocation, language = "en", employ
 This is an internship role. Apply these rules without exception:
 - "employmentType" MUST be "Internship"
 - "experienceLevel" MUST be "Junior"
-- level for ALL skills (requiredSkills AND softSkills) MUST be null
+- level for ALL skills (requiredSkills AND softSkills): always return null — code resolves it automatically
 - Requirements must NOT mention years of production experience.
   Use instead: "Basic knowledge of", "Personal or academic project experience with", "Exposure to X through coursework or self-learning"
 - Responsibilities should reflect learning and contributing — not owning or leading
@@ -53,10 +53,10 @@ ${internshipInstruction}
   },
   "skillAnalysis": {
     "requiredSkills": [
-      { "name": string, "level": 1|2|3|4|5|null, "category": "Frontend"|"Backend"|"Fullstack"|"Mobile"|"DevOps"|"Cloud"|"Data"|"AI/ML"|"Security"|"QA"|"Blockchain"|"GameDev"|"Embedded"|"Product"|"Design"|"Marketing"|"Sales"|"Finance"|"Operations"|"Legal"|"HR"|"Other" }
+      { "name": string, "level": 1|2|3|4|5|null, "importance": 1-10, "category": "Frontend"|"Backend"|"Fullstack"|"Mobile"|"DevOps"|"Cloud"|"Data"|"AI/ML"|"Security"|"QA"|"Blockchain"|"GameDev"|"Embedded"|"Product"|"Design"|"Marketing"|"Sales"|"Finance"|"Operations"|"Legal"|"HR"|"Other" }
     ],
     "softSkills": [
-      { "name": string, "level": 1|2|3|4|5|null }
+      { "name": string, "level": 1|2|3|4|5|null, "importance": 1-10 }
     ]
   }
 }
@@ -80,13 +80,13 @@ Output:
   },
   "skillAnalysis": {
     "requiredSkills": [
-      { "name": "Node.js", "level": 4, "category": "Backend" },
-      { "name": "Apache Kafka", "level": null, "category": "Backend" },
-      { "name": "PostgreSQL", "level": null, "category": "Backend" }
+      { "name": "Node.js", "level": 4, "importance": 9, "category": "Backend" },
+      { "name": "Apache Kafka", "level": 3, "importance": 6, "category": "Backend" },
+      { "name": "PostgreSQL", "level": 3, "importance": 6, "category": "Backend" }
     ],
     "softSkills": [
-      { "name": "Technical Leadership", "level": null },
-      { "name": "Mentoring", "level": null }
+      { "name": "Technical Leadership", "level": null, "importance": 8 },
+      { "name": "Mentoring", "level": null, "importance": 5 }
     ]
   }
 }
@@ -105,7 +105,7 @@ requirements
 - If location is not in the description → use: "${companyLocation || "Not specified"}"
 
 skills
-- 1 to 3 required skills — extract skills explicitly mentioned first. If fewer than 3 are named, infer the most commonly required tools for this specific role and seniority level (e.g. a Senior Frontend Developer implies TypeScript, CSS; a Backend Node.js role implies REST APIs, SQL). Prefer specific named tools over generic terms.
+- 1 to 3 required skills — extract only skills explicitly mentioned or directly implied by the role (e.g. "React developer" implies React.js). Do NOT pad to reach 3 — if the description names 2 skills, return 2. If it names 1, return 1. Prefer specific named tools over generic terms.
 - softSkills MUST always contain at least 1 item — never return an empty array.
 - Prefer specific named tools over generic labels
   Frontend: React.js, Vue, Angular… | Backend: Node.js, Django, Spring… | Mobile: Swift, Kotlin, Flutter…
@@ -116,13 +116,29 @@ skills
   NEVER use: "Programming", "Communication Tools", "Software", "Technology"
 
 - level: required proficiency for this specific skill (1–5 or null)
-  1 = Basic    → "familiarity with", "exposure to", "basic knowledge of"
-  2 = Junior   → "some experience", "understanding of", no qualifier stated
-  3 = Mid      → "experience with", "proficient in", "solid knowledge"
-  4 = Senior   → "strong experience", "advanced", "deep knowledge", "5–8 years"
-  5 = Expert   → "expert in", "mastery of", "8+ years"
-  null         → genuinely unclear → code applies job's experienceLevel as default
-  Percentages are computed in code — do not output them.
+  Map directly from the years or signal in the description:
+  "knowledge", "familiarity", "basic", "exposure"  → 1
+  "1–2 years", "some experience", "understanding"  → 2
+  "3–4 years", "proficient", "solid", "good grasp" → 3
+  "5–7 years", "strong", "advanced", "deep"        → 4
+  "8+ years", "expert", "mastery"                  → 5
+  null → signal genuinely absent from description  → code defaults to Junior (2)
+
+  If two skills share the same years or same qualifier → assign them the same level AND the same importance score
+
+- importance: how critical this skill is to this specific role (1–10)
+  This score is the ONLY input used to compute each skill's evaluation weight — set it with intent.
+  10 = the role cannot function without it (e.g., React for a React Developer)
+  7–9 = strongly required, major differentiator between candidates
+  4–6 = secondary but expected for this level
+  1–3 = nice to have, rarely decisive
+
+  DIFFERENTIATION RULES — these are mandatory:
+  - Skills with the same years/signal MUST get the same importance score (e.g. both "1 year" → both get the same score)
+  - Skills at different levels MUST have clearly different scores — never cluster them (8/7/7 is wrong, 9/6/4 is right)
+  - The primary skill must score at least 3 points above the lowest-scored skill
+  - Ask yourself: "If a candidate is completely missing this skill, how much does it hurt?" → score accordingly
+  - A score of 10 means the candidate cannot do the job without it. Use it only when truly the case.
 
 
 experienceLevel
@@ -135,12 +151,14 @@ ${description}
 `.trim();
 };
 
-// ── Rank-based percentage table for up to 3 required skills (must sum to 80) ──
-const RANK_PCTS = [45, 20, 15];
-
-
 const VALID_WORK_MODES       = ["Remote", "On-site", "Hybrid"];
 const VALID_EXPERIENCE_LEVELS = ["Junior", "Mid-level", "Senior", "Expert"];
+
+// Fallback importance weights when AI returns no importance values
+const FALLBACK_IMPORTANCE = { required: [10, 6, 4], soft: [7, 4] };
+
+const REQUIRED_TOTAL = 80;
+const SOFT_TOTAL     = 20;
 
 function normalizeSkillAnalysis(result) {
   if (!result || result.error || !result.skillAnalysis) return result;
@@ -164,51 +182,78 @@ function normalizeSkillAnalysis(result) {
   }
 
   const isInternship = result?.jobDetails?.employmentType === "Internship";
-  const expFallback = { "Junior": 1, "Mid-level": 2, "Senior": 3, "Expert": 4 };
-  const nullFallback = expFallback[result?.jobDetails?.experienceLevel] || 2;
 
   function resolveLevel(modelLevel) {
     if (isInternship) return 2;
     if (typeof modelLevel === "number" && modelLevel >= 1 && modelLevel <= 5) {
       return Math.max(2, Math.round(modelLevel));
     }
-    return Math.max(2, nullFallback);
+    return 2;
   }
 
-  // ── Required skills: keep first 3, assign rank-based percentages ──────────
+  function getImportance(skill, fallbacks, index) {
+    const v = skill.importance;
+    return typeof v === "number" && v >= 1 && v <= 10 ? v : (fallbacks[index] ?? 3);
+  }
+
+  function distributePercentages(skills, total, fallbacks) {
+    if (skills.length === 0) return [];
+    // Square weights to amplify differences between importance scores
+    const weights   = skills.map((s, i) => {
+      const imp = getImportance(s, fallbacks, i);
+      return imp * imp;
+    });
+    const weightSum = weights.reduce((a, b) => a + b, 0);
+    const pcts      = weights.map((w) => Math.round((w / weightSum) * total));
+    // Correct rounding drift on the highest-weight skill
+    pcts[0] += total - pcts.reduce((a, b) => a + b, 0);
+    return pcts;
+  }
+
+  // ── Collect skills ────────────────────────────────────────────────────────
   const rawRequired = Array.isArray(result.skillAnalysis.requiredSkills)
     ? result.skillAnalysis.requiredSkills.slice(0, 3)
     : [];
 
-  let requiredPcts = [];
-  const n = rawRequired.length;
-  if (n > 0) {
-    const ranks = RANK_PCTS.slice(0, n);
-    const rankSum = ranks.reduce((a, b) => a + b, 0);
-    const scaled = ranks.map((r) => Math.round((r / rankSum) * 80));
-    // Absorb rounding drift into the largest item (always index 0)
-    scaled[0] += 80 - scaled.reduce((a, b) => a + b, 0);
-    requiredPcts = scaled;
+  const rawSoft = Array.isArray(result.skillAnalysis.softSkills) && result.skillAnalysis.softSkills.length > 0
+    ? result.skillAnalysis.softSkills.slice(0, 2)
+    : [{ name: "Communication", level: null, importance: 5 }];
+
+  // ── Equalize importance for skills with the same level ───────────────────
+  function equalizeByLevel(skills, fallbacks) {
+    const groups = {};
+    skills.forEach((s, i) => {
+      const lvl = resolveLevel(s.level);
+      if (!groups[lvl]) groups[lvl] = [];
+      groups[lvl].push({ i, imp: getImportance(s, fallbacks, i) });
+    });
+    const overrides = {};
+    Object.values(groups).forEach(group => {
+      if (group.length > 1) {
+        const avg = Math.round(group.reduce((sum, g) => sum + g.imp, 0) / group.length);
+        group.forEach(g => { overrides[g.i] = avg; });
+      }
+    });
+    return skills.map((s, i) =>
+      overrides[i] !== undefined ? { ...s, importance: overrides[i] } : s
+    );
   }
 
+  // ── Distribute within each group (80 hard / 20 soft — fixed) ────────────
+  const requiredPcts = distributePercentages(equalizeByLevel(rawRequired, FALLBACK_IMPORTANCE.required), REQUIRED_TOTAL, FALLBACK_IMPORTANCE.required);
+  const softPcts     = distributePercentages(equalizeByLevel(rawSoft,     FALLBACK_IMPORTANCE.soft),     SOFT_TOTAL,     FALLBACK_IMPORTANCE.soft);
+
   const requiredSkills = rawRequired.map((skill, i) => ({
-    name: skill.name,
-    category: skill.category,
-    level: resolveLevel(skill.level),
+    name:       skill.name,
+    category:   skill.category,
+    level:      resolveLevel(skill.level),
     percentage: requiredPcts[i],
   }));
 
-  // ── Soft skills: keep first 2, split 20% evenly — fallback if model returns none ──
-  const rawSoft = Array.isArray(result.skillAnalysis.softSkills) && result.skillAnalysis.softSkills.length > 0
-    ? result.skillAnalysis.softSkills.slice(0, 2)
-    : [{ name: "Communication", level: null }];
-
-  const softPct = rawSoft.length === 2 ? [10, 10] : [20];
-
   const softSkills = rawSoft.map((skill, i) => ({
-    name: skill.name,
-    level: resolveLevel(skill.level),
-    percentage: softPct[i],
+    name:       skill.name,
+    level:      resolveLevel(skill.level),
+    percentage: softPcts[i],
   }));
 
   return {

@@ -20,7 +20,8 @@ import CandidateChatRealtimeBridge from "@/modules/chat/candidate-chat/component
 import ChatUnreadSyncBridge from "@/modules/chat/shared/components/ChatUnreadSyncBridge";
 import LoadingScreen from "@/components/ui/LoadingScreen";
 import { isLoggingOutCheck, clearAuth, logout } from "@/store/slices/authSlice";
-import { clearConnectedUser } from "@/store/slices/userSlice";
+import { clearConnectedUser, getMyProfile } from "@/store/slices/userSlice";
+import { getToken } from "@/utils/tokenUtils";
 import { setToastHandler } from "@/utils/toastEmitter";
 import { setSessionExpiredHandler } from "@/utils/storeEmitter";
 import { useTranslation } from "react-i18next";
@@ -53,20 +54,28 @@ const theme = createTheme({
 
 function DbLanguageSync() {
   const user = useSelector((state: RootState) => state.user.connectedUser.user);
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const { i18n } = useTranslation();
 
   useEffect(() => {
-    if (!user) return;
-    // language is stored on the User document, not the Profile
-    const raw = (user as any)?.language;
-    const dbLang = normalizeLangCode(raw);
-    if (!dbLang) return;
-    // Always apply the account's saved language — clear any pre-login guest selection
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(MANUAL_LANG_KEY);
+    if (!isAuthenticated) {
+      if (typeof window !== 'undefined') localStorage.removeItem(MANUAL_LANG_KEY);
+      i18n.changeLanguage('en');
+      return;
     }
-    i18n.changeLanguage(dbLang);
-  }, [(user as any)?.language, (user as any)?._id]);
+
+    const dbLang = normalizeLangCode((user as any)?.language);
+    if (dbLang) {
+      if (typeof window !== 'undefined') localStorage.removeItem(MANUAL_LANG_KEY);
+      i18n.changeLanguage(dbLang);
+      return;
+    }
+
+    const manualLang = typeof window !== 'undefined'
+      ? normalizeLangCode(localStorage.getItem(MANUAL_LANG_KEY))
+      : null;
+    i18n.changeLanguage(manualLang ?? 'en');
+  }, [isAuthenticated, (user as any)?._id, (user as any)?.language]);
   return null;
 }
 
@@ -79,6 +88,14 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
 
   const userId = user?._id;
   const isLoggingOut = useSelector(isLoggingOutCheck);
+
+  // If a token exists but connectedUser is empty (e.g. after hard reload before persist rehydrates),
+  // fetch the profile so the header shows the correct name immediately.
+  useEffect(() => {
+    if (user) return; // already populated
+    if (!getToken()) return; // not logged in
+    dispatch(getMyProfile());
+  }, []); // run once on mount
 
   // Force logout when middleware detected an invalid/role-less token
   useEffect(() => {

@@ -113,16 +113,18 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           )}
 
           {/* Title */}
-          <Typography
-            sx={{
-              fontSize: "20px",
-              fontWeight: 800,
-              color: "#111827",
-              lineHeight: 1.2,
-            }}
-          >
-            {title}
-          </Typography>
+          {title && (
+            <Typography
+              sx={{
+                fontSize: "20px",
+                fontWeight: 800,
+                color: "#111827",
+                lineHeight: 1.2,
+              }}
+            >
+              {title}
+            </Typography>
+          )}
 
           {/* Subtitle */}
           {subtitle && (

@@ -59,11 +59,10 @@ export const ActionCard: React.FC<{
 }> = ({ icon: Icon, label, value, color, bg, trend, note }) => (
   <Paper elevation={0} sx={{
     border: `1px solid ${BORDER}`, borderRadius: "18px", p: 2.5,
-    bgcolor: WHITE, position: "relative", overflow: "hidden",
+    bgcolor: WHITE,
     transition: "box-shadow 0.2s, transform 0.2s",
     "&:hover": { boxShadow: "0 8px 28px rgba(0,0,0,0.09)", transform: "translateY(-2px)" },
   }}>
-    <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, bgcolor: color, borderRadius: "18px 18px 0 0" }} />
     <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
       <Box sx={{ width: 44, height: 44, borderRadius: "13px", bgcolor: bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <Icon sx={{ fontSize: 22, color }} />

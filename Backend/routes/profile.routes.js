@@ -12,7 +12,8 @@ const profileController = require('../controllers/ProfileControllers/profile.con
 // Import des middlewares
 const { requireAuth } = require('../middleware/security/auth.middleware');
 const authLogMiddleware = require("../middleware/security/request-log.middleware")
-const uploadfile = require('../middleware/file-upload.middleware');
+const uploadfile       = require('../middleware/file-upload.middleware');
+const uploadResume     = require('../middleware/fileResume-upload.middleware');
 
 router.put('/updateFinalBid', profileController.updateFinalBid);
 
@@ -25,6 +26,12 @@ router.get('/me', profileController.getMyProfile);
 
 // POST /profile/createOrUpdateProfile — creates/updates user profile
 router.post('/createOrUpdateProfile',profileController.createOrUpdateProfile);
+
+// PUT /profiles/update-resume — replace candidate's active resume file
+router.put('/update-resume', uploadResume.single('resume'), profileController.updateResume);
+
+// DELETE /profiles/delete-resume — remove candidate's resume
+router.delete('/delete-resume', profileController.deleteResume);
 
 // PUT /profile/updateProfileVisibility - Update profile visibility (public/private)
 router.put('/updateProfileVisibility', profileController.updateProfileVisibility);

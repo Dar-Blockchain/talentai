@@ -1,68 +1,23 @@
-/**
- * User authentication routes
- *
- * Global middlewares applied:
- * - LogMiddleware("Auth"): logs each auth-related request
- *
- * Note: some routes are public (registration, OTP, logins),
- * others require authentication via `requireAuthUser`.
- */
 const express = require("express");
-const router = express.Router();
-const authController = require("../controllers/authentication.controller");
+const router  = express.Router();
 
-const { requireAuth } = require("../middleware/security/auth.middleware");
-const authLogMiddleware = require("../middleware/security/request-log.middleware");
-const uploadfile = require("../middleware/fileResume-upload.middleware");
+const authController    = require("../controllers/authentication.controller");
+const { requireAuth }   = require("../middleware/security/auth.middleware");
+const authLog           = require("../middleware/security/request-log.middleware");
+const uploadfile        = require("../middleware/fileResume-upload.middleware");
 
+router.use(authLog("Auth"));
 
-// Logging all requests from this router
-router.use(authLogMiddleware("Auth"));
+// ── Public ────────────────────────────────────────────────────────────────────
+router.post("/register",    uploadfile.single("resume"), authController.register);
+router.post("/",            authController.login);
+router.post("/verify-otp",  authController.verifyOTP);
+router.post("/resend-otp",  authController.resendOTP);
+router.get( "/check-role",  authController.checkRole);
 
-// POST /auth/register
-// Access: Public
-// Expected body for Candidate: { email, roleType: "Candidate", firstName (REQUIRED), lastName (REQUIRED), phone (optional), resume (optional file) }
-// Expected body for Company: { email, roleType: "Company", name (optional), companyDetails (optional) }
-// Description: Creates a new user and profile according to roleType, then sends an OTP. For Candidates, the resume is automatically analyzed and stored in CVAnalysis model. FirstName and lastName are required for Candidate. Resume can be uploaded for Candidates.
-router.post("/register", uploadfile.single('resume'), authController.register);
-
-// POST /auth/login
-// Access: Public
-// Expected body: { email }
-// Description: Sends an OTP to an existing user to log in
-router.post("/", authController.login);
-
-// POST /auth/analyze
-// Access: Public
-// Expected body: { filePath: "public/images/Users/resume.pdf", saveToDatabase?: true }
-// Description: Analyzes a stored resume, extracts information via Bedrock and stores it in CVAnalysis model
-router.post("/analyze", authController.parseCV);
-
-// POST /auth/verify-otp
-// Access: Public
-// Expected body: { email, otp }
-// Description: Verifies OTP code to activate/validate account
-router.post("/verify-otp", authController.verifyOTP);
-
-// POST /auth/resend-otp
-// Access: Public
-// Expected body: { email }
-// Description: Sends a new OTP code to user via email (valid for 5 minutes)
-router.post("/resend-otp", authController.resendOTP);
-
-// GET /auth/warnUser
-// Access: Protected (Authenticated user)
-// Description: Notifies/warns the logged-in user (internal use)
-router.get("/warnUser", requireAuth, authController.warnUser);
-
-// POST /auth/logout
-// Access: Protected (Authenticated user)
-// Description: Invalidates session/token on server side if applicable
-router.post("/logout", requireAuth, authController.logout);
-
-// GET /auth/check-role?email=...
-// Access: Public
-// Description: Returns the role of a user by email (used by job application modal to block non-candidates)
-router.get("/check-role", authController.checkRole);
+// ── Protected ─────────────────────────────────────────────────────────────────
+router.post("/analyze",  requireAuth, authController.parseCV);
+router.post("/logout",   requireAuth, authController.logout);
+router.get( "/warnUser", requireAuth, authController.warnUser);
 
 module.exports = router;

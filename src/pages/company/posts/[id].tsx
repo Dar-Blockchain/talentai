@@ -1,29 +1,31 @@
 import React from "react";
-import { useTranslation } from "react-i18next";
-import { Alert, Box } from "@mui/material";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
+import { Box, Alert } from "@mui/material";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
-import JobDetailContent from "@/modules/posts/details/components/JobDetailContent";
-import ApplicationsView from "@/modules/posts/details/components/ApplicationsView";
+import { useTranslation } from "react-i18next";
+
+import { usePostDetailPage } from "@/modules/posts/details/hooks/usePostDetailPage";
 import JobDetailHeader from "@/modules/posts/details/components/JobDetailHeader";
+import JobDetailContent from "@/modules/posts/details/components/JobDetailContent";
 import JobQrDialog from "@/modules/posts/details/components/JobQrDialog";
+import ApplicationsView from "@/modules/posts/details/components/ApplicationsView";
 import DeletePostModal from "@/modules/posts/list/components/DeletePostModal";
 import PublishConfirmModal from "@/modules/posts/list/components/PublishConfirmModal";
-import InterviewLanguagesModal from "@/modules/create-post-ai/components/InterviewLanguagesModal";
-import { usePostDetailPage } from "@/modules/posts/details/hooks/usePostDetailPage";
+import InterviewLanguagesModal from "@/modules/posts/create/components/InterviewLanguagesModal";
 
 const TEAL = "#0D9488";
 
 const PostDetailsPage: React.FC = () => {
   const { t } = useTranslation("posts");
+
   const {
     job, loading, error, isOwner,
     activeEdit, setActiveEdit,
-    activeTab,  setActiveTab,
+    activeTab, setActiveTab,
     menuAnchor, setMenuAnchor,
     publishConfirmOpen, setPublishConfirmOpen,
     publishing,
-    langModalOpen,   setLangModalOpen,
+    langModalOpen, setLangModalOpen,
     savingLanguages,
     qrOpen, setQrOpen,
     qrCanvasRef,
@@ -104,9 +106,9 @@ const PostDetailsPage: React.FC = () => {
 
         <JobQrDialog
           open={qrOpen}
-          jobId={job?._id ?? ""}
           shareLink={getInterviewLink()}
           canvasRef={qrCanvasRef}
+          jobId={job?._id ?? ""}
           onClose={() => setQrOpen(false)}
           onDownload={handleDownloadQr}
         />

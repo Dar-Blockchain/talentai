@@ -10,4 +10,4 @@ export {
   inferExperienceLevelFromText,
   hardSkillLevelLabel,
   softSkillLevelLabel,
-} from "@/modules/create-post-ai/utils";
+} from "@/modules/posts/create/utils";
