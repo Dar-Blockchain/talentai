@@ -150,13 +150,17 @@ module.exports.respondInvitation = async (req, res) => {
         path: "/",
       });
 
+      const profileService = require("../../services/ProfileService/profile.service");
+      const fullPayload = await profileService.getProfileByUserId(userId).catch(() => ({}));
+
       return res.status(200).json({
-        success: true,
-        message: "Invitation accepted successfully",
-        user: fullUser,
-        token: jwtToken,
-        profile: userProfile || null,
-        companyMembership: accepted || null,
+        success:           true,
+        message:           "Invitation accepted successfully",
+        token:             jwtToken,
+        user:              fullPayload.user              || fullUser,
+        profile:           fullPayload.profile           || userProfile || null,
+        planLimits:        fullPayload.planLimits        || null,
+        companyMembership: fullPayload.companyMembership || accepted    || null,
       });
     }
 

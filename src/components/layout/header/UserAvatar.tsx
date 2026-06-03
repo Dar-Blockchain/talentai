@@ -29,15 +29,25 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
   const isCandidate = useMemo(() => user?.role === "Candidate", [user?.role]);
 
   const displayName = useMemo(() => {
-    if (isCompany) return profile?.companyDetails?.name || profile?.userId?.username || user?.username || "Company";
+    if (isCompany) {
+      return (
+        (profile?.companyDetails?.name as string) ||
+        (profile?.name as string) ||
+        user?.username ||
+        user?.email?.split("@")[0] ||
+        "Company"
+      );
+    }
     const name = `${profile?.firstName || ""} ${profile?.lastName || ""}`.trim();
-    return name || user?.username || user?.email?.split("@")[0] || "…";
+    return name || user?.username || user?.email?.split("@")[0] || "User";
   }, [isCompany, profile, user]);
 
   const shortName = useMemo(() => {
+    // Don't abbreviate company names — show them in full
+    if (isCompany) return displayName;
     const words = displayName.split(" ");
     return words.length >= 2 ? `${words[0]} ${words[1][0]}.` : displayName;
-  }, [displayName]);
+  }, [isCompany, displayName]);
 
   const avatarUrl = useMemo(() => {
     const img = profile?.user_image || user?.user_image || profile?.userId?.user_image;
@@ -45,12 +55,12 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
   }, [profile?.user_image, profile?.userId?.user_image, user?.user_image]);
 
   const initials = useMemo(() => {
-    if (isCompany) return (profile?.companyDetails?.name || user?.username || "C")[0].toUpperCase();
+    if (isCompany) return (displayName)[0].toUpperCase();
     const f = profile?.firstName?.[0] || "";
     const l = profile?.lastName?.[0]  || "";
     if (f || l) return (f + l).toUpperCase();
     return (user?.username || user?.email || "?")[0].toUpperCase();
-  }, [isCompany, profile, user]);
+  }, [isCompany, displayName, profile, user]);
 
   const handleLogout = useCallback(async () => {
     setLoggingOut(true);
@@ -119,7 +129,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
           fontSize: "12.5px",
           fontWeight: 600,
           color: "#111827",
-          maxWidth: 96,
+          maxWidth: isCompany ? 160 : 96,
           overflow: "hidden",
           textOverflow: "ellipsis",
           whiteSpace: "nowrap",

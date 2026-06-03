@@ -199,10 +199,12 @@ const userSlice = createSlice({
   initialState,
   reducers: {
     setConnectedUser(state, action: PayloadAction<any>) {
-      state.connectedUser.user = action.payload.user;
-      state.connectedUser.profile = action.payload.profile;
-      state.connectedUser.planLimits = action.payload.planLimits;
-      state.connectedUser.companyMembership = action.payload.companyMembership;
+      // Normalize: some APIs wrap the response in a `data` key, others don't
+      const p = action.payload?.data ?? action.payload;
+      state.connectedUser.user = p.user ?? state.connectedUser.user;
+      state.connectedUser.profile = p.profile ?? state.connectedUser.profile;
+      state.connectedUser.planLimits = p.planLimits ?? state.connectedUser.planLimits;
+      state.connectedUser.companyMembership = p.companyMembership ?? state.connectedUser.companyMembership;
     },
     clearConnectedUser(state) {
       state.connectedUser.user = null;
@@ -307,11 +309,12 @@ const userSlice = createSlice({
         .addCase(
           getMyProfile.fulfilled,
           (state: UserState, action: PayloadAction<any>) => {
+            const p = action.payload?.data ?? action.payload;
             state.connectedUser.loading = false;
-            state.connectedUser.profile = action.payload.profile;
-            state.connectedUser.planLimits = action.payload.planLimits;
-            state.connectedUser.companyMembership = action.payload.companyMembership;
-            state.connectedUser.user = action.payload.user;
+            state.connectedUser.profile = p.profile ?? state.connectedUser.profile;
+            state.connectedUser.planLimits = p.planLimits ?? state.connectedUser.planLimits;
+            state.connectedUser.companyMembership = p.companyMembership ?? state.connectedUser.companyMembership;
+            state.connectedUser.user = p.user ?? state.connectedUser.user;
           }
         )
         .addCase(

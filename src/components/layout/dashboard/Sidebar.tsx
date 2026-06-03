@@ -138,7 +138,13 @@ const Sidebar: React.FC<SidebarProps> = ({
       const full = `${profile?.firstName || ""} ${profile?.lastName || ""}`.trim();
       return full || user?.username || "Employee";
     }
-    return profile?.companyDetails?.name || "Company";
+    return (
+      profile?.companyDetails?.name ||
+      (profile?.name as string | undefined) ||
+      user?.username ||
+      user?.email?.split("@")[0] ||
+      "Company"
+    );
   })();
   const displayInitial = displayName[0]?.toUpperCase() || "E";
   const displayEmail = user?.role === "Employee" || user?.role === "Admin" || user?.role === "Candidate"

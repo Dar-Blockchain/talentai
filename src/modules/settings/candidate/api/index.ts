@@ -9,12 +9,12 @@ const authHeaders = () => {
 export const candidateApi = {
   fetchProfile: async () => {
     const res = await axiosInstance.get('profiles/me', { headers: authHeaders() });
-    return res.data?.data ?? res.data;
+    return res.data;
   },
 
   updateProfile: async (userId: string, payload: Record<string, unknown>) => {
     const res = await axiosInstance.put(`profiles/${userId}`, payload, { headers: authHeaders() });
-    return res.data?.data ?? res.data;
+    return res.data;
   },
 
   uploadAvatar: async (userId: string, file: File) => {
@@ -23,7 +23,7 @@ export const candidateApi = {
     const res = await axiosInstance.put(`profiles/${userId}`, formData, {
       headers: { ...authHeaders(), 'Content-Type': 'multipart/form-data' },
     });
-    return res.data?.data ?? res.data;
+    return res.data;
   },
 
   deleteResume: async () => {
@@ -37,7 +37,7 @@ export const candidateApi = {
     const res = await axiosInstance.put('profiles/update-resume', formData, {
       headers: { ...authHeaders(), 'Content-Type': 'multipart/form-data' },
     });
-    return res.data?.data ?? res.data;
+    return res.data;
   },
 
   updateVisibility: async (isPublicProfile: boolean) => {
@@ -46,6 +46,6 @@ export const candidateApi = {
       { isPublicProfile },
       { headers: authHeaders() }
     );
-    return res.data?.data ?? res.data;
+    return res.data;
   },
 };
