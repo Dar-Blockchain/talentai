@@ -185,6 +185,9 @@ function normalizeSkillAnalysis(result) {
 
   const isInternship = result?.jobDetails?.employmentType === "Internship";
 
+  const EXP_TO_LEVEL = { "Junior": 2, "Mid-level": 3, "Senior": 4, "Expert": 5 };
+  const roleLevel = isInternship ? 2 : (EXP_TO_LEVEL[result.jobDetails?.experienceLevel] ?? 2);
+
   function resolveLevel(modelLevel) {
     if (isInternship) return 2;
     if (typeof modelLevel === "number" && modelLevel >= 1 && modelLevel <= 5) {
@@ -234,7 +237,7 @@ function normalizeSkillAnalysis(result) {
 
   const softSkills = rawSoft.map((skill, i) => ({
     name:       skill.name,
-    level:      resolveLevel(skill.level),
+    level:      roleLevel,
     percentage: softPcts[i],
   }));
 
