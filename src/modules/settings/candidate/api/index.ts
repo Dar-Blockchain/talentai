@@ -19,7 +19,7 @@ export const candidateApi = {
 
   uploadAvatar: async (userId: string, file: File) => {
     const formData = new FormData();
-    formData.append('profile_image', file);
+    formData.append('user_image', file);
     const res = await axiosInstance.put(`profiles/${userId}`, formData, {
       headers: { ...authHeaders(), 'Content-Type': 'multipart/form-data' },
     });
