@@ -13,6 +13,7 @@ import InterviewSessionHeader from "./InterviewSessionHeader";
 import GDPRConsentModal from "../modals/GDPRConsentModal";
 import SecurityModals from "../modals/SecurityModals";
 import ConfirmLeaveModal from "./ConfirmLeaveModal";
+import FeedbackModal from "./FeedbackModal";
 import { interviewScreenSx } from "../../styles/interviewScreen.styles";
 import { type Coverage, type InterviewMessage } from "../../types/interview";
 import { type JobPost } from "../../types/api";
@@ -91,10 +92,11 @@ export default function InterviewScreen({
 
   const isActive = socket.interviewStatus === "active";
 
-  // ── Confirm-leave modal ────────────────────────────────────────────────────
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const pendingUrlRef  = useRef<string | null>(null);
-  const confirmedRef   = useRef(false);
+  // ── Confirm-leave + feedback modals ───────────────────────────────────────
+  const [confirmOpen,  setConfirmOpen]  = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const pendingUrlRef = useRef<string | null>(null);
+  const confirmedRef  = useRef(false);
 
   // Intercept Next.js client-side navigation while interview is active
   useEffect(() => {
@@ -103,7 +105,6 @@ export default function InterviewScreen({
       if (confirmedRef.current) { confirmedRef.current = false; return; }
       pendingUrlRef.current = url;
       setConfirmOpen(true);
-      // Throwing cancels the navigation in Next.js router
       throw new Error("interview-leave-cancelled");
     };
     router.events.on("routeChangeStart", handleRouteChange);
@@ -114,10 +115,13 @@ export default function InterviewScreen({
     confirmedRef.current = true;
     setConfirmOpen(false);
     endInterview();
-    const url = pendingUrlRef.current;
+    setFeedbackOpen(true);
+  }, [endInterview]);
+
+  const handleFeedbackDone = useCallback(() => {
+    setFeedbackOpen(false);
     pendingUrlRef.current = null;
-    if (url) router.push(url);
-  }, [endInterview, router]);
+  }, []);
 
   const handleCancelLeave = useCallback(() => {
     setConfirmOpen(false);
@@ -277,6 +281,11 @@ export default function InterviewScreen({
         open={confirmOpen}
         onConfirm={handleConfirmLeave}
         onCancel={handleCancelLeave}
+      />
+
+      <FeedbackModal
+        open={feedbackOpen}
+        onDone={handleFeedbackDone}
       />
 
       {/* <SecurityModals
