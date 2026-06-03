@@ -20,7 +20,8 @@ import CandidateChatRealtimeBridge from "@/modules/chat/candidate-chat/component
 import ChatUnreadSyncBridge from "@/modules/chat/shared/components/ChatUnreadSyncBridge";
 import LoadingScreen from "@/components/ui/LoadingScreen";
 import { isLoggingOutCheck, clearAuth, logout } from "@/store/slices/authSlice";
-import { clearConnectedUser } from "@/store/slices/userSlice";
+import { clearConnectedUser, getMyProfile } from "@/store/slices/userSlice";
+import { getToken } from "@/utils/tokenUtils";
 import { setToastHandler } from "@/utils/toastEmitter";
 import { setSessionExpiredHandler } from "@/utils/storeEmitter";
 import { useTranslation } from "react-i18next";
@@ -87,6 +88,14 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
 
   const userId = user?._id;
   const isLoggingOut = useSelector(isLoggingOutCheck);
+
+  // If a token exists but connectedUser is empty (e.g. after hard reload before persist rehydrates),
+  // fetch the profile so the header shows the correct name immediately.
+  useEffect(() => {
+    if (user) return; // already populated
+    if (!getToken()) return; // not logged in
+    dispatch(getMyProfile());
+  }, []); // run once on mount
 
   // Force logout when middleware detected an invalid/role-less token
   useEffect(() => {

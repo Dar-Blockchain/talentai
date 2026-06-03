@@ -26,6 +26,20 @@ export const candidateApi = {
     return res.data?.data ?? res.data;
   },
 
+  deleteResume: async () => {
+    const res = await axiosInstance.delete('profiles/delete-resume', { headers: authHeaders() });
+    return res.data;
+  },
+
+  uploadResume: async (file: File) => {
+    const formData = new FormData();
+    formData.append('resume', file);
+    const res = await axiosInstance.put('profiles/update-resume', formData, {
+      headers: { ...authHeaders(), 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data?.data ?? res.data;
+  },
+
   updateVisibility: async (isPublicProfile: boolean) => {
     const res = await axiosInstance.put(
       'profiles/updateProfileVisibility',
