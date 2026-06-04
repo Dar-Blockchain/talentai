@@ -3,8 +3,9 @@ import { Box, Typography } from '@mui/material';
 import BusinessIcon from '@mui/icons-material/Business';
 import WorkOutlineIcon from '@mui/icons-material/WorkOutline';
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
-import AttachMoneyOutlinedIcon from '@mui/icons-material/AttachMoneyOutlined';
+import PaidOutlinedIcon from '@mui/icons-material/PaidOutlined';
 import CalendarTodayOutlinedIcon from '@mui/icons-material/CalendarTodayOutlined';
+import EventBusyOutlinedIcon from '@mui/icons-material/EventBusyOutlined';
 import { formatSalary } from '@/utils/postHelpers';
 import { fmtDate } from '@/utils/functions';
 import { PURPLE, PURPLE_LIGHT, PURPLE_BORDER } from '../../constants';
@@ -15,9 +16,10 @@ interface JobHeaderCardProps {
   companyName: string;
   jd: any;
   createdAt?: string;
+  expirationDate?: string;
 }
 
-export default function JobHeaderCard({ jobTitle, companyName, jd, createdAt }: JobHeaderCardProps) {
+export default function JobHeaderCard({ jobTitle, companyName, jd, createdAt, expirationDate }: JobHeaderCardProps) {
   return (
     <SectionCard>
       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 2.5 }}>
@@ -36,8 +38,9 @@ export default function JobHeaderCard({ jobTitle, companyName, jd, createdAt }: 
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
         {jd.workMode       && <MetaBadge icon={<LocationOnOutlinedIcon sx={{ fontSize: 14 }} />}    label={jd.workMode}                              color="#2563EB" bg="#EFF6FF" border="#BFDBFE" />}
         {jd.employmentType && <MetaBadge icon={<WorkOutlineIcon sx={{ fontSize: 14 }} />}           label={jd.employmentType}                        color="#7C3AED" bg="#F5F3FF" border="#DDD6FE" />}
-        {jd.salary && formatSalary(jd.salary) && <MetaBadge icon={<AttachMoneyOutlinedIcon sx={{ fontSize: 14 }} />} label={formatSalary(jd.salary)} color="#16A34A" bg="#F0FDF4" border="#BBF7D0" />}
+        {jd.salary && formatSalary(jd.salary) && <MetaBadge icon={<PaidOutlinedIcon sx={{ fontSize: 14 }} />} label={formatSalary(jd.salary)} color="#16A34A" bg="#F0FDF4" border="#BBF7D0" />}
         {createdAt         && <MetaBadge icon={<CalendarTodayOutlinedIcon sx={{ fontSize: 14 }} />} label={fmtDate(createdAt)}                       color="#6B7280" bg="#F9FAFB" border="#E5E7EB" />}
+        {expirationDate    && <MetaBadge icon={<EventBusyOutlinedIcon   sx={{ fontSize: 14 }} />} label={`Expires ${fmtDate(expirationDate)}`}        color="#DC2626" bg="#FEF2F2" border="#FECACA" />}
       </Box>
     </SectionCard>
   );

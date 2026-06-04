@@ -231,7 +231,7 @@ module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6)
 // Get a post by its ID
 module.exports.getPostById = async (postId) => {
   try {
-    const post = await Post.findById(postId).select('-MatchingConfig').populate("PostSteps").populate("user", "_id username email");
+    const post = await Post.findById(postId).select('-MatchingConfig');
     if (!post) {
       throw new Error("Post not found");
     }
@@ -241,17 +241,16 @@ module.exports.getPostById = async (postId) => {
       post.interviewLanguages = ['en'];
     }
 
-    // Attach company name from the company's profile
+    const result = post.toObject();
     if (post.user?._id) {
       const profile = await Profile.findOne({ userId: post.user._id, type: 'Company' }).select('companyDetails.name');
-      if (profile?.companyDetails?.name) {
-        const result = post.toObject();
-        result.companyName = profile.companyDetails.name;
-        return result;
-      }
+      const companyName = profile?.companyDetails?.name;
+      result.createdBy = {
+        id:   post.user._id,
+        name: companyName,
+      };
     }
-
-    return post;
+    return result;
   } catch (error) {
     throw new Error(`Error fetching post: ${error.message}`);
   }

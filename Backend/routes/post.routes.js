@@ -181,24 +181,6 @@ router.get("/metrics", resolveCompanyActor, postController.getPostMetrics);
  */
 router.get("/kpi/status-by-post", postController.getPostsStatusKPI);
 
-/**
- * @openapi
- * /post/getPostById/{id}:
- *   get:
- *     tags: [Posts]
- *     summary: Get post by ID
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: string }
- *     responses:
- *       200:
- *         description: Post details
- *       404:
- *         description: Not found
- */
-router.get("/getPostById/:id", checkScope(['read:posts']), postController.getPostById);
 
 /**
  * @openapi

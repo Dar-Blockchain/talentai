@@ -264,9 +264,9 @@ export default function InterviewScreen({
                   dashboardPath={dashboardPath}
                   jobTitle={jobData?.jobDetails?.title || jobData?.title || ""}
                   companyName={
+                    jobData?.createdBy?.name ||
                     jobData?.companyName ||
                     interviewConfig?.context?.targetCompany ||
-                    jobData?.user?.companyName ||
                     jobData?.user?.username ||
                     ""
                   }

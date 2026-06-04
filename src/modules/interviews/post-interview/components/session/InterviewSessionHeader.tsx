@@ -53,9 +53,9 @@ export default function InterviewSessionHeader({
 
   const companyName = useMemo(
     () =>
+      jobData?.createdBy?.name ||
       jobData?.companyName ||
       interviewConfig?.context?.targetCompany ||
-      jobData?.user?.companyName ||
       jobData?.user?.username ||
       "",
     [jobData, interviewConfig],
