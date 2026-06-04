@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import {
-  InterviewConfig,
   InterviewMessage,
   ConnectionStatus,
   InterviewStatus,

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { AssemblyAI } from 'assemblyai';
-import { InterviewConfig, InterviewMessage, AgentState, SpeechPhase } from '@/types/interview';
+import { InterviewMessage, AgentState, SpeechPhase } from '@/types/interview';
+import { InterviewConfig } from '@/modules/interviews/post-interview';
 
 export interface UseAudioTranscriptionReturn {
   // Recording

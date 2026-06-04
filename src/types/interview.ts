@@ -1,6 +1,3 @@
-// Re-export canonical type from the module — do not redefine here.
-export type { InterviewConfig } from '@/modules/interview/post/types/interview';
-
 export interface InterviewMessage {
   type: 'greeting' | 'question' | 'follow_up' | 'silence_prompt' | 'system';
   content: string;

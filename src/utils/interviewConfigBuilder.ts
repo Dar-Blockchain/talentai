@@ -3,6 +3,8 @@
  * Dynamically builds interview configuration from URL parameters
  */
 
+import { InterviewConfig } from "@/modules/interviews/post-interview";
+
 export interface URLParams {
   type?: 'hr' | 'technical' | 'technicalSkill' | 'soft' | 'salary' | 'psycho';
   skill?: string;           // e.g., "React", "Communication"
@@ -23,9 +25,6 @@ export interface URLParams {
   softSkills?: string[];                                  // Soft skills from pipeline soft node
   focusAreas?: string[];                                  // HR interview focus areas
 }
-
-import type { InterviewConfig } from '@/modules/interview/post/types/interview';
-export type { InterviewConfig };
 
 /**
  * Proficiency level mapping

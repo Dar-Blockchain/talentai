@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Campaign } from '@/types/campaign';
-import { InterviewConfig } from '@/types/interview';
+import { InterviewConfig } from '@/modules/interviews/post-interview';
 
 // ─── Defaults ─────────────────────────────────────────────────────────────────
 

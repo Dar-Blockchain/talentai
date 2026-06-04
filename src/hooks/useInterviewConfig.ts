@@ -3,8 +3,8 @@ import { useRouter } from 'next/router';
 import { useSelector } from 'react-redux';
 import Cookies from 'js-cookie';
 import { RootState } from '@/store/store';
-import { InterviewConfig } from '@/types/interview';
 import { buildInterviewConfigFromURL, URLParams } from '@/utils/interviewConfigBuilder';
+import { InterviewConfig } from '@/modules/interviews/post-interview';
 
 export interface UseInterviewConfigReturn {
   interviewConfig: InterviewConfig;
