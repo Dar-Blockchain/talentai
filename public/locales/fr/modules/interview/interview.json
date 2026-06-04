@@ -10,9 +10,9 @@
     "action": "Accéder au tableau de bord"
   },
   "company_only": {
-    "title": "Cet entretien est réservé aux candidats",
-    "redirecting": "Redirection vers votre tableau de bord…",
-    "action": "Accéder au tableau de bord"
+    "title": "Cette page n'est pas disponible pour votre compte",
+    "desc": "Le parcours d'entretien est conçu pour les comptes Candidat. Votre compte entreprise n'a pas accès à cette section.",
+    "action": "Mon tableau de bord"
   },
   "employee_blocked": {
     "title": "Cette page n'est pas disponible pour votre compte",

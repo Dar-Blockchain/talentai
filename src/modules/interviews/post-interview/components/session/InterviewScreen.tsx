@@ -300,7 +300,7 @@ export default function InterviewScreen({
       <GDPRConsentModal
         open={!camera.consentGiven}
         onAccept={camera.giveConsent}
-        onDecline={() => router.back()}
+        onDecline={handleBack}
       />
 
       <Snackbar

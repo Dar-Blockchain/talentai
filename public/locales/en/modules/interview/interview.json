@@ -10,9 +10,9 @@
     "action": "Go to dashboard"
   },
   "company_only": {
-    "title": "This interview is for candidates only",
-    "redirecting": "Redirecting you to the dashboard…",
-    "action": "Go to dashboard"
+    "title": "This page is not available for your account",
+    "desc": "The interview flow is designed for Candidate accounts. Your company account does not have access to this section.",
+    "action": "Go to my dashboard"
   },
   "employee_blocked": {
     "title": "This page is not available for your account",

@@ -16,7 +16,7 @@ export const ELIGIBILITY_SCREEN_CONFIG: Record<BlockableStatus, ScreenEntry> = {
   company_blocked: {
     icon: '🏢',
     titleKey: 'company_only.title',
-    descKey: 'company_only.redirecting',
+    descKey: 'company_only.desc',
     actionLabelKey: 'company_only.action',
     actionPath: '/company/dashboard',
     actionReplace: true,
