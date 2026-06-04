@@ -105,10 +105,11 @@ module.exports.hasExistingAssessment = async (candidateId, postId) => {
       return false;
     }
 
-    // If post has NO PostSteps → check assessment
+    // If post has NO PostSteps → check for a *completed* assessment
     const assessment = await PostInterviewAssessment.findOne({
       candidate: candidateId,
-      post: postId
+      post: postId,
+      completed: true,
     });
 
     return assessment !== null;

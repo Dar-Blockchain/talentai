@@ -177,14 +177,12 @@
         "experience_expert": "Expert"
       },
       "hard_skill_levels": {
-        "1": "Niveau d’entrée",
         "2": "Junior",
         "3": "Intermédiaire",
         "4": "Senior",
         "5": "Expert"
       },
       "soft_skill_levels": {
-        "1": "Débutant",
         "2": "Junior",
         "3": "Intermédiaire",
         "4": "Senior",

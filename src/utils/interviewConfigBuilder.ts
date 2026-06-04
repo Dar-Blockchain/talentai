@@ -24,44 +24,8 @@ export interface URLParams {
   focusAreas?: string[];                                  // HR interview focus areas
 }
 
-export interface InterviewConfig {
-  interviewType: 'HR_INTERVIEW' | 'TECHNICAL_INTERVIEW' | 'ASSESSMENT' | 'EVALUATION';
-  testReason: string;
-  context: {
-    targetCompany: string;
-    targetRole: string;
-    experienceLevel: string;
-    interviewGoal: string;
-  };
-  models?: {
-    fastModel?: string;
-    thinkingModel?: string;
-    analysisModel?: string;
-  };
-  sessionSettings?: {
-    duration?: number;
-    language?: string;
-    difficulty?: string;
-    silenceTimeout?: number;
-    silenceIntelligence?: {
-      enabled: boolean;
-      adaptiveThresholds: boolean;
-      maxSilencePrompts: number;
-      naturalPauseDetection: boolean;
-      contextAwareThresholds: boolean;
-    };
-  };
-
-  // 🔥 NEW: Pipeline-specific configuration
-  pipelineConfig?: {
-    skills?: Array<{name: string; requiredLevel: number}>;
-    categories?: string[];
-    assessmentLevel?: string;
-    passThreshold?: number;
-    softSkills?: string[];
-    focusAreas?: string[];
-  };
-}
+import type { InterviewConfig } from '@/modules/interview/post/types/interview';
+export type { InterviewConfig };
 
 /**
  * Proficiency level mapping
@@ -164,11 +128,8 @@ export function buildInterviewConfigFromURL(params: URLParams): InterviewConfig 
       difficulty: params.difficulty || 'intermediate',
       silenceTimeout: 5,
       silenceIntelligence: {
-        enabled: true,
-        adaptiveThresholds: true,
-        maxSilencePrompts: 3,
-        naturalPauseDetection: true,
-        contextAwareThresholds: true
+        adaptiveMode: true,
+        contextualAdjustments: true,
       }
     }
   };

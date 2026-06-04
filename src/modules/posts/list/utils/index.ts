@@ -8,5 +8,5 @@ export const getDaysLeft = (expirationDate?: string): number | null => {
 
 export const getPostShareLink = (jobId: string, companyId?: string): string => {
   if (typeof window === "undefined") return "";
-  return `${window.location.origin}/candidate/interview/hr?jobId=${jobId}${companyId ? `&companyId=${companyId}` : ""}&ref=link`;
+  return `${window.location.origin}/candidate/interview?jobId=${jobId}${companyId ? `&companyId=${companyId}` : ""}&ref=link`;
 };

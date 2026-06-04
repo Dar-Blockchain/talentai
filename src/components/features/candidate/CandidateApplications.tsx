@@ -320,7 +320,7 @@ const CandidateApplications: React.FC<CandidateApplicationsProps> = ({ previewCo
               onClick={() => {
                 const status = (app.status || "").toLowerCase();
                 if (status === "visited" && app.post?._id)
-                  router.push(`/candidate/interview/hr?jobId=${app.post._id}`);
+                  router.push(`/candidate/interview?jobId=${app.post._id}`);
                 else
                   router.push(`/candidate/applications/${app._id}`);
               }}
@@ -339,7 +339,7 @@ const CandidateApplications: React.FC<CandidateApplicationsProps> = ({ previewCo
                   onClick={() => {
                     const status = (app.status || "").toLowerCase();
                     if (status === "visited" && app.post?._id)
-                      router.push(`/candidate/interview/hr?jobId=${app.post._id}`);
+                      router.push(`/candidate/interview?jobId=${app.post._id}`);
                     else
                       router.push(`/candidate/applications/${app._id}`);
                   }}

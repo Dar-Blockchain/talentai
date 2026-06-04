@@ -241,6 +241,16 @@ module.exports.getPostById = async (postId) => {
       post.interviewLanguages = ['en'];
     }
 
+    // Attach company name from the company's profile
+    if (post.user?._id) {
+      const profile = await Profile.findOne({ userId: post.user._id, type: 'Company' }).select('companyDetails.name');
+      if (profile?.companyDetails?.name) {
+        const result = post.toObject();
+        result.companyName = profile.companyDetails.name;
+        return result;
+      }
+    }
+
     return post;
   } catch (error) {
     throw new Error(`Error fetching post: ${error.message}`);

@@ -13,10 +13,9 @@ const PUBLIC_PATHS = [
   "/privacy-policy",
   "/candidate/home",
   "/unauthorized",
-  "/candidate/interview/results",
   "/employee/invitation",
   "/campaign",
-  "/candidate/interview/hr",
+  "/candidate/interview",
   "/payments/stripe/callback",
 ];
 
@@ -33,7 +32,7 @@ const ROLE_ROUTES: { prefix: string; roles: string[] }[] = [
   { prefix: "/company",                  roles: ["Company", "Employee"] },
   { prefix: "/profile/company",          roles: ["Company"] },
   // Allow Employee so the page component can show a graceful message before redirecting
-  { prefix: "/candidate/interview/hr",   roles: ["Candidate", "Employee"] },
+  { prefix: "/candidate/interview",   roles: ["Candidate", "Employee"] },
   { prefix: "/candidate",                roles: ["Candidate"] },
   { prefix: "/employee/invitation",       roles: ["Admin", "Company", "Employee", "Candidate"] },
   { prefix: "/employee",                 roles: ["Employee"] },
@@ -140,7 +139,7 @@ export function middleware(request: NextRequest) {
 
   // Authenticated user on signin/register → redirect to their landing
   if (isAuthenticated && isAuthOnly(pathname)) {
-    const destination = getDashboardByRole(role);
+    const destination = getDashboardByRole(role!);
     return NextResponse.redirect(new URL(destination, request.url));
   }
 

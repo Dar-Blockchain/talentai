@@ -69,7 +69,7 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
   const getShareLink = () => {
     if (typeof window === "undefined") return "";
     const companyId = job.user?._id || "";
-    return `${window.location.origin}/candidate/interview/hr?jobId=${job._id}${companyId ? `&companyId=${companyId}` : ""}&ref=link`;
+    return `${window.location.origin}/candidate/interview?jobId=${job._id}${companyId ? `&companyId=${companyId}` : ""}&ref=link`;
   };
 
   const handleCopyLink = (e: React.MouseEvent) => {

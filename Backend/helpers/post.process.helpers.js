@@ -7,8 +7,18 @@
  * 2. employmentType → "Internship" if internship keywords detected
  * 3. employmentType → "Full-time" if nothing explicit mentioned
  * 4. Skill percentages → proportional to years, capped at 55%
- * 5. Internship → all skill levels forced to 1
+ * 5. yearsSignal → numeric level (null→2, <1→1, ≤3→2, ≤5→3, ≤8→4, >8→5)
+ * 6. Internship → all skill levels forced to 1
  */
+
+function yearsSignalToLevel(y) {
+  if (y === null || y === undefined) return 2;
+  if (y < 1)  return 1;
+  if (y <= 3) return 2;
+  if (y <= 5) return 3;
+  if (y <= 8) return 4;
+  return 5;
+}
 const postProcessJobDetails = (modelResponse, rawDescription) => {
   const desc = rawDescription.toLowerCase();
   const details = modelResponse.jobDetails || modelResponse;
@@ -108,7 +118,15 @@ if (isInternship) {
     }
   }
 
-  // ─── RULE 5 — INTERNSHIP: ALL SKILL LEVELS = 1 ───────────────────────────
+  // ─── RULE 5 — yearsSignal → level, then remove yearsSignal ──────────────
+  [...skills, ...softSkills].forEach((s) => {
+    if ("yearsSignal" in s) {
+      s.level = yearsSignalToLevel(s.yearsSignal);
+      delete s.yearsSignal;
+    }
+  });
+
+  // ─── RULE 6 — INTERNSHIP: ALL SKILL LEVELS = 1 ───────────────────────────
   if (isInternship) {
     skills.forEach((s) => {
       s.level = 1;
