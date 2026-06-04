@@ -635,8 +635,14 @@ module.exports.inviteToInterview = async (req, res) => {
 
     console.log(`✅ Interview invitation email sent successfully`);
 
-    // Persist the manual invite timestamp so the UI can show "Invited" after refresh
-    await JobApplication.findByIdAndUpdate(applicationId, { invitedAt: new Date() });
+    // Persist the manual invite timestamp and clear any auto-rejection —
+    // a manual invite is an explicit recruiter override of the threshold.
+    await JobApplication.findByIdAndUpdate(applicationId, {
+      invitedAt: new Date(),
+      recruiterDecision: null,
+      recruiterDecisionAt: null,
+      rejectionReason: null,
+    });
 
     console.log("=".repeat(80) + "\n");
 

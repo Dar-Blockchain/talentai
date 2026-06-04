@@ -222,14 +222,14 @@ module.exports.checkCandidateAssessmentExists = async (req, res) => {
         const jobApplication = await JobApplication.findOne({
           profile: candidateProfile._id,
           post: postId
-        }).select('matchScore');
+        }).select('matchScore invitedAt');
 
         if (jobApplication) {
-          matchScore = jobApplication.matchScore; // Assign even if null
-          // Only apply threshold check if both threshold and score exist
-          if (thresholdScore !== null && matchScore !== null) {
+          matchScore = jobApplication.matchScore;
+          // If the recruiter manually invited this candidate, bypass the threshold entirely
+          const manuallyInvited = !!jobApplication.invitedAt;
+          if (!manuallyInvited && thresholdScore !== null && matchScore !== null) {
             underThreshold = matchScore < thresholdScore;
-            console.log(`🔍 Threshold: ${thresholdScore}, Score: ${matchScore}, Blocked: ${underThreshold}`);
           }
         }
       }
