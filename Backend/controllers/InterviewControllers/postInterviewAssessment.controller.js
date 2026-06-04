@@ -813,8 +813,10 @@ module.exports.checkInterviewEligibility = async (req, res) => {
       const app = await JobApplication.findOne({
         profile: candidateProfile._id,
         post: postId,
-      }).select("matchScore");
-      if (app?.matchScore != null && app.matchScore < post.thresholdScore) {
+      }).select("matchScore invitedAt");
+      // A manual recruiter invite overrides the threshold — candidate can always proceed
+      const manuallyInvited = !!app?.invitedAt;
+      if (!manuallyInvited && app?.matchScore != null && app.matchScore < post.thresholdScore) {
         return res.json({
           status: "under_threshold",
           meta: { required: post.thresholdScore, score: app.matchScore },

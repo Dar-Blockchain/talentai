@@ -82,7 +82,7 @@ const VelocityCard: React.FC<{
           {loading
             ? <Skeleton variant="text" width={40} height={14} sx={{ mt: 0.25 }} />
             : <Typography sx={{ fontFamily: "Poppins", fontSize: "0.65rem", fontWeight: 600, color: trendColor }}>
-                {isDown ? t("pages.kpi.trending_down") : isUp ? "Rising" : "Stable"}
+                {isDown ? t("pages.kpi.trending_down") : isUp ? t("pages.kpi.trending_up") : t("pages.kpi.trending_stable")}
               </Typography>
           }
         </Box>
