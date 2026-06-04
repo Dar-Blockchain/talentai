@@ -110,13 +110,8 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const hasLocalToken = () => {
-      const token = localStorage.getItem("api_token") || localStorage.getItem("token");
-      return !!token;
-    };
-
     const syncAuthFromStorage = () => {
-      if (!hasLocalToken() && isAuthenticated) {
+      if (!getToken() && isAuthenticated) {
         dispatch(clearAuth());
         dispatch(clearConnectedUser());
       }
