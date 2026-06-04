@@ -198,7 +198,7 @@ export default function App({ Component, pageProps }: AppProps) {
               <AuthWrapper>
                 <Component {...pageProps} />
                 <ScrollToTop />
-                <CookieBanner />
+                {/* <CookieBanner /> */}
               </AuthWrapper>
             </ToastProvider>
           </main>

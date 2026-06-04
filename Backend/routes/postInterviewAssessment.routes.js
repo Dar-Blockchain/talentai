@@ -27,6 +27,9 @@ router.use(requireAuth,authLogMiddleware("PostInterviewAssessment"));
 // GET /post-interview-assessments/check/:postId — Check if candidate has assessment for post
 router.get('/check/:postId', postInterviewAssessmentController.checkCandidateAssessmentExists);
 
+// GET /post-interview-assessments/eligibility/:postId — Unified eligibility check
+router.get('/eligibility/:postId', postInterviewAssessmentController.checkInterviewEligibility);
+
 // GET /post-interview-assessments/matching/:postId — Get matching details for candidate and post
 router.get('/matching/:postId', postInterviewAssessmentController.getMatchingDetails);
 
