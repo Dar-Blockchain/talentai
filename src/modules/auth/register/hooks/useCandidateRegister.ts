@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
 import { useRouter } from "next/router";
 import { useToast } from "@/hooks/useToast";
 import { isInvitationUrl } from "@/utils/memberInvitation";
-import { getUserLocation } from "@/utils/api";
-import { useOtpTimer, useOtpInput } from "@/modules/auth/shared/hooks";
+import { useOtpFlow, useCvProgress } from "@/modules/auth/shared/hooks";
 import { extractInvitationEmail, refreshAbort } from "@/modules/auth/shared/utils";
-import { OTP_CODE_LENGTH } from "@/modules/auth/shared/types";
 import { useRegisterMutation, useVerifyRegisterOtp, useResendRegisterOtp } from "../queries";
 import { CANDIDATE_EXPIRY_KEY } from "../utils";
 import type { CandidateFormValues, RegisterFormProps, RegisterStep } from "../types";
@@ -17,41 +16,36 @@ export function useCandidateRegister({ onStepChange, onEmailChange }: RegisterFo
   const isJoinTeam      = isInvitationUrl(returnUrl);
   const invitationEmail = extractInvitationEmail(returnUrl);
 
-  const [step,        setStep]        = useState<RegisterStep>(1);
-  const [savedEmail,  setSavedEmail]  = useState("");
+  const [step,       setStep]       = useState<RegisterStep>(1);
+  const [savedEmail, setSavedEmail] = useState("");
   const [analyzingCv, setAnalyzingCv] = useState(false);
-  const [cvProgress,  setCvProgress]  = useState(0);
   const [cvFile,      setCvFile]      = useState<File | null>(null);
   const [cvError,     setCvError]     = useState(false);
   const [isDragging,  setIsDragging]  = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortRef     = useRef<AbortController | null>(null);
-  const timer        = useOtpTimer(CANDIDATE_EXPIRY_KEY);
-  const otp          = useOtpInput();
 
+  // Form lives here so the hook owns all candidate register state
+  const form = useForm<CandidateFormValues>({ mode: "onTouched" });
+  useEffect(() => { if (invitationEmail) form.setValue("email", invitationEmail); }, [invitationEmail]);
+
+  const cvProgress       = useCvProgress(analyzingCv);
   const registerMutation = useRegisterMutation();
   const verifyMutation   = useVerifyRegisterOtp((_data) => {
     router.replace(returnUrl ? decodeURIComponent(returnUrl) : "/candidate/dashboard");
   });
   const resendMutation = useResendRegisterOtp();
 
-  const loading       = registerMutation.isPending || verifyMutation.isPending;
-  const resendLoading = resendMutation.isPending;
+  const { timer, otp, verifyCode, resendCode, cleanup, verifyLoading, resendLoading } = useOtpFlow({
+    storageKey:    CANDIDATE_EXPIRY_KEY,
+    verifyMutation,
+    resendMutation,
+  });
 
-  useEffect(() => () => { abortRef.current?.abort(); }, []);
+  const loading = registerMutation.isPending || verifyLoading;
 
-  // CV analysis progress animation — runs while analyzingCv is true, caps at 90%
-  useEffect(() => {
-    if (!analyzingCv) { setCvProgress(0); return; }
-    const id = setInterval(() => {
-      setCvProgress((p) => {
-        if (p >= 90) { clearInterval(id); return 90; }
-        return p + (p < 60 ? 4 : 1);
-      });
-    }, 300);
-    return () => clearInterval(id);
-  }, [analyzingCv]);
+  useEffect(() => () => { cleanup(); abortRef.current?.abort(); }, []);
 
   const sendCode = async (values: CandidateFormValues) => {
     if (!isJoinTeam && !cvFile) { setCvError(true); return; }
@@ -59,17 +53,17 @@ export function useCandidateRegister({ onStepChange, onEmailChange }: RegisterFo
 
     const signal = refreshAbort(abortRef);
     try {
-      const formData = new FormData();
-      formData.append("roleType",  "Candidate");
-      formData.append("firstName", values.firstName);
-      formData.append("lastName",  values.lastName);
-      formData.append("email",     values.email.toLowerCase().trim());
+      const fd = new FormData();
+      fd.append("roleType",  "Candidate");
+      fd.append("firstName", values.firstName);
+      fd.append("lastName",  values.lastName);
+      fd.append("email",     values.email.toLowerCase().trim());
       if (!isJoinTeam) {
-        formData.append("phone", values.phone);
-        if (cvFile) formData.append("resume", cvFile);
+        fd.append("phone", values.phone);
+        if (cvFile) fd.append("resume", cvFile);
       }
 
-      await registerMutation.mutateAsync({ payload: formData, signal });
+      await registerMutation.mutateAsync({ payload: fd, signal });
 
       const email = values.email.toLowerCase().trim();
       setSavedEmail(email);
@@ -85,42 +79,21 @@ export function useCandidateRegister({ onStepChange, onEmailChange }: RegisterFo
     }
   };
 
-  const verifyCode = async () => {
-    const code = otp.otpCode.join("");
-    if (code.length < OTP_CODE_LENGTH) return;
-
-    const signal = refreshAbort(abortRef);
-    try {
-      timer.clear();
-      const location = await getUserLocation();
-      await verifyMutation.mutateAsync({ email: savedEmail, otp: code, location, signal });
-    } catch (err: any) {
-      if (err?.name !== "AbortError")
-        showToast({ message: err?.message ?? "Invalid code. Please try again.", severity: "error" });
-    }
-  };
-
-  const resendCode = async () => {
-    const signal = refreshAbort(abortRef);
-    try {
-      await resendMutation.mutateAsync({ email: savedEmail, signal });
-      timer.clear();
-      timer.start();
-      otp.reset();
-      showToast({ message: "A new verification code has been sent to your email.", severity: "success" });
-    } catch (err: any) {
-      if (err?.name !== "AbortError")
-        showToast({ message: err?.message ?? "Failed to resend code.", severity: "error" });
-    }
-  };
-
   return {
+    // form
+    form,
+    // step
     step, loading, resendLoading,
+    // cv
     analyzingCv, cvProgress,
     cvFile, setCvFile, cvError, setCvError,
-    isDragging, setIsDragging,
-    savedEmail, otp, fileInputRef,
-    isJoinTeam, returnUrl, invitationEmail, timer,
-    sendCode, verifyCode, resendCode,
+    isDragging, setIsDragging, fileInputRef,
+    // auth
+    savedEmail, otp, timer,
+    isJoinTeam, returnUrl, invitationEmail,
+    // actions
+    sendCode,
+    verifyCode: () => verifyCode(savedEmail),
+    resendCode: () => resendCode(savedEmail),
   };
 }

@@ -1,17 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter } from "next/router";
 import { useForm, useWatch } from "react-hook-form";
 import { useDispatch } from "react-redux";
 import { useToast } from "@/hooks/useToast";
-import { getUserLocation } from "@/utils/api";
 import { fetchEmployeePermissions } from "@/store/slices/memberSlice";
 import type { AppDispatch } from "@/store/store";
-import { useOtpTimer, useOtpInput } from "@/modules/auth/shared/hooks";
-import { extractInvitationEmail, resolveRedirectPath, refreshAbort } from "@/modules/auth/shared/utils";
-import { OTP_CODE_LENGTH } from "@/modules/auth/shared/types";
+import { useOtpFlow } from "@/modules/auth/shared/hooks";
+import { extractInvitationEmail, resolveRedirectPath } from "@/modules/auth/shared/utils";
 import { useSendSigninCode, useVerifySigninOtp } from "../queries";
 import { OTP_STORAGE_KEY } from "../utils";
 import type { SigninFormValues, SigninStep } from "../types";
+import { useState } from "react";
 
 export function useSignin() {
   const router        = useRouter();
@@ -23,20 +22,14 @@ export function useSignin() {
 
   const [step, setStep] = useState<SigninStep>(1);
 
-  const abortRef = useRef<AbortController | null>(null);
-  const timer    = useOtpTimer(OTP_STORAGE_KEY);
-  const otp      = useOtpInput();
-
   const form = useForm<SigninFormValues>({
     defaultValues: { email: "", code: "" },
     mode: "onTouched",
   });
 
-  // useWatch instead of form.watch — avoids re-subscribing on every render
   const emailValue = useWatch({ control: form.control, name: "email" });
 
   useEffect(() => { if (invitationEmail) form.setValue("email", invitationEmail); }, [invitationEmail]);
-  useEffect(() => () => { timer.clear(); abortRef.current?.abort(); }, []);
 
   const sendMutation   = useSendSigninCode();
   const verifyMutation = useVerifySigninOtp(async (data) => {
@@ -46,12 +39,18 @@ export function useSignin() {
     router.replace(resolveRedirectPath(data.user?.role, data.profile?._id, returnUrl));
   });
 
-  const loading = sendMutation.isPending || verifyMutation.isPending;
+  const { timer, otp, verifyCode, cleanup, verifyLoading } = useOtpFlow({
+    storageKey:    OTP_STORAGE_KEY,
+    verifyMutation,
+  });
+
+  const loading = sendMutation.isPending || verifyLoading;
+
+  useEffect(() => () => cleanup(), []);
 
   const sendCode = async (email: string) => {
-    const signal = refreshAbort(abortRef);
     try {
-      await sendMutation.mutateAsync({ email: email.toLowerCase().trim(), signal });
+      await sendMutation.mutateAsync({ email: email.toLowerCase().trim() });
       timer.start();
       setStep(2);
     } catch (err: any) {
@@ -60,25 +59,10 @@ export function useSignin() {
     }
   };
 
-  const verifyCode = async () => {
-    const { email } = form.getValues();
-    const code      = otp.otpCode.join("");
-    if (code.length < OTP_CODE_LENGTH) return;
-
-    const signal = refreshAbort(abortRef);
-    try {
-      timer.clear();
-      const location = await getUserLocation();
-      await verifyMutation.mutateAsync({ email: email.toLowerCase().trim(), otp: code, location, signal });
-    } catch (err: any) {
-      if (err?.name !== "AbortError")
-        showToast({ message: err?.message ?? "The code you entered didn't match.", severity: "error" });
-    }
-  };
-
   const onSubmit = (data: SigninFormValues) => {
-    if (step === 1) sendCode(data.email);
-    else verifyCode();
+    const email = data.email.toLowerCase().trim();
+    if (step === 1) sendCode(email);
+    else verifyCode(email);
   };
 
   const resendCode = () => {

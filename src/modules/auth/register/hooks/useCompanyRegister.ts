@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { useToast } from "@/hooks/useToast";
-import { getUserLocation } from "@/utils/api";
-import { useOtpTimer, useOtpInput } from "@/modules/auth/shared/hooks";
-import { OTP_CODE_LENGTH } from "@/modules/auth/shared/types";
+import { useOtpFlow } from "@/modules/auth/shared/hooks";
 import { refreshAbort } from "@/modules/auth/shared/utils";
 import { useRegisterMutation, useVerifyRegisterOtp } from "../queries";
 import { COMPANY_EXPIRY_KEY } from "../utils";
@@ -17,17 +15,20 @@ export function useCompanyRegister({ onStepChange, onEmailChange }: RegisterForm
   const [savedEmail, setSavedEmail] = useState("");
 
   const abortRef = useRef<AbortController | null>(null);
-  const timer    = useOtpTimer(COMPANY_EXPIRY_KEY);
-  const otp      = useOtpInput();
 
   const registerMutation = useRegisterMutation();
   const verifyMutation   = useVerifyRegisterOtp((_data) => {
     router.replace("/company/dashboard");
   });
 
-  const loading = registerMutation.isPending || verifyMutation.isPending;
+  const { timer, otp, verifyCode, cleanup, verifyLoading } = useOtpFlow({
+    storageKey:    COMPANY_EXPIRY_KEY,
+    verifyMutation,
+  });
 
-  useEffect(() => () => { abortRef.current?.abort(); }, []);
+  const loading = registerMutation.isPending || verifyLoading;
+
+  useEffect(() => () => { cleanup(); abortRef.current?.abort(); }, []);
 
   const sendCode = async (values: CompanyFormValues) => {
     const signal = refreshAbort(abortRef);
@@ -60,20 +61,9 @@ export function useCompanyRegister({ onStepChange, onEmailChange }: RegisterForm
     }
   };
 
-  const verifyCode = async () => {
-    const code = otp.otpCode.join("");
-    if (code.length < OTP_CODE_LENGTH) return;
-
-    const signal = refreshAbort(abortRef);
-    try {
-      timer.clear();
-      const location = await getUserLocation();
-      await verifyMutation.mutateAsync({ email: savedEmail, otp: code, location, signal });
-    } catch (err: any) {
-      if (err?.name !== "AbortError")
-        showToast({ message: err?.message ?? "Invalid code. Please try again.", severity: "error" });
-    }
+  return {
+    step, loading, savedEmail, otp, timer,
+    sendCode,
+    verifyCode: () => verifyCode(savedEmail),
   };
-
-  return { step, loading, savedEmail, otp, timer, sendCode, verifyCode };
 }
