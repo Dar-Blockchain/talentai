@@ -20,11 +20,6 @@ export const postService = {
     return res.data?.data;
   },
 
-  postRecruitmentSteps: async (postId: string, steps: any[]) => {
-    const res = await axiosInstance.post(`post-steps/post/${postId}/steps`, steps);
-    return res.data;
-  },
-
   savePostInterviewAssessment: async (postId: string, interviewData: any) => {
     const normalizedInterviewData = interviewData?.interviewType
       ? { ...interviewData, interviewType: INTERVIEW_TYPE_MAP[interviewData.interviewType] ?? interviewData.interviewType }

@@ -122,15 +122,4 @@ export const memberService = {
     const res = await axiosInstance.put(`employee-permissions/${memberId}`, permissions);
     return res.data.data || res.data;
   },
-
-  acceptInvitationAsNewUser: async (params: {
-    invitationId: string;
-    token: string;
-    firstName: string;
-    lastName: string;
-  }) => {
-    const { invitationId, token, firstName, lastName } = params;
-    const res = await axiosInstance.post(`company-invitations/registerAndAccept/${invitationId}`, { token, firstName, lastName });
-    return res.data;
-  },
 };

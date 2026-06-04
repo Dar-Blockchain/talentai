@@ -357,19 +357,6 @@ export const updateEmployeePermissions = createAsyncThunk<
   }
 });
 
-// Register as new user and accept invitation in one step
-export const acceptInvitationAsNewUser = createAsyncThunk<
-  { token: string; user: any },
-  { invitationId: string; token: string; firstName: string; lastName: string },
-  { rejectValue: string }
->("member/acceptInvitationAsNewUser", async (params, { rejectWithValue }) => {
-  try {
-    return await memberService.acceptInvitationAsNewUser(params);
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to accept invitation");
-  }
-});
-
 const memberSlice = createSlice({
   name: "member",
   initialState,
@@ -661,18 +648,6 @@ const memberSlice = createSlice({
       .addCase(updateEmployeePermissions.rejected, (state: MemberState, action: PayloadAction<string | undefined>) => {
         state.updatingPermissions = false;
         state.permissionsError = action.payload || "An error occurred";
-      })
-      // Handle acceptInvitationAsNewUser
-      .addCase(acceptInvitationAsNewUser.pending, (state: MemberState) => {
-        state.registeringWithInvitation = true;
-        state.registrationError = null;
-      })
-      .addCase(acceptInvitationAsNewUser.fulfilled, (state: MemberState) => {
-        state.registeringWithInvitation = false;
-      })
-      .addCase(acceptInvitationAsNewUser.rejected, (state: MemberState, action: PayloadAction<string | undefined>) => {
-        state.registeringWithInvitation = false;
-        state.registrationError = action.payload || "An error occurred";
       });
   },
 });

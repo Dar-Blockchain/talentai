@@ -107,7 +107,7 @@ const JobPreviewPanel: React.FC<JobPreviewPanelProps> = ({ jobData, jobId, compa
 
     dispatch(setConnectedUser({ user, profile, planLimits: null, companyMembership: null }));
     setModalOpen(false);
-    router.push(`/candidate/interview/hr?jobId=${jobId}${companyId ? `&companyId=${companyId}` : ''}&ref=link`);
+    router.push(`/candidate/interview?jobId=${jobId}${companyId ? `&companyId=${companyId}` : ''}&ref=link`);
   };
 
   return (

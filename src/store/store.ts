@@ -17,7 +17,6 @@ import candidateReducer from './slices/candidateSlice';
 import postGenerationReducer from './slices/postGenerationSlice';
 import interviewReducer from './slices/interviewSlice';
 import jobDetailsReducer from './slices/jobDetailsSlice';
-import notificationReducer from './slices/notificationSlice';
 import memberReducer from './slices/memberSlice';
 import chatReducer from './slices/chatSlice';
 import teamChatReducer from '@/modules/chat/team-chat/store/teamChatSlice';
@@ -32,7 +31,6 @@ import feedbackReducer from './slices/feedbackSlice';
 import paymentReducer from './slices/paymentSlice';
 import kpiReducer from './slices/kpiSlice';
 import postDetailsReducer from '../modules/posts/details/store/postSlice';
-import { socketMiddleware } from './middleware/socketMiddleware';
 
 const rootReducer = combineReducers({
   user: userReducer,
@@ -42,7 +40,6 @@ const rootReducer = combineReducers({
   postGeneration: postGenerationReducer,
   interview: interviewReducer,
   jobDetails: jobDetailsReducer,
-  notifications: notificationReducer,
   member: memberReducer,
   chat: chatReducer,
   teamChat: teamChatReducer,
@@ -74,7 +71,7 @@ export const store = configureStore({
       serializableCheck: {
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER]
       }
-    }).concat(socketMiddleware)
+    })
 });
 
 export const persistor = persistStore(store);

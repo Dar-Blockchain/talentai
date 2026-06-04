@@ -152,14 +152,6 @@ export const fetchRecommendedPosts = createAsyncThunk(
   }
 );
 
-export const postRecruitmentSteps = createAsyncThunk(
-  "post/postRecruitmentSteps",
-  async ({ postId, steps }: { postId: string; steps: any[] }, { rejectWithValue }) => {
-    try { return await postService.postRecruitmentSteps(postId, steps); }
-    catch (error: any) { return rejectWithValue(error.response?.data?.message || error.message || "An error occurred while posting recruitment steps"); }
-  }
-);
-
 export const fetchMyPosts = createAsyncThunk(
   "post/fetchMyPosts",
   async (params: { page?: number; limit?: number; search?: string; sort?: string; status?: string; creationType?: string; } = {}, { rejectWithValue }) => {
@@ -251,9 +243,6 @@ const postSlice = createSlice({
       .addCase(updatePost.pending,  (state) => { state.savePost.loading = true;  state.savePost.error = null; })
       .addCase(updatePost.fulfilled,(state, action) => { state.savePost.loading = false; state.savePost.error = null; state.savePost.savedPost = action.payload; state.currentJob = action.payload.jobData || action.payload; })
       .addCase(updatePost.rejected, (state, action) => { state.savePost.loading = false; state.savePost.error = action.payload as string; })
-      .addCase(postRecruitmentSteps.pending,   (state) => { state.postStepsLoading = true;  state.postStepsError = null; })
-      .addCase(postRecruitmentSteps.fulfilled, (state, action) => { state.postStepsLoading = false; state.postStepsError = null; if (action.payload.data) { state.steps = action.payload.data; if (state.currentJob) state.currentJob.PostSteps = action.payload.data; } })
-      .addCase(postRecruitmentSteps.rejected,  (state, action) => { state.postStepsLoading = false; state.postStepsError = action.payload as string; })
       .addCase(fetchMyPosts.pending,   (state) => { state.myPostsLoading = true;  state.myPostsError = null; })
       .addCase(fetchMyPosts.fulfilled, (state, action: PayloadAction<any>) => { state.myPostsLoading = false; state.myPosts = action.payload.posts || []; state.myPostsPagination = action.payload.pagination; })
       .addCase(fetchMyPosts.rejected,  (state, action) => { state.myPostsLoading = false; state.myPostsError = action.payload as string; })

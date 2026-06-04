@@ -1,8 +1,8 @@
 /**
  * Job Application Routes
- * 
+ *
  * Middlewares applied:
- * - requireAuthUser: requires authenticated user for protected routes
+ * - requireAuth: requires authenticated user for protected routes
  * - LogMiddleware("JobApplication"): logs application requests
  */
 
@@ -10,100 +10,299 @@ const express = require("express");
 const router = express.Router();
 const jobApplicationController = require("../controllers/jobApplication.controller");
 
-// Import middlewares
 const { requireAuth } = require("../middleware/security/auth.middleware");
 const authLogMiddleware = require("../middleware/security/request-log.middleware");
-const { verifyApiKey, checkScope } = require("../middleware/security/api-key.middleware");
-
-// ========== PUBLIC ROUTES (no auth required) ==========
-
-// GET /job-applications/post/:postId — Get all applications for a post
-router.get("/post/:postId", jobApplicationController.getApplicationsByPost);
 
 // ========== AUTHENTICATED ROUTES ==========
 router.use(requireAuth, authLogMiddleware("JobApplication"));
 
-// POST /job-applications — Create new application
+/**
+ * @openapi
+ * /job-applications:
+ *   post:
+ *     tags: [Job Applications]
+ *     summary: Create a new job application
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [postId]
+ *             properties:
+ *               postId: { type: string }
+ *               coverLetter: { type: string }
+ *     responses:
+ *       201:
+ *         description: Application created
+ */
 router.post("/", jobApplicationController.createJobApplication);
 
-// GET /job-applications — Get all applications (admin/global)
-router.get("/", jobApplicationController.getAllJobApplications);
-
-// GET /job-applications/candidate/my — Get all applications for authenticated candidate
+/**
+ * @openapi
+ * /job-applications/candidate/my:
+ *   get:
+ *     tags: [Job Applications]
+ *     summary: Get applications for the authenticated candidate
+ *     responses:
+ *       200:
+ *         description: Candidate's applications
+ */
 router.get("/candidate/my", jobApplicationController.getApplicationsByCandidate);
 
-// GET /job-applications/candidate/my/stats — Get dashboard stats for authenticated candidate
+/**
+ * @openapi
+ * /job-applications/candidate/my/stats:
+ *   get:
+ *     tags: [Job Applications]
+ *     summary: Dashboard stats for the authenticated candidate
+ *     responses:
+ *       200:
+ *         description: Candidate stats
+ */
 router.get("/candidate/my/stats", jobApplicationController.getCandidateStats);
 
-// GET /job-applications/company/my — Get all applications for authenticated company
-// Query params: page, limit, post (filter by post), status, search/candidateName (search by candidate name), skills (filter by skills)
+/**
+ * @openapi
+ * /job-applications/company/my:
+ *   get:
+ *     tags: [Job Applications]
+ *     summary: All applications received by the authenticated company
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 10 }
+ *       - in: query
+ *         name: post
+ *         schema: { type: string }
+ *       - in: query
+ *         name: status
+ *         schema: { type: string }
+ *       - in: query
+ *         name: search
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Paginated list of applications
+ */
 router.get("/company/my", jobApplicationController.getApplicationsByCompany);
 
-// POST /job-applications/contact-candidate — Send a direct email to a candidate
+/**
+ * @openapi
+ * /job-applications/contact-candidate:
+ *   post:
+ *     tags: [Job Applications]
+ *     summary: Send a direct email to a candidate
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [applicationId, subject, message]
+ *             properties:
+ *               applicationId: { type: string }
+ *               subject: { type: string }
+ *               message: { type: string }
+ *     responses:
+ *       200:
+ *         description: Email sent
+ */
 router.post("/contact-candidate", jobApplicationController.contactCandidate);
 
-// GET /job-applications/post/:postId/summary — Flat summary list for a post (company only)
-// Query params: status, search, matchScoreMin, matchScoreMax, interviewScoreMin, interviewScoreMax,
-//               dateFrom, dateTo, sort (appliedAt_desc|appliedAt_asc|matchScore_desc|matchScore_asc|
-//               interviewScore_desc|interviewScore_asc|name_asc|name_desc), page, limit
+/**
+ * @openapi
+ * /job-applications/post/{postId}/summary:
+ *   get:
+ *     tags: [Job Applications]
+ *     summary: Flat summary list of applications for a post (company)
+ *     parameters:
+ *       - in: path
+ *         name: postId
+ *         required: true
+ *         schema: { type: string }
+ *       - in: query
+ *         name: status
+ *         schema: { type: string }
+ *       - in: query
+ *         name: search
+ *         schema: { type: string }
+ *       - in: query
+ *         name: sort
+ *         schema: { type: string }
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 10 }
+ *     responses:
+ *       200:
+ *         description: Summary list
+ */
 router.get("/post/:postId/summary", jobApplicationController.getApplicationsSummaryByPost);
 
-// GET /job-applications/company/my/summary — Flat summary list for all company applications
+/**
+ * @openapi
+ * /job-applications/company/my/summary:
+ *   get:
+ *     tags: [Job Applications]
+ *     summary: Flat summary list of all company applications
+ *     responses:
+ *       200:
+ *         description: Summary list
+ */
 router.get("/company/my/summary", jobApplicationController.getApplicationsSummaryByCompany);
 
-// GET /job-applications/company/my/metrics — Get application metrics for authenticated company
+/**
+ * @openapi
+ * /job-applications/company/my/metrics:
+ *   get:
+ *     tags: [Job Applications]
+ *     summary: Application metrics for the authenticated company
+ *     responses:
+ *       200:
+ *         description: Metrics data
+ */
 router.get("/company/my/metrics", jobApplicationController.getApplicationMetrics);
 
-// GET /job-applications/company/my/cvs/download — Download all matching CVs as a ZIP
-router.get("/company/my/cvs/download", jobApplicationController.downloadCVsByCompany);
-
-// GET /job-applications/company/my/kpi/actions — Get all Zone 1 action counts in one call
-// Query params: postId (optional), dateFrom (optional)
+/**
+ * @openapi
+ * /job-applications/company/my/kpi/actions:
+ *   get:
+ *     tags: [Job Applications]
+ *     summary: Zone 1 action KPI counts
+ *     parameters:
+ *       - in: query
+ *         name: postId
+ *         schema: { type: string }
+ *       - in: query
+ *         name: dateFrom
+ *         schema: { type: string, format: date }
+ *     responses:
+ *       200:
+ *         description: KPI action counts
+ */
 router.get("/company/my/kpi/actions", jobApplicationController.getActionsKPI);
 
-// GET /job-applications/company/my/kpi/sourcing — Get KPI: Sourcing quality (Zone 5)
+/**
+ * @openapi
+ * /job-applications/company/my/kpi/sourcing:
+ *   get:
+ *     tags: [Job Applications]
+ *     summary: KPI — Sourcing quality
+ *     responses:
+ *       200:
+ *         description: Sourcing KPI
+ */
 router.get("/company/my/kpi/sourcing", jobApplicationController.getSourcingKPI);
 
-// GET /job-applications/company/my/kpi/velocity — Get KPI: TTS + TTH trend (Zone 4)
+/**
+ * @openapi
+ * /job-applications/company/my/kpi/velocity:
+ *   get:
+ *     tags: [Job Applications]
+ *     summary: KPI — TTS + TTH trend
+ *     responses:
+ *       200:
+ *         description: Velocity KPI
+ */
 router.get("/company/my/kpi/velocity", jobApplicationController.getVelocityKPI);
 
-// GET /job-applications/company/my/kpi/funnel — Get KPI: Global funnel counts
-// Query params: postId (optional)
+/**
+ * @openapi
+ * /job-applications/company/my/kpi/funnel:
+ *   get:
+ *     tags: [Job Applications]
+ *     summary: KPI — Global funnel counts
+ *     parameters:
+ *       - in: query
+ *         name: postId
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Funnel KPI
+ */
 router.get("/company/my/kpi/funnel", jobApplicationController.getFunnelKPI);
 
-// GET /job-applications/company/my/kpi/roi — Get KPI: Reporting & ROI (Zone 7)
+/**
+ * @openapi
+ * /job-applications/company/my/kpi/roi:
+ *   get:
+ *     tags: [Job Applications]
+ *     summary: KPI — Reporting & ROI
+ *     responses:
+ *       200:
+ *         description: ROI KPI
+ */
 router.get("/company/my/kpi/roi", jobApplicationController.getRoiKPI);
 
-// GET /job-applications/company/my/by-decision — Get candidates by recruiter decision
-// Query params: decision (required: shortlisted|rejected), postId (optional), page, limit
-router.get("/company/my/by-decision", jobApplicationController.getCandidatesByDecision);
-
-// POST /job-applications/auto-invite/trigger — Trigger auto-invite (nudge #1), bypasses time window
-router.post("/auto-invite/trigger", jobApplicationController.triggerAutoInvite);
-
-// POST /job-applications/reminder/trigger — Trigger reminder (nudge #2 / #3), bypasses time window
-router.post("/reminder/trigger", jobApplicationController.triggerReminder);
-
-// PATCH /job-applications/:applicationId/recruiter-decision — Update recruiter's decision (shortlist/reject)
-// Body: { decision: "shortlisted" | "rejected", rejectionReason: "optional reason" }
+/**
+ * @openapi
+ * /job-applications/{applicationId}/recruiter-decision:
+ *   patch:
+ *     tags: [Job Applications]
+ *     summary: Update recruiter's decision on an application
+ *     parameters:
+ *       - in: path
+ *         name: applicationId
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [decision]
+ *             properties:
+ *               decision:
+ *                 type: string
+ *                 enum: [shortlisted, rejected]
+ *               rejectionReason: { type: string }
+ *     responses:
+ *       200:
+ *         description: Decision updated
+ */
 router.patch("/:applicationId/recruiter-decision", jobApplicationController.updateRecruiterDecision);
 
-// GET /job-applications/:applicationId — Get single application by ID
+/**
+ * @openapi
+ * /job-applications/{applicationId}:
+ *   get:
+ *     tags: [Job Applications]
+ *     summary: Get a single application by ID
+ *     parameters:
+ *       - in: path
+ *         name: applicationId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Application details
+ *       404:
+ *         description: Not found
+ */
 router.get("/:applicationId", jobApplicationController.getJobApplicationById);
 
-// PATCH /job-applications/:applicationId — Update application
-router.patch("/:applicationId", jobApplicationController.updateJobApplication);
-
-// POST /job-applications/:applicationId/withdraw — Withdraw application
-router.post("/:applicationId/withdraw", jobApplicationController.withdrawJobApplication);
-
-// POST /job-applications/:applicationId/archive — Archive application
-router.post("/:applicationId/archive", jobApplicationController.archiveJobApplication);
-
-// POST /job-applications/:applicationId/invite-to-interview — Send interview invitation email
+/**
+ * @openapi
+ * /job-applications/{applicationId}/invite-to-interview:
+ *   post:
+ *     tags: [Job Applications]
+ *     summary: Send interview invitation email to candidate
+ *     parameters:
+ *       - in: path
+ *         name: applicationId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Invitation sent
+ */
 router.post("/:applicationId/invite-to-interview", jobApplicationController.inviteToInterview);
-
-// DELETE /job-applications/:applicationId — Delete application
-router.delete("/:applicationId", jobApplicationController.deleteJobApplication);
 
 module.exports = router;

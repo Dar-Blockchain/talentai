@@ -28,6 +28,7 @@ import LogoutProgressModal from "@/components/ui/LogoutProgressModal";
 import { useTranslation } from "react-i18next";
 import { useChatUnreadBadges } from "@/modules/chat/shared/hooks/useChatUnreadBadges";
 import ChatUnreadBadge from "@/modules/chat/shared/components/ChatUnreadBadge";
+import { useNotifications } from "@/modules/notifications/context/NotificationContext";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -52,7 +53,7 @@ const HOVER_TXT = "#E8F6F9"; // hover text — near white
 const LABEL_C = "#a3aed1"; // section label — visible
 
 const GROUPS = [
-  { groupKey: "main", ids: ["dashboard", "messages"] },
+  { groupKey: "main", ids: ["dashboard", "messages", "notifications"] },
   { groupKey: "jobs", ids: ["posts", "applications"] },
   { groupKey: "campaigns", ids: ["campaigns"] },
   { groupKey: "team", ids: ["employees", "departments"] },
@@ -160,10 +161,12 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const settingsHref = "/settings";
   const { teamChatUnread, companyMessagesUnread } = useChatUnreadBadges();
+  const { unreadCount: notifUnread } = useNotifications();
 
   const getNavUnreadCount = (itemId: string) => {
-    if (itemId !== "messages") return 0;
-    return isEmployee ? teamChatUnread : companyMessagesUnread;
+    if (itemId === "messages")      return isEmployee ? teamChatUnread : companyMessagesUnread;
+    if (itemId === "notifications") return notifUnread;
+    return 0;
   };
 
   const renderNavItem = (item: { id: string; icon: React.ElementType; label: string; href: string }, isCollapsed: boolean) => {
@@ -319,7 +322,14 @@ const Sidebar: React.FC<SidebarProps> = ({
         </Box>
 
         {/* ── Nav ── */}
-        <Box sx={{ flex: 1, overflowY: "auto", py: 2, px: 1 }} className="custom-scrollbar">
+        <Box sx={{
+          flex: 1, overflowY: "auto", py: 2, px: 1,
+          scrollbarWidth: "thin",
+          scrollbarColor: `${BORDER} transparent`,
+          "&::-webkit-scrollbar": { width: 4 },
+          "&::-webkit-scrollbar-track": { background: "transparent" },
+          "&::-webkit-scrollbar-thumb": { background: BORDER, borderRadius: 4, "&:hover": { background: "#2a4a6a" } },
+        }}>
 
           {/* ── Company nav ── */}
           {!isEmployee && GROUPS.map((group, gi) => {
@@ -403,8 +413,8 @@ const Sidebar: React.FC<SidebarProps> = ({
 
             {!isCollapsed && (
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                  <Typography noWrap sx={{ fontSize: "12.5px", fontWeight: 600, color: "#E8F6F9", lineHeight: 1.35 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
+                  <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#E8F6F9", lineHeight: 1.35, wordBreak: "break-word" }}>
                     {displayName}
                   </Typography>
                   {activePlanLabel && (
@@ -486,7 +496,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   )}
                 </Box>
                 {displayEmail && (
-                  <Typography noWrap sx={{ fontSize: "10px", color: TXT_CLR, lineHeight: 1.3 }}>
+                  <Typography sx={{ fontSize: "10px", color: TXT_CLR, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {displayEmail}
                   </Typography>
                 )}

@@ -207,24 +207,6 @@ export const fetchInterviewReport = createAsyncThunk<
 );
 
 /**
- * Fetch interview details by ID (interview-details endpoint)
- */
-export const fetchInterviewDetailsById = createAsyncThunk<
-  any,
-  string,
-  { rejectValue: string }
->(
-  'interview/fetchDetailsById',
-  async (interviewId, { rejectWithValue }) => {
-    try {
-      return await interviewService.fetchDetailsById(interviewId);
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Error fetching interview details');
-    }
-  }
-);
-
-/**
  * Fetch company interview metrics
  */
 export const fetchCompanyInterviewMetrics = createAsyncThunk<

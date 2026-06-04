@@ -359,7 +359,7 @@ const ApplicationDetailPage: React.FC = () => {
                   const companyId = app.company?._id || app.post?.user || "";
                   const ref = email ? encodeURIComponent(email) : "link";
                   const base = typeof window !== "undefined" ? window.location.origin : "";
-                  setInviteLink(postId ? `${base}/candidate/interview/hr?jobId=${postId}&companyId=${companyId}&ref=${ref}` : "");
+                  setInviteLink(postId ? `${base}/candidate/interview?jobId=${postId}&companyId=${companyId}&ref=${ref}` : "");
                   setInviteOpen(true);
                 }}
                 sx={{

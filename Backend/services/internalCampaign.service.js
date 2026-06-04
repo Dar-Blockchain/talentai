@@ -43,20 +43,6 @@ exports.getCampaignById = async (campaignId) => {
 };
 
 /**
- * Get all campaigns with optional filters
- */
-exports.getAllCampaigns = async (filters = {}) => {
-  try {
-    return await InternalCampaign.find(filters)
-      .populate("company", "username email role")
-      .populate("createdBy", "username email")
-      .sort({ createdAt: -1 });
-  } catch (error) {
-    throw new Error(`Error fetching campaigns: ${error.message}`);
-  }
-};
-
-/**
  * Get campaigns by company
  */
 exports.getCampaignsByCompany = async (companyId, filters = {}) => {
@@ -182,37 +168,6 @@ exports.updateCampaignStatus = async (campaignId, status) => {
   } catch (error) {
     error.status = error.status || 500;
     throw error;
-  }
-};
-
-/**
- * Get campaign statistics
- */
-exports.getCampaignStats = async (campaignId) => {
-  try {
-    const campaign = await InternalCampaign.findById(campaignId);
-    if (!campaign) {
-      throw new Error("Campaign not found");
-    }
-
-    const participants = await CampaignParticipant.aggregate([
-      { $match: { campaign: campaign._id } },
-      {
-        $group: {
-          _id: "$status",
-          count: { $sum: 1 },
-        },
-      },
-    ]);
-
-    return {
-      campaignId,
-      title: campaign.title,
-      participantStats: participants,
-      totalParticipants: participants.reduce((sum, p) => sum + p.count, 0),
-    };
-  } catch (error) {
-    throw new Error(`Error getting campaign stats: ${error.message}`);
   }
 };
 

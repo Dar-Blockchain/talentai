@@ -9,10 +9,10 @@ import {
   selectPostSummaryPagination,
 } from "@/store/slices/jobApplicationSlice";
 import ContactCandidateModal, { ContactTarget } from "./ContactCandidateModal";
-import AssessmentDetailsModal, { AssessmentTarget } from "./AssessmentDetailsModal";
 import ApplicationsToolbar from "./applications/ApplicationsToolbar";
 import ApplicationsEmptyState from "./applications/ApplicationsEmptyState";
 import ApplicationsList from "./applications/ApplicationsList";
+import { AssessmentDetailsModal, AssessmentTarget } from "@/modules/assessments/post";
 
 const TEAL     = "#0D9488";
 const PAGE_SIZE = 10;

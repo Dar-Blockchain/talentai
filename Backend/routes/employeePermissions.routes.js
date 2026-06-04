@@ -4,23 +4,45 @@ const employeePermissionsController = require("../controllers/employeePermission
 const { requireAuthUser } = require("../middleware/security/auth.middleware");
 
 /**
- * @route   GET /api/employee-permissions/available
- * @desc    Get all available permissions
- * @access  Private
- */
-router.get("/available", requireAuthUser, employeePermissionsController.getAvailablePermissions);
-
-/**
- * @route   GET /api/employee-permissions/:userId
- * @desc    Get permissions for a user
- * @access  Private
+ * @openapi
+ * /employee-permissions/{userId}:
+ *   get:
+ *     tags: [Employee Permissions]
+ *     summary: Get permissions for a specific user
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: User's permissions
  */
 router.get("/:userId", requireAuthUser, employeePermissionsController.getPermissions);
 
 /**
- * @route   PUT /api/employee-permissions/:userId
- * @desc    Update user's permissions
- * @access  Private/Admin
+ * @openapi
+ * /employee-permissions/{userId}:
+ *   put:
+ *     tags: [Employee Permissions]
+ *     summary: Update permissions for a user (Admin/Company)
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               permissions:
+ *                 type: object
+ *     responses:
+ *       200:
+ *         description: Permissions updated
  */
 router.put("/:userId", requireAuthUser, employeePermissionsController.updatePermissions);
 

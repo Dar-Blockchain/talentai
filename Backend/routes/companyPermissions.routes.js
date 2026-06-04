@@ -17,13 +17,51 @@ const { controledAcces } = require('../middleware/authorize.middleware.js');
 // All routes require admin authentication
 router.use(requireAuth, controledAcces('Admin'));
 
-// GET /admin/companies/:companyId/permissions
-// Description: Retrieve permissions for a specific company
+/**
+ * @openapi
+ * /admin/companies/{companyId}/permissions:
+ *   get:
+ *     tags: [Admin — Company Permissions]
+ *     summary: Get permissions for a company (Admin)
+ *     parameters:
+ *       - in: path
+ *         name: companyId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Company permissions object
+ *       403:
+ *         description: Admin role required
+ */
 router.get("/companies/:companyId/permissions", companyPermissionsController.getCompanyPermissions);
 
-// POST /admin/companies/:companyId/permissions
-// Description: Update permissions for a specific company
-// Body: { permissions: { canCreateJobPosts: boolean, ... } }
+/**
+ * @openapi
+ * /admin/companies/{companyId}/permissions:
+ *   post:
+ *     tags: [Admin — Company Permissions]
+ *     summary: Update permissions for a company (Admin)
+ *     parameters:
+ *       - in: path
+ *         name: companyId
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               permissions:
+ *                 type: object
+ *                 properties:
+ *                   canCreateJobPosts: { type: boolean }
+ *     responses:
+ *       200:
+ *         description: Permissions updated
+ */
 router.post("/companies/:companyId/permissions", companyPermissionsController.updateCompanyPermissions);
 
 module.exports = router;

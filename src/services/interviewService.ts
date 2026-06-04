@@ -57,13 +57,6 @@ export const interviewService = {
     return res.data.data;
   },
 
-  fetchDetailsById: async (interviewId: string) => {
-    const res = await axiosInstance.get(`interview-details/getInterviewDetailsById/${interviewId}`);
-    const data = res.data;
-    if (data.success && data.data) return data.data;
-    throw new Error('No interview data found');
-  },
-
   fetchCompanyInterviewMetrics: async () => {
     const res = await axiosInstance.get('post-interview-assessments/company/mine/metrics');
     const d = res.data.data ?? {};

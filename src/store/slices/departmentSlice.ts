@@ -102,25 +102,6 @@ export const fetchDepartmentById = createAsyncThunk<
   }
 });
 
-export interface FetchDepartmentMembersParams {
-  departmentId: string;
-  search?: string;
-  page?: number;
-  limit?: number;
-}
-
-export const fetchDepartmentMembers = createAsyncThunk<
-  { members: DepartmentMember[]; total: number },
-  FetchDepartmentMembersParams,
-  { rejectValue: string }
->("department/fetchMembers", async (params, { rejectWithValue }) => {
-  try {
-    return await departmentService.fetchDepartmentMembers(params) as { members: DepartmentMember[]; total: number };
-  } catch (err: any) {
-    return rejectWithValue(err.response?.data?.message || "Error fetching department members");
-  }
-});
-
 export const deleteDepartment = createAsyncThunk<
   string,
   string,
@@ -307,22 +288,6 @@ const departmentSlice = createSlice({
       .addCase(fetchDepartmentById.rejected, (state, action) => {
         state.loadingCurrent = false;
         state.currentError = action.payload || "Error fetching department";
-      });
-
-    // fetchDepartmentMembers
-    builder
-      .addCase(fetchDepartmentMembers.pending, (state) => {
-        state.loadingMembers = true;
-        state.membersError = null;
-      })
-      .addCase(fetchDepartmentMembers.fulfilled, (state, action) => {
-        state.loadingMembers = false;
-        state.departmentMembers = action.payload.members;
-        state.membersTotal = action.payload.total;
-      })
-      .addCase(fetchDepartmentMembers.rejected, (state, action) => {
-        state.loadingMembers = false;
-        state.membersError = action.payload || "Error fetching members";
       });
 
     // deleteDepartment

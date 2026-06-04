@@ -2,6 +2,7 @@ const Profile = require("../models/Profile.model");
 const Post    = require("../models/Post.model");
 const User    = require("../models/User.model");
 const { sendJobMatchEmail } = require("../utils/email-service");
+const notificationService  = require("./notificationSystem.service");
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 
@@ -66,6 +67,16 @@ module.exports.notifyMatchingCandidates = async (postId) => {
         matchScore,
         jobLink,
       });
+
+      const recipientId = profile.userId?._id ?? profile.userId;
+      if (recipientId) {
+        notificationService.createNotification(
+          recipientId,
+          `🎯 Great news! Your profile matches "${jobTitle}" at ${companyName}. Check it out now!`,
+          'info'
+        ).catch(err => console.warn(`In-app notification failed for user ${recipientId}:`, err.message));
+      }
+
       sent++;
     }
 

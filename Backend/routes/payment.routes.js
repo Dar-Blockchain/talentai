@@ -11,14 +11,38 @@ const { requireAuth } = require("../middleware/security/auth.middleware");
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js");
 const { controledAcces } = require("../middleware/authorize.middleware.js");
 
-// ========== PUBLIC ROUTES ==========
-
-// GET /payments/verify - Verify and update payment status after successful checkout
+/**
+ * @openapi
+ * /payments/verify:
+ *   post:
+ *     tags: [Payments]
+ *     summary: Verify and update payment status after Stripe checkout
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [sessionId]
+ *             properties:
+ *               sessionId: { type: string }
+ *     responses:
+ *       200:
+ *         description: Payment status verified and updated
+ */
 router.post("/verify", paymentController.verifyPaymentStatus);
 
-// ========== AUTHENTICATED USER ROUTES ==========
-
-// GET /payments/user/history - Get current user's payment history
+/**
+ * @openapi
+ * /payments/user/history:
+ *   get:
+ *     tags: [Payments]
+ *     summary: Get current user's payment history
+ *     responses:
+ *       200:
+ *         description: List of payments
+ */
 router.get(
   "/user/history",
   requireAuth,

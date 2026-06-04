@@ -167,208 +167,6 @@ module.exports.getProfileById = async (req, res) => {
   }
 };
 
-// Search profiles by skills
-module.exports.searchProfilesBySkills = async (req, res) => {
-  try {
-    const { skills } = req.query;
-    if (!skills) {
-      return res.status(400).json({ message: "Skills are required" });
-    }
-
-    const skillsArray = skills.split(",").map((skill) => skill.trim());
-
-    // Use the service to search profiles
-    const profiles = await profileService.searchProfilesBySkills(skillsArray);
-
-    res.status(200).json(profiles);
-  } catch (error) {
-    console.error("Error searching profiles:", error);
-    res.status(500).json({
-      message: error.message || "Error searching profiles",
-    });
-  }
-};
-
-// Add soft skills
-module.exports.addSoftSkills = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { softSkills } = req.body;
-
-    if (!softSkills || !Array.isArray(softSkills)) {
-      return res.status(400).json({
-        message: "Soft skills must be provided as an array",
-      });
-    }
-
-    const result = await profileService.addSoftSkills(userId, softSkills);
-
-    if (result.duplicateSoftSkills.length > 0) {
-      return res.status(200).json({
-        message: `The following soft skills already exist: ${result.duplicateSoftSkills.join(
-          ", ",
-        )}`,
-      });
-    }
-
-    res.status(200).json({
-      message: result.message,
-      profile: result.profile,
-    });
-  } catch (error) {
-    console.error("Error adding soft skills:", error);
-    res.status(500).json({
-      message: error.message || "Error adding soft skills",
-    });
-  }
-};
-
-// Get soft skills
-module.exports.getSoftSkills = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const softSkills = await profileService.getSoftSkills(userId);
-    res.status(200).json(softSkills);
-  } catch (error) {
-    console.error("Error retrieving soft skills:", error);
-    res.status(500).json({
-      message: error.message || "Error retrieving soft skills",
-    });
-  }
-};
-
-// Update soft skills
-module.exports.updateSoftSkills = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { softSkills } = req.body;
-
-    if (!softSkills || !Array.isArray(softSkills)) {
-      return res.status(400).json({
-        message: "Soft skills must be provided as an array",
-      });
-    }
-
-    const profile = await profileService.updateSoftSkills(userId, softSkills);
-    res.status(200).json({
-      message: "Soft skills updated successfully",
-      profile,
-    });
-  } catch (error) {
-    console.error("Error updating soft skills:", error);
-    res.status(500).json({
-      message: error.message || "Error updating soft skills",
-    });
-  }
-};
-
-// Delete a specific skill
-module.exports.deleteHardSkill = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { skillToDelete } = req.body;
-
-    if (!skillToDelete || typeof skillToDelete !== "string") {
-      return res.status(400).json({
-        message: "The skill to be deleted must be provided as a string",
-      });
-    }
-
-    const profile = await profileService.deleteHardSkill(userId, skillToDelete);
-    res.status(200).json({
-      message: `Hard Skill "${skillToDelete}" has been successfully deleted`,
-      profile,
-    });
-  } catch (error) {
-    console.error("Error deleting soft skills:", error);
-    res
-      .status(500)
-      .json({ message: error.message || "Error deleting soft skills" });
-  }
-};
-
-// Delete a specific softSkill
-module.exports.deleteSoftSkill = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { softSkillToDelete } = req.body;
-
-    if (!softSkillToDelete || typeof softSkillToDelete !== "string") {
-      return res.status(400).json({
-        message: "The skill to be deleted must be provided as a string",
-      });
-    }
-
-    const profile = await profileService.deleteSoftSkill(
-      userId,
-      softSkillToDelete,
-    );
-    res.status(200).json({
-      message: `Soft Skills "${softSkillToDelete}" has been successfully deleted`,
-      profile,
-    });
-  } catch (error) {
-    console.error("Error deleting soft skills:", error);
-    res
-      .status(500)
-      .json({ message: error.message || "Error deleting soft skills" });
-  }
-};
-
-// Update finalBid
-module.exports.updateFinalBid = async (req, res) => {
-  try {
-    const { newBid, userId, postId, companyId } = req.body;
-
-    //const companyId = req.user._id;
-
-    if (typeof newBid !== "number" || newBid <= 0) {
-      return res
-        .status(401)
-        .json({ message: "The bid must be a positive number" });
-    }
-
-    const profile = await profileService.updateFinalBid(
-      userId,
-      newBid,
-      companyId,
-      postId,
-    );
-
-    res.status(200).json({
-      message: "Bid updated successfully",
-      profile,
-    });
-  } catch (error) {
-    console.error("Error updating bid:", error);
-    res.status(500).json({ message: error.message || "Error updating bid" });
-  }
-};
-
-exports.getCompanyWithAssessments = async (req, res) => {
-  try {
-    const { id } = req.user.profile;
-    //const id = "68ff674d5d0454e0505e4d75"; // For testing purpose
-
-    const { jobId } = req.params;
-
-    const profile = await profileService.getCompanyProfileWithAssessments(
-      id,
-      jobId,
-    );
-
-    if (!profile) {
-      return res
-        .status(404)
-        .json({ message: "Profile not found or not a company." });
-    }
-
-    return res.status(200).json(profile);
-  } catch (error) {
-    return res.status(500).json({ message: error.message });
-  }
-};
-
 // Update profile visibility (public / private)
 module.exports.updateProfileVisibility = async (req, res) => {
   try {
@@ -480,12 +278,7 @@ module.exports.updateProfileComplete = async (req, res) => {
   }
 };
 
-// ========== PAYMENT MANAGEMENT CONTROLLERS ==========
 
-/**
- * Delete candidate resume
- * DELETE /profiles/delete-resume
- */
 module.exports.deleteResume = async (req, res) => {
   try {
     const userId  = req.user._id;
@@ -508,10 +301,6 @@ module.exports.deleteResume = async (req, res) => {
   }
 };
 
-/**
- * Update candidate resume
- * PUT /profiles/update-resume
- */
 module.exports.updateResume = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -542,92 +331,61 @@ module.exports.updateResume = async (req, res) => {
   }
 };
 
-/**
- * Get all payments for a profile
- * GET /profile/:profileId/payments
- */
 module.exports.getProfilePayments = async (req, res) => {
   try {
     const { profileId } = req.params;
 
     if (!profileId) {
-      return res.status(400).json({
-        success: false,
-        message: "Profile ID is required",
-      });
+      return res.status(400).json({ success: false, message: "Profile ID is required" });
     }
 
     const result = await profileService.getProfilePayments(profileId);
-
     return res.status(200).json(result);
   } catch (error) {
     console.error("Error retrieving profile payments:", error);
-    const statusCode = error.status || 500;
-    return res.status(statusCode).json({
+    return res.status(error.status || 500).json({
       success: false,
       message: error.message || "Failed to retrieve profile payments",
     });
   }
 };
 
-/**
- * Get active payment for a profile (most recent completed)
- * GET /profile/:profileId/payments/active
- */
 module.exports.getActiveProfilePayment = async (req, res) => {
   try {
     const { profileId } = req.params;
 
     if (!profileId) {
-      return res.status(400).json({
-        success: false,
-        message: "Profile ID is required",
-      });
+      return res.status(400).json({ success: false, message: "Profile ID is required" });
     }
 
     const result = await profileService.getActiveProfilePayment(profileId);
-
     return res.status(200).json(result);
   } catch (error) {
     console.error("Error retrieving active profile payment:", error);
-    const statusCode = error.status || 500;
-    return res.status(statusCode).json({
+    return res.status(error.status || 500).json({
       success: false,
       message: error.message || "Failed to retrieve active profile payment",
     });
   }
 };
 
-/**
- * Add payment to profile
- * POST /profile/:profileId/payments/add
- */
 module.exports.addPaymentToProfile = async (req, res) => {
   try {
     const { profileId } = req.params;
     const { paymentId } = req.body;
 
     if (!profileId) {
-      return res.status(400).json({
-        success: false,
-        message: "Profile ID is required",
-      });
+      return res.status(400).json({ success: false, message: "Profile ID is required" });
     }
-
     if (!paymentId) {
-      return res.status(400).json({
-        success: false,
-        message: "Payment ID is required",
-      });
+      return res.status(400).json({ success: false, message: "Payment ID is required" });
     }
 
     const result = await profileService.addPaymentToProfile(profileId, paymentId);
-
     return res.status(200).json(result);
   } catch (error) {
     console.error("Error adding payment to profile:", error);
-    const statusCode = error.status || 500;
-    return res.status(statusCode).json({
+    return res.status(error.status || 500).json({
       success: false,
       message: error.message || "Failed to add payment to profile",
     });

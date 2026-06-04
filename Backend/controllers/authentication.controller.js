@@ -221,6 +221,19 @@ module.exports.logout = (req, res) => {
   }
 };
 
+module.exports.checkRole = async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) return res.status(400).json({ success: false, message: 'email query param required' });
+    const User = require('../models/User.model');
+    const user = await User.findOne({ email: email.toLowerCase().trim() }).select('role').lean();
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    res.status(200).json({ success: true, role: user.role });
+  } catch (error) {
+    handleError(res, error, 500);
+  }
+};
+
 module.exports.warnUser = async (req, res) => {
   try {
     if (!req.user?.email) return res.status(401).json({ success: false, error: "User not authenticated" });
@@ -272,17 +285,5 @@ module.exports.parseCV = async (req, res) => {
     if (error?.message?.includes("unsupported countries") || error?.message?.includes("AccessDenied"))
       return res.status(403).json({ success: false, error: "CV analysis service unavailable in your region." });
     handleError(res, error, 400);
-  }
-};
-
-module.exports.checkRole = async (req, res) => {
-  try {
-    const email = (req.query.email || "").trim().toLowerCase();
-    if (!email) return res.status(400).json({ error: "Email is required" });
-    const user = await User.findOne({ email }).select("role").lean();
-    if (!user) return res.status(404).json({ role: null, exists: false });
-    res.json({ role: user.role, exists: true });
-  } catch (error) {
-    handleError(res, error);
   }
 };

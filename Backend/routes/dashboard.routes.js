@@ -1,70 +1,95 @@
 /**
- * Dashboard routes (statistics and exports)
- *
- * Global middlewares applied:
- * - requireAuthUser: requires an authenticated user
- * - controledAcces('Admin'): restricted to administrators
- * - LogMiddleware("Dashboard"): logs dashboard access
+ * Dashboard routes (statistics)
  */
 const express = require("express");
 const router = express.Router();
 const dashboardController = require("../controllers/dashboard.controller");
 
-// Import des middlewares
 const { requireAuth } = require("../middleware/security/auth.middleware");
 const { verifyApiKey, checkScope } = require("../middleware/security/api-key.middleware");
-
-const authLogMiddleware = require("../middleware/security/request-log.middleware.js")
-const { controledAcces } = require('../middleware/authorize.middleware.js'); // Importez le middleware
+const authLogMiddleware = require("../middleware/security/request-log.middleware.js");
+const { controledAcces } = require('../middleware/authorize.middleware.js');
 const resolveCompanyActor = require('../middleware/resolve-company-actor.middleware');
 
-
-// All routes below require an authenticated admin
-//router.use(requireAuthUser, authLogMiddleware("Dashboard"));
-// Auth required + logs for all routes
-// Accepts either JWT (requireAuthUser) or API key (verifyApiKey)
 router.use(requireAuth);
 
-// GET /dashboard/getAllUsers
-// Description: Retrieves the list of all users
+/**
+ * @openapi
+ * /dashboard/getAllUsers:
+ *   get:
+ *     tags: [Dashboard]
+ *     summary: List all users (paginated)
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 10 }
+ *       - in: query
+ *         name: username
+ *         schema: { type: string }
+ *       - in: query
+ *         name: email
+ *         schema: { type: string }
+ *       - in: query
+ *         name: role
+ *         schema: { type: string }
+ *       - in: query
+ *         name: status
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Paginated list of users
+ */
 router.get("/getAllUsers", dashboardController.getAllUsers);
 
-// GET /dashboard/getCounts
-// Description: Retrieves global counters (users, etc.)
+/**
+ * @openapi
+ * /dashboard/getCounts:
+ *   get:
+ *     tags: [Dashboard]
+ *     summary: Global platform counters
+ *     responses:
+ *       200:
+ *         description: Aggregated counts
+ */
 router.get("/getCounts", dashboardController.getCounts);
 
-// GET /dashboard/statsCards
-// Description: Retrieves statistics displayed as cards on the dashboard
+/**
+ * @openapi
+ * /dashboard/statsCards:
+ *   get:
+ *     tags: [Dashboard]
+ *     summary: Card statistics for the dashboard
+ *     responses:
+ *       200:
+ *         description: Stats cards data
+ */
 router.get("/statsCards", resolveCompanyActor, dashboardController.getStatsCards);
+
+/**
+ * @openapi
+ * /dashboard/richStats:
+ *   get:
+ *     tags: [Dashboard]
+ *     summary: Rich/extended dashboard statistics
+ *     responses:
+ *       200:
+ *         description: Extended stats
+ */
 router.get("/richStats", resolveCompanyActor, dashboardController.getRichStats);
 
-// GET /dashboard/getUserCountsByDay
-// Description: Retrieves daily evolution of user count
+/**
+ * @openapi
+ * /dashboard/getUserCountsByDay:
+ *   get:
+ *     tags: [Dashboard]
+ *     summary: Daily counts for users, posts, and assessments
+ *     responses:
+ *       200:
+ *         description: Array of daily data points
+ */
 router.get("/getUserCountsByDay", dashboardController.getCountsByDay);
-
-// GET /dashboard/getUserCountsByLocation
-// Description: Statistics by location
-router.get("/getUserCountsByLocation", dashboardController.getUserCountsByLocation);
-
-// GET /dashboard/job-assessment-results-grouped
-// Description: Assessment results grouped by jobId
-router.get("/job-assessment-results-grouped", dashboardController.getJobAssessmentResultsGroupedByJobId);
-
-// POST /dashboard/getJobAssessmentsBySkill
-// Body: { skill: string }
-// Description: Retrieves assessments by skill
-router.post("/getJobAssessmentsBySkill", dashboardController.getJobAssessmentsBySkill);
-
-// GET /dashboard/downloadUserExcel
-// Description: Downloads an Excel export of users
-router.get("/downloadUserExcel", dashboardController.downloadUserExcel);
-
-// GET /dashboard/download-users-with-assessment-zero
-// Description: Downloads users without assessment
-router.get("/download-users-with-assessment-zero", dashboardController.downloadUserExcelWithAssessmentZero);
-
-// GET /dashboard/download-users-with-assessment-Above50
-// Description: Downloads users with score > 50
-router.get("/download-users-with-assessment-Above50", dashboardController.downloadUserExcelWithAssessmentAbove50);
 
 module.exports = router;

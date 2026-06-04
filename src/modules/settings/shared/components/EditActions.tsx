@@ -38,7 +38,7 @@ const EditActions: React.FC<EditActionsProps> = ({ isEditing, loading, onEdit, o
         startIcon={loading ? undefined : <SaveOutlined sx={{ fontSize: 14 }} />}
         onClick={onSave}
         disabled={loading}
-        sx={{ textTransform: "none", borderRadius: 2, fontWeight: 600, fontSize: "12px", bgcolor: TEAL, "&:hover": { bgcolor: "#0F766E" } }}
+        sx={{ textTransform: "none", borderRadius: 2, fontWeight: 600, fontSize: "12px", bgcolor: TEAL, color: "#fff", "&:hover": { bgcolor: "#0F766E" }, "&.Mui-disabled": { bgcolor: TEAL, opacity: 0.6, color: "#fff" } }}
       >
         {loading ? <CircularProgress size={14} color="inherit" /> : "Save"}
       </Button>
