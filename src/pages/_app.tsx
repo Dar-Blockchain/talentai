@@ -14,7 +14,7 @@ import CookieBanner from "@/components/ui/CookieBanner";
 import { Poppins } from "next/font/google";
 import MuiToast from "@/components/ui/Toast";
 import { useToast, ToastProvider } from "@/hooks/useToast";
-import { NotificationProvider } from "@/modules/notifications/context/NotificationContext";
+import { NotificationProvider } from "@/modules/notifications/shared/context";
 import TeamChatRealtimeBridge from "@/modules/chat/team-chat/components/TeamChatRealtimeBridge";
 import CandidateChatRealtimeBridge from "@/modules/chat/candidate-chat/components/CandidateChatRealtimeBridge";
 import ChatUnreadSyncBridge from "@/modules/chat/shared/components/ChatUnreadSyncBridge";

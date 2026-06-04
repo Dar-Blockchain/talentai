@@ -98,10 +98,7 @@ export const useInterviewConfig = ({
       console.log('🔍 Fetching interview config for jobId:', jobId);
 
       // 1. Check if this is a pipeline job
-      // Guests (no token) use the public endpoint; authenticated users use the protected one
-      const postUrl = token
-        ? `${process.env.NEXT_PUBLIC_API_BASE_URL}post/getPostById/${jobId}`
-        : `${process.env.NEXT_PUBLIC_API_BASE_URL}post/details/${jobId}`;
+      const postUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}post/details/${jobId}`;
 
       const postHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) postHeaders['Authorization'] = `Bearer ${token}`;
@@ -139,8 +136,6 @@ export const useInterviewConfig = ({
         postId: post._id,
         creationType: post.creationType,
         isPipeline: isPipeline,
-        hasPostSteps: !!post.PostSteps,
-        postStepsCount: post.PostSteps?.length || 0
       });
       console.log('📋 Job type:', isPipeline ? 'Pipeline ⚡' : 'Regular');
       setIsPipelineJob(isPipeline);

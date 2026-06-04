@@ -11,7 +11,7 @@ interface NotificationContextValue {
   isConnected: boolean;
 }
 
-const NotificationStateContext = createContext<NotificationContextValue>({ isConnected: false });
+export const NotificationStateContext = createContext<NotificationContextValue>({ isConnected: false });
 
 export const NotificationProvider: React.FC<{ children: ReactNode; userId?: string }> = ({ children, userId }) => {
   const { isConnected } = useNotificationSocket(userId);

@@ -65,8 +65,15 @@ const PostDescription = ({ onGeneratingChange }: PostDescriptionProps) => {
         },
         onSettled: () => onGeneratingChange?.(false),
         onError: (err: unknown) => {
-          const message = err instanceof Error ? err.message : "Failed to generate job post. Please try again.";
-          showToast({ message, severity: "error" });
+          const errorCode = (err as { response?: { data?: { error?: string } } }).response?.data?.error;
+          if (errorCode === "invalid_input") {
+            setErrors((prev) => ({ ...prev, promptDescription: t("create.form.error_invalid_input") }));
+          } else if (errorCode === "insufficient_detail") {
+            setErrors((prev) => ({ ...prev, promptDescription: t("create.form.error_insufficient_detail") }));
+          } else {
+            const message = err instanceof Error ? err.message : "Failed to generate job post. Please try again.";
+            showToast({ message, severity: "error" });
+          }
         },
       }
     );

@@ -1,11 +1,11 @@
 "use client";
-import React, { useMemo, useEffect, useState, useRef } from "react";
+import React, { useMemo, useEffect, useState, useRef, useCallback } from "react";
 import { Box } from "@mui/material";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { getToken } from "@/utils/tokenUtils";
 import HeaderLogo from "@/components/layout/header/HeaderLogo";
-import HeaderNotification from "@/modules/notifications/components/HeaderNotification";
+import HeaderNotification from "@/modules/notifications/shared/components/HeaderNotification";
 import UserAvatar from "@/components/layout/header/UserAvatar";
 import HamburgerButton from "@/components/layout/header/HamburgerButton";
 import HeaderNavMenu from "@/components/layout/header/HeaderNavMenu";
@@ -19,11 +19,13 @@ const Header = () => {
   const router    = useRouter();
   const socketRef = useRef<Socket | null>(null);
   const [scrolled, setScrolled] = useState(false);
-
   const isAuthRedux   = useSelector((state: RootState) => state.auth.isAuthenticated);
   const connectedUser = useSelector((state: RootState) => state.user?.connectedUser?.user);
   const profile       = useSelector((state: RootState) => state.user?.connectedUser?.profile);
   const userId        = connectedUser?._id;
+  const isCandidate   = connectedUser?.role?.toLowerCase() === 'candidate';
+
+  const handleCandidateViewAll = useCallback(() => router.push('/candidate/notifications'), [router]);
 
   // Derive auth from token directly — covers the PersistGate rehydration window
   // where isAuthRedux is still false even though a valid token exists.
@@ -146,7 +148,7 @@ const Header = () => {
                     gap: 0.5,
                   }}>
                     <HeaderMessagesDropdown userId={userId} unreadMessageCount={unreadMessageCount} />
-                    <HeaderNotification />
+                    <HeaderNotification onViewAll={isCandidate ? handleCandidateViewAll : undefined} />
                   </Box>
 
                   {/* Divider */}
@@ -174,6 +176,7 @@ const Header = () => {
 
       {/* Spacer so page content starts below the fixed header */}
       <Box sx={{ height: { xs: 76, md: 90 } }} />
+
     </>
   );
 };

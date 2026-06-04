@@ -5,8 +5,8 @@ import Cookies from "js-cookie";
 import type { AppDispatch } from "@/store/store";
 import { setConnectedUser } from "@/store/slices/userSlice";
 import { setAuthenticated } from "@/store/slices/authSlice";
-import { notificationApi } from "@/modules/notifications/api/notificationApi";
-import { notifMessages } from "@/modules/notifications/i18n/notificationMessages";
+import { notificationApi } from "@/modules/notifications/shared/api";
+import { notifMessages } from "@/modules/notifications/shared/i18n";
 import { authApi } from "../api";
 import type { VerifyOtpPayload, VerifyOtpResponse } from "../types";
 

@@ -209,73 +209,7 @@ exports.getPostDetailsPublic = async (req, res) => {
 
     const post = await postService.getPostById(req.params.id);
 
-    console.log("📄 Public job details requested for ID:", req.params.id);
-
-    // For pipeline jobs, extract skills from PostSteps instead of skillAnalysis
-    // For pipeline jobs, extract skills from Post_Steps instead of skillAnalysis
-    if (
-      post.creationType === "pipeline" &&
-      post.PostSteps &&
-      post.PostSteps.length > 0
-    ) {
-      console.log("🔄 Pipeline job detected - extracting skills from steps");
-
-      const pipelineSkills = [];
-      const pipelineSoftSkills = [];
-
-      // Extract skills from each technical/soft step
-      post.PostSteps.forEach((step) => {
-        console.log(
-          `📋 Checking step: type=${step.data?.type}, configured=${step.data?.config?.configured}`,
-        );
-
-        if (step.data?.type === "technical" && step.data?.config?.skills) {
-          console.log(
-            `  → Found ${step.data.config.skills.length} technical skills`,
-          );
-          // Add technical skills with their required level
-          step.data.config.skills.forEach((skill) => {
-            pipelineSkills.push({
-              name: skill.name,
-              level: skill.requiredLevel || "Intermediate",
-            });
-          });
-        }
-
-        if (step.data?.type === "soft" && step.data?.config?.softSkills) {
-          console.log(
-            `  → Found ${step.data.config.softSkills.length} soft skills`,
-          );
-          // Add soft skills
-          step.data.config.softSkills.forEach((softSkill) => {
-            pipelineSoftSkills.push(softSkill);
-          });
-        }
-      });
-
-      // 🔥 ALWAYS override skillAnalysis for pipeline jobs to avoid showing default skills
-      post.skillAnalysis = post.skillAnalysis || {};
-
-      if (pipelineSkills.length > 0 || pipelineSoftSkills.length > 0) {
-        // Use extracted pipeline skills
-        post.skillAnalysis.requiredSkills = [
-          ...pipelineSkills,
-          ...pipelineSoftSkills.map((skill) => ({
-            name: skill,
-            level: "Intermediate",
-          })),
-        ];
-        console.log(
-          `✅ Extracted ${pipelineSkills.length} technical + ${pipelineSoftSkills.length} soft skills from pipeline`,
-        );
-      } else {
-        // Clear default skills to avoid showing wrong data
-        post.skillAnalysis.requiredSkills = [];
-        console.log(
-          "⚠️ No skills found in pipeline steps - clearing default skills",
-        );
-      }
-    }
+    delete post.PostSteps;
 
     res.status(200).json({
       success: true,
@@ -287,21 +221,6 @@ exports.getPostDetailsPublic = async (req, res) => {
   }
 };
 
-// Retrieve post by ID
-exports.getPostById = async (req, res) => {
-  try {
-    if (!req.params.id) {
-      return res
-        .status(400)
-        .json({ success: false, error: "Post ID is required" });
-    }
-
-    const post = await postService.getPostById(req.params.id);
-    res.status(200).json({ success: true, data: post });
-  } catch (error) {
-    handleError(res, error, 404);
-  }
-};
 
 // Get pipeline job details with all step configurations
 exports.getPipelineJobDetails = async (req, res) => {
@@ -559,7 +478,7 @@ exports.getJobInterviewConfig = async (req, res) => {
 
     // ⚠️ IMPORTANT: This endpoint is ONLY for non-pipeline jobs
     // Pipeline jobs should use /api/pipeline-interview/progress API instead
-    const isPipeline = post.creationType === "pipeline";
+    const PostSteps = post.creationType === "pipeline";
 
     if (isPipeline) {
       console.log(

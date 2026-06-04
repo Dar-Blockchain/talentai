@@ -8,7 +8,11 @@ import { useNotifications } from '../context/NotificationContext';
 import NotificationDropdown from './NotificationDropdown';
 import { NotificationsNoneRounded, NotificationsRounded } from '@mui/icons-material';
 
-const HeaderNotification = () => {
+interface HeaderNotificationProps {
+  onViewAll?: () => void;
+}
+
+const HeaderNotification = ({ onViewAll }: HeaderNotificationProps) => {
   const router = useRouter();
   const { user } = useSelector((state: RootState) => state.user.connectedUser);
   const [anchor, setAnchor] = useState<null | HTMLElement>(null);
@@ -19,12 +23,24 @@ const HeaderNotification = () => {
 
   const isOpen = Boolean(anchor);
 
+  const notificationsPage = isCompany ? '/notifications' : '/candidate/notifications';
+
   const handleOpen  = useCallback((e: React.MouseEvent<HTMLElement>) => setAnchor(e.currentTarget), []);
   const handleClose = useCallback(() => setAnchor(null), []);
   const handleViewAll = useCallback(() => {
     setAnchor(null);
-    router.push('/notifications');
-  }, [router, isCompany]);
+    if (onViewAll) {
+      onViewAll();
+    } else {
+      router.push(notificationsPage);
+    }
+  }, [router, onViewAll, notificationsPage]);
+
+  const handleNotificationClick = useCallback((id: string) => {
+    setAnchor(null);
+    markAsRead(id);
+    router.push(notificationsPage);
+  }, [router, markAsRead, notificationsPage]);
 
   return (
     <>
@@ -77,6 +93,7 @@ const HeaderNotification = () => {
         onMarkAsRead={markAsRead}
         onMarkAllAsRead={markAllAsRead}
         onViewAll={handleViewAll}
+        onNotificationClick={handleNotificationClick}
         onArchive={archive}
         onArchiveAll={archiveAll}
         onDelete={deleteById}

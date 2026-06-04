@@ -122,6 +122,8 @@
       "btn_generate": "Generate Job Post with AI",
       "btn_generating": "Generating Post…",
       "error_prompt": "Please describe the role",
+      "error_invalid_input": "Your input contains inappropriate or unrecognizable content. Please revise it.",
+      "error_insufficient_detail": "Please provide more details about the role so AI can understand what you need.",
       "error_salary_required": "Currency, min and max are required",
       "error_salary_max": "Max salary must be greater than min",
       "error_required": "Required"

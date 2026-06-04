@@ -10,7 +10,7 @@ import {
 import MenuOutlined from "@mui/icons-material/MenuOutlined";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
-import HeaderNotification from "@/modules/notifications/components/HeaderNotification";
+import HeaderNotification from "@/modules/notifications/shared/components/HeaderNotification";
 import HeaderChat from "./HeaderChat";
 import GlobalSearch from "./GlobalSearch";
 import LanguageSwitcher from "@/components/ui/LanguageSwitcher";

@@ -14,7 +14,10 @@ export interface JobPreviewPanelProps {
 export default function JobInterviewPanel({ jobData, isConfigLoading, onStartInterview }: JobPreviewPanelProps) {
   const jd = jobData?.jobDetails || {};
   const companyName =
-    jobData?.user?.companyName || jobData?.companyName || "Company";
+    jobData?.createdBy?.name ||
+    jobData?.companyName ||
+    jobData?.user?.username ||
+    "Company";
   const jobTitle = jd.title || jobData?.title || "Open Position";
 
   const skills = useMemo(() => getPostSkills(jobData), [jobData]);
@@ -54,6 +57,7 @@ export default function JobInterviewPanel({ jobData, isConfigLoading, onStartInt
             companyName={companyName}
             jd={jd}
             createdAt={jobData?.createdAt}
+            expirationDate={jobData?.expirationDate}
           />
           <JobDetailsColumn
             jd={jd}

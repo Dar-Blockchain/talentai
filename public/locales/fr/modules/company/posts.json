@@ -122,6 +122,8 @@
       "btn_generate": "Générer l'offre avec l'IA",
       "btn_generating": "Génération en cours…",
       "error_prompt": "Veuillez décrire le poste",
+      "error_invalid_input": "Votre saisie contient du contenu inapproprié ou incompréhensible. Veuillez la réviser.",
+      "error_insufficient_detail": "Veuillez fournir plus de détails sur le poste afin que l'IA puisse comprendre votre besoin.",
       "error_salary_required": "La devise, le minimum et le maximum sont requis",
       "error_salary_max": "Le salaire maximum doit être supérieur au minimum",
       "error_required": "Requis"
