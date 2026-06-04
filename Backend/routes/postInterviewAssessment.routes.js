@@ -66,9 +66,6 @@ router.get('/check/:postId', postInterviewAssessmentController.checkCandidateAss
 // GET /post-interview-assessments/eligibility/:postId — Unified eligibility check
 router.get('/eligibility/:postId', postInterviewAssessmentController.checkInterviewEligibility);
 
-// GET /post-interview-assessments/matching/:postId — Get matching details for candidate and post
-router.get('/matching/:postId', postInterviewAssessmentController.getMatchingDetails);
-
 // GET /post-interview-assessments — Get all assessments
 /**
  * @openapi
