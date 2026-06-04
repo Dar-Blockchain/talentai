@@ -322,7 +322,14 @@ const Sidebar: React.FC<SidebarProps> = ({
         </Box>
 
         {/* ── Nav ── */}
-        <Box sx={{ flex: 1, overflowY: "auto", py: 2, px: 1 }} className="custom-scrollbar">
+        <Box sx={{
+          flex: 1, overflowY: "auto", py: 2, px: 1,
+          scrollbarWidth: "thin",
+          scrollbarColor: `${BORDER} transparent`,
+          "&::-webkit-scrollbar": { width: 4 },
+          "&::-webkit-scrollbar-track": { background: "transparent" },
+          "&::-webkit-scrollbar-thumb": { background: BORDER, borderRadius: 4, "&:hover": { background: "#2a4a6a" } },
+        }}>
 
           {/* ── Company nav ── */}
           {!isEmployee && GROUPS.map((group, gi) => {
@@ -406,8 +413,8 @@ const Sidebar: React.FC<SidebarProps> = ({
 
             {!isCollapsed && (
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                  <Typography noWrap sx={{ fontSize: "12.5px", fontWeight: 600, color: "#E8F6F9", lineHeight: 1.35 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
+                  <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#E8F6F9", lineHeight: 1.35, wordBreak: "break-word" }}>
                     {displayName}
                   </Typography>
                   {activePlanLabel && (
@@ -489,7 +496,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   )}
                 </Box>
                 {displayEmail && (
-                  <Typography noWrap sx={{ fontSize: "10px", color: TXT_CLR, lineHeight: 1.3 }}>
+                  <Typography sx={{ fontSize: "10px", color: TXT_CLR, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {displayEmail}
                   </Typography>
                 )}
