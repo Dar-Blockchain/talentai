@@ -21,6 +21,7 @@ export interface NotificationItem {
   isRead:    boolean;
   icon:      NotificationLevel;
   archived?: boolean;
+  link?:     string;
 }
 
 export interface NotificationsData {
@@ -36,9 +37,28 @@ export interface BroadcastResult {
   notifications: NotificationItem[];
 }
 
+// ─── Shared visual styles (single source of truth for all UI) ────────────────
+
+export interface NotifTypeStyle {
+  bg:     string;
+  color:  string;
+  border: string;
+  dot:    string;
+}
+
+export const NOTIF_TYPE_STYLES: Record<NotificationLevel, NotifTypeStyle> = {
+  success: { bg: '#D1FAE5', color: '#065F46', border: '#6EE7B7', dot: '#10B981' },
+  warning: { bg: '#FEF3C7', color: '#92400E', border: '#FCD34D', dot: '#F59E0B' },
+  error:   { bg: '#FEE2E2', color: '#991B1B', border: '#FCA5A5', dot: '#EF4444' },
+  info:    { bg: '#DBEAFE', color: '#1E40AF', border: '#93C5FD', dot: '#3B82F6' },
+};
+
+export const getNotifTypeStyle = (type: string): NotifTypeStyle =>
+  NOTIF_TYPE_STYLES[type as NotificationLevel] ?? NOTIF_TYPE_STYLES.info;
+
 // ─── Raw backend shapes (before mapping) ────────────────────────────────────
 
-interface RawNotification {
+export interface RawNotification {
   _id?:       string;
   id?:        string;
   type?:      NotificationLevel | 'system' | 'custom';
@@ -50,6 +70,7 @@ interface RawNotification {
   read?:      boolean;
   isRead?:    boolean;
   archived?:  boolean;
+  link?:      string | null;
 }
 
 interface RawNotificationsResponse {
@@ -111,6 +132,7 @@ export const mapToNotificationItem = (raw: RawNotification, archived = false): N
     isRead:    archived ? true : (raw.read ?? raw.isRead ?? false),
     icon:      type,
     ...(archived ? { archived: true } : {}),
+    ...(raw.link ? { link: raw.link } : {}),
   };
 };
 

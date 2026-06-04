@@ -44,7 +44,7 @@ async function createSystemNotification(recipientId, content) {
   return notification;
 }
 
-async function createNotification(recipientId, content, type, category = 'system') {
+async function createNotification(recipientId, content, type, category = 'system', link = null) {
   /**
    * Create a notification with a specific type and optional category
    * @param {string} recipientId - User ID of the recipient
@@ -63,6 +63,7 @@ async function createNotification(recipientId, content, type, category = 'system
     type,
     category,
     read: false,
+    ...(link ? { link } : {}),
   });
 
   await notification.save();

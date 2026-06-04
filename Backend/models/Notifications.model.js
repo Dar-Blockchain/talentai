@@ -74,6 +74,11 @@ const NotificationSchema = new mongoose.Schema(
         default: false,
         index: true, // Index for quick filtering of archived notifications
       },
+    link: {
+      type: String,
+      trim: true,
+      default: null,
+    },
     recipient: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

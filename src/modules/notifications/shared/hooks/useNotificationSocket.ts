@@ -5,21 +5,7 @@ import { NOTIF_KEYS } from './useNotifications';
 import { mapToNotificationItem } from '../api/notificationApi';
 import { playNotificationSound } from '../utils/notificationSounds';
 import { emitToast } from '@/utils/toastEmitter';
-import type { NotificationsData, NotificationItem, NotificationLevel, NotificationCategory } from '../api/notificationApi';
-
-// ─── Socket event payload types ───────────────────────────────────────────────
-
-interface NotificationPayload {
-  _id?: string;
-  id?:  string;
-  type?: 'info' | 'success' | 'warning' | 'error' | 'custom' | 'system';
-  category?: 'system' | 'job' | 'chat' | 'account' | 'profile';
-  title?: string;
-  content?: string;
-  message?: string;
-  createdAt?: string | number;
-  read?: boolean;
-}
+import type { NotificationsData, NotificationItem, NotificationLevel, NotificationCategory, RawNotification } from '../api/notificationApi';
 
 interface NotificationIdPayload {
   id?:             string;
@@ -39,8 +25,6 @@ interface InterviewCompletedPayload {
 interface MessagePayload {
   message?: string;
 }
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const shouldShowToast = (message: string): boolean => {
   const lower = message.toLowerCase();
@@ -73,8 +57,6 @@ const prependNotification = (old: NotificationsData | undefined, notif: Notifica
   };
 };
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────
-
 const INTERVIEW_TYPE_LABELS: Record<string, string> = {
   HR_INTERVIEW:          'HR',
   TECHNICAL_INTERVIEW:   'Technical',
@@ -104,8 +86,7 @@ export const useNotificationSocket = (userId: string | undefined) => {
 
     socket.on('disconnect', () => setIsConnected(false));
 
-    // New real-time notification pushed from backend
-    socket.on('notification', (payload: NotificationPayload) => {
+    socket.on('notification', (payload: RawNotification) => {
       const notif = mapToNotificationItem(payload);
       qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => prependNotification(old, notif));
       playNotificationSound(notif.type);
@@ -118,7 +99,6 @@ export const useNotificationSocket = (userId: string | undefined) => {
       qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => {
         if (!old) return old;
         const target = old.notifications.find(n => n.id === id);
-        // Skip if mutation already removed it — avoids double-decrement of nonArchivedCount
         if (!target) return old;
         return {
           ...old,
@@ -135,7 +115,6 @@ export const useNotificationSocket = (userId: string | undefined) => {
       qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => {
         if (!old) return old;
         const target = old.notifications.find(n => n.id === id);
-        // Skip if mutation already removed it — avoids double-increment of archivedCount
         if (!target) return old;
         return {
           ...old,
@@ -147,12 +126,10 @@ export const useNotificationSocket = (userId: string | undefined) => {
       });
     });
 
-    // FIX: was completely ignored before
     socket.on('notificationsArchived', () => {
       qc.invalidateQueries({ queryKey: NOTIF_KEYS.all });
     });
 
-    // FIX: was completely ignored before
     socket.on('unreadCountUpdated', (payload: UnreadCountPayload) => {
       qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => {
         if (!old) return old;

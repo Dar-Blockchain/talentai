@@ -65,7 +65,6 @@ export const useArchiveNotification = () => {
       qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => {
         if (!old) return old;
         const target = old.notifications.find(n => n.id === id);
-        // Skip if socket already removed it — avoids double-increment of archivedCount
         if (!target) return old;
         return {
           ...old,
@@ -88,7 +87,6 @@ export const useDeleteNotification = () => {
       qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => {
         if (!old) return old;
         const target = old.notifications.find(n => n.id === id);
-        // Skip if socket already removed it — avoids double-decrement of nonArchivedCount
         if (!target) return old;
         return {
           ...old,

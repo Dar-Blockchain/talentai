@@ -28,7 +28,7 @@ import LogoutProgressModal from "@/components/ui/LogoutProgressModal";
 import { useTranslation } from "react-i18next";
 import { useChatUnreadBadges } from "@/modules/chat/shared/hooks/useChatUnreadBadges";
 import ChatUnreadBadge from "@/modules/chat/shared/components/ChatUnreadBadge";
-import { useNotifications } from "@/modules/notifications/context/NotificationContext";
+import { useNotifications } from "@/modules/notifications/shared/context";
 
 interface SidebarProps {
   collapsed: boolean;

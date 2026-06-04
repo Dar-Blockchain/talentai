@@ -15,19 +15,28 @@ import {
   DeleteForever as DeleteForeverIcon,
   Wifi as WifiIcon,
   WifiOff as WifiOffIcon,
+  ArrowForward as ArrowForwardIcon,
 } from '@mui/icons-material';
-import { useNotifications } from '../context/NotificationContext';
-import { useArchivedNotificationsQuery, NOTIF_KEYS } from '../hooks/useNotifications';
-import { useQueryClient } from '@tanstack/react-query';
-import type { NotificationsData } from '../api/notificationApi';
-import type { NotificationItem } from '../api/notificationApi';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'next/router';
+import {
+  useCandidateNotifications,
+  useCandidateArchivedNotifications,
+  useSyncCandidateArchivedCount,
+} from '../hooks/useCandidateNotifications';
+import type { NotificationItem } from '../hooks/useCandidateNotifications';
+import { getNotifTypeStyle } from '../../shared/api/notificationApi';
+import type { NotifTypeStyle } from '../../shared/api/notificationApi';
+
+// ─── Design tokens ────────────────────────────────────────────────────────────
 
 const T    = '#0D9488';
 const TBG  = '#F0FDFA';
 const TBRD = '#99F6E4';
 const NAVY = '#0D1B2A';
 const PAGE_SIZE = 10;
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const getIcon = (type: string) => {
   switch (type) {
@@ -38,153 +47,111 @@ const getIcon = (type: string) => {
   }
 };
 
-const getColors = (type: string) => {
-  switch (type) {
-    case 'success': return { bg: '#d1fae5', color: '#065f46', border: '#6ee7b7' };
-    case 'warning': return { bg: '#fef3c7', color: '#92400e', border: '#fcd34d' };
-    case 'error':   return { bg: '#fee2e2', color: '#991b1b', border: '#fca5a5' };
-    default:        return { bg: TBG,       color: T,         border: TBRD      };
-  }
-};
+// Panel uses brand teal for info/default instead of the standard blue
+const TEAL_STYLE: NotifTypeStyle = { bg: TBG, color: T, border: TBRD, dot: T };
+const getPanelTypeStyle = (type: string): NotifTypeStyle =>
+  (type === 'success' || type === 'warning' || type === 'error')
+    ? getNotifTypeStyle(type)
+    : TEAL_STYLE;
 
-// ─── Confirm Dialog ───────────────────────────────────────────────────────────
+// ─── Delete Confirm Dialog ────────────────────────────────────────────────────
 
-interface ConfirmState {
-  open: boolean;
-  type: 'single' | 'all';
-  id?:  string;
-}
-
+interface ConfirmState { open: boolean; type: 'single' | 'all'; id?: string }
 const CLOSED: ConfirmState = { open: false, type: 'single' };
 
-interface DeleteConfirmDialogProps {
+const DeleteConfirmDialog: React.FC<{
   confirm: ConfirmState;
   onCancel: () => void;
   onConfirm: () => void;
-}
-
-const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({ confirm, onCancel, onConfirm }) => {
+}> = ({ confirm, onCancel, onConfirm }) => {
   const { t } = useTranslation('dashboard');
   const s = (k: string) => t(`candidate_settings.notifications.${k}`);
   return (
-  <Dialog
-    open={confirm.open}
-    onClose={onCancel}
-    PaperProps={{
-      sx: {
-        borderRadius: '20px',
-        p: 0,
-        minWidth: 400,
-        maxWidth: 420,
-        overflow: 'hidden',
-        boxShadow: '0 32px 80px rgba(0,0,0,0.18)',
-        border: '1px solid #F3F4F6',
-      },
-    }}
-  >
-    <DialogContent sx={{ p: 0 }}>
-      {/* Top section */}
-      <Box sx={{ bgcolor: '#fff', px: 3.5, pt: 4, pb: 3, textAlign: 'center' }}>
-        {/* Outer glow ring + icon */}
-        <Box sx={{
-          width: 80, height: 80, borderRadius: '50%',
-          background: 'radial-gradient(circle, #FEE2E2 60%, #FECACA 100%)',
-          boxShadow: '0 0 0 10px rgba(239,68,68,0.08)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          mx: 'auto', mb: 2.5,
-        }}>
-          <DeleteForeverIcon sx={{ fontSize: 36, color: '#EF4444' }} />
+    <Dialog open={confirm.open} onClose={onCancel}
+      PaperProps={{
+        sx: {
+          borderRadius: '20px', p: 0, minWidth: 400, maxWidth: 420,
+          overflow: 'hidden', boxShadow: '0 32px 80px rgba(0,0,0,0.18)',
+          border: '1px solid #F3F4F6',
+        },
+      }}
+    >
+      <DialogContent sx={{ p: 0 }}>
+        <Box sx={{ bgcolor: '#fff', px: 3.5, pt: 4, pb: 3, textAlign: 'center' }}>
+          <Box sx={{
+            width: 80, height: 80, borderRadius: '50%',
+            background: 'radial-gradient(circle, #FEE2E2 60%, #FECACA 100%)',
+            boxShadow: '0 0 0 10px rgba(239,68,68,0.08)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            mx: 'auto', mb: 2.5,
+          }}>
+            <DeleteForeverIcon sx={{ fontSize: 36, color: '#EF4444' }} />
+          </Box>
+          <Typography sx={{ fontWeight: 800, fontSize: '1.1rem', color: '#111827', mb: 1 }}>
+            {confirm.type === 'all' ? s('confirm_delete_all_title') : s('confirm_delete_one_title')}
+          </Typography>
+          <Typography sx={{ fontSize: '0.82rem', color: '#9CA3AF', lineHeight: 1.7, px: 1 }}>
+            {confirm.type === 'all' ? s('confirm_delete_all_body') : s('confirm_delete_one_body')}
+          </Typography>
         </Box>
-
-        <Typography sx={{ fontWeight: 800, fontSize: '1.1rem', color: '#111827', mb: 1 }}>
-          {confirm.type === 'all' ? s('confirm_delete_all_title') : s('confirm_delete_one_title')}
-        </Typography>
-        <Typography sx={{ fontSize: '0.82rem', color: '#9CA3AF', lineHeight: 1.7, px: 1 }}>
-          {confirm.type === 'all' ? s('confirm_delete_all_body') : s('confirm_delete_one_body')}
-        </Typography>
-      </Box>
-
-      {/* Divider */}
-      <Divider sx={{ borderColor: '#F3F4F6' }} />
-
-      {/* Actions */}
-      <Box sx={{ display: 'flex', gap: 1.5, px: 3.5, py: 3, bgcolor: '#FAFAFA' }}>
-        <Button
-          fullWidth
-          variant="outlined"
-          onClick={onCancel}
-          sx={{
+        <Divider sx={{ borderColor: '#F3F4F6' }} />
+        <Box sx={{ display: 'flex', gap: 1.5, px: 3.5, py: 3, bgcolor: '#FAFAFA' }}>
+          <Button fullWidth variant="outlined" onClick={onCancel} sx={{
             textTransform: 'none', fontWeight: 600, fontSize: '0.9rem',
             borderRadius: '12px', borderColor: '#E5E7EB', color: '#374151',
             bgcolor: '#fff', py: 1.25,
             '&:hover': { borderColor: '#D1D5DB', bgcolor: '#F9FAFB' },
-          }}
-        >
-          {s('btn_cancel')}
-        </Button>
-        <Button
-          fullWidth
-          variant="contained"
-          onClick={onConfirm}
-          startIcon={<DeleteForeverIcon sx={{ fontSize: '18px !important' }} />}
-          sx={{
-            textTransform: 'none', fontWeight: 700, fontSize: '0.9rem',
-            borderRadius: '12px', py: 1.25,
-            bgcolor: '#EF4444', color: '#fff',
-            boxShadow: '0 4px 14px rgba(239,68,68,0.35)',
-            border: '1px solid #EF4444',
-            '&:hover': {
-              bgcolor: '#DC2626',
-              boxShadow: '0 6px 20px rgba(239,68,68,0.45)',
-              border: '1px solid #DC2626',
-            },
-          }}
-        >
-          {s('btn_delete')}
-        </Button>
-      </Box>
-    </DialogContent>
-  </Dialog>
+          }}>
+            {s('btn_cancel')}
+          </Button>
+          <Button fullWidth variant="contained" onClick={onConfirm}
+            startIcon={<DeleteForeverIcon sx={{ fontSize: '18px !important' }} />}
+            sx={{
+              textTransform: 'none', fontWeight: 700, fontSize: '0.9rem',
+              borderRadius: '12px', py: 1.25,
+              bgcolor: '#EF4444', color: '#fff',
+              boxShadow: '0 4px 14px rgba(239,68,68,0.35)',
+              border: '1px solid #EF4444',
+              '&:hover': { bgcolor: '#DC2626', boxShadow: '0 6px 20px rgba(239,68,68,0.45)', border: '1px solid #DC2626' },
+            }}>
+            {s('btn_delete')}
+          </Button>
+        </Box>
+      </DialogContent>
+    </Dialog>
   );
 };
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// ─── Main Panel ───────────────────────────────────────────────────────────────
 
-export type NotificationsPanelVariant = 'tab' | 'page';
+export type CandidateNotificationsPanelVariant = 'tab' | 'page';
 
 interface Props {
-  variant?: NotificationsPanelVariant;
+  variant?: CandidateNotificationsPanelVariant;
 }
 
-const NotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
+const CandidateNotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
   const { t } = useTranslation('dashboard');
   const s = (k: string) => t(`candidate_settings.notifications.${k}`);
+  const router = useRouter();
 
   const {
     notifications, unreadCount, archivedCount,
     markAsRead, markAllAsRead, archive, archiveAll,
     deleteById, deleteAll, deleteAllArchived, isConnected,
-  } = useNotifications();
+  } = useCandidateNotifications();
 
   const [activeTab, setActiveTab] = useState(0);
   const [page, setPage]           = useState(1);
   const [confirm, setConfirm]     = useState<ConfirmState>(CLOSED);
 
-  const qc = useQueryClient();
   const isOnArchivedTab = activeTab === 1;
-  const { data: archivedNotifications = [], isLoading: archivedLoading } =
-    useArchivedNotificationsQuery(isOnArchivedTab);
-
-  // Sync archivedCount in cache once archived data loads to correct any drift from double-counting
-  useEffect(() => {
-    if (!isOnArchivedTab || archivedLoading) return;
-    qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => {
-      if (!old || old.archivedCount === archivedNotifications.length) return old;
-      return { ...old, archivedCount: archivedNotifications.length };
-    });
-  }, [isOnArchivedTab, archivedLoading, archivedNotifications.length, qc]);
-
   const isPage = variant === 'page';
+
+  const { data: archivedNotifications = [], isLoading: archivedLoading } =
+    useCandidateArchivedNotifications(isOnArchivedTab);
+
+  useSyncCandidateArchivedCount(isOnArchivedTab, archivedLoading, archivedNotifications.length);
 
   const currentList  = isOnArchivedTab ? archivedNotifications : notifications;
   const totalPages   = Math.ceil(currentList.length / PAGE_SIZE);
@@ -211,7 +178,6 @@ const NotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
     setConfirm(CLOSED);
   };
 
-  // Stats
   const thisWeekCount  = notifications.filter(n => n.timestamp.includes('hour') || n.timestamp.includes('day') || n.timestamp.includes('days')).length;
   const importantCount = notifications.filter(n => n.type === 'warning' || n.type === 'error').length;
 
@@ -222,11 +188,7 @@ const NotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
     { label: s('stat_important'), value: importantCount,       color: '#D97706' },
   ];
 
-  const btnBase = {
-    textTransform: 'none' as const,
-    fontWeight: 600,
-    fontSize: isPage ? 13 : '0.75rem',
-  };
+  const btnBase = { textTransform: 'none' as const, fontWeight: 600, fontSize: isPage ? 13 : '0.75rem' };
 
   const actionButtons = currentList.length > 0 && (
     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
@@ -287,8 +249,8 @@ const NotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
     </Box>
   );
 
-  const notificationList = (items: NotificationItem[]) => items.map((n, index) => {
-    const colors = getColors(n.type);
+  const renderList = (items: NotificationItem[]) => items.map((n, index) => {
+    const colors = getPanelTypeStyle(n.type);
     return (
       <React.Fragment key={n.id}>
         <Box
@@ -312,7 +274,6 @@ const NotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
           }}>
             {getIcon(n.type)}
           </Box>
-
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25, justifyContent: 'space-between' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -332,9 +293,23 @@ const NotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
               </Box>
             </Box>
             <Typography sx={{ fontSize: '0.78rem', color: '#6B7280', lineHeight: 1.5 }}>{n.message}</Typography>
+            {n.link && (
+              <Button
+                size="small"
+                variant="contained"
+                endIcon={<ArrowForwardIcon sx={{ fontSize: '14px !important' }} />}
+                onClick={(e) => { e.stopPropagation(); if (!n.isRead) markAsRead(n.id); router.push(n.link!); }}
+                sx={{
+                  mt: 1, textTransform: 'none', fontWeight: 600, fontSize: '0.75rem',
+                  borderRadius: '8px', px: 1.5, py: 0.5, alignSelf: 'flex-start',
+                  bgcolor: T, color: '#fff', boxShadow: 'none',
+                  '&:hover': { bgcolor: '#0F766E', boxShadow: 'none' },
+                }}
+              >
+                Start Interview
+              </Button>
+            )}
           </Box>
-
-          {/* Action buttons per item */}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25, alignSelf: 'flex-start' }}>
             {!isOnArchivedTab && (
               <IconButton size="small" title="Archive"
@@ -345,12 +320,7 @@ const NotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
             )}
             <IconButton size="small" title="Delete"
               onClick={(e) => { e.stopPropagation(); setConfirm({ open: true, type: 'single', id: n.id }); }}
-              sx={{
-                borderRadius: 1.5,
-                bgcolor: '#FEF2F2',
-                border: '1px solid #FECACA',
-                '&:hover': { bgcolor: '#FEE2E2', borderColor: '#FCA5A5' },
-              }}>
+              sx={{ borderRadius: 1.5, bgcolor: '#FEF2F2', border: '1px solid #FECACA', '&:hover': { bgcolor: '#FEE2E2', borderColor: '#FCA5A5' } }}>
               <DeleteIcon sx={{ fontSize: 17, color: '#EF4444' }} />
             </IconButton>
           </Box>
@@ -363,8 +333,6 @@ const NotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
   return (
     <>
       <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', mb: isPage ? 0 : 2 }}>
-
-        {/* Header */}
         <Box sx={{ px: 2.5, py: 2, borderBottom: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
           <Box>
             <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', color: NAVY }}>
@@ -379,17 +347,14 @@ const NotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
               <Chip
                 icon={isConnected ? <WifiIcon sx={{ fontSize: '14px !important' }} /> : <WifiOffIcon sx={{ fontSize: '14px !important' }} />}
                 label={isConnected ? s('connected') : s('disconnected')}
-                size="small"
-                color={isConnected ? 'success' : 'error'}
+                size="small" color={isConnected ? 'success' : 'error'}
                 sx={{ fontWeight: 600, fontSize: '0.72rem' }}
               />
             )}
             {actionButtons}
           </Box>
         </Box>
-
         <Box sx={{ p: 2.5 }}>
-          {/* Stats — tab variant only */}
           {!isPage && (
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1.5, mb: 2.5 }}>
               {statItems.map(({ label, value, color }) => (
@@ -400,8 +365,6 @@ const NotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
               ))}
             </Box>
           )}
-
-          {/* Tabs — both variants */}
           <Box sx={{ borderBottom: '1px solid #F1F5F9', mb: 2 }}>
             <Tabs value={activeTab} onChange={handleTabChange}
               sx={{
@@ -414,46 +377,25 @@ const NotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
               <Tab label={t('candidate_settings.notifications.tab_archived', { count: archivedCount })} />
             </Tabs>
           </Box>
-
-          {/* List */}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: isPage ? 0 : 1.5 }}>
             {isOnArchivedTab && archivedLoading ? (
               <Box sx={{ py: 6, textAlign: 'center' }}>
                 <CircularProgress size={24} sx={{ color: T }} />
               </Box>
-            ) : visibleItems.length === 0 ? emptyState
-              : notificationList(visibleItems)
-            }
+            ) : visibleItems.length === 0 ? emptyState : renderList(visibleItems)}
           </Box>
-
-          {/* Pagination */}
           {totalPages > 1 && (
             <Box sx={{ display: 'flex', justifyContent: 'center', pt: 2, borderTop: '1px solid #E5E7EB', mt: 2 }}>
-              <Pagination
-                count={totalPages} page={page}
-                onChange={(_, v) => setPage(v)}
-                shape="rounded"
-                sx={{
-                  '& .MuiPaginationItem-root': {
-                    fontWeight: 500,
-                    '&.Mui-selected': { bgcolor: 'rgba(13,148,136,0.1)', color: T, fontWeight: 700 },
-                    '&:hover': { bgcolor: '#F3F4F6' },
-                  },
-                }}
+              <Pagination count={totalPages} page={page} onChange={(_, v) => setPage(v)} shape="rounded"
+                sx={{ '& .MuiPaginationItem-root': { fontWeight: 500, '&.Mui-selected': { bgcolor: 'rgba(13,148,136,0.1)', color: T, fontWeight: 700 }, '&:hover': { bgcolor: '#F3F4F6' } } }}
               />
             </Box>
           )}
         </Box>
       </Box>
-
-      {/* Confirmation dialog */}
-      <DeleteConfirmDialog
-        confirm={confirm}
-        onCancel={() => setConfirm(CLOSED)}
-        onConfirm={handleConfirmDelete}
-      />
+      <DeleteConfirmDialog confirm={confirm} onCancel={() => setConfirm(CLOSED)} onConfirm={handleConfirmDelete} />
     </>
   );
 };
 
-export default React.memo(NotificationsPanel);
+export default React.memo(CandidateNotificationsPanel);

@@ -4,6 +4,7 @@ import ChatBubbleOutlineOutlined from "@mui/icons-material/ChatBubbleOutlineOutl
 import DashboardOutlined from "@mui/icons-material/DashboardOutlined";
 import PsychologyOutlined from "@mui/icons-material/PsychologyOutlined";
 import SchoolOutlined from "@mui/icons-material/SchoolOutlined";
+import NotificationsNoneOutlined from "@mui/icons-material/NotificationsNoneOutlined";
 import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
 import {
   CANDIDATE_MESSAGES_BASE_PATH,
@@ -19,6 +20,7 @@ export interface CandidateWorkspaceNavItem {
   sublabelKey: string;
   href: string;
   view?: CandidateWorkspaceView;
+  modal?: boolean;
   color: string;
   bg: string;
   border: string;
@@ -83,6 +85,16 @@ export const candidateWorkspaceNavItems: CandidateWorkspaceNavItem[] = [
     border: "#FDE68A",
   },
   {
+    id: "notifications",
+    icon: NotificationsNoneOutlined,
+    labelKey: "candidate.nav.notifications",
+    sublabelKey: "candidate.nav.your_notifications",
+    href: "/notifications",
+    color: "#0891B2",
+    bg: "#ECFEFF",
+    border: "#A5F3FC",
+  },
+  {
     id: "settings",
     icon: SettingsOutlined,
     labelKey: "candidate.nav.settings",
@@ -105,6 +117,10 @@ export const isCandidateWorkspaceNavActive = (
 
   if (item.id === "dashboard") {
     return pathname === "/candidate/dashboard" && !viewQuery;
+  }
+
+  if (item.id === "notifications") {
+    return pathname === "/notifications";
   }
 
   if (item.id === "settings") {

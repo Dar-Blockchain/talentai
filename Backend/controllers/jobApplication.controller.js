@@ -461,6 +461,19 @@ module.exports.inviteToInterview = async (req, res) => {
       rejectionReason: null,
     });
 
+    // Send in-app notification to candidate
+    const notificationService = require('../services/notificationSystem.service');
+    const candidateUserId = candidateProfile.userId._id;
+    const candidateInterviewUrl = `/candidate/interview?jobId=${post._id}`;
+
+    notificationService.createNotification(
+      candidateUserId,
+      `You've been invited to interview for "${jobTitle}" at ${companyName}. Your AI interview is ready — click to start.`,
+      'info',
+      'job',
+      candidateInterviewUrl
+    ).catch(err => console.warn('⚠️ Failed to send invite in-app notification:', err.message));
+
     console.log("=".repeat(80) + "\n");
 
     res.status(200).json({
