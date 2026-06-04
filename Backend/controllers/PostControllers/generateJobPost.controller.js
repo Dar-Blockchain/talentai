@@ -83,6 +83,13 @@ module.exports.generateJobPost = async (req, res) => {
       { workMode, contractType, language, interviewLanguages },
     );
 
+    if (result?.error === "invalid_input") {
+      return res.status(404).json({ error: "invalid_input" });
+    }
+    if (result?.error === "insufficient_detail") {
+      return res.status(422).json({ error: "insufficient_detail" });
+    }
+
     const { jobDetails, skillAnalysis, ...rest } = result;
     res.json({
       success: true,

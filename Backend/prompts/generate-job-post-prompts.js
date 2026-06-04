@@ -1,193 +1,297 @@
-const getDetailedPrompt = (description, companyLocation, language = "en") => {
-  const languageInstructions = language === "fr" 
-    ? `Vous devez générer TOUT le contenu en FRANÇAIS (y compris les titres, descriptions, exigences, responsabilités, compétences et le post LinkedIn). Assurez-vous que chaque champ de texte est en français correctement formé.`
-    : `Generate ALL content in ENGLISH (including titles, descriptions, requirements, responsibilities, skills, and LinkedIn post). Ensure all text fields are in proper English.`;
+const getDetailedPrompt = (description, companyLocation, language = "en", employmentType = "Full-time") => {
+  const languageInstruction =
+    language === "fr"
+      ? "Generate ALL text fields in FRENCH only."
+      : "Generate ALL text fields in ENGLISH only.";
+
+  const isInternship = employmentType === "Internship";
+
+  const internshipInstruction = isInternship ? `
+━━━ INTERNSHIP MODE ━━━
+
+This is an internship role. Apply these rules without exception:
+- "employmentType" MUST be "Internship"
+- "experienceLevel" MUST be "Junior"
+- level for ALL skills (requiredSkills AND softSkills): always return null — code resolves it automatically
+- Requirements must NOT mention years of production experience.
+  Use instead: "Basic knowledge of", "Personal or academic project experience with", "Exposure to X through coursework or self-learning"
+- Responsibilities should reflect learning and contributing — not owning or leading
+` : "";
 
   return `
-As an expert technical recruiter and AI assistant, analyze this job description and generate a JSON object with only the following structure:
+You are a structured job analysis AI.
+Generate realistic job post data using only information supported by the input. Do not invent specific facts (numbers, tools, salaries, names) not present in the description. When a required field has no signal, use the safe default — never a specific guess.
 
-${languageInstructions}
+If information is missing or uncertain, use null or safe defaults instead of guessing.
 
-1. Create a professional job post
-2. Extract and suggest relevant skills
-3. Format it for LinkedIn
-4. Provide comprehensive skill analysis
+Infer only what is clearly supported by the job description. Do not rely on the example content when generating the final output.
 
-IMPORTANT:
-${languageInstructions}
-- Extract the exact salary range (min, max, currency) as specified in the job description. Do not estimate or change these values.
-- For the "location" field, extract the location from the job description if specified.
-- If no location is specified in the job description, use the company location: "${companyLocation}".
-- Always include "location" in the output.
-- **CRITICAL: The sum of all percentages in requiredSkills + softSkills must equal EXACTLY 100%**
-- If the job description explicitly mentions language (for example: English, French, Spanish), INCLUDE THAT LANGUAGE as the single soft skill. Assign the language a suitable "percentage" and "level".
-- If no language is mentioned, generate one relevant soft skill as usual (e.g., Problem solving, Communication, Teamwork, Leadership, Adaptability, Time management).
+${languageInstruction}
 
-- Set skill level based on the seniority scale:
-  - Entry-level (0–1 year)   = level 1
-  - Junior      (1–3 years)  = level 2
-  - Mid-level   (3–6 years)  = level 3
-  - Senior      (6–10 years) = level 4
-  - Expert      (10+ years)  = level 5
+Analyze the job description below and return a single valid JSON object. No markdown, no explanation — raw JSON only.
 
-- Each skill in "requiredSkills" must include a "percentage" field representing its importance weight in the job.
-- Only one soft skill must be generated.
-- Core and frequently mentioned skills should receive higher percentages.
+If the input is not a valid job description (random words, gibberish, offensive content, or completely unrelated text) → return exactly this and nothing else:
+{ "error": "invalid_input" }
 
-Job Description:
-${description}
+If the description is valid but too vague to generate a meaningful job post (e.g., only a job title with no context, fewer than 10 meaningful words, no indication of role scope or required skills) → return exactly this and nothing else:
+{ "error": "insufficient_detail" }
 
-Return the response in the following JSON format:
+${internshipInstruction}
+━━━ OUTPUT STRUCTURE ━━━
 
 {
   "jobDetails": {
-    "title": "Job title",
-    "description": "A concise, professional summary of the role (2-4 sentences). Must clearly state what the role is about, the team/product context, and the impact the hire will have. Do NOT repeat requirements or responsibilities here.",
-    "requirements": ["Each requirement must be specific, measurable, and directly relevant to the role. Use concrete technologies, years of experience, degrees, or certifications. Avoid vague terms like 'good knowledge of' or 'familiarity with'. Example: '3+ years of production experience with React.js and TypeScript' instead of 'Experience with frontend frameworks'."],
-    "responsibilities": ["Each responsibility must describe a concrete, actionable task the candidate will perform daily or regularly. Use strong action verbs (design, implement, optimize, lead, build, deploy, review, mentor). Avoid generic filler like 'Work with the team' or 'Participate in meetings'. Example: 'Design and implement RESTful APIs serving 10K+ requests/min using Node.js and Express' instead of 'Develop backend services'."],
-    "location": "Job location",
-    "workMode": "Remote/On-site/Hybrid",
-    "employmentType": "Full-time/Part-time/Contract/Internship",
-    "experienceLevel": "Entry-level/Junior/Mid-level/Senior/Expert",
-    "salary": {
-      "min": 0,
-      "max": 0,
-      "currency": "USD"
-    }
+    "title": string,
+    "description": string,
+    "requirements": string[],
+    "responsibilities": string[],
+    "location": string,
+    "workMode": "Remote" | "On-site" | "Hybrid",
+    "employmentType": "${employmentType}",
+    "experienceLevel": ${isInternship ? '"Junior"' : '"Junior" | "Mid-level" | "Senior" | "Expert"'},
+    "salary": { "min": number, "max": number, "currency": string }
   },
   "skillAnalysis": {
     "requiredSkills": [
-      {
-        "name": "Skill 1",
-        "level": "Required level (1-5) based on years of experience",
-        "category": "Frontend/Backend/DevOps/etc.",
-        "percentage": 0
-      }
+      { "name": string, "level": 1|2|3|4|5|null, "importance": 1-10, "category": "Frontend"|"Backend"|"Fullstack"|"Mobile"|"DevOps"|"Cloud"|"Data"|"AI/ML"|"Security"|"QA"|"Blockchain"|"GameDev"|"Embedded"|"Product"|"Design"|"Marketing"|"Sales"|"Finance"|"Operations"|"Legal"|"HR"|"Other" }
     ],
     "softSkills": [
-      {
-        "name": "Soft Skill 1",
-        "level": "Required level (1-5) based on needs",
-        "percentage": 0
-      }
+      { "name": string, "level": 1|2|3|4|5|null, "importance": 1-10 }
     ]
   }
 }
 
-═══════════════════════════════════════════
-ABSOLUTE RULES — APPLY BEFORE ANYTHING ELSE
-═══════════════════════════════════════════
+━━━ EXAMPLE — JSON structure only (do not copy this content) ━━━
 
-RULE 1 — SALARY:
-- If no exact salary figure is explicitly written in the job description with a real number and currency,
-  salary MUST be exactly: { "min": 0, "max": 0, "currency": "USD" }.
-- NEVER infer, estimate, guess, or generate a salary value.
-- 1 is not 0. 20 is not 0. Any non-zero value when salary is not mentioned is a critical error.
+Input: "Senior Node.js engineer, 6+ years, Kafka and PostgreSQL experience, will mentor junior devs."
 
-RULE 2 — INTERNSHIP DETECTION:
-- If the words "stage", "intern", "internship", or "stagiaire" appear ANYWHERE
-  in the job title or description:
-  • employmentType MUST be "Internship". NEVER "Full-time", NEVER "Part-time".
-  • experienceLevel MUST be "Entry-level". NEVER "Junior" or above.
-  • All skill levels (requiredSkills AND softSkills) MUST be 1.
-  • These rules override ANY other inference. No exceptions.
+Output:
+{
+  "jobDetails": {
+    "title": "Senior Backend Engineer",
+    "description": "One focused paragraph: what this person owns, builds, or leads — written for the candidate, not the company.",
+    "requirements": ["Most critical requirement", "Second requirement", "Third requirement"],
+    "responsibilities": ["Core responsibility 1", "Core responsibility 2"],
+    "location": "Not specified",
+    "workMode": "On-site",
+    "employmentType": "Full-time",
+    "experienceLevel": "Senior",
+    "salary": { "min": 0, "max": 0, "currency": "USD" }
+  },
+  "skillAnalysis": {
+    "requiredSkills": [
+      { "name": "Node.js", "level": 4, "importance": 9, "category": "Backend" },
+      { "name": "Apache Kafka", "level": 3, "importance": 6, "category": "Backend" },
+      { "name": "PostgreSQL", "level": 3, "importance": 6, "category": "Backend" }
+    ],
+    "softSkills": [
+      { "name": "Technical Leadership", "level": null, "importance": 8 },
+      { "name": "Mentoring", "level": null, "importance": 5 }
+    ]
+  }
+}
 
-RULE 3 — EMPLOYMENT TYPE DEFAULT:
-- If employmentType is not explicitly stated in the job description,
-  default to "Full-time". NEVER infer "Part-time" from context, title, or assumptions.
+━━━ KEY PRINCIPLES ━━━
 
-RULE 4 — SKILL PERCENTAGE PROPORTIONAL TO YEARS OF EXPERIENCE:
-- Rank all requiredSkills by years of experience from highest to lowest.
-- The skill with the most years MUST have the highest percentage. No exceptions.
-- Use this exact formula to compute each skill's percentage:
+title
+- MUST always be returned — never null or empty.
+- Derive it from the full job context: what the role actually does, the domain, and the seniority level. Never leave it empty.
 
-    skill_percentage = ROUND( (skill_years / total_years) × skill_budget )
+description
+- Make it feel like a real person wrote it about a real job
+- Say what the person will own, build, or lead — not what the company wants
+- If you can swap the description into any other job post without it feeling wrong, rewrite it
 
-  Where:
-  • total_years = sum of all requiredSkills years (skills without years = 0.5)
-  • skill_budget = 100 minus the soft skill percentage (soft skill default = 20%)
-  • Apply a cap of 55% max per skill to preserve balance
+requirements
+- Be specific enough that a candidate can self-assess in 30 seconds
+- 4 to 8 items ordered from most critical to least critical
+- If salary is not explicitly stated with real numbers → { "min": 0, "max": 0, "currency": "USD" }
+- If location is not in the description → use: "${companyLocation || "Not specified"}"
 
-  Example — Next.js 6yr + Express.js 1yr + GitHub (no years, = 0.5yr):
-    total_years  = 6 + 1 + 0.5 = 7.5
-    skill_budget = 100 - 20 = 80
-    Next.js      = ROUND((6   / 7.5) × 80) = 64% → capped at 55%
-    Express.js   = ROUND((1   / 7.5) × 80) = 11% → 13% (adjust for rounding)
-    GitHub       = ROUND((0.5 / 7.5) × 80) = 5%  → 12% (adjust to reach total 100%)
-    Communication soft skill → 20%
-    Total = 55 + 13 + 12 + 20 = 100% ✅
+skills
+- required skills — include EVERY skill explicitly named in the description (up to 3). When more than 3 skills are mentioned, always prioritize skills with explicit years or signals over skills with no years. NEVER drop a skill that has explicit years in favor of one that does not. Do NOT pad — if the description names 2, return 2. If it names 1, return 1. Prefer specific named tools over generic terms.
 
-- NEVER let a lower-experience skill have a higher percentage than a higher-experience skill.
-- After computing, verify: sum of all percentages (requiredSkills + softSkills) = 100. Adjust the lowest-ranked skill if needed to fix rounding drift.
+- years parsing rule: when a years signal follows multiple skills (e.g. "Python and NestJS for 7 years"), apply the years ONLY to the last mentioned skill before them. The other skills in the group have no years signal — unless the description explicitly says "each" or "both" (e.g. "Python and NestJS, 7 years each").
+- softSkills MUST contain 1 to 2 items — never return an empty array. Return 2 when the description clearly signals a second soft skill.
+- Prefer specific named tools over generic labels
+  Frontend: React.js, Vue, Angular… | Backend: Node.js, Django, Spring… | Mobile: Swift, Kotlin, Flutter…
+  DevOps/Cloud: Docker, Kubernetes, AWS, GCP… | Data: Spark, dbt, Airflow… | AI/ML: PyTorch, TensorFlow, LangChain…
+  Security: Burp Suite, Splunk, IAM… | QA: Cypress, Selenium, Jest… | Blockchain: Solidity, Hardhat, Web3.js…
+  GameDev: Unity, Unreal Engine, Godot, C# (Unity)… | Embedded: C, C++, RTOS, Arduino, STM32, ROS…
+  Product: Jira, Figma, Amplitude… | Marketing: Google Ads, HubSpot… | Finance: Excel, SAP, QuickBooks…
+  NEVER use: "Programming", "Communication Tools", "Software", "Technology"
 
-═══════════════════════════════
-STRICT SKILL RULES
-═══════════════════════════════
-- REQUIRED: Generate 1 to 3 skills in "requiredSkills" based on the actual requirements of the job description.
-- NEVER generate general or non-technical skills such as "Web Development", "Software Engineering", "Programming", or "Full Stack".
-- Skills MUST ALWAYS be specific and technical (e.g., React.js, Next.js, Node.js, Express.js, NestJS, MongoDB, PostgreSQL, REST APIs, HTML/CSS, TypeScript, Docker, AWS, Redis, CI/CD, Laravel, Symfony).
-- If the job description is vague, infer the most relevant precise technologies instead of using generic terms.
-- Categorize each skill only as: "Frontend", "Backend", "Fullstack", "DevOps", or "Other".
-- Never invent unrealistic skills; remain consistent with standard industry technical stacks.
-- The "name" field must always be a precise tool, language, framework, library, cloud service, or dev practice (NOT a job role).
-- When the job covers 3+ distinct domains (e.g., development + AI + content creation), ALWAYS generate 3 requiredSkills — one per major domain.
-- NEVER assign more than 55% to a single requiredSkill.
+- level: required proficiency for this specific skill (1–5 or null)
+  Map directly from the years or signal in the description:
+  "knowledge", "familiarity", "basic", "exposure"  → 1
+  "1–2 years", "some experience", "understanding"  → 2
+  "3–4 years", "proficient", "solid", "good grasp" → 3
+  "5–7 years", "strong", "advanced", "deep"        → 4
+  "8+ years", "expert", "mastery"                  → 5
+  null → signal genuinely absent from description  → code defaults to Junior (2)
 
-═══════════════════════════════
-STRICT DESCRIPTION RULES
-═══════════════════════════════
-- The "description" field must be a concise professional summary (2-4 sentences max).
-- It must explain what the role is, what team or product the candidate will work on, and why this role matters.
-- NEVER repeat the requirements or responsibilities in the description.
-- NEVER use generic filler phrases like "We are looking for a talented developer" or "Join our growing team".
-- The description should feel unique to this specific role and company, not a copy-paste template.
+  SENIORITY FLOOR — mandatory:
+  If experienceLevel is "Senior" or "Expert", required technical skills MUST have a minimum level of 3 — unless the description explicitly marks them as secondary, optional, or "nice to have".
+  The primary skill (highest importance score) must match the role seniority: Senior → level 4, Expert → level 5. All other required skills minimum level 3.
+  The level mapping always takes priority when the description explicitly qualifies a skill (e.g., "basic", "familiarity with", "exposure to"). The Seniority Floor applies only when no qualifier is present.
 
-═══════════════════════════════
-STRICT REQUIREMENTS RULES
-═══════════════════════════════
-- Generate 4-8 requirements. Every single one must be specific, verifiable, and directly extractable from the job description.
-- MANDATORY FORMAT — choose the most fitting pattern per requirement:
-    • Experience pattern   : "<N>+ years of hands-on experience with <specific technology/tool> in a production environment"
-    • Degree pattern       : "<Degree level> in <Field> or equivalent practical experience"
-    • Certification pattern: "Holding or actively pursuing <Certification name> (e.g., AWS Solutions Architect, PMP)"
-    • Skill pattern        : "Demonstrated proficiency in <specific tool/language/framework> through <shipped projects / open-source contributions / certifications>"
-    • Domain pattern       : "Proven experience building <specific system type> (e.g., payment systems, real-time APIs, CI/CD pipelines)"
-- NEVER use vague openers: "good understanding of", "familiarity with", "knowledge of", "experience with modern", "awareness of best practices".
-- NEVER write generic requirements like "Strong communication skills", "Team player", "Passion for technology".
-- If the job description mentions a technology without specifying years:
-    • Junior role   → default to "1+ years"
-    • Mid-level     → default to "3+ years"
-    • Senior role   → default to "5+ years"
-- If the job description is vague, infer realistic requirements but flag them with the prefix "[Inferred]".
-- Order requirements from most critical (must-have) to least critical (nice-to-have).
-- Each requirement must be a standalone, self-contained sentence.
-- Avoid repeating the same technology across multiple requirements — consolidate into one.
-- FOR INTERNSHIP ROLES ONLY: NEVER require years of production experience.
-  Use instead: "Basic knowledge of", "Academic or personal project experience with", "Exposure to X through coursework or self-learning".
+- importance: assign based on the years signal in the description (1–10).
+  More years = higher importance — a skill with more years MUST always score higher than one with fewer years.
+  Even a 1-year difference MUST result in a different importance score — no two skills with different year counts can share the same importance.
+  Skills with no years signal always score lower than those with explicit years.
+  Skills with only "knowledge", "basic", or "exposure" always score the lowest.
 
-═══════════════════════════════
-STRICT RESPONSIBILITIES RULES
-═══════════════════════════════
-- Generate 4-8 specific, actionable responsibilities.
-- Each responsibility MUST start with a strong action verb (Design, Implement, Build, Optimize, Lead, Deploy, Review, Architect, Mentor, Develop, Maintain, Automate).
-- Each responsibility must describe a concrete task with enough context to understand what the candidate will actually do.
-- NEVER use vague responsibilities like "Work with the team", "Participate in meetings", "Support development efforts".
-- Responsibilities should cover the full scope of the role: technical work, collaboration, and growth areas.
 
-═══════════════════════════════
-STRICT SOFT SKILL RULES
-═══════════════════════════════
-- Generate exactly 1 soft skill — no more, no less.
-- The soft skill must be relevant to the job role.
-- It must include a "percentage" field.
-- For Internship roles, soft skill level MUST be 1.
-- Never use vague or irrelevant soft skills.
+experienceLevel
+- Set based on the HIGHEST years signal across all skills in the description — one skill with 8+ years makes the whole role Expert.
+- Default to "Junior" if the description gives no seniority or years signal
+- Junior: 1–3 yrs | Mid-level: 3–5 yrs | Senior: 5–8 yrs | Expert: 8+ yrs
 
-CRITICAL: Return ONLY the raw JSON object. Do NOT include any explanation, reasoning, or text before or after the JSON.
+━━━ JOB DESCRIPTION ━━━
+
+${description}
 `.trim();
 };
+
+const VALID_WORK_MODES       = ["Remote", "On-site", "Hybrid"];
+const VALID_EXPERIENCE_LEVELS = ["Junior", "Mid-level", "Senior", "Expert"];
+
+// Fallback importance weights when AI returns no importance values
+const FALLBACK_IMPORTANCE = { required: [10, 6, 4], soft: [7, 4] };
+
+const REQUIRED_TOTAL = 80;
+const SOFT_TOTAL     = 20;
+
+function normalizeSkillAnalysis(result) {
+  if (!result || result.error || !result.skillAnalysis) return result;
+
+  // ── Sanitize jobDetails fields with safe defaults ─────────────────────────
+  if (result.jobDetails) {
+    const jd = result.jobDetails;
+    if (!jd.title        || typeof jd.title !== "string")          jd.title          = "Untitled Position";
+    if (!jd.description  || typeof jd.description !== "string")    jd.description    = "";
+    if (!Array.isArray(jd.requirements))                           jd.requirements   = [];
+    if (!Array.isArray(jd.responsibilities))                       jd.responsibilities = [];
+    if (!jd.location     || typeof jd.location !== "string")       jd.location       = "Not specified";
+    if (!VALID_WORK_MODES.includes(jd.workMode))                   jd.workMode       = "On-site";
+    if (!VALID_EXPERIENCE_LEVELS.includes(jd.experienceLevel))     jd.experienceLevel = "Mid-level";
+    const sal = jd.salary || {};
+    jd.salary = {
+      min:      typeof sal.min === "number" ? sal.min : 0,
+      max:      typeof sal.max === "number" ? sal.max : 0,
+      currency: typeof sal.currency === "string" && sal.currency ? sal.currency : "USD",
+    };
+  }
+
+  const isInternship = result?.jobDetails?.employmentType === "Internship";
+
+  const EXP_TO_LEVEL = { "Junior": 2, "Mid-level": 3, "Senior": 4, "Expert": 5 };
+  const roleLevel = isInternship ? 2 : (EXP_TO_LEVEL[result.jobDetails?.experienceLevel] ?? 2);
+
+  function resolveLevel(modelLevel) {
+    if (isInternship) return 2;
+    if (typeof modelLevel === "number" && modelLevel >= 1 && modelLevel <= 5) {
+      return Math.max(2, Math.round(modelLevel));
+    }
+    return 2;
+  }
+
+  function getImportance(skill, fallbacks, index) {
+    const v = skill.importance;
+    return typeof v === "number" && v >= 1 && v <= 10 ? v : (fallbacks[index] ?? 3);
+  }
+
+  function distributePercentages(skills, total, fallbacks, roundTo, minPct) {
+    if (skills.length === 0) return [];
+    const units    = total / roundTo;
+    const minUnits = minPct / roundTo;
+
+    const weights = skills.map((s, i) => {
+      const imp = getImportance(s, fallbacks, i);
+      return imp * imp;
+    });
+    const weightSum = weights.reduce((a, b) => a + b, 0);
+
+    let allocated = skills.map(() => minUnits);
+    let remaining = units - allocated.reduce((a, b) => a + b, 0);
+
+    if (remaining > 0) {
+      const proportional = weights.map(w => (w / weightSum) * remaining);
+      const floors       = proportional.map(p => Math.floor(p));
+      let leftover       = remaining - floors.reduce((a, b) => a + b, 0);
+      allocated          = allocated.map((a, i) => a + floors[i]);
+      const sorted       = weights.map((_, i) => i).sort((a, b) => weights[b] - weights[a]);
+      for (const i of sorted) {
+        if (leftover <= 0) break;
+        allocated[i]++;
+        leftover--;
+      }
+    } else {
+      const diff = units - allocated.reduce((a, b) => a + b, 0);
+      if (diff !== 0) allocated[weights.indexOf(Math.max(...weights))] += diff;
+    }
+
+    return allocated.map(u => u * roundTo);
+  }
+
+  function ensureUniquePcts(pcts, skills, fallbacks, roundTo, minPct) {
+    const imps  = skills.map((s, i) => getImportance(s, fallbacks, i));
+    const order = imps.map((_, i) => i).sort((a, b) => imps[b] - imps[a]);
+    for (let i = 0; i < order.length - 1; i++) {
+      for (let j = i + 1; j < order.length; j++) {
+        const hi = order[i], lo = order[j];
+        if (imps[hi] !== imps[lo] && pcts[hi] === pcts[lo] && pcts[lo] - roundTo >= minPct) {
+          pcts[hi] += roundTo;
+          pcts[lo] -= roundTo;
+        }
+      }
+    }
+    return pcts;
+  }
+
+  // ── Collect skills ────────────────────────────────────────────────────────
+  const rawRequired = Array.isArray(result.skillAnalysis.requiredSkills)
+    ? [...result.skillAnalysis.requiredSkills]
+        .sort((a, b) => (b.importance || 0) - (a.importance || 0))
+        .slice(0, 3)
+    : [];
+
+  const validSoft = Array.isArray(result.skillAnalysis.softSkills)
+    ? result.skillAnalysis.softSkills.filter(s => s && typeof s.name === "string" && s.name.trim())
+    : [];
+
+  const rawSoft = validSoft.length > 0
+    ? validSoft.slice(0, 2)
+    : [{ name: "Communication", level: null, importance: 5 }];
+
+  // ── Distribute within each group (80 hard / 20 soft — fixed) ────────────
+  const requiredPcts = ensureUniquePcts(
+    distributePercentages(rawRequired, REQUIRED_TOTAL, FALLBACK_IMPORTANCE.required, 5, 15),
+    rawRequired, FALLBACK_IMPORTANCE.required, 5, 15
+  );
+  const softPcts     = distributePercentages(rawSoft,     SOFT_TOTAL,     FALLBACK_IMPORTANCE.soft,     10, 10);
+
+  const requiredSkills = rawRequired.map((skill, i) => ({
+    name:       skill.name,
+    category:   skill.category,
+    level:      resolveLevel(skill.level),
+    percentage: requiredPcts[i],
+  }));
+
+  const softSkills = rawSoft.map((skill, i) => ({
+    name:       skill.name,
+    level:      roleLevel,
+    percentage: softPcts[i],
+  }));
+
+  return {
+    ...result,
+    skillAnalysis: { ...result.skillAnalysis, requiredSkills, softSkills },
+  };
+}
 
 module.exports = {
   getDetailedPrompt,
   generatePrompt: getDetailedPrompt,
+  normalizeSkillAnalysis,
 };
