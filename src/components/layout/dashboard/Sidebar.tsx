@@ -28,6 +28,7 @@ import LogoutProgressModal from "@/components/ui/LogoutProgressModal";
 import { useTranslation } from "react-i18next";
 import { useChatUnreadBadges } from "@/modules/chat/shared/hooks/useChatUnreadBadges";
 import ChatUnreadBadge from "@/modules/chat/shared/components/ChatUnreadBadge";
+import { useNotifications } from "@/modules/notifications/context/NotificationContext";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -52,7 +53,7 @@ const HOVER_TXT = "#E8F6F9"; // hover text — near white
 const LABEL_C = "#a3aed1"; // section label — visible
 
 const GROUPS = [
-  { groupKey: "main", ids: ["dashboard", "messages"] },
+  { groupKey: "main", ids: ["dashboard", "messages", "notifications"] },
   { groupKey: "jobs", ids: ["posts", "applications"] },
   { groupKey: "campaigns", ids: ["campaigns"] },
   { groupKey: "team", ids: ["employees", "departments"] },
@@ -160,10 +161,12 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const settingsHref = "/settings";
   const { teamChatUnread, companyMessagesUnread } = useChatUnreadBadges();
+  const { unreadCount: notifUnread } = useNotifications();
 
   const getNavUnreadCount = (itemId: string) => {
-    if (itemId !== "messages") return 0;
-    return isEmployee ? teamChatUnread : companyMessagesUnread;
+    if (itemId === "messages")      return isEmployee ? teamChatUnread : companyMessagesUnread;
+    if (itemId === "notifications") return notifUnread;
+    return 0;
   };
 
   const renderNavItem = (item: { id: string; icon: React.ElementType; label: string; href: string }, isCollapsed: boolean) => {

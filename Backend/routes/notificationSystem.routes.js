@@ -8,46 +8,248 @@ const resolveCompanyActor = require("../middleware/resolve-company-actor.middlew
 // All routes require an authenticated user
 router.use(requireAuth, authLogMiddleware('NotificationSystem'));
 
-// POST /notification-system/AddNotification — create a system notification
+/**
+ * @openapi
+ * /notification-system/AddNotification:
+ *   post:
+ *     tags: [Notifications]
+ *     summary: Create a system notification
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [userId, message]
+ *             properties:
+ *               userId: { type: string }
+ *               message: { type: string }
+ *               type: { type: string }
+ *     responses:
+ *       201:
+ *         description: Notification created
+ */
 router.post('/AddNotification', controller.createSystemNotification);
 
-// POST /notification-system/AddNotification/info — create info notification
+/**
+ * @openapi
+ * /notification-system/AddNotification/info:
+ *   post:
+ *     tags: [Notifications]
+ *     summary: Create an info notification
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [userId, message]
+ *             properties:
+ *               userId: { type: string }
+ *               message: { type: string }
+ *     responses:
+ *       201:
+ *         description: Notification created
+ */
 router.post('/AddNotification/info', controller.createInfoNotification);
 
-// POST /notification-system/AddNotification/success — create success notification
+/**
+ * @openapi
+ * /notification-system/AddNotification/success:
+ *   post:
+ *     tags: [Notifications]
+ *     summary: Create a success notification
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [userId, message]
+ *             properties:
+ *               userId: { type: string }
+ *               message: { type: string }
+ *     responses:
+ *       201:
+ *         description: Notification created
+ */
 router.post('/AddNotification/success', controller.createSuccessNotification);
 
-// POST /notification-system/AddNotification/warning — create warning notification
+/**
+ * @openapi
+ * /notification-system/AddNotification/warning:
+ *   post:
+ *     tags: [Notifications]
+ *     summary: Create a warning notification
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [userId, message]
+ *             properties:
+ *               userId: { type: string }
+ *               message: { type: string }
+ *     responses:
+ *       201:
+ *         description: Notification created
+ */
 router.post('/AddNotification/warning', controller.createWarningNotification);
 
-// POST /notification-system/AddNotification/error — create error notification
+/**
+ * @openapi
+ * /notification-system/AddNotification/error:
+ *   post:
+ *     tags: [Notifications]
+ *     summary: Create an error notification
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [userId, message]
+ *             properties:
+ *               userId: { type: string }
+ *               message: { type: string }
+ *     responses:
+ *       201:
+ *         description: Notification created
+ */
 router.post('/AddNotification/error', controller.createErrorNotification);
 
-// POST /notification-system/AddNotification/custom — create custom notification
+/**
+ * @openapi
+ * /notification-system/AddNotification/custom:
+ *   post:
+ *     tags: [Notifications]
+ *     summary: Create a custom notification
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       201:
+ *         description: Notification created
+ */
 router.post('/AddNotification/custom', controller.createCustomNotification);
 
-// POST /notification-system/broadcastSystemNotification — broadcast notification to all users
+/**
+ * @openapi
+ * /notification-system/broadcastSystemNotification:
+ *   post:
+ *     tags: [Notifications]
+ *     summary: Broadcast a notification to all users
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [message]
+ *             properties:
+ *               message: { type: string }
+ *               type: { type: string }
+ *     responses:
+ *       200:
+ *         description: Broadcast sent
+ */
 router.post('/broadcastSystemNotification', controller.broadcastSystemNotification);
 
-// GET /notification-system/GetMyNotification — list system notifications for current user
+/**
+ * @openapi
+ * /notification-system/GetMyNotification:
+ *   get:
+ *     tags: [Notifications]
+ *     summary: Get all notifications for the current user
+ *     responses:
+ *       200:
+ *         description: List of notifications
+ */
 router.get('/GetMyNotification', resolveCompanyActor,controller.listForUser);
 
-// GET /notification-system/:id — retrieve a notification
-// router.get('/GetNotificationByID/:id', controller.getById);
-
-// PATCH /notification-system/:id/read — mark as read
+/**
+ * @openapi
+ * /notification-system/markAsRead/{id}/read:
+ *   patch:
+ *     tags: [Notifications]
+ *     summary: Mark a notification as read
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Notification marked as read
+ */
 router.patch('/markAsRead/:id/read', resolveCompanyActor,controller.markAsRead);
 
-// PATCH /notification-system/mark-all-read — mark all as read for user
+/**
+ * @openapi
+ * /notification-system/mark-all-read:
+ *   patch:
+ *     tags: [Notifications]
+ *     summary: Mark all notifications as read for current user
+ *     responses:
+ *       200:
+ *         description: All notifications marked as read
+ */
 router.patch('/mark-all-read', resolveCompanyActor,controller.markAllAsRead);
 
-// PATCH /notification-system/archiveNotification/:id — archive a notification
+/**
+ * @openapi
+ * /notification-system/archiveNotification/{id}:
+ *   patch:
+ *     tags: [Notifications]
+ *     summary: Archive a notification
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Notification archived
+ */
 router.patch('/archiveNotification/:id', resolveCompanyActor,controller.archiveNotification);
 
-// PATCH /notification-system/archive-all — archive all notifications for current user
+/**
+ * @openapi
+ * /notification-system/archive-all:
+ *   patch:
+ *     tags: [Notifications]
+ *     summary: Archive all notifications for the current user
+ *     responses:
+ *       200:
+ *         description: All notifications archived
+ */
 router.patch('/archive-all',resolveCompanyActor, controller.archiveAllNotifications);
 
-// DELETE /notification-system/:id — delete
+/**
+ * @openapi
+ * /notification-system/deleteNotification/{id}:
+ *   delete:
+ *     tags: [Notifications]
+ *     summary: Delete a notification
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Notification deleted
+ */
 router.delete('/deleteNotification/:id',resolveCompanyActor, controller.deleteNotification);
+
+// DELETE /notification-system/delete-all — delete all active (non-archived) notifications
+router.delete('/delete-all', resolveCompanyActor, controller.deleteAllNotifications);
+
+// DELETE /notification-system/delete-all-archived — delete all archived notifications
+router.delete('/delete-all-archived', resolveCompanyActor, controller.deleteAllArchivedNotifications);
 
 module.exports = router;

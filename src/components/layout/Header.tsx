@@ -5,7 +5,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { getToken } from "@/utils/tokenUtils";
 import HeaderLogo from "@/components/layout/header/HeaderLogo";
-import HeaderNotification from "@/components/layout/header/HeaderNotification";
+import HeaderNotification from "@/modules/notifications/components/HeaderNotification";
 import UserAvatar from "@/components/layout/header/UserAvatar";
 import HamburgerButton from "@/components/layout/header/HamburgerButton";
 import HeaderNavMenu from "@/components/layout/header/HeaderNavMenu";

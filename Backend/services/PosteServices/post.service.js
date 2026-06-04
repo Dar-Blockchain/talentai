@@ -88,51 +88,6 @@ module.exports.createPostWithSideEffects = async (postData, token, userProfile) 
   }
 };
 
-// Get all posts with advanced filters
-module.exports.getAllPosts = async (filters = {}) => {
-  try {
-    let query = {};
-
-    // Filters for status
-    if (filters.status) {
-      query.status = filters.status;
-    }
-
-    // Filters for employment type
-    if (filters.employmentType) {
-      query["jobDetails.employmentType"] = filters.employmentType;
-    }
-
-    // Filters for experience level
-    if (filters.experienceLevel) {
-      query["jobDetails.experienceLevel"] = filters.experienceLevel;
-    }
-
-    // Filters for skills
-    if (filters.skills) {
-      query["skillAnalysis.requiredSkills.name"] = { $in: filters.skills };
-    }
-
-    // Filters for salary range
-    if (filters.salary) {
-      if (filters.salary.min) {
-        query["jobDetails.salary.min"] = { $gte: filters.salary.min };
-      }
-      if (filters.salary.max) {
-        query["jobDetails.salary.max"] = { $lte: filters.salary.max };
-      }
-    }
-
-    return await Post.find(query)
-      .select('-MatchingConfig')
-      .populate("user", "username email companyDetails")
-      .sort({ createdAt: -1 })
-      .lean();
-  } catch (error) {
-    throw new Error(`Error fetching posts: ${error.message}`);
-  }
-};
-
 // Get all posts with search, filters and pagination
 module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6) => {
   try {
@@ -284,6 +239,16 @@ module.exports.getPostById = async (postId) => {
     // Ensure interviewLanguages is present for posts created before the field was added
     if (!post.interviewLanguages || post.interviewLanguages.length === 0) {
       post.interviewLanguages = ['en'];
+    }
+
+    // Attach company name from the company's profile
+    if (post.user?._id) {
+      const profile = await Profile.findOne({ userId: post.user._id, type: 'Company' }).select('companyDetails.name');
+      if (profile?.companyDetails?.name) {
+        const result = post.toObject();
+        result.companyName = profile.companyDetails.name;
+        return result;
+      }
     }
 
     return post;

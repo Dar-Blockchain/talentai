@@ -15,8 +15,22 @@ const resolveCompanyActor = require("../middleware/resolve-company-actor.middlew
 // ========== PUBLIC ROUTES (no auth required) ==========
 
 /**
- * GET /details/:invitationId
- * Get invitation details by ID — public so unauthenticated users can view before accepting
+ * @openapi
+ * /company-invitations/details/{invitationId}:
+ *   get:
+ *     tags: [Company Invitations]
+ *     summary: Get invitation details (public — view before accepting)
+ *     security: []
+ *     parameters:
+ *       - in: path
+ *         name: invitationId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Invitation details
+ *       404:
+ *         description: Invitation not found
  */
 router.get(
   "/details/:invitationId",
@@ -24,8 +38,31 @@ router.get(
 );
 
 /**
- * POST /respondInvitation/:invitationId
- * Accept or reject an invitation — public so the invitee can respond before having an account
+ * @openapi
+ * /company-invitations/respondInvitation/{invitationId}:
+ *   post:
+ *     tags: [Company Invitations]
+ *     summary: Accept or reject an invitation (public)
+ *     security: []
+ *     parameters:
+ *       - in: path
+ *         name: invitationId
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [response]
+ *             properties:
+ *               response:
+ *                 type: string
+ *                 enum: [accepted, rejected]
+ *     responses:
+ *       200:
+ *         description: Response recorded
  */
 router.post(
   "/respondInvitation/:invitationId",
@@ -36,8 +73,25 @@ router.post(
 router.use(requireAuth, authLogMiddleware("sentInvitation"));
 
 /**
- * POST /sentInvitation
- * Add a new employee to a Company account
+ * @openapi
+ * /company-invitations/sentInvitation:
+ *   post:
+ *     tags: [Company Invitations]
+ *     summary: Invite an employee to the company
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email: { type: string, format: email }
+ *               role: { type: string }
+ *               departmentId: { type: string }
+ *     responses:
+ *       201:
+ *         description: Invitation sent
  */
 router.post(
   "/sentInvitation",
@@ -46,8 +100,19 @@ router.post(
 );
 
 /**
- * POST /resendInvitation/:invitationId
- * Resend an invitation (regenerate token and reset expiration)
+ * @openapi
+ * /company-invitations/resendInvitation/{invitationId}:
+ *   post:
+ *     tags: [Company Invitations]
+ *     summary: Resend an invitation (regenerate token)
+ *     parameters:
+ *       - in: path
+ *         name: invitationId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Invitation resent
  */
 router.post(
   "/resendInvitation/:invitationId",
@@ -56,8 +121,19 @@ router.post(
 );
 
 /**
- * DELETE /deleteInvitation/:invitationId
- * Delete/revoke an invitation
+ * @openapi
+ * /company-invitations/deleteInvitation/{invitationId}:
+ *   delete:
+ *     tags: [Company Invitations]
+ *     summary: Revoke/delete an invitation
+ *     parameters:
+ *       - in: path
+ *         name: invitationId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Invitation deleted
  */
 router.delete(
   "/deleteInvitation/:invitationId",
@@ -65,8 +141,14 @@ router.delete(
 );
 
 /**
- * GET /myInvitations
- * Get all invitations for companies owned by current user
+ * @openapi
+ * /company-invitations/myInvitations:
+ *   get:
+ *     tags: [Company Invitations]
+ *     summary: Get all invitations sent by current company
+ *     responses:
+ *       200:
+ *         description: List of invitations
  */
 router.get(
   "/myInvitations",
@@ -75,8 +157,19 @@ router.get(
 );
 
 /**
- * GET /byDepartment/:departmentId
- * Get all pending invitations for a specific department
+ * @openapi
+ * /company-invitations/byDepartment/{departmentId}:
+ *   get:
+ *     tags: [Company Invitations]
+ *     summary: Get all pending invitations for a department
+ *     parameters:
+ *       - in: path
+ *         name: departmentId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: List of invitations
  */
 router.get(
   "/byDepartment/:departmentId",

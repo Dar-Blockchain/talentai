@@ -11,20 +11,82 @@ const { requireAuth } = require("../middleware/security/auth.middleware");
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js");
 const { controledAcces } = require('../middleware/authorize.middleware.js');
 
-// Plans Management Routes (Public Read, Auth Required for Write)
-
-// POST /planLimits - Create a new plan (Admin only)
+/**
+ * @openapi
+ * /plan-limits:
+ *   post:
+ *     tags: [Plan Limits]
+ *     summary: Create a new plan (Admin)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name]
+ *             properties:
+ *               name: { type: string }
+ *               maxPosts: { type: integer }
+ *               maxMonthlyInterviews: { type: integer }
+ *               price: { type: number }
+ *     responses:
+ *       201:
+ *         description: Plan created
+ *   get:
+ *     tags: [Plan Limits]
+ *     summary: Get all plans (public)
+ *     security: []
+ *     responses:
+ *       200:
+ *         description: List of plans
+ */
 router.post("/", requireAuth, authLogMiddleware("planLimits"),planLimitsController.createPlan);
-
-// GET /planLimits - Get all plans (Public)
 router.get("/", planLimitsController.getAllPlans);
 
-// GET /planLimits/:id - Get plan by ID (Public)
+/**
+ * @openapi
+ * /plan-limits/{id}:
+ *   get:
+ *     tags: [Plan Limits]
+ *     summary: Get a plan by ID (public)
+ *     security: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Plan details
+ *       404:
+ *         description: Not found
+ */
 router.get("/:id", planLimitsController.getPlanById);
 
 router.use(requireAuth,authLogMiddleware("planLimits"),controledAcces('Admin'));
 
-// PUT /planLimits - Update plan by name (passed in body)
+/**
+ * @openapi
+ * /plan-limits:
+ *   put:
+ *     tags: [Plan Limits]
+ *     summary: Update a plan by name (Admin)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name]
+ *             properties:
+ *               name: { type: string }
+ *               maxPosts: { type: integer }
+ *               maxMonthlyInterviews: { type: integer }
+ *               price: { type: number }
+ *     responses:
+ *       200:
+ *         description: Plan updated
+ */
 router.put("/",  planLimitsController.updatePlan);
 
 module.exports = router;

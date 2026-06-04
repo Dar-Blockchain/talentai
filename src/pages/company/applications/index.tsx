@@ -38,9 +38,9 @@ import {
   selectMyPostsPagination,
 } from "@/store/slices/postSlice";
 import ContactCandidateModal, { ContactTarget } from "@/modules/posts/details/components/ContactCandidateModal";
-import AssessmentDetailsModal, { AssessmentTarget } from "@/modules/posts/details/components/AssessmentDetailsModal";
 import ApplicationMetrics from "@/components/features/company/applications/ApplicationMetrics";
 import ApplicationCard from "@/components/features/company/applications/ApplicationCard";
+import { AssessmentDetailsModal, AssessmentTarget } from "@/modules/assessments/post";
 
 const TEAL = "#0D9488";
 const PAGE_SIZE = 15;

@@ -7,47 +7,129 @@ const apiKeyController = require("../controllers/apiKeys.controller");
 router.use(requireAuth);
 
 /**
- * POST /api/api-keys
- * Create a new API key
- * Body: { name, serviceName?, scopes?, rateLimit?, expiresAt?, ipWhitelist? }
+ * @openapi
+ * /api/api-keys:
+ *   post:
+ *     tags: [API Keys]
+ *     summary: Create a new API key
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name]
+ *             properties:
+ *               name: { type: string }
+ *               serviceName: { type: string }
+ *               scopes:
+ *                 type: array
+ *                 items: { type: string }
+ *               rateLimit: { type: integer }
+ *               expiresAt: { type: string, format: date-time }
+ *               ipWhitelist:
+ *                 type: array
+ *                 items: { type: string }
+ *     responses:
+ *       201:
+ *         description: API key created (plaintext key returned only once)
+ *   get:
+ *     tags: [API Keys]
+ *     summary: List all API keys for the authenticated user
+ *     responses:
+ *       200:
+ *         description: List of API keys (secrets masked)
  */
 router.post("/", apiKeyController.createApiKey);
-
-/**
- * GET /api/api-keys
- * List all API keys for the user
- */
 router.get("/", apiKeyController.listApiKeys);
 
 /**
- * GET /api/api-keys/:id
- * Get details of an API key
+ * @openapi
+ * /api/api-keys/{id}:
+ *   get:
+ *     tags: [API Keys]
+ *     summary: Get details of an API key
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: API key details
+ *   put:
+ *     tags: [API Keys]
+ *     summary: Update an API key
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name: { type: string }
+ *               serviceName: { type: string }
+ *               scopes: { type: array, items: { type: string } }
+ *               rateLimit: { type: integer }
+ *               expiresAt: { type: string, format: date-time }
+ *               ipWhitelist: { type: array, items: { type: string } }
+ *               isActive: { type: boolean }
+ *     responses:
+ *       200:
+ *         description: API key updated
+ *   delete:
+ *     tags: [API Keys]
+ *     summary: Delete an API key
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: API key deleted
  */
 router.get("/:id", apiKeyController.getApiKeyDetails);
-
-/**
- * PUT /api/api-keys/:id
- * Update an API key
- * Body: { name?, serviceName?, scopes?, rateLimit?, expiresAt?, ipWhitelist?, isActive? }
- */
 router.put("/:id", apiKeyController.updateApiKey);
+router.delete("/:id", apiKeyController.deleteApiKey);
 
 /**
- * PATCH /api/api-keys/:id/toggle
- * Disable/re-enable an API key
+ * @openapi
+ * /api/api-keys/{id}/toggle:
+ *   patch:
+ *     tags: [API Keys]
+ *     summary: Enable or disable an API key
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Toggle applied
  */
 router.patch("/:id/toggle", apiKeyController.toggleApiKey);
 
 /**
- * POST /api/api-keys/:id/regenerate
- * Regenerate an API key (create a new one)
+ * @openapi
+ * /api/api-keys/{id}/regenerate:
+ *   post:
+ *     tags: [API Keys]
+ *     summary: Regenerate an API key (issues a new secret)
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: New key returned (plaintext, shown only once)
  */
 router.post("/:id/regenerate", apiKeyController.regenerateApiKey);
-
-/**
- * DELETE /api/api-keys/:id
- * Delete an API key
- */
-router.delete("/:id", apiKeyController.deleteApiKey);
 
 module.exports = router;

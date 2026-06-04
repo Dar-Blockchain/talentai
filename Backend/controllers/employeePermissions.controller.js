@@ -117,21 +117,3 @@ exports.updatePermissions = async (req, res) => {
   }
 };
 
-/**
- * Get all available permissions
- * GET /api/employee-permissions/available
- */
-exports.getAvailablePermissions = async (req, res) => {
-  try {
-    const availablePermissions =
-      await employeePermissionsService.getAvailablePermissions();
-
-    res.status(200).json({
-      success: true,
-      data: availablePermissions,
-    });
-  } catch (error) {
-    handleError(res, error, 500);
-  }
-};
-

@@ -1,33 +1,5 @@
-// Interview Configuration Types
-export interface InterviewConfig {
-  interviewType: 'HR_INTERVIEW' | 'TECHNICAL_INTERVIEW' | 'ASSESSMENT' | 'EVALUATION' | 'TECHNICAL_SKILL' | 'SOFT_SKILL' | 'SALARY_INTERVIEW' | 'PSYCHOTECHNIC';
-  testReason: string;
-  context: {
-    targetCompany?: string;
-    targetRole?: string;
-    experienceLevel?: string;
-    interviewGoal: string;
-  };
-  models?: {
-    fastModel?: string;
-    thinkingModel?: string;
-    analysisModel?: string;
-  };
-  sessionSettings?: {
-    duration?: number;
-    language?: string;
-    difficulty?: string;
-    silenceTimeout?: number;
-    silenceIntelligence?: {
-      enabled: boolean;
-      adaptiveThresholds: boolean;
-      maxSilencePrompts: number;
-      naturalPauseDetection: boolean;
-      contextAwareThresholds: boolean;
-    };
-  };
-  enableSecurity?: boolean;
-}
+// Re-export canonical type from the module — do not redefine here.
+export type { InterviewConfig } from '@/modules/interview/post/types/interview';
 
 export interface InterviewMessage {
   type: 'greeting' | 'question' | 'follow_up' | 'silence_prompt' | 'system';

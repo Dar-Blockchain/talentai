@@ -19,12 +19,14 @@ export const useUpdateEmployeeUsername = () => {
     mutationFn: ({ userId, username }: { userId: string; username: string }) =>
       employeeApi.updateUsername(userId, username),
     onSuccess: (data) => {
-      dispatch(setConnectedUser({
-        user:              data?.user              ?? null,
-        profile:           data?.profile           ?? null,
-        planLimits:        data?.planLimits        ?? null,
-        companyMembership: data?.companyMembership ?? null,
-      }));
+      if (data?.user) {
+        dispatch(setConnectedUser({
+          user:              data.user,
+          profile:           data?.profile           ?? null,
+          planLimits:        data?.planLimits         ?? null,
+          companyMembership: data?.companyMembership  ?? null,
+        }));
+      }
       queryClient.invalidateQueries({ queryKey: profileKeys.me });
     },
   });
@@ -37,12 +39,14 @@ export const useUploadEmployeeAvatar = () => {
     mutationFn: ({ userId, file }: { userId: string; file: File }) =>
       employeeApi.uploadAvatar(userId, file),
     onSuccess: (data) => {
-      dispatch(setConnectedUser({
-        user:              data?.user              ?? null,
-        profile:           data?.profile           ?? null,
-        planLimits:        data?.planLimits        ?? null,
-        companyMembership: data?.companyMembership ?? null,
-      }));
+      if (data?.user) {
+        dispatch(setConnectedUser({
+          user:              data.user,
+          profile:           data?.profile           ?? null,
+          planLimits:        data?.planLimits         ?? null,
+          companyMembership: data?.companyMembership  ?? null,
+        }));
+      }
       queryClient.invalidateQueries({ queryKey: profileKeys.me });
     },
   });

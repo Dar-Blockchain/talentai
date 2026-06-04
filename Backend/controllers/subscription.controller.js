@@ -84,42 +84,6 @@ module.exports.cancelSubscription = async (req, res) => {
 };
 
 /**
- * POST /subscriptions/:subscriptionId/extend
- * Extend subscription
- */
-module.exports.extendSubscription = async (req, res) => {
-  try {
-    const { subscriptionId } = req.params;
-    const { additionalDays = 30 } = req.body;
-
-    const result = await subscriptionService.extendSubscription(
-      subscriptionId,
-      additionalDays
-    );
-
-    res.status(200).json(result);
-  } catch (error) {
-    handleError(res, error, 404);
-  }
-};
-
-/**
- * POST /subscriptions/:subscriptionId/renew
- * Renew subscription
- */
-module.exports.renewSubscription = async (req, res) => {
-  try {
-    const { subscriptionId } = req.params;
-
-    const result = await subscriptionService.renewSubscription(subscriptionId);
-
-    res.status(200).json(result);
-  } catch (error) {
-    handleError(res, error, 404);
-  }
-};
-
-/**
  * GET /subscriptions/:companyProfileId/check-limit/:limitType
  * Check if company can perform an action (posts or monthlyInterviews)
  */
@@ -138,45 +102,6 @@ module.exports.checkLimit = async (req, res) => {
     });
   } catch (error) {
     handleError(res, error, 400);
-  }
-};
-
-/**
- * POST /subscriptions/:subscriptionId/increment-usage
- * Increment usage counter
- */
-module.exports.incrementUsage = async (req, res) => {
-  try {
-    const { subscriptionId } = req.params;
-    const { usageType, amount = 1 } = req.body;
-
-    const result = await subscriptionService.incrementUsage(
-      subscriptionId,
-      usageType,
-      amount
-    );
-
-    res.status(200).json(result);
-  } catch (error) {
-    handleError(res, error, 400);
-  }
-};
-
-/**
- * POST /subscriptions/:subscriptionId/reset-monthly-interview
- * Reset monthly interview counter if needed
- */
-module.exports.resetMonthlyInterview = async (req, res) => {
-  try {
-    const { subscriptionId } = req.params;
-
-    const result = await subscriptionService.resetMonthlyInterviewIfNeeded(
-      subscriptionId
-    );
-
-    res.status(200).json(result);
-  } catch (error) {
-    handleError(res, error, 404);
   }
 };
 

@@ -138,41 +138,6 @@ module.exports.createJobApplication = async (req, res) => {
   }
 };
 
-// ========== READ - Get all applications ==========
-module.exports.getAllJobApplications = async (req, res) => {
-  try {
-    const { page = 1, limit = 10, profile, post, company, status } = req.query;
-
-    const filters = {};
-    if (profile) filters.profile = profile;
-    if (post) filters.post = post;
-    if (company) filters.company = company;
-    if (status) filters.status = status;
-
-    const result = await jobApplicationService.getAllJobApplications(
-      filters,
-      parseInt(page),
-      parseInt(limit)
-    );
-
-    res.status(200).json({
-      success: true,
-      message: "Job applications retrieved successfully",
-      data: result.data,
-      pagination: {
-        currentPage: result.currentPage,
-        totalPages: result.totalPages,
-        totalCount: result.totalCount,
-        limit: result.limit,
-        hasNextPage: result.hasNextPage,
-        hasPrevPage: result.hasPrevPage,
-      },
-    });
-  } catch (error) {
-    handleError(res, error);
-  }
-};
-
 // ========== READ - Get by ID ==========
 module.exports.getJobApplicationById = async (req, res) => {
   try {
@@ -267,48 +232,6 @@ module.exports.getApplicationsByCandidate = async (req, res) => {
   }
 };
 
-// ========== READ - Get applications by post ==========
-module.exports.getApplicationsByPost = async (req, res) => {
-  try {
-    const { postId } = req.params;
-    const { page = 1, limit = 10, status, search } = req.query;
-
-    if (!postId) {
-      return res.status(400).json({
-        success: false,
-        error: "Post ID is required",
-      });
-    }
-
-    const filters = {};
-    if (status) filters.status = status;
-    if (search) filters.search = search;
-
-    const result = await jobApplicationService.getApplicationsByPost(
-      postId,
-      filters,
-      parseInt(page),
-      parseInt(limit)
-    );
-
-    res.status(200).json({
-      success: true,
-      message: "Job applications retrieved successfully",
-      data: result.data,
-      pagination: {
-        currentPage: result.currentPage,
-        totalPages: result.totalPages,
-        totalCount: result.totalCount,
-        limit: result.limit,
-        hasNextPage: result.hasNextPage,
-        hasPrevPage: result.hasPrevPage,
-      },
-    });
-  } catch (error) {
-    handleError(res, error);
-  }
-};
-
 // ========== READ - Get applications by company ==========
 module.exports.getApplicationsByCompany = async (req, res) => {
   try {
@@ -354,112 +277,6 @@ module.exports.getApplicationsByCompany = async (req, res) => {
         hasNextPage: result.hasNextPage,
         hasPrevPage: result.hasPrevPage,
       },
-    });
-  } catch (error) {
-    handleError(res, error);
-  }
-};
-
-// ========== UPDATE ==========
-module.exports.updateJobApplication = async (req, res) => {
-  try {
-    const { applicationId } = req.params;
-    const updateData = req.body;
-
-    if (!applicationId) {
-      return res.status(400).json({
-        success: false,
-        error: "Application ID is required",
-      });
-    }
-
-    const application = await jobApplicationService.updateJobApplication(
-      applicationId,
-      updateData
-    );
-
-    res.status(200).json({
-      success: true,
-      message: "Job application updated successfully",
-      data: application,
-    });
-  } catch (error) {
-    handleError(res, error);
-  }
-};
-
-// ========== WITHDRAW APPLICATION ==========
-module.exports.withdrawJobApplication = async (req, res) => {
-  try {
-    const { applicationId } = req.params;
-
-    if (!applicationId) {
-      return res.status(400).json({
-        success: false,
-        error: "Application ID is required",
-      });
-    }
-
-    const application = await jobApplicationService.withdrawJobApplication(
-      applicationId
-    );
-
-    res.status(200).json({
-      success: true,
-      message: "Job application withdrawn successfully",
-      data: application,
-    });
-  } catch (error) {
-    handleError(res, error);
-  }
-};
-
-// ========== ARCHIVE APPLICATION ==========
-module.exports.archiveJobApplication = async (req, res) => {
-  try {
-    const { applicationId } = req.params;
-
-    if (!applicationId) {
-      return res.status(400).json({
-        success: false,
-        error: "Application ID is required",
-      });
-    }
-
-    const application = await jobApplicationService.archiveJobApplication(
-      applicationId
-    );
-
-    res.status(200).json({
-      success: true,
-      message: "Job application archived successfully",
-      data: application,
-    });
-  } catch (error) {
-    handleError(res, error);
-  }
-};
-
-// ========== DELETE ==========
-module.exports.deleteJobApplication = async (req, res) => {
-  try {
-    const { applicationId } = req.params;
-
-    if (!applicationId) {
-      return res.status(400).json({
-        success: false,
-        error: "Application ID is required",
-      });
-    }
-
-    const application = await jobApplicationService.deleteJobApplication(
-      applicationId
-    );
-
-    res.status(200).json({
-      success: true,
-      message: "Job application deleted successfully",
-      data: application,
     });
   } catch (error) {
     handleError(res, error);
@@ -667,102 +484,6 @@ module.exports.inviteToInterview = async (req, res) => {
   }
 };
 
-// ========== TRIGGER AUTO INVITE (FOR TESTING) ==========
-module.exports.triggerAutoInvite = async (req, res) => {
-  try {
-    const { runAutoInviteJob } = require("../cron/autoInviteScheduler.cron");
-    const { AUTO_INVITE_CONFIG } = require("../constants/scheduler.constants");
-
-    console.log("\n" + "=".repeat(80));
-    console.log("🚀 [JOB APPLICATION] - MANUAL AUTO INVITE TRIGGER");
-    console.log("=".repeat(80) + "\n");
-
-    // ?reset=true clears firstInvitationSentAt so applications can be re-tested
-    if (req.query.reset === "true") {
-      const resetResult = await JobApplication.updateMany(
-        { status: { $in: AUTO_INVITE_CONFIG.VALID_STATUSES }, isArchived: false, isWithdrawn: false },
-        { $set: { firstInvitationSentAt: null } }
-      );
-      console.log(`🔄 [RESET] Cleared firstInvitationSentAt on ${resetResult.modifiedCount} applications`);
-    }
-
-    // Diagnostic: show what the query would find BEFORE running
-    const eligible = await JobApplication.find({
-      appliedAt: { $lte: new Date(Date.now() - AUTO_INVITE_CONFIG.FIRST_INVITE_HOURS * 60 * 60 * 1000) },
-      status: { $in: AUTO_INVITE_CONFIG.VALID_STATUSES },
-      firstInvitationSentAt: null,
-      isArchived: false,
-      isWithdrawn: false
-    }).select("_id status appliedAt firstInvitationSentAt profile").limit(20).lean();
-
-    console.log(`🔍 [DIAGNOSTIC] Eligible applications found: ${eligible.length}`);
-    eligible.forEach(a => console.log(`   - ${a._id} | status: ${a.status} | profile: ${a.profile} | firstInviteSent: ${a.firstInvitationSentAt}`));
-
-    await runAutoInviteJob({ force: true });
-
-    console.log("=".repeat(80) + "\n");
-
-    res.status(200).json({
-      success: true,
-      message: "Auto-invite scheduler triggered successfully",
-      eligibleCount: eligible.length,
-      eligibleIds: eligible.map(a => a._id),
-      note: req.query.reset === "true" ? "firstInvitationSentAt was reset before running" : "Add ?reset=true to clear firstInvitationSentAt and re-test",
-    });
-  } catch (error) {
-    console.error(`\n❌ [ERROR] Error in triggerAutoInvite: ${error.message}`);
-    console.error("Stack trace:", error.stack);
-    console.log("=".repeat(80) + "\n");
-    handleError(res, error, 400);
-  }
-};
-
-// ========== TRIGGER REMINDER (FOR TESTING) ==========
-module.exports.triggerReminder = async (req, res) => {
-  try {
-    const { runReminderJob } = require("../cron/reminderScheduler.cron");
-    const { REMINDER_CONFIG } = require("../constants/scheduler.constants");
-
-    console.log("\n" + "=".repeat(80));
-    console.log("🚀 [JOB APPLICATION] - MANUAL REMINDER TRIGGER");
-    console.log("=".repeat(80) + "\n");
-
-    // ?reset=true clears reminder timestamps so applications can be re-tested
-    if (req.query.reset === "true") {
-      const resetResult = await JobApplication.updateMany(
-        { status: { $in: REMINDER_CONFIG.VALID_STATUSES }, isArchived: false, isWithdrawn: false },
-        { $set: { firstReminderSentAt: null, secondReminderSentAt: null } }
-      );
-      console.log(`🔄 [RESET] Cleared reminder timestamps on ${resetResult.modifiedCount} applications`);
-    }
-
-    // Diagnostic: show pending applications before running
-    const pending = await JobApplication.find({
-      status: { $in: REMINDER_CONFIG.VALID_STATUSES },
-      isArchived: false,
-      isWithdrawn: false
-    }).select("_id status appliedAt firstReminderSentAt secondReminderSentAt").limit(20).lean();
-
-    console.log(`🔍 [DIAGNOSTIC] Pending applications found: ${pending.length}`);
-    pending.forEach(a => console.log(`   - ${a._id} | status: ${a.status} | 1st: ${a.firstReminderSentAt} | 2nd: ${a.secondReminderSentAt}`));
-
-    await runReminderJob({ force: true });
-
-    console.log("=".repeat(80) + "\n");
-
-    res.status(200).json({
-      success: true,
-      message: "Reminder scheduler triggered successfully",
-      pendingCount: pending.length,
-      pendingIds: pending.map(a => a._id),
-      note: req.query.reset === "true" ? "Reminder timestamps were reset before running" : "Add ?reset=true to clear reminder timestamps and re-test",
-    });
-  } catch (error) {
-    console.error(`\n❌ [ERROR] Error in triggerReminder: ${error.message}`);
-    handleError(res, error, 400);
-  }
-};
-
 // ========== GET - Flat summary list for a post ==========
 module.exports.getApplicationsSummaryByPost = async (req, res) => {
   try {
@@ -884,42 +605,6 @@ module.exports.getApplicationsSummaryByCompany = async (req, res) => {
         hasPrevPage: result.hasPrevPage,
       },
     });
-  } catch (error) {
-    handleError(res, error);
-  }
-};
-
-module.exports.downloadCVsByCompany = async (req, res) => {
-  try {
-    const archiver = require("archiver");
-    const companyId = req.user._id;
-    const { status, search, postId, dateFrom, dateTo } = req.query;
-
-    const filters = {};
-    if (status)   filters.status   = status;
-    if (search)   filters.search   = search;
-    if (postId)   filters.postId   = postId;
-    if (dateFrom) filters.dateFrom = dateFrom;
-    if (dateTo)   filters.dateTo   = dateTo;
-
-    const files = await jobApplicationService.downloadCVsByCompany(companyId, filters);
-
-    if (files.length === 0) {
-      return res.status(404).json({ success: false, message: "No CVs found for the selected filters." });
-    }
-
-    res.setHeader("Content-Type", "application/zip");
-    res.setHeader("Content-Disposition", `attachment; filename="candidates_cvs.zip"`);
-
-    const archive = archiver("zip", { zlib: { level: 6 } });
-    archive.on("error", (err) => { throw err; });
-    archive.pipe(res);
-
-    for (const { filePath, archiveName } of files) {
-      archive.file(filePath, { name: archiveName });
-    }
-
-    await archive.finalize();
   } catch (error) {
     handleError(res, error);
   }
@@ -1162,59 +847,6 @@ module.exports.updateRecruiterDecision = async (req, res) => {
     });
   } catch (error) {
     console.error(`\n❌ [ERROR] Error in updateRecruiterDecision: ${error.message}`);
-    handleError(res, error);
-  }
-};
-
-
-
-
-// ========== GET CANDIDATES BY DECISION ==========
-module.exports.getCandidatesByDecision = async (req, res) => {
-  try {
-    const companyId = req.user._id;
-    const { decision, postId, page = 1, limit = 20 } = req.query;
-
-    if (!companyId) {
-      return res.status(400).json({
-        success: false,
-        error: "Company ID is required",
-      });
-    }
-
-    if (!decision || !["shortlisted", "rejected"].includes(decision)) {
-      return res.status(400).json({
-        success: false,
-        error: "Decision query param must be 'shortlisted' or 'rejected'",
-      });
-    }
-
-    console.log("\n" + "=".repeat(80));
-    console.log(`📋 [DECISION: ${decision.toUpperCase()}] GET CANDIDATES - REQUEST RECEIVED`);
-    console.log("=".repeat(80));
-    console.log(`👤 Company ID: ${companyId}`);
-    console.log(`🔍 Decision: ${decision}`);
-    if (postId) console.log(`📄 Post ID: ${postId}`);
-
-    const result = await jobApplicationService.getCandidatesByDecision(
-      companyId,
-      decision,
-      postId || null,
-      parseInt(page),
-      parseInt(limit)
-    );
-
-    console.log(`✅ Retrieved ${result.pagination.totalCount} candidates`);
-    console.log("=".repeat(80) + "\n");
-
-    res.status(200).json({
-      success: true,
-      message: `Candidates with decision '${decision}' retrieved successfully`,
-      data: result.data,
-      pagination: result.pagination,
-    });
-  } catch (error) {
-    console.error(`\n❌ [ERROR] Error in getCandidatesByDecision: ${error.message}`);
     handleError(res, error);
   }
 };

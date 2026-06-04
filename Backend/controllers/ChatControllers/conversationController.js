@@ -10,7 +10,6 @@ module.exports.findOrCreateConversation = async (req, res) => {
     const { candidateId, companyId, relatedPost } = req.body;
     const userId = req.user._id.toString();
 
-    // Verify current user is one of the participants
     if (userId !== candidateId && userId !== companyId) {
       return res.status(403).json({
         success: false,
@@ -18,15 +17,9 @@ module.exports.findOrCreateConversation = async (req, res) => {
       });
     }
 
-    // Conversations are company-initiated: a candidate may only resume an
-    // existing thread, never create one. This keeps the candidate inbox
-    // restricted to companies that have already reached out.
     if (req.user.role === "Candidate") {
       const Conversation = require("../../models/Conversations.model");
-      const existing = await Conversation.findOne({
-        candidateId,
-        companyId,
-      });
+      const existing = await Conversation.findOne({ candidateId, companyId });
       if (!existing) {
         return res.status(403).json({
           success: false,
@@ -41,10 +34,7 @@ module.exports.findOrCreateConversation = async (req, res) => {
       relatedPost,
     );
 
-    res.status(200).json({
-      success: true,
-      data: conversation,
-    });
+    res.status(200).json({ success: true, data: conversation });
   } catch (error) {
     console.error("Error in findOrCreateConversation controller:", error);
     res.status(500).json({
@@ -65,20 +55,15 @@ module.exports.getUserConversations = async (req, res) => {
 
     const pageNum = Number.parseInt(String(page), 10);
     const limitNum = Number.parseInt(String(limit), 10);
-    const safePage = Number.isFinite(pageNum) && pageNum > 0 ? pageNum : 1;
-    const safeLimit = Number.isFinite(limitNum) && limitNum > 0 ? Math.min(limitNum, 100) : 20;
 
     const options = {
-      page: safePage,
-      limit: safeLimit,
+      page: Number.isFinite(pageNum) && pageNum > 0 ? pageNum : 1,
+      limit: Number.isFinite(limitNum) && limitNum > 0 ? Math.min(limitNum, 100) : 20,
       status,
       includeArchived: includeArchived === "true",
     };
 
-    const result = await conversationService.getUserConversations(
-      userId,
-      options,
-    );
+    const result = await conversationService.getUserConversations(userId, options);
 
     res.set("Cache-Control", "private, no-store, must-revalidate");
     res.status(200).json({
@@ -104,15 +89,9 @@ module.exports.getConversationById = async (req, res) => {
     const { conversationId } = req.params;
     const userId = req.user._id;
 
-    const conversation = await conversationService.getConversationById(
-      conversationId,
-      userId,
-    );
+    const conversation = await conversationService.getConversationById(conversationId, userId);
 
-    res.status(200).json({
-      success: true,
-      data: conversation,
-    });
+    res.status(200).json({ success: true, data: conversation });
   } catch (error) {
     console.error("Error in getConversationById controller:", error);
     res.status(500).json({
@@ -133,111 +112,12 @@ module.exports.markConversationAsRead = async (req, res) => {
 
     await conversationService.markConversationAsRead(conversationId, userId);
 
-    res.status(200).json({
-      success: true,
-      message: "Conversation marked as read",
-    });
+    res.status(200).json({ success: true, message: "Conversation marked as read" });
   } catch (error) {
     console.error("Error in markConversationAsRead controller:", error);
     res.status(500).json({
       success: false,
       message: error.message || "Failed to mark conversation as read",
-    });
-  }
-};
-
-/**
- * Archive conversation
- * PUT /chat/conversations/:conversationId/archive
- */
-module.exports.archiveConversation = async (req, res) => {
-  try {
-    const { conversationId } = req.params;
-    const userId = req.user._id;
-
-    await conversationService.archiveConversation(conversationId, userId);
-
-    res.status(200).json({
-      success: true,
-      message: "Conversation archived successfully",
-    });
-  } catch (error) {
-    console.error("Error in archiveConversation controller:", error);
-    res.status(500).json({
-      success: false,
-      message: error.message || "Failed to archive conversation",
-    });
-  }
-};
-
-/**
- * Unarchive conversation
- * PUT /chat/conversations/:conversationId/unarchive
- */
-module.exports.unarchiveConversation = async (req, res) => {
-  try {
-    const { conversationId } = req.params;
-    const userId = req.user._id;
-
-    await conversationService.unarchiveConversation(conversationId, userId);
-
-    res.status(200).json({
-      success: true,
-      message: "Conversation unarchived successfully",
-    });
-  } catch (error) {
-    console.error("Error in unarchiveConversation controller:", error);
-    res.status(500).json({
-      success: false,
-      message: error.message || "Failed to unarchive conversation",
-    });
-  }
-};
-
-/**
- * Block conversation
- * PUT /chat/conversations/:conversationId/block
- */
-module.exports.blockConversation = async (req, res) => {
-  try {
-    const { conversationId } = req.params;
-    const userId = req.user._id;
-
-    await conversationService.blockConversation(conversationId, userId);
-
-    res.status(200).json({
-      success: true,
-      message: "Conversation blocked successfully",
-    });
-  } catch (error) {
-    console.error("Error in blockConversation controller:", error);
-    res.status(500).json({
-      success: false,
-      message: error.message || "Failed to block conversation",
-    });
-  }
-};
-
-/**
- * Unblock conversation
- * PUT /chat/conversations/:conversationId/unblock
- */
-module.exports.unblockConversation = async (req, res) => {
-  try {
-    const { conversationId } = req.params;
-    const userId = req.user._id;
-
-    await conversationService.unblockConversation(conversationId, userId);
-
-    res.status(200).json({
-      success: true,
-      message: "Conversation unblocked successfully",
-    });
-  } catch (error) {
-    console.error("Error in unblockConversation controller:", error);
-    res.status(500).json({
-      success: false,
-      message: error.message || "Failed to unblock conversation",
     });
   }
 };
@@ -251,35 +131,21 @@ module.exports.deleteConversation = async (req, res) => {
     const { conversationId } = req.params;
     const userId = req.user._id;
 
-    // Get conversation details before deletion for socket notification
     const Conversation = require("../../models/Conversations.model");
     const conversation = await Conversation.findById(conversationId);
 
     if (!conversation) {
-      return res.status(404).json({
-        success: false,
-        message: "Conversation not found",
-      });
+      return res.status(404).json({ success: false, message: "Conversation not found" });
     }
 
     const participants = conversation.participants.map((p) => p.toString());
-    const result = await conversationService.deleteConversation(
-      conversationId,
-      userId,
-    );
+    const result = await conversationService.deleteConversation(conversationId, userId);
 
-    // Emit WebSocket event to notify participants.
-    // Company performs a hard delete (removes for everyone) → notify all participants.
-    // Candidate performs a soft delete (archive for themselves only) → notify only
-    // the candidate so the company's inbox is not incorrectly cleared.
     try {
       const io = socket.getIO();
       const chatNamespace = io.of("/chat");
-
       const isCompanyDelete = req.user.role === "Company";
-      const recipientIds = isCompanyDelete
-        ? participants
-        : [userId.toString()];
+      const recipientIds = isCompanyDelete ? participants : [userId.toString()];
 
       recipientIds.forEach((participantId) => {
         chatNamespace.to(`user:${participantId}`).emit("conversation_deleted", {
@@ -287,19 +153,11 @@ module.exports.deleteConversation = async (req, res) => {
           deletedBy: userId.toString(),
         });
       });
-
-      console.log(
-        `📨 Conversation deletion broadcast via WebSocket to ${recipientIds.length} participant(s)`,
-      );
     } catch (socketError) {
       console.error("Error emitting WebSocket event:", socketError);
-      // Don't fail the request if WebSocket broadcast fails
     }
 
-    res.status(200).json({
-      success: true,
-      message: result.message,
-    });
+    res.status(200).json({ success: true, message: result.message });
   } catch (error) {
     console.error("Error in deleteConversation controller:", error);
     res.status(500).json({
@@ -311,19 +169,15 @@ module.exports.deleteConversation = async (req, res) => {
 
 /**
  * Get total unread count
- * GET /chat/unread-count
+ * GET /chat/conversations/unread-count
  */
 module.exports.getTotalUnreadCount = async (req, res) => {
   try {
     const userId = req.user._id;
-
     const totalUnread = await conversationService.getTotalUnreadCount(userId);
 
     res.set("Cache-Control", "private, no-store, must-revalidate");
-    res.status(200).json({
-      success: true,
-      data: { totalUnread },
-    });
+    res.status(200).json({ success: true, data: { totalUnread } });
   } catch (error) {
     console.error("Error in getTotalUnreadCount controller:", error);
     res.status(500).json({
@@ -334,15 +188,13 @@ module.exports.getTotalUnreadCount = async (req, res) => {
 };
 
 /**
- * Unarchive all conversations for the current user.
- * Removes the user's ID from archivedBy on every conversation they participate in.
+ * Unarchive all conversations for the current user
  * POST /chat/conversations/unarchive-all
  */
 module.exports.unarchiveAllConversations = async (req, res) => {
   try {
     const userId = req.user._id;
     const Conversation = require("../../models/Conversations.model");
-
     const modifiedCount = await Conversation.unarchiveAllForUser(userId);
 
     res.status(200).json({
@@ -355,40 +207,6 @@ module.exports.unarchiveAllConversations = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || "Failed to unarchive conversations",
-    });
-  }
-};
-
-/**
- * Search conversations
- * GET /chat/conversations/search
- */
-module.exports.searchConversations = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { q: searchTerm } = req.query;
-
-    if (!searchTerm) {
-      return res.status(400).json({
-        success: false,
-        message: "Search term is required",
-      });
-    }
-
-    const conversations = await conversationService.searchConversations(
-      userId,
-      searchTerm,
-    );
-
-    res.status(200).json({
-      success: true,
-      data: conversations,
-    });
-  } catch (error) {
-    console.error("Error in searchConversations controller:", error);
-    res.status(500).json({
-      success: false,
-      message: error.message || "Failed to search conversations",
     });
   }
 };

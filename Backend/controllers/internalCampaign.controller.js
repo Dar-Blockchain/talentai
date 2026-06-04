@@ -625,43 +625,6 @@ exports.deleteInternalCampaign = async (req, res) => {
 };
 
 /**
- * Get campaign statistics
- */
-exports.getCampaignStats = async (req, res) => {
-  try {
-    const { campaignId } = req.params;
-    const stats = await getCampaignStats(campaignId);
-    res.status(200).json({
-      success: true,
-      data: stats,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
-  }
-};
-
-/**
- * Get all campaigns (admin only)
- */
-exports.getAllCampaigns = async (req, res) => {
-  try {
-    const campaigns = await getAllCampaigns();
-    res.status(200).json({
-      success: true,
-      data: campaigns,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
-  }
-};
-
-/**
  * Get campaign metrics (count by status)
  */
 exports.getCampaignMetrics = async (req, res) => {
@@ -1667,75 +1630,6 @@ exports.getNonParticipants = async (req, res) => {
   }
 };
 
-// ─── Anonymous scores ─────────────────────────────────────────────────────────
-
-/**
- * GET /internal-campaigns/:campaignId/anonymous-scores
- * Returns the ordered list of anonymous participants with their scores.
- * Each entry is numbered sequentially (Anonymous #1, #2 …).
- * Requires Company auth (handled by the router.use middleware).
- */
-exports.getAnonymousScores = async (req, res) => {
-  try {
-    const { campaignId } = req.params;
-
-    const campaign = await InternalCampaign.findById(campaignId).lean();
-    if (!campaign)
-      return res
-        .status(404)
-        .json({ success: false, error: "Campaign not found" });
-    if (campaign.anonymityMode !== "ANONYMOUS") {
-      return res
-        .status(400)
-        .json({ success: false, error: "Campaign is not anonymous" });
-    }
-
-    // All anonymous participants for this campaign (both LINK+ANONYMOUS and ACCOUNTS+ANONYMOUS), oldest first
-    const participants = await CampaignParticipant.find(
-      { campaign: campaignId, anonymousToken: { $exists: true, $ne: null } },
-      {
-        _id: 1,
-        status: 1,
-        completedAt: 1,
-        accessedAt: 1,
-        anonymousToken: 1,
-        createdAt: 1,
-      },
-    )
-      .sort({ createdAt: 1 })
-      .lean();
-
-    const participantIds = participants.map((p) => p._id);
-
-    // Fetch all responses in one query
-    const responses = await CampaignResponse.find(
-      { campaign: campaignId, participant: { $in: participantIds } },
-      { participant: 1, aiScore: 1, aiSummary: 1 },
-    ).lean();
-    const scoreMap = {};
-    responses.forEach((r) => {
-      scoreMap[r.participant.toString()] = {
-        score: r.aiScore ?? null,
-        summary: r.aiSummary ?? null,
-      };
-    });
-
-    const data = participants.map((p, i) => ({
-      index: i + 1,
-      _id: p._id,
-      status: p.status,
-      completedAt: p.completedAt ?? null,
-      accessedAt: p.accessedAt ?? null,
-      score: scoreMap[p._id.toString()]?.score ?? null,
-      aiSummary: scoreMap[p._id.toString()]?.summary ?? null,
-    }));
-
-    res.status(200).json({ success: true, data });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-};
-
 // ─── Sessions ─────────────────────────────────────────────────────────────────
 
 /**
@@ -1926,44 +1820,6 @@ exports.getSessions = async (req, res) => {
     });
 
     res.status(200).json({ success: true, data: sessions, total });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-};
-
-// ─── Public campaign info ─────────────────────────────────────────────────────
-
-/**
- * GET /internal-campaigns/:campaignId/public
- * Public — returns limited campaign info by ID (no auth required).
- * Used by the public assessment page after joining via link.
- */
-exports.getPublicCampaignInfo = async (req, res) => {
-  try {
-    const { campaignId } = req.params;
-    const campaign = await InternalCampaign.findById(campaignId)
-      .populate("company", "name")
-      .lean();
-    if (!campaign) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Campaign not found" });
-    }
-    res.status(200).json({
-      success: true,
-      data: {
-        _id: campaign._id,
-        title: campaign.title,
-        description: campaign.description,
-        type: campaign.type,
-        status: campaign.status,
-        anonymityMode: campaign.anonymityMode,
-        accessMethod: campaign.accessMethod,
-        module: campaign.module,
-        deadline: campaign.deadline,
-        company: campaign.company,
-      },
-    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

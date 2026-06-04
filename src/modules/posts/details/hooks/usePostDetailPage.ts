@@ -53,7 +53,7 @@ export const usePostDetailPage = () => {
   const getInterviewLink = () => {
     if (!job?._id || typeof window === "undefined") return "";
     const companyId = job.user?._id || connectedUser?._id || "";
-    return `${window.location.origin}/candidate/interview/hr?jobId=${job._id}${companyId ? `&companyId=${companyId}` : ""}&ref=link`;
+    return `${window.location.origin}/candidate/interview?jobId=${job._id}${companyId ? `&companyId=${companyId}` : ""}&ref=link`;
   };
 
   const handleSaveSuccess = () => {

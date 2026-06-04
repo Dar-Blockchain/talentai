@@ -6,6 +6,28 @@
 const redis = require('redis');
 require('dotenv').config();
 
+const TECH_LABELS = {
+  reactjs: 'ReactJS', nodejs: 'Node.js', expressjs: 'ExpressJS', nextjs: 'Next.js',
+  vuejs: 'Vue.js', angularjs: 'AngularJS', typescript: 'TypeScript', javascript: 'JavaScript',
+  python: 'Python', java: 'Java', golang: 'Go', rust: 'Rust', ruby: 'Ruby',
+  css: 'CSS', html: 'HTML', html5: 'HTML5', css3: 'CSS3',
+  api: 'API', rest: 'REST', graphql: 'GraphQL', http: 'HTTP', grpc: 'gRPC',
+  sql: 'SQL', nosql: 'NoSQL', mongodb: 'MongoDB', postgresql: 'PostgreSQL',
+  mysql: 'MySQL', redis: 'Redis', elasticsearch: 'Elasticsearch',
+  aws: 'AWS', gcp: 'GCP', azure: 'Azure', docker: 'Docker', kubernetes: 'Kubernetes',
+  ci: 'CI', cd: 'CD', cicd: 'CI/CD', devops: 'DevOps',
+  ui: 'UI', ux: 'UX', oop: 'OOP', ai: 'AI', ml: 'ML',
+  blockchain: 'Blockchain', web3: 'Web3', defi: 'DeFi',
+  kotlin: 'Kotlin', swift: 'Swift', flutter: 'Flutter', dart: 'Dart',
+};
+
+function formatAreaLabel(key) {
+  return key
+    .split('_')
+    .map(w => TECH_LABELS[w.toLowerCase()] || (w.charAt(0).toUpperCase() + w.slice(1)))
+    .join(' ');
+}
+
 class RedisSessionManager {
   constructor() {
     this.client = null;
@@ -540,6 +562,7 @@ class RedisSessionManager {
 
     focusAreas.forEach(area => {
       coverage.areas[area.area] = {
+        label: formatAreaLabel(area.area),
         percentage: 0,
         indicators: area.indicators.map(indicator => ({
           name: indicator,
@@ -549,7 +572,9 @@ class RedisSessionManager {
         })),
         weight: area.weight,
         depth: area.depth,
-        completed: false
+        completed: false,
+        skipCount: 0,
+        skippedQuestions: [],
       };
     });
 

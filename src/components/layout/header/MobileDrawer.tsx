@@ -213,7 +213,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unre
                 <Row icon={<ChatBubbleOutlineOutlined />} label={t("header.messages")}
                   badge={unreadMessageCount} onClick={() => go(getCandidateChatBasePath(user?.role))} />
                 <Row icon={<NotificationsOutlined />} label={t("header.notifications")}
-                  onClick={() => go(isCompany ? "/company/notifications" : "/candidate/notifications")} />
+                  onClick={() => go("/notifications")} />
                 <Row icon={<SettingsOutlined />} label={t("header.settings")}
                   onClick={() => go("/settings")} />
               </Box>

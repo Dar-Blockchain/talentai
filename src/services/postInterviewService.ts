@@ -62,33 +62,6 @@ export const fetchCandidateProgress = async (token: string): Promise<CandidatePr
 };
 
 /**
- * Submit task with GitHub link
- */
-export const submitTask = async (
-  stepNodeId: string,
-  githubLink: string,
-  token: string
-): Promise<void> => {
-  const apiUrl = `${API_BASE_URL}post-steps/node/${stepNodeId}/submit-task`;
-
-  const response = await fetch(apiUrl, {
-    method: 'PUT',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ githubLink }),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || 'Failed to submit task');
-  }
-
-  return response.json();
-};
-
-/**
  * Get cached candidate progress from sessionStorage
  */
 export const getCachedProgress = (): CandidateProgress[] | null => {

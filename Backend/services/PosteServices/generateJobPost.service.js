@@ -1,7 +1,7 @@
 const bedrock = require("../../helpers/bedrock.helpers");
 require("dotenv").config();
 const Profile = require("../../models/Profile.model");
-const { generatePrompt } = require("../../prompts/generate-job-post-prompts");
+const { generatePrompt, normalizeSkillAnalysis } = require("../../prompts/generate-job-post-prompts");
 
 function parseLLMJson(raw) {
   const firstBrace = raw.indexOf("{");
@@ -43,15 +43,15 @@ async function generateJobPost(description, user, overrides = {}) {
 
   const company         = user?.profile ? await Profile.findById(user.profile).lean() : null;
   const companyLocation = company?.companyDetails?.location || "";
-  const prompt          = generatePrompt(description, companyLocation, language);
+  const prompt          = generatePrompt(description, companyLocation, language, contractType);
   const sleep           = (ms) => new Promise((r) => setTimeout(r, ms));
 
   const attemptOnce = async () => {
     const response = await bedrock.callLLM({
       systemPrompt:
-        "You are an expert technical recruiter and AI assistant specializing in job analysis, skill assessment, and creating engaging job posts. Provide comprehensive analysis while maintaining professional formatting.",
+        "You are an expert technical recruiter and AI assistant specializing in job analysis, skill extraction, and structured job post generation. Your output must always be a single valid JSON object — no extra text, no markdown, no explanations. Follow every rule in the user prompt exactly and consistently.",
       messages:    [{ role: "user", content: prompt }],
-      temperature: 0.7,
+      temperature: 0.3,
       maxTokens:   4096,
       timeout:     30000,
     });
@@ -69,8 +69,7 @@ async function generateJobPost(description, user, overrides = {}) {
     if (workMode     && result?.jobDetails) result.jobDetails.workMode       = workMode;
     if (contractType && result?.jobDetails) result.jobDetails.employmentType = contractType;
 
-    // NOTE: normalizeSkillPercentages removed — handled by postProcessJobDetails
-    return result;
+    return normalizeSkillAnalysis(result);
   };
 
   let lastError;
