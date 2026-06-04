@@ -136,7 +136,6 @@ export const useInterviewConfig = ({
         postId: post._id,
         creationType: post.creationType,
         isPipeline: isPipeline,
-        isPipeline: isPipeline
       });
       console.log('📋 Job type:', isPipeline ? 'Pipeline ⚡' : 'Regular');
       setIsPipelineJob(isPipeline);

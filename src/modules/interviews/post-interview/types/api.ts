@@ -32,7 +32,8 @@ export interface JobPost {
   _id: string;
   title?: string;
   companyName?: string;
-  user?: { _id: string; username?: string; companyName?: string };
+  createdBy?: { id: string; name: string };
+  user?: { _id: string; username?: string };
   company?: { _id?: string; companyName?: string };
   profile?: { _id: string };
   jobDetails?: JobDetails;
