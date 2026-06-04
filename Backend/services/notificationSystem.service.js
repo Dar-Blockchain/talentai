@@ -44,12 +44,13 @@ async function createSystemNotification(recipientId, content) {
   return notification;
 }
 
-async function createNotification(recipientId, content, type ) {
+async function createNotification(recipientId, content, type, category = 'system') {
   /**
-   * Create a notification with a specific type
+   * Create a notification with a specific type and optional category
    * @param {string} recipientId - User ID of the recipient
    * @param {string} content - Notification content
    * @param {string} type - Type of notification (info, success, warning, error, custom, system)
+   * @param {string} [category] - Category: system | job | chat | account | profile
    * @returns {Promise<Object>} Created notification document
    */
   if (!recipientId || !content) {
@@ -60,6 +61,7 @@ async function createNotification(recipientId, content, type ) {
     recipient: recipientId,
     content,
     type,
+    category,
     read: false,
   });
 
@@ -175,7 +177,7 @@ async function deleteNotification(notificationId, userId, userRole = null) {
     console.warn('Failed to remove notification reference from user:', error.message || error);
   }
 
-  await notification.remove();
+  await notification.deleteOne();
   // Emit deletion event
   try {
     const io = socket.getIO();
@@ -344,6 +346,41 @@ async function archiveAllNotifications(userId) {
   return { archivedCount: result.modifiedCount };
 }
 
+async function deleteAllNotifications(userId) {
+  if (!userId) {
+    throw new Error('User ID is required.');
+  }
+
+  // Only delete non-archived (active) notifications
+  const result = await Notification.deleteMany({ recipient: userId, archived: { $ne: true } });
+
+  try {
+    const io = socket.getIO();
+    io.to(String(userId)).emit('allNotificationsDeleted', { deletedCount: result.deletedCount });
+  } catch (err) {
+    console.warn('Socket emit failed on deleteAllNotifications:', err.message || err);
+  }
+
+  return { deletedCount: result.deletedCount };
+}
+
+async function deleteAllArchivedNotifications(userId) {
+  if (!userId) {
+    throw new Error('User ID is required.');
+  }
+
+  const result = await Notification.deleteMany({ recipient: userId, archived: true });
+
+  try {
+    const io = socket.getIO();
+    io.to(String(userId)).emit('allArchivedNotificationsDeleted', { deletedCount: result.deletedCount });
+  } catch (err) {
+    console.warn('Socket emit failed on deleteAllArchivedNotifications:', err.message || err);
+  }
+
+  return { deletedCount: result.deletedCount };
+}
+
 async function autoArchiveOldNotifications(userId, daysOld = 15) {
   if (!userId) {
     throw new Error('User ID is required.');
@@ -379,6 +416,8 @@ module.exports = {
   markAllAsRead,
   archiveAllNotifications,
   deleteNotification,
+  deleteAllNotifications,
+  deleteAllArchivedNotifications,
   getUnreadCount,
   broadcastSystemNotification,
   archiveNotification,

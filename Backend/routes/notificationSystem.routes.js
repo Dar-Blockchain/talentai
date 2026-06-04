@@ -246,4 +246,10 @@ router.patch('/archive-all',resolveCompanyActor, controller.archiveAllNotificati
  */
 router.delete('/deleteNotification/:id',resolveCompanyActor, controller.deleteNotification);
 
+// DELETE /notification-system/delete-all — delete all active (non-archived) notifications
+router.delete('/delete-all', resolveCompanyActor, controller.deleteAllNotifications);
+
+// DELETE /notification-system/delete-all-archived — delete all archived notifications
+router.delete('/delete-all-archived', resolveCompanyActor, controller.deleteAllArchivedNotifications);
+
 module.exports = router;

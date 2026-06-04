@@ -170,6 +170,34 @@ exports.archiveAllNotifications = async (req, res) => {
   }
 };
 
+// Delete all active (non-archived) notifications for the authenticated user
+exports.deleteAllNotifications = async (req, res) => {
+  try {
+    const userId = req.user && req.user._id;
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+    const result = await notificationSystemService.deleteAllNotifications(userId);
+    res.json({ message: 'All active notifications deleted.', deletedCount: result.deletedCount });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+// Delete all archived notifications for the authenticated user
+exports.deleteAllArchivedNotifications = async (req, res) => {
+  try {
+    const userId = req.user && req.user._id;
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+    const result = await notificationSystemService.deleteAllArchivedNotifications(userId);
+    res.json({ message: 'All archived notifications deleted.', deletedCount: result.deletedCount });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
 // Broadcast system notification to all users
 exports.broadcastSystemNotification = async (req, res) => {
   try {

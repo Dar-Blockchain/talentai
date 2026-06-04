@@ -10,7 +10,7 @@ export const useRegisterMutation = () =>
   });
 
 export const useVerifyRegisterOtp = (onSuccess?: (data: VerifyOtpResponse) => void) =>
-  useVerifyOtp(onSuccess);
+  useVerifyOtp(onSuccess, { sendWelcome: true });
 
 export const useResendRegisterOtp = () =>
   useMutation({

@@ -5,6 +5,8 @@ import Cookies from "js-cookie";
 import type { AppDispatch } from "@/store/store";
 import { setConnectedUser } from "@/store/slices/userSlice";
 import { setAuthenticated } from "@/store/slices/authSlice";
+import { notificationApi } from "@/modules/notifications/api/notificationApi";
+import { notifMessages } from "@/modules/notifications/i18n/notificationMessages";
 import { authApi } from "../api";
 import type { VerifyOtpPayload, VerifyOtpResponse } from "../types";
 
@@ -18,7 +20,14 @@ function persistSession(token: string, role: string): void {
   Cookies.set(ROLE_KEY,  role,  COOKIE_OPTIONS);
 }
 
-export function useVerifyOtp(onSuccess?: (data: VerifyOtpResponse) => void) {
+interface UseVerifyOtpOptions {
+  sendWelcome?: boolean;
+}
+
+export function useVerifyOtp(
+  onSuccess?: (data: VerifyOtpResponse) => void,
+  options?: UseVerifyOtpOptions,
+) {
   const dispatch     = useDispatch<AppDispatch>();
   const queryClient  = useQueryClient();
 
@@ -32,13 +41,18 @@ export function useVerifyOtp(onSuccess?: (data: VerifyOtpResponse) => void) {
     onSuccess: (data) => {
       persistSession(data.token, data.user.role);
 
-      dispatch(setAuthenticated(data.token));
       dispatch(setConnectedUser({
         user:              data.user,
         profile:           data.profile           ?? null,
         planLimits:        data.planLimits         ?? null,
         companyMembership: data.companyMembership  ?? null,
       }));
+
+      dispatch(setAuthenticated(true));
+
+      if (options?.sendWelcome) {
+        notificationApi.createNotification("success", notifMessages.welcome()).catch(() => {});
+      }
 
       // Clear stale cache from any previous session before navigating
       queryClient.clear();

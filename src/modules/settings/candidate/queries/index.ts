@@ -19,12 +19,14 @@ export const useUpdateCandidateProfile = () => {
     mutationFn: ({ userId, payload }: { userId: string; payload: Record<string, unknown> }) =>
       candidateApi.updateProfile(userId, payload),
     onSuccess: (data) => {
-      dispatch(setConnectedUser({
-        user:              data?.user              ?? null,
-        profile:           data?.profile           ?? null,
-        planLimits:        data?.planLimits        ?? null,
-        companyMembership: data?.companyMembership ?? null,
-      }));
+      if (data?.user) {
+        dispatch(setConnectedUser({
+          user:              data.user,
+          profile:           data?.profile           ?? null,
+          planLimits:        data?.planLimits         ?? null,
+          companyMembership: data?.companyMembership  ?? null,
+        }));
+      }
       queryClient.invalidateQueries({ queryKey: profileKeys.me });
     },
   });
@@ -37,12 +39,14 @@ export const useUploadCandidateAvatar = () => {
     mutationFn: ({ userId, file }: { userId: string; file: File }) =>
       candidateApi.uploadAvatar(userId, file),
     onSuccess: (data) => {
-      dispatch(setConnectedUser({
-        user:              data?.user              ?? null,
-        profile:           data?.profile           ?? null,
-        planLimits:        data?.planLimits        ?? null,
-        companyMembership: data?.companyMembership ?? null,
-      }));
+      if (data?.user) {
+        dispatch(setConnectedUser({
+          user:              data.user,
+          profile:           data?.profile           ?? null,
+          planLimits:        data?.planLimits         ?? null,
+          companyMembership: data?.companyMembership  ?? null,
+        }));
+      }
       queryClient.invalidateQueries({ queryKey: profileKeys.me });
     },
   });

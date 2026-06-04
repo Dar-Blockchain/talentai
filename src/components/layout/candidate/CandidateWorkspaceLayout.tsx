@@ -98,6 +98,7 @@ const CandidateWorkspaceLayout: React.FC<CandidateWorkspaceLayoutProps> = ({
       </Drawer>
 
       <Box
+        id="main-scroll"
         sx={{
           flex: 1,
           mt: `${HEADER_HEIGHT}px`,

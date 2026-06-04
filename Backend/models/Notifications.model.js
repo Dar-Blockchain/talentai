@@ -6,6 +6,9 @@ const mongoose = require("mongoose");
 // List of possible notification types
 const NOTIFICATION_TYPES = ["info", "success", "warning", "error", "custom", "system"];
 
+// List of possible notification categories
+const NOTIFICATION_CATEGORIES = ["system", "job", "chat", "account", "profile"];
+
 // Derive a human-readable title from content + type
 function deriveTitleFromContent(content, type) {
   if (content) {
@@ -51,6 +54,15 @@ const NotificationSchema = new mongoose.Schema(
         message: "Invalid notification type.",
       },
       default: "info",
+    },
+    category: {
+      type: String,
+      enum: {
+        values: NOTIFICATION_CATEGORIES,
+        message: "Invalid notification category.",
+      },
+      default: "system",
+      index: true,
     },
     read: {
       type: Boolean,
