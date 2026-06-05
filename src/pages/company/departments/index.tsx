@@ -9,9 +9,7 @@ import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 import { RootState }      from "@/store/store";
 import { selectEmployeePermissions } from "@/store/slices/memberSlice";
 import { useToast }       from "@/hooks/useToast";
-import {
-  useDepartmentList,
-} from "@/modules/company/departments/hooks";
+import { useDepartmentList } from "@/modules/company/departments/hooks";
 import {
   useCreateDepartmentMutation,
   useUpdateDepartmentMutation,
@@ -22,14 +20,13 @@ import {
   DepartmentGrid,
   DepartmentEmptyState,
 } from "@/modules/company/departments/components/list";
-import { CreateDepartmentModal } from "@/modules/company/departments/components/new";
-import { EditDepartmentModal }   from "@/modules/company/departments/components/edit";
+import { DepartmentFormModal } from "@/modules/company/departments/components/shared";
 import { DeleteDepartmentDialog } from "@/modules/company/departments/components/delete";
 import { extractAxiosErrorMessage } from "@/modules/company/departments/utils/departmentI18n";
 import type { Department } from "@/modules/company/departments/types";
 
 const DepartmentsPage: React.FC = () => {
-  const { t }       = useTranslation("dashboard");
+  const { t }         = useTranslation("dashboard");
   const { showToast } = useToast();
   useCompanyAccess("canViewDepartments");
 
@@ -54,25 +51,25 @@ const DepartmentsPage: React.FC = () => {
         setCreateOpen(false);
       },
     });
-  }, [createMutation, showToast, t]);
+  }, [createMutation.mutate, showToast, t]);
 
   const handleSaveEdit = useCallback((name: string, description: string) => {
     if (!editTarget) return;
     updateMutation.mutate({ departmentId: editTarget._id, name, description }, {
       onSuccess: () => setEditTarget(null),
     });
-  }, [updateMutation, editTarget]);
+  }, [updateMutation.mutate, editTarget]);
 
   const handleConfirmDelete = useCallback(() => {
     if (!deleteTarget) return;
     deleteMutation.mutate(deleteTarget._id, {
       onSuccess: () => setDeleteTarget(null),
     });
-  }, [deleteMutation, deleteTarget]);
+  }, [deleteMutation.mutate, deleteTarget]);
 
-  const createError  = createMutation.error  ? extractAxiosErrorMessage(createMutation.error)  ?? null : null;
-  const updateError  = updateMutation.error  ? extractAxiosErrorMessage(updateMutation.error)  ?? null : null;
-  const deleteError  = deleteMutation.error  ? extractAxiosErrorMessage(deleteMutation.error)  ?? null : null;
+  const createError = createMutation.error ? extractAxiosErrorMessage(createMutation.error) : null;
+  const updateError = updateMutation.error ? extractAxiosErrorMessage(updateMutation.error) : null;
+  const deleteError = deleteMutation.error ? extractAxiosErrorMessage(deleteMutation.error) : null;
 
   return (
     <DashboardLayout>
@@ -104,8 +101,9 @@ const DepartmentsPage: React.FC = () => {
         canManage={canManage}
       />
 
-      <CreateDepartmentModal
+      <DepartmentFormModal
         open={createOpen}
+        mode="create"
         onClose={() => { setCreateOpen(false); createMutation.reset(); }}
         onSave={handleCreate}
         saving={createMutation.isPending}
@@ -119,8 +117,9 @@ const DepartmentsPage: React.FC = () => {
         deleting={deleteMutation.isPending}
         error={deleteError}
       />
-      <EditDepartmentModal
+      <DepartmentFormModal
         open={Boolean(editTarget)}
+        mode="edit"
         department={editTarget}
         onClose={() => { setEditTarget(null); updateMutation.reset(); }}
         onSave={handleSaveEdit}

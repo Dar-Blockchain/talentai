@@ -1,14 +1,13 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useRouter }        from "next/router";
-import { useSelector }      from "react-redux";
-import { useDispatch }      from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { Building2 }        from "lucide-react";
 import DashboardLayout      from "@/components/layout/dashboard/DashboardLayout";
 import {
   DepartmentDetailHeader,
   DepartmentMembersSection,
 } from "@/modules/company/departments/components/details";
-import { EditDepartmentModal }    from "@/modules/company/departments/components/edit";
+import { DepartmentFormModal }    from "@/modules/company/departments/components/shared";
 import { DeleteDepartmentDialog } from "@/modules/company/departments/components/delete";
 import EditRoleModal        from "@/components/features/company/employees/edit/EditRoleModal";
 import DeleteMemberDialog   from "@/components/features/company/employees/delete/DeleteMemberDialog";
@@ -21,7 +20,6 @@ import {
 } from "@/store/slices/memberSlice";
 import { useToast }       from "@/hooks/useToast";
 import { useTranslation } from "react-i18next";
-import { useEffect }      from "react";
 import {
   useDepartmentDetail,
 } from "@/modules/company/departments/hooks";
@@ -64,14 +62,14 @@ const DepartmentDetailPage: React.FC = () => {
     updateMutation.mutate({ departmentId: department._id, name, description }, {
       onSuccess: () => { setEditOpen(false); updateMutation.reset(); },
     });
-  }, [updateMutation, department]);
+  }, [updateMutation.mutate, updateMutation.reset, department]);
 
   const handleConfirmDelete = useCallback(() => {
     if (!department) return;
     deleteMutation.mutate(department._id, {
       onSuccess: () => router.push("/company/departments"),
     });
-  }, [deleteMutation, department, router]);
+  }, [deleteMutation.mutate, department, router]);
 
   const handleUpdateMemberRole = useCallback(async (role: string, departmentId?: string) => {
     if (!selectedMember) throw new Error("No member selected");
@@ -100,8 +98,8 @@ const DepartmentDetailPage: React.FC = () => {
     }
   }, [deleteMemberSuccess, dispatch, showToast, t]);
 
-  const updateError = updateMutation.error ? extractAxiosErrorMessage(updateMutation.error) ?? null : null;
-  const deleteError = deleteMutation.error ? extractAxiosErrorMessage(deleteMutation.error) ?? null : null;
+  const updateError = updateMutation.error ? extractAxiosErrorMessage(updateMutation.error) : null;
+  const deleteError = deleteMutation.error ? extractAxiosErrorMessage(deleteMutation.error) : null;
 
   if (deptError) {
     return (
@@ -160,8 +158,8 @@ const DepartmentDetailPage: React.FC = () => {
 
       {department && (
         <>
-          <EditDepartmentModal
-            open={editOpen} department={department}
+          <DepartmentFormModal
+            open={editOpen} mode="edit" department={department}
             onClose={() => { setEditOpen(false); updateMutation.reset(); }}
             onSave={handleSaveEdit} saving={updateMutation.isPending} error={updateError}
           />
