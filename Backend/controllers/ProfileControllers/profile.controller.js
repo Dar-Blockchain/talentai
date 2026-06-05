@@ -311,6 +311,8 @@ module.exports.updateResume = async (req, res) => {
     }
 
     const Profile = require("../../models/Profile.model");
+    const User    = require("../../models/User.model");
+
     const profile = await Profile.findOneAndUpdate(
       { userId },
       { resume: file.filename },
@@ -321,11 +323,86 @@ module.exports.updateResume = async (req, res) => {
       return res.status(404).json({ success: false, error: "Profile not found." });
     }
 
-    return res.status(200).json({
+    // Respond immediately — analysis runs in the background
+    res.status(200).json({
       success: true,
       message: "Resume updated successfully.",
       data: { resume: profile.resume },
     });
+
+    // Trigger CV analysis asynchronously (does not block the response)
+    try {
+      const user            = await User.findById(userId).select("email");
+      const { analyzeCV }   = require("../../services/analyseResume.service");
+      const CVAnalysisService = require("../../services/cvAnalysis.service");
+      const path            = require("path");
+      const fs              = require("fs");
+
+      const resumePath = path.join(__dirname, "..", "..", "uploads", "resumes", file.filename);
+      if (!fs.existsSync(resumePath)) return;
+
+      const cvData = JSON.parse(await analyzeCV(resumePath));
+
+      await CVAnalysisService.replaceForProfile({
+        name:              cvData.name || `${profile.firstName} ${profile.lastName}` || "Unknown",
+        email:             user?.email || "",
+        phone:             cvData.phone             || "",
+        location:          cvData.location          || "",
+        title:             cvData.title             || "",
+        summary:           cvData.summary           || "",
+        yearsOfExperience: cvData.yearsOfExperience || 0,
+        seniority:         cvData.seniority         || "Entry-Level",
+        skills:            cvData.skills            || [],
+        softSkills:        cvData.softSkills        || [],
+        spokenLanguages:   cvData.spokenLanguages   || [],
+        experience:        cvData.experience        || [],
+        education:         cvData.education         || [],
+        certifications:    cvData.certifications    || [],
+        projects:          cvData.projects          || [],
+        links:             cvData.links             || { linkedin: "", github: "", portfolio: "" },
+        User:              userId,
+        sourceUrl:         resumePath,
+        ipAddress:         req.ip,
+        userAgent:         req.get("user-agent"),
+      }, profile._id);
+
+      // Update profile with extracted data
+      const profileUpdate = {};
+      if (cvData.skills?.length) {
+        profileUpdate.$push = {
+          skills: {
+            $each: cvData.skills.map((name) => ({
+              name, proficiencyLevel: 0, experienceLevel: "",
+              NumberTestPassed: 0, ScoreTest: 0, Levelconfirmed: 0,
+            })),
+          },
+        };
+      }
+      if (cvData.spokenLanguages?.length) {
+        profileUpdate.$push = { ...(profileUpdate.$push || {}), spokenLanguages: { $each: cvData.spokenLanguages } };
+      }
+      if (cvData.email || cvData.links || cvData.location) {
+        profileUpdate.$set = {
+          contactInformation: {
+            email:           cvData.email           || "",
+            address:         "",
+            linkedinUrl:     cvData.links?.linkedin || "",
+            githubUrl:       cvData.links?.github   || "",
+            personalWebsite: cvData.links?.portfolio|| "",
+            location:        cvData.location        || "",
+          },
+          phone:          cvData.phone          || "",
+          educationLevel: cvData.educationLevel || "",
+          country:        cvData.country        || "",
+        };
+      }
+      if (Object.keys(profileUpdate).length) {
+        await Profile.findByIdAndUpdate(profile._id, profileUpdate);
+      }
+    } catch (analysisError) {
+      // Analysis is non-critical — log but don't surface to the user
+      console.error("⚠️  [updateResume] CV analysis failed (non-critical):", analysisError.message);
+    }
   } catch (error) {
     return res.status(500).json({ success: false, error: error.message });
   }
