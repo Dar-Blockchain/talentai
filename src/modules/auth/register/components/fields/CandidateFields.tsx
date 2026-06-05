@@ -5,6 +5,7 @@ import PhoneIcon    from "@mui/icons-material/Phone";
 import { useTranslation } from "react-i18next";
 import type { Control, FieldErrors } from "react-hook-form";
 import { FormField } from "@/modules/auth/shared/ui/FormField";
+import { validators } from "@/modules/auth/shared/utils/validators";
 import type { CandidateFormValues } from "../../types";
 
 interface Props {
@@ -40,7 +41,7 @@ const CandidateFields: React.FC<Props> = ({ control, errors, loading, invitation
         overrideValue={invitationEmail || undefined}
         rules={{
           required: v("email_required"),
-          pattern: { value: /^\S+@\S+\.\S+$/, message: v("email_invalid") },
+          validate: validators.email,
         }}
       />
       <FormField
@@ -49,7 +50,7 @@ const CandidateFields: React.FC<Props> = ({ control, errors, loading, invitation
         disabled={loading} error={errors.phone?.message}
         rules={{
           required: v("phone_required"),
-          validate: (v) => /^\+?[1-9]\d{6,14}$/.test(v.replace(/[\s\-().]/g, "")) || t("candidate_form.validation.phone_invalid"),
+          validate: validators.phone,
         }}
       />
     </>

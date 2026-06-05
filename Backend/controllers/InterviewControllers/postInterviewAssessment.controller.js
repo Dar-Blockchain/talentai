@@ -9,6 +9,23 @@ const subscriptionService = require("../../services/subscription.service");
 const jobApplicationService = require("../../services/jobApplication.service");
 const { sendInterviewAssessmentEmail, sendInterviewCompletionNotificationToCompany } = require("../../utils/email-service");
 
+/**
+ * Check whether a candidate is blocked by the CV-score threshold for a post.
+ * Returns { underThreshold, thresholdScore, matchScore }.
+ * A manual recruiter invite (invitedAt set) always bypasses the threshold.
+ */
+async function checkThresholdStatus(candidateId, postId, thresholdScore) {
+  if (thresholdScore == null) return { underThreshold: false, thresholdScore: null, matchScore: null };
+  const candidateProfile = await Profile.findOne({ userId: candidateId }).select('_id');
+  if (!candidateProfile) return { underThreshold: false, thresholdScore, matchScore: null };
+  const app = await JobApplication.findOne({ profile: candidateProfile._id, post: postId }).select('matchScore invitedAt');
+  if (!app) return { underThreshold: false, thresholdScore, matchScore: null };
+  const matchScore = app.matchScore;
+  const manuallyInvited = !!app.invitedAt;
+  const underThreshold = !manuallyInvited && matchScore != null && matchScore < thresholdScore;
+  return { underThreshold, thresholdScore, matchScore };
+}
+
 // ========== CREATE ==========
 module.exports.createPostInterviewAssessment = async (req, res) => {
   try {
@@ -207,37 +224,10 @@ module.exports.checkCandidateAssessmentExists = async (req, res) => {
     );
 
     // ===== CHECK THRESHOLD SCORE =====
-    // Only block when we have BOTH a threshold AND a score that falls below it.
-    // If matchScore is null (CV not yet scored), let the candidate through.
-    let underThreshold = false;
-    let thresholdScore = null;
-    let matchScore = null;
-
-    try {
-      const post = await Post.findById(postId).select('thresholdScore');
-      if (post) {
-        thresholdScore = post.thresholdScore;
-      }
-
-      const candidateProfile = await Profile.findOne({ userId: candidateId }).select('_id');
-      if (candidateProfile) {
-        const jobApplication = await JobApplication.findOne({
-          profile: candidateProfile._id,
-          post: postId
-        }).select('matchScore invitedAt');
-
-        if (jobApplication) {
-          matchScore = jobApplication.matchScore;
-          // If the recruiter manually invited this candidate, bypass the threshold entirely
-          const manuallyInvited = !!jobApplication.invitedAt;
-          if (!manuallyInvited && thresholdScore !== null && matchScore !== null) {
-            underThreshold = matchScore < thresholdScore;
-          }
-        }
-      }
-    } catch (thresholdError) {
-      console.warn('⚠️ Warning: Could not check threshold score:', thresholdError.message);
-    }
+    const thresholdPost = await Post.findById(postId).select('thresholdScore');
+    const { underThreshold, thresholdScore, matchScore } = await checkThresholdStatus(
+      candidateId, postId, thresholdPost?.thresholdScore ?? null
+    ).catch((e) => { console.warn('⚠️ Could not check threshold:', e.message); return { underThreshold: false, thresholdScore: null, matchScore: null }; });
 
     return res.status(200).json({
       success: true,
@@ -809,18 +799,11 @@ module.exports.checkInterviewEligibility = async (req, res) => {
 
     const exists = await postInterviewAssessmentService.hasExistingAssessment(candidateId, postId);
     if (exists) return res.json({ status: "completed", meta: { jobTitle: post.jobDetails?.title || post.title || "" } });
-    if (candidateProfile && post.thresholdScore != null) {
-      const app = await JobApplication.findOne({
-        profile: candidateProfile._id,
-        post: postId,
-      }).select("matchScore invitedAt");
-      // A manual recruiter invite overrides the threshold — candidate can always proceed
-      const manuallyInvited = !!app?.invitedAt;
-      if (!manuallyInvited && app?.matchScore != null && app.matchScore < post.thresholdScore) {
-        return res.json({
-          status: "under_threshold",
-          meta: { required: post.thresholdScore, score: app.matchScore },
-        });
+    if (post.thresholdScore != null) {
+      const { underThreshold, thresholdScore: req, matchScore: score } =
+        await checkThresholdStatus(candidateId, postId, post.thresholdScore);
+      if (underThreshold) {
+        return res.json({ status: "under_threshold", meta: { required: req, score } });
       }
     }
 

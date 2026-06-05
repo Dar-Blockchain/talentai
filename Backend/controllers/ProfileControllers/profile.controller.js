@@ -6,6 +6,28 @@ const {
   validateUpdateFields,
 } = require("../../helpers/profileValidation.helpers.js");
 
+// Validates candidate-specific profile fields. Returns an error message string or null.
+function validateCandidateFields(profileData, requireNames = false) {
+  const firstName = profileData.firstName || profileData.FirstName;
+  const lastName  = profileData.lastName  || profileData.LastName;
+  if (requireNames && (!firstName || !lastName)) return "First name and last name are required";
+  if (firstName && typeof firstName !== "string") return "firstName must be a string";
+  if (lastName  && typeof lastName  !== "string") return "lastName must be a string";
+  if (profileData.age && isNaN(parseInt(profileData.age, 10))) return "Age must be a valid number";
+  if (profileData.preferredContractType && typeof profileData.preferredContractType !== "string")
+    return "Preferred contract type must be a valid string";
+  if (profileData.location && typeof profileData.location !== "string")
+    return "Location must be a valid string";
+  if (profileData.expectedSalary) {
+    const { min, max, currency } = profileData.expectedSalary;
+    if (min != null && (isNaN(min) || min < 0))  return "Expected salary min must be a positive number";
+    if (max != null && (isNaN(max) || max < 0))  return "Expected salary max must be a positive number";
+    if (min != null && max != null && min > max)  return "Expected salary min cannot be greater than max";
+    if (currency && typeof currency !== "string") return "Currency must be a valid string (e.g., EUR, USD, GBP)";
+  }
+  return null;
+}
+
 // Shared helper — fetch full profile with planLimits and build standard response payload
 async function buildProfilePayload(userId) {
   const result = await profileService.getProfileByUserId(userId);
@@ -23,68 +45,8 @@ module.exports.createOrUpdateProfile = async (req, res) => {
     const userId = req.user._id;
     const profileData = req.body;
 
-    // Validation: firstName and lastName (handle both camelCase and PascalCase)
-    const firstName = profileData.firstName || profileData.FirstName;
-    const lastName = profileData.lastName || profileData.LastName;
-
-    if (!firstName || !lastName) {
-      return res
-        .status(400)
-        .json({ message: "First name and last name are required" });
-    }
-
-    // Validation: age should be a valid number if provided
-    if (profileData.age && isNaN(parseInt(profileData.age, 10))) {
-      return res.status(400).json({ message: "Age must be a valid number" });
-    }
-
-    // Validation: preferredContractType (optional)
-    if (
-      profileData.preferredContractType &&
-      typeof profileData.preferredContractType !== "string"
-    ) {
-      return res
-        .status(400)
-        .json({ message: "Preferred contract type must be a valid string" });
-    }
-
-    // Validation: location (optional)
-    if (profileData.location && typeof profileData.location !== "string") {
-      return res
-        .status(400)
-        .json({ message: "Location must be a valid string" });
-    }
-
-    // Validation: expectedSalary structure (optional)
-    if (profileData.expectedSalary) {
-      const { min, max, currency } = profileData.expectedSalary;
-
-      if (min !== null && min !== undefined && (isNaN(min) || min < 0)) {
-        return res
-          .status(400)
-          .json({ message: "Expected salary min must be a positive number" });
-      }
-
-      if (max !== null && max !== undefined && (isNaN(max) || max < 0)) {
-        return res
-          .status(400)
-          .json({ message: "Expected salary max must be a positive number" });
-      }
-
-      if (min !== null && max !== null && min > max) {
-        return res
-          .status(400)
-          .json({ message: "Expected salary min cannot be greater than max" });
-      }
-
-      if (currency && typeof currency !== "string") {
-        return res
-          .status(400)
-          .json({
-            message: "Currency must be a valid string (e.g., EUR, USD, GBP)",
-          });
-      }
-    }
+    const validationError = validateCandidateFields(profileData, true);
+    if (validationError) return res.status(400).json({ success: false, message: validationError });
 
     await profileService.createOrUpdateProfile(userId, profileData);
     const payload = await buildProfilePayload(userId);
@@ -116,23 +78,10 @@ module.exports.createOrUpdateCompanyProfile = async (req, res) => {
 // controllers/profileController.js
 module.exports.getMyProfile = async (req, res) => {
   try {
-    const userId = req.user._id;
-    const result = await profileService.getProfileByUserId(userId);
-
-    res.status(200).json({
-      success: true,
-      message: "Profile retrieved successfully",
-      user: result.user,
-      profile: result.profile || null,
-      planLimits: result.planLimits,
-      companyMembership: result.companyMembership || null,
-    });
+    const payload = await buildProfilePayload(req.user._id);
+    res.status(200).json({ success: true, message: "Profile retrieved successfully", ...payload });
   } catch (error) {
-    console.error("Error retrieving profile:", error);
-    return res.status(error.status || 500).json({
-      success: false,
-      message: error.message || "Internal error retrieving profile",
-    });
+    return res.status(error.status || 500).json({ success: false, message: error.message || "Internal error retrieving profile" });
   }
 };
 
@@ -244,29 +193,8 @@ module.exports.updateProfileComplete = async (req, res) => {
         await profileService.createOrUpdateCompanyProfile(userId, profileData);
 
       } else {
-        const firstName = profileData.firstName || profileData.FirstName;
-        const lastName  = profileData.lastName  || profileData.LastName;
-        if (firstName && typeof firstName !== "string")
-          return res.status(400).json({ success: false, message: "firstName must be a string" });
-        if (lastName && typeof lastName !== "string")
-          return res.status(400).json({ success: false, message: "lastName must be a string" });
-        if (profileData.age && isNaN(parseInt(profileData.age, 10)))
-          return res.status(400).json({ success: false, message: "Age must be a valid number" });
-        if (profileData.preferredContractType && typeof profileData.preferredContractType !== "string")
-          return res.status(400).json({ success: false, message: "Preferred contract type must be a valid string" });
-        if (profileData.location && typeof profileData.location !== "string")
-          return res.status(400).json({ success: false, message: "Location must be a valid string" });
-        if (profileData.expectedSalary) {
-          const { min, max, currency } = profileData.expectedSalary;
-          if (min != null && (isNaN(min) || min < 0))
-            return res.status(400).json({ success: false, message: "Expected salary min must be a positive number" });
-          if (max != null && (isNaN(max) || max < 0))
-            return res.status(400).json({ success: false, message: "Expected salary max must be a positive number" });
-          if (min != null && max != null && min > max)
-            return res.status(400).json({ success: false, message: "Expected salary min cannot be greater than max" });
-          if (currency && typeof currency !== "string")
-            return res.status(400).json({ success: false, message: "Currency must be a valid string (e.g., EUR, USD, GBP)" });
-        }
+        const err = validateCandidateFields(profileData, false);
+        if (err) return res.status(400).json({ success: false, message: err });
         await profileService.createOrUpdateProfile(userId, profileData);
       }
     }

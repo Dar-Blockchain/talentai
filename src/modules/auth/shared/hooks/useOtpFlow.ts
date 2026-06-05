@@ -29,9 +29,9 @@ export function useOtpFlow({ storageKey, verifyMutation, resendMutation }: UseOt
 
     const signal = refreshAbort(abortRef);
     try {
-      timer.clear();
       const location = await getUserLocation();
       await verifyMutation.mutateAsync({ email, otp: code, location, signal });
+      timer.clear();
     } catch (err: any) {
       if (err?.name !== "AbortError")
         showToast({ message: err?.message ?? "Invalid code. Please try again.", severity: "error" });

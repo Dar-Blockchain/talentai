@@ -36,7 +36,7 @@ export const AuthSubmitButton: React.FC<AuthSubmitButtonProps> = ({
     type={type}
     fullWidth
     variant="contained"
-    disabled={disabled}
+    disabled={disabled || loading}
     onClick={onClick}
     endIcon={!loading   && <ArrowForwardIcon sx={{ fontSize: 15 }} />}
     startIcon={loading  && <CircularProgress size={14} sx={{ color: "#fff" }} />}

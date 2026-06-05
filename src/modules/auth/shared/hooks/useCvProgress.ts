@@ -11,10 +11,7 @@ export function useCvProgress(enabled: boolean): number {
   useEffect(() => {
     if (!enabled) { setProgress(0); return; }
     const id = setInterval(() => {
-      setProgress((p) => {
-        if (p >= 90) { clearInterval(id); return 90; }
-        return p + (p < 60 ? 4 : 1);
-      });
+      setProgress((p) => p >= 90 ? 90 : p + (p < 60 ? 4 : 1));
     }, 300);
     return () => clearInterval(id);
   }, [enabled]);

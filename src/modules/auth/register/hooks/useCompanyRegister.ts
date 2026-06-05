@@ -4,7 +4,7 @@ import { useRouter } from "next/router";
 import { useToast } from "@/hooks/useToast";
 import { useOtpFlow } from "@/modules/auth/shared/hooks";
 import { refreshAbort } from "@/modules/auth/shared/utils";
-import { useRegisterMutation, useVerifyRegisterOtp } from "../queries";
+import { useRegisterMutation, useVerifyRegisterOtp, useResendRegisterOtp } from "../queries";
 import { COMPANY_EXPIRY_KEY } from "../utils";
 import type { CompanyFormValues, RegisterFormProps, RegisterStep } from "../types";
 
@@ -28,9 +28,12 @@ export function useCompanyRegister({ onStepChange, onEmailChange }: RegisterForm
     router.replace("/company/dashboard");
   });
 
-  const { timer, otp, verifyCode, cleanup, verifyLoading } = useOtpFlow({
+  const resendMutation = useResendRegisterOtp();
+
+  const { timer, otp, verifyCode, resendCode, cleanup, verifyLoading, resendLoading } = useOtpFlow({
     storageKey:    COMPANY_EXPIRY_KEY,
     verifyMutation,
+    resendMutation,
   });
 
   const loading = registerMutation.isPending || verifyLoading;
@@ -70,8 +73,9 @@ export function useCompanyRegister({ onStepChange, onEmailChange }: RegisterForm
 
   return {
     form,
-    step, loading, savedEmail, otp, timer,
+    step, loading, resendLoading, savedEmail, otp, timer,
     sendCode,
     verifyCode: () => verifyCode(savedEmail),
+    resendCode: () => resendCode(savedEmail),
   };
 }
