@@ -286,14 +286,18 @@ module.exports.deleteResume = async (req, res) => {
     const path    = require("path");
     const Profile = require("../../models/Profile.model");
 
-    const profile = await Profile.findOne({ userId }).select("resume");
+    const profile = await Profile.findOne({ userId }).select("_id resume");
     if (!profile) return res.status(404).json({ success: false, error: "Profile not found." });
 
     if (profile.resume) {
       const filePath = path.join(__dirname, "..", "..", "uploads", "resumes", profile.resume);
       if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-      await Profile.findOneAndUpdate({ userId }, { resume: "" });
+      await Profile.findOneAndUpdate({ userId }, { resume: "", cvAnalyses: [] });
     }
+
+    // Remove all CV analyses linked to this profile
+    const CVAnalysis = require("../../models/CvAnalysis.model");
+    await CVAnalysis.deleteMany({ profile: profile._id });
 
     return res.status(200).json({ success: true, message: "Resume deleted." });
   } catch (error) {
