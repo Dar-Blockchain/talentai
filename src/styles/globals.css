@@ -1,67 +1,252 @@
+@import "tailwindcss";
+@source "../../src";
+@source "../../components.json";
+
+/* ─── Class-based dark mode for Tailwind v4 ─────────────────────────────────
+   next-themes sets class="dark" on <html>; this variant wires dark: utilities
+   to that class rather than the OS media query.                               */
+@variant dark (&:where(.dark, .dark *));
+
+/* ─── Map shadcn :root CSS vars → Tailwind v4 utilities ─────────────────────
+   @theme inline tells Tailwind v4 to use the hsl() values from :root so that
+   classes like bg-primary, text-primary-foreground etc. all resolve correctly. */
+@theme inline {
+  --color-background:           hsl(var(--background));
+  --color-foreground:           hsl(var(--foreground));
+  --color-card:                 hsl(var(--card));
+  --color-card-foreground:      hsl(var(--card-foreground));
+  --color-popover:              hsl(var(--popover));
+  --color-popover-foreground:   hsl(var(--popover-foreground));
+  --color-primary:              hsl(var(--primary));
+  --color-primary-foreground:   hsl(var(--primary-foreground));
+  --color-secondary:            hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted:                hsl(var(--muted));
+  --color-muted-foreground:     hsl(var(--muted-foreground));
+  --color-accent:               hsl(var(--accent));
+  --color-accent-foreground:    hsl(var(--accent-foreground));
+  --color-destructive:          hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border:               hsl(var(--border));
+  --color-input:                hsl(var(--input));
+  --color-ring:                 hsl(var(--ring));
+  --radius-sm:                  calc(var(--radius) - 4px);
+  --radius-md:                  calc(var(--radius) - 2px);
+  --radius-lg:                  var(--radius);
+  --radius-xl:                  calc(var(--radius) + 4px);
+}
+
+/* ─── Theme tokens — matched to TalentAI logo ────────────────────────────────
+   Logo colors:
+     #6AD39C  mint green   — main brand circle
+     #52E899  bright green — "ai" accent
+     #10453F  deep green   — wordmark body
+     #BD85FF  soft purple  — AI badge background
+     #191919  near-black   — wordmark text
+──────────────────────────────────────────────────────────────────────────── */
+
+@theme {
+  /* ── Brand — green (primary) ── */
+  --color-brand-mint:        #6AD39C;
+  --color-brand-green:       #52E899;
+  --color-brand-deep:        #10453F;
+
+  /* ── Brand — purple (secondary) ── */
+  --color-brand-purple:      #BD85FF;
+  --color-brand-purple-dark: #9B5CE5;
+
+  /* ── Primary scale (mint green) ── */
+  --color-primary:           #6AD39C;
+  --color-primary-hover:     #52C88A;
+  --color-primary-dark:      #10453F;
+  --color-primary-light:     #EDFAF3;
+  --color-primary-border:    #A8EAC8;
+  --color-primary-foreground:#FFFFFF;
+
+  /* ── Secondary scale (purple) ── */
+  --color-secondary:         #BD85FF;
+  --color-secondary-hover:   #A96CE8;
+  --color-secondary-dark:    #7C3AED;
+  --color-secondary-light:   #F5F0FF;
+  --color-secondary-border:  #DDD6FE;
+  --color-secondary-foreground: #FFFFFF;
+
+  /* ── Accent (bright green) ── */
+  --color-accent:            #52E899;
+  --color-accent-hover:      #3DD984;
+  --color-accent-light:      #EAFFF3;
+
+  /* ── Neutral scale ── */
+  --color-gray-50:           #F9FAFB;
+  --color-gray-100:          #F3F4F6;
+  --color-gray-200:          #E5E7EB;
+  --color-gray-300:          #D1D5DB;
+  --color-gray-400:          #9CA3AF;
+  --color-gray-500:          #6B7280;
+  --color-gray-600:          #4B5563;
+  --color-gray-700:          #374151;
+  --color-gray-800:          #1F2937;
+  --color-gray-900:          #191919;
+
+  /* ── Semantic ── */
+  --color-success:           #52E899;
+  --color-success-light:     #EAFFF3;
+  --color-success-border:    #A8EAC8;
+
+  --color-warning:           #D97706;
+  --color-warning-light:     #FFFBEB;
+  --color-warning-border:    #FDE68A;
+
+  --color-danger:            #DC2626;
+  --color-danger-hover:      #B91C1C;
+  --color-danger-light:      #FEF2F2;
+  --color-danger-border:     #FECACA;
+
+  --color-info:              #2563EB;
+  --color-info-light:        #EFF6FF;
+  --color-info-border:       #BFDBFE;
+
+  /* ── Typography ── */
+  --font-sans:               "Poppins", system-ui, sans-serif;
+
+  /* ── Radius ── */
+  --radius-sm:               6px;
+  --radius-md:               10px;
+  --radius-lg:               14px;
+  --radius-xl:               20px;
+  --radius-full:             9999px;
+
+  /* ── Shadow ── */
+  --shadow-sm:               0 1px 3px 0 rgb(0 0 0 / 0.07);
+  --shadow-md:               0 4px 12px 0 rgb(0 0 0 / 0.08);
+  --shadow-lg:               0 8px 28px 0 rgb(0 0 0 / 0.10);
+  --shadow-card:             0 1px 3px rgb(0 0 0 / 0.06), 0 1px 2px rgb(0 0 0 / 0.04);
+  --shadow-brand:            0 4px 16px rgb(106 211 156 / 0.25);
+  --shadow-purple:           0 4px 16px rgb(189 133 255 / 0.25);
+}
+
+/* ─── Light theme (default) ──────────────────────────────────────────────────
+   shadcn hsl values — no hsl() wrapper                                        */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background:              0 0% 100%;
+  --foreground:              0 0% 10%;
+  --card:                    0 0% 100%;
+  --card-foreground:         0 0% 10%;
+  --popover:                 0 0% 100%;
+  --popover-foreground:      0 0% 10%;
+  --primary:                 149 52% 62%;         /* #6AD39C */
+  --primary-foreground:      170 64% 17%;         /* #10453F */
+  --secondary:               271 100% 76%;        /* #BD85FF */
+  --secondary-foreground:    0 0% 100%;
+  --muted:                   210 40% 96%;
+  --muted-foreground:        215 16% 47%;
+  --accent:                  145 72% 62%;         /* #52E899 */
+  --accent-foreground:       170 64% 17%;
+  --destructive:             0 84% 60%;
+  --destructive-foreground:  0 0% 100%;
+  --border:                  214 32% 91%;
+  --input:                   214 32% 91%;
+  --ring:                    149 52% 62%;
+  --radius:                  0.625rem;
+  --sidebar-background:      0 0% 100%;
+  --sidebar-border:          214 32% 91%;
+
+  /* surface / text tokens used directly via var() */
+  --surface:                 #F8FAFC;
+  --surface-raised:          #FFFFFF;
+  --text-primary:            #191919;
+  --text-secondary:          #374151;
+  --text-muted:              #6B7280;
+  --text-disabled:           #9CA3AF;
+  --text-inverse:            #FFFFFF;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─── Dark theme ─────────────────────────────────────────────────────────────
+   Deep navy palette — brand greens & purples stay vibrant on dark backgrounds */
+
+.dark {
+  --background:              222 47% 9%;          /* #0B1120 */
+  --foreground:              210 40% 96%;          /* #F3F6FB */
+  --card:                    222 47% 12%;          /* #0F1829 */
+  --card-foreground:         210 40% 96%;
+  --popover:                 222 47% 12%;
+  --popover-foreground:      210 40% 96%;
+  --primary:                 149 52% 62%;          /* #6AD39C — keep brand */
+  --primary-foreground:      170 64% 17%;
+  --secondary:               271 100% 76%;         /* #BD85FF — keep brand */
+  --secondary-foreground:    0 0% 100%;
+  --muted:                   217 33% 17%;          /* #1A2234 */
+  --muted-foreground:        215 20% 65%;          /* #8EA0B8 */
+  --accent:                  145 72% 62%;          /* #52E899 — keep brand */
+  --accent-foreground:       170 64% 17%;
+  --destructive:             0 62% 55%;
+  --destructive-foreground:  0 0% 100%;
+  --border:                  217 33% 19%;          /* #1C2A3E */
+  --input:                   217 33% 19%;
+  --ring:                    149 52% 62%;
+  --sidebar-background:      222 47% 7%;           /* #090F1C */
+  --sidebar-border:          217 33% 16%;
+
+  --surface:                 #0F1829;
+  --surface-raised:          #1A2234;
+  --text-primary:            #F0F4F8;
+  --text-secondary:          #CBD5E0;
+  --text-muted:              #718096;
+  --text-disabled:           #4A5568;
+  --text-inverse:            #191919;
 }
 
-html {
-  overflow-y: auto;
-  overflow-x: hidden;
-  scroll-behavior: smooth;
-}
+/* ─── Base reset ─────────────────────────────────────────────────────────────── */
 
-body {
-  /* max-width: 1400px; */
-  overflow-x: hidden;
-  margin: 0 auto;
-}
-
-body {
-  color: var(--foreground);
-  background: #FDFEFE;
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   html {
-    color-scheme: dark;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    overflow-x: hidden;
+    margin: 0 auto;
+    background-color: hsl(var(--background));
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color: hsl(var(--foreground));
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  * {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+    border-color: hsl(var(--border));
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
   }
 }
 
-/* Custom scrollbar */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
+/* ─── Utilities ──────────────────────────────────────────────────────────────── */
 
-.custom-scrollbar::-webkit-scrollbar-track {
-  background-color: #F5F5F4;
-}
+@layer utilities {
+  /* Scrollbar */
+  .custom-scrollbar::-webkit-scrollbar        { width: 6px; height: 6px; }
+  .custom-scrollbar::-webkit-scrollbar-track  { background-color: hsl(var(--muted)); }
+  .custom-scrollbar::-webkit-scrollbar-thumb  { background-color: #A8EAC8; border-radius: 9999px; }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover { background-color: #6AD39C; }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #D6D3D1;
-  border-radius: 9999px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: #A8A29E;
+  /* Brand gradient */
+  .bg-brand-gradient {
+    background: linear-gradient(135deg, #6AD39C 0%, #52E899 100%);
+  }
+  .bg-brand-gradient-purple {
+    background: linear-gradient(135deg, #BD85FF 0%, #9B5CE5 100%);
+  }
+  .text-brand        { color: #10453F; }
+  .text-brand-mint   { color: #6AD39C; }
+  .text-brand-purple { color: #BD85FF; }
 }

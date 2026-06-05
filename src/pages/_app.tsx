@@ -5,8 +5,10 @@ import type { AppProps } from "next/app";
 import { Provider, useSelector, useDispatch } from "react-redux";
 import { store, persistor, RootState } from "../store/store";
 import { PersistGate } from "redux-persist/integration/react";
-import { ThemeProvider, createTheme, CssBaseline, Dialog, DialogContent, Box, Typography, CircularProgress } from "@mui/material";
-import { useEffect } from "react";
+import { ThemeProvider as MuiThemeProvider, createTheme, CssBaseline, Dialog, DialogContent, Box, Typography, CircularProgress } from "@mui/material";
+import { useEffect, useMemo, useState } from "react";
+import { useTheme } from "next-themes";
+import { ThemeProvider } from "@/providers/ThemeProvider";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import ScrollToTop from "@/components/ui/ScrollToTop";
@@ -34,23 +36,27 @@ const poppins = Poppins({
   variable: "--font-poppins",
 });
 
-const theme = createTheme({
-  palette: {
-    mode: "light",
-    primary: {
-      main: "rgba(77, 217, 163, 1)",
+function MuiThemeSync({ children }: { children: React.ReactNode }) {
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const isDark = mounted && resolvedTheme === "dark";
+  const muiTheme = useMemo(() => createTheme({
+    palette: {
+      mode: isDark ? "dark" : "light",
+      primary:    { main: "#6AD39C" },
+      secondary:  { main: "#BD85FF" },
+      background: {
+        default: isDark ? "#0B1120" : "#FDFEFE",
+        paper:   isDark ? "#0F1829" : "#FFFFFF",
+      },
     },
-    secondary: {
-      main: "rgba(41, 210, 145, 0.83)",
-    },
-    background: {
-      default: "white",
-    },
-  },
-  typography: {
-    fontFamily: "Poppins, sans-serif",
-  },
-});
+    typography: { fontFamily: "Poppins, sans-serif" },
+  }), [isDark]);
+
+  return <MuiThemeProvider theme={muiTheme}><CssBaseline />{children}</MuiThemeProvider>;
+}
 
 function DbLanguageSync() {
   const user = useSelector((state: RootState) => state.user.connectedUser.user);
@@ -175,9 +181,9 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <Provider store={store}>
       <PersistGate loading={<LoadingScreen />} persistor={persistor}>
+        <ThemeProvider>
         <ReactQueryProvider>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
+        <MuiThemeSync>
           <Head>
             <title>TalentAI | AI Recruitment Platform — Hire 75% Faster with Conversational AI Agents</title>
             <meta name="viewport" content="initial-scale=1, width=device-width" />
@@ -197,8 +203,9 @@ export default function App({ Component, pageProps }: AppProps) {
               </AuthWrapper>
             </ToastProvider>
           </main>
-        </ThemeProvider>
+        </MuiThemeSync>
         </ReactQueryProvider>
+        </ThemeProvider>
       </PersistGate>
     </Provider>
   );
