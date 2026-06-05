@@ -10,7 +10,7 @@ router.use(requireAuth, authLogMiddleware('NotificationSystem'));
 
 /**
  * @openapi
- * /notification-system/AddNotification:
+ * /notification/AddNotification:
  *   post:
  *     tags: [Notifications]
  *     summary: Create a system notification
@@ -33,7 +33,7 @@ router.post('/AddNotification', controller.createSystemNotification);
 
 /**
  * @openapi
- * /notification-system/AddNotification/info:
+ * /notification/AddNotification/info:
  *   post:
  *     tags: [Notifications]
  *     summary: Create an info notification
@@ -55,7 +55,7 @@ router.post('/AddNotification/info', controller.createInfoNotification);
 
 /**
  * @openapi
- * /notification-system/AddNotification/success:
+ * /notification/AddNotification/success:
  *   post:
  *     tags: [Notifications]
  *     summary: Create a success notification
@@ -77,7 +77,7 @@ router.post('/AddNotification/success', controller.createSuccessNotification);
 
 /**
  * @openapi
- * /notification-system/AddNotification/warning:
+ * /notification/AddNotification/warning:
  *   post:
  *     tags: [Notifications]
  *     summary: Create a warning notification
@@ -99,7 +99,7 @@ router.post('/AddNotification/warning', controller.createWarningNotification);
 
 /**
  * @openapi
- * /notification-system/AddNotification/error:
+ * /notification/AddNotification/error:
  *   post:
  *     tags: [Notifications]
  *     summary: Create an error notification
@@ -121,7 +121,7 @@ router.post('/AddNotification/error', controller.createErrorNotification);
 
 /**
  * @openapi
- * /notification-system/AddNotification/custom:
+ * /notification/AddNotification/custom:
  *   post:
  *     tags: [Notifications]
  *     summary: Create a custom notification
@@ -139,7 +139,7 @@ router.post('/AddNotification/custom', controller.createCustomNotification);
 
 /**
  * @openapi
- * /notification-system/broadcastSystemNotification:
+ * /notification/broadcastSystemNotification:
  *   post:
  *     tags: [Notifications]
  *     summary: Broadcast a notification to all users
@@ -161,7 +161,7 @@ router.post('/broadcastSystemNotification', controller.broadcastSystemNotificati
 
 /**
  * @openapi
- * /notification-system/GetMyNotification:
+ * /notification/GetMyNotification:
  *   get:
  *     tags: [Notifications]
  *     summary: Get all notifications for the current user
@@ -173,7 +173,7 @@ router.get('/GetMyNotification', resolveCompanyActor,controller.listForUser);
 
 /**
  * @openapi
- * /notification-system/markAsRead/{id}/read:
+ * /notification/markAsRead/{id}/read:
  *   patch:
  *     tags: [Notifications]
  *     summary: Mark a notification as read
@@ -190,7 +190,7 @@ router.patch('/markAsRead/:id/read', resolveCompanyActor,controller.markAsRead);
 
 /**
  * @openapi
- * /notification-system/mark-all-read:
+ * /notification/mark-all-read:
  *   patch:
  *     tags: [Notifications]
  *     summary: Mark all notifications as read for current user
@@ -202,7 +202,7 @@ router.patch('/mark-all-read', resolveCompanyActor,controller.markAllAsRead);
 
 /**
  * @openapi
- * /notification-system/archiveNotification/{id}:
+ * /notification/archiveNotification/{id}:
  *   patch:
  *     tags: [Notifications]
  *     summary: Archive a notification
@@ -219,7 +219,7 @@ router.patch('/archiveNotification/:id', resolveCompanyActor,controller.archiveN
 
 /**
  * @openapi
- * /notification-system/archive-all:
+ * /notification/archive-all:
  *   patch:
  *     tags: [Notifications]
  *     summary: Archive all notifications for the current user
@@ -231,7 +231,7 @@ router.patch('/archive-all',resolveCompanyActor, controller.archiveAllNotificati
 
 /**
  * @openapi
- * /notification-system/deleteNotification/{id}:
+ * /notification/deleteNotification/{id}:
  *   delete:
  *     tags: [Notifications]
  *     summary: Delete a notification
@@ -246,10 +246,10 @@ router.patch('/archive-all',resolveCompanyActor, controller.archiveAllNotificati
  */
 router.delete('/deleteNotification/:id',resolveCompanyActor, controller.deleteNotification);
 
-// DELETE /notification-system/delete-all — delete all active (non-archived) notifications
+// DELETE /notification/delete-all — delete all active (non-archived) notifications
 router.delete('/delete-all', resolveCompanyActor, controller.deleteAllNotifications);
 
-// DELETE /notification-system/delete-all-archived — delete all archived notifications
+// DELETE /notification/delete-all-archived — delete all archived notifications
 router.delete('/delete-all-archived', resolveCompanyActor, controller.deleteAllArchivedNotifications);
 
 module.exports = router;
