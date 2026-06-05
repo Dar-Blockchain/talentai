@@ -1,6 +1,6 @@
-import LandingPageLayout from "@/components/features/home/LandingPageLayout";
+﻿import LandingPageLayout from "@/components/features/home/LandingPageLayout";
 import JobListingsSection from "@/components/features/home/candidate/JobListingsSection";
-import Footer from "@/components/layout/Footer";
+import Footer from "@/modules/shared/layouts/home/HomeFooter";
 import { useEffect } from "react";
 import { setUserType } from "@/store/slices/userSlice";
 import { useDispatch } from "react-redux";

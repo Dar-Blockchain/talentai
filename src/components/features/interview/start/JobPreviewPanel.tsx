@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import Cookies from 'js-cookie';
 import { useRouter } from 'next/router';
 import { Box, Typography, Button, Chip, Divider } from '@mui/material';
@@ -16,7 +16,7 @@ import { AppDispatch } from '@/store/store';
 import { setConnectedUser } from '@/store/slices/userSlice';
 import { getPostSkills, formatSalary, getLevelFromNumber, getSoftSkillLevelLabel, Skill } from '@/utils/postHelpers';
 import OnboardingModal from '@/components/features/interview/OnboardingModal';
-import Header from '@/components/layout/Header';
+import Header from '@/modules/shared/layouts/home/HomeHeader';
 import { useTranslation } from 'react-i18next';
 
 const PURPLE = '#8310FF';

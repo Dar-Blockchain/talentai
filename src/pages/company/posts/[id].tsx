@@ -1,5 +1,5 @@
-import React from "react";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
+﻿import React from "react";
+import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
 import { Box, Alert } from "@mui/material";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
 import { useTranslation } from "react-i18next";

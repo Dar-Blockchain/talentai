@@ -1,7 +1,7 @@
-import { useSelector } from "react-redux";
+﻿import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import CandidateWorkspaceLayout from "@/components/layout/candidate/CandidateWorkspaceLayout";
+import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
+import CandidateWorkspaceLayout from "@/modules/shared/layouts/candidate/CandidateWorkspaceLayout";
 import { CandidateNotificationsPanel } from "@/modules/notifications/candidate";
 
 function NotificationsContent() {

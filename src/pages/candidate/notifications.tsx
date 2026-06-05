@@ -1,4 +1,4 @@
-import CandidateWorkspaceLayout from "@/components/layout/candidate/CandidateWorkspaceLayout";
+﻿import CandidateWorkspaceLayout from "@/modules/shared/layouts/candidate/CandidateWorkspaceLayout";
 import { CandidateNotificationsPanel } from "@/modules/notifications/candidate";
 
 export default function CandidateNotificationsPage() {

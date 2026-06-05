@@ -1,8 +1,8 @@
-import Head from "next/head";
+﻿import Head from "next/head";
 import { Box, Container, Typography, Divider, Link } from "@mui/material";
 import NextLink from "next/link";
 import { Trans, useTranslation } from "react-i18next";
-import Header from "@/components/layout/Header";
+import Header from "@/modules/shared/layouts/home/HomeHeader";
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <Box sx={{ mb: 4.5 }}>

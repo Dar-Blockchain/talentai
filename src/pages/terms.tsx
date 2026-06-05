@@ -1,10 +1,10 @@
-import Head from "next/head";
+﻿import Head from "next/head";
 import { Box, Container, Typography, Divider, Link, Chip } from "@mui/material";
 import NextLink from "next/link";
 import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { Trans, useTranslation } from "react-i18next";
-import Header from "@/components/layout/Header";
+import Header from "@/modules/shared/layouts/home/HomeHeader";
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <Box sx={{ mb: 4.5 }}>

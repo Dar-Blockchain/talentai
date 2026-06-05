@@ -1,9 +1,9 @@
-import React, { useState, useCallback } from "react";
+﻿import React, { useState, useCallback } from "react";
 import { useSelector }    from "react-redux";
 import { useTranslation } from "react-i18next";
 import { Plus }           from "lucide-react";
-import DashboardLayout    from "@/components/layout/dashboard/DashboardLayout";
-import PageHeader         from "@/components/layout/dashboard/PageHeader";
+import DashboardLayout    from "@/modules/shared/layouts/dashboard/DashboardLayout";
+import PageHeader         from "@/modules/shared/layouts/dashboard/PageHeader";
 import { Button }         from "@/modules/shared/ui/shadcn/button";
 import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 import { RootState }      from "@/store/store";

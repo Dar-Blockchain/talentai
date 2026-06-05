@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+﻿import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Box } from "@mui/material";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import PageHeader from "@/components/layout/dashboard/PageHeader";
+import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
+import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
 import AppButton from "@/components/ui/AppButton";
 import PersonAddOutlined from "@mui/icons-material/PersonAddOutlined";
 import AddEmployeeModal from "@/components/features/company/employees/create/AddEmployeeModal";

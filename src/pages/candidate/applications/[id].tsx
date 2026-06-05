@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import dynamic from "next/dynamic";
 import { useSelector } from "react-redux";
@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import {
   Box, Typography, Chip, Skeleton, Divider, Button, Avatar, LinearProgress,
 } from "@mui/material";
-import Header from "@/components/layout/dashboard/Header";
+import Header from "@/modules/shared/layouts/dashboard/DashboardHeader";
 import { RootState } from "@/store/store";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutline";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";

@@ -1,7 +1,7 @@
-import React, { useEffect } from "react";
+﻿import React, { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
+import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
 import CampaignDetail from "@/components/features/company/campaigns/details/CampaignDetail";
 import CampaignDetailSkeleton from "@/components/features/company/campaigns/details/CampaignDetailSkeleton";
 import CampaignDetailError from "@/components/features/company/campaigns/details/CampaignDetailError";

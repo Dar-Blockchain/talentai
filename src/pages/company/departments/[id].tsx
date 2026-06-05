@@ -1,8 +1,8 @@
-import React, { useCallback, useEffect, useState } from "react";
+﻿import React, { useCallback, useEffect, useState } from "react";
 import { useRouter }        from "next/router";
 import { useSelector, useDispatch } from "react-redux";
 import { Building2 }        from "lucide-react";
-import DashboardLayout      from "@/components/layout/dashboard/DashboardLayout";
+import DashboardLayout      from "@/modules/shared/layouts/dashboard/DashboardLayout";
 import {
   DepartmentDetailHeader,
   DepartmentMembersSection,

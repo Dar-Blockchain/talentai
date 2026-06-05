@@ -1,6 +1,6 @@
-import React from "react";
+﻿import React from "react";
 import { Box } from "@mui/material";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
+import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
 import CandidateChatPageContent from "@/modules/chat/candidate-chat/components/CandidateChatPageContent";
 import CompanyChatLayout from "@/modules/chat/shared/components/CompanyChatLayout";
 import MessagesRouteGuard from "@/modules/chat/shared/components/MessagesRouteGuard";

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Box, Button } from '@mui/material';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux';
 import { useRouter } from 'next/router';
 import { type RootState } from '@/store/store';
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
-import UserAvatar from '@/components/layout/header/UserAvatar';
+import UserAvatar from '@/modules/shared/layouts/shared/UserAvatar';
 
 const InterviewHeader: React.FC = () => {
   const router = useRouter();

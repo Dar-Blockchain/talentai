@@ -1,5 +1,5 @@
-import React from "react";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
+﻿import React from "react";
+import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
 import { Box, Typography } from "@mui/material";
 import LockOutlined from "@mui/icons-material/LockOutlined";
 import Link from "next/link";

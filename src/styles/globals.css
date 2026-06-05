@@ -30,6 +30,14 @@
   --color-border:               hsl(var(--border));
   --color-input:                hsl(var(--input));
   --color-ring:                 hsl(var(--ring));
+  --color-sidebar-background:   hsl(var(--sidebar-background));
+  --color-sidebar-foreground:   hsl(var(--sidebar-foreground));
+  --color-sidebar-primary:      hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent:       hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border:       hsl(var(--sidebar-border));
+  --color-sidebar-ring:         hsl(var(--sidebar-ring));
   --radius-sm:                  calc(var(--radius) - 4px);
   --radius-md:                  calc(var(--radius) - 2px);
   --radius-lg:                  var(--radius);
@@ -150,7 +158,13 @@
   --ring:                    149 52% 62%;
   --radius:                  0.625rem;
   --sidebar-background:      0 0% 100%;
+  --sidebar-foreground:      0 0% 10%;
+  --sidebar-primary:         149 52% 62%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent:          210 40% 96%;
+  --sidebar-accent-foreground: 0 0% 10%;
   --sidebar-border:          214 32% 91%;
+  --sidebar-ring:            149 52% 62%;
 
   /* surface / text tokens used directly via var() */
   --surface:                 #F8FAFC;
@@ -186,7 +200,13 @@
   --input:                   217 33% 19%;
   --ring:                    149 52% 62%;
   --sidebar-background:      222 47% 7%;           /* #090F1C */
+  --sidebar-foreground:      210 40% 96%;
+  --sidebar-primary:         149 52% 62%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent:          217 33% 17%;          /* same as --muted dark */
+  --sidebar-accent-foreground: 210 40% 96%;
   --sidebar-border:          217 33% 16%;
+  --sidebar-ring:            149 52% 62%;
 
   --surface:                 #0F1829;
   --surface-raised:          #1A2234;

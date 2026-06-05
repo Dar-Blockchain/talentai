@@ -1,8 +1,8 @@
-'use client';
+﻿'use client';
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import PageHeader from "@/components/layout/dashboard/PageHeader";
+import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
+import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
 import StatCard from "@/components/ui/StatCard";
 import {
   Box, Chip, CircularProgress, Grid, LinearProgress, Paper,

@@ -1,4 +1,4 @@
-import { useRouter } from 'next/router';
+﻿import { useRouter } from 'next/router';
 import { useEffect, useMemo } from 'react';
 import {
   Box, Typography, Chip, Skeleton, Button, Avatar, LinearProgress, Divider,
@@ -26,7 +26,7 @@ import {
   JobDetailsSection,
   RecommendationsSection,
 } from '@/components/features/interview/assessment';
-import Header from '@/components/layout/dashboard/Header';
+import Header from '@/modules/shared/layouts/dashboard/DashboardHeader';
 import ChevronLeftOutlined from '@mui/icons-material/ChevronLeftOutlined';
 import AssessmentOutlined from '@mui/icons-material/AssessmentOutlined';
 import TrendingUpOutlined from '@mui/icons-material/TrendingUpOutlined';

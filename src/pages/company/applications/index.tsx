@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useState } from "react";
+﻿import React, { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
+import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
 import {
   Box, Button, CircularProgress, Dialog,
   DialogContent, DialogTitle, Divider, FormControl, IconButton, InputBase,

@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+﻿import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Box } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/router";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
+import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
 import { useCompanyAccess } from "@/hooks/useCompanyAccess";
-import PageHeader from "@/components/layout/dashboard/PageHeader";
+import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
 import InterviewsHeader from "@/components/features/company/interviews/list/InterviewsHeader";
 import InterviewsList, { ScoreFilter, SortOption } from "@/components/features/company/interviews/list/InterviewsList";
 import { getScore } from "@/components/features/company/interviews/list/InterviewCard";

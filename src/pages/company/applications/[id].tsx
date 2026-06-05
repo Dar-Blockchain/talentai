@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import PageHeader from "@/components/layout/dashboard/PageHeader";
+import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
+import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
 import {
   Box, Typography, Avatar, Chip, Divider, Skeleton, Button,
   Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress,

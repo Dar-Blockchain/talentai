@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useMemo } from "react";
 import Head from "next/head";
@@ -31,8 +31,8 @@ import {
   EmojiEvents,
 } from "@mui/icons-material";
 
-import Header from "@/components/layout/Header";
-import PageContainer from "@/components/layout/PageContainer";
+import Header from "@/modules/shared/layouts/home/HomeHeader";
+import PageContainer from "@/modules/shared/layouts/PageContainer";
 import SkillsSection from "@/components/features/profile/SkillsSection";
 import { getProfileById, clearTargetUser } from "@/store/slices/userSlice";
 

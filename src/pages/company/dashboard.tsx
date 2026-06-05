@@ -1,7 +1,7 @@
-import React from "react";
+﻿import React from "react";
 import dynamic from "next/dynamic";
 import { Box } from "@mui/material";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
+import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
 
 const KpiStatCards         = dynamic(() => import("@/components/features/company/kpi/KpiStatCards"));
 const KpiFiltersBar        = dynamic(() => import("@/components/features/company/kpi/KpiFiltersBar"));

@@ -1,11 +1,11 @@
-import { Box, Typography, Button, Stack, Avatar } from '@mui/material';
+﻿import { Box, Typography, Button, Stack, Avatar } from '@mui/material';
 import {
   Home as HomeIcon,
   Warning as WarningIcon,
 } from '@mui/icons-material';
 import { useRouter } from 'next/router';
-import PageContainer from '@/components/layout/PageContainer';
-import Header from '@/components/layout/Header';
+import PageContainer from '@/modules/shared/layouts/PageContainer';
+import Header from '@/modules/shared/layouts/home/HomeHeader';
 import { useTranslation } from 'react-i18next';
 
 interface ErrorStateProps {

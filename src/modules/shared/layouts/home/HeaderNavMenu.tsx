@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Box } from "@mui/material";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
@@ -11,11 +10,11 @@ const ACCENT = "#0D9488";
 
 interface HeaderNavMenuProps {
   direction?: "row" | "column";
-  inverted?: boolean;
+  inverted?:  boolean;
 }
 
 const HeaderNavMenu: React.FC<HeaderNavMenuProps> = ({ direction = "row", inverted = false }) => {
-  const { t } = useTranslation("home");
+  const { t }    = useTranslation("home");
   const router   = useRouter();
   const userType = useSelector((state: RootState) => state.user.userType) ?? "candidate";
   const [hovered, setHovered] = useState<string | null>(null);
@@ -26,8 +25,8 @@ const HeaderNavMenu: React.FC<HeaderNavMenuProps> = ({ direction = "row", invert
       { label: t("nav.how_it_works"),id: "howitworks" },
     ];
     if (userType === "candidate") return [
-      { label: t("nav.find_jobs"),      href: "/posts/"        },
-      { label: t("nav.how_it_works"),   id:   "howitworks"     },
+      { label: t("nav.find_jobs"),    href: "/posts/"    },
+      { label: t("nav.how_it_works"), id:   "howitworks" },
     ];
     return [
       { label: t("nav.features"), id: "features" },
@@ -55,68 +54,57 @@ const HeaderNavMenu: React.FC<HeaderNavMenuProps> = ({ direction = "row", invert
 
   if (direction === "column") {
     return (
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+      <div className="flex flex-col gap-[2px]">
         {items.map((item) => (
-          <Box
+          <div
             key={item.id || item.href}
             onClick={() => handleNavClick(item)}
-            sx={{
-              px: 2, py: 1.25, borderRadius: "8px", cursor: "pointer",
-              fontSize: "14px", fontWeight: isActive(item) ? 700 : 500,
-              color: isActive(item) ? "#111" : "#374151",
-              "&:hover": { bgcolor: "#F3F4F6", color: "#111" },
-            }}
+            className="px-4 py-[10px] rounded-[8px] cursor-pointer text-[14px] hover:bg-[#F3F4F6] hover:text-[#111] transition-colors"
+            style={{ fontWeight: isActive(item) ? 700 : 500, color: isActive(item) ? "#111" : "#374151" }}
           >
             {item.label}
-          </Box>
+          </div>
         ))}
-      </Box>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+    <div className="flex items-center gap-[2px]">
       {items.map((item) => {
         const active  = isActive(item);
         const isHover = hovered === (item.id || item.href);
-
         const textColor  = inverted ? "#475569" : "#555";
         const textActive = inverted ? ACCENT : "#0a0a0a";
         const hoverBg    = inverted ? "rgba(13,148,136,0.15)" : `${ACCENT}14`;
 
         return (
-          <Box
+          <div
             key={item.id || item.href}
             onClick={() => handleNavClick(item)}
             onMouseEnter={() => setHovered(item.id || item.href || null)}
             onMouseLeave={() => setHovered(null)}
-            sx={{
-              position: "relative",
-              px: 1.75, py: 0.75, borderRadius: "10px", cursor: "pointer",
-              fontSize: "13.5px",
-              fontWeight: active ? 650 : 500,
-              color: active ? textActive : textColor,
-              letterSpacing: "0.01em",
-              bgcolor: (active || isHover) ? hoverBg : "transparent",
-              transition: "color 0.18s, background 0.18s",
-              "&:hover": { color: textActive },
-              "&::after": {
-                content: '""',
-                position: "absolute", bottom: 4, left: "50%",
-                transform: `translateX(-50%) scaleX(${active ? 1 : 0})`,
-                transformOrigin: "center",
-                width: "60%", height: "2px", borderRadius: "2px",
-                bgcolor: ACCENT,
-                transition: "transform 0.22s cubic-bezier(0.34,1.56,0.64,1)",
-              },
-              "&:hover::after": { transform: "translateX(-50%) scaleX(1)" },
+            className="relative px-[14px] py-[6px] rounded-[10px] cursor-pointer text-[13.5px] tracking-[0.01em] transition-colors duration-[0.18s]"
+            style={{
+              fontWeight:      active ? 650 : 500,
+              color:           active ? textActive : textColor,
+              backgroundColor: (active || isHover) ? hoverBg : "transparent",
             }}
           >
             {item.label}
-          </Box>
+            <span
+              className="absolute bottom-1 left-1/2 h-[2px] rounded-[2px] transition-transform duration-[0.22s] cubic-bezier(0.34,1.56,0.64,1)"
+              style={{
+                width:           "60%",
+                backgroundColor: ACCENT,
+                transform:       `translateX(-50%) scaleX(${active || isHover ? 1 : 0})`,
+                transformOrigin: "center",
+              }}
+            />
+          </div>
         );
       })}
-    </Box>
+    </div>
   );
 };
 

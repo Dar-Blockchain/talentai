@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useCallback } from "react";
+﻿import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/router";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
+import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
 import EditRoleModal from "@/components/features/company/employees/edit/EditRoleModal";
 import DeleteMemberDialog from "@/components/features/company/employees/delete/DeleteMemberDialog";
 import EmployeeDetail from "@/components/features/company/employees/details/EmployeeDetail";

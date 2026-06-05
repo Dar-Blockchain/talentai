@@ -1,12 +1,12 @@
-'use client';
+﻿'use client';
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import PageHeader from "@/components/layout/dashboard/PageHeader";
+import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
+import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
 import { AppDispatch } from "@/store/store";
 import { fetchPlanLimits, selectPlanLimits, selectPlanLimitsLoading, selectCurrentPlanLimit, PlanLimit } from "@/store/slices/planLimitsSlice";
 import { getMyProfile } from "@/store/slices/userSlice";

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { Box, Button, CircularProgress } from "@mui/material";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutlineOutlined";
 import { useTranslation } from "react-i18next";
@@ -9,7 +9,7 @@ import { selectSavedPostId } from "@/store/slices/postSlice";
 import { useAiPostStepper } from "../hooks";
 import PostDetailsStep from "./PostDetailsStep";
 import InterviewLanguagesModal from "./InterviewLanguagesModal";
-import PageHeader from "@/components/layout/dashboard/PageHeader";
+import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
 
 import { TEAL } from "@/modules/posts/shared/constants";
 

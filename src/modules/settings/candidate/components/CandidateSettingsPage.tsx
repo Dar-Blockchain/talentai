@@ -1,7 +1,7 @@
-import React, { useState, useCallback, useEffect } from "react";
+﻿import React, { useState, useCallback, useEffect } from "react";
 import { Box, Typography, Avatar } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import CandidateWorkspaceLayout from "@/components/layout/candidate/CandidateWorkspaceLayout";
+import CandidateWorkspaceLayout from "@/modules/shared/layouts/candidate/CandidateWorkspaceLayout";
 import NotificationsTab from "./NotificationsTab";
 import PersonalInformationTab from "./PersonalInformationTab";
 import ProfileVisibilityTab from "./ProfileVisibilityTab";

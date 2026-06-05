@@ -1,10 +1,10 @@
-import React from "react";
+﻿import React from "react";
 import {
   Box, Typography, Avatar, TextField, Button,
   CircularProgress, Divider, Chip,
 } from "@mui/material";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import PageHeader from "@/components/layout/dashboard/PageHeader";
+import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
+import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
 import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
 import PersonOutlined from "@mui/icons-material/PersonOutlined";
 import EmailOutlined from "@mui/icons-material/EmailOutlined";

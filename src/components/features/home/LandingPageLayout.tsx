@@ -1,9 +1,9 @@
-import { Box } from "@mui/material";
-import Header from "@/components/layout/Header";
+﻿import { Box } from "@mui/material";
+import Header from "@/modules/shared/layouts/home/HomeHeader";
 import { ReactNode } from "react";
 import CompanyHeroSection from "./company/HeroSection";
 import CandidateHeroSection from "./candidate/HeroSection";
-import PageContainer from '@/components/layout/PageContainer'
+import PageContainer from '@/modules/shared/layouts/PageContainer'
 
 interface LandingPageLayoutProps {
   logo: string;

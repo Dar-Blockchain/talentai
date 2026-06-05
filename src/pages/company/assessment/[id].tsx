@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+﻿import React, { useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
@@ -7,8 +7,8 @@ import PersonOutlined from "@mui/icons-material/PersonOutlined";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import PageHeader from "@/components/layout/dashboard/PageHeader";
+import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
+import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
 import SectionCard from "@/components/ui/SectionCard";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
 import { AppDispatch } from "@/store/store";

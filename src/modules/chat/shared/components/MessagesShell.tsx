@@ -1,10 +1,10 @@
-import React, { useMemo } from "react";
+﻿import React, { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import { Box } from "@mui/material";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import CandidateWorkspaceLayout from "@/components/layout/candidate/CandidateWorkspaceLayout";
+import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
+import CandidateWorkspaceLayout from "@/modules/shared/layouts/candidate/CandidateWorkspaceLayout";
 import TeamChatPageContent from "@/modules/chat/team-chat/components/TeamChatPageContent";
 import CandidateChatPageContent from "@/modules/chat/candidate-chat/components/CandidateChatPageContent";
 import CompanyChatLayout from "@/modules/chat/shared/components/CompanyChatLayout";

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useSelector } from 'react-redux';
 import { Box, Typography, Container, Button, Chip, CircularProgress } from '@mui/material';
 import { RootState } from '@/store/store';
@@ -9,7 +9,7 @@ import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
 import BusinessCenterOutlinedIcon from '@mui/icons-material/BusinessCenterOutlined';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import Header from '@/components/layout/Header';
+import Header from '@/modules/shared/layouts/home/HomeHeader';
 import { GlobalStyles } from './styles';
 import { useTranslation } from 'react-i18next';
 
