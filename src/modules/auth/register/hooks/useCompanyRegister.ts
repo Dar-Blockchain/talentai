@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
 import { useRouter } from "next/router";
 import { useToast } from "@/hooks/useToast";
 import { useOtpFlow } from "@/modules/auth/shared/hooks";
@@ -15,6 +16,12 @@ export function useCompanyRegister({ onStepChange, onEmailChange }: RegisterForm
   const [savedEmail, setSavedEmail] = useState("");
 
   const abortRef = useRef<AbortController | null>(null);
+
+  // Form lives here — hook owns all company register state
+  const form = useForm<CompanyFormValues>({
+    mode: "onTouched",
+    defaultValues: { name: "", email: "", industry: "", size: "", location: "", website: "", linkedin: "" },
+  });
 
   const registerMutation = useRegisterMutation();
   const verifyMutation   = useVerifyRegisterOtp((_data) => {
@@ -62,6 +69,7 @@ export function useCompanyRegister({ onStepChange, onEmailChange }: RegisterForm
   };
 
   return {
+    form,
     step, loading, savedEmail, otp, timer,
     sendCode,
     verifyCode: () => verifyCode(savedEmail),
