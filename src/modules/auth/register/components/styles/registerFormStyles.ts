@@ -22,17 +22,6 @@ export const compactFieldSx = {
   },
 };
 
-export const compactSubmitBtnSx = {
-  textTransform: "none", fontFamily: "Poppins", fontWeight: 600, borderRadius: "10px",
-  height: { xs: 44, sm: 46 }, px: { xs: 1.25, sm: 1.75 },
-  background: `linear-gradient(135deg, ${ACCENT} 0%, ${ACCENT2} 100%)`,
-  color: "#fff", boxShadow: `0 4px 20px ${ACCENT}50`, letterSpacing: "0.01em",
-  fontSize: { xs: "0.88rem", sm: "0.92rem" }, transition: "all 0.2s",
-  "&:hover": { background: `linear-gradient(135deg, #0caa9d 0%, ${ACCENT2} 100%)`, boxShadow: `0 8px 28px ${ACCENT}60`, transform: "translateY(-1px)" },
-  "&:active": { transform: "translateY(0)" },
-  "&.Mui-disabled": { background: "#F3F4F6", color: "#9CA3AF", boxShadow: "none" },
-};
-
 export const selectMenuProps = {
   disableScrollLock: true,
   PaperProps: {

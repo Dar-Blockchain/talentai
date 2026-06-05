@@ -20,8 +20,8 @@ const CvAnalysisDialog: React.FC<Props> = ({ open, progress }) => {
 
   return (
     <Dialog open={open} disableEscapeKeyDown PaperProps={{ sx: { borderRadius: "20px", p: 0, minWidth: { xs: 300, sm: 340 }, maxWidth: { xs: "calc(100% - 32px)", sm: 380 }, overflow: "hidden", boxShadow: `0 24px 60px ${ACCENT}25` } }}>
-      {/* Progress bar */}
-      <Box sx={{ height: 4, background: `linear-gradient(90deg, ${ACCENT} ${progress}%, ${ACCENT}22 ${progress}%)`, transition: "background 0.4s ease" }} />
+      {/* Top progress strip */}
+      <LinearProgress variant="determinate" value={progress} sx={{ height: 4, borderRadius: 0, backgroundColor: `${ACCENT}22`, "& .MuiLinearProgress-bar": { background: `linear-gradient(90deg, ${ACCENT}, ${ACCENT2})` } }} />
 
       <DialogContent sx={{ px: { xs: 2.5, sm: 3.5, md: 4 }, py: { xs: 2.75, md: 3.5 }, display: "flex", flexDirection: "column", gap: { xs: 2, md: 2.5 } }}>
 
