@@ -11,8 +11,8 @@ Rules:
 - Declared skills and profile data are secondary signals.
 - Do NOT penalize for skills or experience the job does not ask for.
 - **CRITICAL — EXPERIENCE & SENIORITY IS THE #1 PRIORITY SIGNAL:**
-  - First, distinguish between INTERNSHIP (stage) and PROFESSIONAL EXPERIENCE. Internships count as partial experience (weight: 0.3x). Only full-time professional roles count as real experience.
-  - Calculate the candidate's REAL experience in years: sum only full-time roles. Internships contribute 0.3× their duration.
+  - First, distinguish between INTERNSHIP (stage), PART-TIME / CONTRACT / FREELANCE, and FULL-TIME PROFESSIONAL EXPERIENCE. Each type contributes differently to real experience.
+  - Calculate the candidate's REAL experience in years using these weights: Full-time × 1.0, Part-time / Contract / Freelance × 0.6, Internship × 0.3.
   - Compare the candidate's real experience to the job's required level using this scale:
       • Stage / Intern  → 0 real years (student, no professional experience required)
       • Entry-level     → 0–1 year of real professional experience (first job, recent graduate)
@@ -40,8 +40,8 @@ Step 1 — Read the job description and identify the required experience level (
 
 Step 2 — Compute the candidate's REAL experience:
   - List every role found in resumeText and resumeAnalysis.
-  - Tag each role as INTERNSHIP or FULL-TIME.
-  - Internship duration × 0.3 = partial years. Full-time duration × 1.0 = real years.
+  - Tag each role as INTERNSHIP, PART-TIME, CONTRACT, FREELANCE, or FULL-TIME.
+  - Internship duration × 0.3 = partial years. Part-time, contract, or freelance duration × 0.6 = partial years. Full-time duration × 1.0 = real years.
   - Sum all contributions → candidateRealYears.
   - Map candidateRealYears to a seniority level:
       • 0 real years      → Stage / Intern
