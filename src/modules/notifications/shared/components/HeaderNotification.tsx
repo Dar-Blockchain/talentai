@@ -1,9 +1,7 @@
 "use client";
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Box, Badge } from '@mui/material';
 import { useRouter } from 'next/router';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store/store';
 import { useNotifications } from '../context/NotificationContext';
 import NotificationDropdown from './NotificationDropdown';
 import { NotificationsNoneRounded, NotificationsRounded } from '@mui/icons-material';
@@ -14,16 +12,13 @@ interface HeaderNotificationProps {
 
 const HeaderNotification = ({ onViewAll }: HeaderNotificationProps) => {
   const router = useRouter();
-  const { user } = useSelector((state: RootState) => state.user.connectedUser);
   const [anchor, setAnchor] = useState<null | HTMLElement>(null);
-
-  const isCompany = useMemo(() => user?.role?.toLowerCase() === 'company', [user?.role]);
 
   const { notifications, unreadCount, markAsRead, markAllAsRead, archive, archiveAll, deleteById } = useNotifications();
 
   const isOpen = Boolean(anchor);
 
-  const notificationsPage = isCompany ? '/notifications' : '/candidate/notifications';
+  const notificationsPage = '/notifications';
 
   const handleOpen  = useCallback((e: React.MouseEvent<HTMLElement>) => setAnchor(e.currentTarget), []);
   const handleClose = useCallback(() => setAnchor(null), []);

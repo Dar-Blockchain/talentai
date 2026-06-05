@@ -25,7 +25,7 @@ const Header = () => {
   const userId        = connectedUser?._id;
   const isCandidate   = connectedUser?.role?.toLowerCase() === 'candidate';
 
-  const handleCandidateViewAll = useCallback(() => router.push('/candidate/notifications'), [router]);
+  const handleCandidateViewAll = useCallback(() => router.push('/notifications'), [router]);
 
   // Derive auth from token directly — covers the PersistGate rehydration window
   // where isAuthRedux is still false even though a valid token exists.
