@@ -11,7 +11,10 @@ import { useRouter } from "next/router";
 import Head from "next/head";
 import ScrollToTop from "@/components/ui/ScrollToTop";
 import CookieBanner from "@/components/ui/CookieBanner";
-import { Poppins } from "next/font/google";
+import "@fontsource/poppins/400.css";
+import "@fontsource/poppins/500.css";
+import "@fontsource/poppins/600.css";
+import "@fontsource/poppins/700.css";
 import MuiToast from "@/components/ui/Toast";
 import { useToast, ToastProvider } from "@/hooks/useToast";
 import { NotificationProvider } from "@/modules/notifications/shared/context";
@@ -27,12 +30,6 @@ import { setSessionExpiredHandler } from "@/utils/storeEmitter";
 import { useTranslation } from "react-i18next";
 import { ReactQueryProvider } from "@/providers/ReactQueryProvider";
 import { normalizeLangCode, MANUAL_LANG_KEY } from "@/hooks/useLanguage";
-
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-poppins",
-});
 
 const theme = createTheme({
   palette: {
@@ -187,7 +184,7 @@ export default function App({ Component, pageProps }: AppProps) {
             <meta property="og:type" content="website" />
             <link rel="icon" href="/images/home/favico.png" type="image/png" />
           </Head>
-          <main className={poppins.variable}>
+          <main>
             <ToastProvider>
               <MuiToastWrapper />
               <AuthWrapper>
