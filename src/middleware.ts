@@ -17,6 +17,7 @@ const PUBLIC_PATHS = [
   "/campaign",
   "/candidate/interview",
   "/payments/stripe/callback",
+  "/ui-kit"
 ];
 
 const PUBLIC_PREFIXES = ["/api/", "/_next/", "/favicon", "/logo", "/static/"];

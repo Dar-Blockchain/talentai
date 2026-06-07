@@ -1,22 +1,38 @@
 "use client";
 import React, { useCallback } from "react";
+import { Box } from "@mui/material";
 import { useRouter } from "next/router";
 
 const HeaderLogo = () => {
   const router = useRouter();
 
   const goHome = useCallback(() => {
-    if (router.pathname === "/") { window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+    if (router.pathname === "/") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
     router.push("/");
   }, [router]);
 
   return (
-    <button
+    <Box
       onClick={goHome}
-      className="inline-flex items-center justify-center cursor-pointer transition-opacity hover:opacity-[0.82] bg-transparent border-0 p-0"
+      sx={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        cursor: "pointer",
+        transition: "opacity 0.2s",
+        "&:hover": { opacity: 0.82 },
+      }}
     >
-      <img src="/images/home/logo.svg" alt="TalentAI" style={{ height: 36, display: "block", userSelect: "none" }} />
-    </button>
+      <Box
+        component="img"
+        src="/images/home/logo.svg"
+        alt="TalentAI"
+        sx={{ height: 36, display: "block", userSelect: "none" }}
+      />
+    </Box>
   );
 };
 

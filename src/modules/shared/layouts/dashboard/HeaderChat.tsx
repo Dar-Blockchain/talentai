@@ -1,7 +1,17 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
-import { MessageSquare, Loader2 } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
+
+import React, { useState } from "react";
+import {
+  Avatar,
+  Badge,
+  Box,
+  Button,
+  Divider,
+  IconButton,
+  Popover,
+  Typography,
+} from "@mui/material";
+import ChatOutlined from "@mui/icons-material/ChatOutlined";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { selectCandidateConversations } from "@/modules/chat/candidate-chat/store/candidateChatSlice";
@@ -9,7 +19,10 @@ import { useCandidateConversationsQuery } from "@/modules/chat/candidate-chat/qu
 import { selectTeamConversations } from "@/modules/chat/team-chat/store/teamChatSlice";
 import { useTeamConversationsQuery } from "@/modules/chat/team-chat/queries/useTeamChatQueries";
 import { getTeamChatBasePath, getTeamChatConversationPath } from "@/modules/chat/team-chat/utils/routes";
-import { getCandidateChatBasePath, getCandidateChatConversationPath } from "@/modules/chat/candidate-chat/utils/routes";
+import {
+  getCandidateChatBasePath,
+  getCandidateChatConversationPath,
+} from "@/modules/chat/candidate-chat/utils/routes";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import { useChatUnreadBadges } from "@/modules/chat/shared/hooks/useChatUnreadBadges";
@@ -17,35 +30,36 @@ import { normalizeConversationUnreadCount } from "@/modules/chat/shared/utils/no
 import { getParticipantDisplayName } from "@/modules/chat/shared/components/helpers";
 import { TEAM_LAST_MESSAGE_DELETED_SENTINEL } from "@/modules/chat/team-chat/constants/lastMessagePreview";
 
-const TEAL    = "#6AD39C";  // brand-mint
-const TEAL_BG = "#EDFAF3";  // primary-light
+const TEAL    = "#0D9488";
+const TEAL_BG = "#F0FDFA";
 
 const HeaderChat: React.FC = () => {
-  const router = useRouter();
+  const router   = useRouter();
   const { t: tShared, i18n } = useTranslation("shared/chat");
-  const { t: tTeam }       = useTranslation("modules/company/teamChat");
-  const { t: tCandidate }  = useTranslation("modules/candidates/candidateChat");
+  const { t: tTeam } = useTranslation("modules/company/teamChat");
+  const { t: tCandidate } = useTranslation("modules/candidates/candidateChat");
   const { t: tCompanyHub } = useTranslation("modules/company/companyChat");
-
-  const currentUser = useSelector((s: RootState) => s.user.connectedUser.user);
-  const role        = currentUser?.role;
-  const isEmployee  = role === "Employee";
+  const currentUser = useSelector((state: RootState) => state.user.connectedUser.user);
+  const role = currentUser?.role;
+  const isEmployee = role === "Employee";
   const usesCandidateChat = role === "Company" || role === "Candidate";
 
   const candidateConversations = useSelector(selectCandidateConversations);
-  const teamConversations      = useSelector(selectTeamConversations);
-  useTeamConversationsQuery(undefined,   { enabled: isEmployee       && !!currentUser?._id });
+  const teamConversations = useSelector(selectTeamConversations);
+  useTeamConversationsQuery(undefined, { enabled: isEmployee && !!currentUser?._id });
   useCandidateConversationsQuery(undefined, { enabled: usesCandidateChat && !!currentUser?._id });
 
-  const conversations         = isEmployee ? teamConversations : candidateConversations;
+  const conversations = isEmployee ? teamConversations : candidateConversations;
   const { activeModuleUnread } = useChatUnreadBadges();
-  const teamChatBasePath       = getTeamChatBasePath(role);
-  const candidateChatBasePath  = getCandidateChatBasePath(role);
-
-  const headerTitle = isEmployee ? tTeam("header.team")
-    : role === "Company" ? tCompanyHub("header.company") : tCandidate("header.candidate");
+  const teamChatBasePath = getTeamChatBasePath(role);
+  const candidateChatBasePath = getCandidateChatBasePath(role);
+  const headerTitle = isEmployee
+    ? tTeam("header.team")
+    : role === "Company"
+      ? tCompanyHub("header.company")
+      : tCandidate("header.candidate");
   const emptyLabel = isEmployee ? tTeam("header.empty_team") : tShared("header.empty");
-  const openLabel  = isEmployee ? tTeam("header.open_team")  : tShared("header.open");
+  const openLabel = isEmployee ? tTeam("header.open_team") : tShared("header.open");
 
   const fmtTime = (iso?: string): string => {
     if (!iso) return "";
@@ -55,155 +69,220 @@ const HeaderChat: React.FC = () => {
     const locale = i18n.language?.startsWith("fr") ? "fr-FR" : "en-US";
     if (diff === 0) return d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
     if (diff === 1) return tShared("header.yesterday");
-    if (diff < 7)   return d.toLocaleDateString(locale, { weekday: "short" });
+    if (diff < 7) return d.toLocaleDateString(locale, { weekday: "short" });
     return d.toLocaleDateString(locale, { month: "short", day: "numeric" });
   };
 
-  const [open, setOpen] = useState(false);
+  const [anchor, setAnchor] = useState<null | HTMLElement>(null);
   const totalBadge = activeModuleUnread;
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (!containerRef.current?.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
+  const close = () => setAnchor(null);
 
   return (
-    <div ref={containerRef} className="relative">
-      {/* Trigger */}
-      <button
-        onClick={() => setOpen((p) => !p)}
-        className="relative flex items-center justify-center size-8 rounded-[9px] cursor-pointer transition-colors text-gray-500 hover:bg-[#EDFAF3]"
+    <>
+      <IconButton
+        onClick={(e) => setAnchor(e.currentTarget)}
+        sx={{ color: "#6B7280" }}
       >
-        <MessageSquare className="size-5" />
-        {totalBadge > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-px leading-none">
-            {totalBadge > 9 ? "9+" : totalBadge}
-          </span>
-        )}
-      </button>
-
-      {/* Dropdown */}
-      {open && (
-        <div
-          className="absolute right-0 top-full mt-2 w-[340px] rounded-[12px] border border-gray-200 overflow-hidden z-50 flex flex-col"
-          style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.12)", background: "#fff" }}
+        <Badge
+          badgeContent={totalBadge > 9 ? "9+" : totalBadge || undefined}
+          sx={{
+            "& .MuiBadge-badge": {
+              bgcolor: "#EF4444",
+              color: "#fff",
+              fontSize: "10px",
+              fontWeight: 700,
+              minWidth: 18,
+              height: 18,
+            },
+          }}
         >
-          {/* Brand gradient top accent */}
-          <div className="h-[3px] bg-brand-gradient w-full" />
+          <ChatOutlined sx={{ fontSize: 20 }} />
+        </Badge>
+      </IconButton>
 
-          {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
-            <div className="flex items-center gap-2">
-              <span className="text-[15px] font-bold text-gray-900">{headerTitle}</span>
-              {totalBadge > 0 && (
-                <span
-                  className="size-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
-                  style={{ background: TEAL }}
-                >
-                  {totalBadge > 9 ? "9+" : totalBadge}
-                </span>
-              )}
-            </div>
-          </div>
+      <Popover
+        open={Boolean(anchor)}
+        anchorEl={anchor}
+        onClose={close}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        slotProps={{
+          paper: {
+            sx: {
+              width: 340,
+              borderRadius: 3,
+              boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+              overflow: "hidden",
+              mt: 1,
+              border: "1px solid #E5E7EB",
+            },
+          },
+        }}
+      >
+        <Box
+          sx={{
+            px: 2.5,
+            py: 2,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            borderBottom: "1px solid #E5E7EB",
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>
+              {headerTitle}
+            </Typography>
+            {totalBadge > 0 && (
+              <Box
+                sx={{
+                  bgcolor: TEAL,
+                  color: "#fff",
+                  borderRadius: "50%",
+                  width: 20,
+                  height: 20,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "10px",
+                  fontWeight: 700,
+                }}
+              >
+                {totalBadge > 9 ? "9+" : totalBadge}
+              </Box>
+            )}
+          </Box>
+        </Box>
 
-          {/* List */}
-          <div className="max-h-[340px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
-            {conversations.length === 0 ? (
-              <div className="py-12 text-center">
-                <MessageSquare className="size-10 mx-auto mb-2 text-gray-300" />
-                <p className="text-[13px] text-gray-400">{emptyLabel}</p>
-              </div>
-            ) : conversations.slice(0, 8).map((conv, i) => {
-              const uid   = currentUser?._id != null ? String(currentUser._id) : "";
+        <Box
+          sx={{
+            maxHeight: 340,
+            overflowY: "auto",
+            "&::-webkit-scrollbar": { width: 4 },
+            "&::-webkit-scrollbar-thumb": { bgcolor: "#E5E7EB", borderRadius: 2 },
+          }}
+        >
+          {conversations.length === 0 ? (
+            <Box sx={{ py: 6, textAlign: "center" }}>
+              <ChatOutlined sx={{ fontSize: 40, color: "#D1D5DB", mb: 1 }} />
+              <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>
+                {emptyLabel}
+              </Typography>
+            </Box>
+          ) : (
+            conversations.slice(0, 8).map((conv, i) => {
+              const uid = currentUser?._id != null ? String(currentUser._id) : "";
               const other = conv.participants?.find((p) => String(p._id) !== uid);
-              const name  = getParticipantDisplayName(other);
-              const initial    = name[0]?.toUpperCase() || "?";
-              const lastMsg    = conv.lastMessage;
-              const unreadN    = normalizeConversationUnreadCount(conv.unreadCount, uid || undefined);
-              const teamLastPreviewDeleted = isEmployee
-                && (!!lastMsg?.isDeletedForEveryone || lastMsg?.text === TEAM_LAST_MESSAGE_DELETED_SENTINEL);
+              const name = getParticipantDisplayName(other);
+              const initial = name[0]?.toUpperCase() || "?";
+              const lastMsg = conv.lastMessage;
+              const unreadN = normalizeConversationUnreadCount(conv.unreadCount, uid || undefined);
+              const teamLastPreviewDeleted =
+                isEmployee
+                && (!!lastMsg?.isDeletedForEveryone
+                  || lastMsg?.text === TEAM_LAST_MESSAGE_DELETED_SENTINEL);
               const hasUnread = unreadN > 0;
-              const convPath  = isEmployee
+              const conversationPath = isEmployee
                 ? getTeamChatConversationPath(role, conv._id)
                 : getCandidateChatConversationPath(role, conv._id);
 
               return (
                 <React.Fragment key={conv._id}>
-                  <button
-                    onClick={() => { router.push(convPath); setOpen(false); }}
-                    className="flex gap-3 w-full px-4 py-3 cursor-pointer transition-colors text-left"
-                    style={{ background: hasUnread ? TEAL_BG : "transparent" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "#F9FAFB")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = hasUnread ? TEAL_BG : "transparent")}
+                  <Box
+                    onClick={() => { router.push(conversationPath); close(); }}
+                    sx={{
+                      display: "flex",
+                      gap: 1.5,
+                      px: 2,
+                      py: 1.5,
+                      cursor: "pointer",
+                      bgcolor: hasUnread ? TEAL_BG : "transparent",
+                      transition: "background 0.15s",
+                      "&:hover": { bgcolor: "#F9FAFB" },
+                    }}
                   >
-                    {/* Avatar with unread badge */}
-                    <div className="relative shrink-0">
-                      <Avatar className="size-[38px] shrink-0" style={{ background: TEAL }}>
-                        <AvatarFallback className="text-[14px] text-white" style={{ background: TEAL }}>
-                          {initial}
-                        </AvatarFallback>
+                    <Badge
+                      overlap="circular"
+                      anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                      badgeContent={unreadN > 0 ? unreadN : 0}
+                      sx={{
+                        "& .MuiBadge-badge": {
+                          bgcolor: TEAL,
+                          color: "#fff",
+                          fontSize: "9px",
+                          minWidth: 16,
+                          height: 16,
+                        },
+                      }}
+                    >
+                      <Avatar sx={{ width: 38, height: 38, bgcolor: TEAL, fontSize: 14, flexShrink: 0 }}>
+                        {initial}
                       </Avatar>
-                      {unreadN > 0 && (
-                        <span
-                          className="absolute -bottom-0.5 -right-0.5 min-w-[16px] h-[16px] rounded-full text-white text-[9px] font-bold flex items-center justify-center px-px leading-none"
-                          style={{ background: TEAL }}
-                        >
-                          {unreadN}
-                        </span>
-                      )}
-                    </div>
+                    </Badge>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-center mb-0.5">
-                        <span className={`text-[13px] truncate text-gray-900 ${hasUnread ? "font-bold" : "font-semibold"}`}>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.25 }}>
+                        <Typography
+                          sx={{
+                            fontSize: "13px",
+                            fontWeight: hasUnread ? 700 : 600,
+                            color: "#111827",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           {name}
-                        </span>
-                        <span className="text-[11px] text-gray-400 shrink-0 ml-2">
+                        </Typography>
+                        <Typography sx={{ fontSize: "11px", color: "#9CA3AF", flexShrink: 0, ml: 1 }}>
                           {fmtTime(lastMsg?.timestamp)}
-                        </span>
-                      </div>
-                      <p
-                        className="text-[12px] truncate"
-                        style={{
-                          color:      hasUnread ? TEAL : "#6B7280",
+                        </Typography>
+                      </Box>
+                      <Typography
+                        sx={{
+                          fontSize: "12px",
+                          color: hasUnread ? TEAL : "#6B7280",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
                           fontWeight: hasUnread ? 600 : 400,
-                          fontStyle:  teamLastPreviewDeleted ? "italic" : undefined,
+                          fontStyle: teamLastPreviewDeleted ? "italic" : undefined,
                         }}
                       >
                         {teamLastPreviewDeleted
                           ? tShared("messages.this_message_was_deleted")
                           : lastMsg?.text || tShared("header.no_messages_yet")}
-                      </p>
-                    </div>
-                  </button>
-                  {i < Math.min(conversations.length, 8) - 1 && (
-                    <hr className="border-t border-gray-100 mx-0" />
-                  )}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  {i < Math.min(conversations.length, 8) - 1 && <Divider />}
                 </React.Fragment>
               );
-            })}
-          </div>
+            })
+          )}
+        </Box>
 
-          {/* Footer */}
-          <div className="border-t border-gray-200 p-3">
-            <button
-              onClick={() => { router.push(isEmployee ? teamChatBasePath : candidateChatBasePath); setOpen(false); }}
-              className="w-full py-1.5 text-[13px] font-semibold rounded-[8px] transition-colors cursor-pointer"
-              style={{ color: TEAL }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = TEAL_BG)}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-            >
-              {openLabel}
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+        <Box sx={{ borderTop: "1px solid #E5E7EB", p: 1.5 }}>
+          <Button
+            fullWidth
+            size="small"
+            onClick={() => {
+              router.push(isEmployee ? teamChatBasePath : candidateChatBasePath);
+              close();
+            }}
+            sx={{
+              textTransform: "none",
+              fontWeight: 600,
+              color: TEAL,
+              borderRadius: 2,
+              "&:hover": { bgcolor: TEAL_BG },
+            }}
+          >
+            {openLabel}
+          </Button>
+        </Box>
+      </Popover>
+    </>
   );
 };
 

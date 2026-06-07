@@ -1,6 +1,10 @@
+"use client";
+
 import React, { ReactNode } from "react";
+import { Box, Typography, Breadcrumbs, Link as MuiLink } from "@mui/material";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import HomeOutlined from "@mui/icons-material/HomeOutlined";
 import Link from "next/link";
-import { Home, ChevronRight } from "lucide-react";
 
 interface BreadcrumbItem {
   label: string;
@@ -8,65 +12,144 @@ interface BreadcrumbItem {
 }
 
 interface PageHeaderProps {
-  title:         string;
-  subtitle?:     string;
-  breadcrumbs?:  BreadcrumbItem[];
-  actions?:      ReactNode;
-  icon?:         React.ElementType;
-  accentColor?:  string;
+  title: string;
+  subtitle?: string;
+  breadcrumbs?: BreadcrumbItem[];
+  actions?: ReactNode;
+  icon?: React.ElementType;
+  accentColor?: string;
 }
 
 const PageHeader: React.FC<PageHeaderProps> = ({
-  title, subtitle, breadcrumbs = [], actions, icon: Icon, accentColor = "#6AD39C",
-}) => (
-  <div
-    className={[
-      "relative overflow-hidden mb-6 border border-gray-200 rounded-2xl pl-9 pr-6 py-5 shadow-sm shadow-card flex flex-col md:flex-row md:items-center justify-between gap-4",
-      Icon ? "bg-gradient-to-r from-[#EDFAF3]/40 via-white to-white" : "bg-white",
-    ].join(" ")}
-  >
-    {/* Left brand gradient accent bar */}
-    <div className="absolute left-0 top-3 bottom-3 w-[3px] rounded-full bg-brand-gradient" />
+  title,
+  subtitle,
+  breadcrumbs = [],
+  actions,
+  icon: Icon,
+  accentColor = "#0D9488",
+}) => {
+  return (
+    <Box
+      sx={{
+        mb: 3,
+        bgcolor: "#fff",
+        border: "1px solid #E5E7EB",
+        borderRadius: "16px",
+        px: 3,
+        py: 2.5,
+        boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+        display: "flex",
+        flexDirection: { xs: "column", md: "row" },
+        alignItems: { md: "center" },
+        justifyContent: "space-between",
+        gap: 2,
+      }}
+    >
+      {/* Left: breadcrumbs + title + subtitle */}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+        {/* Optional icon box */}
+        {Icon && (
+          <Box
+            sx={{
+              width: 48,
+              height: 48,
+              borderRadius: "12px",
+              bgcolor: `${accentColor}12`,
+              border: `1.5px solid ${accentColor}25`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <Icon sx={{ fontSize: 24, color: accentColor }} />
+          </Box>
+        )}
 
-    <div className="flex items-center gap-4">
-      {Icon && (
-        <div
-          className="size-[52px] rounded-xl flex items-center justify-center shrink-0 border shadow-sm"
-          style={{ backgroundColor: `${accentColor}12`, borderColor: `${accentColor}25` }}
-        >
-          <Icon style={{ fontSize: 24, color: accentColor }} />
-        </div>
-      )}
-      <div>
-        {breadcrumbs.length > 0 && (
-          <nav className="flex items-center gap-1 mb-1" aria-label="breadcrumb">
-            <Home className="size-[11px] text-gray-400" />
-            {breadcrumbs.map((item, i) => (
-              <React.Fragment key={i}>
-                <ChevronRight className="size-[11px] text-gray-300" />
-                {item.href ? (
-                  <Link
+        <Box>
+          {/* Breadcrumbs */}
+          {breadcrumbs.length > 0 && (
+            <Breadcrumbs
+              separator={
+                <NavigateNextIcon sx={{ fontSize: 12, color: "#D1D5DB" }} />
+              }
+              aria-label="breadcrumb"
+              sx={{ mb: 0.5, "& .MuiBreadcrumbs-separator": { mx: 0.25 } }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <HomeOutlined sx={{ fontSize: 11, color: "#9CA3AF" }} />
+              </Box>
+              {breadcrumbs.map((item, index) =>
+                item.href ? (
+                  <MuiLink
+                    key={index}
+                    component={Link}
                     href={item.href}
-                    className="text-[11.5px] font-medium text-gray-400 transition-colors hover:text-[#6AD39C]"
+                    underline="none"
+                    sx={{
+                      fontSize: "11.5px",
+                      fontWeight: 500,
+                      color: "#9CA3AF",
+                      transition: "color 0.15s",
+                      "&:hover": { color: accentColor },
+                    }}
                   >
                     {item.label}
-                  </Link>
+                  </MuiLink>
                 ) : (
-                  <span className="text-[11.5px] font-semibold text-gray-700">{item.label}</span>
-                )}
-              </React.Fragment>
-            ))}
-          </nav>
-        )}
-        {title    && <h1 className="text-xl font-extrabold text-gray-900 leading-tight">{title}</h1>}
-        {subtitle && <p className="text-[13px] text-gray-500 mt-0.5 leading-relaxed">{subtitle}</p>}
-      </div>
-    </div>
+                  <Typography
+                    key={index}
+                    sx={{
+                      fontSize: "11.5px",
+                      fontWeight: 600,
+                      color: "#374151",
+                    }}
+                  >
+                    {item.label}
+                  </Typography>
+                )
+              )}
+            </Breadcrumbs>
+          )}
 
-    {actions && (
-      <div className="flex items-center gap-3 shrink-0">{actions}</div>
-    )}
-  </div>
-);
+          {/* Title */}
+          {title && (
+            <Typography
+              sx={{
+                fontSize: "20px",
+                fontWeight: 800,
+                color: "#111827",
+                lineHeight: 1.2,
+              }}
+            >
+              {title}
+            </Typography>
+          )}
+
+          {/* Subtitle */}
+          {subtitle && (
+            <Typography
+              sx={{
+                fontSize: "13px",
+                color: "#6B7280",
+                mt: 0.4,
+                lineHeight: 1.5,
+              }}
+            >
+              {subtitle}
+            </Typography>
+          )}
+        </Box>
+      </Box>
+
+      {/* Right: actions */}
+      {actions && (
+        <Box sx={{ display: "flex", gap: 1.5, flexShrink: 0 }}>
+          {actions}
+        </Box>
+      )}
+    </Box>
+  );
+};
 
 export default PageHeader;

@@ -2,7 +2,6 @@ export { default as DashboardSidebar }          from "./dashboard/DashboardSideb
 export { default as DashboardHeader }           from "./dashboard/DashboardHeader";
 export { default as DashboardLayout }           from "./dashboard/DashboardLayout";
 export { default as PageHeader }                from "./dashboard/PageHeader";
-export { default as ChatLayout }                from "./dashboard/ChatLayout";
 export { default as CandidateQuickNav }         from "./candidate/CandidateQuickNav";
 export { default as CandidateWorkspaceLayout }  from "./candidate/CandidateWorkspaceLayout";
 export { default as HomeHeader }                from "./home/HomeHeader";

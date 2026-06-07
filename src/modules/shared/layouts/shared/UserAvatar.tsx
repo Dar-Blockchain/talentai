@@ -1,12 +1,7 @@
 "use client";
 import React, { useState, useMemo, useCallback } from "react";
-import { ChevronDown } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Avatar, AvatarImage, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-} from "@/modules/shared/ui/shadcn/dropdown-menu";
+import { Avatar, Box, Typography } from "@mui/material";
+import KeyboardArrowDownRounded from "@mui/icons-material/KeyboardArrowDownRounded";
 import UserDropdownMenu from "./UserDropdownMenu";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
@@ -21,13 +16,16 @@ interface UserAvatarProps {
 const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
   const router   = useRouter();
   const dispatch = useDispatch<AppDispatch>();
+
+  const [anchorEl,   setAnchorEl]   = useState<null | HTMLElement>(null);
   const [loggingOut, setLoggingOut] = useState(false);
-  const [open, setOpen] = useState(false);
+  const open = Boolean(anchorEl);
 
-  const { user, profile } = useSelector((s: RootState) => s.user.connectedUser);
+  const { user, profile } = useSelector((state: RootState) => state.user.connectedUser);
 
-  const isCompany   = useMemo(() => user?.role === "Company",   [user?.role]);
+  const isAdmin     = useMemo(() => user?.role === "Admin",     [user?.role]);
   const isEmployee  = useMemo(() => user?.role === "Employee",  [user?.role]);
+  const isCompany   = useMemo(() => user?.role === "Company",   [user?.role]);
   const isCandidate = useMemo(() => user?.role === "Candidate", [user?.role]);
 
   const displayName = useMemo(() => {
@@ -45,15 +43,16 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
   }, [isCompany, profile, user]);
 
   const shortName = useMemo(() => {
+    // Don't abbreviate company names — show them in full
     if (isCompany) return displayName;
     const words = displayName.split(" ");
     return words.length >= 2 ? `${words[0]} ${words[1][0]}.` : displayName;
   }, [isCompany, displayName]);
 
   const avatarUrl = useMemo(() => {
-    const img = profile?.user_image || user?.user_image || (profile as any)?.userId?.user_image;
+    const img = profile?.user_image || user?.user_image || profile?.userId?.user_image;
     return img ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${img}` : null;
-  }, [profile?.user_image, (profile as any)?.userId?.user_image, user?.user_image]);
+  }, [profile?.user_image, profile?.userId?.user_image, user?.user_image]);
 
   const initials = useMemo(() => {
     if (isCompany) return (displayName)[0].toUpperCase();
@@ -70,53 +69,103 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
   }, [dispatch, router]);
 
   const goToDashboard = useCallback(() => {
-    if (user?.role === "Admin")         router.push("/admin/dashboard");
-    else if (user?.role === "Employee") router.push("/employee/dashboard");
-    else if (isCompany)                 router.push("/company/dashboard");
-    else                                router.push("/candidate/dashboard");
-  }, [user?.role, isCompany, router]);
-
-  const triggerBtn = (
-    <div className="flex items-center gap-0.5 cursor-pointer border border-gray-200 rounded-[9px] px-1.5 py-[3px] bg-transparent hover:bg-gray-50 hover:border-gray-300 transition-colors select-none">
-      <div className="relative shrink-0">
-        <Avatar className="size-[26px] rounded-[8px] border-[1.5px] border-white/90">
-          <AvatarImage src={avatarUrl || undefined} />
-          <AvatarFallback className="text-[10px] font-bold bg-teal-600 text-white rounded-[8px]">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-        <div className="absolute -bottom-0.5 -right-0.5 size-2 rounded-full bg-green-500 border-[1.5px] border-white" />
-      </div>
-      <span
-        className="text-[12.5px] font-semibold text-gray-900 leading-none tracking-tight truncate"
-        style={{ maxWidth: isCompany ? 160 : 96 }}
-      >
-        {shortName}
-      </span>
-      {showDropdown && (
-        <ChevronDown className={cn("size-3.5 text-gray-400 transition-transform shrink-0", open && "rotate-180")} />
-      )}
-    </div>
-  );
+    if (isAdmin)         router.push("/admin/dashboard");
+    else if (isEmployee) router.push("/employee/dashboard");
+    else if (isCompany)  router.push("/company/dashboard");
+    else                 router.push("/candidate/dashboard");
+  }, [isAdmin, isEmployee, isCompany, router]);
 
   return (
     <>
-      {showDropdown ? (
-        <DropdownMenu open={open} onOpenChange={setOpen}>
-          <DropdownMenuTrigger asChild>
-            {triggerBtn}
-          </DropdownMenuTrigger>
-          <UserDropdownMenu
-            displayName={displayName} email={user?.email}
-            avatarUrl={avatarUrl} initials={initials}
-            isCompany={isCompany} isEmployee={isEmployee} isCandidate={isCandidate}
-            onDashboard={() => { goToDashboard(); setOpen(false); }}
-            onLogout={handleLogout}
-          />
-        </DropdownMenu>
-      ) : (
-        <div onClick={goToDashboard}>{triggerBtn}</div>
-      )}
+      {/* Trigger */}
+      <Box
+        onClick={(e) => showDropdown ? setAnchorEl(e.currentTarget) : goToDashboard()}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          cursor: "pointer",
+          color: '#374151',
+          bgcolor: 'transparent',
+          border: '1px solid #E5E7EB',
+          borderRadius: 2,
+          px: 1.5,
+          py: 0.5,
+          gap: 0.25,
+          '&:hover': { bgcolor: '#F9FAFB', borderColor: '#D1D5DB' },
+        }}
+      >
+        {/* Avatar with online dot */}
+        <Box sx={{ position: "relative", flexShrink: 0 }}>
+          <Avatar
+            src={avatarUrl || undefined}
+            sx={{
+              width: 26,
+              height: 26,
+              fontSize: "10px",
+              fontWeight: 700,
+              bgcolor: "#0D9488",
+              color: "#fff",
+              borderRadius: "8px",
+              border: "1.5px solid rgba(255,255,255,0.9)",
+            }}
+          >
+            {!avatarUrl && initials}
+          </Avatar>
+          {/* Online indicator */}
+          <Box sx={{
+            position: "absolute",
+            bottom: -1,
+            right: -1,
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            bgcolor: "#22C55E",
+            border: "1.5px solid #fff",
+          }} />
+        </Box>
+
+        {/* Name */}
+        <Typography sx={{
+          fontSize: "12.5px",
+          fontWeight: 600,
+          color: "#111827",
+          maxWidth: isCompany ? 160 : 96,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+          lineHeight: 1,
+          letterSpacing: "0.01em",
+        }}>
+          {shortName}
+        </Typography>
+
+        {/* Chevron */}
+        {showDropdown && (
+          <KeyboardArrowDownRounded sx={{
+            fontSize: 14,
+            color: "#9CA3AF",
+            transition: "transform 0.2s",
+            transform: open ? "rotate(180deg)" : "rotate(0deg)",
+            flexShrink: 0,
+          }} />
+        )}
+      </Box>
+
+      <UserDropdownMenu
+        anchorEl={anchorEl}
+        open={open}
+        onClose={() => setAnchorEl(null)}
+        onLogout={handleLogout}
+        displayName={displayName}
+        email={user?.email}
+        avatarUrl={avatarUrl}
+        initials={initials}
+        isCompany={isCompany}
+        isEmployee={isEmployee}
+        isCandidate={isCandidate}
+        onDashboard={goToDashboard}
+      />
+
       <LogoutProgressModal open={loggingOut} />
     </>
   );

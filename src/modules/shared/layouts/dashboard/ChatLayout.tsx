@@ -1,9 +1,11 @@
+"use client";
+
 import React from "react";
-import { Loader2 } from "lucide-react";
+import { Box, Modal, CircularProgress, Typography } from "@mui/material";
 import { useSelector } from "react-redux";
-import { useTranslation } from "react-i18next";
 import { isLoggingOutCheck } from "@/store/slices/authSlice";
-import DashboardHeader from "./DashboardHeader";
+import { useTranslation } from "react-i18next";
+import Header from "./DashboardHeader";
 
 interface ChatLayoutProps {
   children: React.ReactNode;
@@ -12,36 +14,62 @@ interface ChatLayoutProps {
 const HEADER_HEIGHT = 64;
 
 const ChatLayout: React.FC<ChatLayoutProps> = ({ children }) => {
-  const { t }        = useTranslation("auth");
+  const { t } = useTranslation("auth");
   const isLoggingOut = useSelector(isLoggingOutCheck);
 
   return (
-    <div className="flex flex-col h-screen">
-      {isLoggingOut && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white/85 backdrop-blur-[6px]">
-          <div className="relative overflow-hidden flex flex-col items-center gap-4 bg-white rounded-[20px] px-10 py-8 shadow-[0_8px_40px_rgba(0,0,0,0.12)] border border-[#A8EAC8]/40">
-            {/* Brand gradient top accent */}
-            <div className="w-full h-[3px] bg-brand-gradient rounded-t-[20px] absolute top-0 left-0" />
-            <Loader2 className="size-10 animate-spin" style={{ color: "#BD85FF" }} />
-            <div className="text-center">
-              <p className="font-bold text-base text-[#0F172A]">{t("logout.signing_out")}</p>
-              <p className="text-[0.8125rem] text-[#94A3B8] mt-1">{t("logout.please_wait")}</p>
-            </div>
-          </div>
-        </div>
-      )}
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+      {/* Logout overlay */}
+      <Modal open={isLoggingOut} disableAutoFocus>
+        <Box sx={{
+          position: "absolute", inset: 0,
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+          bgcolor: "rgba(255,255,255,0.85)", backdropFilter: "blur(6px)",
+          gap: 2.5,
+        }}>
+          <Box sx={{
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
+            bgcolor: "#fff", borderRadius: "20px", px: 5, py: 4,
+            boxShadow: "0 8px 40px rgba(0,0,0,0.12)",
+            border: "1px solid #E8EAED",
+          }}>
+            <CircularProgress size={40} sx={{ color: "#8310FF" }} />
+            <Box sx={{ textAlign: "center" }}>
+              <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "#0F172A" }}>
+                {t("logout.signing_out")}
+              </Typography>
+              <Typography sx={{ fontSize: "0.8125rem", color: "#94A3B8", mt: 0.5 }}>
+                {t("logout.please_wait")}
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+      </Modal>
 
-      <div className="fixed top-0 left-0 right-0 z-[1200]" style={{ height: HEADER_HEIGHT }}>
-        <DashboardHeader isMobile={false} onOpenMobile={() => {}} />
-      </div>
+      {/* Fixed header */}
+      <Box sx={{
+        position: "fixed",
+        top: 0, left: 0, right: 0,
+        height: HEADER_HEIGHT,
+        zIndex: 1200,
+      }}>
+        <Header onOpenMobile={() => {}} />
+      </Box>
 
-      <div
-        className="flex-1 bg-[#F7FAF9] flex flex-col overflow-hidden p-3 sm:p-5 md:p-6"
-        style={{ marginTop: HEADER_HEIGHT, height: `calc(100vh - ${HEADER_HEIGHT}px)` }}
-      >
+      {/* Content — full width, no sidebar */}
+      <Box sx={{
+        flex: 1,
+        mt: `${HEADER_HEIGHT}px`,
+        height: `calc(100vh - ${HEADER_HEIGHT}px)`,
+        overflow: "hidden",
+        backgroundColor: "rgb(249 250 251)",
+        display: "flex",
+        flexDirection: "column",
+        p: { xs: 1.5, sm: 2.5, md: 3 },
+      }}>
         {children}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 

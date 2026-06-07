@@ -1,62 +1,125 @@
 "use client";
+
 import React from "react";
-import { Menu } from "lucide-react";
+import {
+  Box,
+  IconButton,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
+import MenuOutlined from "@mui/icons-material/MenuOutlined";
 import { useSelector } from "react-redux";
-import Image from "next/image";
-import Link from "next/link";
 import { RootState } from "@/store/store";
 import HeaderNotification from "@/modules/notifications/shared/components/HeaderNotification";
-import HeaderChat        from "./HeaderChat";
-import GlobalSearch      from "./GlobalSearch";
-import LanguageSwitcher  from "@/components/ui/LanguageSwitcher";
-import UserAvatar        from "@/modules/shared/layouts/shared/UserAvatar";
+import HeaderChat from "./HeaderChat";
+import GlobalSearch from "./GlobalSearch";
+import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
+import UserAvatar from "../shared/UserAvatar";
+import Image from "next/image";
+import Link from "next/link";
 
-interface DashboardHeaderProps {
+interface HeaderProps {
   onOpenMobile: () => void;
-  isMobile:     boolean;
+  breadcrumb?: string;
 }
 
-const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onOpenMobile, isMobile }) => {
-  const user        = useSelector((state: RootState) => state.user.connectedUser.user);
+const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
+  const user = useSelector((state: RootState) => state.user.connectedUser.user);
+
   const isCandidate = user?.role === "Candidate";
 
   return (
-    <div className="relative h-16 bg-white border-b border-gray-100/80 flex items-center justify-between px-4 md:px-6 shadow-card">
-      {/* Brand gradient bottom accent line */}
-      <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-brand-gradient" />
-
-      {/* Left */}
-      <div className="flex items-center gap-3">
+    <Box
+      sx={{
+        height: 64,
+        bgcolor: "#fff",
+        borderBottom: "1px solid #F3F4F6",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        px: { xs: 2, md: 3 },
+      }}
+    >
+      {/* ── Left: mobile menu + logo ── */}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
         {isMobile && (
-          <button
+          <IconButton
             onClick={onOpenMobile}
-            className="size-[34px] rounded-[9px] bg-[#EDFAF3] border border-[#A8EAC8] flex items-center justify-center text-[#6AD39C] hover:bg-[#D1F5E4] transition"
-            aria-label="Open menu"
+            size="small"
+            sx={{
+              color: "#6B7280",
+              width: 34,
+              height: 34,
+              borderRadius: "9px",
+              bgcolor: "#F9FAFB",
+              border: "1px solid #F3F4F6",
+              "&:hover": { bgcolor: "#F3F4F6" },
+            }}
           >
-            <Menu className="size-[18px]" />
-          </button>
+            <MenuOutlined sx={{ fontSize: 18 }} />
+          </IconButton>
         )}
+
+        {/* Logo — candidates only */}
         {isCandidate && (
-          <Link href="/" className="inline-block">
-            <Image src="/images/home/logo.svg" alt="TalentAI" width={140} height={38} className="object-contain" />
+          <Link href="/" style={{ display: "inline-block" }}>
+            <Image src="/images/home/logo.svg" alt="TalentAI" width={140} height={38} style={{ objectFit: "contain", cursor: "pointer" }} />
           </Link>
         )}
-      </div>
+      </Box>
 
-      {/* Right */}
-      <div className="flex items-center gap-1.5">
+      {/* ── Right: search + actions + user ── */}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
         {!isCandidate && <GlobalSearch />}
-        {!isCandidate && (
-          <div className="w-px h-[22px] mx-0.5 bg-gradient-to-b from-transparent via-gray-200 to-transparent" />
-        )}
-        <div data-tour="header-chat"><HeaderChat /></div>
-        <div data-tour="header-notif"><HeaderNotification /></div>
+        {!isCandidate && <Box sx={{ width: "1px", height: 22, bgcolor: "#E5E7EB", mx: 0.25 }} />}
+        {/* Chat */}
+        <Box
+          sx={{
+            "& .MuiIconButton-root": {
+              width: 34,
+              height: 34,
+              borderRadius: "9px",
+              bgcolor: "#F9FAFB",
+              border: "1px solid #F3F4F6",
+              color: "#6B7280",
+              "&:hover": { bgcolor: "#F3F4F6", color: "#374151" },
+              transition: "all 0.15s",
+            },
+          }}
+          data-tour="header-chat"
+        >
+          <HeaderChat />
+        </Box>
+        {/* Notifications */}
+        <Box
+          sx={{
+            "& .MuiIconButton-root": {
+              width: 34,
+              height: 34,
+              borderRadius: "9px",
+              bgcolor: "#F9FAFB",
+              border: "1px solid #F3F4F6",
+              color: "#6B7280",
+              "&:hover": { bgcolor: "#F3F4F6", color: "#374151" },
+              transition: "all 0.15s",
+            },
+          }}
+          data-tour="header-notif"
+        >
+          <HeaderNotification />
+        </Box>
+        {/* Language */}
         <LanguageSwitcher variant="icon" size="small" />
-        <div className="w-px h-[22px] mx-1 bg-gradient-to-b from-transparent via-gray-200 to-transparent" />
-        <UserAvatar />
-      </div>
-    </div>
+        {/* Divider */}
+        <Box sx={{ width: "1px", height: 22, bgcolor: "#E5E7EB", mx: 0.5 }} />
+        {/* User */}
+        <UserAvatar />{" "}
+      </Box>
+    </Box>
   );
 };
 
-export default DashboardHeader;
+export default Header;
