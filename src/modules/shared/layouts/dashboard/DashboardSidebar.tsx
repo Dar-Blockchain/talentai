@@ -39,18 +39,24 @@ interface SidebarProps {
 
 const DRAWER_WIDTH = 240;
 const COLLAPSED_WIDTH = 64;
-const TEAL = "#0D9488";
-const TEAL_LIGHT = "#14B8A6";
 
-// Dark sidebar palette — teal-tinted navy, matches brand
-const BG = "#0D1B2A"; // deep navy-teal
-const BG_TOP = "#091422"; // logo bar + footer (deeper)
-const BORDER = "#1E3448"; // border
-const ICO_CLR = "#a3aed1"; // inactive icon — clear teal-blue
-const TXT_CLR = "#a3aed1"; // inactive label — readable teal-blue
-const HOVER_BG = "#162840"; // hover row
-const HOVER_TXT = "#E8F6F9"; // hover text — near white
-const LABEL_C = "#a3aed1"; // section label — visible
+// Brand colors from logo
+const GREEN_DARK = "#10453f";   // dark forest green (logo text)
+const GREEN_MID  = "#6ad39c";   // mint green (logo circle accents)
+const GREEN_VIVID = "#52e899";  // bright green (logo "ai")
+
+// Light sidebar palette
+const BG      = "#ffffff";
+const BG_TOP  = "#F7FBF9";
+const BORDER  = "#E5E7EB";
+const ICO_CLR = "#6B7280";
+const TXT_CLR = "#374151";
+const HOVER_BG  = "rgba(106,211,156,0.10)";
+const HOVER_TXT = GREEN_DARK;
+const LABEL_C   = "#9CA3AF";
+const ACTIVE_BG  = "rgba(82,232,153,0.13)";
+const ACTIVE_TXT = GREEN_DARK;
+const ACTIVE_ICO = GREEN_DARK;
 
 const GROUPS = [
   { groupKey: "main", ids: ["dashboard", "messages", "notifications"] },
@@ -189,28 +195,28 @@ const Sidebar: React.FC<SidebarProps> = ({
             borderRadius: "9px",
             justifyContent: isCollapsed ? "center" : "flex-start",
             cursor: "pointer", transition: "all 0.12s", position: "relative",
-            bgcolor: isActive ? `${TEAL}22` : "transparent",
-            color: isActive ? TEAL_LIGHT : TXT_CLR,
+            bgcolor: isActive ? ACTIVE_BG : "transparent",
+            color: isActive ? ACTIVE_TXT : TXT_CLR,
             "&:hover": {
-              bgcolor: isActive ? `${TEAL}28` : HOVER_BG,
-              color: isActive ? TEAL_LIGHT : HOVER_TXT,
-              "& .nav-icon": { color: isActive ? TEAL_LIGHT : HOVER_TXT },
+              bgcolor: isActive ? ACTIVE_BG : HOVER_BG,
+              color: isActive ? ACTIVE_TXT : HOVER_TXT,
+              "& .nav-icon": { color: isActive ? ACTIVE_ICO : HOVER_TXT },
             },
           }}
         >
           {isActive && (
-            <Box sx={{ position: "absolute", left: 0, top: "20%", bottom: "20%", width: 3, borderRadius: "0 3px 3px 0", bgcolor: TEAL_LIGHT }} />
+            <Box sx={{ position: "absolute", left: 0, top: "20%", bottom: "20%", width: 3, borderRadius: "0 3px 3px 0", bgcolor: GREEN_VIVID }} />
           )}
           <Box className="nav-icon" sx={{
             display: "flex", alignItems: "center", justifyContent: "center",
             width: isCollapsed ? 38 : 28, height: isCollapsed ? 38 : 28,
             borderRadius: "8px", flexShrink: 0,
-            color: isActive ? TEAL_LIGHT : ICO_CLR, transition: "color 0.12s",
+            color: isActive ? ACTIVE_ICO : ICO_CLR, transition: "color 0.12s",
           }}>
             <item.icon sx={{ fontSize: isCollapsed ? 18 : 16 }} />
           </Box>
           {!isCollapsed && (
-            <Typography sx={{ fontSize: "13px", fontWeight: isActive ? 600 : 400, color: "inherit", lineHeight: 1, flex: 1 }}>
+            <Typography sx={{ fontSize: { md: "13px", lg: "14.5px", xl: "15.5px" }, fontWeight: isActive ? 600 : 500, color: "inherit", lineHeight: 1, flex: 1 }}>
               {translatedLabel}
             </Typography>
           )}
@@ -255,7 +261,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           {!isCollapsed && (
             <Box
               component="img"
-              src="/images/home/logoDark.svg"
+              src="/images/home/logo.svg"
               alt="TalentAI"
               onClick={handleGoHome}
               sx={{ height: 32, cursor: "pointer" }}
@@ -272,8 +278,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                   width: 26,
                   height: 26,
                   borderRadius: "7px",
-                  bgcolor: BORDER,
+                  bgcolor: "#F3F4F6",
                   color: ICO_CLR,
+                  border: `1px solid ${BORDER}`,
                   "&:hover": { bgcolor: HOVER_BG, color: HOVER_TXT },
                   transition: "all 0.15s",
                 }}
@@ -293,8 +300,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                   width: 28,
                   height: 28,
                   borderRadius: "8px",
-                  bgcolor: BORDER,
+                  bgcolor: "#F3F4F6",
                   color: ICO_CLR,
+                  border: `1px solid ${BORDER}`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -325,10 +333,10 @@ const Sidebar: React.FC<SidebarProps> = ({
         <Box sx={{
           flex: 1, overflowY: "auto", py: 2, px: 1,
           scrollbarWidth: "thin",
-          scrollbarColor: `${BORDER} transparent`,
+          scrollbarColor: `#D1D5DB transparent`,
           "&::-webkit-scrollbar": { width: 4 },
           "&::-webkit-scrollbar-track": { background: "transparent" },
-          "&::-webkit-scrollbar-thumb": { background: BORDER, borderRadius: 4, "&:hover": { background: "#2a4a6a" } },
+          "&::-webkit-scrollbar-thumb": { background: "#D1D5DB", borderRadius: 4, "&:hover": { background: "#9CA3AF" } },
         }}>
 
           {/* ── Company nav ── */}
@@ -348,7 +356,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   </Typography>
                 )}
                 {gi > 0 && isCollapsed && (
-                  <Box sx={{ mx: "auto", mb: 1.5, width: 24, height: "1px", bgcolor: BORDER }} />
+                  <Box sx={{ mx: "auto", mb: 1.5, width: 24, height: "1px", bgcolor: "#E5E7EB" }} />
                 )}
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
                   {items.map((item) => renderNavItem(item, isCollapsed))}
@@ -370,7 +378,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </Typography>
               )}
               {gi > 0 && isCollapsed && (
-                <Box sx={{ mx: "auto", mb: 1.5, width: 24, height: "1px", bgcolor: BORDER }} />
+                <Box sx={{ mx: "auto", mb: 1.5, width: 24, height: "1px", bgcolor: "#E5E7EB" }} />
               )}
               <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
                 {group.items.map((item) => renderNavItem(item, isCollapsed))}
@@ -406,7 +414,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           >
             <Avatar
               src={avatarUrl ?? undefined}
-              sx={{ bgcolor: TEAL, width: 28, height: 28, fontSize: "11px", fontWeight: 700, flexShrink: 0 }}
+              sx={{ bgcolor: GREEN_DARK, width: 28, height: 28, fontSize: "11px", fontWeight: 700, flexShrink: 0 }}
             >
               {displayInitial}
             </Avatar>
@@ -414,7 +422,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             {!isCollapsed && (
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
-                  <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#E8F6F9", lineHeight: 1.35, wordBreak: "break-word" }}>
+                  <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#111827", lineHeight: 1.35, wordBreak: "break-word" }}>
                     {displayName}
                   </Typography>
                   {activePlanLabel && (
@@ -430,11 +438,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                       <Box sx={{
                         display: "inline-flex", alignItems: "center",
                         px: 0.75, py: 0.15, borderRadius: "4px",
-                        bgcolor: `${TEAL}28`, border: `1px solid ${TEAL}55`,
+                        bgcolor: `rgba(82,232,153,0.12)`, border: `1px solid rgba(82,232,153,0.35)`,
                         cursor: "pointer", transition: "all 0.15s",
-                        "&:hover": { bgcolor: `${TEAL}45`, border: `1px solid ${TEAL}99` },
+                        "&:hover": { bgcolor: `rgba(82,232,153,0.22)`, border: `1px solid rgba(82,232,153,0.6)` },
                       }}>
-                        <Typography sx={{ fontSize: "9px", fontWeight: 700, color: TEAL_LIGHT, letterSpacing: "0.04em", lineHeight: 1.4 }}>
+                        <Typography sx={{ fontSize: "9px", fontWeight: 700, color: GREEN_DARK, letterSpacing: "0.04em", lineHeight: 1.4 }}>
                           {activePlanLabel}
                         </Typography>
                       </Box>
@@ -446,31 +454,31 @@ const Sidebar: React.FC<SidebarProps> = ({
                       }}>
                         <Box sx={{
                           minWidth: 200,
-                          bgcolor: "#0D1B2A", border: "1px solid #1E3448",
+                          bgcolor: "#fff", border: `1px solid ${BORDER}`,
                           borderRadius: "10px", overflow: "hidden",
-                          boxShadow: "0 8px 32px rgba(0,0,0,0.55)",
+                          boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
                         }}>
                           <Box sx={{ px: 1.75, pt: 1.25, pb: 0.75 }}>
-                            <Typography sx={{ fontSize: "9px", fontWeight: 700, color: "#4B7A96", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                            <Typography sx={{ fontSize: "9px", fontWeight: 700, color: "#6B7280", letterSpacing: "0.08em", textTransform: "uppercase" }}>
                               {t("sidebar.plan.active_plans")}
                             </Typography>
                           </Box>
-                          <Divider sx={{ borderColor: "#1E3448" }} />
+                          <Divider sx={{ borderColor: BORDER }} />
                           <Box sx={{ py: 0.75 }}>
                             {combinedDetails?.subscriptions?.length
                               ? combinedDetails.subscriptions
                                   .filter((s) => s.planName !== "Trial")
                                   .map((s) => {
-                                    const col = ({ Standard: "#0D9488", Gold: "#7C3AED", Platinum: "#0891B2", Diamond: "#D97706" } as Record<string, string>)[s.planName] ?? TEAL;
+                                    const col = ({ Standard: "#0D9488", Gold: "#7C3AED", Platinum: "#0891B2", Diamond: "#D97706" } as Record<string, string>)[s.planName] ?? GREEN_MID;
                                     const exp = new Date(s.endDate).toLocaleDateString(planTooltipDateLocale, { month: "short", day: "numeric", year: "numeric" });
                                     return (
                                       <Box key={s.id} sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.75, py: 0.6 }}>
                                         <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: col, flexShrink: 0 }} />
                                         <Box sx={{ flex: 1, minWidth: 0 }}>
-                                          <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#E8F6F9", lineHeight: 1.3 }}>
+                                          <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#111827", lineHeight: 1.3 }}>
                                             {s.planName}
                                           </Typography>
-                                          <Typography sx={{ fontSize: "9.5px", color: "#4B7A96", lineHeight: 1.3 }}>
+                                          <Typography sx={{ fontSize: "9.5px", color: "#6B7280", lineHeight: 1.3 }}>
                                             {t("sidebar.plan.expires", { date: exp })}
                                           </Typography>
                                         </Box>
@@ -479,14 +487,14 @@ const Sidebar: React.FC<SidebarProps> = ({
                                   })
                               : (
                                 <Box sx={{ px: 1.75, py: 0.6 }}>
-                                  <Typography sx={{ fontSize: "11px", color: "#4B7A96" }}>{t("sidebar.plan.trial")}</Typography>
+                                  <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>{t("sidebar.plan.trial")}</Typography>
                                 </Box>
                               )
                             }
                           </Box>
-                          <Divider sx={{ borderColor: "#1E3448" }} />
+                          <Divider sx={{ borderColor: BORDER }} />
                           <Box sx={{ px: 1.75, py: 1 }}>
-                            <Typography sx={{ fontSize: "10px", fontWeight: 600, color: TEAL_LIGHT }}>
+                            <Typography sx={{ fontSize: "10px", fontWeight: 600, color: GREEN_DARK }}>
                               {t("sidebar.plan.view_all")}
                             </Typography>
                           </Box>
@@ -547,7 +555,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               transition: "width 0.22s cubic-bezier(0.4,0,0.2,1)",
               overflowX: "hidden",
               borderRight: `1px solid ${BORDER}`,
-              boxShadow: "4px 0 20px rgba(0,0,0,0.15)",
+              boxShadow: "2px 0 12px rgba(0,0,0,0.06)",
               bgcolor: BG,
             },
           }}
