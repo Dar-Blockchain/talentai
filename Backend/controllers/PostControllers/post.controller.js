@@ -9,6 +9,7 @@ const Profile = require("../../models/Profile.model");
 const Subscription = require("../../models/Subscription.model");
 const PlanLimits = require("../../models/PlanLimits.model");
 const { notifyMatchingCandidates } = require("../../services/jobMatch.service");
+const JobApplication = require("../../models/JobApplication.model");
 
 // Centralized error handler
 const handleError = (res, error, defaultStatus = 500) => {
@@ -211,9 +212,11 @@ exports.getPostDetailsPublic = async (req, res) => {
 
     delete post.PostSteps;
 
+    const applicationCount = await JobApplication.countDocuments({ post: req.params.id });
+
     res.status(200).json({
       success: true,
-      data: post,
+      data: { ...post, applicationCount },
     });
   } catch (error) {
     console.error("❌ Error fetching public job details:", error?.message);
