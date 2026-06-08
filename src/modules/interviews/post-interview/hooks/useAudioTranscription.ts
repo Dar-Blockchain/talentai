@@ -41,7 +41,10 @@ export const useAudioTranscription = ({
   const submitGraceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const speakingStartTimeRef = useRef<number | null>(null);
   const MAX_ACCUMULATED_TURNS = 10;
-  const minimumSpeakingDuration = 500;
+  // Lowered from 500ms: short answers like "I used React" were being discarded
+  // because speakingStartTimeRef is set on first turn arrival (not actual speech
+  // start), so real speaking time measured here is always shorter than actual.
+  const minimumSpeakingDuration = 200;
 
   // ── Agent state ───────────────────────────────────────────────────────────────
   const [agentState, setAgentState]   = useState<AgentState>('idle');
@@ -413,9 +416,15 @@ export const useAudioTranscription = ({
         processor.connect(audioContext.destination);
 
         processor.onaudioprocess = (event) => {
-          if (isInReadingTimeRef.current) return;
-
           const inputBuffer = event.inputBuffer.getChannelData(0);
+
+          if (isInReadingTimeRef.current) {
+            // Send silent audio instead of stopping the stream so AssemblyAI
+            // stays warm. A 10-second gap with no packets causes a warm-up delay
+            // that drops the first words spoken after reading time ends.
+            transcriber.sendAudio(new Int16Array(inputBuffer.length).buffer);
+            return;
+          }
 
           // ── Voice-activity detection: RMS + ZCR + hysteresis ────────────
           let sumSq = 0;
@@ -556,6 +565,10 @@ export const useAudioTranscription = ({
     setQuestionAnswerStartTime(null);
     setQuestionAnswerElapsed(0);
     prevIsInReadingTimeRef.current = false;
+    // Unblock turns on every new message, not just question/follow_up/new_topic.
+    // Without this, an 'intervention' message leaves blockTurnsRef=true and all
+    // speech for the following response is silently discarded.
+    blockTurnsRef.current = false;
     addTranscriptDebugLog('🆕 New question — state reset');
   }, [currentMessage, addTranscriptDebugLog]);
 
