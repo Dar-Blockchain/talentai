@@ -40,6 +40,11 @@ export const useAudioTranscription = ({
   // Delays submit availability after each turn so trailing words finish before the button activates.
   const submitGraceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const speakingStartTimeRef = useRef<number | null>(null);
+  // Tracks the most recent partial transcript within the current turn.
+  // AssemblyAI's end_of_turn transcript is sometimes shorter than the last partial
+  // (last word gets dropped when the model revises under silence pressure).
+  // We compare both and keep whichever has more words.
+  const lastPartialRef = useRef('');
   const MAX_ACCUMULATED_TURNS = 10;
   // Lowered from 500ms: short answers like "I used React" were being discarded
   // because speakingStartTimeRef is set on first turn arrival (not actual speech
@@ -332,6 +337,9 @@ export const useAudioTranscription = ({
           return;
         }
 
+        // Track the last partial so end_of_turn can recover dropped last words
+        if (!turn.end_of_turn) lastPartialRef.current = text;
+
         // Show accumulated turns + live partial so the user sees real-time text
         const accumulated = accumulatedTurnsRef.current.join(' ');
         setCurrentTranscript(accumulated ? `${accumulated} ${text}` : text);
@@ -379,7 +387,13 @@ export const useAudioTranscription = ({
           return;
         }
 
-        const newTurns = [...accumulatedTurnsRef.current, text];
+        // Prefer whichever has more words — end_of_turn sometimes drops the last
+        // word that appeared in the final partial (model revision under silence pressure)
+        const lastPartial = lastPartialRef.current;
+        lastPartialRef.current = '';
+        const finalText = lastPartial.split(' ').length > text.split(' ').length ? lastPartial : text;
+
+        const newTurns = [...accumulatedTurnsRef.current, finalText];
         setAccumulatedTurns(newTurns);
         accumulatedTurnsRef.current = newTurns;
 
@@ -389,7 +403,7 @@ export const useAudioTranscription = ({
         setAgentState('waiting');
         setAgentMessage('Listening to your answer...');
         setSpeechPhase('paused');
-        addTranscriptDebugLog(`📥 Turn ${newTurns.length} accumulated (${text.length} chars)`);
+        addTranscriptDebugLog(`📥 Turn ${newTurns.length} accumulated (${finalText.length} chars)`);
 
         if (newTurns.length >= MAX_ACCUMULATED_TURNS) {
           addTranscriptDebugLog(`⚠️ Max turns reached — forcing send`);
@@ -418,15 +432,12 @@ export const useAudioTranscription = ({
         processor.onaudioprocess = (event) => {
           const inputBuffer = event.inputBuffer.getChannelData(0);
 
-          if (isInReadingTimeRef.current) {
-            // Send silent audio instead of stopping the stream so AssemblyAI
-            // stays warm. A 10-second gap with no packets causes a warm-up delay
-            // that drops the first words spoken after reading time ends.
-            transcriber.sendAudio(new Int16Array(inputBuffer.length).buffer);
-            return;
-          }
-
           // ── Voice-activity detection: RMS + ZCR + hysteresis ────────────
+          // NOTE: We intentionally send real mic audio even during reading time.
+          // The turn handler blocks reading-time speech via isInReadingTimeRef,
+          // but sending real audio (vs. silent zeros) keeps the model calibrated
+          // to the current acoustic environment — eliminating the cold-start delay
+          // that caused the first word to be dropped when the user began answering.
           let sumSq = 0;
           let zcr   = 0;
           for (let i = 0; i < inputBuffer.length; i++) {
