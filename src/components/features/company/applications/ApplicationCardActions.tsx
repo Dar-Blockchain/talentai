@@ -16,6 +16,7 @@ import StarOutlined from "@mui/icons-material/StarOutlined";
 import CancelOutlined from "@mui/icons-material/CancelOutlined";
 import CheckOutlined from "@mui/icons-material/CheckOutlined";
 import { useRouter } from "next/router";
+import { useQueryClient } from "@tanstack/react-query";
 import { AppDispatch } from "@/store/store";
 import { ApplicationSummaryItem, updateRecruiterDecision, updateLocalDecision } from "@/store/slices/jobApplicationSlice";
 
@@ -90,6 +91,7 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
   const { t } = useTranslation("dashboard");
   const router        = useRouter();
   const dispatch      = useDispatch<AppDispatch>();
+  const qc            = useQueryClient();
   const hasInterview  = !!app.completedAt;
   const isVisited     = app.status === "visited";
   const isInvited     = invitedIds ? invitedIds.has(appId) : false;
@@ -102,9 +104,38 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
     onMenuClose();
     if (decision === "shortlisted") setDecidingShortlist(true);
     else setDecidingReject(true);
+
+    // Optimistic update on all matching React Query summary cache entries
+    qc.setQueriesData<{ data: ApplicationSummaryItem[]; pagination: { currentPage: number; totalPages: number; totalCount: number } }>(
+      { queryKey: ["applications", "summary"] },
+      (prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          data: prev.data.map((item) =>
+            String(item.id) === appId ? { ...item, recruiterDecision: decision } : item,
+          ),
+        };
+      },
+    );
+
     try {
       await dispatch(updateRecruiterDecision({ applicationId: appId, decision })).unwrap();
       dispatch(updateLocalDecision({ applicationId: appId, decision }));
+    } catch {
+      // Roll back optimistic update on failure
+      qc.setQueriesData<{ data: ApplicationSummaryItem[]; pagination: { currentPage: number; totalPages: number; totalCount: number } }>(
+        { queryKey: ["applications", "summary"] },
+        (prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            data: prev.data.map((item) =>
+              String(item.id) === appId ? { ...item, recruiterDecision: null } : item,
+            ),
+          };
+        },
+      );
     } finally {
       setDecidingShortlist(false);
       setDecidingReject(false);
@@ -202,17 +233,18 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
       <Box onClick={(e) => e.stopPropagation()} sx={{ display: "flex", gap: 0.75, flexShrink: 0 }}>
         <Box
           component="button"
-          onClick={() => !isShortlisted && handleDecision("shortlisted")}
-          disabled={decidingShortlist}
+          onClick={() => handleDecision("shortlisted")}
+          disabled={decidingShortlist || decidingReject}
           title={isShortlisted ? "Shortlisted" : "Shortlist"}
           sx={{
             display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5,
-            height: 28, px: 1.1, outline: "none", borderRadius: "7px", cursor: isShortlisted ? "default" : "pointer",
+            height: 28, px: 1.1, outline: "none", borderRadius: "7px", cursor: "pointer",
             border: `1px solid ${isShortlisted ? "#059669" : "#D1D5DB"}`,
             bgcolor: isShortlisted ? "#ECFDF5" : "#F9FAFB",
             color: isShortlisted ? "#059669" : "#6B7280",
             transition: "all 0.15s",
-            "&:hover:not(:disabled)": !isShortlisted ? { borderColor: "#059669", bgcolor: "#F0FDF4", color: "#059669" } : {},
+            "&:hover:not(:disabled)": { borderColor: "#059669", bgcolor: "#F0FDF4", color: "#059669" },
+            "&:disabled": { opacity: 0.5, cursor: "not-allowed" },
           }}
         >
           {decidingShortlist
@@ -225,17 +257,18 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
 
         <Box
           component="button"
-          onClick={() => !isRejected && handleDecision("rejected")}
-          disabled={decidingReject}
+          onClick={() => handleDecision("rejected")}
+          disabled={decidingShortlist || decidingReject}
           title={isRejected ? "Rejected" : "Reject"}
           sx={{
             display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5,
-            height: 28, px: 1.1, outline: "none", borderRadius: "7px", cursor: isRejected ? "default" : "pointer",
+            height: 28, px: 1.1, outline: "none", borderRadius: "7px", cursor: "pointer",
             border: `1px solid ${isRejected ? "#DC2626" : "#D1D5DB"}`,
             bgcolor: isRejected ? "#FEF2F2" : "#F9FAFB",
             color: isRejected ? "#DC2626" : "#6B7280",
             transition: "all 0.15s",
-            "&:hover:not(:disabled)": !isRejected ? { borderColor: "#DC2626", bgcolor: "#FEF2F2", color: "#DC2626" } : {},
+            "&:hover:not(:disabled)": { borderColor: "#DC2626", bgcolor: "#FEF2F2", color: "#DC2626" },
+            "&:disabled": { opacity: 0.5, cursor: "not-allowed" },
           }}
         >
           {decidingReject

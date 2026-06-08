@@ -126,6 +126,17 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
               size="small"
               sx={{ bgcolor: statusDef.bg, color: statusDef.color, fontWeight: 600, fontSize: "10px", height: 18, borderRadius: "4px" }}
             />
+            {app.recruiterDecision && (
+              <Chip
+                label={app.recruiterDecision === "shortlisted" ? "Shortlisted" : "Rejected"}
+                size="small"
+                sx={{
+                  bgcolor: app.recruiterDecision === "shortlisted" ? "#F0FDF4" : "#FEF2F2",
+                  color:   app.recruiterDecision === "shortlisted" ? "#16A34A" : "#DC2626",
+                  fontWeight: 600, fontSize: "10px", height: 18, borderRadius: "4px",
+                }}
+              />
+            )}
             {showPostTitle && app.postTitle && (
               <Chip
                 label={app.postTitle}
