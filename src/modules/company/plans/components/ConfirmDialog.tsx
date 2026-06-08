@@ -1,8 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import {
-  Dialog, DialogTitle, DialogContent, DialogContentText,
-  DialogActions, CircularProgress,
+  Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
 } from "@mui/material";
 import AppButton from "@/components/ui/AppButton";
 
@@ -38,8 +37,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         <AppButton
           label={loading ? t("pages.subscription.card.processing") : confirmLabel}
           variant="contained"
-          disabled={loading}
-          startIcon={loading ? <CircularProgress size={14} color="inherit" /> : undefined}
+          loading={loading}
           onClick={onConfirm}
           sx={{ bgcolor: confirmColor, "&:hover": { bgcolor: confirmColor, filter: "brightness(0.88)" } }}
         />

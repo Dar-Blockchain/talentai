@@ -1,11 +1,13 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import Link from "next/link";
-import { Box, Grid, CircularProgress, Snackbar, Alert } from "@mui/material";
+import { Grid } from "@mui/material";
 import ReceiptLongOutlined from "@mui/icons-material/ReceiptLongOutlined";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import AppButton from "@/components/ui/AppButton";
+import MuiToast from "@/components/ui/Toast";
+import LoadingState from "@/components/ui/LoadingState";
 import { usePlans } from "@/modules/company/plans/hooks";
 import {
   SubscriptionBanner, PlanCard, ContactUsModal,
@@ -42,20 +44,12 @@ export default function PlansPage() {
         onConfirm={handleConfirmCancel}
       />
 
-      <Snackbar
+      <MuiToast
         open={snackbar.open}
-        autoHideDuration={5000}
+        message={snackbar.message}
+        severity={snackbar.severity}
         onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      >
-        <Alert
-          severity={snackbar.severity}
-          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-          sx={{ fontWeight: 600 }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+      />
 
       <PageHeader
         title={t("pages.subscription.title")}
@@ -79,9 +73,7 @@ export default function PlansPage() {
       <SubscriptionBanner />
 
       {plansLoading || combinedLoading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
-          <CircularProgress />
-        </Box>
+        <LoadingState message={t("pages.subscription.loading", "Loading plans…")} color="#0D9488" />
       ) : (
         <Grid container spacing={2.5} sx={{ mt: 0.5 }}>
           {sortedPlans.map((plan: any) => (

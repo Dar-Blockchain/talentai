@@ -1,6 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Box, Typography, Chip, Divider, CircularProgress } from "@mui/material";
+import { Box, Typography, Chip, Divider } from "@mui/material";
 import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
 import CreditCardOutlined from "@mui/icons-material/CreditCardOutlined";
 import { PlanLimit } from "@/store/slices/planLimitsSlice";
@@ -110,9 +110,9 @@ const PlanCard: React.FC<PlanCardProps> = ({
         ) : !isTrial ? (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             <AppButton
-              label={checkingOut ? t("pages.subscription.card.redirecting") : t("pages.subscription.card.add_plan", "Add Plan")}
-              variant="contained" fullWidth disabled={checkingOut}
-              startIcon={checkingOut ? <CircularProgress size={15} color="inherit" /> : <CreditCardOutlined sx={{ fontSize: "16px !important" }} />}
+              label={t("pages.subscription.card.add_plan", "Add Plan")}
+              variant="contained" fullWidth loading={checkingOut}
+              startIcon={<CreditCardOutlined sx={{ fontSize: "16px !important" }} />}
               onClick={() => onSubscribe(plan._id)}
               sx={primaryBtnSx(cfg.color)}
             />

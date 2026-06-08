@@ -69,11 +69,10 @@ const ContactUsModal: React.FC<Props> = ({ open, onClose }) => {
             onClick={handleClose}
           />
           <AppButton
-            label={sending
-              ? t("pages.subscription.enterprise_modal.sending")
-              : t("pages.subscription.enterprise_modal.send")}
+            label={t("pages.subscription.enterprise_modal.send")}
             variant="contained"
-            disabled={sending || !canSubmit}
+            loading={sending}
+            disabled={!canSubmit}
             onClick={handleSend}
             sx={{ bgcolor: "#D97706", "&:hover": { bgcolor: "#B45309" } }}
           />
