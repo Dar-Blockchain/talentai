@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useDispatch } from "react-redux";
 import {
   Box, CircularProgress, Divider, IconButton, ListItemIcon, Menu, MenuItem, Typography,
 } from "@mui/material";
@@ -17,8 +16,8 @@ import CancelOutlined from "@mui/icons-material/CancelOutlined";
 import CheckOutlined from "@mui/icons-material/CheckOutlined";
 import { useRouter } from "next/router";
 import { useQueryClient } from "@tanstack/react-query";
-import { AppDispatch } from "@/store/store";
-import { ApplicationSummaryItem, updateRecruiterDecision, updateLocalDecision } from "@/store/slices/jobApplicationSlice";
+import { ApplicationSummaryItem } from "@/store/slices/jobApplicationSlice";
+import { applicationsApi } from "@/modules/company/applications/api";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const TEAL   = "#0D9488";
@@ -81,6 +80,8 @@ const menuItemSx = (color: string) => ({
   "&.Mui-disabled": { opacity: 0.5 },
 });
 
+type SummaryPage = { data: ApplicationSummaryItem[]; pagination: { currentPage: number; totalPages: number; totalCount: number } };
+
 // ── Component ──────────────────────────────────────────────────────────────────
 const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
   app, name, appId, postId, avatarUrl, bgColor,
@@ -90,7 +91,6 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
 }) => {
   const { t } = useTranslation("dashboard");
   const router        = useRouter();
-  const dispatch      = useDispatch<AppDispatch>();
   const qc            = useQueryClient();
   const hasInterview  = !!app.completedAt;
   const isVisited     = app.status === "visited";
@@ -100,49 +100,33 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
   const isShortlisted = app.recruiterDecision === "shortlisted";
   const isRejected    = app.recruiterDecision === "rejected";
 
-  const handleDecision = async (decision: "shortlisted" | "rejected") => {
+  const patchSummary = useCallback((decision: "shortlisted" | "rejected" | null) => {
+    qc.setQueriesData<SummaryPage>(
+      { queryKey: ["applications", "summary"] },
+      (prev) => prev
+        ? { ...prev, data: prev.data.map((item) => String(item.id) === appId ? { ...item, recruiterDecision: decision } : item) }
+        : prev,
+    );
+  }, [qc, appId]);
+
+  const handleDecision = useCallback(async (decision: "shortlisted" | "rejected") => {
     onMenuClose();
+    const prev = app.recruiterDecision as "shortlisted" | "rejected" | null | undefined;
     if (decision === "shortlisted") setDecidingShortlist(true);
     else setDecidingReject(true);
 
-    // Optimistic update on all matching React Query summary cache entries
-    qc.setQueriesData<{ data: ApplicationSummaryItem[]; pagination: { currentPage: number; totalPages: number; totalCount: number } }>(
-      { queryKey: ["applications", "summary"] },
-      (prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          data: prev.data.map((item) =>
-            String(item.id) === appId ? { ...item, recruiterDecision: decision } : item,
-          ),
-        };
-      },
-    );
-
+    patchSummary(decision);
     try {
-      await dispatch(updateRecruiterDecision({ applicationId: appId, decision })).unwrap();
-      dispatch(updateLocalDecision({ applicationId: appId, decision }));
+      await applicationsApi.updateDecision(appId, decision);
     } catch {
-      // Roll back optimistic update on failure
-      qc.setQueriesData<{ data: ApplicationSummaryItem[]; pagination: { currentPage: number; totalPages: number; totalCount: number } }>(
-        { queryKey: ["applications", "summary"] },
-        (prev) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            data: prev.data.map((item) =>
-              String(item.id) === appId ? { ...item, recruiterDecision: null } : item,
-            ),
-          };
-        },
-      );
+      patchSummary(prev ?? null);
     } finally {
       setDecidingShortlist(false);
       setDecidingReject(false);
     }
-  };
+  }, [appId, app.recruiterDecision, onMenuClose, patchSummary]);
 
-  const handleDownloadCV = () => {
+  const handleDownloadCV = useCallback(() => {
     if (!app.resumeFile) return;
     onMenuClose();
     const url  = `${process.env.NEXT_PUBLIC_API_BASE_URL}resume/${app.resumeFile}`;
@@ -151,11 +135,10 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
     link.download = app.resumeFile;
     link.target = "_blank";
     link.click();
-  };
+  }, [app.resumeFile, onMenuClose]);
 
   // ── Render invite / contact button ─────────────────────────────────────────
   const renderActionButton = () => {
-    // Already sent this session → show disabled green badge
     if (isInvited) {
       return (
         <Box sx={{
@@ -172,7 +155,6 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
       );
     }
 
-    // Candidate visited but not yet invited
     if (isVisited) {
       return (
         <Box
@@ -195,7 +177,6 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
       );
     }
 
-    // Default: contact button
     return (
       <Box
         component="button"
@@ -283,7 +264,7 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
       {/* Divider */}
       <Box sx={{ width: "1px", height: 40, bgcolor: "#F3F4F6", flexShrink: 0 }} />
 
-      {/* Action button + more menu — stop propagation so row click doesn't fire */}
+      {/* Action button + more menu */}
       <Box onClick={(e) => e.stopPropagation()} sx={{ display: "flex", alignItems: "center", gap: 0.75, flexShrink: 0 }}>
         {renderActionButton()}
         <IconButton
@@ -311,7 +292,6 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
         </Box>
 
         <Box sx={{ py: 0.75 }}>
-          {/* 1 — View Profile */}
           <MenuItem
             onClick={() => { onMenuClose(); router.push(`/company/applications/${appId}`); }}
             sx={menuItemSx(TEAL)}
@@ -327,7 +307,6 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
             </Box>
           </MenuItem>
 
-          {/* 2 — View Results */}
           <MenuItem
             disabled={!hasInterview}
             onClick={() => { if (hasInterview) { onMenuClose(); onAssessment(); } }}
@@ -346,7 +325,6 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
             </Box>
           </MenuItem>
 
-          {/* 3 — Download CV */}
           <MenuItem
             disabled={!app.resumeFile}
             onClick={handleDownloadCV}
@@ -367,7 +345,6 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
 
           <Divider sx={{ my: 0.5, borderColor: "#F3F4F6" }} />
 
-          {/* 4 — Contact Candidate */}
           <MenuItem
             disabled={!app.email}
             onClick={() => { onMenuClose(); if (app.email) onContact(); }}
