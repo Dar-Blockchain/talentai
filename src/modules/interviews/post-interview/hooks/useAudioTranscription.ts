@@ -69,6 +69,12 @@ export const useAudioTranscription = ({
   }, []);
   const [readingTimeLeft, setReadingTimeLeft] = useState(0);
 
+  // ── Answer timer ──────────────────────────────────────────────────────────────
+  const QUESTION_MAX_DURATION = 180000; // 3 minutes
+  const prevIsInReadingTimeRef = useRef(false);
+  const [questionAnswerStartTime, setQuestionAnswerStartTime] = useState<number | null>(null);
+  const [questionAnswerElapsed, setQuestionAnswerElapsed] = useState(0);
+
   // ── UI helpers ────────────────────────────────────────────────────────────────
   const [questionHighlight, setQuestionHighlight]               = useState(false);
   const [coverageDashboardExpanded, setCoverageDashboardExpanded] = useState(false);
@@ -521,6 +527,9 @@ export const useAudioTranscription = ({
     setSilenceWarning(null);
     silenceTimerLastVoiceRef.current = Date.now();
     silenceAutoSkipFiredRef.current = false;
+    setQuestionAnswerStartTime(null);
+    setQuestionAnswerElapsed(0);
+    prevIsInReadingTimeRef.current = false;
     addTranscriptDebugLog('🆕 New question — state reset');
   }, [currentMessage, addTranscriptDebugLog]);
 
@@ -559,6 +568,42 @@ export const useAudioTranscription = ({
 
     return () => clearInterval(timer);
   }, [questionReadingTime]);
+
+  // ── Start answer timer when reading phase ends ───────────────────────────────
+
+  useEffect(() => {
+    const wasReading = prevIsInReadingTimeRef.current;
+    prevIsInReadingTimeRef.current = isInReadingTime;
+    if (wasReading && !isInReadingTime) {
+      setQuestionAnswerStartTime(Date.now());
+      setQuestionAnswerElapsed(0);
+    }
+  }, [isInReadingTime]);
+
+  useEffect(() => {
+    if (!questionAnswerStartTime || !isRecording) return;
+    const id = setInterval(() => {
+      setQuestionAnswerElapsed(Date.now() - questionAnswerStartTime);
+    }, 500);
+    return () => clearInterval(id);
+  }, [questionAnswerStartTime, isRecording]);
+
+  // ── Auto-advance when answer time (3 min) expires ────────────────────────────
+
+  useEffect(() => {
+    if (!questionAnswerStartTime) return;
+    if (questionAnswerElapsed < QUESTION_MAX_DURATION) return;
+
+    // Stop the timer first to prevent re-firing
+    setQuestionAnswerStartTime(null);
+    setQuestionAnswerElapsed(0);
+
+    if (accumulatedTurnsRef.current.length > 0) {
+      sendAccumulatedAnswer();
+    } else {
+      skipQuestion();
+    }
+  }, [questionAnswerElapsed, questionAnswerStartTime, sendAccumulatedAnswer, skipQuestion]);
 
   // ── Auto-skip on 60 s silence (warn at 30 s) ─────────────────────────────────
 
@@ -630,5 +675,7 @@ export const useAudioTranscription = ({
     skipQuestion,
     resetSkipGuard,
     silenceWarning,
+    questionAnswerElapsed,
+    questionAnswerRemaining: Math.max(0, QUESTION_MAX_DURATION - questionAnswerElapsed),
   };
 };

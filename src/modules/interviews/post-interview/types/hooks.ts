@@ -91,6 +91,8 @@ export interface UseAudioTranscriptionReturn {
   skipQuestion: () => void;
   resetSkipGuard: () => void;
   silenceWarning: number | null;
+  questionAnswerElapsed: number;
+  questionAnswerRemaining: number;
 }
 
 export interface UseAudioTranscriptionOptions {
