@@ -36,7 +36,8 @@ export const usePostDetailPage = () => {
 
   const isOwner = useMemo(() => {
     if (!job) return false;
-    const ownerId = String(job.user?._id ?? "");
+    // user may be a populated object or a raw ObjectId string
+    const ownerId = String(job.user?._id ?? job.user ?? "");
     if (!ownerId) return false;
     return !!(
       (connectedUser     && ownerId === String(connectedUser._id     ?? "")) ||
