@@ -12,6 +12,7 @@ interface AgentStatusPanelProps {
   agentState: AgentState;
   isVoiceActive?: boolean;
   currentTranscript?: string;
+  canSubmit?: boolean;
   isInReadingTime?: boolean;
   readingTimeLeft?: number;
   onSubmitAnswer: () => void;
@@ -23,6 +24,7 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
   agentState,
   isVoiceActive,
   currentTranscript,
+  canSubmit = false,
   isInReadingTime = false,
   readingTimeLeft = 0,
   onSubmitAnswer,
@@ -31,12 +33,11 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
   const { t } = useTranslation('interview');
   if (interviewStatus !== 'active') return null;
 
-  const secondsLeft   = Math.ceil(readingTimeLeft / 1000);
-  const progressPct   = Math.max(0, Math.min(100, (readingTimeLeft / 10000) * 100));
-  const isProcessing  = agentState === 'thinking' || agentState === 'processing' || agentState === 'finishing';
-  const isSpeaking    = !!isVoiceActive;
-  const hasTranscript = currentTranscript !== undefined ? Boolean(currentTranscript.trim()) : true;
-  const isDisabled    = isProcessing || isSpeaking || !hasTranscript;
+  const secondsLeft  = Math.ceil(readingTimeLeft / 1000);
+  const progressPct  = Math.max(0, Math.min(100, (readingTimeLeft / 10000) * 100));
+  const isProcessing = agentState === 'thinking' || agentState === 'processing' || agentState === 'finishing';
+  const isSpeaking   = !!isVoiceActive;
+  const isDisabled   = isProcessing || isSpeaking || !canSubmit;
 
   return (
     <Box sx={{ p: { xs: 0.75, md: 1 }, display: 'flex', flexDirection: 'column', gap: 0.75 }}>
@@ -150,10 +151,8 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
         >
           {isProcessing
             ? t('agent.processing')
-            : isSpeaking
+            : (isSpeaking || !canSubmit)
             ? t('agent.listening')
-            : !hasTranscript
-            ? t('agent.waiting', { defaultValue: 'Waiting…' })
             : t('agent.submit')}
         </Button>
       )}

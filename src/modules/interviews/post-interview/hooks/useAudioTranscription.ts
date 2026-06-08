@@ -32,9 +32,13 @@ export const useAudioTranscription = ({
   const mediaStreamRef  = useRef<MediaStream | null>(null);
 
   // ── Transcript / turn accumulation ───────────────────────────────────────────
-  const [finalTranscriptSent, setFinalTranscriptSent] = useState(false);
   const [accumulatedTurns, setAccumulatedTurns]       = useState<string[]>([]);
   const accumulatedTurnsRef = useRef<string[]>([]);
+  // Blocks late AssemblyAI turns that arrive after submit/skip from landing on the next question.
+  // Set true on submit/skip; cleared only when the next question's reading time ends.
+  const blockTurnsRef = useRef(false);
+  // Delays submit availability after each turn so trailing words finish before the button activates.
+  const submitGraceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const speakingStartTimeRef = useRef<number | null>(null);
   const MAX_ACCUMULATED_TURNS = 10;
   const minimumSpeakingDuration = 500;
@@ -42,6 +46,8 @@ export const useAudioTranscription = ({
   // ── Agent state ───────────────────────────────────────────────────────────────
   const [agentState, setAgentState]   = useState<AgentState>('idle');
   const [agentMessage, setAgentMessage] = useState<string>('');
+  // True only after 700 ms of silence following the last AssemblyAI audio event.
+  const [canSubmit, setCanSubmit] = useState(false);
 
   // ── Silence / speech phase ────────────────────────────────────────────────────
   const [silenceCount, setSilenceCount]               = useState(0);
@@ -167,15 +173,15 @@ export const useAudioTranscription = ({
 
   const getTurnDetectionConfig = (questionType: string = 'general') => {
     if (questionType === 'quick_response' || questionType === 'confirmation') {
-      return { end_of_turn_confidence_threshold: 0.65, min_end_of_turn_silence_when_confident: 250, max_turn_silence: 2000 };
+      return { end_of_turn_confidence_threshold: 0.65, min_end_of_turn_silence_when_confident: 700,  max_turn_silence: 2000 };
     }
     if (questionType === 'technical' || questionType === 'system_design' || questionType === 'coding') {
-      return { end_of_turn_confidence_threshold: 0.78, min_end_of_turn_silence_when_confident: 550, max_turn_silence: 8000 };
+      return { end_of_turn_confidence_threshold: 0.78, min_end_of_turn_silence_when_confident: 1000, max_turn_silence: 8000 };
     }
     if (questionType === 'behavioral' || questionType === 'experience') {
-      return { end_of_turn_confidence_threshold: 0.72, min_end_of_turn_silence_when_confident: 400, max_turn_silence: 6000 };
+      return { end_of_turn_confidence_threshold: 0.72, min_end_of_turn_silence_when_confident: 800,  max_turn_silence: 6000 };
     }
-    return   { end_of_turn_confidence_threshold: 0.72, min_end_of_turn_silence_when_confident: 400, max_turn_silence: 6000 };
+    return   { end_of_turn_confidence_threshold: 0.72, min_end_of_turn_silence_when_confident: 800,  max_turn_silence: 6000 };
   };
 
   // ── Skip guard (prevents double-fire) ────────────────────────────────────────
@@ -191,7 +197,7 @@ export const useAudioTranscription = ({
     setCurrentTranscript('');
     setAccumulatedTranscript('');
     accumulatedTurnsRef.current = [];
-    setFinalTranscriptSent(false);
+    blockTurnsRef.current = true;
 
     setAgentState('thinking');
     setAgentMessage('Skipping to next question…');
@@ -212,25 +218,24 @@ export const useAudioTranscription = ({
   // ── Send accumulated turns to backend ────────────────────────────────────────
 
   const sendAccumulatedAnswer = useCallback(() => {
-    // Use accumulated turns; fall back to currentTranscript only when speech has
-    // genuinely paused — avoids capturing a mid-sentence partial as the answer.
-    let turns = accumulatedTurnsRef.current;
-    if (turns.length === 0 && speechPhaseRef.current === 'paused' && currentTranscriptRef.current.trim()) {
-      turns = [currentTranscriptRef.current.trim()];
-    }
-    if (turns.length === 0) return;
+    const completedTurns = accumulatedTurnsRef.current;
+    const currentVisible  = currentTranscriptRef.current.trim();
 
-    const completeAnswer = turns.join(' ');
+    // currentTranscript always equals: joined completed turns + any live partial.
+    // Prefer it so trailing words visible in the transcript panel are never dropped.
+    // Fall back to joined completed turns if the transcript was already cleared.
+    const completeAnswer = currentVisible || completedTurns.join(' ');
+    if (!completeAnswer) return;
 
     if (!socketRef.current?.connected || !sessionIdRef.current) return;
 
-    setFinalTranscriptSent(true);
+    blockTurnsRef.current = true;
     socketRef.current.emit('candidate_response', {
       sessionId:       sessionIdRef.current,
       transcript:      completeAnswer,
       timestamp:       new Date().toISOString(),
       isFinal:         true,
-      turnCount:       turns.length,
+      turnCount:       completedTurns.length || 1,
       speakingDuration: speakingStartTimeRef.current ? Date.now() - speakingStartTimeRef.current : 0,
       accumulated:     true,
     });
@@ -238,7 +243,7 @@ export const useAudioTranscription = ({
     setAgentState('thinking');
     setAgentMessage('AI is analyzing your complete response...');
     setSpeechPhase('thinking');
-    addTranscriptDebugLog(`📤 Sent ${turns.length} turns (${completeAnswer.length} chars)`);
+    addTranscriptDebugLog(`📤 Sent (${completeAnswer.length} chars)`);
 
     setAccumulatedTurns([]);
     accumulatedTurnsRef.current = [];
@@ -253,13 +258,14 @@ export const useAudioTranscription = ({
     setSpeechPhase('reading');
     setAccumulatedTranscript('');
     setCurrentTranscript('');
-    setFinalTranscriptSent(false);
     speakingStartTimeRef.current = null;
     setAccumulatedTurns([]);
     accumulatedTurnsRef.current = [];
     setSilenceWarning(null);
     silenceTimerLastVoiceRef.current = Date.now();
     silenceAutoSkipFiredRef.current = false;
+    if (submitGraceTimerRef.current) { clearTimeout(submitGraceTimerRef.current); submitGraceTimerRef.current = null; }
+    setCanSubmit(false);
     addSilenceDebugLog('🔄 State reset for new question');
   }, [addSilenceDebugLog]);
 
@@ -325,6 +331,18 @@ export const useAudioTranscription = ({
         setAgentMessage('Listening to your answer...');
         addTranscriptDebugLog(`📝 Partial: "${text.slice(0, 50)}..."`);
 
+        // Every audio event (partial or end_of_turn) resets the submit gate and
+        // restarts the quiet window. 1500 ms covers AssemblyAI's P99 post-turn
+        // flush latency — late words ("developer") arrive as post-end_of_turn
+        // partials within ~500 ms, so 1500 ms ensures they always land before
+        // the button enables.
+        setCanSubmit(false);
+        if (submitGraceTimerRef.current) clearTimeout(submitGraceTimerRef.current);
+        submitGraceTimerRef.current = setTimeout(() => {
+          submitGraceTimerRef.current = null;
+          setCanSubmit(true);
+        }, 1500);
+
         if (!turn.end_of_turn) return;
 
         const now = Date.now();
@@ -345,14 +363,9 @@ export const useAudioTranscription = ({
           return;
         }
 
-        if (finalTranscriptSent) return;
+        if (blockTurnsRef.current) return;
 
-        const inReadingTime = questionReadingTime && (now - questionReadingTime < readingTimeBuffer);
-        if (inReadingTime) {
-          setAccumulatedTranscript(text);
-          setCurrentTranscript(text);
-          setAgentState('waiting');
-          setAgentMessage(`Reading time: ${Math.ceil((readingTimeBuffer - (now - questionReadingTime!)) / 1000)}s remaining`);
+        if (isInReadingTimeRef.current) {
           setSpeechPhase('reading');
           return;
         }
@@ -379,12 +392,12 @@ export const useAudioTranscription = ({
       let lastLogTime = Date.now();
       // VAD state — hysteresis prevents flickering on brief / ambient sounds
       let prevVoiceActive  = false;
-      let speechFrames     = 0;  // consecutive frames above threshold
-      let silenceFrames    = 0;  // consecutive frames below threshold
+      let speechFrames     = 0;  // consecutive frames passing speech criteria
+      let silenceFrames    = 0;  // consecutive frames failing speech criteria
       // At 16 kHz / 1024 buffer each frame ≈ 64 ms
-      const SPEECH_THRESHOLD  = 0.022; // ~−33 dBFS — above ambient noise, below normal speech
-      const FRAMES_TO_ACTIVATE = 3;    // 3 × 64 ms = ~192 ms sustained to activate
-      const FRAMES_TO_RELEASE  = 6;    // 6 × 64 ms = ~384 ms of silence to deactivate
+      const SPEECH_THRESHOLD   = 0.028; // ~−31 dBFS — above breathing (~0.015) and ambient noise
+      const FRAMES_TO_ACTIVATE = 8;     // 8 × 64 ms = ~512 ms — filters coughs, throat clears, keyboard clicks
+      const FRAMES_TO_RELEASE  = 12;    // 12 × 64 ms = ~768 ms of silence to deactivate
 
       transcriber.on('open', ({ id: aaiSessionId }: any) => {
         console.log('✅ AssemblyAI connected, session:', aaiSessionId);
@@ -398,18 +411,28 @@ export const useAudioTranscription = ({
 
           const inputBuffer = event.inputBuffer.getChannelData(0);
 
-          // ── Voice-activity detection: RMS + hysteresis ───────────────────
+          // ── Voice-activity detection: RMS + ZCR + hysteresis ────────────
           let sumSq = 0;
-          for (let i = 0; i < inputBuffer.length; i++) sumSq += inputBuffer[i] * inputBuffer[i];
-          const rms = Math.sqrt(sumSq / inputBuffer.length);
+          let zcr   = 0;
+          for (let i = 0; i < inputBuffer.length; i++) {
+            sumSq += inputBuffer[i] * inputBuffer[i];
+            if (i > 0 && (inputBuffer[i] >= 0) !== (inputBuffer[i - 1] >= 0)) zcr++;
+          }
+          const rms     = Math.sqrt(sumSq / inputBuffer.length);
+          const zcrRate = zcr / inputBuffer.length;
+          // Keyboard clicks / sharp transients spike ZCR above 0.40; speech stays below.
+          // RMS gate rejects breathing and ambient noise regardless of ZCR.
+          const looksLikeSpeech = rms > SPEECH_THRESHOLD && zcrRate < 0.40;
 
-          if (rms > SPEECH_THRESHOLD) {
+          if (looksLikeSpeech) {
             speechFrames++;
             silenceFrames = 0;
+            // Refresh the silence clock on every speech frame, not just on VAD activation.
+            // Without this, 30+ s of continuous speech would trigger the "still silent" warning.
+            silenceTimerLastVoiceRef.current = Date.now();
             if (!prevVoiceActive && speechFrames >= FRAMES_TO_ACTIVATE) {
               prevVoiceActive = true;
               setIsVoiceActive(true);
-              silenceTimerLastVoiceRef.current = Date.now();
               setSilenceWarning(null);
               silenceAutoSkipFiredRef.current = false;
             }
@@ -495,6 +518,8 @@ export const useAudioTranscription = ({
         audioContextRef.current = null;
       }
       setIsVoiceActive(false);
+      setCanSubmit(false);
+      if (submitGraceTimerRef.current) { clearTimeout(submitGraceTimerRef.current); submitGraceTimerRef.current = null; }
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach(t => t.stop());
         mediaStreamRef.current = null;
@@ -511,7 +536,6 @@ export const useAudioTranscription = ({
     if (!currentMessage) return;
     setAccumulatedTranscript('');
     setCurrentTranscript('');
-    setFinalTranscriptSent(false);
     setAgentState('waiting');
     setAgentMessage('Listening to your answer...');
     setSpeechPhase('reading');
@@ -521,6 +545,8 @@ export const useAudioTranscription = ({
     setSilenceWarning(null);
     silenceTimerLastVoiceRef.current = Date.now();
     silenceAutoSkipFiredRef.current = false;
+    if (submitGraceTimerRef.current) { clearTimeout(submitGraceTimerRef.current); submitGraceTimerRef.current = null; }
+    setCanSubmit(false);
     addTranscriptDebugLog('🆕 New question — state reset');
   }, [currentMessage, addTranscriptDebugLog]);
 
@@ -539,6 +565,7 @@ export const useAudioTranscription = ({
       setIsInReadingTime(false);
       setReadingTimeLeft(0);
       setQuestionReadingTime(null);
+      blockTurnsRef.current = false;
       return;
     }
 
@@ -554,6 +581,7 @@ export const useAudioTranscription = ({
         setIsInReadingTime(false);
         setReadingTimeLeft(0);
         setQuestionReadingTime(null);
+        blockTurnsRef.current = false;
       }
     }, 100);
 
@@ -573,6 +601,7 @@ export const useAudioTranscription = ({
       const silentMs = Date.now() - silenceTimerLastVoiceRef.current;
       if (silentMs >= 60_000) {
         silenceAutoSkipFiredRef.current = true;
+        blockTurnsRef.current = true;
         setSilenceWarning(0); // 0 = "pending" — banner stays visible until question arrives
         silenceTimerLastVoiceRef.current = Date.now();
         socketRef.current.emit('silence_detected', {
@@ -612,6 +641,7 @@ export const useAudioTranscription = ({
     questionReadingTime, setQuestionReadingTime,
     agentState, setAgentState,
     agentMessage, setAgentMessage,
+    canSubmit,
     debugMode, setDebugMode,
     silenceDebugLog,
     transcriptDebugLog,

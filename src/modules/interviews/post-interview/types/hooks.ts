@@ -67,6 +67,7 @@ export interface UseAudioTranscriptionReturn {
   setAgentState: (val: AgentState) => void;
   agentMessage: string;
   setAgentMessage: (val: string) => void;
+  canSubmit: boolean;
   debugMode: boolean;
   setDebugMode: (val: boolean) => void;
   silenceDebugLog: string[];

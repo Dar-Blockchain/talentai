@@ -238,6 +238,7 @@ export default function InterviewScreen({
               cameraStatus={camera.cameraStatus}
               agentState={audio.agentState}
               currentTranscript={audio.currentTranscript}
+              canSubmit={audio.canSubmit}
               resultsReady={resultsReady}
               isVoiceActive={audio.isVoiceActive}
               isInReadingTime={audio.isInReadingTime}
