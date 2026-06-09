@@ -9,6 +9,7 @@ const Profile = require("../../models/Profile.model");
 const Subscription = require("../../models/Subscription.model");
 const PlanLimits = require("../../models/PlanLimits.model");
 const { notifyMatchingCandidates } = require("../../services/jobMatch.service");
+const JobApplication = require("../../models/JobApplication.model");
 
 // Centralized error handler
 const handleError = (res, error, defaultStatus = 500) => {
@@ -211,9 +212,11 @@ exports.getPostDetailsPublic = async (req, res) => {
 
     delete post.PostSteps;
 
+    const applicationCount = await JobApplication.countDocuments({ post: req.params.id });
+
     res.status(200).json({
       success: true,
-      data: post,
+      data: { ...post, applicationCount },
     });
   } catch (error) {
     console.error("❌ Error fetching public job details:", error?.message);
@@ -473,26 +476,6 @@ exports.getJobInterviewConfig = async (req, res) => {
       return res.status(404).json({
         success: false,
         error: "Job post not found",
-      });
-    }
-
-    // ⚠️ IMPORTANT: This endpoint is ONLY for non-pipeline jobs
-    // Pipeline jobs should use /api/pipeline-interview/progress API instead
-    const PostSteps = post.creationType === "pipeline";
-
-    if (isPipeline) {
-      console.log(
-        "❌ Pipeline job detected - rejecting request to use pipeline interview flow",
-      );
-      return res.status(400).json({
-        success: false,
-        error: "This endpoint cannot be used for pipeline jobs",
-        message:
-          "Pipeline jobs must use the pipeline interview flow via /api/pipeline-interview/progress API",
-        hint: "This job has a recruitment pipeline with configured steps. Use the pipeline progress API to get step-specific interview configuration.",
-        isPipeline: true,
-        jobId: jobId,
-        stepsCount: post.PostSteps?.length || 0,
       });
     }
 

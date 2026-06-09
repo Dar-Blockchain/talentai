@@ -25,6 +25,7 @@ interface Props {
 const CvSection: React.FC<Props> = ({ resumeFilename, onUpdated, onDeleted }) => {
   const inputRef              = useRef<HTMLInputElement>(null);
   const [uploading, setUploading]     = useState(false);
+  const [analysing, setAnalysing]     = useState(false);
   const [deleting, setDeleting]       = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [progress, setProgress]       = useState(0);
@@ -62,8 +63,10 @@ const CvSection: React.FC<Props> = ({ resumeFilename, onUpdated, onDeleted }) =>
       setProgress(100);
       const filename = result?.resume ?? result?.data?.resume ?? file.name;
       onUpdated(filename);
-      emitToast({ message: "CV updated successfully!", severity: "success" });
-      setTimeout(() => setProgress(0), 800);
+      emitToast({ message: "CV uploaded! Analysing your CV in the background…", severity: "success" });
+      setTimeout(() => { setProgress(0); setAnalysing(true); }, 800);
+      // Show analysing badge for ~30s — the backend runs analysis async
+      setTimeout(() => setAnalysing(false), 30_000);
     } catch (err: any) {
       clearInterval(tick);
       setProgress(0);
@@ -96,8 +99,9 @@ const CvSection: React.FC<Props> = ({ resumeFilename, onUpdated, onDeleted }) =>
               {resumeFilename}
             </Typography>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.2 }}>
-              <CheckCircleOutlined sx={{ fontSize: 12, color: TEAL }} />
-              <Typography sx={{ fontSize: "0.72rem", color: TEAL, fontWeight: 600 }}>Active CV</Typography>
+              {analysing
+                ? <><CircularProgress size={10} sx={{ color: "#D97706" }} /><Typography sx={{ fontSize: "0.72rem", color: "#D97706", fontWeight: 600 }}>Analysing…</Typography></>
+                : <><CheckCircleOutlined sx={{ fontSize: 12, color: TEAL }} /><Typography sx={{ fontSize: "0.72rem", color: TEAL, fontWeight: 600 }}>Active CV</Typography></>}
             </Box>
           </Box>
           <Box sx={{ display: "flex", gap: 0.5 }}>

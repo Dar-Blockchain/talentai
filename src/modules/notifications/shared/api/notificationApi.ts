@@ -141,7 +141,7 @@ export const mapToNotificationItem = (raw: RawNotification, archived = false): N
 export const notificationApi = {
   getAll: async (): Promise<NotificationsData> => {
     try {
-      const { data } = await axiosInstance.get<RawNotificationsResponse>('/notification-system/GetMyNotification');
+      const { data } = await axiosInstance.get<RawNotificationsResponse>('/notification/GetMyNotification');
       let items: RawNotification[] = [], nonArchivedCount = 0, archivedCount = 0, unreadCount = 0;
       if (data.nonArchived?.notifications) {
         items            = data.nonArchived.notifications;
@@ -158,7 +158,7 @@ export const notificationApi = {
   },
 
   getArchived: async (): Promise<NotificationItem[]> => {
-    const { data } = await axiosInstance.get<RawNotificationsResponse>('/notification-system/GetMyNotification');
+    const { data } = await axiosInstance.get<RawNotificationsResponse>('/notification/GetMyNotification');
     const items: RawNotification[] = data.archived?.notifications
       ?? data.notifications
       ?? (Array.isArray(data) ? data : []);
@@ -166,40 +166,40 @@ export const notificationApi = {
   },
 
   markAsRead: async (id: string): Promise<void> => {
-    await axiosInstance.patch(`/notification-system/markAsRead/${id}/read`);
+    await axiosInstance.patch(`/notification/markAsRead/${id}/read`);
   },
 
   markAllAsRead: async (): Promise<void> => {
-    await axiosInstance.patch('/notification-system/mark-all-read');
+    await axiosInstance.patch('/notification/mark-all-read');
   },
 
   archiveById: async (id: string): Promise<void> => {
-    await axiosInstance.patch(`/notification-system/archiveNotification/${id}`);
+    await axiosInstance.patch(`/notification/archiveNotification/${id}`);
   },
 
   archiveAll: async (): Promise<void> => {
-    await axiosInstance.patch('/notification-system/archive-all');
+    await axiosInstance.patch('/notification/archive-all');
   },
 
   createNotification: async (type: NotificationCreateType, content: string): Promise<void> => {
-    await axiosInstance.post(`/notification-system/AddNotification/${type}`, { content });
+    await axiosInstance.post(`/notification/AddNotification/${type}`, { content });
   },
 
   deleteById: async (id: string): Promise<void> => {
-    await axiosInstance.delete(`/notification-system/deleteNotification/${id}`);
+    await axiosInstance.delete(`/notification/deleteNotification/${id}`);
   },
 
   deleteAll: async (): Promise<void> => {
-    await axiosInstance.delete('/notification-system/delete-all');
+    await axiosInstance.delete('/notification/delete-all');
   },
 
   deleteAllArchived: async (): Promise<void> => {
-    await axiosInstance.delete('/notification-system/delete-all-archived');
+    await axiosInstance.delete('/notification/delete-all-archived');
   },
 
   broadcastNotification: async (content: string, recipientIds: string[]): Promise<BroadcastResult> => {
     const { data } = await axiosInstance.post<BroadcastResult>(
-      '/notification-system/broadcastSystemNotification',
+      '/notification/broadcastSystemNotification',
       { content, recipientIds }
     );
     return data;

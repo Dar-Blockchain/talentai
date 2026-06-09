@@ -71,7 +71,7 @@ function registerRoutes(app) {
   app.use("/team-chat", noChatCache, teamChatRouter);
 
   // Notifications
-  app.use("/notification-system", notificationSystemRouter);
+  app.use("/notification", notificationSystemRouter);
 
   // Candidate Management
   app.use("/job-applications", jobApplicationRouter);

@@ -75,6 +75,7 @@ export const employeeNavGroups: EmployeeNavGroup[] = [
       { id: "dashboard",    icon: DashboardOutlined, label: "Dashboard",    href: "/employee/dashboard" },
       { id: "my-campaigns", icon: CampaignOutlined,  label: "My Campaigns", href: "/employee/campaigns" },
       { id: "messages", icon: ChatBubbleOutlineOutlined, label: "Messages", href: MESSAGES_BASE_PATH },
+      { id: "notifications", icon: NotificationsNoneOutlined, label: "Notifications", href: "/notifications" },
     ],
   },
   {

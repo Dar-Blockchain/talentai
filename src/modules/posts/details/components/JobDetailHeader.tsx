@@ -66,6 +66,7 @@ const JobDetailHeader: React.FC<Props> = ({
 
   const jd      = job.jobDetails || {};
   const isDraft = job.status === "draft";
+  const canEdit = isDraft || (job.applicationCount ?? 0) === 0;
 
   const metaItems = [
     jd.location      && { Icon: LocationOnOutlined,       label: jd.location },
@@ -168,9 +169,9 @@ const JobDetailHeader: React.FC<Props> = ({
                   anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
                   slotProps={{ paper: { sx: { borderRadius: "12px", boxShadow: "0 12px 32px rgba(0,0,0,0.12)", minWidth: 180, mt: 0.75, border: "1px solid #E5E7EB" } } }}
                 >
-                  <Tooltip title={!isDraft ? t("detail.tooltips.cannot_edit_published") : ""} arrow placement="left" disableHoverListener={isDraft}>
+                  <Tooltip title={!canEdit ? t("detail.tooltips.cannot_edit_published") : ""} arrow placement="left" disableHoverListener={canEdit}>
                     <span>
-                      <MenuItem disabled={!isDraft} onClick={() => { onMenuClose(); onEditPost(); }}
+                      <MenuItem disabled={!canEdit} onClick={() => { onMenuClose(); onEditPost(); }}
                         sx={{ mx: 0.5, borderRadius: "8px", gap: 1.25, py: 1, px: 1.25, "&:hover": { bgcolor: "#F0FDFA" }, "&.Mui-disabled": { opacity: 0.45 } }}
                       >
                         <Box sx={{ width: 28, height: 28, borderRadius: "7px", bgcolor: "#F0FDFA", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -178,7 +179,7 @@ const JobDetailHeader: React.FC<Props> = ({
                         </Box>
                         <Box>
                           <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>{t("detail.menu.edit_title")}</Typography>
-                          <Typography sx={{ fontSize: "11px", color: "#9CA3AF", lineHeight: 1.2 }}>{!isDraft ? t("detail.menu.edit_desc_published") : t("detail.menu.edit_desc_draft")}</Typography>
+                          <Typography sx={{ fontSize: "11px", color: "#9CA3AF", lineHeight: 1.2 }}>{!canEdit ? t("detail.menu.edit_desc_published") : t("detail.menu.edit_desc_draft")}</Typography>
                         </Box>
                       </MenuItem>
                     </span>

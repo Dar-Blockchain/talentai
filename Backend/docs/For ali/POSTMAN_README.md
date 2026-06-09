@@ -136,11 +136,11 @@ POST   /stripe/create-checkout-session     - Créer session paiement
 
 ### 🔔 Notifications (13 endpoints)
 ```
-POST   /notification-system/AddNotification        - Créer notification
-GET    /notification-system/GetMyNotification      - Mes notifications
-PATCH  /notification-system/markAsRead/:id         - Marquer lu
-PATCH  /notification-system/archiveNotification/:id - Archiver
-DELETE /notification-system/deleteNotification/:id - Supprimer
+POST   /notification/AddNotification        - Créer notification
+GET    /notification/GetMyNotification      - Mes notifications
+PATCH  /notification/markAsRead/:id         - Marquer lu
+PATCH  /notification/archiveNotification/:id - Archiver
+DELETE /notification/deleteNotification/:id - Supprimer
 ```
 
 ### 🏢 Gestion Entreprise (22 endpoints)

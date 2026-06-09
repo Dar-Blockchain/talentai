@@ -146,6 +146,21 @@ class CVAnalysisService {
   }
 
   /**
+   * Replace all existing CV analyses for a profile with a fresh one.
+   * Used when a candidate re-uploads their CV from settings.
+   */
+  static async replaceForProfile(cvData, profileId) {
+    // Delete all previous analyses for this profile
+    const old = await CVAnalysis.find({ profile: profileId }).select('_id');
+    if (old.length) {
+      await CVAnalysis.deleteMany({ profile: profileId });
+      await Profile.findByIdAndUpdate(profileId, { $set: { cvAnalyses: [] } });
+    }
+    // Create fresh analysis
+    return this.createCVAnalysis(cvData, profileId);
+  }
+
+  /**
    * Create a new CV analysis record
    * @param {Object} cvData - CV analysis data
    * @param {string} profileId - Profile ID to associate with CV analysis
