@@ -88,6 +88,7 @@ export interface InterviewData {
 }
 
 export interface InterviewAssessment {
+  _id?: string;
   interviewData?: InterviewData;
 }
 

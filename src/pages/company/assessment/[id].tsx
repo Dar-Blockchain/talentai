@@ -19,9 +19,9 @@ import {
   RecommendationsSection,
   PipelineSteps,
 } from "@/components/features/interview/assessment";
-import { useAssessmentDetail } from "@/modules/company/assessment/hooks/useAssessmentDetail";
-import { MetaChip, StatBox, ScoreBadge } from "@/modules/company/assessment/components";
-import { TEAL, TEAL_BG, TEAL_BORDER, fmtDuration } from "@/modules/company/assessment/components/constants";
+import { useAssessmentDetail } from "@/modules/company/assessment/detail/hooks/useAssessmentDetail";
+import { MetaChip, StatBox, ScoreBadge } from "@/modules/company/assessment/detail/components";
+import { TEAL, TEAL_BG, TEAL_BORDER, fmtDuration } from "@/modules/company/assessment/detail/components/constants";
 
 const CompanyAssessmentPage: React.FC = () => {
   const { stepsData, loading, isError, derived } = useAssessmentDetail();

@@ -7,7 +7,7 @@ import { Avatar, Box, Chip, Paper, Typography } from "@mui/material";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutline";
 import { ApplicationSummaryItem } from "@/store/slices/jobApplicationSlice";
 import { ContactTarget } from "@/modules/posts/details/components/ContactCandidateModal";
-import { AssessmentTarget } from "@/modules/assessments/post";
+import { AssessmentTarget } from "@/modules/company/assessment/modal";
 import { InviteTarget } from "./InviteToInterviewModal";
 import InviteToInterviewModal from "./InviteToInterviewModal";
 import ApplicationCardActions from "./ApplicationCardActions";
@@ -174,7 +174,7 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
           bgColor={bgColor}
           menuAnchorEl={menuAnchor}
           menuOpen={Boolean(menuAnchor)}
-          onMenuOpen={(e) => setMenuAnchor(e.currentTarget)}
+          onMenuOpen={(e) => { e.stopPropagation(); setMenuAnchor(e.currentTarget); }}
           onMenuClose={() => setMenuAnchor(null)}
           onContact={() => {
             if (app.email) onContact({ name, email: app.email, candidateUserId: app.candidateUserId, avatarUrl, bgColor });

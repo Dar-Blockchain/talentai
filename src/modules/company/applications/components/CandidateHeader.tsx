@@ -6,8 +6,10 @@ import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import DownloadOutlined from "@mui/icons-material/DownloadOutlined";
 import VideoCallOutlined from "@mui/icons-material/VideoCallOutlined";
+import AssessmentOutlined from "@mui/icons-material/AssessmentOutlined";
 import CheckCircleOutlineOutlined from "@mui/icons-material/CheckCircleOutline";
 import HighlightOffOutlined from "@mui/icons-material/HighlightOff";
+import { useRouter } from "next/router";
 import AppButton from "@/components/ui/AppButton";
 import type { ApplicationDetail, CandidateDerived } from "../types";
 import AppCard from "./AppCard";
@@ -36,7 +38,9 @@ const CandidateHeader: React.FC<Props> = ({
   app, derived, tab, tabs,
   deciding, invitedThisSession, onTabChange, onDownloadCv, onInviteClick, onDecision,
 }) => {
+  const router = useRouter();
   const { name, email, phone, location, title, status, cvUrl } = derived;
+  const assessmentId = app.interviewAssessment?._id;
   const sc       = STATUS_STYLE[status] ?? STATUS_STYLE.visited;
   const decision = app.recruiterDecision as "shortlisted" | "rejected" | null | undefined;
   const isInvited = !!(app.invitedAt || app.status === "interview_completed" || invitedThisSession);
@@ -128,6 +132,22 @@ const CandidateHeader: React.FC<Props> = ({
                 borderRadius: "8px", color: "#374151", borderColor: "#E5E7EB",
                 bgcolor: "#fff", "&:hover": { bgcolor: "#F3F4F6", borderColor: "#D1D5DB" },
                 boxShadow: "none", px: 1.5,
+              }}
+            />
+          )}
+
+          {/* View Assessment */}
+          {assessmentId && (
+            <AppButton
+              label="Assessment"
+              variant="outlined"
+              startIcon={<AssessmentOutlined sx={{ fontSize: 14 }} />}
+              onClick={() => router.push(`/company/assessment/${assessmentId}`)}
+              size="small"
+              sx={{
+                borderRadius: "8px", color: "#7C3AED", borderColor: "#DDD6FE",
+                bgcolor: "#F5F3FF", "&:hover": { bgcolor: "#EDE9FE", borderColor: "#C4B5FD" },
+                boxShadow: "none", px: 1.5, whiteSpace: "nowrap",
               }}
             />
           )}

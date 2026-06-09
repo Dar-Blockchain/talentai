@@ -12,7 +12,7 @@ import ContactCandidateModal, { ContactTarget } from "./ContactCandidateModal";
 import ApplicationsToolbar from "./applications/ApplicationsToolbar";
 import ApplicationsEmptyState from "./applications/ApplicationsEmptyState";
 import ApplicationsList from "./applications/ApplicationsList";
-import { AssessmentDetailsModal, AssessmentTarget } from "@/modules/assessments/post";
+import { AssessmentDetailsModal, AssessmentTarget } from "@/modules/company/assessment/modal";
 
 const TEAL     = "#0D9488";
 const PAGE_SIZE = 10;

@@ -9,7 +9,7 @@ import LoadingState from "@/components/ui/LoadingState";
 import ApplicationMetrics from "@/components/features/company/applications/ApplicationMetrics";
 import ApplicationCard from "@/components/features/company/applications/ApplicationCard";
 import ContactCandidateModal, { ContactTarget } from "@/modules/posts/details/components/ContactCandidateModal";
-import { AssessmentDetailsModal, AssessmentTarget } from "@/modules/assessments/post";
+import { AssessmentDetailsModal, AssessmentTarget } from "@/modules/company/assessment/modal";
 import type { ApplicationSummaryItem } from "@/store/slices/jobApplicationSlice";
 import { useApplicationsList } from "@/modules/company/applications/hooks";
 import { ApplicationsToolbar, PostPickerModal } from "@/modules/company/applications/components";

@@ -269,7 +269,7 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
         {renderActionButton()}
         <IconButton
           size="small"
-          onClick={onMenuOpen}
+          onClick={(e) => { e.stopPropagation(); onMenuOpen(e); }}
           sx={{ flexShrink: 0, width: 30, height: 30, borderRadius: "8px", color: "#6B7280", "&:hover": { bgcolor: "#F3F4F6" } }}
         >
           <MoreVertOutlined sx={{ fontSize: 17 }} />
@@ -281,6 +281,7 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
         anchorEl={menuAnchorEl}
         open={menuOpen}
         onClose={onMenuClose}
+        onClick={(e) => e.stopPropagation()}
         transformOrigin={{ horizontal: "right", vertical: "top" }}
         anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
         slotProps={{ paper: { sx: { borderRadius: "12px", boxShadow: "0 12px 32px rgba(0,0,0,0.12)", minWidth: 210, mt: 0.75, border: "1px solid #E5E7EB", overflow: "hidden" } } }}
