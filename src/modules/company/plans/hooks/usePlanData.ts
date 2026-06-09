@@ -1,13 +1,14 @@
 import { useMemo, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useRouter } from "next/router";
+import type { RootState } from "@/store/store";
 import { usePlansQuery, useCombinedQuery, useVerifyPaymentMutation } from "../queries";
 import { ORDERED_PLANS } from "../constants";
 import type { ActiveSubMap, CombinedData, Snack } from "../types";
 
 export function usePlanData(showSnack: Snack) {
   const router         = useRouter();
-  const userPlanLimits = useSelector((state: any) => state.user?.connectedUser?.planLimits);
+  const userPlanLimits = useSelector((state: RootState) => state.user?.connectedUser?.planLimits);
 
   const { data: plans = [], isLoading: plansLoading }          = usePlansQuery();
   const { data: combined, isLoading: combinedLoading }         = useCombinedQuery();

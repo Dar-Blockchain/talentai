@@ -26,6 +26,14 @@ export interface PostPickerParams {
   limit?: number;
 }
 
+export interface PostPickerItem {
+  _id?: string;
+  id?: string;
+  title?: string;
+  createdAt?: string;
+  jobDetails?: { title?: string; employmentType?: string };
+}
+
 // ─── Queries ──────────────────────────────────────────────────────────────────
 
 export const useApplicationsSummaryQuery = (params: ApplicationListParams) =>
@@ -71,7 +79,7 @@ export const useMyPostsPickerQuery = (params: PostPickerParams, enabled: boolean
       });
       const { data } = await axiosInstance.get(`post/my-posts?${query}`);
       return {
-        posts:      (data.results ?? []) as any[],
+        posts:      (data.results ?? []) as PostPickerItem[],
         totalPages: (data.totalPages ?? 1) as number,
       };
     },

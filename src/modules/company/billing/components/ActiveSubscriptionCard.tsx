@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Box, Chip, CircularProgress, Grid, LinearProgress, Paper, Typography } from "@mui/material";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import CheckCircleOutlined   from "@mui/icons-material/CheckCircleOutlined";
@@ -23,16 +23,17 @@ const ActiveSubscriptionCard: React.FC = () => {
   const { combined: c, subscriptions } = combined;
   const isMulti = subscriptions.length > 1;
 
-  const postsPct      = c.usage.posts.limit > 0
-    ? Math.min(100, Math.round((c.usage.posts.used / c.usage.posts.limit) * 100)) : 0;
-  const interviewsPct = c.usage.monthlyInterviews.limit > 0
-    ? Math.min(100, Math.round((c.usage.monthlyInterviews.used / c.usage.monthlyInterviews.limit) * 100)) : 0;
-
-  const periodPct = Math.min(100, Math.max(0, 100 - Math.round(
-    (c.daysRemaining / Math.max(1, Math.round(
-      (new Date(subscriptions[0].endDate).getTime() - new Date(subscriptions[0].startDate).getTime()) / 86400000
-    ))) * 100
-  )));
+  const { postsPct, interviewsPct, periodPct } = useMemo(() => {
+    const posts      = c.usage.posts.limit > 0
+      ? Math.min(100, Math.round((c.usage.posts.used / c.usage.posts.limit) * 100)) : 0;
+    const interviews = c.usage.monthlyInterviews.limit > 0
+      ? Math.min(100, Math.round((c.usage.monthlyInterviews.used / c.usage.monthlyInterviews.limit) * 100)) : 0;
+    const durationDays = Math.max(1, Math.round(
+      (new Date(subscriptions[0].endDate).getTime() - new Date(subscriptions[0].startDate).getTime()) / 86400000,
+    ));
+    const period = Math.min(100, Math.max(0, 100 - Math.round((c.daysRemaining / durationDays) * 100)));
+    return { postsPct: posts, interviewsPct: interviews, periodPct: period };
+  }, [c, subscriptions]);
 
   return (
     <Paper sx={{ borderRadius: 3, overflow: "hidden", boxShadow: `0 4px 20px ${TEAL}18`, border: `1.5px solid ${TEAL}25`, mb: 3 }}>

@@ -12,6 +12,7 @@ import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import LoadingState from "@/components/ui/LoadingState";
 import EmptyState from "@/components/ui/EmptyState";
 import { usePostPicker } from "../hooks/usePostPicker";
+import { PostPickerItem } from "../queries";
 import { TEAL } from "./constants";
 
 interface Props {
@@ -86,21 +87,17 @@ const PostPickerModal: React.FC<Props> = ({ open, selectedId, onSelect, onClose 
           />
         ) : (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-            {posts.map((p: any) => {
-              const id        = p._id ?? p.id;
+            {(posts as PostPickerItem[]).map((p) => {
+              const id        = p._id ?? p.id ?? "";
               const title     = p.jobDetails?.title ?? p.title ?? "Untitled";
               const empType   = p.jobDetails?.employmentType ?? "";
               const createdAt = p.createdAt
                 ? new Date(p.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
-                : null;
+                : undefined;
               return (
                 <PostRow
-                  key={id}
-                  id={id}
-                  title={title}
-                  empType={empType}
-                  createdAt={createdAt ?? undefined}
-                  selectedId={selectedId}
+                  key={id} id={id} title={title} empType={empType}
+                  createdAt={createdAt} selectedId={selectedId}
                   onSelect={() => onSelect(id, title)}
                 />
               );

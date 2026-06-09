@@ -40,6 +40,50 @@ const selectSx = {
   "& .MuiOutlinedInput-notchedOutline": { border: "none" },
 } as const;
 
+// Hoisted outside the component — never recreated on re-render
+const STATUS_VALUES = [
+  { value: "visited",             i18nKey: "pages.applications.status.visited" },
+  { value: "interview_completed", i18nKey: "pages.applications.status.interview_completed" },
+] as const;
+
+interface SortGroup {
+  labelKey: string;
+  Icon: React.ComponentType<{ sx?: object }>;
+  color: string;
+  options: { value: string; labelKey: string }[];
+}
+
+const SORT_GROUPS_STATIC: SortGroup[] = [
+  {
+    labelKey: "pages.applications.sort.date_applied", Icon: CalendarTodayOutlined, color: "#6B7280",
+    options: [
+      { value: "appliedAt_desc", labelKey: "pages.applications.sort.most_recent" },
+      { value: "appliedAt_asc",  labelKey: "pages.applications.sort.earliest" },
+    ],
+  },
+  {
+    labelKey: "pages.applications.sort.match_score", Icon: StarOutlineOutlined, color: "#D97706",
+    options: [
+      { value: "matchScore_desc", labelKey: "pages.applications.sort.best_match" },
+      { value: "matchScore_asc",  labelKey: "pages.applications.sort.worst_match" },
+    ],
+  },
+  {
+    labelKey: "pages.applications.sort.interview_score", Icon: PsychologyOutlined, color: "#7C3AED",
+    options: [
+      { value: "interviewScore_desc", labelKey: "pages.applications.sort.top_performers" },
+      { value: "interviewScore_asc",  labelKey: "pages.applications.sort.low_performers" },
+    ],
+  },
+  {
+    labelKey: "pages.applications.sort.candidate_name", Icon: SortByAlphaOutlined, color: "#0891B2",
+    options: [
+      { value: "name_asc",  labelKey: "pages.applications.sort.a_to_z" },
+      { value: "name_desc", labelKey: "pages.applications.sort.z_to_a" },
+    ],
+  },
+];
+
 const ApplicationsToolbar: React.FC<Props> = ({
   searchInput, status, postId, postTitle, sort,
   loading, totalCount, downloading,
@@ -47,42 +91,9 @@ const ApplicationsToolbar: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation("dashboard");
 
-  const STATUS_OPTIONS = [
-    { value: "visited",             label: t("pages.applications.status.visited") },
-    { value: "interview_completed", label: t("pages.applications.status.interview_completed") },
-  ];
-
-  const SORT_GROUPS = [
-    {
-      label: t("pages.applications.sort.date_applied"), Icon: CalendarTodayOutlined, color: "#6B7280",
-      options: [
-        { value: "appliedAt_desc", label: t("pages.applications.sort.most_recent") },
-        { value: "appliedAt_asc",  label: t("pages.applications.sort.earliest") },
-      ],
-    },
-    {
-      label: t("pages.applications.sort.match_score"), Icon: StarOutlineOutlined, color: "#D97706",
-      options: [
-        { value: "matchScore_desc", label: t("pages.applications.sort.best_match") },
-        { value: "matchScore_asc",  label: t("pages.applications.sort.worst_match") },
-      ],
-    },
-    {
-      label: t("pages.applications.sort.interview_score"), Icon: PsychologyOutlined, color: "#7C3AED",
-      options: [
-        { value: "interviewScore_desc", label: t("pages.applications.sort.top_performers") },
-        { value: "interviewScore_asc",  label: t("pages.applications.sort.low_performers") },
-      ],
-    },
-    {
-      label: t("pages.applications.sort.candidate_name"), Icon: SortByAlphaOutlined, color: "#0891B2",
-      options: [
-        { value: "name_asc",  label: t("pages.applications.sort.a_to_z") },
-        { value: "name_desc", label: t("pages.applications.sort.z_to_a") },
-      ],
-    },
-  ];
-  const allSortOptions = SORT_GROUPS.flatMap((g) => g.options);
+  const currentSortLabel = SORT_GROUPS_STATIC
+    .flatMap((g) => g.options)
+    .find((o) => o.value === sort)?.labelKey;
 
   return (
     <Box sx={{ mb: 3, bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "16px", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", borderTop: "3px solid #E5E7EB" }}>
@@ -118,8 +129,8 @@ const ApplicationsToolbar: React.FC<Props> = ({
           <FormControl size="small">
             <Select value={status} onChange={(e) => onStatusChange(e.target.value)} displayEmpty sx={selectSx}>
               <MenuItem value=""><em style={{ color: "#9CA3AF", fontStyle: "normal" }}>{t("pages.applications.status.all")}</em></MenuItem>
-              {STATUS_OPTIONS.map(({ value, label }) => (
-                <MenuItem key={value} value={value} sx={{ fontSize: "13px" }}>{label}</MenuItem>
+              {STATUS_VALUES.map(({ value, i18nKey }) => (
+                <MenuItem key={value} value={value} sx={{ fontSize: "13px" }}>{t(i18nKey)}</MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -153,23 +164,24 @@ const ApplicationsToolbar: React.FC<Props> = ({
               value={sort}
               onChange={(e) => onSortChange(e.target.value)}
               startAdornment={<SortOutlined sx={{ fontSize: 14, color: "#9CA3AF", mr: 0.5 }} />}
-              renderValue={(val) => {
-                const opt = allSortOptions.find((o) => o.value === val);
-                return <Typography sx={{ fontSize: "13px", color: "#374151" }}>{opt?.label ?? t("pages.common.sort")}</Typography>;
-              }}
+              renderValue={() => (
+                <Typography sx={{ fontSize: "13px", color: "#374151" }}>
+                  {currentSortLabel ? t(currentSortLabel) : t("pages.common.sort")}
+                </Typography>
+              )}
               sx={selectSx}
               MenuProps={{ slotProps: { paper: { sx: { borderRadius: "12px", boxShadow: "0 12px 32px rgba(0,0,0,0.12)", border: "1px solid #E5E7EB", mt: 0.5, minWidth: 200 } } } }}
             >
-              {SORT_GROUPS.flatMap((group, gi) => [
+              {SORT_GROUPS_STATIC.flatMap((group, gi) => [
                 <ListSubheader key={`h-${gi}`} sx={{ display: "flex", alignItems: "center", gap: 0.75, fontSize: "10px", fontWeight: 700, color: group.color, textTransform: "uppercase", letterSpacing: "0.06em", lineHeight: "32px", bgcolor: "#fff", px: 1.5 }}>
-                  <group.Icon sx={{ fontSize: 12 }} />{group.label}
+                  <group.Icon sx={{ fontSize: 12 }} />{t(group.labelKey)}
                 </ListSubheader>,
-                ...group.options.map(({ value, label }) => (
+                ...group.options.map(({ value, labelKey }) => (
                   <MenuItem key={value} value={value} sx={{ mx: 0.5, borderRadius: "8px", py: 0.75, px: 1.5, "&:hover": { bgcolor: `${group.color}0D` }, "&.Mui-selected": { bgcolor: `${group.color}12` } }}>
-                    <Typography sx={{ fontSize: "13px", fontWeight: sort === value ? 700 : 400, color: sort === value ? group.color : "#374151" }}>{label}</Typography>
+                    <Typography sx={{ fontSize: "13px", fontWeight: sort === value ? 700 : 400, color: sort === value ? group.color : "#374151" }}>{t(labelKey)}</Typography>
                   </MenuItem>
                 )),
-                gi < SORT_GROUPS.length - 1 ? <Divider key={`d-${gi}`} sx={{ my: 0.5, borderColor: "#F3F4F6" }} /> : null,
+                gi < SORT_GROUPS_STATIC.length - 1 ? <Divider key={`d-${gi}`} sx={{ my: 0.5, borderColor: "#F3F4F6" }} /> : null,
               ])}
             </Select>
           </FormControl>
