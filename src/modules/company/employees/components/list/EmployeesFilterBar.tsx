@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { memo, useState, useCallback, useMemo } from "react";
 import {
   Box, Typography, IconButton,
   Drawer, useMediaQuery, Badge, Tooltip,
@@ -25,44 +25,43 @@ export interface EmployeesFilterBarProps {
   departments: Department[];
   sortBy: SortOption;
   onSortChange: (s: SortOption) => void;
-  /** Total filtered result count — shown in drawer footer */
   resultCount: number;
-  /** Hide the department filter (e.g. when already scoped to a department) */
   hideDepartmentFilter?: boolean;
 }
 
+const BADGE_SX = { "& .MuiBadge-badge": { bgcolor: PURPLE, fontSize: "10px", minWidth: 16, height: 16 } } as const;
 const DIVIDER = <Box sx={{ width: "1px", height: 20, bgcolor: "#E5E7EB", flexShrink: 0 }} />;
 
 const SearchInput: React.FC<{
   value: string;
   onChange: (v: string) => void;
+  onClear: () => void;
   placeholder?: string;
   py?: string | number;
-}> = ({ value, onChange, placeholder = "Search by name or email…", py = 0.25 }) => (
-  <Box sx={{
-    flex: 1, display: "flex", alignItems: "center",
-    bgcolor: "#fff",
-    borderRadius: "12px", px: 1.5, py,
-    boxShadow: "0 1px 3px rgba(0,0,0,0.04)", minWidth: 0,
-  }}>
-    <SearchOutlined sx={{ fontSize: 16, color: "#9CA3AF", flexShrink: 0, mr: 1 }} />
-    <input
-      type="text"
-      placeholder={placeholder}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      style={{ border: "none", outline: "none", background: "transparent", fontSize: "13px", color: "#111827", width: "100%", fontFamily: "inherit", padding: "5px 0" }}
-    />
-    {value && (
-      <IconButton size="small" onClick={() => onChange("")} sx={{ p: 0.25, color: "#9CA3AF", "&:hover": { color: "#374151" } }}>
-        <CloseOutlined sx={{ fontSize: 13 }} />
-      </IconButton>
-    )}
-  </Box>
-);
+}> = memo(({ value, onChange, onClear, placeholder = "Search by name or email…", py = 0.25 }) => {
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value), [onChange]);
+  return (
+    <Box sx={{ flex: 1, display: "flex", alignItems: "center", bgcolor: "#fff", borderRadius: "12px", px: 1.5, py, boxShadow: "0 1px 3px rgba(0,0,0,0.04)", minWidth: 0 }}>
+      <SearchOutlined sx={{ fontSize: 16, color: "#9CA3AF", flexShrink: 0, mr: 1 }} />
+      <input
+        type="text"
+        placeholder={placeholder}
+        value={value}
+        onChange={handleChange}
+        style={{ border: "none", outline: "none", background: "transparent", fontSize: "13px", color: "#111827", width: "100%", fontFamily: "inherit", padding: "5px 0" }}
+      />
+      {value && (
+        <IconButton size="small" onClick={onClear} sx={{ p: 0.25, color: "#9CA3AF", "&:hover": { color: "#374151" } }}>
+          <CloseOutlined sx={{ fontSize: 13 }} />
+        </IconButton>
+      )}
+    </Box>
+  );
+});
+SearchInput.displayName = "SearchInput";
 
-const FiltersButton: React.FC<{ activeCount: number; onClick: () => void; label: string }> = ({ activeCount, onClick, label }) => (
-  <Badge badgeContent={activeCount} color="primary" sx={{ "& .MuiBadge-badge": { bgcolor: PURPLE, fontSize: "10px", minWidth: 16, height: 16 } }}>
+const FiltersButton: React.FC<{ activeCount: number; onClick: () => void; label: string }> = memo(({ activeCount, onClick, label }) => (
+  <Badge badgeContent={activeCount} color="primary" sx={BADGE_SX}>
     <Box
       onClick={onClick}
       sx={{
@@ -79,9 +78,10 @@ const FiltersButton: React.FC<{ activeCount: number; onClick: () => void; label:
       </Typography>
     </Box>
   </Badge>
-);
+));
+FiltersButton.displayName = "FiltersButton";
 
-const EmployeesFilterBar: React.FC<EmployeesFilterBarProps> = ({
+const EmployeesFilterBar: React.FC<EmployeesFilterBarProps> = memo(({
   search, onSearchChange,
   roleFilter, onRoleFilterChange,
   departmentFilter, onDepartmentFilterChange, departments,
@@ -90,7 +90,7 @@ const EmployeesFilterBar: React.FC<EmployeesFilterBarProps> = ({
   hideDepartmentFilter = false,
 }) => {
   const { t } = useTranslation("dashboard");
-  const pf = (k: string) => t(`pages.employees.filters.${k}`);
+  const pf = useCallback((k: string) => t(`pages.employees.filters.${k}`), [t]);
   const isMobile  = useMediaQuery("(max-width:650px)");
   const isDesktop = useMediaQuery("(min-width:1101px)");
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -101,17 +101,46 @@ const EmployeesFilterBar: React.FC<EmployeesFilterBarProps> = ({
   const hasAnyFilter  = hasRoleFilter || hasDeptFilter || hasSearch;
   const activeCount   = [hasRoleFilter, hasDeptFilter, isMobile && hasSearch].filter(Boolean).length;
 
-  const clearAll = () => { onSearchChange(""); onRoleFilterChange("all"); onDepartmentFilterChange("all"); };
+  const clearAll       = useCallback(() => { onSearchChange(""); onRoleFilterChange("all"); onDepartmentFilterChange("all"); }, [onSearchChange, onRoleFilterChange, onDepartmentFilterChange]);
+  const clearSearch    = useCallback(() => onSearchChange(""), [onSearchChange]);
+  const openDrawer     = useCallback(() => setDrawerOpen(true), []);
+  const closeDrawer    = useCallback(() => setDrawerOpen(false), []);
+
+  const drawerSections = useMemo(() => {
+    const sections: { label: string; content: React.ReactNode }[] = [
+      {
+        label: pf("label_search"),
+        content: (
+          <Box sx={{ display: "flex", alignItems: "center", bgcolor: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "10px", px: 1.5, py: 0.5 }}>
+            <SearchOutlined sx={{ fontSize: 16, color: "#9CA3AF", flexShrink: 0, mr: 1 }} />
+            <input
+              type="text"
+              placeholder={pf("search_placeholder")}
+              value={search}
+              onChange={(e) => onSearchChange(e.target.value)}
+              style={{ border: "none", outline: "none", background: "transparent", fontSize: "13px", color: "#111827", width: "100%", fontFamily: "inherit", padding: "6px 0" }}
+            />
+            {hasSearch && (
+              <IconButton size="small" onClick={clearSearch} sx={{ p: 0.25, color: "#9CA3AF" }}>
+                <CloseOutlined sx={{ fontSize: 13 }} />
+              </IconButton>
+            )}
+          </Box>
+        ),
+      },
+      { label: pf("label_role"), content: <RoleFilterSelect value={roleFilter} onChange={onRoleFilterChange} /> },
+      ...(!hideDepartmentFilter ? [{ label: pf("label_department"), content: <DeptFilterSelect value={departmentFilter} onChange={onDepartmentFilterChange} departments={departments} /> }] : []),
+      { label: pf("label_sort"), content: <SortSelect value={sortBy} onChange={onSortChange} /> },
+    ];
+    return sections;
+  }, [search, hasSearch, roleFilter, departmentFilter, departments, sortBy, hideDepartmentFilter, onSearchChange, onRoleFilterChange, onDepartmentFilterChange, onSortChange, pf, clearSearch]);
 
   return (
     <>
-      {/* ── Responsive filter bar ───────────────────────────────────── */}
       <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1, minWidth: 0 }}>
-
-        {/* Desktop (> 1100px): full inline bar */}
         {isDesktop && (
           <Box sx={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0, bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "12px", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
-            <SearchInput value={search} onChange={onSearchChange} placeholder={pf("search_placeholder")} />
+            <SearchInput value={search} onChange={onSearchChange} onClear={clearSearch} placeholder={pf("search_placeholder")} />
             {DIVIDER}
             <RoleFilterSelect value={roleFilter} onChange={onRoleFilterChange} />
             {!hideDepartmentFilter && DIVIDER}
@@ -121,59 +150,34 @@ const EmployeesFilterBar: React.FC<EmployeesFilterBarProps> = ({
           </Box>
         )}
 
-        {/* Compact (651–1100px): search + filters button */}
         {!isDesktop && !isMobile && (
           <>
-            <SearchInput value={search} onChange={onSearchChange} placeholder={pf("search_placeholder")} />
-            <FiltersButton activeCount={activeCount} onClick={() => setDrawerOpen(true)} label={pf("filters")} />
+            <SearchInput value={search} onChange={onSearchChange} onClear={clearSearch} placeholder={pf("search_placeholder")} />
+            <FiltersButton activeCount={activeCount} onClick={openDrawer} label={pf("filters")} />
           </>
         )}
 
-        {/* Mobile (≤ 650px): search + filters button, full width */}
         {isMobile && (
           <>
-            <SearchInput value={search} onChange={onSearchChange} placeholder={pf("search_short")} py={0.5} />
-            <FiltersButton activeCount={activeCount} onClick={() => setDrawerOpen(true)} label={pf("filters")} />
+            <SearchInput value={search} onChange={onSearchChange} onClear={clearSearch} placeholder={pf("search_short")} py={0.5} />
+            <FiltersButton activeCount={activeCount} onClick={openDrawer} label={pf("filters")} />
           </>
         )}
 
-        {/* Clear-filters icon (visible only when any filter is active) */}
         {hasAnyFilter && (
           <Tooltip title={pf("clear_all_tooltip")} placement="top" arrow>
-            <IconButton
-              onClick={clearAll}
-              size="small"
-              sx={{
-                flexShrink: 0,
-                color: "#9CA3AF",
-                border: "1px solid #E5E7EB",
-                borderRadius: "10px",
-                p: "7px",
-                bgcolor: "#fff",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-                "&:hover": { color: "#EF4444", borderColor: "#FECACA", bgcolor: "#FEF2F2" },
-                transition: "all 0.15s",
-              }}
-            >
+            <IconButton onClick={clearAll} size="small" sx={{ flexShrink: 0, color: "#9CA3AF", border: "1px solid #E5E7EB", borderRadius: "10px", p: "7px", bgcolor: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", "&:hover": { color: "#EF4444", borderColor: "#FECACA", bgcolor: "#FEF2F2" }, transition: "all 0.15s" }}>
               <FilterAltOffOutlined sx={{ fontSize: 17 }} />
             </IconButton>
           </Tooltip>
         )}
       </Box>
 
-      {/* ── Filter drawer (compact + mobile) ─────────────────────────── */}
-      <Drawer
-        anchor="bottom"
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        slotProps={{ paper: { sx: { borderRadius: "20px 20px 0 0", maxHeight: "85vh" } } }}
-      >
-        {/* Handle */}
+      <Drawer anchor="bottom" open={drawerOpen} onClose={closeDrawer} slotProps={{ paper: { sx: { borderRadius: "20px 20px 0 0", maxHeight: "85vh" } } }}>
         <Box sx={{ display: "flex", justifyContent: "center", pt: 1.5, pb: 0.5 }}>
           <Box sx={{ width: 36, height: 4, borderRadius: 999, bgcolor: "#E5E7EB" }} />
         </Box>
 
-        {/* Header */}
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 2.5, py: 1.75, borderBottom: "1px solid #F3F4F6" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <TuneOutlined sx={{ fontSize: 18, color: PURPLE }} />
@@ -184,35 +188,13 @@ const EmployeesFilterBar: React.FC<EmployeesFilterBarProps> = ({
               </Box>
             )}
           </Box>
-          <IconButton size="small" onClick={() => setDrawerOpen(false)} sx={{ color: "#9CA3AF", "&:hover": { bgcolor: "#F3F4F6" } }}>
+          <IconButton size="small" onClick={closeDrawer} sx={{ color: "#9CA3AF", "&:hover": { bgcolor: "#F3F4F6" } }}>
             <CloseOutlined sx={{ fontSize: 18 }} />
           </IconButton>
         </Box>
 
-        {/* Sections */}
         <Box sx={{ px: 2.5, py: 2, display: "flex", flexDirection: "column", gap: 2.5, overflowY: "auto" }}>
-          {([
-            { label: pf("label_search"), content: (
-              <Box sx={{ display: "flex", alignItems: "center", bgcolor: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "10px", px: 1.5, py: 0.5 }}>
-                <SearchOutlined sx={{ fontSize: 16, color: "#9CA3AF", flexShrink: 0, mr: 1 }} />
-                <input
-                  type="text"
-                  placeholder={pf("search_placeholder")}
-                  value={search}
-                  onChange={(e) => onSearchChange(e.target.value)}
-                  style={{ border: "none", outline: "none", background: "transparent", fontSize: "13px", color: "#111827", width: "100%", fontFamily: "inherit", padding: "6px 0" }}
-                />
-                {hasSearch && (
-                  <IconButton size="small" onClick={() => onSearchChange("")} sx={{ p: 0.25, color: "#9CA3AF" }}>
-                    <CloseOutlined sx={{ fontSize: 13 }} />
-                  </IconButton>
-                )}
-              </Box>
-            )},
-            { label: pf("label_role"), content: <RoleFilterSelect value={roleFilter} onChange={onRoleFilterChange} /> },
-            ...(!hideDepartmentFilter ? [{ label: pf("label_department"), content: <DeptFilterSelect value={departmentFilter} onChange={onDepartmentFilterChange} departments={departments} /> }] : []),
-            { label: pf("label_sort"), content: <SortSelect value={sortBy} onChange={onSortChange} /> },
-          ] as { label: string; content: React.ReactNode }[]).map(({ label, content }) => (
+          {drawerSections.map(({ label, content }) => (
             <Box key={label}>
               <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.06em", mb: 1 }}>
                 {label}
@@ -222,12 +204,11 @@ const EmployeesFilterBar: React.FC<EmployeesFilterBarProps> = ({
           ))}
         </Box>
 
-        {/* Footer */}
         <Box sx={{ px: 2.5, py: 2, borderTop: "1px solid #F3F4F6", display: "flex", gap: 1.5 }}>
           <Box onClick={clearAll} sx={{ flex: 1, py: 1.25, borderRadius: "12px", textAlign: "center", cursor: "pointer", border: "1px solid #E5E7EB", bgcolor: "#F9FAFB", "&:hover": { bgcolor: "#F3F4F6" }, transition: "all 0.15s" }}>
             <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#374151" }}>{pf("clear_all")}</Typography>
           </Box>
-          <Box onClick={() => setDrawerOpen(false)} sx={{ flex: 2, py: 1.25, borderRadius: "12px", textAlign: "center", cursor: "pointer", bgcolor: PURPLE, "&:hover": { bgcolor: "#7209E6" }, transition: "all 0.15s" }}>
+          <Box onClick={closeDrawer} sx={{ flex: 2, py: 1.25, borderRadius: "12px", textAlign: "center", cursor: "pointer", bgcolor: PURPLE, "&:hover": { bgcolor: "#7209E6" }, transition: "all 0.15s" }}>
             <Typography sx={{ fontSize: "14px", fontWeight: 700, color: "#fff" }}>
               {resultCount > 0 ? t("pages.employees.filters.show_results_count", { count: resultCount }) : t("pages.employees.filters.show_results")}
             </Typography>
@@ -236,7 +217,7 @@ const EmployeesFilterBar: React.FC<EmployeesFilterBarProps> = ({
       </Drawer>
     </>
   );
-};
+});
 
 EmployeesFilterBar.displayName = "EmployeesFilterBar";
 export default EmployeesFilterBar;

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { memo, useCallback, useMemo, useState } from "react";
 import { Box, Typography, TextField, InputAdornment, FormControl, Select, MenuItem } from "@mui/material";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
@@ -6,66 +6,86 @@ import { Department } from "@/store/slices/departmentSlice";
 import { useTranslation } from "react-i18next";
 import { PURPLE, INLINE_SELECT_SX } from "./constants";
 
+const MENU_PAPER_SX = {
+  maxHeight: 320, borderRadius: 2, mt: 0.5,
+  boxShadow: "0 8px 32px rgba(0,0,0,0.14)",
+  border: "1px solid #E5E7EB", minWidth: 220,
+} as const;
+
+const STICKY_ITEM_SX = {
+  position: "sticky", top: 0, zIndex: 1, bgcolor: "#fff", p: 1,
+  borderBottom: "1px solid #f3f4f6",
+  "&:hover": { bgcolor: "#fff" }, "&.Mui-focusVisible": { bgcolor: "#fff" },
+} as const;
+
+const FIELD_SX = {
+  "& .MuiOutlinedInput-root": {
+    borderRadius: 1.5, fontSize: "13px", bgcolor: "#F8FAFC",
+    "& fieldset": { borderColor: "#E2E8F0" },
+    "&.Mui-focused fieldset": { borderColor: PURPLE, borderWidth: 2 },
+  },
+} as const;
+
 interface Props {
   value: string;
   onChange: (d: string) => void;
   departments: Department[];
 }
 
-const DeptFilterSelect: React.FC<Props> = ({ value, onChange, departments }) => {
+const DeptFilterSelect: React.FC<Props> = memo(({ value, onChange, departments }) => {
   const { t } = useTranslation("dashboard");
-  const pf = (key: string, opts?: { [option: string]: string | number }) =>
-    t(`pages.employees.filters.${key}`, opts);
+  const pf = useCallback((key: string, opts?: Record<string, string | number>) =>
+    t(`pages.employees.filters.${key}`, opts), [t]);
   const [search, setSearch] = useState("");
 
-  const filtered = departments.filter((d) => {
+  const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return !q || d.name.toLowerCase().includes(q);
-  });
+    return !q ? departments : departments.filter((d) => d.name.toLowerCase().includes(q));
+  }, [departments, search]);
+
+  const handleChange      = useCallback((e: { target: { value: string } }) => onChange(e.target.value), [onChange]);
+  const handleClose       = useCallback(() => setSearch(""), []);
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value), []);
+  const stopPropagation   = useCallback((e: React.KeyboardEvent) => e.stopPropagation(), []);
+
+  const renderValue = useCallback((val: string) => {
+    if (!val || val === "all") {
+      return (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+          <BusinessOutlined sx={{ fontSize: 14, color: "#9CA3AF" }} />
+          <Typography sx={{ fontSize: "13px", color: "#6B7280", fontWeight: 500 }}>{pf("department_placeholder")}</Typography>
+        </Box>
+      );
+    }
+    const d = departments.find((d) => d._id === val);
+    return (
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+        <BusinessOutlined sx={{ fontSize: 14, color: "#0891B2" }} />
+        <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#0891B2" }}>{d?.name ?? val}</Typography>
+      </Box>
+    );
+  }, [departments, pf]);
 
   return (
     <FormControl size="small" sx={{ minWidth: 0, flex: "0 0 auto" }}>
       <Select
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onClose={() => setSearch("")}
+        onChange={handleChange}
+        onClose={handleClose}
         displayEmpty
-        MenuProps={{
-          PaperProps: { sx: { maxHeight: 320, borderRadius: 2, mt: 0.5, boxShadow: "0 8px 32px rgba(0,0,0,0.14)", border: "1px solid #E5E7EB", minWidth: 220 } },
-          autoFocus: false,
-        }}
-        renderValue={(val) => {
-          if (!val || val === "all") {
-            return (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                <BusinessOutlined sx={{ fontSize: 14, color: "#9CA3AF" }} />
-                <Typography sx={{ fontSize: "13px", color: "#6B7280", fontWeight: 500 }}>{pf("department_placeholder")}</Typography>
-              </Box>
-            );
-          }
-          const d = departments.find((d) => d._id === val);
-          return (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-              <BusinessOutlined sx={{ fontSize: 14, color: "#0891B2" }} />
-              <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#0891B2" }}>{d?.name ?? val}</Typography>
-            </Box>
-          );
-        }}
+        MenuProps={{ PaperProps: { sx: MENU_PAPER_SX }, autoFocus: false }}
+        renderValue={renderValue}
         sx={INLINE_SELECT_SX}
       >
-        <MenuItem
-          disableRipple
-          onKeyDown={(e) => e.stopPropagation()}
-          sx={{ position: "sticky", top: 0, zIndex: 1, bgcolor: "#fff", p: 1, borderBottom: "1px solid #f3f4f6", "&:hover": { bgcolor: "#fff" }, "&.Mui-focusVisible": { bgcolor: "#fff" } }}
-        >
+        <MenuItem disableRipple onKeyDown={stopPropagation} sx={STICKY_ITEM_SX}>
           <TextField
             size="small" fullWidth autoFocus
             placeholder={pf("search_departments")}
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.stopPropagation()}
+            onChange={handleSearchChange}
+            onKeyDown={stopPropagation}
             InputProps={{ startAdornment: <InputAdornment position="start"><SearchOutlined sx={{ fontSize: 14, color: "#9CA3AF" }} /></InputAdornment> }}
-            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5, fontSize: "13px", bgcolor: "#F8FAFC", "& fieldset": { borderColor: "#E2E8F0" }, "&.Mui-focused fieldset": { borderColor: PURPLE, borderWidth: 2 } } }}
+            sx={FIELD_SX}
           />
         </MenuItem>
 
@@ -102,6 +122,7 @@ const DeptFilterSelect: React.FC<Props> = ({ value, onChange, departments }) => 
       </Select>
     </FormControl>
   );
-};
+});
 
+DeptFilterSelect.displayName = "DeptFilterSelect";
 export default DeptFilterSelect;

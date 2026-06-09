@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { memo, useCallback, useMemo, useState } from "react";
 import { Box, Typography, TextField, InputAdornment, FormControl, Select, MenuItem } from "@mui/material";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
@@ -8,15 +8,35 @@ import { useTranslation } from "react-i18next";
 import { getRoleDescription, getRoleLabel, roleMatchesSearch } from "@/utils/employeeRoleI18n";
 import { PURPLE, INLINE_SELECT_SX } from "./constants";
 
+const MENU_PAPER_SX = {
+  maxHeight: 380, borderRadius: 2, mt: 0.5,
+  boxShadow: "0 8px 32px rgba(0,0,0,0.14)",
+  border: "1px solid #E5E7EB",
+} as const;
+
+const STICKY_ITEM_SX = {
+  position: "sticky", top: 0, zIndex: 1, bgcolor: "#fff", p: 1,
+  borderBottom: "1px solid #f3f4f6",
+  "&:hover": { bgcolor: "#fff" }, "&.Mui-focusVisible": { bgcolor: "#fff" },
+} as const;
+
+const FIELD_SX = {
+  "& .MuiOutlinedInput-root": {
+    borderRadius: 1.5, fontSize: "13px", bgcolor: "#F8FAFC",
+    "& fieldset": { borderColor: "#E2E8F0" },
+    "&.Mui-focused fieldset": { borderColor: PURPLE, borderWidth: 2 },
+  },
+} as const;
+
 interface Props {
   value: string;
   onChange: (f: string) => void;
 }
 
-const RoleFilterSelect: React.FC<Props> = ({ value, onChange }) => {
+const RoleFilterSelect: React.FC<Props> = memo(({ value, onChange }) => {
   const { t } = useTranslation("dashboard");
-  const pf = (key: string, opts?: { [option: string]: string | number }) =>
-    t(`pages.employees.filters.${key}`, opts);
+  const pf = useCallback((key: string, opts?: Record<string, string | number>) =>
+    t(`pages.employees.filters.${key}`, opts), [t]);
   const [search, setSearch] = useState("");
 
   const filtered = useMemo(() => {
@@ -24,53 +44,53 @@ const RoleFilterSelect: React.FC<Props> = ({ value, onChange }) => {
     return ROLES.filter((r) => roleMatchesSearch(r.value, q, t));
   }, [search, t]);
 
+  const handleChange       = useCallback((e: { target: { value: string } }) => onChange(e.target.value), [onChange]);
+  const handleClose        = useCallback(() => setSearch(""), []);
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value), []);
+  const stopPropagation    = useCallback((e: React.KeyboardEvent) => e.stopPropagation(), []);
+
+  const renderValue = useCallback((val: string) => {
+    if (!val || val === "all") {
+      return (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+          <WorkOutlined sx={{ fontSize: 14, color: "#9CA3AF" }} />
+          <Typography sx={{ fontSize: "13px", color: "#6B7280", fontWeight: 500 }}>{pf("role_placeholder")}</Typography>
+        </Box>
+      );
+    }
+    const r = ROLES.find((r) => r.value === val);
+    if (!r) return <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#374151" }}>{val}</Typography>;
+    const Icon = r.icon;
+    return (
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+        <Box sx={{ width: 18, height: 18, borderRadius: 0.75, bgcolor: `${r.color}18`, display: "flex", alignItems: "center", justifyContent: "center", color: r.color, "& svg": { fontSize: 11 } }}>
+          <Icon />
+        </Box>
+        <Typography sx={{ fontSize: "13px", fontWeight: 700, color: r.color }}>{getRoleLabel(r.value, t)}</Typography>
+      </Box>
+    );
+  }, [pf, t]);
+
   return (
     <FormControl size="small" sx={{ minWidth: 0, flex: "0 0 auto" }}>
       <Select
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onClose={() => setSearch("")}
+        onChange={handleChange}
+        onClose={handleClose}
         displayEmpty
-        MenuProps={{
-          PaperProps: { sx: { maxHeight: 380, borderRadius: 2, mt: 0.5, boxShadow: "0 8px 32px rgba(0,0,0,0.14)", border: "1px solid #E5E7EB" } },
-          autoFocus: false,
-        }}
-        renderValue={(val) => {
-          if (!val || val === "all") {
-            return (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                <WorkOutlined sx={{ fontSize: 14, color: "#9CA3AF" }} />
-                <Typography sx={{ fontSize: "13px", color: "#6B7280", fontWeight: 500 }}>{pf("role_placeholder")}</Typography>
-              </Box>
-            );
-          }
-          const r = ROLES.find((r) => r.value === val);
-          if (!r) return <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#374151" }}>{val}</Typography>;
-          const Icon = r.icon;
-          return (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-              <Box sx={{ width: 18, height: 18, borderRadius: 0.75, bgcolor: `${r.color}18`, display: "flex", alignItems: "center", justifyContent: "center", color: r.color, "& svg": { fontSize: 11 } }}>
-                <Icon />
-              </Box>
-              <Typography sx={{ fontSize: "13px", fontWeight: 700, color: r.color }}>{getRoleLabel(r.value, t)}</Typography>
-            </Box>
-          );
-        }}
+        MenuProps={{ PaperProps: { sx: MENU_PAPER_SX }, autoFocus: false }}
+        renderValue={renderValue}
         sx={INLINE_SELECT_SX}
       >
-        <MenuItem
-          disableRipple
-          onKeyDown={(e) => e.stopPropagation()}
-          sx={{ position: "sticky", top: 0, zIndex: 1, bgcolor: "#fff", p: 1, borderBottom: "1px solid #f3f4f6", "&:hover": { bgcolor: "#fff" }, "&.Mui-focusVisible": { bgcolor: "#fff" } }}
-        >
+        <MenuItem disableRipple onKeyDown={stopPropagation} sx={STICKY_ITEM_SX}>
           <TextField
             size="small" fullWidth autoFocus
             placeholder={pf("search_roles")}
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.stopPropagation()}
+            onChange={handleSearchChange}
+            onKeyDown={stopPropagation}
             InputProps={{ startAdornment: <InputAdornment position="start"><SearchOutlined sx={{ fontSize: 14, color: "#9CA3AF" }} /></InputAdornment> }}
-            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5, fontSize: "13px", bgcolor: "#F8FAFC", "& fieldset": { borderColor: "#E2E8F0" }, "&.Mui-focused fieldset": { borderColor: PURPLE, borderWidth: 2 } } }}
+            sx={FIELD_SX}
           />
         </MenuItem>
 
@@ -111,6 +131,7 @@ const RoleFilterSelect: React.FC<Props> = ({ value, onChange }) => {
       </Select>
     </FormControl>
   );
-};
+});
 
+RoleFilterSelect.displayName = "RoleFilterSelect";
 export default RoleFilterSelect;

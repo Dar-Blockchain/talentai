@@ -11,9 +11,9 @@ import { fetchMembers, selectMembers, FetchMembersFilters } from "@/store/slices
 import { fetchDepartments, selectDepartments } from "@/store/slices/departmentSlice";
 import Pagination from "@/components/ui/Pagination";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
-import EmployeesFilterBar from "@/components/features/company/employees/list/EmployeesFilterBar";
-import { RoleFilter, SortOption } from "@/components/features/company/employees/list/EmployeesList";
-import { ROLE_LABELS, ROLE_STYLES } from "@/components/features/company/employees/list/EmployeeCard";
+import EmployeesFilterBar from "@/modules/company/employees/components/list/EmployeesFilterBar";
+import { RoleFilter, SortOption } from "@/modules/company/employees/components/list/EmployeesList";
+import { ROLE_LABELS, ROLE_STYLES } from "@/modules/company/employees/components/list/EmployeeCard";
 import { ROLES } from "@/constants/employee";
 
 const PURPLE = "#8310FF";

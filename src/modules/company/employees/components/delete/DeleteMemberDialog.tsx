@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useCallback } from 'react';
 import { Dialog, DialogContent, DialogActions, Button, Typography, Box } from '@mui/material';
 import DeleteOutlineOutlined from '@mui/icons-material/DeleteOutlineOutlined';
 import WarningAmberOutlined from '@mui/icons-material/WarningAmberOutlined';
@@ -13,7 +13,7 @@ interface DeleteMemberDialogProps {
 
 const DeleteMemberDialog: React.FC<DeleteMemberDialogProps> = ({ open, memberName, onCancel, onConfirm }) => {
   const { t } = useTranslation('dashboard');
-  const m = (key: string) => t(`pages.employees.modals.delete.${key}`);
+  const m = useCallback((key: string) => t(`pages.employees.modals.delete.${key}`), [t]);
   return (
     <Dialog
     open={open}

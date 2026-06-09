@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useMemo } from "react";
 import { Box, Skeleton } from "@mui/material";
 import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
 import CheckCircleOutline from "@mui/icons-material/CheckCircleOutline";
@@ -7,17 +7,20 @@ import { useTranslation } from "react-i18next";
 import StatCard from "@/components/ui/StatCard";
 import { MemberStats } from "@/store/slices/memberSlice";
 
+const GRID_SX = { display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 2, mb: 3 } as const;
+const SKELETON_SX = { borderRadius: 2 } as const;
+
 interface EmployeesHeaderProps {
   stats: MemberStats | null;
   loading?: boolean;
-  // fallback counts used while stats are loading
   active: number;
   owners: number;
 }
 
-const EmployeesHeader: React.FC<EmployeesHeaderProps> = ({ stats, loading = false, active: _active, owners: _owners }) => {
+const EmployeesHeader: React.FC<EmployeesHeaderProps> = ({ stats, loading = false }) => {
   const { t } = useTranslation("dashboard");
-  const cards = [
+
+  const cards = useMemo(() => [
     {
       icon: <PeopleAltOutlined sx={{ fontSize: 18 }} />,
       label: t("pages.employees.header.total"),
@@ -39,13 +42,13 @@ const EmployeesHeader: React.FC<EmployeesHeaderProps> = ({ stats, loading = fals
       value: stats?.invitations.total ?? 0,
       color: "#D97706",
     },
-  ];
+  ], [t, stats]);
 
   return (
-    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 2, mb: 3 }}>
+    <Box sx={GRID_SX}>
       {cards.map((card) =>
         loading ? (
-          <Skeleton key={card.key} variant="rounded" height={80} sx={{ borderRadius: 2 }} />
+          <Skeleton key={card.key} variant="rounded" height={80} sx={SKELETON_SX} />
         ) : (
           <StatCard key={card.key} icon={card.icon} label={card.label} value={card.value} color={card.color} />
         )

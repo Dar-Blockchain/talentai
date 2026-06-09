@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { memo, useCallback, useMemo, useState } from "react";
 import {
   Box, Typography, Switch,
   Accordion, AccordionSummary, AccordionDetails,
@@ -16,8 +16,6 @@ import { EmployeePermission, EmployeePermissionKey, EMPLOYEE_PERMISSION_GROUPS, 
 
 const PURPLE = "#8310FF";
 
-// Packs: multiple keys rendered as a single toggle row.
-// primaryKey is what gets rendered; the rest are hidden and follow it.
 const PACK_ROWS: Partial<Record<EmployeePermissionKey, {
   keys: EmployeePermissionKey[];
   label: string;
@@ -39,13 +37,13 @@ const PACK_ROWS: Partial<Record<EmployeePermissionKey, {
     description: "Create, edit, delete and publish campaigns",
   },
 };
-// All keys that are absorbed into a pack (not rendered individually)
+
 const PACK_ABSORBED = new Set<EmployeePermissionKey>(
   Object.values(PACK_ROWS).flatMap((p) => p!.keys.slice(1))
 );
 
 interface CategoryMeta {
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ sx?: object }>;
   color: string;
   description: string;
 }
@@ -59,6 +57,74 @@ const CATEGORY_META: Record<string, CategoryMeta> = {
   [EMPLOYEE_PERMISSION_CATEGORIES.SETTINGS]:    { icon: SettingsOutlined,      color: "#64748B", description: "Control company profile and workspace settings" },
 };
 
+const SWITCH_SX = {
+  flexShrink: 0,
+  "& .MuiSwitch-switchBase": { color: "#E2E8F0" },
+  "& .MuiSwitch-track": { bgcolor: "#CBD5E1", opacity: 1, borderRadius: 99 },
+  "& .MuiSwitch-thumb": { boxShadow: "0 1px 4px rgba(0,0,0,0.2)" },
+} as const;
+
+/* ── Permission row ───────────────────────────────────────────────────────── */
+interface PermRowProps {
+  permKey: EmployeePermissionKey;
+  value: Partial<EmployeePermission>;
+  color: string;
+  disabled: boolean;
+  isLast: boolean;
+  onToggle: (key: EmployeePermissionKey) => void;
+}
+
+const PermRow: React.FC<PermRowProps> = memo(({ permKey, value, color, disabled, isLast, onToggle }) => {
+  const pack    = PACK_ROWS[permKey];
+  const label   = pack ? pack.label       : permKey;
+  const desc    = pack ? pack.description : permKey;
+  const enabled = pack ? pack.keys.every((k) => !!value[k]) : !!value[permKey];
+
+  return (
+    <Box
+      sx={{
+        px: 2.5, py: 1.5,
+        display: "flex", alignItems: "center", gap: 2,
+        borderBottom: isLast ? "none" : "1px solid #F8FAFC",
+        transition: "background 0.15s",
+        "&:hover": disabled ? {} : { bgcolor: "#FAFBFC" },
+        opacity: disabled ? 0.6 : 1,
+      }}
+    >
+      <Box sx={{
+        width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
+        bgcolor: enabled ? color : "#E2E8F0",
+        boxShadow: enabled ? `0 0 0 3px ${color}18` : "none",
+        transition: "all 0.2s",
+      }} />
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography sx={{ fontWeight: 600, fontSize: "0.8125rem", color: "#1E293B", lineHeight: 1.3 }}>
+          {label}
+        </Typography>
+        <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8", mt: 0.15 }}>
+          {desc}
+        </Typography>
+      </Box>
+      <Switch
+        checked={enabled}
+        onChange={() => !disabled && onToggle(permKey)}
+        onClick={(e) => e.stopPropagation()}
+        size="small"
+        disabled={disabled}
+        sx={{
+          ...SWITCH_SX,
+          "& .MuiSwitch-switchBase.Mui-checked": {
+            color: "#fff",
+            "& + .MuiSwitch-track": { bgcolor: color, opacity: 1 },
+          },
+        }}
+      />
+    </Box>
+  );
+});
+PermRow.displayName = "PermRow";
+
+/* ── Main component ───────────────────────────────────────────────────────── */
 export interface PermissionsPanelProps {
   value: Partial<EmployeePermission>;
   onChange: (updated: Partial<EmployeePermission>) => void;
@@ -91,15 +157,23 @@ const PermissionsPanel: React.FC<PermissionsPanelProps> = ({ value, onChange, di
     [value, onChange],
   );
 
+  const groups = useMemo(() =>
+    EMPLOYEE_PERMISSION_GROUPS.map((group) => {
+      const meta = CATEGORY_META[group.category] ?? { icon: WorkOutlineOutlined, color: "#6B7280", description: "" };
+      const keys = group.permissions.map((p) => p.key);
+      const visiblePerms = group.permissions.filter(
+        (p) => !PACK_ABSORBED.has(p.key) && (isOwner || p.key !== "canManagePermissions")
+      );
+      return { group, meta, keys, visiblePerms };
+    }),
+  [isOwner]);
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-      {EMPLOYEE_PERMISSION_GROUPS.map((group) => {
-        const meta = CATEGORY_META[group.category] ?? { icon: WorkOutlineOutlined, color: "#6B7280", description: "" };
-        const Icon = meta.icon;
-        const keys        = group.permissions.map((p) => p.key);
+      {groups.map(({ group, meta, keys, visiblePerms }) => {
+        const Icon        = meta.icon;
         const allGranted  = keys.every((k) => !!value[k]);
         const someGranted = keys.some((k)  => !!value[k]);
-        const visiblePerms = group.permissions.filter((p) => !PACK_ABSORBED.has(p.key) && (isOwner || p.key !== "canManagePermissions"));
         const enabledCount = visiblePerms.filter((p) => {
           const pack = PACK_ROWS[p.key];
           return pack ? pack.keys.every((k) => !!value[k]) : !!value[p.key];
@@ -111,8 +185,7 @@ const PermissionsPanel: React.FC<PermissionsPanelProps> = ({ value, onChange, di
             key={group.category}
             expanded={isOpen}
             onChange={(_, open) => setExpanded(open ? group.category : false)}
-            disableGutters
-            elevation={0}
+            disableGutters elevation={0}
             sx={{
               border: `1px solid ${isOpen ? `${meta.color}30` : "#E8EAED"}`,
               borderRadius: "14px !important",
@@ -123,12 +196,7 @@ const PermissionsPanel: React.FC<PermissionsPanelProps> = ({ value, onChange, di
             }}
           >
             <AccordionSummary
-              expandIcon={
-                <ExpandMoreOutlined sx={{
-                  fontSize: 18, color: isOpen ? meta.color : "#94A3B8",
-                  transition: "color 0.2s",
-                }} />
-              }
+              expandIcon={<ExpandMoreOutlined sx={{ fontSize: 18, color: isOpen ? meta.color : "#94A3B8", transition: "color 0.2s" }} />}
               sx={{
                 px: 2.5, py: 0,
                 minHeight: "60px !important",
@@ -138,17 +206,14 @@ const PermissionsPanel: React.FC<PermissionsPanelProps> = ({ value, onChange, di
                 "& .MuiAccordionSummary-content": { my: "14px", alignItems: "center", gap: 1.5 },
               }}
             >
-              {/* Icon box */}
               <Box sx={{
                 width: 36, height: 36, borderRadius: "10px", flexShrink: 0,
                 bgcolor: `${meta.color}12`, border: `1px solid ${meta.color}22`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                color: meta.color,
+                display: "flex", alignItems: "center", justifyContent: "center", color: meta.color,
               }}>
                 <Icon sx={{ fontSize: 18 }} />
               </Box>
 
-              {/* Label + description */}
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Typography sx={{ fontWeight: 700, fontSize: "0.875rem", color: "#0F172A", lineHeight: 1.3 }}>
                   {group.category}
@@ -158,7 +223,6 @@ const PermissionsPanel: React.FC<PermissionsPanelProps> = ({ value, onChange, di
                 </Typography>
               </Box>
 
-              {/* Enabled count badge */}
               <Box sx={{
                 px: 1, py: "2px", borderRadius: "999px", flexShrink: 0,
                 bgcolor: someGranted ? `${meta.color}12` : "#F1F5F9",
@@ -169,7 +233,6 @@ const PermissionsPanel: React.FC<PermissionsPanelProps> = ({ value, onChange, di
                 </Typography>
               </Box>
 
-              {/* Grant / revoke all — stop propagation so it doesn't toggle accordion */}
               {!disabled && (
                 <Box
                   onClick={(e) => toggleGroup(keys, !allGranted, e)}
@@ -189,63 +252,17 @@ const PermissionsPanel: React.FC<PermissionsPanelProps> = ({ value, onChange, di
             </AccordionSummary>
 
             <AccordionDetails sx={{ p: 0, bgcolor: "#fff" }}>
-              {group.permissions
-                .filter((perm) => !PACK_ABSORBED.has(perm.key) && (isOwner || perm.key !== "canManagePermissions"))
-                .map((perm, idx, visible) => {
-                  const pack    = PACK_ROWS[perm.key];
-                  const label   = pack ? pack.label       : perm.label;
-                  const desc    = pack ? pack.description : perm.description;
-                  const enabled = pack
-                    ? pack.keys.every((k) => !!value[k])
-                    : !!value[perm.key];
-                  return (
-                    <Box
-                      key={perm.key}
-                      sx={{
-                        px: 2.5, py: 1.5,
-                        display: "flex", alignItems: "center", gap: 2,
-                        borderBottom: idx < visible.length - 1 ? "1px solid #F8FAFC" : "none",
-                        transition: "background 0.15s",
-                        "&:hover": disabled ? {} : { bgcolor: "#FAFBFC" },
-                        opacity: disabled ? 0.6 : 1,
-                      }}
-                    >
-                      <Box sx={{
-                        width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
-                        bgcolor: enabled ? meta.color : "#E2E8F0",
-                        boxShadow: enabled ? `0 0 0 3px ${meta.color}18` : "none",
-                        transition: "all 0.2s",
-                      }} />
-
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography sx={{ fontWeight: 600, fontSize: "0.8125rem", color: "#1E293B", lineHeight: 1.3 }}>
-                          {label}
-                        </Typography>
-                        <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8", mt: 0.15 }}>
-                          {desc}
-                        </Typography>
-                      </Box>
-
-                      <Switch
-                        checked={enabled}
-                        onChange={() => !disabled && toggle(perm.key)}
-                        onClick={(e) => e.stopPropagation()}
-                        size="small"
-                        disabled={disabled}
-                        sx={{
-                          flexShrink: 0,
-                          "& .MuiSwitch-switchBase.Mui-checked": {
-                            color: "#fff",
-                            "& + .MuiSwitch-track": { bgcolor: meta.color, opacity: 1 },
-                          },
-                          "& .MuiSwitch-switchBase": { color: "#E2E8F0" },
-                          "& .MuiSwitch-track": { bgcolor: "#CBD5E1", opacity: 1, borderRadius: 99 },
-                          "& .MuiSwitch-thumb": { boxShadow: "0 1px 4px rgba(0,0,0,0.2)" },
-                        }}
-                      />
-                    </Box>
-                  );
-                })}
+              {visiblePerms.map((perm, idx) => (
+                <PermRow
+                  key={perm.key}
+                  permKey={perm.key}
+                  value={value}
+                  color={meta.color}
+                  disabled={disabled}
+                  isLast={idx === visiblePerms.length - 1}
+                  onToggle={toggle}
+                />
+              ))}
             </AccordionDetails>
           </Accordion>
         );
@@ -254,4 +271,4 @@ const PermissionsPanel: React.FC<PermissionsPanelProps> = ({ value, onChange, di
   );
 };
 
-export default PermissionsPanel;
+export default memo(PermissionsPanel);

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo, useCallback, useMemo } from "react";
 import {
   Box, Typography, FormControl, Select, MenuItem,
   InputBase, Tooltip, Divider, ListSubheader,
@@ -34,13 +34,34 @@ interface Props {
   onDownload: () => void;
 }
 
-const selectSx = {
+const SELECT_SX = {
   height: 34, fontSize: "13px", bgcolor: "#F9FAFB",
   border: "1px solid #E5E7EB", borderRadius: "8px",
   "& .MuiOutlinedInput-notchedOutline": { border: "none" },
 } as const;
 
-// Hoisted outside the component — never recreated on re-render
+const SORT_MENU_PAPER_SX = {
+  borderRadius: "12px",
+  boxShadow: "0 12px 32px rgba(0,0,0,0.12)",
+  border: "1px solid #E5E7EB",
+  mt: 0.5,
+  minWidth: 200,
+} as const;
+
+const CONTROLS_BOX_SX = {
+  display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap",
+} as const;
+
+const SEARCH_BOX_SX = {
+  display: "flex", alignItems: "center",
+  bgcolor: "#F9FAFB", border: "1px solid #E5E7EB",
+  borderRadius: "8px", px: 1.25, height: 34, minWidth: 220,
+  "&:focus-within": { borderColor: TEAL },
+  transition: "border-color 0.15s",
+} as const;
+
+const DIVIDER_SX = { width: "1px", height: 22, bgcolor: "#E5E7EB", mx: 0.25 } as const;
+
 const STATUS_VALUES = [
   { value: "visited",             i18nKey: "pages.applications.status.visited" },
   { value: "interview_completed", i18nKey: "pages.applications.status.interview_completed" },
@@ -84,16 +105,72 @@ const SORT_GROUPS_STATIC: SortGroup[] = [
   },
 ];
 
-const ApplicationsToolbar: React.FC<Props> = ({
+// Flat option list for O(1) label lookup — built once at module load
+const SORT_OPTIONS_FLAT = SORT_GROUPS_STATIC.flatMap((g) => g.options);
+
+const ApplicationsToolbar: React.FC<Props> = memo(({
   searchInput, status, postId, postTitle, sort,
   loading, totalCount, downloading,
   onSearchChange, onStatusChange, onPostPickerOpen, onClearPost, onSortChange, onDownload,
 }) => {
   const { t } = useTranslation("dashboard");
 
-  const currentSortLabel = SORT_GROUPS_STATIC
-    .flatMap((g) => g.options)
-    .find((o) => o.value === sort)?.labelKey;
+  const currentSortLabel = useMemo(
+    () => SORT_OPTIONS_FLAT.find((o) => o.value === sort)?.labelKey,
+    [sort],
+  );
+
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => onSearchChange(e.target.value),
+    [onSearchChange],
+  );
+  const handleStatusChange = useCallback(
+    (e: { target: { value: string } }) => onStatusChange(e.target.value),
+    [onStatusChange],
+  );
+  const handleSortChange = useCallback(
+    (e: { target: { value: string } }) => onSortChange(e.target.value),
+    [onSortChange],
+  );
+  const handleClearPost = useCallback(
+    (e: React.MouseEvent) => { e.stopPropagation(); onClearPost(); },
+    [onClearPost],
+  );
+
+  const sortMenuItems = useMemo(() =>
+    SORT_GROUPS_STATIC.flatMap((group, gi) => [
+      <ListSubheader key={`h-${gi}`} sx={{
+        display: "flex", alignItems: "center", gap: 0.75,
+        fontSize: "10px", fontWeight: 700, color: group.color,
+        textTransform: "uppercase", letterSpacing: "0.06em",
+        lineHeight: "32px", bgcolor: "#fff", px: 1.5,
+      }}>
+        <group.Icon sx={{ fontSize: 12 }} />{t(group.labelKey)}
+      </ListSubheader>,
+      ...group.options.map(({ value, labelKey }) => (
+        <MenuItem key={value} value={value} sx={{
+          mx: 0.5, borderRadius: "8px", py: 0.75, px: 1.5,
+          "&:hover": { bgcolor: `${group.color}0D` },
+          "&.Mui-selected": { bgcolor: `${group.color}12` },
+        }}>
+          <Typography sx={{ fontSize: "13px", fontWeight: sort === value ? 700 : 400, color: sort === value ? group.color : "#374151" }}>
+            {t(labelKey)}
+          </Typography>
+        </MenuItem>
+      )),
+      gi < SORT_GROUPS_STATIC.length - 1
+        ? <Divider key={`d-${gi}`} sx={{ my: 0.5, borderColor: "#F3F4F6" }} />
+        : null,
+    ]),
+  [sort, t]);
+
+  const postPickerSx = useMemo(() => ({
+    display: "flex", alignItems: "center", gap: 0.75, height: 34, px: 1.25,
+    bgcolor: postId ? `${TEAL}0D` : "#F9FAFB",
+    border: `1px solid ${postId ? TEAL : "#E5E7EB"}`,
+    borderRadius: "8px", cursor: "pointer", minWidth: 130, maxWidth: 200,
+    transition: "all 0.15s", "&:hover": { borderColor: TEAL, bgcolor: `${TEAL}08` },
+  }), [postId]);
 
   return (
     <Box sx={{ mb: 3, bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "16px", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", borderTop: "3px solid #E5E7EB" }}>
@@ -105,7 +182,9 @@ const ApplicationsToolbar: React.FC<Props> = ({
             <PeopleAltOutlined sx={{ fontSize: 20, color: TEAL }} />
           </Box>
           <Box>
-            <Typography sx={{ fontWeight: 800, fontSize: "1.1rem", color: "#111827", lineHeight: 1.2 }}>{t("pages.applications.title")}</Typography>
+            <Typography sx={{ fontWeight: 800, fontSize: "1.1rem", color: "#111827", lineHeight: 1.2 }}>
+              {t("pages.applications.title")}
+            </Typography>
             <Typography sx={{ fontSize: "12px", color: "#9CA3AF" }}>
               {loading ? t("pages.common.loading") : t("pages.applications.candidate_count", { count: totalCount })}
             </Typography>
@@ -113,21 +192,21 @@ const ApplicationsToolbar: React.FC<Props> = ({
         </Box>
 
         {/* Controls */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+        <Box sx={CONTROLS_BOX_SX}>
           {/* Search */}
-          <Box sx={{ display: "flex", alignItems: "center", bgcolor: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "8px", px: 1.25, height: 34, minWidth: 220, "&:focus-within": { borderColor: TEAL }, transition: "border-color 0.15s" }}>
+          <Box sx={SEARCH_BOX_SX}>
             <SearchOutlined sx={{ fontSize: 15, color: "#9CA3AF", mr: 0.75 }} />
             <InputBase
               placeholder={t("pages.applications.search_placeholder")}
               value={searchInput}
-              onChange={(e) => onSearchChange(e.target.value)}
+              onChange={handleSearchChange}
               sx={{ fontSize: "13px", flex: 1 }}
             />
           </Box>
 
           {/* Status filter */}
           <FormControl size="small">
-            <Select value={status} onChange={(e) => onStatusChange(e.target.value)} displayEmpty sx={selectSx}>
+            <Select value={status} onChange={handleStatusChange} displayEmpty sx={SELECT_SX}>
               <MenuItem value=""><em style={{ color: "#9CA3AF", fontStyle: "normal" }}>{t("pages.applications.status.all")}</em></MenuItem>
               {STATUS_VALUES.map(({ value, i18nKey }) => (
                 <MenuItem key={value} value={value} sx={{ fontSize: "13px" }}>{t(i18nKey)}</MenuItem>
@@ -135,17 +214,8 @@ const ApplicationsToolbar: React.FC<Props> = ({
             </Select>
           </FormControl>
 
-          {/* Post picker trigger */}
-          <Box
-            onClick={onPostPickerOpen}
-            sx={{
-              display: "flex", alignItems: "center", gap: 0.75, height: 34, px: 1.25,
-              bgcolor: postId ? `${TEAL}0D` : "#F9FAFB",
-              border: `1px solid ${postId ? TEAL : "#E5E7EB"}`,
-              borderRadius: "8px", cursor: "pointer", minWidth: 130, maxWidth: 200,
-              transition: "all 0.15s", "&:hover": { borderColor: TEAL, bgcolor: `${TEAL}08` },
-            }}
-          >
+          {/* Post picker */}
+          <Box onClick={onPostPickerOpen} sx={postPickerSx}>
             <WorkOutlineOutlined sx={{ fontSize: 14, color: postId ? TEAL : "#9CA3AF", flexShrink: 0 }} />
             <Typography noWrap sx={{ fontSize: "13px", color: postId ? TEAL : "#9CA3AF", flex: 1, fontWeight: postId ? 600 : 400 }}>
               {postId ? postTitle : t("pages.applications.all_jobs")}
@@ -153,7 +223,7 @@ const ApplicationsToolbar: React.FC<Props> = ({
             {postId && (
               <CloseOutlined
                 sx={{ fontSize: 13, color: TEAL, flexShrink: 0, "&:hover": { opacity: 0.7 } }}
-                onClick={(e) => { e.stopPropagation(); onClearPost(); }}
+                onClick={handleClearPost}
               />
             )}
           </Box>
@@ -162,31 +232,21 @@ const ApplicationsToolbar: React.FC<Props> = ({
           <FormControl size="small">
             <Select
               value={sort}
-              onChange={(e) => onSortChange(e.target.value)}
+              onChange={handleSortChange}
               startAdornment={<SortOutlined sx={{ fontSize: 14, color: "#9CA3AF", mr: 0.5 }} />}
               renderValue={() => (
                 <Typography sx={{ fontSize: "13px", color: "#374151" }}>
                   {currentSortLabel ? t(currentSortLabel) : t("pages.common.sort")}
                 </Typography>
               )}
-              sx={selectSx}
-              MenuProps={{ slotProps: { paper: { sx: { borderRadius: "12px", boxShadow: "0 12px 32px rgba(0,0,0,0.12)", border: "1px solid #E5E7EB", mt: 0.5, minWidth: 200 } } } }}
+              sx={SELECT_SX}
+              MenuProps={{ slotProps: { paper: { sx: SORT_MENU_PAPER_SX } } }}
             >
-              {SORT_GROUPS_STATIC.flatMap((group, gi) => [
-                <ListSubheader key={`h-${gi}`} sx={{ display: "flex", alignItems: "center", gap: 0.75, fontSize: "10px", fontWeight: 700, color: group.color, textTransform: "uppercase", letterSpacing: "0.06em", lineHeight: "32px", bgcolor: "#fff", px: 1.5 }}>
-                  <group.Icon sx={{ fontSize: 12 }} />{t(group.labelKey)}
-                </ListSubheader>,
-                ...group.options.map(({ value, labelKey }) => (
-                  <MenuItem key={value} value={value} sx={{ mx: 0.5, borderRadius: "8px", py: 0.75, px: 1.5, "&:hover": { bgcolor: `${group.color}0D` }, "&.Mui-selected": { bgcolor: `${group.color}12` } }}>
-                    <Typography sx={{ fontSize: "13px", fontWeight: sort === value ? 700 : 400, color: sort === value ? group.color : "#374151" }}>{t(labelKey)}</Typography>
-                  </MenuItem>
-                )),
-                gi < SORT_GROUPS_STATIC.length - 1 ? <Divider key={`d-${gi}`} sx={{ my: 0.5, borderColor: "#F3F4F6" }} /> : null,
-              ])}
+              {sortMenuItems}
             </Select>
           </FormControl>
 
-          <Box sx={{ width: "1px", height: 22, bgcolor: "#E5E7EB", mx: 0.25 }} />
+          <Box sx={DIVIDER_SX} />
 
           {/* Download CVs */}
           <Tooltip title={totalCount === 0 ? t("pages.applications.no_candidates_download") : t("pages.applications.download_cvs_tooltip", { count: totalCount })}>
@@ -207,6 +267,7 @@ const ApplicationsToolbar: React.FC<Props> = ({
       </Box>
     </Box>
   );
-};
+});
 
+ApplicationsToolbar.displayName = "ApplicationsToolbar";
 export default ApplicationsToolbar;

@@ -1,6 +1,4 @@
-"use client";
-
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { memo, useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { Box, Typography, Alert, CircularProgress } from "@mui/material";
 import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
 import PersonAddOutlined  from "@mui/icons-material/PersonAddOutlined";
@@ -11,16 +9,16 @@ import { AppDispatch } from "@/store/store";
 import {
   fetchMembers, selectMembers, addEmployee,
   fetchInvitationsByDepartment, cancelInvitation, resendInvitation,
-  Invitation, Member,
+  Member,
 } from "@/store/slices/memberSlice";
-import { RoleFilter, SortOption } from "@/components/features/company/employees/list/EmployeesList";
-import EmployeesFilterBar   from "@/components/features/company/employees/list/EmployeesFilterBar";
-import EmployeeCard         from "@/components/features/company/employees/list/EmployeeCard";
-import EmployeeSkeletonCard from "@/components/features/company/employees/list/EmployeeSkeletonCard";
-import InvitationCard       from "@/components/features/company/employees/list/InvitationCard";
+import { RoleFilter, SortOption } from "@/modules/company/employees/components/list/EmployeesList";
+import EmployeesFilterBar   from "@/modules/company/employees/components/list/EmployeesFilterBar";
+import EmployeeCard         from "@/modules/company/employees/components/list/EmployeeCard";
+import EmployeeSkeletonCard from "@/modules/company/employees/components/list/EmployeeSkeletonCard";
+import InvitationCard       from "@/modules/company/employees/components/list/InvitationCard";
 import Pagination           from "@/components/ui/Pagination";
-import { PURPLE, AMBER, GRID } from "@/components/features/company/employees/list/constants";
-import AddEmployeeModal     from "@/components/features/company/employees/create/AddEmployeeModal";
+import { PURPLE, AMBER, GRID } from "@/modules/company/employees/components/list/constants";
+import AddEmployeeModal     from "@/modules/company/employees/components/create/AddEmployeeModal";
 import AppButton            from "@/components/ui/AppButton";
 import { useToast }         from "@/hooks/useToast";
 import { Invitation as InvitationType } from "@/types/employee";
@@ -33,6 +31,99 @@ const SORT_MAP: Record<SortOption, { sortBy: "date" | "name"; order: "asc" | "de
   "name-desc": { sortBy: "name", order: "desc" },
 };
 
+// ─── Module-level sx constants ────────────────────────────────────────────────
+
+const TOP_BAR_SX      = { display: "flex", alignItems: "center", gap: 1.5, mb: 2.5, flexWrap: "wrap" } as const;
+const TAB_STRIP_SX    = { display: "inline-flex", alignItems: "center", bgcolor: "#F3F4F6", borderRadius: "12px", p: 0.5, gap: 0.5, flexShrink: 0 } as const;
+const INVITE_BTN_SX   = { ml: "auto" } as const;
+const PANEL_SX        = { bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "16px", p: { xs: 2, sm: 3 } } as const;
+const EMPTY_SX        = { textAlign: "center", py: 10 } as const;
+const INV_LOADER_SX   = { display: "flex", justifyContent: "center", py: 8 } as const;
+const ALERT_SX        = { borderRadius: 2 } as const;
+const PEOPLE_ICON_SX  = { fontSize: 48, color: "#D1D5DB", mb: 2 } as const;
+const EMAIL_ICON_SX   = { fontSize: 48, color: "#D1D5DB", mb: 2 } as const;
+const EMPTY_TITLE_SX  = { fontSize: "15px", fontWeight: 600, color: "#374151" } as const;
+const EMPTY_HINT_SX   = { fontSize: "13px", color: "#9CA3AF", mt: 0.5 } as const;
+
+// Pre-built skeleton array — same length every time, never reallocated
+const SKELETONS = Array.from({ length: PAGE_SIZE }, (_, i) => <EmployeeSkeletonCard key={i} />);
+
+// ─── TabPill ──────────────────────────────────────────────────────────────────
+
+const BLINK_SX = {
+  "@keyframes blink": { "0%,100%": { opacity: 1 }, "50%": { opacity: 0.3 } },
+} as const;
+
+const TAB_BASE_SX = {
+  display: "flex", alignItems: "center", gap: 1,
+  px: 2, py: 0.875, borderRadius: "9px", cursor: "pointer",
+  transition: "all 0.18s ease",
+} as const;
+
+const ICON_BOX_SX  = { display: "flex", fontSize: 16 } as const;
+const BADGE_BOX_SX = { minWidth: 20, height: 20, borderRadius: "6px", px: 0.75, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" } as const;
+const DOT_BASE_SX  = { position: "absolute", top: -3, right: -3, width: 7, height: 7, borderRadius: "50%", border: "1.5px solid #F3F4F6", animation: "blink 1.8s ease-in-out infinite" } as const;
+
+interface TabPillProps {
+  active:  boolean;
+  label:   string;
+  icon:    React.ReactNode;
+  count:   number | string;
+  color:   string;
+  pulse?:  boolean;
+  onClick: () => void;
+}
+
+const TabPill: React.FC<TabPillProps> = memo(({ active, label, icon, count, color, pulse, onClick }) => {
+  const containerSx = useMemo(() => ({
+    ...TAB_BASE_SX,
+    bgcolor: active ? "#fff" : "transparent",
+    boxShadow: active ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
+    "&:hover": !active ? { bgcolor: "#EAECF0" } : {},
+  }), [active]);
+
+  const iconBoxSx = useMemo(() => ({
+    ...ICON_BOX_SX,
+    color: active ? color : "#6B7280",
+  }), [active, color]);
+
+  const labelSx = useMemo(() => ({
+    fontSize: "13px", fontWeight: 700,
+    color: active ? "#111827" : "#6B7280",
+    whiteSpace: "nowrap",
+  }), [active]);
+
+  const badgeSx = useMemo(() => ({
+    ...BADGE_BOX_SX,
+    bgcolor: active ? `${color}18` : (pulse ? `${color}15` : "#E5E7EB"),
+  }), [active, color, pulse]);
+
+  const countSx = useMemo(() => ({
+    fontSize: "11px", fontWeight: 800,
+    color: active ? color : (pulse ? color : "#9CA3AF"),
+  }), [active, color, pulse]);
+
+  const dotSx = useMemo(() => ({
+    ...DOT_BASE_SX,
+    bgcolor: color,
+    ...BLINK_SX,
+  }), [color]);
+
+  return (
+    <Box onClick={onClick} sx={containerSx}>
+      <Box sx={iconBoxSx}>{icon}</Box>
+      <Typography sx={labelSx}>{label}</Typography>
+      <Box sx={badgeSx}>
+        <Typography sx={countSx}>{count}</Typography>
+        {pulse && !active && <Box sx={dotSx} />}
+      </Box>
+    </Box>
+  );
+});
+TabPill.displayName = "TabPill";
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
 interface DepartmentMembersSectionProps {
   departmentId:    string;
   canManage?:      boolean;
@@ -42,52 +133,9 @@ interface DepartmentMembersSectionProps {
   onDelete?: (member: Member) => void;
 }
 
-// ─── Tab pill (same style as EmployeesList) ───────────────────────────────────
+const EMPTY_DEPTS: never[] = [];
 
-const TabPill: React.FC<{
-  active: boolean;
-  label:  string;
-  icon:   React.ReactNode;
-  count:  number | string;
-  color:  string;
-  pulse?: boolean;
-  onClick: () => void;
-}> = ({ active, label, icon, count, color, pulse, onClick }) => (
-  <Box onClick={onClick} sx={{
-    display: "flex", alignItems: "center", gap: 1,
-    px: 2, py: 0.875, borderRadius: "9px", cursor: "pointer",
-    transition: "all 0.18s ease",
-    bgcolor: active ? "#fff" : "transparent",
-    boxShadow: active ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
-    "&:hover": !active ? { bgcolor: "#EAECF0" } : {},
-  }}>
-    <Box sx={{ color: active ? color : "#6B7280", display: "flex", fontSize: 16 }}>{icon}</Box>
-    <Typography sx={{ fontSize: "13px", fontWeight: 700, color: active ? "#111827" : "#6B7280", whiteSpace: "nowrap" }}>
-      {label}
-    </Typography>
-    <Box sx={{
-      minWidth: 20, height: 20, borderRadius: "6px", px: 0.75, position: "relative",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      bgcolor: active ? `${color}18` : (pulse ? `${color}15` : "#E5E7EB"),
-    }}>
-      <Typography sx={{ fontSize: "11px", fontWeight: 800, color: active ? color : (pulse ? color : "#9CA3AF") }}>
-        {count}
-      </Typography>
-      {pulse && !active && (
-        <Box sx={{
-          position: "absolute", top: -3, right: -3, width: 7, height: 7,
-          borderRadius: "50%", bgcolor: color, border: "1.5px solid #F3F4F6",
-          animation: "blink 1.8s ease-in-out infinite",
-          "@keyframes blink": { "0%,100%": { opacity: 1 }, "50%": { opacity: 0.3 } },
-        }} />
-      )}
-    </Box>
-  </Box>
-);
-
-// ─── Main component ───────────────────────────────────────────────────────────
-
-const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({
+const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = memo(({
   departmentId, canManage = true, canAssignRoles = true, canRemove = true,
   onEdit, onDelete,
 }) => {
@@ -105,9 +153,8 @@ const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({
   const [inviteOpen,      setInviteOpen]      = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Invitations local state
-  const [invitations,  setInvitations]  = useState<InvitationType[]>([]);
-  const [invLoading,   setInvLoading]   = useState(false);
+  const [invitations, setInvitations] = useState<InvitationType[]>([]);
+  const [invLoading,  setInvLoading]  = useState(false);
 
   const loadInvitations = useCallback(async () => {
     setInvLoading(true);
@@ -160,144 +207,147 @@ const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({
     showToast({ message: t("pages.departments.members_panel.toast_invite_cancelled"), severity: "info" });
   }, [dispatch, showToast, t]);
 
+  const handleRoleFilterChange = useCallback((f: RoleFilter) => { setRoleFilter(f); setPage(1); }, []);
+  const handleSortChange       = useCallback((s: SortOption) => { setSortBy(s); setPage(1); }, []);
+  const openInviteModal        = useCallback(() => setInviteOpen(true), []);
+  const closeInviteModal       = useCallback(() => setInviteOpen(false), []);
+  const showMembers            = useCallback(() => setTab("members"), []);
+  const showInvitations        = useCallback(() => setTab("invitations"), []);
+  const handleEdit             = useCallback((m: Member) => onEdit?.(m),   [onEdit]);
+  const handleDelete           = useCallback((m: Member) => onDelete?.(m), [onDelete]);
+  const handleSelect           = useCallback(() => {}, []);
+  const noDeptChange           = useCallback(() => {}, []);
+
+  const hasFilter = search || roleFilter !== "all";
+
+  // Stable memoized member cards — only rebuilt when members array reference changes
+  const memberCards = useMemo(() => members.map((m, i) => (
+    <EmployeeCard
+      key={m._id}
+      member={m as Member}
+      index={i}
+      onEdit={handleEdit}
+      onDelete={handleDelete}
+      onSelect={handleSelect}
+      canAssignRoles={canAssignRoles}
+      canRemove={canRemove}
+    />
+  )), [members, handleEdit, handleDelete, handleSelect, canAssignRoles, canRemove]);
+
+  // Stable memoized invitation cards
+  const invitationCards = useMemo(() => invitations.map((inv) => (
+    <InvitationCard key={inv._id} invitation={inv} onResend={handleResend} onCancel={handleCancel} />
+  )), [invitations, handleResend, handleCancel]);
+
+  const memberCount     = loading     ? t("pages.departments.detail.loading_short") : pageTotal;
+  const invitationCount = invLoading  ? t("pages.departments.detail.loading_short") : invitations.length;
+  const invitationPulse = invitations.length > 0;
+
+  const inviteBtnIcon = useMemo(() => <PersonAddOutlined sx={{ fontSize: 15 }} />, []);
+
   return (
     <Box>
-      {/* ── Top bar: tabs + filter + invite button ── */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2.5, flexWrap: "wrap" }}>
-
-        {/* Tabs */}
-        <Box sx={{ display: "inline-flex", alignItems: "center", bgcolor: "#F3F4F6", borderRadius: "12px", p: 0.5, gap: 0.5, flexShrink: 0 }}>
+      <Box sx={TOP_BAR_SX}>
+        <Box sx={TAB_STRIP_SX}>
           <TabPill
             active={tab === "members"}
             label={t("pages.departments.members_panel.tab_members")}
             icon={<PeopleAltOutlined sx={{ fontSize: 16 }} />}
-            count={loading ? t("pages.departments.detail.loading_short") : pageTotal}
+            count={memberCount}
             color={PURPLE}
-            onClick={() => setTab("members")}
+            onClick={showMembers}
           />
           <TabPill
             active={tab === "invitations"}
             label={t("pages.departments.members_panel.tab_invitations")}
             icon={<EmailOutlined sx={{ fontSize: 16 }} />}
-            count={invLoading ? t("pages.departments.detail.loading_short") : invitations.length}
+            count={invitationCount}
             color={AMBER}
-            pulse={invitations.length > 0}
-            onClick={() => setTab("invitations")}
+            pulse={invitationPulse}
+            onClick={showInvitations}
           />
         </Box>
 
-        {/* Filter bar — members tab only */}
         {tab === "members" && (
           <EmployeesFilterBar
-            search={search}           onSearchChange={handleSearchChange}
-            roleFilter={roleFilter}   onRoleFilterChange={(f) => { setRoleFilter(f); setPage(1); }}
-            departmentFilter="all"    onDepartmentFilterChange={() => {}}
-            departments={[]}
-            sortBy={sortBy}           onSortChange={(s) => { setSortBy(s); setPage(1); }}
+            search={search}          onSearchChange={handleSearchChange}
+            roleFilter={roleFilter}  onRoleFilterChange={handleRoleFilterChange}
+            departmentFilter="all"   onDepartmentFilterChange={noDeptChange}
+            departments={EMPTY_DEPTS}
+            sortBy={sortBy}          onSortChange={handleSortChange}
             resultCount={pageTotal}
             hideDepartmentFilter
           />
         )}
 
-        {/* Invite button */}
         {canManage && (
-          <Box sx={{ ml: "auto" }}>
+          <Box sx={INVITE_BTN_SX}>
             <AppButton
               label={t("pages.departments.members_panel.invite_employee")}
               variant="contained"
               size="small"
-              startIcon={<PersonAddOutlined sx={{ fontSize: 15 }} />}
-              onClick={() => setInviteOpen(true)}
+              startIcon={inviteBtnIcon}
+              onClick={openInviteModal}
             />
           </Box>
         )}
       </Box>
 
-      {/* ── Tab panels ── */}
-      <Box sx={{ bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "16px", p: { xs: 2, sm: 3 } }}>
-
-        {/* Members tab */}
+      <Box sx={PANEL_SX}>
         {tab === "members" && (
           error ? (
-            <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>
+            <Alert severity="error" sx={ALERT_SX}>{error}</Alert>
           ) : loading ? (
-            <Box sx={GRID}>
-              {Array.from({ length: PAGE_SIZE }).map((_, i) => <EmployeeSkeletonCard key={i} />)}
-            </Box>
+            <Box sx={GRID}>{SKELETONS}</Box>
           ) : members.length === 0 ? (
-            <Box sx={{ textAlign: "center", py: 10 }}>
-              <PeopleAltOutlined sx={{ fontSize: 48, color: "#D1D5DB", mb: 2 }} />
-              <Typography sx={{ fontSize: "15px", fontWeight: 600, color: "#374151" }}>
-                {search || roleFilter !== "all" ? t("pages.departments.members_panel.empty_members_filtered_title") : t("pages.departments.members_panel.empty_members_title")}
+            <Box sx={EMPTY_SX}>
+              <PeopleAltOutlined sx={PEOPLE_ICON_SX} />
+              <Typography sx={EMPTY_TITLE_SX}>
+                {hasFilter ? t("pages.departments.members_panel.empty_members_filtered_title") : t("pages.departments.members_panel.empty_members_title")}
               </Typography>
-              <Typography sx={{ fontSize: "13px", color: "#9CA3AF", mt: 0.5 }}>
-                {search || roleFilter !== "all"
-                  ? t("pages.departments.members_panel.empty_members_filtered_hint")
-                  : t("pages.departments.members_panel.empty_members_hint")}
+              <Typography sx={EMPTY_HINT_SX}>
+                {hasFilter ? t("pages.departments.members_panel.empty_members_filtered_hint") : t("pages.departments.members_panel.empty_members_hint")}
               </Typography>
             </Box>
           ) : (
-            <Box sx={GRID}>
-              {members.map((m, i) => (
-                <EmployeeCard
-                  key={m._id}
-                  member={m as Member}
-                  index={i}
-                  onEdit={(m) => onEdit?.(m)}
-                  onDelete={(m) => onDelete?.(m)}
-                  onSelect={() => {}}
-                  canAssignRoles={canAssignRoles}
-                  canRemove={canRemove}
-                />
-              ))}
-            </Box>
+            <Box sx={GRID}>{memberCards}</Box>
           )
         )}
 
-        {/* Invitations tab */}
         {tab === "invitations" && (
           invLoading ? (
-            <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+            <Box sx={INV_LOADER_SX}>
               <CircularProgress size={28} sx={{ color: AMBER }} />
             </Box>
           ) : invitations.length === 0 ? (
-            <Box sx={{ textAlign: "center", py: 10 }}>
-              <EmailOutlined sx={{ fontSize: 48, color: "#D1D5DB", mb: 2 }} />
-              <Typography sx={{ fontSize: "15px", fontWeight: 600, color: "#374151" }}>
+            <Box sx={EMPTY_SX}>
+              <EmailOutlined sx={EMAIL_ICON_SX} />
+              <Typography sx={EMPTY_TITLE_SX}>
                 {t("pages.departments.members_panel.empty_invitations_title")}
               </Typography>
-              <Typography sx={{ fontSize: "13px", color: "#9CA3AF", mt: 0.5 }}>
+              <Typography sx={EMPTY_HINT_SX}>
                 {t("pages.departments.members_panel.empty_invitations_hint")}
               </Typography>
             </Box>
           ) : (
-            <Box sx={GRID}>
-              {invitations.map((inv) => (
-                <InvitationCard
-                  key={inv._id}
-                  invitation={inv}
-                  onResend={handleResend}
-                  onCancel={handleCancel}
-                />
-              ))}
-            </Box>
+            <Box sx={GRID}>{invitationCards}</Box>
           )
         )}
       </Box>
 
-      {/* Pagination — members tab only */}
       {tab === "members" && !loading && !error && (
         <Pagination page={page} total={pageTotal} pageSize={PAGE_SIZE} onPageChange={setPage} />
       )}
 
       <AddEmployeeModal
         open={inviteOpen}
-        onClose={() => setInviteOpen(false)}
+        onClose={closeInviteModal}
         onSave={handleInvite}
         defaultDepartmentId={departmentId}
       />
     </Box>
   );
-};
+});
 
+DepartmentMembersSection.displayName = "DepartmentMembersSection";
 export default DepartmentMembersSection;
