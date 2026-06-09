@@ -1,7 +1,15 @@
 const express = require("express");
 const path = require("path");
 const http = require("http");
+const fs = require("fs");
 require("dotenv").config();
+
+// Ensure upload directories exist and are writable at startup
+["uploads/resumes", "uploads/temp"].forEach((dir) => {
+  const abs = path.join(__dirname, dir);
+  fs.mkdirSync(abs, { recursive: true });
+  fs.chmodSync(abs, 0o775);
+});
 
 // Core setup
 const app = express();
