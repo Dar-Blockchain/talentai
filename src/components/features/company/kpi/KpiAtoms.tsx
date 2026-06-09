@@ -1,10 +1,12 @@
 "use client";
 import React from "react";
-import { Box, Typography, Paper } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import ArrowUpwardOutlined from "@mui/icons-material/ArrowUpwardOutlined";
 import ArrowDownwardOutlined from "@mui/icons-material/ArrowDownwardOutlined";
 import RemoveOutlined from "@mui/icons-material/RemoveOutlined";
-import { BORDER, GRAY, GRAY2, NAVY, NAVY2, WHITE } from "./kpiTokens";
+import { BORDER, GRAY, GRAY2, NAVY, NAVY2 } from "./kpiTokens";
+import { Card, CardContent } from "@/modules/shared/ui/shadcn/card";
+import { cn } from "@/lib/utils";
 
 // ── Delta badge ────────────────────────────────────────────────────────────────
 export const Delta: React.FC<{ cur: number; prev: number }> = ({ cur, prev }) => {
@@ -40,16 +42,23 @@ export const ZoneHeading: React.FC<{ icon: React.ElementType; label: string; col
 );
 
 // ── Generic card wrapper ───────────────────────────────────────────────────────
-export const KpiCard: React.FC<{ title?: string; subtitle?: string; children: React.ReactNode; sx?: object }> = ({ title, subtitle, children, sx = {} }) => (
-  <Paper elevation={0} sx={{ border: `1px solid ${BORDER}`, borderRadius: "18px", p: { xs: 2, sm: 2.5 }, bgcolor: WHITE, height: "100%", ...sx }}>
-    {title && (
-      <Box sx={{ mb: 2 }}>
-        <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "0.92rem", color: NAVY }}>{title}</Typography>
-        {subtitle && <Typography sx={{ fontFamily: "Poppins", fontSize: "0.74rem", color: GRAY2, mt: 0.25 }}>{subtitle}</Typography>}
-      </Box>
-    )}
-    {children}
-  </Paper>
+export const KpiCard: React.FC<{
+  title?: string;
+  subtitle?: string;
+  children: React.ReactNode;
+  className?: string;
+}> = ({ title, subtitle, children, className }) => (
+  <Card className={cn("rounded-[18px] py-0 gap-0 h-full", className)}>
+    <CardContent className="p-4 sm:p-5 h-full">
+      {title && (
+        <Box sx={{ mb: 2 }}>
+          <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "0.92rem", color: NAVY }}>{title}</Typography>
+          {subtitle && <Typography sx={{ fontFamily: "Poppins", fontSize: "0.74rem", color: GRAY2, mt: 0.25 }}>{subtitle}</Typography>}
+        </Box>
+      )}
+      {children}
+    </CardContent>
+  </Card>
 );
 
 // ── Action card (Zone 1) ───────────────────────────────────────────────────────
@@ -57,22 +66,19 @@ export const ActionCard: React.FC<{
   icon: React.ElementType; label: string; value: number;
   color: string; bg: string; trend: number; note: string;
 }> = ({ icon: Icon, label, value, color, bg, trend, note }) => (
-  <Paper elevation={0} sx={{
-    border: `1px solid ${BORDER}`, borderRadius: "18px", p: 2.5,
-    bgcolor: WHITE,
-    transition: "box-shadow 0.2s, transform 0.2s",
-    "&:hover": { boxShadow: "0 8px 28px rgba(0,0,0,0.09)", transform: "translateY(-2px)" },
-  }}>
-    <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
-      <Box sx={{ width: 44, height: 44, borderRadius: "13px", bgcolor: bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Icon sx={{ fontSize: 22, color }} />
+  <Card className="rounded-[18px] py-0 gap-0 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(0,0,0,0.09)]">
+    <CardContent className="p-5">
+      <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
+        <Box sx={{ width: 44, height: 44, borderRadius: "13px", bgcolor: bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Icon sx={{ fontSize: 22, color }} />
+        </Box>
+        <Delta cur={value} prev={value - trend} />
       </Box>
-      <Delta cur={value} prev={value - trend} />
-    </Box>
-    <Typography sx={{ fontFamily: "Poppins", fontWeight: 800, fontSize: "2rem", color: NAVY, lineHeight: 1 }}>{value}</Typography>
-    <Typography sx={{ fontFamily: "Poppins", fontSize: "0.78rem", fontWeight: 600, color: NAVY2, mt: 0.5, mb: 0.25 }}>{label}</Typography>
-    <Typography sx={{ fontFamily: "Poppins", fontSize: "0.68rem", color: GRAY2 }}>{note}</Typography>
-  </Paper>
+      <Typography sx={{ fontFamily: "Poppins", fontWeight: 800, fontSize: "2rem", color: NAVY, lineHeight: 1 }}>{value}</Typography>
+      <Typography sx={{ fontFamily: "Poppins", fontSize: "0.78rem", fontWeight: 600, color: NAVY2, mt: 0.5, mb: 0.25 }}>{label}</Typography>
+      <Typography sx={{ fontFamily: "Poppins", fontSize: "0.68rem", color: GRAY2 }}>{note}</Typography>
+    </CardContent>
+  </Card>
 );
 
 // ── Metric row ─────────────────────────────────────────────────────────────────

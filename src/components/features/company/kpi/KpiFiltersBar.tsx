@@ -2,9 +2,10 @@
 import React, { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
-import { Box, Typography, Paper, Divider, Chip, FormControl, InputLabel, Select, MenuItem, OutlinedInput } from "@mui/material";
+import { Box, Typography, Divider, Chip, FormControl, InputLabel, Select, MenuItem, OutlinedInput } from "@mui/material";
 import FilterListOutlined from "@mui/icons-material/FilterListOutlined";
 import { BORDER, GRAY, LGRAY, NAVY, T, T_DARK, WHITE } from "./kpiTokens";
+import { Card, CardContent } from "@/modules/shared/ui/shadcn/card";
 import { AppDispatch } from "@/store/store";
 import {
   fetchMyPostsForFilter,
@@ -70,70 +71,68 @@ const KpiFiltersBar: React.FC = () => {
   )?.days ?? null;
 
   return (
-    <Paper elevation={0} sx={{
-      border: `1px solid ${BORDER}`, borderRadius: "14px",
-      px: { xs: 2, sm: 2.5 }, py: 1.5, mb: 3,
-      display: "flex", flexWrap: "wrap", gap: { xs: 1.5, sm: 2 }, alignItems: "center",
-    }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-        <FilterListOutlined sx={{ fontSize: 17, color: T }} />
-        <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "0.8rem", color: NAVY }}>
-          {t("pages.kpi.filters")}
-        </Typography>
-      </Box>
+    <Card className="rounded-[14px] py-0 gap-0 mb-6">
+      <CardContent className="px-4 sm:px-5 py-3 flex flex-wrap gap-3 sm:gap-4 items-center">
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+          <FilterListOutlined sx={{ fontSize: 17, color: T }} />
+          <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "0.8rem", color: NAVY }}>
+            {t("pages.kpi.filters")}
+          </Typography>
+        </Box>
 
-      <Divider orientation="vertical" flexItem sx={{ borderColor: BORDER, display: { xs: "none", sm: "block" } }} />
+        <Divider orientation="vertical" flexItem sx={{ borderColor: BORDER, display: { xs: "none", sm: "block" } }} />
 
-      {/* Period chips */}
-      <Box sx={{ display: "flex", gap: 0.6, flexWrap: "wrap" }}>
-        {PERIODS.map(p => {
-          const active = p.days === activePeriod && (p.days !== null || activeDays === null);
-          return (
-            <Chip
-              key={p.label}
-              label={p.label}
-              size="small"
-              onClick={() => handlePeriodChange(p.days)}
-              sx={{
-                fontFamily: "Poppins", fontWeight: 600, fontSize: "0.7rem", height: 26,
-                bgcolor: active ? T : LGRAY,
-                color:   active ? WHITE : GRAY,
-                border: `1px solid ${active ? T : BORDER}`,
-                cursor: "pointer", transition: "all 0.15s",
-                "&:hover": { bgcolor: active ? T_DARK : "#F1F5F9" },
-                "& .MuiChip-label": { px: 1.25 },
-              }}
-            />
-          );
-        })}
-      </Box>
+        {/* Period chips */}
+        <Box sx={{ display: "flex", gap: 0.6, flexWrap: "wrap" }}>
+          {PERIODS.map(p => {
+            const active = p.days === activePeriod && (p.days !== null || activeDays === null);
+            return (
+              <Chip
+                key={p.label}
+                label={p.label}
+                size="small"
+                onClick={() => handlePeriodChange(p.days)}
+                sx={{
+                  fontFamily: "Poppins", fontWeight: 600, fontSize: "0.7rem", height: 26,
+                  bgcolor: active ? T : LGRAY,
+                  color:   active ? WHITE : GRAY,
+                  border: `1px solid ${active ? T : BORDER}`,
+                  cursor: "pointer", transition: "all 0.15s",
+                  "&:hover": { bgcolor: active ? T_DARK : "#F1F5F9" },
+                  "& .MuiChip-label": { px: 1.25 },
+                }}
+              />
+            );
+          })}
+        </Box>
 
-      <Divider orientation="vertical" flexItem sx={{ borderColor: BORDER, display: { xs: "none", sm: "block" } }} />
+        <Divider orientation="vertical" flexItem sx={{ borderColor: BORDER, display: { xs: "none", sm: "block" } }} />
 
-      {/* Post dropdown */}
-      <Box sx={{ ml: { sm: "auto" } }}>
-        <FormControl size="small" sx={{ minWidth: 200 }}>
-          <InputLabel sx={{ fontFamily: "Poppins", fontSize: "0.75rem" }}>
-            {t("pages.kpi.post")}
-          </InputLabel>
-          <Select
-            value={postId ?? ""}
-            onChange={e => handlePostChange(e.target.value as string)}
-            input={<OutlinedInput label={t("pages.kpi.post")} />}
-            sx={{ fontFamily: "Poppins", fontSize: "0.78rem", borderRadius: "10px", "& .MuiOutlinedInput-notchedOutline": { borderColor: BORDER } }}
-          >
-            <MenuItem value="" sx={{ fontFamily: "Poppins", fontSize: "0.78rem", color: GRAY }}>
-              {t("pages.kpi.all_posts")}
-            </MenuItem>
-            {availablePosts.map(p => (
-              <MenuItem key={p.id} value={p.id} sx={{ fontFamily: "Poppins", fontSize: "0.78rem" }}>
-                {p.title}
+        {/* Post dropdown */}
+        <Box sx={{ ml: { sm: "auto" } }}>
+          <FormControl size="small" sx={{ minWidth: 200 }}>
+            <InputLabel sx={{ fontFamily: "Poppins", fontSize: "0.75rem" }}>
+              {t("pages.kpi.post")}
+            </InputLabel>
+            <Select
+              value={postId ?? ""}
+              onChange={e => handlePostChange(e.target.value as string)}
+              input={<OutlinedInput label={t("pages.kpi.post")} />}
+              sx={{ fontFamily: "Poppins", fontSize: "0.78rem", borderRadius: "10px", "& .MuiOutlinedInput-notchedOutline": { borderColor: BORDER } }}
+            >
+              <MenuItem value="" sx={{ fontFamily: "Poppins", fontSize: "0.78rem", color: GRAY }}>
+                {t("pages.kpi.all_posts")}
               </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Box>
-    </Paper>
+              {availablePosts.map(p => (
+                <MenuItem key={p.id} value={p.id} sx={{ fontFamily: "Poppins", fontSize: "0.78rem" }}>
+                  {p.title}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+      </CardContent>
+    </Card>
   );
 };
 

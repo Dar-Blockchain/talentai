@@ -69,7 +69,7 @@ const KpiZone2: React.FC = () => {
   return (
     <>
       <ZoneHeading icon={WorkOutlineOutlined} label={t("pages.kpi.zone2_title")} color="#0891B2" />
-      <KpiCard sx={{ mb: 4 }}>
+      <KpiCard className="mb-8">
         <TableContainer>
           <Table size="small">
             <TableHead>

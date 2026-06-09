@@ -2,7 +2,7 @@
 import React, { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
-import { Box, Typography, Grid, Paper, Skeleton } from "@mui/material";
+import { Box, Typography, Grid, Skeleton } from "@mui/material";
 import SavingsOutlined from "@mui/icons-material/SavingsOutlined";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -10,6 +10,7 @@ import {
 } from "recharts";
 import { ZoneHeading, KpiCard, MetricRow } from "./KpiAtoms";
 import { BORDER, ChartTooltip, GRAY, GRAY2, T, T_BG, T_BRD, T_DARK, WHITE } from "./kpiTokens";
+import { Card, CardContent } from "@/modules/shared/ui/shadcn/card";
 import { AppDispatch } from "@/store/store";
 import { fetchRoi, selectRoi, selectRoiLoading } from "@/store/slices/kpiSlice";
 
@@ -50,54 +51,57 @@ const KpiZone7: React.FC = () => {
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, height: "100%" }}>
 
             {/* Saved hours */}
-            <Paper elevation={0} sx={{
-              border: `1px solid ${T_BRD}`, borderRadius: "18px", p: 2.5,
-              background: `linear-gradient(135deg, ${T_BG} 0%, #ECFDF5 100%)`,
-              flex: "0 0 auto",
-            }}>
-              <Typography sx={{ fontFamily: "Poppins", fontSize: "0.68rem", fontWeight: 700, color: T, textTransform: "uppercase", letterSpacing: "0.08em", mb: 1 }}>
-                {t("pages.kpi.saved_hours_label")}
-              </Typography>
-              {loading ? (
-                <Skeleton variant="text" width={80} height={52} />
-              ) : (
-                <Typography sx={{ fontFamily: "Poppins", fontWeight: 800, fontSize: "2.8rem", color: T_DARK, lineHeight: 1 }}>
-                  {roi.savedHours !== null ? `${roi.savedHours}h` : "—"}
+            <Card
+              className="rounded-[18px] py-0 gap-0 shrink-0"
+              style={{ background: `linear-gradient(135deg, ${T_BG} 0%, #ECFDF5 100%)`, borderColor: T_BRD }}
+            >
+              <CardContent className="p-5">
+                <Typography sx={{ fontFamily: "Poppins", fontSize: "0.68rem", fontWeight: 700, color: T, textTransform: "uppercase", letterSpacing: "0.08em", mb: 1 }}>
+                  {t("pages.kpi.saved_hours_label")}
                 </Typography>
-              )}
-              <Typography sx={{ fontFamily: "Poppins", fontSize: "0.72rem", color: GRAY, mt: 0.5 }}>
-                {loading ? <Skeleton variant="text" width={160} /> : `${roi.completedInterviews ?? 0} ${t("pages.kpi.saved_hours_formula")}`}
-              </Typography>
-            </Paper>
+                {loading ? (
+                  <Skeleton variant="text" width={80} height={52} />
+                ) : (
+                  <Typography sx={{ fontFamily: "Poppins", fontWeight: 800, fontSize: "2.8rem", color: T_DARK, lineHeight: 1 }}>
+                    {roi.savedHours !== null ? `${roi.savedHours}h` : "—"}
+                  </Typography>
+                )}
+                <Typography sx={{ fontFamily: "Poppins", fontSize: "0.72rem", color: GRAY, mt: 0.5 }}>
+                  {loading ? <Skeleton variant="text" width={160} /> : `${roi.completedInterviews ?? 0} ${t("pages.kpi.saved_hours_formula")}`}
+                </Typography>
+              </CardContent>
+            </Card>
 
             {/* Costs */}
-            <Paper elevation={0} sx={{ border: `1px solid ${BORDER}`, borderRadius: "18px", p: 2.5, bgcolor: WHITE, flex: "1 1 auto" }}>
-              <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "0.7rem", color: GRAY2, textTransform: "uppercase", letterSpacing: "0.07em", mb: 1.5 }}>
-                {t("pages.kpi.costs_label")}
-              </Typography>
-              {loading ? (
-                <>
-                  <Skeleton variant="rounded" width="100%" height={36} sx={{ mb: 1, borderRadius: "8px" }} />
-                  <Skeleton variant="rounded" width="100%" height={36} sx={{ borderRadius: "8px" }} />
-                </>
-              ) : (
-                <>
-                  <MetricRow
-                    label={t("pages.kpi.cost_per_hire")}
-                    value={fmt(roi.costPerHire)}
-                    sub={t("pages.kpi.cost_per_hire_sub")}
-                    color="#7C3AED"
-                  />
-                  <MetricRow
-                    label={t("pages.kpi.cost_per_shortlist")}
-                    value={fmt(roi.costPerShortlisted)}
-                    sub={t("pages.kpi.cost_per_shortlist_sub")}
-                    color="#0891B2"
-                    last
-                  />
-                </>
-              )}
-            </Paper>
+            <Card className="rounded-[18px] py-0 gap-0 grow">
+              <CardContent className="p-5">
+                <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "0.7rem", color: GRAY2, textTransform: "uppercase", letterSpacing: "0.07em", mb: 1.5 }}>
+                  {t("pages.kpi.costs_label")}
+                </Typography>
+                {loading ? (
+                  <>
+                    <Skeleton variant="rounded" width="100%" height={36} sx={{ mb: 1, borderRadius: "8px" }} />
+                    <Skeleton variant="rounded" width="100%" height={36} sx={{ borderRadius: "8px" }} />
+                  </>
+                ) : (
+                  <>
+                    <MetricRow
+                      label={t("pages.kpi.cost_per_hire")}
+                      value={fmt(roi.costPerHire)}
+                      sub={t("pages.kpi.cost_per_hire_sub")}
+                      color="#7C3AED"
+                    />
+                    <MetricRow
+                      label={t("pages.kpi.cost_per_shortlist")}
+                      value={fmt(roi.costPerShortlisted)}
+                      sub={t("pages.kpi.cost_per_shortlist_sub")}
+                      color="#0891B2"
+                      last
+                    />
+                  </>
+                )}
+              </CardContent>
+            </Card>
           </Box>
         </Grid>
 

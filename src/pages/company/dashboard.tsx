@@ -1,6 +1,5 @@
-﻿import React from "react";
+import React from "react";
 import dynamic from "next/dynamic";
-import { Box } from "@mui/material";
 import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
 
 const KpiStatCards         = dynamic(() => import("@/components/features/company/kpi/KpiStatCards"));
@@ -15,7 +14,7 @@ const KpiRoiSavings        = dynamic(() => import("@/components/features/company
 const CompanyDashboard: React.FC = () => {
   return (
     <DashboardLayout>
-      <Box sx={{ maxWidth: 1440, mx: "auto" }}>
+      <div className="max-w-[1440px] mx-auto">
         <KpiStatCards />
         <KpiFiltersBar />
         <KpiActionsToTake />
@@ -24,7 +23,7 @@ const CompanyDashboard: React.FC = () => {
         <KpiHiringVelocity />
         <KpiCandidateQuality />
         <KpiRoiSavings />
-      </Box>
+      </div>
     </DashboardLayout>
   );
 };

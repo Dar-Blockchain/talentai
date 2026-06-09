@@ -7,6 +7,7 @@ import { isLoggingOutCheck } from "@/store/slices/authSlice";
 import { useTranslation } from "react-i18next";
 import Sidebar from "./DashboardSidebar";
 import Header from "./DashboardHeader";
+import DashboardMain from "./DashboardMain";
 import { navigation } from "@/constants/navigation";
 import { useRouter } from "next/router";
 import OnboardingTour from "@/components/features/company/OnboardingTour";
@@ -128,35 +129,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         </Box>
 
         {/* Main content: scrollable dashboard pages, or flex viewport for full-height chat */}
-        <Box
-          sx={{
-            flex: 1,
-            minHeight: 0,
-            mt: `${HEADER_HEIGHT}px`,
-            ...(fillMainHeight
-              ? {
-                  display: "flex",
-                  flexDirection: "column",
-                  overflow: "hidden",
-                }
-              : {
-                  height: `calc(100vh - ${HEADER_HEIGHT}px)`,
-                  overflowY: "auto",
-                  overflowX: "hidden",
-                }),
-            backgroundColor: "rgb(249 250 251)!important",
-            px: { xs: 1.5, sm: 2.5, md: 3 },
-            pb: tightenMainPaddingBottom
-              ? { xs: 1, sm: 1.25 }
-              : { xs: 1.5, sm: 2.5, md: 3 },
-            pt: tightenMainPaddingTop
-              ? { xs: 0.5, sm: 1, md: 1 }
-              : { xs: 1.5, sm: 2.5, md: 3 },
-          }}
-          className={fillMainHeight ? undefined : "custom-scrollbar"}
+        <DashboardMain
+          fillMainHeight={fillMainHeight}
+          tightenMainPaddingTop={tightenMainPaddingTop}
+          tightenMainPaddingBottom={tightenMainPaddingBottom}
         >
           {children}
-        </Box>
+        </DashboardMain>
       </Box>
     </Box>
   );

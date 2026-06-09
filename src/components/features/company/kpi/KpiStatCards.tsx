@@ -16,20 +16,24 @@ import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
 import CampaignOutlined from "@mui/icons-material/CampaignOutlined";
 import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
 import GroupsOutlined from "@mui/icons-material/GroupsOutlined";
+import { Card, CardContent } from "@/modules/shared/ui/shadcn/card";
+import { cn } from "@/lib/utils";
 
 const TEAL = "#0D9488";
 const TEAL_BG = "#F0FDFA";
 
 const StatCardSkeleton: React.FC = () => (
-  <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 2 }}>
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-      <Skeleton variant="rounded" width={40} height={40} sx={{ borderRadius: "10px", flexShrink: 0 }} />
-      <Box sx={{ minWidth: 0, flex: 1 }}>
-        <Skeleton variant="text" width="50%" height={28} />
-        <Skeleton variant="text" width="80%" height={14} sx={{ mt: 0.3 }} />
+  <Card className="rounded-2xl py-0 gap-0">
+    <CardContent className="p-4">
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+        <Skeleton variant="rounded" width={40} height={40} sx={{ borderRadius: "10px", flexShrink: 0 }} />
+        <Box sx={{ minWidth: 0, flex: 1 }}>
+          <Skeleton variant="text" width="50%" height={28} />
+          <Skeleton variant="text" width="80%" height={14} sx={{ mt: 0.3 }} />
+        </Box>
       </Box>
-    </Box>
-  </Box>
+    </CardContent>
+  </Card>
 );
 
 const StatCard: React.FC<{
@@ -43,27 +47,27 @@ const StatCard: React.FC<{
 }> = ({ icon: Icon, color, bg, value, label, loading, onClick }) => {
   if (loading) return <StatCardSkeleton />;
   return (
-    <Box
+    <Card
       onClick={onClick}
-      sx={{
-        bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB",
-        p: 2, cursor: onClick ? "pointer" : "default",
-        transition: "box-shadow 0.2s",
-        "&:hover": { boxShadow: onClick ? "0 2px 12px rgba(0,0,0,0.07)" : "none" },
-      }}
+      className={cn(
+        "rounded-2xl py-0 gap-0",
+        onClick ? "cursor-pointer hover:shadow-md transition-shadow" : ""
+      )}
     >
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-        <Box sx={{ width: 40, height: 40, borderRadius: "10px", bgcolor: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <Icon sx={{ fontSize: 20, color }} />
+      <CardContent className="p-4">
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box sx={{ width: 40, height: 40, borderRadius: "10px", bgcolor: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Icon sx={{ fontSize: 20, color }} />
+          </Box>
+          <Box sx={{ minWidth: 0 }}>
+            <Box sx={{ fontSize: "1.4rem", fontWeight: 800, color: "#111827", lineHeight: 1 }}>{value}</Box>
+            <Typography sx={{ fontSize: "0.67rem", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.04em", mt: 0.3, whiteSpace: "nowrap" }}>
+              {label}
+            </Typography>
+          </Box>
         </Box>
-        <Box sx={{ minWidth: 0 }}>
-          <Box sx={{ fontSize: "1.4rem", fontWeight: 800, color: "#111827", lineHeight: 1 }}>{value}</Box>
-          <Typography sx={{ fontSize: "0.67rem", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.04em", mt: 0.3, whiteSpace: "nowrap" }}>
-            {label}
-          </Typography>
-        </Box>
-      </Box>
-    </Box>
+      </CardContent>
+    </Card>
   );
 };
 

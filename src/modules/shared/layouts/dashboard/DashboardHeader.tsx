@@ -1,15 +1,11 @@
 "use client";
 
 import React from "react";
-import {
-  Box,
-  IconButton,
-  useMediaQuery,
-  useTheme,
-} from "@mui/material";
-import MenuOutlined from "@mui/icons-material/MenuOutlined";
+import { Menu } from "lucide-react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import { Separator } from "@/modules/shared/ui/shadcn/separator";
 import HeaderNotification from "@/modules/notifications/shared/components/HeaderNotification";
 import HeaderChat from "./HeaderChat";
 import GlobalSearch from "./GlobalSearch";
@@ -24,101 +20,71 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-
   const user = useSelector((state: RootState) => state.user.connectedUser.user);
-
   const isCandidate = user?.role === "Candidate";
 
   return (
-    <Box
-      sx={{
-        height: 64,
-        bgcolor: "#fff",
-        borderBottom: "1px solid #F3F4F6",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        px: { xs: 2, md: 3 },
-      }}
-    >
+    <header className="relative h-16 bg-white border-b border-gray-100 shadow-[0_1px_4px_0_rgb(0_0_0/0.06)] flex items-center justify-between px-5 md:px-7 z-10">
       {/* ── Left: mobile menu + logo ── */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-        {isMobile && (
-          <IconButton
-            onClick={onOpenMobile}
-            size="small"
-            sx={{
-              color: "#6B7280",
-              width: 34,
-              height: 34,
-              borderRadius: "9px",
-              bgcolor: "#F9FAFB",
-              border: "1px solid #F3F4F6",
-              "&:hover": { bgcolor: "#F3F4F6" },
-            }}
-          >
-            <MenuOutlined sx={{ fontSize: 18 }} />
-          </IconButton>
-        )}
+      <div className="flex items-center gap-3">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onOpenMobile}
+          className="md:hidden h-9 w-9 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
 
-        {/* Logo — candidates only */}
         {isCandidate && (
-          <Link href="/" style={{ display: "inline-block" }}>
-            <Image src="/images/home/logo.svg" alt="TalentAI" width={140} height={38} style={{ objectFit: "contain", cursor: "pointer" }} />
+          <Link href="/" className="inline-flex items-center">
+            <Image
+              src="/images/home/logo.svg"
+              alt="TalentAI"
+              width={130}
+              height={36}
+              className="object-contain"
+            />
           </Link>
         )}
-      </Box>
+      </div>
 
       {/* ── Right: search + actions + user ── */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-        {!isCandidate && <GlobalSearch />}
-        {!isCandidate && <Box sx={{ width: "1px", height: 22, bgcolor: "#E5E7EB", mx: 0.25 }} />}
-        {/* Chat */}
-        <Box
-          sx={{
-            "& .MuiIconButton-root": {
-              width: 34,
-              height: 34,
-              borderRadius: "9px",
-              bgcolor: "#F9FAFB",
-              border: "1px solid #F3F4F6",
-              color: "#6B7280",
-              "&:hover": { bgcolor: "#F3F4F6", color: "#374151" },
-              transition: "all 0.15s",
-            },
-          }}
-          data-tour="header-chat"
-        >
-          <HeaderChat />
-        </Box>
-        {/* Notifications */}
-        <Box
-          sx={{
-            "& .MuiIconButton-root": {
-              width: 34,
-              height: 34,
-              borderRadius: "9px",
-              bgcolor: "#F9FAFB",
-              border: "1px solid #F3F4F6",
-              color: "#6B7280",
-              "&:hover": { bgcolor: "#F3F4F6", color: "#374151" },
-              transition: "all 0.15s",
-            },
-          }}
-          data-tour="header-notif"
-        >
-          <HeaderNotification />
-        </Box>
-        {/* Language */}
-        <LanguageSwitcher variant="icon" size="small" />
-        {/* Divider */}
-        <Box sx={{ width: "1px", height: 22, bgcolor: "#E5E7EB", mx: 0.5 }} />
-        {/* User */}
-        <UserAvatar />{" "}
-      </Box>
-    </Box>
+      <div className="flex items-center gap-2">
+        {!isCandidate && (
+          <>
+            <GlobalSearch />
+            <Separator orientation="vertical" className="h-5 bg-gray-200 mx-0.5" />
+          </>
+        )}
+
+        {/* Action icon cluster */}
+        <div className="flex items-center gap-1 rounded-xl bg-gray-50 border border-gray-100 px-1 py-1">
+          <div
+            data-tour="header-chat"
+            className="[&_.MuiIconButton-root]:!w-8 [&_.MuiIconButton-root]:!h-8 [&_.MuiIconButton-root]:!rounded-lg [&_.MuiIconButton-root]:!bg-transparent [&_.MuiIconButton-root]:!border-0 [&_.MuiIconButton-root]:!text-gray-500 [&_.MuiIconButton-root:hover]:!bg-white [&_.MuiIconButton-root:hover]:!text-gray-800 [&_.MuiIconButton-root:hover]:!shadow-sm [&_.MuiIconButton-root]:!transition-all"
+          >
+            <HeaderChat />
+          </div>
+
+          <div
+            data-tour="header-notif"
+            className="[&_.MuiIconButton-root]:!w-8 [&_.MuiIconButton-root]:!h-8 [&_.MuiIconButton-root]:!rounded-lg [&_.MuiIconButton-root]:!bg-transparent [&_.MuiIconButton-root]:!border-0 [&_.MuiIconButton-root]:!text-gray-500 [&_.MuiIconButton-root:hover]:!bg-white [&_.MuiIconButton-root:hover]:!text-gray-800 [&_.MuiIconButton-root:hover]:!shadow-sm [&_.MuiIconButton-root]:!transition-all"
+          >
+            <HeaderNotification />
+          </div>
+
+          <div className="[&_button]:!rounded-lg [&_button]:!text-gray-500 [&_button:hover]:!bg-white [&_button:hover]:!text-gray-800">
+            <LanguageSwitcher variant="icon" size="small" />
+          </div>
+        </div>
+
+        <Separator orientation="vertical" className="h-5 bg-gray-200 mx-0.5" />
+
+        {/* User chip */}
+        <UserAvatar />
+      </div>
+    </header>
   );
 };
 

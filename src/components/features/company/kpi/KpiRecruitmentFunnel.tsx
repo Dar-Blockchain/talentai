@@ -55,7 +55,7 @@ const KpiZone3: React.FC = () => {
   return (
     <>
       <ZoneHeading icon={TrendingUpOutlined} label={t("pages.kpi.zone3_title")} color="#10B981" />
-      <KpiCard sx={{ mb: 4 }}>
+      <KpiCard className="mb-8">
         {/* Funnel step cards */}
         <Box sx={{ display: "flex", gap: { xs: 1, sm: 1.5 }, mb: 3, flexWrap: { xs: "wrap", md: "nowrap" } }}>
           {loading

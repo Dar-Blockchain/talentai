@@ -2,27 +2,30 @@
 import React, { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
-import { Grid, Skeleton, Paper, Box } from "@mui/material";
+import { Grid, Skeleton, Box } from "@mui/material";
 import AssignmentOutlined from "@mui/icons-material/AssignmentOutlined";
 import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
 import PersonOffOutlined from "@mui/icons-material/PersonOffOutlined";
 import WarningAmberOutlined from "@mui/icons-material/WarningAmberOutlined";
 import { ActionCard, ZoneHeading } from "./KpiAtoms";
-import { BORDER, WHITE } from "./kpiTokens";
+import { BORDER } from "./kpiTokens";
+import { Card, CardContent } from "@/modules/shared/ui/shadcn/card";
 import { AppDispatch } from "@/store/store";
 import { fetchActions, selectActions, selectActionsLoading } from "@/store/slices/kpiSlice";
 import { useKpiParams } from "./useKpiParams";
 
 const CardSkeleton: React.FC = () => (
-  <Paper elevation={0} sx={{ border: `1px solid ${BORDER}`, borderRadius: "18px", p: 2.5, bgcolor: WHITE }}>
-    <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-      <Skeleton variant="rounded" width={44} height={44} sx={{ borderRadius: "13px" }} />
-      <Skeleton variant="rounded" width={48} height={20} sx={{ borderRadius: "20px" }} />
-    </Box>
-    <Skeleton variant="text" width={48} height={36} />
-    <Skeleton variant="text" width="70%" height={16} />
-    <Skeleton variant="text" width="50%" height={14} />
-  </Paper>
+  <Card className="rounded-[18px] py-0 gap-0">
+    <CardContent className="p-5">
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
+        <Skeleton variant="rounded" width={44} height={44} sx={{ borderRadius: "13px" }} />
+        <Skeleton variant="rounded" width={48} height={20} sx={{ borderRadius: "20px" }} />
+      </Box>
+      <Skeleton variant="text" width={48} height={36} />
+      <Skeleton variant="text" width="70%" height={16} />
+      <Skeleton variant="text" width="50%" height={14} />
+    </CardContent>
+  </Card>
 );
 
 const KpiActionsToTake: React.FC = () => {
