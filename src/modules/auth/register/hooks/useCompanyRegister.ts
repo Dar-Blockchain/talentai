@@ -8,10 +8,12 @@ import { refreshAbort } from "@/modules/auth/shared/utils";
 import { useRegisterMutation, useVerifyRegisterOtp } from "../queries";
 import { COMPANY_EXPIRY_KEY } from "../utils";
 import type { CompanyFormValues, RegisterFormProps, RegisterStep } from "../types";
+import { useLanguage } from "@/hooks/useLanguage";
 
 export function useCompanyRegister({ onStepChange, onEmailChange }: RegisterFormProps) {
-  const router        = useRouter();
-  const { showToast } = useToast();
+  const router          = useRouter();
+  const { showToast }   = useToast();
+  const { currentLang } = useLanguage();
 
   const [step,       setStep]       = useState<RegisterStep>(1);
   const [savedEmail, setSavedEmail] = useState("");
@@ -36,6 +38,7 @@ export function useCompanyRegister({ onStepChange, onEmailChange }: RegisterForm
         payload: {
           email:          values.email.toLowerCase().trim(),
           roleType:       "Company",
+          language:       currentLang,
           name:           values.name,
           companyDetails: {
             industry: values.industry,

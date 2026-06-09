@@ -32,7 +32,8 @@ transporter
   );
 
 // Compiled templates (loaded once at startup)
-const otpTemplate                    = compileTemplate("auth/auth-otp.hbs");
+const otpTemplateEn                  = compileTemplate("auth/auth-otp.hbs");
+const otpTemplateFr                  = compileTemplate("auth/auth-otp.fr.hbs");
 const organizationInviteTemplate     = compileTemplate("team/team-invitation.hbs");
 const interviewAssessmentTemplate    = compileTemplate("interview/candidate-assessment-completed.hbs");
 const interviewCompletionTemplate    = compileTemplate("interview/company-assessment-completed.hbs");
@@ -63,12 +64,13 @@ const logoAttachment = {
 const year = new Date().getFullYear();
 
 // ─── Send OTP ────────────────────────────────────────────────────────────────
-const sendOTP = async (email, otp) => {
+const sendOTP = async (email, otp, language = "fr") => {
+  const isFr = language === "fr";
   const mailOptions = {
     from: FROM_ADDRESS,
     to: email,
-    subject: "Verification Code - TalentAI",
-    html: otpTemplate({ otp, year }),
+    subject: isFr ? "Code de vérification - TalentAI" : "Verification Code - TalentAI",
+    html: (isFr ? otpTemplateFr : otpTemplateEn)({ otp, year }),
     attachments: [logoAttachment],
   };
   try {

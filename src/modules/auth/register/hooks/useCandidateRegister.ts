@@ -9,10 +9,12 @@ import { OTP_CODE_LENGTH } from "@/modules/auth/shared/types";
 import { useRegisterMutation, useVerifyRegisterOtp, useResendRegisterOtp } from "../queries";
 import { CANDIDATE_EXPIRY_KEY } from "../utils";
 import type { CandidateFormValues, RegisterFormProps, RegisterStep } from "../types";
+import { useLanguage } from "@/hooks/useLanguage";
 
 export function useCandidateRegister({ onStepChange, onEmailChange }: RegisterFormProps) {
   const router          = useRouter();
   const { showToast }   = useToast();
+  const { currentLang } = useLanguage();
   const returnUrl       = router.query.returnUrl as string | undefined;
   const isJoinTeam      = isInvitationUrl(returnUrl);
   const invitationEmail = extractInvitationEmail(returnUrl);
@@ -64,6 +66,7 @@ export function useCandidateRegister({ onStepChange, onEmailChange }: RegisterFo
       formData.append("firstName", values.firstName);
       formData.append("lastName",  values.lastName);
       formData.append("email",     values.email.toLowerCase().trim());
+      formData.append("language",  currentLang);
       if (!isJoinTeam) {
         formData.append("phone", values.phone);
         if (cvFile) formData.append("resume", cvFile);
@@ -103,7 +106,7 @@ export function useCandidateRegister({ onStepChange, onEmailChange }: RegisterFo
   const resendCode = async () => {
     const signal = refreshAbort(abortRef);
     try {
-      await resendMutation.mutateAsync({ email: savedEmail, signal });
+      await resendMutation.mutateAsync({ email: savedEmail, lang: currentLang, signal });
       timer.clear();
       timer.start();
       otp.reset();

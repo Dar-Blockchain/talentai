@@ -12,12 +12,14 @@ import { OTP_CODE_LENGTH } from "@/modules/auth/shared/types";
 import { useSendSigninCode, useVerifySigninOtp } from "../queries";
 import { OTP_STORAGE_KEY } from "../utils";
 import type { SigninFormValues, SigninStep } from "../types";
+import { useLanguage } from "@/hooks/useLanguage";
 
 export function useSignin() {
-  const router        = useRouter();
-  const dispatch      = useDispatch<AppDispatch>();
-  const { showToast } = useToast();
-  const returnUrl     = router.query.returnUrl as string | undefined;
+  const router           = useRouter();
+  const dispatch         = useDispatch<AppDispatch>();
+  const { showToast }    = useToast();
+  const { currentLang }  = useLanguage();
+  const returnUrl        = router.query.returnUrl as string | undefined;
 
   const invitationEmail = useMemo(() => extractInvitationEmail(returnUrl), [returnUrl]);
 
@@ -51,7 +53,7 @@ export function useSignin() {
   const sendCode = async (email: string) => {
     const signal = refreshAbort(abortRef);
     try {
-      await sendMutation.mutateAsync({ email: email.toLowerCase().trim(), signal });
+      await sendMutation.mutateAsync({ email: email.toLowerCase().trim(), lang: currentLang, signal });
       timer.start();
       setStep(2);
     } catch (err: any) {

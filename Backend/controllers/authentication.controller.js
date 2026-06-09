@@ -115,12 +115,12 @@ const analyseCvAndEnrichProfile = async (resumeFile, validEmail, firstName, last
 module.exports.register = async (req, res) => {
   const resumeFile = req.file;
   try {
-    const { email, roleType, firstName, lastName, name, companyDetails, phone } = req.body;
+    const { email, roleType, firstName, lastName, name, companyDetails, phone, language } = req.body;
     const validEmail    = validateEmail(email);
     const validRoleType = roleType && ["Candidate", "Company", "Member"].includes(roleType) ? roleType : "Candidate";
 
     const result = await authService.registerUser(validEmail, validRoleType, {
-      firstName, lastName, name, companyDetails, phone, resumeFile,
+      firstName, lastName, name, companyDetails, phone, resumeFile, language,
     });
 
     const cvAnalysis = (resumeFile?.path && validRoleType === "Candidate" && result.user)
@@ -141,7 +141,7 @@ module.exports.register = async (req, res) => {
 
 module.exports.login = async (req, res) => {
   try {
-    const result = await authService.loginUser(validateEmail(req.body.email));
+    const result = await authService.loginUser(validateEmail(req.body.email), req.body.language);
     res.status(200).json({ success: true, message: result.message, email: result.email, username: result.username });
   } catch (error) {
     handleError(res, error, 400);
@@ -195,7 +195,7 @@ module.exports.verifyOTP = async (req, res) => {
 
 module.exports.resendOTP = async (req, res) => {
   try {
-    const result = await authService.resendOTP(validateEmail(req.body.email));
+    const result = await authService.resendOTP(validateEmail(req.body.email), req.body.language);
     res.status(200).json({ success: true, message: result.message, email: result.email, username: result.username });
   } catch (error) {
     handleError(res, error, 400);
