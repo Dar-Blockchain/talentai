@@ -4,7 +4,6 @@ import axiosInstance from "@/utils/axiosInstance";
 // ─── Query keys ───────────────────────────────────────────────────────────────
 
 export const APPLICATION_QUERY_KEYS = {
-  detail:  (id: string)                    => ["application", id]                as const,
   summary: (params: ApplicationListParams) => ["applications", "summary", params] as const,
   metrics: ()                              => ["applications", "metrics"]         as const,
   posts:   (params: PostPickerParams)      => ["my-posts", params]                as const,
@@ -28,17 +27,6 @@ export interface PostPickerParams {
 }
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
-
-export const useApplicationDetailQuery = (id: string | undefined) =>
-  useQuery({
-    queryKey: APPLICATION_QUERY_KEYS.detail(id ?? ""),
-    queryFn:  async () => {
-      const { data } = await axiosInstance.get(`job-applications/${id}`);
-      return data?.data ?? data;
-    },
-    enabled:   !!id,
-    staleTime: 30 * 1000,
-  });
 
 export const useApplicationsSummaryQuery = (params: ApplicationListParams) =>
   useQuery({

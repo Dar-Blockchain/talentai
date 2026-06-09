@@ -1,12 +1,2 @@
-export { default as AppCard } from "./AppCard";
-export { default as SectionLabel } from "./SectionLabel";
-export { default as ScoreRing } from "./ScoreRing";
-export { default as BarRow } from "./BarRow";
-export { default as InviteModal } from "./InviteModal";
-export { default as CandidateHeader } from "./CandidateHeader";
-export { default as OverviewTab } from "./OverviewTab";
-export { default as CvTab } from "./CvTab";
-export { default as AiMatchTab } from "./AiMatchTab";
-export { default as InterviewTab } from "./InterviewTab";
 export { default as PostPickerModal } from "./PostPickerModal";
 export { default as ApplicationsToolbar } from "./ApplicationsToolbar";
