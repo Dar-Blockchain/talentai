@@ -109,9 +109,17 @@ requirements
 - If location is not in the description → use: "${companyLocation || "Not specified"}"
 
 skills
-- required skills — include EVERY skill explicitly named in the description (up to 3). When more than 3 skills are mentioned, always prioritize skills with explicit years or signals over skills with no years. NEVER drop a skill that has explicit years in favor of one that does not. Do NOT pad — if the description names 2, return 2. If it names 1, return 1. Prefer specific named tools over generic terms.
+- required skills — include EVERY skill explicitly named in the description (up to 3). When more than 3 skills are mentioned, use this priority order:
+  1. Skills marked as "mandatory", "required", or "must have" — always include these first.
+  2. Skills with explicit years signals — never drop these in favor of skills with no years.
+  3. Skills with the strongest qualifier (mastery > solid > comfortable > basic).
+  Do NOT pad — if the description names 2, return 2. If it names 1, return 1. Prefer specific named tools over generic terms.
 
-- years parsing rule: when a years signal follows multiple skills (e.g. "Python and NestJS for 7 years"), apply the years ONLY to the last mentioned skill before them. The other skills in the group have no years signal — unless the description explicitly says "each" or "both" (e.g. "Python and NestJS, 7 years each").
+- years parsing rule:
+  - If a years signal PRECEDES a skill name (e.g. "2 years Node.js"), apply it to the skill that FOLLOWS it.
+  - If a years signal FOLLOWS a skill (e.g. "React, 2 years" or "Python and NestJS for 7 years"), apply it to the skill IMMEDIATELY BEFORE it.
+  - Never assign a years signal to a skill separated from it by another skill name.
+  - Unless the description explicitly says "each" or "both" (e.g. "Python and NestJS, 7 years each"), do not apply the same years to multiple skills.
 - softSkills MUST contain 1 to 2 items — never return an empty array. Return 2 when the description clearly signals a second soft skill.
 - Prefer specific named tools over generic labels
   Frontend: React.js, Vue, Angular… | Backend: Node.js, Django, Spring… | Mobile: Swift, Kotlin, Flutter…
@@ -119,7 +127,8 @@ skills
   Security: Burp Suite, Splunk, IAM… | QA: Cypress, Selenium, Jest… | Blockchain: Solidity, Hardhat, Web3.js…
   GameDev: Unity, Unreal Engine, Godot, C# (Unity)… | Embedded: C, C++, RTOS, Arduino, STM32, ROS…
   Product: Jira, Figma, Amplitude… | Marketing: Google Ads, HubSpot… | Finance: Excel, SAP, QuickBooks…
-  NEVER use: "Programming", "Communication Tools", "Software", "Technology"
+  NEVER use generic category names as skills: "Programming", "Communication Tools", "Software", "Technology", "CI/CD tools", "Containerization tools", "Cloud platforms", "DevOps tools", "Frontend tools", "Backend technologies", "Database tools", "AI tools", "Analytics platforms", or any phrase ending in "tools", "technologies", "platforms", "frameworks", "solutions".
+  Universal rule: if the description names a category without a specific tool, skip it as a standalone skill — only return named tools or technologies (e.g., Docker not "Containerization tools", GitHub Actions not "CI/CD tools", React.js not "Frontend framework").
 
 - level: required proficiency for this specific skill (1–5 or null)
   Map directly from the years or signal in the description:
@@ -131,21 +140,24 @@ skills
   null → signal genuinely absent from description  → code defaults to Junior (2)
 
   SENIORITY FLOOR — mandatory:
-  If experienceLevel is "Senior" or "Expert", required technical skills MUST have a minimum level of 3 — unless the description explicitly marks them as secondary, optional, or "nice to have".
-  The primary skill (highest importance score) must match the role seniority: Senior → level 4, Expert → level 5. All other required skills minimum level 3.
-  The level mapping always takes priority when the description explicitly qualifies a skill (e.g., "basic", "familiarity with", "exposure to"). The Seniority Floor applies only when no qualifier is present.
+  If experienceLevel is "Senior" or "Expert", required technical skills MUST have a minimum level of 3 — ONLY when the description gives NO explicit years or qualifier for that skill.
+  The primary skill (highest importance score) must match the role seniority: Senior → level 4, Expert → level 5.
+  EXCEPTION — explicit years or qualifiers always win: If the description explicitly states years for a skill (e.g., "2 years React") or uses a qualifier (e.g., "basic", "familiarity with", "exposure to"), the level mapping for that skill ALWAYS takes priority. The Seniority Floor does NOT apply to it — even if the overall experienceLevel is Senior or Expert.
 
 - importance: assign based on the years signal in the description (1–10).
   More years = higher importance — a skill with more years MUST always score higher than one with fewer years.
   Even a 1-year difference MUST result in a different importance score — no two skills with different year counts can share the same importance.
   Skills with no years signal always score lower than those with explicit years.
   Skills with only "knowledge", "basic", or "exposure" always score the lowest.
+  ecosystem tie-breaking: When two or more skills have equal years, rank skills that belong to the same ecosystem or framework hierarchy as the highest-importance skill above unrelated skills. Give the ecosystem-related skill a 1-point higher importance score.
+  Examples: React.js is the foundation of Next.js → React ranks above unrelated same-years skills when Next.js is primary. TypeScript underlies JS frameworks. Express.js belongs to the Node.js ecosystem.
 
 
 experienceLevel
-- Set based on the HIGHEST years signal across all skills in the description — one skill with 8+ years makes the whole role Expert.
-- Default to "Junior" if the description gives no seniority or years signal
-- Junior: 1–3 yrs | Mid-level: 3–5 yrs | Senior: 5–8 yrs | Expert: 8+ yrs
+- Set based on the HIGHEST explicit years signal stated for the overall role (e.g., "1-2 years of experience", "5+ years required"). Do NOT use skill qualifiers (mastery, solid, basic, advanced) to determine experienceLevel — those set the individual skill level only.
+- When an explicit overall years requirement exists, ALL required skill levels are capped at the corresponding maximum — no individual skill qualifier (even "mastery") can exceed it.
+- Default to "Junior" if the description gives no seniority or years signal.
+- Junior: 1–2 yrs → max skill level 2 | Mid-level: 3–5 yrs → max skill level 3 | Senior: 5–8 yrs → max skill level 4 | Expert: 8+ yrs → max skill level 5
 
 ━━━ JOB DESCRIPTION ━━━
 
@@ -187,11 +199,12 @@ function normalizeSkillAnalysis(result) {
 
   const EXP_TO_LEVEL = { "Junior": 2, "Mid-level": 3, "Senior": 4, "Expert": 5 };
   const roleLevel = isInternship ? 2 : (EXP_TO_LEVEL[result.jobDetails?.experienceLevel] ?? 2);
+  const maxLevel  = isInternship ? 2 : (EXP_TO_LEVEL[result.jobDetails?.experienceLevel] ?? 5);
 
   function resolveLevel(modelLevel) {
     if (isInternship) return 2;
     if (typeof modelLevel === "number" && modelLevel >= 1 && modelLevel <= 5) {
-      return Math.max(2, Math.round(modelLevel));
+      return Math.min(maxLevel, Math.max(2, Math.round(modelLevel)));
     }
     return 2;
   }
