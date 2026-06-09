@@ -86,32 +86,43 @@ function mergeDashboardPageBundles<D extends { pages: Record<string, unknown> }>
 
 /**
  * Synchronously determine the correct starting language before React renders.
- * - Guest (no auth token): always 'en'
- * - Authenticated: user.language from persisted Redux state, then MANUAL_LANG_KEY, then 'en'
+ * Priority: persisted Redux user language (auth) → cookie → manual key → 'en'
+ * The cookie (talentai_lang, 1-year) is the guest/post-logout source of truth.
  */
 function getInitialLanguage(): string {
   if (typeof window === 'undefined') return 'en';
 
+  // For authenticated users, the language on the User model wins
   const hasToken = !!(
     localStorage.getItem('api_token') ||
     localStorage.getItem('token')
   );
-  if (!hasToken) return 'en';
-
-  // Try to read from persisted Redux state (fastest — already in localStorage)
-  try {
-    const raw = localStorage.getItem('persist:root');
-    if (raw) {
-      const root = JSON.parse(raw);
-      if (root.user) {
-        const userState = JSON.parse(root.user);
-        const lang = userState?.connectedUser?.user?.language;
-        if (lang === 'fr' || lang === 'en') return lang;
+  if (hasToken) {
+    try {
+      const raw = localStorage.getItem('persist:root');
+      if (raw) {
+        const root = JSON.parse(raw);
+        if (root.user) {
+          const userState = JSON.parse(root.user);
+          // language lives on connectedUser.user (User model), not profile
+          const lang = userState?.connectedUser?.user?.language;
+          if (lang === 'fr' || lang === 'en') return lang;
+        }
       }
-    }
-  } catch { /* ignore parse errors */ }
+    } catch { /* ignore parse errors */ }
+  }
 
-  // Fall back to manually saved language key
+  // Cookie persists across logout — read it for guests and as auth fallback
+  try {
+    const cookieVal = document.cookie
+      .split(';')
+      .map((c) => c.trim())
+      .find((c) => c.startsWith('talentai_lang='))
+      ?.split('=')[1];
+    if (cookieVal === 'fr' || cookieVal === 'en') return cookieVal;
+  } catch { /* ignore */ }
+
+  // Manual key fallback
   const manual = localStorage.getItem('talentai_lang_manual');
   if (manual === 'fr' || manual === 'en') return manual;
 

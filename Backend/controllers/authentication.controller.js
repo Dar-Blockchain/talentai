@@ -141,7 +141,7 @@ module.exports.register = async (req, res) => {
 
 module.exports.login = async (req, res) => {
   try {
-    const result = await authService.loginUser(validateEmail(req.body.email), req.body.language);
+    const result = await authService.loginUser(validateEmail(req.body.email));
     res.status(200).json({ success: true, message: result.message, email: result.email, username: result.username });
   } catch (error) {
     handleError(res, error, 400);
@@ -195,7 +195,7 @@ module.exports.verifyOTP = async (req, res) => {
 
 module.exports.resendOTP = async (req, res) => {
   try {
-    const result = await authService.resendOTP(validateEmail(req.body.email), req.body.language);
+    const result = await authService.resendOTP(validateEmail(req.body.email));
     res.status(200).json({ success: true, message: result.message, email: result.email, username: result.username });
   } catch (error) {
     handleError(res, error, 400);

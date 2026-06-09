@@ -5,7 +5,8 @@ import { authService } from "@/services/authService";
 import { notificationApi } from "@/modules/notifications/shared/api";
 import { notifMessages } from "@/modules/notifications/shared/i18n";
 import i18n from "@/i18n/config";
-import { normalizeLangCode } from "@/hooks/useLanguage";
+import { normalizeLangCode, MANUAL_LANG_KEY } from "@/hooks/useLanguage";
+import { LANGUAGE_COOKIE } from "@/i18n/config";
 import { clearConnectedUser, setConnectedUser } from "./userSlice";
 
 interface AuthState {
@@ -150,17 +151,23 @@ export const logout = createAsyncThunk(
       setAxiosLoggingOut(true);
       dispatch(clearConnectedUser());
 
+      // Preserve language preference across logout
+      const savedLang     = localStorage.getItem(MANUAL_LANG_KEY);
+      const savedLangCookie = Cookies.get(LANGUAGE_COOKIE);
+
       // Clear storage
       const userType = localStorage.getItem("userType");
       localStorage.clear();
-      if (userType) {
-        localStorage.setItem("userType", userType);
-      }
+      if (userType)   localStorage.setItem("userType", userType);
+      if (savedLang)  localStorage.setItem(MANUAL_LANG_KEY, savedLang);
 
-      // Clear cookies
+      // Clear cookies (excluding language preference)
       Object.keys(Cookies.get()).forEach((cookieName) => {
-        Cookies.remove(cookieName, { path: "/" });
+        if (cookieName !== LANGUAGE_COOKIE) Cookies.remove(cookieName, { path: "/" });
       });
+      if (savedLangCookie) {
+        Cookies.set(LANGUAGE_COOKIE, savedLangCookie, { expires: 365, path: "/", sameSite: "lax" });
+      }
 
       // Delay reset so in-flight responses (e.g. 401s) are still suppressed
       setTimeout(() => setAxiosLoggingOut(false), 500);

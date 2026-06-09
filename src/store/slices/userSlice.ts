@@ -12,6 +12,7 @@ export interface ConnectedUserEntity {
   trafficCounter?: number;
   firstName?: string;
   lastName?: string;
+  language?: string;
 }
 
 export interface ConnectedUserProfile {

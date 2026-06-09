@@ -59,14 +59,16 @@ function DbLanguageSync() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      if (typeof window !== 'undefined') localStorage.removeItem(MANUAL_LANG_KEY);
-      i18n.changeLanguage('en');
+      // Preserve the user's last selected language on the login/guest pages.
+      // The cookie (talentai_lang) and MANUAL_LANG_KEY are intentionally kept
+      // so the language survives logout and is picked up by getInitialLanguage
+      // on the next visit without needing to re-select.
       return;
     }
 
-    const dbLang = normalizeLangCode((user as any)?.language);
+    // language is stored on the User model and returned in the auth/profile response
+    const dbLang = normalizeLangCode(user?.language);
     if (dbLang) {
-      if (typeof window !== 'undefined') localStorage.removeItem(MANUAL_LANG_KEY);
       i18n.changeLanguage(dbLang);
       return;
     }
@@ -75,7 +77,7 @@ function DbLanguageSync() {
       ? normalizeLangCode(localStorage.getItem(MANUAL_LANG_KEY))
       : null;
     i18n.changeLanguage(manualLang ?? 'en');
-  }, [isAuthenticated, (user as any)?._id, (user as any)?.language]);
+  }, [isAuthenticated, user?._id, user?.language]);
   return null;
 }
 

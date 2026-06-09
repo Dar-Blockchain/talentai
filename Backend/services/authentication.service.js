@@ -90,12 +90,12 @@ module.exports.registerUser = async (email, roleType = "Candidate", opts = {}) =
   const language = ["fr", "en"].includes(opts.language) ? opts.language : "fr";
 
   // Unverified user — resend OTP instead of blocking
-  const existing = await User.findOne({ email }).select("_id isVerified username").lean();
+  const existing = await User.findOne({ email }).select("_id isVerified username language").lean();
   if (existing) {
     if (existing.isVerified)
       throw Object.assign(new Error("User already exists. Please sign in instead."), { status: 409 });
     const code = await issueOtp(existing._id);
-    await sendOTP(email, code, language);
+    await sendOTP(email, code, existing.language || "fr");
     return { email, username: existing.username, message: "A new verification code has been sent to your email." };
   }
 
@@ -234,6 +234,7 @@ module.exports.verifyUserOTP = async (email, otp, location = null) => {
     user_image: user.user_image,
     isVerified: true,
     lastLogin:  now,
+    language:   user.language || "fr",
   };
 
   const [profile, companyMembership] = await Promise.all([
@@ -271,13 +272,12 @@ module.exports.verifyUserOTP = async (email, otp, location = null) => {
 
 // ─── Login (send OTP) ─────────────────────────────────────────────────────────
 
-module.exports.loginUser = async (email, language) => {
+module.exports.loginUser = async (email) => {
   const user = await User.findOne({ email }).select("_id username isBanned language").lean();
   assertUserCanReceiveOtp(user);
 
-  const lang = (language && ["fr", "en"].includes(language)) ? language : (user.language || "fr");
   const code = await issueOtp(user._id);
-  if (!await sendOTP(email, code, lang))
+  if (!await sendOTP(email, code, user.language || "fr"))
     throw Object.assign(new Error("Failed to send OTP email. Please try again."), { status: 500 });
 
   return { email, username: user.username, message: "Verification code sent to your email." };
@@ -285,13 +285,12 @@ module.exports.loginUser = async (email, language) => {
 
 // ─── Resend OTP ───────────────────────────────────────────────────────────────
 
-module.exports.resendOTP = async (email, language) => {
+module.exports.resendOTP = async (email) => {
   const user = await User.findOne({ email }).select("_id username isBanned language").lean();
   assertUserCanReceiveOtp(user);
 
-  const lang = (language && ["fr", "en"].includes(language)) ? language : (user.language || "fr");
   const code = await issueOtp(user._id);
-  if (!await sendOTP(email, code, lang))
+  if (!await sendOTP(email, code, user.language || "fr"))
     throw Object.assign(new Error("Failed to send OTP email. Please try again."), { status: 500 });
 
   return { email, username: user.username, message: "New verification code sent. Valid for 5 minutes." };
