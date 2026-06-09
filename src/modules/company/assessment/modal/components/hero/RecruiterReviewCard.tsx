@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Typography } from "@mui/material";
 import HourglassEmptyOutlined from "@mui/icons-material/HourglassEmptyOutlined";
 import VerifiedOutlined       from "@mui/icons-material/VerifiedOutlined";
-import { fmtDate } from "@/modules/company/assessment/detail/components/constants";
+import { fmtDate } from "@/modules/company/assessment/constants";
 import { PostAssessmentData } from "../../types";
 
 interface Props {

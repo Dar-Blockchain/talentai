@@ -17,7 +17,6 @@ export const fmtDate = (d: string) => {
   } catch { return "—"; }
 };
 
-
 export function scoreStyle(s: number): { color: string; bg: string; label: string } {
   if (s >= 70) return { color: "#10B981", bg: "#F0FDF4", label: "Excellent" };
   if (s >= 50) return { color: "#D97706", bg: "#FFFBEB", label: "Satisfactory" };

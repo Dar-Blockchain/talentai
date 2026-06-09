@@ -2,7 +2,7 @@ import React from "react";
 import { Avatar, Box, Chip, Typography } from "@mui/material";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import WorkOutlined          from "@mui/icons-material/WorkOutlined";
-import { fmtDate } from "@/modules/company/assessment/detail/components/constants";
+import { fmtDate } from "@/modules/company/assessment/constants";
 import { PostAssessmentData } from "../../types";
 import { TEAL, TEAL_BG, TEAL_BORDER } from "../assessmentAtoms";
 

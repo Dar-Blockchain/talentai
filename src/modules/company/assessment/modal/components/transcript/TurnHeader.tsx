@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Chip, Typography } from "@mui/material";
-import { fmtDate } from "@/modules/company/assessment/detail/components/constants";
+import { fmtDate } from "@/modules/company/assessment/constants";
 import { TEAL, TEAL_BG, TEAL_BORDER } from "../assessmentAtoms";
 
 interface Props {

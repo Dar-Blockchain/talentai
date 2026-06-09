@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { scoreStyle, verdictStyle, TEAL, TEAL_BG } from "@/modules/company/assessment/detail/components/constants";
+import { scoreStyle, verdictStyle, TEAL, TEAL_BG } from "@/modules/company/assessment/constants";
 import { PostAssessmentData, AssessmentTarget } from "../types";
 
 function pickGradient(str: string): [string, string] {

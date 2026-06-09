@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
-import { scoreStyle } from "@/modules/company/assessment/detail/components/constants";
+import { scoreStyle } from "@/modules/company/assessment/constants";
 import { PostAssessmentData } from "../../types";
 import { ScoreRing } from "../assessmentAtoms";
 

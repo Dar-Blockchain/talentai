@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, LinearProgress, Typography } from "@mui/material";
-export { TEAL, TEAL_BG, TEAL_BORDER } from "@/modules/company/assessment/detail/components/constants";
+export { TEAL, TEAL_BG, TEAL_BORDER } from "@/modules/company/assessment/constants";
 
 export const ScoreRing: React.FC<{ value: number; color: string; size?: number }> = ({
   value, color, size = 88,

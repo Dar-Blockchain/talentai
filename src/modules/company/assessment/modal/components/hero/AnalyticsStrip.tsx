@@ -4,7 +4,7 @@ import AccessTimeOutlined        from "@mui/icons-material/AccessTimeOutlined";
 import ChatBubbleOutlineOutlined from "@mui/icons-material/ChatBubbleOutlineOutlined";
 import TrendingUpOutlined        from "@mui/icons-material/TrendingUpOutlined";
 import VolumeOffOutlined         from "@mui/icons-material/VolumeOffOutlined";
-import { fmtDuration } from "@/modules/company/assessment/detail/components/constants";
+import { fmtDuration } from "@/modules/company/assessment/constants";
 import { PostAssessmentData } from "../../types";
 import { InfoChip, TEAL } from "../assessmentAtoms";
 

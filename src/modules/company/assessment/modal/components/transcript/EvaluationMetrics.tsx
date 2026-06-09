@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Chip, Typography } from "@mui/material";
-import { scoreStyle } from "@/modules/company/assessment/detail/components/constants";
+import { scoreStyle } from "@/modules/company/assessment/constants";
 import { ConversationTurn } from "../../types";
 import { Bar } from "../assessmentAtoms";
 
