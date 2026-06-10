@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { memo, useEffect, useState, useRef, useCallback } from "react";
 import {
   Box, Typography, Checkbox, Avatar, Chip, Skeleton, Alert,
 } from "@mui/material";
@@ -38,7 +38,7 @@ function pickGradient(str: string) {
   return AVATAR_GRADIENTS[Math.abs(h) % AVATAR_GRADIENTS.length];
 }
 
-const EmployeeRowSkeleton: React.FC = () => (
+const EmployeeRowSkeleton = memo(() => (
   <Box sx={{ display: "flex", alignItems: "center", gap: 2, px: 2, py: 1.5, borderBottom: "1px solid #F3F4F6" }}>
     <Skeleton variant="rectangular" width={20} height={20} sx={{ borderRadius: 0.5, flexShrink: 0 }} />
     <Skeleton variant="circular" width={36} height={36} sx={{ flexShrink: 0 }} />
@@ -48,14 +48,15 @@ const EmployeeRowSkeleton: React.FC = () => (
     </Box>
     <Skeleton variant="rounded" width={72} height={22} sx={{ borderRadius: "6px", flexShrink: 0 }} />
   </Box>
-);
+));
+EmployeeRowSkeleton.displayName = "EmployeeRowSkeleton";
 
 interface ParticipantsStepProps {
   selected: string[];
   onChange: (ids: string[]) => void;
 }
 
-const ParticipantsStep: React.FC<ParticipantsStepProps> = ({ selected, onChange }) => {
+const ParticipantsStep = memo<ParticipantsStepProps>(({ selected, onChange }) => {
   const dispatch    = useDispatch<AppDispatch>();
   const { members, pageTotal, loading, error } = useSelector(selectMembers);
   const departments = useSelector(selectDepartments);
@@ -103,13 +104,13 @@ const ParticipantsStep: React.FC<ParticipantsStepProps> = ({ selected, onChange 
   const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selected.includes(id));
   const somePageSelected = pageIds.some((id) => selected.includes(id)) && !allPageSelected;
 
-  const toggleMember = (id: string) =>
-    onChange(selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id]);
+  const toggleMember = useCallback((id: string) =>
+    onChange(selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id]), [onChange, selected]);
 
-  const toggleAllOnPage = () => {
+  const toggleAllOnPage = useCallback(() => {
     if (allPageSelected) onChange(selected.filter((id) => !pageIds.includes(id)));
     else                 onChange([...new Set([...selected, ...pageIds])]);
-  };
+  }, [allPageSelected, onChange, selected, pageIds]);
 
   return (
     <Box>
@@ -278,6 +279,7 @@ const ParticipantsStep: React.FC<ParticipantsStepProps> = ({ selected, onChange 
       )}
     </Box>
   );
-};
+});
+ParticipantsStep.displayName = "ParticipantsStep";
 
 export default ParticipantsStep;

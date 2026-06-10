@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useMemo } from "react";
 import { Box, Chip, Typography } from "@mui/material";
 import LockOutlined from "@mui/icons-material/LockOutlined";
 import LockOpenOutlined from "@mui/icons-material/LockOpenOutlined";
@@ -19,14 +19,20 @@ const CARD = {
   boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
 } as const;
 
+const INFO_LABEL_SX = { fontSize: "0.7rem", color: "#94A3B8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.3 } as const;
+const INFO_TITLE_SX = { fontSize: "0.8125rem", fontWeight: 700, color: "#0F172A" } as const;
+const INFO_SUB_SX   = { fontSize: "0.7rem", color: "#94A3B8", mt: 0.15 } as const;
+
 // ─── InfoBlock ────────────────────────────────────────────────────────────────
 
-const InfoBlock: React.FC<{
+interface InfoBlockProps {
   icon: React.ReactNode;
   iconColor: string;
   label: string;
   children: React.ReactNode;
-}> = ({ icon, iconColor, label, children }) => (
+}
+
+const InfoBlock = memo<InfoBlockProps>(({ icon, iconColor, label, children }) => (
   <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
     <Box sx={{
       width: 36, height: 36, borderRadius: "10px", flexShrink: 0,
@@ -37,13 +43,12 @@ const InfoBlock: React.FC<{
       {icon}
     </Box>
     <Box sx={{ minWidth: 0 }}>
-      <Typography sx={{ fontSize: "0.7rem", color: "#94A3B8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.3 }}>
-        {label}
-      </Typography>
+      <Typography sx={INFO_LABEL_SX}>{label}</Typography>
       {children}
     </Box>
   </Box>
-);
+));
+InfoBlock.displayName = "InfoBlock";
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -51,21 +56,35 @@ interface Props {
   campaign: Campaign;
 }
 
-const CampaignDetailsCard: React.FC<Props> = memo(({ campaign }) => {
+const CampaignDetailsCard = memo<Props>(({ campaign }) => {
   const { t } = useTranslation("dashboard");
   const d = "pages.campaigns.detail";
-  const remaining    = daysLeft(campaign.deadline);
-  const anonymous    = campaign.anonymityMode === "ANONYMOUS";
-  const accessLabel  =
+
+  const remaining = useMemo(() => daysLeft(campaign.deadline), [campaign.deadline]);
+  const anonymous = useMemo(() => campaign.anonymityMode === "ANONYMOUS", [campaign.anonymityMode]);
+
+  const accessLabel = useMemo(() =>
     campaign.accessMethod === "LINK"     ? t(`${d}.access_public_link`)      :
-    campaign.accessMethod === "ACCOUNTS" ? t(`${d}.access_accounts_only`)    : t(`${d}.access_link_and_accounts`);
-  const accessSub    =
+    campaign.accessMethod === "ACCOUNTS" ? t(`${d}.access_accounts_only`)    : t(`${d}.access_link_and_accounts`),
+  [campaign.accessMethod, t]);
+
+  const accessSub = useMemo(() =>
     campaign.accessMethod === "LINK"     ? t(`${d}.access_sub_link`) :
-    campaign.accessMethod === "ACCOUNTS" ? t(`${d}.access_sub_accounts`) : t(`${d}.access_sub_both`);
-  const deadlineColor =
+    campaign.accessMethod === "ACCOUNTS" ? t(`${d}.access_sub_accounts`) : t(`${d}.access_sub_both`),
+  [campaign.accessMethod, t]);
+
+  const deadlineColor = useMemo(() =>
     remaining === null ? "#6B7280" :
     remaining === 0    ? "#DC2626" :
-    remaining <= 7     ? "#D97706" : "#16A34A";
+    remaining <= 7     ? "#D97706" : "#16A34A",
+  [remaining]);
+
+  const chipSx = useMemo(() => ({
+    height: 18, fontSize: "10px", fontWeight: 700,
+    bgcolor: remaining === 0 ? "#FEF2F2" : remaining !== null && remaining <= 7 ? "#FFFBEB" : "#F0FDF4",
+    color: deadlineColor,
+    "& .MuiChip-label": { px: 1 },
+  }), [remaining, deadlineColor]);
 
   return (
     <Box sx={{ ...CARD, p: 0, overflow: "hidden" }}>
@@ -85,10 +104,10 @@ const CampaignDetailsCard: React.FC<Props> = memo(({ campaign }) => {
           iconColor={anonymous ? "#8310FF" : "#0891B2"}
           label={t(`${d}.anonymity_label`)}
         >
-          <Typography sx={{ fontSize: "0.8125rem", fontWeight: 700, color: "#0F172A" }}>
+          <Typography sx={INFO_TITLE_SX}>
             {anonymous ? t(`${d}.anonymous`) : t(`${d}.nominative`)}
           </Typography>
-          <Typography sx={{ fontSize: "0.7rem", color: "#94A3B8", mt: 0.15 }}>
+          <Typography sx={INFO_SUB_SX}>
             {anonymous ? t(`${d}.responses_hidden`) : t(`${d}.responses_identified`)}
           </Typography>
         </InfoBlock>
@@ -101,47 +120,32 @@ const CampaignDetailsCard: React.FC<Props> = memo(({ campaign }) => {
           iconColor="#0D9488"
           label={t(`${d}.access_method_label`)}
         >
-          <Typography sx={{ fontSize: "0.8125rem", fontWeight: 700, color: "#0F172A" }}>
-            {accessLabel}
-          </Typography>
-          <Typography sx={{ fontSize: "0.7rem", color: "#94A3B8", mt: 0.15 }}>
-            {accessSub}
-          </Typography>
+          <Typography sx={INFO_TITLE_SX}>{accessLabel}</Typography>
+          <Typography sx={INFO_SUB_SX}>{accessSub}</Typography>
         </InfoBlock>
 
         {/* Target department */}
         {campaign.targetDepartment && (
           <InfoBlock icon={<GroupOutlined sx={{ fontSize: 16 }} />} iconColor="#F59E0B" label={t(`${d}.target_department`)}>
-            <Typography sx={{ fontSize: "0.8125rem", fontWeight: 700, color: "#0F172A" }}>
-              {campaign.targetDepartment}
-            </Typography>
+            <Typography sx={INFO_TITLE_SX}>{campaign.targetDepartment}</Typography>
           </InfoBlock>
         )}
 
         {/* Created */}
         <InfoBlock icon={<CalendarTodayOutlined sx={{ fontSize: 16 }} />} iconColor="#6B7280" label={t(`${d}.created`)}>
-          <Typography sx={{ fontSize: "0.8125rem", fontWeight: 700, color: "#0F172A" }}>
-            {fmtDate(campaign.createdAt)}
-          </Typography>
+          <Typography sx={INFO_TITLE_SX}>{fmtDate(campaign.createdAt)}</Typography>
         </InfoBlock>
 
         {/* Deadline */}
         {campaign.deadline && (
           <InfoBlock icon={<AccessTimeOutlined sx={{ fontSize: 16 }} />} iconColor={deadlineColor} label={t(`${d}.deadline`)}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-              <Typography sx={{ fontSize: "0.8125rem", fontWeight: 700, color: "#0F172A" }}>
-                {fmtDate(campaign.deadline)}
-              </Typography>
+              <Typography sx={INFO_TITLE_SX}>{fmtDate(campaign.deadline)}</Typography>
               {remaining !== null && (
                 <Chip
                   label={remaining === 0 ? t(`${d}.stats_expired`) : t(`${d}.days_left_short`, { count: remaining })}
                   size="small"
-                  sx={{
-                    height: 18, fontSize: "10px", fontWeight: 700,
-                    bgcolor: remaining === 0 ? "#FEF2F2" : remaining <= 7 ? "#FFFBEB" : "#F0FDF4",
-                    color:   deadlineColor,
-                    "& .MuiChip-label": { px: 1 },
-                  }}
+                  sx={chipSx}
                 />
               )}
             </Box>
@@ -150,9 +154,7 @@ const CampaignDetailsCard: React.FC<Props> = memo(({ campaign }) => {
 
         {/* Last updated */}
         <InfoBlock icon={<UpdateOutlined sx={{ fontSize: 16 }} />} iconColor="#94A3B8" label={t(`${d}.last_updated`)}>
-          <Typography sx={{ fontSize: "0.8125rem", fontWeight: 700, color: "#0F172A" }}>
-            {fmtDate(campaign.updatedAt)}
-          </Typography>
+          <Typography sx={INFO_TITLE_SX}>{fmtDate(campaign.updatedAt)}</Typography>
         </InfoBlock>
 
       </Box>

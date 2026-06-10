@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { memo, useMemo, useCallback } from "react";
 import { Box, Button, IconButton, Typography } from "@mui/material";
 import { AddOutlined, CloseOutlined, DeleteOutlined } from "@mui/icons-material";
 import AppInput from "@/components/ui/AppInput";
@@ -19,7 +19,7 @@ interface Props {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-const QuestionnaireForm: React.FC<Props> = ({ config, onChange }) => {
+const QuestionnaireForm = memo<Props>(({ config, onChange }) => {
   const { t } = useTranslation("dashboard");
   const cf = "pages.campaigns.detail.configure_form.questionnaire";
 
@@ -31,34 +31,34 @@ const QuestionnaireForm: React.FC<Props> = ({ config, onChange }) => {
       })),
     [t, cf],
   );
-  const addQuestion = () =>
-    onChange({ questions: [...config.questions, { question: "", type: "TEXT" }] });
+  const addQuestion = useCallback(() =>
+    onChange({ questions: [...config.questions, { question: "", type: "TEXT" }] }), [onChange, config.questions]);
 
-  const updateQuestion = (i: number, updates: Partial<Question>) =>
+  const updateQuestion = useCallback((i: number, updates: Partial<Question>) =>
     onChange({
       questions: config.questions.map((q, idx) => (idx === i ? { ...q, ...updates } : q)),
-    });
+    }), [onChange, config.questions]);
 
-  const removeQuestion = (i: number) =>
-    onChange({ questions: config.questions.filter((_, idx) => idx !== i) });
+  const removeQuestion = useCallback((i: number) =>
+    onChange({ questions: config.questions.filter((_, idx) => idx !== i) }), [onChange, config.questions]);
 
-  const addOption = (qi: number) => {
+  const addOption = useCallback((qi: number) => {
     const q = config.questions[qi];
     updateQuestion(qi, { options: [...(q.options ?? []), ""] });
-  };
+  }, [config.questions, updateQuestion]);
 
-  const updateOption = (qi: number, oi: number, value: string) => {
+  const updateOption = useCallback((qi: number, oi: number, value: string) => {
     const options = (config.questions[qi].options ?? []).map((o, idx) =>
       idx === oi ? value : o,
     );
     updateQuestion(qi, { options });
-  };
+  }, [config.questions, updateQuestion]);
 
-  const removeOption = (qi: number, oi: number) => {
+  const removeOption = useCallback((qi: number, oi: number) => {
     updateQuestion(qi, {
       options: (config.questions[qi].options ?? []).filter((_, idx) => idx !== oi),
     });
-  };
+  }, [config.questions, updateQuestion]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -158,7 +158,8 @@ const QuestionnaireForm: React.FC<Props> = ({ config, onChange }) => {
       <AddRowButton label={t(`${cf}.add_question`)} onClick={addQuestion} />
     </Box>
   );
-};
+});
+QuestionnaireForm.displayName = "QuestionnaireForm";
 
 // ─── Local helpers ────────────────────────────────────────────────────────────
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { memo, useEffect, useMemo, useState, useCallback } from "react";
 import {
   Box,
   Button,
@@ -42,7 +42,7 @@ const DEFAULT_CONFIGS: Record<ModuleType, AnyConfig> = {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-const ConfigureModuleModal: React.FC<Props> = ({
+const ConfigureModuleModal = memo<Props>(({
   open,
   campaignId,
   moduleType,
@@ -76,11 +76,9 @@ const ConfigureModuleModal: React.FC<Props> = ({
     }
   }, [moduleType, config]);
 
-  const handleSave = () => {
-    if (moduleType && config && isValid) {
-      onSave(campaignId, moduleType, config);
-    }
-  };
+  const handleSave = useCallback(() => {
+    if (moduleType && config && isValid) onSave(campaignId, moduleType, config);
+  }, [moduleType, config, isValid, onSave, campaignId]);
 
   // Resolve display metadata — null when moduleType is null (dialog closing)
   const cfg = moduleType ? MODULE_CONFIG[moduleType] : null;
@@ -188,6 +186,7 @@ const ConfigureModuleModal: React.FC<Props> = ({
       </DialogActions>
     </Dialog>
   );
-};
+});
+ConfigureModuleModal.displayName = "ConfigureModuleModal";
 
 export default ConfigureModuleModal;

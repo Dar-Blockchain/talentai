@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { memo, useMemo, useCallback } from "react";
 import { Box, IconButton, Typography } from "@mui/material";
 import { DeleteOutlined } from "@mui/icons-material";
 import AppInput from "@/components/ui/AppInput";
@@ -31,7 +31,7 @@ interface Props {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-const TrainingPathForm: React.FC<Props> = ({ config, onChange }) => {
+const TrainingPathForm = memo<Props>(({ config, onChange }) => {
   const { t } = useTranslation("dashboard");
   const cf = "pages.campaigns.detail.configure_form.training_path";
 
@@ -43,16 +43,16 @@ const TrainingPathForm: React.FC<Props> = ({ config, onChange }) => {
       })),
     [t, cf],
   );
-  const addResource = () =>
-    onChange({ resources: [...config.resources, { type: "LINK", title: "", url: "" }] });
+  const addResource = useCallback(() =>
+    onChange({ resources: [...config.resources, { type: "LINK", title: "", url: "" }] }), [onChange, config.resources]);
 
-  const updateResource = (i: number, updates: Partial<Resource>) =>
+  const updateResource = useCallback((i: number, updates: Partial<Resource>) =>
     onChange({
       resources: config.resources.map((r, idx) => (idx === i ? { ...r, ...updates } : r)),
-    });
+    }), [onChange, config.resources]);
 
-  const removeResource = (i: number) =>
-    onChange({ resources: config.resources.filter((_, idx) => idx !== i) });
+  const removeResource = useCallback((i: number) =>
+    onChange({ resources: config.resources.filter((_, idx) => idx !== i) }), [onChange, config.resources]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -132,6 +132,7 @@ const TrainingPathForm: React.FC<Props> = ({ config, onChange }) => {
       <AddRowButton label={t(`${cf}.add_resource`)} onClick={addResource} />
     </Box>
   );
-};
+});
+TrainingPathForm.displayName = "TrainingPathForm";
 
 export default TrainingPathForm;

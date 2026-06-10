@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { memo, useState, useEffect, useCallback } from "react";
 import {
   Button,
   Dialog,
@@ -31,7 +31,7 @@ interface Props {
   onConfirm: (newStatus: CampaignStatus) => void;
 }
 
-const ChangeStatusDialog: React.FC<Props> = ({
+const ChangeStatusDialog = memo<Props>(({
   open,
   campaignTitle,
   currentStatus,
@@ -51,11 +51,9 @@ const ChangeStatusDialog: React.FC<Props> = ({
 
   const currentColors = STATUS_COLORS[currentStatus] || STATUS_COLORS.DRAFT;
 
-  const handleConfirm = () => {
-    if (selected) {
-      onConfirm(selected);
-    }
-  };
+  const handleConfirm = useCallback(() => {
+    if (selected) onConfirm(selected);
+  }, [selected, onConfirm]);
 
   return (
     <Dialog
@@ -366,6 +364,7 @@ const ChangeStatusDialog: React.FC<Props> = ({
       </DialogActions>
     </Dialog>
   );
-};
+});
+ChangeStatusDialog.displayName = "ChangeStatusDialog";
 
 export default ChangeStatusDialog;

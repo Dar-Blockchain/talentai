@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { memo, useState, useEffect, useCallback, useMemo } from "react";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Box, Typography, TextField, ToggleButtonGroup, ToggleButton,
@@ -38,7 +38,7 @@ const FieldLabel: React.FC<{ label: string; required?: boolean }> = ({ label, re
   </Typography>
 );
 
-const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }) => {
+const EditCampaignModal = memo<Props>(({ open, campaign, onClose, onSaved }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { t } = useTranslation("dashboard");
   const m = "pages.campaigns.detail.edit_modal";
@@ -67,7 +67,7 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
     }
   }, [open, campaign]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!title.trim()) { setError(t(`${m}.error_title_required`)); return; }
     setSaving(true);
     setError(null);
@@ -95,9 +95,9 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
     } finally {
       setSaving(false);
     }
-  };
+  }, [title, description, deadline, anonymityMode, accessMethod, moduleChanged, moduleType, campaign, dispatch, onSaved, onClose, t, m]);
 
-  const toggleSx = {
+  const toggleSx = useMemo(() => ({
     borderRadius: "10px !important",
     border: "1px solid #E5E7EB !important",
     px: 1.5, py: 0.875,
@@ -111,7 +111,7 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
       borderColor: `${PURPLE}40 !important`,
       color: PURPLE,
     },
-  };
+  }), []);
 
   return (
     <Dialog
@@ -299,6 +299,7 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
       </DialogActions>
     </Dialog>
   );
-};
+});
+EditCampaignModal.displayName = "EditCampaignModal";
 
 export default EditCampaignModal;

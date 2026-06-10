@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { memo, useState, useMemo, useCallback } from "react";
 import {
   Box,
   FormControl,
@@ -49,12 +49,12 @@ const CATEGORY_ORDER = ["development", "web3", "ai", "marketing", "qa", "busines
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-const SkillTestForm: React.FC<Props> = ({ config, onChange }) => {
+const SkillTestForm = memo<Props>(({ config, onChange }) => {
   const { t } = useTranslation("dashboard");
   const cf = "pages.campaigns.detail.configure_form.skill_test";
   const [skillSearch, setSkillSearch] = useState("");
 
-  const categoryLabel = (catId: string) => t(`${cf}.category_${catId}`);
+  const categoryLabel = useCallback((catId: string) => t(`${cf}.category_${catId}`), [t, cf]);
 
   const filteredGroups = useMemo(() => {
     const q = skillSearch.trim().toLowerCase();
@@ -256,6 +256,7 @@ const SkillTestForm: React.FC<Props> = ({ config, onChange }) => {
 
     </Box>
   );
-};
+});
+SkillTestForm.displayName = "SkillTestForm";
 
 export default SkillTestForm;

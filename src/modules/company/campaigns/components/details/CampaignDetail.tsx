@@ -64,6 +64,22 @@ const SETUP_BG_SX    = { position: "absolute", inset: 0, opacity: 0.035, backgro
 const SETUP_TITLE_ROW_SX = { display: "flex", alignItems: "center", gap: 1.25, mb: 2 } as const;
 const SETUP_STEPS_SX = { display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 1.5 } as const;
 const SETUP_ARROW_SX = { display: { xs: "none", sm: "flex" }, alignItems: "center", color: "#D1D5DB", fontSize: 22, fontWeight: 300 } as const;
+const SETUP_BANNER_SX = { bgcolor: "#fff", border: "1px solid #E2E8F0", borderRadius: "18px", p: 2.5, boxShadow: "0 1px 4px rgba(0,0,0,0.04)", overflow: "hidden", position: "relative" } as const;
+const SETUP_ICON_BOX_SX = { width: 32, height: 32, borderRadius: "9px", bgcolor: "#FFFBEB", border: "1px solid #FDE68A", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } as const;
+const SETUP_CONFIGURE_BTN_SX = { mt: 0.25, alignSelf: "flex-start", display: "flex", alignItems: "center", gap: 0.5, px: 1.25, py: 0.625, borderRadius: "8px", cursor: "pointer", bgcolor: "#FEF3C7", border: "1px solid #FDE68A", transition: "all 0.15s", "&:hover": { bgcolor: "#FDE68A" } } as const;
+const SETUP_ACTIVATE_BTN_SX = { mt: 0.25, alignSelf: "flex-start", display: "flex", alignItems: "center", gap: 0.5, px: 1.25, py: 0.625, borderRadius: "8px", cursor: "pointer", bgcolor: "#2563EB", border: "1px solid #1D4ED8", transition: "all 0.15s", "&:hover": { bgcolor: "#1D4ED8" } } as const;
+const BADGE_EXPIRED_SX = { display: "inline-flex", alignItems: "center", gap: 0.5, px: 1.125, py: "4px", borderRadius: "999px", bgcolor: "#FEF2F2", border: "1px solid #FECACA" } as const;
+const BADGE_PAUSED_SX  = { display: "inline-flex", alignItems: "center", gap: 0.5, px: 1.125, py: "4px", borderRadius: "999px", bgcolor: "#FFFBEB", border: "1px solid #FDE68A" } as const;
+const BADGE_CLOSED_SX  = { display: "inline-flex", alignItems: "center", gap: 0.5, px: 1.125, py: "4px", borderRadius: "999px", bgcolor: "#EFF6FF", border: "1px solid #BFDBFE" } as const;
+const EXP_DOT_SX   = { width: 6, height: 6, borderRadius: "50%", bgcolor: "#EF4444" } as const;
+const EXP_TEXT_SX  = { fontSize: "11px", fontWeight: 700, color: "#EF4444" } as const;
+const PAU_DOT_SX   = { width: 6, height: 6, borderRadius: "50%", bgcolor: "#D97706" } as const;
+const PAU_TEXT_SX  = { fontSize: "11px", fontWeight: 700, color: "#D97706" } as const;
+const CLO_DOT_SX   = { width: 6, height: 6, borderRadius: "50%", bgcolor: "#2563EB" } as const;
+const CLO_TEXT_SX  = { fontSize: "11px", fontWeight: 700, color: "#2563EB" } as const;
+const VIEW_RESULTS_BTN_SX = { display: "flex", alignItems: "center", gap: 0.625, px: 1.625, py: 0.75, borderRadius: "10px", cursor: "pointer", background: "linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)", boxShadow: "0 3px 10px rgba(139,92,246,0.35)", transition: "all 0.15s", "&:hover": { boxShadow: "0 5px 16px rgba(139,92,246,0.45)", transform: "translateY(-1px)" } } as const;
+const VIEW_RESULTS_TEXT_SX = { fontSize: "0.775rem", fontWeight: 700, color: "#fff" } as const;
+const STAT_ICON_SX_BASE = { width: 38, height: 38, borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } as const;
 
 // ─── TabPill ──────────────────────────────────────────────────────────────────
 
@@ -278,21 +294,21 @@ const CampaignDetail: React.FC<Props> = memo(({
       </Box>
 
       {isExpired && pStatus !== "COMPLETED" && (
-        <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, px: 1.125, py: "4px", borderRadius: "999px", bgcolor: "#FEF2F2", border: "1px solid #FECACA" }}>
-          <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#EF4444" }} />
-          <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#EF4444" }}>{t(`${tp}.employee_deadline_passed`)}</Typography>
+        <Box sx={BADGE_EXPIRED_SX}>
+          <Box sx={EXP_DOT_SX} />
+          <Typography sx={EXP_TEXT_SX}>{t(`${tp}.employee_deadline_passed`)}</Typography>
         </Box>
       )}
       {campaign.status === "PAUSED" && (
-        <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, px: 1.125, py: "4px", borderRadius: "999px", bgcolor: "#FFFBEB", border: "1px solid #FDE68A" }}>
-          <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#D97706" }} />
-          <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#D97706" }}>{t(`${tp}.employee_campaign_paused`)}</Typography>
+        <Box sx={BADGE_PAUSED_SX}>
+          <Box sx={PAU_DOT_SX} />
+          <Typography sx={PAU_TEXT_SX}>{t(`${tp}.employee_campaign_paused`)}</Typography>
         </Box>
       )}
       {campaign.status === "CLOSED" && (
-        <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, px: 1.125, py: "4px", borderRadius: "999px", bgcolor: "#EFF6FF", border: "1px solid #BFDBFE" }}>
-          <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#2563EB" }} />
-          <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#2563EB" }}>{t(`${tp}.employee_campaign_closed`)}</Typography>
+        <Box sx={BADGE_CLOSED_SX}>
+          <Box sx={CLO_DOT_SX} />
+          <Typography sx={CLO_TEXT_SX}>{t(`${tp}.employee_campaign_closed`)}</Typography>
         </Box>
       )}
 
@@ -308,9 +324,9 @@ const CampaignDetail: React.FC<Props> = memo(({
       )}
 
       {supportsResults && pStatus === "COMPLETED" && (
-        <Box onClick={handleViewResults} sx={{ display: "flex", alignItems: "center", gap: 0.625, px: 1.625, py: 0.75, borderRadius: "10px", cursor: "pointer", background: "linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)", boxShadow: "0 3px 10px rgba(139,92,246,0.35)", transition: "all 0.15s", "&:hover": { boxShadow: "0 5px 16px rgba(139,92,246,0.45)", transform: "translateY(-1px)" } }}>
+        <Box onClick={handleViewResults} sx={VIEW_RESULTS_BTN_SX}>
           <VisibilityOutlined sx={{ fontSize: 14, color: "#fff" }} />
-          <Typography sx={{ fontSize: "0.775rem", fontWeight: 700, color: "#fff" }}>{t(`${tp}.view_results`)}</Typography>
+          <Typography sx={VIEW_RESULTS_TEXT_SX}>{t(`${tp}.view_results`)}</Typography>
         </Box>
       )}
     </Box>
@@ -330,10 +346,10 @@ const CampaignDetail: React.FC<Props> = memo(({
 
       {/* Setup checklist banner */}
       {showSetupBanner && (
-        <Box sx={{ bgcolor: "#fff", border: "1px solid #E2E8F0", borderRadius: "18px", p: 2.5, boxShadow: "0 1px 4px rgba(0,0,0,0.04)", overflow: "hidden", position: "relative" }}>
+        <Box sx={SETUP_BANNER_SX}>
           <Box sx={SETUP_BG_SX} />
           <Box sx={SETUP_TITLE_ROW_SX}>
-            <Box sx={{ width: 32, height: 32, borderRadius: "9px", bgcolor: "#FFFBEB", border: "1px solid #FDE68A", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Box sx={SETUP_ICON_BOX_SX}>
               <VisibilityOffOutlined sx={{ fontSize: 16, color: "#D97706" }} />
             </Box>
             <Box>
@@ -360,7 +376,7 @@ const CampaignDetail: React.FC<Props> = memo(({
                 {moduleConfigured ? t(`${tp}.setup_step1_desc_done`) : t(`${tp}.setup_step1_desc_pending`)}
               </Typography>
               {!moduleConfigured && campaign.module?.type && canEdit && (
-                <Box onClick={() => openConfigureModule(campaign.module!.type)} sx={{ mt: 0.25, alignSelf: "flex-start", display: "flex", alignItems: "center", gap: 0.5, px: 1.25, py: 0.625, borderRadius: "8px", cursor: "pointer", bgcolor: "#FEF3C7", border: "1px solid #FDE68A", transition: "all 0.15s", "&:hover": { bgcolor: "#FDE68A" } }}>
+                <Box onClick={() => openConfigureModule(campaign.module!.type)} sx={SETUP_CONFIGURE_BTN_SX}>
                   <TuneOutlined sx={{ fontSize: 13, color: "#D97706" }} />
                   <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#D97706" }}>{t(`${tp}.setup_configure_now`)}</Typography>
                 </Box>
@@ -387,7 +403,7 @@ const CampaignDetail: React.FC<Props> = memo(({
                 {moduleConfigured ? t(`${tp}.setup_step2_desc_ready`) : t(`${tp}.setup_step2_desc_wait`)}
               </Typography>
               {moduleConfigured && canPublish && (
-                <Box onClick={openPending} sx={{ mt: 0.25, alignSelf: "flex-start", display: "flex", alignItems: "center", gap: 0.5, px: 1.25, py: 0.625, borderRadius: "8px", cursor: "pointer", bgcolor: "#2563EB", border: "1px solid #1D4ED8", transition: "all 0.15s", "&:hover": { bgcolor: "#1D4ED8" } }}>
+                <Box onClick={openPending} sx={SETUP_ACTIVATE_BTN_SX}>
                   <RocketLaunchOutlined sx={{ fontSize: 13, color: "#fff" }} />
                   <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#fff" }}>{t(`${tp}.setup_activate_now`)}</Typography>
                 </Box>
@@ -401,7 +417,7 @@ const CampaignDetail: React.FC<Props> = memo(({
       <Box sx={STATS_GRID_SX}>
         {STATS.map(({ icon: Icon, color, bg, label, value }) => (
           <Box key={label} sx={STAT_CARD_SX}>
-            <Box sx={{ width: 38, height: 38, borderRadius: "10px", bgcolor: bg, border: `1px solid ${color}20`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Box sx={{ ...STAT_ICON_SX_BASE, bgcolor: bg, border: `1px solid ${color}20` }}>
               {Icon && <Icon sx={{ fontSize: 18, color }} />}
             </Box>
             <Box>

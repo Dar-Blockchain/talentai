@@ -124,6 +124,26 @@ const CampaignCard: React.FC<CampaignCardProps> = memo(({
 
   const transitions = useMemo(() => STATUS_TRANSITIONS[campaign.status] ?? [], [campaign.status]);
 
+  const accessBadgeSx = useMemo(() => ({
+    display: "flex", alignItems: "center", gap: 0.5, px: 1, py: 0.35, borderRadius: "6px",
+    bgcolor: campaign.accessMethod === "LINK" ? "#EFF6FF" : "#F5F3FF",
+    border: `1px solid ${campaign.accessMethod === "LINK" ? "#BFDBFE" : "#DDD6FE"}`,
+  }), [campaign.accessMethod]);
+
+  const accessTextColor = useMemo(() =>
+    campaign.accessMethod === "LINK" ? "#1D4ED8" : "#5B21B6",
+  [campaign.accessMethod]);
+
+  const anonymityBadgeSx = useMemo(() => ({
+    display: "flex", alignItems: "center", gap: 0.5, px: 1, py: 0.35, borderRadius: "6px",
+    bgcolor: campaign.anonymityMode === "ANONYMOUS" ? "#FFF7ED" : "#F0FDF4",
+    border: `1px solid ${campaign.anonymityMode === "ANONYMOUS" ? "#FED7AA" : "#BBF7D0"}`,
+  }), [campaign.anonymityMode]);
+
+  const anonymityTextColor = useMemo(() =>
+    campaign.anonymityMode === "ANONYMOUS" ? "#9A3412" : "#166534",
+  [campaign.anonymityMode]);
+
   const deadlineText = useMemo(() => {
     if (!campaign.deadline) {
       return <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>{t(`${p}.card.no_deadline`)}</Typography>;
@@ -257,21 +277,21 @@ const CampaignCard: React.FC<CampaignCardProps> = memo(({
         {(campaign.accessMethod || campaign.anonymityMode) && (
           <Box sx={FLAGS_ROW_SX}>
             {campaign.accessMethod && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, px: 1, py: 0.35, borderRadius: "6px", bgcolor: campaign.accessMethod === "LINK" ? "#EFF6FF" : "#F5F3FF", border: `1px solid ${campaign.accessMethod === "LINK" ? "#BFDBFE" : "#DDD6FE"}` }}>
+              <Box sx={accessBadgeSx}>
                 {campaign.accessMethod === "LINK"
                   ? <LinkOutlined sx={{ fontSize: 11, color: "#3B82F6" }} />
                   : <LockPersonOutlined sx={{ fontSize: 11, color: "#8B5CF6" }} />}
-                <Typography sx={{ fontSize: "10px", fontWeight: 600, color: campaign.accessMethod === "LINK" ? "#1D4ED8" : "#5B21B6" }}>
+                <Typography sx={{ fontSize: "10px", fontWeight: 600, color: accessTextColor }}>
                   {campaign.accessMethod === "LINK" ? t(`${p}.card.access_public_link`) : t(`${p}.card.access_accounts_only`)}
                 </Typography>
               </Box>
             )}
             {campaign.anonymityMode && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, px: 1, py: 0.35, borderRadius: "6px", bgcolor: campaign.anonymityMode === "ANONYMOUS" ? "#FFF7ED" : "#F0FDF4", border: `1px solid ${campaign.anonymityMode === "ANONYMOUS" ? "#FED7AA" : "#BBF7D0"}` }}>
+              <Box sx={anonymityBadgeSx}>
                 {campaign.anonymityMode === "ANONYMOUS"
                   ? <VisibilityOffOutlined sx={{ fontSize: 11, color: "#EA580C" }} />
                   : <VisibilityOutlined sx={{ fontSize: 11, color: "#10B981" }} />}
-                <Typography sx={{ fontSize: "10px", fontWeight: 600, color: campaign.anonymityMode === "ANONYMOUS" ? "#9A3412" : "#166534" }}>
+                <Typography sx={{ fontSize: "10px", fontWeight: 600, color: anonymityTextColor }}>
                   {campaign.anonymityMode === "ANONYMOUS" ? t(`${p}.card.privacy_anonymous`) : t(`${p}.card.privacy_nominative`)}
                 </Typography>
               </Box>

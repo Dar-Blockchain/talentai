@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { Box } from "@mui/material";
 import AppInput from "@/components/ui/AppInput";
 import { useTranslation } from "react-i18next";
@@ -16,7 +16,7 @@ interface Props {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-const AIInterviewForm: React.FC<Props> = ({ config, onChange }) => {
+const AIInterviewForm = memo<Props>(({ config, onChange }) => {
   const { t } = useTranslation("dashboard");
   const cf = "pages.campaigns.detail.configure_form.ai_interview";
 
@@ -33,6 +33,7 @@ const AIInterviewForm: React.FC<Props> = ({ config, onChange }) => {
       />
     </Box>
   );
-};
+});
+AIInterviewForm.displayName = "AIInterviewForm";
 
 export default AIInterviewForm;
