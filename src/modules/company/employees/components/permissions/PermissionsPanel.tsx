@@ -57,6 +57,8 @@ const CATEGORY_META: Record<string, CategoryMeta> = {
   [EMPLOYEE_PERMISSION_CATEGORIES.SETTINGS]:    { icon: SettingsOutlined,      color: "#64748B", description: "Control company profile and workspace settings" },
 };
 
+// ─── Static sx constants ──────────────────────────────────────────────────────
+
 const SWITCH_SX = {
   flexShrink: 0,
   "& .MuiSwitch-switchBase": { color: "#E2E8F0" },
@@ -64,7 +66,21 @@ const SWITCH_SX = {
   "& .MuiSwitch-thumb": { boxShadow: "0 1px 4px rgba(0,0,0,0.2)" },
 } as const;
 
-/* ── Permission row ───────────────────────────────────────────────────────── */
+const PANEL_SX       = { display: "flex", flexDirection: "column", gap: 1 } as const;
+const ACCORD_BASE_SX = { "&:before": { display: "none" } } as const;
+const DETAILS_SX     = { p: 0, bgcolor: "#fff" } as const;
+const SUMMARY_CONTENT_SX = { "& .MuiAccordionSummary-content": { my: "14px", alignItems: "center", gap: 1.5 } } as const;
+const META_BOX_SX    = { flex: 1, minWidth: 0 } as const;
+const META_TITLE_SX  = { fontWeight: 700, fontSize: "0.875rem", color: "#0F172A", lineHeight: 1.3 } as const;
+const META_DESC_SX   = { fontSize: "0.7rem", color: "#94A3B8", mt: 0.1 } as const;
+const GRANT_TEXT_SX  = { fontSize: "0.68rem", fontWeight: 700, whiteSpace: "nowrap" } as const;
+const ROW_LABEL_SX   = { fontWeight: 600, fontSize: "0.8125rem", color: "#1E293B", lineHeight: 1.3 } as const;
+const ROW_DESC_SX    = { fontSize: "0.72rem", color: "#94A3B8", mt: 0.15 } as const;
+const ROW_BODY_SX    = { flex: 1, minWidth: 0 } as const;
+const STOP_PROP      = (e: React.MouseEvent) => e.stopPropagation();
+
+// ─── PermRow ──────────────────────────────────────────────────────────────────
+
 interface PermRowProps {
   permKey: EmployeePermissionKey;
   value: Partial<EmployeePermission>;
@@ -80,51 +96,171 @@ const PermRow: React.FC<PermRowProps> = memo(({ permKey, value, color, disabled,
   const desc    = pack ? pack.description : permKey;
   const enabled = pack ? pack.keys.every((k) => !!value[k]) : !!value[permKey];
 
+  const handleToggle = useCallback(() => { if (!disabled) onToggle(permKey); }, [disabled, onToggle, permKey]);
+
+  const rowSx = useMemo(() => ({
+    px: 2.5, py: 1.5,
+    display: "flex", alignItems: "center", gap: 2,
+    borderBottom: isLast ? "none" : "1px solid #F8FAFC",
+    transition: "background 0.15s",
+    "&:hover": disabled ? {} : { bgcolor: "#FAFBFC" },
+    opacity: disabled ? 0.6 : 1,
+  }), [isLast, disabled]);
+
+  const dotSx = useMemo(() => ({
+    width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
+    bgcolor: enabled ? color : "#E2E8F0",
+    boxShadow: enabled ? `0 0 0 3px ${color}18` : "none",
+    transition: "all 0.2s",
+  }), [enabled, color]);
+
+  const switchSx = useMemo(() => ({
+    ...SWITCH_SX,
+    "& .MuiSwitch-switchBase.Mui-checked": {
+      color: "#fff",
+      "& + .MuiSwitch-track": { bgcolor: color, opacity: 1 },
+    },
+  }), [color]);
+
   return (
-    <Box
-      sx={{
-        px: 2.5, py: 1.5,
-        display: "flex", alignItems: "center", gap: 2,
-        borderBottom: isLast ? "none" : "1px solid #F8FAFC",
-        transition: "background 0.15s",
-        "&:hover": disabled ? {} : { bgcolor: "#FAFBFC" },
-        opacity: disabled ? 0.6 : 1,
-      }}
-    >
-      <Box sx={{
-        width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
-        bgcolor: enabled ? color : "#E2E8F0",
-        boxShadow: enabled ? `0 0 0 3px ${color}18` : "none",
-        transition: "all 0.2s",
-      }} />
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography sx={{ fontWeight: 600, fontSize: "0.8125rem", color: "#1E293B", lineHeight: 1.3 }}>
-          {label}
-        </Typography>
-        <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8", mt: 0.15 }}>
-          {desc}
-        </Typography>
+    <Box sx={rowSx}>
+      <Box sx={dotSx} />
+      <Box sx={ROW_BODY_SX}>
+        <Typography sx={ROW_LABEL_SX}>{label}</Typography>
+        <Typography sx={ROW_DESC_SX}>{desc}</Typography>
       </Box>
       <Switch
         checked={enabled}
-        onChange={() => !disabled && onToggle(permKey)}
-        onClick={(e) => e.stopPropagation()}
+        onChange={handleToggle}
+        onClick={STOP_PROP}
         size="small"
         disabled={disabled}
-        sx={{
-          ...SWITCH_SX,
-          "& .MuiSwitch-switchBase.Mui-checked": {
-            color: "#fff",
-            "& + .MuiSwitch-track": { bgcolor: color, opacity: 1 },
-          },
-        }}
+        sx={switchSx}
       />
     </Box>
   );
 });
 PermRow.displayName = "PermRow";
 
-/* ── Main component ───────────────────────────────────────────────────────── */
+// ─── AccordionGroup — isolated so each group's handlers are stable ────────────
+
+interface AccordionGroupProps {
+  group: typeof EMPLOYEE_PERMISSION_GROUPS[number];
+  meta: CategoryMeta;
+  keys: EmployeePermissionKey[];
+  visiblePerms: Array<{ key: EmployeePermissionKey }>;
+  value: Partial<EmployeePermission>;
+  disabled: boolean;
+  isOpen: boolean;
+  onToggle: (key: EmployeePermissionKey) => void;
+  onToggleGroup: (keys: EmployeePermissionKey[], grant: boolean, e: React.MouseEvent) => void;
+  onExpandChange: (category: string, open: boolean) => void;
+}
+
+const AccordionGroup: React.FC<AccordionGroupProps> = memo(({
+  group, meta, keys, visiblePerms, value, disabled, isOpen, onToggle, onToggleGroup, onExpandChange,
+}) => {
+  const Icon        = meta.icon;
+  const allGranted  = keys.every((k) => !!value[k]);
+  const someGranted = keys.some((k)  => !!value[k]);
+  const enabledCount = visiblePerms.filter((p) => {
+    const pack = PACK_ROWS[p.key];
+    return pack ? pack.keys.every((k) => !!value[k]) : !!value[p.key];
+  }).length;
+
+  const handleExpand  = useCallback((_: React.SyntheticEvent, open: boolean) => onExpandChange(group.category, open), [onExpandChange, group.category]);
+  const handleGrant   = useCallback((e: React.MouseEvent) => onToggleGroup(keys, !allGranted, e), [onToggleGroup, keys, allGranted]);
+
+  const accordSx = useMemo(() => ({
+    ...ACCORD_BASE_SX,
+    border: `1px solid ${isOpen ? `${meta.color}30` : "#E8EAED"}`,
+    borderRadius: "14px !important", overflow: "hidden",
+    boxShadow: isOpen ? `0 4px 16px ${meta.color}12` : "0 1px 4px rgba(0,0,0,0.04)",
+    transition: "box-shadow 0.22s, border-color 0.22s",
+  }), [isOpen, meta.color]);
+
+  const summarySx = useMemo(() => ({
+    ...SUMMARY_CONTENT_SX,
+    px: 2.5, py: 0, minHeight: "60px !important",
+    bgcolor: isOpen ? `${meta.color}06` : "#FAFBFC",
+    borderBottom: isOpen ? `1px solid ${meta.color}15` : "none",
+    transition: "background 0.2s",
+  }), [isOpen, meta.color]);
+
+  const expandIconSx = useMemo(() => ({
+    fontSize: 18, color: isOpen ? meta.color : "#94A3B8", transition: "color 0.2s",
+  }), [isOpen, meta.color]);
+
+  const iconBoxSx = useMemo(() => ({
+    width: 36, height: 36, borderRadius: "10px", flexShrink: 0,
+    bgcolor: `${meta.color}12`, border: `1px solid ${meta.color}22`,
+    display: "flex", alignItems: "center", justifyContent: "center", color: meta.color,
+  }), [meta.color]);
+
+  const countBadgeSx = useMemo(() => ({
+    px: 1, py: "2px", borderRadius: "999px", flexShrink: 0,
+    bgcolor: someGranted ? `${meta.color}12` : "#F1F5F9",
+    border: `1px solid ${someGranted ? `${meta.color}25` : "#E2E8F0"}`,
+  }), [someGranted, meta.color]);
+
+  const countTextSx = useMemo(() => ({
+    fontSize: "0.7rem", fontWeight: 700,
+    color: someGranted ? meta.color : "#94A3B8",
+  }), [someGranted, meta.color]);
+
+  const grantBoxSx = useMemo(() => ({
+    px: 1.125, py: "3px", borderRadius: "8px", cursor: "pointer", flexShrink: 0,
+    bgcolor: someGranted ? `${meta.color}08` : "transparent",
+    border: `1px solid ${someGranted ? `${meta.color}22` : "#E8EAED"}`,
+    transition: "all 0.15s",
+    "&:hover": { bgcolor: `${meta.color}14`, borderColor: `${meta.color}35` },
+  }), [someGranted, meta.color]);
+
+  const grantTextSx = useMemo(() => ({
+    ...GRANT_TEXT_SX, color: someGranted ? meta.color : "#94A3B8",
+  }), [someGranted, meta.color]);
+
+  return (
+    <Accordion key={group.category} expanded={isOpen} onChange={handleExpand} disableGutters elevation={0} sx={accordSx}>
+      <AccordionSummary expandIcon={<ExpandMoreOutlined sx={expandIconSx} />} sx={summarySx}>
+        <Box sx={iconBoxSx}><Icon sx={{ fontSize: 18 }} /></Box>
+
+        <Box sx={META_BOX_SX}>
+          <Typography sx={META_TITLE_SX}>{group.category}</Typography>
+          <Typography sx={META_DESC_SX}>{meta.description}</Typography>
+        </Box>
+
+        <Box sx={countBadgeSx}>
+          <Typography sx={countTextSx}>{enabledCount} / {visiblePerms.length}</Typography>
+        </Box>
+
+        {!disabled && (
+          <Box onClick={handleGrant} sx={grantBoxSx}>
+            <Typography sx={grantTextSx}>{allGranted ? "Revoke all" : "Grant all"}</Typography>
+          </Box>
+        )}
+      </AccordionSummary>
+
+      <AccordionDetails sx={DETAILS_SX}>
+        {visiblePerms.map((perm, idx) => (
+          <PermRow
+            key={perm.key}
+            permKey={perm.key}
+            value={value}
+            color={meta.color}
+            disabled={disabled}
+            isLast={idx === visiblePerms.length - 1}
+            onToggle={onToggle}
+          />
+        ))}
+      </AccordionDetails>
+    </Accordion>
+  );
+});
+AccordionGroup.displayName = "AccordionGroup";
+
+// ─── PermissionsPanel ─────────────────────────────────────────────────────────
+
 export interface PermissionsPanelProps {
   value: Partial<EmployeePermission>;
   onChange: (updated: Partial<EmployeePermission>) => void;
@@ -132,30 +268,28 @@ export interface PermissionsPanelProps {
   isOwner?: boolean;
 }
 
-const PermissionsPanel: React.FC<PermissionsPanelProps> = ({ value, onChange, disabled = false, isOwner = false }) => {
+const PermissionsPanel: React.FC<PermissionsPanelProps> = memo(({ value, onChange, disabled = false, isOwner = false }) => {
   const [expanded, setExpanded] = useState<string | false>(EMPLOYEE_PERMISSION_GROUPS[0]?.category ?? false);
 
-  const toggle = useCallback(
-    (key: EmployeePermissionKey) => {
-      const newVal = !value[key];
-      const patch: Partial<EmployeePermission> = {};
-      const pack = PACK_ROWS[key];
-      if (pack) { pack.keys.forEach((k) => { patch[k] = newVal; }); }
-      else { patch[key] = newVal; }
-      onChange({ ...value, ...patch });
-    },
-    [value, onChange],
-  );
+  const toggle = useCallback((key: EmployeePermissionKey) => {
+    const newVal = !value[key];
+    const patch: Partial<EmployeePermission> = {};
+    const pack = PACK_ROWS[key];
+    if (pack) { pack.keys.forEach((k) => { patch[k] = newVal; }); }
+    else { patch[key] = newVal; }
+    onChange({ ...value, ...patch });
+  }, [value, onChange]);
 
-  const toggleGroup = useCallback(
-    (keys: EmployeePermissionKey[], grant: boolean, e: React.MouseEvent) => {
-      e.stopPropagation();
-      const patch: Partial<EmployeePermission> = {};
-      keys.forEach((k) => { patch[k] = grant; });
-      onChange({ ...value, ...patch });
-    },
-    [value, onChange],
-  );
+  const toggleGroup = useCallback((keys: EmployeePermissionKey[], grant: boolean, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const patch: Partial<EmployeePermission> = {};
+    keys.forEach((k) => { patch[k] = grant; });
+    onChange({ ...value, ...patch });
+  }, [value, onChange]);
+
+  const handleExpandChange = useCallback((category: string, open: boolean) => {
+    setExpanded(open ? category : false);
+  }, []);
 
   const groups = useMemo(() =>
     EMPLOYEE_PERMISSION_GROUPS.map((group) => {
@@ -169,106 +303,25 @@ const PermissionsPanel: React.FC<PermissionsPanelProps> = ({ value, onChange, di
   [isOwner]);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-      {groups.map(({ group, meta, keys, visiblePerms }) => {
-        const Icon        = meta.icon;
-        const allGranted  = keys.every((k) => !!value[k]);
-        const someGranted = keys.some((k)  => !!value[k]);
-        const enabledCount = visiblePerms.filter((p) => {
-          const pack = PACK_ROWS[p.key];
-          return pack ? pack.keys.every((k) => !!value[k]) : !!value[p.key];
-        }).length;
-        const isOpen = expanded === group.category;
-
-        return (
-          <Accordion
-            key={group.category}
-            expanded={isOpen}
-            onChange={(_, open) => setExpanded(open ? group.category : false)}
-            disableGutters elevation={0}
-            sx={{
-              border: `1px solid ${isOpen ? `${meta.color}30` : "#E8EAED"}`,
-              borderRadius: "14px !important",
-              overflow: "hidden",
-              boxShadow: isOpen ? `0 4px 16px ${meta.color}12` : "0 1px 4px rgba(0,0,0,0.04)",
-              transition: "box-shadow 0.22s, border-color 0.22s",
-              "&:before": { display: "none" },
-            }}
-          >
-            <AccordionSummary
-              expandIcon={<ExpandMoreOutlined sx={{ fontSize: 18, color: isOpen ? meta.color : "#94A3B8", transition: "color 0.2s" }} />}
-              sx={{
-                px: 2.5, py: 0,
-                minHeight: "60px !important",
-                bgcolor: isOpen ? `${meta.color}06` : "#FAFBFC",
-                borderBottom: isOpen ? `1px solid ${meta.color}15` : "none",
-                transition: "background 0.2s",
-                "& .MuiAccordionSummary-content": { my: "14px", alignItems: "center", gap: 1.5 },
-              }}
-            >
-              <Box sx={{
-                width: 36, height: 36, borderRadius: "10px", flexShrink: 0,
-                bgcolor: `${meta.color}12`, border: `1px solid ${meta.color}22`,
-                display: "flex", alignItems: "center", justifyContent: "center", color: meta.color,
-              }}>
-                <Icon sx={{ fontSize: 18 }} />
-              </Box>
-
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: "0.875rem", color: "#0F172A", lineHeight: 1.3 }}>
-                  {group.category}
-                </Typography>
-                <Typography sx={{ fontSize: "0.7rem", color: "#94A3B8", mt: 0.1 }}>
-                  {meta.description}
-                </Typography>
-              </Box>
-
-              <Box sx={{
-                px: 1, py: "2px", borderRadius: "999px", flexShrink: 0,
-                bgcolor: someGranted ? `${meta.color}12` : "#F1F5F9",
-                border: `1px solid ${someGranted ? `${meta.color}25` : "#E2E8F0"}`,
-              }}>
-                <Typography sx={{ fontSize: "0.7rem", fontWeight: 700, color: someGranted ? meta.color : "#94A3B8" }}>
-                  {enabledCount} / {visiblePerms.length}
-                </Typography>
-              </Box>
-
-              {!disabled && (
-                <Box
-                  onClick={(e) => toggleGroup(keys, !allGranted, e)}
-                  sx={{
-                    px: 1.125, py: "3px", borderRadius: "8px", cursor: "pointer", flexShrink: 0,
-                    bgcolor: someGranted ? `${meta.color}08` : "transparent",
-                    border: `1px solid ${someGranted ? `${meta.color}22` : "#E8EAED"}`,
-                    transition: "all 0.15s",
-                    "&:hover": { bgcolor: `${meta.color}14`, borderColor: `${meta.color}35` },
-                  }}
-                >
-                  <Typography sx={{ fontSize: "0.68rem", fontWeight: 700, color: someGranted ? meta.color : "#94A3B8", whiteSpace: "nowrap" }}>
-                    {allGranted ? "Revoke all" : "Grant all"}
-                  </Typography>
-                </Box>
-              )}
-            </AccordionSummary>
-
-            <AccordionDetails sx={{ p: 0, bgcolor: "#fff" }}>
-              {visiblePerms.map((perm, idx) => (
-                <PermRow
-                  key={perm.key}
-                  permKey={perm.key}
-                  value={value}
-                  color={meta.color}
-                  disabled={disabled}
-                  isLast={idx === visiblePerms.length - 1}
-                  onToggle={toggle}
-                />
-              ))}
-            </AccordionDetails>
-          </Accordion>
-        );
-      })}
+    <Box sx={PANEL_SX}>
+      {groups.map(({ group, meta, keys, visiblePerms }) => (
+        <AccordionGroup
+          key={group.category}
+          group={group}
+          meta={meta}
+          keys={keys}
+          visiblePerms={visiblePerms}
+          value={value}
+          disabled={disabled}
+          isOpen={expanded === group.category}
+          onToggle={toggle}
+          onToggleGroup={toggleGroup}
+          onExpandChange={handleExpandChange}
+        />
+      ))}
     </Box>
   );
-};
+});
 
-export default memo(PermissionsPanel);
+PermissionsPanel.displayName = "PermissionsPanel";
+export default PermissionsPanel;

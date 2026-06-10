@@ -32,6 +32,8 @@ const STATUS_META: Record<string, { color: string; dot: string; bg: string }> = 
   inactive: { color: "#6B7280", dot: "#D1D5DB", bg: "#F3F4F6" },
 };
 
+// ─── Static sx constants ──────────────────────────────────────────────────────
+
 const MENU_PAPER_SX = {
   mt: 0.5, minWidth: 188, borderRadius: "14px",
   border: "1px solid #E8EAED",
@@ -39,14 +41,36 @@ const MENU_PAPER_SX = {
 } as const;
 
 const MENU_BTN_SX = {
-  position: "absolute",
-  top: 12, right: 12, zIndex: 2,
-  color: "#64748B",
-  bgcolor: "rgba(255,255,255,0.96)",
-  border: "1px solid #E8EAED",
-  boxShadow: "0 2px 8px rgba(15,23,42,0.08)",
+  position: "absolute", top: 12, right: 12, zIndex: 2,
+  color: "#64748B", bgcolor: "rgba(255,255,255,0.96)",
+  border: "1px solid #E8EAED", boxShadow: "0 2px 8px rgba(15,23,42,0.08)",
   "&:hover": { bgcolor: "#F8FAFC" },
 } as const;
+
+const MENU_ICON_SX     = { minWidth: 32 } as const;
+const DIVIDER_SX       = { mx: 2.5, height: "1px", bgcolor: "#F1F5F9" } as const;
+const BODY_SX          = { px: 2.5, pt: 1.75, pb: 2, display: "flex", flexDirection: "column", gap: 1.5, flex: 1 } as const;
+const FOOTER_SX        = { display: "flex", alignItems: "center", justifyContent: "space-between", mt: "auto" } as const;
+const TEXT_BOX_SX      = { textAlign: "center", width: "100%", px: 0.5 } as const;
+const NAME_SX          = { fontSize: "15px", fontWeight: 700, color: "#0F172A", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } as const;
+const EMAIL_SX         = { fontSize: "11.5px", color: "#94A3B8", mt: 0.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", letterSpacing: "0.01em" } as const;
+const AVATAR_RING_POS  = { position: "relative", mt: 0.5 } as const;
+const STATUS_DOT_SX    = { position: "absolute", bottom: 3, right: 3, width: 14, height: 14, borderRadius: "50%", border: "2.5px solid #fff", boxShadow: "0 1px 4px rgba(0,0,0,0.15)" } as const;
+const ROLE_ICON_WRAP   = { display: "flex", alignItems: "center", "& svg": { fontSize: 12 } } as const;
+const ROLE_LABEL_TEXT  = { fontSize: "11.5px", fontWeight: 700, letterSpacing: "0.01em" } as const;
+const CAL_ICON_SX      = { fontSize: 10, color: "#CBD5E1" } as const;
+const CAL_TEXT_SX      = { fontSize: "10.5px", color: "#CBD5E1", fontWeight: 500 } as const;
+const CAL_BOX_SX       = { display: "flex", alignItems: "center", gap: 0.4 } as const;
+const MOTION_STYLE     = { height: "100%" } as const;
+const STRIP_SX         = { height: 4, opacity: 0.6, transition: "opacity 0.24s" } as const;
+const DELETE_ITEM_SX   = { color: "#DC2626" } as const;
+const MSG_ICON_SX      = { fontSize: 18, color: "#0D9488" } as const;
+const VIEW_ICON_SX     = { fontSize: 18, color: "#64748B" } as const;
+const EDIT_ICON_SX     = { fontSize: 18, color: PURPLE } as const;
+const DEL_ICON_SX      = { fontSize: 18, color: "#DC2626" } as const;
+const MSG_TEXT_PROPS   = { fontSize: "13px", fontWeight: 600 } as const;
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 interface EmployeeCardProps {
   member: ExtendedMember;
@@ -81,9 +105,12 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({
     return { ...meta, label: t(`pages.employees.card.${labelKey}`) };
   }, [t]);
 
-  const name    = (member.firstName && member.lastName)
-    ? `${member.firstName} ${member.lastName}`
-    : member.firstName || member.lastName || member.username || t("pages.employees.card.unnamed");
+  const name = useMemo(() => (
+    (member.firstName && member.lastName)
+      ? `${member.firstName} ${member.lastName}`
+      : member.firstName || member.lastName || member.username || t("pages.employees.card.unnamed")
+  ), [member.firstName, member.lastName, member.username, t]);
+
   const email   = member.email || "";
   const letter  = name[0]?.toUpperCase() || "U";
   const palette = useMemo(() => pickPalette(email || name), [email, name]);
@@ -99,60 +126,13 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({
   const dept       = member.department?.name ?? member.departmentName ?? null;
   const canMessage = member.status === "active" && member.userId !== currentUserId;
 
-  const closeMenu = useCallback(() => setMenuAnchor(null), []);
-
-  const openMenu = useCallback((event: React.MouseEvent<HTMLElement>) => {
-    event.stopPropagation();
-    setMenuAnchor(event.currentTarget);
-  }, []);
-
-  const handleSelect = useCallback(() => onSelect(member), [onSelect, member]);
-
-  const handleMessage = useCallback((event: React.MouseEvent) => {
-    event.stopPropagation();
-    closeMenu();
-    void startTeamChat(member.userId);
-  }, [closeMenu, startTeamChat, member.userId]);
-
-  const handleView = useCallback((event: React.MouseEvent) => {
-    event.stopPropagation();
-    closeMenu();
-    router.push(`/company/employees/${member.userId}`);
-  }, [closeMenu, router, member.userId]);
-
-  const handleEdit = useCallback((event: React.MouseEvent) => {
-    event.stopPropagation();
-    closeMenu();
-    onEdit(member);
-  }, [closeMenu, onEdit, member]);
-
-  const handleDelete = useCallback((event: React.MouseEvent) => {
-    event.stopPropagation();
-    closeMenu();
-    onDelete(member);
-  }, [closeMenu, onDelete, member]);
-
-  const handleMenuClose = useCallback((event: Event | React.SyntheticEvent) => {
-    event.stopPropagation();
-    closeMenu();
-  }, [closeMenu]);
-
-  const handleDeptClick = useCallback((e: React.MouseEvent) => {
-    const deptId = member.department?._id;
-    if (deptId) { e.stopPropagation(); router.push(`/company/departments/${deptId}`); }
-  }, [member.department?._id, router]);
+  // ── Derived sx objects (depend on palette/role/status/dept) ─────────────────
 
   const cardSx = useMemo(() => ({
-    height: "100%",
-    display: "flex",
-    flexDirection: "column",
-    position: "relative",
-    borderRadius: "20px",
-    cursor: "pointer",
-    bgcolor: "#fff",
-    border: "1px solid #E8EAED",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-    overflow: "hidden",
+    height: "100%", display: "flex", flexDirection: "column",
+    position: "relative", borderRadius: "20px", cursor: "pointer",
+    bgcolor: "#fff", border: "1px solid #E8EAED",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.05)", overflow: "hidden",
     transition: "all 0.24s cubic-bezier(.4,0,.2,1)",
     "&:hover": {
       borderColor: `${palette.to}50`,
@@ -161,6 +141,46 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({
       "& .top-strip": { opacity: 1 },
     },
   }), [palette.to]);
+
+  const stripSx = useMemo(() => ({
+    ...STRIP_SX, background: `linear-gradient(90deg, ${palette.from}, ${palette.to})`,
+  }), [palette.from, palette.to]);
+
+  const headerSx = useMemo(() => ({
+    px: 2.5, pt: 2.5, pb: 2,
+    display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5,
+    background: `radial-gradient(ellipse 160% 100% at 50% 0%, ${palette.from}0A 0%, transparent 65%)`,
+  }), [palette.from]);
+
+  const ringSx = useMemo(() => ({
+    width: 76, height: 76, borderRadius: "50%",
+    background: `linear-gradient(145deg, ${palette.from}, ${palette.to})`,
+    p: "2.5px", display: "flex", alignItems: "center", justifyContent: "center",
+    boxShadow: `0 6px 20px ${palette.to}40`,
+  }), [palette.from, palette.to]);
+
+  const avatarSx = useMemo(() => ({
+    width: 71, height: 71, fontSize: "1.55rem", fontWeight: 800, color: "#fff",
+    background: `linear-gradient(145deg, ${palette.from}CC, ${palette.to})`,
+  }), [palette.from, palette.to]);
+
+  const statusDotSx = useMemo(() => ({
+    ...STATUS_DOT_SX, bgcolor: status.dot,
+  }), [status.dot]);
+
+  const rolePillSx = useMemo(() => ({
+    display: "inline-flex", alignItems: "center", gap: 0.6,
+    px: 1.5, py: "5px", borderRadius: "999px",
+    bgcolor: `${roleColor}10`, border: `1.5px solid ${roleColor}25`,
+  }), [roleColor]);
+
+  const roleIconColorSx = useMemo(() => ({
+    ...ROLE_ICON_WRAP, color: roleColor,
+  }), [roleColor]);
+
+  const roleLabelColorSx = useMemo(() => ({
+    ...ROLE_LABEL_TEXT, color: roleColor,
+  }), [roleColor]);
 
   const deptBoxSx = useMemo(() => ({
     display: "flex", alignItems: "center", gap: 0.75,
@@ -172,13 +192,53 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({
     ...(member.department?._id && { "&:hover": { bgcolor: "#EEF2FF", borderColor: "#C7D2FE" } }),
   }), [dept, member.department?._id]);
 
+  const deptIconSx = useMemo(() => ({
+    fontSize: 13, color: dept ? "#94A3B8" : "#CBD5E1", flexShrink: 0,
+  }), [dept]);
+
+  const deptTextSx = useMemo(() => ({
+    fontSize: "12px", fontWeight: 600, color: dept ? "#475569" : "#CBD5E1",
+    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+    fontStyle: dept ? "normal" : "italic",
+  }), [dept]);
+
+  const statusBadgeSx = useMemo(() => ({
+    display: "inline-flex", alignItems: "center", gap: 0.5,
+    px: 1, py: "3px", borderRadius: "999px", bgcolor: status.bg,
+  }), [status.bg]);
+
+  const statusInnerDotSx = useMemo(() => ({
+    width: 5, height: 5, borderRadius: "50%", bgcolor: status.dot,
+  }), [status.dot]);
+
+  const statusTextSx = useMemo(() => ({
+    fontSize: "10.5px", fontWeight: 700, color: status.color,
+  }), [status.color]);
+
+  // ── Handlers ──────────────────────────────────────────────────────────────────
+
+  const closeMenu      = useCallback(() => setMenuAnchor(null), []);
+  const openMenu       = useCallback((e: React.MouseEvent<HTMLElement>) => { e.stopPropagation(); setMenuAnchor(e.currentTarget); }, []);
+  const handleSelect   = useCallback(() => onSelect(member), [onSelect, member]);
+  const handleMessage  = useCallback((e: React.MouseEvent) => { e.stopPropagation(); closeMenu(); void startTeamChat(member.userId); }, [closeMenu, startTeamChat, member.userId]);
+  const handleView     = useCallback((e: React.MouseEvent) => { e.stopPropagation(); closeMenu(); router.push(`/company/employees/${member.userId}`); }, [closeMenu, router, member.userId]);
+  const handleEdit     = useCallback((e: React.MouseEvent) => { e.stopPropagation(); closeMenu(); onEdit(member); }, [closeMenu, onEdit, member]);
+  const handleDelete   = useCallback((e: React.MouseEvent) => { e.stopPropagation(); closeMenu(); onDelete(member); }, [closeMenu, onDelete, member]);
+  const handleMenuClose = useCallback((e: Event | React.SyntheticEvent) => { e.stopPropagation(); closeMenu(); }, [closeMenu]);
+  const handleDeptClick = useCallback((e: React.MouseEvent) => {
+    const deptId = member.department?._id;
+    if (deptId) { e.stopPropagation(); router.push(`/company/departments/${deptId}`); }
+  }, [member.department?._id, router]);
+
+  const motionProps = useMemo(() => ({
+    initial: { opacity: 0, y: 10 },
+    animate: { opacity: 1, y: 0 },
+    transition: { delay: index * 0.04, duration: 0.28, ease: "easeOut" },
+    style: MOTION_STYLE,
+  }), [index]);
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.04, duration: 0.28, ease: "easeOut" }}
-      style={{ height: "100%" }}
-    >
+    <motion.div {...motionProps}>
       <Box onClick={handleSelect} sx={cardSx}>
         <IconButton size="small" aria-label={t("pages.employees.card.actions_menu")} onClick={openMenu} sx={MENU_BTN_SX}>
           <MoreVertOutlined sx={{ fontSize: 18 }} />
@@ -194,102 +254,68 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({
         >
           {canMessage && (
             <MenuItem onClick={handleMessage}>
-              <ListItemIcon sx={{ minWidth: 32 }}>
-                <ChatBubbleOutlineOutlined sx={{ fontSize: 18, color: "#0D9488" }} />
-              </ListItemIcon>
-              <ListItemText primary={t("pages.employees.card.message")} primaryTypographyProps={{ fontSize: "13px", fontWeight: 600 }} />
+              <ListItemIcon sx={MENU_ICON_SX}><ChatBubbleOutlineOutlined sx={MSG_ICON_SX} /></ListItemIcon>
+              <ListItemText primary={t("pages.employees.card.message")} primaryTypographyProps={MSG_TEXT_PROPS} />
             </MenuItem>
           )}
           <MenuItem onClick={handleView}>
-            <ListItemIcon sx={{ minWidth: 32 }}>
-              <OpenInNewOutlined sx={{ fontSize: 18, color: "#64748B" }} />
-            </ListItemIcon>
-            <ListItemText primary={t("pages.employees.card.view")} primaryTypographyProps={{ fontSize: "13px", fontWeight: 600 }} />
+            <ListItemIcon sx={MENU_ICON_SX}><OpenInNewOutlined sx={VIEW_ICON_SX} /></ListItemIcon>
+            <ListItemText primary={t("pages.employees.card.view")} primaryTypographyProps={MSG_TEXT_PROPS} />
           </MenuItem>
           {canAssignRoles && (
             <MenuItem onClick={handleEdit}>
-              <ListItemIcon sx={{ minWidth: 32 }}>
-                <EditOutlined sx={{ fontSize: 18, color: PURPLE }} />
-              </ListItemIcon>
-              <ListItemText primary={t("pages.employees.card.edit")} primaryTypographyProps={{ fontSize: "13px", fontWeight: 600 }} />
+              <ListItemIcon sx={MENU_ICON_SX}><EditOutlined sx={EDIT_ICON_SX} /></ListItemIcon>
+              <ListItemText primary={t("pages.employees.card.edit")} primaryTypographyProps={MSG_TEXT_PROPS} />
             </MenuItem>
           )}
           {canRemove && (
-            <MenuItem onClick={handleDelete} sx={{ color: "#DC2626" }}>
-              <ListItemIcon sx={{ minWidth: 32 }}>
-                <DeleteOutlineOutlined sx={{ fontSize: 18, color: "#DC2626" }} />
-              </ListItemIcon>
+            <MenuItem onClick={handleDelete} sx={DELETE_ITEM_SX}>
+              <ListItemIcon sx={MENU_ICON_SX}><DeleteOutlineOutlined sx={DEL_ICON_SX} /></ListItemIcon>
               <ListItemText primary={t("pages.employees.card.tooltip_remove")} primaryTypographyProps={{ fontSize: "13px", fontWeight: 600, color: "#DC2626" }} />
             </MenuItem>
           )}
         </Menu>
 
-        <Box className="top-strip" sx={{ height: 4, background: `linear-gradient(90deg, ${palette.from}, ${palette.to})`, opacity: 0.6, transition: "opacity 0.24s" }} />
+        <Box className="top-strip" sx={stripSx} />
 
-        <Box sx={{
-          px: 2.5, pt: 2.5, pb: 2,
-          display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5,
-          background: `radial-gradient(ellipse 160% 100% at 50% 0%, ${palette.from}0A 0%, transparent 65%)`,
-        }}>
-          <Box sx={{ position: "relative", mt: 0.5 }}>
-            <Box sx={{
-              width: 76, height: 76, borderRadius: "50%",
-              background: `linear-gradient(145deg, ${palette.from}, ${palette.to})`,
-              p: "2.5px",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: `0 6px 20px ${palette.to}40`,
-            }}>
-              <Avatar sx={{
-                width: 71, height: 71,
-                fontSize: "1.55rem", fontWeight: 800, color: "#fff",
-                background: `linear-gradient(145deg, ${palette.from}CC, ${palette.to})`,
-              }}>
-                {letter}
-              </Avatar>
+        <Box sx={headerSx}>
+          <Box sx={AVATAR_RING_POS}>
+            <Box sx={ringSx}>
+              <Avatar sx={avatarSx}>{letter}</Avatar>
             </Box>
-            <Box sx={{ position: "absolute", bottom: 3, right: 3, width: 14, height: 14, borderRadius: "50%", bgcolor: status.dot, border: "2.5px solid #fff", boxShadow: "0 1px 4px rgba(0,0,0,0.15)" }} />
+            <Box sx={statusDotSx} />
           </Box>
 
-          <Box sx={{ textAlign: "center", width: "100%", px: 0.5 }}>
-            <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#0F172A", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {name}
-            </Typography>
-            <Typography sx={{ fontSize: "11.5px", color: "#94A3B8", mt: 0.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", letterSpacing: "0.01em" }}>
-              {email}
-            </Typography>
+          <Box sx={TEXT_BOX_SX}>
+            <Typography sx={NAME_SX}>{name}</Typography>
+            <Typography sx={EMAIL_SX}>{email}</Typography>
           </Box>
 
-          <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.6, px: 1.5, py: "5px", borderRadius: "999px", bgcolor: `${roleColor}10`, border: `1.5px solid ${roleColor}25` }}>
-            {RoleIcon && (
-              <Box sx={{ color: roleColor, display: "flex", alignItems: "center", "& svg": { fontSize: 12 } }}>
-                <RoleIcon />
-              </Box>
-            )}
-            <Typography sx={{ fontSize: "11.5px", fontWeight: 700, color: roleColor, letterSpacing: "0.01em" }}>
-              {roleLabel}
-            </Typography>
+          <Box sx={rolePillSx}>
+            {RoleIcon && <Box sx={roleIconColorSx}><RoleIcon /></Box>}
+            <Typography sx={roleLabelColorSx}>{roleLabel}</Typography>
           </Box>
         </Box>
 
-        <Box sx={{ mx: 2.5, height: "1px", bgcolor: "#F1F5F9" }} />
+        <Box sx={DIVIDER_SX} />
 
-        <Box sx={{ px: 2.5, pt: 1.75, pb: 2, display: "flex", flexDirection: "column", gap: 1.5, flex: 1 }}>
+        <Box sx={BODY_SX}>
           <Box onClick={handleDeptClick} sx={deptBoxSx}>
-            <BusinessOutlined sx={{ fontSize: 13, color: dept ? "#94A3B8" : "#CBD5E1", flexShrink: 0 }} />
-            <Typography sx={{ fontSize: "12px", fontWeight: 600, color: dept ? "#475569" : "#CBD5E1", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontStyle: dept ? "normal" : "italic" }}>
+            <BusinessOutlined sx={deptIconSx} />
+            <Typography sx={deptTextSx}>
               {dept ?? t("pages.employees.card.no_department")}
             </Typography>
           </Box>
 
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: "auto", pt: dept ? 0 : 0.5 }}>
-            <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, px: 1, py: "3px", borderRadius: "999px", bgcolor: status.bg }}>
-              <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: status.dot }} />
-              <Typography sx={{ fontSize: "10.5px", fontWeight: 700, color: status.color }}>{status.label}</Typography>
+          <Box sx={FOOTER_SX}>
+            <Box sx={statusBadgeSx}>
+              <Box sx={statusInnerDotSx} />
+              <Typography sx={statusTextSx}>{status.label}</Typography>
             </Box>
             {joinedDate && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
-                <CalendarTodayOutlined sx={{ fontSize: 10, color: "#CBD5E1" }} />
-                <Typography sx={{ fontSize: "10.5px", color: "#CBD5E1", fontWeight: 500 }}>{joinedDate}</Typography>
+              <Box sx={CAL_BOX_SX}>
+                <CalendarTodayOutlined sx={CAL_ICON_SX} />
+                <Typography sx={CAL_TEXT_SX}>{joinedDate}</Typography>
               </Box>
             )}
           </Box>
