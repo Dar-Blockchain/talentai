@@ -99,25 +99,22 @@ const sendReminderEmail = async (application, post, reminderType) => {
     const candidateEmail = candidateProfile.userId.email;
     const firstName = candidateProfile.firstName || candidateProfile.userId.username || 'there';
     const jobTitle = post.jobDetails?.title || 'Position';
+    const jobLanguage = post.interviewLanguages?.[0] || 'en';
     const companyProfile = await Profile.findOne({ userId: post.user }).select('companyDetails').lean();
     const companyName = companyProfile?.companyDetails?.name || company.username || company.email || 'Our Company';
     const interviewLink = `${process.env.BASE_URL}candidate/interview?jobId=${post._id}&companyId=${post.user}&ref=link`;
+    const deadlineLocale = jobLanguage === 'fr' ? 'fr-FR' : 'en-US';
     const deadline = post.expirationDate
-      ? new Date(post.expirationDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+      ? new Date(post.expirationDate).toLocaleDateString(deadlineLocale, { year: 'numeric', month: 'long', day: 'numeric' })
       : null;
-
-    // logger.debug(`📧 To: ${candidateEmail}`);
-    // logger.debug(`👤 Candidate: ${firstName}`);
-    // logger.debug(`💼 Position: ${jobTitle}`);
-    // logger.debug(`🏢 Company: ${companyName}`);
-    // logger.debug(`🔗 Interview Link: ${interviewLink}`);
 
     // Nudge #2 for first reminder (4 days), nudge #3 for second reminder (24h before deadline)
     const nudgeNumber = reminderType === REMINDER_TYPES.SECOND_REMINDER ? 3 : 2;
     const emailSent = await sendInterviewNudge(
       candidateEmail,
       { firstName, jobTitle, companyName, interviewLink, deadline },
-      nudgeNumber
+      nudgeNumber,
+      jobLanguage
     );
 
     if (!emailSent) {
@@ -185,7 +182,7 @@ const runReminderJob = async ({ force = false } = {}) => {
       select: '_id'
     }).populate({
       path: 'post',
-      select: 'expirationDate _id user jobDetails'
+      select: 'expirationDate _id user jobDetails interviewLanguages'
     });
 
     // logger.debug(`Found ${pendingApplications.length} pending applications`);

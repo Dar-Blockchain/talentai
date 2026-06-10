@@ -3,6 +3,7 @@ const CampaignParticipant = require("../models/CampaignParticipant.model");
 const InternalCampaign = require("../models/InternalCampaign.model");
 const Profile = require("../models/Profile.model");
 const campaignParticipantService = require("../services/campaignParticipant.service");
+const User = require("../models/User.model");
 const { sendCampaignInvitation } = require("../utils/email-service");
 
 const MODULE_LABELS = {
@@ -55,15 +56,21 @@ exports.addCampaignParticipant = async (req, res) => {
       (async () => {
         try {
           let participantName = "Participant";
+          let employeeLanguage = "en";
           if (employeeId) {
-            const profile = await Profile.findOne({ userId: employeeId }).select("firstName lastName").lean();
+            const [profile, employeeUser] = await Promise.all([
+              Profile.findOne({ userId: employeeId }).select("firstName lastName").lean(),
+              User.findById(employeeId).select("language").lean(),
+            ]);
             participantName = [profile?.firstName, profile?.lastName].filter(Boolean).join(" ") || "Participant";
+            employeeLanguage = employeeUser?.language || "en";
           }
           const companyProfile = await Profile.findOne({ userId: campaign.company }).select("companyDetails.name").lean();
           const companyName = companyProfile?.companyDetails?.name || "Your company";
           const assessmentLink = `${process.env.BASE_URL}/employee/campaigns/${campaignId}/assessment`;
+          const deadlineLocale = employeeLanguage === "fr" ? "fr-FR" : "en-GB";
           const deadlineStr = campaign.deadline
-            ? new Date(campaign.deadline).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+            ? new Date(campaign.deadline).toLocaleDateString(deadlineLocale, { day: "numeric", month: "long", year: "numeric" })
             : null;
 
           const sent = await sendCampaignInvitation(recipientEmail, {
@@ -74,7 +81,7 @@ exports.addCampaignParticipant = async (req, res) => {
             deadline: deadlineStr,
             campaignDescription: campaign.description || null,
             assessmentLink,
-          });
+          }, employeeLanguage);
           if (sent) {
             await CampaignParticipant.findByIdAndUpdate(participant._id, { invitationSentAt: new Date() });
           }

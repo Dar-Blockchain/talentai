@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invitation à une campagne</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f0f4f8; font-family:'Segoe UI', Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f4f8; padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table width="620" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+          <!-- Logo header -->
+          <tr>
+            <td style="background-color:#ffffff; padding:20px 28px; border-bottom:1px solid #E5E7EB;">
+              <img src="cid:logo" alt="TalentAI" height="28" style="display:block; border:0; outline:none;">
+            </td>
+          </tr>
+
+          <!-- Title -->
+          <tr>
+            <td style="padding:36px 36px 8px 36px;">
+              <h1 style="margin:0; font-size:26px; font-weight:700; color:#111827; line-height:1.2; font-family:'Segoe UI', Arial, sans-serif;">
+                Vous avez été assigné(e) à une campagne
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Greeting -->
+          <tr>
+            <td style="padding:16px 36px 0 36px;">
+              <p style="margin:0 0 10px 0; font-size:16px; color:#374151; font-family:'Segoe UI', Arial, sans-serif;">Bonjour <strong>{{participantName}}</strong>,</p>
+              <p style="margin:0; font-size:15px; color:#4B5563; line-height:1.7; font-family:'Segoe UI', Arial, sans-serif;">
+                <strong>{{companyName}}</strong> vous a assigné(e) à la campagne suivante. Veuillez compléter l'évaluation avant la date limite.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Highlight badge -->
+          <tr>
+            <td style="padding:20px 36px 8px 36px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="background-color:#F5F3FF; border:1.5px solid #C4B5FD; border-radius:10px; padding:14px 24px;">
+                    <p style="margin:0; font-size:15px; font-weight:700; color:#6D28D9; font-family:'Segoe UI', Arial, sans-serif;">
+                      📋 &nbsp;Action requise — complétez votre évaluation
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Campaign details box -->
+          <tr>
+            <td style="padding:16px 36px 8px 36px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f9fafb; border-radius:10px; border:1px solid #e5e7eb;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding-bottom:14px;">
+                          <p style="margin:0 0 3px 0; font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.5px; font-family:'Segoe UI', Arial, sans-serif;">Campagne</p>
+                          <p style="margin:0; font-size:15px; font-weight:700; color:#111827; font-family:'Segoe UI', Arial, sans-serif;">{{campaignTitle}}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding-bottom:14px;">
+                          <p style="margin:0 0 3px 0; font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.5px; font-family:'Segoe UI', Arial, sans-serif;">Type d'évaluation</p>
+                          <p style="margin:0; font-size:15px; font-weight:700; color:#111827; font-family:'Segoe UI', Arial, sans-serif;">{{moduleLabel}}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding-bottom:14px;">
+                          <p style="margin:0 0 3px 0; font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.5px; font-family:'Segoe UI', Arial, sans-serif;">Organisé par</p>
+                          <p style="margin:0; font-size:15px; font-weight:700; color:#111827; font-family:'Segoe UI', Arial, sans-serif;">{{companyName}}</p>
+                        </td>
+                      </tr>
+                      {{#if deadline}}
+                      <tr>
+                        <td>
+                          <p style="margin:0 0 3px 0; font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.5px; font-family:'Segoe UI', Arial, sans-serif;">Date limite</p>
+                          <p style="margin:0; font-size:15px; font-weight:700; color:#DC2626; font-family:'Segoe UI', Arial, sans-serif;">{{deadline}}</p>
+                        </td>
+                      </tr>
+                      {{/if}}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          {{#if campaignDescription}}
+          <!-- Description -->
+          <tr>
+            <td style="padding:8px 36px 8px 36px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f9ff; border-radius:10px; border:1px solid #bae6fd;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <p style="margin:0 0 6px 0; font-size:13px; font-weight:700; color:#0369a1; font-family:'Segoe UI', Arial, sans-serif;">À propos de cette campagne</p>
+                    <p style="margin:0; font-size:13px; color:#374151; line-height:1.7; font-family:'Segoe UI', Arial, sans-serif;">{{campaignDescription}}</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {{/if}}
+
+          <!-- CTA Button -->
+          <tr>
+            <td align="center" style="padding:24px 36px 8px 36px;">
+              <table cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" bgcolor="#7C3AED" style="background-color:#7C3AED; border-radius:10px;">
+                    <a href="{{assessmentLink}}" target="_blank" style="display:inline-block; padding:15px 40px; font-size:15px; font-weight:700; color:#ffffff; text-decoration:none; font-family:'Segoe UI', Arial, sans-serif; letter-spacing:0.2px; background-color:#7C3AED; border-radius:10px;">
+                      Commencer l'évaluation &#8594;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:10px 0 0 0; font-size:12px; color:#9ca3af; font-family:'Segoe UI', Arial, sans-serif;">
+                Cliquez sur le bouton ci-dessus ou copiez le lien dans votre navigateur
+              </p>
+            </td>
+          </tr>
+
+          <!-- Tips -->
+          <tr>
+            <td style="padding:20px 36px 28px 36px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#fffbeb; border-left:4px solid #fcd34d; border-radius:0 6px 6px 0;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <p style="margin:0 0 10px 0; font-size:13px; font-weight:700; color:#d97706; font-family:'Segoe UI', Arial, sans-serif;">📋 Avant de commencer</p>
+                    <p style="margin:0 0 5px 0; font-size:13px; color:#4F5A68; font-family:'Segoe UI', Arial, sans-serif;">• Trouvez un moment calme avec une connexion internet stable</p>
+                    <p style="margin:0 0 5px 0; font-size:13px; color:#4F5A68; font-family:'Segoe UI', Arial, sans-serif;">• Pour les entretiens IA : utilisez un ordinateur avec caméra et microphone</p>
+                    <p style="margin:0; font-size:13px; color:#4F5A68; font-family:'Segoe UI', Arial, sans-serif;">• Terminez l'évaluation en une seule session une fois commencée</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr>
+            <td style="padding:0 36px;">
+              <hr style="border:none; border-top:1px solid #e5e7eb; margin:0;">
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#f9fafb; padding:20px 36px; border-radius:0 0 12px 12px;">
+              <p style="margin:0; font-size:13px; color:#6b7280; font-family:'Segoe UI', Arial, sans-serif;">
+                Si vous n'attendiez pas cette invitation ou si vous avez reçu cet e-mail par erreur, veuillez l'ignorer. Ceci est un e-mail automatique sans réponse.
+              </p>
+              <p style="margin:10px 0 0 0; font-size:12px; color:#9ca3af; font-family:'Segoe UI', Arial, sans-serif;">
+                &copy; {{year}} TalentAI. Tous droits réservés.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

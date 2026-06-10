@@ -151,23 +151,18 @@ export const logout = createAsyncThunk(
       setAxiosLoggingOut(true);
       dispatch(clearConnectedUser());
 
-      // Preserve language preference across logout
-      const savedLang     = localStorage.getItem(MANUAL_LANG_KEY);
-      const savedLangCookie = Cookies.get(LANGUAGE_COOKIE);
-
       // Clear storage
       const userType = localStorage.getItem("userType");
       localStorage.clear();
-      if (userType)   localStorage.setItem("userType", userType);
-      if (savedLang)  localStorage.setItem(MANUAL_LANG_KEY, savedLang);
+      if (userType) localStorage.setItem("userType", userType);
 
-      // Clear cookies (excluding language preference)
+      // Clear all cookies including language — reset to default on logout
       Object.keys(Cookies.get()).forEach((cookieName) => {
-        if (cookieName !== LANGUAGE_COOKIE) Cookies.remove(cookieName, { path: "/" });
+        Cookies.remove(cookieName, { path: "/" });
       });
-      if (savedLangCookie) {
-        Cookies.set(LANGUAGE_COOKIE, savedLangCookie, { expires: 365, path: "/", sameSite: "lax" });
-      }
+
+      // Reset language to default; it will be restored from DB on next login
+      i18n.changeLanguage('en');
 
       // Delay reset so in-flight responses (e.g. 401s) are still suppressed
       setTimeout(() => setAxiosLoggingOut(false), 500);

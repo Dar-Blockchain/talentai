@@ -421,6 +421,7 @@ module.exports.inviteToInterview = async (req, res) => {
     }
 
     const jobTitle = post.jobDetails?.title || "Position";
+    const jobLanguage = post.interviewLanguages?.[0] || "en";
 
     // Prefer the company's registered name over the login username
     const companyProfile = await Profile.findOne({ userId: post.user._id }).select("companyDetails").lean();
@@ -429,6 +430,7 @@ module.exports.inviteToInterview = async (req, res) => {
     console.log(`✅ Job post found`);
     console.log(`   - Title: ${jobTitle}`);
     console.log(`   - Company: ${companyName}`);
+    console.log(`   - Language: ${jobLanguage}`);
 
     // Send interview invitation email
     console.log(`📧 Sending interview invitation email...`);
@@ -439,7 +441,8 @@ module.exports.inviteToInterview = async (req, res) => {
       companyName,
       interviewDate || null,
       interviewTime || null,
-      interviewLink || null
+      interviewLink || null,
+      jobLanguage
     );
 
     if (!emailSent) {
@@ -560,13 +563,18 @@ module.exports.contactCandidate = async (req, res) => {
     }
 
     const Profile = require("../models/Profile.model");
-    const companyProfile = await Profile.findOne({ userId: req.user._id }).select("companyDetails firstName lastName");
+    const User = require("../models/User.model");
+    const [companyProfile, candidateUser] = await Promise.all([
+      Profile.findOne({ userId: req.user._id }).select("companyDetails firstName lastName"),
+      User.findOne({ email: candidateEmail }).select("language").lean(),
+    ]);
     const companyName =
       companyProfile?.companyDetails?.name ||
       `${companyProfile?.firstName || ""} ${companyProfile?.lastName || ""}`.trim() ||
       "A Company";
+    const candidateLanguage = candidateUser?.language || "en";
 
-    const sent = await sendCandidateEmail(candidateEmail, candidateName || "Candidate", companyName, subject, message);
+    const sent = await sendCandidateEmail(candidateEmail, candidateName || "Candidate", companyName, subject, message, candidateLanguage);
     if (!sent) {
       return res.status(500).json({ success: false, error: "Failed to send email. Please try again." });
     }

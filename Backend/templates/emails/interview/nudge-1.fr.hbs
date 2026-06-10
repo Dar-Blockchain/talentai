@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Votre entretien est prêt</title>
+</head>
+<body style="margin:0; padding:0; background-color:#F3F4F6; font-family:'Segoe UI', Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F3F4F6; padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="560" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 2px 16px rgba(0,0,0,0.07);">
+
+          <!-- Logo -->
+          <tr>
+            <td style="padding:22px 32px; border-bottom:1px solid #F3F4F6;">
+              <img src="cid:logo" alt="TalentAI" height="28" style="display:block; border:0; outline:none;">
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding:38px 36px 16px 36px;">
+
+              <!-- Pill -->
+              <table cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+                <tr>
+                  <td style="background-color:#F0FDFA; border:1px solid #99F6E4; border-radius:999px; padding:5px 16px;">
+                    <p style="margin:0; font-size:12px; font-weight:700; color:#0D9488; font-family:'Segoe UI', Arial, sans-serif;">🎉 &nbsp;Invitation à un entretien</p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 10px 0; font-size:23px; font-weight:700; color:#111827; line-height:1.3; font-family:'Segoe UI', Arial, sans-serif;">
+                Bonjour {{firstName}}, bonne nouvelle — vous passez à l'étape suivante !
+              </p>
+              <p style="margin:0 0 22px 0; font-size:15px; color:#4B5563; line-height:1.75; font-family:'Segoe UI', Arial, sans-serif;">
+                <strong style="color:#111827;">{{companyName}}</strong> a examiné votre candidature pour <strong style="color:#111827;">{{jobTitle}}</strong> et vous a sélectionné(e) pour la prochaine étape. Il ne reste plus qu'un court entretien IA — et vous pouvez le faire depuis n'importe où, dès maintenant.
+              </p>
+
+              <!-- What is it callout -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#EFF6FF; border-radius:12px; border:1px solid #BFDBFE; margin-bottom:22px;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <p style="margin:0 0 6px 0; font-size:13px; font-weight:700; color:#1D4ED8; font-family:'Segoe UI', Arial, sans-serif;">🤖 &nbsp;Pas une réunion — un entretien IA à la demande</p>
+                    <p style="margin:0; font-size:13px; color:#1E40AF; line-height:1.65; font-family:'Segoe UI', Arial, sans-serif;">
+                      Vous ne rejoindrez pas un appel vidéo ni n'attendrez un recruteur. Cliquez simplement sur le lien et un intervieweur IA vous guidera à travers une série de questions à votre rythme. Pas de planning, pas de pression — commencez quand vous êtes prêt(e).
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Quick facts -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F9FAFB; border-radius:12px; margin-bottom:30px;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td width="50%" style="text-align:center; padding:4px 8px; border-right:1px solid #E5E7EB;">
+                          <p style="margin:0 0 5px 0; font-size:22px;">🗓</p>
+                          <p style="margin:0 0 2px 0; font-size:12px; font-weight:700; color:#374151; font-family:'Segoe UI', Arial, sans-serif;">N'importe quand</p>
+                          <p style="margin:0; font-size:11px; color:#9CA3AF; font-family:'Segoe UI', Arial, sans-serif;">avant la date limite</p>
+                        </td>
+                        <td width="50%" style="text-align:center; padding:4px 8px;">
+                          <p style="margin:0 0 5px 0; font-size:22px;">🎙</p>
+                          <p style="margin:0 0 2px 0; font-size:12px; font-weight:700; color:#374151; font-family:'Segoe UI', Arial, sans-serif;">Caméra & micro</p>
+                          <p style="margin:0; font-size:11px; color:#9CA3AF; font-family:'Segoe UI', Arial, sans-serif;">nécessaires pour la session</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA -->
+              <table cellpadding="0" cellspacing="0" style="margin-bottom:14px;">
+                <tr>
+                  <td style="background-color:#0D9488; border-radius:10px; box-shadow:0 4px 14px rgba(13,148,136,0.28);">
+                    <a href="{{interviewLink}}" target="_blank" style="display:inline-block; padding:15px 40px; font-size:15px; font-weight:700; color:#ffffff; text-decoration:none; font-family:'Segoe UI', Arial, sans-serif;">
+                      Commencer mon entretien →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:0 0 6px 0; font-size:12px; color:#9CA3AF; font-family:'Segoe UI', Arial, sans-serif;">
+                Vous ne pouvez pas cliquer ? Copiez ce lien dans votre navigateur :<br>
+                <a href="{{interviewLink}}" style="color:#0D9488; text-decoration:none; word-break:break-all;">{{interviewLink}}</a>
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- Tip bar -->
+          <tr>
+            <td style="padding:14px 36px; background-color:#F9FAFB; border-top:1px solid #F3F4F6;">
+              <p style="margin:0; font-size:12px; color:#6B7280; font-family:'Segoe UI', Arial, sans-serif;">
+                💡 &nbsp;<strong>Conseil :</strong> Trouvez un endroit calme avec un bon éclairage, testez votre micro au préalable, et accordez-vous 20 minutes complètes sans interruption.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:18px 36px 24px 36px; border-top:1px solid #F3F4F6;">
+              <p style="margin:0 0 4px 0; font-size:12px; color:#9CA3AF; font-family:'Segoe UI', Arial, sans-serif;">
+                Vous recevez ceci parce que vous avez postulé pour <strong>{{jobTitle}}</strong> chez <strong>{{companyName}}</strong>.
+              </p>
+              <p style="margin:0; font-size:11px; color:#D1D5DB; font-family:'Segoe UI', Arial, sans-serif;">
+                &copy; {{year}} TalentAI &nbsp;·&nbsp; Ceci est un e-mail automatique sans réponse.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

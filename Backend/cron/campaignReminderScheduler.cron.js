@@ -2,6 +2,7 @@ const cron = require("node-cron");
 const InternalCampaign = require("../models/InternalCampaign.model");
 const CampaignParticipant = require("../models/CampaignParticipant.model");
 const Profile = require("../models/Profile.model");
+const User = require("../models/User.model");
 const { sendCampaignDeadlineReminder } = require("../utils/email-service");
 const logger = require("../utils/logger");
 
@@ -46,27 +47,34 @@ const runCampaignReminderJob = async ({ force = false } = {}) => {
 
       if (participants.length === 0) continue;
 
-      // Fetch participant names from profiles
+      // Fetch participant names, profiles, and languages
       const employeeIds = participants.map((p) => p.employee).filter(Boolean);
-      const [profiles, companyProfile] = await Promise.all([
+      const [profiles, companyProfile, employeeUsers] = await Promise.all([
         Profile.find({ userId: { $in: employeeIds } }).select("userId firstName lastName").lean(),
         Profile.findOne({ userId: campaign.company }).select("companyDetails.name").lean(),
+        User.find({ _id: { $in: employeeIds } }).select("_id language").lean(),
       ]);
       const profileMap = profiles.reduce((acc, p) => {
         acc[p.userId.toString()] = [p.firstName, p.lastName].filter(Boolean).join(" ") || "Participant";
         return acc;
       }, {});
+      const languageMap = employeeUsers.reduce((acc, u) => {
+        acc[u._id.toString()] = u.language || "en";
+        return acc;
+      }, {});
       const companyName = companyProfile?.companyDetails?.name || "Your company";
 
       const hoursLeft = Math.max(1, Math.round((new Date(campaign.deadline) - now) / (1000 * 60 * 60)));
-      const deadlineStr = new Date(campaign.deadline).toLocaleDateString("en-GB", {
-        day: "numeric", month: "long", year: "numeric",
-      });
       const assessmentLink = `${process.env.BASE_URL}/employee/campaigns/${campaign._id}/assessment`;
       const moduleLabel = MODULE_LABELS[campaign.module?.type] || campaign.module?.type || "Assessment";
 
       for (const participant of participants) {
         const participantName = profileMap[participant.employee?.toString()] || participant.providerName || "Participant";
+        const participantLanguage = languageMap[participant.employee?.toString()] || "en";
+        const deadlineLocale = participantLanguage === "fr" ? "fr-FR" : "en-GB";
+        const deadlineStr = new Date(campaign.deadline).toLocaleDateString(deadlineLocale, {
+          day: "numeric", month: "long", year: "numeric",
+        });
         const sent = await sendCampaignDeadlineReminder(participant.email, {
           participantName,
           companyName,
@@ -75,7 +83,7 @@ const runCampaignReminderJob = async ({ force = false } = {}) => {
           deadline: deadlineStr,
           hoursLeft,
           assessmentLink,
-        });
+        }, participantLanguage);
         if (sent) {
           await CampaignParticipant.findByIdAndUpdate(participant._id, { reminderSentAt: new Date() });
         }

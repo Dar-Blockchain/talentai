@@ -82,8 +82,9 @@ async function sendPlanReminders() {
         const reminderCount = profile.planReminderCount || 0;
         const isSecondReminder = reminderCount === 1;
 
-        const user = await User.findById(recipientUserId).select('email username profile').lean();
+        const user = await User.findById(recipientUserId).select('email username profile language').lean();
         const companyName = user?.profile?.firstName || user?.username || 'there';
+        const companyLanguage = user?.language || 'en';
 
         // Tailor message for 1st vs 2nd reminder
         const message = isSecondReminder
@@ -95,7 +96,7 @@ async function sendPlanReminders() {
 
         // Email reminder (best-effort, non-blocking)
         if (user?.email) {
-          sendPlanUpgradeReminder(user.email, companyName).catch(err =>
+          sendPlanUpgradeReminder(user.email, companyName, companyLanguage).catch(err =>
             logger.error(`[PlanReminder] Email failed for ${user.email}:`, err.message)
           );
         }

@@ -60,6 +60,7 @@ const sendAutoInvitation = async (application) => {
     const candidateEmail = candidateProfile.userId.email;
     const firstName = candidateProfile.firstName || candidateProfile.userId.username || 'there';
     const jobTitle = post.jobDetails?.title || 'Position';
+    const jobLanguage = post.interviewLanguages?.[0] || 'en';
     const companyProfile = await Profile.findOne({ userId: post.user }).select('companyDetails').lean();
     const companyName = companyProfile?.companyDetails?.name || company.username || company.email || 'Our Company';
     const interviewLink = `${process.env.BASE_URL}candidate/interview?jobId=${post._id}&companyId=${post.user}&ref=link`;
@@ -69,12 +70,14 @@ const sendAutoInvitation = async (application) => {
     logger.debug(`   📋 Position: ${jobTitle}`);
     logger.debug(`   🏢 Company: ${companyName}`);
     logger.debug(`   🔗 Interview Link: ${interviewLink}`);
+    logger.debug(`   🌐 Language: ${jobLanguage}`);
 
     // Nudge #1 — welcoming first invitation (24h after applying)
     const emailSent = await sendInterviewNudge(
       candidateEmail,
       { firstName, jobTitle, companyName, interviewLink, deadline: null },
-      1
+      1,
+      jobLanguage
     );
 
     if (!emailSent) {

@@ -120,7 +120,14 @@ skills
   - If a years signal FOLLOWS a skill (e.g. "React, 2 years" or "Python and NestJS for 7 years"), apply it to the skill IMMEDIATELY BEFORE it.
   - Never assign a years signal to a skill separated from it by another skill name.
   - Unless the description explicitly says "each" or "both" (e.g. "Python and NestJS, 7 years each"), do not apply the same years to multiple skills.
-- softSkills MUST contain 1 to 2 items — never return an empty array. Return 2 when the description clearly signals a second soft skill.
+- softSkills MUST contain 1 to 2 items — never return an empty array.
+  Always infer soft skills from the job context even if not explicitly stated. Use the role type, seniority, and skills to determine what matters most:
+  - Senior/Expert roles → prefer "Technical Leadership", "Problem Solving", "Mentoring"
+  - Collaborative/team roles → prefer "Teamwork", "Communication"
+  - Creative/product roles → prefer "Creativity", "Attention to Detail"
+  - Fast-paced/startup signals → prefer "Adaptability", "Ownership"
+  - Client-facing signals → prefer "Communication", "Presentation Skills"
+  Return 2 soft skills when the context clearly supports it, otherwise return 1. Never return "Communication" as the only soft skill unless the description explicitly signals a communication-heavy role.
 - Prefer specific named tools over generic labels
   Frontend: React.js, Vue, Angular… | Backend: Node.js, Django, Spring… | Mobile: Swift, Kotlin, Flutter…
   DevOps/Cloud: Docker, Kubernetes, AWS, GCP… | Data: Spark, dbt, Airflow… | AI/ML: PyTorch, TensorFlow, LangChain…
@@ -140,9 +147,9 @@ skills
   null → signal genuinely absent from description  → code defaults to Junior (2)
 
   SENIORITY FLOOR — mandatory:
-  If experienceLevel is "Senior" or "Expert", required technical skills MUST have a minimum level of 3 — ONLY when the description gives NO explicit years or qualifier for that skill.
-  The primary skill (highest importance score) must match the role seniority: Senior → level 4, Expert → level 5.
-  EXCEPTION — explicit years or qualifiers always win: If the description explicitly states years for a skill (e.g., "2 years React") or uses a qualifier (e.g., "basic", "familiarity with", "exposure to"), the level mapping for that skill ALWAYS takes priority. The Seniority Floor does NOT apply to it — even if the overall experienceLevel is Senior or Expert.
+  If experienceLevel is "Senior" or "Expert", the PRIMARY skill only (highest importance score) must match the role seniority: Senior → level 4, Expert → level 5 — but ONLY if that skill has an explicit years signal.
+  All other skills with NO explicit years or qualifier → always return null (code will default them to Junior/level 2).
+  EXCEPTION — explicit years or qualifiers always win: If the description explicitly states years for a skill (e.g., "2 years React") or uses a qualifier (e.g., "basic", "familiarity with", "exposure to"), the level mapping for that skill ALWAYS takes priority.
 
 - importance: assign based on the years signal in the description (1–10).
   More years = higher importance — a skill with more years MUST always score higher than one with fewer years.
