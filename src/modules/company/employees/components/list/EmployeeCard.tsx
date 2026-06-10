@@ -233,7 +233,7 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({
   const motionProps = useMemo(() => ({
     initial: { opacity: 0, y: 10 },
     animate: { opacity: 1, y: 0 },
-    transition: { delay: index * 0.04, duration: 0.28, ease: "easeOut" },
+    transition: { delay: index * 0.04, duration: 0.28, ease: "easeOut" as const },
     style: MOTION_STYLE,
   }), [index]);
 

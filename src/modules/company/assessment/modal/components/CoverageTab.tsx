@@ -3,7 +3,7 @@ import { Box, Chip, Typography } from "@mui/material";
 import TrendingUpOutlined from "@mui/icons-material/TrendingUpOutlined";
 import { PostAssessmentData } from "../types";
 import { TEAL, TEAL_BG, TEAL_BORDER } from "./assessmentAtoms";
-import AreaCoverageCard from "./coverage/AreaCoverageCard";
+import AreaCoverageCard from "./area-coverage/AreaCoverageCard";
 
 interface Props {
   coverage:             PostAssessmentData["coverage"];
