@@ -33,6 +33,7 @@ export interface SavePostPayload extends JobDetails {
   interviewLanguages: string[];
   expirationDate: string | null;
   thresholdScore: number;
+  language?: string;
 }
 
 export interface SavePostResponse {

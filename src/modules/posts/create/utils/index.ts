@@ -93,10 +93,10 @@ export function inferExperienceLevelFromText(text = ""): string {
   const yearsMatches = Array.from(normalized.matchAll(YEARS_EXPERIENCE_REGEX));
   const maxYears = yearsMatches.reduce((max, match) => Math.max(max, Number(match[1]) || 0), 0);
 
-  if (maxYears >= 10) return "Expert";
-  if (maxYears >= 5)  return "Senior";
-  if (maxYears >= 3)  return "Mid-level";
-  if (maxYears > 0)   return "Junior";
+  if (maxYears >= 9) return "Expert";
+  if (maxYears >= 5) return "Senior";
+  if (maxYears >= 3) return "Mid-level";
+  if (maxYears > 0)  return "Junior";
 
   if (/\b(expert|experimente|principal|staff)\b/.test(normalized))    return "Expert";
   if (/\b(senior|confirme|lead)\b/.test(normalized))                  return "Senior";

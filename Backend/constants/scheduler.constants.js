@@ -17,7 +17,7 @@ const SCHEDULER_TIME_WINDOW = {
 // ========== AUTO INVITE SCHEDULER ==========
 const AUTO_INVITE_CONFIG = {
   // Time thresholds
-  FIRST_INVITE_HOURS: TEST_MODE ? (2 / 60) : 24,      // TEST: 2 min | PROD: 24h after application
+  FIRST_INVITE_HOURS: TEST_MODE ? (1 / 60) : 24,      // TEST: 2 min | PROD: 24h after application
   RECURRING_INVITE_HOURS: TEST_MODE ? (5 / 60) : 48,  // TEST: 5 min | PROD: 48h
 
   // Batch processing

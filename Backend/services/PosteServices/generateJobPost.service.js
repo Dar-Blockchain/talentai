@@ -39,7 +39,7 @@ function parseLLMJson(raw) {
 async function generateJobPost(description, user, overrides = {}) {
   const MAX_RETRIES  = parseInt(process.env.GENERATE_JOBPOST_MAX_RETRIES   || "3",    10);
   const BASE_DELAY   = parseInt(process.env.GENERATE_JOBPOST_BASE_DELAY_MS || "1000", 10);
-  const { workMode, contractType, language = "en" } = overrides;
+  const { workMode, contractType, language = "en", interviewLanguages } = overrides;
 
   const company         = user?.profile ? await Profile.findById(user.profile).lean() : null;
   const companyLocation = company?.companyDetails?.location || "";
@@ -69,7 +69,11 @@ async function generateJobPost(description, user, overrides = {}) {
     if (workMode     && result?.jobDetails) result.jobDetails.workMode       = workMode;
     if (contractType && result?.jobDetails) result.jobDetails.employmentType = contractType;
 
-    return normalizeSkillAnalysis(result);
+    const normalized = normalizeSkillAnalysis(result);
+    if (normalized) {
+      normalized.language = language === 'fr' ? 'fr' : 'en';
+    }
+    return normalized;
   };
 
   let lastError;

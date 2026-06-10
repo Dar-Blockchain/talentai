@@ -99,7 +99,7 @@ const sendReminderEmail = async (application, post, reminderType) => {
     const candidateEmail = candidateProfile.userId.email;
     const firstName = candidateProfile.firstName || candidateProfile.userId.username || 'there';
     const jobTitle = post.jobDetails?.title || 'Position';
-    const jobLanguage = post.interviewLanguages?.[0] || 'en';
+    const jobLanguage = post.language || 'en';
     const companyProfile = await Profile.findOne({ userId: post.user }).select('companyDetails').lean();
     const companyName = companyProfile?.companyDetails?.name || company.username || company.email || 'Our Company';
     const interviewLink = `${process.env.BASE_URL}candidate/interview?jobId=${post._id}&companyId=${post.user}&ref=link`;
@@ -182,7 +182,7 @@ const runReminderJob = async ({ force = false } = {}) => {
       select: '_id'
     }).populate({
       path: 'post',
-      select: 'expirationDate _id user jobDetails interviewLanguages'
+      select: 'expirationDate _id user jobDetails language interviewLanguages'
     });
 
     // logger.debug(`Found ${pendingApplications.length} pending applications`);
