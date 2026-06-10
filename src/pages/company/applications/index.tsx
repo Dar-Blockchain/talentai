@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Box, Pagination } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
@@ -15,6 +15,14 @@ import { useApplicationsList } from "@/modules/company/applications/hooks";
 import { ApplicationsToolbar, PostPickerModal } from "@/modules/company/applications/components";
 import { TEAL } from "@/modules/company/applications/components/constants";
 
+// ─── Static sx constants ──────────────────────────────────────────────────────
+
+const LIST_BOX_SX       = { display: "flex", flexDirection: "column", gap: 1.5 } as const;
+const PAGINATION_BOX_SX = { display: "flex", justifyContent: "center", mt: 1 } as const;
+const PAGINATION_SX     = { "& .MuiPaginationItem-root": { fontWeight: 500 }, "& .Mui-selected": { bgcolor: `${TEAL}18`, color: TEAL, fontWeight: 700 } } as const;
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 const ApplicationsPage: React.FC = () => {
   const { t } = useTranslation("dashboard");
   const {
@@ -27,17 +35,16 @@ const ApplicationsPage: React.FC = () => {
     downloading, handleDownloadCVs,
   } = useApplicationsList();
 
-  const [postPickerOpen, setPostPickerOpen] = useState(false);
+  const [postPickerOpen,   setPostPickerOpen]   = useState(false);
   const [contactTarget,    setContactTarget]    = useState<ContactTarget | null>(null);
   const [assessmentTarget, setAssessmentTarget] = useState<AssessmentTarget | null>(null);
 
-  // Track which applicationIds were invited this session
   const [invitedIds, setInvitedIds] = useState<Set<string>>(new Set());
+
   const markInvited = useCallback((appId: string) => {
     setInvitedIds((prev) => new Set(prev).add(appId));
   }, []);
 
-  // Seed invited state from server data (persists across refreshes)
   useEffect(() => {
     const fromServer = rows.filter((r) => !!r.invitedAt).map((r) => String(r.id));
     if (!fromServer.length) return;
@@ -48,7 +55,23 @@ const ApplicationsPage: React.FC = () => {
     });
   }, [rows]);
 
-  const hasFilters = !!(search || status || postId);
+  const hasFilters = useMemo(() => !!(search || status || postId), [search, status, postId]);
+
+  const openPostPicker  = useCallback(() => setPostPickerOpen(true),  []);
+  const closePostPicker = useCallback(() => setPostPickerOpen(false), []);
+  const closeContact    = useCallback(() => setContactTarget(null),    []);
+  const closeAssessment = useCallback(() => setAssessmentTarget(null), []);
+
+  const handlePostSelect = useCallback((id: string, title: string) => {
+    setPostId(id);
+    setPostTitle(title);
+    setPostPickerOpen(false);
+  }, [setPostId, setPostTitle]);
+
+  const handlePageChange = useCallback((_: React.ChangeEvent<unknown>, v: number) => {
+    setPage(v);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [setPage]);
 
   return (
     <DashboardLayout>
@@ -63,7 +86,7 @@ const ApplicationsPage: React.FC = () => {
         downloading={downloading}
         onSearchChange={setSearchInput}
         onStatusChange={setStatus}
-        onPostPickerOpen={() => setPostPickerOpen(true)}
+        onPostPickerOpen={openPostPicker}
         onClearPost={clearPost}
         onSortChange={setSort}
         onDownload={handleDownloadCVs}
@@ -81,7 +104,7 @@ const ApplicationsPage: React.FC = () => {
           minHeight={320}
         />
       ) : (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+        <Box sx={LIST_BOX_SX}>
           {rows.map((app: ApplicationSummaryItem) => (
             <ApplicationCard
               key={String(app.id)}
@@ -96,14 +119,14 @@ const ApplicationsPage: React.FC = () => {
           ))}
 
           {pagination.totalPages > 1 && (
-            <Box sx={{ display: "flex", justifyContent: "center", mt: 1 }}>
+            <Box sx={PAGINATION_BOX_SX}>
               <Pagination
                 count={pagination.totalPages}
                 page={page}
-                onChange={(_, v) => { setPage(v); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                onChange={handlePageChange}
                 shape="rounded"
                 size="small"
-                sx={{ "& .MuiPaginationItem-root": { fontWeight: 500 }, "& .Mui-selected": { bgcolor: `${TEAL}18`, color: TEAL, fontWeight: 700 } }}
+                sx={PAGINATION_SX}
               />
             </Box>
           )}
@@ -113,11 +136,11 @@ const ApplicationsPage: React.FC = () => {
       <PostPickerModal
         open={postPickerOpen}
         selectedId={postId}
-        onSelect={(id, title) => { setPostId(id); setPostTitle(title); setPostPickerOpen(false); }}
-        onClose={() => setPostPickerOpen(false)}
+        onSelect={handlePostSelect}
+        onClose={closePostPicker}
       />
-      <ContactCandidateModal open={!!contactTarget} target={contactTarget} onClose={() => setContactTarget(null)} />
-      <AssessmentDetailsModal open={!!assessmentTarget} target={assessmentTarget} onClose={() => setAssessmentTarget(null)} />
+      <ContactCandidateModal open={!!contactTarget} target={contactTarget} onClose={closeContact} />
+      <AssessmentDetailsModal open={!!assessmentTarget} target={assessmentTarget} onClose={closeAssessment} />
     </DashboardLayout>
   );
 };
