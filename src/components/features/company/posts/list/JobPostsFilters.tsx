@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo, useCallback } from "react";
 import { Box, TextField, InputAdornment } from "@mui/material";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import TabBar from "@/components/ui/TabBar";
@@ -21,13 +21,24 @@ interface JobPostsFiltersProps {
   tabItems: TabItem[];
 }
 
-const JobPostsFilters: React.FC<JobPostsFiltersProps> = ({
-  search,
-  onSearchChange,
-  activeTab,
-  onTabChange,
-  tabItems,
-}) => {
+const FIELD_SX = {
+  mb: 2,
+  "& .MuiOutlinedInput-root": {
+    borderRadius: 2,
+    "&.Mui-focused fieldset": { borderColor: TEAL },
+  },
+} as const;
+
+const JobPostsFilters = memo<JobPostsFiltersProps>(({ search, onSearchChange, activeTab, onTabChange, tabItems }) => {
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => onSearchChange(e.target.value),
+    [onSearchChange],
+  );
+  const handleTabChange = useCallback(
+    (id: string) => onTabChange(id as TabType),
+    [onTabChange],
+  );
+
   return (
     <Box sx={{ mb: 2 }}>
       <TextField
@@ -35,7 +46,7 @@ const JobPostsFilters: React.FC<JobPostsFiltersProps> = ({
         fullWidth
         placeholder="Search by title, location, type…"
         value={search}
-        onChange={(e) => onSearchChange(e.target.value)}
+        onChange={handleSearchChange}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
@@ -43,22 +54,17 @@ const JobPostsFilters: React.FC<JobPostsFiltersProps> = ({
             </InputAdornment>
           ),
         }}
-        sx={{
-          mb: 2,
-          "& .MuiOutlinedInput-root": {
-            borderRadius: 2,
-            "&.Mui-focused fieldset": { borderColor: TEAL },
-          },
-        }}
+        sx={FIELD_SX}
       />
       <TabBar
         tabs={tabItems}
         activeTab={activeTab}
-        onChange={(id) => onTabChange(id as TabType)}
+        onChange={handleTabChange}
         color={TEAL}
       />
     </Box>
   );
-};
+});
+JobPostsFilters.displayName = "JobPostsFilters";
 
 export default JobPostsFilters;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { memo, useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
 import { useRouter } from "next/router";
@@ -19,15 +19,44 @@ import {
 } from "@/modules/chat/candidate-chat/queries/useCandidateChatQueries";
 import { getCandidateChatConversationPath } from "@/modules/chat/candidate-chat/utils/routes";
 
-// ── Constants ──────────────────────────────────────────────────────────────────
+// ─── Static constants ─────────────────────────────────────────────────────────
 
 const TEAL = "#0D9488";
 
-function initials(first?: string | null, last?: string | null) {
-  return `${first?.[0] ?? ""}${last?.[0] ?? ""}`.toUpperCase() || "?";
-}
+const PAPER_SX       = { borderRadius: "18px", overflow: "hidden", boxShadow: "0 24px 64px rgba(0,0,0,0.14)" } as const;
+const HEADER_SX      = { px: 3, pt: 2.5, pb: 2, display: "flex", alignItems: "center", gap: 2, borderBottom: "1px solid #F3F4F6" } as const;
+const CLOSE_BTN_SX   = { color: "#9CA3AF", borderRadius: "8px", "&:hover": { bgcolor: "#F3F4F6", color: "#374151" } } as const;
+const CONTENT_SX     = { px: 3, pt: 2.5, pb: 3 } as const;
+const MODE_ROW_SX    = { display: "flex", gap: 1, mb: 2.5 } as const;
+const SUCCESS_BOX_SX = { textAlign: "center", py: 5 } as const;
+const SUCCESS_RING_SX = { width: 60, height: 60, borderRadius: "50%", bgcolor: `${TEAL}12`, mx: "auto", mb: 2, display: "flex", alignItems: "center", justifyContent: "center" } as const;
+const FORM_BOX_SX    = { display: "flex", flexDirection: "column", gap: 1.75 } as const;
+const CHAT_BANNER_SX = { display: "flex", gap: 1, px: 1.5, py: 1, bgcolor: `${TEAL}08`, borderRadius: "10px", border: `1px solid ${TEAL}20`, alignItems: "flex-start" } as const;
+const ERROR_BOX_SX   = { px: 1.5, py: 1, bgcolor: "#FEF2F2", borderRadius: "8px", border: "1px solid #FECACA" } as const;
+const ACTIONS_SX     = { display: "flex", justifyContent: "flex-end", gap: 1.25 } as const;
+const CANCEL_BTN_SX  = { borderRadius: "10px", textTransform: "none", fontWeight: 600, fontSize: "13px", borderColor: "#E5E7EB", color: "#6B7280", "&:hover": { borderColor: "#D1D5DB", bgcolor: "#F9FAFB" } } as const;
+const DIVIDER_SX     = { borderColor: "#F3F4F6", my: 0.25 } as const;
 
-// ── Types ──────────────────────────────────────────────────────────────────────
+const INPUT_SX = {
+  "& .MuiOutlinedInput-root": {
+    borderRadius: "10px", fontSize: "13px", bgcolor: "#F9FAFB", color: "#111827",
+    "& .MuiOutlinedInput-notchedOutline": { borderColor: "#E5E7EB" },
+    "&:hover": { bgcolor: "#F3F4F6", "& .MuiOutlinedInput-notchedOutline": { borderColor: "#D1D5DB" } },
+    "&.Mui-focused": { bgcolor: "#fff", "& .MuiOutlinedInput-notchedOutline": { borderColor: "#9CA3AF", borderWidth: "1.5px" } },
+    "&.Mui-disabled": { bgcolor: "#F3F4F6", "& .MuiOutlinedInput-notchedOutline": { borderColor: "#E5E7EB" } },
+  },
+  "& .MuiInputBase-input::placeholder": { color: "#9CA3AF", opacity: 1, fontSize: "13px" },
+  "& .MuiInputBase-inputMultiline": { lineHeight: 1.65 },
+} as const;
+
+type ContactMode = "email" | "chat";
+
+const MODES: Record<ContactMode, { labelKey: string; sublabelKey: string; Icon: React.ElementType; color: string; lightBg: string; activeBorder: string }> = {
+  email: { labelKey: "pages.applications.contact_modal.mode_email_label", sublabelKey: "pages.applications.contact_modal.mode_email_sublabel", Icon: EmailOutlined, color: "#2563EB", lightBg: "#EFF6FF", activeBorder: "#BFDBFE" },
+  chat:  { labelKey: "pages.applications.contact_modal.mode_chat_label",  sublabelKey: "pages.applications.contact_modal.mode_chat_sublabel",  Icon: ChatBubbleOutlineOutlined, color: TEAL, lightBg: `${TEAL}0F`, activeBorder: `${TEAL}40` },
+};
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface ContactTarget {
   name: string;
@@ -43,50 +72,28 @@ export interface ContactCandidateModalProps {
   onClose: () => void;
 }
 
-type ContactMode = "email" | "chat";
+// ─── Helper ───────────────────────────────────────────────────────────────────
 
-const MODES: Record<ContactMode, {
-  labelKey: string;
-  sublabelKey: string;
-  Icon: React.ElementType;
-  color: string;
-  lightBg: string;
-  activeBorder: string;
-}> = {
-  email: {
-    labelKey: "pages.applications.contact_modal.mode_email_label",
-    sublabelKey: "pages.applications.contact_modal.mode_email_sublabel",
-    Icon: EmailOutlined,
-    color: "#2563EB",
-    lightBg: "#EFF6FF",
-    activeBorder: "#BFDBFE",
-  },
-  chat: {
-    labelKey: "pages.applications.contact_modal.mode_chat_label",
-    sublabelKey: "pages.applications.contact_modal.mode_chat_sublabel",
-    Icon: ChatBubbleOutlineOutlined,
-    color: TEAL,
-    lightBg: `${TEAL}0F`,
-    activeBorder: `${TEAL}40`,
-  },
-};
+function initials(first?: string | null, last?: string | null) {
+  return `${first?.[0] ?? ""}${last?.[0] ?? ""}`.toUpperCase() || "?";
+}
 
-// ── Component ──────────────────────────────────────────────────────────────────
+// ─── Component ────────────────────────────────────────────────────────────────
 
-const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, target, onClose }) => {
-  const { t } = useTranslation("dashboard");
-  const router = useRouter();
-  const companyId   = useSelector((s: RootState) => s.user.connectedUser?.user?._id as string | undefined);
-  const companyRole = useSelector((s: RootState) => s.user.connectedUser?.user?.role);
+const ContactCandidateModal = memo<ContactCandidateModalProps>(({ open, target, onClose }) => {
+  const { t }        = useTranslation("dashboard");
+  const router       = useRouter();
+  const companyId    = useSelector((s: RootState) => s.user.connectedUser?.user?._id as string | undefined);
+  const companyRole  = useSelector((s: RootState) => s.user.connectedUser?.user?.role);
   const createConversationMutation = useCreateCandidateConversationMutation();
-  const sendMessageMutation = useSendCandidateMessageMutation();
+  const sendMessageMutation        = useSendCandidateMessageMutation();
 
-  const [mode, setMode]       = useState<ContactMode>("email");
+  const [mode,    setMode]    = useState<ContactMode>("email");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
-  const [sent, setSent]       = useState(false);
-  const [error, setError]     = useState("");
+  const [sent,    setSent]    = useState(false);
+  const [error,   setError]   = useState("");
 
   useEffect(() => {
     if (open) {
@@ -99,14 +106,17 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
     }
   }, [open]);
 
-  const handleSendEmail = async () => {
+  const handleSubjectChange  = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setSubject(e.target.value), []);
+  const handleMessageChange  = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setMessage(e.target.value), []);
+
+  const handleSendEmail = useCallback(async () => {
     if (!target?.email || !subject.trim() || !message.trim()) return;
     setSending(true);
     setError("");
     try {
       await axiosInstance.post("job-applications/contact-candidate", {
         candidateEmail: target.email,
-        candidateName: target.name,
+        candidateName:  target.name,
         subject,
         message,
       });
@@ -117,9 +127,9 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
     } finally {
       setSending(false);
     }
-  };
+  }, [target, subject, message, onClose, t]);
 
-  const handleSendChat = async () => {
+  const handleSendChat = useCallback(async () => {
     if (!message.trim()) { setError(t("pages.applications.contact_modal.error_empty")); return; }
     if (!target?.candidateUserId || !companyId) {
       setError(t("pages.applications.contact_modal.error_no_user"));
@@ -133,15 +143,15 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
       });
       await sendMessageMutation.mutateAsync({
         conversationId: conversation._id,
-        receiverId: target.candidateUserId,
-        text: message,
+        receiverId:     target.candidateUserId,
+        text:           message,
       });
       onClose();
       await router.push(getCandidateChatConversationPath(companyRole, conversation._id));
     } catch {
       setError(t("pages.applications.contact_modal.error_msg"));
     }
-  };
+  }, [message, target, companyId, companyRole, createConversationMutation, sendMessageMutation, onClose, router, t]);
 
   if (!target) return null;
 
@@ -156,27 +166,15 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
       onClose={!isBusy ? onClose : undefined}
       maxWidth="sm"
       fullWidth
-      slotProps={{ paper: { sx: { borderRadius: "18px", overflow: "hidden", boxShadow: "0 24px 64px rgba(0,0,0,0.14)" } } }}
+      slotProps={{ paper: { sx: PAPER_SX } }}
     >
-      {/* ── Header ── */}
-      <Box sx={{
-        px: 3, pt: 2.5, pb: 2,
-        display: "flex", alignItems: "center", gap: 2,
-        borderBottom: "1px solid #F3F4F6",
-      }}>
+      {/* Header */}
+      <Box sx={HEADER_SX}>
         <Box sx={{ position: "relative", flexShrink: 0 }}>
-          <Avatar
-            src={target.avatarUrl}
-            sx={{ width: 42, height: 42, bgcolor: target.bgColor, fontSize: 14, fontWeight: 700 }}
-          >
+          <Avatar src={target.avatarUrl} sx={{ width: 42, height: 42, bgcolor: target.bgColor, fontSize: 14, fontWeight: 700 }}>
             {initials(firstName, rest.join(" "))}
           </Avatar>
-          <Box sx={{
-            position: "absolute", bottom: -2, right: -2,
-            width: 14, height: 14, borderRadius: "50%",
-            bgcolor: cfg.color, border: "2px solid #fff",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
+          <Box sx={{ position: "absolute", bottom: -2, right: -2, width: 14, height: 14, borderRadius: "50%", bgcolor: cfg.color, border: "2px solid #fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <cfg.Icon sx={{ fontSize: 7, color: "#fff" }} />
           </Box>
         </Box>
@@ -188,20 +186,14 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
           </Typography>
         </Box>
 
-        <IconButton
-          size="small"
-          onClick={onClose}
-          disabled={isBusy}
-          sx={{ color: "#9CA3AF", borderRadius: "8px", "&:hover": { bgcolor: "#F3F4F6", color: "#374151" } }}
-        >
+        <IconButton size="small" onClick={onClose} disabled={isBusy} sx={CLOSE_BTN_SX}>
           <CloseOutlined sx={{ fontSize: 16 }} />
         </IconButton>
       </Box>
 
-      <DialogContent sx={{ px: 3, pt: 2.5, pb: 3 }}>
-
-        {/* ── Mode selector ── */}
-        <Box sx={{ display: "flex", gap: 1, mb: 2.5 }}>
+      <DialogContent sx={CONTENT_SX}>
+        {/* Mode selector */}
+        <Box sx={MODE_ROW_SX}>
           {(Object.entries(MODES) as [ContactMode, typeof MODES.email][]).map(([m, c]) => {
             const active = mode === m;
             const ModeIcon = c.Icon;
@@ -219,35 +211,22 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
                   "&:hover": isBusy ? {} : { borderColor: active ? c.activeBorder : "#D1D5DB" },
                 }}
               >
-                <Box sx={{
-                  width: 30, height: 30, borderRadius: "8px", flexShrink: 0,
-                  bgcolor: active ? c.color : "#F3F4F6",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  transition: "background 0.15s",
-                }}>
+                <Box sx={{ width: 30, height: 30, borderRadius: "8px", flexShrink: 0, bgcolor: active ? c.color : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.15s" }}>
                   <ModeIcon sx={{ fontSize: 15, color: active ? "#fff" : "#9CA3AF" }} />
                 </Box>
                 <Box>
-                  <Typography sx={{ fontSize: "12px", fontWeight: 700, color: active ? c.color : "#374151", lineHeight: 1.2 }}>
-                    {t(c.labelKey)}
-                  </Typography>
-                  <Typography sx={{ fontSize: "10px", color: "#9CA3AF", lineHeight: 1.2 }}>
-                    {t(c.sublabelKey)}
-                  </Typography>
+                  <Typography sx={{ fontSize: "12px", fontWeight: 700, color: active ? c.color : "#374151", lineHeight: 1.2 }}>{t(c.labelKey)}</Typography>
+                  <Typography sx={{ fontSize: "10px", color: "#9CA3AF", lineHeight: 1.2 }}>{t(c.sublabelKey)}</Typography>
                 </Box>
               </Box>
             );
           })}
         </Box>
 
-        {/* ── Success state ── */}
+        {/* Success state */}
         {sent ? (
-          <Box sx={{ textAlign: "center", py: 5 }}>
-            <Box sx={{
-              width: 60, height: 60, borderRadius: "50%",
-              bgcolor: `${TEAL}12`, mx: "auto", mb: 2,
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
+          <Box sx={SUCCESS_BOX_SX}>
+            <Box sx={SUCCESS_RING_SX}>
               <CheckCircleOutlineOutlined sx={{ fontSize: 30, color: TEAL }} />
             </Box>
             <Typography sx={{ fontSize: "16px", fontWeight: 700, color: "#111827", mb: 0.5 }}>
@@ -260,28 +239,19 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
             </Typography>
           </Box>
         ) : (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.75 }}>
-
-            {/* Subject (email only) */}
+          <Box sx={FORM_BOX_SX}>
             {mode === "email" && (
               <TextField
                 placeholder={t("pages.applications.contact_modal.subject_placeholder")}
                 value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                fullWidth
-                size="small"
-                disabled={isBusy}
-                sx={inputSx}
+                onChange={handleSubjectChange}
+                fullWidth size="small" disabled={isBusy}
+                sx={INPUT_SX}
               />
             )}
 
-            {/* Chat info banner */}
             {mode === "chat" && (
-              <Box sx={{
-                display: "flex", gap: 1, px: 1.5, py: 1,
-                bgcolor: `${TEAL}08`, borderRadius: "10px",
-                border: `1px solid ${TEAL}20`, alignItems: "flex-start",
-              }}>
+              <Box sx={CHAT_BANNER_SX}>
                 <ChatBubbleOutlineOutlined sx={{ fontSize: 13, color: TEAL, mt: 0.2, flexShrink: 0 }} />
                 <Typography sx={{ fontSize: "11.5px", color: "#0F766E", lineHeight: 1.5 }}>
                   {t("pages.applications.contact_modal.chat_banner", { name: target.name })}
@@ -289,61 +259,34 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
               </Box>
             )}
 
-            {/* Message */}
             <TextField
-              placeholder={mode === "email" ? t("pages.applications.contact_modal.msg_placeholder_email", { firstName }) : t("pages.applications.contact_modal.msg_placeholder_chat")}
+              placeholder={mode === "email"
+                ? t("pages.applications.contact_modal.msg_placeholder_email", { firstName })
+                : t("pages.applications.contact_modal.msg_placeholder_chat")}
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              fullWidth
-              multiline
-              minRows={5}
-              disabled={isBusy}
-              sx={inputSx}
+              onChange={handleMessageChange}
+              fullWidth multiline minRows={5} disabled={isBusy}
+              sx={INPUT_SX}
             />
 
-            {/* Error */}
             {error && (
-              <Box sx={{
-                px: 1.5, py: 1, bgcolor: "#FEF2F2",
-                borderRadius: "8px", border: "1px solid #FECACA",
-              }}>
+              <Box sx={ERROR_BOX_SX}>
                 <Typography sx={{ fontSize: "12px", color: "#DC2626" }}>{error}</Typography>
               </Box>
             )}
 
-            <Divider sx={{ borderColor: "#F3F4F6", my: 0.25 }} />
+            <Divider sx={DIVIDER_SX} />
 
-            {/* Actions */}
-            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.25 }}>
-              <Button
-                variant="outlined"
-                onClick={onClose}
-                disabled={isBusy}
-                sx={{
-                  borderRadius: "10px", textTransform: "none", fontWeight: 600, fontSize: "13px",
-                  borderColor: "#E5E7EB", color: "#6B7280",
-                  "&:hover": { borderColor: "#D1D5DB", bgcolor: "#F9FAFB" },
-                }}
-              >
+            <Box sx={ACTIONS_SX}>
+              <Button variant="outlined" onClick={onClose} disabled={isBusy} sx={CANCEL_BTN_SX}>
                 {t("pages.applications.contact_modal.cancel")}
               </Button>
               <Button
                 variant="contained"
                 onClick={mode === "email" ? handleSendEmail : handleSendChat}
                 disabled={!isValid || isBusy}
-                startIcon={
-                  isBusy
-                    ? <CircularProgress size={13} sx={{ color: "rgba(255,255,255,0.7)" }} />
-                    : <SendOutlined sx={{ fontSize: 14 }} />
-                }
-                sx={{
-                  borderRadius: "10px", textTransform: "none", fontWeight: 600,
-                  fontSize: "13px", minWidth: 130,
-                  color: "#fff",
-                  bgcolor: cfg.color, boxShadow: "none",
-                  "&:hover": { filter: "brightness(0.92)", boxShadow: "none" },
-                  "&.Mui-disabled": { bgcolor: "#E5E7EB", color: "#9CA3AF" },
-                }}
+                startIcon={isBusy ? <CircularProgress size={13} sx={{ color: "rgba(255,255,255,0.7)" }} /> : <SendOutlined sx={{ fontSize: 14 }} />}
+                sx={{ borderRadius: "10px", textTransform: "none", fontWeight: 600, fontSize: "13px", minWidth: 130, color: "#fff", bgcolor: cfg.color, boxShadow: "none", "&:hover": { filter: "brightness(0.92)", boxShadow: "none" }, "&.Mui-disabled": { bgcolor: "#E5E7EB", color: "#9CA3AF" } }}
               >
                 {isBusy ? t("pages.applications.contact_modal.sending") : mode === "email" ? t("pages.applications.contact_modal.send_email") : t("pages.applications.contact_modal.send_message")}
               </Button>
@@ -353,38 +296,7 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
       </DialogContent>
     </Dialog>
   );
-};
-
-// ── Input style ────────────────────────────────────────────────────────────────
-
-const inputSx = {
-  "& .MuiOutlinedInput-root": {
-    borderRadius: "10px",
-    fontSize: "13px",
-    bgcolor: "#F9FAFB",
-    color: "#111827",
-    "& .MuiOutlinedInput-notchedOutline": { borderColor: "#E5E7EB" },
-    "&:hover": {
-      bgcolor: "#F3F4F6",
-      "& .MuiOutlinedInput-notchedOutline": { borderColor: "#D1D5DB" },
-    },
-    "&.Mui-focused": {
-      bgcolor: "#fff",
-      "& .MuiOutlinedInput-notchedOutline": { borderColor: "#9CA3AF", borderWidth: "1.5px" },
-    },
-    "&.Mui-disabled": {
-      bgcolor: "#F3F4F6",
-      "& .MuiOutlinedInput-notchedOutline": { borderColor: "#E5E7EB" },
-    },
-  },
-  "& .MuiInputBase-input::placeholder": {
-    color: "#9CA3AF",
-    opacity: 1,
-    fontSize: "13px",
-  },
-  "& .MuiInputBase-inputMultiline": {
-    lineHeight: 1.65,
-  },
-};
+});
+ContactCandidateModal.displayName = "ContactCandidateModal";
 
 export default ContactCandidateModal;

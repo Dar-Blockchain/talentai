@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
 import { selectCurrentJob } from "@/store/slices/postSlice";
@@ -11,21 +11,21 @@ import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
 import AssignmentLateOutlined from "@mui/icons-material/AssignmentLateOutlined";
 import SectionCard from "@/components/ui/SectionCard";
 
+// ─── Static constants ─────────────────────────────────────────────────────────
+
 const TEAL        = "#0D9488";
 const TEAL_BG     = "#F0FDFA";
 const TEAL_BORDER = "#99F6E4";
 
-type Step = {
-  id: string;
-  order: number;
-  status: string;
-  data: {
-    label: string;
-    type: string;
-    subtitle?: string;
-    config?: Record<string, any>;
-  };
-};
+const HEADER_ICON_SX   = { width: 28, height: 28, borderRadius: 1.5, bgcolor: TEAL_BG, border: `1px solid ${TEAL_BORDER}`, display: "flex", alignItems: "center", justifyContent: "center", color: TEAL } as const;
+const STEP_COUNT_SX    = { fontSize: "10px", height: 20, bgcolor: TEAL_BG, color: TEAL, border: `1px solid ${TEAL_BORDER}`, fontWeight: 700, ml: 0.5 } as const;
+const EMPTY_OUTER_SX   = { display: "flex", flexDirection: "column", alignItems: "center", py: 6, px: 3, bgcolor: "#FAFAFA", borderRadius: 2, border: "1px dashed #E5E7EB", textAlign: "center" } as const;
+const EMPTY_ICON_SX    = { width: 56, height: 56, borderRadius: "50%", bgcolor: TEAL_BG, display: "flex", alignItems: "center", justifyContent: "center", mb: 2 } as const;
+const ACCORDION_SX     = { borderRadius: "10px !important", border: "1px solid #F3F4F6", boxShadow: "none", "&:before": { display: "none" }, overflow: "hidden" } as const;
+const SUMMARY_SX       = { px: 2, py: 1, minHeight: "48px !important", "& .MuiAccordionSummary-content": { my: "0 !important" } } as const;
+const DETAILS_SX       = { px: 2, pt: 0, pb: 2, borderTop: "1px solid #F3F4F6" } as const;
+const TAG_SX           = { fontSize: "11px", height: 22, bgcolor: "#F3F4F6", color: "#374151", border: "1px solid #E5E7EB" } as const;
+const CFG_TITLE_SX     = { fontSize: "10px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: 0.6 } as const;
 
 const STEP_COLORS: Record<string, { color: string; bg: string; border: string }> = {
   assessment: { color: "#7C3AED", bg: "#F5F3FF", border: "#DDD6FE" },
@@ -35,57 +35,62 @@ const STEP_COLORS: Record<string, { color: string; bg: string; border: string }>
   default:    { color: "#6B7280", bg: "#F9FAFB",  border: "#E5E7EB" },
 };
 
-const Tag = ({ label }: { label: string }) => (
-  <Chip label={label} size="small" sx={{ fontSize: "11px", height: 22, bgcolor: "#F3F4F6", color: "#374151", border: "1px solid #E5E7EB" }} />
-);
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
-const ConfigSection = ({ title, children }: { title: string; children: React.ReactNode }) => (
+type Step = {
+  id: string;
+  order: number;
+  status: string;
+  data: { label: string; type: string; subtitle?: string; config?: Record<string, any> };
+};
+
+const Tag = memo(({ label }: { label: string }) => (
+  <Chip label={label} size="small" sx={TAG_SX} />
+));
+Tag.displayName = "Tag";
+
+const ConfigSection = memo(({ title, children }: { title: string; children: React.ReactNode }) => (
   <Stack spacing={0.75}>
-    <Typography sx={{ fontSize: "10px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: 0.6 }}>
-      {title}
-    </Typography>
+    <Typography sx={CFG_TITLE_SX}>{title}</Typography>
     <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>{children}</Stack>
   </Stack>
-);
+));
+ConfigSection.displayName = "ConfigSection";
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 interface Props {
   canEdit: boolean;
 }
 
-const RecruitmentFlowDetails: React.FC<Props> = ({ canEdit }) => {
+const RecruitmentFlowDetails = memo<Props>(({ canEdit }) => {
   const { t } = useTranslation("posts");
-  const job = useSelector(selectCurrentJob);
+  const job   = useSelector(selectCurrentJob);
 
-  if (!canEdit && !job?.PostSteps?.length) return null;
-
-  const sortedSteps: Step[] = React.useMemo(
+  const sortedSteps = useMemo<Step[]>(
     () => (Array.isArray(job?.PostSteps) ? [...job.PostSteps].sort((a, b) => a.order - b.order) : []),
-    [job?.PostSteps]
+    [job?.PostSteps],
   );
+
+  if (!canEdit && !sortedSteps.length) return null;
 
   return (
     <SectionCard>
-      {/* Header */}
       <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: sortedSteps.length ? 3 : 2 }}>
-        <Box sx={{ width: 28, height: 28, borderRadius: 1.5, bgcolor: TEAL_BG, border: `1px solid ${TEAL_BORDER}`, display: "flex", alignItems: "center", justifyContent: "center", color: TEAL }}>
+        <Box sx={HEADER_ICON_SX}>
           <AccountTreeOutlined sx={{ fontSize: 15 }} />
         </Box>
         <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: 0.5 }}>
           {t("detail.pipeline.title")}
         </Typography>
         {sortedSteps.length > 0 && (
-          <Chip
-            label={t("detail.pipeline.step_count", { count: sortedSteps.length })}
-            size="small"
-            sx={{ fontSize: "10px", height: 20, bgcolor: TEAL_BG, color: TEAL, border: `1px solid ${TEAL_BORDER}`, fontWeight: 700, ml: 0.5 }}
-          />
+          <Chip label={t("detail.pipeline.step_count", { count: sortedSteps.length })} size="small" sx={STEP_COUNT_SX} />
         )}
       </Box>
 
-      {/* Empty state */}
       {!sortedSteps.length && (
-        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", py: 6, px: 3, bgcolor: "#FAFAFA", borderRadius: 2, border: "1px dashed #E5E7EB", textAlign: "center" }}>
-          <Box sx={{ width: 56, height: 56, borderRadius: "50%", bgcolor: TEAL_BG, display: "flex", alignItems: "center", justifyContent: "center", mb: 2 }}>
+        <Box sx={EMPTY_OUTER_SX}>
+          <Box sx={EMPTY_ICON_SX}>
             <AssignmentLateOutlined sx={{ fontSize: 28, color: TEAL }} />
           </Box>
           <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#374151", mb: 0.5 }}>{t("detail.pipeline.empty_title")}</Typography>
@@ -93,22 +98,15 @@ const RecruitmentFlowDetails: React.FC<Props> = ({ canEdit }) => {
         </Box>
       )}
 
-      {/* Steps */}
       {sortedSteps.length > 0 && (
         <Stack spacing={1.5}>
           {sortedSteps.map((step) => {
-            const config = step.data?.config ?? {};
+            const config  = step.data?.config ?? {};
             const typeKey = step.data?.type?.toLowerCase() || "default";
-            const colors = STEP_COLORS[typeKey] || STEP_COLORS.default;
-
+            const colors  = STEP_COLORS[typeKey] || STEP_COLORS.default;
             return (
-              <Accordion key={step.id} defaultExpanded={false}
-                sx={{ borderRadius: "10px !important", border: "1px solid #F3F4F6", boxShadow: "none", "&:before": { display: "none" }, overflow: "hidden" }}
-              >
-                <AccordionSummary
-                  expandIcon={<ExpandMoreIcon sx={{ fontSize: 18, color: "#9CA3AF" }} />}
-                  sx={{ px: 2, py: 1, minHeight: "48px !important", "& .MuiAccordionSummary-content": { my: "0 !important" } }}
-                >
+              <Accordion key={step.id} defaultExpanded={false} sx={ACCORDION_SX}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ fontSize: 18, color: "#9CA3AF" }} />} sx={SUMMARY_SX}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                     <Box sx={{ width: 26, height: 26, borderRadius: "50%", bgcolor: colors.bg, border: `1px solid ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       <Typography sx={{ fontSize: "11px", fontWeight: 800, color: colors.color }}>{step.order + 1}</Typography>
@@ -116,21 +114,19 @@ const RecruitmentFlowDetails: React.FC<Props> = ({ canEdit }) => {
                     <Box>
                       <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827" }}>{step.data?.label}</Typography>
                       <Box sx={{ display: "flex", gap: 0.75, mt: 0.25 }}>
-                        <Chip label={step.data?.type?.toUpperCase()} size="small"
-                          sx={{ fontSize: "9px", height: 16, fontWeight: 700, color: colors.color, bgcolor: colors.bg, border: `1px solid ${colors.border}` }} />
-                        <Chip label={step.status?.toUpperCase()} size="small"
-                          sx={{ fontSize: "9px", height: 16, fontWeight: 700, color: "#6B7280", bgcolor: "#F3F4F6", border: "1px solid #E5E7EB" }} />
+                        <Chip label={step.data?.type?.toUpperCase()} size="small" sx={{ fontSize: "9px", height: 16, fontWeight: 700, color: colors.color, bgcolor: colors.bg, border: `1px solid ${colors.border}` }} />
+                        <Chip label={step.status?.toUpperCase()} size="small" sx={{ fontSize: "9px", height: 16, fontWeight: 700, color: "#6B7280", bgcolor: "#F3F4F6", border: "1px solid #E5E7EB" }} />
                       </Box>
                     </Box>
                   </Box>
                 </AccordionSummary>
 
-                <AccordionDetails sx={{ px: 2, pt: 0, pb: 2, borderTop: "1px solid #F3F4F6" }}>
+                <AccordionDetails sx={DETAILS_SX}>
                   <Stack spacing={1.5}>
                     {(config.assessmentLevel || config.passThreshold) && (
                       <ConfigSection title={t("detail.pipeline.config.assessment")}>
                         {config.assessmentLevel && <Tag label={`Level · ${config.assessmentLevel}`} />}
-                        {config.passThreshold && <Tag label={`Pass ≥ ${config.passThreshold}%`} />}
+                        {config.passThreshold   && <Tag label={`Pass ≥ ${config.passThreshold}%`} />}
                       </ConfigSection>
                     )}
                     {Array.isArray(config.skills) && config.skills.length > 0 && (
@@ -158,14 +154,14 @@ const RecruitmentFlowDetails: React.FC<Props> = ({ canEdit }) => {
                     )}
                     {step.data?.type === "email" && (
                       <ConfigSection title={t("detail.pipeline.config.email")}>
-                        {config.emailType && <Tag label={`Type · ${config.emailType}`} />}
-                        {config.sendTo && <Tag label={`To · ${config.sendTo}`} />}
-                        {config.subject && <Tag label={`Subject · ${config.subject}`} />}
+                        {config.emailType  && <Tag label={`Type · ${config.emailType}`} />}
+                        {config.sendTo     && <Tag label={`To · ${config.sendTo}`} />}
+                        {config.subject    && <Tag label={`Subject · ${config.subject}`} />}
                       </ConfigSection>
                     )}
                     {step.data?.type === "task" && (
                       <ConfigSection title={t("detail.pipeline.config.task")}>
-                        {config.taskTitle && <Tag label={config.taskTitle} />}
+                        {config.taskTitle       && <Tag label={config.taskTitle} />}
                         {config.deliverableType && <Tag label={`Deliverable · ${config.deliverableType}`} />}
                       </ConfigSection>
                     )}
@@ -178,6 +174,7 @@ const RecruitmentFlowDetails: React.FC<Props> = ({ canEdit }) => {
       )}
     </SectionCard>
   );
-};
+});
+RecruitmentFlowDetails.displayName = "RecruitmentFlowDetails";
 
 export default RecruitmentFlowDetails;

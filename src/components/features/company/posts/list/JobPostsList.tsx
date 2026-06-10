@@ -1,12 +1,6 @@
-import { memo } from "react";
+import { memo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Box,
-  Typography,
-  Skeleton,
-  Pagination,
-  Button,
-} from "@mui/material";
+import { Box, Typography, Skeleton, Pagination, Button } from "@mui/material";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import AddOutlined from "@mui/icons-material/AddOutlined";
 import JobPostCard from "./JobPostCard";
@@ -16,34 +10,24 @@ const TEAL = "#0D9488";
 export type StatusFilter = "all" | "active" | "draft" | "expired";
 export type SortOption   = "newest" | "oldest" | "title-asc" | "title-desc";
 
-interface PaginationInfo {
-  totalPages: number;
-  total?: number;
-}
+// ─── Static constants ─────────────────────────────────────────────────────────
 
-interface JobPostsListProps {
-  jobs: any[];
-  loading: boolean;
-  error: string | null;
-  hasFilters: boolean;
-  page: number;
-  pagination: PaginationInfo;
-  onPageChange: (page: number) => void;
-  onDelete: (id: string) => void;
-  onViewDetails: (id: string) => void;
-  onPublish?: (id: string) => void;
-  onCreateClick: () => void;
-  canCreate?: boolean;
-  canDelete?: boolean;
-}
+const GRID_SX        = { display: "grid", gridTemplateColumns: { xs: "minmax(0,1fr)", sm: "repeat(2, minmax(0,1fr))", lg: "repeat(3, minmax(0,1fr))" }, gap: { xs: 1.5, md: 2 } } as const;
+const GRID_LIST_SX   = { display: "grid", gridTemplateColumns: { xs: "minmax(0,1fr)", sm: "repeat(2, minmax(0,1fr))", lg: "repeat(3, minmax(0,1fr))" }, gap: { xs: 2, md: 2.5 } } as const;
+const ERROR_SX       = { p: 3, borderRadius: "10px", bgcolor: "#FEF2F2", border: "1px solid #FECACA", color: "#DC2626", fontSize: "13px" } as const;
+const EMPTY_BOX_SX   = { py: 12, textAlign: "center", border: "1.5px dashed #E5E7EB", borderRadius: "12px", bgcolor: "#FAFAFA" } as const;
+const EMPTY_TITLE_SX = { fontSize: "14px", fontWeight: 600, color: "#374151", mb: 0.5 } as const;
+const EMPTY_SUB_SX   = { fontSize: "13px", color: "#9CA3AF" } as const;
+const CREATE_BTN_SX  = { textTransform: "none", fontWeight: 700, color: "#fff", bgcolor: TEAL, "&:hover": { bgcolor: "#0F766E" }, borderRadius: "10px" } as const;
+const PAGE_BOX_SX    = { display: "flex", justifyContent: "center" } as const;
+const PAGINATION_SX  = { "& .MuiPaginationItem-root": { fontWeight: 500 }, "& .Mui-selected": { bgcolor: `${TEAL}18`, color: TEAL, fontWeight: 700 }, "& .MuiPaginationItem-root:hover": { bgcolor: "#F3F4F6" } } as const;
 
-/* ── Skeleton card ─────────────────────────────────────────── */
-const JobPostSkeletonCard: React.FC = () => (
-  <Box sx={{
-    bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "14px",
-    overflow: "hidden", display: "flex", flexDirection: "column", height: "100%",
-    boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-  }}>
+const SKELETON_ITEMS = Array.from({ length: 6 });
+
+// ─── Skeleton card ────────────────────────────────────────────────────────────
+
+const JobPostSkeletonCard = memo(() => (
+  <Box sx={{ bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "14px", overflow: "hidden", display: "flex", flexDirection: "column", height: "100%", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
     <Skeleton variant="rectangular" height={3} sx={{ bgcolor: "#F3F4F6" }} />
     <Box sx={{ p: 2.5, display: "flex", flexDirection: "column", gap: 2 }}>
       <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
@@ -70,61 +54,68 @@ const JobPostSkeletonCard: React.FC = () => (
       </Box>
     </Box>
   </Box>
-);
+));
+JobPostSkeletonCard.displayName = "JobPostSkeletonCard";
 
-/* ── Main component ────────────────────────────────────────── */
+// ─── Main component ───────────────────────────────────────────────────────────
+
+interface PaginationInfo {
+  totalPages: number;
+  total?: number;
+}
+
+interface JobPostsListProps {
+  jobs: any[];
+  loading: boolean;
+  error: string | null;
+  hasFilters: boolean;
+  page: number;
+  pagination: PaginationInfo;
+  onPageChange: (page: number) => void;
+  onDelete: (id: string) => void;
+  onViewDetails: (id: string) => void;
+  onPublish?: (id: string) => void;
+  onCreateClick: () => void;
+  canCreate?: boolean;
+  canDelete?: boolean;
+}
+
 const JobPostsList = memo<JobPostsListProps>(({
-  jobs,
-  loading,
-  error,
-  hasFilters,
-  page,
-  pagination,
-  onPageChange,
-  onDelete,
-  onViewDetails,
-  onPublish,
-  onCreateClick,
-  canCreate = true,
-  canDelete = true,
+  jobs, loading, error, hasFilters, page, pagination,
+  onPageChange, onDelete, onViewDetails, onPublish, onCreateClick,
+  canCreate = true, canDelete = true,
 }) => {
   const { t } = useTranslation("posts");
 
+  const handlePageChange = useCallback(
+    (_: React.ChangeEvent<unknown>, v: number) => onPageChange(v),
+    [onPageChange],
+  );
+
   if (loading) {
     return (
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "minmax(0,1fr)", sm: "repeat(2, minmax(0,1fr))", lg: "repeat(3, minmax(0,1fr))" }, gap: { xs: 1.5, md: 2 } }}>
-        {Array.from({ length: 6 }).map((_, i) => <JobPostSkeletonCard key={i} />)}
+      <Box sx={GRID_SX}>
+        {SKELETON_ITEMS.map((_, i) => <JobPostSkeletonCard key={i} />)}
       </Box>
     );
   }
 
   if (error) {
-    return (
-      <Box sx={{ p: 3, borderRadius: "10px", bgcolor: "#FEF2F2", border: "1px solid #FECACA", color: "#DC2626", fontSize: "13px" }}>
-        {error}
-      </Box>
-    );
+    return <Box sx={ERROR_SX}>{error}</Box>;
   }
 
   if (jobs.length === 0) {
     return (
-      <Box sx={{ py: 12, textAlign: "center", border: "1.5px dashed #E5E7EB", borderRadius: "12px", bgcolor: "#FAFAFA" }}>
+      <Box sx={EMPTY_BOX_SX}>
         <WorkOutlined sx={{ fontSize: 44, color: "#D1D5DB", mb: 1.5 }} />
-        <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#374151", mb: 0.5 }}>
+        <Typography sx={EMPTY_TITLE_SX}>
           {hasFilters ? t("empty.no_match") : t("empty.no_posts")}
         </Typography>
-        <Typography sx={{ fontSize: "13px", color: "#9CA3AF", mb: hasFilters ? 0 : 2 }}>
-          {hasFilters
-            ? t("empty.no_match_hint")
-            : t("empty.no_posts_hint")}
+        <Typography sx={{ ...EMPTY_SUB_SX, mb: hasFilters ? 0 : 2 }}>
+          {hasFilters ? t("empty.no_match_hint") : t("empty.no_posts_hint")}
         </Typography>
         {!hasFilters && (
-          <Button
-            variant="contained"
-            startIcon={<AddOutlined />}
-            onClick={onCreateClick}
-            sx={{ textTransform: "none", fontWeight: 700, color: "#fff", bgcolor: TEAL, "&:hover": { bgcolor: "#0F766E" }, borderRadius: "10px" }}
-          >
+          <Button variant="contained" startIcon={<AddOutlined />} onClick={onCreateClick} sx={CREATE_BTN_SX}>
             {t("empty.create_btn")}
           </Button>
         )}
@@ -134,30 +125,21 @@ const JobPostsList = memo<JobPostsListProps>(({
 
   return (
     <Box>
-      <Box sx={{
-        display: "grid",
-        gridTemplateColumns: { xs: "minmax(0,1fr)", sm: "repeat(2, minmax(0,1fr))", lg: "repeat(3, minmax(0,1fr))" },
-        gap: { xs: 2, md: 2.5 },
-        mb: pagination.totalPages > 1 ? 3 : 0,
-      }}>
+      <Box sx={{ ...GRID_LIST_SX, mb: pagination.totalPages > 1 ? 3 : 0 }}>
         {jobs.map((job: any, i: number) => (
           <JobPostCard key={job._id} job={job} index={i} onDelete={onDelete} onViewDetails={onViewDetails} onPublish={onPublish} />
         ))}
       </Box>
 
       {pagination.totalPages > 1 && (
-        <Box sx={{ display: "flex", justifyContent: "center" }}>
+        <Box sx={PAGE_BOX_SX}>
           <Pagination
             count={pagination.totalPages}
             page={page}
-            onChange={(_, v) => onPageChange(v)}
+            onChange={handlePageChange}
             shape="rounded"
             size="small"
-            sx={{
-              "& .MuiPaginationItem-root": { fontWeight: 500 },
-              "& .Mui-selected": { bgcolor: `${TEAL}18`, color: TEAL, fontWeight: 700 },
-              "& .MuiPaginationItem-root:hover": { bgcolor: "#F3F4F6" },
-            }}
+            sx={PAGINATION_SX}
           />
         </Box>
       )}
@@ -166,5 +148,4 @@ const JobPostsList = memo<JobPostsListProps>(({
 });
 
 JobPostsList.displayName = "JobPostsList";
-
 export default JobPostsList;
