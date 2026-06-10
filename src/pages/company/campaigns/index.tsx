@@ -14,11 +14,11 @@ import { selectEmployeePermissions } from "@/store/slices/memberSlice";
 const AddOutlined = dynamic(() => import("@mui/icons-material/AddOutlined"));
 
 const CampaignsStats = dynamic(
-  () => import("@/components/features/company/campaigns/list/Stats")
+  () => import("@/modules/company/campaigns/components/list/Stats")
 );
 
 const CampaignsGrid = dynamic(
-  () => import("@/components/features/company/campaigns/list/CampaignsGrid"),
+  () => import("@/modules/company/campaigns/components/list/CampaignsGrid"),
   { ssr: false }
 );
 
