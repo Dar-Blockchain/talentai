@@ -1,6 +1,5 @@
 "use client";
 import React, { useMemo, useEffect, useState, useRef, useCallback } from "react";
-import { Box } from "@mui/material";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { getToken } from "@/utils/tokenUtils";
@@ -14,6 +13,7 @@ import HeaderMessagesDropdown from "@/modules/shared/layouts/home/HeaderMessages
 import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
 import { useRouter } from "next/router";
 import { io, Socket } from "socket.io-client";
+import { cn } from "@/lib/utils";
 
 const Header = () => {
   const router    = useRouter();
@@ -21,14 +21,11 @@ const Header = () => {
   const [scrolled, setScrolled] = useState(false);
   const isAuthRedux   = useSelector((state: RootState) => state.auth.isAuthenticated);
   const connectedUser = useSelector((state: RootState) => state.user?.connectedUser?.user);
-  const profile       = useSelector((state: RootState) => state.user?.connectedUser?.profile);
   const userId        = connectedUser?._id;
-  const isCandidate   = connectedUser?.role?.toLowerCase() === 'candidate';
+  const isCandidate   = connectedUser?.role?.toLowerCase() === "candidate";
 
-  const handleCandidateViewAll = useCallback(() => router.push('/notifications'), [router]);
+  const handleCandidateViewAll = useCallback(() => router.push("/notifications"), [router]);
 
-  // Derive auth from token directly — covers the PersistGate rehydration window
-  // where isAuthRedux is still false even though a valid token exists.
   const [hasToken, setHasToken] = useState(false);
   useEffect(() => {
     setHasToken(!!getToken());
@@ -37,13 +34,14 @@ const Header = () => {
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
 
   const landingLikePaths = useMemo(
-    () => ["/", "/home/candidate", "/candidate/home", "/terms", "/privacy"],
+    () => ["/", "/terms", "/privacy"],
     []
   );
 
-  const showHeaderNavMenu = useMemo(() => (
-    landingLikePaths.includes(router.pathname)
-  ), [router.pathname, landingLikePaths]);
+  const showHeaderNavMenu = useMemo(
+    () => landingLikePaths.includes(router.pathname),
+    [router.pathname, landingLikePaths]
+  );
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
@@ -87,96 +85,81 @@ const Header = () => {
 
   return (
     <>
-      <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1100 }}>
-        <Box sx={{
-          maxWidth: isCompact ? "1000px" : "1440px",
-          mx: "auto",
-          px: { xs: 1.5, md: 4 },
-          pt: isCompact ? 3 : 1.5,
-          pb: isCompact ? 1.5 : 0,
-          transition: "max-width 0.5s cubic-bezier(0.22,1,0.36,1), padding-top 0.4s ease, padding-bottom 0.4s ease",
-        }}>
-          {/* Inner bar */}
-          <Box sx={{
-            display: "grid",
-            gridTemplateColumns: "1fr auto",
-            "@media (min-width:800px)": { gridTemplateColumns: "auto 1fr auto" },
-            alignItems: "center",
-            height: 54,
-            px: { xs: 1.5, md: 2.5 },
-            borderRadius: isCompact ? "99px" : "0px",
-            bgcolor: isCompact ? "rgba(242,243,244,0.97)" : "transparent",
-            backdropFilter: isCompact ? "blur(18px)" : "none",
-            WebkitBackdropFilter: isCompact ? "blur(18px)" : "none",
-            border: "1px solid",
-            borderColor: isCompact ? "rgba(13,148,136,0.18)" : "transparent",
-            boxShadow: isCompact
-              ? "0 12px 40px rgba(0,0,0,0.14), 0 4px 14px rgba(0,0,0,0.09), 0 1px 3px rgba(0,0,0,0.06)"
-              : "none",
-            transition: [
-              "background-color 0.4s ease",
-              "border-color 0.4s ease",
-              "box-shadow 0.4s ease",
-              "border-radius 0.5s cubic-bezier(0.22,1,0.36,1)",
-            ].join(", "),
-          }}>
-
+      {/* Fixed header */}
+      <div className="fixed inset-x-0 top-0 z-[1100]">
+        <div
+          className={cn(
+            "mx-auto px-3 md:px-8",
+            "transition-[max-width,padding-top,padding-bottom] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
+            isCompact ? "max-w-[1000px] pt-3 pb-[18px]" : "max-w-[1440px] pt-[18px] pb-0"
+          )}
+        >
+          {/* Inner pill / bar */}
+          <div
+            className={cn(
+              // layout
+              "grid grid-cols-[1fr_auto] [@media(min-width:800px)]:grid-cols-[auto_1fr_auto]",
+              "items-center h-[54px] px-3 [@media(min-width:800px)]:px-5",
+              "border",
+              // smooth all animated properties
+              "transition-[background-color,border-color,box-shadow,border-radius,backdrop-filter] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
+              isCompact
+                ? [
+                    "rounded-full",
+                    "bg-[rgba(242,243,244,0.97)]",
+                    "backdrop-blur-[18px]",
+                    "border-[rgba(13,148,136,0.18)]",
+                    "shadow-[0_12px_40px_rgba(0,0,0,0.14),_0_4px_14px_rgba(0,0,0,0.09),_0_1px_3px_rgba(0,0,0,0.06)]",
+                  ].join(" ")
+                : "rounded-none bg-transparent backdrop-blur-none border-transparent shadow-none"
+            )}
+          >
             {/* LEFT — logo */}
-            <Box sx={{ display: "flex", alignItems: "center" }}>
+            <div className="flex items-center">
               <HeaderLogo />
-            </Box>
+            </div>
 
-            {/* CENTER — nav (hidden <800px) */}
-            <Box sx={{ display: "none", "@media (min-width:800px)": { display: "flex" }, alignItems: "center", justifyContent: "center" }}>
+            {/* CENTER — nav (hidden below 800px) */}
+            <div className="hidden [@media(min-width:800px)]:flex items-center justify-center">
               {showHeaderNavMenu && <HeaderNavMenu inverted={!isCompact} />}
-            </Box>
+            </div>
 
             {/* RIGHT — actions */}
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 1 }}>
-              {/* Language switcher — always visible on desktop */}
-              <Box sx={{ display: "none", "@media (min-width:800px)": { display: "flex" } }}>
-                <LanguageSwitcher variant="icon" size="small" />
-              </Box>
-
+            <div className="flex items-center justify-end gap-2">
               {isAuthenticated ? (
-                <>
-                  {/* Icon group (hidden <800px) */}
-                  <Box sx={{
-                    display: "none",
-                    "@media (min-width:800px)": { display: "flex" },
-                    alignItems: "center",
-                    gap: 0.5,
-                  }}>
+                <div className="hidden [@media(min-width:800px)]:flex items-center gap-1.5">
+                  {/* Language + notif + messages cluster */}
+                  <div className="flex items-center gap-0.5 bg-gray-100/80 rounded-xl px-1 py-1">
+                    <LanguageSwitcher variant="icon" size="small" />
                     <HeaderMessagesDropdown userId={userId} unreadMessageCount={unreadMessageCount} />
                     <HeaderNotification onViewAll={isCandidate ? handleCandidateViewAll : undefined} />
-                  </Box>
+                  </div>
 
                   {/* Divider */}
-                  <Box sx={{ width: "1px", height: 20, bgcolor: "rgba(0,0,0,0.10)" }} />
+                  <div className="w-px h-4 bg-gray-300/50" />
 
-                  {/* User pill (hidden <800px) */}
-                  <Box sx={{ display: "none", "@media (min-width:800px)": { display: "flex" } }}>
-                    <UserAvatar />
-                  </Box>
-                </>
+                  {/* User pill */}
+                  <UserAvatar />
+                </div>
               ) : (
-                /* Primary actions (hidden <800px) */
-                <Box sx={{ display: "none", "@media (min-width:800px)": { display: "flex" } }}>
+                /* Primary actions + lang (unauthenticated) */
+                <div className="hidden [@media(min-width:800px)]:flex items-center gap-2">
+                  <LanguageSwitcher variant="icon" size="small" standalone />
                   <HeaderPrimaryActions inverted={!isCompact} />
-                </Box>
+                </div>
               )}
+
               <HamburgerButton
                 userId={userId}
                 unreadMessageCount={unreadMessageCount}
               />
-            </Box>
-          </Box>
-        </Box>
-      </Box>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      {/* Spacer so page content starts below the fixed header */}
-      <Box sx={{ height: { xs: 76, md: 90 } }} />
-
+      {/* Spacer */}
+      <div className="h-[76px] md:h-[90px]" />
     </>
   );
 };

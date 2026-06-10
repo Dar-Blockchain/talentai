@@ -1,20 +1,19 @@
-﻿import Head from "next/head";
-import LandingPageLayout from "@/components/features/home/LandingPageLayout";
-import AISpotlight from "@/components/features/home/company/AISpotlight";
-import GlobalCompanies from "@/components/features/home/company/GlobalCompanies";
-import BiasFreeEvaluation from "@/components/features/home/company/BiasFreeEvaluation";
-import Footer from "@/modules/shared/layouts/home/HomeFooter";
-import SolutionsSection from "@/components/features/home/company/HowItWorksSection";
-import ContactSection from "@/components/features/home/company/ContactSection";
-import FAQSection from "@/components/features/home/company/FAQSection";
-import FinalCTA from "@/components/features/home/company/FinalCTA";
-import StakesSection from "@/components/features/home/company/StakesSection";
-import SuccessSection from "@/components/features/home/company/SuccessSection";
-import { useEffect } from "react";
-import { Box } from "@mui/material";
-import { setUserType } from "@/store/slices/userSlice";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/store/store";
+import Head from "next/head";
+import LandingPageLayout  from "@/modules/home/LandingPageLayout";
+import AISpotlight        from "@/modules/home/company/AISpotlight";
+import GlobalCompanies    from "@/modules/home/company/GlobalCompanies";
+import BiasFreeEvaluation from "@/modules/home/company/BiasFreeEvaluation";
+import Footer             from "@/modules/shared/layouts/home/HomeFooter";
+import SolutionsSection   from "@/modules/home/company/HowItWorksSection";
+import ContactSection     from "@/modules/home/company/ContactSection";
+import FAQSection         from "@/modules/home/company/FAQSection";
+import FinalCTA           from "@/modules/home/company/FinalCTA";
+import StakesSection      from "@/modules/home/company/StakesSection";
+import SuccessSection     from "@/modules/home/company/SuccessSection";
+import { useEffect }     from "react";
+import { setUserType }   from "@/store/slices/userSlice";
+import { useDispatch }   from "react-redux";
+import { AppDispatch }   from "@/store/store";
 import type { GetStaticProps } from "next";
 
 const CANONICAL = "https://talentai.bid/";
@@ -125,88 +124,72 @@ const HomePage: React.FC = () => {
         <link rel="canonical" href={CANONICAL} />
         <meta name="robots" content="index, follow" />
 
-        {/* Open Graph */}
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content={CANONICAL} />
-        <meta property="og:site_name" content="TalentAI" />
-        <meta property="og:title" content="TalentAI — AI Agents That Interview Candidates For You" />
-        <meta
-          property="og:description"
-          content="Automate screening, interviews, and evaluation with conversational AI. Reduce hiring time by 75%. Trusted by NVIDIA Inception."
-        />
-        <meta property="og:image" content={OG_IMAGE} />
+        <meta property="og:type"        content="website" />
+        <meta property="og:url"         content={CANONICAL} />
+        <meta property="og:site_name"   content="TalentAI" />
+        <meta property="og:title"       content="TalentAI — AI Agents That Interview Candidates For You" />
+        <meta property="og:description" content="Automate screening, interviews, and evaluation with conversational AI. Reduce hiring time by 75%. Trusted by NVIDIA Inception." />
+        <meta property="og:image"       content={OG_IMAGE} />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
-        <meta property="og:image:alt" content="TalentAI — AI-powered recruitment platform" />
+        <meta property="og:image:alt"   content="TalentAI — AI-powered recruitment platform" />
 
-        {/* Twitter Card */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="TalentAI — AI Agents That Interview Candidates For You" />
-        <meta
-          name="twitter:description"
-          content="Automate screening, interviews, and evaluation with conversational AI. Reduce hiring time by 75%."
-        />
-        <meta name="twitter:image" content={OG_IMAGE} />
+        <meta name="twitter:card"        content="summary_large_image" />
+        <meta name="twitter:title"       content="TalentAI — AI Agents That Interview Candidates For You" />
+        <meta name="twitter:description" content="Automate screening, interviews, and evaluation with conversational AI. Reduce hiring time by 75%." />
+        <meta name="twitter:image"       content={OG_IMAGE} />
 
-        {/* JSON-LD structured data */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
-        />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       </Head>
 
-      <LandingPageLayout
-        logo="/images/home/logo.svg"
-        type="company"
-        color="#0D9488"
-        headerLink="Are you a Job Seeker?"
-        heroTitle="Revolutionize Your Hiring with"
-        heroSubtitle="AI-Powered Intelligence"
-        backgroundColor="#F2F3F4"
-      >
-        <Box sx={{ background: "#F2F3F4", py: { xs: 5, md: 7 } }}>
+      <LandingPageLayout type="company" heroTitle="Revolutionize Your Hiring with" heroSubtitle="AI-Powered Intelligence">
+
+        {/* Social proof strip */}
+        <div className="bg-[#F2F4F7] py-10 md:py-14">
           <GlobalCompanies />
-        </Box>
+        </div>
 
-        <Box sx={{ background: "#111827", py: { xs: 6, md: 9 } }}>
+        {/* Problem stats */}
+        <div className="bg-white py-16 md:py-24">
           <AISpotlight />
-        </Box>
+        </div>
 
-        <Box sx={{ background: "#ffffff", py: { xs: 6, md: 9 } }}>
+        {/* Solution */}
+        <div className="bg-[#F2F4F7] py-16 md:py-24">
           <BiasFreeEvaluation />
-        </Box>
+        </div>
 
-        <Box sx={{ background: "#111827", py: { xs: 6, md: 9 } }}>
+        {/* Stakes */}
+        <div className="bg-white py-16 md:py-24">
           <StakesSection />
-        </Box>
+        </div>
 
-        <Box sx={{ background: "#F2F3F4", py: { xs: 6, md: 9 } }}>
+        {/* How it works */}
+        <div className="bg-[#F2F4F7] py-16 md:py-24">
           <SolutionsSection />
-        </Box>
+        </div>
 
-        <Box sx={{ background: "#ffffff", py: { xs: 6, md: 9 } }}>
+        {/* Results */}
+        <div className="bg-white py-16 md:py-24">
           <SuccessSection />
-        </Box>
+        </div>
 
-        <Box sx={{ background: "#111827" }}>
+        {/* Final CTA */}
+        <div className="bg-[#F2F4F7]">
           <FinalCTA />
-        </Box>
+        </div>
 
-        <Box sx={{ background: "#F2F3F4" }}>
+        {/* FAQ */}
+        <div className="bg-white">
           <FAQSection />
-        </Box>
+        </div>
 
-        <Box sx={{ background: "#ffffff", py: { xs: 6, md: 9 } }}>
+        {/* Contact */}
+        <div className="bg-[#F2F4F7] py-16 md:py-24">
           <ContactSection />
-        </Box>
+        </div>
 
         <Footer />
       </LandingPageLayout>

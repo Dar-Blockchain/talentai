@@ -1,13 +1,22 @@
 "use client";
 import React, { useState, useMemo, useCallback } from "react";
-import { Avatar, Box, Typography } from "@mui/material";
-import KeyboardArrowDownRounded from "@mui/icons-material/KeyboardArrowDownRounded";
-import UserDropdownMenu from "./UserDropdownMenu";
+import { ChevronDown } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { logout } from "@/store/slices/authSlice";
 import { useRouter } from "next/router";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+} from "@/modules/shared/ui/shadcn/dropdown-menu";
+import {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+} from "@/modules/shared/ui/shadcn/avatar";
+import UserDropdownMenu from "./UserDropdownMenu";
 import LogoutProgressModal from "@/components/ui/LogoutProgressModal";
+import { cn } from "@/lib/utils";
 
 interface UserAvatarProps {
   showDropdown?: boolean;
@@ -17,9 +26,8 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
   const router   = useRouter();
   const dispatch = useDispatch<AppDispatch>();
 
-  const [anchorEl,   setAnchorEl]   = useState<null | HTMLElement>(null);
+  const [open,       setOpen]       = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const open = Boolean(anchorEl);
 
   const { user, profile } = useSelector((state: RootState) => state.user.connectedUser);
 
@@ -43,7 +51,6 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
   }, [isCompany, profile, user]);
 
   const shortName = useMemo(() => {
-    // Don't abbreviate company names — show them in full
     if (isCompany) return displayName;
     const words = displayName.split(" ");
     return words.length >= 2 ? `${words[0]} ${words[1][0]}.` : displayName;
@@ -55,7 +62,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
   }, [profile?.user_image, profile?.userId?.user_image, user?.user_image]);
 
   const initials = useMemo(() => {
-    if (isCompany) return (displayName)[0].toUpperCase();
+    if (isCompany) return displayName[0].toUpperCase();
     const f = profile?.firstName?.[0] || "";
     const l = profile?.lastName?.[0]  || "";
     if (f || l) return (f + l).toUpperCase();
@@ -77,94 +84,61 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
 
   return (
     <>
-      {/* Trigger */}
-      <Box
-        onClick={(e) => showDropdown ? setAnchorEl(e.currentTarget) : goToDashboard()}
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          cursor: "pointer",
-          color: '#374151',
-          bgcolor: 'transparent',
-          border: '1px solid #E5E7EB',
-          borderRadius: 2,
-          px: 1.5,
-          py: 0.5,
-          gap: 0.25,
-          '&:hover': { bgcolor: '#F9FAFB', borderColor: '#D1D5DB' },
-        }}
-      >
-        {/* Avatar with online dot */}
-        <Box sx={{ position: "relative", flexShrink: 0 }}>
-          <Avatar
-            src={avatarUrl || undefined}
-            sx={{
-              width: 26,
-              height: 26,
-              fontSize: "10px",
-              fontWeight: 700,
-              bgcolor: "#0D9488",
-              color: "#fff",
-              borderRadius: "8px",
-              border: "1.5px solid rgba(255,255,255,0.9)",
-            }}
+      <DropdownMenu open={open} onOpenChange={showDropdown ? setOpen : undefined}>
+        <DropdownMenuTrigger asChild>
+          <button
+            onClick={!showDropdown ? goToDashboard : undefined}
+            className={cn(
+              "flex items-center gap-1.5 px-2 py-1 rounded-xl cursor-pointer",
+              "bg-white/80 border border-gray-200/70 shadow-sm",
+              "text-foreground transition-all duration-150",
+              "hover:bg-white hover:border-primary/30 hover:shadow",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+            )}
           >
-            {!avatarUrl && initials}
-          </Avatar>
-          {/* Online indicator */}
-          <Box sx={{
-            position: "absolute",
-            bottom: -1,
-            right: -1,
-            width: 8,
-            height: 8,
-            borderRadius: "50%",
-            bgcolor: "#22C55E",
-            border: "1.5px solid #fff",
-          }} />
-        </Box>
+            {/* Avatar with online dot */}
+            <div className="relative flex-shrink-0">
+              <Avatar className="size-[26px] rounded-full">
+                <AvatarImage src={avatarUrl || undefined} className="rounded-full" />
+                <AvatarFallback className="rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+            </div>
 
-        {/* Name */}
-        <Typography sx={{
-          fontSize: "12.5px",
-          fontWeight: 600,
-          color: "#111827",
-          maxWidth: isCompany ? 160 : 96,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-          lineHeight: 1,
-          letterSpacing: "0.01em",
-        }}>
-          {shortName}
-        </Typography>
+            {/* Display name */}
+            <span className={cn(
+              "text-xs font-medium text-foreground leading-none truncate",
+              isCompany ? "max-w-40" : "max-w-24",
+            )}>
+              {shortName}
+            </span>
 
-        {/* Chevron */}
+            {/* Chevron */}
+            {showDropdown && (
+              <ChevronDown className={cn(
+                "size-3.5 text-muted-foreground flex-shrink-0 transition-transform duration-200",
+                open && "rotate-180",
+              )} />
+            )}
+          </button>
+        </DropdownMenuTrigger>
+
         {showDropdown && (
-          <KeyboardArrowDownRounded sx={{
-            fontSize: 14,
-            color: "#9CA3AF",
-            transition: "transform 0.2s",
-            transform: open ? "rotate(180deg)" : "rotate(0deg)",
-            flexShrink: 0,
-          }} />
+          <UserDropdownMenu
+            onLogout={handleLogout}
+            displayName={displayName}
+            email={user?.email}
+            avatarUrl={avatarUrl}
+            initials={initials}
+            isCompany={isCompany}
+            isEmployee={isEmployee}
+            isCandidate={isCandidate}
+            onDashboard={goToDashboard}
+            onClose={() => setOpen(false)}
+          />
         )}
-      </Box>
-
-      <UserDropdownMenu
-        anchorEl={anchorEl}
-        open={open}
-        onClose={() => setAnchorEl(null)}
-        onLogout={handleLogout}
-        displayName={displayName}
-        email={user?.email}
-        avatarUrl={avatarUrl}
-        initials={initials}
-        isCompany={isCompany}
-        isEmployee={isEmployee}
-        isCandidate={isCandidate}
-        onDashboard={goToDashboard}
-      />
+      </DropdownMenu>
 
       <LogoutProgressModal open={loggingOut} />
     </>

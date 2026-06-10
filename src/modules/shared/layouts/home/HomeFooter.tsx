@@ -2,251 +2,115 @@ import React, { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import Image from "next/image";
 import NextLink from "next/link";
-import {
-  Box,
-  Link,
-  Stack,
-  Typography,
-  IconButton,
-  Divider,
-} from "@mui/material";
-import LinkedInIcon from "@mui/icons-material/LinkedIn";
-import YouTubeIcon from "@mui/icons-material/YouTube";
-import TwitterIcon from "@mui/icons-material/Twitter";
-import InstagramIcon from "@mui/icons-material/Instagram";
-import FacebookIcon from "@mui/icons-material/Facebook";
-import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
+import { Mail } from "lucide-react";
 import { useRouter } from "next/router";
 
-const FooterLink: React.FC<{ children: React.ReactNode; href?: string }> = ({
-  children,
-  href = "#",
-}) => (
-  <Link
-    component={NextLink}
+const FooterLink: React.FC<{ children: React.ReactNode; href?: string }> = ({ children, href = "#" }) => (
+  <NextLink
     href={href}
-    underline="none"
-    sx={{
-      color: "#ffffff",
-      fontFamily: "Fustat",
-      fontWeight: 400,
-      fontStyle: "normal",
-      fontSize: "12px",
-      lineHeight: "18px",
-      letterSpacing: "0",
-      verticalAlign: "middle",
-      "&:hover": { color: "#D1D5DB" },
-    }}
+    className="text-[12px] text-gray-500 hover:text-gray-900 transition-colors leading-snug"
   >
     {children}
-  </Link>
+  </NextLink>
 );
+
+const LinkedInSVG = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="size-[15px]">
+    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+  </svg>
+);
+
+const XSVG = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="size-[14px]">
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+  </svg>
+);
+
+const SOCIAL = [
+  { Icon: LinkedInSVG, href: "https://www.linkedin.com/company/talentai-bid/", label: "LinkedIn" },
+  { Icon: XSVG,        href: "https://x.com/talentai_bid",                     label: "X / Twitter" },
+];
 
 const Footer: React.FC = () => {
   const { t } = useTranslation("common");
   const router = useRouter();
 
   const goHome = useCallback(() => {
-    if (router.pathname === "/") {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
-    }
+    if (router.pathname === "/") { window.scrollTo({ top: 0, behavior: "smooth" }); return; }
     router.push("/");
   }, [router]);
 
   return (
-    <Box
-      sx={{
-        backgroundColor: "#111827",
-        color: "#fff",
-        py: 4,
-        px: 3,
-        pb: { xs: 4, md: 6 },
-      }}
-    >
-      <Box sx={{ maxWidth: 1200, mx: "auto" }}>
-        {/* Top Section - Logo + Copyright and Disclaimer */}
-        <Box sx={{ mb: 1 }}>
-          {/* Logo */}
-          <Box sx={{ mb: 1.5 }}>
+    <footer className="bg-white border-t border-gray-100">
+      <div className="max-w-[1200px] mx-auto px-4 md:px-8 py-8 md:py-10">
+
+        {/* Top — logo + disclaimer */}
+        <div className="mb-5">
+          <div className="mb-2 cursor-pointer inline-block" onClick={goHome}>
             <Image
-              onClick={goHome}
-              src="/images/home/logoDark.svg"
+              src="/images/home/logo.svg"
               alt="TalentAI"
-              width={140}
-              height={40}
-              style={{ objectFit: "contain", cursor: "pointer" }}
+              width={130}
+              height={36}
+              style={{ objectFit: "contain" }}
             />
-          </Box>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "rgba(255, 255, 255, 0.5)",
-              fontFamily: "Fustat",
-              fontWeight: 400,
-              fontStyle: "normal",
-              fontSize: "10px",
-              lineHeight: "15px",
-              letterSpacing: "0%",
-              verticalAlign: "middle",
-            }}
-          >
+          </div>
+          <p className="text-[10px] text-gray-400 leading-[1.5] mb-1">
             {t("footer.copyright")}
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "rgba(255, 255, 255, 0.35)",
-              fontFamily: "Poppins",
-              fontWeight: 400,
-              fontSize: "10px",
-              lineHeight: "16px",
-              mt: 0.5,
-            }}
-          >
+          </p>
+          <p className="text-[10px] text-gray-400 leading-[1.6]">
             {t("footer.disclaimer_prefix")}{" "}
-            <Link
-              component={NextLink}
-              href="/terms"
-              sx={{
-                color: "rgba(255,255,255,0.5)",
-                textDecoration: "underline",
-                "&:hover": { color: "rgba(255,255,255,0.8)" },
-              }}
-            >
+            <NextLink href="/terms" className="text-gray-500 underline hover:text-gray-700 transition-colors">
               {t("footer.terms_of_use")}
-            </Link>{" "}
-            ·{" "}
-            <Link
-              component={NextLink}
-              href="/privacy"
-              sx={{
-                color: "rgba(255,255,255,0.5)",
-                textDecoration: "underline",
-                "&:hover": { color: "rgba(255,255,255,0.8)" },
-              }}
-            >
+            </NextLink>
+            {" · "}
+            <NextLink href="/privacy" className="text-gray-500 underline hover:text-gray-700 transition-colors">
               {t("footer.privacy_policy")}
-            </Link>
+            </NextLink>
             . {t("footer.disclaimer_suffix")}
-          </Typography>
-          {/* <Typography variant="caption" sx={{ color: '#D1D5DB', fontSize: '0.75rem', lineHeight: 1.5 }}>
-            *Numbers on this page are based on internal data compiled from existing customer base and speed assumption is based on the fact that standard onboarding may take 30 days and Remote's average onboarding time is 2.3 days.
-          </Typography> */}
-        </Box>
+          </p>
+        </div>
 
-        {/* Divider Line */}
-        <Divider
-          sx={{ mb: 2, borderBottom: "1px solid rgba(255, 255, 255, 0.15)" }}
-        />
+        {/* Divider */}
+        <div className="h-px bg-gray-100 mb-5" />
 
-        {/* Bottom Section - Links and Social Media */}
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          justifyContent="flex-end"
-          gap={{ xs: 3, md: 6 }}
-          alignItems={{ xs: "flex-start", md: "center" }}
-          spacing={{ xs: 2, md: 0 }}
-        >
-          {/* Policy Links */}
-          <Stack direction="row" spacing={3} flexWrap="wrap">
+        {/* Bottom — links, email, socials */}
+        <div className="flex flex-col md:flex-row justify-end gap-5 md:gap-8 items-start md:items-center">
+
+          {/* Policy links */}
+          <div className="flex gap-5">
             <FooterLink href="/terms">{t("footer.terms_of_use")}</FooterLink>
-            <FooterLink href="/privacy">
-              {t("footer.privacy_policy")}
-            </FooterLink>
-          </Stack>
+            <FooterLink href="/privacy">{t("footer.privacy_policy")}</FooterLink>
+          </div>
 
           {/* Contact email */}
-          <Link
-            href="mailto:contact@talent-ai.com"
-            underline="none"
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 0.75,
-              color: "rgba(255,255,255,0.7)",
-              fontSize: "12px",
-              "&:hover": { color: "#fff" },
-            }}
+          <a
+            href="mailto:contact@talentai.bid"
+            className="flex items-center gap-1.5 text-[12px] text-gray-500 hover:text-primary transition-colors"
           >
-            <EmailOutlinedIcon sx={{ fontSize: 16 }} />
+            <Mail className="size-[14px]" />
             contact@talentai.bid
-          </Link>
+          </a>
 
-          {/* Social Media Icons */}
-          <Stack direction="row" spacing={1.5}>
-            {/* <IconButton
-              sx={{
-                color: "#ffffff",
-                backgroundColor: "#ffffff",
-                width: 32,
-                height: 32,
-                "&:hover": { backgroundColor: "#f3f4f6" },
-              }}
-              size="small"
-            >
-              <YouTubeIcon sx={{ color: "#121212", fontSize: "1rem" }} />
-            </IconButton> */}
-            <IconButton
-              component="a"
-              href="https://www.linkedin.com/company/talentai-bid/"
-              target="_blank"
-              rel="noopener noreferrer"
-              sx={{
-                color: "#ffffff",
-                backgroundColor: "#ffffff",
-                width: 32,
-                height: 32,
-                "&:hover": { backgroundColor: "#f3f4f6" },
-              }}
-              size="small"
-            >
-              <LinkedInIcon sx={{ color: "#121212", fontSize: "1rem" }} />
-            </IconButton>
-            <IconButton
-              component="a"
-              href="https://x.com/talentai_bid"
-              target="_blank"
-              rel="noopener noreferrer"
-              sx={{
-                color: "#ffffff",
-                backgroundColor: "#ffffff",
-                width: 32,
-                height: 32,
-                "&:hover": { backgroundColor: "#f3f4f6" },
-              }}
-              size="small"
-            >
-              <TwitterIcon sx={{ color: "#121212", fontSize: "1rem" }} />
-            </IconButton>
-            {/* <IconButton
-              sx={{
-                color: "#ffffff",
-                backgroundColor: "#ffffff",
-                width: 32,
-                height: 32,
-                "&:hover": { backgroundColor: "#f3f4f6" },
-              }}
-              size="small"
-            >
-              <InstagramIcon sx={{ color: "#121212", fontSize: "1rem" }} />
-            </IconButton> */}
-            {/* <IconButton
-              sx={{
-                color: "#ffffff",
-                backgroundColor: "#ffffff",
-                width: 32,
-                height: 32,
-                "&:hover": { backgroundColor: "#f3f4f6" },
-              }}
-              size="small"
-            >
-              <FacebookIcon sx={{ color: "#121212", fontSize: "1rem" }} />
-            </IconButton> */}
-          </Stack>
-        </Stack>
-      </Box>
-    </Box>
+          {/* Social icons */}
+          <div className="flex gap-2">
+            {SOCIAL.map(({ Icon, href, label }) => (
+              <a
+                key={label}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={label}
+                className="size-8 rounded-lg bg-gray-100 hover:bg-primary/10 hover:text-primary flex items-center justify-center text-gray-500 transition-colors"
+              >
+                <Icon className="size-[15px]" />
+              </a>
+            ))}
+          </div>
+
+        </div>
+      </div>
+    </footer>
   );
 };
 

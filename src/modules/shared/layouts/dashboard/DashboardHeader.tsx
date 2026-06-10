@@ -59,22 +59,14 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
         )}
 
         {/* Action icon cluster */}
-        <div className="flex items-center gap-1 rounded-xl bg-gray-50 border border-gray-100 px-1 py-1">
-          <div
-            data-tour="header-chat"
-            className="[&_.MuiIconButton-root]:!w-8 [&_.MuiIconButton-root]:!h-8 [&_.MuiIconButton-root]:!rounded-lg [&_.MuiIconButton-root]:!bg-transparent [&_.MuiIconButton-root]:!border-0 [&_.MuiIconButton-root]:!text-gray-500 [&_.MuiIconButton-root:hover]:!bg-white [&_.MuiIconButton-root:hover]:!text-gray-800 [&_.MuiIconButton-root:hover]:!shadow-sm [&_.MuiIconButton-root]:!transition-all"
-          >
+        <div className="flex items-center gap-0.5 rounded-xl bg-gray-50 border border-gray-100 px-1 py-1">
+          <div data-tour="header-chat">
             <HeaderChat />
           </div>
-
-          <div
-            data-tour="header-notif"
-            className="[&_.MuiIconButton-root]:!w-8 [&_.MuiIconButton-root]:!h-8 [&_.MuiIconButton-root]:!rounded-lg [&_.MuiIconButton-root]:!bg-transparent [&_.MuiIconButton-root]:!border-0 [&_.MuiIconButton-root]:!text-gray-500 [&_.MuiIconButton-root:hover]:!bg-white [&_.MuiIconButton-root:hover]:!text-gray-800 [&_.MuiIconButton-root:hover]:!shadow-sm [&_.MuiIconButton-root]:!transition-all"
-          >
+          <div data-tour="header-notif">
             <HeaderNotification />
           </div>
-
-          <div className="[&_button]:!rounded-lg [&_button]:!text-gray-500 [&_button:hover]:!bg-white [&_button:hover]:!text-gray-800">
+          <div className="[&_button]:!border-0 [&_button]:!bg-transparent [&_button]:!shadow-none [&_button:hover]:!bg-primary/10 [&_button:hover]:!text-primary">
             <LanguageSwitcher variant="icon" size="small" />
           </div>
         </div>

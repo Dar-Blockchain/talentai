@@ -1,13 +1,17 @@
-import React, { useState } from "react";
-import { Box } from "@mui/material";
+import React from "react";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
+import {
+  NavigationMenu,
+  NavigationMenuList,
+  NavigationMenuItem,
+  NavigationMenuLink,
+} from "@/modules/shared/ui/shadcn/navigation-menu";
 
 type NavItem = { label: string; id?: string; href?: string };
-
-const ACCENT = "#0D9488";
 
 interface HeaderNavMenuProps {
   direction?: "row" | "column";
@@ -15,19 +19,18 @@ interface HeaderNavMenuProps {
 }
 
 const HeaderNavMenu: React.FC<HeaderNavMenuProps> = ({ direction = "row", inverted = false }) => {
-  const { t } = useTranslation("home");
+  const { t }    = useTranslation("home");
   const router   = useRouter();
   const userType = useSelector((state: RootState) => state.user.userType) ?? "candidate";
-  const [hovered, setHovered] = useState<string | null>(null);
 
   const getNavItems = (): NavItem[] => {
     if (userType === "company") return [
-      { label: t("nav.features"),    id: "features"   },
-      { label: t("nav.how_it_works"),id: "howitworks" },
+      { label: t("nav.features"),     id: "features"   },
+      { label: t("nav.how_it_works"), id: "howitworks" },
     ];
     if (userType === "candidate") return [
-      { label: t("nav.find_jobs"),      href: "/posts/"        },
-      { label: t("nav.how_it_works"),   id:   "howitworks"     },
+      { label: t("nav.find_jobs"),    href: "/posts/"   },
+      { label: t("nav.how_it_works"), id: "howitworks" },
     ];
     return [
       { label: t("nav.features"), id: "features" },
@@ -53,70 +56,79 @@ const HeaderNavMenu: React.FC<HeaderNavMenuProps> = ({ direction = "row", invert
     return false;
   };
 
+  // ── Column layout (mobile drawer) ────────────────────────────────────────────
   if (direction === "column") {
     return (
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-        {items.map((item) => (
-          <Box
-            key={item.id || item.href}
-            onClick={() => handleNavClick(item)}
-            sx={{
-              px: 2, py: 1.25, borderRadius: "8px", cursor: "pointer",
-              fontSize: "14px", fontWeight: isActive(item) ? 700 : 500,
-              color: isActive(item) ? "#111" : "#374151",
-              "&:hover": { bgcolor: "#F3F4F6", color: "#111" },
-            }}
-          >
-            {item.label}
-          </Box>
-        ))}
-      </Box>
+      <NavigationMenu viewport={false} orientation="vertical" className="max-w-full w-full items-start">
+        <NavigationMenuList className="flex-col items-start gap-0.5 w-full">
+          {items.map((item) => (
+            <NavigationMenuItem key={item.id || item.href} className="w-full">
+              <NavigationMenuLink
+                onClick={() => handleNavClick(item)}
+                data-active={isActive(item)}
+                className={cn(
+                  "w-full cursor-pointer rounded-lg px-4 py-[10px]",
+                  "text-sm flex-col gap-0",
+                  "transition-colors duration-150",
+                  isActive(item)
+                    ? "font-bold text-foreground bg-primary/10 hover:bg-primary/10"
+                    : "font-medium text-gray-700 hover:bg-muted hover:text-foreground"
+                )}
+              >
+                {item.label}
+              </NavigationMenuLink>
+            </NavigationMenuItem>
+          ))}
+        </NavigationMenuList>
+      </NavigationMenu>
     );
   }
 
+  // ── Row layout (desktop header) ───────────────────────────────────────────────
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-      {items.map((item) => {
-        const active  = isActive(item);
-        const isHover = hovered === (item.id || item.href);
-
-        const textColor  = inverted ? "#475569" : "#555";
-        const textActive = inverted ? ACCENT : "#0a0a0a";
-        const hoverBg    = inverted ? "rgba(13,148,136,0.15)" : `${ACCENT}14`;
-
-        return (
-          <Box
-            key={item.id || item.href}
-            onClick={() => handleNavClick(item)}
-            onMouseEnter={() => setHovered(item.id || item.href || null)}
-            onMouseLeave={() => setHovered(null)}
-            sx={{
-              position: "relative",
-              px: 1.75, py: 0.75, borderRadius: "10px", cursor: "pointer",
-              fontSize: "13.5px",
-              fontWeight: active ? 650 : 500,
-              color: active ? textActive : textColor,
-              letterSpacing: "0.01em",
-              bgcolor: (active || isHover) ? hoverBg : "transparent",
-              transition: "color 0.18s, background 0.18s",
-              "&:hover": { color: textActive },
-              "&::after": {
-                content: '""',
-                position: "absolute", bottom: 4, left: "50%",
-                transform: `translateX(-50%) scaleX(${active ? 1 : 0})`,
-                transformOrigin: "center",
-                width: "60%", height: "2px", borderRadius: "2px",
-                bgcolor: ACCENT,
-                transition: "transform 0.22s cubic-bezier(0.34,1.56,0.64,1)",
-              },
-              "&:hover::after": { transform: "translateX(-50%) scaleX(1)" },
-            }}
-          >
-            {item.label}
-          </Box>
-        );
-      })}
-    </Box>
+    <NavigationMenu viewport={false}>
+      <NavigationMenuList className="gap-0.5">
+        {items.map((item) => {
+          const active = isActive(item);
+          return (
+            <NavigationMenuItem key={item.id || item.href}>
+              <NavigationMenuLink
+                onClick={() => handleNavClick(item)}
+                data-active={active}
+                className={cn(
+                  // shape & spacing
+                  "relative cursor-pointer rounded-[10px] px-[14px] py-[6px]",
+                  // text
+                  "text-[13.5px] tracking-[0.01em] flex-col gap-0",
+                  // animated underline bar
+                  "after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2",
+                  "after:w-[60%] after:h-0.5 after:rounded-sm after:bg-primary",
+                  "after:origin-center",
+                  "after:transition-transform after:duration-[220ms] after:ease-[cubic-bezier(0.34,1.56,0.64,1)]",
+                  // weight via data-active
+                  "data-[active=true]:font-[650] data-[active=false]:font-medium",
+                  // underline via data-active + hover
+                  "data-[active=true]:after:scale-x-100 data-[active=false]:after:scale-x-0 hover:after:scale-x-100",
+                  // colour — inactive
+                  inverted
+                    ? "text-muted-foreground hover:text-primary"
+                    : "text-gray-500 hover:text-foreground",
+                  // colour — active (override shadcn accent defaults)
+                  inverted
+                    ? "data-[active=true]:text-primary data-[active=true]:hover:text-primary"
+                    : "data-[active=true]:text-foreground data-[active=true]:hover:text-foreground",
+                  // background (override shadcn accent defaults)
+                  "hover:bg-primary/10",
+                  "data-[active=true]:bg-primary/10 data-[active=true]:hover:bg-primary/10",
+                )}
+              >
+                {item.label}
+              </NavigationMenuLink>
+            </NavigationMenuItem>
+          );
+        })}
+      </NavigationMenuList>
+    </NavigationMenu>
   );
 };
 

@@ -11,7 +11,6 @@ const PUBLIC_PATHS = [
   "/privacy",
   "/terms-of-use",
   "/privacy-policy",
-  "/candidate/home",
   "/unauthorized",
   "/employee/invitation",
   "/campaign",

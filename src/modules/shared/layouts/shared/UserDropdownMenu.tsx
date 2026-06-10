@@ -1,224 +1,145 @@
-import React, { useMemo } from "react";
+"use client";
+import React from "react";
 import { useTranslation } from "react-i18next";
-import { Menu, Box, Typography, Avatar } from "@mui/material";
-import type { MenuProps } from "@mui/material";
 import { useRouter } from "next/router";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
 import { setUserType } from "@/store/slices/userSlice";
-import DashboardOutlined from "@mui/icons-material/DashboardOutlined";
-import PersonOutlined    from "@mui/icons-material/PersonOutlined";
-import SettingsOutlined  from "@mui/icons-material/SettingsOutlined";
-import SwapHorizOutlined from "@mui/icons-material/SwapHorizOutlined";
-import LogoutOutlined    from "@mui/icons-material/LogoutOutlined";
+import { LayoutDashboard, User, Settings, LogOut } from "lucide-react";
+import {
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/modules/shared/ui/shadcn/dropdown-menu";
+import {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+} from "@/modules/shared/ui/shadcn/avatar";
 
-interface UserDropdownMenuProps extends Omit<MenuProps, "children"> {
-  onLogout?:     () => void;
-  displayName?:  string;
-  email?:        string;
-  avatarUrl?:    string | null;
-  initials?:     string;
-  isCompany?:    boolean;
-  isEmployee?:   boolean;
-  isCandidate?:  boolean;
-  onDashboard?:  () => void;
+interface UserDropdownMenuProps {
+  onLogout?:    () => void;
+  displayName?: string;
+  email?:       string;
+  avatarUrl?:   string | null;
+  initials?:    string;
+  isCompany?:   boolean;
+  isEmployee?:  boolean;
+  isCandidate?: boolean;
+  onDashboard?: () => void;
+  onClose?:     () => void;
 }
-
-const Item: React.FC<{
-  icon:    React.ReactNode;
-  label:   string;
-  sub?:    string;
-  danger?: boolean;
-  onClick: () => void;
-}> = ({ icon, label, sub, danger, onClick }) => (
-  <Box
-    onClick={onClick}
-    sx={{
-      display: "flex",
-      alignItems: "center",
-      gap: 1.25,
-      px: 1.25,
-      py: 0.85,
-      mx: 0.5,
-      borderRadius: "10px",
-      cursor: "pointer",
-      transition: "background 0.12s",
-      "&:hover": { bgcolor: danger ? "#FEF2F2" : "#F3F4F6" },
-    }}
-  >
-    <Box sx={{
-      width: 30,
-      height: 30,
-      borderRadius: "10px",
-      flexShrink: 0,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      bgcolor: danger ? "#FEF2F2" : "#F3F4F6",
-      border: "1px solid",
-      borderColor: danger ? "#FECACA" : "#E5E7EB",
-      "& svg": { fontSize: 15, color: danger ? "#EF4444" : "#6B7280" },
-    }}>
-      {icon}
-    </Box>
-
-    <Box sx={{ minWidth: 0 }}>
-      <Typography sx={{
-        fontSize: "13px",
-        fontWeight: 500,
-        color: danger ? "#EF4444" : "#374151",
-        lineHeight: 1.2,
-      }}>
-        {label}
-      </Typography>
-      {sub && (
-        <Typography sx={{ fontSize: "11px", color: "#9CA3AF", lineHeight: 1.3, mt: 0.15 }}>
-          {sub}
-        </Typography>
-      )}
-    </Box>
-  </Box>
-);
 
 const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
   onLogout,
   displayName = "User",
   email,
   avatarUrl,
-  initials = "U",
+  initials   = "U",
   isCompany   = false,
   isEmployee  = false,
   isCandidate = false,
   onDashboard,
-  ...menuProps
+  onClose,
 }) => {
   const { t }    = useTranslation("common");
   const dispatch = useDispatch<AppDispatch>();
   const router   = useRouter();
 
-  const { user, companyMembership } = useSelector((state: RootState) => state.user.connectedUser);
-  const currentSpace  = useSelector((state: RootState) => state.user.currentSpace);
-  const hasMembership = !!companyMembership?._id;
+  const { user } = useSelector((state: RootState) => state.user.connectedUser);
 
-  const close = () => menuProps.onClose?.({}, "backdropClick");
+  const go = (path: string) => { router.push(path); onClose?.(); };
 
   const handleLogout = () => {
     dispatch(setUserType(isCompany ? "company" : "candidate"));
     onLogout?.();
-    close();
+    onClose?.();
   };
 
   return (
-    <Menu
-      {...menuProps}
-      disableScrollLock
-      anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      transformOrigin={{ vertical: "top",    horizontal: "right" }}
-      PaperProps={{
-        elevation: 0,
-        sx: {
-          mt: 1,
-          borderRadius: "14px",
-          minWidth: 220,
-          border: "1px solid #E5E7EB",
-          boxShadow: "0 8px 24px rgba(0,0,0,0.07), 0 2px 6px rgba(0,0,0,0.04)",
-          overflow: "hidden",
-          p: 0,
-        },
-      }}
+    <DropdownMenuContent
+      align="end"
+      sideOffset={8}
+      className="min-w-[220px] rounded-[14px] p-0 overflow-hidden border-gray-200 shadow-[0_8px_24px_rgba(0,0,0,0.08),_0_2px_6px_rgba(0,0,0,0.04)]"
     >
       {/* ── User header ── */}
-      <Box sx={{
-        display: "flex",
-        alignItems: "center",
-        gap: 1.25,
-        px: 1.75,
-        pt: 1.75,
-        pb: 1.5,
-        borderBottom: "1px solid #F3F4F6",
-        bgcolor: "#FAFAFA",
-      }}>
-        <Avatar
-          src={avatarUrl || undefined}
-          sx={{
-            width: 36,
-            height: 36,
-            fontSize: "13px",
-            fontWeight: 700,
-            bgcolor: "#0D9488",
-            color: "#fff",
-            borderRadius: "10px",
-            flexShrink: 0,
-          }}
+      <DropdownMenuLabel className="px-3.5 pt-3.5 pb-3 border-b border-gray-100 bg-gray-50/80">
+        <div className="flex items-center gap-3">
+          <Avatar className="size-9 rounded-full flex-shrink-0">
+            <AvatarImage src={avatarUrl || undefined} className="rounded-full" />
+            <AvatarFallback className="rounded-full bg-primary text-primary-foreground text-[13px] font-bold">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <p className="text-[13.5px] font-bold text-foreground truncate leading-tight">{displayName}</p>
+            {email && <p className="text-[11.5px] text-muted-foreground truncate mt-0.5">{email}</p>}
+          </div>
+        </div>
+      </DropdownMenuLabel>
+
+      {/* ── Navigation items ── */}
+      <div className="py-1.5 px-1">
+        <DropdownMenuItem
+          onClick={() => { onDashboard?.(); onClose?.(); }}
+          className="flex items-center gap-2.5 rounded-[10px] px-2.5 py-[7px] cursor-pointer focus:bg-gray-100 focus:text-foreground"
         >
-          {!avatarUrl && initials}
-        </Avatar>
+          <span className="size-[30px] rounded-[10px] flex-shrink-0 flex items-center justify-center bg-gray-100 border border-gray-200">
+            <LayoutDashboard className="size-[15px] text-gray-500" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-[13px] font-medium text-gray-700 leading-tight">{t("header.dashboard")}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">{t("header.go_to_workspace")}</p>
+          </div>
+        </DropdownMenuItem>
 
-        <Box sx={{ minWidth: 0 }}>
-          <Typography sx={{
-            fontSize: "13.5px",
-            fontWeight: 700,
-            color: "#111827",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}>
-            {displayName}
-          </Typography>
-          {email && (
-            <Typography sx={{
-              fontSize: "11.5px",
-              color: "#9CA3AF",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              mt: 0.1,
-            }}>
-              {email}
-            </Typography>
-          )}
-        </Box>
-      </Box>
-
-      {/* ── Items ── */}
-      <Box sx={{ py: 0.75 }}>
-        <Item
-          icon={<DashboardOutlined />}
-          label={t("header.dashboard")}
-          sub={t("header.go_to_workspace")}
-          onClick={() => { onDashboard?.(); close(); }}
-        />
         {!isCompany && !isEmployee && !isCandidate && (
-          <Item
-            icon={<PersonOutlined />}
-            label={t("header.view_profile")}
-            sub={t("header.public_profile")}
-            onClick={() => { router.push("/candidate/profile/" + user?._id); close(); }}
-          />
+          <DropdownMenuItem
+            onClick={() => go("/candidate/profile/" + user?._id)}
+            className="flex items-center gap-2.5 rounded-[10px] px-2.5 py-[7px] cursor-pointer focus:bg-gray-100 focus:text-foreground"
+          >
+            <span className="size-[30px] rounded-[10px] flex-shrink-0 flex items-center justify-center bg-gray-100 border border-gray-200">
+              <User className="size-[15px] text-gray-500" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[13px] font-medium text-gray-700 leading-tight">{t("header.view_profile")}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">{t("header.public_profile")}</p>
+            </div>
+          </DropdownMenuItem>
         )}
+
         {!isEmployee && (
-          <Item
-            icon={<SettingsOutlined />}
-            label={t("header.settings")}
-            sub={t("header.account_prefs")}
-            onClick={() => {
-              router.push("/settings");
-              close();
-            }}
-          />
+          <DropdownMenuItem
+            onClick={() => go("/settings")}
+            className="flex items-center gap-2.5 rounded-[10px] px-2.5 py-[7px] cursor-pointer focus:bg-gray-100 focus:text-foreground"
+          >
+            <span className="size-[30px] rounded-[10px] flex-shrink-0 flex items-center justify-center bg-gray-100 border border-gray-200">
+              <Settings className="size-[15px] text-gray-500" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[13px] font-medium text-gray-700 leading-tight">{t("header.settings")}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">{t("header.account_prefs")}</p>
+            </div>
+          </DropdownMenuItem>
         )}
-      </Box>
+      </div>
 
       {/* ── Logout ── */}
-      <Box sx={{ borderTop: "1px solid #F3F4F6", py: 0.75 }}>
-        <Item
-          icon={<LogoutOutlined />}
-          label={t("header.logout")}
-          danger
+      <DropdownMenuSeparator className="my-0 bg-gray-100" />
+      <div className="py-1.5 px-1">
+        <DropdownMenuItem
+          variant="destructive"
           onClick={handleLogout}
-        />
-      </Box>
-    </Menu>
+          className="flex items-center gap-2.5 rounded-[10px] px-2.5 py-[7px] cursor-pointer focus:bg-red-50"
+        >
+          <span className="size-[30px] rounded-[10px] flex-shrink-0 flex items-center justify-center bg-red-50 border border-red-200">
+            <LogOut className="size-[15px] text-red-500" />
+          </span>
+          <p className="text-[13px] font-medium leading-tight">{t("header.logout")}</p>
+        </DropdownMenuItem>
+      </div>
+    </DropdownMenuContent>
   );
 };
 
