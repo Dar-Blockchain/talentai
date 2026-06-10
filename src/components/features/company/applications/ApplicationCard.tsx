@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "next/router";
 import { Avatar, Box, Chip, Paper, Typography } from "@mui/material";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutline";
 import { ApplicationSummaryItem } from "@/store/slices/jobApplicationSlice";
 import { ContactTarget } from "@/modules/posts/details/components/ContactCandidateModal";
-import { AssessmentTarget } from "@/modules/assessments/post";
+import { AssessmentTarget } from "@/modules/company/assessment/modal";
 import { InviteTarget } from "./InviteToInterviewModal";
 import InviteToInterviewModal from "./InviteToInterviewModal";
 import ApplicationCardActions from "./ApplicationCardActions";
@@ -42,70 +42,73 @@ export interface ApplicationCardProps {
   showPostTitle?: boolean;
   onContact: (target: ContactTarget) => void;
   onAssessment: (target: AssessmentTarget) => void;
-  /**
-   * If provided, the parent owns invited state (survives list re-fetches).
-   * onInviteSuccess receives the applicationId so the parent can add it to its Set.
-   */
   invitedIds?: Set<string>;
   onInviteSuccess?: (appId: string) => void;
 }
 
 const ApplicationCard: React.FC<ApplicationCardProps> = ({
-  app,
-  postId,
-  showPostTitle = false,
-  onContact,
-  onAssessment,
-  invitedIds: externalInvitedIds,
-  onInviteSuccess,
+  app, postId, showPostTitle = false,
+  onContact, onAssessment,
+  invitedIds: externalInvitedIds, onInviteSuccess,
 }) => {
-  const { t } = useTranslation("dashboard");
+  const { t }  = useTranslation("dashboard");
   const router = useRouter();
 
   const [menuAnchor,   setMenuAnchor]   = useState<HTMLElement | null>(null);
   const [inviteTarget, setInviteTarget] = useState<InviteTarget | null>(null);
-  // Local fallback invited state (used when no external Set is provided)
   const [localInvited, setLocalInvited] = useState(false);
 
   const name      = `${app.firstName ?? ""} ${app.lastName ?? ""}`.trim() || "Unknown";
-  const bgColor   = avatarColor(name);
+  const bgColor   = useMemo(() => avatarColor(name), [name]);
   const avatarUrl = app.userImage
     ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${app.userImage}`
     : undefined;
   const appId     = String(app.id);
   const statusDef = STATUS_STYLE[app.status] ?? STATUS_STYLE.visited;
-
-  // Resolve whether this card is invited from the external Set (page-level) or local state
   const isInvited = externalInvitedIds ? externalInvitedIds.has(appId) : localInvited;
+  const invitedSet = useMemo(() => (isInvited ? new Set([appId]) : new Set<string>()), [isInvited, appId]);
 
   const handleInviteSuccess = useCallback(() => {
-    if (externalInvitedIds !== undefined) {
-      // Parent owns the state — notify it
-      onInviteSuccess?.(appId);
-    } else {
-      // No parent Set — fall back to local state
-      setLocalInvited(true);
-      onInviteSuccess?.(appId);
-    }
+    if (!externalInvitedIds) setLocalInvited(true);
+    onInviteSuccess?.(appId);
   }, [externalInvitedIds, onInviteSuccess, appId]);
 
-  // Build Set for ApplicationCardActions
-  const invitedSet: Set<string> = isInvited ? new Set([appId]) : new Set();
+  const handleContact = useCallback(() => {
+    if (app.email) onContact({ name, email: app.email, candidateUserId: app.candidateUserId, avatarUrl, bgColor });
+  }, [app.email, app.candidateUserId, name, avatarUrl, bgColor, onContact]);
+
+  const handleAssessment = useCallback(() => {
+    if (app.candidateUserId) onAssessment({
+      applicationId: appId, postId,
+      candidateUserId: app.candidateUserId,
+      candidateName: name, candidateEmail: app.email || "",
+      avatarUrl, bgColor,
+    });
+  }, [app.candidateUserId, app.email, appId, postId, name, avatarUrl, bgColor, onAssessment]);
+
+  const handleInvite = useCallback(
+    () => setInviteTarget({ applicationId: appId, name, postTitle: app.postTitle || "", postId }),
+    [appId, name, app.postTitle, postId],
+  );
+
+  const handleMenuOpen = useCallback((e: React.MouseEvent<HTMLElement>) => {
+    e.stopPropagation();
+    setMenuAnchor(e.currentTarget);
+  }, []);
+
+  const handleMenuClose = useCallback(() => setMenuAnchor(null), []);
 
   return (
     <>
       <Paper
         elevation={0}
-        onClick={() => router.push(`/company/applications/${appId}`)}
         sx={{
           border: "1px solid #E5E7EB", borderRadius: "12px",
           p: "14px 16px", display: "flex", alignItems: "center", gap: 2,
           transition: "box-shadow 0.15s, border-color 0.15s",
-          cursor: "pointer",
           "&:hover": { boxShadow: "0 2px 12px rgba(0,0,0,0.07)", borderColor: TEAL },
         }}
       >
-        {/* Avatar */}
         <Avatar
           src={avatarUrl}
           sx={{ width: 40, height: 40, bgcolor: bgColor, fontSize: 13, fontWeight: 700, flexShrink: 0 }}
@@ -113,23 +116,28 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
           {initials(app.firstName, app.lastName)}
         </Avatar>
 
-        {/* Name + chips + email + date */}
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-            <Typography
-              sx={{ fontSize: "13px", fontWeight: 700, color: "#111827", lineHeight: 1.3 }}
-            >
+            <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827", lineHeight: 1.3 }}>
               {name}
             </Typography>
             <Chip
-              label={t(statusDef.i18nKey)}
-              size="small"
+              label={t(statusDef.i18nKey)} size="small"
               sx={{ bgcolor: statusDef.bg, color: statusDef.color, fontWeight: 600, fontSize: "10px", height: 18, borderRadius: "4px" }}
             />
+            {app.recruiterDecision && (
+              <Chip
+                label={app.recruiterDecision === "shortlisted" ? "Shortlisted" : "Rejected"} size="small"
+                sx={{
+                  bgcolor: app.recruiterDecision === "shortlisted" ? "#F0FDF4" : "#FEF2F2",
+                  color:   app.recruiterDecision === "shortlisted" ? "#16A34A" : "#DC2626",
+                  fontWeight: 600, fontSize: "10px", height: 18, borderRadius: "4px",
+                }}
+              />
+            )}
             {showPostTitle && app.postTitle && (
               <Chip
-                label={app.postTitle}
-                size="small"
+                label={app.postTitle} size="small"
                 icon={<WorkOutlineOutlined style={{ fontSize: 10 }} />}
                 onClick={(e) => { e.stopPropagation(); if (app.postId) router.push(`/company/posts/${app.postId}`); }}
                 sx={{
@@ -155,31 +163,10 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
         </Box>
 
         <ApplicationCardActions
-          app={app}
-          name={name}
-          appId={appId}
-          postId={postId}
-          avatarUrl={avatarUrl}
-          bgColor={bgColor}
-          menuAnchorEl={menuAnchor}
-          menuOpen={Boolean(menuAnchor)}
-          onMenuOpen={(e) => setMenuAnchor(e.currentTarget)}
-          onMenuClose={() => setMenuAnchor(null)}
-          onContact={() => {
-            if (app.email) onContact({ name, email: app.email, candidateUserId: app.candidateUserId, avatarUrl, bgColor });
-          }}
-          onAssessment={() => {
-            if (app.candidateUserId) onAssessment({
-              applicationId: appId,
-              postId,
-              candidateUserId: app.candidateUserId,
-              candidateName: name,
-              candidateEmail: app.email || "",
-              avatarUrl,
-              bgColor,
-            });
-          }}
-          onInvite={() => setInviteTarget({ applicationId: appId, name, postTitle: app.postTitle || "", postId })}
+          app={app} name={name} appId={appId}
+          menuAnchorEl={menuAnchor} menuOpen={Boolean(menuAnchor)}
+          onMenuOpen={handleMenuOpen} onMenuClose={handleMenuClose}
+          onContact={handleContact} onAssessment={handleAssessment} onInvite={handleInvite}
           invitedIds={invitedSet}
         />
       </Paper>

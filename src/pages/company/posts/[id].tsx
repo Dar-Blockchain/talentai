@@ -94,6 +94,7 @@ const PostDetailsPage: React.FC = () => {
           publishing={publishing}
           onClose={() => setPublishConfirmOpen(false)}
           onConfirm={handleConfirmPublish}
+          onEdit={() => { setPublishConfirmOpen(false); setActiveEdit("post"); }}
         />
 
         <InterviewLanguagesModal

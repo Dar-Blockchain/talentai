@@ -8,8 +8,8 @@ import DepartmentDetailHeader from "@/components/features/company/departments/de
 import DepartmentMembersSection from "@/components/features/company/departments/details/DepartmentMembersSection";
 import EditDepartmentModal from "@/components/features/company/departments/edit/EditDepartmentModal";
 import DeleteDepartmentDialog from "@/components/features/company/departments/delete/DeleteDepartmentDialog";
-import EditRoleModal from "@/components/features/company/employees/edit/EditRoleModal";
-import DeleteMemberDialog from "@/components/features/company/employees/delete/DeleteMemberDialog";
+import EditRoleModal from "@/modules/company/employees/components/edit/EditRoleModal";
+import DeleteMemberDialog from "@/modules/company/employees/components/delete/DeleteMemberDialog";
 import { AppDispatch } from "@/store/store";
 import {
   fetchDepartmentById,

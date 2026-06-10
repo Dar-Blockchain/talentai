@@ -1,7 +1,8 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Box, Dialog, DialogContent, Typography, CircularProgress } from "@mui/material";
-import PublishOutlined from "@mui/icons-material/PublishOutlined";
+import PublishOutlined      from "@mui/icons-material/PublishOutlined";
+import EditOutlined         from "@mui/icons-material/EditOutlined";
 import WarningAmberOutlined from "@mui/icons-material/WarningAmberOutlined";
 import AppButton from "@/components/ui/AppButton";
 
@@ -10,9 +11,10 @@ interface PublishConfirmModalProps {
   publishing: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  onEdit: () => void;
 }
 
-const PublishConfirmModal: React.FC<PublishConfirmModalProps> = ({ open, publishing, onClose, onConfirm }) => {
+const PublishConfirmModal: React.FC<PublishConfirmModalProps> = ({ open, publishing, onClose, onConfirm, onEdit }) => {
   const { t } = useTranslation("posts");
   return (
   <Dialog
@@ -64,6 +66,21 @@ const PublishConfirmModal: React.FC<PublishConfirmModalProps> = ({ open, publish
           {t("detail.publish_modal.warning")}
         </Typography>
       </Box>
+
+      {/* Edit post button */}
+      <AppButton
+        label={t("detail.publish_modal.edit_post", "Edit Post")}
+        variant="outlined"
+        fullWidth
+        disabled={publishing}
+        startIcon={<EditOutlined sx={{ fontSize: 16 }} />}
+        onClick={onEdit}
+        sx={{
+          borderRadius: "10px", py: 1.1, fontWeight: 600, mb: 1.5,
+          borderColor: "#BFDBFE", color: "#2563EB",
+          "&:hover": { borderColor: "#93C5FD", bgcolor: "#EFF6FF" },
+        }}
+      />
 
       {/* Actions */}
       <Box sx={{ display: "flex", gap: 1.5 }}>

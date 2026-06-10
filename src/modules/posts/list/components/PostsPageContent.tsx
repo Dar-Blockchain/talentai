@@ -99,6 +99,10 @@ const PostsPageContent: React.FC = () => {
         publishing={publishHook.publishing}
         onClose={publishHook.handleClose}
         onConfirm={publishHook.handleConfirm}
+        onEdit={() => {
+          publishHook.handleClose();
+          router.push(`/company/posts/${publishHook.confirmId}`);
+        }}
       />
     </Box>
   );
