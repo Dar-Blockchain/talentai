@@ -23,13 +23,22 @@ import { Alert, AlertTitle, AlertDescription } from '@/modules/shared/ui/shadcn/
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/modules/shared/ui/shadcn/tabs';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/modules/shared/ui/shadcn/accordion';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel } from '@/modules/shared/ui/shadcn/dropdown-menu';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/modules/shared/ui/shadcn/dialog';
+import { Popover, PopoverTrigger, PopoverContent } from '@/modules/shared/ui/shadcn/popover';
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from '@/modules/shared/ui/shadcn/breadcrumb';
+import { Calendar } from '@/modules/shared/ui/shadcn/calendar';
+import {
+  NavigationMenu, NavigationMenuList, NavigationMenuItem,
+  NavigationMenuLink, NavigationMenuTrigger, NavigationMenuContent,
+} from '@/modules/shared/ui/shadcn/navigation-menu';
 
 // icons
 import {
   Mail, Loader2, Trash2, Plus, ExternalLink,
   Star, TrendingUp, Users, BriefcaseBusiness,
   Info, AlertTriangle, CheckCircle2, ChevronDown,
-  Bell, Settings, LogOut, User,
+  Bell, Settings, LogOut, User, Home, Briefcase,
+  SlidersHorizontal, Sparkles, ListChecks,
 } from 'lucide-react';
 import { ThemeToggle } from '@/modules/shared/ui';
 
@@ -53,12 +62,14 @@ const Row = ({ label, children }: { label?: string; children: React.ReactNode })
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function UIKitPage() {
-  const [loading, setLoading]     = useState(false);
-  const [checked, setChecked]     = useState(false);
-  const [radio, setRadio]         = useState('candidate');
-  const [switched, setSwitched]   = useState(false);
-  const [slider, setSlider]       = useState([40]);
-  const [progress]                = useState(68);
+  const [loading, setLoading]       = useState(false);
+  const [checked, setChecked]       = useState(false);
+  const [radio, setRadio]           = useState('candidate');
+  const [switched, setSwitched]     = useState(false);
+  const [slider, setSlider]         = useState([40]);
+  const [progress]                  = useState(68);
+  const [calDate, setCalDate]       = useState<Date | undefined>(new Date());
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   return (
     <TooltipProvider>
@@ -72,7 +83,7 @@ export default function UIKitPage() {
                 UI Kit
               </h1>
               <p className="text-sm text-muted-foreground mt-1">
-                shadcn/ui components — <code className="text-xs bg-muted px-1.5 py-0.5 rounded">src/components/ui/shadcn</code>
+                shadcn/ui components — <code className="text-xs bg-muted px-1.5 py-0.5 rounded">src/modules/shared/ui/shadcn</code>
               </p>
             </div>
             <ThemeToggle />
@@ -411,6 +422,193 @@ export default function UIKitPage() {
                   <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+            </Row>
+          </Section>
+
+          {/* ═══════════════════════════════════════════════════════ DIALOG */}
+          <Section title="Dialog">
+            <Row label="Examples">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline">Open dialog</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Confirm application</DialogTitle>
+                    <DialogDescription>
+                      You are about to apply for Senior Frontend Engineer at TalentAI. This action will notify the hiring team.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <Button variant="outline">Cancel</Button>
+                    <Button>Confirm</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="destructive"><Trash2 className="size-4" />Delete account</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Delete account?</DialogTitle>
+                    <DialogDescription>
+                      This will permanently delete your account and all associated data. This action cannot be undone.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+                    <Button variant="destructive" onClick={() => setDialogOpen(false)}>Delete</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </Row>
+          </Section>
+
+          {/* ═══════════════════════════════════════════════════════ POPOVER */}
+          <Section title="Popover">
+            <Row label="Examples">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline"><SlidersHorizontal className="size-4" />Filters</Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64">
+                  <div className="flex flex-col gap-3">
+                    <p className="text-sm font-semibold text-foreground">Filter candidates</p>
+                    <div className="flex flex-col gap-1.5">
+                      <Label className="text-xs">Min. score</Label>
+                      <Input placeholder="e.g. 70" type="number" className="h-8 text-sm" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <Label className="text-xs">Role</Label>
+                      <Select>
+                        <SelectTrigger className="h-8 text-sm">
+                          <SelectValue placeholder="Any role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="fe">Frontend</SelectItem>
+                          <SelectItem value="be">Backend</SelectItem>
+                          <SelectItem value="full">Fullstack</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button size="sm" className="w-full">Apply filters</Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="icon"><Info className="size-4" /></Button>
+                </PopoverTrigger>
+                <PopoverContent side="right" className="w-56 text-sm text-muted-foreground">
+                  Scores are computed by our AI model based on verbal accuracy, tone, and topic coverage.
+                </PopoverContent>
+              </Popover>
+            </Row>
+          </Section>
+
+          {/* ═══════════════════════════════════════════════════════ CALENDAR */}
+          <Section title="Calendar">
+            <Row label="Date picker">
+              <div className="flex flex-col gap-2">
+                <Calendar
+                  mode="single"
+                  selected={calDate}
+                  onSelect={setCalDate}
+                  className="rounded-xl border border-border shadow-sm"
+                />
+                {calDate && (
+                  <p className="text-xs text-muted-foreground">
+                    Selected: {calDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                  </p>
+                )}
+              </div>
+            </Row>
+          </Section>
+
+          {/* ═══════════════════════════════════════════════════════ BREADCRUMB */}
+          <Section title="Breadcrumb">
+            <Row label="Examples">
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem>
+                    <BreadcrumbLink href="/"><Home className="size-3.5" /></BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbLink href="/jobs">Jobs</BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>Senior Frontend Engineer</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+            </Row>
+            <Row>
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem>
+                    <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbLink href="/dashboard/candidates">Candidates</BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbLink href="/dashboard/candidates/42">Alice Chen</BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>Interview report</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+            </Row>
+          </Section>
+
+          {/* ═══════════════════════════════════════════════════════ NAVIGATION MENU */}
+          <Section title="Navigation Menu">
+            <Row label="Desktop nav with dropdown">
+              <NavigationMenu viewport={false}>
+                <NavigationMenuList className="gap-1">
+                  <NavigationMenuItem>
+                    <NavigationMenuTrigger>Features</NavigationMenuTrigger>
+                    <NavigationMenuContent>
+                      <div className="grid gap-2 p-4 w-[280px]">
+                        {[
+                          { icon: Sparkles,   label: 'AI Interviews',     desc: 'Automated candidate screening'      },
+                          { icon: ListChecks, label: 'Bias-free scoring', desc: 'Objective assessments at scale'     },
+                          { icon: Briefcase,  label: 'Job pipeline',      desc: 'Manage all openings in one place'  },
+                        ].map(({ icon: Icon, label, desc }) => (
+                          <NavigationMenuLink key={label} className="flex items-start gap-3 rounded-lg p-2 hover:bg-accent cursor-pointer">
+                            <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <Icon className="size-4 text-primary" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-foreground">{label}</p>
+                              <p className="text-xs text-muted-foreground">{desc}</p>
+                            </div>
+                          </NavigationMenuLink>
+                        ))}
+                      </div>
+                    </NavigationMenuContent>
+                  </NavigationMenuItem>
+                  <NavigationMenuItem>
+                    <NavigationMenuLink className="px-3 py-2 text-sm font-medium rounded-lg hover:bg-accent cursor-pointer">
+                      Pricing
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                  <NavigationMenuItem>
+                    <NavigationMenuLink className="px-3 py-2 text-sm font-medium rounded-lg hover:bg-accent cursor-pointer">
+                      Blog
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                </NavigationMenuList>
+              </NavigationMenu>
             </Row>
           </Section>
 
