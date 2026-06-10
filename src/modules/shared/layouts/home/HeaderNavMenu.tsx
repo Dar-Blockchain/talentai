@@ -10,8 +10,16 @@ import {
   NavigationMenuItem,
   NavigationMenuLink,
 } from "@/modules/shared/ui/shadcn/navigation-menu";
+import { Sparkles, ListChecks, Briefcase, Mail, ChevronRight } from "lucide-react";
 
 type NavItem = { label: string; id?: string; href?: string };
+
+const NAV_ICON_MAP: Record<string, React.ElementType> = {
+  features:   Sparkles,
+  howitworks: ListChecks,
+  contact:    Mail,
+  "/posts/":  Briefcase,
+};
 
 interface HeaderNavMenuProps {
   direction?: "row" | "column";
@@ -59,28 +67,48 @@ const HeaderNavMenu: React.FC<HeaderNavMenuProps> = ({ direction = "row", invert
   // ── Column layout (mobile drawer) ────────────────────────────────────────────
   if (direction === "column") {
     return (
-      <NavigationMenu viewport={false} orientation="vertical" className="max-w-full w-full items-start">
-        <NavigationMenuList className="flex-col items-start gap-0.5 w-full">
-          {items.map((item) => (
-            <NavigationMenuItem key={item.id || item.href} className="w-full">
-              <NavigationMenuLink
-                onClick={() => handleNavClick(item)}
-                data-active={isActive(item)}
-                className={cn(
-                  "w-full cursor-pointer rounded-lg px-4 py-[10px]",
-                  "text-sm flex-col gap-0",
-                  "transition-colors duration-150",
-                  isActive(item)
-                    ? "font-bold text-foreground bg-primary/10 hover:bg-primary/10"
-                    : "font-medium text-gray-700 hover:bg-muted hover:text-foreground"
-                )}
-              >
+      <div className="flex flex-col gap-0.5 w-full">
+        {items.map((item) => {
+          const active = isActive(item);
+          const Icon   = NAV_ICON_MAP[item.id ?? item.href ?? ""] ?? Sparkles;
+          return (
+            <button
+              key={item.id || item.href}
+              type="button"
+              onClick={() => handleNavClick(item)}
+              className={cn(
+                "group flex items-center gap-2.5 w-full text-left",
+                "px-2 py-[9px] rounded-[10px] cursor-pointer",
+                "transition-all duration-150",
+                active ? "bg-primary/[0.07]" : "hover:bg-primary/[0.07]"
+              )}
+            >
+              <span className={cn(
+                "w-8 h-8 rounded-[9px] flex-shrink-0",
+                "flex items-center justify-center border transition-colors duration-150",
+                "[&>svg]:w-[15px] [&>svg]:h-[15px]",
+                active
+                  ? "bg-gray-200 border-gray-300 [&>svg]:text-gray-700"
+                  : "bg-gray-100 border-gray-200 [&>svg]:text-gray-400 group-hover:bg-gray-200 group-hover:border-gray-300 group-hover:[&>svg]:text-gray-600"
+              )}>
+                <Icon />
+              </span>
+              <span className={cn(
+                "font-sans text-[13.5px] flex-1",
+                active ? "font-semibold text-primary" : "font-medium text-gray-700"
+              )}>
                 {item.label}
-              </NavigationMenuLink>
-            </NavigationMenuItem>
-          ))}
-        </NavigationMenuList>
-      </NavigationMenu>
+              </span>
+              <ChevronRight className={cn(
+                "w-3.5 h-3.5 flex-shrink-0 transition-all duration-150",
+                active
+                  ? "text-primary/50"
+                  : "text-gray-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5"
+              )} />
+            </button>
+          );
+        })}
+      </div>
     );
   }
 

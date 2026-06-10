@@ -39,7 +39,7 @@ const BiasFreeEvaluation: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 28 }} whileInView={{ opacity: 1, y: 0 }}
         viewport={VP} transition={{ duration: 0.6, ease }}
-        className="mb-12 md:mb-16"
+        className="mb-8 sm:mb-12 md:mb-16"
       >
         <div className="inline-flex items-center gap-2 rounded-full bg-primary/[0.07] border border-primary/20 px-4 py-1.5 mb-5">
           <Sparkles className="size-3 text-primary" />
@@ -50,16 +50,16 @@ const BiasFreeEvaluation: React.FC = () => {
 
         <h2 className="font-extrabold text-[28px] sm:text-[36px] md:text-[50px] leading-[1.1] tracking-[-0.5px] md:tracking-[-1.5px] text-gray-900 mb-4">
           {t("solution.headline_1")}{" "}
-          <span className="text-primary">{t("solution.headline_accent")}</span>
+          <span className="italic text-gray-600">{t("solution.headline_accent")}</span>
         </h2>
 
-        <p className="text-[15px] md:text-[16px] leading-[1.75] text-gray-400 max-w-[520px]">
+        <p className="text-[15px] md:text-[16px] leading-[1.75] text-gray-500 max-w-[520px]">
           {t("solution.body")}
         </p>
       </motion.div>
 
       {/* ── Two-column body ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-14 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 md:gap-14 items-start">
 
         {/* LEFT — video + stats */}
         <motion.div
@@ -96,16 +96,16 @@ const BiasFreeEvaluation: React.FC = () => {
             initial="hidden" whileInView="visible" viewport={VP}
             variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.09, delayChildren: 0.1 } } }}
           >
-            <div className="grid grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
               {QUICK_STATS.map((s) => (
                 <motion.div
                   key={s.key}
                   variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease } } }}
                   whileHover={{ y: -3, transition: { type: "spring", stiffness: 320, damping: 18 } }}
                 >
-                  <div className="bg-white rounded-2xl border border-gray-200 shadow-[0_2px_10px_rgba(0,0,0,0.05)] px-4 py-4 text-center">
-                    <p className={cn("font-black text-[22px] leading-none mb-1", s.color)}>{s.value}</p>
-                    <p className="text-[11px] text-gray-400 leading-snug">{t(`solution.stats.${s.key}`)}</p>
+                  <div className="bg-white rounded-2xl border border-gray-200 shadow-[0_2px_10px_rgba(0,0,0,0.05)] px-2 sm:px-4 py-3 sm:py-4 text-center">
+                    <p className={cn("font-black text-[17px] sm:text-[22px] leading-none mb-1", s.color)}>{s.value}</p>
+                    <p className="text-[11px] text-gray-500 leading-snug">{t(`solution.stats.${s.key}`)}</p>
                   </div>
                 </motion.div>
               ))}
@@ -120,11 +120,11 @@ const BiasFreeEvaluation: React.FC = () => {
         >
           {/* Sub-headline */}
           <div className="mb-7">
-            <h3 className="font-extrabold text-[20px] md:text-[28px] leading-[1.2] text-gray-900 mb-2 tracking-[-0.3px]">
+            <h3 className="font-extrabold text-[18px] sm:text-[22px] md:text-[28px] leading-[1.2] text-gray-900 mb-2 tracking-[-0.3px]">
               {t("solution.right_headline_1")}{" "}
-              <span className="text-primary">{t("solution.right_headline_accent")}</span>
+              <span className="italic text-gray-600">{t("solution.right_headline_accent")}</span>
             </h3>
-            <p className="text-[14px] md:text-[15px] text-gray-400 leading-[1.75]">
+            <p className="text-[14px] md:text-[15px] text-gray-500 leading-[1.75]">
               {t("solution.right_body")}
             </p>
           </div>

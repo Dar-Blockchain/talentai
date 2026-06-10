@@ -1,6 +1,6 @@
 "use client";
-import React, { useCallback, useState } from "react";
-import { Drawer, Box, Typography, Divider, Avatar } from "@mui/material";
+import React, { useCallback, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { logout } from "@/store/slices/authSlice";
@@ -10,15 +10,11 @@ import HeaderNavMenu from "./HeaderNavMenu";
 import { useTranslation } from "react-i18next";
 import LogoutProgressModal from "@/components/ui/LogoutProgressModal";
 import { getCandidateChatBasePath } from "@/modules/chat/candidate-chat/utils/routes";
-import DashboardOutlined   from "@mui/icons-material/DashboardOutlined";
-import ChatBubbleOutlineOutlined from "@mui/icons-material/ChatBubbleOutlineOutlined";
-import NotificationsOutlined from "@mui/icons-material/NotificationsOutlined";
-import LogoutOutlined from "@mui/icons-material/LogoutOutlined";
-import PersonOutlined from "@mui/icons-material/PersonOutlined";
-import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
-
-const ACCENT    = "#0D9488";
-const ACCENT_BG = "rgba(13,148,136,0.07)";
+import {
+  LayoutDashboard, MessageSquare, Bell, LogOut,
+  User, Settings, X, ChevronRight, ArrowUpRight,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface MobileDrawerProps {
   open: boolean;
@@ -32,48 +28,68 @@ const Row: React.FC<{
   label: string;
   badge?: number;
   danger?: boolean;
+  active?: boolean;
   onClick: () => void;
-}> = ({ icon, label, badge, danger, onClick }) => (
-  <Box
+}> = ({ icon, label, badge, danger, active, onClick }) => (
+  <button
+    type="button"
     onClick={onClick}
-    sx={{
-      display: "flex", alignItems: "center", gap: 1.5,
-      px: 1.5, py: 1.1, borderRadius: "10px", cursor: "pointer",
-      transition: "background 0.15s",
-      "&:hover": { bgcolor: danger ? "rgba(239,68,68,0.06)" : ACCENT_BG },
-    }}
-  >
-    <Box sx={{
-      width: 32, height: 32, borderRadius: "9px", flexShrink: 0,
-      display: "flex", alignItems: "center", justifyContent: "center",
-      bgcolor: danger ? "rgba(239,68,68,0.08)" : ACCENT_BG,
-      border: "1px solid",
-      borderColor: danger ? "rgba(239,68,68,0.18)" : "rgba(13,148,136,0.15)",
-      "& svg": { fontSize: 16, color: danger ? "#EF4444" : ACCENT },
-    }}>
-      {icon}
-    </Box>
-    <Typography sx={{
-      fontFamily: "Poppins", fontSize: "14px", fontWeight: 500,
-      color: danger ? "#EF4444" : "#374151", flex: 1,
-    }}>
-      {label}
-    </Typography>
-    {!!badge && (
-      <Box sx={{
-        minWidth: 18, height: 18, borderRadius: "9px", px: 0.5,
-        bgcolor: "#EF4444", display: "flex", alignItems: "center", justifyContent: "center",
-      }}>
-        <Typography sx={{ fontSize: "10px", fontWeight: 700, color: "#fff", lineHeight: 1 }}>
-          {badge > 9 ? "9+" : badge}
-        </Typography>
-      </Box>
+    className={cn(
+      "group flex items-center gap-2.5 w-full text-left",
+      "px-2 py-[9px] rounded-[10px] cursor-pointer",
+      "transition-all duration-150",
+      danger
+        ? "hover:bg-destructive/5"
+        : active
+          ? "bg-primary/[0.07]"
+          : "hover:bg-primary/[0.07]"
     )}
-  </Box>
+  >
+    <span
+      className={cn(
+        "w-8 h-8 rounded-[9px] flex-shrink-0",
+        "flex items-center justify-center border transition-colors duration-150",
+        "[&>svg]:w-[15px] [&>svg]:h-[15px]",
+        danger
+          ? "bg-destructive/[0.08] border-destructive/20 [&>svg]:text-destructive"
+          : active
+            ? "bg-gray-200 border-gray-300 [&>svg]:text-gray-700"
+            : "bg-gray-100 border-gray-200 [&>svg]:text-gray-400 group-hover:bg-gray-200 group-hover:border-gray-300 group-hover:[&>svg]:text-gray-600"
+      )}
+    >
+      {icon}
+    </span>
+
+    <span className={cn(
+      "font-sans text-[13.5px] flex-1",
+      danger    ? "font-medium text-destructive" :
+      active    ? "font-semibold text-primary"   :
+                  "font-medium text-gray-700"
+    )}>
+      {label}
+    </span>
+
+    {!!badge ? (
+      <span className="min-w-[18px] h-[18px] rounded-full px-0.5 bg-destructive flex items-center justify-center text-white text-[10px] font-bold leading-none">
+        {badge > 9 ? "9+" : badge}
+      </span>
+    ) : !danger && (
+      <ChevronRight className={cn(
+        "w-3.5 h-3.5 flex-shrink-0 transition-all duration-150",
+        active ? "text-primary/50" : "text-gray-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5"
+      )} />
+    )}
+  </button>
+);
+
+const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <p className="px-2 pt-0.5 pb-1.5 text-[10px] font-extrabold text-gray-400 uppercase tracking-[1.2px] select-none">
+    {children}
+  </p>
 );
 
 const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unreadMessageCount = 0 }) => {
-  const { t }  = useTranslation("common");
+  const { t } = useTranslation("common");
   const router   = useRouter();
   const dispatch = useDispatch<AppDispatch>();
 
@@ -91,7 +107,10 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unre
 
   const initials = (() => {
     if (isCompany) return (profile?.companyDetails?.name || "C")[0].toUpperCase();
-    return ((profile?.firstName?.[0] || "") + (profile?.lastName?.[0] || "")).toUpperCase() || (user?.email?.[0] || "U").toUpperCase();
+    return (
+      ((profile?.firstName?.[0] || "") + (profile?.lastName?.[0] || "")).toUpperCase() ||
+      (user?.email?.[0] || "U").toUpperCase()
+    );
   })();
 
   const avatarUrl = (() => {
@@ -99,7 +118,24 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unre
     return img ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${img}` : null;
   })();
 
+  // Role badge meta
+  const roleMeta = isAdmin
+    ? { label: "Admin",     bg: "bg-amber-50",   border: "border-amber-200",  dot: "bg-amber-400",  text: "text-amber-700"  }
+    : isCompany
+      ? { label: "Company",   bg: "bg-violet-50",  border: "border-violet-200", dot: "bg-violet-400", text: "text-violet-700" }
+      : { label: "Candidate", bg: "bg-primary/[0.08]", border: "border-primary/20", dot: "bg-primary",    text: "text-primary"    };
+
+  // Active route detection
+  const p = router.pathname;
+  const isActiveDashboard     = p.includes("dashboard");
+  const isActiveProfile       = p.includes("profile");
+  const isActiveMessages      = p.includes("chat") || p.includes("message");
+  const isActiveNotifications = p === "/notifications";
+  const isActiveSettings      = p === "/settings";
+
   const [loggingOut, setLoggingOut] = useState(false);
+  const [mounted,    setMounted]    = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   const go = (path: string) => { router.push(path); onClose(); };
 
@@ -116,154 +152,198 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unre
     else                go("/candidate/dashboard");
   };
 
-  return (
+  useEffect(() => {
+    if (!open) return;
+    document.documentElement.style.overflow = "hidden";
+    return () => { document.documentElement.style.overflow = ""; };
+  }, [open]);
+
+  if (!mounted) return <LogoutProgressModal open={loggingOut} />;
+
+  return createPortal(
     <>
-      <Drawer
-        anchor="right"
-        open={open}
-        onClose={onClose}
-        PaperProps={{
-          sx: {
-            width: 280,
-            bgcolor: "#F2F3F4",
-            border: "none",
-            boxShadow: "-8px 0 32px rgba(0,0,0,0.10)",
-            display: "flex",
-            flexDirection: "column",
-          },
-        }}
+      {/* Backdrop */}
+      <div
+        className={cn(
+          "fixed inset-0 z-[9998] bg-black/50 backdrop-blur-[2px]",
+          "transition-opacity duration-300",
+          open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        )}
+        onClick={onClose}
+      />
+
+      {/* Drawer panel */}
+      <div
+        className={cn(
+          "fixed top-0 right-0 bottom-0 z-[9999]",
+          "w-[280px] flex flex-col",
+          "bg-gray-50 shadow-[-12px_0_40px_rgba(0,0,0,0.12)]",
+          "border-l border-primary/10",
+          "transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+          open ? "translate-x-0" : "translate-x-full"
+        )}
       >
-        {/* Header */}
-        <Box sx={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          px: 2, py: 1.75,
-          borderBottom: "1px solid rgba(13,148,136,0.10)",
-          bgcolor: "rgba(242,243,244,0.97)",
-          backdropFilter: "blur(12px)",
-        }}>
+        {/* ── Header bar ── */}
+        <div className="flex items-center justify-between px-4 py-[14px] border-b border-primary/10 bg-white/90 backdrop-blur-[12px]">
           <HeaderLogo />
-          <Box
+          <button
+            type="button"
             onClick={onClose}
-            sx={{
-              width: 30, height: 30, borderRadius: "8px",
-              border: "1px solid rgba(13,148,136,0.2)",
-              bgcolor: "rgba(13,148,136,0.04)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer", fontSize: "16px", color: "#6B7280",
-              "&:hover": { bgcolor: "rgba(13,148,136,0.08)" },
-            }}
+            className="w-[30px] h-[30px] rounded-[8px] border border-primary/20 bg-primary/5 flex items-center justify-center cursor-pointer hover:bg-primary/10 transition-colors"
           >
-            ✕
-          </Box>
-        </Box>
+            <X className="w-4 h-4 text-primary" />
+          </button>
+        </div>
 
-        {/* Body */}
-        <Box sx={{ flex: 1, overflowY: "auto", px: 1.5, py: 2 }}>
-
+        {/* ── Scrollable body ── */}
+        <div className="flex-1 overflow-y-auto overscroll-contain px-2.5 py-3 flex flex-col">
           {isAuthenticated ? (
             <>
-              {/* User card */}
-              <Box sx={{
-                display: "flex", alignItems: "center", gap: 1.5,
-                px: 1.5, py: 1.5, mb: 1.5,
-                bgcolor: "#fff", borderRadius: "12px",
-                border: "1px solid rgba(13,148,136,0.12)",
-              }}>
-                <Avatar
-                  src={avatarUrl || undefined}
-                  sx={{
-                    width: 38, height: 38, fontSize: "13px", fontWeight: 700,
-                    bgcolor: ACCENT, color: "#fff", borderRadius: "10px", flexShrink: 0,
+              {/* ── User hero card ── */}
+              <div className="relative mb-3 overflow-hidden rounded-2xl border border-primary/10">
+                {/* Gradient fill */}
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.09] via-primary/[0.04] to-transparent pointer-events-none" />
+                {/* Dot mesh */}
+                <div
+                  className="absolute inset-0 pointer-events-none opacity-40"
+                  style={{
+                    backgroundImage: "radial-gradient(circle, rgba(106,211,156,0.25) 1px, transparent 1px)",
+                    backgroundSize: "14px 14px",
                   }}
-                >
-                  {!avatarUrl && initials}
-                </Avatar>
-                <Box sx={{ minWidth: 0 }}>
-                  <Typography sx={{
-                    fontFamily: "Poppins", fontWeight: 700, fontSize: "13.5px", color: "#111827",
-                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                  }}>
-                    {displayName}
-                  </Typography>
-                  {user?.email && (
-                    <Typography sx={{
-                      fontFamily: "Poppins", fontSize: "11px", color: "#9CA3AF",
-                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                    }}>
-                      {user.email}
-                    </Typography>
-                  )}
-                </Box>
-              </Box>
+                />
 
-              {/* Nav */}
-              <Box sx={{ mb: 1 }}>
+                <div className="relative p-3 flex items-center gap-3">
+                  {/* Avatar + online dot */}
+                  <div className="relative flex-shrink-0">
+                    <div className={cn(
+                      "w-12 h-12 rounded-xl overflow-hidden flex-shrink-0",
+                      "flex items-center justify-center",
+                      "bg-gradient-to-br from-primary to-accent",
+                      "text-primary-foreground text-[14px] font-black",
+                      "ring-2 ring-white shadow-md"
+                    )}>
+                      {avatarUrl
+                        ? <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+                        : initials}
+                    </div>
+                    <span className="absolute -bottom-0.5 -right-0.5 w-[11px] h-[11px] rounded-full bg-green-400 border-2 border-white shadow-sm" />
+                  </div>
+
+                  {/* Name / email / role */}
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-[14px] text-gray-900 truncate leading-snug">
+                      {displayName}
+                    </p>
+                    {user?.email && (
+                      <p className="text-[11px] text-gray-400 truncate">{user.email}</p>
+                    )}
+                    <div className={cn(
+                      "inline-flex items-center gap-1 mt-1.5 rounded-full px-2 py-[3px] border",
+                      roleMeta.bg, roleMeta.border
+                    )}>
+                      <span className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", roleMeta.dot)} />
+                      <span className={cn("text-[10px] font-bold leading-none", roleMeta.text)}>
+                        {roleMeta.label}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Dashboard quick-jump */}
+                  <button
+                    type="button"
+                    onClick={goDashboard}
+                    title="Go to dashboard"
+                    className="group/qd flex-shrink-0 w-8 h-8 rounded-xl bg-white border border-primary/20 shadow-sm flex items-center justify-center hover:bg-primary hover:border-primary transition-all duration-150"
+                  >
+                    <ArrowUpRight className="w-3.5 h-3.5 text-primary group-hover/qd:text-white transition-colors duration-150" />
+                  </button>
+                </div>
+              </div>
+
+              {/* ── Explore ── */}
+              <SectionLabel>Explore</SectionLabel>
+              <div className="mb-1">
                 <HeaderNavMenu direction="column" />
-              </Box>
+              </div>
 
-              <Divider sx={{ my: 1, borderColor: "rgba(13,148,136,0.08)" }} />
+              <hr className="my-2 border-gray-200" />
 
-              {/* Actions */}
-              <Box>
-                <Row icon={<DashboardOutlined />}  label={t("header.dashboard")}   onClick={goDashboard} />
+              {/* ── Account ── */}
+              <SectionLabel>Account</SectionLabel>
+              <div>
+                <Row
+                  icon={<LayoutDashboard />}
+                  label={t("header.dashboard")}
+                  active={isActiveDashboard}
+                  onClick={goDashboard}
+                />
                 {!isCompany && (
-                  <Row icon={<PersonOutlined />} label={t("header.view_profile")}
-                    onClick={() => go("/candidate/profile/" + user?._id)} />
+                  <Row
+                    icon={<User />}
+                    label={t("header.view_profile")}
+                    active={isActiveProfile}
+                    onClick={() => go("/candidate/profile/" + user?._id)}
+                  />
                 )}
-                <Row icon={<ChatBubbleOutlineOutlined />} label={t("header.messages")}
-                  badge={unreadMessageCount} onClick={() => go(getCandidateChatBasePath(user?.role))} />
-                <Row icon={<NotificationsOutlined />} label={t("header.notifications")}
-                  onClick={() => go("/notifications")} />
-                <Row icon={<SettingsOutlined />} label={t("header.settings")}
-                  onClick={() => go("/settings")} />
-              </Box>
+                <Row
+                  icon={<MessageSquare />}
+                  label={t("header.messages")}
+                  badge={unreadMessageCount}
+                  active={isActiveMessages}
+                  onClick={() => go(getCandidateChatBasePath(user?.role))}
+                />
+                <Row
+                  icon={<Bell />}
+                  label={t("header.notifications")}
+                  active={isActiveNotifications}
+                  onClick={() => go("/notifications")}
+                />
+                <Row
+                  icon={<Settings />}
+                  label={t("header.settings")}
+                  active={isActiveSettings}
+                  onClick={() => go("/settings")}
+                />
+              </div>
 
-              <Divider sx={{ my: 1, borderColor: "rgba(13,148,136,0.08)" }} />
-
-              <Row icon={<LogoutOutlined />} label={t("header.logout")} danger onClick={handleLogout} />
+              {/* ── Logout — pinned at bottom ── */}
+              <div className="mt-auto pt-2">
+                <hr className="mb-2 border-gray-200" />
+                <Row icon={<LogOut />} label={t("header.logout")} danger onClick={handleLogout} />
+              </div>
             </>
           ) : (
             <>
-              {/* Nav for unauthenticated */}
-              <Box sx={{ mb: 2 }}>
+              <div className="mb-2">
                 <HeaderNavMenu direction="column" />
-              </Box>
+              </div>
 
-              <Divider sx={{ my: 1.5, borderColor: "rgba(13,148,136,0.08)" }} />
+              <hr className="my-2 border-primary/10" />
 
-              {/* Auth buttons */}
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1, px: 0.5, mt: 1 }}>
-                <Box
+              <div className="flex flex-col gap-2 px-0.5 mt-1">
+                <button
+                  type="button"
                   onClick={() => go("/signin")}
-                  sx={{
-                    py: 1.1, borderRadius: "10px", textAlign: "center", cursor: "pointer",
-                    border: "1px solid rgba(13,148,136,0.2)", bgcolor: "rgba(13,148,136,0.04)",
-                    fontFamily: "Poppins", fontSize: "14px", fontWeight: 500, color: "#374151",
-                    "&:hover": { bgcolor: "rgba(13,148,136,0.08)" },
-                  }}
+                  className="py-[9px] rounded-[10px] text-center cursor-pointer border border-primary/25 bg-primary/5 font-sans text-sm font-medium text-gray-700 hover:bg-primary/10 transition-colors w-full"
                 >
                   {t("header.login")}
-                </Box>
-                <Box
+                </button>
+                <button
+                  type="button"
                   onClick={() => go("/signin")}
-                  sx={{
-                    py: 1.1, borderRadius: "10px", textAlign: "center", cursor: "pointer",
-                    bgcolor: ACCENT, fontFamily: "Poppins", fontSize: "14px",
-                    fontWeight: 700, color: "#fff",
-                    boxShadow: `0 4px 14px rgba(13,148,136,0.35)`,
-                    "&:hover": { opacity: 0.92 },
-                  }}
+                  className="py-[9px] rounded-[10px] text-center cursor-pointer bg-primary font-sans text-sm font-bold text-primary-foreground shadow-brand hover:brightness-105 transition-all w-full"
                 >
                   {t("header.signup")}
-                </Box>
-              </Box>
+                </button>
+              </div>
             </>
           )}
-        </Box>
-      </Drawer>
+        </div>
+      </div>
 
       <LogoutProgressModal open={loggingOut} />
-    </>
+    </>,
+    document.body
   );
 };
 

@@ -50,30 +50,30 @@ const FinalCTA: React.FC = () => {
           style={{ width: size, height: size, border: `1px solid rgba(13,148,136,${0.12 - i * 0.03})` }} />
       ))}
 
-      {/* Floating diamonds */}
+      {/* Floating diamonds — hidden on mobile to avoid overlapping text */}
       <motion.div animate={{ y: [0,-24,0], rotate: [45,70,45], opacity: [0.12,0.22,0.12] }} transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-        className="pointer-events-none absolute top-[10%] left-[5%] size-14 border border-primary/30 rotate-45" />
+        className="pointer-events-none hidden sm:block absolute top-[10%] left-[5%] size-14 border border-primary/30 rotate-45" />
       <motion.div animate={{ y: [0,20,0], rotate: [45,20,45], opacity: [0.08,0.18,0.08] }} transition={{ duration: 13, repeat: Infinity, ease: "easeInOut", delay: 3 }}
-        className="pointer-events-none absolute bottom-[15%] right-[6%] size-11 border border-primary/25 rotate-45" />
+        className="pointer-events-none hidden sm:block absolute bottom-[15%] right-[6%] size-11 border border-primary/25 rotate-45" />
       <motion.div animate={{ y: [0,-16,0], rotate: [45,65,45], opacity: [0.06,0.14,0.06] }} transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 6 }}
-        className="pointer-events-none absolute top-[55%] right-[3%] size-8 border border-primary/20 rotate-45" />
+        className="pointer-events-none hidden sm:block absolute top-[55%] right-[3%] size-8 border border-primary/20 rotate-45" />
 
       {/* Content */}
-      <div className="max-w-[1200px] mx-auto px-6 md:px-16 text-center relative">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 md:px-16 text-center relative">
         <motion.div initial={{ opacity: 0, y: 28 }} whileInView={{ opacity: 1, y: 0 }} viewport={VP} transition={{ duration: 0.6, ease }}>
 
-          <div className="inline-flex items-center rounded-full bg-primary/10 border border-primary/25 px-5 py-2 mb-6">
+          <div className="inline-flex items-center rounded-full bg-primary/10 border border-primary/25 px-4 py-1.5 sm:px-5 sm:py-2 mb-6">
             <span className="text-[11px] font-bold text-primary uppercase tracking-[1.2px]">
               {t("cta.overline")}
             </span>
           </div>
 
-          <h2 className="font-extrabold text-[28px] sm:text-[36px] md:text-[52px] leading-[1.1] text-gray-900 tracking-[-0.5px] md:tracking-[-1px] mb-4 mx-auto max-w-[780px]">
+          <h2 className="font-extrabold text-[28px] sm:text-[36px] md:text-[52px] leading-[1.1] text-gray-900 tracking-[-0.5px] md:tracking-[-1px] mb-4 mx-auto w-full max-w-[780px]">
             {t("cta.headline_1")}{" "}
-            <span className="text-primary">{t("cta.headline_accent")}</span>
+            <span className="italic text-gray-600">{t("cta.headline_accent")}</span>
           </h2>
 
-          <p className="text-[15px] md:text-[17px] text-gray-400 leading-[1.75] max-w-[520px] mx-auto mb-10">
+          <p className="text-[15px] md:text-[17px] text-gray-500 leading-[1.75] max-w-[520px] mx-auto mb-10">
             {t("cta.body")}
           </p>
 
@@ -99,7 +99,7 @@ const FinalCTA: React.FC = () => {
 
           <div className="flex flex-wrap gap-6 justify-center">
             {TRUST_BADGES.map(({ Icon, label }) => (
-              <div key={label} className="flex items-center gap-1.5 text-gray-400">
+              <div key={label} className="flex items-center gap-1.5 text-gray-500">
                 <Icon className="size-3" />
                 <span className="text-[12px] font-medium">{label}</span>
               </div>

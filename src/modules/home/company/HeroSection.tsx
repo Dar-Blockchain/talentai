@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { PlayCircle }  from "lucide-react";
+import { PlayCircle } from "lucide-react";
 import { Button }      from "@/modules/shared/ui/shadcn/button";
 import CaptchaModal    from "./CaptchaModal";
 import DemoVideoModal  from "./DemoVideoModal";
@@ -34,17 +34,17 @@ const StatCard: React.FC<{
       }}
       whileHover={{ y: -4, transition: { type: "spring", stiffness: 340, damping: 20 } }}
     >
-      <div className={cn("px-2 pl-0 py-1", !isLast && "border-r border-gray-200")}>
+      <div className={cn("px-2 pl-0 py-1", !isLast && "sm:border-r sm:border-gray-200")}>
         <div className="flex items-baseline gap-0.5 mb-1.5">
-          <span className="font-black text-[28px] md:text-[34px] leading-none bg-gradient-to-br from-primary to-emerald-600 bg-clip-text text-transparent">
+          <span className="font-black text-[24px] sm:text-[28px] md:text-[34px] leading-none bg-gradient-to-br from-primary to-emerald-600 bg-clip-text text-transparent">
             <motion.span>{num}</motion.span>
           </span>
-          <span className="font-extrabold text-base md:text-lg leading-none bg-gradient-to-br from-primary to-emerald-600 bg-clip-text text-transparent">
+          <span className="font-extrabold text-sm sm:text-base md:text-lg leading-none bg-gradient-to-br from-primary to-emerald-600 bg-clip-text text-transparent">
             {suffix}
           </span>
         </div>
         <p className="font-bold text-[11.5px] text-gray-900 leading-snug">{label}</p>
-        <p className="text-[10px] text-gray-400 leading-snug mt-0.5">{sub}</p>
+        <p className="text-[11px] text-gray-500 leading-snug mt-0.5">{sub}</p>
       </div>
     </motion.div>
   );
@@ -68,7 +68,7 @@ const CompanyHeroSection = () => {
 
   return (
     <section
-      className="relative overflow-hidden pt-12 md:pt-16 pb-8 md:pb-12"
+      className="relative overflow-hidden pt-10 sm:pt-12 md:pt-16 pb-6 sm:pb-8 md:pb-12"
       style={{
         backgroundImage: `
           linear-gradient(0deg, #F2F4F7, #F2F4F7),
@@ -84,16 +84,16 @@ const CompanyHeroSection = () => {
         {/* LEFT */}
         <div>
           <motion.div {...fadeUp(0)}>
-            <h1 className="font-bold text-[36px] sm:text-[44px] md:text-[52px] leading-[1.08] text-gray-900 mb-5">
+            <h1 className="font-bold text-[24px] sm:text-[36px] md:text-[52px] leading-[1.08] text-gray-900 mb-5">
               {t("hero.headline_1")}
               <br />
               {t("hero.headline_2")}{" "}
-              <span className="text-primary">{t("hero.headline_accent")}</span>
+              <span className="italic text-gray-600">{t("hero.headline_accent")}</span>
             </h1>
           </motion.div>
 
           <motion.div {...fadeUp(0.12)}>
-            <p className="text-[15px] md:text-base text-gray-500 leading-[1.75] mb-7 max-w-[520px]">
+            <p className="text-[15px] md:text-base text-gray-500 leading-[1.75] mb-7 w-full max-w-[520px]">
               {t("hero.body")}{" "}
               <span className="text-gray-900 font-semibold">{t("hero.body_accent")}</span>.
             </p>
@@ -132,16 +132,16 @@ const CompanyHeroSection = () => {
           </motion.div>
 
           <motion.div {...fadeUp(0.32)}>
-            <p className="text-[13px] text-gray-400 mb-8">{t("hero.trust")}</p>
+            <p className="text-[13px] text-gray-500 mb-8">{t("hero.trust")}</p>
           </motion.div>
 
           {/* Stats row */}
-          <div className="border-t border-gray-200 pt-5">
+          <div className="border-t border-gray-200 pt-4 sm:pt-5">
             <motion.div
               initial="hidden" animate="visible"
               variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.1, delayChildren: 0.42 } } }}
             >
-              <div className="grid grid-cols-4 gap-0">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-0">
                 {STATS.map((s, i) => (
                   <StatCard
                     key={i}
@@ -160,13 +160,21 @@ const CompanyHeroSection = () => {
 
         {/* RIGHT */}
         <motion.div {...fadeRight(0.18)} className="hidden md:flex justify-end">
-          <div className="relative w-[110%] ml-auto">
+          {/* Whole unit floats together */}
+          <motion.div
+            animate={{ y: [0, -12, 0] }}
+            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+            className="relative w-[110%] ml-auto"
+          >
+            {/* Main dashboard image */}
             <img
               src="/images/home/HeroSectionLanding.png"
               alt="TalentAI Dashboard"
               className="w-full h-auto rounded-xl block"
             />
-          </div>
+
+
+          </motion.div>
         </motion.div>
 
       </div>

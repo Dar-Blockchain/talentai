@@ -175,7 +175,7 @@ export default function GradientStepper() {
             </div>
 
             {/* Content */}
-            <div className={i < steps.length - 1 ? "pb-8 flex-1" : "flex-1"}>
+            <div className={i < steps.length - 1 ? "pb-6 sm:pb-8 flex-1" : "flex-1"}>
               <span className={`text-[10px] font-bold uppercase tracking-[0.8px] ${step.accent.text} mb-1 block`}>
                 {step.tag}
               </span>
@@ -187,7 +187,7 @@ export default function GradientStepper() {
                 {step.features.map((f) => (
                   <div key={f} className="flex items-center gap-1.5">
                     <span className={`size-1.5 rounded-full ${step.accent.solid}`} />
-                    <span className="text-[11.5px] text-gray-400">{f}</span>
+                    <span className="text-[11.5px] text-gray-500">{f}</span>
                   </div>
                 ))}
               </div>

@@ -50,16 +50,16 @@ export default function SuccessSection() {
 
         <h2 className="font-extrabold text-[30px] sm:text-[40px] md:text-[54px] leading-[1.05] tracking-[-1px] md:tracking-[-2px] text-gray-900 mb-4">
           {t("transformation.headline_1")}{" "}
-          <span className="text-primary">{t("transformation.headline_accent")}</span>
+          <span className="italic text-gray-600">{t("transformation.headline_accent")}</span>
         </h2>
 
-        <p className="text-[15px] md:text-[16.5px] text-gray-500 leading-[1.8] max-w-[460px]">
+        <p className="text-[14px] sm:text-[15px] md:text-[16.5px] text-gray-500 leading-[1.8] max-w-[460px]">
           {t("transformation.body")}
         </p>
       </motion.div>
 
       {/* ── Stat cards ── */}
-      <div className="grid grid-cols-3 gap-3 md:gap-4 mb-4">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4">
         {STATS.map((s, i) => (
           <motion.div
             key={i}
@@ -75,11 +75,11 @@ export default function SuccessSection() {
               {/* Colored top strip */}
               <div className="h-1 w-full flex-shrink-0" style={{ background: s.hex }} />
 
-              <div className="flex flex-col flex-1 p-4 md:p-6">
+              <div className="flex flex-col flex-1 p-2 sm:p-3 md:p-6">
 
                 {/* Icon badge */}
                 <div
-                  className="mb-3 md:mb-4 size-9 md:size-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                  className="mb-2 sm:mb-3 md:mb-4 size-7 sm:size-9 md:size-10 rounded-xl flex items-center justify-center flex-shrink-0"
                   style={{ background: s.hexDim }}
                 >
                   <ArrowUpRight className="size-4 md:size-[18px]" style={{ color: s.hex }} />
@@ -87,19 +87,19 @@ export default function SuccessSection() {
 
                 {/* Value */}
                 <p
-                  className="font-black text-[36px] md:text-[52px] leading-none tracking-[-2px] mb-1.5"
+                  className="font-black text-[20px] sm:text-[30px] md:text-[52px] leading-none tracking-[-1px] md:tracking-[-2px] mb-1.5"
                   style={{ color: s.hex }}
                 >
                   {s.value}
                 </p>
 
                 {/* Label */}
-                <p className="text-[12px] md:text-[13.5px] font-bold text-gray-800 leading-snug mb-1">
+                <p className="text-[10px] sm:text-[12px] md:text-[13.5px] font-bold text-gray-800 leading-snug mb-1">
                   {s.label}
                 </p>
 
                 {/* Context */}
-                <p className="text-[11px] md:text-[12px] text-gray-400 leading-snug mt-auto pt-2 hidden md:block">
+                <p className="text-[11px] md:text-[12px] text-gray-500 leading-snug mt-auto pt-2 hidden md:block">
                   {s.context}
                 </p>
               </div>
@@ -113,21 +113,22 @@ export default function SuccessSection() {
         initial={{ opacity: 0, y: 28 }} whileInView={{ opacity: 1, y: 0 }}
         viewport={VP} transition={{ duration: 0.7, delay: 0.12, ease }}
       >
-        <div className="rounded-2xl overflow-hidden border border-gray-200 shadow-[0_4px_24px_rgba(0,0,0,0.06)]">
+        <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+        <div className="rounded-2xl overflow-hidden border border-gray-200 shadow-[0_4px_24px_rgba(0,0,0,0.06)] min-w-[540px]">
 
           {/* Column headers */}
           <div className="grid grid-cols-[1fr_auto_auto] md:grid-cols-[2fr_1fr_1fr]">
 
             <div className="bg-gray-50 border-b border-gray-200 px-5 md:px-7 py-3 flex items-center">
-              <span className="text-[10.5px] font-bold uppercase tracking-[1px] text-gray-400">Metric</span>
+              <span className="text-[11px] font-bold uppercase tracking-[1px] text-gray-500">Metric</span>
             </div>
 
-            <div className="bg-rose-50 border-b border-l border-gray-200 px-4 md:px-7 py-3 flex items-center gap-1.5 min-w-[100px] md:min-w-0">
+            <div className="bg-rose-50 border-b border-l border-gray-200 px-3 md:px-7 py-3 flex items-center gap-1.5 min-w-[70px] sm:min-w-[100px] md:min-w-0">
               <X className="size-3 text-rose-400 flex-shrink-0" />
               <span className="text-[10.5px] font-bold uppercase tracking-[1px] text-rose-500 whitespace-nowrap">Before</span>
             </div>
 
-            <div className="bg-primary/[0.07] border-b border-l border-primary/15 px-4 md:px-7 py-3 flex items-center gap-1.5 min-w-[120px] md:min-w-0">
+            <div className="bg-primary/[0.07] border-b border-l border-primary/15 px-3 md:px-7 py-3 flex items-center gap-1.5 min-w-[90px] sm:min-w-[120px] md:min-w-0">
               <CheckCircle2 className="size-3 text-primary flex-shrink-0" />
               <span className="text-[10.5px] font-bold uppercase tracking-[1px] text-primary whitespace-nowrap">With TalentAI</span>
             </div>
@@ -150,7 +151,7 @@ export default function SuccessSection() {
                   {/* Metric */}
                   <div className="px-5 md:px-7 py-3.5 md:py-4 flex items-center gap-3">
                     <div className="size-8 rounded-xl bg-gray-100 group-hover:bg-primary/[0.08] border border-gray-200 group-hover:border-primary/15 flex items-center justify-center flex-shrink-0 transition-colors duration-150">
-                      <Icon className="size-3.5 text-gray-400 group-hover:text-primary transition-colors duration-150" />
+                      <Icon className="size-3.5 text-gray-500 group-hover:text-primary transition-colors duration-150" />
                     </div>
                     <span className="text-[12.5px] md:text-[13.5px] font-semibold text-gray-700 leading-snug">
                       {row.metric}
@@ -158,14 +159,14 @@ export default function SuccessSection() {
                   </div>
 
                   {/* Before */}
-                  <div className="min-w-[100px] md:min-w-0 border-l border-gray-100 px-4 md:px-7 py-3.5 md:py-4 flex items-center bg-rose-50/25 group-hover:bg-rose-50/50 transition-colors">
+                  <div className="min-w-[70px] sm:min-w-[100px] md:min-w-0 border-l border-gray-100 px-3 md:px-7 py-3.5 md:py-4 flex items-center bg-rose-50/25 group-hover:bg-rose-50/50 transition-colors">
                     <span className="font-mono text-[12px] md:text-[13.5px] font-medium text-gray-400 tabular-nums line-through decoration-gray-300 decoration-[1.5px]">
                       {row.before}
                     </span>
                   </div>
 
                   {/* After */}
-                  <div className="min-w-[120px] md:min-w-0 border-l border-primary/10 px-4 md:px-7 py-3.5 md:py-4 flex items-center justify-between gap-2 bg-primary/[0.02] group-hover:bg-primary/[0.05] transition-colors">
+                  <div className="min-w-[90px] sm:min-w-[120px] md:min-w-0 border-l border-primary/10 px-3 md:px-7 py-3.5 md:py-4 flex items-center justify-between gap-2 bg-primary/[0.02] group-hover:bg-primary/[0.05] transition-colors">
                     <div className="flex items-center gap-1.5 min-w-0">
                       <MoveRight className="size-3 text-primary/40 flex-shrink-0 hidden md:block" />
                       <span className="font-mono text-[12px] md:text-[13.5px] font-bold text-gray-900 tabular-nums">
@@ -173,7 +174,7 @@ export default function SuccessSection() {
                       </span>
                     </div>
                     <span
-                      className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold whitespace-nowrap text-white flex-shrink-0"
+                      className="hidden sm:inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold whitespace-nowrap text-white flex-shrink-0"
                       style={{ background: "#0D9488" }}
                     >
                       {row.delta}
@@ -187,11 +188,12 @@ export default function SuccessSection() {
           {/* Footer */}
           <div className="border-t border-gray-100 bg-gray-50 px-5 md:px-7 py-3 flex items-center gap-2">
             <Zap className="size-3.5 text-primary flex-shrink-0" />
-            <p className="text-[11.5px] font-medium text-gray-400">
+            <p className="text-[11.5px] font-medium text-gray-500">
               Results based on teams using TalentAI for 90+ days.{" "}
               <span className="font-semibold text-gray-600">Average across all customers.</span>
             </p>
           </div>
+        </div>
         </div>
       </motion.div>
 

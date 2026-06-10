@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useCallback } from "react";
-import { Box, Badge } from "@mui/material";
-import MenuRounded from "@mui/icons-material/MenuRounded";
+import { Menu } from "lucide-react";
+import { cn } from "@/lib/utils";
 import MobileDrawer from "./MobileDrawer";
 
 interface HamburgerButtonProps {
@@ -18,30 +18,26 @@ const HamburgerButton: React.FC<HamburgerButtonProps> = ({
 
   return (
     <>
-      <Box
+      <button
+        type="button"
         onClick={toggleDrawer}
-        sx={{
-          display: "flex",
-          "@media (min-width:800px)": { display: "none" },
-          alignItems: "center",
-          justifyContent: "center",
-          width: 34,
-          height: 34,
-          borderRadius: "10px",
-          border: "1px solid rgba(13,148,136,0.2)",
-          bgcolor: mobileOpen ? "rgba(13,148,136,0.08)" : "rgba(13,148,136,0.04)",
-          cursor: "pointer",
-          transition: "border-color 0.15s, background 0.15s",
-          "&:hover": { borderColor: "rgba(13,148,136,0.4)", bgcolor: "rgba(13,148,136,0.08)" },
-        }}
+        className={cn(
+          "relative flex items-center justify-center",
+          "w-[34px] h-[34px] rounded-[10px]",
+          "border border-primary/25",
+          "[@media(min-width:800px)]:hidden",
+          "transition-colors duration-150 cursor-pointer",
+          mobileOpen ? "bg-primary/10" : "bg-primary/5",
+          "hover:border-primary/40 hover:bg-primary/10"
+        )}
       >
-        <Badge
-          badgeContent={unreadMessageCount || undefined}
-          sx={{ "& .MuiBadge-badge": { bgcolor: "#EF4444", color: "#fff", fontSize: "9px", minWidth: 14, height: 14, padding: 0 } }}
-        >
-          <MenuRounded sx={{ fontSize: 18, color: "#0D9488" }} />
-        </Badge>
-      </Box>
+        <Menu className="w-[18px] h-[18px] text-primary" />
+        {!!unreadMessageCount && (
+          <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-0.5 rounded-full bg-destructive flex items-center justify-center text-white text-[9px] font-bold leading-none">
+            {unreadMessageCount > 9 ? "9+" : unreadMessageCount}
+          </span>
+        )}
+      </button>
 
       <MobileDrawer
         open={mobileOpen}

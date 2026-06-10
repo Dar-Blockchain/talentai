@@ -88,7 +88,7 @@ const ContactSection: React.FC = () => {
 
             {/* ══ LEFT PANEL ══ */}
             <div
-              className="relative flex flex-col justify-between gap-10 px-8 py-10 md:px-10 md:py-12 border-b md:border-b-0 md:border-r border-gray-200"
+              className="relative flex flex-col justify-between gap-10 px-5 sm:px-8 py-7 sm:py-10 md:px-10 md:py-12 border-b md:border-b-0 md:border-r border-gray-200"
               style={{
                 backgroundColor: "#f9fafb",
                 backgroundImage: "radial-gradient(circle, #d1d5db 1px, transparent 1px)",
@@ -110,9 +110,9 @@ const ContactSection: React.FC = () => {
 
                 {/* Headline */}
                 <div>
-                  <h2 className="font-extrabold text-[26px] md:text-[34px] leading-[1.15] tracking-[-0.5px] md:tracking-[-1px] text-gray-900 mb-3">
+                  <h2 className="font-extrabold text-[22px] sm:text-[26px] md:text-[34px] leading-[1.15] tracking-[-0.5px] md:tracking-[-1px] text-gray-900 mb-3">
                     {t("contact.headline_1")}{" "}
-                    <span className="text-primary">{t("contact.headline_accent")}</span>
+                    <span className="italic text-gray-600">{t("contact.headline_accent")}</span>
                   </h2>
                   <p className="text-[14px] text-gray-500 leading-[1.8]">
                     {t("contact.body")}
@@ -148,13 +148,13 @@ const ContactSection: React.FC = () => {
                     transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
                     className="block size-2 rounded-full bg-green-400"
                   />
-                  <span className="text-[12px] text-gray-400">{t("contact.online")}</span>
+                  <span className="text-[12px] text-gray-500">{t("contact.online")}</span>
                 </div>
               </div>
             </div>
 
             {/* ══ RIGHT PANEL — form ══ */}
-            <div className="bg-white px-8 py-10 md:px-10 md:py-12">
+            <div className="bg-white px-5 sm:px-8 py-7 sm:py-10 md:px-10 md:py-12">
               {submitted ? (
                 <div className="flex flex-col items-center justify-center h-full min-h-[320px] gap-5 text-center">
                   <motion.div
@@ -168,7 +168,7 @@ const ContactSection: React.FC = () => {
                   </motion.div>
                   <div>
                     <h3 className="font-bold text-[20px] text-gray-900 mb-2">{t("contact.success_title")}</h3>
-                    <p className="text-[13.5px] text-gray-400 max-w-[240px] leading-[1.75]">{t("contact.success_body")}</p>
+                    <p className="text-[13.5px] text-gray-500 max-w-[240px] leading-[1.75]">{t("contact.success_body")}</p>
                   </div>
                 </div>
               ) : (
@@ -176,7 +176,7 @@ const ContactSection: React.FC = () => {
                   {/* Form heading */}
                   <div className="mb-1">
                     <h3 className="font-bold text-[17px] text-gray-900 mb-0.5">{t("contact.form_headline")}</h3>
-                    <p className="text-[13px] text-gray-400">{t("contact.form_subtitle")}</p>
+                    <p className="text-[13px] text-gray-500">{t("contact.form_subtitle")}</p>
                   </div>
 
                   {/* Name + Email */}
@@ -248,7 +248,7 @@ const ContactSection: React.FC = () => {
                     />
                     <div className="flex justify-between mt-1">
                       <FieldError msg={errors.message} />
-                      <span className="text-[10.5px] text-gray-300 ml-auto tabular-nums">{form.message.length} / 1000</span>
+                      <span className="text-[11px] text-gray-400 ml-auto tabular-nums">{form.message.length} / 1000</span>
                     </div>
                   </div>
 
@@ -276,7 +276,7 @@ const ContactSection: React.FC = () => {
                     {sendError && <p className="mt-2 text-[12px] text-red-500 text-center">{sendError}</p>}
                   </div>
 
-                  <p className="text-[11px] text-gray-300 text-center">{t("contact.privacy")}</p>
+                  <p className="text-[11px] text-gray-400 text-center">{t("contact.privacy")}</p>
                 </div>
               )}
             </div>

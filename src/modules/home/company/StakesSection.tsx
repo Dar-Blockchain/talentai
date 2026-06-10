@@ -68,7 +68,7 @@ const StakesSection: React.FC = () => {
               />
             </span>
           </h2>
-          <p className="text-[15px] md:text-base text-gray-400 max-w-[520px] mx-auto leading-[1.7]">
+          <p className="text-[15px] md:text-base text-gray-500 max-w-[520px] mx-auto leading-[1.7]">
             {t("stakes.body")}
           </p>
         </div>
@@ -78,7 +78,7 @@ const StakesSection: React.FC = () => {
       <motion.div
         initial="hidden" whileInView="visible" viewport={VP}
         variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.1, delayChildren: 0.05 } } }}
-        className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8"
+        className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-6 md:mb-8"
       >
         {STATS.map((s, i) => {
           const { Icon, color, bg, border, bar } = STAT_META[i];
@@ -88,16 +88,16 @@ const StakesSection: React.FC = () => {
               variants={{ hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease } } }}
               whileHover={{ y: -4, transition: { type: "spring", stiffness: 340, damping: 20 } }}
             >
-              <div className="h-full bg-white rounded-2xl border border-gray-200 shadow-[0_2px_12px_rgba(0,0,0,0.05)] px-5 py-5 flex flex-col gap-3 overflow-hidden relative">
+              <div className="h-full bg-white rounded-2xl border border-gray-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.08),0_1px_4px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.05)] transition-shadow duration-200 px-3 sm:px-5 py-3 sm:py-5 flex flex-col gap-3 overflow-hidden relative">
                 <div className={cn("absolute top-0 left-0 right-0 h-[3px] rounded-t-2xl", bg.replace("50", "200"))} />
                 <div className={cn("size-9 rounded-xl flex items-center justify-center flex-shrink-0", bg, "border", border)}>
                   <Icon className={cn("size-4", color)} />
                 </div>
                 <div>
-                  <p className="font-black text-[32px] md:text-[40px] leading-none tracking-[-1.5px] text-gray-900 mb-1">
+                  <p className="font-black text-[24px] sm:text-[32px] md:text-[40px] leading-none tracking-[-1px] md:tracking-[-1.5px] text-gray-900 mb-1">
                     <Counter target={s.target} prefix={s.prefix} suffix={s.suffix} />
                   </p>
-                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-[0.6px]">
+                  <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-[0.6px]">
                     {s.unit}
                   </p>
                 </div>
@@ -120,7 +120,7 @@ const StakesSection: React.FC = () => {
       {/* Source */}
       <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={VP}
         transition={{ duration: 0.5, delay: 0.3 }}>
-        <p className="text-[10px] text-gray-300 text-center mb-8 md:mb-10 tracking-[0.4px]">
+        <p className="text-[11px] text-gray-400 text-center mb-8 md:mb-10 tracking-[0.4px]">
           {t("stakes.source")}
         </p>
       </motion.div>
@@ -128,20 +128,20 @@ const StakesSection: React.FC = () => {
       {/* CTA banner */}
       <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={VP}
         transition={{ duration: 0.6, delay: 0.2, ease }}>
-        <div className="relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6 md:gap-8 px-6 md:px-10 py-7 md:py-8 rounded-2xl bg-gray-950 border border-gray-800">
+        <div className="relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6 md:gap-8 px-4 sm:px-6 md:px-10 py-6 sm:py-7 md:py-8 rounded-2xl bg-white border border-gray-200 shadow-[0_4px_24px_rgba(0,0,0,0.07),0_1px_4px_rgba(0,0,0,0.04)]">
           <div className="pointer-events-none absolute -top-16 -left-16 size-[260px] rounded-full"
-            style={{ background: "radial-gradient(circle,rgba(13,148,136,0.12) 0%,transparent 70%)" }} />
+            style={{ background: "radial-gradient(circle,rgba(13,148,136,0.07) 0%,transparent 70%)" }} />
           <div className="relative flex-1">
             <p className="text-[11px] font-semibold text-primary uppercase tracking-[1px] mb-1.5">
               Stop losing money
             </p>
-            <h3 className="font-bold text-[18px] md:text-[22px] text-white mb-1 leading-snug">
+            <h3 className="font-bold text-[16px] sm:text-[18px] md:text-[22px] text-gray-900 mb-1 leading-snug">
               {t("stakes.cta_headline_1")}{" "}
-              <span className="text-primary">{t("stakes.cta_headline_accent")}</span>
+              <span className="italic text-gray-600">{t("stakes.cta_headline_accent")}</span>
             </h3>
-            <p className="text-[13px] text-white/50">{t("stakes.cta_body")}</p>
+            <p className="text-[12.5px] sm:text-[13px] text-gray-500">{t("stakes.cta_body")}</p>
           </div>
-          <div className="relative flex flex-col gap-3 items-start md:items-end flex-shrink-0">
+          <div className="relative flex flex-col gap-3 items-start md:items-end flex-shrink-0 w-full md:w-auto">
             <motion.div whileHover={{ scale: 1.04, y: -2 }} whileTap={{ scale: 0.97 }}
               transition={{ type: "spring", stiffness: 400, damping: 20 }}>
               <Button
@@ -156,8 +156,8 @@ const StakesSection: React.FC = () => {
             <div className="flex gap-5">
               {[{ Icon: Clock, label: t("stakes.trust_live") }, { Icon: Ban, label: t("stakes.trust_cancel") }].map(({ Icon, label }) => (
                 <div key={label} className="flex items-center gap-1.5">
-                  <Icon className="size-3 text-white/30" />
-                  <span className="text-[11px] text-white/35">{label}</span>
+                  <Icon className="size-3 text-gray-400" />
+                  <span className="text-[11px] text-gray-500">{label}</span>
                 </div>
               ))}
             </div>

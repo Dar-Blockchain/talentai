@@ -16,7 +16,7 @@ const SolutionsSection = () => {
       <motion.div
         initial={{ opacity: 0, y: 28 }} whileInView={{ opacity: 1, y: 0 }}
         viewport={VP} transition={{ duration: 0.6, ease }}
-        className="text-center mb-14 md:mb-18"
+        className="text-center mb-10 sm:mb-14 md:mb-18"
       >
         <div className="inline-flex items-center gap-2 rounded-full bg-primary/[0.07] border border-primary/20 px-4 py-1.5 mb-5">
           <Zap className="size-3 text-primary" />
@@ -27,10 +27,10 @@ const SolutionsSection = () => {
 
         <h2 className="font-extrabold text-[28px] sm:text-[38px] md:text-[52px] leading-[1.08] tracking-[-0.5px] md:tracking-[-1.5px] text-gray-900 mb-4">
           {t("plan.headline_1")}{" "}
-          <span className="text-primary">{t("plan.headline_accent")}</span>
+          <span className="italic text-gray-600">{t("plan.headline_accent")}</span>
         </h2>
 
-        <p className="text-[15px] md:text-[16px] text-gray-400 max-w-[440px] mx-auto leading-[1.75]">
+        <p className="text-[15px] md:text-[16px] text-gray-500 max-w-[440px] mx-auto leading-[1.75]">
           {t("plan.body")}
         </p>
       </motion.div>

@@ -8,7 +8,7 @@ import { useRouter } from "next/router";
 const FooterLink: React.FC<{ children: React.ReactNode; href?: string }> = ({ children, href = "#" }) => (
   <NextLink
     href={href}
-    className="text-[12px] text-gray-500 hover:text-gray-900 transition-colors leading-snug"
+    className="text-[12px] text-gray-600 hover:text-gray-900 transition-colors leading-snug"
   >
     {children}
   </NextLink>
@@ -55,16 +55,16 @@ const Footer: React.FC = () => {
               style={{ objectFit: "contain" }}
             />
           </div>
-          <p className="text-[10px] text-gray-400 leading-[1.5] mb-1">
+          <p className="text-[11px] text-gray-500 leading-[1.5] mb-1">
             {t("footer.copyright")}
           </p>
-          <p className="text-[10px] text-gray-400 leading-[1.6]">
+          <p className="text-[11px] text-gray-500 leading-[1.6]">
             {t("footer.disclaimer_prefix")}{" "}
-            <NextLink href="/terms" className="text-gray-500 underline hover:text-gray-700 transition-colors">
+            <NextLink href="/terms" className="text-gray-600 underline hover:text-gray-800 transition-colors">
               {t("footer.terms_of_use")}
             </NextLink>
             {" · "}
-            <NextLink href="/privacy" className="text-gray-500 underline hover:text-gray-700 transition-colors">
+            <NextLink href="/privacy" className="text-gray-600 underline hover:text-gray-800 transition-colors">
               {t("footer.privacy_policy")}
             </NextLink>
             . {t("footer.disclaimer_suffix")}
@@ -86,7 +86,7 @@ const Footer: React.FC = () => {
           {/* Contact email */}
           <a
             href="mailto:contact@talentai.bid"
-            className="flex items-center gap-1.5 text-[12px] text-gray-500 hover:text-primary transition-colors"
+            className="flex items-center gap-1.5 text-[12px] text-gray-600 hover:text-primary transition-colors"
           >
             <Mail className="size-[14px]" />
             contact@talentai.bid
@@ -101,7 +101,7 @@ const Footer: React.FC = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={label}
-                className="size-8 rounded-lg bg-gray-100 hover:bg-primary/10 hover:text-primary flex items-center justify-center text-gray-500 transition-colors"
+                className="size-8 rounded-lg bg-gray-100 hover:bg-primary/10 hover:text-primary flex items-center justify-center text-gray-600 transition-colors"
               >
                 <Icon className="size-[15px]" />
               </a>

@@ -61,7 +61,7 @@ const FAQItem: React.FC<{ faq: FaqItem; index: number; open: boolean; onToggle: 
         {open && (
           <motion.div key="answer" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.32, ease }} style={{ overflow: "hidden" }}>
-            <div className="px-5 md:px-6 pb-5 md:pb-6 pl-[68px] md:pl-[76px]">
+            <div className="px-5 md:px-6 pb-5 md:pb-6 pl-12 sm:pl-[68px] md:pl-[76px]">
               <p className="text-[13.5px] md:text-[14px] text-gray-500 leading-[1.8]">{faq.answer}</p>
             </div>
           </motion.div>
@@ -111,25 +111,25 @@ const FAQSection: React.FC = () => {
           className="pointer-events-none absolute -bottom-20 -right-20 w-[380px] h-[340px]"
           style={{ background: "radial-gradient(circle at 60% 55%,rgba(13,148,136,0.05) 0%,transparent 70%)" }} />
         <motion.div animate={{ y: [0,-22,0], rotate: [45,68,45], opacity: [0.08,0.16,0.08] }} transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
-          className="pointer-events-none absolute top-[6%] right-[6%] size-14 border-[1.5px] border-primary/25 rotate-45" />
+          className="pointer-events-none hidden sm:block absolute top-[6%] right-[6%] size-14 border-[1.5px] border-primary/25 rotate-45" />
         <motion.div animate={{ y: [0,18,0], rotate: [45,22,45], opacity: [0.06,0.12,0.06] }} transition={{ duration: 14, repeat: Infinity, ease: "easeInOut", delay: 3 }}
-          className="pointer-events-none absolute bottom-[8%] left-[5%] size-10 border-[1.5px] border-primary/20 rotate-45" />
+          className="pointer-events-none hidden sm:block absolute bottom-[8%] left-[5%] size-10 border-[1.5px] border-primary/20 rotate-45" />
 
         <div className="max-w-[760px] mx-auto px-4 md:px-8 relative">
 
           {/* Header */}
           <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={VP} transition={{ duration: 0.55, ease }}>
-            <div className="text-center mb-10 md:mb-14">
+            <div className="text-center mb-8 sm:mb-10 md:mb-14">
               <div className="inline-flex items-center rounded-full bg-gray-100 border border-gray-200 px-4 py-1.5 mb-5">
                 <span className="text-[11px] font-bold text-gray-500 uppercase tracking-[1.2px]">
                   {t("faq.overline")}
                 </span>
               </div>
-              <h2 className="font-extrabold text-[28px] md:text-[44px] leading-[1.1] text-gray-900 mb-3 tracking-[-0.5px]">
+              <h2 className="font-extrabold text-[24px] sm:text-[32px] md:text-[44px] leading-[1.1] text-gray-900 mb-3 tracking-[-0.5px]">
                 {t("faq.headline_1")}{" "}
-                <span className="text-primary">{t("faq.headline_accent")}</span>
+                <span className="italic text-gray-600">{t("faq.headline_accent")}</span>
               </h2>
-              <p className="text-[14px] md:text-base text-gray-400 leading-[1.7]">{t("faq.body")}</p>
+              <p className="text-[14px] md:text-base text-gray-500 leading-[1.7]">{t("faq.body")}</p>
             </div>
           </motion.div>
 

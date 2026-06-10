@@ -34,7 +34,7 @@ const GlobalCompanies: React.FC = () => {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={VP}
         transition={{ duration: 0.5, ease }}
-        className="text-center text-[11px] font-medium uppercase tracking-[2px] text-gray-400 mb-8"
+        className="text-center text-[11px] font-medium uppercase tracking-[2px] text-gray-500 mb-8"
       >
         {t("trusted")}
       </motion.p>
