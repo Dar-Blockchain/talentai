@@ -69,7 +69,7 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
         console.log(`\n🎯 Interview Overall Score: ${overallScore}`);
 
         // Fetch the post to get the interview score threshold and language
-        const post = await Post.findById(assessmentData.post).select('thresholdScoreInterview interviewLanguages');
+        const post = await Post.findById(assessmentData.post).select('thresholdScoreInterview language interviewLanguages');
         const thresholdScoreInterview = post?.thresholdScoreInterview || 20;
         console.log(`📊 Interview Score Threshold: ${thresholdScoreInterview}%`);
 
@@ -123,9 +123,8 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
       if (assessment.post && assessment.post.jobDetails) {
         postTitle = assessment.post.jobDetails.title || 'New Opportunity';
       }
-      // Re-use the post already fetched above for threshold; fall back to a fresh query
-      const postForLang = await Post.findById(assessmentData.post).select('interviewLanguages').lean();
-      if (postForLang) jobLanguage = postForLang.interviewLanguages?.[0] || 'en';
+      const postForLang = await Post.findById(assessmentData.post).select('language interviewLanguages').lean();
+      if (postForLang) jobLanguage = postForLang.language || postForLang.interviewLanguages?.[0] || 'en';
 
       console.log(`📧 Sending interview assessment email to: ${candidateEmail} (lang: ${jobLanguage})`);
 
@@ -144,9 +143,8 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
 
           if (companyUser && companyUser.email) {
             const companyName = companyProfile?.firstName || 'Company';
-            const companyLanguage = companyUser.language || 'en';
 
-            console.log(`📧 Sending interview completion notification to company: ${companyUser.email} (lang: ${companyLanguage})`);
+            console.log(`📧 Sending interview completion notification to company: ${companyUser.email} (lang: ${jobLanguage})`);
 
             // Send email to company asynchronously
             sendInterviewCompletionNotificationToCompany(
@@ -155,7 +153,7 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
               candidateName,
               postTitle,
               candidateEmail,
-              companyLanguage
+              jobLanguage
             ).catch(err => {
               console.error('⚠️ Warning: Failed to send company notification Email:', err.message);
             });

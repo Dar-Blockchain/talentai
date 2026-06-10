@@ -42,8 +42,7 @@ const interviewCompletionTemplateEn      = compileTemplate("interview/company-as
 const interviewCompletionTemplateFr      = compileTemplate("interview/company-assessment-completed.fr.hbs");
 const interviewInvitationTemplateEn      = compileTemplate("interview/candidate-invitation.hbs");
 const interviewInvitationTemplateFr      = compileTemplate("interview/candidate-invitation.fr.hbs");
-const contactCandidateTemplateEn         = compileTemplate("contact/contact-candidate.hbs");
-const contactCandidateTemplateFr         = compileTemplate("contact/contact-candidate.fr.hbs");
+const contactCandidateTemplate            = compileTemplate("contact/contact-candidate.hbs");
 const interviewNudge1TemplateEn          = compileTemplate("interview/nudge-1.hbs");
 const interviewNudge1TemplateFr          = compileTemplate("interview/nudge-1.fr.hbs");
 const interviewNudge2TemplateEn          = compileTemplate("interview/nudge-2.hbs");
@@ -230,9 +229,8 @@ const sendInterviewNudge = async (candidateEmail, { firstName, jobTitle, company
 };
 
 // ─── Send Direct Message to Candidate (from company) ─────────────────────────
-const sendCandidateEmail = async (to, candidateName, fromCompanyName, subject, message, language = "en") => {
-  const fr = isFr(language);
-  const template = fr ? contactCandidateTemplateFr : contactCandidateTemplateEn;
+const sendCandidateEmail = async (to, candidateName, fromCompanyName, subject, message) => {
+  const template = contactCandidateTemplate;
   const senderAddr = process.env.NO_REPLY_EMAIL;
   const mailOptions = {
     from: `"${fromCompanyName} via TalentAI" <${senderAddr}>`,
