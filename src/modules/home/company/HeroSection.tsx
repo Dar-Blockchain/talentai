@@ -107,7 +107,8 @@ const CompanyHeroSection = () => {
               >
                 <Button
                   onClick={() => setCaptchaOpen(true)}
-                  className="bg-primary text-white hover:bg-primary/90 rounded-[10px] px-7 py-5 text-[15px] font-bold shadow-[0_4px_18px_rgba(13,148,136,0.4)] hover:shadow-[0_8px_28px_rgba(13,148,136,0.5)]"
+                  size="xl"
+                  className="rounded-xl shadow-[0_4px_18px_rgba(13,148,136,0.4)] hover:shadow-[0_8px_28px_rgba(13,148,136,0.5)]"
                 >
                   {t("hero.cta_primary")}
                 </Button>
@@ -118,9 +119,10 @@ const CompanyHeroSection = () => {
                 transition={{ type: "spring", stiffness: 400, damping: 20 }}
               >
                 <Button
-                  variant="outline"
+                  variant="ghost"
+                  size="xl"
                   onClick={() => setVideoOpen(true)}
-                  className="border-2 border-gray-300 text-gray-700 rounded-[10px] px-7 py-5 text-[15px] font-medium hover:bg-gray-900 hover:border-gray-900 hover:text-white gap-2"
+                  className="rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-900 hover:border-gray-900 hover:text-white"
                 >
                   <PlayCircle className="size-[18px]" />
                   {t("hero.cta_demo")}

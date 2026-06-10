@@ -257,7 +257,8 @@ const ContactSection: React.FC = () => {
                     <Button
                       onClick={handleSubmit}
                       disabled={sending}
-                      className="w-full bg-primary text-white hover:bg-primary/90 rounded-xl h-11 text-[14.5px] font-bold shadow-[0_4px_16px_rgba(13,148,136,0.28)] hover:shadow-[0_8px_24px_rgba(13,148,136,0.40)] gap-2 disabled:opacity-55 transition-all duration-200"
+                      size="lg"
+                      className="w-full rounded-xl shadow-[0_4px_16px_rgba(13,148,136,0.28)] hover:shadow-[0_8px_24px_rgba(13,148,136,0.40)] disabled:opacity-55"
                     >
                       {sending ? (
                         <span className="flex items-center gap-2">

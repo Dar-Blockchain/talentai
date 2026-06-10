@@ -146,7 +146,8 @@ const StakesSection: React.FC = () => {
               transition={{ type: "spring", stiffness: 400, damping: 20 }}>
               <Button
                 onClick={() => setCaptchaOpen(true)}
-                className="bg-primary text-white hover:bg-primary/90 rounded-[10px] px-8 py-5 text-[15px] font-bold shadow-[0_4px_18px_rgba(13,148,136,0.4)] hover:shadow-[0_6px_24px_rgba(13,148,136,0.5)] gap-2 whitespace-nowrap"
+                size="xl"
+                className="rounded-xl shadow-[0_4px_18px_rgba(13,148,136,0.4)] hover:shadow-[0_6px_24px_rgba(13,148,136,0.5)] whitespace-nowrap"
               >
                 {t("stakes.cta_button")}
                 <ArrowRight className="size-4" />

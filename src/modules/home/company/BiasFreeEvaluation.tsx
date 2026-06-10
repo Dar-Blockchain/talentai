@@ -163,7 +163,8 @@ const BiasFreeEvaluation: React.FC = () => {
           >
             <Button
               onClick={() => setCaptchaOpen(true)}
-              className="bg-primary text-white hover:bg-primary/90 rounded-xl px-8 py-5 text-[15px] font-bold shadow-[0_4px_20px_rgba(13,148,136,0.38)] hover:shadow-[0_8px_28px_rgba(13,148,136,0.48)] gap-2"
+              size="xl"
+              className="rounded-xl shadow-[0_4px_20px_rgba(13,148,136,0.38)] hover:shadow-[0_8px_28px_rgba(13,148,136,0.48)]"
             >
               {t("solution.cta")}
             </Button>

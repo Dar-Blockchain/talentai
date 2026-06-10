@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import DemoVideoModal from "@/modules/home/company/DemoVideoModal";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
@@ -18,30 +19,34 @@ const HeaderPrimaryActions = ({ inverted = false }: { inverted?: boolean }) => {
     "candidate";
 
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-1">
       {/* Log in — ghost */}
-      <button
+      <Button
+        variant="ghost"
+        size="sm"
         onClick={() => router.push("/signin")}
         className={cn(
-          "px-[18px] py-[7px] rounded-[10px] text-[13.5px] font-medium whitespace-nowrap transition-colors duration-150 cursor-pointer",
+          "rounded-lg font-medium",
           inverted
-            ? "text-slate-500 hover:text-primary hover:bg-primary/10"
-            : "text-gray-500 hover:text-gray-900 hover:bg-black/[0.04]"
+            ? "text-gray-500 hover:text-foreground hover:bg-black/[0.06]"
+            : "text-gray-500 hover:text-foreground hover:bg-black/[0.04]"
         )}
       >
         {t("header.login")}
-      </button>
+      </Button>
 
       {/* Separator */}
-      <div className={cn("w-px h-[18px]", inverted ? "bg-white/15" : "bg-black/10")} />
+      <div className={cn("w-px h-[18px] mx-0.5", inverted ? "bg-black/10" : "bg-black/10")} />
 
-      {/* CTA — primary pill */}
-      <button
+      {/* CTA — primary */}
+      <Button
+        variant="default"
+        size="sm"
         onClick={() => userType === "candidate" ? router.push("/signin") : setVideoOpen(true)}
-        className="px-5 py-[7px] rounded-[10px] text-[13.5px] font-bold whitespace-nowrap cursor-pointer bg-primary text-white tracking-[0.01em] shadow-[0_2px_10px_rgba(13,148,136,0.35)] hover:opacity-90 hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(13,148,136,0.45)] transition-all duration-150"
+        className="rounded-lg px-4 shadow-[0_2px_10px_rgba(13,148,136,0.30)] hover:shadow-[0_4px_16px_rgba(13,148,136,0.42)]"
       >
         {userType === "candidate" ? t("header.signup") : t("header.watch_demo")}
-      </button>
+      </Button>
 
       <DemoVideoModal open={videoOpen} onClose={() => setVideoOpen(false)} />
     </div>

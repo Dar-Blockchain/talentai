@@ -111,11 +111,11 @@ const HeaderNavMenu: React.FC<HeaderNavMenuProps> = ({ direction = "row", invert
                   "data-[active=true]:after:scale-x-100 data-[active=false]:after:scale-x-0 hover:after:scale-x-100",
                   // colour — inactive
                   inverted
-                    ? "text-muted-foreground hover:text-primary"
+                    ? "text-muted-foreground hover:text-foreground"
                     : "text-gray-500 hover:text-foreground",
                   // colour — active (override shadcn accent defaults)
                   inverted
-                    ? "data-[active=true]:text-primary data-[active=true]:hover:text-primary"
+                    ? "data-[active=true]:text-foreground data-[active=true]:hover:text-foreground"
                     : "data-[active=true]:text-foreground data-[active=true]:hover:text-foreground",
                   // background (override shadcn accent defaults)
                   "hover:bg-primary/10",

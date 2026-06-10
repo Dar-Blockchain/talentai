@@ -81,7 +81,8 @@ const FinalCTA: React.FC = () => {
             <motion.div whileHover={{ scale: 1.04, y: -2 }} whileTap={{ scale: 0.97 }}
               transition={{ type: "spring", stiffness: 380, damping: 20 }}>
               <Button onClick={() => setCaptchaOpen(true)}
-                className="bg-primary text-white hover:bg-primary/90 rounded-[10px] px-8 py-5 text-[15px] font-bold shadow-[0_4px_20px_rgba(13,148,136,0.35)] hover:shadow-[0_8px_30px_rgba(13,148,136,0.45)]">
+                size="xl"
+                className="rounded-xl shadow-[0_4px_20px_rgba(13,148,136,0.35)] hover:shadow-[0_8px_30px_rgba(13,148,136,0.45)]">
                 {t("cta.btn_primary")}
               </Button>
             </motion.div>
@@ -89,7 +90,8 @@ const FinalCTA: React.FC = () => {
             <motion.div whileHover={{ scale: 1.04, y: -2 }} whileTap={{ scale: 0.97 }}
               transition={{ type: "spring", stiffness: 380, damping: 20 }}>
               <Button variant="outline" onClick={() => setCaptchaOpen(true)}
-                className="border-gray-300 text-gray-600 rounded-[10px] px-8 py-5 text-[15px] font-semibold hover:border-primary hover:text-primary hover:bg-primary/[0.06] bg-transparent">
+                size="xl"
+                className="rounded-xl border-gray-300 text-gray-600">
                 {t("cta.btn_secondary")}
               </Button>
             </motion.div>
