@@ -20,10 +20,9 @@ import { cn } from "@/lib/utils";
 
 interface UserAvatarProps {
   showDropdown?: boolean;
-  hideLabel?: boolean;
 }
 
-const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true, hideLabel = false }) => {
+const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
   const router   = useRouter();
   const dispatch = useDispatch<AppDispatch>();
 
@@ -107,15 +106,14 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true, hideLabel 
               </Avatar>
             </div>
 
-            {/* Display name */}
-            {!hideLabel && (
-              <span className={cn(
-                "text-xs font-medium text-foreground leading-none truncate",
-                isCompany ? "max-w-40" : "max-w-24",
-              )}>
-                {shortName}
-              </span>
-            )}
+            {/* Display name — hidden on mobile, visible on large screens */}
+            <span className={cn(
+              "text-xs font-medium text-foreground leading-none truncate",
+              "hidden min-[900px]:inline",
+              isCompany ? "max-w-40" : "max-w-24",
+            )}>
+              {shortName}
+            </span>
 
             {/* Chevron */}
             {showDropdown && (

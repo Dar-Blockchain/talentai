@@ -74,7 +74,7 @@ const KpiRecruitmentFunnel = memo<KpiRecruitmentFunnelProps>(({ data, loading })
   return (
     <>
       <ZoneHeading icon={TrendingUpOutlined} label={t("pages.kpi.zone3_title")} color="#10B981" />
-      <KpiCard sx={{ mb: 4 }}>
+      <KpiCard className="mb-4">
         <Box sx={STEPS_ROW_SX}>
           {loading
             ? SKEL_SKELS.map((_, i) => <StepSkeleton key={i} />)

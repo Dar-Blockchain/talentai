@@ -74,8 +74,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
 
         <Separator orientation="vertical" className="h-5 bg-gray-200 mx-0.5" />
 
-        {/* User chip — avatar only */}
-        <UserAvatar hideLabel />
+        <UserAvatar />
       </div>
     </header>
   );

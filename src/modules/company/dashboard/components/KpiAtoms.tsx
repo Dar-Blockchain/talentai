@@ -1,9 +1,11 @@
 "use client";
 import React, { memo, useMemo } from "react";
-import { Box, Typography, Paper } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import ArrowUpwardOutlined   from "@mui/icons-material/ArrowUpwardOutlined";
 import ArrowDownwardOutlined from "@mui/icons-material/ArrowDownwardOutlined";
 import RemoveOutlined        from "@mui/icons-material/RemoveOutlined";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/modules/shared/ui/shadcn/card";
+import { cn } from "@/lib/utils";
 import { BORDER, GRAY, GRAY2, NAVY, NAVY2, WHITE } from "../utils/kpiTokens";
 
 // ─── Static sx constants ──────────────────────────────────────────────────────
@@ -24,12 +26,6 @@ const ZONE_ICON_BOX_SX = { width: 32, height: 32, borderRadius: "9px", display: 
 const ZONE_TITLE_SX    = { fontFamily: "Poppins", fontWeight: 700, fontSize: "0.92rem", color: NAVY } as const;
 const ZONE_DIVIDER_SX  = { flex: 1, height: "1px", bgcolor: BORDER } as const;
 
-const KPICARD_PAPER_SX  = { border: `1px solid ${BORDER}`, borderRadius: "18px", p: { xs: 2, sm: 2.5 }, bgcolor: WHITE, height: "100%" } as const;
-const KPICARD_TITLE_BOX = { mb: 2 } as const;
-const KPICARD_TITLE_SX  = { fontFamily: "Poppins", fontWeight: 700, fontSize: "0.92rem", color: NAVY } as const;
-const KPICARD_SUB_SX    = { fontFamily: "Poppins", fontSize: "0.74rem", color: GRAY2, mt: 0.25 } as const;
-
-const ACTION_PAPER_SX   = { border: `1px solid ${BORDER}`, borderRadius: "18px", p: 2.5, bgcolor: WHITE, transition: "box-shadow 0.2s, transform 0.2s", "&:hover": { boxShadow: "0 8px 28px rgba(0,0,0,0.09)", transform: "translateY(-2px)" } } as const;
 const ACTION_TOP_ROW_SX = { display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 } as const;
 const ACTION_VAL_SX     = { fontFamily: "Poppins", fontWeight: 800, fontSize: "2rem", color: NAVY, lineHeight: 1 } as const;
 const ACTION_LABEL_SX   = { fontFamily: "Poppins", fontSize: "0.78rem", fontWeight: 600, color: NAVY2, mt: 0.5, mb: 0.25 } as const;
@@ -88,24 +84,20 @@ ZoneHeading.displayName = "ZoneHeading";
 
 // ─── Generic card wrapper ─────────────────────────────────────────────────────
 
-export const KpiCard = memo<{ title?: string; subtitle?: string; children: React.ReactNode; sx?: object }>(
-  ({ title, subtitle, children, sx }) => {
-    const paperSx = useMemo(
-      () => sx ? { ...KPICARD_PAPER_SX, ...sx } : KPICARD_PAPER_SX,
-      [sx],
-    );
-    return (
-      <Paper elevation={0} sx={paperSx}>
-        {title && (
-          <Box sx={KPICARD_TITLE_BOX}>
-            <Typography sx={KPICARD_TITLE_SX}>{title}</Typography>
-            {subtitle && <Typography sx={KPICARD_SUB_SX}>{subtitle}</Typography>}
-          </Box>
-        )}
+export const KpiCard = memo<{ title?: string; subtitle?: string; children: React.ReactNode; className?: string }>(
+  ({ title, subtitle, children, className }) => (
+    <Card className={cn("h-full rounded-[18px]", className)}>
+      {title && (
+        <CardHeader className="pb-0">
+          <CardTitle className="font-poppins font-bold text-[0.92rem] text-[#0F172A]">{title}</CardTitle>
+          {subtitle && <CardDescription className="font-poppins text-[0.74rem]">{subtitle}</CardDescription>}
+        </CardHeader>
+      )}
+      <CardContent className={title ? "" : "pt-0"}>
         {children}
-      </Paper>
-    );
-  },
+      </CardContent>
+    </Card>
+  ),
 );
 KpiCard.displayName = "KpiCard";
 
@@ -118,17 +110,17 @@ export const ActionCard = memo<{
   const iconBoxSx = useMemo(() => ({ ...ACTION_ICON_SX, bgcolor: bg }), [bg]);
   const iconSx    = useMemo(() => ({ fontSize: 22, color }), [color]);
   return (
-    <Paper elevation={0} sx={ACTION_PAPER_SX}>
-      <Box sx={ACTION_TOP_ROW_SX}>
-        <Box sx={iconBoxSx}>
-          <Icon sx={iconSx} />
+    <Card className="rounded-[18px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg">
+      <CardContent>
+        <Box sx={ACTION_TOP_ROW_SX}>
+          <Box sx={iconBoxSx}><Icon sx={iconSx} /></Box>
+          <Delta cur={value} prev={value - trend} />
         </Box>
-        <Delta cur={value} prev={value - trend} />
-      </Box>
-      <Typography sx={ACTION_VAL_SX}>{value}</Typography>
-      <Typography sx={ACTION_LABEL_SX}>{label}</Typography>
-      <Typography sx={ACTION_NOTE_SX}>{note}</Typography>
-    </Paper>
+        <Typography sx={ACTION_VAL_SX}>{value}</Typography>
+        <Typography sx={ACTION_LABEL_SX}>{label}</Typography>
+        <Typography sx={ACTION_NOTE_SX}>{note}</Typography>
+      </CardContent>
+    </Card>
   );
 });
 ActionCard.displayName = "ActionCard";

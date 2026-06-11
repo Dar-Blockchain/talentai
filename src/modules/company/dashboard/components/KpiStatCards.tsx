@@ -2,6 +2,8 @@
 import React, { memo, useCallback, useMemo } from "react";
 import { Box, Typography, Skeleton } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import { Card, CardContent } from "@/modules/shared/ui/shadcn/card";
+import { cn } from "@/lib/utils";
 import { useRouter } from "next/router";
 import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "@/utils/axiosInstance";
@@ -42,15 +44,15 @@ const fetchMemberStats       = () => axiosInstance.get("company-memberships/memb
 // ─── StatCardSkeleton ─────────────────────────────────────────────────────────
 
 const StatCardSkeleton = memo(() => (
-  <Box sx={SKELETON_CARD_SX}>
-    <Box sx={SKELETON_ROW_SX}>
+  <Card className="rounded-2xl">
+    <CardContent className="flex items-center gap-3">
       <Skeleton variant="rounded" width={40} height={40} sx={{ borderRadius: "10px", flexShrink: 0 }} />
-      <Box sx={SKELETON_INNER_SX}>
+      <div className="flex-1 min-w-0">
         <Skeleton variant="text" width="50%" height={28} />
         <Skeleton variant="text" width="80%" height={14} sx={{ mt: 0.3 }} />
-      </Box>
-    </Box>
-  </Box>
+      </div>
+    </CardContent>
+  </Card>
 ));
 StatCardSkeleton.displayName = "StatCardSkeleton";
 
@@ -67,20 +69,22 @@ interface StatCardProps {
 }
 
 const StatCard = memo<StatCardProps>(({ icon: Icon, color, bg, value, label, loading, onClick }) => {
-  const cardSx    = useMemo(() => ({ ...CARD_BASE_SX, cursor: onClick ? "pointer" : "default", "&:hover": { boxShadow: onClick ? "0 2px 12px rgba(0,0,0,0.07)" : "none" } }), [onClick]);
   const iconBoxSx = useMemo(() => ({ ...ICON_BOX_SX, bgcolor: bg }), [bg]);
 
   if (loading) return <StatCardSkeleton />;
   return (
-    <Box onClick={onClick} sx={cardSx}>
-      <Box sx={CARD_ROW_SX}>
+    <Card
+      className={cn("rounded-2xl", onClick && "cursor-pointer hover:shadow-md")}
+      onClick={onClick}
+    >
+      <CardContent className="flex items-center gap-3">
         <Box sx={iconBoxSx}><Icon sx={{ fontSize: 20, color }} /></Box>
-        <Box sx={VALUE_BOX_SX}>
-          <Box sx={VALUE_SX}>{value}</Box>
-          <Typography sx={LABEL_SX}>{label}</Typography>
-        </Box>
-      </Box>
-    </Box>
+        <div className="min-w-0">
+          <div className="text-[1.4rem] font-extrabold text-[#111827] leading-none">{value}</div>
+          <div className="text-[0.67rem] font-semibold text-[#9CA3AF] uppercase tracking-[0.04em] mt-1 whitespace-nowrap">{label}</div>
+        </div>
+      </CardContent>
+    </Card>
   );
 });
 StatCard.displayName = "StatCard";
