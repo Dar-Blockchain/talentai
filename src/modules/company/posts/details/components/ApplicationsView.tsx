@@ -1,13 +1,6 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { Box, CircularProgress } from "@mui/material";
-import { AppDispatch } from "@/store/store";
-import {
-  fetchPostApplicationsSummary,
-  selectPostSummary,
-  selectPostSummaryLoading,
-  selectPostSummaryPagination,
-} from "@/store/slices/jobApplicationSlice";
+import { useApplicationsSummaryQuery } from "../queries";
 import ContactCandidateModal, { ContactTarget } from "./ContactCandidateModal";
 import ApplicationsToolbar from "./applications/ApplicationsToolbar";
 import ApplicationsEmptyState from "./applications/ApplicationsEmptyState";
@@ -20,11 +13,6 @@ const PAGE_SIZE = 10;
 interface Props { jobId: string }
 
 const ApplicationsView: React.FC<Props> = ({ jobId }) => {
-  const dispatch   = useDispatch<AppDispatch>();
-  const rows       = useSelector(selectPostSummary);
-  const loading    = useSelector(selectPostSummaryLoading);
-  const pagination = useSelector(selectPostSummaryPagination);
-
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch]           = useState("");
   const [status, setStatus]           = useState("");
@@ -32,44 +20,41 @@ const ApplicationsView: React.FC<Props> = ({ jobId }) => {
   const [page, setPage]               = useState(1);
   const [contactTarget,    setContactTarget]    = useState<ContactTarget | null>(null);
   const [assessmentTarget, setAssessmentTarget] = useState<AssessmentTarget | null>(null);
-  // Survives re-fetches — tracks invited applicationIds for this session
   const [invitedIds, setInvitedIds] = useState<Set<string>>(new Set());
   const markInvited = useCallback((appId: string) => {
     setInvitedIds(prev => new Set(prev).add(appId));
   }, []);
 
-  // Seed invited state from server on every fetch (persists across refreshes)
   useEffect(() => {
-    const fromServer = rows
-      .filter(r => !!r.invitedAt)
-      .map(r => String(r.id));
-    if (fromServer.length === 0) return;
-    setInvitedIds(prev => {
-      const merged = new Set(prev);
-      fromServer.forEach(id => merged.add(id));
-      return merged;
-    });
-  }, [rows]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setSearch(searchInput), 350);
+    const timer = setTimeout(() => { setSearch(searchInput); setPage(1); }, 350);
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  useEffect(() => { setPage(1); }, [search, status, sort]);
+  useEffect(() => { setPage(1); }, [status, sort]);
 
-  const load = useCallback(() => {
-    dispatch(fetchPostApplicationsSummary({
-      postId: jobId,
-      search:  search  || undefined,
-      status:  status  || undefined,
-      sort:    sort    || undefined,
-      page,
-      limit: PAGE_SIZE,
-    }));
-  }, [dispatch, jobId, search, status, sort, page]);
+  const queryParams = useMemo(() => ({
+    postId: jobId,
+    search:  search  || undefined,
+    status:  status  || undefined,
+    sort:    sort    || undefined,
+    page,
+    limit: PAGE_SIZE,
+  }), [jobId, search, status, sort, page]);
 
-  useEffect(() => { load(); }, [load]);
+  const { data, isLoading: loading } = useApplicationsSummaryQuery(queryParams);
+
+  const rows       = data?.data ?? [];
+  const pagination = data?.pagination ?? {};
+
+  useEffect(() => {
+    const fromServer = rows.filter((r: any) => !!r.invitedAt).map((r: any) => String(r.id));
+    if (fromServer.length === 0) return;
+    setInvitedIds(prev => {
+      const merged = new Set(prev);
+      fromServer.forEach((id: string) => merged.add(id));
+      return merged;
+    });
+  }, [rows]);
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -77,7 +62,7 @@ const ApplicationsView: React.FC<Props> = ({ jobId }) => {
         searchInput={searchInput}
         status={status}
         sort={sort}
-        totalCount={pagination.totalCount}
+        totalCount={(pagination as any).totalCount}
         loading={loading}
         onSearchChange={setSearchInput}
         onStatusChange={setStatus}

@@ -29,7 +29,6 @@ import departmentReducer from './slices/departmentSlice';
 import jobApplicationReducer from './slices/jobApplicationSlice';
 import feedbackReducer from './slices/feedbackSlice';
 import paymentReducer from './slices/paymentSlice';
-import kpiReducer from './slices/kpiSlice';
 import postDetailsReducer from '../modules/company/posts/details/store/postSlice';
 
 const rootReducer = combineReducers({
@@ -50,7 +49,6 @@ const rootReducer = combineReducers({
   company: companyReducer,
   department: departmentReducer,
   jobApplications: jobApplicationReducer,
-  kpi: kpiReducer,
   feedback: feedbackReducer,
   payment: paymentReducer,
   postDetails: postDetailsReducer,

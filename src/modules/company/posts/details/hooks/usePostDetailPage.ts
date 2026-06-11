@@ -1,42 +1,41 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
+import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
-import { AppDispatch, RootState } from "@/store/store";
-import { fetchJobById, selectCurrentJob, selectCurrentJobLoading, selectCurrentJobError, updatePostStatus } from "@/store/slices/postSlice";
-import { updateJobDetails } from "../store/postSlice";
-import { useDeletePost } from "@/modules/company/posts/list/hooks/useDeletePost";
+import { RootState } from "@/store/store";
 import { useToast } from "@/hooks/useToast";
+import { useDeletePost } from "@/modules/company/posts/list/hooks/useDeletePost";
+import { useJobDetailQuery, useUpdatePostMutation } from "../queries";
+import { useUpdatePostStatusMutation } from "@/modules/company/posts/list/queries";
 
 export const usePostDetailPage = () => {
-  const dispatch      = useDispatch<AppDispatch>();
   const router        = useRouter();
   const { id }        = router.query;
   const { t }         = useTranslation("posts");
   const { showToast } = useToast();
 
-  const job     = useSelector(selectCurrentJob);
-  const loading = useSelector(selectCurrentJobLoading);
-  const error   = useSelector(selectCurrentJobError);
+  const jobId = typeof id === "string" ? id : undefined;
+
+  const { data: job, isLoading: loading, error: queryError, refetch } = useJobDetailQuery(jobId);
+  const updateMut     = useUpdatePostMutation(jobId ?? "");
+  const statusMut     = useUpdatePostStatusMutation();
+
   const connectedUser     = useSelector((s: RootState) => s.user.connectedUser.user);
   const companyMembership = useSelector((s: RootState) => s.user.connectedUser.companyMembership);
 
-  const [activeEdit,        setActiveEdit]        = useState<"post" | null>(null);
-  const [activeTab,         setActiveTab]          = useState<"details" | "applications">("details");
-  const [menuAnchor,        setMenuAnchor]         = useState<null | HTMLElement>(null);
-  const [publishConfirmOpen,setPublishConfirmOpen] = useState(false);
-  const [publishing,        setPublishing]         = useState(false);
-  const [langModalOpen,     setLangModalOpen]      = useState(false);
-  const [savingLanguages,   setSavingLanguages]    = useState(false);
-  const [qrOpen,            setQrOpen]             = useState(false);
+  const [activeEdit,         setActiveEdit]         = useState<"post" | null>(null);
+  const [activeTab,          setActiveTab]          = useState<"details" | "applications">("details");
+  const [menuAnchor,         setMenuAnchor]         = useState<null | HTMLElement>(null);
+  const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
+  const [langModalOpen,      setLangModalOpen]      = useState(false);
+  const [savingLanguages,    setSavingLanguages]    = useState(false);
+  const [qrOpen,             setQrOpen]             = useState(false);
   const qrCanvasRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => { if (id) dispatch(fetchJobById(id as string)); }, [id, dispatch]);
-  useEffect(() => { setActiveEdit(null); }, [activeTab]);
+  const error = queryError ? String(queryError) : null;
 
   const isOwner = useMemo(() => {
     if (!job) return false;
-    // user may be a populated object or a raw ObjectId string
     const ownerId = String(job.user?._id ?? job.user ?? "");
     if (!ownerId) return false;
     return !!(
@@ -47,8 +46,8 @@ export const usePostDetailPage = () => {
 
   const deleteHook = useDeletePost({
     redirectTo: "/company/posts",
-    onSuccess: () => showToast({ message: t("detail.toast.deleted"),      severity: "success" }),
-    onError:   () => showToast({ message: t("detail.toast.delete_error"), severity: "error"   }),
+    onSuccess:  () => showToast({ message: t("detail.toast.deleted"),      severity: "success" }),
+    onError:    () => showToast({ message: t("detail.toast.delete_error"), severity: "error"   }),
   });
 
   const getInterviewLink = () => {
@@ -59,21 +58,18 @@ export const usePostDetailPage = () => {
 
   const handleSaveSuccess = () => {
     setActiveEdit(null);
-    if (id) dispatch(fetchJobById(id as string));
+    refetch();
   };
 
   const handleConfirmPublish = () => {
     if (!job?._id) return;
-    setPublishing(true);
-    dispatch(updatePostStatus({ postId: job._id, status: "open" }))
-      .unwrap()
-      .then(() => {
-        setPublishConfirmOpen(false);
-        showToast({ message: t("detail.toast.published"), severity: "success" });
-        dispatch(fetchJobById(job._id));
-      })
-      .catch(() => showToast({ message: t("detail.toast.publish_error"), severity: "error" }))
-      .finally(() => setPublishing(false));
+    statusMut.mutate(
+      { postId: job._id, status: "open" },
+      {
+        onSuccess: () => { setPublishConfirmOpen(false); showToast({ message: t("detail.toast.published"),     severity: "success" }); refetch(); },
+        onError:   () => showToast({ message: t("detail.toast.publish_error"), severity: "error" }),
+      },
+    );
   };
 
   const handleCopyLink = () => {
@@ -81,22 +77,21 @@ export const usePostDetailPage = () => {
     if (!link) return;
     navigator.clipboard
       .writeText(link)
-      .then(()  => showToast({ message: t("detail.toast.link_copied"),    severity: "success" }))
-      .catch(()  => showToast({ message: t("detail.toast.link_copy_error"), severity: "error" }));
+      .then(()  => showToast({ message: t("detail.toast.link_copied"),      severity: "success" }))
+      .catch(() => showToast({ message: t("detail.toast.link_copy_error"),  severity: "error"   }));
   };
 
   const handleUpdateLanguages = (languages: string[]) => {
     if (!job?._id) return;
     setSavingLanguages(true);
-    dispatch(updateJobDetails({ jobId: job._id, jobData: { interviewLanguages: languages } }))
-      .unwrap()
-      .then(() => {
-        setLangModalOpen(false);
-        showToast({ message: t("detail.toast.languages_updated"), severity: "success" });
-        dispatch(fetchJobById(job._id));
-      })
-      .catch(() => showToast({ message: t("detail.toast.languages_error"), severity: "error" }))
-      .finally(() => setSavingLanguages(false));
+    updateMut.mutate(
+      { interviewLanguages: languages },
+      {
+        onSuccess: () => { setLangModalOpen(false); showToast({ message: t("detail.toast.languages_updated"), severity: "success" }); refetch(); },
+        onError:   () => showToast({ message: t("detail.toast.languages_error"), severity: "error" }),
+        onSettled: () => setSavingLanguages(false),
+      },
+    );
   };
 
   const handleDownloadQr = () => {
@@ -109,12 +104,12 @@ export const usePostDetailPage = () => {
   };
 
   return {
-    job, loading, error, isOwner,
-    activeEdit, setActiveEdit,
-    activeTab,  setActiveTab,
-    menuAnchor, setMenuAnchor,
+    job: job ?? null, loading, error, isOwner,
+    publishing: statusMut.isPending,
+    activeEdit,  setActiveEdit,
+    activeTab,   setActiveTab,
+    menuAnchor,  setMenuAnchor,
     publishConfirmOpen, setPublishConfirmOpen,
-    publishing,
     langModalOpen,   setLangModalOpen,
     savingLanguages,
     qrOpen, setQrOpen,

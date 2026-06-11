@@ -1,74 +1,47 @@
-import { useCallback, useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch } from "@/store/store";
-import {
-  fetchMyPosts,
-  selectMyPosts,
-  selectMyPostsLoading,
-  selectMyPostsError,
-  selectMyPostsPagination,
-} from "@/store/slices/postSlice";
+import { useCallback, useMemo, useState } from "react";
 import type { StatusFilter, SortOption, TypeFilter } from "../types";
+import { useMyPostsQuery } from "../queries";
 
-interface UseMyPostsOptions {
-  initialPage?: number;
-  limit?: number;
-}
+const STATUS_MAP: Record<StatusFilter, string | undefined> = {
+  all: undefined, active: "open", draft: "draft", expired: "closed",
+};
+const SORT_MAP: Record<SortOption, string> = {
+  newest: "newest", oldest: "oldest", "title-asc": "title_asc", "title-desc": "title_desc",
+};
 
-export const useMyPosts = ({ initialPage = 1, limit = 9 }: UseMyPostsOptions = {}) => {
-  const dispatch   = useDispatch<AppDispatch>();
-  const posts      = useSelector(selectMyPosts);
-  const loading    = useSelector(selectMyPostsLoading);
-  const error      = useSelector(selectMyPostsError);
-  const pagination = useSelector(selectMyPostsPagination);
-
+export const useMyPosts = ({ initialPage = 1, limit = 9 } = {}) => {
   const [page,         setPage]         = useState(initialPage);
   const [search,       setSearch]       = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [typeFilter,   setTypeFilter]   = useState<TypeFilter>("all");
   const [sortBy,       setSortBy]       = useState<SortOption>("newest");
 
-  const apiStatus = statusFilter === "all"     ? undefined
-                  : statusFilter === "active"  ? "open"
-                  : statusFilter === "draft"   ? "draft"
-                  : statusFilter === "expired" ? "closed"
-                  : undefined;
+  const params = useMemo(() => ({
+    page, limit,
+    search:       search || undefined,
+    sort:         SORT_MAP[sortBy],
+    status:       STATUS_MAP[statusFilter],
+    creationType: typeFilter !== "all" ? typeFilter : undefined,
+  }), [page, limit, search, sortBy, statusFilter, typeFilter]);
 
-  const apiSort = sortBy === "title-asc"  ? "title_asc"
-                : sortBy === "title-desc" ? "title_desc"
-                : sortBy;
+  const { data, isLoading, error, refetch } = useMyPostsQuery(params);
 
-  const load = useCallback(() => {
-    dispatch(fetchMyPosts({
-      page,
-      limit,
-      search:       search       || undefined,
-      sort:         apiSort,
-      status:       apiStatus,
-      creationType: typeFilter !== "all" ? typeFilter : undefined,
-    }));
-  }, [dispatch, page, limit, search, apiSort, apiStatus, typeFilter]);
+  const resetPage = useCallback(() => setPage(1), []);
 
-  useEffect(() => { load(); }, [load]);
-
-  const resetPage = () => setPage(1);
-
-  const handleSearchChange = (v: string)       => { setSearch(v);       resetPage(); };
-  const handleStatusChange = (v: StatusFilter) => { setStatusFilter(v); resetPage(); };
-  const handleTypeChange   = (v: TypeFilter)   => { setTypeFilter(v);   resetPage(); };
-  const handleSortChange   = (v: SortOption)   => { setSortBy(v);       resetPage(); };
-
-  const hasFilters = !!search || statusFilter !== "all" || typeFilter !== "all";
+  const handleSearchChange = useCallback((v: string)       => { setSearch(v);       resetPage(); }, [resetPage]);
+  const handleStatusChange = useCallback((v: StatusFilter) => { setStatusFilter(v); resetPage(); }, [resetPage]);
+  const handleTypeChange   = useCallback((v: TypeFilter)   => { setTypeFilter(v);   resetPage(); }, [resetPage]);
+  const handleSortChange   = useCallback((v: SortOption)   => { setSortBy(v);       resetPage(); }, [resetPage]);
 
   return {
-    posts, loading, error, pagination,
+    posts:      data?.posts      ?? [],
+    pagination: data?.pagination ?? null,
+    loading:    isLoading,
+    error:      error ? String(error) : null,
     page, search, statusFilter, typeFilter, sortBy,
-    hasFilters,
+    hasFilters: !!search || statusFilter !== "all" || typeFilter !== "all",
     setPage,
-    handleSearchChange,
-    handleStatusChange,
-    handleTypeChange,
-    handleSortChange,
-    reload: load,
+    handleSearchChange, handleStatusChange, handleTypeChange, handleSortChange,
+    reload: refetch,
   };
 };

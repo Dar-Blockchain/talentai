@@ -9,9 +9,7 @@ import EditOutlined from "@mui/icons-material/EditOutlined";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch } from "@/store/store";
-import { fetchDepartments, selectDepartments, selectDepartmentsLoading } from "@/store/slices/departmentSlice";
+import { useDepartmentsQuery } from "@/modules/company/employees/queries";
 import { useTranslation } from "react-i18next";
 import { ROLES } from "@/constants/employee";
 import { roleMatchesSearch } from "@/utils/employeeRoleI18n";
@@ -41,9 +39,8 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
     (key: string, opts?: Record<string, string>) => t(`pages.employees.modals.edit.${key}`, opts),
     [t],
   );
-  const dispatch = useDispatch<AppDispatch>();
-  const departments        = useSelector(selectDepartments);
-  const departmentsLoading = useSelector(selectDepartmentsLoading);
+  const { data: deptsRaw, isLoading: departmentsLoading } = useDepartmentsQuery();
+  const departments = (Array.isArray(deptsRaw) ? deptsRaw : (deptsRaw as any)?.data) ?? [];
 
   const [role,         setRole]         = useState(currentRole);
   const [departmentId, setDepartmentId] = useState(currentDepartmentId ?? "");
@@ -66,7 +63,6 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
       setRoleSearch("");
       setError(null);
       setSuccess(false);
-      if (departments.length === 0) dispatch(fetchDepartments({}));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, currentRole, currentDepartmentId]);

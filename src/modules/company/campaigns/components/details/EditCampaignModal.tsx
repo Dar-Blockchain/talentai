@@ -15,21 +15,19 @@ import AccountCircleOutlined from "@mui/icons-material/AccountCircleOutlined";
 import WarningAmberOutlined  from "@mui/icons-material/WarningAmberOutlined";
 import AppButton             from "@/components/ui/AppButton";
 import { Campaign, ModuleType } from "@/types/campaign";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/store/store";
-import { updateCampaign } from "@/store/slices/campaignSlice";
-import { MODULE_CONFIG } from "@/constants/campaign";
+import { MODULE_CONFIG }     from "@/constants/campaign";
 import { useTranslation, Trans } from "react-i18next";
+import { useUpdateCampaignMutation } from "../../queries";
 
 const PURPLE = "#8310FF";
 
 const MODULE_TYPES: ModuleType[] = ["QUESTIONNAIRE", "AI_INTERVIEW", "SKILL_TEST", "TRAINING_PATH"];
 
 interface Props {
-  open: boolean;
+  open:     boolean;
   campaign: Campaign;
-  onClose: () => void;
-  onSaved: (updated: Campaign) => void;
+  onClose:  () => void;
+  onSaved:  (updated: Campaign) => void;
 }
 
 const FieldLabel: React.FC<{ label: string; required?: boolean }> = ({ label, required }) => (
@@ -39,21 +37,21 @@ const FieldLabel: React.FC<{ label: string; required?: boolean }> = ({ label, re
 );
 
 const EditCampaignModal = memo<Props>(({ open, campaign, onClose, onSaved }) => {
-  const dispatch = useDispatch<AppDispatch>();
   const { t } = useTranslation("dashboard");
   const m = "pages.campaigns.detail.edit_modal";
 
-  const [title,         setTitle]         = useState("");
-  const [description,   setDescription]   = useState("");
-  const [deadline,      setDeadline]       = useState("");
-  const [anonymityMode, setAnonymityMode]  = useState<Campaign["anonymityMode"]>("NOMINATIVE");
-  const [accessMethod,  setAccessMethod]   = useState<Campaign["accessMethod"]>("ACCOUNTS");
-  const [moduleType,    setModuleType]     = useState<ModuleType>("QUESTIONNAIRE");
-  const [saving,        setSaving]         = useState(false);
-  const [error,         setError]          = useState<string | null>(null);
+  const updateMut = useUpdateCampaignMutation(campaign._id);
+
+  const [title,         setTitle]        = useState("");
+  const [description,   setDescription]  = useState("");
+  const [deadline,      setDeadline]      = useState("");
+  const [anonymityMode, setAnonymityMode] = useState<Campaign["anonymityMode"]>("NOMINATIVE");
+  const [accessMethod,  setAccessMethod]  = useState<Campaign["accessMethod"]>("ACCOUNTS");
+  const [moduleType,    setModuleType]    = useState<ModuleType>("QUESTIONNAIRE");
+  const [error,         setError]         = useState<string | null>(null);
 
   const originalModuleType = campaign.module?.type;
-  const moduleChanged = moduleType !== originalModuleType;
+  const moduleChanged      = moduleType !== originalModuleType;
 
   useEffect(() => {
     if (open) {
@@ -69,33 +67,22 @@ const EditCampaignModal = memo<Props>(({ open, campaign, onClose, onSaved }) => 
 
   const handleSave = useCallback(async () => {
     if (!title.trim()) { setError(t(`${m}.error_title_required`)); return; }
-    setSaving(true);
     setError(null);
     try {
-      const result = await dispatch(updateCampaign({
-        campaignId: campaign._id,
-        updatePayload: {
-          title:        title.trim(),
-          description:  description.trim() || undefined,
-          deadline:     deadline || undefined,
-          anonymityMode,
-          accessMethod,
-          // If module type changed, reset config to null
-          module: moduleChanged
-            ? { type: moduleType, config: null }
-            : campaign.module,
-        },
-      }));
-      if (updateCampaign.fulfilled.match(result)) {
-        onSaved(result.payload);
-        onClose();
-      } else {
-        setError((result.payload as string) || t(`${m}.error_save_failed`));
-      }
-    } finally {
-      setSaving(false);
+      const updated = await updateMut.mutateAsync({
+        title:        title.trim(),
+        description:  description.trim() || undefined,
+        deadline:     deadline || undefined,
+        anonymityMode,
+        accessMethod,
+        module: moduleChanged ? { type: moduleType, config: null } : campaign.module,
+      } as Partial<Campaign>);
+      onSaved(updated);
+      onClose();
+    } catch (e: any) {
+      setError(e?.message || t(`${m}.error_save_failed`));
     }
-  }, [title, description, deadline, anonymityMode, accessMethod, moduleChanged, moduleType, campaign, dispatch, onSaved, onClose, t, m]);
+  }, [title, description, deadline, anonymityMode, accessMethod, moduleChanged, moduleType, campaign, updateMut, onSaved, onClose, t, m]);
 
   const toggleSx = useMemo(() => ({
     borderRadius: "10px !important",
@@ -113,6 +100,8 @@ const EditCampaignModal = memo<Props>(({ open, campaign, onClose, onSaved }) => 
     },
   }), []);
 
+  const saving = updateMut.isPending;
+
   return (
     <Dialog
       open={open}
@@ -121,14 +110,9 @@ const EditCampaignModal = memo<Props>(({ open, campaign, onClose, onSaved }) => 
       fullWidth
       slotProps={{ paper: { sx: { borderRadius: "20px", boxShadow: "0 20px 60px rgba(0,0,0,0.13)" } } }}
     >
-      {/* Title bar */}
       <DialogTitle sx={{ px: 3, pt: 3, pb: 2, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
-          <Box sx={{
-            width: 36, height: 36, borderRadius: "10px",
-            bgcolor: `${PURPLE}10`, border: `1px solid ${PURPLE}20`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
+          <Box sx={{ width: 36, height: 36, borderRadius: "10px", bgcolor: `${PURPLE}10`, border: `1px solid ${PURPLE}20`, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <EditOutlined sx={{ fontSize: 17, color: PURPLE }} />
           </Box>
           <Box>
@@ -144,40 +128,29 @@ const EditCampaignModal = memo<Props>(({ open, campaign, onClose, onSaved }) => 
       <DialogContent sx={{ px: 3, pb: 1 }}>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
 
-          {/* Title */}
           <Box>
             <FieldLabel label={t(`${m}.title_label`)} required />
-            <TextField
-              fullWidth size="small" value={title}
-              onChange={(e) => setTitle(e.target.value)}
+            <TextField fullWidth size="small" value={title} onChange={(e) => setTitle(e.target.value)}
               placeholder={t(`${m}.title_placeholder`)}
-              sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px", fontSize: "13.5px" } }}
-            />
+              sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px", fontSize: "13.5px" } }} />
           </Box>
 
-          {/* Description */}
           <Box>
             <FieldLabel label={t(`${m}.description_label`)} />
-            <TextField
-              fullWidth size="small" multiline minRows={2} maxRows={4}
+            <TextField fullWidth size="small" multiline minRows={2} maxRows={4}
               value={description} onChange={(e) => setDescription(e.target.value)}
               placeholder={t(`${m}.description_placeholder`)}
-              sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px", fontSize: "13px" } }}
-            />
+              sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px", fontSize: "13px" } }} />
           </Box>
 
-          {/* Deadline */}
           <Box>
             <FieldLabel label={t(`${m}.deadline_label`)} />
-            <TextField
-              fullWidth size="small" type="date" value={deadline}
+            <TextField fullWidth size="small" type="date" value={deadline}
               onChange={(e) => setDeadline(e.target.value)}
               inputProps={{ min: new Date().toISOString().slice(0, 10) }}
-              sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px", fontSize: "13px" } }}
-            />
+              sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px", fontSize: "13px" } }} />
           </Box>
 
-          {/* Module type */}
           <Box>
             <FieldLabel label={t(`${m}.module_type_label`)} />
             <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
@@ -185,12 +158,9 @@ const EditCampaignModal = memo<Props>(({ open, campaign, onClose, onSaved }) => 
                 const cfg        = MODULE_CONFIG[mt];
                 const Icon       = cfg.icon;
                 const selected   = moduleType === mt;
-                const moduleTitle = t(`pages.campaigns.module.${mt}`);
                 const comingSoon = mt === "TRAINING_PATH";
                 return (
-                  <Box
-                    key={mt}
-                    onClick={() => { if (!comingSoon) setModuleType(mt); }}
+                  <Box key={mt} onClick={() => { if (!comingSoon) setModuleType(mt); }}
                     sx={{
                       display: "flex", alignItems: "center", gap: 1.25,
                       px: 1.5, py: 1.125, borderRadius: "12px",
@@ -202,16 +172,12 @@ const EditCampaignModal = memo<Props>(({ open, campaign, onClose, onSaved }) => 
                       ...(!comingSoon && { "&:hover": { borderColor: `${cfg.color}40`, bgcolor: `${cfg.color}06` } }),
                     }}
                   >
-                    <Box sx={{
-                      width: 30, height: 30, borderRadius: "8px", flexShrink: 0,
-                      bgcolor: selected ? `${cfg.color}15` : "#F3F4F6",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                    }}>
+                    <Box sx={{ width: 30, height: 30, borderRadius: "8px", flexShrink: 0, bgcolor: selected ? `${cfg.color}15` : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       <Icon sx={{ fontSize: 15, color: selected ? cfg.color : "#9CA3AF" }} />
                     </Box>
                     <Box>
                       <Typography sx={{ fontSize: "12.5px", fontWeight: 700, color: selected ? "#111827" : "#6B7280", lineHeight: 1.2 }}>
-                        {moduleTitle}
+                        {t(`pages.campaigns.module.${mt}`)}
                       </Typography>
                       {comingSoon && (
                         <Typography sx={{ fontSize: "9px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: 0.5 }}>
@@ -224,13 +190,8 @@ const EditCampaignModal = memo<Props>(({ open, campaign, onClose, onSaved }) => 
               })}
             </Box>
 
-            {/* Warning when module type changes */}
             {moduleChanged && (
-              <Box sx={{
-                display: "flex", alignItems: "flex-start", gap: 1,
-                mt: 1.25, px: 1.5, py: 1, borderRadius: "8px",
-                bgcolor: "#FFFBEB", border: "1px solid #FDE68A",
-              }}>
+              <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1, mt: 1.25, px: 1.5, py: 1, borderRadius: "8px", bgcolor: "#FFFBEB", border: "1px solid #FDE68A" }}>
                 <WarningAmberOutlined sx={{ fontSize: 14, color: "#D97706", flexShrink: 0, mt: "1px" }} />
                 <Typography sx={{ fontSize: "11.5px", color: "#92400E", lineHeight: 1.5 }}>
                   <Trans i18nKey="pages.campaigns.detail.edit_modal.module_change_warning" components={{ strong: <strong /> }} />
@@ -239,45 +200,24 @@ const EditCampaignModal = memo<Props>(({ open, campaign, onClose, onSaved }) => 
             )}
           </Box>
 
-          {/* Anonymity mode */}
           <Box>
             <FieldLabel label={t(`${m}.anonymity_label`)} />
-            <ToggleButtonGroup
-              exclusive value={anonymityMode}
-              onChange={(_, v) => v && setAnonymityMode(v)}
-              sx={{ gap: 1, "& .MuiToggleButtonGroup-grouped": { mr: 0 } }}
-            >
-              <ToggleButton value="NOMINATIVE" sx={toggleSx}>
-                <LockOpenOutlined sx={{ fontSize: 14 }} />
-                {t(`pages.campaigns.detail.nominative`)}
-              </ToggleButton>
-              <ToggleButton value="ANONYMOUS" sx={toggleSx}>
-                <LockOutlined sx={{ fontSize: 14 }} />
-                {t(`pages.campaigns.detail.anonymous`)}
-              </ToggleButton>
+            <ToggleButtonGroup exclusive value={anonymityMode} onChange={(_, v) => v && setAnonymityMode(v)}
+              sx={{ gap: 1, "& .MuiToggleButtonGroup-grouped": { mr: 0 } }}>
+              <ToggleButton value="NOMINATIVE" sx={toggleSx}><LockOpenOutlined sx={{ fontSize: 14 }} />{t(`pages.campaigns.detail.nominative`)}</ToggleButton>
+              <ToggleButton value="ANONYMOUS"  sx={toggleSx}><LockOutlined     sx={{ fontSize: 14 }} />{t(`pages.campaigns.detail.anonymous`)}</ToggleButton>
             </ToggleButtonGroup>
           </Box>
 
-          {/* Access method */}
           <Box>
             <FieldLabel label={t(`${m}.access_method_label`)} />
-            <ToggleButtonGroup
-              exclusive value={accessMethod}
-              onChange={(_, v) => v && setAccessMethod(v)}
-              sx={{ gap: 1, "& .MuiToggleButtonGroup-grouped": { mr: 0 } }}
-            >
-              <ToggleButton value="ACCOUNTS" sx={toggleSx}>
-                <AccountCircleOutlined sx={{ fontSize: 14 }} />
-                {t(`${m}.accounts_only`)}
-              </ToggleButton>
-              <ToggleButton value="LINK" sx={toggleSx}>
-                <LinkOutlined sx={{ fontSize: 14 }} />
-                {t(`${m}.public_link`)}
-              </ToggleButton>
+            <ToggleButtonGroup exclusive value={accessMethod} onChange={(_, v) => v && setAccessMethod(v)}
+              sx={{ gap: 1, "& .MuiToggleButtonGroup-grouped": { mr: 0 } }}>
+              <ToggleButton value="ACCOUNTS" sx={toggleSx}><AccountCircleOutlined sx={{ fontSize: 14 }} />{t(`${m}.accounts_only`)}</ToggleButton>
+              <ToggleButton value="LINK"     sx={toggleSx}><LinkOutlined          sx={{ fontSize: 14 }} />{t(`${m}.public_link`)}</ToggleButton>
             </ToggleButtonGroup>
           </Box>
 
-          {/* Error */}
           {error && (
             <Typography sx={{ fontSize: "12px", color: "#EF4444", bgcolor: "#FEF2F2", px: 1.5, py: 1, borderRadius: "8px", border: "1px solid #FECACA" }}>
               {error}
@@ -290,10 +230,8 @@ const EditCampaignModal = memo<Props>(({ open, campaign, onClose, onSaved }) => 
         <AppButton label={t(`${m}.cancel`)} variant="outlined" size="medium" onClick={onClose} disabled={saving} />
         <AppButton
           label={saving ? t(`${m}.saving`) : t(`${m}.save`)}
-          variant="contained"
-          size="medium"
-          onClick={handleSave}
-          disabled={saving}
+          variant="contained" size="medium"
+          onClick={handleSave} disabled={saving}
           startIcon={saving ? <CircularProgress size={13} sx={{ color: "#fff" }} /> : undefined}
         />
       </DialogActions>
@@ -301,5 +239,4 @@ const EditCampaignModal = memo<Props>(({ open, campaign, onClose, onSaved }) => 
   );
 });
 EditCampaignModal.displayName = "EditCampaignModal";
-
 export default EditCampaignModal;

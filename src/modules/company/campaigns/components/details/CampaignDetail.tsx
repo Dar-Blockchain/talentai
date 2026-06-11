@@ -13,10 +13,7 @@ import DeleteCampaignDialog from "./DeleteCampaignDialog";
 import ConfirmStatusChangeDialog from "./ConfirmStatusChangeDialog";
 import ConfigureModuleModal from "./configure/ConfigureModuleModal";
 import EditCampaignModal from "./EditCampaignModal";
-import { useSelector } from "react-redux";
-import {
-  selectCampaignParticipantsTotal, selectCampaignSessionsTotal, selectCampaignDeleteLoading,
-} from "@/store/slices/campaignSlice";
+import { useDeleteCampaignMutation } from "../../queries";
 import PeopleAltOutlined            from "@mui/icons-material/PeopleAltOutlined";
 import AssignmentOutlined           from "@mui/icons-material/AssignmentOutlined";
 import AccessTimeOutlined           from "@mui/icons-material/AccessTimeOutlined";
@@ -159,9 +156,10 @@ const CampaignDetail: React.FC<Props> = memo(({
   const [configureModuleType, setConfigureModuleType] = useState<ModuleType | null>(null);
   const [pendingActivate,     setPendingActivate]     = useState(false);
 
-  const participantsTotal = useSelector(selectCampaignParticipantsTotal);
-  const sessionsTotal     = useSelector(selectCampaignSessionsTotal);
-  const deleteLoading     = useSelector(selectCampaignDeleteLoading);
+  const deleteMut         = useDeleteCampaignMutation();
+  const participantsTotal = campaign.participantCount ?? 0;
+  const sessionsTotal     = (campaign as any).sessionCount ?? 0;
+  const deleteLoading     = deleteMut.isPending;
 
   const participantStatusLabel = useCallback((s: ParticipantStatus) =>
     t(`pages.campaigns.detail.participants.participant_status.${s}`),

@@ -1,48 +1,83 @@
 import axiosInstance from "@/utils/axiosInstance";
-import { apiCall } from "@/utils/apiCall";
 import type { EmployeePermission } from "@/types/employeePermissions";
 import type { FetchMembersFilters, AddMemberPayload, UpdateRolePayload } from "@/store/slices/memberSlice";
 
 export const employeesApi = {
-  fetchMembers: (filters: FetchMembersFilters) =>
-    apiCall(() => axiosInstance.get("members", { params: filters }), "Failed to fetch members"),
+  fetchMembers: async (filters: FetchMembersFilters) => {
+    const query = new URLSearchParams();
+    if (filters?.search)       query.set("search",       filters.search);
+    if (filters?.departmentId) query.set("departmentId", filters.departmentId);
+    if (filters?.role)         query.set("role",         filters.role);
+    if (filters?.sortBy)       query.set("sortBy",       filters.sortBy as string);
+    if (filters?.order)        query.set("order",        filters.order as string);
+    if (filters?.page)         query.set("page",         String(filters.page));
+    if (filters?.limit)        query.set("limit",        String(filters.limit));
+    const qs = query.toString();
+    const res = await axiosInstance.get(`company-memberships/memberships${qs ? `?${qs}` : ""}`);
+    return {
+      members: res.data.memberships || res.data.members || [],
+      total:   res.data.total ?? res.data.pagination?.total ?? 0,
+    };
+  },
 
-  fetchMemberById: (userId: string) =>
-    apiCall(() => axiosInstance.get(`members/${userId}`), "Failed to fetch member"),
+  fetchMemberById: async (userId: string) => {
+    const res = await axiosInstance.get(`company-memberships/user/${userId}`);
+    return res.data.membership || res.data;
+  },
 
-  fetchStats: () =>
-    apiCall(() => axiosInstance.get("members/stats"), "Failed to fetch member stats"),
+  fetchStats: async () => {
+    const res = await axiosInstance.get("company-memberships/memberships/stats");
+    return res.data.stats ?? res.data;
+  },
 
-  fetchDepartments: () =>
-    apiCall(() => axiosInstance.get("departments"), "Failed to fetch departments"),
+  fetchDepartments: async () => {
+    const res = await axiosInstance.get("departments");
+    return res.data;
+  },
 
-  fetchInvitations: () =>
-    apiCall(() => axiosInstance.get("members/invitations"), "Failed to fetch invitations"),
+  fetchInvitations: async () => {
+    const res = await axiosInstance.get("company-invitations/myInvitations");
+    return res.data.invitations || [];
+  },
 
-  inviteEmployee: (payload: AddMemberPayload) =>
-    apiCall(() => axiosInstance.post("members/invite", payload), "Failed to invite employee"),
+  inviteEmployee: async (payload: AddMemberPayload) => {
+    const res = await axiosInstance.post("company-invitations/sentInvitation", {
+      email: payload.email,
+      role:  payload.role,
+      ...(payload.departmentId && { departmentId: payload.departmentId }),
+    });
+    return res.data;
+  },
 
-  updateRole: (payload: UpdateRolePayload) =>
-    apiCall(
-      () => axiosInstance.patch(`members/${payload.membershipId}/role`, { role: payload.role, departmentId: payload.departmentId }),
-      "Failed to update member role"
-    ),
+  updateRole: async (payload: UpdateRolePayload) => {
+    const apiPayload: { role: string; departmentId?: string } = { role: payload.role };
+    if (payload.departmentId !== undefined) apiPayload.departmentId = payload.departmentId || undefined;
+    const res = await axiosInstance.patch(`company-memberships/${payload.membershipId}`, apiPayload);
+    return res.data.updated || res.data;
+  },
 
-  removeMember: (membershipId: string) =>
-    apiCall(() => axiosInstance.delete(`members/${membershipId}`), "Failed to remove member"),
+  removeMember: async (membershipId: string) => {
+    await axiosInstance.delete(`company-memberships/${membershipId}`);
+    return membershipId;
+  },
 
-  resendInvitation: (invitationId: string) =>
-    apiCall(() => axiosInstance.post(`members/invitations/${invitationId}/resend`), "Failed to resend invitation"),
+  resendInvitation: async (invitationId: string) => {
+    const res = await axiosInstance.post(`company-invitations/resendInvitation/${invitationId}`);
+    return res.data.updated;
+  },
 
-  cancelInvitation: (invitationId: string) =>
-    apiCall(() => axiosInstance.delete(`members/invitations/${invitationId}`), "Failed to cancel invitation"),
+  cancelInvitation: async (invitationId: string) => {
+    await axiosInstance.delete(`company-invitations/deleteInvitation/${invitationId}`);
+    return invitationId;
+  },
 
-  /** Direct call (no apiCall wrapper) — returns the permissions object, not the full axios response. */
-  fetchPermissions: (userId: string): Promise<Partial<EmployeePermission>> =>
-    axiosInstance
-      .get(`employee-permissions/${userId}`)
-      .then((res) => res.data?.data ?? res.data),
+  fetchPermissions: async (userId: string): Promise<Partial<EmployeePermission>> => {
+    const res = await axiosInstance.get(`employee-permissions/${userId}`);
+    return res.data?.data ?? res.data;
+  },
 
-  updatePermissions: (memberId: string, permissions: Partial<EmployeePermission>) =>
-    apiCall(() => axiosInstance.patch(`employee-permissions/${memberId}`, permissions), "Failed to update permissions"),
+  updatePermissions: async (memberId: string, permissions: Partial<EmployeePermission>) => {
+    const res = await axiosInstance.patch(`employee-permissions/${memberId}`, permissions);
+    return res.data?.data ?? res.data;
+  },
 };

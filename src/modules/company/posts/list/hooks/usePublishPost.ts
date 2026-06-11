@@ -1,34 +1,25 @@
 import { useCallback, useState } from "react";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/store/store";
-import { updatePostStatus } from "@/store/slices/postSlice";
+import { useUpdatePostStatusMutation } from "../queries";
 
-interface UsePublishPostOptions {
-  onSuccess?: () => void;
-  onError?: () => void;
-}
+interface Options { onSuccess?: () => void; onError?: () => void; }
 
-export const usePublishPost = ({ onSuccess, onError }: UsePublishPostOptions = {}) => {
-  const dispatch = useDispatch<AppDispatch>();
-  const [publishing, setPublishing] = useState(false);
-  const [confirmId,  setConfirmId]  = useState<string | null>(null);
+export const usePublishPost = ({ onSuccess, onError }: Options = {}) => {
+  const statusMut = useUpdatePostStatusMutation();
+  const [confirmId, setConfirmId] = useState<string | null>(null);
 
   const handleOpen  = useCallback((id: string) => setConfirmId(id), []);
   const handleClose = useCallback(() => setConfirmId(null), []);
 
   const handleConfirm = useCallback(async () => {
     if (!confirmId) return;
-    setPublishing(true);
     try {
-      await dispatch(updatePostStatus({ postId: confirmId, status: "open" })).unwrap();
+      await statusMut.mutateAsync({ postId: confirmId, status: "open" });
       setConfirmId(null);
       onSuccess?.();
     } catch {
       onError?.();
-    } finally {
-      setPublishing(false);
     }
-  }, [dispatch, confirmId, onSuccess, onError]);
+  }, [confirmId, statusMut, onSuccess, onError]);
 
-  return { confirmId, publishing, handleOpen, handleClose, handleConfirm };
+  return { confirmId, publishing: statusMut.isPending, handleOpen, handleClose, handleConfirm };
 };

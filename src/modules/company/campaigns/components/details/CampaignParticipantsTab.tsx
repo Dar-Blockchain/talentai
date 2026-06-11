@@ -1,6 +1,6 @@
 "use client";
 
-import React, { memo, useEffect, useState, useRef, useCallback, useMemo } from "react";
+import React, { memo, useState, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/router";
 import {
   Box, Typography, Avatar, Skeleton, Alert, IconButton, Tooltip,
@@ -18,27 +18,13 @@ import PersonAddOutlined           from "@mui/icons-material/PersonAddOutlined";
 import DeleteOutlineOutlined       from "@mui/icons-material/DeleteOutlineOutlined";
 import AssessmentOutlined          from "@mui/icons-material/AssessmentOutlined";
 import AddOutlined                 from "@mui/icons-material/AddOutlined";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch } from "@/store/store";
 import {
-  fetchCampaignParticipants,
-  selectCampaignParticipants,
-  selectCampaignParticipantsLoading,
-  selectCampaignParticipantsError,
-  selectCampaignParticipantsTotal,
-  addCampaignParticipant,
-  removeCampaignParticipant,
-  selectParticipantActionLoading,
-  fetchNonParticipants,
-  selectNonParticipants,
-  selectNonParticipantsLoading,
-  selectNonParticipantsError,
-  selectNonParticipantsTotal,
-} from "@/store/slices/campaignSlice";
-import {
-  fetchDepartments,
-  selectDepartments,
-} from "@/store/slices/departmentSlice";
+  useCampaignParticipantsQuery,
+  useNonParticipantsQuery,
+  useAddParticipantMutation,
+  useRemoveParticipantMutation,
+} from "../../queries";
+import { useDepartmentsQuery } from "@/modules/company/employees/queries";
 import { CampaignParticipant, NonParticipant, ParticipantStatus } from "@/types/campaign";
 import Pagination from "@/components/ui/Pagination";
 import { ROLES } from "@/constants/employee";
@@ -478,19 +464,11 @@ interface AddDialogProps {
   open: boolean;
   campaignId: string;
   onClose: () => void;
-  onAdded: () => void;
 }
 
-const AddParticipantDialog = memo<AddDialogProps>(({ open, campaignId, onClose, onAdded }) => {
-  const dispatch   = useDispatch<AppDispatch>();
+const AddParticipantDialog = memo<AddDialogProps>(({ open, campaignId, onClose }) => {
   const { t } = useTranslation("dashboard");
   const pp = "pages.campaigns.detail.participants";
-  const employees  = useSelector(selectNonParticipants);
-  const loading    = useSelector(selectNonParticipantsLoading);
-  const error      = useSelector(selectNonParticipantsError);
-  const total      = useSelector(selectNonParticipantsTotal);
-  const adding     = useSelector(selectParticipantActionLoading);
-  const departments = useSelector(selectDepartments);
 
   const [search,          setSearch]          = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -500,15 +478,26 @@ const AddParticipantDialog = memo<AddDialogProps>(({ open, campaignId, onClose, 
   const [addingId,        setAddingId]        = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    if (open) dispatch(fetchDepartments({ limit: 100 }));
-  }, [open, dispatch]);
+  const nonParticipantParams = useMemo(() => ({
+    campaignId,
+    search:     debouncedSearch || undefined,
+    department: department      || undefined,
+    role:       role            || undefined,
+    page,
+    limit: PICKER_PAGE_SIZE,
+  }), [campaignId, debouncedSearch, department, role, page]);
 
-  useEffect(() => {
-    if (open) {
-      setSearch(""); setDebouncedSearch(""); setDepartment(""); setRole(""); setPage(1);
-    }
-  }, [open]);
+  const { data: nonParticipantsRaw, isLoading: loading, error: queryError } = useNonParticipantsQuery(
+    open ? nonParticipantParams : { campaignId: "", page: 1 },
+  );
+  const { data: deptsRaw } = useDepartmentsQuery();
+  const addMut = useAddParticipantMutation(campaignId);
+
+  const nonParticipantsData = (nonParticipantsRaw as any)?.data ?? nonParticipantsRaw;
+  const employees   = nonParticipantsData?.employees ?? nonParticipantsData?.members ?? nonParticipantsData ?? [];
+  const total       = nonParticipantsData?.total ?? 0;
+  const error       = queryError ? String(queryError) : null;
+  const departments = (Array.isArray(deptsRaw) ? deptsRaw : (deptsRaw as any)?.data) ?? [];
 
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
@@ -516,36 +505,12 @@ const AddParticipantDialog = memo<AddDialogProps>(({ open, campaignId, onClose, 
     debounceRef.current = setTimeout(() => { setDebouncedSearch(value); setPage(1); }, 300);
   }, []);
 
-  useEffect(() => { setPage(1); }, [debouncedSearch, department, role]);
-
-  useEffect(() => {
-    if (!open) return;
-    dispatch(fetchNonParticipants({
-      campaignId,
-      search:     debouncedSearch || undefined,
-      department: department      || undefined,
-      role:       role            || undefined,
-      page,
-      limit: PICKER_PAGE_SIZE,
-    }));
-  }, [open, dispatch, campaignId, debouncedSearch, department, role, page]);
-
   const handleAdd = useCallback(async (employeeId: string) => {
     setAddingId(employeeId);
-    const result = await dispatch(addCampaignParticipant({ campaignId, employeeId }));
-    setAddingId(null);
-    if (addCampaignParticipant.fulfilled.match(result)) {
-      onAdded();
-      dispatch(fetchNonParticipants({
-        campaignId,
-        search:     debouncedSearch || undefined,
-        department: department      || undefined,
-        role:       role            || undefined,
-        page,
-        limit: PICKER_PAGE_SIZE,
-      }));
-    }
-  }, [dispatch, campaignId, onAdded, debouncedSearch, department, role, page]);
+    addMut.mutate(employeeId, {
+      onSettled: () => setAddingId(null),
+    });
+  }, [addMut]);
 
   const clearAllFilters = useCallback(() => {
     setSearch(""); setDebouncedSearch(""); setDepartment(""); setRole("");
@@ -555,7 +520,7 @@ const AddParticipantDialog = memo<AddDialogProps>(({ open, campaignId, onClose, 
   const clearRole = useCallback(() => setRole(""), []);
 
   const hasFilters = useMemo(() => !!debouncedSearch || !!department || !!role, [debouncedSearch, department, role]);
-  const activeDeptLabel = useMemo(() => department ? departments.find((d) => d._id === department)?.name : null, [department, departments]);
+  const activeDeptLabel = useMemo(() => department ? (departments as any[]).find((d) => d._id === department)?.name : null, [department, departments]);
   const activeRoleLabel = useMemo(() => role ? ROLES.find((r) => r.value === role)?.label : null, [role]);
 
   const deptSelectSx = useMemo(() => ({
@@ -668,11 +633,11 @@ const AddParticipantDialog = memo<AddDialogProps>(({ open, campaignId, onClose, 
           <Select
             size="small" displayEmpty value={department}
             onChange={(e) => setDepartment(e.target.value)}
-            renderValue={(v) => v ? (departments.find((d) => d._id === v)?.name ?? t(`${pp}.department_filter`)) : t(`${pp}.department_filter`)}
+            renderValue={(v) => v ? ((departments as any[]).find((d) => d._id === v)?.name ?? t(`${pp}.department_filter`)) : t(`${pp}.department_filter`)}
             sx={deptSelectSx}
           >
             <MenuItem value="" sx={{ fontSize: "12px", color: "#6B7280" }}>{t(`${pp}.all_departments`)}</MenuItem>
-            {departments.map((d) => (
+            {(departments as any[]).map((d) => (
               <MenuItem key={d._id} value={d._id} sx={{ fontSize: "12px" }}>{d.name}</MenuItem>
             ))}
           </Select>
@@ -717,11 +682,11 @@ const AddParticipantDialog = memo<AddDialogProps>(({ open, campaignId, onClose, 
 
         {error ? (
           <Alert severity="error" sx={{ m: 2.5, borderRadius: "12px", fontSize: "13px" }}>{error}</Alert>
-        ) : loading && employees.length === 0 ? (
+        ) : loading && (employees as any[]).length === 0 ? (
           <Box sx={{ py: 1 }}>
             {SKELETON_ROWS_8.map((_, i) => <PickerRowSkeleton key={i} />)}
           </Box>
-        ) : employees.length === 0 ? (
+        ) : (employees as any[]).length === 0 ? (
           <Box sx={{ textAlign: "center", py: 8, px: 3 }}>
             <Box sx={PICKER_EMPTY_ICON_SX}>
               <PeopleAltOutlined sx={{ fontSize: 25, color: "#9CA3AF" }} />
@@ -741,14 +706,14 @@ const AddParticipantDialog = memo<AddDialogProps>(({ open, campaignId, onClose, 
           </Box>
         ) : (
           <Box sx={{ py: 0.5 }}>
-            {employees.map((emp, i) => (
+            {(employees as NonParticipant[]).map((emp, i) => (
               <EmployeePickerRow
                 key={emp._id}
                 employee={emp}
-                isLast={i === employees.length - 1}
+                isLast={i === (employees as any[]).length - 1}
                 onAdd={handleAdd}
                 adding={addingId === emp._id}
-                disabled={!!(adding && addingId !== emp._id)}
+                disabled={!!(addMut.isPending && addingId !== emp._id)}
               />
             ))}
           </Box>
@@ -783,13 +748,8 @@ AddParticipantDialog.displayName = "AddParticipantDialog";
 interface Props { campaignId: string; mode?: "company" | "employee"; anonymityMode?: string }
 
 const CampaignParticipantsTab = memo<Props>(({ campaignId, mode = "company" }) => {
-  const dispatch     = useDispatch<AppDispatch>();
   const { t } = useTranslation("dashboard");
   const pp = "pages.campaigns.detail.participants";
-  const participants = useSelector(selectCampaignParticipants);
-  const loading      = useSelector(selectCampaignParticipantsLoading);
-  const error        = useSelector(selectCampaignParticipantsError);
-  const total        = useSelector(selectCampaignParticipantsTotal);
 
   const isCompany = mode === "company";
 
@@ -800,31 +760,37 @@ const CampaignParticipantsTab = memo<Props>(({ campaignId, mode = "company" }) =
   const [removingId,      setRemovingId]      = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const participantParams = useMemo(() => ({
+    campaignId,
+    search: debouncedSearch || undefined,
+    page,
+    limit: PAGE_SIZE,
+  }), [campaignId, debouncedSearch, page]);
+
+  const { data: participantsRaw, isLoading: loading, error: queryError } = useCampaignParticipantsQuery(participantParams);
+  const removeMut = useRemoveParticipantMutation(campaignId);
+
+  const participantsData = (participantsRaw as any)?.data ?? participantsRaw;
+  const participants     = participantsData?.participants ?? participantsData?.data ?? participantsData ?? [];
+  const total            = participantsData?.total ?? 0;
+  const error            = queryError ? String(queryError) : null;
+
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
     clearTimeout(debounceRef.current!);
     debounceRef.current = setTimeout(() => { setDebouncedSearch(value); setPage(1); }, 300);
   }, []);
 
-  useEffect(() => { setPage(1); }, [debouncedSearch]);
-
-  const refreshParticipants = useCallback(() => {
-    dispatch(fetchCampaignParticipants({ campaignId, search: debouncedSearch || undefined, page, limit: PAGE_SIZE }));
-  }, [dispatch, campaignId, debouncedSearch, page]);
-
-  useEffect(() => { refreshParticipants(); }, [refreshParticipants]);
-
-  const handleRemoveParticipant = useCallback(async (participantId: string) => {
+  const handleRemoveParticipant = useCallback((participantId: string) => {
     setRemovingId(participantId);
-    const result = await dispatch(removeCampaignParticipant({ campaignId, participantId }));
-    setRemovingId(null);
-    if (removeCampaignParticipant.fulfilled.match(result)) refreshParticipants();
-  }, [dispatch, campaignId, refreshParticipants]);
+    removeMut.mutate(participantId, {
+      onSettled: () => setRemovingId(null),
+    });
+  }, [removeMut]);
 
   const openAddDialog  = useCallback(() => setAddDialogOpen(true), []);
   const closeAddDialog = useCallback(() => setAddDialogOpen(false), []);
-
-  const clearSearch = useCallback(() => handleSearchChange(""), [handleSearchChange]);
+  const clearSearch    = useCallback(() => handleSearchChange(""), [handleSearchChange]);
 
   const tableHeaderCols = useMemo(() => [
     t(`${pp}.col_hash`),
@@ -850,10 +816,10 @@ const CampaignParticipantsTab = memo<Props>(({ campaignId, mode = "company" }) =
             </Typography>
             <Typography sx={{ fontSize: "11px", color: "#94A3B8", fontWeight: 500 }}>{t(`${pp}.toolbar_total`)}</Typography>
           </Box>
-          {!loading && participants.length > 0 && (
+          {!loading && (participants as CampaignParticipant[]).length > 0 && (
             <>
               {(["COMPLETED", "IN_PROGRESS", "INVITED"] as ParticipantStatus[]).map((s) => {
-                const count = participants.filter((p) => p.status === s).length;
+                const count = (participants as CampaignParticipant[]).filter((p) => p.status === s).length;
                 if (!count) return null;
                 const sc = PARTICIPANT_STATUS_META[s];
                 return (
@@ -914,9 +880,9 @@ const CampaignParticipantsTab = memo<Props>(({ campaignId, mode = "company" }) =
 
         {error ? (
           <Alert severity="error" sx={{ m: 2.5, borderRadius: 2 }}>{error}</Alert>
-        ) : loading && participants.length === 0 ? (
+        ) : loading && (participants as any[]).length === 0 ? (
           <Box>{SKELETON_ROWS_5.map((_, i) => <RowSkeleton key={i} showActions={isCompany} />)}</Box>
-        ) : participants.length === 0 ? (
+        ) : (participants as any[]).length === 0 ? (
           <Box sx={{ textAlign: "center", py: 9 }}>
             <Box sx={EMPTY_STATE_ICON_SX}>
               <PeopleAltOutlined sx={{ fontSize: 26, color: "#9CA3AF" }} />
@@ -929,9 +895,9 @@ const CampaignParticipantsTab = memo<Props>(({ campaignId, mode = "company" }) =
             </Typography>
           </Box>
         ) : (
-          participants.map((p, i) => (
+          (participants as CampaignParticipant[]).map((p, i) => (
             <ParticipantRow
-              key={p._id} participant={p} index={i} total={participants.length}
+              key={p._id} participant={p} index={i} total={(participants as any[]).length}
               campaignId={campaignId}
               onRemove={isCompany ? handleRemoveParticipant : undefined}
               removing={removingId === p._id}
@@ -949,7 +915,6 @@ const CampaignParticipantsTab = memo<Props>(({ campaignId, mode = "company" }) =
           open={addDialogOpen}
           campaignId={campaignId}
           onClose={closeAddDialog}
-          onAdded={refreshParticipants}
         />
       )}
     </Box>

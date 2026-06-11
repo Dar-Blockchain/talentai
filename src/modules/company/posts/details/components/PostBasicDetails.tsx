@@ -1,9 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { useSelector } from "react-redux";
 import { Box } from "@mui/material";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
-import { selectCurrentJob } from "@/store/slices/postSlice";
 import { getPostSkills } from "@/utils/postHelpers";
 import ThresholdCard from "./overview/ThresholdCard";
 import OverviewCard from "./overview/OverviewCard";
@@ -11,13 +9,13 @@ import SkillsCard from "./overview/SkillsCard";
 import BulletListCard from "./overview/BulletListCard";
 
 interface Props {
+  job: any;
   canEdit: boolean;
   onEdit: () => void;
 }
 
-const PostBasicDetails: React.FC<Props> = ({ canEdit }) => {
-  const { t }    = useTranslation("posts");
-  const job      = useSelector(selectCurrentJob);
+const PostBasicDetails: React.FC<Props> = ({ job, canEdit }) => {
+  const { t } = useTranslation("posts");
   if (!job) return null;
 
   const jd            = job.jobDetails || {};

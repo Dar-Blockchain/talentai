@@ -1,14 +1,12 @@
 "use client";
 
-import React, { memo, useEffect, useState, useRef, useCallback } from "react";
+import React, { memo, useState, useRef, useCallback, useMemo } from "react";
 import {
   Box, Typography, Checkbox, Avatar, Chip, Skeleton, Alert,
 } from "@mui/material";
 import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch } from "@/store/store";
-import { fetchMembers, selectMembers, FetchMembersFilters } from "@/store/slices/memberSlice";
-import { fetchDepartments, selectDepartments } from "@/store/slices/departmentSlice";
+import type { FetchMembersFilters } from "@/store/slices/memberSlice";
+import { useMembersQuery, useDepartmentsQuery } from "@/modules/company/employees/queries";
 import Pagination from "@/components/ui/Pagination";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
 import EmployeesFilterBar from "@/modules/company/employees/components/list/EmployeesFilterBar";
@@ -57,10 +55,6 @@ interface ParticipantsStepProps {
 }
 
 const ParticipantsStep = memo<ParticipantsStepProps>(({ selected, onChange }) => {
-  const dispatch    = useDispatch<AppDispatch>();
-  const { members, pageTotal, loading, error } = useSelector(selectMembers);
-  const departments = useSelector(selectDepartments);
-
   const [search,          setSearch]          = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [roleFilter,      setRoleFilter]      = useState<RoleFilter>("all");
@@ -69,36 +63,30 @@ const ParticipantsStep = memo<ParticipantsStepProps>(({ selected, onChange }) =>
   const [page,            setPage]            = useState(1);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    dispatch(fetchDepartments(undefined));
-  }, [dispatch]);
+  const { sortBy: sortByParam, order } = SORT_MAP[sortBy];
+  const memberFilters = useMemo<FetchMembersFilters>(() => ({
+    search:       debouncedSearch || undefined,
+    role:         roleFilter !== "all" ? roleFilter : undefined,
+    departmentId: deptFilter  !== "all" ? deptFilter  : undefined,
+    sortBy:       sortByParam,
+    order,
+    page,
+    limit: PAGE_SIZE,
+  }), [debouncedSearch, roleFilter, deptFilter, sortByParam, order, page]);
 
-  // debounce search
+  const { data: membersRaw, isLoading: loading, error: membersError } = useMembersQuery(memberFilters);
+  const { data: deptsRaw } = useDepartmentsQuery();
+
+  const members     = (membersRaw as any)?.members ?? [];
+  const pageTotal   = (membersRaw as any)?.total   ?? 0;
+  const departments = (Array.isArray(deptsRaw) ? deptsRaw : (deptsRaw as any)?.data) ?? [];
+  const error       = membersError ? String(membersError) : null;
+
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
     clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      setDebouncedSearch(value);
-      setPage(1);
-    }, 300);
+    debounceRef.current = setTimeout(() => { setDebouncedSearch(value); setPage(1); }, 300);
   }, []);
-
-  // reset page when filters change
-  useEffect(() => { setPage(1); }, [debouncedSearch, roleFilter, deptFilter, sortBy]);
-
-  // fetch members
-  useEffect(() => {
-    const { sortBy: sortByParam, order } = SORT_MAP[sortBy];
-    dispatch(fetchMembers({
-      search:       debouncedSearch || undefined,
-      role:         roleFilter !== "all" ? roleFilter : undefined,
-      departmentId: deptFilter  !== "all" ? deptFilter  : undefined,
-      sortBy:       sortByParam,
-      order,
-      page,
-      limit: PAGE_SIZE,
-    }));
-  }, [dispatch, debouncedSearch, roleFilter, deptFilter, sortBy, page]);
 
   const pageIds         = members.map((m) => m.userId ?? m._id);
   const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selected.includes(id));

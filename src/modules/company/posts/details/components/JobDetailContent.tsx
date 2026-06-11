@@ -10,6 +10,7 @@ interface Props {
   activeEdit: EditMode;
   isOwner: boolean;
   creationType?: string;
+  job: any;
   onEditPost: () => void;
   onCancelEdit: () => void;
   onSaveSuccess: () => void;
@@ -19,19 +20,20 @@ const JobDetailContent: React.FC<Props> = ({
   activeEdit,
   isOwner,
   creationType,
+  job,
   onEditPost,
   onCancelEdit,
   onSaveSuccess,
 }) => (
   <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
     {activeEdit === "post" && (
-      <EditPostDetails key="edit-post" onCancel={onCancelEdit} onSaveSuccess={onSaveSuccess} />
+      <EditPostDetails key="edit-post" job={job} onCancel={onCancelEdit} onSaveSuccess={onSaveSuccess} />
     )}
     {activeEdit === null && (
       <>
-        <PostBasicDetails onEdit={onEditPost} canEdit={isOwner} />
+        <PostBasicDetails job={job} onEdit={onEditPost} canEdit={isOwner} />
         {creationType !== "ai" && (
-          <RecruitmentFlowDetails canEdit={isOwner} />
+          <RecruitmentFlowDetails job={job} canEdit={isOwner} />
         )}
       </>
     )}

@@ -1,16 +1,6 @@
-import { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch } from "@/store/store";
-import { fetchPostMetrics, selectPostMetrics, selectPostMetricsLoading } from "@/store/slices/postSlice";
+import { usePostMetricsQuery } from "@/modules/company/posts/list/queries";
 
 export const usePostMetrics = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const metrics  = useSelector(selectPostMetrics);
-  const loading  = useSelector(selectPostMetricsLoading);
-
-  useEffect(() => {
-    if (!metrics) dispatch(fetchPostMetrics());
-  }, [dispatch, metrics]);
-
-  return { metrics, loading };
+  const { data: metrics, isLoading } = usePostMetricsQuery();
+  return { metrics: metrics ?? null, loading: isLoading };
 };

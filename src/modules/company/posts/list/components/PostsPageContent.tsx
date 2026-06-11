@@ -1,32 +1,41 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Box } from "@mui/material";
-import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
-import { AppDispatch } from "@/store/store";
-import { fetchCombinedSubscriptionDetails, selectCombinedDetails } from "@/store/slices/paymentSlice";
+import { useSelector } from "react-redux";
+import { selectCombinedDetails } from "@/store/slices/paymentSlice";
+import { useQuery } from "@tanstack/react-query";
+import axiosInstance from "@/utils/axiosInstance";
 import { useToast } from "@/hooks/useToast";
-import JobPostsList from "./JobPostsList";
-import PostsStats from "./PostsStats";
-import DeletePostModal from "./DeletePostModal";
+import JobPostsList      from "./JobPostsList";
+import PostsStats        from "./PostsStats";
+import DeletePostModal   from "./DeletePostModal";
 import PublishConfirmModal from "./PublishConfirmModal";
-import PostsToolbar from "./PostsToolbar";
-import { useDeletePost } from "../hooks/useDeletePost";
-import { useMyPosts } from "../hooks/useMyPosts";
+import PostsToolbar      from "./PostsToolbar";
+import { useDeletePost }  from "../hooks/useDeletePost";
+import { useMyPosts }     from "../hooks/useMyPosts";
 import { usePublishPost } from "../hooks/usePublishPost";
 
+const fetchSubscription = () =>
+  axiosInstance.get("subscriptions/combined").then(r => r.data?.data ?? r.data);
+
 const PostsPageContent: React.FC = () => {
-  const { t }        = useTranslation("posts");
-  const dispatch     = useDispatch<AppDispatch>();
-  const router       = useRouter();
+  const { t }         = useTranslation("posts");
+  const router        = useRouter();
   const { showToast } = useToast();
 
-  const combined     = useSelector(selectCombinedDetails);
-  const postsUsed    = combined?.combined.usage.posts.used ?? 0;
-  const postsLimit   = combined?.combined.usage.posts.limit ?? Infinity;
+  // Use cached selector if already in Redux; otherwise fetch independently
+  const cached    = useSelector(selectCombinedDetails);
+  const { data: subData } = useQuery({
+    queryKey: ["subscription", "combined"],
+    queryFn:  fetchSubscription,
+    staleTime: 60_000,
+    enabled:  !cached,
+  });
+  const combined     = cached ?? subData;
+  const postsUsed    = combined?.combined?.usage?.posts?.used  ?? 0;
+  const postsLimit   = combined?.combined?.usage?.posts?.limit ?? Infinity;
   const postsAtLimit = !!combined && postsLimit !== Infinity && postsLimit !== -1 && postsUsed >= postsLimit;
-
-  useEffect(() => { dispatch(fetchCombinedSubscriptionDetails()); }, [dispatch]);
 
   const {
     posts, loading, error, pagination,
@@ -42,11 +51,8 @@ const PostsPageContent: React.FC = () => {
   });
 
   const publishHook = usePublishPost({
-    onSuccess: () => {
-      showToast({ message: t("publish_success"), severity: "success" });
-      reload();
-    },
-    onError: () => showToast({ message: t("publish_error"), severity: "error" }),
+    onSuccess: () => { showToast({ message: t("publish_success"), severity: "success" }); reload(); },
+    onError:   () => showToast({ message: t("publish_error"),     severity: "error"   }),
   });
 
   const handleCreateClick = () => { if (!postsAtLimit) router.push("/company/posts/create"); };
@@ -55,31 +61,19 @@ const PostsPageContent: React.FC = () => {
   return (
     <Box>
       <PostsToolbar
-        totalCount={totalCount}
-        loading={loading}
-        search={search}
-        statusFilter={statusFilter}
-        typeFilter={typeFilter}
-        sortBy={sortBy}
-        postsUsed={postsUsed}
-        postsLimit={postsLimit}
-        postsAtLimit={postsAtLimit}
-        onSearchChange={handleSearchChange}
-        onStatusChange={handleStatusChange}
-        onTypeChange={handleTypeChange}
-        onSortChange={handleSortChange}
+        totalCount={totalCount} loading={loading}
+        search={search} statusFilter={statusFilter} typeFilter={typeFilter} sortBy={sortBy}
+        postsUsed={postsUsed} postsLimit={postsLimit} postsAtLimit={postsAtLimit}
+        onSearchChange={handleSearchChange} onStatusChange={handleStatusChange}
+        onTypeChange={handleTypeChange}     onSortChange={handleSortChange}
         onCreateClick={handleCreateClick}
       />
 
       <PostsStats />
 
       <JobPostsList
-        jobs={posts as any[]}
-        loading={loading}
-        error={error}
-        hasFilters={hasFilters}
-        page={page}
-        pagination={pagination}
+        jobs={posts as any[]} loading={loading} error={error}
+        hasFilters={hasFilters} page={page} pagination={pagination}
         onPageChange={setPage}
         onDelete={deleteHook.handleOpen}
         onPublish={publishHook.handleOpen}
@@ -88,21 +82,14 @@ const PostsPageContent: React.FC = () => {
       />
 
       <DeletePostModal
-        open={deleteHook.open}
-        onClose={deleteHook.handleClose}
-        onDelete={deleteHook.handleDelete}
-        isDeleting={deleteHook.isDeleting}
+        open={deleteHook.open} onClose={deleteHook.handleClose}
+        onDelete={deleteHook.handleDelete} isDeleting={deleteHook.isDeleting}
       />
 
       <PublishConfirmModal
-        open={!!publishHook.confirmId}
-        publishing={publishHook.publishing}
-        onClose={publishHook.handleClose}
-        onConfirm={publishHook.handleConfirm}
-        onEdit={() => {
-          publishHook.handleClose();
-          router.push(`/company/posts/${publishHook.confirmId}`);
-        }}
+        open={!!publishHook.confirmId} publishing={publishHook.publishing}
+        onClose={publishHook.handleClose} onConfirm={publishHook.handleConfirm}
+        onEdit={() => { publishHook.handleClose(); router.push(`/company/posts/${publishHook.confirmId}`); }}
       />
     </Box>
   );

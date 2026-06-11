@@ -1,7 +1,5 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { useSelector } from "react-redux";
-import { selectCurrentJob } from "@/store/slices/postSlice";
 import { Box, Chip, Stack, Typography } from "@mui/material";
 import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
 import AssignmentLateOutlined from "@mui/icons-material/AssignmentLateOutlined";
@@ -12,11 +10,10 @@ const TEAL        = "#0D9488";
 const TEAL_BG     = "#F0FDFA";
 const TEAL_BORDER = "#99F6E4";
 
-interface Props { canEdit: boolean }
+interface Props { canEdit: boolean; job: any }
 
-const RecruitmentFlowDetails: React.FC<Props> = ({ canEdit }) => {
+const RecruitmentFlowDetails: React.FC<Props> = ({ canEdit, job }) => {
   const { t } = useTranslation("posts");
-  const job = useSelector(selectCurrentJob);
 
   if (!canEdit && !job?.PostSteps?.length) return null;
 

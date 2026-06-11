@@ -3,9 +3,9 @@ import { Box, Backdrop } from "@mui/material";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store/store";
-import TourCard from "./tour/TourCard";
-import { STEPS, TOTAL } from "./tour/tourSteps";
-import { resolveRect, popoverStyle } from "./tour/tourUtils";
+import TourCard from "./TourCard";
+import { STEPS, TOTAL } from "./tourSteps";
+import { resolveRect, popoverStyle } from "./tourUtils";
 
 const TEAL = "#0D9488";
 

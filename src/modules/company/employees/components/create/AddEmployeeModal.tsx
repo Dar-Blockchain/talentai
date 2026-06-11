@@ -8,9 +8,7 @@ import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch } from "@/store/store";
-import { fetchDepartments, selectDepartments, selectDepartmentsLoading } from "@/store/slices/departmentSlice";
+import { useDepartmentsQuery } from "@/modules/company/employees/queries";
 import { useTranslation } from "react-i18next";
 import { ROLES } from "@/constants/employee";
 import { roleMatchesSearch } from "@/utils/employeeRoleI18n";
@@ -40,9 +38,8 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({
     (key: string, opts?: Record<string, string>) => t(`pages.employees.modals.add.${key}`, opts),
     [t],
   );
-  const dispatch = useDispatch<AppDispatch>();
-  const departments        = useSelector(selectDepartments);
-  const departmentsLoading = useSelector(selectDepartmentsLoading);
+  const { data: deptsRaw, isLoading: departmentsLoading } = useDepartmentsQuery();
+  const departments = (Array.isArray(deptsRaw) ? deptsRaw : (deptsRaw as any)?.data) ?? [];
 
   const [email,       setEmail]       = useState("");
   const [role,        setRole]        = useState("hr");
@@ -56,7 +53,6 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({
       setRole("hr");
       setDepartmentId(defaultDepartmentId ?? "");
       setRoleSearch("");
-      if (departments.length === 0) dispatch(fetchDepartments({}));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);

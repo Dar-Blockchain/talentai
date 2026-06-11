@@ -8,9 +8,7 @@ import InputAdornment from "@mui/material/InputAdornment";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import Image from "next/image";
 import { useForm, Controller } from "react-hook-form";
-import { useSelector, useDispatch } from "react-redux";
-import { AppDispatch } from "@/store/store";
-import { selectCurrentJob, updatePost } from "@/store/slices/postSlice";
+import { useUpdatePostMutation } from "@/modules/company/posts/details/queries";
 import { useToast } from "@/hooks/useToast";
 import { validateEditPost } from "@/validations/postValidation";
 import SalaryRange from "@/modules/company/posts/create/components/SalaryRange";
@@ -57,14 +55,14 @@ const getInitialValues = (job: any) => ({
 // ── Component ─────────────────────────────────────────────────────────────────
 
 interface Props {
+  job: any;
   onCancel: () => void;
   onSaveSuccess?: () => void;
 }
 
-const EditPostDetails: React.FC<Props> = ({ onCancel, onSaveSuccess }) => {
-  const dispatch      = useDispatch<AppDispatch>();
+const EditPostDetails: React.FC<Props> = ({ job, onCancel, onSaveSuccess }) => {
   const { showToast } = useToast();
-  const job           = useSelector(selectCurrentJob);
+  const updateMut     = useUpdatePostMutation(job?._id ?? "");
 
   // Skill editor modal state
   const [open,          setOpen]          = useState(false);
@@ -112,21 +110,18 @@ const EditPostDetails: React.FC<Props> = ({ onCancel, onSaveSuccess }) => {
   const onSubmit = async (values: any) => {
     if (!validateEditPost(values, showToast, job?.creationType)) return;
     try {
-      await dispatch(updatePost({
-        jobId:   job?._id,
-        jobData: {
-          jobDetails:     values.jobDetails,
-          skillAnalysis:  values.skillAnalysis,
-          expirationDate: values.expirationDate || undefined,
-          thresholdScore: values.thresholdScore,
-        },
-      })).unwrap();
+      await updateMut.mutateAsync({
+        jobDetails:     values.jobDetails,
+        skillAnalysis:  values.skillAnalysis,
+        expirationDate: values.expirationDate || undefined,
+        thresholdScore: values.thresholdScore,
+      });
       reset();
       onCancel();
       showToast({ message: "Post details updated successfully", severity: "success" });
       onSaveSuccess?.();
     } catch (err: any) {
-      showToast({ message: err || "Failed to update post. Please try again.", severity: "error" });
+      showToast({ message: err?.message ?? "Failed to update post. Please try again.", severity: "error" });
     }
   };
 

@@ -1,6 +1,5 @@
 import React, { memo, useState, useCallback, useEffect, useMemo } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch } from "@/store/store";
+import { useUpdatePermissionsMutation } from "@/modules/company/employees/queries";
 import { Box, Typography, Avatar } from "@mui/material";
 import { AnimatePresence } from "framer-motion";
 import ArrowBackOutlined from "@mui/icons-material/ArrowBackOutlined";
@@ -13,7 +12,6 @@ import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import TuneOutlined from "@mui/icons-material/TuneOutlined";
 import PersonOutlined from "@mui/icons-material/PersonOutlined";
 import { useTranslation } from "react-i18next";
-import { updateEmployeePermissions, selectUpdatingPermissions } from "@/store/slices/memberSlice";
 import { ROLES } from "@/constants/employee";
 import { getRoleLabel } from "@/utils/employeeRoleI18n";
 import { DEFAULT_EMPLOYEE_PERMISSIONS } from "@/types/employeePermissions";
@@ -52,12 +50,11 @@ const EmployeeDetail: React.FC<EmployeeDetailProps> = memo(({
   canAssignRoles = true, canRemove = true,
   canManagePermissions = true, isOwner = false, isSelf = false,
 }) => {
-  const startTeamChat = useStartTeamChat();
-  const dispatch      = useDispatch<AppDispatch>();
-  const updatingPerms = useSelector(selectUpdatingPermissions);
+  const userId         = member.userId;
+  const startTeamChat  = useStartTeamChat();
+  const updatePermMut  = useUpdatePermissionsMutation(userId ?? "");
+  const updatingPerms  = updatePermMut.isPending;
   const { t } = useTranslation("dashboard");
-
-  const userId = member.userId;
 
   const [tab,           setTab]           = useState<"overview" | "permissions">("overview");
   const [permissions,   setPermissions]   = useState<Partial<EmployeePermission>>(DEFAULT_EMPLOYEE_PERMISSIONS);
@@ -109,15 +106,16 @@ const EmployeeDetail: React.FC<EmployeeDetailProps> = memo(({
     bgcolor: `${roleColor}10`, border: `1px solid ${roleColor}22`,
   }), [roleColor]);
 
-  const handleSavePermissions = useCallback(async () => {
-    const result = await dispatch(updateEmployeePermissions({ memberId: userId, permissions }));
-    if (updateEmployeePermissions.fulfilled.match(result)) {
-      setSaved(true);
-      const updated = result.payload as Partial<EmployeePermission>;
-      if (updated) setPermissions(updated);
-      setTimeout(() => setSaved(false), 2500);
-    }
-  }, [dispatch, permissions, userId]);
+  const handleSavePermissions = useCallback(() => {
+    updatePermMut.mutate(permissions, {
+      onSuccess: (updated: any) => {
+        setSaved(true);
+        const p = (updated as any)?.data ?? updated;
+        if (p) setPermissions(p as Partial<EmployeePermission>);
+        setTimeout(() => setSaved(false), 2500);
+      },
+    });
+  }, [updatePermMut, permissions]);
 
   const handleChatClick    = useCallback(() => { void startTeamChat(member.userId); }, [startTeamChat, member.userId]);
   const handleEditClick    = useCallback(() => onEdit(member),   [onEdit, member]);

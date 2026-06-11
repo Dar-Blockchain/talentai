@@ -1,38 +1,33 @@
-import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/router";
-import { AppDispatch } from "@/store/store";
-import { deletePost, fetchMyPosts, selectDeletePostLoading } from "@/store/slices/postSlice";
+import { useDeletePostMutation } from "../queries";
 
-interface UseDeletePostOptions {
-  redirectTo?: string;
+interface Options {
+  redirectTo?:         string;
   refetchAfterDelete?: boolean;
-  limit?: number;
-  onSuccess?: () => void;
-  onError?: (error: unknown) => void;
+  onSuccess?:          () => void;
+  onError?:            (e: unknown) => void;
 }
 
-export const useDeletePost = ({ redirectTo, refetchAfterDelete = false, limit = 9, onSuccess, onError }: UseDeletePostOptions = {}) => {
-  const dispatch   = useDispatch<AppDispatch>();
-  const router     = useRouter();
-  const isDeleting = useSelector(selectDeletePostLoading);
+export const useDeletePost = ({ redirectTo, onSuccess, onError }: Options = {}) => {
+  const router    = useRouter();
+  const deleteMut = useDeletePostMutation();
   const [pendingId, setPendingId] = useState<string | null>(null);
 
-  const handleOpen  = (id: string) => setPendingId(id);
-  const handleClose = () => { if (!isDeleting) setPendingId(null); };
+  const handleOpen  = useCallback((id: string) => setPendingId(id), []);
+  const handleClose = useCallback(() => { if (!deleteMut.isPending) setPendingId(null); }, [deleteMut.isPending]);
 
-  const handleDelete = async () => {
-    if (!pendingId || isDeleting) return;
+  const handleDelete = useCallback(async () => {
+    if (!pendingId || deleteMut.isPending) return;
     try {
-      await dispatch(deletePost(pendingId)).unwrap();
+      await deleteMut.mutateAsync(pendingId);
       setPendingId(null);
       onSuccess?.();
-      if (refetchAfterDelete) { dispatch(fetchMyPosts({ limit })); return; }
       if (redirectTo) router.push(redirectTo);
-    } catch (error) {
-      onError?.(error);
+    } catch (e) {
+      onError?.(e);
     }
-  };
+  }, [pendingId, deleteMut, onSuccess, redirectTo, router, onError]);
 
-  return { open: !!pendingId, isDeleting, handleOpen, handleClose, handleDelete };
+  return { open: !!pendingId, isDeleting: deleteMut.isPending, handleOpen, handleClose, handleDelete };
 };

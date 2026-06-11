@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Pagination } from "@mui/material";
-import ApplicationCard from "@/components/features/company/applications/ApplicationCard";
+import ApplicationCard from "@/modules/company/applications/components/ApplicationCard";
 import { ApplicationSummaryItem } from "@/store/slices/jobApplicationSlice";
 import { ContactTarget } from "../ContactCandidateModal";
 import { AssessmentTarget } from "@/modules/company/assessment/modal";

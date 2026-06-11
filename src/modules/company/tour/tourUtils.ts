@@ -25,7 +25,6 @@ export function popoverStyle(rect: DOMRect | null, position: Step["position"]) {
   const vh = window.innerHeight;
   const cardH = Math.min(CARD_MAX_H, vh - 80);
   const clampX = (x: number) => Math.min(Math.max(x, 12), window.innerWidth - W - 12);
-  // Clamp top so card never overflows bottom of viewport
   const clampTop = (ideal: number) => Math.max(12, Math.min(ideal, vh - cardH - 12));
   const cx = rect.left + rect.width / 2 - W / 2;
 

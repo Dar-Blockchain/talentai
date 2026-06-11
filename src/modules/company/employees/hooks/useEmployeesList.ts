@@ -1,18 +1,15 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/router";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
-import { AppDispatch, RootState } from "@/store/store";
+import { RootState } from "@/store/store";
 import {
-  fetchMembers, fetchInvitations, fetchMemberStats,
-  addEmployee, updateMemberRole, deleteMember,
-  resendInvitation, cancelInvitation,
-  selectMembers, selectEmployeePermissions, selectFetchingPermissions,
-  fetchEmployeePermissions,
-  clearAddMemberSuccess, clearUpdateRoleSuccess, clearDeleteMemberSuccess, clearError,
-} from "@/store/slices/memberSlice";
+  useMembersQuery, useInvitationsQuery, useMemberStatsQuery,
+  useDepartmentsQuery, useInviteEmployeeMutation, useUpdateRoleMutation,
+  useRemoveMemberMutation, usePermissionsQuery,
+  useResendInvitationMutation, useCancelInvitationMutation,
+} from "../queries";
 import type { ExtendedMember } from "../types";
-import { fetchDepartments, selectDepartments } from "@/store/slices/departmentSlice";
 import { useToast } from "@/hooks/useToast";
 import type { RoleFilter, SortOption } from "@/modules/company/employees/components/list/EmployeesList";
 
@@ -25,27 +22,33 @@ const SORT_MAP: Record<SortOption, { sortBy?: "name" | "date"; order?: "asc" | "
 };
 
 export function useEmployeesList() {
-  const { t }     = useTranslation("dashboard");
-  const router    = useRouter();
-  const dispatch  = useDispatch<AppDispatch>();
+  const { t }         = useTranslation("dashboard");
+  const router        = useRouter();
   const { showToast } = useToast();
 
-  const user         = useSelector((state: RootState) => state.user.connectedUser.user);
-  const empPerms     = useSelector(selectEmployeePermissions);
-  const loadingPerms = useSelector(selectFetchingPermissions);
-  const isEmployee   = user?.role === "Employee";
-  const departments  = useSelector(selectDepartments);
+  const user       = useSelector((state: RootState) => state.user.connectedUser.user);
+  const isEmployee = user?.role === "Employee";
 
-  const {
-    members, pageTotal, loading, error,
-    addMemberSuccess, updateRoleSuccess, deleteMemberSuccess,
-    invitations, fetchingInvitations, stats, fetchingStats,
-  } = useSelector(selectMembers);
+  const { data: empPerms }   = usePermissionsQuery(user?._id, isEmployee);
+  const inviteMut            = useInviteEmployeeMutation();
+  const updateRoleMut        = useUpdateRoleMutation();
+  const removeMut            = useRemoveMemberMutation();
+  const resendMut            = useResendInvitationMutation();
+  const cancelMut            = useCancelInvitationMutation();
+
+  if (!isEmployee && empPerms && !empPerms.canManageTeam && !empPerms.canManagePermissions) {
+    void router.replace("/unauthorized");
+  }
+
+  const canInvite      = !isEmployee || !!empPerms?.canInviteMembers;
+  const canAssignRoles = !isEmployee || !!empPerms?.canAssignRoles;
+  const canRemove      = !isEmployee || !!empPerms?.canRemoveEmployee;
+  const canManagePerms = !isEmployee || !!empPerms?.canManagePermissions;
 
   // Modal state
   const [addModalOpen,     setAddModalOpen]     = useState(false);
   const [editModalOpen,    setEditModalOpen]     = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen]  = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedMember,   setSelectedMember]   = useState<ExtendedMember | null>(null);
   const [detailMember,     setDetailMember]     = useState<ExtendedMember | null>(null);
 
@@ -58,152 +61,111 @@ export function useEmployeesList() {
   const [debouncedSearch,  setDebouncedSearch]  = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Permissions: fetch for employees, redirect if insufficient
-  useEffect(() => {
-    if (isEmployee && user?._id && !loadingPerms) {
-      dispatch(fetchEmployeePermissions(user._id));
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?._id]);
-
-  useEffect(() => {
-    if (!isEmployee) return;
-    if (empPerms && !empPerms.canManageTeam && !empPerms.canManagePermissions) {
-      router.replace("/unauthorized");
-    }
-  }, [isEmployee, empPerms, router]);
-
-  const canInvite      = !isEmployee || !!empPerms?.canInviteMembers;
-  const canAssignRoles = !isEmployee || !!empPerms?.canAssignRoles;
-  const canRemove      = !isEmployee || !!empPerms?.canRemoveEmployee;
-  const canManagePerms = !isEmployee || !!empPerms?.canManagePermissions;
-
-  // Search debounce
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => setDebouncedSearch(value), 300);
+    debounceRef.current = setTimeout(() => { setDebouncedSearch(value); setPage(1); }, 300);
   }, []);
 
-  // Reset page on filter change
-  useEffect(() => { setPage(1); }, [debouncedSearch, roleFilter, departmentFilter, sortBy]);
+  const memberFilters = useMemo(() => ({
+    search:       debouncedSearch || undefined,
+    departmentId: departmentFilter !== "all" ? departmentFilter : undefined,
+    role:         roleFilter !== "all" ? roleFilter : undefined,
+    ...SORT_MAP[sortBy],
+    page,
+    limit: PAGE_SIZE,
+  }), [debouncedSearch, roleFilter, departmentFilter, sortBy, page]);
 
-  // Fetch members
-  const doFetch = useCallback((overridePage?: number) => {
-    dispatch(fetchMembers({
-      search:       debouncedSearch || undefined,
-      departmentId: departmentFilter !== "all" ? departmentFilter : undefined,
-      role:         roleFilter !== "all" ? roleFilter : undefined,
-      ...SORT_MAP[sortBy],
-      page:         overridePage ?? page,
-      limit:        PAGE_SIZE,
-    }));
-  }, [dispatch, debouncedSearch, roleFilter, departmentFilter, sortBy, page]);
+  const { data: membersRaw, isLoading: loading, error: membersError } = useMembersQuery(memberFilters);
+  const { data: invitationsRaw, isLoading: fetchingInvitations }      = useInvitationsQuery();
+  const { data: statsRaw,       isLoading: fetchingStats }            = useMemberStatsQuery();
+  const { data: deptsRaw }                                            = useDepartmentsQuery();
 
-  useEffect(() => { doFetch(); }, [doFetch]);
+  const members       = (membersRaw as any)?.members     ?? [];
+  const pageTotal     = (membersRaw as any)?.total       ?? 0;
+  const invitations   = Array.isArray(invitationsRaw)    ? invitationsRaw : [];
+  const stats         = statsRaw ?? null;
+  const departments   = (Array.isArray(deptsRaw) ? deptsRaw : (deptsRaw as any)?.data) ?? [];
+  const error         = membersError ? String(membersError) : null;
 
-  // Initial data
-  useEffect(() => {
-    dispatch(fetchInvitations());
-    dispatch(fetchMemberStats());
-    dispatch(fetchDepartments({}));
-  }, [dispatch]);
-
-  // Success effects
-  useEffect(() => {
-    if (!addMemberSuccess) return;
-    setAddModalOpen(false);
-    dispatch(clearAddMemberSuccess());
-    showToast({ message: t("pages.employees.invited_success"), severity: "success" });
-    dispatch(fetchInvitations());
-    dispatch(fetchMemberStats());
-    doFetch();
-  }, [addMemberSuccess, dispatch, showToast, doFetch, t]);
-
-  useEffect(() => {
-    if (!updateRoleSuccess) return;
-    setEditModalOpen(false);
-    setSelectedMember(null);
-    dispatch(clearUpdateRoleSuccess());
-    showToast({ message: t("pages.employees.role_updated"), severity: "success" });
-    doFetch();
-  }, [updateRoleSuccess, dispatch, showToast, doFetch, t]);
-
-  useEffect(() => {
-    if (!deleteMemberSuccess) return;
-    setDeleteDialogOpen(false);
-    setSelectedMember(null);
-    setDetailMember(null);
-    dispatch(clearDeleteMemberSuccess());
-    showToast({ message: t("pages.employees.deleted_success"), severity: "success" });
-    dispatch(fetchMemberStats());
-    doFetch();
-  }, [deleteMemberSuccess, dispatch, showToast, doFetch, t]);
-
-  // Action handlers
   const handleAddMember = useCallback(async (email: string, role: string, departmentId?: string) => {
-    const result = await dispatch(addEmployee({ email, role, departmentId }));
-    if (addEmployee.rejected.match(result)) {
-      const msg = (result.payload as string) || t("pages.employees.toast_invite_failed");
-      showToast({ message: msg, severity: "error" });
-      dispatch(clearError());
-    }
-  }, [dispatch, showToast, t]);
+    inviteMut.mutate({ email, role, departmentId }, {
+      onSuccess: () => {
+        setAddModalOpen(false);
+        showToast({ message: t("pages.employees.invited_success"), severity: "success" });
+      },
+      onError: (err: any) => {
+        const msg = err?.response?.data?.message ?? err?.message ?? t("pages.employees.toast_invite_failed");
+        showToast({ message: msg, severity: "error" });
+      },
+    });
+  }, [inviteMut, showToast, t]);
 
   const handleUpdateRole = useCallback(async (role: string, departmentId?: string) => {
     if (!selectedMember) throw new Error("No member selected");
-    await dispatch(updateMemberRole({ membershipId: selectedMember._id, role, departmentId })).unwrap();
-  }, [dispatch, selectedMember]);
+    return new Promise<void>((resolve, reject) => {
+      updateRoleMut.mutate({ membershipId: selectedMember._id, role, departmentId }, {
+        onSuccess: () => {
+          setEditModalOpen(false);
+          setSelectedMember(null);
+          showToast({ message: t("pages.employees.role_updated"), severity: "success" });
+          resolve();
+        },
+        onError: (err) => reject(err),
+      });
+    });
+  }, [updateRoleMut, selectedMember, showToast, t]);
 
   const handleConfirmDelete = useCallback(async () => {
     if (!selectedMember) return;
-    try { await dispatch(deleteMember({ membershipId: selectedMember._id })).unwrap(); }
-    catch (e) { console.error(e); }
-  }, [dispatch, selectedMember]);
+    removeMut.mutate(selectedMember._id, {
+      onSuccess: () => {
+        setDeleteDialogOpen(false);
+        setSelectedMember(null);
+        setDetailMember(null);
+        showToast({ message: t("pages.employees.deleted_success"), severity: "success" });
+      },
+      onError: (err: any) => {
+        const msg = err?.response?.data?.message ?? t("pages.employees.toast_delete_failed");
+        showToast({ message: msg, severity: "error" });
+      },
+    });
+  }, [removeMut, selectedMember, showToast, t]);
 
-  const handleResendInvitation = useCallback(async (invitationId: string) => {
-    try {
-      await dispatch(resendInvitation(invitationId)).unwrap();
-      showToast({ message: t("pages.employees.resend_success"), severity: "success" });
-    } catch {
-      showToast({ message: t("pages.employees.resend_error"), severity: "error" });
-    }
-  }, [dispatch, showToast, t]);
-
-  const handleCancelInvitation = useCallback(async (invitationId: string) => {
-    try {
-      await dispatch(cancelInvitation(invitationId)).unwrap();
-      showToast({ message: t("pages.employees.cancel_success"), severity: "success" });
-      dispatch(fetchMemberStats());
-    } catch {
-      showToast({ message: t("pages.employees.cancel_error"), severity: "error" });
-    }
-  }, [dispatch, showToast, t]);
-
-  const active = members.filter((m) => m.status === "active").length;
-  const owners = members.filter((m) => m.role === "Owner").length;
+  const active = (members as any[]).filter((m) => m.status === "active").length;
+  const owners = (members as any[]).filter((m) => m.role === "Owner").length;
 
   return {
-    // data
     members: members as ExtendedMember[], pageTotal, loading, error,
-    invitations, fetchingInvitations, stats, fetchingStats,
+    invitations, fetchingInvitations,
+    stats, fetchingStats,
     departments,
     active, owners,
-    // permissions
     canInvite, canAssignRoles, canRemove, canManagePerms,
-    // filter state
     search, roleFilter, departmentFilter, sortBy, page,
     handleSearchChange,
-    setRoleFilter, setDepartmentFilter, setSortBy, setPage,
-    // modal state
+    setRoleFilter: (f: RoleFilter) => { setRoleFilter(f); setPage(1); },
+    setDepartmentFilter: (d: string) => { setDepartmentFilter(d); setPage(1); },
+    setSortBy: (s: SortOption) => { setSortBy(s); setPage(1); },
+    setPage,
     addModalOpen,     setAddModalOpen,
     editModalOpen,    setEditModalOpen,
     deleteDialogOpen, setDeleteDialogOpen,
     selectedMember,   setSelectedMember,
     detailMember,     setDetailMember,
-    // action handlers
     handleAddMember, handleUpdateRole, handleConfirmDelete,
-    handleResendInvitation, handleCancelInvitation,
+    handleResendInvitation: useCallback(async (invitationId: string) => {
+      resendMut.mutate(invitationId, {
+        onSuccess: () => showToast({ message: t("pages.employees.resend_success"), severity: "success" }),
+        onError:   () => showToast({ message: t("pages.employees.resend_error"),   severity: "error"   }),
+      });
+    }, [resendMut, showToast, t]),
+    handleCancelInvitation: useCallback(async (invitationId: string) => {
+      cancelMut.mutate(invitationId, {
+        onSuccess: () => showToast({ message: t("pages.employees.cancel_success"), severity: "success" }),
+        onError:   () => showToast({ message: t("pages.employees.cancel_error"),   severity: "error"   }),
+      });
+    }, [cancelMut, showToast, t]),
     PAGE_SIZE,
   };
 }

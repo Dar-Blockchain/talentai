@@ -10,17 +10,9 @@ import RadioButtonUncheckedOutlined from "@mui/icons-material/RadioButtonUncheck
 import AccessTimeOutlined           from "@mui/icons-material/AccessTimeOutlined";
 import BlockOutlined                from "@mui/icons-material/BlockOutlined";
 import VisibilityOutlined           from "@mui/icons-material/VisibilityOutlined";
-import { useDispatch, useSelector }  from "react-redux";
-import { AppDispatch }               from "@/store/store";
-import axiosInstance                 from "@/utils/axiosInstance";
+import axiosInstance from "@/utils/axiosInstance";
 import { ResultsData, QuestionnaireResults, InterviewResults } from "@/components/features/campaign/results/CampaignResultsView";
-import {
-  fetchCampaignSessions,
-  selectCampaignSessions,
-  selectCampaignSessionsLoading,
-  selectCampaignSessionsError,
-  selectCampaignSessionsTotal,
-} from "@/store/slices/campaignSlice";
+import { useCampaignSessionsQuery } from "../../queries";
 import { SessionStatus } from "@/types/campaign";
 import Pagination from "@/components/ui/Pagination";
 import { useTranslation } from "react-i18next";
@@ -155,14 +147,9 @@ ResultsDialog.displayName = "ResultsDialog";
 // ─── Sessions view ────────────────────────────────────────────────────────────
 
 const SessionsView = memo<{ campaignId: string }>(({ campaignId }) => {
-  const dispatch = useDispatch<AppDispatch>();
   const { t, i18n } = useTranslation("dashboard");
   const sp = "pages.campaigns.detail.sessions";
   const du = "pages.campaigns.detail";
-  const sessions = useSelector(selectCampaignSessions);
-  const loading  = useSelector(selectCampaignSessionsLoading);
-  const error    = useSelector(selectCampaignSessionsError);
-  const total    = useSelector(selectCampaignSessionsTotal);
 
   const [search,          setSearch]          = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -171,21 +158,21 @@ const SessionsView = memo<{ campaignId: string }>(({ campaignId }) => {
   const [selectedId,    setSelectedId]    = useState<string | null>(null);
   const [selectedLabel, setSelectedLabel] = useState("");
 
+  const { data, isLoading: loading, error: queryError } = useCampaignSessionsQuery({
+    campaignId, search: debouncedSearch || undefined, page, limit: PAGE_SIZE,
+  });
+  const sessions = data?.data  ?? [];
+  const total    = data?.total ?? 0;
+  const error    = queryError ? String(queryError) : null;
+
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
     clearTimeout(debounceRef.current!);
     debounceRef.current = setTimeout(() => { setDebouncedSearch(value); setPage(1); }, 300);
   }, []);
 
-  const clearSearch = useCallback(() => handleSearchChange(""), [handleSearchChange]);
-
+  const clearSearch  = useCallback(() => handleSearchChange(""), [handleSearchChange]);
   const closeResults = useCallback(() => setSelectedId(null), []);
-
-  useEffect(() => { setPage(1); }, [debouncedSearch]);
-
-  useEffect(() => {
-    dispatch(fetchCampaignSessions({ campaignId, search: debouncedSearch || undefined, page, limit: PAGE_SIZE }));
-  }, [dispatch, campaignId, debouncedSearch, page]);
 
   const headerCols = useMemo(() => [
     t(`${sp}.col_participant`),

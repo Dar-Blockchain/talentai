@@ -70,6 +70,7 @@ const PostDetailsPage: React.FC = () => {
                 activeEdit={activeEdit}
                 isOwner={isOwner}
                 creationType={job.creationType}
+                job={job}
                 onEditPost={() => setActiveEdit("post")}
                 onCancelEdit={() => setActiveEdit(null)}
                 onSaveSuccess={handleSaveSuccess}

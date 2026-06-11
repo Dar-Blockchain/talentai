@@ -103,3 +103,20 @@ export function useRemoveMemberMutation() {
     },
   });
 }
+
+export function useResendInvitationMutation() {
+  return useMutation({
+    mutationFn: (invitationId: string) => employeesApi.resendInvitation(invitationId),
+  });
+}
+
+export function useCancelInvitationMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (invitationId: string) => employeesApi.cancelInvitation(invitationId),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: EMPLOYEE_QUERY_KEYS.invitations() });
+      void qc.invalidateQueries({ queryKey: EMPLOYEE_QUERY_KEYS.stats() });
+    },
+  });
+}

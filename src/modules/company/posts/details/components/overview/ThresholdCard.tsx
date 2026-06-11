@@ -1,13 +1,11 @@
 import React, { useState } from "react";
-import { useDispatch } from "react-redux";
 import { Box, Slider, Typography } from "@mui/material";
 import TrackChangesOutlined from "@mui/icons-material/TrackChangesOutlined";
 import SaveOutlined from "@mui/icons-material/SaveOutlined";
 import CheckOutlined from "@mui/icons-material/Check";
 import SectionCard from "@/components/ui/SectionCard";
 import AppButton from "@/components/ui/AppButton";
-import { updatePost, fetchJobById } from "@/store/slices/postSlice";
-import { AppDispatch } from "@/store/store";
+import { useUpdatePostMutation } from "@/modules/company/posts/details/queries";
 
 import { TEAL, TEAL_BG, TEAL_BORDER } from "@/modules/company/posts/shared/constants";
 
@@ -19,24 +17,19 @@ interface Props {
 }
 
 const ThresholdCard: React.FC<Props> = ({ jobId, initial, canEdit, isDraft }) => {
-  const dispatch = useDispatch<AppDispatch>();
+  const updateMut = useUpdatePostMutation(jobId);
   const [value, setValue] = useState<number>(initial);
-  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const dirty    = value !== initial;
   const editable = canEdit && isDraft;
 
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await dispatch(updatePost({ jobId, jobData: { thresholdScore: value } })).unwrap();
-      await dispatch(fetchJobById(jobId));
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-    } finally {
-      setSaving(false);
-    }
+  const handleSave = () => {
+    updateMut.mutate({ thresholdScore: value }, {
+      onSuccess: () => { setSaved(true); setTimeout(() => setSaved(false), 2000); },
+    });
   };
+
+  const saving = updateMut.isPending;
 
   const color  = value >= 70 ? "#16A34A" : value >= 40 ? "#D97706" : "#DC2626";
   const label  = value >= 70 ? "High"    : value >= 40 ? "Medium"  : "Low";
