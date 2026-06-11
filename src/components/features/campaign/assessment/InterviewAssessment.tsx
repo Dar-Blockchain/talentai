@@ -14,7 +14,7 @@ import { fetchParticipantResults } from '@/store/slices/campaignSlice';
 
 import { Campaign } from '@/types/campaign';
 import { InterviewMessage, Coverage } from '@/types/interview';
-import { useCampaignInterviewConfig } from '@/hooks/useCampaignInterviewConfig';
+import { useCampaignInterviewConfig } from '@/modules/company/campaigns/hooks/useCampaignInterviewConfig';
 import { useNotification }            from '@/hooks/useNotification';
 import { useInterviewTimer }          from '@/hooks/useInterviewTimer';
 import { useCamera }                  from '@/hooks/useCamera';

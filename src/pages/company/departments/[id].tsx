@@ -9,8 +9,6 @@ import {
 } from "@/modules/company/departments/components/details";
 import { DepartmentFormModal }    from "@/modules/company/departments/components/shared";
 import { DeleteDepartmentDialog } from "@/modules/company/departments/components/delete";
-import EditRoleModal        from "@/components/features/company/employees/edit/EditRoleModal";
-import DeleteMemberDialog   from "@/components/features/company/employees/delete/DeleteMemberDialog";
 import { AppDispatch, RootState } from "@/store/store";
 import {
   selectMembers, selectEmployeePermissions,
@@ -28,6 +26,8 @@ import {
   useDeleteDepartmentMutation,
 } from "@/modules/company/departments/queries";
 import { extractAxiosErrorMessage } from "@/modules/company/departments/utils/departmentI18n";
+import EditRoleModal from "@/modules/company/employees/components/edit/EditRoleModal";
+import DeleteMemberDialog from "@/modules/company/employees/components/delete/DeleteMemberDialog";
 
 const DepartmentDetailPage: React.FC = () => {
   const router   = useRouter();

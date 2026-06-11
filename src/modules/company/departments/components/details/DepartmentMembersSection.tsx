@@ -10,20 +10,16 @@ import {
   fetchInvitationsByDepartment, cancelInvitation, resendInvitation,
   Invitation, Member,
 } from "@/store/slices/memberSlice";
-import { RoleFilter, SortOption }   from "@/components/features/company/employees/list/EmployeesList";
-import EmployeesFilterBar           from "@/components/features/company/employees/list/EmployeesFilterBar";
-import EmployeeCard                 from "@/components/features/company/employees/list/EmployeeCard";
-import EmployeeSkeletonCard         from "@/components/features/company/employees/list/EmployeeSkeletonCard";
-import InvitationCard               from "@/components/features/company/employees/list/InvitationCard";
-import Pagination                   from "@/components/ui/Pagination";
-import { PURPLE, AMBER }            from "@/components/features/company/employees/list/constants";
 
 const GRID_CLS = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4";
-import AddEmployeeModal             from "@/components/features/company/employees/create/AddEmployeeModal";
 import { Button }                   from "@/modules/shared/ui/shadcn/button";
 import { useToast }                 from "@/hooks/useToast";
 import { Invitation as InvitationType } from "@/types/employee";
 import { cn }                       from "@/lib/utils";
+import AddEmployeeModal from "@/modules/company/employees/components/create/AddEmployeeModal";
+import { AMBER, EmployeeCard, EmployeesFilterBar, EmployeeSkeletonCard, InvitationCard, RoleFilter, SortOption } from "@/modules/company/employees/components/list";
+import { PURPLE } from "@/modules/company/constants";
+import Pagination from "@/components/ui/Pagination";
 
 const PAGE_SIZE = 9;
 

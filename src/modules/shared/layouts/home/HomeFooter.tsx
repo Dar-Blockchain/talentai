@@ -104,7 +104,7 @@ const Footer: React.FC = () => {
                 aria-label={label}
                 className="size-8 rounded-lg bg-gray-100 hover:bg-primary/10 hover:text-primary flex items-center justify-center text-gray-600 transition-colors"
               >
-                <Icon className="size-[15px]" />
+                <Icon />
               </a>
             ))}
           </div>

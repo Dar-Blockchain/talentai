@@ -45,7 +45,7 @@ import { AppDispatch } from "@/store/store";
 import { createCampaign } from "@/store/slices/campaignSlice";
 import { useToast } from "@/hooks/useToast";
 import { useTranslation } from "react-i18next";
-import ParticipantsStep from "@/components/features/company/campaigns/new/ParticipantsStep";
+import ParticipantsStep from "@/modules/company/campaigns/components/new/ParticipantsStep";
 
 // ─── Palette ─────────────────────────────────────────────────────────────────
 

@@ -10,7 +10,7 @@ import Header from "./DashboardHeader";
 import DashboardMain from "./DashboardMain";
 import { navigation } from "@/constants/navigation";
 import { useRouter } from "next/router";
-import OnboardingTour from "@/components/features/company/OnboardingTour";
+import OnboardingTour from "@/modules/company/tour";
 
 
 interface DashboardLayoutProps {

@@ -339,7 +339,7 @@ const AssessmentDetailsPage = () => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', bgcolor: '#F8FAFC' }}>
       <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1200 }}>
-        <Header onOpenMobile={() => {}} isMobile={false} />
+        <Header onOpenMobile={() => {}} />
       </Box>
 
       <Box sx={{ flex: 1, mt: '64px', overflowY: 'auto', overflowX: 'hidden', p: { xs: 1.5, sm: 2.5, md: 3 } }} className="custom-scrollbar">
