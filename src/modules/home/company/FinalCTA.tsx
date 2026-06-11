@@ -1,7 +1,6 @@
-import { useState }    from "react";
+import React           from "react";
 import { Clock, Ban }  from "lucide-react";
 import { Button }      from "@/modules/shared/ui/shadcn/button";
-import CaptchaModal    from "./CaptchaModal";
 import { motion }      from "framer-motion";
 import { useTranslation } from "react-i18next";
 
@@ -11,8 +10,6 @@ const VP       = { once: true, margin: "-60px" };
 
 const FinalCTA: React.FC = () => {
   const { t } = useTranslation("home");
-  const [captchaOpen, setCaptchaOpen] = useState(false);
-  const handleVerified = () => window.open(CALENDLY, "_blank");
 
   const TRUST_BADGES = [
     { Icon: Clock, label: t("cta.trust_setup") },
@@ -80,7 +77,7 @@ const FinalCTA: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-8">
             <motion.div whileHover={{ scale: 1.04, y: -2 }} whileTap={{ scale: 0.97 }}
               transition={{ type: "spring", stiffness: 380, damping: 20 }}>
-              <Button onClick={() => setCaptchaOpen(true)}
+              <Button onClick={() => window.open(CALENDLY, "_blank")}
                 size="xl"
                 className="rounded-xl shadow-[0_4px_20px_rgba(13,148,136,0.35)] hover:shadow-[0_8px_30px_rgba(13,148,136,0.45)]">
                 {t("cta.btn_primary")}
@@ -89,7 +86,7 @@ const FinalCTA: React.FC = () => {
 
             <motion.div whileHover={{ scale: 1.04, y: -2 }} whileTap={{ scale: 0.97 }}
               transition={{ type: "spring", stiffness: 380, damping: 20 }}>
-              <Button variant="outline" onClick={() => setCaptchaOpen(true)}
+              <Button variant="outline" onClick={() => window.open(CALENDLY, "_blank")}
                 size="xl"
                 className="rounded-xl border-gray-300 text-gray-600">
                 {t("cta.btn_secondary")}
@@ -108,7 +105,6 @@ const FinalCTA: React.FC = () => {
 
         </motion.div>
 
-        <CaptchaModal open={captchaOpen} onVerified={handleVerified} onClose={() => setCaptchaOpen(false)} />
       </div>
     </div>
   );

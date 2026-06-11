@@ -1,23 +1,23 @@
 import Head from "next/head";
-import LandingPageLayout  from "@/modules/home/LandingPageLayout";
-import AISpotlight        from "@/modules/home/company/AISpotlight";
-import GlobalCompanies    from "@/modules/home/company/GlobalCompanies";
+import LandingPageLayout from "@/modules/home/LandingPageLayout";
+import AISpotlight from "@/modules/home/company/AISpotlight";
+import GlobalCompanies from "@/modules/home/company/GlobalCompanies";
 import BiasFreeEvaluation from "@/modules/home/company/BiasFreeEvaluation";
-import Footer             from "@/modules/shared/layouts/home/HomeFooter";
-import SolutionsSection   from "@/modules/home/company/HowItWorksSection";
-import ContactSection     from "@/modules/home/company/ContactSection";
-import FAQSection         from "@/modules/home/company/FAQSection";
-import FinalCTA           from "@/modules/home/company/FinalCTA";
-import StakesSection      from "@/modules/home/company/StakesSection";
-import SuccessSection     from "@/modules/home/company/SuccessSection";
-import { useEffect }     from "react";
-import { setUserType }   from "@/store/slices/userSlice";
-import { useDispatch }   from "react-redux";
-import { AppDispatch }   from "@/store/store";
+import SolutionsSection from "@/modules/home/company/HowItWorksSection";
+import ContactSection from "@/modules/home/company/ContactSection";
+import FAQSection from "@/modules/home/company/FAQSection";
+import FinalCTA from "@/modules/home/company/FinalCTA";
+import StakesSection from "@/modules/home/company/StakesSection";
+import SuccessSection from "@/modules/home/company/SuccessSection";
+import { useEffect } from "react";
+import { setUserType } from "@/store/slices/userSlice";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/store/store";
 import type { GetStaticProps } from "next";
+import CompanyHeroSection from "@/modules/home/company/HeroSection";
 
 const CANONICAL = "https://talentai.bid/";
-const OG_IMAGE  = "https://talentai.bid/images/home/og-cover.png";
+const OG_IMAGE = "https://talentai.bid/images/home/og-cover.png";
 
 const organizationSchema = {
   "@context": "https://schema.org",
@@ -116,7 +116,10 @@ const HomePage: React.FC = () => {
   return (
     <>
       <Head>
-        <title>TalentAI | AI Recruitment Platform — Hire 75% Faster with Conversational AI Agents</title>
+        <title>
+          TalentAI | AI Recruitment Platform — Hire 75% Faster with
+          Conversational AI Agents
+        </title>
         <meta
           name="description"
           content="TalentAI automates your entire hiring pipeline with AI agents that conduct natural video interviews, score candidates objectively, and deliver explainable reports. Cut 42-day hiring cycles by up to 75%. AI interviews from $8 each."
@@ -124,28 +127,54 @@ const HomePage: React.FC = () => {
         <link rel="canonical" href={CANONICAL} />
         <meta name="robots" content="index, follow" />
 
-        <meta property="og:type"        content="website" />
-        <meta property="og:url"         content={CANONICAL} />
-        <meta property="og:site_name"   content="TalentAI" />
-        <meta property="og:title"       content="TalentAI — AI Agents That Interview Candidates For You" />
-        <meta property="og:description" content="Automate screening, interviews, and evaluation with conversational AI. Reduce hiring time by 75%. Trusted by NVIDIA Inception." />
-        <meta property="og:image"       content={OG_IMAGE} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={CANONICAL} />
+        <meta property="og:site_name" content="TalentAI" />
+        <meta
+          property="og:title"
+          content="TalentAI — AI Agents That Interview Candidates For You"
+        />
+        <meta
+          property="og:description"
+          content="Automate screening, interviews, and evaluation with conversational AI. Reduce hiring time by 75%. Trusted by NVIDIA Inception."
+        />
+        <meta property="og:image" content={OG_IMAGE} />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
-        <meta property="og:image:alt"   content="TalentAI — AI-powered recruitment platform" />
+        <meta
+          property="og:image:alt"
+          content="TalentAI — AI-powered recruitment platform"
+        />
 
-        <meta name="twitter:card"        content="summary_large_image" />
-        <meta name="twitter:title"       content="TalentAI — AI Agents That Interview Candidates For You" />
-        <meta name="twitter:description" content="Automate screening, interviews, and evaluation with conversational AI. Reduce hiring time by 75%." />
-        <meta name="twitter:image"       content={OG_IMAGE} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta
+          name="twitter:title"
+          content="TalentAI — AI Agents That Interview Candidates For You"
+        />
+        <meta
+          name="twitter:description"
+          content="Automate screening, interviews, and evaluation with conversational AI. Reduce hiring time by 75%."
+        />
+        <meta name="twitter:image" content={OG_IMAGE} />
 
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }} />
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(organizationSchema),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        />
       </Head>
 
-      <LandingPageLayout type="company" heroTitle="Revolutionize Your Hiring with" heroSubtitle="AI-Powered Intelligence">
-
+      <LandingPageLayout>
+        <CompanyHeroSection />
         {/* Social proof strip */}
         <div className="bg-[#F2F4F7] py-10 md:py-14">
           <GlobalCompanies />
@@ -190,8 +219,6 @@ const HomePage: React.FC = () => {
         <div className="bg-[#F2F4F7] py-16 md:py-24">
           <ContactSection />
         </div>
-
-        <Footer />
       </LandingPageLayout>
     </>
   );

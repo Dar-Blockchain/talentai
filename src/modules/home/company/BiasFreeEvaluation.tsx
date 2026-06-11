@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { CheckCircle2, Play, Sparkles, ShieldCheck, Target, BarChart3 } from "lucide-react";
 import { Button }       from "@/modules/shared/ui/shadcn/button";
-import CaptchaModal     from "./CaptchaModal";
 import DemoVideoModal   from "./DemoVideoModal";
 import { motion }       from "framer-motion";
 import { useTranslation } from "react-i18next";
@@ -21,9 +20,7 @@ const QUICK_STATS = [
 
 const BiasFreeEvaluation: React.FC = () => {
   const { t } = useTranslation("home");
-  const [captchaOpen, setCaptchaOpen] = useState(false);
-  const [videoOpen,   setVideoOpen]   = useState(false);
-  const handleVerified = () => window.open(CALENDLY, "_blank");
+  const [videoOpen, setVideoOpen] = useState(false);
 
   const BULLETS = [
     t("solution.bullet_video"),
@@ -162,7 +159,7 @@ const BiasFreeEvaluation: React.FC = () => {
             className="inline-block"
           >
             <Button
-              onClick={() => setCaptchaOpen(true)}
+              onClick={() => window.open(CALENDLY, "_blank")}
               size="xl"
               className="rounded-xl shadow-[0_4px_20px_rgba(13,148,136,0.38)] hover:shadow-[0_8px_28px_rgba(13,148,136,0.48)]"
             >
@@ -172,8 +169,7 @@ const BiasFreeEvaluation: React.FC = () => {
         </motion.div>
       </div>
 
-      <CaptchaModal   open={captchaOpen} onVerified={handleVerified} onClose={() => setCaptchaOpen(false)} />
-      <DemoVideoModal open={videoOpen}   onClose={() => setVideoOpen(false)} />
+      <DemoVideoModal open={videoOpen} onClose={() => setVideoOpen(false)} />
     </div>
   );
 };

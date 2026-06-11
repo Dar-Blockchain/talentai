@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { ArrowRight, Clock, Ban, DollarSign, AlertTriangle, CalendarClock, TrendingDown } from "lucide-react";
 import { Button }   from "@/modules/shared/ui/shadcn/button";
-import CaptchaModal from "./CaptchaModal";
 import { motion, useInView, useMotionValue, useTransform, animate } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -32,9 +31,6 @@ const STAT_META = [
 
 const StakesSection: React.FC = () => {
   const { t } = useTranslation("home");
-  const [captchaOpen, setCaptchaOpen] = useState(false);
-  const handleVerified = () => window.open(CALENDLY, "_blank");
-
   const STATS = [
     { target: 500, prefix: "$", suffix: "+", unit: t("stakes.stat_1_unit"), desc: t("stakes.stat_1_desc") },
     { target: 25,  prefix: "$", suffix: "K", unit: t("stakes.stat_2_unit"), desc: t("stakes.stat_2_desc") },
@@ -145,7 +141,7 @@ const StakesSection: React.FC = () => {
             <motion.div whileHover={{ scale: 1.04, y: -2 }} whileTap={{ scale: 0.97 }}
               transition={{ type: "spring", stiffness: 400, damping: 20 }}>
               <Button
-                onClick={() => setCaptchaOpen(true)}
+                onClick={() => window.open(CALENDLY, "_blank")}
                 size="xl"
                 className="rounded-xl shadow-[0_4px_18px_rgba(13,148,136,0.4)] hover:shadow-[0_6px_24px_rgba(13,148,136,0.5)] whitespace-nowrap"
               >
@@ -165,7 +161,6 @@ const StakesSection: React.FC = () => {
         </div>
       </motion.div>
 
-      <CaptchaModal open={captchaOpen} onVerified={handleVerified} onClose={() => setCaptchaOpen(false)} />
     </div>
   );
 };

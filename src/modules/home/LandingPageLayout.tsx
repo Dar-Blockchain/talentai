@@ -1,20 +1,17 @@
 import Header from "@/modules/shared/layouts/home/HomeHeader";
 import { ReactNode } from "react";
-import CompanyHeroSection   from "./company/HeroSection";
+import Footer from "../shared/layouts/home/HomeFooter";
 
 interface LandingPageLayoutProps {
-  type: "candidate" | "company";
   children: ReactNode;
 }
 
-const LandingPageLayout: React.FC<LandingPageLayoutProps> = ({
-  type, children,
-}) => {
+const LandingPageLayout: React.FC<LandingPageLayoutProps> = ({ children }) => {
   return (
     <div className="bg-[#F2F4F7]">
       <Header />
-      {type === "company"   && <CompanyHeroSection />}
       {children}
+      <Footer />
     </div>
   );
 };

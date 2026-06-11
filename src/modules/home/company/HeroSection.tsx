@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { PlayCircle } from "lucide-react";
 import { Button }      from "@/modules/shared/ui/shadcn/button";
-import CaptchaModal    from "./CaptchaModal";
 import DemoVideoModal  from "./DemoVideoModal";
 import { motion, useInView, useMotionValue, useTransform, animate } from "framer-motion";
 import { useTranslation } from "react-i18next";
@@ -55,9 +54,7 @@ const fadeRight = (delay = 0) => ({ initial: { opacity: 0, x: 40 }, animate: { o
 
 const CompanyHeroSection = () => {
   const { t } = useTranslation("home");
-  const [captchaOpen, setCaptchaOpen] = useState(false);
-  const [videoOpen,   setVideoOpen]   = useState(false);
-  const handleVerified = () => window.open(CALENDLY, "_blank");
+  const [videoOpen, setVideoOpen] = useState(false);
 
   const STATS = [
     { label: t("hero.stats.screening_label"), sub: t("hero.stats.screening_sub") },
@@ -106,7 +103,7 @@ const CompanyHeroSection = () => {
                 transition={{ type: "spring", stiffness: 400, damping: 20 }}
               >
                 <Button
-                  onClick={() => setCaptchaOpen(true)}
+                  onClick={() => window.open(CALENDLY, "_blank")}
                   size="xl"
                   className="rounded-xl shadow-[0_4px_18px_rgba(13,148,136,0.4)] hover:shadow-[0_8px_28px_rgba(13,148,136,0.5)]"
                 >
@@ -179,7 +176,6 @@ const CompanyHeroSection = () => {
 
       </div>
 
-      <CaptchaModal open={captchaOpen} onVerified={handleVerified} onClose={() => setCaptchaOpen(false)} />
       <DemoVideoModal open={videoOpen} onClose={() => setVideoOpen(false)} />
     </section>
   );
