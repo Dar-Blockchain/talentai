@@ -1,97 +1,101 @@
-import { useState, useCallback, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "@/store/store";
+import { useState, useCallback, useMemo } from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
 import { selectEmployeePermissions } from "@/store/slices/memberSlice";
-import {
-  fetchCampaigns, deleteCampaign, updateCampaignStatus, fetchCampaignMetrics,
-  selectCampaigns, selectCampaignLoading, selectCampaignDeleteLoading,
-  selectCampaignPage, selectCampaignLimit, selectCampaignCount,
-  setPage,
-} from "@/store/slices/campaignSlice";
 import { CampaignStatus } from "@/types/campaign";
+import {
+  useCampaignsListQuery, useCampaignMetricsQuery,
+  useDeleteCampaignMutation,
+} from "../queries";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { apiUpdateCampaignStatus } from "../api";
+import { CAMPAIGN_KEYS } from "../queries";
+
+const DEFAULT_LIMIT = 6;
 
 export function useCampaignsList() {
-  const dispatch = useDispatch<AppDispatch>();
-
-  const campaigns     = useSelector(selectCampaigns);
-  const loading       = useSelector(selectCampaignLoading);
-  const deleteLoading = useSelector(selectCampaignDeleteLoading);
-  const page          = useSelector(selectCampaignPage);
-  const limit         = useSelector(selectCampaignLimit);
-  const count         = useSelector(selectCampaignCount);
-
-  const user     = useSelector((state: RootState) => state.user.connectedUser.user);
+  const user     = useSelector((s: RootState) => s.user.connectedUser.user);
   const empPerms = useSelector(selectEmployeePermissions);
   const isEmp    = user?.role === "Employee";
-  const canEdit    = !isEmp || empPerms === null || !!empPerms.canEditCampaign || !!empPerms.canCreateCampaign;
+  const canEdit    = !isEmp || empPerms === null || !!empPerms?.canEditCampaign || !!empPerms?.canCreateCampaign;
   const canDelete  = !isEmp || !!empPerms?.canDeleteCampaign;
   const canPublish = !isEmp || !!empPerms?.canPublishCampaign;
 
+  const [page,        setPage]        = useState(1);
   const [searchInput, setSearchInput] = useState("");
   const [search,      setSearch]      = useState("");
   const [status,      setStatus]      = useState("");
   const [period,      setPeriod]      = useState("");
 
-  const doFetch = useCallback((overrides: Partial<{ search: string; status: string; period: string }> = {}) => {
-    dispatch(fetchCampaigns({
-      page,
-      limit,
-      search: overrides.search ?? search,
-      status: (overrides.status ?? status) as CampaignStatus | undefined,
-      period: overrides.period ?? period,
-    }));
-  }, [dispatch, page, limit, search, status, period]);
-
-  useEffect(() => { doFetch(); }, [page, limit]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setSearch(searchInput);
-      dispatch(setPage(1));
-      dispatch(fetchCampaigns({ page: 1, limit, search: searchInput, status: status as CampaignStatus | undefined, period }));
-    }, 400);
+  const handleSearchInput = useCallback((val: string) => {
+    setSearchInput(val);
+    const timer = setTimeout(() => { setSearch(val); setPage(1); }, 400);
     return () => clearTimeout(timer);
-  }, [searchInput]);
+  }, []);
+
+  const params = useMemo(
+    () => ({ page, limit: DEFAULT_LIMIT, search, status, period }),
+    [page, search, status, period],
+  );
+
+  const listQ    = useCampaignsListQuery(params);
+  const metricsQ = useCampaignMetricsQuery();
+  const deleteMut = useDeleteCampaignMutation();
+
+  // Status mutation that accepts both campaignId and status (no per-id hook needed)
+  const qc = useQueryClient();
+  const statusMut = useMutation({
+    mutationFn: ({ campaignId, newStatus }: { campaignId: string; newStatus: CampaignStatus }) =>
+      apiUpdateCampaignStatus(campaignId, newStatus),
+    onSuccess: (updated, { campaignId }) => {
+      qc.setQueryData(CAMPAIGN_KEYS.detail(campaignId), updated);
+      qc.invalidateQueries({ queryKey: CAMPAIGN_KEYS.list({}) });
+      qc.invalidateQueries({ queryKey: CAMPAIGN_KEYS.metrics() });
+    },
+  });
+
+  const campaigns = listQ.data?.data       ?? [];
+  const count     = listQ.data?.pagination?.total ?? 0;
+  const loading   = listQ.isLoading || listQ.isFetching;
 
   const handleStatusChange = useCallback((val: string) => {
-    setStatus(val);
-    dispatch(setPage(1));
-    dispatch(fetchCampaigns({ page: 1, limit, search, status: val as CampaignStatus | undefined, period }));
-  }, [dispatch, limit, search, period]);
+    setStatus(val); setPage(1);
+  }, []);
 
   const handlePeriodChange = useCallback((val: string) => {
-    setPeriod(val);
-    dispatch(setPage(1));
-    dispatch(fetchCampaigns({ page: 1, limit, search, status: status as CampaignStatus | undefined, period: val }));
-  }, [dispatch, limit, search, status]);
+    setPeriod(val); setPage(1);
+  }, []);
 
   const clearFilters = useCallback(() => {
-    setSearchInput(""); setSearch(""); setStatus(""); setPeriod("");
-    dispatch(setPage(1));
-    dispatch(fetchCampaigns({ page: 1, limit }));
-  }, [dispatch, limit]);
+    setSearchInput(""); setSearch(""); setStatus(""); setPeriod(""); setPage(1);
+  }, []);
 
   const handleDeleteConfirm = useCallback(async (id: string) => {
-    await dispatch(deleteCampaign(id));
-    doFetch();
-    dispatch(fetchCampaignMetrics());
-  }, [dispatch, doFetch]);
+    await deleteMut.mutateAsync(id);
+  }, [deleteMut]);
 
   const handleStatusConfirm = useCallback(async (id: string, targetStatus: CampaignStatus) => {
-    await dispatch(updateCampaignStatus({ campaignId: id, status: targetStatus }));
-    doFetch();
-  }, [dispatch, doFetch]);
+    await statusMut.mutateAsync({ campaignId: id, newStatus: targetStatus });
+  }, [statusMut]);
 
-  const handlePageChange = useCallback((p: number) => dispatch(setPage(p)), [dispatch]);
+  const handlePageChange = useCallback((p: number) => setPage(p), []);
 
   return {
-    campaigns, loading, deleteLoading, page, limit, count,
+    campaigns,
+    loading,
+    deleteLoading: deleteMut.isPending,
+    statusLoading: statusMut.isPending,
+    page,
+    limit: DEFAULT_LIMIT,
+    count,
+    metrics:        metricsQ.data ?? null,
+    metricsLoading: metricsQ.isLoading,
     canEdit, canDelete, canPublish,
-    searchInput, setSearchInput,
+    searchInput,
+    setSearchInput: handleSearchInput,
     search, status, period,
     hasActiveFilters: !!(search || status || period),
     handleStatusChange, handlePeriodChange, clearFilters,
     handleDeleteConfirm, handleStatusConfirm, handlePageChange,
-    doFetch,
   };
 }

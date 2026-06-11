@@ -67,7 +67,6 @@ const CampaignsGrid: React.FC = memo(() => {
     handleDeleteConfirm: confirmDelete,
     handleStatusConfirm: confirmStatus,
     handlePageChange,
-    doFetch,
   } = useCampaignsList();
 
   const [deleteDialog, setDeleteDialog] = useState(EMPTY_DIALOG_DELETE);
@@ -109,7 +108,7 @@ const CampaignsGrid: React.FC = memo(() => {
     closeStatus();
   }, [confirmStatus, statusDialog.id, statusDialog.targetStatus, closeStatus]);
 
-  const clearSearch = useCallback(() => { setSearchInput(""); doFetch({ search: "" }); }, [setSearchInput, doFetch]);
+  const clearSearch = useCallback(() => setSearchInput(""), [setSearchInput]);
   const clearStatus = useCallback(() => handleStatusChange(""), [handleStatusChange]);
   const clearPeriod = useCallback(() => handlePeriodChange(""), [handlePeriodChange]);
 
