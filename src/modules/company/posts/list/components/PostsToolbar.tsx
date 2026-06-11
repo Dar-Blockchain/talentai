@@ -15,7 +15,7 @@ import EditNoteOutlined from "@mui/icons-material/EditNoteOutlined";
 import FilterListOutlined from "@mui/icons-material/FilterListOutlined";
 import type { StatusFilter, SortOption, TypeFilter } from "../types";
 
-import { TEAL } from "@/modules/posts/shared/constants";
+import { TEAL } from "@/modules/company/posts/shared/constants";
 
 const selectSx = {
   height: 34, fontSize: "13px", bgcolor: "#F9FAFB",

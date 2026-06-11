@@ -19,7 +19,7 @@ import {
 } from "@/modules/chat/candidate-chat/queries/useCandidateChatQueries";
 import { getCandidateChatConversationPath } from "@/modules/chat/candidate-chat/utils/routes";
 
-import { TEAL } from "@/modules/posts/shared/constants";
+import { TEAL } from "@/modules/company/posts/shared/constants";
 
 function initials(first?: string | null, last?: string | null) {
   return `${first?.[0] ?? ""}${last?.[0] ?? ""}`.toUpperCase() || "?";

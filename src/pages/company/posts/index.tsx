@@ -1,7 +1,7 @@
 import React from "react";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import { useCompanyAccess } from "@/hooks/useCompanyAccess";
-import { PostsPageContent } from "@/modules/posts";
+import { PostsPageContent } from "@/modules/company/posts";
 
 const PostsPage: React.FC = () => {
   useCompanyAccess("canViewJobPosts");

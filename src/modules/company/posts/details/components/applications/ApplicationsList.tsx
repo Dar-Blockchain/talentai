@@ -5,7 +5,7 @@ import { ApplicationSummaryItem } from "@/store/slices/jobApplicationSlice";
 import { ContactTarget } from "../ContactCandidateModal";
 import { AssessmentTarget } from "@/modules/company/assessment/modal";
 
-import { TEAL } from "@/modules/posts/shared/constants";
+import { TEAL } from "@/modules/company/posts/shared/constants";
 
 interface Props {
   rows: ApplicationSummaryItem[];

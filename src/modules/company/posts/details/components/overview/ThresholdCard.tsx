@@ -9,7 +9,7 @@ import AppButton from "@/components/ui/AppButton";
 import { updatePost, fetchJobById } from "@/store/slices/postSlice";
 import { AppDispatch } from "@/store/store";
 
-import { TEAL, TEAL_BG, TEAL_BORDER } from "@/modules/posts/shared/constants";
+import { TEAL, TEAL_BG, TEAL_BORDER } from "@/modules/company/posts/shared/constants";
 
 interface Props {
   jobId: string;

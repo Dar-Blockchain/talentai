@@ -3,7 +3,7 @@ import { Box, Slider, Typography } from "@mui/material";
 import TrackChangesOutlined from "@mui/icons-material/TrackChangesOutlined";
 import { Controller, Control } from "react-hook-form";
 
-import { TEAL } from "@/modules/posts/shared/constants";
+import { TEAL } from "@/modules/company/posts/shared/constants";
 
 interface Props {
   control: Control<any>;

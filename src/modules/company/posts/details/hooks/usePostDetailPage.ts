@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchJobById, selectCurrentJob, selectCurrentJobLoading, selectCurrentJobError, updatePostStatus } from "@/store/slices/postSlice";
 import { updateJobDetails } from "../store/postSlice";
-import { useDeletePost } from "@/modules/posts/list/hooks/useDeletePost";
+import { useDeletePost } from "@/modules/company/posts/list/hooks/useDeletePost";
 import { useToast } from "@/hooks/useToast";
 
 export const usePostDetailPage = () => {

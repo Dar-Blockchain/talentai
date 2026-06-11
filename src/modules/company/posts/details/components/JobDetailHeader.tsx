@@ -20,7 +20,7 @@ import EditOutlined            from "@mui/icons-material/EditOutlined";
 import DeleteOutlineOutlined   from "@mui/icons-material/DeleteOutline";
 import PeopleOutlined          from "@mui/icons-material/PeopleOutlined";
 
-import { TEAL } from "@/modules/posts/shared/constants";
+import { TEAL } from "@/modules/company/posts/shared/constants";
 
 const DOT = <Typography sx={{ fontSize: "12px", color: "#D1D5DB" }}>·</Typography>;
 

@@ -19,8 +19,8 @@ import { getLevelFromNumber } from "@/utils/postHelpers";
 import { selectCurrentJob, updatePost } from "@/store/slices/postSlice";
 import { useToast } from "@/hooks/useToast";
 import { validateEditPost } from "@/validations/postValidation";
-import SalaryRange from "@/modules/posts/create/components/SalaryRange";
-import SkillEditorModal from "@/modules/posts/create/components/SkillEditorModal";
+import SalaryRange from "@/modules/company/posts/create/components/SalaryRange";
+import SkillEditorModal from "@/modules/company/posts/create/components/SkillEditorModal";
 import { contractTypes, experienceLevels, workModes } from "@/constants/candidate";
 
 // ─── Static sx constants ──────────────────────────────────────────────────────

@@ -11,7 +11,7 @@ import PostDetailsStep from "./PostDetailsStep";
 import InterviewLanguagesModal from "./InterviewLanguagesModal";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 
-import { TEAL } from "@/modules/posts/shared/constants";
+import { TEAL } from "@/modules/company/posts/shared/constants";
 
 const CreatePostPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();

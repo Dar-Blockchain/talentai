@@ -3,8 +3,8 @@ import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import { Box, Typography } from "@mui/material";
 import LockOutlined from "@mui/icons-material/LockOutlined";
 import Link from "next/link";
-import CreatePostPage from "@/modules/posts/create/components/CreatePostPage";
-import { useCreatePostPage } from "@/modules/posts/create/hooks";
+import CreatePostPage from "@/modules/company/posts/create/components/CreatePostPage";
+import { useCreatePostPage } from "@/modules/company/posts/create/hooks";
 
 const CreatePage: React.FC = () => {
   const { postsUsed, postsLimit, atLimit } = useCreatePostPage();
