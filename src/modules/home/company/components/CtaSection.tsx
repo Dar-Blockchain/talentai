@@ -8,7 +8,7 @@ const CALENDLY = "https://calendly.com/talent__ai/30min";
 const ease     = [0.22, 1, 0.36, 1] as const;
 const VP       = { once: true, margin: "-60px" };
 
-const FinalCTA: React.FC = () => {
+const CtaSection: React.FC = () => {
   const { t } = useTranslation("home");
 
   const TRUST_BADGES = [
@@ -110,4 +110,4 @@ const FinalCTA: React.FC = () => {
   );
 };
 
-export default FinalCTA;
+export default CtaSection;

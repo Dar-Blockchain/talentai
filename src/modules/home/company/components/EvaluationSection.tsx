@@ -18,7 +18,7 @@ const QUICK_STATS = [
   { value: "10×",    key: "shortlisting", color: "text-emerald-600" },
 ];
 
-const BiasFreeEvaluation: React.FC = () => {
+const EvaluationSection: React.FC = () => {
   const { t } = useTranslation("home");
   const [videoOpen, setVideoOpen] = useState(false);
 
@@ -174,4 +174,4 @@ const BiasFreeEvaluation: React.FC = () => {
   );
 };
 
-export default BiasFreeEvaluation;
+export default EvaluationSection;

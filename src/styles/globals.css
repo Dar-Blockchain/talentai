@@ -136,6 +136,21 @@
 /* ─── Light theme (default) ──────────────────────────────────────────────────
    shadcn hsl values — no hsl() wrapper                                        */
 
+/* ─── Prevent scrollbar layout shift ────────────────────────────────────────
+   react-remove-scroll-bar injects:
+     body[data-scroll-locked] { margin-right: <gap>px !important }  (spec 0,1,1)
+   scrollbar-gutter:stable keeps the gutter reserved so no shift occurs.
+   html body[data-scroll-locked] wins the specificity battle (0,1,2 > 0,1,1)
+   and zeroes the unnecessary compensation margin.                               */
+html {
+  scrollbar-gutter: stable;
+}
+
+html body[data-scroll-locked] {
+  margin-right: 0 !important;
+  padding-right: 0 !important;
+}
+
 :root {
   --background:              0 0% 100%;
   --foreground:              0 0% 10%;

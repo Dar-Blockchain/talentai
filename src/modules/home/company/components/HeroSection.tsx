@@ -52,7 +52,7 @@ const StatCard: React.FC<{
 const fadeUp   = (delay = 0) => ({ initial: { opacity: 0, y: 28 },  animate: { opacity: 1, y: 0 },  transition: { duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] as const } });
 const fadeRight = (delay = 0) => ({ initial: { opacity: 0, x: 40 }, animate: { opacity: 1, x: 0 }, transition: { duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] as const } });
 
-const CompanyHeroSection = () => {
+const HeroSection = () => {
   const { t } = useTranslation("home");
   const [videoOpen, setVideoOpen] = useState(false);
 
@@ -181,4 +181,4 @@ const CompanyHeroSection = () => {
   );
 };
 
-export default CompanyHeroSection;
+export default HeroSection;

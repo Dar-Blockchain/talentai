@@ -22,7 +22,7 @@ const LOOPED = [...allLogos, ...allLogos, ...allLogos];
 const VP   = { once: true, margin: "-40px" };
 const ease = [0.22, 1, 0.36, 1] as const;
 
-const GlobalCompanies: React.FC = () => {
+const ClientsSection: React.FC = () => {
   const { t } = useTranslation("home");
 
   return (
@@ -86,4 +86,4 @@ const GlobalCompanies: React.FC = () => {
   );
 };
 
-export default GlobalCompanies;
+export default ClientsSection;

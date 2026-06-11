@@ -29,7 +29,7 @@ const STAT_META = [
   { Icon: TrendingDown,  color: "text-red-500",     bg: "bg-red-50",    border: "border-red-100",    bar: 45 },
 ];
 
-const StakesSection: React.FC = () => {
+const ProblemSection: React.FC = () => {
   const { t } = useTranslation("home");
   const STATS = [
     { target: 500, prefix: "$", suffix: "+", unit: t("stakes.stat_1_unit"), desc: t("stakes.stat_1_desc") },
@@ -165,4 +165,4 @@ const StakesSection: React.FC = () => {
   );
 };
 
-export default StakesSection;
+export default ProblemSection;

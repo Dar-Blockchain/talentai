@@ -28,7 +28,7 @@ const Counter: React.FC<{ target: number; prefix?: string; suffix?: string; star
   );
 };
 
-const AISpotlight: React.FC = () => {
+const AIShowcaseSection: React.FC = () => {
   const { t } = useTranslation("home");
   const ref     = useRef<HTMLDivElement>(null);
   const inView  = useInView(ref, { once: true, margin: "-80px" });
@@ -217,4 +217,4 @@ const AISpotlight: React.FC = () => {
   );
 };
 
-export default AISpotlight;
+export default AIShowcaseSection;

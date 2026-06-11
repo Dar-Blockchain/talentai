@@ -1,20 +1,20 @@
 import Head from "next/head";
-import LandingPageLayout from "@/modules/home/LandingPageLayout";
-import AISpotlight from "@/modules/home/company/AISpotlight";
-import GlobalCompanies from "@/modules/home/company/GlobalCompanies";
-import BiasFreeEvaluation from "@/modules/home/company/BiasFreeEvaluation";
-import SolutionsSection from "@/modules/home/company/HowItWorksSection";
-import ContactSection from "@/modules/home/company/ContactSection";
-import FAQSection from "@/modules/home/company/FAQSection";
-import FinalCTA from "@/modules/home/company/FinalCTA";
-import StakesSection from "@/modules/home/company/StakesSection";
-import SuccessSection from "@/modules/home/company/SuccessSection";
+import LandingPageLayout from "@/modules/home/shared/components/LandingPageLayout";
+import AIShowcaseSection from "@/modules/home/company/components/AIShowcaseSection";
+import ClientsSection from "@/modules/home/company/components/ClientsSection";
+import EvaluationSection from "@/modules/home/company/components/EvaluationSection";
+import HowItWorksSection from "@/modules/home/company/components/HowItWorksSection";
+import ContactSection from "@/modules/home/company/components/ContactSection";
+import FAQSection from "@/modules/home/company/components/FAQSection";
+import CtaSection from "@/modules/home/company/components/CtaSection";
+import ProblemSection from "@/modules/home/company/components/ProblemSection";
+import ResultsSection from "@/modules/home/company/components/ResultsSection";
 import { useEffect } from "react";
 import { setUserType } from "@/store/slices/userSlice";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import type { GetStaticProps } from "next";
-import CompanyHeroSection from "@/modules/home/company/HeroSection";
+import HeroSection from "@/modules/home/company/components/HeroSection";
 
 const CANONICAL = "https://talentai.bid/";
 const OG_IMAGE = "https://talentai.bid/images/home/og-cover.png";
@@ -174,40 +174,40 @@ const HomePage: React.FC = () => {
       </Head>
 
       <LandingPageLayout>
-        <CompanyHeroSection />
+        <HeroSection />
         {/* Social proof strip */}
         <div className="bg-[#F2F4F7] py-10 md:py-14">
-          <GlobalCompanies />
+          <ClientsSection />
         </div>
 
         {/* Problem stats */}
         <div className="bg-white py-16 md:py-24">
-          <AISpotlight />
+          <AIShowcaseSection />
         </div>
 
         {/* Solution */}
         <div className="bg-[#F2F4F7] py-16 md:py-24">
-          <BiasFreeEvaluation />
+          <EvaluationSection />
         </div>
 
         {/* Stakes */}
         <div className="bg-white py-16 md:py-24">
-          <StakesSection />
+          <ProblemSection />
         </div>
 
         {/* How it works */}
         <div className="bg-[#F2F4F7] py-16 md:py-24">
-          <SolutionsSection />
+          <HowItWorksSection />
         </div>
 
         {/* Results */}
         <div className="bg-white py-16 md:py-24">
-          <SuccessSection />
+          <ResultsSection />
         </div>
 
         {/* Final CTA */}
         <div className="bg-[#F2F4F7]">
-          <FinalCTA />
+          <CtaSection />
         </div>
 
         {/* FAQ */}

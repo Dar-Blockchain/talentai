@@ -84,7 +84,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
 
   return (
     <>
-      <DropdownMenu open={open} onOpenChange={showDropdown ? setOpen : undefined}>
+      <DropdownMenu open={open} onOpenChange={showDropdown ? setOpen : undefined} modal={false}>
         <DropdownMenuTrigger asChild>
           <button
             onClick={!showDropdown ? goToDashboard : undefined}

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
-import DemoVideoModal from "@/modules/home/company/DemoVideoModal";
+import DemoVideoModal from "@/modules/home/company/components/DemoVideoModal";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";

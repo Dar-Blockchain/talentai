@@ -1,4 +1,4 @@
-import GradientStepper from "./Stepper";
+import ProcessStepper from "./ProcessStepper";
 import { motion }      from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { Zap } from "lucide-react";
@@ -6,7 +6,7 @@ import { Zap } from "lucide-react";
 const VP   = { once: true, margin: "-80px" };
 const ease = [0.22, 1, 0.36, 1] as const;
 
-const SolutionsSection = () => {
+const HowItWorksSection = () => {
   const { t } = useTranslation("home");
 
   return (
@@ -35,9 +35,9 @@ const SolutionsSection = () => {
         </p>
       </motion.div>
 
-      <GradientStepper />
+      <ProcessStepper />
     </div>
   );
 };
 
-export default SolutionsSection;
+export default HowItWorksSection;

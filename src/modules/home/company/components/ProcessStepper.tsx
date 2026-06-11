@@ -35,7 +35,7 @@ const STEPS = [
   },
 ];
 
-export default function GradientStepper() {
+export default function ProcessStepper() {
   const { t } = useTranslation("home");
 
   const steps = STEPS.map((s, i) => ({

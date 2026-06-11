@@ -86,7 +86,7 @@ const Header = () => {
   return (
     <>
       {/* Fixed header */}
-      <div className="fixed inset-x-0 top-0 z-[1100]">
+      <div className="fixed inset-x-0 top-0 z-[50]">
         <div
           className={cn(
             "mx-auto px-3 md:px-8",

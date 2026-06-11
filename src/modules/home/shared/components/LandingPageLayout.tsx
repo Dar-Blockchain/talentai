@@ -1,6 +1,6 @@
 import Header from "@/modules/shared/layouts/home/HomeHeader";
 import { ReactNode } from "react";
-import Footer from "../shared/layouts/home/HomeFooter";
+import Footer from "@/modules/shared/layouts/home/HomeFooter";
 
 interface LandingPageLayoutProps {
   children: ReactNode;

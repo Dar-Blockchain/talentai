@@ -21,7 +21,7 @@ const STATS: Stat[] = [
   { value: "< 5%", label: "Bad hire rate",      context: "Down from industry avg. of 39%", hex: "#7C3AED", hexDim: "#EDE9FE" },
 ];
 
-export default function SuccessSection() {
+export default function ResultsSection() {
   const { t } = useTranslation("home");
 
   const ROWS = [
