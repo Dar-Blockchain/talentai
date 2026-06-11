@@ -46,6 +46,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     navigation.forEach((item) => router.prefetch(item.href));
   }, [router]);
 
+  // Close mobile sidebar on every navigation
+  useEffect(() => {
+    const handleRouteChange = () => setMobileOpen(false);
+    router.events.on("routeChangeStart", handleRouteChange);
+    return () => router.events.off("routeChangeStart", handleRouteChange);
+  }, [router.events]);
+
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isSmallDesktop = useMediaQuery(theme.breakpoints.between("md", "lg"));
@@ -67,7 +74,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   }, [drawerWidth, isMobile]);
 
   return (
-    <Box sx={{ display: "flex", height: "100vh" }}>
+    <Box sx={{ display: "flex", height: "100dvh" }}>
       <OnboardingTour />
       {/* Logout loading modal */}
       <Modal open={isLoggingOut} disableAutoFocus>

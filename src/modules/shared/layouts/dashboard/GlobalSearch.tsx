@@ -153,7 +153,7 @@ const GlobalSearch: React.FC = () => {
           borderRadius: "10px", cursor: "text",
           transition: "all 0.15s",
           "&:hover": { borderColor: `${TEAL}50`, bgcolor: "#fff" },
-          minWidth: { xs: 120, sm: 200, md: 240 },
+          width: "100%",
         }}
       >
         <SearchOutlined sx={{ fontSize: 14, color: "#9CA3AF", flexShrink: 0 }} />

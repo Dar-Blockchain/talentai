@@ -32,7 +32,7 @@ const DashboardMain: React.FC<DashboardMainProps> = ({
         // fill vs scroll mode
         fillMainHeight
           ? "flex flex-col overflow-hidden"
-          : "h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden custom-scrollbar",
+          : "h-[calc(100dvh-4rem)] overflow-y-auto overflow-x-hidden custom-scrollbar",
         // horizontal padding (responsive)
         "px-4 sm:px-6 md:px-7",
         // vertical padding

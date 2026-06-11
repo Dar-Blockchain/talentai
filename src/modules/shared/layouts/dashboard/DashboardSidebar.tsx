@@ -570,6 +570,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           sx={{
             "& .MuiDrawer-paper": {
               width: DRAWER_WIDTH,
+              overflowX: "hidden",
               borderRight: `1px solid ${BORDER}`,
               bgcolor: BG,
             },

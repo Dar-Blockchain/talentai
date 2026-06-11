@@ -26,12 +26,12 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
   return (
     <header className="relative h-16 bg-white border-b border-gray-100 shadow-[0_1px_4px_0_rgb(0_0_0/0.06)] flex items-center justify-between px-5 md:px-7 z-10">
       {/* ── Left: mobile menu + logo ── */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 shrink-0">
         <Button
           variant="ghost"
           size="icon"
           onClick={onOpenMobile}
-          className="md:hidden h-9 w-9 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors"
+          className="min-[900px]:hidden h-9 w-9 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors"
         >
           <Menu className="h-5 w-5" />
         </Button>
@@ -49,17 +49,18 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
         )}
       </div>
 
-      {/* ── Right: search + actions + user ── */}
-      <div className="flex items-center gap-2">
-        {!isCandidate && (
-          <>
-            <GlobalSearch />
-            <Separator orientation="vertical" className="h-5 bg-gray-200 mx-0.5" />
-          </>
-        )}
+      {/* ── Center: search fills remaining space (hidden on mobile) ── */}
+      {!isCandidate && (
+        <div className="hidden min-[900px]:flex flex-1 min-w-0 mx-4">
+          <GlobalSearch />
+        </div>
+      )}
+
+      {/* ── Right: actions + user ── */}
+      <div className="flex items-center gap-2 shrink-0">
 
         {/* Action icon cluster */}
-        <div className="flex items-center gap-0.5 rounded-xl bg-gray-50 border border-gray-100 px-1 py-1">
+        <div className="flex items-center gap-0 rounded-xl bg-gray-50 border border-gray-100 px-0.5 py-0.5 [&_.MuiIconButton-root]:!p-1.5 [&_.MuiSvgIcon-root]:!text-[17px]">
           <div data-tour="header-chat">
             <HeaderChat />
           </div>
@@ -73,8 +74,8 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
 
         <Separator orientation="vertical" className="h-5 bg-gray-200 mx-0.5" />
 
-        {/* User chip */}
-        <UserAvatar />
+        {/* User chip — avatar only */}
+        <UserAvatar hideLabel />
       </div>
     </header>
   );
