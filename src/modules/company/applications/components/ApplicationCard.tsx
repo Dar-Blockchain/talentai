@@ -16,10 +16,20 @@ import ApplicationCardActions from "./ApplicationCardActions";
 
 const TEAL = "#0D9488";
 
-const PAPER_SX = {
+const PAPER_BASE_SX = {
   border: "1px solid #E5E7EB", borderRadius: "12px",
   p: "14px 16px", display: "flex", alignItems: "center", gap: 2,
   transition: "box-shadow 0.15s, border-color 0.15s",
+} as const;
+
+const PAPER_CLICKABLE_SX = {
+  ...PAPER_BASE_SX,
+  cursor: "pointer",
+  "&:hover": { boxShadow: "0 2px 12px rgba(0,0,0,0.07)", borderColor: TEAL },
+} as const;
+
+const PAPER_SX = {
+  ...PAPER_BASE_SX,
   "&:hover": { boxShadow: "0 2px 12px rgba(0,0,0,0.07)", borderColor: TEAL },
 } as const;
 
@@ -131,6 +141,13 @@ const ApplicationCard = memo<ApplicationCardProps>(({
   const handleMenuClose = useCallback(() => setMenuAnchor(null), []);
   const closeInvite     = useCallback(() => setInviteTarget(null), []);
 
+  const hasInterview = !!app.completedAt;
+
+  const handleCardClick = useCallback(() => {
+    if (!hasInterview) return;
+    if (app.candidateUserId) handleAssessment();
+  }, [hasInterview, app.candidateUserId, handleAssessment]);
+
   const handlePostClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     if (app.postId) router.push(`/company/posts/${app.postId}`);
@@ -138,7 +155,7 @@ const ApplicationCard = memo<ApplicationCardProps>(({
 
   return (
     <>
-      <Paper elevation={0} sx={PAPER_SX}>
+      <Paper elevation={0} sx={hasInterview ? PAPER_CLICKABLE_SX : PAPER_SX} onClick={handleCardClick}>
         <Avatar
           src={avatarUrl}
           sx={{ width: 40, height: 40, bgcolor: bgColor, fontSize: 13, fontWeight: 700, flexShrink: 0 }}
