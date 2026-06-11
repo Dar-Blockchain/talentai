@@ -1,5 +1,6 @@
 export type UserType = "candidate" | "company";
-export type RegisterStep = 1 | 2;
+// RegisterStep is defined in shared/types — re-exported here for backwards compat
+export type { RegisterStep } from "@/modules/auth/shared/types";
 
 export interface CandidateFormValues {
   firstName: string;

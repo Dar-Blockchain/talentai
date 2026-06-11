@@ -1,4 +1,22 @@
 import type { MutableRefObject } from "react";
+export { validators } from "./validators";
+
+// ─── Shared form constants ────────────────────────────────────────────────────
+export const COMPANY_SIZES = [
+  "1–10 employees",
+  "10–50 employees",
+  "50–200 employees",
+  "200–500 employees",
+  "500+ employees",
+] as const;
+
+export const INDUSTRIES = [
+  "Technology",
+  "Finance",
+  "Healthcare",
+  "Education",
+  "Other",
+] as const;
 
 export function extractInvitationEmail(returnUrl?: string): string {
   if (!returnUrl) return "";

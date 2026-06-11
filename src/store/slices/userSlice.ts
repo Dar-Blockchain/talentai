@@ -225,12 +225,12 @@ const userSlice = createSlice({
       }
     },
     updateProfileSkills(state, action: PayloadAction<string[]>) {
-      if (state?.connectedUser?.profile.skills !== null) {
+      if (state?.connectedUser?.profile) {
         state.connectedUser.profile.skills = action.payload;
       }
     },
     updateProfileSoftSkill(state, action: PayloadAction<string[]>) {
-      if (state?.connectedUser?.profile.softSkills !== null) {
+      if (state?.connectedUser?.profile) {
         state.connectedUser.profile.softSkills = action.payload;
       }
     },
