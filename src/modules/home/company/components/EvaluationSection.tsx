@@ -5,8 +5,7 @@ import DemoVideoModal   from "./DemoVideoModal";
 import { motion }       from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-
-const CALENDLY = "https://calendly.com/talent__ai/30min";
+import { CALENDLY_URL } from "@/constants";
 const VP   = { once: true, margin: "-80px" };
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -159,7 +158,7 @@ const EvaluationSection: React.FC = () => {
             className="inline-block"
           >
             <Button
-              onClick={() => window.open(CALENDLY, "_blank")}
+              onClick={() => window.open(CALENDLY_URL, "_blank")}
               size="xl"
               className="rounded-xl shadow-[0_4px_20px_rgba(13,148,136,0.38)] hover:shadow-[0_8px_28px_rgba(13,148,136,0.48)]"
             >

@@ -3,8 +3,7 @@ import { Clock, Ban }  from "lucide-react";
 import { Button }      from "@/modules/shared/ui/shadcn/button";
 import { motion }      from "framer-motion";
 import { useTranslation } from "react-i18next";
-
-const CALENDLY = "https://calendly.com/talent__ai/30min";
+import { CALENDLY_URL } from "@/constants";
 const ease     = [0.22, 1, 0.36, 1] as const;
 const VP       = { once: true, margin: "-60px" };
 
@@ -77,7 +76,7 @@ const CtaSection: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-8">
             <motion.div whileHover={{ scale: 1.04, y: -2 }} whileTap={{ scale: 0.97 }}
               transition={{ type: "spring", stiffness: 380, damping: 20 }}>
-              <Button onClick={() => window.open(CALENDLY, "_blank")}
+              <Button onClick={() => window.open(CALENDLY_URL, "_blank")}
                 size="xl"
                 className="rounded-xl shadow-[0_4px_20px_rgba(13,148,136,0.35)] hover:shadow-[0_8px_30px_rgba(13,148,136,0.45)]">
                 {t("cta.btn_primary")}
@@ -86,7 +85,7 @@ const CtaSection: React.FC = () => {
 
             <motion.div whileHover={{ scale: 1.04, y: -2 }} whileTap={{ scale: 0.97 }}
               transition={{ type: "spring", stiffness: 380, damping: 20 }}>
-              <Button variant="outline" onClick={() => window.open(CALENDLY, "_blank")}
+              <Button variant="outline" onClick={() => window.open(CALENDLY_URL, "_blank")}
                 size="xl"
                 className="rounded-xl border-gray-300 text-gray-600">
                 {t("cta.btn_secondary")}

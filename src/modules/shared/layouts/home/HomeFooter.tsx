@@ -4,6 +4,7 @@ import Image from "next/image";
 import NextLink from "next/link";
 import { Mail } from "lucide-react";
 import { useRouter } from "next/router";
+import { LINKEDIN_URL, TWITTER_URL, CONTACT_EMAIL } from "@/constants";
 
 const FooterLink: React.FC<{ children: React.ReactNode; href?: string }> = ({ children, href = "#" }) => (
   <NextLink
@@ -27,8 +28,8 @@ const XSVG = () => (
 );
 
 const SOCIAL = [
-  { Icon: LinkedInSVG, href: "https://www.linkedin.com/company/talentai-bid/", label: "LinkedIn" },
-  { Icon: XSVG,        href: "https://x.com/talentai_bid",                     label: "X / Twitter" },
+  { Icon: LinkedInSVG, href: LINKEDIN_URL, label: "LinkedIn"   },
+  { Icon: XSVG,        href: TWITTER_URL,  label: "X / Twitter" },
 ];
 
 const Footer: React.FC = () => {
@@ -85,11 +86,11 @@ const Footer: React.FC = () => {
 
           {/* Contact email */}
           <a
-            href="mailto:contact@talentai.bid"
+            href={`mailto:${CONTACT_EMAIL}`}
             className="flex items-center gap-1.5 text-[12px] text-gray-600 hover:text-primary transition-colors"
           >
             <Mail className="size-[14px]" />
-            contact@talentai.bid
+            {CONTACT_EMAIL}
           </a>
 
           {/* Social icons */}

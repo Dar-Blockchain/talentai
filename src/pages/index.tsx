@@ -15,24 +15,24 @@ import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import type { GetStaticProps } from "next";
 import HeroSection from "@/modules/home/company/components/HeroSection";
+import { SITE_URL, OG_IMAGE, LOGO_URL, CONTACT_EMAIL, LINKEDIN_URL } from "@/constants";
 
-const CANONICAL = "https://talentai.bid/";
-const OG_IMAGE = "https://talentai.bid/images/home/og-cover.png";
+const CANONICAL = `${SITE_URL}/`;
 
 const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
   name: "TalentAI",
-  url: "https://talentai.bid",
-  logo: "https://talentai.bid/images/home/logo.svg",
+  url: SITE_URL,
+  logo: LOGO_URL,
   description:
     "AI-powered recruitment automation platform that replaces manual hiring with intelligent, conversational AI agents.",
   contactPoint: {
     "@type": "ContactPoint",
     contactType: "customer support",
-    email: "contact@talentai.bid",
+    email: CONTACT_EMAIL,
   },
-  sameAs: ["https://www.linkedin.com/company/talentai-bid"],
+  sameAs: [LINKEDIN_URL],
 };
 
 const softwareSchema = {
@@ -41,7 +41,7 @@ const softwareSchema = {
   name: "TalentAI",
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web",
-  url: "https://talentai.bid",
+  url: SITE_URL,
   description:
     "Automate your entire hiring pipeline with AI agents that conduct natural video interviews, score candidates objectively, and deliver explainable evaluation reports. Cut 42-day hiring cycles by up to 75%.",
   brand: { "@type": "Brand", name: "TalentAI" },

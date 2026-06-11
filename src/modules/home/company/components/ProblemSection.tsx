@@ -4,8 +4,7 @@ import { Button }   from "@/modules/shared/ui/shadcn/button";
 import { motion, useInView, useMotionValue, useTransform, animate } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-
-const CALENDLY = "https://calendly.com/talent__ai/30min";
+import { CALENDLY_URL } from "@/constants";
 const VP   = { once: true, margin: "-60px" };
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -141,7 +140,7 @@ const ProblemSection: React.FC = () => {
             <motion.div whileHover={{ scale: 1.04, y: -2 }} whileTap={{ scale: 0.97 }}
               transition={{ type: "spring", stiffness: 400, damping: 20 }}>
               <Button
-                onClick={() => window.open(CALENDLY, "_blank")}
+                onClick={() => window.open(CALENDLY_URL, "_blank")}
                 size="xl"
                 className="rounded-xl shadow-[0_4px_18px_rgba(13,148,136,0.4)] hover:shadow-[0_6px_24px_rgba(13,148,136,0.5)] whitespace-nowrap"
               >

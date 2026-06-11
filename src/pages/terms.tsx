@@ -3,6 +3,7 @@ import NextLink from "next/link";
 import { AlertTriangle, Info } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 import Header from "@/modules/shared/layouts/home/HomeHeader";
+import { APP_URL, CONTACT_EMAIL } from "@/constants";
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <div className="mb-8">
@@ -55,7 +56,7 @@ export default function TermsOfUse() {
       <Head>
         <title>{t("terms.meta.title")}</title>
         <meta name="description" content={t("terms.meta.description")} />
-        <link rel="canonical" href="https://app.talentai.bid/terms" />
+        <link rel="canonical" href={`${APP_URL}/terms`} />
       </Head>
 
       <Header />
@@ -90,7 +91,7 @@ export default function TermsOfUse() {
               <Trans
                 i18nKey="terms.intro"
                 ns="legal"
-                components={{ site: <a href="https://app.talentai.bid" className="text-primary hover:underline" /> }}
+                components={{ site: <NextLink href={APP_URL} className="text-primary hover:underline" /> }}
               />
             </P>
 
@@ -139,7 +140,7 @@ export default function TermsOfUse() {
                     i18nKey="terms.sections.ai.explanation.p1"
                     ns="legal"
                     components={{
-                      contact: <a href="mailto:contact@talentai.bid" className="text-primary hover:underline" />,
+                      contact: <NextLink href={`mailto:${CONTACT_EMAIL}`} className="text-primary hover:underline" />,
                       b: <strong />,
                     }}
                   />
@@ -162,7 +163,7 @@ export default function TermsOfUse() {
                     <Trans
                       i18nKey="terms.sections.ai.contest.items.0"
                       ns="legal"
-                      components={{ contact: <a href="mailto:contact@talentai.bid" className="text-primary hover:underline" /> }}
+                      components={{ contact: <NextLink href={`mailto:${CONTACT_EMAIL}`} className="text-primary hover:underline" /> }}
                     />
                   </Li>
                   {list("terms.sections.ai.contest.items").slice(1).map((item) => (
@@ -191,7 +192,7 @@ export default function TermsOfUse() {
                   <Trans
                     i18nKey="terms.sections.accounts.items.2"
                     ns="legal"
-                    components={{ contact: <a href="mailto:contact@talentai.bid" className="text-primary hover:underline" /> }}
+                    components={{ contact: <NextLink href={`mailto:${CONTACT_EMAIL}`} className="text-primary hover:underline" /> }}
                   />
                 </Li>
               </ul>
@@ -233,7 +234,7 @@ export default function TermsOfUse() {
                 <Trans
                   i18nKey="terms.sections.nonDiscrimination.p1"
                   ns="legal"
-                  components={{ contact: <a href="mailto:contact@talentai.bid" className="text-primary hover:underline" /> }}
+                  components={{ contact: <NextLink href={`mailto:${CONTACT_EMAIL}`} className="text-primary hover:underline" /> }}
                 />
               </P>
             </Section>
@@ -282,10 +283,10 @@ export default function TermsOfUse() {
               <P>{t("terms.sections.contact.p1")}</P>
               <div className="bg-gray-50 border border-gray-200 rounded-xl px-5 py-4 mt-2 space-y-1">
                 <p className="text-[0.9rem] text-gray-600 leading-loose">
-                  📧 <a href="mailto:contact@talentai.bid" className="text-primary font-semibold hover:underline">contact@talentai.bid</a>
+                  📧 <NextLink href={`mailto:${CONTACT_EMAIL}`} className="text-primary font-semibold hover:underline">{CONTACT_EMAIL}</NextLink>
                 </p>
                 <p className="text-[0.9rem] text-gray-600 leading-loose">
-                  🌐 <a href="https://app.talentai.bid" className="text-primary hover:underline">app.talentai.bid</a>
+                  🌐 <NextLink href={APP_URL} className="text-primary hover:underline">{APP_URL.replace("https://", "")}</NextLink>
                 </p>
                 <p className="text-[0.9rem] text-gray-600 leading-loose">
                   ⏱ {t("terms.sections.contact.responseTime")}

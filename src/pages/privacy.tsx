@@ -2,6 +2,7 @@ import Head from "next/head";
 import NextLink from "next/link";
 import { Trans, useTranslation } from "react-i18next";
 import Header from "@/modules/shared/layouts/home/HomeHeader";
+import { APP_URL, CONTACT_EMAIL } from "@/constants";
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <div className="mb-8">
@@ -28,7 +29,7 @@ export default function PrivacyPolicy() {
       <Head>
         <title>{t("privacy.meta.title")}</title>
         <meta name="description" content={t("privacy.meta.description")} />
-        <link rel="canonical" href="https://app.talentai.bid/privacy" />
+        <link rel="canonical" href={`${APP_URL}/privacy`} />
       </Head>
 
       <Header />
@@ -54,7 +55,7 @@ export default function PrivacyPolicy() {
               <Trans
                 i18nKey="privacy.intro"
                 ns="legal"
-                components={{ site: <a href="https://app.talentai.bid" className="text-primary hover:underline" /> }}
+                components={{ site: <NextLink href={APP_URL} className="text-primary hover:underline" /> }}
               />
             </P>
 
@@ -122,7 +123,7 @@ export default function PrivacyPolicy() {
                 <Trans
                   i18nKey="privacy.sections.retention.p2"
                   ns="legal"
-                  components={{ contact: <a href="mailto:contact@talentai.bid" className="text-primary hover:underline" /> }}
+                  components={{ contact: <NextLink href={`mailto:${CONTACT_EMAIL}`} className="text-primary hover:underline" /> }}
                 />
               </P>
             </Section>
@@ -138,7 +139,7 @@ export default function PrivacyPolicy() {
                 <Trans
                   i18nKey="privacy.sections.rights.p2"
                   ns="legal"
-                  components={{ contact: <a href="mailto:contact@talentai.bid" className="text-primary hover:underline" /> }}
+                  components={{ contact: <NextLink href={`mailto:${CONTACT_EMAIL}`} className="text-primary hover:underline" /> }}
                 />
               </P>
             </Section>
@@ -152,7 +153,7 @@ export default function PrivacyPolicy() {
                 <Trans
                   i18nKey="privacy.sections.security.p1"
                   ns="legal"
-                  components={{ contact: <a href="mailto:contact@talentai.bid" className="text-primary hover:underline" /> }}
+                  components={{ contact: <NextLink href={`mailto:${CONTACT_EMAIL}`} className="text-primary hover:underline" /> }}
                 />
               </P>
             </Section>
@@ -170,7 +171,7 @@ export default function PrivacyPolicy() {
                 <Trans
                   i18nKey="privacy.sections.contact.p1"
                   ns="legal"
-                  components={{ contact: <a href="mailto:contact@talentai.bid" className="text-primary hover:underline" /> }}
+                  components={{ contact: <NextLink href={`mailto:${CONTACT_EMAIL}`} className="text-primary hover:underline" /> }}
                 />
               </P>
             </Section>

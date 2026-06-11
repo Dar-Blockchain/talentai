@@ -5,8 +5,9 @@ import DemoVideoModal  from "./DemoVideoModal";
 import { motion, useInView, useMotionValue, useTransform, animate } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
+import { CALENDLY_URL } from "@/constants";
 
-const CALENDLY      = "https://calendly.com/talent__ai/30min";
+
 const STAT_TARGETS  = [90, 10, 24, 75];
 const STAT_SUFFIXES = ["%", "×", "/7", "%"];
 
@@ -103,7 +104,7 @@ const HeroSection = () => {
                 transition={{ type: "spring", stiffness: 400, damping: 20 }}
               >
                 <Button
-                  onClick={() => window.open(CALENDLY, "_blank")}
+                  onClick={() => window.open(CALENDLY_URL, "_blank")}
                   size="xl"
                   className="rounded-xl shadow-[0_4px_18px_rgba(13,148,136,0.4)] hover:shadow-[0_8px_28px_rgba(13,148,136,0.5)]"
                 >
