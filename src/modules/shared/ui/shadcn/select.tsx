@@ -84,7 +84,7 @@ function SelectContent({
         data-slot="select-content"
         position={position}
         className={cn(
-          "relative z-50 overflow-hidden",
+          "relative z-[1300] overflow-hidden",
           "min-w-[var(--radix-select-trigger-width)] max-h-[var(--radix-select-content-available-height)]",
           "rounded-2xl border border-border/60 bg-popover",
           "shadow-[0_8px_30px_rgba(0,0,0,0.10),_0_2px_8px_rgba(0,0,0,0.06),_0_0_0_1px_rgba(0,0,0,0.04)]",

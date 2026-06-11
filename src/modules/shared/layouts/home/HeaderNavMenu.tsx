@@ -48,11 +48,17 @@ const HeaderNavMenu: React.FC<HeaderNavMenuProps> = ({ direction = "row", invert
 
   const items = getNavItems();
 
+  const HEADER_OFFSET = 96;
+
   const handleNavClick = (item: NavItem) => {
     if (item.id) {
       const el = document.getElementById(item.id);
-      if (el) el.scrollIntoView({ behavior: "smooth" });
-      else if (router.pathname.includes("/home")) router.push(`#${item.id}`);
+      if (el) {
+        const top = el.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET;
+        window.scrollTo({ top, behavior: "smooth" });
+      } else {
+        router.push(`/#${item.id}`);
+      }
     } else if (item.href) {
       router.push(item.href);
     }
@@ -60,7 +66,6 @@ const HeaderNavMenu: React.FC<HeaderNavMenuProps> = ({ direction = "row", invert
 
   const isActive = (item: NavItem) => {
     if (item.href) return router.pathname === item.href;
-    if (item.id && typeof window !== "undefined") return window.location.hash === `#${item.id}`;
     return false;
   };
 
