@@ -48,7 +48,7 @@ export function useVerifyOtp(
         companyMembership: data.companyMembership  ?? null,
       }));
 
-      dispatch(setAuthenticated(data.token));
+      dispatch(setAuthenticated(true));
 
       if (options?.sendWelcome) {
         notificationApi.createNotification("success", notifMessages.welcome()).catch(() => {});

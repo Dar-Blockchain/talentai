@@ -20,7 +20,7 @@ interface FormFieldProps<T extends FieldValues> {
   type?:       string;
   disabled?:   boolean;
   error?:      string;
-  icon:        React.ReactElement;
+  icon:        React.ReactElement<any>;
   /** "half" = 50% on desktop, "full" = always 100% */
   width?:      "half" | "full";
   /** Render as a Select instead of Input */
