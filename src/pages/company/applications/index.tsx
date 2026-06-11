@@ -8,7 +8,7 @@ import EmptyState from "@/components/ui/EmptyState";
 import LoadingState from "@/components/ui/LoadingState";
 import ApplicationMetrics from "@/modules/company/applications/components/ApplicationMetrics";
 import ApplicationCard from "@/modules/company/applications/components/ApplicationCard";
-import ContactCandidateModal, { ContactTarget } from "@/modules/company/posts/details/components/ContactCandidateModal";
+import ContactCandidateModal, { ContactTarget } from "@/modules/company/applications/components/ContactCandidateModal";
 import { AssessmentDetailsModal, AssessmentTarget } from "@/modules/company/assessment/modal";
 import type { ApplicationSummaryItem } from "@/store/slices/jobApplicationSlice";
 import { useApplicationsList } from "@/modules/company/applications/hooks";

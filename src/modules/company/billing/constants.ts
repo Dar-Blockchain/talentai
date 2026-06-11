@@ -3,7 +3,7 @@ import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
 import CancelOutlined      from "@mui/icons-material/CancelOutlined";
 import PendingOutlined     from "@mui/icons-material/PendingOutlined";
 
-export const TEAL = "#0D9488";
+export { TEAL } from "@/modules/company/constants";
 
 export const STATUS_CONFIG: Record<string, { label: string; color: "success" | "error" | "warning" | "default"; icon: React.ReactNode }> = {
   completed: { label: "Completed", color: "success", icon: React.createElement(CheckCircleOutlined, { sx: { fontSize: 14 } }) },

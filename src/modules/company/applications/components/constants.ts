@@ -1,6 +1,8 @@
-export const TEAL        = "#0D9488";
-export const TEAL_BG     = "#F0FDFA";
-export const TEAL_BORDER = "#99F6E4";
+import { TEAL as _TEAL, TEAL_BG as _TEAL_BG, TEAL_BORDER as _TEAL_BORDER } from "@/modules/company/constants";
+
+export const TEAL        = _TEAL;
+export const TEAL_BG     = _TEAL_BG;
+export const TEAL_BORDER = _TEAL_BORDER;
 export const PURPLE      = "#8310FF";
 
 export const AVATAR_COLORS = [TEAL, "#3B82F6", "#8B5CF6", "#F59E0B", "#EC4899"];

@@ -9,9 +9,8 @@ import type { FetchMembersFilters } from "@/store/slices/memberSlice";
 import { useMembersQuery, useDepartmentsQuery } from "@/modules/company/employees/queries";
 import Pagination from "@/components/ui/Pagination";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
-import EmployeesFilterBar from "@/modules/company/employees/components/list/EmployeesFilterBar";
-import { RoleFilter, SortOption } from "@/modules/company/employees/components/list/EmployeesList";
-import { ROLE_LABELS, ROLE_STYLES } from "@/modules/company/employees/components/list/EmployeeCard";
+import { EmployeesFilterBar, ROLE_LABELS, ROLE_STYLES } from "@/modules/company/employees/components/list";
+import type { RoleFilter, SortOption } from "@/modules/company/employees/components/list";
 import { ROLES } from "@/constants/employee";
 
 const PURPLE = "#8310FF";

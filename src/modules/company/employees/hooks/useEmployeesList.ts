@@ -1,17 +1,15 @@
 import { useState, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/router";
-import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
-import { RootState } from "@/store/store";
 import {
   useMembersQuery, useInvitationsQuery, useMemberStatsQuery,
   useDepartmentsQuery, useInviteEmployeeMutation, useUpdateRoleMutation,
-  useRemoveMemberMutation, usePermissionsQuery,
-  useResendInvitationMutation, useCancelInvitationMutation,
+  useRemoveMemberMutation, useResendInvitationMutation, useCancelInvitationMutation,
 } from "../queries";
 import type { ExtendedMember } from "../types";
 import { useToast } from "@/hooks/useToast";
-import type { RoleFilter, SortOption } from "@/modules/company/employees/components/list/EmployeesList";
+import { useRolePermissions } from "./useRolePermissions";
+import type { RoleFilter, SortOption } from "@/modules/company/employees/components/list";
 
 const PAGE_SIZE = 9;
 
@@ -26,24 +24,13 @@ export function useEmployeesList() {
   const router        = useRouter();
   const { showToast } = useToast();
 
-  const user       = useSelector((state: RootState) => state.user.connectedUser.user);
-  const isEmployee = user?.role === "Employee";
+  const { isEmployee, canInvite, canAssignRoles, canRemove, canManagePerms } = useRolePermissions();
 
-  const { data: empPerms }   = usePermissionsQuery(user?._id, isEmployee);
-  const inviteMut            = useInviteEmployeeMutation();
-  const updateRoleMut        = useUpdateRoleMutation();
-  const removeMut            = useRemoveMemberMutation();
-  const resendMut            = useResendInvitationMutation();
-  const cancelMut            = useCancelInvitationMutation();
-
-  if (!isEmployee && empPerms && !empPerms.canManageTeam && !empPerms.canManagePermissions) {
-    void router.replace("/unauthorized");
-  }
-
-  const canInvite      = !isEmployee || !!empPerms?.canInviteMembers;
-  const canAssignRoles = !isEmployee || !!empPerms?.canAssignRoles;
-  const canRemove      = !isEmployee || !!empPerms?.canRemoveEmployee;
-  const canManagePerms = !isEmployee || !!empPerms?.canManagePermissions;
+  const inviteMut   = useInviteEmployeeMutation();
+  const updateRoleMut = useUpdateRoleMutation();
+  const removeMut   = useRemoveMemberMutation();
+  const resendMut   = useResendInvitationMutation();
+  const cancelMut   = useCancelInvitationMutation();
 
   // Modal state
   const [addModalOpen,     setAddModalOpen]     = useState(false);

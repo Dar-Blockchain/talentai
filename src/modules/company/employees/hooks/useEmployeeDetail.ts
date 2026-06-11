@@ -3,27 +3,22 @@ import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import {
-  useMemberQuery, useUpdateRoleMutation, useRemoveMemberMutation, usePermissionsQuery,
+  useMemberQuery, useUpdateRoleMutation, useRemoveMemberMutation,
 } from "../queries";
 import type { ExtendedMember } from "../types";
 import { useToast } from "@/hooks/useToast";
+import { useRolePermissions } from "./useRolePermissions";
 
 export function useEmployeeDetail(id: string | undefined) {
   const router        = useRouter();
   const { showToast } = useToast();
 
-  const user       = useSelector((state: RootState) => state.user.connectedUser.user);
-  const isEmployee = user?.role === "Employee";
-  const isOwner    = user?.role === "Company";
+  const user = useSelector((state: RootState) => state.user.connectedUser.user);
+  const { isEmployee, isOwner, canAssignRoles, canRemove, canManagePerms } = useRolePermissions();
 
-  const { data: empPerms }  = usePermissionsQuery(user?._id, isEmployee);
   const { data: memberRaw, isLoading: loading } = useMemberQuery(id);
   const updateRoleMut = useUpdateRoleMutation();
   const removeMut     = useRemoveMemberMutation();
-
-  const canAssignRoles = !isEmployee || !!empPerms?.canAssignRoles;
-  const canRemove      = !isEmployee || !!empPerms?.canRemoveEmployee;
-  const canManagePerms = !isEmployee || !!empPerms?.canManagePermissions;
 
   const memberData = (memberRaw as any)?.data ?? memberRaw;
   const member     = (memberData as ExtendedMember | null) ?? null;
@@ -77,7 +72,7 @@ export function useEmployeeDetail(id: string | undefined) {
 
   return {
     member, loading,
-    user, isOwner,
+    user, isEmployee, isOwner,
     canAssignRoles, canRemove, canManagePerms,
     editModalOpen,    setEditModalOpen,
     deleteDialogOpen, setDeleteDialogOpen,

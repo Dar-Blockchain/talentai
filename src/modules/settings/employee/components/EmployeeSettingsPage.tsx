@@ -13,7 +13,7 @@ import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
 import CameraAltOutlined from "@mui/icons-material/CameraAltOutlined";
 import CheckOutlined from "@mui/icons-material/CheckOutlined";
-import { ROLE_LABELS, ROLE_STYLES } from "@/modules/company/employees/components/list/EmployeeCard";
+import { ROLE_LABELS, ROLE_STYLES } from "@/modules/company/employees/components/list";
 import { Section, InfoRow, TEAL, useEmployeeSettings } from "@/modules/settings/employee";
 
 const fieldSx = {

@@ -1,6 +1,4 @@
-export const TEAL        = "#0D9488";
-export const TEAL_BG     = "#F0FDFA";
-export const TEAL_BORDER = "#99F6E4";
+export { TEAL, TEAL_BG, TEAL_BORDER } from "@/modules/company/constants";
 
 export const scoreColor = (s: number) =>
   s >= 70 ? "#10B981" : s >= 50 ? "#F59E0B" : "#EF4444";

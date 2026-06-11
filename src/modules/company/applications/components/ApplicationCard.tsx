@@ -6,7 +6,7 @@ import { useRouter } from "next/router";
 import { Avatar, Box, Chip, Paper, Typography } from "@mui/material";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutline";
 import { ApplicationSummaryItem } from "@/store/slices/jobApplicationSlice";
-import { ContactTarget } from "@/modules/company/posts/details/components/ContactCandidateModal";
+import { ContactTarget } from "./ContactCandidateModal";
 import { AssessmentTarget } from "@/modules/company/assessment/modal";
 import { InviteTarget } from "./InviteToInterviewModal";
 import InviteToInterviewModal from "./InviteToInterviewModal";

@@ -11,13 +11,12 @@ import {
   fetchInvitationsByDepartment, cancelInvitation, resendInvitation,
   Member,
 } from "@/store/slices/memberSlice";
-import { RoleFilter, SortOption } from "@/modules/company/employees/components/list/EmployeesList";
-import EmployeesFilterBar   from "@/modules/company/employees/components/list/EmployeesFilterBar";
-import EmployeeCard         from "@/modules/company/employees/components/list/EmployeeCard";
-import EmployeeSkeletonCard from "@/modules/company/employees/components/list/EmployeeSkeletonCard";
-import InvitationCard       from "@/modules/company/employees/components/list/InvitationCard";
-import Pagination           from "@/components/ui/Pagination";
-import { PURPLE, AMBER, GRID } from "@/modules/company/employees/components/list/constants";
+import type { RoleFilter, SortOption } from "@/modules/company/employees/components/list";
+import {
+  EmployeesFilterBar, EmployeeCard, EmployeeSkeletonCard, InvitationCard,
+  PURPLE, AMBER, GRID,
+} from "@/modules/company/employees/components/list";
+import Pagination from "@/components/ui/Pagination";
 import AddEmployeeModal     from "@/modules/company/employees/components/create/AddEmployeeModal";
 import AppButton            from "@/components/ui/AppButton";
 import { useToast }         from "@/hooks/useToast";
