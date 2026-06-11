@@ -14,7 +14,7 @@ const departmentSchema = new mongoose.Schema(
     },
     companyId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",   // departments belong to a user/company
+      ref: "User",
       required: true,
       index: true,
     },
@@ -30,7 +30,7 @@ const departmentSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// unique constraint per company
+// unique department name per company
 departmentSchema.index({ companyId: 1, name: 1 }, { unique: true });
 
 module.exports = mongoose.model("Department", departmentSchema);

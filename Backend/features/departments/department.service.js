@@ -1,14 +1,8 @@
-const Department = require("../models/Departments.model");
-const mongoose = require("mongoose");
+const mongoose  = require("mongoose");
+const Department = require("./department.model");
 
-/**
- * Validate if a string is a valid MongoDB ObjectId
- */
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
-/**
- * Create a new department
- */
 exports.createDepartment = async (departmentData) => {
   try {
     const dept = new Department(departmentData);
@@ -21,13 +15,10 @@ exports.createDepartment = async (departmentData) => {
   }
 };
 
-/**
- * Fetch a department by its ID
- */
 exports.getDepartmentById = async (id) => {
   try {
     if (!isValidObjectId(id)) {
-      const err = new Error(`Invalid department ID format`);
+      const err = new Error("Invalid department ID format");
       err.status = 400;
       throw err;
     }
@@ -37,26 +28,21 @@ exports.getDepartmentById = async (id) => {
   }
 };
 
-/**
- * List departments for a given company
- */
 exports.getDepartmentsByCompany = async (companyId, page = 1, limit = 20, search = "", filters = {}) => {
   try {
-    const pageNum = Math.max(1, parseInt(page) || 1);
+    const pageNum  = Math.max(1, parseInt(page) || 1);
     const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 20));
-    const skip = (pageNum - 1) * limitNum;
+    const skip     = (pageNum - 1) * limitNum;
 
     const query = { companyId, ...filters };
     if (search && typeof search === "string" && search.trim().length > 0) {
       query.name = { $regex: search.trim(), $options: "i" };
     }
 
-    const data = await Department.find(query)
-      .sort({ name: 1 })
-      .skip(skip)
-      .limit(limitNum);
-
-    const total = await Department.countDocuments(query);
+    const [data, total] = await Promise.all([
+      Department.find(query).sort({ name: 1 }).skip(skip).limit(limitNum),
+      Department.countDocuments(query),
+    ]);
 
     return {
       data,
@@ -72,58 +58,45 @@ exports.getDepartmentsByCompany = async (companyId, page = 1, limit = 20, search
   }
 };
 
-/**
- * Update department by ID
- */
 exports.updateDepartment = async (id, updateData) => {
   try {
     if (!isValidObjectId(id)) {
-      const err = new Error(`Invalid department ID format`);
+      const err = new Error("Invalid department ID format");
       err.status = 400;
       throw err;
     }
-    if (updateData.companyId) delete updateData.companyId; // cannot change owner
-    if (updateData.createdBy) delete updateData.createdBy; // cannot modify createdBy
-    const dept = await Department.findByIdAndUpdate(id, updateData, {
-      new: true,
-      runValidators: true,
-    });
-    return dept;
+    delete updateData.companyId; // cannot change owner
+    delete updateData.createdBy; // immutable
+    return await Department.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
   } catch (error) {
     throw new Error(`Error updating department: ${error.message}`);
   }
 };
 
-/**
- * Department stats with 30-day trend
- */
 exports.getDepartmentStats = async (companyId) => {
-  const CompanyMembership = require("../models/CompanyMembership.model");
+  const CompanyMembership = require("../../models/CompanyMembership.model");
 
   const total = await Department.countDocuments({ companyId });
 
   const since = new Date(Date.now() - 29 * 24 * 60 * 60 * 1000);
   since.setHours(0, 0, 0, 0);
+
   const trendRaw = await Department.aggregate([
     { $match: { companyId: new mongoose.Types.ObjectId(companyId), createdAt: { $gte: since } } },
     { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, count: { $sum: 1 } } },
   ]);
-  const trendMap = {};
-  trendRaw.forEach(({ _id, count }) => { trendMap[_id] = count; });
-  const trend = [];
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    trend.push({ date: d, count: trendMap[d] || 0 });
-  }
+  const trendMap = Object.fromEntries(trendRaw.map(({ _id, count }) => [_id, count]));
+  const trend = Array.from({ length: 30 }, (_, i) => {
+    const d = new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    return { date: d, count: trendMap[d] || 0 };
+  });
 
-  // Members per department (top 8)
   const depts = await Department.find({ companyId }).select("_id name").lean();
   const memberCounts = await CompanyMembership.aggregate([
     { $match: { company: new mongoose.Types.ObjectId(companyId), department: { $ne: null } } },
     { $group: { _id: "$department", count: { $sum: 1 } } },
   ]);
-  const countMap = {};
-  memberCounts.forEach(({ _id, count }) => { countMap[_id.toString()] = count; });
+  const countMap = Object.fromEntries(memberCounts.map(({ _id, count }) => [_id.toString(), count]));
   const byDepartment = depts
     .map((d) => ({ name: d.name.length > 16 ? d.name.slice(0, 16) + "…" : d.name, members: countMap[d._id.toString()] || 0 }))
     .sort((a, b) => b.members - a.members)
@@ -132,13 +105,10 @@ exports.getDepartmentStats = async (companyId) => {
   return { total, trend, byDepartment };
 };
 
-/**
- * Delete department
- */
 exports.deleteDepartment = async (id) => {
   try {
     if (!isValidObjectId(id)) {
-      const err = new Error(`Invalid department ID format`);
+      const err = new Error("Invalid department ID format");
       err.status = 400;
       throw err;
     }
