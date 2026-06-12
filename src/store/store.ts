@@ -10,7 +10,6 @@ import {
   REGISTER
 } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
-import authReducer from './slices/authSlice';
 import userReducer from './slices/userSlice';
 import postReducer from './slices/postSlice';
 import candidateReducer from './slices/candidateSlice';
@@ -33,7 +32,6 @@ import postDetailsReducer from '../modules/company/posts/details/store/postSlice
 
 const rootReducer = combineReducers({
   user: userReducer,
-  auth: authReducer,
   post: postReducer,
   candidate: candidateReducer,
   postGeneration: postGenerationReducer,
@@ -57,7 +55,7 @@ const rootReducer = combineReducers({
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['auth', 'user', 'planLimits']
+  whitelist: ['user', 'planLimits']
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

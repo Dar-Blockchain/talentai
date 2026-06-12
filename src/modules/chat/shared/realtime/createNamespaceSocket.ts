@@ -1,7 +1,5 @@
 import { io, Socket } from "socket.io-client";
-
-const getAuthToken = () =>
-  localStorage.getItem("api_token") || localStorage.getItem("token") || "";
+import { getToken } from "@/utils/tokenUtils";
 
 export interface ChatNamespaceSocketConfig {
   namespacePath: string;
@@ -32,7 +30,7 @@ export const createNamespaceSocket = ({ namespacePath }: ChatNamespaceSocketConf
   };
 
   const connect = (userId: string) => {
-    const token = getAuthToken();
+    const token = getToken();
     if (!userId || !token) return null;
 
     if (socket && connectedUserId === userId) {

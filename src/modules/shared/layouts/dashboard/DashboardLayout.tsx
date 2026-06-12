@@ -2,8 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from "react";
 import { Box, useTheme, useMediaQuery, Modal, CircularProgress, Typography } from "@mui/material";
-import { useSelector } from "react-redux";
-import { isLoggingOutCheck } from "@/store/slices/authSlice";
+import { useAuthContext } from "@/modules/auth/shared/context/AuthContext";
 import { useTranslation } from "react-i18next";
 import Sidebar from "./DashboardSidebar";
 import Header from "./DashboardHeader";
@@ -39,7 +38,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const { t } = useTranslation("auth");
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const isLoggingOut = useSelector(isLoggingOutCheck);
+  const { isLoggingOut } = useAuthContext();
   const router = useRouter();
 
   useEffect(() => {

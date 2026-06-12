@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import { useRouter } from 'next/router';
 import { AppDispatch } from '@/store/store';
+import { useAuthContext } from '@/modules/auth/shared/context/AuthContext';
 import {
   Box,
   Typography,
@@ -10,7 +11,6 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { Menu as MenuIcon } from '@mui/icons-material';
-import { logout } from '@/store/slices/authSlice';
 import { saveCompanyPermissions } from '@/store/slices/adminSlice';
 import AdminSidebar from '@/components/features/admin/AdminSidebar';
 import AdminDashboardHome from '@/components/features/admin/AdminDashboardHome';
@@ -64,6 +64,7 @@ const DashboardAdmin = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
+  const { logout } = useAuthContext();
 
   const [drawerOpen, setDrawerOpen] = useState(!isMobile);
 
@@ -83,11 +84,11 @@ const DashboardAdmin = () => {
 
   const handleLogout = useCallback(async () => {
     try {
-      await dispatch(logout()).unwrap();
+      await logout();
     } catch (error) {
       console.error("Logout failed:", error);
     }
-  }, [dispatch]);
+  }, [logout]);
 
   const handleSavePermissions = async (companyId: string, permissions: CompanyPermissions) => {
     await dispatch(saveCompanyPermissions({ companyId, permissions })).unwrap();

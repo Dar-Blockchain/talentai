@@ -1,74 +1,66 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
 import Image from "next/image";
 import NextLink from "next/link";
 import { useTranslation } from "react-i18next";
-import { useMediaQuery } from "@mui/material";
-import { ACCENT } from "@/modules/auth/shared/types";
+import { cn } from "@/lib/utils";
 
 interface Props {
-  children: React.ReactNode;
-  /** i18n key prefix for footer terms text, e.g. "register_panel" */
-  footerTKey?: string;
+  children:       React.ReactNode;
+  footerTKey?:    string;
+  maxWidthClass?: string;
 }
 
-/**
- * Shared right-side panel used by both Register and Signin.
- * Handles: mobile logo, card wrapper, teal top bar, optional terms footer.
- */
-const AuthRightPanel: React.FC<Props> = ({ children, footerTKey }) => {
+const AuthRightPanel: React.FC<Props> = ({ children, footerTKey, maxWidthClass = "max-w-sm sm:max-w-md lg:max-w-lg" }) => {
   const { t } = useTranslation("auth");
-  const isSplit = useMediaQuery("(min-width:1025px)", { noSsr: true });
 
   return (
-    <Box sx={{ flex: 1, overflowY: "auto", background: "#F7F8FA", position: "relative" }}>
-      {/* Subtle radial glow */}
-      <Box sx={{ position: "absolute", inset: 0, pointerEvents: "none", background: "radial-gradient(ellipse 80% 40% at 50% 100%, rgba(13,148,136,0.05) 0%, transparent 60%)" }} />
+    <div className="flex-1 min-h-0 overflow-y-auto relative z-10">
+      <div className="min-h-full flex flex-col items-center justify-center px-3 sm:px-6 lg:px-10 py-6 sm:py-8 lg:py-10">
 
-      <Box sx={{
-        minHeight: "100dvh", display: "flex", flexDirection: "column",
-        alignItems: "center", justifyContent: "center",
-        px: { xs: 2, sm: 3, md: 4, lg: 5 }, py: { xs: 3, sm: 4 },
-        position: "relative", zIndex: 1,
-      }}>
-        {/* Mobile logo — only visible when left panel is hidden */}
-        {!isSplit && (
-          <Box sx={{ display: "flex", justifyContent: "center", flexShrink: 0, pt: { xs: 1.5, sm: 2 }, mb: { xs: 1.25, sm: 1.75 } }}>
-            <NextLink href="/" style={{ textDecoration: "none" }}>
-              <Image src="/images/home/logo.svg" alt="TalentAI" width={140} height={38} style={{ objectFit: "contain" }} />
-            </NextLink>
-          </Box>
-        )}
+        {/* Mobile logo */}
+        <div className="md:hidden flex justify-center shrink-0 mb-5">
+          <NextLink href="/">
+            <Image
+              src="/images/home/logo.svg"
+              alt="TalentAI"
+              width={130}
+              height={36}
+              style={{ objectFit: "contain" }}
+            />
+          </NextLink>
+        </div>
 
-        <Box sx={{ width: "100%", maxWidth: { xs: 480, sm: 560, md: 600, lg: 640 }, flexShrink: 0 }}>
+        <div className={cn("w-full shrink-0", maxWidthClass)}>
           {/* Card */}
-          <Box sx={{
-            bgcolor: "#fff",
-            borderRadius: { xs: "18px", md: "20px" },
-            boxShadow: "0 0 0 1px rgba(0,0,0,0.06), 0 4px 6px -1px rgba(0,0,0,0.04), 0 12px 40px -4px rgba(0,0,0,0.06)",
-            overflow: "hidden",
+          <div style={{
+            backgroundColor: "#ffffff",
+            borderRadius:     20,
+            overflow:         "hidden",
+            border:           "1px solid rgba(16,69,63,0.1)",
+            boxShadow:        "0 4px 6px rgba(16,69,63,0.04), 0 16px 48px rgba(16,69,63,0.1), 0 2px 8px rgba(0,0,0,0.04)",
           }}>
-            <Box sx={{ height: 2, bgcolor: ACCENT }} />
-            <Box sx={{
-              minHeight: "50dvh", display: "flex", flexDirection: "column", justifyContent: "center",
-              px: { xs: 3, sm: 4, md: 4.5 }, pt: { xs: 3, sm: 3.5 }, pb: { xs: 3, sm: 3.5 },
-            }}>
+            {/* Top accent bar */}
+            <div style={{
+              height:     3,
+              background: "linear-gradient(to right, #10453F, #6AD39C, #52e899)",
+            }} />
+            <div className="px-4 sm:px-7 lg:px-9 pt-5 sm:pt-7 lg:pt-8 pb-6 sm:pb-8 lg:pb-9">
               {children}
-            </Box>
-          </Box>
+            </div>
+          </div>
 
-          {/* Terms footer — optional */}
+          {/* Terms footer */}
           {footerTKey && (
-            <Typography sx={{ mt: { xs: 1.5, sm: 2 }, fontSize: { xs: "10.25px", sm: "10.875px", md: "11.5px" }, color: "#9CA3AF", fontFamily: "Poppins", textAlign: "center", lineHeight: 1.75, px: { xs: 0.5, md: 0 }, overflowWrap: "break-word" }}>
+            <p className="mt-5 text-[11px] text-muted-foreground font-sans text-center leading-relaxed px-2 wrap-break-word">
               {t(`${footerTKey}.footer_prefix`)}{" "}
-              <NextLink href="/terms"   style={{ color: ACCENT, textDecoration: "none", fontWeight: 600 }}>{t(`${footerTKey}.terms`)}</NextLink>
+              <NextLink href="/terms"   className="font-semibold text-primary no-underline hover:underline">{t(`${footerTKey}.terms`)}</NextLink>
               {" "}{t(`${footerTKey}.footer_and`)}{" "}
-              <NextLink href="/privacy" style={{ color: ACCENT, textDecoration: "none", fontWeight: 600 }}>{t(`${footerTKey}.privacy`)}</NextLink>
-            </Typography>
+              <NextLink href="/privacy" className="font-semibold text-primary no-underline hover:underline">{t(`${footerTKey}.privacy`)}</NextLink>
+            </p>
           )}
-        </Box>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 };
 

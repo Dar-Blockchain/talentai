@@ -2,9 +2,8 @@
 
 import React, { useState } from "react";
 import { Box, Drawer, Modal, CircularProgress, Typography } from "@mui/material";
-import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
-import { isLoggingOutCheck } from "@/store/slices/authSlice";
+import { useAuthContext } from "@/modules/auth/shared/context/AuthContext";
 import Header from "@/modules/shared/layouts/dashboard/DashboardHeader";
 import CandidateQuickNav from "@/modules/shared/layouts/candidate/CandidateQuickNav";
 
@@ -23,7 +22,7 @@ const CandidateWorkspaceLayout: React.FC<CandidateWorkspaceLayoutProps> = ({
   fillHeight = false,
 }) => {
   const { t } = useTranslation("auth");
-  const isLoggingOut = useSelector(isLoggingOutCheck);
+  const { isLoggingOut } = useAuthContext();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (

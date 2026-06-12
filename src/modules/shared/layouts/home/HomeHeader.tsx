@@ -2,6 +2,7 @@
 import React, { useMemo, useEffect, useState, useRef, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
+import { useAuthContext } from "@/modules/auth/shared/context/AuthContext";
 import { getToken } from "@/utils/tokenUtils";
 import HeaderLogo from "@/modules/shared/layouts/home/HeaderLogo";
 import HeaderNotification from "@/modules/notifications/shared/components/HeaderNotification";
@@ -19,7 +20,7 @@ const Header = () => {
   const router    = useRouter();
   const socketRef = useRef<Socket | null>(null);
   const [scrolled, setScrolled] = useState(false);
-  const isAuthRedux   = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const { isAuthenticated: isAuthContext } = useAuthContext();
   const connectedUser = useSelector((state: RootState) => state.user?.connectedUser?.user);
   const userId        = connectedUser?._id;
   const isCandidate   = connectedUser?.role?.toLowerCase() === "candidate";
@@ -29,8 +30,8 @@ const Header = () => {
   const [hasToken, setHasToken] = useState(false);
   useEffect(() => {
     setHasToken(!!getToken());
-  }, [isAuthRedux]);
-  const isAuthenticated = isAuthRedux || hasToken;
+  }, [isAuthContext]);
+  const isAuthenticated = isAuthContext || hasToken;
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
 
   const landingLikePaths = useMemo(
@@ -53,7 +54,7 @@ const Header = () => {
     if (!isAuthenticated) return;
     (async () => {
       try {
-        const token = localStorage.getItem("token");
+        const token = getToken();
         if (!token) return;
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}chat/conversations/unread-count`,
@@ -69,7 +70,7 @@ const Header = () => {
 
   useEffect(() => {
     if (!userId || !isAuthenticated) return;
-    const token = localStorage.getItem("token");
+    const token = getToken();
     if (!token) return;
     const socket = io(
       `${process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "")}/chat`,

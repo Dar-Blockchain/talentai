@@ -1,5 +1,6 @@
 import i18n, { type InitOptions } from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import { getToken } from '@/utils/tokenUtils';
 
 // ── EN ──────────────────────────────────────────────
 import enCommon     from '../../public/locales/en/shared/common.json';
@@ -92,10 +93,7 @@ function mergeDashboardPageBundles<D extends { pages: Record<string, unknown> }>
 function getInitialLanguage(): string {
   if (typeof window === 'undefined') return 'en';
 
-  const hasToken = !!(
-    localStorage.getItem('api_token') ||
-    localStorage.getItem('token')
-  );
+  const hasToken = !!getToken();
   if (!hasToken) return 'en';
 
   // Try to read from persisted Redux state (fastest — already in localStorage)

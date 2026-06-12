@@ -6,6 +6,7 @@ import { io, Socket } from "socket.io-client";
 import { RootState, AppDispatch } from "@/store/store";
 import { useToast } from "@/hooks/useToast";
 import { deliveryBlockedToastMessage } from "@/modules/chat/shared";
+import { getToken } from "@/utils/tokenUtils";
 import {
   fetchConversations,
   fetchConversation,
@@ -87,7 +88,7 @@ export const useChatSession = ({
   // ── Socket — one connection per session ─────────────────
   useEffect(() => {
     if (!currentUserId) return;
-    const token = localStorage.getItem("token");
+    const token = getToken();
     if (!token) return;
 
     const socket = io(

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { getToken } from '@/utils/tokenUtils';
 import { CandidateProgress } from '../types/postInterview';
 import {
   fetchCandidateProgress as fetchProgressAPI,
@@ -19,7 +20,7 @@ export const useCandidateProgress = () => {
       setProgressLoading(true);
       setProgressError(null);
 
-      const token = localStorage.getItem('api_token');
+      const token = getToken();
       if (!token) {
         throw new Error('No authentication token found');
       }

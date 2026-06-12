@@ -1,7 +1,5 @@
-import { useState } from "react";
-import { Box } from "@mui/material";
-import PersonOutlined from "@mui/icons-material/PersonOutlined";
-import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
+import React, { useState } from "react";
+import { Building2, User } from "lucide-react";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import RegisterContainer from "../layout/RegisterContainer";
@@ -14,29 +12,39 @@ import FormHeader from "../ui/FormHeader";
 
 type UserType = "candidate" | "company";
 
-// Static config — no i18n keys, just visual/structural data
-const ROLE_CONFIG = [
+interface RoleConfig {
+  type:         UserType;
+  icon:         React.ReactNode;
+  tLabel:       string;
+  tDesc:        string;
+  accent:       string;
+  iconGradient: string;
+  shadowColor:  string;
+  border:       string;
+}
+
+const ROLE_CONFIG: RoleConfig[] = [
   {
-    type: "company" as UserType,
-    icon: BusinessOutlined,
-    tLabel: "register.company_label",
-    tDesc:  "register.company_desc",
-    accent: "#0D9488",
+    type:         "company",
+    icon:         <Building2 className="size-5 sm:size-6 text-white" />,
+    tLabel:       "register.company_label",
+    tDesc:        "register.company_desc",
+    accent:       "#0D9488",
     iconGradient: "linear-gradient(135deg, #0D9488 0%, #059669 100%)",
-    shadowColor: "rgba(13,148,136,0.22)",
-    border: "rgba(13,148,136,0.14)",
+    shadowColor:  "rgba(13,148,136,0.22)",
+    border:       "rgba(13,148,136,0.14)",
   },
   {
-    type: "candidate" as UserType,
-    icon: PersonOutlined,
-    tLabel: "register.candidate_label",
-    tDesc:  "register.candidate_desc",
-    accent: "#7C3AED",
+    type:         "candidate",
+    icon:         <User className="size-5 sm:size-6 text-white" />,
+    tLabel:       "register.candidate_label",
+    tDesc:        "register.candidate_desc",
+    accent:       "#7C3AED",
     iconGradient: "linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)",
-    shadowColor: "rgba(124,58,237,0.2)",
-    border: "rgba(124,58,237,0.14)",
+    shadowColor:  "rgba(124,58,237,0.2)",
+    border:       "rgba(124,58,237,0.14)",
   },
-] as const;
+];
 
 const FORM_TITLE_KEYS: Record<UserType, { title: string; subtitle: string }> = {
   company:   { title: "register.company_title",   subtitle: "register.company_subtitle"   },
@@ -62,7 +70,7 @@ const RegisterPage = () => {
       {!userType ? (
         <>
           <RoleSelectHeader />
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mb: 3.5 }}>
+          <div className="flex flex-col gap-3 sm:gap-4 mb-5 sm:mb-6">
             {ROLE_CONFIG.map((role) => (
               <RoleCard
                 key={role.type}
@@ -76,7 +84,7 @@ const RegisterPage = () => {
                 onClick={() => setUserType(role.type)}
               />
             ))}
-          </Box>
+          </div>
           <SignInLink returnUrl={returnUrl} label={t("register.already_account")} />
         </>
       ) : (

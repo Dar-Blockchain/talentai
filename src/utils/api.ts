@@ -1,3 +1,5 @@
+import { getToken } from '@/utils/tokenUtils';
+
 /**
  * API Utility functions for making backend calls
  */
@@ -12,7 +14,7 @@
 export const regenerateText = async (text: string, token?: string, block: string = 'bio'): Promise<string | null> => {
   try {
     // Try to get token from localStorage first, then use provided token as fallback
-    const authToken = localStorage.getItem('api_token') || token;
+    const authToken = getToken() || token;
     
     if (!authToken) {
       console.error('No authentication token found');

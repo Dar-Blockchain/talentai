@@ -21,7 +21,7 @@ import TeamChatRealtimeBridge from "@/modules/chat/team-chat/components/TeamChat
 import CandidateChatRealtimeBridge from "@/modules/chat/candidate-chat/components/CandidateChatRealtimeBridge";
 import ChatUnreadSyncBridge from "@/modules/chat/shared/components/ChatUnreadSyncBridge";
 import LoadingScreen from "@/components/ui/LoadingScreen";
-import { isLoggingOutCheck, clearAuth, logout } from "@/store/slices/authSlice";
+import { AuthProvider, useAuthContext } from "@/modules/auth/shared/context/AuthContext";
 import { clearConnectedUser, getMyProfile } from "@/store/slices/userSlice";
 import { getToken } from "@/utils/tokenUtils";
 import { setToastHandler } from "@/utils/toastEmitter";
@@ -60,7 +60,7 @@ function MuiThemeSync({ children }: { children: React.ReactNode }) {
 
 function DbLanguageSync() {
   const user = useSelector((state: RootState) => state.user.connectedUser.user);
-  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const { isAuthenticated } = useAuthContext();
   const { i18n } = useTranslation();
 
   useEffect(() => {
@@ -87,13 +87,12 @@ function DbLanguageSync() {
 
 function AuthWrapper({ children }: { children: React.ReactNode }) {
   const { user } = useSelector((state: RootState) => state.user.connectedUser);
-  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const dispatch = useDispatch<typeof store.dispatch>();
   const router = useRouter();
   const { t } = useTranslation('auth');
 
   const userId = user?._id;
-  const isLoggingOut = useSelector(isLoggingOutCheck);
+  const { isAuthenticated, isLoggingOut, logout, clearAuth } = useAuthContext();
 
   // If a token exists but connectedUser is empty (e.g. after hard reload before persist rehydrates),
   // fetch the profile so the header shows the correct name immediately.
@@ -106,7 +105,7 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
   // Force logout when middleware detected an invalid/role-less token
   useEffect(() => {
     if (router.query.force_logout !== "1") return;
-    dispatch(logout()).finally(() => {
+    logout().finally(() => {
       persistor.purge();
       router.replace("/signin");
     });
@@ -118,7 +117,7 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
 
     const syncAuthFromStorage = () => {
       if (!getToken() && isAuthenticated) {
-        dispatch(clearAuth());
+        clearAuth();
         dispatch(clearConnectedUser());
       }
     };
@@ -139,7 +138,7 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
       window.removeEventListener("focus", syncAuthFromStorage);
       document.removeEventListener("visibilitychange", syncAuthFromStorage);
     };
-  }, [dispatch, isAuthenticated]);
+  }, [isAuthenticated]);
 
   return (
     <NotificationProvider userId={userId}>
@@ -183,6 +182,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <PersistGate loading={<LoadingScreen />} persistor={persistor}>
         <ThemeProvider>
         <ReactQueryProvider>
+        <AuthProvider>
         <MuiThemeSync>
           <Head>
             <title>TalentAI | AI Recruitment Platform — Hire 75% Faster with Conversational AI Agents</title>
@@ -204,6 +204,7 @@ export default function App({ Component, pageProps }: AppProps) {
             </ToastProvider>
           </main>
         </MuiThemeSync>
+        </AuthProvider>
         </ReactQueryProvider>
         </ThemeProvider>
       </PersistGate>
@@ -213,6 +214,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
 function MuiToastWrapper() {
   const { open, toastOptions, closeToast, showToast } = useToast();
+  const { clearAuth } = useAuthContext();
 
   useEffect(() => {
     setToastHandler(showToast);
@@ -220,11 +222,11 @@ function MuiToastWrapper() {
 
   useEffect(() => {
     setSessionExpiredHandler(() => {
-      store.dispatch(clearAuth());
+      clearAuth();
       store.dispatch(clearConnectedUser());
       persistor.purge();
     });
-  }, []);
+  }, [clearAuth]);
 
   return (
     <MuiToast

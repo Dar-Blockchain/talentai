@@ -2,8 +2,7 @@
 
 import React from "react";
 import { Box, Modal, CircularProgress, Typography } from "@mui/material";
-import { useSelector } from "react-redux";
-import { isLoggingOutCheck } from "@/store/slices/authSlice";
+import { useAuthContext } from "@/modules/auth/shared/context/AuthContext";
 import { useTranslation } from "react-i18next";
 import Header from "./DashboardHeader";
 
@@ -15,7 +14,7 @@ const HEADER_HEIGHT = 64;
 
 const ChatLayout: React.FC<ChatLayoutProps> = ({ children }) => {
   const { t } = useTranslation("auth");
-  const isLoggingOut = useSelector(isLoggingOutCheck);
+  const { isLoggingOut } = useAuthContext();
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>

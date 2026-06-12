@@ -1,24 +1,14 @@
 import { useRef } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useDispatch } from "react-redux";
-import Cookies from "js-cookie";
 import type { AppDispatch } from "@/store/store";
 import { setConnectedUser } from "@/store/slices/userSlice";
-import { setAuthenticated } from "@/store/slices/authSlice";
+import { useAuthContext } from "@/modules/auth/shared/context/AuthContext";
+import { persistSession } from "@/modules/auth/shared/utils";
 import { notificationApi } from "@/modules/notifications/shared/api";
 import { notifMessages } from "@/modules/notifications/shared/i18n";
 import { authApi } from "../api";
 import type { VerifyOtpPayload, VerifyOtpResponse } from "../types";
-
-const TOKEN_KEY      = "api_token";
-const ROLE_KEY       = "user_role";
-const COOKIE_OPTIONS = { expires: 30, path: "/", sameSite: "strict" } as const;
-
-function persistSession(token: string, role: string): void {
-  // Cookie only — no localStorage (XSS risk)
-  Cookies.set(TOKEN_KEY, token, COOKIE_OPTIONS);
-  Cookies.set(ROLE_KEY,  role,  COOKIE_OPTIONS);
-}
 
 interface UseVerifyOtpOptions {
   sendWelcome?: boolean;
@@ -28,10 +18,10 @@ export function useVerifyOtp(
   onSuccess?: (data: VerifyOtpResponse) => void,
   options?: UseVerifyOtpOptions,
 ) {
-  const dispatch     = useDispatch<AppDispatch>();
-  const queryClient  = useQueryClient();
+  const dispatch = useDispatch<AppDispatch>();
+  const { login } = useAuthContext();
 
-  // Stable ref — changing onSuccess never recreates the mutation object
+  // Stable ref so changing onSuccess never recreates the mutation object.
   const onSuccessRef = useRef(onSuccess);
   onSuccessRef.current = onSuccess;
 
@@ -48,14 +38,11 @@ export function useVerifyOtp(
         companyMembership: data.companyMembership  ?? null,
       }));
 
-      dispatch(setAuthenticated(true));
+      login();
 
       if (options?.sendWelcome) {
         notificationApi.createNotification("success", notifMessages.welcome()).catch(() => {});
       }
-
-      // Clear stale cache from any previous session before navigating
-      queryClient.clear();
 
       onSuccessRef.current?.(data);
     },

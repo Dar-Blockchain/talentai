@@ -1,5 +1,5 @@
 import axios from 'axios';
-import Cookies from 'js-cookie';
+import { getToken } from '@/utils/tokenUtils';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -8,7 +8,7 @@ const isMongoObjectId = (id?: string | null): boolean =>
 
 export const feedbackService = {
   submitFeedback: async (payload: { rating: number; comment: string; interviewId?: string }) => {
-    const token = localStorage.getItem('api_token') || Cookies.get('api_token');
+    const token = getToken();
     const body: { rating: number; comment: string; interviewId?: string } = {
       rating: payload.rating,
       comment: payload.comment,

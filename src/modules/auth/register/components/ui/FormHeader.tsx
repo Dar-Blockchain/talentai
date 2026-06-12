@@ -1,8 +1,6 @@
 import React from "react";
-import { Box } from "@mui/material";
-import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
+import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { ACCENT } from "@/modules/auth/shared/types";
 import { AuthPageHeader, AccentSpan } from "@/modules/auth/shared/ui/AuthPageHeader";
 
 interface Props {
@@ -26,10 +24,14 @@ const FormHeader: React.FC<Props> = ({ isOtpStep, hasReturnUrl, title, subtitle,
           : subtitle
       }
       above={!isOtpStep && !hasReturnUrl ? (
-        <Box onClick={onBack} sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, mb: 1, cursor: "pointer", color: "#9CA3AF", fontFamily: "Poppins", fontSize: { xs: "0.72rem", sm: "0.76rem", md: "0.8rem" }, fontWeight: 500, "&:hover": { color: ACCENT }, transition: "color 0.2s" }}>
-          <ArrowForwardOutlined sx={{ fontSize: { xs: 14, md: 15 }, transform: "rotate(180deg)", flexShrink: 0 }} />
+        <button
+          type="button"
+          onClick={onBack}
+          className="inline-flex items-center gap-1 mb-2 cursor-pointer text-muted-foreground font-sans text-xs sm:text-sm font-medium hover:text-primary transition-colors duration-200"
+        >
+          <ArrowLeft className="size-3.5 shrink-0" />
           {t("register.change_role")}
-        </Box>
+        </button>
       ) : undefined}
     />
   );

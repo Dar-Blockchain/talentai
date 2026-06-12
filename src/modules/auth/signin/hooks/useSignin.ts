@@ -1,26 +1,19 @@
 import { useEffect, useMemo } from "react";
 import { useRouter } from "next/router";
 import { useForm, useWatch } from "react-hook-form";
-import { useDispatch } from "react-redux";
 import { useToast } from "@/hooks/useToast";
-import { fetchEmployeePermissions } from "@/store/slices/memberSlice";
-import type { AppDispatch } from "@/store/store";
-import { useOtpFlow } from "@/modules/auth/shared/hooks";
-import { extractInvitationEmail, resolveRedirectPath } from "@/modules/auth/shared/utils";
-import { useSendSigninCode, useVerifySigninOtp } from "../queries";
-import { OTP_STORAGE_KEY } from "../utils";
-import type { SigninFormValues, SigninStep } from "../types";
-import { useState } from "react";
+import { extractInvitationEmail } from "@/modules/auth/shared/utils";
+import { OTP_TTL } from "@/modules/auth/shared/types";
+import { useSendSigninCode } from "../queries";
+import { OTP_STORAGE_KEY, SIGNIN_EMAIL_KEY } from "../utils";
+import type { SigninFormValues } from "../types";
 
 export function useSignin() {
   const router        = useRouter();
-  const dispatch      = useDispatch<AppDispatch>();
   const { showToast } = useToast();
   const returnUrl     = router.query.returnUrl as string | undefined;
 
   const invitationEmail = useMemo(() => extractInvitationEmail(returnUrl), [returnUrl]);
-
-  const [step, setStep] = useState<SigninStep>(1);
 
   const form = useForm<SigninFormValues>({
     defaultValues: { email: "", code: "" },
@@ -31,54 +24,23 @@ export function useSignin() {
 
   useEffect(() => { if (invitationEmail) form.setValue("email", invitationEmail); }, [invitationEmail]);
 
-  const sendMutation   = useSendSigninCode();
-  const verifyMutation = useVerifySigninOtp(async (data) => {
-    if (data.user?.role === "Employee" && data.user?._id) {
-      await dispatch(fetchEmployeePermissions(data.user._id));
-    }
-    router.replace(resolveRedirectPath(data.user?.role, data.profile?._id, returnUrl));
-  });
+  const sendMutation = useSendSigninCode();
+  const loading      = sendMutation.isPending;
 
-  const { timer, otp, verifyCode, cleanup, verifyLoading } = useOtpFlow({
-    storageKey:    OTP_STORAGE_KEY,
-    verifyMutation,
-  });
-
-  const loading = sendMutation.isPending || verifyLoading;
-
-  useEffect(() => () => cleanup(), []);
-
-  const sendCode = async (email: string) => {
+  const onSubmit = async (data: SigninFormValues) => {
+    const email = data.email.toLowerCase().trim();
     try {
-      await sendMutation.mutateAsync({ email: email.toLowerCase().trim() });
-      timer.start();
-      setStep(2);
+      await sendMutation.mutateAsync({ email });
+      // Persist timer expiry so the OTP page restores it via localStorage
+      localStorage.setItem(OTP_STORAGE_KEY, (Date.now() + OTP_TTL * 1000).toString());
+      sessionStorage.setItem(SIGNIN_EMAIL_KEY, email);
+      const dest = `/signin/otp${returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl)}` : ""}`;
+      router.push(dest);
     } catch (err: any) {
       if (err?.name !== "AbortError")
         showToast({ message: err?.message ?? "Sign in failed. Please try again.", severity: "error" });
     }
   };
 
-  const onSubmit = (data: SigninFormValues) => {
-    const email = data.email.toLowerCase().trim();
-    if (step === 1) sendCode(email);
-    else verifyCode(email);
-  };
-
-  const resendCode = () => {
-    otp.reset();
-    sendCode(form.getValues("email"));
-  };
-
-  const changeEmail = () => {
-    timer.clear();
-    otp.reset();
-    setStep(1);
-  };
-
-  return {
-    form, step, loading,
-    emailValue, otp, invitationEmail, timer,
-    onSubmit, resendCode, changeEmail,
-  };
+  return { form, loading, emailValue, invitationEmail, onSubmit };
 }

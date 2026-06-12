@@ -1,9 +1,9 @@
 "use client";
 import React, { useState, useMemo, useCallback } from "react";
 import { ChevronDown } from "lucide-react";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "@/store/store";
-import { logout } from "@/store/slices/authSlice";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
+import { useAuthContext } from "@/modules/auth/shared/context/AuthContext";
 import { useRouter } from "next/router";
 import {
   DropdownMenu,
@@ -23,8 +23,8 @@ interface UserAvatarProps {
 }
 
 const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
-  const router   = useRouter();
-  const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
+  const { logout } = useAuthContext();
 
   const [open,       setOpen]       = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -71,9 +71,9 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
 
   const handleLogout = useCallback(async () => {
     setLoggingOut(true);
-    try { await dispatch(logout()).unwrap(); } catch {}
+    try { await logout(); } catch {}
     router.push("/signin");
-  }, [dispatch, router]);
+  }, [logout, router]);
 
   const goToDashboard = useCallback(() => {
     if (isAdmin)         router.push("/admin/dashboard");

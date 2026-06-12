@@ -1,5 +1,4 @@
 import React from "react";
-import { Box } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { useCandidateRegister } from "../../hooks";
 import CandidateFields from "../fields/CandidateFields";
@@ -8,8 +7,6 @@ import CvAnalysisDialog from "../cv/CvAnalysisDialog";
 import AppOtpVerifyStep from "@/modules/shared/ui/AppOtpVerifyStep";
 import SubmitButton from "../ui/SubmitButton";
 import type { RegisterFormProps } from "../../types";
-
-const full = { flex: "1 1 100%" };
 
 const CandidateRegisterForm: React.FC<RegisterFormProps> = ({ onStepChange, onEmailChange }) => {
   const { t } = useTranslation("auth");
@@ -30,9 +27,10 @@ const CandidateRegisterForm: React.FC<RegisterFormProps> = ({ onStepChange, onEm
   );
 
   return (
-    <Box>
-      <Box component="form" onSubmit={form.handleSubmit(sendCode)}
-        sx={{ mb: 2, textAlign: "left", display: "flex", flexWrap: "wrap", gap: { xs: 2.25, sm: 2.75, md: 3 } }}
+    <div>
+      <form
+        onSubmit={form.handleSubmit(sendCode)}
+        className="mb-4 text-left grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5"
       >
         <CandidateFields
           control={form.control}
@@ -42,28 +40,28 @@ const CandidateRegisterForm: React.FC<RegisterFormProps> = ({ onStepChange, onEm
         />
 
         {!isJoinTeam && (
-          <Box sx={full}>
+          <div className="col-span-full">
             <CvUpload
               fileInputRef={fileInputRef}
               cvFile={cvFile} cvError={cvError} isDragging={isDragging}
               onFileChange={(f) => { setCvFile(f); if (f) setCvError(false); }}
               onDragChange={setIsDragging}
             />
-          </Box>
+          </div>
         )}
 
-        <Box sx={full}>
+        <div className="col-span-full">
           <SubmitButton
             loading={loading}
             label={t("candidate_form.btn_continue")}
             loadingLabel={t("candidate_form.btn_sending")}
             onClick={() => { if (!isJoinTeam && !cvFile) setCvError(true); }}
           />
-        </Box>
-      </Box>
+        </div>
+      </form>
 
       <CvAnalysisDialog open={analyzingCv} progress={cvProgress} />
-    </Box>
+    </div>
   );
 };
 

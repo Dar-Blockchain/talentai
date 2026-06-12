@@ -1,9 +1,7 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
-import UploadFileIcon from "@mui/icons-material/UploadFile";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import { UploadCloud, CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { ACCENT } from "@/modules/auth/shared/types";
+import { cn } from "@/lib/utils";
 
 interface Props {
   fileInputRef: React.RefObject<HTMLInputElement>;
@@ -18,17 +16,21 @@ const CvUpload: React.FC<Props> = ({ fileInputRef, cvFile, cvError, isDragging, 
   const { t } = useTranslation("auth");
 
   return (
-    <Box>
-      <Typography sx={{ fontFamily: "Poppins", fontSize: { xs: "0.8125rem", sm: "0.875rem", md: "0.95rem" }, fontWeight: 500, color: "#6B7280", mb: 0.75 }}>
+    <div>
+      <label className="block text-xs font-semibold text-foreground uppercase tracking-wider font-sans mb-1.5">
         {t("candidate_form.cv_label")}
-        <Box component="span" sx={{ color: "#EF4444", ml: 0.25 }}>*</Box>
-      </Typography>
+        <span className="text-destructive ml-0.5">*</span>
+      </label>
 
-      <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx" style={{ display: "none" }}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.doc,.docx"
+        className="hidden"
         onChange={(e) => onFileChange(e.target.files?.[0] ?? null)}
       />
 
-      <Box
+      <div
         onClick={() => fileInputRef.current?.click()}
         onDragOver={(e) => { e.preventDefault(); onDragChange(true); }}
         onDragLeave={(e) => { e.preventDefault(); onDragChange(false); }}
@@ -37,51 +39,56 @@ const CvUpload: React.FC<Props> = ({ fileInputRef, cvFile, cvError, isDragging, 
           const f = e.dataTransfer.files?.[0] ?? null;
           if (f && /\.(pdf|doc|docx)$/i.test(f.name)) onFileChange(f);
         }}
-        sx={{
-          border: "1.5px dashed",
-          borderColor: cvError ? "#EF4444" : isDragging ? ACCENT : cvFile ? ACCENT : "#E5E7EB",
-          borderRadius: "12px", py: { xs: 1.25, md: 1.5 }, px: { xs: 1.5, md: 2 }, cursor: "pointer",
-          display: "flex", alignItems: "center", gap: 1.5,
-          transition: "all 0.25s cubic-bezier(0.4,0,0.2,1)",
-          background: isDragging ? `${ACCENT}0C` : cvFile ? `${ACCENT}06` : "#FAFAFA",
-          transform: isDragging ? "scale(1.015)" : "scale(1)",
-          boxShadow: isDragging ? `0 8px 32px ${ACCENT}22` : "none",
-          "&:hover": { borderColor: cvFile ? ACCENT : "#9CA3AF", background: cvFile ? `${ACCENT}08` : "#F5F5F5" },
-        }}
+        className={cn(
+          "flex items-center gap-3 px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl border-[1.5px] border-dashed cursor-pointer",
+          "transition-all duration-200 select-none",
+          cvError    && "border-destructive bg-destructive/5",
+          isDragging && "border-primary/60 bg-primary/5 scale-[1.015] shadow-lg shadow-primary/10",
+          cvFile && !isDragging && !cvError && "border-primary/50 bg-primary/5",
+          !cvFile && !isDragging && !cvError && "border-border bg-muted/30 hover:border-muted-foreground/40 hover:bg-muted/50",
+        )}
       >
         {/* Icon */}
-        <Box sx={{ width: 34, height: 34, borderRadius: "9px", flexShrink: 0, bgcolor: cvFile ? `${ACCENT}12` : isDragging ? `${ACCENT}18` : "#F0F0F0", border: cvFile ? `1px solid ${ACCENT}30` : "none", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s" }}>
+        <div className={cn(
+          "w-8 h-8 sm:w-9 sm:h-9 rounded-lg shrink-0 flex items-center justify-center transition-all duration-200",
+          cvFile || isDragging ? "bg-primary/10 border border-primary/20" : "bg-muted border border-border",
+        )}>
           {cvFile
-            ? <CheckCircleOutlineIcon sx={{ fontSize: { xs: 16, md: 18 }, color: ACCENT }} />
-            : <UploadFileIcon sx={{ fontSize: { xs: 16, md: 18 }, color: isDragging ? ACCENT : "#9CA3AF" }} />}
-        </Box>
+            ? <CheckCircle2 className="size-4 text-primary" />
+            : <UploadCloud className={cn("size-4", isDragging ? "text-primary" : "text-muted-foreground")} />}
+        </div>
 
         {/* Text */}
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography sx={{ fontWeight: 600, fontSize: { xs: "0.75rem", sm: "0.78rem", md: "0.82rem" }, color: cvFile ? "#0F172A" : isDragging ? ACCENT : "#374151", fontFamily: "Poppins", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        <div className="flex-1 min-w-0">
+          <p className={cn(
+            "font-sans font-semibold text-xs sm:text-[0.8125rem] truncate leading-snug",
+            cvFile ? "text-foreground" : isDragging ? "text-primary" : "text-foreground/80",
+          )}>
             {cvFile ? cvFile.name : isDragging ? t("candidate_form.cv_drop") : t("candidate_form.cv_browse")}
-          </Typography>
-          <Typography sx={{ fontSize: { xs: "0.6625rem", sm: "0.695rem", md: "0.72rem" }, color: "#9CA3AF", fontFamily: "Poppins", lineHeight: 1.45 }}>
-            {cvFile
-              ? <>{(cvFile.size / 1024).toFixed(0)} KB · <Box component="span" sx={{ color: ACCENT, fontWeight: 600 }}>{t("candidate_form.cv_replace")}</Box></>
-              : cvError
-              ? <Box component="span" sx={{ color: "#EF4444" }}>{t("candidate_form.cv_required")}</Box>
-              : t("candidate_form.cv_formats")}
-          </Typography>
-        </Box>
+          </p>
+          <p className="font-sans text-[0.65rem] sm:text-xs text-muted-foreground leading-snug mt-0.5">
+            {cvFile ? (
+              <>{(cvFile.size / 1024).toFixed(0)} KB · <span className="text-primary font-semibold">{t("candidate_form.cv_replace")}</span></>
+            ) : cvError ? (
+              <span className="text-destructive">{t("candidate_form.cv_required")}</span>
+            ) : (
+              t("candidate_form.cv_formats")
+            )}
+          </p>
+        </div>
 
         {/* Format badges */}
         {!cvFile && !isDragging && (
-          <Box sx={{ display: "flex", gap: 0.5, flexShrink: 0 }}>
+          <div className="flex gap-1 shrink-0">
             {["PDF", "DOC"].map((fmt) => (
-              <Box key={fmt} component="span" sx={{ px: { xs: 0.55, md: 0.75 }, py: 0.2, borderRadius: "5px", bgcolor: "#F3F4F6", border: "1px solid #E5E7EB", fontSize: { xs: "0.55rem", md: "0.6rem" }, fontWeight: 700, color: "#6B7280", letterSpacing: "0.04em" }}>
+              <span key={fmt} className="px-1.5 py-0.5 rounded text-[0.55rem] sm:text-[0.6rem] font-bold tracking-wide text-muted-foreground bg-muted border border-border uppercase">
                 {fmt}
-              </Box>
+              </span>
             ))}
-          </Box>
+          </div>
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 

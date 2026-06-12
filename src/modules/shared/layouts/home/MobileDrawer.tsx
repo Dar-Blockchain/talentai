@@ -1,9 +1,9 @@
 "use client";
 import React, { useCallback, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useSelector, useDispatch } from "react-redux";
-import { AppDispatch, RootState } from "@/store/store";
-import { logout } from "@/store/slices/authSlice";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
+import { useAuthContext } from "@/modules/auth/shared/context/AuthContext";
 import { useRouter } from "next/router";
 import HeaderLogo from "./HeaderLogo";
 import HeaderNavMenu from "./HeaderNavMenu";
@@ -91,9 +91,7 @@ const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unreadMessageCount = 0 }) => {
   const { t } = useTranslation("common");
   const router   = useRouter();
-  const dispatch = useDispatch<AppDispatch>();
-
-  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const { isAuthenticated, logout } = useAuthContext();
   const { user, profile } = useSelector((state: RootState) => state.user.connectedUser);
 
   const isCompany = profile?.type === "Company" || profile?.type === "Employee";
@@ -141,10 +139,10 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unre
 
   const handleLogout = useCallback(async () => {
     setLoggingOut(true);
-    try { await dispatch(logout()).unwrap(); } catch {}
+    try { await logout(); } catch {}
     onClose();
     router.push("/signin");
-  }, [dispatch, onClose, router]);
+  }, [logout, onClose, router]);
 
   const goDashboard = () => {
     if (isAdmin)        go("/admin/dashboard");

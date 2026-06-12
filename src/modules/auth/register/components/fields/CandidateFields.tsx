@@ -1,7 +1,5 @@
 import React from "react";
-import EmailIcon    from "@mui/icons-material/Email";
-import PersonIcon   from "@mui/icons-material/Person";
-import PhoneIcon    from "@mui/icons-material/Phone";
+import { Mail, User, Phone } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Control, FieldErrors } from "react-hook-form";
 import { FormField } from "@/modules/auth/shared/ui/FormField";
@@ -22,19 +20,19 @@ const CandidateFields: React.FC<Props> = ({ control, errors, loading, invitation
   return (
     <>
       <FormField
-        name="firstName" control={control} icon={<PersonIcon />}
+        name="firstName" control={control} icon={<User className="size-4" />}
         label={t("candidate_form.first_name")} placeholder="John"
         disabled={loading} error={errors.firstName?.message}
         rules={{ required: v("first_name_required") }}
       />
       <FormField
-        name="lastName" control={control} icon={<PersonIcon />}
+        name="lastName" control={control} icon={<User className="size-4" />}
         label={t("candidate_form.last_name")} placeholder="Doe"
         disabled={loading} error={errors.lastName?.message}
         rules={{ required: v("last_name_required") }}
       />
       <FormField
-        name="email" control={control} icon={<EmailIcon />}
+        name="email" control={control} icon={<Mail className="size-4" />}
         label={t("candidate_form.email")} placeholder="john@example.com" type="email"
         disabled={loading || !!invitationEmail}
         error={invitationEmail ? t("candidate_form.email_prefilled") : errors.email?.message}
@@ -45,7 +43,7 @@ const CandidateFields: React.FC<Props> = ({ control, errors, loading, invitation
         }}
       />
       <FormField
-        name="phone" control={control} icon={<PhoneIcon />}
+        name="phone" control={control} icon={<Phone className="size-4" />}
         label={t("candidate_form.phone")} placeholder="+1 234 567 890"
         disabled={loading} error={errors.phone?.message}
         rules={{
