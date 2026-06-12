@@ -51,8 +51,8 @@ const CandidateSettingsPage: React.FC = () => {
 
   const handleToggleVisibility = useCallback(async (newVisibility: boolean) => {
     setLocalIsPublic(newVisibility);
-    await updateVisibilityMutation.mutateAsync(newVisibility);
-  }, [updateVisibilityMutation]);
+    await updateVisibilityMutation.mutateAsync({ userId, isPublicProfile: newVisibility });
+  }, [updateVisibilityMutation, userId]);
 
   const displayName = profile.firstName
     ? `${profile.firstName}${profile.lastName ? ` ${profile.lastName}` : ""}`

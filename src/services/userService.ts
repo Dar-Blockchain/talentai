@@ -1,15 +1,6 @@
 import axiosInstance from '@/utils/axiosInstance';
 
 export const userService = {
-  createOrUpdateProfile: async (profileData: any) => {
-    const endpoint =
-      profileData.type === 'company'
-        ? 'profiles/createOrUpdateCompanyProfile'
-        : 'profiles/createOrUpdateProfile';
-    const res = await axiosInstance.post(endpoint, profileData);
-    return res.data;
-  },
-
   updateProfile: async (userId: string, payload: any) => {
     const res = await axiosInstance.put(`profiles/${userId}`, payload);
     return res.data;

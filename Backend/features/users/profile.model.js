@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const TodoList = require("./TodoList.model");
+const TodoList = require("../../models/TodoList.model");
 
 // Sub-schemas for skills and softSkills to enable per-item timestamps
 const skillSchema = new mongoose.Schema(
@@ -106,7 +106,7 @@ const profileSchema = new mongoose.Schema(
 
     // ========== REFERENCES & ASSOCIATIONS ==========
     todoList: { type: mongoose.Schema.Types.ObjectId, ref: "TodoList" },
-    
+
     // ========== SUBSCRIPTION MANAGEMENT ==========
     activeSubscription: {
       type: mongoose.Schema.Types.ObjectId,
@@ -120,14 +120,14 @@ const profileSchema = new mongoose.Schema(
         description: "Complete history of subscriptions",
       },
     ],
-    
+
     // ========== DEPRECATED - KEPT FOR BACKWARD COMPATIBILITY ==========
     planLimits: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "PlanLimits",
       description: "DEPRECATED: Use activeSubscription.planId instead. Kept for backward compatibility.",
     },
-    
+
     payments: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -144,13 +144,16 @@ const profileSchema = new mongoose.Schema(
 
     // ========== COMPANY SPECIFIC FIELDS ==========
     companyDetails: {
-      email: { type: String, set: (value) => value ? value.toLowerCase() : value },
-      name: String,
-      industry: String,
-      size: String,
-      location: String,
-      website: String,
-      linkedin: String,
+      email:          { type: String, set: (value) => value ? value.toLowerCase() : value },
+      name:           String,
+      industry:       String,
+      size:           String,
+      location:       String,
+      website:        String,
+      linkedin:       String,
+      phone:          String,
+      address:        String,
+      personalWebsite: String,
       employmentType: {
         type: String,
         enum: ["Remote", "Hybrid", "On-site"],

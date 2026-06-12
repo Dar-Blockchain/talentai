@@ -34,8 +34,9 @@ const buildPayload = (values: PersonalInformationFormValues): Record<string, unk
   if (values.requiredExperienceLevel) payload.requiredExperienceLevel = values.requiredExperienceLevel;
   if (values.targetRole)              payload.targetRole              = values.targetRole;
 
+  if (values.phone) payload.phone = values.phone;
+
   const contact: Record<string, string> = {};
-  if (values.phone)           contact.phone           = values.phone;
   if (values.location)        contact.location        = values.location;
   if (values.address)         contact.address         = values.address;
   if (values.linkedinUrl)     contact.linkedinUrl     = values.linkedinUrl;

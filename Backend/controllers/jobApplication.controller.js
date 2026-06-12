@@ -1,9 +1,9 @@
 const jobApplicationService = require("../services/jobApplication.service");
 const { sendInterviewInvitation, sendCandidateEmail } = require("../utils/email-service");
-const profileService = require("../services/ProfileService/profile.service");
+const profileService = require("../features/users/profile.service");
 const postService = require("../services/PosteServices/post.service");
 const JobApplication = require("../models/JobApplication.model");
-const Profile = require("../models/Profile.model");
+const Profile = require("../features/users/profile.model");
 
 // Centralized error handler
 const handleError = (res, error, defaultStatus = 500) => {
@@ -386,7 +386,7 @@ module.exports.inviteToInterview = async (req, res) => {
     }
 
     // Fetch candidate profile to get email
-    const Profile = require("../models/Profile.model");
+    const Profile = require("../features/users/profile.model");
     console.log(`🔍 Fetching candidate profile: ${application.profile._id}`);
     const candidateProfile = await Profile.findById(application.profile._id).populate("userId");
 
@@ -559,7 +559,7 @@ module.exports.contactCandidate = async (req, res) => {
       return res.status(400).json({ success: false, error: "candidateEmail, subject, and message are required." });
     }
 
-    const Profile = require("../models/Profile.model");
+    const Profile = require("../features/users/profile.model");
     const companyProfile = await Profile.findOne({ userId: req.user._id }).select("companyDetails firstName lastName");
     const companyName =
       companyProfile?.companyDetails?.name ||

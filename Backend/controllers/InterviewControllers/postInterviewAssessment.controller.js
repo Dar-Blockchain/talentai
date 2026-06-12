@@ -1,8 +1,8 @@
 const postInterviewAssessmentService = require("../../services/InterviewServices/postInterviewAssessment.service");
 const CandidatePostStepProgress = require("../../models/CandidatePostStepsProgress.model");
 const PostSteps = require("../../models/PostSteps.model");
-const User = require("../../models/User.model");
-const Profile = require("../../models/Profile.model");
+const User = require("../../features/users/user.model");
+const Profile = require("../../features/users/profile.model");
 const JobApplication = require("../../models/JobApplication.model");
 const Post = require("../../models/Post.model");
 const subscriptionService = require("../../services/subscription.service");
@@ -434,10 +434,7 @@ module.exports.getAllPostInterviewAssessmentsForCompany = async (req, res) => {
             })
               .populate("currentStep")
               .populate("steps.interviewDetails")
-              .populate(
-                "idCandidate",
-                "-authHistory -notifications",
-              );
+              .populate("idCandidate", "-notifications");
 
             return {
               assessment: ass,

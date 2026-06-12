@@ -84,7 +84,7 @@ module.exports.respondInvitation = async (req, res) => {
       let jwtToken;
 
       // Check if user already exists
-      const User = require("../../models/User.model");
+      const User = require("../../features/users/user.model");
       const existingUser = await User.findOne({ email: invitationEmail });
 
       let userRole = "Employee";
@@ -140,7 +140,7 @@ module.exports.respondInvitation = async (req, res) => {
 
       // Get full user data and profile
       const fullUser = await User.findById(userId);
-      const Profile = require("../../models/Profile.model");
+      const Profile = require("../../features/users/profile.model");
       const userProfile = await Profile.findOne({ userId });
 
       res.cookie("api_token", jwtToken, {
@@ -150,7 +150,7 @@ module.exports.respondInvitation = async (req, res) => {
         path: "/",
       });
 
-      const profileService = require("../../services/ProfileService/profile.service");
+      const profileService = require("../../features/users/profile.service");
       const fullPayload = await profileService.getProfileByUserId(userId).catch(() => ({}));
 
       return res.status(200).json({

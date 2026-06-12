@@ -6,7 +6,7 @@ const { registerSwagger } = require('./swagger');
 const authRouter = require("../routes/authentication.routes");
 const companyPermissionsRouter = require("../routes/companyPermissions.routes");
 const dashboardRouter = require("../routes/dashboard.routes");
-const profileRouter = require("../routes/profile.routes");
+const profileRouter = require("../features/users").profileRouter;
 const postRouter = require("../routes/post.routes");
 const feedbackRouter = require("../routes/feedback.routes");
 const postInterviewAssessmentRouter = require("../routes/postInterviewAssessment.routes");
@@ -26,7 +26,7 @@ const employeePermissionsRouter = require('../routes/employeePermissions.routes'
 const jobApplicationRouter = require("../routes/jobApplication.routes");
 const apiKeyRouter = require('../routes/apiKeys.routes');
 const paymentRouter = require('../routes/payment.routes');
-const usersRouter = require('../routes/users.routes');
+const usersRouter = require('../features/users').userRouter;
 
 /**
  * Register all routes on the Express app

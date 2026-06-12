@@ -5,7 +5,7 @@ async function run() {
   await mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI || "mongodb://localhost:27017/talentai");
 
   const Subscription = require("../models/Subscription.model");
-  const Profile = require("../models/Profile.model");
+  const Profile = require("../features/users/profile.model");
 
   const profileId = "69f0c65c7533f9db655b83ee";
 

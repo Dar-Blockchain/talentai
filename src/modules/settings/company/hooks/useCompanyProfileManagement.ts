@@ -241,21 +241,18 @@ export const useCompanyProfileManagement = () => {
       try {
         if (!effectiveUserId) throw new Error('User not found');
 
-        const companyDetails: Record<string, string> = {};
-        if (data.location) companyDetails.location = data.location;
-        if (data.linkedin) companyDetails.linkedin  = data.linkedin;
-        if (data.website)  companyDetails.website   = data.website;
-        if (data.phone)    companyDetails.phone     = data.phone;
-
         const updatePayload = {
-          name:                    data.name?.trim() || '',
-          industry:                data.industry,
-          size:                    data.size,
-          employmentType:          data.employmentType,
-          language:                currentProfile.language || 'en',
-          requiredSkills:          currentProfile.requiredSkills || [],
-          requiredExperienceLevel: currentProfile.requiredExperienceLevel,
-          ...(Object.keys(companyDetails).length > 0 && { companyDetails }),
+          language: currentProfile.language || 'en',
+          companyDetails: {
+            name:           data.name?.trim() || '',
+            industry:       data.industry,
+            size:           data.size,
+            employmentType: data.employmentType,
+            ...(data.location && { location: data.location }),
+            ...(data.linkedin && { linkedin: data.linkedin }),
+            ...(data.website  && { website:  data.website }),
+            ...(data.phone    && { phone:    data.phone }),
+          },
         };
 
         await updateMutation.mutateAsync({ userId: effectiveUserId, payload: updatePayload });

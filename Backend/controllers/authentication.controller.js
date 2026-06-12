@@ -3,8 +3,8 @@ const fs   = require("fs");
 
 const authService       = require("../services/authentication.service");
 const CVAnalysisService = require("../services/cvAnalysis.service");
-const Profile           = require("../models/Profile.model");
-const User              = require("../models/User.model");
+const Profile           = require("../features/users/profile.model");
+const User              = require("../features/users/user.model");
 const logger            = require("../utils/logger");
 const { analyzeCV }     = require("../services/analyseResume.service");
 const { validateEmail, validateOTPInput } = require("../helpers/auth-validation.helpers");
@@ -225,7 +225,7 @@ module.exports.checkRole = async (req, res) => {
   try {
     const { email } = req.query;
     if (!email) return res.status(400).json({ success: false, message: 'email query param required' });
-    const User = require('../models/User.model');
+    const User = require('../features/users/user.model');
     const user = await User.findOne({ email: email.toLowerCase().trim() }).select('role').lean();
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
     res.status(200).json({ success: true, role: user.role });

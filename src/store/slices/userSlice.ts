@@ -118,20 +118,6 @@ const initialState: UserState = {
   currentSpace: null,
 };
 
-export const createOrUpdateProfile = createAsyncThunk<
-  any,
-  any,
-  { rejectValue: string }
->("user/createOrUpdateProfile", async (profileData, { rejectWithValue }) => {
-  try {
-    return await userService.createOrUpdateProfile(profileData);
-  } catch (error: any) {
-    return rejectWithValue(
-      error.response?.data?.message || "An error occurred while creating/updating profile"
-    );
-  }
-});
-
 export const updateProfile = createAsyncThunk<
   any,
   { payload: any; targetUserId?: string },
@@ -242,26 +228,6 @@ const userSlice = createSlice({
   },
     extraReducers: (builder) => {
       builder
-        //CREATE OR UPDATE PROFILE
-        .addCase(createOrUpdateProfile.pending, (state: UserState) => {
-          state.connectedUser.loading = true;
-          state.connectedUser.error = null;
-        })
-        .addCase(
-          createOrUpdateProfile.fulfilled,
-          (state: UserState, action: PayloadAction<any>) => {
-            state.connectedUser.loading = false;
-            state.connectedUser.profile = action.payload.profile;
-            state.connectedUser.companyMembership = action.payload.companyMembership;
-            state.connectedUser.user = action.payload.user;
-          }
-        )
-        .addCase(
-          createOrUpdateProfile.rejected,
-          (state: UserState) => {
-            state.connectedUser.loading = false;
-          }
-        )
         //UPDATE PROFILE
         .addCase(updateProfile.pending, (state: UserState) => {
           state.connectedUser.loading = true;

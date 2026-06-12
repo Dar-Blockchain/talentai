@@ -40,9 +40,9 @@ export const candidateApi = {
     return res.data;
   },
 
-  updateVisibility: async (isPublicProfile: boolean) => {
+  updateVisibility: async (userId: string, isPublicProfile: boolean) => {
     const res = await axiosInstance.put(
-      'profiles/updateProfileVisibility',
+      `profiles/${userId}`,
       { isPublicProfile },
       { headers: authHeaders() }
     );

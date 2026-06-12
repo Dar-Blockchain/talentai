@@ -33,15 +33,13 @@ export type UpdateApiKeyPayload = Partial<
 // ─── API request / response types ─────────────────────────────────────────────
 
 export interface UpdateProfilePayload {
-  name?: string;
-  industry?: string;
-  size?: string;
-  employmentType?: string;
   language?: string;
-  requiredSkills?: string[];
-  requiredExperienceLevel?: string;
   targetRole?: string;
   companyDetails?: {
+    name?: string;
+    industry?: string;
+    size?: string;
+    employmentType?: string;
     location?: string;
     linkedin?: string;
     website?: string;

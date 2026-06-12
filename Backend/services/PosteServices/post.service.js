@@ -1,6 +1,6 @@
 const Post = require("../../models/Post.model");
-const User = require("../../models/User.model");
-const Profile = require("../../models/Profile.model");
+const User = require("../../features/users/user.model");
+const Profile = require("../../features/users/profile.model");
 const PostInterviewAssessmentModel = require("../../models/PostInterviewAssessment.model");
 const JobApplication = require("../../models/JobApplication.model");
 const subscriptionService = require("../subscription.service");
@@ -35,10 +35,7 @@ module.exports.createPost = async (postData, token) => {
     validatePostData(postData);
 
     const post = new Post(postData);
-    await Promise.all([
-      post.save(),
-      User.findByIdAndUpdate(postData.user, { $push: { post: post._id } }),
-    ]);
+    await post.save();
     return post;
   } catch (error) {
     throw new Error(`Error creating post: ${error.message}`);
@@ -568,13 +565,6 @@ module.exports.deletePost = async (postId, userId) => {
       { archived: true, archivedAt: new Date() },
       { new: true }
     );
-
-    // 7. Remove the post reference from user (optional - keep reference for archive history)
-    // Keep post in user.post array to maintain history
-    // await User.updateOne(
-    //   { _id: userId },
-    //   { $pull: { post: postId } }
-    // );
 
     console.log(`✅ Post ${postId} and all associated records archived successfully`);
     return archivedPost;

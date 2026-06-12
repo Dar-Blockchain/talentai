@@ -1,5 +1,5 @@
-const User    = require("../models/User.model");
-const Profile = require("../models/Profile.model");
+const User    = require("../features/users/user.model");
+const Profile = require("../features/users/profile.model");
 const logger  = require("../utils/logger");
 const { sendOTP }                              = require("../utils/email-service");
 const { generateOTP }                          = require("../utils/one-time-password");
@@ -53,26 +53,9 @@ const assignFreePlanToProfile = module.exports.assignFreePlanToProfile = async (
 const issueOtp = async (userId) => {
   const code      = generateOTP();
   const expiresAt = new Date(Date.now() + OTP_EXPIRY_MS);
-  await User.updateOne({ _id: userId }, { otp: { code, expiresAt }, otpAttempts: 0 });
+  await User.updateOne({ _id: userId }, { otp: { code, expiresAt, attempts: 0 } });
   return code;
 };
-
-/** Append one entry to the user's auth history (fire-and-forget). */
-const logAuthAttempt = (userId, location, status) =>
-  User.updateOne(
-    { _id: userId },
-    {
-      $push: {
-        authHistory: {
-          date:         new Date(),
-          ip:           location?.ip || "",
-          localisation: formatLocation(location),
-          method:       "OTP",
-          status,
-        },
-      },
-    }
-  );
 
 /** Shared guard used by loginUser and resendOTP. */
 const assertUserCanReceiveOtp = (user) => {
@@ -111,8 +94,7 @@ module.exports.registerUser = async (email, roleType = "Candidate", opts = {}) =
     FirstName:   opts.firstName || "",
     LastName:    opts.lastName  || "",
     role:        validRole,
-    otp:         { code: otpCode, expiresAt: new Date(Date.now() + OTP_EXPIRY_MS) },
-    otpAttempts: 0,
+    otp: { code: otpCode, expiresAt: new Date(Date.now() + OTP_EXPIRY_MS), attempts: 0 },
   });
 
   // Create role-specific profile then link it to the user
@@ -171,24 +153,19 @@ module.exports.verifyUserOTP = async (email, otp, location = null) => {
   if (!user) throw Object.assign(new Error("User not found."), { status: 404 });
 
   if (user.isBanned) {
-    await logAuthAttempt(user._id, location, "Failed");
     throw Object.assign(new Error("Your account has been banned. Please contact support."), { status: 403 });
   }
   if (!user.otp?.code || !user.otp?.expiresAt)
     throw Object.assign(new Error("No active OTP. Please request a new one."), { status: 400 });
 
   if (new Date() > user.otp.expiresAt) {
-    await logAuthAttempt(user._id, location, "Failed");
     throw Object.assign(new Error("OTP has expired. Please request a new one."), { status: 401 });
   }
 
   // Brute-force guard
-  const attempts = (user.otpAttempts || 0) + 1;
+  const attempts = (user.otp.attempts || 0) + 1;
   if (user.otp.code !== otp) {
-    await Promise.all([
-      User.updateOne({ _id: user._id }, { otpAttempts: attempts }),
-      logAuthAttempt(user._id, location, "Failed"),
-    ]);
+    await User.updateOne({ _id: user._id }, { "otp.attempts": attempts });
     if (attempts >= MAX_OTP_ATTEMPTS) {
       await User.updateOne({ _id: user._id }, { "otp.expiresAt": new Date(0) });
       throw Object.assign(new Error("Too many incorrect attempts. Please request a new code."), { status: 429 });
@@ -211,15 +188,12 @@ module.exports.verifyUserOTP = async (email, otp, location = null) => {
       {
         $unset: { otp: "" },
         $set: {
-          isVerified:     true,
-          otpAttempts:    0,
-          lastLogin:      now,
-          trafficCounter: (user.trafficCounter || 0) + 1,
+          isVerified: true,
+          lastLogin: now,
           ...locationUpdate,
         },
       }
     ),
-    logAuthAttempt(user._id, location, "Success"),
   ]);
 
   // Build the user projection from what we already know — no extra DB round-trip

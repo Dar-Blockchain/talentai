@@ -1,6 +1,6 @@
 require("dotenv").config();
 const stripeService = require("../services/stripe.service");
-const Profile = require("../models/Profile.model");
+const Profile = require("../features/users/profile.model");
 
 // Create Stripe Checkout session
 exports.createCheckoutSession = async (req, res) => {

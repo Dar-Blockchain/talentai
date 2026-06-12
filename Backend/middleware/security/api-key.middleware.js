@@ -1,5 +1,5 @@
 const ApiKey = require("../../models/ApiKey.model");
-const User   = require("../../models/User.model");
+const User   = require("../../features/users/user.model");
 const { createClient } = require("redis");
 
 // ─── Redis client ─────────────────────────────────────────────────────────────

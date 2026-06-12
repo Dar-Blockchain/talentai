@@ -1,5 +1,5 @@
 const Notification = require('../models/Notifications.model');
-const User = require('../models/User.model');
+const User = require('../features/users/user.model');
 const socket = require('../socket');
 
 /**
