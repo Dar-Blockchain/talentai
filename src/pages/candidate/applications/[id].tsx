@@ -138,7 +138,7 @@ const CandidateApplicationDetailPage: React.FC = () => {
 
   useEffect(() => {
     if (!id) return;
-    const token = Cookies.get("api_token");
+    const token = Cookies.get("jwt_token");
     if (!token) { setLoading(false); return; }
     fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}job-applications/${id}`, {
       headers: { Authorization: `Bearer ${token}` },

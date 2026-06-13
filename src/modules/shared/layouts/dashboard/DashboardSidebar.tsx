@@ -16,7 +16,7 @@ import CloseOutlined from "@mui/icons-material/CloseOutlined";
 import Link from "next/link";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
-import { useAuthContext } from "@/modules/auth/shared/context/AuthContext";
+import { useLogout } from "@/modules/auth/shared/hooks";
 import { navigation, employeeNavGroups, EmployeeNavItem } from "@/constants/navigation";
 import { selectEmployeePermissions, fetchEmployeePermissions } from "@/store/slices/memberSlice";
 import { selectCombinedDetails, fetchCombinedSubscriptionDetails } from "@/store/slices/paymentSlice";
@@ -77,15 +77,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const { logout } = useAuthContext();
+  const handleLogout = useLogout("/signin");
 
   const [loggingOut, setLoggingOut] = useState(false);
-
-  const handleLogout = useCallback(async () => {
-    setLoggingOut(true);
-    await logout();
-    router.push("/signin");
-  }, [logout, router]);
 
   const handleGoHome = useCallback(() => {
     if (router.pathname === "/") {

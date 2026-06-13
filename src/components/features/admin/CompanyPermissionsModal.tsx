@@ -19,7 +19,7 @@ import {
   Security as SecurityIcon,
 } from '@mui/icons-material';
 import { Permission, DEFAULT_PERMISSIONS } from '@/types/permissions';
-import { getToken } from '@/utils/tokenUtils';
+import { getToken } from '@/modules/auth/shared/utils/token';
 
 const PRIMARY = '#8310FF';
 

@@ -18,7 +18,6 @@ import {
   selectMembers,
 } from "@/store/slices/memberSlice";
 import { setConnectedUser } from "@/store/slices/userSlice";
-import { persistSession } from "@/modules/auth/shared/utils";
 import { useAuthContext } from "@/modules/auth/shared/context/AuthContext";
 import Shell from "@/components/features/invitation/Shell";
 import InfoRow from "@/components/features/invitation/InfoRow";
@@ -173,7 +172,6 @@ const JoinTeamPage: React.FC = () => {
       ).unwrap();
 
       if (result.token) {
-        persistSession(result.token, result.user?.role ?? "Employee");
         login();
       }
       if (result.user) dispatch(setConnectedUser(result));

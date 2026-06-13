@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { useAuthContext } from "@/modules/auth/shared/context/AuthContext";
+import { useLogout } from "@/modules/auth/shared/hooks";
 import { useRouter } from "next/router";
 import HeaderLogo from "./HeaderLogo";
 import HeaderNavMenu from "./HeaderNavMenu";
@@ -91,7 +92,8 @@ const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unreadMessageCount = 0 }) => {
   const { t } = useTranslation("common");
   const router   = useRouter();
-  const { isAuthenticated, logout } = useAuthContext();
+  const { isAuthenticated } = useAuthContext();
+  const doLogout = useLogout("/signin");
   const { user, profile } = useSelector((state: RootState) => state.user.connectedUser);
 
   const isCompany = profile?.type === "Company" || profile?.type === "Employee";
@@ -139,10 +141,9 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unre
 
   const handleLogout = useCallback(async () => {
     setLoggingOut(true);
-    try { await logout(); } catch {}
     onClose();
-    router.push("/signin");
-  }, [logout, onClose, router]);
+    await doLogout();
+  }, [doLogout, onClose]);
 
   const goDashboard = () => {
     if (isAdmin)        go("/admin/dashboard");

@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { useToast } from "@/hooks/useToast";
 import { getUserLocation } from "@/utils/api";
 import { refreshAbort } from "@/modules/auth/shared/utils";
@@ -19,9 +19,17 @@ interface UseOtpFlowOptions {
  */
 export function useOtpFlow({ storageKey, verifyMutation, resendMutation }: UseOtpFlowOptions) {
   const { showToast } = useToast();
-  const abortRef = useRef<AbortController | null>(null);
-  const timer    = useOtpTimer(storageKey);
-  const otp      = useOtpInput();
+  const abortRef      = useRef<AbortController | null>(null);
+  const locationRef   = useRef<Awaited<ReturnType<typeof getUserLocation>> | undefined>(undefined);
+  const timer         = useOtpTimer(storageKey);
+  const otp           = useOtpInput();
+
+  // Pre-fetch location in the background so it's ready before the user clicks verify.
+  useEffect(() => {
+    getUserLocation()
+      .then(loc  => { locationRef.current = loc;  })
+      .catch(()  => { locationRef.current = null; });
+  }, []);
 
   const verifyCode = async (email: string) => {
     const code = otp.otpCode.join("");
@@ -29,7 +37,13 @@ export function useOtpFlow({ storageKey, verifyMutation, resendMutation }: UseOt
 
     const signal = refreshAbort(abortRef);
     try {
-      const location = await getUserLocation();
+      // Use cached location; if still pending, wait with a 1.5 s hard cap.
+      const location = locationRef.current !== undefined
+        ? locationRef.current
+        : await Promise.race([
+            getUserLocation(),
+            new Promise<null>(resolve => setTimeout(() => resolve(null), 1500)),
+          ]);
       await verifyMutation.mutateAsync({ email, otp: code, location, signal });
       timer.clear();
     } catch (err: any) {

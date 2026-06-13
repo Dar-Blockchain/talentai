@@ -81,7 +81,7 @@ export const useInterviewConfig = ({
   const fetchJobInterviewConfig = async (jobId: string) => {
     setConfigLoading(true);
     try {
-      const token = Cookies.get('api_token');
+      const token = Cookies.get('jwt_token');
       const ref = router.query.ref as string | undefined;
       const isPublicLink = !ref || ref === 'link';
 

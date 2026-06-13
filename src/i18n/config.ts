@@ -1,6 +1,6 @@
 import i18n, { type InitOptions } from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import { getToken } from '@/utils/tokenUtils';
+import { getToken } from '@/modules/auth/shared/utils/token';
 
 // ── EN ──────────────────────────────────────────────
 import enCommon     from '../../public/locales/en/shared/common.json';

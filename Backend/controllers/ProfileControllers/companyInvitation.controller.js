@@ -143,11 +143,12 @@ module.exports.respondInvitation = async (req, res) => {
       const Profile = require("../../features/users/profile.model");
       const userProfile = await Profile.findOne({ userId });
 
-      res.cookie("api_token", jwtToken, {
+      res.cookie("jwt_token", jwtToken, {
         httpOnly: false,
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-        sameSite: "lax",
-        path: "/",
+        secure:   process.env.NODE_ENV === "production",
+        maxAge:   7 * 24 * 60 * 60 * 1000,
+        sameSite: "strict",
+        path:     "/",
       });
 
       const profileService = require("../../features/users/profile.service");

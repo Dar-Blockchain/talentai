@@ -14,36 +14,27 @@ const AuthRightPanel: React.FC<Props> = ({ children, footerTKey, maxWidthClass =
   const { t } = useTranslation("auth");
 
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto relative z-10">
-      <div className="min-h-full flex flex-col items-center justify-center px-3 sm:px-6 lg:px-10 py-6 sm:py-8 lg:py-10">
+    <div className="flex-1 w-full min-h-0 overflow-y-auto relative z-10 flex flex-col">
+      <div className="flex-1 w-full flex flex-col items-center justify-center py-6 sm:py-8 lg:py-10">
 
         {/* Mobile logo */}
-        <div className="md:hidden flex justify-center shrink-0 mb-5">
-          <NextLink href="/">
+        <div className="lg:hidden flex justify-center shrink-0 mb-5">
+          <NextLink href="/" className="inline-flex transition-opacity duration-200 hover:opacity-80">
             <Image
               src="/images/home/logo.svg"
               alt="TalentAI"
-              width={130}
+              width={148}
               height={36}
-              style={{ objectFit: "contain" }}
+              className="h-9 w-auto object-contain"
             />
           </NextLink>
         </div>
 
-        <div className={cn("w-full shrink-0", maxWidthClass)}>
+        <div className={cn("w-full mx-auto shrink-0", maxWidthClass)}>
           {/* Card */}
-          <div style={{
-            backgroundColor: "#ffffff",
-            borderRadius:     20,
-            overflow:         "hidden",
-            border:           "1px solid rgba(16,69,63,0.1)",
-            boxShadow:        "0 4px 6px rgba(16,69,63,0.04), 0 16px 48px rgba(16,69,63,0.1), 0 2px 8px rgba(0,0,0,0.04)",
-          }}>
+          <div className="bg-white rounded-xl overflow-hidden border border-primary/10 shadow-[0_4px_6px_rgba(16,69,63,0.04),0_16px_48px_rgba(16,69,63,0.1),0_2px_8px_rgba(0,0,0,0.04)]">
             {/* Top accent bar */}
-            <div style={{
-              height:     3,
-              background: "linear-gradient(to right, #10453F, #6AD39C, #52e899)",
-            }} />
+            <div className="h-0.75 bg-linear-to-r from-[#10453F] via-[#6AD39C] to-[#52e899]" />
             <div className="px-4 sm:px-7 lg:px-9 pt-5 sm:pt-7 lg:pt-8 pb-6 sm:pb-8 lg:pb-9">
               {children}
             </div>

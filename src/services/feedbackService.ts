@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getToken } from '@/utils/tokenUtils';
+import { getToken } from '@/modules/auth/shared/utils/token';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 

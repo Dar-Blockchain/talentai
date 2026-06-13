@@ -58,6 +58,14 @@ export interface VerifyOtpResponse {
   companyMembership?: unknown;
 }
 
+// ─── /auth/me response ────────────────────────────────────────────────────────
+
+export interface MeResponse {
+  success: boolean;
+  user:    AuthUser;
+  profile: AuthProfile | null;
+}
+
 // ─── UI constants ─────────────────────────────────────────────────────────────
 
 export const ACCENT          = "#0D9488";

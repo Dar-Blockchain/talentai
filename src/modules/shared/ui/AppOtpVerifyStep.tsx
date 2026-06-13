@@ -125,7 +125,7 @@ const AppOtpVerifyStep: React.FC<Props> = ({
               loading={loading}
               onClick={!loading ? onVerify : undefined}
             >
-              {loading ? t(`${tPrefix}.btn_creating`) : (
+              {loading ? t(tPrefix === "signin" ? `${tPrefix}.btn_verifying` : `${tPrefix}.btn_creating`) : (
                 <>
                   {t(`${tPrefix}.btn_verify`)}
                   <ArrowRight className="size-3.5 sm:size-4" />

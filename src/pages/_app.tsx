@@ -23,7 +23,7 @@ import ChatUnreadSyncBridge from "@/modules/chat/shared/components/ChatUnreadSyn
 import LoadingScreen from "@/components/ui/LoadingScreen";
 import { AuthProvider, useAuthContext } from "@/modules/auth/shared/context/AuthContext";
 import { clearConnectedUser, getMyProfile } from "@/store/slices/userSlice";
-import { getToken } from "@/utils/tokenUtils";
+import { getToken } from '@/modules/auth/shared/utils/token';
 import { setToastHandler } from "@/utils/toastEmitter";
 import { setSessionExpiredHandler } from "@/utils/storeEmitter";
 import { useTranslation } from "react-i18next";
@@ -123,8 +123,8 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
     };
 
     const onStorage = (event: StorageEvent) => {
-      // localStorage.clear() from another tab sets key to null.
-      if (!event.key || event.key === "api_token" || event.key === "token" || event.key === "persist:root") {
+      // localStorage.clear() fires with key=null; also sync when redux persist root changes.
+      if (!event.key || event.key === "persist:root") {
         syncAuthFromStorage();
       }
     };

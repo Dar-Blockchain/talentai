@@ -1,9 +1,9 @@
 import axios, { type AxiosError } from "axios";
 import axiosInstance from "@/utils/axiosInstance";
-import type { VerifyOtpPayload, VerifyOtpResponse } from "../types";
+import type { MeResponse, VerifyOtpPayload, VerifyOtpResponse } from "../types";
 
 // ─── Error normaliser ─────────────────────────────────────────────────────────
-// Extracts the most useful human-readable message from an AxiosError.
+
 function extractMessage(err: unknown, fallback: string): string {
   if (axios.isAxiosError(err)) {
     const data = (err as AxiosError<{ message?: string; error?: string }>).response?.data;
@@ -16,10 +16,7 @@ function extractMessage(err: unknown, fallback: string): string {
 // ─── Auth API ─────────────────────────────────────────────────────────────────
 
 export const authApi = {
-  /**
-   * Sends a one-time code to the email address for sign-in.
-   * Throws a normalised Error on failure.
-   */
+  /** Sends a one-time code to the given email for sign-in. */
   signin: async (email: string, signal?: AbortSignal): Promise<void> => {
     try {
       await axiosInstance.post("auth", { email }, { signal });
@@ -28,11 +25,7 @@ export const authApi = {
     }
   },
 
-  /**
-   * Creates a new account (candidate or company).
-   * Accepts FormData for CV uploads or a plain object for company registration.
-   * Throws a normalised Error on failure.
-   */
+  /** Creates a new account. Accepts FormData (CV upload) or plain object (company). */
   register: async (payload: FormData | Record<string, unknown>, signal?: AbortSignal): Promise<void> => {
     try {
       await axiosInstance.post("auth/register", payload, { signal });
@@ -41,10 +34,7 @@ export const authApi = {
     }
   },
 
-  /**
-   * Verifies the OTP and returns the full session payload.
-   * Always throws on non-2xx — callers never need to check res.data.token manually.
-   */
+  /** Verifies the OTP and returns the full session payload including the JWT token. */
   verifyOtp: async ({ email, otp, location, signal }: VerifyOtpPayload): Promise<VerifyOtpResponse> => {
     try {
       const res = await axiosInstance.post<VerifyOtpResponse>(
@@ -59,15 +49,30 @@ export const authApi = {
     }
   },
 
-  /**
-   * Requests a new OTP code for the given email.
-   * Throws a normalised Error on failure.
-   */
+  /** Requests a new OTP code for the given email. */
   resendOtp: async (email: string, signal?: AbortSignal): Promise<void> => {
     try {
       await axiosInstance.post("auth/resend-otp", { email }, { signal });
     } catch (err) {
       throw new Error(extractMessage(err, "Failed to resend code. Please try again."));
+    }
+  },
+
+  /** Returns the current authenticated user and profile. Throws on 401. */
+  me: async (): Promise<MeResponse> => {
+    const res = await axiosInstance.get<MeResponse>("auth/me");
+    return res.data;
+  },
+
+  /**
+   * Signs the user out server-side (clears the jwt_token cookie).
+   * Never throws — a failed network call should not block client-side cleanup.
+   */
+  logout: async (): Promise<void> => {
+    try {
+      await axiosInstance.post("auth/logout");
+    } catch {
+      // Cookie may already be gone; client-side cleanup still runs.
     }
   },
 };

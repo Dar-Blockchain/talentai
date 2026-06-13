@@ -4,7 +4,6 @@ import { useDispatch } from "react-redux";
 import type { AppDispatch } from "@/store/store";
 import { setConnectedUser } from "@/store/slices/userSlice";
 import { useAuthContext } from "@/modules/auth/shared/context/AuthContext";
-import { persistSession } from "@/modules/auth/shared/utils";
 import { notificationApi } from "@/modules/notifications/shared/api";
 import { notifMessages } from "@/modules/notifications/shared/i18n";
 import { authApi } from "../api";
@@ -29,7 +28,7 @@ export function useVerifyOtp(
     mutationFn: (payload: VerifyOtpPayload) => authApi.verifyOtp(payload),
 
     onSuccess: (data) => {
-      persistSession(data.token, data.user.role);
+      // The backend sets the jwt_token cookie directly — no client-side cookie write needed.
 
       dispatch(setConnectedUser({
         user:              data.user,

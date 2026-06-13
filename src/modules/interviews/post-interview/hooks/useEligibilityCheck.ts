@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router';
 import { useSelector } from 'react-redux';
-import { getToken } from '@/utils/tokenUtils';
+import { getToken } from '@/modules/auth/shared/utils/token';
 import { type RootState } from '@/store/store';
 import { useEligibilityQuery } from '../queries/useEligibilityQuery';
 import { type EligibilityStatus, type EligibilityMeta } from '../types/api';

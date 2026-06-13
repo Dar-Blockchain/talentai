@@ -3,7 +3,7 @@ const express = require("express");
 
 // Import all route modules
 const { registerSwagger } = require('./swagger');
-const authRouter = require("../routes/authentication.routes");
+const { router: authRouter } = require("../features/auth");
 const companyPermissionsRouter = require("../routes/companyPermissions.routes");
 const dashboardRouter = require("../routes/dashboard.routes");
 const profileRouter = require("../features/users").profileRouter;

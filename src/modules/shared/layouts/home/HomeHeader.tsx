@@ -3,7 +3,7 @@ import React, { useMemo, useEffect, useState, useRef, useCallback } from "react"
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { useAuthContext } from "@/modules/auth/shared/context/AuthContext";
-import { getToken } from "@/utils/tokenUtils";
+import { getToken } from '@/modules/auth/shared/utils/token';
 import HeaderLogo from "@/modules/shared/layouts/home/HeaderLogo";
 import HeaderNotification from "@/modules/notifications/shared/components/HeaderNotification";
 import UserAvatar from "@/modules/shared/layouts/shared/UserAvatar";

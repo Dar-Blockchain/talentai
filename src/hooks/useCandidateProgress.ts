@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getToken } from '@/utils/tokenUtils';
+import { getToken } from '@/modules/auth/shared/utils/token';
 import { CandidateProgress } from '../types/postInterview';
 import {
   fetchCandidateProgress as fetchProgressAPI,

@@ -1,5 +1,5 @@
 import { io, Socket } from "socket.io-client";
-import { getToken } from "@/utils/tokenUtils";
+import { getToken } from '@/modules/auth/shared/utils/token';
 
 export interface ChatNamespaceSocketConfig {
   namespacePath: string;

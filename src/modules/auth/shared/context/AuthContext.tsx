@@ -1,10 +1,10 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useDispatch } from "react-redux";
-import Cookies from "js-cookie";
 import { clearConnectedUser } from "@/store/slices/userSlice";
 import { setAxiosLoggingOut } from "@/utils/axiosInstance";
-import { getToken } from "@/utils/tokenUtils";
+import { clearTokens, getToken } from "../utils/token";
+import { authApi } from "../api";
 import type { AppDispatch } from "@/store/store";
 
 interface AuthContextValue {
@@ -12,9 +12,9 @@ interface AuthContextValue {
   isLoggingOut: boolean;
   /** Call after successful OTP verification. */
   login: () => void;
-  /** Call on session expiry or cross-tab sign-out (no cleanup needed). */
+  /** Call on session expiry or cross-tab sign-out (no network call needed). */
   clearAuth: () => void;
-  /** Full sign-out: clears storage, cookies, query cache, then hides spinner. */
+  /** Full sign-out: tells the backend to clear the cookie, then cleans up client state. */
   logout: () => Promise<void>;
 }
 
@@ -35,18 +35,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoggingOut(true);
     setIsAuthenticated(false);
 
+    // Tell the backend to clear the jwt_token cookie server-side.
+    // authApi.logout() never throws — we continue cleanup regardless.
+    await authApi.logout();
+
     dispatch(clearConnectedUser());
+
+    clearTokens();
 
     const userType = localStorage.getItem("userType");
     localStorage.clear();
     if (userType) localStorage.setItem("userType", userType);
 
-    Object.keys(Cookies.get()).forEach((name) => Cookies.remove(name, { path: "/" }));
-
     queryClient.clear();
 
-    // Keep isLoggingOut=true for 500 ms so in-flight 401 responses are suppressed
-    // before axios interceptors are re-enabled.
+    // Keep isLoggingOut=true briefly so in-flight 401 responses are suppressed.
     setTimeout(() => {
       setAxiosLoggingOut(false);
       setIsLoggingOut(false);

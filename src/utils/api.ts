@@ -1,4 +1,4 @@
-import { getToken } from '@/utils/tokenUtils';
+import { getToken } from '@/modules/auth/shared/utils/token';
 
 /**
  * API Utility functions for making backend calls

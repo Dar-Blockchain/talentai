@@ -1,18 +1,9 @@
 import type { MutableRefObject } from "react";
-import Cookies from "js-cookie";
 export { validators } from "./validators";
-
-// ─── Session persistence ───────────────────────────────────────────────────────
-
-const COOKIE_OPTIONS = { expires: 30, path: "/", sameSite: "strict" } as const;
-
-/** Writes the JWT and user role to cookies after a successful OTP verification. */
-export function persistSession(token: string, role: string): void {
-  Cookies.set("api_token", token, COOKIE_OPTIONS);
-  Cookies.set("user_role", role,  COOKIE_OPTIONS);
-}
+export { getToken, clearTokens, isTokenExpired } from "./token";
 
 // ─── Shared form constants ────────────────────────────────────────────────────
+
 export const COMPANY_SIZES = [
   "1–10 employees",
   "10–50 employees",

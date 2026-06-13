@@ -14,7 +14,6 @@ import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/store/store';
 import { setConnectedUser } from '@/store/slices/userSlice';
 import { authApi } from '@/modules/auth/shared/api';
-import { persistSession } from '@/modules/auth/shared/utils';
 import { useAuthContext } from '@/modules/auth/shared/context/AuthContext';
 import { usePersistentCountdown } from '@/hooks/usePersistentCountdown';
 import { getUserLocation } from '@/utils/api';
@@ -236,7 +235,6 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
         otp: code,
         location: userLocation,
       });
-      persistSession(data.token, data.user.role);
       dispatch(setConnectedUser({
         user:              data.user,
         profile:           data.profile           ?? null,
