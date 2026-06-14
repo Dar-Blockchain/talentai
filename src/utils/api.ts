@@ -51,7 +51,7 @@ export const regenerateText = async (text: string, token?: string, block: string
 }; 
 
 
-export const getUserLocation = async (): Promise<{
+export const getUserLocation = async (signal?: AbortSignal): Promise<{
   ip?: string;
   city?: string;
   region?: string;
@@ -60,7 +60,7 @@ export const getUserLocation = async (): Promise<{
   loc?: string;
 } | null> => {
   try {
-    const response = await fetch('https://ipinfo.io/json');
+    const response = await fetch('https://ipinfo.io/json', { signal });
     if (response.ok) {
       const data = await response.json();
       return {
@@ -69,12 +69,14 @@ export const getUserLocation = async (): Promise<{
         region: data.region,
         country: data.country,
         timezone: data.timezone,
-        loc: data.loc, // "latitude,longitude"
+        loc: data.loc,
       };
     }
   } catch (error) {
-    console.warn('Could not fetch location:', error);
+    if (error instanceof Error && error.name !== 'AbortError') {
+      console.warn('Could not fetch location:', error);
+    }
   }
 
-  return null; // Return null if fetch fails
+  return null;
 };

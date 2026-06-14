@@ -1,4 +1,11 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useMemo,
+  type ReactNode,
+} from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useDispatch } from "react-redux";
 import { clearConnectedUser } from "@/store/slices/userSlice";
@@ -7,18 +14,26 @@ import { clearTokens, getToken } from "../utils/token";
 import { authApi } from "../api";
 import type { AppDispatch } from "@/store/store";
 
-interface AuthContextValue {
+// ─── Volatile state ────────────────────────────────────────────────────────────
+// Changes on every auth transition (login / logout / session-expiry).
+// Only subscribe here when your component needs to RE-RENDER on those events.
+interface AuthState {
   isAuthenticated: boolean;
   isLoggingOut: boolean;
-  /** Call after successful OTP verification. */
+}
+
+// ─── Stable actions ────────────────────────────────────────────────────────────
+// These are useCallback refs — their object reference NEVER changes after mount.
+// Subscribe here when you only call auth actions (e.g. a "Logout" button, the
+// OTP success handler). Your component will not re-render on auth transitions.
+interface AuthActions {
   login: () => void;
-  /** Call on session expiry or cross-tab sign-out (no network call needed). */
   clearAuth: () => void;
-  /** Full sign-out: tells the backend to clear the cookie, then cleans up client state. */
   logout: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextValue | null>(null);
+const AuthStateContext   = createContext<AuthState   | null>(null);
+const AuthActionsContext = createContext<AuthActions | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const dispatch    = useDispatch<AppDispatch>();
@@ -40,7 +55,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await authApi.logout();
 
     dispatch(clearConnectedUser());
-
     clearTokens();
 
     const userType = localStorage.getItem("userType");
@@ -56,15 +70,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, 500);
   }, [dispatch, queryClient]);
 
+  // State context: new object only when isAuthenticated or isLoggingOut changes.
+  const stateValue = useMemo<AuthState>(
+    () => ({ isAuthenticated, isLoggingOut }),
+    [isAuthenticated, isLoggingOut],
+  );
+
+  // Actions context: login/clearAuth have no deps, logout deps are stable singletons.
+  // This object reference effectively never changes after the first render.
+  const actionsValue = useMemo<AuthActions>(
+    () => ({ login, clearAuth, logout }),
+    [login, clearAuth, logout],
+  );
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLoggingOut, login, clearAuth, logout }}>
-      {children}
-    </AuthContext.Provider>
+    <AuthActionsContext.Provider value={actionsValue}>
+      <AuthStateContext.Provider value={stateValue}>
+        {children}
+      </AuthStateContext.Provider>
+    </AuthActionsContext.Provider>
   );
 }
 
-export function useAuthContext(): AuthContextValue {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuthContext must be used within AuthProvider");
+// ─── Granular hooks ───────────────────────────────────────────────────────────
+
+/** Subscribe only to volatile auth state. Re-renders on login / logout. */
+export function useAuthState(): AuthState {
+  const ctx = useContext(AuthStateContext);
+  if (!ctx) throw new Error("useAuthState must be used within AuthProvider");
   return ctx;
+}
+
+/** Subscribe only to stable auth actions. NEVER re-renders on auth transitions. */
+export function useAuthActions(): AuthActions {
+  const ctx = useContext(AuthActionsContext);
+  if (!ctx) throw new Error("useAuthActions must be used within AuthProvider");
+  return ctx;
+}
+
+/**
+ * Backward-compatible composite hook. Existing callsites continue to work,
+ * but re-render on any auth state change. Prefer useAuthState / useAuthActions
+ * when the component only needs one half.
+ */
+export function useAuthContext(): AuthState & AuthActions {
+  return { ...useAuthState(), ...useAuthActions() };
 }

@@ -6,6 +6,8 @@ import { OTP_CODE_LENGTH } from "@/modules/auth/shared/types";
 import { useOtpTimer } from "./useOtpTimer";
 import { useOtpInput } from "./useOtpInput";
 
+type UserLocation = Awaited<ReturnType<typeof getUserLocation>>;
+
 interface UseOtpFlowOptions {
   storageKey: string;
   resendMutation?: { mutateAsync: (args: { email: string; signal?: AbortSignal }) => Promise<any>; isPending: boolean } | null;
@@ -14,21 +16,29 @@ interface UseOtpFlowOptions {
 
 /**
  * Shared OTP verification + resend logic used by signin, candidate register,
- * and company register. Eliminates the duplicated verifyCode / resendCode
- * implementations across all three hooks.
+ * and company register.
  */
 export function useOtpFlow({ storageKey, verifyMutation, resendMutation }: UseOtpFlowOptions) {
   const { showToast } = useToast();
-  const abortRef      = useRef<AbortController | null>(null);
-  const locationRef   = useRef<Awaited<ReturnType<typeof getUserLocation>> | undefined>(undefined);
-  const timer         = useOtpTimer(storageKey);
-  const otp           = useOtpInput();
+  const abortRef    = useRef<AbortController | null>(null);
+  // Start as null ("no data yet") rather than undefined ("pending").
+  // This means verifyCode can always use the ref immediately without waiting.
+  const locationRef = useRef<UserLocation>(null);
+  const timer = useOtpTimer(storageKey);
+  const otp   = useOtpInput();
 
-  // Pre-fetch location in the background so it's ready before the user clicks verify.
+  // Pre-fetch location in the background. Location is tracking metadata and
+  // must NEVER block OTP verification — if the fetch hasn't resolved when the
+  // user taps Verify, we simply send null and the backend accepts it.
   useEffect(() => {
-    getUserLocation()
-      .then(loc  => { locationRef.current = loc;  })
-      .catch(()  => { locationRef.current = null; });
+    const controller = new AbortController();
+    getUserLocation(controller.signal)
+      .then(loc => { locationRef.current = loc; })
+      .catch(() => {}); // AbortError on unmount is expected; other errors keep null
+    return () => {
+      controller.abort();
+      locationRef.current = null;
+    };
   }, []);
 
   const verifyCode = async (email: string) => {
@@ -37,13 +47,9 @@ export function useOtpFlow({ storageKey, verifyMutation, resendMutation }: UseOt
 
     const signal = refreshAbort(abortRef);
     try {
-      // Use cached location; if still pending, wait with a 1.5 s hard cap.
-      const location = locationRef.current !== undefined
-        ? locationRef.current
-        : await Promise.race([
-            getUserLocation(),
-            new Promise<null>(resolve => setTimeout(() => resolve(null), 1500)),
-          ]);
+      // Use whatever location is cached right now. Never await or re-fetch —
+      // location is metadata and must not add latency to the OTP critical path.
+      const location = locationRef.current;
       await verifyMutation.mutateAsync({ email, otp: code, location, signal });
       timer.clear();
     } catch (err: any) {

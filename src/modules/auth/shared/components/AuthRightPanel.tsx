@@ -14,7 +14,7 @@ const AuthRightPanel: React.FC<Props> = ({ children, footerTKey, maxWidthClass =
   const { t } = useTranslation("auth");
 
   return (
-    <div className="flex-1 w-full min-h-0 overflow-y-auto relative z-10 flex flex-col">
+    <div className="flex-1 w-full relative z-10 flex flex-col">
       <div className="flex-1 w-full flex flex-col items-center justify-center py-6 sm:py-8 lg:py-10">
 
         {/* Mobile logo */}
