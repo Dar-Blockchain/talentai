@@ -1,10 +1,10 @@
-const feedbackService = require("../services/feedback.service");
+const feedbackService = require("./feedback.service");
 
 exports.create = async (req, res) => {
   try {
     const feedback = await feedbackService.createFeedback({
       ...req.body,
-      userId: req.user._id, // If user is authenticated
+      userId: req.user._id,
     });
     res.status(201).json(feedback);
   } catch (err) {

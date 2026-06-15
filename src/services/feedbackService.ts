@@ -17,7 +17,7 @@ export const feedbackService = {
       body.interviewId = payload.interviewId;
     }
     const res = await axios.post(
-      `${API_BASE_URL}feedback/addFeedback`,
+      `${API_BASE_URL}feedbacks/`,
       body,
       { headers: { Authorization: `Bearer ${token}` } },
     );

@@ -2,7 +2,7 @@
 const mongoose = require('mongoose');
 const User = require("../features/users/user.model");
 const Post = require('../models/Post.model');
-const Feedback = require('../models/Feedbacks.model');
+const Feedback = require('../features/feedbacks/feedback.model');
 const Profile = require('../features/users/profile.model');
 
 module.exports.getAllUsers = async (searchQuery, page = 1, limit = 10) => {

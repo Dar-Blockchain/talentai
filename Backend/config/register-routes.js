@@ -8,7 +8,7 @@ const companyPermissionsRouter = require("../routes/companyPermissions.routes");
 const dashboardRouter = require("../routes/dashboard.routes");
 const profileRouter = require("../features/users").profileRouter;
 const postRouter = require("../routes/post.routes");
-const feedbackRouter = require("../routes/feedback.routes");
+const feedbackRouter = require("../features/feedbacks/feedback.routes");
 const postInterviewAssessmentRouter = require("../routes/postInterviewAssessment.routes");
 const notificationSystemRouter = require("../routes/notificationSystem.routes");
 const stripRouter = require("../routes/strip.routes");
@@ -77,7 +77,7 @@ function registerRoutes(app) {
   app.use("/job-applications", jobApplicationRouter);
 
   // Utility
-  app.use("/feedback", feedbackRouter);
+  app.use("/feedbacks", feedbackRouter);
 
   // Billing
   app.use("/stripe", stripRouter);
