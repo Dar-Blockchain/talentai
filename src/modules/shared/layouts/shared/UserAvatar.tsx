@@ -15,7 +15,6 @@ import {
   AvatarFallback,
 } from "@/modules/shared/ui/shadcn/avatar";
 import UserDropdownMenu from "./UserDropdownMenu";
-import LogoutProgressModal from "@/components/ui/LogoutProgressModal";
 import { cn } from "@/lib/utils";
 
 interface UserAvatarProps {
@@ -26,8 +25,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
   const router = useRouter();
   const { logout } = useAuthContext();
 
-  const [open,       setOpen]       = useState(false);
-  const [loggingOut, setLoggingOut] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const { user, profile } = useSelector((state: RootState) => state.user.connectedUser);
 
@@ -70,7 +68,6 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
   }, [isCompany, displayName, profile, user]);
 
   const handleLogout = useCallback(async () => {
-    setLoggingOut(true);
     try { await logout(); } catch {}
     router.push("/signin");
   }, [logout, router]);
@@ -141,7 +138,6 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
         )}
       </DropdownMenu>
 
-      <LogoutProgressModal open={loggingOut} />
     </>
   );
 };

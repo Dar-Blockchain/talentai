@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect } from "react";
 import {
   Box,
   Drawer,
@@ -24,7 +24,6 @@ import { LogoutOutlined } from "@mui/icons-material";
 import { useRouter } from "next/router";
 import ChevronLeftOutlined from "@mui/icons-material/ChevronLeftOutlined";
 import ChevronRightOutlined from "@mui/icons-material/ChevronRightOutlined";
-import LogoutProgressModal from "@/components/ui/LogoutProgressModal";
 import { useTranslation } from "react-i18next";
 import { useChatUnreadBadges } from "@/modules/chat/shared/hooks/useChatUnreadBadges";
 import ChatUnreadBadge from "@/modules/chat/shared/components/ChatUnreadBadge";
@@ -78,8 +77,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const handleLogout = useLogout("/signin");
-
-  const [loggingOut, setLoggingOut] = useState(false);
 
   const handleGoHome = useCallback(() => {
     if (router.pathname === "/") {
@@ -574,7 +571,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           {content(true)}
         </Drawer>
       )}
-      <LogoutProgressModal open={loggingOut} />
     </>
   );
 };

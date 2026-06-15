@@ -9,7 +9,6 @@ import { useRouter } from "next/router";
 import HeaderLogo from "./HeaderLogo";
 import HeaderNavMenu from "./HeaderNavMenu";
 import { useTranslation } from "react-i18next";
-import LogoutProgressModal from "@/components/ui/LogoutProgressModal";
 import { getCandidateChatBasePath } from "@/modules/chat/candidate-chat/utils/routes";
 import {
   LayoutDashboard, MessageSquare, Bell, LogOut,
@@ -133,14 +132,12 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unre
   const isActiveNotifications = p === "/notifications";
   const isActiveSettings      = p === "/settings";
 
-  const [loggingOut, setLoggingOut] = useState(false);
-  const [mounted,    setMounted]    = useState(false);
+  const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
   const go = (path: string) => { router.push(path); onClose(); };
 
   const handleLogout = useCallback(async () => {
-    setLoggingOut(true);
     onClose();
     await doLogout();
   }, [doLogout, onClose]);
@@ -157,7 +154,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unre
     return () => { document.documentElement.style.overflow = ""; };
   }, [open]);
 
-  if (!mounted) return <LogoutProgressModal open={loggingOut} />;
+  if (!mounted) return null;
 
   return createPortal(
     <>
@@ -340,7 +337,6 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unre
         </div>
       </div>
 
-      <LogoutProgressModal open={loggingOut} />
     </>,
     document.body
   );

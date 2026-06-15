@@ -8,14 +8,14 @@ import type { RegisterFormProps } from "../../types";
 
 const CompanyRegisterForm: React.FC<RegisterFormProps> = ({ onStepChange, onEmailChange }) => {
   const { t } = useTranslation("auth");
-  const { form, step, loading, savedEmail, otp, timer, sendCode, verifyCode } =
+  const { form, step, loading, resendLoading, savedEmail, otp, timer, sendCode, verifyCode, resendCode } =
     useCompanyRegister({ onStepChange, onEmailChange });
 
   if (step === 2) return (
     <AppOtpVerifyStep
       savedEmail={savedEmail} otp={otp} timer={timer}
-      loading={loading}
-      onVerify={verifyCode}
+      loading={loading} resendLoading={resendLoading}
+      onVerify={verifyCode} onResend={resendCode}
       tPrefix="company_form"
     />
   );
