@@ -12,10 +12,13 @@ export const createQueryClient = () =>
         // Don't re-fetch just because the user switched tabs and came back.
         refetchOnWindowFocus: false,
 
-        // Retry once for transient network errors, but never retry a 4xx
-        // response — those indicate auth / validation failures that won't
-        // self-heal on a second attempt.
+        // Retry once for transient network errors, but never retry:
+        // - Aborted/cancelled requests (ERR_CANCELED) — these are intentional
+        //   (e.g. logout flow aborts in-flight requests). Retrying after the
+        //   abort window closes triggers spurious "session expired" toasts.
+        // - 4xx responses — auth/validation failures that won't self-heal.
         retry: (failureCount, error: any) => {
+          if (error?.code === "ERR_CANCELED" || error?.name === "CanceledError") return false;
           if (error?.response?.status >= 400 && error?.response?.status < 500) return false;
           return failureCount < 1;
         },

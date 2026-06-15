@@ -46,13 +46,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const clearAuth = useCallback(() => setIsAuthenticated(false), []);
 
   const logout = useCallback(async () => {
+    // Tell the backend to clear the jwt_token cookie BEFORE setting the
+    // isLoggingOut flag — otherwise the request interceptor aborts it and
+    // the server-side session is never closed.
+    await authApi.logout();
+
     setAxiosLoggingOut(true);
     setIsLoggingOut(true);
     setIsAuthenticated(false);
-
-    // Tell the backend to clear the jwt_token cookie server-side.
-    // authApi.logout() never throws — we continue cleanup regardless.
-    await authApi.logout();
 
     dispatch(clearConnectedUser());
     clearTokens();
