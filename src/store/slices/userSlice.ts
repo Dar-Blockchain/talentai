@@ -238,9 +238,9 @@ const userSlice = createSlice({
           updateProfile.fulfilled,
           (state: UserState, action: PayloadAction<any>) => {
             state.connectedUser.loading = false;
-            state.connectedUser.profile = action.payload.profile;
-            state.connectedUser.companyMembership = action.payload.companyMembership;
-            state.connectedUser.user = action.payload.user;
+            if (action.payload.profile !== undefined)           state.connectedUser.profile           = action.payload.profile;
+            if (action.payload.companyMembership !== undefined) state.connectedUser.companyMembership = action.payload.companyMembership;
+            if (action.payload.user !== undefined)              state.connectedUser.user              = action.payload.user;
           }
         )
         .addCase(

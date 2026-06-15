@@ -115,12 +115,12 @@ const analyseCvAndEnrichProfile = async (resumeFile, validEmail, firstName, last
 module.exports.register = async (req, res) => {
   const resumeFile = req.file;
   try {
-    const { email, roleType, firstName, lastName, name, companyDetails, phone } = req.body;
+    const { email, roleType, firstName, lastName, name, companyDetails, phone, language } = req.body;
     const validEmail    = validateEmail(email);
     const validRoleType = roleType && ["Candidate", "Company", "Member"].includes(roleType) ? roleType : "Candidate";
 
     const result = await authService.registerUser(validEmail, validRoleType, {
-      firstName, lastName, name, companyDetails, phone, resumeFile,
+      firstName, lastName, name, companyDetails, phone, resumeFile, language,
     });
 
     const cvAnalysis = (resumeFile?.path && validRoleType === "Candidate" && result.user)

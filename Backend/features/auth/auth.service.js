@@ -12,8 +12,7 @@ const Subscription      = require("../../models/Subscription.model");
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const OTP_EXPIRY_MS    = 5 * 60 * 1000;
-const MAX_OTP_ATTEMPTS = 5;
+const OTP_EXPIRY_MS = 5 * 60 * 1000;
 
 // ─── Private helpers ──────────────────────────────────────────────────────────
 
@@ -52,7 +51,7 @@ const assignFreePlanToProfile = module.exports.assignFreePlanToProfile = async (
 const issueOtp = async (userId) => {
   const code      = generateOTP();
   const expiresAt = new Date(Date.now() + OTP_EXPIRY_MS);
-  await User.updateOne({ _id: userId }, { otp: { code, expiresAt, attempts: 0 } });
+  await User.updateOne({ _id: userId }, { otp: { code, expiresAt } });
   return code;
 };
 
@@ -69,12 +68,12 @@ module.exports.registerUser = async (email, roleType = "Candidate", opts = {}) =
 
   const validRole = ["Company", "Member", "Employee"].includes(roleType) ? roleType : "Candidate";
 
-  const existing = await User.findOne({ email }).select("_id isVerified username").lean();
+  const existing = await User.findOne({ email }).select("_id isVerified username language").lean();
   if (existing) {
     if (existing.isVerified)
       throw Object.assign(new Error("User already exists. Please sign in instead."), { status: 409 });
     const code = await issueOtp(existing._id);
-    await sendOTP(email, code);
+    await sendOTP(email, code, existing.language || "en");
     return { email, username: existing.username, message: "A new verification code has been sent to your email." };
   }
 
@@ -90,7 +89,8 @@ module.exports.registerUser = async (email, roleType = "Candidate", opts = {}) =
     FirstName:   opts.firstName || "",
     LastName:    opts.lastName  || "",
     role:        validRole,
-    otp: { code: otpCode, expiresAt: new Date(Date.now() + OTP_EXPIRY_MS), attempts: 0 },
+    language:    opts.language  || "en",
+    otp: { code: otpCode, expiresAt: new Date(Date.now() + OTP_EXPIRY_MS) },
   });
 
   let profile = null;
@@ -130,7 +130,7 @@ module.exports.registerUser = async (email, roleType = "Candidate", opts = {}) =
     await Promise.all(tasks);
   }
 
-  await sendOTP(email, otpCode);
+  await sendOTP(email, otpCode, user.language || "en");
 
   return {
     email, username,
@@ -156,17 +156,8 @@ module.exports.verifyUserOTP = async (email, otp, location = null) => {
     throw Object.assign(new Error("OTP has expired. Please request a new one."), { status: 401 });
   }
 
-  const attempts = (user.otp.attempts || 0) + 1;
   if (user.otp.code !== otp) {
-    await User.updateOne({ _id: user._id }, { "otp.attempts": attempts });
-    if (attempts >= MAX_OTP_ATTEMPTS) {
-      await User.updateOne({ _id: user._id }, { "otp.expiresAt": new Date(0) });
-      throw Object.assign(new Error("Too many incorrect attempts. Please request a new code."), { status: 429 });
-    }
-    throw Object.assign(
-      new Error(`Invalid OTP code. ${MAX_OTP_ATTEMPTS - attempts} attempt(s) remaining.`),
-      { status: 401 }
-    );
+    throw Object.assign(new Error("Invalid OTP code. Please check and try again."), { status: 401 });
   }
 
   const locationUpdate = location
@@ -234,11 +225,11 @@ module.exports.verifyUserOTP = async (email, otp, location = null) => {
 // ─── Login (send OTP) ─────────────────────────────────────────────────────────
 
 module.exports.loginUser = async (email) => {
-  const user = await User.findOne({ email }).select("_id username isBanned").lean();
+  const user = await User.findOne({ email }).select("_id username isBanned language").lean();
   assertUserCanReceiveOtp(user);
 
   const code = await issueOtp(user._id);
-  if (!await sendOTP(email, code))
+  if (!await sendOTP(email, code, user.language || "en"))
     throw Object.assign(new Error("Failed to send OTP email. Please try again."), { status: 500 });
 
   return { email, username: user.username, message: "Verification code sent to your email." };
@@ -247,11 +238,11 @@ module.exports.loginUser = async (email) => {
 // ─── Resend OTP ───────────────────────────────────────────────────────────────
 
 module.exports.resendOTP = async (email) => {
-  const user = await User.findOne({ email }).select("_id username isBanned").lean();
+  const user = await User.findOne({ email }).select("_id username isBanned language").lean();
   assertUserCanReceiveOtp(user);
 
   const code = await issueOtp(user._id);
-  if (!await sendOTP(email, code))
+  if (!await sendOTP(email, code, user.language || "en"))
     throw Object.assign(new Error("Failed to send OTP email. Please try again."), { status: 500 });
 
   return { email, username: user.username, message: "New verification code sent. Valid for 5 minutes." };
