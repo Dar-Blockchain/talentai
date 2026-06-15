@@ -8,10 +8,12 @@ import { extractInvitationEmail, refreshAbort } from "@/modules/auth/shared/util
 import { useRegisterMutation, useVerifyRegisterOtp, useResendRegisterOtp } from "../queries";
 import { CANDIDATE_EXPIRY_KEY } from "../utils";
 import type { CandidateFormValues, RegisterFormProps, RegisterStep } from "../types";
+import { useLanguage } from "@/hooks/useLanguage";
 
 export function useCandidateRegister({ onStepChange, onEmailChange }: RegisterFormProps) {
   const router          = useRouter();
   const { showToast }   = useToast();
+  const { currentLang } = useLanguage();
   const returnUrl       = router.query.returnUrl as string | undefined;
   const isJoinTeam      = isInvitationUrl(returnUrl);
   const invitationEmail = extractInvitationEmail(returnUrl);
@@ -66,6 +68,7 @@ export function useCandidateRegister({ onStepChange, onEmailChange }: RegisterFo
       fd.append("firstName", values.firstName);
       fd.append("lastName",  values.lastName);
       fd.append("email",     values.email.toLowerCase().trim());
+      fd.append("language",  currentLang);
       if (!isJoinTeam) {
         fd.append("phone", values.phone);
         if (cvFile) fd.append("resume", cvFile);

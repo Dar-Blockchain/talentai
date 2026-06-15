@@ -16,10 +16,13 @@ function extractMessage(err: unknown, fallback: string): string {
 // ─── Auth API ─────────────────────────────────────────────────────────────────
 
 export const authApi = {
-  /** Sends a one-time code to the given email for sign-in. */
-  signin: async (email: string, signal?: AbortSignal): Promise<void> => {
+  /**
+   * Sends a one-time code to the email address for sign-in.
+   * Throws a normalised Error on failure.
+   */
+  signin: async (email: string, language?: string, signal?: AbortSignal): Promise<void> => {
     try {
-      await axiosInstance.post("auth", { email }, { signal });
+      await axiosInstance.post("auth", { email, language }, { signal });
     } catch (err) {
       throw new Error(extractMessage(err, "Sign in failed. Please try again."));
     }
@@ -49,10 +52,13 @@ export const authApi = {
     }
   },
 
-  /** Requests a new OTP code for the given email. */
-  resendOtp: async (email: string, signal?: AbortSignal): Promise<void> => {
+  /**
+   * Requests a new OTP code for the given email.
+   * Throws a normalised Error on failure.
+   */
+  resendOtp: async (email: string, language?: string, signal?: AbortSignal): Promise<void> => {
     try {
-      await axiosInstance.post("auth/resend-otp", { email }, { signal });
+      await axiosInstance.post("auth/resend-otp", { email, language }, { signal });
     } catch (err) {
       throw new Error(extractMessage(err, "Failed to resend code. Please try again."));
     }

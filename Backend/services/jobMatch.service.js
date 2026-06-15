@@ -20,6 +20,7 @@ module.exports.notifyMatchingCandidates = async (postId) => {
     const companyName     = post.user?.username || "A company";
     const experienceLevel = post.jobDetails?.experienceLevel || null;
     const workMode        = post.jobDetails?.workMode || null;
+    const jobLanguage     = post.interviewLanguages?.[0] || "en";
 
     // Build a searchable text from the post title + description to match against candidate skills
     const postSearchText = [
@@ -66,7 +67,7 @@ module.exports.notifyMatchingCandidates = async (postId) => {
         matchedSkills,
         matchScore,
         jobLink,
-      });
+      }, jobLanguage);
 
       const recipientId = profile.userId?._id ?? profile.userId;
       if (recipientId) {

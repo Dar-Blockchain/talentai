@@ -120,7 +120,14 @@ skills
   - If a years signal FOLLOWS a skill (e.g. "React, 2 years" or "Python and NestJS for 7 years"), apply it to the skill IMMEDIATELY BEFORE it.
   - Never assign a years signal to a skill separated from it by another skill name.
   - Unless the description explicitly says "each" or "both" (e.g. "Python and NestJS, 7 years each"), do not apply the same years to multiple skills.
-- softSkills MUST contain 1 to 2 items — never return an empty array. Return 2 when the description clearly signals a second soft skill.
+- softSkills MUST contain 1 to 2 items — never return an empty array.
+  Always infer soft skills from the job context even if not explicitly stated. Use the role type, seniority, and skills to determine what matters most:
+  - Senior/Expert roles → prefer "Technical Leadership", "Problem Solving", "Mentoring"
+  - Collaborative/team roles → prefer "Teamwork", "Communication"
+  - Creative/product roles → prefer "Creativity", "Attention to Detail"
+  - Fast-paced/startup signals → prefer "Adaptability", "Ownership"
+  - Client-facing signals → prefer "Communication", "Presentation Skills"
+  Return 2 soft skills when the context clearly supports it, otherwise return 1. Never return "Communication" as the only soft skill unless the description explicitly signals a communication-heavy role.
 - Prefer specific named tools over generic labels
   Frontend: React.js, Vue, Angular… | Backend: Node.js, Django, Spring… | Mobile: Swift, Kotlin, Flutter…
   DevOps/Cloud: Docker, Kubernetes, AWS, GCP… | Data: Spark, dbt, Airflow… | AI/ML: PyTorch, TensorFlow, LangChain…
@@ -135,14 +142,14 @@ skills
   "knowledge", "familiarity", "basic", "exposure"  → 1
   "1–2 years", "some experience", "understanding"  → 2
   "3–4 years", "proficient", "solid", "good grasp" → 3
-  "5–7 years", "strong", "advanced", "deep"        → 4
-  "8+ years", "expert", "mastery"                  → 5
+  "5–8 years", "strong", "advanced", "deep"        → 4
+  "9+ years", "expert", "mastery"                  → 5
   null → signal genuinely absent from description  → code defaults to Junior (2)
 
   SENIORITY FLOOR — mandatory:
-  If experienceLevel is "Senior" or "Expert", required technical skills MUST have a minimum level of 3 — ONLY when the description gives NO explicit years or qualifier for that skill.
-  The primary skill (highest importance score) must match the role seniority: Senior → level 4, Expert → level 5.
-  EXCEPTION — explicit years or qualifiers always win: If the description explicitly states years for a skill (e.g., "2 years React") or uses a qualifier (e.g., "basic", "familiarity with", "exposure to"), the level mapping for that skill ALWAYS takes priority. The Seniority Floor does NOT apply to it — even if the overall experienceLevel is Senior or Expert.
+  If experienceLevel is "Senior" or "Expert", the PRIMARY skill only (highest importance score) must match the role seniority: Senior → level 4, Expert → level 5 — but ONLY if that skill has an explicit years signal.
+  All other skills with NO explicit years or qualifier → always return null (code will default them to Junior/level 2).
+  EXCEPTION — explicit years or qualifiers always win: If the description explicitly states years for a skill (e.g., "2 years React") or uses a qualifier (e.g., "basic", "familiarity with", "exposure to"), the level mapping for that skill ALWAYS takes priority.
 
 - importance: assign based on the years signal in the description (1–10).
   More years = higher importance — a skill with more years MUST always score higher than one with fewer years.
@@ -157,7 +164,7 @@ experienceLevel
 - Set based on the HIGHEST explicit years signal stated for the overall role (e.g., "1-2 years of experience", "5+ years required"). Do NOT use skill qualifiers (mastery, solid, basic, advanced) to determine experienceLevel — those set the individual skill level only.
 - When an explicit overall years requirement exists, ALL required skill levels are capped at the corresponding maximum — no individual skill qualifier (even "mastery") can exceed it.
 - Default to "Junior" if the description gives no seniority or years signal.
-- Junior: 1–2 yrs → max skill level 2 | Mid-level: 3–5 yrs → max skill level 3 | Senior: 5–8 yrs → max skill level 4 | Expert: 8+ yrs → max skill level 5
+- Junior: 0–2 yrs → max skill level 2 | Mid-level: 3–4 yrs → max skill level 3 | Senior: 5–8 yrs → max skill level 4 | Expert: 9+ yrs → max skill level 5
 
 ━━━ JOB DESCRIPTION ━━━
 
@@ -197,14 +204,13 @@ function normalizeSkillAnalysis(result) {
 
   const isInternship = result?.jobDetails?.employmentType === "Internship";
 
-  const EXP_TO_LEVEL = { "Junior": 2, "Mid-level": 3, "Senior": 4, "Expert": 5 };
-  const roleLevel = isInternship ? 2 : (EXP_TO_LEVEL[result.jobDetails?.experienceLevel] ?? 2);
-  const maxLevel  = isInternship ? 2 : (EXP_TO_LEVEL[result.jobDetails?.experienceLevel] ?? 5);
+  const EXP_TO_LEVEL  = { "Junior": 2, "Mid-level": 3, "Senior": 4, "Expert": 5 };
+  const LEVEL_TO_EXP  = { 2: "Junior", 3: "Mid-level", 4: "Senior", 5: "Expert" };
 
   function resolveLevel(modelLevel) {
     if (isInternship) return 2;
     if (typeof modelLevel === "number" && modelLevel >= 1 && modelLevel <= 5) {
-      return Math.min(maxLevel, Math.max(2, Math.round(modelLevel)));
+      return Math.max(2, Math.round(modelLevel));
     }
     return 2;
   }
@@ -282,7 +288,7 @@ function normalizeSkillAnalysis(result) {
     distributePercentages(rawRequired, REQUIRED_TOTAL, FALLBACK_IMPORTANCE.required, 5, 15),
     rawRequired, FALLBACK_IMPORTANCE.required, 5, 15
   );
-  const softPcts     = distributePercentages(rawSoft,     SOFT_TOTAL,     FALLBACK_IMPORTANCE.soft,     10, 10);
+  const softPcts = distributePercentages(rawSoft, SOFT_TOTAL, FALLBACK_IMPORTANCE.soft, 10, 10);
 
   const requiredSkills = rawRequired.map((skill, i) => ({
     name:       skill.name,
@@ -290,6 +296,19 @@ function normalizeSkillAnalysis(result) {
     level:      resolveLevel(skill.level),
     percentage: requiredPcts[i],
   }));
+
+  // ── Derive effective experienceLevel from max skill level ─────────────────
+  // The LLM defaults experienceLevel to "Junior" when no overall role years are stated,
+  // even if individual skills have explicit years (e.g. "8 years Next.js"). We correct
+  // this by taking the max of the LLM's value and the highest resolved skill level.
+  if (!isInternship && result.jobDetails) {
+    const llmExpNumeric  = EXP_TO_LEVEL[result.jobDetails.experienceLevel] ?? 2;
+    const maxSkillLevel  = requiredSkills.reduce((max, s) => Math.max(max, s.level), 2);
+    const effectiveLevel = Math.max(llmExpNumeric, maxSkillLevel);
+    result.jobDetails.experienceLevel = LEVEL_TO_EXP[effectiveLevel] ?? result.jobDetails.experienceLevel;
+  }
+
+  const roleLevel = isInternship ? 2 : (EXP_TO_LEVEL[result.jobDetails?.experienceLevel] ?? 2);
 
   const softSkills = rawSoft.map((skill, i) => ({
     name:       skill.name,

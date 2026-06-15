@@ -31,17 +31,25 @@ transporter
     console.error("❌ SMTP verification failed:", err.message)
   );
 
+// Locale files
+const locales = {
+  en: require("../locales/en.json"),
+  fr: require("../locales/fr.json"),
+};
+
 // Compiled templates (loaded once at startup)
-const otpTemplate                    = compileTemplate("auth/auth-otp.hbs");
-const organizationInviteTemplate     = compileTemplate("team/team-invitation.hbs");
-const interviewAssessmentTemplate    = compileTemplate("interview/candidate-assessment-completed.hbs");
-const interviewCompletionTemplate    = compileTemplate("interview/company-assessment-completed.hbs");
-const interviewInvitationTemplate    = compileTemplate("interview/candidate-invitation.hbs");
-const contactCandidateTemplate       = compileTemplate("contact/contact-candidate.hbs");
-const interviewNudge1Template        = compileTemplate("interview/nudge-1.hbs");
-const interviewNudge2Template        = compileTemplate("interview/nudge-2.hbs");
-const interviewNudge3Template        = compileTemplate("interview/nudge-3.hbs");
-const contactEnterpriseTemplate      = compileTemplate("contact/contact-enterprise.hbs");
+const otpTemplate                      = compileTemplate("auth/auth-otp.hbs");
+const organizationInviteTemplate       = compileTemplate("team/team-invitation.hbs");
+const interviewAssessmentTemplate      = compileTemplate("interview/candidate-assessment-completed.hbs");
+const interviewCompletionTemplate      = compileTemplate("interview/company-assessment-completed.hbs");
+const interviewInvitationTemplate      = compileTemplate("interview/candidate-invitation.hbs");
+const contactCandidateTemplate         = compileTemplate("contact/contact-candidate.hbs");
+const interviewNudgeTemplates          = {
+  1: compileTemplate("interview/nudge-1.hbs"),
+  2: compileTemplate("interview/nudge-2.hbs"),
+  3: compileTemplate("interview/nudge-3.hbs"),
+};
+const contactEnterpriseTemplate        = compileTemplate("contact/contact-enterprise.hbs");
 const campaignInviteTemplate           = compileTemplate("campaign/campaign-invite.hbs");
 const campaignDeadlineReminderTemplate = compileTemplate("campaign/campaign-deadline-reminder.hbs");
 const planUpgradeReminderTemplate      = compileTemplate("company/plan-upgrade-reminder.hbs");
@@ -63,12 +71,14 @@ const logoAttachment = {
 const year = new Date().getFullYear();
 
 // ─── Send OTP ────────────────────────────────────────────────────────────────
-const sendOTP = async (email, otp) => {
+const sendOTP = async (email, otp, language = "fr") => {
+  const locale = locales[language] || locales.en;
+  const t = { ...locale.common, ...locale.otp };
   const mailOptions = {
     from: FROM_ADDRESS,
     to: email,
-    subject: "Verification Code - TalentAI",
-    html: otpTemplate({ otp, year }),
+    subject: locale.email_subjects.otp,
+    html: otpTemplate({ t, otp, year }),
     attachments: [logoAttachment],
   };
   try {
@@ -82,12 +92,16 @@ const sendOTP = async (email, otp) => {
 };
 
 // ─── Send Company Invitation ──────────────────────────────────────────────────
-const sendCompanyInvitation = async (to, orgName, role, inviterEmail, invitationLink = "#") => {
+const sendCompanyInvitation = async (to, orgName, role, inviterEmail, invitationLink = "#", language = "en") => {
+  const locale = locales[language] || locales.en;
+  const t = { ...locale.common, ...locale.team_invitation };
+  const s = locale.email_subjects;
+  const subject = `${s.team_invitation_prefix} ${orgName} ${s.team_invitation_as} ${formatRole(role)}`;
   const mailOptions = {
     from: FROM_ADDRESS,
     to,
-    subject: `Invitation: Join ${orgName} as ${role}`,
-    html: organizationInviteTemplate({ orgName, role: formatRole(role), inviter: inviterEmail, invitationLink, year }),
+    subject,
+    html: organizationInviteTemplate({ t, orgName, role: formatRole(role), inviter: inviterEmail, invitationLink, year }),
     attachments: [logoAttachment],
   };
   try {
@@ -101,12 +115,16 @@ const sendCompanyInvitation = async (to, orgName, role, inviterEmail, invitation
 };
 
 // ─── Send Interview Assessment (to candidate) ────────────────────────────────
-const sendInterviewAssessmentEmail = async (candidateEmail, candidateName, postTitle) => {
+const sendInterviewAssessmentEmail = async (candidateEmail, candidateName, postTitle, language = "en") => {
+  const locale = locales[language] || locales.en;
+  const t = { ...locale.common, ...locale.candidate_assessment };
+  const s = locale.email_subjects;
+  const subject = `${s.candidate_assessment_prefix} ${postTitle || (language === "fr" ? "Nouvelle opportunité" : "New Opportunity")}`;
   const mailOptions = {
     from: FROM_ADDRESS,
     to: candidateEmail,
-    subject: `Interview Assessment Completed – ${postTitle || "New Opportunity"}`,
-    html: interviewAssessmentTemplate({ candidateName, postTitle: postTitle || "Position", year }),
+    subject,
+    html: interviewAssessmentTemplate({ t, candidateName, postTitle: postTitle || (language === "fr" ? "Poste" : "Position"), year }),
     attachments: [logoAttachment],
   };
   try {
@@ -120,12 +138,16 @@ const sendInterviewAssessmentEmail = async (candidateEmail, candidateName, postT
 };
 
 // ─── Send Interview Completion Notification (to company) ────────────────────
-const sendInterviewCompletionNotificationToCompany = async (companyEmail, companyName, candidateName, postTitle, candidateEmail) => {
+const sendInterviewCompletionNotificationToCompany = async (companyEmail, companyName, candidateName, postTitle, candidateEmail, language = "en") => {
+  const locale = locales[language] || locales.en;
+  const t = { ...locale.common, ...locale.company_assessment };
+  const s = locale.email_subjects;
+  const subject = `${s.company_assessment_prefix} ${candidateName} ${s.company_assessment_for} ${postTitle || (language === "fr" ? "Poste" : "Position")}`;
   const mailOptions = {
     from: FROM_ADDRESS,
     to: companyEmail,
-    subject: `Interview Completed – ${candidateName} for ${postTitle || "Position"}`,
-    html: interviewCompletionTemplate({ companyName, candidateName, postTitle: postTitle || "Position", candidateEmail, year }),
+    subject,
+    html: interviewCompletionTemplate({ t, companyName, candidateName, postTitle: postTitle || (language === "fr" ? "Poste" : "Position"), candidateEmail, year }),
     attachments: [logoAttachment],
   };
   try {
@@ -139,12 +161,16 @@ const sendInterviewCompletionNotificationToCompany = async (companyEmail, compan
 };
 
 // ─── Send Interview Invitation (to candidate) ────────────────────────────────
-const sendInterviewInvitation = async (candidateEmail, candidateName, jobTitle, companyName, interviewDate = null, interviewTime = null, interviewLink = null) => {
+const sendInterviewInvitation = async (candidateEmail, candidateName, jobTitle, companyName, interviewDate = null, interviewTime = null, interviewLink = null, language = "en") => {
+  const locale = locales[language] || locales.en;
+  const t = { ...locale.common, ...locale.candidate_invitation };
+  const s = locale.email_subjects;
+  const subject = `${s.candidate_invitation_prefix} ${jobTitle} ${s.at} ${companyName}`;
   const mailOptions = {
     from: FROM_ADDRESS,
     to: candidateEmail,
-    subject: `Interview Invitation – ${jobTitle} at ${companyName}`,
-    html: interviewInvitationTemplate({ candidateName, jobTitle, companyName, interviewDate, interviewTime, interviewLink, year }),
+    subject,
+    html: interviewInvitationTemplate({ t, candidateName, jobTitle, companyName, interviewDate, interviewTime, interviewLink, year }),
     attachments: [logoAttachment],
   };
   try {
@@ -158,20 +184,23 @@ const sendInterviewInvitation = async (candidateEmail, candidateName, jobTitle, 
 };
 
 // ─── Send Interview Nudge Emails (cron-triggered reminders) ──────────────────
-const sendInterviewNudge = async (candidateEmail, { firstName, jobTitle, companyName, interviewLink, deadline }, nudgeNumber) => {
-  const templates = { 1: interviewNudge1Template, 2: interviewNudge2Template, 3: interviewNudge3Template };
-  const subjects  = {
-    1: `Your AI interview is ready — ${jobTitle} at ${companyName}`,
-    2: `Still waiting for you — ${jobTitle} at ${companyName}`,
-    3: `Last chance: interview closes tomorrow — ${jobTitle}`,
+const sendInterviewNudge = async (candidateEmail, { firstName, jobTitle, companyName, interviewLink, deadline }, nudgeNumber, language = "en") => {
+  const locale = locales[language] || locales.en;
+  const nudgeKey = `nudge${nudgeNumber}`;
+  const t = { ...locale.common, ...locale[nudgeKey] };
+  const s = locale.email_subjects;
+  const subjects = {
+    1: `${s.nudge1_prefix} ${jobTitle} ${s.at} ${companyName}`,
+    2: `${s.nudge2_prefix} ${jobTitle} ${s.at} ${companyName}`,
+    3: `${s.nudge3_prefix} ${jobTitle}`,
   };
-  const template = templates[nudgeNumber];
+  const template = interviewNudgeTemplates[nudgeNumber];
   if (!template) return false;
   const mailOptions = {
     from: FROM_ADDRESS,
     to: candidateEmail,
     subject: subjects[nudgeNumber],
-    html: template({ firstName, jobTitle, companyName, interviewLink, deadline, year }),
+    html: template({ t, firstName, jobTitle, companyName, interviewLink, deadline, year }),
     attachments: [logoAttachment],
   };
   try {
@@ -185,13 +214,15 @@ const sendInterviewNudge = async (candidateEmail, { firstName, jobTitle, company
 };
 
 // ─── Send Direct Message to Candidate (from company) ─────────────────────────
-const sendCandidateEmail = async (to, candidateName, fromCompanyName, subject, message) => {
+const sendCandidateEmail = async (to, candidateName, fromCompanyName, subject, message, language = "en") => {
+  const locale = locales[language] || locales.en;
+  const t = { ...locale.common, ...locale.contact_candidate };
   const senderAddr = process.env.NO_REPLY_EMAIL;
   const mailOptions = {
     from: `"${fromCompanyName} via TalentAI" <${senderAddr}>`,
     to,
     subject,
-    html: contactCandidateTemplate({ candidateName, companyName: fromCompanyName, subject, message, year }),
+    html: contactCandidateTemplate({ t, candidateName, companyName: fromCompanyName, subject, message, year }),
     attachments: [logoAttachment],
   };
   try {
@@ -205,13 +236,15 @@ const sendCandidateEmail = async (to, candidateName, fromCompanyName, subject, m
 };
 
 // ─── Send Plan Upgrade Reminder to Company ───────────────────────────────────
-const sendPlanUpgradeReminder = async (companyEmail, companyName) => {
+const sendPlanUpgradeReminder = async (companyEmail, companyName, language = "en") => {
+  const locale = locales[language] || locales.en;
+  const t = { ...locale.common, ...locale.plan_upgrade };
   const upgradeUrl = `${process.env.FRONTEND_URL}company/plans`;
   const mailOptions = {
     from: FROM_ADDRESS,
     to: companyEmail,
-    subject: '🚀 Upgrade your TalentAI plan to unlock full access',
-    html: planUpgradeReminderTemplate({ companyName, upgradeUrl, year }),
+    subject: locale.email_subjects.plan_upgrade,
+    html: planUpgradeReminderTemplate({ t, companyName, upgradeUrl, year }),
     attachments: [logoAttachment],
   };
   try {
@@ -225,12 +258,15 @@ const sendPlanUpgradeReminder = async (companyEmail, companyName) => {
 };
 
 // ─── Send Campaign Invitation ────────────────────────────────────────────────
-const sendCampaignInvitation = async (to, { participantName, companyName, campaignTitle, moduleLabel, deadline, campaignDescription, assessmentLink }) => {
+const sendCampaignInvitation = async (to, { participantName, companyName, campaignTitle, moduleLabel, deadline, campaignDescription, assessmentLink }, language = "en") => {
+  const locale = locales[language] || locales.en;
+  const t = { ...locale.common, ...locale.campaign_invite };
+  const subject = `${locale.email_subjects.campaign_invite_prefix} ${campaignTitle}`;
   const mailOptions = {
     from: FROM_ADDRESS,
     to,
-    subject: `You've been assigned to a campaign — ${campaignTitle}`,
-    html: campaignInviteTemplate({ participantName, companyName, campaignTitle, moduleLabel, deadline, campaignDescription, assessmentLink, year }),
+    subject,
+    html: campaignInviteTemplate({ t, participantName, companyName, campaignTitle, moduleLabel, deadline, campaignDescription, assessmentLink, year }),
     attachments: [logoAttachment],
   };
   try {
@@ -244,12 +280,16 @@ const sendCampaignInvitation = async (to, { participantName, companyName, campai
 };
 
 // ─── Send Campaign Deadline Reminder ─────────────────────────────────────────
-const sendCampaignDeadlineReminder = async (to, { participantName, companyName, campaignTitle, moduleLabel, deadline, hoursLeft, assessmentLink }) => {
+const sendCampaignDeadlineReminder = async (to, { participantName, companyName, campaignTitle, moduleLabel, deadline, hoursLeft, assessmentLink }, language = "en") => {
+  const locale = locales[language] || locales.en;
+  const t = { ...locale.common, ...locale.campaign_deadline };
+  const s = locale.email_subjects;
+  const subject = `${s.campaign_deadline_p1} ${hoursLeft}${s.campaign_deadline_p2} ${campaignTitle}`;
   const mailOptions = {
     from: FROM_ADDRESS,
     to,
-    subject: `⏰ Deadline in ${hoursLeft}h — complete your assessment for ${campaignTitle}`,
-    html: campaignDeadlineReminderTemplate({ participantName, companyName, campaignTitle, moduleLabel, deadline, hoursLeft, assessmentLink, year }),
+    subject,
+    html: campaignDeadlineReminderTemplate({ t, participantName, companyName, campaignTitle, moduleLabel, deadline, hoursLeft, assessmentLink, year }),
     attachments: [logoAttachment],
   };
   try {
@@ -283,12 +323,15 @@ const sendEnterpriseInquiry = async ({ name, email, company, message }) => {
 };
 
 // ─── Send Job Match Email (to candidate when a new matching post is published) ──
-const sendJobMatchEmail = async (candidateEmail, { candidateName, jobTitle, companyName, experienceLevel, workMode, matchedSkills, matchScore, jobLink }) => {
+const sendJobMatchEmail = async (candidateEmail, { candidateName, jobTitle, companyName, experienceLevel, workMode, matchedSkills, matchScore, jobLink }, language = "en") => {
+  const locale = locales[language] || locales.en;
+  const t = { ...locale.common, ...locale.job_match };
+  const subject = `${locale.email_subjects.job_match_prefix} ${jobTitle} ${locale.email_subjects.at} ${companyName}`;
   const mailOptions = {
     from: FROM_ADDRESS,
     to: candidateEmail,
-    subject: `🎯 New job match: ${jobTitle} at ${companyName}`,
-    html: jobMatchTemplate({ candidateName, jobTitle, companyName, experienceLevel, workMode, matchedSkills, matchScore, jobLink, year }),
+    subject,
+    html: jobMatchTemplate({ t, candidateName, jobTitle, companyName, experienceLevel, workMode, matchedSkills, matchScore, jobLink, year }),
     attachments: [logoAttachment],
   };
   try {

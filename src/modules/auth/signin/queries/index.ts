@@ -5,8 +5,8 @@ import type { VerifyOtpResponse } from "@/modules/auth/shared/types";
 
 export const useSendSigninCode = () =>
   useMutation({
-    mutationFn: ({ email, signal }: { email: string; signal?: AbortSignal }) =>
-      authApi.signin(email, signal),
+    mutationFn: ({ email, lang, signal }: { email: string; lang?: string; signal?: AbortSignal }) =>
+      authApi.signin(email, lang, signal),
   });
 
 export const useVerifySigninOtp = (onSuccess?: (data: VerifyOtpResponse) => void) =>

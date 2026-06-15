@@ -16,6 +16,7 @@ export const useAiPostStepper = (
   const dispatch = useDispatch<AppDispatch>();
   const { showToast } = useToast();
   const thresholdScore = useSelector((state: RootState) => state.postGeneration.thresholdScore);
+  const generatedLanguage = useSelector((state: RootState) => state.postGeneration.generatedLanguage);
 
   const saveMutation = useSavePostMutation();
 
@@ -29,6 +30,7 @@ export const useAiPostStepper = (
         jobData: { ...generatedPost, interviewLanguages: forcedLanguages ?? interviewLanguages },
         savedPostId,
         thresholdScore,
+        language: generatedLanguage,
       },
       {
         onSuccess: (_data, { savedPostId: id }) => {

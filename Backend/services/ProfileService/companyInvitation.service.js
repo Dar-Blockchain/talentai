@@ -58,9 +58,9 @@ const _buildInvitationLink = (token, invitationId, company) =>
  * @param {string} invitationLink - The invitation link
  * @param {boolean} isResend - Whether this is a resend
  */
-const _sendInvitationEmail = async (email, senderName, role, invitationLink, isResend = false) => {
+const _sendInvitationEmail = async (email, senderName, role, invitationLink, isResend = false, language = "en") => {
   try {
-    await sendCompanyInvitation(email, senderName, role, senderName, invitationLink);
+    await sendCompanyInvitation(email, senderName, role, senderName, invitationLink, language);
     if (isResend) {
       console.log(`✅ Invitation resent to ${email}`);
     }
@@ -147,10 +147,14 @@ module.exports.sentInvitation = async (
   const member = await CompanyInvitationModel.create(invitationData);
   const invitationLink = _buildInvitationLink(token, member._id, company);
 
-  const companyProfile = await Profile.findOne({ userId: company });
+  const [companyProfile, companyUser] = await Promise.all([
+    Profile.findOne({ userId: company }),
+    User.findById(company).select('language').lean(),
+  ]);
   const companyName = companyProfile?.companyDetails?.name || username;
+  const companyLanguage = companyUser?.language || 'en';
 
-  await _sendInvitationEmail(userEmail, companyName, role, invitationLink);
+  await _sendInvitationEmail(userEmail, companyName, role, invitationLink, false, companyLanguage);
 
   return member;
 };
@@ -190,10 +194,14 @@ module.exports.resendInvitation = async (invitationId, departmentId = null, upda
   ).populate("invitedBy");
 
   const invitationLink = _buildInvitationLink(token, invitationId, updatedInvitation.company);
-  const companyProfile = await Profile.findOne({ userId: updatedInvitation.company });
+  const [companyProfile, companyUserResend] = await Promise.all([
+    Profile.findOne({ userId: updatedInvitation.company }),
+    User.findById(updatedInvitation.company).select('language').lean(),
+  ]);
   const companyName = companyProfile?.companyDetails?.name || updatedInvitation.invitedBy?.username || "Admin";
+  const companyLanguageResend = companyUserResend?.language || 'en';
 
-  await _sendInvitationEmail(updatedInvitation.email, companyName, updatedInvitation.role, invitationLink, true);
+  await _sendInvitationEmail(updatedInvitation.email, companyName, updatedInvitation.role, invitationLink, true, companyLanguageResend);
 
   return updatedInvitation;
 };

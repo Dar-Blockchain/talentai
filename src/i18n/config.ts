@@ -87,8 +87,8 @@ function mergeDashboardPageBundles<D extends { pages: Record<string, unknown> }>
 
 /**
  * Synchronously determine the correct starting language before React renders.
- * - Guest (no auth token): always 'en'
- * - Authenticated: user.language from persisted Redux state, then MANUAL_LANG_KEY, then 'en'
+ * Priority: persisted Redux user language (auth) → cookie → manual key → 'en'
+ * The cookie (talentai_lang, 1-year) is the guest/post-logout source of truth.
  */
 function getInitialLanguage(): string {
   if (typeof window === 'undefined') return 'en';

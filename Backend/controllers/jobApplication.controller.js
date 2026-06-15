@@ -421,6 +421,7 @@ module.exports.inviteToInterview = async (req, res) => {
     }
 
     const jobTitle = post.jobDetails?.title || "Position";
+    const jobLanguage = post.language || post.interviewLanguages?.[0] || "en";
 
     // Prefer the company's registered name over the login username
     const companyProfile = await Profile.findOne({ userId: post.user._id }).select("companyDetails").lean();
@@ -429,6 +430,7 @@ module.exports.inviteToInterview = async (req, res) => {
     console.log(`✅ Job post found`);
     console.log(`   - Title: ${jobTitle}`);
     console.log(`   - Company: ${companyName}`);
+    console.log(`   - Language: ${jobLanguage}`);
 
     // Send interview invitation email
     console.log(`📧 Sending interview invitation email...`);
@@ -439,7 +441,8 @@ module.exports.inviteToInterview = async (req, res) => {
       companyName,
       interviewDate || null,
       interviewTime || null,
-      interviewLink || null
+      interviewLink || null,
+      jobLanguage
     );
 
     if (!emailSent) {

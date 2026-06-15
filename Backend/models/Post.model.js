@@ -148,6 +148,14 @@ const postSchema = new mongoose.Schema({
     description: 'Timestamp when post was archived'
   },
 
+  // Language the job post is written in (set at creation time)
+  language: {
+    type: String,
+    enum: ['en', 'fr'],
+    default: 'en',
+    description: 'Language the job post is written in'
+  },
+
   // Interview Languages field - array of languages for the job post interview
   interviewLanguages: {
     type: [String],

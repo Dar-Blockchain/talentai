@@ -23,6 +23,7 @@ export interface SaveMutationPayload {
   jobData: PostGenerationResponse & { interviewLanguages: string[] };
   savedPostId: string | null;
   thresholdScore: number;
+  language?: string;
 }
 
 // ── Fetch existing post by ID ─────────────────────────────────────────────────
@@ -85,7 +86,7 @@ export const useSavePostMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ jobData, savedPostId, thresholdScore }: SaveMutationPayload) => {
+    mutationFn: ({ jobData, savedPostId, thresholdScore, language }: SaveMutationPayload) => {
       const payload: SavePostPayload = {
         ...jobData.jobDetails,
         requiredSkills: jobData.skillAnalysis.requiredSkills,
@@ -94,6 +95,7 @@ export const useSavePostMutation = () => {
         interviewLanguages: jobData.interviewLanguages,
         expirationDate: jobData.expirationDate ?? null,
         thresholdScore,
+        language: language ?? "en",
       };
       return savedPostId ? updatePost(savedPostId, payload) : savePost(payload);
     },

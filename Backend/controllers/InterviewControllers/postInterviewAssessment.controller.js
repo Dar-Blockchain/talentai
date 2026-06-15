@@ -85,8 +85,8 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
         const overallScore = assessment?.interviewData?.finalReport?.scores?.overall;
         console.log(`\n🎯 Interview Overall Score: ${overallScore}`);
 
-        // Fetch the post to get the interview score threshold
-        const post = await Post.findById(assessmentData.post).select('thresholdScoreInterview');
+        // Fetch the post to get the interview score threshold and language
+        const post = await Post.findById(assessmentData.post).select('thresholdScoreInterview language interviewLanguages');
         const thresholdScoreInterview = post?.thresholdScoreInterview || 20;
         console.log(`📊 Interview Score Threshold: ${thresholdScoreInterview}%`);
 
@@ -133,17 +133,20 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
       // Get candidate email and name
       const candidateEmail = req.user.email;
       const candidateName = `${req.user.profile?.firstName || ""} ${req.user.profile?.lastName || ""}`.trim() || req.user.username || 'Candidate';
-      
-      // Get post title if available
+
+      // Get post title and language
       let postTitle = 'New Opportunity';
+      let jobLanguage = 'en';
       if (assessment.post && assessment.post.jobDetails) {
         postTitle = assessment.post.jobDetails.title || 'New Opportunity';
       }
+      const postForLang = await Post.findById(assessmentData.post).select('language interviewLanguages').lean();
+      if (postForLang) jobLanguage = postForLang.language || postForLang.interviewLanguages?.[0] || 'en';
 
-      console.log(`📧 Sending interview assessment email to: ${candidateEmail}`);
+      console.log(`📧 Sending interview assessment email to: ${candidateEmail} (lang: ${jobLanguage})`);
 
       // Send email to candidate asynchronously (don't block response)
-      sendInterviewAssessmentEmail(candidateEmail, candidateName, postTitle).catch(err => {
+      sendInterviewAssessmentEmail(candidateEmail, candidateName, postTitle, jobLanguage).catch(err => {
         console.error('⚠️ Warning: Failed to send candidate email, but assessment was created:', err.message);
       });
 
@@ -152,13 +155,13 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
         // Get company details from assessment
         const companyId = assessment.company;
         if (companyId) {
-          const companyUser = await User.findById(companyId).select('email');
+          const companyUser = await User.findById(companyId).select('email language');
           const companyProfile = await Profile.findOne({ userId: companyId }).select('firstName lastName');
 
           if (companyUser && companyUser.email) {
             const companyName = companyProfile?.firstName || 'Company';
 
-            console.log(`📧 Sending interview completion notification to company: ${companyUser.email}`);
+            console.log(`📧 Sending interview completion notification to company: ${companyUser.email} (lang: ${jobLanguage})`);
 
             // Send email to company asynchronously
             sendInterviewCompletionNotificationToCompany(
@@ -166,7 +169,8 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
               companyName,
               candidateName,
               postTitle,
-              candidateEmail
+              candidateEmail,
+              jobLanguage
             ).catch(err => {
               console.error('⚠️ Warning: Failed to send company notification Email:', err.message);
             });
