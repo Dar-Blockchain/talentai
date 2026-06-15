@@ -67,9 +67,9 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
     return (user?.username || user?.email || "?")[0].toUpperCase();
   }, [isCompany, displayName, profile, user]);
 
-  const handleLogout = useCallback(async () => {
-    try { await logout(); } catch {}
-    router.push("/signin");
+  const handleLogout = useCallback(() => {
+    logout();
+    router.replace("/signin");
   }, [logout, router]);
 
   const goToDashboard = useCallback(() => {

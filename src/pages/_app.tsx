@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 import { Provider, useSelector, useDispatch } from "react-redux";
 import { store, persistor, RootState } from "../store/store";
 import { PersistGate } from "redux-persist/integration/react";
-import { ThemeProvider as MuiThemeProvider, createTheme, CssBaseline, Dialog, DialogContent, Box, Typography, CircularProgress } from "@mui/material";
+import { ThemeProvider as MuiThemeProvider, createTheme, CssBaseline, Backdrop, Box, Typography, CircularProgress } from "@mui/material";
 import { useEffect, useMemo } from "react";
 import { useTheme } from "next-themes";
 import { ThemeProvider } from "@/providers/ThemeProvider";
@@ -125,6 +125,8 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
   const dispatch = useDispatch<typeof store.dispatch>();
   const router   = useRouter();
   const { t }    = useTranslation("auth");
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   const userId = user?._id;
 
@@ -193,31 +195,25 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
       )}
       <DbLanguageSync />
       {children}
-      <Dialog
+      <Backdrop
         open={isLoggingOut}
-        disableEscapeKeyDown
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            px: 4,
-            py: 3.5,
-            minWidth: 260,
-            boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
-          },
+        sx={{
+          zIndex: 9999,
+          flexDirection: "column",
+          gap: 2.5,
+          bgcolor: isDark ? "#0B1120" : "#FDFEFE",
         }}
       >
-        <DialogContent sx={{ p: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 2.5 }}>
-          <CircularProgress size={36} thickness={4} sx={{ color: "#0D9488" }} />
-          <Box sx={{ textAlign: "center" }}>
-            <Typography sx={{ fontWeight: 700, fontSize: "15px", color: "#111827" }}>
-              {t("logout.signing_out")}
-            </Typography>
-            <Typography sx={{ fontSize: "12px", color: "#6B7280", mt: 0.5 }}>
-              {t("logout.please_wait")}
-            </Typography>
-          </Box>
-        </DialogContent>
-      </Dialog>
+        <CircularProgress size={36} thickness={4} sx={{ color: "#0D9488" }} />
+        <Box sx={{ textAlign: "center" }}>
+          <Typography sx={{ fontWeight: 700, fontSize: "15px", color: isDark ? "#F9FAFB" : "#111827" }}>
+            {t("logout.signing_out")}
+          </Typography>
+          <Typography sx={{ fontSize: "12px", color: "#6B7280", mt: 0.5 }}>
+            {t("logout.please_wait")}
+          </Typography>
+        </Box>
+      </Backdrop>
     </NotificationProvider>
   );
 }

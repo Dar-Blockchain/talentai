@@ -137,9 +137,9 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unre
 
   const go = (path: string) => { router.push(path); onClose(); };
 
-  const handleLogout = useCallback(async () => {
+  const handleLogout = useCallback(() => {
     onClose();
-    await doLogout();
+    doLogout();
   }, [doLogout, onClose]);
 
   const goDashboard = () => {
