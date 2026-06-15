@@ -1,6 +1,6 @@
-import { Box, Typography, CircularProgress } from '@mui/material';
-import PageContainer from '@/components/layout/PageContainer';
-import Header from '@/components/layout/Header';
+﻿import { Box, Typography, CircularProgress } from '@mui/material';
+import PageContainer from '@/modules/shared/layouts/PageContainer';
+import Header from '@/modules/shared/layouts/home/HomeHeader';
 import { useTranslation } from 'react-i18next';
 
 export default function LoadingState() {

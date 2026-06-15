@@ -1,5 +1,5 @@
 const Payment = require("../models/Payment.model");
-const Profile = require("../models/Profile.model");
+const Profile = require("../features/users/profile.model");
 const PlanLimits = require("../models/PlanLimits.model");
 const subscriptionService = require("./subscription.service");
 

@@ -5,8 +5,8 @@ const InternalCampaign = require("../models/InternalCampaign.model");
 const CampaignParticipant = require("../models/CampaignParticipant.model");
 const CampaignResponse = require("../models/CampaignResponse.model");
 const CompanyMembership = require("../models/CompanyMembership.model");
-const Profile = require("../models/Profile.model");
-const User = require("../models/User.model");
+const Profile = require("../features/users/profile.model");
+const User = require("../features/users/user.model");
 const bedrock = require("../helpers/bedrock.helpers");
 const { sendCampaignInvitation } = require("../utils/email-service");
 

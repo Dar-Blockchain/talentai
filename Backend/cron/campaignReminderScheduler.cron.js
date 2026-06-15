@@ -1,7 +1,7 @@
 const cron = require("node-cron");
 const InternalCampaign = require("../models/InternalCampaign.model");
 const CampaignParticipant = require("../models/CampaignParticipant.model");
-const Profile = require("../models/Profile.model");
+const Profile = require("../features/users/profile.model");
 const { sendCampaignDeadlineReminder } = require("../utils/email-service");
 const logger = require("../utils/logger");
 

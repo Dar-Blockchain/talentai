@@ -1,6 +1,9 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { departmentService } from "@/services/departmentService";
-import { DEPARTMENT_API_ERROR_I18N, extractAxiosErrorMessage } from "@/utils/departmentI18n";
+import {
+  DEPARTMENT_API_ERROR_I18N,
+  extractAxiosErrorMessage,
+} from "@/modules/company/departments/utils/departmentI18n";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -217,7 +220,6 @@ const departmentSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // fetchDepartments
     builder
       .addCase(fetchDepartments.pending, (state) => {
         state.loading = true;
@@ -232,89 +234,66 @@ const departmentSlice = createSlice({
       })
       .addCase(fetchDepartments.rejected, (state, action) => {
         state.loading = false;
-        state.error =
-          (action.payload as string | undefined) ?? DEPARTMENT_API_ERROR_I18N.fetchList;
+        state.error = (action.payload as string | undefined) ?? DEPARTMENT_API_ERROR_I18N.fetchList;
       });
 
-    // createDepartment
     builder
       .addCase(createDepartment.pending, (state) => {
-        state.creating = true;
-        state.createError = null;
-        state.createSuccess = false;
+        state.creating = true; state.createError = null; state.createSuccess = false;
       })
       .addCase(createDepartment.fulfilled, (state, action) => {
-        state.creating = false;
-        state.createSuccess = true;
-        state.departments.unshift(action.payload);
-        state.total += 1;
+        state.creating = false; state.createSuccess = true;
+        state.departments.unshift(action.payload); state.total += 1;
       })
       .addCase(createDepartment.rejected, (state, action) => {
         state.creating = false;
-        state.createError =
-          (action.payload as string | undefined) ?? DEPARTMENT_API_ERROR_I18N.create;
+        state.createError = (action.payload as string | undefined) ?? DEPARTMENT_API_ERROR_I18N.create;
       });
 
-    // updateDepartment
     builder
       .addCase(updateDepartment.pending, (state) => {
-        state.updating = true;
-        state.updateError = null;
-        state.updateSuccess = false;
+        state.updating = true; state.updateError = null; state.updateSuccess = false;
       })
       .addCase(updateDepartment.fulfilled, (state, action) => {
-        state.updating = false;
-        state.updateSuccess = true;
+        state.updating = false; state.updateSuccess = true;
         const idx = state.departments.findIndex((d) => d._id === action.payload._id);
         if (idx !== -1) state.departments[idx] = action.payload;
       })
       .addCase(updateDepartment.rejected, (state, action) => {
         state.updating = false;
-        state.updateError =
-          (action.payload as string | undefined) ?? DEPARTMENT_API_ERROR_I18N.update;
+        state.updateError = (action.payload as string | undefined) ?? DEPARTMENT_API_ERROR_I18N.update;
       });
 
-    // fetchDepartmentById
     builder
       .addCase(fetchDepartmentById.pending, (state) => {
-        state.loadingCurrent = true;
-        state.currentError = null;
-        state.currentDepartment = null;
+        state.loadingCurrent = true; state.currentError = null; state.currentDepartment = null;
       })
       .addCase(fetchDepartmentById.fulfilled, (state, action) => {
-        state.loadingCurrent = false;
-        state.currentDepartment = action.payload;
+        state.loadingCurrent = false; state.currentDepartment = action.payload;
       })
       .addCase(fetchDepartmentById.rejected, (state, action) => {
         state.loadingCurrent = false;
         state.currentError = action.payload || "Error fetching department";
       });
 
-    // deleteDepartment
     builder
       .addCase(deleteDepartment.pending, (state) => {
-        state.deleting = true;
-        state.deleteError = null;
-        state.deleteSuccess = false;
+        state.deleting = true; state.deleteError = null; state.deleteSuccess = false;
       })
       .addCase(deleteDepartment.fulfilled, (state, action) => {
-        state.deleting = false;
-        state.deleteSuccess = true;
+        state.deleting = false; state.deleteSuccess = true;
         state.departments = state.departments.filter((d) => d._id !== action.payload);
         state.total -= 1;
       })
       .addCase(deleteDepartment.rejected, (state, action) => {
         state.deleting = false;
-        state.deleteError =
-          (action.payload as string | undefined) ?? DEPARTMENT_API_ERROR_I18N.delete;
+        state.deleteError = (action.payload as string | undefined) ?? DEPARTMENT_API_ERROR_I18N.delete;
       });
 
-    // fetchDepartmentStats
     builder
       .addCase(fetchDepartmentStats.pending, (state) => { state.deptStatsLoading = true; })
       .addCase(fetchDepartmentStats.fulfilled, (state, action) => {
-        state.deptStatsLoading = false;
-        state.deptStats = action.payload;
+        state.deptStatsLoading = false; state.deptStats = action.payload;
       })
       .addCase(fetchDepartmentStats.rejected, (state) => { state.deptStatsLoading = false; });
   },
@@ -325,53 +304,29 @@ export const { clearCreateStatus, clearUpdateStatus, clearDeleteStatus, clearErr
 
 // ─── Selectors ────────────────────────────────────────────────────────────────
 
-export const selectDepartments = (state: any) =>
-  state.department.departments as Department[];
-export const selectDepartmentsLoading = (state: any) =>
-  state.department.loading as boolean;
-export const selectDepartmentsError = (state: any) =>
-  state.department.error as string | null;
-export const selectDepartmentCreating = (state: any) =>
-  state.department.creating as boolean;
-export const selectDepartmentCreateSuccess = (state: any) =>
-  state.department.createSuccess as boolean;
-export const selectDepartmentCreateError = (state: any) =>
-  state.department.createError as string | null;
-export const selectDepartmentUpdating = (state: any) =>
-  state.department.updating as boolean;
-export const selectDepartmentUpdateSuccess = (state: any) =>
-  state.department.updateSuccess as boolean;
-export const selectDepartmentUpdateError = (state: any) =>
-  state.department.updateError as string | null;
-export const selectDepartmentDeleting = (state: any) =>
-  state.department.deleting as boolean;
-export const selectDepartmentDeleteSuccess = (state: any) =>
-  state.department.deleteSuccess as boolean;
-export const selectDepartmentDeleteError = (state: any) =>
-  state.department.deleteError as string | null;
-export const selectDepartmentTotal = (state: any) =>
-  state.department.total as number;
-export const selectDepartmentPage = (state: any) =>
-  state.department.page as number;
-export const selectDepartmentLimit = (state: any) =>
-  state.department.limit as number;
-export const selectCurrentDepartment = (state: any) =>
-  state.department.currentDepartment as Department | null;
-export const selectCurrentDepartmentLoading = (state: any) =>
-  state.department.loadingCurrent as boolean;
-export const selectCurrentDepartmentError = (state: any) =>
-  state.department.currentError as string | null;
-export const selectDepartmentMembers = (state: any) =>
-  state.department.departmentMembers as DepartmentMember[];
-export const selectDepartmentMembersTotal = (state: any) =>
-  state.department.membersTotal as number;
-export const selectDepartmentMembersLoading = (state: any) =>
-  state.department.loadingMembers as boolean;
-export const selectDepartmentMembersError = (state: any) =>
-  state.department.membersError as string | null;
-export const selectDepartmentStats = (state: any) =>
-  state.department.deptStats as DepartmentStats | null;
-export const selectDepartmentStatsLoading = (state: any) =>
-  state.department.deptStatsLoading as boolean;
+export const selectDepartments            = (s: any) => s.department.departments       as Department[];
+export const selectDepartmentsLoading     = (s: any) => s.department.loading           as boolean;
+export const selectDepartmentsError       = (s: any) => s.department.error             as string | null;
+export const selectDepartmentCreating     = (s: any) => s.department.creating          as boolean;
+export const selectDepartmentCreateSuccess = (s: any) => s.department.createSuccess    as boolean;
+export const selectDepartmentCreateError  = (s: any) => s.department.createError       as string | null;
+export const selectDepartmentUpdating     = (s: any) => s.department.updating          as boolean;
+export const selectDepartmentUpdateSuccess = (s: any) => s.department.updateSuccess    as boolean;
+export const selectDepartmentUpdateError  = (s: any) => s.department.updateError       as string | null;
+export const selectDepartmentDeleting     = (s: any) => s.department.deleting          as boolean;
+export const selectDepartmentDeleteSuccess = (s: any) => s.department.deleteSuccess    as boolean;
+export const selectDepartmentDeleteError  = (s: any) => s.department.deleteError       as string | null;
+export const selectDepartmentTotal        = (s: any) => s.department.total             as number;
+export const selectDepartmentPage         = (s: any) => s.department.page              as number;
+export const selectDepartmentLimit        = (s: any) => s.department.limit             as number;
+export const selectCurrentDepartment      = (s: any) => s.department.currentDepartment as Department | null;
+export const selectCurrentDepartmentLoading = (s: any) => s.department.loadingCurrent  as boolean;
+export const selectCurrentDepartmentError = (s: any) => s.department.currentError      as string | null;
+export const selectDepartmentMembers      = (s: any) => s.department.departmentMembers as DepartmentMember[];
+export const selectDepartmentMembersTotal = (s: any) => s.department.membersTotal      as number;
+export const selectDepartmentMembersLoading = (s: any) => s.department.loadingMembers  as boolean;
+export const selectDepartmentMembersError = (s: any) => s.department.membersError      as string | null;
+export const selectDepartmentStats        = (s: any) => s.department.deptStats         as DepartmentStats | null;
+export const selectDepartmentStatsLoading = (s: any) => s.department.deptStatsLoading  as boolean;
 
 export default departmentSlice.reducer;

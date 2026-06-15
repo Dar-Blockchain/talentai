@@ -1,38 +1,28 @@
 import React from 'react';
-import {
-  Box, Typography, Popover, Divider, IconButton, Button, Chip, Tooltip,
-} from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import {
-  CheckCircle as CheckCircleIcon,
-  Info as InfoIcon,
-  Warning as WarningIcon,
-  Error as ErrorIcon,
-  AccessTime as AccessTimeIcon,
-  Settings as SettingsIcon,
-  MarkEmailRead as MarkEmailReadIcon,
-  Archive as ArchiveIcon,
-  DeleteOutline as DeleteIcon,
-  NotificationsNone as EmptyIcon,
-  Circle as DotIcon,
-} from '@mui/icons-material';
+  CheckCircle2, AlertTriangle, XCircle, Info,
+  Clock, Settings, MailCheck, Archive, Trash2,
+  Bell, Circle,
+} from 'lucide-react';
+import { PopoverContent } from '@/modules/shared/ui/shadcn/popover';
+import { cn } from '@/lib/utils';
 import { getNotifTypeStyle } from '../api/notificationApi';
 import type { NotificationItem } from '../api/notificationApi';
 
 const getTypeIcon = (type: string) => {
+  const cls = "size-4";
   switch (type) {
-    case 'success': return <CheckCircleIcon sx={{ fontSize: 16 }} />;
-    case 'warning': return <WarningIcon     sx={{ fontSize: 16 }} />;
-    case 'error':   return <ErrorIcon       sx={{ fontSize: 16 }} />;
-    default:        return <InfoIcon        sx={{ fontSize: 16 }} />;
+    case 'success': return <CheckCircle2  className={cls} />;
+    case 'warning': return <AlertTriangle className={cls} />;
+    case 'error':   return <XCircle       className={cls} />;
+    default:        return <Info          className={cls} />;
   }
 };
 
 interface NotificationDropdownProps {
-  anchorEl:            HTMLElement | null;
-  open:                boolean;
-  unreadCount:         number;
   onClose:             () => void;
+  unreadCount:         number;
   notifications:       NotificationItem[];
   onMarkAsRead:        (id: string) => void;
   onMarkAllAsRead:     () => void;
@@ -44,7 +34,7 @@ interface NotificationDropdownProps {
 }
 
 const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
-  anchorEl, open, onClose,
+  onClose,
   notifications, unreadCount,
   onMarkAsRead, onMarkAllAsRead,
   onViewAll, onNotificationClick, onArchive, onArchiveAll, onDelete,
@@ -57,156 +47,143 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   const hasMore   = notifications.length > 6;
 
   return (
-    <Popover
-      open={open}
-      anchorEl={anchorEl}
-      onClose={onClose}
-      disableScrollLock
-      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      transformOrigin={{ vertical: 'top',    horizontal: 'right' }}
-      slotProps={{
-        paper: {
-          sx: {
-            width: 400, maxHeight: 560, mt: 1, borderRadius: '16px',
-            boxShadow: '0 8px 40px rgba(0,0,0,0.13)', overflow: 'hidden',
-            border: '1px solid #F1F5F9',
-          },
-        },
-      }}
+    <PopoverContent
+      align="end"
+      sideOffset={8}
+      className="w-[400px] max-h-[560px] p-0 rounded-[16px] border border-[#F1F5F9] shadow-[0_8px_40px_rgba(0,0,0,0.13)] overflow-hidden flex flex-col"
     >
       {/* Header */}
-      <Box sx={{ px: 2.5, pt: 2, pb: 1.5, borderBottom: '1px solid #F1F5F9' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', color: '#0D1B2A' }}>
-              {s('dropdown_title')}
-            </Typography>
-            {unreadCount > 0 && (
-              <Chip
-                label={s('dropdown_new_count', { count: unreadCount })}
-                size="small"
-                sx={{
-                  height: 20, fontSize: '0.68rem', fontWeight: 700,
-                  bgcolor: '#FEE2E2', color: '#EF4444', border: '1px solid #FECACA',
-                  '& .MuiChip-label': { px: 1 },
-                }}
-              />
-            )}
-          </Box>
-          <Box sx={{ display: 'flex', gap: 0.5 }}>
-            {unreadCount > 0 && (
-              <Tooltip title={s('tooltip_mark_all_read')} placement="top">
-                <IconButton size="small" onClick={onMarkAllAsRead}
-                  sx={{ width: 28, height: 28, borderRadius: '8px', '&:hover': { bgcolor: '#F0FDFA', color: '#0D9488' } }}>
-                  <MarkEmailReadIcon sx={{ fontSize: 16, color: '#6B7280' }} />
-                </IconButton>
-              </Tooltip>
-            )}
-            {notifications.length > 0 && (
-              <Tooltip title={s('tooltip_archive_all')} placement="top">
-                <IconButton size="small" onClick={onArchiveAll}
-                  sx={{ width: 28, height: 28, borderRadius: '8px', '&:hover': { bgcolor: '#F9FAFB', color: '#374151' } }}>
-                  <ArchiveIcon sx={{ fontSize: 16, color: '#6B7280' }} />
-                </IconButton>
-              </Tooltip>
-            )}
-            <Tooltip title={s('tooltip_settings')} placement="top">
-              <IconButton size="small" onClick={onViewAll}
-                sx={{ width: 28, height: 28, borderRadius: '8px', '&:hover': { bgcolor: '#F9FAFB', color: '#374151' } }}>
-                <SettingsIcon sx={{ fontSize: 16, color: '#6B7280' }} />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        </Box>
-      </Box>
+      <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-[#F1F5F9] flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-[15px] text-[#0D1B2A]">{s('dropdown_title')}</span>
+          {unreadCount > 0 && (
+            <span className="inline-flex items-center h-5 px-2 rounded-full text-[10.5px] font-bold bg-red-50 text-red-500 border border-red-200">
+              {s('dropdown_new_count', { count: unreadCount })}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-0.5">
+          {unreadCount > 0 && (
+            <button
+              title={s('tooltip_mark_all_read')}
+              onClick={onMarkAllAsRead}
+              className="size-7 rounded-[8px] flex items-center justify-center text-gray-400 hover:bg-teal-50 hover:text-teal-600 transition-colors"
+            >
+              <MailCheck className="size-4" />
+            </button>
+          )}
+          {notifications.length > 0 && (
+            <button
+              title={s('tooltip_archive_all')}
+              onClick={onArchiveAll}
+              className="size-7 rounded-[8px] flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+            >
+              <Archive className="size-4" />
+            </button>
+          )}
+          <button
+            title={s('tooltip_settings')}
+            onClick={() => { onClose(); onViewAll(); }}
+            className="size-7 rounded-[8px] flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+          >
+            <Settings className="size-4" />
+          </button>
+        </div>
+      </div>
 
       {/* List */}
-      <Box sx={{ maxHeight: 420, overflowY: 'auto', '&::-webkit-scrollbar': { width: 4 }, '&::-webkit-scrollbar-thumb': { bgcolor: '#E5E7EB', borderRadius: 4 } }}>
+      <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
         {displayed.length === 0 ? (
-          <Box sx={{ py: 8, textAlign: 'center', px: 3 }}>
-            <Box sx={{ width: 56, height: 56, borderRadius: '50%', bgcolor: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2 }}>
-              <EmptyIcon sx={{ fontSize: 28, color: '#CBD5E1' }} />
-            </Box>
-            <Typography sx={{ fontWeight: 600, fontSize: '0.875rem', color: '#374151', mb: 0.5 }}>
-              {s('dropdown_empty_title')}
-            </Typography>
-            <Typography sx={{ fontSize: '0.78rem', color: '#9CA3AF', lineHeight: 1.5 }}>
-              {s('dropdown_empty_subtitle')}
-            </Typography>
-          </Box>
+          <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+            <div className="size-14 rounded-full bg-slate-100 flex items-center justify-center mb-3">
+              <Bell className="size-7 text-slate-300" />
+            </div>
+            <p className="font-semibold text-sm text-gray-700 mb-1">{s('dropdown_empty_title')}</p>
+            <p className="text-[12.5px] text-gray-400 leading-relaxed">{s('dropdown_empty_subtitle')}</p>
+          </div>
         ) : (
           displayed.map((n, i) => {
             const style = getNotifTypeStyle(n.type);
             return (
               <React.Fragment key={n.id}>
-                <Box
-                  onClick={() => onNotificationClick(n.id)}
-                  sx={{
-                    px: 2.5, py: 1.5, display: 'flex', gap: 1.5, alignItems: 'flex-start',
-                    cursor: 'pointer',
-                    bgcolor: n.isRead ? 'transparent' : '#FAFEFF',
-                    borderLeft: `3px solid ${n.isRead ? 'transparent' : style.dot}`,
-                    transition: 'background 0.15s',
-                    '&:hover': { bgcolor: '#F8FAFC', '& .notif-actions': { opacity: 1 } },
-                    position: 'relative',
-                  }}
+                <div
+                  onClick={() => { onNotificationClick(n.id); onClose(); }}
+                  className={cn(
+                    "group relative flex gap-3 items-start px-5 py-3 cursor-pointer transition-colors duration-150",
+                    "border-l-[3px]",
+                    n.isRead
+                      ? "bg-transparent border-l-transparent hover:bg-slate-50"
+                      : "bg-[#FAFEFF] border-l-current hover:bg-blue-50/30",
+                  )}
+                  style={n.isRead ? undefined : { borderLeftColor: style.dot }}
                 >
-                  <Box sx={{
-                    width: 34, height: 34, minWidth: 34, borderRadius: '10px',
-                    bgcolor: style.bg, color: style.color,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    flexShrink: 0, mt: 0.25,
-                  }}>
+                  {/* Type icon */}
+                  <div
+                    className="size-[34px] min-w-[34px] rounded-[10px] flex items-center justify-center flex-shrink-0 mt-0.5"
+                    style={{ background: style.bg, color: style.color }}
+                  >
                     {getTypeIcon(n.type)}
-                  </Box>
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.25 }}>
-                      <Typography sx={{ fontWeight: n.isRead ? 500 : 700, fontSize: '0.82rem', color: '#0D1B2A', lineHeight: 1.3 }}>
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <span className={cn(
+                        "text-[13px] text-[#0D1B2A] leading-snug",
+                        n.isRead ? "font-medium" : "font-bold",
+                      )}>
                         {n.title}
-                      </Typography>
-                      {!n.isRead && <DotIcon sx={{ fontSize: 7, color: style.dot, flexShrink: 0 }} />}
-                    </Box>
-                    <Typography sx={{ fontSize: '0.75rem', color: '#6B7280', lineHeight: 1.45, mb: 0.5,
-                      display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                      {n.message}
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <AccessTimeIcon sx={{ fontSize: 11, color: '#9CA3AF' }} />
-                      <Typography sx={{ fontSize: '0.7rem', color: '#9CA3AF' }}>{n.timestamp}</Typography>
-                    </Box>
-                  </Box>
-                  <Box className="notif-actions" sx={{ display: 'flex', flexDirection: 'column', gap: 0.25, opacity: 0, transition: 'opacity 0.15s', flexShrink: 0 }}>
-                    <Tooltip title={s('tooltip_archive')} placement="left">
-                      <IconButton size="small" onClick={(e) => { e.stopPropagation(); onArchive(n.id); }}
-                        sx={{ width: 24, height: 24, borderRadius: '6px', '&:hover': { bgcolor: '#F1F5F9' } }}>
-                        <ArchiveIcon sx={{ fontSize: 14, color: '#9CA3AF' }} />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title={s('tooltip_delete')} placement="left">
-                      <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDelete(n.id); }}
-                        sx={{ width: 24, height: 24, borderRadius: '6px', '&:hover': { bgcolor: '#FEE2E2' } }}>
-                        <DeleteIcon sx={{ fontSize: 14, color: '#EF4444' }} />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                </Box>
-                {i < displayed.length - 1 && <Divider sx={{ mx: 2.5, borderColor: '#F8FAFC' }} />}
+                      </span>
+                      {!n.isRead && (
+                        <Circle className="size-[7px] flex-shrink-0" style={{ color: style.dot, fill: style.dot }} />
+                      )}
+                    </div>
+                    <p className="text-[12px] text-gray-500 leading-[1.45] mb-1 line-clamp-2">{n.message}</p>
+                    <div className="flex items-center gap-1">
+                      <Clock className="size-[11px] text-gray-400" />
+                      <span className="text-[11px] text-gray-400">{n.timestamp}</span>
+                    </div>
+                  </div>
+
+                  {/* Row actions (visible on hover) */}
+                  <div className="flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex-shrink-0">
+                    <button
+                      title={s('tooltip_archive')}
+                      onClick={(e) => { e.stopPropagation(); onArchive(n.id); }}
+                      className="size-6 rounded-[6px] flex items-center justify-center text-gray-400 hover:bg-slate-100 hover:text-gray-600"
+                    >
+                      <Archive className="size-3.5" />
+                    </button>
+                    <button
+                      title={s('tooltip_delete')}
+                      onClick={(e) => { e.stopPropagation(); onDelete(n.id); }}
+                      className="size-6 rounded-[6px] flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-500"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  </div>
+                </div>
+                {i < displayed.length - 1 && (
+                  <div className="h-px bg-[#F8FAFC] mx-5" />
+                )}
               </React.Fragment>
             );
           })
         )}
-      </Box>
+      </div>
 
       {/* Footer */}
       {displayed.length > 0 && (
-        <Box sx={{ px: 2, py: 1.5, borderTop: '1px solid #F1F5F9', bgcolor: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Button fullWidth onClick={onViewAll}
-            sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.82rem', color: '#0D9488', borderRadius: '10px', py: 0.75, '&:hover': { bgcolor: '#F0FDFA' } }}>
+        <div className="flex-shrink-0 px-3 py-2 border-t border-[#F1F5F9] bg-gray-50/60">
+          <button
+            onClick={() => { onClose(); onViewAll(); }}
+            className="w-full text-[13px] font-semibold text-teal-600 rounded-[10px] py-1.5 hover:bg-teal-50 transition-colors"
+          >
             {hasMore ? s('view_all_count', { count: notifications.length }) : s('view_all')}
-          </Button>
-        </Box>
+          </button>
+        </div>
       )}
-    </Popover>
+    </PopoverContent>
   );
 };
 

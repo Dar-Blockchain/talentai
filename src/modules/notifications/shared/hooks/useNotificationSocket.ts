@@ -64,6 +64,17 @@ const INTERVIEW_TYPE_LABELS: Record<string, string> = {
   SOFT_SKILLS:           'Soft Skills',
 };
 
+// Schedule fn to run during browser idle time. Falls back to setTimeout(0)
+// in environments where requestIdleCallback isn't available (e.g. Safari <16).
+function scheduleIdle(fn: () => void): () => void {
+  if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+    const id = window.requestIdleCallback(fn);
+    return () => window.cancelIdleCallback(id);
+  }
+  const id = setTimeout(fn, 0);
+  return () => clearTimeout(id);
+}
+
 export const useNotificationSocket = (userId: string | undefined) => {
   const qc = useQueryClient();
   const socketRef = useRef<Socket | null>(null);
@@ -73,128 +84,138 @@ export const useNotificationSocket = (userId: string | undefined) => {
     if (!userId) return;
 
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000';
-    const socket    = io(socketUrl, { transports: ['websocket', 'polling'] });
-    socketRef.current = socket;
 
-    let toastEnabled = false;
+    // Defer socket connection until the browser is idle. When the user logs in,
+    // this effect fires at the same moment router.replace() starts the page
+    // transition. Yielding to idle time lets the navigation network request go
+    // first; the socket handshake runs as a low-priority background task.
+    const cancelIdle = scheduleIdle(() => {
+      const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
+      socketRef.current = socket;
 
-    socket.on('connect', () => {
-      setIsConnected(true);
-      socket.emit('join', userId);
-      setTimeout(() => { toastEnabled = true; }, 2000);
-    });
+      let toastEnabled = false;
 
-    socket.on('disconnect', () => setIsConnected(false));
-
-    socket.on('notification', (payload: RawNotification) => {
-      const notif = mapToNotificationItem(payload);
-      qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => prependNotification(old, notif));
-      playNotificationSound(notif.type);
-      if (toastEnabled && shouldShowToast(notif.message)) emitToast({ message: notif.message, severity: notif.type });
-    });
-
-    socket.on('notificationDeleted', (payload: NotificationIdPayload) => {
-      const id = payload.id ?? payload.notificationId ?? '';
-      if (!id) return;
-      qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => {
-        if (!old) return old;
-        const target = old.notifications.find(n => n.id === id);
-        if (!target) return old;
-        return {
-          ...old,
-          notifications:    old.notifications.filter(n => n.id !== id),
-          nonArchivedCount: Math.max(0, old.nonArchivedCount - 1),
-          unreadCount:      !target.isRead ? Math.max(0, old.unreadCount - 1) : old.unreadCount,
-        };
+      socket.on('connect', () => {
+        setIsConnected(true);
+        socket.emit('join', userId);
+        setTimeout(() => { toastEnabled = true; }, 2000);
       });
-    });
 
-    socket.on('notificationArchived', (payload: NotificationIdPayload) => {
-      const id = payload.id ?? payload._id ?? '';
-      if (!id) return;
-      qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => {
-        if (!old) return old;
-        const target = old.notifications.find(n => n.id === id);
-        if (!target) return old;
-        return {
-          ...old,
-          notifications:    old.notifications.filter(n => n.id !== id),
-          nonArchivedCount: Math.max(0, old.nonArchivedCount - 1),
-          archivedCount:    old.archivedCount + 1,
-          unreadCount:      !target.isRead ? Math.max(0, old.unreadCount - 1) : old.unreadCount,
-        };
+      socket.on('disconnect', () => setIsConnected(false));
+
+      socket.on('notification', (payload: RawNotification) => {
+        const notif = mapToNotificationItem(payload);
+        qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => prependNotification(old, notif));
+        playNotificationSound(notif.type);
+        if (toastEnabled && shouldShowToast(notif.message)) emitToast({ message: notif.message, severity: notif.type });
       });
-    });
 
-    socket.on('notificationsArchived', () => {
-      qc.invalidateQueries({ queryKey: NOTIF_KEYS.all });
-    });
-
-    socket.on('unreadCountUpdated', (payload: UnreadCountPayload) => {
-      qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => {
-        if (!old) return old;
-        return { ...old, unreadCount: payload.unreadCount ?? 0 };
+      socket.on('notificationDeleted', (payload: NotificationIdPayload) => {
+        const id = payload.id ?? payload.notificationId ?? '';
+        if (!id) return;
+        qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => {
+          if (!old) return old;
+          const target = old.notifications.find(n => n.id === id);
+          if (!target) return old;
+          return {
+            ...old,
+            notifications:    old.notifications.filter(n => n.id !== id),
+            nonArchivedCount: Math.max(0, old.nonArchivedCount - 1),
+            unreadCount:      !target.isRead ? Math.max(0, old.unreadCount - 1) : old.unreadCount,
+          };
+        });
       });
-    });
 
-    socket.on('notificationRead', (payload: NotificationIdPayload) => {
-      const id = payload.id ?? payload.notificationId ?? payload._id ?? '';
-      if (!id) return;
-      qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => {
-        if (!old) return old;
-        return { ...old, notifications: old.notifications.map(n => n.id === id ? { ...n, isRead: true } : n) };
+      socket.on('notificationArchived', (payload: NotificationIdPayload) => {
+        const id = payload.id ?? payload._id ?? '';
+        if (!id) return;
+        qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => {
+          if (!old) return old;
+          const target = old.notifications.find(n => n.id === id);
+          if (!target) return old;
+          return {
+            ...old,
+            notifications:    old.notifications.filter(n => n.id !== id),
+            nonArchivedCount: Math.max(0, old.nonArchivedCount - 1),
+            archivedCount:    old.archivedCount + 1,
+            unreadCount:      !target.isRead ? Math.max(0, old.unreadCount - 1) : old.unreadCount,
+          };
+        });
       });
-    });
 
-    socket.on('allNotificationsDeleted', () => {
-      qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => {
-        if (!old) return old;
-        return { ...old, notifications: [], nonArchivedCount: 0, archivedCount: 0, unreadCount: 0 };
+      socket.on('notificationsArchived', () => {
+        qc.invalidateQueries({ queryKey: NOTIF_KEYS.all });
       });
-      qc.setQueryData(NOTIF_KEYS.archived(), []);
-    });
 
-    socket.on('notificationsMarkedRead', () => {
-      qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => {
-        if (!old) return old;
-        return { ...old, notifications: old.notifications.map(n => ({ ...n, isRead: true })), unreadCount: 0 };
+      socket.on('unreadCountUpdated', (payload: UnreadCountPayload) => {
+        qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => {
+          if (!old) return old;
+          return { ...old, unreadCount: payload.unreadCount ?? 0 };
+        });
       });
-    });
 
-    socket.on('interview_completed', (payload: InterviewCompletedPayload) => {
-      const typeLabel = payload.interviewType
-        ? (INTERVIEW_TYPE_LABELS[payload.interviewType] ?? payload.interviewType.replace(/_/g, ' '))
-        : null;
-      const jobSuffix = payload.jobTitle ? ` for ${payload.jobTitle}` : '';
-      const message   = typeLabel
-        ? `You completed your ${typeLabel} interview${jobSuffix}. Your results are now available in your dashboard.`
-        : `You completed your interview${jobSuffix}. Your results are now available in your dashboard.`;
-      const notif = makeInstantNotification('success', 'Interview Completed', message);
-      qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => prependNotification(old, notif));
-      playNotificationSound('success');
-      if (toastEnabled) emitToast({ message, severity: 'success' });
-    });
+      socket.on('notificationRead', (payload: NotificationIdPayload) => {
+        const id = payload.id ?? payload.notificationId ?? payload._id ?? '';
+        if (!id) return;
+        qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => {
+          if (!old) return old;
+          return { ...old, notifications: old.notifications.map(n => n.id === id ? { ...n, isRead: true } : n) };
+        });
+      });
 
-    socket.on('new_match', (payload: MessagePayload) => {
-      const message = payload.message ?? 'A new candidate matches your job posting.';
-      const notif   = makeInstantNotification('info', 'New Match Found', message);
-      qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => prependNotification(old, notif));
-      playNotificationSound('info');
-      if (toastEnabled) emitToast({ message, severity: 'info' });
-    });
+      socket.on('allNotificationsDeleted', () => {
+        qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => {
+          if (!old) return old;
+          return { ...old, notifications: [], nonArchivedCount: 0, archivedCount: 0, unreadCount: 0 };
+        });
+        qc.setQueryData(NOTIF_KEYS.archived(), []);
+      });
 
-    socket.on('purchase_successful', (payload: MessagePayload) => {
-      const message = payload.message ?? 'Candidate profile purchased successfully.';
-      const notif   = makeInstantNotification('success', 'Purchase Successful', message);
-      qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => prependNotification(old, notif));
-      playNotificationSound('success');
-      if (toastEnabled) emitToast({ message, severity: 'success' });
+      socket.on('notificationsMarkedRead', () => {
+        qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => {
+          if (!old) return old;
+          return { ...old, notifications: old.notifications.map(n => ({ ...n, isRead: true })), unreadCount: 0 };
+        });
+      });
+
+      socket.on('interview_completed', (payload: InterviewCompletedPayload) => {
+        const typeLabel = payload.interviewType
+          ? (INTERVIEW_TYPE_LABELS[payload.interviewType] ?? payload.interviewType.replace(/_/g, ' '))
+          : null;
+        const jobSuffix = payload.jobTitle ? ` for ${payload.jobTitle}` : '';
+        const message   = typeLabel
+          ? `You completed your ${typeLabel} interview${jobSuffix}. Your results are now available in your dashboard.`
+          : `You completed your interview${jobSuffix}. Your results are now available in your dashboard.`;
+        const notif = makeInstantNotification('success', 'Interview Completed', message);
+        qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => prependNotification(old, notif));
+        playNotificationSound('success');
+        if (toastEnabled) emitToast({ message, severity: 'success' });
+      });
+
+      socket.on('new_match', (payload: MessagePayload) => {
+        const message = payload.message ?? 'A new candidate matches your job posting.';
+        const notif   = makeInstantNotification('info', 'New Match Found', message);
+        qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => prependNotification(old, notif));
+        playNotificationSound('info');
+        if (toastEnabled) emitToast({ message, severity: 'info' });
+      });
+
+      socket.on('purchase_successful', (payload: MessagePayload) => {
+        const message = payload.message ?? 'Candidate profile purchased successfully.';
+        const notif   = makeInstantNotification('success', 'Purchase Successful', message);
+        qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => prependNotification(old, notif));
+        playNotificationSound('success');
+        if (toastEnabled) emitToast({ message, severity: 'success' });
+      });
     });
 
     return () => {
-      socket.close();
-      socketRef.current = null;
-      setIsConnected(false);
+      cancelIdle();
+      if (socketRef.current) {
+        socketRef.current.close();
+        socketRef.current = null;
+        setIsConnected(false);
+      }
     };
   }, [userId, qc]);
 

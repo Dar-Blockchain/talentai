@@ -1,4 +1,4 @@
-import { useRouter } from 'next/router';
+﻿import { useRouter } from 'next/router';
 import { useEffect, useMemo } from 'react';
 import {
   Box, Typography, Chip, Skeleton, Button, Avatar, LinearProgress, Divider,
@@ -26,7 +26,7 @@ import {
   JobDetailsSection,
   RecommendationsSection,
 } from '@/components/features/interview/assessment';
-import Header from '@/components/layout/dashboard/Header';
+import Header from '@/modules/shared/layouts/dashboard/DashboardHeader';
 import ChevronLeftOutlined from '@mui/icons-material/ChevronLeftOutlined';
 import AssessmentOutlined from '@mui/icons-material/AssessmentOutlined';
 import TrendingUpOutlined from '@mui/icons-material/TrendingUpOutlined';
@@ -339,7 +339,7 @@ const AssessmentDetailsPage = () => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', bgcolor: '#F8FAFC' }}>
       <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1200 }}>
-        <Header breadcrumb={t('candidate.nav.dashboard')} onOpenMobile={() => {}} />
+        <Header onOpenMobile={() => {}} />
       </Box>
 
       <Box sx={{ flex: 1, mt: '64px', overflowY: 'auto', overflowX: 'hidden', p: { xs: 1.5, sm: 2.5, md: 3 } }} className="custom-scrollbar">

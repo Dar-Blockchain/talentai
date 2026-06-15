@@ -1,10 +1,9 @@
-import { useSelector } from "react-redux";
+﻿import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
-import { isLoggingOutCheck } from "@/store/slices/authSlice";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import CandidateWorkspaceLayout from "@/components/layout/candidate/CandidateWorkspaceLayout";
+import { useAuthContext } from "@/modules/auth/shared/context/AuthContext";
 import LoadingScreen from "@/components/ui/LoadingScreen";
 import { CandidateNotificationsPanel } from "@/modules/notifications/candidate";
+import { CandidateWorkspaceLayout, DashboardLayout } from "@/modules/shared/layouts";
 
 function NotificationsContent() {
   return <CandidateNotificationsPanel variant="page" />;
@@ -12,7 +11,7 @@ function NotificationsContent() {
 
 export default function NotificationsPage() {
   const user = useSelector((state: RootState) => state.user.connectedUser.user);
-  const isLoggingOut = useSelector(isLoggingOutCheck);
+  const { isLoggingOut } = useAuthContext();
 
   // During logout the user is cleared from the store. Without this guard the
   // role check below would fall back to the company DashboardLayout, flashing

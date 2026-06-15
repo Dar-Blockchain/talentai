@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const Subscription = require("../models/Subscription.model");
-const Profile = require("../models/Profile.model");
+const Profile = require("../features/users/profile.model");
 const PlanLimits = require("../models/PlanLimits.model");
 
 // ========== GET ACTIVE SUBSCRIPTION ==========

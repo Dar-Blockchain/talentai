@@ -1,6 +1,6 @@
 const bedrock = require("../../helpers/bedrock.helpers");
 require("dotenv").config();
-const Profile = require("../../models/Profile.model");
+const Profile = require("../../features/users/profile.model");
 const { generatePrompt, normalizeSkillAnalysis } = require("../../prompts/generate-job-post-prompts");
 
 function parseLLMJson(raw) {

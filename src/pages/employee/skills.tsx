@@ -1,5 +1,5 @@
-import React from "react";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
+﻿import React from "react";
+import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
 import EmployeeMySkills from "@/components/features/employee/EmployeeMySkills";
 import dynamic from "next/dynamic";
 

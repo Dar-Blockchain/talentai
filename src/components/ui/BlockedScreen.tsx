@@ -1,6 +1,6 @@
-import React from 'react';
+﻿import React from 'react';
 import { Box, Typography, Button } from '@mui/material';
-import Header from '@/components/layout/Header';
+import Header from '@/modules/shared/layouts/home/HomeHeader';
 
 export interface BlockedScreenAction {
   label: string;

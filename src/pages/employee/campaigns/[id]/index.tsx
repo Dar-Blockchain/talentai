@@ -1,10 +1,9 @@
-import React, { useEffect } from "react";
+﻿import React, { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import CampaignDetail from "@/components/features/company/campaigns/details/CampaignDetail";
-import CampaignDetailSkeleton from "@/components/features/company/campaigns/details/CampaignDetailSkeleton";
-import CampaignDetailError from "@/components/features/company/campaigns/details/CampaignDetailError";
+import CampaignDetail from "@/modules/company/campaigns/components/details/CampaignDetail";
+import CampaignDetailSkeleton from "@/modules/company/campaigns/components/details/CampaignDetailSkeleton";
+import CampaignDetailError from "@/modules/company/campaigns/components/details/CampaignDetailError";
 import { AppDispatch, RootState } from "@/store/store";
 import {
   fetchCampaignById,
@@ -14,6 +13,7 @@ import {
   clearSelectedCampaign,
 } from "@/store/slices/campaignSlice";
 import dynamic from "next/dynamic";
+import { DashboardLayout } from "@/modules/shared/layouts";
 
 const EmployeeCampaignDetailsPage: React.FC = () => {
   const router   = useRouter();

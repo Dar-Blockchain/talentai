@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import { Box, Typography, Avatar, LinearProgress, Button, Divider, Chip } from "@mui/material";
-import CandidateWorkspaceLayout from "@/components/layout/candidate/CandidateWorkspaceLayout";
+import CandidateWorkspaceLayout from "@/modules/shared/layouts/candidate/CandidateWorkspaceLayout";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchCandidateStats, selectCandidateStats } from "@/store/slices/jobApplicationSlice";
 import CandidateApplications from "@/components/features/candidate/CandidateApplications";

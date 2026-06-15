@@ -1,6 +1,20 @@
-export const GITHUB_URL='https://github.com/TalentAI-bid/'
-export const TWITTER_URL='https://x.com/talentai_bid'
-export const YOUTUBE_URL='https://www.youtube.com/@TalentAi-w3p'
-export const LINKEDIN_URL='https://www.linkedin.com/company/106773236/'
-export const BOOK_DEMO_URL='https://calendly.com/hatemazaiez1/book-demo'
-export const DEMO_VIDEO_SRC='https://drive.google.com/file/d/1oWx6YFJ3ezx3guiYB8Rwj1T12964zB_n/preview'
+// ─── Domains ─────────────────────────────────────────────────────────────────
+export const SITE_URL        = "https://talentai.bid";
+export const APP_URL         = "https://app.talentai.bid";
+
+// ─── Contact ─────────────────────────────────────────────────────────────────
+export const CONTACT_EMAIL   = "contact@talentai.bid";
+export const SUPPORT_EMAIL   = "support@talentai.bid";
+
+// ─── Booking ─────────────────────────────────────────────────────────────────
+export const CALENDLY_URL    = "https://calendly.com/talent__ai/30min";
+
+// ─── Social ──────────────────────────────────────────────────────────────────
+export const LINKEDIN_URL    = "https://www.linkedin.com/company/talentai-bid/";
+export const TWITTER_URL     = "https://x.com/talentai_bid";
+export const YOUTUBE_URL     = "https://www.youtube.com/@TalentAi-w3p";
+export const GITHUB_URL      = "https://github.com/TalentAI-bid/";
+
+// ─── Media ───────────────────────────────────────────────────────────────────
+export const OG_IMAGE        = `${SITE_URL}/images/home/og-cover.png`;
+export const LOGO_URL        = `${SITE_URL}/images/home/logo.svg`;

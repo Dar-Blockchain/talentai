@@ -1,7 +1,7 @@
 require("dotenv").config();
 const CampaignParticipant = require("../models/CampaignParticipant.model");
 const InternalCampaign = require("../models/InternalCampaign.model");
-const Profile = require("../models/Profile.model");
+const Profile = require("../features/users/profile.model");
 const campaignParticipantService = require("../services/campaignParticipant.service");
 const { sendCampaignInvitation } = require("../utils/email-service");
 

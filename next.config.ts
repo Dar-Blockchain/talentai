@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  reactStrictMode: false, // Temporarily disabled to debug duplicate API calls
+  reactStrictMode: true,
   output: 'standalone',
   outputFileTracingRoot: process.cwd(),
   devIndicators: {

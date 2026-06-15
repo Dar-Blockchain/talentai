@@ -1,4 +1,4 @@
-import {
+﻿import {
   Box,
   Typography,
   Chip,
@@ -12,7 +12,7 @@ import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
 import BusinessCenterOutlinedIcon from '@mui/icons-material/BusinessCenterOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import Header from '@/components/layout/Header';
+import Header from '@/modules/shared/layouts/home/HomeHeader';
 import { GlobalStyles } from './styles';
 
 const PURPLE = '#8310FF';

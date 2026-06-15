@@ -1,5 +1,5 @@
 import axiosInstance from '@/utils/axiosInstance';
-import { getToken } from '@/utils/tokenUtils';
+import { getToken } from '@/modules/auth/shared/utils/token';
 
 const authHeaders = () => {
   const token = getToken();

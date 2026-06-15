@@ -1,6 +1,6 @@
 const Conversation = require('../../models/Conversations.model');
 const Message = require('../../models/Message.model');
-const User = require('../../models/User.model');
+const User = require('../../features/users/user.model');
 
 /**
  * Find or create a conversation between candidate and company

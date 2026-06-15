@@ -12,7 +12,9 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import EmailIcon from '@mui/icons-material/Email';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/store/store';
-import { signinUser, verifyOTP, registerUser } from '@/store/slices/authSlice';
+import { setConnectedUser } from '@/store/slices/userSlice';
+import { authApi } from '@/modules/auth/shared/api';
+import { useAuthContext } from '@/modules/auth/shared/context/AuthContext';
 import { usePersistentCountdown } from '@/hooks/usePersistentCountdown';
 import { getUserLocation } from '@/utils/api';
 import { formatTimeLeft } from '@/utils/functions';
@@ -56,6 +58,7 @@ export interface OnboardingModalProps {
 const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClose, onSuccess }) => {
   const { t } = useTranslation('modules/interview/apply');
   const dispatch = useDispatch<AppDispatch>();
+  const { login } = useAuthContext();
 
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
@@ -115,11 +118,11 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
       } catch { /* ignore check errors, let signin handle it */ }
 
       // Try signin — if it works, user exists → go straight to OTP
-      await dispatch(signinUser(trimmed)).unwrap();
+      await authApi.signin(trimmed);
       startTimer();
       setStep('otp');
     } catch (err: any) {
-      const msg = (err || '').toString().toLowerCase();
+      const msg = (err instanceof Error ? err.message : String(err || '')).toLowerCase();
       if (msg.includes('not found') || msg.includes('register')) {
         // New user → show full form
         setStep('form');
@@ -174,11 +177,11 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
       fd.append('phone', form.phone.trim());
       fd.append('roleType', 'Candidate');
       if (cvFile) fd.append('resume', cvFile);
-      await dispatch(registerUser(fd)).unwrap();
+      await authApi.register(fd);
       startTimer();
       setStep('otp');
     } catch (err: any) {
-      setApiError(err || t('onboarding.error_registration'));
+      setApiError(err instanceof Error ? err.message : t('onboarding.error_registration'));
     } finally {
       setLoading(false);
       setAnalyzingCv(false);
@@ -213,10 +216,10 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
   const handleResend = async () => {
     setLoading(true); setApiError(''); setCode('');
     try {
-      await dispatch(signinUser(email.trim().toLowerCase())).unwrap();
+      await authApi.signin(email.trim().toLowerCase());
       startTimer();
     } catch (err: any) {
-      setApiError(err || t('onboarding.error_resend'));
+      setApiError(err instanceof Error ? err.message : t('onboarding.error_resend'));
     } finally {
       setLoading(false);
     }
@@ -227,14 +230,20 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
     setLoading(true); setApiError('');
     try {
       const userLocation = await getUserLocation();
-      const response = await dispatch(verifyOTP({
+      const data = await authApi.verifyOtp({
         email: email.trim().toLowerCase(),
         otp: code,
         location: userLocation,
-      })).unwrap();
-      if (!response.token) throw new Error('No token received');
+      });
+      dispatch(setConnectedUser({
+        user:              data.user,
+        profile:           data.profile           ?? null,
+        planLimits:        data.planLimits         ?? null,
+        companyMembership: data.companyMembership  ?? null,
+      }));
+      login();
       clearTimer();
-      onSuccess(response.token, response.user, response.profile);
+      onSuccess(data.token, data.user, data.profile);
     } catch {
       setApiError(t('onboarding.error_code'));
       setLoading(false);

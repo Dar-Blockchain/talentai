@@ -1,5 +1,5 @@
 const CompanyMembershipModel = require("../../models/CompanyMembership.model");
-const User = require("../../models/User.model");
+const User = require("../../features/users/user.model");
 
 // Get all memberships for a company owned by the current user (with optional search, role, department filter, sorting and pagination)
 module.exports.getMembershipsByCompany = async (
@@ -128,7 +128,7 @@ module.exports.deleteMembership = async (membershipId, companyOwnerId) => {
   try {
     // Get all models that might reference this user
     const EmployeePermissionsModel = require("../../models/EmployeePermissions.model");
-    const ProfileModel = require("../../models/Profile.model");
+    const ProfileModel = require("../../features/users/profile.model");
     const CVAnalysisModel = require("../../models/CvAnalysis.model");
     const CompanyInvitationModel = require("../../models/CompanyInvitation.model");
 

@@ -1,5 +1,5 @@
 const PlanLimits = require("../models/PlanLimits.model");
-const Profile = require("../models/Profile.model");
+const Profile = require("../features/users/profile.model");
 
 /**
  * Create a new plan

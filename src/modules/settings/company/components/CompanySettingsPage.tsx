@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import Link from "next/link";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import PageHeader from "@/components/layout/dashboard/PageHeader";
+import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
+import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
 import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 import { useCompanyProfileManagement } from "../hooks";
 import { selectEmployeePermissions } from "@/store/slices/memberSlice";

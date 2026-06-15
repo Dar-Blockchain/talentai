@@ -1,6 +1,6 @@
 // cron/reset-quota.js
 const cron = require('node-cron');
-const Profile = require('../models/Profile.model');
+const Profile = require('../features/users/profile.model');
 const logger = require('../utils/logger');
 
 function initialize() {

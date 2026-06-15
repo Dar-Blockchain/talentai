@@ -5,7 +5,7 @@ const {
   parseJsonFields,
   flattenPost,
 } = require("../../helpers/post.validation.helpers");
-const Profile = require("../../models/Profile.model");
+const Profile = require("../../features/users/profile.model");
 const Subscription = require("../../models/Subscription.model");
 const PlanLimits = require("../../models/PlanLimits.model");
 const { notifyMatchingCandidates } = require("../../services/jobMatch.service");
@@ -441,7 +441,7 @@ exports.getPostsByUserTopSkills = async (req, res) => {
 // Get public statistics (users, posts, companies)
 exports.getPublicStats = async (req, res) => {
   try {
-    const User = require("../../models/User.model");
+    const User = require("../../features/users/user.model");
     const Post = require("../../models/Post.model");
 
     // Count in parallel with .lean() for read-only

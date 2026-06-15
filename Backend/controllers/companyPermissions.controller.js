@@ -13,8 +13,8 @@
  * - canAssignRoles
  */
 
-const User = require("../models/User.model");
-const Profile = require("../models/Profile.model");
+const User = require("../features/users/user.model");
+const Profile = require("../features/users/profile.model");
 const Permission = require("../models/Permission.model");
 
 /**

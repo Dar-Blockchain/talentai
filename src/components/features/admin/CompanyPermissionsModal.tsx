@@ -19,6 +19,7 @@ import {
   Security as SecurityIcon,
 } from '@mui/icons-material';
 import { Permission, DEFAULT_PERMISSIONS } from '@/types/permissions';
+import { getToken } from '@/modules/auth/shared/utils/token';
 
 const PRIMARY = '#8310FF';
 
@@ -85,7 +86,7 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const token = localStorage.getItem('api_token');
+      const token = getToken();
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}admin/companies/${company._id}/permissions`,
         {

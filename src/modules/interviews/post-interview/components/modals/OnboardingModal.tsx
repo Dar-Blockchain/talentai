@@ -12,7 +12,9 @@ import EmailIcon from '@mui/icons-material/Email';
 import { useDispatch } from 'react-redux';
 import { useQueryClient } from '@tanstack/react-query';
 import { AppDispatch } from '@/store/store';
-import { signinUser, verifyOTP, registerUser } from '@/store/slices/authSlice';
+import { setConnectedUser } from '@/store/slices/userSlice';
+import { authApi } from '@/modules/auth/shared/api';
+import { useAuthContext } from '@/modules/auth/shared/context/AuthContext';
 import { checkEligibility } from '../../api/eligibility.api';
 import { usePersistentCountdown } from '@/hooks/usePersistentCountdown';
 import { getUserLocation } from '@/utils/api';
@@ -44,8 +46,9 @@ export interface OnboardingModalProps {
 
 const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClose }) => {
   const { t } = useTranslation('modules/interview/apply');
-  const dispatch     = useDispatch<AppDispatch>();
-  const queryClient  = useQueryClient();
+  const dispatch    = useDispatch<AppDispatch>();
+  const queryClient = useQueryClient();
+  const { login } = useAuthContext();
   const isMountedRef = useRef(true);
   useEffect(() => () => { isMountedRef.current = false; }, []);
 
@@ -94,11 +97,11 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
     setApiError('');
     try {
       // Try signin — if it works, user exists → go straight to OTP
-      await dispatch(signinUser(trimmed)).unwrap();
+      await authApi.signin(trimmed);
       startTimer();
       setStep('otp');
     } catch (err: any) {
-      const msg = (err || '').toString().toLowerCase();
+      const msg = (err instanceof Error ? err.message : String(err || '')).toLowerCase();
       if (msg.includes('not found') || msg.includes('register')) {
         // New user → show full form
         setStep('form');
@@ -153,7 +156,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
       fd.append('phone', form.phone.trim());
       fd.append('roleType', 'Candidate');
       if (cvFile) fd.append('resume', cvFile);
-      await dispatch(registerUser(fd)).unwrap();
+      await authApi.register(fd);
       startTimer();
       setStep('otp');
     } catch (err: any) {
@@ -192,7 +195,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
   const handleResend = async () => {
     setLoading(true); setApiError(''); setCode('');
     try {
-      await dispatch(signinUser(email.trim().toLowerCase())).unwrap();
+      await authApi.signin(email.trim().toLowerCase());
       startTimer();
     } catch (err: any) {
       setApiError(err || t('onboarding.error_resend'));
@@ -206,16 +209,21 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
     setLoading(true); setApiError('');
     try {
       const userLocation = await getUserLocation();
-      const response = await dispatch(verifyOTP({
+      const data = await authApi.verifyOtp({
         email: email.trim().toLowerCase(),
         otp: code,
         location: userLocation,
-      })).unwrap();
-      if (!response.token) throw new Error('No token received');
+      });
+      dispatch(setConnectedUser({
+        user:              data.user,
+        profile:           data.profile           ?? null,
+        planLimits:        data.planLimits         ?? null,
+        companyMembership: data.companyMembership  ?? null,
+      }));
+      login();
 
       // Pre-populate the eligibility cache so index.tsx gets the result immediately after auth.
-      // The component may unmount during this await (Redux update triggers re-render), but
-      // prefetchQuery is a queryClient operation and continues regardless of mount state.
+      // The component may unmount during this await, but prefetchQuery continues regardless.
       const postId = typeof router.query.jobId === 'string' ? router.query.jobId : null;
       if (postId) {
         await queryClient.prefetchQuery({

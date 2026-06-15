@@ -1,5 +1,5 @@
 import axiosInstance from '@/utils/axiosInstance';
-import { getToken } from '@/utils/tokenUtils';
+import { getToken } from '@/modules/auth/shared/utils/token';
 
 const authHeaders = () => {
   const token = getToken();
@@ -40,9 +40,9 @@ export const candidateApi = {
     return res.data;
   },
 
-  updateVisibility: async (isPublicProfile: boolean) => {
+  updateVisibility: async (userId: string, isPublicProfile: boolean) => {
     const res = await axiosInstance.put(
-      'profiles/updateProfileVisibility',
+      `profiles/${userId}`,
       { isPublicProfile },
       { headers: authHeaders() }
     );

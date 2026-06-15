@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import dynamic from "next/dynamic";
 import { useSelector } from "react-redux";
@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import {
   Box, Typography, Chip, Skeleton, Divider, Button, Avatar, LinearProgress,
 } from "@mui/material";
-import Header from "@/components/layout/dashboard/Header";
+import Header from "@/modules/shared/layouts/dashboard/DashboardHeader";
 import { RootState } from "@/store/store";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutline";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
@@ -138,7 +138,7 @@ const CandidateApplicationDetailPage: React.FC = () => {
 
   useEffect(() => {
     if (!id) return;
-    const token = Cookies.get("api_token");
+    const token = Cookies.get("jwt_token");
     if (!token) { setLoading(false); return; }
     fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}job-applications/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -183,7 +183,7 @@ const CandidateApplicationDetailPage: React.FC = () => {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", bgcolor: "rgb(249 250 251)" }}>
       <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1200 }}>
-        <Header breadcrumb={t("candidate.nav.dashboard")} onOpenMobile={() => {}} />
+        <Header onOpenMobile={() => {}} />
       </Box>
 
       <Box sx={{ flex: 1, mt: "64px", overflowY: "auto", overflowX: "hidden", p: { xs: 1.5, sm: 2.5, md: 3 } }} className="custom-scrollbar">

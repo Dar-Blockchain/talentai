@@ -18,12 +18,12 @@ import {
   selectMembers,
 } from "@/store/slices/memberSlice";
 import { setConnectedUser } from "@/store/slices/userSlice";
+import { useAuthContext } from "@/modules/auth/shared/context/AuthContext";
 import Shell from "@/components/features/invitation/Shell";
 import InfoRow from "@/components/features/invitation/InfoRow";
 import AppButton from "@/components/ui/AppButton";
 import { PURPLE, TEAL } from "@/components/features/invitation/constants";
 import { ROLES } from "@/constants/employee";
-import Cookies from "js-cookie";
 
 // Map legacy backend role strings → ROLES array lookup key
 const ROLE_VALUE_MAP: Record<string, string> = {
@@ -130,7 +130,8 @@ const StyledInput: React.FC<StyledInputProps> = ({ label, value, onChange, icon:
 // ── Main page ───────────────────────────────────────────────────────────────
 const JoinTeamPage: React.FC = () => {
   const router = useRouter();
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch    = useDispatch<AppDispatch>();
+  const { login }   = useAuthContext();
   const { invitationId, token } = router.query;
 
   const {
@@ -171,10 +172,7 @@ const JoinTeamPage: React.FC = () => {
       ).unwrap();
 
       if (result.token) {
-        Cookies.remove("api_token");
-        localStorage.removeItem("api_token");
-        localStorage.setItem("api_token", result.token);
-        Cookies.set("api_token", result.token, { expires: 30, path: "/", sameSite: "lax" });
+        login();
       }
       if (result.user) dispatch(setConnectedUser(result));
       localStorage.setItem("userType", "Employee");

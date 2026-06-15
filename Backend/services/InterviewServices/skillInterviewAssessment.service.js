@@ -1,5 +1,5 @@
 const SkillInterviewAssessment = require('../../models/SkillInterviewAssessment.model');
-const Profile = require('../../models/Profile.model');
+const Profile = require('../../features/users/profile.model');
 
 // ========== HELPER - Functions for score calculation ==========
 const getLevelFromScore = (score) => {

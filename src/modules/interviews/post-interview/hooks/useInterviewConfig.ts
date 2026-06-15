@@ -5,7 +5,7 @@ import { useRouter } from 'next/router';
 import { InterviewConfig } from '../types/interview';
 import { DEFAULT_INTERVIEW_CONFIG } from '../constants';
 import { buildInterviewConfigFromURL, URLParams } from '@/utils/interviewConfigBuilder';
-import { getToken } from '@/utils/tokenUtils';
+import { getToken } from '@/modules/auth/shared/utils/token';
 import { useJobPostQuery } from '../queries/useJobPostQuery';
 import { useInterviewConfigQuery } from '../queries/useInterviewConfigQuery';
 import type { UseInterviewConfigReturn, UseInterviewConfigOptions } from '../types/hooks';

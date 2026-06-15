@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const CompanyMembership = require("../models/CompanyMembership.model");
-const User = require("../models/User.model");
+const User = require("../features/users/user.model");
 
 const createHttpError = (message, status) => {
   const error = new Error(message);

@@ -1,5 +1,5 @@
 const jwt       = require("jsonwebtoken");
-const userModel = require("../../models/User.model");
+const userModel = require("../../features/users/user.model");
 const ApiKey    = require("../../models/ApiKey.model");
 const logger    = require("../../utils/logger");
 const { getRedisClient, getClientIp, normalizeIp, enforceRateLimit } = require("./api-key.middleware");
@@ -35,7 +35,9 @@ async function revokeToken(jti) {
 
 const requireAuthUser = async (req, res, next) => {
   const authHeader = req.headers.authorization;
-  const token = authHeader && authHeader.split(" ")[1];
+  const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  // Cookie fallback: browser sessions send jwt_token automatically
+  const token = bearerToken || req.cookies?.jwt_token || null;
   if (!token) return res.status(401).json({ code: "TOKEN_MISSING", message: "Authentication required" });
 
   let decoded;

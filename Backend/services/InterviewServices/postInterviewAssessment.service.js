@@ -1,7 +1,7 @@
 const PostInterviewAssessment = require("../../models/PostInterviewAssessment.model");
 const Post = require("../../models/Post.model");
-const Profile = require("../../models/Profile.model");
-const User = require("../../models/User.model");
+const Profile = require("../../features/users/profile.model");
+const User = require("../../features/users/user.model");
 const CandidatePostStepProgress = require("../../models/CandidatePostStepsProgress.model");
 const crypto = require("crypto");
 const subscriptionService = require("../subscription.service");
@@ -492,7 +492,6 @@ module.exports.getAssessmentsByCompany = async (
     // project out sensitive or unnecessary fields before pagination
     pipeline.push({
       $project: {
-        'candidate.authHistory': 0,
         'candidate.notifications': 0,
       },
     });

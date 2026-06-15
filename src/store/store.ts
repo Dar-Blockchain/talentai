@@ -10,7 +10,6 @@ import {
   REGISTER
 } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
-import authReducer from './slices/authSlice';
 import userReducer from './slices/userSlice';
 import postReducer from './slices/postSlice';
 import candidateReducer from './slices/candidateSlice';
@@ -29,12 +28,10 @@ import departmentReducer from './slices/departmentSlice';
 import jobApplicationReducer from './slices/jobApplicationSlice';
 import feedbackReducer from './slices/feedbackSlice';
 import paymentReducer from './slices/paymentSlice';
-import kpiReducer from './slices/kpiSlice';
-import postDetailsReducer from '../modules/posts/details/store/postSlice';
+import postDetailsReducer from '../modules/company/posts/details/store/postSlice';
 
 const rootReducer = combineReducers({
   user: userReducer,
-  auth: authReducer,
   post: postReducer,
   candidate: candidateReducer,
   postGeneration: postGenerationReducer,
@@ -50,7 +47,6 @@ const rootReducer = combineReducers({
   company: companyReducer,
   department: departmentReducer,
   jobApplications: jobApplicationReducer,
-  kpi: kpiReducer,
   feedback: feedbackReducer,
   payment: paymentReducer,
   postDetails: postDetailsReducer,
@@ -59,7 +55,7 @@ const rootReducer = combineReducers({
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['auth', 'user', 'planLimits']
+  whitelist: ['user', 'planLimits']
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

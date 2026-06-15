@@ -3,12 +3,12 @@ const express = require("express");
 
 // Import all route modules
 const { registerSwagger } = require('./swagger');
-const authRouter = require("../routes/authentication.routes");
+const { router: authRouter } = require("../features/auth");
 const companyPermissionsRouter = require("../routes/companyPermissions.routes");
 const dashboardRouter = require("../routes/dashboard.routes");
-const profileRouter = require("../routes/profile.routes");
+const profileRouter = require("../features/users").profileRouter;
 const postRouter = require("../routes/post.routes");
-const feedbackRouter = require("../routes/feedback.routes");
+const feedbackRouter = require("../features/feedbacks/feedback.routes");
 const postInterviewAssessmentRouter = require("../routes/postInterviewAssessment.routes");
 const notificationSystemRouter = require("../routes/notificationSystem.routes");
 const stripRouter = require("../routes/strip.routes");
@@ -20,13 +20,13 @@ const teamChatRouter = require("../routes/teamChat.routes");
 const planLimitsRouter = require("../routes/planLimits.routes");
 const subscriptionRouter = require("../routes/subscription.routes");
 const internalCampaignRoutes = require('../routes/internalCampaign.routes');
-const departmentRoutes = require('../routes/department.routes');
+const { router: departmentRoutes } = require('../features/departments');
 const contactRouter = require('../routes/contact.routes');
 const employeePermissionsRouter = require('../routes/employeePermissions.routes');
 const jobApplicationRouter = require("../routes/jobApplication.routes");
 const apiKeyRouter = require('../routes/apiKeys.routes');
 const paymentRouter = require('../routes/payment.routes');
-const usersRouter = require('../routes/users.routes');
+const usersRouter = require('../features/users').userRouter;
 
 /**
  * Register all routes on the Express app
@@ -77,7 +77,7 @@ function registerRoutes(app) {
   app.use("/job-applications", jobApplicationRouter);
 
   // Utility
-  app.use("/feedback", feedbackRouter);
+  app.use("/feedbacks", feedbackRouter);
 
   // Billing
   app.use("/stripe", stripRouter);

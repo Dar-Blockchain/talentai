@@ -1,4 +1,4 @@
-import { useRouter } from 'next/router';
+﻿import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 import {
     Box,
@@ -18,8 +18,8 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
-import PageContainer from '@/components/layout/PageContainer';
-import Header from '@/components/layout/Header';
+import PageContainer from '@/modules/shared/layouts/PageContainer';
+import Header from '@/modules/shared/layouts/home/HomeHeader';
 import dynamic from 'next/dynamic';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '@/store/store';

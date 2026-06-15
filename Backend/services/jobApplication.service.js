@@ -3,7 +3,7 @@ const path = require("path");
 const { PDFParse } = require("pdf-parse");
 const JobApplication = require("../models/JobApplication.model");
 const PostInterviewAssessment = require("../models/PostInterviewAssessment.model");
-const Profile = require("../models/Profile.model");
+const Profile = require("../features/users/profile.model");
 const CvAnalysis = require("../models/CvAnalysis.model");
 const Post = require("../models/Post.model");
 const { callLLM } = require("../helpers/bedrock.helpers");
@@ -221,7 +221,7 @@ module.exports.createJobApplication = async (applicationData) => {
     const populatedApplication = await JobApplication.findById(application._id)
       .populate("profile")
       .populate("post")
-      .populate("company", "-authHistory -notifications")
+      .populate("company", "-notifications")
       .populate("cvAnalysis")
       .populate("interviewAssessment");
 
@@ -244,7 +244,7 @@ module.exports.getJobApplicationById = async (applicationId) => {
     const application = await JobApplication.findById(applicationId)
       .populate({ path: "profile", populate: { path: "userId", select: "email" } })
       .populate("post")
-      .populate("company", "-authHistory -notifications")
+      .populate("company", "-notifications")
       .populate("cvAnalysis")
       .populate("interviewAssessment");
 
@@ -322,7 +322,7 @@ module.exports.getApplicationsByCandidate = async (profileId, filters = {}, page
 
     const applications = await JobApplication.find(query)
       .populate("post")
-      .populate("company", "-authHistory -notifications")
+      .populate("company", "-notifications")
       .populate("cvAnalysis")
       .populate("interviewAssessment")
       .sort({ appliedAt: -1 })
@@ -1172,7 +1172,7 @@ module.exports.getVelocityKPI = async (companyId, postId = null, dateFrom = null
 module.exports.getRoiKPI = async (companyId) => {
   try {
     const Payment      = require('../models/Payment.model');
-    const Profile      = require('../models/Profile.model');
+    const Profile      = require('../features/users/profile.model');
 
     const base = { company: companyId, isArchived: false };
 
@@ -1317,7 +1317,7 @@ module.exports.updateRecruiterDecision = async (applicationId, decision, rejecti
     )
       .populate("profile")
       .populate("post")
-      .populate("company", "-authHistory -notifications")
+      .populate("company", "-notifications")
       .populate("cvAnalysis");
 
     if (!application) {

@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import Cookies from 'js-cookie';
+﻿import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import { Box, Typography, Button, Chip, Divider } from '@mui/material';
 import WorkOutlineIcon from '@mui/icons-material/WorkOutline';
@@ -11,12 +10,9 @@ import CodeIcon from '@mui/icons-material/Code';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { useDispatch } from 'react-redux';
-import { AppDispatch } from '@/store/store';
-import { setConnectedUser } from '@/store/slices/userSlice';
 import { getPostSkills, formatSalary, getLevelFromNumber, getSoftSkillLevelLabel, Skill } from '@/utils/postHelpers';
 import OnboardingModal from '@/components/features/interview/OnboardingModal';
-import Header from '@/components/layout/Header';
+import Header from '@/modules/shared/layouts/home/HomeHeader';
 import { useTranslation } from 'react-i18next';
 
 const PURPLE = '#8310FF';
@@ -66,7 +62,6 @@ export interface JobPreviewPanelProps {
 const JobPreviewPanel: React.FC<JobPreviewPanelProps> = ({ jobData, jobId, companyId }) => {
   const { t } = useTranslation('modules/interview/apply');
   const router = useRouter();
-  const dispatch = useDispatch<AppDispatch>();
   const [modalOpen, setModalOpen] = useState(false);
 
   const jd = jobData?.jobDetails || {};
@@ -74,38 +69,8 @@ const JobPreviewPanel: React.FC<JobPreviewPanelProps> = ({ jobData, jobId, compa
   const companyName = jobData?.user?.companyName || jobData?.companyName || 'Company';
   const jobTitle = jd.title || jobData?.title || 'Open Position';
 
-  const handleApplySuccess = async (token: string, user: any, profile: any) => {
-    localStorage.setItem('token', token);
-    localStorage.setItem('api_token', token);
-    Cookies.set('api_token', token, { expires: 30, path: '/', sameSite: 'lax' });
-    Cookies.set('user_role', user?.role || 'Candidate', { expires: 30, path: '/', sameSite: 'lax' });
-
-    const authState = { isAuthenticated: true, token, isLoading: false, error: null, isLoggingOut: false };
-    const userState = {
-      connectedUser: {
-        user: user || null, profile: profile || null,
-        planLimits: null, companyMembership: null, loading: false, error: null,
-      },
-      targetUser: {
-        user: null, profile: null,
-        planLimits: null, companyMembership: null, loading: false, error: null,
-      },
-      userType: 'candidate',
-      currentSpace: null,
-    };
-
-    let existing: Record<string, string> = {};
-    try {
-      const raw = localStorage.getItem('persist:root');
-      if (raw) existing = JSON.parse(raw);
-    } catch { /* ignore */ }
-    localStorage.setItem('persist:root', JSON.stringify({
-      ...existing,
-      auth: JSON.stringify(authState),
-      user: JSON.stringify(userState),
-    }));
-
-    dispatch(setConnectedUser({ user, profile, planLimits: null, companyMembership: null }));
+  const handleApplySuccess = (_token: string, _user: any, _profile: any) => {
+    // Session is already persisted and auth state set by OnboardingModal before this callback fires.
     setModalOpen(false);
     router.push(`/candidate/interview?jobId=${jobId}${companyId ? `&companyId=${companyId}` : ''}&ref=link`);
   };

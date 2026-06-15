@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -6,8 +6,8 @@ import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
 import { Box, Typography, Chip, Divider, CircularProgress, Alert } from '@mui/material';
 
-import DashboardLayout from '@/components/layout/dashboard/DashboardLayout';
-import PageHeader      from '@/components/layout/dashboard/PageHeader';
+import DashboardLayout from '@/modules/shared/layouts/dashboard/DashboardLayout';
+import PageHeader      from '@/modules/shared/layouts/dashboard/PageHeader';
 import {
   fetchParticipantResults,
   selectParticipantResults,

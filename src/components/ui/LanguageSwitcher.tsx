@@ -1,111 +1,92 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
+import { Check } from "lucide-react";
+import { useLanguage, type LanguageOption } from "@/hooks/useLanguage";
 import {
-  Box, Button, Menu, MenuItem, Typography, Divider,
-} from '@mui/material';
-import LanguageOutlined   from '@mui/icons-material/LanguageOutlined';
-import ExpandMoreOutlined from '@mui/icons-material/ExpandMoreOutlined';
-import CheckOutlined      from '@mui/icons-material/CheckOutlined';
-import { useLanguage, type LanguageOption } from '@/hooks/useLanguage';
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/modules/shared/ui/shadcn/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 interface Props {
-  /** 'icon' — globe + chevron only; 'full' — includes label text (default) */
-  variant?: 'icon' | 'full';
-  /** Size passed through to MUI Button */
-  size?: 'small' | 'medium';
+  variant?:    "icon" | "full";
+  size?:       "small" | "medium";
+  standalone?: boolean;
 }
 
-const LanguageSwitcher: React.FC<Props> = ({ variant = 'full', size = 'small' }) => {
+
+const Flag: React.FC<{ code: string; label: string; size?: number }> = ({ code, label, size = 18 }) => (
+  <img
+    src={`https://flagcdn.com/w40/${code}.png`}
+    srcSet={`https://flagcdn.com/w80/${code}.png 2x`}
+    width={size}
+    height={Math.round(size * 0.72)}
+    alt={label}
+    className="rounded-[3px] block flex-shrink-0 object-cover shadow-[0_1px_2px_rgba(0,0,0,0.15)]"
+  />
+);
+
+const LanguageSwitcher: React.FC<Props> = ({ size = "small", standalone = false }) => {
   const { currentLang, changeLanguage, languages } = useLanguage();
-  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
-
-  const current = languages.find(l => l.code === currentLang) ?? languages[0];
-
-  const open  = (e: React.MouseEvent<HTMLButtonElement>) => setAnchor(e.currentTarget);
-  const close = () => setAnchor(null);
+  const [open, setOpen] = useState(false);
 
   const select = async (lang: LanguageOption) => {
-    close();
+    setOpen(false);
     if (lang.code !== currentLang) await changeLanguage(lang.code);
   };
 
   return (
-    <>
-      <Button
-        size={size}
-        onClick={open}
-        startIcon={<LanguageOutlined sx={{ fontSize: 16 }} />}
-        endIcon={<ExpandMoreOutlined sx={{ fontSize: 14, transition: 'transform 0.2s', transform: anchor ? 'rotate(180deg)' : 'none' }} />}
-        sx={{
-          textTransform: 'none',
-          fontFamily: 'Poppins, sans-serif',
-          fontWeight: 500,
-          fontSize: size === 'small' ? 13 : 14,
-          color: '#374151',
-          bgcolor: 'transparent',
-          border: '1px solid #E5E7EB',
-          borderRadius: 2,
-          px: 1.5,
-          py: 0.5,
-          gap: 0.25,
-          '&:hover': { bgcolor: '#F9FAFB', borderColor: '#D1D5DB' },
-        }}
-      >
-        <img src={`https://flagcdn.com/w40/${current.flag}.png`} srcSet={`https://flagcdn.com/w80/${current.flag}.png 2x`} width={20} height={14} alt={current.label} style={{ borderRadius: 2, display: 'block', marginRight: 4 }} />
-        {variant === 'full' && (
-          <Typography component="span" sx={{ fontSize: 'inherit', fontWeight: 'inherit' }}>
-            {current.label}
-          </Typography>
-        )}
-      </Button>
+    <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
+      <DropdownMenuTrigger asChild>
+        <button
+          className={cn(
+            "group inline-flex items-center justify-center rounded-lg cursor-pointer focus:outline-none transition-all duration-200",
+            size === "small" ? "size-8" : "size-9",
+            standalone
+              ? cn(
+                  "bg-gray-100 border border-gray-200",
+                  "hover:bg-gray-200 hover:border-gray-300",
+                  open && "bg-gray-200 border-gray-300",
+                )
+              : "bg-transparent hover:bg-black/[0.06]"
+          )}
+        >
+          <span className="text-[15px] leading-none select-none text-gray-600 transition-transform duration-300 inline-block group-hover:rotate-[20deg]">
+            文
+          </span>
+        </button>
+      </DropdownMenuTrigger>
 
-      <Menu
-        anchorEl={anchor}
-        open={!!anchor}
-        onClose={close}
-        disableScrollLock
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-        slotProps={{
-          paper: {
-            sx: {
-              mt: 0.5, minWidth: 160,
-              borderRadius: 2,
-              border: '1px solid #E5E7EB',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-            },
-          },
-        }}
+      <DropdownMenuContent
+        align="end"
+        sideOffset={7}
+        className="w-[156px] p-1.5 rounded-xl bg-white border border-gray-200 shadow-[0_8px_24px_rgba(0,0,0,0.10),_0_2px_6px_rgba(0,0,0,0.05)]"
       >
-        <Box sx={{ px: 1.5, py: 1 }}>
-          <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Language
-          </Typography>
-        </Box>
-        <Divider sx={{ mb: 0.5 }} />
-
-        {languages.map(lang => (
-          <MenuItem
-            key={lang.code}
-            onClick={() => select(lang)}
-            sx={{
-              px: 1.5, py: 1, borderRadius: 1.5, mx: 0.5,
-              display: 'flex', alignItems: 'center', gap: 1.5,
-              fontFamily: 'Poppins, sans-serif',
-              bgcolor: lang.code === currentLang ? '#F5F3FF' : 'transparent',
-              '&:hover': { bgcolor: lang.code === currentLang ? '#EDE9FE' : '#F9FAFB' },
-            }}
-          >
-            <img src={`https://flagcdn.com/w40/${lang.flag}.png`} srcSet={`https://flagcdn.com/w80/${lang.flag}.png 2x`} width={24} height={16} alt={lang.label} style={{ borderRadius: 2, display: 'block', flexShrink: 0 }} />
-            <Typography sx={{ flex: 1, fontSize: 13, fontWeight: lang.code === currentLang ? 600 : 400, color: '#111827' }}>
-              {lang.label}
-            </Typography>
-            {lang.code === currentLang && (
-              <CheckOutlined sx={{ fontSize: 14, color: '#7C3AED' }} />
-            )}
-          </MenuItem>
-        ))}
-      </Menu>
-    </>
+        {languages.map(lang => {
+          const active = lang.code === currentLang;
+          return (
+            <DropdownMenuItem
+              key={lang.code}
+              onClick={() => select(lang)}
+              className={cn(
+                "flex items-center gap-2.5 rounded-lg px-2.5 py-2 cursor-pointer focus:outline-none transition-colors duration-100",
+                active ? "bg-gray-100 focus:bg-gray-100" : "hover:bg-gray-50 focus:bg-gray-50"
+              )}
+            >
+              <Flag code={lang.flag} label={lang.label} size={20} />
+              <span className={cn(
+                "flex-1 text-[13px]",
+                active ? "font-semibold text-gray-900" : "font-normal text-gray-600"
+              )}>
+                {lang.label}
+              </span>
+              {active && <Check className="size-3 text-gray-500 flex-shrink-0" strokeWidth={2.5} />}
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 

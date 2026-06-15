@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
@@ -27,8 +27,8 @@ import {
   AutoAwesome as AutoAwesomeIcon,
   TitleOutlined as TitleIcon,
 } from "@mui/icons-material";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import PageHeader from "@/components/layout/dashboard/PageHeader";
+import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
+import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
 import AppInput from "@/components/ui/AppInput";
 import { AppDatePicker } from "@/components/ui/DatePicker";
 import {
@@ -45,7 +45,7 @@ import { AppDispatch } from "@/store/store";
 import { createCampaign } from "@/store/slices/campaignSlice";
 import { useToast } from "@/hooks/useToast";
 import { useTranslation } from "react-i18next";
-import ParticipantsStep from "@/components/features/company/campaigns/new/ParticipantsStep";
+import ParticipantsStep from "@/modules/company/campaigns/components/new/ParticipantsStep";
 
 // ─── Palette ─────────────────────────────────────────────────────────────────
 

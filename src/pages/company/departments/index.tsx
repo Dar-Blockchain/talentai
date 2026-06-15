@@ -1,178 +1,132 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { useDispatch, useSelector } from "react-redux";
+﻿import React, { useState, useCallback } from "react";
+import { useSelector }    from "react-redux";
 import { useTranslation } from "react-i18next";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
+import { Plus }           from "lucide-react";
+import DashboardLayout    from "@/modules/shared/layouts/dashboard/DashboardLayout";
+import PageHeader         from "@/modules/shared/layouts/dashboard/PageHeader";
+import { Button }         from "@/modules/shared/ui/shadcn/button";
 import { useCompanyAccess } from "@/hooks/useCompanyAccess";
-import { RootState } from "@/store/store";
+import { RootState }      from "@/store/store";
 import { selectEmployeePermissions } from "@/store/slices/memberSlice";
-import PageHeader from "@/components/layout/dashboard/PageHeader";
-import AppButton from "@/components/ui/AppButton";
-import { AppDispatch } from "@/store/store";
+import { useToast }       from "@/hooks/useToast";
+import { useDepartmentList } from "@/modules/company/departments/hooks";
 import {
-  fetchDepartments,
-  createDepartment,
-  updateDepartment,
-  deleteDepartment,
-  clearCreateStatus,
-  clearUpdateStatus,
-  clearDeleteStatus,
-  selectDepartmentCreating,
-  selectDepartmentCreateSuccess,
-  selectDepartmentCreateError,
-  selectDepartmentUpdating,
-  selectDepartmentUpdateSuccess,
-  selectDepartmentUpdateError,
-  selectDepartmentDeleting,
-  selectDepartmentDeleteSuccess,
-  selectDepartmentDeleteError,
-  Department,
-} from "@/store/slices/departmentSlice";
-import DepartmentFetchError from "@/components/features/company/departments/list/DepartmentFetchError";
-import DepartmentGrid from "@/components/features/company/departments/list/DepartmentGrid";
-import DepartmentEmptyState from "@/components/features/company/departments/list/DepartmentEmptyState";
-import CreateDepartmentModal from "@/components/features/company/departments/new/CreateDepartmentModal";
-import EditDepartmentModal from "@/components/features/company/departments/edit/EditDepartmentModal";
-import DeleteDepartmentDialog from "@/components/features/company/departments/delete/DeleteDepartmentDialog";
-import AddOutlined from "@mui/icons-material/AddOutlined";
-import { useToast } from "@/hooks/useToast";
+  useCreateDepartmentMutation,
+  useUpdateDepartmentMutation,
+  useDeleteDepartmentMutation,
+} from "@/modules/company/departments/queries";
+import {
+  DepartmentFetchError,
+  DepartmentGrid,
+  DepartmentEmptyState,
+} from "@/modules/company/departments/components/list";
+import { DepartmentFormModal } from "@/modules/company/departments/components/shared";
+import { DeleteDepartmentDialog } from "@/modules/company/departments/components/delete";
+import { extractAxiosErrorMessage } from "@/modules/company/departments/utils/departmentI18n";
+import type { Department } from "@/modules/company/departments/types";
 
 const DepartmentsPage: React.FC = () => {
-  const { t } = useTranslation("dashboard");
+  const { t }         = useTranslation("dashboard");
   const { showToast } = useToast();
   useCompanyAccess("canViewDepartments");
-  const dispatch  = useDispatch<AppDispatch>();
+
   const user      = useSelector((state: RootState) => state.user.connectedUser.user);
   const empPerms  = useSelector(selectEmployeePermissions);
   const canManage = user?.role !== "Employee" || !!empPerms?.canCreateDepartment;
 
-  const creating = useSelector(selectDepartmentCreating);
-  const createSuccess = useSelector(selectDepartmentCreateSuccess);
-  const createError = useSelector(selectDepartmentCreateError);
-  const updating = useSelector(selectDepartmentUpdating);
-  const updateSuccess = useSelector(selectDepartmentUpdateSuccess);
-  const updateError = useSelector(selectDepartmentUpdateError);
-  const deleting = useSelector(selectDepartmentDeleting);
-  const deleteSuccess = useSelector(selectDepartmentDeleteSuccess);
-  const deleteError = useSelector(selectDepartmentDeleteError);
+  const { departments, total, loading, error, search, onSearch } = useDepartmentList();
 
-  const [search, setSearch] = useState("");
-  const [createOpen, setCreateOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<Department | null>(null);
+  const createMutation = useCreateDepartmentMutation();
+  const updateMutation = useUpdateDepartmentMutation();
+  const deleteMutation = useDeleteDepartmentMutation();
+
+  const [createOpen,   setCreateOpen]   = useState(false);
+  const [editTarget,   setEditTarget]   = useState<Department | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Department | null>(null);
 
-  useEffect(() => {
-    dispatch(fetchDepartments({}));
-  }, [dispatch]);
+  const handleCreate = useCallback((name: string, description: string) => {
+    createMutation.mutate({ name, description }, {
+      onSuccess: () => {
+        showToast({ message: t("pages.departments.toast.created"), severity: "success" });
+        setCreateOpen(false);
+      },
+    });
+  }, [createMutation.mutate, showToast, t]);
 
-  useEffect(() => {
-    if (createSuccess) {
-      showToast({ message: t("pages.departments.toast.created"), severity: "success" });
-      setCreateOpen(false);
-      dispatch(clearCreateStatus());
-    }
-  }, [createSuccess, dispatch, showToast, t]);
-
-  useEffect(() => {
-    if (updateSuccess) {
-      setEditTarget(null);
-      dispatch(clearUpdateStatus());
-    }
-  }, [updateSuccess, dispatch]);
-
-  useEffect(() => {
-    if (deleteSuccess) {
-      setDeleteTarget(null);
-      dispatch(clearDeleteStatus());
-    }
-  }, [deleteSuccess, dispatch]);
-
-  const handleCreate = useCallback(
-    (name: string, description: string) => {
-      dispatch(createDepartment({ name, description }));
-    },
-    [dispatch],
-  );
-
-  const handleSaveEdit = useCallback(
-    (name: string, description: string) => {
-      if (!editTarget) return;
-      dispatch(
-        updateDepartment({ departmentId: editTarget._id, name, description }),
-      );
-    },
-    [dispatch, editTarget],
-  );
+  const handleSaveEdit = useCallback((name: string, description: string) => {
+    if (!editTarget) return;
+    updateMutation.mutate({ departmentId: editTarget._id, name, description }, {
+      onSuccess: () => setEditTarget(null),
+    });
+  }, [updateMutation.mutate, editTarget]);
 
   const handleConfirmDelete = useCallback(() => {
     if (!deleteTarget) return;
-    dispatch(deleteDepartment(deleteTarget._id));
-  }, [dispatch, deleteTarget]);
+    deleteMutation.mutate(deleteTarget._id, {
+      onSuccess: () => setDeleteTarget(null),
+    });
+  }, [deleteMutation.mutate, deleteTarget]);
 
-  const openCreate = () => {
-    dispatch(clearCreateStatus());
-    setCreateOpen(true);
-  };
+  const createError = createMutation.error ? extractAxiosErrorMessage(createMutation.error) : null;
+  const updateError = updateMutation.error ? extractAxiosErrorMessage(updateMutation.error) : null;
+  const deleteError = deleteMutation.error ? extractAxiosErrorMessage(deleteMutation.error) : null;
 
   return (
-      <DashboardLayout>
-        <PageHeader
-          title={t("pages.departments.title")}
-          subtitle={t("pages.departments.subtitle")}
-          breadcrumbs={[
-            { label: t("pages.common.dashboard"), href: "/company/dashboard" },
-            { label: t("pages.departments.title") },
-          ]}
-          actions={canManage ? [
-            <AppButton
-              key="create"
-              label={t("pages.departments.new_department")}
-              variant="contained"
-              startIcon={<AddOutlined />}
-              size="medium"
-              onClick={openCreate}
-            />,
-          ] : []}
-        />
+    <DashboardLayout>
+      <PageHeader
+        title={t("pages.departments.title")}
+        subtitle={t("pages.departments.subtitle")}
+        breadcrumbs={[
+          { label: t("pages.common.dashboard"), href: "/company/dashboard" },
+          { label: t("pages.departments.title") },
+        ]}
+        actions={canManage ? [
+          <Button key="create" onClick={() => { createMutation.reset(); setCreateOpen(true); }}>
+            <Plus className="size-4" />
+            {t("pages.departments.new_department")}
+          </Button>,
+        ] : []}
+      />
 
-        <DepartmentFetchError />
-        <DepartmentGrid onEdit={setEditTarget} onDelete={setDeleteTarget} onSearch={setSearch} canManage={canManage} />
-        <DepartmentEmptyState search={search} onCreateClick={openCreate} canManage={canManage} />
+      <DepartmentFetchError error={error} />
+      <DepartmentGrid
+        departments={departments} total={total} loading={loading}
+        search={search} onSearch={onSearch}
+        onEdit={setEditTarget} onDelete={setDeleteTarget}
+        canManage={canManage}
+      />
+      <DepartmentEmptyState
+        departments={departments} loading={loading} search={search}
+        onCreateClick={() => { createMutation.reset(); setCreateOpen(true); }}
+        canManage={canManage}
+      />
 
-        <CreateDepartmentModal
-          open={createOpen}
-          onClose={() => {
-            setCreateOpen(false);
-            dispatch(clearCreateStatus());
-          }}
-          onSave={handleCreate}
-          saving={creating}
-          error={createError}
-        />
-
-        <DeleteDepartmentDialog
-          open={Boolean(deleteTarget)}
-          departmentName={deleteTarget?.name ?? ""}
-          onClose={() => {
-            setDeleteTarget(null);
-            dispatch(clearDeleteStatus());
-          }}
-          onConfirm={handleConfirmDelete}
-          deleting={deleting}
-          error={deleteError}
-        />
-
-        <EditDepartmentModal
-          open={Boolean(editTarget)}
-          department={editTarget}
-          onClose={() => {
-            setEditTarget(null);
-            dispatch(clearUpdateStatus());
-          }}
-          onSave={handleSaveEdit}
-          saving={updating}
-          error={updateError}
-        />
-      </DashboardLayout>
+      <DepartmentFormModal
+        open={createOpen}
+        mode="create"
+        onClose={() => { setCreateOpen(false); createMutation.reset(); }}
+        onSave={handleCreate}
+        saving={createMutation.isPending}
+        error={createError}
+      />
+      <DeleteDepartmentDialog
+        open={Boolean(deleteTarget)}
+        departmentName={deleteTarget?.name ?? ""}
+        onClose={() => { setDeleteTarget(null); deleteMutation.reset(); }}
+        onConfirm={handleConfirmDelete}
+        deleting={deleteMutation.isPending}
+        error={deleteError}
+      />
+      <DepartmentFormModal
+        open={Boolean(editTarget)}
+        mode="edit"
+        department={editTarget}
+        onClose={() => { setEditTarget(null); updateMutation.reset(); }}
+        onSave={handleSaveEdit}
+        saving={updateMutation.isPending}
+        error={updateError}
+      />
+    </DashboardLayout>
   );
 };
 

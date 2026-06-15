@@ -1,32 +1,72 @@
-import React from "react";
-import dynamic from "next/dynamic";
+import React, { memo, useMemo } from "react";
 import { Box } from "@mui/material";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
+import { useDashboard } from "@/modules/company/dashboard/hooks/useDashboard";
+import KpiStatCards         from "@/modules/company/dashboard/components/KpiStatCards";
+import KpiFiltersBar        from "@/modules/company/dashboard/components/KpiFiltersBar";
+import KpiActionsToTake     from "@/modules/company/dashboard/components/KpiActionsToTake";
+import KpiPostsOverview     from "@/modules/company/dashboard/components/KpiPostsOverview";
+import KpiRecruitmentFunnel from "@/modules/company/dashboard/components/KpiRecruitmentFunnel";
+import KpiHiringVelocity    from "@/modules/company/dashboard/components/KpiHiringVelocity";
+import KpiCandidateQuality  from "@/modules/company/dashboard/components/KpiCandidateQuality";
+import KpiRoiSavings        from "@/modules/company/dashboard/components/KpiRoiSavings";
+import { DashboardLayout } from "@/modules/shared/layouts";
 
-const KpiStatCards         = dynamic(() => import("@/components/features/company/kpi/KpiStatCards"));
-const KpiFiltersBar        = dynamic(() => import("@/components/features/company/kpi/KpiFiltersBar"));
-const KpiActionsToTake     = dynamic(() => import("@/components/features/company/kpi/KpiActionsToTake"));
-const KpiPostsOverview     = dynamic(() => import("@/components/features/company/kpi/KpiPostsOverview"));
-const KpiRecruitmentFunnel = dynamic(() => import("@/components/features/company/kpi/KpiRecruitmentFunnel"));
-const KpiHiringVelocity    = dynamic(() => import("@/components/features/company/kpi/KpiHiringVelocity"));
-const KpiCandidateQuality  = dynamic(() => import("@/components/features/company/kpi/KpiCandidateQuality"));
-const KpiRoiSavings        = dynamic(() => import("@/components/features/company/kpi/KpiRoiSavings"));
+const CONTAINER_SX = { maxWidth: 1440, mx: "auto" } as const;
+const EMPTY_POSTS:  never[] = [];
 
-const CompanyDashboard: React.FC = () => {
+const CompanyDashboard = memo(() => {
+  const {
+    postId, activeDays,
+    statusPage, handlePostChange, handlePeriodChange, handleStatusPageChange,
+    actionsQ, funnelQ, velocityQ, sourcingQ, roiQ, postsQ, postsStatusQ,
+  } = useDashboard();
+
+  const availablePosts = useMemo(
+    () => (Array.isArray(postsQ.data) ? postsQ.data : EMPTY_POSTS),
+    [postsQ.data],
+  );
+
   return (
     <DashboardLayout>
-      <Box sx={{ maxWidth: 1440, mx: "auto" }}>
+      <Box sx={CONTAINER_SX}>
         <KpiStatCards />
-        <KpiFiltersBar />
-        <KpiActionsToTake />
-        <KpiPostsOverview />
-        <KpiRecruitmentFunnel />
-        <KpiHiringVelocity />
-        <KpiCandidateQuality />
-        <KpiRoiSavings />
+        <KpiFiltersBar
+          postId={postId}
+          activeDays={activeDays}
+          availablePosts={availablePosts}
+          onPostChange={handlePostChange}
+          onPeriodChange={handlePeriodChange}
+        />
+        <KpiActionsToTake
+          data={actionsQ.data}
+          loading={actionsQ.isLoading}
+        />
+        <KpiPostsOverview
+          data={postsStatusQ.data}
+          loading={postsStatusQ.isLoading}
+          page={statusPage}
+          onPageChange={handleStatusPageChange}
+        />
+        <KpiRecruitmentFunnel
+          data={funnelQ.data}
+          loading={funnelQ.isLoading}
+        />
+        <KpiHiringVelocity
+          data={velocityQ.data}
+          loading={velocityQ.isLoading}
+        />
+        <KpiCandidateQuality
+          data={sourcingQ.data}
+          loading={sourcingQ.isLoading}
+        />
+        <KpiRoiSavings
+          data={roiQ.data}
+          loading={roiQ.isLoading}
+        />
       </Box>
     </DashboardLayout>
   );
-};
+});
+CompanyDashboard.displayName = "CompanyDashboard";
 
 export default CompanyDashboard;
