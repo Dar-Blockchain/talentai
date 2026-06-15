@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { useRouter } from "next/router";
 import { useToast } from "@/hooks/useToast";
 import { isInvitationUrl } from "@/utils/memberInvitation";
-import { useOtpFlow, useCvProgress } from "@/modules/auth/shared/hooks";
+import { useOtpFlow, useCvProgress, useLoadingWithNavigation } from "@/modules/auth/shared/hooks";
 import { extractInvitationEmail, refreshAbort } from "@/modules/auth/shared/utils";
 import { useRegisterMutation, useVerifyRegisterOtp, useResendRegisterOtp } from "../queries";
 import { CANDIDATE_EXPIRY_KEY } from "../utils";
@@ -15,6 +15,7 @@ export function useCandidateRegister({ onStepChange, onEmailChange }: RegisterFo
   const returnUrl       = router.query.returnUrl as string | undefined;
   const isJoinTeam      = isInvitationUrl(returnUrl);
   const invitationEmail = extractInvitationEmail(returnUrl);
+  const { loading: navigationLoading, withLoading } = useLoadingWithNavigation();
 
   const [step,       setStep]       = useState<RegisterStep>(1);
   const [savedEmail, setSavedEmail] = useState("");
@@ -37,13 +38,20 @@ export function useCandidateRegister({ onStepChange, onEmailChange }: RegisterFo
   });
   const resendMutation = useResendRegisterOtp();
 
-  const { timer, otp, verifyCode, resendCode, cleanup, verifyLoading, resendLoading } = useOtpFlow({
+  const { timer, otp, verifyCode: originalVerifyCode, resendCode, cleanup, verifyLoading, resendLoading } = useOtpFlow({
     storageKey:    CANDIDATE_EXPIRY_KEY,
     verifyMutation,
     resendMutation,
   });
 
-  const loading = registerMutation.isPending || verifyLoading;
+  // Wrap verifyCode to show loading during navigation
+  const verifyCode = async (emailArg: string) => {
+    await withLoading(async () => {
+      await originalVerifyCode(emailArg);
+    });
+  };
+
+  const loading = registerMutation.isPending || verifyLoading || navigationLoading;
 
   useEffect(() => () => { cleanup(); abortRef.current?.abort(); }, []);
 

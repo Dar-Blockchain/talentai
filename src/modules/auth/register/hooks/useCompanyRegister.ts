@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/router";
 import { useToast } from "@/hooks/useToast";
-import { useOtpFlow } from "@/modules/auth/shared/hooks";
+import { useOtpFlow, useLoadingWithNavigation } from "@/modules/auth/shared/hooks";
 import { refreshAbort } from "@/modules/auth/shared/utils";
 import { useRegisterMutation, useVerifyRegisterOtp, useResendRegisterOtp } from "../queries";
 import { COMPANY_EXPIRY_KEY } from "../utils";
@@ -11,6 +11,7 @@ import type { CompanyFormValues, RegisterFormProps, RegisterStep } from "../type
 export function useCompanyRegister({ onStepChange, onEmailChange }: RegisterFormProps) {
   const router        = useRouter();
   const { showToast } = useToast();
+  const { loading: navigationLoading, withLoading } = useLoadingWithNavigation();
 
   const [step,       setStep]       = useState<RegisterStep>(1);
   const [savedEmail, setSavedEmail] = useState("");
@@ -30,13 +31,20 @@ export function useCompanyRegister({ onStepChange, onEmailChange }: RegisterForm
 
   const resendMutation = useResendRegisterOtp();
 
-  const { timer, otp, verifyCode, resendCode, cleanup, verifyLoading, resendLoading } = useOtpFlow({
+  const { timer, otp, verifyCode: originalVerifyCode, resendCode, cleanup, verifyLoading, resendLoading } = useOtpFlow({
     storageKey:    COMPANY_EXPIRY_KEY,
     verifyMutation,
     resendMutation,
   });
 
-  const loading = registerMutation.isPending || verifyLoading;
+  // Wrap verifyCode to show loading during navigation
+  const verifyCode = async (emailArg: string) => {
+    await withLoading(async () => {
+      await originalVerifyCode(emailArg);
+    });
+  };
+
+  const loading = registerMutation.isPending || verifyLoading || navigationLoading;
 
   useEffect(() => () => { cleanup(); abortRef.current?.abort(); }, []);
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { useOtpFlow } from "@/modules/auth/shared/hooks";
+import { useLoadingWithNavigation } from "@/modules/auth/shared/hooks/useLoadingWithNavigation";
 import { resolveRedirectPath } from "@/modules/auth/shared/utils";
 import { useSendSigninCode, useVerifySigninOtp } from "../queries";
 import { OTP_STORAGE_KEY, SIGNIN_EMAIL_KEY } from "../utils";
@@ -9,6 +10,7 @@ import { OTP_CODE_LENGTH } from "@/modules/auth/shared/types";
 export function useSigninOtp() {
   const router    = useRouter();
   const returnUrl = router.query.returnUrl as string | undefined;
+  const { loading: navigationLoading, withLoading } = useLoadingWithNavigation();
 
   // Read email from sessionStorage exactly once (lazy init).
   // It was written by useSignin before navigation and won't change during the
@@ -36,11 +38,20 @@ export function useSigninOtp() {
     router.replace(resolveRedirectPath(data.user?.role, data.profile?._id, returnUrl));
   });
 
-  const { timer, otp, verifyCode, resendCode, cleanup, verifyLoading } = useOtpFlow({
+  const { timer, otp, verifyCode: originalVerifyCode, resendCode, cleanup, verifyLoading } = useOtpFlow({
     storageKey:     OTP_STORAGE_KEY,
     verifyMutation,
     resendMutation: sendMutation,
   });
+
+  // Wrap verifyCode to show loading during navigation
+  const verifyCode = async (emailArg: string) => {
+    await withLoading(async () => {
+      await originalVerifyCode(emailArg);
+    });
+  };
+
+  const loading = verifyLoading || navigationLoading;
 
   // Auto-submit when all 6 digits are filled. This is the standard OTP UX
   // (Google, Apple, WhatsApp) — no explicit button tap required. The verify
@@ -48,7 +59,7 @@ export function useSigninOtp() {
   const isOtpComplete = otp.otpCode.length === OTP_CODE_LENGTH &&
                         otp.otpCode.every(d => d !== "");
   useEffect(() => {
-    if (!isOtpComplete || verifyLoading || timer.isExpired) return;
+    if (!isOtpComplete || loading || timer.isExpired) return;
     verifyCode(email);
   }, [isOtpComplete]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -66,7 +77,7 @@ export function useSigninOtp() {
     email,
     otp,
     timer,
-    loading:       verifyLoading,
+    loading,
     resendLoading: sendMutation.isPending,
     onVerify:      () => verifyCode(email),
     onResend:      () => resendCode(email),
