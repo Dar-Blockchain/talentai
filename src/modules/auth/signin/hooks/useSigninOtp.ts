@@ -38,7 +38,7 @@ export function useSigninOtp() {
     router.replace(resolveRedirectPath(data.user?.role, data.profile?._id, returnUrl));
   });
 
-  const { timer, otp, verifyCode: originalVerifyCode, resendCode, cleanup, verifyLoading } = useOtpFlow({
+  const { timer, otp, verifyCode: originalVerifyCode, resendCode, abort, cleanup, verifyLoading } = useOtpFlow({
     storageKey:     OTP_STORAGE_KEY,
     verifyMutation,
     resendMutation: sendMutation,
@@ -63,7 +63,7 @@ export function useSigninOtp() {
     verifyCode(email);
   }, [isOtpComplete]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => () => cleanup(), []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => abort(), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const changeEmail = () => {
     cleanup();

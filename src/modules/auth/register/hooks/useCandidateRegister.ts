@@ -40,7 +40,7 @@ export function useCandidateRegister({ onStepChange, onEmailChange }: RegisterFo
   });
   const resendMutation = useResendRegisterOtp();
 
-  const { timer, otp, verifyCode: originalVerifyCode, resendCode, cleanup, verifyLoading, resendLoading } = useOtpFlow({
+  const { timer, otp, verifyCode: originalVerifyCode, resendCode, abort, cleanup, verifyLoading, resendLoading } = useOtpFlow({
     storageKey:    CANDIDATE_EXPIRY_KEY,
     verifyMutation,
     resendMutation,
@@ -55,7 +55,7 @@ export function useCandidateRegister({ onStepChange, onEmailChange }: RegisterFo
 
   const loading = registerMutation.isPending || verifyLoading || navigationLoading;
 
-  useEffect(() => () => { cleanup(); abortRef.current?.abort(); }, []);
+  useEffect(() => () => { abort(); abortRef.current?.abort(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sendCode = async (values: CandidateFormValues) => {
     if (!isJoinTeam && !cvFile) { setCvError(true); return; }

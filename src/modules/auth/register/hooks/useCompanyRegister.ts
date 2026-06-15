@@ -33,7 +33,7 @@ export function useCompanyRegister({ onStepChange, onEmailChange }: RegisterForm
 
   const resendMutation = useResendRegisterOtp();
 
-  const { timer, otp, verifyCode: originalVerifyCode, resendCode, cleanup, verifyLoading, resendLoading } = useOtpFlow({
+  const { timer, otp, verifyCode: originalVerifyCode, resendCode, abort, cleanup, verifyLoading, resendLoading } = useOtpFlow({
     storageKey:    COMPANY_EXPIRY_KEY,
     verifyMutation,
     resendMutation,
@@ -48,7 +48,7 @@ export function useCompanyRegister({ onStepChange, onEmailChange }: RegisterForm
 
   const loading = registerMutation.isPending || verifyLoading || navigationLoading;
 
-  useEffect(() => () => { cleanup(); abortRef.current?.abort(); }, []);
+  useEffect(() => () => { abort(); abortRef.current?.abort(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sendCode = async (values: CompanyFormValues) => {
     const signal = refreshAbort(abortRef);

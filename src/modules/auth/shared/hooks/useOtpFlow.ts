@@ -73,6 +73,10 @@ export function useOtpFlow({ storageKey, verifyMutation, resendMutation }: UseOt
     }
   };
 
+  const abort = () => {
+    abortRef.current?.abort();
+  };
+
   const cleanup = () => {
     timer.clear();
     abortRef.current?.abort();
@@ -83,6 +87,7 @@ export function useOtpFlow({ storageKey, verifyMutation, resendMutation }: UseOt
     otp,
     verifyCode,
     resendCode,
+    abort,
     cleanup,
     verifyLoading:  verifyMutation.isPending,
     resendLoading:  resendMutation?.isPending ?? false,
