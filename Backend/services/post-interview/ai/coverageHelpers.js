@@ -18,6 +18,7 @@ function findLeastAskedArea(coverageAreas, excludeArea = null) {
 
   for (const [areaName, data] of Object.entries(coverageAreas)) {
     if (areaName === excludeArea) continue;
+    if (data.disqualified) continue;
     const count = data.questionsAsked || 0;
     if (count < minQuestions) {
       minQuestions = count;

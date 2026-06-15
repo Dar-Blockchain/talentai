@@ -184,6 +184,9 @@ export default function InterviewScreen({
             isInReadingTime={audio.isInReadingTime}
             readingTimeLeft={audio.readingTimeLeft}
             questionHighlight={audio.questionHighlight}
+            questionAnswerElapsed={audio.questionAnswerElapsed}
+            questionAnswerRemaining={audio.questionAnswerRemaining}
+            agentState={audio.agentState}
             questionNumber={
               lastQuestion.type === "question" ||
               lastQuestion.type === "follow_up"
@@ -238,6 +241,7 @@ export default function InterviewScreen({
               cameraStatus={camera.cameraStatus}
               agentState={audio.agentState}
               currentTranscript={audio.currentTranscript}
+              canSubmit={audio.canSubmit}
               resultsReady={resultsReady}
               isVoiceActive={audio.isVoiceActive}
               isInReadingTime={audio.isInReadingTime}

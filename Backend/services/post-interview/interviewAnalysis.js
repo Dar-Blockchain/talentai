@@ -107,7 +107,7 @@ function decideQuestionStrategy(analysis, candidateProfile, coverage, session) {
   const lastMeta = lastCandidateEntry?.metadata;
   if (lastMeta?.answeredQuestion === false || lastMeta?.completeness === 'avoided') {
     const weakest = Object.entries(areas)
-      .filter(([name, d]) => name !== currentArea && d.percentage < 70 && !d.completed)
+      .filter(([name, d]) => name !== currentArea && d.percentage < 70 && !d.completed && !d.disqualified)
       .sort((a, b) => a[1].percentage - b[1].percentage)[0];
     if (weakest) {
       return {
@@ -121,7 +121,7 @@ function decideQuestionStrategy(analysis, candidateProfile, coverage, session) {
   // HARD CAP: After 2 questions in current area, always transition to weakest area
   if (questionsInArea >= 2 && currentArea) {
     const weakest = Object.entries(areas)
-      .filter(([name, d]) => name !== currentArea && d.percentage < 70 && !d.completed)
+      .filter(([name, d]) => name !== currentArea && d.percentage < 70 && !d.completed && !d.disqualified)
       .sort((a, b) => a[1].percentage - b[1].percentage)[0];
     if (weakest) {
       return {
@@ -134,7 +134,7 @@ function decideQuestionStrategy(analysis, candidateProfile, coverage, session) {
 
   // Priority 1: BRIDGE — candidate mentioned something mapping to a gap
   for (const topic of (analysis.interestingTopics || [])) {
-    if (topic.relevantArea && areas[topic.relevantArea] && areas[topic.relevantArea].percentage < 60) {
+    if (topic.relevantArea && areas[topic.relevantArea] && areas[topic.relevantArea].percentage < 60 && !areas[topic.relevantArea].disqualified) {
       return {
         mode: 'bridge',
         targetArea: topic.relevantArea,
@@ -144,8 +144,8 @@ function decideQuestionStrategy(analysis, candidateProfile, coverage, session) {
     }
   }
 
-  // Priority 2: PROBE — only 1 follow-up before moving on
-  if (currentArea && questionsInArea < 2 && areas[currentArea]?.percentage < 70 && analysis.quality?.depthLevel === 'surface') {
+  // Priority 2: PROBE — only 1 follow-up before moving on (never probe a disqualified area)
+  if (currentArea && !areas[currentArea]?.disqualified && questionsInArea < 2 && areas[currentArea]?.percentage < 70 && analysis.quality?.depthLevel === 'surface') {
     return {
       mode: 'probe',
       targetArea: currentArea,
@@ -153,9 +153,9 @@ function decideQuestionStrategy(analysis, candidateProfile, coverage, session) {
     };
   }
 
-  // Priority 3: TRANSITION — explore weakest uncovered area
+  // Priority 3: TRANSITION — explore weakest uncovered area (skip disqualified)
   const weakest = Object.entries(areas)
-    .filter(([_, d]) => d.percentage < 70 && !d.completed)
+    .filter(([_, d]) => d.percentage < 70 && !d.completed && !d.disqualified)
     .sort((a, b) => a[1].percentage - b[1].percentage)[0];
 
   if (weakest) {
@@ -167,10 +167,13 @@ function decideQuestionStrategy(analysis, candidateProfile, coverage, session) {
     };
   }
 
-  // Priority 4: VALIDATE
+  // Priority 4: VALIDATE — never target a disqualified area
+  const validateTarget = (currentArea && !areas[currentArea]?.disqualified)
+    ? currentArea
+    : Object.keys(areas).find(k => !areas[k].disqualified) || Object.keys(areas)[0];
   return {
     mode: 'validate',
-    targetArea: currentArea || Object.keys(areas)[0],
+    targetArea: validateTarget,
     context: 'Ask a final validation question',
   };
 }

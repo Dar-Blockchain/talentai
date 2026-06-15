@@ -144,7 +144,8 @@ Return ONLY valid JSON with ALL of these fields:
   "coverage": { "areasImpacted": [{ "area": "MUST be one of: ${areaKeys.join(', ')}", "increase": 5-25, "evidence": "brief evidence" }] },
   "style": { "verbosity": "concise|detailed|rambling", "confidence": "hesitant|moderate|confident", "usesExamples": true/false },
   "interestingTopics": [{ "topic": "what they mentioned", "unexplored": ["angle1"], "relevantArea": "focus_area" }],
-  "shouldEnd": { "shouldEnd": false, "reason": "ONLY set true if candidate had 8+ poor responses OR all areas >80% covered. For early interviews (< 6 exchanges), ALWAYS false." }
+  "shouldEnd": { "shouldEnd": false, "reason": "ONLY set true if candidate had 8+ poor responses OR all areas >80% covered. For early interviews (< 6 exchanges), ALWAYS false." },
+  "knowledgeGap": { "type": "none", "areaName": null, "subtopicName": null, "triggerPhrase": null }
 }
 
 CRITICAL AREA NAME RULE: In "areasImpacted", the "area" value MUST be exactly one of: ${areaKeys.join(', ')}
@@ -157,12 +158,18 @@ COVERAGE INCREASE GUIDE (use these ranges — do NOT default to low values):
 - Off-topic, avoided, or no useful signal: increase 0
 The goal is to complete coverage of 4 areas in ~12-15 total questions (roughly 3-4 questions per area).
 
+ZERO-KNOWLEDGE HARD RULE (apply BEFORE any other calibration):
+If the response is ONLY a bare refusal or admission of zero knowledge — e.g. "I don't know", "I have no idea", "I never worked with this", "I can't answer that", "pass", or any equivalent with NO additional content — you MUST set ALL of the following, with no exceptions:
+  score: 0, answeredQuestion: false, completeness: "avoided", depthLevel: "surface", isOffTopic: false
+Do NOT give partial credit. Do NOT set answeredQuestion: true. Do NOT use completeness: "minimal". A bare "I don't know" contributes nothing and must score exactly 0.
+
 QUALITY SCORE CALIBRATION (be FAIR — give credit where it's due):
 - 80-100: Excellent — deep technical detail, specific examples, demonstrates mastery
 - 60-79: Good — solid understanding, some specifics, shows competence
 - 40-59: Fair — shows basic understanding, somewhat vague but on-topic
 - 20-39: Weak — major gaps, confused, or mostly wrong
-- 0-19: No answer / completely off-topic / "I don't know"
+- 1-19: Attempted but essentially empty — one-word answer, single buzzword, no real content
+- 0: Pure refusal — "I don't know", "I never worked with X", "I can't answer" with nothing else
 A candidate who answers the question on-topic with some understanding should score AT LEAST 50.
 A good answer with real examples MUST score 70+. Only score below 40 if the answer is genuinely weak.
 DEFAULT to 55-65 if the answer is reasonable but not exceptional.
@@ -171,8 +178,8 @@ DEFAULT to 55-65 if the answer is reasonable but not exceptional.
 DEPTH LEVEL CALIBRATION:
 - "deep": Specific technical details, real examples, trade-offs, or internals explained
 - "moderate": Shows understanding with some specifics but stays conceptual
-- "surface": Vague or generic response without specifics
-Default to "moderate" for any answer that shows understanding. Use "surface" ONLY for one-word or truly empty responses.
+- "surface": Vague or generic response without specifics, OR pure refusal with no content
+Default to "moderate" for any answer that shows understanding. Use "surface" for empty, one-word, or refusal responses.
 
 TRANSCRIPTION TOLERANCE (CRITICAL):
 The candidate response is from SPEECH-TO-TEXT transcription and may contain misspelled technical terms (e.g., "nexus" = "Next.js", "express us" = "Express", "type strip" = "TypeScript", "no JS" = "Node.js"). ALWAYS infer the intended meaning from context. If a candidate clearly describes using a technology/framework for its known purpose, credit them even if the exact name is garbled by transcription. Judge the SUBSTANCE and technical understanding, not the exact transcribed words.
@@ -181,7 +188,14 @@ SKILL DETECTION (CRITICAL — anti-gaming rules):
 - "demonstrated" = candidate EXPLAINED or APPLIED the skill with real understanding (specific details, how/why, trade-offs, real examples). Simply NAMING a technology without explaining it is NOT "demonstrated" — put it in "hinted" instead.
 - "hinted" = candidate mentioned the skill name or used keywords but did NOT show real understanding. This includes keyword dropping, name-dropping without context, or vague references.
 - "gaps" = candidate was asked about this skill but showed confusion, wrong info, or couldn't answer.
-- ANTI-GAMING: If the candidate strings together buzzwords/keywords without forming coherent explanations (e.g. "Android Studio build last version"), score quality 15-25 and put ALL mentioned skills in "hinted", NOT "demonstrated". This is keyword dropping, not knowledge.`;
+- ANTI-GAMING: If the candidate strings together buzzwords/keywords without forming coherent explanations (e.g. "Android Studio build last version"), score quality 15-25 and put ALL mentioned skills in "hinted", NOT "demonstrated". This is keyword dropping, not knowledge.
+
+KNOWLEDGE GAP DETECTION — populate the "knowledgeGap" field:
+Trigger phrases that indicate zero experience: "I don't know X", "I never worked with X", "I have no experience with X", "I've never used X", "I don't have X experience", "I never learned X", "I have no knowledge of X".
+- type "full_area": candidate explicitly claims zero experience with something that maps to one of the known focus areas (${areaKeys.join(', ')}). Set areaName to the closest matching area key from that list.
+- type "subtopic": candidate explicitly claims zero experience with a SPECIFIC library, tool, framework, or concept that is a sub-component of a broader area (e.g. "I never used NumPy" within a Python area, "I've never used Redux" within a React area). Set subtopicName to the tool/library name and areaName to the parent area key.
+- type "none": any other case — weak answers, partial knowledge ("I'm not very experienced with X"), vague uncertainty, or off-topic responses. Do NOT trigger for anything other than explicit zero-knowledge declarations.
+Set triggerPhrase to the exact candidate phrase that triggered the detection (or null for "none").`;
 }
 
 module.exports = {

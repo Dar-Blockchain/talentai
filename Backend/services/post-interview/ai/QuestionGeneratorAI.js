@@ -161,8 +161,19 @@ ${coveredSkills.join(', ') || 'none yet'}` : '';
         ? `\nSKIPPED QUESTIONS — Do NOT ask anything similar to these (candidate passed on them):\n${allSkippedQuestions.map(q => `- ${q}`).join('\n')}\n`
         : '';
 
-      const userPrompt = `Role: ${session.config.context.targetRole} at ${session.config.context.targetCompany}
+      // Build disqualified areas / sub-topics block
+      const disqualifiedAreaNames = Object.entries(session.coverage?.areas || {})
+        .filter(([, d]) => d.disqualified)
+        .map(([name]) => name);
+      const disqualifiedSubtopics = Object.entries(session.coverage?.areas || {})
+        .filter(([, d]) => d.disqualifiedSubtopics?.length > 0)
+        .flatMap(([area, d]) => d.disqualifiedSubtopics.map(st => `${st} (in ${area})`));
+      const disqualifiedBlock = (disqualifiedAreaNames.length > 0 || disqualifiedSubtopics.length > 0)
+        ? `\nCANDIDATE'S EXPLICIT KNOWLEDGE GAPS — NEVER ASK ABOUT THESE:\n${disqualifiedAreaNames.length > 0 ? `Completely off-limits areas (candidate has zero experience): ${disqualifiedAreaNames.join(', ')}\n` : ''}${disqualifiedSubtopics.length > 0 ? `Specific off-limits sub-topics: ${disqualifiedSubtopics.join(', ')}\n` : ''}`
+        : '';
 
+      const userPrompt = `Role: ${session.config.context.targetRole} at ${session.config.context.targetCompany}
+${disqualifiedBlock}
 COVERAGE: ${JSON.stringify(coverageSummary)}
 WEAKEST: ${JSON.stringify(
         coverageAnalysis?.overallAssessment?.weakestAreas ||

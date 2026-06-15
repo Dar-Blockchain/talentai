@@ -484,7 +484,82 @@ class IntelligentInterviewService {
         await this.sessionManager.updateSession(sessionId, { jdSkillsChecklist: session.jdSkillsChecklist });
       }
 
-      // ── STEP 3.5: Compute running score ──
+      // ── STEP 3.5: Knowledge gap disqualification ──
+      // Permanently marks an area or sub-topic as off-limits when the candidate
+      // explicitly states zero knowledge ("I don't know X" / "I never worked with X").
+      const knowledgeGap = analysis.knowledgeGap;
+      if (knowledgeGap?.type && knowledgeGap.type !== 'none') {
+        if (knowledgeGap.type === 'full_area' && knowledgeGap.areaName) {
+          let disqualifiedKey = knowledgeGap.areaName;
+          if (!finalCoverage.areas[disqualifiedKey]) {
+            const gapNorm = disqualifiedKey.toLowerCase().replace(/[_\s-]/g, '');
+            disqualifiedKey = Object.keys(finalCoverage.areas).find(key => {
+              const keyNorm = key.toLowerCase().replace(/[_\s-]/g, '');
+              return keyNorm.includes(gapNorm) || gapNorm.includes(keyNorm) ||
+                keyNorm.split('_').some(w => w.length > 2 && gapNorm.includes(w));
+            }) || null;
+          }
+          if (disqualifiedKey && !finalCoverage.areas[disqualifiedKey]?.disqualified) {
+            const area                      = finalCoverage.areas[disqualifiedKey];
+            area.disqualified               = true;
+            area.percentage                 = 0;
+            area.disqualificationReason     = knowledgeGap.triggerPhrase || 'Candidate stated no experience';
+            area.lastUpdated                = new Date().toISOString();
+            const areaEntries               = Object.values(finalCoverage.areas);
+            const totalWeight               = areaEntries.reduce((sum, a) => sum + (a.weight || 25), 0);
+            finalCoverage.overall           = totalWeight > 0
+              ? Math.round(areaEntries.reduce((sum, a) => sum + ((a.percentage / 100) * (a.weight || 25)), 0) / totalWeight * 100)
+              : 0;
+            await this.sessionManager.updateCoverage(sessionId, finalCoverage);
+            // Mark all checklist skills that match this area as asked so they
+            // are removed from "JD SKILLS NOT YET ASKED ABOUT" in the prompt.
+            const keyNorm = disqualifiedKey.toLowerCase().replace(/[_\s-]/g, '');
+            const checklist = session.jdSkillsChecklist || [];
+            for (const item of checklist) {
+              const skillNorm = item.skill.toLowerCase().replace(/[_\s-]/g, '');
+              if (skillNorm.includes(keyNorm) || keyNorm.includes(skillNorm)) {
+                item.asked = true;
+              }
+            }
+            if (checklist.length > 0) await this.sessionManager.updateSession(sessionId, { jdSkillsChecklist: checklist });
+            console.log(`🚫 [Knowledge Gap] Full area "${disqualifiedKey}" disqualified — "${knowledgeGap.triggerPhrase}"`);
+          }
+        } else if (knowledgeGap.type === 'subtopic' && knowledgeGap.subtopicName) {
+          let areaKey = knowledgeGap.areaName;
+          if (!areaKey || !finalCoverage.areas[areaKey]) {
+            const gapNorm = (areaKey || '').toLowerCase().replace(/[_\s-]/g, '');
+            areaKey = gapNorm
+              ? Object.keys(finalCoverage.areas).find(k => {
+                  const kNorm = k.toLowerCase().replace(/[_\s-]/g, '');
+                  return kNorm.includes(gapNorm) || gapNorm.includes(kNorm);
+                })
+              : null;
+            areaKey = areaKey || targetArea;
+          }
+          if (areaKey && finalCoverage.areas[areaKey]) {
+            const area                      = finalCoverage.areas[areaKey];
+            area.disqualifiedSubtopics      = area.disqualifiedSubtopics || [];
+            if (!area.disqualifiedSubtopics.includes(knowledgeGap.subtopicName)) {
+              area.disqualifiedSubtopics.push(knowledgeGap.subtopicName);
+              await this.sessionManager.updateCoverage(sessionId, finalCoverage);
+              // Mark the specific skill in the checklist as asked so the question
+              // generator stops prioritising it as an uncovered JD skill.
+              const stNorm    = knowledgeGap.subtopicName.toLowerCase().replace(/[_\s-]/g, '');
+              const checklist = session.jdSkillsChecklist || [];
+              for (const item of checklist) {
+                const skillNorm = item.skill.toLowerCase().replace(/[_\s-]/g, '');
+                if (skillNorm.includes(stNorm) || stNorm.includes(skillNorm)) {
+                  item.asked = true;
+                }
+              }
+              if (checklist.length > 0) await this.sessionManager.updateSession(sessionId, { jdSkillsChecklist: checklist });
+              console.log(`🚫 [Knowledge Gap] Sub-topic "${knowledgeGap.subtopicName}" disqualified in "${areaKey}"`);
+            }
+          }
+        }
+      }
+
+      // ── STEP 3.6: Compute running score ──
       const runningScoreData = computeRunningScore(session, updatedProfile, finalCoverage, analysis);
       await this.sessionManager.updateSession(sessionId, { runningScoreData });
 

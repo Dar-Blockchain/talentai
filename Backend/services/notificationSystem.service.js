@@ -200,6 +200,7 @@ async function getUnreadCount(userId) {
   const count = await Notification.countDocuments({
     recipient: userId,
     read: false,
+    archived: { $ne: true },
   });
 
   return count;
