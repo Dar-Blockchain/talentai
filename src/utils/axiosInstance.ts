@@ -3,6 +3,7 @@ import { getToken, clearTokens } from '@/modules/auth/shared/utils/token';
 import { emitToast } from './toastEmitter';
 import { emitSessionExpired } from './storeEmitter';
 
+
 // Set by the store during logout to suppress interceptor side-effects
 let _isLoggingOut = false;
 export const setAxiosLoggingOut = (v: boolean) => { _isLoggingOut = v; };
@@ -51,7 +52,12 @@ axiosInstance.interceptors.response.use(
         data?.message === 'Invalid or expired token' ||
         data?.message === 'Token has been revoked');
 
-    if (isTokenInvalid && !_isLoggingOut) {
+    // Only treat this as a surprise session expiry if:
+    // 1. The 401 code signals an invalid/revoked/missing token
+    // 2. We are NOT already in a deliberate logout flow
+    // 3. The user actually HAS a token — if getToken() is null the client is
+    //    already logged out and showing a "session expired" toast is misleading.
+    if (isTokenInvalid && !_isLoggingOut && getToken()) {
       clearTokens();
       emitSessionExpired();
       emitToast({ message: 'Your session has expired. Please sign in again.', severity: 'warning' });
