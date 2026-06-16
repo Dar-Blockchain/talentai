@@ -1,61 +1,33 @@
 "use client";
 import React, { memo, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Box, Typography, Chip, Skeleton } from "@mui/material";
+import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import TrendingUpOutlined from "@mui/icons-material/TrendingUpOutlined";
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip as RechartsTooltip, ResponsiveContainer, Cell,
-} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from "recharts";
 import { ZoneHeading, KpiCard, Delta, MetricRow } from "./KpiAtoms";
-import { BORDER, ChartTooltip, GRAY, GRAY2, LGRAY, NAVY, T, WHITE, passRate } from "../utils/kpiTokens";
+import { ChartTooltip, GRAY, T, passRate } from "../utils/kpiTokens";
 import type { KpiFunnelData } from "../types";
 
-// ─── Static constants ─────────────────────────────────────────────────────────
-
 const OPACITIES  = ["FF", "AA", "77"] as const;
-const STEPS_KEYS = ["funnel_applied", "funnel_completed", "funnel_shortlisted"] as const;
+const STEP_KEYS  = ["funnel_applied", "funnel_completed", "funnel_shortlisted"] as const;
 
-const STEPS_ROW_SX   = { display: "flex", gap: { xs: 1, sm: 1.5 }, mb: 3, flexWrap: { xs: "wrap", md: "nowrap" } } as const;
-const STEP_OUTER_SX  = { flex: "1 1 0", minWidth: { xs: "calc(50% - 8px)", md: 0 } } as const;
-const STEP_TITLE_SX  = { fontFamily: "Poppins", fontSize: "0.6rem", fontWeight: 700, color: GRAY2, textTransform: "uppercase", letterSpacing: "0.08em", mb: 0.75 } as const;
-const STEP_VAL_SX    = { fontFamily: "Poppins", fontWeight: 800, fontSize: { xs: "1.5rem", sm: "1.8rem" }, color: NAVY, lineHeight: 1 } as const;
-const STEP_BADGE_ROW = { mt: 1, display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" } as const;
-const RATE_CHIP_SX   = { fontFamily: "Poppins", fontWeight: 700, fontSize: "0.6rem", height: 18, bgcolor: `${T}12`, color: T, "& .MuiChip-label": { px: 0.6 } } as const;
-const FILL_RAIL_SX   = { mt: 1.25, height: 4, borderRadius: "99px", bgcolor: "#F1F5F9", overflow: "hidden" } as const;
-const CHART_ROW_SX   = { display: "flex", gap: 2.5, flexDirection: { xs: "column", md: "row" }, alignItems: "stretch" } as const;
-const CHART_BOX_SX   = { flex: "1 1 0", minWidth: 0 } as const;
-const METRICS_BOX_SX = { width: { xs: "100%", md: 220 }, flexShrink: 0, bgcolor: LGRAY, border: `1px solid ${BORDER}`, borderRadius: "14px", p: 2, display: "flex", flexDirection: "column", justifyContent: "center" } as const;
-const METRICS_TTL_SX = { fontFamily: "Poppins", fontWeight: 700, fontSize: "0.7rem", color: GRAY2, textTransform: "uppercase", letterSpacing: "0.07em", mb: 1.25 } as const;
+const fmtTick = (t: (k: string) => string) => (k: string) => t(`pages.kpi.${k}`);
 
-const SKEL_SKELS   = [null, null, null] as const;
-const SKEL_METRICS = [0, 1, 2, 3, 4] as const;
+const StepSkeleton = () => (
+  <div className="flex-1 min-w-[calc(50%-8px)] md:min-w-0 border border-slate-200 rounded-[14px] p-4 sm:p-5 space-y-2">
+    <Skeleton className="h-3 w-16 rounded" />
+    <Skeleton className="h-9 w-12 rounded" />
+    <div className="flex gap-2">
+      <Skeleton className="h-5 w-9 rounded-full" />
+      <Skeleton className="h-5 w-12 rounded-full" />
+    </div>
+    <Skeleton className="h-1 w-full rounded-full" />
+  </div>
+);
 
-// ─── StepSkeleton ─────────────────────────────────────────────────────────────
+interface Props { data: KpiFunnelData | undefined; loading: boolean }
 
-const StepSkeleton = memo(() => (
-  <Box sx={STEP_OUTER_SX}>
-    <Box sx={{ border: `1px solid ${BORDER}`, borderRadius: "14px", p: { xs: 1.5, sm: 2 } }}>
-      <Skeleton variant="text" width={60} height={14} />
-      <Skeleton variant="text" width={48} height={42} sx={{ mt: 0.5 }} />
-      <Box sx={{ display: "flex", gap: 0.75, mt: 1 }}>
-        <Skeleton variant="rounded" width={36} height={18} sx={{ borderRadius: "20px" }} />
-        <Skeleton variant="rounded" width={48} height={18} sx={{ borderRadius: "20px" }} />
-      </Box>
-      <Skeleton variant="rounded" width="100%" height={4} sx={{ mt: 1.25, borderRadius: "99px" }} />
-    </Box>
-  </Box>
-));
-StepSkeleton.displayName = "StepSkeleton";
-
-// ─── KpiRecruitmentFunnel ─────────────────────────────────────────────────────
-
-interface KpiRecruitmentFunnelProps {
-  data:    KpiFunnelData | undefined;
-  loading: boolean;
-}
-
-const KpiRecruitmentFunnel = memo<KpiRecruitmentFunnelProps>(({ data, loading }) => {
+const KpiRecruitmentFunnel = memo<Props>(({ data, loading }) => {
   const { t } = useTranslation("dashboard");
 
   const applied     = data?.applied     ?? 0;
@@ -63,69 +35,75 @@ const KpiRecruitmentFunnel = memo<KpiRecruitmentFunnelProps>(({ data, loading })
   const shortlisted = data?.shortlisted ?? 0;
 
   const steps = useMemo(() => [
-    { key: STEPS_KEYS[0], value: applied     },
-    { key: STEPS_KEYS[1], value: completed   },
-    { key: STEPS_KEYS[2], value: shortlisted },
+    { key: STEP_KEYS[0], value: applied     },
+    { key: STEP_KEYS[1], value: completed   },
+    { key: STEP_KEYS[2], value: shortlisted },
   ], [applied, completed, shortlisted]);
 
-  const tickFormatter  = useMemo(() => (k: string) => t(`pages.kpi.${k}`), [t]);
-  const labelFormatter = useMemo(() => (k: string) => t(`pages.kpi.${k}`), [t]);
+  const tickFmt = fmtTick(t);
 
   return (
     <>
       <ZoneHeading icon={TrendingUpOutlined} label={t("pages.kpi.zone3_title")} color="#10B981" />
       <KpiCard className="mb-4">
-        <Box sx={STEPS_ROW_SX}>
+        <div className="flex gap-3 sm:gap-4 mb-6 flex-wrap md:flex-nowrap">
           {loading
-            ? SKEL_SKELS.map((_, i) => <StepSkeleton key={i} />)
+            ? STEP_KEYS.map((k) => <StepSkeleton key={k} />)
             : steps.map((step, i) => {
-                const rate    = (i > 0 && applied > 0) ? Math.min(Math.round((step.value / applied) * 100), 100) : null;
+                const rate    = i > 0 && applied > 0 ? Math.min(Math.round((step.value / applied) * 100), 100) : null;
                 const fillPct = applied > 0 ? Math.round((step.value / applied) * 100) : 0;
-                const color   = `${T}${OPACITIES[i]}`;
                 return (
-                  <Box key={step.key} sx={STEP_OUTER_SX}>
-                    <Box sx={{ border: `1px solid ${BORDER}`, borderRadius: "14px", p: { xs: 1.5, sm: 2 }, height: "100%", bgcolor: i === 0 ? `${T}06` : WHITE }}>
-                      <Typography sx={STEP_TITLE_SX}>{t(`pages.kpi.${step.key}`)}</Typography>
-                      <Typography sx={STEP_VAL_SX}>{step.value}</Typography>
-                      <Box sx={STEP_BADGE_ROW}>
-                        {rate !== null && <Chip label={`${rate}%`} size="small" sx={RATE_CHIP_SX} />}
+                  <div key={step.key} className="flex-1 min-w-[calc(50%-8px)] md:min-w-0">
+                    <div className="border border-slate-200 rounded-[14px] p-4 sm:p-5 h-full" style={{ background: i === 0 ? `${T}06` : "#fff" }}>
+                      <div className="text-[0.6rem] font-bold text-slate-400 uppercase tracking-[0.08em] mb-2">
+                        {t(`pages.kpi.${step.key}`)}
+                      </div>
+                      <div className="font-extrabold text-2xl sm:text-[1.8rem] text-slate-900 leading-none">{step.value}</div>
+                      <div className="mt-2 flex items-center gap-2 flex-wrap">
+                        {rate !== null && (
+                          <span className="font-bold text-[0.6rem] px-1.5 py-0.5 rounded-full" style={{ background: `${T}12`, color: T }}>
+                            {rate}%
+                          </span>
+                        )}
                         <Delta cur={step.value} prev={step.value} />
-                      </Box>
-                      <Box sx={FILL_RAIL_SX}>
-                        <Box sx={{ width: `${fillPct}%`, height: "100%", bgcolor: color, borderRadius: "99px" }} />
-                      </Box>
-                    </Box>
-                  </Box>
+                      </div>
+                      <div className="mt-3 h-1 rounded-full bg-slate-100 overflow-hidden">
+                        <div className="h-full rounded-full" style={{ width: `${fillPct}%`, background: `${T}${OPACITIES[i]}` }} />
+                      </div>
+                    </div>
+                  </div>
                 );
               })}
-        </Box>
+        </div>
 
-        <Box sx={CHART_ROW_SX}>
-          <Box sx={CHART_BOX_SX}>
+        <div className="flex flex-col md:flex-row gap-5">
+          <div className="flex-1 min-w-0">
             {loading ? (
-              <Skeleton variant="rounded" width="100%" height={190} sx={{ borderRadius: "10px" }} />
+              <Skeleton className="w-full h-[190px] rounded-[10px]" />
             ) : (
               <ResponsiveContainer width="100%" height={190}>
                 <BarChart data={steps} barSize={40}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
-                  <XAxis dataKey="key" tickFormatter={tickFormatter} tick={{ fontFamily: "Poppins", fontSize: 11, fill: GRAY }} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="key" tickFormatter={tickFmt} tick={{ fontFamily: "Poppins", fontSize: 11, fill: GRAY }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontFamily: "Poppins", fontSize: 11, fill: GRAY }} axisLine={false} tickLine={false} />
-                  <RechartsTooltip {...ChartTooltip} formatter={(v: any) => [v, ""]} labelFormatter={labelFormatter} />
+                  <RechartsTooltip {...ChartTooltip} formatter={(v: any) => [v, ""]} labelFormatter={tickFmt} />
                   <Bar dataKey="value" radius={[6, 6, 0, 0]}>
                     {steps.map((_, i) => <Cell key={i} fill={`${T}${OPACITIES[i]}`} />)}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
             )}
-          </Box>
+          </div>
 
-          <Box sx={METRICS_BOX_SX}>
-            <Typography sx={METRICS_TTL_SX}>{t("pages.kpi.key_metrics")}</Typography>
+          <div className="w-full md:w-[220px] shrink-0 bg-slate-50 border border-slate-200 rounded-[14px] p-4 flex flex-col justify-center">
+            <div className="font-bold text-[0.7rem] text-slate-400 uppercase tracking-[0.07em] mb-3">
+              {t("pages.kpi.key_metrics")}
+            </div>
             {loading ? (
-              SKEL_METRICS.map((i) => (
-                <Box key={i} sx={{ py: 1.1, borderBottom: i < 4 ? `1px solid ${BORDER}` : "none" }}>
-                  <Skeleton variant="text" width="100%" height={20} />
-                </Box>
+              [0, 1, 2].map((i) => (
+                <div key={i} className="py-3 border-b border-slate-100 last:border-0">
+                  <Skeleton className="h-5 w-full rounded" />
+                </div>
               ))
             ) : (
               <>
@@ -134,12 +112,11 @@ const KpiRecruitmentFunnel = memo<KpiRecruitmentFunnelProps>(({ data, loading })
                 <MetricRow label={t("pages.kpi.hire_conversion")} value={passRate(shortlisted, applied)} color="#10B981" last />
               </>
             )}
-          </Box>
-        </Box>
+          </div>
+        </div>
       </KpiCard>
     </>
   );
 });
 KpiRecruitmentFunnel.displayName = "KpiRecruitmentFunnel";
-
 export default KpiRecruitmentFunnel;

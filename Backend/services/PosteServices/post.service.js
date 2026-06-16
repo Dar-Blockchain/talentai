@@ -811,48 +811,36 @@ module.exports.getPostsInAlertKPI = async (userId) => {
 // Returns paginated per-post: shortlisted count, velocity (avg days appliedAt→recruiterDecisionAt), coverage, deadline
 module.exports.getPostsStatusKPI = async (userId, page = 1, limit = 3, postId = null) => {
   try {
-    const now = new Date();
+    const now      = new Date();
+    const pageNum  = Math.max(1, parseInt(page)  || 1);
+    const limitNum = Math.max(1, parseInt(limit) || 3);
+    const skip     = (pageNum - 1) * limitNum;
 
-    const postQuery = {
-      user: userId,
-      status: 'open',
-      archived: { $ne: true },
-    };
-    if (postId) postQuery._id = postId;
+    const postMatch = { user: userId, status: 'open', archived: { $ne: true } };
+    if (postId) postMatch._id = postId;
 
-    const posts = await Post.find(postQuery).select('_id jobDetails expirationDate').lean();
+    const [totalCount, posts] = await Promise.all([
+      Post.countDocuments(postMatch),
+      Post.find(postMatch).select('_id jobDetails expirationDate').skip(skip).limit(limitNum).lean(),
+    ]);
 
     if (!posts.length) {
-      return { data: [], pagination: { currentPage: 1, totalPages: 0, totalCount: 0 } };
+      return { data: [], pagination: { currentPage: pageNum, totalPages: 0, totalCount: 0 } };
     }
 
     const postIds = posts.map(p => p._id);
 
-    // Aggregate using recruiterDecisionAt (shortlistedAt is never set in current flow)
     const agg = await JobApplication.aggregate([
-      {
-        $match: {
-          company: userId,
-          post: { $in: postIds },
-          isArchived: false,
-        },
-      },
+      { $match: { company: userId, post: { $in: postIds }, isArchived: false } },
       {
         $group: {
-          _id: '$post',
-          totalCount: { $sum: 1 },
-          shortlistedCount: {
-            $sum: { $cond: [{ $eq: ['$recruiterDecision', 'shortlisted'] }, 1, 0] },
-          },
+          _id:            '$post',
+          totalCount:     { $sum: 1 },
+          shortlistedCount: { $sum: { $cond: [{ $eq: ['$recruiterDecision', 'shortlisted'] }, 1, 0] } },
           velocitySum: {
             $sum: {
               $cond: [
-                {
-                  $and: [
-                    { $eq: ['$recruiterDecision', 'shortlisted'] },
-                    { $ne: ['$recruiterDecisionAt', null] },
-                  ],
-                },
+                { $and: [{ $eq: ['$recruiterDecision', 'shortlisted'] }, { $ne: ['$recruiterDecisionAt', null] }] },
                 { $divide: [{ $subtract: ['$recruiterDecisionAt', '$appliedAt'] }, 86400000] },
                 0,
               ],
@@ -861,12 +849,7 @@ module.exports.getPostsStatusKPI = async (userId, page = 1, limit = 3, postId = 
           velocityCount: {
             $sum: {
               $cond: [
-                {
-                  $and: [
-                    { $eq: ['$recruiterDecision', 'shortlisted'] },
-                    { $ne: ['$recruiterDecisionAt', null] },
-                  ],
-                },
+                { $and: [{ $eq: ['$recruiterDecision', 'shortlisted'] }, { $ne: ['$recruiterDecisionAt', null] }] },
                 1,
                 0,
               ],
@@ -879,35 +862,23 @@ module.exports.getPostsStatusKPI = async (userId, page = 1, limit = 3, postId = 
     const aggMap = {};
     agg.forEach(a => { aggMap[String(a._id)] = a; });
 
-    const allRows = posts.map(post => {
-      const a = aggMap[String(post._id)] || { totalCount: 0, shortlistedCount: 0, velocitySum: 0, velocityCount: 0 };
-      const title      = post.jobDetails?.title || 'Untitled';
-      const deadline   = post.expirationDate
-        ? Math.max(0, Math.round((new Date(post.expirationDate) - now) / 86400000))
-        : null;
+    const data = posts.map(post => {
+      const a          = aggMap[String(post._id)] || { totalCount: 0, shortlistedCount: 0, velocitySum: 0, velocityCount: 0 };
       const shortlisted = a.shortlistedCount;
       const total       = a.totalCount;
-      const velocity    = a.velocityCount > 0 ? Math.round(a.velocitySum / a.velocityCount) : null;
-      const coverage    = total > 0 ? Math.round((shortlisted / total) * 100) / 100 : 0;
-      return { id: String(post._id), title, shortlisted, velocity, coverage, deadline };
+      return {
+        id:         String(post._id),
+        title:      post.jobDetails?.title || 'Untitled',
+        shortlisted,
+        velocity:   a.velocityCount > 0 ? Math.round(a.velocitySum / a.velocityCount) : null,
+        coverage:   total > 0 ? Math.round((shortlisted / total) * 100) / 100 : 0,
+        deadline:   post.expirationDate
+          ? Math.max(0, Math.round((new Date(post.expirationDate) - now) / 86400000))
+          : null,
+      };
     });
 
-    // Sort: alert first, then by velocity descending
-    const statusRank = (c, d) => {
-      if ((d !== null && d < 14) || c < 0.7) return 0;
-      if (c < 1.0) return 1;
-      return 2;
-    };
-    allRows.sort((a, b) =>
-      statusRank(a.coverage, a.deadline) - statusRank(b.coverage, b.deadline)
-      || (b.velocity ?? 0) - (a.velocity ?? 0)
-    );
-
-    const totalCount = allRows.length;
-    const totalPages = Math.ceil(totalCount / limit);
-    const data       = allRows.slice((page - 1) * limit, page * limit);
-
-    return { data, pagination: { currentPage: page, totalPages, totalCount } };
+    return { data, pagination: { currentPage: pageNum, totalPages: Math.ceil(totalCount / limitNum), totalCount } };
   } catch (error) {
     throw new Error(`Error getting posts status KPI: ${error.message}`);
   }
