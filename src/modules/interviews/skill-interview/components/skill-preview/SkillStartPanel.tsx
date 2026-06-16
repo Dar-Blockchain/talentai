@@ -16,12 +16,10 @@ const FEATURES = [
 
 interface SkillStartPanelProps {
   skill: string;
-  proficiency: string | null;
-  duration: number;
   onStartInterview?: () => void;
 }
 
-export default function SkillStartPanel({ skill, proficiency, duration, onStartInterview }: SkillStartPanelProps) {
+export default function SkillStartPanel({ skill, onStartInterview }: SkillStartPanelProps) {
   const authUser = useSelector((state: RootState) => state.user.connectedUser.user);
   const router   = useRouter();
 
@@ -46,7 +44,7 @@ export default function SkillStartPanel({ skill, proficiency, duration, onStartI
               Start your assessment
             </Typography>
             <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#6B7280', mb: 2.5, lineHeight: 1.6 }}>
-              Prove your <strong>{skill}</strong> skills with an AI-powered {duration}-minute assessment.
+              Prove your <strong>{skill}</strong> skills with an AI-powered adaptive assessment. Your level will be determined by the results.
             </Typography>
 
             {FEATURES.map((item) => (
@@ -87,7 +85,7 @@ export default function SkillStartPanel({ skill, proficiency, duration, onStartI
             {[
               { num: 1, label: 'Create or log in to your account', sub: 'Takes less than a minute' },
               { num: 2, label: 'Allow camera & microphone access',  sub: 'Required for voice interview' },
-              { num: 3, label: 'Complete the AI interview',         sub: `${duration} minutes, voice-based` },
+              { num: 3, label: 'Complete the AI interview',         sub: 'Adaptive, voice-based session' },
             ].map(({ num, label, sub }) => (
               <Box key={num} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 1.75 }}>
                 <Box sx={{ width: 26, height: 26, borderRadius: '50%', flexShrink: 0, bgcolor: GREEN_LIGHT, border: `1px solid ${GREEN_BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

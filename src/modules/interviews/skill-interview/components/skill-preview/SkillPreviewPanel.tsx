@@ -6,18 +6,14 @@ import SkillStartPanel from './SkillStartPanel';
 
 export interface SkillPreviewPanelProps {
   skill: string;
-  proficiency: string | null;
   category: string | null;
-  duration: number;
   language: string;
   onStartInterview?: () => void;
 }
 
 export default function SkillPreviewPanel({
   skill,
-  proficiency,
   category,
-  duration,
   language,
   onStartInterview,
 }: SkillPreviewPanelProps) {
@@ -38,19 +34,15 @@ export default function SkillPreviewPanel({
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
           <SkillHeaderCard
             skill={skill}
-            proficiency={proficiency}
             category={category}
-            duration={duration}
             language={language}
           />
-          <SkillDetailsColumn skill={skill} proficiency={proficiency} />
+          <SkillDetailsColumn skill={skill} />
         </Box>
 
         {/* Right sticky panel — start button */}
         <SkillStartPanel
           skill={skill}
-          proficiency={proficiency}
-          duration={duration}
           onStartInterview={onStartInterview}
         />
       </Box>

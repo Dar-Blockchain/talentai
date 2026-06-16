@@ -21,6 +21,11 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
+import ThumbUpOutlinedIcon from '@mui/icons-material/ThumbUpOutlined';
+import ThumbDownOutlinedIcon from '@mui/icons-material/ThumbDownOutlined';
+import BuildOutlinedIcon from '@mui/icons-material/BuildOutlined';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import QuestionAnswerOutlinedIcon from '@mui/icons-material/QuestionAnswerOutlined';
 import CandidateWorkspaceLayout from '@/modules/shared/layouts/candidate/CandidateWorkspaceLayout';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '@/store/store';
@@ -486,6 +491,152 @@ function SkillInterviewReportPage() {
                       <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.8rem', color: '#374151', lineHeight: 1.65 }}>
                         {rec}
                       </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </Card>
+            )}
+
+            {/* ── Strengths & Weaknesses ── */}
+            {(fr?.strengths?.length > 0 || fr?.weaknesses?.length > 0) && (
+              <Card>
+                <SectionTitle>Strengths &amp; Weaknesses</SectionTitle>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
+                  {fr.strengths?.length > 0 && (
+                    <Box sx={{ p: 2, bgcolor: GREEN_L, borderRadius: '12px', border: `1px solid ${GREEN_B}` }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                        <ThumbUpOutlinedIcon sx={{ fontSize: 16, color: GREEN }} />
+                        <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.8rem', color: GREEN }}>
+                          Strengths
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                        {(fr.strengths as string[]).map((s, i) => (
+                          <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                            <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: GREEN, mt: 0.75, flexShrink: 0 }} />
+                            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.77rem', color: '#374151', lineHeight: 1.6 }}>{s}</Typography>
+                          </Box>
+                        ))}
+                      </Box>
+                    </Box>
+                  )}
+                  {fr.weaknesses?.length > 0 && (
+                    <Box sx={{ p: 2, bgcolor: RED_L, borderRadius: '12px', border: `1px solid ${RED_B}` }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                        <ThumbDownOutlinedIcon sx={{ fontSize: 16, color: RED }} />
+                        <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.8rem', color: RED }}>
+                          Areas to Strengthen
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                        {(fr.weaknesses as string[]).map((w, i) => (
+                          <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                            <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: RED, mt: 0.75, flexShrink: 0 }} />
+                            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.77rem', color: '#374151', lineHeight: 1.6 }}>{w}</Typography>
+                          </Box>
+                        ))}
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+              </Card>
+            )}
+
+            {/* ── Development Areas ── */}
+            {fr?.developmentAreas?.length > 0 && (
+              <Card>
+                <SectionTitle>Development Areas</SectionTitle>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {(fr.developmentAreas as string[]).map((area, i) => (
+                    <Box key={i} sx={{
+                      display: 'flex', alignItems: 'flex-start', gap: 1.5,
+                      p: 1.75, bgcolor: AMBER_L, borderRadius: '10px', border: `1px solid ${AMBER_B}`,
+                    }}>
+                      <BuildOutlinedIcon sx={{ fontSize: 16, color: AMBER, mt: 0.2, flexShrink: 0 }} />
+                      <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.8rem', color: '#374151', lineHeight: 1.65 }}>
+                        {area}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </Card>
+            )}
+
+            {/* ── Candidate Profile ── */}
+            {fr?.candidateProfile && (fr.candidateProfile.revealedExpertise?.length > 0 || fr.candidateProfile.revealedGaps?.length > 0 || fr.candidateProfile.difficultyLevel) && (
+              <Card>
+                <SectionTitle>Candidate Profile</SectionTitle>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {fr.candidateProfile.difficultyLevel && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <PersonOutlineIcon sx={{ fontSize: 16, color: INDIGO }} />
+                      <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.8rem', color: '#374151' }}>
+                        <span style={{ fontWeight: 600, color: '#111827' }}>Difficulty Level:</span>{' '}
+                        {String(fr.candidateProfile.difficultyLevel).charAt(0).toUpperCase() + String(fr.candidateProfile.difficultyLevel).slice(1)}
+                      </Typography>
+                    </Box>
+                  )}
+                  {fr.candidateProfile.revealedExpertise?.length > 0 && (
+                    <Box>
+                      <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.78rem', color: GREEN, mb: 1 }}>
+                        Demonstrated Expertise
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                        {(fr.candidateProfile.revealedExpertise as string[]).map((e, i) => (
+                          <Chip key={i} label={e} size="small"
+                            sx={{ bgcolor: GREEN_L, color: GREEN, border: `1px solid ${GREEN_B}`, fontFamily: 'Poppins', fontSize: '0.72rem', fontWeight: 500 }} />
+                        ))}
+                      </Box>
+                    </Box>
+                  )}
+                  {fr.candidateProfile.revealedGaps?.length > 0 && (
+                    <Box>
+                      <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.78rem', color: AMBER, mb: 1 }}>
+                        Knowledge Gaps Identified
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                        {(fr.candidateProfile.revealedGaps as string[]).map((g, i) => (
+                          <Chip key={i} label={g} size="small"
+                            sx={{ bgcolor: AMBER_L, color: AMBER, border: `1px solid ${AMBER_B}`, fontFamily: 'Poppins', fontSize: '0.72rem', fontWeight: 500 }} />
+                        ))}
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+              </Card>
+            )}
+
+            {/* ── Conversation Q&A ── */}
+            {(data?.interviewData as any)?.conversation?.length > 0 && (
+              <Card>
+                <SectionTitle>Interview Q&amp;A</SectionTitle>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                  {((data?.interviewData as any).conversation as any[]).map((turn: any, i: number) => (
+                    <Box key={i} sx={{ p: 2, bgcolor: SURFACE, borderRadius: '12px', border: `1px solid ${BORDER}` }}>
+                      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1 }}>
+                        <QuestionAnswerOutlinedIcon sx={{ fontSize: 15, color: INDIGO, mt: 0.2, flexShrink: 0 }} />
+                        <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.8rem', color: '#111827', lineHeight: 1.5 }}>
+                          {turn.question}
+                        </Typography>
+                      </Box>
+                      {turn.response && (
+                        <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.77rem', color: '#374151', lineHeight: 1.65, pl: 3 }}>
+                          {turn.response}
+                        </Typography>
+                      )}
+                      {(turn.evaluation?.qualityScore != null || turn.targetArea) && (
+                        <Box sx={{ display: 'flex', gap: 1, mt: 1, pl: 3, flexWrap: 'wrap' }}>
+                          {turn.targetArea && (
+                            <Chip label={areaLabel(turn.targetArea)} size="small"
+                              sx={{ bgcolor: INDIGO_L, color: INDIGO, border: `1px solid ${INDIGO_B}`, fontFamily: 'Poppins', fontSize: '0.68rem' }} />
+                          )}
+                          {turn.evaluation?.qualityScore != null && (
+                            <Chip
+                              label={`Quality: ${turn.evaluation.qualityScore}/10`} size="small"
+                              sx={{ bgcolor: scoreBg(turn.evaluation.qualityScore * 10), color: scoreColor(turn.evaluation.qualityScore * 10), border: `1px solid ${scoreBorder(turn.evaluation.qualityScore * 10)}`, fontFamily: 'Poppins', fontSize: '0.68rem', fontWeight: 600 }} />
+                          )}
+                        </Box>
+                      )}
                     </Box>
                   ))}
                 </Box>

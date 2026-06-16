@@ -17,9 +17,9 @@ async function persistSkillInterviewResults(sessionId, result, socket) {
 
   const data = {
     candidateId,
-    skill:     ctx.skill     || interviewConfig?.targetRole || 'Unknown',
-    skillType: ctx.skillType || 'technical',
-    category:  ctx.category  || '',
+    skill:     ctx.targetRole || interviewConfig?.pipelineConfig?.skills?.[0]?.name || 'Unknown',
+    skillType: interviewConfig?.interviewType === 'SOFT_SKILL' ? 'soft' : 'technical',
+    category:  interviewConfig?.pipelineConfig?.categories?.[0] || '',
     interviewData: {
       sessionId,
       interviewType: 'TECHNICAL_SKILL',

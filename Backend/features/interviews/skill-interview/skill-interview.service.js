@@ -36,11 +36,16 @@ const createAssessment = async (data, rawInterviewData, userId) => {
       }
     }
 
-    const assessment = new SkillInterviewAssessment(data);
+    // Calculate proficiency from score before saving so it's part of the document
+    const overallScore = rawInterviewData?.finalReport?.coverage?.overall || 0;
+    const proficiencyLevel = getLevelFromScore(overallScore);
+    const experienceLevel = getExperienceLabel(proficiencyLevel);
+
+    const assessment = new SkillInterviewAssessment({ ...data, proficiency: experienceLevel });
     const savedAssessment = await assessment.save();
 
     const candidateId = data.candidateId; // User._id
-    console.log('Skill interview assessment created:', savedAssessment._id);
+    console.log('Skill interview assessment created:', savedAssessment._id, '— proficiency:', experienceLevel);
 
     // If candidate exists, handle profile updates and remove previous assessments
     if (candidateId) {
@@ -70,10 +75,7 @@ const createAssessment = async (data, rawInterviewData, userId) => {
         console.log(`Deleted ${previousDeletedCount} previous assessment(s) for skill "${skillName}" and candidate ${candidateId}`);
       }
 
-      // Calculate scores and levels
-      const overallScore = rawInterviewData?.finalReport?.coverage?.overall || 0;
-      const proficiencyLevel = getLevelFromScore(overallScore);
-      const experienceLevel = getExperienceLabel(proficiencyLevel);
+      // proficiencyLevel / experienceLevel already calculated above; derive levelconfirmed
       const levelconfirmedValue = overallScore > 80 ? proficiencyLevel : proficiencyLevel - 1;
 
       let updatedProfile = null;

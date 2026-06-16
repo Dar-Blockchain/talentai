@@ -1,5 +1,18 @@
 const mongoose = require('mongoose');
 
+const conversationTurnSchema = new mongoose.Schema({
+  question:   String,
+  response:   String,
+  targetArea: String,
+  timestamp:  String,
+  evaluation: {
+    qualityScore:     Number,
+    answeredQuestion: Boolean,
+    completeness:     String,
+    depthLevel:       String,
+  },
+}, { _id: false });
+
 // Schema for individual indicators
 const indicatorSchema = new mongoose.Schema({
   name: {
@@ -89,33 +102,69 @@ const skillInterviewAssessmentSchema = new mongoose.Schema({
   interviewData: {
     finalReport: {
       summary: String,
+
+      // Proficiency assessment (repurposed from hiring context)
+      recommendation: String,
+      reasoning: String,
+      keyDecisionFactors: [String],
+      hiringRisks: [String],
+      developmentAreas: [String],
+
+      strengths:  [String],
+      weaknesses: [String],
+
+      requiredSkills: {
+        all:          [String],
+        demonstrated: [String],
+        missed:       [String],
+      },
+
+      candidateProfile: {
+        communicationStyle: mongoose.Schema.Types.Mixed,
+        revealedExpertise:  [String],
+        revealedGaps:       [String],
+        difficultyLevel:    String,
+      },
+
+      sessionMetrics: {
+        totalResponses:  Number,
+        questionsPerArea: mongoose.Schema.Types.Mixed,
+      },
+
       coverage: {
         overall: Number,
         areas: {
-          technical_depth: areaSchema,
-          problem_approach: areaSchema,
-          learning_ability: areaSchema,
-          practical_experience: areaSchema
-        }
+          technical_depth:     areaSchema,
+          problem_approach:    areaSchema,
+          learning_ability:    areaSchema,
+          practical_experience: areaSchema,
+        },
       },
       completedAreas: [String],
       nextRecommendedArea: String,
       lastUpdated: Date,
       aiAnalysis: {
-        totalCoverage: Number,
-        strongestAreas: [String],
-        weakestAreas: [String],
-        recommendedFocus: [String]
+        totalCoverage:    Number,
+        strongestAreas:   [String],
+        weakestAreas:     [String],
+        recommendedFocus: [String],
       },
       recommendations: [String],
       scores: {
+        // Aggregate scores from generateFinalReport
+        overall:       Number,
+        quality:       Number,
+        coverage:      Number,
+        skills:        Number,
+        depth:         Number,
         communication: Number,
-        technical_depth: Number,
-        problem_approach: Number,
-        learning_ability: Number,
-        overall: Number
+        // Per-area quality scores (derived from coverage areas)
+        technical_depth:     Number,
+        problem_approach:    Number,
+        learning_ability:    Number,
+        practical_experience: Number,
       },
-      timestamp: Date
+      timestamp: Date,
     },
 
     analytics: {
@@ -126,8 +175,10 @@ const skillInterviewAssessmentSchema = new mongoose.Schema({
       completedAreas: Number,
       totalAreas: Number,
       averageResponseLength: Number,
-      interactionStyle: String
+      interactionStyle: String,
     },
+
+    conversation: [conversationTurnSchema],
 
     sessionId: {
       type: String,

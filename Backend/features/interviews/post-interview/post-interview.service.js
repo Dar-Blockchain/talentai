@@ -251,6 +251,25 @@ module.exports.createPostInterviewAssessment = async (assessmentData) => {
   }
 };
 
+// ========== READ - Get by post + candidate ==========
+module.exports.getAssessmentByPostAndCandidate = async (postId, candidateUserId) => {
+  try {
+    const assessment = await PostInterviewAssessment.findOne({ post: postId, candidate: candidateUserId })
+      .populate('post')
+      .populate({ path: 'candidate', populate: { path: 'profile', model: 'Profile' } })
+      .populate('company');
+    if (!assessment) {
+      const error = new Error('Assessment not found');
+      error.status = 404;
+      throw error;
+    }
+    return assessment;
+  } catch (error) {
+    console.error('Error getting assessment by post and candidate:', error.message);
+    throw error;
+  }
+};
+
 // ========== READ - Get all assessments ==========
 module.exports.getAllPostInterviewAssessments = async (filters = {}, page = 1, limit = 10) => {
   try {

@@ -1,36 +1,18 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 import CodeIcon from '@mui/icons-material/Code';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import TranslateIcon from '@mui/icons-material/Translate';
 import CategoryIcon from '@mui/icons-material/Category';
-import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { SectionCard, MetaBadge, GREEN, GREEN_LIGHT, GREEN_BORDER } from './SkillPanelShared';
-
-const PROFICIENCY_COLOR: Record<string, { color: string; bg: string; border: string }> = {
-  beginner:     { color: '#2563EB', bg: '#EFF6FF', border: '#BFDBFE' },
-  intermediate: { color: '#7C3AED', bg: '#F5F3FF', border: '#DDD6FE' },
-  advanced:     { color: '#D97706', bg: '#FFFBEB', border: '#FDE68A' },
-  expert:       { color: '#DC2626', bg: '#FEF2F2', border: '#FECACA' },
-};
-
-function proficiencyLabel(p: string | null): string {
-  if (!p) return 'Intermediate';
-  return p.charAt(0).toUpperCase() + p.slice(1).toLowerCase();
-}
 
 interface SkillHeaderCardProps {
   skill: string;
-  proficiency: string | null;
   category: string | null;
-  duration: number;
   language: string;
 }
 
-export default function SkillHeaderCard({ skill, proficiency, category, duration, language }: SkillHeaderCardProps) {
-  const profKey   = proficiency?.toLowerCase() ?? 'intermediate';
-  const profStyle = PROFICIENCY_COLOR[profKey] ?? PROFICIENCY_COLOR.intermediate;
-
+export default function SkillHeaderCard({ skill, category, language }: SkillHeaderCardProps) {
   return (
     <SectionCard>
       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 2.5 }}>
@@ -53,11 +35,11 @@ export default function SkillHeaderCard({ skill, proficiency, category, duration
 
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
         <MetaBadge
-          icon={<EmojiEventsOutlinedIcon sx={{ fontSize: 14 }} />}
-          label={proficiencyLabel(proficiency)}
-          color={profStyle.color}
-          bg={profStyle.bg}
-          border={profStyle.border}
+          icon={<AutoAwesomeIcon sx={{ fontSize: 14 }} />}
+          label="Adaptive difficulty"
+          color="#7C3AED"
+          bg="#F5F3FF"
+          border="#DDD6FE"
         />
         {category && (
           <MetaBadge
@@ -68,13 +50,6 @@ export default function SkillHeaderCard({ skill, proficiency, category, duration
             border="#E5E7EB"
           />
         )}
-        <MetaBadge
-          icon={<AccessTimeIcon sx={{ fontSize: 14 }} />}
-          label={`${duration} min`}
-          color="#16A34A"
-          bg="#F0FDF4"
-          border="#BBF7D0"
-        />
         <MetaBadge
           icon={<TranslateIcon sx={{ fontSize: 14 }} />}
           label={language.toUpperCase()}

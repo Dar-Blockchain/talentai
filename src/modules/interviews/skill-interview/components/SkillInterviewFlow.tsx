@@ -14,7 +14,7 @@ export default function SkillInterviewFlow() {
 
   const {
     interviewConfig, setInterviewConfig,
-    skill, proficiency, category, duration, language,
+    skill, category, language,
     isReady,
   } = useSkillInterviewConfig();
 
@@ -45,9 +45,7 @@ export default function SkillInterviewFlow() {
     return (
       <SkillPreviewPanel
         skill={skill}
-        proficiency={proficiency}
         category={category}
-        duration={duration}
         language={language}
         onStartInterview={authUser ? handleStartInterview : undefined}
       />

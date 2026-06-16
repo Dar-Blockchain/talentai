@@ -25,25 +25,19 @@ const TIPS = [
 
 const FORMAT_ITEMS = [
   { icon: '🎤', label: 'Voice-based conversation with an AI interviewer' },
-  { icon: '⏱',  label: 'Adaptive questions based on your responses' },
+  { icon: '⚡', label: 'Difficulty adapts in real-time based on your answers' },
   { icon: '📊', label: 'Real-time coverage tracking as you answer' },
-  { icon: '📝', label: 'Instant report when the session ends' },
+  { icon: '📝', label: 'Your level is revealed in the report after the session' },
 ];
+
+const FOCUS_CHIPS = ['Concepts', 'Application', 'Problem Solving', 'Patterns', 'Best Practices'];
 
 interface SkillDetailsColumnProps {
   skill: string;
-  proficiency: string | null;
 }
 
-export default function SkillDetailsColumn({ skill, proficiency }: SkillDetailsColumnProps) {
+export default function SkillDetailsColumn({ skill }: SkillDetailsColumnProps) {
   const areas = ASSESSMENT_AREAS[skill.toLowerCase()] ?? ASSESSMENT_AREAS.default;
-
-  const profLevel = proficiency?.toLowerCase() ?? 'intermediate';
-  const difficultyChips: string[] =
-    profLevel === 'beginner'     ? ['Foundations', 'Core Concepts', 'Basic Usage'] :
-    profLevel === 'advanced'     ? ['Architecture', 'Performance', 'Edge Cases', 'Deep Dives'] :
-    profLevel === 'expert'       ? ['System Design', 'Internals', 'Trade-offs', 'Production Scale'] :
-    ['Concepts', 'Application', 'Problem Solving', 'Patterns'];
 
   return (
     <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
@@ -64,10 +58,10 @@ export default function SkillDetailsColumn({ skill, proficiency }: SkillDetailsC
 
         <Box sx={{ mt: 2.5 }}>
           <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.4, mb: 1 }}>
-            Focus areas at {proficiency ? proficiency.charAt(0).toUpperCase() + proficiency.slice(1).toLowerCase() : 'Intermediate'} level
+            Focus areas
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-            {difficultyChips.map((chip) => (
+            {FOCUS_CHIPS.map((chip) => (
               <Chip
                 key={chip}
                 size="small"

@@ -31,7 +31,7 @@ export interface InterviewConfig {
   };
   enableSecurity?: boolean;
   pipelineConfig?: {
-    skills?: Array<{ name: string; requiredLevel: number }>;
+    skills?: Array<{ name: string; requiredLevel?: number }>;
     categories?: string[];
     assessmentLevel?: string;
     passThreshold?: number;
