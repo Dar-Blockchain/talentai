@@ -1,25 +1,61 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Box, Pagination } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
-import WorkOutlineOutlined from "@mui/icons-material/WorkOutline";
-import EmptyState from "@/components/ui/EmptyState";
+import PeopleAltOutlined   from "@mui/icons-material/PeopleAltOutlined";
+import WorkOutlineOutlined  from "@mui/icons-material/WorkOutline";
+import EmptyState   from "@/components/ui/EmptyState";
 import LoadingState from "@/components/ui/LoadingState";
-import ApplicationMetrics from "@/modules/company/applications/components/ApplicationMetrics";
-import ApplicationCard from "@/modules/company/applications/components/ApplicationCard";
+import ApplicationMetrics  from "@/modules/company/applications/components/ApplicationMetrics";
+import ApplicationCard     from "@/modules/company/applications/components/ApplicationCard";
 import ContactCandidateModal, { ContactTarget } from "@/modules/company/applications/components/ContactCandidateModal";
-import { AssessmentDetailsModal, AssessmentTarget } from "@/modules/company/assessment/modal";
 import type { ApplicationSummaryItem } from "@/store/slices/jobApplicationSlice";
 import { useApplicationsList } from "@/modules/company/applications/hooks";
 import { ApplicationsToolbar, PostPickerModal } from "@/modules/company/applications/components";
 import { TEAL } from "@/modules/company/applications/components/constants";
 import { DashboardLayout } from "@/modules/shared/layouts";
 
-// ─── Static sx constants ──────────────────────────────────────────────────────
+// ─── Simple Tailwind Pagination ───────────────────────────────────────────────
 
-const LIST_BOX_SX       = { display: "flex", flexDirection: "column", gap: 1.5 } as const;
-const PAGINATION_BOX_SX = { display: "flex", justifyContent: "center", mt: 1 } as const;
-const PAGINATION_SX     = { "& .MuiPaginationItem-root": { fontWeight: 500 }, "& .Mui-selected": { bgcolor: `${TEAL}18`, color: TEAL, fontWeight: 700 } } as const;
+interface PaginationProps {
+  page: number;
+  totalPages: number;
+  onPageChange: (p: number) => void;
+}
+
+const Pagination: React.FC<PaginationProps> = ({ page, totalPages, onPageChange }) => {
+  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+  return (
+    <div className="flex items-center justify-center gap-1 mt-4">
+      <button
+        disabled={page === 1}
+        onClick={() => onPageChange(page - 1)}
+        className="w-8 h-8 flex items-center justify-center rounded-md text-[13px] text-slate-500 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+      >
+        ‹
+      </button>
+      {pages.map((p) => (
+        <button
+          key={p}
+          onClick={() => onPageChange(p)}
+          className="w-8 h-8 flex items-center justify-center rounded-md text-[12px] font-medium transition-colors"
+          style={{
+            backgroundColor: p === page ? `${TEAL}18` : "transparent",
+            color:           p === page ? TEAL     : "#374151",
+            fontWeight:      p === page ? 700      : 500,
+          }}
+        >
+          {p}
+        </button>
+      ))}
+      <button
+        disabled={page === totalPages}
+        onClick={() => onPageChange(page + 1)}
+        className="w-8 h-8 flex items-center justify-center rounded-md text-[13px] text-slate-500 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+      >
+        ›
+      </button>
+    </div>
+  );
+};
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -35,11 +71,9 @@ const ApplicationsPage: React.FC = () => {
     downloading, handleDownloadCVs,
   } = useApplicationsList();
 
-  const [postPickerOpen,   setPostPickerOpen]   = useState(false);
-  const [contactTarget,    setContactTarget]    = useState<ContactTarget | null>(null);
-  const [assessmentTarget, setAssessmentTarget] = useState<AssessmentTarget | null>(null);
-
-  const [invitedIds, setInvitedIds] = useState<Set<string>>(new Set());
+  const [postPickerOpen, setPostPickerOpen] = useState(false);
+  const [contactTarget,  setContactTarget]  = useState<ContactTarget | null>(null);
+  const [invitedIds,     setInvitedIds]     = useState<Set<string>>(new Set());
 
   const markInvited = useCallback((appId: string) => {
     setInvitedIds((prev) => new Set(prev).add(appId));
@@ -59,16 +93,13 @@ const ApplicationsPage: React.FC = () => {
 
   const openPostPicker  = useCallback(() => setPostPickerOpen(true),  []);
   const closePostPicker = useCallback(() => setPostPickerOpen(false), []);
-  const closeContact    = useCallback(() => setContactTarget(null),    []);
-  const closeAssessment = useCallback(() => setAssessmentTarget(null), []);
+  const closeContact    = useCallback(() => setContactTarget(null),   []);
 
   const handlePostSelect = useCallback((id: string, title: string) => {
-    setPostId(id);
-    setPostTitle(title);
-    setPostPickerOpen(false);
+    setPostId(id); setPostTitle(title); setPostPickerOpen(false);
   }, [setPostId, setPostTitle]);
 
-  const handlePageChange = useCallback((_: React.ChangeEvent<unknown>, v: number) => {
+  const handlePageChange = useCallback((v: number) => {
     setPage(v);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [setPage]);
@@ -104,7 +135,7 @@ const ApplicationsPage: React.FC = () => {
           minHeight={320}
         />
       ) : (
-        <Box sx={LIST_BOX_SX}>
+        <div className="flex flex-col gap-4">
           {rows.map((app: ApplicationSummaryItem) => (
             <ApplicationCard
               key={String(app.id)}
@@ -112,25 +143,19 @@ const ApplicationsPage: React.FC = () => {
               postId={app.postId || ""}
               showPostTitle
               onContact={setContactTarget}
-              onAssessment={setAssessmentTarget}
               invitedIds={invitedIds}
               onInviteSuccess={markInvited}
             />
           ))}
 
           {pagination.totalPages > 1 && (
-            <Box sx={PAGINATION_BOX_SX}>
-              <Pagination
-                count={pagination.totalPages}
-                page={page}
-                onChange={handlePageChange}
-                shape="rounded"
-                size="small"
-                sx={PAGINATION_SX}
-              />
-            </Box>
+            <Pagination
+              page={page}
+              totalPages={pagination.totalPages}
+              onPageChange={handlePageChange}
+            />
           )}
-        </Box>
+        </div>
       )}
 
       <PostPickerModal
@@ -140,7 +165,6 @@ const ApplicationsPage: React.FC = () => {
         onClose={closePostPicker}
       />
       <ContactCandidateModal open={!!contactTarget} target={contactTarget} onClose={closeContact} />
-      <AssessmentDetailsModal open={!!assessmentTarget} target={assessmentTarget} onClose={closeAssessment} />
     </DashboardLayout>
   );
 };

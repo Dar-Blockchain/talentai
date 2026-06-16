@@ -1,17 +1,16 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
 import EmojiEventsOutlined     from "@mui/icons-material/EmojiEventsOutlined";
 import PsychologyOutlined      from "@mui/icons-material/PsychologyOutlined";
 import RecordVoiceOverOutlined from "@mui/icons-material/RecordVoiceOverOutlined";
 import SpeedOutlined           from "@mui/icons-material/SpeedOutlined";
 import { PostAssessmentData } from "../../types";
-import { Bar, SectionLabel } from "../assessmentAtoms";
+import { ScoreBar, scoreTheme } from "../ui";
 
-const SCORE_METRICS = [
-  { key: "quality"       as const, label: "Response Quality", color: "#3B82F6", icon: <SpeedOutlined sx={{ fontSize: 15 }} /> },
-  { key: "skills"        as const, label: "Skills Match",     color: "#8B5CF6", icon: <EmojiEventsOutlined sx={{ fontSize: 15 }} /> },
-  { key: "depth"         as const, label: "Answer Depth",     color: "#F59E0B", icon: <PsychologyOutlined sx={{ fontSize: 15 }} /> },
-  { key: "communication" as const, label: "Communication",    color: "#10B981", icon: <RecordVoiceOverOutlined sx={{ fontSize: 15 }} /> },
+const METRICS = [
+  { key: "quality"       as const, label: "Response Quality", color: "#3B82F6", iconBgCls: "bg-blue-50",   Icon: SpeedOutlined           },
+  { key: "skills"        as const, label: "Skills Match",     color: "#8B5CF6", iconBgCls: "bg-violet-50", Icon: EmojiEventsOutlined     },
+  { key: "depth"         as const, label: "Answer Depth",     color: "#F59E0B", iconBgCls: "bg-amber-50",  Icon: PsychologyOutlined      },
+  { key: "communication" as const, label: "Communication",    color: "#10B981", iconBgCls: "bg-emerald-50",Icon: RecordVoiceOverOutlined },
 ];
 
 interface Props {
@@ -22,31 +21,35 @@ interface Props {
 const ScoreBreakdownCard: React.FC<Props> = ({ scores, scoreBreakdownLabel }) => {
   if (!scores || !Object.values(scores).some(v => v != null)) return null;
   return (
-    <Box sx={{ borderRadius: "16px", border: "1px solid #F3F4F6" }}>
-      <Box sx={{ px: 2.5, pt: 2.25, pb: 0.5 }}>
-        <SectionLabel>{scoreBreakdownLabel}</SectionLabel>
-      </Box>
-      <Box sx={{ px: 2.5, pb: 2.5, display: "flex", flexDirection: "column", gap: 1.75 }}>
-        {SCORE_METRICS.map(({ key, label, color, icon }) => {
+    <div className="rounded-2xl border border-slate-100 bg-white overflow-hidden">
+      <div className="px-5 pt-4 pb-3 border-b border-slate-100">
+        <span className="text-[0.78rem] font-bold text-slate-700">{scoreBreakdownLabel}</span>
+      </div>
+      <div className="px-5 py-4 flex flex-col gap-5">
+        {METRICS.map(({ key, label, color, iconBgCls, Icon }) => {
           const val = scores[key];
           if (val == null) return null;
-          const pct    = Math.min(Math.round(val), 100);
-          const tColor = pct >= 70 ? "#059669" : pct >= 40 ? "#D97706" : "#DC2626";
+          const pct = Math.min(Math.round(val), 100);
+          const st  = scoreTheme(pct);
           return (
-            <Box key={key}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.875 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                  <Box sx={{ color, display: "flex" }}>{icon}</Box>
-                  <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#374151" }}>{label}</Typography>
-                </Box>
-                <Typography sx={{ fontSize: "0.82rem", fontWeight: 800, color: tColor }}>{pct}%</Typography>
-              </Box>
-              <Bar value={pct} color={color} height={7} />
-            </Box>
+            <div key={key}>
+              <div className="flex justify-between items-center mb-2">
+                <div className="flex items-center gap-1.5">
+                  <div className={`w-[22px] h-[22px] rounded-md flex items-center justify-center ${iconBgCls}`}>
+                    <Icon style={{ fontSize: 13, color }} />
+                  </div>
+                  <span className="text-sm font-semibold text-slate-700">{label}</span>
+                </div>
+                <span className={`text-[0.78rem] font-extrabold tabular-nums px-2 py-0.5 rounded-full ${st.pillCls}`}>
+                  {pct}%
+                </span>
+              </div>
+              <ScoreBar value={pct} color={color} height={6} />
+            </div>
           );
         })}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 

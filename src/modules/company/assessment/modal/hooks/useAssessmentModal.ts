@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { scoreStyle, verdictStyle, TEAL, TEAL_BG } from "@/modules/company/assessment/constants";
+import { verdictTheme, scoreTheme, VerdictTheme, ScoreTheme } from "../components/ui";
 import { PostAssessmentData, AssessmentTarget } from "../types";
 
 function pickGradient(str: string): [string, string] {
@@ -16,10 +16,39 @@ function pickGradient(str: string): [string, string] {
   return GRADS[Math.abs(h) % GRADS.length];
 }
 
+export type AssessmentModalData = {
+  name:   string;
+  email:  string;
+  letter: string;
+  g1:     string;
+  g2:     string;
+  verdict:      PostAssessmentData["verdict"];
+  overallScore: number;
+  vt:           VerdictTheme;
+  st:           ScoreTheme;
+  verdictLabel: string;
+  analytics:        PostAssessmentData["analytics"];
+  scores:           PostAssessmentData["scores"];
+  coverage:         PostAssessmentData["coverage"];
+  areas:            Record<string, unknown>;
+  aiAssessment:     PostAssessmentData["aiAssessment"];
+  requiredSkills:   PostAssessmentData["requiredSkills"];
+  candidateProfile: PostAssessmentData["candidateProfile"];
+  recruiterReview:  PostAssessmentData["recruiterReview"];
+  conversation:     PostAssessmentData["conversation"];
+  hasAreas:     boolean;
+  hasAiData:    boolean;
+  hasTranscript: boolean;
+  TAB_SCORES:     number;
+  TAB_COVERAGE:   number;
+  TAB_REPORT:     number;
+  TAB_TRANSCRIPT: number;
+};
+
 export function useAssessmentModal(
   assessment: PostAssessmentData | undefined,
   target: AssessmentTarget | null,
-) {
+): AssessmentModalData {
   const { t } = useTranslation("dashboard");
 
   return useMemo(() => {
@@ -30,12 +59,10 @@ export function useAssessmentModal(
 
     const verdict      = assessment?.verdict;
     const overallScore = verdict?.overallScore ?? assessment?.scores?.overall ?? 0;
-    const sc           = scoreStyle(overallScore);
-    const vs           = verdictStyle(verdict?.recommendation);
 
-    const verdictColor = vs.label ? vs.color : overallScore >= 70 ? TEAL : overallScore >= 50 ? "#D97706" : "#DC2626";
-    const verdictBg    = vs.label ? vs.bg    : overallScore >= 70 ? TEAL_BG : overallScore >= 50 ? "#FFFBEB" : "#FEF2F2";
-    const verdictBorder = vs.border || verdictColor + "40";
+    const vt = verdictTheme(verdict?.recommendation, overallScore);
+    const st = scoreTheme(overallScore);
+
     const verdictLabel = verdict?.recommendation
       ? verdict.recommendation.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())
       : overallScore >= 70
@@ -54,16 +81,12 @@ export function useAssessmentModal(
     const recruiterReview  = assessment?.recruiterReview;
     const conversation     = assessment?.conversation ?? [];
 
-    const hasAreas = Object.keys(areas).length > 0;
-    const hasAiData = !!(
-      aiAssessment?.summary ||
-      aiAssessment?.strengths?.length ||
-      aiAssessment?.weaknesses?.length ||
-      aiAssessment?.keyDecisionFactors?.length ||
-      aiAssessment?.hiringRisks?.length ||
-      aiAssessment?.developmentAreas?.length ||
-      candidateProfile ||
-      aiAssessment?.recommendedFocus?.length
+    const hasAreas     = Object.keys(areas).length > 0;
+    const hasAiData    = !!(
+      aiAssessment?.summary || aiAssessment?.strengths?.length ||
+      aiAssessment?.weaknesses?.length || aiAssessment?.keyDecisionFactors?.length ||
+      aiAssessment?.hiringRisks?.length || aiAssessment?.developmentAreas?.length ||
+      candidateProfile || aiAssessment?.recommendedFocus?.length
     );
     const hasTranscript = conversation.length > 0;
 
@@ -74,17 +97,11 @@ export function useAssessmentModal(
     const TAB_TRANSCRIPT = hasTranscript ? idx++ : -1;
 
     return {
-      // candidate identity
       name, email, letter, g1, g2,
-      // verdict
-      verdict, overallScore,
-      verdictColor, verdictBg, verdictBorder, verdictLabel,
-      // data sections
+      verdict, overallScore, vt, st, verdictLabel,
       analytics, scores, coverage, areas,
       aiAssessment, requiredSkills, candidateProfile, recruiterReview, conversation,
-      // visibility flags
       hasAreas, hasAiData, hasTranscript,
-      // tab indices
       TAB_SCORES, TAB_COVERAGE, TAB_REPORT, TAB_TRANSCRIPT,
     };
   }, [assessment, target, t]);

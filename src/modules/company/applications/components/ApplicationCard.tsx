@@ -3,41 +3,13 @@
 import React, { memo, useState, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "next/router";
-import { Avatar, Box, Chip, Paper, Typography } from "@mui/material";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutline";
 import { ApplicationSummaryItem } from "@/store/slices/jobApplicationSlice";
 import { ContactTarget } from "./ContactCandidateModal";
-import { AssessmentTarget } from "@/modules/company/assessment/modal";
 import { InviteTarget } from "./InviteToInterviewModal";
 import InviteToInterviewModal from "./InviteToInterviewModal";
 import ApplicationCardActions from "./ApplicationCardActions";
-
-// ─── Static constants ─────────────────────────────────────────────────────────
-
-const TEAL = "#0D9488";
-
-const PAPER_BASE_SX = {
-  border: "1px solid #E5E7EB", borderRadius: "12px",
-  p: "14px 16px", display: "flex", alignItems: "center", gap: 2,
-  transition: "box-shadow 0.15s, border-color 0.15s",
-} as const;
-
-const PAPER_CLICKABLE_SX = {
-  ...PAPER_BASE_SX,
-  cursor: "pointer",
-  "&:hover": { boxShadow: "0 2px 12px rgba(0,0,0,0.07)", borderColor: TEAL },
-} as const;
-
-const PAPER_SX = {
-  ...PAPER_BASE_SX,
-  "&:hover": { boxShadow: "0 2px 12px rgba(0,0,0,0.07)", borderColor: TEAL },
-} as const;
-
-const NAME_ROW_SX   = { display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" } as const;
-const FLEX1_SX      = { flex: 1, minWidth: 0 } as const;
-const EMAIL_SX      = { fontSize: "11px", color: "#6B7280", mt: 0.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } as const;
-const DATE_SX       = { fontSize: "10px", color: "#9CA3AF", mt: 0.15 } as const;
-const NAME_TEXT_SX  = { fontSize: "13px", fontWeight: 700, color: "#111827", lineHeight: 1.3 } as const;
+import { cn } from "@/lib/utils";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -70,19 +42,19 @@ export interface ApplicationCardProps {
   postId: string;
   showPostTitle?: boolean;
   onContact: (target: ContactTarget) => void;
-  onAssessment: (target: AssessmentTarget) => void;
   invitedIds?: Set<string>;
   onInviteSuccess?: (appId: string) => void;
 }
 
 const ApplicationCard = memo<ApplicationCardProps>(({
   app, postId, showPostTitle = false,
-  onContact, onAssessment,
+  onContact,
   invitedIds: externalInvitedIds, onInviteSuccess,
 }) => {
   const { t }  = useTranslation("dashboard");
   const router = useRouter();
 
+  const [menuOpen,     setMenuOpen]     = useState(false);
   const [menuAnchor,   setMenuAnchor]   = useState<HTMLElement | null>(null);
   const [inviteTarget, setInviteTarget] = useState<InviteTarget | null>(null);
   const [localInvited, setLocalInvited] = useState(false);
@@ -98,18 +70,7 @@ const ApplicationCard = memo<ApplicationCardProps>(({
   const isInvited = useMemo(() => externalInvitedIds ? externalInvitedIds.has(appId) : localInvited, [externalInvitedIds, appId, localInvited]);
   const invitedSet = useMemo(() => (isInvited ? new Set([appId]) : new Set<string>()), [isInvited, appId]);
 
-  const decisionChipSx = useMemo(() => ({
-    bgcolor: app.recruiterDecision === "shortlisted" ? "#F0FDF4" : "#FEF2F2",
-    color:   app.recruiterDecision === "shortlisted" ? "#16A34A" : "#DC2626",
-    fontWeight: 600, fontSize: "10px", height: 18, borderRadius: "4px",
-  }), [app.recruiterDecision]);
-
-  const postChipSx = useMemo(() => ({
-    bgcolor: `${TEAL}0F`, color: TEAL, fontWeight: 600, fontSize: "10px",
-    height: 18, borderRadius: "4px",
-    cursor: app.postId ? "pointer" : "default",
-    "& .MuiChip-icon": { color: `${TEAL} !important` },
-  }), [app.postId]);
+  const hasInterview = !!app.completedAt;
 
   const handleInviteSuccess = useCallback(() => {
     if (!externalInvitedIds) setLocalInvited(true);
@@ -121,13 +82,17 @@ const ApplicationCard = memo<ApplicationCardProps>(({
   }, [app.email, app.candidateUserId, name, avatarUrl, bgColor, onContact]);
 
   const handleAssessment = useCallback(() => {
-    if (app.candidateUserId) onAssessment({
-      applicationId: appId, postId,
+    if (!app.candidateUserId) return;
+    const q = new URLSearchParams({
+      postId:          postId,
       candidateUserId: app.candidateUserId,
-      candidateName: name, candidateEmail: app.email || "",
-      avatarUrl, bgColor,
+      candidateName:   name,
+      candidateEmail:  app.email || "",
+      bgColor,
+      ...(avatarUrl ? { avatarUrl } : {}),
     });
-  }, [app.candidateUserId, app.email, appId, postId, name, avatarUrl, bgColor, onAssessment]);
+    router.push(`/company/applications/${appId}/assessment?${q}`);
+  }, [app.candidateUserId, app.email, appId, postId, name, avatarUrl, bgColor, router]);
 
   const handleInvite = useCallback(
     () => setInviteTarget({ applicationId: appId, name, postTitle: app.postTitle || "", postId }),
@@ -137,11 +102,10 @@ const ApplicationCard = memo<ApplicationCardProps>(({
   const handleMenuOpen  = useCallback((e: React.MouseEvent<HTMLElement>) => {
     e.stopPropagation();
     setMenuAnchor(e.currentTarget);
+    setMenuOpen(true);
   }, []);
-  const handleMenuClose = useCallback(() => setMenuAnchor(null), []);
+  const handleMenuClose = useCallback(() => { setMenuOpen(false); setMenuAnchor(null); }, []);
   const closeInvite     = useCallback(() => setInviteTarget(null), []);
-
-  const hasInterview = !!app.completedAt;
 
   const handleCardClick = useCallback(() => {
     if (!hasInterview) return;
@@ -153,57 +117,82 @@ const ApplicationCard = memo<ApplicationCardProps>(({
     if (app.postId) router.push(`/company/posts/${app.postId}`);
   }, [app.postId, router]);
 
+  const decisionIsShortlisted = app.recruiterDecision === "shortlisted";
+
   return (
     <>
-      <Paper elevation={0} sx={hasInterview ? PAPER_CLICKABLE_SX : PAPER_SX} onClick={handleCardClick}>
-        <Avatar
-          src={avatarUrl}
-          sx={{ width: 40, height: 40, bgcolor: bgColor, fontSize: 13, fontWeight: 700, flexShrink: 0 }}
+      <div
+        onClick={handleCardClick}
+        className={cn(
+          "bg-white border border-slate-200 rounded-xl px-4 py-3.5 flex items-center gap-4 transition-all duration-150",
+          hasInterview ? "cursor-pointer hover:shadow-[0_2px_12px_rgba(0,0,0,0.07)] hover:border-teal-500" : "hover:shadow-[0_2px_12px_rgba(0,0,0,0.07)] hover:border-teal-500",
+        )}
+      >
+        {/* Avatar */}
+        <div
+          className="w-10 h-10 rounded-full flex items-center justify-center text-white text-[13px] font-bold shrink-0 overflow-hidden"
+          style={{ backgroundColor: bgColor }}
         >
-          {initials(app.firstName, app.lastName)}
-        </Avatar>
+          {avatarUrl
+            ? <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
+            : initials(app.firstName, app.lastName)
+          }
+        </div>
 
-        <Box sx={FLEX1_SX}>
-          <Box sx={NAME_ROW_SX}>
-            <Typography sx={NAME_TEXT_SX}>{name}</Typography>
-            <Chip
-              label={t(statusDef.i18nKey)} size="small"
-              sx={{ bgcolor: statusDef.bg, color: statusDef.color, fontWeight: 600, fontSize: "10px", height: 18, borderRadius: "4px" }}
-            />
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[13px] font-bold text-slate-900 leading-snug">{name}</span>
+
+            <span
+              className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
+              style={{ backgroundColor: statusDef.bg, color: statusDef.color }}
+            >
+              {t(statusDef.i18nKey)}
+            </span>
+
             {app.recruiterDecision && (
-              <Chip
-                label={app.recruiterDecision === "shortlisted" ? "Shortlisted" : "Rejected"} size="small"
-                sx={decisionChipSx}
-              />
+              <span
+                className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
+                style={{
+                  backgroundColor: decisionIsShortlisted ? "#F0FDF4" : "#FEF2F2",
+                  color:           decisionIsShortlisted ? "#16A34A" : "#DC2626",
+                }}
+              >
+                {decisionIsShortlisted ? "Shortlisted" : "Rejected"}
+              </span>
             )}
-            {showPostTitle && app.postTitle && (
-              <Chip
-                label={app.postTitle} size="small"
-                icon={<WorkOutlineOutlined style={{ fontSize: 10 }} />}
-                onClick={handlePostClick}
-                sx={postChipSx}
-              />
-            )}
-          </Box>
 
-          <Typography sx={EMAIL_SX}>{app.email || "—"}</Typography>
+            {showPostTitle && app.postTitle && (
+              <button
+                onClick={handlePostClick}
+                className="flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded cursor-pointer"
+                style={{ backgroundColor: "#F0FDFA", color: "#0D9488" }}
+              >
+                <WorkOutlineOutlined style={{ fontSize: 10 }} />
+                {app.postTitle}
+              </button>
+            )}
+          </div>
+
+          <div className="text-[11px] text-slate-500 mt-0.5 truncate">{app.email || "—"}</div>
 
           {app.appliedAt && (
-            <Typography sx={DATE_SX}>
+            <div className="text-[10px] text-slate-400 mt-0.5">
               {t("pages.applications.card.applied_date", { date: fmtDate(app.appliedAt) })}
               {app.completedAt && t("pages.applications.card.completed_date", { date: fmtDate(app.completedAt) })}
-            </Typography>
+            </div>
           )}
-        </Box>
+        </div>
 
         <ApplicationCardActions
           app={app} name={name} appId={appId}
-          menuAnchorEl={menuAnchor} menuOpen={Boolean(menuAnchor)}
+          menuAnchorEl={menuAnchor} menuOpen={menuOpen}
           onMenuOpen={handleMenuOpen} onMenuClose={handleMenuClose}
           onContact={handleContact} onAssessment={handleAssessment} onInvite={handleInvite}
           invitedIds={invitedSet}
         />
-      </Paper>
+      </div>
 
       <InviteToInterviewModal
         open={!!inviteTarget}

@@ -1,9 +1,7 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
 import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
-import { scoreStyle } from "@/modules/company/assessment/constants";
 import { AreaData } from "../../types";
-import { Bar } from "../assessmentAtoms";
+import { ScoreBar, scoreTheme } from "../ui";
 
 interface Props {
   area: string;
@@ -12,48 +10,53 @@ interface Props {
 
 const AreaCoverageCard: React.FC<Props> = ({ area, data }) => {
   const pct = data.percentage ?? 0;
-  const ac  = scoreStyle(pct);
-  return (
-    <Box sx={{ borderRadius: "16px", border: "1px solid #F3F4F6", overflow: "hidden" }}>
-      <Box sx={{ height: 3, bgcolor: ac.color }} />
-      <Box sx={{ px: 2.5, pt: 2, pb: 2 }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.25 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-            <Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#1F2937", textTransform: "capitalize" }}>
-              {area.replace(/_/g, " ")}
-            </Typography>
-            {data.completed && <CheckCircleOutlined sx={{ fontSize: 14, color: "#10B981" }} />}
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
-            {data.weight > 0 && (
-              <Typography sx={{ fontSize: "0.68rem", color: "#9CA3AF", fontWeight: 500 }}>{data.weight}% weight</Typography>
-            )}
-            <Typography sx={{ fontSize: "0.9rem", fontWeight: 800, color: ac.color }}>{pct}%</Typography>
-          </Box>
-        </Box>
+  const st  = scoreTheme(pct);
 
-        <Bar value={pct} color={ac.color} height={7} />
+  return (
+    <div className="rounded-2xl border border-slate-100 bg-white overflow-hidden">
+      <div className="h-[3px]" style={{ backgroundColor: st.color }} />
+      <div className="px-5 pt-4 pb-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[0.875rem] font-bold text-slate-800 capitalize">
+              {area.replace(/_/g, " ")}
+            </span>
+            {data.completed && <CheckCircleOutlined style={{ fontSize: 14, color: "#10B981" }} />}
+          </div>
+          <div className="flex items-center gap-2">
+            {data.weight > 0 && (
+              <span className="text-[0.66rem] font-semibold text-slate-400 bg-slate-50 border border-slate-100 px-1.5 py-0.5 rounded-full">
+                {data.weight}% weight
+              </span>
+            )}
+            <span className={`text-sm font-black tabular-nums px-2 py-0.5 rounded-full ${st.pillCls}`}>
+              {pct}%
+            </span>
+          </div>
+        </div>
+
+        <ScoreBar value={pct} color={st.color} height={6} />
 
         {data.questionsAsked > 0 && (
-          <Typography sx={{ fontSize: "0.7rem", color: "#9CA3AF", mt: 1, fontWeight: 500 }}>
+          <div className="text-[0.68rem] text-slate-400 mt-2 font-medium">
             {data.questionsAsked} question{data.questionsAsked !== 1 ? "s" : ""} asked
-          </Typography>
+          </div>
         )}
 
         {(data.indicators?.length ?? 0) > 0 && (
-          <Box sx={{ mt: 1.5, pt: 1.5, borderTop: "1px solid #F3F4F6", display: "flex", flexDirection: "column", gap: 0.75 }}>
+          <div className="mt-3 pt-3 border-t border-slate-100 flex flex-col gap-1.5">
             {data.indicators.slice(0, 5).map((ind, i) => (
-              <Box key={i} sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
-                <Box sx={{ width: 6, height: 6, borderRadius: "50%", flexShrink: 0, mt: "5px", bgcolor: ind.covered ? "#10B981" : "#EF4444" }} />
-                <Typography sx={{ fontSize: "0.75rem", color: "#6B7280", lineHeight: 1.6 }}>
+              <div key={i} className="flex items-start gap-2">
+                <div className={`w-1.5 h-1.5 rounded-full shrink-0 mt-[5px] ${ind.covered ? "bg-emerald-400" : "bg-red-400"}`} />
+                <span className="text-[0.74rem] text-slate-500 leading-relaxed">
                   {ind.evidence?.[0] || ind.name}
-                </Typography>
-              </Box>
+                </span>
+              </div>
             ))}
-          </Box>
+          </div>
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 

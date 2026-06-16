@@ -1,6 +1,6 @@
 import React from "react";
-import { Box } from "@mui/material";
 import { PostAssessmentData } from "../types";
+import { VerdictTheme, ScoreTheme } from "./ui";
 import VerdictCard              from "./scores/VerdictCard";
 import ScoreRingsSection        from "./scores/ScoreRingsSection";
 import ScoreBreakdownCard       from "./scores/ScoreBreakdownCard";
@@ -10,14 +10,13 @@ import StrengthsWeaknessesSection from "./scores/StrengthsWeaknessesSection";
 interface Props {
   verdict:             PostAssessmentData["verdict"];
   overallScore:        number;
+  vt:                  VerdictTheme;
+  st:                  ScoreTheme;
+  verdictLabel:        string;
   scores:              PostAssessmentData["scores"] | undefined;
   analytics:           PostAssessmentData["analytics"] | undefined;
   requiredSkills:      PostAssessmentData["requiredSkills"];
   aiAssessment:        PostAssessmentData["aiAssessment"] | undefined;
-  verdictColor:        string;
-  verdictBg:           string;
-  verdictBorder:       string;
-  verdictLabel:        string;
   scoreOverallLabel:   string;
   scoreCoverageLabel:  string;
   scoreBreakdownLabel: string;
@@ -26,17 +25,21 @@ interface Props {
 }
 
 const ScoresTab: React.FC<Props> = ({
-  verdict, overallScore, scores, analytics, requiredSkills, aiAssessment,
-  verdictColor, verdictBg, verdictBorder, verdictLabel,
+  verdict, overallScore, vt, st, verdictLabel,
+  scores, analytics, requiredSkills, aiAssessment,
   scoreOverallLabel, scoreCoverageLabel, scoreBreakdownLabel, strengthsLabel, weakAreasLabel,
 }) => (
-  <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 2.5 }}>
-    <VerdictCard verdict={verdict} verdictColor={verdictColor} verdictBg={verdictBg} verdictBorder={verdictBorder} verdictLabel={verdictLabel} />
-    <ScoreRingsSection overallScore={overallScore} analytics={analytics ?? undefined} scoreOverallLabel={scoreOverallLabel} scoreCoverageLabel={scoreCoverageLabel} />
-    <ScoreBreakdownCard scores={scores} scoreBreakdownLabel={scoreBreakdownLabel} />
-    <RequiredSkillsCard requiredSkills={requiredSkills} />
-    <StrengthsWeaknessesSection aiAssessment={aiAssessment} strengthsLabel={strengthsLabel} weakAreasLabel={weakAreasLabel} />
-  </Box>
+  <div className="p-6 grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-5">
+    <div className="flex flex-col gap-5">
+      <VerdictCard verdict={verdict} vt={vt} verdictLabel={verdictLabel} />
+      <ScoreBreakdownCard scores={scores} scoreBreakdownLabel={scoreBreakdownLabel} />
+      <StrengthsWeaknessesSection aiAssessment={aiAssessment} strengthsLabel={strengthsLabel} weakAreasLabel={weakAreasLabel} />
+    </div>
+    <div className="flex flex-col gap-5">
+      <ScoreRingsSection overallScore={overallScore} st={st} analytics={analytics} scoreOverallLabel={scoreOverallLabel} scoreCoverageLabel={scoreCoverageLabel} />
+      <RequiredSkillsCard requiredSkills={requiredSkills} />
+    </div>
+  </div>
 );
 
 export default ScoresTab;
