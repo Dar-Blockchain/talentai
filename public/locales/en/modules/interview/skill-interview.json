@@ -1,0 +1,102 @@
+{
+  "header": {
+    "subtitle": "Technical Skill Assessment · AI-Powered",
+    "adaptive_difficulty": "Adaptive difficulty"
+  },
+  "preview": {
+    "what_assessed": "What will be assessed",
+    "focus_areas_label": "Focus areas",
+    "format_title": "Interview format",
+    "tips_title": "Tips to succeed",
+    "areas": [
+      "Core concepts and fundamentals",
+      "Practical problem-solving",
+      "Best practices and patterns",
+      "Real-world scenarios",
+      "Performance and optimization"
+    ],
+    "focus_chips": ["Concepts", "Application", "Problem Solving", "Patterns", "Best Practices"],
+    "format_items": [
+      "Voice-based conversation with an AI interviewer",
+      "Difficulty adapts in real-time based on your answers",
+      "Real-time coverage tracking as you answer",
+      "Your level is revealed in the report after the session"
+    ],
+    "format_icons": ["🎤", "⚡", "📊", "📝"],
+    "tips": [
+      "Think out loud — the AI adapts to your explanation style",
+      "Take reading time to understand each question fully",
+      "Use concrete examples from your experience",
+      "It's okay to ask for clarification before answering"
+    ]
+  },
+  "start": {
+    "ready_badge": "Ready to assess",
+    "title": "Start your assessment",
+    "description": "Prove your {{skill}} skills with an AI-powered adaptive assessment. Your level will be determined by the results.",
+    "features": [
+      "AI adapts questions to your level",
+      "Camera & voice recording",
+      "Real-time skill coverage tracker",
+      "Detailed report after completion"
+    ],
+    "button": "Start Assessment",
+    "login": {
+      "title": "Sign in to begin",
+      "description": "Create a free account or log in to start your {{skill}} skill assessment.",
+      "steps": [
+        { "label": "Create or log in to your account", "sub": "Takes less than a minute" },
+        { "label": "Allow camera & microphone access",  "sub": "Required for voice interview" },
+        { "label": "Complete the AI interview",         "sub": "Adaptive, voice-based session" }
+      ],
+      "button": "Get Started"
+    }
+  },
+  "report": {
+    "title": "Skill Interview Report",
+    "soft_skill": "Soft Skill",
+    "technical_skill": "Technical Skill",
+    "download_pdf": "Download PDF",
+    "no_report": "No report found for this assessment.",
+    "sections": {
+      "coverage_areas": "Coverage Areas",
+      "score_breakdown": "Score Breakdown",
+      "ai_analysis": "AI Analysis",
+      "strengths_weaknesses": "Strengths & Weaknesses",
+      "development_areas": "Development Areas",
+      "candidate_profile": "Candidate Profile",
+      "qa": "Interview Q&A",
+      "recommendations": "Recommendations",
+      "next_area": "Next Recommended Area",
+      "session_analytics": "Session Analytics"
+    },
+    "labels": {
+      "strongest": "Strongest Areas",
+      "improve": "Areas to Improve",
+      "recommended_focus": "Recommended Focus",
+      "strengths": "Strengths",
+      "weaknesses": "Areas to Strengthen",
+      "difficulty_level": "Difficulty Level:",
+      "demonstrated": "Demonstrated Expertise",
+      "gaps": "Knowledge Gaps Identified"
+    },
+    "stats": {
+      "duration": "Duration",
+      "exchanges": "Exchanges",
+      "coverage": "Coverage",
+      "areas_covered": "Areas Covered",
+      "avg_response": "Avg Response",
+      "style": "Style",
+      "silence": "Silence Events",
+      "quality": "Quality: {{score}}/10"
+    },
+    "score_labels": {
+      "excellent": "Excellent",
+      "good": "Good",
+      "fair": "Fair",
+      "needs_work": "Needs Work"
+    },
+    "area_question_one": "{{count}} question",
+    "area_question_other": "{{count}} questions"
+  }
+}

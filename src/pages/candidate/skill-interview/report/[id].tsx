@@ -1,6 +1,7 @@
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -60,7 +61,6 @@ const BORDER   = 'rgba(0,0,0,0.07)';
 const scoreColor  = (s: number) => s >= 80 ? GREEN  : s >= 60 ? INDIGO  : s >= 40 ? AMBER  : RED;
 const scoreBg     = (s: number) => s >= 80 ? GREEN_L : s >= 60 ? INDIGO_L : s >= 40 ? AMBER_L : RED_L;
 const scoreBorder = (s: number) => s >= 80 ? GREEN_B : s >= 60 ? INDIGO_B : s >= 40 ? AMBER_B : RED_B;
-const scoreLabel  = (s: number) => s >= 80 ? 'Excellent' : s >= 60 ? 'Good' : s >= 40 ? 'Fair' : 'Needs Work';
 const areaLabel   = (key: string) =>
   key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
@@ -154,6 +154,7 @@ const ScoreRing = ({ score }: { score: number }) => {
 function SkillInterviewReportPage() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
+  const { t } = useTranslation('modules/interview/skill-interview');
   const { id } = router.query;
 
   const data    = useSelector(selectInterviewReport);
@@ -172,6 +173,12 @@ function SkillInterviewReportPage() {
   const overall   = coverage?.overall ?? 0;
   const isSoft    = data?.skillType === 'soft';
 
+  const scoreLabel = (s: number) =>
+    s >= 80 ? t('report.score_labels.excellent') :
+    s >= 60 ? t('report.score_labels.good') :
+    s >= 40 ? t('report.score_labels.fair') :
+              t('report.score_labels.needs_work');
+
   return (
     <CandidateWorkspaceLayout breadcrumb="Skill Interview Report">
 
@@ -187,7 +194,7 @@ function SkillInterviewReportPage() {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2, mb: 2 }}>
         <Box>
           <Typography sx={{ fontFamily: 'Poppins', fontWeight: 800, fontSize: { xs: '1.3rem', md: '1.6rem' }, color: '#111827', lineHeight: 1.2 }}>
-            Skill Interview Report
+            {t('report.title')}
           </Typography>
           {data?.skill && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
@@ -212,7 +219,7 @@ function SkillInterviewReportPage() {
               boxShadow: 'none', '&:hover': { bgcolor: '#4f46e5', boxShadow: 'none' },
             }}
           >
-            Download PDF
+            {t('report.download_pdf')}
           </Button>
         )}
       </Box>
@@ -225,7 +232,7 @@ function SkillInterviewReportPage() {
         ) : error ? (
           <Card><Alert severity="error">{error}</Alert></Card>
         ) : !data ? (
-          <Card><Alert severity="info">No report found for this assessment.</Alert></Card>
+          <Card><Alert severity="info">{t('report.no_report')}</Alert></Card>
         ) : (
           <>
             {/* ── Hero — score + meta ── */}
@@ -240,7 +247,7 @@ function SkillInterviewReportPage() {
                       sx={{ bgcolor: scoreBg(overall), color: scoreColor(overall), border: `1px solid ${scoreBorder(overall)}`, fontWeight: 700, fontFamily: 'Poppins', fontSize: '0.72rem' }}
                     />
                     <Chip
-                      label={isSoft ? 'Soft Skill' : 'Technical Skill'}
+                      label={isSoft ? t('report.soft_skill') : t('report.technical_skill')}
                       size="small"
                       icon={isSoft ? <PsychologyIcon sx={{ fontSize: '13px !important' }} /> : <CodeIcon sx={{ fontSize: '13px !important' }} />}
                       sx={{ bgcolor: INDIGO_L, color: INDIGO, border: `1px solid ${INDIGO_B}`, fontWeight: 600, fontFamily: 'Poppins', fontSize: '0.72rem' }}
@@ -270,21 +277,21 @@ function SkillInterviewReportPage() {
                 <Box sx={{ display: 'flex', gap: 1.5, mt: 3, flexWrap: 'wrap' }}>
                   {analytics.duration != null && (
                     <StatPill
-                      label="Duration"
+                      label={t('report.stats.duration')}
                       value={fmtDuration(analytics.duration)}
                       icon={<AccessTimeIcon sx={{ fontSize: 18, color: INDIGO }} />}
                     />
                   )}
                   {analytics.messageCount != null && (
                     <StatPill
-                      label="Exchanges"
+                      label={t('report.stats.exchanges')}
                       value={analytics.messageCount}
                       icon={<ChatBubbleOutlineIcon sx={{ fontSize: 18, color: INDIGO }} />}
                     />
                   )}
                   {analytics.coveragePercentage != null && (
                     <StatPill
-                      label="Coverage"
+                      label={t('report.stats.coverage')}
                       value={`${analytics.coveragePercentage}%`}
                       icon={<TrendingUpIcon sx={{ fontSize: 18, color: scoreColor(analytics.coveragePercentage) }} />}
                       color={scoreColor(analytics.coveragePercentage)}
@@ -294,7 +301,7 @@ function SkillInterviewReportPage() {
                   )}
                   {analytics.completedAreas != null && analytics.totalAreas != null && (
                     <StatPill
-                      label="Areas Covered"
+                      label={t('report.stats.areas_covered')}
                       value={`${analytics.completedAreas} / ${analytics.totalAreas}`}
                       icon={<EmojiEventsIcon sx={{ fontSize: 18, color: AMBER }} />}
                       color={AMBER} bg={AMBER_L} border={AMBER_B}
@@ -307,7 +314,7 @@ function SkillInterviewReportPage() {
             {/* ── Coverage areas ── */}
             {coverage?.areas && Object.keys(coverage.areas).length > 0 && (
               <Card>
-                <SectionTitle>Coverage Areas</SectionTitle>
+                <SectionTitle>{t('report.sections.coverage_areas')}</SectionTitle>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {Object.entries(coverage.areas).map(([key, area]: [string, any]) => {
                     const pct = area?.percentage ?? 0;
@@ -321,7 +328,7 @@ function SkillInterviewReportPage() {
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                             {area?.questionsAsked != null && (
                               <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.7rem', color: GRAY }}>
-                                {area.questionsAsked} question{area.questionsAsked !== 1 ? 's' : ''}
+                                {t('report.area_question', { count: area.questionsAsked })}
                               </Typography>
                             )}
                             <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.9rem', color: col }}>
@@ -388,7 +395,7 @@ function SkillInterviewReportPage() {
             {/* ── Scores breakdown ── */}
             {fr?.scores && Object.values(fr.scores).some((v) => v != null) && (
               <Card>
-                <SectionTitle>Score Breakdown</SectionTitle>
+                <SectionTitle>{t('report.sections.score_breakdown')}</SectionTitle>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                   {Object.entries(fr.scores)
                     .filter(([, v]) => v != null)
@@ -424,12 +431,12 @@ function SkillInterviewReportPage() {
             {/* ── AI Analysis ── */}
             {fr?.aiAnalysis && (
               <Card>
-                <SectionTitle>AI Analysis</SectionTitle>
+                <SectionTitle>{t('report.sections.ai_analysis')}</SectionTitle>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                   {fr.aiAnalysis.strongestAreas?.length > 0 && (
                     <Box sx={{ p: 2, bgcolor: GREEN_L, borderRadius: '12px', border: `1px solid ${GREEN_B}` }}>
                       <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.8rem', color: GREEN, mb: 1 }}>
-                        Strongest Areas
+                        {t('report.labels.strongest')}
                       </Typography>
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
                         {fr.aiAnalysis.strongestAreas.map((area: string, i: number) => (
@@ -443,7 +450,7 @@ function SkillInterviewReportPage() {
                   {fr.aiAnalysis.weakestAreas?.length > 0 && (
                     <Box sx={{ p: 2, bgcolor: RED_L, borderRadius: '12px', border: `1px solid ${RED_B}` }}>
                       <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.8rem', color: RED, mb: 1 }}>
-                        Areas to Improve
+                        {t('report.labels.improve')}
                       </Typography>
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
                         {fr.aiAnalysis.weakestAreas.map((area: string, i: number) => (
@@ -457,7 +464,7 @@ function SkillInterviewReportPage() {
                   {fr.aiAnalysis.recommendedFocus?.length > 0 && (
                     <Box sx={{ p: 2, bgcolor: INDIGO_L, borderRadius: '12px', border: `1px solid ${INDIGO_B}` }}>
                       <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.8rem', color: INDIGO, mb: 1 }}>
-                        Recommended Focus
+                        {t('report.labels.recommended_focus')}
                       </Typography>
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
                         {fr.aiAnalysis.recommendedFocus.map((area: string, i: number) => (
@@ -474,7 +481,7 @@ function SkillInterviewReportPage() {
             {/* ── Recommendations ── */}
             {fr?.recommendations?.length > 0 && (
               <Card>
-                <SectionTitle>Recommendations</SectionTitle>
+                <SectionTitle>{t('report.sections.recommendations')}</SectionTitle>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   {fr.recommendations.map((rec: string, i: number) => (
                     <Box key={i} sx={{
@@ -500,14 +507,14 @@ function SkillInterviewReportPage() {
             {/* ── Strengths & Weaknesses ── */}
             {(fr?.strengths?.length > 0 || fr?.weaknesses?.length > 0) && (
               <Card>
-                <SectionTitle>Strengths &amp; Weaknesses</SectionTitle>
+                <SectionTitle>{t('report.sections.strengths_weaknesses')}</SectionTitle>
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
                   {fr.strengths?.length > 0 && (
                     <Box sx={{ p: 2, bgcolor: GREEN_L, borderRadius: '12px', border: `1px solid ${GREEN_B}` }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
                         <ThumbUpOutlinedIcon sx={{ fontSize: 16, color: GREEN }} />
                         <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.8rem', color: GREEN }}>
-                          Strengths
+                          {t('report.labels.strengths')}
                         </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
@@ -525,7 +532,7 @@ function SkillInterviewReportPage() {
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
                         <ThumbDownOutlinedIcon sx={{ fontSize: 16, color: RED }} />
                         <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.8rem', color: RED }}>
-                          Areas to Strengthen
+                          {t('report.labels.weaknesses')}
                         </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
@@ -545,7 +552,7 @@ function SkillInterviewReportPage() {
             {/* ── Development Areas ── */}
             {fr?.developmentAreas?.length > 0 && (
               <Card>
-                <SectionTitle>Development Areas</SectionTitle>
+                <SectionTitle>{t('report.sections.development_areas')}</SectionTitle>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   {(fr.developmentAreas as string[]).map((area, i) => (
                     <Box key={i} sx={{
@@ -565,13 +572,13 @@ function SkillInterviewReportPage() {
             {/* ── Candidate Profile ── */}
             {fr?.candidateProfile && (fr.candidateProfile.revealedExpertise?.length > 0 || fr.candidateProfile.revealedGaps?.length > 0 || fr.candidateProfile.difficultyLevel) && (
               <Card>
-                <SectionTitle>Candidate Profile</SectionTitle>
+                <SectionTitle>{t('report.sections.candidate_profile')}</SectionTitle>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {fr.candidateProfile.difficultyLevel && (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                       <PersonOutlineIcon sx={{ fontSize: 16, color: INDIGO }} />
                       <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.8rem', color: '#374151' }}>
-                        <span style={{ fontWeight: 600, color: '#111827' }}>Difficulty Level:</span>{' '}
+                        <span style={{ fontWeight: 600, color: '#111827' }}>{t('report.labels.difficulty_level')}</span>{' '}
                         {String(fr.candidateProfile.difficultyLevel).charAt(0).toUpperCase() + String(fr.candidateProfile.difficultyLevel).slice(1)}
                       </Typography>
                     </Box>
@@ -579,7 +586,7 @@ function SkillInterviewReportPage() {
                   {fr.candidateProfile.revealedExpertise?.length > 0 && (
                     <Box>
                       <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.78rem', color: GREEN, mb: 1 }}>
-                        Demonstrated Expertise
+                        {t('report.labels.demonstrated')}
                       </Typography>
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
                         {(fr.candidateProfile.revealedExpertise as string[]).map((e, i) => (
@@ -592,7 +599,7 @@ function SkillInterviewReportPage() {
                   {fr.candidateProfile.revealedGaps?.length > 0 && (
                     <Box>
                       <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.78rem', color: AMBER, mb: 1 }}>
-                        Knowledge Gaps Identified
+                        {t('report.labels.gaps')}
                       </Typography>
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
                         {(fr.candidateProfile.revealedGaps as string[]).map((g, i) => (
@@ -609,7 +616,7 @@ function SkillInterviewReportPage() {
             {/* ── Conversation Q&A ── */}
             {(data?.interviewData as any)?.conversation?.length > 0 && (
               <Card>
-                <SectionTitle>Interview Q&amp;A</SectionTitle>
+                <SectionTitle>{t('report.sections.qa')}</SectionTitle>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                   {((data?.interviewData as any).conversation as any[]).map((turn: any, i: number) => (
                     <Box key={i} sx={{ p: 2, bgcolor: SURFACE, borderRadius: '12px', border: `1px solid ${BORDER}` }}>
@@ -632,7 +639,7 @@ function SkillInterviewReportPage() {
                           )}
                           {turn.evaluation?.qualityScore != null && (
                             <Chip
-                              label={`Quality: ${turn.evaluation.qualityScore}/10`} size="small"
+                              label={t('report.stats.quality', { score: turn.evaluation.qualityScore })} size="small"
                               sx={{ bgcolor: scoreBg(turn.evaluation.qualityScore * 10), color: scoreColor(turn.evaluation.qualityScore * 10), border: `1px solid ${scoreBorder(turn.evaluation.qualityScore * 10)}`, fontFamily: 'Poppins', fontSize: '0.68rem', fontWeight: 600 }} />
                           )}
                         </Box>
@@ -650,7 +657,7 @@ function SkillInterviewReportPage() {
                   <TrendingUpIcon sx={{ color: INDIGO, fontSize: 22 }} />
                   <Box>
                     <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.82rem', color: INDIGO }}>
-                      Next Recommended Area
+                      {t('report.sections.next_area')}
                     </Typography>
                     <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.8rem', color: '#374151', mt: 0.25 }}>
                       {areaLabel(fr.nextRecommendedArea)}
@@ -663,16 +670,16 @@ function SkillInterviewReportPage() {
             {/* ── Analytics detail ── */}
             {analytics && (
               <Card>
-                <SectionTitle>Session Analytics</SectionTitle>
+                <SectionTitle>{t('report.sections.session_analytics')}</SectionTitle>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
                   {[
-                    { label: 'Duration',        value: analytics.duration != null ? fmtDuration(analytics.duration) : null },
-                    { label: 'Exchanges',       value: analytics.messageCount },
-                    { label: 'Coverage',        value: analytics.coveragePercentage != null ? `${analytics.coveragePercentage}%` : null },
-                    { label: 'Areas Completed', value: analytics.completedAreas != null && analytics.totalAreas != null ? `${analytics.completedAreas} / ${analytics.totalAreas}` : null },
-                    { label: 'Avg Response',    value: analytics.averageResponseLength != null ? `${analytics.averageResponseLength} words` : null },
-                    { label: 'Style',           value: analytics.interactionStyle },
-                    { label: 'Silence Events',  value: analytics.silenceEvents },
+                    { label: t('report.stats.duration'),       value: analytics.duration != null ? fmtDuration(analytics.duration) : null },
+                    { label: t('report.stats.exchanges'),      value: analytics.messageCount },
+                    { label: t('report.stats.coverage'),       value: analytics.coveragePercentage != null ? `${analytics.coveragePercentage}%` : null },
+                    { label: t('report.stats.areas_covered'),  value: analytics.completedAreas != null && analytics.totalAreas != null ? `${analytics.completedAreas} / ${analytics.totalAreas}` : null },
+                    { label: t('report.stats.avg_response'),   value: analytics.averageResponseLength != null ? `${analytics.averageResponseLength} words` : null },
+                    { label: t('report.stats.style'),          value: analytics.interactionStyle },
+                    { label: t('report.stats.silence'),        value: analytics.silenceEvents },
                   ].filter(({ value }) => value != null).map(({ label, value }) => (
                     <Box key={label}>
                       <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.68rem', color: GRAY, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', mb: 0.4 }}>

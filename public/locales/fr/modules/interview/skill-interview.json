@@ -1,0 +1,102 @@
+{
+  "header": {
+    "subtitle": "Évaluation de compétence technique · Propulsée par l'IA",
+    "adaptive_difficulty": "Difficulté adaptative"
+  },
+  "preview": {
+    "what_assessed": "Ce qui sera évalué",
+    "focus_areas_label": "Axes d'évaluation",
+    "format_title": "Format de l'entretien",
+    "tips_title": "Conseils pour réussir",
+    "areas": [
+      "Concepts fondamentaux",
+      "Résolution de problèmes pratiques",
+      "Bonnes pratiques et patterns",
+      "Scénarios réels",
+      "Performance et optimisation"
+    ],
+    "focus_chips": ["Concepts", "Application", "Résolution de problèmes", "Patterns", "Bonnes pratiques"],
+    "format_items": [
+      "Conversation vocale avec un intervieweur IA",
+      "La difficulté s'adapte en temps réel selon vos réponses",
+      "Suivi de couverture en temps réel",
+      "Votre niveau est révélé dans le rapport après la session"
+    ],
+    "format_icons": ["🎤", "⚡", "📊", "📝"],
+    "tips": [
+      "Pensez à voix haute — l'IA s'adapte à votre style d'explication",
+      "Prenez le temps de lire et comprendre chaque question",
+      "Utilisez des exemples concrets tirés de votre expérience",
+      "N'hésitez pas à demander des clarifications avant de répondre"
+    ]
+  },
+  "start": {
+    "ready_badge": "Prêt pour l'évaluation",
+    "title": "Démarrez votre évaluation",
+    "description": "Prouvez vos compétences en {{skill}} avec une évaluation adaptative propulsée par l'IA. Votre niveau sera déterminé par vos résultats.",
+    "features": [
+      "L'IA adapte les questions à votre niveau",
+      "Caméra et enregistrement vocal",
+      "Suivi de couverture en temps réel",
+      "Rapport détaillé après complétion"
+    ],
+    "button": "Démarrer l'évaluation",
+    "login": {
+      "title": "Connectez-vous pour commencer",
+      "description": "Créez un compte gratuit ou connectez-vous pour démarrer votre évaluation {{skill}}.",
+      "steps": [
+        { "label": "Créez ou connectez-vous à votre compte", "sub": "Moins d'une minute" },
+        { "label": "Autorisez l'accès à la caméra et au micro", "sub": "Requis pour l'entretien vocal" },
+        { "label": "Complétez l'entretien IA", "sub": "Session adaptative, basée sur la voix" }
+      ],
+      "button": "Commencer"
+    }
+  },
+  "report": {
+    "title": "Rapport d'entretien de compétence",
+    "soft_skill": "Compétence comportementale",
+    "technical_skill": "Compétence technique",
+    "download_pdf": "Télécharger le PDF",
+    "no_report": "Aucun rapport trouvé pour cette évaluation.",
+    "sections": {
+      "coverage_areas": "Domaines évalués",
+      "score_breakdown": "Détail des scores",
+      "ai_analysis": "Analyse IA",
+      "strengths_weaknesses": "Points forts & points faibles",
+      "development_areas": "Axes de développement",
+      "candidate_profile": "Profil du candidat",
+      "qa": "Questions & réponses",
+      "recommendations": "Recommandations",
+      "next_area": "Prochain domaine recommandé",
+      "session_analytics": "Statistiques de session"
+    },
+    "labels": {
+      "strongest": "Points les plus forts",
+      "improve": "Points à améliorer",
+      "recommended_focus": "Focus recommandé",
+      "strengths": "Points forts",
+      "weaknesses": "Points à renforcer",
+      "difficulty_level": "Niveau de difficulté :",
+      "demonstrated": "Expertise démontrée",
+      "gaps": "Lacunes identifiées"
+    },
+    "stats": {
+      "duration": "Durée",
+      "exchanges": "Échanges",
+      "coverage": "Couverture",
+      "areas_covered": "Domaines couverts",
+      "avg_response": "Réponse moy.",
+      "style": "Style",
+      "silence": "Silences",
+      "quality": "Qualité : {{score}}/10"
+    },
+    "score_labels": {
+      "excellent": "Excellent",
+      "good": "Bien",
+      "fair": "Passable",
+      "needs_work": "À améliorer"
+    },
+    "area_question_one": "{{count}} question",
+    "area_question_other": "{{count}} questions"
+  }
+}

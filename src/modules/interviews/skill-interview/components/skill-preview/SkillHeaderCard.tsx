@@ -4,6 +4,7 @@ import CodeIcon from '@mui/icons-material/Code';
 import TranslateIcon from '@mui/icons-material/Translate';
 import CategoryIcon from '@mui/icons-material/Category';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import { useTranslation } from 'react-i18next';
 import { SectionCard, MetaBadge, GREEN, GREEN_LIGHT, GREEN_BORDER } from './SkillPanelShared';
 
 interface SkillHeaderCardProps {
@@ -13,6 +14,8 @@ interface SkillHeaderCardProps {
 }
 
 export default function SkillHeaderCard({ skill, category, language }: SkillHeaderCardProps) {
+  const { t } = useTranslation('modules/interview/skill-interview');
+
   return (
     <SectionCard>
       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 2.5 }}>
@@ -28,7 +31,7 @@ export default function SkillHeaderCard({ skill, category, language }: SkillHead
             {skill}
           </Typography>
           <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.88rem', color: '#6B7280', mt: 0.5 }}>
-            Technical Skill Assessment · AI-Powered
+            {t('header.subtitle')}
           </Typography>
         </Box>
       </Box>
@@ -36,7 +39,7 @@ export default function SkillHeaderCard({ skill, category, language }: SkillHead
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
         <MetaBadge
           icon={<AutoAwesomeIcon sx={{ fontSize: 14 }} />}
-          label="Adaptive difficulty"
+          label={t('header.adaptive_difficulty')}
           color="#7C3AED"
           bg="#F5F3FF"
           border="#DDD6FE"
