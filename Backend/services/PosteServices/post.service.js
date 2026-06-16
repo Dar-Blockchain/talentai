@@ -1,7 +1,7 @@
-const Post = require("../../models/Post.model");
+﻿const Post = require("../../models/Post.model");
 const User = require("../../features/users/user.model");
 const Profile = require("../../features/users/profile.model");
-const PostInterviewAssessmentModel = require("../../models/PostInterviewAssessment.model");
+const PostInterviewAssessmentModel = require("../../features/interviews/post-interview/post-interview.model");
 const JobApplication = require("../../models/JobApplication.model");
 const subscriptionService = require("../subscription.service");
 
@@ -71,9 +71,8 @@ module.exports.createPostWithSideEffects = async (postData, token, userProfile) 
           'postsUsed',
           1
         );
-        console.log(`✅ [createPostWithSideEffects] Posts usage incremented`);
       } catch (usageError) {
-        console.error('⚠️ [createPostWithSideEffects] Warning: Could not update posts usage:', usageError.message);
+        console.error('âš ï¸ [createPostWithSideEffects] Warning: Could not update posts usage:', usageError.message);
         // Don't fail post creation if usage update fails
       }
     }
@@ -105,11 +104,9 @@ module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6)
     // Always filter by status "open"
     query.status = 'open';
 
-    console.log('🔍 getAllPostsWithSearch called with filters:', filters);
-
     // Filter by status - DEPRECATED: status is now always "open"
     if (status && status !== 'open') {
-      console.warn('⚠️ [getAllPostsWithSearch] Status filter ignored: only "open" posts are returned. Requested: ' + status);
+      console.warn('âš ï¸ [getAllPostsWithSearch] Status filter ignored: only "open" posts are returned. Requested: ' + status);
     }
 
     // Search filter - search in title, description, requirements, and skills
@@ -130,9 +127,6 @@ module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6)
 
       // Use $or to match any of the search conditions
       query.$or = searchConditions;
-
-      console.log('  - Search terms:', searchTerms);
-      console.log('  - Number of search conditions:', searchConditions.length);
     }
 
     // Location filter
@@ -182,9 +176,6 @@ module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6)
     // Calculate pagination
     const skip = (page - 1) * limit;
 
-    console.log('📊 Final MongoDB query:', JSON.stringify(query, null, 2));
-    console.log('📄 Pagination: page', page, 'limit', limit, 'skip', skip);
-
     // Execute query with pagination
     const posts = await Post.find(query)
       .select('-MatchingConfig')
@@ -199,9 +190,6 @@ module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6)
 
     // Get total count for pagination
     const total = await Post.countDocuments(query);
-
-    console.log('✅ Query results: Found', posts.length, 'posts on this page');
-    console.log('📊 Total matching posts in database:', total);
 
     // Calculate pagination metadata
     const totalPages = Math.ceil(total / limit);
@@ -499,7 +487,7 @@ module.exports.updatePost = async (postId, userId, updateData) => {
     // Prevent modification of createdBy
     if (updateData.createdBy) delete updateData.createdBy;
 
-    // Prevent clearing interviewLanguages — must always have at least one language
+    // Prevent clearing interviewLanguages â€” must always have at least one language
     if (updateData.interviewLanguages !== undefined && (!Array.isArray(updateData.interviewLanguages) || updateData.interviewLanguages.length === 0)) {
       delete updateData.interviewLanguages;
     }
@@ -528,7 +516,6 @@ module.exports.deletePost = async (postId, userId) => {
         { _id: { $in: post.PostSteps } },
         { archived: true, archivedAt: new Date() }
       );
-      console.log(`📦 Archived ${post.PostSteps.length} post step(s)`);
     }
 
     // 2. Archive agentConfig if exists
@@ -538,7 +525,6 @@ module.exports.deletePost = async (postId, userId) => {
         post.agentConfig,
         { archived: true, archivedAt: new Date() }
       );
-      console.log(`📦 Archived agentConfig: ${post.agentConfig}`);
     }
 
     // 3. Archive agent if exists
@@ -548,16 +534,14 @@ module.exports.deletePost = async (postId, userId) => {
         post.agentId,
         { archived: true, archivedAt: new Date() }
       );
-      console.log(`📦 Archived agent: ${post.agentId}`);
     }
 
     // 4. Archive associated job assessments
-    const PostInterviewAssessment = require('../../models/PostInterviewAssessment.model');
+    const PostInterviewAssessment = require('../../features/interviews/post-interview/post-interview.model');
     await PostInterviewAssessment.updateMany(
       { post: postId },
       { archived: true, archivedAt: new Date() }
     );
-    console.log(`📦 Archived job assessment results for post`);
 
     // 6. Archive the post itself
     const archivedPost = await Post.findByIdAndUpdate(
@@ -565,8 +549,6 @@ module.exports.deletePost = async (postId, userId) => {
       { archived: true, archivedAt: new Date() },
       { new: true }
     );
-
-    console.log(`✅ Post ${postId} and all associated records archived successfully`);
     return archivedPost;
   } catch (error) {
     throw new Error(`Error deleting post: ${error.message}`);
@@ -593,8 +575,7 @@ module.exports.updatePostStatus = async (postId, userId, status, updatedBy = nul
 
 // Recommend posts for a user based on ALL their skills (not only the first)
 module.exports.getPostsByUserTopSkill = async (userId, page = 1, limit = 10) => {
-  // 🔄 [getPostsByUserTopSkill] Pagination initiation - page: ${page}, limit: ${limit}
-  console.log(`🔄 [getPostsByUserTopSkill] Pagination initiation - page: ${page}, limit: ${limit}`);
+  // ðŸ”„ [getPostsByUserTopSkill] Pagination initiation - page: ${page}, limit: ${limit}
 
   // Validate pagination parameters
   const pageNum = Math.max(1, parseInt(page, 10));
@@ -645,26 +626,10 @@ module.exports.getPostsByUserTopSkill = async (userId, page = 1, limit = 10) => 
     .sort({ createdAt: -1 })
     .lean();
 
-  // 🔍 [getPostsByUserTopSkill] Posts found with skills and status "open": ${candidatePosts.length}
-  console.log(`🔍 [getPostsByUserTopSkill] Posts found with skills and status "open": ${candidatePosts.length}`);
+  // ðŸ” [getPostsByUserTopSkill] Posts found with skills and status "open": ${candidatePosts.length}
 
   // DEBUG: Log first post with PostSteps to verify population
   if (candidatePosts.length > 0) {
-    console.log('🔍 DEBUG - First post structure:', {
-      _id: candidatePosts[0]._id,
-      creationType: candidatePosts[0].creationType,
-      hasPostSteps: !!candidatePosts[0].PostSteps,
-      postStepsCount: candidatePosts[0].PostSteps?.length || 0,
-      postStepsType: Array.isArray(candidatePosts[0].PostSteps) ? 'array' : typeof candidatePosts[0].PostSteps,
-      firstStepSample: candidatePosts[0].PostSteps?.[0] ? {
-        id: candidatePosts[0].PostSteps[0]._id || candidatePosts[0].PostSteps[0],
-        type: candidatePosts[0].PostSteps[0].type,
-        hasData: !!candidatePosts[0].PostSteps[0].data,
-        dataType: candidatePosts[0].PostSteps[0].data?.type,
-        hasConfig: !!candidatePosts[0].PostSteps[0].data?.config,
-        configKeys: candidatePosts[0].PostSteps[0].data?.config ? Object.keys(candidatePosts[0].PostSteps[0].data.config) : []
-      } : 'no steps'
-    });
   }
 
   // If the user has salary expectations, filter posts to keep
@@ -714,8 +679,7 @@ module.exports.getPostsByUserTopSkill = async (userId, page = 1, limit = 10) => 
   // All posts sorted by relevance
   const allPosts = scored.map((s) => s.post);
 
-  // 📊 [getPostsByUserTopSkill] Total posts available: ${allPosts.length}
-  console.log(`📊 [getPostsByUserTopSkill] Total posts available: ${allPosts.length}`);
+  // ðŸ“Š [getPostsByUserTopSkill] Total posts available: ${allPosts.length}
 
   // Apply pagination to sorted posts
   const paginatedPosts = allPosts.slice(skip, skip + limitNum);
@@ -724,8 +688,7 @@ module.exports.getPostsByUserTopSkill = async (userId, page = 1, limit = 10) => 
   const hasNextPage = pageNum < totalPages;
   const hasPrevPage = pageNum > 1;
 
-  // 📄 [getPostsByUserTopSkill] Pagination result - returned: ${paginatedPosts.length}, page: ${pageNum}/${totalPages}
-  console.log(`📄 [getPostsByUserTopSkill] Pagination result - returned: ${paginatedPosts.length}, page: ${pageNum}/${totalPages}`);
+  // ðŸ“„ [getPostsByUserTopSkill] Pagination result - returned: ${paginatedPosts.length}, page: ${pageNum}/${totalPages}
 
   return {
     success: true,
@@ -762,7 +725,7 @@ module.exports.getPostMetrics = async (userId) => {
       archived: 0,
     };
 
-    // Count posts by status — archived posts excluded from total
+    // Count posts by status â€” archived posts excluded from total
     allPosts.forEach((post) => {
       if (post.archived) {
         metrics.archived++;
@@ -808,7 +771,7 @@ module.exports.getPostsInAlertKPI = async (userId) => {
 };
 
 // ========== KPI - STATUS BY POST (Zone 2) ==========
-// Returns paginated per-post: shortlisted count, velocity (avg days appliedAt→recruiterDecisionAt), coverage, deadline
+// Returns paginated per-post: shortlisted count, velocity (avg days appliedAtâ†’recruiterDecisionAt), coverage, deadline
 module.exports.getPostsStatusKPI = async (userId, page = 1, limit = 3, postId = null) => {
   try {
     const now = new Date();

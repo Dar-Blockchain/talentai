@@ -1,4 +1,4 @@
-// usersService.js
+﻿// usersService.js
 const mongoose = require('mongoose');
 const User = require("../features/users/user.model");
 const Post = require('../models/Post.model');
@@ -50,7 +50,7 @@ module.exports.getAllUsers = async (searchQuery, page = 1, limit = 10) => {
 //Simple Get All
 
 // jobAssessmentService.js
-const PostInterviewAssessment = require("../models/PostInterviewAssessment.model");
+const PostInterviewAssessment = require("../features/interviews/post-interview/post-interview.model");
 const JobAssessmentResult = PostInterviewAssessment; // alias for compatibility
 const { POST_STATUS } = require("../constants/posts.constants");
 const InternalCampaign = require("../models/InternalCampaign.model");
@@ -741,7 +741,7 @@ module.exports.getRichStats = async (userId) => {
       ])
     ]);
 
-    const bucketMap = { 0: "0–20", 20: "20–40", 40: "40–60", 60: "60–80", 80: "80–100" };
+    const bucketMap = { 0: "0â€“20", 20: "20â€“40", 40: "40â€“60", 60: "60â€“80", 80: "80â€“100" };
     const allBuckets = [0, 20, 40, 60, 80];
     const scoreDistribution = allBuckets.map(id => ({
       range: bucketMap[id],

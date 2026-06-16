@@ -1,4 +1,4 @@
-const express = require("express");
+﻿const express = require("express");
 const path = require("path");
 const http = require("http");
 const fs = require("fs");
@@ -14,7 +14,7 @@ require("dotenv").config();
 // Core setup
 const app = express();
 // Disable Express's automatic ETag generation so chat (and other live)
-// endpoints never reply with 304 — 304 strips the body and, in some setups,
+// endpoints never reply with 304 â€” 304 strips the body and, in some setups,
 // surfaces as a CORS error in the browser when the client expects JSON.
 app.set("etag", false);
 const server = http.createServer(app);
@@ -36,8 +36,8 @@ const connectDB = require("./config/mongo.connection");
 const { dbReadyMiddleware } = require("./config/mongo.connection");
 const socket = require("./socket");
 //const { initializeAgenda } = require("./services/Agent&AgendaServices/agenda.service");
-const intelligentInterviewService = require("./services/post-interview/intelligentInterview.service");
-const intelligentInterviewController = require("./controllers/intelligentInterview.controller");
+const intelligentInterviewService = require("./features/interviews/shared/interview.service");
+const intelligentInterviewController = require("./features/interviews/shared/interview.socket");
 const campaignInterviewService = require("./services/campaignInterview.service");
 const campaignInterviewController = require("./controllers/campaignInterview.controller");
 const chatSocketHandler = require("./socket-handlers/chatSocketHandler");
@@ -49,7 +49,7 @@ const { scheduleCampaignReminders } = require("./cron/campaignReminderScheduler.
 //const backupService = require('./services/backupService');
 //const { scheduleDailyBackup } = require('./cron/dailyBackup');
 
-// Auto-load CRON jobs — initialized after DB connects (see initializeApp)
+// Auto-load CRON jobs â€” initialized after DB connects (see initializeApp)
 const { initializeCronJobs } = require("./cron");
 
 /**
@@ -78,8 +78,8 @@ initializeSocketServer(io);
  * Application initialization sequence
  */
 const initializeApp = async () => {
-  logger.info("🔄 Starting TalentAI Backend...");
-  logger.info("📦 Loading environment configuration...");
+  logger.info("ðŸ”„ Starting TalentAI Backend...");
+  logger.info("ðŸ“¦ Loading environment configuration...");
 
   try {
     // Step 1: Connect to database
@@ -105,7 +105,7 @@ const initializeApp = async () => {
       logger.warn('InterviewApplicant dedup failed: ' + e.message);
     }
 
-    // Step 1.5: Seed PlanLimits — always upsert so Trial plan is never missing
+    // Step 1.5: Seed PlanLimits â€” always upsert so Trial plan is never missing
     try {
       await seedDefaultPlans();
       logger.success("PlanLimits seeded");
@@ -129,7 +129,7 @@ const initializeApp = async () => {
     registerMiddlewares(app);
 
     // Step 3.5: Block requests if DB connection dropped (readyState 0 or 3)
-    // readyState 2 (connecting) is safe — bufferCommands handles it
+    // readyState 2 (connecting) is safe â€” bufferCommands handles it
     app.use(dbReadyMiddleware);
 
     // Step 4: Register routes
@@ -192,7 +192,7 @@ const initializeApp = async () => {
       campaignInterviewController.initializeHandlers(io);
       logger.success("Campaign interview namespace /campaign-interview initialized and ready");
       logger.info(
-        "💡 Hedera clients will initialize on first use (lazy loading)",
+        "ðŸ’¡ Hedera clients will initialize on first use (lazy loading)",
       );
 
       // Step 9: Initialize auto-invite scheduler for job applications

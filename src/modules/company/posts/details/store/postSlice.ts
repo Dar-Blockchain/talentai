@@ -17,8 +17,6 @@ interface PostDetailsState {
   currentJobError: string | null;
   recruitmentFlow: { nodes: any[]; edges: any[] };
   savePost: { loading: boolean; error: string | null; savedPost: any };
-  candidateAssessments: { items: any[]; loading: boolean; error: string | null; pagination: PaginationState };
-  companyAssessments:   { items: any[]; loading: boolean; error: string | null; pagination: PaginationState };
   assessmentDetails:    { assessment: any | null; stepsData: any | null; loading: boolean; error: string | null };
 }
 
@@ -37,8 +35,6 @@ const initialState: PostDetailsState = {
   currentJobError: null,
   recruitmentFlow: { nodes: [], edges: [] },
   savePost: { loading: false, error: null, savedPost: null },
-  candidateAssessments: { items: [], loading: false, error: null, pagination: { ...defaultPagination } },
-  companyAssessments:   { items: [], loading: false, error: null, pagination: { ...defaultPagination } },
   assessmentDetails:    { assessment: null, stepsData: null, loading: false, error: null },
 };
 
@@ -57,30 +53,6 @@ export const updateJobDetails = createAsyncThunk(
   async ({ jobId, jobData }: { jobId: string | number; jobData: any }, { rejectWithValue }) => {
     try { return await postService.updatePost(jobId, jobData); }
     catch (err: any) { return rejectWithValue(err.response?.data?.message || err.message || "Error updating post"); }
-  }
-);
-
-export const savePostInterviewAssessment = createAsyncThunk(
-  "postDetails/savePostInterviewAssessment",
-  async ({ postId, interviewData }: { postId: string; interviewData: any }, { rejectWithValue }) => {
-    try { return await postService.savePostInterviewAssessment(postId, interviewData); }
-    catch (err: any) { return rejectWithValue(err.response?.data?.message || err.message || "Error saving assessment"); }
-  }
-);
-
-export const fetchCandidateAssessments = createAsyncThunk(
-  "postDetails/fetchCandidateAssessments",
-  async (params: { page?: number; limit?: number } = {}, { rejectWithValue }) => {
-    try { return await postService.fetchCandidateAssessments(params); }
-    catch (err: any) { return rejectWithValue(err.response?.data?.message || err.message || "Error fetching candidate assessments"); }
-  }
-);
-
-export const fetchCompanyAssessments = createAsyncThunk(
-  "postDetails/fetchCompanyAssessments",
-  async (params: { page?: number; limit?: number } = {}, { rejectWithValue }) => {
-    try { return await postService.fetchCompanyAssessments(params); }
-    catch (err: any) { return rejectWithValue(err.response?.data?.message || err.message || "Error fetching company assessments"); }
   }
 );
 
@@ -114,18 +86,6 @@ const postDetailsSlice = createSlice({
       .addCase(updateJobDetails.fulfilled, (state, action) => { state.savePost.loading = false; state.savePost.savedPost = action.payload; })
       .addCase(updateJobDetails.rejected,  (state, action) => { state.savePost.loading = false; state.savePost.error = action.payload as string; })
 
-      .addCase(savePostInterviewAssessment.pending,   () => {})
-      .addCase(savePostInterviewAssessment.fulfilled, () => {})
-      .addCase(savePostInterviewAssessment.rejected,  () => {})
-
-      .addCase(fetchCandidateAssessments.pending,   (state) => { state.candidateAssessments.loading = true;  state.candidateAssessments.error = null; })
-      .addCase(fetchCandidateAssessments.fulfilled, (state, action) => { state.candidateAssessments.loading = false; state.candidateAssessments.items = action.payload.items; state.candidateAssessments.pagination = action.payload.pagination; })
-      .addCase(fetchCandidateAssessments.rejected,  (state, action) => { state.candidateAssessments.loading = false; state.candidateAssessments.error = action.payload as string; })
-
-      .addCase(fetchCompanyAssessments.pending,   (state) => { state.companyAssessments.loading = true;  state.companyAssessments.error = null; })
-      .addCase(fetchCompanyAssessments.fulfilled, (state, action) => { state.companyAssessments.loading = false; state.companyAssessments.items = action.payload.items; state.companyAssessments.pagination = action.payload.pagination; })
-      .addCase(fetchCompanyAssessments.rejected,  (state, action) => { state.companyAssessments.loading = false; state.companyAssessments.error = action.payload as string; })
-
       .addCase(fetchAssessmentDetails.pending,   (state) => { state.assessmentDetails.loading = true;  state.assessmentDetails.error = null; })
       .addCase(fetchAssessmentDetails.fulfilled, (state, action) => { state.assessmentDetails.loading = false; state.assessmentDetails.assessment = action.payload.assessment; state.assessmentDetails.stepsData = action.payload.stepsData; })
       .addCase(fetchAssessmentDetails.rejected,  (state, action) => { state.assessmentDetails.loading = false; state.assessmentDetails.error = action.payload as string; });
@@ -144,14 +104,6 @@ export const selectCurrentJobLoading   = (s: S) => s.postDetails.currentJobLoadi
 export const selectCurrentJobError     = (s: S) => s.postDetails.currentJobError;
 export const selectSteps               = (s: S) => s.postDetails.steps;
 export const selectRecruitmentFlow     = (s: S) => s.postDetails.recruitmentFlow;
-
-export const selectCandidateAssessments           = (s: S) => s.postDetails.candidateAssessments.items;
-export const selectCandidateAssessmentsLoading    = (s: S) => s.postDetails.candidateAssessments.loading;
-export const selectCandidateAssessmentsPagination = (s: S) => s.postDetails.candidateAssessments.pagination;
-
-export const selectCompanyAssessments             = (s: S) => s.postDetails.companyAssessments.items;
-export const selectCompanyAssessmentsLoading      = (s: S) => s.postDetails.companyAssessments.loading;
-export const selectCompanyAssessmentsPagination   = (s: S) => s.postDetails.companyAssessments.pagination;
 
 export const selectAssessmentDetails              = (s: S) => s.postDetails.assessmentDetails.assessment;
 export const selectAssessmentStepsData            = (s: S) => s.postDetails.assessmentDetails.stepsData;

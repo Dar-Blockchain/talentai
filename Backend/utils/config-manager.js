@@ -920,7 +920,9 @@ class ConfigManager {
       throw new Error(`Missing required configuration fields: ${missing.join(', ')}`);
     }
 
-    if (!config.context.targetRole || !config.context.targetCompany) {
+    const skillTypes = ['TECHNICAL_SKILL', 'SOFT_SKILL', 'ASSESSMENT', 'EVALUATION'];
+    const isSkillInterview = skillTypes.includes(config.interviewType);
+    if (!config.context.targetRole || (!isSkillInterview && !config.context.targetCompany)) {
       throw new Error('Target role and company are required in context');
     }
 

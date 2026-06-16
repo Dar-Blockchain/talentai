@@ -7,14 +7,15 @@ const isMongoObjectId = (id?: string | null): boolean =>
   !!id && /^[a-f\d]{24}$/i.test(id);
 
 export const feedbackService = {
-  submitFeedback: async (payload: { rating: number; comment: string; interviewId?: string }) => {
+  submitFeedback: async (payload: { rating: number; comment: string; interviewId?: string; interviewType?: string }) => {
     const token = getToken();
-    const body: { rating: number; comment: string; interviewId?: string } = {
+    const body: { rating: number; comment: string; interviewId?: string; interviewType?: string } = {
       rating: payload.rating,
       comment: payload.comment,
     };
-    if (isMongoObjectId(payload.interviewId)) {
+    if (isMongoObjectId(payload.interviewId) && payload.interviewType) {
       body.interviewId = payload.interviewId;
+      body.interviewType = payload.interviewType;
     }
     const res = await axios.post(
       `${API_BASE_URL}feedbacks/`,

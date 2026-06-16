@@ -1,8 +1,8 @@
-const fs = require("fs");
+﻿const fs = require("fs");
 const path = require("path");
 const { PDFParse } = require("pdf-parse");
 const JobApplication = require("../models/JobApplication.model");
-const PostInterviewAssessment = require("../models/PostInterviewAssessment.model");
+const PostInterviewAssessment = require("../features/interviews/post-interview/post-interview.model");
 const Profile = require("../features/users/profile.model");
 const CvAnalysis = require("../models/CvAnalysis.model");
 const Post = require("../models/Post.model");
@@ -62,8 +62,8 @@ const calculateMatchScoreWithBedrock = async (candidateProfile, jobPost, resumeA
     const response = await callLLM({
       messages: [{ role: "user", content: prompt }],
       temperature: 0,
-      maxTokens: 8000,   // reasoning model emits  Blocs before JSON — needs headroom
-      timeout: 90000,    // 90 s — large prompt + thinking phase can exceed the 15 s default
+      maxTokens: 8000,   // reasoning model emits  Blocs before JSON â€” needs headroom
+      timeout: 90000,    // 90 s â€” large prompt + thinking phase can exceed the 15 s default
     });
 
     const content = response.content || "{}";
@@ -74,7 +74,7 @@ const calculateMatchScoreWithBedrock = async (candidateProfile, jobPost, resumeA
       if (jsonMatch) {
         result = JSON.parse(jsonMatch[0]);
       } else {
-        // No JSON braces — try to pull a bare number from the response
+        // No JSON braces â€” try to pull a bare number from the response
         const numMatch = content.match(/\b(\d{1,3})\b/);
         if (numMatch) {
           result = { matchScore: parseInt(numMatch[1], 10), reasoning: content.trim() };
@@ -132,7 +132,7 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
       .lean();
 
     if (savedAnalysis) {
-      console.log(`✅ Using saved CV analysis (id: ${savedAnalysis._id})`);
+      console.log(`âœ… Using saved CV analysis (id: ${savedAnalysis._id})`);
       resumeAnalysis = {
         name:              savedAnalysis.name,
         email:             savedAnalysis.email,
@@ -146,10 +146,10 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
         certifications:    savedAnalysis.certifications || [],
       };
       resumeText = (savedAnalysis.experience || [])
-        .map(e => `${e.position || ""} at ${e.company || ""} (${e.startDate || ""}–${e.endDate || ""}): ${e.description || ""}`)
+        .map(e => `${e.position || ""} at ${e.company || ""} (${e.startDate || ""}â€“${e.endDate || ""}): ${e.description || ""}`)
         .join("\n");
     } else {
-      console.log(`⚠️  No saved CV analysis and no resume file — matching with profile data only`);
+      console.log(`âš ï¸  No saved CV analysis and no resume file â€” matching with profile data only`);
     }
 
     const matchResult = await calculateMatchScoreWithBedrock(profile, post, resumeAnalysis, resumeText);
@@ -207,12 +207,12 @@ module.exports.createJobApplication = async (applicationData) => {
     const thresholdScore = post?.thresholdScore || 60; // Default threshold is 60
 
     if (cleanData.matchScore < thresholdScore) {
-      console.log(`\n⚠️  [AUTO-REJECT TRIGGERED] Match Score (${cleanData.matchScore}) is below threshold (${thresholdScore})`);
+      console.log(`\nâš ï¸  [AUTO-REJECT TRIGGERED] Match Score (${cleanData.matchScore}) is below threshold (${thresholdScore})`);
       cleanData.recruiterDecision = "rejected";
       cleanData.recruiterDecisionAt = new Date();
       cleanData.rejectionReason = `Candidate's match score (${cleanData.matchScore}/100) is below the required threshold (${thresholdScore}/100). Automatic rejection based on qualification mismatch.`;
-      console.log(`   ✓ Auto-rejection applied`);
-      console.log(`   ✓ Rejection Reason: ${cleanData.rejectionReason}`);
+      console.log(`   âœ“ Auto-rejection applied`);
+      console.log(`   âœ“ Rejection Reason: ${cleanData.rejectionReason}`);
     }
 
     const application = await JobApplication.create(cleanData);
@@ -543,9 +543,9 @@ module.exports.getApplicationsSummaryByPost = async (postId, filters = {}, page 
       throw error;
     }
 
-    const PostInterviewAssessment = require("../models/PostInterviewAssessment.model");
+    const PostInterviewAssessment = require("../features/interviews/post-interview/post-interview.model");
 
-    // ── Build base query ─────────────────────────────────────────────────────
+    // â”€â”€ Build base query â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const query = { post: postId, isWithdrawn: false };
 
     if (filters.status) query.status = filters.status;
@@ -566,7 +566,7 @@ module.exports.getApplicationsSummaryByPost = async (postId, filters = {}, page 
       }
     }
 
-    // ── Search by name / email ────────────────────────────────────────────────
+    // â”€â”€ Search by name / email â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (filters.search) {
       const rx = { $regex: filters.search, $options: "i" };
       const profileMatches = await Profile.find({
@@ -575,7 +575,7 @@ module.exports.getApplicationsSummaryByPost = async (postId, filters = {}, page 
       query.profile = { $in: profileMatches.map((p) => p._id) };
     }
 
-    // ── Fetch applications (all, for in-memory interviewScore sort/filter) ───
+    // â”€â”€ Fetch applications (all, for in-memory interviewScore sort/filter) â”€â”€â”€
     const applications = await JobApplication.find(query)
       .select("_id status matchScore appliedAt profile recruiterDecision invitedAt")
       .populate({
@@ -586,7 +586,7 @@ module.exports.getApplicationsSummaryByPost = async (postId, filters = {}, page 
       .sort({ appliedAt: -1 })
       .lean();
 
-    // ── Fetch all assessments for this post in one query ─────────────────────
+    // â”€â”€ Fetch all assessments for this post in one query â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const assessments = await PostInterviewAssessment.find({ post: postId })
       .select("candidate interviewData.finalReport.scores.overall createdAt")
       .lean();
@@ -596,7 +596,7 @@ module.exports.getApplicationsSummaryByPost = async (postId, filters = {}, page 
       assessmentByUser.set(String(a.candidate), a);
     });
 
-    // ── Merge & build flat rows ───────────────────────────────────────────────
+    // â”€â”€ Merge & build flat rows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     let rows = applications.map((app) => {
       const p = app.profile || {};
       const userId = String(p.userId?._id || p.userId || "");
@@ -620,7 +620,7 @@ module.exports.getApplicationsSummaryByPost = async (postId, filters = {}, page 
       };
     });
 
-    // ── In-memory filters that depend on joined data ──────────────────────────
+    // â”€â”€ In-memory filters that depend on joined data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (filters.interviewScoreMin !== undefined) {
       rows = rows.filter((r) => r.interviewScore !== null && r.interviewScore >= filters.interviewScoreMin);
     }
@@ -628,7 +628,7 @@ module.exports.getApplicationsSummaryByPost = async (postId, filters = {}, page 
       rows = rows.filter((r) => r.interviewScore !== null && r.interviewScore <= filters.interviewScoreMax);
     }
 
-    // ── Sort ──────────────────────────────────────────────────────────────────
+    // â”€â”€ Sort â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const sortMap = {
       appliedAt_desc: (a, b) => new Date(b.appliedAt) - new Date(a.appliedAt),
       appliedAt_asc:  (a, b) => new Date(a.appliedAt) - new Date(b.appliedAt),
@@ -643,7 +643,7 @@ module.exports.getApplicationsSummaryByPost = async (postId, filters = {}, page 
       rows.sort(sortMap[filters.sort]);
     }
 
-    // ── Paginate ──────────────────────────────────────────────────────────────
+    // â”€â”€ Paginate â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const totalCount = rows.length;
     const totalPages = Math.ceil(totalCount / limit) || 1;
     const skip = (page - 1) * limit;
@@ -669,7 +669,7 @@ module.exports.getApplicationsSummaryByCompany = async (companyId, filters = {},
   try {
     if (!companyId) throw Object.assign(new Error("Company ID is required"), { status: 400 });
 
-    const PostInterviewAssessment = require("../models/PostInterviewAssessment.model");
+    const PostInterviewAssessment = require("../features/interviews/post-interview/post-interview.model");
     const ObjectId = require("mongoose").Types.ObjectId;
 
     const query = { company: new ObjectId(companyId), isWithdrawn: false };
@@ -782,9 +782,9 @@ module.exports.getPendingShortlistsKPI = async (companyId, postId = null, dateFr
   try {
     const SHORTLIST_THRESHOLD = 60; // Score minimum for shortlist consideration
 
-    console.log("\n" + "═".repeat(80));
-    console.log("📊 [KPI] PENDING SHORTLISTS - CALCULATING");
-    console.log("═".repeat(80));
+    console.log("\n" + "â•".repeat(80));
+    console.log("ðŸ“Š [KPI] PENDING SHORTLISTS - CALCULATING");
+    console.log("â•".repeat(80));
 
     const baseQuery = {
       company: companyId,
@@ -799,22 +799,22 @@ module.exports.getPendingShortlistsKPI = async (companyId, postId = null, dateFr
     // Add post filter if specified
     if (postId) {
       baseQuery.post = postId;
-      console.log(`\n🔍 KPI Scope: Company ${companyId}, Post ${postId}`);
+      console.log(`\nðŸ” KPI Scope: Company ${companyId}, Post ${postId}`);
     } else {
-      console.log(`\n🔍 KPI Scope: Company ${companyId}, All Posts`);
+      console.log(`\nðŸ” KPI Scope: Company ${companyId}, All Posts`);
     }
 
-    console.log(`📈 Criteria:`);
-    console.log(`   • Match Score: >= ${SHORTLIST_THRESHOLD}`);
-    console.log(`   • Recruiter Decision: NULL (Pending)`);
-    console.log(`   • Status: Active (not withdrawn/archived)`);
+    console.log(`ðŸ“ˆ Criteria:`);
+    console.log(`   â€¢ Match Score: >= ${SHORTLIST_THRESHOLD}`);
+    console.log(`   â€¢ Recruiter Decision: NULL (Pending)`);
+    console.log(`   â€¢ Status: Active (not withdrawn/archived)`);
 
     // Count matching applications
     const count = await JobApplication.countDocuments(baseQuery);
     
-    console.log(`\n✅ Result:`);
+    console.log(`\nâœ… Result:`);
     console.log(`   Pending Shortlist Count: ${count}`);
-    console.log("═".repeat(80) + "\n");
+    console.log("â•".repeat(80) + "\n");
 
     return {
       pendingShortlistsCount: count,
@@ -828,7 +828,7 @@ module.exports.getPendingShortlistsKPI = async (companyId, postId = null, dateFr
       },
     };
   } catch (error) {
-    console.error(`\n❌ [KPI ERROR] Failed to calculate pending shortlists:`, error.message);
+    console.error(`\nâŒ [KPI ERROR] Failed to calculate pending shortlists:`, error.message);
     error.status = error.status || 500;
     throw error;
   }
@@ -840,7 +840,7 @@ module.exports.getPendingShortlistDetails = async (companyId, postId = null, pag
   try {
     const SHORTLIST_THRESHOLD = 60;
     
-    console.log(`\n📋 Fetching pending shortlist details...`);
+    console.log(`\nðŸ“‹ Fetching pending shortlist details...`);
 
     const baseQuery = {
       company: companyId,
@@ -872,7 +872,7 @@ module.exports.getPendingShortlistDetails = async (companyId, postId = null, pag
       .skip(skip)
       .limit(limit);
 
-    console.log(`   ✓ Found ${totalCount} pending shortlists`);
+    console.log(`   âœ“ Found ${totalCount} pending shortlists`);
 
     return {
       data: applications,
@@ -887,7 +887,7 @@ module.exports.getPendingShortlistDetails = async (companyId, postId = null, pag
       threshold: SHORTLIST_THRESHOLD,
     };
   } catch (error) {
-    console.error(`\n❌ Error fetching pending shortlist details:`, error.message);
+    console.error(`\nâŒ Error fetching pending shortlist details:`, error.message);
     error.status = error.status || 500;
     throw error;
   }
@@ -929,9 +929,9 @@ module.exports.getSourcingKPI = async (companyId, postId = null, dateFrom = null
     const d30 = new Date(now - 30 * 86400000);
     const d60 = new Date(now - 60 * 86400000);
 
-    // ── Top 10: applications that completed or were shortlisted ─────────────────
-    // JobApplication: profile → Profile (has userId, firstName, lastName)
-    // PostInterviewAssessment: candidate → User (userId matches Profile.userId)
+    // â”€â”€ Top 10: applications that completed or were shortlisted â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // JobApplication: profile â†’ Profile (has userId, firstName, lastName)
+    // PostInterviewAssessment: candidate â†’ User (userId matches Profile.userId)
     const appFilter = {
       company: companyId,
       $or: [
@@ -948,7 +948,7 @@ module.exports.getSourcingKPI = async (companyId, postId = null, dateFrom = null
       .populate('profile', 'userId firstName lastName')
       .lean();
 
-    // Build a map: profileId → userId so we can look up assessments by candidate (User ref)
+    // Build a map: profileId â†’ userId so we can look up assessments by candidate (User ref)
     const profileIdToUserId = {};
     completedApps.forEach(a => {
       if (a.profile?._id && a.profile?.userId) {
@@ -966,7 +966,7 @@ module.exports.getSourcingKPI = async (companyId, postId = null, dateFrom = null
       post:      { $in: postIds },
     }).select('candidate post interviewData.finalReport.scores').lean();
 
-    // scoreMap key: postId_userId — only store entries with a real score > 0
+    // scoreMap key: postId_userId â€” only store entries with a real score > 0
     const scoreMap = {};
     assessments.forEach(a => {
       const raw = a.interviewData?.finalReport?.scores?.overall;
@@ -976,16 +976,16 @@ module.exports.getSourcingKPI = async (companyId, postId = null, dateFrom = null
       }
     });
 
-    // Build ranked list — score is null if no assessment exists (not 0)
+    // Build ranked list â€” score is null if no assessment exists (not 0)
     const ranked = completedApps.map(a => {
       const userId    = profileIdToUserId[String(a.profile?._id)] || '';
       const postIdStr = String(a.post?._id || '');
       const key       = `${postIdStr}_${userId}`;
       const score     = key in scoreMap ? scoreMap[key] : null;
       return {
-        firstName: a.profile?.firstName || '—',
+        firstName: a.profile?.firstName || 'â€”',
         lastName:  a.profile?.lastName  || '',
-        postTitle: a.post?.jobDetails?.title || '—',
+        postTitle: a.post?.jobDetails?.title || 'â€”',
         score,
         status: a.recruiterDecision === 'shortlisted' ? 'shortlisted' : 'completed',
       };
@@ -1000,12 +1000,12 @@ module.exports.getSourcingKPI = async (companyId, postId = null, dateFrom = null
     });
     const top10 = ranked.slice(0, 10).map((r, i) => ({ rank: i + 1, ...r }));
 
-    // ── Avg score: all completed/shortlisted candidates, score=0 for those without interview ──
+    // â”€â”€ Avg score: all completed/shortlisted candidates, score=0 for those without interview â”€â”€
     const avgCurrent = ranked.length
       ? Math.round(ranked.reduce((s, r) => s + (r.score ?? 0), 0) / ranked.length)
       : null;
 
-    // ── Previous period avg for delta ────────────────────────────────────────────
+    // â”€â”€ Previous period avg for delta â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const assessBasePrev = { company: companyId, createdAt: { $gte: d60, $lt: d30 }, 'interviewData.finalReport.scores.overall': { $exists: true } };
     if (postId) assessBasePrev.post = new mongoose.Types.ObjectId(postId);
     const prevDocs = await PostInterviewAssessment.find(assessBasePrev).select('interviewData.finalReport.scores.overall').lean();
@@ -1017,7 +1017,7 @@ module.exports.getSourcingKPI = async (companyId, postId = null, dateFrom = null
       ? avgCurrent - avgPrevious
       : null;
 
-    // ── By post: avg score per post across completed/shortlisted candidates ────
+    // â”€â”€ By post: avg score per post across completed/shortlisted candidates â”€â”€â”€â”€
     const byPostMatch = { company: companyId, 'interviewData.finalReport.scores.overall': { $exists: true } };
     if (postId) byPostMatch.post = new mongoose.Types.ObjectId(postId);
     const byPostAgg = await PostInterviewAssessment.aggregate([
@@ -1036,7 +1036,7 @@ module.exports.getSourcingKPI = async (companyId, postId = null, dateFrom = null
 
     const COLORS = ["#0D9488", "#0891B2", "#7C3AED", "#D97706", "#DC2626"];
     const byPost = byPostAgg.map((r, i) => ({
-      label: r.postDoc?.jobDetails?.title || '—',
+      label: r.postDoc?.jobDetails?.title || 'â€”',
       score: Math.round(r.avgScore),
       color: COLORS[i] || "#94A3B8",
     }));
@@ -1049,8 +1049,8 @@ module.exports.getSourcingKPI = async (companyId, postId = null, dateFrom = null
 };
 
 // ========== KPI - VELOCITY (Zone 4) ==========
-// TTS: firstInvitationSentAt → interview completion date (updatedAt when status=interview_completed)
-// TTH: post.createdAt → interview completion date
+// TTS: firstInvitationSentAt â†’ interview completion date (updatedAt when status=interview_completed)
+// TTH: post.createdAt â†’ interview completion date
 // Uses interview_completed OR shortlisted apps so data shows even without recruiter decisions
 module.exports.getVelocityKPI = async (companyId, postId = null, dateFrom = null) => {
   try {
@@ -1082,7 +1082,7 @@ module.exports.getVelocityKPI = async (companyId, postId = null, dateFrom = null
       .populate('post', 'createdAt')
       .lean();
 
-    // Group by month — use recruiterDecisionAt if set, else updatedAt (interview completion time)
+    // Group by month â€” use recruiterDecisionAt if set, else updatedAt (interview completion time)
     const byMonth = {};
     months.forEach(m => { byMonth[`${m.year}-${m.month}`] = { tts: [], tth: [] }; });
 
@@ -1094,7 +1094,7 @@ module.exports.getVelocityKPI = async (companyId, postId = null, dateFrom = null
       const key = `${endDate.getFullYear()}-${endDate.getMonth() + 1}`;
       if (!byMonth[key]) return;
 
-      // TTS: invitation → decision (or completion). Fall back to appliedAt if no invitation.
+      // TTS: invitation â†’ decision (or completion). Fall back to appliedAt if no invitation.
       const startTts = app.firstInvitationSentAt
         ? new Date(app.firstInvitationSentAt)
         : app.appliedAt ? new Date(app.appliedAt) : null;
@@ -1103,7 +1103,7 @@ module.exports.getVelocityKPI = async (companyId, postId = null, dateFrom = null
         if (tts >= 0) byMonth[key].tts.push(tts);
       }
 
-      // TTH: post created → decision/completion
+      // TTH: post created â†’ decision/completion
       const postCreated = app.post?.createdAt;
       if (postCreated) {
         const tth = (endDate - new Date(postCreated)) / 86400000;
@@ -1176,7 +1176,7 @@ module.exports.getRoiKPI = async (companyId) => {
 
     const base = { company: companyId, isArchived: false };
 
-    // ── Counts ──────────────────────────────────────────────────────────────────
+    // â”€â”€ Counts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const [completed, shortlisted] = await Promise.all([
       JobApplication.countDocuments({ ...base, status: 'interview_completed' }),
       JobApplication.countDocuments({ ...base, recruiterDecision: 'shortlisted' }),
@@ -1185,7 +1185,7 @@ module.exports.getRoiKPI = async (companyId) => {
     // Hours saved: each completed interview saves 30 min of manual screening
     const savedHours = Math.round(completed * 0.5);
 
-    // ── Subscription cost (sum of all payments for this company) ─────────────
+    // â”€â”€ Subscription cost (sum of all payments for this company) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const companyProfile = await Profile.findOne({ userId: companyId }).select('_id').lean();
     let subscriptionCost = 0;
     if (companyProfile) {
@@ -1197,7 +1197,7 @@ module.exports.getRoiKPI = async (companyId) => {
     const costPerHire       = shortlisted > 0 ? Math.round(subscriptionCost / shortlisted) : null;
     const costPerShortlisted = shortlisted > 0 ? Math.round(subscriptionCost / shortlisted) : null;
 
-    // ── TTH trend: last 12 months (post.createdAt → completion/decision) ────────
+    // â”€â”€ TTH trend: last 12 months (post.createdAt â†’ completion/decision) â”€â”€â”€â”€â”€â”€â”€â”€
     const now    = new Date();
     const months = [];
     for (let i = 11; i >= 0; i--) {
@@ -1260,7 +1260,7 @@ module.exports.getRoiKPI = async (companyId) => {
 };
 
 // ========== KPI - GLOBAL FUNNEL (Zone 3) ==========
-// Applied → Invited → Completed → Shortlisted
+// Applied â†’ Invited â†’ Completed â†’ Shortlisted
 module.exports.getFunnelKPI = async (companyId, postId = null, dateFrom = null) => {
   try {
     const base = { company: companyId, isArchived: false };
@@ -1296,7 +1296,7 @@ module.exports.updateRecruiterDecision = async (applicationId, decision, rejecti
       throw error;
     }
 
-    console.log(`\n📋 [RECRUITER DECISION] Updating decision for application: ${applicationId}`);
+    console.log(`\nðŸ“‹ [RECRUITER DECISION] Updating decision for application: ${applicationId}`);
     console.log(`   Decision: ${decision}`);
     if (rejectionReason) console.log(`   Reason: ${rejectionReason}`);
 
@@ -1326,7 +1326,7 @@ module.exports.updateRecruiterDecision = async (applicationId, decision, rejecti
       throw error;
     }
 
-    console.log(`✅ Decision updated successfully`);
+    console.log(`âœ… Decision updated successfully`);
     console.log(`   Candidate: ${application.profile?.firstName} ${application.profile?.lastName}`);
     console.log(`   Position: ${application.post?.jobDetails?.title || "N/A"}`);
 

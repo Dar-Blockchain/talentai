@@ -632,7 +632,7 @@ module.exports.getActionsKPI = async (req, res) => {
   try {
     const companyId = req.user._id;
     const { postId = null, dateFrom = null } = req.query;
-    const assessmentService = require("../services/InterviewServices/postInterviewAssessment.service");
+    const assessmentService = require("../features/interviews/post-interview/post-interview.service");
 
     const [pending, unreviewed, noshows, postsInAlert] = await Promise.all([
       jobApplicationService.getPendingShortlistsKPI(companyId, postId, dateFrom),

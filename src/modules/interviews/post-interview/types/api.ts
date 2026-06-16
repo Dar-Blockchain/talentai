@@ -1,4 +1,4 @@
-import { InterviewConfig } from './interview';
+import { InterviewConfig } from '../../shared/types/interview';
 
 // ─── Job Post ──────────────────────────────────────────────────────────────────
 
@@ -95,7 +95,6 @@ export type { InterviewConfig };
 
 // ─── Eligibility ───────────────────────────────────────────────────────────────
 
-// Frontend states handled by useEligibilityCheck and EligibilityGate
 export type EligibilityStatus =
   | 'checking'
   | 'eligible'
@@ -116,10 +115,8 @@ export interface EligibilityMeta {
   companyName?: string;
 }
 
-// Backend can also return not_found (treated as eligible) or error (blocks access)
 export interface EligibilityResponse {
   status: EligibilityStatus | 'not_found';
   meta?: EligibilityMeta;
   message?: string;
 }
-
