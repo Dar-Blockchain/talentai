@@ -12,9 +12,11 @@ router.use(requireAuth, authLogMiddleware("Profile"));
 
 router.get('/me', profileController.getMyProfile);
 router.get('/:userId', profileController.getProfileById);
-router.put('/:userId', uploadfile.single("user_image"), profileController.updateProfile);
 
+// Static routes MUST come before /:userId to avoid being captured as a param
 router.put('/update-resume', uploadResume.single('resume'), profileController.updateResume);
 router.delete('/delete-resume', profileController.deleteResume);
+
+router.put('/:userId', uploadfile.single("user_image"), profileController.updateProfile);
 
 module.exports = router;
