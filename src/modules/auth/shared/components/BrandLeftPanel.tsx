@@ -57,15 +57,15 @@ const BrandLeftPanel: React.FC<Props> = ({ tKey, flex = "0 0 45%" }) => {
         {/* Feature pills */}
         <div className="flex flex-col gap-3">
           {[
-            { Icon: Zap,         text: "AI-powered interviews in minutes" },
-            { Icon: Target,      text: "Auto-scoring & candidate ranking" },
-            { Icon: ShieldCheck, text: "Enterprise-grade security" },
-          ].map(({ Icon, text }) => (
-            <div key={text} className="flex items-center gap-3">
+            { Icon: Zap,         key: "interviews" },
+            { Icon: Target,      key: "scoring" },
+            { Icon: ShieldCheck, key: "security" },
+          ].map(({ Icon, key }) => (
+            <div key={key} className="flex items-center gap-3">
               <div className="flex items-center justify-center rounded-lg shrink-0 w-8 h-8 bg-[rgba(16,69,63,0.06)] border border-[rgba(16,69,63,0.12)]">
                 <Icon className="size-4 text-[#10453F]" />
               </div>
-              <span className="font-sans text-[rgba(10,46,34,0.65)] text-[clamp(0.75rem,0.82vw,0.92rem)]">{text}</span>
+              <span className="font-sans text-[rgba(10,46,34,0.65)] text-[clamp(0.75rem,0.82vw,0.92rem)]">{t(`feature_pills.${key}`)}</span>
             </div>
           ))}
         </div>

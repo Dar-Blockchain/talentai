@@ -186,12 +186,14 @@ function getInitialLanguage(): string {
 }
 
 // Only namespaces actually needed before/outside a React render: `common`
-// (default NS, used everywhere) and the notifications NS, which is read via
+// (default NS, used everywhere), the notifications NS, which is read via
 // bare `i18n.t()` calls from non-component modules (toast/socket handlers)
-// that can't rely on `useTranslation()`'s lazy-load-on-mount behavior.
+// that can't rely on `useTranslation()`'s lazy-load-on-mount behavior, and
+// `home` — the landing page is the first thing most visitors see, so it
+// can't afford the lazy-load flash/delay while its chunk fetches on mount.
 // Every other namespace loads on demand the first time a page's
 // `useTranslation(ns)` asks for it.
-const PRELOADED_NAMESPACES = ['common', 'modules/notifications/notifications'];
+const PRELOADED_NAMESPACES = ['common', 'modules/notifications/notifications', 'home'];
 
 const options: InitOptions = {
   lng: getInitialLanguage(),
