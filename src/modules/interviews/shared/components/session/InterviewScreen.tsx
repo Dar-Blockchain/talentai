@@ -31,6 +31,7 @@ interface InterviewScreenProps {
     security: UseSecurityMonitoringReturn;
     coverage: Coverage | null;
     resultsReady: boolean;
+    assessmentId?: string | null;
     startInterview: () => Promise<void>;
     endInterview: () => void;
     skipQuestion: () => void;
@@ -81,6 +82,7 @@ export default function InterviewScreen({
     security,
     coverage,
     resultsReady,
+    assessmentId,
     startInterview,
     endInterview,
     skipQuestion,
@@ -89,10 +91,14 @@ export default function InterviewScreen({
   const { jobData, interviewConfig } = configData;
 
   const SKILL_TYPES = ['TECHNICAL_SKILL', 'SOFT_SKILL', 'ASSESSMENT', 'EVALUATION'];
+  const isSkillInterview = !!interviewConfig && SKILL_TYPES.includes(interviewConfig.interviewType);
   const feedbackInterviewType = interviewConfig
-    ? SKILL_TYPES.includes(interviewConfig.interviewType)
+    ? isSkillInterview
       ? 'SkillInterviewAssessment'
       : 'PostInterviewAssessment'
+    : undefined;
+  const reportPath = isSkillInterview && assessmentId
+    ? `/candidate/skill-interview/report/${assessmentId}`
     : undefined;
 
   const isActive = socket.interviewStatus === "active";
@@ -135,8 +141,13 @@ export default function InterviewScreen({
 
   const handleFeedbackDone = useCallback(() => {
     setFeedbackOpen(false);
+    if (reportPath) {
+      router.push(reportPath);
+    } else if (pendingUrlRef.current) {
+      router.push(pendingUrlRef.current);
+    }
     pendingUrlRef.current = null;
-  }, []);
+  }, [reportPath, router]);
 
   const handleCancelLeave = useCallback(() => {
     setConfirmOpen(false);
@@ -281,6 +292,7 @@ export default function InterviewScreen({
                   onStartInterview={startInterview}
                   onBack={handleBack}
                   dashboardPath={dashboardPath}
+                  reportPath={reportPath}
                   jobTitle={jobData?.jobDetails?.title || jobData?.title || ""}
                   companyName={
                     jobData?.createdBy?.name ||
@@ -304,6 +316,7 @@ export default function InterviewScreen({
 
       <FeedbackModal
         open={feedbackOpen}
+        interviewId={assessmentId ?? undefined}
         interviewType={feedbackInterviewType}
         onDone={handleFeedbackDone}
       />

@@ -26,33 +26,34 @@ async function persistInterviewResults(sessionId, result, candidateId, postId) {
     } else {
       console.warn(`⚠️ [DB] No assessment found — candidate: ${candidateId}, post: ${postId}, session: ${sessionId}`);
     }
+
+    // Update the JobApplication status to "interview_completed"
+    if (candidateId && postId) {
+      try {
+        const profile = await Profile.findOne({ userId: candidateId }).select('_id').lean();
+        if (!profile) {
+          console.warn(`⚠️ [DB] Profile not found for candidateId ${candidateId} — skipping JobApplication update`);
+        } else {
+          const updatedApp = await JobApplication.findOneAndUpdate(
+            { profile: profile._id, post: postId },
+            { status: 'interview_completed', updatedAt: new Date() },
+            { new: true }
+          );
+          if (updatedApp) {
+            console.log(`✅ [DB] JobApplication status → interview_completed — profile: ${profile._id}, post: ${postId}`);
+          } else {
+            console.warn(`⚠️ [DB] No JobApplication found — profile: ${profile._id}, post: ${postId}`);
+          }
+        }
+      } catch (err) {
+        console.error(`⚠️ [DB] Failed to update JobApplication status for session ${sessionId}:`, err.message);
+      }
+    }
+
+    return { assessmentId: updated?._id ?? null };
   } catch (err) {
     console.error(`⚠️ [DB] Failed to save results for session ${sessionId}:`, err.message);
-  }
-
-  // Update the JobApplication status to "interview_completed"
-  if (candidateId && postId) {
-    try {
-      const profile = await Profile.findOne({ userId: candidateId }).select('_id').lean();
-      if (!profile) {
-        console.warn(`⚠️ [DB] Profile not found for candidateId ${candidateId} — skipping JobApplication update`);
-        return;
-      }
-
-      const updatedApp = await JobApplication.findOneAndUpdate(
-        { profile: profile._id, post: postId },
-        { status: 'interview_completed', updatedAt: new Date() },
-        { new: true }
-      );
-
-      if (updatedApp) {
-        console.log(`✅ [DB] JobApplication status → interview_completed — profile: ${profile._id}, post: ${postId}`);
-      } else {
-        console.warn(`⚠️ [DB] No JobApplication found — profile: ${profile._id}, post: ${postId}`);
-      }
-    } catch (err) {
-      console.error(`⚠️ [DB] Failed to update JobApplication status for session ${sessionId}:`, err.message);
-    }
+    return { assessmentId: null };
   }
 }
 

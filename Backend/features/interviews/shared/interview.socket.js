@@ -36,13 +36,20 @@ async function onSessionStarted(socket, config) {
   }
 }
 
-function onSessionEnded(sessionId, result, socket) {
-  if (socket.interviewType === 'TECHNICAL_SKILL') {
-    persistSkillInterviewResults(sessionId, result, socket).catch(err =>
-      logger.warn('Skill interview results persistence failed', { sessionId, err: err.message })
-    );
-  } else {
-    persistInterviewResults(sessionId, result, socket.candidateId, socket.postId);
+async function onSessionEnded(sessionId, result, socket) {
+  try {
+    let saved;
+    if (socket.interviewType === 'TECHNICAL_SKILL') {
+      saved = await persistSkillInterviewResults(sessionId, result, socket);
+    } else {
+      saved = await persistInterviewResults(sessionId, result, socket.candidateId, socket.postId);
+    }
+    const assessmentId = saved?.assessmentId?.toString?.() ?? null;
+    if (assessmentId) {
+      safeEmit(socket, 'assessment_saved', { assessmentId });
+    }
+  } catch (err) {
+    logger.warn('Session persistence failed', { sessionId, err: err.message });
   }
 }
 

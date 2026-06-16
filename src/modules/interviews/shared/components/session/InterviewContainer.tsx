@@ -28,6 +28,7 @@ interface InterviewContainerProps {
   jobTitle?: string;
   companyName?: string;
   dashboardPath?: string;
+  reportPath?: string;
 }
 
 const InterviewContainer: React.FC<InterviewContainerProps> = ({
@@ -44,6 +45,7 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
   jobTitle,
   companyName,
   dashboardPath = '/candidate/dashboard',
+  reportPath,
 }) => {
   const { t } = useTranslation('interview');
   const [waitDots] = useState('');
@@ -130,7 +132,7 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
         )}
 
         {interviewStatus === 'active' && agentState !== 'thinking' && agentState !== 'processing' && <LiveTranscript currentTranscript={currentTranscript} />}
-        {interviewStatus === 'ended'   && (resultsReady ? <CompletionCard dashboardPath={dashboardPath} /> : <AnalyzingSpinner waitDots={waitDots} />)}
+        {interviewStatus === 'ended'   && (resultsReady ? <CompletionCard dashboardPath={dashboardPath} reportPath={reportPath} /> : <AnalyzingSpinner waitDots={waitDots} />)}
       </Box>
 
     </Box>
@@ -398,7 +400,7 @@ const AnalyzingSpinner: React.FC<{ waitDots: string }> = ({ waitDots }) => {
 };
 
 /** Success card shown once the interview results have been saved. */
-const CompletionCard: React.FC<{ dashboardPath: string }> = ({ dashboardPath }) => {
+const CompletionCard: React.FC<{ dashboardPath: string; reportPath?: string }> = ({ dashboardPath, reportPath }) => {
   const { t } = useTranslation('interview');
   const router = useRouter();
 
@@ -453,11 +455,18 @@ const CompletionCard: React.FC<{ dashboardPath: string }> = ({ dashboardPath }) 
 
       {/* ── What happens next ── */}
       <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 1.25 }}>
-        {[
-          { icon: '📊', label: 'Your answers are being analyzed by AI' },
-          { icon: '📩', label: 'Results will be sent to the recruiter' },
-          { icon: '✅', label: 'You\'ll be notified once reviewed' },
-        ].map(({ icon, label }) => (
+        {(reportPath
+          ? [
+              { icon: '📊', label: 'Your interview has been analyzed by AI' },
+              { icon: '📈', label: 'Your skill profile has been updated' },
+              { icon: '✅', label: 'Full report is ready to view' },
+            ]
+          : [
+              { icon: '📊', label: 'Your answers are being analyzed by AI' },
+              { icon: '📩', label: 'Results will be sent to the recruiter' },
+              { icon: '✅', label: 'You\'ll be notified once reviewed' },
+            ]
+        ).map(({ icon, label }) => (
           <Box key={label} sx={{
             display: 'flex', alignItems: 'center', gap: 1.25,
             px: 1.25, py: 0.875, borderRadius: '10px',
@@ -472,27 +481,54 @@ const CompletionCard: React.FC<{ dashboardPath: string }> = ({ dashboardPath }) 
         ))}
       </Box>
 
-      {/* ── Dashboard button ── */}
-      <Button
-        variant="contained"
-        fullWidth
-        onClick={() => router.push(dashboardPath)}
-        sx={{
-          mt: 2.5,
-          bgcolor: '#10b981',
-          color: '#fff',
-          fontFamily: 'Poppins',
-          fontWeight: 700,
-          fontSize: '0.88rem',
-          py: 1.25,
-          borderRadius: '12px',
-          textTransform: 'none',
-          boxShadow: 'none',
-          '&:hover': { bgcolor: '#059669', boxShadow: 'none' },
-        }}
-      >
-        Go to Dashboard
-      </Button>
+      {/* ── CTA buttons ── */}
+      <Box sx={{ mt: 2.5, width: '100%', display: 'flex', flexDirection: 'column', gap: 1 }}>
+        {reportPath && (
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={() => router.push(reportPath)}
+            sx={{
+              bgcolor: '#6366f1',
+              color: '#fff',
+              fontFamily: 'Poppins',
+              fontWeight: 700,
+              fontSize: '0.88rem',
+              py: 1.25,
+              borderRadius: '12px',
+              textTransform: 'none',
+              boxShadow: 'none',
+              '&:hover': { bgcolor: '#4f46e5', boxShadow: 'none' },
+            }}
+          >
+            View Your Report
+          </Button>
+        )}
+        <Button
+          variant={reportPath ? 'outlined' : 'contained'}
+          fullWidth
+          onClick={() => router.push(dashboardPath)}
+          sx={{
+            bgcolor: reportPath ? 'transparent' : '#10b981',
+            color: reportPath ? '#6b7280' : '#fff',
+            borderColor: reportPath ? '#e5e7eb' : undefined,
+            fontFamily: 'Poppins',
+            fontWeight: 700,
+            fontSize: '0.88rem',
+            py: 1.25,
+            borderRadius: '12px',
+            textTransform: 'none',
+            boxShadow: 'none',
+            '&:hover': {
+              bgcolor: reportPath ? '#f9fafb' : '#059669',
+              borderColor: reportPath ? '#d1d5db' : undefined,
+              boxShadow: 'none',
+            },
+          }}
+        >
+          Go to Dashboard
+        </Button>
+      </Box>
 
     </Box>
   );

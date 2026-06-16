@@ -30,8 +30,9 @@ async function persistSkillInterviewResults(sessionId, result, socket) {
   };
 
   try {
-    await skillInterviewService.createAssessment(data, result, candidateId);
+    const assessment = await skillInterviewService.createAssessment(data, result, candidateId);
     logger.info('Skill interview results saved', { sessionId, candidateId });
+    return { assessmentId: assessment?._id ?? null };
   } catch (err) {
     logger.error('Failed to save skill interview results', { sessionId, err: err.message });
     throw err;

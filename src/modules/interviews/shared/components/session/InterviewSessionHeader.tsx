@@ -49,10 +49,22 @@ export default function InterviewSessionHeader({
   const arcDash  = coverageColor != null ? ARC_C * (1 - (coverage ?? 0) / 100) : ARC_C;
   const { t } = useTranslation("modules/interview/interview");
 
-  const jobTitle = useMemo(
-    () => jobData?.jobDetails?.title || jobData?.title || t("interview_types.hr"),
-    [jobData, t],
-  );
+  const jobTitle = useMemo(() => {
+    if (jobData?.jobDetails?.title) return jobData.jobDetails.title;
+    if (jobData?.title)             return jobData.title;
+
+    // Skill / standalone interviews — derive from config instead of defaulting to "HR interview"
+    const type = interviewConfig?.interviewType;
+    const role = interviewConfig?.context?.targetRole;
+    if (type === 'TECHNICAL_SKILL' || type === 'ASSESSMENT' || type === 'EVALUATION') {
+      return role ? `${role} Assessment` : 'Technical Assessment';
+    }
+    if (type === 'SOFT_SKILL') {
+      return role ? `${role} Assessment` : 'Soft Skills Assessment';
+    }
+
+    return t("interview_types.hr");
+  }, [jobData, interviewConfig, t]);
 
   const companyName = useMemo(
     () =>

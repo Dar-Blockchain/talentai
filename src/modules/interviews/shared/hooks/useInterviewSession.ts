@@ -269,6 +269,7 @@ export function useInterviewSession({
     security,
     coverage,
     resultsReady,
+    assessmentId: socket.assessmentId,
     coverageDashboardExpanded,
     setCoverageDashboardExpanded,
     startInterview,

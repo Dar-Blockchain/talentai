@@ -29,6 +29,7 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
   const [interviewStatus, setInterviewStatus] = useState<InterviewStatus>('idle');
+  const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const sessionIdRef = useRef<string | null>(null);
 
   const namespace = callbacks.namespace ?? '/interview';
@@ -162,6 +163,12 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
       callbacksRef.current.onInterviewEnded(data);
     });
 
+    socket.on('assessment_saved', (data: any) => {
+      console.log('💾 Assessment saved:', data?.assessmentId);
+      setAssessmentId(data?.assessmentId ?? null);
+      callbacksRef.current.onAssessmentSaved?.(data);
+    });
+
     socket.on('interview_error', (error: any) => {
       console.error('❌ Interview error:', error);
       callbacksRef.current.onInterviewError(error);
@@ -243,5 +250,6 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
     setSessionId,
     setInterviewStatus,
     interviewStatus,
+    assessmentId,
   };
 };

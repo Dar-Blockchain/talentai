@@ -168,6 +168,8 @@ export interface UseInterviewSocketCallbacks {
   onInterviewWrapUp?: (data: { sessionId?: string }) => void;
   /** Server reset the silence counter (sync frontend state). */
   onSilenceReset?: () => void;
+  /** Backend saved the assessment — provides its MongoDB ObjectId for feedback linking. */
+  onAssessmentSaved?: (data: { assessmentId: string }) => void;
   /** Socket.IO namespace to connect to. Defaults to '/interview'. */
   namespace?: string;
 }
@@ -182,6 +184,7 @@ export interface UseInterviewSocketReturn {
   setSessionId: (id: string | null) => void;
   setInterviewStatus: (status: InterviewStatus) => void;
   interviewStatus: InterviewStatus;
+  assessmentId: string | null;
 }
 
 // ─── useInterviewTimer ─────────────────────────────────────────────────────────
