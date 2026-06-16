@@ -1,29 +1,29 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  Box, Typography, Button, CircularProgress,
-  Dialog, DialogContent, TextField, IconButton,
-  Alert, Stack, LinearProgress, Card,
-} from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import CloseIcon from '@mui/icons-material/Close';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import EmailIcon from '@mui/icons-material/Email';
+import { ArrowLeft, UploadCloud, CheckCircle2, Loader2 } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { useQueryClient } from '@tanstack/react-query';
+import { useForm } from 'react-hook-form';
 import { AppDispatch } from '@/store/store';
 import { setConnectedUser } from '@/store/slices/userSlice';
 import { authApi } from '@/modules/auth/shared/api';
-import { useAuthContext } from '@/modules/auth/shared/context/AuthContext';
+import {
+  useAuthContext,
+  FormField,
+  AuthSubmitButton,
+  AuthPageHeader,
+} from '@/modules/auth/shared';
+import { validators } from '@/modules/auth/shared/utils/validators';
 import { checkEligibility } from '../../api/eligibility.api';
 import { usePersistentCountdown } from '@/hooks/usePersistentCountdown';
+import { useToast } from '@/hooks/useToast';
 import { getUserLocation } from '@/utils/api';
 import { formatTimeLeft } from '@/utils/functions';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
+import { cn } from '@/lib/utils';
+import { Dialog, DialogContent } from '@/modules/shared/ui/shadcn/dialog';
+import { Button } from '@/modules/shared/ui/shadcn/button';
 
-const PURPLE = '#6AD39C';
-const PURPLE_LIGHT = 'rgba(106,211,156,0.08)';
 const CODE_LENGTH = 6;
 const CODE_TTL = 300;
 const CODE_EXPIRY_KEY = 'job_apply_code_expires_at';
@@ -34,8 +34,15 @@ const CODE_EXPIRY_KEY = 'job_apply_code_expires_at';
 
 type Step = 'email' | 'form' | 'otp';
 
-function validateEmail(email: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+interface EmailFormValues {
+  email: string;
+}
+
+interface DetailsFormValues {
+  firstName: string;
+  lastName:  string;
+  phone:     string;
+  linkedin:  string;
 }
 
 export interface OnboardingModalProps {
@@ -49,16 +56,22 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
   const dispatch    = useDispatch<AppDispatch>();
   const queryClient = useQueryClient();
   const { login } = useAuthContext();
+  const { showToast } = useToast();
   const isMountedRef = useRef(true);
   useEffect(() => () => { isMountedRef.current = false; }, []);
 
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
-  const [emailError, setEmailError] = useState('');
 
-  const [form, setForm] = useState({ firstName: '', lastName: '', phone: '', linkedin: '' });
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const emailForm = useForm<EmailFormValues>({ mode: 'onTouched', defaultValues: { email: '' } });
+  const detailsForm = useForm<DetailsFormValues>({
+    mode: 'onTouched',
+    defaultValues: { firstName: '', lastName: '', phone: '', linkedin: '' },
+  });
+
   const [cvFile, setCvFile] = useState<File | null>(null);
+  const [cvError, setCvError] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [analyzingCv, setAnalyzingCv] = useState(false);
@@ -68,7 +81,6 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
   const codeInputsRef = useRef<Array<HTMLInputElement | null>>([]);
 
   const [loading, setLoading] = useState(false);
-  const [apiError, setApiError] = useState('');
 
   const { secondsLeft, isExpired, isRunning, start: startTimer, clear: clearTimer } =
     usePersistentCountdown({ ttl: CODE_TTL, storageKey: CODE_EXPIRY_KEY });
@@ -88,25 +100,23 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
 
   // ── Step: email ────────────────────────────────────────────────────────────
 
-  const handleEmailContinue = async () => {
-    const trimmed = email.trim().toLowerCase();
-    if (!trimmed) { setEmailError(t('onboarding.error_required')); return; }
-    if (!validateEmail(trimmed)) { setEmailError(t('onboarding.error_email')); return; }
-    setEmailError('');
+  const handleEmailContinue = async ({ email: rawEmail }: EmailFormValues) => {
+    const trimmed = rawEmail.trim().toLowerCase();
     setLoading(true);
-    setApiError('');
     try {
       // Try signin — if it works, user exists → go straight to OTP
       await authApi.signin(trimmed);
+      setEmail(trimmed);
       startTimer();
       setStep('otp');
     } catch (err: any) {
       const msg = (err instanceof Error ? err.message : String(err || '')).toLowerCase();
       if (msg.includes('not found') || msg.includes('register')) {
         // New user → show full form
+        setEmail(trimmed);
         setStep('form');
       } else {
-        setApiError(err || t('onboarding.error_generic'));
+        showToast({ message: err?.message || t('onboarding.error_generic'), severity: 'error' });
       }
     } finally {
       setLoading(false);
@@ -115,52 +125,31 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
 
   // ── Step: form (new users) ─────────────────────────────────────────────────
 
-  const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm(prev => ({ ...prev, [field]: e.target.value }));
-    if (formErrors[field]) setFormErrors(prev => ({ ...prev, [field]: '' }));
-  };
-
-  const validateForm = () => {
-    const e: Record<string, string> = {};
-    if (!form.firstName.trim()) e.firstName = t('onboarding.error_first_name_required');
-    if (!form.lastName.trim()) e.lastName = t('onboarding.error_last_name_required');
-    if (!form.phone.trim()) {
-      e.phone = t('onboarding.error_phone_required');
-    } else if (!/^\+?[1-9]\d{6,14}$/.test(form.phone.trim().replace(/[\s\-().]/g, ''))) {
-      e.phone = t('onboarding.error_phone_invalid');
-    }
-    if (!cvFile) e.cv = t('onboarding.error_cv_required');
-    setFormErrors(e);
-    return Object.keys(e).length === 0;
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleFileChange = (file: File | null) => {
     if (!file) return;
-    if (file.type !== 'application/pdf') { setFormErrors(p => ({ ...p, cv: t('onboarding.error_pdf') })); return; }
-    if (file.size > 10 * 1024 * 1024) { setFormErrors(p => ({ ...p, cv: t('onboarding.error_size') })); return; }
+    if (file.type !== 'application/pdf') { showToast({ message: t('onboarding.error_pdf'), severity: 'error' }); return; }
+    if (file.size > 10 * 1024 * 1024) { showToast({ message: t('onboarding.error_size'), severity: 'error' }); return; }
     setCvFile(file);
-    setFormErrors(p => ({ ...p, cv: '' }));
+    setCvError(false);
   };
 
-  const handleFormContinue = async () => {
-    if (!validateForm()) return;
+  const handleFormContinue = async (values: DetailsFormValues) => {
+    if (!cvFile) { setCvError(true); return; }
     setLoading(true);
-    setApiError('');
-    if (cvFile) setAnalyzingCv(true);
+    setAnalyzingCv(true);
     try {
       const fd = new FormData();
-      fd.append('email', email.trim().toLowerCase());
-      fd.append('firstName', form.firstName.trim());
-      fd.append('lastName', form.lastName.trim());
-      fd.append('phone', form.phone.trim());
+      fd.append('email', email);
+      fd.append('firstName', values.firstName.trim());
+      fd.append('lastName', values.lastName.trim());
+      fd.append('phone', values.phone.trim());
       fd.append('roleType', 'Candidate');
-      if (cvFile) fd.append('resume', cvFile);
+      fd.append('resume', cvFile);
       await authApi.register(fd);
       startTimer();
       setStep('otp');
     } catch (err: any) {
-      setApiError(err || t('onboarding.error_registration'));
+      showToast({ message: err?.message || t('onboarding.error_registration'), severity: 'error' });
     } finally {
       setLoading(false);
       setAnalyzingCv(false);
@@ -193,12 +182,12 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
   };
 
   const handleResend = async () => {
-    setLoading(true); setApiError(''); setCode('');
+    setLoading(true); setCode('');
     try {
-      await authApi.signin(email.trim().toLowerCase());
+      await authApi.signin(email);
       startTimer();
     } catch (err: any) {
-      setApiError(err || t('onboarding.error_resend'));
+      showToast({ message: err?.message || t('onboarding.error_resend'), severity: 'error' });
     } finally {
       setLoading(false);
     }
@@ -206,11 +195,11 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
 
   const handleVerify = async () => {
     if (code.length < CODE_LENGTH) return;
-    setLoading(true); setApiError('');
+    setLoading(true);
     try {
       const userLocation = await getUserLocation();
       const data = await authApi.verifyOtp({
-        email: email.trim().toLowerCase(),
+        email,
         otp: code,
         location: userLocation,
       });
@@ -239,7 +228,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
       }
     } catch {
       if (isMountedRef.current) {
-        setApiError(t('onboarding.error_code'));
+        showToast({ message: t('onboarding.error_code'), severity: 'error' });
         setLoading(false);
       }
     }
@@ -249,9 +238,9 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
 
   const handleClose = () => {
     if (loading) return;
-    setStep('email'); setEmail(''); setEmailError('');
-    setForm({ firstName: '', lastName: '', phone: '', linkedin: '' });
-    setFormErrors({}); setCvFile(null); setApiError(''); setCode('');
+    setStep('email'); setEmail('');
+    emailForm.reset(); detailsForm.reset();
+    setCvFile(null); setCvError(false); setCode('');
     clearTimer(); onClose();
   };
 
@@ -259,250 +248,337 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
-  const btnSx = {
-    mt: 3, textTransform: 'none' as const, fontWeight: 600, borderRadius: '38px',
-    padding: '12px 24px', height: 42, maxWidth: '100%',
-    background: PURPLE, color: '#ffffff', letterSpacing: 0.3, boxShadow: 'none',
-    '&:hover': { background: '#10453F', boxShadow: 'none' },
-    '&.Mui-disabled': { background: 'rgba(0,0,0,0.12)', color: 'rgba(0,0,0,0.26)' },
-  };
-
-  const inputSx = {
-    '& .MuiInputLabel-root': { color: '#666' },
-    '& .MuiInputLabel-root.Mui-focused': { color: '#666' },
-    '& .MuiOutlinedInput-root': {
-      '& fieldset': { borderColor: 'rgb(203 203 203)' },
-      '&:hover fieldset': { borderColor: 'rgb(203 203 203)' },
-      '&.Mui-focused fieldset': { borderColor: 'rgb(203 203 203)' },
-    },
-  };
-
   return (
     <>
-      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth
-        PaperProps={{ sx: { borderRadius: 3, background: '#ffffff', boxShadow: '0px 4px 50px 0px rgba(0,0,0,0.12)', overflow: 'hidden' } }}>
+      <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
+        <DialogContent
+          showCloseButton={!loading}
+          className="sm:max-w-md rounded-2xl p-0 overflow-hidden"
+        >
+          <div className="px-6 sm:px-7 py-7 text-center">
 
-        {/* Close button */}
-        {!loading && (
-          <IconButton onClick={handleClose} size="small"
-            sx={{ position: 'absolute', top: 12, right: 12, color: '#9CA3AF', zIndex: 1, '&:hover': { color: '#374151' } }}>
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        )}
+            {/* Back button row */}
+            {(step === 'form' || step === 'otp') && !loading && (
+              <div className="flex justify-start mb-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="px-0 h-auto text-muted-foreground hover:bg-transparent hover:text-primary font-sans font-medium"
+                  onClick={() => { setStep('email'); setCode(''); clearTimer(); }}
+                >
+                  <ArrowLeft className="size-4" />
+                  {t('onboarding.back')}
+                </Button>
+              </div>
+            )}
 
-        <DialogContent sx={{ px: { xs: 3, sm: 3.5 }, py: 3.5, textAlign: 'center' }}>
-
-          {/* Back button row */}
-          {(step === 'form' || step === 'otp') && !loading && (
-            <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 1 }}>
-              <Button startIcon={<ArrowBackIcon />} onClick={() => { setStep('email'); setCode(''); setApiError(''); clearTimer(); }}
-                sx={{ textTransform: 'none', color: '#666', fontWeight: 500, fontSize: '0.82rem', p: 0, minWidth: 0, '&:hover': { background: 'none', color: PURPLE } }}>
-                {t('onboarding.back')}
-              </Button>
-            </Box>
-          )}
-
-          {/* Logo + branding */}
-          <Box sx={{ mb: 3, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Box component="img" src="/images/home/logo.svg" alt="TalentAI Logo"
-              sx={{ height: 32, cursor: 'pointer', objectFit: 'contain' }} onClick={() => router.push('/')} />
-          </Box>
-
-          {/* Title */}
-          <Typography variant="h5" fontWeight={800} sx={{ color: '#0F172A', mb: 0.75, letterSpacing: '-0.025em', lineHeight: 1.15, fontFamily: 'Poppins' }}>
-            {step === 'email' ? t('onboarding.title_email') : step === 'form' ? t('onboarding.title_form') : t('onboarding.title_otp')}
-          </Typography>
-
-          {/* Descriptor */}
-          <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#64748B', lineHeight: 1.65, mb: step === 'email' ? 1.5 : 3 }}>
-            {step === 'email' ? t('onboarding.desc_email') : step === 'form' ? t('onboarding.desc_form') : t('onboarding.desc_otp')}
-          </Typography>
-
-          {/* Job title badge — email step only */}
-          {step === 'email' && (
-            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, px: 1.5, py: 0.5, bgcolor: 'rgba(106,211,156,0.08)', border: '1px solid rgba(106,211,156,0.25)', borderRadius: '8px', mb: 3 }}>
-              <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#6AD39C', flexShrink: 0 }} />
-              <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.78rem', fontWeight: 600, color: '#10453F' }}>
-                {jobTitle}
-              </Typography>
-            </Box>
-          )}
-
-          {/* Subtitle for form/otp steps */}
-          {step !== 'email' && (
-            <Typography variant="body2" sx={{ color: '#94A3B8', mb: 3, lineHeight: 1.6, fontFamily: 'Poppins', fontSize: '0.78rem' }}>
-              {step === 'form' ? t('onboarding.subtitle_form', { email }) : t('onboarding.subtitle_otp', { email })}
-            </Typography>
-          )}
-
-          {/* ── STEP: email ── */}
-          {step === 'email' && (
-            <Box component="form" onSubmit={e => { e.preventDefault(); handleEmailContinue(); }} sx={{ textAlign: 'left' }}>
-              <TextField
-                name="email" label={t('onboarding.email_label')} type="email" value={email} autoFocus fullWidth
-                onChange={e => { setEmail(e.target.value); if (emailError) setEmailError(''); }}
-                error={!!emailError} helperText={emailError}
-                InputProps={{ startAdornment: <EmailIcon sx={{ mr: 1, color: 'rgba(0,0,0,0.6)' }} /> }}
-                sx={inputSx}
+            {/* Logo */}
+            <div className="mb-5 flex flex-col items-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/images/home/logo.svg"
+                alt="TalentAI Logo"
+                className="h-8 object-contain cursor-pointer"
+                onClick={() => router.push('/')}
               />
-              {apiError && <Alert severity="error" sx={{ mt: 2, borderRadius: '10px', fontSize: '0.83rem' }}>{apiError}</Alert>}
-              <Button type="submit" fullWidth variant="contained" disabled={loading}
-                startIcon={loading ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : undefined}
-                sx={btnSx}>
-                {loading ? t('onboarding.checking') : t('onboarding.continue')}
-              </Button>
-            </Box>
-          )}
+            </div>
 
-          {/* ── STEP: form (new user) ── */}
-          {step === 'form' && (
-            <Box sx={{ textAlign: 'left' }}>
-              <Stack spacing={2}>
-                <Stack direction="row" spacing={1.5}>
-                  <TextField
-                    label={<>{t('onboarding.first_name')}<Box component="span" sx={{ color: '#DC2626', ml: 0.25 }}>*</Box></>}
-                    value={form.firstName} onChange={handleChange('firstName')}
-                    error={!!formErrors.firstName} helperText={formErrors.firstName} fullWidth sx={inputSx} />
-                  <TextField
-                    label={<>{t('onboarding.last_name')}<Box component="span" sx={{ color: '#DC2626', ml: 0.25 }}>*</Box></>}
-                    value={form.lastName} onChange={handleChange('lastName')}
-                    error={!!formErrors.lastName} helperText={formErrors.lastName} fullWidth sx={inputSx} />
-                </Stack>
-                <TextField
-                  label={<>{t('onboarding.phone')}<Box component="span" sx={{ color: '#DC2626', ml: 0.25 }}>*</Box></>}
-                  value={form.phone} onChange={handleChange('phone')}
-                  error={!!formErrors.phone} helperText={formErrors.phone} fullWidth sx={inputSx} />
-                <TextField label={t('onboarding.linkedin')} value={form.linkedin} onChange={handleChange('linkedin')}
-                  fullWidth placeholder="https://linkedin.com/in/yourname" sx={inputSx} />
+            {/* Title + descriptor — same header used across auth pages */}
+            <AuthPageHeader
+              size="sm"
+              mb={step === 'email' ? 2 : 3}
+              title={step === 'email' ? t('onboarding.title_email') : step === 'form' ? t('onboarding.title_form') : t('onboarding.title_otp')}
+              subtitle={step === 'email' ? t('onboarding.desc_email') : step === 'form' ? t('onboarding.desc_form') : t('onboarding.desc_otp')}
+            />
 
-                {/* CV upload */}
-                <Box>
-                  <Typography sx={{ fontSize: '0.82rem', fontWeight: 600, color: '#374151', mb: 0.75 }}>
-                    {t('onboarding.cv_label')} <Typography component="span" sx={{ fontWeight: 400, color: '#DC2626', fontSize: '0.78rem' }}>*</Typography>
-                  </Typography>
-                  <Box onClick={() => fileInputRef.current?.click()} sx={{
-                    border: `2px dashed ${formErrors.cv ? '#DC2626' : cvFile ? PURPLE : '#E5E7EB'}`,
-                    borderRadius: '12px', p: 2.5, textAlign: 'center', cursor: 'pointer',
-                    bgcolor: cvFile ? PURPLE_LIGHT : '#FAFAFA', transition: 'border-color 0.2s',
-                    '&:hover': { borderColor: PURPLE, bgcolor: PURPLE_LIGHT },
-                  }}>
-                    <input ref={fileInputRef} type="file" accept=".pdf" hidden onChange={handleFileChange} />
-                    {cvFile ? (
-                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                        <CheckCircleOutlineIcon sx={{ fontSize: 20, color: PURPLE }} />
-                        <Typography sx={{ fontSize: '0.83rem', color: PURPLE, fontWeight: 600 }}>{cvFile.name}</Typography>
-                      </Box>
-                    ) : (
-                      <>
-                        <CloudUploadIcon sx={{ fontSize: 28, color: '#9CA3AF', mb: 0.5 }} />
-                        <Typography sx={{ fontSize: '0.82rem', color: '#6B7280' }}>{t('onboarding.cv_upload')}</Typography>
-                      </>
-                    )}
-                  </Box>
-                  {formErrors.cv && <Typography sx={{ fontSize: '0.75rem', color: '#DC2626', mt: 0.5 }}>{formErrors.cv}</Typography>}
-                </Box>
-              </Stack>
+            {/* Job title badge — email step only */}
+            {step === 'email' && (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/8 border border-primary/25 rounded-lg mb-6">
+                <span className="size-1.5 rounded-full bg-primary shrink-0" />
+                <span className="font-sans text-sm font-semibold text-[#10453F]">
+                  {jobTitle}
+                </span>
+              </div>
+            )}
 
-              {apiError && <Alert severity="error" sx={{ mt: 2, borderRadius: '10px', fontSize: '0.83rem' }}>{apiError}</Alert>}
-              <Button fullWidth variant="contained" onClick={handleFormContinue} disabled={loading}
-                startIcon={loading ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : undefined}
-                sx={btnSx}>
-                {loading ? (cvFile ? t('onboarding.cv_analyzing') : t('onboarding.cv_creating')) : t('onboarding.cv_create_btn')}
-              </Button>
-            </Box>
-          )}
+            {/* Subtitle for form/otp steps */}
+            {step !== 'email' && (
+              <p className="font-sans text-xs text-muted-foreground/80 leading-relaxed mb-6">
+                {step === 'form' ? t('onboarding.subtitle_form', { email }) : t('onboarding.subtitle_otp', { email })}
+              </p>
+            )}
 
-          {/* ── STEP: OTP ── */}
-          {step === 'otp' && (
-            <Box>
-              <Stack direction="row" spacing={1} justifyContent="center">
-                {Array.from({ length: CODE_LENGTH }).map((_, i) => (
-                  <TextField key={i}
-                    inputRef={el => (codeInputsRef.current[i] = el)}
-                    value={code[i] || ''}
-                    onChange={e => handleCodeChange(i, e as React.ChangeEvent<HTMLInputElement>)}
-                    onPaste={handleCodePaste}
-                    onKeyDown={e => handleCodeKeyDown(i, e)}
-                    inputProps={{ maxLength: 1, style: { textAlign: 'center', fontSize: '1.25rem' } }}
-                    sx={{ width: 48, '& .MuiOutlinedInput-root': { '& fieldset': { borderColor: 'rgb(203 203 203)' }, '&:hover fieldset': { borderColor: 'rgb(203 203 203)' }, '&.Mui-focused fieldset': { borderColor: 'rgb(203 203 203)' } } }}
+            {/* ── STEP: email ── */}
+            {step === 'email' && (
+              <form onSubmit={emailForm.handleSubmit(handleEmailContinue)} className="text-left">
+                <FormField
+                  name="email"
+                  control={emailForm.control}
+                  label={t('onboarding.email_label')}
+                  type="email"
+                  placeholder="you@company.com"
+                  disabled={loading}
+                  error={emailForm.formState.errors.email?.message}
+                  rules={{ required: t('onboarding.error_required'), validate: validators.email }}
+                  width="full"
+                />
+
+                <AuthSubmitButton
+                  type="submit"
+                  loading={loading}
+                  label={t('onboarding.continue')}
+                  loadingLabel={t('onboarding.checking')}
+                />
+              </form>
+            )}
+
+            {/* ── STEP: form (new user) ── */}
+            {step === 'form' && (
+              <form onSubmit={detailsForm.handleSubmit(handleFormContinue)} className="text-left">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    name="firstName"
+                    control={detailsForm.control}
+                    label={t('onboarding.first_name')}
+                    disabled={loading}
+                    error={detailsForm.formState.errors.firstName?.message}
+                    rules={{ required: t('onboarding.error_first_name_required') }}
                   />
-                ))}
-              </Stack>
+                  <FormField
+                    name="lastName"
+                    control={detailsForm.control}
+                    label={t('onboarding.last_name')}
+                    disabled={loading}
+                    error={detailsForm.formState.errors.lastName?.message}
+                    rules={{ required: t('onboarding.error_last_name_required') }}
+                  />
+                  <FormField
+                    name="phone"
+                    control={detailsForm.control}
+                    label={t('onboarding.phone')}
+                    placeholder="+1 234 567 890"
+                    disabled={loading}
+                    error={detailsForm.formState.errors.phone?.message}
+                    rules={{ required: t('onboarding.error_phone_required'), validate: validators.phone }}
+                    width="full"
+                  />
+                  <FormField
+                    name="linkedin"
+                    control={detailsForm.control}
+                    label={t('onboarding.linkedin')}
+                    placeholder="https://linkedin.com/in/yourname"
+                    disabled={loading}
+                    error={detailsForm.formState.errors.linkedin?.message}
+                    rules={{ validate: validators.linkedinUrl }}
+                    width="full"
+                  />
 
-              {(isRunning || isExpired) && (
-                <Typography variant="caption" sx={{ display: 'block', mt: 1.5, fontWeight: 500, color: secondsLeft > 10 ? 'text.secondary' : secondsLeft > 0 ? 'warning.main' : 'error.main', transition: 'color 0.3s ease' }}>
-                  {secondsLeft > 0 ? t('onboarding.code_expires', { time: formatTimeLeft(secondsLeft) }) : t('onboarding.code_expired')}
-                </Typography>
-              )}
+                  {/* CV upload — same styling/behavior as the candidate register form */}
+                  <div className="col-span-full">
+                    <label className="block text-xs font-semibold text-foreground uppercase tracking-wider font-sans mb-1.5">
+                      {t('onboarding.cv_label')}
+                      <span className="text-destructive ml-0.5">*</span>
+                    </label>
 
-              {apiError && <Alert severity="error" sx={{ mt: 2, borderRadius: '10px', fontSize: '0.83rem' }}>{apiError}</Alert>}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf"
+                      className="hidden"
+                      onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)}
+                    />
 
-              <Button fullWidth variant="contained" disabled={loading || (!isExpired && code.length < CODE_LENGTH)}
-                onClick={isExpired ? handleResend : handleVerify}
-                startIcon={loading ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : undefined}
-                sx={btnSx}>
-                {loading
-                  ? (isExpired ? t('onboarding.resending') : t('onboarding.verifying'))
-                  : (isExpired ? t('onboarding.resend_btn') : t('onboarding.verify_btn'))}
-              </Button>
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                      onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
+                      onDrop={(e) => {
+                        e.preventDefault(); setIsDragging(false);
+                        const f = e.dataTransfer.files?.[0] ?? null;
+                        if (f && /\.pdf$/i.test(f.name)) handleFileChange(f);
+                      }}
+                      className={cn(
+                        "flex items-center gap-3 px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl border-[1.5px] border-dashed cursor-pointer",
+                        "transition-all duration-200 select-none",
+                        cvError    && "border-destructive bg-destructive/5",
+                        isDragging && "border-primary/60 bg-primary/5 scale-[1.015] shadow-lg shadow-primary/10",
+                        cvFile && !isDragging && !cvError && "border-primary/50 bg-primary/5",
+                        !cvFile && !isDragging && !cvError && "border-border bg-muted/30 hover:border-muted-foreground/40 hover:bg-muted/50",
+                      )}
+                    >
+                      <div className={cn(
+                        "w-8 h-8 sm:w-9 sm:h-9 rounded-lg shrink-0 flex items-center justify-center transition-all duration-200",
+                        cvFile || isDragging ? "bg-primary/10 border border-primary/20" : "bg-muted border border-border",
+                      )}>
+                        {cvFile
+                          ? <CheckCircle2 className="size-4 text-primary" />
+                          : <UploadCloud className={cn("size-4", isDragging ? "text-primary" : "text-muted-foreground")} />}
+                      </div>
 
-              <Button variant="text" fullWidth onClick={() => { setStep('email'); setCode(''); setApiError(''); clearTimer(); }} disabled={loading}
-                sx={{ mt: 2, px: 2, py: 1, color: PURPLE, borderRadius: '38px', fontWeight: 500, textTransform: 'none', boxShadow: 'none', transition: 'all 0.3s ease-in-out', background: 'rgba(0,0,0,0.05)', ':hover': { transform: 'scale(1.02)' }, ':active': { transform: 'scale(0.98)' } }}>
-                {t('onboarding.change_email')}
-              </Button>
-            </Box>
-          )}
+                      <div className="flex-1 min-w-0">
+                        <p className={cn(
+                          "font-sans font-semibold text-xs sm:text-[0.8125rem] truncate leading-snug",
+                          cvFile ? "text-foreground" : isDragging ? "text-primary" : "text-foreground/80",
+                        )}>
+                          {cvFile ? cvFile.name : isDragging ? t('onboarding.cv_drop') : t('onboarding.cv_upload')}
+                        </p>
+                        <p className="font-sans text-[0.65rem] sm:text-xs text-muted-foreground leading-snug mt-0.5">
+                          {cvFile ? (
+                            <>{(cvFile.size / 1024).toFixed(0)} KB · <span className="text-primary font-semibold">{t('onboarding.cv_replace')}</span></>
+                          ) : cvError ? (
+                            <span className="text-destructive">{t('onboarding.error_cv_required')}</span>
+                          ) : (
+                            t('onboarding.cv_formats')
+                          )}
+                        </p>
+                      </div>
 
+                      {!cvFile && !isDragging && (
+                        <span className="px-1.5 py-0.5 rounded text-[0.55rem] sm:text-[0.6rem] font-bold tracking-wide text-muted-foreground bg-muted border border-border uppercase shrink-0">
+                          PDF
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <AuthSubmitButton
+                  type="submit"
+                  loading={loading}
+                  label={t('onboarding.cv_create_btn')}
+                  loadingLabel={cvFile ? t('onboarding.cv_analyzing') : t('onboarding.cv_creating')}
+                />
+              </form>
+            )}
+
+            {/* ── STEP: OTP ── */}
+            {step === 'otp' && (
+              <div>
+                <div className="flex justify-center gap-1.5 sm:gap-2">
+                  {Array.from({ length: CODE_LENGTH }).map((_, i) => (
+                    <div
+                      key={i}
+                      className={cn(
+                        "relative flex items-center justify-center rounded-xl shrink-0",
+                        "w-10 h-12 sm:w-11 sm:h-13",
+                        "border-[1.5px] transition-all duration-150",
+                        "focus-within:ring-2 focus-within:ring-primary/30 focus-within:ring-offset-2",
+                        code[i] ? "border-primary/50 bg-primary/5" : "border-border bg-muted/40",
+                        loading && "opacity-50 pointer-events-none",
+                      )}
+                    >
+                      <input
+                        ref={el => { codeInputsRef.current[i] = el; }}
+                        value={code[i] || ''}
+                        maxLength={1}
+                        disabled={loading}
+                        onChange={e => handleCodeChange(i, e)}
+                        onPaste={i === 0 ? handleCodePaste : undefined}
+                        onKeyDown={e => handleCodeKeyDown(i, e)}
+                        className="w-full h-full border-0 outline-none bg-transparent text-center text-lg font-bold text-foreground font-sans disabled:cursor-not-allowed"
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                {(isRunning || isExpired) && (
+                  <p className={cn(
+                    "text-xs font-medium font-sans mt-3 transition-colors duration-300",
+                    secondsLeft > 10 ? "text-muted-foreground" : secondsLeft > 0 ? "text-amber-500" : "text-destructive",
+                  )}>
+                    {secondsLeft > 0 ? t('onboarding.code_expires', { time: formatTimeLeft(secondsLeft) }) : t('onboarding.code_expired')}
+                  </p>
+                )}
+
+                <AuthSubmitButton
+                  type="button"
+                  loading={loading}
+                  disabled={!isExpired && code.length < CODE_LENGTH}
+                  label={isExpired ? t('onboarding.resend_btn') : t('onboarding.verify_btn')}
+                  loadingLabel={isExpired ? t('onboarding.resending') : t('onboarding.verifying')}
+                  onClick={isExpired ? handleResend : handleVerify}
+                />
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled={loading}
+                  onClick={() => { setStep('email'); setCode(''); clearTimer(); }}
+                  className="w-full mt-2 font-sans font-medium text-primary bg-muted/60 hover:bg-muted"
+                >
+                  {t('onboarding.change_email')}
+                </Button>
+              </div>
+            )}
+
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* ── CV Analysis Modal (same as register page) ── */}
-      <Dialog open={analyzingCv} disableEscapeKeyDown PaperProps={{ sx: { borderRadius: 4, p: 0, minWidth: 340, maxWidth: 380, overflow: 'hidden', boxShadow: '0 24px 60px rgba(106,211,156,0.15)' } }}>
-        <Box sx={{ height: 4, background: `linear-gradient(90deg, ${PURPLE} ${cvProgress}%, rgba(106,211,156,0.15) ${cvProgress}%)`, transition: 'background 0.4s ease' }} />
-        <DialogContent sx={{ px: 4, py: 3.5, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box sx={{ width: 44, height: 44, borderRadius: '12px', background: 'rgba(106,211,156,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <CircularProgress size={22} thickness={5} sx={{ color: PURPLE }} />
-            </Box>
-            <Box>
-              <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#111', lineHeight: 1.3, fontFamily: 'Poppins' }}>
-                {t('onboarding.cv_analysis_title')}
-              </Typography>
-              <Typography variant="caption" sx={{ color: '#888', fontFamily: 'Poppins' }}>
-                {t('onboarding.cv_analysis_subtitle')}
-              </Typography>
-            </Box>
-          </Box>
+      <Dialog open={analyzingCv}>
+        <DialogContent showCloseButton={false} className="sm:max-w-[380px] rounded-2xl p-0 overflow-hidden gap-0">
+          <div
+            className="h-1 transition-[background] duration-400"
+            style={{ background: `linear-gradient(90deg, hsl(var(--primary)) ${cvProgress}%, rgba(106,211,156,0.15) ${cvProgress}%)` }}
+          />
+          <div className="px-6 py-5 flex flex-col gap-5">
+            <div className="flex items-center gap-3">
+              <div className="size-11 rounded-xl bg-primary/8 flex items-center justify-center shrink-0">
+                <Loader2 className="size-5 text-primary animate-spin" />
+              </div>
+              <div>
+                <p className="font-sans font-bold text-[15px] text-foreground leading-tight">
+                  {t('onboarding.cv_analysis_title')}
+                </p>
+                <p className="font-sans text-xs text-muted-foreground">
+                  {t('onboarding.cv_analysis_subtitle')}
+                </p>
+              </div>
+            </div>
 
-          {[
-            { label: t('onboarding.cv_step1'), threshold: 0 },
-            { label: t('onboarding.cv_step2'), threshold: 30 },
-            { label: t('onboarding.cv_step3'), threshold: 65 },
-          ].map(({ label, threshold }) => (
-            <Box key={label} sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
-              <Box sx={{ width: 18, height: 18, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: cvProgress > threshold ? 'rgba(106,211,156,0.1)' : 'rgba(0,0,0,0.04)', transition: 'background 0.4s' }}>
-                {cvProgress > threshold
-                  ? <CheckCircleOutlineIcon sx={{ fontSize: 13, color: PURPLE }} />
-                  : <CircularProgress size={10} thickness={5} sx={{ color: cvProgress >= threshold ? PURPLE : '#ccc' }} />
-                }
-              </Box>
-              <Typography variant="caption" sx={{ color: cvProgress > threshold ? '#333' : '#aaa', fontWeight: cvProgress > threshold ? 600 : 400, transition: 'color 0.4s', fontFamily: 'Poppins' }}>
-                {label}
-              </Typography>
-            </Box>
-          ))}
+            {[
+              { label: t('onboarding.cv_step1'), threshold: 0 },
+              { label: t('onboarding.cv_step2'), threshold: 30 },
+              { label: t('onboarding.cv_step3'), threshold: 65 },
+            ].map(({ label, threshold }) => (
+              <div key={label} className="flex items-center gap-2.5">
+                <div className={cn(
+                  "size-[18px] rounded-full flex items-center justify-center shrink-0 transition-colors duration-400",
+                  cvProgress > threshold ? "bg-primary/10" : "bg-muted",
+                )}>
+                  {cvProgress > threshold
+                    ? <CheckCircle2 className="size-3.5 text-primary" />
+                    : <Loader2 className={cn("size-2.5 animate-spin", cvProgress >= threshold ? "text-primary" : "text-muted-foreground/50")} />
+                  }
+                </div>
+                <span className={cn(
+                  "text-xs font-sans transition-colors duration-400",
+                  cvProgress > threshold ? "text-foreground font-semibold" : "text-muted-foreground",
+                )}>
+                  {label}
+                </span>
+              </div>
+            ))}
 
-          <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-              <Typography variant="caption" sx={{ color: '#999', fontSize: '0.65rem', fontFamily: 'Poppins' }}>{t('onboarding.cv_processing')}</Typography>
-              <Typography variant="caption" sx={{ color: PURPLE, fontWeight: 700, fontSize: '0.65rem', fontFamily: 'Poppins' }}>{cvProgress}%</Typography>
-            </Box>
-            <LinearProgress variant="determinate" value={cvProgress} sx={{ height: 6, borderRadius: 3, backgroundColor: 'rgba(106,211,156,0.1)', '& .MuiLinearProgress-bar': { borderRadius: 3, background: `linear-gradient(90deg, ${PURPLE}, rgba(106,211,156,0.6))` } }} />
-          </Box>
+            <div>
+              <div className="flex justify-between mb-1">
+                <span className="text-[11px] text-muted-foreground font-sans">{t('onboarding.cv_processing')}</span>
+                <span className="text-[11px] text-primary font-bold font-sans">{cvProgress}%</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-primary/10 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-primary to-primary/60 transition-[width] duration-400"
+                  style={{ width: `${cvProgress}%` }}
+                />
+              </div>
+            </div>
 
-          <Typography variant="caption" sx={{ color: '#bbb', textAlign: 'center', mt: -1, fontFamily: 'Poppins' }}>
-            {t('onboarding.cv_dont_close')}
-          </Typography>
+            <p className="text-[11px] text-muted-foreground/60 text-center -mt-1 font-sans">
+              {t('onboarding.cv_dont_close')}
+            </p>
+          </div>
         </DialogContent>
       </Dialog>
     </>
