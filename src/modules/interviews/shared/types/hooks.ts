@@ -112,6 +112,7 @@ export interface UseCameraReturn {
   cameraError: string;
   streamRef: React.RefObject<MediaStream | null>;
   attachStream: () => void;
+  stopCamera: () => void;
   consentGiven: boolean;
   giveConsent: () => void;
 }

@@ -30,8 +30,9 @@ export function useInterviewSession({
   const [resultsReady, setResultsReady] = useState(false);
   const endInterviewRef = useRef<() => void>(() => {});
 
-  const timerRef = useRef<UseInterviewTimerReturn | null>(null);
-  const audioRef = useRef<UseAudioTranscriptionReturn | null>(null);
+  const timerRef  = useRef<UseInterviewTimerReturn | null>(null);
+  const audioRef  = useRef<UseAudioTranscriptionReturn | null>(null);
+  const cameraRef = useRef<{ stopCamera: () => void } | null>(null);
 
   const isFinishingRef        = useRef(false);
   const finishTimerRef        = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -107,6 +108,7 @@ export function useInterviewSession({
   const handleInterviewEnded = useCallback(async (data: InterviewEndedData) => {
     audioRef.current?.setIsRecording(false);
     timerRef.current?.stopTimer();
+    cameraRef.current?.stopCamera();
     if (data.sessionId) safeSet('last_interview_id', data.sessionId);
     if (data.finalReport || data.analytics) {
       safeSet('last_interview_analysis', JSON.stringify({
@@ -201,8 +203,9 @@ export function useInterviewSession({
     enabled: false,
   });
 
-  audioRef.current = audio;
-  timerRef.current = timer;
+  audioRef.current  = audio;
+  timerRef.current  = timer;
+  cameraRef.current = camera;
   setInterviewStatusRef.current = socket.setInterviewStatus;
 
   const skipQuestion = useCallback(() => { audioRef.current?.skipQuestion(); }, []);
@@ -240,6 +243,7 @@ export function useInterviewSession({
     audio.resetSilenceDetection();
     audio.cleanupAssemblyAI();
     audio.setIsRecording(false);
+    cameraRef.current?.stopCamera();
     socket.setInterviewStatus('ended');
     if (socket.sessionId) safeSet('last_interview_id', socket.sessionId);
   }, [socket.socketRef, socket.sessionId, socket.setInterviewStatus, audio]);

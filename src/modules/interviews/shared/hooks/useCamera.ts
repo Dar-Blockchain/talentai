@@ -87,12 +87,24 @@ export const useCamera = ({ showNotification }: UseCameraOptions): UseCameraRetu
     });
   }, []);
 
+  const stopCamera = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setCameraStatus('idle');
+  }, []);
+
   return {
     videoRef,
     cameraStatus,
     cameraError,
     streamRef,
     attachStream,
+    stopCamera,
     consentGiven,
     giveConsent,
   };
