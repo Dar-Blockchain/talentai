@@ -234,6 +234,13 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
     }
   };
 
+  // Auto-submit when all 6 digits are filled — same UX as the signin OTP page.
+  // The verify call internally checks code length, so false positives are impossible.
+  useEffect(() => {
+    if (step !== 'otp' || loading || isExpired) return;
+    if (code.length === CODE_LENGTH) handleVerify();
+  }, [code]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Reset / close ──────────────────────────────────────────────────────────
 
   const handleClose = () => {
