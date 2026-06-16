@@ -2,6 +2,7 @@ import React from "react";
 import Image from "next/image";
 import NextLink from "next/link";
 import { useTranslation } from "react-i18next";
+import { Zap, Target, ShieldCheck } from "lucide-react";
 
 interface Props {
   tKey: "register_panel" | "signin_panel";
@@ -56,13 +57,13 @@ const BrandLeftPanel: React.FC<Props> = ({ tKey, flex = "0 0 45%" }) => {
         {/* Feature pills */}
         <div className="flex flex-col gap-3">
           {[
-            { icon: "⚡", text: "AI-powered interviews in minutes" },
-            { icon: "🎯", text: "Auto-scoring & candidate ranking" },
-            { icon: "🔒", text: "Enterprise-grade security" },
-          ].map(({ icon, text }) => (
+            { Icon: Zap,         text: "AI-powered interviews in minutes" },
+            { Icon: Target,      text: "Auto-scoring & candidate ranking" },
+            { Icon: ShieldCheck, text: "Enterprise-grade security" },
+          ].map(({ Icon, text }) => (
             <div key={text} className="flex items-center gap-3">
-              <div className="flex items-center justify-center rounded-lg shrink-0 w-8 h-8 text-[15px] bg-[rgba(16,69,63,0.06)] border border-[rgba(16,69,63,0.12)]">
-                {icon}
+              <div className="flex items-center justify-center rounded-lg shrink-0 w-8 h-8 bg-[rgba(16,69,63,0.06)] border border-[rgba(16,69,63,0.12)]">
+                <Icon className="size-4 text-[#10453F]" />
               </div>
               <span className="font-sans text-[rgba(10,46,34,0.65)] text-[clamp(0.75rem,0.82vw,0.92rem)]">{text}</span>
             </div>
