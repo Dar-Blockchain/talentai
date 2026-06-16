@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Box, useTheme, useMediaQuery, Modal, CircularProgress, Typography } from "@mui/material";
 import { useAuthContext } from "@/modules/auth/shared/context/AuthContext";
 import { useTranslation } from "react-i18next";
@@ -40,6 +40,16 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isLoggingOut } = useAuthContext();
   const router = useRouter();
+
+const layoutId = useRef(Math.random().toString(36).slice(2, 8));
+
+useEffect(() => {
+  console.log(`LAYOUT MOUNT ${layoutId.current}`);
+
+  return () => {
+    console.log(`LAYOUT UNMOUNT ${layoutId.current}`);
+  };
+}, []);
 
   useEffect(() => {
     navigation.forEach((item) => router.prefetch(item.href));

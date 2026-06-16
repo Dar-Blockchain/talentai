@@ -1,6 +1,5 @@
 ﻿import React from "react";
 import { Box } from "@mui/material";
-import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
 import CandidateChatPageContent from "@/modules/chat/candidate-chat/components/CandidateChatPageContent";
 import CompanyChatLayout from "@/modules/chat/shared/components/CompanyChatLayout";
 import MessagesRouteGuard from "@/modules/chat/shared/components/MessagesRouteGuard";
@@ -10,21 +9,23 @@ interface CandidatesMessagesShellProps {
   conversationId: string | null;
 }
 
+// Content only — currently not wired to any page (no caller in the
+// codebase). If this is ever used as a page's content, the page must supply
+// the dashboard chrome itself via `Page.getLayout = getDashboardLayout`
+// (see src/modules/shared/layouts/dashboard/getDashboardLayout.tsx).
 const CandidatesMessagesShell: React.FC<CandidatesMessagesShellProps> = ({ conversationId }) => {
   return (
     <MessagesRouteGuard surface="company-candidates">
-      <DashboardLayout tightenMainPaddingTop tightenMainPaddingBottom fillMainHeight>
-        <Box sx={chatDashboardShellFlexSx}>
-          <CompanyChatLayout activeChannel="candidate">
-            <CandidateChatPageContent
-              initialConversationId={conversationId}
-              isCompany
-              fillHeight
-              embeddedInCompanyHub
-            />
-          </CompanyChatLayout>
-        </Box>
-      </DashboardLayout>
+      <Box sx={chatDashboardShellFlexSx}>
+        <CompanyChatLayout activeChannel="candidate">
+          <CandidateChatPageContent
+            initialConversationId={conversationId}
+            isCompany
+            fillHeight
+            embeddedInCompanyHub
+          />
+        </CompanyChatLayout>
+      </Box>
     </MessagesRouteGuard>
   );
 };

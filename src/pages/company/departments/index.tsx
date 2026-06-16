@@ -2,8 +2,9 @@
 import { useSelector }    from "react-redux";
 import { useTranslation } from "react-i18next";
 import { Plus }           from "lucide-react";
-import DashboardLayout    from "@/modules/shared/layouts/dashboard/DashboardLayout";
 import PageHeader         from "@/modules/shared/layouts/dashboard/PageHeader";
+import { getDashboardLayout } from "@/modules/shared/layouts";
+import type { NextPageWithLayout } from "@/pages/_app";
 import { Button }         from "@/modules/shared/ui/shadcn/button";
 import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 import { RootState }      from "@/store/store";
@@ -25,7 +26,7 @@ import { DeleteDepartmentDialog } from "@/modules/company/departments/components
 import { extractAxiosErrorMessage } from "@/modules/company/departments/utils/departmentI18n";
 import type { Department } from "@/modules/company/departments/types";
 
-const DepartmentsPage: React.FC = () => {
+const DepartmentsPage: NextPageWithLayout = () => {
   const { t }         = useTranslation("dashboard");
   const { showToast } = useToast();
   useCompanyAccess("canViewDepartments");
@@ -72,7 +73,7 @@ const DepartmentsPage: React.FC = () => {
   const deleteError = deleteMutation.error ? extractAxiosErrorMessage(deleteMutation.error) : null;
 
   return (
-    <DashboardLayout>
+    <>
       <PageHeader
         title={t("pages.departments.title")}
         subtitle={t("pages.departments.subtitle")}
@@ -126,8 +127,9 @@ const DepartmentsPage: React.FC = () => {
         saving={updateMutation.isPending}
         error={updateError}
       />
-    </DashboardLayout>
+    </>
   );
 };
+DepartmentsPage.getLayout = getDashboardLayout;
 
 export default DepartmentsPage;

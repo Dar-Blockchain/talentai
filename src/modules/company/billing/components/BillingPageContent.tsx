@@ -3,7 +3,6 @@ import { Grid } from "@mui/material";
 import AttachMoneyOutlined from "@mui/icons-material/AttachMoneyOutlined";
 import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
 import ReceiptLongOutlined from "@mui/icons-material/ReceiptLongOutlined";
-import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
 import PageHeader      from "@/modules/shared/layouts/dashboard/PageHeader";
 import StatCard        from "@/components/ui/StatCard";
 import { useBillingPage } from "../hooks/useBillingPage";
@@ -18,7 +17,7 @@ const BillingPageContent: React.FC = () => {
     : "—";
 
   return (
-    <DashboardLayout>
+    <>
       <PageHeader
         title="Billing & Payments"
         subtitle="View your active subscription usage and full payment history"
@@ -44,7 +43,7 @@ const BillingPageContent: React.FC = () => {
       </Grid>
 
       <PaymentTable history={history} loading={loading} subByPaymentId={subByPaymentId} />
-    </DashboardLayout>
+    </>
   );
 };
 

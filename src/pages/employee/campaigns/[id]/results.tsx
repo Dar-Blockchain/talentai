@@ -7,6 +7,8 @@ import { RootState } from '@/store/store';
 import dynamic from 'next/dynamic';
 import CampaignResultsView from '@/components/features/campaign/results/CampaignResultsView';
 import { selectSelectedCampaign } from '@/store/slices/campaignSlice';
+import { getDashboardLayout } from '@/modules/shared/layouts';
+import type { NextPageWithLayout } from '@/pages/_app';
 
 const MAX_TITLE_LENGTH = 28;
 
@@ -38,4 +40,10 @@ const EmployeeCampaignResults: React.FC = () => {
   );
 };
 
-export default dynamic(() => Promise.resolve(EmployeeCampaignResults), { ssr: false });
+const EmployeeCampaignResultsPage: NextPageWithLayout = dynamic(
+  () => Promise.resolve(EmployeeCampaignResults),
+  { ssr: false },
+);
+EmployeeCampaignResultsPage.getLayout = getDashboardLayout;
+
+export default EmployeeCampaignResultsPage;

@@ -7,6 +7,8 @@ import { useSelector } from 'react-redux';
 import dynamic from 'next/dynamic';
 import CampaignResultsView from '@/components/features/campaign/results/CampaignResultsView';
 import { selectSelectedCampaign } from '@/store/slices/campaignSlice';
+import { getDashboardLayout } from '@/modules/shared/layouts';
+import type { NextPageWithLayout } from '@/pages/_app';
 
 const MAX_TITLE_LENGTH = 28;
 
@@ -38,4 +40,10 @@ const CompanyCampaignResults: React.FC = () => {
   );
 };
 
-export default dynamic(() => Promise.resolve(CompanyCampaignResults), { ssr: false });
+const CompanyCampaignResultsPage: NextPageWithLayout = dynamic(
+  () => Promise.resolve(CompanyCampaignResults),
+  { ssr: false },
+);
+CompanyCampaignResultsPage.getLayout = getDashboardLayout;
+
+export default CompanyCampaignResultsPage;

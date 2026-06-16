@@ -2,49 +2,85 @@ import i18n, { type InitOptions } from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { getToken } from '@/modules/auth/shared/utils/token';
 
-// ── EN ──────────────────────────────────────────────
-import enCommon     from '../../public/locales/en/shared/common.json';
-import enAuth       from '../../public/locales/en/shared/auth.json';
-import enDashboard  from '../../public/locales/en/shared/dashboard.json';
-import enDashboardCandidate from '../../public/locales/en/modules/candidates/candidate.json';
-import enPosts      from '../../public/locales/en/modules/company/posts.json';
-import enCampaign   from '../../public/locales/en/modules/campaigns/campaign.json';
-import enInterview  from '../../public/locales/en/shared/interview.json';
-import enHome       from '../../public/locales/en/shared/home.json';
-import enLegal      from '../../public/locales/en/shared/legal.json';
-import enEmployees  from '../../public/locales/en/modules/employees/employees.json';
-import enDepartments from '../../public/locales/en/modules/departments/departments.json';
-import enSubscription from '../../public/locales/en/modules/company/subscription.json';
-import enInterviewHr from '../../public/locales/en/modules/interview/interview.json';
-import enInterviewResults from '../../public/locales/en/modules/interview/results.json';
-import enInterviewApply from '../../public/locales/en/modules/interview/apply.json';
-import enChat from '../../public/locales/en/shared/chat.json';
-import enTeamChat from '../../public/locales/en/modules/company/teamChat.json';
-import enCandidateChat from '../../public/locales/en/modules/candidates/candidateChat.json';
-import enCompanyChat from '../../public/locales/en/modules/company/companyChat.json';
-import enNotifications from '../../public/locales/en/modules/notifications/notifications.json';
+// ─── Lazy namespace loading ───────────────────────────────────────────────
+// All 19 namespaces × 2 languages used to be statically imported here, which
+// inlined ~320 KB of raw JSON into the `_app` chunk (it's loaded on every
+// route). Each namespace is now a `next/dynamic`-style webpack async chunk,
+// fetched on demand the first time a component calls `useTranslation(ns)`
+// for it (see the `lazyJsonBackend` below) — translations a given page
+// never uses never ship to that page.
+type Lang = 'en' | 'fr';
+type Loader = () => Promise<{ default: Record<string, unknown> }>;
 
-// ── FR ──────────────────────────────────────────────
-import frCommon     from '../../public/locales/fr/shared/common.json';
-import frAuth       from '../../public/locales/fr/shared/auth.json';
-import frDashboard  from '../../public/locales/fr/shared/dashboard.json';
-import frDashboardCandidate from '../../public/locales/fr/modules/candidates/candidate.json';
-import frPosts      from '../../public/locales/fr/modules/company/posts.json';
-import frCampaign   from '../../public/locales/fr/modules/campaigns/campaign.json';
-import frInterview  from '../../public/locales/fr/shared/interview.json';
-import frHome       from '../../public/locales/fr/shared/home.json';
-import frLegal      from '../../public/locales/fr/shared/legal.json';
-import frEmployees  from '../../public/locales/fr/modules/employees/employees.json';
-import frDepartments from '../../public/locales/fr/modules/departments/departments.json';
-import frSubscription from '../../public/locales/fr/modules/company/subscription.json';
-import frInterviewHr from '../../public/locales/fr/modules/interview/interview.json';
-import frInterviewResults from '../../public/locales/fr/modules/interview/results.json';
-import frInterviewApply from '../../public/locales/fr/modules/interview/apply.json';
-import frChat from '../../public/locales/fr/shared/chat.json';
-import frTeamChat from '../../public/locales/fr/modules/company/teamChat.json';
-import frCandidateChat from '../../public/locales/fr/modules/candidates/candidateChat.json';
-import frCompanyChat from '../../public/locales/fr/modules/company/companyChat.json';
-import frNotifications from '../../public/locales/fr/modules/notifications/notifications.json';
+const NAMESPACE_LOADERS: Record<string, Record<Lang, Loader>> = {
+  common: {
+    en: () => import('../../public/locales/en/shared/common.json'),
+    fr: () => import('../../public/locales/fr/shared/common.json'),
+  },
+  auth: {
+    en: () => import('../../public/locales/en/shared/auth.json'),
+    fr: () => import('../../public/locales/fr/shared/auth.json'),
+  },
+  posts: {
+    en: () => import('../../public/locales/en/modules/company/posts.json'),
+    fr: () => import('../../public/locales/fr/modules/company/posts.json'),
+  },
+  interview: {
+    en: () => import('../../public/locales/en/shared/interview.json'),
+    fr: () => import('../../public/locales/fr/shared/interview.json'),
+  },
+  home: {
+    en: () => import('../../public/locales/en/shared/home.json'),
+    fr: () => import('../../public/locales/fr/shared/home.json'),
+  },
+  legal: {
+    en: () => import('../../public/locales/en/shared/legal.json'),
+    fr: () => import('../../public/locales/fr/shared/legal.json'),
+  },
+  'modules/interview/interview': {
+    en: () => import('../../public/locales/en/modules/interview/interview.json'),
+    fr: () => import('../../public/locales/fr/modules/interview/interview.json'),
+  },
+  'modules/interview/results': {
+    en: () => import('../../public/locales/en/modules/interview/results.json'),
+    fr: () => import('../../public/locales/fr/modules/interview/results.json'),
+  },
+  'modules/interview/apply': {
+    en: () => import('../../public/locales/en/modules/interview/apply.json'),
+    fr: () => import('../../public/locales/fr/modules/interview/apply.json'),
+  },
+  'shared/chat': {
+    en: () => import('../../public/locales/en/shared/chat.json'),
+    fr: () => import('../../public/locales/fr/shared/chat.json'),
+  },
+  'modules/company/teamChat': {
+    en: () => import('../../public/locales/en/modules/company/teamChat.json'),
+    fr: () => import('../../public/locales/fr/modules/company/teamChat.json'),
+  },
+  'modules/candidates/candidateChat': {
+    en: () => import('../../public/locales/en/modules/candidates/candidateChat.json'),
+    fr: () => import('../../public/locales/fr/modules/candidates/candidateChat.json'),
+  },
+  'modules/company/companyChat': {
+    en: () => import('../../public/locales/en/modules/company/companyChat.json'),
+    fr: () => import('../../public/locales/fr/modules/company/companyChat.json'),
+  },
+  'modules/notifications/notifications': {
+    en: () => import('../../public/locales/en/modules/notifications/notifications.json'),
+    fr: () => import('../../public/locales/fr/modules/notifications/notifications.json'),
+  },
+};
+
+// `dashboard` is a merge of 6 source files (see `mergeDashboardPageBundles`
+// below) — loaded and combined together as a single namespace fetch.
+const DASHBOARD_PART_LOADERS: Record<Lang, Loader>[] = [
+  { en: () => import('../../public/locales/en/shared/dashboard.json'),               fr: () => import('../../public/locales/fr/shared/dashboard.json') } as Record<Lang, Loader>,
+  { en: () => import('../../public/locales/en/modules/employees/employees.json'),     fr: () => import('../../public/locales/fr/modules/employees/employees.json') } as Record<Lang, Loader>,
+  { en: () => import('../../public/locales/en/modules/departments/departments.json'), fr: () => import('../../public/locales/fr/modules/departments/departments.json') } as Record<Lang, Loader>,
+  { en: () => import('../../public/locales/en/modules/campaigns/campaign.json'),      fr: () => import('../../public/locales/fr/modules/campaigns/campaign.json') } as Record<Lang, Loader>,
+  { en: () => import('../../public/locales/en/modules/company/subscription.json'),    fr: () => import('../../public/locales/fr/modules/company/subscription.json') } as Record<Lang, Loader>,
+  { en: () => import('../../public/locales/en/modules/candidates/candidate.json'),    fr: () => import('../../public/locales/fr/modules/candidates/candidate.json') } as Record<Lang, Loader>,
+];
 
 export const SUPPORTED_LANGUAGES = ['en', 'fr'] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
@@ -86,6 +122,39 @@ function mergeDashboardPageBundles<D extends { pages: Record<string, unknown> }>
 }
 
 /**
+ * i18next custom backend: resolves each (language, namespace) pair to its
+ * webpack async chunk instead of a bundled JSON literal. `useTranslation(ns)`
+ * triggers this the first time a namespace is actually requested, so pages
+ * only ever download the translations they use.
+ */
+const lazyJsonBackend = {
+  type: 'backend' as const,
+  init() {},
+  read(language: string, namespace: string, callback: (err: unknown, data?: unknown) => void) {
+    const lng: Lang = language === 'fr' ? 'fr' : 'en';
+
+    if (namespace === 'dashboard') {
+      Promise.all(DASHBOARD_PART_LOADERS.map((loaders) => loaders[lng]()))
+        .then(([dashboard, employees, departments, campaigns, subscription, candidate]) =>
+          callback(
+            null,
+            mergeDashboardPageBundles(
+              dashboard.default as any, employees.default, departments.default,
+              campaigns.default, subscription.default, candidate.default,
+            ),
+          ),
+        )
+        .catch((err) => callback(err, null));
+      return;
+    }
+
+    const loader = NAMESPACE_LOADERS[namespace]?.[lng];
+    if (!loader) { callback(null, {}); return; }
+    loader().then((mod) => callback(null, mod.default)).catch((err) => callback(err, null));
+  },
+};
+
+/**
  * Synchronously determine the correct starting language before React renders.
  * Priority: persisted Redux user language (auth) → cookie → manual key → 'en'
  * The cookie (talentai_lang, 1-year) is the guest/post-logout source of truth.
@@ -116,49 +185,21 @@ function getInitialLanguage(): string {
   return 'en';
 }
 
-const options: InitOptions = {
-  resources: {
-    en: {
-      common:    enCommon,
-      auth:      enAuth,
-      dashboard: mergeDashboardPageBundles(enDashboard, enEmployees, enDepartments, enCampaign, enSubscription, enDashboardCandidate),
-      posts:     enPosts,
-      interview: enInterview,
-      home:      enHome,
-      legal:     enLegal,
-      'modules/interview/interview': enInterviewHr,
-      'modules/interview/results':  enInterviewResults,
-      'modules/interview/apply':    enInterviewApply,
-      'shared/chat':               enChat,
-      'modules/company/teamChat': enTeamChat,
-      'modules/candidates/candidateChat': enCandidateChat,
-      'modules/company/companyChat': enCompanyChat,
-      'modules/notifications/notifications': enNotifications,
-    },
-    fr: {
-      common:    frCommon,
-      auth:      frAuth,
-      dashboard: mergeDashboardPageBundles(frDashboard, frEmployees, frDepartments, frCampaign, frSubscription, frDashboardCandidate),
-      posts:     frPosts,
-      interview: frInterview,
-      home:      frHome,
-      legal:     frLegal,
-      'modules/interview/interview': frInterviewHr,
-      'modules/interview/results':  frInterviewResults,
-      'modules/interview/apply':    frInterviewApply,
-      'shared/chat':               frChat,
-      'modules/company/teamChat': frTeamChat,
-      'modules/candidates/candidateChat': frCandidateChat,
-      'modules/company/companyChat': frCompanyChat,
-      'modules/notifications/notifications': frNotifications,
-    },
-  },
+// Only namespaces actually needed before/outside a React render: `common`
+// (default NS, used everywhere) and the notifications NS, which is read via
+// bare `i18n.t()` calls from non-component modules (toast/socket handlers)
+// that can't rely on `useTranslation()`'s lazy-load-on-mount behavior.
+// Every other namespace loads on demand the first time a page's
+// `useTranslation(ns)` asks for it.
+const PRELOADED_NAMESPACES = ['common', 'modules/notifications/notifications'];
 
+const options: InitOptions = {
   lng: getInitialLanguage(),
   fallbackLng: 'en',
   supportedLngs: [...SUPPORTED_LANGUAGES],
   defaultNS: 'common',
-  ns: [...NAMESPACES],
+  ns: PRELOADED_NAMESPACES,
+  partialBundledLanguages: true,
 
   interpolation: {
     escapeValue: false,
@@ -171,17 +212,12 @@ const options: InitOptions = {
 
 if (!i18n.isInitialized) {
   i18n
+    .use(lazyJsonBackend)
     .use(initReactI18next)
     .init(options);
 } else {
-  // Re-sync all bundles so JSON changes survive HMR without a full restart
-  SUPPORTED_LANGUAGES.forEach((lng) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const langBundles = (options.resources as any)?.[lng] ?? {};
-    Object.keys(langBundles).forEach((ns) => {
-      i18n.addResourceBundle(lng, ns, langBundles[ns], true, true);
-    });
-  });
+  // Re-fetch already-loaded namespaces so JSON changes survive HMR without a full restart
+  i18n.reloadResources();
 }
 
 export default i18n;

@@ -11,9 +11,10 @@ import {
   SubscriptionBanner, PlanCard, ContactUsModal,
   CancelDialog, DowngradeDialog,
 } from "@/modules/company/plans/components";
-import { DashboardLayout, PageHeader } from "@/modules/shared/layouts";
+import { getDashboardLayout, PageHeader } from "@/modules/shared/layouts";
+import type { NextPageWithLayout } from "@/pages/_app";
 
-export default function PlansPage() {
+const PlansPage: NextPageWithLayout = function PlansPage() {
   const { t } = useTranslation("dashboard");
   const {
     sortedPlans, plansLoading, combinedLoading, cancelling,
@@ -27,7 +28,7 @@ export default function PlansPage() {
   } = usePlans();
 
   return (
-    <DashboardLayout>
+    <>
       <DowngradeDialog
         downgradePlan={downgradePlan}
         cancelling={cancelling}
@@ -98,6 +99,9 @@ export default function PlansPage() {
       )}
 
       <ContactUsModal open={contactOpen} onClose={() => setContactOpen(false)} />
-    </DashboardLayout>
+    </>
   );
-}
+};
+PlansPage.getLayout = getDashboardLayout;
+
+export default PlansPage;

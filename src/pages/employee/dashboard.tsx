@@ -1,16 +1,16 @@
 ﻿import React from "react";
-import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
 import EmployeeDashboardOverview from "@/components/features/employee/EmployeeDashboardOverview";
 import dynamic from "next/dynamic";
+import { getDashboardLayout } from "@/modules/shared/layouts";
+import type { NextPageWithLayout } from "@/pages/_app";
 
 const EmployeeDashboard: React.FC = () => {
-  return (
-    <DashboardLayout>
-      <EmployeeDashboardOverview />
-    </DashboardLayout>
-  );
+  return <EmployeeDashboardOverview />;
 };
 
-export default dynamic(() => Promise.resolve(EmployeeDashboard), {
+const EmployeeDashboardPage: NextPageWithLayout = dynamic(() => Promise.resolve(EmployeeDashboard), {
   ssr: false,
 });
+EmployeeDashboardPage.getLayout = getDashboardLayout;
+
+export default EmployeeDashboardPage;

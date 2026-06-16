@@ -13,7 +13,8 @@ import type { ApplicationSummaryItem } from "@/store/slices/jobApplicationSlice"
 import { useApplicationsList } from "@/modules/company/applications/hooks";
 import { ApplicationsToolbar, PostPickerModal } from "@/modules/company/applications/components";
 import { TEAL } from "@/modules/company/applications/components/constants";
-import { DashboardLayout } from "@/modules/shared/layouts";
+import { getDashboardLayout } from "@/modules/shared/layouts";
+import type { NextPageWithLayout } from "@/pages/_app";
 
 // ─── Static sx constants ──────────────────────────────────────────────────────
 
@@ -23,7 +24,7 @@ const PAGINATION_SX     = { "& .MuiPaginationItem-root": { fontWeight: 500 }, "&
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-const ApplicationsPage: React.FC = () => {
+const ApplicationsPage: NextPageWithLayout = () => {
   const { t } = useTranslation("dashboard");
   const {
     searchInput, setSearchInput,
@@ -74,7 +75,7 @@ const ApplicationsPage: React.FC = () => {
   }, [setPage]);
 
   return (
-    <DashboardLayout>
+    <>
       <ApplicationsToolbar
         searchInput={searchInput}
         status={status}
@@ -141,8 +142,9 @@ const ApplicationsPage: React.FC = () => {
       />
       <ContactCandidateModal open={!!contactTarget} target={contactTarget} onClose={closeContact} />
       <AssessmentDetailsModal open={!!assessmentTarget} target={assessmentTarget} onClose={closeAssessment} />
-    </DashboardLayout>
+    </>
   );
 };
+ApplicationsPage.getLayout = getDashboardLayout;
 
 export default ApplicationsPage;

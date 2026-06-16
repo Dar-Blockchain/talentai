@@ -2,6 +2,8 @@ import "@/styles/globals.css";
 import "@/i18n/config"; // initialise i18next before anything renders
 import "@/lib/dayjs";   // extend dayjs plugins globally
 import type { AppProps } from "next/app";
+import type { NextPage } from "next";
+import type { ReactElement, ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { Provider, useSelector, useDispatch } from "react-redux";
 import { store, persistor, RootState } from "../store/store";
@@ -111,10 +113,10 @@ function DbLanguageSync() {
 
 // ─── Auth orchestration ───────────────────────────────────────────────────────
 function AuthWrapper({ children }: { children: React.ReactNode }) {
-  // Granular selector: only re-renders when the user identity object changes.
+  // Granular selector: only re-renders when the user id changes.
   // Previously selected the whole connectedUser slice — loading/profile/planLimits
   // updates all caused AuthWrapper to re-render and re-register event listeners.
-  const user = useSelector((state: RootState) => state.user.connectedUser.user);
+  const userId = useSelector((state: RootState) => state.user.connectedUser.user?._id);
 
   // Wait for redux-persist to finish reading from localStorage before deciding
   // whether a profile fetch is needed. Without this guard, on a cold reload we
@@ -128,8 +130,6 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
 
-  const userId = user?._id;
-
   // Split context subscriptions — AuthWrapper needs both halves but they're
   // now two separate hook calls so each subscription is minimal.
   const { isAuthenticated, isLoggingOut } = useAuthState();
@@ -139,7 +139,7 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
   // that a persisted user (from localStorage) skips the network round-trip.
   useEffect(() => {
     if (!isRehydrated) return;
-    if (user) return;
+    if (userId) return;
     if (!getToken()) return;
     dispatch(getMyProfile());
   }, [isRehydrated]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -218,7 +218,30 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function App({ Component, pageProps }: AppProps) {
+// ─── Persistent-layout support (Next.js Pages Router pattern) ───────────────
+// A page opts into a persistent shell by assigning `Page.getLayout`. Because
+// `getLayout` is a stable function reference (e.g. `getDashboardLayout`,
+// shared across every dashboard page), the element it returns has the same
+// component type + tree position on every navigation, so React reconciles it
+// in place instead of unmounting/remounting it — only the page content
+// (`children`) swaps out. Pages without `getLayout` render unwrapped, exactly
+// as before.
+export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
+  getLayout?: (page: ReactElement) => ReactNode;
+};
+
+type AppPropsWithLayout = AppProps & {
+  Component: NextPageWithLayout;
+};
+
+// Stable reference so pages without `getLayout` don't get a fresh fallback
+// function on every render — that broke the "same component type" check
+// React relies on to reconcile the persistent layout in place.
+const defaultGetLayout = (page: ReactElement) => page;
+
+export default function App({ Component, pageProps }: AppPropsWithLayout) {
+  const getLayout = Component.getLayout ?? defaultGetLayout;
+
   return (
     <Provider store={store}>
       {/*
@@ -244,7 +267,7 @@ export default function App({ Component, pageProps }: AppProps) {
             <ToastProvider>
               <MuiToastWrapper />
               <AuthWrapper>
-                <Component {...pageProps} />
+                {getLayout(<Component {...pageProps} />)}
                 <ScrollToTop />
               </AuthWrapper>
             </ToastProvider>

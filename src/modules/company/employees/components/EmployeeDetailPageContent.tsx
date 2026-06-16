@@ -1,6 +1,5 @@
 import React, { memo, useCallback } from "react";
 import { Box, CircularProgress, Typography } from "@mui/material";
-import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
 import EditRoleModal from "./edit/EditRoleModal";
 import DeleteMemberDialog from "./delete/DeleteMemberDialog";
 import EmployeeDetail from "./details/EmployeeDetail";
@@ -30,7 +29,7 @@ const EmployeeDetailPageContent: React.FC<Props> = memo(({ id }) => {
   const cancelDelete   = useCallback(() => { setDeleteDialogOpen(false); setSelectedMember(null); }, [setDeleteDialogOpen, setSelectedMember]);
 
   return (
-    <DashboardLayout>
+    <>
       {loading && !member ? (
         <Box sx={LOADER_SX}>
           <CircularProgress sx={{ color: "#8310FF" }} />
@@ -75,7 +74,7 @@ const EmployeeDetailPageContent: React.FC<Props> = memo(({ id }) => {
         onCancel={cancelDelete}
         onConfirm={handleConfirmDelete}
       />
-    </DashboardLayout>
+    </>
   );
 });
 

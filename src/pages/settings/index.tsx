@@ -1,5 +1,10 @@
 import SettingsShell from "@/modules/settings/shared/components/SettingsShell";
+import { getSettingsLayout } from "@/modules/settings/shared/components/SettingsLayout";
+import type { NextPageWithLayout } from "@/pages/_app";
 
-export default function SettingsPage() {
+const SettingsPage: NextPageWithLayout = function SettingsPage() {
   return <SettingsShell />;
-}
+};
+SettingsPage.getLayout = getSettingsLayout;
+
+export default SettingsPage;

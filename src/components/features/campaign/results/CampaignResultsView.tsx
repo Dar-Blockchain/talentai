@@ -6,7 +6,6 @@ import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
 import { Box, Typography, Chip, Divider, CircularProgress, Alert } from '@mui/material';
 
-import DashboardLayout from '@/modules/shared/layouts/dashboard/DashboardLayout';
 import PageHeader      from '@/modules/shared/layouts/dashboard/PageHeader';
 import {
   fetchParticipantResults,
@@ -491,11 +490,13 @@ const CampaignResultsView: React.FC<Props> = ({ campaignId, participantId, bread
     );
   }
 
+  // Dashboard chrome is provided by the consuming page via `getLayout`
+  // (the persistent-layout architecture) — this component renders content only.
   return (
-    <DashboardLayout>
+    <>
       <PageHeader title="" breadcrumbs={breadcrumbs} />
       {content}
-    </DashboardLayout>
+    </>
   );
 };
 
