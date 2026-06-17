@@ -21,8 +21,10 @@ export default function SkillStartPanel({ skill, onStartInterview }: SkillStartP
 
   const isAuthenticated = !!authUser && !!onStartInterview;
 
-  const features = t('start.features', { returnObjects: true }) as string[];
-  const steps    = t('start.login.steps', { returnObjects: true }) as { label: string; sub: string }[];
+  const rawFeatures = t('start.features',    { returnObjects: true });
+  const rawSteps    = t('start.login.steps', { returnObjects: true });
+  const features = Array.isArray(rawFeatures) ? rawFeatures as string[]                           : [];
+  const steps    = Array.isArray(rawSteps)    ? rawSteps    as { label: string; sub: string }[]   : [];
 
   return (
     <div className="w-full md:w-[320px] shrink-0 md:sticky md:top-6">

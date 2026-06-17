@@ -18,6 +18,7 @@ import enSubscription from '../../public/locales/en/modules/company/subscription
 import enInterviewHr from '../../public/locales/en/modules/interview/interview.json';
 import enInterviewResults from '../../public/locales/en/modules/interview/results.json';
 import enInterviewApply from '../../public/locales/en/modules/interview/apply.json';
+import enSkillInterview from '../../public/locales/en/modules/interview/skill-interview.json';
 import enChat from '../../public/locales/en/shared/chat.json';
 import enTeamChat from '../../public/locales/en/modules/company/teamChat.json';
 import enCandidateChat from '../../public/locales/en/modules/candidates/candidateChat.json';
@@ -40,6 +41,7 @@ import frSubscription from '../../public/locales/fr/modules/company/subscription
 import frInterviewHr from '../../public/locales/fr/modules/interview/interview.json';
 import frInterviewResults from '../../public/locales/fr/modules/interview/results.json';
 import frInterviewApply from '../../public/locales/fr/modules/interview/apply.json';
+import frSkillInterview from '../../public/locales/fr/modules/interview/skill-interview.json';
 import frChat from '../../public/locales/fr/shared/chat.json';
 import frTeamChat from '../../public/locales/fr/modules/company/teamChat.json';
 import frCandidateChat from '../../public/locales/fr/modules/candidates/candidateChat.json';
@@ -129,6 +131,7 @@ const options: InitOptions = {
       'modules/interview/interview': enInterviewHr,
       'modules/interview/results':  enInterviewResults,
       'modules/interview/apply':    enInterviewApply,
+      'modules/interview/skill-interview': enSkillInterview,
       'shared/chat':               enChat,
       'modules/company/teamChat': enTeamChat,
       'modules/candidates/candidateChat': enCandidateChat,
@@ -146,6 +149,7 @@ const options: InitOptions = {
       'modules/interview/interview': frInterviewHr,
       'modules/interview/results':  frInterviewResults,
       'modules/interview/apply':    frInterviewApply,
+      'modules/interview/skill-interview': frSkillInterview,
       'shared/chat':               frChat,
       'modules/company/teamChat': frTeamChat,
       'modules/candidates/candidateChat': frCandidateChat,

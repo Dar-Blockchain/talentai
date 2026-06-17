@@ -11,11 +11,18 @@ interface SkillDetailsColumnProps {
 export default function SkillDetailsColumn({ skill: _ }: SkillDetailsColumnProps) {
   const { t } = useTranslation('modules/interview/skill-interview');
 
-  const areas       = t('preview.areas',        { returnObjects: true }) as string[];
-  const focusChips  = t('preview.focus_chips',  { returnObjects: true }) as string[];
-  const formatItems = t('preview.format_items', { returnObjects: true }) as string[];
-  const formatIcons = t('preview.format_icons', { returnObjects: true }) as string[];
-  const tips        = t('preview.tips',         { returnObjects: true }) as string[];
+  const raw = {
+    areas:       t('preview.areas',        { returnObjects: true }),
+    focusChips:  t('preview.focus_chips',  { returnObjects: true }),
+    formatItems: t('preview.format_items', { returnObjects: true }),
+    formatIcons: t('preview.format_icons', { returnObjects: true }),
+    tips:        t('preview.tips',         { returnObjects: true }),
+  };
+  const areas       = Array.isArray(raw.areas)       ? raw.areas       as string[] : [];
+  const focusChips  = Array.isArray(raw.focusChips)  ? raw.focusChips  as string[] : [];
+  const formatItems = Array.isArray(raw.formatItems) ? raw.formatItems as string[] : [];
+  const formatIcons = Array.isArray(raw.formatIcons) ? raw.formatIcons as string[] : [];
+  const tips        = Array.isArray(raw.tips)        ? raw.tips        as string[] : [];
 
   return (
     <div className="flex-1 flex flex-col gap-6">
