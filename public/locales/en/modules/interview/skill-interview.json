@@ -1,4 +1,8 @@
 {
+  "loading": {
+    "title": "Loading skill interview",
+    "subtitle": "Preparing your assessment…"
+  },
   "header": {
     "subtitle": "Technical Skill Assessment · AI-Powered",
     "adaptive_difficulty": "Adaptive difficulty"

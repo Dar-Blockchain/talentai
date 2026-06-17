@@ -1,7 +1,5 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
-import WarningIcon from '@mui/icons-material/Warning';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import { AlertTriangle, Clock } from 'lucide-react';
 
 interface InterviewTimerProps {
   elapsedTime: number;
@@ -9,25 +7,23 @@ interface InterviewTimerProps {
 }
 
 const InterviewTimer: React.FC<InterviewTimerProps> = ({ elapsedTime, timeWarning }) => (
-  <Box
-    sx={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 0.75,
-      bgcolor: timeWarning ? 'rgba(239,68,68,0.1)' : 'rgba(11,11,15,0.06)',
-      border: `1px solid ${timeWarning ? 'rgba(239,68,68,0.3)' : 'rgba(0,0,0,0.1)'}`,
-      borderRadius: '40px',
-      px: 1.25,
-      py: 0.4,
+  <div
+    className="flex items-center gap-1.5 rounded-full px-3 py-1 border"
+    style={{
+      background: timeWarning ? 'rgba(239,68,68,0.1)' : 'rgba(11,11,15,0.06)',
+      borderColor: timeWarning ? 'rgba(239,68,68,0.3)' : 'rgba(0,0,0,0.1)',
     }}
   >
     {timeWarning
-      ? <WarningIcon sx={{ fontSize: 12, color: '#ef4444' }} />
-      : <AccessTimeIcon sx={{ fontSize: 12, color: '#6B7280' }} />}
-    <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.78rem', color: timeWarning ? '#ef4444' : '#374151', letterSpacing: '0.04em' }}>
+      ? <AlertTriangle size={12} color="#ef4444" />
+      : <Clock size={12} color="#6B7280" />}
+    <span
+      className="font-sans font-bold text-[0.78rem] tracking-[0.04em]"
+      style={{ color: timeWarning ? '#ef4444' : '#374151' }}
+    >
       {Math.floor(elapsedTime / 60)}:{String(elapsedTime % 60).padStart(2, '0')}
-    </Typography>
-  </Box>
+    </span>
+  </div>
 );
 
 export default InterviewTimer;

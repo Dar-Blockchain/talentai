@@ -1,14 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Box, Button, CircularProgress, Dialog,
-  TextField, Typography,
-} from '@mui/material';
-import StarIcon from '@mui/icons-material/Star';
-import StarBorderIcon from '@mui/icons-material/StarBorder';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import { Star, CheckCircle2 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from '@/store/store';
 import { submitFeedback, resetFeedback } from '@/store/slices/feedbackSlice';
+import {
+  Dialog, DialogContent,
+} from '@/modules/shared/ui/shadcn/dialog';
 
 interface FeedbackModalProps {
   open: boolean;
@@ -25,7 +22,6 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ open, interviewId, interv
   const [hovered, setHovered] = useState(0);
   const [comment, setComment] = useState('');
 
-  // Reset local + redux state each time the modal opens
   useEffect(() => {
     if (open) {
       dispatch(resetFeedback());
@@ -35,11 +31,10 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ open, interviewId, interv
     }
   }, [open, dispatch]);
 
-  // Auto-proceed 1.5 s after successful submission
   useEffect(() => {
     if (!submitted) return;
-    const t = setTimeout(onDone, 1500);
-    return () => clearTimeout(t);
+    const timer = setTimeout(onDone, 1500);
+    return () => clearTimeout(timer);
   }, [submitted, onDone]);
 
   const followUpQuestion =
@@ -48,137 +43,87 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ open, interviewId, interv
                     'What did you like most?';
 
   return (
-    <Dialog
-      open={open}
-      onClose={() => {}} // prevent accidental backdrop close
-      maxWidth="xs"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: '20px',
-          p: 0,
-          overflow: 'hidden',
-          boxShadow: '0 24px 48px rgba(0,0,0,0.18)',
-        },
-      }}
-    >
-      {/* Purple accent bar */}
-      <Box sx={{ height: 4, background: 'linear-gradient(90deg, #8310FF 0%, #6d0ee0 100%)' }} />
+    <Dialog open={open} onOpenChange={() => {}}>
+      <DialogContent
+        showCloseButton={false}
+        className="max-w-xs rounded-[20px] p-0 overflow-hidden shadow-[0_24px_48px_rgba(0,0,0,0.18)]"
+      >
+        {/* Purple accent bar */}
+        <div className="h-1 bg-gradient-to-r from-[#8310FF] to-[#6d0ee0]" />
 
-      <Box sx={{ p: { xs: 2.5, md: 3 } }}>
-        {submitted ? (
-          /* ── Success state ── */
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5, py: 3 }}>
-            <CheckCircleOutlineIcon sx={{ fontSize: 52, color: '#16a34a' }} />
-            <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.05rem', color: '#15803d' }}>
-              Thank you for your feedback!
-            </Typography>
-            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#6B7280', textAlign: 'center' }}>
-              We appreciate your response.
-            </Typography>
-          </Box>
-        ) : (
-          /* ── Form state ── */
-          <>
-            <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.05rem', color: '#111827', mb: 0.5 }}>
-              How was your interview experience?
-            </Typography>
-            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#6B7280', mb: 2.5 }}>
-              Your feedback helps us improve.
-            </Typography>
+        <div className="p-6 md:p-7">
+          {submitted ? (
+            <div className="flex flex-col items-center gap-4 py-6">
+              <CheckCircle2 size={52} color="#16a34a" />
+              <p className="font-sans font-bold text-[1.05rem] text-[#15803d]">Thank you for your feedback!</p>
+              <p className="font-sans text-[0.82rem] text-[#6B7280] text-center">We appreciate your response.</p>
+            </div>
+          ) : (
+            <>
+              <p className="font-sans font-bold text-[1.05rem] text-[#111827] mb-1">How was your interview experience?</p>
+              <p className="font-sans text-[0.82rem] text-[#6B7280] mb-5">Your feedback helps us improve.</p>
 
-            {/* Star rating */}
-            <Box sx={{ display: 'flex', gap: 0.5, mb: 2 }}>
-              {[1, 2, 3, 4, 5].map((star) => {
-                const active = star <= (hovered || rating);
-                return (
-                  <Box
-                    key={star}
-                    onClick={() => setRating(star)}
-                    onMouseEnter={() => setHovered(star)}
-                    onMouseLeave={() => setHovered(0)}
-                    sx={{ cursor: 'pointer', color: active ? '#F59E0B' : '#D1D5DB' }}
-                  >
-                    {active
-                      ? <StarIcon sx={{ fontSize: 36 }} />
-                      : <StarBorderIcon sx={{ fontSize: 36 }} />}
-                  </Box>
-                );
-              })}
-            </Box>
+              {/* Star rating */}
+              <div className="flex gap-1 mb-4">
+                {[1, 2, 3, 4, 5].map((star) => {
+                  const active = star <= (hovered || rating);
+                  return (
+                    <button
+                      key={star}
+                      onClick={() => setRating(star)}
+                      onMouseEnter={() => setHovered(star)}
+                      onMouseLeave={() => setHovered(0)}
+                      className="cursor-pointer transition-colors"
+                      style={{ color: active ? '#F59E0B' : '#D1D5DB' }}
+                    >
+                      <Star size={36} fill={active ? 'currentColor' : 'none'} />
+                    </button>
+                  );
+                })}
+              </div>
 
-            {/* Conditional follow-up */}
-            {followUpQuestion && (
-              <Box sx={{ mb: 2 }}>
-                <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.88rem', fontWeight: 600, color: '#374151', mb: 1 }}>
-                  {followUpQuestion}
-                </Typography>
-                <TextField
-                  multiline
-                  rows={3}
-                  fullWidth
-                  placeholder="Write your comment here…"
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  inputProps={{ maxLength: 1000 }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: '10px',
-                      fontSize: '0.85rem',
-                      fontFamily: 'Poppins',
-                      '& fieldset': { borderColor: '#E5E7EB' },
-                      '&:hover fieldset': { borderColor: '#9CA3AF' },
-                      '&.Mui-focused fieldset': { borderColor: '#8310FF' },
-                    },
-                  }}
-                />
-                <Typography sx={{ fontSize: '0.75rem', color: '#9CA3AF', mt: 0.5, textAlign: 'right' }}>
-                  {comment.length}/1000
-                </Typography>
-              </Box>
-            )}
+              {/* Follow-up */}
+              {followUpQuestion && (
+                <div className="mb-4">
+                  <p className="font-sans font-semibold text-[0.88rem] text-[#374151] mb-2">{followUpQuestion}</p>
+                  <textarea
+                    rows={3}
+                    placeholder="Write your comment here…"
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    maxLength={1000}
+                    className="w-full border border-[#E5E7EB] rounded-[10px] px-3 py-2 text-[0.85rem] font-sans resize-none outline-none focus:border-[#8310FF] hover:border-[#9CA3AF] transition-colors"
+                  />
+                  <p className="text-[0.75rem] text-[#9CA3AF] text-right mt-1">{comment.length}/1000</p>
+                </div>
+              )}
 
-            {error && (
-              <Typography sx={{ fontSize: '0.82rem', color: '#DC2626', mb: 1.5, fontFamily: 'Poppins' }}>
-                {error}
-              </Typography>
-            )}
+              {error && (
+                <p className="text-[0.82rem] text-[#DC2626] mb-3 font-sans">{error}</p>
+              )}
 
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <Button
-                variant="contained"
-                disabled={!rating || submitting}
-                onClick={() => dispatch(submitFeedback({ rating, comment, interviewId, interviewType }))}
-                sx={{
-                  flex: 1,
-                  fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.88rem',
-                  textTransform: 'none', py: 1.2, borderRadius: '12px',
-                  bgcolor: '#8310FF', color: '#fff', boxShadow: 'none',
-                  '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' },
-                  '&.Mui-disabled': { bgcolor: '#E5E7EB', color: '#9CA3AF' },
-                }}
-              >
-                {submitting
-                  ? <CircularProgress size={18} sx={{ color: '#fff' }} />
-                  : 'Submit'}
-              </Button>
-
-              <Button
-                variant="text"
-                disabled={submitting}
-                onClick={onDone}
-                sx={{
-                  fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.82rem',
-                  textTransform: 'none', px: 2.5, py: 1.2, borderRadius: '12px',
-                  color: '#6B7280', '&:hover': { bgcolor: '#f9fafb' },
-                }}
-              >
-                Skip
-              </Button>
-            </Box>
-          </>
-        )}
-      </Box>
+              <div className="flex gap-2">
+                <button
+                  disabled={!rating || submitting}
+                  onClick={() => dispatch(submitFeedback({ rating, comment, interviewId, interviewType }))}
+                  className="flex-1 font-sans font-bold text-[0.88rem] text-white py-3 rounded-[12px] bg-[#8310FF] hover:bg-[#6d0ee0] disabled:bg-[#E5E7EB] disabled:text-[#9CA3AF] transition-colors flex items-center justify-center gap-2"
+                >
+                  {submitting
+                    ? <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                    : 'Submit'}
+                </button>
+                <button
+                  disabled={submitting}
+                  onClick={onDone}
+                  className="font-sans font-semibold text-[0.82rem] text-[#6B7280] px-5 py-3 rounded-[12px] hover:bg-[#f9fafb] transition-colors"
+                >
+                  Skip
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </DialogContent>
     </Dialog>
   );
 };

@@ -1,8 +1,5 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import TimerOutlinedIcon from '@mui/icons-material/TimerOutlined';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import { Sparkles, Timer, ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { type InterviewMessage } from '../../types/interview';
 import { type AgentState } from '../../types/interview';
@@ -38,7 +35,6 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
   const isNearLimit  = remainingSec <= 30 && isAnswering;
   const isCritical   = remainingSec <= 10 && isAnswering;
 
-  // Show "next question loading" overlay when AI is thinking after answering
   const isLoadingNext = agentState === 'thinking' && !isInReadingTime;
 
   const fmtSec = (s: number) => {
@@ -52,223 +48,139 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
   const timerBorder = isCritical ? 'rgba(220,38,38,0.35)' : isNearLimit ? 'rgba(249,115,22,0.35)' : 'rgba(106,211,156,0.35)';
   const accentColor = isCritical ? '#dc2626' : isNearLimit ? '#f97316' : '#6AD39C';
 
+  const borderLeft = isInReadingTime ? '4px solid #f59e0b'
+    : isLoadingNext ? '4px solid #6AD39C'
+    : isNearLimit ? `4px solid ${accentColor}`
+    : '4px solid #6AD39C';
+
+  const boxShadow = isCritical
+    ? '0 2px 20px rgba(220,38,38,0.12)'
+    : isInReadingTime ? '0 2px 20px rgba(245,158,11,0.1)'
+    : questionHighlight ? '0 6px 28px rgba(106,211,156,0.2)'
+    : '0 2px 14px rgba(16,69,63,0.06)';
+
   return (
-    <Box
-      sx={{
-        position: 'relative',
-        overflow: 'hidden',
+    <div
+      className="relative overflow-hidden rounded-[18px] border border-[rgba(106,211,156,0.2)] px-4 md:px-5 py-4 md:py-4.5 mb-3 transition-[transform,box-shadow,border-color] duration-300"
+      style={{
         background: questionHighlight ? 'linear-gradient(135deg, #f0fdf8 0%, #fff 100%)' : '#fff',
-        borderRadius: '18px',
-        border: '1px solid rgba(106,211,156,0.2)',
-        borderLeft: isInReadingTime
-          ? '4px solid #f59e0b'
-          : isLoadingNext
-          ? '4px solid #6AD39C'
-          : isNearLimit
-          ? `4px solid ${accentColor}`
-          : '4px solid #6AD39C',
-        boxShadow: isCritical
-          ? '0 2px 20px rgba(220,38,38,0.12)'
-          : isInReadingTime
-          ? '0 2px 20px rgba(245,158,11,0.1)'
-          : questionHighlight
-          ? '0 6px 28px rgba(106,211,156,0.2)'
-          : '0 2px 14px rgba(16,69,63,0.06)',
-        px: { xs: 1.75, md: 2.25 },
-        py: { xs: 1.5, md: 1.75 },
-        mb: 1,
+        borderLeft,
+        boxShadow,
         transform: questionHighlight ? 'translateY(-2px)' : 'none',
-        transition: 'transform 0.3s ease, box-shadow 0.3s ease, border-color 0.4s ease',
-        ...(isCritical && {
-          '@keyframes criticalPulse': {
-            '0%, 100%': { boxShadow: '0 2px 20px rgba(220,38,38,0.12)' },
-            '50%':       { boxShadow: '0 2px 32px rgba(220,38,38,0.28)' },
-          },
-          animation: 'criticalPulse 1.1s ease-in-out infinite',
-        }),
+        animation: isCritical ? 'iv-critical-pulse 1.1s ease-in-out infinite' : undefined,
       }}
     >
-      {/* ── Label row ── */}
-      <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
-
-        {/* Left: question label */}
-        <Box display="flex" alignItems="center" gap={0.75}>
-          <Box sx={{
-            width: 20, height: 20, borderRadius: '6px',
-            background: isInReadingTime
-              ? 'linear-gradient(135deg,#fbbf24,#d97706)'
-              : 'linear-gradient(135deg,#6AD39C,#10453F)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            transition: 'background 0.4s ease',
-          }}>
-            <AutoAwesomeIcon sx={{ fontSize: 11, color: '#fff' }} />
-          </Box>
-          <Typography sx={{
-            fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.62rem',
-            color: isInReadingTime ? '#d97706' : '#6AD39C',
-            letterSpacing: '0.14em', textTransform: 'uppercase',
-            transition: 'color 0.4s ease',
-          }}>
+      {/* Label row */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-1.5">
+          <div
+            className="w-5 h-5 rounded-[6px] flex items-center justify-center shrink-0 transition-[background] duration-300"
+            style={{ background: isInReadingTime ? 'linear-gradient(135deg,#fbbf24,#d97706)' : 'linear-gradient(135deg,#6AD39C,#10453F)' }}
+          >
+            <Sparkles size={11} color="#fff" />
+          </div>
+          <span
+            className="font-sans font-bold text-[0.62rem] tracking-[0.14em] uppercase transition-colors duration-300"
+            style={{ color: isInReadingTime ? '#d97706' : '#6AD39C' }}
+          >
             {questionNumber ? t('question.label_numbered', { number: questionNumber }) : t('question.label')}
-          </Typography>
-        </Box>
+          </span>
+        </div>
 
-        {/* Right: timer badge */}
+        {/* Timer badge */}
         {isInReadingTime ? (
-          /* Reading phase */
-          <Box sx={{
-            display: 'flex', alignItems: 'center', gap: 0.5,
-            px: 1, py: 0.45, borderRadius: '9px',
-            bgcolor: 'rgba(245,158,11,0.08)',
-            border: '1.5px solid rgba(245,158,11,0.28)',
-          }}>
-            <Typography sx={{
-              fontFamily: 'Poppins', fontWeight: 500, fontSize: '0.5rem',
-              color: '#d97706', letterSpacing: '0.08em', textTransform: 'uppercase',
-            }}>
-              Read in
-            </Typography>
-            <Typography sx={{
-              fontFamily: 'Poppins', fontWeight: 800, fontSize: '1rem', lineHeight: 1, color: '#d97706',
-            }}>
-              {secondsLeft}
-            </Typography>
-            <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.52rem', color: '#d97706', opacity: 0.75 }}>
-              s
-            </Typography>
-          </Box>
+          <div className="flex items-center gap-1 px-2 py-1 rounded-[9px] bg-[rgba(245,158,11,0.08)] border-[1.5px] border-[rgba(245,158,11,0.28)]">
+            <span className="font-sans font-medium text-[0.5rem] text-[#d97706] tracking-[0.08em] uppercase">Read in</span>
+            <span className="font-sans font-extrabold text-base leading-none text-[#d97706]">{secondsLeft}</span>
+            <span className="font-sans font-semibold text-[0.52rem] text-[#d97706] opacity-75">s</span>
+          </div>
         ) : isAnswering ? (
-          /* Answer countdown — remaining only */
-          <Box sx={{
-            display: 'flex', alignItems: 'center', gap: 0.6,
-            px: 1.1, py: 0.55, borderRadius: '10px',
-            bgcolor: timerBg,
-            border: `1.5px solid ${timerBorder}`,
-            transition: 'background 0.4s, border-color 0.4s',
-          }}>
-            <TimerOutlinedIcon sx={{
-              fontSize: 14, color: accentColor,
-              transition: 'color 0.4s',
-              ...(isCritical && {
-                '@keyframes timerPulse': {
-                  '0%, 100%': { opacity: 1 },
-                  '50%':       { opacity: 0.4 },
-                },
-                animation: 'timerPulse 0.8s ease-in-out infinite',
-              }),
-            }} />
-            <Box>
-              <Typography sx={{
-                fontFamily: 'Poppins', fontWeight: 800, fontSize: '0.92rem',
-                lineHeight: 1, color: timerColor, transition: 'color 0.4s',
-              }}>
+          <div
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[10px] border-[1.5px] transition-[background,border-color] duration-300"
+            style={{ background: timerBg, borderColor: timerBorder }}
+          >
+            <Timer
+              size={14}
+              style={{
+                color: accentColor,
+                transition: 'color 0.4s',
+                animation: isCritical ? 'iv-timer-pulse 0.8s ease-in-out infinite' : undefined,
+              }}
+            />
+            <div>
+              <p className="font-sans font-extrabold text-[0.92rem] leading-none transition-colors duration-300" style={{ color: timerColor }}>
                 {fmtSec(remainingSec)}
-              </Typography>
-              <Typography sx={{
-                fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.4rem',
-                color: accentColor, letterSpacing: '0.08em', textTransform: 'uppercase',
-                lineHeight: 1.3, mt: 0.15, transition: 'color 0.4s',
-              }}>
+              </p>
+              <p className="font-sans font-semibold text-[0.4rem] tracking-[0.08em] uppercase leading-tight mt-0.5 transition-colors duration-300" style={{ color: accentColor }}>
                 remaining
-              </Typography>
-            </Box>
-          </Box>
+              </p>
+            </div>
+          </div>
         ) : null}
-      </Box>
+      </div>
 
-      {/* ── Question text ── */}
-      <Typography sx={{
-        fontFamily: '"Inter", sans-serif',
-        fontWeight: 600,
-        fontSize: { xs: '1rem', md: '1.08rem' },
-        lineHeight: 1.75, color: '#0d1117',
-        letterSpacing: '-0.01em', wordBreak: 'break-word',
-        textRendering: 'optimizeLegibility', WebkitFontSmoothing: 'antialiased',
-        opacity: isLoadingNext ? 0.4 : 1,
-        transition: 'opacity 0.3s ease',
-      }}>
+      {/* Question text */}
+      <p
+        className="font-[Inter,sans-serif] font-semibold text-base md:text-[1.08rem] leading-[1.75] text-[#0d1117] tracking-tight break-words transition-opacity duration-300"
+        style={{ opacity: isLoadingNext ? 0.4 : 1 }}
+      >
         {currentMessage.content || t('question.getting_next')}
-      </Typography>
+      </p>
 
       {currentMessage.reasoning && !isLoadingNext && (
-        <Typography sx={{
-          fontFamily: '"Inter", sans-serif',
-          fontSize: '0.72rem', fontWeight: 400, color: '#6b7280',
-          fontStyle: 'italic', mt: 1.25, pl: 1.25,
-          borderLeft: '2px solid rgba(106,211,156,0.4)',
-          lineHeight: 1.65, letterSpacing: '0.01em',
-        }}>
+        <p className="font-[Inter,sans-serif] text-[0.72rem] text-[#6b7280] italic mt-3 pl-3 border-l-2 border-[rgba(106,211,156,0.4)] leading-relaxed tracking-[0.01em]">
           {currentMessage.reasoning}
-        </Typography>
+        </p>
       )}
 
-      {/* ── "Next question loading" overlay ── */}
+      {/* "Next question loading" overlay */}
       {isLoadingNext && (
-        <Box sx={{
-          position: 'absolute', inset: 0,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          borderRadius: '18px',
-          background: 'rgba(255,255,255,0.82)',
-          backdropFilter: 'blur(3px)',
-          '@keyframes fadeIn': { from: { opacity: 0 }, to: { opacity: 1 } },
-          animation: 'fadeIn 0.3s ease',
-        }}>
-          <Box sx={{
-            display: 'flex', alignItems: 'center', gap: 1.25,
-            px: 2, py: 1,
-            borderRadius: '12px',
-            background: 'linear-gradient(135deg, #f0fdf8, #fff)',
-            border: '1.5px solid rgba(106,211,156,0.4)',
-            boxShadow: '0 4px 16px rgba(106,211,156,0.15)',
-          }}>
-            {/* Animated dots */}
-            <Box sx={{ display: 'flex', gap: 0.4, alignItems: 'center' }}>
+        <div
+          className="absolute inset-0 flex items-center justify-center rounded-[18px] bg-white/80 backdrop-blur-[3px]"
+          style={{ animation: 'iv-fade-in 0.3s ease' }}
+        >
+          <div className="flex items-center gap-3 px-4 py-2.5 rounded-[12px] border-[1.5px] border-[rgba(106,211,156,0.4)] shadow-[0_4px_16px_rgba(106,211,156,0.15)]"
+            style={{ background: 'linear-gradient(135deg, #f0fdf8, #fff)' }}>
+            <div className="flex gap-1 items-center">
               {[0, 1, 2].map((i) => (
-                <Box key={i} sx={{
-                  width: 6, height: 6, borderRadius: '50%',
-                  bgcolor: '#6AD39C',
-                  '@keyframes bounce': {
-                    '0%, 80%, 100%': { transform: 'scale(0.7)', opacity: 0.5 },
-                    '40%':            { transform: 'scale(1)',   opacity: 1   },
-                  },
-                  animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite`,
-                }} />
+                <div
+                  key={i}
+                  className="w-1.5 h-1.5 rounded-full bg-[#6AD39C]"
+                  style={{ animation: `iv-bounce-dot 1.2s ease-in-out ${i * 0.2}s infinite` }}
+                />
               ))}
-            </Box>
-            <Typography sx={{
-              fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.8rem',
-              color: '#10453F', letterSpacing: '0.01em',
-            }}>
+            </div>
+            <span className="font-sans font-semibold text-[0.8rem] text-[#10453F] tracking-[0.01em]">
               Preparing next question
-            </Typography>
-            <ArrowForwardIcon sx={{ fontSize: 15, color: '#6AD39C' }} />
-          </Box>
-        </Box>
+            </span>
+            <ArrowRight size={15} color="#6AD39C" />
+          </div>
+        </div>
       )}
 
-      {/* ── Progress bar — reading (amber) | answering (green→orange→red) ── */}
-      <Box sx={{
-        position: 'absolute', bottom: 0, left: 0, right: 0, height: 4,
-        bgcolor: isInReadingTime ? 'rgba(245,158,11,0.1)' : 'rgba(106,211,156,0.1)',
-        opacity: isInReadingTime || isAnswering ? 1 : 0,
-        transition: 'opacity 0.4s ease',
-        pointerEvents: 'none',
-      }}>
-        <Box sx={{
-          height: '100%',
-          width: isInReadingTime ? `${progressPct}%` : `${answerPct}%`,
-          background: isInReadingTime
-            ? 'linear-gradient(90deg,#fde68a,#f59e0b)'
-            : isCritical
-              ? 'linear-gradient(90deg,#fca5a5,#dc2626)'
-              : isNearLimit
-                ? 'linear-gradient(90deg,#fdba74,#f97316)'
-                : 'linear-gradient(90deg,#6AD39C,#10453F)',
-          transition: 'width 0.5s linear, background 0.5s ease',
-          borderRadius: '0 2px 2px 0',
-        }} />
-      </Box>
-    </Box>
+      {/* Bottom progress bar */}
+      <div
+        className="absolute bottom-0 left-0 right-0 h-1 transition-opacity duration-300 pointer-events-none"
+        style={{
+          background: isInReadingTime ? 'rgba(245,158,11,0.1)' : 'rgba(106,211,156,0.1)',
+          opacity: isInReadingTime || isAnswering ? 1 : 0,
+        }}
+      >
+        <div
+          className="h-full rounded-r-[2px] transition-[width] duration-500 ease-linear"
+          style={{
+            width: isInReadingTime ? `${progressPct}%` : `${answerPct}%`,
+            background: isInReadingTime
+              ? 'linear-gradient(90deg,#fde68a,#f59e0b)'
+              : isCritical
+                ? 'linear-gradient(90deg,#fca5a5,#dc2626)'
+                : isNearLimit
+                  ? 'linear-gradient(90deg,#fdba74,#f97316)'
+                  : 'linear-gradient(90deg,#6AD39C,#10453F)',
+          }}
+        />
+      </div>
+    </div>
   );
 };
 

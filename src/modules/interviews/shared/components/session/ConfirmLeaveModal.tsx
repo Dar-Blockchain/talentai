@@ -1,7 +1,9 @@
 import React from 'react';
-import { Box, Button, Dialog, Typography } from '@mui/material';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import { AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import {
+  Dialog, DialogContent,
+} from '@/modules/shared/ui/shadcn/dialog';
 
 interface ConfirmLeaveModalProps {
   open: boolean;
@@ -13,67 +15,46 @@ const ConfirmLeaveModal: React.FC<ConfirmLeaveModalProps> = ({ open, onConfirm, 
   const { t } = useTranslation('modules/interview/interview');
 
   return (
-    <Dialog
-      open={open}
-      onClose={onCancel}
-      maxWidth="xs"
-      fullWidth
-      PaperProps={{ sx: { borderRadius: '20px', p: 0, overflow: 'hidden', boxShadow: '0 24px 48px rgba(0,0,0,0.18)' } }}
-    >
-      {/* Danger accent bar */}
-      <Box sx={{ height: 4, background: 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)' }} />
+    <Dialog open={open} onOpenChange={(o) => !o && onCancel()}>
+      <DialogContent
+        showCloseButton={false}
+        className="max-w-xs rounded-[20px] p-0 overflow-hidden shadow-[0_24px_48px_rgba(0,0,0,0.18)]"
+      >
+        {/* Danger accent bar */}
+        <div className="h-1 bg-gradient-to-r from-[#ef4444] to-[#dc2626]" />
 
-      <Box sx={{ p: { xs: 2.5, md: 3 }, textAlign: 'center' }}>
-        {/* Warning icon */}
-        <Box sx={{
-          width: 58, height: 58, borderRadius: '16px',
-          bgcolor: 'rgba(239,68,68,0.07)', border: '1.5px solid rgba(239,68,68,0.2)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          mx: 'auto', mb: 2.25,
-        }}>
-          <WarningAmberIcon sx={{ fontSize: 28, color: '#ef4444' }} />
-        </Box>
+        <div className="p-6 md:p-7 text-center">
+          <div className="w-[58px] h-[58px] rounded-[16px] bg-[rgba(239,68,68,0.07)] border-[1.5px] border-[rgba(239,68,68,0.2)] flex items-center justify-center mx-auto mb-5">
+            <AlertTriangle size={28} color="#ef4444" />
+          </div>
 
-        <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.02rem', color: '#111827', mb: 1 }}>
-          {t('confirm_leave.title', { defaultValue: 'Leave the interview?' })}
-        </Typography>
+          <p className="font-sans font-bold text-[1.02rem] text-[#111827] mb-2">
+            {t('confirm_leave.title', { defaultValue: 'Leave the interview?' })}
+          </p>
+          <p className="font-sans text-[0.82rem] text-[#6b7280] leading-[1.7] mb-6">
+            {t('confirm_leave.body', { defaultValue: 'If you leave this page, you will no longer be able to take this interview. This action cannot be undone.' })}
+          </p>
 
-        <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#6b7280', lineHeight: 1.7, mb: 3 }}>
-          {t('confirm_leave.body', { defaultValue: 'If you leave this page, you will no longer be able to take this interview. This action cannot be undone.' })}
-        </Typography>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={onConfirm}
+              className="w-full font-sans font-bold text-[0.85rem] text-white py-3 rounded-[12px] transition-colors"
+              style={{ background: '#ef4444', boxShadow: '0 4px 12px rgba(239,68,68,0.25)' }}
+              onMouseEnter={e => (e.currentTarget.style.background = '#dc2626')}
+              onMouseLeave={e => (e.currentTarget.style.background = '#ef4444')}
+            >
+              {t('confirm_leave.confirm', { defaultValue: 'Leave interview' })}
+            </button>
 
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
-          <Button
-            fullWidth
-            variant="contained"
-            onClick={onConfirm}
-            sx={{
-              fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.85rem',
-              textTransform: 'none', py: 1.15, borderRadius: '12px',
-              bgcolor: '#ef4444',
-              color: '#fff',
-              boxShadow: '0 4px 12px rgba(239,68,68,0.25)',
-              '&:hover': { bgcolor: '#dc2626', boxShadow: '0 6px 16px rgba(239,68,68,0.3)' },
-            }}
-          >
-            {t('confirm_leave.confirm', { defaultValue: 'Leave interview' })}
-          </Button>
-
-          <Button
-            fullWidth
-            variant="text"
-            onClick={onCancel}
-            sx={{
-              fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.82rem',
-              textTransform: 'none', py: 1, borderRadius: '12px',
-              color: '#374151',
-              '&:hover': { bgcolor: '#f9fafb' },
-            }}
-          >
-            {t('confirm_leave.cancel', { defaultValue: 'Stay in interview' })}
-          </Button>
-        </Box>
-      </Box>
+            <button
+              onClick={onCancel}
+              className="w-full font-sans font-semibold text-[0.82rem] text-[#374151] py-2.5 rounded-[12px] hover:bg-[#f9fafb] transition-colors"
+            >
+              {t('confirm_leave.cancel', { defaultValue: 'Stay in interview' })}
+            </button>
+          </div>
+        </div>
+      </DialogContent>
     </Dialog>
   );
 };

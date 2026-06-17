@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { safeSet, safeRemove } from '@/utils/safeStorage';
 import { useRouter } from 'next/router';
 import { InterviewConfig } from '../../shared/types/interview';
-import { DEFAULT_INTERVIEW_CONFIG } from '../../shared/constants/interviewDefaults';
+import { DEFAULT_INTERVIEW_CONFIG } from '../constants/interviewDefaults';
 import { buildInterviewConfigFromURL, URLParams } from '@/utils/interviewConfigBuilder';
 import { getToken } from '@/modules/auth/shared/utils/token';
 import { useJobPostQuery } from '../queries/useJobPostQuery';

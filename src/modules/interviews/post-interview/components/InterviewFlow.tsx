@@ -5,9 +5,9 @@ import { useNotification } from "@/hooks/useNotification";
 import { type RootState } from "@/store/store";
 import { useInterviewConfig } from "../hooks/useInterviewConfig";
 import { useInterviewSession } from "../hooks/useInterviewSession";
-import InterviewScreen from "./session/InterviewScreen";
+import InterviewScreen from "../../shared/components/session/InterviewScreen";
 import JobPreviewPanel from "./job-preview/JobInterviewPanel";
-import InterviewLoadingScreen from "./layout/InterviewLoadingScreen";
+import InterviewLoadingScreen from "../../shared/components/layout/InterviewLoadingScreen";
 import LoadingState from "@/components/ui/LoadingState";
 import { useTranslation } from "react-i18next";
 

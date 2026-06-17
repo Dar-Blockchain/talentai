@@ -1,4 +1,8 @@
 {
+  "loading": {
+    "title": "Chargement de l'entretien de compétence",
+    "subtitle": "Préparation de votre évaluation…"
+  },
   "header": {
     "subtitle": "Évaluation de compétence technique · Propulsée par l'IA",
     "adaptive_difficulty": "Difficulté adaptative"

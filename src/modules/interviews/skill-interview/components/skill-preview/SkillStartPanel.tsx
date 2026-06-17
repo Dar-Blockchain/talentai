@@ -1,12 +1,13 @@
 import React from 'react';
-import { Box, Typography, Button, Divider, Chip } from '@mui/material';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { Play, CheckCircle } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 import { type RootState } from '@/store/store';
-import { SectionCard, GREEN, GREEN_DARK, GREEN_LIGHT, GREEN_BORDER } from './SkillPanelShared';
+import { Button } from '@/modules/shared/ui/shadcn/button';
+import { Badge } from '@/modules/shared/ui/shadcn/badge';
+import { Separator } from '@/modules/shared/ui/shadcn/separator';
+import { SectionCard } from './SkillPanelShared';
 
 interface SkillStartPanelProps {
   skill: string;
@@ -24,94 +25,75 @@ export default function SkillStartPanel({ skill, onStartInterview }: SkillStartP
   const steps    = t('start.login.steps', { returnObjects: true }) as { label: string; sub: string }[];
 
   return (
-    <Box sx={{ width: { xs: '100%', md: 320 }, flexShrink: 0, position: { md: 'sticky' }, top: { md: 24 } }}>
+    <div className="w-full md:w-[320px] shrink-0 md:sticky md:top-6">
       <SectionCard>
         {isAuthenticated ? (
           <>
-            <Chip
-              label={t('start.ready_badge')}
-              size="small"
-              sx={{
-                fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.72rem',
-                bgcolor: 'rgba(106,211,156,0.1)', color: '#10453F',
-                border: '1px solid rgba(106,211,156,0.3)', mb: 1.5,
-              }}
-            />
+            <Badge
+              variant="outline"
+              className="mb-3 font-sans text-[0.72rem] rounded-full bg-primary/10 text-primary-dark border-primary/30"
+            >
+              {t('start.ready_badge')}
+            </Badge>
 
-            <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.05rem', color: '#111827', mb: 0.5 }}>
-              {t('start.title')}
-            </Typography>
-            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#6B7280', mb: 2.5, lineHeight: 1.6 }}>
+            <p className="font-sans font-bold text-[1.05rem] text-foreground mb-1">{t('start.title')}</p>
+            <p className="font-sans text-[0.82rem] text-muted-foreground mb-5 leading-relaxed">
               {t('start.description', { skill })}
-            </Typography>
+            </p>
 
             {features.map((item) => (
-              <Box key={item} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <CheckCircleIcon sx={{ fontSize: 15, color: GREEN, flexShrink: 0 }} />
-                <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.78rem', color: '#374151' }}>
-                  {item}
-                </Typography>
-              </Box>
+              <div key={item} className="flex items-center gap-2 mb-3">
+                <CheckCircle size={15} className="shrink-0 text-primary" />
+                <span className="font-sans text-[0.78rem] text-foreground/80">{item}</span>
+              </div>
             ))}
 
-            <Divider sx={{ my: 2 }} />
+            <Separator className="my-4" />
 
             <Button
-              variant="contained"
-              fullWidth
+              variant="default"
+              size="lg"
+              className="w-full rounded-[12px] text-[0.95rem] font-bold"
               onClick={onStartInterview}
-              startIcon={<PlayArrowIcon />}
-              sx={{
-                bgcolor: GREEN, color: '#fff', fontWeight: 700, fontFamily: 'Poppins',
-                fontSize: '0.95rem', py: 1.5, borderRadius: '12px',
-                textTransform: 'none', boxShadow: 'none',
-                '&:hover': { bgcolor: GREEN_DARK, boxShadow: 'none' },
-              }}
             >
+              <Play size={18} />
               {t('start.button')}
             </Button>
           </>
         ) : (
           <>
-            <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.05rem', color: '#111827', mb: 0.5 }}>
-              {t('start.login.title')}
-            </Typography>
-            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#6B7280', mb: 2.5, lineHeight: 1.6 }}>
+            <p className="font-sans font-bold text-[1.05rem] text-foreground mb-1">{t('start.login.title')}</p>
+            <p className="font-sans text-[0.82rem] text-muted-foreground mb-5 leading-relaxed">
               {t('start.login.description', { skill })}
-            </Typography>
+            </p>
 
             {steps.map(({ label, sub }, num) => (
-              <Box key={num} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 1.75 }}>
-                <Box sx={{ width: 26, height: 26, borderRadius: '50%', flexShrink: 0, bgcolor: GREEN_LIGHT, border: `1px solid ${GREEN_BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.75rem', color: '#10453F' }}>
+              <div key={num} className="flex items-start gap-3 mb-4">
+                <div className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center bg-primary/8 border border-primary/20">
+                  <span className="font-sans font-bold text-[0.75rem] text-primary-dark">
                     {num + 1}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.85rem', color: '#111827' }}>{label}</Typography>
-                  <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', color: '#9CA3AF' }}>{sub}</Typography>
-                </Box>
-              </Box>
+                  </span>
+                </div>
+                <div>
+                  <p className="font-sans font-semibold text-[0.85rem] text-foreground">{label}</p>
+                  <p className="font-sans text-[0.75rem] text-muted-foreground">{sub}</p>
+                </div>
+              </div>
             ))}
 
-            <Divider sx={{ my: 2 }} />
+            <Separator className="my-4" />
 
             <Button
-              variant="contained"
-              fullWidth
+              variant="default"
+              size="lg"
+              className="w-full rounded-[12px] text-[0.95rem] font-bold"
               onClick={() => router.push(`/login?redirect=${encodeURIComponent(router.asPath)}`)}
-              sx={{
-                bgcolor: GREEN, color: '#fff', fontWeight: 700, fontFamily: 'Poppins',
-                fontSize: '0.95rem', py: 1.5, borderRadius: '12px',
-                textTransform: 'none', boxShadow: 'none',
-                '&:hover': { bgcolor: GREEN_DARK, boxShadow: 'none' },
-              }}
             >
               {t('start.login.button')}
             </Button>
           </>
         )}
       </SectionCard>
-    </Box>
+    </div>
   );
 }

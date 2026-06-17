@@ -1,12 +1,10 @@
 import React from "react";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
-import { Box, Typography } from "@mui/material";
 import LoadingState from "@/components/ui/LoadingState";
 import EligibilityBlockedScreen from "./EligibilityBlockedScreen";
 import { type EligibilityStatus, type EligibilityMeta } from "../../types/api";
-import { RED, RED_DARK, ELIGIBILITY_SCREEN_CONFIG, type BlockableStatus } from "../../constants";
-import { eligibilityGateSx as sx } from "../../styles/eligibilityGate.styles";
+import { ELIGIBILITY_SCREEN_CONFIG, type BlockableStatus } from "../../constants";
 
 interface EligibilityGateProps {
   status: EligibilityStatus;
@@ -83,13 +81,13 @@ export default function EligibilityGate({ status, meta }: EligibilityGateProps) 
           description={
             <>
               {t("under_threshold.desc_pre")}
-              <strong style={{ color: RED }}>{meta?.score ?? 0}%</strong>
+              <strong className="text-danger">{meta?.score ?? 0}%</strong>
               {t("under_threshold.desc_mid")}
               <strong style={{ color: "#111827" }}>{meta?.required ?? 0}%</strong>
               {t("under_threshold.desc_post")}
             </>
           }
-          actions={[{ ...action, color: RED, hoverColor: RED_DARK }]}
+          actions={[{ ...action, color: '#DC2626', hoverColor: '#B91C1C' }]}
         />
       );
 
@@ -105,14 +103,14 @@ export default function EligibilityGate({ status, meta }: EligibilityGateProps) 
           ]}
         >
           {meta?.jobTitle && (
-            <Box sx={sx.jobTitleBadge}>
-              <Box sx={sx.jobTitleDot} />
-              <Typography sx={sx.jobTitleText}>{meta.jobTitle}</Typography>
-            </Box>
+            <div className="inline-flex items-center gap-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] px-4 py-[7px] mt-4 mb-5">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#94A3B8] shrink-0" />
+              <span className="font-[Poppins] text-[0.83rem] font-semibold text-[#475569]">{meta.jobTitle}</span>
+            </div>
           )}
-          <Box sx={sx.divider} />
-          <Typography sx={sx.limitDesc}>{t("limit.desc")}</Typography>
-          <Typography sx={sx.limitContact}>{t("limit.contact")}</Typography>
+          <div className="h-px bg-[#F1F5F9] mb-5" />
+          <p className="font-[Poppins] text-[0.9rem] text-[#475569] leading-[1.8] mb-4">{t("limit.desc")}</p>
+          <p className="font-[Poppins] text-[0.82rem] text-[#94A3B8] leading-[1.7]">{t("limit.contact")}</p>
         </EligibilityBlockedScreen>
       );
 

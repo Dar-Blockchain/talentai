@@ -1,5 +1,4 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
 
 interface Props {
   text: string;
@@ -7,11 +6,9 @@ interface Props {
 
 export default function InterviewConnectionBanner({ text }: Props) {
   return (
-    <Box sx={{ bgcolor: '#fefce8', borderBottom: '1px solid #fde047', px: { xs: 2, md: 4 }, py: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-      <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#ca8a04', flexShrink: 0 }} />
-      <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.8rem', color: '#854d0e' }}>
-        {text}
-      </Typography>
-    </Box>
+    <div className="bg-[#fefce8] border-b border-[#fde047] px-4 md:px-8 py-2.5 flex items-center gap-2">
+      <div className="w-1.5 h-1.5 rounded-full bg-[#ca8a04] shrink-0" />
+      <p className="font-sans text-[0.8rem] text-[#854d0e]">{text}</p>
+    </div>
   );
 }

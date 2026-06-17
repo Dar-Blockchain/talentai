@@ -1,6 +1,5 @@
 import React from 'react';
-import { Box, Typography, LinearProgress } from '@mui/material';
-import { PURPLE } from '../../constants/colors';
+import { Progress } from '@/modules/shared/ui/shadcn/progress';
 
 interface Props {
   overall: number;
@@ -9,20 +8,17 @@ interface Props {
 
 export default function InterviewProgressBar({ overall, label }: Props) {
   return (
-    <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #c8eedd', px: { xs: 2.5, md: 3.5 }, py: 2, mb: 3 }}>
-      <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
-        <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.82rem', color: '#374151' }}>
-          {label}
-        </Typography>
-        <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.82rem', color: PURPLE }}>
+    <div className="bg-white rounded-[16px] border border-[#c8eedd] px-6 md:px-8 py-4 mb-6">
+      <div className="flex items-center justify-between mb-2">
+        <span className="font-sans font-semibold text-[0.82rem] text-[#374151]">{label}</span>
+        <span className="font-sans font-bold text-[0.82rem] text-primary">
           {Math.round(overall)}%
-        </Typography>
-      </Box>
-      <LinearProgress
-        variant="determinate"
+        </span>
+      </div>
+      <Progress
         value={Math.min(overall, 100)}
-        sx={{ height: 6, borderRadius: 4, bgcolor: 'rgba(106,211,156,0.08)', '& .MuiLinearProgress-bar': { background: 'linear-gradient(90deg,#6AD39C,#10453F)', borderRadius: 4 } }}
+        className="h-1.5 rounded-full bg-[rgba(106,211,156,0.08)] [&>div]:bg-gradient-to-r [&>div]:from-[#6AD39C] [&>div]:to-[#10453F] [&>div]:rounded-full"
       />
-    </Box>
+    </div>
   );
 }

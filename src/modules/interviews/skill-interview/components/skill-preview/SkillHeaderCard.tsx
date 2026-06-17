@@ -1,11 +1,7 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
-import CodeIcon from '@mui/icons-material/Code';
-import TranslateIcon from '@mui/icons-material/Translate';
-import CategoryIcon from '@mui/icons-material/Category';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import { Code2, Languages, Tag, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { SectionCard, MetaBadge, GREEN, GREEN_LIGHT, GREEN_BORDER } from './SkillPanelShared';
+import { SectionCard, MetaBadge } from './SkillPanelShared';
 
 interface SkillHeaderCardProps {
   skill: string;
@@ -18,27 +14,23 @@ export default function SkillHeaderCard({ skill, category, language }: SkillHead
 
   return (
     <SectionCard>
-      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 2.5 }}>
-        <Box sx={{
-          width: 52, height: 52, borderRadius: '14px', flexShrink: 0,
-          bgcolor: GREEN_LIGHT, border: `1px solid ${GREEN_BORDER}`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <CodeIcon sx={{ fontSize: 26, color: GREEN }} />
-        </Box>
-        <Box>
-          <Typography sx={{ fontFamily: 'Poppins', fontWeight: 800, fontSize: { xs: '1.2rem', md: '1.45rem' }, color: '#111827', lineHeight: 1.2 }}>
+      <div className="flex items-start gap-4 mb-5">
+        <div className="w-[52px] h-[52px] rounded-[14px] shrink-0 flex items-center justify-center bg-primary/8 border border-primary/20">
+          <Code2 size={26} className="text-primary" />
+        </div>
+        <div>
+          <h1 className="font-sans font-extrabold text-xl md:text-[1.45rem] text-foreground leading-tight">
             {skill}
-          </Typography>
-          <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.88rem', color: '#6B7280', mt: 0.5 }}>
+          </h1>
+          <p className="font-sans text-[0.88rem] text-muted-foreground mt-1">
             {t('header.subtitle')}
-          </Typography>
-        </Box>
-      </Box>
+          </p>
+        </div>
+      </div>
 
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+      <div className="flex flex-wrap gap-2">
         <MetaBadge
-          icon={<AutoAwesomeIcon sx={{ fontSize: 14 }} />}
+          icon={<Sparkles size={14} />}
           label={t('header.adaptive_difficulty')}
           color="#7C3AED"
           bg="#F5F3FF"
@@ -46,7 +38,7 @@ export default function SkillHeaderCard({ skill, category, language }: SkillHead
         />
         {category && (
           <MetaBadge
-            icon={<CategoryIcon sx={{ fontSize: 14 }} />}
+            icon={<Tag size={14} />}
             label={category}
             color="#6B7280"
             bg="#F9FAFB"
@@ -54,13 +46,13 @@ export default function SkillHeaderCard({ skill, category, language }: SkillHead
           />
         )}
         <MetaBadge
-          icon={<TranslateIcon sx={{ fontSize: 14 }} />}
+          icon={<Languages size={14} />}
           label={language.toUpperCase()}
           color="#6B7280"
           bg="#F9FAFB"
           border="#E5E7EB"
         />
-      </Box>
+      </div>
     </SectionCard>
   );
 }

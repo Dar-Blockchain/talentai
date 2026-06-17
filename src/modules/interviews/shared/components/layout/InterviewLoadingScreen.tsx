@@ -1,5 +1,4 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
 
 interface InterviewLoadingScreenProps {
   title?: string;
@@ -10,60 +9,50 @@ const InterviewLoadingScreen: React.FC<InterviewLoadingScreenProps> = ({
   title    = 'Loading interview',
   subtitle = 'Please wait a moment…',
 }) => (
-  <Box sx={{
-    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-    flexDirection: 'column', gap: 0, px: 2, minHeight: '60vh',
-  }}>
+  <div className="flex-1 flex items-center justify-center flex-col gap-0 px-4 min-h-[60vh]">
     {/* Dual counter-rotating arcs */}
-    <Box sx={{ position: 'relative', width: 72, height: 72, mb: 3, flexShrink: 0 }}>
-      <Box sx={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '2px solid rgba(106,211,156,0.12)' }} />
-      <Box sx={{
-        position: 'absolute', inset: 0, borderRadius: '50%',
-        border: '2.5px solid transparent',
-        borderTopColor: '#6AD39C',
-        borderRightColor: 'rgba(106,211,156,0.25)',
-        animation: 'ilsSpin 1s linear infinite',
-        '@keyframes ilsSpin': { to: { transform: 'rotate(360deg)' } },
-      }} />
-      <Box sx={{
-        position: 'absolute', inset: 12, borderRadius: '50%',
-        border: '2px solid transparent',
-        borderTopColor: 'rgba(106,211,156,0.45)',
-        animation: 'ilsSpinRev 1.6s linear infinite reverse',
-        '@keyframes ilsSpinRev': { to: { transform: 'rotate(360deg)' } },
-      }} />
-      <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Box sx={{
-          width: 10, height: 10, borderRadius: '50%', bgcolor: '#6AD39C',
-          animation: 'ilsPulse 1.4s ease-in-out infinite',
-          '@keyframes ilsPulse': { '0%,100%': { opacity: 1, transform: 'scale(1)' }, '50%': { opacity: 0.35, transform: 'scale(0.55)' } },
-        }} />
-      </Box>
-    </Box>
+    <div className="relative w-[72px] h-[72px] mb-6 shrink-0">
+      <div className="absolute inset-0 rounded-full border-2 border-[rgba(106,211,156,0.12)]" />
+      <div
+        className="absolute inset-0 rounded-full border-[2.5px] border-transparent"
+        style={{
+          borderTopColor: '#6AD39C',
+          borderRightColor: 'rgba(106,211,156,0.25)',
+          animation: 'iv-spin 1s linear infinite',
+        }}
+      />
+      <div
+        className="absolute inset-3 rounded-full border-2 border-transparent"
+        style={{
+          borderTopColor: 'rgba(106,211,156,0.45)',
+          animation: 'iv-spin-rev 1.6s linear infinite',
+        }}
+      />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div
+          className="w-2.5 h-2.5 rounded-full bg-[#6AD39C]"
+          style={{ animation: 'iv-pulse-dot 1.4s ease-in-out infinite' }}
+        />
+      </div>
+    </div>
 
-    <Typography sx={{
-      fontFamily: 'Poppins', fontWeight: 700, fontSize: '1rem',
-      color: '#0d1117', letterSpacing: '-0.01em', mb: 0.5, textAlign: 'center',
-    }}>
+    <p className="font-sans font-bold text-base text-[#0d1117] tracking-tight mb-1 text-center">
       {title}
-    </Typography>
-    <Typography sx={{
-      fontFamily: 'Poppins', fontSize: '0.74rem', color: '#6b7280',
-      lineHeight: 1.65, textAlign: 'center', maxWidth: 240, mb: 3,
-    }}>
+    </p>
+    <p className="font-sans text-[0.74rem] text-[#6b7280] leading-relaxed text-center max-w-[240px] mb-6">
       {subtitle}
-    </Typography>
+    </p>
 
-    <Box sx={{ display: 'flex', gap: 0.875 }}>
+    <div className="flex gap-3">
       {[0, 1, 2].map((i) => (
-        <Box key={i} sx={{
-          width: 6, height: 6, borderRadius: '50%', bgcolor: '#6AD39C',
-          animation: `ilsDot 1.2s ease-in-out ${i * 0.2}s infinite`,
-          '@keyframes ilsDot': { '0%,100%': { opacity: 0.2, transform: 'scale(0.75)' }, '50%': { opacity: 1, transform: 'scale(1.2)' } },
-        }} />
+        <div
+          key={i}
+          className="w-1.5 h-1.5 rounded-full bg-[#6AD39C]"
+          style={{ animation: `iv-dot 1.2s ease-in-out ${i * 0.2}s infinite` }}
+        />
       ))}
-    </Box>
-  </Box>
+    </div>
+  </div>
 );
 
 export default InterviewLoadingScreen;

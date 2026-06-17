@@ -1,26 +1,26 @@
-import React, { useMemo, useState, useRef, useCallback, useEffect } from "react";
-import { useRouter } from "next/router";
-import { useSelector } from "react-redux";
-import { useTranslation } from "react-i18next";
-import { type RootState } from "@/store/store";
-import { Box, Snackbar, Alert, Container, LinearProgress, Typography } from "@mui/material";
-import QuestionPanel from "./QuestionPanel";
-import CameraPreview from "./CameraPreview";
-import InterviewControlsPanel from "./InterviewControlsPanel";
-import InterviewContainer from "./InterviewContainer";
-import InterviewConnectionBanner from "./InterviewConnectionBanner";
-import InterviewSessionHeader from "./InterviewSessionHeader";
-import GDPRConsentModal from "../modals/GDPRConsentModal";
-import SecurityModals from "../modals/SecurityModals";
-import ConfirmLeaveModal from "./ConfirmLeaveModal";
-import FeedbackModal from "./FeedbackModal";
-import { interviewScreenSx } from "../../styles/interviewScreen.styles";
-import { type Coverage, type InterviewMessage, type InterviewConfig } from "../../types/interview";
-import { type UseInterviewSocketReturn } from "../../types/hooks";
-import { type UseAudioTranscriptionReturn } from "../../types/hooks";
-import { type UseInterviewTimerReturn } from "../../types/hooks";
-import { type UseCameraReturn } from "../../types/hooks";
-import { type UseSecurityMonitoringReturn } from "../../types/hooks";
+import React, { useMemo, useState, useRef, useCallback, useEffect } from 'react';
+import { useRouter } from 'next/router';
+import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
+import { type RootState } from '@/store/store';
+import { Progress } from '@/modules/shared/ui/shadcn/progress';
+import QuestionPanel from './QuestionPanel';
+import CameraPreview from './CameraPreview';
+import InterviewControlsPanel from './InterviewControlsPanel';
+import InterviewContainer from './InterviewContainer';
+import InterviewConnectionBanner from './InterviewConnectionBanner';
+import InterviewSessionHeader from './InterviewSessionHeader';
+import GDPRConsentModal from '../modals/GDPRConsentModal';
+import SecurityModals from '../modals/SecurityModals';
+import ConfirmLeaveModal from './ConfirmLeaveModal';
+import FeedbackModal from './FeedbackModal';
+import { interviewScreenStyles } from '../../styles/interviewScreen.styles';
+import { type Coverage, type InterviewMessage, type InterviewConfig } from '../../types/interview';
+import { type UseInterviewSocketReturn } from '../../types/hooks';
+import { type UseAudioTranscriptionReturn } from '../../types/hooks';
+import { type UseInterviewTimerReturn } from '../../types/hooks';
+import { type UseCameraReturn } from '../../types/hooks';
+import { type UseSecurityMonitoringReturn } from '../../types/hooks';
 
 interface InterviewScreenProps {
   session: {
@@ -43,11 +43,18 @@ interface InterviewScreenProps {
   notification: {
     open: boolean;
     message: string;
-    severity: "success" | "error" | "warning" | "info";
+    severity: 'success' | 'error' | 'warning' | 'info';
   };
   hideNotification: () => void;
   onBack?: () => void;
 }
+
+const SEVERITY_STYLES: Record<string, string> = {
+  success: 'bg-[#f0fdf4] border-[#86efac] text-[#15803d]',
+  error:   'bg-[#fef2f2] border-[#fca5a5] text-[#dc2626]',
+  warning: 'bg-[#fffbeb] border-[#fde68a] text-[#d97706]',
+  info:    'bg-[#eff6ff] border-[#bfdbfe] text-[#2563eb]',
+};
 
 export default function InterviewScreen({
   session,
@@ -57,7 +64,7 @@ export default function InterviewScreen({
   onBack,
 }: InterviewScreenProps) {
   const router = useRouter();
-  const { t } = useTranslation("modules/interview/interview");
+  const { t } = useTranslation('modules/interview/interview');
   const userRole = useSelector((state: RootState) => state.user.connectedUser.user?.role);
   const dashboardPath =
     userRole === 'Admin'    ? '/admin/dashboard'    :
@@ -75,17 +82,9 @@ export default function InterviewScreen({
   });
 
   const {
-    socket,
-    audio,
-    timer,
-    camera,
-    security,
-    coverage,
-    resultsReady,
-    assessmentId,
-    startInterview,
-    endInterview,
-    skipQuestion,
+    socket, audio, timer, camera, security,
+    coverage, resultsReady, assessmentId,
+    startInterview, endInterview, skipQuestion,
   } = session;
 
   const { jobData, interviewConfig } = configData;
@@ -93,24 +92,21 @@ export default function InterviewScreen({
   const SKILL_TYPES = ['TECHNICAL_SKILL', 'SOFT_SKILL', 'ASSESSMENT', 'EVALUATION'];
   const isSkillInterview = !!interviewConfig && SKILL_TYPES.includes(interviewConfig.interviewType);
   const feedbackInterviewType = interviewConfig
-    ? isSkillInterview
-      ? 'SkillInterviewAssessment'
-      : 'PostInterviewAssessment'
+    ? isSkillInterview ? 'SkillInterviewAssessment' : 'PostInterviewAssessment'
     : undefined;
   const reportPath = isSkillInterview && assessmentId
     ? `/candidate/skill-interview/report/${assessmentId}`
     : undefined;
 
-  const isActive = socket.interviewStatus === "active";
+  const isActive = socket.interviewStatus === 'active';
 
-  // ── Confirm-leave + feedback modals ───────────────────────────────────────
+  // Confirm-leave + feedback modals
   const [confirmOpen,  setConfirmOpen]  = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const pendingUrlRef       = useRef<string | null>(null);
-  const confirmedRef        = useRef(false);
+  const pendingUrlRef        = useRef<string | null>(null);
+  const confirmedRef         = useRef(false);
   const feedbackTriggeredRef = useRef(false);
 
-  // Open feedback when the interview completes naturally (server-side end)
   useEffect(() => {
     if (resultsReady && !feedbackTriggeredRef.current) {
       feedbackTriggeredRef.current = true;
@@ -118,17 +114,16 @@ export default function InterviewScreen({
     }
   }, [resultsReady]);
 
-  // Intercept Next.js client-side navigation while interview is active
   useEffect(() => {
     if (!isActive) return;
     const handleRouteChange = (url: string) => {
       if (confirmedRef.current) { confirmedRef.current = false; return; }
       pendingUrlRef.current = url;
       setConfirmOpen(true);
-      throw new Error("interview-leave-cancelled");
+      throw new Error('interview-leave-cancelled');
     };
-    router.events.on("routeChangeStart", handleRouteChange);
-    return () => router.events.off("routeChangeStart", handleRouteChange);
+    router.events.on('routeChangeStart', handleRouteChange);
+    return () => router.events.off('routeChangeStart', handleRouteChange);
   }, [isActive, router.events]);
 
   const handleConfirmLeave = useCallback(() => {
@@ -153,45 +148,37 @@ export default function InterviewScreen({
     setConfirmOpen(false);
     pendingUrlRef.current = null;
   }, []);
-  // ──────────────────────────────────────────────────────────────────────────
 
   const connectionBannerText = useMemo(() => {
     switch (socket.connectionStatus) {
-      case "connecting":
-        return t("connection.connecting");
-      case "error":
-        return t("connection.error");
-      default:
-        return t("connection.reconnecting");
+      case 'connecting':  return t('connection.connecting');
+      case 'error':       return t('connection.error');
+      default:            return t('connection.reconnecting');
     }
   }, [socket.connectionStatus, t]);
 
   const lastQuestion = useMemo((): InterviewMessage | null => {
-    const visible = audio.conversationHistory.filter(
-      (m) => m.type !== "system",
-    );
+    const visible = audio.conversationHistory.filter((m) => m.type !== 'system');
     return visible.at(-1) ?? null;
   }, [audio.conversationHistory]);
 
   const questionCount = useMemo(
-    () =>
-      audio.conversationHistory.filter(
-        (m) => m.type === "question" || m.type === "follow_up" || m.type === "new_topic",
-      ).length,
+    () => audio.conversationHistory.filter(
+      (m) => m.type === 'question' || m.type === 'follow_up' || m.type === 'new_topic',
+    ).length,
     [audio.conversationHistory],
   );
 
   return (
-    /* Root — locks to viewport, no page scroll on md+ */
-    <Box sx={interviewScreenSx.root}>
+    <div className={interviewScreenStyles.root}>
       {/* Connection warning banner */}
-      {socket.isHydrated && socket.connectionStatus !== "connected" && (
+      {socket.isHydrated && socket.connectionStatus !== 'connected' && (
         <InterviewConnectionBanner text={connectionBannerText} />
       )}
 
-      {/* Main content fills remaining height */}
-      <Container maxWidth="xl" sx={interviewScreenSx.container}>
-        {/* ── Header ──────────────────────────────────────────────────────── */}
+      {/* Main content */}
+      <div className={`max-w-[1536px] mx-auto w-full ${interviewScreenStyles.container}`}>
+        {/* Header */}
         <InterviewSessionHeader
           jobData={jobData}
           interviewConfig={interviewConfig}
@@ -200,10 +187,10 @@ export default function InterviewScreen({
           timeWarning={timer.timeWarning}
           coverage={coverage ? Math.round(coverage.overall || 0) : null}
           onEndInterview={() => setConfirmOpen(true)}
-          endInterviewLabel={t("end_interview")}
+          endInterviewLabel={t('end_interview')}
         />
 
-        {/* ── Question strip (active only) ─────────────────────────────── */}
+        {/* Question strip (active only) */}
         {isActive && lastQuestion && (
           <QuestionPanel
             currentMessage={lastQuestion}
@@ -214,38 +201,44 @@ export default function InterviewScreen({
             questionAnswerRemaining={audio.questionAnswerRemaining}
             agentState={audio.agentState}
             questionNumber={
-              lastQuestion.type === "question" ||
-              lastQuestion.type === "follow_up"
+              lastQuestion.type === 'question' || lastQuestion.type === 'follow_up'
                 ? questionCount
                 : 0
             }
           />
         )}
 
-        {/* ── Silence warning banner ───────────────────────────────────── */}
+        {/* Silence warning banner */}
         {isActive && audio.silenceWarning !== null && (
-          <Box sx={{ mb: 1, px: 2, py: 1.25, bgcolor: audio.silenceWarning === 0 ? '#F0FDF4' : '#FEF3C7', border: `1px solid ${audio.silenceWarning === 0 ? '#6EE7B7' : '#F59E0B'}`, borderRadius: '12px' }}>
-            <Typography sx={{ fontSize: '0.8rem', color: audio.silenceWarning === 0 ? '#065F46' : '#92400E', fontWeight: 600, mb: 0.75 }}>
+          <div
+            className="mb-2 px-4 py-3 rounded-[12px] border"
+            style={{
+              background:   audio.silenceWarning === 0 ? '#F0FDF4' : '#FEF3C7',
+              borderColor:  audio.silenceWarning === 0 ? '#6EE7B7' : '#F59E0B',
+            }}
+          >
+            <p
+              className="font-sans font-semibold text-[0.8rem] mb-2"
+              style={{ color: audio.silenceWarning === 0 ? '#065F46' : '#92400E' }}
+            >
               {audio.silenceWarning === 0
                 ? 'Generating next question…'
                 : `Still silent? Moving to the next question in ${audio.silenceWarning}s`}
-            </Typography>
-            <LinearProgress
-              variant={audio.silenceWarning === 0 ? 'indeterminate' : 'determinate'}
+            </p>
+            <Progress
               value={audio.silenceWarning === 0 ? undefined : (audio.silenceWarning / 30) * 100}
-              sx={{
-                height: 4, borderRadius: 2,
-                bgcolor: audio.silenceWarning === 0 ? '#A7F3D0' : '#FDE68A',
-                '& .MuiLinearProgress-bar': { bgcolor: audio.silenceWarning === 0 ? '#10B981' : '#F59E0B' },
-              }}
+              className="h-1 rounded-full"
+              style={{
+                background: audio.silenceWarning === 0 ? '#A7F3D0' : '#FDE68A',
+              } as React.CSSProperties}
             />
-          </Box>
+          </div>
         )}
 
-        {/* ── 2-column grid — same layout in both active and lobby ─────── */}
-        <Box sx={interviewScreenSx.grid}>
+        {/* 2-column grid */}
+        <div className={interviewScreenStyles.grid}>
           {/* Left: Camera */}
-          <Box sx={{ bgcolor: "#fff", borderRadius: "20px", border: "1px solid rgba(106,211,156,0.15)", boxShadow: "0 2px 16px rgba(16,69,63,0.06)", p: { xs: 1.5, md: 1.75 }, display: "flex", flexDirection: "column", minHeight: 0, height: "100%" }}>
+          <div className="bg-white rounded-[20px] border border-[rgba(106,211,156,0.15)] shadow-[0_2px_16px_rgba(16,69,63,0.06)] p-4 md:p-[1.75rem] flex flex-col min-h-0 h-full">
             <CameraPreview
               videoRef={camera.videoRef}
               cameraStatus={camera.cameraStatus}
@@ -256,9 +249,9 @@ export default function InterviewScreen({
               audioStreamRef={audio.audioStreamRef}
               attachStream={camera.attachStream}
             />
-          </Box>
+          </div>
 
-          {/* Right: controls when active, readiness card when lobby */}
+          {/* Right: controls or lobby */}
           {isActive ? (
             <InterviewControlsPanel
               interviewStatus={socket.interviewStatus}
@@ -277,9 +270,9 @@ export default function InterviewScreen({
               onSkipQuestion={skipQuestion}
             />
           ) : (
-            <Box sx={{ ...interviewScreenSx.lobbyCard, overflow: "hidden" }}>
-              <Box sx={interviewScreenSx.lobbyAccentBar} />
-              <Box sx={{ p: { xs: 2, md: 2.5 } }}>
+            <div className={`${interviewScreenStyles.lobbyCard} overflow-hidden`}>
+              <div className={interviewScreenStyles.lobbyAccentBar} />
+              <div className="p-4 md:p-5">
                 <InterviewContainer
                   noBorder
                   interviewStatus={socket.interviewStatus}
@@ -293,26 +286,22 @@ export default function InterviewScreen({
                   onBack={handleBack}
                   dashboardPath={dashboardPath}
                   reportPath={reportPath}
-                  jobTitle={jobData?.jobDetails?.title || jobData?.title || ""}
+                  jobTitle={jobData?.jobDetails?.title || jobData?.title || ''}
                   companyName={
                     jobData?.createdBy?.name ||
                     jobData?.companyName ||
                     interviewConfig?.context?.targetCompany ||
                     jobData?.user?.username ||
-                    ""
+                    ''
                   }
                 />
-              </Box>
-            </Box>
+              </div>
+            </div>
           )}
-        </Box>
-      </Container>
+        </div>
+      </div>
 
-      <ConfirmLeaveModal
-        open={confirmOpen}
-        onConfirm={handleConfirmLeave}
-        onCancel={handleCancelLeave}
-      />
+      <ConfirmLeaveModal open={confirmOpen} onConfirm={handleConfirmLeave} onCancel={handleCancelLeave} />
 
       <FeedbackModal
         open={feedbackOpen}
@@ -336,16 +325,22 @@ export default function InterviewScreen({
         onDecline={handleBack}
       />
 
-      <Snackbar
-        open={notification.open}
-        autoHideDuration={4000}
-        onClose={hideNotification}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert severity={notification.severity} onClose={hideNotification}>
-          {notification.message}
-        </Alert>
-      </Snackbar>
-    </Box>
+      {/* Notification toast */}
+      {notification.open && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+          <div
+            className={`flex items-center gap-3 px-4 py-3 rounded-[12px] border shadow-lg font-sans text-[0.85rem] font-medium min-w-[260px] ${SEVERITY_STYLES[notification.severity] || SEVERITY_STYLES.info}`}
+          >
+            <span className="flex-1">{notification.message}</span>
+            <button
+              onClick={hideNotification}
+              className="text-current opacity-60 hover:opacity-100 transition-opacity ml-2 text-lg leading-none"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

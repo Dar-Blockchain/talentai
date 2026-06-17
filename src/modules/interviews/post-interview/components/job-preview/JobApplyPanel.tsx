@@ -1,12 +1,11 @@
 import React, { useState } from "react";
-import { Box, Typography, Button, Divider, Chip, CircularProgress } from "@mui/material";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import { ArrowRight, Play, CheckCircle } from "lucide-react";
 import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import { type RootState } from "@/store/store";
-import { PURPLE, PURPLE_DARK, PURPLE_LIGHT, PURPLE_BORDER } from "../../constants";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import { Badge } from "@/modules/shared/ui/shadcn/badge";
+import { Separator } from "@/modules/shared/ui/shadcn/separator";
 import { SectionCard } from "./JobPanelShared";
 import OnboardingModal from "../modals/OnboardingModal";
 
@@ -30,145 +29,92 @@ export default function JobApplyPanel({ jobTitle, onStartInterview, isConfigLoad
   const isAuthenticated = !!authUser && !!onStartInterview;
 
   return (
-    <Box
-      sx={{
-        width: { xs: "100%", md: 320 },
-        flexShrink: 0,
-        position: { md: "sticky" },
-        top: { md: 24 },
-      }}
-    >
+    <div className="w-full md:w-[320px] shrink-0 md:sticky md:top-6">
       <SectionCard>
         {isAuthenticated ? (
-          // ── Authenticated — "Start Interview" ──────────────────────────────
           <>
-            <Chip
-              label="Ready to interview"
-              size="small"
-              sx={{
-                fontFamily: "Poppins",
-                fontWeight: 600,
-                fontSize: "0.72rem",
-                bgcolor: "rgba(106,211,156,0.1)",
-                color: "#10453F",
-                border: "1px solid rgba(106,211,156,0.3)",
-                mb: 1.5,
-              }}
-            />
-            <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "1.05rem", color: "#111827", mb: 0.5 }}>
+            <Badge
+              variant="outline"
+              className="mb-4 font-[Poppins] text-[0.72rem] rounded-[6px]"
+              style={{ background: 'rgba(106,211,156,0.1)', color: '#10453F', borderColor: 'rgba(106,211,156,0.3)' }}
+            >
+              Ready to interview
+            </Badge>
+            <p className="font-[Poppins] font-bold text-[1.05rem] text-[#111827] mb-1">
               Start your interview
-            </Typography>
-            <Typography sx={{ fontFamily: "Poppins", fontSize: "0.82rem", color: "#6B7280", mb: 2.5, lineHeight: 1.6 }}>
+            </p>
+            <p className="font-[Poppins] text-[0.82rem] text-[#6B7280] mb-5 leading-[1.6]">
               Your account is ready. Click below to begin the AI-powered interview for this position.
-            </Typography>
+            </p>
 
             {[
               "AI interviewer asks tailored questions",
               "Camera & voice recording",
               "Instant feedback after completion",
             ].map((item) => (
-              <Box key={item} sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                <CheckCircleIcon sx={{ fontSize: 15, color: PURPLE, flexShrink: 0 }} />
-                <Typography sx={{ fontFamily: "Poppins", fontSize: "0.78rem", color: "#374151" }}>
-                  {item}
-                </Typography>
-              </Box>
+              <div key={item} className="flex items-center gap-2 mb-2">
+                <CheckCircle size={15} className="shrink-0 text-primary" />
+                <p className="font-[Poppins] text-[0.78rem] text-[#374151]">{item}</p>
+              </div>
             ))}
 
-            <Divider sx={{ my: 2 }} />
+            <Separator className="my-4" />
 
             <Button
-              variant="contained"
-              fullWidth
+              variant="default"
+              size="lg"
+              className="w-full font-[Poppins] font-bold text-[0.95rem] rounded-[12px]"
               onClick={onStartInterview}
               disabled={isConfigLoading}
-              startIcon={isConfigLoading
-                ? <CircularProgress size={16} sx={{ color: "#fff" }} />
-                : <PlayArrowIcon />
-              }
-              sx={{
-                bgcolor: PURPLE,
-                color: "#fff",
-                fontWeight: 700,
-                fontFamily: "Poppins",
-                fontSize: "0.95rem",
-                py: 1.5,
-                borderRadius: "12px",
-                textTransform: "none",
-                boxShadow: "none",
-                "&:hover": { bgcolor: PURPLE_DARK, boxShadow: "none" },
-                "&.Mui-disabled": { bgcolor: PURPLE, opacity: 0.65, color: "#fff" },
-              }}
+              loading={isConfigLoading}
             >
+              {!isConfigLoading && <Play size={16} fill="currentColor" />}
               {isConfigLoading ? "Preparing interview…" : "Start Interview"}
             </Button>
           </>
         ) : (
-          // ── Unauthenticated — "Apply Now" ──────────────────────────────────
           <>
-            <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "1.05rem", color: "#111827", mb: 0.5 }}>
+            <p className="font-[Poppins] font-bold text-[1.05rem] text-[#111827] mb-1">
               {t("apply_panel.title")}
-            </Typography>
-            <Typography sx={{ fontFamily: "Poppins", fontSize: "0.82rem", color: "#6B7280", mb: 2.5, lineHeight: 1.6 }}>
+            </p>
+            <p className="font-[Poppins] text-[0.82rem] text-[#6B7280] mb-5 leading-[1.6]">
               {t("apply_panel.subtitle")}
-            </Typography>
+            </p>
 
             {steps.map(({ num, label, sub }) => (
-              <Box key={num} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, mb: 1.75 }}>
-                <Box
-                  sx={{
-                    width: 26, height: 26, borderRadius: "50%", flexShrink: 0,
-                    bgcolor: PURPLE_LIGHT, border: `1px solid ${PURPLE_BORDER}`,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}
+              <div key={num} className="flex items-start gap-3 mb-4">
+                <div
+                  className="w-[26px] h-[26px] rounded-full shrink-0 flex items-center justify-center border border-primary/20 bg-primary/8"
                 >
-                  <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "0.75rem", color: PURPLE }}>
-                    {num}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography sx={{ fontFamily: "Poppins", fontWeight: 600, fontSize: "0.85rem", color: "#111827" }}>
-                    {label}
-                  </Typography>
-                  <Typography sx={{ fontFamily: "Poppins", fontSize: "0.75rem", color: "#9CA3AF" }}>
-                    {sub}
-                  </Typography>
-                </Box>
-              </Box>
+                  <span className="font-[Poppins] font-bold text-[0.75rem] text-primary">{num}</span>
+                </div>
+                <div>
+                  <p className="font-[Poppins] font-semibold text-[0.85rem] text-[#111827]">{label}</p>
+                  <p className="font-[Poppins] text-[0.75rem] text-[#9CA3AF]">{sub}</p>
+                </div>
+              </div>
             ))}
 
-            <Divider sx={{ my: 2 }} />
+            <Separator className="my-4" />
 
             <Button
-              variant="contained"
-              fullWidth
+              variant="default"
+              size="lg"
+              className="w-full font-[Poppins] font-bold text-[0.95rem] rounded-[12px]"
               onClick={() => setModalOpen(true)}
-              endIcon={<ArrowForwardIcon />}
-              sx={{
-                bgcolor: PURPLE,
-                color: "#fff",
-                fontWeight: 700,
-                fontFamily: "Poppins",
-                fontSize: "0.95rem",
-                py: 1.5,
-                borderRadius: "12px",
-                textTransform: "none",
-                boxShadow: "none",
-                "&:hover": { bgcolor: PURPLE_DARK, boxShadow: "none" },
-              }}
             >
               {t("apply_panel.btn")}
+              <ArrowRight size={16} />
             </Button>
           </>
         )}
       </SectionCard>
 
-      {/* Modal is always rendered outside the conditional so it is never unmounted mid-flow */}
       <OnboardingModal
         open={modalOpen}
         jobTitle={jobTitle}
         onClose={() => setModalOpen(false)}
       />
-    </Box>
+    </div>
   );
 }

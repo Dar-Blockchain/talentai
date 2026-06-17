@@ -1,8 +1,10 @@
 import React from 'react';
-import { Dialog, DialogContent, Box, Typography, Button, LinearProgress } from '@mui/material';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import GppBadRoundedIcon from '@mui/icons-material/GppBadRounded';
+import { AlertTriangle, ShieldX } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Progress } from '@/modules/shared/ui/shadcn/progress';
+import {
+  Dialog, DialogContent,
+} from '@/modules/shared/ui/shadcn/dialog';
 
 const MAX_WARNINGS = 1;
 
@@ -36,70 +38,95 @@ const SecurityModals: React.FC<SecurityModalsProps> = ({
 
   return (
     <>
-      {/* Warning modal (1st & 2nd violation) */}
-      <Dialog open={showFirstViolationModal && !showSecurityModal} onClose={onDismissFirst} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: '20px', overflow: 'hidden' } }}>
-        <Box sx={{ height: 4, bgcolor: '#F59E0B' }} />
-        <DialogContent sx={{ px: 3.5, pt: 3.5, pb: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2.5 }}>
-            <Box sx={{ width: 64, height: 64, borderRadius: '50%', bgcolor: 'rgba(245,158,11,0.1)', border: '2px solid rgba(245,158,11,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <WarningAmberRoundedIcon sx={{ fontSize: 32, color: '#F59E0B' }} />
-            </Box>
-          </Box>
+      {/* Warning modal */}
+      <Dialog
+        open={showFirstViolationModal && !showSecurityModal}
+        onOpenChange={(o) => !o && onDismissFirst()}
+      >
+        <DialogContent
+          showCloseButton={false}
+          className="max-w-xs rounded-[20px] p-0 overflow-hidden"
+        >
+          <div className="h-1 bg-[#F59E0B]" />
+          <div className="px-7 pt-7 pb-6">
+            <div className="flex justify-center mb-5">
+              <div className="w-16 h-16 rounded-full bg-[rgba(245,158,11,0.1)] border-2 border-[rgba(245,158,11,0.25)] flex items-center justify-center">
+                <AlertTriangle size={32} color="#F59E0B" />
+              </div>
+            </div>
 
-          <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.05rem', color: '#111827', textAlign: 'center', mb: 0.75 }}>
-            {t('security.warning_title')}
-          </Typography>
-          <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#4B5563', textAlign: 'center', lineHeight: 1.7, mb: 2.5 }}>
-            <strong style={{ color: '#D97706' }}>{violationType || 'A restricted action'}</strong> {t('security.warning_desc')}
-          </Typography>
+            <p className="font-sans font-bold text-[1.05rem] text-[#111827] text-center mb-1.5">
+              {t('security.warning_title')}
+            </p>
+            <p className="font-sans text-[0.82rem] text-[#4B5563] text-center leading-[1.7] mb-5">
+              <strong className="text-[#D97706]">{violationType || 'A restricted action'}</strong>{' '}
+              {t('security.warning_desc')}
+            </p>
 
-          <Box sx={{ mb: 2.5 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.75 }}>
-              <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', color: '#6B7280' }}>{t('security.violations_label')}</Typography>
-              <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', fontWeight: 700, color: securityViolationCount >= MAX_WARNINGS ? '#EF4444' : '#D97706' }}>
-                {securityViolationCount} / {MAX_WARNINGS + 1} — {warningsLeft > 0 ? t('security.warnings_left', { count: warningsLeft }) : t('security.no_warnings_left')}
-              </Typography>
-            </Box>
-            <LinearProgress
-              variant="determinate"
-              value={(securityViolationCount / (MAX_WARNINGS + 1)) * 100}
-              sx={{ height: 6, borderRadius: 3, bgcolor: '#FEF3C7', '& .MuiLinearProgress-bar': { bgcolor: securityViolationCount >= MAX_WARNINGS ? '#EF4444' : '#F59E0B', borderRadius: 3 } }}
-            />
-          </Box>
+            <div className="mb-5">
+              <div className="flex justify-between mb-1.5">
+                <span className="font-sans text-[0.72rem] text-[#6B7280]">{t('security.violations_label')}</span>
+                <span
+                  className="font-sans font-bold text-[0.72rem]"
+                  style={{ color: securityViolationCount >= MAX_WARNINGS ? '#EF4444' : '#D97706' }}
+                >
+                  {securityViolationCount} / {MAX_WARNINGS + 1} —{' '}
+                  {warningsLeft > 0
+                    ? t('security.warnings_left', { count: warningsLeft })
+                    : t('security.no_warnings_left')}
+                </span>
+              </div>
+              <Progress
+                value={(securityViolationCount / (MAX_WARNINGS + 1)) * 100}
+                className="h-1.5 rounded-full bg-[#FEF3C7]"
+              />
+            </div>
 
-          <Box sx={{ bgcolor: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '10px', p: 1.5, mb: 2.5 }}>
-            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', fontWeight: 700, color: '#92400E', mb: 0.75 }}>{t('security.prohibited_title')}</Typography>
-            {prohibitedRules.map((rule) => (
-              <Typography key={rule} sx={{ fontFamily: 'Poppins', fontSize: '0.71rem', color: '#78350F', lineHeight: 1.7 }}>· {rule}</Typography>
-            ))}
-          </Box>
+            <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-[10px] p-3.5 mb-5">
+              <p className="font-sans font-bold text-[0.72rem] text-[#92400E] mb-1.5">{t('security.prohibited_title')}</p>
+              {prohibitedRules.map((rule) => (
+                <p key={rule} className="font-sans text-[0.71rem] text-[#78350F] leading-[1.7]">· {rule}</p>
+              ))}
+            </div>
 
-          <Button fullWidth variant="contained" onClick={onDismissFirst} sx={{ bgcolor: '#F59E0B', color: '#fff', fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.88rem', textTransform: 'none', borderRadius: '10px', py: 1.2, boxShadow: 'none', '&:hover': { bgcolor: '#D97706', boxShadow: 'none' } }}>
-            {t('security.understand_btn')}
-          </Button>
+            <button
+              onClick={onDismissFirst}
+              className="w-full font-sans font-bold text-[0.88rem] text-white py-3 rounded-[10px] bg-[#F59E0B] hover:bg-[#D97706] transition-colors"
+            >
+              {t('security.understand_btn')}
+            </button>
+          </div>
         </DialogContent>
       </Dialog>
 
-      {/* Termination modal (3rd violation) */}
-      <Dialog open={showSecurityModal} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: '20px', overflow: 'hidden' } }}>
-        <Box sx={{ height: 4, bgcolor: '#EF4444' }} />
-        <DialogContent sx={{ px: 3.5, pt: 3.5, pb: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2.5 }}>
-            <Box sx={{ width: 64, height: 64, borderRadius: '50%', bgcolor: '#FEF2F2', border: '2px solid #FECACA', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <GppBadRoundedIcon sx={{ fontSize: 32, color: '#EF4444' }} />
-            </Box>
-          </Box>
+      {/* Termination modal */}
+      <Dialog open={showSecurityModal} onOpenChange={() => {}}>
+        <DialogContent
+          showCloseButton={false}
+          className="max-w-xs rounded-[20px] p-0 overflow-hidden"
+        >
+          <div className="h-1 bg-[#EF4444]" />
+          <div className="px-7 pt-7 pb-6">
+            <div className="flex justify-center mb-5">
+              <div className="w-16 h-16 rounded-full bg-[#FEF2F2] border-2 border-[#FECACA] flex items-center justify-center">
+                <ShieldX size={32} color="#EF4444" />
+              </div>
+            </div>
 
-          <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.05rem', color: '#111827', textAlign: 'center', mb: 0.75 }}>
-            {t('security.terminated_title')}
-          </Typography>
-          <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#4B5563', textAlign: 'center', lineHeight: 1.7, mb: 3 }}>
-            {t('security.terminated_desc')}
-          </Typography>
+            <p className="font-sans font-bold text-[1.05rem] text-[#111827] text-center mb-1.5">
+              {t('security.terminated_title')}
+            </p>
+            <p className="font-sans text-[0.82rem] text-[#4B5563] text-center leading-[1.7] mb-6">
+              {t('security.terminated_desc')}
+            </p>
 
-          <Button fullWidth variant="contained" onClick={onReturnToDashboard} sx={{ bgcolor: '#EF4444', color: '#fff', fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.88rem', textTransform: 'none', borderRadius: '10px', py: 1.2, boxShadow: 'none', '&:hover': { bgcolor: '#DC2626', boxShadow: 'none' } }}>
-            {t('security.return_dashboard')}
-          </Button>
+            <button
+              onClick={onReturnToDashboard}
+              className="w-full font-sans font-bold text-[0.88rem] text-white py-3 rounded-[10px] bg-[#EF4444] hover:bg-[#DC2626] transition-colors"
+            >
+              {t('security.return_dashboard')}
+            </button>
+          </div>
         </DialogContent>
       </Dialog>
     </>

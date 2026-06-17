@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import { useNotification } from '@/hooks/useNotification';
 import { type RootState } from '@/store/store';
 import { useSkillInterviewConfig } from '../hooks/useSkillInterviewConfig';
@@ -9,6 +10,7 @@ import InterviewLoadingScreen from '../../shared/components/layout/InterviewLoad
 import SkillPreviewPanel from './skill-preview/SkillPreviewPanel';
 
 export default function SkillInterviewFlow() {
+  const { t } = useTranslation('modules/interview/skill-interview');
   const authUser = useSelector((state: RootState) => state.user.connectedUser.user);
   const { notification, showNotification, hideNotification } = useNotification();
 
@@ -35,8 +37,8 @@ export default function SkillInterviewFlow() {
   if (!isReady || !skill) {
     return (
       <InterviewLoadingScreen
-        title="Loading skill interview"
-        subtitle="Preparing your assessment…"
+        title={t('loading.title')}
+        subtitle={t('loading.subtitle')}
       />
     );
   }

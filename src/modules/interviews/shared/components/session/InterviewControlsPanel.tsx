@@ -1,13 +1,12 @@
-import React from "react";
-import { Box } from "@mui/material";
-import InterviewContainer from "./InterviewContainer";
-import AgentStatusPanel from "./AgentStatusPanel";
+import React from 'react';
+import InterviewContainer from './InterviewContainer';
+import AgentStatusPanel from './AgentStatusPanel';
 import {
   type InterviewStatus,
   type ConnectionStatus,
   type CameraStatus,
   type AgentState,
-} from "../../types/interview";
+} from '../../types/interview';
 
 interface InterviewControlsPanelProps {
   interviewStatus: InterviewStatus;
@@ -42,15 +41,7 @@ const InterviewControlsPanel: React.FC<InterviewControlsPanelProps> = ({
   onSubmitAnswer,
   onSkipQuestion,
 }) => (
-  <Box
-    sx={{
-      order: { xs: 2, md: 3 },
-      display: "flex",
-      flexDirection: "column",
-      gap: 1,
-      minHeight: 0,
-    }}
-  >
+  <div className="order-2 md:order-3 flex flex-col gap-2 min-h-0">
     <InterviewContainer
       interviewStatus={interviewStatus}
       isHydrated={isHydrated}
@@ -72,7 +63,7 @@ const InterviewControlsPanel: React.FC<InterviewControlsPanelProps> = ({
       onSubmitAnswer={onSubmitAnswer}
       onSkipQuestion={onSkipQuestion}
     />
-  </Box>
+  </div>
 );
 
 export default InterviewControlsPanel;

@@ -1,18 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/router';
-import { Box, Typography, Button, CircularProgress } from '@mui/material';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import KeyboardVoiceIcon from '@mui/icons-material/KeyboardVoice';
-import AutorenewIcon from '@mui/icons-material/Autorenew';
-import VideocamIcon from '@mui/icons-material/Videocam';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
+import { Play, Mic, RefreshCw, Video, ArrowLeft, CheckCircle, CheckCircle2, Circle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { type InterviewStatus, type ConnectionStatus, type CameraStatus, type AgentState } from '../../types/interview';
-
-// ─── Main component ────────────────────────────────────────────────────────────
 
 interface InterviewContainerProps {
   interviewStatus: InterviewStatus;
@@ -59,11 +49,22 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
   ], [cameraStatus, connectionStatus, isHydrated, t]);
 
   return (
-    <Box sx={{ bgcolor: noBorder ? 'transparent' : '#fff', borderRadius: noBorder ? 0 : '16px', border: noBorder ? 'none' : '1px solid rgba(106,211,156,0.18)', boxShadow: noBorder ? 'none' : '0 2px 16px rgba(16,69,63,0.06)', overflow: 'hidden', height: noBorder ? 'auto' : '100%', display: 'flex', flexDirection: 'column' }}>
-
+    <div
+      className="overflow-hidden flex flex-col"
+      style={{
+        background:   noBorder ? 'transparent' : '#fff',
+        borderRadius: noBorder ? 0 : '16px',
+        border:       noBorder ? 'none' : '1px solid rgba(106,211,156,0.18)',
+        boxShadow:    noBorder ? 'none' : '0 2px 16px rgba(16,69,63,0.06)',
+        height:       noBorder ? 'auto' : '100%',
+      }}
+    >
       {interviewStatus === 'active' && <AgentHeader agentState={agentState} />}
 
-      <Box sx={{ p: { xs: 1.5, md: 2 }, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: interviewStatus === 'active' ? 'flex-start' : 'center' }}>
+      <div
+        className="flex-1 flex flex-col p-4 md:p-5"
+        style={{ justifyContent: interviewStatus === 'active' ? 'flex-start' : 'center' }}
+      >
         {interviewStatus === 'idle' && (
           <ReadinessChecklist
             checks={checks}
@@ -77,89 +78,75 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
         )}
 
         {interviewStatus === 'connecting' && (
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', py: 1.5, gap: 0 }}>
-
-            {/* Layered spinner rings */}
-            <Box sx={{ position: 'relative', width: 68, height: 68, mb: 2.5, flexShrink: 0 }}>
-              <Box sx={{
-                position: 'absolute', inset: 0, borderRadius: '50%',
-                border: '2px solid rgba(106,211,156,0.12)',
-              }} />
-              <Box sx={{
-                position: 'absolute', inset: 0, borderRadius: '50%',
-                border: '2px solid transparent',
-                borderTopColor: '#6AD39C',
-                animation: 'spinOuter 1.1s linear infinite',
-                '@keyframes spinOuter': { to: { transform: 'rotate(360deg)' } },
-              }} />
-              <Box sx={{
-                position: 'absolute', inset: 10, borderRadius: '50%',
-                border: '2px solid transparent',
-                borderTopColor: 'rgba(106,211,156,0.45)',
-                animation: 'spinInner 0.75s linear infinite reverse',
-                '@keyframes spinInner': { to: { transform: 'rotate(360deg)' } },
-              }} />
-              <Box sx={{
-                position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <Box sx={{
-                  width: 10, height: 10, borderRadius: '50%', bgcolor: '#6AD39C',
-                  animation: 'dotPulse 1.4s ease-in-out infinite',
-                  '@keyframes dotPulse': { '0%,100%': { opacity: 1, transform: 'scale(1)' }, '50%': { opacity: 0.4, transform: 'scale(0.6)' } },
-                }} />
-              </Box>
-            </Box>
-
-            <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1rem', color: '#0d1117', letterSpacing: '-0.01em', mb: 0.5 }}>
+          <div className="flex flex-col items-center text-center py-4 gap-0">
+            <div className="relative w-[68px] h-[68px] mb-5 shrink-0">
+              <div className="absolute inset-0 rounded-full border-2 border-[rgba(106,211,156,0.12)]" />
+              <div
+                className="absolute inset-0 rounded-full border-2 border-transparent"
+                style={{ borderTopColor: '#6AD39C', animation: 'iv-spin 1.1s linear infinite' }}
+              />
+              <div
+                className="absolute inset-2.5 rounded-full border-2 border-transparent"
+                style={{ borderTopColor: 'rgba(106,211,156,0.45)', animation: 'iv-spin-rev 0.75s linear infinite' }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div
+                  className="w-2.5 h-2.5 rounded-full bg-[#6AD39C]"
+                  style={{ animation: 'iv-pulse-dot 1.4s ease-in-out infinite' }}
+                />
+              </div>
+            </div>
+            <p className="font-sans font-bold text-base text-[#0d1117] tracking-tight mb-1">
               {t('container.starting_title')}
-            </Typography>
-            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.74rem', color: '#6b7280', lineHeight: 1.65, maxWidth: 210 }}>
+            </p>
+            <p className="font-sans text-[0.74rem] text-[#6b7280] leading-relaxed max-w-[210px]">
               {t('container.starting_subtitle')}
-            </Typography>
-
-            {/* Step dots */}
-            <Box sx={{ display: 'flex', gap: 0.75, mt: 2.5 }}>
+            </p>
+            <div className="flex gap-1.5 mt-5">
               {[0, 1, 2].map((i) => (
-                <Box key={i} sx={{
-                  width: 6, height: 6, borderRadius: '50%',
-                  bgcolor: '#6AD39C',
-                  animation: `stepDot 1.2s ease-in-out ${i * 0.2}s infinite`,
-                  '@keyframes stepDot': { '0%,100%': { opacity: 0.25, transform: 'scale(0.8)' }, '50%': { opacity: 1, transform: 'scale(1.2)' } },
-                }} />
+                <div
+                  key={i}
+                  className="w-1.5 h-1.5 rounded-full bg-[#6AD39C]"
+                  style={{ animation: `iv-step-dot 1.2s ease-in-out ${i * 0.2}s infinite` }}
+                />
               ))}
-            </Box>
-          </Box>
+            </div>
+          </div>
         )}
 
-        {interviewStatus === 'active' && agentState !== 'thinking' && agentState !== 'processing' && <LiveTranscript currentTranscript={currentTranscript} />}
-        {interviewStatus === 'ended'   && (resultsReady ? <CompletionCard dashboardPath={dashboardPath} reportPath={reportPath} /> : <AnalyzingSpinner waitDots={waitDots} />)}
-      </Box>
-
-    </Box>
+        {interviewStatus === 'active' && agentState !== 'thinking' && agentState !== 'processing' && (
+          <LiveTranscript currentTranscript={currentTranscript} />
+        )}
+        {interviewStatus === 'ended' && (
+          resultsReady
+            ? <CompletionCard dashboardPath={dashboardPath} reportPath={reportPath} />
+            : <AnalyzingSpinner waitDots={waitDots} />
+        )}
+      </div>
+    </div>
   );
 };
 
 export default InterviewContainer;
 
-// ─── Sub-components ────────────────────────────────────────────────────────────
+// ─── Sub-components ─────────────────────────────────────────────────────────
 
-/** Top strip shown during an active interview — displays the current AI agent state. */
 const AgentHeader: React.FC<{ agentState: AgentState }> = ({ agentState }) => {
   const { t } = useTranslation('interview');
   const isProcessing = agentState === 'thinking' || agentState === 'processing';
   const isFinishing  = agentState === 'finishing';
 
-  const bgColor     = isFinishing ? 'linear-gradient(90deg, rgba(99,102,241,0.07) 0%, rgba(139,92,246,0.04) 100%)'
-                    : isProcessing ? 'linear-gradient(90deg, rgba(251,191,36,0.07) 0%, rgba(245,158,11,0.04) 100%)'
-                    : 'linear-gradient(90deg, rgba(106,211,156,0.07) 0%, rgba(16,69,63,0.04) 100%)';
-  const borderColor = isFinishing ? 'rgba(99,102,241,0.2)'
-                    : isProcessing ? 'rgba(245,158,11,0.18)'
-                    : 'rgba(106,211,156,0.18)';
+  const bgColor = isFinishing
+    ? 'linear-gradient(90deg, rgba(99,102,241,0.07) 0%, rgba(139,92,246,0.04) 100%)'
+    : isProcessing
+    ? 'linear-gradient(90deg, rgba(251,191,36,0.07) 0%, rgba(245,158,11,0.04) 100%)'
+    : 'linear-gradient(90deg, rgba(106,211,156,0.07) 0%, rgba(16,69,63,0.04) 100%)';
+  const borderColor = isFinishing ? 'rgba(99,102,241,0.2)' : isProcessing ? 'rgba(245,158,11,0.18)' : 'rgba(106,211,156,0.18)';
   const dotColor    = isFinishing ? '#818cf8' : isProcessing ? '#f59e0b' : '#22c55e';
   const iconColor   = isFinishing ? '#818cf8' : '#f59e0b';
 
   const title    = isFinishing  ? 'Interview complete'
-                 : agentState === 'thinking'  ? t('container.thinking')
+                 : agentState === 'thinking'   ? t('container.thinking')
                  : agentState === 'processing' ? t('container.processing')
                  : t('container.recording');
   const subtitle = isFinishing  ? 'Preparing your results…'
@@ -167,30 +154,24 @@ const AgentHeader: React.FC<{ agentState: AgentState }> = ({ agentState }) => {
                  : t('container.listening');
 
   return (
-    <Box sx={{ background: bgColor, borderBottom: `1px solid ${borderColor}`, px: 1.75, py: 1.1, display: 'flex', alignItems: 'center', gap: 1.25 }}>
-      <Box sx={{
-        width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-        bgcolor: dotColor,
-        animation: 'statusPulse 1.8s ease-in-out infinite',
-        '@keyframes statusPulse': { '0%,100%': { opacity: 1, transform: 'scale(1)' }, '50%': { opacity: 0.45, transform: 'scale(0.8)' } },
-      }} />
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.8rem', color: '#111827', lineHeight: 1.2 }}>
-          {title}
-        </Typography>
-        <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.63rem', color: '#9ca3af', mt: 0.1 }}>
-          {subtitle}
-        </Typography>
-      </Box>
+    <div className="flex items-center gap-3 px-4 py-2.5 border-b" style={{ background: bgColor, borderColor }}>
+      <div
+        className="w-2 h-2 rounded-full shrink-0"
+        style={{ background: dotColor, animation: 'iv-status-pulse 1.8s ease-in-out infinite' }}
+      />
+      <div className="flex-1 min-w-0">
+        <p className="font-sans font-bold text-[0.8rem] text-[#111827] leading-tight">{title}</p>
+        <p className="font-sans text-[0.63rem] text-[#9ca3af] mt-0.5">{subtitle}</p>
+      </div>
       {(isProcessing || isFinishing)
-        ? <AutorenewIcon sx={{ fontSize: 15, color: iconColor, flexShrink: 0, animation: 'spin 1.2s linear infinite', '@keyframes spin': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } } }} />
-        : <KeyboardVoiceIcon sx={{ fontSize: 15, color: '#6AD39C', flexShrink: 0 }} />
+        ? <RefreshCw size={15} color={iconColor} className="shrink-0 animate-spin" />
+        : <Mic size={15} color="#6AD39C" className="shrink-0" />
       }
-    </Box>
+    </div>
   );
 };
 
-interface ReadinessChecklistProps {
+const ReadinessChecklist: React.FC<{
   checks: { label: string; ok: boolean }[];
   allReady: boolean;
   cameraStatus: CameraStatus;
@@ -198,263 +179,170 @@ interface ReadinessChecklistProps {
   onBack?: () => void;
   jobTitle?: string;
   companyName?: string;
-}
-
-/** Pre-flight checklist shown before the interview starts, with the start button. */
-const ReadinessChecklist: React.FC<ReadinessChecklistProps> = ({
-  checks, allReady, cameraStatus, onStartInterview, onBack, jobTitle, companyName,
-}) => {
+}> = ({ checks, allReady, cameraStatus, onStartInterview, onBack, jobTitle, companyName }) => {
   const { t } = useTranslation('interview');
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 0 }}>
-
-      {/* ── Job context header ──────────────────────────────────────────── */}
+    <div className="flex flex-col h-full gap-0">
       {(jobTitle || companyName) && (
-        <Box sx={{ mb: 2, pb: 2, borderBottom: '1px solid #f0f1f3' }}>
-          <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.95rem', color: '#111827', mb: 0.25, lineHeight: 1.3 }}>
-            {jobTitle}
-          </Typography>
-          {companyName && (
-            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', color: '#9ca3af' }}>
-              {companyName} · AI Interview
-            </Typography>
-          )}
-        </Box>
+        <div className="mb-4 pb-4 border-b border-[#f0f1f3]">
+          <p className="font-sans font-bold text-[0.95rem] text-[#111827] mb-0.5 leading-snug">{jobTitle}</p>
+          {companyName && <p className="font-sans text-[0.72rem] text-[#9ca3af]">{companyName} · AI Interview</p>}
+        </div>
       )}
 
-      {/* ── Status grid ────────────────────────────────────────────────── */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0.875, mb: 2.25 }}>
+      <div className="grid grid-cols-3 gap-2 mb-5">
         {checks.map(({ label, ok }) => (
-          <Box key={label} sx={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5,
-            py: 1.25, px: 0.5, borderRadius: '12px', textAlign: 'center',
-            bgcolor: ok ? 'rgba(34,197,94,0.05)' : '#f9fafb',
-            border: `1px solid ${ok ? 'rgba(34,197,94,0.18)' : '#f0f1f3'}`,
-          }}>
-            {ok
-              ? <CheckCircleIcon sx={{ fontSize: 20, color: '#22c55e' }} />
-              : <RadioButtonUncheckedIcon sx={{ fontSize: 20, color: '#d1d5db' }} />}
-            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.6rem', fontWeight: 600, color: ok ? '#374151' : '#b0b7c3', lineHeight: 1.3 }}>
+          <div
+            key={label}
+            className="flex flex-col items-center gap-1 py-3 px-1 rounded-[12px] text-center border"
+            style={{ background: ok ? 'rgba(34,197,94,0.05)' : '#f9fafb', borderColor: ok ? 'rgba(34,197,94,0.18)' : '#f0f1f3' }}
+          >
+            {ok ? <CheckCircle size={20} color="#22c55e" /> : <Circle size={20} color="#d1d5db" />}
+            <span className="font-sans text-[0.6rem] font-semibold leading-tight" style={{ color: ok ? '#374151' : '#b0b7c3' }}>
               {label}
-            </Typography>
-          </Box>
+            </span>
+          </div>
         ))}
-      </Box>
+      </div>
 
-      {/* ── Title + subtitle ───────────────────────────────────────────── */}
-      <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1rem', color: '#111827', mb: 0.4 }}>
-        {t('container.ready_title')}
-      </Typography>
-      <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', color: '#6b7280', lineHeight: 1.65, mb: 1 }}>
-        {t('container.ready_subtitle')}
-      </Typography>
-      <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.7rem', color: '#b0b7c3', lineHeight: 1.6, mb: 2.5 }}>
-        {t('container.ready_description')}
-      </Typography>
+      <p className="font-sans font-bold text-base text-[#111827] mb-1">{t('container.ready_title')}</p>
+      <p className="font-sans text-[0.75rem] text-[#6b7280] leading-relaxed mb-2">{t('container.ready_subtitle')}</p>
+      <p className="font-sans text-[0.7rem] text-[#b0b7c3] leading-relaxed mb-5">{t('container.ready_description')}</p>
 
-      {/* ── Buttons — pushed to bottom ─────────────────────────────────── */}
-      <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', gap: 0.875 }}>
+      <div className="mt-auto flex flex-col gap-2">
         {cameraStatus !== 'granted' && cameraStatus !== 'requesting' && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, px: 1.25, py: 0.75, borderRadius: '10px', bgcolor: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.18)' }}>
-            <VideocamIcon sx={{ fontSize: 14, color: '#f59e0b', flexShrink: 0 }} />
-            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', color: '#d97706' }}>
-              {t('container.camera_warning')}
-            </Typography>
-          </Box>
+          <div className="flex items-center gap-1.5 px-3 py-2 rounded-[10px] bg-[rgba(245,158,11,0.05)] border border-[rgba(245,158,11,0.18)]">
+            <Video size={14} color="#f59e0b" className="shrink-0" />
+            <p className="font-sans text-[0.72rem] text-[#d97706]">{t('container.camera_warning')}</p>
+          </div>
         )}
 
-        <Button
-          variant="contained"
-          fullWidth
+        <button
           onClick={onStartInterview}
           disabled={!allReady}
-          startIcon={<PlayArrowIcon />}
-          sx={{
-            fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.88rem', py: 1.25,
-            borderRadius: '14px', textTransform: 'none',
-            background: allReady ? 'linear-gradient(135deg, #6AD39C 0%, #10b981 100%)' : undefined,
-            color: allReady ? '#fff' : undefined,
-            boxShadow: allReady ? '0 4px 16px rgba(106,211,156,0.35)' : 'none',
-            '&:hover': { background: allReady ? 'linear-gradient(135deg, #10b981 0%, #0d9265 100%)' : undefined, boxShadow: allReady ? '0 6px 20px rgba(106,211,156,0.28)' : 'none' },
-            '&.Mui-disabled': { background: '#f3f4f6', color: '#9ca3af', boxShadow: 'none' },
+          className="w-full flex items-center justify-center gap-2 font-sans font-bold text-[0.88rem] py-3 rounded-[14px] transition-all disabled:cursor-not-allowed"
+          style={{
+            background: allReady ? 'linear-gradient(135deg, #6AD39C 0%, #10b981 100%)' : '#f3f4f6',
+            color:      allReady ? '#fff' : '#9ca3af',
+            boxShadow:  allReady ? '0 4px 16px rgba(106,211,156,0.35)' : 'none',
           }}
         >
+          <Play size={16} />
           {t('start.btn_start')}
-        </Button>
+        </button>
 
         {onBack && (
-          <Button
-            variant="text"
-            fullWidth
+          <button
             onClick={onBack}
-            startIcon={<ArrowBackIcon sx={{ fontSize: 15 }} />}
-            sx={{
-              fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.78rem',
-              color: '#9ca3af', textTransform: 'none', py: 0.75,
-              '&:hover': { color: '#6b7280', bgcolor: '#f9fafb' },
-            }}
+            className="w-full flex items-center justify-center gap-1.5 font-sans font-semibold text-[0.78rem] text-[#9ca3af] py-2 rounded-[12px] hover:text-[#6b7280] hover:bg-[#f9fafb] transition-colors"
           >
+            <ArrowLeft size={15} />
             {t('container.back_to_post')}
-          </Button>
+          </button>
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 
-/** Scrollable live transcript panel shown while the interview is active. */
 const LiveTranscript: React.FC<{ currentTranscript?: string }> = ({ currentTranscript }) => {
   const { t } = useTranslation('interview');
 
   return (
-    <Box sx={{ py: 1 }}>
-      <Box
+    <div className="py-2">
+      <div
         id="transcript-scroll"
-        sx={{ maxHeight: 140, overflowY: 'auto', mb: 1, pr: 0.5, '&::-webkit-scrollbar': { width: 4 }, '&::-webkit-scrollbar-track': { bgcolor: 'transparent' }, '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(106,211,156,0.2)', borderRadius: 2 } }}
+        className="max-h-[140px] overflow-y-auto mb-2 pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[rgba(106,211,156,0.2)] [&::-webkit-scrollbar-thumb]:rounded-full"
         ref={(el: HTMLDivElement | null) => { if (el) el.scrollTop = el.scrollHeight; }}
       >
-        <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.78rem', color: currentTranscript ? '#374151' : '#9ca3af', fontStyle: currentTranscript ? 'normal' : 'italic', lineHeight: 1.6, minHeight: 60 }}>
+        <p
+          className="font-sans text-[0.78rem] leading-relaxed min-h-[60px]"
+          style={{ color: currentTranscript ? '#374151' : '#9ca3af', fontStyle: currentTranscript ? 'normal' : 'italic' }}
+        >
           {currentTranscript || t('container.speech_placeholder')}
-        </Typography>
-      </Box>
-    </Box>
+        </p>
+      </div>
+    </div>
   );
 };
 
-/** Spinner shown while the backend generates the interview report. */
 const AnalyzingSpinner: React.FC<{ waitDots: string }> = ({ waitDots }) => {
   const { t } = useTranslation('interview');
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', py: 1.5, gap: 0 }}>
+    <div className="flex flex-col items-center text-center py-4 gap-0">
+      <div className="relative w-[68px] h-[68px] mb-5 shrink-0">
+        <div className="absolute inset-0 rounded-full border-2 border-[rgba(106,211,156,0.1)]" />
+        <div
+          className="absolute inset-0 rounded-full border-2 border-transparent"
+          style={{ borderTopColor: '#10b981', borderRightColor: 'rgba(106,211,156,0.3)', animation: 'iv-spin 0.9s linear infinite' }}
+        />
+        <div
+          className="absolute inset-3 rounded-full border-2 border-transparent"
+          style={{ borderTopColor: 'rgba(106,211,156,0.5)', animation: 'iv-spin-rev 1.6s linear infinite' }}
+        />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div
+            className="w-5 h-5 rounded-[6px] flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, #6AD39C 0%, #10453F 100%)', animation: 'iv-chip-glow 2s ease-in-out infinite' }}
+          >
+            <RefreshCw size={13} color="#fff" className="animate-spin" style={{ animationDuration: '2s' }} />
+          </div>
+        </div>
+      </div>
 
-      {/* Orbital rings */}
-      <Box sx={{ position: 'relative', width: 68, height: 68, mb: 2.5, flexShrink: 0 }}>
-        {/* Static track */}
-        <Box sx={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '2px solid rgba(106,211,156,0.1)' }} />
-        {/* Fast outer arc */}
-        <Box sx={{
-          position: 'absolute', inset: 0, borderRadius: '50%',
-          border: '2px solid transparent',
-          borderTopColor: '#10b981',
-          borderRightColor: 'rgba(106,211,156,0.3)',
-          animation: 'analyzeOuter 0.9s linear infinite',
-          '@keyframes analyzeOuter': { to: { transform: 'rotate(360deg)' } },
-        }} />
-        {/* Slow inner arc (opposite direction) */}
-        <Box sx={{
-          position: 'absolute', inset: 12, borderRadius: '50%',
-          border: '2px solid transparent',
-          borderTopColor: 'rgba(106,211,156,0.5)',
-          animation: 'analyzeInner 1.6s linear infinite reverse',
-          '@keyframes analyzeInner': { to: { transform: 'rotate(360deg)' } },
-        }} />
-        {/* Center AI chip */}
-        <Box sx={{
-          position: 'absolute', inset: 0,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <Box sx={{
-            width: 22, height: 22, borderRadius: '6px',
-            background: 'linear-gradient(135deg, #6AD39C 0%, #10453F 100%)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 0 12px rgba(106,211,156,0.4)',
-            animation: 'chipGlow 2s ease-in-out infinite',
-            '@keyframes chipGlow': { '0%,100%': { boxShadow: '0 0 8px rgba(106,211,156,0.3)' }, '50%': { boxShadow: '0 0 18px rgba(106,211,156,0.55)' } },
-          }}>
-            <AutorenewIcon sx={{ fontSize: 13, color: '#fff', animation: 'spin 2s linear infinite', '@keyframes spin': { to: { transform: 'rotate(360deg)' } } }} />
-          </Box>
-        </Box>
-      </Box>
-
-      <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1rem', color: '#0d1117', letterSpacing: '-0.01em', mb: 0.5 }}>
+      <p className="font-sans font-bold text-base text-[#0d1117] tracking-tight mb-1">
         {t('container.analyzing_title')}{waitDots}
-      </Typography>
-      <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.74rem', color: '#6b7280', lineHeight: 1.65, maxWidth: 210, mb: 2.25 }}>
+      </p>
+      <p className="font-sans text-[0.74rem] text-[#6b7280] leading-relaxed max-w-[210px] mb-5">
         {t('container.analyzing_subtitle')}
-      </Typography>
+      </p>
 
-      {/* Progress steps */}
-      <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 0.875 }}>
+      <div className="w-full flex flex-col gap-2">
         {[
           { label: 'Reviewing your answers', delay: '0s' },
           { label: 'Scoring each response',  delay: '0.3s' },
           { label: 'Building your report',   delay: '0.6s' },
         ].map(({ label, delay }) => (
-          <Box key={label} sx={{ display: 'flex', alignItems: 'center', gap: 1.25, px: 1.25, py: 0.75, borderRadius: '10px', bgcolor: '#f9fafb', border: '1px solid #f0f1f3' }}>
-            <Box sx={{
-              width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
-              bgcolor: '#6AD39C',
-              animation: `stepDot 1.4s ease-in-out ${delay} infinite`,
-              '@keyframes stepDot': { '0%,100%': { opacity: 0.3 }, '50%': { opacity: 1 } },
-            }} />
-            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.7rem', color: '#4b5563', lineHeight: 1 }}>
-              {label}
-            </Typography>
-          </Box>
+          <div key={label} className="flex items-center gap-3 px-3 py-2 rounded-[10px] bg-[#f9fafb] border border-[#f0f1f3]">
+            <div
+              className="w-1.5 h-1.5 rounded-full bg-[#6AD39C] shrink-0"
+              style={{ animation: `iv-step-dot 1.4s ease-in-out ${delay} infinite` }}
+            />
+            <p className="font-sans text-[0.7rem] text-[#4b5563] leading-none">{label}</p>
+          </div>
         ))}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 
-/** Success card shown once the interview results have been saved. */
 const CompletionCard: React.FC<{ dashboardPath: string; reportPath?: string }> = ({ dashboardPath, reportPath }) => {
   const { t } = useTranslation('interview');
   const router = useRouter();
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', py: 1.5, gap: 0 }}>
+    <div className="flex flex-col items-center text-center py-4 gap-0">
+      <div className="relative w-[72px] h-[72px] mb-4 shrink-0">
+        <div
+          className="absolute rounded-full border-[1.5px] border-[rgba(106,211,156,0.3)]"
+          style={{ inset: -6, animation: 'iv-completion-ring 2.4s ease-out infinite' }}
+        />
+        <div
+          className="w-full h-full rounded-full flex items-center justify-center border-2 border-[rgba(106,211,156,0.45)] shadow-[0_0_24px_rgba(106,211,156,0.15)]"
+          style={{ background: 'linear-gradient(135deg, rgba(106,211,156,0.18) 0%, rgba(16,185,129,0.1) 100%)' }}
+        >
+          <CheckCircle2 size={34} color="#10b981" />
+        </div>
+      </div>
 
-      {/* ── Animated success icon ── */}
-      <Box sx={{ position: 'relative', width: 72, height: 72, mb: 2, flexShrink: 0 }}>
-        {/* Outer pulsing ring */}
-        <Box sx={{
-          position: 'absolute', inset: -6,
-          borderRadius: '50%',
-          border: '1.5px solid rgba(106,211,156,0.3)',
-          animation: 'completionRing 2.4s ease-out infinite',
-          '@keyframes completionRing': {
-            '0%':   { transform: 'scale(0.85)', opacity: 0.8 },
-            '60%':  { transform: 'scale(1.12)', opacity: 0.15 },
-            '100%': { transform: 'scale(1.12)', opacity: 0 },
-          },
-        }} />
-        {/* Inner circle */}
-        <Box sx={{
-          width: '100%', height: '100%', borderRadius: '50%',
-          background: 'linear-gradient(135deg, rgba(106,211,156,0.18) 0%, rgba(16,185,129,0.1) 100%)',
-          border: '2px solid rgba(106,211,156,0.45)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 0 24px rgba(106,211,156,0.15)',
-        }}>
-          <CheckCircleOutlineIcon sx={{ fontSize: 34, color: '#10b981' }} />
-        </Box>
-      </Box>
+      <p className="font-sans font-bold text-[1.05rem] text-[#0d1117] tracking-tight mb-1">{t('ended.title')}</p>
+      <p className="font-sans text-[0.75rem] text-[#6b7280] leading-relaxed mb-5 max-w-[220px]">{t('ended.subtitle')}</p>
 
-      {/* ── Title ── */}
-      <Typography sx={{
-        fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.05rem',
-        color: '#0d1117', letterSpacing: '-0.01em', mb: 0.5,
-      }}>
-        {t('ended.title')}
-      </Typography>
+      <div className="w-full h-px bg-[#f0f1f3] mb-5" />
 
-      {/* ── Subtitle ── */}
-      <Typography sx={{
-        fontFamily: 'Poppins', fontSize: '0.75rem',
-        color: '#6b7280', lineHeight: 1.65, mb: 2.25,
-        maxWidth: 220,
-      }}>
-        {t('ended.subtitle')}
-      </Typography>
-
-      {/* ── Divider ── */}
-      <Box sx={{ width: '100%', height: '1px', bgcolor: '#f0f1f3', mb: 2.25 }} />
-
-      {/* ── What happens next ── */}
-      <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+      <div className="w-full flex flex-col gap-3">
         {(reportPath
           ? [
               { icon: '📊', label: 'Your interview has been analyzed by AI' },
@@ -464,72 +352,37 @@ const CompletionCard: React.FC<{ dashboardPath: string; reportPath?: string }> =
           : [
               { icon: '📊', label: 'Your answers are being analyzed by AI' },
               { icon: '📩', label: 'Results will be sent to the recruiter' },
-              { icon: '✅', label: 'You\'ll be notified once reviewed' },
+              { icon: '✅', label: "You'll be notified once reviewed" },
             ]
         ).map(({ icon, label }) => (
-          <Box key={label} sx={{
-            display: 'flex', alignItems: 'center', gap: 1.25,
-            px: 1.25, py: 0.875, borderRadius: '10px',
-            bgcolor: '#f9fafb', border: '1px solid #f0f1f3',
-            textAlign: 'left',
-          }}>
-            <Typography sx={{ fontSize: '0.9rem', lineHeight: 1, flexShrink: 0 }}>{icon}</Typography>
-            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.7rem', color: '#4b5563', lineHeight: 1.5 }}>
-              {label}
-            </Typography>
-          </Box>
+          <div key={label} className="flex items-center gap-3 px-3 py-2.5 rounded-[10px] bg-[#f9fafb] border border-[#f0f1f3] text-left">
+            <span className="text-[0.9rem] leading-none shrink-0">{icon}</span>
+            <p className="font-sans text-[0.7rem] text-[#4b5563] leading-snug">{label}</p>
+          </div>
         ))}
-      </Box>
+      </div>
 
-      {/* ── CTA buttons ── */}
-      <Box sx={{ mt: 2.5, width: '100%', display: 'flex', flexDirection: 'column', gap: 1 }}>
+      <div className="mt-5 w-full flex flex-col gap-2.5">
         {reportPath && (
-          <Button
-            variant="contained"
-            fullWidth
+          <button
             onClick={() => router.push(reportPath)}
-            sx={{
-              bgcolor: '#6366f1',
-              color: '#fff',
-              fontFamily: 'Poppins',
-              fontWeight: 700,
-              fontSize: '0.88rem',
-              py: 1.25,
-              borderRadius: '12px',
-              textTransform: 'none',
-              boxShadow: 'none',
-              '&:hover': { bgcolor: '#4f46e5', boxShadow: 'none' },
-            }}
+            className="w-full font-sans font-bold text-[0.88rem] text-white py-3 rounded-[12px] bg-[#6366f1] hover:bg-[#4f46e5] transition-colors"
           >
             View Your Report
-          </Button>
+          </button>
         )}
-        <Button
-          variant={reportPath ? 'outlined' : 'contained'}
-          fullWidth
+        <button
           onClick={() => router.push(dashboardPath)}
-          sx={{
-            bgcolor: reportPath ? 'transparent' : '#10b981',
-            color: reportPath ? '#6b7280' : '#fff',
-            borderColor: reportPath ? '#e5e7eb' : undefined,
-            fontFamily: 'Poppins',
-            fontWeight: 700,
-            fontSize: '0.88rem',
-            py: 1.25,
-            borderRadius: '12px',
-            textTransform: 'none',
-            boxShadow: 'none',
-            '&:hover': {
-              bgcolor: reportPath ? '#f9fafb' : '#059669',
-              borderColor: reportPath ? '#d1d5db' : undefined,
-              boxShadow: 'none',
-            },
+          className="w-full font-sans font-bold text-[0.88rem] py-3 rounded-[12px] border transition-colors"
+          style={{
+            background:  reportPath ? 'transparent' : '#10b981',
+            color:       reportPath ? '#6b7280' : '#fff',
+            borderColor: reportPath ? '#e5e7eb' : 'transparent',
           }}
         >
           Go to Dashboard
-        </Button>
-      </Box>
-
-    </Box>
+        </button>
+      </div>
+    </div>
   );
 };

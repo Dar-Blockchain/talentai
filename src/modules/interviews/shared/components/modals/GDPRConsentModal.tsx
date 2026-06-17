@@ -1,9 +1,9 @@
 import React from 'react';
-import { Box, Typography, Button, Modal, Divider } from '@mui/material';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
+import { Lock, CheckCircle2, Shield } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import {
+  Dialog, DialogContent,
+} from '@/modules/shared/ui/shadcn/dialog';
 
 interface GDPRConsentModalProps {
   open: boolean;
@@ -15,110 +15,78 @@ const GDPRConsentModal: React.FC<GDPRConsentModalProps> = ({ open, onAccept, onD
   const { t } = useTranslation('interview');
 
   return (
-    <Modal open={open} disableEscapeKeyDown>
-      <Box sx={{
-        position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-        width: { xs: '94vw', sm: 520 },
-        bgcolor: '#fff',
-        borderRadius: '20px',
-        border: '1px solid #E8F5EE',
-        boxShadow: '0 24px 80px rgba(0,0,0,0.1), 0 4px 20px rgba(0,0,0,0.06)',
-        overflow: 'hidden',
-        outline: 'none',
-      }}>
-
+    <Dialog open={open} onOpenChange={() => {}}>
+      <DialogContent
+        showCloseButton={false}
+        className="w-[94vw] sm:max-w-[520px] rounded-[20px] p-0 overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.1),0_4px_20px_rgba(0,0,0,0.06)] border border-[#E8F5EE]"
+      >
         {/* Top accent strip */}
-        <Box sx={{ height: 4, background: 'linear-gradient(90deg, #6AD39C, #10453F)' }} />
+        <div className="h-1 bg-gradient-to-r from-[#6AD39C] to-[#10453F]" />
 
         {/* Header */}
-        <Box sx={{ px: 3.5, pt: 3, pb: 2.5, display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-          <Box sx={{
-            width: 44, height: 44, borderRadius: '12px', flexShrink: 0,
-            background: 'linear-gradient(135deg, rgba(106,211,156,0.15), rgba(16,69,63,0.08))',
-            border: '1px solid rgba(106,211,156,0.25)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <ShieldOutlinedIcon sx={{ fontSize: 22, color: '#16A34A' }} />
-          </Box>
-          <Box>
-            <Typography sx={{ fontFamily: 'Poppins', fontWeight: 800, fontSize: '1.05rem', color: '#0F172A', lineHeight: 1.2, letterSpacing: '-0.01em' }}>
+        <div className="px-7 pt-6 pb-5 flex items-start gap-4">
+          <div
+            className="w-11 h-11 rounded-[12px] shrink-0 flex items-center justify-center border border-[rgba(106,211,156,0.25)]"
+            style={{ background: 'linear-gradient(135deg, rgba(106,211,156,0.15), rgba(16,69,63,0.08))' }}
+          >
+            <Shield size={22} color="#16A34A" />
+          </div>
+          <div>
+            <p className="font-sans font-extrabold text-[1.05rem] text-[#0F172A] leading-tight tracking-tight">
               {t('gdpr.privacy_title')}
-            </Typography>
-            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.8rem', color: '#64748B', mt: 0.4, lineHeight: 1.5 }}>
+            </p>
+            <p className="font-sans text-[0.8rem] text-[#64748B] mt-1 leading-snug">
               {t('gdpr.integrity_title')}
-            </Typography>
-          </Box>
-        </Box>
+            </p>
+          </div>
+        </div>
 
-        <Divider sx={{ borderColor: '#F1F5F9' }} />
+        <hr className="border-[#F1F5F9]" />
 
         {/* Body */}
-        <Box sx={{ px: 3.5, py: 2.5 }}>
-          <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#475569', lineHeight: 1.8, mb: 2.5 }}>
+        <div className="px-7 py-5">
+          <p className="font-sans text-[0.82rem] text-[#475569] leading-[1.8] mb-5">
             {t('gdpr.body')}
-          </Typography>
+          </p>
 
-          {/* Bullet points */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25, mb: 2.5 }}>
+          <div className="flex flex-col gap-3 mb-5">
             {[t('gdpr.bullet_data'), t('gdpr.bullet_privacy')].map((text) => (
-              <Box key={text} sx={{
-                display: 'flex', alignItems: 'flex-start', gap: 1.25,
-                p: 1.5, borderRadius: '10px',
-                bgcolor: 'rgba(106,211,156,0.04)',
-                border: '1px solid rgba(106,211,156,0.12)',
-              }}>
-                <CheckCircleOutlineIcon sx={{ fontSize: 16, color: '#16A34A', flexShrink: 0, mt: '2px' }} />
-                <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.78rem', color: '#374151', lineHeight: 1.7 }}>
-                  {text}
-                </Typography>
-              </Box>
+              <div
+                key={text}
+                className="flex items-start gap-3 p-3.5 rounded-[10px] bg-[rgba(106,211,156,0.04)] border border-[rgba(106,211,156,0.12)]"
+              >
+                <CheckCircle2 size={16} color="#16A34A" className="shrink-0 mt-0.5" />
+                <p className="font-sans text-[0.78rem] text-[#374151] leading-[1.7]">{text}</p>
+              </div>
             ))}
-          </Box>
+          </div>
 
-          {/* Confirmation notice */}
-          <Box sx={{
-            display: 'flex', alignItems: 'flex-start', gap: 1,
-            bgcolor: '#F8FAFC', border: '1px solid #E2E8F0',
-            borderRadius: '10px', px: 2, py: 1.5,
-          }}>
-            <LockOutlinedIcon sx={{ fontSize: 14, color: '#94A3B8', flexShrink: 0, mt: '2px' }} />
-            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', color: '#64748B', lineHeight: 1.65 }}>
-              {t('gdpr.confirmation')}
-            </Typography>
-          </Box>
-        </Box>
+          <div className="flex items-start gap-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] px-4 py-3">
+            <Lock size={14} color="#94A3B8" className="shrink-0 mt-0.5" />
+            <p className="font-sans text-[0.75rem] text-[#64748B] leading-relaxed">{t('gdpr.confirmation')}</p>
+          </div>
+        </div>
 
         {/* Footer */}
-        <Box sx={{ px: 3.5, pb: 3, display: 'flex', gap: 1.25, justifyContent: 'flex-end' }}>
-          <Button
-            variant="outlined"
+        <div className="px-7 pb-6 flex gap-3 justify-end">
+          <button
             onClick={onDecline}
-            sx={{
-              fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.82rem',
-              textTransform: 'none', borderRadius: '10px',
-              color: '#64748B', borderColor: '#E2E8F0', px: 2.5, py: 1,
-              '&:hover': { borderColor: '#CBD5E1', bgcolor: '#F8FAFC' },
-            }}
+            className="font-sans font-semibold text-[0.82rem] text-[#64748B] border border-[#E2E8F0] rounded-[10px] px-5 py-2.5 hover:border-[#CBD5E1] hover:bg-[#F8FAFC] transition-colors"
           >
             {t('gdpr.decline')}
-          </Button>
-          <Button
-            variant="contained"
+          </button>
+          <button
             onClick={onAccept}
-            disableElevation
-            sx={{
-              fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.82rem',
-              textTransform: 'none', borderRadius: '10px',
-              bgcolor: '#6AD39C', color: '#fff', px: 3, py: 1,
-              boxShadow: '0 4px 12px rgba(106,211,156,0.35)',
-              '&:hover': { bgcolor: '#10453F', boxShadow: 'none' },
-            }}
+            className="font-sans font-bold text-[0.82rem] text-white rounded-[10px] px-6 py-2.5 transition-colors"
+            style={{ background: '#6AD39C', boxShadow: '0 4px 12px rgba(106,211,156,0.35)' }}
+            onMouseEnter={e => (e.currentTarget.style.background = '#10453F')}
+            onMouseLeave={e => (e.currentTarget.style.background = '#6AD39C')}
           >
             {t('gdpr.accept_btn')}
-          </Button>
-        </Box>
-      </Box>
-    </Modal>
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 

@@ -296,4 +296,28 @@ html body[data-scroll-locked] {
   .text-brand        { color: #10453F; }
   .text-brand-mint   { color: #6AD39C; }
   .text-brand-purple { color: #BD85FF; }
+
+  /* Hide scrollbar (keep scroll functional) */
+  .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
 }
+
+/* Interview module — shared keyframes */
+@keyframes iv-spin         { to { transform: rotate(360deg); } }
+@keyframes iv-spin-rev     { to { transform: rotate(-360deg); } }
+@keyframes iv-pulse-dot    { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.55); } }
+@keyframes iv-dot          { 0%,100% { opacity: 0.2; transform: scale(0.75); } 50% { opacity: 1; transform: scale(1.2); } }
+@keyframes iv-step-dot     { 0%,100% { opacity: 0.25; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
+@keyframes iv-live-blink   { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
+@keyframes iv-status-pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.45; transform: scale(0.8); } }
+@keyframes iv-chip-glow    { 0%,100% { box-shadow: 0 0 8px rgba(106,211,156,0.3); } 50% { box-shadow: 0 0 18px rgba(106,211,156,0.55); } }
+@keyframes iv-critical-pulse { 0%,100% { box-shadow: 0 2px 20px rgba(220,38,38,0.12); } 50% { box-shadow: 0 2px 32px rgba(220,38,38,0.28); } }
+@keyframes iv-completion-ring { 0% { transform: scale(0.85); opacity: 0.8; } 60% { transform: scale(1.12); opacity: 0.15; } 100% { transform: scale(1.12); opacity: 0; } }
+@keyframes iv-mic-pulse    { from { transform: scaleY(0.55); opacity: 0.75; } to { transform: scaleY(1.3); opacity: 1; } }
+@keyframes iv-bounce-dot   { 0%,80%,100% { transform: scale(0.7); opacity: 0.5; } 40% { transform: scale(1); opacity: 1; } }
+@keyframes iv-timer-pulse  { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+@keyframes iv-fade-in      { from { opacity: 0; } to { opacity: 1; } }
+
+/* Hide all scrollbars inside interview screen */
+.iv-root *, .iv-root *::before, .iv-root *::after { scrollbar-width: none; -ms-overflow-style: none; }
+.iv-root *::-webkit-scrollbar { display: none; }

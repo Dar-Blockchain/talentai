@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { InterviewConfig } from '../../shared/types/interview';
-import { DEFAULT_INTERVIEW_CONFIG } from '../../shared/constants/interviewDefaults';
+import { DEFAULT_MODELS } from '../../shared/constants/interviewDefaults';
 
 export interface UseSkillInterviewConfigReturn {
   interviewConfig: InterviewConfig;
@@ -14,7 +14,12 @@ export interface UseSkillInterviewConfigReturn {
 
 export const useSkillInterviewConfig = (): UseSkillInterviewConfigReturn => {
   const router = useRouter();
-  const [interviewConfig, setInterviewConfig] = useState<InterviewConfig>(DEFAULT_INTERVIEW_CONFIG);
+  const [interviewConfig, setInterviewConfig] = useState<InterviewConfig>({
+    interviewType: 'TECHNICAL_SKILL',
+    testReason: '',
+    context: { interviewGoal: '' },
+    models: DEFAULT_MODELS,
+  });
 
   const skill     = router.isReady ? (router.query.skill     as string) || null : null;
   const category  = router.isReady ? (router.query.category  as string) || null : null;
@@ -30,7 +35,7 @@ export const useSkillInterviewConfig = (): UseSkillInterviewConfigReturn => {
         targetRole:    skill,
         interviewGoal: `Assess ${skill} knowledge and practical skills`,
       },
-      models: DEFAULT_INTERVIEW_CONFIG.models,
+      models: DEFAULT_MODELS,
       sessionSettings: {
         duration: 20,
         language,

@@ -1,31 +1,40 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
+import { cn } from '@/lib/utils';
+import { Card, CardContent } from '@/modules/shared/ui/shadcn/card';
+import { Badge } from '@/modules/shared/ui/shadcn/badge';
 
-export const GREEN        = '#6AD39C';
-export const GREEN_DARK   = '#10453F';
-export const GREEN_LIGHT  = 'rgba(106,211,156,0.08)';
-export const GREEN_BORDER = 'rgba(106,211,156,0.2)';
-
-export const SectionCard: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <Box sx={{ bgcolor: '#fff', border: '1px solid #E5E7EB', borderRadius: '16px', p: { xs: 2.5, md: 3 } }}>
-    {children}
-  </Box>
+export const SectionCard: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className }) => (
+  <Card className={cn('rounded-[16px] gap-0 py-0', className)}>
+    <CardContent className="p-6 md:p-7">
+      {children}
+    </CardContent>
+  </Card>
 );
 
 export const SectionTitle: React.FC<{ icon: React.ReactNode; title: string }> = ({ icon, title }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-    <Box sx={{ width: 28, height: 28, borderRadius: 1.5, bgcolor: GREEN_LIGHT, border: `1px solid ${GREEN_BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: GREEN, flexShrink: 0 }}>
+  <div className="flex items-center gap-2 mb-5">
+    <div className="w-7 h-7 rounded-[6px] flex items-center justify-center shrink-0 bg-primary/8 border border-primary/20 text-primary">
       {icon}
-    </Box>
-    <Typography sx={{ fontSize: '12px', fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: 0.5, fontFamily: 'Poppins' }}>
+    </div>
+    <span className="text-[12px] font-bold text-foreground/70 uppercase tracking-[0.5px] font-sans">
       {title}
-    </Typography>
-  </Box>
+    </span>
+  </div>
 );
 
-export const MetaBadge: React.FC<{ icon: React.ReactNode; label: string; color: string; bg: string; border: string }> = ({ icon, label, color, bg, border }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, bgcolor: bg, border: `1px solid ${border}`, borderRadius: 2, px: 1.5, py: 0.75 }}>
-    <Box sx={{ fontSize: 14, color, display: 'flex' }}>{icon}</Box>
-    <Typography sx={{ fontSize: '12px', fontWeight: 600, color, fontFamily: 'Poppins' }}>{label}</Typography>
-  </Box>
+export const MetaBadge: React.FC<{
+  icon: React.ReactNode;
+  label: string;
+  color: string;
+  bg: string;
+  border: string;
+}> = ({ icon, label, color, bg, border }) => (
+  <Badge
+    variant="outline"
+    className="rounded-[8px] px-3 py-1.5 h-auto font-sans text-[12px] font-semibold gap-2"
+    style={{ background: bg, borderColor: border, color }}
+  >
+    <span className="flex text-[14px]" style={{ color }}>{icon}</span>
+    {label}
+  </Badge>
 );

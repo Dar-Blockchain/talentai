@@ -1,22 +1,20 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { Box } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { EligibilityGate, InterviewFlow, useEligibilityCheck } from '@/modules/interviews/post-interview';
-import InterviewHeader from '@/modules/interviews/post-interview/components/layout/InterviewHeader';
-import InterviewLoadingScreen from '@/modules/interviews/post-interview/components/layout/InterviewLoadingScreen';
+import InterviewHeader from '@/modules/interviews/shared/components/layout/InterviewHeader';
+import InterviewLoadingScreen from '@/modules/interviews/shared/components/layout/InterviewLoadingScreen';
 
 const CandidateInterview = () => {
   const { t } = useTranslation('modules/interview/interview');
   const { eligibilityStatus, eligibilityMeta } = useEligibilityCheck();
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#F1F5F9' }}>
+    <div className="min-h-screen flex flex-col bg-background">
       <InterviewHeader />
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div className="flex-1 flex flex-col">
 
-        {/* 1. Verifying eligibility */}
         {eligibilityStatus === 'checking' && (
           <InterviewLoadingScreen
             title={t('checking.title')}
@@ -24,16 +22,14 @@ const CandidateInterview = () => {
           />
         )}
 
-        {/* 2. Not eligible — gate blocks entry */}
         {eligibilityStatus !== 'eligible' && eligibilityStatus !== 'checking' && (
           <EligibilityGate status={eligibilityStatus} meta={eligibilityMeta} />
         )}
 
-        {/* 3. Confirmed eligible — fetch job post and start interview */}
         {eligibilityStatus === 'eligible' && <InterviewFlow />}
 
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 
