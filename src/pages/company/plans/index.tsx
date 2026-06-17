@@ -1,8 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import Link from "next/link";
-import { Grid } from "@mui/material";
-import ReceiptLongOutlined from "@mui/icons-material/ReceiptLongOutlined";
+import { Receipt } from "lucide-react";
 import AppButton from "@/components/ui/AppButton";
 import MuiToast from "@/components/ui/Toast";
 import LoadingState from "@/components/ui/LoadingState";
@@ -63,7 +62,7 @@ export default function PlansPage() {
             <AppButton
               label={t("pages.subscription.payment_history")}
               variant="outlined"
-              startIcon={<ReceiptLongOutlined />}
+              startIcon={<Receipt size={18} />}
             />
           </Link>
         }
@@ -74,27 +73,26 @@ export default function PlansPage() {
       {plansLoading || combinedLoading ? (
         <LoadingState message={t("pages.subscription.loading", "Loading plans…")} color="#0D9488" />
       ) : (
-        <Grid container spacing={2.5} sx={{ mt: 0.5 }}>
+        <div className="mt-1 grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
           {sortedPlans.map((plan: any) => (
-            <Grid key={plan._id} size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }}>
-              <PlanCard
-                plan={plan}
-                activeSubscriptionId={activeSubByPlanName[plan.name]?.id ?? null}
-                autoRenew={activeSubByPlanName[plan.name]?.autoRenew ?? true}
-                cancelling={cancelling}
-                currentPlanName={currentPlanName}
-                currentSubId={currentPlanName ? (activeSubByPlanName[currentPlanName]?.id ?? null) : null}
-                currentAutoRenew={currentPlanName ? (activeSubByPlanName[currentPlanName]?.autoRenew ?? true) : true}
-                checkingOut={checkingOut}
-                onCancelClick={openCancelDialog}
-                onEnableAutoRenewClick={handleEnableAutoRenew}
-                onContactUs={() => setContactOpen(true)}
-                onDowngradeClick={openDowngradeDialog}
-                onSubscribe={handleSubscribe}
-              />
-            </Grid>
+            <PlanCard
+              key={plan._id}
+              plan={plan}
+              activeSubscriptionId={activeSubByPlanName[plan.name]?.id ?? null}
+              autoRenew={activeSubByPlanName[plan.name]?.autoRenew ?? true}
+              cancelling={cancelling}
+              currentPlanName={currentPlanName}
+              currentSubId={currentPlanName ? (activeSubByPlanName[currentPlanName]?.id ?? null) : null}
+              currentAutoRenew={currentPlanName ? (activeSubByPlanName[currentPlanName]?.autoRenew ?? true) : true}
+              checkingOut={checkingOut}
+              onCancelClick={openCancelDialog}
+              onEnableAutoRenewClick={handleEnableAutoRenew}
+              onContactUs={() => setContactOpen(true)}
+              onDowngradeClick={openDowngradeDialog}
+              onSubscribe={handleSubscribe}
+            />
           ))}
-        </Grid>
+        </div>
       )}
 
       <ContactUsModal open={contactOpen} onClose={() => setContactOpen(false)} />

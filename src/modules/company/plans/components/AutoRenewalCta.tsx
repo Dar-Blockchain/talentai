@@ -1,7 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Box, Typography } from "@mui/material";
-import NotificationsOffOutlined from "@mui/icons-material/NotificationsOffOutlined";
+import { BellOff } from "lucide-react";
 import AppButton from "@/components/ui/AppButton";
 
 interface Props {
@@ -33,16 +32,16 @@ const AutoRenewalCta: React.FC<Props> = ({ autoRenew, cancelling, subscriptionId
   }
 
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.5, py: 1, borderRadius: "10px", bgcolor: "#FFFBEB", border: "1px solid #FDE68A" }}>
-      <NotificationsOffOutlined sx={{ fontSize: 16, color: "#D97706", flexShrink: 0 }} />
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography sx={{ fontSize: "0.73rem", fontWeight: 700, color: "#92400E" }}>
+    <div className="flex items-center gap-2 rounded-[10px] border border-amber-200 bg-amber-50 px-3 py-2">
+      <BellOff size={16} className="flex-shrink-0 text-amber-600" />
+      <div className="min-w-0 flex-1">
+        <p className="text-[0.73rem] font-bold text-amber-800">
           {t("pages.subscription.card.auto_renewal_off")}
-        </Typography>
-        <Typography sx={{ fontSize: "0.68rem", color: "#B45309" }}>
+        </p>
+        <p className="text-[0.68rem] text-amber-700">
           {t("pages.subscription.card.wont_renew_detail")}
-        </Typography>
-      </Box>
+        </p>
+      </div>
       <AppButton
         label={t("pages.subscription.card.reenable")}
         variant="contained"
@@ -54,7 +53,7 @@ const AutoRenewalCta: React.FC<Props> = ({ autoRenew, cancelling, subscriptionId
           fontSize: "0.68rem", minWidth: 0, flexShrink: 0,
         }}
       />
-    </Box>
+    </div>
   );
 };
 

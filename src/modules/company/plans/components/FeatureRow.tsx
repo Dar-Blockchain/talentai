@@ -1,5 +1,4 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
 
 interface Props {
   icon: React.ReactNode;
@@ -8,18 +7,15 @@ interface Props {
 }
 
 const FeatureRow: React.FC<Props> = ({ icon, label, color }) => (
-  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-    <Box sx={{
-      width: 24, height: 24, borderRadius: "6px", flexShrink: 0,
-      bgcolor: `${color}12`, border: `1px solid ${color}22`,
-      display: "flex", alignItems: "center", justifyContent: "center", color,
-    }}>
+  <div className="flex items-center gap-2">
+    <div
+      className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md"
+      style={{ backgroundColor: `${color}12`, border: `1px solid ${color}22`, color }}
+    >
       {icon}
-    </Box>
-    <Typography sx={{ fontSize: "0.82rem", color: "#374151", fontWeight: 500 }}>
-      {label}
-    </Typography>
-  </Box>
+    </div>
+    <span className="text-[0.82rem] font-medium text-gray-700">{label}</span>
+  </div>
 );
 
 export default FeatureRow;

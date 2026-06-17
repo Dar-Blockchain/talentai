@@ -1,5 +1,4 @@
 import React from "react";
-import { Box, LinearProgress, Typography } from "@mui/material";
 import { TEAL } from "../constants";
 
 interface Props {
@@ -12,21 +11,22 @@ interface Props {
 }
 
 const UsageBar: React.FC<Props> = ({ label, used, limit, remaining, pct, icon }) => (
-  <Box>
-    <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, mb: 0.6 }}>
-      <Box sx={{ color: TEAL, display: "flex" }}>{icon}</Box>
-      <Typography sx={{ fontSize: "0.78rem", fontWeight: 600, color: "#374151", flex: 1 }}>{label}</Typography>
-      <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: pct >= 90 ? "#ef4444" : TEAL }}>
+  <div>
+    <div className="mb-1.5 flex items-center gap-2">
+      <span style={{ color: TEAL }} className="flex">{icon}</span>
+      <span className="flex-1 text-[0.78rem] font-semibold text-gray-700">{label}</span>
+      <span className="text-[0.75rem] font-bold" style={{ color: pct >= 90 ? "#ef4444" : TEAL }}>
         {used} / {limit}
-      </Typography>
-    </Box>
-    <LinearProgress
-      variant="determinate"
-      value={pct}
-      sx={{ height: 7, borderRadius: 4, bgcolor: "#f3f4f6", "& .MuiLinearProgress-bar": { bgcolor: pct >= 90 ? "#ef4444" : TEAL, borderRadius: 4 } }}
-    />
-    <Typography sx={{ fontSize: "0.69rem", color: "#9ca3af", mt: 0.4 }}>{remaining} remaining</Typography>
-  </Box>
+      </span>
+    </div>
+    <div className="h-[7px] w-full overflow-hidden rounded-full bg-gray-100">
+      <div
+        className="h-full rounded-full transition-all"
+        style={{ width: `${pct}%`, backgroundColor: pct >= 90 ? "#ef4444" : TEAL }}
+      />
+    </div>
+    <p className="mt-1 text-[0.69rem] text-gray-400">{remaining} remaining</p>
+  </div>
 );
 
 export default UsageBar;
