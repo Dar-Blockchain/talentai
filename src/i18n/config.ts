@@ -19,6 +19,7 @@ import enInterviewHr from '../../public/locales/en/modules/interview/interview.j
 import enInterviewResults from '../../public/locales/en/modules/interview/results.json';
 import enInterviewApply from '../../public/locales/en/modules/interview/apply.json';
 import enSkillInterview from '../../public/locales/en/modules/interview/skill-interview.json';
+import enCampaignInterview from '../../public/locales/en/modules/interview/campaign-interview.json';
 import enChat from '../../public/locales/en/shared/chat.json';
 import enTeamChat from '../../public/locales/en/modules/company/teamChat.json';
 import enCandidateChat from '../../public/locales/en/modules/candidates/candidateChat.json';
@@ -42,6 +43,7 @@ import frInterviewHr from '../../public/locales/fr/modules/interview/interview.j
 import frInterviewResults from '../../public/locales/fr/modules/interview/results.json';
 import frInterviewApply from '../../public/locales/fr/modules/interview/apply.json';
 import frSkillInterview from '../../public/locales/fr/modules/interview/skill-interview.json';
+import frCampaignInterview from '../../public/locales/fr/modules/interview/campaign-interview.json';
 import frChat from '../../public/locales/fr/shared/chat.json';
 import frTeamChat from '../../public/locales/fr/modules/company/teamChat.json';
 import frCandidateChat from '../../public/locales/fr/modules/candidates/candidateChat.json';
@@ -132,6 +134,7 @@ const options: InitOptions = {
       'modules/interview/results':  enInterviewResults,
       'modules/interview/apply':    enInterviewApply,
       'modules/interview/skill-interview': enSkillInterview,
+      'modules/interview/campaign-interview': enCampaignInterview,
       'shared/chat':               enChat,
       'modules/company/teamChat': enTeamChat,
       'modules/candidates/candidateChat': enCandidateChat,
@@ -150,6 +153,7 @@ const options: InitOptions = {
       'modules/interview/results':  frInterviewResults,
       'modules/interview/apply':    frInterviewApply,
       'modules/interview/skill-interview': frSkillInterview,
+      'modules/interview/campaign-interview': frCampaignInterview,
       'shared/chat':               frChat,
       'modules/company/teamChat': frTeamChat,
       'modules/candidates/candidateChat': frCandidateChat,

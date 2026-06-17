@@ -7,7 +7,7 @@ import {
   apiFetchCampaigns, apiFetchMetrics, apiFetchCampaignById,
   apiCreateCampaign, apiUpdateCampaign, apiUpdateCampaignStatus, apiDeleteCampaign,
   apiFetchParticipants, apiFetchNonParticipants, apiAddParticipant, apiRemoveParticipant,
-  apiFetchParticipantResults, apiFetchSessions,
+  apiFetchSessions,
 } from "../api";
 
 // ─── Query key factory ────────────────────────────────────────────────────────
@@ -20,7 +20,6 @@ export const CAMPAIGN_KEYS = {
   participants:       (p: ParticipantsParams)    => ["campaigns", "participants",  p]          as const,
   nonParticipants:    (p: NonParticipantsParams) => ["campaigns", "nonParticipants", p]        as const,
   sessions:           (p: SessionsParams)        => ["campaigns", "sessions",      p]          as const,
-  participantResults: (cId: string, pId: string) => ["campaigns", "results",       cId, pId]  as const,
 };
 
 // ─── List & metrics ───────────────────────────────────────────────────────────
@@ -68,14 +67,6 @@ export const useNonParticipantsQuery = (params: NonParticipantsParams) =>
     enabled:         !!params.campaignId,
     staleTime:       30_000,
     placeholderData: keepPreviousData,
-  });
-
-export const useParticipantResultsQuery = (campaignId: string, participantId: string) =>
-  useQuery({
-    queryKey:  CAMPAIGN_KEYS.participantResults(campaignId, participantId),
-    queryFn:   () => apiFetchParticipantResults(campaignId, participantId),
-    enabled:   !!campaignId && !!participantId,
-    staleTime: 5 * 60_000,
   });
 
 // ─── Sessions ─────────────────────────────────────────────────────────────────

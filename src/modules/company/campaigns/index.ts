@@ -1,7 +1,6 @@
 // Hooks
 export { useCampaignsList } from "./hooks/useCampaignsList";
 export { useCampaignDetail } from "./hooks/useCampaignDetail";
-export { useCampaignInterviewConfig } from "./hooks/useCampaignInterviewConfig";
 
 // Components – list
 export { default as CampaignsGrid } from "./components/list/CampaignsGrid";

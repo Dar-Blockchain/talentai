@@ -1,7 +1,7 @@
 "use client";
 
 import React, { memo, useEffect, useState, useRef, useCallback, useMemo } from "react";
-import { Box, Typography, Avatar, Skeleton, Alert, IconButton, Dialog, DialogContent, DialogTitle, CircularProgress } from "@mui/material";
+import { Box, Typography, Avatar, Skeleton, Alert, IconButton } from "@mui/material";
 import SearchOutlined               from "@mui/icons-material/SearchOutlined";
 import CloseOutlined                from "@mui/icons-material/CloseOutlined";
 import AssignmentOutlined           from "@mui/icons-material/AssignmentOutlined";
@@ -9,9 +9,6 @@ import CheckCircleOutlined          from "@mui/icons-material/CheckCircleOutline
 import RadioButtonUncheckedOutlined from "@mui/icons-material/RadioButtonUncheckedOutlined";
 import AccessTimeOutlined           from "@mui/icons-material/AccessTimeOutlined";
 import BlockOutlined                from "@mui/icons-material/BlockOutlined";
-import VisibilityOutlined           from "@mui/icons-material/VisibilityOutlined";
-import axiosInstance from "@/utils/axiosInstance";
-import { ResultsData, QuestionnaireResults, InterviewResults } from "@/components/features/campaign/results/CampaignResultsView";
 import { useCampaignSessionsQuery } from "../../queries";
 import { SessionStatus } from "@/types/campaign";
 import Pagination from "@/components/ui/Pagination";
@@ -38,7 +35,7 @@ const SESSION_STATUS_META: Record<SessionStatus, { color: string; bg: string; ic
   EXPIRED:     { color: "#DC2626", bg: "#FEF2F2", icon: BlockOutlined },
 };
 
-const GRID_COLS = "1fr 130px 90px 80px 110px 110px" as const;
+const GRID_COLS = "1fr 130px 90px 80px 110px" as const;
 
 const TABLE_CARD_SX = {
   bgcolor: "#fff", border: "1px solid #E5E7EB",
@@ -60,13 +57,6 @@ const SEARCH_BOX_SX = {
   minWidth: 220, boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
 } as const;
 
-const RESULTS_BTN_SX = {
-  display: "inline-flex", alignItems: "center", gap: 0.5,
-  px: 1.25, py: "4px", borderRadius: "8px", cursor: "pointer",
-  bgcolor: "#F5F3FF", border: "1px solid #DDD6FE",
-  "&:hover": { bgcolor: "#EDE9FE" }, transition: "background 0.15s",
-} as const;
-
 const ANON_AVATAR_BG = "linear-gradient(135deg, #94A3B8, #CBD5E1)" as const;
 const PURPLE_AVATAR_BG = "linear-gradient(135deg, #8310FF, #A855F7)" as const;
 
@@ -86,64 +76,6 @@ const RowSkeleton = memo(() => (
 ));
 RowSkeleton.displayName = "SessionRowSkeleton";
 
-// ─── Results dialog ───────────────────────────────────────────────────────────
-
-interface ResultsDialogProps {
-  campaignId: string;
-  participantId: string | null;
-  label: string;
-  onClose: () => void;
-}
-
-const ResultsDialog = memo<ResultsDialogProps>(({ campaignId, participantId, label, onClose }) => {
-  const [data,    setData]    = useState<ResultsData | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState<string | null>(null);
-  const { t } = useTranslation("dashboard");
-  const sp = "pages.campaigns.detail.sessions";
-
-  useEffect(() => {
-    if (!participantId) return;
-    setLoading(true);
-    setData(null);
-    setError(null);
-    axiosInstance
-      .get(`internal-campaigns/${campaignId}/results/${participantId}`)
-      .then((res) => setData(res.data.data))
-      .catch((err) => setError(err?.response?.data?.error ?? t(`${sp}.load_failed`)))
-      .finally(() => setLoading(false));
-  }, [participantId, campaignId, t, sp]);
-
-  const moduleType = data?.campaign?.module?.type ?? "QUESTIONNAIRE";
-
-  return (
-    <Dialog open={!!participantId} onClose={onClose} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: "16px", maxHeight: "90vh" } }}>
-      <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pb: 1, borderBottom: "1px solid #F3F4F6" }}>
-        <Typography sx={{ fontWeight: 700, fontSize: "15px", color: "#0F172A" }}>
-          {t(`${sp}.dialog_title`, { name: label })}
-        </Typography>
-        <IconButton size="small" onClick={onClose} sx={{ color: "#9CA3AF" }}>
-          <CloseOutlined sx={{ fontSize: 18 }} />
-        </IconButton>
-      </DialogTitle>
-      <DialogContent sx={{ p: 3 }}>
-        {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
-            <CircularProgress sx={{ color: "#8B5CF6" }} />
-          </Box>
-        ) : error ? (
-          <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>
-        ) : data ? (
-          moduleType === "QUESTIONNAIRE"
-            ? <QuestionnaireResults data={data} />
-            : <InterviewResults data={data} />
-        ) : null}
-      </DialogContent>
-    </Dialog>
-  );
-});
-ResultsDialog.displayName = "ResultsDialog";
-
 // ─── Sessions view ────────────────────────────────────────────────────────────
 
 const SessionsView = memo<{ campaignId: string }>(({ campaignId }) => {
@@ -155,9 +87,6 @@ const SessionsView = memo<{ campaignId: string }>(({ campaignId }) => {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page,            setPage]            = useState(1);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [selectedId,    setSelectedId]    = useState<string | null>(null);
-  const [selectedLabel, setSelectedLabel] = useState("");
-
   const { data, isLoading: loading, error: queryError } = useCampaignSessionsQuery({
     campaignId, search: debouncedSearch || undefined, page, limit: PAGE_SIZE,
   });
@@ -172,7 +101,6 @@ const SessionsView = memo<{ campaignId: string }>(({ campaignId }) => {
   }, []);
 
   const clearSearch  = useCallback(() => handleSearchChange(""), [handleSearchChange]);
-  const closeResults = useCallback(() => setSelectedId(null), []);
 
   const headerCols = useMemo(() => [
     t(`${sp}.col_participant`),
@@ -180,18 +108,10 @@ const SessionsView = memo<{ campaignId: string }>(({ campaignId }) => {
     t(`${sp}.col_score`),
     t(`${sp}.col_duration`),
     t(`${sp}.col_completed`),
-    t(`${sp}.col_actions`),
   ], [t, sp]);
 
   return (
     <Box>
-      <ResultsDialog
-        campaignId={campaignId}
-        participantId={selectedId}
-        label={selectedLabel}
-        onClose={closeResults}
-      />
-
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, mb: 0, flexWrap: "wrap" }}>
         <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>
           {!loading && (debouncedSearch
@@ -248,8 +168,6 @@ const SessionsView = memo<{ campaignId: string }>(({ campaignId }) => {
             const statusCfg  = SESSION_STATUS_META[s.status] ?? SESSION_STATUS_META.PENDING;
             const StatusIcon = statusCfg.icon;
 
-            const handleViewResults = () => { setSelectedId(s._id); setSelectedLabel(name); };
-
             return (
               <Box key={s._id} sx={{
                 display: "grid", gridTemplateColumns: GRID_COLS,
@@ -292,15 +210,6 @@ const SessionsView = memo<{ campaignId: string }>(({ campaignId }) => {
                 </Box>
 
                 <Typography sx={{ fontSize: "12px", color: "#6B7280" }}>{fmtDate(s.completedAt || s.startedAt, i18n.language)}</Typography>
-
-                <Box>
-                  {s.status === "COMPLETED" && (
-                    <Box onClick={handleViewResults} sx={RESULTS_BTN_SX}>
-                      <VisibilityOutlined sx={{ fontSize: 13, color: "#7C3AED" }} />
-                      <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#7C3AED" }}>{t(`${sp}.results`)}</Typography>
-                    </Box>
-                  )}
-                </Box>
 
                 <Box />
               </Box>

@@ -15,7 +15,7 @@ export type {
   CampaignsResponse,
 } from "@/types/campaign";
 
-export type { ParticipantResultsData, EmployeeCampaignEntry, EmployeeCampaignFilters } from "@/store/slices/campaignSlice";
+export type { EmployeeCampaignEntry, EmployeeCampaignFilters } from "@/store/slices/campaignSlice";
 
 // ─── Query param shapes ───────────────────────────────────────────────────────
 

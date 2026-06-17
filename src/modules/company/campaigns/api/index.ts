@@ -4,8 +4,6 @@ import type {
   NonParticipant, CreateCampaignPayload, CampaignsResponse,
   CampaignsListParams, ParticipantsParams, SessionsParams, NonParticipantsParams,
 } from "../types";
-import type { ParticipantResultsData } from "@/store/slices/campaignSlice";
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const clean = (p: Record<string, any>): Record<string, any> =>
@@ -81,14 +79,6 @@ export const apiAddParticipant = async (campaignId: string, employeeId: string):
 export const apiRemoveParticipant = async (campaignId: string, participantId: string): Promise<string> => {
   await axiosInstance.delete(`internal-campaigns/${campaignId}/participate/${participantId}`);
   return participantId;
-};
-
-export const apiFetchParticipantResults = async (
-  campaignId: string,
-  participantId: string,
-): Promise<ParticipantResultsData> => {
-  const res = await axiosInstance.get(`internal-campaigns/${campaignId}/results/${participantId}`);
-  return res.data.data;
 };
 
 // ─── Sessions ─────────────────────────────────────────────────────────────────

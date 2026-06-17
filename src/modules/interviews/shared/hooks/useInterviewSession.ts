@@ -24,6 +24,7 @@ export function useInterviewSession({
   authUser,
   jobData,
   notify,
+  namespace,
 }: UseInterviewSessionOptions) {
   const [coverage, setCoverage] = useState<Coverage | null>(null);
   const [coverageDashboardExpanded, setCoverageDashboardExpanded] = useState(true);
@@ -178,6 +179,7 @@ export function useInterviewSession({
     onInterviewerTyping: handleInterviewerTyping,
     onInterviewWrapUp: handleInterviewWrapUp,
     onSilenceReset: handleSilenceReset,
+    namespace,
   });
 
   const audio = useAudioTranscription({

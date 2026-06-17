@@ -213,6 +213,8 @@ export interface UseInterviewSessionOptions {
   authUser: ConnectedUserEntity | null;
   jobData?: any;
   notify: (message: string, severity: 'success' | 'error' | 'warning' | 'info') => void;
+  /** Socket.IO namespace to connect to. Defaults to '/interview'. */
+  namespace?: string;
 }
 
 // ─── useSecurityMonitoring ─────────────────────────────────────────────────────

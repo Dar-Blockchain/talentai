@@ -16,7 +16,6 @@ import AccessTimeOutlined          from "@mui/icons-material/AccessTimeOutlined"
 import EmailOutlined               from "@mui/icons-material/EmailOutlined";
 import PersonAddOutlined           from "@mui/icons-material/PersonAddOutlined";
 import DeleteOutlineOutlined       from "@mui/icons-material/DeleteOutlineOutlined";
-import AssessmentOutlined          from "@mui/icons-material/AssessmentOutlined";
 import AddOutlined                 from "@mui/icons-material/AddOutlined";
 import {
   useCampaignParticipantsQuery,
@@ -256,10 +255,6 @@ const ParticipantRow = memo<ParticipantRowProps>(({ participant: p, index, total
 
   const handleRemove = useCallback(() => onRemove?.(p._id), [onRemove, p._id]);
 
-  const handleViewResults = useCallback(() => {
-    if (p.employeeId) router.push(`/company/campaigns/${campaignId}/results?userId=${p.employeeId}`);
-  }, [p.employeeId, campaignId, router]);
-
   const infoBoxSx = useMemo(() => ({
     display: "flex", alignItems: "center", gap: 1.5, minWidth: 0,
     cursor: p.employeeId ? "pointer" : "default",
@@ -330,13 +325,6 @@ const ParticipantRow = memo<ParticipantRowProps>(({ participant: p, index, total
 
       {onRemove && (
         <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 0.75 }}>
-          {p.status === "COMPLETED" && p.employeeId && (
-            <Tooltip title={t(`${pp}.tooltip_view_results`)} placement="top" arrow>
-              <IconButton size="small" onClick={handleViewResults} sx={{ width: 28, height: 28, color: "#7C3AED", bgcolor: "#F5F3FF", border: "1px solid #DDD6FE", "&:hover": { bgcolor: "#EDE9FE" } }}>
-                <AssessmentOutlined sx={{ fontSize: 14 }} />
-              </IconButton>
-            </Tooltip>
-          )}
           <Tooltip title={t(`${pp}.tooltip_remove`)} placement="top" arrow>
             <IconButton
               size="small" onClick={handleRemove} disabled={removing}

@@ -6,6 +6,7 @@ import InterviewHeader from "@/modules/interviews/shared/components/layout/Inter
 import InvalidInterviewLink from "@/modules/interviews/shared/components/InvalidInterviewLink";
 import { PostInterviewFlow } from "@/modules/interviews/post-interview";
 import { SkillInterviewFlow } from "@/modules/interviews/skill-interview";
+import { CampaignInterviewFlow } from "@/modules/interviews/campaign-interview";
 import {
   decodeInterviewSession,
   type InterviewSessionParams,
@@ -33,6 +34,12 @@ function InterviewPage() {
             skill={params.skill}
             category={params.category}
             language={params.language}
+          />
+        )}
+        {params?.type === "campaign" && params.campaignId && params.moduleType && (
+          <CampaignInterviewFlow
+            campaignId={params.campaignId}
+            moduleType={params.moduleType}
           />
         )}
         {!params && <InvalidInterviewLink />}

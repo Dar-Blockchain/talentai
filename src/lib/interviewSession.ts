@@ -1,5 +1,5 @@
 export interface InterviewSessionParams {
-  type: 'post' | 'skill';
+  type: 'post' | 'skill' | 'campaign';
   // post-interview
   jobId?: string;
   companyId?: string;
@@ -8,6 +8,9 @@ export interface InterviewSessionParams {
   skill?: string;
   category?: string;
   language?: string;
+  // campaign-interview
+  campaignId?: string;
+  moduleType?: 'SKILL_TEST' | 'AI_INTERVIEW';
 }
 
 export function encodeInterviewSession(params: InterviewSessionParams): string {

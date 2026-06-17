@@ -25,6 +25,7 @@ import { fetchCampaignByLinkToken, joinCampaignByLink } from '@/store/slices/cam
 import { AppDispatch, RootState } from '@/store/store';
 import { Campaign } from '@/types/campaign';
 import { fmtDate, isDeadlinePassed } from '@/utils/functions';
+import { buildInterviewUrl } from '@/lib/interviewSession';
 
 /* ── palette ──────────────────────────────────────────────────────────────── */
 const P = {
@@ -100,9 +101,14 @@ const CampaignJoinPage: React.FC = () => {
         // backend can find their participant record via `employee: userId`.
         localStorage.setItem(`link_token_${r.campaignId}`, String(user._id));
       }
-      // Always use the public assessment page for link-based access.
-      // /employee/* routes are role-restricted and not reachable by Company users.
-      router.push(`/campaign/assessment/${r.campaignId}`);
+      // Route to the correct page based on module type.
+      // AI/Skill interviews use the unified interview page; questionnaires have their own page.
+      const modType = campaign?.module?.type;
+      if (modType === 'AI_INTERVIEW' || modType === 'SKILL_TEST') {
+        router.push(buildInterviewUrl({ type: 'campaign', campaignId: r.campaignId, moduleType: modType }));
+      } else {
+        router.push(`/campaign/questionnaire/${r.campaignId}`);
+      }
     } catch (e: any) { setJoinErr(e); setJoining(false); }
   };
 

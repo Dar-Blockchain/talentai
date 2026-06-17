@@ -1,6 +1,5 @@
 import React, { memo, useState, useMemo, useCallback } from "react";
 import { Box, Typography } from "@mui/material";
-import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import { Campaign, CampaignModule, CampaignStatus, ModuleType, ParticipantStatus } from "@/types/campaign";
 import CampaignHeader from "./CampaignHeader";
@@ -21,7 +20,6 @@ import DashboardOutlined            from "@mui/icons-material/DashboardOutlined"
 import EmojiEventsOutlined          from "@mui/icons-material/EmojiEventsOutlined";
 import PlayArrowOutlined            from "@mui/icons-material/PlayArrow";
 import ArrowForwardOutlined         from "@mui/icons-material/ArrowForwardOutlined";
-import VisibilityOutlined           from "@mui/icons-material/VisibilityOutlined";
 import CheckCircleOutlined          from "@mui/icons-material/CheckCircleOutlined";
 import RadioButtonUncheckedOutlined from "@mui/icons-material/RadioButtonUnchecked";
 import TuneOutlined                 from "@mui/icons-material/TuneOutlined";
@@ -29,6 +27,7 @@ import RocketLaunchOutlined         from "@mui/icons-material/RocketLaunchOutlin
 import VisibilityOffOutlined        from "@mui/icons-material/VisibilityOffOutlined";
 import { MODULE_CONFIG } from "@/constants/campaign";
 import { daysLeft, isDeadlinePassed } from "@/utils/functions";
+import { buildInterviewUrl } from "@/lib/interviewSession";
 
 // ─── Static constants ─────────────────────────────────────────────────────────
 
@@ -74,8 +73,6 @@ const PAU_DOT_SX   = { width: 6, height: 6, borderRadius: "50%", bgcolor: "#D977
 const PAU_TEXT_SX  = { fontSize: "11px", fontWeight: 700, color: "#D97706" } as const;
 const CLO_DOT_SX   = { width: 6, height: 6, borderRadius: "50%", bgcolor: "#2563EB" } as const;
 const CLO_TEXT_SX  = { fontSize: "11px", fontWeight: 700, color: "#2563EB" } as const;
-const VIEW_RESULTS_BTN_SX = { display: "flex", alignItems: "center", gap: 0.625, px: 1.625, py: 0.75, borderRadius: "10px", cursor: "pointer", background: "linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)", boxShadow: "0 3px 10px rgba(139,92,246,0.35)", transition: "all 0.15s", "&:hover": { boxShadow: "0 5px 16px rgba(139,92,246,0.45)", transform: "translateY(-1px)" } } as const;
-const VIEW_RESULTS_TEXT_SX = { fontSize: "0.775rem", fontWeight: 700, color: "#fff" } as const;
 const STAT_ICON_SX_BASE = { width: 38, height: 38, borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } as const;
 
 // ─── TabPill ──────────────────────────────────────────────────────────────────
@@ -144,7 +141,6 @@ const CampaignDetail: React.FC<Props> = memo(({
   campaign, mode = "company", onDelete, onChangeStatus, onSaveModuleConfig,
   canEdit = true, canDelete = true, canPublish = true,
 }) => {
-  const router = useRouter();
   const { t, i18n } = useTranslation("dashboard");
   const tp = "pages.campaigns.detail";
   const translationLang = i18n.resolvedLanguage ?? i18n.language;
@@ -194,12 +190,12 @@ const CampaignDetail: React.FC<Props> = memo(({
   const openConfigureModule = useCallback((type: ModuleType) => setConfigureModuleType(type), []);
 
   const handleAssessmentAction = useCallback(() => {
-    window.open(`/employee/campaigns/${campaign._id}/assessment`, "_blank", "noopener,noreferrer");
-  }, [campaign._id]);
-
-  const handleViewResults = useCallback(() => {
-    router.push(`/employee/campaigns/${campaign._id}/results`);
-  }, [router, campaign._id]);
+    const modType = campaign.module?.type;
+    const url = modType === 'QUESTIONNAIRE'
+      ? `/campaign/questionnaire/${campaign._id}`
+      : buildInterviewUrl({ type: 'campaign', campaignId: campaign._id, moduleType: modType as 'AI_INTERVIEW' | 'SKILL_TEST' });
+    window.open(url, "_blank", "noopener,noreferrer");
+  }, [campaign._id, campaign.module?.type]);
 
   // ─── Derived values ───────────────────────────────────────────────────────
 
@@ -213,7 +209,6 @@ const CampaignDetail: React.FC<Props> = memo(({
   const canStart     = (pStatus === "INVITED" || pStatus === "IN_PROGRESS") && !isExpired && campaignAccessible;
   const moduleType   = campaign.module?.type;
   const supportsAction  = moduleType === "AI_INTERVIEW" || moduleType === "SKILL_TEST" || moduleType === "QUESTIONNAIRE";
-  const supportsResults = moduleType === "AI_INTERVIEW" || moduleType === "SKILL_TEST" || moduleType === "QUESTIONNAIRE";
   const isLinkBased     = campaign.accessMethod === "LINK";
   const moduleConfigured = campaign.module?.config != null;
   const showSetupBanner  = !isEmployee && campaign.status === "DRAFT";
@@ -321,14 +316,8 @@ const CampaignDetail: React.FC<Props> = memo(({
         </Box>
       )}
 
-      {supportsResults && pStatus === "COMPLETED" && (
-        <Box onClick={handleViewResults} sx={VIEW_RESULTS_BTN_SX}>
-          <VisibilityOutlined sx={{ fontSize: 14, color: "#fff" }} />
-          <Typography sx={VIEW_RESULTS_TEXT_SX}>{t(`${tp}.view_results`)}</Typography>
-        </Box>
-      )}
     </Box>
-  ), [isEmployee, pStatus, ps, isExpired, campaign.status, supportsAction, canStart, supportsResults, handleAssessmentAction, handleViewResults, moduleType, t, tp, participantStatusLabel, empBadgeSx, empDotSx, empTextSx, ctaBtnSx, ctaTextSx, translationLang]);
+  ), [isEmployee, pStatus, ps, isExpired, campaign.status, supportsAction, canStart, handleAssessmentAction, moduleType, t, tp, participantStatusLabel, empBadgeSx, empDotSx, empTextSx, ctaBtnSx, ctaTextSx, translationLang]);
 
   return (
     <Box sx={PAGE_SX}>
