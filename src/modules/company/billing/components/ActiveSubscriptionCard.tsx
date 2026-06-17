@@ -12,18 +12,12 @@ const fmt = (d: string) => new Date(d).toLocaleDateString("en-US", { month: "sho
 
 const ActiveSubscriptionCard: React.FC = () => {
   const { data: combined, isLoading: loading } = useCombinedDetailsQuery();
-
-  if (loading) return (
-    <Paper sx={{ borderRadius: 3, p: 3, mb: 3, display: "flex", justifyContent: "center" }}>
-      <CircularProgress size={24} sx={{ color: TEAL }} />
-    </Paper>
-  );
-  if (!combined || combined.subscriptions.length === 0) return null;
-
-  const { combined: c, subscriptions } = combined;
+  const subscriptions = combined?.subscriptions ?? [];
+  const c = combined?.combined;
   const isMulti = subscriptions.length > 1;
 
   const { postsPct, interviewsPct, periodPct } = useMemo(() => {
+    if (!c || subscriptions.length === 0) return { postsPct: 0, interviewsPct: 0, periodPct: 0 };
     const posts      = c.usage.posts.limit > 0
       ? Math.min(100, Math.round((c.usage.posts.used / c.usage.posts.limit) * 100)) : 0;
     const interviews = c.usage.monthlyInterviews.limit > 0
@@ -34,6 +28,13 @@ const ActiveSubscriptionCard: React.FC = () => {
     const period = Math.min(100, Math.max(0, 100 - Math.round((c.daysRemaining / durationDays) * 100)));
     return { postsPct: posts, interviewsPct: interviews, periodPct: period };
   }, [c, subscriptions]);
+
+  if (loading) return (
+    <Paper sx={{ borderRadius: 3, p: 3, mb: 3, display: "flex", justifyContent: "center" }}>
+      <CircularProgress size={24} sx={{ color: TEAL }} />
+    </Paper>
+  );
+  if (!combined || subscriptions.length === 0 || !c) return null;
 
   return (
     <Paper sx={{ borderRadius: 3, overflow: "hidden", boxShadow: `0 4px 20px ${TEAL}18`, border: `1.5px solid ${TEAL}25`, mb: 3 }}>

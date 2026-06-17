@@ -123,7 +123,7 @@ paymentSchema.post("save", async function (doc) {
     );
 
     if (payment.companyProfileId) {
-      const Profile = require("./Profile.model");
+      const Profile = require("../features/users/profile.model");
       const profile = await Profile.findById(payment.companyProfileId);
 
       console.log(`📌 [Payment Post-Save Hook] Profile found: ${profile ? "Yes" : "No"}`);

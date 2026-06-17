@@ -5,7 +5,7 @@ const Profile = require("../../features/users/profile.model");
 const User = require("../../features/users/user.model");
 const CandidatePostStepProgress = require("../../models/CandidatePostStepsProgress.model");
 const crypto = require("crypto");
-const subscriptionService = require("../subscription.service");
+const subscriptionService = require("../../features/subscriptions/subscription.service");
 
 // ========== MONTHLY INTERVIEW LIMIT HELPERS ==========
 const checkMonthlyInterviewLimit = async (companyId) => {

@@ -1,7 +1,7 @@
 const Stripe = require("stripe");
 require("dotenv").config();
-const planLimitsService = require("./planLimits.service");
-const Payment = require("../models/Payment.model");
+const planLimitsService = require("../../services/planLimits.service");
+const Payment = require("../../models/Payment.model");
 
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -15,16 +15,14 @@ exports.createCheckoutSession = async ({ planId, baseUrl, userId, companyProfile
 
     const plan = result.data;
 
-    // ✅ Prevent free plans from going to Stripe
     if (plan.priceUsd <= 0) {
       throw new Error(`Plan "${plan.name}" is free and does not require payment. Assign it directly to the user.`);
     }
 
     console.log("Selected plan:", plan.name, "- Price:", plan.priceUsd);
 
-    const amount = Math.round(plan.priceUsd * 100); // USD → cents
+    const amount = Math.round(plan.priceUsd * 100);
     const currency = "usd";
-
     const normalizedBase = (baseUrl || "").replace(/\/+$/, "");
     const success_url = `${normalizedBase}/payments/stripe/callback?status=success&session_id={CHECKOUT_SESSION_ID}`;
     const cancel_url = `${normalizedBase}/payments/stripe/callback?status=cancel`;
@@ -51,7 +49,6 @@ exports.createCheckoutSession = async ({ planId, baseUrl, userId, companyProfile
       ],
     });
 
-    // ✅ Create payment record in database
     const payment = new Payment({
       userId,
       companyProfileId,
@@ -71,14 +68,8 @@ exports.createCheckoutSession = async ({ planId, baseUrl, userId, companyProfile
 
     await payment.save();
     console.log("✅ Payment record created:", payment._id);
-    // ✅ Payment will be automatically linked to profile via Payment post-save hook
 
-    return {
-      success: true,
-      sessionId: session.id,
-      session,
-      paymentId: payment._id,
-    };
+    return { success: true, sessionId: session.id, session, paymentId: payment._id };
   } catch (err) {
     console.error("❌ Error creating Stripe checkout session:", err.message);
     throw err;

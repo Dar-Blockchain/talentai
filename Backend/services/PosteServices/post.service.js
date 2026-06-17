@@ -3,7 +3,7 @@ const User = require("../../features/users/user.model");
 const Profile = require("../../features/users/profile.model");
 const PostInterviewAssessmentModel = require("../../models/PostInterviewAssessment.model");
 const JobApplication = require("../../models/JobApplication.model");
-const subscriptionService = require("../subscription.service");
+const subscriptionService = require("../../features/subscriptions/subscription.service");
 
 // Validate post data
 const validatePostData = (postData) => {
