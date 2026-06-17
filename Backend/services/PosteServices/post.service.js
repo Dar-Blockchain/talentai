@@ -4,6 +4,7 @@ const Profile = require("../../features/users/profile.model");
 const PostInterviewAssessmentModel = require("../../features/interviews/post-interview/post-interview.model");
 const JobApplication = require("../../models/JobApplication.model");
 const subscriptionService = require("../subscription.service");
+require("../../models/PostSteps.model");
 
 // Validate post data
 const validatePostData = (postData) => {

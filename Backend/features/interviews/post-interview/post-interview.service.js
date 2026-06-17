@@ -393,6 +393,61 @@ module.exports.getPostInterviewAssessmentById = async (assessmentId) => {
 };
 
 
+// ========== CHECK INTERVIEW ELIGIBILITY ==========
+module.exports.checkInterviewEligibility = async (userId, postId, userRole) => {
+  try {
+    // Role blocks
+    if (userRole === 'Company')  return { status: 'company_blocked' };
+    if (userRole === 'Employee') return { status: 'employee_blocked' };
+
+    const post = await Post.findById(postId).select(
+      'jobDetails createdBy archived expirationDate thresholdScore maxInterviewAttempts'
+    );
+    if (!post) return { status: 'not_found' };
+
+    const jobTitle    = post.jobDetails?.title ?? '';
+    const companyName = '';
+
+    // Post state checks
+    if (post.archived) return { status: 'archived', meta: { jobTitle } };
+
+    if (post.expirationDate && new Date(post.expirationDate) < new Date()) {
+      return { status: 'expired', meta: { jobTitle } };
+    }
+
+    // Past assessments for this candidate on this post
+    const assessments = await PostInterviewAssessment.find({
+      candidate: userId,
+      post:      postId,
+      completed: true,
+    }).sort({ createdAt: -1 });
+
+    if (assessments.length === 0) return { status: 'eligible', meta: { jobTitle, companyName } };
+
+    // Attempt limit (default: 1)
+    const maxAttempts = post.maxInterviewAttempts ?? 1;
+    if (assessments.length >= maxAttempts) {
+      const best  = assessments.reduce((top, a) => {
+        const s = a.interviewData?.finalReport?.scores?.overall ?? 0;
+        return s > (top.interviewData?.finalReport?.scores?.overall ?? 0) ? a : top;
+      }, assessments[0]);
+      const score    = best.interviewData?.finalReport?.scores?.overall ?? 0;
+      const required = post.thresholdScore ?? 0;
+
+      if (required > 0 && score < required) {
+        return { status: 'under_threshold', meta: { jobTitle, companyName, score, required } };
+      }
+
+      return { status: 'limit_reached', meta: { jobTitle, companyName } };
+    }
+
+    return { status: 'eligible', meta: { jobTitle, companyName } };
+  } catch (error) {
+    console.error('❌ Error checking interview eligibility:', error.message);
+    throw error;
+  }
+};
+
 // ========== KPI - Unreviewed interviews older than 48 hours ==========
 module.exports.getUnreviewedInterviewsOver48Hours = async (companyId, postId = null, dateFrom = null) => {
   try {

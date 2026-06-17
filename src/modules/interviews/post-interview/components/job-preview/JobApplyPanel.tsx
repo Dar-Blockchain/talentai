@@ -7,7 +7,7 @@ import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Badge } from "@/modules/shared/ui/shadcn/badge";
 import { Separator } from "@/modules/shared/ui/shadcn/separator";
 import { SectionCard } from "./JobPanelShared";
-import OnboardingModal from "../modals/OnboardingModal";
+import OnboardingModal from "../../../shared/components/modals/OnboardingModal";
 
 interface JobApplyPanelProps {
   jobTitle: string;
