@@ -54,7 +54,7 @@ class CVAnalysisService {
     if (data.softSkills?.length)  score += Math.min(10, data.softSkills.length * 2);
     if (data.education?.length)   score += Math.min(15, data.education.length * 7.5);
     if (data.experience?.length)  score += Math.min(15, data.experience.length * 5);
-    return Math.round(score);
+    return Math.min(100, Math.round(score));
   }
 
   static async replaceForProfile(cvData, profileId) {

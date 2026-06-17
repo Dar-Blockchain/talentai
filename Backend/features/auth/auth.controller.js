@@ -123,16 +123,21 @@ module.exports.register = async (req, res) => {
       firstName, lastName, name, companyDetails, phone, resumeFile, language,
     });
 
-    const cvAnalysis = (resumeFile?.path && validRoleType === "Candidate" && result.user)
-      ? await analyseCvAndEnrichProfile(resumeFile, validEmail, firstName, lastName, result.profile?._id, result.user._id, req)
-      : null;
-
+    // Respond immediately — CV analysis can take 30–120 s (LLM call); don't block registration
     res.status(201).json({
       success:  true,
       message:  result.message,
       email:    result.email,
       username: result.username,
     });
+
+    // Run CV analysis in the background after the response is sent
+    if (resumeFile?.path && validRoleType === "Candidate" && result.user) {
+      analyseCvAndEnrichProfile(
+        resumeFile, validEmail, firstName, lastName,
+        result.profile?._id, result.user._id, req,
+      ).catch((err) => logger.warn("⚠️ Background CV analysis failed:", err.message));
+    }
   } catch (error) {
     deleteFile(resumeFile?.path);
     handleError(res, error, 400);
