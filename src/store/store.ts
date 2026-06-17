@@ -15,7 +15,6 @@ import postReducer from './slices/postSlice';
 import candidateReducer from './slices/candidateSlice';
 import postGenerationReducer from './slices/postGenerationSlice';
 import interviewReducer from './slices/interviewSlice';
-import jobDetailsReducer from './slices/jobDetailsSlice';
 import memberReducer from './slices/memberSlice';
 import chatReducer from './slices/chatSlice';
 import teamChatReducer from '@/modules/chat/team-chat/store/teamChatSlice';
@@ -23,7 +22,6 @@ import candidateChatReducer from '@/modules/chat/candidate-chat/store/candidateC
 import adminReducer from './slices/adminSlice';
 import planLimitsReducer from './slices/planLimitsSlice';
 import campaignReducer from './slices/campaignSlice';
-import companyReducer from './slices/companySlice';
 import departmentReducer from './slices/departmentSlice';
 import jobApplicationReducer from './slices/jobApplicationSlice';
 import feedbackReducer from './slices/feedbackSlice';
@@ -36,7 +34,6 @@ const rootReducer = combineReducers({
   candidate: candidateReducer,
   postGeneration: postGenerationReducer,
   interview: interviewReducer,
-  jobDetails: jobDetailsReducer,
   member: memberReducer,
   chat: chatReducer,
   teamChat: teamChatReducer,
@@ -44,7 +41,6 @@ const rootReducer = combineReducers({
   admin: adminReducer,
   planLimits: planLimitsReducer,
   campaign: campaignReducer,
-  company: companyReducer,
   department: departmentReducer,
   jobApplications: jobApplicationReducer,
   feedback: feedbackReducer,
