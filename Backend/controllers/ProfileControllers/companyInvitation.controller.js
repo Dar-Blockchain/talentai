@@ -1,5 +1,5 @@
 const CompanyInvitationService = require("../../services/ProfileService/companyInvitation.service");
-const authService = require("../../services/authentication.service");
+const authService = require("../../features/auth/auth.service");
 const { generateToken } = require("../../utils/generate-token");
 
 module.exports.sentInvitation = async (req, res) => {

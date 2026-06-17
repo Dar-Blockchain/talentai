@@ -2,7 +2,7 @@ const path = require("path");
 const fs   = require("fs");
 
 const authService       = require("./auth.service");
-const CVAnalysisService = require("../../services/cvAnalysis.service");
+const CVAnalysisService = require("../cv-analysis/cv-analysis.service");
 const Profile           = require("../users/profile.model");
 const User              = require("../users/user.model");
 const logger            = require("../../utils/logger");

@@ -108,7 +108,7 @@ module.exports.getProfileByUserId = async (userId) => {
     try {
       const {
         assignFreePlanToProfile,
-      } = require("../../services/authentication.service");
+      } = require("../auth/auth.service");
       await assignFreePlanToProfile(profile._id);
       const refreshed = await Profile.findById(profile._id).populate(
         "planLimits",
