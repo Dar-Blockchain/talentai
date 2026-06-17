@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/useToast";
 import { useDeletePost } from "@/modules/company/posts/list/hooks/useDeletePost";
 import { useJobDetailQuery, useUpdatePostMutation } from "../queries";
 import { useUpdatePostStatusMutation } from "@/modules/company/posts/list/queries";
+import { buildInterviewUrl } from "@/lib/interviewSession";
 
 export const usePostDetailPage = () => {
   const router        = useRouter();
@@ -53,7 +54,7 @@ export const usePostDetailPage = () => {
   const getInterviewLink = () => {
     if (!job?._id || typeof window === "undefined") return "";
     const companyId = job.user?._id || connectedUser?._id || "";
-    return `${window.location.origin}/candidate/interview?jobId=${job._id}${companyId ? `&companyId=${companyId}` : ""}&ref=link`;
+    return `${window.location.origin}${buildInterviewUrl({ type: 'post', jobId: job._id, ...(companyId ? { companyId } : {}), ref: 'link' })}`;
   };
 
   const handleSaveSuccess = () => {

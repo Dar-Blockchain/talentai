@@ -467,7 +467,8 @@ module.exports.inviteToInterview = async (req, res) => {
     // Send in-app notification to candidate
     const notificationService = require('../services/notificationSystem.service');
     const candidateUserId = candidateProfile.userId._id;
-    const candidateInterviewUrl = `/candidate/interview?jobId=${post._id}`;
+    const { buildInterviewUrl } = require('../utils/interviewUrl');
+    const candidateInterviewUrl = buildInterviewUrl({ type: 'post', jobId: String(post._id) });
 
     notificationService.createNotification(
       candidateUserId,

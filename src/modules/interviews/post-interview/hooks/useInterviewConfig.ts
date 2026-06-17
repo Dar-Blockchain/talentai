@@ -12,11 +12,11 @@ import type { UseInterviewConfigReturn, UseInterviewConfigOptions } from '../typ
 
 export type { UseInterviewConfigReturn, UseInterviewConfigOptions };
 
-export const useInterviewConfig = ({ showNotification }: UseInterviewConfigOptions): UseInterviewConfigReturn => {
+export const useInterviewConfig = ({ showNotification, jobId: propJobId }: UseInterviewConfigOptions): UseInterviewConfigReturn => {
   const router = useRouter();
-  const jobId  = router.isReady && typeof router.query.jobId === 'string'
-    ? router.query.jobId
-    : null;
+  const jobId  = propJobId !== undefined
+    ? propJobId
+    : (router.isReady && typeof router.query.jobId === 'string' ? router.query.jobId : null);
 
   const [interviewConfig, setInterviewConfig] = useState<InterviewConfig>(DEFAULT_INTERVIEW_CONFIG);
 

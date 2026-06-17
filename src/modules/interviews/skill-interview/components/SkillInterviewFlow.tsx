@@ -3,22 +3,32 @@ import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { useNotification } from '@/hooks/useNotification';
 import { type RootState } from '@/store/store';
-import { useSkillInterviewConfig } from '../hooks/useSkillInterviewConfig';
+import { useSkillInterviewConfig, type SkillInterviewOverrides } from '../hooks/useSkillInterviewConfig';
 import { useInterviewSession } from '../../shared/hooks/useInterviewSession';
 import InterviewScreen from '../../shared/components/session/InterviewScreen';
 import InterviewLoadingScreen from '../../shared/components/layout/InterviewLoadingScreen';
 import SkillPreviewPanel from './skill-preview/SkillPreviewPanel';
 
-export default function SkillInterviewFlow() {
+interface SkillInterviewFlowProps {
+  skill?: string;
+  category?: string;
+  language?: string;
+}
+
+export default function SkillInterviewFlow({ skill: propSkill, category: propCategory, language: propLanguage }: SkillInterviewFlowProps = {}) {
   const { t } = useTranslation('modules/interview/skill-interview');
   const authUser = useSelector((state: RootState) => state.user.connectedUser.user);
   const { notification, showNotification, hideNotification } = useNotification();
+
+  const overrides: SkillInterviewOverrides | undefined = propSkill !== undefined
+    ? { skill: propSkill, category: propCategory, language: propLanguage }
+    : undefined;
 
   const {
     interviewConfig, setInterviewConfig,
     skill, category, language,
     isReady,
-  } = useSkillInterviewConfig();
+  } = useSkillInterviewConfig(overrides);
 
   const [step, setStep] = useState<'preview' | 'interview'>('preview');
 

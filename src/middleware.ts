@@ -14,7 +14,7 @@ const PUBLIC_PATHS = [
   "/unauthorized",
   "/employee/invitation",
   "/campaign",
-  "/candidate/interview",
+  "/interviews",
   "/payments/stripe/callback",
   "/ui-kit"
 ];
@@ -32,7 +32,7 @@ const ROLE_ROUTES: { prefix: string; roles: string[] }[] = [
   { prefix: "/company",                  roles: ["Company", "Employee"] },
   { prefix: "/profile/company",          roles: ["Company"] },
   // Allow Employee so the page component can show a graceful message before redirecting
-  { prefix: "/candidate/interview",   roles: ["Candidate", "Employee", "Company"] },
+  { prefix: "/interviews",            roles: ["Candidate", "Employee", "Company"] },
   { prefix: "/candidate",                roles: ["Candidate"] },
   { prefix: "/employee/invitation",       roles: ["Admin", "Company", "Employee", "Candidate"] },
   { prefix: "/employee",                 roles: ["Employee"] },

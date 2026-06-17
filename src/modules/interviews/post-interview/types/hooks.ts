@@ -15,4 +15,5 @@ export interface UseInterviewConfigReturn {
 
 export interface UseInterviewConfigOptions {
   showNotification: (message: string, severity: 'error' | 'warning' | 'info') => void;
+  jobId?: string | null;
 }

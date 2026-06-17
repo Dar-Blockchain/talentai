@@ -22,3 +22,4 @@ export { default as OnboardingModal } from "../shared/components/modals/Onboardi
 export { default as EligibilityGate } from "./components/eligibility/EligibilityGate";
 export { default as InterviewScreen } from "../shared/components/session/InterviewScreen";
 export { default as InterviewFlow } from "./components/InterviewFlow";
+export { default as PostInterviewFlow } from "./components/PostInterviewFlow";

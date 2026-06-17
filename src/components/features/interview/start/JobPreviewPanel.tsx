@@ -14,6 +14,7 @@ import { getPostSkills, formatSalary, getLevelFromNumber, getSoftSkillLevelLabel
 import OnboardingModal from '@/components/features/interview/OnboardingModal';
 import Header from '@/modules/shared/layouts/home/HomeHeader';
 import { useTranslation } from 'react-i18next';
+import { buildInterviewUrl } from '@/lib/interviewSession';
 
 const PURPLE = '#8310FF';
 const PURPLE_LIGHT = 'rgba(131,16,255,0.08)';
@@ -72,7 +73,7 @@ const JobPreviewPanel: React.FC<JobPreviewPanelProps> = ({ jobData, jobId, compa
   const handleApplySuccess = (_token: string, _user: any, _profile: any) => {
     // Session is already persisted and auth state set by OnboardingModal before this callback fires.
     setModalOpen(false);
-    router.push(`/candidate/interview?jobId=${jobId}${companyId ? `&companyId=${companyId}` : ''}&ref=link`);
+    router.push(buildInterviewUrl({ type: 'post', jobId, companyId, ref: 'link' }));
   };
 
   return (

@@ -5,6 +5,7 @@ const Post = require('../models/Post.model');
 const User = require('../features/users/user.model');
 const { sendInterviewNudge } = require('../utils/email-service');
 const { AUTO_INVITE_CONFIG, SCHEDULER_TIME_WINDOW } = require('../constants/scheduler.constants');
+const { buildInterviewUrl } = require('../utils/interviewUrl');
 const logger = require('../utils/logger');
 
 /**
@@ -63,7 +64,7 @@ const sendAutoInvitation = async (application) => {
     const jobLanguage = post.language || 'en';
     const companyProfile = await Profile.findOne({ userId: post.user }).select('companyDetails').lean();
     const companyName = companyProfile?.companyDetails?.name || company.username || company.email || 'Our Company';
-    const interviewLink = `${process.env.BASE_URL}candidate/interview?jobId=${post._id}&companyId=${post.user}&ref=link`;
+    const interviewLink = `${process.env.BASE_URL}${buildInterviewUrl({ type: 'post', jobId: String(post._id), companyId: String(post.user), ref: 'link' })}`;
 
     logger.debug(`   📧 To: ${candidateEmail}`);
     logger.debug(`   👤 Candidate: ${firstName}`);

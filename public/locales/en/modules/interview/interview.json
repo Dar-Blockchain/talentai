@@ -1,5 +1,11 @@
 {
   "loading": "Loading interview…",
+  "invalid_link": {
+    "title": "Invalid interview link",
+    "desc": "This link is broken or has expired. Please check that the URL is correct and try again.",
+    "back": "Go back",
+    "retry": "Try again"
+  },
   "checking": {
     "title": "Verifying your access",
     "subtitle": "Checking your eligibility before loading the interview."

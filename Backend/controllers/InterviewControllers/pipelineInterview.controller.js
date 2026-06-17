@@ -6,6 +6,7 @@
 const Post = require("../../models/Post.model");
 const PostSteps = require("../../models/PostSteps.model");
 const pipelineConfigBuilder = require("../../services/InterviewServices/pipeline-interview-config");
+const { buildInterviewUrl } = require("../../utils/interviewUrl");
 
 /**
  * Get interview parameters for a specific pipeline step
@@ -81,7 +82,7 @@ exports.getInterviewParamsForStep = async (req, res) => {
         stepTitle: targetStep.data.label || `Step ${stepNumber}`,
         interviewParams: interviewParams,
         queryString: queryString,
-        fullUrl: `/candidate/interview?${queryString}&jobId=${jobId}&stepNumber=${stepNumber}&source=pipeline`,
+        fullUrl: buildInterviewUrl({ type: 'post', jobId: String(jobId), stepNumber: String(stepNumber), source: 'pipeline' }),
         jobDetails: {
           jobId: post._id,
           title: post.title,

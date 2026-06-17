@@ -13,6 +13,7 @@ import LinkOutlined from "@mui/icons-material/LinkOutlined";
 import AppButton from "@/components/ui/AppButton";
 import { applicationsApi } from "@/modules/company/applications/api";
 import { emitToast } from "@/utils/toastEmitter";
+import { buildInterviewUrl } from "@/lib/interviewSession";
 
 // ─── Static constants ─────────────────────────────────────────────────────────
 
@@ -64,7 +65,7 @@ const InviteToInterviewModal = memo<Props>(({ open, target, onClose, onSuccess }
   }, [open]);
 
   const interviewLink = target?.postId
-    ? `${typeof window !== "undefined" ? window.location.origin : ""}/candidate/interview?jobId=${target.postId}`
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}${buildInterviewUrl({ type: 'post', jobId: target.postId })}`
     : "";
 
   const handleSend = useCallback(async () => {

@@ -13,6 +13,7 @@ import TrendingUpOutlined from "@mui/icons-material/TrendingUpOutlined";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/router";
 import { AppDispatch } from "@/store/store";
+import { buildInterviewUrl } from "@/lib/interviewSession";
 import {
   fetchCandidateApplications,
   selectCandidateApplications,
@@ -320,7 +321,7 @@ const CandidateApplications: React.FC<CandidateApplicationsProps> = ({ previewCo
               onClick={() => {
                 const status = (app.status || "").toLowerCase();
                 if (status === "visited" && app.post?._id)
-                  router.push(`/candidate/interview?jobId=${app.post._id}`);
+                  router.push(buildInterviewUrl({ type: 'post', jobId: app.post._id }));
                 else
                   router.push(`/candidate/applications/${app._id}`);
               }}
@@ -339,7 +340,7 @@ const CandidateApplications: React.FC<CandidateApplicationsProps> = ({ previewCo
                   onClick={() => {
                     const status = (app.status || "").toLowerCase();
                     if (status === "visited" && app.post?._id)
-                      router.push(`/candidate/interview?jobId=${app.post._id}`);
+                      router.push(buildInterviewUrl({ type: 'post', jobId: app.post._id }));
                     else
                       router.push(`/candidate/applications/${app._id}`);
                   }}

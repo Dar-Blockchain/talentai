@@ -1,3 +1,5 @@
+import { buildInterviewUrl } from "@/lib/interviewSession";
+
 export const fmtDate = (d: string) =>
   new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 
@@ -8,5 +10,5 @@ export const getDaysLeft = (expirationDate?: string): number | null => {
 
 export const getPostShareLink = (jobId: string, companyId?: string): string => {
   if (typeof window === "undefined") return "";
-  return `${window.location.origin}/candidate/interview?jobId=${jobId}${companyId ? `&companyId=${companyId}` : ""}&ref=link`;
+  return `${window.location.origin}${buildInterviewUrl({ type: 'post', jobId, ...(companyId ? { companyId } : {}), ref: 'link' })}`;
 };

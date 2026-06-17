@@ -33,11 +33,21 @@
   },
   "actions": {
     "skill_interview": "Skill Interview",
+    "skill_interview_sub": "Start an AI assessment",
     "hr_interview": "HR Interview",
     "coming_soon": "Coming soon",
     "monthly_quota": "Monthly Quota",
     "hide": "Hide",
     "view_all": "View All"
+  },
+  "skill_dialog": {
+    "title": "Skill Interview",
+    "subtitle": "AI-powered technical assessment",
+    "input_label": "Which skill do you want to be assessed on?",
+    "placeholder": "e.g. React, Python, SQL…",
+    "popular_label": "Popular skills",
+    "cancel": "Cancel",
+    "start": "Start Interview"
   },
   "sections": {
     "skills_title": "Skills & Expertise",

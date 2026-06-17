@@ -33,11 +33,21 @@
   },
   "actions": {
     "skill_interview": "Entretien de compétences",
+    "skill_interview_sub": "Démarrer une évaluation IA",
     "hr_interview": "Entretien RH",
     "coming_soon": "Bientôt disponible",
     "monthly_quota": "Quota mensuel",
     "hide": "Masquer",
     "view_all": "Voir tout"
+  },
+  "skill_dialog": {
+    "title": "Entretien de compétences",
+    "subtitle": "Évaluation technique par IA",
+    "input_label": "Sur quelle compétence souhaitez-vous être évalué ?",
+    "placeholder": "ex. React, Python, SQL…",
+    "popular_label": "Compétences populaires",
+    "cancel": "Annuler",
+    "start": "Démarrer l'entretien"
   },
   "sections": {
     "skills_title": "Compétences & Expertise",

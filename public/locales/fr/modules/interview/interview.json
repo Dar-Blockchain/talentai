@@ -1,5 +1,11 @@
 {
   "loading": "Chargement de l'entretien…",
+  "invalid_link": {
+    "title": "Lien d'entretien invalide",
+    "desc": "Ce lien est invalide ou a expiré. Veuillez vérifier que l'URL est correcte et réessayer.",
+    "back": "Retour",
+    "retry": "Réessayer"
+  },
   "checking": {
     "title": "Vérification de votre accès",
     "subtitle": "Vérification de votre éligibilité avant le chargement de l'entretien."
