@@ -2,10 +2,10 @@ import React, { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button, CircularProgress, Dialog, DialogTitle, Divider } from "@mui/material";
+import { Modal, Spinner } from "@/modules/settings/shared/components";
 import { keyFormSchema, DEFAULT_FORM, type KeyFormState } from "../../schemas/apiKeySchema";
 import { KeyFormFields, DialogForm } from "./KeyFormFields";
-import { cancelBtnSx, saveBtnSx } from "./styles";
+import { cancelBtnClass, saveBtnClass } from "./styles";
 
 type Props = {
   open: boolean;
@@ -26,22 +26,24 @@ const CreateKeyDialog: React.FC<Props> = ({ open, creating, onClose, onSubmit })
   }, [open, reset]);
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { borderRadius: "16px" } } }}>
-      <DialogTitle sx={{ fontSize: "1rem", fontWeight: 700, pb: 1 }}>
-        {t("pages.settings.api_keys.create_title")}
-      </DialogTitle>
-      <Divider />
+    <Modal open={open} onClose={onClose} maxWidth="sm">
+      <div className="px-6 pt-5 pb-3">
+        <span className="text-[1rem] font-bold text-gray-900">
+          {t("pages.settings.api_keys.create_title")}
+        </span>
+      </div>
+      <hr className="border-gray-200" />
       <DialogForm fields={<KeyFormFields control={control} errors={errors} />}>
-        <Button onClick={onClose} size="small" sx={cancelBtnSx}>
+        <button type="button" onClick={onClose} className={cancelBtnClass}>
           {t("pages.settings.api_keys.actions.cancel")}
-        </Button>
-        <Button onClick={handleSubmit(onSubmit)} size="small" disabled={creating} sx={saveBtnSx}>
+        </button>
+        <button type="button" onClick={handleSubmit(onSubmit)} disabled={creating} className={saveBtnClass}>
           {creating
-            ? <CircularProgress size={14} sx={{ color: "#fff" }} />
+            ? <Spinner size={14} className="border-white/40 border-t-white" />
             : t("pages.settings.api_keys.actions.create")}
-        </Button>
+        </button>
       </DialogForm>
-    </Dialog>
+    </Modal>
   );
 };
 

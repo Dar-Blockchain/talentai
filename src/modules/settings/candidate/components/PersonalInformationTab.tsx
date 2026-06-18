@@ -1,14 +1,14 @@
 import React, { useMemo } from 'react';
-import { Box, Alert, Divider, Typography, CircularProgress } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { Control, Controller, FieldErrors } from 'react-hook-form';
+import { CheckCircle2, XCircle } from 'lucide-react';
 import { UserProfile } from '@/types/profile';
 import { PersonalInformationFormValues } from '@/modules/settings/candidate/schemas';
 import { experienceLevels, timezones } from '@/constants/profile';
 import ProfilePictureSection from '@/components/features/profile/ProfilePictureSection';
 import AppInput from '@/modules/shared/ui/AppInput';
 import AppSelect from '@/modules/shared/ui/AppSelect';
-import { EditActions } from '@/modules/settings/shared/components';
+import { EditActions, Spinner } from '@/modules/settings/shared/components';
 import CvSection from './CvSection';
 
 interface PersonalInformationTabProps {
@@ -29,10 +29,10 @@ interface PersonalInformationTabProps {
 }
 
 const SectionHeader = ({ title, subtitle }: { title: string; subtitle: string }) => (
-  <Box sx={{ px: 2, py: 1.5, bgcolor: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: 2, borderLeft: '3px solid #0D9488' }}>
-    <Typography sx={{ fontSize: '0.9rem', fontWeight: 700, color: '#111827' }}>{title}</Typography>
-    <Typography sx={{ fontSize: '0.78rem', color: '#9CA3AF', mt: 0.25 }}>{subtitle}</Typography>
-  </Box>
+  <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg border-l-[3px] border-l-teal-600">
+    <p className="text-[0.9rem] font-bold text-gray-900">{title}</p>
+    <p className="text-[0.78rem] text-gray-400 mt-1">{subtitle}</p>
+  </div>
 );
 
 const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
@@ -63,14 +63,14 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
   }, [isNotWorkingValue, profile.requiredExperienceLevel, t]);
 
   return (
-    <Box sx={{ bgcolor: '#fff', border: '1px solid #E5E7EB', borderRadius: '16px', overflow: 'hidden' }}>
+    <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
 
       {/* Header */}
-      <Box sx={{ px: { xs: 2, md: 3 }, py: 2, borderBottom: '1px solid #F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' }}>
-        <Box>
-          <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', color: '#111827' }}>{s('title')}</Typography>
-          <Typography sx={{ fontSize: '0.78rem', color: '#9CA3AF', mt: 0.25 }}>{s('subtitle')}</Typography>
-        </Box>
+      <div className="px-4 md:px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-2 flex-wrap">
+        <div>
+          <p className="font-bold text-[0.95rem] text-gray-900">{s('title')}</p>
+          <p className="text-[0.78rem] text-gray-400 mt-1">{s('subtitle')}</p>
+        </div>
         <EditActions
           isEditing={isEditing}
           loading={loading}
@@ -78,18 +78,28 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
           onCancel={onCancel}
           onSave={onSave}
         />
-      </Box>
+      </div>
 
       {/* Content */}
-      <Box sx={{ p: { xs: 2, md: 3 }, display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <div className="p-4 md:p-6 flex flex-col gap-6">
         {isLoading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-            <CircularProgress size={28} sx={{ color: '#0D9488' }} />
-          </Box>
+          <div className="flex justify-center py-12">
+            <Spinner size={28} />
+          </div>
         ) : (
           <>
-            {saveSuccess && <Alert severity="success" sx={{ borderRadius: '10px', fontSize: '0.8rem' }}>{s('save_success')}</Alert>}
-            {error       && <Alert severity="error"   sx={{ borderRadius: '10px', fontSize: '0.8rem' }}>{error}</Alert>}
+            {saveSuccess && (
+              <div className="flex items-center gap-2 rounded-[10px] bg-green-50 border border-green-200 px-3 py-2 text-[0.8rem] text-green-800">
+                <CheckCircle2 size={16} className="text-green-600" />
+                {s('save_success')}
+              </div>
+            )}
+            {error && (
+              <div className="flex items-center gap-2 rounded-[10px] bg-red-50 border border-red-200 px-3 py-2 text-[0.8rem] text-red-800">
+                <XCircle size={16} className="text-red-600" />
+                {error}
+              </div>
+            )}
 
             <ProfilePictureSection
               profile={profile}
@@ -99,23 +109,23 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
               onEditClick={onEditToggle}
             />
 
-            <Divider sx={{ borderColor: '#E5E7EB' }} />
+            <hr className="border-gray-200" />
 
             {/* ── Account ── */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+            <div className="flex flex-col gap-5">
               <SectionHeader title="Account" subtitle="Your login credentials" />
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2.5 }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <AppInput label={s('username')} value={profile.username || ''} disabled />
                 <AppInput label={s('email')}    value={profile.email    || ''} disabled />
-              </Box>
-            </Box>
+              </div>
+            </div>
 
-            <Divider sx={{ borderColor: '#E5E7EB' }} />
+            <hr className="border-gray-200" />
 
             {/* ── Profile Details ── */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+            <div className="flex flex-col gap-5">
               <SectionHeader title="Profile Details" subtitle="Your personal and professional information" />
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2.5 }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
                 <Controller name="firstName" control={control}
                   render={({ field }) => (
@@ -152,15 +162,15 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
                     <AppSelect label={s('experience_level')} value={field.value} onChange={(val) => field.onChange(val)} options={experienceOptions} disabled={!isEditing} error={formErrors.requiredExperienceLevel?.message} sx={{ gridColumn: { xs: '1 / -1', sm: 'span 2' } }} />
                   )}
                 />
-              </Box>
-            </Box>
+              </div>
+            </div>
 
-            <Divider sx={{ borderColor: '#E5E7EB' }} />
+            <hr className="border-gray-200" />
 
             {/* ── Contact Information ── */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+            <div className="flex flex-col gap-5">
               <SectionHeader title={t('candidate_settings.contact.title')} subtitle={c('subtitle')} />
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2.5 }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
                 <Controller name="phone" control={control}
                   render={({ field }) => (
@@ -197,10 +207,10 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
                     <AppInput label={c('website')} value={field.value} onChange={(e) => field.onChange(e.target.value)} onBlur={field.onBlur} disabled={!isEditing} placeholder="https://yourwebsite.com" type="url" error={formErrors.personalWebsite?.message} sx={{ gridColumn: { xs: '1 / -1', sm: 'span 2' } }} />
                   )}
                 />
-              </Box>
-            </Box>
+              </div>
+            </div>
 
-            <Divider sx={{ borderColor: '#E5E7EB' }} />
+            <hr className="border-gray-200" />
 
             {/* ── Resume / CV ── */}
             <CvSection
@@ -210,8 +220,8 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
             />
           </>
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 

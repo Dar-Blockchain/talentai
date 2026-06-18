@@ -1,11 +1,10 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
 
 const SectionTitle = ({ title, subtitle }: { title: string; subtitle?: string }) => (
-  <Box sx={{ mb: 2.5 }}>
-    <Typography sx={{ fontSize: "0.9rem", fontWeight: 700, color: "#111827" }}>{title}</Typography>
-    {subtitle && <Typography sx={{ fontSize: "0.78rem", color: "#9CA3AF", mt: 0.25 }}>{subtitle}</Typography>}
-  </Box>
+  <div className="mb-5">
+    <p className="text-[0.9rem] font-bold text-gray-900">{title}</p>
+    {subtitle && <p className="text-[0.78rem] text-gray-400 mt-1">{subtitle}</p>}
+  </div>
 );
 
 export default SectionTitle;

@@ -1,20 +1,15 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
 
 const Section: React.FC<{ title: string; subtitle?: string; children: React.ReactNode }> = ({ title, subtitle, children }) => (
-  <Box sx={{ bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "16px", overflow: "hidden", mb: 3 }}>
-    <Box sx={{ px: 3, py: 2.5, borderBottom: "1px solid #F3F4F6" }}>
-      <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "0.95rem", color: "#111827" }}>
-        {title}
-      </Typography>
+  <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden mb-6">
+    <div className="px-6 py-5 border-b border-gray-100">
+      <p className="font-poppins font-bold text-[0.95rem] text-gray-900">{title}</p>
       {subtitle && (
-        <Typography sx={{ fontFamily: "Poppins", fontSize: "0.8rem", color: "#9CA3AF", mt: 0.25 }}>
-          {subtitle}
-        </Typography>
+        <p className="font-poppins text-[0.8rem] text-gray-400 mt-1">{subtitle}</p>
       )}
-    </Box>
-    <Box sx={{ px: 3, py: 3 }}>{children}</Box>
-  </Box>
+    </div>
+    <div className="px-6 py-6">{children}</div>
+  </div>
 );
 
 export default Section;

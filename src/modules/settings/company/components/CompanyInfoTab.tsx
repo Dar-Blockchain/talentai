@@ -1,6 +1,5 @@
 import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Box, Divider, Typography } from "@mui/material";
 import { Controller, Control } from "react-hook-form";
 import { COMPANY_SIZES } from "@/modules/settings/shared/constants";
 import { getAllCountryNames } from "@/utils/countryMappings";
@@ -17,19 +16,10 @@ interface Props {
 }
 
 const SectionHeader = ({ title, subtitle }: { title: string; subtitle: string }) => (
-  <Box
-    sx={{
-      px: 2,
-      py: 1.5,
-      bgcolor: "#F9FAFB",
-      border: "1px solid #E5E7EB",
-      borderRadius: 2,
-      borderLeft: "3px solid #0D9488",
-    }}
-  >
-    <Typography sx={{ fontSize: "0.9rem", fontWeight: 700, color: "#111827" }}>{title}</Typography>
-    <Typography sx={{ fontSize: "0.78rem", color: "#9CA3AF", mt: 0.25 }}>{subtitle}</Typography>
-  </Box>
+  <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg border-l-[3px] border-l-teal-600">
+    <p className="text-[0.9rem] font-bold text-gray-900">{title}</p>
+    <p className="text-[0.78rem] text-gray-400 mt-1">{subtitle}</p>
+  </div>
 );
 
 const CompanyInfoTab: React.FC<Props> = ({ profile, isEditing, control }) => {
@@ -47,16 +37,16 @@ const CompanyInfoTab: React.FC<Props> = ({ profile, isEditing, control }) => {
   );
 
   return (
-    <Box sx={{ p: { xs: 2, md: 3 }, display: "flex", flexDirection: "column", gap: 3 }}>
+    <div className="p-4 md:p-6 flex flex-col gap-6">
 
       {/* ── Company Information ── */}
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+      <div className="flex flex-col gap-5">
         <SectionHeader
           title={t("pages.settings.company_info.title")}
           subtitle={t("pages.settings.company_info.subtitle")}
         />
 
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2.5 }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {/* Email — read-only, not managed by RHF */}
           <AppInput
             label={t("pages.settings.company_info.email_label")}
@@ -117,13 +107,13 @@ const CompanyInfoTab: React.FC<Props> = ({ profile, isEditing, control }) => {
               />
             )}
           />
-        </Box>
-      </Box>
+        </div>
+      </div>
 
-      <Divider sx={{ borderColor: "#E5E7EB" }} />
+      <hr className="border-gray-200" />
 
       {/* ── Contact & Presence ── */}
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+      <div className="flex flex-col gap-5">
         <SectionHeader
           title="Contact & Presence"
           subtitle="Location, social links, and work preferences"
@@ -147,7 +137,7 @@ const CompanyInfoTab: React.FC<Props> = ({ profile, isEditing, control }) => {
         />
 
         {/* LinkedIn & Website */}
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2.5 }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <Controller
             name="linkedin"
             control={control}
@@ -181,9 +171,9 @@ const CompanyInfoTab: React.FC<Props> = ({ profile, isEditing, control }) => {
               />
             )}
           />
-        </Box>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 };
 
