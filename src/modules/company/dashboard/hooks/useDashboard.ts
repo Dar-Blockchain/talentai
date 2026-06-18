@@ -10,6 +10,7 @@ const PAGE_SIZE = 3;
 export const useDashboard = () => {
   const [postId,     setPostId]     = useState<string>("");
   const [dateFrom,   setDateFrom]   = useState<string>("");
+  const [activeDays, setActiveDays] = useState<number | null>(null);
   const [statusPage, setStatusPage] = useState(1);
 
   const filterParams = useMemo(
@@ -21,11 +22,6 @@ export const useDashboard = () => {
     () => ({ ...filterParams, page: statusPage, limit: PAGE_SIZE }),
     [filterParams, statusPage],
   );
-
-  const activeDays = useMemo(() => {
-    if (!dateFrom) return null;
-    return Math.round((Date.now() - new Date(dateFrom).getTime()) / 86_400_000);
-  }, [dateFrom]);
 
   const actionsQ     = useKpiActionsQuery(filterParams);
   const funnelQ      = useKpiFunnelQuery(filterParams);
@@ -41,6 +37,7 @@ export const useDashboard = () => {
   }, []);
 
   const handlePeriodChange = useCallback((days: number | null) => {
+    setActiveDays(days);
     if (days === null) {
       setDateFrom("");
     } else {

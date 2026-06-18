@@ -1,35 +1,35 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
-import { scoreStyle } from "@/modules/company/assessment/constants";
 import { PostAssessmentData } from "../../types";
-import { ScoreRing } from "../assessmentAtoms";
+import { ScoreRing, ScoreTheme, scoreTheme } from "../ui";
 
 interface Props {
   overallScore:       number;
+  st:                 ScoreTheme;
   analytics:          PostAssessmentData["analytics"] | undefined;
   scoreOverallLabel:  string;
   scoreCoverageLabel: string;
 }
 
-const ScoreRingsSection: React.FC<Props> = ({ overallScore, analytics, scoreOverallLabel, scoreCoverageLabel }) => {
-  const sc = scoreStyle(overallScore);
+const ScoreRingsSection: React.FC<Props> = ({ overallScore, st, analytics, scoreOverallLabel, scoreCoverageLabel }) => {
+  const coverageScore  = analytics?.coveragePercentage;
+  const hasCoverage    = coverageScore !== undefined;
+  const coverageSt     = hasCoverage ? scoreTheme(coverageScore!) : null;
+
   return (
-    <Box sx={{ display: "flex", gap: 1.5 }}>
-      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", py: 2.5, borderRadius: "16px", border: "1px solid #F3F4F6", bgcolor: "#FAFAFA" }}>
-        <ScoreRing value={overallScore} color={sc.color} size={92} />
-        <Typography sx={{ mt: 1.25, fontSize: "0.65rem", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-          {scoreOverallLabel}
-        </Typography>
-      </Box>
-      {analytics?.coveragePercentage !== undefined && (
-        <Box sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", py: 2.5, borderRadius: "16px", border: "1px solid #F3F4F6", bgcolor: "#FAFAFA" }}>
-          <ScoreRing value={analytics.coveragePercentage} color="#0891B2" size={92} />
-          <Typography sx={{ mt: 1.25, fontSize: "0.65rem", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-            {scoreCoverageLabel}
-          </Typography>
-        </Box>
-      )}
-    </Box>
+    <div className="rounded-2xl border border-slate-100 bg-white overflow-hidden">
+      <div className={`grid ${hasCoverage ? "grid-cols-2 divide-x divide-slate-100" : "grid-cols-1"}`}>
+        <div className="flex flex-col items-center py-7 px-4">
+          <ScoreRing value={overallScore} color={st.color} size={100} />
+          <span className="mt-3 text-[0.6rem] font-bold text-slate-400 uppercase tracking-widest">{scoreOverallLabel}</span>
+        </div>
+        {hasCoverage && coverageSt && (
+          <div className="flex flex-col items-center py-7 px-4">
+            <ScoreRing value={coverageScore!} color={coverageSt.color} size={100} />
+            <span className="mt-3 text-[0.6rem] font-bold text-slate-400 uppercase tracking-widest">{scoreCoverageLabel}</span>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

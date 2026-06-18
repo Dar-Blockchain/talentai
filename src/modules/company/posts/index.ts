@@ -12,7 +12,6 @@ export { default as ApplicationsView }      from "./details/components/Applicati
 export { default as PostBasicDetails }      from "./details/components/PostBasicDetails";
 export { default as EditPostDetails, SkillChip } from "./details/components/EditPostDetails";
 export { default as RecruitmentFlowDetails } from "./details/components/RecruitmentFlowDetails";
-export { default as AssessmentDetailsModal } from "@/modules/company/assessment/modal/components/AssessmentDetailsModal";
 export type { AssessmentTarget } from "@/modules/company/assessment/modal";
 export { default as ContactCandidateModal, type ContactTarget }     from "./details/components/ContactCandidateModal";
 export { usePostMetrics }  from "./details/hooks/usePostMetrics";

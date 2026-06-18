@@ -1,10 +1,7 @@
 import React from "react";
-import { Box, Pagination } from "@mui/material";
 import ApplicationCard from "@/modules/company/applications/components/ApplicationCard";
 import { ApplicationSummaryItem } from "@/store/slices/jobApplicationSlice";
 import { ContactTarget } from "../ContactCandidateModal";
-import { AssessmentTarget } from "@/modules/company/assessment/modal";
-
 import { TEAL } from "@/modules/company/posts/shared/constants";
 
 interface Props {
@@ -14,39 +11,57 @@ interface Props {
   pagination: { totalPages: number };
   onPage: (page: number) => void;
   onContact: (t: ContactTarget) => void;
-  onAssessment: (t: AssessmentTarget) => void;
   invitedIds: Set<string>;
   onInviteSuccess: (appId: string) => void;
 }
 
 const ApplicationsList: React.FC<Props> = ({
-  rows, postId, page, pagination, onPage, onContact, onAssessment, invitedIds, onInviteSuccess,
+  rows, postId, page, pagination, onPage, onContact, invitedIds, onInviteSuccess,
 }) => (
-  <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+  <div className="flex flex-col gap-3">
     {rows.map((app: ApplicationSummaryItem) => (
       <ApplicationCard
         key={String(app.id)}
         app={app}
         postId={postId}
         onContact={onContact}
-        onAssessment={onAssessment}
         invitedIds={invitedIds}
         onInviteSuccess={onInviteSuccess}
       />
     ))}
     {pagination.totalPages > 1 && (
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 1 }}>
-        <Pagination
-          count={pagination.totalPages}
-          page={page}
-          onChange={(_, v) => onPage(v)}
-          shape="rounded"
-          size="small"
-          sx={{ "& .MuiPaginationItem-root": { fontWeight: 500 }, "& .Mui-selected": { bgcolor: `${TEAL}18`, color: TEAL, fontWeight: 700 } }}
-        />
-      </Box>
+      <div className="flex items-center justify-center gap-1 mt-2">
+        <button
+          disabled={page === 1}
+          onClick={() => onPage(page - 1)}
+          className="w-8 h-8 flex items-center justify-center rounded-md text-[13px] text-slate-500 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+          ‹
+        </button>
+        {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((p) => (
+          <button
+            key={p}
+            onClick={() => onPage(p)}
+            className="w-8 h-8 flex items-center justify-center rounded-md text-[12px] font-medium transition-colors"
+            style={{
+              backgroundColor: p === page ? `${TEAL}18` : "transparent",
+              color:           p === page ? TEAL      : "#374151",
+              fontWeight:      p === page ? 700       : 500,
+            }}
+          >
+            {p}
+          </button>
+        ))}
+        <button
+          disabled={page === pagination.totalPages}
+          onClick={() => onPage(page + 1)}
+          className="w-8 h-8 flex items-center justify-center rounded-md text-[13px] text-slate-500 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+          ›
+        </button>
+      </div>
     )}
-  </Box>
+  </div>
 );
 
 export default ApplicationsList;

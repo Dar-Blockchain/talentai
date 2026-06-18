@@ -1,5 +1,6 @@
 import React from "react";
-import { Box, Divider, Typography } from "@mui/material";
+import TrendingUpOutlined   from "@mui/icons-material/TrendingUpOutlined";
+import TrendingDownOutlined from "@mui/icons-material/TrendingDownOutlined";
 import { PostAssessmentData } from "../../types";
 
 interface Props {
@@ -12,36 +13,50 @@ const StrengthsWeaknessesSection: React.FC<Props> = ({ aiAssessment, strengthsLa
   const hasStrong = (aiAssessment?.strongestAreas?.length ?? 0) > 0;
   const hasWeak   = (aiAssessment?.weakestAreas?.length ?? 0) > 0;
   if (!hasStrong && !hasWeak) return null;
+
   return (
-    <>
-      <Divider sx={{ borderColor: "#F3F4F6" }} />
-      <Box sx={{ display: "flex", gap: 1.5 }}>
-        {hasStrong && (
-          <Box sx={{ flex: 1, bgcolor: "#F0FDF4", borderRadius: "14px", border: "1px solid #BBF7D0", p: 2 }}>
-            <Typography sx={{ fontSize: "0.63rem", fontWeight: 700, color: "#059669", textTransform: "uppercase", letterSpacing: "0.07em", mb: 1 }}>
+    <div className="grid grid-cols-2 gap-4">
+      {hasStrong && (
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 overflow-hidden">
+          <div className="flex items-center gap-2 px-4 pt-3.5 pb-2.5 border-b border-emerald-100">
+            <div className="w-5 h-5 rounded-md bg-emerald-100 flex items-center justify-center">
+              <TrendingUpOutlined style={{ fontSize: 12, color: "#059669" }} />
+            </div>
+            <span className="text-[0.65rem] font-black text-emerald-700 uppercase tracking-widest">
               {strengthsLabel}
-            </Typography>
+            </span>
+          </div>
+          <div className="px-4 py-3 flex flex-col gap-1.5">
             {aiAssessment!.strongestAreas.map((a, i) => (
-              <Typography key={i} sx={{ fontSize: "0.8rem", color: "#065F46", textTransform: "capitalize", lineHeight: 1.8 }}>
-                · {a.replace(/_/g, " ")}
-              </Typography>
+              <div key={i} className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                <span className="text-[0.79rem] text-emerald-900 capitalize">{a.replace(/_/g, " ")}</span>
+              </div>
             ))}
-          </Box>
-        )}
-        {hasWeak && (
-          <Box sx={{ flex: 1, bgcolor: "#FFF7ED", borderRadius: "14px", border: "1px solid #FED7AA", p: 2 }}>
-            <Typography sx={{ fontSize: "0.63rem", fontWeight: 700, color: "#D97706", textTransform: "uppercase", letterSpacing: "0.07em", mb: 1 }}>
+          </div>
+        </div>
+      )}
+      {hasWeak && (
+        <div className="rounded-2xl border border-amber-100 bg-amber-50 overflow-hidden">
+          <div className="flex items-center gap-2 px-4 pt-3.5 pb-2.5 border-b border-amber-100">
+            <div className="w-5 h-5 rounded-md bg-amber-100 flex items-center justify-center">
+              <TrendingDownOutlined style={{ fontSize: 12, color: "#D97706" }} />
+            </div>
+            <span className="text-[0.65rem] font-black text-amber-700 uppercase tracking-widest">
               {weakAreasLabel}
-            </Typography>
+            </span>
+          </div>
+          <div className="px-4 py-3 flex flex-col gap-1.5">
             {aiAssessment!.weakestAreas.map((a, i) => (
-              <Typography key={i} sx={{ fontSize: "0.8rem", color: "#92400E", textTransform: "capitalize", lineHeight: 1.8 }}>
-                · {a.replace(/_/g, " ")}
-              </Typography>
+              <div key={i} className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                <span className="text-[0.79rem] text-amber-900 capitalize">{a.replace(/_/g, " ")}</span>
+              </div>
             ))}
-          </Box>
-        )}
-      </Box>
-    </>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

@@ -1,5 +1,4 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
 import HourglassEmptyOutlined from "@mui/icons-material/HourglassEmptyOutlined";
 import VerifiedOutlined       from "@mui/icons-material/VerifiedOutlined";
 import { fmtDate } from "@/modules/company/assessment/constants";
@@ -14,25 +13,29 @@ const RecruiterReviewCard: React.FC<Props> = ({ recruiterReview }) => {
 
   if (recruiterReview.reviewed) {
     return (
-      <Box sx={{ mx: 3.5, mb: 2.5, px: 1.75, py: 1.125, borderRadius: "12px", bgcolor: "#F0FDF4", border: "1px solid #BBF7D0", display: "flex", alignItems: "flex-start", gap: 1 }}>
-        <VerifiedOutlined sx={{ fontSize: 14, color: "#059669", mt: "1px", flexShrink: 0 }} />
-        <Box>
-          <Typography sx={{ fontSize: "0.72rem", fontWeight: 700, color: "#059669" }}>
-            Reviewed{recruiterReview.reviewedAt ? ` · ${fmtDate(recruiterReview.reviewedAt)}` : ""}
-          </Typography>
+      <div className="mx-7 mb-5 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-100 flex items-start gap-3">
+        <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+          <VerifiedOutlined style={{ fontSize: 14, color: "#059669" }} />
+        </div>
+        <div>
+          <div className="text-xs font-bold text-emerald-700">
+            Recruiter Reviewed{recruiterReview.reviewedAt ? ` · ${fmtDate(recruiterReview.reviewedAt)}` : ""}
+          </div>
           {recruiterReview.feedback && (
-            <Typography sx={{ fontSize: "0.72rem", color: "#065F46", mt: 0.25 }}>{recruiterReview.feedback}</Typography>
+            <div className="text-xs text-emerald-800 mt-0.5 leading-relaxed">{recruiterReview.feedback}</div>
           )}
-        </Box>
-      </Box>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ mx: 3.5, mb: 2.5, px: 1.75, py: 1, borderRadius: "12px", bgcolor: "#FFFBEB", border: "1px solid #FDE68A", display: "flex", alignItems: "center", gap: 0.875 }}>
-      <HourglassEmptyOutlined sx={{ fontSize: 13, color: "#D97706", flexShrink: 0 }} />
-      <Typography sx={{ fontSize: "0.72rem", fontWeight: 600, color: "#92400E" }}>Pending recruiter review</Typography>
-    </Box>
+    <div className="mx-7 mb-5 px-4 py-2.5 rounded-xl bg-amber-50 border border-amber-100 flex items-center gap-3">
+      <div className="w-6 h-6 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
+        <HourglassEmptyOutlined style={{ fontSize: 13, color: "#D97706" }} />
+      </div>
+      <span className="text-xs font-semibold text-amber-800">Pending recruiter review</span>
+    </div>
   );
 };
 

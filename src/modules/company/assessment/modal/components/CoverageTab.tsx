@@ -1,8 +1,6 @@
 import React from "react";
-import { Box, Chip, Typography } from "@mui/material";
 import TrendingUpOutlined from "@mui/icons-material/TrendingUpOutlined";
 import { PostAssessmentData } from "../types";
-import { TEAL, TEAL_BG, TEAL_BORDER } from "./assessmentAtoms";
 import AreaCoverageCard from "./area-coverage/AreaCoverageCard";
 
 interface Props {
@@ -12,32 +10,32 @@ interface Props {
 
 const CoverageTab: React.FC<Props> = ({ coverage, overallCoverageLabel }) => {
   const areas = coverage?.areas || {};
-  return (
-    <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 2 }}>
 
+  return (
+    <div className="p-6 flex flex-col gap-5">
       {coverage?.overall != null && (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, flexWrap: "wrap", pb: 0.5 }}>
-          <Typography sx={{ fontSize: "0.65rem", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.09em" }}>
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest">
             {overallCoverageLabel}
-          </Typography>
-          <Chip label={`${Math.round(coverage.overall)}%`} size="small"
-            sx={{ bgcolor: TEAL_BG, color: TEAL, fontWeight: 800, fontSize: "0.73rem", height: 22, border: `1px solid ${TEAL_BORDER}` }} />
+          </span>
+          <span className="text-[0.78rem] font-extrabold h-6 px-3 rounded-full border bg-teal-50 text-teal-700 border-teal-200 flex items-center">
+            {Math.round(coverage.overall)}%
+          </span>
           {coverage.nextRecommendedArea && (
-            <Chip
-              label={`Next: ${coverage.nextRecommendedArea.replace(/_/g, " ")}`}
-              size="small"
-              icon={<TrendingUpOutlined style={{ fontSize: 10 }} />}
-              sx={{ height: 22, fontSize: "0.66rem", fontWeight: 600, bgcolor: "#F5F3FF", color: "#6D28D9", border: "1px solid #DDD6FE", textTransform: "capitalize",
-                "& .MuiChip-label": { px: 0.75 }, "& .MuiChip-icon": { color: "#6D28D9 !important" } }} />
+            <span className="flex items-center gap-1 h-6 px-3 rounded-full border bg-violet-50 text-violet-700 border-violet-200 text-[0.7rem] font-semibold capitalize">
+              <TrendingUpOutlined style={{ fontSize: 11 }} />
+              Next: {coverage.nextRecommendedArea.replace(/_/g, " ")}
+            </span>
           )}
-        </Box>
+        </div>
       )}
 
-      {Object.entries(areas).map(([area, data]) => (
-        <AreaCoverageCard key={area} area={area} data={data} />
-      ))}
-
-    </Box>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {Object.entries(areas).map(([area, data]) => (
+          <AreaCoverageCard key={area} area={area} data={data} />
+        ))}
+      </div>
+    </div>
   );
 };
 

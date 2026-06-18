@@ -1,11 +1,9 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
-import { Box, CircularProgress } from "@mui/material";
 import { useApplicationsSummaryQuery } from "../queries";
 import ContactCandidateModal, { ContactTarget } from "./ContactCandidateModal";
 import ApplicationsToolbar from "./applications/ApplicationsToolbar";
 import ApplicationsEmptyState from "./applications/ApplicationsEmptyState";
 import ApplicationsList from "./applications/ApplicationsList";
-import { AssessmentDetailsModal, AssessmentTarget } from "@/modules/company/assessment/modal";
 
 const TEAL     = "#0D9488";
 const PAGE_SIZE = 10;
@@ -18,9 +16,9 @@ const ApplicationsView: React.FC<Props> = ({ jobId }) => {
   const [status, setStatus]           = useState("");
   const [sort, setSort]               = useState("appliedAt_desc");
   const [page, setPage]               = useState(1);
-  const [contactTarget,    setContactTarget]    = useState<ContactTarget | null>(null);
-  const [assessmentTarget, setAssessmentTarget] = useState<AssessmentTarget | null>(null);
-  const [invitedIds, setInvitedIds] = useState<Set<string>>(new Set());
+  const [contactTarget, setContactTarget] = useState<ContactTarget | null>(null);
+  const [invitedIds, setInvitedIds]       = useState<Set<string>>(new Set());
+
   const markInvited = useCallback((appId: string) => {
     setInvitedIds(prev => new Set(prev).add(appId));
   }, []);
@@ -57,7 +55,7 @@ const ApplicationsView: React.FC<Props> = ({ jobId }) => {
   }, [rows]);
 
   return (
-    <Box sx={{ mt: 2 }}>
+    <div className="mt-4">
       <ApplicationsToolbar
         searchInput={searchInput}
         status={status}
@@ -70,9 +68,12 @@ const ApplicationsView: React.FC<Props> = ({ jobId }) => {
       />
 
       {loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-          <CircularProgress size={32} sx={{ color: TEAL }} />
-        </Box>
+        <div className="flex justify-center py-16">
+          <svg className="size-8 animate-spin" viewBox="0 0 24 24" fill="none" style={{ color: TEAL }}>
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3.5"/>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"/>
+          </svg>
+        </div>
       ) : rows.length === 0 ? (
         <ApplicationsEmptyState hasFilters={!!(search || status)} />
       ) : (
@@ -83,15 +84,13 @@ const ApplicationsView: React.FC<Props> = ({ jobId }) => {
           pagination={pagination}
           onPage={setPage}
           onContact={setContactTarget}
-          onAssessment={setAssessmentTarget}
           invitedIds={invitedIds}
           onInviteSuccess={markInvited}
         />
       )}
 
       <ContactCandidateModal open={!!contactTarget} target={contactTarget} onClose={() => setContactTarget(null)} />
-      <AssessmentDetailsModal open={!!assessmentTarget} target={assessmentTarget} onClose={() => setAssessmentTarget(null)} />
-    </Box>
+    </div>
   );
 };
 

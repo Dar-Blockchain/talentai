@@ -1,114 +1,84 @@
 "use client";
-import React, { memo, useCallback, useMemo } from "react";
+import React, { memo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { Box, Typography, Paper, Divider, Chip, FormControl, InputLabel, Select, MenuItem, OutlinedInput } from "@mui/material";
+import { Card, CardContent } from "@/modules/shared/ui/shadcn/card";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/modules/shared/ui/shadcn/select";
+import { cn } from "@/lib/utils";
 import FilterListOutlined from "@mui/icons-material/FilterListOutlined";
-import { BORDER, GRAY, LGRAY, NAVY, T, T_DARK, WHITE } from "../utils/kpiTokens";
 import type { KpiPostOption } from "../types";
 
-// ─── Static constants ─────────────────────────────────────────────────────────
-
-const PERIODS: { label: string; days: number | null }[] = [
-  { label: "7d",  days: 7  },
-  { label: "30d", days: 30 },
-  { label: "90d", days: 90 },
+const PERIODS = [
+  { label: "7d",  days: 7   },
+  { label: "30d", days: 30  },
+  { label: "90d", days: 90  },
   { label: "All", days: null },
 ] as const;
 
-const PAPER_SX       = { border: `1px solid ${BORDER}`, borderRadius: "14px", px: { xs: 2, sm: 2.5 }, py: 1.5, mb: 3, display: "flex", flexWrap: "wrap", gap: { xs: 1.5, sm: 2 }, alignItems: "center" } as const;
-const LABEL_ROW_SX   = { display: "flex", alignItems: "center", gap: 0.75 } as const;
-const LABEL_ICON_SX  = { fontSize: 17, color: T } as const;
-const LABEL_TEXT_SX  = { fontFamily: "Poppins", fontWeight: 700, fontSize: "0.8rem", color: NAVY } as const;
-const DIVIDER_SX     = { borderColor: BORDER, display: { xs: "none", sm: "block" } } as const;
-const CHIPS_ROW_SX   = { display: "flex", gap: 0.6, flexWrap: "wrap" } as const;
-const DROPDOWN_SX    = { ml: { sm: "auto" } } as const;
-const CONTROL_SX     = { minWidth: 200 } as const;
-const INPUT_LABEL_SX = { fontFamily: "Poppins", fontSize: "0.75rem" } as const;
-const SELECT_SX      = { fontFamily: "Poppins", fontSize: "0.78rem", borderRadius: "10px", "& .MuiOutlinedInput-notchedOutline": { borderColor: BORDER } } as const;
-const ALL_ITEM_SX    = { fontFamily: "Poppins", fontSize: "0.78rem", color: GRAY } as const;
-const ITEM_SX        = { fontFamily: "Poppins", fontSize: "0.78rem" } as const;
-const CHIP_BASE_SX   = { fontFamily: "Poppins", fontWeight: 600, fontSize: "0.7rem", height: 26, cursor: "pointer", transition: "all 0.15s", "& .MuiChip-label": { px: 1.25 } } as const;
-
-// ─── PeriodChip ───────────────────────────────────────────────────────────────
-
-const PeriodChip = memo<{ label: string; active: boolean; onSelect: () => void }>(
-  ({ label, active, onSelect }) => {
-    const sx = useMemo(() => ({
-      ...CHIP_BASE_SX,
-      bgcolor: active ? T     : LGRAY,
-      color:   active ? WHITE : GRAY,
-      border: `1px solid ${active ? T : BORDER}`,
-      "&:hover": { bgcolor: active ? T_DARK : "#F1F5F9" },
-    }), [active]);
-    return <Chip label={label} size="small" onClick={onSelect} sx={sx} />;
-  },
-);
-PeriodChip.displayName = "PeriodChip";
-
-// ─── KpiFiltersBar ────────────────────────────────────────────────────────────
-
-interface KpiFiltersBarProps {
-  postId:           string;
-  activeDays:       number | null;
-  availablePosts:   KpiPostOption[];
-  onPostChange:     (id: string) => void;
-  onPeriodChange:   (days: number | null) => void;
+interface Props {
+  postId:         string;
+  activeDays:     number | null;
+  availablePosts: KpiPostOption[];
+  onPostChange:   (id: string) => void;
+  onPeriodChange: (days: number | null) => void;
 }
 
-const KpiFiltersBar = memo<KpiFiltersBarProps>(({ postId, activeDays, availablePosts, onPostChange, onPeriodChange }) => {
+const KpiFiltersBar = memo<Props>(({ postId, activeDays, availablePosts, onPostChange, onPeriodChange }) => {
   const { t } = useTranslation("dashboard");
 
-  const periodHandlers = useMemo(() =>
-    PERIODS.map((p) => () => onPeriodChange(p.days)),
-  [onPeriodChange]);
-
-  const activePeriod = useMemo(() =>
-    PERIODS.find((p) =>
-      p.days === null ? activeDays === null : activeDays !== null && Math.abs(activeDays - p.days) <= 1,
-    )?.days ?? null,
-  [activeDays]);
-
-  const handleSelectChange = useCallback((e: any) => onPostChange(e.target.value as string), [onPostChange]);
-
-  const postLabel = t("pages.kpi.post");
+  const handlePost = useCallback(
+    (val: string) => onPostChange(val === "__all__" ? "" : val),
+    [onPostChange],
+  );
 
   return (
-    <Paper elevation={0} sx={PAPER_SX}>
-      <Box sx={LABEL_ROW_SX}>
-        <FilterListOutlined sx={LABEL_ICON_SX} />
-        <Typography sx={LABEL_TEXT_SX}>{t("pages.kpi.filters")}</Typography>
-      </Box>
+    <Card className="mb-6">
+      <CardContent className="py-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
 
-      <Divider orientation="vertical" flexItem sx={DIVIDER_SX} />
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-teal-50 flex items-center justify-center">
+              <FilterListOutlined style={{ fontSize: 15, color: "#0D9488" }} />
+            </div>
+            <span className="font-semibold text-[13px] text-slate-700">{t("pages.kpi.filters", "Filters")}</span>
+          </div>
 
-      <Box sx={CHIPS_ROW_SX}>
-        {PERIODS.map((p, i) => {
-          const active = p.days === activePeriod && (p.days !== null || activeDays === null);
-          return <PeriodChip key={p.label} label={p.label} active={active} onSelect={periodHandlers[i]} />;
-        })}
-      </Box>
+          <div className="hidden sm:block w-px h-5 bg-slate-200 shrink-0" />
 
-      <Divider orientation="vertical" flexItem sx={DIVIDER_SX} />
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {PERIODS.map((p) => {
+              const isActive = p.days === null ? activeDays === null : activeDays === p.days;
+              return (
+                <Button
+                  key={p.label}
+                  size="xs"
+                  variant={isActive ? "default" : "ghost"}
+                  onClick={() => onPeriodChange(p.days)}
+                  className={cn("rounded-full h-7 px-3 text-[12px] font-semibold", !isActive && "text-slate-500 hover:text-slate-700 hover:bg-slate-100")}
+                >
+                  {p.label}
+                </Button>
+              );
+            })}
+          </div>
 
-      <Box sx={DROPDOWN_SX}>
-        <FormControl size="small" sx={CONTROL_SX}>
-          <InputLabel sx={INPUT_LABEL_SX}>{postLabel}</InputLabel>
-          <Select
-            value={postId}
-            onChange={handleSelectChange}
-            input={<OutlinedInput label={postLabel} />}
-            sx={SELECT_SX}
-          >
-            <MenuItem value="" sx={ALL_ITEM_SX}>{t("pages.kpi.all_posts")}</MenuItem>
-            {availablePosts.map((p) => (
-              <MenuItem key={p.id} value={p.id} sx={ITEM_SX}>{p.title}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Box>
-    </Paper>
+          <div className="sm:ml-auto w-full sm:w-auto">
+            <Select value={postId || "__all__"} onValueChange={handlePost}>
+              <SelectTrigger size="sm" className="w-full sm:w-[220px]">
+                <SelectValue placeholder={t("pages.kpi.all_posts", "All posts")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">{t("pages.kpi.all_posts", "All posts")}</SelectItem>
+                {availablePosts.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 });
 KpiFiltersBar.displayName = "KpiFiltersBar";
-
 export default KpiFiltersBar;

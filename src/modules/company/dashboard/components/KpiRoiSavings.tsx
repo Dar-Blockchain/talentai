@@ -1,45 +1,20 @@
 "use client";
 import React, { memo, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Box, Typography, Grid, Paper, Skeleton } from "@mui/material";
+import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import SavingsOutlined from "@mui/icons-material/SavingsOutlined";
-import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid,
-  Tooltip as RechartsTooltip, ResponsiveContainer,
-} from "recharts";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 import { ZoneHeading, KpiCard, MetricRow } from "./KpiAtoms";
-import { BORDER, ChartTooltip, GRAY, GRAY2, T, T_BG, T_BRD, T_DARK, WHITE } from "../utils/kpiTokens";
+import { ChartTooltip, GRAY, T } from "../utils/kpiTokens";
 import type { KpiRoiData } from "../types";
 
-// ─── Static constants ─────────────────────────────────────────────────────────
-
 const BASELINE = 35;
+const fmt = (v: number | null) => v != null ? `€${v}` : "—";
+const fmtDay = (v: any) => [`${v}d`, ""] as [string, string];
 
-const GRID_SX        = { mb: 2 } as const;
-const COL_BOX_SX     = { display: "flex", flexDirection: "column", gap: 2, height: "100%" } as const;
-const SAVED_PAPER_SX = { border: `1px solid ${T_BRD}`, borderRadius: "18px", p: 2.5, background: `linear-gradient(135deg, ${T_BG} 0%, #ECFDF5 100%)`, flex: "0 0 auto" } as const;
-const SAVED_LABEL_SX = { fontFamily: "Poppins", fontSize: "0.68rem", fontWeight: 700, color: T, textTransform: "uppercase", letterSpacing: "0.08em", mb: 1 } as const;
-const SAVED_VAL_SX   = { fontFamily: "Poppins", fontWeight: 800, fontSize: "2.8rem", color: T_DARK, lineHeight: 1 } as const;
-const SAVED_SUB_SX   = { fontFamily: "Poppins", fontSize: "0.72rem", color: GRAY, mt: 0.5 } as const;
-const COSTS_PAPER_SX = { border: `1px solid ${BORDER}`, borderRadius: "18px", p: 2.5, bgcolor: WHITE, flex: "1 1 auto" } as const;
-const COSTS_LABEL_SX = { fontFamily: "Poppins", fontWeight: 700, fontSize: "0.7rem", color: GRAY2, textTransform: "uppercase", letterSpacing: "0.07em", mb: 1.5 } as const;
-const EMPTY_BOX_SX   = { height: 230, display: "flex", alignItems: "center", justifyContent: "center" } as const;
-const EMPTY_TXT_SX   = { fontFamily: "Poppins", fontSize: "0.82rem", color: GRAY2 } as const;
-const LEGEND_ROW_SX  = { display: "flex", gap: 2.5, mt: 1.5 } as const;
-const LEGEND_ITEM_SX = { display: "flex", alignItems: "center", gap: 0.75 } as const;
-const LEGEND_LINE_SX = { width: 18, height: 2.5, bgcolor: T, borderRadius: 2 } as const;
-const LEGEND_DASH_SX = { width: 18, height: 0, border: "1px dashed #94A3B8" } as const;
-const LEGEND_TXT_SX  = { fontFamily: "Poppins", fontSize: "0.72rem", color: GRAY, fontWeight: 500 } as const;
-const CHART_DOT      = { r: 4, fill: WHITE, stroke: T, strokeWidth: 2 } as const;
+interface Props { data: KpiRoiData | undefined; loading: boolean }
 
-// ─── KpiRoiSavings ────────────────────────────────────────────────────────────
-
-interface KpiRoiSavingsProps {
-  data:    KpiRoiData | undefined;
-  loading: boolean;
-}
-
-const KpiRoiSavings = memo<KpiRoiSavingsProps>(({ data, loading }) => {
+const KpiRoiSavings = memo<Props>(({ data, loading }) => {
   const { t } = useTranslation("dashboard");
 
   const chartData = useMemo(() =>
@@ -53,99 +28,88 @@ const KpiRoiSavings = memo<KpiRoiSavingsProps>(({ data, loading }) => {
       : [10, 50];
   }, [data?.trend]);
 
-  const isNoData = useMemo(() => chartData.every((p) => p.tth === null), [chartData]);
-
-  const fmt = useMemo(() => (v: number | null) => v !== null ? `€${v}` : "—", []);
-
-  const savedHoursText = useMemo(() =>
-    `${data?.completedInterviews ?? 0} ${t("pages.kpi.saved_hours_formula")}`,
-  [data?.completedInterviews, t]);
-
+  const isNoData       = chartData.every((p) => p.tth === null);
+  const savedHoursText = `${data?.completedInterviews ?? 0} ${t("pages.kpi.saved_hours_formula")}`;
   const legendTalentai = t("pages.kpi.legend_talentai");
   const legendBaseline = t("pages.kpi.legend_baseline");
 
   return (
     <>
       <ZoneHeading icon={SavingsOutlined} label={t("pages.kpi.zone7_title")} color="#7C3AED" />
-      <Grid container spacing={{ xs: 1.5, sm: 2.5 }} sx={GRID_SX}>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6 mb-6">
 
-        {/* Stats column */}
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Box sx={COL_BOX_SX}>
-            <Paper elevation={0} sx={SAVED_PAPER_SX}>
-              <Typography sx={SAVED_LABEL_SX}>{t("pages.kpi.saved_hours_label")}</Typography>
-              {loading
-                ? <Skeleton variant="text" width={80} height={52} />
-                : <Typography sx={SAVED_VAL_SX}>{data?.savedHours !== null && data?.savedHours !== undefined ? `${data.savedHours}h` : "—"}</Typography>}
-              <Typography sx={SAVED_SUB_SX}>
-                {loading ? <Skeleton variant="text" width={160} /> : savedHoursText}
-              </Typography>
-            </Paper>
+        <div className="md:col-span-1 flex flex-col gap-4">
+          <div className="border border-teal-200 rounded-[18px] p-5 bg-gradient-to-br from-teal-50 to-emerald-50">
+            <div className="text-[0.68rem] font-bold text-teal-600 uppercase tracking-[0.08em] mb-2">{t("pages.kpi.saved_hours_label")}</div>
+            {loading
+              ? <Skeleton className="h-12 w-20 rounded" />
+              : <div className="font-extrabold text-[2.8rem] text-teal-800 leading-none">{data?.savedHours != null ? `${data.savedHours}h` : "—"}</div>}
+            <div className="text-[0.72rem] text-slate-400 mt-1">
+              {loading ? <Skeleton className="h-3 w-40 rounded" /> : savedHoursText}
+            </div>
+          </div>
 
-            <Paper elevation={0} sx={COSTS_PAPER_SX}>
-              <Typography sx={COSTS_LABEL_SX}>{t("pages.kpi.costs_label")}</Typography>
-              {loading ? (
-                <>
-                  <Skeleton variant="rounded" width="100%" height={36} sx={{ mb: 1, borderRadius: "8px" }} />
-                  <Skeleton variant="rounded" width="100%" height={36} sx={{ borderRadius: "8px" }} />
-                </>
-              ) : (
-                <>
-                  <MetricRow label={t("pages.kpi.cost_per_hire")}      value={fmt(data?.costPerHire ?? null)}        sub={t("pages.kpi.cost_per_hire_sub")}      color="#7C3AED" />
-                  <MetricRow label={t("pages.kpi.cost_per_shortlist")} value={fmt(data?.costPerShortlisted ?? null)} sub={t("pages.kpi.cost_per_shortlist_sub")} color="#0891B2" last />
-                </>
-              )}
-            </Paper>
-          </Box>
-        </Grid>
+          <div className="border border-slate-200 rounded-[18px] p-5 bg-white flex-1">
+            <div className="font-bold text-[0.7rem] text-slate-400 uppercase tracking-[0.07em] mb-4">{t("pages.kpi.costs_label")}</div>
+            {loading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-9 w-full rounded-lg" />
+                <Skeleton className="h-9 w-full rounded-lg" />
+              </div>
+            ) : (
+              <>
+                <MetricRow label={t("pages.kpi.cost_per_hire")}      value={fmt(data?.costPerHire ?? null)}        sub={t("pages.kpi.cost_per_hire_sub")}      color="#7C3AED" />
+                <MetricRow label={t("pages.kpi.cost_per_shortlist")} value={fmt(data?.costPerShortlisted ?? null)} sub={t("pages.kpi.cost_per_shortlist_sub")} color="#0891B2" last />
+              </>
+            )}
+          </div>
+        </div>
 
-        {/* TTH trend chart */}
-        <Grid size={{ xs: 12, md: 8 }}>
+        <div className="md:col-span-3">
           <KpiCard title={t("pages.kpi.chart_title")} subtitle={t("pages.kpi.chart_subtitle")}>
             {loading ? (
-              <Skeleton variant="rounded" width="100%" height={230} sx={{ borderRadius: "10px" }} />
+              <Skeleton className="w-full h-[230px] rounded-[10px]" />
             ) : isNoData ? (
-              <Box sx={EMPTY_BOX_SX}>
-                <Typography sx={EMPTY_TXT_SX}>No data yet</Typography>
-              </Box>
+              <div className="h-[230px] flex items-center justify-center">
+                <span className="text-[0.82rem] text-slate-400">No data yet</span>
+              </div>
             ) : (
               <ResponsiveContainer width="100%" height={230}>
                 <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
                   <defs>
-                    <linearGradient id="tthGrad7" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id="roiTthGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%"  stopColor={T}        stopOpacity={0.18} />
-                      <stop offset="95%" stopColor={T}        stopOpacity={0}    />
+                      <stop offset="95%" stopColor={T}        stopOpacity={0} />
                     </linearGradient>
-                    <linearGradient id="baseGrad7" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id="roiBaseGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%"  stopColor="#94A3B8" stopOpacity={0.12} />
-                      <stop offset="95%" stopColor="#94A3B8" stopOpacity={0}    />
+                      <stop offset="95%" stopColor="#94A3B8" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
                   <XAxis dataKey="month" tick={{ fontFamily: "Poppins", fontSize: 11, fill: GRAY }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontFamily: "Poppins", fontSize: 11, fill: GRAY }} axisLine={false} tickLine={false} domain={[minY, maxY]} unit="d" />
-                  <RechartsTooltip {...ChartTooltip} formatter={(v: any) => [`${v}d`, ""]} />
-                  <Area type="monotone" dataKey="baseline" stroke="#94A3B8" fill="url(#baseGrad7)" strokeWidth={1.5} strokeDasharray="5 4" name={legendBaseline} dot={false} connectNulls />
-                  <Area type="monotone" dataKey="tth" stroke={T} fill="url(#tthGrad7)" strokeWidth={2.5} name={legendTalentai} dot={CHART_DOT} activeDot={{ r: 5 }} connectNulls />
+                  <RechartsTooltip {...ChartTooltip} formatter={fmtDay} />
+                  <Area type="monotone" dataKey="baseline" stroke="#94A3B8" fill="url(#roiBaseGrad)" strokeWidth={1.5} strokeDasharray="5 4" name={legendBaseline} dot={false} connectNulls />
+                  <Area type="monotone" dataKey="tth"      stroke={T}        fill="url(#roiTthGrad)"  strokeWidth={2.5} name={legendTalentai} dot={{ r: 4, fill: "#fff", stroke: T, strokeWidth: 2 }} activeDot={{ r: 5 }} connectNulls />
                 </AreaChart>
               </ResponsiveContainer>
             )}
-            <Box sx={LEGEND_ROW_SX}>
-              <Box sx={LEGEND_ITEM_SX}>
-                <Box sx={LEGEND_LINE_SX} />
-                <Typography sx={LEGEND_TXT_SX}>{legendTalentai}</Typography>
-              </Box>
-              <Box sx={LEGEND_ITEM_SX}>
-                <Box sx={LEGEND_DASH_SX} />
-                <Typography sx={LEGEND_TXT_SX}>{legendBaseline}</Typography>
-              </Box>
-            </Box>
+            <div className="flex gap-6 mt-4">
+              <div className="flex items-center gap-2">
+                <div className="w-[18px] h-[2.5px] rounded bg-teal-600" />
+                <span className="text-[0.72rem] text-slate-500 font-medium">{legendTalentai}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-[18px] border-t border-dashed border-slate-400" />
+                <span className="text-[0.72rem] text-slate-500 font-medium">{legendBaseline}</span>
+              </div>
+            </div>
           </KpiCard>
-        </Grid>
-      </Grid>
+        </div>
+      </div>
     </>
   );
 });
 KpiRoiSavings.displayName = "KpiRoiSavings";
-
 export default KpiRoiSavings;

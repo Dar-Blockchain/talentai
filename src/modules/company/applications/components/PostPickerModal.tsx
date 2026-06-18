@@ -1,34 +1,22 @@
 import React, { memo, useCallback } from "react";
-import {
-  Dialog, DialogTitle, DialogContent, Box, Typography,
-  IconButton, InputBase, Divider, Pagination,
-} from "@mui/material";
-import SearchOutlined from "@mui/icons-material/SearchOutlined";
-import WorkOutlineOutlined from "@mui/icons-material/WorkOutline";
-import LayersOutlined from "@mui/icons-material/LayersOutlined";
-import CloseOutlined from "@mui/icons-material/CloseOutlined";
-import CheckOutlined from "@mui/icons-material/CheckOutlined";
+import SearchOutlined        from "@mui/icons-material/SearchOutlined";
+import WorkOutlineOutlined   from "@mui/icons-material/WorkOutline";
+import LayersOutlined        from "@mui/icons-material/LayersOutlined";
+import CloseOutlined         from "@mui/icons-material/CloseOutlined";
+import CheckOutlined         from "@mui/icons-material/CheckOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import LoadingState from "@/components/ui/LoadingState";
-import EmptyState from "@/components/ui/EmptyState";
+import EmptyState   from "@/components/ui/EmptyState";
 import { usePostPicker } from "../hooks/usePostPicker";
 import { PostPickerItem } from "../queries";
 import { TEAL } from "./constants";
-
-// ─── Static sx constants ──────────────────────────────────────────────────────
-
-const PAPER_SX = { borderRadius: "16px", overflow: "hidden", boxShadow: "0 24px 64px rgba(0,0,0,0.14)" } as const;
-const TITLE_ROW_SX = { px: 2.5, pt: 2.5, pb: 1.5, display: "flex", alignItems: "center", justifyContent: "space-between" } as const;
-const ICON_BOX_SX = { width: 32, height: 32, borderRadius: "8px", bgcolor: `${TEAL}12`, display: "flex", alignItems: "center", justifyContent: "center" } as const;
-const HEADER_BOX_SX = { display: "flex", alignItems: "center", gap: 1.25 } as const;
-const CLOSE_BTN_SX = { color: "#6B7280", "&:hover": { bgcolor: "#F3F4F6" } } as const;
-const CONTENT_SX = { px: 2.5, pb: 2.5, pt: 0 } as const;
-const SEARCH_BOX_SX = { display: "flex", alignItems: "center", bgcolor: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "8px", px: 1.25, height: 36, mb: 1.5, "&:focus-within": { borderColor: TEAL }, transition: "border-color 0.15s" } as const;
-const CLEAR_BTN_SX = { p: 0.25, color: "#9CA3AF" } as const;
-const DIVIDER_SX = { mb: 1, borderColor: "#F3F4F6" } as const;
-const LIST_BOX_SX = { display: "flex", flexDirection: "column", gap: 0.5 } as const;
-const PAGINATION_BOX_SX = { display: "flex", justifyContent: "center", mt: 1.5 } as const;
-const PAGINATION_SX = { "& .MuiPaginationItem-root": { fontWeight: 500, fontSize: "12px" }, "& .Mui-selected": { bgcolor: `${TEAL}18`, color: TEAL, fontWeight: 700 } } as const;
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/shared/ui/shadcn/dialog";
+import { cn } from "@/lib/utils";
 
 // ─── PostRow ──────────────────────────────────────────────────────────────────
 
@@ -45,42 +33,91 @@ interface PostRowProps {
 const PostRow = memo<PostRowProps>(({ id, title, selectedId, icon, empType, createdAt, onSelect }) => {
   const isActive = id === selectedId || (!id && !selectedId);
   return (
-    <Box
+    <button
       onClick={onSelect}
-      sx={{
-        display: "flex", alignItems: "center", gap: 1.25, px: 1.5, py: 1, mb: 0.5,
-        borderRadius: "10px", cursor: "pointer", border: "1px solid",
-        borderColor: isActive ? TEAL : "transparent",
-        bgcolor: isActive ? `${TEAL}0D` : "transparent",
-        "&:hover": { bgcolor: isActive ? `${TEAL}14` : "#F9FAFB" },
-        transition: "all 0.12s",
-      }}
+      className={cn(
+        "w-full flex items-center gap-3 px-3 py-2.5 mb-1 rounded-[10px] border transition-all duration-150 text-left",
+        isActive
+          ? "border-teal-500 bg-teal-50"
+          : "border-transparent bg-transparent hover:bg-slate-50",
+      )}
     >
-      <Box sx={{ width: 34, height: 34, borderRadius: "8px", bgcolor: isActive ? `${TEAL}18` : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        {icon ?? <WorkOutlineOutlined sx={{ fontSize: 16, color: isActive ? TEAL : "#9CA3AF" }} />}
-      </Box>
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography noWrap sx={{ fontSize: "13px", fontWeight: isActive ? 700 : 500, color: isActive ? TEAL : "#111827" }}>
+      <div
+        className="w-[34px] h-[34px] rounded-lg flex items-center justify-center shrink-0"
+        style={{ backgroundColor: isActive ? `${TEAL}18` : "#F3F4F6" }}
+      >
+        {icon ?? <WorkOutlineOutlined style={{ fontSize: 16, color: isActive ? TEAL : "#9CA3AF" }} />}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div
+          className="text-[13px] truncate"
+          style={{ fontWeight: isActive ? 700 : 500, color: isActive ? TEAL : "#111827" }}
+        >
           {title}
-        </Typography>
+        </div>
         {(empType || createdAt) && (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.15, flexWrap: "wrap" }}>
-            {empType && <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>{empType}</Typography>}
-            {empType && createdAt && <Typography sx={{ fontSize: "10px", color: "#D1D5DB" }}>·</Typography>}
+          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+            {empType && <span className="text-[10px] text-slate-400">{empType}</span>}
+            {empType && createdAt && <span className="text-[10px] text-slate-300">·</span>}
             {createdAt && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.35 }}>
-                <CalendarTodayOutlined sx={{ fontSize: 10, color: "#9CA3AF" }} />
-                <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>{createdAt}</Typography>
-              </Box>
+              <div className="flex items-center gap-0.5">
+                <CalendarTodayOutlined style={{ fontSize: 10, color: "#9CA3AF" }} />
+                <span className="text-[10px] text-slate-400">{createdAt}</span>
+              </div>
             )}
-          </Box>
+          </div>
         )}
-      </Box>
-      {isActive && <CheckOutlined sx={{ fontSize: 16, color: TEAL, flexShrink: 0 }} />}
-    </Box>
+      </div>
+      {isActive && <CheckOutlined style={{ fontSize: 16, color: TEAL, flexShrink: 0 }} />}
+    </button>
   );
 });
 PostRow.displayName = "PostRow";
+
+// ─── Pagination ───────────────────────────────────────────────────────────────
+
+interface PaginationProps {
+  page: number;
+  totalPages: number;
+  onPageChange: (p: number) => void;
+}
+
+const SimplePagination = memo<PaginationProps>(({ page, totalPages, onPageChange }) => {
+  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+  return (
+    <div className="flex items-center justify-center gap-1 mt-4">
+      <button
+        disabled={page === 1}
+        onClick={() => onPageChange(page - 1)}
+        className="w-7 h-7 flex items-center justify-center rounded-md text-[13px] text-slate-500 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+      >
+        ‹
+      </button>
+      {pages.map((p) => (
+        <button
+          key={p}
+          onClick={() => onPageChange(p)}
+          className="w-7 h-7 flex items-center justify-center rounded-md text-[12px] font-medium transition-colors"
+          style={{
+            backgroundColor: p === page ? `${TEAL}18` : "transparent",
+            color:           p === page ? TEAL     : "#374151",
+            fontWeight:      p === page ? 700      : 500,
+          }}
+        >
+          {p}
+        </button>
+      ))}
+      <button
+        disabled={page === totalPages}
+        onClick={() => onPageChange(page + 1)}
+        className="w-7 h-7 flex items-center justify-center rounded-md text-[13px] text-slate-500 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+      >
+        ›
+      </button>
+    </div>
+  );
+});
+SimplePagination.displayName = "SimplePagination";
 
 // ─── PostPickerModal ──────────────────────────────────────────────────────────
 
@@ -99,101 +136,90 @@ const PostPickerModal = memo<Props>(({ open, selectedId, onSelect, onClose }) =>
     [setSearchInput],
   );
   const handleClearSearch = useCallback(() => setSearchInput(""), [setSearchInput]);
-  const handlePageChange  = useCallback((_: React.ChangeEvent<unknown>, v: number) => setPage(v), [setPage]);
   const handleSelectAll   = useCallback(() => onSelect("", ""), [onSelect]);
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="xs"
-      fullWidth
-      slotProps={{ paper: { sx: PAPER_SX } }}
-    >
-      <DialogTitle sx={TITLE_ROW_SX}>
-        <Box sx={HEADER_BOX_SX}>
-          <Box sx={ICON_BOX_SX}>
-            <WorkOutlineOutlined sx={{ fontSize: 16, color: TEAL }} />
-          </Box>
-          <Box>
-            <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827", lineHeight: 1.2 }}>Filter by Job</Typography>
-            <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>Select a job to filter applications</Typography>
-          </Box>
-        </Box>
-        <IconButton size="small" onClick={onClose} sx={CLOSE_BTN_SX}>
-          <CloseOutlined sx={{ fontSize: 18 }} />
-        </IconButton>
-      </DialogTitle>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent showCloseButton={false} className="max-w-xs w-full rounded-2xl overflow-hidden shadow-[0_24px_64px_rgba(0,0,0,0.14)] p-0">
+        {/* Header */}
+        <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${TEAL}12` }}>
+              <WorkOutlineOutlined style={{ fontSize: 16, color: TEAL }} />
+            </div>
+            <div>
+              <div className="text-[15px] font-bold text-slate-900 leading-snug">Filter by Job</div>
+              <div className="text-[11px] text-slate-400">Select a job to filter applications</div>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
+          >
+            <CloseOutlined style={{ fontSize: 18 }} />
+          </button>
+        </div>
 
-      <DialogContent sx={CONTENT_SX}>
-        {/* Search */}
-        <Box sx={SEARCH_BOX_SX}>
-          <SearchOutlined sx={{ fontSize: 15, color: "#9CA3AF", mr: 0.75 }} />
-          <InputBase
-            placeholder="Search jobs…"
-            value={searchInput}
-            onChange={handleSearchChange}
-            sx={{ fontSize: "13px", flex: 1 }}
-            autoFocus
-          />
-          {searchInput && (
-            <IconButton size="small" onClick={handleClearSearch} sx={CLEAR_BTN_SX}>
-              <CloseOutlined sx={{ fontSize: 13 }} />
-            </IconButton>
-          )}
-        </Box>
-
-        {/* All jobs option */}
-        <PostRow
-          id=""
-          title="All Jobs"
-          selectedId={selectedId}
-          icon={<LayersOutlined sx={{ fontSize: 16, color: !selectedId ? TEAL : "#9CA3AF" }} />}
-          onSelect={handleSelectAll}
-        />
-
-        <Divider sx={DIVIDER_SX} />
-
-        {isLoading ? (
-          <LoadingState message="" color={TEAL} />
-        ) : posts.length === 0 ? (
-          <EmptyState
-            icon={<WorkOutlineOutlined />}
-            title={searchInput ? "No matches" : "No jobs posted yet"}
-            minHeight={120}
-          />
-        ) : (
-          <Box sx={LIST_BOX_SX}>
-            {(posts as PostPickerItem[]).map((p) => {
-              const id        = p._id ?? p.id ?? "";
-              const title     = p.jobDetails?.title ?? p.title ?? "Untitled";
-              const empType   = p.jobDetails?.employmentType ?? "";
-              const createdAt = p.createdAt
-                ? new Date(p.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
-                : undefined;
-              return (
-                <PostRow
-                  key={id} id={id} title={title} empType={empType}
-                  createdAt={createdAt} selectedId={selectedId}
-                  onSelect={() => onSelect(id, title)}
-                />
-              );
-            })}
-          </Box>
-        )}
-
-        {totalPages > 1 && (
-          <Box sx={PAGINATION_BOX_SX}>
-            <Pagination
-              count={totalPages}
-              page={page}
-              onChange={handlePageChange}
-              size="small"
-              shape="rounded"
-              sx={PAGINATION_SX}
+        {/* Body */}
+        <div className="px-5 pb-5">
+          {/* Search */}
+          <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg px-3 h-9 mb-3 transition-colors focus-within:border-teal-500">
+            <SearchOutlined style={{ fontSize: 15, color: "#9CA3AF" }} />
+            <input
+              className="bg-transparent ml-2 text-[13px] flex-1 outline-none placeholder:text-slate-400"
+              placeholder="Search jobs…"
+              value={searchInput}
+              onChange={handleSearchChange}
+              autoFocus
             />
-          </Box>
-        )}
+            {searchInput && (
+              <button onClick={handleClearSearch} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <CloseOutlined style={{ fontSize: 13 }} />
+              </button>
+            )}
+          </div>
+
+          {/* All jobs option */}
+          <PostRow
+            id="" title="All Jobs" selectedId={selectedId}
+            icon={<LayersOutlined style={{ fontSize: 16, color: !selectedId ? TEAL : "#9CA3AF" }} />}
+            onSelect={handleSelectAll}
+          />
+
+          <div className="border-t border-slate-100 mb-2" />
+
+          {isLoading ? (
+            <LoadingState message="" color={TEAL} />
+          ) : posts.length === 0 ? (
+            <EmptyState
+              icon={<WorkOutlineOutlined />}
+              title={searchInput ? "No matches" : "No jobs posted yet"}
+              minHeight={120}
+            />
+          ) : (
+            <div className="flex flex-col gap-0.5">
+              {(posts as PostPickerItem[]).map((p) => {
+                const id        = p._id ?? p.id ?? "";
+                const title     = p.jobDetails?.title ?? p.title ?? "Untitled";
+                const empType   = p.jobDetails?.employmentType ?? "";
+                const createdAt = p.createdAt
+                  ? new Date(p.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+                  : undefined;
+                return (
+                  <PostRow
+                    key={id} id={id} title={title} empType={empType}
+                    createdAt={createdAt} selectedId={selectedId}
+                    onSelect={() => onSelect(id, title)}
+                  />
+                );
+              })}
+            </div>
+          )}
+
+          {totalPages > 1 && (
+            <SimplePagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );

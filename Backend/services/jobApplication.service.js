@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const fs = require("fs");
 const path = require("path");
 const { PDFParse } = require("pdf-parse");
@@ -780,67 +781,7 @@ module.exports.getApplicationsSummaryByCompany = async (companyId, filters = {},
 // Definition: Count candidates WHERE matchScore >= SHORTLIST_THRESHOLD AND recruiterDecision IS NULL
 module.exports.getPendingShortlistsKPI = async (companyId, postId = null, dateFrom = null) => {
   try {
-    const SHORTLIST_THRESHOLD = 60; // Score minimum for shortlist consideration
-
-    console.log("\n" + "═".repeat(80));
-    console.log("📊 [KPI] PENDING SHORTLISTS - CALCULATING");
-    console.log("═".repeat(80));
-
-    const baseQuery = {
-      company: companyId,
-      matchScore: { $gte: SHORTLIST_THRESHOLD },
-      recruiterDecision: null,  // Pending decision
-      isWithdrawn: false,
-      isArchived: false,
-    };
-
-    if (dateFrom) baseQuery.appliedAt = { $gte: new Date(dateFrom) };
-
-    // Add post filter if specified
-    if (postId) {
-      baseQuery.post = postId;
-      console.log(`\n🔍 KPI Scope: Company ${companyId}, Post ${postId}`);
-    } else {
-      console.log(`\n🔍 KPI Scope: Company ${companyId}, All Posts`);
-    }
-
-    console.log(`📈 Criteria:`);
-    console.log(`   • Match Score: >= ${SHORTLIST_THRESHOLD}`);
-    console.log(`   • Recruiter Decision: NULL (Pending)`);
-    console.log(`   • Status: Active (not withdrawn/archived)`);
-
-    // Count matching applications
-    const count = await JobApplication.countDocuments(baseQuery);
-    
-    console.log(`\n✅ Result:`);
-    console.log(`   Pending Shortlist Count: ${count}`);
-    console.log("═".repeat(80) + "\n");
-
-    return {
-      pendingShortlistsCount: count,
-      threshold: SHORTLIST_THRESHOLD,
-      filters: {
-        company: companyId,
-        post: postId || "all",
-        minMatchScore: SHORTLIST_THRESHOLD,
-        recruiterDecision: "null",
-        isActive: true,
-      },
-    };
-  } catch (error) {
-    console.error(`\n❌ [KPI ERROR] Failed to calculate pending shortlists:`, error.message);
-    error.status = error.status || 500;
-    throw error;
-  }
-};
-
-// ========== KPI - GET PENDING SHORTLIST DETAILS ==========
-// Get detailed list of pending shortlist candidates
-module.exports.getPendingShortlistDetails = async (companyId, postId = null, page = 1, limit = 20) => {
-  try {
     const SHORTLIST_THRESHOLD = 60;
-    
-    console.log(`\n📋 Fetching pending shortlist details...`);
 
     const baseQuery = {
       company: companyId,
@@ -850,44 +791,52 @@ module.exports.getPendingShortlistDetails = async (companyId, postId = null, pag
       isArchived: false,
     };
 
-    if (postId) {
-      baseQuery.post = postId;
-    }
+    if (postId)   baseQuery.post      = postId;
+    if (dateFrom) baseQuery.appliedAt = { $gte: new Date(dateFrom) };
 
-    const skip = (page - 1) * limit;
+    const count = await JobApplication.countDocuments(baseQuery);
+
+    return { pendingShortlistsCount: count, threshold: SHORTLIST_THRESHOLD };
+  } catch (error) {
+    error.status = error.status || 500;
+    throw error;
+  }
+};
+
+// ========== KPI - GET PENDING SHORTLIST DETAILS ==========
+module.exports.getPendingShortlistDetails = async (companyId, postId = null, page = 1, limit = 20) => {
+  try {
+    const SHORTLIST_THRESHOLD = 60;
+
+    const baseQuery = {
+      company: companyId,
+      matchScore: { $gte: SHORTLIST_THRESHOLD },
+      recruiterDecision: null,
+      isWithdrawn: false,
+      isArchived: false,
+    };
+
+    if (postId) baseQuery.post = postId;
+
+    const skip       = (page - 1) * limit;
     const totalCount = await JobApplication.countDocuments(baseQuery);
     const totalPages = Math.ceil(totalCount / limit);
 
     const applications = await JobApplication.find(baseQuery)
       .select("_id profile post matchScore matchReasoning appliedAt viewedAt shortlistedAt companyNotes")
-      .populate({
-        path: "profile",
-        select: "firstName lastName email location skills yearsOfExperience",
-      })
-      .populate({
-        path: "post",
-        select: "jobDetails title",
-      })
+      .populate({ path: "profile", select: "firstName lastName email location skills yearsOfExperience" })
+      .populate({ path: "post",    select: "jobDetails title" })
       .sort({ matchScore: -1, appliedAt: -1 })
       .skip(skip)
-      .limit(limit);
-
-    console.log(`   ✓ Found ${totalCount} pending shortlists`);
+      .limit(limit)
+      .lean();
 
     return {
       data: applications,
-      pagination: {
-        currentPage: page,
-        totalPages,
-        totalCount,
-        limit,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
-      },
+      pagination: { currentPage: page, totalPages, totalCount, limit, hasNextPage: page < totalPages, hasPrevPage: page > 1 },
       threshold: SHORTLIST_THRESHOLD,
     };
   } catch (error) {
-    console.error(`\n❌ Error fetching pending shortlist details:`, error.message);
     error.status = error.status || 500;
     throw error;
   }
@@ -923,8 +872,6 @@ module.exports.getNoshowsKPI = async (companyId, postId = null, dateFrom = null)
 // Top 10 sourced from JobApplication (completed/shortlisted), score joined from PostInterviewAssessment
 module.exports.getSourcingKPI = async (companyId, postId = null, dateFrom = null) => {
   try {
-    const mongoose = require('mongoose');
-
     const now = new Date();
     const d30 = new Date(now - 30 * 86400000);
     const d60 = new Date(now - 60 * 86400000);
@@ -1176,11 +1123,19 @@ module.exports.getRoiKPI = async (companyId) => {
 
     const base = { company: companyId, isArchived: false };
 
-    // ── Counts ──────────────────────────────────────────────────────────────────
-    const [completed, shortlisted] = await Promise.all([
-      JobApplication.countDocuments({ ...base, status: 'interview_completed' }),
-      JobApplication.countDocuments({ ...base, recruiterDecision: 'shortlisted' }),
+    // ── Counts (single aggregation pass) ────────────────────────────────────────
+    const [counts] = await JobApplication.aggregate([
+      { $match: base },
+      {
+        $group: {
+          _id:         null,
+          completed:   { $sum: { $cond: [{ $eq: ["$status", "interview_completed"] }, 1, 0] } },
+          shortlisted: { $sum: { $cond: [{ $eq: ["$recruiterDecision", "shortlisted"] }, 1, 0] } },
+        },
+      },
     ]);
+    const completed  = counts?.completed  ?? 0;
+    const shortlisted = counts?.shortlisted ?? 0;
 
     // Hours saved: each completed interview saves 30 min of manual screening
     const savedHours = Math.round(completed * 0.5);
@@ -1263,18 +1218,26 @@ module.exports.getRoiKPI = async (companyId) => {
 // Applied → Invited → Completed → Shortlisted
 module.exports.getFunnelKPI = async (companyId, postId = null, dateFrom = null) => {
   try {
-    const base = { company: companyId, isArchived: false };
-    if (postId) base.post = postId;
-    if (dateFrom) base.appliedAt = { $gte: new Date(dateFrom) };
+    const match = { company: companyId, isArchived: false };
+    if (postId)   match.post      = postId;
+    if (dateFrom) match.appliedAt = { $gte: new Date(dateFrom) };
 
-    const [applied, invited, completed, shortlisted] = await Promise.all([
-      JobApplication.countDocuments({ ...base }),
-      JobApplication.countDocuments({ ...base, firstInvitationSentAt: { $ne: null } }),
-      JobApplication.countDocuments({ ...base, status: 'interview_completed' }),
-      JobApplication.countDocuments({ ...base, recruiterDecision: 'shortlisted' }),
+    const [result] = await JobApplication.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id:         null,
+          applied:     { $sum: 1 },
+          invited:     { $sum: { $cond: [{ $ne: ["$firstInvitationSentAt", null] }, 1, 0] } },
+          completed:   { $sum: { $cond: [{ $eq: ["$status", "interview_completed"] }, 1, 0] } },
+          shortlisted: { $sum: { $cond: [{ $eq: ["$recruiterDecision", "shortlisted"] }, 1, 0] } },
+        },
+      },
     ]);
 
-    return { applied, invited, completed, shortlisted };
+    return result
+      ? { applied: result.applied, invited: result.invited, completed: result.completed, shortlisted: result.shortlisted }
+      : { applied: 0, invited: 0, completed: 0, shortlisted: 0 };
   } catch (error) {
     error.status = error.status || 500;
     throw error;
@@ -1296,19 +1259,11 @@ module.exports.updateRecruiterDecision = async (applicationId, decision, rejecti
       throw error;
     }
 
-    console.log(`\n📋 [RECRUITER DECISION] Updating decision for application: ${applicationId}`);
-    console.log(`   Decision: ${decision}`);
-    if (rejectionReason) console.log(`   Reason: ${rejectionReason}`);
-
     const updateData = {
       recruiterDecision: decision,
       recruiterDecisionAt: new Date(),
+      ...(decision === "rejected" && rejectionReason ? { rejectionReason } : {}),
     };
-
-    // Add rejection reason if provided
-    if (decision === "rejected" && rejectionReason) {
-      updateData.rejectionReason = rejectionReason;
-    }
 
     const application = await JobApplication.findByIdAndUpdate(
       applicationId,
@@ -1325,10 +1280,6 @@ module.exports.updateRecruiterDecision = async (applicationId, decision, rejecti
       error.status = 404;
       throw error;
     }
-
-    console.log(`✅ Decision updated successfully`);
-    console.log(`   Candidate: ${application.profile?.firstName} ${application.profile?.lastName}`);
-    console.log(`   Position: ${application.post?.jobDetails?.title || "N/A"}`);
 
     return application;
   } catch (error) {
