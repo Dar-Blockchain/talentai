@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from "react";
+import React, { memo, useEffect, useMemo, useRef } from "react";
 import { Box } from "@mui/material";
 import { useDashboard } from "@/modules/company/dashboard/hooks/useDashboard";
 import KpiStatCards         from "@/modules/company/dashboard/components/KpiStatCards";
@@ -9,12 +9,23 @@ import KpiRecruitmentFunnel from "@/modules/company/dashboard/components/KpiRecr
 import KpiHiringVelocity    from "@/modules/company/dashboard/components/KpiHiringVelocity";
 import KpiCandidateQuality  from "@/modules/company/dashboard/components/KpiCandidateQuality";
 import KpiRoiSavings        from "@/modules/company/dashboard/components/KpiRoiSavings";
-import { DashboardLayout } from "@/modules/shared/layouts";
+import { getDashboardLayout } from "@/modules/shared/layouts";
+import type { NextPageWithLayout } from "@/pages/_app";
 
 const CONTAINER_SX = { maxWidth: 1440, mx: "auto" } as const;
 const EMPTY_POSTS:  never[] = [];
 
-const CompanyDashboard = memo(() => {
+const CompanyDashboardContent = memo(() => {
+
+  const pageId = useRef(Math.random().toString(36).slice(2, 8));
+
+useEffect(() => {
+  console.log(`DASHBOARD PAGE MOUNT ${pageId.current}`);
+
+  return () => {
+    console.log(`DASHBOARD PAGE UNMOUNT ${pageId.current}`);
+  };
+}, []);
   const {
     postId, activeDays,
     statusPage, handlePostChange, handlePeriodChange, handleStatusPageChange,
@@ -27,7 +38,6 @@ const CompanyDashboard = memo(() => {
   );
 
   return (
-    <DashboardLayout>
       <Box sx={CONTAINER_SX}>
         <KpiStatCards />
         <KpiFiltersBar
@@ -64,9 +74,11 @@ const CompanyDashboard = memo(() => {
           loading={roiQ.isLoading}
         />
       </Box>
-    </DashboardLayout>
   );
 });
-CompanyDashboard.displayName = "CompanyDashboard";
+CompanyDashboardContent.displayName = "CompanyDashboardContent";
+
+const CompanyDashboard: NextPageWithLayout = () => <CompanyDashboardContent />;
+CompanyDashboard.getLayout = getDashboardLayout;
 
 export default CompanyDashboard;

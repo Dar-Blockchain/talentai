@@ -2,11 +2,13 @@ import "@/styles/globals.css";
 import "@/i18n/config"; // initialise i18next before anything renders
 import "@/lib/dayjs";   // extend dayjs plugins globally
 import type { AppProps } from "next/app";
+import type { NextPage } from "next";
+import type { ReactElement, ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { Provider, useSelector, useDispatch } from "react-redux";
 import { store, persistor, RootState } from "../store/store";
 import { PersistGate } from "redux-persist/integration/react";
-import { ThemeProvider as MuiThemeProvider, createTheme, CssBaseline, Backdrop, Box, Typography, CircularProgress } from "@mui/material";
+import { ThemeProvider as MuiThemeProvider, createTheme, CssBaseline } from "@mui/material";
 import { useEffect, useMemo } from "react";
 import { useTheme } from "next-themes";
 import { ThemeProvider } from "@/providers/ThemeProvider";
@@ -25,6 +27,7 @@ import { setSessionExpiredHandler } from "@/utils/storeEmitter";
 import { useTranslation } from "react-i18next";
 import { ReactQueryProvider } from "@/providers/ReactQueryProvider";
 import { normalizeLangCode, MANUAL_LANG_KEY } from "@/hooks/useLanguage";
+import LogoutOverlay from "@/modules/shared/ui/LogoutOverlay";
 
 // ─── Authenticated-only bridges (dynamic) ────────────────────────────────────
 // These components import Socket.IO + chat-specific Redux, none of which belongs
@@ -111,10 +114,10 @@ function DbLanguageSync() {
 
 // ─── Auth orchestration ───────────────────────────────────────────────────────
 function AuthWrapper({ children }: { children: React.ReactNode }) {
-  // Granular selector: only re-renders when the user identity object changes.
+  // Granular selector: only re-renders when the user id changes.
   // Previously selected the whole connectedUser slice — loading/profile/planLimits
   // updates all caused AuthWrapper to re-render and re-register event listeners.
-  const user = useSelector((state: RootState) => state.user.connectedUser.user);
+  const userId = useSelector((state: RootState) => state.user.connectedUser.user?._id);
 
   // Wait for redux-persist to finish reading from localStorage before deciding
   // whether a profile fetch is needed. Without this guard, on a cold reload we
@@ -124,33 +127,43 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
 
   const dispatch = useDispatch<typeof store.dispatch>();
   const router   = useRouter();
-  const { t }    = useTranslation("auth");
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
-
-  const userId = user?._id;
 
   // Split context subscriptions — AuthWrapper needs both halves but they're
   // now two separate hook calls so each subscription is minimal.
   const { isAuthenticated, isLoggingOut } = useAuthState();
-  const { logout, clearAuth }             = useAuthActions();
+  const { logout, clearAuth, finishLoggingOut } = useAuthActions();
+
+  // Dismiss the logout overlay only once the post-logout navigation has
+  // actually landed, instead of a fixed timer. A fixed timer (the old
+  // approach) hides the overlay before a slow/throttled connection finishes
+  // the route change, exposing the already-cleared dashboard underneath for
+  // a moment before the new page finally takes over.
+  useEffect(() => {
+    if (!isLoggingOut) return;
+    const onSettled = () => finishLoggingOut();
+    router.events.on("routeChangeComplete", onSettled);
+    router.events.on("routeChangeError", onSettled);
+    return () => {
+      router.events.off("routeChangeComplete", onSettled);
+      router.events.off("routeChangeError", onSettled);
+    };
+  }, [isLoggingOut, finishLoggingOut]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Restore user profile after a hard reload. Only runs after rehydration so
   // that a persisted user (from localStorage) skips the network round-trip.
   useEffect(() => {
     if (!isRehydrated) return;
-    if (user) return;
+    if (userId) return;
     if (!getToken()) return;
     dispatch(getMyProfile());
   }, [isRehydrated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Force logout when middleware detected an invalid / role-less token.
+  // persistor.purge() now happens inside logout() itself, so this just
+  // waits for it then redirects — no need to duplicate the purge here.
   useEffect(() => {
     if (router.query.force_logout !== "1") return;
-    logout().finally(() => {
-      persistor.purge();
-      router.replace("/signin");
-    });
+    logout().finally(() => router.replace("/signin"));
   }, [router.query.force_logout]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Keep auth state in sync across browser tabs.
@@ -195,30 +208,35 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
       )}
       <DbLanguageSync />
       {children}
-      <Backdrop
-        open={isLoggingOut}
-        sx={{
-          zIndex: 9999,
-          flexDirection: "column",
-          gap: 2.5,
-          bgcolor: isDark ? "#0B1120" : "#FDFEFE",
-        }}
-      >
-        <CircularProgress size={36} thickness={4} sx={{ color: "#0D9488" }} />
-        <Box sx={{ textAlign: "center" }}>
-          <Typography sx={{ fontWeight: 700, fontSize: "15px", color: isDark ? "#F9FAFB" : "#111827" }}>
-            {t("logout.signing_out")}
-          </Typography>
-          <Typography sx={{ fontSize: "12px", color: "#6B7280", mt: 0.5 }}>
-            {t("logout.please_wait")}
-          </Typography>
-        </Box>
-      </Backdrop>
+      <LogoutOverlay open={isLoggingOut} />
     </NotificationProvider>
   );
 }
 
-export default function App({ Component, pageProps }: AppProps) {
+// ─── Persistent-layout support (Next.js Pages Router pattern) ───────────────
+// A page opts into a persistent shell by assigning `Page.getLayout`. Because
+// `getLayout` is a stable function reference (e.g. `getDashboardLayout`,
+// shared across every dashboard page), the element it returns has the same
+// component type + tree position on every navigation, so React reconciles it
+// in place instead of unmounting/remounting it — only the page content
+// (`children`) swaps out. Pages without `getLayout` render unwrapped, exactly
+// as before.
+export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
+  getLayout?: (page: ReactElement) => ReactNode;
+};
+
+type AppPropsWithLayout = AppProps & {
+  Component: NextPageWithLayout;
+};
+
+// Stable reference so pages without `getLayout` don't get a fresh fallback
+// function on every render — that broke the "same component type" check
+// React relies on to reconcile the persistent layout in place.
+const defaultGetLayout = (page: ReactElement) => page;
+
+export default function App({ Component, pageProps }: AppPropsWithLayout) {
+  const getLayout = Component.getLayout ?? defaultGetLayout;
+
   return (
     <Provider store={store}>
       {/*
@@ -244,7 +262,7 @@ export default function App({ Component, pageProps }: AppProps) {
             <ToastProvider>
               <MuiToastWrapper />
               <AuthWrapper>
-                <Component {...pageProps} />
+                {getLayout(<Component {...pageProps} />)}
                 <ScrollToTop />
               </AuthWrapper>
             </ToastProvider>
@@ -258,23 +276,25 @@ export default function App({ Component, pageProps }: AppProps) {
   );
 }
 
-// MuiToastWrapper only calls clearAuth — it never needs to know about
+// MuiToastWrapper only calls logout — it never needs to know about
 // isAuthenticated. Using useAuthActions() means it won't re-render on login.
 function MuiToastWrapper() {
   const { open, toastOptions, closeToast, showToast } = useToast();
-  const { clearAuth } = useAuthActions();
+  const { logout } = useAuthActions();
 
   useEffect(() => {
     setToastHandler(showToast);
   }, [showToast]);
 
   useEffect(() => {
+    // Route session-expiry through the same teardown as a manual logout
+    // (cookie + redux + localStorage + persistor + query cache) instead of
+    // a hand-rolled subset — this previously skipped clearTokens() and
+    // queryClient.clear(), leaving a dead cookie and stale cached data behind.
     setSessionExpiredHandler(() => {
-      clearAuth();
-      store.dispatch(clearConnectedUser());
-      persistor.purge();
+      logout();
     });
-  }, [clearAuth]);
+  }, [logout]);
 
   return (
     <MuiToast

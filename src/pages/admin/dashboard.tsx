@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import { useRouter } from 'next/router';
 import { AppDispatch } from '@/store/store';
-import { useAuthContext } from '@/modules/auth/shared/context/AuthContext';
+import { useLogout } from '@/modules/auth/shared/hooks';
 import {
   Box,
   Typography,
@@ -64,7 +64,7 @@ const DashboardAdmin = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
-  const { logout } = useAuthContext();
+  const handleLogout = useLogout("/signin");
 
   const [drawerOpen, setDrawerOpen] = useState(!isMobile);
 
@@ -81,14 +81,6 @@ const DashboardAdmin = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<User | null>(null);
-
-  const handleLogout = useCallback(async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
-  }, [logout]);
 
   const handleSavePermissions = async (companyId: string, permissions: CompanyPermissions) => {
     await dispatch(saveCompanyPermissions({ companyId, permissions })).unwrap();

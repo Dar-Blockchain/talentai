@@ -1,16 +1,17 @@
 ﻿import React from "react";
-import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
 import { Box, Typography } from "@mui/material";
 import LockOutlined from "@mui/icons-material/LockOutlined";
 import Link from "next/link";
 import CreatePostPage from "@/modules/company/posts/create/components/CreatePostPage";
 import { useCreatePostPage } from "@/modules/company/posts/create/hooks";
+import { getDashboardLayout } from "@/modules/shared/layouts";
+import type { NextPageWithLayout } from "@/pages/_app";
 
-const CreatePage: React.FC = () => {
+const CreatePage: NextPageWithLayout = () => {
   const { postsUsed, postsLimit, atLimit } = useCreatePostPage();
 
   return (
-    <DashboardLayout>
+    <>
       {atLimit ? (
         <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 400, gap: 2, textAlign: "center" }}>
           <Box sx={{ width: 64, height: 64, borderRadius: "50%", bgcolor: "#FEF2F2", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -29,8 +30,9 @@ const CreatePage: React.FC = () => {
       ) : (
         <CreatePostPage />
       )}
-    </DashboardLayout>
+    </>
   );
 };
+CreatePage.getLayout = getDashboardLayout;
 
 export default CreatePage;

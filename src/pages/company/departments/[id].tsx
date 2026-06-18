@@ -2,7 +2,8 @@
 import { useRouter }        from "next/router";
 import { useSelector, useDispatch } from "react-redux";
 import { Building2 }        from "lucide-react";
-import DashboardLayout      from "@/modules/shared/layouts/dashboard/DashboardLayout";
+import { getDashboardLayout } from "@/modules/shared/layouts";
+import type { NextPageWithLayout } from "@/pages/_app";
 import {
   DepartmentDetailHeader,
   DepartmentMembersSection,
@@ -29,7 +30,7 @@ import { extractAxiosErrorMessage } from "@/modules/company/departments/utils/de
 import EditRoleModal from "@/modules/company/employees/components/edit/EditRoleModal";
 import DeleteMemberDialog from "@/modules/company/employees/components/delete/DeleteMemberDialog";
 
-const DepartmentDetailPage: React.FC = () => {
+const DepartmentDetailPage: NextPageWithLayout = () => {
   const router   = useRouter();
   const id       = typeof router.query.id === "string" ? router.query.id : null;
   const dispatch = useDispatch<AppDispatch>();
@@ -103,22 +104,20 @@ const DepartmentDetailPage: React.FC = () => {
 
   if (deptError) {
     return (
-      <DashboardLayout>
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <Building2 className="size-14 text-gray-300 mb-4" />
-          <p className="text-lg font-bold text-gray-700">
-            {t("pages.departments.detail.not_found_title")}
-          </p>
-          <p className="text-sm text-gray-400 mt-1">
-            {t("pages.departments.detail.not_found_subtitle")}
-          </p>
-        </div>
-      </DashboardLayout>
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <Building2 className="size-14 text-gray-300 mb-4" />
+        <p className="text-lg font-bold text-gray-700">
+          {t("pages.departments.detail.not_found_title")}
+        </p>
+        <p className="text-sm text-gray-400 mt-1">
+          {t("pages.departments.detail.not_found_subtitle")}
+        </p>
+      </div>
     );
   }
 
   return (
-    <DashboardLayout>
+    <>
       <div>
         <DepartmentDetailHeader
           department={department} loading={loadingDept}
@@ -170,8 +169,9 @@ const DepartmentDetailPage: React.FC = () => {
           />
         </>
       )}
-    </DashboardLayout>
+    </>
   );
 };
+DepartmentDetailPage.getLayout = getDashboardLayout;
 
 export default DepartmentDetailPage;

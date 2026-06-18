@@ -1,12 +1,12 @@
 import type { Participant } from "@/modules/chat/shared/components/helpers";
 import type { TeamChatParticipant, TeamConversation, TeamMessage } from "@/modules/chat/team-chat/types";
 import { TEAM_LAST_MESSAGE_DELETED_SENTINEL, TEAM_MESSAGE_BODY_TOMBSTONE } from "@/modules/chat/team-chat/constants/lastMessagePreview";
-import {
-  normalizeId,
-  CHAT_LAST_MESSAGE_BLOCKED_PREVIEW,
-  type ChatShellConversation,
-  type ChatShellMessage,
-} from "@/modules/chat/shared";
+// Direct file imports (not the `@/modules/chat/shared` barrel) — this mapper
+// is used by `teamChatSlice.ts`, which the root reducer loads eagerly; a
+// barrel import here would pull the chat UI shells + socket client into `_app`.
+import { normalizeId } from "@/modules/chat/shared/utils/normalizeId";
+import { CHAT_LAST_MESSAGE_BLOCKED_PREVIEW } from "@/modules/chat/shared/constants/contactPolicy";
+import type { ChatShellConversation, ChatShellMessage } from "@/modules/chat/shared/types/shell";
 
 export type { ChatShellConversation, ChatShellMessage };
 

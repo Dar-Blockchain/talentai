@@ -1,7 +1,6 @@
 import React, { memo, useCallback } from "react";
 import { Box } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
 import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
 import AppButton from "@/components/ui/AppButton";
 import PersonAddOutlined from "@mui/icons-material/PersonAddOutlined";
@@ -55,7 +54,7 @@ const EmployeesPageContent: React.FC = memo(() => {
   ] : [];
 
   return (
-    <DashboardLayout>
+    <>
       {detailMember ? (
         <Box>
           <EmployeeDetail
@@ -132,7 +131,7 @@ const EmployeesPageContent: React.FC = memo(() => {
         onCancel={cancelDelete}
         onConfirm={handleConfirmDelete}
       />
-    </DashboardLayout>
+    </>
   );
 });
 

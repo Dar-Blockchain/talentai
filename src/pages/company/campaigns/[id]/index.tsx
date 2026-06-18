@@ -5,9 +5,10 @@ import { useCampaignDetail } from "@/modules/company/campaigns";
 import CampaignDetail from "@/modules/company/campaigns/components/details/CampaignDetail";
 import CampaignDetailSkeleton from "@/modules/company/campaigns/components/details/CampaignDetailSkeleton";
 import CampaignDetailError from "@/modules/company/campaigns/components/details/CampaignDetailError";
-import { DashboardLayout } from "@/modules/shared/layouts";
+import { getDashboardLayout } from "@/modules/shared/layouts";
+import type { NextPageWithLayout } from "@/pages/_app";
 
-const CampaignDetailsPage: React.FC = () => {
+const CampaignDetailsPage: NextPageWithLayout = () => {
   const { checking } = useCompanyAccess("canViewCampaigns");
   const { id } = useRouter().query;
 
@@ -17,25 +18,22 @@ const CampaignDetailsPage: React.FC = () => {
     handleDelete, handleChangeStatus, handleSaveConfig,
   } = useCampaignDetail(id);
 
-  return (
-    <DashboardLayout>
-      {loading || checking ? (
-        <CampaignDetailSkeleton />
-      ) : error ? (
-        <CampaignDetailError message={error} />
-      ) : campaign ? (
-        <CampaignDetail
-          campaign={campaign}
-          onDelete={handleDelete}
-          onChangeStatus={handleChangeStatus}
-          onSaveModuleConfig={handleSaveConfig}
-          canEdit={canEdit}
-          canDelete={canDelete}
-          canPublish={canPublish}
-        />
-      ) : null}
-    </DashboardLayout>
-  );
+  return loading || checking ? (
+    <CampaignDetailSkeleton />
+  ) : error ? (
+    <CampaignDetailError message={error} />
+  ) : campaign ? (
+    <CampaignDetail
+      campaign={campaign}
+      onDelete={handleDelete}
+      onChangeStatus={handleChangeStatus}
+      onSaveModuleConfig={handleSaveConfig}
+      canEdit={canEdit}
+      canDelete={canDelete}
+      canPublish={canPublish}
+    />
+  ) : null;
 };
+CampaignDetailsPage.getLayout = getDashboardLayout;
 
 export default CampaignDetailsPage;

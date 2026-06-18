@@ -1,15 +1,23 @@
-﻿import React from "react";
-import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
+﻿import React, { useEffect, useRef } from "react";
 import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 import { PostsPageContent } from "@/modules/company/posts";
+import { getDashboardLayout } from "@/modules/shared/layouts";
+import type { NextPageWithLayout } from "@/pages/_app";
 
-const PostsPage: React.FC = () => {
+const PostsPage: NextPageWithLayout = () => {
+
+  const pageId = useRef(Math.random().toString(36).slice(2, 8));
+
+useEffect(() => {
+  console.log(`POSTS PAGE MOUNT ${pageId.current}`);
+
+  return () => {
+    console.log(`POSTS PAGE UNMOUNT ${pageId.current}`);
+  };
+}, []);
   useCompanyAccess("canViewJobPosts");
-  return (
-    <DashboardLayout>
-      <PostsPageContent />
-    </DashboardLayout>
-  );
+  return <PostsPageContent />;
 };
+PostsPage.getLayout = getDashboardLayout;
 
 export default PostsPage;

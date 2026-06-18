@@ -1,7 +1,6 @@
 ﻿import React, { useState, useCallback, useEffect } from "react";
 import { Box, Typography, Avatar } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import CandidateWorkspaceLayout from "@/modules/shared/layouts/candidate/CandidateWorkspaceLayout";
 import NotificationsTab from "./NotificationsTab";
 import PersonalInformationTab from "./PersonalInformationTab";
 import ProfileVisibilityTab from "./ProfileVisibilityTab";
@@ -61,7 +60,7 @@ const CandidateSettingsPage: React.FC = () => {
   const avatarUrl = profile.avatar || undefined;
 
   return (
-    <CandidateWorkspaceLayout breadcrumb={t("candidate.nav.settings")}>
+    <>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "240px 1fr" }, gap: 2.5, alignItems: "start" }}>
 
         {/* LEFT: Profile + Nav */}
@@ -155,7 +154,7 @@ const CandidateSettingsPage: React.FC = () => {
         onDismissError={handleDismissError}
         onDismissSuccess={handleDismissSuccess}
       />
-    </CandidateWorkspaceLayout>
+    </>
   );
 };
 

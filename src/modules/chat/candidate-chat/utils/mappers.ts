@@ -4,15 +4,17 @@ import type {
   CandidateConversation,
   CandidateMessage,
 } from "@/modules/chat/candidate-chat/types";
+// Direct file imports (not the `@/modules/chat/shared` barrel) — this mapper
+// is used by `candidateChatSlice.ts`, which the root reducer loads eagerly; a
+// barrel import here would pull the chat UI shells + socket client into `_app`.
+import { normalizeId } from "@/modules/chat/shared/utils/normalizeId";
+import { normalizeConversationUnreadCount } from "@/modules/chat/shared/utils/normalizeConversationUnread";
 import {
-  normalizeId,
-  normalizeConversationUnreadCount,
   CHAT_LAST_MESSAGE_DELETED_SENTINEL,
   CHAT_LAST_MESSAGE_BLOCKED_PREVIEW,
   CHAT_MESSAGE_BODY_TOMBSTONE,
-  type ChatShellConversation,
-  type ChatShellMessage,
-} from "@/modules/chat/shared";
+} from "@/modules/chat/shared/constants/contactPolicy";
+import type { ChatShellConversation, ChatShellMessage } from "@/modules/chat/shared/types/shell";
 
 export type { ChatShellConversation, ChatShellMessage };
 

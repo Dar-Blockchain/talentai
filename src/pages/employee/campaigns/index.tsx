@@ -1,16 +1,16 @@
 ﻿import React from "react";
-import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
 import EmployeeMyCampaigns from "@/components/features/employee/EmployeeMyCampaigns";
 import dynamic from "next/dynamic";
+import { getDashboardLayout } from "@/modules/shared/layouts";
+import type { NextPageWithLayout } from "@/pages/_app";
 
-const EmployeeCampaignsPage: React.FC = () => {
-  return (
-    <DashboardLayout>
-      <EmployeeMyCampaigns />
-    </DashboardLayout>
-  );
+const EmployeeCampaigns: React.FC = () => {
+  return <EmployeeMyCampaigns />;
 };
 
-export default dynamic(() => Promise.resolve(EmployeeCampaignsPage), {
+const EmployeeCampaignsPage: NextPageWithLayout = dynamic(() => Promise.resolve(EmployeeCampaigns), {
   ssr: false,
 });
+EmployeeCampaignsPage.getLayout = getDashboardLayout;
+
+export default EmployeeCampaignsPage;

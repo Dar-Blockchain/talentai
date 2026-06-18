@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import {
   Box,
   Drawer,
@@ -77,6 +77,16 @@ const Sidebar: React.FC<SidebarProps> = ({
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const handleLogout = useLogout("/signin");
+
+const sidebarId = useRef(Math.random().toString(36).slice(2, 8));
+
+useEffect(() => {
+  console.log(`SIDEBAR MOUNT ${sidebarId.current}`);
+
+  return () => {
+    console.log(`SIDEBAR UNMOUNT ${sidebarId.current}`);
+  };
+}, []);
 
   const handleGoHome = useCallback(() => {
     if (router.pathname === "/") {

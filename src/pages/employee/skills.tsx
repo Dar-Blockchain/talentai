@@ -1,16 +1,16 @@
 ﻿import React from "react";
-import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
 import EmployeeMySkills from "@/components/features/employee/EmployeeMySkills";
 import dynamic from "next/dynamic";
+import { getDashboardLayout } from "@/modules/shared/layouts";
+import type { NextPageWithLayout } from "@/pages/_app";
 
-const EmployeeSkillsPage: React.FC = () => {
-  return (
-    <DashboardLayout>
-      <EmployeeMySkills />
-    </DashboardLayout>
-  );
+const EmployeeSkills: React.FC = () => {
+  return <EmployeeMySkills />;
 };
 
-export default dynamic(() => Promise.resolve(EmployeeSkillsPage), {
+const EmployeeSkillsPage: NextPageWithLayout = dynamic(() => Promise.resolve(EmployeeSkills), {
   ssr: false,
 });
+EmployeeSkillsPage.getLayout = getDashboardLayout;
+
+export default EmployeeSkillsPage;

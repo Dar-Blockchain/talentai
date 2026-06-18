@@ -1,9 +1,7 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
-import { Box, useTheme, useMediaQuery, Modal, CircularProgress, Typography } from "@mui/material";
-import { useAuthContext } from "@/modules/auth/shared/context/AuthContext";
-import { useTranslation } from "react-i18next";
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import { Box, useTheme, useMediaQuery } from "@mui/material";
 import Sidebar from "./DashboardSidebar";
 import Header from "./DashboardHeader";
 import DashboardMain from "./DashboardMain";
@@ -35,11 +33,19 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   tightenMainPaddingBottom = false,
   fillMainHeight = false,
 }) => {
-  const { t } = useTranslation("auth");
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { isLoggingOut } = useAuthContext();
   const router = useRouter();
+
+const layoutId = useRef(Math.random().toString(36).slice(2, 8));
+
+useEffect(() => {
+  console.log(`LAYOUT MOUNT ${layoutId.current}`);
+
+  return () => {
+    console.log(`LAYOUT UNMOUNT ${layoutId.current}`);
+  };
+}, []);
 
   useEffect(() => {
     navigation.forEach((item) => router.prefetch(item.href));
@@ -75,32 +81,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   return (
     <Box sx={{ display: "flex", height: "100dvh" }}>
       <OnboardingTour />
-      {/* Logout loading modal */}
-      <Modal open={isLoggingOut} disableAutoFocus>
-        <Box sx={{
-          position: "absolute", inset: 0,
-          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-          bgcolor: "rgba(255,255,255,0.85)", backdropFilter: "blur(6px)",
-          gap: 2.5,
-        }}>
-          <Box sx={{
-            display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
-            bgcolor: "#fff", borderRadius: "20px", px: 5, py: 4,
-            boxShadow: "0 8px 40px rgba(0,0,0,0.12)",
-            border: "1px solid #E8EAED",
-          }}>
-            <CircularProgress size={40} sx={{ color: "#8310FF" }} />
-            <Box sx={{ textAlign: "center" }}>
-              <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "#0F172A" }}>
-                {t("logout.signing_out")}
-              </Typography>
-              <Typography sx={{ fontSize: "0.8125rem", color: "#94A3B8", mt: 0.5 }}>
-                {t("logout.please_wait")}
-              </Typography>
-            </Box>
-          </Box>
-        </Box>
-      </Modal>
       {/* Sidebar */}
       <Sidebar
         collapsed={effectiveCollapsed}

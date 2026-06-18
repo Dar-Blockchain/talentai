@@ -2,7 +2,6 @@
 import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import Link from "next/link";
-import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
 import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
 import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 import { useCompanyProfileManagement } from "../hooks";
@@ -42,7 +41,7 @@ const CompanySettingsPage: React.FC = () => {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <PageHeader
         title={t("pages.settings.title")}
         subtitle={t("pages.settings.subtitle")}
@@ -110,7 +109,7 @@ const CompanySettingsPage: React.FC = () => {
         {tab === 1 && <ApiKeysTab />}
         {tab === 2 && <LanguageTab onInputChange={handleInputChange} onSaveLanguage={handleSaveLanguage} />}
       </Box>
-    </DashboardLayout>
+    </>
   );
 };
 

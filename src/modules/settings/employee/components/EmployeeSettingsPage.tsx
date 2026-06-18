@@ -3,7 +3,6 @@ import {
   Box, Typography, Avatar, TextField, Button,
   CircularProgress, Divider, Chip,
 } from "@mui/material";
-import DashboardLayout from "@/modules/shared/layouts/dashboard/DashboardLayout";
 import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
 import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
 import PersonOutlined from "@mui/icons-material/PersonOutlined";
@@ -40,7 +39,7 @@ const EmployeeSettingsPage: React.FC = () => {
   } = useEmployeeSettings();
 
   return (
-    <DashboardLayout>
+    <>
       <PageHeader
         title="Settings"
         subtitle="Manage your account and preferences"
@@ -211,7 +210,7 @@ const EmployeeSettingsPage: React.FC = () => {
         </Section>
 
       </Box>
-    </DashboardLayout>
+    </>
   );
 };
 

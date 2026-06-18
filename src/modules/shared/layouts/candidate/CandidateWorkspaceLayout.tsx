@@ -1,9 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Box, Drawer, Modal, CircularProgress, Typography } from "@mui/material";
-import { useTranslation } from "react-i18next";
-import { useAuthContext } from "@/modules/auth/shared/context/AuthContext";
+import { Box, Drawer } from "@mui/material";
 import Header from "@/modules/shared/layouts/dashboard/DashboardHeader";
 import CandidateQuickNav from "@/modules/shared/layouts/candidate/CandidateQuickNav";
 
@@ -21,53 +19,10 @@ const CandidateWorkspaceLayout: React.FC<CandidateWorkspaceLayoutProps> = ({
   breadcrumb,
   fillHeight = false,
 }) => {
-  const { t } = useTranslation("auth");
-  const { isLoggingOut } = useAuthContext();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", bgcolor: "rgb(249 250 251)" }}>
-      <Modal open={isLoggingOut} disableAutoFocus>
-        <Box
-          sx={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            bgcolor: "rgba(255,255,255,0.85)",
-            backdropFilter: "blur(6px)",
-            gap: 2.5,
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 2,
-              bgcolor: "#fff",
-              borderRadius: "20px",
-              px: 5,
-              py: 4,
-              boxShadow: "0 8px 40px rgba(0,0,0,0.12)",
-              border: "1px solid #E8EAED",
-            }}
-          >
-            <CircularProgress size={40} sx={{ color: "#8310FF" }} />
-            <Box sx={{ textAlign: "center" }}>
-              <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "#0F172A" }}>
-                {t("logout.signing_out")}
-              </Typography>
-              <Typography sx={{ fontSize: "0.8125rem", color: "#94A3B8", mt: 0.5 }}>
-                {t("logout.please_wait")}
-              </Typography>
-            </Box>
-          </Box>
-        </Box>
-      </Modal>
-
       <Box
         sx={{
           position: "fixed",
