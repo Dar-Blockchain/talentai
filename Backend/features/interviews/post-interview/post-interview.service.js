@@ -1,10 +1,11 @@
+const mongoose = require("mongoose");
 const PostInterviewAssessment = require("./post-interview.model");
 const Post = require("../../../models/Post.model");
 const Profile = require("../../../features/users/profile.model");
 const User = require("../../../features/users/user.model");
 const CandidatePostStepProgress = require("../../../models/CandidatePostStepsProgress.model");
 const crypto = require("crypto");
-const subscriptionService = require("../../../services/subscription.service");
+const subscriptionService = require("../../../features/subscriptions/subscription.service");
 
 // ========== MONTHLY INTERVIEW LIMIT HELPERS ==========
 const checkMonthlyInterviewLimit = async (companyId) => {
@@ -451,33 +452,26 @@ module.exports.checkInterviewEligibility = async (userId, postId, userRole) => {
 // ========== KPI - Unreviewed interviews older than 48 hours ==========
 module.exports.getUnreviewedInterviewsOver48Hours = async (companyId, postId = null, dateFrom = null) => {
   try {
-    const mongoose = require('mongoose');
-    const cutoff   = new Date(Date.now() - 48 * 60 * 60 * 1000);
-    const urgent   = new Date(Date.now() - 72 * 60 * 60 * 1000);
+    const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000);
+    const urgent = new Date(Date.now() - 72 * 60 * 60 * 1000);
 
     const match = {
-      company:             new mongoose.Types.ObjectId(companyId),
-      completed:           true,
-      recruiterFeedback:   null,
-      createdAt:           { $lte: cutoff },
+      company:           new mongoose.Types.ObjectId(companyId),
+      completed:         true,
+      recruiterFeedback: null,
+      createdAt:         { $lte: cutoff },
     };
 
-    if (postId)   match.post     = new mongoose.Types.ObjectId(postId);
-    if (dateFrom) match.createdAt.$gte = new Date(dateFrom);
+    if (postId)   match.post            = new mongoose.Types.ObjectId(postId);
+    if (dateFrom) match.createdAt.$gte  = new Date(dateFrom);
 
     const [count, urgentCount] = await Promise.all([
       PostInterviewAssessment.countDocuments(match),
       PostInterviewAssessment.countDocuments({ ...match, createdAt: { ...match.createdAt, $lte: urgent } }),
     ]);
 
-    return {
-      count,
-      urgent:    urgentCount,
-      lastCheck: new Date().toISOString(),
-      message:   `${count} completed interview(s) pending recruiter review for 48+ hours`,
-    };
+    return { count, urgent: urgentCount };
   } catch (error) {
-    console.error('❌ Error getting unreviewed interviews KPI:', error.message);
     throw error;
   }
 };

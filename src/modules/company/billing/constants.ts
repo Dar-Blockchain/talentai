@@ -1,15 +1,13 @@
 import React from "react";
-import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
-import CancelOutlined      from "@mui/icons-material/CancelOutlined";
-import PendingOutlined     from "@mui/icons-material/PendingOutlined";
+import { CheckCircle, XCircle, Clock } from "lucide-react";
 
 export { TEAL } from "@/modules/company/constants";
 
-export const STATUS_CONFIG: Record<string, { label: string; color: "success" | "error" | "warning" | "default"; icon: React.ReactNode }> = {
-  completed: { label: "Completed", color: "success", icon: React.createElement(CheckCircleOutlined, { sx: { fontSize: 14 } }) },
-  failed:    { label: "Failed",    color: "error",   icon: React.createElement(CancelOutlined,       { sx: { fontSize: 14 } }) },
-  cancelled: { label: "Cancelled", color: "error",   icon: React.createElement(CancelOutlined,       { sx: { fontSize: 14 } }) },
-  pending:   { label: "Pending",   color: "warning", icon: React.createElement(PendingOutlined,      { sx: { fontSize: 14 } }) },
+export const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string; icon: React.ReactNode }> = {
+  completed: { label: "Completed", bg: "#ecfdf5", color: "#059669", icon: React.createElement(CheckCircle, { size: 14 }) },
+  failed:    { label: "Failed",    bg: "#fef2f2", color: "#dc2626", icon: React.createElement(XCircle,    { size: 14 }) },
+  cancelled: { label: "Cancelled", bg: "#fef2f2", color: "#dc2626", icon: React.createElement(XCircle,    { size: 14 }) },
+  pending:   { label: "Pending",   bg: "#fffbeb", color: "#d97706", icon: React.createElement(Clock,      { size: 14 }) },
 };
 
 export const PLAN_COLORS: Record<string, string> = {

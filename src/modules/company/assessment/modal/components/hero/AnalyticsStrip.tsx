@@ -1,12 +1,17 @@
 import React from "react";
-import { Box } from "@mui/material";
 import AccessTimeOutlined        from "@mui/icons-material/AccessTimeOutlined";
 import ChatBubbleOutlineOutlined from "@mui/icons-material/ChatBubbleOutlineOutlined";
 import TrendingUpOutlined        from "@mui/icons-material/TrendingUpOutlined";
 import VolumeOffOutlined         from "@mui/icons-material/VolumeOffOutlined";
 import { fmtDuration } from "@/modules/company/assessment/constants";
 import { PostAssessmentData } from "../../types";
-import { InfoChip, TEAL } from "../assessmentAtoms";
+
+interface StatItem {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  iconClass: string;
+}
 
 interface Props {
   analytics: PostAssessmentData["analytics"];
@@ -14,24 +19,36 @@ interface Props {
 
 const AnalyticsStrip: React.FC<Props> = ({ analytics }) => {
   if (!analytics) return null;
+
+  const stats: StatItem[] = [];
+
+  if (analytics.duration !== undefined)
+    stats.push({ icon: <AccessTimeOutlined style={{ fontSize: 14 }} />, label: "Duration", value: fmtDuration(analytics.duration), iconClass: "text-slate-400" });
+
+  if (analytics.messageCount !== undefined)
+    stats.push({ icon: <ChatBubbleOutlineOutlined style={{ fontSize: 14 }} />, label: "Exchanges", value: String(analytics.messageCount), iconClass: "text-slate-400" });
+
+  if (analytics.completedAreas !== undefined && analytics.totalAreas !== undefined)
+    stats.push({ icon: <TrendingUpOutlined style={{ fontSize: 14 }} />, label: "Areas", value: `${analytics.completedAreas} / ${analytics.totalAreas}`, iconClass: "text-teal-500" });
+
+  if ((analytics.silenceEvents ?? 0) > 0)
+    stats.push({ icon: <VolumeOffOutlined style={{ fontSize: 14 }} />, label: "Silences", value: String(analytics.silenceEvents), iconClass: "text-amber-500" });
+
+  if (analytics.averageResponseLength !== undefined)
+    stats.push({ icon: <ChatBubbleOutlineOutlined style={{ fontSize: 14 }} />, label: "Avg words", value: `~${analytics.averageResponseLength}`, iconClass: "text-slate-400" });
+
+  if (stats.length === 0) return null;
+
   return (
-    <Box sx={{ px: 3.5, pb: 2.5, display: "flex", flexWrap: "wrap", gap: 0.75 }}>
-      {analytics.duration !== undefined && (
-        <InfoChip icon={<AccessTimeOutlined sx={{ fontSize: 12 }} />} label={fmtDuration(analytics.duration)} />
-      )}
-      {analytics.messageCount !== undefined && (
-        <InfoChip icon={<ChatBubbleOutlineOutlined sx={{ fontSize: 12 }} />} label={`${analytics.messageCount} exchanges`} />
-      )}
-      {analytics.completedAreas !== undefined && analytics.totalAreas !== undefined && (
-        <InfoChip icon={<TrendingUpOutlined sx={{ fontSize: 12 }} />} label={`${analytics.completedAreas}/${analytics.totalAreas} areas`} iconColor={TEAL} />
-      )}
-      {(analytics.silenceEvents ?? 0) > 0 && (
-        <InfoChip icon={<VolumeOffOutlined sx={{ fontSize: 12 }} />} label={`${analytics.silenceEvents} silence${analytics.silenceEvents! > 1 ? "s" : ""}`} iconColor="#D97706" />
-      )}
-      {analytics.averageResponseLength !== undefined && (
-        <InfoChip icon={<ChatBubbleOutlineOutlined sx={{ fontSize: 12 }} />} label={`~${analytics.averageResponseLength} words`} />
-      )}
-    </Box>
+    <div className="mx-7 mb-5 rounded-xl border border-slate-100 bg-slate-50 flex overflow-hidden divide-x divide-slate-100">
+      {stats.map((s, i) => (
+        <div key={i} className="flex-1 flex flex-col items-center justify-center py-3 px-3 min-w-0">
+          <span className={`mb-0.5 ${s.iconClass}`}>{s.icon}</span>
+          <div className="text-sm font-bold text-slate-800 leading-tight">{s.value}</div>
+          <div className="text-[0.6rem] text-slate-400 font-medium mt-0.5 uppercase tracking-wider">{s.label}</div>
+        </div>
+      ))}
+    </div>
   );
 };
 

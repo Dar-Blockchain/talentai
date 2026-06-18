@@ -1,27 +1,24 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
-import { scoreStyle } from "@/modules/company/assessment/constants";
-import { ScoreRing } from "../assessmentAtoms";
+import { ScoreRing, scoreTheme, VerdictTheme } from "../ui";
 
 interface Props {
-  overallScore:  number;
-  verdictColor:  string;
-  verdictBg:     string;
-  verdictBorder: string;
-  verdictLabel:  string;
+  overallScore: number;
+  vt:           VerdictTheme;
+  verdictLabel: string;
 }
 
-const ScoreVerdictBadge: React.FC<Props> = ({ overallScore, verdictColor, verdictBg, verdictBorder, verdictLabel }) => {
-  const sc = scoreStyle(overallScore);
+const ScoreVerdictBadge: React.FC<Props> = ({ overallScore, vt, verdictLabel }) => {
+  const st = scoreTheme(overallScore);
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1, flexShrink: 0 }}>
-      <ScoreRing value={overallScore} color={sc.color} size={84} />
-      <Box sx={{ px: 1.25, py: 0.375, borderRadius: "99px", bgcolor: verdictBg, border: `1px solid ${verdictBorder}` }}>
-        <Typography sx={{ fontSize: "0.68rem", fontWeight: 800, color: verdictColor, letterSpacing: "0.02em", whiteSpace: "nowrap" }}>
+    <div className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl border ${vt.bgCls}`} style={{ borderColor: vt.borderColor }}>
+      <ScoreRing value={overallScore} color={st.color} size={56} />
+      <div className="flex flex-col gap-1">
+        <span className="text-[0.6rem] font-bold text-slate-400 uppercase tracking-widest">Overall Score</span>
+        <span className={`text-[0.72rem] font-extrabold tracking-wide px-2.5 py-0.5 rounded-full self-start ${vt.pillCls}`}>
           {verdictLabel}
-        </Typography>
-      </Box>
-    </Box>
+        </span>
+      </div>
+    </div>
   );
 };
 

@@ -1,128 +1,68 @@
-const subscriptionService = require("../services/subscription.service");
+const subscriptionService = require("./subscription.service");
 
-// Centralized error handler
 const handleError = (res, error, defaultStatus = 500) => {
   console.error("Subscription error:", error?.message || error);
-  const status = error?.status || defaultStatus;
-  res.status(status).json({
+  res.status(error?.status || defaultStatus).json({
     success: false,
     error: error?.message || "Internal server error",
   });
 };
 
-/**
- * GET /subscriptions/active/:companyProfileId
- * Get active subscription for a company
- */
 module.exports.getActiveSubscription = async (req, res) => {
   try {
-    const companyProfileId = req.user.profile;
-    console.log(`Fetching active subscription for company profile: ${req.user}`);
-
-    const result = await subscriptionService.getActiveSubscription(companyProfileId);
-
+    const result = await subscriptionService.getActiveSubscription(req.user.profile);
     res.status(200).json(result);
   } catch (error) {
     handleError(res, error, 404);
   }
 };
 
-/**
- * GET /subscriptions
- * Get all subscriptions for a company
- */
 module.exports.getCompanySubscriptions = async (req, res) => {
   try {
-    const companyProfileId = req.user.profile;
-
-    const result = await subscriptionService.getCompanySubscriptions(
-      companyProfileId
-    );
-
+    const result = await subscriptionService.getCompanySubscriptions(req.user.profile);
     res.status(200).json(result);
   } catch (error) {
     handleError(res, error);
   }
 };
 
-/**
- * GET /subscriptions/:subscriptionId/details
- * Get detailed subscription info
- */
 module.exports.getSubscriptionDetails = async (req, res) => {
   try {
-    const { subscriptionId } = req.params;
-
-    const result = await subscriptionService.getSubscriptionDetails(
-      subscriptionId
-    );
-
+    const result = await subscriptionService.getSubscriptionDetails(req.params.subscriptionId);
     res.status(200).json(result);
   } catch (error) {
     handleError(res, error, 404);
   }
 };
 
-/**
- * POST /subscriptions/:subscriptionId/cancel
- * Cancel a subscription
- */
 module.exports.cancelSubscription = async (req, res) => {
   try {
-    const { subscriptionId } = req.params;
-    const { reason } = req.body;
-
-    const result = await subscriptionService.cancelSubscription(
-      subscriptionId,
-      reason
-    );
-
+    const result = await subscriptionService.cancelSubscription(req.params.subscriptionId, req.body.reason);
     res.status(200).json(result);
   } catch (error) {
     handleError(res, error, 404);
   }
 };
 
-/**
- * GET /subscriptions/:companyProfileId/check-limit/:limitType
- * Check if company can perform an action (posts or monthlyInterviews)
- */
 module.exports.checkLimit = async (req, res) => {
   try {
     const { companyProfileId, limitType } = req.params;
-
-    const result = await subscriptionService.checkSubscriptionLimit(
-      companyProfileId,
-      limitType
-    );
-
-    res.status(200).json({
-      success: true,
-      data: result,
-    });
+    const result = await subscriptionService.checkSubscriptionLimit(companyProfileId, limitType);
+    res.status(200).json({ success: true, data: result });
   } catch (error) {
     handleError(res, error, 400);
   }
 };
 
-/**
- * POST /subscriptions/:subscriptionId/enable-auto-renew
- * Re-enable auto-renewal on a subscription
- */
 module.exports.enableAutoRenew = async (req, res) => {
   try {
-    const { subscriptionId } = req.params;
-    const result = await subscriptionService.enableAutoRenew(subscriptionId);
+    const result = await subscriptionService.enableAutoRenew(req.params.subscriptionId);
     res.status(200).json(result);
   } catch (error) {
     handleError(res, error, 404);
   }
 };
 
-/**
- * GET /subscriptions/combined
- * Get combined usage across all active subscriptions for a company
- */
 module.exports.getCombinedActiveDetails = async (req, res) => {
   const safeDefault = {
     success: true,

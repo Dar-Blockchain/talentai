@@ -1,12 +1,9 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Box, Typography, Chip, Divider } from "@mui/material";
-import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
-import CreditCardOutlined from "@mui/icons-material/CreditCardOutlined";
+import { CheckCircle, CreditCard } from "lucide-react";
 import { PlanLimit } from "@/store/slices/planLimitsSlice";
 import AppButton from "@/components/ui/AppButton";
 import { usePlanCard } from "../hooks/usePlanCard";
-import { planCardSx, primaryBtnSx, activeBannerSx, badgeChipSx } from "./planCard.styles";
 import FeatureRow from "./FeatureRow";
 import AutoRenewalCta from "./AutoRenewalCta";
 import DowngradeCta from "./DowngradeCta";
@@ -39,57 +36,84 @@ const PlanCard: React.FC<PlanCardProps> = ({
   } = usePlanCard(plan, activeSubscriptionId, currentPlanName);
 
   return (
-    <Box sx={planCardSx(cfg.color, isHighlighted, isActive)}>
-
-      <Box sx={{ height: 5, bgcolor: cfg.color, flexShrink: 0 }} />
+    <div
+      className="group relative flex h-full flex-col overflow-hidden rounded-[20px] border-2 bg-white transition-all duration-200 hover:-translate-y-[3px]"
+      style={{
+        borderColor: isHighlighted ? cfg.color : "#E5E7EB",
+        boxShadow: isActive
+          ? `0 8px 32px ${cfg.color}28`
+          : isHighlighted
+            ? `0 12px 40px ${cfg.color}22`
+            : "0 2px 8px rgba(0,0,0,0.06)",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = `0 16px 48px ${cfg.color}28`;
+        e.currentTarget.style.borderColor = cfg.color;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = isHighlighted ? cfg.color : "#E5E7EB";
+        e.currentTarget.style.boxShadow = isActive
+          ? `0 8px 32px ${cfg.color}28`
+          : isHighlighted
+            ? `0 12px 40px ${cfg.color}22`
+            : "0 2px 8px rgba(0,0,0,0.06)";
+      }}
+    >
+      <div className="h-[5px] flex-shrink-0" style={{ backgroundColor: cfg.color }} />
 
       {isHighlighted && (
-        <Chip
-          label={badgeLabel}
-          size="small"
-          icon={isActive ? <CheckCircleOutlined sx={{ fontSize: "13px !important" }} /> : undefined}
-          sx={badgeChipSx(cfg.color)}
-        />
+        <span
+          className="absolute right-4 top-[17px] flex h-[22px] items-center gap-1 rounded-full px-2.5 text-[0.68rem] font-bold tracking-wide text-white"
+          style={{ backgroundColor: cfg.color }}
+        >
+          {isActive && <CheckCircle size={13} />}
+          {badgeLabel}
+        </span>
       )}
 
-      <Box sx={{ p: 3, display: "flex", flexDirection: "column", flex: 1 }}>
-
-        <Typography sx={{ fontWeight: 800, fontSize: "1.05rem", color: "#111827", mb: 0.25, letterSpacing: "-0.01em" }}>
+      <div className="flex flex-1 flex-col p-6">
+        <h3 className="mb-0.5 text-[1.05rem] font-extrabold tracking-tight text-gray-900">
           {plan.name}
-        </Typography>
+        </h3>
         {plan.description && (
-          <Typography sx={{ fontSize: "0.78rem", color: "#9CA3AF", lineHeight: 1.5, mb: 2.5, minHeight: 32 }}>
+          <p className="mb-5 min-h-[32px] text-[0.78rem] leading-relaxed text-gray-400">
             {plan.description}
-          </Typography>
+          </p>
         )}
 
-        <Box sx={{ display: "flex", alignItems: "flex-end", gap: 0.5, mb: 2.5 }}>
-          <Typography sx={{ fontSize: (isTrial || isEnterprise) ? "1.6rem" : "2.4rem", fontWeight: 800, color: cfg.color, lineHeight: 1 }}>
+        <div className="mb-5 flex items-end gap-1">
+          <span
+            className="font-extrabold leading-none"
+            style={{ color: cfg.color, fontSize: isTrial || isEnterprise ? "1.6rem" : "2.4rem" }}
+          >
             {priceLabel}
-          </Typography>
+          </span>
           {!isTrial && !isEnterprise && (
-            <Typography sx={{ color: "#9CA3AF", fontSize: "0.8rem", mb: 0.4 }}>
+            <span className="mb-1 text-[0.8rem] text-gray-400">
               {t("pages.subscription.card.per_month")}
-            </Typography>
+            </span>
           )}
-        </Box>
+        </div>
 
-        <Divider sx={{ mb: 2 }} />
+        <hr className="mb-4 border-gray-200" />
 
-        <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 1.25, mb: 2.5 }}>
+        <div className="mb-5 flex flex-1 flex-col gap-3">
           {features.map(({ key, icon, label }) => (
             <FeatureRow key={key} icon={icon} label={label} color={cfg.color} />
           ))}
-        </Box>
+        </div>
 
         {isActive ? (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-            <Box sx={activeBannerSx(cfg.color)}>
-              <CheckCircleOutlined sx={{ fontSize: 16, color: cfg.color }} />
-              <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: cfg.color }}>
+          <div className="flex flex-col gap-2">
+            <div
+              className="flex items-center justify-center gap-1.5 rounded-[10px] border-[1.5px] py-2.5"
+              style={{ backgroundColor: `${cfg.color}10`, borderColor: `${cfg.color}30` }}
+            >
+              <CheckCircle size={16} style={{ color: cfg.color }} />
+              <span className="text-[0.82rem] font-bold" style={{ color: cfg.color }}>
                 {t("pages.subscription.card.current_plan_banner")}
-              </Typography>
-            </Box>
+              </span>
+            </div>
             {!isTrial && (
               <AutoRenewalCta
                 autoRenew={autoRenew}
@@ -99,22 +123,34 @@ const PlanCard: React.FC<PlanCardProps> = ({
                 onReEnable={onEnableAutoRenewClick}
               />
             )}
-          </Box>
+          </div>
         ) : isEnterprise ? (
           <AppButton
             label={t("pages.subscription.card.contact_us")}
             variant="contained" fullWidth
             onClick={onContactUs}
-            sx={primaryBtnSx(cfg.color)}
+            sx={{
+              bgcolor: cfg.color,
+              "&:hover": { bgcolor: cfg.color, filter: "brightness(0.88)" },
+              fontWeight: 700, borderRadius: "10px", py: 1.1,
+              fontSize: "0.85rem", boxShadow: `0 4px 14px ${cfg.color}30`,
+              textTransform: "none",
+            }}
           />
         ) : !isTrial ? (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <div className="flex flex-col gap-2">
             <AppButton
               label={t("pages.subscription.card.add_plan", "Add Plan")}
               variant="contained" fullWidth loading={checkingOut}
-              startIcon={<CreditCardOutlined sx={{ fontSize: "16px !important" }} />}
+              startIcon={<CreditCard size={16} />}
               onClick={() => onSubscribe(plan._id)}
-              sx={primaryBtnSx(cfg.color)}
+              sx={{
+                bgcolor: cfg.color,
+                "&:hover": { bgcolor: cfg.color, filter: "brightness(0.88)" },
+                fontWeight: 700, borderRadius: "10px", py: 1.1,
+                fontSize: "0.85rem", boxShadow: `0 4px 14px ${cfg.color}30`,
+                textTransform: "none",
+              }}
             />
             {isDowngrade && currentSubId && (
               <DowngradeCta
@@ -125,11 +161,10 @@ const PlanCard: React.FC<PlanCardProps> = ({
                 onDowngrade={onDowngradeClick}
               />
             )}
-          </Box>
+          </div>
         ) : null}
-
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 

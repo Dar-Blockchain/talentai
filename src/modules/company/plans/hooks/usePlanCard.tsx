@@ -1,7 +1,6 @@
 import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import VideoCallOutlined from "@mui/icons-material/VideoCallOutlined";
-import WorkOutlined from "@mui/icons-material/WorkOutlined";
+import { Video, Briefcase } from "lucide-react";
 import { PlanLimit } from "@/store/slices/planLimitsSlice";
 import { PLAN_CONFIG, ORDERED_PLANS } from "../constants";
 
@@ -39,14 +38,14 @@ export function usePlanCard(
   const features = useMemo(() => [
     {
       key: "interviews",
-      icon: <VideoCallOutlined sx={{ fontSize: 15 }} />,
+      icon: <Video size={15} />,
       label: plan.monthlyInterviewLimit === -1
         ? t("pages.subscription.card.interviews_unlimited")
         : t("pages.subscription.card.interviews_month", { count: plan.monthlyInterviewLimit }),
     },
     {
       key: "posts",
-      icon: <WorkOutlined sx={{ fontSize: 15 }} />,
+      icon: <Briefcase size={15} />,
       label: plan.postsLimit === -1
         ? t("pages.subscription.card.job_posts_unlimited")
         : t("pages.subscription.card.job_posts", { count: plan.postsLimit }),

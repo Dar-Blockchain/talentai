@@ -1,48 +1,47 @@
 import React from "react";
-import { Box, Chip, Typography } from "@mui/material";
-import { scoreStyle } from "@/modules/company/assessment/constants";
 import { ConversationTurn } from "../../types";
-import { Bar } from "../assessmentAtoms";
+import { ScoreBar, scoreTheme } from "../ui";
 
 interface Props {
   evaluation: NonNullable<ConversationTurn["evaluation"]>;
 }
 
-const EvaluationMetrics: React.FC<Props> = ({ evaluation }) => (
-  <Box sx={{ ml: 4.25, display: "flex", flexDirection: "column", gap: 0.75 }}>
-    {evaluation.qualityScore != null && (
-      <Box>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.5 }}>
-          <Typography sx={{ fontSize: "0.63rem", color: "#9CA3AF", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-            Response Quality
-          </Typography>
-          <Typography sx={{ fontSize: "0.72rem", fontWeight: 800, color: scoreStyle(evaluation.qualityScore).color }}>
-            {evaluation.qualityScore}%
-          </Typography>
-        </Box>
-        <Bar value={evaluation.qualityScore} color={scoreStyle(evaluation.qualityScore).color} height={5} />
-      </Box>
-    )}
-    <Box sx={{ display: "flex", gap: 0.625, flexWrap: "wrap" }}>
-      {evaluation.answeredQuestion != null && (
-        <Chip
-          label={evaluation.answeredQuestion ? "Answered" : "Not answered"}
-          size="small"
-          sx={{ height: 20, fontSize: "0.65rem", fontWeight: 600,
-            bgcolor: evaluation.answeredQuestion ? "#F0FDF4" : "#FEF2F2",
-            color:   evaluation.answeredQuestion ? "#059669" : "#DC2626",
-            border: `1px solid ${evaluation.answeredQuestion ? "#BBF7D0" : "#FECACA"}` }} />
+const EvaluationMetrics: React.FC<Props> = ({ evaluation }) => {
+  const qSt = evaluation.qualityScore != null ? scoreTheme(evaluation.qualityScore) : null;
+  return (
+    <div className="ml-[34px] flex flex-col gap-1.5">
+      {qSt && evaluation.qualityScore != null && (
+        <div>
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-[0.63rem] text-slate-400 font-bold uppercase tracking-widest">Response Quality</span>
+            <span className={`text-[0.72rem] font-extrabold ${qSt.textCls}`}>{evaluation.qualityScore}%</span>
+          </div>
+          <ScoreBar value={evaluation.qualityScore} color={qSt.color} height={5} />
+        </div>
       )}
-      {evaluation.completeness && (
-        <Chip label={evaluation.completeness} size="small"
-          sx={{ height: 20, fontSize: "0.65rem", fontWeight: 600, bgcolor: "#F9FAFB", color: "#6B7280", border: "1px solid #F3F4F6" }} />
-      )}
-      {evaluation.depthLevel && (
-        <Chip label={evaluation.depthLevel} size="small"
-          sx={{ height: 20, fontSize: "0.65rem", fontWeight: 600, bgcolor: "#EFF6FF", color: "#1D4ED8", border: "1px solid #BFDBFE" }} />
-      )}
-    </Box>
-  </Box>
-);
+      <div className="flex gap-1.5 flex-wrap">
+        {evaluation.answeredQuestion != null && (
+          <span className={`h-5 px-1.5 rounded-full border text-[0.65rem] font-semibold flex items-center ${
+            evaluation.answeredQuestion
+              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+              : "bg-red-50 text-red-700 border-red-200"
+          }`}>
+            {evaluation.answeredQuestion ? "Answered" : "Not answered"}
+          </span>
+        )}
+        {evaluation.completeness && (
+          <span className="h-5 px-1.5 rounded-full border border-slate-100 bg-slate-50 text-slate-500 text-[0.65rem] font-semibold flex items-center">
+            {evaluation.completeness}
+          </span>
+        )}
+        {evaluation.depthLevel && (
+          <span className="h-5 px-1.5 rounded-full border border-blue-200 bg-blue-50 text-blue-700 text-[0.65rem] font-semibold flex items-center">
+            {evaluation.depthLevel}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+};
 
 export default EvaluationMetrics;

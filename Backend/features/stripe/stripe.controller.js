@@ -1,14 +1,12 @@
 require("dotenv").config();
-const stripeService = require("../services/stripe.service");
-const Profile = require("../features/users/profile.model");
+const stripeService = require("./stripe.service");
+const Profile = require("../users/profile.model");
 
-// Create Stripe Checkout session
 exports.createCheckoutSession = async (req, res) => {
   try {
     const { planId } = req.body;
     const userId = req.user?._id;
 
-    // ✅ Validation: planId
     if (!planId) {
       return res.status(400).json({
         message: "Plan ID is required.",
@@ -16,7 +14,6 @@ exports.createCheckoutSession = async (req, res) => {
       });
     }
 
-    // ✅ Validation: userId (authentication)
     if (!userId) {
       return res.status(401).json({
         message: "Authentication required.",
@@ -24,7 +21,6 @@ exports.createCheckoutSession = async (req, res) => {
       });
     }
 
-    // ✅ Validation: User is a Company
     const userProfile = await Profile.findOne({ userId });
     if (!userProfile || userProfile.type !== "Company") {
       return res.status(403).json({
@@ -52,8 +48,8 @@ exports.createCheckoutSession = async (req, res) => {
     return res.status(200).json({
       url: result.session.url,
       sessionId: result.sessionId,
-      planId: planId,
-      paymentId: result.paymentId,  // ✨ NEW: Payment record ID
+      planId,
+      paymentId: result.paymentId,
     });
   } catch (error) {
     console.error("Stripe error:", error);
