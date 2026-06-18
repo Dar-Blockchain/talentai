@@ -98,7 +98,9 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
       setIsConnected(false);
       setConnectionStatus('disconnected');
       setInterviewStatus('idle');
-      callbacksRef.current.onNotification('Connection lost. Attempting to reconnect...', 'warning');
+      if (reason !== 'io client disconnect' && reason !== 'io server disconnect') {
+        callbacksRef.current.onNotification('Connection lost. Attempting to reconnect...', 'warning');
+      }
     });
 
     socket.on('connect_error', (error) => {

@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useRouter } from 'next/router';
-import { Play, Mic, RefreshCw, Video, ArrowLeft, CheckCircle, CheckCircle2, Circle } from 'lucide-react';
+import { Play, Mic, RefreshCw, Video, ArrowLeft, CheckCircle, Circle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { type InterviewStatus, type ConnectionStatus, type CameraStatus, type AgentState } from '../../types/interview';
 
@@ -34,8 +33,8 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
   onBack,
   jobTitle,
   companyName,
-  dashboardPath = '/candidate/dashboard',
-  reportPath,
+  dashboardPath: _dashboardPath,
+  reportPath: _reportPath,
 }) => {
   const { t } = useTranslation('interview');
   const [waitDots] = useState('');
@@ -119,7 +118,18 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
         )}
         {interviewStatus === 'ended' && (
           resultsReady
-            ? <CompletionCard dashboardPath={dashboardPath} reportPath={reportPath} />
+            ? (
+              <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
+                <div className="relative flex items-center justify-center w-16 h-16">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-20 animate-ping" />
+                  <div className="relative w-16 h-16 rounded-full bg-green-50 border-2 border-green-200 flex items-center justify-center">
+                    <CheckCircle size={30} className="text-green-500" />
+                  </div>
+                </div>
+                <p className="font-bold text-gray-900 text-base">Interview Complete</p>
+                <p className="text-xs text-gray-400">Your responses have been recorded successfully</p>
+              </div>
+            )
             : <AnalyzingSpinner waitDots={waitDots} />
         )}
       </div>
@@ -318,71 +328,3 @@ const AnalyzingSpinner: React.FC<{ waitDots: string }> = ({ waitDots }) => {
   );
 };
 
-const CompletionCard: React.FC<{ dashboardPath: string; reportPath?: string }> = ({ dashboardPath, reportPath }) => {
-  const { t } = useTranslation('interview');
-  const router = useRouter();
-
-  return (
-    <div className="flex flex-col items-center text-center py-4 gap-0">
-      <div className="relative w-[72px] h-[72px] mb-4 shrink-0">
-        <div
-          className="absolute rounded-full border-[1.5px] border-[rgba(106,211,156,0.3)]"
-          style={{ inset: -6, animation: 'iv-completion-ring 2.4s ease-out infinite' }}
-        />
-        <div
-          className="w-full h-full rounded-full flex items-center justify-center border-2 border-[rgba(106,211,156,0.45)] shadow-[0_0_24px_rgba(106,211,156,0.15)]"
-          style={{ background: 'linear-gradient(135deg, rgba(106,211,156,0.18) 0%, rgba(16,185,129,0.1) 100%)' }}
-        >
-          <CheckCircle2 size={34} color="#10b981" />
-        </div>
-      </div>
-
-      <p className="font-sans font-bold text-[1.05rem] text-[#0d1117] tracking-tight mb-1">{t('ended.title')}</p>
-      <p className="font-sans text-[0.75rem] text-[#6b7280] leading-relaxed mb-5 max-w-[220px]">{t('ended.subtitle')}</p>
-
-      <div className="w-full h-px bg-[#f0f1f3] mb-5" />
-
-      <div className="w-full flex flex-col gap-3">
-        {(reportPath
-          ? [
-              { icon: '📊', label: 'Your interview has been analyzed by AI' },
-              { icon: '📈', label: 'Your skill profile has been updated' },
-              { icon: '✅', label: 'Full report is ready to view' },
-            ]
-          : [
-              { icon: '📊', label: 'Your answers are being analyzed by AI' },
-              { icon: '📩', label: 'Results will be sent to the recruiter' },
-              { icon: '✅', label: "You'll be notified once reviewed" },
-            ]
-        ).map(({ icon, label }) => (
-          <div key={label} className="flex items-center gap-3 px-3 py-2.5 rounded-[10px] bg-[#f9fafb] border border-[#f0f1f3] text-left">
-            <span className="text-[0.9rem] leading-none shrink-0">{icon}</span>
-            <p className="font-sans text-[0.7rem] text-[#4b5563] leading-snug">{label}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-5 w-full flex flex-col gap-2.5">
-        {reportPath && (
-          <button
-            onClick={() => router.push(reportPath)}
-            className="w-full font-sans font-bold text-[0.88rem] text-white py-3 rounded-[12px] bg-[#6366f1] hover:bg-[#4f46e5] transition-colors"
-          >
-            View Your Report
-          </button>
-        )}
-        <button
-          onClick={() => router.push(dashboardPath)}
-          className="w-full font-sans font-bold text-[0.88rem] py-3 rounded-[12px] border transition-colors"
-          style={{
-            background:  reportPath ? 'transparent' : '#10b981',
-            color:       reportPath ? '#6b7280' : '#fff',
-            borderColor: reportPath ? '#e5e7eb' : 'transparent',
-          }}
-        >
-          Go to Dashboard
-        </button>
-      </div>
-    </div>
-  );
-};
