@@ -12,7 +12,7 @@ const cron = require('node-cron');
 const Profile = require('../features/users/profile.model');
 const Subscription = require('../models/Subscription.model');
 const User = require('../features/users/user.model');
-const notificationService = require('../services/notificationSystem.service');
+const notificationService = require('../features/notifications/notification.service');
 const { sendPlanUpgradeReminder } = require('../utils/email-service');
 const logger = require('../utils/logger');
 

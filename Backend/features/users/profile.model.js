@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const TodoList = require("../../models/TodoList.model");
 
 // Sub-schemas for skills and softSkills to enable per-item timestamps
 const skillSchema = new mongoose.Schema(
@@ -104,9 +103,6 @@ const profileSchema = new mongoose.Schema(
     readyForMatch: { type: Boolean, default: false },
     isPublicProfile: { type: Boolean, default: false },
 
-    // ========== REFERENCES & ASSOCIATIONS ==========
-    todoList: { type: mongoose.Schema.Types.ObjectId, ref: "TodoList" },
-
     // ========== SUBSCRIPTION MANAGEMENT ==========
     activeSubscription: {
       type: mongoose.Schema.Types.ObjectId,
@@ -172,22 +168,6 @@ const profileSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
-profileSchema.post("save", async function (doc) {
-  try {
-    // ========== CREATE TODOLIST FOR CANDIDATES ==========
-    if (doc.type === "Candidate" && !doc.todoList) {
-      const todoList = await TodoList.create({ profile: doc._id });
-
-      await mongoose.model("Profile").findByIdAndUpdate(doc._id, {
-        todoList: todoList._id,
-      });
-    }
-
-  } catch (error) {
-    console.error("Error in Profile post-save hook:", error);
-  }
-});
 
 // Index to speed up queries filtering by visibility
 profileSchema.index({ isPublicProfile: 1 });

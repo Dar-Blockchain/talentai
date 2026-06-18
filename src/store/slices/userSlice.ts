@@ -72,6 +72,7 @@ export interface ConnectedUserProfile {
   planUsage?: any;
   overallScore?: number;
   interviewDetails?: any[];
+  resume?: string;
   isPublicProfile?: boolean;
   createdAt?: string;
   _id?: string;
@@ -221,6 +222,11 @@ const userSlice = createSlice({
         state.connectedUser.profile.softSkills = action.payload;
       }
     },
+    updateProfileResume(state, action: PayloadAction<string>) {
+      if (state?.connectedUser?.profile) {
+        state.connectedUser.profile.resume = action.payload;
+      }
+    },
     updatePlanUsage(state, action: PayloadAction<any>) {
       if (state?.connectedUser?.profile) {
         state.connectedUser.profile.planUsage = action.payload;
@@ -323,6 +329,7 @@ export const {
   updateProfileQuota,
   updateProfileSoftSkill,
   updateProfileSkills,
+  updateProfileResume,
   updatePlanUsage,
 } = userSlice.actions;
 

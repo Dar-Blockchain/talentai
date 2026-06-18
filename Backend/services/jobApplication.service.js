@@ -4,10 +4,10 @@ const { PDFParse } = require("pdf-parse");
 const JobApplication = require("../models/JobApplication.model");
 const PostInterviewAssessment = require("../features/interviews/post-interview/post-interview.model");
 const Profile = require("../features/users/profile.model");
-const CvAnalysis = require("../models/CvAnalysis.model");
+const CvAnalysis = require("../features/cv-analysis/cv-analysis.model");
 const Post = require("../models/Post.model");
 const { callLLM } = require("../helpers/bedrock.helpers");
-const { analyzeCV } = require("./analyseResume.service");
+const { analyzeCV } = require("../features/cv-analysis/analyse-resume.service");
 const { generateMatchingScorePrompt } = require("../prompts/matchingScorePrompt");
 
 // ========== CALCULATE MATCH SCORE WITH BEDROCK ==========

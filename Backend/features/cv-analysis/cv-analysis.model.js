@@ -88,4 +88,4 @@ cvAnalysisSchema.index({ seniority: 1 });
 cvAnalysisSchema.index({ skills: 1 });
 cvAnalysisSchema.index({ softSkills: 1 });
 
-module.exports = mongoose.model("CVAnalysis", cvAnalysisSchema);
+module.exports = mongoose.models.CVAnalysis || mongoose.model("CVAnalysis", cvAnalysisSchema);

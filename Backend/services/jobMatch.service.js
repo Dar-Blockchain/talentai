@@ -2,7 +2,7 @@ const Profile = require("../features/users/profile.model");
 const Post    = require("../models/Post.model");
 const User    = require("../features/users/user.model");
 const { sendJobMatchEmail } = require("../utils/email-service");
-const notificationService  = require("./notificationSystem.service");
+const notificationService  = require("../features/notifications/notification.service");
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 

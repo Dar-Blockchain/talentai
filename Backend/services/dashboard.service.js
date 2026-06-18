@@ -53,7 +53,7 @@ module.exports.getAllUsers = async (searchQuery, page = 1, limit = 10) => {
 const PostInterviewAssessment = require("../features/interviews/post-interview/post-interview.model");
 const JobAssessmentResult = PostInterviewAssessment; // alias for compatibility
 const { POST_STATUS } = require("../constants/posts.constants");
-const InternalCampaign = require("../models/InternalCampaign.model");
+const InternalCampaign = require("../features/campaigns/campaign.model");
 const CompanyMembership = require("../models/CompanyMembership.model");
 
 module.exports.getAllJobAssessments = async (page = 1, limit = 10) => {
@@ -535,7 +535,6 @@ module.exports.generateUserExcel = async () => {
         overallScore: user.profile.overallScore,
         skills: user.profile.skills,
         softSkills: user.profile.softSkills,
-        todoList: user.profile.todoList,
         interviewDetails: user.profile.interviewDetails,
         companyDetails: user.profile.companyDetails,
         requiredSkills: user.profile.requiredSkills,

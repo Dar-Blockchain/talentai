@@ -6,7 +6,7 @@ const CVAnalysisService = require("../cv-analysis/cv-analysis.service");
 const Profile           = require("../users/profile.model");
 const User              = require("../users/user.model");
 const logger            = require("../../utils/logger");
-const { analyzeCV }     = require("../../services/analyseResume.service");
+const { analyzeCV }     = require("../cv-analysis/analyse-resume.service");
 const { validateEmail, validateOTPInput } = require("./auth.validation");
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────

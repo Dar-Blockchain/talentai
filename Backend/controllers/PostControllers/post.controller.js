@@ -509,7 +509,7 @@ exports.getJobInterviewConfig = async (req, res) => {
 
           // Notify the company (best-effort — don't fail the response if it errors)
           try {
-            const notificationService = require("../../services/notificationSystem.service");
+            const notificationService = require("../../features/notifications/notification.service");
             const jobTitle = post.jobDetails?.title || "a job post";
             const planName = limitCheck.limitData?.planName || "your plan";
             const used = limitCheck.limitData?.used ?? 0;

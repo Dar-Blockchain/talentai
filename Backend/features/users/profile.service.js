@@ -180,7 +180,7 @@ module.exports.applyProfileUpdates = async (userId, profileData, filename) => {
 };
 
 module.exports.deleteResume = async (userId) => {
-  const CVAnalysis = require("../../models/CvAnalysis.model");
+  const CVAnalysis = require("../cv-analysis/cv-analysis.model");
 
   const profile = await Profile.findOne({ userId }).select("_id resume");
   if (!profile) {
