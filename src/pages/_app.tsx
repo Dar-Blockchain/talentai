@@ -17,6 +17,7 @@ import Head from "next/head";
 import ScrollToTop from "@/components/ui/ScrollToTop";
 import { Poppins } from "next/font/google";
 import MuiToast from "@/components/ui/Toast";
+import { Toaster } from "@/modules/shared/ui/shadcn/sonner";
 import { useToast, ToastProvider } from "@/hooks/useToast";
 import { NotificationProvider } from "@/modules/notifications/shared/context";
 import { AuthProvider, useAuthState, useAuthActions } from "@/modules/auth/shared/context/AuthContext";
@@ -259,6 +260,7 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
             <link rel="icon" href="/images/home/favico.png" type="image/png" />
           </Head>
           <main className={poppins.variable}>
+            <Toaster richColors />
             <ToastProvider>
               <MuiToastWrapper />
               <AuthWrapper>

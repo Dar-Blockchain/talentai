@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { useNotification } from '@/hooks/useNotification';
 import { type RootState } from '@/store/store';
 import { useCampaignInterviewConfig, type CampaignModuleType } from '../hooks/useCampaignInterviewConfig';
 import { useInterviewSession } from '../../shared/hooks/useInterviewSession';
@@ -20,8 +19,6 @@ export default function CampaignInterviewFlow({
 }: CampaignInterviewFlowProps = {}) {
   const { t } = useTranslation('modules/interview/campaign-interview');
   const authUser = useSelector((state: RootState) => state.user.connectedUser.user);
-  const { notification, showNotification, hideNotification } = useNotification();
-
   const overrides = propCampaignId !== undefined
     ? { campaignId: propCampaignId, moduleType: propModuleType }
     : undefined;
@@ -41,7 +38,6 @@ export default function CampaignInterviewFlow({
     setInterviewConfig: setInterviewConfig as any,
     authUser,
     jobData: null,
-    notify: showNotification,
     namespace: '/campaign-interview',
   });
 
@@ -71,8 +67,6 @@ export default function CampaignInterviewFlow({
     <InterviewScreen
       session={session}
       configData={{ jobData: null, interviewConfig: interviewConfig as any }}
-      notification={notification}
-      hideNotification={hideNotification}
       onBack={() => {
         console.log('[Campaign] Interview ended', { campaignId, moduleType });
         setStep('preview');

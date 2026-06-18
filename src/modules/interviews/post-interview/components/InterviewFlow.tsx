@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
-import { useNotification } from "@/hooks/useNotification";
 import { type RootState } from "@/store/store";
 import { useInterviewConfig } from "../hooks/useInterviewConfig";
 import { useInterviewSession } from "../hooks/useInterviewSession";
@@ -30,11 +29,7 @@ export default function InterviewFlow({ jobId: propJobId }: InterviewFlowProps =
 
   const [step, setStep] = useState<"preview" | "interview">("preview");
 
-  const { notification, showNotification, hideNotification } =
-    useNotification();
-
   const { interviewConfig, setInterviewConfig, jobData, isJobLoading, isConfigLoading } = useInterviewConfig({
-    showNotification,
     jobId: propJobId !== undefined ? propJobId : undefined,
   });
 
@@ -43,7 +38,6 @@ export default function InterviewFlow({ jobId: propJobId }: InterviewFlowProps =
     setInterviewConfig,
     authUser,
     jobData,
-    notify: showNotification,
   });
 
   const handleStartInterview = useCallback(() => {
@@ -79,8 +73,6 @@ export default function InterviewFlow({ jobId: propJobId }: InterviewFlowProps =
     <InterviewScreen
       session={session}
       configData={{ jobData, interviewConfig }}
-      notification={notification}
-      hideNotification={hideNotification}
       onBack={() => setStep("preview")}
     />
   );

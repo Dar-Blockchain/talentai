@@ -13,19 +13,22 @@ import { useAudioTranscription } from './useAudioTranscription';
 import { useInterviewTimer } from './useInterviewTimer';
 import { useCamera } from './useCamera';
 import { useSecurityMonitoring } from './useSecurityMonitoring';
+import { toast } from 'sonner';
 
 import { safeSet } from '@/utils/safeStorage';
 
 export type { UseInterviewSessionOptions };
+
+const notify = (message: string, severity: 'success' | 'error' | 'warning' | 'info') =>
+  toast[severity](message);
 
 export function useInterviewSession({
   interviewConfig,
   setInterviewConfig,
   authUser,
   jobData,
-  notify,
   namespace,
-}: UseInterviewSessionOptions) {
+}: Omit<UseInterviewSessionOptions, 'notify'>) {
   const [coverage, setCoverage] = useState<Coverage | null>(null);
   const [coverageDashboardExpanded, setCoverageDashboardExpanded] = useState(true);
   const [resultsReady, setResultsReady] = useState(false);

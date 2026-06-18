@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { useNotification } from '@/hooks/useNotification';
 import { type RootState } from '@/store/store';
 import { useSkillInterviewConfig, type SkillInterviewOverrides } from '../hooks/useSkillInterviewConfig';
 import { useInterviewSession } from '../../shared/hooks/useInterviewSession';
@@ -18,7 +17,6 @@ interface SkillInterviewFlowProps {
 export default function SkillInterviewFlow({ skill: propSkill, category: propCategory, language: propLanguage }: SkillInterviewFlowProps = {}) {
   const { t } = useTranslation('modules/interview/skill-interview');
   const authUser = useSelector((state: RootState) => state.user.connectedUser.user);
-  const { notification, showNotification, hideNotification } = useNotification();
 
   const overrides: SkillInterviewOverrides | undefined = propSkill !== undefined
     ? { skill: propSkill, category: propCategory, language: propLanguage }
@@ -37,7 +35,6 @@ export default function SkillInterviewFlow({ skill: propSkill, category: propCat
     setInterviewConfig,
     authUser,
     jobData: null,
-    notify: showNotification,
   });
 
   const handleStartInterview = useCallback(() => {
@@ -68,8 +65,6 @@ export default function SkillInterviewFlow({ skill: propSkill, category: propCat
     <InterviewScreen
       session={session}
       configData={{ jobData: null, interviewConfig }}
-      notification={notification}
-      hideNotification={hideNotification}
       onBack={() => setStep('preview')}
     />
   );

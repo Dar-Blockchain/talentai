@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-
+import { toast } from 'sonner';
 import { safeSet, safeRemove } from '@/utils/safeStorage';
 import { useRouter } from 'next/router';
 import { InterviewConfig } from '../../shared/types/interview';
@@ -12,7 +12,7 @@ import type { UseInterviewConfigReturn, UseInterviewConfigOptions } from '../typ
 
 export type { UseInterviewConfigReturn, UseInterviewConfigOptions };
 
-export const useInterviewConfig = ({ showNotification, jobId: propJobId }: UseInterviewConfigOptions): UseInterviewConfigReturn => {
+export const useInterviewConfig = ({ jobId: propJobId }: Omit<UseInterviewConfigOptions, 'showNotification'>): UseInterviewConfigReturn => {
   const router = useRouter();
   const jobId  = propJobId !== undefined
     ? propJobId
@@ -29,7 +29,7 @@ export const useInterviewConfig = ({ showNotification, jobId: propJobId }: UseIn
   );
 
   useEffect(() => {
-    if (configError) showNotification('Failed to load interview configuration', 'error');
+    if (configError) toast.error('Failed to load interview configuration');
   }, [configError]);
 
   // ── Apply fetched config ─────────────────────────────────────────────────────

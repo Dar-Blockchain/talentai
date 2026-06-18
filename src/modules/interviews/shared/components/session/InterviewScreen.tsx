@@ -40,27 +40,12 @@ interface InterviewScreenProps {
     jobData: any;
     interviewConfig: InterviewConfig | null;
   };
-  notification: {
-    open: boolean;
-    message: string;
-    severity: 'success' | 'error' | 'warning' | 'info';
-  };
-  hideNotification: () => void;
   onBack?: () => void;
 }
-
-const SEVERITY_STYLES: Record<string, string> = {
-  success: 'bg-[#f0fdf4] border-[#86efac] text-[#15803d]',
-  error:   'bg-[#fef2f2] border-[#fca5a5] text-[#dc2626]',
-  warning: 'bg-[#fffbeb] border-[#fde68a] text-[#d97706]',
-  info:    'bg-[#eff6ff] border-[#bfdbfe] text-[#2563eb]',
-};
 
 export default function InterviewScreen({
   session,
   configData,
-  notification,
-  hideNotification,
   onBack,
 }: InterviewScreenProps) {
   const router = useRouter();
@@ -325,22 +310,6 @@ export default function InterviewScreen({
         onDecline={handleBack}
       />
 
-      {/* Notification toast */}
-      {notification.open && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-          <div
-            className={`flex items-center gap-3 px-4 py-3 rounded-[12px] border shadow-lg font-sans text-[0.85rem] font-medium min-w-[260px] ${SEVERITY_STYLES[notification.severity] || SEVERITY_STYLES.info}`}
-          >
-            <span className="flex-1">{notification.message}</span>
-            <button
-              onClick={hideNotification}
-              className="text-current opacity-60 hover:opacity-100 transition-opacity ml-2 text-lg leading-none"
-            >
-              ×
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
