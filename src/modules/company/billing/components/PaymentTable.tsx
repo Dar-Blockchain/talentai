@@ -1,10 +1,5 @@
 import React from "react";
-import {
-  Box, CircularProgress, Paper, Table, TableBody,
-  TableCell, TableContainer, TableHead, TableRow, Typography,
-} from "@mui/material";
-import ArticleOutlined    from "@mui/icons-material/ArticleOutlined";
-import ReceiptLongOutlined from "@mui/icons-material/ReceiptLongOutlined";
+import { FileText, Receipt, Loader2 } from "lucide-react";
 import { Payment } from "@/store/slices/paymentSlice";
 import PaymentRow from "./PaymentRow";
 
@@ -17,32 +12,32 @@ interface Props {
 const COLUMNS = ["#", "Plan", "Amount", "Payment", "Subscription", "Date", "Invoice"];
 
 const PaymentTable: React.FC<Props> = ({ history, loading, subByPaymentId }) => (
-  <Paper sx={{ borderRadius: 3, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", overflow: "hidden" }}>
-    <Box sx={{ px: 3, py: 2.5, borderBottom: "1px solid #f3f4f6", display: "flex", alignItems: "center", gap: 1 }}>
-      <ArticleOutlined sx={{ color: "#0D9488", fontSize: 20 }} />
-      <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "#111827" }}>Payment History</Typography>
-    </Box>
+  <div className="overflow-hidden rounded-2xl bg-white shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
+    <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-5">
+      <FileText size={20} className="text-teal-600" />
+      <h2 className="text-[1rem] font-bold text-gray-900">Payment History</h2>
+    </div>
 
     {loading ? (
-      <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-        <CircularProgress size={36} sx={{ color: "#0D9488" }} />
-      </Box>
+      <div className="flex justify-center py-16">
+        <Loader2 size={36} className="animate-spin text-teal-600" />
+      </div>
     ) : history.length === 0 ? (
-      <Box sx={{ textAlign: "center", py: 8 }}>
-        <ReceiptLongOutlined sx={{ fontSize: 48, color: "#d1d5db", mb: 1.5 }} />
-        <Typography sx={{ color: "#6b7280", fontSize: "0.95rem" }}>No payment records found</Typography>
-      </Box>
+      <div className="py-16 text-center">
+        <Receipt size={48} className="mx-auto mb-3 text-gray-300" />
+        <p className="text-[0.95rem] text-gray-500">No payment records found</p>
+      </div>
     ) : (
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow sx={{ bgcolor: "#f9fafb" }}>
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-gray-50">
               {COLUMNS.map((h) => (
-                <TableCell key={h} sx={{ fontWeight: 700, color: "#374151", fontSize: "0.8rem" }}>{h}</TableCell>
+                <th key={h} className="px-4 py-3 text-left text-[0.8rem] font-bold text-gray-700">{h}</th>
               ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
             {history.map((payment, idx) => (
               <PaymentRow
                 key={payment._id}
@@ -51,11 +46,11 @@ const PaymentTable: React.FC<Props> = ({ history, loading, subByPaymentId }) => 
                 subStatus={subByPaymentId[payment._id]?.status}
               />
             ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+          </tbody>
+        </table>
+      </div>
     )}
-  </Paper>
+  </div>
 );
 
 export default PaymentTable;

@@ -1,6 +1,6 @@
 const { POST_STATUS } = require("../../constants/posts.constants");
 const postService = require("../../services/PosteServices/post.service");
-const subscriptionService = require("../../services/subscription.service");
+const subscriptionService = require("../../features/subscriptions/subscription.service");
 const {
   parseJsonFields,
   flattenPost,

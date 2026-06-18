@@ -1,8 +1,6 @@
 import React from "react";
-import { Grid } from "@mui/material";
-import AttachMoneyOutlined from "@mui/icons-material/AttachMoneyOutlined";
-import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
 import ReceiptLongOutlined from "@mui/icons-material/ReceiptLongOutlined";
+import { CheckCircle, Receipt, DollarSign } from "lucide-react";
 import PageHeader      from "@/modules/shared/layouts/dashboard/PageHeader";
 import StatCard        from "@/components/ui/StatCard";
 import { useBillingPage } from "../hooks/useBillingPage";
@@ -30,17 +28,11 @@ const BillingPageContent: React.FC = () => {
 
       <ActiveSubscriptionCard />
 
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
-          <StatCard icon={<CheckCircleOutlined />} label="Successful Payments" value={completedCount} color="#059669" />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
-          <StatCard icon={<ReceiptLongOutlined />} label="Total Invoices" value={history.length} color="#7C3AED" />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
-          <StatCard icon={<AttachMoneyOutlined />} label="Last Payment" value={lastAmount} color="#D97706" />
-        </Grid>
-      </Grid>
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <StatCard icon={<CheckCircle />} label="Successful Payments" value={completedCount} color="#059669" />
+        <StatCard icon={<Receipt />} label="Total Invoices" value={history.length} color="#7C3AED" />
+        <StatCard icon={<DollarSign />} label="Last Payment" value={lastAmount} color="#D97706" />
+      </div>
 
       <PaymentTable history={history} loading={loading} subByPaymentId={subByPaymentId} />
     </>

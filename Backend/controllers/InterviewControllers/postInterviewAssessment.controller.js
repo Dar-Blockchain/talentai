@@ -5,7 +5,7 @@ const User = require("../../features/users/user.model");
 const Profile = require("../../features/users/profile.model");
 const JobApplication = require("../../models/JobApplication.model");
 const Post = require("../../models/Post.model");
-const subscriptionService = require("../../services/subscription.service");
+const subscriptionService = require("../../features/subscriptions/subscription.service");
 const jobApplicationService = require("../../services/jobApplication.service");
 const { sendInterviewAssessmentEmail, sendInterviewCompletionNotificationToCompany } = require("../../utils/email-service");
 

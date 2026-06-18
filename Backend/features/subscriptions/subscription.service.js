@@ -1,15 +1,7 @@
 const mongoose = require("mongoose");
-const Subscription = require("../models/Subscription.model");
-const Profile = require("../features/users/profile.model");
-const PlanLimits = require("../models/PlanLimits.model");
+const Subscription = require("../../models/Subscription.model");
+const PlanLimits = require("../../models/PlanLimits.model");
 
-// ========== GET ACTIVE SUBSCRIPTION ==========
-
-/**
- * Get active subscription for a company
- * @param {string} companyProfileId - Company profile ID
- * @returns {object} - { success, data: subscription, message }
- */
 module.exports.getActiveSubscription = async (companyProfileId) => {
   try {
     if (!companyProfileId) {
@@ -18,7 +10,6 @@ module.exports.getActiveSubscription = async (companyProfileId) => {
       throw err;
     }
 
-    // Fetch all active non-Trial subscriptions (multiple plans allowed)
     const allActive = await Subscription.find({
       companyProfileId,
       status: "active",
@@ -37,31 +28,20 @@ module.exports.getActiveSubscription = async (companyProfileId) => {
       throw err;
     }
 
-    // Combined limits across all active subscriptions
     const combined = {
-      totalPostsLimit:      subscriptions.reduce((sum, s) => sum + (s.planId?.postsLimit || 0), 0),
-      totalInterviewLimit:  subscriptions.reduce((sum, s) => sum + (s.planId?.monthlyInterviewLimit || 0), 0),
-      totalPostsUsed:       subscriptions.reduce((sum, s) => sum + (s.postsUsed || 0), 0),
-      totalInterviewsUsed:  subscriptions.reduce((sum, s) => sum + (s.monthlyInterviewsUsed || 0), 0),
+      totalPostsLimit:     subscriptions.reduce((sum, s) => sum + (s.planId?.postsLimit || 0), 0),
+      totalInterviewLimit: subscriptions.reduce((sum, s) => sum + (s.planId?.monthlyInterviewLimit || 0), 0),
+      totalPostsUsed:      subscriptions.reduce((sum, s) => sum + (s.postsUsed || 0), 0),
+      totalInterviewsUsed: subscriptions.reduce((sum, s) => sum + (s.monthlyInterviewsUsed || 0), 0),
     };
 
-    return {
-      success: true,
-      data: subscriptions[0],       // primary subscription (most recent paid)
-      subscriptions,                 // all active subscriptions
-      combined,
-    };
+    return { success: true, data: subscriptions[0], subscriptions, combined };
   } catch (error) {
     console.error("Error getting active subscription:", error);
     throw error;
   }
 };
 
-/**
- * Get all subscriptions for a company (including expired/cancelled)
- * @param {string} companyProfileId - Company profile ID
- * @returns {object} - { success, data: subscriptions }
- */
 module.exports.getCompanySubscriptions = async (companyProfileId) => {
   try {
     if (!companyProfileId) {
@@ -74,25 +54,13 @@ module.exports.getCompanySubscriptions = async (companyProfileId) => {
       .populate("planId")
       .sort({ createdAt: -1 });
 
-    return {
-      success: true,
-      data: subscriptions,
-      count: subscriptions.length,
-    };
+    return { success: true, data: subscriptions, count: subscriptions.length };
   } catch (error) {
     console.error("Error fetching company subscriptions:", error);
     throw error;
   }
 };
 
-// ========== CHECK LIMITS ==========
-
-/**
- * Check if company can perform an action based on subscription limits
- * @param {string} companyProfileId - Company profile ID
- * @param {string} limitType - Type of limit: 'posts' or 'monthlyInterviews'
- * @returns {object} - { canUse, message, limitData }
- */
 module.exports.checkSubscriptionLimit = async (companyProfileId, limitType) => {
   try {
     const allActive = await Subscription.find({
@@ -107,16 +75,14 @@ module.exports.checkSubscriptionLimit = async (companyProfileId, limitType) => {
       return { canUse: false, message: "No active subscription found", limitData: null };
     }
 
-    // If all subscriptions are orphaned (planId deleted), auto-repair by re-linking to Free plan
     if (!valid.length && allActive.length) {
       try {
-        const freePlan = await require("../models/PlanLimits.model").findOne({ name: "Trial", isActive: true });
+        const freePlan = await PlanLimits.findOne({ name: "Trial", isActive: true });
         if (freePlan) {
-          await require("../models/Subscription.model").updateMany(
+          await Subscription.updateMany(
             { _id: { $in: allActive.map((s) => s._id) } },
             { planId: freePlan._id }
           );
-          // Re-fetch with repaired planId
           const repaired = await Subscription.find({
             companyProfileId,
             status: "active",
@@ -129,9 +95,7 @@ module.exports.checkSubscriptionLimit = async (companyProfileId, limitType) => {
       }
     }
 
-    // Use all valid subscriptions so Free + paid limits are combined
     const active = valid.length ? valid : allActive;
-
     let used = 0;
     let limit = 0;
 
@@ -175,15 +139,6 @@ module.exports.checkSubscriptionLimit = async (companyProfileId, limitType) => {
   }
 };
 
-// ========== INCREMENT USAGE ==========
-
-/**
- * Increment usage counter in subscription
- * @param {string} subscriptionId - Subscription ID
- * @param {string} usageType - Type: 'postsUsed' or 'monthlyInterviewsUsed'
- * @param {number} amount - Amount to increment (default: 1)
- * @returns {object} - { success, data: updated subscription }
- */
 module.exports.incrementUsage = async (subscriptionId, usageType, amount = 1) => {
   try {
     if (!subscriptionId || !usageType) {
@@ -198,8 +153,7 @@ module.exports.incrementUsage = async (subscriptionId, usageType, amount = 1) =>
       throw err;
     }
 
-    const updateObj = {};
-    updateObj[usageType] = amount;
+    const updateObj = { [usageType]: amount };
 
     const subscription = await Subscription.findByIdAndUpdate(
       subscriptionId,
@@ -213,27 +167,15 @@ module.exports.incrementUsage = async (subscriptionId, usageType, amount = 1) =>
       throw err;
     }
 
-    console.log(
-      `✅ [incrementUsage] ${usageType} incremented by ${amount}. New value: ${subscription[usageType]}`
-    );
+    console.log(`✅ [incrementUsage] ${usageType} incremented by ${amount}. New value: ${subscription[usageType]}`);
 
-    return {
-      success: true,
-      data: subscription,
-    };
+    return { success: true, data: subscription };
   } catch (error) {
     console.error("Error incrementing usage:", error);
     throw error;
   }
 };
 
-// ========== MONTHLY RESET ==========
-
-/**
- * Reset monthly interview counter if needed (if month has passed)
- * @param {string} subscriptionId - Subscription ID
- * @returns {object} - { success, data: subscription, wasReset }
- */
 module.exports.resetMonthlyInterviewIfNeeded = async (subscriptionId) => {
   try {
     const subscription = await Subscription.findById(subscriptionId);
@@ -246,46 +188,23 @@ module.exports.resetMonthlyInterviewIfNeeded = async (subscriptionId) => {
 
     const now = new Date();
     const lastReset = subscription.lastMonthlyResetDate || subscription.createdAt;
+    const daysDifference = Math.floor((now - lastReset) / (1000 * 60 * 60 * 24));
 
-    // Check if a month has passed
-    const daysDifference = Math.floor(
-      (now - lastReset) / (1000 * 60 * 60 * 24)
-    );
-    const monthsPassed = daysDifference / 30;
-
-    if (monthsPassed >= 1) {
+    if (daysDifference / 30 >= 1) {
       subscription.monthlyInterviewsUsed = 0;
       subscription.lastMonthlyResetDate = now;
       await subscription.save();
-
       console.log(`✅ [resetMonthlyInterview] Reset for subscription ${subscriptionId}`);
-
-      return {
-        success: true,
-        data: subscription,
-        wasReset: true,
-      };
+      return { success: true, data: subscription, wasReset: true };
     }
 
-    return {
-      success: true,
-      data: subscription,
-      wasReset: false,
-    };
+    return { success: true, data: subscription, wasReset: false };
   } catch (error) {
     console.error("Error resetting monthly interview:", error);
     throw error;
   }
 };
 
-// ========== CANCEL SUBSCRIPTION ==========
-
-/**
- * Cancel a subscription
- * @param {string} subscriptionId - Subscription ID
- * @param {string} reason - Cancellation reason
- * @returns {object} - { success, data: subscription }
- */
 module.exports.cancelSubscription = async (subscriptionId, reason = "") => {
   try {
     const subscription = await Subscription.findById(subscriptionId).populate("planId");
@@ -302,8 +221,6 @@ module.exports.cancelSubscription = async (subscriptionId, reason = "") => {
       throw err;
     }
 
-    // Disable auto-renewal only — subscription stays active until endDate.
-    // Status remains "active"; posts and interview assessments are fully preserved.
     subscription.autoRenew = false;
     subscription.cancellationReason = reason;
     subscription.cancelledAt = new Date();
@@ -322,25 +239,27 @@ module.exports.cancelSubscription = async (subscriptionId, reason = "") => {
   }
 };
 
-// ========== RE-ENABLE AUTO-RENEWAL ==========
-
 module.exports.enableAutoRenew = async (subscriptionId) => {
   try {
     const subscription = await Subscription.findById(subscriptionId);
+
     if (!subscription) {
       const err = new Error("Subscription not found");
       err.status = 404;
       throw err;
     }
+
     if (subscription.autoRenew) {
       const err = new Error("Auto-renewal is already enabled");
       err.status = 400;
       throw err;
     }
+
     subscription.autoRenew = true;
     subscription.cancellationReason = undefined;
     subscription.cancelledAt = undefined;
     await subscription.save();
+
     console.log(`✅ Subscription ${subscriptionId} auto-renewal re-enabled`);
     return { success: true, data: subscription, message: "Auto-renewal has been re-enabled." };
   } catch (error) {
@@ -349,13 +268,6 @@ module.exports.enableAutoRenew = async (subscriptionId) => {
   }
 };
 
-// ========== SUBSCRIPTION INFO ==========
-
-/**
- * Get detailed subscription info with plan limits and usage
- * @param {string} subscriptionId - Subscription ID
- * @returns {object} - { success, data: detailed subscription info }
- */
 module.exports.getSubscriptionDetails = async (subscriptionId) => {
   try {
     const subscription = await Subscription.findById(subscriptionId)
@@ -390,10 +302,7 @@ module.exports.getSubscriptionDetails = async (subscriptionId) => {
           monthlyInterviews: {
             used: subscription.monthlyInterviewsUsed,
             limit: planLimits.monthlyInterviewLimit,
-            remaining: Math.max(
-              0,
-              planLimits.monthlyInterviewLimit - subscription.monthlyInterviewsUsed
-            ),
+            remaining: Math.max(0, planLimits.monthlyInterviewLimit - subscription.monthlyInterviewsUsed),
           },
         },
         autoRenew: subscription.autoRenew,
@@ -407,12 +316,6 @@ module.exports.getSubscriptionDetails = async (subscriptionId) => {
   }
 };
 
-// ========== COMBINED ACTIVE DETAILS ==========
-
-/**
- * Get combined usage and limits across ALL active subscriptions for a company
- * Used by the frontend banner when multiple plans are active simultaneously
- */
 module.exports.getCombinedActiveDetails = async (companyProfileId) => {
   try {
     if (!companyProfileId) {
@@ -427,10 +330,8 @@ module.exports.getCombinedActiveDetails = async (companyProfileId) => {
       endDate: { $gt: new Date() },
     }).populate("planId").sort({ createdAt: -1 });
 
-    // Filter out orphaned subscriptions (planId no longer exists in DB)
     let valid = allActive.filter((s) => s.planId != null);
 
-    // Auto-repair orphaned subscriptions by matching payment plan name to current PlanLimits
     if (!valid.length && allActive.length) {
       console.log(`⚠️  [getCombinedActiveDetails] All ${allActive.length} subs are orphaned — attempting repair via Payment records`);
       const Payment = mongoose.model("Payment");
@@ -438,14 +339,12 @@ module.exports.getCombinedActiveDetails = async (companyProfileId) => {
 
       for (const sub of allActive) {
         try {
-          // Find the payment that created this subscription
           const payment = await Payment.findOne({ subscriptionId: sub._id }).select("planName planId");
           let planDoc = null;
           if (payment?.planName) {
             planDoc = await PlanLimits.findOne({ name: payment.planName, isActive: true });
           }
           if (!planDoc && payment?.planId) {
-            // planId on payment may still be valid even if sub.planId is gone
             planDoc = await PlanLimits.findById(payment.planId);
           }
           if (planDoc) {
@@ -459,7 +358,6 @@ module.exports.getCombinedActiveDetails = async (companyProfileId) => {
       }
       valid = allActive.filter((s) => s.planId != null);
 
-      // Last-resort: link all orphaned subs to Free plan
       if (!valid.length) {
         const freePlan = await mongoose.model("PlanLimits").findOne({ name: "Trial", isActive: true });
         if (freePlan) {
@@ -471,7 +369,6 @@ module.exports.getCombinedActiveDetails = async (companyProfileId) => {
       }
     }
 
-    // Use all valid subscriptions so Free + paid limits are combined
     const subscriptions = valid.length ? valid : allActive;
 
     if (!subscriptions.length || subscriptions.every((s) => !s.planId)) {
@@ -481,13 +378,12 @@ module.exports.getCombinedActiveDetails = async (companyProfileId) => {
     }
 
     const now = new Date();
-    const hasUnlimitedPosts     = subscriptions.some((s) => s.planId?.postsLimit === -1);
+    const hasUnlimitedPosts      = subscriptions.some((s) => s.planId?.postsLimit === -1);
     const hasUnlimitedInterviews = subscriptions.some((s) => s.planId?.monthlyInterviewLimit === -1);
     const totalPostsLimit     = hasUnlimitedPosts ? -1 : subscriptions.reduce((sum, s) => sum + (s.planId?.postsLimit || 0), 0);
     const totalInterviewLimit = hasUnlimitedInterviews ? -1 : subscriptions.reduce((sum, s) => sum + (s.planId?.monthlyInterviewLimit || 0), 0);
     const totalPostsUsed      = subscriptions.reduce((sum, s) => sum + (s.postsUsed || 0), 0);
     const totalInterviewsUsed = subscriptions.reduce((sum, s) => sum + (s.monthlyInterviewsUsed || 0), 0);
-    // Earliest end date across all active subs (the one expiring soonest)
     const soonestExpiry = subscriptions.reduce((min, s) => s.endDate < min ? s.endDate : min, subscriptions[0].endDate);
     const daysRemaining = Math.max(0, Math.ceil((new Date(soonestExpiry) - now) / 86400000));
 
@@ -531,33 +427,14 @@ module.exports.getCombinedActiveDetails = async (companyProfileId) => {
   }
 };
 
-// ========== BULK OPERATIONS ==========
-
-/**
- * Mark expired subscriptions as expired
- * Called by a cron job
- * @returns {object} - { success, count: number of updated subscriptions }
- */
 module.exports.markExpiredSubscriptions = async () => {
   try {
-    const now = new Date();
-
     const result = await Subscription.updateMany(
-      {
-        status: { $ne: "expired" },
-        endDate: { $lte: now },
-      },
-      {
-        status: "expired",
-      }
+      { status: { $ne: "expired" }, endDate: { $lte: new Date() } },
+      { status: "expired" }
     );
-
     console.log(`✅ Marked ${result.modifiedCount} subscriptions as expired`);
-
-    return {
-      success: true,
-      count: result.modifiedCount,
-    };
+    return { success: true, count: result.modifiedCount };
   } catch (error) {
     console.error("Error marking expired subscriptions:", error);
     throw error;
