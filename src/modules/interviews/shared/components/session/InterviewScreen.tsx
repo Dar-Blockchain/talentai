@@ -13,6 +13,7 @@ import InterviewSessionHeader from './InterviewSessionHeader';
 import GDPRConsentModal from '../modals/GDPRConsentModal';
 import SecurityModals from '../modals/SecurityModals';
 import ConfirmLeaveModal from './ConfirmLeaveModal';
+import FeedbackModal from './FeedbackModal';
 import { interviewScreenStyles } from '../../styles/interviewScreen.styles';
 import { type Coverage, type InterviewMessage, type InterviewConfig } from '../../types/interview';
 import { type UseInterviewSocketReturn } from '../../types/hooks';
@@ -81,10 +82,15 @@ export default function InterviewScreen({
 
   const isActive = socket.interviewStatus === 'active';
 
-  // Confirm-leave + feedback modals
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  // Confirm-leave + feedback modal
+  const [confirmOpen,  setConfirmOpen]  = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const pendingUrlRef = useRef<string | null>(null);
   const confirmedRef  = useRef(false);
+
+  useEffect(() => {
+    if (resultsReady && (!isSkillInterview || assessmentId)) setFeedbackOpen(true);
+  }, [resultsReady, assessmentId, isSkillInterview]);
 
   useEffect(() => {
     if (!isActive) return;
@@ -211,8 +217,55 @@ export default function InterviewScreen({
             />
           </div>
 
-          {/* Right: controls or lobby */}
-          {isActive ? (
+          {/* Right: interview complete / controls / lobby */}
+          {(resultsReady && (!isSkillInterview || assessmentId)) ? (
+            <div className="bg-white rounded-[20px] border border-[rgba(106,211,156,0.15)] shadow-[0_2px_16px_rgba(16,69,63,0.06)] flex flex-col items-center justify-center gap-5 p-6 min-h-0 h-full">
+              {/* Animated check */}
+              <div className="relative flex items-center justify-center">
+                <span className="absolute w-20 h-20 rounded-full bg-green-100 animate-ping opacity-20" />
+                <div className="relative w-16 h-16 rounded-full bg-green-50 border-2 border-green-200 flex items-center justify-center shadow-md">
+                  <svg className="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+
+              <div className="text-center">
+                <h2 className="text-xl font-bold text-gray-900 tracking-tight">Interview Complete</h2>
+                <p className="text-sm text-gray-400 mt-1 leading-relaxed">
+                  Your responses have been recorded<br />and analyzed successfully.
+                </p>
+              </div>
+
+              <div className="w-full h-px bg-gray-100" />
+
+              <div className="w-full flex flex-col gap-2">
+                {[
+                  { emoji: '🤖', label: 'Your interview has been analyzed by AI' },
+                  { emoji: '📊', label: 'Your skill profile has been updated' },
+                  { emoji: '✅', label: 'Full report is ready to view' },
+                ].map(({ emoji, label }) => (
+                  <div key={label} className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-100">
+                    <span className="text-base">{emoji}</span>
+                    <span className="text-sm text-gray-600 font-medium">{label}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="w-full flex flex-col gap-2.5">
+                {reportPath && (
+                  <button onClick={() => router.push(reportPath)}
+                    className="w-full py-3 rounded-2xl bg-violet-600 hover:bg-violet-700 active:scale-95 text-white text-sm font-bold transition-all shadow-md shadow-violet-200 cursor-pointer">
+                    View Report
+                  </button>
+                )}
+                <button onClick={() => router.push(dashboardPath)}
+                  className="w-full py-3 rounded-2xl border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50 active:scale-95 transition-all cursor-pointer">
+                  Go to Dashboard
+                </button>
+              </div>
+            </div>
+          ) : isActive ? (
             <InterviewControlsPanel
               interviewStatus={socket.interviewStatus}
               isHydrated={socket.isHydrated}
@@ -229,6 +282,20 @@ export default function InterviewScreen({
               onSubmitAnswer={audio.sendAccumulatedAnswer}
               onSkipQuestion={skipQuestion}
             />
+          ) : socket.interviewStatus === 'ended' ? (
+            <div className="bg-white rounded-[20px] border border-[rgba(106,211,156,0.15)] shadow-[0_2px_16px_rgba(16,69,63,0.06)] flex flex-col items-center justify-center p-6 min-h-0 h-full">
+              <InterviewContainer
+                noBorder
+                interviewStatus={socket.interviewStatus}
+                isHydrated={socket.isHydrated}
+                connectionStatus={socket.connectionStatus}
+                cameraStatus={camera.cameraStatus}
+                agentState={audio.agentState}
+                currentTranscript={audio.currentTranscript}
+                resultsReady={false}
+                onStartInterview={startInterview}
+              />
+            </div>
           ) : (
             <div className={`${interviewScreenStyles.lobbyCard} overflow-hidden`}>
               <div className={interviewScreenStyles.lobbyAccentBar} />
@@ -263,86 +330,19 @@ export default function InterviewScreen({
 
       <ConfirmLeaveModal open={confirmOpen} onConfirm={handleConfirmLeave} onCancel={handleCancelLeave} />
 
-
-      {/* <SecurityModals
-        showFirstViolationModal={security.showFirstViolationModal}
-        showSecurityModal={security.showSecurityModal}
-        violationType={security.violationType}
-        securityViolationCount={security.securityViolationCount}
-        onDismissFirst={() => security.setShowFirstViolationModal(false)}
-        onReturnToDashboard={() => router.push(dashboardPath)}
-      /> */}
-
       <GDPRConsentModal
         open={!camera.consentGiven}
         onAccept={camera.giveConsent}
         onDecline={handleBack}
       />
 
-      {/* Interview complete overlay */}
-      {resultsReady && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="relative bg-white w-full max-w-md mx-4 rounded-3xl shadow-2xl overflow-hidden">
-            {/* Top accent */}
-            <div className="h-1.5 w-full bg-linear-to-r from-violet-500 via-purple-500 to-indigo-500" />
-
-            <div className="flex flex-col items-center gap-6 px-8 py-10">
-              {/* Icon */}
-              <div className="relative flex items-center justify-center">
-                <span className="absolute w-24 h-24 rounded-full bg-green-100 animate-ping opacity-30" />
-                <div className="relative w-20 h-20 rounded-full bg-green-50 border-2 border-green-200 flex items-center justify-center shadow-lg">
-                  <svg className="w-10 h-10 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-              </div>
-
-              {/* Title */}
-              <div className="text-center">
-                <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Interview Complete</h2>
-                <p className="text-sm text-gray-400 mt-2 leading-relaxed">
-                  Your responses have been recorded<br />and analyzed successfully.
-                </p>
-              </div>
-
-              {/* Divider */}
-              <div className="w-full h-px bg-gray-100" />
-
-              {/* Highlights */}
-              <div className="w-full flex flex-col gap-2.5">
-                {[
-                  { emoji: '🤖', label: 'Your interview has been analyzed by AI' },
-                  { emoji: '📊', label: 'Your skill profile has been updated' },
-                  { emoji: '✅', label: 'Full report is ready to view' },
-                ].map(({ emoji, label }) => (
-                  <div key={label} className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-gray-50 border border-gray-100">
-                    <span className="text-base">{emoji}</span>
-                    <span className="text-sm text-gray-600 font-medium">{label}</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Buttons */}
-              <div className="w-full flex gap-3 mt-1">
-                {reportPath && (
-                  <button
-                    onClick={() => router.push(reportPath)}
-                    className="flex-1 py-3.5 rounded-2xl bg-violet-600 hover:bg-violet-700 active:scale-95 text-white text-sm font-bold transition-all shadow-md shadow-violet-200 cursor-pointer"
-                  >
-                    View Report
-                  </button>
-                )}
-                <button
-                  onClick={() => router.push(dashboardPath)}
-                  className="flex-1 py-3.5 rounded-2xl border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50 active:scale-95 transition-all cursor-pointer"
-                >
-                  Go to Dashboard
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Feedback modal (star rating popup) */}
+      <FeedbackModal
+        open={feedbackOpen}
+        interviewId={assessmentId ?? undefined}
+        interviewType={interviewConfig?.interviewType}
+        onDone={() => setFeedbackOpen(false)}
+      />
 
     </div>
   );

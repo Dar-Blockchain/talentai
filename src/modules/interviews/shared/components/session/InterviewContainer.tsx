@@ -116,21 +116,8 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
         {interviewStatus === 'active' && agentState !== 'thinking' && agentState !== 'processing' && (
           <LiveTranscript currentTranscript={currentTranscript} />
         )}
-        {interviewStatus === 'ended' && (
-          resultsReady
-            ? (
-              <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
-                <div className="relative flex items-center justify-center w-16 h-16">
-                  <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-20 animate-ping" />
-                  <div className="relative w-16 h-16 rounded-full bg-green-50 border-2 border-green-200 flex items-center justify-center">
-                    <CheckCircle size={30} className="text-green-500" />
-                  </div>
-                </div>
-                <p className="font-bold text-gray-900 text-base">Interview Complete</p>
-                <p className="text-xs text-gray-400">Your responses have been recorded successfully</p>
-              </div>
-            )
-            : <AnalyzingSpinner waitDots={waitDots} />
+        {interviewStatus === 'ended' && !resultsReady && (
+          <AnalyzingSpinner waitDots={waitDots} />
         )}
       </div>
     </div>
