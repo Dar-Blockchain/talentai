@@ -1,6 +1,6 @@
 const teamConversationService = require('./team-conversation.service');
 const TeamConversation = require('./team-conversation.model');
-const socket = require('../../socket');
+const socket = require('../../socket/io');
 
 const handleError = (res, error) => {
   return res.status(error.status || 500).json({ success: false, message: error.message || 'Internal server error' });

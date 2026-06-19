@@ -1,4 +1,4 @@
-const crypto = require("crypto");
+﻿const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const User = require("../users/user.model");
@@ -7,7 +7,7 @@ const CompanyMembershipModel = require("./company-membership.model");
 const CompanyInvitationModel = require("./company-invitation.model");
 const EmployeePermissionsModel = require("./employee-permissions.model");
 const employeePermissionsService = require("./employee-permissions.service");
-const { sendCompanyInvitation } = require("../../utils/email-service");
+const { sendCompanyInvitation } = require("../../utils/email.service");
 
 // Constants
 const INVITATION_EXPIRATION_TIME = 2 * 24 * 60 * 60 * 1000; // 2 days in milliseconds
@@ -62,7 +62,7 @@ const _sendInvitationEmail = async (email, senderName, role, invitationLink, isR
   try {
     await sendCompanyInvitation(email, senderName, role, senderName, invitationLink, language);
     if (isResend) {
-      console.log(`✅ Invitation resent to ${email}`);
+      console.log(`âœ… Invitation resent to ${email}`);
     }
   } catch (error) {
     console.error(`Failed to send ${isResend ? "resend" : "company"} invitation email:`, error);
@@ -282,9 +282,9 @@ module.exports.acceptInvitation = async (invitationId, userId, userEmail, token)
       { new: true }
     );
 
-    console.log("✅ Employee permissions created successfully for user:", userId);
+    console.log("âœ… Employee permissions created successfully for user:", userId);
   } catch (permError) {
-    console.error("⚠️ Warning: Failed to create employee permissions:", permError.message);
+    console.error("âš ï¸ Warning: Failed to create employee permissions:", permError.message);
     // Don't throw - membership creation was successful, continue with invitation acceptance
   }
 

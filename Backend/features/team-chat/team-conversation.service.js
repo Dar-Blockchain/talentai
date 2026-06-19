@@ -1,4 +1,4 @@
-const TeamConversation = require('./team-conversation.model');
+﻿const TeamConversation = require('./team-conversation.model');
 const TeamMessage = require('./team-message.model');
 const {
   resolveAndAssertCompanyContext,
@@ -8,7 +8,7 @@ const {
   createHttpError,
   assertValidObjectId,
   assertConversationNotHiddenForUser,
-} = require('../../helpers/team-chat-access.helpers');
+} = require('../../utils/team-chat-guards');
 
 const LAST_MESSAGE_DELETED_SENTINEL = '__DELETED__';
 

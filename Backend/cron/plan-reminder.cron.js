@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Plan Reminder Cron Job
  *
  * Runs daily at 10:00 AM and sends in-app + email reminders to Company accounts
@@ -13,14 +13,14 @@ const Profile = require('../features/users/profile.model');
 const Subscription = require('../features/billing/subscriptions/subscription.model');
 const User = require('../features/users/user.model');
 const notificationService = require('../features/notifications/notification.service');
-const { sendPlanUpgradeReminder } = require('../utils/email-service');
+const { sendPlanUpgradeReminder } = require('../utils/email.service');
 const logger = require('../utils/logger');
 
 const REMINDER_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 const MAX_REMINDERS = 2;
 
 async function sendPlanReminders() {
-  logger.info('🔔 [PlanReminder] Starting daily plan reminder check...');
+  logger.info('ðŸ”” [PlanReminder] Starting daily plan reminder check...');
 
   try {
     const now = new Date();
@@ -46,7 +46,7 @@ async function sendPlanReminders() {
       ],
     }).select('_id userId lastPlanReminderSentAt planReminderCount').lean();
 
-    logger.info(`📋 [PlanReminder] Found ${companyProfiles.length} company profiles eligible for reminder check`);
+    logger.info(`ðŸ“‹ [PlanReminder] Found ${companyProfiles.length} company profiles eligible for reminder check`);
 
     let notified = 0;
     let skipped = 0;
@@ -88,8 +88,8 @@ async function sendPlanReminders() {
 
         // Tailor message for 1st vs 2nd reminder
         const message = isSecondReminder
-          ? '⚠️ Final reminder: Your company still doesn\'t have an active plan. Upgrade now to keep using TalentAI features.'
-          : '🚀 Your company doesn\'t have an active plan. Upgrade now to unlock job posts, AI interviews, and candidate matching.';
+          ? 'âš ï¸ Final reminder: Your company still doesn\'t have an active plan. Upgrade now to keep using TalentAI features.'
+          : 'ðŸš€ Your company doesn\'t have an active plan. Upgrade now to unlock job posts, AI interviews, and candidate matching.';
 
         // In-app notification
         await notificationService.createNotification(recipientUserId, message, 'warning');
@@ -114,7 +114,7 @@ async function sendPlanReminders() {
       }
     }
 
-    logger.success(`[PlanReminder] Done — ${notified} reminders sent, ${skipped} skipped (have active plan)`);
+    logger.success(`[PlanReminder] Done â€” ${notified} reminders sent, ${skipped} skipped (have active plan)`);
   } catch (error) {
     logger.error('[PlanReminder] Fatal error:', error.message);
   }
@@ -122,7 +122,7 @@ async function sendPlanReminders() {
 
 function initialize() {
   cron.schedule('0 10 * * *', sendPlanReminders);
-  logger.success('[PlanReminder] Scheduled — runs daily at 10:00 AM');
+  logger.success('[PlanReminder] Scheduled â€” runs daily at 10:00 AM');
 }
 
 module.exports = { initialize, sendPlanReminders };

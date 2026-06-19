@@ -63,6 +63,7 @@ class IntelligentInterviewController {
   }
 
   initializeHandlers(io) {
+    this.service.initialize();
     const ns = io.of('/interview');
 
     ns.on('connection', (socket) => {

@@ -8,8 +8,8 @@
 'use strict';
 
 const ragService       = require('./rag.service');
-const configManager    = require('../../../utils/config-manager');
-const redisSessionManager = require('../../../utils/redis-session-manager');
+const configManager    = require('./config-manager');
+const redisSessionManager = require('./redis-session-manager');
 const Post             = require('../../posts/post.model');
 
 // AI sub-modules

@@ -1,12 +1,12 @@
-const Profile = require("../users/profile.model");
+﻿const Profile = require("../users/profile.model");
 const Post    = require("./post.model");
-const { sendJobMatchEmail } = require("../../utils/email-service");
+const { sendJobMatchEmail } = require("../../utils/email.service");
 const notificationService  = require("../notifications/notification.service");
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 
 // Normalize skill name for fuzzy matching:
-// "React.js" → "reactjs", "Next.js" → "nextjs", "Node JS" → "nodejs", "vue" → "vue"
+// "React.js" â†’ "reactjs", "Next.js" â†’ "nextjs", "Node JS" â†’ "nodejs", "vue" â†’ "vue"
 const normalize = (name) =>
   (name || "").toLowerCase().replace(/[\s.\-_]/g, "").replace(/js$/, "js");
 
@@ -72,7 +72,7 @@ module.exports.notifyMatchingCandidates = async (postId) => {
       if (recipientId) {
         notificationService.createNotification(
           recipientId,
-          `🎯 Great news! Your profile matches "${jobTitle}" at ${companyName}. Check it out now!`,
+          `ðŸŽ¯ Great news! Your profile matches "${jobTitle}" at ${companyName}. Check it out now!`,
           'info'
         ).catch(err => console.warn(`In-app notification failed for user ${recipientId}:`, err.message));
       }
@@ -80,9 +80,9 @@ module.exports.notifyMatchingCandidates = async (postId) => {
       sent++;
     }
 
-    console.log(`📧 Job match emails sent: ${sent} candidate(s) notified for post "${jobTitle}"`);
+    console.log(`ðŸ“§ Job match emails sent: ${sent} candidate(s) notified for post "${jobTitle}"`);
     return sent;
   } catch (error) {
-    console.error("❌ Error in notifyMatchingCandidates:", error.message);
+    console.error("âŒ Error in notifyMatchingCandidates:", error.message);
   }
 };

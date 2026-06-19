@@ -1,10 +1,10 @@
-const Post = require("./post.model");
+﻿const Post = require("./post.model");
 const User = require("../users/user.model");
 const Profile = require("../users/profile.model");
 const PostInterviewAssessmentModel = require("../interviews/post-interview/post-interview.model");
 const JobApplication = require("../job-applications/job-application.model");
 const subscriptionService = require("../billing/subscriptions/subscription.service");
-const bedrock = require("../../helpers/bedrock.helpers");
+const bedrock = require("../../utils/bedrock-client");
 const { generatePrompt, normalizeSkillAnalysis } = require("./prompts/generate-job-post.prompts");
 const validatePostData = (postData) => {
   const { jobDetails, skillAnalysis } = postData;
@@ -58,7 +58,7 @@ module.exports.createPostWithSideEffects = async (postData, token, userProfile) 
           1
         );
       } catch (usageError) {
-        console.error('⚠️ [createPostWithSideEffects] Warning: Could not update posts usage:', usageError.message);
+        console.error('âš ï¸ [createPostWithSideEffects] Warning: Could not update posts usage:', usageError.message);
       }
     }
 
@@ -87,7 +87,7 @@ module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6)
     query.status = 'open';
 
     if (status && status !== 'open') {
-      console.warn('⚠️ [getAllPostsWithSearch] Status filter ignored: only "open" posts are returned. Requested: ' + status);
+      console.warn('âš ï¸ [getAllPostsWithSearch] Status filter ignored: only "open" posts are returned. Requested: ' + status);
     }
 
     if (search) {
@@ -660,7 +660,7 @@ module.exports.getPostsStatusKPI = async (userId, page = 1, limit = 3, postId = 
   }
 };
 
-// ── Generate Job Post ──────────────────────────────────────────────────────────
+// â”€â”€ Generate Job Post â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function parseLLMJson(raw) {
   const firstBrace = raw.indexOf("{");
@@ -708,7 +708,7 @@ module.exports.generateJobPost = async (description, user, overrides = {}) => {
   const attemptOnce = async () => {
     const response = await bedrock.callLLM({
       systemPrompt:
-        "You are an expert technical recruiter and AI assistant specializing in job analysis, skill extraction, and structured job post generation. Your output must always be a single valid JSON object — no extra text, no markdown, no explanations. Follow every rule in the user prompt exactly and consistently.",
+        "You are an expert technical recruiter and AI assistant specializing in job analysis, skill extraction, and structured job post generation. Your output must always be a single valid JSON object â€” no extra text, no markdown, no explanations. Follow every rule in the user prompt exactly and consistently.",
       messages:    [{ role: "user", content: prompt }],
       temperature: 0.3,
       maxTokens:   4096,

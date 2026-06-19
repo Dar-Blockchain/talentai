@@ -56,7 +56,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
 
   const avatarUrl = useMemo(() => {
     const img = profile?.user_image || user?.user_image || profile?.userId?.user_image;
-    return img ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${img}` : null;
+    return img ? `${process.env.NEXT_PUBLIC_API_BASE_URL}uploads/images/${img}` : null;
   }, [profile?.user_image, profile?.userId?.user_image, user?.user_image]);
 
   const initials = useMemo(() => {

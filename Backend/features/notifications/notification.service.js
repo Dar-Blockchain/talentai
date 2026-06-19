@@ -1,6 +1,6 @@
 const Notification = require('./notification.model');
 const User = require('../users/user.model');
-const socket = require('../../socket');
+const socket = require('../../socket/io');
 
 async function createSystemNotification(recipientId, content) {
   if (!recipientId || !content) throw new Error('Recipient ID and content are required.');

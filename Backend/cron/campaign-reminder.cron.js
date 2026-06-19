@@ -1,8 +1,8 @@
-const cron = require("node-cron");
+﻿const cron = require("node-cron");
 const InternalCampaign = require("../features/campaigns/campaign.model");
 const CampaignParticipant = require("../features/campaigns/campaign-participant.model");
 const Profile = require("../features/users/profile.model");
-const { sendCampaignDeadlineReminder } = require("../utils/email-service");
+const { sendCampaignDeadlineReminder } = require("../utils/email.service");
 const logger = require("../utils/logger");
 
 const MODULE_LABELS = {
@@ -100,7 +100,7 @@ const scheduleCampaignReminders = () => {
   cron.schedule("5 * * * *", () => {
     runCampaignReminderJob();
   });
-  logger.info("[Campaign Reminder] Scheduler initialized — checks hourly, sends 48h deadline reminders");
+  logger.info("[Campaign Reminder] Scheduler initialized â€” checks hourly, sends 48h deadline reminders");
 };
 
 module.exports = { scheduleCampaignReminders, runCampaignReminderJob };

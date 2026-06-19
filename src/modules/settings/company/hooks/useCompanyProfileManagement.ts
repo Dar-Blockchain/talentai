@@ -20,7 +20,7 @@ const normalizeCompanySize = (size?: string): string =>
 
 const buildAvatarUrl = (...images: (string | undefined)[]): string => {
   const img = images.find(Boolean);
-  return img ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${img}` : '';
+  return img ? `${process.env.NEXT_PUBLIC_API_BASE_URL}uploads/images/${img}` : '';
 };
 
 const buildSyncedProfile = (

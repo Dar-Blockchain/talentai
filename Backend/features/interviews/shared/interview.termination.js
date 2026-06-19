@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const bedrock = require('../../../helpers/bedrock.helpers');
+const bedrock = require('../../../utils/bedrock-client');
 const AIUtils  = require('./ai/ai.utils');
 const { SHOULD_END_INTERVIEW_SYSTEM } = require('./prompts/report.prompts');
 

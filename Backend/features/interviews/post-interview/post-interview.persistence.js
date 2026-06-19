@@ -1,6 +1,7 @@
 const PostInterviewAssessment = require("./post-interview.model");
 const JobApplication          = require("../../job-applications/job-application.model");
 const Profile                 = require("../../../features/users/profile.model");
+const Post                    = require("../../posts/post.model");
 
 async function persistInterviewResults(sessionId, result, candidateId, postId) {
   try {
@@ -8,7 +9,14 @@ async function persistInterviewResults(sessionId, result, candidateId, postId) {
       ? { candidate: candidateId, post: postId }
       : { 'interviewData.sessionId': sessionId };
 
-    const updated = await PostInterviewAssessment.findOneAndUpdate(
+    // Resolve company for upsert (needed when pending record was never created)
+    let company = null;
+    if (candidateId && postId) {
+      const post = await Post.findById(postId).select('user').lean();
+      company = post?.user ?? null;
+    }
+
+    const saved = await PostInterviewAssessment.findOneAndUpdate(
       query,
       {
         $set: {
@@ -17,40 +25,36 @@ async function persistInterviewResults(sessionId, result, candidateId, postId) {
           'interviewData.analytics': result.sessionAnalytics,
           'interviewData.conversation': result.conversation || [],
         },
+        $setOnInsert: {
+          candidate: candidateId,
+          post: postId,
+          company,
+          'interviewData.sessionId': sessionId,
+        },
       },
-      { new: false }
+      { new: true, upsert: true }
     );
 
-    if (updated) {
+    if (saved) {
       console.log(`✅ [DB] Interview results saved — candidate: ${candidateId}, post: ${postId}`);
-    } else {
-      console.warn(`⚠️ [DB] No assessment found — candidate: ${candidateId}, post: ${postId}, session: ${sessionId}`);
     }
 
-    // Update the JobApplication status to "interview_completed"
+    // Update JobApplication status to "interview_completed"
     if (candidateId && postId) {
       try {
         const profile = await Profile.findOne({ userId: candidateId }).select('_id').lean();
-        if (!profile) {
-          console.warn(`⚠️ [DB] Profile not found for candidateId ${candidateId} — skipping JobApplication update`);
-        } else {
-          const updatedApp = await JobApplication.findOneAndUpdate(
+        if (profile) {
+          await JobApplication.findOneAndUpdate(
             { profile: profile._id, post: postId },
             { status: 'interview_completed', updatedAt: new Date() },
-            { new: true }
           );
-          if (updatedApp) {
-            console.log(`✅ [DB] JobApplication status → interview_completed — profile: ${profile._id}, post: ${postId}`);
-          } else {
-            console.warn(`⚠️ [DB] No JobApplication found — profile: ${profile._id}, post: ${postId}`);
-          }
         }
       } catch (err) {
-        console.error(`⚠️ [DB] Failed to update JobApplication status for session ${sessionId}:`, err.message);
+        console.error(`⚠️ [DB] Failed to update JobApplication status:`, err.message);
       }
     }
 
-    return { assessmentId: updated?._id ?? null };
+    return { assessmentId: saved?._id ?? null };
   } catch (err) {
     console.error(`⚠️ [DB] Failed to save results for session ${sessionId}:`, err.message);
     return { assessmentId: null };

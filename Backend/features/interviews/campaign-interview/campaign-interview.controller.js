@@ -29,6 +29,7 @@ class CampaignInterviewController {
   // ── Register handlers ────────────────────────────────────────────────────────
 
   initializeHandlers(io) {
+    this.service.initialize();
     const ns = io.of('/campaign-interview');
 
     ns.on('connection', (socket) => {

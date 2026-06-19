@@ -62,7 +62,7 @@ const ApplicationCard = memo<ApplicationCardProps>(({
   const name      = useMemo(() => `${app.firstName ?? ""} ${app.lastName ?? ""}`.trim() || "Unknown", [app.firstName, app.lastName]);
   const bgColor   = useMemo(() => avatarColor(name), [name]);
   const avatarUrl = useMemo(() =>
-    app.userImage ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${app.userImage}` : undefined,
+    app.userImage ? `${process.env.NEXT_PUBLIC_API_BASE_URL}uploads/images/${app.userImage}` : undefined,
   [app.userImage]);
 
   const appId     = useMemo(() => String(app.id), [app.id]);

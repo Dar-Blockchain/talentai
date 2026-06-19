@@ -154,7 +154,7 @@ const CandidateApplicationDetailPage: React.FC = () => {
     : user?.username || "Candidate";
   const initial   = displayName[0]?.toUpperCase() || "C";
   const avatarUrl = profile?.user_image
-    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${profile.user_image}`
+    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}uploads/images/${profile.user_image}`
     : undefined;
   const quota = profile?.quota ?? 0;
   const checklist = [

@@ -1,11 +1,11 @@
-const mongoose = require("mongoose");
-const { generateEmbedding, generateEmbeddings } = require("../../../helpers/bedrock.helpers");
+﻿const mongoose = require("mongoose");
+const { generateEmbedding, generateEmbeddings } = require("../../../utils/bedrock-client");
 require("dotenv").config();
 
 const EMBEDDING_DIMS = 1024; // Titan Text Embeddings V2 default
 const SIMILARITY_THRESHOLD = 0.72; // Lowered from 0.85 to catch theme-similar questions
 
-// ─── Collection Helpers ─────────────────────────────────────────────────────
+// â”€â”€â”€ Collection Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function getJdChunksCollection() {
   return mongoose.connection.db.collection("jd_chunks");
@@ -15,7 +15,7 @@ function getInterviewQuestionsCollection() {
   return mongoose.connection.db.collection("interview_questions");
 }
 
-// ─── Job Description Indexing ───────────────────────────────────────────────
+// â”€â”€â”€ Job Description Indexing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Chunk a job description into semantic sections, embed, and store.
@@ -82,11 +82,11 @@ async function indexJobDescription(jobId, jobData) {
 
   await col.insertMany(docs);
   console.log(
-    `✅ Indexed ${docs.length} JD chunks for job ${jobId}`
+    `âœ… Indexed ${docs.length} JD chunks for job ${jobId}`
   );
 }
 
-// ─── Question Indexing & Deduplication ──────────────────────────────────────
+// â”€â”€â”€ Question Indexing & Deduplication â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Store an asked question's embedding for deduplication.
@@ -161,7 +161,7 @@ async function findSimilarQuestions(
       error.message?.includes("vectorSearch")
     ) {
       console.warn(
-        "⚠️ Vector search index not available, skipping similarity check"
+        "âš ï¸ Vector search index not available, skipping similarity check"
       );
       return { isSimilar: false, similarQuestion: null, score: 0 };
     }
@@ -169,7 +169,7 @@ async function findSimilarQuestions(
   }
 }
 
-// ─── Context Retrieval ──────────────────────────────────────────────────────
+// â”€â”€â”€ Context Retrieval â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Retrieve relevant JD context + asked questions for the next question generation.
@@ -228,7 +228,7 @@ async function retrieveContext(jobId, interviewId, candidateLastResponse) {
         .toArray();
       jdContext = allChunks.map((c) => c.text).join("\n\n");
     } else {
-      console.error("❌ Error retrieving JD context:", error.message);
+      console.error("âŒ Error retrieving JD context:", error.message);
     }
   }
 
@@ -241,13 +241,13 @@ async function retrieveContext(jobId, interviewId, candidateLastResponse) {
 
     askedQuestions = questions.map((q) => q.question);
   } catch (error) {
-    console.error("❌ Error retrieving asked questions:", error.message);
+    console.error("âŒ Error retrieving asked questions:", error.message);
   }
 
   return { jdContext, askedQuestions };
 }
 
-// ─── Index Setup ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Index Setup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Ensure MongoDB collections and standard indexes exist.
@@ -263,9 +263,9 @@ async function ensureIndexes() {
     await qCol.createIndex({ interviewId: 1 });
     await qCol.createIndex({ interviewId: 1, createdAt: 1 });
 
-    console.log("✅ RAG standard indexes ensured");
+    console.log("âœ… RAG standard indexes ensured");
   } catch (error) {
-    console.warn("⚠️ Could not create RAG indexes:", error.message);
+    console.warn("âš ï¸ Could not create RAG indexes:", error.message);
   }
 }
 

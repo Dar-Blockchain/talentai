@@ -71,9 +71,8 @@ module.exports.updateUserImage = async (userId, newFilename) => {
       __dirname,
       "..",
       "..",
-      "public",
+      "uploads",
       "images",
-      "Users",
       oldImage,
     );
     fs.access(oldPath, fs.constants.F_OK, (err) => {

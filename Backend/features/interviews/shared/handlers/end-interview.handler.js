@@ -12,7 +12,6 @@ async function handleEndInterview(socket, { service, activeSessions, processing,
     logger.info('Ending session', { sessionId });
 
     const result = await service.endInterview(sessionId);
-    if (onSessionEnded) onSessionEnded(sessionId, result, socket);
 
     safeEmit(socket, 'interview_ended', {
       success: true, finalReport: result.finalReport,
@@ -25,6 +24,13 @@ async function handleEndInterview(socket, { service, activeSessions, processing,
     socket.sessionId = null;
 
     logger.info('Session ended', { sessionId });
+
+    // Persist after emitting interview_ended so the client gets the result immediately
+    if (onSessionEnded) {
+      onSessionEnded(sessionId, result, socket).catch(err =>
+        logger.warn('Session persistence failed', { sessionId, err: err.message })
+      );
+    }
   } catch (error) {
     logger.error('Failed to end interview', { err: error.message });
     safeEmit(socket, 'interview_error', { error: 'Failed to end interview', message: error.message });

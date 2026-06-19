@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
 const TeamConversation = require('./team-conversation.model');
 const TeamMessage = require('./team-message.model');
 const {
@@ -7,8 +7,8 @@ const {
   assertValidObjectId,
   assertConversationNotHiddenForUser,
   getClearedAtForUser,
-} = require('../../helpers/team-chat-access.helpers');
-const { detectContactSharing } = require('../../helpers/message-contact-policy.helpers');
+} = require('../../utils/team-chat-guards');
+const { detectContactSharing } = require('../../utils/contact-sharing-detector');
 
 const LAST_MESSAGE_BLOCKED_PREVIEW = '[Not delivered]';
 const LAST_MESSAGE_DELETED_SENTINEL = '__DELETED__';

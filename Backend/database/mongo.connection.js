@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const dbMonitor = require("../utils/database-monitor.service");
+const dbMonitor = require("./database-monitor.service");
 
 // Track reconnect state so we don't flood Atlas with parallel attempts
 let isReconnecting = false;

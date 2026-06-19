@@ -55,7 +55,7 @@ function registerMiddlewares(app) {
   app.use(express.urlencoded({ extended: true }));
 
   // ── Static files ────────────────────────────────────────────────────────────
-  app.use(express.static(path.join(__dirname, "../public")));
+  app.use("/uploads/images", express.static(path.join(__dirname, "../uploads/images")));
 
   // ── Request logging (dev only) ───────────────────────────────────────────────
   if (process.env.NODE_ENV !== "production") {

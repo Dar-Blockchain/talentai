@@ -1,4 +1,4 @@
-require("dotenv").config();
+﻿require("dotenv").config();
 const mongoose = require("mongoose");
 const { randomUUID } = require("crypto");
 const InternalCampaign = require("./campaign.model");
@@ -7,8 +7,8 @@ const CampaignResponse = require("./campaign-response.model");
 const CompanyMembership = require("../company-members/company-membership.model");
 const Profile = require("../users/profile.model");
 const User = require("../users/user.model");
-const bedrock = require("../../helpers/bedrock.helpers");
-const { sendCampaignInvitation } = require("../../utils/email-service");
+const bedrock = require("../../utils/bedrock-client");
+const { sendCampaignInvitation } = require("../../utils/email.service");
 
 const {
   createCampaign,
@@ -108,9 +108,9 @@ exports.createInternalCampaign = async (req, res) => {
                   }).then((sent) => sent && CampaignParticipant.findByIdAndUpdate(p._id, { invitationSentAt: new Date() }))
                 )
               );
-              console.log(`📧 Campaign invitation emails sent: ${results.filter((r) => r.status === "fulfilled").length}/${emailable.length}`);
+              console.log(`ðŸ“§ Campaign invitation emails sent: ${results.filter((r) => r.status === "fulfilled").length}/${emailable.length}`);
             } catch (err) {
-              console.warn("⚠️ Campaign bulk invitation emails failed:", err.message);
+              console.warn("âš ï¸ Campaign bulk invitation emails failed:", err.message);
             }
           })();
         }
@@ -118,7 +118,7 @@ exports.createInternalCampaign = async (req, res) => {
         campaign.participants = created.map((p) => p._id);
         await campaign.save();
       } catch (err) {
-        console.warn(`⚠️ Warning: Failed to create some participants: ${err.message}`);
+        console.warn(`âš ï¸ Warning: Failed to create some participants: ${err.message}`);
       }
     }
 
@@ -335,9 +335,9 @@ exports.updateCampaignStatus = async (req, res) => {
               }).then((sent) => sent && CampaignParticipant.findByIdAndUpdate(p._id, { invitationSentAt: new Date() }))
             )
           );
-          console.log(`📧 Campaign activation: emails sent to ${results.filter((r) => r.status === "fulfilled").length}/${participants.length}`);
+          console.log(`ðŸ“§ Campaign activation: emails sent to ${results.filter((r) => r.status === "fulfilled").length}/${participants.length}`);
         } catch (err) {
-          console.warn("⚠️ Campaign activation emails failed:", err.message);
+          console.warn("âš ï¸ Campaign activation emails failed:", err.message);
         }
       })();
     }
@@ -393,7 +393,7 @@ exports.getUserCampaigns = async (req, res) => {
 
     res.status(200).json({ success: true, data: campaigns, pagination: { page: pageNum, limit: limitNum, total, pages: Math.ceil(total / limitNum) } });
   } catch (error) {
-    console.error(`❌ Error in getUserCampaigns: ${error.message}`);
+    console.error(`âŒ Error in getUserCampaigns: ${error.message}`);
     res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -420,7 +420,7 @@ exports.getEmployeeCampaignMetrics = async (req, res) => {
     }
     res.status(200).json({ success: true, data: metrics });
   } catch (error) {
-    console.error(`❌ Error in getEmployeeCampaignMetrics: ${error.message}`);
+    console.error(`âŒ Error in getEmployeeCampaignMetrics: ${error.message}`);
     res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -440,7 +440,7 @@ exports.saveQuestionnaireProgress = async (req, res) => {
     if (!participant) participant = await CampaignParticipant.findOne({ campaign: campaignId, anonymousToken: participantId });
     if (!participant) participant = await CampaignParticipant.findOne({ campaign: campaignId, linkAccessToken: participantId });
     if (!participant) return res.status(404).json({ success: false, error: "Participant not found" });
-    if (participant.status === "COMPLETED") return res.status(200).json({ success: true, message: "Already completed — draft ignored" });
+    if (participant.status === "COMPLETED") return res.status(200).json({ success: true, message: "Already completed â€” draft ignored" });
 
     await CampaignResponse.findOneAndUpdate(
       { campaign: campaignId, participant: participant._id, moduleType: "QUESTIONNAIRE" },
@@ -461,8 +461,8 @@ async function scoreQuestionnaireAsync(responseId, campaign, answers) {
       const selected = Array.isArray(raw) ? raw : raw !== undefined && raw !== "" ? [String(raw)] : [];
       const answerText = selected.join(", ") || "(no answer)";
       if ((q.type === "SINGLE_CHOICE" || q.type === "MULTIPLE_CHOICE") && Array.isArray(q.options) && q.options.length > 0) {
-        const optionLines = q.options.map((opt) => `  ${selected.includes(opt) ? "✓" : "✗"} ${opt}`).join("\n");
-        return `Q${i + 1} [${q.type}]: ${q.question}\nAvailable options (✓ = selected by respondent):\n${optionLines}`;
+        const optionLines = q.options.map((opt) => `  ${selected.includes(opt) ? "âœ“" : "âœ—"} ${opt}`).join("\n");
+        return `Q${i + 1} [${q.type}]: ${q.question}\nAvailable options (âœ“ = selected by respondent):\n${optionLines}`;
       }
       if (q.type === "RATING") return `Q${i + 1} [RATING]: ${q.question}\nRating given: ${raw ?? 0}/5`;
       return `Q${i + 1} [TEXT]: ${q.question}\nAnswer: ${answerText}`;
@@ -474,8 +474,8 @@ Scoring rules:
 - RATING: score = (stars / 5) * 100.
 - SINGLE_CHOICE: 100 if correct/relevant, 0 if clearly wrong, 50 if partially relevant.
 - MULTIPLE_CHOICE: score = max(0, (correct_selected - wrong_selected) / total_correct_options) * 100.
-- TEXT: judge depth, clarity, and relevance (0–100).
-Respond ONLY with valid JSON — no markdown, no extra text.`;
+- TEXT: judge depth, clarity, and relevance (0â€“100).
+Respond ONLY with valid JSON â€” no markdown, no extra text.`;
 
     const userMessage = `Campaign context: ${campaign.description ?? campaign.title}\n\nQuestionnaire responses:\n${qaPairs}\n\nReturn JSON exactly:\n{\n  "scores": [<score_q1>, ...],\n  "aiScore": <overall_0_to_100>,\n  "aiSummary": "<2-3 sentence summary>"\n}`;
 
@@ -497,7 +497,7 @@ Respond ONLY with valid JSON — no markdown, no extra text.`;
       aiSummary: parsed.aiSummary ?? null,
     }});
   } catch (err) {
-    console.error(`❌ scoreQuestionnaireAsync failed for response ${responseId}:`, err.message);
+    console.error(`âŒ scoreQuestionnaireAsync failed for response ${responseId}:`, err.message);
   }
 }
 
@@ -537,7 +537,7 @@ exports.submitQuestionnaire = async (req, res) => {
     scoreQuestionnaireAsync(response._id, campaign, answers);
     res.status(200).json({ success: true, data: { responseId: response._id } });
   } catch (error) {
-    console.error(`❌ Error in submitQuestionnaire: ${error.message}`);
+    console.error(`âŒ Error in submitQuestionnaire: ${error.message}`);
     res.status(500).json({ success: false, error: error.message });
   }
 };

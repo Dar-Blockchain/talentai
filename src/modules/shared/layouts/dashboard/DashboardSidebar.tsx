@@ -161,7 +161,7 @@ useEffect(() => {
     : "";
 
   const avatarUrl = profile?.user_image
-    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${profile.user_image}`
+    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}uploads/images/${profile.user_image}`
     : null;
 
   const drawerWidth  = collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH;

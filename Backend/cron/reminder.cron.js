@@ -1,24 +1,24 @@
-const cron = require('node-cron');
+﻿const cron = require('node-cron');
 const JobApplication = require('../features/job-applications/job-application.model');
 const Profile = require('../features/users/profile.model');
 const Post = require('../features/posts/post.model');
 const User = require('../features/users/user.model');
-const { sendInterviewNudge } = require('../utils/email-service');
+const { sendInterviewNudge } = require('../utils/email.service');
 const { REMINDER_CONFIG, SCHEDULER_TIME_WINDOW } = require('./scheduler.constants');
-const { buildInterviewUrl } = require('../utils/interviewUrl');
+const { buildInterviewUrl } = require('../utils/interview-url');
 const logger = require('../utils/logger');
 
 /**
  * Interview Reminder Scheduler
  * 
  * Sends EXACTLY 2 reminders to candidates:
- * 🔔 FIRST REMINDER:  24 hours after JobApplication creation
- * 🔔 SECOND REMINDER: Less than 24 hours BEFORE post expirationDate
+ * ðŸ”” FIRST REMINDER:  24 hours after JobApplication creation
+ * ðŸ”” SECOND REMINDER: Less than 24 hours BEFORE post expirationDate
  * 
  * Example Timeline (Post expires in 5 days):
- * - Day 0: Candidate applies → JobApplication created
- * - Day 1 at ~24h: FIRST REMINDER sent ✅
- * - Day 4 at ~4h before expiration: SECOND REMINDER sent ✅
+ * - Day 0: Candidate applies â†’ JobApplication created
+ * - Day 1 at ~24h: FIRST REMINDER sent âœ…
+ * - Day 4 at ~4h before expiration: SECOND REMINDER sent âœ…
  * - Day 5: Post expires
  * 
  * Features:
@@ -81,7 +81,7 @@ const shouldSendSecondReminder = (application, post) => {
 
 const sendReminderEmail = async (application, post, reminderType) => {
   try {
-    //logger.debug(`📧 [REMINDER - ${reminderType}] Processing application: ${application._id}`);
+    //logger.debug(`ðŸ“§ [REMINDER - ${reminderType}] Processing application: ${application._id}`);
 
     // Fetch candidate profile
     const candidateProfile = await Profile.findById(application.profile).populate('userId');
@@ -162,7 +162,7 @@ const runReminderJob = async ({ force = false } = {}) => {
   try {
     const MSG = REMINDER_CONFIG.MESSAGES;
 
-    // logger.debug(`⏰ [REMINDER SCHEDULER] Running at ${new Date().toLocaleString()}${force ? ' (FORCED)' : ''}`);
+    // logger.debug(`â° [REMINDER SCHEDULER] Running at ${new Date().toLocaleString()}${force ? ' (FORCED)' : ''}`);
 
     // Check if we're within the time window (skip when forced or in test mode)
     if (!force && !isWithinTimeWindow()) {

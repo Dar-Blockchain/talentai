@@ -1,4 +1,4 @@
-const { sendEnterpriseInquiry } = require("../../utils/email-service");
+﻿const { sendEnterpriseInquiry } = require("../../utils/email.service");
 
 class ContactService {
   static validateContactInput(data) {
@@ -29,7 +29,7 @@ class ContactService {
         message: "Your message has been sent. Our team will get back to you within 24 hours.",
       };
     } catch (error) {
-      console.error("❌ Contact email failed:", error.message);
+      console.error("âŒ Contact email failed:", error.message);
       throw { status: error.status || 500, message: error.message || "Failed to send contact email." };
     }
   }

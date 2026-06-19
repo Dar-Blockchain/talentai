@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const bedrock  = require('../../../../helpers/bedrock.helpers');
+const bedrock  = require('../../../../utils/bedrock-client');
 const AIUtils  = require('./ai.utils');
 const { findLeastAskedArea, calculateAreaQualityAverage } = require('./coverage.helpers');
 const { DECISION_ENGINE_SYSTEM } = require('../prompts/analysis.prompts');

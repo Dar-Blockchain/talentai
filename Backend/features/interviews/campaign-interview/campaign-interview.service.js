@@ -1,23 +1,23 @@
-/**
+﻿/**
  * Campaign Interview Service
  * Lightweight AI interview engine for campaign-based assessments.
  *
- * AI_INTERVIEW  — uses campaign.module.config.agentPrompt as the interview brief
- * SKILL_TEST    — uses campaign.module.config.skill (e.g. "React") for technical assessment
+ * AI_INTERVIEW  â€” uses campaign.module.config.agentPrompt as the interview brief
+ * SKILL_TEST    â€” uses campaign.module.config.skill (e.g. "React") for technical assessment
  *
  * Deliberately simpler than intelligentInterview.service:
- *   • No job post / JD / RAG
- *   • Single-pass combined analysis + question generation (one LLM call per turn)
- *   • Lightweight coverage tracking
+ *   â€¢ No job post / JD / RAG
+ *   â€¢ Single-pass combined analysis + question generation (one LLM call per turn)
+ *   â€¢ Lightweight coverage tracking
  */
 
-const bedrock = require("../../../helpers/bedrock.helpers");
-const sessionMgr = require("../../../utils/redis-session-manager");
+const bedrock = require("../../../utils/bedrock-client");
+const sessionMgr = require("../shared/redis-session-manager");
 const Campaign = require("../../campaigns/campaign.model");
 const CampaignResponse = require("../../campaigns/campaign-response.model");
 const CampaignParticipant = require("../../campaigns/campaign-participant.model");
 require("dotenv").config();
-// ── Phase-aware, diversity-enforcing question prompt ──────────────────────────
+// â”€â”€ Phase-aware, diversity-enforcing question prompt â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function buildMixedQuestionPrompt({
   transcript,
   conversationSummary,
@@ -64,20 +64,20 @@ function buildMixedQuestionPrompt({
   return `
 You are conducting a live interview. Use the full context below to generate your next move.
 
-════ INTERVIEW TOPIC ════
+â•â•â•â• INTERVIEW TOPIC â•â•â•â•
 ${interviewTopic || "General assessment"}
 Every question you ask MUST be directly relevant to this topic. Do not ask generic questions unrelated to it.
 
-════ CONVERSATION HISTORY (last 4 turns) ════
-${conversationSummary || "(interview just started — this is the first question after the greeting)"}
+â•â•â•â• CONVERSATION HISTORY (last 4 turns) â•â•â•â•
+${conversationSummary || "(interview just started â€” this is the first question after the greeting)"}
 
-════ CANDIDATE'S LATEST ANSWER ════
+â•â•â•â• CANDIDATE'S LATEST ANSWER â•â•â•â•
 "${transcript}"
 
-════ LAST QUESTION YOU ASKED ════
-${lastQuestion ? `"${lastQuestion}"` : "(none yet — you just gave the opening greeting)"}
+â•â•â•â• LAST QUESTION YOU ASKED â•â•â•â•
+${lastQuestion ? `"${lastQuestion}"` : "(none yet â€” you just gave the opening greeting)"}
 
-════ INTERVIEW PROGRESS ════
+â•â•â•â• INTERVIEW PROGRESS â•â•â•â•
 Questions asked: ${questionsAsked} / ${maxQuestions} | Phase: ${phase.toUpperCase()} (${totalProgress}% through)
 Coverage: ${coverageLine}
 Topics explored so far: ${topicsCovered.join(", ") || "none yet"}
@@ -85,27 +85,27 @@ Topics still needed (priority order): ${remainingTopics.join(", ") || "all areas
 Question types recently used: ${recentTypes.join(", ") || "none"}
 Recommended next type (for variety): ${recommendedType}
 
-════ PHASE STRATEGY ════
+â•â•â•â• PHASE STRATEGY â•â•â•â•
 ${phaseGuide[phase]}
 
-════ YOUR TASK ════
-Step 1 — Evaluate the candidate's latest answer honestly.
-Step 2 — Decide your next move:
-  • "follow_up"      → if the answer was vague, incomplete, or skipped a key detail that needs probing
-  • "next_question"  → if the answer was sufficient and you should move to a new topic or angle
-  • "end_interview"  → ONLY if SHOULD_END is true OR overall coverage across all areas ≥ 75%
-Step 3 — Generate the next question or closing statement following ALL of these rules:
-  ✓ Use a DIFFERENT question type than the last 2 (avoid: ${recentTypes.join(", ") || "none"})
-  ✓ One question only — never compound questions or sub-questions
-  ✓ Human and conversational — no robotic phrasing
-  ✓ For "follow_up": acknowledge something specific the candidate said, then probe deeper on that exact point
-  ✓ For "next_question": one brief natural transition phrase, then the question
-  ✓ For "end_interview": warm, professional closing statement — not a question
-  ✓ Match the tone and depth to the "${phase}" phase
+â•â•â•â• YOUR TASK â•â•â•â•
+Step 1 â€” Evaluate the candidate's latest answer honestly.
+Step 2 â€” Decide your next move:
+  â€¢ "follow_up"      â†’ if the answer was vague, incomplete, or skipped a key detail that needs probing
+  â€¢ "next_question"  â†’ if the answer was sufficient and you should move to a new topic or angle
+  â€¢ "end_interview"  â†’ ONLY if SHOULD_END is true OR overall coverage across all areas â‰¥ 75%
+Step 3 â€” Generate the next question or closing statement following ALL of these rules:
+  âœ“ Use a DIFFERENT question type than the last 2 (avoid: ${recentTypes.join(", ") || "none"})
+  âœ“ One question only â€” never compound questions or sub-questions
+  âœ“ Human and conversational â€” no robotic phrasing
+  âœ“ For "follow_up": acknowledge something specific the candidate said, then probe deeper on that exact point
+  âœ“ For "next_question": one brief natural transition phrase, then the question
+  âœ“ For "end_interview": warm, professional closing statement â€” not a question
+  âœ“ Match the tone and depth to the "${phase}" phase
 
 SHOULD END: ${shouldEnd}
 
-Return ONLY valid JSON — no extra text, no markdown:
+Return ONLY valid JSON â€” no extra text, no markdown:
 {
   "analysis": {
     "quality": "poor|fair|good|excellent",
@@ -128,15 +128,15 @@ Return ONLY valid JSON — no extra text, no markdown:
 
 Coverage increase guide:
   0     = answer was off-topic, avoided, or empty
-  5–10  = partial or shallow answer — touched the area but lacked depth
-  10–15 = reasonable answer with some substance
-  15–20 = solid, well-articulated answer
-  20–25 = expert-level, detailed, insightful answer
+  5â€“10  = partial or shallow answer â€” touched the area but lacked depth
+  10â€“15 = reasonable answer with some substance
+  15â€“20 = solid, well-articulated answer
+  20â€“25 = expert-level, detailed, insightful answer
 
-If SHOULD END is true OR all areas have coverage ≥ 75%, decision MUST be "end_interview".
+If SHOULD END is true OR all areas have coverage â‰¥ 75%, decision MUST be "end_interview".
 `;
 }
-// ─── JSON helpers ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ JSON helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function parseJSON(raw, fallback) {
   try {
@@ -158,7 +158,7 @@ function parseJSON(raw, fallback) {
   }
 }
 
-// ─── Coverage area defaults ────────────────────────────────────────────────────
+// â”€â”€â”€ Coverage area defaults â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const SKILL_TEST_AREAS = (skill) => ({
   fundamentals: {
@@ -214,21 +214,21 @@ const AI_INTERVIEW_DEFAULT_AREAS = () => ({
   },
 });
 
-// ─── Service class ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ Service class â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class CampaignInterviewService {
   constructor() {
     this.sessionManager = sessionMgr;
   }
 
-  // ── Initialize ──────────────────────────────────────────────────────────────
+  // â”€â”€ Initialize â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async initialize() {
     try {
-      // The Redis session manager is a shared singleton — skip re-initialization if already connected
+      // The Redis session manager is a shared singleton â€” skip re-initialization if already connected
       if (this.sessionManager.isConnected && this.sessionManager.client) {
         console.log(
-          "✅ [CampaignInterview] Service initialized (Redis already connected)",
+          "âœ… [CampaignInterview] Service initialized (Redis already connected)",
         );
         return true;
       }
@@ -238,22 +238,22 @@ class CampaignInterviewService {
           setTimeout(() => r(new Error("Redis timeout")), 5000),
         ),
       ]).catch((err) => {
-        console.warn("⚠️ [CampaignInterview] Redis init failed:", err.message);
+        console.warn("âš ï¸ [CampaignInterview] Redis init failed:", err.message);
         return false;
       });
       console.log(
         ok
-          ? "✅ [CampaignInterview] Service initialized with Redis"
-          : "⚠️ [CampaignInterview] Service initialized WITHOUT Redis (degraded mode)",
+          ? "âœ… [CampaignInterview] Service initialized with Redis"
+          : "âš ï¸ [CampaignInterview] Service initialized WITHOUT Redis (degraded mode)",
       );
       return true;
     } catch (e) {
-      console.error("❌ [CampaignInterview] Init error:", e.message);
+      console.error("âŒ [CampaignInterview] Init error:", e.message);
       return true; // don't block server startup
     }
   }
 
-  // ── Start interview ─────────────────────────────────────────────────────────
+  // â”€â”€ Start interview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async startInterview(sessionId, config, candidateId, onGreetingChunk = null) {
     const { campaignId, moduleType } = config;
@@ -325,7 +325,7 @@ class CampaignInterviewService {
     };
   }
 
-  // ── Process candidate response ──────────────────────────────────────────────
+  // â”€â”€ Process candidate response â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async processCandidateResponse(sessionId, transcript) {
     const session = await this.sessionManager.getSession(sessionId);
@@ -400,25 +400,25 @@ class CampaignInterviewService {
     };
   }
 
-  // ── End interview ───────────────────────────────────────────────────────────
+  // â”€â”€ End interview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async endInterview(sessionId) {
     const session = await this.sessionManager.getSession(sessionId);
     if (!session) {
-      console.warn(`⚠️ [CampaignInterview] endInterview: session ${sessionId} not found in Redis — skipping persist`);
+      console.warn(`âš ï¸ [CampaignInterview] endInterview: session ${sessionId} not found in Redis â€” skipping persist`);
       return { success: true, sessionId };
     }
 
     const finalReport = await this._generateFinalReport(session);
 
-    // Persist results to MongoDB — throw so the caller can surface the error
+    // Persist results to MongoDB â€” throw so the caller can surface the error
     await this._persistResults(session, finalReport);
 
     // Delete session from Redis after successful save to prevent double-processing
     try {
       const key = this.sessionManager.sessionPrefix + sessionId;
       await this.sessionManager.client.del(key);
-    } catch (_) { /* non-critical — TTL will expire it anyway */ }
+    } catch (_) { /* non-critical â€” TTL will expire it anyway */ }
 
     return {
       success: true,
@@ -431,15 +431,15 @@ class CampaignInterviewService {
     };
   }
 
-  // ── Persist interview results to MongoDB ─────────────────────────────────────
+  // â”€â”€ Persist interview results to MongoDB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async _persistResults(session, finalReport) {
     const { campaignId, candidateId, moduleType, conversation = [], coverage } = session;
 
-    console.log(`📝 [CampaignInterview] _persistResults start — campaign=${campaignId} candidate=${candidateId} moduleType=${moduleType} turns=${conversation.length}`);
+    console.log(`ðŸ“ [CampaignInterview] _persistResults start â€” campaign=${campaignId} candidate=${candidateId} moduleType=${moduleType} turns=${conversation.length}`);
 
     if (!campaignId || !candidateId) {
-      console.warn("⚠️ [CampaignInterview] Missing campaignId or candidateId — skipping persist");
+      console.warn("âš ï¸ [CampaignInterview] Missing campaignId or candidateId â€” skipping persist");
       return;
     }
 
@@ -450,16 +450,16 @@ class CampaignInterviewService {
     });
 
     if (!participant) {
-      console.warn(`⚠️ [CampaignInterview] No participant found for campaign=${campaignId} employee=${candidateId} — upserting`);
+      console.warn(`âš ï¸ [CampaignInterview] No participant found for campaign=${campaignId} employee=${candidateId} â€” upserting`);
       participant = await CampaignParticipant.findOneAndUpdate(
         { campaign: campaignId, employee: candidateId },
         { $setOnInsert: { campaign: campaignId, employee: candidateId, status: 'IN_PROGRESS' } },
         { upsert: true, new: true, setDefaultsOnInsert: true },
       );
-      console.log(`✅ [CampaignInterview] Upserted participant ${participant._id}`);
+      console.log(`âœ… [CampaignInterview] Upserted participant ${participant._id}`);
     }
 
-    console.log(`📝 [CampaignInterview] Found participant ${participant._id}, building response...`);
+    console.log(`ðŸ“ [CampaignInterview] Found participant ${participant._id}, building response...`);
 
     const aiScore   = typeof finalReport.overallScore === "number" ? Math.round(finalReport.overallScore) : null;
     const aiSummary = finalReport.summary ?? null;
@@ -509,7 +509,7 @@ class CampaignInterviewService {
       };
     }
 
-    console.log(`📝 [CampaignInterview] Upserting CampaignResponse — campaign=${campaignId} participant=${participant._id} moduleType=${moduleType} aiScore=${aiScore} turns=${interviewTranscript.length}`);
+    console.log(`ðŸ“ [CampaignInterview] Upserting CampaignResponse â€” campaign=${campaignId} participant=${participant._id} moduleType=${moduleType} aiScore=${aiScore} turns=${interviewTranscript.length}`);
 
     const savedResponse = await CampaignResponse.findOneAndUpdate(
       { campaign: campaignId, participant: participant._id, moduleType },
@@ -517,7 +517,7 @@ class CampaignInterviewService {
       { upsert: true, new: true, runValidators: false },
     );
 
-    console.log(`✅ [CampaignInterview] CampaignResponse saved — _id=${savedResponse._id}`);
+    console.log(`âœ… [CampaignInterview] CampaignResponse saved â€” _id=${savedResponse._id}`);
 
     participant.status         = "COMPLETED";
     participant.completedAt    = new Date();
@@ -530,25 +530,25 @@ class CampaignInterviewService {
 
     await participant.save();
 
-    console.log(`✅ [CampaignInterview] Participant updated — _id=${participant._id} status=COMPLETED`);
+    console.log(`âœ… [CampaignInterview] Participant updated â€” _id=${participant._id} status=COMPLETED`);
   }
 
-  // ── Session storage ─────────────────────────────────────────────────────────
+  // â”€â”€ Session storage â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async _saveSession(sessionId, sessionData) {
     const mgr = this.sessionManager;
     if (!mgr.client || !mgr.isConnected) {
       throw new Error(
-        "Redis not connected — cannot create campaign interview session",
+        "Redis not connected â€” cannot create campaign interview session",
       );
     }
     const key = mgr.sessionPrefix + sessionId;
     await mgr.client.setEx(key, mgr.sessionTTL, JSON.stringify(sessionData));
-    console.log(`✅ [CampaignInterview] Session ${sessionId} stored in Redis`);
+    console.log(`âœ… [CampaignInterview] Session ${sessionId} stored in Redis`);
     return sessionData;
   }
 
-  // ── Private helpers ─────────────────────────────────────────────────────────
+  // â”€â”€ Private helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   _buildSkillContext(skill) {
     const s = skill || "General Programming";
@@ -559,51 +559,51 @@ class CampaignInterviewService {
       systemPrompt: `You are a senior technical interviewer conducting a rigorous ${s} skill assessment.
 
 ROLE
-Act as a knowledgeable, professional, and empathetic interviewer — like a senior engineer interviewing a peer. Your tone should be encouraging yet evaluative. Make the candidate feel at ease while genuinely testing their depth.
+Act as a knowledgeable, professional, and empathetic interviewer â€” like a senior engineer interviewing a peer. Your tone should be encouraging yet evaluative. Make the candidate feel at ease while genuinely testing their depth.
 
 INTERVIEW PROGRESSION
-Phase 1 – Warm-up (first 2 questions):
+Phase 1 â€“ Warm-up (first 2 questions):
   Broad, approachable questions about experience level and general familiarity with ${s}.
   Goal: break the ice, calibrate seniority level.
   Example style: "How long have you been working with ${s} and what kinds of projects have you used it on?"
 
-Phase 2 – Exploration (next 2–3 questions):
+Phase 2 â€“ Exploration (next 2â€“3 questions):
   Core concepts, common patterns, and practical application.
   Mix conceptual understanding with real-world usage.
   Example styles: "How does X work internally?", "How have you used Y in a production context?"
 
-Phase 3 – Deep-dive (next 2–3 questions):
+Phase 3 â€“ Deep-dive (next 2â€“3 questions):
   Advanced topics, edge cases, performance considerations, architectural trade-offs.
-  Push for genuine depth — probe if answers are shallow.
+  Push for genuine depth â€” probe if answers are shallow.
   Example styles: "What would happen if...?", "How would you approach optimizing...?"
 
-Phase 4 – Closing (last 1–2 questions):
+Phase 4 â€“ Closing (last 1â€“2 questions):
   Reflection, best practices, lessons learned.
   Example styles: "What's a mistake you made with ${s} and what did you learn?", "What advice would you give a junior developer starting with ${s}?"
 
-QUESTION TYPE ROTATION — always vary across:
-  • Conceptual   → test understanding of how/why things work
-  • Applied      → test hands-on experience with real projects
-  • Scenario     → present a problem and ask how they'd solve it
-  • Best-practice → probe for quality standards and code hygiene
-  • Problem-solving → give a challenge and evaluate their reasoning
+QUESTION TYPE ROTATION â€” always vary across:
+  â€¢ Conceptual   â†’ test understanding of how/why things work
+  â€¢ Applied      â†’ test hands-on experience with real projects
+  â€¢ Scenario     â†’ present a problem and ask how they'd solve it
+  â€¢ Best-practice â†’ probe for quality standards and code hygiene
+  â€¢ Problem-solving â†’ give a challenge and evaluate their reasoning
 
 ANTI-REPETITION RULES
-  – Never ask two conceptual questions in a row
-  – Never reuse the same example, framework feature, or scenario
-  – If a candidate gave an excellent answer, build on it — don't repeat the same angle
-  – If a candidate gave a poor answer, simplify slightly and try a different angle, don't abandon the area
+  â€“ Never ask two conceptual questions in a row
+  â€“ Never reuse the same example, framework feature, or scenario
+  â€“ If a candidate gave an excellent answer, build on it â€” don't repeat the same angle
+  â€“ If a candidate gave a poor answer, simplify slightly and try a different angle, don't abandon the area
 
 RESPONSE QUALITY ADAPTATION
-  – Excellent answer → increase difficulty, go deeper, ask about edge cases
-  – Good answer → probe one specific detail further before moving on
-  – Fair answer → stay at the same level, try a different angle
-  – Poor/avoided → give a simpler follow-up or pivot to a related area
+  â€“ Excellent answer â†’ increase difficulty, go deeper, ask about edge cases
+  â€“ Good answer â†’ probe one specific detail further before moving on
+  â€“ Fair answer â†’ stay at the same level, try a different angle
+  â€“ Poor/avoided â†’ give a simpler follow-up or pivot to a related area
 
 STYLE
-  – Concise, clear questions (one thing at a time — no compound questions)
-  – Brief acknowledgment of the previous answer before each new question (1 phrase max)
-  – Professional but never cold or robotic`,
+  â€“ Concise, clear questions (one thing at a time â€” no compound questions)
+  â€“ Brief acknowledgment of the previous answer before each new question (1 phrase max)
+  â€“ Professional but never cold or robotic`,
     };
   }
 
@@ -614,7 +614,7 @@ STYLE
 
     const conductRules = `
 INTERVIEW CONDUCT RULES
-- Ask one question at a time — no compound questions.
+- Ask one question at a time â€” no compound questions.
 - Vary question types every turn: behavioral, situational, technical (if relevant), motivational, problem-solving.
 - Acknowledge the candidate's previous answer with one brief phrase before each new question.
 - Adapt difficulty based on answer quality (deeper if excellent, simpler if poor).
@@ -638,17 +638,17 @@ Act as a knowledgeable, professional, and empathetic interviewer. Your tone is e
 You combine behavioral, situational, technical, and problem-solving questions to build a complete picture of the candidate's capabilities in "${topic}".
 
 INTERVIEW PROGRESSION
-Phase 1 – Warm-up: Ask about the candidate's overall experience with "${topic}" — how long, in what context.
-Phase 2 – Exploration: Probe specific knowledge, past projects, and practical application of "${topic}".
-Phase 3 – Deep-dive: Test advanced understanding, trade-offs, edge cases, and design decisions related to "${topic}".
-Phase 4 – Closing: Ask about best practices, lessons learned, or an achievement they're proud of involving "${topic}".
+Phase 1 â€“ Warm-up: Ask about the candidate's overall experience with "${topic}" â€” how long, in what context.
+Phase 2 â€“ Exploration: Probe specific knowledge, past projects, and practical application of "${topic}".
+Phase 3 â€“ Deep-dive: Test advanced understanding, trade-offs, edge cases, and design decisions related to "${topic}".
+Phase 4 â€“ Closing: Ask about best practices, lessons learned, or an achievement they're proud of involving "${topic}".
 
 QUESTION TYPE ROTATION (always vary):
-  • Conceptual     → "How does X work in the context of ${topic}?"
-  • Applied        → "Tell me about a project where you used ${topic}. What did you build?"
-  • Behavioral     → "Tell me about a challenge you faced with ${topic} and how you solved it."
-  • Situational    → "If you had to use ${topic} to solve [problem], how would you approach it?"
-  • Best-practice  → "What are the most common mistakes people make with ${topic}?"
+  â€¢ Conceptual     â†’ "How does X work in the context of ${topic}?"
+  â€¢ Applied        â†’ "Tell me about a project where you used ${topic}. What did you build?"
+  â€¢ Behavioral     â†’ "Tell me about a challenge you faced with ${topic} and how you solved it."
+  â€¢ Situational    â†’ "If you had to use ${topic} to solve [problem], how would you approach it?"
+  â€¢ Best-practice  â†’ "What are the most common mistakes people make with ${topic}?"
 
 ${conductRules}`;
     }
@@ -668,22 +668,22 @@ ${conductRules}`;
       moduleType === "SKILL_TEST"
         ? `Generate a warm, professional opening message to start a ${topic} skill assessment.
 The message must:
-1. Greet the candidate using "I" — do NOT include any name, placeholder, or bracket like [Your Name]. Just say "I" or "I'm your interviewer today".
-2. Set expectations briefly — mention it will be a conversational assessment covering ${topic} from fundamentals to advanced topics.
+1. Greet the candidate using "I" â€” do NOT include any name, placeholder, or bracket like [Your Name]. Just say "I" or "I'm your interviewer today".
+2. Set expectations briefly â€” mention it will be a conversational assessment covering ${topic} from fundamentals to advanced topics.
 3. End with a natural warm-up question asking about their experience level with ${topic} and the kinds of projects they've used it on.
 
 IMPORTANT: Never output placeholders like [Your Name], [Name], or any text in square brackets.
 Tone: encouraging, professional, human. Not robotic.
-Length: 3–4 sentences maximum. No bullet points, no headers.`
+Length: 3â€“4 sentences maximum. No bullet points, no headers.`
         : `Generate a warm, professional opening message to start an interview on the topic: "${topic}".
 The message must:
-1. Greet the candidate using "I" — do NOT include any name, placeholder, or bracket like [Your Name]. Just say "I" or "I'm your interviewer today".
+1. Greet the candidate using "I" â€” do NOT include any name, placeholder, or bracket like [Your Name]. Just say "I" or "I'm your interviewer today".
 2. Briefly mention the interview will focus on "${topic}" and that it's a conversation, not a test.
-3. End with an open warm-up question related to "${topic}" — for example, asking about their overall experience with it or how they've worked with it in the past.
+3. End with an open warm-up question related to "${topic}" â€” for example, asking about their overall experience with it or how they've worked with it in the past.
 
 IMPORTANT: Never output placeholders like [Your Name], [Name], or any text in square brackets.
 Tone: warm, welcoming, professional. Not robotic or formal.
-Length: 3–4 sentences maximum. No bullet points, no headers.`;
+Length: 3â€“4 sentences maximum. No bullet points, no headers.`;
 
     try {
       const res = await bedrock.callLLM({
@@ -698,7 +698,7 @@ Length: 3–4 sentences maximum. No bullet points, no headers.`;
       return res.content || this._fallbackGreeting(moduleType, skill);
     } catch (e) {
       console.warn(
-        "⚠️ [CampaignInterview] Greeting generation failed:",
+        "âš ï¸ [CampaignInterview] Greeting generation failed:",
         e.message,
       );
       return this._fallbackGreeting(moduleType, skill);
@@ -709,7 +709,7 @@ Length: 3–4 sentences maximum. No bullet points, no headers.`;
     const topic = skill || "technical";
     return moduleType === "SKILL_TEST"
       ? `Welcome! I'm your interviewer today and I'll be guiding you through a ${topic} assessment. We'll cover a range of topics from fundamentals to practical usage. To get started, could you tell me about your experience with ${topic} and the kinds of projects you've worked on?`
-      : `Welcome! I'm your interviewer today. This will be a relaxed conversation — not a test — so feel free to speak freely. To kick things off, could you give me a quick overview of your background and what you've been working on recently?`;
+      : `Welcome! I'm your interviewer today. This will be a relaxed conversation â€” not a test â€” so feel free to speak freely. To kick things off, could you give me a quick overview of your background and what you've been working on recently?`;
   }
 
 
@@ -758,25 +758,25 @@ Length: 3–4 sentences maximum. No bullet points, no headers.`;
 
     const userMsg = `
 You are generating a final assessment report based on the completed interview below.
-Be objective, evidence-based, and specific — reference actual things the candidate said, not generic observations.
+Be objective, evidence-based, and specific â€” reference actual things the candidate said, not generic observations.
 
-════ INTERVIEW TYPE ════
+â•â•â•â• INTERVIEW TYPE â•â•â•â•
 ${moduleType}
 
-════ COVERAGE ACHIEVED ════
+â•â•â•â• COVERAGE ACHIEVED â•â•â•â•
 ${coverageLines}
 Overall: ${Math.round(coverage.overall || 0)}%
 
-════ FULL CONVERSATION ════
+â•â•â•â• FULL CONVERSATION â•â•â•â•
 ${conversationText.slice(0, 4500)}
 
-════ SCORING GUIDELINES ════
-overallScore (0–100):
-  90–100 = Exceptional — would hire immediately, clear standout
-  75–89  = Strong — above expectations, recommend hire
-  60–74  = Solid — meets expectations with some gaps
-  45–59  = Mixed — some good areas but significant gaps
-  0–44   = Below bar — does not meet expectations
+â•â•â•â• SCORING GUIDELINES â•â•â•â•
+overallScore (0â€“100):
+  90â€“100 = Exceptional â€” would hire immediately, clear standout
+  75â€“89  = Strong â€” above expectations, recommend hire
+  60â€“74  = Solid â€” meets expectations with some gaps
+  45â€“59  = Mixed â€” some good areas but significant gaps
+  0â€“44   = Below bar â€” does not meet expectations
 
 communicationScore: clarity, structure, and effectiveness of expression
 confidenceScore: how decisive and self-assured responses were (not arrogance)
@@ -784,17 +784,17 @@ clarityScore: how precise, focused, and well-organized answers were
 engagementScore: enthusiasm, curiosity, and active participation
 
 recommendation rules:
-  strong_hire → overallScore ≥ 85
-  hire        → overallScore 70–84
-  consider    → overallScore 50–69
-  reject      → overallScore < 50
+  strong_hire â†’ overallScore â‰¥ 85
+  hire        â†’ overallScore 70â€“84
+  consider    â†’ overallScore 50â€“69
+  reject      â†’ overallScore < 50
 
-Respond ONLY with valid JSON — no markdown, no extra text:
+Respond ONLY with valid JSON â€” no markdown, no extra text:
 {
   "overallScore": <0-100>,
-  "summary": "<2–3 sentences: what stood out most — both positive and developmental — grounded in specific answers they gave>",
-  "strengths": ["<3–5 specific, evidence-based strengths observed during the interview>"],
-  "areasForImprovement": ["<2–4 concrete, actionable areas to develop>"],
+  "summary": "<2â€“3 sentences: what stood out most â€” both positive and developmental â€” grounded in specific answers they gave>",
+  "strengths": ["<3â€“5 specific, evidence-based strengths observed during the interview>"],
+  "areasForImprovement": ["<2â€“4 concrete, actionable areas to develop>"],
   "recommendation": "strong_hire|hire|consider|reject",
   "coverageSummary": { "<area_key>": <0-100> },
   "communicationScore": <0-100>,
@@ -834,7 +834,7 @@ Respond ONLY with valid JSON — no markdown, no extra text:
       });
       return parseJSON(res.content, fallback);
     } catch (e) {
-      console.warn("⚠️ [CampaignInterview] Final report failed:", e.message);
+      console.warn("âš ï¸ [CampaignInterview] Final report failed:", e.message);
       return fallback;
     }
   }
@@ -877,7 +877,7 @@ Respond ONLY with valid JSON — no markdown, no extra text:
       decision: shouldEnd ? "end_interview" : "next_question",
       questionType: "situational",
       nextQuestion: shouldEnd
-        ? "Thank you so much for your time today — I really enjoyed our conversation. That brings us to the end of this session."
+        ? "Thank you so much for your time today â€” I really enjoyed our conversation. That brings us to the end of this session."
         : "That's interesting. Could you walk me through a specific situation where you had to apply that in practice?",
       report: { strengths: [], areasForImprovement: [], overallProgress: 30 },
     };
@@ -893,7 +893,7 @@ Respond ONLY with valid JSON — no markdown, no extra text:
       });
       return parseJSON(res.content, fallback);
     } catch (e) {
-      console.warn("⚠️ [CampaignInterview] Combined turn failed:", e.message);
+      console.warn("âš ï¸ [CampaignInterview] Combined turn failed:", e.message);
       return fallback;
     }
   }

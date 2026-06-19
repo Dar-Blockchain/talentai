@@ -1,7 +1,7 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
 const Message = require('./message.model');
 const Conversation = require('./conversation.model');
-const { detectContactSharing } = require('../../helpers/message-contact-policy.helpers');
+const { detectContactSharing } = require('../../utils/contact-sharing-detector');
 
 const LAST_MESSAGE_BLOCKED_PREVIEW = '[Not delivered]';
 const LAST_MESSAGE_DELETED_SENTINEL = '__DELETED__';

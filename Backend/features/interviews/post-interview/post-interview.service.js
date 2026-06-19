@@ -5,6 +5,7 @@ const Profile = require("../../../features/users/profile.model");
 const User = require("../../../features/users/user.model");
 const crypto = require("crypto");
 const subscriptionService = require("../../../features/billing/subscriptions/subscription.service");
+const jobApplicationService = require("../../job-applications/job-application.service");
 
 // ========== MONTHLY INTERVIEW LIMIT HELPERS ==========
 const checkMonthlyInterviewLimit = async (companyId) => {
@@ -275,58 +276,52 @@ module.exports.getPostInterviewAssessmentById = async (assessmentId) => {
 
 
 // ========== CHECK INTERVIEW ELIGIBILITY ==========
-module.exports.checkInterviewEligibility = async (userId, postId, userRole) => {
-  try {
-    // Role blocks
-    if (userRole === 'Company')  return { status: 'company_blocked' };
-    if (userRole === 'Employee') return { status: 'employee_blocked' };
+module.exports.checkInterviewEligibility = async (candidateId, postId, userRole) => {
+  if (userRole === "Company")  return { status: "company_blocked" };
+  if (userRole === "Employee") return { status: "employee_blocked" };
 
-    const post = await Post.findById(postId).select(
-      'jobDetails createdBy archived expirationDate thresholdScore maxInterviewAttempts'
+  const post = await Post.findById(postId)
+    .select("archived expirationDate thresholdScore user jobDetails title");
+  if (!post) return { status: "not_found" };
+
+  if (post.archived) return { status: "archived" };
+
+  if (post.expirationDate && new Date(post.expirationDate) < new Date())
+    return { status: "expired" };
+
+  const companyProfile = await Profile.findOne({ userId: post.user }).select("_id activeSubscription");
+  if (companyProfile) {
+    const limitCheck = await subscriptionService.checkSubscriptionLimit(
+      companyProfile._id, "monthlyInterviews"
     );
-    if (!post) return { status: 'not_found' };
-
-    const jobTitle    = post.jobDetails?.title ?? '';
-    const companyName = '';
-
-    // Post state checks
-    if (post.archived) return { status: 'archived', meta: { jobTitle } };
-
-    if (post.expirationDate && new Date(post.expirationDate) < new Date()) {
-      return { status: 'expired', meta: { jobTitle } };
+    if (!limitCheck.canUse) {
+      return { status: "limit_reached", meta: { jobTitle: post.jobDetails?.title || "" } };
     }
-
-    // Past assessments for this candidate on this post
-    const assessments = await PostInterviewAssessment.find({
-      candidate: userId,
-      post:      postId,
-      completed: true,
-    }).sort({ createdAt: -1 });
-
-    if (assessments.length === 0) return { status: 'eligible', meta: { jobTitle, companyName } };
-
-    // Attempt limit (default: 1)
-    const maxAttempts = post.maxInterviewAttempts ?? 1;
-    if (assessments.length >= maxAttempts) {
-      const best  = assessments.reduce((top, a) => {
-        const s = a.interviewData?.finalReport?.scores?.overall ?? 0;
-        return s > (top.interviewData?.finalReport?.scores?.overall ?? 0) ? a : top;
-      }, assessments[0]);
-      const score    = best.interviewData?.finalReport?.scores?.overall ?? 0;
-      const required = post.thresholdScore ?? 0;
-
-      if (required > 0 && score < required) {
-        return { status: 'under_threshold', meta: { jobTitle, companyName, score, required } };
-      }
-
-      return { status: 'limit_reached', meta: { jobTitle, companyName } };
-    }
-
-    return { status: 'eligible', meta: { jobTitle, companyName } };
-  } catch (error) {
-    console.error('❌ Error checking interview eligibility:', error.message);
-    throw error;
   }
+
+  // Record visit as a job application (idempotent — 409 on repeat visits is expected)
+  const candidateProfile = await Profile.findOne({ userId: candidateId }).select("_id");
+  if (candidateProfile) {
+    jobApplicationService.createJobApplication({
+      profile: candidateProfile._id,
+      post: postId,
+      company: post.user,
+    }).catch(() => {});
+  }
+
+  const completed = await PostInterviewAssessment.exists({ candidate: candidateId, post: postId, completed: true });
+  if (completed) return { status: "completed", meta: { jobTitle: post.jobDetails?.title || post.title || "" } };
+
+  if (post.thresholdScore != null && candidateProfile) {
+    const JobApplication = require("../../job-applications/job-application.model");
+    const application = await JobApplication.findOne({ profile: candidateProfile._id, post: postId })
+      .select("matchScore").lean();
+    if (application?.matchScore != null && application.matchScore < post.thresholdScore) {
+      return { status: "under_threshold", meta: { required: post.thresholdScore, score: application.matchScore } };
+    }
+  }
+
+  return { status: "eligible" };
 };
 
 // ========== KPI - Unreviewed interviews older than 48 hours ==========

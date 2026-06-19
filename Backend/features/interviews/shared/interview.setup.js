@@ -1,8 +1,8 @@
 ﻿'use strict';
 
-const bedrock = require('../../../helpers/bedrock.helpers');
+const bedrock = require('../../../utils/bedrock-client');
 const AIUtils  = require('./ai/ai.utils');
-const { detectJobCategory, getEvaluationFramework } = require('../../../utils/config-manager');
+const { detectJobCategory, getEvaluationFramework } = require('./config-manager');
 const { buildGreetingSystem, buildSilenceUser } = require('./prompts/generation.prompts');
 const { buildPostInterviewGreetingUser, buildAgentPersonaUser, buildFinalReportUser } = require('../post-interview/prompts/post-interview.prompts');
 const { buildSkillInterviewGreetingUser } = require('../skill-interview/prompts/skill-interview.prompts');

@@ -1,11 +1,11 @@
-const cron = require('node-cron');
+﻿const cron = require('node-cron');
 const JobApplication = require('../features/job-applications/job-application.model');
 const Profile = require('../features/users/profile.model');
 const Post = require('../features/posts/post.model');
 const User = require('../features/users/user.model');
-const { sendInterviewNudge } = require('../utils/email-service');
+const { sendInterviewNudge } = require('../utils/email.service');
 const { AUTO_INVITE_CONFIG, SCHEDULER_TIME_WINDOW } = require('./scheduler.constants');
-const { buildInterviewUrl } = require('../utils/interviewUrl');
+const { buildInterviewUrl } = require('../utils/interview-url');
 const logger = require('../utils/logger');
 
 /**
@@ -66,14 +66,14 @@ const sendAutoInvitation = async (application) => {
     const companyName = companyProfile?.companyDetails?.name || company.username || company.email || 'Our Company';
     const interviewLink = `${process.env.BASE_URL}${buildInterviewUrl({ type: 'post', jobId: String(post._id), companyId: String(post.user), ref: 'link' })}`;
 
-    logger.debug(`   📧 To: ${candidateEmail}`);
-    logger.debug(`   👤 Candidate: ${firstName}`);
-    logger.debug(`   📋 Position: ${jobTitle}`);
-    logger.debug(`   🏢 Company: ${companyName}`);
-    logger.debug(`   🔗 Interview Link: ${interviewLink}`);
-    logger.debug(`   🌐 Language: ${jobLanguage}`);
+    logger.debug(`   ðŸ“§ To: ${candidateEmail}`);
+    logger.debug(`   ðŸ‘¤ Candidate: ${firstName}`);
+    logger.debug(`   ðŸ“‹ Position: ${jobTitle}`);
+    logger.debug(`   ðŸ¢ Company: ${companyName}`);
+    logger.debug(`   ðŸ”— Interview Link: ${interviewLink}`);
+    logger.debug(`   ðŸŒ Language: ${jobLanguage}`);
 
-    // Nudge #1 — welcoming first invitation (24h after applying)
+    // Nudge #1 â€” welcoming first invitation (24h after applying)
     const emailSent = await sendInterviewNudge(
       candidateEmail,
       { firstName, jobTitle, companyName, interviewLink, deadline: null },
@@ -112,13 +112,13 @@ const runAutoInviteJob = async ({ force = false } = {}) => {
     const MSG = AUTO_INVITE_CONFIG.MESSAGES;
     const CONFIG = AUTO_INVITE_CONFIG;
 
-   // logger.debug(`⏰ [AUTO INVITE SCHEDULER] Running at ${new Date().toLocaleString()}${force ? ' (FORCED)' : ''}`);
+   // logger.debug(`â° [AUTO INVITE SCHEDULER] Running at ${new Date().toLocaleString()}${force ? ' (FORCED)' : ''}`);
 
     // Check if we're within the time window (skip when forced or in test mode)
     if (!force && !isWithinTimeWindow()) {
       const currentHour = new Date().getHours();
      // logger.debug(`${MSG.OUTSIDE_WINDOW}`);
-     // logger.debug(`   ⏰ Auto-invitations are only sent between ${SCHEDULER_TIME_WINDOW.START_HOUR}:00 and ${SCHEDULER_TIME_WINDOW.END_HOUR}:00`);
+     // logger.debug(`   â° Auto-invitations are only sent between ${SCHEDULER_TIME_WINDOW.START_HOUR}:00 and ${SCHEDULER_TIME_WINDOW.END_HOUR}:00`);
       return;
     }
 
@@ -150,9 +150,9 @@ const runAutoInviteJob = async ({ force = false } = {}) => {
     for (const application of pendingApplications) {
       const hoursElapsed = calculateHoursSinceApplication(application.appliedAt);
       
-      // logger.debug(`\n📋 Application ${application._id}`);
-      // logger.debug(`   ⏱️  Hours since application: ${hoursElapsed.toFixed(2)}`);
-      // logger.debug(`   📧 Invitation #1`);
+      // logger.debug(`\nðŸ“‹ Application ${application._id}`);
+      // logger.debug(`   â±ï¸  Hours since application: ${hoursElapsed.toFixed(2)}`);
+      // logger.debug(`   ðŸ“§ Invitation #1`);
       // logger.debug(`   Status: ${application.status}`);
 
       const sent = await sendAutoInvitation(application);

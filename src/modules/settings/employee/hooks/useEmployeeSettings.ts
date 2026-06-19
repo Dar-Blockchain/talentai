@@ -31,7 +31,7 @@ export const useEmployeeSettings = () => {
     : user?.username || '';
 
   const avatarUrl = (profile?.user_image || user?.user_image)
-    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${profile?.user_image || user?.user_image}`
+    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}uploads/images/${profile?.user_image || user?.user_image}`
     : null;
 
   const initials = displayName

@@ -114,7 +114,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unre
 
   const avatarUrl = (() => {
     const img = profile?.user_image || user?.user_image || profile?.userId?.user_image;
-    return img ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${img}` : null;
+    return img ? `${process.env.NEXT_PUBLIC_API_BASE_URL}uploads/images/${img}` : null;
   })();
 
   // Role badge meta

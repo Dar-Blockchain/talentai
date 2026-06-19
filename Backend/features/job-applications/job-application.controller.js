@@ -1,5 +1,5 @@
-const jobApplicationService = require("./job-application.service");
-const { sendInterviewInvitation, sendCandidateEmail } = require("../../utils/email-service");
+﻿const jobApplicationService = require("./job-application.service");
+const { sendInterviewInvitation, sendCandidateEmail } = require("../../utils/email.service");
 const profileService = require("../users/profile.service");
 const postService = require("../posts/post.service");
 const JobApplication = require("./job-application.model");
@@ -19,18 +19,18 @@ const handleError = (res, error, defaultStatus = 500) => {
 module.exports.createJobApplication = async (req, res) => {
   try {
     console.log("\n" + "=".repeat(80));
-    console.log("🚀 [JOB APPLICATION] - STARTING CREATE JOB APPLICATION PROCESS");
+    console.log("ðŸš€ [JOB APPLICATION] - STARTING CREATE JOB APPLICATION PROCESS");
     console.log("=".repeat(80));
 
     const userId = req.user._id;
     const { post: postId } = req.body;
 
-    console.log(`📝 Request received from user: ${userId}`);
-    console.log(`📋 Post ID: ${postId}`);
+    console.log(`ðŸ“ Request received from user: ${userId}`);
+    console.log(`ðŸ“‹ Post ID: ${postId}`);
 
     // Validation: only post is required
     if (!postId) {
-      console.error("❌ Validation failed: Missing postId");
+      console.error("âŒ Validation failed: Missing postId");
       return res.status(400).json({
         success: false,
         error: "Missing required field: post (postId)",
@@ -58,20 +58,20 @@ module.exports.createJobApplication = async (req, res) => {
     }
 
     // Get candidate profile from current user
-    console.log(`🔍 Fetching candidate profile for user: ${userId}`);
+    console.log(`ðŸ” Fetching candidate profile for user: ${userId}`);
     const profileResult = await profileService.getProfileByUserId(userId);
     const profile = profileResult.profile;
     if (profile) {
       await profile.populate("cvAnalyses");
     }
     if (!profile) {
-      console.error(`❌ Candidate profile not found for user: ${userId}`);
+      console.error(`âŒ Candidate profile not found for user: ${userId}`);
       return res.status(404).json({
         success: false,
         error: "Candidate profile not found for current user",
       });
     }
-    console.log(`✅ Candidate profile found: ${profile.firstName} ${profile.lastName}`);
+    console.log(`âœ… Candidate profile found: ${profile.firstName} ${profile.lastName}`);
     console.log(`   - Profile ID: ${profile._id}`);
     console.log(`   - Technical Skills: ${profile.skills?.length || 0} skills`);
     console.log(`   - Soft Skills: ${profile.softSkills?.length || 0} skills`);
@@ -80,19 +80,19 @@ module.exports.createJobApplication = async (req, res) => {
     const cvAnalysis = profile.cvAnalyses && profile.cvAnalyses.length > 0 
       ? profile.cvAnalyses[profile.cvAnalyses.length - 1]._id 
       : null;
-    console.log(`📄 CV Analysis: ${cvAnalysis ? "Found (ID: " + cvAnalysis + ")" : "Not available"}`);
+    console.log(`ðŸ“„ CV Analysis: ${cvAnalysis ? "Found (ID: " + cvAnalysis + ")" : "Not available"}`);
 
     // Get post and extract company from it
-    console.log(`\n🔍 Fetching job post: ${postId}`);
+    console.log(`\nðŸ” Fetching job post: ${postId}`);
     const post = await postService.getPostById(postId);
     if (!post) {
-      console.error(`❌ Job post not found: ${postId}`);
+      console.error(`âŒ Job post not found: ${postId}`);
       return res.status(404).json({
         success: false,
         error: "Post not found",
       });
     }
-    console.log(`✅ Job post found: "${post.jobDetails?.title || 'Untitled'}"`);
+    console.log(`âœ… Job post found: "${post.jobDetails?.title || 'Untitled'}"`);
     console.log(`   - Company ID: ${post.user}`);
     console.log(`   - Required Skills: ${post.skillAnalysis?.requiredSkills?.length || 0} skills`);
     console.log(`   - Soft Skills Required: ${post.skillAnalysis?.softSkills?.length || 0} skills`);
@@ -107,13 +107,13 @@ module.exports.createJobApplication = async (req, res) => {
       // matchScore will be calculated automatically - DO NOT SET IT HERE
     };
 
-    console.log(`\n   ⚙️  Processing with jobApplicationService.createJobApplication()...`);
+    console.log(`\n   âš™ï¸  Processing with jobApplicationService.createJobApplication()...`);
 
     const application = await jobApplicationService.createJobApplication(
       applicationData
     );
 
-    console.log(`\n✅ [SUCCESS] Job application created!`);
+    console.log(`\nâœ… [SUCCESS] Job application created!`);
     console.log(`   - Application ID: ${application._id}`);
     console.log(`   - Match Score: ${application.matchScore}/100`);
     console.log(`   - Status: ${application.status}`);
@@ -131,7 +131,7 @@ module.exports.createJobApplication = async (req, res) => {
       data: application,
     });
   } catch (error) {
-    console.error(`\n❌ [ERROR] Error in createJobApplication: ${error.message}`);
+    console.error(`\nâŒ [ERROR] Error in createJobApplication: ${error.message}`);
     console.error("Stack trace:", error.stack);
     console.log("=".repeat(80) + "\n");
     handleError(res, error, 400);
@@ -343,42 +343,42 @@ module.exports.inviteToInterview = async (req, res) => {
     const companyId = req.user._id;
 
     console.log("\n" + "=".repeat(80));
-    console.log("🚀 [JOB APPLICATION] - STARTING INTERVIEW INVITATION PROCESS");
+    console.log("ðŸš€ [JOB APPLICATION] - STARTING INTERVIEW INVITATION PROCESS");
     console.log("=".repeat(80));
 
     // Validation
     if (!applicationId) {
-      console.error("❌ Validation failed: Missing applicationId");
+      console.error("âŒ Validation failed: Missing applicationId");
       return res.status(400).json({
         success: false,
         error: "Application ID is required",
       });
     }
 
-    console.log(`📝 Request from company: ${companyId}`);
-    console.log(`📋 Application ID: ${applicationId}`);
+    console.log(`ðŸ“ Request from company: ${companyId}`);
+    console.log(`ðŸ“‹ Application ID: ${applicationId}`);
 
     // Fetch the job application
-    console.log(`🔍 Fetching job application: ${applicationId}`);
+    console.log(`ðŸ” Fetching job application: ${applicationId}`);
     const application = await jobApplicationService.getJobApplicationById(applicationId);
 
     if (!application) {
-      console.error(`❌ Job application not found: ${applicationId}`);
+      console.error(`âŒ Job application not found: ${applicationId}`);
       return res.status(404).json({
         success: false,
         error: "Job application not found",
       });
     }
 
-    console.log(`✅ Job application found`);
+    console.log(`âœ… Job application found`);
     console.log(`   - Candidate Profile ID: ${application.profile._id}`);
     console.log(`   - Post ID: ${application.post._id}`);
     console.log(`   - Status: ${application.status}`);
 
     // Verify that the current user is the company that owns this post
     if (application.company._id.toString() !== companyId.toString()) {
-      console.error(`❌ Unauthorized: User ${application.company._id} is not the  owner of this application`);
-      console.error(`❌ Unauthorized: User ${companyId} is not the owner of this post`);
+      console.error(`âŒ Unauthorized: User ${application.company._id} is not the  owner of this application`);
+      console.error(`âŒ Unauthorized: User ${companyId} is not the owner of this post`);
       return res.status(403).json({
         success: false,
         error: "You are not authorized to send interview invitations for this application",
@@ -387,11 +387,11 @@ module.exports.inviteToInterview = async (req, res) => {
 
     // Fetch candidate profile to get email
     const Profile = require("../users/profile.model");
-    console.log(`🔍 Fetching candidate profile: ${application.profile._id}`);
+    console.log(`ðŸ” Fetching candidate profile: ${application.profile._id}`);
     const candidateProfile = await Profile.findById(application.profile._id).populate("userId");
 
     if (!candidateProfile) {
-      console.error(`❌ Candidate profile not found: ${application.profile._id}`);
+      console.error(`âŒ Candidate profile not found: ${application.profile._id}`);
       return res.status(404).json({
         success: false,
         error: "Candidate profile not found",
@@ -404,16 +404,16 @@ module.exports.inviteToInterview = async (req, res) => {
         ? (candidateProfile.companyDetails?.name || candidateProfile.userId.username || "Company")
         : [candidateProfile.firstName, candidateProfile.lastName].filter(Boolean).join(" ") || candidateProfile.userId.username || "Candidate";
 
-    console.log(`✅ Candidate profile found`);
+    console.log(`âœ… Candidate profile found`);
     console.log(`   - Email: ${candidateEmail}`);
     console.log(`   - Name: ${candidateName}`);
 
     // Fetch post details
-    console.log(`🔍 Fetching job post: ${application.post._id}`);
+    console.log(`ðŸ” Fetching job post: ${application.post._id}`);
     const post = await postService.getPostById(application.post._id);
 
     if (!post) {
-      console.error(`❌ Job post not found: ${application.post._id}`);
+      console.error(`âŒ Job post not found: ${application.post._id}`);
       return res.status(404).json({
         success: false,
         error: "Job post not found",
@@ -427,13 +427,13 @@ module.exports.inviteToInterview = async (req, res) => {
     const companyProfile = await Profile.findOne({ userId: post.user._id }).select("companyDetails").lean();
     const companyName = companyProfile?.companyDetails?.name || post.user?.username || "Our Company";
 
-    console.log(`✅ Job post found`);
+    console.log(`âœ… Job post found`);
     console.log(`   - Title: ${jobTitle}`);
     console.log(`   - Company: ${companyName}`);
     console.log(`   - Language: ${jobLanguage}`);
 
     // Send interview invitation email
-    console.log(`📧 Sending interview invitation email...`);
+    console.log(`ðŸ“§ Sending interview invitation email...`);
     const emailSent = await sendInterviewInvitation(
       candidateEmail,
       candidateName,
@@ -446,16 +446,16 @@ module.exports.inviteToInterview = async (req, res) => {
     );
 
     if (!emailSent) {
-      console.error(`❌ Failed to send interview invitation email`);
+      console.error(`âŒ Failed to send interview invitation email`);
       return res.status(500).json({
         success: false,
         error: "Failed to send interview invitation email",
       });
     }
 
-    console.log(`✅ Interview invitation email sent successfully`);
+    console.log(`âœ… Interview invitation email sent successfully`);
 
-    // Persist the manual invite timestamp and clear any auto-rejection —
+    // Persist the manual invite timestamp and clear any auto-rejection â€”
     // a manual invite is an explicit recruiter override of the threshold.
     await JobApplication.findByIdAndUpdate(applicationId, {
       invitedAt: new Date(),
@@ -467,16 +467,16 @@ module.exports.inviteToInterview = async (req, res) => {
     // Send in-app notification to candidate
     const notificationService = require('../notifications/notification.service');
     const candidateUserId = candidateProfile.userId._id;
-    const { buildInterviewUrl } = require('../../utils/interviewUrl');
+    const { buildInterviewUrl } = require('../../utils/interview-url');
     const candidateInterviewUrl = buildInterviewUrl({ type: 'post', jobId: String(post._id) });
 
     notificationService.createNotification(
       candidateUserId,
-      `You've been invited to interview for "${jobTitle}" at ${companyName}. Your AI interview is ready — click to start.`,
+      `You've been invited to interview for "${jobTitle}" at ${companyName}. Your AI interview is ready â€” click to start.`,
       'info',
       'job',
       candidateInterviewUrl
-    ).catch(err => console.warn('⚠️ Failed to send invite in-app notification:', err.message));
+    ).catch(err => console.warn('âš ï¸ Failed to send invite in-app notification:', err.message));
 
     console.log("=".repeat(80) + "\n");
 
@@ -494,7 +494,7 @@ module.exports.inviteToInterview = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(`\n❌ [ERROR] Error in inviteToInterview: ${error.message}`);
+    console.error(`\nâŒ [ERROR] Error in inviteToInterview: ${error.message}`);
     console.error("Stack trace:", error.stack);
     console.log("=".repeat(80) + "\n");
     handleError(res, error, 400);
@@ -628,7 +628,7 @@ module.exports.getApplicationsSummaryByCompany = async (req, res) => {
 };
 
 // ========== KPI - GET PENDING SHORTLISTS COUNT ==========
-// ========== KPI - ACTIONS TO TAKE (Zone 1 — combined) ==========
+// ========== KPI - ACTIONS TO TAKE (Zone 1 â€” combined) ==========
 module.exports.getActionsKPI = async (req, res) => {
   try {
     const companyId = req.user._id;

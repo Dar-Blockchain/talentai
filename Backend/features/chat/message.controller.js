@@ -1,6 +1,6 @@
 const messageService = require('./message.service');
 const Message = require('./message.model');
-const socket = require('../../socket');
+const socket = require('../../socket/io');
 
 const senderRoomDiffersFromReceiver = (senderStr, receiverStr) =>
   senderStr && receiverStr && senderStr !== receiverStr;

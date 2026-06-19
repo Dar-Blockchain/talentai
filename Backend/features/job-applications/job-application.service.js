@@ -7,7 +7,7 @@ const PostInterviewAssessment = require("../interviews/post-interview/post-inter
 const Profile = require("../users/profile.model");
 const CvAnalysis = require("../cv-analysis/cv-analysis.model");
 const Post = require("../posts/post.model");
-const { callLLM } = require("../../helpers/bedrock.helpers");
+const { callLLM } = require("../../utils/bedrock-client");
 const { analyzeCV } = require("../cv-analysis/analyse-resume.service");
 const { generateMatchingScorePrompt } = require("../posts/prompts/matching-score.prompts");
 

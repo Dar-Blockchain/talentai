@@ -1,27 +1,27 @@
-const User    = require("../users/user.model");
+﻿const User    = require("../users/user.model");
 const Profile = require("../users/profile.model");
 const logger  = require("../../utils/logger");
-const { sendOTP }                              = require("../../utils/email-service");
-const { generateOTP }                          = require("../../utils/one-time-password");
-const { generateToken }                        = require("../../utils/generate-token");
+const { sendOTP }                              = require("../../utils/email.service");
+const { generateOTP }                          = require("./one-time-password");
+const { generateToken }                        = require("./generate-token");
 const { extractUsernameFromEmail, formatLocation } = require("./auth.validation");
 
 const CompanyMembership = require("../company-members/company-membership.model");
 const PlanLimits        = require("../billing/plans/plan-limits.model");
 const Subscription      = require("../billing/subscriptions/subscription.model");
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const OTP_EXPIRY_MS = 5 * 60 * 1000;
 
-// ─── Private helpers ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Private helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const assignFreePlanToProfile = module.exports.assignFreePlanToProfile = async (profileId) => {
   try {
     if (await Subscription.countDocuments({ companyProfileId: profileId })) return;
 
     const freePlan = await PlanLimits.findOne({ name: "Trial", isActive: true }).lean();
-    if (!freePlan) { logger.warn("⚠️ Free plan not found — skipping auto-assign"); return; }
+    if (!freePlan) { logger.warn("âš ï¸ Free plan not found â€” skipping auto-assign"); return; }
 
     const startDate = new Date();
     const endDate   = new Date();
@@ -41,9 +41,9 @@ const assignFreePlanToProfile = module.exports.assignFreePlanToProfile = async (
       planLimits:         freePlan._id,
     }, { runValidators: false });
 
-    logger.info(`✅ Free plan assigned to profile ${profileId}`);
+    logger.info(`âœ… Free plan assigned to profile ${profileId}`);
   } catch (err) {
-    logger.error("❌ Failed to assign free plan:", err.message);
+    logger.error("âŒ Failed to assign free plan:", err.message);
   }
 };
 
@@ -61,7 +61,7 @@ const assertUserCanReceiveOtp = (user) => {
   if (user.isBanned) throw Object.assign(new Error("Your account has been banned. Please contact support."), { status: 403 });
 };
 
-// ─── Register ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Register â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 module.exports.registerUser = async (email, roleType = "Candidate", opts = {}) => {
   if (!email) throw Object.assign(new Error("Email is required"), { status: 400 });
@@ -140,7 +140,7 @@ module.exports.registerUser = async (email, roleType = "Candidate", opts = {}) =
   };
 };
 
-// ─── Verify OTP ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ Verify OTP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 module.exports.verifyUserOTP = async (email, otp, location = null) => {
   const user = await User.findOne({ email });
@@ -222,7 +222,7 @@ module.exports.verifyUserOTP = async (email, otp, location = null) => {
   return { user: updatedUser, token, profile, planLimits, companyMembership };
 };
 
-// ─── Login (send OTP) ─────────────────────────────────────────────────────────
+// â”€â”€â”€ Login (send OTP) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 module.exports.loginUser = async (email) => {
   const user = await User.findOne({ email }).select("_id username isBanned language").lean();
@@ -235,7 +235,7 @@ module.exports.loginUser = async (email) => {
   return { email, username: user.username, message: "Verification code sent to your email." };
 };
 
-// ─── Resend OTP ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ Resend OTP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 module.exports.resendOTP = async (email) => {
   const user = await User.findOne({ email }).select("_id username isBanned language").lean();
@@ -248,7 +248,7 @@ module.exports.resendOTP = async (email) => {
   return { email, username: user.username, message: "New verification code sent. Valid for 5 minutes." };
 };
 
-// ─── Get current user (me) ────────────────────────────────────────────────────
+// â”€â”€â”€ Get current user (me) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 module.exports.getMe = async (userId) => {
   const [user, profile] = await Promise.all([
@@ -265,7 +265,7 @@ module.exports.getMe = async (userId) => {
   return { user, profile: profile ?? null };
 };
 
-// ─── Warn user ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Warn user â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 module.exports.warnUser = async (email) => {
   const user = await User.findOne({ email }).select("_id email warnings isBanned").lean();

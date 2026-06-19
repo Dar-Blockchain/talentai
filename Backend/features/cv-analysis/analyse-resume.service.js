@@ -1,4 +1,4 @@
-const { callLLM } = require("../../helpers/bedrock.helpers");
+﻿const { callLLM } = require("../../utils/bedrock-client");
 const fs   = require("fs");
 const path = require("path");
 const { PDFParse } = require("pdf-parse");
@@ -44,13 +44,13 @@ If the resume text is truncated, analyze the available information only and retu
 Read the attached CV carefully and extract all relevant information.
 
 CRITICAL RULES FOR SKILLS EXTRACTION:
-- "skills" must be an array of INDIVIDUAL, ATOMIC skill names only — one technology or tool per entry
+- "skills" must be an array of INDIVIDUAL, ATOMIC skill names only â€” one technology or tool per entry
 - NEVER group multiple skills into one string
 - Each skill must be a clean, standard technology name (e.g. "React.js", "Node.js")
 - "skills" should contain ONLY technical skills: programming languages, frameworks, libraries, tools, platforms, databases, DevOps, cloud services
-- NEVER put soft skills in the "skills" array — those go in "softSkills"
+- NEVER put soft skills in the "skills" array â€” those go in "softSkills"
 - Remove any duplicates
-- Aim to extract 10–40 individual skills from a typical CV
+- Aim to extract 10â€“40 individual skills from a typical CV
 
 GENERAL RULES:
 - Return ONLY one valid raw JSON object. No markdown. No explanation. No extra text.
