@@ -3,159 +3,93 @@ import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Box,
-  Typography,
-  CircularProgress,
-  Alert,
-  Button,
-  Chip,
-  LinearProgress,
-} from '@mui/material';
-import DownloadIcon from '@mui/icons-material/Download';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
-import CodeIcon from '@mui/icons-material/Code';
-import PsychologyIcon from '@mui/icons-material/Psychology';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
-import ThumbUpOutlinedIcon from '@mui/icons-material/ThumbUpOutlined';
-import ThumbDownOutlinedIcon from '@mui/icons-material/ThumbDownOutlined';
-import BuildOutlinedIcon from '@mui/icons-material/BuildOutlined';
-import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
-import QuestionAnswerOutlinedIcon from '@mui/icons-material/QuestionAnswerOutlined';
+  Download, CheckCircle2, Circle, Code2, Brain, Clock,
+  MessageCircle, TrendingUp, Award, Trophy, Lightbulb,
+  ThumbsUp, ThumbsDown, Wrench, User, MessageSquare,
+  Sparkles, Target, BarChart3, ChevronRight,
+} from 'lucide-react';
 import CandidateWorkspaceLayout from '@/modules/shared/layouts/candidate/CandidateWorkspaceLayout';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '@/store/store';
 import {
-  fetchInterviewReport,
-  selectInterviewReport,
-  selectInterviewReportLoading,
-  selectInterviewReportError,
-  clearReport,
+  fetchInterviewReport, selectInterviewReport,
+  selectInterviewReportLoading, selectInterviewReportError, clearReport,
 } from '@/store/slices/interviewSlice';
+import { cn } from '@/lib/utils';
 
-// ─── Design tokens ────────────────────────────────────────────────────────────
+// ── Color helpers ─────────────────────────────────────────────────────────────
+const scoreColor  = (s: number) => s >= 80 ? '#10b981' : s >= 60 ? '#6366f1' : s >= 40 ? '#f59e0b' : '#ef4444';
+const scoreBg     = (s: number) => s >= 80 ? 'rgba(16,185,129,0.10)' : s >= 60 ? 'rgba(99,102,241,0.10)' : s >= 40 ? 'rgba(245,158,11,0.10)' : 'rgba(239,68,68,0.10)';
+const scoreBorder = (s: number) => s >= 80 ? 'rgba(16,185,129,0.25)' : s >= 60 ? 'rgba(99,102,241,0.25)' : s >= 40 ? 'rgba(245,158,11,0.25)' : 'rgba(239,68,68,0.25)';
+const scoreGlow   = (s: number) => s >= 80 ? 'rgba(16,185,129,0.20)' : s >= 60 ? 'rgba(99,102,241,0.20)' : s >= 40 ? 'rgba(245,158,11,0.20)' : 'rgba(239,68,68,0.20)';
 
-const INDIGO   = '#6366f1';
-const INDIGO_L = 'rgba(99,102,241,0.08)';
-const INDIGO_B = 'rgba(99,102,241,0.18)';
-const GREEN    = '#10b981';
-const GREEN_L  = 'rgba(16,185,129,0.08)';
-const GREEN_B  = 'rgba(16,185,129,0.18)';
-const AMBER    = '#f59e0b';
-const AMBER_L  = 'rgba(245,158,11,0.08)';
-const AMBER_B  = 'rgba(245,158,11,0.18)';
-const RED      = '#ef4444';
-const RED_L    = 'rgba(239,68,68,0.08)';
-const RED_B    = 'rgba(239,68,68,0.18)';
-const GRAY     = '#6b7280';
-const SURFACE  = '#f9fafb';
-const BORDER   = 'rgba(0,0,0,0.07)';
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-const scoreColor  = (s: number) => s >= 80 ? GREEN  : s >= 60 ? INDIGO  : s >= 40 ? AMBER  : RED;
-const scoreBg     = (s: number) => s >= 80 ? GREEN_L : s >= 60 ? INDIGO_L : s >= 40 ? AMBER_L : RED_L;
-const scoreBorder = (s: number) => s >= 80 ? GREEN_B : s >= 60 ? INDIGO_B : s >= 40 ? AMBER_B : RED_B;
-const areaLabel   = (key: string) =>
-  key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-
+const areaLabel  = (key: string) => key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 const fmtDuration = (ms: number) => {
-  const totalSec = Math.floor(ms / 1000);
-  const m = Math.floor(totalSec / 60);
-  const s = totalSec % 60;
+  const t = Math.floor(ms / 1000), m = Math.floor(t / 60), s = t % 60;
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
 };
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-const Card = ({ children, sx = {} }: { children: React.ReactNode; sx?: object }) => (
-  <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: `1px solid ${BORDER}`, p: { xs: 2.5, md: 3.5 }, mb: 2, ...sx }}>
-    {children}
-  </Box>
-);
-
-const SectionTitle = ({ children }: { children: React.ReactNode }) => (
-  <Typography sx={{
-    fontFamily: 'Poppins', fontWeight: 700, fontSize: '1rem', color: '#111827',
-    mb: 2.5, pb: 1.5, borderBottom: `2px solid ${INDIGO_L}`,
-  }}>
-    {children}
-  </Typography>
-);
-
-const StatPill = ({
-  label, value, icon, color = INDIGO, bg = INDIGO_L, border = INDIGO_B,
-}: {
-  label: string; value: string | number; icon: React.ReactNode;
-  color?: string; bg?: string; border?: string;
+// ── Tiny Badge ────────────────────────────────────────────────────────────────
+const Badge = ({ label, icon, color, bg, border, className }: {
+  label: string; icon?: React.ReactNode; color?: string; bg?: string; border?: string; className?: string;
 }) => (
-  <Box sx={{
-    display: 'flex', alignItems: 'center', gap: 1.5,
-    px: 2, py: 1.5, borderRadius: '12px',
-    bgcolor: bg, border: `1px solid ${border}`,
-    minWidth: 140, flex: 1,
-  }}>
-    <Box sx={{
-      width: 38, height: 38, borderRadius: '10px',
-      bgcolor: '#fff', border: `1px solid ${border}`,
-      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-    }}>
-      {icon}
-    </Box>
-    <Box>
-      <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.65rem', color: GRAY, fontWeight: 500, lineHeight: 1, mb: 0.4 }}>
-        {label}
-      </Typography>
-      <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.95rem', fontWeight: 700, color, lineHeight: 1 }}>
-        {value}
-      </Typography>
-    </Box>
-  </Box>
+  <span
+    className={cn('inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[0.72rem] font-semibold border', className)}
+    style={{ color, backgroundColor: bg, borderColor: border }}
+  >
+    {icon}{label}
+  </span>
 );
 
-const ScoreRing = ({ score }: { score: number }) => {
-  const r = 42;
+// ── Score Ring ────────────────────────────────────────────────────────────────
+const ScoreRing = ({ score, size = 130 }: { score: number; size?: number }) => {
+  const r = size / 2 - 10;
   const circ = 2 * Math.PI * r;
   const offset = circ * (1 - score / 100);
   const color = scoreColor(score);
+  const cx = size / 2, cy = size / 2;
   return (
-    <Box sx={{ position: 'relative', width: 110, height: 110, flexShrink: 0 }}>
-      <svg width="110" height="110" viewBox="0 0 110 110">
-        <circle cx="55" cy="55" r={r} fill="none" stroke={`${color}20`} strokeWidth="8" />
-        <circle
-          cx="55" cy="55" r={r}
-          fill="none" stroke={color} strokeWidth="8"
-          strokeLinecap="round"
-          strokeDasharray={circ}
-          strokeDashoffset={offset}
-          transform="rotate(-90 55 55)"
-          style={{ transition: 'stroke-dashoffset 1s ease' }}
-        />
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke={`${color}18`} strokeWidth="10" />
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke={`${color}30`} strokeWidth="10"
+          strokeDasharray={circ} strokeDashoffset={circ * 0.35} transform={`rotate(-90 ${cx} ${cy})`} />
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth="10"
+          strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
+          transform={`rotate(-90 ${cx} ${cy})`} style={{ transition: 'stroke-dashoffset 1.2s ease' }} />
       </svg>
-      <Box sx={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        <Typography sx={{ fontFamily: 'Poppins', fontWeight: 800, fontSize: '1.4rem', color, lineHeight: 1 }}>
-          {score}
-        </Typography>
-        <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.55rem', color: GRAY, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          / 100
-        </Typography>
-      </Box>
-    </Box>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="font-black leading-none" style={{ fontSize: size * 0.24, color }}>{score}</span>
+        <span className="text-[0.58rem] text-gray-400 font-bold uppercase tracking-widest mt-0.5">/ 100</span>
+      </div>
+    </div>
   );
 };
 
-// ─── Main page ────────────────────────────────────────────────────────────────
+// ── Progress Bar ──────────────────────────────────────────────────────────────
+const ProgressBar = ({ value, color, height = 8 }: { value: number; color: string; height?: number }) => (
+  <div className="w-full rounded-full overflow-hidden" style={{ height, backgroundColor: `${color}18` }}>
+    <div className="h-full rounded-full transition-all duration-700"
+      style={{ width: `${Math.min(value, 100)}%`, backgroundColor: color }} />
+  </div>
+);
 
+// ── Section Header ────────────────────────────────────────────────────────────
+const SectionHeader = ({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) => (
+  <div className="flex items-center gap-2.5 mb-5 pb-3 border-b border-gray-100">
+    <div className="w-7 h-7 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
+      {icon}
+    </div>
+    <h3 className="font-bold text-[0.95rem] text-gray-800">{children}</h3>
+  </div>
+);
+
+// ── Main ──────────────────────────────────────────────────────────────────────
 function SkillInterviewReportPage() {
-  const router = useRouter();
+  const router   = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const { t } = useTranslation('modules/interview/skill-interview');
-  const { id } = router.query;
+  const { t }   = useTranslation('modules/interview/skill-interview');
+  const { id }  = router.query;
 
   const data    = useSelector(selectInterviewReport);
   const loading = useSelector(selectInterviewReportLoading);
@@ -167,11 +101,12 @@ function SkillInterviewReportPage() {
     return () => { dispatch(clearReport()); };
   }, [id, dispatch]);
 
-  const fr        = data?.interviewData?.finalReport;
+  const fr       = data?.interviewData?.finalReport;
   const analytics = data?.interviewData?.analytics;
   const coverage  = fr?.coverage;
   const overall   = coverage?.overall ?? 0;
   const isSoft    = data?.skillType === 'soft';
+  const color     = scoreColor(overall);
 
   const scoreLabel = (s: number) =>
     s >= 80 ? t('report.score_labels.excellent') :
@@ -181,7 +116,6 @@ function SkillInterviewReportPage() {
 
   return (
     <CandidateWorkspaceLayout breadcrumb="Skill Interview Report">
-
       <style jsx global>{`
         @media print {
           body * { visibility: hidden !important; }
@@ -190,513 +124,468 @@ function SkillInterviewReportPage() {
         }
       `}</style>
 
-      {/* ── Page header ── */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2, mb: 2 }}>
-        <Box>
-          <Typography sx={{ fontFamily: 'Poppins', fontWeight: 800, fontSize: { xs: '1.3rem', md: '1.6rem' }, color: '#111827', lineHeight: 1.2 }}>
-            {t('report.title')}
-          </Typography>
-          {data?.skill && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-              {isSoft
-                ? <PsychologyIcon sx={{ fontSize: 15, color: INDIGO }} />
-                : <CodeIcon sx={{ fontSize: 15, color: INDIGO }} />
-              }
-              <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.8rem', color: GRAY, fontWeight: 500 }}>
-                {data.skill}{data.category ? ` · ${data.category}` : ''}
-              </Typography>
-            </Box>
-          )}
-        </Box>
-        {!loading && !error && data && (
-          <Button
-            variant="contained"
-            startIcon={<DownloadIcon />}
-            onClick={() => window.print()}
-            sx={{
-              bgcolor: INDIGO, color: '#fff', fontFamily: 'Poppins', fontWeight: 700,
-              textTransform: 'none', fontSize: '0.82rem', borderRadius: '10px', px: 2.5, py: 1,
-              boxShadow: 'none', '&:hover': { bgcolor: '#4f46e5', boxShadow: 'none' },
-            }}
-          >
-            {t('report.download_pdf')}
-          </Button>
+      <div id="skill-report" className="max-w-4xl mx-auto">
+
+        {/* ── Loading ── */}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-24 gap-4">
+            <div className="w-12 h-12 rounded-full border-4 border-indigo-100 border-t-indigo-500 animate-spin" />
+            <p className="text-sm text-gray-400 font-medium">Loading your report…</p>
+          </div>
         )}
-      </Box>
 
-      <div id="skill-report">
-        {loading ? (
-          <Card sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-            <CircularProgress sx={{ color: INDIGO }} />
-          </Card>
-        ) : error ? (
-          <Card><Alert severity="error">{error}</Alert></Card>
-        ) : !data ? (
-          <Card><Alert severity="info">{t('report.no_report')}</Alert></Card>
-        ) : (
+        {/* ── Error ── */}
+        {error && !loading && (
+          <div className="flex items-start gap-3 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-sm">
+            ⚠️ {error}
+          </div>
+        )}
+
+        {/* ── No data ── */}
+        {!data && !loading && !error && (
+          <div className="flex items-start gap-3 p-4 rounded-2xl bg-blue-50 border border-blue-200 text-blue-700 text-sm">
+            ℹ️ {t('report.no_report')}
+          </div>
+        )}
+
+        {data && !loading && (
           <>
-            {/* ── Hero — score + meta ── */}
-            <Card>
-              <Box sx={{ display: 'flex', gap: 3, alignItems: 'center', flexWrap: 'wrap' }}>
-                <ScoreRing score={overall} />
-                <Box sx={{ flex: 1, minWidth: 200 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75, flexWrap: 'wrap' }}>
-                    <Chip
-                      label={scoreLabel(overall)}
-                      size="small"
-                      sx={{ bgcolor: scoreBg(overall), color: scoreColor(overall), border: `1px solid ${scoreBorder(overall)}`, fontWeight: 700, fontFamily: 'Poppins', fontSize: '0.72rem' }}
-                    />
-                    <Chip
-                      label={isSoft ? t('report.soft_skill') : t('report.technical_skill')}
-                      size="small"
-                      icon={isSoft ? <PsychologyIcon sx={{ fontSize: '13px !important' }} /> : <CodeIcon sx={{ fontSize: '13px !important' }} />}
-                      sx={{ bgcolor: INDIGO_L, color: INDIGO, border: `1px solid ${INDIGO_B}`, fontWeight: 600, fontFamily: 'Poppins', fontSize: '0.72rem' }}
-                    />
-                    {data.proficiency && (
-                      <Chip
-                        label={data.proficiency}
-                        size="small"
-                        icon={<WorkspacePremiumIcon sx={{ fontSize: '13px !important' }} />}
-                        sx={{ bgcolor: AMBER_L, color: AMBER, border: `1px solid ${AMBER_B}`, fontWeight: 600, fontFamily: 'Poppins', fontSize: '0.72rem' }}
-                      />
+            {/* ══ HERO ══════════════════════════════════════════════════════ */}
+            <div className="relative rounded-3xl overflow-hidden mb-4 shadow-lg"
+              style={{ background: `linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)` }}>
+
+              {/* Decorative blobs */}
+              <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full opacity-20"
+                style={{ background: `radial-gradient(circle, ${color} 0%, transparent 70%)` }} />
+              <div className="absolute -bottom-12 -left-12 w-48 h-48 rounded-full opacity-10"
+                style={{ background: `radial-gradient(circle, #818cf8 0%, transparent 70%)` }} />
+
+              <div className="relative z-10 p-7 md:p-10">
+                {/* Top row: title + download */}
+                <div className="flex items-start justify-between gap-4 mb-8">
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-6 h-6 rounded-md bg-white/10 flex items-center justify-center">
+                        {isSoft ? <Brain size={13} className="text-indigo-300" /> : <Code2 size={13} className="text-indigo-300" />}
+                      </div>
+                      <span className="text-indigo-300 text-[0.75rem] font-semibold uppercase tracking-widest">
+                        {isSoft ? t('report.soft_skill') : t('report.technical_skill')}
+                      </span>
+                    </div>
+                    <h1 className="text-white font-black text-2xl md:text-3xl leading-tight">
+                      {data.skill || 'Skill Assessment'}
+                    </h1>
+                    {data.category && (
+                      <p className="text-white/50 text-sm mt-1">{data.category}</p>
                     )}
-                  </Box>
-                  <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.3rem', color: '#111827', mb: 0.25 }}>
-                    {data.skill || 'Skill Assessment'}
-                  </Typography>
-                  {fr?.summary && (
-                    <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.8rem', color: GRAY, lineHeight: 1.6, maxWidth: 520 }}>
-                      {fr.summary}
-                    </Typography>
-                  )}
-                </Box>
-              </Box>
+                  </div>
+                  <button onClick={() => window.print()}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[0.8rem] font-bold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-colors shrink-0">
+                    <Download size={14} />
+                    {t('report.download_pdf')}
+                  </button>
+                </div>
 
-              {/* Quick stats row */}
-              {analytics && (
-                <Box sx={{ display: 'flex', gap: 1.5, mt: 3, flexWrap: 'wrap' }}>
-                  {analytics.duration != null && (
-                    <StatPill
-                      label={t('report.stats.duration')}
-                      value={fmtDuration(analytics.duration)}
-                      icon={<AccessTimeIcon sx={{ fontSize: 18, color: INDIGO }} />}
-                    />
-                  )}
-                  {analytics.messageCount != null && (
-                    <StatPill
-                      label={t('report.stats.exchanges')}
-                      value={analytics.messageCount}
-                      icon={<ChatBubbleOutlineIcon sx={{ fontSize: 18, color: INDIGO }} />}
-                    />
-                  )}
-                  {analytics.coveragePercentage != null && (
-                    <StatPill
-                      label={t('report.stats.coverage')}
-                      value={`${analytics.coveragePercentage}%`}
-                      icon={<TrendingUpIcon sx={{ fontSize: 18, color: scoreColor(analytics.coveragePercentage) }} />}
-                      color={scoreColor(analytics.coveragePercentage)}
-                      bg={scoreBg(analytics.coveragePercentage)}
-                      border={scoreBorder(analytics.coveragePercentage)}
-                    />
-                  )}
-                  {analytics.completedAreas != null && analytics.totalAreas != null && (
-                    <StatPill
-                      label={t('report.stats.areas_covered')}
-                      value={`${analytics.completedAreas} / ${analytics.totalAreas}`}
-                      icon={<EmojiEventsIcon sx={{ fontSize: 18, color: AMBER }} />}
-                      color={AMBER} bg={AMBER_L} border={AMBER_B}
-                    />
-                  )}
-                </Box>
-              )}
-            </Card>
+                {/* Score + summary */}
+                <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
+                  {/* Ring */}
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="p-3 rounded-2xl" style={{ background: scoreGlow(overall) }}>
+                      <ScoreRing score={overall} size={140} />
+                    </div>
+                    <Badge label={scoreLabel(overall)}
+                      color={color} bg={scoreBg(overall)} border={scoreBorder(overall)}
+                      className="text-[0.78rem] px-3 py-1.5" />
+                  </div>
 
-            {/* ── Coverage areas ── */}
+                  {/* Meta */}
+                  <div className="flex-1 flex flex-col gap-4">
+                    {fr?.summary && (
+                      <p className="text-white/70 text-[0.88rem] leading-relaxed max-w-lg">
+                        {fr.summary}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      {data.proficiency && (
+                        <Badge label={data.proficiency} icon={<Award size={11} />}
+                          color="#fbbf24" bg="rgba(251,191,36,0.15)" border="rgba(251,191,36,0.3)" />
+                      )}
+                    </div>
+
+                    {/* Stat cards row */}
+                    {analytics && (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
+                        {analytics.duration != null && (
+                          <div className="flex flex-col gap-1 p-3 rounded-xl bg-white/5 border border-white/10">
+                            <Clock size={14} className="text-white/40" />
+                            <p className="text-[0.62rem] text-white/40 font-semibold uppercase tracking-wider">{t('report.stats.duration')}</p>
+                            <p className="text-white font-black text-[0.95rem]">{fmtDuration(analytics.duration)}</p>
+                          </div>
+                        )}
+                        {analytics.messageCount != null && (
+                          <div className="flex flex-col gap-1 p-3 rounded-xl bg-white/5 border border-white/10">
+                            <MessageCircle size={14} className="text-white/40" />
+                            <p className="text-[0.62rem] text-white/40 font-semibold uppercase tracking-wider">{t('report.stats.exchanges')}</p>
+                            <p className="text-white font-black text-[0.95rem]">{analytics.messageCount}</p>
+                          </div>
+                        )}
+                        {analytics.coveragePercentage != null && (
+                          <div className="flex flex-col gap-1 p-3 rounded-xl bg-white/5 border border-white/10">
+                            <Target size={14} className="text-white/40" />
+                            <p className="text-[0.62rem] text-white/40 font-semibold uppercase tracking-wider">{t('report.stats.coverage')}</p>
+                            <p className="font-black text-[0.95rem]" style={{ color }}>{analytics.coveragePercentage}%</p>
+                          </div>
+                        )}
+                        {analytics.completedAreas != null && analytics.totalAreas != null && (
+                          <div className="flex flex-col gap-1 p-3 rounded-xl bg-white/5 border border-white/10">
+                            <Trophy size={14} className="text-white/40" />
+                            <p className="text-[0.62rem] text-white/40 font-semibold uppercase tracking-wider">{t('report.stats.areas_covered')}</p>
+                            <p className="text-white font-black text-[0.95rem]">{analytics.completedAreas}/{analytics.totalAreas}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ══ COVERAGE AREAS ════════════════════════════════════════════ */}
             {coverage?.areas && Object.keys(coverage.areas).length > 0 && (
-              <Card>
-                <SectionTitle>{t('report.sections.coverage_areas')}</SectionTitle>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <div className="bg-white rounded-3xl border border-gray-100 p-6 md:p-8 mb-4 shadow-sm">
+                <SectionHeader icon={<BarChart3 size={14} className="text-indigo-500" />}>
+                  {t('report.sections.coverage_areas')}
+                </SectionHeader>
+                <div className="flex flex-col gap-5">
                   {Object.entries(coverage.areas).map(([key, area]: [string, any]) => {
                     const pct = area?.percentage ?? 0;
                     const col = scoreColor(pct);
                     return (
-                      <Box key={key} sx={{ p: 2.5, bgcolor: SURFACE, borderRadius: '12px', border: `1px solid ${BORDER}` }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.25, flexWrap: 'wrap', gap: 1 }}>
-                          <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.88rem', color: '#111827' }}>
-                            {areaLabel(key)}
-                          </Typography>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <div key={key}>
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="font-semibold text-[0.88rem] text-gray-800">{areaLabel(key)}</p>
+                          <div className="flex items-center gap-3">
                             {area?.questionsAsked != null && (
-                              <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.7rem', color: GRAY }}>
+                              <span className="text-[0.68rem] text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100">
                                 {t('report.area_question', { count: area.questionsAsked })}
-                              </Typography>
+                              </span>
                             )}
-                            <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.9rem', color: col }}>
-                              {pct}%
-                            </Typography>
-                          </Box>
-                        </Box>
-
-                        <LinearProgress
-                          variant="determinate"
-                          value={pct}
-                          sx={{
-                            height: 6, borderRadius: 3, mb: 1.75,
-                            bgcolor: `${col}18`,
-                            '& .MuiLinearProgress-bar': { borderRadius: 3, bgcolor: col },
-                          }}
-                        />
-
+                            <span className="font-black text-[0.95rem]" style={{ color: col }}>{pct}%</span>
+                          </div>
+                        </div>
+                        <ProgressBar value={pct} color={col} height={10} />
                         {area?.aiAnalysis?.reasoning && (
-                          <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', color: GRAY, lineHeight: 1.6, mb: 1.5, fontStyle: 'italic' }}>
-                            {area.aiAnalysis.reasoning}
-                          </Typography>
+                          <p className="text-[0.74rem] text-gray-400 leading-relaxed mt-2 italic">{area.aiAnalysis.reasoning}</p>
                         )}
-
                         {area?.indicators?.length > 0 && (
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                          <div className="flex flex-wrap gap-1.5 mt-2.5">
                             {(area.indicators as any[])
                               .filter((ind: any, i: number, arr: any[]) =>
-                                arr.findIndex((x: any) => (x.name || x) === (ind.name || ind)) === i
-                              )
+                                arr.findIndex((x: any) => (x.name || x) === (ind.name || ind)) === i)
                               .map((ind: any, idx: number) => {
                                 const name = (ind.name || ind as string)
-                                  .replace(/^AI-detected:\s*/i, '')
-                                  .replace(/_/g, ' ')
+                                  .replace(/^AI-detected:\s*/i, '').replace(/_/g, ' ')
                                   .replace(/\b\w/g, (c: string) => c.toUpperCase());
                                 return (
-                                  <Chip
-                                    key={idx}
-                                    label={name}
-                                    size="small"
-                                    icon={ind.covered
-                                      ? <CheckCircleIcon sx={{ fontSize: '13px !important', color: `${GREEN} !important` }} />
-                                      : <RadioButtonUncheckedIcon sx={{ fontSize: '13px !important', color: `${GRAY} !important` }} />
-                                    }
-                                    sx={{
-                                      fontFamily: 'Poppins', fontSize: '0.7rem', fontWeight: 500,
-                                      bgcolor: ind.covered ? GREEN_L : '#f3f4f6',
-                                      color: ind.covered ? GREEN : GRAY,
-                                      border: `1px solid ${ind.covered ? GREEN_B : BORDER}`,
-                                      '& .MuiChip-icon': { ml: '6px' },
-                                    }}
-                                  />
+                                  <span key={idx} className={cn(
+                                    'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.68rem] font-medium border',
+                                    ind.covered ? 'text-emerald-600 border-emerald-200' : 'text-gray-400 bg-gray-50 border-gray-100'
+                                  )} style={ind.covered ? { backgroundColor: 'rgba(16,185,129,0.08)' } : undefined}>
+                                    {ind.covered
+                                      ? <CheckCircle2 size={10} className="text-emerald-500 shrink-0" />
+                                      : <Circle size={10} className="text-gray-300 shrink-0" />}
+                                    {name}
+                                  </span>
                                 );
                               })}
-                          </Box>
+                          </div>
                         )}
-                      </Box>
+                      </div>
                     );
                   })}
-                </Box>
-              </Card>
+                </div>
+              </div>
             )}
 
-            {/* ── Scores breakdown ── */}
+            {/* ══ SCORE BREAKDOWN ═══════════════════════════════════════════ */}
             {fr?.scores && Object.values(fr.scores).some((v) => v != null) && (
-              <Card>
-                <SectionTitle>{t('report.sections.score_breakdown')}</SectionTitle>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                  {Object.entries(fr.scores)
-                    .filter(([, v]) => v != null)
-                    .map(([key, val]: [string, any]) => {
-                      const pct = Math.round(val);
-                      const col = scoreColor(pct);
-                      return (
-                        <Box key={key} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                          <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.78rem', color: '#374151', fontWeight: 500, minWidth: 140 }}>
-                            {areaLabel(key)}
-                          </Typography>
-                          <Box sx={{ flex: 1 }}>
-                            <LinearProgress
-                              variant="determinate"
-                              value={pct}
-                              sx={{
-                                height: 7, borderRadius: 3,
-                                bgcolor: `${col}18`,
-                                '& .MuiLinearProgress-bar': { borderRadius: 3, bgcolor: col },
-                              }}
-                            />
-                          </Box>
-                          <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.8rem', fontWeight: 700, color: col, minWidth: 38, textAlign: 'right' }}>
-                            {pct}
-                          </Typography>
-                        </Box>
-                      );
-                    })}
-                </Box>
-              </Card>
+              <div className="bg-white rounded-3xl border border-gray-100 p-6 md:p-8 mb-4 shadow-sm">
+                <SectionHeader icon={<Target size={14} className="text-indigo-500" />}>
+                  {t('report.sections.score_breakdown')}
+                </SectionHeader>
+                <div className="flex flex-col gap-4">
+                  {Object.entries(fr.scores).filter(([, v]) => v != null).map(([key, val]: [string, any]) => {
+                    const pct = Math.round(val);
+                    const col = scoreColor(pct);
+                    return (
+                      <div key={key} className="flex items-center gap-4">
+                        <span className="text-[0.78rem] text-gray-600 font-medium w-36 shrink-0">{areaLabel(key)}</span>
+                        <div className="flex-1"><ProgressBar value={pct} color={col} height={8} /></div>
+                        <span className="text-[0.82rem] font-black w-9 text-right" style={{ color: col }}>{pct}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             )}
 
-            {/* ── AI Analysis ── */}
+            {/* ══ AI ANALYSIS ═══════════════════════════════════════════════ */}
             {fr?.aiAnalysis && (
-              <Card>
-                <SectionTitle>{t('report.sections.ai_analysis')}</SectionTitle>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <div className="bg-white rounded-3xl border border-gray-100 p-6 md:p-8 mb-4 shadow-sm">
+                <SectionHeader icon={<Sparkles size={14} className="text-indigo-500" />}>
+                  {t('report.sections.ai_analysis')}
+                </SectionHeader>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {fr.aiAnalysis.strongestAreas?.length > 0 && (
-                    <Box sx={{ p: 2, bgcolor: GREEN_L, borderRadius: '12px', border: `1px solid ${GREEN_B}` }}>
-                      <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.8rem', color: GREEN, mb: 1 }}>
-                        {t('report.labels.strongest')}
-                      </Typography>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                    <div className="p-4 rounded-2xl border border-emerald-100 bg-emerald-50">
+                      <div className="flex items-center gap-2 mb-3">
+                        <ThumbsUp size={14} className="text-emerald-500" />
+                        <p className="font-bold text-[0.78rem] text-emerald-600">{t('report.labels.strongest')}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
                         {fr.aiAnalysis.strongestAreas.map((area: string, i: number) => (
-                          <Chip key={i} label={areaLabel(area)} size="small"
-                            sx={{ bgcolor: '#fff', color: GREEN, border: `1px solid ${GREEN_B}`, fontFamily: 'Poppins', fontSize: '0.72rem', fontWeight: 600 }} />
+                          <span key={i} className="px-2 py-0.5 rounded-full text-[0.7rem] font-semibold bg-white text-emerald-600 border border-emerald-200">
+                            {areaLabel(area)}
+                          </span>
                         ))}
-                      </Box>
-                    </Box>
+                      </div>
+                    </div>
                   )}
-
                   {fr.aiAnalysis.weakestAreas?.length > 0 && (
-                    <Box sx={{ p: 2, bgcolor: RED_L, borderRadius: '12px', border: `1px solid ${RED_B}` }}>
-                      <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.8rem', color: RED, mb: 1 }}>
-                        {t('report.labels.improve')}
-                      </Typography>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                    <div className="p-4 rounded-2xl border border-red-100 bg-red-50">
+                      <div className="flex items-center gap-2 mb-3">
+                        <ThumbsDown size={14} className="text-red-400" />
+                        <p className="font-bold text-[0.78rem] text-red-500">{t('report.labels.improve')}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
                         {fr.aiAnalysis.weakestAreas.map((area: string, i: number) => (
-                          <Chip key={i} label={areaLabel(area)} size="small"
-                            sx={{ bgcolor: '#fff', color: RED, border: `1px solid ${RED_B}`, fontFamily: 'Poppins', fontSize: '0.72rem', fontWeight: 600 }} />
+                          <span key={i} className="px-2 py-0.5 rounded-full text-[0.7rem] font-semibold bg-white text-red-500 border border-red-200">
+                            {areaLabel(area)}
+                          </span>
                         ))}
-                      </Box>
-                    </Box>
+                      </div>
+                    </div>
                   )}
-
                   {fr.aiAnalysis.recommendedFocus?.length > 0 && (
-                    <Box sx={{ p: 2, bgcolor: INDIGO_L, borderRadius: '12px', border: `1px solid ${INDIGO_B}` }}>
-                      <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.8rem', color: INDIGO, mb: 1 }}>
-                        {t('report.labels.recommended_focus')}
-                      </Typography>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                    <div className="p-4 rounded-2xl border border-indigo-100 bg-indigo-50">
+                      <div className="flex items-center gap-2 mb-3">
+                        <TrendingUp size={14} className="text-indigo-400" />
+                        <p className="font-bold text-[0.78rem] text-indigo-500">{t('report.labels.recommended_focus')}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
                         {fr.aiAnalysis.recommendedFocus.map((area: string, i: number) => (
-                          <Chip key={i} label={areaLabel(area)} size="small"
-                            sx={{ bgcolor: '#fff', color: INDIGO, border: `1px solid ${INDIGO_B}`, fontFamily: 'Poppins', fontSize: '0.72rem', fontWeight: 600 }} />
+                          <span key={i} className="px-2 py-0.5 rounded-full text-[0.7rem] font-semibold bg-white text-indigo-500 border border-indigo-200">
+                            {areaLabel(area)}
+                          </span>
                         ))}
-                      </Box>
-                    </Box>
+                      </div>
+                    </div>
                   )}
-                </Box>
-              </Card>
+                </div>
+              </div>
             )}
 
-            {/* ── Recommendations ── */}
-            {fr?.recommendations?.length > 0 && (
-              <Card>
-                <SectionTitle>{t('report.sections.recommendations')}</SectionTitle>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  {fr.recommendations.map((rec: string, i: number) => (
-                    <Box key={i} sx={{
-                      display: 'flex', alignItems: 'flex-start', gap: 1.5,
-                      p: 1.75, bgcolor: SURFACE, borderRadius: '10px', border: `1px solid ${BORDER}`,
-                    }}>
-                      <Box sx={{
-                        minWidth: 26, height: 26, borderRadius: '50%',
-                        bgcolor: INDIGO_L, border: `1px solid ${INDIGO_B}`,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                      }}>
-                        <LightbulbOutlinedIcon sx={{ fontSize: 14, color: INDIGO }} />
-                      </Box>
-                      <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.8rem', color: '#374151', lineHeight: 1.65 }}>
-                        {rec}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Box>
-              </Card>
-            )}
-
-            {/* ── Strengths & Weaknesses ── */}
+            {/* ══ STRENGTHS & WEAKNESSES ════════════════════════════════════ */}
             {(fr?.strengths?.length > 0 || fr?.weaknesses?.length > 0) && (
-              <Card>
-                <SectionTitle>{t('report.sections.strengths_weaknesses')}</SectionTitle>
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
-                  {fr.strengths?.length > 0 && (
-                    <Box sx={{ p: 2, bgcolor: GREEN_L, borderRadius: '12px', border: `1px solid ${GREEN_B}` }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-                        <ThumbUpOutlinedIcon sx={{ fontSize: 16, color: GREEN }} />
-                        <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.8rem', color: GREEN }}>
-                          {t('report.labels.strengths')}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
-                        {(fr.strengths as string[]).map((s, i) => (
-                          <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                            <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: GREEN, mt: 0.75, flexShrink: 0 }} />
-                            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.77rem', color: '#374151', lineHeight: 1.6 }}>{s}</Typography>
-                          </Box>
-                        ))}
-                      </Box>
-                    </Box>
-                  )}
-                  {fr.weaknesses?.length > 0 && (
-                    <Box sx={{ p: 2, bgcolor: RED_L, borderRadius: '12px', border: `1px solid ${RED_B}` }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-                        <ThumbDownOutlinedIcon sx={{ fontSize: 16, color: RED }} />
-                        <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.8rem', color: RED }}>
-                          {t('report.labels.weaknesses')}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
-                        {(fr.weaknesses as string[]).map((w, i) => (
-                          <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                            <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: RED, mt: 0.75, flexShrink: 0 }} />
-                            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.77rem', color: '#374151', lineHeight: 1.6 }}>{w}</Typography>
-                          </Box>
-                        ))}
-                      </Box>
-                    </Box>
-                  )}
-                </Box>
-              </Card>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                {fr.strengths?.length > 0 && (
+                  <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+                        <ThumbsUp size={15} className="text-emerald-500" />
+                      </div>
+                      <h3 className="font-bold text-[0.88rem] text-gray-800">{t('report.labels.strengths')}</h3>
+                    </div>
+                    <div className="flex flex-col gap-2.5">
+                      {(fr.strengths as string[]).map((s, i) => (
+                        <div key={i} className="flex items-start gap-2.5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-2 shrink-0" />
+                          <p className="text-[0.8rem] text-gray-600 leading-relaxed">{s}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {fr.weaknesses?.length > 0 && (
+                  <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="w-8 h-8 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center">
+                        <ThumbsDown size={15} className="text-red-400" />
+                      </div>
+                      <h3 className="font-bold text-[0.88rem] text-gray-800">{t('report.labels.weaknesses')}</h3>
+                    </div>
+                    <div className="flex flex-col gap-2.5">
+                      {(fr.weaknesses as string[]).map((w, i) => (
+                        <div key={i} className="flex items-start gap-2.5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-red-400 mt-2 shrink-0" />
+                          <p className="text-[0.8rem] text-gray-600 leading-relaxed">{w}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
 
-            {/* ── Development Areas ── */}
-            {fr?.developmentAreas?.length > 0 && (
-              <Card>
-                <SectionTitle>{t('report.sections.development_areas')}</SectionTitle>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  {(fr.developmentAreas as string[]).map((area, i) => (
-                    <Box key={i} sx={{
-                      display: 'flex', alignItems: 'flex-start', gap: 1.5,
-                      p: 1.75, bgcolor: AMBER_L, borderRadius: '10px', border: `1px solid ${AMBER_B}`,
-                    }}>
-                      <BuildOutlinedIcon sx={{ fontSize: 16, color: AMBER, mt: 0.2, flexShrink: 0 }} />
-                      <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.8rem', color: '#374151', lineHeight: 1.65 }}>
-                        {area}
-                      </Typography>
-                    </Box>
+            {/* ══ RECOMMENDATIONS ═══════════════════════════════════════════ */}
+            {fr?.recommendations?.length > 0 && (
+              <div className="bg-white rounded-3xl border border-gray-100 p-6 md:p-8 mb-4 shadow-sm">
+                <SectionHeader icon={<Lightbulb size={14} className="text-indigo-500" />}>
+                  {t('report.sections.recommendations')}
+                </SectionHeader>
+                <div className="flex flex-col gap-2.5">
+                  {fr.recommendations.map((rec: string, i: number) => (
+                    <div key={i} className="flex items-start gap-3 p-3.5 rounded-2xl bg-gray-50 border border-gray-100 hover:border-indigo-100 hover:bg-indigo-50/30 transition-colors">
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 bg-indigo-100 border border-indigo-200 text-[0.65rem] font-black text-indigo-600 mt-0.5">
+                        {i + 1}
+                      </div>
+                      <p className="text-[0.82rem] text-gray-700 leading-relaxed">{rec}</p>
+                    </div>
                   ))}
-                </Box>
-              </Card>
+                </div>
+              </div>
             )}
 
-            {/* ── Candidate Profile ── */}
+            {/* ══ DEVELOPMENT AREAS ══════════════════════════════════════════ */}
+            {fr?.developmentAreas?.length > 0 && (
+              <div className="bg-white rounded-3xl border border-gray-100 p-6 md:p-8 mb-4 shadow-sm">
+                <SectionHeader icon={<Wrench size={14} className="text-amber-500" />}>
+                  {t('report.sections.development_areas')}
+                </SectionHeader>
+                <div className="flex flex-col gap-2.5">
+                  {(fr.developmentAreas as string[]).map((area, i) => (
+                    <div key={i} className="flex items-start gap-3 p-3.5 rounded-2xl border border-amber-100 bg-amber-50">
+                      <ChevronRight size={15} className="text-amber-400 mt-0.5 shrink-0" />
+                      <p className="text-[0.82rem] text-gray-700 leading-relaxed">{area}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ══ CANDIDATE PROFILE ══════════════════════════════════════════ */}
             {fr?.candidateProfile && (fr.candidateProfile.revealedExpertise?.length > 0 || fr.candidateProfile.revealedGaps?.length > 0 || fr.candidateProfile.difficultyLevel) && (
-              <Card>
-                <SectionTitle>{t('report.sections.candidate_profile')}</SectionTitle>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <div className="bg-white rounded-3xl border border-gray-100 p-6 md:p-8 mb-4 shadow-sm">
+                <SectionHeader icon={<User size={14} className="text-indigo-500" />}>
+                  {t('report.sections.candidate_profile')}
+                </SectionHeader>
+                <div className="flex flex-col gap-5">
                   {fr.candidateProfile.difficultyLevel && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      <PersonOutlineIcon sx={{ fontSize: 16, color: INDIGO }} />
-                      <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.8rem', color: '#374151' }}>
-                        <span style={{ fontWeight: 600, color: '#111827' }}>{t('report.labels.difficulty_level')}</span>{' '}
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                      <User size={15} className="text-indigo-400" />
+                      <p className="text-[0.82rem] text-gray-700">
+                        <span className="font-semibold text-gray-900">{t('report.labels.difficulty_level')} </span>
                         {String(fr.candidateProfile.difficultyLevel).charAt(0).toUpperCase() + String(fr.candidateProfile.difficultyLevel).slice(1)}
-                      </Typography>
-                    </Box>
+                      </p>
+                    </div>
                   )}
                   {fr.candidateProfile.revealedExpertise?.length > 0 && (
-                    <Box>
-                      <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.78rem', color: GREEN, mb: 1 }}>
-                        {t('report.labels.demonstrated')}
-                      </Typography>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                    <div>
+                      <p className="font-semibold text-[0.75rem] text-emerald-600 uppercase tracking-wider mb-2.5">{t('report.labels.demonstrated')}</p>
+                      <div className="flex flex-wrap gap-1.5">
                         {(fr.candidateProfile.revealedExpertise as string[]).map((e, i) => (
-                          <Chip key={i} label={e} size="small"
-                            sx={{ bgcolor: GREEN_L, color: GREEN, border: `1px solid ${GREEN_B}`, fontFamily: 'Poppins', fontSize: '0.72rem', fontWeight: 500 }} />
+                          <span key={i} className="px-2.5 py-1 rounded-full text-[0.72rem] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200">{e}</span>
                         ))}
-                      </Box>
-                    </Box>
+                      </div>
+                    </div>
                   )}
                   {fr.candidateProfile.revealedGaps?.length > 0 && (
-                    <Box>
-                      <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.78rem', color: AMBER, mb: 1 }}>
-                        {t('report.labels.gaps')}
-                      </Typography>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                    <div>
+                      <p className="font-semibold text-[0.75rem] text-amber-500 uppercase tracking-wider mb-2.5">{t('report.labels.gaps')}</p>
+                      <div className="flex flex-wrap gap-1.5">
                         {(fr.candidateProfile.revealedGaps as string[]).map((g, i) => (
-                          <Chip key={i} label={g} size="small"
-                            sx={{ bgcolor: AMBER_L, color: AMBER, border: `1px solid ${AMBER_B}`, fontFamily: 'Poppins', fontSize: '0.72rem', fontWeight: 500 }} />
+                          <span key={i} className="px-2.5 py-1 rounded-full text-[0.72rem] font-semibold bg-amber-50 text-amber-600 border border-amber-200">{g}</span>
                         ))}
-                      </Box>
-                    </Box>
+                      </div>
+                    </div>
                   )}
-                </Box>
-              </Card>
+                </div>
+              </div>
             )}
 
-            {/* ── Conversation Q&A ── */}
+            {/* ══ Q&A ═══════════════════════════════════════════════════════ */}
             {(data?.interviewData as any)?.conversation?.length > 0 && (
-              <Card>
-                <SectionTitle>{t('report.sections.qa')}</SectionTitle>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <div className="bg-white rounded-3xl border border-gray-100 p-6 md:p-8 mb-4 shadow-sm">
+                <SectionHeader icon={<MessageSquare size={14} className="text-indigo-500" />}>
+                  {t('report.sections.qa')}
+                </SectionHeader>
+                <div className="flex flex-col gap-3">
                   {((data?.interviewData as any).conversation as any[]).map((turn: any, i: number) => (
-                    <Box key={i} sx={{ p: 2, bgcolor: SURFACE, borderRadius: '12px', border: `1px solid ${BORDER}` }}>
-                      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1 }}>
-                        <QuestionAnswerOutlinedIcon sx={{ fontSize: 15, color: INDIGO, mt: 0.2, flexShrink: 0 }} />
-                        <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.8rem', color: '#111827', lineHeight: 1.5 }}>
-                          {turn.question}
-                        </Typography>
-                      </Box>
+                    <div key={i} className="rounded-2xl border border-gray-100 overflow-hidden">
+                      <div className="flex items-start gap-3 p-4 bg-gray-50 border-b border-gray-100">
+                        <div className="w-6 h-6 rounded-full bg-indigo-100 border border-indigo-200 flex items-center justify-center shrink-0 mt-0.5">
+                          <MessageSquare size={11} className="text-indigo-500" />
+                        </div>
+                        <p className="font-semibold text-[0.82rem] text-gray-800 leading-snug">{turn.question}</p>
+                      </div>
                       {turn.response && (
-                        <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.77rem', color: '#374151', lineHeight: 1.65, pl: 3 }}>
-                          {turn.response}
-                        </Typography>
+                        <div className="px-4 py-3 bg-white">
+                          <p className="text-[0.78rem] text-gray-600 leading-relaxed pl-9">{turn.response}</p>
+                        </div>
                       )}
                       {(turn.evaluation?.qualityScore != null || turn.targetArea) && (
-                        <Box sx={{ display: 'flex', gap: 1, mt: 1, pl: 3, flexWrap: 'wrap' }}>
+                        <div className="flex gap-1.5 px-4 pb-3 pl-13 flex-wrap">
                           {turn.targetArea && (
-                            <Chip label={areaLabel(turn.targetArea)} size="small"
-                              sx={{ bgcolor: INDIGO_L, color: INDIGO, border: `1px solid ${INDIGO_B}`, fontFamily: 'Poppins', fontSize: '0.68rem' }} />
+                            <Badge label={areaLabel(turn.targetArea)}
+                              color="#6366f1" bg="rgba(99,102,241,0.08)" border="rgba(99,102,241,0.18)" />
                           )}
                           {turn.evaluation?.qualityScore != null && (
-                            <Chip
-                              label={t('report.stats.quality', { score: turn.evaluation.qualityScore })} size="small"
-                              sx={{ bgcolor: scoreBg(turn.evaluation.qualityScore * 10), color: scoreColor(turn.evaluation.qualityScore * 10), border: `1px solid ${scoreBorder(turn.evaluation.qualityScore * 10)}`, fontFamily: 'Poppins', fontSize: '0.68rem', fontWeight: 600 }} />
+                            <Badge label={t('report.stats.quality', { score: turn.evaluation.qualityScore })}
+                              color={scoreColor(turn.evaluation.qualityScore * 10)}
+                              bg={scoreBg(turn.evaluation.qualityScore * 10)}
+                              border={scoreBorder(turn.evaluation.qualityScore * 10)}
+                              className="font-bold" />
                           )}
-                        </Box>
+                        </div>
                       )}
-                    </Box>
+                    </div>
                   ))}
-                </Box>
-              </Card>
+                </div>
+              </div>
             )}
 
-            {/* ── Next recommended area ── */}
+            {/* ══ NEXT AREA ══════════════════════════════════════════════════ */}
             {fr?.nextRecommendedArea && (
-              <Card sx={{ bgcolor: INDIGO_L, border: `1px solid ${INDIGO_B}` }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                  <TrendingUpIcon sx={{ color: INDIGO, fontSize: 22 }} />
-                  <Box>
-                    <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.82rem', color: INDIGO }}>
-                      {t('report.sections.next_area')}
-                    </Typography>
-                    <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.8rem', color: '#374151', mt: 0.25 }}>
-                      {areaLabel(fr.nextRecommendedArea)}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Card>
+              <div className="flex items-center gap-5 p-6 rounded-3xl mb-4 border"
+                style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(139,92,246,0.06) 100%)', borderColor: 'rgba(99,102,241,0.2)' }}>
+                <div className="w-12 h-12 rounded-2xl bg-indigo-500 flex items-center justify-center shrink-0 shadow-lg shadow-indigo-200">
+                  <TrendingUp size={22} className="text-white" />
+                </div>
+                <div>
+                  <p className="text-[0.7rem] font-bold text-indigo-400 uppercase tracking-widest mb-0.5">{t('report.sections.next_area')}</p>
+                  <p className="font-black text-[1.1rem] text-gray-800">{areaLabel(fr.nextRecommendedArea)}</p>
+                </div>
+              </div>
             )}
 
-            {/* ── Analytics detail ── */}
+            {/* ══ SESSION ANALYTICS ══════════════════════════════════════════ */}
             {analytics && (
-              <Card>
-                <SectionTitle>{t('report.sections.session_analytics')}</SectionTitle>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+              <div className="bg-white rounded-3xl border border-gray-100 p-6 md:p-8 mb-4 shadow-sm">
+                <SectionHeader icon={<BarChart3 size={14} className="text-indigo-500" />}>
+                  {t('report.sections.session_analytics')}
+                </SectionHeader>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {[
-                    { label: t('report.stats.duration'),       value: analytics.duration != null ? fmtDuration(analytics.duration) : null },
-                    { label: t('report.stats.exchanges'),      value: analytics.messageCount },
-                    { label: t('report.stats.coverage'),       value: analytics.coveragePercentage != null ? `${analytics.coveragePercentage}%` : null },
-                    { label: t('report.stats.areas_covered'),  value: analytics.completedAreas != null && analytics.totalAreas != null ? `${analytics.completedAreas} / ${analytics.totalAreas}` : null },
-                    { label: t('report.stats.avg_response'),   value: analytics.averageResponseLength != null ? `${analytics.averageResponseLength} words` : null },
-                    { label: t('report.stats.style'),          value: analytics.interactionStyle },
-                    { label: t('report.stats.silence'),        value: analytics.silenceEvents },
-                  ].filter(({ value }) => value != null).map(({ label, value }) => (
-                    <Box key={label}>
-                      <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.68rem', color: GRAY, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', mb: 0.4 }}>
-                        {label}
-                      </Typography>
-                      <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.88rem', fontWeight: 700, color: '#111827' }}>
-                        {value}
-                      </Typography>
-                    </Box>
+                    { label: t('report.stats.duration'),      value: analytics.duration != null ? fmtDuration(analytics.duration) : null,                                                   icon: <Clock size={16} className="text-indigo-400" /> },
+                    { label: t('report.stats.exchanges'),     value: analytics.messageCount,                                                                                                 icon: <MessageCircle size={16} className="text-indigo-400" /> },
+                    { label: t('report.stats.coverage'),      value: analytics.coveragePercentage != null ? `${analytics.coveragePercentage}%` : null,                                       icon: <Target size={16} className="text-indigo-400" /> },
+                    { label: t('report.stats.areas_covered'), value: analytics.completedAreas != null && analytics.totalAreas != null ? `${analytics.completedAreas} / ${analytics.totalAreas}` : null, icon: <Trophy size={16} className="text-amber-400" /> },
+                    { label: t('report.stats.avg_response'),  value: analytics.averageResponseLength != null ? `${analytics.averageResponseLength} words` : null,                            icon: <MessageSquare size={16} className="text-indigo-400" /> },
+                    { label: t('report.stats.style'),         value: analytics.interactionStyle,                                                                                              icon: <User size={16} className="text-indigo-400" /> },
+                    { label: t('report.stats.silence'),       value: analytics.silenceEvents,                                                                                                 icon: <Award size={16} className="text-indigo-400" /> },
+                  ].filter(({ value }) => value != null).map(({ label, value, icon }) => (
+                    <div key={label} className="flex flex-col gap-2 p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                      {icon}
+                      <p className="text-[0.62rem] text-gray-400 font-semibold uppercase tracking-wider">{label}</p>
+                      <p className="text-[0.92rem] font-black text-gray-800">{value}</p>
+                    </div>
                   ))}
-                </Box>
-              </Card>
+                </div>
+              </div>
             )}
           </>
         )}
       </div>
-
     </CandidateWorkspaceLayout>
   );
 }

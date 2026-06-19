@@ -167,9 +167,9 @@ export default function InterviewScreen({
             questionAnswerRemaining={audio.questionAnswerRemaining}
             agentState={audio.agentState}
             questionNumber={
-              lastQuestion.type === 'question' || lastQuestion.type === 'follow_up'
+              lastQuestion.type === 'question' || lastQuestion.type === 'follow_up' || lastQuestion.type === 'new_topic'
                 ? questionCount
-                : 0
+                : 0  // greeting shows with generic label, no number
             }
           />
         )}

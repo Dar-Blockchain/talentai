@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { Coverage, InterviewMessage } from '../types/interview';
 import type {
   InterviewStartedData,
@@ -14,7 +15,8 @@ import { useInterviewTimer } from './useInterviewTimer';
 import { useCamera } from './useCamera';
 import { useSecurityMonitoring } from './useSecurityMonitoring';
 import { toast } from 'sonner';
-
+import { getMyProfile } from '@/store/slices/userSlice';
+import type { AppDispatch } from '@/store/store';
 import { safeSet } from '@/utils/safeStorage';
 
 export type { UseInterviewSessionOptions };
@@ -29,6 +31,7 @@ export function useInterviewSession({
   jobData,
   namespace,
 }: Omit<UseInterviewSessionOptions, 'notify'>) {
+  const dispatch = useDispatch<AppDispatch>();
   const [coverage, setCoverage] = useState<Coverage | null>(null);
   const [coverageDashboardExpanded, setCoverageDashboardExpanded] = useState(true);
   const [resultsReady, setResultsReady] = useState(false);
@@ -124,6 +127,7 @@ export function useInterviewSession({
       }));
     }
     setResultsReady(true);
+    dispatch(getMyProfile());
     if (isFinishingRef.current) {
       setTimeout(() => {
         if (isFinishingRef.current) {
