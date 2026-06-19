@@ -1,7 +1,7 @@
 const Profile = require("./profile.model");
 const User = require("./user.model");
-const Post = require("../../models/Post.model");
-const CompanyMembership = require("../../models/CompanyMembership.model");
+const Post = require("../posts/post.model");
+const CompanyMembership = require("../company-members/company-membership.model");
 const fs = require("fs");
 const path = require("path");
 

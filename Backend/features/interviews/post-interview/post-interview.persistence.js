@@ -1,5 +1,5 @@
 const PostInterviewAssessment = require("./post-interview.model");
-const JobApplication          = require("../../../models/JobApplication.model");
+const JobApplication          = require("../../job-applications/job-application.model");
 const Profile                 = require("../../../features/users/profile.model");
 
 async function persistInterviewResults(sessionId, result, candidateId, postId) {

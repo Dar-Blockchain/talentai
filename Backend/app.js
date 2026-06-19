@@ -43,9 +43,9 @@ const campaignInterviewController = require("./features/interviews/campaign-inte
 const chatSocketHandler = require("./features/chat/chat.socket");
 const teamChatSocketHandler = require("./features/team-chat/team-chat.socket");
 const { seedDefaultPlans } = require("./seeders/planLimits.seeder");
-const { scheduleAutoInvites } = require("./cron/autoInviteScheduler.cron");
-const { scheduleReminders } = require("./cron/reminderScheduler.cron");
-const { scheduleCampaignReminders } = require("./cron/campaignReminderScheduler.cron");
+const { scheduleAutoInvites } = require("./cron/auto-invite.cron");
+const { scheduleReminders } = require("./cron/reminder.cron");
+const { scheduleCampaignReminders } = require("./cron/campaign-reminder.cron");
 //const backupService = require('./services/backupService');
 //const { scheduleDailyBackup } = require('./cron/dailyBackup');
 

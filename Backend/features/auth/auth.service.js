@@ -6,9 +6,9 @@ const { generateOTP }                          = require("../../utils/one-time-p
 const { generateToken }                        = require("../../utils/generate-token");
 const { extractUsernameFromEmail, formatLocation } = require("./auth.validation");
 
-const CompanyMembership = require("../../models/CompanyMembership.model");
-const PlanLimits        = require("../../models/PlanLimits.model");
-const Subscription      = require("../../models/Subscription.model");
+const CompanyMembership = require("../company-members/company-membership.model");
+const PlanLimits        = require("../billing/plans/plan-limits.model");
+const Subscription      = require("../billing/subscriptions/subscription.model");
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 

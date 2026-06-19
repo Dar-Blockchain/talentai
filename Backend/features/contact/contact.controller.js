@@ -13,10 +13,6 @@ class ContactController {
         message: plan ? `[Plan: ${plan}]\n${message || ""}` : message,
       });
 
-      ContactService.logContactSubmission({ name, email, company, teamSize }).catch((err) =>
-        console.error("Logging error:", err)
-      );
-
       return res.json(result);
     } catch (error) {
       const statusCode = error.status || 500;

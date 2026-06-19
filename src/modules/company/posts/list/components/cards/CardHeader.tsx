@@ -4,7 +4,6 @@ import { Box, IconButton, Menu, MenuItem, Typography } from "@mui/material";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutlineOutlined";
 import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
 import EditNoteOutlined from "@mui/icons-material/EditNoteOutlined";
-import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
 import MoreVertOutlined from "@mui/icons-material/MoreVert";
 import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
 import OpenInNewOutlined from "@mui/icons-material/OpenInNewOutlined";
@@ -13,9 +12,8 @@ import PublishOutlined from "@mui/icons-material/PublishOutlined";
 import { useRouter } from "next/router";
 
 const CREATION_TYPE: Record<string, { i18nKey: string; color: string; bg: string; Icon: React.ElementType }> = {
-  ai:       { i18nKey: "ai",       color: "#7C3AED", bg: "#F5F3FF", Icon: AutoAwesomeOutlined },
-  pipeline: { i18nKey: "pipeline", color: "#0891B2", bg: "#ECFEFF", Icon: AccountTreeOutlined },
-  manual:   { i18nKey: "manual",   color: "#D97706", bg: "#FFFBEB", Icon: EditNoteOutlined },
+  ai:     { i18nKey: "ai",     color: "#7C3AED", bg: "#F5F3FF", Icon: AutoAwesomeOutlined },
+  manual: { i18nKey: "manual", color: "#D97706", bg: "#FFFBEB", Icon: EditNoteOutlined },
 };
 
 const STATUS_STYLES: Record<string, { i18nKey: string; color: string; bg: string; dot: string }> = {

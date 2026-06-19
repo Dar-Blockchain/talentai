@@ -37,7 +37,7 @@ export interface JobPost {
   company?: { _id?: string; companyName?: string };
   profile?: { _id: string };
   jobDetails?: JobDetails;
-  creationType?: 'pipeline' | 'regular' | 'standard';
+  creationType?: 'regular' | 'standard';
   archived?: boolean;
   expirationDate?: string;
   thresholdScore?: number;

@@ -74,7 +74,7 @@ exports.updateDepartment = async (id, updateData) => {
 };
 
 exports.getDepartmentStats = async (companyId) => {
-  const CompanyMembership = require("../../models/CompanyMembership.model");
+  const CompanyMembership = require("../company-members/company-membership.model");
 
   const total = await Department.countDocuments({ companyId });
 

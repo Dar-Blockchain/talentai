@@ -2,8 +2,6 @@ const nodemailer = require("nodemailer");
 const fs = require("fs");
 const path = require("path");
 const handlebars = require("handlebars");
-const { getMailTransportOptions } = require("./mail-transport-options");
-
 const compileTemplate = (templateName) => {
   const filePath = path.join(__dirname, "../templates/emails", templateName);
   const source = fs.readFileSync(filePath, "utf8");
@@ -12,6 +10,23 @@ const compileTemplate = (templateName) => {
 
 // Build transport from env (EMAIL_HOST / EMAIL_PORT / EMAIL_SECURE / EMAIL_USER / EMAIL_PASSWORD).
 // Defaults: port 465 + TLS. For STARTTLS use EMAIL_PORT=587 EMAIL_SECURE=false.
+function getMailTransportOptions() {
+  const port = parseInt(process.env.EMAIL_PORT || "465", 10) || 465;
+  const secureEnv = process.env.EMAIL_SECURE;
+  const secure = secureEnv !== undefined ? /^true$/i.test(String(secureEnv)) : port === 465;
+  const opts = {
+    host: process.env.EMAIL_HOST,
+    port,
+    secure,
+    auth: {
+      user: process.env.NO_REPLY_EMAIL || process.env.EMAIL_USER,
+      pass: process.env.NO_REPLY_EMAIL_PASSWORD || process.env.EMAIL_PASSWORD,
+    },
+  };
+  if (port === 587 && !secure) opts.requireTLS = true;
+  return opts;
+}
+
 const transporter = nodemailer.createTransport(getMailTransportOptions());
 
 // "From" must match the SMTP authenticated address (EMAIL_USER), otherwise providers

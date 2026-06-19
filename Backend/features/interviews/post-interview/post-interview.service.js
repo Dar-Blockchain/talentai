@@ -1,11 +1,10 @@
 const mongoose = require("mongoose");
 const PostInterviewAssessment = require("./post-interview.model");
-const Post = require("../../../models/Post.model");
+const Post = require("../../posts/post.model");
 const Profile = require("../../../features/users/profile.model");
 const User = require("../../../features/users/user.model");
-const CandidatePostStepProgress = require("../../../models/CandidatePostStepsProgress.model");
 const crypto = require("crypto");
-const subscriptionService = require("../../../features/subscriptions/subscription.service");
+const subscriptionService = require("../../../features/billing/subscriptions/subscription.service");
 
 // ========== MONTHLY INTERVIEW LIMIT HELPERS ==========
 const checkMonthlyInterviewLimit = async (companyId) => {
@@ -47,7 +46,7 @@ const incrementMonthlyInterviewsUsage = async (companyId) => {
     }
 
     // Increment on all active non-Trial subscriptions (distributed evenly — first active sub gets +1)
-    const Subscription = require("../../../models/Subscription.model");
+    const Subscription = require("../../../features/billing/subscriptions/subscription.model");
     const active = await Subscription.find({
       companyProfileId: profile._id.toString(),
       status: "active",
@@ -142,78 +141,7 @@ module.exports.createPostInterviewAssessment = async (assessmentData) => {
       // Do not fail assessment creation if increment fails
     }
 
-    // =======================
-    // UPDATE PIPELINE
-    // =======================
-    const progress = await CandidatePostStepProgress.findOne({
-      idCandidate: assessmentData.candidate,
-      idPost: assessmentData.post
-    }).populate('currentStep');
-
-    if (!progress) {
-      // No pipeline progress - populate and return
-      return await PostInterviewAssessment.findById(assessment._id)
-        .populate({
-          path: 'candidate',
-          populate: {
-            path: 'profile',
-            model: 'Profile'
-          }
-        })
-        .populate('company')
-        .populate('post');
-    }
-
-    // sort steps by nodeNumber
-    const sortedSteps = [...progress.steps].sort((a, b) => {
-      const sa = post.PostSteps.find(ps => ps._id.equals(a.stepId));
-      const sb = post.PostSteps.find(ps => ps._id.equals(b.stepId));
-      return (sa?.data?.config?.nodeNumber ?? 0) -
-             (sb?.data?.config?.nodeNumber ?? 0);
-    });
-
-    const currentIndex = sortedSteps.findIndex(s =>
-      s.stepId.equals(progress.currentStep._id)
-    );
-
-    if (currentIndex === -1) {
-      // No matching step - populate and return
-      return await PostInterviewAssessment.findById(assessment._id)
-        .populate({
-          path: 'candidate',
-          populate: {
-            path: 'profile',
-            model: 'Profile'
-          }
-        })
-        .populate('company')
-        .populate('post');
-    }
-
-    // current → done
-    const currentStep = progress.steps.find(s =>
-      s.stepId.equals(progress.currentStep._id)
-    );
-
-    currentStep.status = 'done';
-    currentStep.interviewDetails = assessment._id;
-    currentStep.completedAt = new Date();
-    currentStep.attempts = (currentStep.attempts || 0) + 1;
-
-    // next → inProgress
-    const next = sortedSteps[currentIndex + 1];
-    if (next) {
-      const nextStep = progress.steps.find(s =>
-        s.stepId.equals(next.stepId)
-      );
-      nextStep.status = 'inProgress';
-      progress.currentStep = next.stepId;
-    }
-
-    await progress.save();
-
-    // Populate and return assessment with candidate profile
-    const populatedAssessment = await PostInterviewAssessment.findById(assessment._id)
+    return await PostInterviewAssessment.findById(assessment._id)
       .populate({
         path: 'candidate',
         populate: {
@@ -223,8 +151,6 @@ module.exports.createPostInterviewAssessment = async (assessmentData) => {
       })
       .populate('company')
       .populate('post');
-
-    return populatedAssessment;
 
   } catch (error) {
     // If duplicate key error occurs, return the existing assessment instead
@@ -336,56 +262,10 @@ module.exports.getPostInterviewAssessmentById = async (assessmentId) => {
       throw new Error('Post interview assessment not found');
     }
 
-    // =======================
-    // FETCH STEPS DATA
-    // =======================
-    let stepsData = null;
-    try {
-      const candidatePostStepProgress = await CandidatePostStepProgress.findOne({
-        idCandidate: assessment.candidate._id,
-        idPost: assessment.post._id
-      })
-        .populate({
-          path: 'steps.stepId',
-          model: 'PostSteps'
-        })
-        .populate({
-          path: 'steps.interviewDetails',
-          model: 'PostInterviewAssessment'
-        })
-        .populate('currentStep');
-
-      if (candidatePostStepProgress) {
-        stepsData = {
-          _id: candidatePostStepProgress._id,
-          idCandidate: candidatePostStepProgress.idCandidate,
-          idPost: candidatePostStepProgress.idPost,
-          currentStep: candidatePostStepProgress.currentStep,
-          steps: candidatePostStepProgress.steps.map(step => ({
-            stepId: step.stepId,
-            interviewDetails: step.interviewDetails,
-            status: step.status,
-            passed: step.passed,
-            finalScore: step.finalScore,
-            attempts: step.attempts,
-            completedAt: step.completedAt
-          })),
-          createdAt: candidatePostStepProgress.createdAt,
-          updatedAt: candidatePostStepProgress.updatedAt
-        };
-      }
-    } catch (stepsError) {
-      console.warn('⚠️ Warning fetching steps data:', stepsError.message);
-      // Don't throw - steps data is optional
-    }
-
-    // =======================
-    // RETURN WITH STEPS DATA
-    // =======================
     return {
       assessment,
-      stepsData,
-      hasSteps: stepsData !== null
+      stepsData: null,
+      hasSteps: false
     };
   } catch (error) {
     console.error('❌ Error getting post interview assessment:', error.message);

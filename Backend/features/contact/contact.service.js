@@ -33,19 +33,6 @@ class ContactService {
       throw { status: error.status || 500, message: error.message || "Failed to send contact email." };
     }
   }
-
-  static async logContactSubmission(data) {
-    try {
-      console.log("📧 New contact submission:", {
-        name: data.name,
-        email: data.email,
-        company: data.company,
-        timestamp: new Date().toISOString(),
-      });
-    } catch (error) {
-      console.error("Failed to log contact submission:", error.message);
-    }
-  }
 }
 
 module.exports = ContactService;

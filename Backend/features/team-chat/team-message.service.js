@@ -7,8 +7,8 @@ const {
   assertValidObjectId,
   assertConversationNotHiddenForUser,
   getClearedAtForUser,
-} = require('../../helpers/teamChatAccess.helper');
-const { detectContactSharing } = require('../../helpers/messageContactPolicy');
+} = require('../../helpers/team-chat-access.helpers');
+const { detectContactSharing } = require('../../helpers/message-contact-policy.helpers');
 
 const LAST_MESSAGE_BLOCKED_PREVIEW = '[Not delivered]';
 const LAST_MESSAGE_DELETED_SENTINEL = '__DELETED__';

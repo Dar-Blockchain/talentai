@@ -14,8 +14,8 @@
  */
 
 const mongoose = require("mongoose");
-const Subscription = require("../models/Subscription.model");
-const PlanLimits = require("../models/PlanLimits.model");
+const Subscription = require("../features/billing/subscriptions/subscription.model");
+const PlanLimits = require("../features/billing/plans/plan-limits.model");
 require("dotenv").config();
 
 const connectDB = async () => {

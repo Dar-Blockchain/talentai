@@ -4,28 +4,30 @@ const express = require("express");
 // Import all route modules
 const { registerSwagger } = require('./swagger');
 const { router: authRouter } = require("../features/auth");
-const companyPermissionsRouter = require("../routes/companyPermissions.routes");
-const dashboardRouter = require("../routes/dashboard.routes");
+const {
+  companyPermissionsRouter,
+  companyInvitationRouter: CompanyInvitationRouters,
+  companyMembershipRouter: CompanyMembershipRoutes,
+  employeePermissionsRouter,
+} = require("../features/company-members");
+const { dashboardRouter } = require("../features/dashboard");
 const profileRouter = require("../features/users").profileRouter;
-const postRouter = require("../routes/post.routes");
+const { postRouter } = require("../features/posts");
 const feedbackRouter = require("../features/feedbacks/feedback.routes");
 const postInterviewAssessmentRouter = require("../features/interviews/post-interview/post-interview.routes");
 const { router: notificationSystemRouter } = require("../features/notifications");
-const { stripeRouter: stripRouter } = require("../features/stripe");
+const { stripeRouter: stripRouter } = require("../features/billing/payments");
 const SkillInterviewAssessmentRoutes = require("../features/interviews/skill-interview/skill-interview.routes");
-const CompanyInvitationRouters = require("../routes/companyInvitation.routes");
-const CompanyMembershipRoutes = require("../routes/companyMembership.routes");
 const { router: chatRouter } = require("../features/chat");
 const { router: teamChatRouter } = require("../features/team-chat");
-const planLimitsRouter = require("../routes/planLimits.routes");
-const { subscriptionRouter } = require("../features/subscriptions");
+const { router: planLimitsRouter } = require("../features/billing/plans");
+const { subscriptionRouter } = require("../features/billing/subscriptions");
 const { router: internalCampaignRoutes } = require('../features/campaigns');
 const { router: departmentRoutes } = require('../features/departments');
 const { contactRouter } = require('../features/contact');
-const employeePermissionsRouter = require('../routes/employeePermissions.routes');
-const jobApplicationRouter = require("../routes/jobApplication.routes");
+const { jobApplicationRouter } = require("../features/job-applications");
 const { router: apiKeyRouter } = require('../features/api-keys');
-const { paymentRouter } = require('../features/payment');
+const { paymentRouter } = require('../features/billing/payments');
 const usersRouter = require('../features/users').userRouter;
 
 /**

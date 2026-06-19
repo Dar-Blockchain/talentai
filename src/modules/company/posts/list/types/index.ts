@@ -1,6 +1,6 @@
 export type StatusFilter = "all" | "active" | "draft" | "expired";
 export type SortOption   = "newest" | "oldest" | "title-asc" | "title-desc";
-export type TypeFilter   = "all" | "ai" | "pipeline" | "manual";
+export type TypeFilter   = "all" | "ai" | "manual";
 export type PostStatus   = "open" | "active" | "draft" | "closed" | "expired";
 
 export interface PaginationInfo {
@@ -11,7 +11,7 @@ export interface PaginationInfo {
 export interface JobPost {
   _id: string;
   status: string;
-  creationType: "ai" | "pipeline" | "manual";
+  creationType: "ai" | "manual";
   createdAt: string;
   expirationDate?: string;
   jobDetails: {

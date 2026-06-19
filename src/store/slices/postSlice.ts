@@ -1,11 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { postService } from "@/services/postService";
 
-interface RecruitmentFlowState {
-  nodes: any[];
-  edges: any[];
-}
-
 interface SavePostState {
   loading: boolean;
   error: string | null;
@@ -57,8 +52,6 @@ interface PostState {
   steps: any[];
   loading: boolean;
   error: string | null;
-  postStepsLoading: boolean;
-  postStepsError: string | null;
   myPosts: any[];
   myPostsLoading: boolean;
   myPostsError: string | null;
@@ -70,7 +63,6 @@ interface PostState {
   currentJobError: string | null;
   recommended: RecommendedState;
   savePost: SavePostState;
-  recruitmentFlow: RecruitmentFlowState;
   updatePostStatus: UpdatePostStatusState;
   assessmentDetails: AssessmentDetailsState;
   postMetrics: PostMetricsState;
@@ -80,8 +72,6 @@ const initialState: PostState = {
   steps: [],
   loading: false,
   error: null,
-  postStepsLoading: false,
-  postStepsError: null,
   myPosts: [],
   myPostsLoading: false,
   myPostsError: null,
@@ -98,7 +88,6 @@ const initialState: PostState = {
     pagination: { total: 0, page: 1, limit: 3, totalPages: 0, hasNextPage: false, hasPrevPage: false },
   },
   savePost: { loading: false, error: null, savedPost: null },
-  recruitmentFlow: { nodes: [], edges: [] },
   updatePostStatus: { loading: false, error: null },
   assessmentDetails: { assessment: null, stepsData: null, loading: false, error: null },
   postMetrics: { data: null, loading: false, error: null },
@@ -181,10 +170,7 @@ const postSlice = createSlice({
   initialState,
   reducers: {
     resetSavePost: (state) => { state.savePost.loading = false; state.savePost.error = null; state.savePost.savedPost = null; },
-    clearError: (state) => { state.error = null; state.postStepsError = null; state.currentJobError = null; state.recommended.error = null; },
-    setFlowNodes(state, action) { state.recruitmentFlow.nodes = action.payload; },
-    setFlowEdges(state, action) { state.recruitmentFlow.edges = action.payload; },
-    resetFlow(state) { state.recruitmentFlow.nodes = []; state.recruitmentFlow.edges = []; },
+    clearError: (state) => { state.error = null; state.currentJobError = null; state.recommended.error = null; },
     clearAssessmentDetails(state) { state.assessmentDetails = { assessment: null, stepsData: null, loading: false, error: null }; },
   },
   extraReducers: (builder) => {
@@ -219,14 +205,12 @@ const postSlice = createSlice({
   },
 });
 
-export const { resetSavePost, clearError, setFlowNodes, setFlowEdges, resetFlow, clearAssessmentDetails } = postSlice.actions;
+export const { resetSavePost, clearError, clearAssessmentDetails } = postSlice.actions;
 export default postSlice.reducer;
 
 // ── Selectors ─────────────────────────────────────────────────────────────────
 
 export const selectSteps                          = (state: { post: PostState }) => state.post.steps;
-export const selectPostStepsLoading               = (state: { post: PostState }) => state.post.postStepsLoading;
-export const selectPostStepsError                 = (state: { post: PostState }) => state.post.postStepsError;
 export const selectMyPosts                        = (state: { post: PostState }) => state.post.myPosts;
 export const selectMyPostsLoading                 = (state: { post: PostState }) => state.post.myPostsLoading;
 export const selectMyPostsError                   = (state: { post: PostState }) => state.post.myPostsError;

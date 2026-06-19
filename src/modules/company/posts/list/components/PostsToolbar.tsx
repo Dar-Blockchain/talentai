@@ -10,7 +10,6 @@ import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import SortByAlphaOutlined from "@mui/icons-material/SortByAlphaOutlined";
 import CheckCircleOutlineOutlined from "@mui/icons-material/CheckCircleOutline";
 import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
-import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
 import EditNoteOutlined from "@mui/icons-material/EditNoteOutlined";
 import FilterListOutlined from "@mui/icons-material/FilterListOutlined";
 import type { StatusFilter, SortOption, TypeFilter } from "../types";
@@ -53,10 +52,9 @@ const STATUS_OPTIONS: { value: StatusFilter; label_key: string; color: string }[
 ];
 
 const TYPE_OPTIONS: { value: TypeFilter; label_key: string; color: string; bg: string; Icon: React.ElementType }[] = [
-  { value: "all",      label_key: "type.all",      color: "#6B7280", bg: "#F3F4F6", Icon: FilterListOutlined },
-  { value: "ai",       label_key: "type.ai",       color: "#7C3AED", bg: "#F5F3FF", Icon: AutoAwesomeOutlined },
-  { value: "pipeline", label_key: "type.pipeline", color: "#0891B2", bg: "#ECFEFF", Icon: AccountTreeOutlined },
-  { value: "manual",   label_key: "type.manual",   color: "#D97706", bg: "#FFFBEB", Icon: EditNoteOutlined },
+  { value: "all",    label_key: "type.all",    color: "#6B7280", bg: "#F3F4F6", Icon: FilterListOutlined },
+  { value: "ai",     label_key: "type.ai",     color: "#7C3AED", bg: "#F5F3FF", Icon: AutoAwesomeOutlined },
+  { value: "manual", label_key: "type.manual", color: "#D97706", bg: "#FFFBEB", Icon: EditNoteOutlined },
 ];
 
 const SORT_GROUPS_DEF = [

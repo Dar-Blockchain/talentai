@@ -7,10 +7,10 @@
  */
 'use strict';
 
-const ragService       = require('../../../services/rag.service');
+const ragService       = require('./rag.service');
 const configManager    = require('../../../utils/config-manager');
 const redisSessionManager = require('../../../utils/redis-session-manager');
-const Post             = require('../../../models/Post.model');
+const Post             = require('../../posts/post.model');
 
 // AI sub-modules
 const AIUtils            = require('./ai/ai.utils');

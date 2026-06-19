@@ -10,12 +10,9 @@ interface PaginationState {
 
 interface PostDetailsState {
   steps: any[];
-  postStepsLoading: boolean;
-  postStepsError: string | null;
   currentJob: any | null;
   currentJobLoading: boolean;
   currentJobError: string | null;
-  recruitmentFlow: { nodes: any[]; edges: any[] };
   savePost: { loading: boolean; error: string | null; savedPost: any };
   assessmentDetails:    { assessment: any | null; stepsData: any | null; loading: boolean; error: string | null };
 }
@@ -28,12 +25,9 @@ const defaultPagination: PaginationState = {
 
 const initialState: PostDetailsState = {
   steps: [],
-  postStepsLoading: false,
-  postStepsError: null,
   currentJob: null,
   currentJobLoading: false,
   currentJobError: null,
-  recruitmentFlow: { nodes: [], edges: [] },
   savePost: { loading: false, error: null, savedPost: null },
   assessmentDetails:    { assessment: null, stepsData: null, loading: false, error: null },
 };
@@ -70,10 +64,7 @@ const postDetailsSlice = createSlice({
   name: "postDetails",
   initialState,
   reducers: {
-    clearDetailsError:     (state) => { state.currentJobError = null; state.postStepsError = null; },
-    setFlowNodes:          (state, action) => { state.recruitmentFlow.nodes = action.payload; },
-    setFlowEdges:          (state, action) => { state.recruitmentFlow.edges = action.payload; },
-    resetFlow:             (state) => { state.recruitmentFlow.nodes = []; state.recruitmentFlow.edges = []; },
+    clearDetailsError:     (state) => { state.currentJobError = null; },
     clearAssessmentDetails:(state) => { state.assessmentDetails = { assessment: null, stepsData: null, loading: false, error: null }; },
   },
   extraReducers: (builder) => {
@@ -92,7 +83,7 @@ const postDetailsSlice = createSlice({
   },
 });
 
-export const { clearDetailsError, setFlowNodes, setFlowEdges, resetFlow, clearAssessmentDetails } = postDetailsSlice.actions;
+export const { clearDetailsError, clearAssessmentDetails } = postDetailsSlice.actions;
 export default postDetailsSlice.reducer;
 
 // ── Selectors ─────────────────────────────────────────────────────────────────
@@ -103,7 +94,6 @@ export const selectCurrentJob          = (s: S) => s.postDetails.currentJob;
 export const selectCurrentJobLoading   = (s: S) => s.postDetails.currentJobLoading;
 export const selectCurrentJobError     = (s: S) => s.postDetails.currentJobError;
 export const selectSteps               = (s: S) => s.postDetails.steps;
-export const selectRecruitmentFlow     = (s: S) => s.postDetails.recruitmentFlow;
 
 export const selectAssessmentDetails              = (s: S) => s.postDetails.assessmentDetails.assessment;
 export const selectAssessmentStepsData            = (s: S) => s.postDetails.assessmentDetails.stepsData;

@@ -8,7 +8,7 @@ const {
   createHttpError,
   assertValidObjectId,
   assertConversationNotHiddenForUser,
-} = require('../../helpers/teamChatAccess.helper');
+} = require('../../helpers/team-chat-access.helpers');
 
 const LAST_MESSAGE_DELETED_SENTINEL = '__DELETED__';
 

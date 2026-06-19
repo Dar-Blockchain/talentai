@@ -10,7 +10,7 @@
  */
 
 const mongoose = require("mongoose");
-const PlanLimits = require("../models/PlanLimits.model");
+const PlanLimits = require("../features/billing/plans/plan-limits.model");
 require("dotenv").config();
 
 // Default plans

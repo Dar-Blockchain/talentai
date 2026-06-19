@@ -1,6 +1,6 @@
 'use strict';
 
-const ragService = require('../../../../services/rag.service');
+const ragService = require('../rag.service');
 
 /**
  * MemoryAI — semantic question deduplication via RAG vector search.
