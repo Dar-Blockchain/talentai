@@ -2,11 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
 import { useRouter } from "next/router";
-import EmailOutlined                from "@mui/icons-material/EmailOutlined";
-import ChatBubbleOutlineOutlined    from "@mui/icons-material/ChatBubbleOutlineOutlined";
-import CloseOutlined                from "@mui/icons-material/CloseOutlined";
-import SendOutlined                 from "@mui/icons-material/Send";
-import CheckCircleOutlineOutlined   from "@mui/icons-material/CheckCircleOutline";
+import { Mail, MessageCircle, X, Send, CheckCircle2 } from "lucide-react";
 import axiosInstance from "@/utils/axiosInstance";
 import { RootState } from "@/store/store";
 import {
@@ -19,6 +15,7 @@ import {
   Dialog,
   DialogContent,
 } from "@/modules/shared/ui/shadcn/dialog";
+import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
 import { cn } from "@/lib/utils";
 
 function initials(first?: string | null, last?: string | null) {
@@ -54,13 +51,13 @@ const MODES: Record<ContactMode, {
   email: {
     labelKey:    "pages.applications.contact_modal.mode_email_label",
     sublabelKey: "pages.applications.contact_modal.mode_email_sublabel",
-    Icon: EmailOutlined,
+    Icon: Mail,
     color: "#2563EB", lightBg: "#EFF6FF", activeBorder: "#BFDBFE",
   },
   chat: {
     labelKey:    "pages.applications.contact_modal.mode_chat_label",
     sublabelKey: "pages.applications.contact_modal.mode_chat_sublabel",
-    Icon: ChatBubbleOutlineOutlined,
+    Icon: MessageCircle,
     color: TEAL, lightBg: `${TEAL}0F`, activeBorder: `${TEAL}40`,
   },
 };
@@ -152,7 +149,7 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
               className="absolute -bottom-0.5 -right-0.5 w-[14px] h-[14px] rounded-full border-2 border-white flex items-center justify-center"
               style={{ backgroundColor: cfg.color }}
             >
-              <cfg.Icon style={{ fontSize: 7, color: "#fff" }} />
+              <cfg.Icon size={7} className="text-white" />
             </div>
           </div>
 
@@ -166,7 +163,7 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
             disabled={isBusy}
             className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50 transition-colors"
           >
-            <CloseOutlined style={{ fontSize: 16 }} />
+            <X size={16} />
           </button>
         </div>
 
@@ -193,7 +190,7 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
                     className="w-[30px] h-[30px] rounded-lg shrink-0 flex items-center justify-center transition-colors duration-150"
                     style={{ backgroundColor: active ? c.color : "#F3F4F6" }}
                   >
-                    <ModeIcon style={{ fontSize: 15, color: active ? "#fff" : "#9CA3AF" }} />
+                    <ModeIcon size={15} style={{ color: active ? "#fff" : "#9CA3AF" }} />
                   </div>
                   <div>
                     <div className="text-[12px] font-bold leading-snug" style={{ color: active ? c.color : "#374151" }}>
@@ -213,7 +210,7 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
                 className="w-[60px] h-[60px] rounded-full mx-auto mb-4 flex items-center justify-center"
                 style={{ backgroundColor: `${TEAL}12` }}
               >
-                <CheckCircleOutlineOutlined style={{ fontSize: 30, color: TEAL }} />
+                <CheckCircle2 size={30} style={{ color: TEAL }} />
               </div>
               <div className="text-[16px] font-bold text-slate-900 mb-1">
                 {mode === "email" ? t("pages.applications.contact_modal.success_email_title") : t("pages.applications.contact_modal.success_chat_title")}
@@ -244,7 +241,7 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
                   className="flex gap-2 px-3 py-2.5 rounded-[10px] border items-start"
                   style={{ backgroundColor: `${TEAL}08`, borderColor: `${TEAL}20` }}
                 >
-                  <ChatBubbleOutlineOutlined style={{ fontSize: 13, color: TEAL, marginTop: 2, flexShrink: 0 }} />
+                  <MessageCircle size={13} style={{ color: TEAL, marginTop: 2 }} className="shrink-0" />
                   <span className="text-[11.5px] leading-relaxed" style={{ color: "#0F766E" }}>
                     {t("pages.applications.contact_modal.chat_banner", { name: target.name })}
                   </span>
@@ -289,10 +286,7 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
                   className="h-10 px-5 rounded-[10px] text-[13px] font-semibold text-white flex items-center gap-2 min-w-[130px] justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ backgroundColor: cfg.color }}
                 >
-                  {isBusy
-                    ? <svg className="size-3.5 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"/></svg>
-                    : <SendOutlined style={{ fontSize: 14 }} />
-                  }
+                  {isBusy ? <Spinner className="size-3.5" /> : <Send size={14} />}
                   {isBusy
                     ? t("pages.applications.contact_modal.sending")
                     : mode === "email"

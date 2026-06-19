@@ -11,52 +11,9 @@ import type { ApplicationSummaryItem } from "@/store/slices/jobApplicationSlice"
 import { useApplicationsList } from "@/modules/company/applications/hooks";
 import { ApplicationsToolbar, PostPickerModal } from "@/modules/company/applications/components";
 import { TEAL } from "@/modules/company/applications/components/constants";
+import { SimplePagination } from "@/modules/shared/ui/shadcn/pagination-simple";
 import { getDashboardLayout } from "@/modules/shared/layouts";
 import type { NextPageWithLayout } from "@/pages/_app";
-
-// ─── Simple Tailwind Pagination ───────────────────────────────────────────────
-
-interface PaginationProps {
-  page: number;
-  totalPages: number;
-  onPageChange: (p: number) => void;
-}
-
-const Pagination: React.FC<PaginationProps> = ({ page, totalPages, onPageChange }) => {
-  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
-  return (
-    <div className="flex items-center justify-center gap-1 mt-4">
-      <button
-        disabled={page === 1}
-        onClick={() => onPageChange(page - 1)}
-        className="w-8 h-8 flex items-center justify-center rounded-md text-[13px] text-slate-500 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-      >
-        ‹
-      </button>
-      {pages.map((p) => (
-        <button
-          key={p}
-          onClick={() => onPageChange(p)}
-          className="w-8 h-8 flex items-center justify-center rounded-md text-[12px] font-medium transition-colors"
-          style={{
-            backgroundColor: p === page ? `${TEAL}18` : "transparent",
-            color:           p === page ? TEAL     : "#374151",
-            fontWeight:      p === page ? 700      : 500,
-          }}
-        >
-          {p}
-        </button>
-      ))}
-      <button
-        disabled={page === totalPages}
-        onClick={() => onPageChange(page + 1)}
-        className="w-8 h-8 flex items-center justify-center rounded-md text-[13px] text-slate-500 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-      >
-        ›
-      </button>
-    </div>
-  );
-};
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -150,7 +107,7 @@ const ApplicationsPage: NextPageWithLayout = () => {
           ))}
 
           {pagination.totalPages > 1 && (
-            <Pagination
+            <SimplePagination
               page={page}
               totalPages={pagination.totalPages}
               onPageChange={handlePageChange}

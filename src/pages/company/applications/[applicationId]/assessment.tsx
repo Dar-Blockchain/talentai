@@ -17,6 +17,7 @@ import CoverageTab                from "@/modules/company/assessment/modal/compo
 import AiReportTab                from "@/modules/company/assessment/modal/components/AiReportTab";
 import TranscriptTab              from "@/modules/company/assessment/modal/components/TranscriptTab";
 import { avatarColor }            from "@/modules/company/applications/components/ApplicationCard";
+import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
 
 const TAB_ICONS = [BarChartOutlined, LayersOutlined, AutoAwesomeOutlined, ForumOutlined];
 
@@ -74,10 +75,7 @@ const AssessmentPage: React.FC = () => {
       {/* Loading */}
       {isLoading && (
         <div className="flex flex-col items-center justify-center py-32 gap-4">
-          <svg className="size-10 animate-spin text-violet-500" viewBox="0 0 24 24" fill="none">
-            <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"/>
-            <path className="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"/>
-          </svg>
+          <Spinner className="size-10 text-violet-500" />
           <span className="text-sm text-slate-400 font-medium">{t("pages.applications.assessment_modal.loading")}</span>
         </div>
       )}

@@ -3,7 +3,7 @@
 import React, { memo, useState, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "next/router";
-import WorkOutlineOutlined from "@mui/icons-material/WorkOutline";
+import { Briefcase } from "lucide-react";
 import { ApplicationSummaryItem } from "@/store/slices/jobApplicationSlice";
 import { ContactTarget } from "./ContactCandidateModal";
 import { InviteTarget } from "./InviteToInterviewModal";
@@ -169,7 +169,7 @@ const ApplicationCard = memo<ApplicationCardProps>(({
                 className="flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded cursor-pointer"
                 style={{ backgroundColor: "#F0FDFA", color: "#0D9488" }}
               >
-                <WorkOutlineOutlined style={{ fontSize: 10 }} />
+                <Briefcase size={10} />
                 {app.postTitle}
               </button>
             )}

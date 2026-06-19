@@ -2,14 +2,7 @@
 
 import React, { memo, useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import EmailOutlined      from "@mui/icons-material/EmailOutlined";
-import AssessmentOutlined from "@mui/icons-material/AssessmentOutlined";
-import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
-import VideoCallOutlined  from "@mui/icons-material/VideoCallOutlined";
-import MoreVertOutlined   from "@mui/icons-material/MoreVert";
-import StarOutlined       from "@mui/icons-material/StarOutlined";
-import CancelOutlined     from "@mui/icons-material/CancelOutlined";
-import CheckOutlined      from "@mui/icons-material/CheckOutlined";
+import { Mail, BarChart3, FileText, Video, MoreVertical, Star, XCircle, Check } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ApplicationSummaryItem } from "@/store/slices/jobApplicationSlice";
 import { applicationsApi } from "@/modules/company/applications/api";
@@ -38,7 +31,7 @@ const ActionButton = memo<ActionButtonProps>(({ isInvited, isVisited, hasEmail, 
   if (isInvited) {
     return (
       <div className="flex items-center justify-center gap-1 h-[30px] w-[108px] shrink-0 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-600">
-        <CheckOutlined style={{ fontSize: 14 }} />
+        <Check size={14} />
         <span className="text-[12px] font-semibold whitespace-nowrap">Invited</span>
       </div>
     );
@@ -50,7 +43,7 @@ const ActionButton = memo<ActionButtonProps>(({ isInvited, isVisited, hasEmail, 
         onClick={onInvite}
         className="flex items-center justify-center gap-1 h-[30px] w-[108px] shrink-0 rounded-lg border border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100 hover:border-violet-300 transition-all duration-150 outline-none"
       >
-        <VideoCallOutlined style={{ fontSize: 14 }} />
+        <Video size={14} />
         <span className="text-[12px] font-semibold whitespace-nowrap">{sendInviteLabel}</span>
       </button>
     );
@@ -67,7 +60,7 @@ const ActionButton = memo<ActionButtonProps>(({ isInvited, isVisited, hasEmail, 
           : "border-slate-200 bg-slate-50 text-slate-400 opacity-55 cursor-not-allowed",
       )}
     >
-      <EmailOutlined style={{ fontSize: 14 }} />
+      <Mail size={14} />
       <span className="text-[12px] font-semibold whitespace-nowrap">{contactLabel}</span>
     </button>
   );
@@ -199,14 +192,14 @@ const ApplicationCardActions = memo<ApplicationCardActionsProps>(({
         <DecisionButton
           active={isShortlisted} loading={decidingShortlist} disabled={busy}
           activeColor="#059669" activeBg="#ECFDF5"
-          icon={<StarOutlined style={{ fontSize: 13 }} />}
+          icon={<Star size={13} />}
           label={isShortlisted ? "Shortlisted" : "Shortlist"}
           onClick={handleShortlist}
         />
         <DecisionButton
           active={isRejected} loading={decidingReject} disabled={busy}
           activeColor="#DC2626" activeBg="#FEF2F2"
-          icon={<CancelOutlined style={{ fontSize: 13 }} />}
+          icon={<XCircle size={13} />}
           label={isRejected ? "Rejected" : "Reject"}
           onClick={handleReject}
         />
@@ -229,7 +222,7 @@ const ApplicationCardActions = memo<ApplicationCardActionsProps>(({
               onClick={onMenuOpen}
               className="w-[30px] h-[30px] rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors outline-none shrink-0"
             >
-              <MoreVertOutlined style={{ fontSize: 17 }} />
+              <MoreVertical size={17} />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -243,7 +236,7 @@ const ApplicationCardActions = memo<ApplicationCardActionsProps>(({
               <MenuRow
                 iconColor={hasInterview ? PURPLE : "#D1D5DB"}
                 iconBg={hasInterview ? `${PURPLE}14` : "#F3F4F6"}
-                icon={<AssessmentOutlined style={{ fontSize: 14 }} />}
+                icon={<BarChart3 size={14} />}
                 title={t("pages.applications.actions.menu.view_results_title")}
                 subtitle={hasInterview ? t("pages.applications.actions.menu.view_results_desc_done") : t("pages.applications.actions.menu.view_results_desc_pending")}
                 disabled={!hasInterview}
@@ -252,7 +245,7 @@ const ApplicationCardActions = memo<ApplicationCardActionsProps>(({
               <MenuRow
                 iconColor={app.resumeFile ? "#D97706" : "#D1D5DB"}
                 iconBg={app.resumeFile ? "#FEF3C714" : "#F3F4F6"}
-                icon={<DescriptionOutlined style={{ fontSize: 14 }} />}
+                icon={<FileText size={14} />}
                 title={t("pages.applications.actions.menu.download_cv_title")}
                 subtitle={app.resumeFile ? t("pages.applications.actions.menu.download_cv_desc_done") : t("pages.applications.actions.menu.download_cv_desc_none")}
                 disabled={!app.resumeFile}
@@ -262,7 +255,7 @@ const ApplicationCardActions = memo<ApplicationCardActionsProps>(({
               <MenuRow
                 iconColor="#2563EB"
                 iconBg="#EFF6FF"
-                icon={<EmailOutlined style={{ fontSize: 14 }} />}
+                icon={<Mail size={14} />}
                 title={t("pages.applications.actions.menu.contact_title")}
                 subtitle={app.email || t("pages.applications.actions.menu.contact_desc_none")}
                 disabled={!app.email}

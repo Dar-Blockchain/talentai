@@ -12,6 +12,7 @@ import ApiKeysTab from "./ApiKeysTab";
 import { LanguageTab } from "@/modules/settings/shared";
 import AppButton from "@/components/ui/AppButton";
 import AppUserInfo from "@/modules/shared/ui/AppUserInfo";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/modules/shared/ui/shadcn/tabs";
 import {
   Building2, MapPin, Key, CreditCard, Globe, Users, Tag,
 } from "lucide-react";
@@ -30,9 +31,9 @@ const CompanySettingsPage: React.FC = () => {
   } = useCompanyProfileManagement();
 
   const canEdit = !isEmployee || !!empPerms?.canEditCompanyProfile;
-  const [tab, setTab] = useState(0);
+  const [tab, setTab] = useState("0");
 
-  const handleTabChange = (v: number) => {
+  const handleTabChange = (v: string) => {
     if (isEditing) { setIsEditing(false); handleCancel(); }
     setTab(v);
   };
@@ -84,38 +85,40 @@ const CompanySettingsPage: React.FC = () => {
           loading={loading}
           uploadingImage={uploadingImage}
           isEditing={isEditing}
-          showEditActions={tab === 0 && canEdit}
+          showEditActions={tab === "0" && canEdit}
           onStartEdit={() => setIsEditing(true)}
           onCancelEdit={() => { setIsEditing(false); handleCancel(); }}
           onSaveEdit={async () => { const ok = await handleSaveProfile(); if (ok) setIsEditing(false); }}
           onImageUpload={handleImageUpload}
         />
 
-        <div className="border-b border-gray-100 px-6">
-          <div className="flex gap-1 -mb-px">
-            {TABS.map(({ label, icon: Icon, dataTour }, i) => {
-              const active = tab === i;
-              return (
-                <button
+        <Tabs value={tab} onValueChange={handleTabChange} className="gap-0">
+          <div className="border-b border-gray-100 px-6">
+            <TabsList variant="line" className="-mb-px h-auto gap-1 p-0">
+              {TABS.map(({ label, icon: Icon, dataTour }, i) => (
+                <TabsTrigger
                   key={label}
-                  type="button"
+                  value={String(i)}
                   data-tour={dataTour}
-                  onClick={() => handleTabChange(i)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-3 text-[0.82rem] font-semibold border-b-2 transition-colors ${
-                    active ? "border-teal-600 text-teal-600" : "border-transparent text-gray-700 hover:text-gray-900"
-                  }`}
+                  className="inline-flex items-center gap-1.5 px-3 py-3 text-[0.82rem] font-semibold rounded-none data-[state=active]:after:bg-teal-600 data-[state=active]:text-teal-600 text-gray-700 hover:text-gray-900"
                 >
                   <Icon size={15} />
                   {label}
-                </button>
-              );
-            })}
+                </TabsTrigger>
+              ))}
+            </TabsList>
           </div>
-        </div>
 
-        {tab === 0 && <CompanyInfoTab profile={profile} isEditing={isEditing} control={control} />}
-        {tab === 1 && <ApiKeysTab />}
-        {tab === 2 && <LanguageTab onInputChange={handleInputChange} onSaveLanguage={handleSaveLanguage} />}
+          <TabsContent value="0">
+            <CompanyInfoTab profile={profile} isEditing={isEditing} control={control} />
+          </TabsContent>
+          <TabsContent value="1">
+            <ApiKeysTab />
+          </TabsContent>
+          <TabsContent value="2">
+            <LanguageTab onInputChange={handleInputChange} onSaveLanguage={handleSaveLanguage} />
+          </TabsContent>
+        </Tabs>
       </div>
     </>
   );

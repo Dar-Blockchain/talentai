@@ -2,6 +2,7 @@ import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { Slot } from "radix-ui"
 import { cn } from "@/lib/utils"
+import { Spinner } from "@/modules/shared/ui/shadcn/spinner"
 
 const buttonVariants = cva(
   // ── Base ──────────────────────────────────────────────────────────────────
@@ -120,12 +121,7 @@ function Button({
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     >
-      {loading && (
-        <svg className="size-4 animate-spin" viewBox="0 0 24 24" fill="none">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
-        </svg>
-      )}
+      {loading && <Spinner className="size-4" />}
       {children}
     </Comp>
   )

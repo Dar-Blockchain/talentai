@@ -1,15 +1,9 @@
 import React, { memo, useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import SearchOutlined       from "@mui/icons-material/SearchOutlined";
-import SortOutlined         from "@mui/icons-material/SortOutlined";
-import PeopleAltOutlined    from "@mui/icons-material/PeopleAltOutlined";
-import WorkOutlineOutlined  from "@mui/icons-material/WorkOutline";
-import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
-import StarOutlineOutlined  from "@mui/icons-material/StarOutlineOutlined";
-import PsychologyOutlined   from "@mui/icons-material/PsychologyOutlined";
-import SortByAlphaOutlined  from "@mui/icons-material/SortByAlphaOutlined";
-import CloseOutlined        from "@mui/icons-material/CloseOutlined";
-import FileDownloadOutlined from "@mui/icons-material/FileDownloadOutlined";
+import {
+  Search, ArrowDownUp, Users, Briefcase, CalendarDays,
+  Star, BrainCircuit, ArrowDownAZ, X, Download, type LucideIcon,
+} from "lucide-react";
 import AppButton from "@/components/ui/AppButton";
 import { TEAL } from "./constants";
 import {
@@ -45,35 +39,35 @@ const STATUS_VALUES = [
 
 interface SortGroup {
   labelKey: string;
-  Icon: React.ComponentType<{ style?: React.CSSProperties }>;
+  Icon: LucideIcon;
   color: string;
   options: { value: string; labelKey: string }[];
 }
 
 const SORT_GROUPS: SortGroup[] = [
   {
-    labelKey: "pages.applications.sort.date_applied", Icon: CalendarTodayOutlined, color: "#6B7280",
+    labelKey: "pages.applications.sort.date_applied", Icon: CalendarDays, color: "#6B7280",
     options: [
       { value: "appliedAt_desc", labelKey: "pages.applications.sort.most_recent" },
       { value: "appliedAt_asc",  labelKey: "pages.applications.sort.earliest" },
     ],
   },
   {
-    labelKey: "pages.applications.sort.match_score", Icon: StarOutlineOutlined, color: "#D97706",
+    labelKey: "pages.applications.sort.match_score", Icon: Star, color: "#D97706",
     options: [
       { value: "matchScore_desc", labelKey: "pages.applications.sort.best_match" },
       { value: "matchScore_asc",  labelKey: "pages.applications.sort.worst_match" },
     ],
   },
   {
-    labelKey: "pages.applications.sort.interview_score", Icon: PsychologyOutlined, color: "#7C3AED",
+    labelKey: "pages.applications.sort.interview_score", Icon: BrainCircuit, color: "#7C3AED",
     options: [
       { value: "interviewScore_desc", labelKey: "pages.applications.sort.top_performers" },
       { value: "interviewScore_asc",  labelKey: "pages.applications.sort.low_performers" },
     ],
   },
   {
-    labelKey: "pages.applications.sort.candidate_name", Icon: SortByAlphaOutlined, color: "#0891B2",
+    labelKey: "pages.applications.sort.candidate_name", Icon: ArrowDownAZ, color: "#0891B2",
     options: [
       { value: "name_asc",  labelKey: "pages.applications.sort.a_to_z" },
       { value: "name_desc", labelKey: "pages.applications.sort.z_to_a" },
@@ -118,7 +112,7 @@ const ApplicationsToolbar: React.FC<Props> = memo(({
         {/* Title */}
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-[10px] flex items-center justify-center" style={{ backgroundColor: `${TEAL}12` }}>
-            <PeopleAltOutlined style={{ fontSize: 20, color: TEAL }} />
+            <Users size={20} style={{ color: TEAL }} />
           </div>
           <div>
             <div className="font-extrabold text-[1.1rem] text-slate-900 leading-snug">
@@ -137,7 +131,7 @@ const ApplicationsToolbar: React.FC<Props> = memo(({
           <div
             className="flex items-center bg-slate-50 border border-slate-200 rounded-lg px-3 h-[34px] min-w-[220px] transition-colors focus-within:border-teal-500"
           >
-            <SearchOutlined style={{ fontSize: 15, color: "#9CA3AF" }} />
+            <Search size={15} className="text-gray-400" />
             <input
               className="bg-transparent ml-2 text-[13px] flex-1 outline-none placeholder:text-slate-400"
               placeholder={t("pages.applications.search_placeholder")}
@@ -167,7 +161,7 @@ const ApplicationsToolbar: React.FC<Props> = memo(({
               borderColor: postId ? TEAL : "#E5E7EB",
             }}
           >
-            <WorkOutlineOutlined style={{ fontSize: 14, color: postId ? TEAL : "#9CA3AF", flexShrink: 0 }} />
+            <Briefcase size={14} style={{ color: postId ? TEAL : "#9CA3AF" }} className="shrink-0" />
             <span
               className="text-[13px] flex-1 truncate text-left"
               style={{ color: postId ? TEAL : "#9CA3AF", fontWeight: postId ? 600 : 400 }}
@@ -176,7 +170,7 @@ const ApplicationsToolbar: React.FC<Props> = memo(({
             </span>
             {postId && (
               <span onClick={handleClearPost} className="shrink-0 hover:opacity-70 cursor-pointer">
-                <CloseOutlined style={{ fontSize: 13, color: TEAL }} />
+                <X size={13} style={{ color: TEAL }} />
               </span>
             )}
           </button>
@@ -185,7 +179,7 @@ const ApplicationsToolbar: React.FC<Props> = memo(({
           <DropdownMenu open={sortOpen} onOpenChange={setSortOpen}>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-1.5 h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-[13px] text-slate-700 outline-none hover:border-slate-300 transition-colors min-w-[120px]">
-                <SortOutlined style={{ fontSize: 14, color: "#9CA3AF" }} />
+                <ArrowDownUp size={14} className="text-gray-400" />
                 <span className="flex-1 text-left truncate">
                   {currentSortLabel ? t(currentSortLabel) : t("pages.common.sort")}
                 </span>
@@ -201,7 +195,7 @@ const ApplicationsToolbar: React.FC<Props> = memo(({
                     className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider"
                     style={{ color: group.color }}
                   >
-                    <group.Icon style={{ fontSize: 12 }} />
+                    <group.Icon size={12} />
                     {t(group.labelKey)}
                   </div>
                   {group.options.map(({ value, labelKey }) => (
@@ -234,7 +228,7 @@ const ApplicationsToolbar: React.FC<Props> = memo(({
               size="small"
               loading={downloading}
               disabled={totalCount === 0}
-              startIcon={<FileDownloadOutlined style={{ fontSize: 15 }} />}
+              startIcon={<Download size={15} />}
               onClick={onDownload}
               sx={{
                 borderColor: `${TEAL}40`, color: TEAL, bgcolor: `${TEAL}08`,

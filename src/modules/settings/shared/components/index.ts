@@ -6,4 +6,3 @@ export { default as InfoRow } from "./InfoRow";
 export { default as LanguageTab } from "./LanguageTab";
 export { default as SettingsTextField } from "./SettingsTextField";
 export { default as Spinner } from "./Spinner";
-export { default as Modal } from "./Modal";

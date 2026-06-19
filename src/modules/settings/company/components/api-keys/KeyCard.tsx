@@ -2,6 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { Trash2, Pencil, Key, RefreshCw, type LucideIcon } from "lucide-react";
 import type { ApiKey } from "@/modules/settings/company/types";
+import { Switch } from "@/modules/shared/ui/shadcn/switch";
 import { TEAL, TEAL_BG, fmtDate } from "@/modules/settings/shared/constants";
 
 // ─── Local sub-components ─────────────────────────────────────────────────────
@@ -96,16 +97,12 @@ const KeyCard: React.FC<Props> = ({ apiKey: k, onEdit, onDelete, onToggle, onReg
 
       {/* Actions */}
       <div className="flex items-center gap-1 flex-shrink-0">
-        <button
-          type="button"
-          role="switch"
-          aria-checked={k.isActive}
+        <Switch
+          size="sm"
+          checked={k.isActive}
           title={k.isActive ? t("pages.settings.api_keys.toggle_disable") : t("pages.settings.api_keys.toggle_enable")}
-          onClick={() => onToggle(k.id, k.isActive)}
-          className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${k.isActive ? "bg-teal-600" : "bg-gray-300"}`}
-        >
-          <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${k.isActive ? "translate-x-4" : "translate-x-0.5"}`} />
-        </button>
+          onCheckedChange={() => onToggle(k.id, k.isActive)}
+        />
         <ActionButton title={t("pages.settings.api_keys.regenerate_tooltip")} icon={RefreshCw} onClick={() => onRegenerate(k.id)} color="#F59E0B" hoverBg="#FFFBEB" />
         <ActionButton title={t("pages.settings.api_keys.edit_tooltip")}       icon={Pencil}     onClick={() => onEdit(k)}           color={TEAL}    hoverBg={TEAL_BG} />
         <ActionButton title={t("pages.settings.api_keys.delete_tooltip")}     icon={Trash2}     onClick={() => onDelete(k)}         color="#EF4444" hoverBg="#FEF2F2" />

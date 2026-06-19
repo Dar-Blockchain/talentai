@@ -3,6 +3,7 @@ import { Eye, EyeOff, Copy, ExternalLink, Info } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
 import { useTranslation } from 'react-i18next';
 import { Spinner } from '@/modules/settings/shared/components';
+import { Switch } from '@/modules/shared/ui/shadcn/switch';
 import { TEAL as T, TEAL_BG as TBG, TEAL_BORDER as TBRD } from '@/modules/settings/shared/constants';
 
 const NAVY = "#0D1B2A";
@@ -100,22 +101,11 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({ userId, eff
               </div>
             )}
           </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={effectiveIsPublic}
+          <Switch
+            checked={effectiveIsPublic}
             disabled={loading || hasMembership}
-            onClick={handleToggleVisibility}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-              effectiveIsPublic ? "bg-teal-600" : "bg-gray-300"
-            }`}
-          >
-            <span
-              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
-                effectiveIsPublic ? "translate-x-5" : "translate-x-0.5"
-              }`}
-            />
-          </button>
+            onCheckedChange={handleToggleVisibility}
+          />
         </div>
 
         <hr className="mb-5 border-gray-200" />

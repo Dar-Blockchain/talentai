@@ -1,6 +1,7 @@
 import React, { useRef, useState } from "react";
 import { FileText, UploadCloud, ExternalLink, Trash2, AlertTriangle, CheckCircle2 } from "lucide-react";
-import { Modal, Spinner } from "@/modules/settings/shared/components";
+import { Spinner } from "@/modules/settings/shared/components";
+import { Dialog, DialogContent } from "@/modules/shared/ui/shadcn/dialog";
 import { candidateApi } from "../api";
 import { emitToast } from "@/utils/toastEmitter";
 
@@ -165,37 +166,39 @@ const CvSection: React.FC<Props> = ({ resumeFilename, onUpdated, onDeleted }) =>
       )}
 
       {/* Delete confirmation modal */}
-      <Modal open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="xs">
-        <div className="px-5 pt-4 pb-2">
-          <div className="flex items-center gap-2">
-            <div className="w-[34px] h-[34px] rounded-[10px] bg-red-50 flex items-center justify-center flex-shrink-0">
-              <AlertTriangle size={18} className="text-red-600" />
+      <Dialog open={confirmOpen} onOpenChange={(o) => { if (!o) setConfirmOpen(false); }}>
+        <DialogContent showCloseButton={false} className="max-w-xs w-full rounded-2xl overflow-hidden p-0">
+          <div className="px-5 pt-4 pb-2">
+            <div className="flex items-center gap-2">
+              <div className="w-[34px] h-[34px] rounded-[10px] bg-red-50 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle size={18} className="text-red-600" />
+              </div>
+              <span className="font-bold text-[1rem] text-gray-900">Delete CV</span>
             </div>
-            <span className="font-bold text-[1rem] text-gray-900">Delete CV</span>
           </div>
-        </div>
-        <div className="px-5">
-          <p className="text-[0.88rem] text-gray-600 leading-relaxed">
-            Are you sure you want to remove <strong>{resumeFilename}</strong>? You can upload a new one at any time.
-          </p>
-        </div>
-        <div className="flex justify-end gap-2 px-5 py-4">
-          <button
-            type="button"
-            onClick={() => setConfirmOpen(false)}
-            className="text-gray-500 rounded-[10px] text-[0.85rem] px-3 py-2 hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleDeleteConfirm}
-            className="font-semibold rounded-[10px] text-[0.85rem] px-3 py-2 bg-red-600 text-white hover:bg-red-700"
-          >
-            Delete
-          </button>
-        </div>
-      </Modal>
+          <div className="px-5">
+            <p className="text-[0.88rem] text-gray-600 leading-relaxed">
+              Are you sure you want to remove <strong>{resumeFilename}</strong>? You can upload a new one at any time.
+            </p>
+          </div>
+          <div className="flex justify-end gap-2 px-5 py-4">
+            <button
+              type="button"
+              onClick={() => setConfirmOpen(false)}
+              className="text-gray-500 rounded-[10px] text-[0.85rem] px-3 py-2 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleDeleteConfirm}
+              className="font-semibold rounded-[10px] text-[0.85rem] px-3 py-2 bg-red-600 text-white hover:bg-red-700"
+            >
+              Delete
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
