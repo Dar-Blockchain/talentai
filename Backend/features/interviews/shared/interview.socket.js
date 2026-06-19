@@ -13,30 +13,51 @@ const { handleDisconnect }        = require('./handlers/disconnect.handler');
 const { handleSilenceDetected }   = require('./handlers/silence-detected.handler');
 
 // Post-interview persistence
-const postInterviewAssessmentService = require('../post-interview/post-interview.service');
+const PostInterviewAssessment = require('../post-interview/post-interview.model');
+const Post                    = require('../../posts/post.model');
 const { persistInterviewResults }    = require('../post-interview/post-interview.persistence');
 
 // Skill-interview persistence
 const { persistSkillInterviewResults } = require('../skill-interview/skill-interview.persistence');
 
-// â”€â”€ Persistence dispatchers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Persistence dispatchers ────────────────────────────────────────────────────
 
 async function onSessionStarted(socket, config) {
-  if (config?.interviewType === 'TECHNICAL_SKILL') {
-    // Skill interviews: no pending record needed at start â€” assessment saved on end
+  const interviewType = config?.interviewType;
+  logger.info('onSessionStarted', { interviewType, candidateId: socket.candidateId, postId: socket.postId });
+
+  if (interviewType === 'TECHNICAL_SKILL') return;
+  if (!socket.postId || !socket.candidateId) {
+    logger.warn('onSessionStarted skipped — missing postId or candidateId', { postId: socket.postId, candidateId: socket.candidateId });
     return;
   }
-  // Post-interview: create a pending assessment record immediately
-  if (socket.postId && socket.candidateId) {
-    await postInterviewAssessmentService.createPostInterviewAssessment({
-      post: socket.postId,
-      candidate: socket.candidateId,
-      interviewData: { interviewType: config?.interviewType || 'HR_INTERVIEW' },
-    });
+
+  try {
+    const post = await Post.findById(socket.postId).select('user').lean();
+    await PostInterviewAssessment.findOneAndUpdate(
+      { candidate: socket.candidateId, post: socket.postId },
+      {
+        $setOnInsert: {
+          candidate: socket.candidateId,
+          post:      socket.postId,
+          company:   post?.user ?? null,
+          completed: false,
+          'interviewData.sessionId':    `session_${Date.now()}`,
+          'interviewData.interviewType': interviewType || 'HR_INTERVIEW',
+        },
+      },
+      { upsert: true, new: false },
+    );
+    logger.info('Pending PostInterviewAssessment created/found', { candidateId: socket.candidateId, postId: socket.postId });
+  } catch (err) {
+    if (err.code !== 11000) {
+      logger.warn('Pending assessment creation failed', { err: err.message });
+    }
   }
 }
 
 async function onSessionEnded(sessionId, result, socket) {
+  logger.info('onSessionEnded', { sessionId, interviewType: socket.interviewType, candidateId: socket.candidateId, postId: socket.postId });
   try {
     let saved;
     if (socket.interviewType === 'TECHNICAL_SKILL') {
@@ -46,7 +67,10 @@ async function onSessionEnded(sessionId, result, socket) {
     }
     const assessmentId = saved?.assessmentId?.toString?.() ?? null;
     if (assessmentId) {
+      logger.info('Assessment saved', { sessionId, assessmentId });
       safeEmit(socket, 'assessment_saved', { assessmentId });
+    } else {
+      logger.warn('Assessment save returned no ID', { sessionId });
     }
   } catch (err) {
     logger.warn('Session persistence failed', { sessionId, err: err.message });

@@ -4,10 +4,13 @@ const Profile                 = require("../../../features/users/profile.model")
 const Post                    = require("../../posts/post.model");
 
 async function persistInterviewResults(sessionId, result, candidateId, postId) {
+  if (!candidateId || !postId) {
+    console.error(`⚠️ [DB] Cannot persist — missing candidateId or postId for session ${sessionId}`);
+    return { assessmentId: null };
+  }
+
   try {
-    const query = (candidateId && postId)
-      ? { candidate: candidateId, post: postId }
-      : { 'interviewData.sessionId': sessionId };
+    const query = { candidate: candidateId, post: postId };
 
     // Resolve company for upsert (needed when pending record was never created)
     let company = null;

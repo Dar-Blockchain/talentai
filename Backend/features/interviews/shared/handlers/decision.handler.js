@@ -68,8 +68,12 @@ async function handleAIDecision(socket, sessionId, decision, { service, onSessio
         safeEmit(socket, 'interviewer_message', { type: 'end_interview', content, reasoning: decision.reasoning, timestamp, sessionId });
         try {
           const result = await service.endInterview(sessionId);
-          if (onSessionEnded) onSessionEnded(sessionId, result, socket);
           safeEmit(socket, 'interview_ended', { finalReport: result.finalReport, analytics: result.sessionAnalytics, sessionId });
+          if (onSessionEnded) {
+            onSessionEnded(sessionId, result, socket).catch(err =>
+              logger.warn('Auto-end persistence failed', { sessionId, err: err.message })
+            );
+          }
         } catch (endErr) {
           logger.warn('Auto-end failed in decision handler', { sessionId, err: endErr.message });
         }

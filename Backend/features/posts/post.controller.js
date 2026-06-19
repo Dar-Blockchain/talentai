@@ -523,27 +523,25 @@ exports.getJobInterviewConfig = async (req, res) => {
     });
 
     const config = {
-      interviewType: "TECHNICAL_SKILL",
-      testReason: `Technical Skills Assessment for ${jobTitle} at ${companyName}`,
+      interviewType: "HR_INTERVIEW",
+      testReason: `Job Interview for ${jobTitle} at ${companyName}`,
       context: {
         targetCompany: companyName,
         targetRole: jobTitle,
         experienceLevel: experienceLevel,
 
-        interviewGoal: `Deep technical assessment for ${jobTitle} position - evaluate hands-on skills, problem-solving, and technical depth`,
+        interviewGoal: `Comprehensive interview for ${jobTitle} position - evaluate experience, skills, problem-solving, and cultural fit`,
 
         requiredSkills: technicalSkills,
         softSkills: softSkills,
 
-        technicalFocus: true,
-        assessmentDepth: "deep",
+        assessmentDepth: "moderate",
         questionTypes: [
-          "coding-proficiency",
-          "system-architecture",
+          "behavioral",
+          "situational",
+          "technical",
           "problem-solving",
-          "technical-implementation",
-          "best-practices",
-          "real-world-scenarios",
+          "experience-based",
         ],
 
         jobDescription: post.jobDetails?.description || "",
