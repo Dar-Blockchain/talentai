@@ -240,11 +240,14 @@ export default function InterviewScreen({
               <div className="w-full h-px bg-gray-100" />
 
               <div className="w-full flex flex-col gap-2">
-                {[
+                {(isSkillInterview ? [
                   { emoji: '🤖', label: 'Your interview has been analyzed by AI' },
                   { emoji: '📊', label: 'Your skill profile has been updated' },
                   { emoji: '✅', label: 'Full report is ready to view' },
-                ].map(({ emoji, label }) => (
+                ] : [
+                  { emoji: '🤖', label: 'Your interview has been analyzed by AI' },
+                  { emoji: '✅', label: 'Your responses have been saved successfully' },
+                ]).map(({ emoji, label }) => (
                   <div key={label} className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-100">
                     <span className="text-base">{emoji}</span>
                     <span className="text-sm text-gray-600 font-medium">{label}</span>
