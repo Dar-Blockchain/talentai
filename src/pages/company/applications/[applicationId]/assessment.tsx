@@ -11,12 +11,12 @@ import { DashboardLayout }        from "@/modules/shared/layouts";
 import { usePostAssessmentQuery } from "@/modules/company/assessment/modal/queries";
 import { useAssessmentModal }     from "@/modules/company/assessment/modal/hooks/useAssessmentModal";
 import { AssessmentTarget }       from "@/modules/company/assessment/modal/types";
+import { useJobApplicationQuery } from "@/modules/company/applications/hooks";
 import AssessmentHero             from "@/modules/company/assessment/modal/components/AssessmentHero";
 import ScoresTab                  from "@/modules/company/assessment/modal/components/ScoresTab";
 import CoverageTab                from "@/modules/company/assessment/modal/components/CoverageTab";
 import AiReportTab                from "@/modules/company/assessment/modal/components/AiReportTab";
 import TranscriptTab              from "@/modules/company/assessment/modal/components/TranscriptTab";
-import { avatarColor }            from "@/modules/company/applications/components/ApplicationCard";
 import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
 
 const TAB_ICONS = [BarChartOutlined, LayersOutlined, AutoAwesomeOutlined, ForumOutlined];
@@ -26,25 +26,40 @@ const AssessmentPage: React.FC = () => {
   const { t }  = useTranslation("dashboard");
   const [tab, setTab] = useState(0);
 
+  const { applicationId } = router.query as Record<string, string>;
+
   const {
-    applicationId, postId, candidateUserId,
-    candidateName, candidateEmail, avatarUrl, bgColor: bgColorParam,
-  } = router.query as Record<string, string>;
+    data: application,
+    isLoading: isApplicationLoading,
+    isError: isApplicationError,
+    error: applicationError,
+  } = useJobApplicationQuery(applicationId ?? null);
 
-  const bgColor = bgColorParam || avatarColor(candidateName || "");
+  const postId = application?.post?._id ?? null;
+  const candidateUserId = typeof application?.profile?.userId === "object"
+    ? application.profile.userId._id
+    : application?.profile?.userId ?? null;
 
-  const target: AssessmentTarget | null = postId && candidateUserId && candidateName != null
-    ? { applicationId, postId, candidateUserId, candidateName: candidateName || "", candidateEmail: candidateEmail || "", avatarUrl, bgColor }
+  const target: AssessmentTarget | null = postId && candidateUserId
+    ? { applicationId, postId, candidateUserId }
     : null;
 
-  const { data: assessment, isLoading, isError, error } = usePostAssessmentQuery(
-    postId ?? null, candidateUserId ?? null,
-  );
+  const {
+    data: assessment,
+    isLoading: isAssessmentLoading,
+    isError: isAssessmentError,
+    error: assessmentError,
+  } = usePostAssessmentQuery(postId, candidateUserId);
+
+  const isLoading = isApplicationLoading || isAssessmentLoading;
+  const isError   = isApplicationError || isAssessmentError;
+  const error     = applicationError || assessmentError;
 
   const {
-    name, email, letter, g1, g2,
+    name, email, letter, g1, g2, avatarUrl, bgColor,
+    jobTitle, interviewType, createdAt,
     verdict, overallScore, vt, st, verdictLabel,
-    scores, coverage, aiAssessment, requiredSkills, candidateProfile, conversation,
+    scores, analytics, coverage, aiAssessment, requiredSkills, candidateProfile, recruiterReview, conversation,
     hasAreas, hasAiData, hasTranscript,
     TAB_SCORES, TAB_COVERAGE, TAB_REPORT, TAB_TRANSCRIPT,
   } = useAssessmentModal(assessment, target);
@@ -68,7 +83,7 @@ const AssessmentPage: React.FC = () => {
         </button>
         <div>
           <div className="text-[0.6rem] text-slate-400 font-bold uppercase tracking-widest">Interview Assessment</div>
-          <div className="text-[0.95rem] font-black text-slate-900 leading-tight">{candidateName || "Candidate"}</div>
+          <div className="text-[0.95rem] font-black text-slate-900 leading-tight">{name || "Candidate"}</div>
         </div>
       </div>
 
@@ -98,7 +113,9 @@ const AssessmentPage: React.FC = () => {
           <AssessmentHero
             g1={g1} g2={g2} letter={letter} name={name} email={email}
             avatarUrl={avatarUrl} bgColor={bgColor}
-            assessment={assessment} overallScore={overallScore}
+            jobTitle={jobTitle} interviewType={interviewType} createdAt={createdAt}
+            analytics={analytics} recruiterReview={recruiterReview}
+            overallScore={overallScore}
             vt={vt} verdictLabel={verdictLabel}
           />
 
@@ -129,7 +146,7 @@ const AssessmentPage: React.FC = () => {
             {tab === TAB_SCORES && (
               <ScoresTab
                 verdict={verdict} overallScore={overallScore} vt={vt} st={st} verdictLabel={verdictLabel}
-                scores={scores} analytics={assessment.analytics}
+                scores={scores} analytics={analytics}
                 requiredSkills={requiredSkills} aiAssessment={aiAssessment}
                 scoreOverallLabel={t("pages.applications.assessment_modal.score_overall")}
                 scoreCoverageLabel={t("pages.applications.assessment_modal.score_coverage")}

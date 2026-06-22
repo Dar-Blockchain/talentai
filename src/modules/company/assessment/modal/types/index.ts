@@ -1,12 +1,15 @@
-// ─── Target (passed by the parent to identify which assessment to load) ───────
+// ─── Target (identifies which assessment to load) ──────────────────────────────
+// candidateName/candidateEmail/avatarUrl/bgColor are optional display hints used
+// only as a placeholder before the real candidate data arrives from the fetch —
+// the actual name/email/avatar are derived from the populated assessment response.
 export interface AssessmentTarget {
   applicationId: string;
   postId: string;
   candidateUserId: string;
-  candidateName: string;
-  candidateEmail: string;
+  candidateName?: string;
+  candidateEmail?: string;
   avatarUrl?: string;
-  bgColor: string;
+  bgColor?: string;
 }
 
 // ─── Conversation transcript ───────────────────────────────────────────────────
@@ -140,4 +143,79 @@ export interface PostAssessmentData {
   };
 
   conversation: ConversationTurn[];
+}
+
+// ─── Raw API response (Mongoose document shape, before flattening) ────────────
+// Matches Backend/features/interviews/post-interview/post-interview.model.js —
+// everything the AI engine writes lives under interviewData.finalReport.
+// useAssessmentModal flattens this into the PostAssessmentData shape above.
+export interface RawAssessmentDocument {
+  _id: string;
+  createdAt: string;
+  post?: { _id: string; jobDetails?: { title?: string } } | string | null;
+  candidate?: {
+    _id: string;
+    username?: string;
+    email?: string;
+    profile?: {
+      firstName?: string;
+      lastName?: string;
+      user_image?: string;
+    } | null;
+  } | string | null;
+  interviewData?: {
+    finalReport?: {
+      summary?: string | null;
+      reasoning?: string | null;
+      recommendation?: 'strong_hire' | 'hire' | 'maybe' | 'no_hire' | null;
+      keyDecisionFactors?: string[];
+      hiringRisks?: string[];
+      developmentAreas?: string[];
+      scores?: {
+        overall?: number;
+        quality?: number;
+        coverage?: number;
+        skills?: number;
+        depth?: number;
+        communication?: number;
+      };
+      strengths?: string[];
+      weaknesses?: string[];
+      requiredSkills?: {
+        all: string[];
+        demonstrated: string[];
+        missed: string[];
+      };
+      coverage?: {
+        overall?: number;
+        areas?: Record<string, AreaData>;
+      };
+      candidateProfile?: {
+        communicationStyle?: { verbosity?: string; confidenceLevel?: string };
+        revealedExpertise?: string[];
+        revealedGaps?: string[];
+        difficultyLevel?: string;
+      };
+      sessionMetrics?: {
+        totalResponses?: number;
+        questionsPerArea?: Record<string, number>;
+      };
+      timestamp?: string;
+    };
+    analytics?: {
+      duration?: number;
+      messageCount?: number;
+      silenceEvents?: number;
+      coveragePercentage?: number;
+      completedAreas?: number;
+      totalAreas?: number;
+      averageResponseLength?: number;
+      interactionStyle?: string;
+    };
+    conversation?: ConversationTurn[];
+    sessionId?: string;
+    interviewType?: string | null;
+  };
+  recruiterFeedback?: string | null;
+  recruiterFeedbackAt?: string | null;
 }

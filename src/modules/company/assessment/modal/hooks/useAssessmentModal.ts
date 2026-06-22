@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { verdictTheme, scoreTheme, VerdictTheme, ScoreTheme } from "../components/ui";
-import { PostAssessmentData, AssessmentTarget } from "../types";
+import { avatarColor } from "@/modules/company/applications/components/ApplicationCard";
+import { PostAssessmentData, AssessmentTarget, RawAssessmentDocument, AreaData } from "../types";
 
 function pickGradient(str: string): [string, string] {
   const GRADS: [string, string][] = [
@@ -17,11 +18,16 @@ function pickGradient(str: string): [string, string] {
 }
 
 export type AssessmentModalData = {
-  name:   string;
-  email:  string;
-  letter: string;
-  g1:     string;
-  g2:     string;
+  name:      string;
+  email:     string;
+  letter:    string;
+  g1:        string;
+  g2:        string;
+  avatarUrl: string | undefined;
+  bgColor:   string;
+  jobTitle:      string | null;
+  interviewType: string | null;
+  createdAt:     string;
   verdict:      PostAssessmentData["verdict"];
   overallScore: number;
   vt:           VerdictTheme;
@@ -46,19 +52,45 @@ export type AssessmentModalData = {
 };
 
 export function useAssessmentModal(
-  assessment: PostAssessmentData | undefined,
+  assessment: RawAssessmentDocument | undefined,
   target: AssessmentTarget | null,
 ): AssessmentModalData {
   const { t } = useTranslation("dashboard");
 
   return useMemo(() => {
-    const name   = target?.candidateName  ?? "";
-    const email  = target?.candidateEmail ?? "";
+    const candidate = typeof assessment?.candidate === "object" ? assessment.candidate : null;
+    const candidateProfileInfo = candidate?.profile;
+    const fetchedName = candidateProfileInfo
+      ? `${candidateProfileInfo.firstName ?? ""} ${candidateProfileInfo.lastName ?? ""}`.trim()
+      : candidate?.username;
+
+    const name   = fetchedName || target?.candidateName  || "";
+    const email  = candidate?.email ?? target?.candidateEmail ?? "";
     const letter = name[0]?.toUpperCase() || "?";
     const [g1, g2] = pickGradient(email || name);
 
-    const verdict      = assessment?.verdict;
-    const overallScore = verdict?.overallScore ?? assessment?.scores?.overall ?? 0;
+    const avatarUrl = candidateProfileInfo?.user_image
+      ? `${process.env.NEXT_PUBLIC_API_BASE_URL}uploads/images/${candidateProfileInfo.user_image}`
+      : target?.avatarUrl;
+    const bgColor = target?.bgColor || avatarColor(name);
+
+    // The backend stores everything under interviewData.finalReport — flatten it here
+    // so the rest of this hook (and every tab component) can keep using the simple
+    // top-level shape defined by PostAssessmentData.
+    const finalReport = assessment?.interviewData?.finalReport;
+
+    const jobTitle = (typeof assessment?.post === "object" ? assessment.post?.jobDetails?.title : null) ?? null;
+    const interviewType = assessment?.interviewData?.interviewType ?? null;
+    const createdAt = assessment?.createdAt ?? "";
+
+    const verdict = finalReport
+      ? {
+          recommendation: finalReport.recommendation ?? null,
+          overallScore:   finalReport.scores?.overall ?? null,
+          reasoning:      finalReport.reasoning ?? null,
+        }
+      : undefined;
+    const overallScore = verdict?.overallScore ?? 0;
 
     const vt = verdictTheme(verdict?.recommendation, overallScore);
     const st = scoreTheme(overallScore);
@@ -71,15 +103,57 @@ export function useAssessmentModal(
           ? t("pages.applications.assessment_modal.verdict_review")
           : t("pages.applications.assessment_modal.verdict_needs_work");
 
-    const analytics        = assessment?.analytics;
-    const scores           = assessment?.scores;
-    const coverage         = assessment?.coverage;
-    const areas            = coverage?.areas || {};
-    const aiAssessment     = assessment?.aiAssessment;
-    const requiredSkills   = assessment?.requiredSkills;
-    const candidateProfile = assessment?.candidateProfile;
-    const recruiterReview  = assessment?.recruiterReview;
-    const conversation     = assessment?.conversation ?? [];
+    const analytics = assessment?.interviewData?.analytics;
+    const scores    = finalReport?.scores
+      ? {
+          overall:       finalReport.scores.overall       ?? null,
+          quality:       finalReport.scores.quality       ?? null,
+          coverage:      finalReport.scores.coverage      ?? null,
+          skills:        finalReport.scores.skills        ?? null,
+          depth:         finalReport.scores.depth         ?? null,
+          communication: finalReport.scores.communication ?? null,
+        }
+      : undefined;
+    const areas: Record<string, AreaData> = finalReport?.coverage?.areas || {};
+    const completedAreaNames = Object.entries(areas).filter(([, a]) => a?.completed).map(([name]) => name);
+
+    const strongestAreas   = Object.entries(areas).filter(([, a]) => (a?.percentage ?? 0) >= 70).map(([name]) => name);
+    const weakestAreas     = Object.entries(areas).filter(([, a]) => (a?.percentage ?? 0) < 50).map(([name]) => name);
+    const recommendedFocus = Object.entries(areas).filter(([, a]) => !a?.completed && (a?.percentage ?? 0) < 60).map(([name]) => name);
+
+    const coverage = finalReport?.coverage
+      ? {
+          overall: finalReport.coverage.overall ?? null,
+          completedAreas: completedAreaNames,
+          nextRecommendedArea: weakestAreas[0] ?? null,
+          areas,
+        }
+      : undefined;
+
+    const aiAssessment = finalReport
+      ? {
+          summary:            finalReport.summary ?? null,
+          strengths:          finalReport.strengths ?? [],
+          weaknesses:         finalReport.weaknesses ?? [],
+          keyDecisionFactors: finalReport.keyDecisionFactors ?? [],
+          hiringRisks:        finalReport.hiringRisks ?? [],
+          developmentAreas:   finalReport.developmentAreas ?? [],
+          strongestAreas,
+          weakestAreas,
+          recommendedFocus,
+        }
+      : undefined;
+
+    const requiredSkills   = finalReport?.requiredSkills ?? null;
+    const candidateProfile = finalReport?.candidateProfile ?? null;
+    const recruiterReview  = assessment?.recruiterFeedback != null || assessment?.recruiterFeedbackAt != null
+      ? {
+          reviewed:   !!assessment?.recruiterFeedback,
+          feedback:   assessment?.recruiterFeedback ?? null,
+          reviewedAt: assessment?.recruiterFeedbackAt ?? null,
+        }
+      : undefined;
+    const conversation = assessment?.interviewData?.conversation ?? [];
 
     const hasAreas     = Object.keys(areas).length > 0;
     const hasAiData    = !!(
@@ -97,7 +171,8 @@ export function useAssessmentModal(
     const TAB_TRANSCRIPT = hasTranscript ? idx++ : -1;
 
     return {
-      name, email, letter, g1, g2,
+      name, email, letter, g1, g2, avatarUrl, bgColor,
+      jobTitle, interviewType, createdAt,
       verdict, overallScore, vt, st, verdictLabel,
       analytics, scores, coverage, areas,
       aiAssessment, requiredSkills, candidateProfile, recruiterReview, conversation,

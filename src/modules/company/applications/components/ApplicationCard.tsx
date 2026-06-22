@@ -83,16 +83,8 @@ const ApplicationCard = memo<ApplicationCardProps>(({
 
   const handleAssessment = useCallback(() => {
     if (!app.candidateUserId) return;
-    const q = new URLSearchParams({
-      postId:          postId,
-      candidateUserId: app.candidateUserId,
-      candidateName:   name,
-      candidateEmail:  app.email || "",
-      bgColor,
-      ...(avatarUrl ? { avatarUrl } : {}),
-    });
-    router.push(`/company/applications/${appId}/assessment?${q}`);
-  }, [app.candidateUserId, app.email, appId, postId, name, avatarUrl, bgColor, router]);
+    router.push(`/company/applications/${appId}/assessment`);
+  }, [app.candidateUserId, appId, router]);
 
   const handleInvite = useCallback(
     () => setInviteTarget({ applicationId: appId, name, postTitle: app.postTitle || "", postId }),

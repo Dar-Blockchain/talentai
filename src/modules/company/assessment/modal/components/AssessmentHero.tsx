@@ -14,7 +14,11 @@ interface Props {
   email:        string;
   avatarUrl?:   string;
   bgColor:      string;
-  assessment:   PostAssessmentData;
+  jobTitle:      string | null;
+  interviewType: string | null;
+  createdAt:     string;
+  analytics:       PostAssessmentData["analytics"];
+  recruiterReview: PostAssessmentData["recruiterReview"];
   overallScore: number;
   vt:           VerdictTheme;
   verdictLabel: string;
@@ -22,7 +26,8 @@ interface Props {
 
 const AssessmentHero: React.FC<Props> = ({
   g1, g2, letter, name, email, avatarUrl, bgColor,
-  assessment, overallScore, vt, verdictLabel,
+  jobTitle, interviewType, createdAt,
+  analytics, recruiterReview, overallScore, vt, verdictLabel,
 }) => (
   <div>
     <div className="h-1" style={{ background: `linear-gradient(90deg, ${g1}, ${g2})` }} />
@@ -30,13 +35,14 @@ const AssessmentHero: React.FC<Props> = ({
     <div className="px-7 py-5 flex items-center justify-between gap-4">
       <CandidateInfoSection
         letter={letter} name={name} email={email}
-        avatarUrl={avatarUrl} bgColor={bgColor} assessment={assessment}
+        avatarUrl={avatarUrl} bgColor={bgColor}
+        jobTitle={jobTitle} interviewType={interviewType} createdAt={createdAt}
       />
       <ScoreVerdictBadge overallScore={overallScore} vt={vt} verdictLabel={verdictLabel} />
     </div>
 
-    <AnalyticsStrip analytics={assessment.analytics} />
-    <RecruiterReviewCard recruiterReview={assessment.recruiterReview} />
+    <AnalyticsStrip analytics={analytics} />
+    <RecruiterReviewCard recruiterReview={recruiterReview} />
   </div>
 );
 
