@@ -29,8 +29,8 @@ exports.createCheckoutSession = async ({ planId, baseUrl, userId, companyProfile
         },
       ],
       mode: "payment",
-      success_url: `${baseUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/payment/cancel`,
+      success_url: `${baseUrl}/payments/stripe/callback?status=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/payments/stripe/callback?status=cancel`,
       metadata: { planId: planId.toString(), userId: userId.toString(), companyProfileId: companyProfileId.toString() },
     });
 

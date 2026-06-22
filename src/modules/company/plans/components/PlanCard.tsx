@@ -17,6 +17,7 @@ export interface PlanCardProps {
   currentSubId: string | null;
   currentAutoRenew: boolean;
   checkingOut: boolean;
+  isCheckingOutThis: boolean;
   onCancelClick: (subscriptionId: string) => void;
   onEnableAutoRenewClick: (subscriptionId: string) => void;
   onContactUs: () => void;
@@ -26,7 +27,7 @@ export interface PlanCardProps {
 
 const PlanCard: React.FC<PlanCardProps> = ({
   plan, activeSubscriptionId, autoRenew, cancelling,
-  currentPlanName, currentSubId, currentAutoRenew, checkingOut,
+  currentPlanName, currentSubId, currentAutoRenew, checkingOut, isCheckingOutThis,
   onCancelClick, onEnableAutoRenewClick, onContactUs, onDowngradeClick, onSubscribe,
 }) => {
   const { t } = useTranslation("dashboard");
@@ -141,7 +142,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
           <div className="flex flex-col gap-2">
             <AppButton
               label={t("pages.subscription.card.add_plan", "Add Plan")}
-              variant="contained" fullWidth loading={checkingOut}
+              variant="contained" fullWidth loading={isCheckingOutThis}
               startIcon={<CreditCard size={16} />}
               onClick={() => onSubscribe(plan._id)}
               sx={{

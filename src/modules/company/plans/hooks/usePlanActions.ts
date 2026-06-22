@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import {
   useCancelSubscriptionMutation,
   useEnableAutoRenewMutation,
@@ -28,6 +28,7 @@ export function usePlanActions({
   const cancelMutation    = useCancelSubscriptionMutation();
   const autoRenewMutation = useEnableAutoRenewMutation();
   const checkoutMutation  = useCheckoutMutation();
+  const [checkingOutPlanId, setCheckingOutPlanId] = useState<string | null>(null);
 
   const handleConfirmCancel = useCallback(() => {
     if (!cancelSubId) return;
@@ -58,14 +59,17 @@ export function usePlanActions({
   }, [showSnack]);
 
   const handleSubscribe = useCallback((planId: string) => {
+    setCheckingOutPlanId(planId);
     checkoutMutation.mutateAsync(planId)
-      .catch((err: Error) => showSnack(err.message, "error"));
+      .catch((err: Error) => showSnack(err.message, "error"))
+      .finally(() => setCheckingOutPlanId(null));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showSnack]);
 
   return {
     cancelling:  cancelMutation.isPending,
     checkingOut: checkoutMutation.isPending,
+    checkingOutPlanId,
     handleConfirmCancel,
     handleConfirmDowngrade,
     handleEnableAutoRenew,

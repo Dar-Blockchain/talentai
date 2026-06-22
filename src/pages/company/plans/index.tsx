@@ -17,7 +17,7 @@ const PlansPage: NextPageWithLayout = function PlansPage() {
   const { t } = useTranslation("dashboard");
   const {
     sortedPlans, plansLoading, combinedLoading, cancelling,
-    activeSubByPlanName, currentPlanName, cancellingPlanName, checkingOut,
+    activeSubByPlanName, currentPlanName, cancellingPlanName, checkingOut, checkingOutPlanId,
     snackbar, setSnackbar,
     confirmOpen, openCancelDialog, closeCancelDialog,
     contactOpen, setContactOpen,
@@ -86,6 +86,7 @@ const PlansPage: NextPageWithLayout = function PlansPage() {
               currentSubId={currentPlanName ? (activeSubByPlanName[currentPlanName]?.id ?? null) : null}
               currentAutoRenew={currentPlanName ? (activeSubByPlanName[currentPlanName]?.autoRenew ?? true) : true}
               checkingOut={checkingOut}
+              isCheckingOutThis={checkingOutPlanId === plan._id}
               onCancelClick={openCancelDialog}
               onEnableAutoRenewClick={handleEnableAutoRenew}
               onContactUs={() => setContactOpen(true)}
