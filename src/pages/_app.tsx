@@ -15,6 +15,7 @@ import { ThemeProvider } from "@/providers/ThemeProvider";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import ScrollToTop from "@/components/ui/ScrollToTop";
+import LoadingScreen from "@/components/ui/LoadingScreen";
 import { Poppins } from "next/font/google";
 import MuiToast from "@/components/ui/Toast";
 import { Toaster } from "@/modules/shared/ui/shadcn/sonner";
@@ -245,7 +246,7 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
         The isRehydrated guard in AuthWrapper prevents a double profile-fetch
         on cold reload.
       */}
-      <PersistGate loading={null} persistor={persistor}>
+      <PersistGate loading={<LoadingScreen />} persistor={persistor}>
         <ThemeProvider>
         <ReactQueryProvider>
         <AuthProvider>

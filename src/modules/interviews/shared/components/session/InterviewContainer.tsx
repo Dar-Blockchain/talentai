@@ -78,38 +78,18 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
 
         {interviewStatus === 'connecting' && (
           <div className="flex flex-col items-center text-center py-4 gap-0">
-            <div className="relative w-[68px] h-[68px] mb-5 shrink-0">
-              <div className="absolute inset-0 rounded-full border-2 border-[rgba(106,211,156,0.12)]" />
-              <div
-                className="absolute inset-0 rounded-full border-2 border-transparent"
-                style={{ borderTopColor: '#6AD39C', animation: 'iv-spin 1.1s linear infinite' }}
-              />
-              <div
-                className="absolute inset-2.5 rounded-full border-2 border-transparent"
-                style={{ borderTopColor: 'rgba(106,211,156,0.45)', animation: 'iv-spin-rev 0.75s linear infinite' }}
-              />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div
-                  className="w-2.5 h-2.5 rounded-full bg-[#6AD39C]"
-                  style={{ animation: 'iv-pulse-dot 1.4s ease-in-out infinite' }}
-                />
-              </div>
-            </div>
+            <img
+              src="/gif/loading.gif"
+              alt="Connecting…"
+              className="w-24 h-24 object-contain mb-4"
+              draggable={false}
+            />
             <p className="font-sans font-bold text-base text-[#0d1117] tracking-tight mb-1">
               {t('container.starting_title')}
             </p>
             <p className="font-sans text-[0.74rem] text-[#6b7280] leading-relaxed max-w-[210px]">
               {t('container.starting_subtitle')}
             </p>
-            <div className="flex gap-1.5 mt-5">
-              {[0, 1, 2].map((i) => (
-                <div
-                  key={i}
-                  className="w-1.5 h-1.5 rounded-full bg-[#6AD39C]"
-                  style={{ animation: `iv-step-dot 1.2s ease-in-out ${i * 0.2}s infinite` }}
-                />
-              ))}
-            </div>
           </div>
         )}
 
@@ -269,25 +249,12 @@ const AnalyzingSpinner: React.FC<{ waitDots: string }> = ({ waitDots }) => {
 
   return (
     <div className="flex flex-col items-center text-center py-4 gap-0">
-      <div className="relative w-[68px] h-[68px] mb-5 shrink-0">
-        <div className="absolute inset-0 rounded-full border-2 border-[rgba(106,211,156,0.1)]" />
-        <div
-          className="absolute inset-0 rounded-full border-2 border-transparent"
-          style={{ borderTopColor: '#10b981', borderRightColor: 'rgba(106,211,156,0.3)', animation: 'iv-spin 0.9s linear infinite' }}
-        />
-        <div
-          className="absolute inset-3 rounded-full border-2 border-transparent"
-          style={{ borderTopColor: 'rgba(106,211,156,0.5)', animation: 'iv-spin-rev 1.6s linear infinite' }}
-        />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div
-            className="w-5 h-5 rounded-[6px] flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #6AD39C 0%, #10453F 100%)', animation: 'iv-chip-glow 2s ease-in-out infinite' }}
-          >
-            <RefreshCw size={13} color="#fff" className="animate-spin" style={{ animationDuration: '2s' }} />
-          </div>
-        </div>
-      </div>
+      <img
+        src="/gif/loading.gif"
+        alt="Analyzing…"
+        className="w-24 h-24 object-contain mb-4"
+        draggable={false}
+      />
 
       <p className="font-sans font-bold text-base text-[#0d1117] tracking-tight mb-1">
         {t('container.analyzing_title')}{waitDots}
