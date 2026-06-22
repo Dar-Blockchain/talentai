@@ -40,19 +40,12 @@ const HeaderNotification = ({ onViewAll }: HeaderNotificationProps) => {
             "transition-all duration-150",
             open
               ? "bg-primary/12 text-primary"
-              : "text-gray-500 hover:bg-primary/10 hover:text-primary",
+              : "text-gray-500 hover:bg-gray-100",
           )}
         >
           <Bell className="size-[18px]" />
           {unreadCount > 0 && (
-            <span className={cn(
-              "absolute -top-1 -right-1 min-w-[15px] h-[15px] px-px",
-              "rounded-full bg-red-500 border-[1.5px] border-white",
-              "flex items-center justify-center",
-              "text-[9px] font-bold text-white leading-none",
-            )}>
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </span>
+            <span className="absolute top-[5px] right-[5px] w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white" />
           )}
         </button>
       </PopoverTrigger>

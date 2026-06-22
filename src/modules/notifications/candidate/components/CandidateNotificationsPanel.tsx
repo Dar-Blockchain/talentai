@@ -54,6 +54,14 @@ const getPanelTypeStyle = (type: string): NotifTypeStyle =>
     ? getNotifTypeStyle(type)
     : TEAL_STYLE;
 
+const getLinkLabel = (link: string): string => {
+  if (link.includes('/interview'))    return 'Start Interview';
+  if (link.includes('/applications')) return 'View Applications';
+  if (link.includes('/posts'))        return 'View Post';
+  if (link.includes('/chat'))         return 'Open Chat';
+  return 'View Details';
+};
+
 // ─── Delete Confirm Dialog ────────────────────────────────────────────────────
 
 interface ConfirmState { open: boolean; type: 'single' | 'all'; id?: string }
@@ -306,7 +314,7 @@ const CandidateNotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
                   '&:hover': { bgcolor: '#0F766E', boxShadow: 'none' },
                 }}
               >
-                Start Interview
+                {getLinkLabel(n.link!)}
               </Button>
             )}
           </Box>

@@ -7,6 +7,8 @@ import { type RootState } from '@/store/store';
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 import UserAvatar from '@/modules/shared/layouts/shared/UserAvatar';
 import { Button } from '@/modules/shared/ui/shadcn/button';
+import HeaderNotification from '@/modules/notifications/shared/components/HeaderNotification';
+import HeaderChat from '@/modules/shared/layouts/dashboard/HeaderChat';
 
 const InterviewHeader: React.FC = () => {
   const router = useRouter();
@@ -28,12 +30,21 @@ const InterviewHeader: React.FC = () => {
 
       {/* Right side */}
       <div className="flex items-center gap-3">
-        <LanguageSwitcher variant="icon" size="small" />
+        {user && (
+          <div className="flex items-center gap-0 rounded-xl bg-gray-50 border border-gray-100 px-0.5 py-0.5 [&_.MuiIconButton-root]:!p-1.5 [&_.MuiSvgIcon-root]:!text-[17px]">
+            <HeaderChat />
+            <HeaderNotification />
+            <div className="[&_button]:!border-0 [&_button]:!bg-transparent [&_button]:!shadow-none [&_button:hover]:!bg-primary/10 [&_button:hover]:!text-primary">
+              <LanguageSwitcher variant="icon" size="small" />
+            </div>
+          </div>
+        )}
 
         {user ? (
           <UserAvatar />
         ) : (
           <>
+            <LanguageSwitcher variant="icon" size="small" />
             <Button
               variant="outline"
               size="sm"

@@ -2,6 +2,8 @@ const PostInterviewAssessment = require("./post-interview.model");
 const JobApplication          = require("../../job-applications/job-application.model");
 const Profile                 = require("../../../features/users/profile.model");
 const Post                    = require("../../posts/post.model");
+const notificationService     = require("../../notifications/notification.service");
+const socket                  = require("../../../socket/io");
 
 async function persistInterviewResults(sessionId, result, candidateId, postId) {
   if (!candidateId || !postId) {
@@ -12,11 +14,13 @@ async function persistInterviewResults(sessionId, result, candidateId, postId) {
   try {
     const query = { candidate: candidateId, post: postId };
 
-    // Resolve company for upsert (needed when pending record was never created)
-    let company = null;
+    // Resolve company and job title for upsert & notifications
+    let company  = null;
+    let jobTitle = null;
     if (candidateId && postId) {
-      const post = await Post.findById(postId).select('user').lean();
-      company = post?.user ?? null;
+      const post = await Post.findById(postId).select('user jobDetails.title').lean();
+      company  = post?.user          ?? null;
+      jobTitle = post?.jobDetails?.title ?? null;
     }
 
     const saved = await PostInterviewAssessment.findOneAndUpdate(
@@ -42,19 +46,41 @@ async function persistInterviewResults(sessionId, result, candidateId, postId) {
       console.log(`✅ [DB] Interview results saved — candidate: ${candidateId}, post: ${postId}`);
     }
 
-    // Update JobApplication status to "interview_completed"
+    // Update JobApplication status and send notifications
     if (candidateId && postId) {
       try {
-        const profile = await Profile.findOne({ userId: candidateId }).select('_id').lean();
+        const profile = await Profile.findOne({ userId: candidateId }).select('_id firstName lastName').lean();
         if (profile) {
           await JobApplication.findOneAndUpdate(
             { profile: profile._id, post: postId },
             { status: 'interview_completed', updatedAt: new Date() },
           );
+
+          // Notify the company (recruiter) that a candidate completed their interview
+          if (company) {
+            const candidateName = [profile.firstName, profile.lastName].filter(Boolean).join(' ') || 'A candidate';
+            const content = jobTitle
+              ? `${candidateName} has completed their interview for "${jobTitle}".`
+              : `${candidateName} has completed their interview.`;
+            try {
+              await notificationService.createNotification(company, content, 'success', 'job', '/company/applications');
+            } catch (err) {
+              console.warn(`⚠️ [Notify] Failed to notify company ${company}:`, err.message);
+            }
+          }
         }
       } catch (err) {
         console.error(`⚠️ [DB] Failed to update JobApplication status:`, err.message);
       }
+    }
+
+    // Notify the candidate that their interview results are recorded
+    const interviewType = saved?.interviewData?.interviewType ?? null;
+    try {
+      const io = socket.getIO();
+      io.to(String(candidateId)).emit('interview_completed', { interviewType, jobTitle });
+    } catch (err) {
+      console.warn(`⚠️ [Socket] Failed to emit interview_completed to candidate ${candidateId}:`, err.message);
     }
 
     return { assessmentId: saved?._id ?? null };

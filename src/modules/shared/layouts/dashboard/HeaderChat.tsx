@@ -83,21 +83,23 @@ const HeaderChat: React.FC = () => {
         onClick={(e) => setAnchor(e.currentTarget)}
         sx={{ color: "#6B7280" }}
       >
-        <Badge
-          badgeContent={totalBadge > 9 ? "9+" : totalBadge || undefined}
-          sx={{
-            "& .MuiBadge-badge": {
-              bgcolor: "#EF4444",
-              color: "#fff",
-              fontSize: "10px",
-              fontWeight: 700,
-              minWidth: 18,
-              height: 18,
-            },
-          }}
-        >
+        <div style={{ position: "relative", display: "inline-flex" }}>
           <ChatOutlined sx={{ fontSize: 20 }} />
-        </Badge>
+          {totalBadge > 0 && (
+            <span
+              style={{
+                position: "absolute",
+                top: 1,
+                right: 1,
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                backgroundColor: "#EF4444",
+                boxShadow: "0 0 0 2px #fff",
+              }}
+            />
+          )}
+        </div>
       </IconButton>
 
       <Popover
