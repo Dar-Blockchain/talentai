@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
 import { useTranslation } from "react-i18next";
 import NotificationsTab from "./NotificationsTab";
 import PersonalInformationTab from "./PersonalInformationTab";
@@ -69,17 +70,12 @@ const CandidateSettingsPage: React.FC = () => {
             </div>
             <div className="px-4 pb-4">
               <div className="-mt-6 mb-2">
-                {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt={displayName}
-                    className="w-[52px] h-[52px] rounded-full border-[2.5px] border-white shadow-[0_2px_8px_rgba(0,0,0,0.12)] object-cover"
-                  />
-                ) : (
-                  <div className="w-[52px] h-[52px] rounded-full border-[2.5px] border-white shadow-[0_2px_8px_rgba(0,0,0,0.12)] bg-teal-600 text-white flex items-center justify-center text-[1.2rem] font-bold">
+                <Avatar className="w-[52px] h-[52px] rounded-full border-[2.5px] border-white shadow-[0_2px_8px_rgba(0,0,0,0.12)]">
+                  <AvatarImage src={avatarUrl} alt={displayName} className="object-cover" />
+                  <AvatarFallback className="rounded-full bg-teal-600 text-white text-[1.2rem] font-bold">
                     {initial}
-                  </div>
-                )}
+                  </AvatarFallback>
+                </Avatar>
               </div>
               <p className="font-extrabold text-[0.95rem] leading-tight" style={{ color: NAVY }}>{displayName}</p>
               {profile.email && <p className="text-[0.72rem] text-gray-400 mt-1">{profile.email}</p>}

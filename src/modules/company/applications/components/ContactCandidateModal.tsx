@@ -17,6 +17,7 @@ import {
 } from "@/modules/shared/ui/shadcn/dialog";
 import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarImage, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
 
 function initials(first?: string | null, last?: string | null) {
   return `${first?.[0] ?? ""}${last?.[0] ?? ""}`.toUpperCase() || "?";
@@ -72,13 +73,12 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
   const createConversationMutation = useCreateCandidateConversationMutation();
   const sendMessageMutation        = useSendCandidateMessageMutation();
 
-  const [mode, setMode]       = useState<ContactMode>("email");
-  const [subject, setSubject] = useState("");
-  const [message, setMessage] = useState("");
-  const [sending, setSending] = useState(false);
-  const [sent, setSent]       = useState(false);
-  const [error, setError]     = useState("");
-
+  const [mode, setMode]         = useState<ContactMode>("email");
+  const [subject, setSubject]   = useState("");
+  const [message, setMessage]   = useState("");
+  const [sending, setSending]   = useState(false);
+  const [sent, setSent]         = useState(false);
+  const [error, setError]       = useState("");
   useEffect(() => {
     if (open) {
       setMode("email"); setSubject(""); setMessage("");
@@ -136,15 +136,15 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
         {/* Header */}
         <div className="px-6 pt-5 pb-4 flex items-center gap-4 border-b border-slate-100">
           <div className="relative shrink-0">
-            <div
-              className="w-[42px] h-[42px] rounded-full flex items-center justify-center text-white text-[14px] font-bold overflow-hidden"
-              style={{ backgroundColor: target.bgColor }}
-            >
-              {target.avatarUrl
-                ? <img src={target.avatarUrl} alt={target.name} className="w-full h-full object-cover" />
-                : initials(firstName, rest.join(" "))
-              }
-            </div>
+            <Avatar className="w-[42px] h-[42px] rounded-full">
+              <AvatarImage src={target.avatarUrl} alt={target.name} className="object-cover" />
+              <AvatarFallback
+                className="rounded-full text-white text-[14px] font-bold"
+                style={{ backgroundColor: target.bgColor }}
+              >
+                {initials(firstName, rest.join(" "))}
+              </AvatarFallback>
+            </Avatar>
             <div
               className="absolute -bottom-0.5 -right-0.5 w-[14px] h-[14px] rounded-full border-2 border-white flex items-center justify-center"
               style={{ backgroundColor: cfg.color }}

@@ -33,11 +33,12 @@ export const useAiPostStepper = (
         language: generatedLanguage,
       },
       {
-        onSuccess: (_data, { savedPostId: id }) => {
+        onSuccess: (data, { savedPostId: id }) => {
           showToast({ message: "Job post saved as draft.", severity: "success" });
           if (!id) dispatch(getMyProfile());
           dispatch(clearPost());
-          router.push("/company/posts");
+          const postId = data?.data?._id ?? id;
+          router.push(postId ? `/company/posts/${postId}` : "/company/posts");
         },
         onError: (err: unknown) => {
           const message =

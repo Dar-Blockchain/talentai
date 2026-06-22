@@ -1,9 +1,10 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { MapPin, Users, UploadCloud } from "lucide-react";
 import { UserProfile } from "@/types/profile";
 import SectionCard from "@/components/ui/SectionCard";
 import { Spinner } from "@/modules/settings/shared/components";
 import { TEAL, TEAL_BORDER } from "@/modules/settings/shared/constants";
+import { Avatar, AvatarImage, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
 
 interface SettingsProfileCardProps {
   profile: UserProfile;
@@ -45,12 +46,13 @@ const SettingsProfileCard: React.FC<SettingsProfileCardProps> = ({ profile, uplo
             <div className="w-full h-full flex items-center justify-center">
               <Spinner size={24} />
             </div>
-          ) : profile.avatar ? (
-            <img src={profile.avatar} alt={displayName} className="w-full h-full rounded-full object-cover ring-[3px] ring-teal-200" />
           ) : (
-            <div className="w-full h-full rounded-full flex items-center justify-center text-white font-extrabold text-[26px] bg-teal-600 ring-[3px] ring-teal-200">
-              {initials}
-            </div>
+            <Avatar className="w-full h-full rounded-full ring-[3px] ring-teal-200">
+              <AvatarImage src={profile.avatar || undefined} alt={displayName} className="object-cover" />
+              <AvatarFallback className="rounded-full bg-teal-600 text-white font-extrabold text-[26px]">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
           )}
           {!readOnly && (
             <div

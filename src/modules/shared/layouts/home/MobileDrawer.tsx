@@ -15,6 +15,7 @@ import {
   User, Settings, X, ChevronRight, ArrowUpRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarImage, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
 
 interface MobileDrawerProps {
   open: boolean;
@@ -211,17 +212,12 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unre
                 <div className="relative p-3 flex items-center gap-3">
                   {/* Avatar + online dot */}
                   <div className="relative flex-shrink-0">
-                    <div className={cn(
-                      "w-12 h-12 rounded-xl overflow-hidden flex-shrink-0",
-                      "flex items-center justify-center",
-                      "bg-gradient-to-br from-primary to-accent",
-                      "text-primary-foreground text-[14px] font-black",
-                      "ring-2 ring-white shadow-md"
-                    )}>
-                      {avatarUrl
-                        ? <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
-                        : initials}
-                    </div>
+                    <Avatar className="w-12 h-12 rounded-xl ring-2 ring-white shadow-md">
+                      <AvatarImage src={avatarUrl || undefined} alt={displayName} className="object-cover" />
+                      <AvatarFallback className="rounded-xl bg-gradient-to-br from-primary to-accent text-primary-foreground text-[14px] font-black">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
                     <span className="absolute -bottom-0.5 -right-0.5 w-[11px] h-[11px] rounded-full bg-green-400 border-2 border-white shadow-sm" />
                   </div>
 

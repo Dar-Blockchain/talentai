@@ -5,6 +5,7 @@ import { User, Mail, Building2, Briefcase, GitBranch, Camera, Check } from "luci
 import { ROLE_LABELS, ROLE_STYLES } from "@/modules/company/employees/components/list";
 import { Spinner } from "@/modules/settings/shared/components";
 import { Section, InfoRow, TEAL, useEmployeeSettings } from "@/modules/settings/employee";
+import { Avatar, AvatarImage, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
 
 const EmployeeSettingsPage: React.FC = () => {
   const {
@@ -32,13 +33,12 @@ const EmployeeSettingsPage: React.FC = () => {
         <Section title="Profile Picture" subtitle="Update your display photo">
           <div className="flex items-center gap-6">
             <div className="relative flex-shrink-0">
-              {avatarUrl ? (
-                <img src={avatarUrl} alt={displayName} className="w-20 h-20 rounded-[20px] object-cover" />
-              ) : (
-                <div className="w-20 h-20 rounded-[20px] flex items-center justify-center text-white font-bold text-[1.6rem] bg-teal-600">
+              <Avatar className="w-20 h-20 rounded-[20px]">
+                <AvatarImage src={avatarUrl || undefined} alt={displayName} className="object-cover" />
+                <AvatarFallback className="rounded-[20px] bg-teal-600 text-white font-bold text-[1.6rem]">
                   {initials}
-                </div>
-              )}
+                </AvatarFallback>
+              </Avatar>
               <div
                 onClick={() => fileRef.current?.click()}
                 className="group absolute inset-0 rounded-[20px] bg-black/45 flex items-center justify-center opacity-0 hover:opacity-100 cursor-pointer transition-opacity"

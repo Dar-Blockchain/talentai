@@ -153,9 +153,10 @@ const validatePostUpdate = (updateData, partial = true) => {
 const flattenPost = (post) => {
   const obj = post?.toObject ? post.toObject() : { ...post };
   const { jobDetails, skillAnalysis, ...rest } = obj;
+  const { _id: _jdId, ...jobDetailsRest } = jobDetails ?? {};
   return {
     ...rest,
-    ...(jobDetails ?? {}),
+    ...jobDetailsRest,
     requiredSkills: skillAnalysis?.requiredSkills ?? [],
     softSkills: skillAnalysis?.softSkills ?? [],
   };

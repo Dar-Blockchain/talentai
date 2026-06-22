@@ -3,6 +3,7 @@ import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import WorkOutlined          from "@mui/icons-material/WorkOutlined";
 import { fmtDate } from "@/modules/company/assessment/constants";
 import { PostAssessmentData } from "../../types";
+import { Avatar, AvatarImage, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
 
 function fmtInterviewType(raw: string | null): string {
   if (!raw) return "";
@@ -20,15 +21,15 @@ interface Props {
 
 const CandidateInfoSection: React.FC<Props> = ({ letter, name, email, avatarUrl, bgColor, assessment }) => (
   <div className="flex items-center gap-4">
-    <div
-      className="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-xl font-black overflow-hidden shrink-0 shadow-sm"
-      style={{ backgroundColor: bgColor }}
-    >
-      {avatarUrl
-        ? <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
-        : letter
-      }
-    </div>
+    <Avatar className="w-14 h-14 rounded-2xl shrink-0 shadow-sm">
+      <AvatarImage src={avatarUrl || undefined} alt={name} className="object-cover" />
+      <AvatarFallback
+        className="rounded-2xl text-white text-xl font-black"
+        style={{ backgroundColor: bgColor }}
+      >
+        {letter}
+      </AvatarFallback>
+    </Avatar>
 
     <div>
       <div className="font-black text-[1.05rem] text-slate-900 leading-tight">{name || "—"}</div>

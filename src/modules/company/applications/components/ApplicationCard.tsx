@@ -10,6 +10,7 @@ import { InviteTarget } from "./InviteToInterviewModal";
 import InviteToInterviewModal from "./InviteToInterviewModal";
 import ApplicationCardActions from "./ApplicationCardActions";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarImage, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -58,7 +59,6 @@ const ApplicationCard = memo<ApplicationCardProps>(({
   const [menuAnchor,   setMenuAnchor]   = useState<HTMLElement | null>(null);
   const [inviteTarget, setInviteTarget] = useState<InviteTarget | null>(null);
   const [localInvited, setLocalInvited] = useState(false);
-
   const name      = useMemo(() => `${app.firstName ?? ""} ${app.lastName ?? ""}`.trim() || "Unknown", [app.firstName, app.lastName]);
   const bgColor   = useMemo(() => avatarColor(name), [name]);
   const avatarUrl = useMemo(() =>
@@ -129,15 +129,15 @@ const ApplicationCard = memo<ApplicationCardProps>(({
         )}
       >
         {/* Avatar */}
-        <div
-          className="w-10 h-10 rounded-full flex items-center justify-center text-white text-[13px] font-bold shrink-0 overflow-hidden"
-          style={{ backgroundColor: bgColor }}
-        >
-          {avatarUrl
-            ? <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
-            : initials(app.firstName, app.lastName)
-          }
-        </div>
+        <Avatar className="w-10 h-10 rounded-full shrink-0">
+          <AvatarImage src={avatarUrl} alt={name} className="object-cover" />
+          <AvatarFallback
+            className="rounded-full text-white text-[13px] font-bold"
+            style={{ backgroundColor: bgColor }}
+          >
+            {initials(app.firstName, app.lastName)}
+          </AvatarFallback>
+        </Avatar>
 
         {/* Info */}
         <div className="flex-1 min-w-0">
