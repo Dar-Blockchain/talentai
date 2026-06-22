@@ -26,13 +26,11 @@ export const useUpdateSettingsProfile = () => {
     mutationFn: ({ userId, payload }: { userId: string; payload: UpdateProfilePayload }) =>
       settingsApi.updateProfile(userId, payload),
     onSuccess: (data) => {
-      dispatch(setConnectedUser({
-        user:              data.user,
-        profile:           data.profile,
-        planLimits:        data.planLimits        ?? null,
-        companyMembership: data.companyMembership ?? null,
-      }));
-      queryClient.invalidateQueries({ queryKey: profileKeys.me });
+      if (!data?.profile) return;
+      dispatch(setConnectedUser({ profile: data.profile }));
+      queryClient.setQueryData(profileKeys.me, (old: any) =>
+        old ? { ...old, profile: data.profile } : old
+      );
     },
   });
 };
@@ -47,13 +45,11 @@ export const useUploadSettingsAvatar = () => {
     mutationFn: ({ userId, file }: { userId: string; file: File }) =>
       settingsApi.uploadAvatar(userId, file),
     onSuccess: (data) => {
-      dispatch(setConnectedUser({
-        user:              data?.user              ?? null,
-        profile:           data?.profile           ?? null,
-        planLimits:        data?.planLimits        ?? null,
-        companyMembership: data?.companyMembership ?? null,
-      }));
-      queryClient.invalidateQueries({ queryKey: profileKeys.me });
+      if (!data?.profile) return;
+      dispatch(setConnectedUser({ profile: data.profile }));
+      queryClient.setQueryData(profileKeys.me, (old: any) =>
+        old ? { ...old, profile: data.profile } : old
+      );
     },
   });
 };

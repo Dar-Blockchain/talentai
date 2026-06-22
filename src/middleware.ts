@@ -11,12 +11,12 @@ const PUBLIC_PATHS = [
   "/privacy",
   "/terms-of-use",
   "/privacy-policy",
-  "/candidate/home",
   "/unauthorized",
   "/employee/invitation",
   "/campaign",
-  "/candidate/interview",
+  "/interviews",
   "/payments/stripe/callback",
+  "/ui-kit"
 ];
 
 const PUBLIC_PREFIXES = ["/api/", "/_next/", "/favicon", "/logo", "/static/"];
@@ -32,7 +32,7 @@ const ROLE_ROUTES: { prefix: string; roles: string[] }[] = [
   { prefix: "/company",                  roles: ["Company", "Employee"] },
   { prefix: "/profile/company",          roles: ["Company"] },
   // Allow Employee so the page component can show a graceful message before redirecting
-  { prefix: "/candidate/interview",   roles: ["Candidate", "Employee", "Company"] },
+  { prefix: "/interviews",            roles: ["Candidate", "Employee", "Company"] },
   { prefix: "/candidate",                roles: ["Candidate"] },
   { prefix: "/employee/invitation",       roles: ["Admin", "Company", "Employee", "Candidate"] },
   { prefix: "/employee",                 roles: ["Employee"] },
@@ -126,14 +126,14 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const token = request.cookies.get("api_token")?.value;
+  const token = request.cookies.get("jwt_token")?.value;
   const isAuthenticated = !!token;
   const role = token ? getRoleFromToken(token) : null;
 
   // Token exists but role cannot be decoded → corrupted/invalid token → force logout
   if (isAuthenticated && !role) {
     const res = NextResponse.redirect(new URL("/signin?force_logout=1", request.url));
-    res.cookies.delete("api_token");
+    res.cookies.delete("jwt_token");
     return res;
   }
 

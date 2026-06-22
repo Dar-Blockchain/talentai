@@ -1,21 +1,22 @@
-import React from "react";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
+﻿import React from "react";
 import { Box, Alert } from "@mui/material";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
 import { useTranslation } from "react-i18next";
 
-import { usePostDetailPage } from "@/modules/posts/details/hooks/usePostDetailPage";
-import JobDetailHeader from "@/modules/posts/details/components/JobDetailHeader";
-import JobDetailContent from "@/modules/posts/details/components/JobDetailContent";
-import JobQrDialog from "@/modules/posts/details/components/JobQrDialog";
-import ApplicationsView from "@/modules/posts/details/components/ApplicationsView";
-import DeletePostModal from "@/modules/posts/list/components/DeletePostModal";
-import PublishConfirmModal from "@/modules/posts/list/components/PublishConfirmModal";
-import InterviewLanguagesModal from "@/modules/posts/create/components/InterviewLanguagesModal";
+import { usePostDetailPage } from "@/modules/company/posts/details/hooks/usePostDetailPage";
+import JobDetailHeader from "@/modules/company/posts/details/components/JobDetailHeader";
+import JobDetailContent from "@/modules/company/posts/details/components/JobDetailContent";
+import JobQrDialog from "@/modules/company/posts/details/components/JobQrDialog";
+import ApplicationsView from "@/modules/company/posts/details/components/ApplicationsView";
+import DeletePostModal from "@/modules/company/posts/list/components/DeletePostModal";
+import PublishConfirmModal from "@/modules/company/posts/list/components/PublishConfirmModal";
+import InterviewLanguagesModal from "@/modules/company/posts/create/components/InterviewLanguagesModal";
+import { getDashboardLayout } from "@/modules/shared/layouts";
+import type { NextPageWithLayout } from "@/pages/_app";
 
 const TEAL = "#0D9488";
 
-const PostDetailsPage: React.FC = () => {
+const PostDetailsPage: NextPageWithLayout = () => {
   const { t } = useTranslation("posts");
 
   const {
@@ -39,7 +40,6 @@ const PostDetailsPage: React.FC = () => {
   } = usePostDetailPage();
 
   return (
-    <DashboardLayout>
       <Box>
         {loading && <LoadingOverlay height={400} message={t("detail.loading")} color={TEAL} />}
 
@@ -69,7 +69,7 @@ const PostDetailsPage: React.FC = () => {
               <JobDetailContent
                 activeEdit={activeEdit}
                 isOwner={isOwner}
-                creationType={job.creationType}
+                job={job}
                 onEditPost={() => setActiveEdit("post")}
                 onCancelEdit={() => setActiveEdit(null)}
                 onSaveSuccess={handleSaveSuccess}
@@ -94,6 +94,7 @@ const PostDetailsPage: React.FC = () => {
           publishing={publishing}
           onClose={() => setPublishConfirmOpen(false)}
           onConfirm={handleConfirmPublish}
+          onEdit={() => { setPublishConfirmOpen(false); setActiveEdit("post"); }}
         />
 
         <InterviewLanguagesModal
@@ -113,8 +114,8 @@ const PostDetailsPage: React.FC = () => {
           onDownload={handleDownloadQr}
         />
       </Box>
-    </DashboardLayout>
   );
 };
+PostDetailsPage.getLayout = getDashboardLayout;
 
 export default PostDetailsPage;

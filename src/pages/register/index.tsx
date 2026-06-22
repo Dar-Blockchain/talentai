@@ -1,5 +1,5 @@
 import { RegisterPage } from "@/modules/auth/register";
-import ErrorBoundary from "@/components/common/ErrorBoundary";
+import ErrorBoundary from "@/modules/shared/ui/ErrorBoundary";
 
 export default function Register() {
   return (

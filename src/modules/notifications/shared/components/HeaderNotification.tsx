@@ -1,10 +1,11 @@
 "use client";
 import React, { useState, useCallback } from 'react';
-import { Box, Badge } from '@mui/material';
+import { Bell } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { useNotifications } from '../context/NotificationContext';
 import NotificationDropdown from './NotificationDropdown';
-import { NotificationsNoneRounded, NotificationsRounded } from '@mui/icons-material';
+import { Popover, PopoverTrigger } from '@/modules/shared/ui/shadcn/popover';
+import { cn } from '@/lib/utils';
 
 interface HeaderNotificationProps {
   onViewAll?: () => void;
@@ -12,79 +13,47 @@ interface HeaderNotificationProps {
 
 const HeaderNotification = ({ onViewAll }: HeaderNotificationProps) => {
   const router = useRouter();
-  const [anchor, setAnchor] = useState<null | HTMLElement>(null);
+  const [open, setOpen] = useState(false);
 
   const { notifications, unreadCount, markAsRead, markAllAsRead, archive, archiveAll, deleteById } = useNotifications();
 
-  const isOpen = Boolean(anchor);
-
   const notificationsPage = '/notifications';
 
-  const handleOpen  = useCallback((e: React.MouseEvent<HTMLElement>) => setAnchor(e.currentTarget), []);
-  const handleClose = useCallback(() => setAnchor(null), []);
   const handleViewAll = useCallback(() => {
-    setAnchor(null);
-    if (onViewAll) {
-      onViewAll();
-    } else {
-      router.push(notificationsPage);
-    }
+    setOpen(false);
+    if (onViewAll) onViewAll();
+    else router.push(notificationsPage);
   }, [router, onViewAll, notificationsPage]);
 
   const handleNotificationClick = useCallback((id: string) => {
-    setAnchor(null);
+    setOpen(false);
     markAsRead(id);
     router.push(notificationsPage);
   }, [router, markAsRead, notificationsPage]);
 
   return (
-    <>
-      <Box
-        onClick={handleOpen}
-        sx={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          width: 34, height: 34, borderRadius: '9px', cursor: 'pointer',
-          bgcolor: isOpen ? 'rgba(13,148,136,0.10)' : '#F9FAFB',
-          border: `1px solid ${isOpen ? 'rgba(13,148,136,0.25)' : '#F3F4F6'}`,
-          transition: 'all 0.18s',
-          '&:hover': { bgcolor: '#F3F4F6', borderColor: '#E5E7EB' },
-        }}
-      >
-        <Badge
-          badgeContent={unreadCount > 9 ? '9+' : unreadCount || undefined}
-          sx={{
-            '& .MuiBadge-badge': {
-              bgcolor: '#EF4444',
-              color: '#fff',
-              fontSize: '9px',
-              fontWeight: 700,
-              minWidth: 15,
-              height: 15,
-              padding: 0,
-              boxShadow: '0 0 0 1.5px #fff',
-              ...(unreadCount > 0 && {
-                animation: 'badgePop 0.3s ease',
-                '@keyframes badgePop': {
-                  '0%':   { transform: 'scale(0.6)' },
-                  '60%':  { transform: 'scale(1.2)' },
-                  '100%': { transform: 'scale(1)' },
-                },
-              }),
-            },
-          }}
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          className={cn(
+            "relative size-8 rounded-lg flex items-center justify-center cursor-pointer",
+            "transition-all duration-150",
+            open
+              ? "bg-primary/12 text-primary"
+              : "text-gray-500 hover:bg-gray-100",
+          )}
         >
-          {isOpen
-            ? <NotificationsRounded    sx={{ fontSize: 19, color: '#0D9488' }} />
-            : <NotificationsNoneRounded sx={{ fontSize: 19, color: '#374151', transition: 'color 0.15s' }} />
-          }
-        </Badge>
-      </Box>
+          <Bell className="size-[18px]" />
+          {unreadCount > 0 && (
+            <span className="absolute top-[5px] right-[5px] w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white" />
+          )}
+        </button>
+      </PopoverTrigger>
 
       <NotificationDropdown
-        anchorEl={anchor}
-        open={isOpen}
-        onClose={handleClose}
+        onClose={() => setOpen(false)}
         notifications={notifications}
+        unreadCount={unreadCount}
         onMarkAsRead={markAsRead}
         onMarkAllAsRead={markAllAsRead}
         onViewAll={handleViewAll}
@@ -92,9 +61,8 @@ const HeaderNotification = ({ onViewAll }: HeaderNotificationProps) => {
         onArchive={archive}
         onArchiveAll={archiveAll}
         onDelete={deleteById}
-        unreadCount={unreadCount}
       />
-    </>
+    </Popover>
   );
 };
 

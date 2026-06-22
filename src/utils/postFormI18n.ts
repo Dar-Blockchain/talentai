@@ -10,4 +10,4 @@ export {
   inferExperienceLevelFromText,
   hardSkillLevelLabel,
   softSkillLevelLabel,
-} from "@/modules/posts/create/utils";
+} from "@/modules/company/posts/create/utils";

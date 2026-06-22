@@ -1,0 +1,16 @@
+{
+  "loading": {
+    "title": "Chargement de l'entretien de campagne…",
+    "subtitle": "Préparation de votre session, veuillez patienter."
+  },
+  "preview": {
+    "skill_title": "Évaluation des compétences techniques",
+    "skill_desc": "Un entretien technique conversationnel qui évalue vos compétences à travers des questions structurées couvrant les fondamentaux, l'usage pratique et les sujets avancés.",
+    "ai_title": "Entretien comportemental IA",
+    "ai_desc": "Un entretien comportemental structuré qui évalue votre expérience, vos compétences et votre jugement situationnel à travers une conversation guidée par l'IA.",
+    "duration": "Environ 20 minutes",
+    "microphone": "Accès au microphone requis",
+    "start": "Démarrer l'entretien",
+    "login_required": "Connectez-vous pour commencer"
+  }
+}

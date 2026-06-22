@@ -26,6 +26,7 @@ import {
 } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import { Campaign, ModuleType, ParticipantStatus } from "@/types/campaign";
+import { buildInterviewUrl } from "@/lib/interviewSession";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -352,11 +353,20 @@ const EmployeeDashboardOverview: React.FC = () => {
                 <CampaignRow
                   key={c._id}
                   campaign={c}
-                  onAction={() => router.push(
-                    !isExpired && c.participantStatus === "IN_PROGRESS"
-                      ? `/employee/campaigns/${c._id}/assessment`
-                      : `/employee/campaigns/${c._id}`
-                  )}
+                  onAction={() => {
+                    if (!isExpired && (c.participantStatus === "IN_PROGRESS" || c.participantStatus === "INVITED")) {
+                      const modType = c.module?.type;
+                      if (modType === "QUESTIONNAIRE") {
+                        router.push(`/campaign/questionnaire/${c._id}`);
+                      } else if (modType === "AI_INTERVIEW" || modType === "SKILL_TEST") {
+                        router.push(buildInterviewUrl({ type: 'campaign', campaignId: c._id, moduleType: modType }));
+                      } else {
+                        router.push(`/employee/campaigns/${c._id}`);
+                      }
+                    } else {
+                      router.push(`/employee/campaigns/${c._id}`);
+                    }
+                  }}
                 />
                 );
               })}
@@ -380,7 +390,7 @@ const EmployeeDashboardOverview: React.FC = () => {
                 <CampaignRow
                   key={c._id}
                   campaign={c}
-                  onAction={() => router.push(`/employee/campaigns/${c._id}/results`)}
+                  onAction={() => router.push(`/employee/campaigns/${c._id}`)}
                 />
               ))}
             </Box>

@@ -79,8 +79,8 @@ const scoreColor = (s: number) => s >= 80 ? GREEN : s >= 60 ? TEAL : s >= 40 ? A
 
 // ─── Campaign Card ────────────────────────────────────────────────────────────
 
-const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: string) => void; onDetails: (id: string) => void; onResults: (id: string) => void }> = memo(
-  ({ campaign, index, onStart, onDetails, onResults }) => {
+const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: string) => void; onDetails: (id: string) => void }> = memo(
+  ({ campaign, index, onStart, onDetails }) => {
     const tm = campaign.type ? TYPE_META[campaign.type] : null;
     const mm = MODULE_META[campaign.module.type];
     const ps = PARTICIPANT_STATUS_META[campaign?.participantStatus || "INVITED"];
@@ -280,21 +280,6 @@ const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: 
                     </Typography>
                   </Box>
                 )}
-                <Button
-                  fullWidth
-                  startIcon={<VisibilityOutlined />}
-                  onClick={() => onResults(campaign._id)}
-                  variant="contained"
-                  disableElevation
-                  sx={{
-                    bgcolor: TEAL, color: "#fff", fontWeight: 700, fontSize: "13px",
-                    textTransform: "none", borderRadius: 2, py: 0.9,
-                    boxShadow: `0 3px 10px ${TEAL}40`,
-                    "&:hover": { bgcolor: "#0b7a6e", boxShadow: `0 4px 14px ${TEAL}55` },
-                  }}
-                >
-                  View Results
-                </Button>
               </>
             )}
             <Tooltip title="Campaign details" arrow>
@@ -437,10 +422,6 @@ const EmployeeMyCampaigns: React.FC = () => {
     router.push(`/employee/campaigns/${id}`);
   };
 
-  const handleResults = (id: string) => {
-    router.push(`/employee/campaigns/${id}/results`);
-  };
-
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
 
@@ -554,7 +535,7 @@ const EmployeeMyCampaigns: React.FC = () => {
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", xl: "repeat(3, 1fr)" }, gap: 3 }}>
           <AnimatePresence mode="popLayout">
             {campaigns.map((campaign, i) => (
-              <CampaignCard key={campaign._id} campaign={campaign} index={i} onStart={handleStart} onDetails={handleDetails} onResults={handleResults} />
+              <CampaignCard key={campaign._id} campaign={campaign} index={i} onStart={handleStart} onDetails={handleDetails} />
             ))}
           </AnimatePresence>
         </Box>

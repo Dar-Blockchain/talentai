@@ -1,62 +1,48 @@
 import Head from "next/head";
-import { Box, Container, Typography, Divider, Link, Chip } from "@mui/material";
 import NextLink from "next/link";
-import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import { AlertTriangle, Info } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
-import Header from "@/components/layout/Header";
+import Header from "@/modules/shared/layouts/home/HomeHeader";
+import { APP_URL, CONTACT_EMAIL } from "@/constants";
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-  <Box sx={{ mb: 4.5 }}>
-    <Typography sx={{ fontSize: "1.05rem", fontWeight: 700, color: "#111827", mb: 1.5, fontFamily: "Poppins" }}>
-      {title}
-    </Typography>
+  <div className="mb-8">
+    <h2 className="text-[1.05rem] font-bold text-gray-900 mb-3">{title}</h2>
     {children}
-  </Box>
+  </div>
 );
 
 const Sub: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-  <Box sx={{ mb: 2.5 }}>
-    <Typography sx={{ fontSize: "0.95rem", fontWeight: 700, color: "#374151", mb: 1, fontFamily: "Poppins" }}>
-      {title}
-    </Typography>
+  <div className="mb-5">
+    <h3 className="text-[0.95rem] font-bold text-gray-700 mb-2">{title}</h3>
     {children}
-  </Box>
+  </div>
 );
 
 const P: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <Typography sx={{ fontSize: "0.93rem", color: "#374151", lineHeight: 1.85, mb: 1.5, fontFamily: "Poppins" }}>
-    {children}
-  </Typography>
+  <p className="text-[0.93rem] text-gray-600 leading-[1.85] mb-3">{children}</p>
 );
 
 const Li: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <Typography component="li" sx={{ fontSize: "0.93rem", color: "#374151", lineHeight: 1.85, mb: 0.75, fontFamily: "Poppins", ml: 2.5 }}>
-    {children}
-  </Typography>
+  <li className="text-[0.93rem] text-gray-600 leading-[1.85] mb-1.5 ml-5 list-disc">{children}</li>
 );
 
 const InfoBox: React.FC<{ children: React.ReactNode; color?: "blue" | "amber" }> = ({ children, color = "blue" }) => {
   const isAmber = color === "amber";
   return (
-    <Box sx={{
-      bgcolor: isAmber ? "#FFFBEB" : "#EFF6FF",
-      border: `1px solid ${isAmber ? "#FDE68A" : "#BFDBFE"}`,
-      borderRadius: "10px",
-      p: "14px 18px",
-      mb: 2,
-      display: "flex",
-      gap: 1.5,
-      alignItems: "flex-start",
-    }}>
+    <div className={`flex items-start gap-3 rounded-xl border px-4 py-3.5 mb-4 ${
+      isAmber
+        ? "bg-amber-50 border-amber-200"
+        : "bg-blue-50 border-blue-200"
+    }`}>
       {isAmber
-        ? <WarningAmberRoundedIcon sx={{ fontSize: 18, color: "#D97706", mt: "2px", flexShrink: 0 }} />
-        : <InfoOutlinedIcon sx={{ fontSize: 18, color: "#2563EB", mt: "2px", flexShrink: 0 }} />
+        ? <AlertTriangle className="size-4 text-amber-600 mt-0.5 flex-shrink-0" />
+        : <Info className="size-4 text-blue-600 mt-0.5 flex-shrink-0" />
       }
-      <Typography sx={{ fontSize: "0.88rem", color: isAmber ? "#92400E" : "#1E40AF", lineHeight: 1.75, fontFamily: "Poppins" }}>
+      <p className={`text-[0.88rem] leading-[1.75] ${isAmber ? "text-amber-800" : "text-blue-800"}`}>
         {children}
-      </Typography>
-    </Box>
+      </p>
+    </div>
   );
 };
 
@@ -70,52 +56,42 @@ export default function TermsOfUse() {
       <Head>
         <title>{t("terms.meta.title")}</title>
         <meta name="description" content={t("terms.meta.description")} />
-        <link rel="canonical" href="https://app.talentai.bid/terms" />
+        <link rel="canonical" href={`${APP_URL}/terms`} />
       </Head>
 
       <Header />
 
-      {/* Content */}
-      <Box
-        sx={{
-          minHeight: "100vh",
-          py: { xs: 5, md: 8 },
-          background: "linear-gradient(180deg, #111827 0px, #111827 120px, #F9FAFB 120px, #F9FAFB 100%)",
-        }}
+      <div
+        className="min-h-screen py-10 md:py-16"
+        style={{ background: "linear-gradient(180deg,#111827 0px,#111827 120px,#F9FAFB 120px,#F9FAFB 100%)" }}
       >
-        <Container maxWidth="md">
-          <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", px: { xs: 3, md: 6 }, py: { xs: 4, md: 6 } }}>
+        <div className="max-w-3xl mx-auto px-4 md:px-6">
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm px-6 md:px-10 py-8 md:py-10">
 
             {/* Title */}
-            <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2, flexWrap: "wrap", mb: 1 }}>
-              <Typography sx={{ fontSize: { xs: "1.6rem", md: "2rem" }, fontWeight: 800, color: "#111827", fontFamily: "Poppins", lineHeight: 1.2 }}>
+            <div className="flex items-start gap-3 flex-wrap mb-1">
+              <h1 className="text-[1.6rem] md:text-[2rem] font-extrabold text-gray-900 leading-tight">
                 {t("terms.title")}
-              </Typography>
-              <Chip
-                label={t("terms.chip")}
-                size="small"
-                sx={{ bgcolor: "#EFF6FF", color: "#1D4ED8", border: "1px solid #BFDBFE", fontWeight: 700, fontSize: "11px", fontFamily: "Poppins", mt: 0.5 }}
-              />
-            </Box>
-            <Typography sx={{ fontSize: "0.85rem", color: "#9CA3AF", mb: 1, fontFamily: "Poppins" }}>
+              </h1>
+              <span className="mt-1.5 inline-flex items-center rounded-full bg-blue-50 border border-blue-200 px-2.5 py-0.5 text-[11px] font-bold text-blue-700">
+                {t("terms.chip")}
+              </span>
+            </div>
+            <p className="text-[0.85rem] text-gray-400 mb-6">
               {t("common.lastUpdated", { date: lastUpdated })}
-            </Typography>
+            </p>
 
-            <Divider sx={{ mb: 4 }} />
+            <hr className="border-gray-200 mb-7" />
 
             <InfoBox>
-              <Trans
-                i18nKey="terms.notice"
-                ns="legal"
-                components={{ b: <strong /> }}
-              />
+              <Trans i18nKey="terms.notice" ns="legal" components={{ b: <strong /> }} />
             </InfoBox>
 
             <P>
               <Trans
                 i18nKey="terms.intro"
                 ns="legal"
-                components={{ site: <Link href="https://app.talentai.bid" sx={{ color: "#0D9488" }} /> }}
+                components={{ site: <NextLink href={APP_URL} className="text-primary hover:underline" /> }}
               />
             </P>
 
@@ -126,11 +102,11 @@ export default function TermsOfUse() {
 
             <Section title={t("terms.sections.service.title")}>
               <P>{t("terms.sections.service.p1")}</P>
-              <Box component="ul" sx={{ pl: 0, listStyle: "disc", mb: 1.5 }}>
+              <ul className="mb-4">
                 {list("terms.sections.service.items").map((item) => (
                   <Li key={item}>{item}</Li>
                 ))}
-              </Box>
+              </ul>
               <InfoBox color="amber">
                 <Trans i18nKey="terms.sections.service.notice" ns="legal" components={{ b: <strong /> }} />
               </InfoBox>
@@ -139,20 +115,20 @@ export default function TermsOfUse() {
             <Section title={t("terms.sections.ai.title")}>
               <Sub title={t("terms.sections.ai.classification.title")}>
                 <P><Trans i18nKey="terms.sections.ai.classification.p1" ns="legal" components={{ b: <strong /> }} /></P>
-                <Box component="ul" sx={{ pl: 0, listStyle: "disc", mb: 2 }}>
+                <ul className="mb-4">
                   {list("terms.sections.ai.classification.items").map((item) => (
                     <Li key={item}>{item}</Li>
                   ))}
-                </Box>
+                </ul>
               </Sub>
 
               <Sub title={t("terms.sections.ai.transparency.title")}>
                 <P>{t("terms.sections.ai.transparency.p1")}</P>
-                <Box component="ul" sx={{ pl: 0, listStyle: "disc", mb: 2 }}>
+                <ul className="mb-4">
                   {list("terms.sections.ai.transparency.items").map((item) => (
                     <Li key={item}>{item}</Li>
                   ))}
-                </Box>
+                </ul>
               </Sub>
 
               <Sub title={t("terms.sections.ai.explanation.title")}>
@@ -164,7 +140,7 @@ export default function TermsOfUse() {
                     i18nKey="terms.sections.ai.explanation.p1"
                     ns="legal"
                     components={{
-                      contact: <Link href="mailto:contact@talentai.bid" sx={{ color: "#0D9488" }} />,
+                      contact: <NextLink href={`mailto:${CONTACT_EMAIL}`} className="text-primary hover:underline" />,
                       b: <strong />,
                     }}
                   />
@@ -173,42 +149,42 @@ export default function TermsOfUse() {
 
               <Sub title={t("terms.sections.ai.oversight.title")}>
                 <P>{t("terms.sections.ai.oversight.p1")}</P>
-                <Box component="ul" sx={{ pl: 0, listStyle: "disc", mb: 2 }}>
+                <ul className="mb-4">
                   {list("terms.sections.ai.oversight.items").map((item, idx) => (
                     <Li key={`${item}-${idx}`}>{item}</Li>
                   ))}
-                </Box>
+                </ul>
               </Sub>
 
               <Sub title={t("terms.sections.ai.contest.title")}>
                 <P>{t("terms.sections.ai.contest.p1")}</P>
-                <Box component="ul" sx={{ pl: 0, listStyle: "disc", mb: 2 }}>
+                <ul className="mb-4">
                   <Li>
                     <Trans
                       i18nKey="terms.sections.ai.contest.items.0"
                       ns="legal"
-                      components={{ contact: <Link href="mailto:contact@talentai.bid" sx={{ color: "#0D9488" }} /> }}
+                      components={{ contact: <NextLink href={`mailto:${CONTACT_EMAIL}`} className="text-primary hover:underline" /> }}
                     />
                   </Li>
                   {list("terms.sections.ai.contest.items").slice(1).map((item) => (
                     <Li key={item}>{item}</Li>
                   ))}
-                </Box>
+                </ul>
               </Sub>
 
               <Sub title={t("terms.sections.ai.risk.title")}>
                 <P>{t("terms.sections.ai.risk.p1")}</P>
-                <Box component="ul" sx={{ pl: 0, listStyle: "disc", mb: 1 }}>
+                <ul className="mb-3">
                   {list("terms.sections.ai.risk.items").map((item) => (
                     <Li key={item}>{item}</Li>
                   ))}
-                </Box>
+                </ul>
               </Sub>
             </Section>
 
             <Section title={t("terms.sections.accounts.title")}>
               <P>{t("terms.sections.accounts.p1")}</P>
-              <Box component="ul" sx={{ pl: 0, listStyle: "disc", mb: 1.5 }}>
+              <ul className="mb-4">
                 {list("terms.sections.accounts.items").slice(0, 2).map((item) => (
                   <Li key={item}>{item}</Li>
                 ))}
@@ -216,35 +192,35 @@ export default function TermsOfUse() {
                   <Trans
                     i18nKey="terms.sections.accounts.items.2"
                     ns="legal"
-                    components={{ contact: <Link href="mailto:contact@talentai.bid" sx={{ color: "#0D9488" }} /> }}
+                    components={{ contact: <NextLink href={`mailto:${CONTACT_EMAIL}`} className="text-primary hover:underline" /> }}
                   />
                 </Li>
-              </Box>
+              </ul>
               <P>{t("terms.sections.accounts.p2")}</P>
             </Section>
 
             <Section title={t("terms.sections.candidateRights.title")}>
               <P>{t("terms.sections.candidateRights.p1")}</P>
-              <Box component="ul" sx={{ pl: 0, listStyle: "disc", mb: 2 }}>
+              <ul className="mb-4">
                 {list("terms.sections.candidateRights.itemsA").map((item) => (
                   <Li key={item}>{item}</Li>
                 ))}
-              </Box>
+              </ul>
               <P>{t("terms.sections.candidateRights.p2")}</P>
-              <Box component="ul" sx={{ pl: 0, listStyle: "disc", mb: 1.5 }}>
+              <ul className="mb-4">
                 {list("terms.sections.candidateRights.itemsB").map((item) => (
                   <Li key={item}>{item}</Li>
                 ))}
-              </Box>
+              </ul>
             </Section>
 
             <Section title={t("terms.sections.employerResponsibilities.title")}>
               <P>{t("terms.sections.employerResponsibilities.p1")}</P>
-              <Box component="ul" sx={{ pl: 0, listStyle: "disc", mb: 1.5 }}>
+              <ul className="mb-4">
                 {list("terms.sections.employerResponsibilities.items").map((item) => (
                   <Li key={item}>{item}</Li>
                 ))}
-              </Box>
+              </ul>
               <InfoBox color="amber">
                 <Trans i18nKey="terms.sections.employerResponsibilities.notice" ns="legal" components={{ b: <strong /> }} />
               </InfoBox>
@@ -258,7 +234,7 @@ export default function TermsOfUse() {
                 <Trans
                   i18nKey="terms.sections.nonDiscrimination.p1"
                   ns="legal"
-                  components={{ contact: <Link href="mailto:contact@talentai.bid" sx={{ color: "#0D9488" }} /> }}
+                  components={{ contact: <NextLink href={`mailto:${CONTACT_EMAIL}`} className="text-primary hover:underline" /> }}
                 />
               </P>
             </Section>
@@ -270,29 +246,29 @@ export default function TermsOfUse() {
 
             <Section title={t("terms.sections.prohibitedUses.title")}>
               <P>{t("terms.sections.prohibitedUses.p1")}</P>
-              <Box component="ul" sx={{ pl: 0, listStyle: "disc", mb: 1.5 }}>
+              <ul className="mb-4">
                 {list("terms.sections.prohibitedUses.items").map((item) => (
                   <Li key={item}>{item}</Li>
                 ))}
-              </Box>
+              </ul>
             </Section>
 
             <Section title={t("terms.sections.reports.title")}>
               <P>{t("terms.sections.reports.p1")}</P>
-              <Box component="ul" sx={{ pl: 0, listStyle: "disc", mb: 1.5 }}>
+              <ul className="mb-4">
                 {list("terms.sections.reports.items").map((item) => (
                   <Li key={item}>{item}</Li>
                 ))}
-              </Box>
+              </ul>
             </Section>
 
             <Section title={t("terms.sections.liability.title")}>
               <P>{t("terms.sections.liability.p1")}</P>
-              <Box component="ul" sx={{ pl: 0, listStyle: "disc", mb: 1.5 }}>
+              <ul className="mb-4">
                 {list("terms.sections.liability.items").map((item) => (
                   <Li key={item}>{item}</Li>
                 ))}
-              </Box>
+              </ul>
             </Section>
 
             <Section title={t("terms.sections.modifications.title")}>
@@ -305,29 +281,32 @@ export default function TermsOfUse() {
 
             <Section title={t("terms.sections.contact.title")}>
               <P>{t("terms.sections.contact.p1")}</P>
-              <Box sx={{ bgcolor: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "10px", p: "16px 20px", mt: 1 }}>
-                <Typography sx={{ fontSize: "0.9rem", color: "#374151", fontFamily: "Poppins", lineHeight: 2 }}>
-                  📧 <Link href="mailto:contact@talentai.bid" sx={{ color: "#0D9488", fontWeight: 600 }}>contact@talentai.bid</Link><br />
-                  🌐 <Link href="https://app.talentai.bid" sx={{ color: "#0D9488" }}>app.talentai.bid</Link><br />
+              <div className="bg-gray-50 border border-gray-200 rounded-xl px-5 py-4 mt-2 space-y-1">
+                <p className="text-[0.9rem] text-gray-600 leading-loose">
+                  📧 <NextLink href={`mailto:${CONTACT_EMAIL}`} className="text-primary font-semibold hover:underline">{CONTACT_EMAIL}</NextLink>
+                </p>
+                <p className="text-[0.9rem] text-gray-600 leading-loose">
+                  🌐 <NextLink href={APP_URL} className="text-primary hover:underline">{APP_URL.replace("https://", "")}</NextLink>
+                </p>
+                <p className="text-[0.9rem] text-gray-600 leading-loose">
                   ⏱ {t("terms.sections.contact.responseTime")}
-                </Typography>
-              </Box>
+                </p>
+              </div>
             </Section>
 
-
-          </Box>
-        </Container>
-      </Box>
+          </div>
+        </div>
+      </div>
 
       {/* Footer */}
-      <Box sx={{ bgcolor: "#111827", py: 3, px: 3, textAlign: "center" }}>
-        <Typography sx={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", fontFamily: "Poppins" }}>
+      <div className="border-t border-gray-200 bg-white py-5 px-4 text-center">
+        <p className="text-[12px] text-gray-400">
           {t("common.footerCopyright")} &nbsp;·&nbsp;{" "}
-          <NextLink href="/terms" style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none" }}>{t("common.termsOfUse")}</NextLink>
+          <NextLink href="/terms" className="text-gray-500 hover:text-gray-700 transition-colors">{t("common.termsOfUse")}</NextLink>
           {" "}&nbsp;·&nbsp;{" "}
-          <NextLink href="/privacy" style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none" }}>{t("common.privacyPolicy")}</NextLink>
-        </Typography>
-      </Box>
+          <NextLink href="/privacy" className="text-gray-500 hover:text-gray-700 transition-colors">{t("common.privacyPolicy")}</NextLink>
+        </p>
+      </div>
     </>
   );
 }

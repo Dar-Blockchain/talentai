@@ -105,11 +105,6 @@ export const campaignService = {
     return participantId;
   },
 
-  fetchParticipantResults: async (campaignId: string, participantId: string) => {
-    const res = await axiosInstance.get(`internal-campaigns/${campaignId}/results/${participantId}`);
-    return res.data.data;
-  },
-
   fetchByLinkToken: async (token: string) => {
     const res = await axiosInstance.get(`internal-campaigns/link/${token}`);
     return res.data.data;

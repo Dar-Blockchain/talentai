@@ -1,4 +1,4 @@
-import Head from "next/head";
+﻿import Head from "next/head";
 import { useRef, useState } from "react";
 import { Box, Container, IconButton, Typography } from "@mui/material";
 import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
@@ -6,7 +6,7 @@ import PauseRoundedIcon from "@mui/icons-material/PauseRounded";
 import VolumeUpRoundedIcon from "@mui/icons-material/VolumeUpRounded";
 import VolumeOffRoundedIcon from "@mui/icons-material/VolumeOffRounded";
 import FullscreenRoundedIcon from "@mui/icons-material/FullscreenRounded";
-import Header from "@/components/layout/Header";
+import Header from "@/modules/shared/layouts/home/HomeHeader";
 
 const TEAL = "#0D9488";
 const DARK = "#111827";

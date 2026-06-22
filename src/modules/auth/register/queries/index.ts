@@ -14,6 +14,6 @@ export const useVerifyRegisterOtp = (onSuccess?: (data: VerifyOtpResponse) => vo
 
 export const useResendRegisterOtp = () =>
   useMutation({
-    mutationFn: ({ email, signal }: { email: string; signal?: AbortSignal }) =>
-      authApi.resendOtp(email, signal),
+    mutationFn: ({ email, lang, signal }: { email: string; lang?: string; signal?: AbortSignal }) =>
+      authApi.resendOtp(email, lang, signal),
   });

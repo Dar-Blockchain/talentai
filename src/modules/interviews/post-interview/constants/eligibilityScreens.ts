@@ -1,14 +1,13 @@
 import { type EligibilityStatus } from '../types/api';
 
-// Statuses that render a BlockedScreen (excludes checking / eligible)
 export type BlockableStatus = Exclude<EligibilityStatus, 'checking' | 'eligible' | 'no_link'>;
 
 export type ScreenEntry = {
   icon: string;
-  titleKey?: string;       // resolved via t()
-  descKey?: string;        // resolved via t()
+  titleKey?: string;
+  descKey?: string;
   actionPath: string;
-  actionLabelKey?: string; // resolved via t() (falls back to t('back_to_dashboard'))
+  actionLabelKey?: string;
   actionReplace?: boolean;
 };
 

@@ -1,27 +1,41 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
-import { PURPLE, PURPLE_LIGHT, PURPLE_BORDER } from '../../constants';
+import { Card, CardContent } from '@/modules/shared/ui/shadcn/card';
+import { Badge } from '@/modules/shared/ui/shadcn/badge';
 
 export const SectionCard: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <Box sx={{ bgcolor: '#fff', border: '1px solid #E5E7EB', borderRadius: '16px', p: { xs: 2.5, md: 3 } }}>
-    {children}
-  </Box>
+  <Card className="rounded-[16px] gap-0 py-0">
+    <CardContent className="p-5 md:p-6">
+      {children}
+    </CardContent>
+  </Card>
 );
 
 export const SectionTitle: React.FC<{ icon: React.ReactNode; title: string }> = ({ icon, title }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-    <Box sx={{ width: 28, height: 28, borderRadius: 1.5, bgcolor: PURPLE_LIGHT, border: `1px solid ${PURPLE_BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: PURPLE, flexShrink: 0 }}>
+  <div className="flex items-center gap-2 mb-4">
+    <div
+      className="w-7 h-7 rounded-[6px] shrink-0 flex items-center justify-center border border-primary/20 bg-primary/8 text-primary"
+    >
       {icon}
-    </Box>
-    <Typography sx={{ fontSize: '12px', fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: 0.5, fontFamily: 'Poppins' }}>
+    </div>
+    <span className="font-[Poppins] text-[12px] font-bold text-[#374151] uppercase tracking-[0.5px]">
       {title}
-    </Typography>
-  </Box>
+    </span>
+  </div>
 );
 
-export const MetaBadge: React.FC<{ icon: React.ReactNode; label: string; color: string; bg: string; border: string }> = ({ icon, label, color, bg, border }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, bgcolor: bg, border: `1px solid ${border}`, borderRadius: 2, px: 1.5, py: 0.75 }}>
-    <Box sx={{ fontSize: 14, color, display: 'flex' }}>{icon}</Box>
-    <Typography sx={{ fontSize: '12px', fontWeight: 600, color, fontFamily: 'Poppins' }}>{label}</Typography>
-  </Box>
+export const MetaBadge: React.FC<{
+  icon: React.ReactNode;
+  label: string;
+  color: string;
+  bg: string;
+  border: string;
+}> = ({ icon, label, color, bg, border }) => (
+  <Badge
+    variant="outline"
+    className="rounded-[8px] px-3 py-[6px] h-auto font-[Poppins] text-[12px] font-semibold gap-[6px]"
+    style={{ background: bg, borderColor: border, color }}
+  >
+    <span className="flex text-[14px]" style={{ color }}>{icon}</span>
+    {label}
+  </Badge>
 );

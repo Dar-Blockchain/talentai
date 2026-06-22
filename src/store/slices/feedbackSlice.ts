@@ -16,7 +16,7 @@ const initialState: FeedbackState = {
 export const submitFeedback = createAsyncThunk(
   'feedback/submit',
   async (
-    payload: { rating: number; comment: string; interviewId?: string },
+    payload: { rating: number; comment: string; interviewId?: string; interviewType?: string },
     { rejectWithValue }
   ) => {
     try {

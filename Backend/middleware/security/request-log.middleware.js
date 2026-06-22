@@ -1,6 +1,5 @@
 const fs   = require("fs");
 const path = require("path");
-const Log  = require("../../models/Logs.model");
 
 // Keys whose values must never appear in logs
 const REDACTED_BODY_KEYS  = new Set(["otp", "password", "token", "code", "secret", "apikey", "api_key"]);
@@ -21,11 +20,6 @@ const logFilePath = path.join(logsDirectory, "auth.log");
 function writeToFile(line) {
   // Non-blocking append — schedules I/O without blocking the event loop
   fs.appendFile(logFilePath, line, () => {});
-}
-
-function saveToDb(doc) {
-  // Fire-and-forget — log failure never affects the HTTP response
-  new Log(doc).save().catch(() => {});
 }
 
 /**
@@ -55,14 +49,6 @@ function authLogMiddleware(logType) {
       // Re-use req.user set by auth middleware — no extra DB lookup
       const userId  = req.user?._id    ?? "N/A";
       const userNom = req.user?.username ?? "N/A";
-
-      saveToDb({
-        type: logType, method: req.method, url: req.originalUrl,
-        ip: req.ip, referer, statusCode: res.statusCode,
-        user_id: userId, user_nom: userNom,
-        headers: safeHeaders, executionTime, body: safeBody,
-        location: locationStr, timestamp: new Date(),
-      });
 
       writeToFile(
         `${new Date().toISOString()} - ${req.method} ${req.originalUrl} - ${req.ip}` +

@@ -1,28 +1,29 @@
-import React from "react";
+﻿import React from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import PageHeader from "@/components/layout/dashboard/PageHeader";
+import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
 import AppButton from "@/components/ui/AppButton";
 import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 import { RootState } from "@/store/store";
 import { selectEmployeePermissions } from "@/store/slices/memberSlice";
+import { getDashboardLayout } from "@/modules/shared/layouts";
+import type { NextPageWithLayout } from "@/pages/_app";
 
 const AddOutlined = dynamic(() => import("@mui/icons-material/AddOutlined"));
 
 const CampaignsStats = dynamic(
-  () => import("@/components/features/company/campaigns/list/Stats")
+  () => import("@/modules/company/campaigns/components/list/Stats")
 );
 
 const CampaignsGrid = dynamic(
-  () => import("@/components/features/company/campaigns/list/CampaignsGrid"),
+  () => import("@/modules/company/campaigns/components/list/CampaignsGrid"),
   { ssr: false }
 );
 
-const CampaignsPage: React.FC = () => {
+const CampaignsPage: NextPageWithLayout = () => {
   const { t } = useTranslation("dashboard");
   useCompanyAccess("canViewCampaigns");
 
@@ -32,7 +33,7 @@ const CampaignsPage: React.FC = () => {
   const canCreate = !isEmp || !!empPerms?.canCreateCampaign;
 
   return (
-    <DashboardLayout>
+    <>
       <PageHeader
         title={t("pages.campaigns.title")}
         subtitle={t("pages.campaigns.subtitle")}
@@ -54,8 +55,9 @@ const CampaignsPage: React.FC = () => {
 
       <CampaignsStats />
       <CampaignsGrid />
-    </DashboardLayout>
+    </>
   );
 };
+CampaignsPage.getLayout = getDashboardLayout;
 
 export default CampaignsPage;

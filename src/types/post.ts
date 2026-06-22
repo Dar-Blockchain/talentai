@@ -8,4 +8,4 @@ export type {
   PostGenerationState,
 } from "@/store/slices/postGenerationSlice";
 
-export type { SavePostResponse, PostJobData } from "@/modules/posts/create/types";
+export type { SavePostResponse, PostJobData } from "@/modules/company/posts/create/types";

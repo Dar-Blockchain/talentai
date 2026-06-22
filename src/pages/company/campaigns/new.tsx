@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
@@ -27,8 +27,9 @@ import {
   AutoAwesome as AutoAwesomeIcon,
   TitleOutlined as TitleIcon,
 } from "@mui/icons-material";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import PageHeader from "@/components/layout/dashboard/PageHeader";
+import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
+import { getDashboardLayout } from "@/modules/shared/layouts";
+import type { NextPageWithLayout } from "@/pages/_app";
 import AppInput from "@/components/ui/AppInput";
 import { AppDatePicker } from "@/components/ui/DatePicker";
 import {
@@ -45,7 +46,7 @@ import { AppDispatch } from "@/store/store";
 import { createCampaign } from "@/store/slices/campaignSlice";
 import { useToast } from "@/hooks/useToast";
 import { useTranslation } from "react-i18next";
-import ParticipantsStep from "@/components/features/company/campaigns/new/ParticipantsStep";
+import ParticipantsStep from "@/modules/company/campaigns/components/new/ParticipantsStep";
 
 // ─── Palette ─────────────────────────────────────────────────────────────────
 
@@ -176,7 +177,7 @@ const OptionCard: React.FC<{
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-const NewCampaignPage: React.FC = () => {
+const NewCampaignPage: NextPageWithLayout = () => {
   useCompanyAccess("canCreateCampaign");
   const dispatch = useDispatch<AppDispatch>();
   const { showToast } = useToast();
@@ -243,7 +244,7 @@ const NewCampaignPage: React.FC = () => {
 
 
   return (
-    <DashboardLayout>
+    <>
       <PageHeader
         title={t("pages.campaigns.wizard_new.title")}
         subtitle={t("pages.campaigns.wizard_new.subtitle")}
@@ -631,8 +632,9 @@ const NewCampaignPage: React.FC = () => {
         </Box>
 
       </Box>
-    </DashboardLayout>
+    </>
   );
 };
+NewCampaignPage.getLayout = getDashboardLayout;
 
 export default NewCampaignPage;

@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
-import { Box, Typography, Avatar, LinearProgress, Button, Divider, Chip } from "@mui/material";
-import CandidateWorkspaceLayout from "@/components/layout/candidate/CandidateWorkspaceLayout";
+import { Box, Typography, Avatar, LinearProgress, Button, Divider, Chip, Dialog, DialogContent, DialogActions, TextField } from "@mui/material";
+import CandidateWorkspaceLayout from "@/modules/shared/layouts/candidate/CandidateWorkspaceLayout";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchCandidateStats, selectCandidateStats } from "@/store/slices/jobApplicationSlice";
 import CandidateApplications from "@/components/features/candidate/CandidateApplications";
@@ -22,6 +22,9 @@ import ChevronLeftOutlined from "@mui/icons-material/ChevronLeftOutlined";
 import RecordVoiceOverOutlined from "@mui/icons-material/RecordVoiceOverOutlined";
 import CodeOutlined from "@mui/icons-material/CodeOutlined";
 import LockOutlined from "@mui/icons-material/LockOutlined";
+import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
+import CloseOutlined from "@mui/icons-material/CloseOutlined";
+import { buildInterviewUrl } from "@/lib/interviewSession";
 
 const T    = "#0D9488";
 const TL   = "#14B8A6";
@@ -86,6 +89,27 @@ const DisabledAction: React.FC<{ icon: React.ElementType; label: string; sublabe
     <LockOutlined sx={{ fontSize: 13, color: "#9CA3AF", flexShrink: 0 }} />
   </Box>
 );
+
+const ActiveAction: React.FC<{ icon: React.ElementType; label: string; sublabel: string; color: string; onClick: () => void }> = ({ icon: Icon, label, sublabel, color, onClick }) => (
+  <Box onClick={onClick} sx={{
+    display: "flex", alignItems: "center", gap: 1.25,
+    borderRadius: "10px", border: `1px solid ${color}30`, bgcolor: `${color}08`,
+    px: 1.5, py: 1, cursor: "pointer", transition: "all 0.18s",
+    "&:hover": { borderColor: color, bgcolor: `${color}12`, boxShadow: `0 2px 8px ${color}20` },
+    "&:active": { transform: "scale(0.99)" },
+  }}>
+    <Box sx={{ width: 28, height: 28, borderRadius: "8px", bgcolor: `${color}18`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+      <Icon sx={{ fontSize: 15, color }} />
+    </Box>
+    <Box sx={{ flex: 1, minWidth: 0 }}>
+      <Typography sx={{ fontWeight: 700, fontSize: "0.78rem", color: "#111827", lineHeight: 1.2 }}>{label}</Typography>
+      <Typography sx={{ fontSize: "0.62rem", color: "#6B7280" }}>{sublabel}</Typography>
+    </Box>
+    <ArrowForwardOutlined sx={{ fontSize: 13, color, flexShrink: 0 }} />
+  </Box>
+);
+
+const POPULAR_SKILLS = ["React", "TypeScript", "Python", "Node.js", "Java", "SQL", "Docker", "AWS", "Vue.js", "Go"];
 
 const ProfileCard: React.FC<{
   displayName: string; email?: string; initial: string; avatarUrl?: string;
@@ -186,6 +210,8 @@ const DashboardCandidate: React.FC = () => {
   const stats    = useSelector(selectCandidateStats);
 
   const [activeView, setActiveView] = useState<ActiveView>(null);
+  const [skillDialogOpen, setSkillDialogOpen]  = useState(false);
+  const [skillInput,      setSkillInput]       = useState("");
 
   useEffect(() => { dispatch(fetchCandidateStats()); }, [dispatch]);
 
@@ -206,7 +232,7 @@ const DashboardCandidate: React.FC = () => {
     : user?.username || "Candidate";
   const initial   = displayName[0]?.toUpperCase() || "C";
   const avatarUrl = profile?.user_image
-    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${profile.user_image}`
+    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}uploads/images/${profile.user_image}`
     : undefined;
 
   const checklist = [
@@ -226,6 +252,14 @@ const DashboardCandidate: React.FC = () => {
     router.replace(`/candidate/dashboard?view=${view}`, undefined, { shallow: true });
   };
   const hide = () => expand(null);
+
+  const handleStartSkillInterview = () => {
+    const skill = skillInput.trim();
+    if (!skill) return;
+    router.push(buildInterviewUrl({ type: "skill", skill }));
+    setSkillDialogOpen(false);
+    setSkillInput("");
+  };
 
   return (
     <CandidateWorkspaceLayout breadcrumb={t("candidate.nav.dashboard")}>
@@ -249,7 +283,7 @@ const DashboardCandidate: React.FC = () => {
             {/* Action bar */}
             <Box sx={{ bgcolor: "#fff", borderRadius: "14px", border: "1px solid #E5E7EB", px: 2, py: 1.5, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
               <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1.25 }}>
-                <DisabledAction icon={CodeOutlined}            label={t("candidate.actions.skill_interview")} sublabel={t("candidate.actions.coming_soon")} />
+                <ActiveAction  icon={CodeOutlined}            label={t("candidate.actions.skill_interview")} sublabel={t("candidate.actions.skill_interview_sub")} color={T} onClick={() => setSkillDialogOpen(true)} />
                 <DisabledAction icon={RecordVoiceOverOutlined} label={t("candidate.actions.hr_interview")}    sublabel={t("candidate.actions.coming_soon")} />
               </Box>
             </Box>
@@ -297,6 +331,83 @@ const DashboardCandidate: React.FC = () => {
             )}
           </Box>
         </Box>
+      {/* Skill Interview Dialog */}
+      <Dialog open={skillDialogOpen} onClose={() => setSkillDialogOpen(false)} maxWidth="xs" fullWidth
+        PaperProps={{ sx: { borderRadius: "20px", p: 0, overflow: "hidden" } }}>
+
+        {/* Header */}
+        <Box sx={{ px: 3, pt: 3, pb: 2, background: `linear-gradient(135deg, ${NAVY} 0%, ${T} 100%)`, position: "relative" }}>
+          <Button onClick={() => setSkillDialogOpen(false)} size="small" sx={{ position: "absolute", top: 10, right: 10, minWidth: 0, p: 0.5, color: "#fff", opacity: 0.7, "&:hover": { opacity: 1, bgcolor: "transparent" } }}>
+            <CloseOutlined sx={{ fontSize: 18 }} />
+          </Button>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box sx={{ width: 36, height: 36, borderRadius: "10px", bgcolor: `${TL}30`, border: `1px solid ${TL}50`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <CodeOutlined sx={{ fontSize: 18, color: "#fff" }} />
+            </Box>
+            <Box>
+              <Typography sx={{ fontWeight: 800, fontSize: "1rem", color: "#fff" }}>{t("candidate.skill_dialog.title")}</Typography>
+              <Typography sx={{ fontSize: "0.72rem", color: `${TL}cc` }}>{t("candidate.skill_dialog.subtitle")}</Typography>
+            </Box>
+          </Box>
+        </Box>
+
+        <DialogContent sx={{ px: 3, pt: 2.5, pb: 1 }}>
+          <Typography sx={{ fontSize: "0.78rem", fontWeight: 600, color: "#374151", mb: 1 }}>{t("candidate.skill_dialog.input_label")}</Typography>
+          <TextField
+            autoFocus
+            fullWidth
+            size="small"
+            placeholder={t("candidate.skill_dialog.placeholder")}
+            value={skillInput}
+            onChange={(e) => setSkillInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleStartSkillInterview()}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "10px", fontSize: "0.88rem",
+                "&.Mui-focused fieldset": { borderColor: T, borderWidth: 1.5 },
+              },
+            }}
+          />
+
+          <Typography sx={{ fontSize: "0.72rem", fontWeight: 600, color: "#9CA3AF", mt: 2, mb: 1 }}>{t("candidate.skill_dialog.popular_label")}</Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
+            {POPULAR_SKILLS.map((s) => (
+              <Chip
+                key={s}
+                label={s}
+                size="small"
+                onClick={() => setSkillInput(s)}
+                sx={{
+                  fontSize: "0.72rem", fontWeight: 600, cursor: "pointer",
+                  bgcolor: skillInput === s ? TBG : "#F9FAFB",
+                  border: `1px solid ${skillInput === s ? TBRD : "#E5E7EB"}`,
+                  color: skillInput === s ? T : "#374151",
+                  "&:hover": { bgcolor: TBG, borderColor: TBRD, color: T },
+                  transition: "all 0.15s",
+                }}
+              />
+            ))}
+          </Box>
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 3, pt: 1, gap: 1 }}>
+          <Button onClick={() => setSkillDialogOpen(false)}
+            sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.82rem", color: "#6B7280", borderRadius: "10px", px: 2, "&:hover": { bgcolor: "#F3F4F6" } }}>
+            {t("candidate.skill_dialog.cancel")}
+          </Button>
+          <Button onClick={handleStartSkillInterview} disabled={!skillInput.trim()}
+            endIcon={<ArrowForwardOutlined sx={{ fontSize: "15px !important" }} />}
+            sx={{
+              textTransform: "none", fontWeight: 700, fontSize: "0.82rem", borderRadius: "10px", px: 2.5,
+              bgcolor: T, color: "#fff",
+              "&:hover": { bgcolor: "#0F766E" },
+              "&.Mui-disabled": { bgcolor: "#E5E7EB", color: "#9CA3AF" },
+            }}>
+            {t("candidate.skill_dialog.start")}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
     </CandidateWorkspaceLayout>
   );
 };

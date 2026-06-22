@@ -1,14 +1,11 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Box, Divider, Typography, CircularProgress } from "@mui/material";
-import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
-import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
-import HelpOutlineOutlined from "@mui/icons-material/HelpOutlineOutlined";
+import { CheckCircle2, Sparkles, HelpCircle } from "lucide-react";
 import SectionTitle from "./SectionTitle";
-import { TEAL, TEAL_BG, TEAL_BORDER } from "../constants";
+import Spinner from "./Spinner";
 import { useLanguage } from "@/hooks/useLanguage";
 import { SUPPORTED_LANGS } from "@/constants/languages";
-import { GENERATE_LANG_KEY } from "@/modules/posts/create/components/GenerateLanguageModal";
+import { GENERATE_LANG_KEY } from "@/modules/company/posts/create/components/GenerateLanguageModal";
 
 interface Props {
   onInputChange: (key: string, value: string) => void;
@@ -55,136 +52,136 @@ const LanguageTab: React.FC<Props> = ({
     setGenerateLang(code);
   };
 
-  const cardSx = (active: boolean) => ({
-    position: "relative",
-    cursor: saving ? "wait" : "pointer",
-    width: 180,
-    border: active ? `2px solid ${TEAL}` : "2px solid #E5E7EB",
-    borderRadius: "14px",
-    bgcolor: active ? TEAL_BG : "#fff",
-    p: 2.5,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: 1,
-    transition: "border-color 0.15s, background 0.15s",
-    "&:hover": saving ? {} : { borderColor: TEAL_BORDER, bgcolor: TEAL_BG },
-  } as const);
+  const cardClass = (active: boolean) =>
+    `relative w-[180px] rounded-2xl border-2 p-5 flex flex-col items-center gap-2 transition-colors ${
+      saving ? "cursor-wait" : "cursor-pointer"
+    } ${
+      active
+        ? "border-teal-600 bg-teal-50"
+        : `border-gray-200 bg-white ${saving ? "" : "hover:border-teal-300 hover:bg-teal-50"}`
+    }`;
+
+  const centered = centerInterfaceVertically && !showGenerateLanguage;
 
   return (
-    <Box
-      sx={{
-        p: { xs: 2, md: 2.5 },
-        bgcolor: "#fff",
-        borderRadius: "20px",
-        border: "1px solid #E5E7EB",
-        boxShadow: "0 14px 32px rgba(2,6,23,0.07)",
-        background: "linear-gradient(180deg, #FFFFFF 0%, #F8FCFC 100%)",
-        minHeight: centerInterfaceVertically && !showGenerateLanguage ? "55vh" : "auto",
-        display: centerInterfaceVertically && !showGenerateLanguage ? "flex" : "block",
-        flexDirection: centerInterfaceVertically && !showGenerateLanguage ? "column" : undefined,
-        justifyContent: centerInterfaceVertically && !showGenerateLanguage ? "center" : undefined,
-      }}
+    <div
+      className={`p-5 md:p-6 bg-white rounded-[20px] border border-gray-200 shadow-[0_14px_32px_rgba(2,6,23,0.07)] bg-gradient-to-b from-white to-[#F8FCFC] ${
+        centered ? "flex flex-col justify-center min-h-[55vh]" : ""
+      }`}
     >
       <SectionTitle
         title={t("pages.settings.language.title")}
         subtitle={t("pages.settings.language.subtitle")}
       />
 
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mt: 1 }}>
+      <div className="flex flex-wrap gap-4 mt-1">
         {SUPPORTED_LANGS.map((lang) => {
           const active = selected === lang.code;
           const loading = saving === lang.code;
           return (
-            <Box key={lang.code} onClick={() => handleSelect(lang.code)} sx={cardSx(active)}>
-              <Box sx={{ position: "absolute", top: 10, right: 10 }}>
-                {loading
-                  ? <CircularProgress size={16} sx={{ color: TEAL }} />
-                  : active && <CheckCircleOutlined sx={{ fontSize: 18, color: TEAL }} />}
-              </Box>
+            <div key={lang.code} onClick={() => handleSelect(lang.code)} className={cardClass(active)}>
+              <div className="absolute top-2.5 right-2.5">
+                {loading ? (
+                  <Spinner size={16} />
+                ) : (
+                  active && <CheckCircle2 size={18} className="text-teal-600" />
+                )}
+              </div>
               <img
                 src={`https://flagcdn.com/w80/${lang.flag}.png`}
                 srcSet={`https://flagcdn.com/w160/${lang.flag}.png 2x`}
-                width={48} height={32} alt={lang.label}
-                style={{ borderRadius: 4, display: "block" }}
+                width={48}
+                height={32}
+                alt={lang.label}
+                className="rounded block"
               />
-              <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", color: active ? TEAL : "#111827" }}>
+              <p className={`font-bold text-[0.95rem] ${active ? "text-teal-600" : "text-gray-900"}`}>
                 {lang.label}
-              </Typography>
-              <Typography sx={{ fontSize: "0.72rem", color: "#6B7280", textAlign: "center" }}>
+              </p>
+              <p className="text-[0.72rem] text-gray-500 text-center">
                 {t(`pages.settings.language.desc_${lang.code}`, { defaultValue: "" })}
-              </Typography>
-            </Box>
+              </p>
+            </div>
           );
         })}
-      </Box>
+      </div>
 
-      <Typography sx={{ mt: 2.5, fontSize: "0.75rem", color: "#9CA3AF" }}>
+      <p className="mt-5 text-[0.75rem] text-gray-400">
         {t("pages.settings.language.save_hint")}
-      </Typography>
+      </p>
 
       {showGenerateLanguage && (
         <>
-          <Divider sx={{ my: 3.5 }} />
+          <hr className="my-7 border-gray-200" />
 
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-            <Box sx={{ width: 28, height: 28, borderRadius: "8px", bgcolor: TEAL_BG, border: `1px solid ${TEAL_BORDER}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <AutoAwesomeOutlined sx={{ fontSize: 15, color: TEAL }} />
-            </Box>
-            <Typography sx={{ fontSize: "0.9rem", fontWeight: 700, color: "#111827" }}>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-7 h-7 rounded-lg bg-teal-50 border border-teal-200 flex items-center justify-center">
+              <Sparkles size={15} className="text-teal-600" />
+            </div>
+            <p className="text-[0.9rem] font-bold text-gray-900">
               {t("pages.settings.generate_lang.title")}
-            </Typography>
-          </Box>
-          <Typography sx={{ fontSize: "0.78rem", color: "#9CA3AF", mb: 2.5 }}>
+            </p>
+          </div>
+          <p className="text-[0.78rem] text-gray-400 mb-5">
             {t("pages.settings.generate_lang.subtitle")}
-          </Typography>
+          </p>
 
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
-            <Box onClick={() => handleSetGenerateLang(null)} sx={cardSx(generateLang === null)}>
+          <div className="flex flex-wrap gap-4">
+            <div onClick={() => handleSetGenerateLang(null)} className={cardClass(generateLang === null)}>
               {generateLang === null && (
-                <CheckCircleOutlined sx={{ position: "absolute", top: 10, right: 10, fontSize: 18, color: TEAL }} />
+                <CheckCircle2 size={18} className="absolute top-2.5 right-2.5 text-teal-600" />
               )}
-              <Box sx={{ width: 48, height: 32, borderRadius: "4px", bgcolor: generateLang === null ? TEAL_BG : "#F3F4F6", border: `1px solid ${generateLang === null ? TEAL_BORDER : "#E5E7EB"}`, display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}>
-                <HelpOutlineOutlined sx={{ fontSize: 18, color: generateLang === null ? TEAL : "#9CA3AF" }} />
-              </Box>
-              <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", color: generateLang === null ? TEAL : "#111827", textAlign: "center" }}>
+              <div
+                className={`w-12 h-8 rounded border flex items-center justify-center transition-colors ${
+                  generateLang === null ? "bg-teal-50 border-teal-200" : "bg-gray-100 border-gray-200"
+                }`}
+              >
+                <HelpCircle size={18} className={generateLang === null ? "text-teal-600" : "text-gray-400"} />
+              </div>
+              <p
+                className={`font-bold text-[0.95rem] text-center ${
+                  generateLang === null ? "text-teal-600" : "text-gray-900"
+                }`}
+              >
                 {t("pages.settings.generate_lang.always_ask_label")}
-              </Typography>
-              <Typography sx={{ fontSize: "0.72rem", color: "#6B7280", textAlign: "center" }}>
+              </p>
+              <p className="text-[0.72rem] text-gray-500 text-center">
                 {t("pages.settings.generate_lang.always_ask_desc")}
-              </Typography>
-            </Box>
+              </p>
+            </div>
 
             {SUPPORTED_LANGS.map((lang) => {
               const active = generateLang === lang.code;
               return (
-                <Box key={lang.code} onClick={() => handleSetGenerateLang(lang.code)} sx={cardSx(active)}>
+                <div key={lang.code} onClick={() => handleSetGenerateLang(lang.code)} className={cardClass(active)}>
                   {active && (
-                    <CheckCircleOutlined sx={{ position: "absolute", top: 10, right: 10, fontSize: 18, color: TEAL }} />
+                    <CheckCircle2 size={18} className="absolute top-2.5 right-2.5 text-teal-600" />
                   )}
                   <img
                     src={`https://flagcdn.com/w80/${lang.flag}.png`}
                     srcSet={`https://flagcdn.com/w160/${lang.flag}.png 2x`}
-                    width={48} height={32} alt={lang.label}
-                    style={{ borderRadius: 4, display: "block" }}
+                    width={48}
+                    height={32}
+                    alt={lang.label}
+                    className="rounded block"
                   />
-                  <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", color: active ? TEAL : "#111827" }}>
+                  <p className={`font-bold text-[0.95rem] ${active ? "text-teal-600" : "text-gray-900"}`}>
                     {lang.label}
-                  </Typography>
-                  <Typography sx={{ fontSize: "0.72rem", color: "#6B7280", textAlign: "center" }}>
+                  </p>
+                  <p className="text-[0.72rem] text-gray-500 text-center">
                     {t(`pages.settings.generate_lang.lang_desc_${lang.code}`)}
-                  </Typography>
-                </Box>
+                  </p>
+                </div>
               );
             })}
-          </Box>
+          </div>
 
-          <Typography sx={{ mt: 2.5, fontSize: "0.75rem", color: "#9CA3AF" }}>
+          <p className="mt-5 text-[0.75rem] text-gray-400">
             {t("pages.settings.generate_lang.save_hint")}
-          </Typography>
+          </p>
         </>
       )}
-    </Box>
+    </div>
   );
 };
 

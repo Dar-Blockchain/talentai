@@ -1,4 +1,5 @@
-import { InterviewConfig } from '../types/interview';
+import { InterviewConfig } from '../../shared/types/interview';
+import { DEFAULT_MODELS } from '../../shared/constants/interviewDefaults';
 
 export const DEFAULT_INTERVIEW_CONFIG: InterviewConfig = {
   interviewType: 'HR_INTERVIEW',
@@ -9,11 +10,7 @@ export const DEFAULT_INTERVIEW_CONFIG: InterviewConfig = {
     experienceLevel: 'Mid-Level',
     interviewGoal: 'Assess behavioral competencies and cultural fit',
   },
-  models: {
-    fastModel: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
-    thinkingModel: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
-    analysisModel: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
-  },
+  models: DEFAULT_MODELS,
   sessionSettings: {
     duration: 30,
     language: 'en',

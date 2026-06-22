@@ -1,6 +1,4 @@
-import React, { useEffect } from "react";
-import { Box } from "@mui/material";
-import { useForm } from "react-hook-form";
+import React from "react";
 import { useTranslation } from "react-i18next";
 import { useCandidateRegister } from "../../hooks";
 import CandidateFields from "../fields/CandidateFields";
@@ -8,23 +6,16 @@ import CvUpload from "../cv/CvUpload";
 import CvAnalysisDialog from "../cv/CvAnalysisDialog";
 import AppOtpVerifyStep from "@/modules/shared/ui/AppOtpVerifyStep";
 import SubmitButton from "../ui/SubmitButton";
-import type { CandidateFormValues, RegisterFormProps } from "../../types";
-
-const full = { flex: "1 1 100%" };
+import type { RegisterFormProps } from "../../types";
 
 const CandidateRegisterForm: React.FC<RegisterFormProps> = ({ onStepChange, onEmailChange }) => {
   const { t } = useTranslation("auth");
   const {
-    step, loading, resendLoading, analyzingCv, cvProgress,
+    form, step, loading, resendLoading, analyzingCv, cvProgress,
     cvFile, setCvFile, cvError, setCvError, isDragging, setIsDragging,
     savedEmail, otp, fileInputRef, isJoinTeam, invitationEmail, timer,
     sendCode, verifyCode, resendCode,
   } = useCandidateRegister({ onStepChange, onEmailChange });
-
-  const { handleSubmit, control, setValue, formState: { errors } } = useForm<CandidateFormValues>({ mode: "onTouched" });
-
-  useEffect(() => { if (invitationEmail) setValue("email", invitationEmail); }, [invitationEmail]);
-
 
   if (step === 2) return (
     <AppOtpVerifyStep
@@ -36,35 +27,41 @@ const CandidateRegisterForm: React.FC<RegisterFormProps> = ({ onStepChange, onEm
   );
 
   return (
-    <Box>
-      <Box component="form" onSubmit={handleSubmit(sendCode)}
-        sx={{ mb: 2, textAlign: "left", display: "flex", flexWrap: "wrap", gap: { xs: 2.25, sm: 2.75, md: 3 } }}
+    <div>
+      <form
+        onSubmit={form.handleSubmit(sendCode)}
+        className="mb-4 text-left grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5"
       >
-        <CandidateFields control={control} errors={errors} loading={loading} invitationEmail={invitationEmail} />
+        <CandidateFields
+          control={form.control}
+          errors={form.formState.errors}
+          loading={loading}
+          invitationEmail={invitationEmail}
+        />
 
         {!isJoinTeam && (
-          <Box sx={full}>
+          <div className="col-span-full">
             <CvUpload
               fileInputRef={fileInputRef}
               cvFile={cvFile} cvError={cvError} isDragging={isDragging}
               onFileChange={(f) => { setCvFile(f); if (f) setCvError(false); }}
               onDragChange={setIsDragging}
             />
-          </Box>
+          </div>
         )}
 
-        <Box sx={full}>
+        <div className="col-span-full">
           <SubmitButton
             loading={loading}
             label={t("candidate_form.btn_continue")}
             loadingLabel={t("candidate_form.btn_sending")}
             onClick={() => { if (!isJoinTeam && !cvFile) setCvError(true); }}
           />
-        </Box>
-      </Box>
+        </div>
+      </form>
 
       <CvAnalysisDialog open={analyzingCv} progress={cvProgress} />
-    </Box>
+    </div>
   );
 };
 

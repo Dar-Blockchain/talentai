@@ -23,7 +23,7 @@ export {
   selectHardSkills,
   selectSoftSkills,
   selectCreationType,
-} from "@/modules/posts/create/store/createPostSlice";
+} from "@/modules/company/posts/create/store/createPostSlice";
 
 export type {
   HardSkill,
@@ -33,6 +33,6 @@ export type {
   SkillAnalysis,
   PostGenerationResponse,
   PostGenerationState,
-} from "@/modules/posts/create/store/createPostSlice";
+} from "@/modules/company/posts/create/store/createPostSlice";
 
-export { default } from "@/modules/posts/create/store/createPostSlice";
+export { default } from "@/modules/company/posts/create/store/createPostSlice";

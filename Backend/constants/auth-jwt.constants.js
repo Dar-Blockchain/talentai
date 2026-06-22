@@ -1,3 +1,0 @@
-EXPIRATION_HOURS = 24;
-
-module.exports = { EXPIRATION_HOURS };

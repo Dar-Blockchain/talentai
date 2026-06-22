@@ -1,82 +1,81 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
 import Image from "next/image";
 import NextLink from "next/link";
 import { useTranslation } from "react-i18next";
+import { Zap, Target, ShieldCheck } from "lucide-react";
 
 interface Props {
-  /** i18n namespace prefix: "register_panel" or "signin_panel" */
   tKey: "register_panel" | "signin_panel";
   flex?: string;
 }
-
-const RING_SIZES = [480, 360, 250, 150] as const;
 
 const BrandLeftPanel: React.FC<Props> = ({ tKey, flex = "0 0 45%" }) => {
   const { t } = useTranslation("auth");
 
   return (
-    <Box sx={{
-      display: { xs: "none", md: "flex" },
-      flex: { md: flex, lg: "0 0 50%" },
-      flexDirection: "column", justifyContent: "center",
-      px: "clamp(32px, 5vw, 64px)", py: "clamp(24px, 5vh, 48px)",
-      background: "linear-gradient(155deg, #052e2b 0%, #08504a 45%, #0a6b62 100%)",
-      position: "relative", overflow: "hidden",
-    }}>
-
-      {/* Glow orbs */}
-      <Box sx={{ position: "absolute", top: -100, right: -80, width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(13,148,136,0.3) 0%, transparent 65%)", pointerEvents: "none" }} />
-      <Box sx={{ position: "absolute", bottom: -140, left: -100, width: 460, height: 460, borderRadius: "50%", background: "radial-gradient(circle, rgba(5,150,105,0.2) 0%, transparent 65%)", pointerEvents: "none" }} />
-
-      {/* Grid overlay */}
-      <Box sx={{ position: "absolute", inset: 0, pointerEvents: "none", opacity: 0.06, backgroundImage: "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)", backgroundSize: "48px 48px" }} />
-
-      {/* Concentric rings */}
-      {RING_SIZES.map((size, i) => (
-        <Box key={size} sx={{ position: "absolute", right: -(size / 2.2), top: "50%", transform: "translateY(-50%)", width: size, height: size, borderRadius: "50%", border: `1px solid rgba(94,234,212,${0.12 - i * 0.025})`, pointerEvents: "none" }} />
-      ))}
-
-      {/* Floating dots */}
-      <Box sx={{ position: "absolute", top: "28%", right: "22%", width: 8, height: 8, borderRadius: "50%", bgcolor: "rgba(94,234,212,0.5)", pointerEvents: "none" }} />
-      <Box sx={{ position: "absolute", top: "62%", right: "34%", width: 5, height: 5, borderRadius: "50%", bgcolor: "rgba(94,234,212,0.35)", pointerEvents: "none" }} />
-      <Box sx={{ position: "absolute", top: "42%", right: "14%", width: 6, height: 6, borderRadius: "50%", bgcolor: "rgba(167,243,208,0.4)", pointerEvents: "none" }} />
-
-      {/* Logo */}
-      <Box sx={{ position: "absolute", top: "clamp(24px, 4vh, 40px)", left: "clamp(32px, 4vw, 64px)", zIndex: 10 }}>
-        <NextLink href="/" style={{ textDecoration: "none", display: "inline-flex" }}>
-          <Image src="/images/home/logoDark.svg" alt="TalentAI" width={160} height={44} style={{ objectFit: "contain", width: "clamp(110px, 11vw, 160px)", height: "auto" }} />
+    <div
+      className="hidden lg:flex flex-col z-10 relative pr-10 pt-[clamp(20px,2.5vh,32px)] pb-[clamp(20px,2.5vh,32px)]"
+      style={{ flex }}
+    >
+      {/* ── Logo ── */}
+      <div className="mb-[clamp(24px,4vh,48px)]">
+        <NextLink href="/" className="inline-flex transition-opacity duration-200 hover:opacity-80">
+          <Image
+            src="/images/home/logo.svg"
+            alt="TalentAI"
+            width={148}
+            height={36}
+            className="h-9 w-auto object-contain"
+          />
         </NextLink>
-      </Box>
+      </div>
 
-      {/* Brand content */}
-      <Box sx={{ position: "relative", zIndex: 1, maxWidth: "clamp(240px, 34vw, 440px)" }}>
-        <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1, px: 1.5, py: 0.6, borderRadius: "20px", bgcolor: "rgba(94,234,212,0.1)", border: "1px solid rgba(94,234,212,0.2)", mb: "clamp(10px, 2vh, 24px)" }}>
-          <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#5eead4", flexShrink: 0 }} />
-          <Typography sx={{ fontSize: "clamp(0.6rem, 0.65vw, 0.78rem)", fontWeight: 600, color: "#5eead4", fontFamily: "Poppins", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+      {/* ── Brand content ── */}
+      <div className="flex-1 flex flex-col justify-center max-w-[clamp(240px,33vw,420px)]">
+        {/* Badge */}
+        <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 self-start mb-[clamp(16px,3vh,30px)] bg-[rgba(16,69,63,0.06)] border border-[rgba(16,69,63,0.15)]">
+          <span className="w-1.5 h-1.5 rounded-full shrink-0 bg-[#10453F]" />
+          <span className="font-sans font-semibold uppercase tracking-widest text-[clamp(0.55rem,0.58vw,0.7rem)] text-[#10453F]">
             {t(`${tKey}.badge`)}
-          </Typography>
-        </Box>
+          </span>
+        </div>
 
-        <Typography sx={{ fontSize: "clamp(1.6rem, 3.2vw, 4rem)", fontWeight: 800, color: "#fff", fontFamily: "Poppins", lineHeight: 1.08, mb: "clamp(10px, 2vh, 24px)" }}>
+        {/* Headline */}
+        <h1 className="font-sans font-extrabold leading-[1.06] tracking-tight text-[#0a2e22] text-[clamp(2rem,3.6vw,4.4rem)] mb-[clamp(12px,2vh,24px)]">
           {t(`${tKey}.headline_1`)}<br />
-          <Box component="span" sx={{ background: "linear-gradient(90deg, #5eead4 0%, #a7f3d0 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-            {t(`${tKey}.headline_2`)}
-          </Box>
-        </Typography>
+          <span className="text-[#10453F]">{t(`${tKey}.headline_2`)}</span>
+        </h1>
 
-        <Box sx={{ width: "clamp(36px, 4vw, 56px)", height: 3, borderRadius: 2, background: "linear-gradient(90deg, #5eead4, transparent)", mb: "clamp(10px, 2vh, 24px)" }} />
+        {/* Divider */}
+        <div className="rounded-full h-[3px] w-[clamp(32px,3.5vw,48px)] mb-[clamp(12px,2vh,22px)] bg-linear-to-r from-[#10453F] to-[rgba(16,69,63,0.1)]" />
 
-        <Typography sx={{ fontSize: "clamp(0.78rem, 0.88vw, 1.05rem)", color: "rgba(255,255,255,0.5)", fontFamily: "Poppins", lineHeight: 1.85 }}>
+        {/* Body */}
+        <p className="font-sans leading-[1.9] text-[rgba(10,46,34,0.6)] text-[clamp(0.82rem,0.9vw,1rem)] mb-[clamp(24px,4vh,40px)]">
           {t(`${tKey}.body`)}
-        </Typography>
-      </Box>
+        </p>
 
-      {/* Copyright */}
-      <Typography sx={{ position: "absolute", bottom: "clamp(18px, 3vh, 32px)", left: "clamp(32px, 4vw, 64px)", fontSize: "clamp(0.6rem, 0.65vw, 0.75rem)", color: "rgba(255,255,255,0.2)", fontFamily: "Poppins", zIndex: 1 }}>
+        {/* Feature pills */}
+        <div className="flex flex-col gap-3">
+          {[
+            { Icon: Zap,         key: "interviews" },
+            { Icon: Target,      key: "scoring" },
+            { Icon: ShieldCheck, key: "security" },
+          ].map(({ Icon, key }) => (
+            <div key={key} className="flex items-center gap-3">
+              <div className="flex items-center justify-center rounded-lg shrink-0 w-8 h-8 bg-[rgba(16,69,63,0.06)] border border-[rgba(16,69,63,0.12)]">
+                <Icon className="size-4 text-[#10453F]" />
+              </div>
+              <span className="font-sans text-[rgba(10,46,34,0.65)] text-[clamp(0.75rem,0.82vw,0.92rem)]">{t(`feature_pills.${key}`)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Copyright ── */}
+      <p className="font-sans text-[rgba(10,46,34,0.3)] text-[clamp(0.55rem,0.58vw,0.68rem)] mt-[clamp(16px,3vh,28px)]">
         {t(`${tKey}.copyright`)}
-      </Typography>
-    </Box>
+      </p>
+    </div>
   );
 };
 

@@ -1,33 +1,54 @@
 import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
 import { useRouter } from "next/router";
 import { useToast } from "@/hooks/useToast";
-import { getUserLocation } from "@/utils/api";
-import { useOtpTimer, useOtpInput } from "@/modules/auth/shared/hooks";
-import { OTP_CODE_LENGTH } from "@/modules/auth/shared/types";
+import { useOtpFlow, useLoadingWithNavigation } from "@/modules/auth/shared/hooks";
 import { refreshAbort } from "@/modules/auth/shared/utils";
-import { useRegisterMutation, useVerifyRegisterOtp } from "../queries";
+import { useRegisterMutation, useVerifyRegisterOtp, useResendRegisterOtp } from "../queries";
 import { COMPANY_EXPIRY_KEY } from "../utils";
 import type { CompanyFormValues, RegisterFormProps, RegisterStep } from "../types";
+import { useLanguage } from "@/hooks/useLanguage";
 
 export function useCompanyRegister({ onStepChange, onEmailChange }: RegisterFormProps) {
   const router        = useRouter();
   const { showToast } = useToast();
+  const { loading: navigationLoading, withLoading } = useLoadingWithNavigation();
+  const { currentLang } = useLanguage();
 
   const [step,       setStep]       = useState<RegisterStep>(1);
   const [savedEmail, setSavedEmail] = useState("");
 
   const abortRef = useRef<AbortController | null>(null);
-  const timer    = useOtpTimer(COMPANY_EXPIRY_KEY);
-  const otp      = useOtpInput();
+
+  // Form lives here — hook owns all company register state
+  const form = useForm<CompanyFormValues>({
+    mode: "onTouched",
+    defaultValues: { name: "", email: "", industry: "", size: "", location: "", website: "", linkedin: "" },
+  });
 
   const registerMutation = useRegisterMutation();
   const verifyMutation   = useVerifyRegisterOtp((_data) => {
     router.replace("/company/dashboard");
   });
 
-  const loading = registerMutation.isPending || verifyMutation.isPending;
+  const resendMutation = useResendRegisterOtp();
 
-  useEffect(() => () => { abortRef.current?.abort(); }, []);
+  const { timer, otp, verifyCode: originalVerifyCode, resendCode, abort, cleanup, verifyLoading, resendLoading } = useOtpFlow({
+    storageKey:    COMPANY_EXPIRY_KEY,
+    verifyMutation,
+    resendMutation,
+  });
+
+  // Wrap verifyCode to show loading during navigation
+  const verifyCode = async (emailArg: string) => {
+    await withLoading(async () => {
+      await originalVerifyCode(emailArg);
+    });
+  };
+
+  const loading = registerMutation.isPending || verifyLoading || navigationLoading;
+
+  useEffect(() => () => { abort(); abortRef.current?.abort(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sendCode = async (values: CompanyFormValues) => {
     const signal = refreshAbort(abortRef);
@@ -36,6 +57,7 @@ export function useCompanyRegister({ onStepChange, onEmailChange }: RegisterForm
         payload: {
           email:          values.email.toLowerCase().trim(),
           roleType:       "Company",
+          language:       currentLang,
           name:           values.name,
           companyDetails: {
             industry: values.industry,
@@ -60,20 +82,11 @@ export function useCompanyRegister({ onStepChange, onEmailChange }: RegisterForm
     }
   };
 
-  const verifyCode = async () => {
-    const code = otp.otpCode.join("");
-    if (code.length < OTP_CODE_LENGTH) return;
-
-    const signal = refreshAbort(abortRef);
-    try {
-      timer.clear();
-      const location = await getUserLocation();
-      await verifyMutation.mutateAsync({ email: savedEmail, otp: code, location, signal });
-    } catch (err: any) {
-      if (err?.name !== "AbortError")
-        showToast({ message: err?.message ?? "Invalid code. Please try again.", severity: "error" });
-    }
+  return {
+    form,
+    step, loading, resendLoading, savedEmail, otp, timer,
+    sendCode,
+    verifyCode: () => verifyCode(savedEmail),
+    resendCode: () => resendCode(savedEmail),
   };
-
-  return { step, loading, savedEmail, otp, timer, sendCode, verifyCode };
 }

@@ -1,36 +1,36 @@
 import React, { useState, useCallback } from "react";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
-import { useNotification } from "@/hooks/useNotification";
 import { type RootState } from "@/store/store";
 import { useInterviewConfig } from "../hooks/useInterviewConfig";
 import { useInterviewSession } from "../hooks/useInterviewSession";
-import InterviewScreen from "./session/InterviewScreen";
+import InterviewScreen from "../../shared/components/session/InterviewScreen";
 import JobPreviewPanel from "./job-preview/JobInterviewPanel";
-import InterviewLoadingScreen from "./layout/InterviewLoadingScreen";
+import InterviewLoadingScreen from "../../shared/components/layout/InterviewLoadingScreen";
 import LoadingState from "@/components/ui/LoadingState";
 import { useTranslation } from "react-i18next";
 
-export default function InterviewFlow() {
+interface InterviewFlowProps {
+  jobId?: string;
+}
+
+export default function InterviewFlow({ jobId: propJobId }: InterviewFlowProps = {}) {
   const { t } = useTranslation("modules/interview/interview");
-  
+
   const router = useRouter();
   const authUser = useSelector(
     (state: RootState) => state.user.connectedUser.user,
   );
 
-  const hasJobId =
-    router.isReady &&
-    typeof router.query.jobId === "string" &&
-    !!router.query.jobId;
+  const resolvedJobId = propJobId
+    ?? (router.isReady && typeof router.query.jobId === "string" ? router.query.jobId : undefined);
+
+  const hasJobId = !!resolvedJobId;
 
   const [step, setStep] = useState<"preview" | "interview">("preview");
 
-  const { notification, showNotification, hideNotification } =
-    useNotification();
-
   const { interviewConfig, setInterviewConfig, jobData, isJobLoading, isConfigLoading } = useInterviewConfig({
-    showNotification,
+    jobId: propJobId !== undefined ? propJobId : undefined,
   });
 
   const session = useInterviewSession({
@@ -38,7 +38,6 @@ export default function InterviewFlow() {
     setInterviewConfig,
     authUser,
     jobData,
-    notify: showNotification,
   });
 
   const handleStartInterview = useCallback(() => {
@@ -52,9 +51,7 @@ export default function InterviewFlow() {
   }, [jobData, interviewConfig, setInterviewConfig]);
 
   // Guard: router.query is empty on the first SSR/hydration render.
-  // Returning null here prevents InterviewScreen from flashing before the
-  // router resolves the jobId and the correct view is determined.
-  if (!router.isReady) return <LoadingState message={t("loading")} />;
+  if (!propJobId && !router.isReady) return <LoadingState message={t("loading")} />;
 
   if (hasJobId && step !== "interview") {
     if (!jobData) return (
@@ -76,8 +73,6 @@ export default function InterviewFlow() {
     <InterviewScreen
       session={session}
       configData={{ jobData, interviewConfig }}
-      notification={notification}
-      hideNotification={hideNotification}
       onBack={() => setStep("preview")}
     />
   );

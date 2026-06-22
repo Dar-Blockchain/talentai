@@ -1,7 +1,6 @@
 import React from "react";
-import { Box, TextField, MenuItem } from "@mui/material";
 import { EditActions } from "@/modules/settings/shared/components";
-import { fieldSx, COMPANY_SIZES } from "@/modules/settings/shared/constants";
+import { COMPANY_SIZES } from "@/modules/settings/shared/constants";
 import { UserProfile } from "@/types/profile";
 import SectionCard from "@/components/ui/SectionCard";
 import SectionHeader from "@/components/ui/SectionHeader";
@@ -26,7 +25,7 @@ const CompanyInfoCard: React.FC<CompanyInfoCardProps> = ({ profile, isEditing, l
       subtitle="Basic company details and profile settings"
       action={!readOnly ? <EditActions isEditing={isEditing} loading={loading} onEdit={onEdit} onCancel={onCancel} onSave={onSave} /> : undefined}
     />
-    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2.5 }}>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
       <AppInput
         label="ali shanti"
         value={profile.name || profile.companyName || ""}
@@ -36,20 +35,40 @@ const CompanyInfoCard: React.FC<CompanyInfoCardProps> = ({ profile, isEditing, l
         error={fieldErrors.name || fieldErrors.companyName || ""}
         sx={{ gridColumn: "1 / -1" }}
       />
-      <TextField label="Company Email" value={profile.email} disabled fullWidth
-        helperText="Email cannot be changed" sx={{ gridColumn: "1 / -1", ...fieldSx }} />
-      <TextField label="Industry" value={profile.industry || ""}
-        onChange={(e) => onInputChange("industry", e.target.value)}
-        disabled={!isEditing} fullWidth placeholder="e.g. Technology, Finance…"
-        error={!!fieldErrors.industry} helperText={fieldErrors.industry || ""} sx={fieldSx} />
-      <TextField select label="Company Size" value={profile.size || profile.companySize || ""}
-        onChange={(e) => { onInputChange("size", e.target.value); onInputChange("companySize", e.target.value); }}
-        disabled={!isEditing} fullWidth
-        error={!!fieldErrors.size} helperText={fieldErrors.size || ""} sx={fieldSx}
-      >
-        {COMPANY_SIZES.map((s) => <MenuItem key={s} value={s}>{s} employees</MenuItem>)}
-      </TextField>
-    </Box>
+      <label className="flex flex-col gap-1.5 sm:col-span-2">
+        <span className="text-xs font-semibold uppercase tracking-wide text-gray-700">Company Email</span>
+        <input value={profile.email} disabled className="rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-sm text-gray-500" />
+        <span className="text-[11px] text-gray-400">Email cannot be changed</span>
+      </label>
+      <label className="flex flex-col gap-1.5">
+        <span className="text-xs font-semibold uppercase tracking-wide text-gray-700">Industry</span>
+        <input
+          value={profile.industry || ""}
+          onChange={(e) => onInputChange("industry", e.target.value)}
+          disabled={!isEditing}
+          placeholder="e.g. Technology, Finance…"
+          className={`rounded-lg border px-3 py-2 text-sm outline-none transition-colors disabled:bg-gray-100 disabled:text-gray-500 ${
+            fieldErrors.industry ? "border-red-400" : "border-gray-200 focus:border-teal-600"
+          }`}
+        />
+        {fieldErrors.industry && <span className="text-[11px] text-red-500">{fieldErrors.industry}</span>}
+      </label>
+      <label className="flex flex-col gap-1.5">
+        <span className="text-xs font-semibold uppercase tracking-wide text-gray-700">Company Size</span>
+        <select
+          value={profile.size || profile.companySize || ""}
+          onChange={(e) => { onInputChange("size", e.target.value); onInputChange("companySize", e.target.value); }}
+          disabled={!isEditing}
+          className={`rounded-lg border px-3 py-2 text-sm outline-none transition-colors disabled:bg-gray-100 disabled:text-gray-500 ${
+            fieldErrors.size ? "border-red-400" : "border-gray-200 focus:border-teal-600"
+          }`}
+        >
+          <option value="" disabled hidden></option>
+          {COMPANY_SIZES.map((s) => <option key={s} value={s}>{s} employees</option>)}
+        </select>
+        {fieldErrors.size && <span className="text-[11px] text-red-500">{fieldErrors.size}</span>}
+      </label>
+    </div>
   </SectionCard>
 );
 

@@ -239,43 +239,6 @@ export const removeCampaignParticipant = createAsyncThunk<
   }
 });
 
-// ─── Participant results ──────────────────────────────────────────────────────
-
-export interface ParticipantResultsData {
-  campaign: {
-    _id: string;
-    title: string;
-    type: string;
-    module: { type: string; config: any } | null;
-  };
-  participant: {
-    _id: string;
-    status: string;
-    completedAt: string | null;
-    score: number | null;
-  };
-  response: {
-    answers:             { questionId: string; answer: any; score?: number }[];
-    aiScore:             number | null;
-    aiSummary:           string | null;
-    testResults:         { score: number; maxScore: number; breakdown: any } | null;
-    moduleType:          string;
-    interviewTranscript: { role: string; message: string; timestamp: string }[];
-  } | null;
-}
-
-export const fetchParticipantResults = createAsyncThunk<
-  ParticipantResultsData,
-  { campaignId: string; participantId: string },
-  { rejectValue: string }
->("campaign/fetchParticipantResults", async ({ campaignId, participantId }, { rejectWithValue }) => {
-  try {
-    return await campaignService.fetchParticipantResults(campaignId, participantId) as ParticipantResultsData;
-  } catch (err: any) {
-    return rejectWithValue(err.response?.data?.error ?? err.message);
-  }
-});
-
 // ─── Link-based access thunks ─────────────────────────────────────────────────
 
 export const fetchCampaignByLinkToken = createAsyncThunk<
@@ -356,9 +319,6 @@ interface CampaignState {
   nonParticipantsError: string | null;
   nonParticipantsTotal: number;
 
-  participantResults: ParticipantResultsData | null;
-  resultsLoading: boolean;
-  resultsError: string | null;
 }
 
 const initialState: CampaignState = {
@@ -413,9 +373,6 @@ const initialState: CampaignState = {
   nonParticipantsError: null,
   nonParticipantsTotal: 0,
 
-  participantResults: null,
-  resultsLoading: false,
-  resultsError: null,
 };
 
 // ─── Slice ────────────────────────────────────────────────────────────────────
@@ -682,20 +639,6 @@ const campaignSlice = createSlice({
         state.participantActionError = action.payload || "Failed to remove participant";
       });
 
-    // fetchParticipantResults
-    builder
-      .addCase(fetchParticipantResults.pending, (state) => {
-        state.resultsLoading = true;
-        state.resultsError = null;
-      })
-      .addCase(fetchParticipantResults.fulfilled, (state, action) => {
-        state.resultsLoading = false;
-        state.participantResults = action.payload;
-      })
-      .addCase(fetchParticipantResults.rejected, (state, action) => {
-        state.resultsLoading = false;
-        state.resultsError = action.payload || "Failed to load results";
-      });
   },
 });
 
@@ -788,12 +731,5 @@ export const selectNonParticipantsError = (state: any) =>
   state.campaign.nonParticipantsError as string | null;
 export const selectNonParticipantsTotal = (state: any) =>
   state.campaign.nonParticipantsTotal as number;
-
-export const selectParticipantResults = (state: any) =>
-  state.campaign.participantResults as ParticipantResultsData | null;
-export const selectResultsLoading = (state: any) =>
-  state.campaign.resultsLoading as boolean;
-export const selectResultsError = (state: any) =>
-  state.campaign.resultsError as string | null;
 
 export default campaignSlice.reducer;

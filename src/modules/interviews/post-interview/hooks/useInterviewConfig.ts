@@ -1,22 +1,22 @@
 import { useState, useEffect } from 'react';
-
+import { toast } from 'sonner';
 import { safeSet, safeRemove } from '@/utils/safeStorage';
 import { useRouter } from 'next/router';
-import { InterviewConfig } from '../types/interview';
-import { DEFAULT_INTERVIEW_CONFIG } from '../constants';
+import { InterviewConfig } from '../../shared/types/interview';
+import { DEFAULT_INTERVIEW_CONFIG } from '../constants/interviewDefaults';
 import { buildInterviewConfigFromURL, URLParams } from '@/utils/interviewConfigBuilder';
-import { getToken } from '@/utils/tokenUtils';
+import { getToken } from '@/modules/auth/shared/utils/token';
 import { useJobPostQuery } from '../queries/useJobPostQuery';
 import { useInterviewConfigQuery } from '../queries/useInterviewConfigQuery';
 import type { UseInterviewConfigReturn, UseInterviewConfigOptions } from '../types/hooks';
 
 export type { UseInterviewConfigReturn, UseInterviewConfigOptions };
 
-export const useInterviewConfig = ({ showNotification }: UseInterviewConfigOptions): UseInterviewConfigReturn => {
+export const useInterviewConfig = ({ jobId: propJobId }: Omit<UseInterviewConfigOptions, 'showNotification'>): UseInterviewConfigReturn => {
   const router = useRouter();
-  const jobId  = router.isReady && typeof router.query.jobId === 'string'
-    ? router.query.jobId
-    : null;
+  const jobId  = propJobId !== undefined
+    ? propJobId
+    : (router.isReady && typeof router.query.jobId === 'string' ? router.query.jobId : null);
 
   const [interviewConfig, setInterviewConfig] = useState<InterviewConfig>(DEFAULT_INTERVIEW_CONFIG);
 
@@ -29,7 +29,7 @@ export const useInterviewConfig = ({ showNotification }: UseInterviewConfigOptio
   );
 
   useEffect(() => {
-    if (configError) showNotification('Failed to load interview configuration', 'error');
+    if (configError) toast.error('Failed to load interview configuration');
   }, [configError]);
 
   // ── Apply fetched config ─────────────────────────────────────────────────────

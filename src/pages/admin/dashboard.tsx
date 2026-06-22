@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import { useRouter } from 'next/router';
 import { AppDispatch } from '@/store/store';
+import { useLogout } from '@/modules/auth/shared/hooks';
 import {
   Box,
   Typography,
@@ -10,7 +11,6 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { Menu as MenuIcon } from '@mui/icons-material';
-import { logout } from '@/store/slices/authSlice';
 import { saveCompanyPermissions } from '@/store/slices/adminSlice';
 import AdminSidebar from '@/components/features/admin/AdminSidebar';
 import AdminDashboardHome from '@/components/features/admin/AdminDashboardHome';
@@ -64,6 +64,7 @@ const DashboardAdmin = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
+  const handleLogout = useLogout("/signin");
 
   const [drawerOpen, setDrawerOpen] = useState(!isMobile);
 
@@ -80,14 +81,6 @@ const DashboardAdmin = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<User | null>(null);
-
-  const handleLogout = useCallback(async () => {
-    try {
-      await dispatch(logout()).unwrap();
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
-  }, [dispatch]);
 
   const handleSavePermissions = async (companyId: string, permissions: CompanyPermissions) => {
     await dispatch(saveCompanyPermissions({ companyId, permissions })).unwrap();
@@ -158,8 +151,7 @@ const DashboardAdmin = () => {
                     setSelectedUser(user);
                     setUserDialogOpen(true);
                   }}
-                  onUserDelete={(userId) => {
-                    console.log('Delete user:', userId);
+                  onUserDelete={(_userId) => {
                   }}
                   onManagePermissions={(user) => {
                     setSelectedCompany(user);
@@ -179,16 +171,14 @@ const DashboardAdmin = () => {
           open={userDialogOpen}
           user={selectedUser}
           onClose={() => setUserDialogOpen(false)}
-          onEdit={(user) => {
-            console.log('Edit user:', user);
+          onEdit={(_user) => {
           }}
         />
         <AssessmentDetailsDialog
           open={assessmentDialogOpen}
           assessment={selectedAssessment}
           onClose={() => setAssessmentDialogOpen(false)}
-          onEdit={(assessment) => {
-            console.log('Edit assessment:', assessment);
+          onEdit={(_assessment) => {
           }}
         />
         <CompanyPermissionsModal

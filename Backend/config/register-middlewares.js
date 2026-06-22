@@ -24,14 +24,8 @@ function registerMiddlewares(app) {
     crossOriginResourcePolicy: { policy: "cross-origin" }, // allow static assets cross-origin
   }));
 
-  // ── IP-level rate limiting on auth routes (B-20) ────────────────────────────
-  app.use("/auth", authLimiter);
-
-  // ── Body parsing ────────────────────────────────────────────────────────────
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
-
-  // ── CORS ────────────────────────────────────────────────────────────────────
+  // ── CORS must come before rate limiting so preflight OPTIONS requests
+  //    receive proper CORS headers even when the rate limit is exceeded.
   app.use(
     cors({
       origin: [
@@ -53,8 +47,15 @@ function registerMiddlewares(app) {
     }),
   );
 
+  // ── IP-level rate limiting on auth routes (B-20) ────────────────────────────
+  app.use("/auth", authLimiter);
+
+  // ── Body parsing ────────────────────────────────────────────────────────────
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
+
   // ── Static files ────────────────────────────────────────────────────────────
-  app.use(express.static(path.join(__dirname, "../public")));
+  app.use("/uploads/images", express.static(path.join(__dirname, "../uploads/images")));
 
   // ── Request logging (dev only) ───────────────────────────────────────────────
   if (process.env.NODE_ENV !== "production") {

@@ -77,23 +77,6 @@ interface InterviewReportState {
   error: string | null;
 }
 
-interface CompanyInterviewsState {
-  items: any[];
-  total: number;
-  totalPages: number;
-  loading: boolean;
-  error: string | null;
-}
-
-interface CompanyInterviewMetrics {
-  total: number;
-  needWork: number;
-  excellent: number;
-  avgScore: number;
-  loading: boolean;
-  error: string | null;
-}
-
 interface InterviewDetailState {
   data: any | null;
   stepsData: any | null;
@@ -113,8 +96,6 @@ interface InterviewState {
   technicalAssessments: SkillTypeAssessments;
   softAssessments: SkillTypeAssessments;
   report: InterviewReportState;
-  companyInterviews: CompanyInterviewsState;
-  companyMetrics: CompanyInterviewMetrics;
   interviewDetail: InterviewDetailState;
 }
 
@@ -129,28 +110,8 @@ const initialState: InterviewState = {
   technicalAssessments: { data: [], loading: false, error: null, total: 0 },
   softAssessments: { data: [], loading: false, error: null, total: 0 },
   report: { data: null, loading: false, error: null },
-  companyInterviews: { items: [], total: 0, totalPages: 1, loading: false, error: null },
-  companyMetrics: { total: 0, needWork: 0, excellent: 0, avgScore: 0, loading: false, error: null },
   interviewDetail: { data: null, stepsData: null, hasSteps: false, loading: false, error: null },
 };
-
-/**
- * Save skill interview assessment
- */
-export const saveInterviewAssessment = createAsyncThunk<
-  any,
-  { skill: string; proficiency: string; interviewData: any; skillType?: string },
-  { rejectValue: string }
->(
-  'interview/saveAssessment',
-  async (params, { rejectWithValue }) => {
-    try {
-      return await interviewService.saveAssessment(params);
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Error saving interview assessment');
-    }
-  }
-);
 
 /**
  * Fetch skill interview assessments
@@ -202,67 +163,6 @@ export const fetchInterviewReport = createAsyncThunk<
       return await interviewService.fetchReport(id);
     } catch (error: any) {
       return rejectWithValue(error.message || 'Error fetching data');
-    }
-  }
-);
-
-/**
- * Fetch company interview metrics
- */
-export const fetchCompanyInterviewMetrics = createAsyncThunk<
-  { total: number; needWork: number; excellent: number; avgScore: number },
-  void,
-  { rejectValue: string }
->(
-  'interview/fetchCompanyInterviewMetrics',
-  async (_, { rejectWithValue }) => {
-    try {
-      return await interviewService.fetchCompanyInterviewMetrics();
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Error fetching interview metrics');
-    }
-  }
-);
-
-/**
- * Check if candidate already completed an assessment for a given post
- */
-export const checkPostInterviewAssessment = createAsyncThunk<
-  { exists: boolean; isCompanyBlocked?: boolean; isArchived?: boolean; underThreshold?: boolean; thresholdScore?: number; matchScore?: number },
-  string,
-  { rejectValue: string }
->(
-  'interview/checkPostAssessment',
-  async (postId, { rejectWithValue }) => {
-    try {
-      return await interviewService.checkPostAssessment(postId);
-    } catch (error: any) {
-      const msg: string = error?.response?.data?.message || error.message || '';
-      if (msg.toLowerCase().includes('company')) {
-        return { exists: false, isCompanyBlocked: true };
-      }
-      if (msg.toLowerCase().includes('archived')) {
-        return { exists: false, isArchived: true };
-      }
-      return rejectWithValue(msg || 'Error checking assessment');
-    }
-  }
-);
-
-/**
- * Fetch company post-interview assessments
- */
-export const fetchCompanyInterviews = createAsyncThunk<
-  { items: any[]; total: number; totalPages: number },
-  { search?: string; page?: number; limit?: number },
-  { rejectValue: string }
->(
-  'interview/fetchCompanyInterviews',
-  async (params, { rejectWithValue }) => {
-    try {
-      return await interviewService.fetchCompanyInterviews(params);
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Error fetching company interviews');
     }
   }
 );
@@ -350,37 +250,6 @@ const interviewSlice = createSlice({
         state.report.loading = false;
         state.report.error = action.payload || 'An error occurred';
       })
-      // ---- COMPANY INTERVIEWS ----
-      .addCase(fetchCompanyInterviews.pending, (state) => {
-        state.companyInterviews.loading = true;
-        state.companyInterviews.error = null;
-      })
-      .addCase(fetchCompanyInterviews.fulfilled, (state, action) => {
-        state.companyInterviews.loading = false;
-        state.companyInterviews.items = action.payload.items;
-        state.companyInterviews.total = action.payload.total;
-        state.companyInterviews.totalPages = action.payload.totalPages ?? 1;
-      })
-      .addCase(fetchCompanyInterviews.rejected, (state, action) => {
-        state.companyInterviews.loading = false;
-        state.companyInterviews.error = (action.payload as string) || 'An error occurred';
-      })
-      // ---- COMPANY METRICS ----
-      .addCase(fetchCompanyInterviewMetrics.pending, (state) => {
-        state.companyMetrics.loading = true;
-        state.companyMetrics.error = null;
-      })
-      .addCase(fetchCompanyInterviewMetrics.fulfilled, (state, action) => {
-        state.companyMetrics.loading = false;
-        state.companyMetrics.total    = action.payload.total;
-        state.companyMetrics.needWork = action.payload.needWork;
-        state.companyMetrics.excellent = action.payload.excellent;
-        state.companyMetrics.avgScore  = action.payload.avgScore;
-      })
-      .addCase(fetchCompanyInterviewMetrics.rejected, (state, action) => {
-        state.companyMetrics.loading = false;
-        state.companyMetrics.error = action.payload || 'An error occurred';
-      })
       // ---- INTERVIEW DETAIL ----
       .addCase(fetchInterviewById.pending, (state) => {
         state.interviewDetail.loading = true;
@@ -415,10 +284,4 @@ export const selectSoftAssessments = (state: RootState) => state.interview.softA
 export const selectInterviewReport = (state: RootState) => state.interview.report.data;
 export const selectInterviewReportLoading = (state: RootState) => state.interview.report.loading;
 export const selectInterviewReportError = (state: RootState) => state.interview.report.error;
-export const selectCompanyInterviews = (state: RootState) => state.interview.companyInterviews.items;
-export const selectCompanyInterviewsLoading = (state: RootState) => state.interview.companyInterviews.loading;
-export const selectCompanyInterviewsTotal = (state: RootState) => state.interview.companyInterviews.total;
-export const selectCompanyInterviewsTotalPages = (state: RootState) => state.interview.companyInterviews.totalPages;
-export const selectCompanyMetrics = (state: RootState) => state.interview.companyMetrics;
-
 export default interviewSlice.reducer;
