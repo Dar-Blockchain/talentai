@@ -56,7 +56,7 @@ class IntelligentInterviewService {
 
   async initialize() {
     try {
-      console.log('ðŸ”Œ [Service] Attempting to connect to Redis...');
+
       const redisInitialized = await Promise.race([
         this.sessionManager.initialize(),
         new Promise((_, reject) =>
@@ -71,21 +71,12 @@ class IntelligentInterviewService {
       });
 
       if (redisInitialized) {
-        console.log('âœ… [Service] Intelligent Interview Service initialized with Redis');
-        console.log('ðŸ’¾ [Service] Sessions will be stored in Redis with 2-hour TTL');
         try {
           const pingTest = await this.sessionManager.client.ping();
-          console.log('ðŸ” [Service] Redis connectivity test:', pingTest);
-          console.log('ðŸ“Š [Service] Redis status:', {
-            isConnected: this.sessionManager.isConnected,
-            isReady: this.sessionManager.isReady(),
-          });
         } catch (pingError) {
           console.error('âŒ [Service] Redis ping test failed:', pingError.message);
         }
-      } else {
-        console.log('âš ï¸  [Service] Intelligent Interview Service initialized WITHOUT Redis (degraded mode)');
-      }
+      } 
 
       return true;
     } catch (error) {
@@ -98,12 +89,7 @@ class IntelligentInterviewService {
 
   async startInterview(sessionId, userConfig, candidateId, onGreetingChunk = null) {
     try {
-      console.log(`ðŸš€ [Service] Starting interview session: ${sessionId} for candidate: ${candidateId}`);
-      console.log('ðŸ“Š [Service] Redis state:', {
-        isConnected: this.sessionManager.isConnected,
-        isReady: this.sessionManager.isReady(),
-        clientExists: !!this.sessionManager.client,
-      });
+
 
       if (!this.sessionManager.isConnected || !this.sessionManager.client) {
         throw new Error('Redis connection not available. Please ensure Redis is running.');
@@ -111,10 +97,8 @@ class IntelligentInterviewService {
 
       const config = configManager.createIntelligentConfig(userConfig);
       configManager.validateConfig(config);
-      console.log('âœ… [Service] Config validated');
 
       const session = await this.sessionManager.createSession(sessionId, config, candidateId);
-      console.log('âœ… [Service] Session created in Redis');
 
       // Fetch full job description from Post model
       let jobDescription = null;
@@ -134,7 +118,6 @@ class IntelligentInterviewService {
               skills:           (post.skillAnalysis?.requiredSkills || []).map(s => s.name).filter(Boolean),
             };
             config.context.targetCompany = companyName;
-            console.log(`âœ… [Service] Full JD loaded: ${jobDescription.title} at ${companyName}`);
             ragService.indexJobDescription(jobId, jobDescription).catch(err =>
               console.warn('âš ï¸ [RAG] JD indexing failed (non-blocking):', err.message)
             );
@@ -152,7 +135,6 @@ class IntelligentInterviewService {
           requirements:     Array.isArray(userConfig.context.requirements)     ? userConfig.context.requirements     : [],
           responsibilities: Array.isArray(userConfig.context.responsibilities) ? userConfig.context.responsibilities : [],
         };
-        console.log(`âœ… [Service] JD loaded from config context: ${jobDescription.title} at ${jobDescription.companyName}`);
       }
 
       // Build agent persona (ONE LLM call â€” sets evaluation framework + ideal candidate)
@@ -179,7 +161,6 @@ class IntelligentInterviewService {
             completedAreas: [],
             lastUpdated: new Date().toISOString(),
           });
-          console.log(`âœ… [Service] Persona-driven coverage initialized: ${Object.keys(frameworkAreas).length} areas`);
 
           const syncedFocusAreas = Object.entries(agentPersona.evaluationFramework.focusAreas).map(
             ([area, cfg]) => ({ area, weight: (cfg.weight || 25) / 100, indicators: cfg.indicators || [], depth: cfg.description || '' })
@@ -192,7 +173,6 @@ class IntelligentInterviewService {
             ...(agentPersona.idealCandidate?.niceToHaveSkills || []),
           ].map(skill => ({ skill, asked: false, covered: false }));
           await this.sessionManager.updateSession(sessionId, { jdSkillsChecklist });
-          console.log(`ðŸ“‹ [Service] JD skills checklist initialized: ${jdSkillsChecklist.length} skills`);
         } catch (personaError) {
           console.warn('âš ï¸ [Service] Persona building failed (non-blocking):', personaError.message);
         }
@@ -226,7 +206,6 @@ class IntelligentInterviewService {
           totalBadAnswers: 0, totalGoodAnswers: 0, lastQualityScore: null,
         },
       });
-      console.log(`âœ… [Service] Interview timing: target ${totalMinutes}min, max ${maxDurationMinutes}min, ${coverageAreas.length} areas`);
 
       let greeting;
       try {
@@ -248,7 +227,6 @@ class IntelligentInterviewService {
       await this.sessionManager.saveCurrentQuestion(sessionId, greeting.content, 'simple');
       await this.sessionManager.updateSession(sessionId, { status: 'active' });
 
-      console.log(`âœ… [Service] Interview ${sessionId} started successfully`);
 
       return {
         success: true,
@@ -296,7 +274,6 @@ class IntelligentInterviewService {
       const session = await this.sessionManager.getSession(sessionId);
       if (!session) throw new Error(`Session ${sessionId} not found`);
 
-      console.log('ðŸ§  [Pipeline] Processing candidate response...');
 
       const recentInterviewerMessages = session.conversation.filter(entry => entry.type === 'interviewer').slice(-1);
       const lastQuestion = recentInterviewerMessages[0]?.content || null;
@@ -308,7 +285,6 @@ class IntelligentInterviewService {
       const analysis   = isSkipped
         ? { quality: { answeredQuestion: false, completeness: 'avoided', score: 0, depthLevel: 'none' }, topics: [], areasImpacted: [], candidateBehavior: { interactionStyle: 'minimal' } }
         : await combinedAnalysis(transcript, session, lastQuestion, targetArea);
-      if (!isSkipped) console.log(`âš¡ [Step 1] Combined analysis: ${Date.now() - step1Start}ms â€” quality: ${analysis.quality?.score}/100, depth: ${analysis.quality?.depthLevel}`);
 
       // â”€â”€ STEP 2: Update Candidate Profile â”€â”€
       const turnNumber    = Math.floor((session.conversation?.length || 0) / 2);
@@ -332,7 +308,6 @@ class IntelligentInterviewService {
       // â”€â”€ STEP 3: Apply coverage updates â”€â”€
       let finalCoverage = { ...session.coverage };
       if (analysis.coverage?.areasImpacted?.length > 0) {
-        console.log(`ðŸ“Š [Coverage] LLM areasImpacted: ${analysis.coverage.areasImpacted.map(a => `${a.area}(+${a.increase})`).join(', ')}`);
         for (const impact of analysis.coverage.areasImpacted) {
           let matchedAreaKey = impact.area;
           if (!finalCoverage.areas[matchedAreaKey]) {
@@ -342,7 +317,6 @@ class IntelligentInterviewService {
               return keyLower.includes(impactLower) || impactLower.includes(keyLower) ||
                 keyLower.split('_').some(w => w.length > 2 && impactLower.includes(w));
             }) || null;
-            if (matchedAreaKey) console.log(`ðŸ”„ [Coverage] Fuzzy matched "${impact.area}" â†’ "${matchedAreaKey}"`);
           }
 
           if (matchedAreaKey && finalCoverage.areas[matchedAreaKey]) {
@@ -351,7 +325,6 @@ class IntelligentInterviewService {
 
             const isPassSkip = analysis.quality?.answeredQuestion === false || analysis.quality?.completeness === 'avoided';
             if (isPassSkip && increase === 0) {
-              console.log(`â­ [Coverage] Pass/skip detected for "${impact.area}" â€” gap recorded, no coverage credit`);
               area.indicators = area.indicators || [];
               area.indicators.push({
                 name: `Gap: candidate passed on ${impact.area}`,
@@ -395,7 +368,6 @@ class IntelligentInterviewService {
 
             if (area.percentage >= 80 && !area.completed) {
               area.completed = true;
-              console.log(`âœ… [Coverage] Area "${impact.area}" marked completed at ${area.percentage}%`);
             }
 
             const topicsFromResponse = (analysis.skills?.demonstrated || [])
@@ -432,7 +404,6 @@ class IntelligentInterviewService {
                   const bonus = Math.round(((timeBudget - elapsed) / timeBudget) * 15);
                   area.percentage = Math.min(100, area.percentage + bonus);
                   area.earlyCompletionBonus = bonus;
-                  console.log(`ðŸŽ [Score Bonus] +${bonus}% for "${impact.area}"`);
                 }
               }
             }
@@ -468,7 +439,6 @@ class IntelligentInterviewService {
             finalCoverage.areas[targetArea].skippedQuestions.push(lastInterviewerQ);
             finalCoverage.areas[targetArea].skipCount = (finalCoverage.areas[targetArea].skipCount || 0) + 1;
           }
-          console.log(`â­ [Coverage] Pass/skip (no areas from LLM) for "${targetArea}" â€” gap recorded, no coverage credit`);
 
           const areaEntries = Object.values(finalCoverage.areas);
           const totalWeight = areaEntries.reduce((sum, a) => sum + (a.weight || 25), 0);
@@ -522,7 +492,6 @@ class IntelligentInterviewService {
               }
             }
             if (checklist.length > 0) await this.sessionManager.updateSession(sessionId, { jdSkillsChecklist: checklist });
-            console.log(`ðŸš« [Knowledge Gap] Full area "${disqualifiedKey}" disqualified â€” "${knowledgeGap.triggerPhrase}"`);
           }
         } else if (knowledgeGap.type === 'subtopic' && knowledgeGap.subtopicName) {
           let areaKey = knowledgeGap.areaName;
@@ -553,7 +522,6 @@ class IntelligentInterviewService {
                 }
               }
               if (checklist.length > 0) await this.sessionManager.updateSession(sessionId, { jdSkillsChecklist: checklist });
-              console.log(`ðŸš« [Knowledge Gap] Sub-topic "${knowledgeGap.subtopicName}" disqualified in "${areaKey}"`);
             }
           }
         }
@@ -571,7 +539,6 @@ class IntelligentInterviewService {
       const updatedSessionForEnd = { ...session, coverage: finalCoverage, qualityTracking: session.qualityTracking };
       const endCheck             = await shouldEndInterview(updatedSessionForEnd);
       if (endCheck.shouldEnd) {
-        console.log(`ðŸ›‘ [Pipeline] Ending interview: ${endCheck.terminationReason}`);
         return {
           action:   'end_interview',
           content:  endCheck.message || 'Thank you for your time. This concludes our interview.',
@@ -582,27 +549,21 @@ class IntelligentInterviewService {
 
       const turnCount = Math.floor((session.conversation?.length || 0) / 2);
       if (analysis.shouldEnd?.shouldEnd && turnCount >= 6) {
-        console.log(`ðŸ›‘ [Pipeline] AI suggests ending at turn ${turnCount}: ${analysis.shouldEnd.reason}`);
         return {
           action:   'end_interview',
           content:  'Thank you for your time. This concludes our interview.',
           reasoning: analysis.shouldEnd.reason,
           metadata: { terminationReason: 'ai_determined', score: 'ai' },
         };
-      } else if (analysis.shouldEnd?.shouldEnd && turnCount < 6) {
-        console.log(`âš ï¸ [Pipeline] LLM suggested ending at turn ${turnCount} â€” IGNORED (min 6 turns required)`);
-      }
+      } 
 
-      if (isLowQuality) console.log(`ðŸš« [Pipeline] Low quality (${qualityScore}) â€” generating from gaps only`);
 
       // â”€â”€ STEP 5: Decide question strategy â”€â”€
       const finalSession = { ...session, coverage: finalCoverage, candidateProfile: updatedProfile, currentFocusArea: targetArea };
       const strategy     = decideQuestionStrategy(analysis, updatedProfile, finalCoverage, finalSession);
-      console.log(`ðŸŽ¯ [Step 5] Strategy: ${strategy.mode} â†’ ${strategy.targetArea} (${strategy.context})`);
 
       // â”€â”€ STEP 5.5: Select question style â”€â”€
       const questionStyle = selectQuestionStyle(finalSession, analysis, strategy);
-      console.log(`ðŸŽ¨ [Step 5.5] Style: ${questionStyle.id} | Strategy: ${strategy.mode} â†’ ${strategy.targetArea}`);
 
       // â”€â”€ STEP 5.7: Retrieve RAG context (~100ms) â”€â”€
       let ragContext = '';
@@ -611,7 +572,6 @@ class IntelligentInterviewService {
         if (jobId) {
           const rag = await ragService.retrieveContext(jobId, sessionId, transcript);
           ragContext = rag.jdContext || '';
-          if (ragContext) console.log(`ðŸ“š [Step 5.7] RAG context retrieved: ${ragContext.length} chars`);
         }
       } catch (ragErr) {
         console.warn('âš ï¸ [Step 5.7] RAG context retrieval failed (non-blocking):', ragErr.message);
@@ -654,7 +614,6 @@ class IntelligentInterviewService {
         };
       });
 
-      console.log(`âš¡ [Step 6] Question generated: ${Date.now() - step6Start}ms`);
 
       // â”€â”€ STEP 7: Quick dedup via RAG vector search (~50ms) â”€â”€
       let finalQuestion = proposedQuestion;
@@ -665,7 +624,6 @@ class IntelligentInterviewService {
           'analyzeQuestionSimilarity'
         );
         if (similarityCheck.isSimilar && similarityCheck.confidence > 70) {
-          console.log('ðŸ”„ [Step 7] Similar question detected â€” regenerating once');
           try {
             const altQuestion = await this.questionAI.generateTargetedQuestionForArea(
               strategy.targetArea,
@@ -742,7 +700,6 @@ class IntelligentInterviewService {
         .catch(err => console.warn('âš ï¸ [Report] Background update failed:', err.message));
 
       const totalTime = Date.now() - pipelineStart;
-      console.log(`âœ… [Pipeline] Complete in ${totalTime}ms (target: <5000ms) â€” strategy: ${strategy.mode}, quality: ${qualityScore}/100`);
 
       return {
         action:   strategy.mode === 'validate' ? 'wrap_up_area' : 'continue_probing',
@@ -773,13 +730,11 @@ class IntelligentInterviewService {
    */
   async handleSilence(sessionId, silenceDuration) {
     try {
-      console.log(`ðŸ”‡ [Silence] Detected ${silenceDuration}s of silence`);
 
       if (silenceDuration < 20) {
         return { action: 'ignore', content: null, reasoning: 'Short pause - allowing natural thinking time' };
       }
 
-      console.log(`â­  [Silence] Extended silence (${silenceDuration}s) - generating next question`);
 
       const session = await this.sessionManager.getSession(sessionId);
       if (!session) throw new Error(`Session ${sessionId} not found`);
@@ -806,7 +761,6 @@ class IntelligentInterviewService {
         metadata: { aiGenerated: true, targetAreas: nextQuestion.targetAreas, reasoning: 'Extended silence - moving forward', silenceDuration },
       });
 
-      console.log(`âœ… [Silence] Moving to next question: "${nextQuestion.question.substring(0, 60)}..."`);
       return {
         action:   'next_question',
         content:  nextQuestion.question,

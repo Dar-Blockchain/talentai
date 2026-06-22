@@ -3,24 +3,20 @@ module.exports.initializeChatNamespace = (io) => {
 
   chatNamespace.on('connection', (socket) => {
     const userId = socket.handshake.auth.userId;
-    console.log(`🟢 Chat: User ${userId} connected (socket: ${socket.id})`);
 
     if (userId) {
       socket.join(`user:${userId}`);
-      console.log(`👤 User ${userId} joined personal room`);
     }
 
     socket.on('join_conversation', ({ conversationId }) => {
       if (conversationId) {
         socket.join(`conversation:${conversationId}`);
-        console.log(`💬 User ${userId} joined conversation room: ${conversationId}`);
       }
     });
 
     socket.on('leave_conversation', (conversationId) => {
       if (conversationId) {
         socket.leave(`conversation:${conversationId}`);
-        console.log(`👋 User ${userId} left conversation room: ${conversationId}`);
       }
     });
 
@@ -37,7 +33,6 @@ module.exports.initializeChatNamespace = (io) => {
     });
 
     socket.on('disconnect', (reason) => {
-      console.log(`🔴 Chat: User ${userId} disconnected (reason: ${reason})`);
     });
 
     socket.on('error', (error) => {
@@ -45,6 +40,5 @@ module.exports.initializeChatNamespace = (io) => {
     });
   });
 
-  console.log('✅ Chat namespace /chat initialized and ready');
   return chatNamespace;
 };

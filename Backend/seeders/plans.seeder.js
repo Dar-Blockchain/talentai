@@ -32,7 +32,6 @@ const seedPlans = async () => {
           updateOne: { filter: { name: plan.name }, update: { $set: plan }, upsert: true },
         }))
       );
-      console.log(`✅ Plans seeded: ${missing.map((p) => p.name).join(", ")}`);
     }
   } catch (error) {
     console.warn("⚠️ Plans seed failed: " + error.message);

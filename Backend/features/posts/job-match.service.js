@@ -80,7 +80,6 @@ module.exports.notifyMatchingCandidates = async (postId) => {
       sent++;
     }
 
-    console.log(`ðŸ“§ Job match emails sent: ${sent} candidate(s) notified for post "${jobTitle}"`);
     return sent;
   } catch (error) {
     console.error("âŒ Error in notifyMatchingCandidates:", error.message);

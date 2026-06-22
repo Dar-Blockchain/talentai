@@ -81,10 +81,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 const sidebarId = useRef(Math.random().toString(36).slice(2, 8));
 
 useEffect(() => {
-  console.log(`SIDEBAR MOUNT ${sidebarId.current}`);
-
   return () => {
-    console.log(`SIDEBAR UNMOUNT ${sidebarId.current}`);
   };
 }, []);
 

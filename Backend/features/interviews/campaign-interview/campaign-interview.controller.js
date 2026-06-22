@@ -33,7 +33,6 @@ class CampaignInterviewController {
     const ns = io.of('/campaign-interview');
 
     ns.on('connection', (socket) => {
-      console.log(`🔌 [CampaignInterview] New connection: ${socket.id}`);
 
       // ── start_interview ────────────────────────────────────────────────────
       socket.on('start_interview', async (data) => {
@@ -41,12 +40,6 @@ class CampaignInterviewController {
           const { config, candidateId } = data;
           const sessionId = uuidv4();
 
-          console.log(`🚀 [CampaignInterview] Starting session ${sessionId} for ${candidateId}`);
-          console.log(`📋 [CampaignInterview] Config:`, {
-            campaignId:  config.campaignId,
-            moduleType:  config.moduleType,
-            duration:    config.duration,
-          });
 
           this.activeSessions.set(sessionId, socket.id);
           socket.sessionId = sessionId;
@@ -75,7 +68,6 @@ class CampaignInterviewController {
             sessionId,
           });
 
-          console.log(`✅ [CampaignInterview] Session ${sessionId} started`);
         } catch (err) {
           console.error('❌ [CampaignInterview] start_interview error:', err.message);
           this.safeEmit(socket, 'interview_error', {
@@ -96,7 +88,6 @@ class CampaignInterviewController {
         }
 
         try {
-          console.log(`💬 [CampaignInterview] Processing response in session ${sessionId}`);
 
           this.safeEmit(socket, 'interviewer_typing', { sessionId, status: 'thinking' });
 
@@ -188,7 +179,6 @@ class CampaignInterviewController {
         if (!sessionId) return;
 
         try {
-          console.log(`🏁 [CampaignInterview] Ending session ${sessionId}`);
           const result = await this.service.endInterview(sessionId);
           this.activeSessions.delete(sessionId);
 
@@ -228,14 +218,12 @@ class CampaignInterviewController {
 
       // ── disconnect ─────────────────────────────────────────────────────────
       socket.on('disconnect', (reason) => {
-        console.log(`🔌 [CampaignInterview] Disconnected: ${socket.id} (${reason})`);
         if (socket.sessionId) {
           this.activeSessions.delete(socket.sessionId);
         }
       });
     });
 
-    console.log('✅ [CampaignInterview] Namespace /campaign-interview registered');
   }
 }
 

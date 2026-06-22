@@ -21,16 +21,13 @@ async function updateQualityCounters(sessionManager, sessionId, qualityScore) {
       tracking.consecutiveBadAnswers++;
       tracking.consecutiveGoodAnswers = 0;
       tracking.totalBadAnswers++;
-      console.log(`âŒ [Quality Counter] Bad answer ${tracking.consecutiveBadAnswers}/8 (score: ${qualityScore})`);
     } else if (qualityScore >= GOOD_THRESHOLD) {
       tracking.consecutiveGoodAnswers++;
       tracking.consecutiveBadAnswers = 0;
       tracking.totalGoodAnswers++;
-      console.log(`âœ… [Quality Counter] Good answer ${tracking.consecutiveGoodAnswers}/8 (score: ${qualityScore})`);
     } else {
       tracking.consecutiveBadAnswers = 0;
       tracking.consecutiveGoodAnswers = 0;
-      console.log(`ðŸ“Š [Quality Counter] Medium answer (score: ${qualityScore}) - counters reset`);
     }
 
     tracking.lastQualityScore = qualityScore;
@@ -52,7 +49,6 @@ async function shouldEndInterview(session, totalDuration) {
       const elapsedMinutes = (Date.now() - session.interviewStartTime) / 60000;
       const maxDuration    = session.maxDurationMinutes || 45;
       if (elapsedMinutes >= maxDuration) {
-        console.log(`â° [Time Limit] ${elapsedMinutes.toFixed(1)} minutes elapsed (max: ${maxDuration}) - ending interview`);
         return {
           shouldEnd: true,
           confidence: 100,
@@ -74,7 +70,6 @@ async function shouldEndInterview(session, totalDuration) {
       const overallCoverage = session.coverage?.overall || 0;
 
       if (tracking.consecutiveBadAnswers >= 8) {
-        console.log('ðŸš« [Poor Quality Termination] 8 consecutive bad answers - ending interview');
         return {
           shouldEnd: true, confidence: 95,
           reasoning: `Candidate provided 8 consecutive low-quality responses (quality < 40), indicating consistent difficulty with technical questions.`,
@@ -89,7 +84,6 @@ async function shouldEndInterview(session, totalDuration) {
       }
 
       if (tracking.consecutiveGoodAnswers >= 8 && overallCoverage >= 60) {
-        console.log(`âœ… [Excellent Quality Termination] 8 consecutive good answers + ${overallCoverage}% coverage - ending interview`);
         return {
           shouldEnd: true, confidence: 95,
           reasoning: `Candidate demonstrated 8 consecutive high-quality responses (quality >= 75), showing strong technical competency.`,
@@ -117,7 +111,6 @@ async function shouldEndInterview(session, totalDuration) {
     const candidateResponseCount = Math.floor(session.conversation.length / 2);
 
     if (candidateResponseCount >= 6 && overallQualityAverage < 35) {
-      console.log(`âŒ [Early Termination - Poor Performance] ${overallQualityAverage.toFixed(1)}/100 avg quality over ${candidateResponseCount} responses`);
       return {
         shouldEnd: true, confidence: 95,
         reasoning: `Candidate consistently provides insufficient technical responses (${overallQualityAverage.toFixed(1)}/100 average quality over ${candidateResponseCount} responses). Early termination to save time.`,
@@ -133,7 +126,6 @@ async function shouldEndInterview(session, totalDuration) {
     }
 
     if (candidateResponseCount >= 6 && overallQualityAverage >= 85) {
-      console.log(`ðŸŒŸ [Early Excellence] ${overallQualityAverage.toFixed(1)}/100 avg quality over ${candidateResponseCount} responses â€” ending early`);
       return {
         shouldEnd: true, confidence: 95,
         reasoning: `Candidate consistently demonstrates excellent competency (${overallQualityAverage.toFixed(1)}/100 average quality over ${candidateResponseCount} responses).`,
@@ -150,7 +142,6 @@ async function shouldEndInterview(session, totalDuration) {
 
     const overallCov = session.coverage?.overall || 0;
     if (candidateResponseCount >= 8 && overallQualityAverage >= 80 && overallCov >= 60) {
-      console.log(`âœ… [Early Success - Excellent Performance] ${overallQualityAverage.toFixed(1)}/100 avg quality, ${overallCov}% coverage`);
       return {
         shouldEnd: true, confidence: 90,
         reasoning: `Candidate consistently demonstrates strong technical competency (${overallQualityAverage.toFixed(1)}/100 average quality over ${candidateResponseCount} responses). Sufficient evidence gathered.`,
@@ -171,7 +162,6 @@ async function shouldEndInterview(session, totalDuration) {
     const totalAreas    = Object.keys(session.coverage?.areas || {}).length;
 
     if (currentOverallCoverage < 40 || areasExplored < Math.min(2, totalAreas)) {
-      console.log(`â³ [shouldEndInterview] Coverage ${currentOverallCoverage}%, ${areasExplored}/${totalAreas} areas explored â€” insufficient data, continuing`);
       return {
         shouldEnd: false,
         confidence: 0,

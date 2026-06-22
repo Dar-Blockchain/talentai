@@ -231,7 +231,6 @@ async function autoArchiveOldNotifications(userId, daysOld = 15) {
     { archived: true }
   );
   if (result.modifiedCount > 0) {
-    console.log(`Auto-archived ${result.modifiedCount} notifications older than ${daysOld} days for user ${userId}`);
   }
   return { archivedCount: result.modifiedCount };
 }

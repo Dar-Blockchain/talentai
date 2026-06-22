@@ -51,19 +51,11 @@ class RedisSessionManager {
   async initialize() {
     try {
       const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-      console.log('🔌 [Redis] Initializing Redis client...');
-      console.log('🔌 [Redis] Connection URL:', redisUrl);
-      console.log('🔌 [Redis] Environment:', process.env.NODE_ENV || 'development');
 
       this.client = redis.createClient({
         url: redisUrl,
         retry_strategy: (options) => {
-          console.log(`🔄 [Redis] Retry attempt ${options.attempt}:`, {
-            error: options.error?.message,
-            errorCode: options.error?.code,
-            totalRetryTime: options.total_retry_time,
-            attemptNumber: options.attempt
-          });
+
 
           if (options.error && options.error.code === 'ECONNREFUSED') {
             console.error('❌ [Redis] Connection refused - Redis server not running or unreachable');
@@ -79,7 +71,6 @@ class RedisSessionManager {
           }
 
           const delay = Math.min(options.attempt * 100, 3000);
-          console.log(`⏳ [Redis] Retrying in ${delay}ms...`);
           return delay;
         }
       });
@@ -99,38 +90,26 @@ class RedisSessionManager {
       });
 
       this.client.on('connect', () => {
-        console.log('✅ [Redis] TCP connection established');
         this.isConnected = true;
       });
 
       this.client.on('ready', () => {
-        console.log('✅ [Redis] Client ready to accept commands');
         this.isConnected = true;
       });
 
       this.client.on('reconnecting', () => {
-        console.log('🔄 [Redis] Attempting to reconnect...');
         this.isConnected = false;
       });
 
       this.client.on('end', () => {
-        console.log('⚠️  [Redis] Connection closed');
         this.isConnected = false;
       });
 
-      console.log('⏳ [Redis] Attempting to connect...');
       await this.client.connect();
 
-      console.log('🏓 [Redis] Testing connection with PING...');
       const pingResult = await this.client.ping();
-      console.log('✅ [Redis] PING successful:', pingResult);
 
-      console.log('✅ [Redis] Initialization complete - Ready to accept commands');
-      console.log('📊 [Redis] Client status:', {
-        isConnected: this.isConnected,
-        isReady: this.client.isReady,
-        isOpen: this.client.isOpen
-      });
+
 
       return true;
     } catch (error) {
@@ -153,13 +132,7 @@ class RedisSessionManager {
    */
   async createSession(sessionId, config, candidateId) {
     try {
-      console.log('📝 [Redis] Creating new session:', sessionId);
-      console.log('📊 [Redis] Pre-creation connection check:', {
-        isConnected: this.isConnected,
-        clientExists: !!this.client,
-        clientIsReady: this.client?.isReady,
-        clientIsOpen: this.client?.isOpen
-      });
+
 
       if (!this.client || !this.isConnected) {
         console.error('❌ [Redis] Cannot create session - Redis client not connected');
@@ -218,33 +191,19 @@ class RedisSessionManager {
       const jsonData = JSON.stringify(sessionData);
       const dataSize = Buffer.byteLength(jsonData, 'utf8');
 
-      console.log('💾 [Redis] Storing session data:', {
-        key: key,
-        ttl: this.sessionTTL,
-        dataSize: `${dataSize} bytes`,
-        candidateId: candidateId
-      });
+
 
       await this.client.setEx(key, this.sessionTTL, jsonData);
-      console.log('✅ [Redis] Session data stored successfully');
 
       // Verify storage with immediate read
-      console.log('🔍 [Redis] Verifying session storage...');
       const storedData = await this.client.get(key);
       if (storedData) {
-        console.log('✅ [Redis] Session verified - data retrieved successfully');
         const parsed = JSON.parse(storedData);
-        console.log('📋 [Redis] Stored session info:', {
-          sessionId: parsed.sessionId,
-          candidateId: parsed.candidateId,
-          status: parsed.status,
-          startTime: parsed.startTime
-        });
+
       } else {
         console.error('⚠️  [Redis] WARNING: Session data not found after storage!');
       }
 
-      console.log(`✅ [Redis] Created interview session: ${sessionId}`);
       return sessionData;
     } catch (error) {
       console.error('❌ [Redis] Failed to create session:', {
@@ -418,11 +377,7 @@ class RedisSessionManager {
         // REMOVED: No silenceStage tracking for MVP
       });
 
-      console.log(`💾 [Session] Saved current question for potential rephrasing:`, {
-        sessionId,
-        questionPreview: questionContent.substring(0, 80) + '...',
-        complexity
-      });
+
 
       return currentQuestionContext;
     } catch (error) {
@@ -515,7 +470,6 @@ class RedisSessionManager {
       const key = this.sessionPrefix + sessionId;
       await this.client.expire(key, 86400);
 
-      console.log(`✅ Ended interview session: ${sessionId}`);
       return session;
     } catch (error) {
       console.error('❌ Failed to end session:', error.message);
@@ -590,7 +544,6 @@ class RedisSessionManager {
       if (session?.coverage?.areas?.[areaName] && !session.coverage.areas[areaName].startTime) {
         session.coverage.areas[areaName].startTime = Date.now();
         await this.updateCoverage(sessionId, session.coverage);
-        console.log(`⏱️ [Time Budget] Started timer for area: "${areaName}"`);
       }
     } catch (error) {
       console.error('❌ Failed to set area start time:', error.message);
@@ -610,10 +563,6 @@ class RedisSessionManager {
         if (ttl === -2) { // Key doesn't exist
           cleanedCount++;
         }
-      }
-
-      if (cleanedCount > 0) {
-        console.log(`🧹 Cleaned up ${cleanedCount} expired sessions`);
       }
 
       return cleanedCount;
@@ -679,7 +628,6 @@ class RedisSessionManager {
     try {
       if (this.client) {
         await this.client.disconnect();
-        console.log('✅ Redis disconnected gracefully');
       }
     } catch (error) {
       console.error('❌ Error disconnecting Redis:', error.message);

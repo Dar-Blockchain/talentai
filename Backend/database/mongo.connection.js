@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+﻿const mongoose = require("mongoose");
 const dbMonitor = require("./database-monitor.service");
 
 // Track reconnect state so we don't flood Atlas with parallel attempts
@@ -32,9 +32,7 @@ async function attemptReconnect(uri) {
   for (let i = 0; i < delays.length; i++) {
     try {
       await new Promise((r) => setTimeout(r, delays[i]));
-      console.log(`🔄 MongoDB reconnect attempt ${i + 1}/${delays.length}…`);
       await mongoose.connect(uri, MONGO_OPTIONS);
-      console.log("✅ MongoDB reconnected successfully");
       isReconnecting = false;
       return;
     } catch (err) {
@@ -58,7 +56,6 @@ const connectDB = async () => {
 
   try {
     await mongoose.connect(process.env.MONGODB_URI, MONGO_OPTIONS);
-    console.log("✅ MongoDB Connected");
 
     // ── Connection event listeners ──────────────────────────────────────
 
@@ -72,12 +69,10 @@ const connectDB = async () => {
     });
 
     mongoose.connection.on("reconnected", () => {
-      console.log("🔄 MongoDB reconnected");
       isReconnecting = false;
     });
 
     mongoose.connection.on("connected", () => {
-      console.log("✅ MongoDB connection ready");
     });
 
     // ── Performance monitoring (dev only) ──────────────────────────────

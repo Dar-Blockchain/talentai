@@ -26,10 +26,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
 const headerId = useRef(Math.random().toString(36).slice(2, 8));
 
 useEffect(() => {
-  console.log(`HEADER MOUNT ${headerId.current}`);
-
   return () => {
-    console.log(`HEADER UNMOUNT ${headerId.current}`);
   };
 }, []);
   return (

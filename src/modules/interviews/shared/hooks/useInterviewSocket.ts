@@ -46,11 +46,9 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
   // Initialize WebSocket connection
   useEffect(() => {
     if (connectionInitialized.current) {
-      console.log('🔄 Connection already initialized, skipping...');
       return;
     }
 
-    console.log('🔌 Initializing WebSocket connection...');
     connectionInitialized.current = true;
 
     const rawBase = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -60,8 +58,6 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
       return;
     }
     const baseUrl = rawBase.replace(/\/$/, '');
-    console.log('🔗 Attempting to connect to:', `${baseUrl}${namespace}`);
-    console.log('🔗 Socket.IO will connect to namespace:', namespace);
 
     const socket = io(`${baseUrl}${namespace}`, {
       path: '/socket.io/',
@@ -85,16 +81,12 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
 
     // Connection event handlers
     socket.on('connect', () => {
-      console.log('✅ Connected to interview WebSocket');
-      console.log('🔗 Connection ID:', socket.id);
-      console.log('🚀 Transport:', socket.io.engine.transport.name);
       setIsConnected(true);
       setConnectionStatus('connected');
       callbacksRef.current.onNotification('Connected to interview system', 'success');
     });
 
     socket.on('disconnect', (reason) => {
-      console.log('🔌 Disconnected from interview WebSocket:', reason);
       setIsConnected(false);
       setConnectionStatus('disconnected');
       setInterviewStatus('idle');
@@ -115,10 +107,8 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
       setConnectionStatus('error');
 
       if (error.message?.includes('Invalid namespace')) {
-        console.log('🔄 Namespace error detected - Interview service not available');
         callbacksRef.current.onNotification('Interview namespace not available. Retrying...', 'warning');
       } else if ((error as any).type === 'TransportError') {
-        console.log('🚛 Transport error - trying different transport method');
         callbacksRef.current.onNotification('Connection transport failed, retrying...', 'warning');
       } else {
         callbacksRef.current.onNotification(`Connection failed: ${error.message || 'Unknown error'}`, 'error');
@@ -127,7 +117,6 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
 
     // Interview event handlers
     socket.on('interview_started', (data: any) => {
-      console.log('🚀 Interview started:', data);
       setSessionId(data.sessionId);
       sessionIdRef.current = data.sessionId;
       setInterviewStatus('active');
@@ -135,22 +124,18 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
     });
 
     socket.on('interviewer_message', (message: InterviewMessage) => {
-      console.log('💬 Received interviewer message:', message);
       callbacksRef.current.onInterviewMessage(message);
     });
 
     socket.on('coverage_update', (data: any) => {
-      console.log('📊 Coverage update:', data);
       callbacksRef.current.onCoverageUpdate(data.coverage);
     });
 
     socket.on('report_update', (data: any) => {
-      console.log('📋 Report update:', data);
       callbacksRef.current.onReportUpdate?.(data.report);
     });
 
     socket.on('silence_response', (data: any) => {
-      console.log('🔇 Enhanced silence response:', data);
       callbacksRef.current.onSilenceResponse(data);
     });
 
@@ -159,14 +144,12 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
     });
 
     socket.on('interview_ended', (data: any) => {
-      console.log('🏁 Interview ended:', data);
       // Status transition is the callback's responsibility — it may need to delay
       // the change (e.g. to keep the farewell message visible for a few seconds).
       callbacksRef.current.onInterviewEnded(data);
     });
 
     socket.on('assessment_saved', (data: any) => {
-      console.log('💾 Assessment saved:', data?.assessmentId);
       setAssessmentId(data?.assessmentId ?? null);
       callbacksRef.current.onAssessmentSaved?.(data);
     });
@@ -184,7 +167,6 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
     });
 
     socket.on('greeting_complete', (data: any) => {
-      console.log('👋 Greeting complete');
       callbacksRef.current.onGreetingComplete?.(data);
     });
 
@@ -192,41 +174,33 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
       callbacksRef.current.onInterviewerTyping?.(data);
     });
 
-    socket.on('response_processed', (data: any) => {
-      console.log('✔️ Response processed by server:', data?.sessionId);
+    socket.on('response_processed', (_data: any) => {
     });
 
     socket.on('topic_change', (data: any) => {
-      console.log('🔀 Topic change:', data?.from, '→', data?.to);
       callbacksRef.current.onTopicChange?.(data);
     });
 
     socket.on('interview_wrap_up', (data: any) => {
-      console.log('🏁 Interview entering wrap-up phase');
       callbacksRef.current.onInterviewWrapUp?.(data);
     });
 
     socket.on('silence_reset', () => {
-      console.log('🔇 Silence counter reset by server');
       callbacksRef.current.onSilenceReset?.();
     });
 
-    socket.on('session_status', (data: any) => {
-      console.log('💓 Session health ping:', data?.status);
+    socket.on('session_status', (_data: any) => {
     });
 
     socket.on('interview_paused', () => {
-      console.log('⏸️ Interview paused');
       setInterviewStatus('paused');
     });
 
     socket.on('interview_resumed', () => {
-      console.log('▶️ Interview resumed');
       setInterviewStatus('active');
     });
 
     socket.on('reconnect', () => {
-      console.log('🔄 Reconnected to interview WebSocket');
       setIsConnected(true);
       setConnectionStatus('connected');
       callbacksRef.current.onNotification('Reconnected to interview system', 'success');
@@ -234,7 +208,6 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
 
     return () => {
       if (socketRef.current && socketRef.current === socket) {
-        console.log('🧹 Cleaning up WebSocket connection');
         socket.disconnect();
         socketRef.current = null;
         connectionInitialized.current = false;

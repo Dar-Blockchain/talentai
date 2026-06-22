@@ -1,4 +1,4 @@
-const CompanyInvitationService = require("./company-invitation.service");
+﻿const CompanyInvitationService = require("./company-invitation.service");
 const authService = require("../auth/auth.service");
 const { generateToken } = require("../auth/generate-token");
 
@@ -115,10 +115,6 @@ module.exports.respondInvitation = async (req, res) => {
 
           userId = newUserData.user._id;
           userEmail = newUserData.user.email;
-
-          console.log(
-            `✅ New employee account created for ${invitationEmail} (${firstName} ${lastName})`,
-          );
         } catch (registrationError) {
           return res.status(400).json({
             success: false,

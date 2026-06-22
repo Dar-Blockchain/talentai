@@ -40,10 +40,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 const layoutId = useRef(Math.random().toString(36).slice(2, 8));
 
 useEffect(() => {
-  console.log(`LAYOUT MOUNT ${layoutId.current}`);
-
   return () => {
-    console.log(`LAYOUT UNMOUNT ${layoutId.current}`);
   };
 }, []);
 

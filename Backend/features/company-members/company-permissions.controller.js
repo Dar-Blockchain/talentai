@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Company Permissions Controller
  * Handles company permissions management operations (Admin only)
  *
@@ -24,11 +24,6 @@ const Permission = require("./permission.model");
 module.exports.getCompanyPermissions = async (req, res) => {
   try {
     const { companyId } = req.params;
-
-    console.log(
-      "📥 [Permissions] Fetching permissions for company:",
-      companyId,
-    );
 
     // Find the user and populate their profile
     const user = await User.findById(companyId).populate("profile");
@@ -63,9 +58,6 @@ module.exports.getCompanyPermissions = async (req, res) => {
 
     // If no permissions exist, return defaults
     if (!permission) {
-      console.log(
-        "⚠️ [Permissions] No permission document found, returning defaults",
-      );
       return res.status(200).json({
         success: true,
         permissions: {
@@ -81,7 +73,6 @@ module.exports.getCompanyPermissions = async (req, res) => {
       });
     }
 
-    console.log("✅ [Permissions] Found permission document:", permission._id);
 
     // Return the 7 permissions from PermissionModel
     // Return the 9 permissions from PermissionModel
@@ -119,12 +110,6 @@ module.exports.updateCompanyPermissions = async (req, res) => {
   try {
     const { companyId } = req.params;
     const { permissions } = req.body;
-
-    console.log(
-      "📥 [Permissions] Updating permissions for company:",
-      companyId,
-    );
-    console.log("📥 [Permissions] Received data:", permissions);
 
     if (!permissions || typeof permissions !== "object") {
       return res.status(400).json({
@@ -207,11 +192,6 @@ module.exports.updateCompanyPermissions = async (req, res) => {
         upsert: true, // Create if doesn't exist
         setDefaultsOnInsert: true,
       },
-    );
-
-    console.log(
-      "✅ [Permissions] Permission saved successfully:",
-      updatedPermission._id,
     );
 
     // Return the updated permissions

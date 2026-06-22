@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+﻿const mongoose = require("mongoose");
 const Subscription = require("./subscription.model");
 const PlanLimits = require("../plans/plan-limits.model");
 
@@ -167,7 +167,6 @@ module.exports.incrementUsage = async (subscriptionId, usageType, amount = 1) =>
       throw err;
     }
 
-    console.log(`✅ [incrementUsage] ${usageType} incremented by ${amount}. New value: ${subscription[usageType]}`);
 
     return { success: true, data: subscription };
   } catch (error) {
@@ -194,7 +193,6 @@ module.exports.resetMonthlyInterviewIfNeeded = async (subscriptionId) => {
       subscription.monthlyInterviewsUsed = 0;
       subscription.lastMonthlyResetDate = now;
       await subscription.save();
-      console.log(`✅ [resetMonthlyInterview] Reset for subscription ${subscriptionId}`);
       return { success: true, data: subscription, wasReset: true };
     }
 
@@ -226,7 +224,6 @@ module.exports.cancelSubscription = async (subscriptionId, reason = "") => {
     subscription.cancelledAt = new Date();
     await subscription.save();
 
-    console.log(`✅ Subscription ${subscriptionId} auto-renewal disabled — active until ${subscription.endDate}`);
 
     return {
       success: true,
@@ -260,7 +257,6 @@ module.exports.enableAutoRenew = async (subscriptionId) => {
     subscription.cancelledAt = undefined;
     await subscription.save();
 
-    console.log(`✅ Subscription ${subscriptionId} auto-renewal re-enabled`);
     return { success: true, data: subscription, message: "Auto-renewal has been re-enabled." };
   } catch (error) {
     console.error("Error enabling auto-renewal:", error);
@@ -333,7 +329,6 @@ module.exports.getCombinedActiveDetails = async (companyProfileId) => {
     let valid = allActive.filter((s) => s.planId != null);
 
     if (!valid.length && allActive.length) {
-      console.log(`⚠️  [getCombinedActiveDetails] All ${allActive.length} subs are orphaned — attempting repair via Payment records`);
       const Payment = mongoose.model("Payment");
       const PlanLimits = mongoose.model("PlanLimits");
 
@@ -350,7 +345,6 @@ module.exports.getCombinedActiveDetails = async (companyProfileId) => {
           if (planDoc) {
             await Subscription.findByIdAndUpdate(sub._id, { planId: planDoc._id });
             sub.planId = planDoc;
-            console.log(`✅ Repaired sub ${sub._id} → plan "${planDoc.name}"`);
           }
         } catch (repairErr) {
           console.error(`⚠️  Could not repair sub ${sub._id}:`, repairErr.message);
@@ -364,7 +358,6 @@ module.exports.getCombinedActiveDetails = async (companyProfileId) => {
           await Subscription.updateMany({ _id: { $in: allActive.map((s) => s._id) } }, { planId: freePlan._id });
           const repaired = await Subscription.find({ companyProfileId, status: "active", endDate: { $gt: new Date() } }).populate("planId");
           valid.push(...repaired.filter((s) => s.planId != null));
-          console.log(`✅ Last-resort: linked ${valid.length} subs to Free plan`);
         }
       }
     }
@@ -433,7 +426,6 @@ module.exports.markExpiredSubscriptions = async () => {
       { status: { $ne: "expired" }, endDate: { $lte: new Date() } },
       { status: "expired" }
     );
-    console.log(`✅ Marked ${result.modifiedCount} subscriptions as expired`);
     return { success: true, count: result.modifiedCount };
   } catch (error) {
     console.error("Error marking expired subscriptions:", error);

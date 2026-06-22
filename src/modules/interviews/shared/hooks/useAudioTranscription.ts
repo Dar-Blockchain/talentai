@@ -422,8 +422,7 @@ export const useAudioTranscription = ({
       const FRAMES_TO_ACTIVATE = 8;     // 8 × 64 ms = ~512 ms — filters coughs, throat clears, keyboard clicks
       const FRAMES_TO_RELEASE  = 12;    // 12 × 64 ms = ~768 ms of silence to deactivate
 
-      transcriber.on('open', ({ id: aaiSessionId }: any) => {
-        console.log('✅ AssemblyAI connected, session:', aaiSessionId);
+      transcriber.on('open', (_openData: any) => {
         setIsConnecting(false);
 
         source.connect(processor);
@@ -479,7 +478,7 @@ export const useAudioTranscription = ({
           transcriber.sendAudio(int16Buffer.buffer);
           audioPacketsSent++;
           const now = Date.now();
-          if (now - lastLogTime > 5000) { console.log(`📡 Streaming: ${audioPacketsSent} packets`); lastLogTime = now; }
+          if (now - lastLogTime > 5000) { lastLogTime = now; }
         };
 
         addTranscriptDebugLog('🎤 Streaming started');
@@ -493,7 +492,6 @@ export const useAudioTranscription = ({
       });
 
       transcriber.on('close', () => {
-        console.log('🔌 AssemblyAI connection closed');
         setIsConnecting(false);
         addTranscriptDebugLog('🔌 Streaming stopped');
       });

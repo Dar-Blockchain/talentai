@@ -24,7 +24,6 @@ if (
     accessKeyId: _accessKeyId,
     secretAccessKey: _secretAccessKey,
   };
-  console.log("✅ AWS Bedrock: Using explicit credentials from .env");
 } else {
   console.warn(
     "⚠️ AWS Bedrock: No valid explicit credentials in .env — using default credential chain (AWS profile/IAM role/bearer token)"
@@ -37,11 +36,6 @@ const REGION = process.env.AWS_BEDROCK_REGION || "us-east-1";
 const MODEL_ID = process.env.BEDROCK_MODEL_ID || "openai.gpt-oss-120b-1:0";
 const FAST_MODEL_ID = process.env.BEDROCK_FAST_MODEL_ID || MODEL_ID;
 const BEARER_TOKEN = process.env.AWS_BEARER_TOKEN_BEDROCK;
-
-console.log(`🤖 Bedrock model: ${MODEL_ID} (region: ${REGION})`);
-if (FAST_MODEL_ID !== MODEL_ID) {
-  console.log(`⚡ Bedrock fast model: ${FAST_MODEL_ID}`);
-}
 
 /**
  * Strip <think>/<thinking> reasoning tags from model responses.

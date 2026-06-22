@@ -37,11 +37,6 @@ const FROM_ADDRESS =
 // Verify SMTP at startup so misconfigurations are visible immediately
 transporter
   .verify()
-  .then(() =>
-    console.log(
-      `📧 SMTP ready: ${process.env.EMAIL_HOST}:${process.env.EMAIL_PORT || 465}`
-    )
-  )
   .catch((err) =>
     console.error("❌ SMTP verification failed:", err.message)
   );
@@ -98,7 +93,6 @@ const sendOTP = async (email, otp, language = "fr") => {
   };
   try {
     await transporter.sendMail(mailOptions);
-    console.log("✅ OTP email sent to", email);
     return true;
   } catch (error) {
     console.error("❌ OTP email failed:", error.message);
@@ -121,7 +115,6 @@ const sendCompanyInvitation = async (to, orgName, role, inviterEmail, invitation
   };
   try {
     await transporter.sendMail(mailOptions);
-    console.log(`✅ Company invitation sent to ${to}`);
     return true;
   } catch (error) {
     console.error("❌ Company invitation failed:", error.message);
@@ -144,7 +137,6 @@ const sendInterviewAssessmentEmail = async (candidateEmail, candidateName, postT
   };
   try {
     await transporter.sendMail(mailOptions);
-    console.log(`✅ Interview assessment email sent to ${candidateEmail}`);
     return true;
   } catch (error) {
     console.error("❌ Interview assessment email failed:", error.message);
@@ -167,7 +159,6 @@ const sendInterviewCompletionNotificationToCompany = async (companyEmail, compan
   };
   try {
     await transporter.sendMail(mailOptions);
-    console.log(`✅ Interview completion notification sent to ${companyEmail}`);
     return true;
   } catch (error) {
     console.error("❌ Interview completion notification failed:", error.message);
@@ -190,7 +181,6 @@ const sendInterviewInvitation = async (candidateEmail, candidateName, jobTitle, 
   };
   try {
     await transporter.sendMail(mailOptions);
-    console.log(`✅ Interview invitation sent to ${candidateEmail}`);
     return true;
   } catch (error) {
     console.error("❌ Interview invitation failed:", error.message);
@@ -220,7 +210,6 @@ const sendInterviewNudge = async (candidateEmail, { firstName, jobTitle, company
   };
   try {
     await transporter.sendMail(mailOptions);
-    console.log(`✅ Interview nudge #${nudgeNumber} sent to ${candidateEmail}`);
     return true;
   } catch (error) {
     console.error(`❌ Interview nudge #${nudgeNumber} failed:`, error.message);
@@ -242,7 +231,6 @@ const sendCandidateEmail = async (to, candidateName, fromCompanyName, subject, m
   };
   try {
     await transporter.sendMail(mailOptions);
-    console.log(`✅ Candidate email sent to ${to}`);
     return true;
   } catch (error) {
     console.error("❌ Candidate email failed:", error.message);
@@ -264,7 +252,6 @@ const sendPlanUpgradeReminder = async (companyEmail, companyName, language = "en
   };
   try {
     await transporter.sendMail(mailOptions);
-    console.log(`✅ Plan upgrade reminder sent to ${companyEmail}`);
     return true;
   } catch (error) {
     console.error(`❌ Plan upgrade reminder failed for ${companyEmail}:`, error.message);
@@ -286,7 +273,6 @@ const sendCampaignInvitation = async (to, { participantName, companyName, campai
   };
   try {
     await transporter.sendMail(mailOptions);
-    console.log(`✅ Campaign invitation sent to ${to}`);
     return true;
   } catch (error) {
     console.error("❌ Campaign invitation failed:", error.message);
@@ -309,7 +295,6 @@ const sendCampaignDeadlineReminder = async (to, { participantName, companyName, 
   };
   try {
     await transporter.sendMail(mailOptions);
-    console.log(`✅ Campaign deadline reminder sent to ${to}`);
     return true;
   } catch (error) {
     console.error("❌ Campaign deadline reminder failed:", error.message);
@@ -329,7 +314,6 @@ const sendEnterpriseInquiry = async ({ name, email, company, message }) => {
   };
   try {
     await transporter.sendMail(mailOptions);
-    console.log(`✅ Enterprise inquiry email received from ${email}`);
     return true;
   } catch (error) {
     console.error("❌ Enterprise inquiry email failed:", error.message);
@@ -351,7 +335,6 @@ const sendJobMatchEmail = async (candidateEmail, { candidateName, jobTitle, comp
   };
   try {
     await transporter.sendMail(mailOptions);
-    console.log(`✅ Job match email sent to ${candidateEmail} (${jobTitle})`);
     return true;
   } catch (error) {
     console.error(`❌ Job match email failed for ${candidateEmail}:`, error.message);

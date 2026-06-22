@@ -54,8 +54,6 @@ function getInterviewGoal(interviewType: string, params: URLParams): string {
  * Build interview configuration from URL parameters
  */
 export function buildInterviewConfigFromURL(params: URLParams): InterviewConfig {
-  console.log('🔧 Building interview config from URL params:', params);
-
   // Map URL type to interviewType enum
   const interviewTypeMap: { [key: string]: InterviewConfig['interviewType'] } = {
     'hr': 'HR_INTERVIEW',
@@ -144,10 +142,7 @@ export function buildInterviewConfigFromURL(params: URLParams): InterviewConfig 
       focusAreas: params.focusAreas
     };
 
-    console.log('🎯 Pipeline config detected:', config.pipelineConfig);
   }
-
-  console.log('✅ Generated interview config:', config);
 
   return config;
 }

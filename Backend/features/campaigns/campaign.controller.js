@@ -108,7 +108,6 @@ exports.createInternalCampaign = async (req, res) => {
                   }).then((sent) => sent && CampaignParticipant.findByIdAndUpdate(p._id, { invitationSentAt: new Date() }))
                 )
               );
-              console.log(`ðŸ“§ Campaign invitation emails sent: ${results.filter((r) => r.status === "fulfilled").length}/${emailable.length}`);
             } catch (err) {
               console.warn("âš ï¸ Campaign bulk invitation emails failed:", err.message);
             }
@@ -335,7 +334,6 @@ exports.updateCampaignStatus = async (req, res) => {
               }).then((sent) => sent && CampaignParticipant.findByIdAndUpdate(p._id, { invitationSentAt: new Date() }))
             )
           );
-          console.log(`ðŸ“§ Campaign activation: emails sent to ${results.filter((r) => r.status === "fulfilled").length}/${participants.length}`);
         } catch (err) {
           console.warn("âš ï¸ Campaign activation emails failed:", err.message);
         }

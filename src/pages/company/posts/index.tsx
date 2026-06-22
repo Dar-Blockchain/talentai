@@ -9,10 +9,7 @@ const PostsPage: NextPageWithLayout = () => {
   const pageId = useRef(Math.random().toString(36).slice(2, 8));
 
 useEffect(() => {
-  console.log(`POSTS PAGE MOUNT ${pageId.current}`);
-
   return () => {
-    console.log(`POSTS PAGE UNMOUNT ${pageId.current}`);
   };
 }, []);
   useCompanyAccess("canViewJobPosts");

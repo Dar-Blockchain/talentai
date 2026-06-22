@@ -1,4 +1,4 @@
-const Profile = require('../../../features/users/profile.model');
+﻿const Profile = require('../../../features/users/profile.model');
 const SkillInterviewAssessment = require('./skill-interview.model')
 
 // ========== HELPER - Functions for score calculation ==========
@@ -24,14 +24,12 @@ const getExperienceLabel = (level) => {
 // ========== CREATE ==========
 const createAssessment = async (data, rawInterviewData, userId) => {
   try {
-    console.log('Creating skill interview assessment:', data);
 
     // Idempotency: if an assessment already exists for this sessionId, return it
     const sessionId = rawInterviewData?.sessionId;
     if (sessionId) {
       const existing = await SkillInterviewAssessment.findOne({ 'interviewData.sessionId': sessionId }).select('_id');
       if (existing) {
-        console.log(`Assessment already exists for sessionId ${sessionId}, returning existing assessment ${existing._id}`);
         return await getAssessmentById(existing._id);
       }
     }
@@ -45,7 +43,6 @@ const createAssessment = async (data, rawInterviewData, userId) => {
     const savedAssessment = await assessment.save();
 
     const candidateId = data.candidateId; // User._id
-    console.log('Skill interview assessment created:', savedAssessment._id, '— proficiency:', experienceLevel);
 
     // If candidate exists, handle profile updates and remove previous assessments
     if (candidateId) {
@@ -72,7 +69,6 @@ const createAssessment = async (data, rawInterviewData, userId) => {
 
       if (previousDeletedCount > 0) {
         await SkillInterviewAssessment.deleteMany({ _id: { $in: previousIds } });
-        console.log(`Deleted ${previousDeletedCount} previous assessment(s) for skill "${skillName}" and candidate ${candidateId}`);
       }
 
       // proficiencyLevel / experienceLevel already calculated above; derive levelconfirmed
@@ -99,7 +95,6 @@ const createAssessment = async (data, rawInterviewData, userId) => {
         throw new Error(`Profile not found for candidate: ${candidateId}`);
       }
 
-      console.log(`Profile updated — quota: ${updatedProfile.quota}`);
 
       // Handle skill type - manage technical vs soft skills
       const skillType = data.skillType || 'technical';
@@ -133,14 +128,12 @@ const createAssessment = async (data, rawInterviewData, userId) => {
             },
             { arrayFilters: [{ 'elem.name': skillName }], new: true }
           );
-          console.log(`Soft skill "${skillName}" updated`);
         } else {
           await Profile.findByIdAndUpdate(
             profileId,
             { $addToSet: { softSkills: { ...softSkill, createdAt: new Date(), updatedAt: new Date() } } },
             { new: true }
           );
-          console.log(`Soft skill "${skillName}" added`);
         }
       } else {
         const technicalSkill = {
@@ -173,14 +166,12 @@ const createAssessment = async (data, rawInterviewData, userId) => {
             },
             { arrayFilters: [{ 'elem.name': skillName }], new: true }
           );
-          console.log(`Technical skill "${skillName}" updated`);
         } else {
           await Profile.findByIdAndUpdate(
             profileId,
             { $addToSet: { skills: { ...technicalSkill, createdAt: new Date(), updatedAt: new Date() } } },
             { new: true }
           );
-          console.log(`Technical skill "${skillName}" added`);
         }
       }
     }

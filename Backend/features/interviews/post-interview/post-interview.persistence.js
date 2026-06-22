@@ -42,10 +42,6 @@ async function persistInterviewResults(sessionId, result, candidateId, postId) {
       { new: true, upsert: true }
     );
 
-    if (saved) {
-      console.log(`✅ [DB] Interview results saved — candidate: ${candidateId}, post: ${postId}`);
-    }
-
     // Update JobApplication status and send notifications
     if (candidateId && postId) {
       try {

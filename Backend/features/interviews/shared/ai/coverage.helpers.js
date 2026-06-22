@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 
 /**
  * Pure utility functions for coverage-area arithmetic.
@@ -61,7 +61,6 @@ function calculateAreaQualityAverage(conversation, areaName, questionCount) {
   if (scores.length === 0) return 50;
 
   const average = scores.reduce((sum, s) => sum + s, 0) / scores.length;
-  console.log(`📊 [Quality Analysis] ${areaName}: ${scores.length} responses, avg quality: ${average.toFixed(1)}/100`);
   return average;
 }
 

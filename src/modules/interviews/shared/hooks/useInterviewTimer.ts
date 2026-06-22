@@ -37,7 +37,6 @@ export const useInterviewTimer = ({
       });
     }, 1000);
 
-    console.log(`⏱️ Interview timer started (max: ${maxMinutes} minutes)`);
   }, [showNotification]);
 
   const stopTimer = useCallback(() => {

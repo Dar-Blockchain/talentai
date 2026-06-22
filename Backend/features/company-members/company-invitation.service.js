@@ -61,9 +61,6 @@ const _buildInvitationLink = (token, invitationId, company) =>
 const _sendInvitationEmail = async (email, senderName, role, invitationLink, isResend = false, language = "en") => {
   try {
     await sendCompanyInvitation(email, senderName, role, senderName, invitationLink, language);
-    if (isResend) {
-      console.log(`âœ… Invitation resent to ${email}`);
-    }
   } catch (error) {
     console.error(`Failed to send ${isResend ? "resend" : "company"} invitation email:`, error);
   }
@@ -282,7 +279,6 @@ module.exports.acceptInvitation = async (invitationId, userId, userEmail, token)
       { new: true }
     );
 
-    console.log("âœ… Employee permissions created successfully for user:", userId);
   } catch (permError) {
     console.error("âš ï¸ Warning: Failed to create employee permissions:", permError.message);
     // Don't throw - membership creation was successful, continue with invitation acceptance

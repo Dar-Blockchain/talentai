@@ -133,7 +133,6 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
       .lean();
 
     if (savedAnalysis) {
-      console.log(`âœ… Using saved CV analysis (id: ${savedAnalysis._id})`);
       resumeAnalysis = {
         name:              savedAnalysis.name,
         email:             savedAnalysis.email,
@@ -150,7 +149,6 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
         .map(e => `${e.position || ""} at ${e.company || ""} (${e.startDate || ""}â€“${e.endDate || ""}): ${e.description || ""}`)
         .join("\n");
     } else {
-      console.log(`âš ï¸  No saved CV analysis and no resume file â€” matching with profile data only`);
     }
 
     const matchResult = await calculateMatchScoreWithBedrock(profile, post, resumeAnalysis, resumeText);
@@ -208,12 +206,9 @@ module.exports.createJobApplication = async (applicationData) => {
     const thresholdScore = post?.thresholdScore || 60; // Default threshold is 60
 
     if (cleanData.matchScore < thresholdScore) {
-      console.log(`\nâš ï¸  [AUTO-REJECT TRIGGERED] Match Score (${cleanData.matchScore}) is below threshold (${thresholdScore})`);
       cleanData.recruiterDecision = "rejected";
       cleanData.recruiterDecisionAt = new Date();
       cleanData.rejectionReason = `Candidate's match score (${cleanData.matchScore}/100) is below the required threshold (${thresholdScore}/100). Automatic rejection based on qualification mismatch.`;
-      console.log(`   âœ“ Auto-rejection applied`);
-      console.log(`   âœ“ Rejection Reason: ${cleanData.rejectionReason}`);
     }
 
     const application = await JobApplication.create(cleanData);

@@ -81,9 +81,6 @@ async function indexJobDescription(jobId, jobData) {
   }));
 
   await col.insertMany(docs);
-  console.log(
-    `âœ… Indexed ${docs.length} JD chunks for job ${jobId}`
-  );
 }
 
 // â”€â”€â”€ Question Indexing & Deduplication â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -263,7 +260,6 @@ async function ensureIndexes() {
     await qCol.createIndex({ interviewId: 1 });
     await qCol.createIndex({ interviewId: 1, createdAt: 1 });
 
-    console.log("âœ… RAG standard indexes ensured");
   } catch (error) {
     console.warn("âš ï¸ Could not create RAG indexes:", error.message);
   }

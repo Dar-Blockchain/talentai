@@ -1,4 +1,4 @@
-const logger = require('../../../utils/logger');
+﻿const logger = require('../../../utils/logger');
 
 const AI_TIMEOUT_MS            = 30_000;
 const RESPONSE_RATE_LIMIT_MS   = 1_500;
@@ -53,13 +53,6 @@ async function startIntelligentSilenceMonitoring(socket, sessionId, decision, se
     stage2: Math.floor(baseThresholds.stage2 * multiplier),
     stage3: Math.floor(baseThresholds.stage3 * multiplier),
   };
-
-  console.log(`⏱️ [Smart Silence] ${sessionId} — quality: ${responseQuality}, complexity: ${complexity}`, {
-    stage1: `${thresholds.stage1 / 1000}s`,
-    stage2: `${thresholds.stage2 / 1000}s`,
-    stage3: `${thresholds.stage3 / 1000}s`,
-  });
-  // Timers removed for MVP — manual "Next" button only
 }
 
 module.exports = {

@@ -47,7 +47,6 @@ class DecisionEngineAI {
         if (areaData?.startTime) {
           const elapsed = Date.now() - areaData.startTime;
           if (elapsed >= session.timeBudgetPerAreaMs) {
-            console.log(`â° [Time Budget] Exhausted for "${currentArea}" (${Math.round(elapsed / 1000)}s)`);
             const nextArea = findLeastAskedArea(session.coverage.areas, currentArea);
             return {
               decision: 'explore_new_area',
@@ -65,10 +64,10 @@ class DecisionEngineAI {
         const quality     = calculateAreaQualityAverage(session.conversation, currentArea, areaQuestionCounts[currentArea]);
         let maxForArea    = MAX_QUESTIONS_PER_AREA;
 
-        if      (quality >= QUALITY_THRESHOLDS.EXCELLENT) { maxForArea = QUESTIONS_PER_QUALITY.EXCELLENT; console.log(`âš¡ [Smart Limit] Excellent (${quality.toFixed(1)}) in ${currentArea} â€” max ${maxForArea}q`); }
-        else if (quality >= QUALITY_THRESHOLDS.GOOD)      { maxForArea = QUESTIONS_PER_QUALITY.GOOD;      console.log(`âœ… [Smart Limit] Good (${quality.toFixed(1)}) in ${currentArea} â€” max ${maxForArea}q`); }
-        else if (quality >= QUALITY_THRESHOLDS.MODERATE)  { maxForArea = QUESTIONS_PER_QUALITY.MODERATE;  console.log(`ðŸ“Š [Smart Limit] Moderate (${quality.toFixed(1)}) in ${currentArea} â€” max ${maxForArea}q`); }
-        else                                               { maxForArea = QUESTIONS_PER_QUALITY.POOR;      console.log(`âš ï¸  [Smart Limit] Poor (${quality.toFixed(1)}) in ${currentArea} â€” max ${maxForArea}q`); }
+        if      (quality >= QUALITY_THRESHOLDS.EXCELLENT) { maxForArea = QUESTIONS_PER_QUALITY.EXCELLENT;; }
+        else if (quality >= QUALITY_THRESHOLDS.GOOD)      { maxForArea = QUESTIONS_PER_QUALITY.GOOD;     ; }
+        else if (quality >= QUALITY_THRESHOLDS.MODERATE)  { maxForArea = QUESTIONS_PER_QUALITY.MODERATE; ; }
+        else                                               { maxForArea = QUESTIONS_PER_QUALITY.POOR;     ; }
 
         if (areaQuestionCounts[currentArea] >= maxForArea) {
           const forced = {
@@ -82,7 +81,6 @@ class DecisionEngineAI {
             forcedBySmartLimit: true,
             areaQuality: quality,
           };
-          console.log(`âœ… [Forced] Moving to: ${forced.targetArea}`);
           return forced;
         }
       }
@@ -98,7 +96,6 @@ class DecisionEngineAI {
 
         // First skip in this area: stay and try a different angle
         if (areaSkipCount <= 1) {
-          console.log(`â­ï¸ [Skip Rule] Candidate ${reason} in "${currentArea}" (skip #${areaSkipCount}) â€” staying, different angle`);
           return {
             decision:     'continue_probing',
             targetArea:   currentArea,
@@ -111,7 +108,6 @@ class DecisionEngineAI {
 
         // Second+ skip: give up on this area
         const nextArea = findLeastAskedArea(session.coverage.areas, currentArea);
-        console.log(`â­ï¸ [Skip Rule] Candidate ${reason} twice in "${currentArea}" â€” moving to "${nextArea}"`);
         return {
           decision:         'explore_new_area',
           targetArea:       nextArea,

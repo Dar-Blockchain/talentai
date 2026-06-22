@@ -63,17 +63,13 @@ async function buildAgentPersona(jobData, interviewConfig) {
           ? llmQuestionStyles
           : evaluationFramework.questionStyles,
       };
-      console.log(`ðŸŽ¯ [Persona] LLM-generated focus areas: ${Object.keys(llmFocusAreas).join(', ')}`);
     } else {
       finalEvaluationFramework = evaluationFramework;
-      console.log(`âš ï¸ [Persona] LLM focus areas invalid weights (${totalWeight}), using static framework`);
     }
   } else {
     finalEvaluationFramework = evaluationFramework;
-    console.log(`âš ï¸ [Persona] No LLM focus areas returned, using static framework: ${Object.keys(evaluationFramework.focusAreas).join(', ')}`);
   }
 
-  console.log(`ðŸŽ­ [Persona] Built for ${jobCategory}/${interviewConfig.interviewType}: ${parsed.mustHaveSkills?.length || 0} must-haves, ${parsed.redFlags?.length || 0} red flags, ${Object.keys(finalEvaluationFramework.focusAreas).length} focus areas`);
 
   return {
     job: {
@@ -105,7 +101,6 @@ async function generateIntelligentGreeting(config, onChunk = null, persona = nul
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const startTime = Date.now();
-      console.log(`ðŸ¤– [Greeting] Attempt ${attempt}/${maxRetries} - Generating greeting...`);
 
       const greetingUser = SKILL_INTERVIEW_TYPES.includes(config.interviewType)
         ? buildSkillInterviewGreetingUser(config, persona)
@@ -125,12 +120,6 @@ async function generateIntelligentGreeting(config, onChunk = null, persona = nul
 
       const processingTime = Date.now() - startTime;
       const greeting = response.content.trim();
-
-      console.log('âœ… [Greeting] AI response received:', {
-        length: greeting.length,
-        preview: greeting.substring(0, 100) + (greeting.length > 100 ? '...' : ''),
-        processingTime: `${processingTime}ms`,
-      });
 
       if (greeting.length < 20) {
         throw new Error(`Malformed greeting (too short): "${greeting}"`);
@@ -153,7 +142,6 @@ async function generateIntelligentGreeting(config, onChunk = null, persona = nul
       lastError = error;
       console.error(`âŒ [Greeting] Attempt ${attempt}/${maxRetries} failed:`, error.message);
       if (attempt < maxRetries) {
-        console.log('ðŸ”„ [Greeting] Retrying in 500ms...');
         await new Promise(resolve => setTimeout(resolve, 500));
       }
     }
@@ -190,7 +178,6 @@ async function generateSilencePrompt(session, silenceData) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const config = session.config;
-      console.log(`ðŸ”‡ [Silence] Attempt ${attempt}/${maxRetries} - Generating silence prompt...`);
 
       const response = await bedrock.callLLM({
         systemPrompt: 'You are a supportive interviewer. Your task is to generate ONLY the encouraging text - nothing else. Be empathetic and natural.',
@@ -281,7 +268,6 @@ async function generateFinalReport(session) {
     effectiveSkillsScore        = runningData.scores.skills;
     effectiveDepthScore         = runningData.scores.depth;
     effectiveCommunicationScore = runningData.scores.communication;
-    console.log(`ðŸ“Š [FinalReport] Using running score: overall=${finalScore} (q=${qualityScore} c=${coverageScore} s=${effectiveSkillsScore} d=${effectiveDepthScore} comm=${effectiveCommunicationScore})`);
   } else {
     console.warn('âš ï¸ [FinalReport] No running score found, computing from scratch');
     const responseQualities = candidateProfile.responseQualities || [];
@@ -432,7 +418,6 @@ async function incrementAreaQuestionCount(sessionManager, sessionId, areaName) {
     area.lastQuestionTime  = new Date().toISOString();
 
     await sessionManager.updateCoverage(sessionId, session.coverage);
-    console.log(`ðŸ“Š Area "${areaName}" now has ${area.questionsAsked} questions asked`);
   } catch (error) {
     console.error('Error incrementing area question count:', error);
   }

@@ -336,7 +336,6 @@ function computeRunningScore(session, updatedProfile, finalCoverage, analysis) {
     lastUpdated: new Date().toISOString(),
   };
 
-  console.log(`ðŸ“Š [RunningScore] overall=${overall} (q=${qualityScore} c=${coverageScore} s=${effectiveSkills} d=${effectiveDepth} comm=${effectiveComm})${isNonAnswering ? ' NON-ANSWERING' : ''}`);
   return result;
 }
 
@@ -354,7 +353,6 @@ async function detectQuestionComplexity(questionText) {
       useFastModel: true,
     });
     const parsed = AIUtils.parseJSONResponse(response.content, 'detectQuestionComplexity');
-    console.log('ðŸ” [Complexity] Detected:', { complexity: parsed.complexity, estimatedThinkingTime: parsed.estimatedThinkingTime });
     return parsed.complexity || 'medium';
   } catch (error) {
     console.error('âŒ Error detecting question complexity:', error.message);

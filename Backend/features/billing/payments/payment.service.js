@@ -1,4 +1,4 @@
-const Payment = require("./payment.model");
+﻿const Payment = require("./payment.model");
 const Profile = require("../../users/profile.model");
 
 module.exports.getPaymentByStripeSessionId = async (stripeSessionId) => {
@@ -83,7 +83,6 @@ module.exports.updatePaymentStatusWithProfileLink = async (paymentId, status, ad
     Object.assign(payment, additionalData);
     await payment.save({ validateBeforeSave: true });
 
-    console.log(`📌 [updatePaymentStatusWithProfileLink] Payment ${paymentId} status updated to: ${status}`);
 
     if (status === "completed" && payment.planId && payment.companyProfileId) {
       try {
@@ -93,18 +92,15 @@ module.exports.updatePaymentStatusWithProfileLink = async (paymentId, status, ad
 
           if (!profile.payments.includes(paymentId)) {
             profile.payments.push(paymentId);
-            console.log(`✅ [Fallback] Payment ${paymentId} added to profile payments array`);
           }
 
           const planLimitsChanged = !profile.planLimits || profile.planLimits.toString() !== payment.planId.toString();
           if (planLimitsChanged) {
             profile.planLimits = payment.planId;
-            console.log(`✅ [Fallback] Profile planLimits updated to: ${payment.planId}`);
           }
 
           if (!profile.payments.includes(paymentId) || planLimitsChanged) {
             await profile.save();
-            console.log(`✅ [Fallback] Profile ${payment.companyProfileId} saved`);
           }
         }
       } catch (fallbackErr) {

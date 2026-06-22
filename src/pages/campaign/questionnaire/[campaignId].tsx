@@ -74,7 +74,7 @@ const CampaignQuestionnairePage: React.FC = () => {
         campaign={campaign}
         participantId={participantId}
         onBack={() => router.push('/')}
-        onComplete={() => console.log('[Campaign] Questionnaire completed', { campaignId, participantId })}
+        onComplete={() => {}}
       />
     </>
   );

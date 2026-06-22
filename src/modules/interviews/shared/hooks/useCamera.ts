@@ -40,7 +40,6 @@ export const useCamera = ({ showNotification }: UseCameraOptions): UseCameraRetu
           });
         }
 
-        console.log('✅ Camera initialized successfully');
       } catch (error) {
         console.error('❌ Camera initialization error:', error);
 

@@ -83,7 +83,6 @@ exports.createPost = async (req, res) => {
               activeSubscription: freeSub._id,
               $addToSet: { subscriptions: freeSub._id },
             });
-            console.log(`✅ Auto-assigned Free plan to company ${userProfile._id}`);
           }
         }
 
@@ -275,7 +274,6 @@ exports.updatePost = async (req, res) => {
         });
       }
       updateData.thresholdScore = score;
-      console.log(`📊 Updated thresholdScore to: ${score}`);
     }
 
     if (updateData.thresholdScoreInterview !== undefined) {
@@ -288,7 +286,6 @@ exports.updatePost = async (req, res) => {
         });
       }
       updateData.thresholdScoreInterview = score;
-      console.log(`📊 Updated thresholdScoreInterview to: ${score}`);
     }
 
     const post = await postService.updatePost(
@@ -359,9 +356,6 @@ exports.getPostsByUserTopSkills = async (req, res) => {
     const page = req.query.page || 1;
     const limit = req.query.limit || 10;
 
-    console.log(
-      `📥 [getPostsByUserTopSkills] Extract pagination - page: ${page}, limit: ${limit}`,
-    );
 
     const result = await postService.getPostsByUserTopSkill(
       userId,
@@ -419,7 +413,6 @@ exports.getJobInterviewConfig = async (req, res) => {
     }
 
     if (post.expirationDate && new Date(post.expirationDate) < new Date()) {
-      console.log("❌ Job post has expired");
       return res.status(404).json({
         success: false,
         error: "Job post has expired",
@@ -442,7 +435,6 @@ exports.getJobInterviewConfig = async (req, res) => {
         );
 
         if (!limitCheck.canUse) {
-          console.log("❌ Company has reached maximum monthly interviews limit");
 
           try {
             const notificationService = require("../notifications/notification.service");
@@ -513,14 +505,6 @@ exports.getJobInterviewConfig = async (req, res) => {
       typeof skill === "string" ? skill : skill.name,
     );
 
-    console.log("📊 Non-Pipeline Interview Skills Analysis:", {
-      companyName,
-      jobTitle,
-      experienceLevel,
-      technicalSkills,
-      softSkills,
-      totalSkills: technicalSkills.length + softSkills.length,
-    });
 
     const config = {
       interviewType: "HR_INTERVIEW",

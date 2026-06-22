@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+﻿const mongoose = require("mongoose");
 const PostInterviewAssessment = require("./post-interview.model");
 const Post = require("../../posts/post.model");
 const Profile = require("../../../features/users/profile.model");
@@ -70,7 +70,6 @@ const incrementMonthlyInterviewsUsage = async (companyId) => {
     });
 
     await subscriptionService.incrementUsage(target._id.toString(), 'monthlyInterviewsUsed', 1);
-    console.log(`✅ [incrementMonthlyInterviewsUsage] subscription ${target._id} monthlyInterviewsUsed +1`);
   } catch (error) {
     console.error('Error incrementing monthly interviews usage:', error.message || error);
     throw error;
@@ -103,7 +102,6 @@ module.exports.createPostInterviewAssessment = async (assessmentData) => {
     });
 
     if (existingAssessment) {
-      console.log(`✅ Assessment already exists for candidate ${assessmentData.candidate} and post ${assessmentData.post}. Returning existing assessment.`);
       return await PostInterviewAssessment.findById(existingAssessment._id)
         .populate({
           path: 'candidate',
@@ -156,7 +154,6 @@ module.exports.createPostInterviewAssessment = async (assessmentData) => {
   } catch (error) {
     // If duplicate key error occurs, return the existing assessment instead
     if (error.code === 11000) {
-      console.log('⚠️ Duplicate assessment detected. An assessment already exists for this candidate and post. Returning existing assessment...');
       const existingAssessment = await PostInterviewAssessment.findOne({
         candidate: assessmentData.candidate,
         post: assessmentData.post

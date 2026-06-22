@@ -45,7 +45,6 @@ const paymentSchema = new mongoose.Schema(
 paymentSchema.index({ userId: 1, status: 1 });
 paymentSchema.index({ companyProfileId: 1 });
 paymentSchema.index({ planId: 1 });
-paymentSchema.index({ stripeSessionId: 1 });
 paymentSchema.index({ createdAt: -1 });
 
 paymentSchema.post("save", async function (doc) {

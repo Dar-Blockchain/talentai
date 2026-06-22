@@ -18,15 +18,10 @@ const handleError = (res, error, defaultStatus = 500) => {
 // ========== CREATE ==========
 module.exports.createJobApplication = async (req, res) => {
   try {
-    console.log("\n" + "=".repeat(80));
-    console.log("ðŸš€ [JOB APPLICATION] - STARTING CREATE JOB APPLICATION PROCESS");
-    console.log("=".repeat(80));
 
     const userId = req.user._id;
     const { post: postId } = req.body;
 
-    console.log(`ðŸ“ Request received from user: ${userId}`);
-    console.log(`ðŸ“‹ Post ID: ${postId}`);
 
     // Validation: only post is required
     if (!postId) {
@@ -58,7 +53,6 @@ module.exports.createJobApplication = async (req, res) => {
     }
 
     // Get candidate profile from current user
-    console.log(`ðŸ” Fetching candidate profile for user: ${userId}`);
     const profileResult = await profileService.getProfileByUserId(userId);
     const profile = profileResult.profile;
     if (profile) {
@@ -71,19 +65,13 @@ module.exports.createJobApplication = async (req, res) => {
         error: "Candidate profile not found for current user",
       });
     }
-    console.log(`âœ… Candidate profile found: ${profile.firstName} ${profile.lastName}`);
-    console.log(`   - Profile ID: ${profile._id}`);
-    console.log(`   - Technical Skills: ${profile.skills?.length || 0} skills`);
-    console.log(`   - Soft Skills: ${profile.softSkills?.length || 0} skills`);
 
     // Extract cvAnalysis from profile (use the most recent one)
     const cvAnalysis = profile.cvAnalyses && profile.cvAnalyses.length > 0 
       ? profile.cvAnalyses[profile.cvAnalyses.length - 1]._id 
       : null;
-    console.log(`ðŸ“„ CV Analysis: ${cvAnalysis ? "Found (ID: " + cvAnalysis + ")" : "Not available"}`);
 
     // Get post and extract company from it
-    console.log(`\nðŸ” Fetching job post: ${postId}`);
     const post = await postService.getPostById(postId);
     if (!post) {
       console.error(`âŒ Job post not found: ${postId}`);
@@ -92,10 +80,6 @@ module.exports.createJobApplication = async (req, res) => {
         error: "Post not found",
       });
     }
-    console.log(`âœ… Job post found: "${post.jobDetails?.title || 'Untitled'}"`);
-    console.log(`   - Company ID: ${post.user}`);
-    console.log(`   - Required Skills: ${post.skillAnalysis?.requiredSkills?.length || 0} skills`);
-    console.log(`   - Soft Skills Required: ${post.skillAnalysis?.softSkills?.length || 0} skills`);
 
     const company = post.user; // Company is the user who created the post
 
@@ -107,21 +91,13 @@ module.exports.createJobApplication = async (req, res) => {
       // matchScore will be calculated automatically - DO NOT SET IT HERE
     };
 
-    console.log(`\n   âš™ï¸  Processing with jobApplicationService.createJobApplication()...`);
 
     const application = await jobApplicationService.createJobApplication(
       applicationData
     );
 
-    console.log(`\nâœ… [SUCCESS] Job application created!`);
-    console.log(`   - Application ID: ${application._id}`);
-    console.log(`   - Match Score: ${application.matchScore}/100`);
-    console.log(`   - Status: ${application.status}`);
-    console.log(`   - Recruiter Decision: ${application.recruiterDecision || "Pending"}`);
     if (application.recruiterDecision === "rejected") {
-      console.log(`   - Rejection Reason: ${application.rejectionReason}`);
     }
-    console.log("=".repeat(80) + "\n");
 
     res.status(201).json({
       success: true,
@@ -133,7 +109,6 @@ module.exports.createJobApplication = async (req, res) => {
   } catch (error) {
     console.error(`\nâŒ [ERROR] Error in createJobApplication: ${error.message}`);
     console.error("Stack trace:", error.stack);
-    console.log("=".repeat(80) + "\n");
     handleError(res, error, 400);
   }
 };
@@ -342,9 +317,6 @@ module.exports.inviteToInterview = async (req, res) => {
     const { interviewDate, interviewTime, interviewLink } = req.body;
     const companyId = req.user._id;
 
-    console.log("\n" + "=".repeat(80));
-    console.log("ðŸš€ [JOB APPLICATION] - STARTING INTERVIEW INVITATION PROCESS");
-    console.log("=".repeat(80));
 
     // Validation
     if (!applicationId) {
@@ -355,11 +327,8 @@ module.exports.inviteToInterview = async (req, res) => {
       });
     }
 
-    console.log(`ðŸ“ Request from company: ${companyId}`);
-    console.log(`ðŸ“‹ Application ID: ${applicationId}`);
 
     // Fetch the job application
-    console.log(`ðŸ” Fetching job application: ${applicationId}`);
     const application = await jobApplicationService.getJobApplicationById(applicationId);
 
     if (!application) {
@@ -370,10 +339,6 @@ module.exports.inviteToInterview = async (req, res) => {
       });
     }
 
-    console.log(`âœ… Job application found`);
-    console.log(`   - Candidate Profile ID: ${application.profile._id}`);
-    console.log(`   - Post ID: ${application.post._id}`);
-    console.log(`   - Status: ${application.status}`);
 
     // Verify that the current user is the company that owns this post
     if (application.company._id.toString() !== companyId.toString()) {
@@ -387,7 +352,6 @@ module.exports.inviteToInterview = async (req, res) => {
 
     // Fetch candidate profile to get email
     const Profile = require("../users/profile.model");
-    console.log(`ðŸ” Fetching candidate profile: ${application.profile._id}`);
     const candidateProfile = await Profile.findById(application.profile._id).populate("userId");
 
     if (!candidateProfile) {
@@ -404,12 +368,8 @@ module.exports.inviteToInterview = async (req, res) => {
         ? (candidateProfile.companyDetails?.name || candidateProfile.userId.username || "Company")
         : [candidateProfile.firstName, candidateProfile.lastName].filter(Boolean).join(" ") || candidateProfile.userId.username || "Candidate";
 
-    console.log(`âœ… Candidate profile found`);
-    console.log(`   - Email: ${candidateEmail}`);
-    console.log(`   - Name: ${candidateName}`);
 
     // Fetch post details
-    console.log(`ðŸ” Fetching job post: ${application.post._id}`);
     const post = await postService.getPostById(application.post._id);
 
     if (!post) {
@@ -427,13 +387,8 @@ module.exports.inviteToInterview = async (req, res) => {
     const companyProfile = await Profile.findOne({ userId: post.user._id }).select("companyDetails").lean();
     const companyName = companyProfile?.companyDetails?.name || post.user?.username || "Our Company";
 
-    console.log(`âœ… Job post found`);
-    console.log(`   - Title: ${jobTitle}`);
-    console.log(`   - Company: ${companyName}`);
-    console.log(`   - Language: ${jobLanguage}`);
 
     // Send interview invitation email
-    console.log(`ðŸ“§ Sending interview invitation email...`);
     const emailSent = await sendInterviewInvitation(
       candidateEmail,
       candidateName,
@@ -453,7 +408,6 @@ module.exports.inviteToInterview = async (req, res) => {
       });
     }
 
-    console.log(`âœ… Interview invitation email sent successfully`);
 
     // Persist the manual invite timestamp and clear any auto-rejection â€”
     // a manual invite is an explicit recruiter override of the threshold.
@@ -478,7 +432,6 @@ module.exports.inviteToInterview = async (req, res) => {
       candidateInterviewUrl
     ).catch(err => console.warn('âš ï¸ Failed to send invite in-app notification:', err.message));
 
-    console.log("=".repeat(80) + "\n");
 
     res.status(200).json({
       success: true,
@@ -496,7 +449,6 @@ module.exports.inviteToInterview = async (req, res) => {
   } catch (error) {
     console.error(`\nâŒ [ERROR] Error in inviteToInterview: ${error.message}`);
     console.error("Stack trace:", error.stack);
-    console.log("=".repeat(80) + "\n");
     handleError(res, error, 400);
   }
 };

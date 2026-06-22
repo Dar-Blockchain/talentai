@@ -1,4 +1,4 @@
-const CompanyMembershipModel = require("./company-membership.model");
+﻿const CompanyMembershipModel = require("./company-membership.model");
 const User = require("../users/user.model");
 
 // Get all memberships for a company owned by the current user (with optional search, role, department filter, sorting and pagination)
@@ -134,30 +134,24 @@ module.exports.deleteMembership = async (membershipId, companyOwnerId) => {
 
     // 1. Delete all employee permissions for this user
     await EmployeePermissionsModel.deleteMany({ userId });
-    console.log(`✅ Deleted employee permissions for user ${userId}`);
 
     // 2. Delete all company memberships for this user
     await CompanyMembershipModel.deleteMany({ user: userId });
-    console.log(`✅ Deleted all memberships for user ${userId}`);
 
     // 3. Delete user's profile
     const userProfile = await ProfileModel.findOne({ userId });
     if (userProfile) {
       await ProfileModel.findByIdAndDelete(userProfile._id);
-      console.log(`✅ Deleted profile for user ${userId}`);
     }
 
     // 4. Delete all CV analyses for this user
     await CVAnalysisModel.deleteMany({ user: userId });
-    console.log(`✅ Deleted all CV analyses for user ${userId}`);
 
     // 5. Delete all company invitations where this user was invitedBy
     await CompanyInvitationModel.deleteMany({ invitedBy: userId });
-    console.log(`✅ Deleted invitations sent by user ${userId}`);
 
     // 6. Finally, delete the user from the User table
     const deletedUser = await User.findByIdAndDelete(userId);
-    console.log(`✅ Deleted user account ${userId}`);
 
     return {
       success: true,

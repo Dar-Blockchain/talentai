@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Intelligent Interview Configuration Manager
  * Handles rich configuration for adaptive interview experiences
  */
@@ -624,7 +624,6 @@ class ConfigManager {
   buildIntelligenceContext(userConfig, baseConfig) {
     // 🔥 Check if this is a pipeline interview with specific skills
     if (userConfig.pipelineConfig) {
-      console.log('🎯 Pipeline config detected, building custom intelligence context');
       return this.buildPipelineIntelligenceContext(
         userConfig.pipelineConfig,
         userConfig.interviewType,
@@ -637,7 +636,6 @@ class ConfigManager {
     if (targetRole) {
       const roleFocusAreas = this.generateRoleFocusAreas(targetRole);
       if (roleFocusAreas) {
-        console.log(`🎯 Role-aware focus areas generated for "${targetRole}"`);
         return { ...baseConfig.intelligenceContext, focusAreas: roleFocusAreas };
       }
     }
@@ -658,7 +656,6 @@ class ConfigManager {
 
     // TECHNICAL SKILL INTERVIEW - Build from technical skills
     if (interviewType === 'TECHNICAL_SKILL' && pipelineConfig.skills && Array.isArray(pipelineConfig.skills)) {
-      console.log(`🔧 Building focus areas for ${pipelineConfig.skills.length} technical skills`);
 
       pipelineConfig.skills.forEach((skill, index) => {
         const skillName = skill.name || skill;
@@ -680,12 +677,10 @@ class ConfigManager {
         });
       });
 
-      console.log(`✅ Generated ${focusAreas.length} technical skill focus areas`);
     }
 
     // SOFT SKILL INTERVIEW - Build from soft skills
     else if (interviewType === 'SOFT_SKILL' && pipelineConfig.softSkills && Array.isArray(pipelineConfig.softSkills)) {
-      console.log(`🗣️ Building focus areas for ${pipelineConfig.softSkills.length} soft skills`);
 
       pipelineConfig.softSkills.forEach((softSkill, index) => {
         const skillName = typeof softSkill === 'string' ? softSkill : softSkill.name;
@@ -705,12 +700,10 @@ class ConfigManager {
         });
       });
 
-      console.log(`✅ Generated ${focusAreas.length} soft skill focus areas`);
     }
 
     // HR INTERVIEW - Use focus areas if provided
     else if (interviewType === 'HR_INTERVIEW' && pipelineConfig.focusAreas && Array.isArray(pipelineConfig.focusAreas)) {
-      console.log(`💼 Building focus areas for HR interview with ${pipelineConfig.focusAreas.length} areas`);
 
       pipelineConfig.focusAreas.forEach((area, index) => {
         const areaName = typeof area === 'string' ? area : area.name;
@@ -728,7 +721,6 @@ class ConfigManager {
         });
       });
 
-      console.log(`✅ Generated ${focusAreas.length} HR focus areas`);
     }
 
     // If no focus areas were generated, fall back to base context

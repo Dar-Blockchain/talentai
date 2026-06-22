@@ -68,7 +68,6 @@ export default function CampaignInterviewFlow({
       session={session}
       configData={{ jobData: null, interviewConfig: interviewConfig as any }}
       onBack={() => {
-        console.log('[Campaign] Interview ended', { campaignId, moduleType });
         setStep('preview');
       }}
     />

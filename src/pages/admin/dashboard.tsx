@@ -151,8 +151,7 @@ const DashboardAdmin = () => {
                     setSelectedUser(user);
                     setUserDialogOpen(true);
                   }}
-                  onUserDelete={(userId) => {
-                    console.log('Delete user:', userId);
+                  onUserDelete={(_userId) => {
                   }}
                   onManagePermissions={(user) => {
                     setSelectedCompany(user);
@@ -172,16 +171,14 @@ const DashboardAdmin = () => {
           open={userDialogOpen}
           user={selectedUser}
           onClose={() => setUserDialogOpen(false)}
-          onEdit={(user) => {
-            console.log('Edit user:', user);
+          onEdit={(_user) => {
           }}
         />
         <AssessmentDetailsDialog
           open={assessmentDialogOpen}
           assessment={selectedAssessment}
           onClose={() => setAssessmentDialogOpen(false)}
-          onEdit={(assessment) => {
-            console.log('Edit assessment:', assessment);
+          onEdit={(_assessment) => {
           }}
         />
         <CompanyPermissionsModal

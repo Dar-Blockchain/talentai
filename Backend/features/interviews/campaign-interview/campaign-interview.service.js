@@ -227,9 +227,6 @@ class CampaignInterviewService {
     try {
       // The Redis session manager is a shared singleton â€” skip re-initialization if already connected
       if (this.sessionManager.isConnected && this.sessionManager.client) {
-        console.log(
-          "âœ… [CampaignInterview] Service initialized (Redis already connected)",
-        );
         return true;
       }
       const ok = await Promise.race([
@@ -241,11 +238,6 @@ class CampaignInterviewService {
         console.warn("âš ï¸ [CampaignInterview] Redis init failed:", err.message);
         return false;
       });
-      console.log(
-        ok
-          ? "âœ… [CampaignInterview] Service initialized with Redis"
-          : "âš ï¸ [CampaignInterview] Service initialized WITHOUT Redis (degraded mode)",
-      );
       return true;
     } catch (e) {
       console.error("âŒ [CampaignInterview] Init error:", e.message);
@@ -436,8 +428,6 @@ class CampaignInterviewService {
   async _persistResults(session, finalReport) {
     const { campaignId, candidateId, moduleType, conversation = [], coverage } = session;
 
-    console.log(`ðŸ“ [CampaignInterview] _persistResults start â€” campaign=${campaignId} candidate=${candidateId} moduleType=${moduleType} turns=${conversation.length}`);
-
     if (!campaignId || !candidateId) {
       console.warn("âš ï¸ [CampaignInterview] Missing campaignId or candidateId â€” skipping persist");
       return;
@@ -456,10 +446,8 @@ class CampaignInterviewService {
         { $setOnInsert: { campaign: campaignId, employee: candidateId, status: 'IN_PROGRESS' } },
         { upsert: true, new: true, setDefaultsOnInsert: true },
       );
-      console.log(`âœ… [CampaignInterview] Upserted participant ${participant._id}`);
     }
 
-    console.log(`ðŸ“ [CampaignInterview] Found participant ${participant._id}, building response...`);
 
     const aiScore   = typeof finalReport.overallScore === "number" ? Math.round(finalReport.overallScore) : null;
     const aiSummary = finalReport.summary ?? null;
@@ -509,7 +497,6 @@ class CampaignInterviewService {
       };
     }
 
-    console.log(`ðŸ“ [CampaignInterview] Upserting CampaignResponse â€” campaign=${campaignId} participant=${participant._id} moduleType=${moduleType} aiScore=${aiScore} turns=${interviewTranscript.length}`);
 
     const savedResponse = await CampaignResponse.findOneAndUpdate(
       { campaign: campaignId, participant: participant._id, moduleType },
@@ -517,7 +504,6 @@ class CampaignInterviewService {
       { upsert: true, new: true, runValidators: false },
     );
 
-    console.log(`âœ… [CampaignInterview] CampaignResponse saved â€” _id=${savedResponse._id}`);
 
     participant.status         = "COMPLETED";
     participant.completedAt    = new Date();
@@ -530,7 +516,6 @@ class CampaignInterviewService {
 
     await participant.save();
 
-    console.log(`âœ… [CampaignInterview] Participant updated â€” _id=${participant._id} status=COMPLETED`);
   }
 
   // â”€â”€ Session storage â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -544,7 +529,6 @@ class CampaignInterviewService {
     }
     const key = mgr.sessionPrefix + sessionId;
     await mgr.client.setEx(key, mgr.sessionTTL, JSON.stringify(sessionData));
-    console.log(`âœ… [CampaignInterview] Session ${sessionId} stored in Redis`);
     return sessionData;
   }
 

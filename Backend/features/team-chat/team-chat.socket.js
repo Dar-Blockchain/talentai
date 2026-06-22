@@ -3,7 +3,6 @@ module.exports.initializeTeamChatNamespace = (io) => {
 
   teamChatNamespace.on('connection', (socket) => {
     const userId = socket.handshake.auth.userId;
-    console.log(`🟢 Team chat: User ${userId} connected (socket: ${socket.id})`);
 
     if (userId) {
       socket.join(`user:${userId}`);
@@ -22,10 +21,8 @@ module.exports.initializeTeamChatNamespace = (io) => {
     });
 
     socket.on('disconnect', (reason) => {
-      console.log(`🔴 Team chat: User ${userId} disconnected (reason: ${reason})`);
     });
   });
 
-  console.log('✅ Team chat namespace /team-chat initialized and ready');
   return teamChatNamespace;
 };
