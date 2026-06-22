@@ -1,17 +1,9 @@
 import React, { useState, useCallback } from 'react';
-import {
-  Box, Typography, Switch, Button, Alert, CircularProgress,
-  Divider, IconButton, Tooltip,
-} from '@mui/material';
-import {
-  Visibility as VisibilityIcon,
-  VisibilityOff as VisibilityOffIcon,
-  ContentCopy as ContentCopyIcon,
-  OpenInNew as OpenInNewIcon,
-  Info as InfoIcon,
-} from '@mui/icons-material';
+import { Eye, EyeOff, Copy, ExternalLink, Info } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
 import { useTranslation } from 'react-i18next';
+import { Spinner } from '@/modules/settings/shared/components';
+import { Switch } from '@/modules/shared/ui/shadcn/switch';
 import { TEAL as T, TEAL_BG as TBG, TEAL_BORDER as TBRD } from '@/modules/settings/shared/constants';
 
 const NAVY = "#0D1B2A";
@@ -64,68 +56,106 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({ userId, eff
   const privacyItems = [s('privacy_item_1'), s('privacy_item_2'), s('privacy_item_3'), s('privacy_item_4')];
 
   return (
-    <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-      <Box sx={{ px: 2.5, py: 2, borderBottom: "1px solid #F1F5F9" }}>
-        <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", color: NAVY }}>{s('title')}</Typography>
-        <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8", mt: 0.25 }}>{s('subtitle')}</Typography>
-      </Box>
-      <Box sx={{ p: 2.5 }}>
+    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+      <div className="px-5 py-4 border-b border-gray-100">
+        <p className="font-bold text-[0.95rem]" style={{ color: NAVY }}>{s('title')}</p>
+        <p className="text-[0.72rem] text-gray-400 mt-1">{s('subtitle')}</p>
+      </div>
+      <div className="p-5">
         {hasMembership && (
-          <Alert severity="info" sx={{ mb: 2.5, borderRadius: "10px", fontSize: "0.8rem", bgcolor: TBG, border: `1px solid ${TBRD}`, "& .MuiAlert-icon": { color: T } }}>
-            <Typography sx={{ fontWeight: 600, fontSize: "0.82rem", color: NAVY }}>{s('membership_title')}</Typography>
-            <Typography sx={{ fontSize: "0.78rem", color: "#6B7280", mt: 0.25 }}>{s('membership_subtitle')}</Typography>
-          </Alert>
+          <div className="mb-5 rounded-[10px] px-3 py-2.5 text-[0.8rem] bg-teal-50 border border-teal-200">
+            <p className="font-semibold text-[0.82rem]" style={{ color: NAVY }}>{s('membership_title')}</p>
+            <p className="text-[0.78rem] text-gray-500 mt-1">{s('membership_subtitle')}</p>
+          </div>
         )}
-        {error   && <Alert severity="error"   onClose={() => setError(null)}   sx={{ mb: 2, borderRadius: "10px", fontSize: "0.8rem" }}>{error}</Alert>}
-        {success && <Alert severity="success" onClose={() => setSuccess(null)} sx={{ mb: 2, borderRadius: "10px", fontSize: "0.8rem" }}>{success}</Alert>}
+        {error && (
+          <div className="mb-4 flex items-center justify-between rounded-[10px] bg-red-50 border border-red-200 px-3 py-2 text-[0.8rem] text-red-700">
+            <span>{error}</span>
+            <button type="button" onClick={() => setError(null)} className="text-red-500 hover:text-red-700">×</button>
+          </div>
+        )}
+        {success && (
+          <div className="mb-4 flex items-center justify-between rounded-[10px] bg-green-50 border border-green-200 px-3 py-2 text-[0.8rem] text-green-700">
+            <span>{success}</span>
+            <button type="button" onClick={() => setSuccess(null)} className="text-green-500 hover:text-green-700">×</button>
+          </div>
+        )}
 
-        <Box sx={{ p: 2, mb: 2.5, borderRadius: "12px", border: `1px solid ${effectiveIsPublic ? TBRD : "#E5E7EB"}`, bgcolor: effectiveIsPublic ? TBG : "#F9FAFB", display: "flex", alignItems: "center", gap: 2 }}>
-          <Box sx={{ width: 44, height: 44, borderRadius: "12px", flexShrink: 0, bgcolor: effectiveIsPublic ? T : "#94A3B8", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {effectiveIsPublic ? <VisibilityIcon sx={{ fontSize: 22, color: "#fff" }} /> : <VisibilityOffIcon sx={{ fontSize: 22, color: "#fff" }} />}
-          </Box>
-          <Box sx={{ flex: 1 }}>
-            <Typography sx={{ fontWeight: 700, fontSize: "0.88rem", color: NAVY }}>{effectiveIsPublic ? s('status_public') : s('status_private')}</Typography>
-            <Typography sx={{ fontSize: "0.75rem", color: "#6B7280", mt: 0.25 }}>{effectiveIsPublic ? s('desc_public') : s('desc_private')}</Typography>
-            {loading && <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.75 }}><CircularProgress size={12} sx={{ color: T }} /><Typography sx={{ fontSize: "0.72rem", color: "#6B7280" }}>{s('updating')}</Typography></Box>}
-          </Box>
-          <Switch checked={effectiveIsPublic} onChange={handleToggleVisibility} disabled={loading || hasMembership}
-            sx={{ "& .MuiSwitch-switchBase.Mui-checked": { color: T, "&:hover": { bgcolor: `${T}14` } }, "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { bgcolor: T } }} />
-        </Box>
+        <div
+          className="p-4 mb-5 rounded-xl flex items-center gap-4"
+          style={{ border: `1px solid ${effectiveIsPublic ? TBRD : "#E5E7EB"}`, backgroundColor: effectiveIsPublic ? TBG : "#F9FAFB" }}
+        >
+          <div
+            className="w-11 h-11 rounded-xl flex-shrink-0 flex items-center justify-center"
+            style={{ backgroundColor: effectiveIsPublic ? T : "#94A3B8" }}
+          >
+            {effectiveIsPublic ? <Eye size={22} className="text-white" /> : <EyeOff size={22} className="text-white" />}
+          </div>
+          <div className="flex-1">
+            <p className="font-bold text-[0.88rem]" style={{ color: NAVY }}>{effectiveIsPublic ? s('status_public') : s('status_private')}</p>
+            <p className="text-[0.75rem] text-gray-500 mt-1">{effectiveIsPublic ? s('desc_public') : s('desc_private')}</p>
+            {loading && (
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <Spinner size={12} />
+                <span className="text-[0.72rem] text-gray-500">{s('updating')}</span>
+              </div>
+            )}
+          </div>
+          <Switch
+            checked={effectiveIsPublic}
+            disabled={loading || hasMembership}
+            onCheckedChange={handleToggleVisibility}
+          />
+        </div>
 
-        <Divider sx={{ mb: 2.5 }} />
+        <hr className="mb-5 border-gray-200" />
 
-        <Box sx={{ mb: 2.5 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 1.25 }}>
-            <Typography sx={{ fontWeight: 700, fontSize: "0.88rem", color: NAVY }}>{s('url_title')}</Typography>
-            <Tooltip title={s('url_tooltip')}><IconButton size="small"><InfoIcon sx={{ fontSize: 15, color: "#CBD5E1" }} /></IconButton></Tooltip>
-          </Box>
-          <Box sx={{ p: 1.5, borderRadius: "10px", bgcolor: "#F9FAFB", border: "1px solid #E5E7EB", mb: 1.5 }}>
-            <Typography sx={{ fontSize: "0.78rem", fontFamily: "monospace", color: effectiveIsPublic ? NAVY : "#CBD5E1", wordBreak: "break-all" }}>{publicProfileUrl}</Typography>
-          </Box>
-          <Box sx={{ display: "flex", gap: 1.5 }}>
-            <Button size="small" variant="outlined" startIcon={<ContentCopyIcon sx={{ fontSize: "14px !important" }} />} onClick={handleCopyLink} disabled={!effectiveIsPublic}
-              sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.75rem", borderRadius: "8px", px: 1.5, borderColor: "#E5E7EB", color: "#6B7280", "&:hover": { borderColor: T, bgcolor: TBG, color: T }, "&.Mui-disabled": { borderColor: "#F1F5F9", color: "#CBD5E1" } }}>
+        <div className="mb-5">
+          <div className="flex items-center gap-1.5 mb-3">
+            <p className="font-bold text-[0.88rem]" style={{ color: NAVY }}>{s('url_title')}</p>
+            <span title={s('url_tooltip')}>
+              <Info size={15} className="text-gray-300" />
+            </span>
+          </div>
+          <div className="p-3 rounded-[10px] bg-gray-50 border border-gray-200 mb-3">
+            <p className={`text-[0.78rem] font-mono break-all ${effectiveIsPublic ? "" : "text-gray-300"}`} style={effectiveIsPublic ? { color: NAVY } : undefined}>
+              {publicProfileUrl}
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              disabled={!effectiveIsPublic}
+              className="inline-flex items-center gap-1.5 text-[0.75rem] font-semibold rounded-lg px-3 py-1.5 border border-gray-200 text-gray-500 hover:border-teal-600 hover:bg-teal-50 hover:text-teal-600 disabled:border-gray-100 disabled:text-gray-300 disabled:hover:bg-transparent disabled:hover:border-gray-100 transition-colors"
+            >
+              <Copy size={14} />
               {copied ? s('copied') : s('copy_link')}
-            </Button>
-            <Button size="small" variant="contained" startIcon={<OpenInNewIcon sx={{ fontSize: "14px !important" }} />} onClick={handleViewProfile} disabled={!effectiveIsPublic}
-              sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.75rem", borderRadius: "8px", px: 1.5, bgcolor: T, color: "#fff", "&:hover": { bgcolor: "#0F766E" }, "&.Mui-disabled": { bgcolor: "#F1F5F9", color: "#CBD5E1" } }}>
+            </button>
+            <button
+              type="button"
+              onClick={handleViewProfile}
+              disabled={!effectiveIsPublic}
+              className="inline-flex items-center gap-1.5 text-[0.75rem] font-semibold rounded-lg px-3 py-1.5 bg-teal-600 text-white hover:bg-teal-700 disabled:bg-gray-100 disabled:text-gray-300 transition-colors"
+            >
+              <ExternalLink size={14} />
               {s('view_profile')}
-            </Button>
-          </Box>
-        </Box>
+            </button>
+          </div>
+        </div>
 
-        <Divider sx={{ mb: 2.5 }} />
+        <hr className="mb-5 border-gray-200" />
 
-        <Box sx={{ p: 2, borderRadius: "12px", bgcolor: "#FFFBEB", border: "1px solid #FEF3C7" }}>
-          <Typography sx={{ fontWeight: 700, fontSize: "0.82rem", color: "#92400E", mb: 0.75 }}>{s('privacy_title')}</Typography>
-          <Typography sx={{ fontSize: "0.78rem", color: "#78350F", mb: 1, lineHeight: 1.6 }}>{s('privacy_intro')}</Typography>
-          <Box component="ul" sx={{ m: 0, pl: 2.5, color: "#78350F" }}>
-            {privacyItems.map(item => <li key={item}><Typography sx={{ fontSize: "0.78rem", mb: 0.4 }}>{item}</Typography></li>)}
-          </Box>
-          <Typography sx={{ fontSize: "0.78rem", color: "#78350F", mt: 1, fontWeight: 600 }}>{s('privacy_footer')}</Typography>
-        </Box>
-      </Box>
-    </Box>
+        <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
+          <p className="font-bold text-[0.82rem] text-amber-800 mb-2">{s('privacy_title')}</p>
+          <p className="text-[0.78rem] text-amber-900 mb-2 leading-relaxed">{s('privacy_intro')}</p>
+          <ul className="m-0 pl-5 text-amber-900 list-disc">
+            {privacyItems.map(item => <li key={item} className="text-[0.78rem] mb-1">{item}</li>)}
+          </ul>
+          <p className="text-[0.78rem] text-amber-900 mt-2 font-semibold">{s('privacy_footer')}</p>
+        </div>
+      </div>
+    </div>
   );
 };
 

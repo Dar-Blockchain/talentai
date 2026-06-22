@@ -1,33 +1,10 @@
-﻿import React from "react";
-import {
-  Box, Typography, Avatar, TextField, Button,
-  CircularProgress, Divider, Chip,
-} from "@mui/material";
+import React from "react";
 import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
 import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
-import PersonOutlined from "@mui/icons-material/PersonOutlined";
-import EmailOutlined from "@mui/icons-material/EmailOutlined";
-import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
-import WorkOutlined from "@mui/icons-material/WorkOutlined";
-import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
-import CameraAltOutlined from "@mui/icons-material/CameraAltOutlined";
-import CheckOutlined from "@mui/icons-material/CheckOutlined";
+import { User, Mail, Building2, Briefcase, GitBranch, Camera, Check } from "lucide-react";
 import { ROLE_LABELS, ROLE_STYLES } from "@/modules/company/employees/components/list";
+import { Spinner } from "@/modules/settings/shared/components";
 import { Section, InfoRow, TEAL, useEmployeeSettings } from "@/modules/settings/employee";
-
-const fieldSx = {
-  "& .MuiInputLabel-root": { color: "#6B7280", fontFamily: "Poppins", fontSize: "0.9rem" },
-  "& .MuiInputLabel-root.Mui-focused": { color: TEAL },
-  "& .MuiOutlinedInput-root": {
-    borderRadius: "12px", fontFamily: "Poppins", fontSize: "0.95rem",
-    bgcolor: "#F9FAFB",
-    "& fieldset": { borderColor: "#E5E7EB" },
-    "&:hover fieldset": { borderColor: "#D1D5DB" },
-    "&.Mui-focused fieldset": { borderColor: TEAL, borderWidth: "1.5px" },
-    "&.Mui-focused": { bgcolor: "#fff" },
-    "&.Mui-disabled": { bgcolor: "#F3F4F6" },
-  },
-};
 
 const EmployeeSettingsPage: React.FC = () => {
   const {
@@ -50,112 +27,102 @@ const EmployeeSettingsPage: React.FC = () => {
         icon={SettingsOutlined}
       />
 
-      <Box sx={{ maxWidth: 720 }}>
+      <div className="max-w-[720px]">
 
         <Section title="Profile Picture" subtitle="Update your display photo">
-          <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
-            <Box sx={{ position: "relative", flexShrink: 0 }}>
-              <Avatar
-                src={avatarUrl || undefined}
-                sx={{ width: 80, height: 80, fontSize: "1.6rem", fontWeight: 700, bgcolor: TEAL, color: "#fff", borderRadius: "20px" }}
-              >
-                {!avatarUrl && initials}
-              </Avatar>
-              <Box
+          <div className="flex items-center gap-6">
+            <div className="relative flex-shrink-0">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={displayName} className="w-20 h-20 rounded-[20px] object-cover" />
+              ) : (
+                <div className="w-20 h-20 rounded-[20px] flex items-center justify-center text-white font-bold text-[1.6rem] bg-teal-600">
+                  {initials}
+                </div>
+              )}
+              <div
                 onClick={() => fileRef.current?.click()}
-                sx={{
-                  position: "absolute", inset: 0, borderRadius: "20px",
-                  bgcolor: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center",
-                  justifyContent: "center", opacity: 0, cursor: "pointer",
-                  transition: "opacity 0.2s",
-                  "&:hover": { opacity: 1 },
-                }}
+                className="group absolute inset-0 rounded-[20px] bg-black/45 flex items-center justify-center opacity-0 hover:opacity-100 cursor-pointer transition-opacity"
               >
                 {uploadingImg
-                  ? <CircularProgress size={20} sx={{ color: "#fff" }} />
-                  : <CameraAltOutlined sx={{ fontSize: 22, color: "#fff" }} />
+                  ? <Spinner size={20} className="border-white/40 border-t-white" />
+                  : <Camera size={22} className="text-white" />
                 }
-              </Box>
-              <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleAvatarChange} />
-            </Box>
+              </div>
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+            </div>
 
-            <Box>
-              <Typography sx={{ fontFamily: "Poppins", fontWeight: 600, fontSize: "0.9rem", color: "#111827", mb: 0.5 }}>
+            <div>
+              <p className="font-poppins font-semibold text-[0.9rem] text-gray-900 mb-1">
                 {displayName || "Employee"}
-              </Typography>
-              <Typography sx={{ fontFamily: "Poppins", fontSize: "0.8rem", color: "#9CA3AF", mb: 1.5 }}>
+              </p>
+              <p className="font-poppins text-[0.8rem] text-gray-400 mb-3">
                 JPG, PNG or GIF · Max 5 MB
-              </Typography>
-              <Button
-                size="small"
-                variant="outlined"
+              </p>
+              <button
+                type="button"
                 onClick={() => fileRef.current?.click()}
                 disabled={uploadingImg}
-                sx={{
-                  textTransform: "none", fontFamily: "Poppins", fontWeight: 600,
-                  fontSize: "0.8rem", borderRadius: "10px",
-                  borderColor: "#E5E7EB", color: "#374151",
-                  "&:hover": { borderColor: TEAL, color: TEAL, bgcolor: `${TEAL}08` },
-                }}
+                className="font-poppins font-semibold text-[0.8rem] rounded-[10px] border border-gray-200 text-gray-700 px-3 py-1.5 hover:border-teal-600 hover:text-teal-600 hover:bg-teal-50/40 disabled:opacity-60 transition-colors"
               >
                 {uploadingImg ? "Uploading…" : "Change photo"}
-              </Button>
-            </Box>
-          </Box>
+              </button>
+            </div>
+          </div>
         </Section>
 
         <Section title="Display Name" subtitle="This is how your name appears across the platform">
-          <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start" }}>
-            <TextField
-              label="Username"
-              value={username}
-              onChange={(e) => { setUsername(e.target.value); setNameError(""); }}
-              fullWidth
-              error={!!nameError}
-              helperText={nameError}
-              InputProps={{ startAdornment: <PersonOutlined sx={{ fontSize: 18, color: "#9CA3AF", mr: 1 }} /> }}
-              sx={fieldSx}
-            />
-            <Button
-              variant="contained"
+          <div className="flex gap-3 items-start">
+            <label className="flex-1 flex flex-col gap-1.5">
+              <span className="font-poppins text-sm text-gray-500">Username</span>
+              <div className="relative">
+                <User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  value={username}
+                  onChange={(e) => { setUsername(e.target.value); setNameError(""); }}
+                  className={`font-poppins w-full rounded-xl border bg-gray-50 pl-10 pr-3 py-3.5 text-sm outline-none transition-colors focus:bg-white ${
+                    nameError ? "border-red-400" : "border-gray-200 focus:border-teal-600"
+                  }`}
+                />
+              </div>
+              {nameError && <span className="text-xs text-red-500">{nameError}</span>}
+            </label>
+            <button
+              type="button"
               onClick={handleSaveName}
               disabled={savingName || username === user?.username}
-              startIcon={
-                savingName ? <CircularProgress size={14} sx={{ color: "#fff" }} />
-                : nameSaved ? <CheckOutlined sx={{ fontSize: 16 }} />
-                : undefined
-              }
-              sx={{
-                mt: "4px", height: 56, px: 3, borderRadius: "12px",
-                textTransform: "none", fontFamily: "Poppins", fontWeight: 700,
-                whiteSpace: "nowrap", flexShrink: 0,
-                bgcolor: nameSaved ? "#059669" : TEAL,
-                "&:hover": { bgcolor: nameSaved ? "#059669" : "#0caa9d" },
-                "&.Mui-disabled": { bgcolor: "#F3F4F6", color: "#9CA3AF" },
-              }}
+              className="font-poppins font-bold text-white rounded-xl h-14 px-6 whitespace-nowrap flex-shrink-0 mt-[1px] flex items-center justify-center gap-2 transition-colors disabled:bg-gray-100 disabled:text-gray-400"
+              style={!(savingName || username === user?.username) ? { backgroundColor: nameSaved ? "#059669" : TEAL } : undefined}
             >
+              {savingName ? (
+                <Spinner size={14} className="border-white/40 border-t-white" />
+              ) : nameSaved ? (
+                <Check size={16} />
+              ) : null}
               {savingName ? "Saving…" : nameSaved ? "Saved" : "Save"}
-            </Button>
-          </Box>
+            </button>
+          </div>
         </Section>
 
         <Section title="Account Information" subtitle="Read-only information about your account">
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <TextField
-              label="Email address"
-              value={user?.email || ""}
-              disabled
-              fullWidth
-              InputProps={{ startAdornment: <EmailOutlined sx={{ fontSize: 18, color: "#9CA3AF", mr: 1 }} /> }}
-              sx={fieldSx}
-            />
+          <div className="flex flex-col gap-4">
+            <label className="flex flex-col gap-1.5">
+              <span className="font-poppins text-sm text-gray-500">Email address</span>
+              <div className="relative">
+                <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  value={user?.email || ""}
+                  disabled
+                  className="font-poppins w-full rounded-xl border border-gray-200 bg-gray-100 pl-10 pr-3 py-3.5 text-sm text-gray-500"
+                />
+              </div>
+            </label>
 
             {companyMembership && (
               <>
-                <Divider sx={{ borderColor: "#F3F4F6" }} />
+                <hr className="border-gray-100" />
 
                 <InfoRow
-                  icon={<BusinessOutlined sx={{ fontSize: 18, color: TEAL }} />}
+                  icon={<Building2 size={18} className="text-teal-600" />}
                   iconBg="#F0FDF9"
                   iconBorder="#CCFBF1"
                   label="Organization"
@@ -175,21 +142,18 @@ const EmployeeSettingsPage: React.FC = () => {
                   const roleStyle = ROLE_STYLES[roleKey] ?? { color: "#6B7280", bg: "#F3F4F6" };
                   return (
                     <InfoRow
-                      icon={<WorkOutlined sx={{ fontSize: 18, color: roleStyle.color }} />}
+                      icon={<Briefcase size={18} style={{ color: roleStyle.color }} />}
                       iconBg={roleStyle.bg}
                       iconBorder={roleStyle.color + "33"}
                       label="Role"
                       value={roleLabel}
                       chip={
-                        <Chip
-                          label={roleLabel}
-                          size="small"
-                          sx={{
-                            bgcolor: roleStyle.bg, color: roleStyle.color,
-                            fontFamily: "Poppins", fontWeight: 600, fontSize: "0.72rem",
-                            border: `1px solid ${roleStyle.color}33`,
-                          }}
-                        />
+                        <span
+                          className="font-poppins font-semibold text-[0.72rem] rounded-full px-2.5 py-1"
+                          style={{ backgroundColor: roleStyle.bg, color: roleStyle.color, border: `1px solid ${roleStyle.color}33` }}
+                        >
+                          {roleLabel}
+                        </span>
                       }
                     />
                   );
@@ -197,7 +161,7 @@ const EmployeeSettingsPage: React.FC = () => {
 
                 {companyMembership?.department?.name && (
                   <InfoRow
-                    icon={<AccountTreeOutlined sx={{ fontSize: 18, color: "#7C3AED" }} />}
+                    icon={<GitBranch size={18} className="text-violet-600" />}
                     iconBg="#F5F3FF"
                     iconBorder="#DDD6FE"
                     label="Department"
@@ -206,10 +170,10 @@ const EmployeeSettingsPage: React.FC = () => {
                 )}
               </>
             )}
-          </Box>
+          </div>
         </Section>
 
-      </Box>
+      </div>
     </>
   );
 };

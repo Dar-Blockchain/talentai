@@ -1,10 +1,8 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Typography,
-} from "@mui/material";
 import type { ApiKey } from "@/modules/settings/company/types";
-import { cancelBtnSx, deleteBtnSx } from "./styles";
+import { Dialog, DialogContent } from "@/modules/shared/ui/shadcn/dialog";
+import { cancelBtnClass, deleteBtnClass } from "./styles";
 
 type Props = {
   target: ApiKey | null;
@@ -16,28 +14,32 @@ const DeleteKeyDialog: React.FC<Props> = ({ target, onClose, onConfirm }) => {
   const { t } = useTranslation("dashboard");
 
   return (
-    <Dialog open={!!target} onClose={onClose} maxWidth="xs" fullWidth slotProps={{ paper: { sx: { borderRadius: "16px" } } }}>
-      <DialogTitle sx={{ fontSize: "1rem", fontWeight: 700, pb: 1 }}>
-        {t("pages.settings.api_keys.delete_title")}
-      </DialogTitle>
-      <Divider />
-      <DialogContent sx={{ pt: 2.5 }}>
-        <Typography sx={{ fontSize: "0.88rem", color: "#374151" }}>
-          {t("pages.settings.api_keys.delete_confirm", { name: target?.name })}
-        </Typography>
-        <Typography sx={{ fontSize: "0.78rem", color: "#9CA3AF", mt: 0.75 }}>
-          {t("pages.settings.api_keys.delete_warning")}
-        </Typography>
+    <Dialog open={!!target} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent showCloseButton={false} className="max-w-xs w-full rounded-2xl overflow-hidden p-0">
+        <div className="px-6 pt-5 pb-3">
+          <span className="text-[1rem] font-bold text-gray-900">
+            {t("pages.settings.api_keys.delete_title")}
+          </span>
+        </div>
+        <hr className="border-gray-200" />
+        <div className="px-6 py-5">
+          <p className="text-[0.88rem] text-gray-700">
+            {t("pages.settings.api_keys.delete_confirm", { name: target?.name })}
+          </p>
+          <p className="text-[0.78rem] text-gray-400 mt-2">
+            {t("pages.settings.api_keys.delete_warning")}
+          </p>
+        </div>
+        <hr className="border-gray-200" />
+        <div className="flex justify-end gap-2 px-6 py-4">
+          <button type="button" onClick={onClose} className={cancelBtnClass}>
+            {t("pages.settings.api_keys.actions.cancel")}
+          </button>
+          <button type="button" onClick={onConfirm} className={deleteBtnClass}>
+            {t("pages.settings.api_keys.actions.delete")}
+          </button>
+        </div>
       </DialogContent>
-      <Divider />
-      <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-        <Button onClick={onClose} size="small" sx={cancelBtnSx}>
-          {t("pages.settings.api_keys.actions.cancel")}
-        </Button>
-        <Button onClick={onConfirm} size="small" sx={deleteBtnSx}>
-          {t("pages.settings.api_keys.actions.delete")}
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 };

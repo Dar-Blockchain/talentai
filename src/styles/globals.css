@@ -84,6 +84,12 @@
   --color-accent-hover:      #3DD984;
   --color-accent-light:      #EAFFF3;
 
+  /* ── Teal scale (settings module brand accent) ── */
+  --color-teal-50:           #F0FDFA;
+  --color-teal-200:          #99F6E4;
+  --color-teal-600:          #0D9488;
+  --color-teal-700:          #0F766E;
+
   /* ── Neutral scale ── */
   --color-gray-50:           #F9FAFB;
   --color-gray-100:          #F3F4F6;

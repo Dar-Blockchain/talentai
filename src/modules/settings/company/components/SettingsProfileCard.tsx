@@ -1,11 +1,9 @@
 import React, { useRef, useState } from "react";
-import { Box, Avatar, Typography, Chip, CircularProgress } from "@mui/material";
-import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
-import GroupsOutlined from "@mui/icons-material/GroupsOutlined";
-import CloudUploadOutlined from "@mui/icons-material/CloudUploadOutlined";
+import { MapPin, Users, UploadCloud } from "lucide-react";
 import { UserProfile } from "@/types/profile";
 import SectionCard from "@/components/ui/SectionCard";
-import { TEAL, TEAL_BG, TEAL_BORDER } from "@/modules/settings/shared/constants";
+import { Spinner } from "@/modules/settings/shared/components";
+import { TEAL, TEAL_BORDER } from "@/modules/settings/shared/constants";
 
 interface SettingsProfileCardProps {
   profile: UserProfile;
@@ -34,54 +32,58 @@ const SettingsProfileCard: React.FC<SettingsProfileCardProps> = ({ profile, uplo
 
   return (
     <SectionCard>
-      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", py: 1, gap: 1.5 }}>
-        <Box
+      <div className="flex flex-col items-center text-center py-2 gap-3">
+        <div
           onDragOver={readOnly ? undefined : (e) => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={readOnly ? undefined : () => setDragOver(false)}
           onDrop={readOnly ? undefined : handleDrop}
           onClick={readOnly ? undefined : () => fileInputRef.current?.click()}
-          sx={{
-            position: "relative", cursor: readOnly ? "default" : "pointer",
-            width: 72, height: 72, borderRadius: "50%",
-            border: `2px ${readOnly ? "solid" : "dashed"} ${dragOver ? TEAL : TEAL_BORDER}`,
-            transition: "all 0.2s",
-            ...(!readOnly && { "&:hover": { borderColor: TEAL }, "&:hover .upload-overlay": { opacity: 1 } }),
-          }}
+          className={`group relative w-[72px] h-[72px] rounded-full border-2 transition-colors ${readOnly ? "cursor-default border-solid" : "cursor-pointer border-dashed"}`}
+          style={{ borderColor: dragOver ? TEAL : TEAL_BORDER }}
         >
           {uploadingImage ? (
-            <Box sx={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <CircularProgress size={24} sx={{ color: TEAL }} />
-            </Box>
+            <div className="w-full h-full flex items-center justify-center">
+              <Spinner size={24} />
+            </div>
+          ) : profile.avatar ? (
+            <img src={profile.avatar} alt={displayName} className="w-full h-full rounded-full object-cover ring-[3px] ring-teal-200" />
           ) : (
-            <Avatar src={profile.avatar} sx={{ width: "100%", height: "100%", bgcolor: TEAL, fontSize: "26px", fontWeight: 800, boxShadow: `0 0 0 3px ${TEAL_BORDER}` }}>
+            <div className="w-full h-full rounded-full flex items-center justify-center text-white font-extrabold text-[26px] bg-teal-600 ring-[3px] ring-teal-200">
               {initials}
-            </Avatar>
+            </div>
           )}
           {!readOnly && (
-            <Box className="upload-overlay" sx={{ position: "absolute", inset: 0, borderRadius: "50%", bgcolor: "rgba(13,148,136,0.7)", opacity: 0, transition: "opacity 0.2s", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <CloudUploadOutlined sx={{ fontSize: 22, color: "#fff" }} />
-            </Box>
+            <div
+              className="absolute inset-0 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              style={{ backgroundColor: "rgba(13,148,136,0.7)" }}
+            >
+              <UploadCloud size={22} className="text-white" />
+            </div>
           )}
-        </Box>
+        </div>
 
-        {!readOnly && <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={onImageUpload} />}
+        {!readOnly && <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onImageUpload} />}
 
-        <Box>
-          <Typography sx={{ fontSize: "14px", fontWeight: 700, color: "#111827" }}>{displayName}</Typography>
-          <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>{profile.email}</Typography>
-        </Box>
+        <div>
+          <p className="text-sm font-bold text-gray-900">{displayName}</p>
+          <p className="text-[11px] text-gray-500">{profile.email}</p>
+        </div>
 
-        <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", justifyContent: "center" }}>
+        <div className="flex gap-1.5 flex-wrap justify-center">
           {profile.location && (
-            <Chip icon={<LocationOnOutlined sx={{ fontSize: 11 }} />} label={profile.location} size="small"
-              sx={{ fontSize: "10px", height: 20, bgcolor: TEAL_BG, color: TEAL, border: `1px solid ${TEAL_BORDER}` }} />
+            <span className="inline-flex items-center gap-1 text-[10px] h-5 px-2 rounded-full bg-teal-50 text-teal-600 border border-teal-200">
+              <MapPin size={11} />
+              {profile.location}
+            </span>
           )}
           {(profile.size || profile.companySize) && (
-            <Chip icon={<GroupsOutlined sx={{ fontSize: 11 }} />} label={profile.size || profile.companySize} size="small"
-              sx={{ fontSize: "10px", height: 20, bgcolor: "#F3F4F6", color: "#6B7280" }} />
+            <span className="inline-flex items-center gap-1 text-[10px] h-5 px-2 rounded-full bg-gray-100 text-gray-500">
+              <Users size={11} />
+              {profile.size || profile.companySize}
+            </span>
           )}
-        </Box>
-      </Box>
+        </div>
+      </div>
     </SectionCard>
   );
 };

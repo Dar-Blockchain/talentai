@@ -1,20 +1,9 @@
 import React, { useRef, useState } from "react";
-import {
-  Box, Typography, Button, CircularProgress, Alert, LinearProgress,
-  Dialog, DialogTitle, DialogContent, DialogActions,
-} from "@mui/material";
-import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
-import UploadFileOutlined from "@mui/icons-material/UploadFileOutlined";
-import OpenInNewOutlined from "@mui/icons-material/OpenInNew";
-import DeleteOutlined from "@mui/icons-material/DeleteOutlined";
-import WarningAmberOutlined from "@mui/icons-material/WarningAmberOutlined";
-import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
+import { FileText, UploadCloud, ExternalLink, Trash2, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Spinner } from "@/modules/settings/shared/components";
+import { Dialog, DialogContent } from "@/modules/shared/ui/shadcn/dialog";
 import { candidateApi } from "../api";
 import { emitToast } from "@/utils/toastEmitter";
-
-const TEAL = "#0D9488";
-const TEAL_BG = "#F0FDFA";
-const TEAL_BORDER = "#99F6E4";
 
 interface Props {
   resumeFilename: string | null | undefined;
@@ -78,115 +67,139 @@ const CvSection: React.FC<Props> = ({ resumeFilename, onUpdated, onDeleted }) =>
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <Box sx={{ px: 2, py: 1.5, bgcolor: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: 2, borderLeft: "3px solid #0D9488" }}>
-        <Typography sx={{ fontSize: "0.9rem", fontWeight: 700, color: "#111827" }}>Resume / CV</Typography>
-        <Typography sx={{ fontSize: "0.78rem", color: "#9CA3AF", mt: 0.25 }}>
+    <div className="flex flex-col gap-4">
+      <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg border-l-[3px] border-l-teal-600">
+        <p className="text-[0.9rem] font-bold text-gray-900">Resume / CV</p>
+        <p className="text-[0.78rem] text-gray-400 mt-1">
           Upload your latest CV. This will be used for all new job applications.
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
-      {error && <Alert severity="error" sx={{ borderRadius: "10px", fontSize: "0.8rem" }} onClose={() => setError(null)}>{error}</Alert>}
+      {error && (
+        <div className="flex items-center justify-between rounded-[10px] bg-red-50 border border-red-200 px-3 py-2 text-[0.8rem] text-red-700">
+          <span>{error}</span>
+          <button type="button" onClick={() => setError(null)} className="text-red-500 hover:text-red-700">×</button>
+        </div>
+      )}
 
       {/* Current CV */}
       {cvUrl ? (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 2, bgcolor: TEAL_BG, border: `1px solid ${TEAL_BORDER}`, borderRadius: "12px" }}>
-          <Box sx={{ width: 38, height: 38, borderRadius: "10px", bgcolor: `${TEAL}15`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <DescriptionOutlined sx={{ fontSize: 20, color: TEAL }} />
-          </Box>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <div className="flex items-center gap-3 p-4 rounded-xl bg-teal-50 border border-teal-200">
+          <div className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center flex-shrink-0 bg-teal-600/10">
+            <FileText size={20} className="text-teal-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[0.82rem] font-bold text-gray-900 overflow-hidden text-ellipsis whitespace-nowrap">
               {resumeFilename}
-            </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.2 }}>
-              {analysing
-                ? <><CircularProgress size={10} sx={{ color: "#D97706" }} /><Typography sx={{ fontSize: "0.72rem", color: "#D97706", fontWeight: 600 }}>Analysing…</Typography></>
-                : <><CheckCircleOutlined sx={{ fontSize: 12, color: TEAL }} /><Typography sx={{ fontSize: "0.72rem", color: TEAL, fontWeight: 600 }}>Active CV</Typography></>}
-            </Box>
-          </Box>
-          <Box sx={{ display: "flex", gap: 0.5 }}>
-            <Button size="small" startIcon={<OpenInNewOutlined sx={{ fontSize: 13 }} />}
+            </p>
+            <div className="flex items-center gap-1 mt-0.5">
+              {analysing ? (
+                <>
+                  <Spinner size={10} className="border-amber-200 border-t-amber-600" />
+                  <span className="text-[0.72rem] text-amber-600 font-semibold">Analysing…</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 size={12} className="text-teal-600" />
+                  <span className="text-[0.72rem] font-semibold text-teal-600">Active CV</span>
+                </>
+              )}
+            </div>
+          </div>
+          <div className="flex gap-1">
+            <button
+              type="button"
               onClick={() => window.open(cvUrl, "_blank")}
-              sx={{ textTransform: "none", fontSize: "0.72rem", fontWeight: 600, color: TEAL, borderRadius: "8px", "&:hover": { bgcolor: `${TEAL}10` } }}>
+              className="inline-flex items-center gap-1 text-[0.72rem] font-semibold rounded-lg px-2 py-1 text-teal-600 transition-colors hover:bg-teal-600/10"
+            >
+              <ExternalLink size={13} />
               View
-            </Button>
-            <Button size="small"
-              startIcon={deleting ? <CircularProgress size={12} sx={{ color: "#DC2626" }} /> : <DeleteOutlined sx={{ fontSize: 13 }} />}
+            </button>
+            <button
+              type="button"
               disabled={deleting}
               onClick={() => setConfirmOpen(true)}
-              sx={{ textTransform: "none", fontSize: "0.72rem", fontWeight: 600, color: "#DC2626", borderRadius: "8px", "&:hover": { bgcolor: "#FEF2F2" } }}>
+              className="inline-flex items-center gap-1 text-[0.72rem] font-semibold rounded-lg px-2 py-1 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-60"
+            >
+              {deleting ? <Spinner size={12} className="border-red-200 border-t-red-600" /> : <Trash2 size={13} />}
               {deleting ? "Removing…" : "Delete"}
-            </Button>
-          </Box>
-        </Box>
+            </button>
+          </div>
+        </div>
       ) : (
-        <Box sx={{ p: 2, bgcolor: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: "12px" }}>
-          <Typography sx={{ fontSize: "0.82rem", color: "#92400E" }}>No CV on file. Upload one below so recruiters can review your profile.</Typography>
-        </Box>
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
+          <p className="text-[0.82rem] text-amber-800">No CV on file. Upload one below so recruiters can review your profile.</p>
+        </div>
       )}
 
       {/* Upload zone */}
-      <input ref={inputRef} type="file" accept=".pdf,.doc,.docx" style={{ display: "none" }}
+      <input ref={inputRef} type="file" accept=".pdf,.doc,.docx" className="hidden"
         onChange={(e) => handleFile(e.target.files?.[0] ?? null)} />
 
-      <Box
+      <div
         onClick={() => !uploading && inputRef.current?.click()}
         onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
         onDragLeave={() => setIsDragging(false)}
         onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleFile(e.dataTransfer.files?.[0] ?? null); }}
-        sx={{
-          border: "1.5px dashed", borderColor: isDragging ? TEAL : "#E5E7EB",
-          borderRadius: "12px", py: 2.5, px: 2, cursor: uploading ? "default" : "pointer",
-          display: "flex", flexDirection: "column", alignItems: "center", gap: 1,
-          bgcolor: isDragging ? TEAL_BG : "#FAFAFA",
-          transition: "all 0.2s",
-          "&:hover": { borderColor: uploading ? "#E5E7EB" : TEAL, bgcolor: uploading ? "#FAFAFA" : TEAL_BG },
-        }}
+        className={`border-[1.5px] border-dashed rounded-xl py-5 px-4 flex flex-col items-center gap-2 transition-colors ${
+          uploading ? "cursor-default" : "cursor-pointer"
+        } ${isDragging ? "border-teal-600 bg-teal-50" : "border-gray-200 bg-[#FAFAFA] hover:border-teal-600 hover:bg-teal-50"}`}
       >
         {uploading ? (
-          <CircularProgress size={24} sx={{ color: TEAL }} />
+          <Spinner size={24} />
         ) : (
-          <UploadFileOutlined sx={{ fontSize: 28, color: isDragging ? TEAL : "#9CA3AF" }} />
+          <UploadCloud size={28} className={isDragging ? "text-teal-600" : "text-gray-400"} />
         )}
-        <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: isDragging ? TEAL : "#374151", textAlign: "center" }}>
+        <p className={`text-[0.82rem] font-semibold text-center ${isDragging ? "text-teal-600" : "text-gray-700"}`}>
           {uploading ? "Uploading…" : isDragging ? "Drop your CV here" : cvUrl ? "Upload a new CV" : "Upload your CV"}
-        </Typography>
-        <Typography sx={{ fontSize: "0.72rem", color: "#9CA3AF" }}>PDF, DOC, DOCX · Max 5 MB</Typography>
-      </Box>
+        </p>
+        <p className="text-[0.72rem] text-gray-400">PDF, DOC, DOCX · Max 5 MB</p>
+      </div>
 
       {uploading && progress > 0 && (
-        <LinearProgress variant="determinate" value={progress}
-          sx={{ height: 4, borderRadius: 2, bgcolor: `${TEAL}18`, "& .MuiLinearProgress-bar": { bgcolor: TEAL, borderRadius: 2 } }} />
+        <div className="h-1 rounded-full overflow-hidden bg-teal-600/[0.09]">
+          <div
+            className="h-full rounded-full bg-teal-600 transition-[width] duration-300"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
       )}
 
       {/* Delete confirmation modal */}
-      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="xs" fullWidth
-        PaperProps={{ sx: { borderRadius: "16px", p: 0.5 } }}>
-        <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem", color: "#111827", pb: 1 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Box sx={{ width: 34, height: 34, borderRadius: "10px", bgcolor: "#FEF2F2", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <WarningAmberOutlined sx={{ fontSize: 18, color: "#DC2626" }} />
-            </Box>
-            Delete CV
-          </Box>
-        </DialogTitle>
-        <DialogContent sx={{ pt: "4px !important" }}>
-          <Typography sx={{ fontSize: "0.88rem", color: "#4B5563", lineHeight: 1.7 }}>
-            Are you sure you want to remove <strong>{resumeFilename}</strong>? You can upload a new one at any time.
-          </Typography>
+      <Dialog open={confirmOpen} onOpenChange={(o) => { if (!o) setConfirmOpen(false); }}>
+        <DialogContent showCloseButton={false} className="max-w-xs w-full rounded-2xl overflow-hidden p-0">
+          <div className="px-5 pt-4 pb-2">
+            <div className="flex items-center gap-2">
+              <div className="w-[34px] h-[34px] rounded-[10px] bg-red-50 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle size={18} className="text-red-600" />
+              </div>
+              <span className="font-bold text-[1rem] text-gray-900">Delete CV</span>
+            </div>
+          </div>
+          <div className="px-5">
+            <p className="text-[0.88rem] text-gray-600 leading-relaxed">
+              Are you sure you want to remove <strong>{resumeFilename}</strong>? You can upload a new one at any time.
+            </p>
+          </div>
+          <div className="flex justify-end gap-2 px-5 py-4">
+            <button
+              type="button"
+              onClick={() => setConfirmOpen(false)}
+              className="text-gray-500 rounded-[10px] text-[0.85rem] px-3 py-2 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleDeleteConfirm}
+              className="font-semibold rounded-[10px] text-[0.85rem] px-3 py-2 bg-red-600 text-white hover:bg-red-700"
+            >
+              Delete
+            </button>
+          </div>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-          <Button onClick={() => setConfirmOpen(false)}
-            sx={{ textTransform: "none", color: "#6B7280", borderRadius: "10px", fontSize: "0.85rem" }}>
-            Cancel
-          </Button>
-          <Button variant="contained" onClick={handleDeleteConfirm}
-            sx={{ textTransform: "none", fontWeight: 600, borderRadius: "10px", fontSize: "0.85rem", bgcolor: "#DC2626", boxShadow: "none", color: "#fff", "&:hover": { bgcolor: "#B91C1C", boxShadow: "none" } }}>
-            Delete
-          </Button>
-        </DialogActions>
       </Dialog>
-    </Box>
+    </div>
   );
 };
 

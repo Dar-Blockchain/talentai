@@ -1,10 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Alert, Box, Button } from "@mui/material";
-import AddOutlined from "@mui/icons-material/AddOutlined";
-import KeyOutlined from "@mui/icons-material/KeyOutlined";
+import { Plus, Key } from "lucide-react";
 import AppUserInfo from "@/modules/shared/ui/AppUserInfo";
-import { TEAL, TEAL_BG } from "@/modules/settings/shared/constants";
 
 import { useApiKeysTab }  from "./api-keys/useApiKeysTab";
 import KeysList           from "./api-keys/KeysList";
@@ -12,7 +9,7 @@ import NewKeyBanner       from "./api-keys/NewKeyBanner";
 import CreateKeyDialog    from "./api-keys/CreateKeyDialog";
 import EditKeyDialog      from "./api-keys/EditKeyDialog";
 import DeleteKeyDialog    from "./api-keys/DeleteKeyDialog";
-import { addBtnSx }      from "./api-keys/styles";
+import { addBtnClass }    from "./api-keys/styles";
 
 const ApiKeysTab: React.FC = () => {
   const { t } = useTranslation("dashboard");
@@ -25,23 +22,28 @@ const ApiKeysTab: React.FC = () => {
   } = useApiKeysTab();
 
   return (
-    <Box sx={{ p: { xs: 2.5, md: 3.5 } }}>
+    <div className="p-5 md:p-7">
 
-      <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2.5, flexWrap: "wrap", gap: 1.5 }}>
+      <div className="flex items-start justify-between mb-5 flex-wrap gap-3">
         <AppUserInfo
           name={t("pages.settings.api_keys.title")}
           subtitle={t("pages.settings.api_keys.subtitle")}
-          icon={<KeyOutlined sx={{ fontSize: 20, color: TEAL }} />}
-          iconBgColor={TEAL_BG}
+          icon={<Key size={20} className="text-teal-600" />}
+          iconBgColor="#F0FDFA"
         />
-        <Button size="small" startIcon={<AddOutlined sx={{ fontSize: 15 }} />} onClick={() => setCreateOpen(true)} sx={addBtnSx}>
+        <button type="button" onClick={() => setCreateOpen(true)} className={addBtnClass}>
+          <Plus size={15} />
           {t("pages.settings.api_keys.new_key")}
-        </Button>
-      </Box>
+        </button>
+      </div>
 
       {newKey && <NewKeyBanner newKey={newKey} copied={copied} onCopy={handleCopy} onDismiss={handleDismissNewKey} />}
 
-      {apiError && <Alert severity="error" sx={{ mb: 2, borderRadius: "10px", fontSize: "0.82rem" }}>{apiError}</Alert>}
+      {apiError && (
+        <div className="mb-4 rounded-[10px] bg-red-50 border border-red-200 px-3 py-2 text-[0.82rem] text-red-700">
+          {apiError}
+        </div>
+      )}
 
       <KeysList
         apiKeys={apiKeys}
@@ -56,7 +58,7 @@ const ApiKeysTab: React.FC = () => {
       <EditKeyDialog   editingKey={editingKey}                onClose={() => setEditingKey(null)}  onSubmit={handleUpdate} />
       <DeleteKeyDialog target={deleteTarget}                  onClose={() => setDeleteTarget(null)} onConfirm={handleDelete} />
 
-    </Box>
+    </div>
   );
 };
 

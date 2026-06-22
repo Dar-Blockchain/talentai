@@ -1,9 +1,8 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Box, CircularProgress, Typography } from "@mui/material";
-import KeyOutlined from "@mui/icons-material/KeyOutlined";
+import { Key } from "lucide-react";
 import type { ApiKey } from "@/modules/settings/company/types";
-import { TEAL } from "@/modules/settings/shared/constants";
+import { Spinner } from "@/modules/settings/shared/components";
 import KeyCard from "./KeyCard";
 
 type Props = {
@@ -20,23 +19,23 @@ const KeysList: React.FC<Props> = ({ apiKeys, loading, onEdit, onDelete, onToggl
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
-        <CircularProgress size={28} sx={{ color: TEAL }} />
-      </Box>
+      <div className="flex justify-center py-12">
+        <Spinner size={28} />
+      </div>
     );
   }
 
   if (apiKeys.length === 0) {
     return (
-      <Box sx={{ textAlign: "center", py: 8, color: "#9CA3AF" }}>
-        <KeyOutlined sx={{ fontSize: 40, mb: 1, opacity: 0.4 }} />
-        <Typography sx={{ fontSize: "0.88rem" }}>{t("pages.settings.api_keys.no_keys")}</Typography>
-      </Box>
+      <div className="text-center py-16 text-gray-400">
+        <Key size={40} className="mx-auto mb-2 opacity-40" />
+        <p className="text-[0.88rem]">{t("pages.settings.api_keys.no_keys")}</p>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+    <div className="flex flex-col gap-3">
       {apiKeys.map((k) => (
         <KeyCard
           key={k.id}
@@ -47,7 +46,7 @@ const KeysList: React.FC<Props> = ({ apiKeys, loading, onEdit, onDelete, onToggl
           onRegenerate={onRegenerate}
         />
       ))}
-    </Box>
+    </div>
   );
 };
 

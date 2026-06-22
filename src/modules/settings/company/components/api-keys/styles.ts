@@ -1,61 +1,14 @@
-import { TEAL } from "@/modules/settings/shared/constants";
+export const addBtnClass =
+  "inline-flex items-center gap-1.5 rounded-[9px] bg-teal-600 px-4 py-1.5 text-[0.78rem] font-bold text-white hover:bg-teal-700 transition-colors";
 
-export const addBtnSx = {
-  textTransform: "none",
-  fontWeight: 700,
-  fontSize: "0.78rem",
-  bgcolor: TEAL,
-  color: "#fff",
-  borderRadius: "9px",
-  px: 2,
-  boxShadow: "none",
-  "&:hover": { bgcolor: "#0F766E", boxShadow: "none" },
-} as const;
+export const deleteBtnClass =
+  "rounded-[9px] bg-red-500 px-5 py-2 text-sm font-bold text-white hover:bg-red-600 transition-colors";
 
-export const deleteBtnSx = {
-  textTransform: "none",
-  fontWeight: 700,
-  bgcolor: "#EF4444",
-  color: "#fff",
-  borderRadius: "9px",
-  px: 2.5,
-  boxShadow: "none",
-  "&:hover": { bgcolor: "#DC2626", boxShadow: "none" },
-} as const;
+export const cancelBtnClass =
+  "rounded-[9px] border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-500 hover:bg-gray-50 transition-colors";
 
-export const cancelBtnSx = {
-  textTransform: "none",
-  fontWeight: 600,
-  color: "#6B7280",
-  border: "1px solid #E5E7EB",
-  borderRadius: "9px",
-  px: 2,
-} as const;
+export const saveBtnClass =
+  "rounded-[9px] bg-teal-600 px-5 py-2 text-sm font-bold text-white hover:bg-teal-700 disabled:bg-gray-200 disabled:text-gray-400 transition-colors";
 
-export const saveBtnSx = {
-  textTransform: "none",
-  fontWeight: 700,
-  bgcolor: TEAL,
-  color: "#fff",
-  borderRadius: "9px",
-  px: 2.5,
-  boxShadow: "none",
-  "&:hover": { bgcolor: "#0F766E", boxShadow: "none" },
-  "&.Mui-disabled": { bgcolor: "#E5E7EB" },
-} as const;
-
-// Applied directly to InputProps.sx — mirrors AppInput exactly
-export const datePickerInputSx = {
-  bgcolor: "#fff",
-  borderRadius: 2,
-  fontSize: "13px",
-  height: 38,
-  "& input": { fontSize: "13px" },
-  "& .MuiOutlinedInput-notchedOutline":             { borderColor: "#E5E7EB" },
-  "&:hover .MuiOutlinedInput-notchedOutline":       { borderColor: "#D1D5DB" },
-  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-    borderColor: TEAL,
-    borderWidth: "1px",
-    boxShadow: `0 0 0 4px rgba(13,148,136,0.1)`,
-  },
-} as const;
+export const datePickerInputClass =
+  "rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] h-[38px] outline-none transition-colors hover:border-gray-300 focus:border-teal-600 focus:shadow-[0_0_0_4px_rgba(13,148,136,0.1)]";

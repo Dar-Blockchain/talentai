@@ -4,6 +4,7 @@ import ContactCandidateModal, { ContactTarget } from "./ContactCandidateModal";
 import ApplicationsToolbar from "./applications/ApplicationsToolbar";
 import ApplicationsEmptyState from "./applications/ApplicationsEmptyState";
 import ApplicationsList from "./applications/ApplicationsList";
+import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
 
 const TEAL     = "#0D9488";
 const PAGE_SIZE = 10;
@@ -69,10 +70,7 @@ const ApplicationsView: React.FC<Props> = ({ jobId }) => {
 
       {loading ? (
         <div className="flex justify-center py-16">
-          <svg className="size-8 animate-spin" viewBox="0 0 24 24" fill="none" style={{ color: TEAL }}>
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3.5"/>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"/>
-          </svg>
+          <Spinner className="size-8" style={{ color: TEAL }} />
         </div>
       ) : rows.length === 0 ? (
         <ApplicationsEmptyState hasFilters={!!(search || status)} />

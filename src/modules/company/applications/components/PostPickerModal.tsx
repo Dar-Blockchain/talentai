@@ -1,10 +1,5 @@
 import React, { memo, useCallback } from "react";
-import SearchOutlined        from "@mui/icons-material/SearchOutlined";
-import WorkOutlineOutlined   from "@mui/icons-material/WorkOutline";
-import LayersOutlined        from "@mui/icons-material/LayersOutlined";
-import CloseOutlined         from "@mui/icons-material/CloseOutlined";
-import CheckOutlined         from "@mui/icons-material/CheckOutlined";
-import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
+import { Search, Briefcase, Layers, X, Check, CalendarDays } from "lucide-react";
 import LoadingState from "@/components/ui/LoadingState";
 import EmptyState   from "@/components/ui/EmptyState";
 import { usePostPicker } from "../hooks/usePostPicker";
@@ -16,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/shared/ui/shadcn/dialog";
+import { SimplePagination } from "@/modules/shared/ui/shadcn/pagination-simple";
 import { cn } from "@/lib/utils";
 
 // ─── PostRow ──────────────────────────────────────────────────────────────────
@@ -46,7 +42,7 @@ const PostRow = memo<PostRowProps>(({ id, title, selectedId, icon, empType, crea
         className="w-[34px] h-[34px] rounded-lg flex items-center justify-center shrink-0"
         style={{ backgroundColor: isActive ? `${TEAL}18` : "#F3F4F6" }}
       >
-        {icon ?? <WorkOutlineOutlined style={{ fontSize: 16, color: isActive ? TEAL : "#9CA3AF" }} />}
+        {icon ?? <Briefcase size={16} style={{ color: isActive ? TEAL : "#9CA3AF" }} />}
       </div>
       <div className="flex-1 min-w-0">
         <div
@@ -61,63 +57,18 @@ const PostRow = memo<PostRowProps>(({ id, title, selectedId, icon, empType, crea
             {empType && createdAt && <span className="text-[10px] text-slate-300">·</span>}
             {createdAt && (
               <div className="flex items-center gap-0.5">
-                <CalendarTodayOutlined style={{ fontSize: 10, color: "#9CA3AF" }} />
+                <CalendarDays size={10} className="text-gray-400" />
                 <span className="text-[10px] text-slate-400">{createdAt}</span>
               </div>
             )}
           </div>
         )}
       </div>
-      {isActive && <CheckOutlined style={{ fontSize: 16, color: TEAL, flexShrink: 0 }} />}
+      {isActive && <Check size={16} style={{ color: TEAL }} className="shrink-0" />}
     </button>
   );
 });
 PostRow.displayName = "PostRow";
-
-// ─── Pagination ───────────────────────────────────────────────────────────────
-
-interface PaginationProps {
-  page: number;
-  totalPages: number;
-  onPageChange: (p: number) => void;
-}
-
-const SimplePagination = memo<PaginationProps>(({ page, totalPages, onPageChange }) => {
-  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
-  return (
-    <div className="flex items-center justify-center gap-1 mt-4">
-      <button
-        disabled={page === 1}
-        onClick={() => onPageChange(page - 1)}
-        className="w-7 h-7 flex items-center justify-center rounded-md text-[13px] text-slate-500 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-      >
-        ‹
-      </button>
-      {pages.map((p) => (
-        <button
-          key={p}
-          onClick={() => onPageChange(p)}
-          className="w-7 h-7 flex items-center justify-center rounded-md text-[12px] font-medium transition-colors"
-          style={{
-            backgroundColor: p === page ? `${TEAL}18` : "transparent",
-            color:           p === page ? TEAL     : "#374151",
-            fontWeight:      p === page ? 700      : 500,
-          }}
-        >
-          {p}
-        </button>
-      ))}
-      <button
-        disabled={page === totalPages}
-        onClick={() => onPageChange(page + 1)}
-        className="w-7 h-7 flex items-center justify-center rounded-md text-[13px] text-slate-500 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-      >
-        ›
-      </button>
-    </div>
-  );
-});
-SimplePagination.displayName = "SimplePagination";
 
 // ─── PostPickerModal ──────────────────────────────────────────────────────────
 
@@ -145,7 +96,7 @@ const PostPickerModal = memo<Props>(({ open, selectedId, onSelect, onClose }) =>
         <div className="px-5 pt-5 pb-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${TEAL}12` }}>
-              <WorkOutlineOutlined style={{ fontSize: 16, color: TEAL }} />
+              <Briefcase size={16} style={{ color: TEAL }} />
             </div>
             <div>
               <div className="text-[15px] font-bold text-slate-900 leading-snug">Filter by Job</div>
@@ -156,7 +107,7 @@ const PostPickerModal = memo<Props>(({ open, selectedId, onSelect, onClose }) =>
             onClick={onClose}
             className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
           >
-            <CloseOutlined style={{ fontSize: 18 }} />
+            <X size={18} />
           </button>
         </div>
 
@@ -164,7 +115,7 @@ const PostPickerModal = memo<Props>(({ open, selectedId, onSelect, onClose }) =>
         <div className="px-5 pb-5">
           {/* Search */}
           <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg px-3 h-9 mb-3 transition-colors focus-within:border-teal-500">
-            <SearchOutlined style={{ fontSize: 15, color: "#9CA3AF" }} />
+            <Search size={15} className="text-gray-400" />
             <input
               className="bg-transparent ml-2 text-[13px] flex-1 outline-none placeholder:text-slate-400"
               placeholder="Search jobs…"
@@ -174,7 +125,7 @@ const PostPickerModal = memo<Props>(({ open, selectedId, onSelect, onClose }) =>
             />
             {searchInput && (
               <button onClick={handleClearSearch} className="text-slate-400 hover:text-slate-600 transition-colors">
-                <CloseOutlined style={{ fontSize: 13 }} />
+                <X size={13} />
               </button>
             )}
           </div>
@@ -182,7 +133,7 @@ const PostPickerModal = memo<Props>(({ open, selectedId, onSelect, onClose }) =>
           {/* All jobs option */}
           <PostRow
             id="" title="All Jobs" selectedId={selectedId}
-            icon={<LayersOutlined style={{ fontSize: 16, color: !selectedId ? TEAL : "#9CA3AF" }} />}
+            icon={<Layers size={16} style={{ color: !selectedId ? TEAL : "#9CA3AF" }} />}
             onSelect={handleSelectAll}
           />
 
@@ -192,7 +143,7 @@ const PostPickerModal = memo<Props>(({ open, selectedId, onSelect, onClose }) =>
             <LoadingState message="" color={TEAL} />
           ) : posts.length === 0 ? (
             <EmptyState
-              icon={<WorkOutlineOutlined />}
+              icon={<Briefcase size={36} />}
               title={searchInput ? "No matches" : "No jobs posted yet"}
               minHeight={120}
             />
@@ -217,7 +168,7 @@ const PostPickerModal = memo<Props>(({ open, selectedId, onSelect, onClose }) =>
           )}
 
           {totalPages > 1 && (
-            <SimplePagination page={page} totalPages={totalPages} onPageChange={setPage} />
+            <SimplePagination page={page} totalPages={totalPages} onPageChange={setPage} size="sm" />
           )}
         </div>
       </DialogContent>

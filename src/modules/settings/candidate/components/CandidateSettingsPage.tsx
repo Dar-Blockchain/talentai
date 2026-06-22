@@ -1,5 +1,4 @@
-﻿import React, { useState, useCallback, useEffect } from "react";
-import { Box, Typography, Avatar } from "@mui/material";
+import React, { useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import NotificationsTab from "./NotificationsTab";
 import PersonalInformationTab from "./PersonalInformationTab";
@@ -8,19 +7,15 @@ import SnackbarNotifications from "./SnackbarNotifications";
 import { useProfileManagement } from "../hooks";
 import { useUpdateCandidateVisibility } from "../queries";
 import { LanguageTab } from "@/modules/settings/shared";
-import PersonOutlined from "@mui/icons-material/PersonOutlined";
-import LanguageIcon from "@mui/icons-material/Language";
-import NotificationsOutlined from "@mui/icons-material/NotificationsOutlined";
-import VisibilityOutlined from "@mui/icons-material/VisibilityOutlined";
-import { TEAL as T, TEAL_BG as TBG, TEAL_BORDER as TBRD } from "@/modules/settings/shared";
+import { User, Globe, Bell, Eye } from "lucide-react";
 
 const NAVY = "#0D1B2A";
 
 const TAB_IDS = [
-  { id: "personal",      key: "personal",      icon: PersonOutlined },
-  { id: "language",      key: "language",      icon: LanguageIcon },
-  { id: "notifications", key: "notifications", icon: NotificationsOutlined },
-  { id: "visibility",    key: "visibility",    icon: VisibilityOutlined },
+  { id: "personal",      key: "personal",      icon: User },
+  { id: "language",      key: "language",      icon: Globe },
+  { id: "notifications", key: "notifications", icon: Bell },
+  { id: "visibility",    key: "visibility",    icon: Eye },
 ];
 
 const CandidateSettingsPage: React.FC = () => {
@@ -61,55 +56,63 @@ const CandidateSettingsPage: React.FC = () => {
 
   return (
     <>
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "240px 1fr" }, gap: 2.5, alignItems: "start" }}>
+      <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-[20px] items-start">
 
         {/* LEFT: Profile + Nav */}
-        <Box sx={{ display: { xs: "none", md: "flex" }, flexDirection: "column", gap: 2, position: "sticky", top: 16, maxHeight: "calc(100vh - 96px)", overflowY: "auto" }} className="custom-scrollbar">
-          <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-            <Box sx={{ height: 56, background: `linear-gradient(135deg, ${NAVY} 0%, ${T} 100%)`, position: "relative" }}>
-              <Box sx={{ position: "absolute", top: "50%", right: 16, transform: "translateY(-50%)", width: 32, height: 32, borderRadius: "50%", bgcolor: `${T}30`, border: `1px solid ${T}40` }} />
-            </Box>
-            <Box sx={{ px: 2, pb: 2 }}>
-              <Box sx={{ mt: -3, mb: 1 }}>
-                <Avatar src={avatarUrl} sx={{ width: 52, height: 52, bgcolor: T, fontSize: "1.2rem", fontWeight: 700, border: "2.5px solid #fff", boxShadow: "0 2px 8px rgba(0,0,0,0.12)" }}>
-                  {initial}
-                </Avatar>
-              </Box>
-              <Typography sx={{ fontWeight: 800, fontSize: "0.95rem", color: NAVY, lineHeight: 1.2 }}>{displayName}</Typography>
-              {profile.email && <Typography sx={{ fontSize: "0.72rem", color: "#9CA3AF", mt: 0.25 }}>{profile.email}</Typography>}
-            </Box>
-          </Box>
+        <div className="hidden md:flex flex-col gap-4 sticky top-4 max-h-[calc(100vh-96px)] overflow-y-auto custom-scrollbar">
+          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+            <div
+              className="h-14 relative"
+              style={{ background: `linear-gradient(135deg, ${NAVY} 0%, #0D9488 100%)` }}
+            >
+              <div className="absolute top-1/2 right-4 -translate-y-1/2 w-8 h-8 rounded-full bg-teal-600/20 border border-teal-600/30" />
+            </div>
+            <div className="px-4 pb-4">
+              <div className="-mt-6 mb-2">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt={displayName}
+                    className="w-[52px] h-[52px] rounded-full border-[2.5px] border-white shadow-[0_2px_8px_rgba(0,0,0,0.12)] object-cover"
+                  />
+                ) : (
+                  <div className="w-[52px] h-[52px] rounded-full border-[2.5px] border-white shadow-[0_2px_8px_rgba(0,0,0,0.12)] bg-teal-600 text-white flex items-center justify-center text-[1.2rem] font-bold">
+                    {initial}
+                  </div>
+                )}
+              </div>
+              <p className="font-extrabold text-[0.95rem] leading-tight" style={{ color: NAVY }}>{displayName}</p>
+              {profile.email && <p className="text-[0.72rem] text-gray-400 mt-1">{profile.email}</p>}
+            </div>
+          </div>
 
-          <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 1.25, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-            <Typography sx={{ fontSize: "0.65rem", fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.06em", px: 1, pb: 1 }}>{t("candidate_settings.tabs.settings_label")}</Typography>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+          <div className="bg-white rounded-2xl border border-gray-200 p-[10px] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+            <p className="text-[0.65rem] font-bold text-gray-400 uppercase tracking-wide px-2 pb-2">{t("candidate_settings.tabs.settings_label")}</p>
+            <div className="flex flex-col gap-1">
               {TABS.map(({ id, label, icon: Icon }) => {
                 const active = activeTab === id;
                 return (
-                  <Box
+                  <div
                     key={id}
                     onClick={() => setActiveTab(id)}
-                    sx={{
-                      display: "flex", alignItems: "center", gap: 1.25,
-                      px: 1.5, py: 1, borderRadius: "10px", cursor: "pointer",
-                      bgcolor: active ? TBG : "transparent",
-                      border: `1px solid ${active ? TBRD : "transparent"}`,
-                      transition: "all 0.15s",
-                      "&:hover": { bgcolor: active ? TBG : "#F8FAFC", borderColor: active ? TBRD : "#E5E7EB" },
-                    }}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-[10px] cursor-pointer border transition-colors ${
+                      active
+                        ? "bg-teal-50 border-teal-200"
+                        : "bg-transparent border-transparent hover:bg-gray-50 hover:border-gray-200"
+                    }`}
                   >
-                    <Icon sx={{ fontSize: 16, color: active ? T : "#6B7280" }} />
-                    <Typography sx={{ fontSize: "0.82rem", fontWeight: active ? 700 : 500, color: active ? T : "#374151" }}>{label}</Typography>
-                    {active && <Box sx={{ ml: "auto", width: 6, height: 6, borderRadius: "50%", bgcolor: T }} />}
-                  </Box>
+                    <Icon size={16} className={active ? "text-teal-600" : "text-gray-500"} />
+                    <span className={`text-[0.82rem] ${active ? "font-bold text-teal-600" : "font-medium text-gray-700"}`}>{label}</span>
+                    {active && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-teal-600" />}
+                  </div>
                 );
               })}
-            </Box>
-          </Box>
-        </Box>
+            </div>
+          </div>
+        </div>
 
         {/* RIGHT: Tab content */}
-        <Box>
+        <div>
           {activeTab === "personal" && (
             <PersonalInformationTab
               profile={profile}
@@ -145,8 +148,8 @@ const CandidateSettingsPage: React.FC = () => {
               hasMembership={hasMembership}
             />
           )}
-        </Box>
-      </Box>
+        </div>
+      </div>
 
       <SnackbarNotifications
         error={error || null}
