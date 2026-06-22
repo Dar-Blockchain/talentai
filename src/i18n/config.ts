@@ -186,7 +186,7 @@ function getInitialLanguage(): string {
   return 'en';
 }
 
-const PRELOADED_NAMESPACES = ['common', 'modules/notifications/notifications', 'home'];
+const PRELOADED_NAMESPACES = ['common', 'dashboard', 'modules/notifications/notifications', 'home'];
 
 const options: InitOptions = {
   lng: getInitialLanguage(),
