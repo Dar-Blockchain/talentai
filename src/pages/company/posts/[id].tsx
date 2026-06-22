@@ -69,7 +69,6 @@ const PostDetailsPage: NextPageWithLayout = () => {
               <JobDetailContent
                 activeEdit={activeEdit}
                 isOwner={isOwner}
-                creationType={job.creationType}
                 job={job}
                 onEditPost={() => setActiveEdit("post")}
                 onCancelEdit={() => setActiveEdit(null)}

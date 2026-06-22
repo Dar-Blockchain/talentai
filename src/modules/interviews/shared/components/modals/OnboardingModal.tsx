@@ -436,7 +436,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobTitle, onClo
                   {Array.from({ length: CODE_LENGTH }).map((_, i) => (
                     <input
                       key={i}
-                      ref={el => (codeInputsRef.current[i] = el)}
+                      ref={el => { codeInputsRef.current[i] = el; }}
                       value={code[i] || ''}
                       onChange={e => handleCodeChange(i, e as React.ChangeEvent<HTMLInputElement>)}
                       onPaste={handleCodePaste}

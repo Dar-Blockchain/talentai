@@ -5,15 +5,15 @@ import type {
   PostsStatusParams, PostsStatusResult, KpiPostOption,
 } from "../types";
 
-const qs = (p: Record<string, string | number | undefined | null>) => {
+const qs = (p: object) => {
   const q = new URLSearchParams();
-  for (const [k, v] of Object.entries(p)) {
+  for (const [k, v] of Object.entries(p) as [string, unknown][]) {
     if (v != null && v !== "") q.set(k, String(v));
   }
   return q.toString() ? `?${q}` : "";
 };
 
-const sel = <T>(res: { data: any }): T => res.data?.data ?? res.data;
+const sel = (res: { data: any }): any => res.data?.data ?? res.data;
 
 export const fetchKpiActions = (params: KpiFilterParams): Promise<KpiActionsData> =>
   axiosInstance.get(`job-applications/company/my/kpi/actions${qs(params)}`).then(sel);
