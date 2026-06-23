@@ -6,6 +6,12 @@ export function getToken(): string | null {
   return Cookies.get('jwt_token') ?? null;
 }
 
+/** Saves the JWT token in a client-side cookie (7-day expiry). */
+export function saveToken(token: string): void {
+  if (typeof window === 'undefined') return;
+  Cookies.set('jwt_token', token, { path: '/', expires: 7, sameSite: 'strict' });
+}
+
 /** Removes the auth cookie from the browser (backend also clears it on logout). */
 export function clearTokens(): void {
   if (typeof window === 'undefined') return;
