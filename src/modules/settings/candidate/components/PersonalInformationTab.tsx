@@ -24,7 +24,7 @@ interface PersonalInformationTabProps {
   onSave:         () => void;
   onCancel:       () => void;
   onEditToggle:   () => void;
-  onCvUpdated:    (filename: string) => void;
+  onCvUpdated:    (filename: string, cvAnalysis?: any) => void;
   onCvDeleted:    () => void;
 }
 

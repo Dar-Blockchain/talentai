@@ -110,29 +110,49 @@ module.exports.updateResume = async (req, res) => {
         .json({ success: false, error: "No resume file provided." });
     }
 
+    const Profile = require("./profile.model");
+    const currentProfile = await Profile.findOne({ userId: req.user._id }).select("_id");
+    if (currentProfile) {
+      const hasActive = await profileService.checkActiveApplications(currentProfile._id);
+      if (hasActive) {
+        return res.status(409).json({
+          success: false,
+          error: "You have pending job applications. Please withdraw them before replacing your CV.",
+        });
+      }
+    }
+
     const profile = await profileService.saveResume(
       req.user._id,
       req.file.filename,
     );
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "Resume updated successfully.",
-        data: { resume: profile.resume },
-      });
-
-    CVAnalysisService.analyzeResumeBg(
+    const cvAnalysis = await CVAnalysisService.analyzeAndReplace(
       req.user._id,
       profile._id,
       req.file.filename,
       {
-        name: `${profile.firstName} ${profile.lastName}`,
+        name:      `${profile.firstName || ""} ${profile.lastName || ""}`.trim(),
         ipAddress: req.ip,
         userAgent: req.get("user-agent"),
       },
-    ).catch((err) => console.error("⚠️  CV analysis failed:", err.message));
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Resume updated and analysed successfully.",
+      data: {
+        resume: profile.resume,
+        cvAnalysis: cvAnalysis ? {
+          _id:             cvAnalysis._id,
+          analysisScore:   cvAnalysis.analysisScore,
+          seniority:       cvAnalysis.seniority,
+          skillsCount:     cvAnalysis.skills?.length     ?? 0,
+          softSkillsCount: cvAnalysis.softSkills?.length ?? 0,
+          createdAt:       cvAnalysis.createdAt,
+        } : null,
+      },
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

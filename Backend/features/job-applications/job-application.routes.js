@@ -268,6 +268,7 @@ router.get("/company/my/kpi/roi", jobApplicationController.getRoiKPI);
  *         description: Decision updated
  */
 router.patch("/:applicationId/recruiter-decision", jobApplicationController.updateRecruiterDecision);
+router.patch("/:applicationId/withdraw", jobApplicationController.withdrawApplication);
 
 /**
  * @openapi

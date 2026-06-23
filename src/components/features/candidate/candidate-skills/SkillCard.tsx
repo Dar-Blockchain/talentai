@@ -35,8 +35,8 @@ const SkillCard: React.FC<SkillCardProps> = ({ skill, type }) => {
   const { t } = useTranslation("dashboard");
   const s = (k: string, opts?: any) => t(`candidate.skills.${k}`, opts) as string;
 
-  const score     = skill.ScoreTest ?? 0;
-  const levelKey  = LEVEL_KEYS[skill.Levelconfirmed] ?? "new";
+  const score     = skill.testScore ?? 0;
+  const levelKey  = LEVEL_KEYS[skill.levelConfirmed] ?? "new";
   const lvlStyle  = LEVEL_STYLES[levelKey];
   const lvlLabel  = s(`levels.${levelKey}`);
   const timeAgo   = skill?.updatedAt ? dayjs(skill.updatedAt).fromNow() : null;

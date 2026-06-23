@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Box, Typography, Avatar, Button, InputBase, Skeleton, Collapse } from "@mui/material";
+import { Box, Typography, Avatar, Button, InputBase, Skeleton, Collapse, Dialog, DialogContent, DialogActions } from "@mui/material";
 import ExpandMoreOutlined from "@mui/icons-material/ExpandMoreOutlined";
 import ExpandLessOutlined from "@mui/icons-material/ExpandLessOutlined";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutlineOutlined";
@@ -14,11 +14,16 @@ import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/router";
 import { AppDispatch } from "@/store/store";
 import { buildInterviewUrl } from "@/lib/interviewSession";
+import { emitToast } from "@/utils/toastEmitter";
 import {
   fetchCandidateApplications,
   selectCandidateApplications,
   selectCandidateApplicationsLoading,
   selectCandidateApplicationsPagination,
+  withdrawApplication,
+  updateLocalWithdraw,
+  fetchCandidateStats,
+  selectCandidateStats,
 } from "@/store/slices/jobApplicationSlice";
 
 const T    = "#0D9488";
@@ -69,7 +74,7 @@ const CardSkeleton = () => (
 );
 
 // ── Application card ─────────────────────────────────────────
-const AppCard: React.FC<{ app: any; onClick: () => void; last: boolean; s: (k: string, opts?: any) => string }> = ({ app, onClick, last, s }) => {
+const AppCard: React.FC<{ app: any; onClick: () => void; last: boolean; s: (k: string, opts?: any) => string; onWithdraw?: (id: string) => void }> = ({ app, onClick, last, s, onWithdraw }) => {
   const post    = app.post    || {};
   const company = app.company || {};
   const jd      = post.jobDetails || {};
@@ -82,6 +87,7 @@ const AppCard: React.FC<{ app: any; onClick: () => void; last: boolean; s: (k: s
   const appliedDate = fmtDate(app.appliedAt || app.createdAt);
   const rawStatus   = (app.status || "applied").toLowerCase();
   const sc          = STATUS_COLORS[rawStatus] ?? STATUS_COLORS.applied;
+  const canWithdraw = rawStatus === "visited" && !!onWithdraw;
   const statusKey = `candidate.my_applications.status.${rawStatus}`;
   const statusCandidate = s(`status.${rawStatus}`);
   const statusLabel = statusCandidate === statusKey ? rawStatus : statusCandidate;
@@ -171,6 +177,16 @@ const AppCard: React.FC<{ app: any; onClick: () => void; last: boolean; s: (k: s
               <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8" }}>{s("applied_date", { date: appliedDate })}</Typography>
             </Box>
           )}
+          {canWithdraw && (
+            <Box
+              onClick={(e) => { e.stopPropagation(); onWithdraw!(app._id); }}
+              sx={{ display: "flex", alignItems: "center", gap: 0.3, cursor: "pointer", ml: "auto",
+                px: 1, py: 0.2, borderRadius: "6px", border: "1px solid #FECACA",
+                bgcolor: "#FEF2F2", "&:hover": { bgcolor: "#FEE2E2" }, transition: "background 0.12s" }}
+            >
+              <Typography sx={{ fontSize: "0.65rem", fontWeight: 700, color: "#DC2626" }}>Withdraw</Typography>
+            </Box>
+          )}
         </Box>
       </Box>
     </Box>
@@ -197,44 +213,89 @@ const CandidateApplications: React.FC<CandidateApplicationsProps> = ({ previewCo
   const applications = useSelector(selectCandidateApplications);
   const loading      = useSelector(selectCandidateApplicationsLoading);
   const { currentPage, totalPages, totalCount } = useSelector(selectCandidateApplicationsPagination);
+  const candidateStats = useSelector(selectCandidateStats);
 
-  const [search,       setSearch]       = useState("");
-  const [activeFilter, setActiveFilter] = useState("all");
-  const [expanded,     setExpanded]     = useState(false);
+  const [search,            setSearch]            = useState("");
+  const [debouncedSearch,   setDebouncedSearch]   = useState("");
+  const [activeFilter,      setActiveFilter]      = useState("all");
+  const [expanded,          setExpanded]          = useState(false);
+  const [withdrawId,        setWithdrawId]        = useState<string | null>(null);
+  const [withdrawing,       setWithdrawing]       = useState(false);
 
   const COLLAPSE_SIZE = 4;
 
   const fetchLimit = previewCount ?? PAGE_SIZE;
 
+  const statusForServer = (filter: string) =>
+    previewCount == null && filter !== "all" ? filter : undefined;
+
+  const searchForServer = (q: string) =>
+    previewCount == null && q ? q : undefined;
+
   useEffect(() => {
-    dispatch(fetchCandidateApplications({ page: 1, limit: fetchLimit }));
-  }, [dispatch, fetchLimit]);
+    if (previewCount == null) dispatch(fetchCandidateStats());
+  }, [dispatch, previewCount]);
+
+  useEffect(() => {
+    const t = setTimeout(() => { setDebouncedSearch(search); setExpanded(false); }, 400);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  useEffect(() => {
+    dispatch(fetchCandidateApplications({
+      page: 1,
+      limit: fetchLimit,
+      status: statusForServer(activeFilter),
+      search: searchForServer(debouncedSearch),
+    }));
+  }, [activeFilter, debouncedSearch, dispatch, fetchLimit]);
 
   const goToPage = (p: number) =>
-    dispatch(fetchCandidateApplications({ page: p, limit: fetchLimit }));
+    dispatch(fetchCandidateApplications({
+      page: p,
+      limit: fetchLimit,
+      status: statusForServer(activeFilter),
+      search: searchForServer(debouncedSearch),
+    }));
 
-  const statusCounts = applications.reduce<Record<string, number>>((acc, app) => {
-    const st = (app.status || "applied").toLowerCase();
-    acc[st] = (acc[st] || 0) + 1;
-    return acc;
-  }, {});
+  const refreshList = () => {
+    dispatch(fetchCandidateApplications({
+      page: currentPage,
+      limit: fetchLimit,
+      status: statusForServer(activeFilter),
+      search: searchForServer(debouncedSearch),
+    }));
+    dispatch(fetchCandidateStats());
+  };
 
-  const filtered = applications.filter(app => {
-    const title   = (app.post?.jobDetails?.title   || "").toLowerCase();
-    const company = (app.company?.companyName      || "").toLowerCase();
-    const q       = search.toLowerCase();
-    const matchSearch = !q || title.includes(q) || company.includes(q);
-    const matchFilter = activeFilter === "all" || (app.status || "applied").toLowerCase() === activeFilter;
-    return matchSearch && matchFilter;
-  });
+  const handleWithdrawConfirm = async () => {
+    if (!withdrawId) return;
+    setWithdrawing(true);
+    const result = await dispatch(withdrawApplication(withdrawId));
+    if (withdrawApplication.fulfilled.match(result)) {
+      emitToast({ message: "Application withdrawn successfully.", severity: "success" });
+      refreshList();
+    } else {
+      emitToast({ message: (result.payload as string) || "Failed to withdraw application.", severity: "error" });
+    }
+    setWithdrawing(false);
+    setWithdrawId(null);
+  };
 
-  const displayed = previewCount != null ? filtered.slice(0, previewCount) : filtered;
+  const displayed = previewCount != null ? applications.slice(0, previewCount) : applications;
+
+  const statsTotal = candidateStats
+    ? Object.values(candidateStats.statusCounts).reduce((s, n) => s + n, 0)
+    : totalCount;
 
   const filterOptions = [
-    { key: "all", label: s("status.all"), count: totalCount, color: T },
-    ...Object.keys(statusCounts).map(key => ({
-      key, label: statusLabel(key), count: statusCounts[key], color: STATUS_COLORS[key]?.color || T,
-    })),
+    { key: "all", label: s("status.all"), count: statsTotal, color: T },
+    ...(candidateStats
+      ? Object.entries(candidateStats.statusCounts).map(([key, count]) => ({
+          key, label: statusLabel(key), count, color: STATUS_COLORS[key]?.color || T,
+        }))
+      : []
+    ),
   ];
 
   return (
@@ -277,7 +338,7 @@ const CandidateApplications: React.FC<CandidateApplicationsProps> = ({ previewCo
             </Box>
             <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
               {filterOptions.map(({ key, label, count, color }) => (
-                <Box key={key} onClick={() => setActiveFilter(key)} sx={{
+                <Box key={key} onClick={() => { setActiveFilter(key); setExpanded(false); }} sx={{
                   display: "flex", alignItems: "center", gap: 0.5, px: 1, py: 0.3,
                   borderRadius: "20px", cursor: "pointer",
                   border: activeFilter === key ? `1.5px solid ${color}` : "1px solid #E2E8F0",
@@ -325,6 +386,7 @@ const CandidateApplications: React.FC<CandidateApplicationsProps> = ({ previewCo
                 else
                   router.push(`/candidate/applications/${app._id}`);
               }}
+              onWithdraw={previewCount == null ? setWithdrawId : undefined}
               s={s}
             />
           ))}
@@ -371,6 +433,27 @@ const CandidateApplications: React.FC<CandidateApplicationsProps> = ({ previewCo
           )}
         </Box>
       )}
+
+      {/* ── Withdraw confirmation ── */}
+      <Dialog open={!!withdrawId} onClose={() => { if (!withdrawing) setWithdrawId(null); }}
+        PaperProps={{ sx: { borderRadius: "16px", maxWidth: 360 } }}>
+        <DialogContent sx={{ pt: 2.5, pb: 1 }}>
+          <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "#0F172A", mb: 0.75 }}>Withdraw application</Typography>
+          <Typography sx={{ fontSize: "0.85rem", color: "#6B7280", lineHeight: 1.6 }}>
+            Are you sure you want to withdraw this application? The company will see it as withdrawn.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 2.5, pb: 2.5, gap: 1 }}>
+          <Button size="small" disabled={withdrawing} onClick={() => setWithdrawId(null)}
+            sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.82rem", color: "#6B7280", borderRadius: "8px", "&:hover": { bgcolor: "#F3F4F6" } }}>
+            Cancel
+          </Button>
+          <Button size="small" disabled={withdrawing} onClick={handleWithdrawConfirm} variant="contained"
+            sx={{ textTransform: "none", fontWeight: 700, fontSize: "0.82rem", bgcolor: "#DC2626", borderRadius: "8px", boxShadow: "none", "&:hover": { bgcolor: "#B91C1C", boxShadow: "none" } }}>
+            {withdrawing ? "Withdrawing…" : "Withdraw"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* ── Pagination ── */}
       {previewCount == null && totalPages > 1 && (

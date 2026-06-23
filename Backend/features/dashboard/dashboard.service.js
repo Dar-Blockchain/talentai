@@ -2,7 +2,9 @@ const mongoose = require('mongoose');
 const User = require("../users/user.model");
 const Post = require('../posts/post.model');
 const Feedback = require('../feedbacks/feedback.model');
-const Profile = require('../users/profile.model');
+const Profile          = require('../users/profile.model');
+const ProfileSkill     = require('../skills/profile-skill.model');
+const ProfileSoftSkill = require('../skills/profile-soft-skill.model');
 const PostInterviewAssessment = require("../interviews/post-interview/post-interview.model");
 const { POST_STATUS } = require("../posts/posts.constants");
 const InternalCampaign = require("../campaigns/campaign.model");
@@ -51,9 +53,9 @@ module.exports.getCounts = async () => {
       Feedback.countDocuments()
     ]);
 
-    const totalSkillsPromise = Profile.aggregate([
-      { $project: { totalHardSkills: { $size: { $ifNull: ["$skills", []] } }, totalSoftSkills: { $size: { $ifNull: ["$softSkills", []] } } } },
-      { $group: { _id: null, totalHardSkillsCount: { $sum: "$totalHardSkills" }, totalSoftSkillsCount: { $sum: "$totalSoftSkills" }, totalSkillsCount: { $sum: { $add: ["$totalHardSkills", "$totalSoftSkills"] } } } }
+    const totalSkillsPromise = Promise.all([
+      ProfileSkill.countDocuments(),
+      ProfileSoftSkill.countDocuments(),
     ]);
 
     const avgOverallScorePromise = PostInterviewAssessment.aggregate([
@@ -61,26 +63,20 @@ module.exports.getCounts = async () => {
       { $group: { _id: null, avgOverallScore: { $avg: "$interviewData.finalReport.coverage.overall" } } }
     ]);
 
-    const topSkillsPromise = Profile.aggregate([
-      { $project: { skills: 1 } },
-      { $unwind: { path: "$skills", preserveNullAndEmptyArrays: false } },
-      { $group: { _id: "$skills.name", count: { $sum: 1 }, avgLevel: { $avg: "$skills.proficiencyLevel" } } },
+    const topSkillsPromise = ProfileSkill.aggregate([
+      { $group: { _id: "$name", count: { $sum: 1 }, avgLevel: { $avg: "$proficiencyLevel" } } },
       { $sort: { count: -1, avgLevel: -1 } },
-      { $limit: 10 }
+      { $limit: 10 },
     ]);
 
     const jobAssessmentWithScoreCountPromise = PostInterviewAssessment.countDocuments({ "interviewData.finalReport.coverage.overall": { $gt: 0 } });
 
-    const [totalSkillsResult, avgOverallScoreResult, topSkillsResult, jobAssessmentWithScoreCount] = await Promise.all([
-      totalSkillsPromise,
-      avgOverallScorePromise,
-      topSkillsPromise,
-      jobAssessmentWithScoreCountPromise
+    const [[totalSkillsResult, avgOverallScoreResult, topSkillsResult, jobAssessmentWithScoreCount]] = await Promise.all([
+      Promise.all([totalSkillsPromise, avgOverallScorePromise, topSkillsPromise, jobAssessmentWithScoreCountPromise]),
     ]);
 
-    const totalHardSkillsCount = totalSkillsResult.length > 0 ? totalSkillsResult[0].totalHardSkillsCount : 0;
-    const totalSoftSkillsCount = totalSkillsResult.length > 0 ? totalSkillsResult[0].totalSoftSkillsCount : 0;
-    const totalSkillsCount = totalSkillsResult.length > 0 ? totalSkillsResult[0].totalSkillsCount : 0;
+    const [totalHardSkillsCount, totalSoftSkillsCount] = totalSkillsResult;
+    const totalSkillsCount = totalHardSkillsCount + totalSoftSkillsCount;
 
     const hardSkillsPercentage = totalSkillsCount > 0 ? (totalHardSkillsCount / totalSkillsCount) * 100 : 0;
     const softSkillsPercentage = totalSkillsCount > 0 ? (totalSoftSkillsCount / totalSkillsCount) * 100 : 0;

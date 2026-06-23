@@ -387,7 +387,8 @@
       "status": {
         "all": "Tous les statuts",
         "visited": "Visité",
-        "interview_completed": "Entretien terminé"
+        "interview_completed": "Entretien terminé",
+        "withdrawn": "Retiré"
       },
       "sort": {
         "date_applied": "Date de candidature",

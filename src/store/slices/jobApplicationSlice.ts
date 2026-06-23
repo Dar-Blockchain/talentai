@@ -157,7 +157,7 @@ export const fetchCompanyApplicationMetrics = createAsyncThunk(
 
 export const fetchCandidateApplications = createAsyncThunk(
   'jobApplications/fetchCandidateList',
-  async (params: { page?: number; limit?: number } = {}) => {
+  async (params: { page?: number; limit?: number; status?: string; search?: string } = {}) => {
     const result = await jobApplicationService.fetchCandidateApplications(params);
     return { data: result.data as any[], pagination: result.pagination };
   }
@@ -177,6 +177,18 @@ export const createJobApplication = createAsyncThunk(
       return await jobApplicationService.createApplication(postId);
     } catch (error: any) {
       return rejectWithValue(error?.response?.data?.message || error.message || 'Failed to create application');
+    }
+  }
+);
+
+export const withdrawApplication = createAsyncThunk(
+  'jobApplications/withdraw',
+  async (applicationId: string, { rejectWithValue }) => {
+    try {
+      await jobApplicationService.withdrawApplication(applicationId);
+      return applicationId;
+    } catch (error: any) {
+      return rejectWithValue(error?.response?.data?.error || error.message || 'Failed to withdraw application');
     }
   }
 );
@@ -203,6 +215,11 @@ const jobApplicationSlice = createSlice({
       if (item) item.recruiterDecision = decision;
       const item2 = state.postSummary.data.find(a => String(a.id) === applicationId);
       if (item2) item2.recruiterDecision = decision;
+    },
+    updateLocalWithdraw(state, action: { payload: string }) {
+      const id = action.payload;
+      const item = state.candidateList.data.find(a => String(a._id) === id);
+      if (item) item.status = 'withdrawn';
     },
   },
   extraReducers: (builder) => {
@@ -291,7 +308,7 @@ const jobApplicationSlice = createSlice({
   },
 });
 
-export const { updateLocalDecision } = jobApplicationSlice.actions;
+export const { updateLocalDecision, updateLocalWithdraw } = jobApplicationSlice.actions;
 export default jobApplicationSlice.reducer;
 
 // Selectors

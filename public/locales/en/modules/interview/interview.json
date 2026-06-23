@@ -53,6 +53,11 @@
     "go_back": "← Go Back",
     "go_home": "Go to Home"
   },
+  "no_cv": {
+    "title": "CV Required to Access This Interview",
+    "desc": "This interview requires a CV so the AI can evaluate your profile. Please upload your CV in your settings and come back.",
+    "action": "Upload my CV"
+  },
   "back_to_dashboard": "Back to Dashboard",
   "connection": {
     "connecting": "Connecting to interview system…",

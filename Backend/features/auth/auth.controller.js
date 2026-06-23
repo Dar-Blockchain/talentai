@@ -61,19 +61,11 @@ const analyseCvAndEnrichProfile = async (resumeFile, validEmail, firstName, last
       userAgent:         req.get("user-agent"),
     }, profileId);
 
+    // Skills are upserted into ProfileSkill inside createCVAnalysis above
     const profileUpdate = {};
 
-    if (cvData.skills?.length) {
-      profileUpdate.$push = {
-        skills: { $each: cvData.skills.map((name) => ({
-          name, proficiencyLevel: 0, experienceLevel: "",
-          NumberTestPassed: 0, ScoreTest: 0, Levelconfirmed: 0,
-        })) },
-      };
-    }
-
     if (cvData.spokenLanguages?.length) {
-      profileUpdate.$push = { ...(profileUpdate.$push || {}), spokenLanguages: { $each: cvData.spokenLanguages } };
+      profileUpdate.$push = { spokenLanguages: { $each: cvData.spokenLanguages } };
     }
 
     if (cvData.email || cvData.links || cvData.location) {
@@ -179,9 +171,8 @@ module.exports.verifyOTP = async (req, res) => {
       contactInformation:      p.contactInformation,
       companyDetails:          p.companyDetails,
       requiredExperienceLevel: p.requiredExperienceLevel,
-      requiredSkills:          p.requiredSkills,
-      skills:     (p.skills     || []).map(s => ({ _id: s._id, name: s.name, Levelconfirmed: s.Levelconfirmed })),
-      softSkills: (p.softSkills || []).map(s => ({ _id: s._id, name: s.name, category: s.category })),
+      skills:     (p.skills     || []).map(s => ({ _id: s._id, name: s.name, levelConfirmed: s.levelConfirmed })),
+      softSkills: (p.softSkills || []).map(s => ({ _id: s._id, name: s.name, category: s.category, levelConfirmed: s.levelConfirmed })),
     } : null;
 
     res.status(200).json({

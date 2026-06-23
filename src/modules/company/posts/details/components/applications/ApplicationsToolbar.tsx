@@ -17,6 +17,7 @@ import { TEAL } from "@/modules/company/posts/shared/constants";
 const STATUS_I18N_KEYS: Record<string, string> = {
   visited:             "pages.applications.status.visited",
   interview_completed: "pages.applications.status.interview_completed",
+  withdrawn:           "pages.applications.status.withdrawn",
 };
 
 const SORT_GROUP_DEFS = [

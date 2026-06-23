@@ -7,14 +7,13 @@ import { emitToast } from "@/utils/toastEmitter";
 
 interface Props {
   resumeFilename: string | null | undefined;
-  onUpdated: (filename: string) => void;
+  onUpdated: (filename: string, cvAnalysis?: any) => void;
   onDeleted: () => void;
 }
 
 const CvSection: React.FC<Props> = ({ resumeFilename, onUpdated, onDeleted }) => {
   const inputRef              = useRef<HTMLInputElement>(null);
   const [uploading, setUploading]     = useState(false);
-  const [analysing, setAnalysing]     = useState(false);
   const [deleting, setDeleting]       = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [progress, setProgress]       = useState(0);
@@ -31,8 +30,8 @@ const CvSection: React.FC<Props> = ({ resumeFilename, onUpdated, onDeleted }) =>
       await candidateApi.deleteResume();
       onDeleted();
       emitToast({ message: "CV removed.", severity: "success" });
-    } catch {
-      setError("Failed to remove CV. Please try again.");
+    } catch (err: any) {
+      setError(err?.response?.data?.error || err?.response?.data?.message || "Failed to remove CV. Please try again.");
     } finally {
       setDeleting(false);
     }
@@ -50,12 +49,11 @@ const CvSection: React.FC<Props> = ({ resumeFilename, onUpdated, onDeleted }) =>
       const result = await candidateApi.uploadResume(file);
       clearInterval(tick);
       setProgress(100);
-      const filename = result?.resume ?? result?.data?.resume ?? file.name;
-      onUpdated(filename);
-      emitToast({ message: "CV uploaded! Analysing your CV in the background…", severity: "success" });
-      setTimeout(() => { setProgress(0); setAnalysing(true); }, 800);
-      // Show analysing badge for ~30s — the backend runs analysis async
-      setTimeout(() => setAnalysing(false), 30_000);
+      const filename   = result?.data?.resume ?? result?.resume ?? file.name;
+      const cvAnalysis = result?.data?.cvAnalysis ?? null;
+      onUpdated(filename, cvAnalysis);
+      emitToast({ message: "CV uploaded and analysed successfully.", severity: "success" });
+      setTimeout(() => setProgress(0), 800);
     } catch (err: any) {
       clearInterval(tick);
       setProgress(0);
@@ -93,17 +91,10 @@ const CvSection: React.FC<Props> = ({ resumeFilename, onUpdated, onDeleted }) =>
               {resumeFilename}
             </p>
             <div className="flex items-center gap-1 mt-0.5">
-              {analysing ? (
-                <>
-                  <Spinner size={10} className="border-amber-200 border-t-amber-600" />
-                  <span className="text-[0.72rem] text-amber-600 font-semibold">Analysing…</span>
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 size={12} className="text-teal-600" />
-                  <span className="text-[0.72rem] font-semibold text-teal-600">Active CV</span>
-                </>
-              )}
+              <>
+                <CheckCircle2 size={12} className="text-teal-600" />
+                <span className="text-[0.72rem] font-semibold text-teal-600">Active CV</span>
+              </>
             </div>
           </div>
           <div className="flex gap-1">
@@ -151,7 +142,7 @@ const CvSection: React.FC<Props> = ({ resumeFilename, onUpdated, onDeleted }) =>
           <UploadCloud size={28} className={isDragging ? "text-teal-600" : "text-gray-400"} />
         )}
         <p className={`text-[0.82rem] font-semibold text-center ${isDragging ? "text-teal-600" : "text-gray-700"}`}>
-          {uploading ? "Uploading…" : isDragging ? "Drop your CV here" : cvUrl ? "Upload a new CV" : "Upload your CV"}
+          {uploading ? "Uploading & analysing…" : isDragging ? "Drop your CV here" : cvUrl ? "Upload a new CV" : "Upload your CV"}
         </p>
         <p className="text-[0.72rem] text-gray-400">PDF, DOC, DOCX · Max 5 MB</p>
       </div>
@@ -179,6 +170,9 @@ const CvSection: React.FC<Props> = ({ resumeFilename, onUpdated, onDeleted }) =>
           <div className="px-5">
             <p className="text-[0.88rem] text-gray-600 leading-relaxed">
               Are you sure you want to remove <strong>{resumeFilename}</strong>? You can upload a new one at any time.
+            </p>
+            <p className="text-[0.78rem] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-3">
+              This will be blocked if you have pending job applications that haven't completed an interview yet.
             </p>
           </div>
           <div className="flex justify-end gap-2 px-5 py-4">

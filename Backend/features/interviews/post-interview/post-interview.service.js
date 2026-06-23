@@ -296,15 +296,16 @@ module.exports.checkInterviewEligibility = async (candidateId, postId, userRole)
     }
   }
 
+  // Block candidates who haven't uploaded a CV yet
+  const candidateProfile = await Profile.findOne({ userId: candidateId }).select("_id resume");
+  if (!candidateProfile?.resume) return { status: "no_cv" };
+
   // Record visit as a job application (idempotent — 409 on repeat visits is expected)
-  const candidateProfile = await Profile.findOne({ userId: candidateId }).select("_id");
-  if (candidateProfile) {
-    jobApplicationService.createJobApplication({
-      profile: candidateProfile._id,
-      post: postId,
-      company: post.user,
-    }).catch(() => {});
-  }
+  jobApplicationService.createJobApplication({
+    profile: candidateProfile._id,
+    post: postId,
+    company: post.user,
+  }).catch(() => {});
 
   const completed = await PostInterviewAssessment.exists({ candidate: candidateId, post: postId, completed: true });
   if (completed) return { status: "completed", meta: { jobTitle: post.jobDetails?.title || post.title || "" } };

@@ -7,7 +7,7 @@ import SkillCard from './SkillCard';
 interface Skill {
   _id: string;
   name: string;
-  ScoreTest?: number;
+  testScore?: number;
   experienceLevel?: string;
   category?: string;
   createdAt?: string;

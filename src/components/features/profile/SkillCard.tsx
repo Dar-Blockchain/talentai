@@ -7,7 +7,7 @@ interface SkillCardProps {
   skill: {
     _id: string;
     name: string;
-    ScoreTest?: number;
+    testScore?: number;
     experienceLevel?: string;
     category?: string;
     createdAt?: string;
@@ -16,7 +16,7 @@ interface SkillCardProps {
 }
 
 const SkillCard: React.FC<SkillCardProps> = React.memo(({ skill, type }) => {
-  const score = skill.ScoreTest || 0;
+  const score = skill.testScore || 0;
 
   // Color schemes based on type and score
   const getColors = () => {

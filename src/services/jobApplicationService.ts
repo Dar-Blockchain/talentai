@@ -83,10 +83,12 @@ export const jobApplicationService = {
     return res.data?.data;
   },
 
-  fetchCandidateApplications: async (params: { page?: number; limit?: number } = {}) => {
+  fetchCandidateApplications: async (params: { page?: number; limit?: number; status?: string; search?: string } = {}) => {
     const query = new URLSearchParams();
-    if (params.page)  query.set('page',  String(params.page));
-    if (params.limit) query.set('limit', String(params.limit));
+    if (params.page)   query.set('page',   String(params.page));
+    if (params.limit)  query.set('limit',  String(params.limit));
+    if (params.status) query.set('status', params.status);
+    if (params.search) query.set('search', params.search);
     const res = await axiosInstance.get(`job-applications/candidate/my${query.toString() ? `?${query}` : ''}`);
     return { data: Array.isArray(res.data?.data) ? res.data.data : [], pagination: res.data?.pagination ?? {} };
   },
@@ -103,6 +105,11 @@ export const jobApplicationService = {
 
   updateRecruiterDecision: async (applicationId: string, decision: 'shortlisted' | 'rejected', rejectionReason?: string) => {
     const res = await axiosInstance.patch(`job-applications/${applicationId}/recruiter-decision`, { decision, rejectionReason });
+    return res.data;
+  },
+
+  withdrawApplication: async (applicationId: string) => {
+    const res = await axiosInstance.patch(`job-applications/${applicationId}/withdraw`);
     return res.data;
   },
 

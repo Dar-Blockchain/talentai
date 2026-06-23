@@ -5,6 +5,8 @@ const { PDFParse } = require("pdf-parse");
 const JobApplication = require("./job-application.model");
 const PostInterviewAssessment = require("../interviews/post-interview/post-interview.model");
 const Profile = require("../users/profile.model");
+const ProfileSkill      = require("../skills/profile-skill.model");
+const ProfileSoftSkill  = require("../skills/profile-soft-skill.model");
 const CvAnalysis = require("../cv-analysis/cv-analysis.model");
 const Post = require("../posts/post.model");
 const { callLLM } = require("../../utils/bedrock-client");
@@ -23,7 +25,7 @@ const calculateMatchScoreWithBedrock = async (candidateProfile, jobPost, resumeA
       resumeAnalysis: resumeAnalysis || {},
       skills: candidateProfile.skills?.map((s) => ({
         name: s.name,
-        level: s.Levelconfirmed || s.proficiencyLevel || "Not specified",
+        level: s.levelConfirmed || s.proficiencyLevel || "Not specified",
         experienceLevel: s.experienceLevel || "Not specified",
       })) || [],
       softSkills: candidateProfile.softSkills?.map((s) => ({
@@ -109,13 +111,19 @@ const calculateMatchScoreWithBedrock = async (candidateProfile, jobPost, resumeA
 // ========== CALCULATE MATCH SCORE (via AI Agent) ==========
 const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
   try {
-    const profile = await Profile.findById(profileId).populate("userId", "firstName lastName email");
+    const [profile, profileSkills, profileSoftSkills] = await Promise.all([
+      Profile.findById(profileId).populate("userId", "firstName lastName email"),
+      ProfileSkill.find({ profile: profileId }).lean(),
+      ProfileSoftSkill.find({ profile: profileId }).lean(),
+    ]);
     if (!profile) {
       return {
         matchScore: 0,
         reasoning: "Candidate profile not found.",
       };
     }
+    profile.skills     = profileSkills;
+    profile.softSkills = profileSoftSkills;
   
     const post = await Post.findById(postId).populate("skillAnalysis");
     if (!post) {
@@ -228,6 +236,34 @@ module.exports.createJobApplication = async (applicationData) => {
   }
 };
 
+// ========== WITHDRAW ==========
+module.exports.withdrawApplication = async (applicationId, profileId) => {
+  const app = await JobApplication.findById(applicationId);
+  if (!app) {
+    const err = new Error("Application not found.");
+    err.status = 404;
+    throw err;
+  }
+  if (String(app.profile) !== String(profileId)) {
+    const err = new Error("Not authorized to withdraw this application.");
+    err.status = 403;
+    throw err;
+  }
+  if (app.status === "withdrawn") {
+    const err = new Error("Application is already withdrawn.");
+    err.status = 409;
+    throw err;
+  }
+  if (app.status === "interview_completed") {
+    const err = new Error("Cannot withdraw an application after the interview has been completed.");
+    err.status = 409;
+    throw err;
+  }
+  app.status = "withdrawn";
+  await app.save();
+  return app;
+};
+
 // ========== READ - Get by ID ==========
 module.exports.getJobApplicationById = async (applicationId) => {
   try {
@@ -312,6 +348,14 @@ module.exports.getApplicationsByCandidate = async (profileId, filters = {}, page
     if (filters.status) query.status = filters.status;
     if (filters.isArchived !== undefined) query.isArchived = filters.isArchived;
 
+    if (filters.search) {
+      const rx = { $regex: filters.search, $options: "i" };
+      const postMatches = await Post.find({
+        $or: [{ "jobDetails.title": rx }, { "jobDetails.company": rx }],
+      }).select("_id");
+      query.post = { $in: postMatches.map((p) => p._id) };
+    }
+
     const skip = (page - 1) * limit;
     const totalCount = await JobApplication.countDocuments(query);
     const totalPages = Math.ceil(totalCount / limit);
@@ -386,24 +430,16 @@ module.exports.getApplicationsByCompany = async (companyId, filters = {}, page =
       query.profile = { $in: profileMatches.map((p) => p._id) };
     }
 
-    // Filter by skills
+    // Filter by skills (query ProfileSkill collection)
     if (filters.skills && filters.skills.length > 0) {
       const skillsArray = Array.isArray(filters.skills) ? filters.skills : [filters.skills];
       const skillRegexes = skillsArray.map((s) => new RegExp(s, "i"));
-      const profilesWithSkills = await Profile.find({
-        skills: {
-          $elemMatch: {
-            name: { $in: skillRegexes },
-          },
-        },
-      }).select("_id");
+      const profilesWithSkills = await ProfileSkill.find({ name: { $in: skillRegexes } }).distinct("profile");
 
-      const profileIds = profilesWithSkills.map((p) => p._id);
       if (query.profile) {
-        // If already filtered by name, intersect with skills filter
-        query.profile = { $in: profileIds.filter((id) => query.profile.$in.includes(id)) };
+        query.profile = { $in: profilesWithSkills.filter((id) => query.profile.$in.map(String).includes(String(id))) };
       } else {
-        query.profile = { $in: profileIds };
+        query.profile = { $in: profilesWithSkills };
       }
     }
 
@@ -668,7 +704,7 @@ module.exports.getApplicationsSummaryByCompany = async (companyId, filters = {},
     const PostInterviewAssessment = require("../interviews/post-interview/post-interview.model");
     const ObjectId = require("mongoose").Types.ObjectId;
 
-    const query = { company: new ObjectId(companyId), isWithdrawn: false };
+    const query = { company: new ObjectId(companyId) };
 
     if (filters.status) query.status = filters.status;
     if (filters.postId) query.post = new ObjectId(filters.postId);
@@ -708,7 +744,7 @@ module.exports.getApplicationsSummaryByCompany = async (companyId, filters = {},
       .sort({ appliedAt: -1 })
       .lean();
 
-    const postIds = [...new Set(applications.map((a) => String(a.post?._id)).filter(Boolean))];
+    const postIds = [...new Set(applications.map((a) => a.post?._id).filter(Boolean).map(String))];
     const assessments = await PostInterviewAssessment.find({ post: { $in: postIds } })
       .select("candidate post interviewData.finalReport.scores.overall createdAt")
       .lean();

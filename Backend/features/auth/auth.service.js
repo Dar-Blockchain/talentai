@@ -108,19 +108,19 @@ module.exports.registerUser = async (email, roleType = "Candidate", opts = {}) =
         website:  opts.companyDetails?.website  || "",
         linkedin: opts.companyDetails?.linkedin || "",
       },
-      requiredSkills: [], requiredExperienceLevel: "Entry Level",
+      requiredExperienceLevel: "Entry Level",
     });
   } else if (validRole === "Member" || validRole === "Employee") {
     profile = await Profile.create({
       userId: user._id, type: validRole === "Employee" ? "Employee" : "Member",
       firstName: opts.firstName, lastName: opts.lastName,
-      phone: opts.phone || "", skills: [], overallScore: 0,
+      phone: opts.phone || "", overallScore: 0,
     });
   } else if (validRole === "Candidate") {
     profile = await Profile.create({
       userId: user._id, type: "Candidate",
       firstName: opts.firstName, lastName: opts.lastName,
-      phone: opts.phone || "", resume: resumePath, skills: [], overallScore: 0,
+      phone: opts.phone || "", resume: resumePath, overallScore: 0,
     });
   }
 
@@ -192,7 +192,7 @@ module.exports.verifyUserOTP = async (email, otp, location = null) => {
   const [profile, companyMembership] = await Promise.all([
     user.profile
       ? Profile.findById(user.profile)
-          .select("_id userId type firstName lastName user_image phone language timeZone country isPublicProfile quota planUsage overallScore contactInformation companyDetails requiredExperienceLevel requiredSkills skills softSkills")
+          .select("_id userId type firstName lastName user_image phone language timeZone country isPublicProfile quota planUsage overallScore contactInformation companyDetails requiredExperienceLevel")
           .lean()
       : null,
     user.companyMembership

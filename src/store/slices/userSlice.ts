@@ -62,10 +62,9 @@ export interface ConnectedUserProfile {
     address?: string;
     personalWebsite?: string;
     requiredExperienceLevel?: string;
-    requiredSkills?: string[];
     language?: string;
   };
-  requiredSkills?: string[];
+
   quota?: number;
   skills?: any[] | null;
   softSkills?: any[] | null;

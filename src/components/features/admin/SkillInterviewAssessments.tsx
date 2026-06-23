@@ -98,9 +98,9 @@ interface CandidateSkill {
   name: string;
   proficiencyLevel?: number;
   experienceLevel?: string;
-  ScoreTest?: number;
-  Levelconfirmed?: number;
-  NumberTestPassed?: number;
+  testScore?: number;
+  levelConfirmed?: number;
+  numberTestPassed?: number;
 }
 
 interface CandidateData {

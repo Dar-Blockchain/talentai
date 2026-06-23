@@ -391,7 +391,8 @@
       "status": {
         "all": "All statuses",
         "visited": "Visited",
-        "interview_completed": "Interview Completed"
+        "interview_completed": "Interview Completed",
+        "withdrawn": "Withdrawn"
       },
       "sort": {
         "date_applied": "Date Applied",

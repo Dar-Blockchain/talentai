@@ -34,7 +34,6 @@ export interface UserProfile {
   companySize?: string;
   size?: string;
   employmentType?: string;
-  requiredSkills?: string[];
 }
 
 export interface Notification {

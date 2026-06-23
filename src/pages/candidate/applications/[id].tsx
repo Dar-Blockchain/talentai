@@ -1,10 +1,11 @@
 ﻿import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import dynamic from "next/dynamic";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { useTranslation } from "react-i18next";
 import {
   Box, Typography, Chip, Skeleton, Divider, Button, Avatar, LinearProgress,
+  Dialog, DialogContent, DialogActions,
 } from "@mui/material";
 import Header from "@/modules/shared/layouts/dashboard/DashboardHeader";
 import { RootState } from "@/store/store";
@@ -22,6 +23,9 @@ import EmojiEventsOutlined from "@mui/icons-material/EmojiEventsOutlined";
 import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
 import RadioButtonUncheckedOutlined from "@mui/icons-material/RadioButtonUncheckedOutlined";
 import Cookies from "js-cookie";
+import { AppDispatch } from "@/store/store";
+import { withdrawApplication, updateLocalWithdraw, fetchCandidateStats } from "@/store/slices/jobApplicationSlice";
+import { emitToast } from "@/utils/toastEmitter";
 
 const T    = "#0D9488";
 const TL   = "#14B8A6";
@@ -133,8 +137,12 @@ const CandidateApplicationDetailPage: React.FC = () => {
   const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
   const user    = useSelector((state: RootState) => state.user.connectedUser.user);
 
-  const [app,     setApp]     = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch<AppDispatch>();
+
+  const [app,             setApp]             = useState<any>(null);
+  const [loading,         setLoading]         = useState(true);
+  const [withdrawOpen,    setWithdrawOpen]    = useState(false);
+  const [withdrawing,     setWithdrawing]     = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -148,6 +156,22 @@ const CandidateApplicationDetailPage: React.FC = () => {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [id]);
+
+  const handleWithdraw = async () => {
+    if (!id) return;
+    setWithdrawing(true);
+    const result = await dispatch(withdrawApplication(String(id)));
+    if (withdrawApplication.fulfilled.match(result)) {
+      setApp((prev: any) => ({ ...prev, status: "withdrawn" }));
+      dispatch(updateLocalWithdraw(String(id)));
+      dispatch(fetchCandidateStats());
+      emitToast({ message: "Application withdrawn successfully.", severity: "success" });
+    } else {
+      emitToast({ message: (result.payload as string) || "Failed to withdraw.", severity: "error" });
+    }
+    setWithdrawing(false);
+    setWithdrawOpen(false);
+  };
 
   const displayName = profile?.firstName
     ? `${profile.firstName}${profile.lastName ? ` ${profile.lastName}` : ""}`
@@ -204,7 +228,8 @@ const CandidateApplicationDetailPage: React.FC = () => {
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
 
             {/* Back nav */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <Button
                 size="small"
                 startIcon={<ChevronLeftOutlined sx={{ fontSize: "14px !important" }} />}
@@ -220,7 +245,35 @@ const CandidateApplicationDetailPage: React.FC = () => {
                 <Typography sx={{ fontSize: "0.72rem", color: "#CBD5E1" }}>›</Typography>
                 <Typography sx={{ fontSize: "0.72rem", fontWeight: 600, color: NAVY }}>{loading ? s("loading_title") : title}</Typography>
               </Box>
+              </Box>
+              {app && rawStatus === "visited" && (
+                <Button size="small" onClick={() => setWithdrawOpen(true)}
+                  sx={{ textTransform: "none", fontWeight: 700, fontSize: "0.72rem", color: "#DC2626", bgcolor: "#FEF2F2", border: "1px solid #FECACA", borderRadius: "10px", px: 1.5, py: 0.5, "&:hover": { bgcolor: "#FEE2E2" }, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+                  Withdraw
+                </Button>
+              )}
             </Box>
+
+            {/* Withdraw confirmation dialog */}
+            <Dialog open={withdrawOpen} onClose={() => { if (!withdrawing) setWithdrawOpen(false); }}
+              PaperProps={{ sx: { borderRadius: "16px", maxWidth: 360 } }}>
+              <DialogContent sx={{ pt: 2.5, pb: 1 }}>
+                <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "#0F172A", mb: 0.75 }}>Withdraw application</Typography>
+                <Typography sx={{ fontSize: "0.85rem", color: "#6B7280", lineHeight: 1.6 }}>
+                  Are you sure you want to withdraw your application for <strong>{title}</strong>? The company will see it as withdrawn.
+                </Typography>
+              </DialogContent>
+              <DialogActions sx={{ px: 2.5, pb: 2.5, gap: 1 }}>
+                <Button size="small" disabled={withdrawing} onClick={() => setWithdrawOpen(false)}
+                  sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.82rem", color: "#6B7280", borderRadius: "8px", "&:hover": { bgcolor: "#F3F4F6" } }}>
+                  Cancel
+                </Button>
+                <Button size="small" disabled={withdrawing} onClick={handleWithdraw} variant="contained"
+                  sx={{ textTransform: "none", fontWeight: 700, fontSize: "0.82rem", bgcolor: "#DC2626", borderRadius: "8px", boxShadow: "none", "&:hover": { bgcolor: "#B91C1C", boxShadow: "none" } }}>
+                  {withdrawing ? "Withdrawing…" : "Withdraw"}
+                </Button>
+              </DialogActions>
+            </Dialog>
 
             {loading ? (
               <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 3, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>

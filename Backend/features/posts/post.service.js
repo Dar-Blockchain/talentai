@@ -1,6 +1,7 @@
-﻿const Post = require("./post.model");
-const User = require("../users/user.model");
-const Profile = require("../users/profile.model");
+﻿const Post         = require("./post.model");
+const User         = require("../users/user.model");
+const Profile      = require("../users/profile.model");
+const ProfileSkill = require("../skills/profile-skill.model");
 const PostInterviewAssessmentModel = require("../interviews/post-interview/post-interview.model");
 const JobApplication = require("../job-applications/job-application.model");
 const subscriptionService = require("../billing/subscriptions/subscription.service");
@@ -428,23 +429,30 @@ module.exports.getPostsByUserTopSkill = async (userId, page = 1, limit = 10) => 
 
   const user = await User.findById(userId).populate({
     path: "profile",
-    select: "skills expectedSalary",
+    select: "expectedSalary",
   });
 
   if (!user) {
     throw new Error("User not found.");
   }
 
-  if (!user.profile || !Array.isArray(user.profile.skills) || user.profile.skills.length === 0) {
+  if (!user.profile) {
     return {
       success: false,
       message: "No skills found. Add at least one skill to your profile to get recommendations.",
     };
   }
 
-  const skillNames = user.profile.skills
-    .map((s) => (typeof s === "string" ? s : s?.name))
-    .filter(Boolean);
+  const profileSkills = await ProfileSkill.find({ profile: user.profile._id }).lean();
+
+  if (profileSkills.length === 0) {
+    return {
+      success: false,
+      message: "No skills found. Add at least one skill to your profile to get recommendations.",
+    };
+  }
+
+  const skillNames = profileSkills.map((s) => s.name).filter(Boolean);
 
   if (skillNames.length === 0) {
     return {

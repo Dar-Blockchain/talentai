@@ -1,5 +1,7 @@
-﻿const Profile = require('../../../features/users/profile.model');
-const SkillInterviewAssessment = require('./skill-interview.model')
+﻿const Profile           = require('../../../features/users/profile.model');
+const ProfileSkill      = require('../../../features/skills/profile-skill.model');
+const ProfileSoftSkill  = require('../../../features/skills/profile-soft-skill.model');
+const SkillInterviewAssessment = require('./skill-interview.model');
 
 // ========== HELPER - Functions for score calculation ==========
 const getLevelFromScore = (score) => {
@@ -100,79 +102,37 @@ const createAssessment = async (data, rawInterviewData, userId) => {
       const skillType = data.skillType || 'technical';
 
       if (skillType === 'soft') {
-        const softSkill = {
-          name: skillName,
-          category: data.category || '',
-          proficiencyLevel,
-          experienceLevel,
-          ScoreTest: overallScore,
-          Levelconfirmed: levelconfirmedValue,
-        };
-
-        const existingSoft = await Profile.findOne(
-          { _id: profileId, 'softSkills.name': skillName },
-          { 'softSkills.$': 1 }
-        );
-
-        if (existingSoft && existingSoft.softSkills.length > 0) {
-          await Profile.findByIdAndUpdate(
-            profileId,
-            {
-              $set: {
-                'softSkills.$[elem].ScoreTest': overallScore,
-                'softSkills.$[elem].proficiencyLevel': proficiencyLevel,
-                'softSkills.$[elem].experienceLevel': experienceLevel,
-                'softSkills.$[elem].Levelconfirmed': levelconfirmedValue,
-                'softSkills.$[elem].updatedAt': new Date(),
-              },
+        // Soft skill — upsert into ProfileSoftSkill collection
+        await ProfileSoftSkill.findOneAndUpdate(
+          { profile: profileId, name: skillName },
+          {
+            $set: {
+              category:         data.category || '',
+              proficiencyLevel,
+              experienceLevel,
+              testScore:        overallScore,
+              levelConfirmed:   levelconfirmedValue,
             },
-            { arrayFilters: [{ 'elem.name': skillName }], new: true }
-          );
-        } else {
-          await Profile.findByIdAndUpdate(
-            profileId,
-            { $addToSet: { softSkills: { ...softSkill, createdAt: new Date(), updatedAt: new Date() } } },
-            { new: true }
-          );
-        }
+            $setOnInsert: { sourceCvAnalyses: [] },
+          },
+          { upsert: true, new: true }
+        );
       } else {
-        const technicalSkill = {
-          name: skillName,
-          category: data.category || '',
-          proficiencyLevel,
-          experienceLevel,
-          NumberTestPassed: 1,
-          ScoreTest: overallScore,
-          Levelconfirmed: levelconfirmedValue,
-        };
-
-        const existingTech = await Profile.findOne(
-          { _id: profileId, 'skills.name': skillName },
-          { 'skills.$': 1 }
-        );
-
-        if (existingTech && existingTech.skills.length > 0) {
-          await Profile.findByIdAndUpdate(
-            profileId,
-            {
-              $set: {
-                'skills.$[elem].ScoreTest': overallScore,
-                'skills.$[elem].proficiencyLevel': proficiencyLevel,
-                'skills.$[elem].experienceLevel': experienceLevel,
-                'skills.$[elem].NumberTestPassed': (existingTech.skills[0].NumberTestPassed || 0) + 1,
-                'skills.$[elem].Levelconfirmed': levelconfirmedValue,
-                'skills.$[elem].updatedAt': new Date(),
-              },
+        // Technical skill — upsert into ProfileSkill collection
+        await ProfileSkill.findOneAndUpdate(
+          { profile: profileId, name: skillName },
+          {
+            $set: {
+              proficiencyLevel,
+              experienceLevel,
+              testScore:      overallScore,
+              levelConfirmed: levelconfirmedValue,
             },
-            { arrayFilters: [{ 'elem.name': skillName }], new: true }
-          );
-        } else {
-          await Profile.findByIdAndUpdate(
-            profileId,
-            { $addToSet: { skills: { ...technicalSkill, createdAt: new Date(), updatedAt: new Date() } } },
-            { new: true }
-          );
-        }
+            $inc:         { numberTestPassed: 1 },
+            $setOnInsert: { sourceCvAnalyses: [] },
+          },
+          { upsert: true, new: true }
+        );
       }
     }
 

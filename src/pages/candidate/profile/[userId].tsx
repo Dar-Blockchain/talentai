@@ -140,8 +140,8 @@ const CandidateProfile: React.FC = () => {
   }, [profile, user]);
 
   const verifiedCount =
-    (profile?.skills?.filter((s: any) => s.ScoreTest > 0) || []).length +
-    (profile?.softSkills?.filter((s: any) => s.ScoreTest > 0) || []).length;
+    (profile?.skills?.filter((s: any) => s.testScore > 0) || []).length +
+    (profile?.softSkills?.filter((s: any) => s.testScore > 0) || []).length;
 
   if (profile && (!profile.isPublicProfile || targetHasMembership) && !isOwnProfile) {
     return (
