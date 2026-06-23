@@ -26,9 +26,9 @@ import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
 import CloseOutlined from "@mui/icons-material/CloseOutlined";
 import { buildInterviewUrl } from "@/lib/interviewSession";
 
-const T    = "#0D9488";
-const TL   = "#14B8A6";
-const TBG  = "#F0FDFA";
+const T = "#0D9488";
+const TL = "#14B8A6";
+const TBG = "#F0FDFA";
 const TBRD = "#99F6E4";
 const NAVY = "#0D1B2A";
 
@@ -205,13 +205,13 @@ const DashboardCandidate: React.FC = () => {
   const { t } = useTranslation("dashboard");
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const profile  = useSelector((state: RootState) => state.user.connectedUser.profile);
-  const user     = useSelector((state: RootState) => state.user.connectedUser.user);
-  const stats    = useSelector(selectCandidateStats);
+  const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
+  const user = useSelector((state: RootState) => state.user.connectedUser.user);
+  const stats = useSelector(selectCandidateStats);
 
   const [activeView, setActiveView] = useState<ActiveView>(null);
-  const [skillDialogOpen, setSkillDialogOpen]  = useState(false);
-  const [skillInput,      setSkillInput]       = useState("");
+  const [skillDialogOpen, setSkillDialogOpen] = useState(false);
+  const [skillInput, setSkillInput] = useState("");
 
   useEffect(() => { dispatch(fetchCandidateStats()); }, [dispatch]);
 
@@ -225,21 +225,21 @@ const DashboardCandidate: React.FC = () => {
   }, [router.query.view]);
 
   const totalApplications = stats?.totalApplications ?? 0;
-  const totalInterviews   = stats?.totalInterviews   ?? 0;
+  const totalInterviews = stats?.totalInterviews ?? 0;
 
   const displayName = profile?.firstName
     ? `${profile.firstName}${profile.lastName ? ` ${profile.lastName}` : ""}`
     : user?.username || "Candidate";
-  const initial   = displayName[0]?.toUpperCase() || "C";
+  const initial = displayName[0]?.toUpperCase() || "C";
   const avatarUrl = profile?.user_image
     ? `${process.env.NEXT_PUBLIC_API_BASE_URL}uploads/images/${profile.user_image}`
     : undefined;
 
   const checklist = [
     { label: t("candidate.checklist.complete_profile"), done: !!(profile?.firstName && profile?.lastName), href: "/settings" },
-    { label: t("candidate.checklist.add_target_role"),  done: !!profile?.targetRole,                        href: "/settings" },
-    { label: t("candidate.checklist.set_experience"),   done: !!profile?.requiredExperienceLevel,           href: "/settings" },
-    { label: t("candidate.checklist.first_application"),done: totalApplications > 0,                        href: "/candidate/dashboard"        },
+    { label: t("candidate.checklist.add_target_role"), done: !!profile?.targetRole, href: "/settings" },
+    { label: t("candidate.checklist.set_experience"), done: !!profile?.requiredExperienceLevel, href: "/settings" },
+    { label: t("candidate.checklist.first_application"), done: totalApplications > 0, href: "/candidate/dashboard" },
   ];
 
   const expand = (view: ActiveView) => {
@@ -265,72 +265,73 @@ const DashboardCandidate: React.FC = () => {
     <CandidateWorkspaceLayout breadcrumb={t("candidate.nav.dashboard")}>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "240px 1fr" }, gap: 2.5, alignItems: "start" }}>
 
-          {/* ── LEFT ── */}
-          <Box sx={{ display: { xs: "none", md: "flex" }, flexDirection: "column", gap: 2, position: "sticky", top: 16, maxHeight: "calc(100vh - 96px)", overflowY: "auto" }} className="custom-scrollbar">
-            <ProfileCard
-              displayName={displayName} email={user?.email} initial={initial} avatarUrl={avatarUrl}
-              targetRole={profile?.targetRole} experienceLevel={profile?.requiredExperienceLevel}
-              totalApplications={totalApplications} totalInterviews={totalInterviews}
-              labelApplications={t("candidate.profile.applications")}
-              labelInterviews={t("candidate.profile.interviews")}
-            />
-            <ProfileStrengthCard checklist={checklist} label={t("candidate.profile.profile_strength")} />
-          </Box>
-
-          {/* ── CENTER ── */}
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-
-            {/* Action bar */}
-            <Box sx={{ bgcolor: "#fff", borderRadius: "14px", border: "1px solid #E5E7EB", px: 2, py: 1.5, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
-              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1.25 }}>
-                <ActiveAction  icon={CodeOutlined}            label={t("candidate.actions.skill_interview")} sublabel={t("candidate.actions.skill_interview_sub")} color={T} onClick={() => setSkillDialogOpen(true)} />
-                <DisabledAction icon={RecordVoiceOverOutlined} label={t("candidate.actions.hr_interview")}    sublabel={t("candidate.actions.coming_soon")} />
-              </Box>
-            </Box>
-
-            {/* Applications */}
-            {activeView === "applications" ? (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                <HideBar onHide={hide} label={t("candidate.actions.hide")} />
-                <CandidateApplications />
-              </Box>
-            ) : (
-              <CandidateApplications previewCount={2} onViewAll={() => expand("applications")} />
-            )}
-
-            {/* Skills */}
-            {activeView === "skills" ? (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                <HideBar onHide={hide} label={t("candidate.actions.hide")} />
-                <CandidateSkills />
-              </Box>
-            ) : activeView === null && (
-              <CollapsedRow
-                icon={<PsychologyOutlined sx={{ fontSize: 16, color: "#2563EB" }} />}
-                iconBg="#EFF6FF" iconBorder="#BFDBFE"
-                title={t("candidate.sections.skills_title")} subtitle={t("candidate.sections.skills_subtitle")}
-                color="#2563EB" onExpand={() => expand("skills")}
-                viewAllLabel={t("candidate.actions.view_all")}
-              />
-            )}
-
-            {/* Interviews */}
-            {activeView === "interviews" ? (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                <HideBar onHide={hide} label={t("candidate.actions.hide")} />
-                <InterviewsBlock />
-              </Box>
-            ) : activeView === null && (
-              <CollapsedRow
-                icon={<SchoolOutlined sx={{ fontSize: 16, color: "#D97706" }} />}
-                iconBg="#FFFBEB" iconBorder="#FDE68A"
-                title={t("candidate.sections.interviews_title")} subtitle={t("candidate.sections.interviews_subtitle")}
-                color="#D97706" onExpand={() => expand("interviews")}
-                viewAllLabel={t("candidate.actions.view_all")}
-              />
-            )}
-          </Box>
+        {/* ── LEFT ── */}
+        <Box sx={{ display: { xs: "none", md: "flex" }, flexDirection: "column", gap: 2, position: "sticky", top: 16, maxHeight: "calc(100vh - 96px)", overflowY: "auto" }} className="custom-scrollbar">
+          <ProfileCard
+            displayName={displayName} email={user?.email} initial={initial} avatarUrl={avatarUrl}
+            targetRole={profile?.targetRole} experienceLevel={profile?.requiredExperienceLevel}
+            totalApplications={totalApplications} totalInterviews={totalInterviews}
+            labelApplications={t("candidate.profile.applications")}
+            labelInterviews={t("candidate.profile.interviews")}
+          />
+          <ProfileStrengthCard checklist={checklist} label={t("candidate.profile.profile_strength")} />
         </Box>
+
+        {/* ── CENTER ── */}
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+
+          {/* Action bar */}
+          <Box sx={{ bgcolor: "#fff", borderRadius: "14px", border: "1px solid #E5E7EB", px: 2, py: 1.5, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1.25 }}>
+              {/* <ActiveAction  icon={CodeOutlined}            label={t("candidate.actions.skill_interview")} sublabel={t("candidate.actions.skill_interview_sub")} color={T} onClick={() => setSkillDialogOpen(true)} /> */}
+              <DisabledAction icon={CodeOutlined} label={t("candidate.actions.skill_interview")} sublabel={t("candidate.actions.coming_soon")} />
+              <DisabledAction icon={RecordVoiceOverOutlined} label={t("candidate.actions.hr_interview")} sublabel={t("candidate.actions.coming_soon")} />
+            </Box>
+          </Box>
+
+          {/* Applications */}
+          {activeView === "applications" ? (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <HideBar onHide={hide} label={t("candidate.actions.hide")} />
+              <CandidateApplications />
+            </Box>
+          ) : (
+            <CandidateApplications previewCount={2} onViewAll={() => expand("applications")} />
+          )}
+
+          {/* Skills */}
+          {activeView === "skills" ? (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <HideBar onHide={hide} label={t("candidate.actions.hide")} />
+              <CandidateSkills />
+            </Box>
+          ) : activeView === null && (
+            <CollapsedRow
+              icon={<PsychologyOutlined sx={{ fontSize: 16, color: "#2563EB" }} />}
+              iconBg="#EFF6FF" iconBorder="#BFDBFE"
+              title={t("candidate.sections.skills_title")} subtitle={t("candidate.sections.skills_subtitle")}
+              color="#2563EB" onExpand={() => expand("skills")}
+              viewAllLabel={t("candidate.actions.view_all")}
+            />
+          )}
+
+          {/* Interviews */}
+          {activeView === "interviews" ? (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <HideBar onHide={hide} label={t("candidate.actions.hide")} />
+              <InterviewsBlock />
+            </Box>
+          ) : activeView === null && (
+            <CollapsedRow
+              icon={<SchoolOutlined sx={{ fontSize: 16, color: "#D97706" }} />}
+              iconBg="#FFFBEB" iconBorder="#FDE68A"
+              title={t("candidate.sections.interviews_title")} subtitle={t("candidate.sections.interviews_subtitle")}
+              color="#D97706" onExpand={() => expand("interviews")}
+              viewAllLabel={t("candidate.actions.view_all")}
+            />
+          )}
+        </Box>
+      </Box>
       {/* Skill Interview Dialog */}
       <Dialog open={skillDialogOpen} onClose={() => setSkillDialogOpen(false)} maxWidth="xs" fullWidth
         PaperProps={{ sx: { borderRadius: "20px", p: 0, overflow: "hidden" } }}>
