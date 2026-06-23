@@ -201,14 +201,14 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
               </div>
             </div>
 
+            {/* ── Resume / CV ──
             <hr className="border-gray-200" />
-
-            {/* ── Resume / CV ── */}
             <CvSection
               resumeFilename={profile.resume}
               onUpdated={onCvUpdated}
               onDeleted={onCvDeleted}
             />
+            */}
 
             <hr className="border-gray-200" />
 
