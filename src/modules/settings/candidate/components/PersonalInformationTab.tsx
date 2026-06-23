@@ -1,14 +1,14 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Control, Controller, FieldErrors } from 'react-hook-form';
-import { CheckCircle2, XCircle } from 'lucide-react';
+import { CheckCircle2, XCircle, Pencil, Save, X } from 'lucide-react';
 import { UserProfile } from '@/types/profile';
 import { PersonalInformationFormValues } from '@/modules/settings/candidate/schemas';
 import { experienceLevels, timezones } from '@/constants/profile';
 import ProfilePictureSection from '@/components/features/profile/ProfilePictureSection';
 import AppInput from '@/modules/shared/ui/AppInput';
 import AppSelect from '@/modules/shared/ui/AppSelect';
-import { EditActions, Spinner } from '@/modules/settings/shared/components';
+import { Spinner } from '@/modules/settings/shared/components';
 import CvSection from './CvSection';
 
 interface PersonalInformationTabProps {
@@ -66,18 +66,9 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
     <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
 
       {/* Header */}
-      <div className="px-4 md:px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-2 flex-wrap">
-        <div>
-          <p className="font-bold text-[0.95rem] text-gray-900">{s('title')}</p>
-          <p className="text-[0.78rem] text-gray-400 mt-1">{s('subtitle')}</p>
-        </div>
-        <EditActions
-          isEditing={isEditing}
-          loading={loading}
-          onEdit={onEditToggle}
-          onCancel={onCancel}
-          onSave={onSave}
-        />
+      <div className="px-4 md:px-6 py-4 border-b border-gray-100">
+        <p className="font-bold text-[0.95rem] text-gray-900">{s('title')}</p>
+        <p className="text-[0.78rem] text-gray-400 mt-1">{s('subtitle')}</p>
       </div>
 
       {/* Content */}
@@ -218,6 +209,46 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
               onUpdated={onCvUpdated}
               onDeleted={onCvDeleted}
             />
+
+            <hr className="border-gray-200" />
+
+            {/* ── Edit actions ── */}
+            <div className="flex justify-end gap-3">
+              {!isEditing ? (
+                <button
+                  type="button"
+                  onClick={onEditToggle}
+                  className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-teal-700 transition-colors"
+                >
+                  <Pencil size={18} />
+                  {s('edit')}
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={onCancel}
+                    className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-6 py-3 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors"
+                  >
+                    <X size={18} />
+                    {s('cancel')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onSave}
+                    disabled={loading}
+                    className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-teal-700 disabled:opacity-60 transition-colors"
+                  >
+                    {loading ? (
+                      <Spinner size={18} className="border-white/40 border-t-white" />
+                    ) : (
+                      <Save size={18} />
+                    )}
+                    {s('save')}
+                  </button>
+                </>
+              )}
+            </div>
           </>
         )}
       </div>
