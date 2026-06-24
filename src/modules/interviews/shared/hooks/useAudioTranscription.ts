@@ -65,6 +65,9 @@ export const useAudioTranscription = ({
   const silenceTimerLastVoiceRef  = useRef<number>(Date.now());
   const silenceAutoSkipFiredRef   = useRef(false);
   const [questionReadingTime, setQuestionReadingTime] = useState<number | null>(null);
+  // True only for the last 1500 ms of reading time — flushes AssemblyAI's buffer
+  // before reading time ends so no stale turns arrive after it.
+  const sendSilenceRef = useRef(false);
   const [speechPhase, _setSpeechPhase]                = useState<SpeechPhase>('reading');
   const speechPhaseRef = useRef<SpeechPhase>('reading');
   const setSpeechPhase = useCallback((phase: SpeechPhase) => {
@@ -478,9 +481,14 @@ export const useAudioTranscription = ({
           }
           // ─────────────────────────────────────────────────────────────────
 
+          // Send real audio during most of reading time (keeps AssemblyAI calibrated,
+          // prevents cold-start on first word). For the last 1500 ms, send silence
+          // so AssemblyAI flushes pending reading-time speech before reading ends.
           const int16Buffer = new Int16Array(inputBuffer.length);
-          for (let i = 0; i < inputBuffer.length; i++) {
-            int16Buffer[i] = Math.max(-32768, Math.min(32767, inputBuffer[i] * 32767));
+          if (!sendSilenceRef.current) {
+            for (let i = 0; i < inputBuffer.length; i++) {
+              int16Buffer[i] = Math.max(-32768, Math.min(32767, inputBuffer[i] * 32767));
+            }
           }
           transcriber.sendAudio(int16Buffer.buffer);
           audioPacketsSent++;
@@ -615,7 +623,11 @@ export const useAudioTranscription = ({
       const rem = readingTimeBuffer - (Date.now() - questionReadingTime);
       if (rem > 0) {
         setReadingTimeLeft(rem);
+        // Last 1500 ms: send silence so AssemblyAI flushes any pending
+        // reading-time speech before reading ends — no stale turns afterwards.
+        sendSilenceRef.current = rem <= 1500;
       } else {
+        sendSilenceRef.current = false;
         setIsInReadingTime(false);
         setReadingTimeLeft(0);
         setQuestionReadingTime(null);
