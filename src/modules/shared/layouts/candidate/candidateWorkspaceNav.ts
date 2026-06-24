@@ -67,8 +67,7 @@ export const candidateWorkspaceNavItems: CandidateWorkspaceNavItem[] = [
     icon: PsychologyOutlined,
     labelKey: "candidate.nav.skills",
     sublabelKey: "candidate.nav.tech_and_soft",
-    href: "/candidate/dashboard?view=skills",
-    view: "skills",
+    href: "/candidate/skills",
     color: "#2563EB",
     bg: "#EFF6FF",
     border: "#BFDBFE",
@@ -125,6 +124,10 @@ export const isCandidateWorkspaceNavActive = (
 
   if (item.id === "settings") {
     return pathname === "/settings";
+  }
+
+  if (item.id === "skills") {
+    return pathname === "/candidate/skills";
   }
 
   if (item.view) {

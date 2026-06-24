@@ -14,7 +14,10 @@
     "your_notifications": "Vos notifications",
     "settings": "Paramètres",
     "manage_profile": "Gérer votre profil",
-    "navigation": "Navigation"
+    "navigation": "Navigation",
+    "group_main": "Principal",
+    "group_workspace": "Espace de travail",
+    "group_account": "Compte"
   },
   "profile": {
     "applications": "Candidatures",

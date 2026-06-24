@@ -14,7 +14,10 @@
     "your_notifications": "Your notifications",
     "settings": "Settings",
     "manage_profile": "Manage your profile",
-    "navigation": "Navigation"
+    "navigation": "Navigation",
+    "group_main": "Main",
+    "group_workspace": "Workspace",
+    "group_account": "Account"
   },
   "profile": {
     "applications": "Applications",
