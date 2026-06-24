@@ -106,7 +106,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ open, interviewId, interv
                 <button
                   disabled={!rating || submitting}
                   onClick={() => dispatch(submitFeedback({ rating, comment, interviewId, interviewType }))}
-                  className="flex-1 font-sans font-bold text-[0.88rem] text-white py-3 rounded-[12px] bg-[#8310FF] hover:bg-[#6d0ee0] disabled:bg-[#E5E7EB] disabled:text-[#9CA3AF] transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 font-sans font-bold text-[0.88rem] text-white py-3 rounded-[12px] bg-[#8310FF] hover:bg-[#6d0ee0] disabled:bg-[#E5E7EB] disabled:text-[#9CA3AF] disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {submitting
                     ? <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
@@ -115,7 +115,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ open, interviewId, interv
                 <button
                   disabled={submitting}
                   onClick={onDone}
-                  className="font-sans font-semibold text-[0.82rem] text-[#6B7280] px-5 py-3 rounded-[12px] hover:bg-[#f9fafb] transition-colors"
+                  className="font-sans font-semibold text-[0.82rem] text-[#6B7280] px-5 py-3 rounded-[12px] hover:bg-[#f9fafb] transition-colors cursor-pointer"
                 >
                   Skip
                 </button>

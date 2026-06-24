@@ -279,6 +279,72 @@ class IntelligentInterviewService {
       const lastQuestion = recentInterviewerMessages[0]?.content || null;
       const targetArea   = recentInterviewerMessages[0]?.metadata?.targetAreas?.[0] || null;
 
+      // â”€â”€ GREETING RESPONSE SHORTCUT â”€â”€
+      // If the candidate has no previous responses this is a reply to the greeting.
+      // Skip analysis and coverage updates â€” go straight to first real question.
+      const previousCandidateResponses = session.conversation.filter(e => e.type === 'candidate').length;
+      const isGreetingResponse = previousCandidateResponses === 0;
+
+      if (isGreetingResponse) {
+        await this.sessionManager.addConversationEntry(sessionId, {
+          type: 'candidate',
+          content: transcript,
+          timestamp: new Date().toISOString(),
+          metadata: { ...audioMetadata, isGreetingResponse: true },
+        });
+
+        const coverageForQGen = {
+          overallAssessment: {
+            weakestAreas:   Object.keys(session.coverage?.areas || {}),
+            strongestAreas: [],
+          },
+        };
+
+        const firstQuestion = await AIUtils.withTimeout(
+          this.questionAI.generateIntelligentQuestion(
+            session,
+            coverageForQGen,
+            { previousQuestions: [] },
+            null,
+            null
+          ),
+          15000,
+          'generateIntelligentQuestion-greeting'
+        ).catch(() => ({
+          question: `Tell me about your experience with ${session.config.context?.targetRole || 'this role'}.`,
+          targetAreas: [Object.keys(session.coverage?.areas || {})[0] || 'General'],
+          reasoning: 'Fallback first question',
+        }));
+
+        const questionContent     = firstQuestion.question || firstQuestion.content;
+        const questionTargetAreas = firstQuestion.targetAreas || [];
+
+        await this.sessionManager.addConversationEntry(sessionId, {
+          type: 'interviewer',
+          content: questionContent,
+          timestamp: new Date().toISOString(),
+          metadata: { aiGenerated: true, targetAreas: questionTargetAreas, reasoning: firstQuestion.reasoning, strategy: 'transition', questionStyle: 'direct' },
+        });
+
+        if (questionTargetAreas[0] && session.coverage?.areas?.[questionTargetAreas[0]]) {
+          await incrementAreaQuestionCount(this.sessionManager, sessionId, questionTargetAreas[0]);
+          await this.sessionManager.setAreaStartTime(sessionId, questionTargetAreas[0]);
+          await this.sessionManager.updateSession(sessionId, { currentFocusArea: questionTargetAreas[0] });
+        }
+
+        const complexity = await detectQuestionComplexity(questionContent);
+        await this.sessionManager.saveCurrentQuestion(sessionId, questionContent, complexity);
+
+        return {
+          action:    'continue_probing',
+          content:   questionContent,
+          reasoning: firstQuestion.reasoning,
+          targetArea: questionTargetAreas[0],
+          confidence: 50,
+          metadata: { strategy: 'transition', questionStyle: 'direct', pipelineTimeMs: Date.now() - pipelineStart },
+        };
+      }
+
       // â”€â”€ STEP 1: Combined Analysis â”€â”€
       const step1Start = Date.now();
       const isSkipped  = transcript === '[SKIPPED]' || audioMetadata?.skipped === true;

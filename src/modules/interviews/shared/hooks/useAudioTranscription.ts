@@ -337,6 +337,13 @@ export const useAudioTranscription = ({
           return;
         }
 
+        // Block transcript display: after submit OR during reading time.
+        // Only show text once the question is read and the Submit button is visible.
+        if (blockTurnsRef.current || isInReadingTimeRef.current) {
+          setCurrentTranscript('');
+          return;
+        }
+
         // Track the last partial so end_of_turn can recover dropped last words
         if (!turn.end_of_turn) lastPartialRef.current = text;
 

@@ -31,16 +31,19 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
   const secondsLeft  = Math.ceil(readingTimeLeft / 1000);
   const progressPct  = Math.max(0, Math.min(100, (readingTimeLeft / 10000) * 100));
   const isProcessing = agentState === 'thinking' || agentState === 'processing' || agentState === 'finishing';
-  const isSpeaking   = !!isVoiceActive;
+  // When AI is processing, ignore voice activity — button must stay frozen until question arrives
+  const isSpeaking   = !isProcessing && !!isVoiceActive;
   const isDisabled   = isProcessing || isSpeaking || !canSubmit;
 
-  const submitBg = isDisabled
-    ? isSpeaking
-      ? 'linear-gradient(135deg, rgba(106,211,156,0.1), rgba(34,197,94,0.07))'
-      : '#f3f4f6'
-    : 'linear-gradient(135deg, #6AD39C 0%, #10b981 100%)';
-  const submitColor  = isDisabled ? (isSpeaking ? '#10453F' : '#9ca3af') : '#fff';
-  const submitShadow = isDisabled
+  const submitBg = isProcessing
+    ? '#f3f4f6'
+    : isDisabled
+      ? isSpeaking
+        ? 'linear-gradient(135deg, rgba(106,211,156,0.1), rgba(34,197,94,0.07))'
+        : '#f3f4f6'
+      : 'linear-gradient(135deg, #6AD39C 0%, #10b981 100%)';
+  const submitColor  = isProcessing ? '#9ca3af' : isDisabled ? (isSpeaking ? '#10453F' : '#9ca3af') : '#fff';
+  const submitShadow = isProcessing ? 'none' : isDisabled
     ? isSpeaking ? '0 0 0 1.5px rgba(106,211,156,0.3)' : 'none'
     : '0 4px 16px rgba(106,211,156,0.32)';
 
@@ -79,10 +82,10 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
         <button
           onClick={onSubmitAnswer}
           disabled={isDisabled}
-          className="w-full flex items-center justify-center gap-2 font-sans font-bold text-[0.8rem] py-2.5 rounded-[12px] transition-all duration-200 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-2 font-sans font-bold text-[0.8rem] py-2.5 rounded-[12px] transition-all duration-200 cursor-pointer disabled:cursor-not-allowed"
           style={{ background: submitBg, color: submitColor, boxShadow: submitShadow }}
         >
-          {isSpeaking && (
+          {!isProcessing && isSpeaking && (
             <Activity
               size={17}
               color="#22c55e"
@@ -102,7 +105,7 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
       <button
         onClick={onSkipQuestion}
         disabled={isProcessing || isInReadingTime}
-        className="w-full flex items-center justify-center gap-1.5 font-sans font-semibold text-[0.72rem] py-1.5 rounded-[10px] border transition-colors disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-center gap-1.5 font-sans font-semibold text-[0.72rem] py-1.5 rounded-[10px] border transition-colors cursor-pointer disabled:cursor-not-allowed"
         style={{
           color:       (isProcessing || isInReadingTime) ? '#d1d5db' : '#9ca3af',
           borderColor: (isProcessing || isInReadingTime) ? 'rgba(209,213,219,0.4)' : 'rgba(209,213,219,0.7)',

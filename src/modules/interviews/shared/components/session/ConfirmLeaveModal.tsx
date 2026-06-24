@@ -38,7 +38,7 @@ const ConfirmLeaveModal: React.FC<ConfirmLeaveModalProps> = ({ open, onConfirm, 
           <div className="flex flex-col gap-3">
             <button
               onClick={onConfirm}
-              className="w-full font-sans font-bold text-[0.85rem] text-white py-3 rounded-[12px] transition-colors"
+              className="w-full font-sans font-bold text-[0.85rem] text-white py-3 rounded-[12px] transition-colors cursor-pointer"
               style={{ background: '#ef4444', boxShadow: '0 4px 12px rgba(239,68,68,0.25)' }}
               onMouseEnter={e => (e.currentTarget.style.background = '#dc2626')}
               onMouseLeave={e => (e.currentTarget.style.background = '#ef4444')}
@@ -48,7 +48,7 @@ const ConfirmLeaveModal: React.FC<ConfirmLeaveModalProps> = ({ open, onConfirm, 
 
             <button
               onClick={onCancel}
-              className="w-full font-sans font-semibold text-[0.82rem] text-[#374151] py-2.5 rounded-[12px] hover:bg-[#f9fafb] transition-colors"
+              className="w-full font-sans font-semibold text-[0.82rem] text-[#374151] py-2.5 rounded-[12px] hover:bg-[#f9fafb] transition-colors cursor-pointer"
             >
               {t('confirm_leave.cancel', { defaultValue: 'Stay in interview' })}
             </button>
