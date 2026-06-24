@@ -296,19 +296,14 @@ module.exports.checkInterviewEligibility = async (candidateId, postId, userRole)
     }
   }
 
-  // Record visit as a job application (idempotent — 409 on repeat visits is expected)
   const candidateProfile = await Profile.findOne({ userId: candidateId }).select("_id");
-  if (candidateProfile) {
-    jobApplicationService.createJobApplication({
-      profile: candidateProfile._id,
-      post: postId,
-      company: post.user,
-    }).catch(() => {});
-  }
 
   const completed = await PostInterviewAssessment.exists({ candidate: candidateId, post: postId, completed: true });
   if (completed) return { status: "completed", meta: { jobTitle: post.jobDetails?.title || post.title || "" } };
 
+  // Threshold check runs against the existing application BEFORE creating the visit record.
+  // The visit creation is fire-and-forget (no await), so querying after it races with the
+  // async AI matchScore computation and returns null — causing the threshold to be bypassed.
   if (post.thresholdScore != null && candidateProfile) {
     const JobApplication = require("../../job-applications/job-application.model");
     const application = await JobApplication.findOne({ profile: candidateProfile._id, post: postId })
@@ -316,6 +311,15 @@ module.exports.checkInterviewEligibility = async (candidateId, postId, userRole)
     if (application?.matchScore != null && application.matchScore < post.thresholdScore) {
       return { status: "under_threshold", meta: { required: post.thresholdScore, score: application.matchScore } };
     }
+  }
+
+  // Record visit as a job application (idempotent — 409 on repeat visits is expected)
+  if (candidateProfile) {
+    jobApplicationService.createJobApplication({
+      profile: candidateProfile._id,
+      post: postId,
+      company: post.user,
+    }).catch(() => {});
   }
 
   return { status: "eligible" };
