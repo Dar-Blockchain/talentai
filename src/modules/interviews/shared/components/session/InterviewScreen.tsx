@@ -174,30 +174,40 @@ export default function InterviewScreen({
           />
         )}
 
-        {/* Silence warning banner */}
-        {isActive && audio.silenceWarning !== null && (
+        {/* Silence warning — fixed popup bottom-center */}
+        {isActive && audio.silenceWarning !== null && audio.silenceWarning > 0 && (
           <div
-            className="mb-2 px-4 py-3 rounded-[12px] border"
-            style={{
-              background:   audio.silenceWarning === 0 ? '#F0FDF4' : '#FEF3C7',
-              borderColor:  audio.silenceWarning === 0 ? '#6EE7B7' : '#F59E0B',
-            }}
+            className="fixed bottom-6 left-1/2 z-50"
+            style={{ transform: 'translateX(-50%)', animation: 'iv-fade-in 0.25s ease' }}
           >
-            <p
-              className="font-sans font-semibold text-[0.8rem] mb-2"
-              style={{ color: audio.silenceWarning === 0 ? '#065F46' : '#92400E' }}
-            >
-              {audio.silenceWarning === 0
-                ? 'Generating next question…'
-                : `Still silent? Moving to the next question in ${audio.silenceWarning}s`}
-            </p>
-            <Progress
-              value={audio.silenceWarning === 0 ? undefined : (audio.silenceWarning / 30) * 100}
-              className="h-1 rounded-full"
+            <div
+              className="rounded-2xl border overflow-hidden"
               style={{
-                background: audio.silenceWarning === 0 ? '#A7F3D0' : '#FDE68A',
-              } as React.CSSProperties}
-            />
+                background: '#fff',
+                borderColor: 'rgba(245,158,11,0.5)',
+                boxShadow: '0 8px 40px rgba(245,158,11,0.18)',
+                minWidth: 280,
+              }}
+            >
+              <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg,#fde68a,#f59e0b)' }} />
+              <div className="px-5 py-3.5">
+                <p className="font-sans font-bold text-[0.88rem] text-[#111827] leading-tight mb-0.5">
+                  No response detected
+                </p>
+                <p className="font-sans text-[0.75rem] text-[#6b7280] mb-3">
+                  Moving to the next question in <span className="font-bold text-[#d97706]">{audio.silenceWarning}s</span>
+                </p>
+                <div className="h-1.5 rounded-full overflow-hidden bg-[rgba(245,158,11,0.12)]">
+                  <div
+                    className="h-full rounded-full transition-[width] duration-500 ease-linear"
+                    style={{
+                      width: `${(audio.silenceWarning / 30) * 100}%`,
+                      background: 'linear-gradient(90deg,#fde68a,#f59e0b)',
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

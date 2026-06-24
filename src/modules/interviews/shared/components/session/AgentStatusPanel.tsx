@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Send, Activity, SkipForward, MicOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { type InterviewStatus, type AgentState } from '../../types/interview';
@@ -34,6 +34,8 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
   // When AI is processing, ignore voice activity — button must stay frozen until question arrives
   const isSpeaking   = !isProcessing && !!isVoiceActive;
   const isDisabled   = isProcessing || isSpeaking || !canSubmit;
+  const [skipHovered,   setSkipHovered]   = useState(false);
+  const [submitHovered, setSubmitHovered] = useState(false);
 
   const submitBg = isProcessing
     ? '#f3f4f6'
@@ -82,8 +84,18 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
         <button
           onClick={onSubmitAnswer}
           disabled={isDisabled}
+          onMouseEnter={() => setSubmitHovered(true)}
+          onMouseLeave={() => setSubmitHovered(false)}
           className="w-full flex items-center justify-center gap-2 font-sans font-bold text-[0.8rem] py-2.5 rounded-[12px] transition-all duration-200 cursor-pointer disabled:cursor-not-allowed"
-          style={{ background: submitBg, color: submitColor, boxShadow: submitShadow }}
+          style={{
+            background: submitBg,
+            color:      submitColor,
+            boxShadow:  !isDisabled && submitHovered
+              ? '0 6px 20px rgba(106,211,156,0.5)'
+              : submitShadow,
+            transform:  !isDisabled && submitHovered ? 'translateY(-1px)' : 'none',
+            filter:     !isDisabled && submitHovered ? 'brightness(1.08)' : 'none',
+          }}
         >
           {!isProcessing && isSpeaking && (
             <Activity
@@ -105,14 +117,31 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
       <button
         onClick={onSkipQuestion}
         disabled={isProcessing || isInReadingTime}
-        className="w-full flex items-center justify-center gap-1.5 font-sans font-semibold text-[0.72rem] py-1.5 rounded-[10px] border transition-colors cursor-pointer disabled:cursor-not-allowed"
+        onMouseEnter={() => setSkipHovered(true)}
+        onMouseLeave={() => setSkipHovered(false)}
+        className="w-full flex items-center justify-center gap-2 font-sans font-semibold text-[0.78rem] py-2.5 rounded-md border transition-all duration-150 cursor-pointer disabled:cursor-not-allowed active:scale-[0.97]"
         style={{
-          color:       (isProcessing || isInReadingTime) ? '#d1d5db' : '#9ca3af',
-          borderColor: (isProcessing || isInReadingTime) ? 'rgba(209,213,219,0.4)' : 'rgba(209,213,219,0.7)',
-          background:  'transparent',
+          color:       (isProcessing || isInReadingTime) ? '#d1d5db'
+                     : skipHovered                       ? '#10453F'
+                     :                                     '#4b5563',
+          borderColor: (isProcessing || isInReadingTime) ? 'rgba(209,213,219,0.3)'
+                     : skipHovered                       ? 'rgba(106,211,156,0.7)'
+                     :                                     'rgba(156,163,175,0.6)',
+          background:  (isProcessing || isInReadingTime) ? 'rgba(243,244,246,0.4)'
+                     : skipHovered                       ? 'rgba(106,211,156,0.08)'
+                     :                                     'rgba(248,249,250,0.8)',
+          boxShadow:   (!isProcessing && !isInReadingTime)
+                     ? skipHovered
+                       ? '0 2px 10px rgba(106,211,156,0.2)'
+                       : '0 1px 3px rgba(0,0,0,0.04)'
+                     : 'none',
+          transform:   (!isProcessing && !isInReadingTime && skipHovered) ? 'translateY(-1px)' : 'none',
         }}
       >
-        <SkipForward size={15} />
+        <SkipForward
+          size={14}
+          style={{ transform: skipHovered && !(isProcessing || isInReadingTime) ? 'translateX(2px)' : 'translateX(0)', transition: 'transform 0.15s' }}
+        />
         {t('agent.skip_question', { defaultValue: 'Skip question' })}
       </button>
     </div>

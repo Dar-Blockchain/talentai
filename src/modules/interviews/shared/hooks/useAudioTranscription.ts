@@ -688,7 +688,10 @@ export const useAudioTranscription = ({
       if (silentMs >= 60_000) {
         silenceAutoSkipFiredRef.current = true;
         blockTurnsRef.current = true;
-        setSilenceWarning(0); // 0 = "pending" — banner stays visible until question arrives
+        setSilenceWarning(0);
+        // Show "Preparing next question" overlay immediately — same UX as Submit
+        setAgentState('thinking');
+        setAgentMessage('Moving to next question…');
         silenceTimerLastVoiceRef.current = Date.now();
         socketRef.current.emit('silence_detected', {
           sessionId: sessionIdRef.current,
