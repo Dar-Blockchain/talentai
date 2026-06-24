@@ -1,21 +1,23 @@
 const mongoose = require("mongoose");
+const { Schema } = mongoose;
+const ObjectId = Schema.Types.ObjectId;
 
-const profileSkillSchema = new mongoose.Schema(
+const profileSkillSchema = new Schema(
   {
-    profile:          { type: mongoose.Schema.Types.ObjectId, ref: "Profile", required: true, index: true },
+    profile:          { type: ObjectId, ref: "Profile", required: true, index: true },
+    kind:             { type: String, enum: ["technical", "soft"], required: true },
     name:             { type: String, required: true, trim: true },
+    category:         { type: String, default: "" },
     proficiencyLevel: { type: Number, default: 0 },
     experienceLevel:  { type: String, default: "" },
     numberTestPassed: { type: Number, default: 0 },
     testScore:        { type: Number, default: 0 },
     levelConfirmed:   { type: Number, default: 0 },
-    // tracks which CVAnalysis documents sourced this skill — supports multi-CV
-    sourceCvAnalyses: [{ type: mongoose.Schema.Types.ObjectId, ref: "CVAnalysis" }],
+    sourceCvAnalyses: [{ type: ObjectId, ref: "CVAnalysis" }],
   },
   { timestamps: true }
 );
 
-// prevents duplicate skill names per profile at the DB level
-profileSkillSchema.index({ profile: 1, name: 1 }, { unique: true });
+profileSkillSchema.index({ profile: 1, kind: 1, name: 1 }, { unique: true });
 
 module.exports = mongoose.model("ProfileSkill", profileSkillSchema);

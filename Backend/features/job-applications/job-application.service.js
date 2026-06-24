@@ -5,8 +5,7 @@ const { PDFParse } = require("pdf-parse");
 const JobApplication = require("./job-application.model");
 const PostInterviewAssessment = require("../interviews/post-interview/post-interview.model");
 const Profile = require("../users/profile.model");
-const ProfileSkill      = require("../skills/profile-skill.model");
-const ProfileSoftSkill  = require("../skills/profile-soft-skill.model");
+const ProfileSkill = require("../skills/profile-skill.model");
 const CvAnalysis = require("../cv-analysis/cv-analysis.model");
 const Post = require("../posts/post.model");
 const { callLLM } = require("../../utils/bedrock-client");
@@ -113,8 +112,8 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
   try {
     const [profile, profileSkills, profileSoftSkills] = await Promise.all([
       Profile.findById(profileId).populate("userId", "firstName lastName email"),
-      ProfileSkill.find({ profile: profileId }).lean(),
-      ProfileSoftSkill.find({ profile: profileId }).lean(),
+      ProfileSkill.find({ profile: profileId, kind: "technical" }).lean(),
+      ProfileSkill.find({ profile: profileId, kind: "soft" }).lean(),
     ]);
     if (!profile) {
       return {

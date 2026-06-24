@@ -1,124 +1,117 @@
 "use client";
 
-import React, { useState } from "react";
-import { Box, Drawer } from "@mui/material";
+import React, { useState, useEffect } from "react";
+import { X } from "lucide-react";
+import { cn } from "@/lib/utils";
 import Header from "@/modules/shared/layouts/dashboard/DashboardHeader";
 import CandidateQuickNav from "@/modules/shared/layouts/candidate/CandidateQuickNav";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 
 interface CandidateWorkspaceLayoutProps {
   children: React.ReactNode;
   breadcrumb?: string;
   fillHeight?: boolean;
+  leftPanel?: React.ReactNode;
 }
-
-const HEADER_HEIGHT = 64;
-const NAV_WIDTH = 240;
 
 const CandidateWorkspaceLayout: React.FC<CandidateWorkspaceLayoutProps> = ({
   children,
   breadcrumb,
   fillHeight = false,
+  leftPanel,
 }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileOpen]);
+
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", bgcolor: "rgb(249 250 251)" }}>
-      <Box
-        sx={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: HEADER_HEIGHT,
-          zIndex: 1200,
-        }}
-      >
-        <Header breadcrumb={breadcrumb} onOpenMobile={() => setMobileOpen(true)} />
-      </Box>
+    <div className="flex flex-col h-screen bg-gray-50">
+      {/* ── Header ── */}
+      <Header breadcrumb={breadcrumb} onOpenMobile={() => setMobileOpen(true)} />
 
-      <Drawer
-        anchor="right"
-        open={mobileOpen}
-        onClose={() => setMobileOpen(false)}
-        PaperProps={{
-          sx: {
-            width: 280,
-            p: 2,
-            bgcolor: "#F9FAFB",
-          },
-        }}
-      >
-        <CandidateQuickNav onNavigate={() => setMobileOpen(false)} />
-      </Drawer>
-
-      <Box
-        id="main-scroll"
-        sx={{
-          flex: 1,
-          mt: `${HEADER_HEIGHT}px`,
-          height: `calc(100vh - ${HEADER_HEIGHT}px)`,
-          overflow: fillHeight ? "hidden" : "auto",
-          px: { xs: 1.5, sm: 2.5, md: 3 },
-          pb: { xs: 1.5, sm: 2.5, md: 3 },
-          pt: { xs: 0.5, sm: 1, md: 1 },
-        }}
-        className={fillHeight ? undefined : "custom-scrollbar"}
-      >
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: `1fr ${NAV_WIDTH}px` },
-            gap: 2.5,
-            alignItems: "start",
-            height: fillHeight ? "100%" : "auto",
-            minHeight: fillHeight ? 0 : undefined,
-          }}
+      {/* ── Mobile nav drawer ── */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-50 flex justify-end"
+          onClick={() => setMobileOpen(false)}
         >
-          <Box
-            sx={{
-              minWidth: 0,
-              minHeight: fillHeight ? 0 : undefined,
-              height: fillHeight ? "100%" : "auto",
-              display: "flex",
-              flexDirection: "column",
-              gap: 1.5,
-              gridColumn: { xs: "1", md: "1" },
-              alignSelf: { xs: "start", md: "start" },
-              mt: { xs: 0, md: 2 },
-            }}
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity" />
+          <div
+            className="relative w-72 h-full bg-white border-l border-gray-200 shadow-2xl flex flex-col overflow-hidden"
+            onClick={e => e.stopPropagation()}
           >
-            <Box sx={{ display: { xs: "block", md: "none" } }}>
-              <CandidateQuickNav variant="horizontal" />
-            </Box>
-            <Box
-              sx={{
-                flex: fillHeight ? 1 : undefined,
-                minHeight: fillHeight ? 0 : undefined,
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              {children}
-            </Box>
-          </Box>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+              <span className="text-[0.65rem] font-bold text-gray-400 uppercase tracking-widest">
+                Navigation
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setMobileOpen(false)}
+                className="h-7 w-7 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-4">
+              <CandidateQuickNav onNavigate={() => setMobileOpen(false)} />
+            </div>
+          </div>
+        </div>
+      )}
 
-          <Box
-            sx={{
-              display: { xs: "none", md: "block" },
-              position: "sticky",
-              top: 16,
-              alignSelf: "start",
-              maxHeight: "calc(100vh - 96px)",
-              overflowY: "auto",
-              gridColumn: { xs: "1", md: "2" },
-            }}
-            className="custom-scrollbar"
+      {/* ── Main scroll area ── */}
+      <main
+        id="main-scroll"
+        className={cn(
+          "flex-1 min-h-0",
+          fillHeight ? "overflow-hidden" : "overflow-auto custom-scrollbar"
+        )}
+      >
+        <div
+          className={cn(
+            "px-4 sm:px-6 md:px-8 pb-6 pt-2 sm:pt-3",
+            "grid gap-5 items-start",
+            fillHeight && "h-full",
+            leftPanel
+              ? "grid-cols-1 md:grid-cols-[240px_1fr_240px]"
+              : "grid-cols-1 md:grid-cols-[1fr_240px]"
+          )}
+        >
+          {/* Left panel (e.g. profile sidebar injected from dashboard) */}
+          {leftPanel && (
+            <aside className="hidden md:flex flex-col gap-4 sticky top-4 max-h-[calc(100vh-96px)] overflow-y-auto custom-scrollbar">
+              {leftPanel}
+            </aside>
+          )}
+
+          {/* Center: page content */}
+          <div
+            className={cn(
+              "min-w-0 flex flex-col gap-4 mt-0 md:mt-4",
+              fillHeight && "h-full min-h-0"
+            )}
           >
+            {/* Horizontal nav — mobile only */}
+            <div className="md:hidden">
+              <CandidateQuickNav variant="horizontal" />
+            </div>
+
+            <div className={cn("flex flex-col", fillHeight && "flex-1 min-h-0")}>
+              {children}
+            </div>
+          </div>
+
+          {/* Right panel: QuickNav — desktop only */}
+          <aside className="hidden md:flex flex-col gap-4 sticky top-4 max-h-[calc(100vh-96px)] overflow-y-auto custom-scrollbar">
             <CandidateQuickNav />
-          </Box>
-        </Box>
-      </Box>
-    </Box>
+          </aside>
+        </div>
+      </main>
+    </div>
   );
 };
 

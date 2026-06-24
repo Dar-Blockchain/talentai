@@ -2,9 +2,8 @@ const mongoose = require('mongoose');
 const User = require("../users/user.model");
 const Post = require('../posts/post.model');
 const Feedback = require('../feedbacks/feedback.model');
-const Profile          = require('../users/profile.model');
-const ProfileSkill     = require('../skills/profile-skill.model');
-const ProfileSoftSkill = require('../skills/profile-soft-skill.model');
+const Profile      = require('../users/profile.model');
+const ProfileSkill = require('../skills/profile-skill.model');
 const PostInterviewAssessment = require("../interviews/post-interview/post-interview.model");
 const { POST_STATUS } = require("../posts/posts.constants");
 const InternalCampaign = require("../campaigns/campaign.model");
@@ -54,8 +53,8 @@ module.exports.getCounts = async () => {
     ]);
 
     const totalSkillsPromise = Promise.all([
-      ProfileSkill.countDocuments(),
-      ProfileSoftSkill.countDocuments(),
+      ProfileSkill.countDocuments({ kind: "technical" }),
+      ProfileSkill.countDocuments({ kind: "soft" }),
     ]);
 
     const avgOverallScorePromise = PostInterviewAssessment.aggregate([
@@ -64,6 +63,7 @@ module.exports.getCounts = async () => {
     ]);
 
     const topSkillsPromise = ProfileSkill.aggregate([
+      { $match: { kind: "technical" } },
       { $group: { _id: "$name", count: { $sum: 1 }, avgLevel: { $avg: "$proficiencyLevel" } } },
       { $sort: { count: -1, avgLevel: -1 } },
       { $limit: 10 },

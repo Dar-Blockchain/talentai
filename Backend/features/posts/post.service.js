@@ -443,7 +443,7 @@ module.exports.getPostsByUserTopSkill = async (userId, page = 1, limit = 10) => 
     };
   }
 
-  const profileSkills = await ProfileSkill.find({ profile: user.profile._id }).lean();
+  const profileSkills = await ProfileSkill.find({ profile: user.profile._id, kind: "technical" }).lean();
 
   if (profileSkills.length === 0) {
     return {

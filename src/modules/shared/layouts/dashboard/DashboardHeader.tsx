@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import { Menu } from "lucide-react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
@@ -23,12 +23,6 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
   const user = useSelector((state: RootState) => state.user.connectedUser.user);
   const isCandidate = user?.role === "Candidate";
 
-const headerId = useRef(Math.random().toString(36).slice(2, 8));
-
-useEffect(() => {
-  return () => {
-  };
-}, []);
   return (
     <header className="relative h-16 bg-white border-b border-gray-100 shadow-[0_1px_4px_0_rgb(0_0_0/0.06)] flex items-center justify-between px-5 md:px-7 z-10">
       {/* ── Left: mobile menu + logo ── */}

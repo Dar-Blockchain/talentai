@@ -8,12 +8,14 @@ import SnackbarNotifications from "./SnackbarNotifications";
 import { useProfileManagement } from "../hooks";
 import { useUpdateCandidateVisibility } from "../queries";
 import { LanguageTab } from "@/modules/settings/shared";
-import { User, Globe, Bell, Eye } from "lucide-react";
+import { User, Globe, Bell, Eye, FileText } from "lucide-react";
+import CvSection from "./CvSection";
 
 const NAVY = "#0D1B2A";
 
 const TAB_IDS = [
   { id: "personal",      key: "personal",      icon: User },
+  { id: "resumes",       key: "resumes",       icon: FileText },
   { id: "language",      key: "language",      icon: Globe },
   { id: "notifications", key: "notifications", icon: Bell },
   { id: "visibility",    key: "visibility",    icon: Eye },
@@ -57,10 +59,10 @@ const CandidateSettingsPage: React.FC = () => {
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-[20px] items-start">
+      <div className="grid grid-cols-[180px_1fr] md:grid-cols-[240px_1fr] gap-[20px] items-start">
 
         {/* LEFT: Profile + Nav */}
-        <div className="hidden md:flex flex-col gap-4 sticky top-4 max-h-[calc(100vh-96px)] overflow-y-auto custom-scrollbar">
+        <div className="flex flex-col gap-4 sticky top-4 max-h-[calc(100vh-96px)] overflow-y-auto custom-scrollbar">
           <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
             <div
               className="h-14 relative"
@@ -126,6 +128,21 @@ const CandidateSettingsPage: React.FC = () => {
               onCvUpdated={handleCvUpdated}
               onCvDeleted={handleCvDeleted}
             />
+          )}
+          {activeTab === "resumes" && (
+            <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+              <div className="px-4 md:px-6 py-4 border-b border-gray-100">
+                <p className="font-bold text-[0.95rem] text-gray-900">{t("candidate_settings.tabs.resumes")}</p>
+                <p className="text-[0.78rem] text-gray-400 mt-1">Upload your latest CV. It will be used for all new job applications.</p>
+              </div>
+              <div className="p-4 md:p-6">
+                <CvSection
+                  resumeFilename={profile.resume}
+                  onUpdated={handleCvUpdated}
+                  onDeleted={handleCvDeleted}
+                />
+              </div>
+            </div>
           )}
           {activeTab === "language" && (
             <LanguageTab

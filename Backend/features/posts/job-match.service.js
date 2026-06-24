@@ -37,7 +37,7 @@ module.exports.notifyMatchingCandidates = async (postId) => {
 
     // Load all relevant skills in one query and group by profile id
     const candidateIds = candidates.map((p) => p._id);
-    const allSkills = await ProfileSkill.find({ profile: { $in: candidateIds } }).lean();
+    const allSkills = await ProfileSkill.find({ profile: { $in: candidateIds }, kind: "technical" }).lean();
     const skillsByProfile = allSkills.reduce((acc, s) => {
       const key = String(s.profile);
       (acc[key] = acc[key] || []).push(s);

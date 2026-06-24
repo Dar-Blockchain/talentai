@@ -226,6 +226,8 @@
     "locked": "Locked",
     "limit_tooltip": "Monthly limit reached (5/5)",
     "show_more": "Show {{count}} more",
+    "search_placeholder": "Search skills…",
+    "loading": "Loading…",
     "levels": {
       "entry": "Entry",
       "junior": "Junior",

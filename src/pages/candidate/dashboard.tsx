@@ -8,7 +8,6 @@ import CandidateWorkspaceLayout from "@/modules/shared/layouts/candidate/Candida
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchCandidateStats, selectCandidateStats } from "@/store/slices/jobApplicationSlice";
 import CandidateApplications from "@/components/features/candidate/CandidateApplications";
-import CandidateSkills from "@/components/features/candidate/candidate-skills/CandidateSkills";
 import InterviewsBlock from "@/components/features/candidate/candidate-interviews/InterviewsBlock";
 import AssignmentOutlined from "@mui/icons-material/AssignmentOutlined";
 import PsychologyOutlined from "@mui/icons-material/PsychologyOutlined";
@@ -32,7 +31,7 @@ const TBG  = "#F0FDFA";
 const TBRD = "#99F6E4";
 const NAVY = "#0D1B2A";
 
-type ActiveView = "applications" | "skills" | "interviews" | null;
+type ActiveView = "applications" | "interviews" | null;
 
 const StatPill: React.FC<{ label: string; value: number | string; color: string; bg: string; border: string }> = ({ label, value, color, bg, border }) => (
   <Box sx={{ flex: 1, px: 1.5, py: 1.25, borderRadius: "10px", bgcolor: bg, border: `1px solid ${border}`, textAlign: "center" }}>
@@ -217,7 +216,7 @@ const DashboardCandidate: React.FC = () => {
 
   useEffect(() => {
     const view = router.query.view;
-    if (view === "applications" || view === "skills" || view === "interviews") {
+    if (view === "applications" || view === "interviews") {
       setActiveView(view);
       return;
     }
@@ -261,23 +260,22 @@ const DashboardCandidate: React.FC = () => {
     setSkillInput("");
   };
 
+  const leftPanel = (
+    <>
+      <ProfileCard
+        displayName={displayName} email={user?.email} initial={initial} avatarUrl={avatarUrl}
+        targetRole={profile?.targetRole} experienceLevel={profile?.requiredExperienceLevel}
+        totalApplications={totalApplications} totalInterviews={totalInterviews}
+        labelApplications={t("candidate.profile.applications")}
+        labelInterviews={t("candidate.profile.interviews")}
+      />
+      <ProfileStrengthCard checklist={checklist} label={t("candidate.profile.profile_strength")} />
+    </>
+  );
+
   return (
-    <CandidateWorkspaceLayout breadcrumb={t("candidate.nav.dashboard")}>
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "240px 1fr" }, gap: 2.5, alignItems: "start" }}>
-
-          {/* ── LEFT ── */}
-          <Box sx={{ display: { xs: "none", md: "flex" }, flexDirection: "column", gap: 2, position: "sticky", top: 16, maxHeight: "calc(100vh - 96px)", overflowY: "auto" }} className="custom-scrollbar">
-            <ProfileCard
-              displayName={displayName} email={user?.email} initial={initial} avatarUrl={avatarUrl}
-              targetRole={profile?.targetRole} experienceLevel={profile?.requiredExperienceLevel}
-              totalApplications={totalApplications} totalInterviews={totalInterviews}
-              labelApplications={t("candidate.profile.applications")}
-              labelInterviews={t("candidate.profile.interviews")}
-            />
-            <ProfileStrengthCard checklist={checklist} label={t("candidate.profile.profile_strength")} />
-          </Box>
-
-          {/* ── CENTER ── */}
+    <CandidateWorkspaceLayout breadcrumb={t("candidate.nav.dashboard")} leftPanel={leftPanel}>
+          {/* ── MAIN ── */}
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
 
             {/* Action bar */}
@@ -299,17 +297,12 @@ const DashboardCandidate: React.FC = () => {
             )}
 
             {/* Skills */}
-            {activeView === "skills" ? (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                <HideBar onHide={hide} label={t("candidate.actions.hide")} />
-                <CandidateSkills />
-              </Box>
-            ) : activeView === null && (
+            {activeView === null && (
               <CollapsedRow
                 icon={<PsychologyOutlined sx={{ fontSize: 16, color: "#2563EB" }} />}
                 iconBg="#EFF6FF" iconBorder="#BFDBFE"
                 title={t("candidate.sections.skills_title")} subtitle={t("candidate.sections.skills_subtitle")}
-                color="#2563EB" onExpand={() => expand("skills")}
+                color="#2563EB" onExpand={() => router.push("/candidate/skills")}
                 viewAllLabel={t("candidate.actions.view_all")}
               />
             )}
@@ -330,7 +323,6 @@ const DashboardCandidate: React.FC = () => {
               />
             )}
           </Box>
-        </Box>
       {/* Skill Interview Dialog */}
       <Dialog open={skillDialogOpen} onClose={() => setSkillDialogOpen(false)} maxWidth="xs" fullWidth
         PaperProps={{ sx: { borderRadius: "20px", p: 0, overflow: "hidden" } }}>

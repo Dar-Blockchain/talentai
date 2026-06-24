@@ -226,6 +226,8 @@
     "locked": "Verrouillé",
     "limit_tooltip": "Limite mensuelle atteinte (5/5)",
     "show_more": "Voir {{count}} de plus",
+    "search_placeholder": "Rechercher des compétences…",
+    "loading": "Chargement…",
     "levels": {
       "entry": "Débutant",
       "junior": "Junior",

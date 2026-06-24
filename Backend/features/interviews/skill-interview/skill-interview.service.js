@@ -1,6 +1,5 @@
-﻿const Profile           = require('../../../features/users/profile.model');
-const ProfileSkill      = require('../../../features/skills/profile-skill.model');
-const ProfileSoftSkill  = require('../../../features/skills/profile-soft-skill.model');
+﻿const Profile          = require('../../../features/users/profile.model');
+const ProfileSkill     = require('../../../features/skills/profile-skill.model');
 const SkillInterviewAssessment = require('./skill-interview.model');
 
 // ========== HELPER - Functions for score calculation ==========
@@ -102,25 +101,23 @@ const createAssessment = async (data, rawInterviewData, userId) => {
       const skillType = data.skillType || 'technical';
 
       if (skillType === 'soft') {
-        // Soft skill — upsert into ProfileSoftSkill collection
-        await ProfileSoftSkill.findOneAndUpdate(
-          { profile: profileId, name: skillName },
+        await ProfileSkill.findOneAndUpdate(
+          { profile: profileId, kind: 'soft', name: skillName },
           {
             $set: {
-              category:         data.category || '',
+              category:       data.category || '',
               proficiencyLevel,
               experienceLevel,
-              testScore:        overallScore,
-              levelConfirmed:   levelconfirmedValue,
+              testScore:      overallScore,
+              levelConfirmed: levelconfirmedValue,
             },
             $setOnInsert: { sourceCvAnalyses: [] },
           },
           { upsert: true, new: true }
         );
       } else {
-        // Technical skill — upsert into ProfileSkill collection
         await ProfileSkill.findOneAndUpdate(
-          { profile: profileId, name: skillName },
+          { profile: profileId, kind: 'technical', name: skillName },
           {
             $set: {
               proficiencyLevel,

@@ -1,9 +1,8 @@
-const CVAnalysis        = require("./cv-analysis.model");
-const Profile           = require("../users/profile.model");
-const ProfileSkill      = require("../skills/profile-skill.model");
-const ProfileSoftSkill  = require("../skills/profile-soft-skill.model");
-const User              = require("../users/user.model");
-const { analyzeCV }     = require("./analyse-resume.service");
+const CVAnalysis    = require("./cv-analysis.model");
+const Profile       = require("../users/profile.model");
+const ProfileSkill  = require("../skills/profile-skill.model");
+const User          = require("../users/user.model");
+const { analyzeCV } = require("./analyse-resume.service");
 const fs   = require("fs");
 const path = require("path");
 
@@ -12,7 +11,7 @@ async function upsertSkillsForCv(profileId, cvAnalysisId, skillNames) {
   await Promise.all(
     skillNames.map((name) =>
       ProfileSkill.findOneAndUpdate(
-        { profile: profileId, name },
+        { profile: profileId, kind: "technical", name },
         { $setOnInsert: { proficiencyLevel: 0, experienceLevel: "", numberTestPassed: 0, testScore: 0, levelConfirmed: 0 },
           $addToSet: { sourceCvAnalyses: cvAnalysisId } },
         { upsert: true, new: true }
@@ -21,12 +20,12 @@ async function upsertSkillsForCv(profileId, cvAnalysisId, skillNames) {
   );
 }
 
-// Upsert each soft skill extracted from a CV into ProfileSoftSkill.
+// Upsert each soft skill extracted from a CV into ProfileSkill.
 async function upsertSoftSkillsForCv(profileId, cvAnalysisId, softSkills) {
   await Promise.all(
     softSkills.map((s) =>
-      ProfileSoftSkill.findOneAndUpdate(
-        { profile: profileId, name: s.name },
+      ProfileSkill.findOneAndUpdate(
+        { profile: profileId, kind: "soft", name: s.name },
         { $setOnInsert: { category: s.category || "", proficiencyLevel: s.proficiencyLevel || 0, experienceLevel: "", testScore: 0, levelConfirmed: 0 },
           $addToSet: { sourceCvAnalyses: cvAnalysisId } },
         { upsert: true, new: true }
@@ -40,24 +39,18 @@ async function upsertSoftSkillsForCv(profileId, cvAnalysisId, softSkills) {
 async function removeObsoleteSkills(profileId, oldCvIds) {
   const oldIdSet = oldCvIds.map(String);
 
-  const removeFromCollection = async (Model, isVerifiedFn) => {
-    const affected = await Model.find({ profile: profileId, sourceCvAnalyses: { $in: oldCvIds } });
-    await Promise.all(
-      affected.map(async (skill) => {
-        const remaining = skill.sourceCvAnalyses.map(String).filter((id) => !oldIdSet.includes(id));
-        if (!isVerifiedFn(skill) && remaining.length === 0) {
-          await Model.deleteOne({ _id: skill._id });
-        } else {
-          await Model.updateOne({ _id: skill._id }, { $pull: { sourceCvAnalyses: { $in: oldCvIds } } });
-        }
-      })
-    );
-  };
-
-  await Promise.all([
-    removeFromCollection(ProfileSkill,     (s) => (s.levelConfirmed ?? 0) > 0 || (s.numberTestPassed ?? 0) > 0),
-    removeFromCollection(ProfileSoftSkill, (s) => (s.levelConfirmed ?? 0) > 0),
-  ]);
+  const affected = await ProfileSkill.find({ profile: profileId, sourceCvAnalyses: { $in: oldCvIds } });
+  await Promise.all(
+    affected.map(async (skill) => {
+      const remaining = skill.sourceCvAnalyses.map(String).filter((id) => !oldIdSet.includes(id));
+      const isVerified = (skill.levelConfirmed ?? 0) > 0 || (skill.numberTestPassed ?? 0) > 0;
+      if (!isVerified && remaining.length === 0) {
+        await ProfileSkill.deleteOne({ _id: skill._id });
+      } else {
+        await ProfileSkill.updateOne({ _id: skill._id }, { $pull: { sourceCvAnalyses: { $in: oldCvIds } } });
+      }
+    })
+  );
 }
 
 class CVAnalysisService {

@@ -91,8 +91,7 @@ module.exports.getProfileByUserId = async (userId) => {
     throw err;
   }
 
-  const ProfileSkill     = require("../skills/profile-skill.model");
-  const ProfileSoftSkill = require("../skills/profile-soft-skill.model");
+  const ProfileSkill = require("../skills/profile-skill.model");
   const [profile, companyMembership] = await Promise.all([
     user.profile ? Profile.findById(user.profile).populate("planLimits") : null,
     user.companyMembership
@@ -105,8 +104,8 @@ module.exports.getProfileByUserId = async (userId) => {
   // Attach skills from dedicated collections onto the profile object for API consumers
   if (profile) {
     const [skills, softSkills] = await Promise.all([
-      ProfileSkill.find({ profile: profile._id }).lean(),
-      ProfileSoftSkill.find({ profile: profile._id }).lean(),
+      ProfileSkill.find({ profile: profile._id, kind: "technical" }).lean(),
+      ProfileSkill.find({ profile: profile._id, kind: "soft" }).lean(),
     ]);
     profile.skills     = skills;
     profile.softSkills = softSkills;
@@ -219,8 +218,7 @@ module.exports.deleteResume = async (userId) => {
 
   // Preserve CVAnalysis docs still referenced by existing job applications
   const JobApplication   = require("../job-applications/job-application.model");
-  const ProfileSkill     = require("../skills/profile-skill.model");
-  const ProfileSoftSkill = require("../skills/profile-soft-skill.model");
+  const ProfileSkill = require("../skills/profile-skill.model");
   const linkedIds = (await JobApplication.distinct("cvAnalysis", { profile: profile._id })).filter(Boolean);
 
   const deletingIds = (await CVAnalysis.find({ profile: profile._id, _id: { $nin: linkedIds } }).select("_id")).map((d) => d._id);
@@ -232,24 +230,18 @@ module.exports.deleteResume = async (userId) => {
   if (deletingIds.length) {
     const deletingIdSet = deletingIds.map(String);
 
-    const cleanupCollection = async (Model, isVerifiedFn) => {
-      const affected = await Model.find({ profile: profile._id, sourceCvAnalyses: { $in: deletingIds } });
-      await Promise.all(
-        affected.map(async (skill) => {
-          const remaining = skill.sourceCvAnalyses.map(String).filter((id) => !deletingIdSet.includes(id));
-          if (!isVerifiedFn(skill) && remaining.length === 0) {
-            await Model.deleteOne({ _id: skill._id });
-          } else {
-            await Model.updateOne({ _id: skill._id }, { $pull: { sourceCvAnalyses: { $in: deletingIds } } });
-          }
-        })
-      );
-    };
-
-    await Promise.all([
-      cleanupCollection(ProfileSkill,     (s) => (s.levelConfirmed ?? 0) > 0 || (s.numberTestPassed ?? 0) > 0),
-      cleanupCollection(ProfileSoftSkill, (s) => (s.levelConfirmed ?? 0) > 0),
-    ]);
+    const affected = await ProfileSkill.find({ profile: profile._id, sourceCvAnalyses: { $in: deletingIds } });
+    await Promise.all(
+      affected.map(async (skill) => {
+        const remaining = skill.sourceCvAnalyses.map(String).filter((id) => !deletingIdSet.includes(id));
+        const isVerified = (skill.levelConfirmed ?? 0) > 0 || (skill.numberTestPassed ?? 0) > 0;
+        if (!isVerified && remaining.length === 0) {
+          await ProfileSkill.deleteOne({ _id: skill._id });
+        } else {
+          await ProfileSkill.updateOne({ _id: skill._id }, { $pull: { sourceCvAnalyses: { $in: deletingIds } } });
+        }
+      })
+    );
   }
 };
 

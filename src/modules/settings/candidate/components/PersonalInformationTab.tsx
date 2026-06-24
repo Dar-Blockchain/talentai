@@ -101,13 +101,21 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
               </div>
             )}
 
-            <ProfilePictureSection
-              profile={profile}
-              uploadingImage={uploadingImage}
-              isEditing={isEditing}
-              onImageUpload={onImageUpload}
-              onEditClick={onEditToggle}
-            />
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+              <ProfilePictureSection
+                profile={profile}
+                uploadingImage={uploadingImage}
+                isEditing={isEditing}
+                onImageUpload={onImageUpload}
+                onEditClick={onEditToggle}
+              />
+              <CvSection
+                compact
+                resumeFilename={profile.resume}
+                onUpdated={onCvUpdated}
+                onDeleted={onCvDeleted}
+              />
+            </div>
 
             <hr className="border-gray-200" />
 
@@ -210,14 +218,6 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
               </div>
             </div>
 
-            <hr className="border-gray-200" />
-
-            {/* ── Resume / CV ── */}
-            <CvSection
-              resumeFilename={profile.resume}
-              onUpdated={onCvUpdated}
-              onDeleted={onCvDeleted}
-            />
           </>
         )}
       </div>
