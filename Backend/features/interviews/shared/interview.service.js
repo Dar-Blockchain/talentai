@@ -796,56 +796,73 @@ class IntelligentInterviewService {
    */
   async handleSilence(sessionId, silenceDuration) {
     try {
-
       if (silenceDuration < 20) {
         return { action: 'ignore', content: null, reasoning: 'Short pause - allowing natural thinking time' };
       }
 
-
       const session = await this.sessionManager.getSession(sessionId);
       if (!session) throw new Error(`Session ${sessionId} not found`);
 
-      const coverageAnalysis = await this.coverageAI.analyzeCoverageIntelligently(
-        '[SILENCE - NO RESPONSE]',
-        session.coverage,
-        session.config.intelligenceContext.focusAreas,
-        session.conversation
+      const weakestAreas = Object.entries(session.coverage?.areas || {})
+        .filter(([, d]) => d.percentage < 50 && !d.completed && !d.disqualified)
+        .sort((a, b) => a[1].percentage - b[1].percentage)
+        .map(([a]) => a);
+
+      const coverageForQGen = {
+        overallAssessment: {
+          weakestAreas,
+          strongestAreas: Object.entries(session.coverage?.areas || {})
+            .filter(([, d]) => d.percentage >= 60)
+            .map(([a]) => a),
+        },
+      };
+
+      const nextQuestion = await AIUtils.withTimeout(
+        this.questionAI.generateIntelligentQuestion(
+          session,
+          coverageForQGen,
+          { previousQuestions: session.conversation.filter(e => e.type === 'interviewer').slice(-5) },
+          null,
+          null
+        ),
+        12000,
+        'handleSilence-generateQuestion'
       );
 
-      await this.decisionAI.makeIntelligentDecision(session, '[EXTENDED SILENCE]', { coverage: coverageAnalysis });
-
-      const nextQuestion = await this.questionAI.generateIntelligentQuestion(
-        session,
-        coverageAnalysis,
-        { previousQuestions: session.conversation.filter(e => e.type === 'interviewer') }
-      );
+      const questionContent = nextQuestion.question || nextQuestion.content;
 
       await this.sessionManager.addConversationEntry(sessionId, {
         type: 'interviewer',
-        content: nextQuestion.question,
+        content: questionContent,
         timestamp: new Date().toISOString(),
         metadata: { aiGenerated: true, targetAreas: nextQuestion.targetAreas, reasoning: 'Extended silence - moving forward', silenceDuration },
       });
 
+      if (nextQuestion.targetAreas?.[0] && session.coverage?.areas?.[nextQuestion.targetAreas[0]]) {
+        await incrementAreaQuestionCount(this.sessionManager, sessionId, nextQuestion.targetAreas[0]);
+        await this.sessionManager.updateSession(sessionId, { currentFocusArea: nextQuestion.targetAreas[0] });
+      }
+
       return {
-        action:   'next_question',
-        content:  nextQuestion.question,
-        reasoning: `Extended silence (${silenceDuration}s) - automatically moving forward`,
+        action:     'next_question',
+        content:    questionContent,
+        reasoning:  `Extended silence (${silenceDuration}s) - automatically moving forward`,
         targetAreas: nextQuestion.targetAreas,
         silenceDuration,
       };
     } catch (error) {
-      console.error('âŒ [Silence] Failed to handle silence:', error.message);
+      console.error('[Silence] Failed to handle silence:', error.message);
+      const fallback = "Let's move on to the next topic. Can you tell me about a recent project you worked on?";
       return {
         action:  'next_question',
-        content: "Let's move on to the next topic. Can you tell me about your experience with problem-solving?",
+        content: fallback,
         reasoning: 'Silence handling failed - using fallback',
         error:   error.message,
       };
     }
   }
 
-  async endInterview(sessionId) {
+    async endInterview(sessionId) {
     try {
       const session = await this.sessionManager.getSession(sessionId);
       if (!session) throw new Error(`Session ${sessionId} not found`);
