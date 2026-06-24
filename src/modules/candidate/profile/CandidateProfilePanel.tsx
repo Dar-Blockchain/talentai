@@ -10,6 +10,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/modules/shared/ui/shadcn/
 import { Badge } from "@/modules/shared/ui/shadcn/badge";
 import { Progress } from "@/modules/shared/ui/shadcn/progress";
 import { Separator } from "@/modules/shared/ui/shadcn/separator";
+import { Card } from "@/modules/shared/ui/shadcn/card";
 import { cn } from "@/lib/utils";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchCandidateStats, selectCandidateStats } from "@/store/slices/jobApplicationSlice";
@@ -35,7 +36,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   totalApplications, totalInterviews,
   labelApplications, labelInterviews,
 }) => (
-  <div className="bg-card rounded-lg border overflow-hidden shadow-card">
+  <Card className="gap-0 py-0 overflow-hidden">
 
     {/* Banner — logo gradient: deep-green → mint */}
     <div className="h-16 relative bg-gradient-to-br from-primary-dark to-primary overflow-hidden">
@@ -106,7 +107,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
         </div>
       </div>
     </div>
-  </div>
+  </Card>
 );
 
 // ─── ProfileStrengthCard ──────────────────────────────────────────────────────
@@ -118,7 +119,7 @@ const ProfileStrengthCard: React.FC<{ checklist: ChecklistItem[]; label: string 
   const pct  = Math.round((done / checklist.length) * 100);
 
   return (
-    <div className="bg-card rounded-lg border p-3 shadow-card">
+    <Card className="gap-0 py-0 p-3">
 
       {/* Header */}
       <div className="flex items-center gap-2 mb-1">
@@ -167,7 +168,7 @@ const ProfileStrengthCard: React.FC<{ checklist: ChecklistItem[]; label: string 
           );
         })}
       </div>
-    </div>
+    </Card>
   );
 };
 

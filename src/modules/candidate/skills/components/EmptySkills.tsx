@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Code2, Users, Plus } from "lucide-react";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { cn } from "@/lib/utils";
-import AssessmentModal from "../AssessmentModal";
+import AssessmentModal from "@/components/features/candidate/AssessmentModal";
 
 type SkillType = "technical" | "soft";
 

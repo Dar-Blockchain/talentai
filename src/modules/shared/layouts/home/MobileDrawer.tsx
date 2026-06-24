@@ -12,7 +12,7 @@ import { useTranslation } from "react-i18next";
 import { getCandidateChatBasePath } from "@/modules/chat/candidate-chat/utils/routes";
 import {
   LayoutDashboard, MessageSquare, Bell, LogOut,
-  User, Settings, X, ChevronRight, ArrowUpRight,
+  Settings, X, ChevronRight, ArrowUpRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarImage, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
@@ -128,7 +128,6 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unre
   // Active route detection
   const p = router.pathname;
   const isActiveDashboard     = p.includes("dashboard");
-  const isActiveProfile       = p.includes("profile");
   const isActiveMessages      = p.includes("chat") || p.includes("message");
   const isActiveNotifications = p === "/notifications";
   const isActiveSettings      = p === "/settings";
@@ -269,14 +268,6 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unre
                   active={isActiveDashboard}
                   onClick={goDashboard}
                 />
-                {!isCompany && (
-                  <Row
-                    icon={<User />}
-                    label={t("header.view_profile")}
-                    active={isActiveProfile}
-                    onClick={() => go("/candidate/profile/" + user?._id)}
-                  />
-                )}
                 <Row
                   icon={<MessageSquare />}
                   label={t("header.messages")}

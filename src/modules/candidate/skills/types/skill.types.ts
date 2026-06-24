@@ -1,8 +1,8 @@
-import axiosInstance from '@/utils/axiosInstance';
+export type SkillKind = 'technical' | 'soft';
 
 export interface Skill {
   _id: string;
-  kind: 'technical' | 'soft';
+  kind: SkillKind;
   name: string;
   category?: string;
   proficiencyLevel: number;
@@ -31,7 +31,7 @@ export interface SkillsResponse {
 }
 
 export interface SkillsParams {
-  kind?: 'technical' | 'soft';
+  kind?: SkillKind;
   search?: string;
   verified?: boolean;
   page?: number;
@@ -39,10 +39,3 @@ export interface SkillsParams {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }
-
-export const skillService = {
-  getMySkills: async (params: SkillsParams = {}): Promise<SkillsResponse> => {
-    const res = await axiosInstance.get('skills', { params });
-    return res.data;
-  },
-};

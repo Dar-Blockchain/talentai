@@ -7,7 +7,7 @@ import {
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { Separator } from "@/modules/shared/ui/shadcn/separator";
 import { cn } from "@/lib/utils";
-import { useSkills } from "@/hooks/useSkills";
+import { useSkills } from "../hooks/useSkills";
 import TechnicalSkills from "./TechnicalSkills";
 import SoftSkills from "./SoftSkills";
 

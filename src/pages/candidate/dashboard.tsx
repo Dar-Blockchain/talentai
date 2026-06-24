@@ -4,9 +4,9 @@ import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import { Box, Typography, Button, Dialog, DialogContent, DialogActions, TextField, Chip } from "@mui/material";
 import CandidateWorkspaceLayout from "@/modules/shared/layouts/candidate/CandidateWorkspaceLayout";
-import CandidateApplications from "@/components/features/candidate/CandidateApplications";
-import InterviewsBlock from "@/components/features/candidate/candidate-interviews/InterviewsBlock";
-import CandidateProfilePanel from "@/components/features/candidate/CandidateProfilePanel";
+import CandidateApplications from "@/modules/candidate/applications/components/CandidateApplicationsWidget";
+
+import CandidateProfilePanel from "@/modules/candidate/profile/CandidateProfilePanel";
 import PsychologyOutlined from "@mui/icons-material/PsychologyOutlined";
 import SchoolOutlined from "@mui/icons-material/SchoolOutlined";
 import ExpandMoreOutlined from "@mui/icons-material/ExpandMoreOutlined";
@@ -24,7 +24,7 @@ const TBG  = "#F0FDFA";
 const TBRD = "#99F6E4";
 const NAVY = "#0D1B2A";
 
-type ActiveView = "applications" | "interviews" | null;
+type ActiveView = "applications" | null;
 
 const POPULAR_SKILLS = ["React", "TypeScript", "Python", "Node.js", "Java", "SQL", "Docker", "AWS", "Vue.js", "Go"];
 
@@ -106,7 +106,7 @@ const DashboardCandidate: React.FC = () => {
 
   useEffect(() => {
     const view = router.query.view;
-    if (view === "applications" || view === "interviews") {
+    if (view === "applications") {
       setActiveView(view);
       return;
     }
@@ -167,17 +167,12 @@ const DashboardCandidate: React.FC = () => {
             )}
 
             {/* Interviews */}
-            {activeView === "interviews" ? (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                <HideBar onHide={hide} label={t("candidate.actions.hide")} />
-                <InterviewsBlock />
-              </Box>
-            ) : activeView === null && (
+            {activeView === null && (
               <CollapsedRow
                 icon={<SchoolOutlined sx={{ fontSize: 16, color: "#D97706" }} />}
                 iconBg="#FFFBEB" iconBorder="#FDE68A"
                 title={t("candidate.sections.interviews_title")} subtitle={t("candidate.sections.interviews_subtitle")}
-                color="#D97706" onExpand={() => expand("interviews")}
+                color="#D97706" onExpand={() => router.push("/candidate/interviews")}
                 viewAllLabel={t("candidate.actions.view_all")}
               />
             )}

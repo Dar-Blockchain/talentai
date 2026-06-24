@@ -37,7 +37,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
         </Button>
 
         {isCandidate && (
-          <Link href="/" className="inline-flex items-center">
+          <Link href="/" className="hidden sm:inline-flex items-center">
             <Image
               src="/images/home/logo.svg"
               alt="TalentAI"

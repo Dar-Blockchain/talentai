@@ -4,7 +4,7 @@ import { Search, ChevronDown, Loader2 } from "lucide-react";
 import { Input } from "@/modules/shared/ui/shadcn/input";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
-import { UseSkillsReturn } from "@/hooks/useSkills";
+import { UseSkillsReturn } from "../hooks/useSkills";
 import SkillCard from "./SkillCard";
 import EmptySkills from "./EmptySkills";
 

@@ -28,28 +28,3 @@ module.exports.getMySkills = async (req, res) => {
     handleError(res, error);
   }
 };
-
-/**
- * GET /skills/profile/:profileId
- * Returns skills for a specific profile (public-facing or admin use).
- */
-module.exports.getSkillsByProfile = async (req, res) => {
-  try {
-    const { profileId } = req.params;
-    const { kind, search, verified, page, limit, sortBy, sortOrder } = req.query;
-
-    const result = await skillService.getSkillsByProfile(profileId, {
-      kind,
-      search,
-      verified: verified === "true",
-      page,
-      limit,
-      sortBy,
-      sortOrder,
-    });
-
-    res.status(200).json({ success: true, ...result });
-  } catch (error) {
-    handleError(res, error);
-  }
-};

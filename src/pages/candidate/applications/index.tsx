@@ -2,20 +2,20 @@ import React from "react";
 import dynamic from "next/dynamic";
 import { useTranslation } from "react-i18next";
 import CandidateWorkspaceLayout from "@/modules/shared/layouts/candidate/CandidateWorkspaceLayout";
-import CandidateSkills from "@/modules/candidate/skills/components/CandidateSkills";
 import CandidateProfilePanel from "@/modules/candidate/profile/CandidateProfilePanel";
+import { CandidateApplicationsList } from "@/modules/candidate/applications";
 
-const CandidateSkillsPage: React.FC = () => {
+const CandidateApplicationsPage: React.FC = () => {
   const { t } = useTranslation("dashboard");
 
   return (
     <CandidateWorkspaceLayout
-      breadcrumb={t("candidate.sections.skills_title")}
+      breadcrumb={t("candidate.nav.applications")}
       leftPanel={<CandidateProfilePanel />}
     >
-      <CandidateSkills />
+      <CandidateApplicationsList />
     </CandidateWorkspaceLayout>
   );
 };
 
-export default dynamic(() => Promise.resolve(CandidateSkillsPage), { ssr: false });
+export default dynamic(() => Promise.resolve(CandidateApplicationsPage), { ssr: false });
