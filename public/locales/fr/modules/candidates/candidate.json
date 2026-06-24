@@ -239,6 +239,14 @@
       "expert": "Expert",
       "new": "Nouveau"
     },
+    "filter": {
+      "all": "Tout",
+      "technical": "Technique",
+      "soft": "Soft",
+      "level": "Niveau :",
+      "all_levels": "Tous niveaux"
+    },
+    "no_filter_results": "Aucune compétence ne correspond au filtre",
     "empty": {
       "technical_title": "Aucune compétence technique",
       "technical_desc": "Ajoutez vos compétences techniques pour être mis en relation avec des opportunités pertinentes.",

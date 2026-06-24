@@ -55,7 +55,7 @@ const CandidateWorkspaceLayout: React.FC<CandidateWorkspaceLayoutProps> = ({
           {/* Center: page content */}
           <div
             className={cn(
-              "min-w-0 flex flex-col mt-0 md:mt-4",
+              "min-w-0 flex flex-col",
               fillHeight ? "h-full min-h-0" : "gap-4"
             )}
           >

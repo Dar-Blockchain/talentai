@@ -239,6 +239,14 @@
       "expert": "Expert",
       "new": "New"
     },
+    "filter": {
+      "all": "All",
+      "technical": "Technical",
+      "soft": "Soft",
+      "level": "Level:",
+      "all_levels": "All levels"
+    },
+    "no_filter_results": "No skills match the current filter",
     "empty": {
       "technical_title": "No Technical Skills Yet",
       "technical_desc": "Add your technical skills to get matched with relevant job opportunities.",

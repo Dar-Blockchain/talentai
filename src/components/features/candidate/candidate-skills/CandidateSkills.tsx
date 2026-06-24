@@ -1,14 +1,77 @@
-import React from "react";
-import { Box, Typography, Skeleton } from "@mui/material";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Code2, Users, Layers } from "lucide-react";
+import {
+  Card, CardHeader, CardTitle, CardDescription,
+} from "@/modules/shared/ui/shadcn/card";
+import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
+import { Separator } from "@/modules/shared/ui/shadcn/separator";
+import { cn } from "@/lib/utils";
 import { useSkills } from "@/hooks/useSkills";
-import CodeOutlined from "@mui/icons-material/CodeOutlined";
 import TechnicalSkills from "./TechnicalSkills";
 import SoftSkills from "./SoftSkills";
 
-const T   = "#0D9488";
-const TBG = "#F0FDFA";
-const TBD = "#99F6E4";
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type TypeFilter  = "all" | "technical" | "soft";
+type LevelFilter = null | 1 | 2 | 3 | 4 | 5;
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const LEVEL_LABELS: Record<number, string> = {
+  1: "entry", 2: "junior", 3: "mid", 4: "senior", 5: "expert",
+};
+
+const LEVEL_ACTIVE: Record<number | "all", string> = {
+  all: "bg-primary text-primary-foreground border-primary",
+  1:   "bg-gray-200 text-gray-600 border-gray-300",
+  2:   "bg-warning text-white border-warning",
+  3:   "bg-info text-white border-info",
+  4:   "bg-secondary text-white border-secondary",
+  5:   "bg-primary-dark text-white border-primary-dark",
+};
+
+const TYPE_ACTIVE: Record<TypeFilter, string> = {
+  all:       "bg-primary text-primary-foreground border-primary shadow-sm",
+  technical: "bg-info text-white border-info shadow-sm",
+  soft:      "bg-warning text-white border-warning shadow-sm",
+};
+
+const INACTIVE = "bg-card text-gray-500 border-border hover:border-primary/50 hover:text-primary-dark";
+
+// ─── Section header ───────────────────────────────────────────────────────────
+
+function SectionHeader({
+  icon: Icon, label, count, loading, accentBg, accentText,
+}: {
+  icon: React.ElementType;
+  label: string;
+  count: number;
+  loading: boolean;
+  accentBg: string;
+  accentText: string;
+}) {
+  return (
+    <div className="flex items-center gap-2 px-3 py-2 bg-gray-50/80 border-b">
+      <div className={cn("w-1 h-3.5 rounded-full shrink-0", accentBg)} />
+      <Icon className={cn("size-3.5 shrink-0", accentText)} />
+      <span className={cn("text-[0.7rem] font-bold uppercase tracking-widest", accentText)}>
+        {label}
+      </span>
+      <div className="ml-1">
+        {loading ? (
+          <Skeleton className="h-4 w-6" />
+        ) : (
+          <span className={cn("text-[0.62rem] font-bold px-1.5 py-0.5 rounded-full text-white", accentBg)}>
+            {count}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── CandidateSkills ─────────────────────────────────────────────────────────
 
 function CandidateSkills() {
   const { t } = useTranslation("dashboard");
@@ -21,59 +84,114 @@ function CandidateSkills() {
   const softCount  = soft.pagination?.total ?? 0;
   const totalCount = techCount + softCount;
 
+  const [typeFilter,  setTypeFilter]  = useState<TypeFilter>("all");
+  const [levelFilter, setLevelFilter] = useState<LevelFilter>(null);
+
+  const toggleLevel = (v: LevelFilter) => setLevelFilter(prev => prev === v ? null : v);
+
+  const showTech = typeFilter === "all" || typeFilter === "technical";
+  const showSoft = typeFilter === "all" || typeFilter === "soft";
+
   return (
-    <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E2E8F0", overflow: "hidden" }}>
+    <Card className="gap-0 py-0 overflow-hidden">
 
-      {/* ── Header ── */}
-      <Box sx={{ px: 2.5, pt: 2.25, pb: 2, borderBottom: "1px solid #F1F5F9" }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Box sx={{ width: 32, height: 32, borderRadius: "9px", bgcolor: TBG, border: `1px solid ${TBD}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <CodeOutlined sx={{ fontSize: 16, color: T }} />
-          </Box>
-          <Box>
-            <Typography sx={{ fontSize: "0.95rem", fontWeight: 800, color: "#0F172A", lineHeight: 1.2 }}>{s("title")}</Typography>
-            {(tech.loading && soft.loading) ? (
-              <Skeleton width={80} height={14} />
-            ) : (
-              <Typography sx={{ fontSize: "0.65rem", color: "#94A3B8" }}>{s("subtitle", { count: totalCount })}</Typography>
+      {/* ── Header ──────────────────────────────────────────────────────── */}
+      <CardHeader className="flex-row items-center gap-2.5 px-3 py-2.5 border-b grid-rows-1 [&>div]:gap-0">
+        <div className="size-8 rounded-lg bg-primary-light border border-primary-border flex items-center justify-center shrink-0">
+          <Layers className="size-4 text-primary-dark" />
+        </div>
+        <div className="flex flex-col">
+          <CardTitle className="text-[0.95rem] font-extrabold text-gray-900 leading-tight">
+            {s("title")}
+          </CardTitle>
+          {tech.loading && soft.loading ? (
+            <Skeleton className="h-3 w-20 mt-1" />
+          ) : (
+            <CardDescription className="text-[0.65rem]">
+              {s("subtitle", { count: totalCount })}
+            </CardDescription>
+          )}
+        </div>
+      </CardHeader>
+
+      {/* ── Filters ─────────────────────────────────────────────────────── */}
+      <div className="px-3 pt-2.5 pb-2 flex flex-col gap-2 border-b bg-gray-50/60">
+
+        {/* Type */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {(["all", "technical", "soft"] as TypeFilter[]).map(type => (
+            <button
+              key={type}
+              onClick={() => setTypeFilter(type)}
+              className={cn(
+                "flex items-center gap-1 text-[0.68rem] font-semibold px-2.5 py-1 rounded-full border transition-all duration-150",
+                typeFilter === type ? TYPE_ACTIVE[type] : INACTIVE,
+              )}
+            >
+              {type === "all"       && <Layers className="size-3" />}
+              {type === "technical" && <Code2  className="size-3" />}
+              {type === "soft"      && <Users  className="size-3" />}
+              {s(`filter.${type}`)}
+            </button>
+          ))}
+        </div>
+
+        <Separator />
+
+        {/* Level */}
+        <div className="flex items-center gap-1 flex-wrap">
+          <span className="text-[0.62rem] text-muted-foreground font-medium mr-0.5">
+            {s("filter.level")}
+          </span>
+          <button
+            onClick={() => setLevelFilter(null)}
+            className={cn(
+              "text-[0.65rem] font-semibold px-2 py-0.5 rounded-full border transition-all duration-150",
+              levelFilter === null ? LEVEL_ACTIVE.all : INACTIVE,
             )}
-          </Box>
-        </Box>
-      </Box>
+          >
+            {s("filter.all_levels")}
+          </button>
+          {([1, 2, 3, 4, 5] as const).map(lvl => (
+            <button
+              key={lvl}
+              onClick={() => toggleLevel(lvl)}
+              className={cn(
+                "text-[0.65rem] font-semibold px-2 py-0.5 rounded-full border transition-all duration-150",
+                levelFilter === lvl ? LEVEL_ACTIVE[lvl] : INACTIVE,
+              )}
+            >
+              {s(`levels.${LEVEL_LABELS[lvl]}`)}
+            </button>
+          ))}
+        </div>
+      </div>
 
-      {/* ── Technical ── */}
-      <Box>
-        <Box sx={{ px: 2.5, py: 1, display: "flex", alignItems: "center", gap: 0.75, bgcolor: "#F8FAFC", borderBottom: "1px solid #F1F5F9" }}>
-          <Box sx={{ width: 5, height: 14, borderRadius: "99px", bgcolor: "#2563EB" }} />
-          <Typography sx={{ fontSize: "0.7rem", fontWeight: 700, color: "#2563EB", textTransform: "uppercase", letterSpacing: "0.06em" }}>{s("technical")}</Typography>
-          <Box sx={{ ml: 0.5, px: 0.75, py: 0.1, borderRadius: "99px", bgcolor: "#DBEAFE" }}>
-            {tech.loading ? (
-              <Skeleton width={16} height={14} />
-            ) : (
-              <Typography sx={{ fontSize: "0.6rem", fontWeight: 700, color: "#1D4ED8" }}>{techCount}</Typography>
-            )}
-          </Box>
-        </Box>
-        <TechnicalSkills {...tech} />
-      </Box>
+      {/* ── Technical ───────────────────────────────────────────────────── */}
+      {showTech && (
+        <div>
+          <SectionHeader
+            icon={Code2} label={s("technical")}
+            count={techCount} loading={tech.loading}
+            accentBg="bg-info" accentText="text-info"
+          />
+          <TechnicalSkills {...tech} levelFilter={levelFilter} />
+        </div>
+      )}
 
-      {/* ── Soft ── */}
-      <Box sx={{ borderTop: "1px solid #E2E8F0" }}>
-        <Box sx={{ px: 2.5, py: 1, display: "flex", alignItems: "center", gap: 0.75, bgcolor: "#F8FAFC", borderBottom: "1px solid #F1F5F9" }}>
-          <Box sx={{ width: 5, height: 14, borderRadius: "99px", bgcolor: "#D97706" }} />
-          <Typography sx={{ fontSize: "0.7rem", fontWeight: 700, color: "#D97706", textTransform: "uppercase", letterSpacing: "0.06em" }}>{s("soft")}</Typography>
-          <Box sx={{ ml: 0.5, px: 0.75, py: 0.1, borderRadius: "99px", bgcolor: "#FEF3C7" }}>
-            {soft.loading ? (
-              <Skeleton width={16} height={14} />
-            ) : (
-              <Typography sx={{ fontSize: "0.6rem", fontWeight: 700, color: "#B45309" }}>{softCount}</Typography>
-            )}
-          </Box>
-        </Box>
-        <SoftSkills {...soft} />
-      </Box>
+      {/* ── Soft ────────────────────────────────────────────────────────── */}
+      {showSoft && (
+        <div className={cn(showTech && "border-t")}>
+          <SectionHeader
+            icon={Users} label={s("soft")}
+            count={softCount} loading={soft.loading}
+            accentBg="bg-warning" accentText="text-warning"
+          />
+          <SoftSkills {...soft} levelFilter={levelFilter} />
+        </div>
+      )}
 
-    </Box>
+    </Card>
   );
 }
 

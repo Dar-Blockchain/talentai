@@ -1,9 +1,10 @@
 import React from "react";
-import { Box, Typography, LinearProgress } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import { Code2, Users } from "lucide-react";
 import dayjs from "@/lib/dayjs";
-import CodeOutlined from "@mui/icons-material/CodeOutlined";
-import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
+import { Progress } from "@/modules/shared/ui/shadcn/progress";
+import { Badge } from "@/modules/shared/ui/shadcn/badge";
+import { cn } from "@/lib/utils";
 
 interface SkillCardProps {
   type: "technical" | "soft";
@@ -12,119 +13,108 @@ interface SkillCardProps {
 }
 
 const LEVEL_KEYS: Record<number, string> = {
-  1: "entry",
-  2: "junior",
-  3: "mid",
-  4: "senior",
-  5: "expert",
+  1: "entry", 2: "junior", 3: "mid", 4: "senior", 5: "expert",
 };
 
-const LEVEL_STYLES: Record<string, { color: string; bg: string }> = {
-  entry:  { color: "#64748B", bg: "#F1F5F9" },
-  junior: { color: "#D97706", bg: "#FFFBEB" },
-  mid:    { color: "#2563EB", bg: "#EFF6FF" },
-  senior: { color: "#7C3AED", bg: "#F5F3FF" },
-  expert: { color: "#059669", bg: "#F0FDF4" },
-  new:    { color: "#94A3B8", bg: "#F8FAFC" },
+const LEVEL_CLASSES: Record<string, string> = {
+  entry:  "bg-gray-100 text-gray-500 border-gray-200",
+  junior: "bg-warning-light text-warning border-warning-border",
+  mid:    "bg-info-light text-info border-info-border",
+  senior: "bg-secondary-light text-secondary-dark border-secondary-border",
+  expert: "bg-primary-light text-primary-dark border-primary-border",
+  new:    "bg-gray-50 text-gray-400 border-gray-200",
 };
 
-const getScoreColor = (s: number) =>
-  s >= 80 ? "#059669" : s >= 60 ? "#0D9488" : s >= 40 ? "#D97706" : "#DC2626";
+const SCORE_TEXT_CLASS: Record<string, string> = {
+  high:   "text-primary-dark",
+  mid:    "text-teal-600",
+  low:    "text-warning",
+  crit:   "text-danger",
+};
+
+const SCORE_BAR_CLASS: Record<string, string> = {
+  high:   "[&>[data-slot=progress-indicator]]:bg-primary-dark",
+  mid:    "[&>[data-slot=progress-indicator]]:bg-teal-600",
+  low:    "[&>[data-slot=progress-indicator]]:bg-warning",
+  crit:   "[&>[data-slot=progress-indicator]]:bg-danger",
+  empty:  "[&>[data-slot=progress-indicator]]:bg-gray-200",
+};
+
+function scoreTier(s: number) {
+  return s >= 80 ? "high" : s >= 60 ? "mid" : s >= 40 ? "low" : s > 0 ? "crit" : "empty";
+}
 
 const SkillCard: React.FC<SkillCardProps> = ({ skill, type }) => {
   const { t } = useTranslation("dashboard");
   const s = (k: string, opts?: any) => t(`candidate.skills.${k}`, opts) as string;
 
-  const score     = skill.testScore ?? 0;
-  const levelKey  = LEVEL_KEYS[skill.levelConfirmed] ?? "new";
-  const lvlStyle  = LEVEL_STYLES[levelKey];
-  const lvlLabel  = s(`levels.${levelKey}`);
-  const timeAgo   = skill?.updatedAt ? dayjs(skill.updatedAt).fromNow() : null;
+  const score    = skill.testScore ?? 0;
+  const levelKey = LEVEL_KEYS[skill.levelConfirmed] ?? "new";
+  const timeAgo  = skill?.updatedAt ? dayjs(skill.updatedAt).fromNow() : null;
+  const tier     = scoreTier(score);
 
-  const isTech      = type === "technical";
-  const accentColor = isTech ? "#2563EB" : "#D97706";
-  const accentBg    = isTech ? "#EFF6FF" : "#FFFBEB";
-  const accentBd    = isTech ? "#BFDBFE" : "#FDE68A";
-  const Icon        = isTech ? CodeOutlined : PeopleOutlined;
+  const isTech = type === "technical";
+  const Icon   = isTech ? Code2 : Users;
 
   return (
-    <Box sx={{
-      bgcolor: "#fff",
-      border: "1px solid #E2E8F0",
-      borderRadius: "14px",
-      p: 1.75,
-      display: "flex",
-      flexDirection: "column",
-      gap: 1.25,
-      transition: "all 0.18s",
-      "&:hover": {
-        borderColor: accentColor,
-        boxShadow: `0 4px 16px ${accentColor}18`,
-        transform: "translateY(-1px)",
-      },
-    }}>
+    <div
+      className={cn(
+        "bg-card border rounded-lg p-3 flex flex-col gap-2 transition-all duration-200",
+        "hover:-translate-y-0.5 hover:shadow-md",
+        isTech ? "hover:border-info" : "hover:border-warning",
+      )}
+    >
+      {/* Top row: icon · name · level badge */}
+      <div className="flex items-start gap-2">
+        <div className={cn(
+          "size-8 rounded-lg border flex items-center justify-center shrink-0",
+          isTech
+            ? "bg-info-light border-info-border text-info"
+            : "bg-warning-light border-warning-border text-warning",
+        )}>
+          <Icon className="size-[15px]" />
+        </div>
 
-      {/* Top row: icon + name + level badge */}
-      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.25 }}>
-        <Box sx={{
-          width: 36, height: 36, borderRadius: "10px", flexShrink: 0,
-          bgcolor: accentBg, border: `1px solid ${accentBd}`,
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-          <Icon sx={{ fontSize: 17, color: accentColor }} />
-        </Box>
-
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography sx={{
-            fontSize: "0.88rem", fontWeight: 700, color: "#0F172A",
-            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1.3,
-          }}>
+        <div className="flex-1 min-w-0">
+          <p className="text-[0.85rem] font-bold text-gray-900 truncate leading-tight">
             {skill.name}
-          </Typography>
+          </p>
           {type === "soft" && skill.category && (
-            <Typography sx={{ fontSize: "0.63rem", color: "#94A3B8", mt: 0.15 }}>{skill.category}</Typography>
+            <p className="text-[0.62rem] text-muted-foreground mt-0.5">{skill.category}</p>
           )}
-        </Box>
+        </div>
 
-        <Box sx={{ px: 0.85, py: 0.25, borderRadius: "20px", bgcolor: lvlStyle.bg, border: `1px solid ${lvlStyle.color}30`, flexShrink: 0 }}>
-          <Typography sx={{ fontSize: "0.6rem", fontWeight: 700, color: lvlStyle.color }}>{lvlLabel}</Typography>
-        </Box>
-      </Box>
+        <Badge
+          variant="outline"
+          className={cn("text-[0.6rem] font-bold h-5 px-1.5 shrink-0", LEVEL_CLASSES[levelKey])}
+        >
+          {s(`levels.${levelKey}`)}
+        </Badge>
+      </div>
 
       {/* Score bar */}
-      <Box>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.5 }}>
-          <Typography sx={{ fontSize: "0.62rem", color: "#94A3B8", fontWeight: 500 }}>
+      <div>
+        <div className="flex justify-between items-center mb-1">
+          <span className="text-[0.62rem] text-muted-foreground font-medium">
             {score > 0 ? s("score") : s("not_tested")}
-          </Typography>
+          </span>
           {score > 0 && (
-            <Typography sx={{ fontSize: "0.72rem", fontWeight: 800, color: getScoreColor(score) }}>
+            <span className={cn("text-[0.7rem] font-black", SCORE_TEXT_CLASS[tier])}>
               {score}%
-            </Typography>
+            </span>
           )}
-        </Box>
-        <LinearProgress
-          variant="determinate"
+        </div>
+        <Progress
           value={Math.min(score, 100)}
-          sx={{
-            height: 5, borderRadius: "99px",
-            bgcolor: "#F1F5F9",
-            "& .MuiLinearProgress-bar": {
-              borderRadius: "99px",
-              bgcolor: score > 0 ? getScoreColor(score) : "#E2E8F0",
-            },
-          }}
+          className={cn("h-1 bg-gray-100", SCORE_BAR_CLASS[tier])}
         />
-      </Box>
+      </div>
 
-      {/* Bottom row: time */}
-      <Box sx={{ display: "flex", alignItems: "center", mt: 0.25 }}>
-        <Typography sx={{ fontSize: "0.6rem", color: "#CBD5E1" }}>
-          {timeAgo ?? s("just_added")}
-        </Typography>
-      </Box>
-
-    </Box>
+      {/* Timestamp */}
+      <p className="text-[0.58rem] text-gray-300 leading-none">
+        {timeAgo ?? s("just_added")}
+      </p>
+    </div>
   );
 };
 
