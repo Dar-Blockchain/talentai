@@ -1,10 +1,9 @@
-import { Box, Typography } from '@mui/material';
 import WorldMap from './WorldMap';
 
 const AdminWorldMap = ({ userLocations, totalUsers }: { userLocations: any[]; totalUsers: number }) => (
-  <Box sx={{ mb: 4 }}>
+  <div className="mb-4">
     <WorldMap userLocations={userLocations} totalUsers={totalUsers} />
-  </Box>
+  </div>
 );
 
-export default AdminWorldMap; 
+export default AdminWorldMap;

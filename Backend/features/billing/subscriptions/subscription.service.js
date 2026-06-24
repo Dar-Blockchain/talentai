@@ -432,3 +432,78 @@ module.exports.markExpiredSubscriptions = async () => {
     throw error;
   }
 };
+
+module.exports.adminCreateSubscription = async ({ companyProfileId, planId, startDate, notes }) => {
+  try {
+    if (!companyProfileId || !planId) {
+      const err = new Error("Company and plan are required");
+      err.status = 400;
+      throw err;
+    }
+
+    const Profile = mongoose.model("Profile");
+    const profile = await Profile.findById(companyProfileId);
+    if (!profile || profile.type !== "Company") {
+      const err = new Error("Company profile not found");
+      err.status = 404;
+      throw err;
+    }
+
+    const plan = await PlanLimits.findById(planId);
+    if (!plan) {
+      const err = new Error("Plan not found");
+      err.status = 404;
+      throw err;
+    }
+
+    const start = startDate ? new Date(startDate) : new Date();
+    const end = new Date(start);
+    end.setDate(end.getDate() + plan.durationDays);
+
+    const subscription = await Subscription.create({
+      companyProfileId,
+      planId,
+      startDate: start,
+      endDate: end,
+      status: "active",
+      autoRenew: false,
+      notes: notes || "Granted manually by admin",
+    });
+
+    return { success: true, data: await subscription.populate("planId") };
+  } catch (error) {
+    console.error("Error creating admin subscription:", error);
+    throw error;
+  }
+};
+
+module.exports.searchCompanies = async (search = "") => {
+  try {
+    const Profile = mongoose.model("Profile");
+    const query = { type: "Company" };
+    if (search) {
+      query.$or = [
+        { "companyDetails.name": { $regex: search, $options: "i" } },
+        { "companyDetails.email": { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const companies = await Profile.find(query)
+      .select("companyDetails.name companyDetails.email userId")
+      .populate("userId", "username email")
+      .limit(20)
+      .lean();
+
+    return {
+      success: true,
+      data: companies.map((c) => ({
+        profileId: c._id,
+        name: c.companyDetails?.name || c.userId?.username || "Unnamed company",
+        email: c.companyDetails?.email || c.userId?.email || "",
+      })),
+    };
+  } catch (error) {
+    console.error("Error searching companies:", error);
+    throw error;
+  }
+};

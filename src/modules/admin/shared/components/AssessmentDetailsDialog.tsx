@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-  Dialog,
-  DialogContent,
-  Box,
-  Typography,
-  IconButton,
-  Chip,
-  LinearProgress,
-} from '@mui/material';
+import { Dialog, DialogContent, IconButton } from '@mui/material';
 import {
   Close as CloseIcon,
   WorkOutline as WorkIcon,
@@ -17,8 +9,9 @@ import {
   Quiz as QuizIcon,
   Repeat as RepeatIcon,
 } from '@mui/icons-material';
-
-const PRIMARY = '#8310FF';
+import { Badge } from '@/modules/shared/ui/shadcn/badge';
+import { scoreTone } from './AdminAtoms';
+import { ADMIN_ACCENT } from '../theme';
 
 interface AssessmentDetailsDialogProps {
   open: boolean;
@@ -35,8 +28,7 @@ const AssessmentDetailsDialog: React.FC<AssessmentDetailsDialogProps> = ({
   if (!assessment) return null;
 
   const score = assessment.averageScore ?? 0;
-  const scoreColor = score >= 70 ? '#10b981' : score >= 50 ? '#f59e0b' : '#ef4444';
-  const scoreLabel = score >= 70 ? 'Excellent' : score >= 50 ? 'Satisfactory' : 'Needs Work';
+  const tone = scoreTone(score);
 
   return (
     <Dialog
@@ -53,14 +45,9 @@ const AssessmentDetailsDialog: React.FC<AssessmentDetailsDialogProps> = ({
       }}
     >
       {/* Header */}
-      <Box
-        sx={{
-          background: `linear-gradient(135deg, ${PRIMARY} 0%, #6a0dad 100%)`,
-          px: 3,
-          pt: 3,
-          pb: 4,
-          position: 'relative',
-        }}
+      <div
+        className="relative px-6 pt-6 pb-8"
+        style={{ background: ADMIN_ACCENT }}
       >
         <IconButton
           onClick={onClose}
@@ -68,191 +55,101 @@ const AssessmentDetailsDialog: React.FC<AssessmentDetailsDialogProps> = ({
         >
           <CloseIcon fontSize="small" />
         </IconButton>
-        <Typography variant="overline" sx={{ color: 'rgba(255,255,255,0.7)', letterSpacing: 1.5 }}>
+        <span className="text-[11px] uppercase tracking-[1.5px] text-white/70">
           Assessment Details
-        </Typography>
-        <Typography variant="h5" sx={{ color: 'white', fontWeight: 700, mt: 0.5, pr: 4 }}>
+        </span>
+        <h2 className="text-[1.5rem] font-bold text-white mt-1 pr-8">
           {assessment.jobId?.title || assessment.jobName || 'Unnamed Job'}
-        </Typography>
+        </h2>
         {assessment.jobId?.location && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
-            <LocationIcon sx={{ fontSize: 16, color: 'rgba(255,255,255,0.7)' }} />
-            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-              {assessment.jobId.location}
-            </Typography>
-          </Box>
+          <div className="flex items-center gap-1 mt-2">
+            <LocationIcon style={{ fontSize: 16, color: 'rgba(255,255,255,0.7)' }} />
+            <span className="text-[13px] text-white/70">{assessment.jobId.location}</span>
+          </div>
         )}
-      </Box>
+      </div>
 
       <DialogContent sx={{ p: 0 }}>
         {/* Score Card - overlapping header */}
-        <Box sx={{ px: 3, mt: -2.5 }}>
-          <Box
-            sx={{
-              background: 'white',
-              borderRadius: '12px',
-              p: 2.5,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-              border: '1px solid #ece6fa',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 2.5,
-            }}
-          >
-            <Box
-              sx={{
-                width: 64,
-                height: 64,
-                borderRadius: '12px',
-                background: `${scoreColor}14`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
+        <div className="px-6 -mt-5">
+          <div className="bg-white rounded-xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.08)] border border-slate-200 flex items-center gap-5">
+            <div
+              className="w-16 h-16 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: `${tone.color}14` }}
             >
-              <Typography variant="h5" sx={{ fontWeight: 800, color: scoreColor }}>
+              <span className="text-[1.5rem] font-extrabold" style={{ color: tone.color }}>
                 {score.toFixed(0)}%
-              </Typography>
-            </Box>
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#1a1a2e' }}>
-                  Average Score
-                </Typography>
-                <Chip
-                  label={scoreLabel}
-                  size="small"
-                  sx={{
-                    backgroundColor: `${scoreColor}14`,
-                    color: scoreColor,
-                    fontWeight: 600,
-                    fontSize: '0.75rem',
-                    height: 24,
-                  }}
-                />
-              </Box>
-              <LinearProgress
-                variant="determinate"
-                value={score}
-                sx={{
-                  height: 6,
-                  borderRadius: 3,
-                  backgroundColor: '#f0f0f0',
-                  '& .MuiLinearProgress-bar': {
-                    borderRadius: 3,
-                    backgroundColor: scoreColor,
-                  },
-                }}
-              />
-            </Box>
-          </Box>
-        </Box>
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[14px] font-semibold text-slate-900">Average Score</span>
+                <Badge variant="outline" className="border-transparent font-semibold" style={{ background: `${tone.color}14`, color: tone.color }}>
+                  {tone.label}
+                </Badge>
+              </div>
+              <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                <div className="h-full rounded-full" style={{ width: `${score}%`, background: tone.color }} />
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Stats Row */}
-        <Box sx={{ display: 'flex', gap: 2, px: 3, mt: 2.5 }}>
-          <Box
-            sx={{
-              flex: 1,
-              p: 2,
-              borderRadius: '12px',
-              backgroundColor: '#f5f3ff',
-              textAlign: 'center',
-            }}
-          >
-            <RepeatIcon sx={{ color: PRIMARY, fontSize: 22, mb: 0.5 }} />
-            <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a1a2e' }}>
-              {assessment.numberOfAttempts || 0}
-            </Typography>
-            <Typography variant="caption" sx={{ color: '#6c6c80' }}>
-              Attempts
-            </Typography>
-          </Box>
-          <Box
-            sx={{
-              flex: 1,
-              p: 2,
-              borderRadius: '12px',
-              backgroundColor: '#f5f3ff',
-              textAlign: 'center',
-            }}
-          >
-            <QuizIcon sx={{ color: PRIMARY, fontSize: 22, mb: 0.5 }} />
-            <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a1a2e' }}>
-              {assessment.totalQuestions || 'N/A'}
-            </Typography>
-            <Typography variant="caption" sx={{ color: '#6c6c80' }}>
-              Questions
-            </Typography>
-          </Box>
-          <Box
-            sx={{
-              flex: 1,
-              p: 2,
-              borderRadius: '12px',
-              backgroundColor: '#f5f3ff',
-              textAlign: 'center',
-            }}
-          >
-            <TrendingUpIcon sx={{ color: PRIMARY, fontSize: 22, mb: 0.5 }} />
-            <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a1a2e' }}>
+        <div className="flex gap-3 px-6 mt-5">
+          <div className="flex-1 p-4 rounded-xl bg-indigo-50 text-center">
+            <RepeatIcon style={{ color: ADMIN_ACCENT, fontSize: 22, marginBottom: 4 }} />
+            <div className="text-[1.1rem] font-bold text-slate-900">{assessment.numberOfAttempts || 0}</div>
+            <div className="text-[11px] text-slate-500">Attempts</div>
+          </div>
+          <div className="flex-1 p-4 rounded-xl bg-indigo-50 text-center">
+            <QuizIcon style={{ color: ADMIN_ACCENT, fontSize: 22, marginBottom: 4 }} />
+            <div className="text-[1.1rem] font-bold text-slate-900">{assessment.totalQuestions || 'N/A'}</div>
+            <div className="text-[11px] text-slate-500">Questions</div>
+          </div>
+          <div className="flex-1 p-4 rounded-xl bg-indigo-50 text-center">
+            <TrendingUpIcon style={{ color: ADMIN_ACCENT, fontSize: 22, marginBottom: 4 }} />
+            <div className="text-[1.1rem] font-bold text-slate-900">
               {score >= 70 ? 'High' : score >= 50 ? 'Mid' : 'Low'}
-            </Typography>
-            <Typography variant="caption" sx={{ color: '#6c6c80' }}>
-              Performance
-            </Typography>
-          </Box>
-        </Box>
+            </div>
+            <div className="text-[11px] text-slate-500">Performance</div>
+          </div>
+        </div>
 
         {/* Job Details */}
-        <Box sx={{ px: 3, mt: 2.5, pb: 3 }}>
-          <Typography variant="overline" sx={{ color: '#6c6c80', letterSpacing: 1.2, fontSize: '0.7rem' }}>
-            Job Information
-          </Typography>
-          <Box sx={{ mt: 1.5, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+        <div className="px-6 mt-5 pb-6">
+          <span className="text-[11px] uppercase tracking-[1.2px] text-slate-500">Job Information</span>
+          <div className="mt-3 flex flex-col gap-3">
             {assessment.jobId?.description && (
-              <Typography variant="body2" sx={{ color: '#444', lineHeight: 1.7 }}>
-                {assessment.jobId.description}
-              </Typography>
+              <p className="text-[13px] text-slate-600 leading-[1.7]">{assessment.jobId.description}</p>
             )}
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 0.5 }}>
+            <div className="flex gap-2 flex-wrap mt-0.5">
               {assessment.jobId?.employmentType && (
-                <Chip
-                  icon={<WorkIcon sx={{ fontSize: '16px !important' }} />}
-                  label={assessment.jobId.employmentType}
-                  size="small"
-                  variant="outlined"
-                  sx={{ borderColor: '#ece6fa', color: '#6c6c80', textTransform: 'capitalize' }}
-                />
+                <Badge variant="outline" className="gap-1 border-slate-200 text-slate-500 capitalize">
+                  <WorkIcon style={{ fontSize: 14 }} />
+                  {assessment.jobId.employmentType}
+                </Badge>
               )}
               {assessment.jobId?.experienceLevel && (
-                <Chip
-                  icon={<TrendingUpIcon sx={{ fontSize: '16px !important' }} />}
-                  label={assessment.jobId.experienceLevel}
-                  size="small"
-                  variant="outlined"
-                  sx={{ borderColor: '#ece6fa', color: '#6c6c80' }}
-                />
+                <Badge variant="outline" className="gap-1 border-slate-200 text-slate-500">
+                  <TrendingUpIcon style={{ fontSize: 14 }} />
+                  {assessment.jobId.experienceLevel}
+                </Badge>
               )}
               {assessment.createdAt && (
-                <Chip
-                  icon={<TimeIcon sx={{ fontSize: '16px !important' }} />}
-                  label={new Date(assessment.createdAt).toLocaleDateString()}
-                  size="small"
-                  variant="outlined"
-                  sx={{ borderColor: '#ece6fa', color: '#6c6c80' }}
-                />
+                <Badge variant="outline" className="gap-1 border-slate-200 text-slate-500">
+                  <TimeIcon style={{ fontSize: 14 }} />
+                  {new Date(assessment.createdAt).toLocaleDateString()}
+                </Badge>
               )}
-            </Box>
-          </Box>
-        </Box>
+            </div>
+          </div>
+        </div>
 
         {/* Footer */}
-        <Box sx={{ px: 3, py: 1.5, backgroundColor: '#fafafa', borderTop: '1px solid #ece6fa' }}>
-          <Typography variant="caption" sx={{ color: '#aaa', fontFamily: 'monospace', fontSize: '0.7rem' }}>
-            ID: {assessment._id}
-          </Typography>
-        </Box>
+        <div className="px-6 py-3 bg-slate-50 border-t border-slate-200">
+          <span className="text-[11px] font-mono text-slate-400">ID: {assessment._id}</span>
+        </div>
       </DialogContent>
     </Dialog>
   );

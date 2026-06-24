@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Popup, Tooltip, useMap } from 'react-leaflet';
-import { Box, Typography, Paper, Chip, IconButton, Divider } from '@mui/material';
-import { styled } from '@mui/material/styles';
 import { LocationOn as LocationIcon, ZoomIn, ZoomOut } from '@mui/icons-material';
+import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -13,75 +12,6 @@ L.Icon.Default.mergeOptions({
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
-
-const StyledPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  borderRadius: '20px',
-  background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-  border: '1px solid rgba(131, 16, 255, 0.1)',
-  boxShadow: '0 8px 32px rgba(131,16,255,0.08)',
-  transition: 'all 0.3s ease',
-  '&:hover': {
-    transform: 'translateY(-2px)',
-    boxShadow: '0 12px 40px rgba(131,16,255,0.12)'
-  }
-}));
-
-const MapWrapper = styled(Box)(({ theme }) => ({
-  position: 'relative',
-  height: 500,
-  borderRadius: '16px',
-  overflow: 'hidden',
-  border: '1px solid rgba(131, 16, 255, 0.1)',
-  '& .leaflet-container': {
-    borderRadius: '16px',
-    height: '100%',
-    width: '100%',
-  },
-  '& .leaflet-popup-content-wrapper': {
-    borderRadius: '12px',
-    background: 'rgba(255, 255, 255, 0.98)',
-    backdropFilter: 'blur(10px)',
-    border: '1px solid rgba(131, 16, 255, 0.1)',
-    boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
-  },
-  '& .leaflet-popup-content': {
-    margin: '12px',
-    fontFamily: '"Inter", sans-serif',
-    color: '#333',
-  },
-  '& .leaflet-popup-tip': {
-    background: 'rgba(255, 255, 255, 0.98)',
-    border: '1px solid rgba(131, 16, 255, 0.1)',
-  },
-}));
-
-const ControlPanel = styled(Box)(({ theme }) => ({
-  position: 'absolute',
-  top: 20,
-  right: 20,
-  background: 'rgba(255,255,255,0.95)',
-  padding: theme.spacing(2.5),
-  borderRadius: 12,
-  border: '1px solid rgba(131, 16, 255, 0.1)',
-  backdropFilter: 'blur(10px)',
-  boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-  zIndex: 1000,
-  minWidth: 200,
-}));
-
-const LegendPanel = styled(Box)(({ theme }) => ({
-  position: 'absolute',
-  bottom: 20,
-  left: 20,
-  background: 'rgba(255,255,255,0.95)',
-  padding: theme.spacing(2.5),
-  borderRadius: 12,
-  border: '1px solid rgba(131, 16, 255, 0.1)',
-  backdropFilter: 'blur(10px)',
-  boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-  zIndex: 1000,
-}));
 
 interface UserLocation {
   country: string;
@@ -436,29 +366,25 @@ const WorldMapComponent: React.FC<WorldMapComponentProps> = ({
   const showLoadMore = sortedCountries.length > topCountToShow;
 
   return (
-    <StyledPaper>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h5" sx={{ fontWeight: 700, color: '#8310FF', display: 'flex', alignItems: 'center', gap: 1 }}>
-          <LocationIcon sx={{ fontSize: 28 }} />
+    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-none transition-shadow hover:shadow-sm">
+      <div className="flex justify-between items-center mb-5 flex-wrap gap-2">
+        <h2 className="flex items-center gap-2 text-[1.1rem] font-semibold text-slate-900">
+          <span className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-indigo-50">
+            <LocationIcon style={{ fontSize: 18, color: '#4F46E5' }} />
+          </span>
           Global User Distribution
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Chip 
-            label={`${userLocations.length} Countries`} 
-            color="primary" 
-            variant="outlined"
-            size="small"
-          />
-          <Chip 
-            label={`${totalUsers} Total Users`} 
-            color="secondary" 
-            variant="outlined"
-            size="small"
-          />
-        </Box>
-      </Box>
-      
-      <MapWrapper>
+        </h2>
+        <div className="flex gap-2">
+          <Badge variant="outline" className="border-indigo-200 text-indigo-600">
+            {userLocations.length} Countries
+          </Badge>
+          <Badge variant="outline" className="border-slate-300 text-slate-600">
+            {totalUsers} Total Users
+          </Badge>
+        </div>
+      </div>
+
+      <div className="relative h-[500px] rounded-xl overflow-hidden border border-slate-200 [&_.leaflet-container]:rounded-xl [&_.leaflet-container]:h-full [&_.leaflet-container]:w-full [&_.leaflet-popup-content-wrapper]:rounded-lg [&_.leaflet-popup-content-wrapper]:border [&_.leaflet-popup-content-wrapper]:border-slate-200 [&_.leaflet-popup-content]:m-3 [&_.leaflet-popup-tip]:border [&_.leaflet-popup-tip]:border-slate-200">
         <MapContainer
           center={[20, 0]}
           zoom={2}
@@ -470,35 +396,31 @@ const WorldMapComponent: React.FC<WorldMapComponentProps> = ({
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
-          
+
           {userLocations.map((location) => {
             const normalizedCountry = normalizeCountryName(location.country);
             const coordinates = countryCoordinates[normalizedCountry];
-            
+
             if (!coordinates) return null;
-            
+
             return (
               <CircleMarker
                 key={location.country}
                 center={coordinates}
                 radius={getMarkerRadius(location.count)}
                 fillColor={getMarkerColor(location.count)}
-                color="#8310FF"
+                color="#4F46E5"
                 weight={2}
                 opacity={0.8}
                 fillOpacity={0.7}
               >
                 <Popup>
                   <div style={{ textAlign: 'center', minWidth: '200px' }}>
-                    <Typography variant="h6" sx={{ color: '#8310FF', fontWeight: 600, mb: 1 }}>
-                      {normalizedCountry}
-                    </Typography>
-                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#1a1a1a', mb: 1 }}>
-                      {location.count} users
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: '#666' }}>
+                    <div className="text-base font-semibold text-indigo-600 mb-1">{normalizedCountry}</div>
+                    <div className="text-xl font-bold text-slate-900 mb-1">{location.count} users</div>
+                    <div className="text-sm text-slate-500">
                       {location.users.length > 0 ? `${location.users[0].username} and ${location.count - 1} others` : 'No users'}
-                    </Typography>
+                    </div>
                   </div>
                 </Popup>
                 <Tooltip>
@@ -513,151 +435,81 @@ const WorldMapComponent: React.FC<WorldMapComponentProps> = ({
         </MapContainer>
 
         {/* Control Panel */}
-        <ControlPanel>
-          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5, color: '#8310FF' }}>
-            Map Controls
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-            <IconButton
+        <div className="absolute top-5 right-5 z-[1000] min-w-[200px] rounded-xl border border-slate-200 bg-white/95 p-5 shadow-[0_4px_20px_rgba(15,23,42,0.08)] backdrop-blur-sm">
+          <span className="block text-[13px] font-semibold text-slate-900 mb-3">Map Controls</span>
+          <div className="flex gap-2 mb-4">
+            <button
               onClick={handleZoomIn}
-              size="small"
-              sx={{
-                background: 'rgba(131, 16, 255, 0.1)',
-                color: '#8310FF',
-                '&:hover': { background: 'rgba(131, 16, 255, 0.2)' }
-              }}
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
             >
               <ZoomIn fontSize="small" />
-            </IconButton>
-            <IconButton
+            </button>
+            <button
               onClick={handleZoomOut}
-              size="small"
-              sx={{
-                background: 'rgba(131, 16, 255, 0.1)',
-                color: '#8310FF',
-                '&:hover': { background: 'rgba(131, 16, 255, 0.2)' }
-              }}
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
             >
               <ZoomOut fontSize="small" />
-            </IconButton>
-          </Box>
-          
+            </button>
+          </div>
+
           {sortedCountries.length > 0 && (
             <>
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  fontWeight: 600,
-                  mb: 1.5,
-                  color: '#8310FF',
-                  position: 'sticky',
-                  top: 0,
-                  zIndex: 2,
-                  background: 'rgba(255,255,255,0.95)',
-                  borderBottom: '1px solid #f3e5f5',
-                  py: 1,
-                  px: 1,
-                  borderRadius: '8px 8px 0 0',
-                }}
-              >
+              <span className="sticky top-0 z-[2] block rounded-t-lg border-b border-slate-100 bg-white/95 px-1 py-1 text-[13px] font-semibold text-slate-900 mb-3">
                 Top Countries
-              </Typography>
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 0,
-                  maxHeight: 250,
-                  overflowY: 'auto',
-                  background: 'rgba(131,16,255,0.04)',
-                  border: '1px solid #f3e5f5',
-                  borderRadius: '8px',
-                  boxShadow: '0 2px 8px rgba(131,16,255,0.04)',
-                  scrollbarWidth: 'thin',
-                  '&::-webkit-scrollbar': {
-                    width: 6,
-                    background: '#f3e5f5',
-                    borderRadius: 8,
-                  },
-                  '&::-webkit-scrollbar-thumb': {
-                    background: '#d1b3ff',
-                    borderRadius: 8,
-                  },
-                }}
-              >
+              </span>
+              <div className="flex flex-col max-h-[250px] overflow-y-auto rounded-lg border border-slate-100 bg-slate-50 [scrollbar-width:thin]">
                 {sortedCountries.slice(0, topCountToShow).map((location, index) => (
                   <React.Fragment key={location.country}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 1.5, py: 1 }}>
-                      <Typography variant="caption" sx={{ fontWeight: 500, color: '#333' }}>
+                    <div className="flex justify-between items-center px-3 py-2">
+                      <span className="text-[12px] font-medium text-slate-700">
                         {index + 1}. {normalizeCountryName(location.country)}
-                      </Typography>
-                      <Chip
-                        label={location.count}
-                        size="small"
-                        sx={{
-                          background: 'rgba(131, 16, 255, 0.1)',
-                          color: '#8310FF',
-                          fontWeight: 600,
-                          fontSize: '0.7rem',
-                        }}
-                      />
-                    </Box>
-                    {index < topCountToShow - 1 && index < sortedCountries.length - 1 && <Divider sx={{ mx: 1 }} />}
+                      </span>
+                      <Badge variant="outline" className="border-transparent bg-indigo-50 text-indigo-600 font-semibold">
+                        {location.count}
+                      </Badge>
+                    </div>
+                    {index < topCountToShow - 1 && index < sortedCountries.length - 1 && <div className="mx-2 h-px bg-slate-200" />}
                   </React.Fragment>
                 ))}
                 {showLoadMore && (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1, mb: 1 }}>
+                  <div className="flex justify-center my-2">
                     <button
-                      style={{
-                        background: 'linear-gradient(90deg, #8310FF 60%, #9C27B0 100%)',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: 8,
-                        padding: '6px 20px',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        fontSize: '0.95rem',
-                        boxShadow: '0 2px 8px rgba(131,16,255,0.10)',
-                        letterSpacing: 1,
-                        transition: 'background 0.2s',
-                      }}
+                      className="rounded-lg px-5 py-1.5 text-[0.85rem] font-semibold text-white tracking-wide transition-colors bg-indigo-600 hover:bg-indigo-700"
                       onClick={() => setTopCountToShow(sortedCountries.length)}
                     >
                       Load More
                     </button>
-                  </Box>
+                  </div>
                 )}
-              </Box>
+              </div>
             </>
           )}
-        </ControlPanel>
+        </div>
 
         {/* Legend Panel */}
-        <LegendPanel>
-          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5, color: '#8310FF' }}>
-            User Density
-          </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Box sx={{ width: 24, height: 24, borderRadius: '50%', background: '#8310FF' }} />
-              <Typography variant="caption" sx={{ fontWeight: 500 }}>20+ users</Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Box sx={{ width: 20, height: 20, borderRadius: '50%', background: '#9C27B0' }} />
-              <Typography variant="caption" sx={{ fontWeight: 500 }}>10-19 users</Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Box sx={{ width: 16, height: 16, borderRadius: '50%', background: '#E1BEE7' }} />
-              <Typography variant="caption" sx={{ fontWeight: 500 }}>5-9 users</Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Box sx={{ width: 12, height: 12, borderRadius: '50%', background: '#F3E5F5' }} />
-              <Typography variant="caption" sx={{ fontWeight: 500 }}>1-4 users</Typography>
-            </Box>
-          </Box>
-        </LegendPanel>
-      </MapWrapper>
-    </StyledPaper>
+        <div className="absolute bottom-5 left-5 z-[1000] rounded-xl border border-slate-200 bg-white/95 p-5 shadow-[0_4px_20px_rgba(15,23,42,0.08)] backdrop-blur-sm">
+          <span className="block text-[13px] font-semibold text-slate-900 mb-3">User Density</span>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2.5">
+              <span className="w-6 h-6 rounded-full shrink-0" style={{ background: '#4F46E5' }} />
+              <span className="text-[12px] font-medium text-slate-700">20+ users</span>
+            </div>
+            <div className="flex items-center gap-2.5">
+              <span className="w-5 h-5 rounded-full shrink-0" style={{ background: '#6366F1' }} />
+              <span className="text-[12px] font-medium text-slate-700">10-19 users</span>
+            </div>
+            <div className="flex items-center gap-2.5">
+              <span className="w-4 h-4 rounded-full shrink-0" style={{ background: '#A5B4FC' }} />
+              <span className="text-[12px] font-medium text-slate-700">5-9 users</span>
+            </div>
+            <div className="flex items-center gap-2.5">
+              <span className="w-3 h-3 rounded-full shrink-0" style={{ background: '#E0E7FF' }} />
+              <span className="text-[12px] font-medium text-slate-700">1-4 users</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

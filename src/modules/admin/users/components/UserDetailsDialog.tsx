@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-  Dialog,
-  DialogContent,
-  Box,
-  Typography,
-  IconButton,
-  Chip,
-  Avatar,
-} from '@mui/material';
+import { Dialog, DialogContent, IconButton, Avatar } from '@mui/material';
 import {
   Close as CloseIcon,
   Email as EmailIcon,
@@ -15,15 +7,14 @@ import {
   Login as LoginIcon,
   Language as LanguageIcon,
   VerifiedUser as VerifiedIcon,
-  Person as PersonIcon,
   Business as BusinessIcon,
   Phone as PhoneIcon,
   LocationOn as LocationIcon,
   Badge as BadgeIcon,
 } from '@mui/icons-material';
-import { User } from '../../../types/admin';
-
-const PRIMARY = '#8310FF';
+import { Badge } from '@/modules/shared/ui/shadcn/badge';
+import { InfoRow, ADMIN_ACCENT } from '@/modules/admin/shared';
+import { User } from '../types';
 
 interface UserDetailsDialogProps {
   open: boolean;
@@ -31,49 +22,6 @@ interface UserDetailsDialogProps {
   onClose: () => void;
   onEdit?: (user: User) => void;
 }
-
-interface InfoRowProps {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  mono?: boolean;
-}
-
-const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value, mono }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1.2 }}>
-    <Box
-      sx={{
-        width: 36,
-        height: 36,
-        borderRadius: '10px',
-        backgroundColor: '#f5f3ff',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-      }}
-    >
-      {icon}
-    </Box>
-    <Box sx={{ minWidth: 0 }}>
-      <Typography variant="caption" sx={{ color: '#6c6c80', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-        {label}
-      </Typography>
-      <Typography
-        variant="body2"
-        sx={{
-          fontWeight: 500,
-          color: '#1a1a2e',
-          ...(mono && { fontFamily: 'monospace', fontSize: '0.8rem' }),
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        }}
-      >
-        {value}
-      </Typography>
-    </Box>
-  </Box>
-);
 
 const UserDetailsDialog: React.FC<UserDetailsDialogProps> = ({ open, user, onClose }) => {
   if (!user) return null;
@@ -98,15 +46,9 @@ const UserDetailsDialog: React.FC<UserDetailsDialogProps> = ({ open, user, onClo
       }}
     >
       {/* Header */}
-      <Box
-        sx={{
-          background: `linear-gradient(135deg, ${PRIMARY} 0%, #6a0dad 100%)`,
-          px: 3,
-          pt: 3,
-          pb: 5,
-          position: 'relative',
-          textAlign: 'center',
-        }}
+      <div
+        className="relative px-6 pt-6 pb-10 text-center"
+        style={{ background: ADMIN_ACCENT }}
       >
         <IconButton
           onClick={onClose}
@@ -128,125 +70,74 @@ const UserDetailsDialog: React.FC<UserDetailsDialogProps> = ({ open, user, onClo
         >
           {user.username?.charAt(0).toUpperCase() || 'U'}
         </Avatar>
-        <Typography variant="h6" sx={{ color: 'white', fontWeight: 700 }}>
-          {displayName}
-        </Typography>
-        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', mt: 0.3 }}>
-          @{user.username}
-        </Typography>
-      </Box>
+        <h2 className="text-[1.15rem] font-bold text-white">{displayName}</h2>
+        <p className="text-[13px] text-white/70 mt-0.5">@{user.username}</p>
+      </div>
 
       <DialogContent sx={{ p: 0 }}>
         {/* Status chips - overlapping */}
-        <Box sx={{ px: 3, mt: -2, display: 'flex', justifyContent: 'center', gap: 1 }}>
-          <Chip
-            label={user.role}
-            size="small"
-            sx={{
-              backgroundColor: 'white',
-              color: PRIMARY,
-              fontWeight: 700,
-              fontSize: '0.75rem',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              border: '1px solid #ece6fa',
-            }}
-          />
-          <Chip
-            icon={<VerifiedIcon sx={{ fontSize: '14px !important' }} />}
-            label={user.isVerified ? 'Verified' : 'Pending'}
-            size="small"
-            sx={{
-              backgroundColor: 'white',
-              color: user.isVerified ? '#10b981' : '#f59e0b',
-              fontWeight: 600,
-              fontSize: '0.75rem',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              '& .MuiChip-icon': { color: user.isVerified ? '#10b981' : '#f59e0b' },
-            }}
-          />
-        </Box>
+        <div className="px-6 -mt-4 flex justify-center gap-2">
+          <Badge variant="outline" className="border-slate-200 bg-white font-bold text-indigo-600 shadow-[0_2px_8px_rgba(0,0,0,0.1)]">
+            {user.role}
+          </Badge>
+          <Badge
+            variant="outline"
+            className="gap-1 border-transparent bg-white font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.1)]"
+            style={{ color: user.isVerified ? '#10b981' : '#f59e0b' }}
+          >
+            <VerifiedIcon style={{ fontSize: 14 }} />
+            {user.isVerified ? 'Verified' : 'Pending'}
+          </Badge>
+        </div>
 
         {/* Info List */}
-        <Box sx={{ px: 3, pt: 2, pb: 1 }}>
+        <div className="px-6 pt-4 pb-1">
+          <InfoRow icon={<EmailIcon sx={{ fontSize: 18, color: ADMIN_ACCENT }} />} label="Email" value={user.email} />
           <InfoRow
-            icon={<EmailIcon sx={{ fontSize: 18, color: PRIMARY }} />}
-            label="Email"
-            value={user.email}
-          />
-          <InfoRow
-            icon={<CalendarIcon sx={{ fontSize: 18, color: PRIMARY }} />}
+            icon={<CalendarIcon sx={{ fontSize: 18, color: ADMIN_ACCENT }} />}
             label="Joined"
             value={new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
           />
           {user.lastLogin && (
             <InfoRow
-              icon={<LoginIcon sx={{ fontSize: 18, color: PRIMARY }} />}
+              icon={<LoginIcon sx={{ fontSize: 18, color: ADMIN_ACCENT }} />}
               label="Last Login"
               value={new Date(user.lastLogin).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
             />
           )}
           {user.Localisation && (
-            <InfoRow
-              icon={<LanguageIcon sx={{ fontSize: 18, color: PRIMARY }} />}
-              label="Location"
-              value={user.Localisation}
-            />
+            <InfoRow icon={<LanguageIcon sx={{ fontSize: 18, color: ADMIN_ACCENT }} />} label="Location" value={user.Localisation} />
           )}
           {user.ip && (
-            <InfoRow
-              icon={<LanguageIcon sx={{ fontSize: 18, color: PRIMARY }} />}
-              label="IP Address"
-              value={user.ip}
-              mono
-            />
+            <InfoRow icon={<LanguageIcon sx={{ fontSize: 18, color: ADMIN_ACCENT }} />} label="IP Address" value={user.ip} mono />
           )}
-        </Box>
+        </div>
 
         {/* Profile Section */}
         {user.profile && (user.profile.phone || user.profile.location || user.profile.company || user.profile.position) && (
-          <Box sx={{ px: 3, pb: 2 }}>
-            <Box sx={{ borderTop: '1px solid #ece6fa', pt: 2 }}>
-              <Typography variant="overline" sx={{ color: '#6c6c80', letterSpacing: 1.2, fontSize: '0.7rem' }}>
-                Profile
-              </Typography>
+          <div className="px-6 pb-4">
+            <div className="border-t border-slate-200 pt-3">
+              <span className="text-[11px] uppercase tracking-[1.2px] text-slate-500">Profile</span>
               {user.profile.phone && (
-                <InfoRow
-                  icon={<PhoneIcon sx={{ fontSize: 18, color: PRIMARY }} />}
-                  label="Phone"
-                  value={user.profile.phone}
-                />
+                <InfoRow icon={<PhoneIcon sx={{ fontSize: 18, color: ADMIN_ACCENT }} />} label="Phone" value={user.profile.phone} />
               )}
               {user.profile.location && (
-                <InfoRow
-                  icon={<LocationIcon sx={{ fontSize: 18, color: PRIMARY }} />}
-                  label="Location"
-                  value={user.profile.location}
-                />
+                <InfoRow icon={<LocationIcon sx={{ fontSize: 18, color: ADMIN_ACCENT }} />} label="Location" value={user.profile.location} />
               )}
               {user.profile.company && (
-                <InfoRow
-                  icon={<BusinessIcon sx={{ fontSize: 18, color: PRIMARY }} />}
-                  label="Company"
-                  value={user.profile.company}
-                />
+                <InfoRow icon={<BusinessIcon sx={{ fontSize: 18, color: ADMIN_ACCENT }} />} label="Company" value={user.profile.company} />
               )}
               {user.profile.position && (
-                <InfoRow
-                  icon={<BadgeIcon sx={{ fontSize: 18, color: PRIMARY }} />}
-                  label="Position"
-                  value={user.profile.position}
-                />
+                <InfoRow icon={<BadgeIcon sx={{ fontSize: 18, color: ADMIN_ACCENT }} />} label="Position" value={user.profile.position} />
               )}
-            </Box>
-          </Box>
+            </div>
+          </div>
         )}
 
         {/* Footer */}
-        <Box sx={{ px: 3, py: 1.5, backgroundColor: '#fafafa', borderTop: '1px solid #ece6fa' }}>
-          <Typography variant="caption" sx={{ color: '#aaa', fontFamily: 'monospace', fontSize: '0.7rem' }}>
-            ID: {user._id}
-          </Typography>
-        </Box>
+        <div className="px-6 py-3 bg-slate-50 border-t border-slate-200">
+          <span className="text-[11px] font-mono text-slate-400">ID: {user._id}</span>
+        </div>
       </DialogContent>
     </Dialog>
   );

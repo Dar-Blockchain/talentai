@@ -4,24 +4,20 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  FormControlLabel,
   Checkbox,
-  Typography,
-  Box,
   IconButton,
   Alert,
   CircularProgress,
-  Chip,
-  Stack,
 } from '@mui/material';
 import {
   Close as CloseIcon,
   Security as SecurityIcon,
 } from '@mui/icons-material';
+import { Badge } from '@/modules/shared/ui/shadcn/badge';
+import { cn } from '@/lib/utils';
 import { Permission, DEFAULT_PERMISSIONS } from '@/types/permissions';
 import { getToken } from '@/modules/auth/shared/utils/token';
-
-const PRIMARY = '#8310FF';
+import { ADMIN_ACCENT } from '@/modules/admin/shared';
 
 // Type for the permissions object (without metadata fields)
 export type CompanyPermissions = Omit<Permission, '_id' | 'userId' | 'profileId' | 'lastModifiedBy' | 'notes' | 'createdAt' | 'updatedAt'>;
@@ -173,14 +169,9 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
       }}
     >
       {/* Header */}
-      <Box
-        sx={{
-          background: `linear-gradient(135deg, ${PRIMARY} 0%, #6a0dad 100%)`,
-          px: 3,
-          pt: 3,
-          pb: 3,
-          position: 'relative',
-        }}
+      <div
+        className="relative px-6 pt-6 pb-6"
+        style={{ background: ADMIN_ACCENT }}
       >
         <IconButton
           onClick={onClose}
@@ -188,53 +179,43 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
         >
           <CloseIcon fontSize="small" />
         </IconButton>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <SecurityIcon sx={{ fontSize: 28, color: 'rgba(255,255,255,0.9)' }} />
-          <Box>
-            <Typography variant="h6" sx={{ color: 'white', fontWeight: 700 }}>
-              Company Permissions
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+        <div className="flex items-center gap-3">
+          <SecurityIcon style={{ fontSize: 28, color: 'rgba(255,255,255,0.9)' }} />
+          <div>
+            <h2 className="text-[1.15rem] font-bold text-white">Company Permissions</h2>
+            <p className="text-[13px] text-white/70">
               {getCompanyName()} &middot; {company?.email}
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
+            </p>
+          </div>
+        </div>
+      </div>
 
       <DialogContent sx={{ p: 0 }}>
         {/* Summary Bar */}
-        <Box sx={{ px: 3, py: 2, backgroundColor: '#f5f3ff', borderBottom: '1px solid #ece6fa' }}>
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Box>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#1a1a2e' }}>
-                {enabledCount} of {totalCount} enabled
-              </Typography>
-              <Typography variant="caption" sx={{ color: '#6c6c80' }}>
-                {Math.round((enabledCount / totalCount) * 100)}% access level
-              </Typography>
-            </Box>
-            <Chip
-              label={Object.values(permissions).every(Boolean) ? 'Deselect All' : 'Select All'}
-              size="small"
-              onClick={handleSelectAll}
-              sx={{
-                backgroundColor: 'white',
-                color: PRIMARY,
-                fontWeight: 600,
-                border: '1px solid #ece6fa',
-                cursor: 'pointer',
-                '&:hover': { backgroundColor: '#ece6fa' },
-              }}
-            />
-          </Stack>
-        </Box>
+        <div className="px-6 py-4 bg-indigo-50 border-b border-slate-200 flex items-center justify-between">
+          <div>
+            <div className="text-[14px] font-semibold text-slate-900">
+              {enabledCount} of {totalCount} enabled
+            </div>
+            <div className="text-[12px] text-slate-500">
+              {Math.round((enabledCount / totalCount) * 100)}% access level
+            </div>
+          </div>
+          <Badge
+            variant="outline"
+            className="cursor-pointer border-slate-200 bg-white font-semibold text-indigo-600 hover:bg-indigo-50"
+            onClick={handleSelectAll}
+          >
+            {Object.values(permissions).every(Boolean) ? 'Deselect All' : 'Select All'}
+          </Badge>
+        </div>
 
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-            <CircularProgress sx={{ color: PRIMARY }} />
-          </Box>
+          <div className="flex justify-center py-12">
+            <CircularProgress sx={{ color: ADMIN_ACCENT }} />
+          </div>
         ) : (
-          <Box sx={{ px: 2, py: 1.5 }}>
+          <div className="px-3 py-3">
             {error && (
               <Alert severity="error" sx={{ mx: 1, mb: 1.5, borderRadius: '10px' }} onClose={() => setError(null)}>
                 {error}
@@ -249,73 +230,48 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
             {permissionItems.map((perm) => {
               const isEnabled = permissions[perm.key];
               return (
-                <Box
+                <div
                   key={perm.key}
                   onClick={() => handlePermissionChange(perm.key)}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1.5,
-                    px: 2,
-                    py: 1.5,
-                    mx: 1,
-                    mb: 1,
-                    borderRadius: '12px',
-                    border: '1.5px solid',
-                    borderColor: isEnabled ? PRIMARY : '#ece6fa',
-                    backgroundColor: isEnabled ? '#f5f3ff' : 'white',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                    '&:hover': {
-                      borderColor: PRIMARY,
-                      backgroundColor: '#f5f3ff',
-                    },
-                  }}
+                  className={cn(
+                    "flex items-center gap-3 mx-1 mb-2 px-3 py-3 rounded-xl border-[1.5px] cursor-pointer transition-all duration-150 hover:border-indigo-300 hover:bg-indigo-50",
+                    isEnabled ? "border-indigo-300 bg-indigo-50" : "border-slate-200 bg-white",
+                  )}
                 >
-                  <Typography sx={{ fontSize: 22, lineHeight: 1 }}>{perm.icon}</Typography>
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#1a1a2e' }}>
-                      {perm.label}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: '#6c6c80', lineHeight: 1.3 }}>
-                      {perm.description}
-                    </Typography>
-                  </Box>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={isEnabled}
-                        size="small"
-                        sx={{
-                          color: '#ece6fa',
-                          '&.Mui-checked': { color: PRIMARY },
-                          p: 0,
-                        }}
-                      />
-                    }
-                    label=""
-                    sx={{ m: 0, mr: -0.5 }}
+                  <span className="text-[22px] leading-none">{perm.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[13px] font-semibold text-slate-900">{perm.label}</div>
+                    <div className="text-[11px] text-slate-500 leading-[1.3]">{perm.description}</div>
+                  </div>
+                  <Checkbox
+                    checked={isEnabled}
+                    size="small"
+                    sx={{
+                      color: '#CBD5E1',
+                      '&.Mui-checked': { color: ADMIN_ACCENT },
+                      p: 0,
+                    }}
                     onClick={(e) => e.stopPropagation()}
                     onChange={() => handlePermissionChange(perm.key)}
                   />
-                </Box>
+                </div>
               );
             })}
-          </Box>
+          </div>
         )}
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid #ece6fa', backgroundColor: '#fafafa', gap: 1.5 }}>
+      <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid #E2E8F0', backgroundColor: '#F8FAFC', gap: 1.5 }}>
         <Button
           onClick={onClose}
           disabled={saving}
           variant="outlined"
           sx={{
             textTransform: 'none',
-            borderColor: '#ece6fa',
-            color: '#6c6c80',
+            borderColor: '#E2E8F0',
+            color: '#64748B',
             borderRadius: '10px',
-            '&:hover': { borderColor: '#ccc', backgroundColor: 'white' },
+            '&:hover': { borderColor: '#CBD5E1', backgroundColor: 'white' },
           }}
         >
           Cancel
@@ -327,10 +283,10 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
           startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SecurityIcon />}
           sx={{
             textTransform: 'none',
-            backgroundColor: PRIMARY,
+            backgroundColor: ADMIN_ACCENT,
             borderRadius: '10px',
             fontWeight: 600,
-            '&:hover': { backgroundColor: '#6a0dad' },
+            '&:hover': { backgroundColor: '#4338CA' },
           }}
         >
           {saving ? 'Saving...' : 'Save Permissions'}

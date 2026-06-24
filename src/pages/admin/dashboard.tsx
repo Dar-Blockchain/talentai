@@ -1,70 +1,34 @@
 import { useState, useCallback } from 'react';
-import { useDispatch } from 'react-redux';
 import { useRouter } from 'next/router';
-import { AppDispatch } from '@/store/store';
 import { useLogout } from '@/modules/auth/shared/hooks';
 import {
   Box,
-  Typography,
-  IconButton,
   useTheme,
   useMediaQuery,
 } from '@mui/material';
 import { Menu as MenuIcon } from '@mui/icons-material';
-import { saveCompanyPermissions } from '@/store/slices/adminSlice';
-import AdminSidebar from '@/components/features/admin/AdminSidebar';
-import AdminDashboardHome from '@/components/features/admin/AdminDashboardHome';
-import UserManagement from '@/components/features/admin/UserManagement';
-import UserDetailsDialog from '@/components/features/admin/UserDetailsDialog';
-import AssessmentDetailsDialog from '@/components/features/admin/AssessmentDetailsDialog';
-import PostInterviewAssessments from '@/components/features/admin/PostInterviewAssessments';
-import SkillInterviewAssessments from '@/components/features/admin/SkillInterviewAssessments';
-import CompanyConfig from '@/components/features/admin/CompanyConfig';
-import CompanyPermissionsModal, { CompanyPermissions } from '@/components/features/admin/CompanyPermissionsModal';
+import { AdminSidebar, AssessmentDetailsDialog, AdminAssessmentSummary, ADMIN_ACCENT } from '@/modules/admin/shared';
+import { AdminDashboardHome } from '@/modules/admin/overview';
+import {
+  UserManagement, UserDetailsDialog, CompanyPermissionsModal,
+  type CompanyPermissions, type User, useSaveCompanyPermissionsMutation,
+} from '@/modules/admin/users';
+import { PostInterviewAssessments } from '@/modules/admin/post-interview';
+import { SkillInterviewAssessments } from '@/modules/admin/skill-interview';
+import { CompanyConfig } from '@/modules/admin/company-config';
 import dynamic from 'next/dynamic';
-
-const PRIMARY = '#8310FF';
 
 const VALID_TABS = ['dashboard', 'users', 'post-interview', 'skill-interview', 'company-config'] as const;
 type TabName = typeof VALID_TABS[number];
 
-interface User {
-  _id: string;
-  username: string;
-  email: string;
-  role: 'Admin' | 'Company' | 'Candidate' | 'jury';
-  isVerified: boolean;
-  createdAt: string;
-  lastLogin?: string;
-  ip?: string;
-  Localisation?: string;
-  profile?: {
-    firstName?: string;
-    lastName?: string;
-    phone?: string;
-    location?: string;
-    company?: string;
-    position?: string;
-  };
-}
-
-interface Assessment {
-  _id: string;
-  jobId?: any;
-  jobName?: string;
-  jobDescription?: string;
-  numberOfAttempts: number;
-  averageScore: number;
-  totalQuestions: number;
-  assessments: any[];
-}
+type Assessment = AdminAssessmentSummary;
 
 const DashboardAdmin = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const handleLogout = useLogout("/signin");
+  const { mutateAsync: saveCompanyPermissions } = useSaveCompanyPermissionsMutation();
 
   const [drawerOpen, setDrawerOpen] = useState(!isMobile);
 
@@ -83,11 +47,11 @@ const DashboardAdmin = () => {
   const [selectedCompany, setSelectedCompany] = useState<User | null>(null);
 
   const handleSavePermissions = async (companyId: string, permissions: CompanyPermissions) => {
-    await dispatch(saveCompanyPermissions({ companyId, permissions })).unwrap();
+    await saveCompanyPermissions({ companyId, permissions });
   };
 
   return (
-      <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f5f3ff' }}>
+      <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#ffffff' }}>
         {/* Sidebar */}
         <Box sx={{ position: 'relative' }}>
           <AdminSidebar
@@ -105,7 +69,7 @@ const DashboardAdmin = () => {
           sx={{
             flexGrow: 1,
             minHeight: '100vh',
-            bgcolor: '#f5f3ff',
+            bgcolor: '#ffffff',
             p: { xs: 1, sm: 2, md: 4 },
             display: 'flex',
             flexDirection: 'column',
@@ -113,14 +77,17 @@ const DashboardAdmin = () => {
         >
           {/* Mobile Header */}
           {isMobile && (
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <IconButton onClick={() => setDrawerOpen(true)} sx={{ mr: 2 }}>
+            <div className="flex items-center mb-4">
+              <button
+                onClick={() => setDrawerOpen(true)}
+                className="w-9 h-9 mr-3 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
+              >
                 <MenuIcon />
-              </IconButton>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: PRIMARY }}>
+              </button>
+              <span className="text-[1.05rem] font-bold" style={{ color: ADMIN_ACCENT }}>
                 TalentAI Admin
-              </Typography>
-            </Box>
+              </span>
+            </div>
           )}
 
           {/* Content */}

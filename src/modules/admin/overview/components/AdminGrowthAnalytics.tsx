@@ -1,48 +1,26 @@
-import { Box, Typography, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { FormControl, Select, MenuItem } from '@mui/material';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend } from 'recharts';
-import { styled } from '@mui/material/styles';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-
-const StyledCard = styled(Box)(({ theme }) => ({
-  background: '#ffffff',
-  borderRadius: '20px',
-  boxShadow: '0 4px 24px rgba(131,16,255,0.06)',
-  border: '1px solid #ece6fa',
-  padding: theme.spacing(3),
-  marginBottom: theme.spacing(4),
-}));
+import { AdminChartCard, ADMIN_ACCENT } from '@/modules/admin/shared';
 
 const AdminGrowthAnalytics = ({ userGrowthData, selectedMonth, setSelectedMonth, getFilteredUserGrowthData }: any) => (
-  <StyledCard>
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <Box
-          sx={{
-            width: 36,
-            height: 36,
-            borderRadius: '10px',
-            background: 'linear-gradient(135deg, #ece6fa 0%, #f3eeff 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <TrendingUpIcon sx={{ fontSize: 20, color: '#8310FF' }} />
-        </Box>
-        <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a1a2e' }}>
-          Growth Analytics
-        </Typography>
-      </Box>
+  <AdminChartCard className="mb-4">
+    <div className="flex justify-between items-center mb-5 flex-wrap gap-2">
+      <div className="flex items-center gap-2">
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${ADMIN_ACCENT}14` }}>
+          <TrendingUpIcon style={{ fontSize: 17, color: ADMIN_ACCENT }} />
+        </div>
+        <span className="font-semibold text-[15px] text-slate-900">Growth Analytics</span>
+      </div>
       <FormControl size="small" sx={{ minWidth: 140 }}>
-        <InputLabel>Filter by Month</InputLabel>
         <Select
           value={selectedMonth}
-          label="Filter by Month"
           onChange={(e) => setSelectedMonth(e.target.value)}
           sx={{
-            borderRadius: '10px',
-            '& .MuiOutlinedInput-notchedOutline': { borderColor: '#ece6fa' },
-            '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#8310FF' },
+            borderRadius: '8px',
+            fontSize: '0.85rem',
+            '& .MuiOutlinedInput-notchedOutline': { borderColor: '#E2E8F0' },
+            '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: ADMIN_ACCENT },
           }}
         >
           <MenuItem value="all">All Time</MenuItem>
@@ -51,32 +29,32 @@ const AdminGrowthAnalytics = ({ userGrowthData, selectedMonth, setSelectedMonth,
           <MenuItem value="2025-06">June 2025</MenuItem>
         </Select>
       </FormControl>
-    </Box>
+    </div>
     <ResponsiveContainer width="100%" height={300}>
       <AreaChart data={getFilteredUserGrowthData()}>
         <defs>
           <linearGradient id="usersGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#8310FF" stopOpacity={0.15} />
-            <stop offset="95%" stopColor="#8310FF" stopOpacity={0} />
+            <stop offset="5%" stopColor={ADMIN_ACCENT} stopOpacity={0.15} />
+            <stop offset="95%" stopColor={ADMIN_ACCENT} stopOpacity={0} />
           </linearGradient>
           <linearGradient id="postsGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#10b981" stopOpacity={0.15} />
-            <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+            <stop offset="5%" stopColor="#10B981" stopOpacity={0.15} />
+            <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
           </linearGradient>
           <linearGradient id="assessmentsGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.15} />
-            <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+            <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.15} />
+            <stop offset="95%" stopColor="#F59E0B" stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="#ece6fa" vertical={false} />
-        <XAxis dataKey="day" tick={{ fontSize: 12, fill: '#6c6c80' }} axisLine={{ stroke: '#ece6fa' }} tickLine={false} />
-        <YAxis tick={{ fontSize: 12, fill: '#6c6c80' }} axisLine={false} tickLine={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+        <XAxis dataKey="day" tick={{ fontSize: 12, fill: '#64748B' }} axisLine={{ stroke: '#E2E8F0' }} tickLine={false} />
+        <YAxis tick={{ fontSize: 12, fill: '#64748B' }} axisLine={false} tickLine={false} />
         <RechartsTooltip
           contentStyle={{
             backgroundColor: '#ffffff',
-            border: '1px solid #ece6fa',
-            borderRadius: '12px',
-            boxShadow: '0 4px 16px rgba(131,16,255,0.1)',
+            border: '1px solid #E2E8F0',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(15,23,42,0.08)',
             padding: '8px 12px',
           }}
         />
@@ -85,12 +63,12 @@ const AdminGrowthAnalytics = ({ userGrowthData, selectedMonth, setSelectedMonth,
           iconType="circle"
           iconSize={8}
         />
-        <Area type="monotone" dataKey="users" stroke="#8310FF" strokeWidth={2} fill="url(#usersGrad)" name="Users" dot={false} />
-        <Area type="monotone" dataKey="posts" stroke="#10b981" strokeWidth={2} fill="url(#postsGrad)" name="Posts" dot={false} />
-        <Area type="monotone" dataKey="assessments" stroke="#f59e0b" strokeWidth={2} fill="url(#assessmentsGrad)" name="Assessments" dot={false} />
+        <Area type="monotone" dataKey="users" stroke={ADMIN_ACCENT} strokeWidth={2} fill="url(#usersGrad)" name="Users" dot={false} />
+        <Area type="monotone" dataKey="posts" stroke="#10B981" strokeWidth={2} fill="url(#postsGrad)" name="Posts" dot={false} />
+        <Area type="monotone" dataKey="assessments" stroke="#F59E0B" strokeWidth={2} fill="url(#assessmentsGrad)" name="Assessments" dot={false} />
       </AreaChart>
     </ResponsiveContainer>
-  </StyledCard>
+  </AdminChartCard>
 );
 
 export default AdminGrowthAnalytics;

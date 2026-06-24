@@ -1,18 +1,10 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { Box, Typography } from '@mui/material';
-import { AppDispatch } from '@/store/store';
-import {
-  fetchAdminStats,
-  fetchAllUsersForMap,
-  fetchUserGrowthData,
-  selectAdminStats,
-  selectAllUsersForMap,
-  selectUserGrowthData,
-  selectSkillsData,
-  selectSkillDistribution,
-} from '@/store/slices/adminSlice';
+import React, { useMemo, useState } from 'react';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import InsightsIcon from '@mui/icons-material/Insights';
+import PublicIcon from '@mui/icons-material/Public';
 import { getCountryName } from '@/utils/countryMappings';
+import { ZoneHeading } from '@/modules/admin/shared';
+import { useAdminStatsQuery, useAdminUsersForMapQuery, useAdminUserGrowthQuery, useSkillDistribution } from '../queries';
 import AdminHeader from './AdminHeader';
 import AdminStatsCards from './AdminStatsCards';
 import AdminSkillsBarChart from './AdminSkillsBarChart';
@@ -20,40 +12,26 @@ import AdminGrowthAnalytics from './AdminGrowthAnalytics';
 import AdminSkillsDistribution from './AdminSkillsDistribution';
 import AdminWorldMap from './AdminWorldMap';
 
-const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-  <Typography
-    variant="overline"
-    sx={{
-      color: '#6c6c80',
-      fontWeight: 600,
-      letterSpacing: '1px',
-      mb: 2,
-      display: 'block',
-    }}
-  >
-    {children}
-  </Typography>
-);
-
 const AdminDashboardHome: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const stats = useSelector(selectAdminStats);
-  const allUsersForMap = useSelector(selectAllUsersForMap);
-  const userGrowthData = useSelector(selectUserGrowthData);
-  const skillsData = useSelector(selectSkillsData);
-  const skillDistribution = useSelector(selectSkillDistribution);
+  const { data: stats, isLoading: statsLoading } = useAdminStatsQuery();
+  const { data: allUsersForMap = [] } = useAdminUsersForMapQuery();
+  const { data: userGrowthData = [] } = useAdminUserGrowthQuery();
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
 
-  useEffect(() => {
-    dispatch(fetchAdminStats(undefined));
-    dispatch(fetchAllUsersForMap(undefined));
-    dispatch(fetchUserGrowthData(undefined));
-  }, [dispatch]);
-  
+  const skillsData = useMemo(
+    () =>
+      (stats?.topSkills || [])
+        .map((item) => ({ skill: item._id, count: item.count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10),
+    [stats?.topSkills],
+  );
+
+  const skillDistribution = useSkillDistribution(stats?.hardSkillsPercentage, stats?.softSkillsPercentage);
 
   const processUserLocations = useMemo(() => {
     const locationMap = new Map<string, { count: number; users: any[] }>();
-    allUsersForMap.forEach((user: any) => {
+    allUsersForMap.forEach((user) => {
       if (user.Localisation) {
         const locationParts = user.Localisation.split(',').map((part: string) => part.trim());
         const countryCode = locationParts[locationParts.length - 1] || 'Unknown';
@@ -75,7 +53,7 @@ const AdminDashboardHome: React.FC = () => {
 
   const getFilteredUserGrowthData = () => {
     if (selectedMonth === 'all') return userGrowthData;
-    return userGrowthData.filter((item: any) => {
+    return userGrowthData.filter((item) => {
       const date = new Date(item.fullDate);
       const month = date.getMonth() + 1;
       const year = date.getFullYear();
@@ -86,40 +64,40 @@ const AdminDashboardHome: React.FC = () => {
   };
 
   return (
-    <Box>
+    <div>
       <AdminHeader />
-      <AdminStatsCards stats={stats} />
+      <AdminStatsCards stats={stats} loading={statsLoading} />
 
       {/* Skills section */}
-      <Box sx={{ mt: 2 }}>
-        <SectionLabel>Skills Overview</SectionLabel>
+      <div className="mt-2">
+        <ZoneHeading icon={BarChartIcon} label="Skills Overview" />
         <AdminSkillsBarChart skillsData={skillsData} />
-      </Box>
+      </div>
 
       {/* Analytics section */}
-      <Box sx={{ mt: 1 }}>
-        <SectionLabel>Analytics</SectionLabel>
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-          <Box sx={{ flex: '1 1 580px', minWidth: 0 }}>
+      <div className="mt-1">
+        <ZoneHeading icon={InsightsIcon} label="Analytics" />
+        <div className="flex flex-wrap gap-6">
+          <div className="flex-[1_1_580px] min-w-0">
             <AdminGrowthAnalytics
               userGrowthData={userGrowthData}
               selectedMonth={selectedMonth}
               setSelectedMonth={setSelectedMonth}
               getFilteredUserGrowthData={getFilteredUserGrowthData}
             />
-          </Box>
-          <Box sx={{ flex: '1 1 360px', minWidth: 0 }}>
+          </div>
+          <div className="flex-[1_1_360px] min-w-0">
             <AdminSkillsDistribution skillDistribution={skillDistribution} />
-          </Box>
-        </Box>
-      </Box>
+          </div>
+        </div>
+      </div>
 
       {/* World Map section */}
-      <Box sx={{ mt: 1 }}>
-        <SectionLabel>Geographic Distribution</SectionLabel>
-        <AdminWorldMap userLocations={processUserLocations} totalUsers={stats.users} />
-      </Box>
-    </Box>
+      <div className="mt-1">
+        <ZoneHeading icon={PublicIcon} label="Geographic Distribution" />
+        <AdminWorldMap userLocations={processUserLocations} totalUsers={stats?.users ?? 0} />
+      </div>
+    </div>
   );
 };
 

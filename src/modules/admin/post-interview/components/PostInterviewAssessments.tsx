@@ -1,8 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import {
-  Box,
-  Paper,
   Table,
   TableBody,
   TableCell,
@@ -10,8 +7,6 @@ import {
   TableHead,
   TableRow,
   TablePagination,
-  Chip,
-  Typography,
   CircularProgress,
   IconButton,
   Dialog,
@@ -22,8 +17,6 @@ import {
   MenuItem,
   SelectChangeEvent,
   Tooltip,
-  TextField,
-  InputAdornment,
   Tab,
   Tabs,
   styled,
@@ -37,20 +30,15 @@ import {
   TrendingDown as NeedsImprovementIcon,
   Assessment as AllIcon,
 } from '@mui/icons-material';
-import { AppDispatch } from '@/store/store';
-import {
-  fetchAdminPostAssessments,
-  selectAdminAssessments,
-  selectAdminAssessmentsLoading,
-  selectAdminAssessmentsTotal,
-} from '@/store/slices/adminSlice';
-
-const PRIMARY = '#8310FF';
+import { useAdminPostAssessmentsQuery } from '../queries';
+import { Card } from '@/modules/shared/ui/shadcn/card';
+import { Badge } from '@/modules/shared/ui/shadcn/badge';
+import { ScoreBadge, scoreTone, ADMIN_ACCENT, ADMIN_TABLE_HEAD_CELL_SX, ADMIN_TABLE_ROW_SX, AdminPageHeading } from '@/modules/admin/shared';
 
 const StyledTabs = styled(Tabs)({
   minHeight: 40,
   '& .MuiTabs-indicator': {
-    backgroundColor: PRIMARY,
+    backgroundColor: ADMIN_ACCENT,
     height: 3,
     borderRadius: '3px 3px 0 0',
   },
@@ -61,10 +49,10 @@ const StyledTab = styled(Tab)({
   textTransform: 'none',
   fontWeight: 600,
   fontSize: '0.85rem',
-  color: '#6c6c80',
+  color: '#64748B',
   padding: '8px 16px',
   '&.Mui-selected': {
-    color: PRIMARY,
+    color: ADMIN_ACCENT,
   },
 });
 
@@ -143,13 +131,6 @@ interface PostInterviewAssessmentsProps {
  * Displays post interview assessments with filtering by post, candidate, and company
  */
 const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ autoFetch = true }) => {
-  const dispatch = useDispatch<AppDispatch>();
-
-  // Redux selectors
-  const results = useSelector(selectAdminAssessments) as PostInterviewAssessmentData[];
-  const loading = useSelector(selectAdminAssessmentsLoading);
-  const totalCount = useSelector(selectAdminAssessmentsTotal);
-
   // Filter state
   const [companies, setCompanies] = useState<{ _id: string; username: string }[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<string>('');
@@ -163,6 +144,13 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
   // Pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const { data, isLoading: loading } = useAdminPostAssessmentsQuery(
+    { page: page + 1, limit: rowsPerPage, company: selectedCompany || undefined },
+    autoFetch,
+  );
+  const results = (data?.items ?? []) as PostInterviewAssessmentData[];
+  const totalCount = data?.total ?? 0;
 
   // Extract unique companies from results
   useEffect(() => {
@@ -179,19 +167,6 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
       setCompanies(Array.from(uniqueCompanies.values()));
     }
   }, [results, selectedCompany]);
-
-  // Fetch on mount and when pagination/filter changes
-  useEffect(() => {
-    if (autoFetch) {
-      dispatch(
-        fetchAdminPostAssessments({
-          page: page + 1,
-          limit: rowsPerPage,
-          company: selectedCompany || undefined,
-        })
-      );
-    }
-  }, [dispatch, autoFetch, page, rowsPerPage, selectedCompany]);
 
   /**
    * Handle company filter change
@@ -243,15 +218,6 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
   };
 
   /**
-   * Get score color
-   */
-  const getScoreColor = (score: number): 'success' | 'warning' | 'error' => {
-    if (score >= 70) return 'success';
-    if (score >= 50) return 'warning';
-    return 'error';
-  };
-
-  /**
    * Format date
    */
   const formatDate = (dateString: string): string => {
@@ -289,31 +255,23 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
   });
 
   return (
-    <Box>
+    <div>
       {/* Header */}
-      <Typography variant="h5" sx={{ fontWeight: 700, color: '#1a1a2e', mb: 3 }}>
-        Post Interview Assessments
-      </Typography>
+      <AdminPageHeading title="Post Interview Assessments" subtitle={`${totalCount.toLocaleString()} assessments recorded`} />
 
       {/* Filters */}
-      <Paper sx={{ mb: 3, borderRadius: '12px', border: '1px solid #ece6fa', boxShadow: 'none', overflow: 'hidden' }}>
+      <Card className="mb-6 overflow-hidden py-0 gap-0">
         {/* Search & Company filter */}
-        <Box sx={{ p: 2, display: 'flex', flexWrap: 'wrap', gap: 1.5, alignItems: 'center' }}>
-          <TextField
-            placeholder="Search candidate, job, company..."
-            variant="outlined"
-            size="small"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: '#6c6c80', fontSize: 20 }} />
-                </InputAdornment>
-              ),
-            }}
-            sx={{ flex: '1 1 220px' }}
-          />
+        <div className="p-4 flex flex-wrap gap-3 items-center">
+          <div className="flex-[1_1_220px] flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2">
+            <SearchIcon style={{ fontSize: 18 }} className="text-slate-400 shrink-0" />
+            <input
+              placeholder="Search candidate, job, company..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full text-[13px] outline-none placeholder:text-slate-400"
+            />
+          </div>
           <FormControl size="small" sx={{ minWidth: 180 }}>
             <InputLabel id="company-filter-label">Company</InputLabel>
             <Select
@@ -333,115 +291,109 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
               ))}
             </Select>
           </FormControl>
-          {loading && <CircularProgress size={20} sx={{ color: PRIMARY }} />}
-          <Box sx={{ flex: 1 }} />
-          <Typography variant="body2" sx={{ color: '#6c6c80' }}>
+          {loading && <CircularProgress size={20} sx={{ color: ADMIN_ACCENT }} />}
+          <div className="flex-1" />
+          <span className="text-[13px] text-slate-500">
             {filteredResults.length} of {totalCount}
-          </Typography>
-        </Box>
+          </span>
+        </div>
         {/* Score Tabs */}
-        <Box sx={{ borderTop: '1px solid #ece6fa', px: 2 }}>
+        <div className="border-t border-slate-100 px-2">
           <StyledTabs value={scoreTab} onChange={handleScoreTabChange}>
             <StyledTab icon={<AllIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="All" />
             <StyledTab icon={<ExcellentIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Excellent (70%+)" />
             <StyledTab icon={<SatisfactoryIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Satisfactory" />
             <StyledTab icon={<NeedsImprovementIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Needs Work" />
           </StyledTabs>
-        </Box>
-      </Paper>
+        </div>
+      </Card>
 
       {/* Table */}
-      <TableContainer component={Paper} sx={{ borderRadius: '12px', border: '1px solid #ece6fa', boxShadow: 'none' }}>
-        <Table>
-          <TableHead>
-            <TableRow sx={{ backgroundColor: '#f5f3ff' }}>
-              <TableCell sx={{ fontWeight: 600 }}>Candidate</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Post/Job</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Company</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Score</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loading ? (
+      <Card className="overflow-hidden py-0 gap-0">
+        <TableContainer sx={{ maxHeight: 600 }}>
+          <Table stickyHeader>
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                  <Typography variant="body2" color="text.secondary">Loading...</Typography>
-                </TableCell>
+                <TableCell sx={ADMIN_TABLE_HEAD_CELL_SX}>Candidate</TableCell>
+                <TableCell sx={ADMIN_TABLE_HEAD_CELL_SX}>Post/Job</TableCell>
+                <TableCell sx={ADMIN_TABLE_HEAD_CELL_SX}>Company</TableCell>
+                <TableCell sx={ADMIN_TABLE_HEAD_CELL_SX}>Score</TableCell>
+                <TableCell sx={ADMIN_TABLE_HEAD_CELL_SX}>Date</TableCell>
+                <TableCell sx={ADMIN_TABLE_HEAD_CELL_SX}>Actions</TableCell>
               </TableRow>
-            ) : filteredResults.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    No assessments found
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredResults.map((assessment) => {
-                const score = getOverallScore(assessment);
-                return (
-                  <TableRow key={assessment._id} hover>
-                    <TableCell>
-                      <Box>
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                          {assessment.candidate?.username || 'Unknown'}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                          {assessment.candidate?.email || assessment.candidate?._id || 'N/A'}
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {assessment.post?.jobDetails?.title || 'Untitled Post'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {assessment.company?.username || 'Unknown Company'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={`${score.toFixed(1)}%`}
-                        color={getScoreColor(score)}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                        {formatDate(assessment.createdAt)}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Tooltip title="View Details">
-                        <IconButton
-                          size="small"
-                          onClick={() => handleViewDetails(assessment)}
-                          sx={{ color: PRIMARY }}
-                        >
-                          <VisibilityIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component="div"
-          count={totalCount}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                    <span className="text-[13px] text-slate-500">Loading...</span>
+                  </TableCell>
+                </TableRow>
+              ) : filteredResults.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                    <span className="text-[13px] text-slate-500">No assessments found</span>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredResults.map((assessment) => {
+                  const score = getOverallScore(assessment);
+                  return (
+                    <TableRow key={assessment._id} hover sx={ADMIN_TABLE_ROW_SX}>
+                      <TableCell>
+                        <div>
+                          <div className="text-[13px] font-medium text-slate-900">
+                            {assessment.candidate?.username || 'Unknown'}
+                          </div>
+                          <div className="text-[11px] text-slate-400">
+                            {assessment.candidate?.email || assessment.candidate?._id || 'N/A'}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-[13px] font-medium text-slate-900">
+                          {assessment.post?.jobDetails?.title || 'Untitled Post'}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-[13px] font-medium text-slate-900">
+                          {assessment.company?.username || 'Unknown Company'}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <ScoreBadge score={score} />
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-[13px] text-slate-500">{formatDate(assessment.createdAt)}</span>
+                      </TableCell>
+                      <TableCell>
+                        <Tooltip title="View Details">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleViewDetails(assessment)}
+                            sx={{ color: ADMIN_ACCENT }}
+                          >
+                            <VisibilityIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={totalCount}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
+        </TableContainer>
+      </Card>
 
       {/* Details Dialog */}
       <Dialog
@@ -453,146 +405,157 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
       >
         {selectedAssessment && (() => {
           const score = getOverallScore(selectedAssessment);
-          const scoreColor = score >= 70 ? '#10b981' : score >= 50 ? '#f59e0b' : '#ef4444';
-          const scoreLabel = score >= 70 ? 'Excellent' : score >= 50 ? 'Satisfactory' : 'Needs Work';
+          const tone = scoreTone(score);
           return (
             <>
               {/* Header */}
-              <Box sx={{ background: `linear-gradient(135deg, ${PRIMARY} 0%, #6a0dad 100%)`, px: 3, pt: 3, pb: 4, position: 'relative' }}>
+              <div className="relative px-6 pt-6 pb-8" style={{ background: ADMIN_ACCENT }}>
                 <IconButton onClick={() => setDetailsDialogOpen(false)} sx={{ position: 'absolute', top: 12, right: 12, color: 'rgba(255,255,255,0.7)', '&:hover': { color: 'white' } }}>
                   <CloseIcon fontSize="small" />
                 </IconButton>
-                <Typography variant="overline" sx={{ color: 'rgba(255,255,255,0.7)', letterSpacing: 1.5 }}>
-                  Post Interview Assessment
-                </Typography>
-                <Typography variant="h5" sx={{ color: 'white', fontWeight: 700, mt: 0.5, pr: 4 }}>
+                <span className="text-[11px] uppercase tracking-[1.5px] text-white/70">Post Interview Assessment</span>
+                <h2 className="text-[1.5rem] font-bold text-white mt-1 pr-8">
                   {selectedAssessment.post?.jobDetails?.title || 'Assessment Review'}
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 1, mt: 1.5, flexWrap: 'wrap' }}>
+                </h2>
+                <div className="flex gap-2 mt-3 flex-wrap">
                   {selectedAssessment.status && (
-                    <Chip label={selectedAssessment.status} size="small" sx={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white', fontWeight: 600, fontSize: '0.7rem', height: 22, textTransform: 'capitalize' }} />
+                    <Badge variant="outline" className="border-transparent bg-white/20 font-semibold capitalize text-white">
+                      {selectedAssessment.status}
+                    </Badge>
                   )}
                   {selectedAssessment.stage && (
-                    <Chip label={selectedAssessment.stage} size="small" sx={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.9)', fontSize: '0.7rem', height: 22, textTransform: 'capitalize' }} />
+                    <Badge variant="outline" className="border-transparent bg-white/15 capitalize text-white/90">
+                      {selectedAssessment.stage}
+                    </Badge>
                   )}
-                </Box>
-              </Box>
+                </div>
+              </div>
 
               <DialogContent sx={{ p: 0 }}>
                 {/* Score Card */}
-                <Box sx={{ px: 3, mt: -2.5 }}>
-                  <Box sx={{ background: 'white', borderRadius: '12px', p: 2.5, boxShadow: '0 4px 12px rgba(0,0,0,0.08)', border: '1px solid #ece6fa', display: 'flex', alignItems: 'center', gap: 2.5 }}>
-                    <Box sx={{ width: 56, height: 56, borderRadius: '12px', background: `${scoreColor}14`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <Typography variant="h6" sx={{ fontWeight: 800, color: scoreColor }}>{score.toFixed(0)}%</Typography>
-                    </Box>
-                    <Box sx={{ flex: 1 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#1a1a2e' }}>Overall Score</Typography>
-                        <Chip label={scoreLabel} size="small" sx={{ backgroundColor: `${scoreColor}14`, color: scoreColor, fontWeight: 600, fontSize: '0.7rem', height: 22 }} />
-                      </Box>
-                    </Box>
-                  </Box>
-                </Box>
+                <div className="px-6 -mt-5">
+                  <div className="bg-white rounded-xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.08)] border border-slate-200 flex items-center gap-5">
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${tone.color}14` }}>
+                      <span className="text-[1.15rem] font-extrabold" style={{ color: tone.color }}>{score.toFixed(0)}%</span>
+                    </div>
+                    <div className="flex-1 flex items-center justify-between">
+                      <span className="text-[14px] font-semibold text-slate-900">Overall Score</span>
+                      <Badge variant="outline" className="border-transparent font-semibold" style={{ background: `${tone.color}14`, color: tone.color }}>
+                        {tone.label}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
 
                 {/* Stats Row */}
                 {selectedAssessment.interviewData?.analytics && (
-                  <Box sx={{ display: 'flex', gap: 1.5, px: 3, mt: 2 }}>
-                    <Box sx={{ flex: 1, p: 1.5, borderRadius: '10px', backgroundColor: '#f5f3ff', textAlign: 'center' }}>
-                      <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a1a2e', fontSize: '1.1rem' }}>
+                  <div className="flex gap-3 px-6 mt-5">
+                    <div className="flex-1 p-3 rounded-[10px] bg-indigo-50 text-center">
+                      <div className="text-[1.1rem] font-bold text-slate-900">
                         {Math.floor((selectedAssessment.interviewData.analytics.duration || 0) / 60000)}m
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: '#6c6c80', fontSize: '0.7rem' }}>Duration</Typography>
-                    </Box>
-                    <Box sx={{ flex: 1, p: 1.5, borderRadius: '10px', backgroundColor: '#f5f3ff', textAlign: 'center' }}>
-                      <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a1a2e', fontSize: '1.1rem' }}>
+                      </div>
+                      <div className="text-[11px] text-slate-500">Duration</div>
+                    </div>
+                    <div className="flex-1 p-3 rounded-[10px] bg-indigo-50 text-center">
+                      <div className="text-[1.1rem] font-bold text-slate-900">
                         {selectedAssessment.interviewData.analytics.messageCount || 0}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: '#6c6c80', fontSize: '0.7rem' }}>Responses</Typography>
-                    </Box>
-                    <Box sx={{ flex: 1, p: 1.5, borderRadius: '10px', backgroundColor: '#f5f3ff', textAlign: 'center' }}>
-                      <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a1a2e', fontSize: '1.1rem' }}>
+                      </div>
+                      <div className="text-[11px] text-slate-500">Responses</div>
+                    </div>
+                    <div className="flex-1 p-3 rounded-[10px] bg-indigo-50 text-center">
+                      <div className="text-[1.1rem] font-bold text-slate-900">
                         {selectedAssessment.interviewData.analytics.coveragePercentage || 0}%
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: '#6c6c80', fontSize: '0.7rem' }}>Coverage</Typography>
-                    </Box>
-                  </Box>
+                      </div>
+                      <div className="text-[11px] text-slate-500">Coverage</div>
+                    </div>
+                  </div>
                 )}
 
                 {/* People */}
-                <Box sx={{ px: 3, mt: 2 }}>
-                  <Typography variant="overline" sx={{ color: '#6c6c80', letterSpacing: 1.2, fontSize: '0.65rem' }}>People</Typography>
-                  <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
-                    <Box sx={{ flex: 1, p: 1.5, borderRadius: '10px', border: '1px solid #ece6fa' }}>
-                      <Typography variant="caption" sx={{ color: '#6c6c80', fontSize: '0.65rem', textTransform: 'uppercase' }}>Candidate</Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#1a1a2e' }}>{selectedAssessment.candidate?.username || 'Unknown'}</Typography>
-                      <Typography variant="caption" sx={{ color: '#6c6c80' }}>{selectedAssessment.candidate?.email || ''}</Typography>
-                    </Box>
-                    <Box sx={{ flex: 1, p: 1.5, borderRadius: '10px', border: '1px solid #ece6fa' }}>
-                      <Typography variant="caption" sx={{ color: '#6c6c80', fontSize: '0.65rem', textTransform: 'uppercase' }}>Company</Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#1a1a2e' }}>{selectedAssessment.company?.username || 'Unknown'}</Typography>
-                      <Typography variant="caption" sx={{ color: '#6c6c80' }}>{selectedAssessment.company?.email || ''}</Typography>
-                    </Box>
-                  </Box>
-                </Box>
+                <div className="px-6 mt-5">
+                  <span className="text-[10.5px] uppercase tracking-[1.2px] text-slate-500">People</span>
+                  <div className="flex gap-3 mt-2">
+                    <div className="flex-1 p-3 rounded-[10px] border border-slate-200">
+                      <div className="text-[10.5px] uppercase text-slate-500">Candidate</div>
+                      <div className="text-[13px] font-semibold text-slate-900">{selectedAssessment.candidate?.username || 'Unknown'}</div>
+                      <div className="text-[11px] text-slate-500">{selectedAssessment.candidate?.email || ''}</div>
+                    </div>
+                    <div className="flex-1 p-3 rounded-[10px] border border-slate-200">
+                      <div className="text-[10.5px] uppercase text-slate-500">Company</div>
+                      <div className="text-[13px] font-semibold text-slate-900">{selectedAssessment.company?.username || 'Unknown'}</div>
+                      <div className="text-[11px] text-slate-500">{selectedAssessment.company?.email || ''}</div>
+                    </div>
+                  </div>
+                </div>
 
                 {/* Skills */}
                 {selectedAssessment.metadata && (selectedAssessment.metadata.skill || selectedAssessment.metadata.proficiency) && (
-                  <Box sx={{ px: 3, mt: 2 }}>
-                    <Typography variant="overline" sx={{ color: '#6c6c80', letterSpacing: 1.2, fontSize: '0.65rem' }}>Skills</Typography>
-                    <Box sx={{ display: 'flex', gap: 1, mt: 0.5, flexWrap: 'wrap' }}>
+                  <div className="px-6 mt-5">
+                    <span className="text-[10.5px] uppercase tracking-[1.2px] text-slate-500">Skills</span>
+                    <div className="flex gap-2 mt-1.5 flex-wrap">
                       {selectedAssessment.metadata.skill && (
-                        <Chip label={selectedAssessment.metadata.skill} size="small" sx={{ backgroundColor: '#ece6fa', color: PRIMARY, fontWeight: 600 }} />
+                        <Badge variant="outline" className="border-transparent bg-indigo-50 font-semibold text-indigo-600">
+                          {selectedAssessment.metadata.skill}
+                        </Badge>
                       )}
                       {selectedAssessment.metadata.proficiency && (
-                        <Chip label={selectedAssessment.metadata.proficiency} size="small" variant="outlined" sx={{ borderColor: '#ece6fa', color: '#6c6c80' }} />
+                        <Badge variant="outline" className="border-slate-200 text-slate-500">
+                          {selectedAssessment.metadata.proficiency}
+                        </Badge>
                       )}
-                    </Box>
-                  </Box>
+                    </div>
+                  </div>
                 )}
 
                 {/* Coverage Areas */}
                 {selectedAssessment.interviewData?.finalReport?.coverage?.areas && (
-                  <Box sx={{ px: 3, mt: 2 }}>
-                    <Typography variant="overline" sx={{ color: '#6c6c80', letterSpacing: 1.2, fontSize: '0.65rem' }}>Coverage Areas</Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 0.5 }}>
+                  <div className="px-6 mt-5">
+                    <span className="text-[10.5px] uppercase tracking-[1.2px] text-slate-500">Coverage Areas</span>
+                    <div className="flex flex-wrap gap-2 mt-1.5">
                       {Object.entries(selectedAssessment.interviewData.finalReport.coverage.areas).map(([areaName, areaData]: [string, any]) => {
                         const pct = areaData.percentage || 0;
                         const c = pct >= 70 ? '#10b981' : pct >= 50 ? '#f59e0b' : '#ef4444';
                         return (
-                          <Box key={areaName} sx={{ flex: '1 1 45%', p: 1.5, borderRadius: '10px', backgroundColor: `${c}0a`, border: `1px solid ${c}20`, textAlign: 'center' }}>
-                            <Typography variant="body2" sx={{ fontWeight: 700, color: c }}>{pct}%</Typography>
-                            <Typography variant="caption" sx={{ color: '#6c6c80', textTransform: 'capitalize', fontSize: '0.7rem' }}>{areaName.replace(/_/g, ' ')}</Typography>
-                          </Box>
+                          <div key={areaName} className="flex-[1_1_45%] p-3 rounded-[10px] text-center" style={{ background: `${c}0a`, border: `1px solid ${c}20` }}>
+                            <div className="text-[13px] font-bold" style={{ color: c }}>{pct}%</div>
+                            <div className="text-[11px] text-slate-500 capitalize">{areaName.replace(/_/g, ' ')}</div>
+                          </div>
                         );
                       })}
-                    </Box>
-                  </Box>
+                    </div>
+                  </div>
                 )}
 
                 {/* Job chips */}
-                <Box sx={{ px: 3, mt: 2, pb: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                <div className="px-6 mt-5 pb-5 flex gap-2 flex-wrap">
                   {selectedAssessment.post?.jobDetails?.location && (
-                    <Chip label={selectedAssessment.post.jobDetails.location} size="small" variant="outlined" sx={{ borderColor: '#ece6fa', color: '#6c6c80', fontSize: '0.75rem' }} />
+                    <Badge variant="outline" className="border-slate-200 text-[13px] text-slate-500">
+                      {selectedAssessment.post.jobDetails.location}
+                    </Badge>
                   )}
                   {selectedAssessment.post?.jobDetails?.employmentType && (
-                    <Chip label={selectedAssessment.post.jobDetails.employmentType} size="small" variant="outlined" sx={{ borderColor: '#ece6fa', color: '#6c6c80', fontSize: '0.75rem', textTransform: 'capitalize' }} />
+                    <Badge variant="outline" className="border-slate-200 text-[13px] capitalize text-slate-500">
+                      {selectedAssessment.post.jobDetails.employmentType}
+                    </Badge>
                   )}
                   {selectedAssessment.interviewData?.interviewType && (
-                    <Chip label={selectedAssessment.interviewData.interviewType.replace(/_/g, ' ')} size="small" variant="outlined" sx={{ borderColor: '#ece6fa', color: '#6c6c80', fontSize: '0.75rem', textTransform: 'capitalize' }} />
+                    <Badge variant="outline" className="border-slate-200 text-[13px] capitalize text-slate-500">
+                      {selectedAssessment.interviewData.interviewType.replace(/_/g, ' ')}
+                    </Badge>
                   )}
-                </Box>
+                </div>
 
                 {/* Footer */}
-                <Box sx={{ px: 3, py: 1.5, backgroundColor: '#fafafa', borderTop: '1px solid #ece6fa', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="caption" sx={{ color: '#aaa', fontFamily: 'monospace', fontSize: '0.65rem' }}>ID: {selectedAssessment._id}</Typography>
-                  <Typography variant="caption" sx={{ color: '#aaa', fontSize: '0.7rem' }}>{formatDate(selectedAssessment.createdAt)}</Typography>
-                </Box>
+                <div className="px-6 py-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
+                  <span className="text-[10.5px] font-mono text-slate-400">ID: {selectedAssessment._id}</span>
+                  <span className="text-[11px] text-slate-400">{formatDate(selectedAssessment.createdAt)}</span>
+                </div>
               </DialogContent>
             </>
           );
         })()}
       </Dialog>
-    </Box>
+    </div>
   );
 };
 

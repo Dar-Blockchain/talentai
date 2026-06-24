@@ -1,4 +1,4 @@
-import { Typography, Box } from '@mui/material';
+import { ADMIN_ACCENT } from '@/modules/admin/shared';
 
 const AdminHeader = () => {
   const today = new Date();
@@ -10,38 +10,19 @@ const AdminHeader = () => {
   });
 
   return (
-    <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 2 }}>
-      <Box>
-        <Typography variant="body2" sx={{ color: '#6c6c80', fontWeight: 500, mb: 0.5 }}>
-          Welcome back
-        </Typography>
-        <Typography
-          variant="h4"
-          sx={{
-            fontWeight: 800,
-            color: '#1a1a2e',
-            letterSpacing: '-0.5px',
-            position: 'relative',
-            pb: 1.5,
-            '&:after': {
-              content: '""',
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              width: '60px',
-              height: '4px',
-              background: 'linear-gradient(90deg, #8310FF 0%, #00FFC3 100%)',
-              borderRadius: '2px',
-            },
-          }}
-        >
+    <div className="flex justify-between items-end flex-wrap gap-2 mb-8">
+      <div>
+        <p className="text-[13px] font-medium text-slate-500 mb-1">Welcome back</p>
+        <h1 className="relative pb-3 text-[2rem] font-bold text-slate-900 tracking-tight">
           Admin Dashboard
-        </Typography>
-      </Box>
-      <Typography variant="body2" sx={{ color: '#6c6c80', fontWeight: 500 }}>
-        {formattedDate}
-      </Typography>
-    </Box>
+          <span
+            className="absolute bottom-0 left-0 h-1 w-[60px] rounded-full"
+            style={{ background: ADMIN_ACCENT }}
+          />
+        </h1>
+      </div>
+      <p className="text-[13px] font-medium text-slate-500">{formattedDate}</p>
+    </div>
   );
 };
 

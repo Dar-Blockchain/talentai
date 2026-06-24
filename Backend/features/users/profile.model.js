@@ -174,5 +174,9 @@ profileSchema.index({ isPublicProfile: 1 });
 profileSchema.index({ userId: 1 });
 profileSchema.index({ type: 1 });
 profileSchema.index({ payments: 1 });
+// Used by the admin "subscribe a company" search (regex on name/email,
+// scoped to type: "Company") — compound index lets Mongo narrow by type first.
+profileSchema.index({ type: 1, "companyDetails.name": 1 });
+profileSchema.index({ type: 1, "companyDetails.email": 1 });
 
 module.exports = mongoose.model("Profile", profileSchema);

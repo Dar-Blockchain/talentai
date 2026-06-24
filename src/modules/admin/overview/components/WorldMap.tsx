@@ -1,28 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Box, Typography, Paper, Chip, IconButton } from '@mui/material';
-import { styled } from '@mui/material/styles';
-import { LocationOn as LocationIcon, ZoomIn, ZoomOut } from '@mui/icons-material';
 
 // Dynamically import the entire map component with SSR disabled
 const WorldMapComponent = dynamic(
-  () => import('@/components/features/admin/WorldMapComponent'),
-  { 
+  () => import('./WorldMapComponent'),
+  {
     ssr: false,
     loading: () => (
-      <Box sx={{ 
-        height: 500, 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        background: 'linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%)',
-        borderRadius: '16px',
-        border: '1px solid rgba(131, 16, 255, 0.1)'
-      }}>
-        <Typography variant="h6" sx={{ color: '#8310FF' }}>
-          Loading map...
-        </Typography>
-      </Box>
+      <div className="h-[500px] flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50">
+        <span className="text-[1.1rem] font-semibold text-slate-500">Loading map...</span>
+      </div>
     )
   }
 ) as any;
@@ -135,11 +122,11 @@ const WorldMap: React.FC<WorldMapProps> = ({ userLocations, totalUsers }) => {
   const [map, setMap] = useState<L.Map | null>(null);
 
   const getMarkerColor = (count: number) => {
-    if (count >= 20) return '#8310FF';
-    if (count >= 10) return '#9C27B0';
-    if (count >= 5) return '#E1BEE7';
-    if (count >= 1) return '#F3E5F5';
-    return '#F8F9FA';
+    if (count >= 20) return '#4F46E5';
+    if (count >= 10) return '#6366F1';
+    if (count >= 5) return '#A5B4FC';
+    if (count >= 1) return '#E0E7FF';
+    return '#F1F5F9';
   };
 
   const getMarkerRadius = (count: number) => {

@@ -1,9 +1,5 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
-  Box,
-  Button,
-  TextField,
-  Paper,
   Table,
   TableBody,
   TableCell,
@@ -12,12 +8,8 @@ import {
   TableRow,
   TablePagination,
   Avatar,
-  Chip,
   IconButton,
-  Typography,
   Tooltip,
-  Stack,
-  InputAdornment,
   Tab,
   Tabs,
   styled,
@@ -36,29 +28,22 @@ import {
   Business as BusinessIcon,
   AdminPanelSettings as AdminIcon,
 } from '@mui/icons-material';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch } from '@/store/store';
-import {
-  fetchAdminUsers,
-  selectAdminUsers,
-  selectAdminUsersLoading,
-  selectAdminUsersError,
-  selectAdminTotalUsers,
-} from '@/store/slices/adminSlice';
+import { useAdminUsersQuery } from '../queries';
 
 // Types
-import { User, UserFilters } from '../../../types/admin';
+import { User, UserFilters } from '../types';
 // Hooks
-import { usePagination } from '../../../hooks/usePagination';
-// Utils
-import { getRoleColor } from '../../../utils/colorMappings';
-
-const PRIMARY = '#8310FF';
+import { usePagination } from '@/hooks/usePagination';
+// UI
+import { Card } from '@/modules/shared/ui/shadcn/card';
+import { Badge } from '@/modules/shared/ui/shadcn/badge';
+import { cn } from '@/lib/utils';
+import { ADMIN_ACCENT, ADMIN_TABLE_HEAD_CELL_SX, ADMIN_TABLE_ROW_SX, AdminPageHeading } from '@/modules/admin/shared';
 
 const StyledTabs = styled(Tabs)({
   minHeight: 40,
   '& .MuiTabs-indicator': {
-    backgroundColor: PRIMARY,
+    backgroundColor: ADMIN_ACCENT,
     height: 3,
     borderRadius: '3px 3px 0 0',
   },
@@ -69,12 +54,25 @@ const StyledTab = styled(Tab)({
   textTransform: 'none',
   fontWeight: 600,
   fontSize: '0.85rem',
-  color: '#6c6c80',
+  color: '#64748B',
   padding: '8px 16px',
   '&.Mui-selected': {
-    color: PRIMARY,
+    color: ADMIN_ACCENT,
   },
 });
+
+const roleBadgeClass = (role: string) => {
+  switch (role?.toLowerCase()) {
+    case 'admin':
+      return 'bg-red-50 text-red-600';
+    case 'company':
+      return 'bg-indigo-50 text-indigo-600';
+    case 'candidate':
+      return 'bg-emerald-50 text-emerald-600';
+    default:
+      return 'bg-slate-100 text-slate-600';
+  }
+};
 
 interface UserManagementProps {
   onUserSelect?: (user: User) => void;
@@ -91,17 +89,20 @@ const UserManagement: React.FC<UserManagementProps> = ({
   onManagePermissions,
   initialFilters = {},
 }) => {
-  const dispatch = useDispatch<AppDispatch>();
-
-  const users = useSelector(selectAdminUsers) as User[];
-  const totalUsers = useSelector(selectAdminTotalUsers);
-  const loading = useSelector(selectAdminUsersLoading);
-  const error = useSelector(selectAdminUsersError);
-
+  // Text inputs the user is actively typing into.
   const [usernameFilter, setUsernameFilter] = useState(initialFilters.username || '');
   const [emailFilter, setEmailFilter] = useState(initialFilters.email || '');
   const [roleFilter, setRoleFilter] = useState(initialFilters.role || '');
   const [statusFilter, setStatusFilter] = useState(initialFilters.status || '');
+
+  // Filters actually sent to the server — only updated on Search/Enter/tab
+  // change/page change, so typing doesn't trigger a fetch on every keystroke.
+  const [appliedFilters, setAppliedFilters] = useState({
+    username: initialFilters.username || '',
+    email: initialFilters.email || '',
+    role: initialFilters.role || '',
+    status: initialFilters.status || '',
+  });
 
   const roleTabMap = ['', 'Candidate', 'Company', 'Admin'];
   const roleTabIndex = roleTabMap.indexOf(roleFilter);
@@ -113,37 +114,27 @@ const UserManagement: React.FC<UserManagementProps> = ({
     handleChangeRowsPerPage: onRowsPerPageChange,
   } = usePagination({ initialRowsPerPage: 10 });
 
-  const dispatchFetchUsers = useCallback(
-    (overrides?: { page?: number; limit?: number }) => {
-      dispatch(
-        fetchAdminUsers({
-          page: overrides?.page ?? page + 1,
-          limit: overrides?.limit ?? rowsPerPage,
-          username: usernameFilter || undefined,
-          email: emailFilter || undefined,
-          role: roleFilter || undefined,
-          status: statusFilter || undefined,
-        })
-      );
-    },
-    [dispatch, page, rowsPerPage, usernameFilter, emailFilter, roleFilter, statusFilter]
-  );
+  const { data, isLoading: loading, error: queryError } = useAdminUsersQuery({
+    page: page + 1,
+    limit: rowsPerPage,
+    username: appliedFilters.username || undefined,
+    email: appliedFilters.email || undefined,
+    role: appliedFilters.role || undefined,
+    status: appliedFilters.status || undefined,
+  });
+
+  const users = (data?.users ?? []) as User[];
+  const totalUsers = data?.total ?? 0;
+  const error = queryError ? (queryError as Error).message : null;
 
   const handleChangePage = useCallback(
-    (event: unknown, newPage: number) => {
-      onPageChange(event, newPage);
-      dispatchFetchUsers({ page: newPage + 1 });
-    },
-    [onPageChange, dispatchFetchUsers]
+    (event: unknown, newPage: number) => onPageChange(event, newPage),
+    [onPageChange]
   );
 
   const handleChangeRowsPerPage = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const newRowsPerPage = parseInt(event.target.value, 10);
-      onRowsPerPageChange(event);
-      dispatchFetchUsers({ page: 1, limit: newRowsPerPage });
-    },
-    [onRowsPerPageChange, dispatchFetchUsers]
+    (event: React.ChangeEvent<HTMLInputElement>) => onRowsPerPageChange(event),
+    [onRowsPerPageChange]
   );
 
   const handleResetFilters = useCallback(() => {
@@ -151,233 +142,212 @@ const UserManagement: React.FC<UserManagementProps> = ({
     setEmailFilter('');
     setRoleFilter('');
     setStatusFilter('');
+    setAppliedFilters({ username: '', email: '', role: '', status: '' });
   }, []);
 
   const handleApplyFilters = useCallback(() => {
-    dispatchFetchUsers({ page: 1 });
-  }, [dispatchFetchUsers]);
+    setAppliedFilters({ username: usernameFilter, email: emailFilter, role: roleFilter, status: statusFilter });
+  }, [usernameFilter, emailFilter, roleFilter, statusFilter]);
 
   const handleRoleTabChange = useCallback((_: React.SyntheticEvent, newValue: number) => {
-    setRoleFilter(roleTabMap[newValue]);
+    const role = roleTabMap[newValue];
+    setRoleFilter(role);
+    setAppliedFilters((prev) => ({ ...prev, role }));
   }, []);
 
-  useEffect(() => {
-    dispatchFetchUsers();
-  }, [dispatchFetchUsers]);
-
   return (
-    <Box>
+    <div>
       {/* Header */}
-      <Typography variant="h5" sx={{ fontWeight: 700, color: '#1a1a2e', mb: 3 }}>
-        User Management
-      </Typography>
+      <AdminPageHeading title="User Management" subtitle={`${totalUsers.toLocaleString()} total users across the platform`} />
 
       {/* Filters & Tabs */}
-      <Paper sx={{ mb: 3, borderRadius: '12px', border: '1px solid #ece6fa', boxShadow: 'none', overflow: 'hidden' }}>
+      <Card className="mb-6 overflow-hidden py-0 gap-0">
         {/* Search */}
-        <Box sx={{ p: 2, display: 'flex', flexWrap: 'wrap', gap: 1.5, alignItems: 'center' }}>
-          <TextField
-            placeholder="Search by username..."
-            variant="outlined"
-            size="small"
-            value={usernameFilter}
-            onChange={(e) => setUsernameFilter(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleApplyFilters()}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: '#6c6c80', fontSize: 20 }} />
-                </InputAdornment>
-              ),
-            }}
-            sx={{ flex: '1 1 180px' }}
-          />
-          <TextField
-            placeholder="Search by email..."
-            variant="outlined"
-            size="small"
-            value={emailFilter}
-            onChange={(e) => setEmailFilter(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleApplyFilters()}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: '#6c6c80', fontSize: 20 }} />
-                </InputAdornment>
-              ),
-            }}
-            sx={{ flex: '1 1 180px' }}
-          />
-          <Button
-            variant="contained"
+        <div className="p-4 flex flex-wrap gap-3 items-center">
+          <div className="flex-[1_1_180px] flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2">
+            <SearchIcon style={{ fontSize: 18 }} className="text-slate-400 shrink-0" />
+            <input
+              placeholder="Search by username..."
+              value={usernameFilter}
+              onChange={(e) => setUsernameFilter(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleApplyFilters()}
+              className="w-full text-[13px] outline-none placeholder:text-slate-400"
+            />
+          </div>
+          <div className="flex-[1_1_180px] flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2">
+            <SearchIcon style={{ fontSize: 18 }} className="text-slate-400 shrink-0" />
+            <input
+              placeholder="Search by email..."
+              value={emailFilter}
+              onChange={(e) => setEmailFilter(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleApplyFilters()}
+              className="w-full text-[13px] outline-none placeholder:text-slate-400"
+            />
+          </div>
+          <button
             onClick={handleApplyFilters}
-            disableElevation
-            sx={{ backgroundColor: PRIMARY, textTransform: 'none', '&:hover': { backgroundColor: '#6a0dad' } }}
+            className="rounded-lg px-4 py-2 text-[13px] font-semibold text-white transition-colors"
+            style={{ background: ADMIN_ACCENT }}
           >
             Search
-          </Button>
-          <Button
-            variant="text"
+          </button>
+          <button
             onClick={handleResetFilters}
-            sx={{ color: '#6c6c80', textTransform: 'none' }}
+            className="rounded-lg px-3 py-2 text-[13px] font-medium text-slate-500 hover:bg-slate-50 transition-colors"
           >
             Reset
-          </Button>
-        </Box>
+          </button>
+        </div>
         {/* Role Tabs */}
-        <Box sx={{ borderTop: '1px solid #ece6fa', px: 2 }}>
+        <div className="border-t border-slate-100 px-2">
           <StyledTabs value={roleTabIndex >= 0 ? roleTabIndex : 0} onChange={handleRoleTabChange}>
             <StyledTab icon={<PeopleIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="All" />
             <StyledTab icon={<PersonIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Candidates" />
             <StyledTab icon={<BusinessIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Companies" />
             <StyledTab icon={<AdminIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Admins" />
           </StyledTabs>
-        </Box>
-      </Paper>
+        </div>
+      </Card>
 
       {/* Error */}
       {error && (
-        <Box sx={{ mb: 2, p: 1.5, bgcolor: '#fef2f2', borderRadius: '8px' }}>
-          <Typography color="error" variant="body2">{error}</Typography>
-        </Box>
+        <div className="mb-3 px-4 py-2.5 rounded-lg bg-red-50">
+          <span className="text-[13px] text-red-600">{error}</span>
+        </div>
       )}
 
       {/* Table */}
-      <TableContainer component={Paper} sx={{ borderRadius: '12px', border: '1px solid #ece6fa', boxShadow: 'none' }}>
-        <Table>
-          <TableHead>
-            <TableRow sx={{ backgroundColor: '#f5f3ff' }}>
-              <TableCell sx={{ fontWeight: 600 }}>User</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Role</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Location</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Joined</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Last Login</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loading ? (
+      <Card className="overflow-hidden py-0 gap-0">
+        <TableContainer sx={{ maxHeight: 600 }}>
+          <Table stickyHeader>
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                  <Typography variant="body2" color="text.secondary">Loading...</Typography>
-                </TableCell>
+                <TableCell sx={ADMIN_TABLE_HEAD_CELL_SX}>User</TableCell>
+                <TableCell sx={ADMIN_TABLE_HEAD_CELL_SX}>Role</TableCell>
+                <TableCell sx={ADMIN_TABLE_HEAD_CELL_SX}>Status</TableCell>
+                <TableCell sx={ADMIN_TABLE_HEAD_CELL_SX}>Location</TableCell>
+                <TableCell sx={ADMIN_TABLE_HEAD_CELL_SX}>Joined</TableCell>
+                <TableCell sx={ADMIN_TABLE_HEAD_CELL_SX}>Last Login</TableCell>
+                <TableCell sx={ADMIN_TABLE_HEAD_CELL_SX}>Actions</TableCell>
               </TableRow>
-            ) : users.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                  <Typography variant="body2" color="text.secondary">No users found</Typography>
-                </TableCell>
-              </TableRow>
-            ) : (
-              users.map((user) => (
-                <TableRow key={user._id} hover>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Avatar sx={{ mr: 2, bgcolor: PRIMARY, width: 36, height: 36, fontSize: '0.9rem' }}>
-                        {user.username.charAt(0).toUpperCase()}
-                      </Avatar>
-                      <Box>
-                        {user.profile?.firstName && user.profile?.lastName ? (
-                          <>
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                              {user.profile.firstName} {user.profile.lastName}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              @{user.username}
-                            </Typography>
-                          </>
-                        ) : (
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                            {user.username}
-                          </Typography>
-                        )}
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                          {user.email}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Chip label={user.role} color={getRoleColor(user.role) as any} size="small" />
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={user.isVerified ? 'Verified' : 'Pending'}
-                      color={user.isVerified ? 'success' : 'warning'}
-                      size="small"
-                      icon={user.isVerified ? <CheckCircleIcon /> : <PendingIcon />}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    {user.Localisation ? (
-                      <Box>
-                        <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          <LocationIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-                          {user.Localisation}
-                        </Typography>
-                        {user.ip && (
-                          <Typography variant="caption" color="text.secondary">
-                            IP: {user.ip}
-                          </Typography>
-                        )}
-                      </Box>
-                    ) : (
-                      <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                        No location
-                      </Typography>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">{new Date(user.createdAt).toLocaleDateString()}</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">
-                      {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Stack direction="row" spacing={0.5}>
-                      <Tooltip title="View">
-                        <IconButton size="small" onClick={() => onUserSelect?.(user)} sx={{ color: PRIMARY }}>
-                          <VisibilityIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Edit">
-                        <IconButton size="small" onClick={() => onUserEdit?.(user)} sx={{ color: '#6c6c80' }}>
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      {user.role === 'Company' && onManagePermissions && (
-                        <Tooltip title="Permissions">
-                          <IconButton size="small" onClick={() => onManagePermissions(user)} sx={{ color: PRIMARY }}>
-                            <SecurityIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                      <Tooltip title="Delete">
-                        <IconButton size="small" onClick={() => onUserDelete?.(user._id)} sx={{ color: '#ccc', '&:hover': { color: '#ef4444' } }}>
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </Stack>
+            </TableHead>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                    <span className="text-[13px] text-slate-500">Loading...</span>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component="div"
-          count={totalUsers}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </TableContainer>
-    </Box>
+              ) : users.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                    <span className="text-[13px] text-slate-500">No users found</span>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                users.map((user) => (
+                  <TableRow key={user._id} hover sx={ADMIN_TABLE_ROW_SX}>
+                    <TableCell>
+                      <div className="flex items-center">
+                        <Avatar sx={{ mr: 2, bgcolor: ADMIN_ACCENT, width: 36, height: 36, fontSize: '0.9rem' }}>
+                          {user.username.charAt(0).toUpperCase()}
+                        </Avatar>
+                        <div>
+                          {user.profile?.firstName && user.profile?.lastName ? (
+                            <>
+                              <div className="text-[13px] font-semibold text-slate-900">
+                                {user.profile.firstName} {user.profile.lastName}
+                              </div>
+                              <div className="text-[11px] text-slate-400">@{user.username}</div>
+                            </>
+                          ) : (
+                            <div className="text-[13px] font-semibold text-slate-900">{user.username}</div>
+                          )}
+                          <div className="text-[11px] text-slate-400">{user.email}</div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={cn("border-transparent font-semibold", roleBadgeClass(user.role))}>
+                        {user.role}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "gap-1 border-transparent font-semibold",
+                          user.isVerified ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600",
+                        )}
+                      >
+                        {user.isVerified ? <CheckCircleIcon style={{ fontSize: 13 }} /> : <PendingIcon style={{ fontSize: 13 }} />}
+                        {user.isVerified ? 'Verified' : 'Pending'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {user.Localisation ? (
+                        <div>
+                          <div className="flex items-center gap-1 text-[13px] text-slate-700">
+                            <LocationIcon style={{ fontSize: 16 }} className="text-slate-400" />
+                            {user.Localisation}
+                          </div>
+                          {user.ip && <div className="text-[11px] text-slate-400">IP: {user.ip}</div>}
+                        </div>
+                      ) : (
+                        <span className="text-[13px] text-slate-400 italic">No location</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-[13px] text-slate-700">{new Date(user.createdAt).toLocaleDateString()}</span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-[13px] text-slate-700">
+                        {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-0.5">
+                        <Tooltip title="View">
+                          <IconButton size="small" onClick={() => onUserSelect?.(user)} sx={{ color: ADMIN_ACCENT }}>
+                            <VisibilityIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Edit">
+                          <IconButton size="small" onClick={() => onUserEdit?.(user)} sx={{ color: '#64748B' }}>
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        {user.role === 'Company' && onManagePermissions && (
+                          <Tooltip title="Permissions">
+                            <IconButton size="small" onClick={() => onManagePermissions(user)} sx={{ color: ADMIN_ACCENT }}>
+                              <SecurityIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                        <Tooltip title="Delete">
+                          <IconButton size="small" onClick={() => onUserDelete?.(user._id)} sx={{ color: '#ccc', '&:hover': { color: '#ef4444' } }}>
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={totalUsers}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
+        </TableContainer>
+      </Card>
+    </div>
   );
 };
 

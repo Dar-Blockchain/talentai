@@ -7,30 +7,35 @@ const PostInterviewAssessment = require("../interviews/post-interview/post-inter
 const { POST_STATUS } = require("../posts/posts.constants");
 const InternalCampaign = require("../campaigns/campaign.model");
 const CompanyMembership = require("../company-members/company-membership.model");
+const ttlCache = require("../../utils/ttl-cache");
+
+// Platform-wide counters/rollups don't need to be second-fresh — a short
+// cache window absorbs repeated dashboard loads/tab-switches without
+// re-running full-collection aggregations every time.
+const COUNTS_CACHE_TTL_MS = 60 * 1000;
+
+const ADMIN_USER_LIST_FIELDS = "username email role isVerified createdAt lastLogin Localisation ip profile";
+const ADMIN_USER_LIST_PROFILE_FIELDS = "firstName lastName phone location company position";
 
 module.exports.getAllUsers = async (searchQuery, page = 1, limit = 10) => {
   try {
     const skip = (page - 1) * limit;
 
-    let query = {};
-    if (searchQuery.username || searchQuery.email || searchQuery.role) {
-      query = {
-        $and: [
-          searchQuery.username ? { username: { $regex: searchQuery.username, $options: 'i' } } : {},
-          searchQuery.email ? { email: { $regex: searchQuery.email, $options: 'i' } } : {},
-          searchQuery.role ? { role: { $regex: searchQuery.role, $options: 'i' } } : {},
-        ]
-      };
-    }
+    const query = {};
+    if (searchQuery.username) query.username = { $regex: searchQuery.username, $options: 'i' };
+    if (searchQuery.email) query.email = { $regex: searchQuery.email, $options: 'i' };
+    if (searchQuery.role) query.role = searchQuery.role;
 
-    const users = await User.find(query)
-      .skip(skip)
-      .limit(parseInt(limit))
-      .populate('profile')
-      .populate('post')
-      .exec();
+    const [users, totalUsers] = await Promise.all([
+      User.find(query)
+        .select(ADMIN_USER_LIST_FIELDS)
+        .skip(skip)
+        .limit(parseInt(limit))
+        .populate('profile', ADMIN_USER_LIST_PROFILE_FIELDS)
+        .lean(),
+      User.countDocuments(query),
+    ]);
 
-    const totalUsers = await User.countDocuments(query);
     const totalPages = Math.ceil(totalUsers / limit);
 
     return {
@@ -42,7 +47,9 @@ module.exports.getAllUsers = async (searchQuery, page = 1, limit = 10) => {
   }
 };
 
-module.exports.getCounts = async () => {
+module.exports.getCounts = () => ttlCache.getOrSet("dashboard:getCounts", COUNTS_CACHE_TTL_MS, _computeCounts);
+
+async function _computeCounts() {
   try {
     const [userCount, postCount, jobAssessmentCount, feedbackCount] = await Promise.all([
       User.countDocuments(),
@@ -105,9 +112,11 @@ module.exports.getCounts = async () => {
   } catch (error) {
     throw new Error('Error fetching counts: ' + error.message);
   }
-};
+}
 
-module.exports.getCountsByDay = async () => {
+module.exports.getCountsByDay = () => ttlCache.getOrSet("dashboard:getCountsByDay", COUNTS_CACHE_TTL_MS, _computeCountsByDay);
+
+async function _computeCountsByDay() {
   try {
     const usersByDayAgg = User.aggregate([
       { $project: { day: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } } } },
@@ -156,7 +165,7 @@ module.exports.getCountsByDay = async () => {
   } catch (error) {
     throw new Error('Error fetching counts by day: ' + error.message);
   }
-};
+}
 
 module.exports.getStatsCards = async (userId) => {
   try {
