@@ -301,25 +301,40 @@ module.exports.checkInterviewEligibility = async (candidateId, postId, userRole)
   const completed = await PostInterviewAssessment.exists({ candidate: candidateId, post: postId, completed: true });
   if (completed) return { status: "completed", meta: { jobTitle: post.jobDetails?.title || post.title || "" } };
 
-  // Threshold check runs against the existing application BEFORE creating the visit record.
-  // The visit creation is fire-and-forget (no await), so querying after it races with the
-  // async AI matchScore computation and returns null — causing the threshold to be bypassed.
-  if (post.thresholdScore != null && candidateProfile) {
-    const JobApplication = require("../../job-applications/job-application.model");
-    const application = await JobApplication.findOne({ profile: candidateProfile._id, post: postId })
-      .select("matchScore").lean();
-    if (application?.matchScore != null && application.matchScore < post.thresholdScore) {
-      return { status: "under_threshold", meta: { required: post.thresholdScore, score: application.matchScore } };
-    }
-  }
-
-  // Record visit as a job application (idempotent — 409 on repeat visits is expected)
   if (candidateProfile) {
-    jobApplicationService.createJobApplication({
-      profile: candidateProfile._id,
-      post: postId,
-      company: post.user,
-    }).catch(() => {});
+    const JobApplication = require("../../job-applications/job-application.model");
+    let matchScore = null;
+
+    const existing = await JobApplication.findOne({ profile: candidateProfile._id, post: postId })
+      .select("matchScore").lean();
+
+    if (existing) {
+      matchScore = existing.matchScore;
+    } else {
+      // First visit: await creation so the AI-computed matchScore is available for the
+      // threshold check before we respond. Fire-and-forget caused a race where findOne()
+      // ran before the document was written and always returned null.
+      try {
+        const created = await jobApplicationService.createJobApplication({
+          profile: candidateProfile._id,
+          post: postId,
+          company: post.user,
+        });
+        matchScore = created?.matchScore ?? null;
+      } catch (err) {
+        if (err?.status === 409) {
+          // Race: another concurrent request created it — re-fetch
+          const raced = await JobApplication.findOne({ profile: candidateProfile._id, post: postId })
+            .select("matchScore").lean();
+          matchScore = raced?.matchScore ?? null;
+        }
+        // Other errors: fail open — don't block the candidate due to a technical fault
+      }
+    }
+
+    if (post.thresholdScore != null && matchScore != null && matchScore < post.thresholdScore) {
+      return { status: "under_threshold", meta: { required: post.thresholdScore, score: matchScore } };
+    }
   }
 
   return { status: "eligible" };
