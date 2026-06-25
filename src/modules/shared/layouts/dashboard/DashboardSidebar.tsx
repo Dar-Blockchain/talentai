@@ -17,7 +17,7 @@ import Link from "next/link";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
 import { useLogout } from "@/modules/auth/shared/hooks";
-import { navigation, employeeNavGroups, EmployeeNavItem } from "@/constants/navigation";
+import { navigation, employeeNavGroups, EmployeeNavItem } from "./navigation";
 import { selectEmployeePermissions, fetchEmployeePermissions } from "@/store/slices/memberSlice";
 import { selectCombinedDetails, fetchCombinedSubscriptionDetails } from "@/store/slices/paymentSlice";
 import { LogoutOutlined } from "@mui/icons-material";

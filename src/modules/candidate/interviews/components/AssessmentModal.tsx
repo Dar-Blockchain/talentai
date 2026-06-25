@@ -24,7 +24,7 @@ import { RootState } from "@/store/store";
 import {
   skillCategories,
   softSkills,
-} from "@/constants/skills";
+} from "@/modules/shared/skills";
 
 const languages = [{ value: "English", label: "English" }];
 

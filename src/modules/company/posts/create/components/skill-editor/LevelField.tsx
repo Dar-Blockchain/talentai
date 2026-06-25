@@ -1,7 +1,7 @@
 import { Box, Typography, TextField, MenuItem, InputAdornment } from "@mui/material";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import { useTranslation } from "react-i18next";
-import { hardSkillLevels, softSkillLevels } from "@/constants/skills";
+import { hardSkillLevels, softSkillLevels } from "@/modules/shared/skills";
 import { inputStyle, labelSx } from "./styles";
 
 interface Props {

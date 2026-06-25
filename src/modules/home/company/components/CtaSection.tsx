@@ -3,7 +3,7 @@ import { Clock, Ban }  from "lucide-react";
 import { Button }      from "@/modules/shared/ui/shadcn/button";
 import { motion }      from "framer-motion";
 import { useTranslation } from "react-i18next";
-import { CALENDLY_URL } from "@/constants";
+import { CALENDLY_URL } from "@/modules/shared/constants";
 const ease     = [0.22, 1, 0.36, 1] as const;
 const VP       = { once: true, margin: "-60px" };
 

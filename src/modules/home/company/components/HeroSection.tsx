@@ -5,7 +5,7 @@ import DemoVideoModal  from "./DemoVideoModal";
 import { motion, useInView, useMotionValue, useTransform, animate } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-import { CALENDLY_URL } from "@/constants";
+import { CALENDLY_URL } from "@/modules/shared/constants";
 
 
 const STAT_TARGETS  = [90, 10, 24, 75];

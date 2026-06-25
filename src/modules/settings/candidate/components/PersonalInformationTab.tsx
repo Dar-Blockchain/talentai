@@ -4,7 +4,7 @@ import { Control, Controller, FieldErrors } from 'react-hook-form';
 import { CheckCircle2, XCircle } from 'lucide-react';
 import { UserProfile } from '@/types/profile';
 import { PersonalInformationFormValues } from '@/modules/settings/candidate/schemas';
-import { experienceLevels, timezones } from '@/constants/profile';
+import { experienceLevels, timezones } from '../constants';
 import ProfilePictureSection from './ProfilePictureSection';
 import AppInput from '@/modules/shared/ui/AppInput';
 import AppSelect from '@/modules/shared/ui/AppSelect';

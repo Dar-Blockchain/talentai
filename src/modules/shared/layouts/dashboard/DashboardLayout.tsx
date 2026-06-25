@@ -5,7 +5,7 @@ import { Box, useTheme, useMediaQuery } from "@mui/material";
 import Sidebar from "./DashboardSidebar";
 import Header from "./DashboardHeader";
 import DashboardMain from "./DashboardMain";
-import { navigation } from "@/constants/navigation";
+import { navigation } from "./navigation";
 import { useRouter } from "next/router";
 import OnboardingTour from "@/modules/company/tour";
 

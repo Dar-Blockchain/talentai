@@ -2,7 +2,7 @@ import React from "react";
 import { Box, TextField, Typography } from "@mui/material";
 import AttachMoneyOutlined from "@mui/icons-material/AttachMoneyOutlined";
 import { useTranslation } from "react-i18next";
-import { defaultCurrencies } from "@/constants/candidate";
+import { defaultCurrencies } from "@/modules/company/posts/shared/constants";
 import { CurrencyDropdown } from "../SalaryRange";
 import FieldLabel from "./FieldLabel";
 import SectionLabel from "./SectionLabel";

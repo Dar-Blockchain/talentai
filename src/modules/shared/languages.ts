@@ -1,8 +1,8 @@
 export interface LangMeta {
-  code: string;
-  flag: string;         // ISO country code for flagcdn.com ("us", "fr")
-  label: string;        // Native display name ("English", "Français")
-  englishLabel: string; // English name ("English", "French")
+  code:         string;
+  flag:         string;
+  label:        string;
+  englishLabel: string;
 }
 
 export const SUPPORTED_LANGS: LangMeta[] = [

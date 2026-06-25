@@ -4,7 +4,7 @@ import TranslateOutlined from "@mui/icons-material/Translate";
 import CheckOutlined from "@mui/icons-material/CheckOutlined";
 import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
 import LockOutlined from "@mui/icons-material/LockOutlined";
-import { LANG_META } from "@/constants/languages";
+import { LANG_META } from "@/modules/shared/languages";
 import { useTranslation } from "react-i18next";
 
 const TEAL    = "#0D9488";

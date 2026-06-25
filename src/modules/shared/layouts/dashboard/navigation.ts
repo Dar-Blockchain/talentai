@@ -5,15 +5,14 @@ import {
   GroupsOutlined,
   TuneOutlined,
   CorporateFareOutlined,
-  PeopleAltOutlined,
   DashboardOutlined,
   SettingsOutlined,
   CreditCardOutlined,
   ChatBubbleOutlineOutlined,
   NotificationsNoneOutlined,
+  PeopleAltOutlined,
 } from "@mui/icons-material";
 import { EmployeePermissionKey } from "@/types/employeePermissions";
-import { CANDIDATE_MESSAGES_BASE_PATH } from "@/modules/chat/candidate-chat/utils/routes";
 import { MESSAGES_BASE_PATH } from "@/modules/chat/shared/constants/messagesRoutes";
 
 export const navigation = [
@@ -29,38 +28,12 @@ export const navigation = [
   { id: "subscription",  icon: CreditCardOutlined,        label: "Subscription",  href: "/company/plans" },
 ];
 
-// ─── Candidate navigation ──────────────────────────────────────────────────────
-
-export interface CandidateNavItem {
-  id:    string;
-  icon:  React.ElementType;
-  label: string;
-  href:  string;
-}
-
-export interface CandidateNavGroup {
-  group: string;
-  items: CandidateNavItem[];
-}
-
-export const candidateNavGroups: CandidateNavGroup[] = [
-  {
-    group: "Overview",
-    items: [
-      { id: "candidate-dashboard", icon: DashboardOutlined, label: "Dashboard", href: "/candidate/dashboard" },
-      { id: "candidate-messages", icon: ChatBubbleOutlineOutlined, label: "Messages", href: CANDIDATE_MESSAGES_BASE_PATH },
-    ],
-  },
-];
-
-// ─── Employee grouped navigation ──────────────────────────────────────────────
-
 export interface EmployeeNavItem {
   id:          string;
   icon:        React.ElementType;
+  permission?: EmployeePermissionKey;
   label:       string;
   href:        string;
-  permission?: EmployeePermissionKey;
 }
 
 export interface EmployeeNavGroup {
@@ -72,10 +45,10 @@ export const employeeNavGroups: EmployeeNavGroup[] = [
   {
     group: "Personal",
     items: [
-      { id: "dashboard",    icon: DashboardOutlined, label: "Dashboard",    href: "/employee/dashboard" },
-      { id: "my-campaigns", icon: CampaignOutlined,  label: "My Campaigns", href: "/employee/campaigns" },
-      { id: "messages", icon: ChatBubbleOutlineOutlined, label: "Messages", href: MESSAGES_BASE_PATH },
-      { id: "notifications", icon: NotificationsNoneOutlined, label: "Notifications", href: "/notifications" },
+      { id: "dashboard",     icon: DashboardOutlined,          label: "Dashboard",     href: "/employee/dashboard" },
+      { id: "my-campaigns",  icon: CampaignOutlined,           label: "My Campaigns",  href: "/employee/campaigns" },
+      { id: "messages",      icon: ChatBubbleOutlineOutlined,  label: "Messages",      href: MESSAGES_BASE_PATH },
+      { id: "notifications", icon: NotificationsNoneOutlined,  label: "Notifications", href: "/notifications" },
     ],
   },
   {

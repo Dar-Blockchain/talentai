@@ -5,7 +5,7 @@ import CheckBoxOutlined from "@mui/icons-material/CheckBoxOutlined";
 import CheckBoxOutlineBlankOutlined from "@mui/icons-material/CheckBoxOutlineBlank";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useTranslation } from "react-i18next";
-import { SUPPORTED_LANGS } from "@/constants/languages";
+import { SUPPORTED_LANGS } from "@/modules/shared/languages";
 
 export const GENERATE_LANG_KEY = "talentai_generate_lang";
 
