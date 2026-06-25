@@ -98,7 +98,8 @@ export default function InterviewScreen({
       if (confirmedRef.current) { confirmedRef.current = false; return; }
       pendingUrlRef.current = url;
       setConfirmOpen(true);
-      throw new Error('interview-leave-cancelled');
+      // cancelled: true tells Next.js this is intentional — suppresses the dev error overlay
+      throw Object.assign(new Error('interview-leave-cancelled'), { cancelled: true });
     };
     router.events.on('routeChangeStart', handleRouteChange);
     return () => router.events.off('routeChangeStart', handleRouteChange);
