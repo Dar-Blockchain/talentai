@@ -1,14 +1,17 @@
 import { FormControl, Select, MenuItem } from '@mui/material';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend } from 'recharts';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import { AdminChartCard, ADMIN_ACCENT } from '@/modules/admin/shared';
+import { AdminChartCard, ADMIN_ACCENT, ADMIN_NEUTRAL, ADMIN_NEUTRAL_BG } from '@/modules/admin/shared';
 
 const AdminGrowthAnalytics = ({ userGrowthData, selectedMonth, setSelectedMonth, getFilteredUserGrowthData }: any) => (
-  <AdminChartCard className="mb-4">
+  <AdminChartCard  className="mb-4">
     <div className="flex justify-between items-center mb-5 flex-wrap gap-2">
       <div className="flex items-center gap-2">
-        <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${ADMIN_ACCENT}14` }}>
-          <TrendingUpIcon style={{ fontSize: 17, color: ADMIN_ACCENT }} />
+        <div
+          className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+          style={{ background: ADMIN_NEUTRAL_BG }}
+        >
+          <TrendingUpIcon style={{ fontSize: 17, color: ADMIN_NEUTRAL }} />
         </div>
         <span className="font-semibold text-[15px] text-slate-900">Growth Analytics</span>
       </div>

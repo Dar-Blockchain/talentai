@@ -5,8 +5,9 @@ const { requireAuth } = require("../../../middleware/security/auth.middleware");
 const authLogMiddleware = require("../../../middleware/security/request-log.middleware.js");
 const { controledAcces } = require("../../../middleware/authorize.middleware");
 
-router.get("/admin/companies", requireAuth, authLogMiddleware("subscription"), controledAcces("Admin"), subscriptionController.searchCompanies);
-router.post("/admin",          requireAuth, authLogMiddleware("subscription"), controledAcces("Admin"), subscriptionController.adminCreateSubscription);
+router.get("/admin/companies",              requireAuth, authLogMiddleware("subscription"), controledAcces("Admin"), subscriptionController.searchCompanies);
+router.get("/admin/companies-with-status",   requireAuth, authLogMiddleware("subscription"), controledAcces("Admin"), subscriptionController.getAllCompaniesWithSubscriptions);
+router.post("/admin",                        requireAuth, authLogMiddleware("subscription"), controledAcces("Admin"), subscriptionController.adminCreateSubscription);
 
 router.get("/active",   requireAuth, authLogMiddleware("subscription"), subscriptionController.getActiveSubscription);
 router.get("/combined", requireAuth, authLogMiddleware("subscription"), subscriptionController.getCombinedActiveDetails);

@@ -2,7 +2,7 @@ export { fetchPlanLimits, fetchPlanLimitById, updatePlanLimits } from "@/store/s
 
 import axiosInstance from "@/utils/axiosInstance";
 import { apiCall } from "@/utils/apiCall";
-import { CompanyOption, AdminSubscription } from "../types";
+import { CompanyOption, AdminSubscription, CompanySubscriptionsPage } from "../types";
 
 export const adminSubscriptionApi = {
   searchCompanies: (search: string) =>
@@ -21,5 +21,19 @@ export const adminSubscriptionApi = {
         return data?.data as AdminSubscription;
       },
       "Failed to create subscription.",
+    ),
+
+  fetchCompaniesWithSubscriptions: (params: { search?: string; page?: number; limit?: number }) =>
+    apiCall(
+      async () => {
+        const { data } = await axiosInstance.get("subscriptions/admin/companies-with-status", { params });
+        return {
+          data: data?.data ?? [],
+          total: data?.total ?? 0,
+          page: data?.page ?? 1,
+          limit: data?.limit ?? 20,
+        } as CompanySubscriptionsPage;
+      },
+      "Failed to load companies.",
     ),
 };

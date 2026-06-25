@@ -28,7 +28,7 @@ const AdminSkillsDistribution = ({ skillDistribution }: { skillDistribution: any
             boxShadow: '0 4px 12px rgba(15,23,42,0.08)',
             padding: '8px 12px',
           }}
-        />
+       />
       </PieChart>
     </ResponsiveContainer>
     {/* Custom legend */}
@@ -38,7 +38,7 @@ const AdminSkillsDistribution = ({ skillDistribution }: { skillDistribution: any
           <span
             className="w-2.5 h-2.5 rounded-full shrink-0"
             style={{ backgroundColor: ADMIN_CHART_COLORS[index % ADMIN_CHART_COLORS.length] }}
-          />
+         />
           <span className="text-[12px] text-slate-500">{entry.name}</span>
         </div>
       ))}

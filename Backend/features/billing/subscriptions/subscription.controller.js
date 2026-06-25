@@ -82,6 +82,16 @@ module.exports.searchCompanies = async (req, res) => {
   }
 };
 
+module.exports.getAllCompaniesWithSubscriptions = async (req, res) => {
+  try {
+    const { search = "", page = 1, limit = 20 } = req.query;
+    const result = await subscriptionService.getAllCompaniesWithSubscriptions({ search, page: Number(page), limit: Number(limit) });
+    res.status(200).json(result);
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
 module.exports.getCombinedActiveDetails = async (req, res) => {
   const safeDefault = {
     success: true,

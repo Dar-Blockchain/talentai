@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Alert, Snackbar, CircularProgress } from '@mui/material';
+import BusinessIcon from '@mui/icons-material/Business';
 import { AppDispatch } from '@/store/store';
 import { fetchPlanLimits } from '../api';
 import { selectPlanLimits, selectPlanLimitsLoading, selectPlanLimitsError } from '../queries';
 import SubscribeCompanyCard from './SubscribeCompanyCard';
 import PlanOverviewGrid from './PlanOverviewGrid';
-import { ADMIN_ACCENT, AdminPageHeading } from '@/modules/admin/shared';
+import CompanySubscriptionsTable from './CompanySubscriptionsTable';
+import { ADMIN_NEUTRAL, AdminPageHeading, ZoneHeading } from '@/modules/admin/shared';
 
 const CompanyConfig: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -23,7 +25,7 @@ const CompanyConfig: React.FC = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
-        <CircularProgress sx={{ color: ADMIN_ACCENT }} />
+        <CircularProgress sx={{ color: ADMIN_NEUTRAL }} />
       </div>
     );
   }
@@ -51,13 +53,19 @@ const CompanyConfig: React.FC = () => {
           setSnackbar({ open: true, message: `${companyName} subscribed to ${planName} successfully!`, severity: 'success' })
         }
         onError={(message) => setSnackbar({ open: true, message, severity: 'error' })}
-      />
+     />
 
       {plans.length === 0 && !loading && (
         <Alert severity="info" sx={{ borderRadius: '12px' }}>
           No plan configurations found. Please create a plan first.
         </Alert>
       )}
+
+      {/* All companies & their subscriptions */}
+      <div className="mt-2">
+        <ZoneHeading icon={BusinessIcon} label="All Companies" />
+        <CompanySubscriptionsTable />
+      </div>
 
       {/* Snackbar */}
       <Snackbar

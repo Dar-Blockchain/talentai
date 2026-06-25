@@ -1,6 +1,6 @@
 import axiosInstance from "@/utils/axiosInstance";
 import { apiCall } from "@/utils/apiCall";
-import { AdminDashboardStats, AdminMapUser, UserGrowthPoint } from "../types";
+import { AdminDashboardStats, AdminMapUser, UserGrowthPoint, AdminRevenueSummary, RecentSignup } from "../types";
 
 const defaultStats: AdminDashboardStats = {
   users: 0,
@@ -79,5 +79,23 @@ export const adminOverviewApi = {
         return processedData;
       },
       "Failed to load user growth data.",
+    ),
+
+  fetchRevenueSummary: () =>
+    apiCall(
+      async () => {
+        const { data } = await axiosInstance.get("dashboard/adminRevenueSummary");
+        return (data?.data ?? { mrr: 0, totalActiveSubscriptions: 0, byPlan: [] }) as AdminRevenueSummary;
+      },
+      "Failed to load revenue summary.",
+    ),
+
+  fetchRecentSignups: (limit = 8) =>
+    apiCall(
+      async () => {
+        const { data } = await axiosInstance.get("dashboard/recentSignups", { params: { limit } });
+        return (data?.data ?? []) as RecentSignup[];
+      },
+      "Failed to load recent signups.",
     ),
 };

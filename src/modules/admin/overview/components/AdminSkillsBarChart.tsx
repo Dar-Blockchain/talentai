@@ -19,13 +19,13 @@ const AdminSkillsBarChart = ({ skillsData }: { skillsData: Array<{ skill: string
           interval={0}
           axisLine={{ stroke: '#E2E8F0' }}
           tickLine={false}
-        />
+       />
         <YAxis
           tick={{ fontSize: 12, fill: '#64748B' }}
           axisLine={false}
           tickLine={false}
           label={{ value: 'Number of Users', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#64748B', fontSize: 12 } }}
-        />
+       />
         <RechartsTooltip
           formatter={(value: any) => [value, 'Users']}
           labelFormatter={(label: any) => `Skill: ${label}`}
@@ -36,7 +36,7 @@ const AdminSkillsBarChart = ({ skillsData }: { skillsData: Array<{ skill: string
             boxShadow: '0 4px 12px rgba(15,23,42,0.08)',
             padding: '8px 12px',
           }}
-        />
+       />
         <Bar
           dataKey="count"
           radius={[4, 4, 0, 0]}
@@ -45,7 +45,7 @@ const AdminSkillsBarChart = ({ skillsData }: { skillsData: Array<{ skill: string
             <Cell
               key={`cell-${index}`}
               fill={ADMIN_CHART_COLORS[index % ADMIN_CHART_COLORS.length]}
-            />
+           />
           ))}
         </Bar>
       </BarChart>

@@ -11,7 +11,7 @@ import {
   Settings as SettingsIcon,
 } from '@mui/icons-material';
 import { cn } from '@/lib/utils';
-import { ADMIN_SIDEBAR_BG, ADMIN_SIDEBAR_BORDER } from '../theme';
+import { ADMIN_SIDEBAR_BG, ADMIN_SIDEBAR_BORDER, ADMIN_ACCENT } from '../theme';
 
 const DRAWER_WIDTH = 260;
 
@@ -66,7 +66,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
             <div className="bg-white rounded-md p-1">
               <img src="/logo-purple.svg" alt="TalentAI" className="h-6 w-auto" />
             </div>
-            <span className="text-white text-[13px] font-bold tracking-tight">Admin</span>
+            <span className="text-[13px] font-bold tracking-tight text-white">
+              Admin
+            </span>
           </Link>
           {isMobile && (
             <button
@@ -98,11 +100,12 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-4 py-2.5 text-[14px] transition-colors text-left",
                   selected
-                    ? "bg-indigo-500/15 text-indigo-300 font-semibold"
+                    ? "text-white font-semibold"
                     : "text-slate-400 font-medium hover:bg-slate-800 hover:text-slate-200",
                 )}
+                style={selected ? { backgroundColor: ADMIN_ACCENT } : undefined}
               >
-                <Icon style={{ fontSize: 20 }} className={selected ? "text-indigo-300" : "text-slate-500"} />
+                <Icon style={{ fontSize: 20 }} className={selected ? "text-white" : "text-slate-500"} />
                 {item.label}
               </button>
             );

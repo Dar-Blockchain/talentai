@@ -17,3 +17,10 @@ export const useCompanySearchQuery = (search: string) =>
     enabled:  search.trim().length > 0,
     staleTime: 30_000,
   });
+
+export const useCompanySubscriptionsQuery = (params: { search: string; page: number; limit: number }) =>
+  useQuery({
+    queryKey: ["admin", "companies-with-status", params],
+    queryFn:  () => adminSubscriptionApi.fetchCompaniesWithSubscriptions(params),
+    staleTime: 30_000,
+  });

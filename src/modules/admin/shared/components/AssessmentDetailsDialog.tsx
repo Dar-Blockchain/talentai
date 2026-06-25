@@ -11,7 +11,7 @@ import {
 } from '@mui/icons-material';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { scoreTone } from './AdminAtoms';
-import { ADMIN_ACCENT } from '../theme';
+import { ADMIN_NEUTRAL, ADMIN_DARK_BANNER } from '../theme';
 
 interface AssessmentDetailsDialogProps {
   open: boolean;
@@ -47,7 +47,7 @@ const AssessmentDetailsDialog: React.FC<AssessmentDetailsDialogProps> = ({
       {/* Header */}
       <div
         className="relative px-6 pt-6 pb-8"
-        style={{ background: ADMIN_ACCENT }}
+        style={{ backgroundColor: ADMIN_DARK_BANNER }}
       >
         <IconButton
           onClick={onClose}
@@ -97,18 +97,18 @@ const AssessmentDetailsDialog: React.FC<AssessmentDetailsDialogProps> = ({
 
         {/* Stats Row */}
         <div className="flex gap-3 px-6 mt-5">
-          <div className="flex-1 p-4 rounded-xl bg-indigo-50 text-center">
-            <RepeatIcon style={{ color: ADMIN_ACCENT, fontSize: 22, marginBottom: 4 }} />
+          <div className="flex-1 p-4 rounded-xl bg-slate-50 text-center">
+            <RepeatIcon style={{ color: ADMIN_NEUTRAL, fontSize: 22, marginBottom: 4 }} />
             <div className="text-[1.1rem] font-bold text-slate-900">{assessment.numberOfAttempts || 0}</div>
             <div className="text-[11px] text-slate-500">Attempts</div>
           </div>
-          <div className="flex-1 p-4 rounded-xl bg-indigo-50 text-center">
-            <QuizIcon style={{ color: ADMIN_ACCENT, fontSize: 22, marginBottom: 4 }} />
+          <div className="flex-1 p-4 rounded-xl bg-slate-50 text-center">
+            <QuizIcon style={{ color: ADMIN_NEUTRAL, fontSize: 22, marginBottom: 4 }} />
             <div className="text-[1.1rem] font-bold text-slate-900">{assessment.totalQuestions || 'N/A'}</div>
             <div className="text-[11px] text-slate-500">Questions</div>
           </div>
-          <div className="flex-1 p-4 rounded-xl bg-indigo-50 text-center">
-            <TrendingUpIcon style={{ color: ADMIN_ACCENT, fontSize: 22, marginBottom: 4 }} />
+          <div className="flex-1 p-4 rounded-xl bg-slate-50 text-center">
+            <TrendingUpIcon style={{ color: ADMIN_NEUTRAL, fontSize: 22, marginBottom: 4 }} />
             <div className="text-[1.1rem] font-bold text-slate-900">
               {score >= 70 ? 'High' : score >= 50 ? 'Mid' : 'Low'}
             </div>

@@ -33,12 +33,12 @@ import {
 import { useAdminSkillAssessmentsQuery } from '../queries';
 import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
-import { ScoreBadge, scoreTone, ADMIN_ACCENT, ADMIN_TABLE_HEAD_CELL_SX, ADMIN_TABLE_ROW_SX, AdminPageHeading } from '@/modules/admin/shared';
+import { ScoreBadge, scoreTone, ADMIN_ACCENT, ADMIN_NEUTRAL, ADMIN_DARK_BANNER, ADMIN_TABLE_HEAD_CELL_SX, ADMIN_TABLE_ROW_SX, AdminPageHeading } from '@/modules/admin/shared';
 
 const StyledTabs = styled(Tabs)({
   minHeight: 40,
   '& .MuiTabs-indicator': {
-    backgroundColor: ADMIN_ACCENT,
+    backgroundColor: ADMIN_NEUTRAL,
     height: 3,
     borderRadius: '3px 3px 0 0',
   },
@@ -52,7 +52,7 @@ const StyledTab = styled(Tab)({
   color: '#64748B',
   padding: '8px 16px',
   '&.Mui-selected': {
-    color: ADMIN_ACCENT,
+    color: ADMIN_NEUTRAL,
   },
 });
 
@@ -319,7 +319,7 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full text-[13px] outline-none placeholder:text-slate-400"
-            />
+           />
           </div>
           <FormControl size="small" sx={{ minWidth: 180 }}>
             <InputLabel id="skill-filter-label">Skill</InputLabel>
@@ -340,7 +340,7 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
               ))}
             </Select>
           </FormControl>
-          {loading && <CircularProgress size={20} sx={{ color: ADMIN_ACCENT }} />}
+          {loading && <CircularProgress size={20} sx={{ color: ADMIN_NEUTRAL }} />}
           <div className="flex-1" />
           <span className="text-[13px] text-slate-500">
             {filteredResults.length} of {totalCount}
@@ -397,7 +397,7 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="border-transparent bg-indigo-50 font-semibold text-indigo-600">
+                        <Badge variant="outline" className="border-transparent bg-slate-100 font-semibold text-slate-700">
                           {assessment.skill || 'N/A'}
                         </Badge>
                       </TableCell>
@@ -422,7 +422,7 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
                           <IconButton
                             size="small"
                             onClick={() => handleViewDetails(assessment)}
-                            sx={{ color: ADMIN_ACCENT }}
+                            sx={{ color: ADMIN_NEUTRAL }}
                           >
                             <VisibilityIcon fontSize="small" />
                           </IconButton>
@@ -442,7 +442,7 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
             page={page}
             onPageChange={handleChangePage}
             onRowsPerPageChange={handleChangeRowsPerPage}
-          />
+         />
         </TableContainer>
       </Card>
 
@@ -460,7 +460,7 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
           return (
             <>
               {/* Header */}
-              <div className="relative px-6 pt-6 pb-8" style={{ background: ADMIN_ACCENT }}>
+              <div className="relative px-6 pt-6 pb-8" style={{ backgroundColor: ADMIN_DARK_BANNER }}>
                 <IconButton onClick={() => setDetailsDialogOpen(false)} sx={{ position: 'absolute', top: 12, right: 12, color: 'rgba(255,255,255,0.7)', '&:hover': { color: 'white' } }}>
                   <CloseIcon fontSize="small" />
                 </IconButton>
@@ -501,19 +501,19 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
                 {/* Stats Row */}
                 {selectedAssessment.interviewData?.analytics && (
                   <div className="flex gap-3 px-6 mt-5">
-                    <div className="flex-1 p-3 rounded-[10px] bg-indigo-50 text-center">
+                    <div className="flex-1 p-3 rounded-[10px] text-center bg-slate-50">
                       <div className="text-[1.1rem] font-bold text-slate-900">
                         {Math.floor((selectedAssessment.interviewData.analytics.duration || 0) / 60000)}m
                       </div>
                       <div className="text-[11px] text-slate-500">Duration</div>
                     </div>
-                    <div className="flex-1 p-3 rounded-[10px] bg-indigo-50 text-center">
+                    <div className="flex-1 p-3 rounded-[10px] text-center bg-slate-50">
                       <div className="text-[1.1rem] font-bold text-slate-900">
                         {selectedAssessment.interviewData.analytics.messageCount || 0}
                       </div>
                       <div className="text-[11px] text-slate-500">Messages</div>
                     </div>
-                    <div className="flex-1 p-3 rounded-[10px] bg-indigo-50 text-center">
+                    <div className="flex-1 p-3 rounded-[10px] text-center bg-slate-50">
                       <div className="text-[1.1rem] font-bold text-slate-900">
                         {selectedAssessment.interviewData.analytics.coveragePercentage || 0}%
                       </div>
@@ -645,7 +645,7 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
                     <div className="mt-1.5 flex flex-col gap-1">
                       {selectedAssessment.interviewData.finalReport.recommendations.map((rec, idx) => (
                         <p key={idx} className="text-[13px] text-slate-600 flex items-start gap-2 leading-[1.5]">
-                          <span className="font-bold text-indigo-600">&bull;</span> {rec}
+                          <span className="font-bold text-slate-500">&bull;</span> {rec}
                         </p>
                       ))}
                     </div>

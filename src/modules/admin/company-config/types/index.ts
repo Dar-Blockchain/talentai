@@ -16,3 +16,31 @@ export interface AdminSubscription {
   autoRenew: boolean;
   notes?: string;
 }
+
+export interface CompanySubscriptionSummary {
+  id: string;
+  planName: string;
+  status: "active" | "expired" | "cancelled" | "suspended";
+  isActive: boolean;
+  startDate: string;
+  endDate: string;
+  postsUsed: number;
+  postsLimit: number | null;
+  monthlyInterviewsUsed: number;
+  monthlyInterviewLimit: number | null;
+  autoRenew: boolean;
+}
+
+export interface CompanyWithSubscription {
+  profileId: string;
+  name: string;
+  email: string;
+  subscription: CompanySubscriptionSummary;
+}
+
+export interface CompanySubscriptionsPage {
+  data: CompanyWithSubscription[];
+  total: number;
+  page: number;
+  limit: number;
+}

@@ -477,6 +477,83 @@ module.exports.adminCreateSubscription = async ({ companyProfileId, planId, star
   }
 };
 
+module.exports.getAllCompaniesWithSubscriptions = async ({ search = "", page = 1, limit = 20 } = {}) => {
+  try {
+    const Profile = mongoose.model("Profile");
+
+    // Pick each company's most relevant subscription — active first, else most recently created.
+    const allSubs = await Subscription.find({})
+      .populate("planId")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const subsByCompany = new Map();
+    for (const sub of allSubs) {
+      const key = String(sub.companyProfileId);
+      const isActive = sub.status === "active" && new Date(sub.endDate) > new Date();
+      const existing = subsByCompany.get(key);
+      if (!existing || (isActive && !existing._isActive)) {
+        subsByCompany.set(key, { ...sub, _isActive: isActive });
+      }
+    }
+
+    const subscribedProfileIds = [...subsByCompany.keys()];
+    if (subscribedProfileIds.length === 0) {
+      return { success: true, data: [], total: 0, page: Number(page), limit: Number(limit) };
+    }
+
+    const profileQuery = {
+      type: "Company",
+      _id: { $in: subscribedProfileIds.map((id) => new mongoose.Types.ObjectId(id)) },
+    };
+    if (search) {
+      profileQuery.$or = [
+        { "companyDetails.name": { $regex: search, $options: "i" } },
+        { "companyDetails.email": { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const skip = (page - 1) * limit;
+    const [profiles, total] = await Promise.all([
+      Profile.find(profileQuery)
+        .select("companyDetails.name companyDetails.email userId")
+        .populate("userId", "username email")
+        .sort({ "companyDetails.name": 1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Profile.countDocuments(profileQuery),
+    ]);
+
+    const data = profiles.map((p) => {
+      const sub = subsByCompany.get(String(p._id));
+      return {
+        profileId: p._id,
+        name: p.companyDetails?.name || p.userId?.username || "Unnamed company",
+        email: p.companyDetails?.email || p.userId?.email || "",
+        subscription: {
+          id: sub._id,
+          planName: sub.planId?.name || "Unknown",
+          status: sub.status,
+          isActive: sub._isActive,
+          startDate: sub.startDate,
+          endDate: sub.endDate,
+          postsUsed: sub.postsUsed,
+          postsLimit: sub.planId?.postsLimit ?? null,
+          monthlyInterviewsUsed: sub.monthlyInterviewsUsed,
+          monthlyInterviewLimit: sub.planId?.monthlyInterviewLimit ?? null,
+          autoRenew: sub.autoRenew,
+        },
+      };
+    });
+
+    return { success: true, data, total, page: Number(page), limit: Number(limit) };
+  } catch (error) {
+    console.error("Error listing companies with subscriptions:", error);
+    throw error;
+  }
+};
+
 module.exports.searchCompanies = async (search = "") => {
   try {
     const Profile = mongoose.model("Profile");

@@ -4,14 +4,13 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import WorkIcon from '@mui/icons-material/Work';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import { AdminStatCard, ADMIN_CHART_COLORS } from '@/modules/admin/shared';
+import { AdminStatCard } from '@/modules/admin/shared';
 import { AdminDashboardStats } from '../types';
 
 interface StatCardConfig {
   label: string;
   value: string | number;
   icon: React.ElementType;
-  color: string;
 }
 
 interface AdminStatsCardsProps {
@@ -35,37 +34,31 @@ const AdminStatsCards = ({ stats, loading = false }: AdminStatsCardsProps) => {
       label: 'Total Users',
       value: stats.users?.toLocaleString?.() ?? 0,
       icon: PeopleIcon,
-      color: ADMIN_CHART_COLORS[0],
     },
     {
       label: 'Job Assessments',
       value: stats.jobAssessments ?? 0,
       icon: AssessmentIcon,
-      color: ADMIN_CHART_COLORS[1],
     },
     {
       label: 'Total Posts',
       value: stats.posts?.toLocaleString?.() ?? 0,
       icon: BarChartIcon,
-      color: ADMIN_CHART_COLORS[2],
     },
     {
       label: 'Total Skills',
       value: stats.totalSkills?.toLocaleString?.() ?? 0,
       icon: WorkIcon,
-      color: ADMIN_CHART_COLORS[3],
     },
     {
       label: 'Average Score',
       value: `${stats.avgOverallScore?.toFixed?.(1) ?? '0.0'}%`,
       icon: ShowChartIcon,
-      color: ADMIN_CHART_COLORS[5],
     },
     {
       label: 'Completion Rate',
       value: `${stats.jobAssessmentsWithScorePercentage?.toFixed?.(1) ?? '0.0'}%`,
       icon: CheckCircleIcon,
-      color: ADMIN_CHART_COLORS[2],
     },
   ];
 
@@ -77,7 +70,6 @@ const AdminStatsCards = ({ stats, loading = false }: AdminStatsCardsProps) => {
           icon={card.icon}
           value={card.value}
           label={card.label}
-          color={card.color}
           loading={loading}
         />
       ))}

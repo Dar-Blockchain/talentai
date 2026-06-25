@@ -7,6 +7,7 @@ const PostInterviewAssessment = require("../interviews/post-interview/post-inter
 const { POST_STATUS } = require("../posts/posts.constants");
 const InternalCampaign = require("../campaigns/campaign.model");
 const CompanyMembership = require("../company-members/company-membership.model");
+const Subscription = require("../billing/subscriptions/subscription.model");
 const ttlCache = require("../../utils/ttl-cache");
 
 // Platform-wide counters/rollups don't need to be second-fresh — a short
@@ -249,5 +250,53 @@ module.exports.getRichStats = async (userId) => {
     return { scoreDistribution, trend: trendAgg, topJobs: topJobsAgg, passRate, totalInterviews };
   } catch (error) {
     throw new Error('Error fetching rich stats: ' + error.message);
+  }
+};
+
+// Platform-wide revenue/plan-distribution summary, derived from active
+// subscriptions joined to their plan price — admin-only, so a short cache
+// window is fine (no per-user variance to worry about).
+module.exports.getAdminRevenueSummary = () => ttlCache.getOrSet("dashboard:getAdminRevenueSummary", COUNTS_CACHE_TTL_MS, _computeAdminRevenueSummary);
+
+async function _computeAdminRevenueSummary() {
+  try {
+    const now = new Date();
+
+    const byPlan = await Subscription.aggregate([
+      { $match: { status: "active", endDate: { $gt: now } } },
+      { $lookup: { from: "planlimits", localField: "planId", foreignField: "_id", as: "plan" } },
+      { $unwind: { path: "$plan", preserveNullAndEmptyArrays: false } },
+      {
+        $group: {
+          _id: "$plan._id",
+          planName: { $first: "$plan.name" },
+          priceUsd: { $first: "$plan.priceUsd" },
+          activeSubscriptions: { $sum: 1 },
+        },
+      },
+      { $project: { _id: 0, planId: "$_id", planName: 1, priceUsd: 1, activeSubscriptions: 1, mrr: { $multiply: ["$priceUsd", "$activeSubscriptions"] } } },
+      { $sort: { mrr: -1 } },
+    ]);
+
+    const totalActiveSubscriptions = byPlan.reduce((sum, p) => sum + p.activeSubscriptions, 0);
+    const mrr = byPlan.reduce((sum, p) => sum + p.mrr, 0);
+
+    return { mrr, totalActiveSubscriptions, byPlan };
+  } catch (error) {
+    throw new Error('Error fetching admin revenue summary: ' + error.message);
+  }
+}
+
+// Most recently created users, for an admin "recent signups" feed.
+module.exports.getRecentSignups = async (limit = 8) => {
+  try {
+    return await User.find({})
+      .select(ADMIN_USER_LIST_FIELDS)
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .populate('profile', ADMIN_USER_LIST_PROFILE_FIELDS)
+      .lean();
+  } catch (error) {
+    throw new Error('Error fetching recent signups: ' + error.message);
   }
 };

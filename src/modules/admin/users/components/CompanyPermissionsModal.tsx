@@ -17,7 +17,7 @@ import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { cn } from '@/lib/utils';
 import { Permission, DEFAULT_PERMISSIONS } from '@/types/permissions';
 import { getToken } from '@/modules/auth/shared/utils/token';
-import { ADMIN_ACCENT } from '@/modules/admin/shared';
+import { ADMIN_ACCENT, ADMIN_DARK_BANNER } from '@/modules/admin/shared';
 
 // Type for the permissions object (without metadata fields)
 export type CompanyPermissions = Omit<Permission, '_id' | 'userId' | 'profileId' | 'lastModifiedBy' | 'notes' | 'createdAt' | 'updatedAt'>;
@@ -171,7 +171,7 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
       {/* Header */}
       <div
         className="relative px-6 pt-6 pb-6"
-        style={{ background: ADMIN_ACCENT }}
+        style={{ backgroundColor: ADMIN_DARK_BANNER }}
       >
         <IconButton
           onClick={onClose}
@@ -192,7 +192,7 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
 
       <DialogContent sx={{ p: 0 }}>
         {/* Summary Bar */}
-        <div className="px-6 py-4 bg-indigo-50 border-b border-slate-200 flex items-center justify-between">
+        <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
           <div>
             <div className="text-[14px] font-semibold text-slate-900">
               {enabledCount} of {totalCount} enabled
@@ -203,7 +203,7 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
           </div>
           <Badge
             variant="outline"
-            className="cursor-pointer border-slate-200 bg-white font-semibold text-indigo-600 hover:bg-indigo-50"
+            className="cursor-pointer border-slate-200 bg-white font-semibold text-slate-700 hover:bg-slate-100"
             onClick={handleSelectAll}
           >
             {Object.values(permissions).every(Boolean) ? 'Deselect All' : 'Select All'}
@@ -234,8 +234,8 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
                   key={perm.key}
                   onClick={() => handlePermissionChange(perm.key)}
                   className={cn(
-                    "flex items-center gap-3 mx-1 mb-2 px-3 py-3 rounded-xl border-[1.5px] cursor-pointer transition-all duration-150 hover:border-indigo-300 hover:bg-indigo-50",
-                    isEnabled ? "border-indigo-300 bg-indigo-50" : "border-slate-200 bg-white",
+                    "flex items-center gap-3 mx-1 mb-2 px-3 py-3 rounded-xl border-[1.5px] cursor-pointer transition-all duration-150 hover:border-slate-300 hover:bg-slate-50",
+                    isEnabled ? "border-slate-300 bg-slate-50" : "border-slate-200 bg-white",
                   )}
                 >
                   <span className="text-[22px] leading-none">{perm.icon}</span>
@@ -286,7 +286,8 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
             backgroundColor: ADMIN_ACCENT,
             borderRadius: '10px',
             fontWeight: 600,
-            '&:hover': { backgroundColor: '#4338CA' },
+            boxShadow: 'none',
+            '&:hover': { backgroundColor: '#4338CA', boxShadow: 'none' },
           }}
         >
           {saving ? 'Saving...' : 'Save Permissions'}

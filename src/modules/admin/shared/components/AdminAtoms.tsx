@@ -4,28 +4,28 @@ import { Card, CardContent } from "@/modules/shared/ui/shadcn/card";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { Badge } from "@/modules/shared/ui/shadcn/badge";
 import { cn } from "@/lib/utils";
-import { ADMIN_ACCENT } from "../theme";
+import { ADMIN_ACCENT, ADMIN_NEUTRAL, ADMIN_NEUTRAL_BG, ADMIN_GRADIENTS, AdminGradientName, adminGradientCss, adminGlowShadow } from "../theme";
 
-/** Sticky table header cell — bold, neutral, sits above scrolling rows. */
+/** Sticky table header cell — bold, flat neutral gray, sits above scrolling rows. */
 export const ADMIN_TABLE_HEAD_CELL_SX = {
-  fontWeight: 600,
+  fontWeight: 700,
   backgroundColor: "#F8FAFC",
   color: "#475569",
 } as const;
 
-/** Table row — zebra striping on even rows, indigo-tinted hover. */
+/** Table row — zebra striping on even rows, neutral hover. */
 export const ADMIN_TABLE_ROW_SX = {
-  "&:nth-of-type(even)": { backgroundColor: "#FAFBFF" },
-  "&:hover": { backgroundColor: "#EEF2FF !important" },
+  "&:nth-of-type(even)": { backgroundColor: "#FAFAFA" },
+  "&:hover": { backgroundColor: "#F1F5F9 !important" },
 } as const;
 
-/** Tab-level page heading — bold title with an accent underline, optional subtitle. */
-export const AdminPageHeading = memo<{ title: string; subtitle?: string }>(
+/** Tab-level page heading — bold black/gray title with a neutral underline, optional subtitle. */
+export const AdminPageHeading = memo<{ title: string; subtitle?: string; gradient?: AdminGradientName }>(
   ({ title, subtitle }) => (
     <div className="mb-6">
-      <h1 className="relative inline-block pb-2.5 text-[1.5rem] font-bold text-slate-900 tracking-tight">
+      <h1 className="relative inline-block pb-2.5 text-[1.6rem] font-extrabold tracking-tight text-slate-900">
         {title}
-        <span className="absolute bottom-0 left-0 h-[3px] w-10 rounded-full" style={{ background: ADMIN_ACCENT }} />
+        <span className="absolute bottom-0 left-0 h-[3px] w-12 rounded-full bg-slate-300" />
       </h1>
       {subtitle && <p className="mt-1.5 text-[13px] text-slate-500">{subtitle}</p>}
     </div>
@@ -33,12 +33,12 @@ export const AdminPageHeading = memo<{ title: string; subtitle?: string }>(
 );
 AdminPageHeading.displayName = "AdminPageHeading";
 
-/** Standard admin section header — icon chip + title + flex-1 divider line. */
-export const ZoneHeading = memo<{ icon: React.ElementType; label: string; color?: string }>(
-  ({ icon: Icon, label, color = ADMIN_ACCENT }) => (
+/** Standard admin section header — neutral icon chip + title + flex-1 divider line. */
+export const ZoneHeading = memo<{ icon: React.ElementType; label: string; gradient?: AdminGradientName }>(
+  ({ icon: Icon, label }) => (
     <div className="flex items-center gap-3 mb-5 mt-1">
-      <div className="w-8 h-8 rounded-[9px] flex items-center justify-center shrink-0" style={{ background: `${color}14` }}>
-        <Icon style={{ fontSize: 17, color }} />
+      <div className="w-8 h-8 rounded-[9px] flex items-center justify-center shrink-0" style={{ background: ADMIN_NEUTRAL_BG }}>
+        <Icon style={{ fontSize: 17, color: ADMIN_NEUTRAL }} />
       </div>
       <span className="font-semibold text-[15px] text-slate-900 tracking-tight">{label}</span>
       <div className="flex-1 h-px bg-slate-200" />
@@ -47,18 +47,18 @@ export const ZoneHeading = memo<{ icon: React.ElementType; label: string; color?
 );
 ZoneHeading.displayName = "ZoneHeading";
 
-/** Small stat card: icon in an accent-tinted rounded square, big number, uppercase label. */
+/** Small stat card: neutral icon chip, big number, uppercase label. */
 export interface AdminStatCardProps {
   icon:    React.ElementType;
   value:   React.ReactNode;
   label:   string;
-  color?:  string;
+  gradient?: AdminGradientName;
   loading?: boolean;
 }
 
-export const AdminStatCard = memo<AdminStatCardProps>(({ icon: Icon, value, label, color = ADMIN_ACCENT, loading }) => {
+export const AdminStatCard = memo<AdminStatCardProps>(({ icon: Icon, value, label, loading }) => {
   if (loading) return (
-    <Card className="shadow-none">
+    <Card className="shadow-none overflow-hidden">
       <CardContent className="flex items-center gap-3 py-4">
         <Skeleton className="w-10 h-10 rounded-lg shrink-0" />
         <div className="flex-1 min-w-0 space-y-2">
@@ -70,10 +70,10 @@ export const AdminStatCard = memo<AdminStatCardProps>(({ icon: Icon, value, labe
   );
 
   return (
-    <Card className="group shadow-none transition-all hover:-translate-y-0.5 hover:shadow-md">
+    <Card className="group overflow-hidden shadow-none transition-all hover:-translate-y-0.5 hover:shadow-md">
       <CardContent className="flex items-center gap-3 py-4">
-        <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-105" style={{ background: `${color}14` }}>
-          <Icon style={{ fontSize: 19, color }} />
+        <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ background: ADMIN_NEUTRAL_BG }}>
+          <Icon style={{ fontSize: 19, color: ADMIN_NEUTRAL }} />
         </div>
         <div className="min-w-0">
           <div className="text-[1.35rem] font-bold text-slate-900 leading-none tabular-nums">{value}</div>
@@ -85,16 +85,16 @@ export const AdminStatCard = memo<AdminStatCardProps>(({ icon: Icon, value, labe
 });
 AdminStatCard.displayName = "AdminStatCard";
 
-/** Chart/section card wrapper — flat Card with optional icon-chip title row. */
-export const AdminChartCard = memo<{ icon?: React.ElementType; title?: string; color?: string; children: React.ReactNode; className?: string }>(
-  ({ icon: Icon, title, color = ADMIN_ACCENT, children, className }) => (
-    <Card className={cn("shadow-none", className)}>
+/** Chart/section card wrapper — flat card, neutral icon-chip title row. */
+export const AdminChartCard = memo<{ icon?: React.ElementType; title?: string; gradient?: AdminGradientName; children: React.ReactNode; className?: string }>(
+  ({ icon: Icon, title, children, className }) => (
+    <Card className={cn("shadow-none overflow-hidden transition-shadow hover:shadow-md", className)}>
       <CardContent className="pt-6">
         {title && (
           <div className="flex items-center gap-2 mb-5">
             {Icon && (
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${color}14` }}>
-                <Icon style={{ fontSize: 17, color }} />
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: ADMIN_NEUTRAL_BG }}>
+                <Icon style={{ fontSize: 17, color: ADMIN_NEUTRAL }} />
               </div>
             )}
             <span className="font-semibold text-[15px] text-slate-900">{title}</span>

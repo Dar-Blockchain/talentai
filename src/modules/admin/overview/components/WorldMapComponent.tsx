@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Popup, Tooltip, useMap } from 'react-leaflet';
 import { LocationOn as LocationIcon, ZoomIn, ZoomOut } from '@mui/icons-material';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
+import { ADMIN_NEUTRAL, ADMIN_NEUTRAL_BG } from '@/modules/admin/shared';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -369,13 +370,16 @@ const WorldMapComponent: React.FC<WorldMapComponentProps> = ({
     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-none transition-shadow hover:shadow-sm">
       <div className="flex justify-between items-center mb-5 flex-wrap gap-2">
         <h2 className="flex items-center gap-2 text-[1.1rem] font-semibold text-slate-900">
-          <span className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-indigo-50">
-            <LocationIcon style={{ fontSize: 18, color: '#4F46E5' }} />
+          <span
+            className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+            style={{ background: ADMIN_NEUTRAL_BG }}
+          >
+            <LocationIcon style={{ fontSize: 18, color: ADMIN_NEUTRAL }} />
           </span>
           Global User Distribution
         </h2>
         <div className="flex gap-2">
-          <Badge variant="outline" className="border-indigo-200 text-indigo-600">
+          <Badge variant="outline" className="border-slate-300 text-slate-600">
             {userLocations.length} Countries
           </Badge>
           <Badge variant="outline" className="border-slate-300 text-slate-600">
@@ -416,7 +420,7 @@ const WorldMapComponent: React.FC<WorldMapComponentProps> = ({
               >
                 <Popup>
                   <div style={{ textAlign: 'center', minWidth: '200px' }}>
-                    <div className="text-base font-semibold text-indigo-600 mb-1">{normalizedCountry}</div>
+                    <div className="text-base font-semibold text-slate-900 mb-1">{normalizedCountry}</div>
                     <div className="text-xl font-bold text-slate-900 mb-1">{location.count} users</div>
                     <div className="text-sm text-slate-500">
                       {location.users.length > 0 ? `${location.users[0].username} and ${location.count - 1} others` : 'No users'}
@@ -464,7 +468,7 @@ const WorldMapComponent: React.FC<WorldMapComponentProps> = ({
                       <span className="text-[12px] font-medium text-slate-700">
                         {index + 1}. {normalizeCountryName(location.country)}
                       </span>
-                      <Badge variant="outline" className="border-transparent bg-indigo-50 text-indigo-600 font-semibold">
+                      <Badge variant="outline" className="border-transparent bg-slate-100 text-slate-700 font-semibold">
                         {location.count}
                       </Badge>
                     </div>
@@ -474,7 +478,7 @@ const WorldMapComponent: React.FC<WorldMapComponentProps> = ({
                 {showLoadMore && (
                   <div className="flex justify-center my-2">
                     <button
-                      className="rounded-lg px-5 py-1.5 text-[0.85rem] font-semibold text-white tracking-wide transition-colors bg-indigo-600 hover:bg-indigo-700"
+                      className="rounded-lg px-5 py-1.5 text-[0.85rem] font-semibold text-white tracking-wide transition-colors bg-slate-700 hover:bg-slate-800"
                       onClick={() => setTopCountToShow(sortedCountries.length)}
                     >
                       Load More

@@ -38,12 +38,12 @@ import { usePagination } from '@/hooks/usePagination';
 import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { cn } from '@/lib/utils';
-import { ADMIN_ACCENT, ADMIN_TABLE_HEAD_CELL_SX, ADMIN_TABLE_ROW_SX, AdminPageHeading } from '@/modules/admin/shared';
+import { ADMIN_ACCENT, ADMIN_NEUTRAL, ADMIN_TABLE_HEAD_CELL_SX, ADMIN_TABLE_ROW_SX, AdminPageHeading } from '@/modules/admin/shared';
 
 const StyledTabs = styled(Tabs)({
   minHeight: 40,
   '& .MuiTabs-indicator': {
-    backgroundColor: ADMIN_ACCENT,
+    backgroundColor: ADMIN_NEUTRAL,
     height: 3,
     borderRadius: '3px 3px 0 0',
   },
@@ -57,7 +57,7 @@ const StyledTab = styled(Tab)({
   color: '#64748B',
   padding: '8px 16px',
   '&.Mui-selected': {
-    color: ADMIN_ACCENT,
+    color: ADMIN_NEUTRAL,
   },
 });
 
@@ -186,8 +186,8 @@ const UserManagement: React.FC<UserManagementProps> = ({
           </div>
           <button
             onClick={handleApplyFilters}
-            className="rounded-lg px-4 py-2 text-[13px] font-semibold text-white transition-colors"
-            style={{ background: ADMIN_ACCENT }}
+            className="rounded-lg px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-indigo-700"
+            style={{ backgroundColor: ADMIN_ACCENT }}
           >
             Search
           </button>
@@ -249,7 +249,7 @@ const UserManagement: React.FC<UserManagementProps> = ({
                   <TableRow key={user._id} hover sx={ADMIN_TABLE_ROW_SX}>
                     <TableCell>
                       <div className="flex items-center">
-                        <Avatar sx={{ mr: 2, bgcolor: ADMIN_ACCENT, width: 36, height: 36, fontSize: '0.9rem' }}>
+                        <Avatar sx={{ mr: 2, bgcolor: '#475569', width: 36, height: 36, fontSize: '0.9rem' }}>
                           {user.username.charAt(0).toUpperCase()}
                         </Avatar>
                         <div>
@@ -308,7 +308,7 @@ const UserManagement: React.FC<UserManagementProps> = ({
                     <TableCell>
                       <div className="flex items-center gap-0.5">
                         <Tooltip title="View">
-                          <IconButton size="small" onClick={() => onUserSelect?.(user)} sx={{ color: ADMIN_ACCENT }}>
+                          <IconButton size="small" onClick={() => onUserSelect?.(user)} sx={{ color: '#64748B' }}>
                             <VisibilityIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
@@ -319,7 +319,7 @@ const UserManagement: React.FC<UserManagementProps> = ({
                         </Tooltip>
                         {user.role === 'Company' && onManagePermissions && (
                           <Tooltip title="Permissions">
-                            <IconButton size="small" onClick={() => onManagePermissions(user)} sx={{ color: ADMIN_ACCENT }}>
+                            <IconButton size="small" onClick={() => onManagePermissions(user)} sx={{ color: '#64748B' }}>
                               <SecurityIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>

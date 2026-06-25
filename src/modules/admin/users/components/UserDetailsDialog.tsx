@@ -13,7 +13,7 @@ import {
   Badge as BadgeIcon,
 } from '@mui/icons-material';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
-import { InfoRow, ADMIN_ACCENT } from '@/modules/admin/shared';
+import { InfoRow, ADMIN_NEUTRAL, ADMIN_DARK_BANNER } from '@/modules/admin/shared';
 import { User } from '../types';
 
 interface UserDetailsDialogProps {
@@ -48,7 +48,7 @@ const UserDetailsDialog: React.FC<UserDetailsDialogProps> = ({ open, user, onClo
       {/* Header */}
       <div
         className="relative px-6 pt-6 pb-10 text-center"
-        style={{ background: ADMIN_ACCENT }}
+        style={{ backgroundColor: ADMIN_DARK_BANNER }}
       >
         <IconButton
           onClick={onClose}
@@ -92,24 +92,24 @@ const UserDetailsDialog: React.FC<UserDetailsDialogProps> = ({ open, user, onClo
 
         {/* Info List */}
         <div className="px-6 pt-4 pb-1">
-          <InfoRow icon={<EmailIcon sx={{ fontSize: 18, color: ADMIN_ACCENT }} />} label="Email" value={user.email} />
+          <InfoRow icon={<EmailIcon sx={{ fontSize: 18, color: ADMIN_NEUTRAL }} />} label="Email" value={user.email} />
           <InfoRow
-            icon={<CalendarIcon sx={{ fontSize: 18, color: ADMIN_ACCENT }} />}
+            icon={<CalendarIcon sx={{ fontSize: 18, color: ADMIN_NEUTRAL }} />}
             label="Joined"
             value={new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
           />
           {user.lastLogin && (
             <InfoRow
-              icon={<LoginIcon sx={{ fontSize: 18, color: ADMIN_ACCENT }} />}
+              icon={<LoginIcon sx={{ fontSize: 18, color: ADMIN_NEUTRAL }} />}
               label="Last Login"
               value={new Date(user.lastLogin).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
             />
           )}
           {user.Localisation && (
-            <InfoRow icon={<LanguageIcon sx={{ fontSize: 18, color: ADMIN_ACCENT }} />} label="Location" value={user.Localisation} />
+            <InfoRow icon={<LanguageIcon sx={{ fontSize: 18, color: ADMIN_NEUTRAL }} />} label="Location" value={user.Localisation} />
           )}
           {user.ip && (
-            <InfoRow icon={<LanguageIcon sx={{ fontSize: 18, color: ADMIN_ACCENT }} />} label="IP Address" value={user.ip} mono />
+            <InfoRow icon={<LanguageIcon sx={{ fontSize: 18, color: ADMIN_NEUTRAL }} />} label="IP Address" value={user.ip} mono />
           )}
         </div>
 
@@ -119,16 +119,16 @@ const UserDetailsDialog: React.FC<UserDetailsDialogProps> = ({ open, user, onClo
             <div className="border-t border-slate-200 pt-3">
               <span className="text-[11px] uppercase tracking-[1.2px] text-slate-500">Profile</span>
               {user.profile.phone && (
-                <InfoRow icon={<PhoneIcon sx={{ fontSize: 18, color: ADMIN_ACCENT }} />} label="Phone" value={user.profile.phone} />
+                <InfoRow icon={<PhoneIcon sx={{ fontSize: 18, color: ADMIN_NEUTRAL }} />} label="Phone" value={user.profile.phone} />
               )}
               {user.profile.location && (
-                <InfoRow icon={<LocationIcon sx={{ fontSize: 18, color: ADMIN_ACCENT }} />} label="Location" value={user.profile.location} />
+                <InfoRow icon={<LocationIcon sx={{ fontSize: 18, color: ADMIN_NEUTRAL }} />} label="Location" value={user.profile.location} />
               )}
               {user.profile.company && (
-                <InfoRow icon={<BusinessIcon sx={{ fontSize: 18, color: ADMIN_ACCENT }} />} label="Company" value={user.profile.company} />
+                <InfoRow icon={<BusinessIcon sx={{ fontSize: 18, color: ADMIN_NEUTRAL }} />} label="Company" value={user.profile.company} />
               )}
               {user.profile.position && (
-                <InfoRow icon={<BadgeIcon sx={{ fontSize: 18, color: ADMIN_ACCENT }} />} label="Position" value={user.profile.position} />
+                <InfoRow icon={<BadgeIcon sx={{ fontSize: 18, color: ADMIN_NEUTRAL }} />} label="Position" value={user.profile.position} />
               )}
             </div>
           </div>

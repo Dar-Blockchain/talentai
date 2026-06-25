@@ -92,4 +92,32 @@ router.get("/richStats", resolveCompanyActor, dashboardController.getRichStats);
  */
 router.get("/getUserCountsByDay", dashboardController.getCountsByDay);
 
+/**
+ * @openapi
+ * /dashboard/adminRevenueSummary:
+ *   get:
+ *     tags: [Dashboard]
+ *     summary: Platform-wide MRR and active-subscriptions breakdown by plan
+ *     responses:
+ *       200:
+ *         description: Revenue summary
+ */
+router.get("/adminRevenueSummary", dashboardController.getAdminRevenueSummary);
+
+/**
+ * @openapi
+ * /dashboard/recentSignups:
+ *   get:
+ *     tags: [Dashboard]
+ *     summary: Most recently registered users
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 8 }
+ *     responses:
+ *       200:
+ *         description: Recent signups list
+ */
+router.get("/recentSignups", dashboardController.getRecentSignups);
+
 module.exports = router;
