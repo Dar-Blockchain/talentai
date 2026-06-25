@@ -1,5 +1,6 @@
 const path = require("path");
 const fs   = require("fs");
+const jwt  = require("jsonwebtoken");
 
 const authService       = require("./auth.service");
 const CVAnalysisService = require("../cv-analysis/cv-analysis.service");
@@ -8,6 +9,7 @@ const User              = require("../users/user.model");
 const logger            = require("../../utils/logger");
 const { analyzeCV }     = require("../cv-analysis/analyse-resume.service");
 const { validateEmail, validateOTPInput } = require("./auth.validation");
+const { revokeToken }   = require("../../middleware/security/auth.middleware");
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
@@ -24,10 +26,21 @@ const deleteFile = (filePath) => {
 };
 
 const JWT_COOKIE = {
+  httpOnly: true,
+  secure:   process.env.NODE_ENV === "production",
+  sameSite: "strict",
+  maxAge:   7 * 24 * 60 * 60 * 1000,
+  path:     "/",
+};
+
+// Non-sensitive JS-readable indicator used by the frontend to determine auth
+// state without exposing the actual JWT. Contains no credential data.
+const AUTH_INDICATOR_COOKIE = {
   httpOnly: false,
   secure:   process.env.NODE_ENV === "production",
   sameSite: "strict",
   maxAge:   7 * 24 * 60 * 60 * 1000,
+  path:     "/",
 };
 
 // ─── CV analysis helper ───────────────────────────────────────────────────────
@@ -123,21 +136,28 @@ module.exports.register = async (req, res) => {
       firstName, lastName, name, companyDetails, phone, resumeFile, language,
     });
 
-    // Respond immediately — CV analysis can take 30–120 s (LLM call); don't block registration
+    // For new candidate registrations (result.user is set), run CV analysis synchronously
+    // so any failure is surfaced to the client before the OTP page is shown.
+    if (resumeFile?.path && validRoleType === "Candidate" && result.user) {
+      const cvResult = await analyseCvAndEnrichProfile(
+        resumeFile, validEmail, firstName, lastName,
+        result.profile?._id, result.user._id, req,
+      );
+      if (!cvResult) {
+        return res.status(422).json({
+          success: false,
+          error:   "We couldn't process your CV. Please upload a different file and try again.",
+          code:    "CV_ANALYSIS_FAILED",
+        });
+      }
+    }
+
     res.status(201).json({
       success:  true,
       message:  result.message,
       email:    result.email,
       username: result.username,
     });
-
-    // Run CV analysis in the background after the response is sent
-    if (resumeFile?.path && validRoleType === "Candidate" && result.user) {
-      analyseCvAndEnrichProfile(
-        resumeFile, validEmail, firstName, lastName,
-        result.profile?._id, result.user._id, req,
-      ).catch((err) => logger.warn("⚠️ Background CV analysis failed:", err.message));
-    }
   } catch (error) {
     deleteFile(resumeFile?.path);
     handleError(res, error, 400);
@@ -159,6 +179,8 @@ module.exports.verifyOTP = async (req, res) => {
     const result = await authService.verifyUserOTP(validEmail, validOTP, req.body.location);
 
     res.cookie("jwt_token", result.token, JWT_COOKIE);
+    // JS-readable auth indicator — value carries no credential, just presence
+    res.cookie("auth_present", "1", AUTH_INDICATOR_COOKIE);
 
     const p = result.profile;
     const safeProfile = p ? {
@@ -187,7 +209,6 @@ module.exports.verifyOTP = async (req, res) => {
     res.status(200).json({
       success:           true,
       message:           "Email verified successfully",
-      token:             result.token,
       user:              result.user,
       profile:           safeProfile,
       planLimits:        result.planLimits        || null,
@@ -207,10 +228,27 @@ module.exports.resendOTP = async (req, res) => {
   }
 };
 
-module.exports.logout = (req, res) => {
+module.exports.logout = async (req, res) => {
   try {
-    res.clearCookie("jwt_token");
-    res.clearCookie("api_token"); // clear legacy cookie name
+    // Revoke the JWT in Redis so it can't be reused within its remaining lifetime.
+    // The endpoint stays public so logout always clears cookies even with an
+    // expired/missing token — but we only revoke if the token is cryptographically valid.
+    const raw =
+      req.cookies?.jwt_token ||
+      (req.headers.authorization?.startsWith("Bearer ") ? req.headers.authorization.slice(7) : null);
+    if (raw) {
+      try {
+        const decoded = jwt.verify(raw, process.env.Net_Secret);
+        if (decoded?.jti) await revokeToken(decoded.jti);
+      } catch {
+        // Invalid/expired token — nothing to revoke, proceed with cookie cleanup.
+      }
+    }
+
+    res.clearCookie("jwt_token",    { path: "/" });
+    res.clearCookie("api_token",    { path: "/" }); // legacy name
+    res.clearCookie("auth_present", { path: "/" });
+
     if (req.session) {
       req.session.destroy((err) => {
         if (err) {

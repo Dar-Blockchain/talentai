@@ -6,7 +6,7 @@ import {
   useMemo,
   type ReactNode,
 } from "react";
-import { useQueryClient, type QueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useDispatch } from "react-redux";
 import { clearConnectedUser } from "@/store/slices/userSlice";
 import { setAxiosLoggingOut } from "@/utils/axiosInstance";
@@ -21,7 +21,6 @@ interface AuthState {
 
 interface AuthActions {
   login: () => void;
-  clearAuth: () => void;
   logout: () => Promise<void>;
   finishLoggingOut: () => void;
 }
@@ -29,17 +28,14 @@ interface AuthActions {
 const AuthStateContext   = createContext<AuthState   | null>(null);
 const AuthActionsContext = createContext<AuthActions | null>(null);
 
-function endSession(dispatch: AppDispatch, queryClient: QueryClient) {
-  dispatch(clearConnectedUser());
+// Clears the cookie and localStorage only — no React or Redux state changes.
+// Keeping Redux/auth state intact while the overlay is visible prevents the
+// dashboard from re-rendering with null data before navigation completes.
+function clearStorageAndToken() {
   clearTokens();
-
   const userType = localStorage.getItem("userType");
   localStorage.clear();
   if (userType) localStorage.setItem("userType", userType);
-
-  persistor.purge();
-
-  queryClient.clear();
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -49,25 +45,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(() => !!getToken());
   const [isLoggingOut,    setIsLoggingOut]    = useState(false);
 
-  const login     = useCallback(() => setIsAuthenticated(true),  []);
-  const clearAuth = useCallback(() => setIsAuthenticated(false), []);
+  const login = useCallback(() => setIsAuthenticated(true), []);
 
+  // Runs after the route change to /signin completes (or after the 8 s safety
+  // timeout). At this point the user is on the signin page, so clearing
+  // Redux + React Query + auth state cannot flash a broken dashboard.
   const finishLoggingOut = useCallback(() => {
+    dispatch(clearConnectedUser());
+    persistor.purge();
+    queryClient.clear();
+    setIsAuthenticated(false);
     setAxiosLoggingOut(false);
     setIsLoggingOut(false);
-  }, []);
+  }, [dispatch, queryClient]);
 
   const logout = useCallback(async () => {
-    setAxiosLoggingOut(true);
-    setIsLoggingOut(true);
-    clearAuth();
-
-    endSession(dispatch, queryClient);
-
+    // 1. Fire server-side JWT revocation BEFORE blocking the Axios interceptor.
+    //    The interceptor aborts any request made while _isLoggingOut is true, so
+    //    authApi.logout() must be in-flight before that flag is set.
     authApi.logout().catch(() => {});
-
+    // 2. Block all other outgoing requests immediately.
+    setAxiosLoggingOut(true);
+    // 3. Show the overlay. isAuthenticated and Redux state are left intact so
+    //    dashboard components keep rendering their current data underneath it —
+    //    nothing breaks or goes empty while the overlay is visible.
+    setIsLoggingOut(true);
+    // 4. Remove the cookie now so the middleware lets the /signin route through
+    //    without redirecting back to the dashboard.
+    clearStorageAndToken();
+    // 5. Safety valve: if routeChangeComplete never fires, clean up after 8 s.
     setTimeout(finishLoggingOut, 8000);
-  }, [dispatch, queryClient, clearAuth, finishLoggingOut]);
+  }, [finishLoggingOut]);
 
   const stateValue = useMemo<AuthState>(
     () => ({ isAuthenticated, isLoggingOut }),
@@ -75,8 +83,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const actionsValue = useMemo<AuthActions>(
-    () => ({ login, clearAuth, logout, finishLoggingOut }),
-    [login, clearAuth, logout, finishLoggingOut],
+    () => ({ login, logout, finishLoggingOut }),
+    [login, logout, finishLoggingOut],
   );
 
   return (

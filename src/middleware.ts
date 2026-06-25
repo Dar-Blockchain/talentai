@@ -127,13 +127,19 @@ export function middleware(request: NextRequest) {
   }
 
   const token = request.cookies.get("jwt_token")?.value;
-  const isAuthenticated = !!token;
-  const role = token ? getRoleFromToken(token) : null;
+  // auth_present is the JS-clearable companion cookie. Clearing it client-side
+  // during logout immediately signals "unauthenticated" to the middleware without
+  // waiting for the server to remove the httpOnly jwt_token cookie.
+  const authPresent = request.cookies.get("auth_present")?.value;
+  const isAuthenticated = !!token && !!authPresent;
+  const role = isAuthenticated ? getRoleFromToken(token!) : null;
 
-  // Token exists but role cannot be decoded → corrupted/invalid token → force logout
+  // Both cookies present but role cannot be decoded → corrupted/invalid token → force logout.
+  // Also clears auth_present so the redirect to /signin isn't blocked by this same check.
   if (isAuthenticated && !role) {
     const res = NextResponse.redirect(new URL("/signin?force_logout=1", request.url));
     res.cookies.delete("jwt_token");
+    res.cookies.delete("auth_present");
     return res;
   }
 

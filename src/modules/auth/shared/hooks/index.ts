@@ -4,5 +4,4 @@ export { useVerifyOtp }             from "./useVerifyOtp";
 export { useOtpFlow }               from "./useOtpFlow";
 export { useCvProgress }            from "./useCvProgress";
 export { useLogout }                from "./useLogout";
-export { useMe }                    from "./useMe";
 export { useLoadingWithNavigation } from "./useLoadingWithNavigation";

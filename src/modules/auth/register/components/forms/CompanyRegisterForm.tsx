@@ -2,23 +2,12 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { useCompanyRegister } from "../../hooks";
 import CompanyFields from "../fields/CompanyFields";
-import AppOtpVerifyStep from "@/modules/shared/ui/AppOtpVerifyStep";
 import SubmitButton from "../ui/SubmitButton";
 import type { RegisterFormProps } from "../../types";
 
-const CompanyRegisterForm: React.FC<RegisterFormProps> = ({ onStepChange, onEmailChange }) => {
+const CompanyRegisterForm: React.FC<RegisterFormProps> = ({ onOtpReady }) => {
   const { t } = useTranslation("auth");
-  const { form, step, loading, resendLoading, savedEmail, otp, timer, sendCode, verifyCode, resendCode } =
-    useCompanyRegister({ onStepChange, onEmailChange });
-
-  if (step === 2) return (
-    <AppOtpVerifyStep
-      savedEmail={savedEmail} otp={otp} timer={timer}
-      loading={loading} resendLoading={resendLoading}
-      onVerify={verifyCode} onResend={resendCode}
-      tPrefix="company_form"
-    />
-  );
+  const { form, loading, sendCode } = useCompanyRegister({ onOtpReady });
 
   return (
     <form
