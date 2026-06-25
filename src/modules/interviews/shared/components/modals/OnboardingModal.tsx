@@ -259,8 +259,8 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
     if (!validateReg()) return;
     setLoading(true);
     setApiError("");
-    if (cvFile) setAnalyzingCv(true);
     const email = reg.email.trim().toLowerCase();
+    if (cvFile) setAnalyzingCv(true);
     try {
       const fd = new FormData();
       fd.append("email", email);
@@ -269,8 +269,8 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
       fd.append("phone", reg.phone.trim());
       fd.append("roleType", "Candidate");
       if (cvFile) fd.append("resume", cvFile);
-      setAnalyzingCv(false);
       await authApi.register(fd);
+      setAnalyzingCv(false);
       goToOtp(email);
     } catch (e: any) {
       setAnalyzingCv(false);

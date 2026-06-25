@@ -6,6 +6,7 @@ import {
   useMemo,
   type ReactNode,
 } from "react";
+import { flushSync } from "react-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useDispatch } from "react-redux";
 import { clearConnectedUser } from "@/store/slices/userSlice";
@@ -60,18 +61,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [dispatch, queryClient]);
 
   const logout = useCallback(async () => {
-    // 1. Fire server-side JWT revocation BEFORE blocking the Axios interceptor.
-    //    The interceptor aborts any request made while _isLoggingOut is true, so
-    //    authApi.logout() must be in-flight before that flag is set.
+    // 1. Paint the overlay to the DOM synchronously before anything else runs.
+    //    Without flushSync, setIsLoggingOut is just a scheduled React update —
+    //    it won't actually appear until the next render cycle. On slow networks
+    //    (3G), aborting in-flight requests and clearing storage causes components
+    //    to flash empty/loading states during that gap. flushSync ensures the
+    //    overlay is pixel-visible BEFORE we touch any other state.
+    flushSync(() => { setIsLoggingOut(true); });
+    // 2. Fire server-side JWT revocation before blocking the Axios interceptor.
     authApi.logout().catch(() => {});
-    // 2. Block all other outgoing requests immediately.
+    // 3. Block new outgoing requests (overlay is already visible, so any
+    //    in-flight request state changes are safely hidden underneath it).
     setAxiosLoggingOut(true);
-    // 3. Show the overlay. isAuthenticated and Redux state are left intact so
-    //    dashboard components keep rendering their current data underneath it —
-    //    nothing breaks or goes empty while the overlay is visible.
-    setIsLoggingOut(true);
-    // 4. Remove the cookie now so the middleware lets the /signin route through
-    //    without redirecting back to the dashboard.
+    // 4. Remove auth_present so the middleware lets /signin through.
     clearStorageAndToken();
     // 5. Safety valve: if routeChangeComplete never fires, clean up after 8 s.
     setTimeout(finishLoggingOut, 8000);
