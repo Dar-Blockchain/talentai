@@ -3,45 +3,47 @@ import { Pencil, Save, X } from "lucide-react";
 import Spinner from "./Spinner";
 
 interface EditActionsProps {
-  isEditing: boolean;
-  loading: boolean;
-  onEdit: () => void;
-  onCancel: () => void;
-  onSave: () => void;
+  isEditing:  boolean;
+  loading:    boolean;
+  onEdit:     () => void;
+  onCancel:   () => void;
+  onSave:     () => void;
+  disabled?:  boolean;
 }
 
-const EditActions: React.FC<EditActionsProps> = ({ isEditing, loading, onEdit, onCancel, onSave }) =>
+const EditActions: React.FC<EditActionsProps> = ({ isEditing, loading, onEdit, onCancel, onSave, disabled }) =>
   !isEditing ? (
     <button
       type="button"
       onClick={onEdit}
-      className="inline-flex items-center gap-1.5 rounded-lg border border-teal-200 px-3 py-1.5 text-xs font-semibold text-teal-600 hover:bg-teal-50 transition-colors"
+      disabled={disabled}
+      className="inline-flex items-center gap-1.5 rounded-lg border border-primary-border px-2.5 py-1.5 text-xs font-semibold text-primary-dark hover:bg-primary-light transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
     >
-      <Pencil size={14} />
-      Edit
+      <Pencil size={13} />
+      <span className="hidden sm:inline">Edit</span>
     </button>
   ) : (
-    <div className="flex gap-2">
+    <div className="flex gap-1.5">
       <button
         type="button"
         onClick={onCancel}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-500 hover:bg-gray-50 transition-colors"
+        className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
       >
-        <X size={14} />
-        Cancel
+        <X size={13} />
+        <span className="hidden sm:inline">Cancel</span>
       </button>
       <button
         type="button"
         onClick={onSave}
         disabled={loading}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-teal-700 disabled:opacity-60 transition-colors"
+        className="inline-flex items-center gap-1 rounded-lg bg-primary-dark px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-primary-dark/90 disabled:opacity-60 transition-colors cursor-pointer"
       >
         {loading ? (
-          <Spinner size={14} className="border-white/40 border-t-white" />
+          <Spinner size={13} className="border-white/40 border-t-white" />
         ) : (
           <>
-            <Save size={14} />
-            Save
+            <Save size={13} />
+            <span className="hidden sm:inline">Save</span>
           </>
         )}
       </button>

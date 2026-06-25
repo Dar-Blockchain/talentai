@@ -16,6 +16,9 @@ export interface UseSkillsReturn {
   setSearch: (val: string) => void;
   loadMore: () => void;
   refetch: () => void;
+  currentPage: number;
+  totalPages: number;
+  goToPage: (page: number) => void;
 }
 
 export function useSkills({ kind, limit = 8 }: UseSkillsOptions): UseSkillsReturn {
@@ -77,5 +80,16 @@ export function useSkills({ kind, limit = 8 }: UseSkillsOptions): UseSkillsRetur
 
   const refetch = () => doFetch(searchRef.current, pageRef.current, false);
 
-  return { skills, pagination, loading, loadingMore, search, setSearch, loadMore, refetch };
+  const totalPages = pagination ? Math.max(1, Math.ceil(pagination.total / limit)) : 1;
+
+  const goToPage = (p: number) => {
+    if (!loading) doFetch(searchRef.current, p - 1, false);
+  };
+
+  return {
+    skills, pagination, loading, loadingMore, search, setSearch, loadMore, refetch,
+    currentPage: page + 1,
+    totalPages,
+    goToPage,
+  };
 }

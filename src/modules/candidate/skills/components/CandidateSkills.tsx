@@ -1,13 +1,12 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Code2, Users, Layers } from "lucide-react";
-import {
-  Card, CardHeader, CardTitle, CardDescription,
-} from "@/modules/shared/ui/shadcn/card";
+import { Code2, Users, Layers, Plus } from "lucide-react";
+import { Card } from "@/modules/shared/ui/shadcn/card";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
-import { Separator } from "@/modules/shared/ui/shadcn/separator";
 import { cn } from "@/lib/utils";
 import { useSkills } from "../hooks/useSkills";
+import AssessmentModal from "@/modules/candidate/interviews/components/AssessmentModal";
 import TechnicalSkills from "./TechnicalSkills";
 import SoftSkills from "./SoftSkills";
 
@@ -22,22 +21,21 @@ const LEVEL_LABELS: Record<number, string> = {
   1: "entry", 2: "junior", 3: "mid", 4: "senior", 5: "expert",
 };
 
-const LEVEL_ACTIVE: Record<number | "all", string> = {
-  all: "bg-primary text-primary-foreground border-primary",
-  1:   "bg-gray-200 text-gray-600 border-gray-300",
-  2:   "bg-warning text-white border-warning",
-  3:   "bg-info text-white border-info",
-  4:   "bg-secondary text-white border-secondary",
-  5:   "bg-primary-dark text-white border-primary-dark",
+const LEVEL_CONFIG: Record<number | "all", { dot: string; active: string }> = {
+  all: { dot: "bg-foreground",   active: "bg-foreground/10 text-foreground border-foreground/20" },
+  1:   { dot: "bg-gray-400",     active: "bg-gray-100 text-gray-700 border-gray-300" },
+  2:   { dot: "bg-warning",      active: "bg-warning/10 text-warning border-warning/30" },
+  3:   { dot: "bg-info",         active: "bg-info/10 text-info border-info/30" },
+  4:   { dot: "bg-secondary",    active: "bg-secondary/10 text-secondary border-secondary/30" },
+  5:   { dot: "bg-primary-dark", active: "bg-primary-light text-primary-dark border-primary-border" },
 };
 
-const TYPE_ACTIVE: Record<TypeFilter, string> = {
-  all:       "bg-primary text-primary-foreground border-primary shadow-sm",
-  technical: "bg-info text-white border-info shadow-sm",
-  soft:      "bg-warning text-white border-warning shadow-sm",
+const TYPE_CONFIG: Record<TypeFilter, { icon: React.ElementType; active: string; dot: string }> = {
+  all:       { icon: Layers, active: "bg-card shadow-sm text-foreground",     dot: "bg-foreground" },
+  technical: { icon: Code2,  active: "bg-card shadow-sm text-info",           dot: "bg-info" },
+  soft:      { icon: Users,  active: "bg-card shadow-sm text-warning",        dot: "bg-warning" },
 };
 
-const INACTIVE = "bg-card text-gray-500 border-border hover:border-primary/50 hover:text-primary-dark";
 
 // ─── Section header ───────────────────────────────────────────────────────────
 
@@ -86,6 +84,7 @@ function CandidateSkills() {
 
   const [typeFilter,  setTypeFilter]  = useState<TypeFilter>("all");
   const [levelFilter, setLevelFilter] = useState<LevelFilter>(null);
+  const [modalOpen,   setModalOpen]   = useState(false);
 
   const toggleLevel = (v: LevelFilter) => setLevelFilter(prev => prev === v ? null : v);
 
@@ -96,74 +95,87 @@ function CandidateSkills() {
     <Card className="gap-0 py-0 overflow-hidden">
 
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <CardHeader className="flex-row items-center gap-2.5 px-3 py-2.5 border-b grid-rows-1 [&>div]:gap-0">
-        <div className="size-8 rounded-lg bg-primary-light border border-primary-border flex items-center justify-center shrink-0">
-          <Layers className="size-4 text-primary-dark" />
+      <div className="px-4 py-3 border-b flex items-center gap-3">
+        {/* Icon */}
+        <div className="size-9 rounded-xl bg-primary-light border border-primary-border flex items-center justify-center shrink-0">
+          <Layers className="size-[18px] text-primary-dark" />
         </div>
-        <div className="flex flex-col">
-          <CardTitle className="text-[0.95rem] font-extrabold text-gray-900 leading-tight">
-            {s("title")}
-          </CardTitle>
-          {tech.loading && soft.loading ? (
-            <Skeleton className="h-3 w-20 mt-1" />
+
+        {/* Title + stats */}
+        <div className="flex-1 min-w-0">
+          <p className="text-[0.92rem] font-extrabold text-foreground leading-tight">{s("title")}</p>
+          {tech.loading || soft.loading ? (
+            <Skeleton className="h-3 w-16 mt-1" />
           ) : (
-            <CardDescription className="text-[0.65rem]">
+            <p className="text-[0.7rem] text-muted-foreground mt-0.5">
               {s("subtitle", { count: totalCount })}
-            </CardDescription>
+            </p>
           )}
         </div>
-      </CardHeader>
+
+        {/* Add button */}
+        <Button
+          size="sm"
+          onClick={() => setModalOpen(true)}
+          className="shrink-0 gap-1.5 text-xs font-semibold rounded-lg bg-primary-dark hover:bg-primary-dark/90 text-white cursor-pointer"
+        >
+          <Plus className="size-3.5" />
+          {s("add_skill")}
+        </Button>
+      </div>
+
+      <AssessmentModal open={modalOpen} onClose={() => setModalOpen(false)} />
 
       {/* ── Filters ─────────────────────────────────────────────────────── */}
-      <div className="px-3 pt-2.5 pb-2 flex flex-col gap-2 border-b bg-gray-50/60">
+      <div className="px-3 py-2.5 flex flex-col gap-2 border-b bg-muted/20">
 
-        {/* Type */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {(["all", "technical", "soft"] as TypeFilter[]).map(type => (
-            <button
-              key={type}
-              onClick={() => setTypeFilter(type)}
-              className={cn(
-                "flex items-center gap-1 text-[0.68rem] font-semibold px-2.5 py-1 rounded-full border transition-all duration-150",
-                typeFilter === type ? TYPE_ACTIVE[type] : INACTIVE,
-              )}
-            >
-              {type === "all"       && <Layers className="size-3" />}
-              {type === "technical" && <Code2  className="size-3" />}
-              {type === "soft"      && <Users  className="size-3" />}
-              {s(`filter.${type}`)}
-            </button>
-          ))}
+        {/* Type — segmented control */}
+        <div className="flex items-center bg-muted/70 rounded-lg p-0.5 gap-0.5">
+          {(["all", "technical", "soft"] as TypeFilter[]).map(type => {
+            const { icon: Icon, active, dot } = TYPE_CONFIG[type];
+            const isActive = typeFilter === type;
+            return (
+              <button
+                key={type}
+                onClick={() => setTypeFilter(type)}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-1.5 text-[0.7rem] font-semibold px-2 py-1.5 rounded-md transition-all duration-200 cursor-pointer",
+                  isActive ? active : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {isActive
+                  ? <span className={cn("size-1.5 rounded-full shrink-0", dot)} />
+                  : <Icon className="size-3 shrink-0" />
+                }
+                {s(`filter.${type}`)}
+              </button>
+            );
+          })}
         </div>
 
-        <Separator />
-
-        {/* Level */}
+        {/* Level pills */}
         <div className="flex items-center gap-1 flex-wrap">
-          <span className="text-[0.62rem] text-muted-foreground font-medium mr-0.5">
-            {s("filter.level")}
-          </span>
-          <button
-            onClick={() => setLevelFilter(null)}
-            className={cn(
-              "text-[0.65rem] font-semibold px-2 py-0.5 rounded-full border transition-all duration-150",
-              levelFilter === null ? LEVEL_ACTIVE.all : INACTIVE,
-            )}
-          >
-            {s("filter.all_levels")}
-          </button>
-          {([1, 2, 3, 4, 5] as const).map(lvl => (
-            <button
-              key={lvl}
-              onClick={() => toggleLevel(lvl)}
-              className={cn(
-                "text-[0.65rem] font-semibold px-2 py-0.5 rounded-full border transition-all duration-150",
-                levelFilter === lvl ? LEVEL_ACTIVE[lvl] : INACTIVE,
-              )}
-            >
-              {s(`levels.${LEVEL_LABELS[lvl]}`)}
-            </button>
-          ))}
+          {([null, 1, 2, 3, 4, 5] as (LevelFilter)[]).map(lvl => {
+            const key      = lvl ?? "all";
+            const { dot, active } = LEVEL_CONFIG[key];
+            const isActive = levelFilter === lvl;
+            const label    = lvl === null ? s("filter.all_levels") : s(`levels.${LEVEL_LABELS[lvl]}`);
+            return (
+              <button
+                key={String(key)}
+                onClick={() => lvl === null ? setLevelFilter(null) : toggleLevel(lvl)}
+                className={cn(
+                  "flex items-center gap-1 text-[0.64rem] font-semibold px-2 py-0.5 rounded-full border transition-all duration-150 cursor-pointer",
+                  isActive
+                    ? active
+                    : "border-transparent bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}
+              >
+                <span className={cn("size-1.5 rounded-full shrink-0 transition-opacity", dot, !isActive && "opacity-40")} />
+                {label}
+              </button>
+            );
+          })}
         </div>
       </div>
 

@@ -1,9 +1,9 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Search, ChevronDown, Loader2 } from "lucide-react";
+import { Search } from "lucide-react";
 import { Input } from "@/modules/shared/ui/shadcn/input";
-import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
+import { SimplePagination } from "@/modules/shared/ui/shadcn/pagination-simple";
 import { UseSkillsReturn } from "../hooks/useSkills";
 import SkillCard from "./SkillCard";
 import EmptySkills from "./EmptySkills";
@@ -21,8 +21,9 @@ function SkeletonGrid() {
 }
 
 function SoftSkills({
-  skills, pagination, loading, loadingMore,
-  search, setSearch, loadMore,
+  skills, loading,
+  search, setSearch,
+  currentPage, totalPages, goToPage,
   levelFilter = null,
 }: Props) {
   const { t } = useTranslation("dashboard");
@@ -34,7 +35,6 @@ function SoftSkills({
 
   return (
     <div className="p-3 flex flex-col gap-3">
-      {/* Search */}
       <div className="relative">
         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
         <Input
@@ -45,7 +45,6 @@ function SoftSkills({
         />
       </div>
 
-      {/* Content */}
       {loading ? (
         <SkeletonGrid />
       ) : filtered.length === 0 ? (
@@ -63,27 +62,13 @@ function SoftSkills({
               <SkillCard key={item._id} skill={item} type="soft" last={false} />
             ))}
           </div>
-
-          {pagination?.hasNext && (
-            <div className="flex justify-center pt-1">
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={loadingMore}
-                onClick={loadMore}
-                className="text-[0.75rem] font-semibold border-warning-border text-warning hover:bg-warning-light gap-1.5"
-              >
-                {loadingMore ? (
-                  <Loader2 className="size-3.5 animate-spin" />
-                ) : (
-                  <ChevronDown className="size-3.5" />
-                )}
-                {loadingMore
-                  ? s("loading")
-                  : s("show_more", { count: pagination.total - skills.length })}
-              </Button>
-            </div>
-          )}
+          <SimplePagination
+            page={currentPage}
+            totalPages={totalPages}
+            onPageChange={goToPage}
+            size="sm"
+            className="pt-1"
+          />
         </>
       )}
     </div>

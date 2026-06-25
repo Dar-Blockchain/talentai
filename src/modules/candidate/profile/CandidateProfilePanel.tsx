@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import {
@@ -140,32 +141,27 @@ const ProfileStrengthCard: React.FC<{ checklist: ChecklistItem[]; label: string 
       <div className="flex flex-col gap-0.5">
         {checklist.map((item, i) => {
           const clickable = !item.done && !!item.href;
-          return (
-            <a
-              key={i}
-              href={clickable ? item.href : undefined}
-              role={clickable ? "link" : undefined}
-              className={cn(
-                "group flex items-center gap-2 px-2 py-1 -mx-2 rounded-md text-[0.72rem] transition-colors duration-150",
-                clickable
-                  ? "cursor-pointer hover:bg-primary-light"
-                  : "cursor-default",
-                item.done ? "text-gray-700" : "text-gray-400",
-              )}
-            >
+          const inner = (
+            <>
               {item.done
                 ? <CheckCircle2 className="size-3.5 text-primary shrink-0" />
                 : <Circle       className="size-3.5 text-gray-300 shrink-0" />}
-
               <span className={cn("flex-1", item.done ? "font-medium" : "font-normal")}>
                 {item.label}
               </span>
-
               {clickable && (
                 <ArrowRight className="size-3 text-primary-dark opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
               )}
-            </a>
+            </>
           );
+          const cls = cn(
+            "group flex items-center gap-2 px-2 py-1 -mx-2 rounded-md text-[0.72rem] transition-colors duration-150",
+            clickable ? "cursor-pointer hover:bg-primary-light" : "cursor-default",
+            item.done ? "text-gray-700" : "text-gray-400",
+          );
+          return clickable
+            ? <Link key={i} href={item.href!} className={cls}>{inner}</Link>
+            : <div  key={i} className={cls}>{inner}</div>;
         })}
       </div>
     </Card>

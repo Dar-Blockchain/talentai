@@ -1,17 +1,15 @@
 import React from 'react';
-import { Box, Avatar, IconButton, Typography, CircularProgress } from '@mui/material';
-import { PhotoCamera as PhotoCameraIcon } from '@mui/icons-material';
+import { Camera } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/modules/shared/ui/shadcn/avatar';
+import { Spinner } from '@/modules/settings/shared/components';
 import { UserProfile } from '@/types/profile';
 
-const T    = "#0D9488";
-const NAVY = "#0D1B2A";
-
 interface ProfilePictureSectionProps {
-  profile: UserProfile;
+  profile:        UserProfile;
   uploadingImage: boolean;
-  isEditing: boolean;
-  onImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onEditClick: () => void;
+  isEditing:      boolean;
+  onImageUpload:  (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onEditClick:    () => void;
 }
 
 const ProfilePictureSection: React.FC<ProfilePictureSectionProps> = ({
@@ -26,52 +24,46 @@ const ProfilePictureSection: React.FC<ProfilePictureSectionProps> = ({
     : `${profile.firstName?.charAt(0) || ''}${profile.lastName?.charAt(0) || ''}`.toUpperCase();
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-      <Box sx={{ position: 'relative', flexShrink: 0 }}>
-        <Avatar
-          src={profile.avatar}
-          alt={displayName}
-          sx={{ width: 72, height: 72, bgcolor: T, fontSize: "1.4rem", fontWeight: 700, border: "2.5px solid #fff", boxShadow: "0 2px 8px rgba(13,148,136,0.18)" }}
-        >
-          {initials}
+    <div className="flex items-center gap-3.5">
+      <div className="relative shrink-0 group">
+        <Avatar className="size-[72px] border-2 border-card shadow-md">
+          <AvatarImage src={profile.avatar} alt={displayName} className="object-cover" />
+          <AvatarFallback className="bg-primary text-primary-foreground text-xl font-bold">
+            {initials}
+          </AvatarFallback>
         </Avatar>
+
         <input
           accept="image/*"
-          style={{ display: 'none' }}
+          className="hidden"
           id="profile-picture-upload"
           type="file"
           onChange={onImageUpload}
           disabled={uploadingImage}
         />
-        <label htmlFor="profile-picture-upload">
-          <IconButton
-            component="span"
-            disabled={uploadingImage}
-            sx={{
-              position: 'absolute', bottom: -4, right: -4,
-              bgcolor: T, color: '#fff', width: 26, height: 26,
-              '&:hover': { bgcolor: '#0F766E' },
-              '&.Mui-disabled': { bgcolor: '#9CA3AF' },
-            }}
-          >
+        <label
+          htmlFor="profile-picture-upload"
+          className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-full bg-primary-dark/0 group-hover:bg-primary-dark/50 transition-all duration-200"
+        >
+          <span className="flex size-8 items-center justify-center rounded-full bg-primary-dark/80 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-md">
             {uploadingImage
-              ? <CircularProgress size={13} sx={{ color: '#fff' }} />
-              : <PhotoCameraIcon sx={{ fontSize: 13 }} />
+              ? <Spinner size={13} className="border-white/40 border-t-white" />
+              : <Camera className="size-3.5" />
             }
-          </IconButton>
+          </span>
         </label>
-      </Box>
+      </div>
 
-      <Box>
-        <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", color: NAVY }}>{displayName}</Typography>
+      <div className="flex flex-col">
+        <p className="text-sm font-bold text-foreground leading-tight">{displayName}</p>
         {profile.email && (
-          <Typography sx={{ fontSize: "0.75rem", color: "#94A3B8", mt: 0.25 }}>{profile.email}</Typography>
+          <p className="text-xs text-muted-foreground mt-0.5">{profile.email}</p>
         )}
-        <Typography sx={{ fontSize: "0.72rem", color: "#CBD5E1", mt: 0.5 }}>
-          {isEditing ? "Click the camera icon to change your photo" : "Click Edit to update your photo"}
-        </Typography>
-      </Box>
-    </Box>
+        <p className="text-xs text-muted-foreground/60 mt-1">
+          {isEditing ? "Click the camera to change your photo" : "Click Edit to update your photo"}
+        </p>
+      </div>
+    </div>
   );
 };
 

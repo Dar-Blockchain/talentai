@@ -228,6 +228,7 @@
     "retest": "Retest",
     "locked": "Locked",
     "limit_tooltip": "Monthly limit reached (5/5)",
+    "add_skill": "Add Skill",
     "show_more": "Show {{count}} more",
     "search_placeholder": "Search skills…",
     "loading": "Loading…",

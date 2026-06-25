@@ -73,39 +73,35 @@ const CvSection: React.FC<Props> = ({ resumeFilename, onUpdated, onDeleted, comp
 
   /* ── Shared CV pill ── */
   const cvPill = cvUrl ? (
-    <div className="flex items-center gap-3 p-3 rounded-xl bg-teal-50 border border-teal-200">
-      <div className="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center flex-shrink-0 bg-teal-600/10">
-        <FileText size={18} className="text-teal-600" />
+    <div className="flex items-center gap-3 p-3 rounded-xl bg-primary-light border border-primary-border min-w-0">
+      <div className="size-9 rounded-lg flex items-center justify-center shrink-0 bg-primary/10">
+        <FileText size={16} className="text-primary-dark" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[0.8rem] font-bold text-gray-900 overflow-hidden text-ellipsis whitespace-nowrap max-w-[140px]">
-          {resumeFilename}
-        </p>
+        <p className="text-[0.8rem] font-bold text-gray-900 truncate">{resumeFilename}</p>
         <div className="flex items-center gap-1 mt-0.5">
-          <CheckCircle2 size={11} className="text-teal-600" />
-          <span className="text-[0.68rem] font-semibold text-teal-600">Active CV</span>
+          <CheckCircle2 size={11} className="text-primary-dark shrink-0" />
+          <span className="text-[0.68rem] font-semibold text-primary-dark">Active CV</span>
         </div>
       </div>
-      <div className="flex gap-1 flex-shrink-0">
+      <div className="flex gap-1 shrink-0">
         <button type="button" onClick={() => window.open(cvUrl, "_blank")}
-          className="inline-flex items-center gap-1 text-[0.72rem] font-semibold rounded-lg px-2 py-1 text-teal-600 hover:bg-teal-600/10 transition-colors">
-          <ExternalLink size={12} /> View
+          className="inline-flex items-center justify-center size-7 rounded-lg text-primary-dark hover:bg-primary/10 transition-colors cursor-pointer" title="View">
+          <ExternalLink size={13} />
         </button>
         <button type="button" onClick={() => !uploading && inputRef.current?.click()} disabled={uploading}
-          className="inline-flex items-center gap-1 text-[0.72rem] font-semibold rounded-lg px-2 py-1 text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-60">
-          {uploading ? <Spinner size={11} className="border-blue-200 border-t-blue-600" /> : <UploadCloud size={12} />}
-          {uploading ? "Uploading…" : "Update"}
+          className="inline-flex items-center justify-center size-7 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-60 cursor-pointer" title="Update">
+          {uploading ? <Spinner size={11} className="border-blue-200 border-t-blue-600" /> : <UploadCloud size={13} />}
         </button>
         <button type="button" disabled={deleting} onClick={() => setConfirmOpen(true)}
-          className="inline-flex items-center gap-1 text-[0.72rem] font-semibold rounded-lg px-2 py-1 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-60">
-          {deleting ? <Spinner size={11} className="border-red-200 border-t-red-600" /> : <Trash2 size={12} />}
-          {deleting ? "Removing…" : "Delete"}
+          className="inline-flex items-center justify-center size-7 rounded-lg text-red-600 hover:bg-red-50 transition-colors disabled:opacity-60 cursor-pointer" title="Delete">
+          {deleting ? <Spinner size={11} className="border-red-200 border-t-red-600" /> : <Trash2 size={13} />}
         </button>
       </div>
     </div>
   ) : (
     <button type="button" onClick={() => !uploading && inputRef.current?.click()} disabled={uploading}
-      className="inline-flex items-center gap-2 text-[0.8rem] font-semibold rounded-xl px-3 py-2 border border-dashed border-teal-300 text-teal-600 hover:bg-teal-50 transition-colors disabled:opacity-60">
+      className="w-full inline-flex items-center justify-center gap-2 text-[0.8rem] font-semibold rounded-xl px-3 py-2.5 border border-dashed border-primary-border text-primary-dark hover:bg-primary-light transition-colors disabled:opacity-60 cursor-pointer">
       {uploading ? <Spinner size={14} /> : <UploadCloud size={16} />}
       {uploading ? "Uploading…" : "Upload CV"}
     </button>
@@ -125,8 +121,8 @@ const CvSection: React.FC<Props> = ({ resumeFilename, onUpdated, onDeleted, comp
           )}
           {cvPill}
           {uploading && progress > 0 && (
-            <div className="h-1 rounded-full overflow-hidden bg-teal-600/[0.09]">
-              <div className="h-full rounded-full bg-teal-600 transition-[width] duration-300" style={{ width: `${progress}%` }} />
+            <div className="h-1 rounded-full overflow-hidden bg-primary/10">
+              <div className="h-full rounded-full bg-primary transition-[width] duration-300" style={{ width: `${progress}%` }} />
             </div>
           )}
         </div>
@@ -167,7 +163,7 @@ const CvSection: React.FC<Props> = ({ resumeFilename, onUpdated, onDeleted, comp
   /* ── Full mode ── */
   return (
     <div className="flex flex-col gap-4">
-      <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg border-l-[3px] border-l-teal-600">
+      <div className="px-4 py-3 bg-primary-light/50 border border-primary-border rounded-xl border-l-[3px] border-l-primary">
         <p className="text-[0.9rem] font-bold text-gray-900">Resume / CV</p>
         <p className="text-[0.78rem] text-gray-400 mt-1">
           Upload your latest CV. This will be used for all new job applications.
@@ -181,7 +177,7 @@ const CvSection: React.FC<Props> = ({ resumeFilename, onUpdated, onDeleted, comp
         </div>
       )}
 
-      {cvPill}
+      {cvUrl && cvPill}
 
       {/* Upload zone */}
       {fileInput}
@@ -193,23 +189,23 @@ const CvSection: React.FC<Props> = ({ resumeFilename, onUpdated, onDeleted, comp
         onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleFile(e.dataTransfer.files?.[0] ?? null); }}
         className={`border-[1.5px] border-dashed rounded-xl py-5 px-4 flex flex-col items-center gap-2 transition-colors ${
           uploading ? "cursor-default" : "cursor-pointer"
-        } ${isDragging ? "border-teal-600 bg-teal-50" : "border-gray-200 bg-[#FAFAFA] hover:border-teal-600 hover:bg-teal-50"}`}
+        } ${isDragging ? "border-primary bg-primary-light" : "border-border bg-muted/30 hover:border-primary hover:bg-primary-light"}`}
       >
         {uploading ? (
           <Spinner size={24} />
         ) : (
-          <UploadCloud size={28} className={isDragging ? "text-teal-600" : "text-gray-400"} />
+          <UploadCloud size={28} className={isDragging ? "text-primary-dark" : "text-gray-400"} />
         )}
-        <p className={`text-[0.82rem] font-semibold text-center ${isDragging ? "text-teal-600" : "text-gray-700"}`}>
+        <p className={`text-[0.82rem] font-semibold text-center ${isDragging ? "text-primary-dark" : "text-gray-700"}`}>
           {uploading ? "Uploading & analysing…" : isDragging ? "Drop your CV here" : cvUrl ? "Upload a new CV" : "Upload your CV"}
         </p>
         <p className="text-[0.72rem] text-gray-400">PDF, DOC, DOCX · Max 5 MB</p>
       </div>
 
       {uploading && progress > 0 && (
-        <div className="h-1 rounded-full overflow-hidden bg-teal-600/[0.09]">
+        <div className="h-1 rounded-full overflow-hidden bg-primary/10">
           <div
-            className="h-full rounded-full bg-teal-600 transition-[width] duration-300"
+            className="h-full rounded-full bg-primary transition-[width] duration-300"
             style={{ width: `${progress}%` }}
           />
         </div>

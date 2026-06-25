@@ -1,46 +1,83 @@
-// 🔽 same imports as before (unchanged)
 import React, { useEffect, useState } from "react";
-import {
-  Autocomplete,
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControl,
-  FormControlLabel,
-  FormLabel,
-  IconButton,
-  Radio,
-  RadioGroup,
-  TextField,
-  Typography,
-} from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
+import { Brain, Code2, ChevronLeft } from "lucide-react";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
+import { cn } from "@/lib/utils";
 import { RootState } from "@/store/store";
+import { skillCategories, softSkills } from "@/modules/shared/skills";
 import {
-  skillCategories,
-  softSkills,
-} from "@/modules/shared/skills";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/modules/shared/ui/shadcn/dialog";
+import { RadioGroup, RadioGroupItem } from "@/modules/shared/ui/shadcn/radio-group";
+import { Label } from "@/modules/shared/ui/shadcn/label";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SelectGroup,
+  SelectLabel,
+} from "@/modules/shared/ui/shadcn/select";
 
-const languages = [{ value: "English", label: "English" }];
+const LANGUAGES = [{ value: "English", label: "English" }];
+
+// ─── Skill type card ──────────────────────────────────────────────────────────
+
+interface SkillCardProps {
+  value: string;
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  selected: boolean;
+}
+
+const SkillCard: React.FC<SkillCardProps> = ({ value, icon, title, description, selected }) => (
+  <Label
+    htmlFor={value}
+    className={cn(
+      "flex cursor-pointer items-start gap-3.5 rounded-2xl border p-4 transition-all duration-150",
+      selected
+        ? "border-secondary-dark/40 bg-secondary-dark/5 shadow-sm"
+        : "border-border bg-card hover:border-secondary-dark/20 hover:bg-secondary-dark/[0.02]",
+    )}
+  >
+    <RadioGroupItem id={value} value={value} className="mt-0.5 shrink-0 border-secondary-dark text-secondary-dark" />
+    <span className={cn(
+      "flex size-9 shrink-0 items-center justify-center rounded-xl border transition-colors",
+      selected ? "border-secondary-dark/30 bg-secondary-dark/10" : "border-border bg-muted",
+    )}>
+      {React.cloneElement(icon as React.ReactElement, {
+        className: cn("size-[18px]", selected ? "text-secondary-dark" : "text-muted-foreground"),
+      })}
+    </span>
+    <span className="flex flex-col gap-0.5">
+      <span className={cn("text-sm font-semibold leading-tight", selected ? "text-secondary-dark" : "text-foreground")}>
+        {title}
+      </span>
+      <span className="text-xs text-muted-foreground leading-snug">{description}</span>
+    </span>
+  </Label>
+);
+
+// ─── Main modal ───────────────────────────────────────────────────────────────
 
 const AssessmentModal = ({ type, open, onClose }: any) => {
-  const router = useRouter();
-  const profile = useSelector(
-    (state: RootState) => state.user.connectedUser.profile
-  );
+  const router  = useRouter();
+  const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
 
-  const [step, setStep] = useState<number>(1);
-  const [skillType, setSkillType] = useState<"soft" | "technical" | "">("");
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedSkill, setSelectedSkill] = useState("");
-  const [softSkillType, setSoftSkillType] = useState("");
-  const [softSkillLanguage, setSoftSkillLanguage] = useState("");
-  const [softSkillSubcategory, setSoftSkillSubcategory] = useState("");
+  const [step,                setStep]                = useState(1);
+  const [skillType,           setSkillType]           = useState<"soft" | "technical" | "">("");
+  const [selectedCategory,    setSelectedCategory]    = useState("");
+  const [selectedSkill,       setSelectedSkill]       = useState("");
+  const [softSkillType,       setSoftSkillType]       = useState("");
+  const [softSkillLanguage,   setSoftSkillLanguage]   = useState("");
+  const [softSkillSubcategory,setSoftSkillSubcategory]= useState("");
 
   useEffect(() => {
     if (open) {
@@ -49,38 +86,13 @@ const AssessmentModal = ({ type, open, onClose }: any) => {
     }
   }, [open, type]);
 
-  /* ---------------- Validation ---------------- */
   const isStep1Invalid = !skillType;
-
   const isStep2Invalid =
     (skillType === "technical" && (!selectedCategory || !selectedSkill)) ||
     (skillType === "soft" &&
       (!softSkillType ||
         (softSkillType === "Communication" && !softSkillLanguage) ||
         (softSkillType !== "Communication" && !softSkillSubcategory)));
-
-  /* ---------------- Submit ---------------- */
-  const handleSubmit = () => {
-    const query =
-      skillType === "technical"
-        ? {
-            type: "technical",
-            role: selectedSkill,
-            proficiency: "Mid Level",
-          }
-        : {
-            type: "soft",
-            skill: softSkillType,
-            category:
-              softSkillType === "Communication"
-                ? softSkillLanguage
-                : softSkillSubcategory,
-            proficiency: "3",
-          };
-
-    handleClose();
-    router.push(`/candidate/interview?${new URLSearchParams(query)}`);
-  };
 
   const handleClose = () => {
     onClose();
@@ -93,277 +105,229 @@ const AssessmentModal = ({ type, open, onClose }: any) => {
     setSoftSkillSubcategory("");
   };
 
+  const handleSubmit = () => {
+    const query =
+      skillType === "technical"
+        ? { type: "technical", role: selectedSkill, proficiency: "Mid Level" }
+        : {
+            type:       "soft",
+            skill:      softSkillType,
+            category:   softSkillType === "Communication" ? softSkillLanguage : softSkillSubcategory,
+            proficiency: "3",
+          };
+    handleClose();
+    router.push(`/candidate/interview?${new URLSearchParams(query)}`);
+  };
+
+  const availableSkills = selectedCategory
+    ? (skillCategories[selectedCategory] ?? []).filter(
+        (s) => !profile?.skills?.some((p) => p.name === s),
+      )
+    : [];
+
+  const subcategories = softSkillType !== "Communication"
+    ? (softSkills.find((s) => s.name === softSkillType)?.subcategories ?? [])
+    : [];
+
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ borderBottom: "1px solid rgba(227, 229, 233, 1)" }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography
-            sx={{
-              fontFamily: "Poppins",
-              fontWeight: 600,
-              fontSize: "20px",
-              m: 0,
-              color: "rgba(131, 16, 255, 1)",
-            }}
-          >
+    <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
+      <DialogContent className="sm:max-w-md gap-0 p-0 overflow-hidden rounded-2xl">
+
+        {/* Header */}
+        <DialogHeader className="px-6 pt-5 pb-4">
+          <DialogTitle className="text-base font-bold text-secondary-dark">
             Start New Test
-          </Typography>
-          <IconButton onClick={handleClose}>
-            <CloseIcon />
-          </IconButton>
-        </Box>
-      </DialogTitle>
+          </DialogTitle>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {step === 1 ? "Choose what you want to practice" : "Configure your assessment"}
+          </p>
+        </DialogHeader>
 
-      <DialogContent sx={{ mt: 2, pb: 0 }}>
-        {/* STEP 1 */}
-        {step === 1 && (
-          <FormControl fullWidth>
-            <FormLabel>
-              <Typography
-                sx={{
-                  mb: 1,
-                  fontFamily: "Poppins",
-                  fontWeight: 400,
-                  fontStyle: "normal",
-                  fontSize: "16px",
-                  lineHeight: "34px",
-                  letterSpacing: "0px",
-                  verticalAlign: "middle",
-                  color: "rgba(0, 0, 0, 1)",
-                }}
-              >
+        {/* Body */}
+        <div className="px-6 py-5 flex flex-col gap-4 min-h-[220px]">
+
+          {/* STEP 1 — skill type */}
+          {step === 1 && (
+            <div className="flex flex-col gap-2">
+              <p className="text-sm font-medium text-foreground mb-1">
                 Which skill do you want to master today?
-              </Typography>
-            </FormLabel>
-            <RadioGroup
-              value={skillType}
-              onChange={(e) =>
-                setSkillType(e.target.value as "soft" | "technical")
-              }
-            >
-              <FormControlLabel
-                value="technical"
-                control={
-                  <Radio
-                    sx={{
-                      color: "rgba(228, 229, 232, 1)",
-                      "&.Mui-checked": {
-                        color: "rgba(131, 16, 255, 1)",
-                      },
-                    }}
-                  />
-                }
-                label="Technical Skills (Coding, Tools, & Knowledge)"
-              />
-              <FormControlLabel
-                value="soft"
-                control={
-                  <Radio
-                    sx={{
-                      color: "rgba(228, 229, 232, 1)",
-                      "&.Mui-checked": {
-                        color: "rgba(131, 16, 255, 1)",
-                      },
-                    }}
-                  />
-                }
-                label="Soft Skills (Communication, Leadership, & More)"
-              />
-            </RadioGroup>
-          </FormControl>
-        )}
-
-        {/* STEP 2 */}
-        {step === 2 && skillType === "technical" && (
-          <>
-            <Typography
-              sx={{
-                mb: 1,
-                fontFamily: "Poppins",
-                fontWeight: 400,
-                fontStyle: "normal",
-                fontSize: "16px",
-                lineHeight: "34px",
-                letterSpacing: "0px",
-                verticalAlign: "middle",
-                color: "rgba(0, 0, 0, 1)",
-              }}
-            >
-              Pick a skill category to get started
-            </Typography>
-            <Autocomplete
-              fullWidth
-              options={Object.keys(skillCategories)}
-              value={selectedCategory || null}
-              onChange={(_, v) => {
-                setSelectedCategory(v || "");
-                setSelectedSkill("");
-              }}
-              renderInput={(params) => <TextField {...params} />}
-            />
-
-            {selectedCategory && (
-              <>
-                <Typography
-                  sx={{
-                    mt: 2,
-                    mb: 1,
-                    fontFamily: "Poppins",
-                    fontWeight: 400,
-                    fontStyle: "normal",
-                    fontSize: "16px",
-                    lineHeight: "34px",
-                    letterSpacing: "0px",
-                    verticalAlign: "middle",
-                    color: "rgba(0, 0, 0, 1)",
-                  }}
-                >
-                  Which technical skill would you like to shine at?
-                </Typography>
-                <Autocomplete
-                  fullWidth
-                  options={
-                    skillCategories[selectedCategory]?.filter(
-                      (s) => !profile?.skills?.some((p) => p.name === s)
-                    ) || []
-                  }
-                  value={selectedSkill}
-                  onChange={(_, v) => setSelectedSkill(v || "")}
-                  renderInput={(params) => <TextField {...params} />}
+              </p>
+              <RadioGroup
+                value={skillType}
+                onValueChange={(v) => setSkillType(v as "soft" | "technical")}
+                className="gap-2.5"
+              >
+                <SkillCard
+                  value="technical"
+                  icon={<Code2 />}
+                  title="Technical Skills"
+                  description="Coding, tools & domain knowledge"
+                  selected={skillType === "technical"}
                 />
-              </>
-            )}
-          </>
-        )}
+                <SkillCard
+                  value="soft"
+                  icon={<Brain />}
+                  title="Soft Skills"
+                  description="Communication, leadership & more"
+                  selected={skillType === "soft"}
+                />
+              </RadioGroup>
+            </div>
+          )}
 
-        {step === 2 && skillType === "soft" && (
-          <>
-            <Typography
-              sx={{
-                mb: 1,
-                fontFamily: "Poppins",
-                fontWeight: 400,
-                fontStyle: "normal",
-                fontSize: "16px",
-                lineHeight: "34px",
-                letterSpacing: "0px",
-                verticalAlign: "middle",
-                color: "rgba(0, 0, 0, 1)",
-              }}
+          {/* STEP 2 — technical */}
+          {step === 2 && skillType === "technical" && (
+            <div className="flex flex-col gap-3.5">
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Skill category
+                </Label>
+                <Select
+                  value={selectedCategory || undefined}
+                  onValueChange={(v) => { setSelectedCategory(v); setSelectedSkill(""); }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pick a category…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.keys(skillCategories).map((cat) => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {selectedCategory && (
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    Specific skill
+                  </Label>
+                  <Select
+                    value={selectedSkill || undefined}
+                    onValueChange={setSelectedSkill}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pick a skill…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableSkills.length > 0
+                        ? availableSkills.map((s) => (
+                            <SelectItem key={s} value={s}>{s}</SelectItem>
+                          ))
+                        : <SelectGroup>
+                            <SelectLabel>No new skills to add</SelectLabel>
+                          </SelectGroup>
+                      }
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* STEP 2 — soft */}
+          {step === 2 && skillType === "soft" && (
+            <div className="flex flex-col gap-3.5">
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Soft skill
+                </Label>
+                <Select
+                  value={softSkillType || undefined}
+                  onValueChange={(v) => { setSoftSkillType(v); setSoftSkillLanguage(""); setSoftSkillSubcategory(""); }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pick a soft skill…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {softSkills.map((s) => (
+                      <SelectItem key={s.name} value={s.name}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {softSkillType === "Communication" && (
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    Language
+                  </Label>
+                  <Select
+                    value={softSkillLanguage || undefined}
+                    onValueChange={setSoftSkillLanguage}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pick a language…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LANGUAGES.map((l) => (
+                        <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {softSkillType && softSkillType !== "Communication" && (
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    Subcategory
+                  </Label>
+                  <Select
+                    value={softSkillSubcategory || undefined}
+                    onValueChange={setSoftSkillSubcategory}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pick a subcategory…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subcategories.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <DialogFooter className="px-6 py-4 border-t border-border bg-muted/30">
+          {step > 1 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setStep(step - 1)}
+              className="gap-1.5 text-secondary-dark hover:bg-secondary-dark/8 hover:text-secondary-dark mr-auto"
             >
-              Which soft skill would you like to shine at?
-            </Typography>
-            <Autocomplete
-              fullWidth
-              options={softSkills}
-              getOptionLabel={(o) => o.name}
-              value={softSkills.find((s) => s.name === softSkillType) || null}
-              onChange={(_, v) => setSoftSkillType(v?.name || "")}
-              renderInput={(params) => <TextField {...params} />}
-            />
+              <ChevronLeft className="size-4" />
+              Back
+            </Button>
+          )}
 
-            {softSkillType === "Communication" && (
-              <Autocomplete
-                fullWidth
-                sx={{ mt: 2 }}
-                options={languages}
-                getOptionLabel={(o) => o.label}
-                onChange={(_, v) => setSoftSkillLanguage(v?.value || "")}
-                renderInput={(params) => <TextField {...params} />}
-              />
-            )}
+          {step === 1 && (
+            <Button
+              disabled={isStep1Invalid}
+              onClick={() => setStep(2)}
+              className="min-w-28 rounded-full bg-secondary-dark hover:bg-secondary-dark/90 text-white cursor-pointer disabled:opacity-40"
+            >
+              Next
+            </Button>
+          )}
 
-            {softSkillType && softSkillType !== "Communication" && (
-              <Autocomplete
-                fullWidth
-                sx={{ mt: 2 }}
-                options={
-                  softSkills.find((s) => s.name === softSkillType)
-                    ?.subcategories || []
-                }
-                getOptionLabel={(o) => o.label}
-                onChange={(_, v) => setSoftSkillSubcategory(v?.value || "")}
-                renderInput={(params) => <TextField {...params} />}
-              />
-            )}
-          </>
-        )}
+          {step === 2 && (
+            <Button
+              disabled={isStep2Invalid}
+              onClick={handleSubmit}
+              className="min-w-28 rounded-full bg-secondary-dark hover:bg-secondary-dark/90 text-white cursor-pointer disabled:opacity-40"
+            >
+              Start Test
+            </Button>
+          )}
+        </DialogFooter>
 
       </DialogContent>
-
-      <DialogActions sx={{ p: 3 }}>
-        {step > 1 && (
-          <Button
-            sx={{
-              backgroundColor: "white",
-              color: "rgba(131, 16, 255, 1)",
-              textTransform: "none",
-              "&:hover": {
-                color: "rgba(131, 16, 255, 0.5)",
-              },
-              "&:disabled": {
-                color: "rgba(0, 0, 0, 0.26)",
-                border: "none",
-              },
-            }}
-            onClick={() => setStep(step - 1)}
-          >
-            Back
-          </Button>
-        )}
-        {step === 1 && (
-          <Button
-            variant="contained"
-            disabled={isStep1Invalid}
-            onClick={() => setStep(2)}
-            sx={{
-              height: 42,
-              backgroundColor: "rgba(131, 16, 255, 1)",
-              color: "white",
-              minWidth: "130px",
-              borderRadius: "38px",
-              textTransform: "none",
-              "&:hover": {
-                boxShadow: "0 4px 14px rgba(0,0,0,0.02)",
-                backgroundColor: "rgba(131, 16, 255, 0.5)",
-              },
-              "&:disabled": {
-                backgroundColor: "rgba(0, 0, 0, 0.12)",
-                color: "rgba(0, 0, 0, 0.26)",
-                border: "none",
-              },
-            }}
-          >
-            Next
-          </Button>
-        )}
-        {step === 2 && (
-          <Button
-            variant="contained"
-            disabled={isStep2Invalid}
-            onClick={handleSubmit}
-            sx={{
-              height: 42,
-              backgroundColor: "rgba(131, 16, 255, 1)",
-              color: "white",
-              minWidth: "130px",
-              borderRadius: "38px",
-              textTransform: "none",
-              "&:hover": {
-                boxShadow: "0 4px 14px rgba(0,0,0,0.02)",
-                backgroundColor: "rgba(131, 16, 255, 0.5)",
-              },
-              "&:disabled": {
-                backgroundColor: "rgba(0, 0, 0, 0.12)",
-                color: "rgba(0, 0, 0, 0.26)",
-                border: "none",
-              },
-            }}
-          >
-            Start Test
-          </Button>
-        )}
-      </DialogActions>
     </Dialog>
   );
 };

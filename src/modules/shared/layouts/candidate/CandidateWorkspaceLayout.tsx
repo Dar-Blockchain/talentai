@@ -43,13 +43,13 @@ const CandidateWorkspaceLayout: React.FC<CandidateWorkspaceLayoutProps> = ({
             "px-4 sm:px-6 md:px-8 pb-6 pt-2 sm:pt-3 grid gap-5 items-start",
             fillHeight && "h-full",
             leftPanel
-              ? "grid-cols-1 md:grid-cols-[240px_1fr_240px]"
-              : "grid-cols-1 md:grid-cols-[1fr_240px]"
+              ? "grid-cols-1 lg:grid-cols-[240px_1fr_240px]"
+              : "grid-cols-1 lg:grid-cols-[1fr_240px]"
           )}
         >
           {/* Left panel (injected per-page, e.g. profile sidebar on dashboard) */}
           {leftPanel && (
-            <aside className="hidden md:flex flex-col gap-4 sticky top-4 max-h-[calc(100vh-96px)] overflow-y-auto custom-scrollbar">
+            <aside className="hidden lg:flex flex-col gap-4 sticky top-4 max-h-[calc(100vh-96px)] overflow-y-auto custom-scrollbar">
               {leftPanel}
             </aside>
           )}
@@ -65,7 +65,7 @@ const CandidateWorkspaceLayout: React.FC<CandidateWorkspaceLayoutProps> = ({
           </div>
 
           {/* Right panel: custom or QuickNav — desktop only */}
-          <aside className="hidden md:flex flex-col gap-4 sticky top-4 max-h-[calc(100vh-96px)] overflow-y-auto custom-scrollbar">
+          <aside className="hidden lg:flex flex-col gap-4 sticky top-4 max-h-[calc(100vh-96px)] overflow-y-auto custom-scrollbar">
             {rightPanel ?? <CandidateQuickNav />}
           </aside>
         </div>

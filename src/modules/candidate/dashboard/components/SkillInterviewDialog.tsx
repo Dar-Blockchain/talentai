@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
-import { Code2, Search, ArrowRight } from "lucide-react";
+import { Code2, Search, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { buildInterviewUrl } from "@/lib/interviewSession";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Input } from "@/modules/shared/ui/shadcn/input";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/modules/shared/ui/shadcn/dialog";
 
 const POPULAR_SKILLS = ["React", "TypeScript", "Python", "Node.js", "Java", "SQL", "Docker", "AWS"];
@@ -33,82 +33,91 @@ const SkillInterviewDialog: React.FC<Props> = ({ open, onOpenChange }) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm p-0 overflow-hidden gap-0">
+      <DialogContent className="max-w-sm gap-0 p-0 overflow-hidden rounded-2xl">
 
-        <div className="px-5 pt-5 pb-4 bg-gradient-to-br from-gray-900 to-primary-dark">
-          <DialogHeader>
-            <div className="flex items-center gap-3 mb-1">
-              <div className="size-9 rounded-xl bg-primary-dark/30 border border-primary/30 flex items-center justify-center">
-                <Code2 className="size-4 text-white" />
-              </div>
-              <div>
-                <DialogTitle className="text-white text-[1rem]">
-                  {t("candidate.skill_dialog.title")}
-                </DialogTitle>
-                <p className="text-[0.7rem] text-white/60 mt-0.5">
-                  {t("candidate.skill_dialog.subtitle")}
-                </p>
-              </div>
+        {/* Header */}
+        <DialogHeader className="px-6 pt-6 pb-5">
+          <div className="flex items-center gap-3.5">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/15 border border-primary/25">
+              <Code2 className="size-[18px] text-primary-dark" />
             </div>
-          </DialogHeader>
-        </div>
+            <div>
+              <DialogTitle className="text-[0.95rem] font-bold text-foreground leading-tight">
+                {t("candidate.skill_dialog.title")}
+              </DialogTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {t("candidate.skill_dialog.subtitle")}
+              </p>
+            </div>
+          </div>
+        </DialogHeader>
 
-        <div className="px-5 pt-4 pb-2">
-          <p className="text-[0.75rem] font-semibold text-gray-600 mb-1.5">
-            {t("candidate.skill_dialog.input_label")}
-          </p>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-gray-400 pointer-events-none" />
-            <Input
-              autoFocus
-              value={skillInput}
-              onChange={(e) => setSkillInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleStart()}
-              placeholder={t("candidate.skill_dialog.placeholder")}
-              className="pl-8 h-9 text-[0.85rem] focus-visible:ring-primary-dark/20 focus-visible:border-primary-dark/50"
-            />
+        {/* Body */}
+        <div className="px-6 pb-6 flex flex-col gap-4">
+
+          {/* Search input */}
+          <div className="flex flex-col gap-1.5">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              {t("candidate.skill_dialog.input_label")}
+            </p>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground/60 pointer-events-none" />
+              <Input
+                autoFocus
+                value={skillInput}
+                onChange={(e) => setSkillInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleStart()}
+                placeholder={t("candidate.skill_dialog.placeholder")}
+                className="pl-8 h-10 text-sm focus-visible:ring-primary/20 focus-visible:border-primary/50"
+              />
+            </div>
           </div>
 
-          <p className="text-[0.68rem] font-semibold text-gray-400 mt-3 mb-2">
-            {t("candidate.skill_dialog.popular_label")}
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {POPULAR_SKILLS.map((skill) => (
-              <button
-                key={skill}
-                onClick={() => setSkillInput(skill)}
-                className={cn(
-                  "px-2.5 py-1 rounded-lg border text-[0.68rem] font-semibold transition-all duration-150",
-                  skillInput === skill
-                    ? "bg-primary-dark/10 border-primary-dark/25 text-primary-dark"
-                    : "bg-gray-50 border-gray-200 text-gray-500 hover:border-primary-dark/30 hover:text-primary-dark",
-                )}
-              >
-                {skill}
-              </button>
-            ))}
+          {/* Popular skills */}
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              {t("candidate.skill_dialog.popular_label")}
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {POPULAR_SKILLS.map((skill) => (
+                <button
+                  key={skill}
+                  onClick={() => setSkillInput(skill)}
+                  className={cn(
+                    "px-2.5 py-1 rounded-lg border text-xs font-semibold transition-all duration-150 cursor-pointer",
+                    skillInput === skill
+                      ? "bg-primary/10 border-primary/30 text-primary-dark"
+                      : "bg-muted border-border text-muted-foreground hover:border-primary/25 hover:text-primary-dark hover:bg-primary/5",
+                  )}
+                >
+                  {skill}
+                </button>
+              ))}
+            </div>
           </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-between pt-1 gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onOpenChange(false)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              {t("candidate.skill_dialog.cancel")}
+            </Button>
+            <Button
+              size="sm"
+              disabled={!skillInput.trim()}
+              onClick={handleStart}
+              className="gap-1.5 rounded-full px-5 bg-primary-dark hover:bg-primary-dark/90 text-white cursor-pointer disabled:opacity-40"
+            >
+              <Sparkles className="size-3.5" />
+              {t("candidate.skill_dialog.start")}
+            </Button>
+          </div>
+
         </div>
-
-        <DialogFooter className="px-5 pb-5 pt-3 gap-2">
-          <Button
-            variant="ghost" size="sm"
-            onClick={() => onOpenChange(false)}
-            className="text-gray-500"
-          >
-            {t("candidate.skill_dialog.cancel")}
-          </Button>
-          <Button
-            size="sm"
-            disabled={!skillInput.trim()}
-            onClick={handleStart}
-            className="gap-1.5"
-          >
-            {t("candidate.skill_dialog.start")}
-            <ArrowRight className="size-3.5" />
-          </Button>
-        </DialogFooter>
-
       </DialogContent>
     </Dialog>
   );
