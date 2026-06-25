@@ -355,6 +355,30 @@ module.exports.getApplicationsByCandidate = async (profileId, filters = {}, page
       query.post = { $in: postMatches.map((p) => p._id) };
     }
 
+    if (filters.scoreMin !== undefined || filters.scoreMax !== undefined) {
+      query.matchScore = {};
+      if (filters.scoreMin !== undefined) query.matchScore.$gte = Number(filters.scoreMin);
+      if (filters.scoreMax !== undefined) query.matchScore.$lte = Number(filters.scoreMax);
+    }
+
+    if (filters.dateFrom || filters.dateTo) {
+      query.appliedAt = {};
+      if (filters.dateFrom) query.appliedAt.$gte = new Date(filters.dateFrom);
+      if (filters.dateTo) {
+        const to = new Date(filters.dateTo);
+        to.setHours(23, 59, 59, 999);
+        query.appliedAt.$lte = to;
+      }
+    }
+
+    const SORT_MAP = {
+      date_desc:  { appliedAt: -1 },
+      date_asc:   { appliedAt:  1 },
+      score_desc: { matchScore: -1, appliedAt: -1 },
+      score_asc:  { matchScore:  1, appliedAt: -1 },
+    };
+    const sortOrder = SORT_MAP[filters.sortBy] || SORT_MAP.date_desc;
+
     const skip = (page - 1) * limit;
     const totalCount = await JobApplication.countDocuments(query);
     const totalPages = Math.ceil(totalCount / limit);
@@ -364,7 +388,7 @@ module.exports.getApplicationsByCandidate = async (profileId, filters = {}, page
       .populate("company", "-notifications")
       .populate("cvAnalysis")
       .populate("interviewAssessment")
-      .sort({ appliedAt: -1 })
+      .sort(sortOrder)
       .skip(skip)
       .limit(limit);
 

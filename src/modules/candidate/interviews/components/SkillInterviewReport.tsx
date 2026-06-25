@@ -1,6 +1,4 @@
-import dynamic from 'next/dynamic';
-import { useRouter } from 'next/router';
-import { useEffect } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Download, CheckCircle2, Circle, Code2, Brain, Clock,
@@ -8,14 +6,8 @@ import {
   ThumbsUp, ThumbsDown, Wrench, User, MessageSquare,
   Sparkles, Target, BarChart3, ChevronRight,
 } from 'lucide-react';
-import CandidateWorkspaceLayout from '@/modules/shared/layouts/candidate/CandidateWorkspaceLayout';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch } from '@/store/store';
-import {
-  fetchInterviewReport, selectInterviewReport,
-  selectInterviewReportLoading, selectInterviewReportError, clearReport,
-} from '@/store/slices/interviewSlice';
 import { cn } from '@/lib/utils';
+import { useInterviewReportQuery } from '../queries/useInterviewsQuery';
 
 // ── Color helpers ─────────────────────────────────────────────────────────────
 const scoreColor  = (s: number) => s >= 80 ? '#10b981' : s >= 60 ? '#6366f1' : s >= 40 ? '#f59e0b' : '#ef4444';
@@ -23,13 +15,13 @@ const scoreBg     = (s: number) => s >= 80 ? 'rgba(16,185,129,0.10)' : s >= 60 ?
 const scoreBorder = (s: number) => s >= 80 ? 'rgba(16,185,129,0.25)' : s >= 60 ? 'rgba(99,102,241,0.25)' : s >= 40 ? 'rgba(245,158,11,0.25)' : 'rgba(239,68,68,0.25)';
 const scoreGlow   = (s: number) => s >= 80 ? 'rgba(16,185,129,0.20)' : s >= 60 ? 'rgba(99,102,241,0.20)' : s >= 40 ? 'rgba(245,158,11,0.20)' : 'rgba(239,68,68,0.20)';
 
-const areaLabel  = (key: string) => key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+const areaLabel   = (key: string) => key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 const fmtDuration = (ms: number) => {
   const t = Math.floor(ms / 1000), m = Math.floor(t / 60), s = t % 60;
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
 };
 
-// ── Tiny Badge ────────────────────────────────────────────────────────────────
+// ── Sub-components ────────────────────────────────────────────────────────────
 const Badge = ({ label, icon, color, bg, border, className }: {
   label: string; icon?: React.ReactNode; color?: string; bg?: string; border?: string; className?: string;
 }) => (
@@ -41,7 +33,6 @@ const Badge = ({ label, icon, color, bg, border, className }: {
   </span>
 );
 
-// ── Score Ring ────────────────────────────────────────────────────────────────
 const ScoreRing = ({ score, size = 130 }: { score: number; size?: number }) => {
   const r = size / 2 - 10;
   const circ = 2 * Math.PI * r;
@@ -66,7 +57,6 @@ const ScoreRing = ({ score, size = 130 }: { score: number; size?: number }) => {
   );
 };
 
-// ── Progress Bar ──────────────────────────────────────────────────────────────
 const ProgressBar = ({ value, color, height = 8 }: { value: number; color: string; height?: number }) => (
   <div className="w-full rounded-full overflow-hidden" style={{ height, backgroundColor: `${color}18` }}>
     <div className="h-full rounded-full transition-all duration-700"
@@ -74,7 +64,6 @@ const ProgressBar = ({ value, color, height = 8 }: { value: number; color: strin
   </div>
 );
 
-// ── Section Header ────────────────────────────────────────────────────────────
 const SectionHeader = ({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) => (
   <div className="flex items-center gap-2.5 mb-5 pb-3 border-b border-gray-100">
     <div className="w-7 h-7 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
@@ -84,24 +73,12 @@ const SectionHeader = ({ icon, children }: { icon: React.ReactNode; children: Re
   </div>
 );
 
-// ── Main ──────────────────────────────────────────────────────────────────────
-function SkillInterviewReportPage() {
-  const router   = useRouter();
-  const dispatch = useDispatch<AppDispatch>();
-  const { t }   = useTranslation('modules/interview/skill-interview');
-  const { id }  = router.query;
+// ── Main component ────────────────────────────────────────────────────────────
+export default function SkillInterviewReport({ interviewId }: { interviewId: string }) {
+  const { t } = useTranslation('modules/interview/skill-interview');
+  const { data, isLoading, error } = useInterviewReportQuery(interviewId);
 
-  const data    = useSelector(selectInterviewReport);
-  const loading = useSelector(selectInterviewReportLoading);
-  const error   = useSelector(selectInterviewReportError);
-
-  useEffect(() => {
-    if (!id) return;
-    dispatch(fetchInterviewReport(id as string));
-    return () => { dispatch(clearReport()); };
-  }, [id, dispatch]);
-
-  const fr       = data?.interviewData?.finalReport;
+  const fr        = data?.interviewData?.finalReport;
   const analytics = data?.interviewData?.analytics;
   const coverage  = fr?.coverage;
   const overall   = coverage?.overall ?? 0;
@@ -115,7 +92,7 @@ function SkillInterviewReportPage() {
               t('report.score_labels.needs_work');
 
   return (
-    <CandidateWorkspaceLayout breadcrumb="Skill Interview Report">
+    <>
       <style jsx global>{`
         @media print {
           body * { visibility: hidden !important; }
@@ -127,7 +104,7 @@ function SkillInterviewReportPage() {
       <div id="skill-report" className="max-w-4xl mx-auto">
 
         {/* ── Loading ── */}
-        {loading && (
+        {isLoading && (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
             <div className="w-12 h-12 rounded-full border-4 border-indigo-100 border-t-indigo-500 animate-spin" />
             <p className="text-sm text-gray-400 font-medium">Loading your report…</p>
@@ -135,33 +112,31 @@ function SkillInterviewReportPage() {
         )}
 
         {/* ── Error ── */}
-        {error && !loading && (
+        {error && !isLoading && (
           <div className="flex items-start gap-3 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-sm">
-            ⚠️ {error}
+            ⚠️ {(error as Error).message}
           </div>
         )}
 
         {/* ── No data ── */}
-        {!data && !loading && !error && (
+        {!data && !isLoading && !error && (
           <div className="flex items-start gap-3 p-4 rounded-2xl bg-blue-50 border border-blue-200 text-blue-700 text-sm">
             ℹ️ {t('report.no_report')}
           </div>
         )}
 
-        {data && !loading && (
+        {data && !isLoading && (
           <>
             {/* ══ HERO ══════════════════════════════════════════════════════ */}
             <div className="relative rounded-3xl overflow-hidden mb-4 shadow-lg"
               style={{ background: `linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)` }}>
 
-              {/* Decorative blobs */}
               <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full opacity-20"
                 style={{ background: `radial-gradient(circle, ${color} 0%, transparent 70%)` }} />
               <div className="absolute -bottom-12 -left-12 w-48 h-48 rounded-full opacity-10"
                 style={{ background: `radial-gradient(circle, #818cf8 0%, transparent 70%)` }} />
 
               <div className="relative z-10 p-7 md:p-10">
-                {/* Top row: title + download */}
                 <div className="flex items-start justify-between gap-4 mb-8">
                   <div>
                     <div className="flex items-center gap-2 mb-2">
@@ -186,9 +161,7 @@ function SkillInterviewReportPage() {
                   </button>
                 </div>
 
-                {/* Score + summary */}
                 <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
-                  {/* Ring */}
                   <div className="flex flex-col items-center gap-3">
                     <div className="p-3 rounded-2xl" style={{ background: scoreGlow(overall) }}>
                       <ScoreRing score={overall} size={140} />
@@ -198,12 +171,9 @@ function SkillInterviewReportPage() {
                       className="text-[0.78rem] px-3 py-1.5" />
                   </div>
 
-                  {/* Meta */}
                   <div className="flex-1 flex flex-col gap-4">
                     {fr?.summary && (
-                      <p className="text-white/70 text-[0.88rem] leading-relaxed max-w-lg">
-                        {fr.summary}
-                      </p>
+                      <p className="text-white/70 text-[0.88rem] leading-relaxed max-w-lg">{fr.summary}</p>
                     )}
                     <div className="flex flex-wrap gap-2">
                       {data.proficiency && (
@@ -211,8 +181,6 @@ function SkillInterviewReportPage() {
                           color="#fbbf24" bg="rgba(251,191,36,0.15)" border="rgba(251,191,36,0.3)" />
                       )}
                     </div>
-
-                    {/* Stat cards row */}
                     {analytics && (
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
                         {analytics.duration != null && (
@@ -344,9 +312,7 @@ function SkillInterviewReportPage() {
                       </div>
                       <div className="flex flex-wrap gap-1.5">
                         {fr.aiAnalysis.strongestAreas.map((area: string, i: number) => (
-                          <span key={i} className="px-2 py-0.5 rounded-full text-[0.7rem] font-semibold bg-white text-emerald-600 border border-emerald-200">
-                            {areaLabel(area)}
-                          </span>
+                          <span key={i} className="px-2 py-0.5 rounded-full text-[0.7rem] font-semibold bg-white text-emerald-600 border border-emerald-200">{areaLabel(area)}</span>
                         ))}
                       </div>
                     </div>
@@ -359,9 +325,7 @@ function SkillInterviewReportPage() {
                       </div>
                       <div className="flex flex-wrap gap-1.5">
                         {fr.aiAnalysis.weakestAreas.map((area: string, i: number) => (
-                          <span key={i} className="px-2 py-0.5 rounded-full text-[0.7rem] font-semibold bg-white text-red-500 border border-red-200">
-                            {areaLabel(area)}
-                          </span>
+                          <span key={i} className="px-2 py-0.5 rounded-full text-[0.7rem] font-semibold bg-white text-red-500 border border-red-200">{areaLabel(area)}</span>
                         ))}
                       </div>
                     </div>
@@ -374,9 +338,7 @@ function SkillInterviewReportPage() {
                       </div>
                       <div className="flex flex-wrap gap-1.5">
                         {fr.aiAnalysis.recommendedFocus.map((area: string, i: number) => (
-                          <span key={i} className="px-2 py-0.5 rounded-full text-[0.7rem] font-semibold bg-white text-indigo-500 border border-indigo-200">
-                            {areaLabel(area)}
-                          </span>
+                          <span key={i} className="px-2 py-0.5 rounded-full text-[0.7rem] font-semibold bg-white text-indigo-500 border border-indigo-200">{areaLabel(area)}</span>
                         ))}
                       </div>
                     </div>
@@ -524,7 +486,7 @@ function SkillInterviewReportPage() {
                         </div>
                       )}
                       {(turn.evaluation?.qualityScore != null || turn.targetArea) && (
-                        <div className="flex gap-1.5 px-4 pb-3 pl-13 flex-wrap">
+                        <div className="flex gap-1.5 px-4 pb-3 flex-wrap">
                           {turn.targetArea && (
                             <Badge label={areaLabel(turn.targetArea)}
                               color="#6366f1" bg="rgba(99,102,241,0.08)" border="rgba(99,102,241,0.18)" />
@@ -566,13 +528,13 @@ function SkillInterviewReportPage() {
                 </SectionHeader>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {[
-                    { label: t('report.stats.duration'),      value: analytics.duration != null ? fmtDuration(analytics.duration) : null,                                                   icon: <Clock size={16} className="text-indigo-400" /> },
-                    { label: t('report.stats.exchanges'),     value: analytics.messageCount,                                                                                                 icon: <MessageCircle size={16} className="text-indigo-400" /> },
-                    { label: t('report.stats.coverage'),      value: analytics.coveragePercentage != null ? `${analytics.coveragePercentage}%` : null,                                       icon: <Target size={16} className="text-indigo-400" /> },
-                    { label: t('report.stats.areas_covered'), value: analytics.completedAreas != null && analytics.totalAreas != null ? `${analytics.completedAreas} / ${analytics.totalAreas}` : null, icon: <Trophy size={16} className="text-amber-400" /> },
-                    { label: t('report.stats.avg_response'),  value: analytics.averageResponseLength != null ? `${analytics.averageResponseLength} words` : null,                            icon: <MessageSquare size={16} className="text-indigo-400" /> },
-                    { label: t('report.stats.style'),         value: analytics.interactionStyle,                                                                                              icon: <User size={16} className="text-indigo-400" /> },
-                    { label: t('report.stats.silence'),       value: analytics.silenceEvents,                                                                                                 icon: <Award size={16} className="text-indigo-400" /> },
+                    { label: t('report.stats.duration'),      value: analytics.duration != null ? fmtDuration(analytics.duration) : null,                                                                    icon: <Clock size={16} className="text-indigo-400" /> },
+                    { label: t('report.stats.exchanges'),     value: analytics.messageCount,                                                                                                                   icon: <MessageCircle size={16} className="text-indigo-400" /> },
+                    { label: t('report.stats.coverage'),      value: analytics.coveragePercentage != null ? `${analytics.coveragePercentage}%` : null,                                                        icon: <Target size={16} className="text-indigo-400" /> },
+                    { label: t('report.stats.areas_covered'), value: analytics.completedAreas != null && analytics.totalAreas != null ? `${analytics.completedAreas} / ${analytics.totalAreas}` : null,       icon: <Trophy size={16} className="text-amber-400" /> },
+                    { label: t('report.stats.avg_response'),  value: analytics.averageResponseLength != null ? `${analytics.averageResponseLength} words` : null,                                              icon: <MessageSquare size={16} className="text-indigo-400" /> },
+                    { label: t('report.stats.style'),         value: analytics.interactionStyle,                                                                                                               icon: <User size={16} className="text-indigo-400" /> },
+                    { label: t('report.stats.silence'),       value: analytics.silenceEvents,                                                                                                                  icon: <Award size={16} className="text-indigo-400" /> },
                   ].filter(({ value }) => value != null).map(({ label, value, icon }) => (
                     <div key={label} className="flex flex-col gap-2 p-4 rounded-2xl bg-gray-50 border border-gray-100">
                       {icon}
@@ -586,8 +548,6 @@ function SkillInterviewReportPage() {
           </>
         )}
       </div>
-    </CandidateWorkspaceLayout>
+    </>
   );
 }
-
-export default dynamic(() => Promise.resolve(SkillInterviewReportPage), { ssr: false });

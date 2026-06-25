@@ -4,7 +4,7 @@ import React, { memo, useState, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "next/router";
 import { Briefcase } from "lucide-react";
-import { ApplicationSummaryItem } from "@/store/slices/jobApplicationSlice";
+import { ApplicationSummaryItem } from "@/modules/company/applications/types";
 import { ContactTarget } from "./ContactCandidateModal";
 import { InviteTarget } from "./InviteToInterviewModal";
 import InviteToInterviewModal from "./InviteToInterviewModal";

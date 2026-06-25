@@ -40,7 +40,7 @@ const JobInterviewCard: React.FC<Props> = ({ application }) => {
   const company     = application.company;
   const companyName = company?.companyName ?? "";
   const logoUrl     = company?.logo
-    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Companies/${company.logo}`
+    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}uploads/images/${company.logo}`
     : undefined;
 
   const dateStr = application.appliedAt ?? application.createdAt;

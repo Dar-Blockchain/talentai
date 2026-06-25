@@ -78,7 +78,7 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({ assessment, onViewDetai
   const jobTitle    = assessment.post?.jobDetails?.title || s("job_application");
   const company     = assessment.company as any;
   const companyName = company?.companyName || company?.username || assessment.post?.user?.companyName || "";
-  const logoUrl     = company?.logo ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Companies/${company.logo}` : undefined;
+  const logoUrl     = company?.logo ? `${process.env.NEXT_PUBLIC_API_BASE_URL}uploads/images/${company.logo}` : undefined;
 
   const timeAgo = (assessment.updatedAt || assessment.createdAt)
     ? dayjs(assessment.updatedAt || assessment.createdAt).fromNow()

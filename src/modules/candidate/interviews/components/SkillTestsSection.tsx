@@ -1,31 +1,24 @@
-import React, { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React from "react";
 import { useTranslation } from "react-i18next";
 import { Code2, Users, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { AppDispatch } from "@/store/store";
-import {
-  fetchSkillAssessmentsByType,
-  selectTechnicalAssessments,
-  selectSoftAssessments,
-} from "@/store/slices/interviewSlice";
+import { useSkillAssessmentsQuery } from "../queries/useInterviewsQuery";
 import SkillInterviewCard from "./SkillInterviewCard";
 
 interface SectionProps {
-  icon:        React.ElementType;
-  label:       string;
-  count:       number;
-  accentBg:    string;
-  accentBorder:string;
-  accentText:  string;
-  dotClass:    string;
-  loading:     boolean;
-  emptyText:   string;
-  children:    React.ReactNode;
+  icon:         React.ElementType;
+  label:        string;
+  count:        number;
+  accentBg:     string;
+  accentBorder: string;
+  accentText:   string;
+  loading:      boolean;
+  emptyText:    string;
+  children:     React.ReactNode;
 }
 
 const Section: React.FC<SectionProps> = ({
-  icon: Icon, label, count, accentBg, accentBorder, accentText, dotClass,
+  icon: Icon, label, count, accentBg, accentBorder, accentText,
   loading, emptyText, children,
 }) => (
   <div className="overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white">
@@ -64,19 +57,17 @@ const SkillTestsSection: React.FC = () => {
   const { t } = useTranslation("dashboard");
   const s = (k: string) => t(`candidate.interviews.${k}`) as string;
 
-  const dispatch = useDispatch<AppDispatch>();
-  const { data: techItems, loading: techLoading } = useSelector(selectTechnicalAssessments);
-  const { data: softItems, loading: softLoading } = useSelector(selectSoftAssessments);
+  const { data: techData, isLoading: techLoading } = useSkillAssessmentsQuery("technical");
+  const { data: softData, isLoading: softLoading } = useSkillAssessmentsQuery("soft");
 
-  useEffect(() => { dispatch(fetchSkillAssessmentsByType({ skillType: "technical" })); }, [dispatch]);
-  useEffect(() => { dispatch(fetchSkillAssessmentsByType({ skillType: "soft" }));      }, [dispatch]);
+  const techItems = techData?.results ?? [];
+  const softItems = softData?.results ?? [];
 
   return (
     <div className="flex flex-col gap-4">
       <Section
         icon={Code2} label={s("technical")} count={techItems.length}
         accentBg="bg-info/10" accentBorder="border-info/20" accentText="text-info"
-        dotClass="bg-info"
         loading={techLoading} emptyText={s("empty_technical")}
       >
         {techItems.map((a) => (
@@ -91,7 +82,6 @@ const SkillTestsSection: React.FC = () => {
       <Section
         icon={Users} label={s("soft_skills")} count={softItems.length}
         accentBg="bg-warning/10" accentBorder="border-warning/20" accentText="text-warning"
-        dotClass="bg-warning"
         loading={softLoading} emptyText={s("empty_soft")}
       >
         {softItems.map((a) => (

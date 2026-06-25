@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React from "react";
+import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import {
   ClipboardList, GraduationCap, TrendingUp, Trophy, CheckCircle2, Circle, ArrowRight,
@@ -12,8 +12,8 @@ import { Progress } from "@/modules/shared/ui/shadcn/progress";
 import { Separator } from "@/modules/shared/ui/shadcn/separator";
 import { Card } from "@/modules/shared/ui/shadcn/card";
 import { cn } from "@/lib/utils";
-import { AppDispatch, RootState } from "@/store/store";
-import { fetchCandidateStats, selectCandidateStats } from "@/store/slices/jobApplicationSlice";
+import { RootState } from "@/store/store";
+import { useApplicationStatsQuery } from "@/modules/candidate/applications/queries/useApplicationsQuery";
 
 // ─── ProfileCard ──────────────────────────────────────────────────────────────
 
@@ -175,13 +175,11 @@ const ProfileStrengthCard: React.FC<{ checklist: ChecklistItem[]; label: string 
 // ─── CandidateProfilePanel (connected) ───────────────────────────────────────
 
 const CandidateProfilePanel: React.FC = () => {
-  const { t }    = useTranslation("dashboard");
-  const dispatch = useDispatch<AppDispatch>();
-  const profile  = useSelector((state: RootState) => state.user.connectedUser.profile);
-  const user     = useSelector((state: RootState) => state.user.connectedUser.user);
-  const stats    = useSelector(selectCandidateStats);
+  const { t }   = useTranslation("dashboard");
+  const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
+  const user    = useSelector((state: RootState) => state.user.connectedUser.user);
 
-  useEffect(() => { dispatch(fetchCandidateStats()); }, [dispatch]);
+  const { data: stats } = useApplicationStatsQuery();
 
   const totalApplications = stats?.totalApplications ?? 0;
   const totalInterviews   = stats?.totalInterviews   ?? 0;

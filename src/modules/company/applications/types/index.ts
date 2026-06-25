@@ -1,3 +1,24 @@
+// ─── Application summary (list row) ──────────────────────────────────────────
+
+export interface ApplicationSummaryItem {
+  id: string;
+  candidateUserId: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  userImage: string | null;
+  matchScore: number | null;
+  interviewScore: number | null;
+  appliedAt: string | null;
+  completedAt: string | null;
+  status: string;
+  postId?: string | null;
+  postTitle?: string | null;
+  resumeFile?: string | null;
+  recruiterDecision?: 'shortlisted' | 'rejected' | null;
+  invitedAt?: string | null;
+}
+
 // ─── CV / Profile shapes ──────────────────────────────────────────────────────
 
 export interface Experience {

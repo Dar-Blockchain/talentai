@@ -12,9 +12,6 @@ import {
 import storage from 'redux-persist/lib/storage';
 import userReducer from './slices/userSlice';
 import postReducer from './slices/postSlice';
-import candidateReducer from './slices/candidateSlice';
-import postGenerationReducer from './slices/postGenerationSlice';
-import interviewReducer from './slices/interviewSlice';
 import memberReducer from './slices/memberSlice';
 import chatReducer from './slices/chatSlice';
 import teamChatReducer from '@/modules/chat/team-chat/store/teamChatSlice';
@@ -23,17 +20,12 @@ import adminReducer from './slices/adminSlice';
 import planLimitsReducer from './slices/planLimitsSlice';
 import campaignReducer from './slices/campaignSlice';
 import departmentReducer from './slices/departmentSlice';
-import jobApplicationReducer from './slices/jobApplicationSlice';
-import feedbackReducer from './slices/feedbackSlice';
 import paymentReducer from './slices/paymentSlice';
 import postDetailsReducer from '../modules/company/posts/details/store/postSlice';
 
 const rootReducer = combineReducers({
   user: userReducer,
   post: postReducer,
-  candidate: candidateReducer,
-  postGeneration: postGenerationReducer,
-  interview: interviewReducer,
   member: memberReducer,
   chat: chatReducer,
   teamChat: teamChatReducer,
@@ -42,8 +34,6 @@ const rootReducer = combineReducers({
   planLimits: planLimitsReducer,
   campaign: campaignReducer,
   department: departmentReducer,
-  jobApplications: jobApplicationReducer,
-  feedback: feedbackReducer,
   payment: paymentReducer,
   postDetails: postDetailsReducer,
 });

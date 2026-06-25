@@ -1,5 +1,11 @@
 import { fetchCandidateApplications } from '@/modules/candidate/applications/api/applications.api';
 import type { CandidateApplication } from '@/modules/candidate/applications/types/application.types';
+import axiosInstance from '@/utils/axiosInstance';
+
+export async function fetchInterviewReport(id: string) {
+  const res = await axiosInstance.get(`skill-interview-assessments/${id}`);
+  return res.data.data;
+}
 
 export async function fetchJobInterviews(): Promise<CandidateApplication[]> {
   const [scheduled, completed] = await Promise.all([

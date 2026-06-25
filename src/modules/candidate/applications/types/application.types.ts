@@ -1,6 +1,4 @@
-export type ApplicationStatus =
-  | 'applied' | 'pending' | 'shortlisted' | 'accepted' | 'rejected'
-  | 'withdrawn' | 'interview_scheduled' | 'interview_completed' | 'viewed' | 'visited';
+export type ApplicationStatus = 'visited' | 'interview_completed' | 'withdrawn';
 
 export interface ApplicationJobDetails {
   title?: string;
@@ -43,9 +41,16 @@ export interface CandidateStats {
   statusCounts: Record<string, number>;
 }
 
+export type SortBy = 'date_desc' | 'date_asc' | 'score_desc' | 'score_asc';
+
 export interface ApplicationsParams {
   page?: number;
   limit?: number;
   status?: string;
   search?: string;
+  sortBy?: SortBy;
+  scoreMin?: number;
+  scoreMax?: number;
+  dateFrom?: string;
+  dateTo?: string;
 }

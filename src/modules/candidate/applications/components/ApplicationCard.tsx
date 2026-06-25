@@ -1,145 +1,148 @@
 import React from "react";
 import { Building2, MapPin, DollarSign, TrendingUp, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { CandidateApplication, ApplicationStatus } from "../types/application.types";
-
-// ─── Status badge classes ─────────────────────────────────────────────────────
-
-const STATUS_CLASSES: Record<string, { badge: string; dot: string }> = {
-  applied:             { badge: "bg-info/10 border-info/20 text-info",                               dot: "bg-info"           },
-  pending:             { badge: "bg-warning/10 border-warning/20 text-warning",                      dot: "bg-warning"        },
-  shortlisted:         { badge: "bg-green-50 border-green-200 text-green-700",                       dot: "bg-green-500"      },
-  accepted:            { badge: "bg-primary-light border-primary-border text-primary-dark",          dot: "bg-primary-dark"   },
-  rejected:            { badge: "bg-danger/10 border-danger/20 text-danger",                         dot: "bg-danger"         },
-  withdrawn:           { badge: "bg-gray-100 border-gray-200 text-gray-500",                         dot: "bg-gray-400"       },
-  interview_scheduled: { badge: "bg-secondary-light border-secondary-border text-secondary-dark",    dot: "bg-secondary-dark" },
-  interview_completed: { badge: "bg-green-50 border-green-200 text-green-700",                       dot: "bg-green-500"      },
-  viewed:              { badge: "bg-gray-50 border-gray-200 text-gray-500",                          dot: "bg-gray-400"       },
-  visited:             { badge: "bg-gray-50 border-gray-200 text-gray-500",                          dot: "bg-gray-400"       },
-};
-
-const SCORE_CLASS: Record<string, string> = {
-  high: "text-green-600",
-  mid:  "text-primary-dark",
-  low:  "text-warning",
-  crit: "text-danger",
-};
-
-const scoreTier = (s: number) =>
-  s >= 80 ? "high" : s >= 60 ? "mid" : s >= 40 ? "low" : "crit";
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-const fmtDate = (iso?: string) =>
-  iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : null;
-
-const fmtSalary = (s: any) => {
-  if (!s?.min && !s?.max) return null;
-  const c = s.currency || "$";
-  const f = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(0)}k` : String(n));
-  if (s.min && s.max) return `${c}${f(s.min)} – ${c}${f(s.max)}`;
-  return s.max ? `≤${c}${f(s.max)}` : `${c}${f(s.min)}+`;
-};
-
-// ─── Component ────────────────────────────────────────────────────────────────
+import { fmtDate, fmtSalary, scoreTier } from "@/utils/functions";
+import { STATUS_CLASSES, SCORE_CLASSES } from "../constants";
+import { Card, CardContent } from "@/modules/shared/ui/shadcn/card";
+import {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+} from "@/modules/shared/ui/shadcn/avatar";
+import { Badge } from "@/modules/shared/ui/shadcn/badge";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import type {
+  CandidateApplication,
+  ApplicationStatus,
+} from "../types/application.types";
 
 interface Props {
   app: CandidateApplication;
   statusLabel: string;
-  isLast: boolean;
   onClick: () => void;
   onWithdraw?: (id: string) => void;
 }
 
-const ApplicationCard: React.FC<Props> = ({ app, statusLabel, isLast, onClick, onWithdraw }) => {
-  const jd          = app.post?.jobDetails || {};
-  const company     = app.company || {};
-  const rawStatus   = ((app.status || "applied") as ApplicationStatus).toLowerCase() as ApplicationStatus;
-  const sc          = STATUS_CLASSES[rawStatus] ?? STATUS_CLASSES.applied;
-  const matchScore  = app.matchScore != null ? Math.round(app.matchScore) : null;
+const ApplicationCard: React.FC<Props> = ({
+  app,
+  statusLabel,
+  onClick,
+  onWithdraw,
+}) => {
+  const jd = app.post?.jobDetails || {};
+  const company = app.company || {};
+  const rawStatus = (
+    (app.status || "visited") as ApplicationStatus
+  ).toLowerCase() as ApplicationStatus;
+  const sc = STATUS_CLASSES[rawStatus] ?? STATUS_CLASSES.visited;
+  const matchScore = app.matchScore != null ? Math.round(app.matchScore) : null;
   const appliedDate = fmtDate(app.appliedAt || app.createdAt);
-  const salary      = fmtSalary(jd.salary);
+  const salary = fmtSalary(jd.salary);
   const canWithdraw = rawStatus === "visited" && !!onWithdraw;
-  const logoUrl     = company.logo
-    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Companies/${company.logo}`
+  const logoUrl = company.logo
+    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}uploads/images/${company.logo}`
     : undefined;
 
   return (
-    <div
+    <Card
       onClick={onClick}
-      className={cn(
-        "flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50/80 transition-colors group",
-        !isLast && "border-b border-gray-100",
-      )}
+      className="gap-0 py-0 cursor-pointer overflow-hidden hover:shadow-md hover:-translate-y-px transition-all duration-200"
     >
-      {/* Company logo */}
-      <div className="size-11 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center shrink-0 overflow-hidden">
-        {logoUrl
-          ? <img src={logoUrl} alt={company.companyName} className="size-full object-contain p-1.5" />
-          : <Building2 className="size-5 text-gray-300" />}
-      </div>
+      {/* status stripe */}
+      <div className={cn("h-0.5 w-full", sc.stripe)} />
 
-      {/* Content */}
-      <div className="flex-1 min-w-0">
+      <CardContent className="px-4 py-3 flex items-start gap-3">
+        {/* Company logo */}
+        <Avatar className="size-10 rounded-xl border border-gray-200 bg-gray-50 shrink-0">
+          <AvatarImage
+            src={logoUrl}
+            alt={company.companyName}
+            className="object-contain p-1"
+          />
+          <AvatarFallback className="rounded-xl bg-gray-50">
+            <Building2 className="size-4 text-gray-300" />
+          </AvatarFallback>
+        </Avatar>
 
-        {/* Title + status */}
-        <div className="flex items-start justify-between gap-2 mb-0.5">
-          <p className="text-[0.88rem] font-bold text-gray-900 truncate leading-tight">
-            {jd.title || "Untitled Position"}
-          </p>
-          <span className={cn(
-            "inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[0.6rem] font-bold shrink-0",
-            sc.badge,
-          )}>
-            <span className={cn("size-1.5 rounded-full shrink-0", sc.dot)} />
-            {statusLabel}
-          </span>
-        </div>
-
-        {/* Company + location */}
-        <div className="flex items-center gap-2 text-[0.75rem] text-gray-500 mb-1">
-          {company.companyName && (
-            <span className="font-medium text-gray-600 truncate">{company.companyName}</span>
-          )}
-          {company.companyName && jd.location && (
-            <span className="size-1 rounded-full bg-gray-300 shrink-0" />
-          )}
-          {jd.location && (
-            <span className="flex items-center gap-0.5 shrink-0">
-              <MapPin className="size-2.5" />
-              {jd.location}
-            </span>
-          )}
-        </div>
-
-        {/* Meta row */}
-        <div className="flex items-center gap-3 flex-wrap">
-          {salary && (
-            <span className="flex items-center gap-0.5 text-[0.7rem] text-gray-400">
-              <DollarSign className="size-2.5" />{salary}
-            </span>
-          )}
-          {matchScore !== null && (
-            <span className={cn("flex items-center gap-0.5 text-[0.7rem] font-semibold", SCORE_CLASS[scoreTier(matchScore)])}>
-              <TrendingUp className="size-2.5" />{matchScore}% match
-            </span>
-          )}
-          {appliedDate && (
-            <span className="flex items-center gap-0.5 text-[0.7rem] text-gray-400">
-              <Clock className="size-2.5" />Applied {appliedDate}
-            </span>
-          )}
-          {canWithdraw && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onWithdraw!(app._id); }}
-              className="ml-auto text-[0.65rem] font-bold text-danger px-1.5 py-0.5 rounded border border-danger/25 bg-danger/5 hover:bg-danger/10 transition-colors"
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          {/* Title + status badge */}
+          <div className="flex items-start justify-between gap-2 mb-0.5">
+            <p className="text-[0.88rem] font-bold text-gray-900 truncate leading-tight">
+              {jd.title || "Untitled Position"}
+            </p>
+            <Badge
+              variant="outline"
+              className={cn(
+                "text-[0.6rem] font-bold shrink-0 rounded-full px-2 py-0.5 gap-1",
+                sc.badge,
+              )}
             >
-              Withdraw
-            </button>
-          )}
+              <span className={cn("size-1.5 rounded-full shrink-0", sc.dot)} />
+              {statusLabel}
+            </Badge>
+          </div>
+
+          {/* Company + location */}
+          <div className="flex items-center gap-2 text-[0.75rem] text-gray-500 mb-1.5">
+            {company.companyName && (
+              <span className="font-medium text-gray-600 truncate">
+                {company.companyName}
+              </span>
+            )}
+            {company.companyName && jd.location && (
+              <span className="size-1 rounded-full bg-gray-300 shrink-0" />
+            )}
+            {jd.location && (
+              <span className="flex items-center gap-0.5 shrink-0">
+                <MapPin className="size-2.5" />
+                {jd.location}
+              </span>
+            )}
+          </div>
+
+          {/* Meta row */}
+          <div className="flex items-center gap-3 flex-wrap">
+            {salary && (
+              <span className="flex items-center gap-0.5 text-[0.7rem] text-gray-400">
+                <DollarSign className="size-2.5" />
+                {salary}
+              </span>
+            )}
+            {matchScore !== null && (
+              <span
+                className={cn(
+                  "flex items-center gap-0.5 text-[0.7rem] font-semibold",
+                  SCORE_CLASSES[scoreTier(matchScore)],
+                )}
+              >
+                <TrendingUp className="size-2.5" />
+                {matchScore}% match
+              </span>
+            )}
+            {appliedDate !== "—" && (
+              <span className="flex items-center gap-0.5 text-[0.7rem] text-gray-400">
+                <Clock className="size-2.5" />
+                Applied {appliedDate}
+              </span>
+            )}
+            {canWithdraw && (
+              <Button
+                variant="destructive"
+                size="xs"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onWithdraw!(app._id);
+                }}
+                className="ml-auto bg-danger/5 text-danger border border-danger/25 hover:bg-danger/10 shadow-none text-[0.65rem] font-bold"
+              >
+                Withdraw
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

@@ -11,6 +11,7 @@ interface CandidateWorkspaceLayoutProps {
   breadcrumb?: string;
   fillHeight?: boolean;
   leftPanel?: React.ReactNode;
+  rightPanel?: React.ReactNode;
 }
 
 const CandidateWorkspaceLayout: React.FC<CandidateWorkspaceLayoutProps> = ({
@@ -18,6 +19,7 @@ const CandidateWorkspaceLayout: React.FC<CandidateWorkspaceLayoutProps> = ({
   breadcrumb,
   fillHeight = false,
   leftPanel,
+  rightPanel,
 }) => {
   return (
     <div className="flex flex-col h-screen bg-gray-50">
@@ -62,9 +64,9 @@ const CandidateWorkspaceLayout: React.FC<CandidateWorkspaceLayoutProps> = ({
             {children}
           </div>
 
-          {/* Right panel: QuickNav — desktop only */}
+          {/* Right panel: custom or QuickNav — desktop only */}
           <aside className="hidden md:flex flex-col gap-4 sticky top-4 max-h-[calc(100vh-96px)] overflow-y-auto custom-scrollbar">
-            <CandidateQuickNav />
+            {rightPanel ?? <CandidateQuickNav />}
           </aside>
         </div>
       </main>

@@ -158,7 +158,7 @@ module.exports.getCandidateStats = async (req, res) => {
 module.exports.getApplicationsByCandidate = async (req, res) => {
   try {
     const candidateId = req.user._id;
-    const { page = 1, limit = 10, status, isArchived, search } = req.query;
+    const { page = 1, limit = 10, status, isArchived, search, sortBy, scoreMin, scoreMax, dateFrom, dateTo } = req.query;
 
     if (!candidateId) {
       return res.status(400).json({
@@ -168,9 +168,14 @@ module.exports.getApplicationsByCandidate = async (req, res) => {
     }
 
     const filters = {};
-    if (status) filters.status = status;
+    if (status)              filters.status    = status;
     if (isArchived !== undefined) filters.isArchived = isArchived === "true";
-    if (search) filters.search = search;
+    if (search)              filters.search    = search;
+    if (sortBy)              filters.sortBy    = sortBy;
+    if (scoreMin !== undefined) filters.scoreMin = scoreMin;
+    if (scoreMax !== undefined) filters.scoreMax = scoreMax;
+    if (dateFrom)            filters.dateFrom  = dateFrom;
+    if (dateTo)              filters.dateTo    = dateTo;
 
     // Find profile for this user
     const profileResult = await profileService.getProfileByUserId(candidateId);

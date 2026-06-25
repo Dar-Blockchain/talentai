@@ -1,29 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useTranslation } from "react-i18next";
 import { Briefcase, Loader2 } from "lucide-react";
-import { fetchJobInterviews } from "../api/interviews.api";
+import { useJobInterviewsQuery } from "../queries/useInterviewsQuery";
 import JobInterviewCard from "./JobInterviewCard";
-import type { CandidateApplication } from "../types/interview.types";
 
 const JobInterviewsSection: React.FC = () => {
   const { t } = useTranslation("dashboard");
   const s = (k: string) => t(`candidate.interviews.${k}`) as string;
 
-  const [items,   setItems]   = useState<CandidateApplication[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
-    fetchJobInterviews()
-      .then((data) => { if (active) { setItems(data); setLoading(false); } })
-      .catch(() =>     { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, []);
+  const { data: items = [], isLoading } = useJobInterviewsQuery();
 
   return (
     <div className="flex flex-col gap-3">
-      {loading ? (
+      {isLoading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-[#9CA3AF]" />
         </div>

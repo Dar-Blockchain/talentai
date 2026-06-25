@@ -106,7 +106,6 @@ const SkillInterviewCard: React.FC<Props> = ({ assessment, accentBg, accentBorde
             size="sm"
             variant="outline"
             className="h-7 gap-1 border-green-200 bg-green-50 px-3 text-[0.68rem] font-bold text-green-700 hover:bg-green-100"
-            onClick={() => router.push(`/candidate/interview/report/${assessment._id}`)}
           >
             {s("report")}
             <ExternalLink className="h-3 w-3" />
