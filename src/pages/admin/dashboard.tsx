@@ -8,15 +8,20 @@ import {
 } from '@mui/material';
 import { Menu as MenuIcon } from '@mui/icons-material';
 import { AdminSidebar, AssessmentDetailsDialog, AdminAssessmentSummary, ADMIN_ACCENT } from '@/modules/admin/shared';
-import { AdminDashboardHome } from '@/modules/admin/overview';
 import {
-  UserManagement, UserDetailsDialog, CompanyPermissionsModal,
+  UserDetailsDialog, CompanyPermissionsModal,
   type CompanyPermissions, type User, useSaveCompanyPermissionsMutation,
 } from '@/modules/admin/users';
-import { PostInterviewAssessments } from '@/modules/admin/post-interview';
-import { SkillInterviewAssessments } from '@/modules/admin/skill-interview';
-import { CompanyConfig } from '@/modules/admin/company-config';
 import dynamic from 'next/dynamic';
+
+// Each admin tab is fetched + code-split on demand — only the active tab's
+// JS (and its heavy deps like recharts/react-leaflet) is downloaded, instead
+// of bundling all 5 tabs' code into the initial admin dashboard chunk.
+const AdminDashboardHome = dynamic(() => import('@/modules/admin/overview').then((m) => m.AdminDashboardHome));
+const UserManagement = dynamic(() => import('@/modules/admin/users').then((m) => m.UserManagement));
+const PostInterviewAssessments = dynamic(() => import('@/modules/admin/post-interview').then((m) => m.PostInterviewAssessments));
+const SkillInterviewAssessments = dynamic(() => import('@/modules/admin/skill-interview').then((m) => m.SkillInterviewAssessments));
+const CompanyConfig = dynamic(() => import('@/modules/admin/company-config').then((m) => m.CompanyConfig));
 
 const VALID_TABS = ['dashboard', 'users', 'post-interview', 'skill-interview', 'company-config'] as const;
 type TabName = typeof VALID_TABS[number];

@@ -23,4 +23,5 @@ export const useCompanySubscriptionsQuery = (params: { search: string; page: num
     queryKey: ["admin", "companies-with-status", params],
     queryFn:  () => adminSubscriptionApi.fetchCompaniesWithSubscriptions(params),
     staleTime: 30_000,
+    placeholderData: (prev) => prev,
   });

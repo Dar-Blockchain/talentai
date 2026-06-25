@@ -1,10 +1,52 @@
 "use client";
 import React, { memo } from "react";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import { Card, CardContent } from "@/modules/shared/ui/shadcn/card";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { Badge } from "@/modules/shared/ui/shadcn/badge";
 import { cn } from "@/lib/utils";
 import { ADMIN_ACCENT, ADMIN_NEUTRAL, ADMIN_NEUTRAL_BG, ADMIN_GRADIENTS, AdminGradientName, adminGradientCss, adminGlowShadow } from "../theme";
+
+/** Inline retry button shared by the card and table-row error states. */
+const AdminRetryButton = memo<{ onRetry: () => void }>(({ onRetry }) => (
+  <button
+    onClick={onRetry}
+    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+  >
+    <RefreshIcon style={{ fontSize: 14 }} />
+    Retry
+  </button>
+));
+AdminRetryButton.displayName = "AdminRetryButton";
+
+/** Card-shaped error state for a failed query — distinct from "no data" empty states. */
+export const AdminQueryError = memo<{ message?: string; onRetry: () => void; className?: string }>(
+  ({ message = "Failed to load data.", onRetry, className }) => (
+    <Card className={cn("shadow-none", className)}>
+      <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
+        <ErrorOutlineIcon sx={{ fontSize: 28 }} className="text-red-400" />
+        <p className="text-[13px] text-slate-500">{message}</p>
+        <AdminRetryButton onRetry={onRetry} />
+      </CardContent>
+    </Card>
+  ),
+);
+AdminQueryError.displayName = "AdminQueryError";
+
+/** Error state sized to drop into a <TableRow><TableCell colSpan={n}> slot. */
+export const AdminTableErrorRow = memo<{ message?: string; onRetry: () => void }>(
+  ({ message = "Failed to load data.", onRetry }) => (
+    <div className="flex flex-col items-center justify-center gap-2 py-6">
+      <div className="flex items-center gap-2">
+        <ErrorOutlineIcon sx={{ fontSize: 16 }} className="text-red-400" />
+        <span className="text-[13px] text-slate-500">{message}</span>
+      </div>
+      <AdminRetryButton onRetry={onRetry} />
+    </div>
+  ),
+);
+AdminTableErrorRow.displayName = "AdminTableErrorRow";
 
 /** Sticky table header cell — bold, flat neutral gray, sits above scrolling rows. */
 export const ADMIN_TABLE_HEAD_CELL_SX = {

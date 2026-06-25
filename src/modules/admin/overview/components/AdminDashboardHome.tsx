@@ -1,29 +1,36 @@
 import React, { useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
+import { Skeleton } from '@/modules/shared/ui/shadcn/skeleton';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import InsightsIcon from '@mui/icons-material/Insights';
 import PublicIcon from '@mui/icons-material/Public';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import { getCountryName } from '@/utils/countryMappings';
-import { ZoneHeading } from '@/modules/admin/shared';
+import { ZoneHeading, AdminQueryError } from '@/modules/admin/shared';
 import {
   useAdminStatsQuery, useAdminUsersForMapQuery, useAdminUserGrowthQuery, useSkillDistribution,
   useAdminRevenueSummaryQuery, useAdminRecentSignupsQuery,
 } from '../queries';
 import AdminHeader from './AdminHeader';
 import AdminStatsCards from './AdminStatsCards';
-import AdminSkillsBarChart from './AdminSkillsBarChart';
-import AdminGrowthAnalytics from './AdminGrowthAnalytics';
-import AdminSkillsDistribution from './AdminSkillsDistribution';
 import AdminWorldMap from './AdminWorldMap';
 import AdminRevenueSummary from './AdminRevenueSummary';
 import AdminRecentSignups from './AdminRecentSignups';
 
+const chartSkeleton = <Skeleton className="h-[300px] w-full rounded-xl" />;
+
+// recharts pulls in a sizeable d3-based runtime — load each chart only when
+// this tab actually renders instead of bundling it into every admin page load.
+const AdminSkillsBarChart = dynamic(() => import('./AdminSkillsBarChart'), { loading: () => chartSkeleton });
+const AdminGrowthAnalytics = dynamic(() => import('./AdminGrowthAnalytics'), { loading: () => chartSkeleton });
+const AdminSkillsDistribution = dynamic(() => import('./AdminSkillsDistribution'), { loading: () => chartSkeleton });
+
 const AdminDashboardHome: React.FC = () => {
-  const { data: stats, isLoading: statsLoading } = useAdminStatsQuery();
+  const { data: stats, isLoading: statsLoading, isError: statsError, refetch: refetchStats } = useAdminStatsQuery();
   const { data: allUsersForMap = [] } = useAdminUsersForMapQuery();
   const { data: userGrowthData = [] } = useAdminUserGrowthQuery();
-  const { data: revenue, isLoading: revenueLoading } = useAdminRevenueSummaryQuery();
-  const { data: recentSignups = [], isLoading: signupsLoading } = useAdminRecentSignupsQuery(6);
+  const { data: revenue, isLoading: revenueLoading, isError: revenueError, refetch: refetchRevenue } = useAdminRevenueSummaryQuery();
+  const { data: recentSignups = [], isLoading: signupsLoading, isError: signupsError, refetch: refetchSignups } = useAdminRecentSignupsQuery(6);
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
 
   const skillsData = useMemo(
@@ -74,22 +81,34 @@ const AdminDashboardHome: React.FC = () => {
   return (
     <div>
       <AdminHeader />
-      <AdminStatsCards stats={stats} loading={statsLoading} />
+      {statsError ? (
+        <AdminQueryError message="Failed to load dashboard stats." onRetry={() => refetchStats()} className="mb-4" />
+      ) : (
+        <AdminStatsCards stats={stats} loading={statsLoading} />
+      )}
 
       {/* Revenue & recent activity */}
       <div className="mt-1">
         <ZoneHeading icon={MonetizationOnIcon} label="Revenue & Activity" />
         <div className="flex flex-wrap gap-6">
           <div className="flex-[1_1_580px] min-w-0">
-            <AdminRevenueSummary
-              mrr={revenue?.mrr ?? 0}
-              totalActiveSubscriptions={revenue?.totalActiveSubscriptions ?? 0}
-              byPlan={revenue?.byPlan ?? []}
-              loading={revenueLoading}
-            />
+            {revenueError ? (
+              <AdminQueryError message="Failed to load revenue summary." onRetry={() => refetchRevenue()} />
+            ) : (
+              <AdminRevenueSummary
+                mrr={revenue?.mrr ?? 0}
+                totalActiveSubscriptions={revenue?.totalActiveSubscriptions ?? 0}
+                byPlan={revenue?.byPlan ?? []}
+                loading={revenueLoading}
+              />
+            )}
           </div>
           <div className="flex-[1_1_360px] min-w-0">
-            <AdminRecentSignups signups={recentSignups} loading={signupsLoading} />
+            {signupsError ? (
+              <AdminQueryError message="Failed to load recent signups." onRetry={() => refetchSignups()} />
+            ) : (
+              <AdminRecentSignups signups={recentSignups} loading={signupsLoading} />
+            )}
           </div>
         </div>
       </div>

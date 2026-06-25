@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Table,
   TableBody,
@@ -33,7 +33,7 @@ import {
 import { useAdminSkillAssessmentsQuery } from '../queries';
 import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
-import { ScoreBadge, scoreTone, ADMIN_ACCENT, ADMIN_NEUTRAL, ADMIN_DARK_BANNER, ADMIN_TABLE_HEAD_CELL_SX, ADMIN_TABLE_ROW_SX, AdminPageHeading } from '@/modules/admin/shared';
+import { ScoreBadge, scoreTone, ADMIN_ACCENT, ADMIN_NEUTRAL, ADMIN_DARK_BANNER, ADMIN_TABLE_HEAD_CELL_SX, ADMIN_TABLE_ROW_SX, AdminPageHeading, AdminTableErrorRow } from '@/modules/admin/shared';
 
 const StyledTabs = styled(Tabs)({
   minHeight: 40,
@@ -190,6 +190,7 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
   const [skillsLoaded, setSkillsLoaded] = useState(false);
   const [skills, setSkills] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [scoreTab, setScoreTab] = useState(0);
 
   // Dialog state
@@ -200,12 +201,19 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  const { data, isLoading: loading } = useAdminSkillAssessmentsQuery(
+  const { data, isLoading: loading, isError, refetch } = useAdminSkillAssessmentsQuery(
     { page, limit: rowsPerPage, skill: selectedSkill || undefined },
     autoFetch,
   );
   const results = (data?.results ?? []) as SkillInterviewAssessmentData[];
   const totalCount = data?.total ?? 0;
+
+  // Debounce the client-side filter pass so typing doesn't re-filter (and
+  // re-render the whole table) on every keystroke.
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebouncedSearchQuery(searchQuery), 250);
+    return () => clearTimeout(timeout);
+  }, [searchQuery]);
 
   // Extract unique skills for the dropdown on first successful load
   useEffect(() => {
@@ -221,28 +229,28 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
     }
   }, [results, skillsLoaded]);
 
-  const handleSkillChange = (event: SelectChangeEvent<string>) => {
+  const handleSkillChange = useCallback((event: SelectChangeEvent<string>) => {
     setSelectedSkill(event.target.value);
     setPage(0);
-  };
+  }, []);
 
-  const handleChangePage = (event: unknown, newPage: number) => {
+  const handleChangePage = useCallback((event: unknown, newPage: number) => {
     setPage(newPage);
-  };
+  }, []);
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
-  };
+  }, []);
 
-  const handleViewDetails = (assessment: SkillInterviewAssessmentData) => {
+  const handleViewDetails = useCallback((assessment: SkillInterviewAssessmentData) => {
     setSelectedAssessment(assessment);
     setDetailsDialogOpen(true);
-  };
+  }, []);
 
-  const handleScoreTabChange = (_: React.SyntheticEvent, newValue: number) => {
+  const handleScoreTabChange = useCallback((_: React.SyntheticEvent, newValue: number) => {
     setScoreTab(newValue);
-  };
+  }, []);
 
   const getOverallScore = (assessment: SkillInterviewAssessmentData): number => {
     if (assessment.interviewData?.finalReport?.scores?.overall !== undefined) {
@@ -285,10 +293,11 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
            'Unknown';
   };
 
-  // Client-side filtering
-  const filteredResults = results.filter((assessment) => {
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
+  // Client-side filtering — memoized so it only recomputes when the debounced
+  // search term, score tab, or the underlying page of results actually change.
+  const filteredResults = useMemo(() => results.filter((assessment) => {
+    if (debouncedSearchQuery) {
+      const q = debouncedSearchQuery.toLowerCase();
       const matchesName = getCandidateName(assessment).toLowerCase().includes(q);
       const matchesEmail = getCandidateEmail(assessment).toLowerCase().includes(q);
       const matchesSkill = assessment.skill?.toLowerCase().includes(q);
@@ -301,7 +310,7 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
       if (scoreTab === 3 && score >= 50) return false;
     }
     return true;
-  });
+  }), [results, debouncedSearchQuery, scoreTab]);
 
   return (
     <div>
@@ -373,7 +382,13 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
               </TableRow>
             </TableHead>
             <TableBody>
-              {loading ? (
+              {isError ? (
+                <TableRow>
+                  <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                    <AdminTableErrorRow message="Failed to load assessments." onRetry={() => refetch()} />
+                  </TableCell>
+                </TableRow>
+              ) : loading ? (
                 <TableRow>
                   <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
                     <span className="text-[13px] text-slate-500">Loading...</span>

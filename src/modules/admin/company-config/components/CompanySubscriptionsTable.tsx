@@ -6,7 +6,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { cn } from '@/lib/utils';
-import { ADMIN_TABLE_HEAD_CELL_SX, ADMIN_TABLE_ROW_SX } from '@/modules/admin/shared';
+import { ADMIN_TABLE_HEAD_CELL_SX, ADMIN_TABLE_ROW_SX, AdminTableErrorRow } from '@/modules/admin/shared';
 import { useCompanySubscriptionsQuery } from '../queries';
 
 const statusBadgeClass = (status: string, isActive: boolean) => {
@@ -33,7 +33,7 @@ const CompanySubscriptionsTable: React.FC = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  const { data, isLoading } = useCompanySubscriptionsQuery({ search, page: page + 1, limit: rowsPerPage });
+  const { data, isLoading, isError, refetch } = useCompanySubscriptionsQuery({ search, page: page + 1, limit: rowsPerPage });
   const companies = data?.data ?? [];
   const total = data?.total ?? 0;
 
@@ -81,7 +81,13 @@ const CompanySubscriptionsTable: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {isLoading ? (
+              {isError ? (
+                <TableRow>
+                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                    <AdminTableErrorRow message="Failed to load companies." onRetry={() => refetch()} />
+                  </TableCell>
+                </TableRow>
+              ) : isLoading ? (
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                     <span className="text-[13px] text-slate-500">Loading…</span>

@@ -17,6 +17,16 @@ const DRAWER_WIDTH = 260;
 
 type TabName = 'dashboard' | 'users' | 'post-interview' | 'skill-interview' | 'company-config';
 
+// Static across all renders — hoisted out of the component so it isn't
+// reallocated (and the .map() below doesn't get a new array identity) every render.
+const MENU_ITEMS: { id: TabName; label: string; icon: React.ElementType }[] = [
+  { id: 'dashboard', label: 'Dashboard', icon: DashboardIcon },
+  { id: 'users', label: 'Users', icon: PeopleIcon },
+  { id: 'post-interview', label: 'Post Interview', icon: InterviewIcon },
+  { id: 'skill-interview', label: 'Skill Interview', icon: SkillIcon },
+  { id: 'company-config', label: 'Company Config', icon: SettingsIcon },
+];
+
 interface AdminSidebarProps {
   activeTab: TabName;
   onTabChange: (tab: TabName) => void;
@@ -34,14 +44,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-
-  const menuItems: { id: TabName; label: string; icon: React.ElementType }[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: DashboardIcon },
-    { id: 'users', label: 'Users', icon: PeopleIcon },
-    { id: 'post-interview', label: 'Post Interview', icon: InterviewIcon },
-    { id: 'skill-interview', label: 'Skill Interview', icon: SkillIcon },
-    { id: 'company-config', label: 'Company Config', icon: SettingsIcon },
-  ];
 
   return (
     <Drawer
@@ -87,7 +89,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
           Menu
         </span>
         <nav className="flex flex-col gap-0.5 px-0.5">
-          {menuItems.map((item) => {
+          {MENU_ITEMS.map((item) => {
             const Icon = item.icon;
             const selected = activeTab === item.id;
             return (

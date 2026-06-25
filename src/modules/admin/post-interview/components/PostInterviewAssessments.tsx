@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   Table,
   TableBody,
@@ -33,7 +33,7 @@ import {
 import { useAdminPostAssessmentsQuery } from '../queries';
 import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
-import { ScoreBadge, scoreTone, ADMIN_ACCENT, ADMIN_NEUTRAL, ADMIN_DARK_BANNER, ADMIN_TABLE_HEAD_CELL_SX, ADMIN_TABLE_ROW_SX, AdminPageHeading } from '@/modules/admin/shared';
+import { ScoreBadge, scoreTone, ADMIN_ACCENT, ADMIN_NEUTRAL, ADMIN_DARK_BANNER, ADMIN_TABLE_HEAD_CELL_SX, ADMIN_TABLE_ROW_SX, AdminPageHeading, AdminTableErrorRow } from '@/modules/admin/shared';
 
 const StyledTabs = styled(Tabs)({
   minHeight: 40,
@@ -135,7 +135,16 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
   const [companies, setCompanies] = useState<{ _id: string; username: string }[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [scoreTab, setScoreTab] = useState(0);
+
+  // Debounce the client-side filter pass so typing doesn't re-filter (and
+  // re-render the whole table) on every keystroke — the input itself stays
+  // fully responsive since it's bound to searchQuery, not the debounced value.
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebouncedSearchQuery(searchQuery), 250);
+    return () => clearTimeout(timeout);
+  }, [searchQuery]);
 
   // Dialog state for viewing details
   const [selectedAssessment, setSelectedAssessment] = useState<PostInterviewAssessmentData | null>(null);
@@ -145,7 +154,7 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  const { data, isLoading: loading } = useAdminPostAssessmentsQuery(
+  const { data, isLoading: loading, isError, refetch } = useAdminPostAssessmentsQuery(
     { page: page + 1, limit: rowsPerPage, company: selectedCompany || undefined },
     autoFetch,
   );
@@ -234,11 +243,12 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
     }
   };
 
-  // Client-side filtering
-  const filteredResults = results.filter((assessment) => {
+  // Client-side filtering — memoized so it only recomputes when the debounced
+  // search term, score tab, or the underlying page of results actually change.
+  const filteredResults = useMemo(() => results.filter((assessment) => {
     // Search filter
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
+    if (debouncedSearchQuery) {
+      const q = debouncedSearchQuery.toLowerCase();
       const matchesCandidate = assessment.candidate?.username?.toLowerCase().includes(q) || assessment.candidate?.email?.toLowerCase().includes(q);
       const matchesJob = assessment.post?.jobDetails?.title?.toLowerCase().includes(q);
       const matchesCompanyName = assessment.company?.username?.toLowerCase().includes(q);
@@ -252,7 +262,7 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
       if (scoreTab === 3 && score >= 50) return false;
     }
     return true;
-  });
+  }), [results, debouncedSearchQuery, scoreTab]);
 
   return (
     <div>
@@ -323,7 +333,13 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
               </TableRow>
             </TableHead>
             <TableBody>
-              {loading ? (
+              {isError ? (
+                <TableRow>
+                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                    <AdminTableErrorRow message="Failed to load assessments." onRetry={() => refetch()} />
+                  </TableCell>
+                </TableRow>
+              ) : loading ? (
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                     <span className="text-[13px] text-slate-500">Loading...</span>

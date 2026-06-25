@@ -38,7 +38,7 @@ import { usePagination } from '@/hooks/usePagination';
 import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { cn } from '@/lib/utils';
-import { ADMIN_ACCENT, ADMIN_NEUTRAL, ADMIN_TABLE_HEAD_CELL_SX, ADMIN_TABLE_ROW_SX, AdminPageHeading } from '@/modules/admin/shared';
+import { ADMIN_ACCENT, ADMIN_NEUTRAL, ADMIN_TABLE_HEAD_CELL_SX, ADMIN_TABLE_ROW_SX, AdminPageHeading, AdminTableErrorRow } from '@/modules/admin/shared';
 
 const StyledTabs = styled(Tabs)({
   minHeight: 40,
@@ -114,7 +114,7 @@ const UserManagement: React.FC<UserManagementProps> = ({
     handleChangeRowsPerPage: onRowsPerPageChange,
   } = usePagination({ initialRowsPerPage: 10 });
 
-  const { data, isLoading: loading, error: queryError } = useAdminUsersQuery({
+  const { data, isLoading: loading, isError, refetch } = useAdminUsersQuery({
     page: page + 1,
     limit: rowsPerPage,
     username: appliedFilters.username || undefined,
@@ -125,7 +125,6 @@ const UserManagement: React.FC<UserManagementProps> = ({
 
   const users = (data?.users ?? []) as User[];
   const totalUsers = data?.total ?? 0;
-  const error = queryError ? (queryError as Error).message : null;
 
   const handleChangePage = useCallback(
     (event: unknown, newPage: number) => onPageChange(event, newPage),
@@ -209,13 +208,6 @@ const UserManagement: React.FC<UserManagementProps> = ({
         </div>
       </Card>
 
-      {/* Error */}
-      {error && (
-        <div className="mb-3 px-4 py-2.5 rounded-lg bg-red-50">
-          <span className="text-[13px] text-red-600">{error}</span>
-        </div>
-      )}
-
       {/* Table */}
       <Card className="overflow-hidden py-0 gap-0">
         <TableContainer sx={{ maxHeight: 600 }}>
@@ -232,7 +224,13 @@ const UserManagement: React.FC<UserManagementProps> = ({
               </TableRow>
             </TableHead>
             <TableBody>
-              {loading ? (
+              {isError ? (
+                <TableRow>
+                  <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                    <AdminTableErrorRow message="Failed to load users." onRetry={() => refetch()} />
+                  </TableCell>
+                </TableRow>
+              ) : loading ? (
                 <TableRow>
                   <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
                     <span className="text-[13px] text-slate-500">Loading...</span>
