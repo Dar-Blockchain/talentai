@@ -279,6 +279,72 @@ class IntelligentInterviewService {
       const lastQuestion = recentInterviewerMessages[0]?.content || null;
       const targetArea   = recentInterviewerMessages[0]?.metadata?.targetAreas?.[0] || null;
 
+      // â”€â”€ GREETING RESPONSE SHORTCUT â”€â”€
+      // If the candidate has no previous responses this is a reply to the greeting.
+      // Skip analysis and coverage updates â€” go straight to first real question.
+      const previousCandidateResponses = session.conversation.filter(e => e.type === 'candidate').length;
+      const isGreetingResponse = previousCandidateResponses === 0;
+
+      if (isGreetingResponse) {
+        await this.sessionManager.addConversationEntry(sessionId, {
+          type: 'candidate',
+          content: transcript,
+          timestamp: new Date().toISOString(),
+          metadata: { ...audioMetadata, isGreetingResponse: true },
+        });
+
+        const coverageForQGen = {
+          overallAssessment: {
+            weakestAreas:   Object.keys(session.coverage?.areas || {}),
+            strongestAreas: [],
+          },
+        };
+
+        const firstQuestion = await AIUtils.withTimeout(
+          this.questionAI.generateIntelligentQuestion(
+            session,
+            coverageForQGen,
+            { previousQuestions: [] },
+            null,
+            null
+          ),
+          15000,
+          'generateIntelligentQuestion-greeting'
+        ).catch(() => ({
+          question: `Tell me about your experience with ${session.config.context?.targetRole || 'this role'}.`,
+          targetAreas: [Object.keys(session.coverage?.areas || {})[0] || 'General'],
+          reasoning: 'Fallback first question',
+        }));
+
+        const questionContent     = firstQuestion.question || firstQuestion.content;
+        const questionTargetAreas = firstQuestion.targetAreas || [];
+
+        await this.sessionManager.addConversationEntry(sessionId, {
+          type: 'interviewer',
+          content: questionContent,
+          timestamp: new Date().toISOString(),
+          metadata: { aiGenerated: true, targetAreas: questionTargetAreas, reasoning: firstQuestion.reasoning, strategy: 'transition', questionStyle: 'direct' },
+        });
+
+        if (questionTargetAreas[0] && session.coverage?.areas?.[questionTargetAreas[0]]) {
+          await incrementAreaQuestionCount(this.sessionManager, sessionId, questionTargetAreas[0]);
+          await this.sessionManager.setAreaStartTime(sessionId, questionTargetAreas[0]);
+          await this.sessionManager.updateSession(sessionId, { currentFocusArea: questionTargetAreas[0] });
+        }
+
+        const complexity = await detectQuestionComplexity(questionContent);
+        await this.sessionManager.saveCurrentQuestion(sessionId, questionContent, complexity);
+
+        return {
+          action:    'continue_probing',
+          content:   questionContent,
+          reasoning: firstQuestion.reasoning,
+          targetArea: questionTargetAreas[0],
+          confidence: 50,
+          metadata: { strategy: 'transition', questionStyle: 'direct', pipelineTimeMs: Date.now() - pipelineStart },
+        };
+      }
+
       // â”€â”€ STEP 1: Combined Analysis â”€â”€
       const step1Start = Date.now();
       const isSkipped  = transcript === '[SKIPPED]' || audioMetadata?.skipped === true;
@@ -730,56 +796,73 @@ class IntelligentInterviewService {
    */
   async handleSilence(sessionId, silenceDuration) {
     try {
-
       if (silenceDuration < 20) {
         return { action: 'ignore', content: null, reasoning: 'Short pause - allowing natural thinking time' };
       }
 
-
       const session = await this.sessionManager.getSession(sessionId);
       if (!session) throw new Error(`Session ${sessionId} not found`);
 
-      const coverageAnalysis = await this.coverageAI.analyzeCoverageIntelligently(
-        '[SILENCE - NO RESPONSE]',
-        session.coverage,
-        session.config.intelligenceContext.focusAreas,
-        session.conversation
+      const weakestAreas = Object.entries(session.coverage?.areas || {})
+        .filter(([, d]) => d.percentage < 50 && !d.completed && !d.disqualified)
+        .sort((a, b) => a[1].percentage - b[1].percentage)
+        .map(([a]) => a);
+
+      const coverageForQGen = {
+        overallAssessment: {
+          weakestAreas,
+          strongestAreas: Object.entries(session.coverage?.areas || {})
+            .filter(([, d]) => d.percentage >= 60)
+            .map(([a]) => a),
+        },
+      };
+
+      const nextQuestion = await AIUtils.withTimeout(
+        this.questionAI.generateIntelligentQuestion(
+          session,
+          coverageForQGen,
+          { previousQuestions: session.conversation.filter(e => e.type === 'interviewer').slice(-5) },
+          null,
+          null
+        ),
+        12000,
+        'handleSilence-generateQuestion'
       );
 
-      await this.decisionAI.makeIntelligentDecision(session, '[EXTENDED SILENCE]', { coverage: coverageAnalysis });
-
-      const nextQuestion = await this.questionAI.generateIntelligentQuestion(
-        session,
-        coverageAnalysis,
-        { previousQuestions: session.conversation.filter(e => e.type === 'interviewer') }
-      );
+      const questionContent = nextQuestion.question || nextQuestion.content;
 
       await this.sessionManager.addConversationEntry(sessionId, {
         type: 'interviewer',
-        content: nextQuestion.question,
+        content: questionContent,
         timestamp: new Date().toISOString(),
         metadata: { aiGenerated: true, targetAreas: nextQuestion.targetAreas, reasoning: 'Extended silence - moving forward', silenceDuration },
       });
 
+      if (nextQuestion.targetAreas?.[0] && session.coverage?.areas?.[nextQuestion.targetAreas[0]]) {
+        await incrementAreaQuestionCount(this.sessionManager, sessionId, nextQuestion.targetAreas[0]);
+        await this.sessionManager.updateSession(sessionId, { currentFocusArea: nextQuestion.targetAreas[0] });
+      }
+
       return {
-        action:   'next_question',
-        content:  nextQuestion.question,
-        reasoning: `Extended silence (${silenceDuration}s) - automatically moving forward`,
+        action:     'next_question',
+        content:    questionContent,
+        reasoning:  `Extended silence (${silenceDuration}s) - automatically moving forward`,
         targetAreas: nextQuestion.targetAreas,
         silenceDuration,
       };
     } catch (error) {
-      console.error('âŒ [Silence] Failed to handle silence:', error.message);
+      console.error('[Silence] Failed to handle silence:', error.message);
+      const fallback = "Let's move on to the next topic. Can you tell me about a recent project you worked on?";
       return {
         action:  'next_question',
-        content: "Let's move on to the next topic. Can you tell me about your experience with problem-solving?",
+        content: fallback,
         reasoning: 'Silence handling failed - using fallback',
         error:   error.message,
       };
     }
   }
 
-  async endInterview(sessionId) {
+    async endInterview(sessionId) {
     try {
       const session = await this.sessionManager.getSession(sessionId);
       if (!session) throw new Error(`Session ${sessionId} not found`);
