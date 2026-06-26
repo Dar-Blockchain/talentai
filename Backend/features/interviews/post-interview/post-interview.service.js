@@ -75,6 +75,7 @@ const incrementMonthlyInterviewsUsage = async (companyId) => {
     throw error;
   }
 };
+module.exports.incrementMonthlyInterviewsUsage = incrementMonthlyInterviewsUsage;
 
 // ========== CREATE ==========
 module.exports.createPostInterviewAssessment = async (assessmentData) => {

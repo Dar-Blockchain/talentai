@@ -4,6 +4,7 @@ const Profile                 = require("../../../features/users/profile.model")
 const Post                    = require("../../posts/post.model");
 const notificationService     = require("../../notifications/notification.service");
 const socket                  = require("../../../socket/io");
+const { incrementMonthlyInterviewsUsage } = require("./post-interview.service");
 
 async function persistInterviewResults(sessionId, result, candidateId, postId) {
   if (!candidateId || !postId) {
@@ -23,6 +24,12 @@ async function persistInterviewResults(sessionId, result, candidateId, postId) {
       jobTitle = post?.jobDetails?.title ?? null;
     }
 
+    // Read the prior state first so the usage counter only increments on the
+    // genuine false→true completion transition, not on every persistence
+    // call for an already-completed session (e.g. a reconnect/retry).
+    const previous = await PostInterviewAssessment.findOne(query).select('completed').lean();
+    const wasAlreadyCompleted = previous?.completed === true;
+
     const saved = await PostInterviewAssessment.findOneAndUpdate(
       query,
       {
@@ -41,6 +48,14 @@ async function persistInterviewResults(sessionId, result, candidateId, postId) {
       },
       { new: true, upsert: true }
     );
+
+    if (!wasAlreadyCompleted && company) {
+      try {
+        await incrementMonthlyInterviewsUsage(company);
+      } catch (incErr) {
+        console.error(`⚠️ [Billing] Failed to increment monthly interviews usage for company ${company}:`, incErr.message);
+      }
+    }
 
     // Update JobApplication status and send notifications
     if (candidateId && postId) {
