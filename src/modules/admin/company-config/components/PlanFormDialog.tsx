@@ -1,0 +1,198 @@
+import React, { useEffect, useState } from 'react';
+import { Dialog, DialogContent, DialogActions, Button, IconButton, TextField, FormControlLabel, Switch, Alert, CircularProgress } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
+import { ADMIN_ACCENT, ADMIN_DARK_BANNER } from '@/modules/admin/shared';
+import { useCreatePlanMutation, useUpdatePlanMutation } from '../queries';
+import { PlanLimit, PlanFormValues } from '../types';
+
+interface PlanFormDialogProps {
+  open: boolean;
+  onClose: () => void;
+  plan: PlanLimit | null; // null = create mode, otherwise edit mode
+  onSaved: (planName: string, mode: 'created' | 'updated') => void;
+}
+
+const emptyForm: PlanFormValues = {
+  name: '',
+  postsLimit: 5,
+  monthlyInterviewLimit: 15,
+  durationDays: 30,
+  priceUsd: 0,
+  description: '',
+  isActive: true,
+};
+
+const PlanFormDialog: React.FC<PlanFormDialogProps> = ({ open, onClose, plan, onSaved }) => {
+  const isEdit = !!plan;
+  const [form, setForm] = useState<PlanFormValues>(emptyForm);
+  const [error, setError] = useState<string | null>(null);
+
+  const { mutate: createPlan, isPending: creating } = useCreatePlanMutation();
+  const { mutate: updatePlan, isPending: updating } = useUpdatePlanMutation();
+  const saving = creating || updating;
+
+  useEffect(() => {
+    if (!open) return;
+    setError(null);
+    setForm(
+      plan
+        ? {
+            name: plan.name,
+            postsLimit: plan.postsLimit,
+            monthlyInterviewLimit: plan.monthlyInterviewLimit,
+            durationDays: plan.durationDays ?? 30,
+            priceUsd: plan.priceUsd ?? 0,
+            description: plan.description ?? '',
+            isActive: plan.isActive,
+          }
+        : emptyForm,
+    );
+  }, [open, plan]);
+
+  const handleField = <K extends keyof PlanFormValues>(key: K, value: PlanFormValues[K]) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const canSubmit = form.name.trim().length > 0
+    && form.postsLimit >= 0
+    && form.monthlyInterviewLimit >= 0
+    && form.durationDays > 0
+    && form.priceUsd >= 0;
+
+  const handleSubmit = () => {
+    if (!canSubmit) return;
+    setError(null);
+
+    if (isEdit) {
+      const { name, ...updates } = form;
+      updatePlan(
+        { name: plan!.name, updates },
+        {
+          onSuccess: () => onSaved(form.name, 'updated'),
+          onError: (err: any) => setError(err?.message || 'Failed to update plan.'),
+        },
+      );
+    } else {
+      createPlan(form, {
+        onSuccess: () => onSaved(form.name, 'created'),
+        onError: (err: any) => setError(err?.message || 'Failed to create plan.'),
+      });
+    }
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{ sx: { borderRadius: '16px', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.15)' } }}
+    >
+      <div className="relative px-6 pt-6 pb-6" style={{ backgroundColor: ADMIN_DARK_BANNER }}>
+        <IconButton onClick={onClose} sx={{ position: 'absolute', top: 12, right: 12, color: 'rgba(255,255,255,0.7)', '&:hover': { color: 'white' } }}>
+          <CloseIcon fontSize="small" />
+        </IconButton>
+        <div className="flex items-center gap-3">
+          <WorkspacePremiumIcon style={{ fontSize: 28, color: 'rgba(255,255,255,0.9)' }} />
+          <h2 className="text-[1.15rem] font-bold text-white">{isEdit ? 'Edit Plan' : 'New Plan'}</h2>
+        </div>
+      </div>
+
+      <DialogContent sx={{ p: 3 }}>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2, borderRadius: '10px' }} onClose={() => setError(null)}>
+            {error}
+          </Alert>
+        )}
+
+        <div className="flex flex-col gap-3">
+          <TextField
+            label="Plan name"
+            value={form.name}
+            onChange={(e) => handleField('name', e.target.value)}
+            disabled={isEdit}
+            helperText={isEdit ? 'Plan names cannot be changed after creation.' : ' '}
+            fullWidth
+            size="small"
+          />
+          <div className="flex gap-3">
+            <TextField
+              label="Job posts limit"
+              type="number"
+              value={form.postsLimit}
+              onChange={(e) => handleField('postsLimit', Number(e.target.value))}
+              fullWidth
+              size="small"
+              slotProps={{ htmlInput: { min: 0 } }}
+            />
+            <TextField
+              label="Interviews / month"
+              type="number"
+              value={form.monthlyInterviewLimit}
+              onChange={(e) => handleField('monthlyInterviewLimit', Number(e.target.value))}
+              fullWidth
+              size="small"
+              slotProps={{ htmlInput: { min: 0 } }}
+            />
+          </div>
+          <div className="flex gap-3">
+            <TextField
+              label="Duration (days)"
+              type="number"
+              value={form.durationDays}
+              onChange={(e) => handleField('durationDays', Number(e.target.value))}
+              fullWidth
+              size="small"
+              slotProps={{ htmlInput: { min: 1 } }}
+            />
+            <TextField
+              label="Price (USD / mo)"
+              type="number"
+              value={form.priceUsd}
+              onChange={(e) => handleField('priceUsd', Number(e.target.value))}
+              fullWidth
+              size="small"
+              slotProps={{ htmlInput: { min: 0 } }}
+            />
+          </div>
+          <TextField
+            label="Description"
+            value={form.description}
+            onChange={(e) => handleField('description', e.target.value)}
+            multiline
+            minRows={2}
+            fullWidth
+            size="small"
+          />
+          <FormControlLabel
+            control={<Switch checked={form.isActive} onChange={(e) => handleField('isActive', e.target.checked)} />}
+            label="Active (visible for new subscriptions)"
+          />
+        </div>
+      </DialogContent>
+
+      <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid #E2E8F0', backgroundColor: '#F8FAFC', gap: 1.5 }}>
+        <Button
+          onClick={onClose}
+          disabled={saving}
+          variant="outlined"
+          sx={{ textTransform: 'none', borderColor: '#E2E8F0', color: '#64748B', borderRadius: '10px' }}
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={handleSubmit}
+          variant="contained"
+          disabled={!canSubmit || saving}
+          startIcon={saving ? <CircularProgress size={16} color="inherit" /> : undefined}
+          sx={{ textTransform: 'none', backgroundColor: ADMIN_ACCENT, borderRadius: '10px', fontWeight: 600, boxShadow: 'none', '&:hover': { backgroundColor: '#4338CA', boxShadow: 'none' } }}
+        >
+          {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Plan'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+export default PlanFormDialog;

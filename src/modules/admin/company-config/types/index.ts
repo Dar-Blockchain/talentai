@@ -1,5 +1,15 @@
 export type { PlanLimit } from "@/store/slices/planLimitsSlice";
 
+export interface PlanFormValues {
+  name: string;
+  postsLimit: number;
+  monthlyInterviewLimit: number;
+  durationDays: number;
+  priceUsd: number;
+  description?: string;
+  isActive: boolean;
+}
+
 export interface CompanyOption {
   profileId: string;
   name: string;

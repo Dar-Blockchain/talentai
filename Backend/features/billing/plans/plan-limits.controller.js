@@ -7,8 +7,8 @@ const handleError = (res, error, defaultStatus = 500) => {
 
 module.exports.createPlan = async (req, res) => {
   try {
-    const { name, postsLimit, monthlyInterviewLimit, description, isActive } = req.body;
-    const result = await planLimitsService.createPlan({ name, postsLimit, monthlyInterviewLimit, description, isActive });
+    const { name, postsLimit, monthlyInterviewLimit, durationDays, priceUsd, description, isActive } = req.body;
+    const result = await planLimitsService.createPlan({ name, postsLimit, monthlyInterviewLimit, durationDays, priceUsd, description, isActive });
     res.status(201).json(result);
   } catch (error) {
     handleError(res, error, 400);

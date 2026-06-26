@@ -44,7 +44,13 @@ const CompanyConfig: React.FC = () => {
       <AdminPageHeading title="Company Configuration" subtitle="Subscribe companies to a plan on the platform" />
 
       {/* Available plans */}
-      <PlanOverviewGrid plans={plans} />
+      <PlanOverviewGrid
+        plans={plans}
+        onSaved={(planName, mode) =>
+          setSnackbar({ open: true, message: mode === 'created' ? `Plan "${planName}" created.` : `Plan "${planName}" updated.`, severity: 'success' })
+        }
+        onError={(message) => setSnackbar({ open: true, message, severity: 'error' })}
+      />
 
       {/* Subscribe a company */}
       <SubscribeCompanyCard

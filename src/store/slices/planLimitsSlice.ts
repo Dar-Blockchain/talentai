@@ -9,6 +9,7 @@ export interface PlanLimit {
   name: string;
   postsLimit: number;
   monthlyInterviewLimit: number;
+  durationDays?: number;
   priceUsd?: number;
   stripePriceId?: string;
   isActive: boolean;

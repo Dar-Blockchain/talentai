@@ -2,7 +2,8 @@ export { fetchPlanLimits, fetchPlanLimitById, updatePlanLimits } from "@/store/s
 
 import axiosInstance from "@/utils/axiosInstance";
 import { apiCall } from "@/utils/apiCall";
-import { CompanyOption, AdminSubscription, CompanySubscriptionsPage } from "../types";
+import { PlanLimit } from "@/store/slices/planLimitsSlice";
+import { CompanyOption, AdminSubscription, CompanySubscriptionsPage, PlanFormValues } from "../types";
 
 export const adminSubscriptionApi = {
   searchCompanies: (search: string) =>
@@ -35,5 +36,26 @@ export const adminSubscriptionApi = {
         } as CompanySubscriptionsPage;
       },
       "Failed to load companies.",
+    ),
+};
+
+export const adminPlanApi = {
+  createPlan: (payload: PlanFormValues) =>
+    apiCall(
+      async () => {
+        const { data } = await axiosInstance.post("plan-limits", payload);
+        return data?.data as PlanLimit;
+      },
+      "Failed to create plan.",
+    ),
+
+  // Backend updates by plan name, not _id — name itself is immutable once created.
+  updatePlan: (name: string, updates: Partial<Omit<PlanFormValues, "name">>) =>
+    apiCall(
+      async () => {
+        const { data } = await axiosInstance.put("plan-limits", { name, ...updates });
+        return data?.data as PlanLimit;
+      },
+      "Failed to update plan.",
     ),
 };
