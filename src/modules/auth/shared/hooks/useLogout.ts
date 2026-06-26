@@ -10,8 +10,8 @@ export function useLogout(redirectTo = "/signin") {
   const { logout } = useAuthContext();
   const router     = useRouter();
 
-  return useCallback(() => {
-    logout();
+  return useCallback(async () => {
+    await logout();
     router.replace(redirectTo);
   }, [logout, router, redirectTo]);
 }

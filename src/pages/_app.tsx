@@ -9,7 +9,7 @@ import { Provider, useSelector, useDispatch } from "react-redux";
 import { store, persistor, RootState } from "../store/store";
 import { PersistGate } from "redux-persist/integration/react";
 import { ThemeProvider as MuiThemeProvider, createTheme, CssBaseline } from "@mui/material";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useTheme } from "next-themes";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { useRouter } from "next/router";
@@ -22,7 +22,7 @@ import { Toaster } from "@/modules/shared/ui/shadcn/sonner";
 import { useToast, ToastProvider } from "@/hooks/useToast";
 import { NotificationProvider } from "@/modules/notifications/shared/context";
 import { AuthProvider, useAuthState, useAuthActions } from "@/modules/auth/shared/context/AuthContext";
-import { clearConnectedUser, getMyProfile } from "@/store/slices/userSlice";
+import { getMyProfile } from "@/store/slices/userSlice";
 import { getToken } from '@/modules/auth/shared/utils/token';
 import { setToastHandler } from "@/utils/toastEmitter";
 import { setSessionExpiredHandler } from "@/utils/storeEmitter";
@@ -133,7 +133,12 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
   // Split context subscriptions — AuthWrapper needs both halves but they're
   // now two separate hook calls so each subscription is minimal.
   const { isAuthenticated, isLoggingOut } = useAuthState();
-  const { logout, clearAuth, finishLoggingOut } = useAuthActions();
+  const { logout, finishLoggingOut } = useAuthActions();
+
+  // Expose for cross-tab sync closure below (avoids stale-closure issues with
+  // the inline lambda capturing an outdated reference to these values).
+  const isAuthenticatedRef = useRef(isAuthenticated);
+  isAuthenticatedRef.current = isAuthenticated;
 
   // Dismiss the logout overlay only once the post-logout navigation has
   // actually landed, instead of a fixed timer. A fixed timer (the old
@@ -161,11 +166,15 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
   }, [isRehydrated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Force logout when middleware detected an invalid / role-less token.
-  // persistor.purge() now happens inside logout() itself, so this just
-  // waits for it then redirects — no need to duplicate the purge here.
+  // Guard: only trigger if actually authenticated — prevents a malicious
+  // cross-site redirect (?force_logout=1) from logging out a visiting user.
   useEffect(() => {
     if (router.query.force_logout !== "1") return;
-    logout().finally(() => router.replace("/signin"));
+    if (isAuthenticated) {
+      logout().finally(() => router.replace("/signin"));
+    } else {
+      router.replace("/signin");
+    }
   }, [router.query.force_logout]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Keep auth state in sync across browser tabs.
@@ -173,9 +182,12 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
     if (typeof window === "undefined") return;
 
     const syncAuthFromStorage = () => {
-      if (!getToken() && isAuthenticated) {
-        clearAuth();
-        dispatch(clearConnectedUser());
+      // Use ref so the closure always reads the latest isAuthenticated value.
+      if (!getToken() && isAuthenticatedRef.current) {
+        // Full cleanup: clears Redux, persistor, React Query cache, and auth state.
+        // Previously only called clearAuth + clearConnectedUser, leaving stale
+        // data in localStorage and the React Query cache after cross-tab logout.
+        finishLoggingOut();
       }
     };
 
@@ -192,7 +204,7 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
       window.removeEventListener("focus", syncAuthFromStorage);
       document.removeEventListener("visibilitychange", syncAuthFromStorage);
     };
-  }, [isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [finishLoggingOut]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <NotificationProvider userId={userId}>

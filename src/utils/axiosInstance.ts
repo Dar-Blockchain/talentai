@@ -15,8 +15,8 @@ const axiosInstance = axios.create({
 
 /* ─── Request interceptor ──────────────────────────────────────────────────
  * Abort the request entirely during logout to stop spurious API calls.
- * Also attach Authorization header for compatibility with socket clients
- * and any manual fetch calls that rely on the token value.
+ * The JWT is now an httpOnly cookie sent automatically by the browser via
+ * withCredentials:true — no Authorization header injection needed.
  * ────────────────────────────────────────────────────────────────────────── */
 axiosInstance.interceptors.request.use(
   (config) => {
@@ -24,11 +24,6 @@ axiosInstance.interceptors.request.use(
       const controller = new AbortController();
       controller.abort();
       config.signal = controller.signal;
-      return config;
-    }
-    const token = getToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },

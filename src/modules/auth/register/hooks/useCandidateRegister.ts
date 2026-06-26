@@ -3,24 +3,22 @@ import { useForm } from "react-hook-form";
 import { useRouter } from "next/router";
 import { useToast } from "@/hooks/useToast";
 import { isInvitationUrl } from "@/utils/memberInvitation";
-import { useOtpFlow, useCvProgress, useLoadingWithNavigation } from "@/modules/auth/shared/hooks";
+import { useCvProgress } from "@/modules/auth/shared/hooks";
 import { extractInvitationEmail, refreshAbort } from "@/modules/auth/shared/utils";
-import { useRegisterMutation, useVerifyRegisterOtp, useResendRegisterOtp } from "../queries";
+import { OTP_TTL } from "@/modules/auth/shared/types";
+import { useRegisterMutation } from "../queries";
 import { CANDIDATE_EXPIRY_KEY } from "../utils";
-import type { CandidateFormValues, RegisterFormProps, RegisterStep } from "../types";
+import type { CandidateFormValues, RegisterFormProps } from "../types";
 import { useLanguage } from "@/hooks/useLanguage";
 
-export function useCandidateRegister({ onStepChange, onEmailChange }: RegisterFormProps) {
+export function useCandidateRegister({ onOtpReady }: RegisterFormProps) {
   const router          = useRouter();
   const { showToast }   = useToast();
   const { currentLang } = useLanguage();
   const returnUrl       = router.query.returnUrl as string | undefined;
   const isJoinTeam      = isInvitationUrl(returnUrl);
   const invitationEmail = extractInvitationEmail(returnUrl);
-  const { loading: navigationLoading, withLoading } = useLoadingWithNavigation();
 
-  const [step,       setStep]       = useState<RegisterStep>(1);
-  const [savedEmail, setSavedEmail] = useState("");
   const [analyzingCv, setAnalyzingCv] = useState(false);
   const [cvFile,      setCvFile]      = useState<File | null>(null);
   const [cvError,     setCvError]     = useState(false);
@@ -29,33 +27,15 @@ export function useCandidateRegister({ onStepChange, onEmailChange }: RegisterFo
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortRef     = useRef<AbortController | null>(null);
 
-  // Form lives here so the hook owns all candidate register state
   const form = useForm<CandidateFormValues>({ mode: "onTouched" });
   useEffect(() => { if (invitationEmail) form.setValue("email", invitationEmail); }, [invitationEmail]);
 
   const cvProgress       = useCvProgress(analyzingCv);
   const registerMutation = useRegisterMutation();
-  const verifyMutation   = useVerifyRegisterOtp((_data) => {
-    router.replace(returnUrl ? decodeURIComponent(returnUrl) : "/candidate/dashboard");
-  });
-  const resendMutation = useResendRegisterOtp();
 
-  const { timer, otp, verifyCode: originalVerifyCode, resendCode, abort, cleanup, verifyLoading, resendLoading } = useOtpFlow({
-    storageKey:    CANDIDATE_EXPIRY_KEY,
-    verifyMutation,
-    resendMutation,
-  });
+  const loading = registerMutation.isPending;
 
-  // Wrap verifyCode to show loading during navigation
-  const verifyCode = async (emailArg: string) => {
-    await withLoading(async () => {
-      await originalVerifyCode(emailArg);
-    });
-  };
-
-  const loading = registerMutation.isPending || verifyLoading || navigationLoading;
-
-  useEffect(() => () => { abort(); abortRef.current?.abort(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => { abortRef.current?.abort(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sendCode = async (values: CandidateFormValues) => {
     if (!isJoinTeam && !cvFile) { setCvError(true); return; }
@@ -77,34 +57,25 @@ export function useCandidateRegister({ onStepChange, onEmailChange }: RegisterFo
       await registerMutation.mutateAsync({ payload: fd, signal });
 
       const email = values.email.toLowerCase().trim();
-      setSavedEmail(email);
-      onEmailChange?.(email);
-      timer.start();
-      setStep(2);
-      onStepChange?.(2);
+      localStorage.setItem(CANDIDATE_EXPIRY_KEY, (Date.now() + OTP_TTL * 1000).toString());
+      // Close the dialog before transitioning — onOtpReady unmounts this component
+      // so any state update after it would be a no-op or cause a React warning.
+      setAnalyzingCv(false);
+      onOtpReady?.(email);
     } catch (err: any) {
+      setAnalyzingCv(false);
       if (err?.name !== "AbortError")
         showToast({ message: err?.message ?? "Failed to send verification code.", severity: "error" });
-    } finally {
-      setAnalyzingCv(false);
     }
   };
 
   return {
-    // form
     form,
-    // step
-    step, loading, resendLoading,
-    // cv
+    loading,
     analyzingCv, cvProgress,
     cvFile, setCvFile, cvError, setCvError,
     isDragging, setIsDragging, fileInputRef,
-    // auth
-    savedEmail, otp, timer,
     isJoinTeam, returnUrl, invitationEmail,
-    // actions
     sendCode,
-    verifyCode: () => verifyCode(savedEmail),
-    resendCode: () => resendCode(savedEmail),
   };
 }

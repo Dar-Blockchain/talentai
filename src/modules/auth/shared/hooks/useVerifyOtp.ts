@@ -32,7 +32,9 @@ export function useVerifyOtp(
     mutationFn: (payload: VerifyOtpPayload) => authApi.verifyOtp(payload),
 
     onSuccess: (data) => {
-      saveToken(data.token);
+      // Sets the JS-readable auth_present indicator cookie.
+      // The actual JWT was delivered server-side as an httpOnly cookie.
+      saveToken();
 
       dispatch(setConnectedUser({
         user:              data.user,
