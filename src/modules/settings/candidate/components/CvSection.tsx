@@ -163,13 +163,6 @@ const CvSection: React.FC<Props> = ({ resumeFilename, onUpdated, onDeleted, comp
   /* ── Full mode ── */
   return (
     <div className="flex flex-col gap-4">
-      <div className="px-4 py-3 bg-primary-light/50 border border-primary-border rounded-xl border-l-[3px] border-l-primary">
-        <p className="text-[0.9rem] font-bold text-gray-900">Resume / CV</p>
-        <p className="text-[0.78rem] text-gray-400 mt-1">
-          Upload your latest CV. This will be used for all new job applications.
-        </p>
-      </div>
-
       {error && (
         <div className="flex items-center justify-between rounded-[10px] bg-red-50 border border-red-200 px-3 py-2 text-[0.8rem] text-red-700">
           <span>{error}</span>
