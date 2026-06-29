@@ -52,7 +52,7 @@ const SkillCard: React.FC<SkillCardProps> = ({ value, icon, title, description, 
       "flex size-9 shrink-0 items-center justify-center rounded-xl border transition-colors",
       selected ? "border-secondary-dark/30 bg-secondary-dark/10" : "border-border bg-muted",
     )}>
-      {React.cloneElement(icon as React.ReactElement, {
+      {React.cloneElement(icon as React.ReactElement<{ className?: string }>, {
         className: cn("size-[18px]", selected ? "text-secondary-dark" : "text-muted-foreground"),
       })}
     </span>

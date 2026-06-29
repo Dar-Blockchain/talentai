@@ -21,7 +21,8 @@ import {
   VisibilityOutlined,
 } from "@mui/icons-material";
 import { motion } from "framer-motion";
-import { Campaign, ModuleType, ParticipantStatus } from "@/types/campaign";
+import { ModuleType, ParticipantStatus } from "@/types/campaign";
+import { EmployeeCampaignEntry } from "@/modules/company/campaigns/types";
 import { buildInterviewUrl } from "@/lib/interviewSession";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -163,14 +164,14 @@ const RowSkeleton = () => (
 
 // ─── Campaign Row ─────────────────────────────────────────────────────────────
 
-const CampaignRow: React.FC<{ campaign: Campaign; onAction: () => void }> = ({ campaign, onAction }) => {
+const CampaignRow: React.FC<{ campaign: EmployeeCampaignEntry; onAction: () => void }> = ({ campaign, onAction }) => {
   const ps      = PS_META[campaign.participantStatus ?? "INVITED"];
   const mm      = MODULE_META[campaign.module?.type];
   const PsIcon  = ps.icon;
   const ModIcon = mm?.icon;
   const remaining = daysLeft(campaign.deadline);
   const isCompleted = campaign.participantStatus === "COMPLETED";
-  const score = (campaign as any).score ?? null;
+  const score = campaign.score ?? null;
 
   return (
     <Box
@@ -350,20 +351,20 @@ const EmployeeDashboardOverview: React.FC = () => {
                   : false;
                 return (
                 <CampaignRow
-                  key={c._id}
+                  key={c.campaignId}
                   campaign={c}
                   onAction={() => {
                     if (!isExpired && (c.participantStatus === "IN_PROGRESS" || c.participantStatus === "INVITED")) {
                       const modType = c.module?.type;
                       if (modType === "QUESTIONNAIRE") {
-                        router.push(`/campaign/questionnaire/${c._id}`);
+                        router.push(`/campaign/questionnaire/${c.campaignId}`);
                       } else if (modType === "AI_INTERVIEW" || modType === "SKILL_TEST") {
-                        router.push(buildInterviewUrl({ type: 'campaign', campaignId: c._id, moduleType: modType }));
+                        router.push(buildInterviewUrl({ type: 'campaign', campaignId: c.campaignId, moduleType: modType }));
                       } else {
-                        router.push(`/employee/campaigns/${c._id}`);
+                        router.push(`/employee/campaigns/${c.campaignId}`);
                       }
                     } else {
-                      router.push(`/employee/campaigns/${c._id}`);
+                      router.push(`/employee/campaigns/${c.campaignId}`);
                     }
                   }}
                 />
@@ -387,9 +388,9 @@ const EmployeeDashboardOverview: React.FC = () => {
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               {completed.map(c => (
                 <CampaignRow
-                  key={c._id}
+                  key={c.campaignId}
                   campaign={c}
-                  onAction={() => router.push(`/employee/campaigns/${c._id}`)}
+                  onAction={() => router.push(`/employee/campaigns/${c.campaignId}`)}
                 />
               ))}
             </Box>
@@ -441,7 +442,7 @@ const EmployeeDashboardOverview: React.FC = () => {
                   Recent scores
                 </Typography>
                 {scored.slice(0, 5).map(c => (
-                  <Box key={c._id} sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <Box key={c.campaignId} sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                     <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: scoreColor((c as any).score), flexShrink: 0 }} />
                     <Typography sx={{ fontSize: "12px", color: "#374151", fontWeight: 500, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {c.title}

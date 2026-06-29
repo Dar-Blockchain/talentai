@@ -18,7 +18,8 @@ import {
   VisibilityOffOutlined,
 } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
-import { Campaign, CampaignType, ModuleType, ParticipantStatus } from "@/types/campaign";
+import { CampaignType, ModuleType, ParticipantStatus } from "@/types/campaign";
+import { EmployeeCampaignEntry } from "@/modules/company/campaigns/types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -72,7 +73,7 @@ const scoreColor = (s: number) => s >= 80 ? GREEN : s >= 60 ? TEAL : s >= 40 ? A
 
 // ─── Campaign Card ────────────────────────────────────────────────────────────
 
-const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: string) => void; onDetails: (id: string) => void }> = memo(
+const CampaignCard: React.FC<{ campaign: EmployeeCampaignEntry; index: number; onStart: (id: string) => void; onDetails: (id: string) => void }> = memo(
   ({ campaign, index, onStart, onDetails }) => {
     const tm = campaign.type ? TYPE_META[campaign.type] : null;
     const mm = MODULE_META[campaign.module.type];
@@ -159,7 +160,7 @@ const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: 
                 </Box>
               )}
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>{campaign.targetEmployeeCount} participants</Typography>
+                <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>{campaign.totalParticipants} participants</Typography>
               </Box>
             </Box>
 
@@ -232,7 +233,7 @@ const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: 
               <Button
                 fullWidth
                 startIcon={<PlayArrowOutlined />}
-                onClick={() => onStart(campaign._id)}
+                onClick={() => onStart(campaign.campaignId)}
                 sx={{
                   bgcolor: TEAL, color: "#fff", fontWeight: 600, fontSize: "13px",
                   textTransform: "none", borderRadius: 2, py: 0.9,
@@ -246,7 +247,7 @@ const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: 
               <Button
                 fullWidth
                 startIcon={<ArrowForwardOutlined />}
-                onClick={() => onStart(campaign._id)}
+                onClick={() => onStart(campaign.campaignId)}
                 sx={{
                   bgcolor: AMBER, color: "#fff", fontWeight: 600, fontSize: "13px",
                   textTransform: "none", borderRadius: 2, py: 0.9,
@@ -277,7 +278,7 @@ const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: 
             )}
             <Tooltip title="Campaign details" arrow>
               <IconButton
-                onClick={() => onDetails(campaign._id)}
+                onClick={() => onDetails(campaign.campaignId)}
                 size="small"
                 sx={{
                   flexShrink: 0, border: "1px solid #E5E7EB", borderRadius: 2,
@@ -358,7 +359,7 @@ const EmployeeMyCampaigns: React.FC = () => {
     enabled:   !!userId,
     staleTime: 60_000,
   });
-  const campaigns = (campaignsData?.data ?? []) as Campaign[];
+  const campaigns = campaignsData?.data ?? [];
   const metrics   = metricsData ?? null;
   const error     = queryError ? ((queryError as Error).message ?? "An error occurred") : null;
 
@@ -497,7 +498,7 @@ const EmployeeMyCampaigns: React.FC = () => {
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", xl: "repeat(3, 1fr)" }, gap: 3 }}>
           <AnimatePresence mode="popLayout">
             {campaigns.map((campaign, i) => (
-              <CampaignCard key={campaign._id} campaign={campaign} index={i} onStart={handleStart} onDetails={handleDetails} />
+              <CampaignCard key={campaign.campaignId} campaign={campaign} index={i} onStart={handleStart} onDetails={handleDetails} />
             ))}
           </AnimatePresence>
         </Box>
