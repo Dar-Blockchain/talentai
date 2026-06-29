@@ -107,7 +107,8 @@ export type EligibilityStatus =
   | 'completed'
   | 'under_threshold'
   | 'limit_reached'
-  | 'no_cv';
+  | 'no_cv'
+  | 'withdrawn';
 
 export interface EligibilityMeta {
   required?: number;

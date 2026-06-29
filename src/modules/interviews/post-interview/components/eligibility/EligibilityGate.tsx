@@ -51,6 +51,7 @@ export default function EligibilityGate({ status, meta }: EligibilityGateProps) 
 
   switch (status) {
     case "no_cv":
+    case "withdrawn":
     case "company_blocked":
     case "employee_blocked":
     case "archived":

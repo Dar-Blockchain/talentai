@@ -265,6 +265,41 @@ module.exports.withdrawApplication = async (applicationId, profileId) => {
   return app;
 };
 
+// ========== RECALCULATE SCORES FOR ALL VISITED APPS ON CV UPDATE ==========
+module.exports.recalculateScoresForVisitedApps = async (profileId, newCvAnalysisId) => {
+  const visitedApps = await JobApplication.find({ profile: profileId, status: "visited" });
+  if (!visitedApps.length) return;
+
+  for (const app of visitedApps) {
+    try {
+      const post = await Post.findById(app.post).lean();
+      if (!post || post.archived) continue;
+
+      app.cvAnalysis          = newCvAnalysisId;
+      const matchResult       = await calculateApplicationMatchScore(profileId, app.post, app.company);
+      app.matchScore          = matchResult.matchScore;
+      app.matchReasoning      = matchResult.reasoning;
+      app.matchRecommendation = matchResult.recommendation || null;
+      app.matchBreakdown      = Array.isArray(matchResult.breakdown) ? matchResult.breakdown : [];
+
+      const thresholdScore = post.thresholdScore || 60;
+      if (app.matchScore < thresholdScore) {
+        app.recruiterDecision   = "rejected";
+        app.recruiterDecisionAt = new Date();
+        app.rejectionReason     = `Candidate's match score (${app.matchScore}/100) is below the required threshold (${thresholdScore}/100).`;
+      } else {
+        app.recruiterDecision   = null;
+        app.recruiterDecisionAt = null;
+        app.rejectionReason     = null;
+      }
+
+      await app.save();
+    } catch (err) {
+      console.warn(`⚠️ [CV Update] Score recalculation failed for application ${app._id}:`, err.message);
+    }
+  }
+};
+
 // ========== REACTIVATE ==========
 module.exports.reactivateApplication = async (applicationId, profileId) => {
   const app = await JobApplication.findById(applicationId);

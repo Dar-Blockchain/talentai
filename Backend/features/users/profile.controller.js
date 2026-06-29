@@ -1,5 +1,6 @@
 const profileService = require("./profile.service");
 const CVAnalysisService = require("../cv-analysis/cv-analysis.service");
+const jobApplicationService = require("../job-applications/job-application.service");
 
 module.exports.getMyProfile = async (req, res) => {
   try {
@@ -125,6 +126,13 @@ module.exports.updateResume = async (req, res) => {
         userAgent: req.get("user-agent"),
       },
     );
+
+    // Background: recalculate match scores for all visited applications with the new CV
+    if (cvAnalysis?._id) {
+      jobApplicationService
+        .recalculateScoresForVisitedApps(profile._id, cvAnalysis._id)
+        .catch((err) => console.warn("⚠️ [CV Update] Background recalculation error:", err.message));
+    }
 
     res.status(200).json({
       success: true,

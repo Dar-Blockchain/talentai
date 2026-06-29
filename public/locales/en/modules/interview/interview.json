@@ -58,6 +58,11 @@
     "desc": "This interview requires a CV so the AI can evaluate your profile. Please upload your CV in your settings and come back.",
     "action": "Upload my CV"
   },
+  "withdrawn": {
+    "title": "You withdrew from this position",
+    "desc": "You previously withdrew your application for this job. Reactivate it from your applications page to take the interview.",
+    "action": "Go to my applications"
+  },
   "back_to_dashboard": "Back to Dashboard",
   "connection": {
     "connecting": "Connecting to interview system…",

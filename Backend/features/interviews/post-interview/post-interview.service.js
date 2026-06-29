@@ -300,6 +300,11 @@ module.exports.checkInterviewEligibility = async (candidateId, postId, userRole)
   const candidateProfile = await Profile.findOne({ userId: candidateId }).select("_id resume");
   if (!candidateProfile?.resume) return { status: "no_cv" };
 
+  // Block candidates who withdrew their application for this post
+  const JobApplication = require("../../job-applications/job-application.model");
+  const existingApp = await JobApplication.findOne({ profile: candidateProfile._id, post: postId }).select("isWithdrawn").lean();
+  if (existingApp?.isWithdrawn) return { status: "withdrawn", meta: { jobTitle: post.jobDetails?.title || "" } };
+
   // Record visit as a job application (idempotent — 409 on repeat visits is expected)
   jobApplicationService.createJobApplication({
     profile: candidateProfile._id,
