@@ -130,6 +130,7 @@ router.get("/recentSignups", adminOnly, dashboardController.getRecentSignups);
 router.get("/posts", adminOnly, dashboardController.getAllPostsForAdmin);
 router.patch("/posts/:id/archive", adminOnly, dashboardController.archivePostAdmin);
 router.patch("/posts/:id/unarchive", adminOnly, dashboardController.unarchivePostAdmin);
+router.patch("/posts/:id/threshold", adminOnly, dashboardController.updatePostThresholdAdmin);
 router.delete("/posts/:id", adminOnly, dashboardController.hardDeletePostAdmin);
 
 // ========== ADMIN MODERATION — Post Interview Assessments ==========

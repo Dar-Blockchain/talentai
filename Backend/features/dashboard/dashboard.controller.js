@@ -124,6 +124,15 @@ module.exports.hardDeletePostAdmin = async (req, res) => {
   }
 };
 
+module.exports.updatePostThresholdAdmin = async (req, res) => {
+  try {
+    const post = await dashboardService.updatePostThresholdAdmin(req.params.id, req.body.thresholdScore);
+    res.status(200).json({ success: true, data: post, message: "Threshold score updated successfully" });
+  } catch (error) {
+    handleError(res, error, 400);
+  }
+};
+
 // ========== ADMIN MODERATION — Post Interview Assessments ==========
 module.exports.getAllPostInterviewAssessmentsForAdmin = async (req, res) => {
   try {

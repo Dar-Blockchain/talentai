@@ -41,3 +41,14 @@ export const useDeletePostMutation = () => {
     },
   });
 };
+
+export const useUpdatePostThresholdMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ postId, thresholdScore }: { postId: string; thresholdScore: number }) =>
+      adminPostsApi.updateThreshold(postId, thresholdScore),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ADMIN_POSTS_QUERY_KEY });
+    },
+  });
+};

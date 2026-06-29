@@ -13,6 +13,7 @@ export interface AdminPost {
   status: "draft" | "open" | "closed";
   archived: boolean;
   archivedAt?: string | null;
+  thresholdScore?: number;
   createdAt: string;
 }
 

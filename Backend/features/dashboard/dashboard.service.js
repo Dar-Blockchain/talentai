@@ -468,6 +468,28 @@ module.exports.hardDeletePostAdmin = async (postId) => {
   }
 };
 
+module.exports.updatePostThresholdAdmin = async (postId, thresholdScore) => {
+  try {
+    const score = Number(thresholdScore);
+    if (Number.isNaN(score) || score < 0 || score > 100) {
+      const err = new Error('thresholdScore must be a number between 0 and 100');
+      err.status = 400;
+      throw err;
+    }
+
+    const post = await Post.findByIdAndUpdate(postId, { thresholdScore: score }, { new: true });
+    if (!post) {
+      const err = new Error('Post not found');
+      err.status = 404;
+      throw err;
+    }
+
+    return post;
+  } catch (error) {
+    throw new Error(`Error updating post threshold: ${error.message}`);
+  }
+};
+
 // ========== ADMIN MODERATION — Post Interview Assessments ==========
 
 module.exports.getAllPostInterviewAssessmentsForAdmin = async (filters = {}, page = 1, limit = 10) => {

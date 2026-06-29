@@ -46,4 +46,13 @@ export const adminPostsApi = {
       },
       "Failed to delete post.",
     ),
+
+  updateThreshold: (postId: string, thresholdScore: number) =>
+    apiCall(
+      async () => {
+        const { data } = await axiosInstance.patch(`dashboard/posts/${postId}/threshold`, { thresholdScore });
+        return data.data as AdminPost;
+      },
+      "Failed to update threshold score.",
+    ),
 };

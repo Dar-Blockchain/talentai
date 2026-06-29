@@ -18,6 +18,12 @@ import {
   Select,
   MenuItem as SelectMenuItem,
   SelectChangeEvent,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Slider,
+  Button,
 } from '@mui/material';
 import {
   MoreVert as MoreVertIcon,
@@ -29,6 +35,7 @@ import {
   CheckCircleOutline as OpenIcon,
   DraftsOutlined as DraftIcon,
   HighlightOff as ClosedIcon,
+  TrackChangesOutlined as ThresholdIcon,
 } from '@mui/icons-material';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { Card } from '@/modules/shared/ui/shadcn/card';
@@ -41,8 +48,16 @@ import {
   AdminTableErrorRow,
   ConfirmDialog,
 } from '@/modules/admin/shared';
-import { useAdminPostsQuery, useArchivePostMutation, useUnarchivePostMutation, useDeletePostMutation } from '../queries';
+import { useAdminPostsQuery, useArchivePostMutation, useUnarchivePostMutation, useDeletePostMutation, useUpdatePostThresholdMutation } from '../queries';
 import { AdminPost } from '../types';
+
+const THRESHOLD_MARKS = [
+  { value: 0, label: '0%' },
+  { value: 50, label: '50%' },
+  { value: 100, label: '100%' },
+];
+
+const thresholdColor = (score: number) => (score >= 70 ? '#16A34A' : score >= 40 ? '#D97706' : '#DC2626');
 
 const STATUS_TONE: Record<string, { color: string; bg: string }> = {
   open: { color: '#10B981', bg: '#ECFDF5' },
@@ -88,10 +103,13 @@ const PostsManagement: React.FC = () => {
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const [menuPost, setMenuPost] = useState<AdminPost | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AdminPost | null>(null);
+  const [thresholdTarget, setThresholdTarget] = useState<AdminPost | null>(null);
+  const [thresholdValue, setThresholdValue] = useState(60);
 
   const archiveMutation = useArchivePostMutation();
   const unarchiveMutation = useUnarchivePostMutation();
   const deleteMutation = useDeletePostMutation();
+  const updateThresholdMutation = useUpdatePostThresholdMutation();
 
   const handleStatusChange = useCallback((event: SelectChangeEvent<string>) => {
     setStatusFilter(event.target.value);
@@ -139,6 +157,21 @@ const PostsManagement: React.FC = () => {
       onSuccess: () => setDeleteTarget(null),
     });
   }, [deleteTarget, deleteMutation]);
+
+  const handleEditThresholdRequest = useCallback(() => {
+    if (!menuPost) return;
+    setThresholdValue(menuPost.thresholdScore ?? 60);
+    setThresholdTarget(menuPost);
+    closeMenu();
+  }, [menuPost, closeMenu]);
+
+  const handleSaveThreshold = useCallback(() => {
+    if (!thresholdTarget) return;
+    updateThresholdMutation.mutate(
+      { postId: thresholdTarget._id, thresholdScore: thresholdValue },
+      { onSuccess: () => setThresholdTarget(null) },
+    );
+  }, [thresholdTarget, thresholdValue, updateThresholdMutation]);
 
   return (
     <div>
@@ -197,6 +230,7 @@ const PostsManagement: React.FC = () => {
                 <TableCell sx={ADMIN_TABLE_HEAD_CELL_SX}>Title</TableCell>
                 <TableCell sx={ADMIN_TABLE_HEAD_CELL_SX}>Company</TableCell>
                 <TableCell sx={ADMIN_TABLE_HEAD_CELL_SX}>Status</TableCell>
+                <TableCell sx={ADMIN_TABLE_HEAD_CELL_SX}>Threshold</TableCell>
                 <TableCell sx={ADMIN_TABLE_HEAD_CELL_SX}>Archived</TableCell>
                 <TableCell sx={ADMIN_TABLE_HEAD_CELL_SX}>Created</TableCell>
                 <TableCell sx={ADMIN_TABLE_HEAD_CELL_SX}>Actions</TableCell>
@@ -205,19 +239,19 @@ const PostsManagement: React.FC = () => {
             <TableBody>
               {isError ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
                     <AdminTableErrorRow message="Failed to load posts." onRetry={() => refetch()} />
                   </TableCell>
                 </TableRow>
               ) : loading ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
                     <span className="text-[13px] text-slate-500">Loading...</span>
                   </TableCell>
                 </TableRow>
               ) : posts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
                     <span className="text-[13px] text-slate-500">No posts found</span>
                   </TableCell>
                 </TableRow>
@@ -245,6 +279,11 @@ const PostsManagement: React.FC = () => {
                         >
                           {post.status}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-[13px] font-semibold" style={{ color: thresholdColor(post.thresholdScore ?? 60) }}>
+                          {post.thresholdScore ?? 60}%
+                        </span>
                       </TableCell>
                       <TableCell>
                         {post.archived ? (
@@ -282,6 +321,12 @@ const PostsManagement: React.FC = () => {
       </Card>
 
       <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
+        <MenuItem onClick={handleEditThresholdRequest}>
+          <ListItemIcon>
+            <ThresholdIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Edit threshold</ListItemText>
+        </MenuItem>
         <MenuItem onClick={handleArchiveToggle}>
           <ListItemIcon>
             {menuPost?.archived ? <UnarchiveIcon fontSize="small" /> : <ArchiveIcon fontSize="small" />}
@@ -306,6 +351,58 @@ const PostsManagement: React.FC = () => {
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteTarget(null)}
       />
+
+      <Dialog open={Boolean(thresholdTarget)} onClose={() => setThresholdTarget(null)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontSize: '16px', fontWeight: 600 }}>
+          Edit CV match threshold
+        </DialogTitle>
+        <DialogContent>
+          <p className="text-[12px] text-slate-500 mb-4">
+            Candidates scoring below this threshold on &quot;{thresholdTarget?.jobDetails?.title || 'this post'}&quot; are automatically flagged for review.
+          </p>
+          <div className="flex items-center gap-3">
+            <div className="flex-1">
+              <Slider
+                value={thresholdValue}
+                onChange={(_, v) => setThresholdValue(v as number)}
+                min={0}
+                max={100}
+                step={5}
+                marks={THRESHOLD_MARKS}
+                sx={{
+                  color: thresholdColor(thresholdValue),
+                  '& .MuiSlider-thumb': { width: 18, height: 18 },
+                  '& .MuiSlider-markLabel': { fontSize: '11px', color: '#9CA3AF' },
+                }}
+              />
+            </div>
+            <div
+              className="min-w-[52px] text-center rounded-lg px-3 py-1.5"
+              style={{
+                background: `${thresholdColor(thresholdValue)}15`,
+                border: `1px solid ${thresholdColor(thresholdValue)}40`,
+              }}
+            >
+              <span className="text-[16px] font-extrabold" style={{ color: thresholdColor(thresholdValue) }}>
+                {thresholdValue}%
+              </span>
+            </div>
+          </div>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={() => setThresholdTarget(null)} sx={{ color: ADMIN_NEUTRAL }}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSaveThreshold}
+            disabled={updateThresholdMutation.isPending}
+            variant="contained"
+            sx={{ boxShadow: 'none' }}
+          >
+            {updateThresholdMutation.isPending ? 'Saving...' : 'Save'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };
