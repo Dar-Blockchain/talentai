@@ -16,8 +16,6 @@ async function handleStartInterview(socket, data, { service, activeSessions, onS
     socket.join(sessionId);
     activeSessions.add(sessionId);
 
-    logger.info('Starting session', { sessionId, candidateId, postId });
-
     const onGreetingChunk = (chunk) => {
       if (socket.connected) socket.emit('greeting_chunk', { content: chunk, sessionId });
     };
@@ -47,7 +45,6 @@ async function handleStartInterview(socket, data, { service, activeSessions, onS
       timestamp: new Date().toISOString(), sessionId,
     });
 
-    logger.info('Session started', { sessionId });
   } catch (error) {
     const isRedisError = error.message?.includes('Redis') ||
       error.code === 'ECONNREFUSED' || error.syscall === 'connect';

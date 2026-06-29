@@ -38,7 +38,6 @@ async function handleAIDecision(socket, sessionId, decision, { service, onSessio
           content, reasoning: decision.reasoning, urgency: decision.urgency,
           timestamp, sessionId,
         });
-        logger.info('Intervention emitted', { sessionId, type: decision.interventionType, urgency: decision.urgency });
         break;
 
       case 'continue_probing':

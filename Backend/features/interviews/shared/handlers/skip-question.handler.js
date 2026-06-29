@@ -16,7 +16,6 @@ async function handleSkipQuestion(socket, { service, processing, onSessionEnded 
   processing.add(sessionId);
 
   try {
-    logger.info('Question skipped', { sessionId });
     safeEmit(socket, 'interviewer_typing', { sessionId, status: 'thinking' });
     resetInterTurnPauseTimer(socket, sessionId);
 

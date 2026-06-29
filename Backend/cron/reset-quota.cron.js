@@ -7,7 +7,6 @@ function initialize() {
   // 🕛 Schedule: daily at 00:00
   cron.schedule('0 0 * * *', async () => {
     try {
-      logger.info('🔁 Checking and resetting quotas (if >30 days)...');
 
       const now = new Date();
       const thresholdDate = new Date(now.setDate(now.getDate() - 30));

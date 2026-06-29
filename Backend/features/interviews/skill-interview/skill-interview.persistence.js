@@ -9,7 +9,6 @@ async function persistSkillInterviewResults(sessionId, result, socket) {
   const { candidateId, interviewConfig } = socket;
 
   if (!candidateId) {
-    logger.info('Anonymous skill interview — skipping persistence', { sessionId });
     return;
   }
 
@@ -31,7 +30,6 @@ async function persistSkillInterviewResults(sessionId, result, socket) {
 
   try {
     const assessment = await skillInterviewService.createAssessment(data, result, candidateId);
-    logger.info('Skill interview results saved', { sessionId, candidateId });
     return { assessmentId: assessment?._id ?? null };
   } catch (err) {
     logger.error('Failed to save skill interview results', { sessionId, err: err.message });
