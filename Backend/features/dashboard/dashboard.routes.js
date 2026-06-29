@@ -126,4 +126,31 @@ router.get("/adminRevenueSummary", adminOnly, dashboardController.getAdminRevenu
  */
 router.get("/recentSignups", adminOnly, dashboardController.getRecentSignups);
 
+// ========== ADMIN MODERATION — Posts ==========
+router.get("/posts", adminOnly, dashboardController.getAllPostsForAdmin);
+router.patch("/posts/:id/archive", adminOnly, dashboardController.archivePostAdmin);
+router.patch("/posts/:id/unarchive", adminOnly, dashboardController.unarchivePostAdmin);
+router.delete("/posts/:id", adminOnly, dashboardController.hardDeletePostAdmin);
+
+// ========== ADMIN MODERATION — Post Interview Assessments ==========
+router.get("/post-interview-assessments", adminOnly, dashboardController.getAllPostInterviewAssessmentsForAdmin);
+router.patch("/post-interview-assessments/:assessmentId/archive", adminOnly, dashboardController.archivePostInterviewAssessmentAdmin);
+router.patch("/post-interview-assessments/:assessmentId/unarchive", adminOnly, dashboardController.unarchivePostInterviewAssessmentAdmin);
+router.delete("/post-interview-assessments/:assessmentId", adminOnly, dashboardController.hardDeletePostInterviewAssessmentAdmin);
+
+// ========== ADMIN MODERATION — Skill Interview Assessments ==========
+router.get("/skill-interview-assessments", adminOnly, dashboardController.getAllSkillInterviewAssessmentsForAdmin);
+router.patch("/skill-interview-assessments/:id/archive", adminOnly, dashboardController.archiveSkillInterviewAssessmentAdmin);
+router.patch("/skill-interview-assessments/:id/unarchive", adminOnly, dashboardController.unarchiveSkillInterviewAssessmentAdmin);
+router.delete("/skill-interview-assessments/:id", adminOnly, dashboardController.hardDeleteSkillInterviewAssessmentAdmin);
+
+// ========== ADMIN MODERATION — Subscriptions ==========
+router.get("/subscriptions/companies", adminOnly, dashboardController.searchCompaniesForAdmin);
+router.get("/subscriptions/companies-with-status", adminOnly, dashboardController.getAllCompaniesWithSubscriptionsForAdmin);
+router.post("/subscriptions", adminOnly, dashboardController.adminCreateSubscription);
+
+// ========== ADMIN MODERATION — Plans ==========
+router.post("/plans", adminOnly, dashboardController.createPlanForAdmin);
+router.put("/plans", adminOnly, dashboardController.updatePlanForAdmin);
+
 module.exports = router;

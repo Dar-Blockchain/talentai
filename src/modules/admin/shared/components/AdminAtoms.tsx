@@ -23,7 +23,7 @@ AdminRetryButton.displayName = "AdminRetryButton";
 /** Card-shaped error state for a failed query — distinct from "no data" empty states. */
 export const AdminQueryError = memo<{ message?: string; onRetry: () => void; className?: string }>(
   ({ message = "Failed to load data.", onRetry, className }) => (
-    <Card className={cn("shadow-none", className)}>
+    <Card className={cn("border-none shadow-[0_1px_2px_rgba(15,23,42,0.04)]", className)}>
       <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
         <ErrorOutlineIcon sx={{ fontSize: 28 }} className="text-red-400" />
         <p className="text-[13px] text-slate-500">{message}</p>
@@ -48,42 +48,44 @@ export const AdminTableErrorRow = memo<{ message?: string; onRetry: () => void }
 );
 AdminTableErrorRow.displayName = "AdminTableErrorRow";
 
-/** Sticky table header cell — bold, flat neutral gray, sits above scrolling rows. */
+/** Sticky table header cell — medium-weight neutral gray, sits above scrolling rows. */
 export const ADMIN_TABLE_HEAD_CELL_SX = {
-  fontWeight: 700,
-  backgroundColor: "#F8FAFC",
-  color: "#475569",
+  fontWeight: 600,
+  backgroundColor: "#FAFBFC",
+  color: "#64748B",
+  borderBottom: "1px solid #EEF1F5",
 } as const;
 
-/** Table row — zebra striping on even rows, neutral hover. */
+/** Table row — hover-only highlight, no zebra striping (cleaner, less busy). */
 export const ADMIN_TABLE_ROW_SX = {
-  "&:nth-of-type(even)": { backgroundColor: "#FAFAFA" },
-  "&:hover": { backgroundColor: "#F1F5F9 !important" },
+  "& td": { borderBottom: "1px solid #F1F4F8" },
+  "&:hover": { backgroundColor: "#FAFBFC !important" },
+  "&:last-of-type td": { borderBottom: "none" },
 } as const;
 
-/** Tab-level page heading — bold black/gray title with a neutral underline, optional subtitle. */
+/** Tab-level page heading — bold title, light subtitle, no underline rule
+ *  (clean Linear-style heading instead of an underlined tab look). */
 export const AdminPageHeading = memo<{ title: string; subtitle?: string; gradient?: AdminGradientName }>(
   ({ title, subtitle }) => (
-    <div className="mb-6">
-      <h1 className="relative inline-block pb-2.5 text-[1.6rem] font-extrabold tracking-tight text-slate-900">
+    <div className="mb-7">
+      <h1 className="text-[1.5rem] font-semibold tracking-tight text-slate-900">
         {title}
-        <span className="absolute bottom-0 left-0 h-[3px] w-12 rounded-full bg-slate-300" />
       </h1>
-      {subtitle && <p className="mt-1.5 text-[13px] text-slate-500">{subtitle}</p>}
+      {subtitle && <p className="mt-1 text-[13px] text-slate-500">{subtitle}</p>}
     </div>
   ),
 );
 AdminPageHeading.displayName = "AdminPageHeading";
 
-/** Standard admin section header — neutral icon chip + title + flex-1 divider line. */
+/** Standard admin section header — neutral icon chip + title, no divider line
+ *  (the surrounding card edge already provides separation). */
 export const ZoneHeading = memo<{ icon: React.ElementType; label: string; gradient?: AdminGradientName }>(
   ({ icon: Icon, label }) => (
-    <div className="flex items-center gap-3 mb-5 mt-1">
-      <div className="w-8 h-8 rounded-[9px] flex items-center justify-center shrink-0" style={{ background: ADMIN_NEUTRAL_BG }}>
-        <Icon style={{ fontSize: 17, color: ADMIN_NEUTRAL }} />
+    <div className="flex items-center gap-2.5 mb-5 mt-1">
+      <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: ADMIN_NEUTRAL_BG }}>
+        <Icon style={{ fontSize: 15, color: ADMIN_NEUTRAL }} />
       </div>
-      <span className="font-semibold text-[15px] text-slate-900 tracking-tight">{label}</span>
-      <div className="flex-1 h-px bg-slate-200" />
+      <span className="font-semibold text-[14px] text-slate-900 tracking-tight">{label}</span>
     </div>
   ),
 );
@@ -100,9 +102,9 @@ export interface AdminStatCardProps {
 
 export const AdminStatCard = memo<AdminStatCardProps>(({ icon: Icon, value, label, loading }) => {
   if (loading) return (
-    <Card className="shadow-none overflow-hidden">
+    <Card className="border-none overflow-hidden">
       <CardContent className="flex items-center gap-3 py-4">
-        <Skeleton className="w-10 h-10 rounded-lg shrink-0" />
+        <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
         <div className="flex-1 min-w-0 space-y-2">
           <Skeleton className="h-6 w-10" />
           <Skeleton className="h-3 w-3/4" />
@@ -112,14 +114,14 @@ export const AdminStatCard = memo<AdminStatCardProps>(({ icon: Icon, value, labe
   );
 
   return (
-    <Card className="group overflow-hidden shadow-none transition-all hover:-translate-y-0.5 hover:shadow-md">
+    <Card className="group overflow-hidden border-none transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-4px_rgba(15,23,42,0.08),0_2px_6px_rgba(15,23,42,0.04)]">
       <CardContent className="flex items-center gap-3 py-4">
-        <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ background: ADMIN_NEUTRAL_BG }}>
-          <Icon style={{ fontSize: 19, color: ADMIN_NEUTRAL }} />
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: ADMIN_NEUTRAL_BG }}>
+          <Icon style={{ fontSize: 18, color: ADMIN_NEUTRAL }} />
         </div>
         <div className="min-w-0">
-          <div className="text-[1.35rem] font-bold text-slate-900 leading-none tabular-nums">{value}</div>
-          <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-1 truncate">{label}</div>
+          <div className="text-[1.4rem] font-bold text-slate-900 leading-none tabular-nums tracking-tight">{value}</div>
+          <div className="text-[10.5px] font-medium text-slate-400 uppercase tracking-wider mt-1.5 truncate">{label}</div>
         </div>
       </CardContent>
     </Card>
@@ -127,19 +129,19 @@ export const AdminStatCard = memo<AdminStatCardProps>(({ icon: Icon, value, labe
 });
 AdminStatCard.displayName = "AdminStatCard";
 
-/** Chart/section card wrapper — flat card, neutral icon-chip title row. */
+/** Chart/section card wrapper — soft elevation, neutral icon-chip title row. */
 export const AdminChartCard = memo<{ icon?: React.ElementType; title?: string; gradient?: AdminGradientName; children: React.ReactNode; className?: string }>(
   ({ icon: Icon, title, children, className }) => (
-    <Card className={cn("shadow-none overflow-hidden transition-shadow hover:shadow-md", className)}>
+    <Card className={cn("border-none overflow-hidden transition-shadow duration-200 hover:shadow-[0_8px_24px_-4px_rgba(15,23,42,0.08),0_2px_6px_rgba(15,23,42,0.04)]", className)}>
       <CardContent className="pt-6">
         {title && (
-          <div className="flex items-center gap-2 mb-5">
+          <div className="flex items-center gap-2.5 mb-5">
             {Icon && (
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: ADMIN_NEUTRAL_BG }}>
-                <Icon style={{ fontSize: 17, color: ADMIN_NEUTRAL }} />
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: ADMIN_NEUTRAL_BG }}>
+                <Icon style={{ fontSize: 16, color: ADMIN_NEUTRAL }} />
               </div>
             )}
-            <span className="font-semibold text-[15px] text-slate-900">{title}</span>
+            <span className="font-semibold text-[14.5px] text-slate-900">{title}</span>
           </div>
         )}
         {children}
@@ -152,8 +154,8 @@ AdminChartCard.displayName = "AdminChartCard";
 /** Labelled icon row used inside detail dialogs (avatar/email/date rows, etc). */
 export const InfoRow = memo<{ icon: React.ReactNode; label: string; value: string; mono?: boolean }>(
   ({ icon, label, value, mono }) => (
-    <div className="flex items-center gap-3 py-[9.6px]">
-      <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+    <div className="flex items-center gap-3 py-[10px]">
+      <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: ADMIN_NEUTRAL_BG }}>
         {icon}
       </div>
       <div className="min-w-0">

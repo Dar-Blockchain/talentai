@@ -3,7 +3,6 @@ import dynamic from 'next/dynamic';
 import { Skeleton } from '@/modules/shared/ui/shadcn/skeleton';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import InsightsIcon from '@mui/icons-material/Insights';
-import PublicIcon from '@mui/icons-material/Public';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import { getCountryName } from '@/utils/countryMappings';
 import { ZoneHeading, AdminQueryError } from '@/modules/admin/shared';
@@ -87,41 +86,24 @@ const AdminDashboardHome: React.FC = () => {
         <AdminStatsCards stats={stats} loading={statsLoading} />
       )}
 
-      {/* Revenue & recent activity */}
+      {/* Business — revenue and plan breakdown */}
       <div className="mt-1">
-        <ZoneHeading icon={MonetizationOnIcon} label="Revenue & Activity" />
-        <div className="flex flex-wrap gap-6">
-          <div className="flex-[1_1_580px] min-w-0">
-            {revenueError ? (
-              <AdminQueryError message="Failed to load revenue summary." onRetry={() => refetchRevenue()} />
-            ) : (
-              <AdminRevenueSummary
-                mrr={revenue?.mrr ?? 0}
-                totalActiveSubscriptions={revenue?.totalActiveSubscriptions ?? 0}
-                byPlan={revenue?.byPlan ?? []}
-                loading={revenueLoading}
-              />
-            )}
-          </div>
-          <div className="flex-[1_1_360px] min-w-0">
-            {signupsError ? (
-              <AdminQueryError message="Failed to load recent signups." onRetry={() => refetchSignups()} />
-            ) : (
-              <AdminRecentSignups signups={recentSignups} loading={signupsLoading} />
-            )}
-          </div>
-        </div>
+        <ZoneHeading icon={MonetizationOnIcon} label="Business" />
+        {revenueError ? (
+          <AdminQueryError message="Failed to load revenue summary." onRetry={() => refetchRevenue()} />
+        ) : (
+          <AdminRevenueSummary
+            mrr={revenue?.mrr ?? 0}
+            totalActiveSubscriptions={revenue?.totalActiveSubscriptions ?? 0}
+            byPlan={revenue?.byPlan ?? []}
+            loading={revenueLoading}
+          />
+        )}
       </div>
 
-      {/* Skills section */}
+      {/* People & Growth — who's joining, where they are, and the trend over time */}
       <div className="mt-1">
-        <ZoneHeading icon={BarChartIcon} label="Skills Overview" />
-        <AdminSkillsBarChart skillsData={skillsData} />
-      </div>
-
-      {/* Analytics section */}
-      <div className="mt-1">
-        <ZoneHeading icon={InsightsIcon} label="Analytics" />
+        <ZoneHeading icon={InsightsIcon} label="People & Growth" />
         <div className="flex flex-wrap gap-6">
           <div className="flex-[1_1_580px] min-w-0">
             <AdminGrowthAnalytics
@@ -132,15 +114,29 @@ const AdminDashboardHome: React.FC = () => {
            />
           </div>
           <div className="flex-[1_1_360px] min-w-0">
-            <AdminSkillsDistribution skillDistribution={skillDistribution} />
+            {signupsError ? (
+              <AdminQueryError message="Failed to load recent signups." onRetry={() => refetchSignups()} />
+            ) : (
+              <AdminRecentSignups signups={recentSignups} loading={signupsLoading} />
+            )}
           </div>
+        </div>
+        <div className="mt-6">
+          <AdminWorldMap userLocations={processUserLocations} totalUsers={stats?.users ?? 0} />
         </div>
       </div>
 
-      {/* World Map section */}
+      {/* Skills & Assessments — what candidates are bringing to the platform */}
       <div className="mt-1">
-        <ZoneHeading icon={PublicIcon} label="Geographic Distribution" />
-        <AdminWorldMap userLocations={processUserLocations} totalUsers={stats?.users ?? 0} />
+        <ZoneHeading icon={BarChartIcon} label="Skills & Assessments" />
+        <div className="flex flex-wrap gap-6">
+          <div className="flex-[1_1_580px] min-w-0">
+            <AdminSkillsBarChart skillsData={skillsData} />
+          </div>
+          <div className="flex-[1_1_360px] min-w-0">
+            <AdminSkillsDistribution skillDistribution={skillDistribution} />
+          </div>
+        </div>
       </div>
     </div>
   );

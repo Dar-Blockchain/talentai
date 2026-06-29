@@ -13,7 +13,7 @@ import {
   Badge as BadgeIcon,
 } from '@mui/icons-material';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
-import { InfoRow, ADMIN_NEUTRAL, ADMIN_DARK_BANNER } from '@/modules/admin/shared';
+import { InfoRow, ADMIN_NEUTRAL, ADMIN_ACCENT, ADMIN_RADIUS } from '@/modules/admin/shared';
 import { User } from '../types';
 
 interface UserDetailsDialogProps {
@@ -39,20 +39,17 @@ const UserDetailsDialog: React.FC<UserDetailsDialogProps> = ({ open, user, onClo
       fullWidth
       PaperProps={{
         sx: {
-          borderRadius: '16px',
+          borderRadius: ADMIN_RADIUS,
           overflow: 'hidden',
-          boxShadow: '0 25px 50px -12px rgba(0,0,0,0.15)',
+          boxShadow: '0 16px 40px -8px rgba(15,23,42,0.12)',
         },
       }}
     >
       {/* Header */}
-      <div
-        className="relative px-6 pt-6 pb-10 text-center"
-        style={{ backgroundColor: ADMIN_DARK_BANNER }}
-      >
+      <div className="relative px-6 pt-6 pb-5 text-center">
         <IconButton
           onClick={onClose}
-          sx={{ position: 'absolute', top: 12, right: 12, color: 'rgba(255,255,255,0.7)', '&:hover': { color: 'white' } }}
+          sx={{ position: 'absolute', top: 12, right: 12, color: '#94A3B8', '&:hover': { color: '#475569' } }}
         >
           <CloseIcon fontSize="small" />
         </IconButton>
@@ -62,34 +59,32 @@ const UserDetailsDialog: React.FC<UserDetailsDialogProps> = ({ open, user, onClo
             height: 64,
             mx: 'auto',
             mb: 1.5,
-            bgcolor: 'rgba(255,255,255,0.15)',
-            border: '3px solid rgba(255,255,255,0.3)',
+            bgcolor: '#EEF2FF',
+            color: ADMIN_ACCENT,
             fontSize: '1.5rem',
             fontWeight: 700,
           }}
         >
           {user.username?.charAt(0).toUpperCase() || 'U'}
         </Avatar>
-        <h2 className="text-[1.15rem] font-bold text-white">{displayName}</h2>
-        <p className="text-[13px] text-white/70 mt-0.5">@{user.username}</p>
-      </div>
-
-      <DialogContent sx={{ p: 0 }}>
-        {/* Status chips - overlapping */}
-        <div className="px-6 -mt-4 flex justify-center gap-2">
-          <Badge variant="outline" className="border-slate-200 bg-white font-bold text-indigo-600 shadow-[0_2px_8px_rgba(0,0,0,0.1)]">
+        <h2 className="text-[1.15rem] font-semibold text-slate-900">{displayName}</h2>
+        <p className="text-[13px] text-slate-500 mt-0.5">@{user.username}</p>
+        <div className="flex justify-center gap-2 mt-3">
+          <Badge variant="outline" className="border-transparent bg-slate-100 font-semibold text-slate-600">
             {user.role}
           </Badge>
           <Badge
             variant="outline"
-            className="gap-1 border-transparent bg-white font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.1)]"
+            className="gap-1 border-transparent bg-slate-100 font-semibold"
             style={{ color: user.isVerified ? '#10b981' : '#f59e0b' }}
           >
             <VerifiedIcon style={{ fontSize: 14 }} />
             {user.isVerified ? 'Verified' : 'Pending'}
           </Badge>
         </div>
+      </div>
 
+      <DialogContent sx={{ p: 0 }}>
         {/* Info List */}
         <div className="px-6 pt-4 pb-1">
           <InfoRow icon={<EmailIcon sx={{ fontSize: 18, color: ADMIN_NEUTRAL }} />} label="Email" value={user.email} />

@@ -9,19 +9,21 @@ import {
   QuestionAnswer as InterviewIcon,
   Psychology as SkillIcon,
   Settings as SettingsIcon,
+  WorkOutline as PostsIcon,
 } from '@mui/icons-material';
 import { cn } from '@/lib/utils';
 import { ADMIN_SIDEBAR_BG, ADMIN_SIDEBAR_BORDER, ADMIN_ACCENT } from '../theme';
 
 const DRAWER_WIDTH = 260;
 
-type TabName = 'dashboard' | 'users' | 'post-interview' | 'skill-interview' | 'company-config';
+type TabName = 'dashboard' | 'users' | 'posts' | 'post-interview' | 'skill-interview' | 'company-config';
 
 // Static across all renders — hoisted out of the component so it isn't
 // reallocated (and the .map() below doesn't get a new array identity) every render.
 const MENU_ITEMS: { id: TabName; label: string; icon: React.ElementType }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: DashboardIcon },
   { id: 'users', label: 'Users', icon: PeopleIcon },
+  { id: 'posts', label: 'Posts', icon: PostsIcon },
   { id: 'post-interview', label: 'Post Interview', icon: InterviewIcon },
   { id: 'skill-interview', label: 'Skill Interview', icon: SkillIcon },
   { id: 'company-config', label: 'Company Config', icon: SettingsIcon },

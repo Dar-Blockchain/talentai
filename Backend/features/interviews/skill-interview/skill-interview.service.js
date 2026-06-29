@@ -46,50 +46,44 @@ const createAssessment = async (data, rawInterviewData, userId) => {
 
     // If candidate exists, handle profile updates and remove previous assessments
     if (candidateId) {
-      // candidateId is a User._id — resolve the Profile first
-      const profile = await Profile.findOne({ userId: candidateId }).select('_id');
+      // Determine skill name from data (fallback to Unknown Skill)
+      const skillName = data.skill || 'Unknown Skill';
+
+      // candidateId is a User._id — resolve the Profile, and look up any prior
+      // assessment for the same candidate+skill in parallel (the two queries
+      // don't depend on each other's result).
+      const [profile, previousAssessments] = await Promise.all([
+        Profile.findOne({ userId: candidateId }).select('_id'),
+        SkillInterviewAssessment.find({
+          candidateId,
+          skill: skillName,
+          _id: { $ne: savedAssessment._id }
+        }).select('_id'),
+      ]);
       if (!profile) {
         console.warn(`Profile not found for userId ${candidateId}`);
         throw new Error(`Profile not found for candidate: ${candidateId}`);
       }
       const profileId = profile._id;
 
-      // Determine skill name from data (fallback to Unknown Skill)
-      const skillName = data.skill || 'Unknown Skill';
-
-      // Find any existing assessments for same candidate and same skill (exclude the newly saved one)
-      const previousAssessments = await SkillInterviewAssessment.find({
-        candidateId,
-        skill: skillName,
-        _id: { $ne: savedAssessment._id }
-      }).select('_id');
-
       const previousIds = previousAssessments.map(a => a._id);
       const previousDeletedCount = previousIds.length;
 
       if (previousDeletedCount > 0) {
         await SkillInterviewAssessment.deleteMany({ _id: { $in: previousIds } });
+        // Mongo rejects $pull and $push on the same array path in one update,
+        // so the stale-id removal has to happen before the new id is pushed.
+        await Profile.findByIdAndUpdate(profileId, { $pull: { interviewDetails: { $in: previousIds } } });
       }
 
       // proficiencyLevel / experienceLevel already calculated above; derive levelconfirmed
       const levelconfirmedValue = overallScore > 80 ? proficiencyLevel : proficiencyLevel - 1;
 
-      let updatedProfile = null;
-
-      if (previousDeletedCount > 0) {
-        await Profile.findByIdAndUpdate(profileId, { $pull: { interviewDetails: { $in: previousIds } } });
-        updatedProfile = await Profile.findByIdAndUpdate(
-          profileId,
-          { $inc: { quota: 1 }, $push: { interviewDetails: savedAssessment._id } },
-          { new: true }
-        );
-      } else {
-        updatedProfile = await Profile.findByIdAndUpdate(
-          profileId,
-          { $inc: { quota: 1 }, $push: { interviewDetails: savedAssessment._id } },
-          { new: true }
-        );
-      }
+      const updatedProfile = await Profile.findByIdAndUpdate(
+        profileId,
+        { $inc: { quota: 1 }, $push: { interviewDetails: savedAssessment._id } },
+        { new: true }
+      );
 
       if (!updatedProfile) {
         throw new Error(`Profile not found for candidate: ${candidateId}`);
@@ -187,7 +181,8 @@ const createAssessment = async (data, rawInterviewData, userId) => {
 const getAssessmentById = async (id) => {
   try {
     const assessment = await SkillInterviewAssessment.findById(id)
-      .populate('candidateId');
+      .populate('candidateId')
+      .lean();
     if (!assessment) {
       throw new Error('Assessment not found');
     }
@@ -204,13 +199,15 @@ const getAllAssessments = async (page = 1, limit = 10, filters = {}) => {
     const skip = (page - 1) * limit;
     const query = buildQuery(filters);
 
-    const assessments = await SkillInterviewAssessment.find(query)
-      .populate('candidateId')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    const total = await SkillInterviewAssessment.countDocuments(query);
+    const [assessments, total] = await Promise.all([
+      SkillInterviewAssessment.find(query)
+        .populate('candidateId')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      SkillInterviewAssessment.countDocuments(query),
+    ]);
 
     return {
       data: assessments,
@@ -257,6 +254,12 @@ const buildQuery = (filters) => {
     if (filters.endDate) {
       query.createdAt.$lte = new Date(filters.endDate);
     }
+  }
+
+  if (filters.archived === true || filters.archived === 'true') {
+    query.archived = true;
+  } else if (filters.archived === false || filters.archived === 'false') {
+    query.archived = { $ne: true };
   }
 
   return query;

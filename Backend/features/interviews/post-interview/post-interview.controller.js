@@ -3,11 +3,12 @@ const service = require('./post-interview.service');
 // ========== READ - Get all assessments ==========
 module.exports.getAllPostInterviewAssessments = async (req, res) => {
   try {
-    const { page = 1, limit = 10, post, candidate, company } = req.query;
+    const { page = 1, limit = 10, post, candidate, company, archived } = req.query;
     const filters = {};
     if (post) filters.post = post;
     if (candidate) filters.candidate = candidate;
     if (company) filters.company = company;
+    if (archived !== undefined) filters.archived = archived;
 
     const result = await service.getAllPostInterviewAssessments(filters, parseInt(page), parseInt(limit));
     return res.status(200).json({
@@ -64,3 +65,4 @@ module.exports.checkInterviewEligibility = async (req, res) => {
     return res.status(500).json({ status: 'error', message: error.message });
   }
 };
+

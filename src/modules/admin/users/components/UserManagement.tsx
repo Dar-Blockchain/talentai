@@ -10,9 +10,6 @@ import {
   Avatar,
   IconButton,
   Tooltip,
-  Tab,
-  Tabs,
-  styled,
 } from '@mui/material';
 import {
   Visibility as VisibilityIcon,
@@ -38,28 +35,7 @@ import { usePagination } from '@/hooks/usePagination';
 import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { cn } from '@/lib/utils';
-import { ADMIN_ACCENT, ADMIN_NEUTRAL, ADMIN_TABLE_HEAD_CELL_SX, ADMIN_TABLE_ROW_SX, AdminPageHeading, AdminTableErrorRow } from '@/modules/admin/shared';
-
-const StyledTabs = styled(Tabs)({
-  minHeight: 40,
-  '& .MuiTabs-indicator': {
-    backgroundColor: ADMIN_NEUTRAL,
-    height: 3,
-    borderRadius: '3px 3px 0 0',
-  },
-});
-
-const StyledTab = styled(Tab)({
-  minHeight: 40,
-  textTransform: 'none',
-  fontWeight: 600,
-  fontSize: '0.85rem',
-  color: '#64748B',
-  padding: '8px 16px',
-  '&.Mui-selected': {
-    color: ADMIN_NEUTRAL,
-  },
-});
+import { ADMIN_ACCENT, ADMIN_TABLE_HEAD_CELL_SX, ADMIN_TABLE_ROW_SX, AdminPageHeading, AdminTableErrorRow, PillTabs, PillTab } from '@/modules/admin/shared';
 
 const roleBadgeClass = (role: string) => {
   switch (role?.toLowerCase()) {
@@ -199,12 +175,12 @@ const UserManagement: React.FC<UserManagementProps> = ({
         </div>
         {/* Role Tabs */}
         <div className="border-t border-slate-100 px-2">
-          <StyledTabs value={roleTabIndex >= 0 ? roleTabIndex : 0} onChange={handleRoleTabChange}>
-            <StyledTab icon={<PeopleIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="All" />
-            <StyledTab icon={<PersonIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Candidates" />
-            <StyledTab icon={<BusinessIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Companies" />
-            <StyledTab icon={<AdminIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Admins" />
-          </StyledTabs>
+          <PillTabs value={roleTabIndex >= 0 ? roleTabIndex : 0} onChange={handleRoleTabChange}>
+            <PillTab icon={<PeopleIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="All" />
+            <PillTab icon={<PersonIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Candidates" />
+            <PillTab icon={<BusinessIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Companies" />
+            <PillTab icon={<AdminIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Admins" />
+          </PillTabs>
         </div>
       </Card>
 
