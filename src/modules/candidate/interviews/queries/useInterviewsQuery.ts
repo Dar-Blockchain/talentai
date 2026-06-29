@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { interviewService } from "@/services/interviewService";
-import { fetchJobInterviews, fetchInterviewReport } from "../api/interviews.api";
+import { fetchJobInterviews, fetchInterviewReport, fetchSkillAssessmentsByType } from "../api/interviews.api";
 
 export const INTERVIEW_KEYS = {
   all:       ()                                                    => ["candidateInterviews"]                        as const,
@@ -19,7 +18,7 @@ export const useJobInterviewsQuery = () =>
 export const useSkillAssessmentsQuery = (skillType: "technical" | "soft", limit?: number) =>
   useQuery({
     queryKey:  INTERVIEW_KEYS.skillType(skillType, limit),
-    queryFn:   () => interviewService.fetchSkillAssessmentsByType({ skillType, limit }),
+    queryFn:   () => fetchSkillAssessmentsByType({ skillType, limit }),
     staleTime: 60_000,
   });
 

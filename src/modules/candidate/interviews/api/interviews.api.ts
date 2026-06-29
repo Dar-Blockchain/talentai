@@ -2,6 +2,16 @@ import { fetchCandidateApplications } from '@/modules/candidate/applications/api
 import type { CandidateApplication } from '@/modules/candidate/applications/types/application.types';
 import axiosInstance from '@/utils/axiosInstance';
 
+export async function fetchSkillAssessmentsByType(params: { skillType: "technical" | "soft"; limit?: number }) {
+  const res = await axiosInstance.get("skill-interview-assessments/my", {
+    params: { skillType: params.skillType, limit: params.limit ?? 20 },
+  });
+  const data = res.data;
+  const results = data.data || data.results || [];
+  const total = data.pagination?.totalCount || data.total || results.length;
+  return { results, total, skillType: params.skillType };
+}
+
 export async function fetchInterviewReport(id: string) {
   const res = await axiosInstance.get(`skill-interview-assessments/${id}`);
   return res.data.data;
