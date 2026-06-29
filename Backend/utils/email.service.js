@@ -96,7 +96,10 @@ const sendOTP = async (email, otp, language = "fr") => {
     return true;
   } catch (error) {
     console.error("❌ OTP email failed:", error.message);
-    return false;
+    throw Object.assign(
+      new Error("Failed to send the verification code. Please try again later."),
+      { status: 503, cause: error }
+    );
   }
 };
 

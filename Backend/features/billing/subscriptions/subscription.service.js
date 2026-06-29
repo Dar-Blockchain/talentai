@@ -332,22 +332,39 @@ module.exports.getCombinedActiveDetails = async (companyProfileId) => {
       const Payment = mongoose.model("Payment");
       const PlanLimits = mongoose.model("PlanLimits");
 
+      // Batch-fetch payments + candidate plans for every subscription that
+      // needs repair in one round trip each, instead of awaiting per-sub
+      // inside the loop (this path only runs on data-integrity gaps, but
+      // there's no reason to serialize N independent lookups).
+      const subIds = allActive.map((s) => s._id);
+      const payments = await Payment.find({ subscriptionId: { $in: subIds } }).select("subscriptionId planName planId");
+      const paymentBySub = new Map(payments.map((p) => [String(p.subscriptionId), p]));
+
+      const planNames = [...new Set(payments.map((p) => p.planName).filter(Boolean))];
+      const planIds = [...new Set(payments.map((p) => p.planId).filter(Boolean).map(String))];
+      const [plansByName, plansById] = await Promise.all([
+        planNames.length ? PlanLimits.find({ name: { $in: planNames }, isActive: true }) : [],
+        planIds.length ? PlanLimits.find({ _id: { $in: planIds } }) : [],
+      ]);
+      const planByName = new Map(plansByName.map((p) => [p.name, p]));
+      const planById = new Map(plansById.map((p) => [String(p._id), p]));
+
+      const updates = [];
       for (const sub of allActive) {
+        const payment = paymentBySub.get(String(sub._id));
+        const planDoc = (payment?.planName && planByName.get(payment.planName))
+          || (payment?.planId && planById.get(String(payment.planId)))
+          || null;
+        if (planDoc) {
+          sub.planId = planDoc;
+          updates.push({ updateOne: { filter: { _id: sub._id }, update: { planId: planDoc._id } } });
+        }
+      }
+      if (updates.length) {
         try {
-          const payment = await Payment.findOne({ subscriptionId: sub._id }).select("planName planId");
-          let planDoc = null;
-          if (payment?.planName) {
-            planDoc = await PlanLimits.findOne({ name: payment.planName, isActive: true });
-          }
-          if (!planDoc && payment?.planId) {
-            planDoc = await PlanLimits.findById(payment.planId);
-          }
-          if (planDoc) {
-            await Subscription.findByIdAndUpdate(sub._id, { planId: planDoc._id });
-            sub.planId = planDoc;
-          }
+          await Subscription.bulkWrite(updates);
         } catch (repairErr) {
-          console.error(`⚠️  Could not repair sub ${sub._id}:`, repairErr.message);
+          console.error("⚠️  Could not persist subscription plan repairs:", repairErr.message);
         }
       }
       valid = allActive.filter((s) => s.planId != null);
@@ -429,6 +446,185 @@ module.exports.markExpiredSubscriptions = async () => {
     return { success: true, count: result.modifiedCount };
   } catch (error) {
     console.error("Error marking expired subscriptions:", error);
+    throw error;
+  }
+};
+
+module.exports.adminCreateSubscription = async ({ companyProfileId, planId, startDate, notes }) => {
+  try {
+    if (!companyProfileId || !planId) {
+      const err = new Error("Company and plan are required");
+      err.status = 400;
+      throw err;
+    }
+
+    const Profile = mongoose.model("Profile");
+    const profile = await Profile.findById(companyProfileId);
+    if (!profile || profile.type !== "Company") {
+      const err = new Error("Company profile not found");
+      err.status = 404;
+      throw err;
+    }
+
+    const plan = await PlanLimits.findById(planId);
+    if (!plan) {
+      const err = new Error("Plan not found");
+      err.status = 404;
+      throw err;
+    }
+
+    const start = startDate ? new Date(startDate) : new Date();
+    const end = new Date(start);
+    end.setDate(end.getDate() + plan.durationDays);
+
+    const subscription = await Subscription.create({
+      companyProfileId,
+      planId,
+      startDate: start,
+      endDate: end,
+      status: "active",
+      autoRenew: false,
+      notes: notes || "Granted manually by admin",
+    });
+
+    return { success: true, data: await subscription.populate("planId") };
+  } catch (error) {
+    console.error("Error creating admin subscription:", error);
+    throw error;
+  }
+};
+
+module.exports.getAllCompaniesWithSubscriptions = async ({ search = "", page = 1, limit = 20 } = {}) => {
+  try {
+    const pageNum = Number(page);
+    const limitNum = Number(limit);
+    const skip = (pageNum - 1) * limitNum;
+    const now = new Date();
+
+    // Pick each company's most relevant subscription in the DB: active
+    // subscriptions sort first, ties broken by most recent — all done via
+    // an index-backed sort + $group, so we never pull more than one
+    // subscription per company into memory (no full-collection scan/load).
+    const pipeline = [
+      {
+        $addFields: {
+          _isActive: { $and: [{ $eq: ["$status", "active"] }, { $gt: ["$endDate", now] }] },
+        },
+      },
+      { $sort: { _isActive: -1, createdAt: -1 } },
+      {
+        $group: {
+          _id: "$companyProfileId",
+          subscription: { $first: "$$ROOT" },
+        },
+      },
+      {
+        $lookup: {
+          from: "profiles",
+          localField: "_id",
+          foreignField: "_id",
+          as: "profile",
+        },
+      },
+      { $unwind: "$profile" },
+      { $match: { "profile.type": "Company" } },
+      ...(search
+        ? [{
+            $match: {
+              $or: [
+                { "profile.companyDetails.name": { $regex: search, $options: "i" } },
+                { "profile.companyDetails.email": { $regex: search, $options: "i" } },
+              ],
+            },
+          }]
+        : []),
+      {
+        $lookup: {
+          from: "planlimits",
+          localField: "subscription.planId",
+          foreignField: "_id",
+          as: "plan",
+        },
+      },
+      { $unwind: { path: "$plan", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "profile.userId",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: 0,
+          profileId: "$_id",
+          name: { $ifNull: ["$profile.companyDetails.name", "$user.username", "Unnamed company"] },
+          email: { $ifNull: ["$profile.companyDetails.email", "$user.email", ""] },
+          companyNameSort: { $toLower: { $ifNull: ["$profile.companyDetails.name", ""] } },
+          subscription: {
+            id: "$subscription._id",
+            planName: { $ifNull: ["$plan.name", "Unknown"] },
+            status: "$subscription.status",
+            isActive: "$subscription._isActive",
+            startDate: "$subscription.startDate",
+            endDate: "$subscription.endDate",
+            postsUsed: "$subscription.postsUsed",
+            postsLimit: { $ifNull: ["$plan.postsLimit", null] },
+            monthlyInterviewsUsed: "$subscription.monthlyInterviewsUsed",
+            monthlyInterviewLimit: { $ifNull: ["$plan.monthlyInterviewLimit", null] },
+            autoRenew: "$subscription.autoRenew",
+          },
+        },
+      },
+      { $sort: { companyNameSort: 1 } },
+      {
+        $facet: {
+          data: [{ $skip: skip }, { $limit: limitNum }, { $project: { companyNameSort: 0 } }],
+          totalCount: [{ $count: "count" }],
+        },
+      },
+    ];
+
+    const [result] = await Subscription.aggregate(pipeline);
+    const data = result?.data ?? [];
+    const total = result?.totalCount?.[0]?.count ?? 0;
+
+    return { success: true, data, total, page: pageNum, limit: limitNum };
+  } catch (error) {
+    console.error("Error listing companies with subscriptions:", error);
+    throw error;
+  }
+};
+
+module.exports.searchCompanies = async (search = "") => {
+  try {
+    const Profile = mongoose.model("Profile");
+    const query = { type: "Company" };
+    if (search) {
+      query.$or = [
+        { "companyDetails.name": { $regex: search, $options: "i" } },
+        { "companyDetails.email": { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const companies = await Profile.find(query)
+      .select("companyDetails.name companyDetails.email userId")
+      .populate("userId", "username email")
+      .limit(20)
+      .lean();
+
+    return {
+      success: true,
+      data: companies.map((c) => ({
+        profileId: c._id,
+        name: c.companyDetails?.name || c.userId?.username || "Unnamed company",
+        email: c.companyDetails?.email || c.userId?.email || "",
+      })),
+    };
+  } catch (error) {
+    console.error("Error searching companies:", error);
     throw error;
   }
 };

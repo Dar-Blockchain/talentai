@@ -20,6 +20,6 @@ export interface CompanyFormValues {
 }
 
 export interface RegisterFormProps {
-  onStepChange?: (step: RegisterStep) => void;
   onEmailChange?: (email: string) => void;
+  onOtpReady?:   (email: string) => void;
 }

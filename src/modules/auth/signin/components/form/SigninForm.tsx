@@ -5,9 +5,13 @@ import { AuthSubmitButton } from "@/modules/auth/shared/ui/AuthSubmitButton";
 import { useSignin } from "../../hooks";
 import EmailStep from "../ui/EmailStep";
 
-const SigninForm: React.FC = () => {
+interface SigninFormProps {
+  onOtpSent?: (email: string) => void;
+}
+
+const SigninForm: React.FC<SigninFormProps> = ({ onOtpSent }) => {
   const { t } = useTranslation("auth");
-  const { form, loading, emailValue, invitationEmail, onSubmit } = useSignin();
+  const { form, loading, emailValue, invitationEmail, onSubmit } = useSignin(onOtpSent);
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-1">

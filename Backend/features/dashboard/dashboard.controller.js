@@ -60,3 +60,22 @@ module.exports.getRichStats = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+module.exports.getAdminRevenueSummary = async (req, res) => {
+  try {
+    const data = await dashboardService.getAdminRevenueSummary();
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+module.exports.getRecentSignups = async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit, 10) || 8, 25);
+    const data = await dashboardService.getRecentSignups(limit);
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

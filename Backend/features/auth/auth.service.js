@@ -12,7 +12,36 @@ const Subscription      = require("../billing/subscriptions/subscription.model")
 
 // â”€â”€â”€ Constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-const OTP_EXPIRY_MS = 5 * 60 * 1000;
+const OTP_EXPIRY_MS    = 5 * 60 * 1000;
+const OTP_MAX_ATTEMPTS = 5;
+
+// ─── OTP brute-force protection ───────────────────────────────────────────────
+// In-memory per-email attempt counter. Resets on server restart; for
+// multi-process deployments replace with a Redis-backed counter.
+
+const _otpAttempts = new Map(); // email → { count, windowStart }
+
+function checkOtpRateLimit(email) {
+  const now   = Date.now();
+  const entry = _otpAttempts.get(email);
+
+  if (!entry || now - entry.windowStart >= OTP_EXPIRY_MS) {
+    _otpAttempts.set(email, { count: 1, windowStart: now });
+    return;
+  }
+
+  entry.count += 1;
+  if (entry.count > OTP_MAX_ATTEMPTS) {
+    throw Object.assign(
+      new Error("Too many verification attempts. Please request a new code."),
+      { status: 429 },
+    );
+  }
+}
+
+function clearOtpRateLimit(email) {
+  _otpAttempts.delete(email);
+}
 
 // â”€â”€â”€ Private helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -156,9 +185,13 @@ module.exports.verifyUserOTP = async (email, otp, location = null) => {
     throw Object.assign(new Error("OTP has expired. Please request a new one."), { status: 401 });
   }
 
+  checkOtpRateLimit(email); // throws 429 after OTP_MAX_ATTEMPTS failures
+
   if (user.otp.code !== otp) {
     throw Object.assign(new Error("Invalid OTP code. Please check and try again."), { status: 401 });
   }
+
+  clearOtpRateLimit(email); // successful match — reset the counter
 
   const locationUpdate = location
     ? { ip: location.ip, Localisation: formatLocation(location) }
@@ -229,23 +262,19 @@ module.exports.loginUser = async (email) => {
   assertUserCanReceiveOtp(user);
 
   const code = await issueOtp(user._id);
-  if (!await sendOTP(email, code, user.language || "en"))
-    throw Object.assign(new Error("Failed to send OTP email. Please try again."), { status: 500 });
+  await sendOTP(email, code, user.language || 'en');
 
-  return { email, username: user.username, message: "Verification code sent to your email." };
+  return { email, username: user.username, message: 'Verification code sent to your email.' };
 };
 
-// â”€â”€â”€ Resend OTP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
 module.exports.resendOTP = async (email) => {
-  const user = await User.findOne({ email }).select("_id username isBanned language").lean();
+  const user = await User.findOne({ email }).select('_id username isBanned language').lean();
   assertUserCanReceiveOtp(user);
 
   const code = await issueOtp(user._id);
-  if (!await sendOTP(email, code, user.language || "en"))
-    throw Object.assign(new Error("Failed to send OTP email. Please try again."), { status: 500 });
+  await sendOTP(email, code, user.language || 'en');
 
-  return { email, username: user.username, message: "New verification code sent. Valid for 5 minutes." };
+  return { email, username: user.username, message: 'New verification code sent. Valid for 5 minutes.' };
 };
 
 // â”€â”€â”€ Get current user (me) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

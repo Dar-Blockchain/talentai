@@ -7,59 +7,30 @@ const { getLanguageInstruction } = require('../../shared/prompts/generation.prom
  * Requires config.context.targetCompany to be set.
  */
 function buildPostInterviewGreetingUser(config, persona) {
-  const langInstruction = getLanguageInstruction(config);
-  const interviewerStyle = config.interviewerPersona?.style || 'professional';
+  const langInstruction  = getLanguageInstruction(config);
   const interviewerTone  = persona?.agentBehavior?.tone || config.interviewerPersona?.tone || 'friendly';
-  const cultureTrait     = config.companyProfile?.culture?.values?.[0] || 'innovation';
+  const exampleGreeting  = `"Hello! I'm excited to speak with you today about the ${config.context.targetRole} position at ${config.context.targetCompany}. Let's get started!"`;
 
-  let personaContext = '';
-  if (persona?.idealCandidate) {
-    const domainTopics = persona.agentBehavior?.domainTopics?.slice(0, 3).join(', ') || '';
-    const mustHaves    = persona.idealCandidate?.mustHaveSkills?.slice(0, 3).join(', ') || '';
-    personaContext = `
-JOB-SPECIFIC CONTEXT (use to make greeting relevant):
-- Job Category: ${persona.jobCategory}
-- Key Skills to Explore: ${mustHaves}
-- Domain Topics: ${domainTopics}
-- Tone: ${persona.agentBehavior?.tone || 'professional'}
-- Seniority: ${persona.idealCandidate?.seniorityExpectations || 'standard'}`;
-  }
+  const exampleWithIntro = `"Hello! I'm Olga, your AI interviewer. I'm excited to speak with you today about the ${config.context.targetRole} position at ${config.context.targetCompany}. To get started, could you please introduce yourself?"`;
 
-  let interviewFocus;
-  let exampleGreeting;
+  return `Generate a short, warm greeting for this interview that ends with asking the candidate to introduce themselves.
 
-  if (config.interviewType === 'HR_INTERVIEW') {
-    interviewFocus  = `This is a BEHAVIORAL and CULTURAL FIT interview focusing on soft skills, teamwork, and alignment with company values.`;
-    exampleGreeting = `"Hello! I'm excited to speak with you today about the ${config.context.targetRole} position at ${config.context.targetCompany}. Let's have a great conversation about your experience and how you can contribute to our team."`;
-  } else {
-    interviewFocus  = `Standard professional interview.`;
-    exampleGreeting = `"Hello! I'm excited to speak with you today about the ${config.context.targetRole} position. Let's have a great conversation."`;
-  }
-
-  return `Generate a warm, professional greeting for this ${config.interviewType} interview:
-
-INTERVIEW TYPE & FOCUS:
-${interviewFocus}
-${personaContext}
-
-INTERVIEW CONTEXT:
+CONTEXT:
+- Agent name: Olga
 - Position: ${config.context.targetRole}
 - Company: ${config.context.targetCompany}
-- Candidate Experience Level: ${config.context.experienceLevel}
-- Interview Style: ${interviewerStyle}, ${interviewerTone}
-- Company Values: ${cultureTrait}
+- Tone: ${interviewerTone}
 
 REQUIREMENTS:
-- Write 2-3 natural, conversational sentences
-- Welcome the candidate warmly
-- Briefly mention the position and set expectations for the interview type
-- If persona context is available, reference specific aspects of the role (domain, key topics)
-- Set a comfortable, professional tone appropriate for ${config.interviewType}
-- DO NOT use labels, bullet points, or structured format
-- DO NOT include explanations or meta-text
-- ONLY output the greeting text itself
+- Maximum 2-3 short sentences
+- First sentence: introduce yourself as Olga the AI interviewer
+- Second sentence: welcome the candidate and mention the role and company
+- Last sentence: ask the candidate to introduce themselves
+- Do NOT mention any technical skills, tools, topics, or interview structure
+- Keep it simple, friendly, and natural
+- ONLY output the greeting text itself — no labels, no meta-text
 
-Example format for ${config.interviewType}: ${exampleGreeting}${langInstruction ? '\n\n' + langInstruction : ''}`;
+Example: ${exampleWithIntro}${langInstruction ? '\n\n' + langInstruction : ''}`;
 }
 
 /**

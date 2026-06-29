@@ -5,11 +5,10 @@ const { requireAuth } = require("../../../middleware/security/auth.middleware");
 const authLogMiddleware = require("../../../middleware/security/request-log.middleware");
 const { controledAcces } = require("../../../middleware/authorize.middleware");
 
-router.post("/", requireAuth, authLogMiddleware("planLimits"), planLimitsController.createPlan);
 router.get("/", planLimitsController.getAllPlans);
 router.get("/:id", planLimitsController.getPlanById);
 
-router.use(requireAuth, authLogMiddleware("planLimits"), controledAcces("Admin"));
-router.put("/", planLimitsController.updatePlan);
+router.post("/", requireAuth, authLogMiddleware("planLimits"), controledAcces("Admin"), planLimitsController.createPlan);
+router.put("/", requireAuth, authLogMiddleware("planLimits"), controledAcces("Admin"), planLimitsController.updatePlan);
 
 module.exports = router;

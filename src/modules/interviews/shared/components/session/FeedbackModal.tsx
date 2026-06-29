@@ -116,7 +116,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ open, interviewId, interv
                 <button
                   disabled={mutation.isPending}
                   onClick={onDone}
-                  className="font-sans font-semibold text-[0.82rem] text-[#6B7280] px-5 py-3 rounded-[12px] hover:bg-[#f9fafb] transition-colors"
+                  className="font-sans font-semibold text-[0.82rem] text-[#6B7280] px-5 py-3 rounded-[12px] hover:bg-[#f9fafb] transition-colors cursor-pointer"
                 >
                   Skip
                 </button>

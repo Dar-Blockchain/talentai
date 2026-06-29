@@ -71,13 +71,13 @@ const GDPRConsentModal: React.FC<GDPRConsentModalProps> = ({ open, onAccept, onD
         <div className="px-7 pb-6 flex gap-3 justify-end">
           <button
             onClick={onDecline}
-            className="font-sans font-semibold text-[0.82rem] text-[#64748B] border border-[#E2E8F0] rounded-[10px] px-5 py-2.5 hover:border-[#CBD5E1] hover:bg-[#F8FAFC] transition-colors"
+            className="font-sans font-semibold text-[0.82rem] text-[#64748B] border border-[#E2E8F0] rounded-[10px] px-5 py-2.5 hover:border-[#CBD5E1] hover:bg-[#F8FAFC] transition-colors cursor-pointer"
           >
             {t('gdpr.decline')}
           </button>
           <button
             onClick={onAccept}
-            className="font-sans font-bold text-[0.82rem] text-white rounded-[10px] px-6 py-2.5 transition-colors"
+            className="font-sans font-bold text-[0.82rem] text-white rounded-[10px] px-6 py-2.5 transition-colors cursor-pointer"
             style={{ background: '#6AD39C', boxShadow: '0 4px 12px rgba(106,211,156,0.35)' }}
             onMouseEnter={e => (e.currentTarget.style.background = '#10453F')}
             onMouseLeave={e => (e.currentTarget.style.background = '#6AD39C')}

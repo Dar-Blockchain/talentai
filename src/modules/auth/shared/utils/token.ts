@@ -1,26 +1,29 @@
 import Cookies from 'js-cookie';
 
-/** Returns the JWT from the cookie set by the backend after OTP verification. */
+// The JWT is now stored in an httpOnly cookie (set server-side) and is not
+// readable by JavaScript. Auth state is tracked via a companion non-sensitive
+// indicator cookie ("auth_present") whose value carries no credential data.
+
+/** Returns a truthy string ("1") when the user has an active session, null otherwise. */
 export function getToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return Cookies.get('jwt_token') ?? null;
+  return Cookies.get('auth_present') ?? null;
 }
 
-/** Removes the auth cookie from the browser (backend also clears it on logout). */
+/**
+ * Sets the JS-readable auth indicator cookie.
+ * The actual JWT is managed server-side (httpOnly); this function only updates
+ * the companion indicator so client code can detect authenticated state.
+ * The token parameter is accepted for API compatibility but is not stored.
+ */
+export function saveToken(_token?: string): void {
+  if (typeof window === 'undefined') return;
+  Cookies.set('auth_present', '1', { path: '/', expires: 7, sameSite: 'strict' });
+}
+
+/** Removes the auth indicator cookie. The server clears the httpOnly JWT on logout. */
 export function clearTokens(): void {
   if (typeof window === 'undefined') return;
-  Cookies.remove('jwt_token', { path: '/' });
+  Cookies.remove('auth_present', { path: '/' });
 }
 
-/** Decodes the JWT exp claim and returns true if the token is expired or unreadable. */
-export function isTokenExpired(token: string | null): boolean {
-  if (!token) return true;
-  try {
-    const base64  = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-    const payload = JSON.parse(atob(base64));
-    if (!payload.exp) return true;
-    return Math.floor(Date.now() / 1000) >= payload.exp;
-  } catch {
-    return true;
-  }
-}

@@ -25,22 +25,6 @@ export interface UserLocation {
 
 // ─── API payloads ─────────────────────────────────────────────────────────────
 
-export interface RegisterPayload {
-  roleType: "Candidate" | "Company";
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
-  name?: string;
-  companyDetails?: {
-    industry: string;
-    size: string;
-    location: string;
-    website?: string;
-    linkedin?: string;
-  };
-}
-
 export interface VerifyOtpPayload {
   email: string;
   otp: string;
@@ -51,7 +35,10 @@ export interface VerifyOtpPayload {
 // ─── API responses ────────────────────────────────────────────────────────────
 
 export interface VerifyOtpResponse {
-  token: string;
+  // token is no longer sent in the response body — the JWT is delivered via
+  // an httpOnly cookie set by the server. This field is kept optional to
+  // avoid breaking callers during the transition.
+  token?: string;
   user: AuthUser;
   profile: AuthProfile;
   planLimits?: unknown;
@@ -73,5 +60,4 @@ export const ACCENT2         = "#059669";
 export const OTP_CODE_LENGTH = 6;
 export const OTP_TTL         = 300;
 
-export type OtpStep      = 1 | 2;
 export type RegisterStep = 1 | 2;

@@ -7,7 +7,7 @@ import { useSendSigninCode, useVerifySigninOtp } from "../queries";
 import { OTP_STORAGE_KEY, SIGNIN_EMAIL_KEY } from "../utils";
 import { OTP_CODE_LENGTH } from "@/modules/auth/shared/types";
 
-export function useSigninOtp() {
+export function useSigninOtp(onChangeEmail?: () => void) {
   const router    = useRouter();
   const returnUrl = router.query.returnUrl as string | undefined;
   const { loading: navigationLoading, withLoading } = useLoadingWithNavigation();
@@ -68,9 +68,13 @@ export function useSigninOtp() {
   const changeEmail = () => {
     cleanup();
     sessionStorage.removeItem(SIGNIN_EMAIL_KEY);
-    router.push(
-      `/signin${returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl)}` : ""}`,
-    );
+    if (onChangeEmail) {
+      onChangeEmail();
+    } else {
+      router.push(
+        `/signin${returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl)}` : ""}`,
+      );
+    }
   };
 
   return {

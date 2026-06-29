@@ -7,6 +7,7 @@ import { fetchEmployeePermissions } from "@/store/slices/memberSlice";
 import { useAuthActions } from "@/modules/auth/shared/context/AuthContext";
 import { notificationApi } from "@/modules/notifications/shared/api";
 import { notifMessages } from "@/modules/notifications/shared/i18n";
+import { saveToken } from "../utils/token";
 import { authApi } from "../api";
 import type { VerifyOtpPayload, VerifyOtpResponse } from "../types";
 
@@ -31,7 +32,9 @@ export function useVerifyOtp(
     mutationFn: (payload: VerifyOtpPayload) => authApi.verifyOtp(payload),
 
     onSuccess: (data) => {
-      // The backend sets the jwt_token cookie directly — no client-side cookie write needed.
+      // Sets the JS-readable auth_present indicator cookie.
+      // The actual JWT was delivered server-side as an httpOnly cookie.
+      saveToken();
 
       dispatch(setConnectedUser({
         user:              data.user,

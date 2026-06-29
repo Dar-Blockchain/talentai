@@ -5,15 +5,29 @@ import { Button } from "@/modules/shared/ui/shadcn/button";
 import AppOtpVerifyStep from "@/modules/shared/ui/AppOtpVerifyStep";
 import SigninContainer from "../layout/SigninContainer";
 import SignInHeader from "../ui/SignInHeader";
-import { useSigninOtp } from "../../hooks";
+import type { useOtpInput, useOtpTimer } from "@/modules/auth/shared/hooks";
 
-const OtpPage: React.FC = () => {
+type OtpInputReturn = ReturnType<typeof useOtpInput>;
+type OtpTimerReturn = ReturnType<typeof useOtpTimer>;
+
+export interface OtpPageProps {
+  email:         string;
+  otp:           OtpInputReturn;
+  timer:         OtpTimerReturn;
+  loading:       boolean;
+  resendLoading: boolean;
+  onVerify:      () => void;
+  onResend:      () => void;
+  onChangeEmail: () => void;
+  tPrefix?:      "signin" | "candidate_form" | "company_form";
+}
+
+const OtpPage: React.FC<OtpPageProps> = ({
+  email, otp, timer, loading, resendLoading,
+  onVerify, onResend, onChangeEmail,
+  tPrefix = "signin",
+}) => {
   const { t } = useTranslation("auth");
-  const {
-    email, otp, timer,
-    loading, resendLoading,
-    onVerify, onResend, changeEmail,
-  } = useSigninOtp();
 
   return (
     <SigninContainer>
@@ -27,7 +41,7 @@ const OtpPage: React.FC = () => {
         resendLoading={resendLoading}
         onVerify={onVerify}
         onResend={onResend}
-        tPrefix="signin"
+        tPrefix={tPrefix}
       />
 
       <div className="flex items-center justify-center gap-1.5 pt-2 sm:pt-3">
@@ -42,7 +56,7 @@ const OtpPage: React.FC = () => {
         variant="ghost"
         size="default"
         className="w-full mt-2 sm:mt-2.5 font-sans font-medium text-xs sm:text-sm text-muted-foreground border border-border hover:bg-muted hover:text-foreground"
-        onClick={changeEmail}
+        onClick={onChangeEmail}
       >
         {t("signin.change_email")}
       </Button>
