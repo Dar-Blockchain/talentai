@@ -24,6 +24,14 @@ export interface FetchAdminPostsParams {
   search?: string;
 }
 
+export interface AdminPostStats {
+  total: number;
+  open: number;
+  draft: number;
+  closed: number;
+  archived: number;
+}
+
 export interface FetchAdminPostsResponse {
   data: AdminPost[];
   currentPage: number;
@@ -32,4 +40,5 @@ export interface FetchAdminPostsResponse {
   limit: number;
   hasNextPage: boolean;
   hasPrevPage: boolean;
+  stats?: AdminPostStats;
 }

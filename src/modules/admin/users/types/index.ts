@@ -1,1 +1,1 @@
-export type { User, UserFilters, FetchUsersParams, FetchUsersResponse } from "@/types/admin";
+export type { User, UserFilters, FetchUsersParams, FetchUsersResponse, UserStats } from "@/types/admin";

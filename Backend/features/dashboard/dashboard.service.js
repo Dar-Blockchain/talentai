@@ -32,7 +32,7 @@ module.exports.getAllUsers = async (searchQuery, page = 1, limit = 10) => {
     if (searchQuery.email) query.email = { $regex: searchQuery.email, $options: 'i' };
     if (searchQuery.role) query.role = searchQuery.role;
 
-    const [users, totalUsers] = await Promise.all([
+    const [users, totalUsers, stats] = await Promise.all([
       User.find(query)
         .select(ADMIN_USER_LIST_FIELDS)
         .skip(skip)
@@ -40,6 +40,7 @@ module.exports.getAllUsers = async (searchQuery, page = 1, limit = 10) => {
         .populate('profile', ADMIN_USER_LIST_PROFILE_FIELDS)
         .lean(),
       User.countDocuments(query),
+      module.exports.getUserStats(),
     ]);
 
     const totalPages = Math.ceil(totalUsers / limit);
@@ -47,11 +48,40 @@ module.exports.getAllUsers = async (searchQuery, page = 1, limit = 10) => {
     return {
       users,
       pagination: { currentPage: parseInt(page), totalPages, totalUsers },
+      stats,
     };
   } catch (error) {
     throw new Error("Error retrieving users: " + error.message);
   }
 };
+
+// Platform-wide role/status breakdown — intentionally NOT scoped to the
+// caller's search/role filters, since these are overview stat cards, not a
+// reflection of the current table view. Cached like the other dashboard
+// rollups since the underlying counts change slowly.
+module.exports.getUserStats = () => ttlCache.getOrSet("dashboard:getUserStats", COUNTS_CACHE_TTL_MS, _computeUserStats);
+
+async function _computeUserStats() {
+  const [byRole, verifiedCount, totalUsers] = await Promise.all([
+    User.aggregate([{ $group: { _id: "$role", count: { $sum: 1 } } }]),
+    User.countDocuments({ isVerified: true }),
+    User.countDocuments(),
+  ]);
+
+  const roleCounts = { Candidate: 0, Company: 0, Admin: 0, Employee: 0 };
+  byRole.forEach((r) => {
+    if (r._id in roleCounts) roleCounts[r._id] = r.count;
+  });
+
+  return {
+    total: totalUsers,
+    candidates: roleCounts.Candidate,
+    companies: roleCounts.Company,
+    admins: roleCounts.Admin,
+    verified: verifiedCount,
+    pending: totalUsers - verifiedCount,
+  };
+}
 
 module.exports.getCounts = () => ttlCache.getOrSet("dashboard:getCounts", COUNTS_CACHE_TTL_MS, _computeCounts);
 
@@ -323,7 +353,7 @@ module.exports.getAllPostsForAdmin = async (filters = {}, page = 1, limit = 10) 
       query['jobDetails.title'] = { $regex: filters.search.trim(), $options: 'i' };
     }
 
-    const [posts, total] = await Promise.all([
+    const [posts, total, stats] = await Promise.all([
       Post.find(query)
         .select('-MatchingConfig')
         .populate('user', 'username email')
@@ -332,6 +362,7 @@ module.exports.getAllPostsForAdmin = async (filters = {}, page = 1, limit = 10) 
         .limit(limitNum)
         .lean(),
       Post.countDocuments(query),
+      module.exports.getPostStats(),
     ]);
 
     const totalPages = Math.ceil(total / limitNum);
@@ -343,11 +374,38 @@ module.exports.getAllPostsForAdmin = async (filters = {}, page = 1, limit = 10) 
       limit: limitNum,
       hasNextPage: pageNum < totalPages,
       hasPrevPage: pageNum > 1,
+      stats,
     };
   } catch (error) {
     throw new Error(`Error fetching posts for admin: ${error.message}`);
   }
 };
+
+// Platform-wide status breakdown — not scoped to the caller's status/search
+// filters, since these are overview stat cards, not a reflection of the
+// current table view.
+module.exports.getPostStats = () => ttlCache.getOrSet("dashboard:getPostStats", COUNTS_CACHE_TTL_MS, _computePostStats);
+
+async function _computePostStats() {
+  const [byStatus, archivedCount, totalPosts] = await Promise.all([
+    Post.aggregate([{ $match: { archived: { $ne: true } } }, { $group: { _id: "$status", count: { $sum: 1 } } }]),
+    Post.countDocuments({ archived: true }),
+    Post.countDocuments(),
+  ]);
+
+  const statusCounts = { draft: 0, open: 0, closed: 0 };
+  byStatus.forEach((s) => {
+    if (s._id in statusCounts) statusCounts[s._id] = s.count;
+  });
+
+  return {
+    total: totalPosts,
+    open: statusCounts.open,
+    draft: statusCounts.draft,
+    closed: statusCounts.closed,
+    archived: archivedCount,
+  };
+}
 
 module.exports.archivePostAdmin = async (postId) => {
   try {
@@ -425,7 +483,7 @@ module.exports.getAllPostInterviewAssessmentsForAdmin = async (filters = {}, pag
     if (filters.archived === true || filters.archived === 'true') query.archived = true;
     else if (filters.archived === false || filters.archived === 'false') query.archived = { $ne: true };
 
-    const [assessments, totalCount] = await Promise.all([
+    const [assessments, totalCount, stats] = await Promise.all([
       PostInterviewAssessment.find(query)
         .populate('post', 'jobDetails.title jobDetails.location jobDetails.employmentType')
         .populate('candidate', 'username email')
@@ -435,6 +493,7 @@ module.exports.getAllPostInterviewAssessmentsForAdmin = async (filters = {}, pag
         .limit(limitNum)
         .lean(),
       PostInterviewAssessment.countDocuments(query),
+      module.exports.getPostInterviewStats(),
     ]);
 
     const totalPages = Math.ceil(totalCount / limitNum);
@@ -446,11 +505,51 @@ module.exports.getAllPostInterviewAssessmentsForAdmin = async (filters = {}, pag
       limit: limitNum,
       hasNextPage: pageNum < totalPages,
       hasPrevPage: pageNum > 1,
+      stats,
     };
   } catch (error) {
     throw new Error(`Error fetching post-interview assessments for admin: ${error.message}`);
   }
 };
+
+// Platform-wide score-band breakdown — not scoped to caller filters, since
+// these are overview stat cards. Score falls back through the same field
+// chain the admin table itself reads (overall score, then coverage), so the
+// "Excellent/Satisfactory/Needs Work" buckets match what's shown per-row.
+const SCORE_EXPR = { $ifNull: ["$interviewData.finalReport.scores.overall", "$interviewData.finalReport.coverage.overall", 0] };
+
+module.exports.getPostInterviewStats = () => ttlCache.getOrSet("dashboard:getPostInterviewStats", COUNTS_CACHE_TTL_MS, _computePostInterviewStats);
+
+async function _computePostInterviewStats() {
+  const [byBand, archivedCount, totalCount] = await Promise.all([
+    PostInterviewAssessment.aggregate([
+      { $match: { archived: { $ne: true } } },
+      { $project: { score: SCORE_EXPR } },
+      { $group: {
+        _id: { $switch: { branches: [
+          { case: { $gte: ["$score", 70] }, then: "excellent" },
+          { case: { $gte: ["$score", 50] }, then: "satisfactory" },
+        ], default: "needsWork" } },
+        count: { $sum: 1 },
+      } },
+    ]),
+    PostInterviewAssessment.countDocuments({ archived: true }),
+    PostInterviewAssessment.countDocuments(),
+  ]);
+
+  const bandCounts = { excellent: 0, satisfactory: 0, needsWork: 0 };
+  byBand.forEach((b) => {
+    if (b._id in bandCounts) bandCounts[b._id] = b.count;
+  });
+
+  return {
+    total: totalCount,
+    excellent: bandCounts.excellent,
+    satisfactory: bandCounts.satisfactory,
+    needsWork: bandCounts.needsWork,
+    archived: archivedCount,
+  };
+}
 
 module.exports.archivePostInterviewAssessmentAdmin = async (assessmentId) => {
   const assessment = await PostInterviewAssessment.findByIdAndUpdate(
@@ -511,7 +610,7 @@ module.exports.getAllSkillInterviewAssessmentsForAdmin = async (filters = {}, pa
     if (filters.archived === true || filters.archived === 'true') query.archived = true;
     else if (filters.archived === false || filters.archived === 'false') query.archived = { $ne: true };
 
-    const [assessments, totalCount] = await Promise.all([
+    const [assessments, totalCount, stats] = await Promise.all([
       SkillInterviewAssessment.find(query)
         .populate('candidateId')
         .sort({ createdAt: -1 })
@@ -519,6 +618,7 @@ module.exports.getAllSkillInterviewAssessmentsForAdmin = async (filters = {}, pa
         .limit(limitNum)
         .lean(),
       SkillInterviewAssessment.countDocuments(query),
+      module.exports.getSkillInterviewStats(),
     ]);
 
     const totalPages = Math.ceil(totalCount / limitNum);
@@ -530,11 +630,48 @@ module.exports.getAllSkillInterviewAssessmentsForAdmin = async (filters = {}, pa
       limit: limitNum,
       hasNextPage: pageNum < totalPages,
       hasPrevPage: pageNum > 1,
+      stats,
     };
   } catch (error) {
     throw new Error(`Error fetching skill-interview assessments for admin: ${error.message}`);
   }
 };
+
+// Platform-wide score-band breakdown — same fallback chain and bucket
+// thresholds as the post-interview stats, mirrored here for the skill
+// interview model's identical score field shape.
+module.exports.getSkillInterviewStats = () => ttlCache.getOrSet("dashboard:getSkillInterviewStats", COUNTS_CACHE_TTL_MS, _computeSkillInterviewStats);
+
+async function _computeSkillInterviewStats() {
+  const [byBand, archivedCount, totalCount] = await Promise.all([
+    SkillInterviewAssessment.aggregate([
+      { $match: { archived: { $ne: true } } },
+      { $project: { score: SCORE_EXPR } },
+      { $group: {
+        _id: { $switch: { branches: [
+          { case: { $gte: ["$score", 70] }, then: "excellent" },
+          { case: { $gte: ["$score", 50] }, then: "satisfactory" },
+        ], default: "needsWork" } },
+        count: { $sum: 1 },
+      } },
+    ]),
+    SkillInterviewAssessment.countDocuments({ archived: true }),
+    SkillInterviewAssessment.countDocuments(),
+  ]);
+
+  const bandCounts = { excellent: 0, satisfactory: 0, needsWork: 0 };
+  byBand.forEach((b) => {
+    if (b._id in bandCounts) bandCounts[b._id] = b.count;
+  });
+
+  return {
+    total: totalCount,
+    excellent: bandCounts.excellent,
+    satisfactory: bandCounts.satisfactory,
+    needsWork: bandCounts.needsWork,
+    archived: archivedCount,
+  };
+}
 
 module.exports.archiveSkillInterviewAssessmentAdmin = async (assessmentId) => {
   const assessment = await SkillInterviewAssessment.findByIdAndUpdate(

@@ -37,7 +37,7 @@ import {
 import { useAdminPostAssessmentsQuery, useArchivePostAssessmentMutation, useUnarchivePostAssessmentMutation, useDeletePostAssessmentMutation } from '../queries';
 import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
-import { ScoreBadge, scoreTone, ADMIN_NEUTRAL, ADMIN_RADIUS, ADMIN_TABLE_HEAD_CELL_SX, ADMIN_TABLE_ROW_SX, AdminPageHeading, AdminTableErrorRow, ConfirmDialog, PillTabs, PillTab } from '@/modules/admin/shared';
+import { ScoreBadge, scoreTone, ADMIN_NEUTRAL, ADMIN_RADIUS, ADMIN_TABLE_HEAD_CELL_SX, ADMIN_TABLE_ROW_SX, AdminPageHeading, AdminStatCard, AdminTableErrorRow, ConfirmDialog, PillTabs, PillTab } from '@/modules/admin/shared';
 
 // Types
 interface PostInterviewAssessmentData {
@@ -144,6 +144,7 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
   );
   const results = (data?.items ?? []) as PostInterviewAssessmentData[];
   const totalCount = data?.total ?? 0;
+  const stats = data?.stats;
 
   // Extract unique companies from results
   useEffect(() => {
@@ -285,6 +286,13 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
     <div>
       {/* Header */}
       <AdminPageHeading title="Post Interview Assessments" subtitle={`${totalCount.toLocaleString()} assessments recorded`} />
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <AdminStatCard icon={AllIcon} value={(stats?.total ?? 0).toLocaleString()} label="Total Assessments" loading={loading && !stats} />
+        <AdminStatCard icon={ExcellentIcon} value={(stats?.excellent ?? 0).toLocaleString()} label="Excellent (70%+)" loading={loading && !stats} />
+        <AdminStatCard icon={SatisfactoryIcon} value={(stats?.satisfactory ?? 0).toLocaleString()} label="Satisfactory" loading={loading && !stats} />
+        <AdminStatCard icon={NeedsImprovementIcon} value={(stats?.needsWork ?? 0).toLocaleString()} label="Needs Work" loading={loading && !stats} />
+      </div>
 
       {/* Filters */}
       <Card className="mb-6 overflow-hidden py-0 gap-0">

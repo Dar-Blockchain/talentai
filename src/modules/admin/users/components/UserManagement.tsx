@@ -35,7 +35,7 @@ import { usePagination } from '@/hooks/usePagination';
 import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { cn } from '@/lib/utils';
-import { ADMIN_ACCENT, ADMIN_TABLE_HEAD_CELL_SX, ADMIN_TABLE_ROW_SX, AdminPageHeading, AdminTableErrorRow, PillTabs, PillTab } from '@/modules/admin/shared';
+import { ADMIN_ACCENT, ADMIN_TABLE_HEAD_CELL_SX, ADMIN_TABLE_ROW_SX, AdminPageHeading, AdminStatCard, AdminTableErrorRow, PillTabs, PillTab } from '@/modules/admin/shared';
 
 const roleBadgeClass = (role: string) => {
   switch (role?.toLowerCase()) {
@@ -101,6 +101,7 @@ const UserManagement: React.FC<UserManagementProps> = ({
 
   const users = (data?.users ?? []) as User[];
   const totalUsers = data?.total ?? 0;
+  const stats = data?.stats;
 
   const handleChangePage = useCallback(
     (event: unknown, newPage: number) => onPageChange(event, newPage),
@@ -134,6 +135,15 @@ const UserManagement: React.FC<UserManagementProps> = ({
     <div>
       {/* Header */}
       <AdminPageHeading title="User Management" subtitle={`${totalUsers.toLocaleString()} total users across the platform`} />
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+        <AdminStatCard icon={PeopleIcon} value={(stats?.total ?? 0).toLocaleString()} label="Total Users" loading={loading && !stats} />
+        <AdminStatCard icon={PersonIcon} value={(stats?.candidates ?? 0).toLocaleString()} label="Candidates" loading={loading && !stats} />
+        <AdminStatCard icon={BusinessIcon} value={(stats?.companies ?? 0).toLocaleString()} label="Companies" loading={loading && !stats} />
+        <AdminStatCard icon={CheckCircleIcon} value={(stats?.verified ?? 0).toLocaleString()} label="Verified" loading={loading && !stats} />
+        <AdminStatCard icon={PendingIcon} value={(stats?.pending ?? 0).toLocaleString()} label="Pending" loading={loading && !stats} />
+      </div>
 
       {/* Filters & Tabs */}
       <Card className="mb-6 overflow-hidden py-0 gap-0">

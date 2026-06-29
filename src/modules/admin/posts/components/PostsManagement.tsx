@@ -25,6 +25,10 @@ import {
   Unarchive as UnarchiveIcon,
   DeleteForever as DeleteForeverIcon,
   Search as SearchIcon,
+  WorkOutline as WorkOutlineIcon,
+  CheckCircleOutline as OpenIcon,
+  DraftsOutlined as DraftIcon,
+  HighlightOff as ClosedIcon,
 } from '@mui/icons-material';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { Card } from '@/modules/shared/ui/shadcn/card';
@@ -33,6 +37,7 @@ import {
   ADMIN_TABLE_HEAD_CELL_SX,
   ADMIN_TABLE_ROW_SX,
   AdminPageHeading,
+  AdminStatCard,
   AdminTableErrorRow,
   ConfirmDialog,
 } from '@/modules/admin/shared';
@@ -78,6 +83,7 @@ const PostsManagement: React.FC = () => {
 
   const posts = data?.data ?? [];
   const totalCount = data?.totalCount ?? 0;
+  const stats = data?.stats;
 
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const [menuPost, setMenuPost] = useState<AdminPost | null>(null);
@@ -137,6 +143,14 @@ const PostsManagement: React.FC = () => {
   return (
     <div>
       <AdminPageHeading title="Posts" subtitle={`${totalCount.toLocaleString()} job posts on the platform`} />
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+        <AdminStatCard icon={WorkOutlineIcon} value={(stats?.total ?? 0).toLocaleString()} label="Total Posts" loading={loading && !stats} />
+        <AdminStatCard icon={OpenIcon} value={(stats?.open ?? 0).toLocaleString()} label="Open" loading={loading && !stats} />
+        <AdminStatCard icon={DraftIcon} value={(stats?.draft ?? 0).toLocaleString()} label="Draft" loading={loading && !stats} />
+        <AdminStatCard icon={ClosedIcon} value={(stats?.closed ?? 0).toLocaleString()} label="Closed" loading={loading && !stats} />
+        <AdminStatCard icon={ArchiveIcon} value={(stats?.archived ?? 0).toLocaleString()} label="Archived" loading={loading && !stats} />
+      </div>
 
       <Card className="mb-6 overflow-hidden py-0 gap-0">
         <div className="p-4 flex flex-wrap gap-3 items-center">

@@ -1,5 +1,6 @@
 import axiosInstance from "@/utils/axiosInstance";
 import { apiCall } from "@/utils/apiCall";
+import { AdminSkillInterviewStats } from "../types";
 
 export const adminSkillInterviewApi = {
   fetchAssessments: (params: { page: number; limit: number; skill?: string }) =>
@@ -11,7 +12,8 @@ export const adminSkillInterviewApi = {
         });
         const results = data.data?.data || [];
         const total = data.data?.totalCount ?? results.length;
-        return { results, total };
+        const stats = data.data?.stats as AdminSkillInterviewStats | undefined;
+        return { results, total, stats };
       },
       "Failed to load skill-interview assessments.",
     ),

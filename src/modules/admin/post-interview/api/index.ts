@@ -1,5 +1,6 @@
 import axiosInstance from "@/utils/axiosInstance";
 import { apiCall } from "@/utils/apiCall";
+import { AdminPostInterviewStats } from "../types";
 
 export const adminPostInterviewApi = {
   fetchAssessments: (params: { page?: number; limit?: number; company?: string }) =>
@@ -11,7 +12,8 @@ export const adminPostInterviewApi = {
         });
         const items = data.data?.data || [];
         const total = data.data?.totalCount ?? items.length;
-        return { items, total };
+        const stats = data.data?.stats as AdminPostInterviewStats | undefined;
+        return { items, total, stats };
       },
       "Failed to load post-interview assessments.",
     ),
