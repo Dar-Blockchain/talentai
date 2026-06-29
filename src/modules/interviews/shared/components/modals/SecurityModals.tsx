@@ -91,7 +91,7 @@ const SecurityModals: React.FC<SecurityModalsProps> = ({
 
             <button
               onClick={onDismissFirst}
-              className="w-full font-sans font-bold text-[0.88rem] text-white py-3 rounded-[10px] bg-[#F59E0B] hover:bg-[#D97706] transition-colors"
+              className="w-full font-sans font-bold text-[0.88rem] text-white py-3 rounded-[10px] bg-[#F59E0B] hover:bg-[#D97706] transition-colors cursor-pointer"
             >
               {t('security.understand_btn')}
             </button>
@@ -122,7 +122,7 @@ const SecurityModals: React.FC<SecurityModalsProps> = ({
 
             <button
               onClick={onReturnToDashboard}
-              className="w-full font-sans font-bold text-[0.88rem] text-white py-3 rounded-[10px] bg-[#EF4444] hover:bg-[#DC2626] transition-colors"
+              className="w-full font-sans font-bold text-[0.88rem] text-white py-3 rounded-[10px] bg-[#EF4444] hover:bg-[#DC2626] transition-colors cursor-pointer"
             >
               {t('security.return_dashboard')}
             </button>

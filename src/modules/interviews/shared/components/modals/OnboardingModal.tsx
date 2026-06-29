@@ -19,6 +19,7 @@ import { AppDispatch } from "@/store/store";
 import { setConnectedUser } from "@/store/slices/userSlice";
 import { authApi } from "@/modules/auth/shared/api";
 import { useAuthContext } from "@/modules/auth/shared/context/AuthContext";
+import { saveToken } from "@/modules/auth/shared/utils/token";
 import { checkEligibility } from "../../../post-interview/api/eligibility.api";
 import { usePersistentCountdown } from "@/hooks/usePersistentCountdown";
 import { getUserLocation } from "@/utils/api";
@@ -26,7 +27,7 @@ import { formatTimeLeft } from "@/utils/functions";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import { Progress } from "@/modules/shared/ui/shadcn/progress";
-import { Dialog, DialogContent } from "@/modules/shared/ui/shadcn/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/modules/shared/ui/shadcn/dialog";
 import { Input } from "@/modules/shared/ui/shadcn/input";
 import { Label } from "@/modules/shared/ui/shadcn/label";
 import { Button } from "@/modules/shared/ui/shadcn/button";
@@ -330,6 +331,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
         otp: otpCode,
         location,
       });
+      saveToken();
       dispatch(
         setConnectedUser({
           user: data.user,
@@ -396,6 +398,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
           showCloseButton={false}
           className="w-full max-w-105 rounded-2xl bg-background border border-border shadow-2xl overflow-hidden p-0"
         >
+          <DialogTitle className="sr-only">Apply for this role</DialogTitle>
           {/* top accent strip */}
           <div className="h-1 w-full bg-linear-to-r from-primary to-primary/60" />
 
@@ -941,6 +944,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
           showCloseButton={false}
           className="max-w-90 rounded-2xl p-0 overflow-hidden border border-border shadow-2xl"
         >
+          <DialogTitle className="sr-only">Analyzing your CV</DialogTitle>
           <div
             className="h-1 transition-all duration-500"
             style={{

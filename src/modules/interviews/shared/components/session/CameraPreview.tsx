@@ -130,7 +130,7 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
                 {(cameraStatus === 'denied' || cameraStatus === 'error') && (
                   <button
                     onClick={() => window.location.reload()}
-                    className="font-sans text-[0.7rem] text-white/50 border border-white/[0.12] rounded-[8px] px-4 py-1 hover:border-[#6AD39C] hover:text-[#6AD39C] hover:bg-[rgba(106,211,156,0.05)] transition-colors"
+                    className="font-sans text-[0.7rem] text-white/50 border border-white/[0.12] rounded-[8px] px-4 py-1 hover:border-[#6AD39C] hover:text-[#6AD39C] hover:bg-[rgba(106,211,156,0.05)] transition-colors cursor-pointer"
                   >
                     {t('camera.retry')}
                   </button>

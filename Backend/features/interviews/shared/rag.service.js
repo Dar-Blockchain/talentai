@@ -4,6 +4,16 @@ require("dotenv").config();
 
 const EMBEDDING_DIMS = 1024; // Titan Text Embeddings V2 default
 const SIMILARITY_THRESHOLD = 0.72; // Lowered from 0.85 to catch theme-similar questions
+function isVectorSearchUnavailable(error) {
+  return (
+    error.codeName === "InvalidPipelineOperator" ||
+    error.codeName === "HostUnreachable" ||
+    error.code === 6 ||
+    error.message?.includes("vectorSearch") ||
+    error.message?.includes("Connection refused")
+  );
+}
+
 
 // â”€â”€â”€ Collection Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -152,14 +162,7 @@ async function findSimilarQuestions(
 
     return { isSimilar: false, similarQuestion: null, score: 0 };
   } catch (error) {
-    // If vector search index doesn't exist yet, fall back gracefully
-    if (
-      error.codeName === "InvalidPipelineOperator" ||
-      error.message?.includes("vectorSearch")
-    ) {
-      console.warn(
-        "âš ï¸ Vector search index not available, skipping similarity check"
-      );
+    if (isVectorSearchUnavailable(error)) {
       return { isSimilar: false, similarQuestion: null, score: 0 };
     }
     throw error;
@@ -215,17 +218,13 @@ async function retrieveContext(jobId, interviewId, candidateLastResponse) {
       }
     }
   } catch (error) {
-    // If vector search not available, fall back to fetching all chunks
-    if (
-      error.codeName === "InvalidPipelineOperator" ||
-      error.message?.includes("vectorSearch")
-    ) {
+    if (isVectorSearchUnavailable(error)) {
       const allChunks = await jdCol
         .find({ jobId: jobId.toString() })
         .toArray();
       jdContext = allChunks.map((c) => c.text).join("\n\n");
     } else {
-      console.error("âŒ Error retrieving JD context:", error.message);
+      console.error("Error retrieving JD context:", error.message);
     }
   }
 

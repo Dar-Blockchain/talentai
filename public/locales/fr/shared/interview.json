@@ -90,6 +90,8 @@
   "question": {
     "label": "Question",
     "label_numbered": "Question {{number}}",
+    "label_greeting": "Intervieweur IA",
+    "greeting_hint": "Présentez-vous pour commencer l'entretien",
     "getting_next": "Récupération de la prochaine question…"
   },
   "coverage_dashboard": {

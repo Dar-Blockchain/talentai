@@ -7,49 +7,30 @@ const { getLanguageInstruction } = require('../../shared/prompts/generation.prom
  * Does NOT require config.context.targetCompany.
  */
 function buildSkillInterviewGreetingUser(config, persona) {
-  const langInstruction  = getLanguageInstruction(config);
-  const interviewerStyle = config.interviewerPersona?.style || 'professional';
-  const interviewerTone  = persona?.agentBehavior?.tone || config.interviewerPersona?.tone || 'friendly';
+  const langInstruction = getLanguageInstruction(config);
+  const interviewerTone = persona?.agentBehavior?.tone || config.interviewerPersona?.tone || 'friendly';
+  const targetRole      = config.context.targetRole || 'this skill assessment';
+  const exampleGreeting = `"Hello! I'm excited to speak with you today for the ${targetRole} assessment. Let's get started!"`;
 
-  const focusAreaNames   = config.intelligenceContext?.focusAreas?.map(a => a.skillName || a.area) || [];
-  const focusDescription = focusAreaNames.length > 0 ? focusAreaNames.join(', ') : 'domain-specific expertise';
+  const exampleWithIntro = `"Hello! I'm Olga, your AI interviewer. I'm excited to speak with you today for the ${targetRole} assessment. To get started, could you please introduce yourself?"`;
 
-  let interviewFocus;
-  let exampleGreeting;
+  return `Generate a short, warm greeting for this skill assessment interview that ends with asking the candidate to introduce themselves.
 
-  if (config.interviewType === 'SOFT_SKILL') {
-    interviewFocus  = `This is a SOFT SKILLS and COMMUNICATION assessment focusing on interpersonal abilities, emotional intelligence, and collaboration.`;
-    exampleGreeting = `"Hello! Today we'll be discussing your communication style and collaboration experiences. I'm looking forward to understanding how you work with others and handle various workplace scenarios."`;
-  } else {
-    interviewFocus = `This is a SKILL ASSESSMENT interview for the role of "${config.context.targetRole}" at ${config.context.experienceLevel} level.
-
-FOCUS:
-- Assess practical expertise in: ${focusDescription}
-- Probe for hands-on experience and real-world results
-- Match the greeting to the role's domain (NOT generic software engineering unless the role IS a dev role)`;
-    exampleGreeting = `"Hello! I'm excited to discuss your experience in ${focusDescription} as it relates to the ${config.context.targetRole} role. Today we'll be exploring your hands-on expertise, problem-solving approach, and practical experience at the ${config.context.experienceLevel} level. Let's dive in!"`;
-  }
-
-  return `Generate a warm, professional greeting for this ${config.interviewType} interview:
-
-INTERVIEW TYPE & FOCUS:
-${interviewFocus}
-
-INTERVIEW CONTEXT:
-- Skill / Role: ${config.context.targetRole}
-- Candidate Experience Level: ${config.context.experienceLevel}
-- Interview Style: ${interviewerStyle}, ${interviewerTone}
+CONTEXT:
+- Agent name: Olga
+- Role / Skill: ${targetRole}
+- Tone: ${interviewerTone}
 
 REQUIREMENTS:
-- Write 2-3 natural, conversational sentences
-- Welcome the candidate warmly
-- Briefly mention the skill being assessed and set expectations
-- Set a comfortable, professional tone appropriate for a skill assessment
-- DO NOT use labels, bullet points, or structured format
-- DO NOT include explanations or meta-text
-- ONLY output the greeting text itself
+- Maximum 2-3 short sentences
+- First sentence: introduce yourself as Olga the AI interviewer
+- Second sentence: welcome the candidate and mention the role or skill being assessed
+- Last sentence: ask the candidate to introduce themselves
+- Do NOT mention any specific technologies, tools, topics, or what will be covered
+- Keep it simple, friendly, and natural
+- ONLY output the greeting text itself — no labels, no meta-text
 
-Example format: ${exampleGreeting}${langInstruction ? '\n\n' + langInstruction : ''}`;
+Example: ${exampleWithIntro}${langInstruction ? '\n\n' + langInstruction : ''}`;
 }
 
 module.exports = {
