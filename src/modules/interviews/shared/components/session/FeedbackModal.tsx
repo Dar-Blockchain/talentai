@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Star, CheckCircle2 } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
-import { feedbackService } from '@/services/feedbackService';
+import { submitFeedback } from '@/modules/interviews/shared/api/feedback.api';
 import {
   Dialog, DialogContent,
 } from '@/modules/shared/ui/shadcn/dialog';
@@ -18,7 +18,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ open, interviewId, interv
   const [hovered, setHovered] = useState(0);
   const [comment, setComment] = useState('');
 
-  const mutation = useMutation({ mutationFn: feedbackService.submitFeedback });
+  const mutation = useMutation({ mutationFn: submitFeedback });
 
   useEffect(() => {
     if (open) {

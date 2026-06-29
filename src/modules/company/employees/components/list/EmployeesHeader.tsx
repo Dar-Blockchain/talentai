@@ -5,7 +5,7 @@ import CheckCircleOutline from "@mui/icons-material/CheckCircleOutline";
 import HourglassEmptyOutlined from "@mui/icons-material/HourglassEmptyOutlined";
 import { useTranslation } from "react-i18next";
 import StatCard from "@/components/ui/StatCard";
-import { MemberStats } from "@/store/slices/memberSlice";
+import type { MemberStats } from "@/modules/company/members/types";
 
 const GRID_SX = { display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 2, mb: 3 } as const;
 const SKELETON_SX = { borderRadius: 2 } as const;

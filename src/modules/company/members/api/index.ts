@@ -1,6 +1,6 @@
 import axiosInstance from '@/utils/axiosInstance';
 
-export const memberService = {
+export const memberApi = {
   addEmployee: async (payload: { email: string; role: string; departmentId?: string }) => {
     const apiPayload: { email: string; role: string; departmentId?: string } = {
       email: payload.email,

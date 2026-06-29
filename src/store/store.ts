@@ -11,29 +11,23 @@ import {
 } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import userReducer from './slices/userSlice';
-import postReducer from './slices/postSlice';
-import memberReducer from './slices/memberSlice';
 import chatReducer from './slices/chatSlice';
 import teamChatReducer from '@/modules/chat/team-chat/store/teamChatSlice';
 import candidateChatReducer from '@/modules/chat/candidate-chat/store/candidateChatSlice';
 import planLimitsReducer from './slices/planLimitsSlice';
-import campaignReducer from './slices/campaignSlice';
-import departmentReducer from './slices/departmentSlice';
 import paymentReducer from './slices/paymentSlice';
 import postDetailsReducer from '../modules/company/posts/details/store/postSlice';
+import postGenerationReducer from '../modules/company/posts/create/store/createPostSlice';
 
 const rootReducer = combineReducers({
   user: userReducer,
-  post: postReducer,
-  member: memberReducer,
   chat: chatReducer,
   teamChat: teamChatReducer,
   candidateChat: candidateChatReducer,
   planLimits: planLimitsReducer,
-  campaign: campaignReducer,
-  department: departmentReducer,
   payment: paymentReducer,
   postDetails: postDetailsReducer,
+  postGeneration: postGenerationReducer,
 });
 
 const persistConfig = {

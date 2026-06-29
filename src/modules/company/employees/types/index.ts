@@ -1,5 +1,5 @@
-import type { Member } from "@/store/slices/memberSlice";
-import type { Department } from "@/store/slices/departmentSlice";
+import type { Member } from "@/modules/company/members/types";
+import type { Department } from "@/modules/company/departments/types";
 
 /** Extended Member with optional API fields not yet in the base slice type. */
 export interface ExtendedMember extends Member {

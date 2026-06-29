@@ -10,7 +10,7 @@ import FilterAltOffOutlined from "@mui/icons-material/FilterAltOffOutlined";
 import RoleFilterSelect from "./RoleFilterSelect";
 import DeptFilterSelect from "./DeptFilterSelect";
 import SortSelect from "./SortSelect";
-import { Department } from "@/store/slices/departmentSlice";
+import { Department } from "@/modules/company/departments/types";
 import { RoleFilter, SortOption } from "./EmployeesList";
 import { useTranslation } from "react-i18next";
 import { PURPLE } from "./constants";

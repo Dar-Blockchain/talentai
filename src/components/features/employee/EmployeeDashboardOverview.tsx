@@ -1,14 +1,10 @@
-import React, { memo, useEffect, useMemo } from "react";
+import React, { memo, useMemo } from "react";
 import { useRouter } from "next/router";
 import { Box, Typography, Chip, Skeleton, LinearProgress } from "@mui/material";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "@/store/store";
-import {
-  fetchEmployeeCampaigns,
-  fetchEmployeeCampaignMetrics,
-  selectEmployeeCampaigns,
-  selectEmployeeCampaignsLoading,
-} from "@/store/slices/campaignSlice";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
+import { useQuery } from "@tanstack/react-query";
+import { apiFetchEmployeeCampaigns, apiFetchEmployeeCampaignMetrics } from "@/modules/company/campaigns/api";
 import {
   CampaignOutlined,
   CheckCircleOutlined,
@@ -234,23 +230,26 @@ const CampaignRow: React.FC<{ campaign: Campaign; onAction: () => void }> = ({ c
 // ─── Main Component ────────────────────────────────────────────────────────────
 
 const EmployeeDashboardOverview: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
   const router   = useRouter();
 
-  const userId           = useSelector((state: RootState) => state.user.connectedUser.user?._id);
-  const user            = useSelector((state: RootState) => state.user.connectedUser.user);
-  const profile          = useSelector((state: RootState) => state.user.connectedUser.profile);
+  const userId            = useSelector((state: RootState) => state.user.connectedUser.user?._id);
+  const user              = useSelector((state: RootState) => state.user.connectedUser.user);
+  const profile           = useSelector((state: RootState) => state.user.connectedUser.profile);
   const companyMembership = useSelector((state: RootState) => state.user.connectedUser.companyMembership);
-  const metrics          = useSelector((state: RootState) => state.campaign.employeeMetrics);
 
-  const campaigns        = useSelector(selectEmployeeCampaigns);
-  const campaignsLoading = useSelector(selectEmployeeCampaignsLoading);
-
-  useEffect(() => {
-    if (!userId) return;
-    dispatch(fetchEmployeeCampaigns({ userId, limit: 20 }));
-    dispatch(fetchEmployeeCampaignMetrics(userId));
-  }, [dispatch, userId]);
+  const { data: campaignsData, isLoading: campaignsLoading } = useQuery({
+    queryKey:  ['employee-campaigns-dashboard', userId],
+    queryFn:   () => apiFetchEmployeeCampaigns({ userId: userId!, limit: 20 }),
+    enabled:   !!userId,
+    staleTime: 30_000,
+  });
+  const { data: metrics } = useQuery({
+    queryKey:  ['employee-campaign-metrics', userId],
+    queryFn:   () => apiFetchEmployeeCampaignMetrics(userId!),
+    enabled:   !!userId,
+    staleTime: 60_000,
+  });
+  const campaigns = campaignsData?.data ?? [];
 
   // Derived
   const pending    = useMemo(() => campaigns.filter(c => c.participantStatus === "INVITED" || c.participantStatus === "IN_PROGRESS").slice(0, 5), [campaigns]);

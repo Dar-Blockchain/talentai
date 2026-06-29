@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
-import { selectEmployeePermissions } from "@/store/slices/memberSlice";
+import { usePermissionsQuery } from "@/modules/company/employees/queries";
 import { useToast } from "@/hooks/useToast";
 import { useTranslation } from "react-i18next";
 import { CampaignModule, CampaignStatus, ModuleType } from "@/types/campaign";
@@ -27,7 +27,7 @@ export function useCampaignDetail(id: string | string[] | undefined) {
   const deleteMut = useDeleteCampaignMutation();
 
   const user     = useSelector((s: RootState) => s.user.connectedUser.user);
-  const empPerms = useSelector(selectEmployeePermissions);
+  const { data: empPerms } = usePermissionsQuery(user?._id);
   const isEmp    = user?.role === "Employee";
   const canEdit    = !isEmp || (empPerms !== null && (!!empPerms.canEditCampaign || !!empPerms.canCreateCampaign));
   const canDelete  = !isEmp || (empPerms !== null && !!empPerms.canDeleteCampaign);

@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
-import { selectEmployeePermissions } from "@/store/slices/memberSlice";
+import { usePermissionsQuery } from "@/modules/company/employees/queries";
 import { CampaignStatus } from "@/types/campaign";
 import {
   useCampaignsListQuery, useCampaignMetricsQuery,
@@ -15,7 +15,7 @@ const DEFAULT_LIMIT = 6;
 
 export function useCampaignsList() {
   const user     = useSelector((s: RootState) => s.user.connectedUser.user);
-  const empPerms = useSelector(selectEmployeePermissions);
+  const { data: empPerms } = usePermissionsQuery(user?._id);
   const isEmp    = user?.role === "Employee";
   const canEdit    = !isEmp || empPerms === null || !!empPerms?.canEditCampaign || !!empPerms?.canCreateCampaign;
   const canDelete  = !isEmp || !!empPerms?.canDeleteCampaign;
