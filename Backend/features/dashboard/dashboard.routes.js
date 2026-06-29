@@ -13,6 +13,12 @@ const resolveCompanyActor = require('../../middleware/resolve-company-actor.midd
 
 router.use(requireAuth);
 
+// Platform-wide stats/PII routes are admin-only — statsCards/richStats below
+// stay open to any authenticated company (they're scoped to that company's
+// own data via resolveCompanyActor), but every route returning cross-tenant
+// data (all users, global counts, revenue, signups) must be admin-gated.
+const adminOnly = controledAcces("Admin");
+
 /**
  * @openapi
  * /dashboard/getAllUsers:
@@ -42,7 +48,7 @@ router.use(requireAuth);
  *       200:
  *         description: Paginated list of users
  */
-router.get("/getAllUsers", dashboardController.getAllUsers);
+router.get("/getAllUsers", adminOnly, dashboardController.getAllUsers);
 
 /**
  * @openapi
@@ -54,7 +60,7 @@ router.get("/getAllUsers", dashboardController.getAllUsers);
  *       200:
  *         description: Aggregated counts
  */
-router.get("/getCounts", dashboardController.getCounts);
+router.get("/getCounts", adminOnly, dashboardController.getCounts);
 
 /**
  * @openapi
@@ -90,7 +96,7 @@ router.get("/richStats", resolveCompanyActor, dashboardController.getRichStats);
  *       200:
  *         description: Array of daily data points
  */
-router.get("/getUserCountsByDay", dashboardController.getCountsByDay);
+router.get("/getUserCountsByDay", adminOnly, dashboardController.getCountsByDay);
 
 /**
  * @openapi
@@ -102,7 +108,7 @@ router.get("/getUserCountsByDay", dashboardController.getCountsByDay);
  *       200:
  *         description: Revenue summary
  */
-router.get("/adminRevenueSummary", dashboardController.getAdminRevenueSummary);
+router.get("/adminRevenueSummary", adminOnly, dashboardController.getAdminRevenueSummary);
 
 /**
  * @openapi
@@ -118,6 +124,6 @@ router.get("/adminRevenueSummary", dashboardController.getAdminRevenueSummary);
  *       200:
  *         description: Recent signups list
  */
-router.get("/recentSignups", dashboardController.getRecentSignups);
+router.get("/recentSignups", adminOnly, dashboardController.getRecentSignups);
 
 module.exports = router;

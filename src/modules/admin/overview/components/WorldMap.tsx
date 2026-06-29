@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import dynamic from 'next/dynamic';
+import type { WorldMapComponentProps } from './WorldMapComponent';
 
-// Dynamically import the entire map component with SSR disabled
-const WorldMapComponent = dynamic(
+// Dynamically import the entire map component with SSR disabled (leaflet
+// needs a real DOM/window, so it can't render on the server).
+const WorldMapComponent = dynamic<WorldMapComponentProps>(
   () => import('./WorldMapComponent'),
   {
     ssr: false,
@@ -12,7 +14,7 @@ const WorldMapComponent = dynamic(
       </div>
     )
   }
-) as any;
+);
 
 interface UserLocation {
   country: string;
@@ -30,142 +32,29 @@ interface WorldMapProps {
   totalUsers: number;
 }
 
-// Country coordinates mapping
-const countryCoordinates: Record<string, [number, number]> = {
-  'United States': [39.8283, -98.5795],
-  'Canada': [56.1304, -106.3468],
-  'Mexico': [23.6345, -102.5528],
-  'Brazil': [-14.2350, -51.9253],
-  'Argentina': [-38.4161, -63.6167],
-  'Colombia': [4.5709, -74.2973],
-  'Peru': [-9.1900, -75.0152],
-  'Chile': [-35.6751, -71.5430],
-  'United Kingdom': [55.3781, -3.4360],
-  'France': [46.2276, 2.2137],
-  'Germany': [51.1657, 10.4515],
-  'Italy': [41.8719, 12.5674],
-  'Spain': [40.4637, -3.7492],
-  'Russia': [61.5240, 105.3188],
-  'China': [35.8617, 104.1954],
-  'India': [20.5937, 78.9629],
-  'Japan': [36.2048, 138.2529],
-  'South Korea': [35.9078, 127.7669],
-  'Thailand': [15.8700, 100.9925],
-  'Vietnam': [14.0583, 108.2772],
-  'Malaysia': [4.2105, 108.9758],
-  'Singapore': [1.3521, 103.8198],
-  'Indonesia': [-0.7893, 113.9213],
-  'Philippines': [12.8797, 121.7740],
-  'Pakistan': [30.3753, 69.3451],
-  'South Africa': [-30.5595, 22.9375],
-  'Egypt': [26.8206, 30.8025],
-  'Tunisia': [33.8869, 9.5375],
-  'Morocco': [31.7917, -7.0926],
-  'Algeria': [28.0339, 1.6596],
-  'Saudi Arabia': [23.8859, 45.0792],
-  'United Arab Emirates': [23.4241, 53.8478],
-  'Turkey': [38.9637, 35.2433],
-  'Australia': [-25.2744, 133.7751],
-  'New Zealand': [-40.9006, 174.8860],
-
+const getMarkerColor = (count: number) => {
+  if (count >= 20) return '#4F46E5';
+  if (count >= 10) return '#6366F1';
+  if (count >= 5) return '#A5B4FC';
+  if (count >= 1) return '#E0E7FF';
+  return '#F1F5F9';
 };
 
-// Country name normalization
-const normalizeCountryName = (countryName: string): string => {
-  const normalized = countryName.trim();
-  const mapping: Record<string, string> = {
-    'US': 'United States',
-    'USA': 'United States',
-    'United States': 'United States',
-    'UK': 'United Kingdom',
-    'Great Britain': 'United Kingdom',
-    'England': 'United Kingdom',
-    'GB': 'United Kingdom',
-    'CA': 'Canada',
-    'FR': 'France',
-    'DE': 'Germany',
-    'ES': 'Spain',
-    'IT': 'Italy',
-    'JP': 'Japan',
-    'CN': 'China',
-    'IN': 'India',
-    'AU': 'Australia',
-    'BR': 'Brazil',
-    'AR': 'Argentina',
-    'ZA': 'South Africa',
-    'EG': 'Egypt',
-    'RU': 'Russia',
-    'TN': 'Tunisia',
-    'MA': 'Morocco',
-    'DZ': 'Algeria',
-    'SA': 'Saudi Arabia',
-    'AE': 'United Arab Emirates',
-    'TR': 'Turkey',
-    'PK': 'Pakistan',
-    'TH': 'Thailand',
-    'VN': 'Vietnam',
-    'MY': 'Malaysia',
-    'SG': 'Singapore',
-    'ID': 'Indonesia',
-    'PH': 'Philippines',
-    'KR': 'South Korea',
-    'MX': 'Mexico',
-    'CO': 'Colombia',
-    'PE': 'Peru',
-    'CL': 'Chile',
-    'NZ': 'New Zealand',
-  };
-  return mapping[normalized] || normalized;
+const getMarkerRadius = (count: number) => {
+  if (count >= 20) return 12;
+  if (count >= 10) return 10;
+  if (count >= 5) return 8;
+  if (count >= 1) return 6;
+  return 4;
 };
 
-const WorldMap: React.FC<WorldMapProps> = ({ userLocations, totalUsers }) => {
-  const [map, setMap] = useState<L.Map | null>(null);
+const WorldMap: React.FC<WorldMapProps> = ({ userLocations, totalUsers }) => (
+  <WorldMapComponent
+    userLocations={userLocations}
+    totalUsers={totalUsers}
+    getMarkerColor={getMarkerColor}
+    getMarkerRadius={getMarkerRadius}
+  />
+);
 
-  const getMarkerColor = (count: number) => {
-    if (count >= 20) return '#4F46E5';
-    if (count >= 10) return '#6366F1';
-    if (count >= 5) return '#A5B4FC';
-    if (count >= 1) return '#E0E7FF';
-    return '#F1F5F9';
-  };
-
-  const getMarkerRadius = (count: number) => {
-    if (count >= 20) return 12;
-    if (count >= 10) return 10;
-    if (count >= 5) return 8;
-    if (count >= 1) return 6;
-    return 4;
-  };
-
-  const getTopCountries = () => {
-    return userLocations
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
-  };
-
-  const handleZoomIn = () => {
-    if (map) {
-      map.zoomIn();
-    }
-  };
-
-  const handleZoomOut = () => {
-    if (map) {
-      map.zoomOut();
-    }
-  };
-
-  return (
-    <WorldMapComponent
-      userLocations={userLocations}
-      totalUsers={totalUsers}
-      getMarkerColor={getMarkerColor}
-      getMarkerRadius={getMarkerRadius}
-      getTopCountries={getTopCountries}
-      handleZoomIn={handleZoomIn}
-      handleZoomOut={handleZoomOut}
-    />
-  );
-};
-
-export default WorldMap; 
+export default WorldMap;

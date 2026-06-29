@@ -25,14 +25,11 @@ interface UserLocation {
   }>;
 }
 
-interface WorldMapComponentProps {
+export interface WorldMapComponentProps {
   userLocations: UserLocation[];
   totalUsers: number;
   getMarkerColor: (count: number) => string;
   getMarkerRadius: (count: number) => number;
-  getTopCountries: () => UserLocation[];
-  handleZoomIn: () => void;
-  handleZoomOut: () => void;
 }
 
 // Country coordinates mapping
@@ -350,17 +347,19 @@ const MapController: React.FC<{ setMap: (map: L.Map) => void }> = ({ setMap }) =
   return null;
 };
 
-const WorldMapComponent: React.FC<WorldMapComponentProps> = ({ 
-  userLocations, 
-  totalUsers, 
-  getMarkerColor, 
-  getMarkerRadius, 
-  getTopCountries, 
-  handleZoomIn, 
-  handleZoomOut 
+const WorldMapComponent: React.FC<WorldMapComponentProps> = ({
+  userLocations,
+  totalUsers,
+  getMarkerColor,
+  getMarkerRadius,
 }) => {
   const [map, setMap] = useState<L.Map | null>(null);
   const [topCountToShow, setTopCountToShow] = useState(5);
+
+  // Zoom controls operate on this component's own map instance — it's the
+  // only place that instance exists (populated by MapController below).
+  const handleZoomIn = () => map?.zoomIn();
+  const handleZoomOut = () => map?.zoomOut();
 
   const sortedCountries = userLocations
     .sort((a, b) => b.count - a.count);

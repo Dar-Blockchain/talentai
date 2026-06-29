@@ -7,7 +7,7 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { Menu as MenuIcon } from '@mui/icons-material';
-import { AdminSidebar, AssessmentDetailsDialog, AdminAssessmentSummary, ADMIN_ACCENT } from '@/modules/admin/shared';
+import { AdminSidebar, ADMIN_ACCENT } from '@/modules/admin/shared';
 import {
   UserDetailsDialog, CompanyPermissionsModal,
   type CompanyPermissions, type User, useSaveCompanyPermissionsMutation,
@@ -26,8 +26,6 @@ const CompanyConfig = dynamic(() => import('@/modules/admin/company-config').the
 const VALID_TABS = ['dashboard', 'users', 'post-interview', 'skill-interview', 'company-config'] as const;
 type TabName = typeof VALID_TABS[number];
 
-type Assessment = AdminAssessmentSummary;
-
 const DashboardAdmin = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -45,10 +43,8 @@ const DashboardAdmin = () => {
 
   // Dialog states
   const [userDialogOpen, setUserDialogOpen] = useState(false);
-  const [assessmentDialogOpen, setAssessmentDialogOpen] = useState(false);
   const [permissionsDialogOpen, setPermissionsDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<User | null>(null);
 
   const handleSavePermissions = async (companyId: string, permissions: CompanyPermissions) => {
@@ -144,13 +140,6 @@ const DashboardAdmin = () => {
           user={selectedUser}
           onClose={() => setUserDialogOpen(false)}
           onEdit={(_user) => {
-          }}
-        />
-        <AssessmentDetailsDialog
-          open={assessmentDialogOpen}
-          assessment={selectedAssessment}
-          onClose={() => setAssessmentDialogOpen(false)}
-          onEdit={(_assessment) => {
           }}
         />
         <CompanyPermissionsModal

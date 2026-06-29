@@ -1,2 +1,2 @@
-// AdminSidebar and AssessmentDetailsDialog are presentational and have no API calls of their own.
+// AdminSidebar is presentational and has no API calls of its own.
 export {};

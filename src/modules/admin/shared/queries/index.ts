@@ -1,2 +1,2 @@
-// AdminSidebar and AssessmentDetailsDialog are presentational and have no selectors of their own.
+// AdminSidebar is presentational and has no selectors of its own.
 export {};
