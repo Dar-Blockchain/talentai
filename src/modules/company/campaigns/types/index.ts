@@ -1,3 +1,11 @@
+import type {
+  CampaignType,
+  CampaignStatus,
+  AnonymityMode,
+  CampaignModule,
+  ParticipantStatus,
+} from "@/types/campaign";
+
 export type {
   Campaign,
   CampaignType,
@@ -22,6 +30,7 @@ export interface EmployeeCampaignEntry {
   type: CampaignType;
   status: CampaignStatus;
   anonymityMode: AnonymityMode;
+  accessMethod?: string;
   module: CampaignModule;
   deadline?: string;
   company: string | { _id: string; name: string };
