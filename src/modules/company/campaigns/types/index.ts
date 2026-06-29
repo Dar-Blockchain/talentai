@@ -15,7 +15,33 @@ export type {
   CampaignsResponse,
 } from "@/types/campaign";
 
-export type { EmployeeCampaignEntry, EmployeeCampaignFilters } from "@/store/slices/campaignSlice";
+export interface EmployeeCampaignEntry {
+  campaignId: string;
+  title: string;
+  description?: string;
+  type: CampaignType;
+  status: CampaignStatus;
+  anonymityMode: AnonymityMode;
+  module: CampaignModule;
+  deadline?: string;
+  company: string | { _id: string; name: string };
+  participantStatus: ParticipantStatus;
+  accessedAt?: string;
+  completedAt?: string;
+  joinedAt?: string;
+  score?: number;
+  progress?: number;
+  totalParticipants?: number;
+}
+
+export interface EmployeeCampaignFilters {
+  userId: string;
+  search?: string;
+  participantStatus?: string;
+  period?: string;
+  page?: number;
+  limit?: number;
+}
 
 // ─── Query param shapes ───────────────────────────────────────────────────────
 

@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { setInterviewLanguages, selectGeneratedPost } from "../store/createPostSlice";
-import { selectSavedPostId } from "@/store/slices/postSlice";
 import { useAiPostStepper } from "../hooks";
 import PostDetailsStep from "./PostDetailsStep";
 import InterviewLanguagesModal from "./InterviewLanguagesModal";
@@ -17,7 +16,7 @@ const CreatePostPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const generatedPost = useSelector(selectGeneratedPost);
   const interviewLanguages = useSelector((state: RootState) => state.postGeneration.interviewLanguages);
-  const savedPostId = useSelector(selectSavedPostId);
+  const savedPostId = null;
 
   const [langModalOpen, setLangModalOpen] = useState(false);
   const { t } = useTranslation("posts");

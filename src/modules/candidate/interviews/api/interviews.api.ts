@@ -1,0 +1,32 @@
+import { fetchCandidateApplications } from '@/modules/candidate/applications/api/applications.api';
+import type { CandidateApplication } from '@/modules/candidate/applications/types/application.types';
+import axiosInstance from '@/utils/axiosInstance';
+
+export async function fetchSkillAssessmentsByType(params: { skillType: "technical" | "soft"; limit?: number }) {
+  const res = await axiosInstance.get("skill-interview-assessments/my", {
+    params: { skillType: params.skillType, limit: params.limit ?? 20 },
+  });
+  const data = res.data;
+  const results = data.data || data.results || [];
+  const total = data.pagination?.totalCount || data.total || results.length;
+  return { results, total, skillType: params.skillType };
+}
+
+export async function fetchInterviewReport(id: string) {
+  const res = await axiosInstance.get(`skill-interview-assessments/${id}`);
+  return res.data.data;
+}
+
+export async function fetchJobInterviews(): Promise<CandidateApplication[]> {
+  const [scheduled, completed] = await Promise.all([
+    fetchCandidateApplications({ status: 'interview_scheduled', limit: 50 }),
+    fetchCandidateApplications({ status: 'interview_completed', limit: 50 }),
+  ]);
+  const merged = [...scheduled.data, ...completed.data];
+  merged.sort((a, b) => {
+    const da = new Date(a.appliedAt ?? a.createdAt ?? 0).getTime();
+    const db = new Date(b.appliedAt ?? b.createdAt ?? 0).getTime();
+    return db - da;
+  });
+  return merged;
+}

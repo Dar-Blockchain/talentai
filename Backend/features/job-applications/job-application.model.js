@@ -34,7 +34,7 @@ const jobApplicationSchema = new mongoose.Schema(
     // ========== APPLICATION DETAILS ==========
     status: {
       type: String,
-      enum: ["visited", "interview_completed"],
+      enum: ["visited", "interview_completed", "withdrawn"],
       default: "visited",
       index: true,
       description: "Current status of the application"

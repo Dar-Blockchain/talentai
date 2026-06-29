@@ -1,5 +1,6 @@
-﻿const Profile = require("../users/profile.model");
-const Post    = require("./post.model");
+﻿const Profile      = require("../users/profile.model");
+const ProfileSkill = require("../skills/profile-skill.model");
+const Post         = require("./post.model");
 const { sendJobMatchEmail } = require("../../utils/email.service");
 const notificationService  = require("../notifications/notification.service");
 
@@ -28,11 +29,20 @@ module.exports.notifyMatchingCandidates = async (postId) => {
     ].join(" ").toLowerCase();
     const jobLink = `${FRONTEND_URL}/candidate/jobs/${postId}`;
 
-    // Fetch all candidate profiles
+    // Fetch all candidate profiles with their skills from ProfileSkill collection
     const candidates = await Profile.find({ type: "Candidate" })
-      .select("firstName lastName email contactInformation skills userId")
+      .select("firstName lastName email contactInformation userId")
       .populate("userId", "email")
       .lean();
+
+    // Load all relevant skills in one query and group by profile id
+    const candidateIds = candidates.map((p) => p._id);
+    const allSkills = await ProfileSkill.find({ profile: { $in: candidateIds }, kind: "technical" }).lean();
+    const skillsByProfile = allSkills.reduce((acc, s) => {
+      const key = String(s.profile);
+      (acc[key] = acc[key] || []).push(s);
+      return acc;
+    }, {});
 
     let sent = 0;
     for (const profile of candidates) {
@@ -40,8 +50,8 @@ module.exports.notifyMatchingCandidates = async (postId) => {
       if (!email) continue;
 
       // Only skills with proficiency >= 60
-      const candidateSkills = (profile.skills || [])
-        .filter(s => (s.Levelconfirmed ?? s.proficiencyLevel ?? 0) >= 60)
+      const candidateSkills = (skillsByProfile[String(profile._id)] || [])
+        .filter(s => (s.levelConfirmed ?? s.proficiencyLevel ?? 0) >= 60)
         .map(s => ({ raw: s.name, norm: normalize(s.name) }))
         .filter(s => s.norm);
 

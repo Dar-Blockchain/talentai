@@ -35,6 +35,7 @@ interface Props {
 const STATUS_VALUES = [
   { value: "visited",             i18nKey: "pages.applications.status.visited" },
   { value: "interview_completed", i18nKey: "pages.applications.status.interview_completed" },
+  { value: "withdrawn",           i18nKey: "pages.applications.status.withdrawn" },
 ] as const;
 
 interface SortGroup {

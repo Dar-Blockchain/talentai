@@ -2,7 +2,7 @@ import Head from "next/head";
 import NextLink from "next/link";
 import { Trans, useTranslation } from "react-i18next";
 import Header from "@/modules/shared/layouts/home/HomeHeader";
-import { APP_URL, CONTACT_EMAIL } from "@/constants";
+import { APP_URL, CONTACT_EMAIL } from "@/modules/shared/constants";
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <div className="mb-8">

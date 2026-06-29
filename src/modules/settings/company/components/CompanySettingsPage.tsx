@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
+import { usePermissionsQuery } from "@/modules/company/employees/queries";
 import { useTranslation } from "react-i18next";
 import Link from "next/link";
 import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
 import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 import { useCompanyProfileManagement } from "../hooks";
-import { selectEmployeePermissions } from "@/store/slices/memberSlice";
 import ProfileBanner from "./ProfileBanner";
 import CompanyInfoTab from "./CompanyInfoTab";
 import ApiKeysTab from "./ApiKeysTab";
@@ -23,7 +24,8 @@ const TEAL = "#0D9488";
 const CompanySettingsPage: React.FC = () => {
   const { t } = useTranslation("dashboard");
   useCompanyAccess("canViewCompanyProfile");
-  const empPerms = useSelector(selectEmployeePermissions);
+  const user     = useSelector((s: RootState) => s.user.connectedUser.user);
+  const { data: empPerms } = usePermissionsQuery(user?._id);
   const {
     profile, loading, uploadingImage, isEmployee, isEditing, control,
     handleInputChange, handleImageUpload, handleSaveProfile, handleSaveLanguage, handleCancel,

@@ -1,6 +1,6 @@
 import { Box, Typography, TextField, Autocomplete, Chip } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import { ALL_SKILLS, SOFT_SKILLS } from "@/constants/skills";
+import { ALL_SKILLS, SOFT_SKILLS } from "@/modules/shared/skills";
 import { inputStyle, labelSx } from "./styles";
 
 interface SkillOption {

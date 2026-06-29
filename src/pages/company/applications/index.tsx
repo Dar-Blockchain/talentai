@@ -7,7 +7,7 @@ import LoadingState from "@/components/ui/LoadingState";
 import ApplicationMetrics  from "@/modules/company/applications/components/ApplicationMetrics";
 import ApplicationCard     from "@/modules/company/applications/components/ApplicationCard";
 import ContactCandidateModal, { ContactTarget } from "@/modules/company/applications/components/ContactCandidateModal";
-import type { ApplicationSummaryItem } from "@/store/slices/jobApplicationSlice";
+import type { ApplicationSummaryItem } from "@/modules/company/applications/types";
 import { useApplicationsList } from "@/modules/company/applications/hooks";
 import { ApplicationsToolbar, PostPickerModal } from "@/modules/company/applications/components";
 import { TEAL } from "@/modules/company/applications/components/constants";

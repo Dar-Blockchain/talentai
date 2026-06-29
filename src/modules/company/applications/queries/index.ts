@@ -48,7 +48,7 @@ export const useApplicationsSummaryQuery = (params: ApplicationListParams) =>
         `job-applications/company/my/summary${query.toString() ? `?${query}` : ""}`,
       );
       return {
-        data:       (data.data       ?? []) as import("@/store/slices/jobApplicationSlice").ApplicationSummaryItem[],
+        data:       (data.data       ?? []) as import("@/modules/company/applications/types").ApplicationSummaryItem[],
         pagination: (data.pagination ?? { currentPage: 1, totalPages: 1, totalCount: 0 }) as {
           currentPage: number; totalPages: number; totalCount: number;
         },

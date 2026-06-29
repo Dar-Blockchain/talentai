@@ -2,7 +2,7 @@ import React, { memo, useCallback, useMemo, useState } from "react";
 import { Box, Typography, TextField, InputAdornment, FormControl, Select, MenuItem } from "@mui/material";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
-import { Department } from "@/store/slices/departmentSlice";
+import { Department } from "@/modules/company/departments/types";
 import { useTranslation } from "react-i18next";
 import { PURPLE, INLINE_SELECT_SX } from "./constants";
 

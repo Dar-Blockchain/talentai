@@ -77,7 +77,7 @@ export default function InterviewScreen({
   const SKILL_TYPES = ['TECHNICAL_SKILL', 'SOFT_SKILL', 'ASSESSMENT', 'EVALUATION'];
   const isSkillInterview = !!interviewConfig && SKILL_TYPES.includes(interviewConfig.interviewType);
   const reportPath = isSkillInterview && assessmentId
-    ? `/candidate/skill-interview/report/${assessmentId}`
+    ? `/candidate/skills/interviews/${assessmentId}`
     : undefined;
 
   const isActive = socket.interviewStatus === 'active';

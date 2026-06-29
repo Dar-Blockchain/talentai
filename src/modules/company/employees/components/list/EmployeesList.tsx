@@ -9,7 +9,7 @@ import InvitationCard from "./InvitationCard";
 import EmployeesFilterBar from "./EmployeesFilterBar";
 import type { ExtendedMember } from "@/modules/company/employees/types";
 import { Invitation } from "@/types/employee";
-import { Department } from "@/store/slices/departmentSlice";
+import { Department } from "@/modules/company/departments/types";
 import { PURPLE, AMBER, GRID } from "./constants";
 import Pagination from "@/components/ui/Pagination";
 

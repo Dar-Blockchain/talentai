@@ -64,7 +64,7 @@ async function persistInterviewResults(sessionId, result, candidateId, postId) {
         if (profile) {
           await JobApplication.findOneAndUpdate(
             { profile: profile._id, post: postId },
-            { status: 'interview_completed', updatedAt: new Date() },
+            { status: 'interview_completed', isWithdrawn: false, withdrawnAt: null, updatedAt: new Date() },
           );
 
           // Notify the company (recruiter) that a candidate completed their interview

@@ -1,20 +1,20 @@
 "use client";
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { useDispatch, useSelector } from "react-redux";
 import { useTranslation }           from "react-i18next";
 import { Users, UserPlus, Mail, Loader2, AlertTriangle } from "lucide-react";
-import { AppDispatch }              from "@/store/store";
+import type { Member } from "@/modules/company/members/types";
 import {
-  fetchMembers, selectMembers, addEmployee,
-  fetchInvitationsByDepartment, cancelInvitation, resendInvitation,
-  Invitation, Member,
-} from "@/store/slices/memberSlice";
+  useMembersQuery,
+  useInviteEmployeeMutation,
+  useResendInvitationMutation,
+  useCancelInvitationMutation,
+  useInvitationsByDepartmentQuery,
+} from "@/modules/company/employees/queries";
 
 const GRID_CLS = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4";
 import { Button }                   from "@/modules/shared/ui/shadcn/button";
 import { useToast }                 from "@/hooks/useToast";
-import { Invitation as InvitationType } from "@/types/employee";
 import { cn }                       from "@/lib/utils";
 import AddEmployeeModal from "@/modules/company/employees/components/create/AddEmployeeModal";
 import { AMBER, EmployeeCard, EmployeesFilterBar, EmployeeSkeletonCard, InvitationCard, RoleFilter, SortOption } from "@/modules/company/employees/components/list";
@@ -78,10 +78,8 @@ const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({
   departmentId, canManage = true, canAssignRoles = true, canRemove = true,
   onEdit, onDelete,
 }) => {
-  const dispatch    = useDispatch<AppDispatch>();
-  const { t }       = useTranslation("dashboard");
+  const { t }        = useTranslation("dashboard");
   const { showToast } = useToast();
-  const { members, pageTotal, loading, error } = useSelector(selectMembers);
 
   const [tab,             setTab]             = useState<"members" | "invitations">("members");
   const [search,          setSearch]          = useState("");
@@ -92,19 +90,25 @@ const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({
   const [inviteOpen,      setInviteOpen]      = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [invitations, setInvitations] = useState<InvitationType[]>([]);
-  const [invLoading,  setInvLoading]  = useState(false);
+  const { sortBy: sb, order } = SORT_MAP[sortBy];
+  const { data: membersData, isLoading: loading, error: membersError } = useMembersQuery({
+    departmentId, search: debouncedSearch || undefined,
+    role: roleFilter !== "all" ? roleFilter : undefined,
+    sortBy: sb, order, page, limit: PAGE_SIZE,
+  });
+  const members   = membersData?.members ?? [];
+  const pageTotal = membersData?.total   ?? 0;
+  const error     = membersError ? (membersError as Error).message : null;
 
-  const loadInvitations = useCallback(async () => {
-    setInvLoading(true);
-    try {
-      const result = await dispatch(fetchInvitationsByDepartment(departmentId)).unwrap();
-      setInvitations(result as unknown as InvitationType[]);
-    } catch { /* silent */ }
-    finally { setInvLoading(false); }
-  }, [dispatch, departmentId]);
+  const {
+    data: invitations = [],
+    isLoading: invLoading,
+    invalidate: invalidateInvitations,
+  } = useInvitationsByDepartmentQuery(departmentId);
 
-  useEffect(() => { loadInvitations(); }, [loadInvitations]);
+  const inviteMutation = useInviteEmployeeMutation();
+  const resendMutation = useResendInvitationMutation();
+  const cancelMutation = useCancelInvitationMutation();
 
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
@@ -114,36 +118,23 @@ const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({
 
   useEffect(() => { setPage(1); }, [debouncedSearch, roleFilter, sortBy]);
 
-  const refreshMembers = useCallback(() => {
-    const { sortBy: sb, order } = SORT_MAP[sortBy];
-    dispatch(fetchMembers({
-      departmentId, search: debouncedSearch || undefined,
-      role: roleFilter !== "all" ? roleFilter : undefined,
-      sortBy: sb, order, page, limit: PAGE_SIZE,
-    }));
-  }, [dispatch, departmentId, sortBy, debouncedSearch, roleFilter, page]);
-
-  useEffect(() => { refreshMembers(); }, [refreshMembers]);
-
   const handleInvite = useCallback(async (email: string, role: string, deptId?: string) => {
-    await dispatch(addEmployee({ email, role, departmentId: deptId || departmentId })).unwrap();
+    await inviteMutation.mutateAsync({ email, role, departmentId: deptId || departmentId });
     setInviteOpen(false);
     showToast({ message: t("pages.departments.members_panel.toast_invite_sent"), severity: "success" });
-    refreshMembers();
-    loadInvitations();
-  }, [dispatch, departmentId, refreshMembers, loadInvitations, showToast, t]);
+    invalidateInvitations();
+  }, [inviteMutation, departmentId, showToast, t, invalidateInvitations]);
 
   const handleResend = useCallback(async (id: string) => {
-    await dispatch(resendInvitation(id)).unwrap();
+    await resendMutation.mutateAsync(id);
     showToast({ message: t("pages.departments.members_panel.toast_invite_resent"), severity: "success" });
-    loadInvitations();
-  }, [dispatch, showToast, loadInvitations, t]);
+    invalidateInvitations();
+  }, [resendMutation, showToast, t, invalidateInvitations]);
 
   const handleCancel = useCallback(async (id: string) => {
-    await dispatch(cancelInvitation(id)).unwrap();
-    setInvitations(prev => prev.filter(i => i._id !== id));
+    await cancelMutation.mutateAsync(id);
     showToast({ message: t("pages.departments.members_panel.toast_invite_cancelled"), severity: "info" });
-  }, [dispatch, showToast, t]);
+  }, [cancelMutation, showToast, t]);
 
   return (
     <div>

@@ -3,6 +3,7 @@ import type {
   Campaign, CampaignMetrics, CampaignParticipant, CampaignSession,
   NonParticipant, CreateCampaignPayload, CampaignsResponse,
   CampaignsListParams, ParticipantsParams, SessionsParams, NonParticipantsParams,
+  EmployeeCampaignEntry,
 } from "../types";
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -88,6 +89,37 @@ export const apiFetchSessions = async (
 ): Promise<{ data: CampaignSession[]; total: number }> => {
   const res = await axiosInstance.get(`internal-campaigns/${campaignId}/sessions`, { params: clean(params) });
   return { data: res.data.data, total: res.data.total ?? res.data.data?.length ?? 0 };
+};
+
+// ─── Employee campaigns ───────────────────────────────────────────────────────
+
+export const apiFetchEmployeeCampaigns = async (params: {
+  userId: string;
+  search?: string;
+  participantStatus?: string;
+  period?: string;
+  page?: number;
+  limit?: number;
+}): Promise<{ data: EmployeeCampaignEntry[]; total: number; pages: number; page: number; limit: number }> => {
+  const { userId, search, participantStatus, period, page = 1, limit = 10 } = params;
+  const p: Record<string, string> = { page: String(page), limit: String(limit) };
+  if (search)            p.search            = search;
+  if (participantStatus) p.participantStatus = participantStatus;
+  if (period)            p.period            = period;
+  const res = await axiosInstance.get(`internal-campaigns/employee/${userId}`, { params: p });
+  const json = res.data;
+  return {
+    data:  json.data,
+    total: json.pagination?.total ?? json.data?.length ?? 0,
+    pages: json.pagination?.pages ?? 1,
+    page:  json.pagination?.page  ?? page,
+    limit: json.pagination?.limit ?? limit,
+  };
+};
+
+export const apiFetchEmployeeCampaignMetrics = async (userId: string): Promise<{ total: number; invited: number; inProgress: number; completed: number }> => {
+  const res = await axiosInstance.get(`internal-campaigns/employee/${userId}/metrics`);
+  return res.data.data;
 };
 
 // ─── Link access ──────────────────────────────────────────────────────────────

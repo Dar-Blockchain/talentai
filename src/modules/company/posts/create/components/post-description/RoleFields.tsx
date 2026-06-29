@@ -3,7 +3,7 @@ import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import { useTranslation } from "react-i18next";
-import { contractTypes, workModes } from "@/constants/candidate";
+import { contractTypes, workModes } from "@/modules/company/posts/shared/constants";
 import { EMPLOYMENT_OPTION_KEY, optionLabel, WORK_MODE_OPTION_KEY } from "../../utils";
 import FieldLabel from "./FieldLabel";
 import SectionLabel from "./SectionLabel";

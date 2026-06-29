@@ -1,15 +1,20 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Control, Controller, FieldErrors } from 'react-hook-form';
-import { CheckCircle2, XCircle, Pencil, Save, X } from 'lucide-react';
+import { CheckCircle2, XCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { UserProfile } from '@/types/profile';
 import { PersonalInformationFormValues } from '@/modules/settings/candidate/schemas';
-import { experienceLevels, timezones } from '@/constants/profile';
-import ProfilePictureSection from '@/components/features/profile/ProfilePictureSection';
-import AppInput from '@/modules/shared/ui/AppInput';
-import AppSelect from '@/modules/shared/ui/AppSelect';
-import { Spinner } from '@/modules/settings/shared/components';
-import CvSection from './CvSection';
+import { experienceLevels, timezones } from '../constants';
+import ProfilePictureSection from './ProfilePictureSection';
+import { EditActions, Spinner } from '@/modules/settings/shared/components';
+import { Input } from '@/modules/shared/ui/shadcn/input';
+import { Label } from '@/modules/shared/ui/shadcn/label';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/modules/shared/ui/shadcn/select';
+
+type EditingSection = 'profile' | 'contact' | null;
 
 interface PersonalInformationTabProps {
   profile:        UserProfile;
@@ -24,27 +29,70 @@ interface PersonalInformationTabProps {
   onSave:         () => void;
   onCancel:       () => void;
   onEditToggle:   () => void;
-  onCvUpdated:    (filename: string) => void;
-  onCvDeleted:    () => void;
+  onCvUpdated?:   (filename: string, cvAnalysis?: any) => void;
+  onCvDeleted?:   () => void;
 }
 
-const SectionHeader = ({ title, subtitle }: { title: string; subtitle: string }) => (
-  <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg border-l-[3px] border-l-teal-600">
-    <p className="text-[0.9rem] font-bold text-gray-900">{title}</p>
-    <p className="text-[0.78rem] text-gray-400 mt-1">{subtitle}</p>
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+interface SectionHeaderProps {
+  title:    string;
+  subtitle?: string;
+  actions?: React.ReactNode;
+}
+
+const SectionHeader: React.FC<SectionHeaderProps> = ({ title, subtitle, actions }) => (
+  <div className="flex items-center justify-between gap-2 px-3 py-2 bg-primary-light/50 border border-primary-border rounded-xl border-l-[3px] border-l-primary">
+    <p className="text-xs font-bold text-primary-dark uppercase tracking-wide truncate">{title}</p>
+    <div className="shrink-0">{actions}</div>
   </div>
 );
 
+interface FieldProps {
+  label:     string;
+  error?:    string;
+  required?: boolean;
+  className?: string;
+  children:  React.ReactNode;
+}
+
+const Field: React.FC<FieldProps> = ({ label, error, required, className, children }) => (
+  <div className={cn("flex flex-col gap-1", className)}>
+    <Label className="text-[0.68rem] font-semibold text-muted-foreground uppercase tracking-wide">
+      {label}{required && <span className="text-destructive ml-0.5">*</span>}
+    </Label>
+    {children}
+    {error && <p className="text-[0.7rem] text-destructive">{error}</p>}
+  </div>
+);
+
+// ─── Tab ─────────────────────────────────────────────────────────────────────
+
 const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
-  profile, control, formErrors, isEditing, loading, saveSuccess, error,
-  uploadingImage, onImageUpload, onSave, onCancel, onEditToggle, onCvUpdated, onCvDeleted,
+  profile, control, formErrors, loading, saveSuccess, error,
+  uploadingImage, onImageUpload, onSave, onCancel, onEditToggle,
 }) => {
   const { t } = useTranslation('dashboard');
   const s = (k: string) => t(`candidate_settings.personal.${k}`);
   const c = (k: string) => t(`candidate_settings.contact.${k}`);
 
-  const isLoading = loading && !profile.firstName && !profile.username;
-  const isNotWorkingValue = /^not\s+working$/i.test(profile.requiredExperienceLevel || '');
+  const [editingSection, setEditingSection] = useState<EditingSection>(null);
+
+  useEffect(() => {
+    if (saveSuccess) setEditingSection(null);
+  }, [saveSuccess]);
+
+  const handleEdit = (section: EditingSection) => {
+    setEditingSection(section);
+    onEditToggle();
+  };
+
+  const handleSave   = () => { onSave(); };
+  const handleCancel = () => { onCancel(); setEditingSection(null); };
+
+  const isLoading          = loading && !profile.firstName && !profile.username;
+  const isNotWorkingValue  = /^not\s+working$/i.test(profile.requiredExperienceLevel || '');
+  const someoneEditing     = editingSection !== null;
 
   const genderOptions = useMemo(() => [
     { value: 'Male',              label: s('gender_male') },
@@ -52,202 +100,215 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
     { value: 'Prefer not to say', label: s('gender_other') },
   ], [t]);
 
-  const timezoneOptions = useMemo(() => timezones.map((tz) => ({ value: tz, label: tz })), []);
+  const timezoneOptions = useMemo(() => timezones.map(tz => ({ value: tz, label: tz })), []);
 
   const experienceOptions = useMemo(() => {
-    const opts = experienceLevels.map((el) => ({ value: el, label: el }));
-    if (isNotWorkingValue && !experienceLevels.includes('Not working') && profile.requiredExperienceLevel) {
+    const opts = experienceLevels.map(el => ({ value: el, label: el }));
+    if (isNotWorkingValue && !experienceLevels.includes('Not working') && profile.requiredExperienceLevel)
       opts.push({ value: profile.requiredExperienceLevel, label: s('experience_not_currently_employed') });
-    }
     return opts;
   }, [isNotWorkingValue, profile.requiredExperienceLevel, t]);
 
-  return (
-    <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+  const inputCls = "h-9 text-sm disabled:bg-muted/40 disabled:cursor-default";
+  const triggerCls = "h-9 text-sm disabled:bg-muted/40 disabled:cursor-default";
 
-      {/* Header */}
-      <div className="px-4 md:px-6 py-4 border-b border-gray-100">
-        <p className="font-bold text-[0.95rem] text-gray-900">{s('title')}</p>
-        <p className="text-[0.78rem] text-gray-400 mt-1">{s('subtitle')}</p>
+  const profileActions = (
+    <EditActions
+      isEditing={editingSection === 'profile'}
+      loading={loading && editingSection === 'profile'}
+      onEdit={() => handleEdit('profile')}
+      onCancel={handleCancel}
+      onSave={handleSave}
+      disabled={someoneEditing && editingSection !== 'profile'}
+    />
+  );
+
+  const contactActions = (
+    <EditActions
+      isEditing={editingSection === 'contact'}
+      loading={loading && editingSection === 'contact'}
+      onEdit={() => handleEdit('contact')}
+      onCancel={handleCancel}
+      onSave={handleSave}
+      disabled={someoneEditing && editingSection !== 'contact'}
+    />
+  );
+
+  return (
+    <div className="bg-card border border-border rounded-2xl overflow-hidden">
+
+      {/* Card header */}
+      <div className="px-4 py-3 border-b border-border">
+        <p className="font-bold text-sm text-foreground">{s('title')}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{s('subtitle')}</p>
       </div>
 
       {/* Content */}
-      <div className="p-4 md:p-6 flex flex-col gap-6">
+      <div className="p-3 sm:p-4 md:p-6 flex flex-col gap-5">
         {isLoading ? (
           <div className="flex justify-center py-12">
             <Spinner size={28} />
           </div>
         ) : (
           <>
+            {/* Alerts */}
             {saveSuccess && (
-              <div className="flex items-center gap-2 rounded-[10px] bg-green-50 border border-green-200 px-3 py-2 text-[0.8rem] text-green-800">
-                <CheckCircle2 size={16} className="text-green-600" />
+              <div className="flex items-center gap-2 rounded-xl bg-primary-light border border-primary-border px-3 py-2 text-xs text-primary-dark">
+                <CheckCircle2 size={14} className="shrink-0" />
                 {s('save_success')}
               </div>
             )}
             {error && (
-              <div className="flex items-center gap-2 rounded-[10px] bg-red-50 border border-red-200 px-3 py-2 text-[0.8rem] text-red-800">
-                <XCircle size={16} className="text-red-600" />
+              <div className="flex items-center gap-2 rounded-xl bg-danger-light border border-danger-border px-3 py-2 text-xs text-danger">
+                <XCircle size={14} className="shrink-0" />
                 {error}
               </div>
             )}
 
+            {/* Avatar */}
             <ProfilePictureSection
               profile={profile}
               uploadingImage={uploadingImage}
-              isEditing={isEditing}
+              isEditing={someoneEditing}
               onImageUpload={onImageUpload}
-              onEditClick={onEditToggle}
+              onEditClick={() => handleEdit('profile')}
             />
 
-            <hr className="border-gray-200" />
+            <hr className="border-border" />
 
-            {/* ── Account ── */}
-            <div className="flex flex-col gap-5">
-              <SectionHeader title="Account" subtitle="Your login credentials" />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <AppInput label={s('username')} value={profile.username || ''} disabled />
-                <AppInput label={s('email')}    value={profile.email    || ''} disabled />
-              </div>
-            </div>
+            {/* ── Profile Details ────────────────────────────── */}
+            <div className="flex flex-col gap-3">
+              <SectionHeader title="Profile Details" actions={profileActions} />
 
-            <hr className="border-gray-200" />
-
-            {/* ── Profile Details ── */}
-            <div className="flex flex-col gap-5">
-              <SectionHeader title="Profile Details" subtitle="Your personal and professional information" />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-
+              {/* First + Last name */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Controller name="firstName" control={control}
                   render={({ field }) => (
-                    <AppInput label={s('first_name')} value={field.value} onChange={(e) => field.onChange(e.target.value)} onBlur={field.onBlur} disabled={!isEditing} error={formErrors.firstName?.message} />
+                    <Field label={s('first_name')} error={formErrors.firstName?.message}>
+                      <Input {...field} disabled={editingSection !== 'profile'} className={inputCls} />
+                    </Field>
                   )}
                 />
-
                 <Controller name="lastName" control={control}
                   render={({ field }) => (
-                    <AppInput label={s('last_name')} value={field.value} onChange={(e) => field.onChange(e.target.value)} onBlur={field.onBlur} disabled={!isEditing} error={formErrors.lastName?.message} />
+                    <Field label={s('last_name')} error={formErrors.lastName?.message}>
+                      <Input {...field} disabled={editingSection !== 'profile'} className={inputCls} />
+                    </Field>
                   )}
                 />
+              </div>
 
+              {/* Target role + Gender */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Controller name="targetRole" control={control}
                   render={({ field }) => (
-                    <AppInput label={s('target_role')} value={field.value} onChange={(e) => field.onChange(e.target.value)} onBlur={field.onBlur} disabled={!isEditing} placeholder={s('target_role_placeholder')} error={formErrors.targetRole?.message} sx={{ gridColumn: { xs: '1 / -1', sm: 'span 2' } }} />
+                    <Field label={s('target_role')} error={formErrors.targetRole?.message}>
+                      <Input {...field} disabled={editingSection !== 'profile'} placeholder={s('target_role_placeholder')} className={inputCls} />
+                    </Field>
                   )}
                 />
-
                 <Controller name="gender" control={control}
                   render={({ field }) => (
-                    <AppSelect label={s('gender')} value={field.value} onChange={(val) => field.onChange(val)} options={genderOptions} disabled={!isEditing} error={formErrors.gender?.message} />
+                    <Field label={s('gender')} error={formErrors.gender?.message}>
+                      <Select value={field.value} onValueChange={field.onChange} disabled={editingSection !== 'profile'}>
+                        <SelectTrigger className={triggerCls}><SelectValue placeholder="Select…" /></SelectTrigger>
+                        <SelectContent>
+                          {genderOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </Field>
                   )}
                 />
+              </div>
 
+              {/* Timezone + Experience */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Controller name="timezone" control={control}
                   render={({ field }) => (
-                    <AppSelect label={s('timezone')} value={field.value} onChange={(val) => field.onChange(val)} options={timezoneOptions} disabled={!isEditing} error={formErrors.timezone?.message} />
+                    <Field label={s('timezone')} error={formErrors.timezone?.message}>
+                      <Select value={field.value} onValueChange={field.onChange} disabled={editingSection !== 'profile'}>
+                        <SelectTrigger className={triggerCls}><SelectValue placeholder="Select…" /></SelectTrigger>
+                        <SelectContent>
+                          {timezoneOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </Field>
                   )}
                 />
-
                 <Controller name="requiredExperienceLevel" control={control}
                   render={({ field }) => (
-                    <AppSelect label={s('experience_level')} value={field.value} onChange={(val) => field.onChange(val)} options={experienceOptions} disabled={!isEditing} error={formErrors.requiredExperienceLevel?.message} sx={{ gridColumn: { xs: '1 / -1', sm: 'span 2' } }} />
+                    <Field label={s('experience_level')} error={formErrors.requiredExperienceLevel?.message}>
+                      <Select value={field.value} onValueChange={field.onChange} disabled={editingSection !== 'profile'}>
+                        <SelectTrigger className={triggerCls}><SelectValue placeholder="Select…" /></SelectTrigger>
+                        <SelectContent>
+                          {experienceOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </Field>
                   )}
                 />
               </div>
             </div>
 
-            <hr className="border-gray-200" />
+            <hr className="border-border" />
 
-            {/* ── Contact Information ── */}
-            <div className="flex flex-col gap-5">
-              <SectionHeader title={t('candidate_settings.contact.title')} subtitle={c('subtitle')} />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {/* ── Contact Information ────────────────────────── */}
+            <div className="flex flex-col gap-3">
+              <SectionHeader title={t('candidate_settings.contact.title')} actions={contactActions} />
 
+              {/* Phone + Location */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Controller name="phone" control={control}
                   render={({ field }) => (
-                    <AppInput label={c('phone')} value={field.value} onChange={(e) => field.onChange(e.target.value)} onBlur={field.onBlur} disabled={!isEditing} error={formErrors.phone?.message} />
+                    <Field label={c('phone')} error={formErrors.phone?.message}>
+                      <Input {...field} disabled={editingSection !== 'contact'} className={inputCls} />
+                    </Field>
                   )}
                 />
-
                 <Controller name="location" control={control}
                   render={({ field }) => (
-                    <AppInput label={c('location')} value={field.value} onChange={(e) => field.onChange(e.target.value)} onBlur={field.onBlur} disabled={!isEditing} error={formErrors.location?.message} />
-                  )}
-                />
-
-                <Controller name="address" control={control}
-                  render={({ field }) => (
-                    <AppInput label={c('address')} value={field.value} onChange={(e) => field.onChange(e.target.value)} onBlur={field.onBlur} disabled={!isEditing} error={formErrors.address?.message} sx={{ gridColumn: { xs: '1 / -1', sm: 'span 2' } }} />
-                  )}
-                />
-
-                <Controller name="linkedinUrl" control={control}
-                  render={({ field }) => (
-                    <AppInput label={c('linkedin')} value={field.value} onChange={(e) => field.onChange(e.target.value)} onBlur={field.onBlur} disabled={!isEditing} placeholder="https://linkedin.com/in/yourprofile" type="url" error={formErrors.linkedinUrl?.message} />
-                  )}
-                />
-
-                <Controller name="githubUrl" control={control}
-                  render={({ field }) => (
-                    <AppInput label={c('github')} value={field.value} onChange={(e) => field.onChange(e.target.value)} onBlur={field.onBlur} disabled={!isEditing} placeholder="https://github.com/yourprofile" type="url" error={formErrors.githubUrl?.message} />
-                  )}
-                />
-
-                <Controller name="personalWebsite" control={control}
-                  render={({ field }) => (
-                    <AppInput label={c('website')} value={field.value} onChange={(e) => field.onChange(e.target.value)} onBlur={field.onBlur} disabled={!isEditing} placeholder="https://yourwebsite.com" type="url" error={formErrors.personalWebsite?.message} sx={{ gridColumn: { xs: '1 / -1', sm: 'span 2' } }} />
+                    <Field label={c('location')} error={formErrors.location?.message}>
+                      <Input {...field} disabled={editingSection !== 'contact'} className={inputCls} />
+                    </Field>
                   )}
                 />
               </div>
-            </div>
 
-            {/* ── Resume / CV ──
-            <hr className="border-gray-200" />
-            <CvSection
-              resumeFilename={profile.resume}
-              onUpdated={onCvUpdated}
-              onDeleted={onCvDeleted}
-            />
-            */}
+              {/* Address — full width */}
+              <Controller name="address" control={control}
+                render={({ field }) => (
+                  <Field label={c('address')} error={formErrors.address?.message}>
+                    <Input {...field} disabled={editingSection !== 'contact'} className={inputCls} />
+                  </Field>
+                )}
+              />
 
-            <hr className="border-gray-200" />
+              {/* LinkedIn + GitHub */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Controller name="linkedinUrl" control={control}
+                  render={({ field }) => (
+                    <Field label={c('linkedin')} error={formErrors.linkedinUrl?.message}>
+                      <Input {...field} type="url" disabled={editingSection !== 'contact'} placeholder="linkedin.com/in/…" className={inputCls} />
+                    </Field>
+                  )}
+                />
+                <Controller name="githubUrl" control={control}
+                  render={({ field }) => (
+                    <Field label={c('github')} error={formErrors.githubUrl?.message}>
+                      <Input {...field} type="url" disabled={editingSection !== 'contact'} placeholder="github.com/…" className={inputCls} />
+                    </Field>
+                  )}
+                />
+              </div>
 
-            {/* ── Edit actions ── */}
-            <div className="flex justify-end gap-3">
-              {!isEditing ? (
-                <button
-                  type="button"
-                  onClick={onEditToggle}
-                  className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-teal-700 transition-colors"
-                >
-                  <Pencil size={18} />
-                  {s('edit')}
-                </button>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={onCancel}
-                    className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-6 py-3 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors"
-                  >
-                    <X size={18} />
-                    {s('cancel')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onSave}
-                    disabled={loading}
-                    className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-teal-700 disabled:opacity-60 transition-colors"
-                  >
-                    {loading ? (
-                      <Spinner size={18} className="border-white/40 border-t-white" />
-                    ) : (
-                      <Save size={18} />
-                    )}
-                    {s('save')}
-                  </button>
-                </>
-              )}
+              {/* Website — full width */}
+              <Controller name="personalWebsite" control={control}
+                render={({ field }) => (
+                  <Field label={c('website')} error={formErrors.personalWebsite?.message}>
+                    <Input {...field} type="url" disabled={editingSection !== 'contact'} placeholder="https://yourwebsite.com" className={inputCls} />
+                  </Field>
+                )}
+              />
             </div>
           </>
         )}

@@ -4,7 +4,7 @@ import React, { memo, useState, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "next/router";
 import { Briefcase } from "lucide-react";
-import { ApplicationSummaryItem } from "@/store/slices/jobApplicationSlice";
+import { ApplicationSummaryItem } from "@/modules/company/applications/types";
 import { ContactTarget } from "./ContactCandidateModal";
 import { InviteTarget } from "./InviteToInterviewModal";
 import InviteToInterviewModal from "./InviteToInterviewModal";
@@ -34,6 +34,7 @@ export function initials(first?: string | null, last?: string | null) {
 export const STATUS_STYLE: Record<string, { i18nKey: string; bg: string; color: string }> = {
   visited:             { i18nKey: "pages.applications.status.visited",             bg: "#EFF6FF", color: "#2563EB" },
   interview_completed: { i18nKey: "pages.applications.status.interview_completed", bg: "#D1FAE5", color: "#059669" },
+  withdrawn:           { i18nKey: "pages.applications.status.withdrawn",           bg: "#F3F4F6", color: "#6B7280" },
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────

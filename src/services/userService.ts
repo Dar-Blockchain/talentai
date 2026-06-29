@@ -19,9 +19,4 @@ export const userService = {
     });
     return res.data;
   },
-
-  getProfileById: async (userId: string) => {
-    const res = await axiosInstance.get(`profiles/${userId}`);
-    return res.data;
-  },
 };

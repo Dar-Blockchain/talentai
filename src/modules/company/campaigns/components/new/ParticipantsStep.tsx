@@ -5,7 +5,7 @@ import {
   Box, Typography, Checkbox, Avatar, Chip, Skeleton, Alert,
 } from "@mui/material";
 import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
-import type { FetchMembersFilters } from "@/store/slices/memberSlice";
+import type { FetchMembersFilters } from "@/modules/company/members/types";
 import { useMembersQuery, useDepartmentsQuery } from "@/modules/company/employees/queries";
 import Pagination from "@/components/ui/Pagination";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";

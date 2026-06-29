@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { Box, Typography, CircularProgress, TextField, InputAdornment } from '@mui/material';
 import dynamic from 'next/dynamic';
 import {
@@ -21,8 +21,8 @@ import {
   GroupOutlined as GroupIcon,
   BusinessOutlined as CompanyIcon,
 } from '@mui/icons-material';
-import { fetchCampaignByLinkToken, joinCampaignByLink } from '@/store/slices/campaignSlice';
-import { AppDispatch, RootState } from '@/store/store';
+import { apiFetchByLinkToken, apiJoinByLink } from '@/modules/company/campaigns/api';
+import { RootState } from '@/store/store';
 import { Campaign } from '@/types/campaign';
 import { fmtDate, isDeadlinePassed } from '@/utils/functions';
 import { buildInterviewUrl } from '@/lib/interviewSession';
@@ -60,7 +60,6 @@ const MODULE_META: Record<string, { icon: React.ElementType; label: string; acce
 /* ── page ─────────────────────────────────────────────────────────────────── */
 const CampaignJoinPage: React.FC = () => {
   const router   = useRouter();
-  const dispatch = useDispatch<AppDispatch>();
   const { token } = router.query as { token?: string };
   const user = useSelector((state: RootState) => state.user.connectedUser.user);
 
@@ -77,9 +76,9 @@ const CampaignJoinPage: React.FC = () => {
   useEffect(() => {
     if (!router.isReady || !token) return;
     setLoading(true);
-    dispatch(fetchCampaignByLinkToken(token))
-      .unwrap().then(setCampaign).catch(setError).finally(() => setLoading(false));
-  }, [router.isReady, token, dispatch]);
+    apiFetchByLinkToken(token)
+      .then(setCampaign).catch((e: any) => setError(e?.message ?? 'Failed to load campaign')).finally(() => setLoading(false));
+  }, [router.isReady, token]);
 
   useEffect(() => {
     if (!campaign || !user || joining || joinErr) return;
@@ -91,12 +90,8 @@ const CampaignJoinPage: React.FC = () => {
     if (!token) return;
     setJoining(true); setJoinErr(null);
     try {
-      const r = await dispatch(joinCampaignByLink({ token, ...opts })).unwrap();
-      if (r.linkAccessToken) {
-        localStorage.setItem(`link_token_${r.campaignId}`, r.linkAccessToken);
-      } else if (r.anonymousToken) {
-        localStorage.setItem(`anon_token_${r.campaignId}`, r.anonymousToken);
-      } else if (user?._id) {
+      const r = await apiJoinByLink(token, opts?.name, opts?.email);
+      if (!r.linkAccessToken && !r.anonymousToken && user?._id) {
         // Logged-in user (any role: Company, Employee, …) — store their userId so the
         // backend can find their participant record via `employee: userId`.
         localStorage.setItem(`link_token_${r.campaignId}`, String(user._id));

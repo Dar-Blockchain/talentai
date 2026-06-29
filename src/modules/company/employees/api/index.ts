@@ -1,6 +1,6 @@
 import axiosInstance from "@/utils/axiosInstance";
 import type { EmployeePermission } from "@/types/employeePermissions";
-import type { FetchMembersFilters, AddMemberPayload, UpdateRolePayload } from "@/store/slices/memberSlice";
+import type { FetchMembersFilters, AddMemberPayload, UpdateRolePayload } from "@/modules/company/members/types";
 
 export const employeesApi = {
   fetchMembers: async (filters: FetchMembersFilters) => {
@@ -79,5 +79,27 @@ export const employeesApi = {
   updatePermissions: async (memberId: string, permissions: Partial<EmployeePermission>) => {
     const res = await axiosInstance.patch(`employee-permissions/${memberId}`, permissions);
     return res.data?.data ?? res.data;
+  },
+
+  fetchInvitationDetails: async (invitationId: string) => {
+    const res = await axiosInstance.get(`company-invitations/details/${invitationId}`);
+    return res.data.data ?? res.data;
+  },
+
+  respondToInvitation: async (params: {
+    invitationId: string;
+    action: 'accept' | 'reject';
+    token?: string;
+    firstName?: string;
+    lastName?: string;
+  }) => {
+    const { invitationId, ...body } = params;
+    const res = await axiosInstance.post(`company-invitations/respond/${invitationId}`, body);
+    return res.data;
+  },
+
+  fetchInvitationsByDepartment: async (departmentId: string) => {
+    const res = await axiosInstance.get(`company-invitations/department/${departmentId}`);
+    return (res.data.invitations || res.data) as any[];
   },
 };
