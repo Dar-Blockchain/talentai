@@ -24,7 +24,6 @@ async function handleCandidateResponse(socket, data, { service, processing, onSe
 
   try {
     const { transcript, audioMetadata } = data;
-    logger.info('Processing response', { sessionId });
 
     safeEmit(socket, 'interviewer_typing', { sessionId, status: 'thinking' });
     resetInterTurnPauseTimer(socket, sessionId);

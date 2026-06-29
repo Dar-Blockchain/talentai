@@ -70,7 +70,6 @@ const assignFreePlanToProfile = module.exports.assignFreePlanToProfile = async (
       planLimits:         freePlan._id,
     }, { runValidators: false });
 
-    logger.info(`âœ… Free plan assigned to profile ${profileId}`);
   } catch (err) {
     logger.error("âŒ Failed to assign free plan:", err.message);
   }
