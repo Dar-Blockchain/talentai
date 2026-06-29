@@ -110,18 +110,6 @@ module.exports.updateResume = async (req, res) => {
         .json({ success: false, error: "No resume file provided." });
     }
 
-    const Profile = require("./profile.model");
-    const currentProfile = await Profile.findOne({ userId: req.user._id }).select("_id");
-    if (currentProfile) {
-      const hasActive = await profileService.checkActiveApplications(currentProfile._id);
-      if (hasActive) {
-        return res.status(409).json({
-          success: false,
-          error: "You have pending job applications. Please withdraw them before replacing your CV.",
-        });
-      }
-    }
-
     const profile = await profileService.saveResume(
       req.user._id,
       req.file.filename,

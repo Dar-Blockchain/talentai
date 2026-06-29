@@ -1,9 +1,9 @@
 import React, { useRef, useState } from "react";
-import { FileText, UploadCloud, ExternalLink, Trash2, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { FileText, UploadCloud, ExternalLink, Trash2, CheckCircle2 } from "lucide-react";
 import { Spinner } from "@/modules/settings/shared/components";
-import { Dialog, DialogContent } from "@/modules/shared/ui/shadcn/dialog";
 import { candidateApi } from "../api";
 import { emitToast } from "@/utils/toastEmitter";
+import DeleteCvDialog from "./DeleteCvDialog";
 
 interface Props {
   resumeFilename: string | null | undefined;
@@ -14,15 +14,30 @@ interface Props {
 
 const CvSection: React.FC<Props> = ({ resumeFilename, onUpdated, onDeleted, compact = false }) => {
   const inputRef              = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading]     = useState(false);
-  const [deleting, setDeleting]       = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [progress, setProgress]       = useState(0);
-  const [error, setError]             = useState<string | null>(null);
-  const [isDragging, setIsDragging]   = useState(false);
+  const [uploading, setUploading]         = useState(false);
+  const [deleting, setDeleting]           = useState(false);
+  const [confirmOpen, setConfirmOpen]     = useState(false);
+  const [activeAppCount, setActiveAppCount] = useState<number | null>(null);
+  const [loadingCount, setLoadingCount]   = useState(false);
+  const [progress, setProgress]           = useState(0);
+  const [error, setError]                 = useState<string | null>(null);
+  const [isDragging, setIsDragging]       = useState(false);
 
   const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/$/, "");
   const cvUrl   = resumeFilename ? `${baseUrl}/resume/${resumeFilename}` : null;
+
+  const handleDeleteClick = async () => {
+    setLoadingCount(true);
+    try {
+      const count = await candidateApi.fetchActiveApplicationsCount();
+      setActiveAppCount(count);
+    } catch {
+      setActiveAppCount(0);
+    } finally {
+      setLoadingCount(false);
+      setConfirmOpen(true);
+    }
+  };
 
   const handleDeleteConfirm = async () => {
     setConfirmOpen(false);
@@ -93,9 +108,9 @@ const CvSection: React.FC<Props> = ({ resumeFilename, onUpdated, onDeleted, comp
           className="inline-flex items-center justify-center size-7 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-60 cursor-pointer" title="Update">
           {uploading ? <Spinner size={11} className="border-blue-200 border-t-blue-600" /> : <UploadCloud size={13} />}
         </button>
-        <button type="button" disabled={deleting} onClick={() => setConfirmOpen(true)}
+        <button type="button" disabled={deleting || loadingCount} onClick={handleDeleteClick}
           className="inline-flex items-center justify-center size-7 rounded-lg text-red-600 hover:bg-red-50 transition-colors disabled:opacity-60 cursor-pointer" title="Delete">
-          {deleting ? <Spinner size={11} className="border-red-200 border-t-red-600" /> : <Trash2 size={13} />}
+          {deleting || loadingCount ? <Spinner size={11} className="border-red-200 border-t-red-600" /> : <Trash2 size={13} />}
         </button>
       </div>
     </div>
@@ -107,7 +122,18 @@ const CvSection: React.FC<Props> = ({ resumeFilename, onUpdated, onDeleted, comp
     </button>
   );
 
-  /* ── Compact mode: pill + hidden input + dialog only ── */
+  /* ── Shared delete confirmation dialog ── */
+  const deleteDialog = (
+    <DeleteCvDialog
+      open={confirmOpen}
+      resumeFilename={resumeFilename}
+      activeAppCount={activeAppCount}
+      onClose={() => setConfirmOpen(false)}
+      onConfirm={handleDeleteConfirm}
+    />
+  );
+
+  /* ── Compact mode ── */
   if (compact) {
     return (
       <>
@@ -126,36 +152,7 @@ const CvSection: React.FC<Props> = ({ resumeFilename, onUpdated, onDeleted, comp
             </div>
           )}
         </div>
-        <Dialog open={confirmOpen} onOpenChange={(o) => { if (!o) setConfirmOpen(false); }}>
-          <DialogContent showCloseButton={false} className="max-w-xs w-full rounded-2xl overflow-hidden p-0">
-            <div className="px-5 pt-4 pb-2">
-              <div className="flex items-center gap-2">
-                <div className="w-[34px] h-[34px] rounded-[10px] bg-red-50 flex items-center justify-center flex-shrink-0">
-                  <AlertTriangle size={18} className="text-red-600" />
-                </div>
-                <span className="font-bold text-[1rem] text-gray-900">Delete CV</span>
-              </div>
-            </div>
-            <div className="px-5">
-              <p className="text-[0.88rem] text-gray-600 leading-relaxed">
-                Are you sure you want to remove <strong>{resumeFilename}</strong>? You can upload a new one at any time.
-              </p>
-              <p className="text-[0.78rem] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-3">
-                This will be blocked if you have pending job applications that haven't completed an interview yet.
-              </p>
-            </div>
-            <div className="flex justify-end gap-2 px-5 py-4">
-              <button type="button" onClick={() => setConfirmOpen(false)}
-                className="text-gray-500 rounded-[10px] text-[0.85rem] px-3 py-2 hover:bg-gray-50">
-                Cancel
-              </button>
-              <button type="button" onClick={handleDeleteConfirm}
-                className="font-semibold rounded-[10px] text-[0.85rem] px-3 py-2 bg-red-600 text-white hover:bg-red-700">
-                Delete
-              </button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {deleteDialog}
       </>
     );
   }
@@ -204,43 +201,7 @@ const CvSection: React.FC<Props> = ({ resumeFilename, onUpdated, onDeleted, comp
         </div>
       )}
 
-      {/* Delete confirmation modal */}
-      <Dialog open={confirmOpen} onOpenChange={(o) => { if (!o) setConfirmOpen(false); }}>
-        <DialogContent showCloseButton={false} className="max-w-xs w-full rounded-2xl overflow-hidden p-0">
-          <div className="px-5 pt-4 pb-2">
-            <div className="flex items-center gap-2">
-              <div className="w-[34px] h-[34px] rounded-[10px] bg-red-50 flex items-center justify-center flex-shrink-0">
-                <AlertTriangle size={18} className="text-red-600" />
-              </div>
-              <span className="font-bold text-[1rem] text-gray-900">Delete CV</span>
-            </div>
-          </div>
-          <div className="px-5">
-            <p className="text-[0.88rem] text-gray-600 leading-relaxed">
-              Are you sure you want to remove <strong>{resumeFilename}</strong>? You can upload a new one at any time.
-            </p>
-            <p className="text-[0.78rem] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-3">
-              This will be blocked if you have pending job applications that haven't completed an interview yet.
-            </p>
-          </div>
-          <div className="flex justify-end gap-2 px-5 py-4">
-            <button
-              type="button"
-              onClick={() => setConfirmOpen(false)}
-              className="text-gray-500 rounded-[10px] text-[0.85rem] px-3 py-2 hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleDeleteConfirm}
-              className="font-semibold rounded-[10px] text-[0.85rem] px-3 py-2 bg-red-600 text-white hover:bg-red-700"
-            >
-              Delete
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {deleteDialog}
     </div>
   );
 };

@@ -4,6 +4,7 @@ import {
   fetchCandidateApplicationStats,
   fetchApplicationById,
   withdrawCandidateApplication,
+  reactivateCandidateApplication,
 } from "../api/applications.api";
 import type { ApplicationsParams, CandidateStats } from "../types/application.types";
 
@@ -41,6 +42,14 @@ export const useWithdrawMutation = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (applicationId: string) => withdrawCandidateApplication(applicationId),
+    onSuccess:  () => qc.invalidateQueries({ queryKey: APPLICATION_KEYS.all() }),
+  });
+};
+
+export const useReactivateMutation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (applicationId: string) => reactivateCandidateApplication(applicationId),
     onSuccess:  () => qc.invalidateQueries({ queryKey: APPLICATION_KEYS.all() }),
   });
 };

@@ -204,12 +204,12 @@ module.exports.deleteResume = async (userId) => {
     throw err;
   }
 
-  const hasActive = await module.exports.checkActiveApplications(profile._id);
-  if (hasActive) {
-    const err = new Error("You have pending job applications. Please withdraw them before deleting your CV.");
-    err.status = 409;
-    throw err;
-  }
+  // Auto-withdraw all active applications before deleting the CV
+  const JobApplication = require("../job-applications/job-application.model");
+  await JobApplication.updateMany(
+    { profile: profile._id, status: "visited" },
+    { $set: { status: "withdrawn", isWithdrawn: true, withdrawnAt: new Date() } },
+  );
 
   if (profile.resume) {
     const filePath = path.join(__dirname, "..", "..", "uploads", "resumes", profile.resume);
@@ -217,7 +217,6 @@ module.exports.deleteResume = async (userId) => {
   }
 
   // Preserve CVAnalysis docs still referenced by existing job applications
-  const JobApplication   = require("../job-applications/job-application.model");
   const ProfileSkill = require("../skills/profile-skill.model");
   const linkedIds = (await JobApplication.distinct("cvAnalysis", { profile: profile._id })).filter(Boolean);
 

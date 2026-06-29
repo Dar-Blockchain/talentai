@@ -21,6 +21,7 @@ interface Props {
   statusLabel: string;
   onClick: () => void;
   onWithdraw?: (id: string) => void;
+  onReactivate?: (id: string) => void;
 }
 
 const ApplicationCard: React.FC<Props> = ({
@@ -28,6 +29,7 @@ const ApplicationCard: React.FC<Props> = ({
   statusLabel,
   onClick,
   onWithdraw,
+  onReactivate,
 }) => {
   const jd = app.post?.jobDetails || {};
   const company = app.company || {};
@@ -38,7 +40,8 @@ const ApplicationCard: React.FC<Props> = ({
   const matchScore = app.matchScore != null ? Math.round(app.matchScore) : null;
   const appliedDate = fmtDate(app.appliedAt || app.createdAt);
   const salary = fmtSalary(jd.salary);
-  const canWithdraw = rawStatus === "visited" && !!onWithdraw;
+  const canWithdraw    = rawStatus === "visited"   && !!onWithdraw;
+  const canReactivate  = rawStatus === "withdrawn" && !!onReactivate;
   const logoUrl = company.logo
     ? `${process.env.NEXT_PUBLIC_API_BASE_URL}uploads/images/${company.logo}`
     : undefined;
@@ -137,6 +140,19 @@ const ApplicationCard: React.FC<Props> = ({
                 className="ml-auto bg-danger/5 text-danger border border-danger/25 hover:bg-danger/10 shadow-none text-[0.65rem] font-bold"
               >
                 Withdraw
+              </Button>
+            )}
+            {canReactivate && (
+              <Button
+                variant="outline"
+                size="xs"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReactivate!(app._id);
+                }}
+                className="ml-auto text-primary-dark border-primary-dark/25 hover:bg-primary-dark/5 shadow-none text-[0.65rem] font-bold"
+              >
+                Reactivate
               </Button>
             )}
           </div>

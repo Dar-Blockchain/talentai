@@ -26,6 +26,11 @@ export const candidateApi = {
     return res.data;
   },
 
+  fetchActiveApplicationsCount: async (): Promise<number> => {
+    const res = await axiosInstance.get('job-applications/candidate/my/stats', { headers: authHeaders() });
+    return (res.data?.statusCounts?.visited as number) ?? 0;
+  },
+
   deleteResume: async () => {
     const res = await axiosInstance.delete('profiles/delete-resume', { headers: authHeaders() });
     return res.data;

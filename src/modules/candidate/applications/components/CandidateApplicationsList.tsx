@@ -17,10 +17,12 @@ import {
   useApplicationsQuery,
   useApplicationStatsQuery,
   useWithdrawMutation,
+  useReactivateMutation,
 } from "../queries/useApplicationsQuery";
 import ApplicationCard    from "./ApplicationCard";
 import ApplicationsEmpty  from "./ApplicationsEmpty";
 import WithdrawDialog     from "./WithdrawDialog";
+import ReactivateDialog   from "./ReactivateDialog";
 
 const PAGE_SIZE = 12;
 
@@ -67,6 +69,7 @@ const CandidateApplicationsList: React.FC = () => {
   const [debounced,    setDebounced]    = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const [withdrawId,   setWithdrawId]   = useState<string | null>(null);
+  const [reactivateId, setReactivateId] = useState<string | null>(null);
   const [showFilters,  setShowFilters]  = useState(false);
   const [sortBy,       setSortBy]       = useState<SortBy>("date_desc");
   const [scoreMin,     setScoreMin]     = useState("");
@@ -104,7 +107,8 @@ const CandidateApplicationsList: React.FC = () => {
 
   const { data, isLoading }   = useApplicationsQuery(params);
   const { data: stats }       = useApplicationStatsQuery();
-  const { mutateAsync: withdraw, isPending: withdrawing } = useWithdrawMutation();
+  const { mutateAsync: withdraw,   isPending: withdrawing   } = useWithdrawMutation();
+  const { mutateAsync: reactivate, isPending: reactivating  } = useReactivateMutation();
 
   const applications = data?.data ?? [];
   const totalPages   = data?.pagination?.totalPages  ?? 1;
@@ -121,6 +125,24 @@ const CandidateApplicationsList: React.FC = () => {
       emitToast({ message: "Failed to withdraw application.", severity: "error" });
     } finally {
       setWithdrawId(null);
+    }
+  };
+
+  const handleReactivateConfirm = async () => {
+    if (!reactivateId) return;
+    try {
+      await reactivate(reactivateId);
+      emitToast({ message: "Application reactivated successfully.", severity: "success" });
+    } catch (err: any) {
+      const isNoCv = err?.response?.status === 422;
+      emitToast({
+        message: isNoCv
+          ? "Upload a CV in Settings → Resume before reactivating."
+          : err?.response?.data?.error || "Failed to reactivate application.",
+        severity: "error",
+      });
+    } finally {
+      setReactivateId(null);
     }
   };
 
@@ -339,6 +361,7 @@ const CandidateApplicationsList: React.FC = () => {
                 statusLabel={statusLabelOf(app.status || "visited")}
                 onClick={() => handleCardClick(app)}
                 onWithdraw={setWithdrawId}
+                onReactivate={setReactivateId}
               />
             ))}
           </div>
@@ -400,6 +423,12 @@ const CandidateApplicationsList: React.FC = () => {
         loading={withdrawing}
         onClose={() => setWithdrawId(null)}
         onConfirm={handleWithdrawConfirm}
+      />
+      <ReactivateDialog
+        open={!!reactivateId}
+        loading={reactivating}
+        onClose={() => setReactivateId(null)}
+        onConfirm={handleReactivateConfirm}
       />
     </>
   );

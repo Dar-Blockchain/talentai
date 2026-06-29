@@ -25,6 +25,7 @@ import type { ApplicationStatus } from "../types/application.types";
 import {
   useApplicationDetailQuery,
   useWithdrawMutation,
+  useReactivateMutation,
 } from "../queries/useApplicationsQuery";
 import WithdrawDialog from "./WithdrawDialog";
 import { emitToast } from "@/utils/toastEmitter";
@@ -145,23 +146,36 @@ const ApplicationDetail: React.FC<Props> = ({ id }) => {
     t(`candidate.application_detail.${k}`, opts) as string;
   const router = useRouter();
 
-  const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [withdrawOpen,   setWithdrawOpen]   = useState(false);
 
   const { data: app, isLoading } = useApplicationDetailQuery(id);
-  const { mutateAsync: withdraw, isPending: withdrawing } =
-    useWithdrawMutation();
+  const { mutateAsync: withdraw,   isPending: withdrawing   } = useWithdrawMutation();
+  const { mutateAsync: reactivate, isPending: reactivating  } = useReactivateMutation();
 
   const handleWithdraw = async () => {
     try {
       await withdraw(id);
-      emitToast({
-        message: "Application withdrawn successfully.",
-        severity: "success",
-      });
+      emitToast({ message: "Application withdrawn successfully.", severity: "success" });
     } catch {
       emitToast({ message: "Failed to withdraw.", severity: "error" });
     } finally {
       setWithdrawOpen(false);
+    }
+  };
+
+  const handleReactivate = async () => {
+    try {
+      await reactivate(id);
+      emitToast({ message: "Application reactivated successfully.", severity: "success" });
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || "Failed to reactivate application.";
+      const isNoCv = err?.response?.status === 422;
+      emitToast({
+        message: isNoCv
+          ? "Upload a CV in Settings → Resume before reactivating."
+          : msg,
+        severity: "error",
+      });
     }
   };
 
@@ -185,20 +199,6 @@ const ApplicationDetail: React.FC<Props> = ({ id }) => {
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <>
-      {/* Breadcrumb + actions */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        {app && rawStatus === "visited" && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setWithdrawOpen(true)}
-            className="shrink-0 text-danger border-danger/30 hover:bg-danger/5 text-[0.72rem] font-bold"
-          >
-            Withdraw
-          </Button>
-        )}
-      </div>
-
       {isLoading ? (
         <DetailSkeleton />
       ) : !app ? (
@@ -285,6 +285,27 @@ const ApplicationDetail: React.FC<Props> = ({ id }) => {
                       />
                       {statusLabel(t, rawStatus)}
                     </Badge>
+                    {rawStatus === "visited" && (
+                      <Button
+                        variant="outline"
+                        size="xs"
+                        onClick={() => setWithdrawOpen(true)}
+                        className="ml-auto text-danger border-danger/30 hover:bg-danger/5 text-[0.65rem] font-bold"
+                      >
+                        Withdraw
+                      </Button>
+                    )}
+                    {rawStatus === "withdrawn" && (
+                      <Button
+                        variant="outline"
+                        size="xs"
+                        disabled={reactivating}
+                        onClick={handleReactivate}
+                        className="ml-auto text-primary-dark border-primary-dark/30 hover:bg-primary-dark/5 text-[0.65rem] font-bold"
+                      >
+                        {reactivating ? "Reactivating…" : "Reactivate"}
+                      </Button>
+                    )}
                   </div>
                   {company.companyName && (
                     <p className="text-[0.78rem] font-semibold text-gray-500 mb-2">

@@ -745,3 +745,17 @@ module.exports.withdrawApplication = async (req, res) => {
     handleError(res, error);
   }
 };
+
+// ========== REACTIVATE (candidate) ==========
+module.exports.reactivateApplication = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    const profile = await Profile.findOne({ userId: req.user._id }).select("_id");
+    if (!profile) return res.status(404).json({ success: false, error: "Profile not found." });
+
+    const app = await jobApplicationService.reactivateApplication(applicationId, profile._id);
+    res.status(200).json({ success: true, message: "Application reactivated successfully.", data: app });
+  } catch (error) {
+    handleError(res, error);
+  }
+};

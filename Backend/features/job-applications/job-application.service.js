@@ -258,7 +258,78 @@ module.exports.withdrawApplication = async (applicationId, profileId) => {
     err.status = 409;
     throw err;
   }
-  app.status = "withdrawn";
+  app.status      = "withdrawn";
+  app.isWithdrawn = true;
+  app.withdrawnAt = new Date();
+  await app.save();
+  return app;
+};
+
+// ========== REACTIVATE ==========
+module.exports.reactivateApplication = async (applicationId, profileId) => {
+  const app = await JobApplication.findById(applicationId);
+  if (!app) {
+    const err = new Error("Application not found.");
+    err.status = 404;
+    throw err;
+  }
+  if (String(app.profile) !== String(profileId)) {
+    const err = new Error("Not authorized to reactivate this application.");
+    err.status = 403;
+    throw err;
+  }
+  if (app.status !== "withdrawn") {
+    const err = new Error("Only withdrawn applications can be reactivated.");
+    err.status = 409;
+    throw err;
+  }
+
+  // Check post is still open
+  const { POST_STATUS } = require("../posts/posts.constants");
+  const post = await Post.findById(app.post).lean();
+  if (!post || post.archived || post.status !== POST_STATUS.OPEN) {
+    const err = new Error("This job posting is no longer accepting applications.");
+    err.status = 409;
+    throw err;
+  }
+
+  // Check candidate has a CV
+  const profile = await Profile.findById(profileId).lean();
+  if (!profile?.resume) {
+    const err = new Error("You need a CV to reactivate this application. Please upload one in Settings.");
+    err.status = 422;
+    throw err;
+  }
+
+  // Check if CV changed since original application
+  const latestAnalysis = await CvAnalysis.findOne({ profile: profileId }).sort({ createdAt: -1 }).lean();
+  const cvChanged = latestAnalysis && (!app.cvAnalysis || String(app.cvAnalysis) !== String(latestAnalysis._id));
+
+  // Reset withdrawal fields
+  app.status      = "visited";
+  app.isWithdrawn = false;
+  app.withdrawnAt = null;
+
+  if (cvChanged) {
+    app.cvAnalysis = latestAnalysis._id;
+    const matchResult = await calculateApplicationMatchScore(profileId, app.post, app.company);
+    app.matchScore          = matchResult.matchScore;
+    app.matchReasoning      = matchResult.reasoning;
+    app.matchRecommendation = matchResult.recommendation || null;
+    app.matchBreakdown      = Array.isArray(matchResult.breakdown) ? matchResult.breakdown : [];
+
+    const thresholdScore = post.thresholdScore || 60;
+    if (app.matchScore < thresholdScore) {
+      app.recruiterDecision    = "rejected";
+      app.recruiterDecisionAt  = new Date();
+      app.rejectionReason      = `Candidate's match score (${app.matchScore}/100) is below the required threshold (${thresholdScore}/100).`;
+    } else {
+      app.recruiterDecision   = null;
+      app.recruiterDecisionAt = null;
+      app.rejectionReason     = null;
+    }
+  }
+
   await app.save();
   return app;
 };
@@ -342,7 +413,7 @@ module.exports.getApplicationsByCandidate = async (profileId, filters = {}, page
       throw error;
     }
 
-    const query = { profile: profileId, isWithdrawn: false };
+    const query = { profile: profileId };
 
     if (filters.status) query.status = filters.status;
     if (filters.isArchived !== undefined) query.isArchived = filters.isArchived;

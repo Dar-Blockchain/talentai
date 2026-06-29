@@ -3,11 +3,13 @@ import { useRouter } from 'next/router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useDispatch } from 'react-redux';
+import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/useToast';
 import { UserProfile } from '@/types/profile';
 import { PersonalInformationFormValues, personalInformationSchema } from '../schemas';
 import { useCandidateProfile, useUpdateCandidateProfile, useUploadCandidateAvatar } from '../queries';
 import { VALID_TABS, initialProfile, buildSyncedProfile } from './profileManagement.utils';
+import { profileKeys } from '@/modules/settings/shared';
 import { updateProfileResume } from '@/store/slices/userSlice';
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
@@ -56,6 +58,7 @@ export const useProfileManagement = () => {
   const { showToast } = useToast();
   const dispatch = useDispatch();
 
+  const queryClient = useQueryClient();
   const { data: settingsData, isLoading } = useCandidateProfile();
   const updateMutation = useUpdateCandidateProfile();
   const uploadMutation = useUploadCandidateAvatar();
@@ -206,11 +209,18 @@ export const useProfileManagement = () => {
       setProfile((prev) => ({ ...prev, resume: filename }));
       setSavedProfile((prev) => ({ ...prev, resume: filename }));
       dispatch(updateProfileResume(filename));
-    }, [dispatch]),
+      queryClient.setQueryData(profileKeys.me, (old: any) =>
+        old ? { ...old, profile: { ...old.profile, resume: filename } } : old
+      );
+    }, [dispatch, queryClient]),
     handleCvDeleted:      useCallback(() => {
       setProfile((prev) => ({ ...prev, resume: "" }));
       setSavedProfile((prev) => ({ ...prev, resume: "" }));
-    }, []),
+      dispatch(updateProfileResume(""));
+      queryClient.setQueryData(profileKeys.me, (old: any) =>
+        old ? { ...old, profile: { ...old.profile, resume: "" } } : old
+      );
+    }, [dispatch, queryClient]),
     handleDismissError:   useCallback(() => setError(null), []),
     handleDismissSuccess: useCallback(() => setSaveSuccess(false), []),
   };

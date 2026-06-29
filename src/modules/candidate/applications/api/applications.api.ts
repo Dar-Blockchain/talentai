@@ -30,3 +30,8 @@ export async function withdrawCandidateApplication(applicationId: string) {
   const res = await axiosInstance.patch(`job-applications/${applicationId}/withdraw`);
   return res.data;
 }
+
+export async function reactivateCandidateApplication(applicationId: string) {
+  const res = await axiosInstance.patch(`job-applications/${applicationId}/reactivate`);
+  return res.data;
+}
