@@ -208,10 +208,10 @@ useEffect(() => {
             borderRadius: "8px", flexShrink: 0,
             color: isActive ? ACTIVE_ICO : ICO_CLR, transition: "color 0.12s",
           }}>
-            <item.icon sx={{ fontSize: isCollapsed ? 18 : 16 }} />
+            <item.icon sx={{ fontSize: 20 }} />
           </Box>
           {!isCollapsed && (
-            <Typography sx={{ fontSize: { md: "13px", lg: "14.5px", xl: "15.5px" }, fontWeight: isActive ? 600 : 500, color: "inherit", lineHeight: 1, flex: 1 }}>
+            <Typography sx={{ fontSize: "14px", fontWeight: isActive ? 700 : 600, color: "inherit", lineHeight: 1, flex: 1 }}>
               {translatedLabel}
             </Typography>
           )}
