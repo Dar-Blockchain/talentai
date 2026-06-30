@@ -5,7 +5,6 @@ const express = require("express");
 const { registerSwagger } = require('./swagger');
 const { router: authRouter } = require("../features/auth");
 const {
-  companyPermissionsRouter,
   companyInvitationRouter: CompanyInvitationRouters,
   companyMembershipRouter: CompanyMembershipRoutes,
   employeePermissionsRouter,
@@ -45,7 +44,6 @@ function registerRoutes(app) {
   // Authentication & Profile
   app.use("/auth", authRouter);
   app.use("/users", usersRouter);
-  app.use("/admin", companyPermissionsRouter);
   app.use("/employee-permissions", employeePermissionsRouter);
   app.use("/dashboard", dashboardRouter);
   app.use("/profiles", profileRouter);

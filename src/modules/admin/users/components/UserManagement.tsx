@@ -6,7 +6,6 @@ import {
   CheckCircle as CheckCircleIcon,
   Pending as PendingIcon,
   LocationOn as LocationIcon,
-  Security as SecurityIcon,
   People as PeopleIcon,
   Person as PersonIcon,
   Business as BusinessIcon,
@@ -42,12 +41,11 @@ interface UserManagementProps {
   onUserSelect?: (user: User) => void;
   onUserEdit?: (user: User) => void;
   onUserDelete?: (userId: string) => void;
-  onManagePermissions?: (user: User) => void;
   initialFilters?: Partial<UserFilters>;
 }
 
 const UserManagement: React.FC<UserManagementProps> = ({
-  onUserSelect, onUserEdit, onUserDelete, onManagePermissions, initialFilters = {},
+  onUserSelect, onUserEdit, onUserDelete, initialFilters = {},
 }) => {
   const [usernameFilter, setUsernameFilter] = useState(initialFilters.username || '');
   const [emailFilter, setEmailFilter] = useState(initialFilters.email || '');
@@ -238,13 +236,6 @@ const UserManagement: React.FC<UserManagementProps> = ({
                           <EditIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                      {user.role === 'Company' && onManagePermissions && (
-                        <Tooltip title="Permissions">
-                          <IconButton size="small" onClick={() => onManagePermissions(user)} sx={{ color: '#64748B', '&:hover': { color: '#0D9488' } }}>
-                            <SecurityIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
                       <Tooltip title="Delete">
                         <IconButton size="small" onClick={() => onUserDelete?.(user._id)} sx={{ color: '#CBD5E1', '&:hover': { color: '#ef4444' } }}>
                           <DeleteIcon fontSize="small" />

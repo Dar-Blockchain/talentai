@@ -126,7 +126,6 @@ module.exports.deleteMembership = async (membershipId, companyOwnerId) => {
   const userId = membership.user;
 
   try {
-    // Get all models that might reference this user
     const EmployeePermissionsModel = require("./employee-permissions.model");
     const ProfileModel = require("../users/profile.model");
     const CVAnalysisModel = require("../cv-analysis/cv-analysis.model");
