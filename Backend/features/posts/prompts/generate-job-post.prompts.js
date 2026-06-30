@@ -139,23 +139,24 @@ skills
 
 - level: required proficiency for this specific skill (1–5 or null)
   Map directly from the years or signal in the description:
-  "knowledge", "familiarity", "basic", "exposure"  → 1
-  "1–2 years", "some experience", "understanding"  → 2
-  "3–4 years", "proficient", "solid", "good grasp" → 3
-  "5–8 years", "strong", "advanced", "deep"        → 4
-  "9+ years", "expert", "mastery"                  → 5
+  "knowledge", "familiarity", "basic", "exposure"          → 1
+  "1–2 years", "some experience", "understanding", "junior" → 2
+  "3–4 years", "proficient", "solid", "good grasp", "mid", "mid-level", "intermediate" → 3
+  "5–8 years", "strong", "advanced", "deep", "senior"      → 4
+  "9+ years", "expert", "mastery"                          → 5
   null → signal genuinely absent from description  → code defaults to Junior (2)
 
   SENIORITY FLOOR — mandatory:
-  If experienceLevel is "Senior" or "Expert", the PRIMARY skill only (highest importance score) must match the role seniority: Senior → level 4, Expert → level 5 — but ONLY if that skill has an explicit years signal.
+  If experienceLevel is "Senior" or "Expert", the PRIMARY skill only (highest importance score) must match the role seniority: Senior → level 4, Expert → level 5 — but ONLY if that skill has an explicit years signal OR a seniority qualifier (e.g., "senior React", "advanced Python").
   All other skills with NO explicit years or qualifier → always return null (code will default them to Junior/level 2).
-  EXCEPTION — explicit years or qualifiers always win: If the description explicitly states years for a skill (e.g., "2 years React") or uses a qualifier (e.g., "basic", "familiarity with", "exposure to"), the level mapping for that skill ALWAYS takes priority.
+  EXCEPTION — explicit years or qualifiers always win: If the description explicitly states years for a skill (e.g., "2 years React") or uses a qualifier (e.g., "senior", "mid", "basic", "familiarity with", "exposure to"), the level mapping for that skill ALWAYS takes priority.
 
-- importance: assign based on the years signal in the description (1–10).
+- importance: assign based on the years signal OR seniority qualifier in the description (1–10).
   More years = higher importance — a skill with more years MUST always score higher than one with fewer years.
   Even a 1-year difference MUST result in a different importance score — no two skills with different year counts can share the same importance.
   Skills with no years signal always score lower than those with explicit years.
   Skills with only "knowledge", "basic", or "exposure" always score the lowest.
+  When seniority qualifiers are used instead of years (e.g. "senior React", "mid Express"), treat them as equivalent years for importance scoring: senior → 5–8 years equivalent, mid → 3–4 years equivalent, junior → 1–2 years equivalent. A "senior" skill MUST always score higher importance than a "mid" or "junior" skill, regardless of mention order.
   ecosystem tie-breaking: When two or more skills have equal years, rank skills that belong to the same ecosystem or framework hierarchy as the highest-importance skill above unrelated skills. Give the ecosystem-related skill a 1-point higher importance score.
   Examples: React.js is the foundation of Next.js → React ranks above unrelated same-years skills when Next.js is primary. TypeScript underlies JS frameworks. Express.js belongs to the Node.js ecosystem.
 
