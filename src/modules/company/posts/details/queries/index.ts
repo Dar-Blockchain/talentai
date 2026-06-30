@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { postService } from "../api/postService";
-import { jobApplicationService } from "@/services/jobApplicationService";
+import { applicationsApi } from "../api/applicationsApi";
 
 export const POST_DETAIL_KEYS = {
   detail:  (id: string) => ["postDetails", "job",     id] as const,
@@ -39,7 +39,7 @@ export const useApplicationsSummaryQuery = (params: {
 }) =>
   useQuery({
     queryKey:        APPLICATION_KEYS.summary(params),
-    queryFn:         () => jobApplicationService.fetchPostApplicationsSummary(params),
+    queryFn:         () => applicationsApi.fetchPostApplicationsSummary(params),
     enabled:         !!params.postId,
     staleTime:       30_000,
     placeholderData: (prev: any) => prev,

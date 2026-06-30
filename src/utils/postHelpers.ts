@@ -1,4 +1,4 @@
-import { softSkillLevels } from "@/constants/skills";
+import { softSkillLevels } from "@/modules/shared/skills";
 
 export interface Skill {
   name: string;

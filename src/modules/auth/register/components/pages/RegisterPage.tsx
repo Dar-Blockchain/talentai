@@ -9,6 +9,9 @@ import SignInLink from "../ui/SignInLink";
 import RoleCard from "../ui/RoleCard";
 import RoleSelectHeader from "../ui/RoleSelectHeader";
 import FormHeader from "../ui/FormHeader";
+import OtpPage from "@/modules/auth/signin/components/pages/OtpPage";
+import { useRegisterOtp } from "../../hooks";
+import { CANDIDATE_EXPIRY_KEY, COMPANY_EXPIRY_KEY } from "../../utils";
 
 type UserType = "candidate" | "company";
 
@@ -51,19 +54,64 @@ const FORM_TITLE_KEYS: Record<UserType, { title: string; subtitle: string }> = {
   candidate: { title: "register.candidate_title", subtitle: "register.candidate_subtitle" },
 };
 
+interface RegisterOtpStepProps {
+  email:         string;
+  userType:      UserType;
+  returnUrl?:    string;
+  onChangeEmail: () => void;
+}
+
+const RegisterOtpStep: React.FC<RegisterOtpStepProps> = ({ email, userType, returnUrl, onChangeEmail }) => {
+  const storageKey  = userType === "candidate" ? CANDIDATE_EXPIRY_KEY : COMPANY_EXPIRY_KEY;
+  const redirectPath =
+    userType === "candidate"
+      ? (returnUrl ? decodeURIComponent(returnUrl) : "/candidate/dashboard")
+      : "/company/dashboard";
+
+  const { otp, timer, loading, resendLoading, onVerify, onResend, changeEmail } = useRegisterOtp({
+    email,
+    storageKey,
+    redirectPath,
+    onChangeEmail,
+  });
+
+  return (
+    <OtpPage
+      email={email}
+      otp={otp}
+      timer={timer}
+      loading={loading}
+      resendLoading={resendLoading}
+      onVerify={onVerify}
+      onResend={onResend}
+      onChangeEmail={changeEmail}
+      tPrefix={userType === "candidate" ? "candidate_form" : "company_form"}
+    />
+  );
+};
+
 const RegisterPage = () => {
   const { t } = useTranslation("auth");
-  const router = useRouter();
+  const router    = useRouter();
   const returnUrl = router.query.returnUrl as string | undefined;
 
-  const [userType,        setUserType]        = useState<UserType | null>(null);
-  const [formStep,        setFormStep]        = useState<1 | 2>(1);
-  const [registeredEmail, setRegisteredEmail] = useState("");
+  const [userType,      setUserType]      = useState<UserType | null>(null);
+  const [pendingEmail,  setPendingEmail]  = useState<string | null>(null);
 
-  const isOtpStep  = formStep === 2;
+  if (pendingEmail && userType) {
+    return (
+      <RegisterOtpStep
+        email={pendingEmail}
+        userType={userType}
+        returnUrl={returnUrl}
+        onChangeEmail={() => setPendingEmail(null)}
+      />
+    );
+  }
+
   const formConfig = userType ? FORM_TITLE_KEYS[userType] : null;
 
-  const handleBack = () => { setUserType(null); setFormStep(1); };
+  const handleBack = () => setUserType(null);
 
   return (
     <RegisterContainer>
@@ -90,19 +138,17 @@ const RegisterPage = () => {
       ) : (
         <>
           <FormHeader
-            isOtpStep={isOtpStep}
             hasReturnUrl={!!returnUrl}
             title={t(formConfig!.title)}
             subtitle={t(formConfig!.subtitle)}
-            registeredEmail={registeredEmail}
             onBack={handleBack}
           />
 
           {userType === "candidate"
-            ? <CandidateRegisterForm key="candidate" onStepChange={setFormStep} onEmailChange={setRegisteredEmail} />
-            : <CompanyRegisterForm   key="company"   onStepChange={setFormStep} onEmailChange={setRegisteredEmail} />}
+            ? <CandidateRegisterForm key="candidate" onOtpReady={setPendingEmail} />
+            : <CompanyRegisterForm   key="company"   onOtpReady={setPendingEmail} />}
 
-          {!isOtpStep && <SignInLink returnUrl={returnUrl} label={t("register.signin_link")} />}
+          <SignInLink returnUrl={returnUrl} label={t("register.signin_link")} />
         </>
       )}
     </RegisterContainer>

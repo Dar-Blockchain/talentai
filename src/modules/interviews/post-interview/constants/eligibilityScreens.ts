@@ -55,6 +55,20 @@ export const ELIGIBILITY_SCREEN_CONFIG: Record<BlockableStatus, ScreenEntry> = {
     titleKey: 'limit.title',
     actionPath: '/',
   },
+  no_cv: {
+    icon: '📄',
+    titleKey: 'no_cv.title',
+    descKey: 'no_cv.desc',
+    actionLabelKey: 'no_cv.action',
+    actionPath: '/settings',
+  },
+  withdrawn: {
+    icon: '↩️',
+    titleKey: 'withdrawn.title',
+    descKey: 'withdrawn.desc',
+    actionLabelKey: 'withdrawn.action',
+    actionPath: '/candidate/applications',
+  },
   error: {
     icon: '⚠️',
     titleKey: 'no_link.title',

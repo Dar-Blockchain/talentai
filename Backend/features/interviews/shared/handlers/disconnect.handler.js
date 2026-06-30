@@ -2,7 +2,6 @@
 const logger = require('../../../../utils/logger');
 
 async function handleDisconnect(socket, reason, { service, activeSessions, processing, onSessionEnded }) {
-  logger.info('Socket disconnected', { socketId: socket.id, reason });
 
   const sessionId = socket.sessionId;
   if (!sessionId) return;
@@ -13,7 +12,6 @@ async function handleDisconnect(socket, reason, { service, activeSessions, proce
     const { wasActive, result } = await service.handleDisconnect(sessionId, reason);
     if (wasActive) {
       if (onSessionEnded) onSessionEnded(sessionId, result, socket);
-      logger.info('Session auto-ended on disconnect', { sessionId });
     }
   } catch (error) {
     logger.warn('Auto-end failed on disconnect', { sessionId, err: error.message });

@@ -26,16 +26,16 @@ import {
 
 interface TechSkill {
   name: string;
-  ScoreTest: number;
-  Levelconfirmed: number;
+  testScore: number;
+  levelConfirmed: number;
   proficiencyLevel?: number;
   updatedAt?: string;
 }
 
 interface SoftSkill {
   name: string;
-  ScoreTest: number;
-  Levelconfirmed: number;
+  testScore: number;
+  levelConfirmed: number;
   category?: string;
   experienceLevel?: string;
   updatedAt?: string;
@@ -87,19 +87,19 @@ const getScoreGrade = (score: number): { label: string; color: string } => {
 // ─── Mock data (shown when profile has no skills) ─────────────────────────────
 
 const MOCK_TECH_SKILLS: TechSkill[] = [
-  { name: "React", ScoreTest: 82, Levelconfirmed: 4, updatedAt: new Date(Date.now() - 7 * 86400000).toISOString() },
-  { name: "TypeScript", ScoreTest: 75, Levelconfirmed: 4, updatedAt: new Date(Date.now() - 14 * 86400000).toISOString() },
-  { name: "Node.js", ScoreTest: 68, Levelconfirmed: 3, updatedAt: new Date(Date.now() - 30 * 86400000).toISOString() },
-  { name: "Python", ScoreTest: 55, Levelconfirmed: 3, updatedAt: new Date(Date.now() - 45 * 86400000).toISOString() },
-  { name: "Docker", ScoreTest: 40, Levelconfirmed: 2, updatedAt: new Date(Date.now() - 60 * 86400000).toISOString() },
-  { name: "GraphQL", ScoreTest: 0, Levelconfirmed: 0, updatedAt: undefined },
+  { name: "React", testScore: 82, levelConfirmed: 4, updatedAt: new Date(Date.now() - 7 * 86400000).toISOString() },
+  { name: "TypeScript", testScore: 75, levelConfirmed: 4, updatedAt: new Date(Date.now() - 14 * 86400000).toISOString() },
+  { name: "Node.js", testScore: 68, levelConfirmed: 3, updatedAt: new Date(Date.now() - 30 * 86400000).toISOString() },
+  { name: "Python", testScore: 55, levelConfirmed: 3, updatedAt: new Date(Date.now() - 45 * 86400000).toISOString() },
+  { name: "Docker", testScore: 40, levelConfirmed: 2, updatedAt: new Date(Date.now() - 60 * 86400000).toISOString() },
+  { name: "GraphQL", testScore: 0, levelConfirmed: 0, updatedAt: undefined },
 ];
 
 const MOCK_SOFT_SKILLS: SoftSkill[] = [
-  { name: "Communication", ScoreTest: 90, Levelconfirmed: 5, category: "Interpersonal", experienceLevel: "Expert", updatedAt: new Date(Date.now() - 5 * 86400000).toISOString() },
-  { name: "Problem Solving", ScoreTest: 78, Levelconfirmed: 4, category: "Analytical", experienceLevel: "Senior", updatedAt: new Date(Date.now() - 20 * 86400000).toISOString() },
-  { name: "Leadership", ScoreTest: 65, Levelconfirmed: 3, category: "Management", experienceLevel: "Mid Level", updatedAt: new Date(Date.now() - 40 * 86400000).toISOString() },
-  { name: "Teamwork", ScoreTest: 88, Levelconfirmed: 5, category: "Interpersonal", experienceLevel: "Expert", updatedAt: new Date(Date.now() - 10 * 86400000).toISOString() },
+  { name: "Communication", testScore: 90, levelConfirmed: 5, category: "Interpersonal", experienceLevel: "Expert", updatedAt: new Date(Date.now() - 5 * 86400000).toISOString() },
+  { name: "Problem Solving", testScore: 78, levelConfirmed: 4, category: "Analytical", experienceLevel: "Senior", updatedAt: new Date(Date.now() - 20 * 86400000).toISOString() },
+  { name: "Leadership", testScore: 65, levelConfirmed: 3, category: "Management", experienceLevel: "Mid Level", updatedAt: new Date(Date.now() - 40 * 86400000).toISOString() },
+  { name: "Teamwork", testScore: 88, levelConfirmed: 5, category: "Interpersonal", experienceLevel: "Expert", updatedAt: new Date(Date.now() - 10 * 86400000).toISOString() },
 ];
 
 // ─── Score Ring SVG ───────────────────────────────────────────────────────────
@@ -148,13 +148,18 @@ const ScoreRing: React.FC<{ score: number; level: number; size?: number }> = ({
   );
 };
 
+const getSkillScore = (s: TechSkill | SoftSkill) => s.testScore ?? 0;
+const getSkillLevel = (s: TechSkill | SoftSkill) => s.levelConfirmed ?? 0;
+
 // ─── Skill Card ───────────────────────────────────────────────────────────────
 
 const SkillCardItem: React.FC<{ skill: TechSkill | SoftSkill; index: number }> = ({ skill, index }) => {
-  const grade = getScoreGrade(skill.ScoreTest);
-  const levelColor = getLevelColor(skill.Levelconfirmed);
-  const levelBg = getLevelBg(skill.Levelconfirmed);
-  const isVerified = skill.Levelconfirmed > 0;
+  const score = getSkillScore(skill);
+  const level = getSkillLevel(skill);
+  const grade = getScoreGrade(score);
+  const levelColor = getLevelColor(level);
+  const levelBg = getLevelBg(level);
+  const isVerified = level > 0;
 
   return (
     <motion.div
@@ -180,7 +185,7 @@ const SkillCardItem: React.FC<{ skill: TechSkill | SoftSkill; index: number }> =
         }}
       >
         {/* Score Ring */}
-        <ScoreRing score={skill.ScoreTest} level={skill.Levelconfirmed} size={64} />
+        <ScoreRing score={score} level={level} size={64} />
 
         {/* Info */}
         <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -196,7 +201,7 @@ const SkillCardItem: React.FC<{ skill: TechSkill | SoftSkill; index: number }> =
           {/* Level badge + grade */}
           <Box sx={{ display: "flex", gap: 1, mb: 1.25, flexWrap: "wrap" }}>
             <Chip
-              label={getLevelLabel(skill.Levelconfirmed)}
+              label={getLevelLabel(level)}
               size="small"
               sx={{
                 bgcolor: levelBg,
@@ -225,7 +230,7 @@ const SkillCardItem: React.FC<{ skill: TechSkill | SoftSkill; index: number }> =
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
             <LinearProgress
               variant="determinate"
-              value={Math.min(Math.max(skill.ScoreTest, 0), 100)}
+              value={Math.min(Math.max(score, 0), 100)}
               sx={{
                 flex: 1,
                 height: 6,
@@ -238,7 +243,7 @@ const SkillCardItem: React.FC<{ skill: TechSkill | SoftSkill; index: number }> =
               }}
             />
             <Typography sx={{ fontSize: 11, color: "#6B7280", flexShrink: 0 }}>
-              {skill.ScoreTest > 0 ? `${skill.ScoreTest}/100` : "Not tested"}
+              {score > 0 ? `${score}/100` : "Not tested"}
             </Typography>
           </Box>
         </Box>
@@ -300,13 +305,13 @@ const EmployeeMySkills: React.FC = () => {
 
   // Stats
   const totalSkills = allSkills.length;
-  const verifiedSkills = allSkills.filter((s) => s.Levelconfirmed > 0).length;
-  const testedSkills = allSkills.filter((s) => s.ScoreTest > 0);
+  const verifiedSkills = allSkills.filter((s) => getSkillLevel(s) > 0).length;
+  const testedSkills = allSkills.filter((s) => getSkillScore(s) > 0);
   const avgScore =
     testedSkills.length > 0
-      ? Math.round(testedSkills.reduce((acc, s) => acc + s.ScoreTest, 0) / testedSkills.length)
+      ? Math.round(testedSkills.reduce((acc, s) => acc + getSkillScore(s), 0) / testedSkills.length)
       : 0;
-  const expertSkills = allSkills.filter((s) => s.Levelconfirmed >= 4).length;
+  const expertSkills = allSkills.filter((s) => getSkillLevel(s) >= 4).length;
 
   const displayedSkills = tab === 0 ? techSkills : softSkills;
 
@@ -512,7 +517,7 @@ const EmployeeMySkills: React.FC = () => {
               { label: "Fair (40–59%)", min: 40, max: 59, color: "#FBBF24" },
               { label: "Beginner (1–39%)", min: 1, max: 39, color: "#FB923C" },
             ].map(({ label, min, max, color }) => {
-              const count = testedSkills.filter((s) => s.ScoreTest >= min && s.ScoreTest <= max).length;
+              const count = testedSkills.filter((s) => getSkillScore(s) >= min && getSkillScore(s) <= max).length;
               const pct = Math.round((count / testedSkills.length) * 100);
               return (
                 <Box key={label} sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>

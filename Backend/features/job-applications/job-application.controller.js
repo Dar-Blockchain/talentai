@@ -158,7 +158,7 @@ module.exports.getCandidateStats = async (req, res) => {
 module.exports.getApplicationsByCandidate = async (req, res) => {
   try {
     const candidateId = req.user._id;
-    const { page = 1, limit = 10, status, isArchived } = req.query;
+    const { page = 1, limit = 10, status, isArchived, search, sortBy, scoreMin, scoreMax, dateFrom, dateTo } = req.query;
 
     if (!candidateId) {
       return res.status(400).json({
@@ -168,8 +168,14 @@ module.exports.getApplicationsByCandidate = async (req, res) => {
     }
 
     const filters = {};
-    if (status) filters.status = status;
+    if (status)              filters.status    = status;
     if (isArchived !== undefined) filters.isArchived = isArchived === "true";
+    if (search)              filters.search    = search;
+    if (sortBy)              filters.sortBy    = sortBy;
+    if (scoreMin !== undefined) filters.scoreMin = scoreMin;
+    if (scoreMax !== undefined) filters.scoreMax = scoreMax;
+    if (dateFrom)            filters.dateFrom  = dateFrom;
+    if (dateTo)              filters.dateTo    = dateTo;
 
     // Find profile for this user
     const profileResult = await profileService.getProfileByUserId(candidateId);
@@ -721,6 +727,34 @@ module.exports.updateRecruiterDecision = async (req, res) => {
     const updatedApp = await jobApplicationService.updateRecruiterDecision(applicationId, decision, rejectionReason || null);
 
     res.status(200).json({ success: true, message: `Application ${decision} successfully`, data: updatedApp });
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
+// ========== WITHDRAW (candidate) ==========
+module.exports.withdrawApplication = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    const profile = await Profile.findOne({ userId: req.user._id }).select("_id");
+    if (!profile) return res.status(404).json({ success: false, error: "Profile not found." });
+
+    const app = await jobApplicationService.withdrawApplication(applicationId, profile._id);
+    res.status(200).json({ success: true, message: "Application withdrawn successfully.", data: app });
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
+// ========== REACTIVATE (candidate) ==========
+module.exports.reactivateApplication = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    const profile = await Profile.findOne({ userId: req.user._id }).select("_id");
+    if (!profile) return res.status(404).json({ success: false, error: "Profile not found." });
+
+    const app = await jobApplicationService.reactivateApplication(applicationId, profile._id);
+    res.status(200).json({ success: true, message: "Application reactivated successfully.", data: app });
   } catch (error) {
     handleError(res, error);
   }

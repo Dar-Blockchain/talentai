@@ -5,7 +5,7 @@ import { useRouter } from "next/router";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
 import { setUserType } from "@/store/slices/userSlice";
-import { LayoutDashboard, User, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Settings, LogOut } from "lucide-react";
 import {
   DropdownMenuContent,
   DropdownMenuItem,
@@ -93,21 +93,6 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
             <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">{t("header.go_to_workspace")}</p>
           </div>
         </DropdownMenuItem>
-
-        {!isCompany && !isEmployee && !isCandidate && (
-          <DropdownMenuItem
-            onClick={() => go("/candidate/profile/" + user?._id)}
-            className="flex items-center gap-2.5 rounded-[10px] px-2.5 py-[7px] cursor-pointer focus:bg-gray-100 focus:text-foreground"
-          >
-            <span className="size-[30px] rounded-[10px] flex-shrink-0 flex items-center justify-center bg-gray-100 border border-gray-200">
-              <User className="size-[15px] text-gray-500" />
-            </span>
-            <div className="min-w-0">
-              <p className="text-[13px] font-medium text-gray-700 leading-tight">{t("header.view_profile")}</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">{t("header.public_profile")}</p>
-            </div>
-          </DropdownMenuItem>
-        )}
 
         {!isEmployee && (
           <DropdownMenuItem

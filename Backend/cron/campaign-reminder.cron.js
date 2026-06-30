@@ -33,7 +33,6 @@ const runCampaignReminderJob = async ({ force = false } = {}) => {
 
     if (campaigns.length === 0) return;
 
-    logger.info(`[Campaign Reminder] Found ${campaigns.length} campaign(s) with deadline within 48h`);
 
     for (const campaign of campaigns) {
       // Incomplete participants with an email who haven't received a reminder yet
@@ -88,7 +87,6 @@ const runCampaignReminderJob = async ({ force = false } = {}) => {
         }
       }
 
-      logger.info(`[Campaign Reminder] Sent reminders for "${campaign.title}" to ${participants.length} participant(s)`);
     }
   } catch (err) {
     logger.error(`[Campaign Reminder] Error: ${err.message}`);
@@ -100,7 +98,6 @@ const scheduleCampaignReminders = () => {
   cron.schedule("5 * * * *", () => {
     runCampaignReminderJob();
   });
-  logger.info("[Campaign Reminder] Scheduler initialized â€” checks hourly, sends 48h deadline reminders");
 };
 
 module.exports = { scheduleCampaignReminders, runCampaignReminderJob };

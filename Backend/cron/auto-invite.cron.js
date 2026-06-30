@@ -86,8 +86,6 @@ const sendAutoInvitation = async (application) => {
       return false;
     }
 
-    logger.info(`${MSG.EMAIL_SUCCESS.replace('%email%', candidateEmail)}`);
-
     // Update application with invitation tracking
     await JobApplication.findByIdAndUpdate(
       application._id,
@@ -98,7 +96,6 @@ const sendAutoInvitation = async (application) => {
       { new: true }
     );
 
-    logger.info(`${MSG.APP_UPDATED.replace('%count%', '1')}`);
     return true;
 
   } catch (error) {
@@ -136,11 +133,8 @@ const runAutoInviteJob = async ({ force = false } = {}) => {
 
     const pendingApplications = firstTimeInvites;
 
-    logger.info(`${MSG.FOUND_APPLICATIONS.replace('%firstTime%', firstTimeInvites.length).replace('%recurring%', '0')}`);
-    logger.info(`${MSG.TOTAL_ELIGIBLE.replace('%total%', pendingApplications.length)}`);
     
     if (pendingApplications.length === 0) {
-      logger.info(`${MSG.NO_PENDING}`);
       return;
     }
 

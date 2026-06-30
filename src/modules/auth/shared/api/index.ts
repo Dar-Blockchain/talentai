@@ -45,7 +45,6 @@ export const authApi = {
         { email, otp, location },
         { signal }
       );
-      if (!res.data.token) throw new Error("Verification succeeded but no token was returned.");
       return res.data;
     } catch (err) {
       throw new Error(extractMessage(err, "Verification failed. Please try again."));
@@ -64,6 +63,19 @@ export const authApi = {
     }
   },
 
+  /** Returns the role of an existing user by email, or null if the user is not found. */
+  checkRole: async (email: string): Promise<string | null> => {
+    try {
+      const res = await axiosInstance.get<{ success: boolean; role: string }>(
+        'auth/check-role',
+        { params: { email } },
+      );
+      return res.data.role ?? null;
+    } catch {
+      return null;
+    }
+  },
+
   /** Returns the current authenticated user and profile. Throws on 401. */
   me: async (): Promise<MeResponse> => {
     const res = await axiosInstance.get<MeResponse>("auth/me");
@@ -71,14 +83,22 @@ export const authApi = {
   },
 
   /**
-   * Signs the user out server-side (clears the jwt_token cookie).
-   * Never throws — a failed network call should not block client-side cleanup.
+   * Signs the user out server-side (clears the jwt_token cookie and revokes the JWT).
+   * Uses native fetch with keepalive:true so the request survives page navigation —
+   * Axios requests are cancelled by the browser when the page unloads, which would
+   * leave the httpOnly jwt_token cookie in place until it naturally expires.
+   * Never throws — client-side cleanup runs regardless of network outcome.
    */
   logout: async (): Promise<void> => {
     try {
-      await axiosInstance.post("auth/logout");
+      const base = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "").replace(/\/$/, "");
+      await fetch(`${base}/auth/logout`, {
+        method:      "POST",
+        credentials: "include", // send the httpOnly jwt_token cookie
+        keepalive:   true,      // survives page navigation / unload
+      });
     } catch {
-      // Cookie may already be gone; client-side cleanup still runs.
+      // Network error or server down — auth_present was already cleared client-side.
     }
   },
 };

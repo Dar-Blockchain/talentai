@@ -4,7 +4,7 @@ import { Button }   from "@/modules/shared/ui/shadcn/button";
 import { motion, useInView, useMotionValue, useTransform, animate } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-import { CALENDLY_URL } from "@/constants";
+import { CALENDLY_URL } from "@/modules/shared/constants";
 const VP   = { once: true, margin: "-60px" };
 const ease = [0.22, 1, 0.36, 1] as const;
 

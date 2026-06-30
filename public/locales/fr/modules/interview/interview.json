@@ -53,6 +53,11 @@
     "go_back": "← Retour",
     "go_home": "Accueil"
   },
+  "no_cv": {
+    "title": "CV requis pour accéder à cet entretien",
+    "desc": "Cet entretien nécessite un CV pour que l'IA puisse évaluer votre profil. Veuillez téléverser votre CV dans vos paramètres et revenir.",
+    "action": "Téléverser mon CV"
+  },
   "back_to_dashboard": "Retour au tableau de bord",
   "connection": {
     "connecting": "Connexion au système d'entretien…",

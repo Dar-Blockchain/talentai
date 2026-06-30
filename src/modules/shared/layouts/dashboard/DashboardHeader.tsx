@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
-import { Menu } from "lucide-react";
+import React from "react";
+import { Menu, X } from "lucide-react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { Button } from "@/modules/shared/ui/shadcn/button";
@@ -16,19 +16,14 @@ import Link from "next/link";
 
 interface HeaderProps {
   onOpenMobile: () => void;
+  mobileOpen?: boolean;
   breadcrumb?: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
+const Header: React.FC<HeaderProps> = ({ onOpenMobile, mobileOpen }) => {
   const user = useSelector((state: RootState) => state.user.connectedUser.user);
   const isCandidate = user?.role === "Candidate";
 
-const headerId = useRef(Math.random().toString(36).slice(2, 8));
-
-useEffect(() => {
-  return () => {
-  };
-}, []);
   return (
     <header className="relative h-16 bg-white border-b border-gray-100 shadow-[0_1px_4px_0_rgb(0_0_0/0.06)] flex items-center justify-between px-5 md:px-7 z-10">
       {/* ── Left: mobile menu + logo ── */}
@@ -37,13 +32,13 @@ useEffect(() => {
           variant="ghost"
           size="icon"
           onClick={onOpenMobile}
-          className="min-[900px]:hidden h-9 w-9 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors"
+          className="xl:hidden h-9 w-9 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors"
         >
-          <Menu className="h-5 w-5" />
+          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
 
         {isCandidate && (
-          <Link href="/" className="inline-flex items-center">
+          <Link href="/" className="hidden sm:inline-flex items-center">
             <Image
               src="/images/home/logo.svg"
               alt="TalentAI"
@@ -57,7 +52,7 @@ useEffect(() => {
 
       {/* ── Center: search fills remaining space (hidden on mobile) ── */}
       {!isCandidate && (
-        <div className="hidden min-[900px]:flex flex-1 min-w-0 mx-4">
+        <div className="hidden xl:flex flex-1 min-w-0 mx-4">
           <GlobalSearch />
         </div>
       )}

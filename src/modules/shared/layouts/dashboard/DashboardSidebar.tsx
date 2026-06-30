@@ -16,9 +16,9 @@ import CloseOutlined from "@mui/icons-material/CloseOutlined";
 import Link from "next/link";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
+import { usePermissionsQuery } from "@/modules/company/employees/queries";
 import { useLogout } from "@/modules/auth/shared/hooks";
-import { navigation, employeeNavGroups, EmployeeNavItem } from "@/constants/navigation";
-import { selectEmployeePermissions, fetchEmployeePermissions } from "@/store/slices/memberSlice";
+import { navigation, employeeNavGroups, EmployeeNavItem } from "./navigation";
 import { selectCombinedDetails, fetchCombinedSubscriptionDetails } from "@/store/slices/paymentSlice";
 import { LogoutOutlined } from "@mui/icons-material";
 import { useRouter } from "next/router";
@@ -98,7 +98,9 @@ useEffect(() => {
   const companyMembership = useSelector((state: RootState) => state.user.connectedUser.companyMembership);
   const planLimits        = useSelector((state: RootState) => state.user.connectedUser.planLimits);
   const combinedDetails   = useSelector(selectCombinedDetails);
-  const employeePermissions = useSelector(selectEmployeePermissions);
+  const { data: employeePermissions } = usePermissionsQuery(
+    user?.role === "Employee" ? user?._id : undefined,
+  );
 
   // Derive the badge label: prefer paid active plans from combined data, fall back to planLimits
   const activePlanLabel = React.useMemo(() => {
@@ -117,12 +119,6 @@ useEffect(() => {
     || companyMembership?.company?.username
     || null;
 
-  // Fetch permissions on reload if not yet in store
-  useEffect(() => {
-    if (isEmployee && !employeePermissions && user?._id) {
-      dispatch(fetchEmployeePermissions(user._id));
-    }
-  }, [isEmployee, employeePermissions, user?._id]);
 
   // Keep plan badge up-to-date for company users
   useEffect(() => {
@@ -189,8 +185,8 @@ useEffect(() => {
             display: "flex", alignItems: "center",
             gap: isCollapsed ? 0 : 1.25,
             px: isCollapsed ? 0 : 1.25,
-            py: isCollapsed ? 0 : 0.875,
-            height: isCollapsed ? 42 : "auto",
+            py: isCollapsed ? 0 : 0.25,
+            height: isCollapsed ? 28 : "auto",
             borderRadius: "9px",
             justifyContent: isCollapsed ? "center" : "flex-start",
             cursor: "pointer", transition: "all 0.12s", position: "relative",
@@ -543,41 +539,40 @@ useEffect(() => {
 
   return (
     <>
-      {!isMobile && (
-        <Drawer
-          variant="permanent"
-          sx={{
-            width: drawerWidth,
-            flexShrink: 0,
-            "& .MuiDrawer-paper": {
-              width: drawerWidth,
-              transition: "width 0.22s cubic-bezier(0.4,0,0.2,1)",
-              overflowX: "hidden",
-              borderRight: `1px solid ${BORDER}`,
-              boxShadow: "2px 0 12px rgba(0,0,0,0.06)",
-              bgcolor: BG,
-            },
-          }}
-        >
-          {content(false)}
-        </Drawer>
-      )}
-      {isMobile && (
-        <Drawer
-          open={mobileOpen}
-          onClose={onCloseMobile}
-          sx={{
-            "& .MuiDrawer-paper": {
-              width: DRAWER_WIDTH,
-              overflowX: "hidden",
-              borderRight: `1px solid ${BORDER}`,
-              bgcolor: BG,
-            },
-          }}
-        >
-          {content(true)}
-        </Drawer>
-      )}
+      {/* Permanent sidebar — hidden on mobile via width:0, always present on tablet+ */}
+      <Drawer
+        variant="permanent"
+        sx={{
+          width: isMobile ? 0 : drawerWidth,
+          flexShrink: 0,
+          "& .MuiDrawer-paper": {
+            width: isMobile ? 0 : drawerWidth,
+            transition: "width 0.22s cubic-bezier(0.4,0,0.2,1)",
+            overflowX: "hidden",
+            borderRight: isMobile ? "none" : `1px solid ${BORDER}`,
+            boxShadow: isMobile ? "none" : "2px 0 12px rgba(0,0,0,0.06)",
+            bgcolor: BG,
+          },
+        }}
+      >
+        {content(false)}
+      </Drawer>
+
+      {/* Overlay drawer — opens on hamburger tap for mobile + tablet */}
+      <Drawer
+        open={mobileOpen}
+        onClose={onCloseMobile}
+        sx={{
+          "& .MuiDrawer-paper": {
+            width: DRAWER_WIDTH,
+            overflowX: "hidden",
+            borderRight: `1px solid ${BORDER}`,
+            bgcolor: BG,
+          },
+        }}
+      >
+        {content(true)}
+      </Drawer>
     </>
   );
 };

@@ -112,11 +112,21 @@ export interface FetchUsersParams {
   status?: string;
 }
 
+export interface UserStats {
+  total: number;
+  candidates: number;
+  companies: number;
+  admins: number;
+  verified: number;
+  pending: number;
+}
+
 export interface FetchUsersResponse {
   users: User[];
   total: number;
   page: number;
   limit: number;
+  stats?: UserStats;
 }
 
 export interface FetchLogsResponse {

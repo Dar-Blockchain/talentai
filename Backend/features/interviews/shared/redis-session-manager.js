@@ -947,7 +947,6 @@ class RedisSessionManager {
         }
       }
 
-      console.log(`🧹 Cleaned up ${deletedCount} AI data entries for session ${sessionId}`);
       return deletedCount;
     } catch (error) {
       console.error('❌ Failed to cleanup AI data:', error);

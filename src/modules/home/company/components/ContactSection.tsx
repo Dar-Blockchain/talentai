@@ -12,7 +12,7 @@ import {
 import { motion }         from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { cn }             from "@/lib/utils";
-import { CONTACT_EMAIL }  from "@/constants";
+import { CONTACT_EMAIL }  from "@/modules/shared/constants";
 
 const VP   = { once: true, margin: "-80px" };
 const ease = [0.22, 1, 0.36, 1] as const;

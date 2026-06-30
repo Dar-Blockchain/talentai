@@ -58,8 +58,12 @@ const subscriptionSchema = new mongoose.Schema(
 
 subscriptionSchema.index({ companyProfileId: 1, status: 1 });
 subscriptionSchema.index({ companyProfileId: 1, startDate: -1 });
-subscriptionSchema.index({ planId: 1 });
-subscriptionSchema.index({ status: 1 });
+// Covers admin revenue/active-subscription aggregations that match on
+// { status: "active", endDate: { $gt: now } } — {status:1} alone is a
+// prefix of this, so the standalone index was dropped as redundant.
+subscriptionSchema.index({ status: 1, endDate: 1 });
+// Covers plan-distribution lookups (admin revenue-by-plan, plan usage reports).
+subscriptionSchema.index({ planId: 1, status: 1 });
 subscriptionSchema.index({ endDate: 1 });
 
 subscriptionSchema.virtual("isActive").get(function () {

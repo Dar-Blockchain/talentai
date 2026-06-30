@@ -30,6 +30,11 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Used by admin dashboard: role filter (getAllUsers) and createdAt-bucketed
+// growth charts (getCountsByDay) both scan the full collection without these.
+userSchema.index({ role: 1 });
+userSchema.index({ createdAt: 1 });
+
 // Clean up related documents when user is deleted
 userSchema.pre("deleteOne", { document: true, query: false }, async function (next) {
   try {

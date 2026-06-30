@@ -1,5 +1,6 @@
-﻿const Profile = require('../../../features/users/profile.model');
-const SkillInterviewAssessment = require('./skill-interview.model')
+﻿const Profile          = require('../../../features/users/profile.model');
+const ProfileSkill     = require('../../../features/skills/profile-skill.model');
+const SkillInterviewAssessment = require('./skill-interview.model');
 
 // ========== HELPER - Functions for score calculation ==========
 const getLevelFromScore = (score) => {
@@ -46,50 +47,44 @@ const createAssessment = async (data, rawInterviewData, userId) => {
 
     // If candidate exists, handle profile updates and remove previous assessments
     if (candidateId) {
-      // candidateId is a User._id — resolve the Profile first
-      const profile = await Profile.findOne({ userId: candidateId }).select('_id');
+      // Determine skill name from data (fallback to Unknown Skill)
+      const skillName = data.skill || 'Unknown Skill';
+
+      // candidateId is a User._id — resolve the Profile, and look up any prior
+      // assessment for the same candidate+skill in parallel (the two queries
+      // don't depend on each other's result).
+      const [profile, previousAssessments] = await Promise.all([
+        Profile.findOne({ userId: candidateId }).select('_id'),
+        SkillInterviewAssessment.find({
+          candidateId,
+          skill: skillName,
+          _id: { $ne: savedAssessment._id }
+        }).select('_id'),
+      ]);
       if (!profile) {
         console.warn(`Profile not found for userId ${candidateId}`);
         throw new Error(`Profile not found for candidate: ${candidateId}`);
       }
       const profileId = profile._id;
 
-      // Determine skill name from data (fallback to Unknown Skill)
-      const skillName = data.skill || 'Unknown Skill';
-
-      // Find any existing assessments for same candidate and same skill (exclude the newly saved one)
-      const previousAssessments = await SkillInterviewAssessment.find({
-        candidateId,
-        skill: skillName,
-        _id: { $ne: savedAssessment._id }
-      }).select('_id');
-
       const previousIds = previousAssessments.map(a => a._id);
       const previousDeletedCount = previousIds.length;
 
       if (previousDeletedCount > 0) {
         await SkillInterviewAssessment.deleteMany({ _id: { $in: previousIds } });
+        // Mongo rejects $pull and $push on the same array path in one update,
+        // so the stale-id removal has to happen before the new id is pushed.
+        await Profile.findByIdAndUpdate(profileId, { $pull: { interviewDetails: { $in: previousIds } } });
       }
 
       // proficiencyLevel / experienceLevel already calculated above; derive levelconfirmed
       const levelconfirmedValue = overallScore > 80 ? proficiencyLevel : proficiencyLevel - 1;
 
-      let updatedProfile = null;
-
-      if (previousDeletedCount > 0) {
-        await Profile.findByIdAndUpdate(profileId, { $pull: { interviewDetails: { $in: previousIds } } });
-        updatedProfile = await Profile.findByIdAndUpdate(
-          profileId,
-          { $inc: { quota: 1 }, $push: { interviewDetails: savedAssessment._id } },
-          { new: true }
-        );
-      } else {
-        updatedProfile = await Profile.findByIdAndUpdate(
-          profileId,
-          { $inc: { quota: 1 }, $push: { interviewDetails: savedAssessment._id } },
-          { new: true }
-        );
-      }
+      const updatedProfile = await Profile.findByIdAndUpdate(
+        profileId,
+        { $inc: { quota: 1 }, $push: { interviewDetails: savedAssessment._id } },
+        { new: true }
+      );
 
       if (!updatedProfile) {
         throw new Error(`Profile not found for candidate: ${candidateId}`);
@@ -100,79 +95,35 @@ const createAssessment = async (data, rawInterviewData, userId) => {
       const skillType = data.skillType || 'technical';
 
       if (skillType === 'soft') {
-        const softSkill = {
-          name: skillName,
-          category: data.category || '',
-          proficiencyLevel,
-          experienceLevel,
-          ScoreTest: overallScore,
-          Levelconfirmed: levelconfirmedValue,
-        };
-
-        const existingSoft = await Profile.findOne(
-          { _id: profileId, 'softSkills.name': skillName },
-          { 'softSkills.$': 1 }
-        );
-
-        if (existingSoft && existingSoft.softSkills.length > 0) {
-          await Profile.findByIdAndUpdate(
-            profileId,
-            {
-              $set: {
-                'softSkills.$[elem].ScoreTest': overallScore,
-                'softSkills.$[elem].proficiencyLevel': proficiencyLevel,
-                'softSkills.$[elem].experienceLevel': experienceLevel,
-                'softSkills.$[elem].Levelconfirmed': levelconfirmedValue,
-                'softSkills.$[elem].updatedAt': new Date(),
-              },
+        await ProfileSkill.findOneAndUpdate(
+          { profile: profileId, kind: 'soft', name: skillName },
+          {
+            $set: {
+              category:       data.category || '',
+              proficiencyLevel,
+              experienceLevel,
+              testScore:      overallScore,
+              levelConfirmed: levelconfirmedValue,
             },
-            { arrayFilters: [{ 'elem.name': skillName }], new: true }
-          );
-        } else {
-          await Profile.findByIdAndUpdate(
-            profileId,
-            { $addToSet: { softSkills: { ...softSkill, createdAt: new Date(), updatedAt: new Date() } } },
-            { new: true }
-          );
-        }
+            $setOnInsert: { sourceCvAnalyses: [] },
+          },
+          { upsert: true, new: true }
+        );
       } else {
-        const technicalSkill = {
-          name: skillName,
-          category: data.category || '',
-          proficiencyLevel,
-          experienceLevel,
-          NumberTestPassed: 1,
-          ScoreTest: overallScore,
-          Levelconfirmed: levelconfirmedValue,
-        };
-
-        const existingTech = await Profile.findOne(
-          { _id: profileId, 'skills.name': skillName },
-          { 'skills.$': 1 }
-        );
-
-        if (existingTech && existingTech.skills.length > 0) {
-          await Profile.findByIdAndUpdate(
-            profileId,
-            {
-              $set: {
-                'skills.$[elem].ScoreTest': overallScore,
-                'skills.$[elem].proficiencyLevel': proficiencyLevel,
-                'skills.$[elem].experienceLevel': experienceLevel,
-                'skills.$[elem].NumberTestPassed': (existingTech.skills[0].NumberTestPassed || 0) + 1,
-                'skills.$[elem].Levelconfirmed': levelconfirmedValue,
-                'skills.$[elem].updatedAt': new Date(),
-              },
+        await ProfileSkill.findOneAndUpdate(
+          { profile: profileId, kind: 'technical', name: skillName },
+          {
+            $set: {
+              proficiencyLevel,
+              experienceLevel,
+              testScore:      overallScore,
+              levelConfirmed: levelconfirmedValue,
             },
-            { arrayFilters: [{ 'elem.name': skillName }], new: true }
-          );
-        } else {
-          await Profile.findByIdAndUpdate(
-            profileId,
-            { $addToSet: { skills: { ...technicalSkill, createdAt: new Date(), updatedAt: new Date() } } },
-            { new: true }
-          );
-        }
+            $inc:         { numberTestPassed: 1 },
+            $setOnInsert: { sourceCvAnalyses: [] },
+          },
+          { upsert: true, new: true }
+        );
       }
     }
 
@@ -187,7 +138,8 @@ const createAssessment = async (data, rawInterviewData, userId) => {
 const getAssessmentById = async (id) => {
   try {
     const assessment = await SkillInterviewAssessment.findById(id)
-      .populate('candidateId');
+      .populate('candidateId')
+      .lean();
     if (!assessment) {
       throw new Error('Assessment not found');
     }
@@ -204,13 +156,15 @@ const getAllAssessments = async (page = 1, limit = 10, filters = {}) => {
     const skip = (page - 1) * limit;
     const query = buildQuery(filters);
 
-    const assessments = await SkillInterviewAssessment.find(query)
-      .populate('candidateId')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    const total = await SkillInterviewAssessment.countDocuments(query);
+    const [assessments, total] = await Promise.all([
+      SkillInterviewAssessment.find(query)
+        .populate('candidateId')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      SkillInterviewAssessment.countDocuments(query),
+    ]);
 
     return {
       data: assessments,
@@ -257,6 +211,12 @@ const buildQuery = (filters) => {
     if (filters.endDate) {
       query.createdAt.$lte = new Date(filters.endDate);
     }
+  }
+
+  if (filters.archived === true || filters.archived === 'true') {
+    query.archived = true;
+  } else if (filters.archived === false || filters.archived === 'false') {
+    query.archived = { $ne: true };
   }
 
   return query;

@@ -75,6 +75,7 @@ const incrementMonthlyInterviewsUsage = async (companyId) => {
     throw error;
   }
 };
+module.exports.incrementMonthlyInterviewsUsage = incrementMonthlyInterviewsUsage;
 
 // ========== CREATE ==========
 module.exports.createPostInterviewAssessment = async (assessmentData) => {
@@ -210,6 +211,11 @@ module.exports.getAllPostInterviewAssessments = async (filters = {}, page = 1, l
     if (filters.company) {
       query.company = filters.company;
     }
+    if (filters.archived === true || filters.archived === 'true') {
+      query.archived = true;
+    } else if (filters.archived === false || filters.archived === 'false') {
+      query.archived = { $ne: true };
+    }
 
     // Calculate skip and limit for pagination
     const skip = (page - 1) * limit;
@@ -296,25 +302,58 @@ module.exports.checkInterviewEligibility = async (candidateId, postId, userRole)
     }
   }
 
+  // Block candidates who haven't uploaded a CV yet
+  const candidateProfile = await Profile.findOne({ userId: candidateId }).select("_id resume");
+  if (!candidateProfile?.resume) return { status: "no_cv" };
+
+  // Block candidates who withdrew their application for this post
+  const JobApplication = require("../../job-applications/job-application.model");
+  const existingApp = await JobApplication.findOne({ profile: candidateProfile._id, post: postId }).select("isWithdrawn").lean();
+  if (existingApp?.isWithdrawn) return { status: "withdrawn", meta: { jobTitle: post.jobDetails?.title || "" } };
+
   // Record visit as a job application (idempotent — 409 on repeat visits is expected)
-  const candidateProfile = await Profile.findOne({ userId: candidateId }).select("_id");
-  if (candidateProfile) {
-    jobApplicationService.createJobApplication({
-      profile: candidateProfile._id,
-      post: postId,
-      company: post.user,
-    }).catch(() => {});
-  }
+  jobApplicationService.createJobApplication({
+    profile: candidateProfile._id,
+    post: postId,
+    company: post.user,
+  }).catch(() => {});
 
   const completed = await PostInterviewAssessment.exists({ candidate: candidateId, post: postId, completed: true });
   if (completed) return { status: "completed", meta: { jobTitle: post.jobDetails?.title || post.title || "" } };
 
-  if (post.thresholdScore != null && candidateProfile) {
+  if (candidateProfile) {
     const JobApplication = require("../../job-applications/job-application.model");
-    const application = await JobApplication.findOne({ profile: candidateProfile._id, post: postId })
+    let matchScore = null;
+
+    const existing = await JobApplication.findOne({ profile: candidateProfile._id, post: postId })
       .select("matchScore").lean();
-    if (application?.matchScore != null && application.matchScore < post.thresholdScore) {
-      return { status: "under_threshold", meta: { required: post.thresholdScore, score: application.matchScore } };
+
+    if (existing) {
+      matchScore = existing.matchScore;
+    } else {
+      // First visit: await creation so the AI-computed matchScore is available for the
+      // threshold check before we respond. Fire-and-forget caused a race where findOne()
+      // ran before the document was written and always returned null.
+      try {
+        const created = await jobApplicationService.createJobApplication({
+          profile: candidateProfile._id,
+          post: postId,
+          company: post.user,
+        });
+        matchScore = created?.matchScore ?? null;
+      } catch (err) {
+        if (err?.status === 409) {
+          // Race: another concurrent request created it — re-fetch
+          const raced = await JobApplication.findOne({ profile: candidateProfile._id, post: postId })
+            .select("matchScore").lean();
+          matchScore = raced?.matchScore ?? null;
+        }
+        // Other errors: fail open — don't block the candidate due to a technical fault
+      }
+    }
+
+    if (post.thresholdScore != null && matchScore != null && matchScore < post.thresholdScore) {
+      return { status: "under_threshold", meta: { required: post.thresholdScore, score: matchScore } };
     }
   }
 

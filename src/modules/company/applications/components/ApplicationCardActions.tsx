@@ -4,7 +4,7 @@ import React, { memo, useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Mail, BarChart3, FileText, Video, MoreVertical, Star, XCircle, Check } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ApplicationSummaryItem } from "@/store/slices/jobApplicationSlice";
+import { ApplicationSummaryItem } from "@/modules/company/applications/types";
 import { applicationsApi } from "@/modules/company/applications/api";
 import { ScoreCircle, DecisionButton } from "@/modules/shared/ui/shadcn/score-circle";
 import {

@@ -261,12 +261,12 @@
       "download": "Télécharger le QR"
     },
     "tooltips": {
-      "cannot_edit_published": "Modification impossible — l'offre est déjà publiée",
+      "cannot_edit_published": "Modification impossible — des candidats ont déjà postulé",
       "cannot_edit_passed": "Modification impossible — des candidats ont déjà passé cet entretien"
     },
     "menu": {
       "edit_title": "Modifier l'offre",
-      "edit_desc_published": "Modifiable uniquement en brouillon",
+      "edit_desc_published": "Impossible de modifier si des candidatures existent",
       "edit_desc_draft": "Modifier les détails du poste",
       "delete_title": "Supprimer l'offre",
       "delete_desc": "Suppression permanente"

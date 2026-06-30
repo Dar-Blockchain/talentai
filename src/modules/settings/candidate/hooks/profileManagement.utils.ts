@@ -29,7 +29,6 @@ export const initialProfile: UserProfile = {
   companySize: '',
   size: '',
   employmentType: 'Remote',
-  requiredSkills: [],
 };
 
 const CANDIDATE_CONTACT_FIELDS: Array<keyof UserProfile> = [
@@ -129,6 +128,5 @@ export const buildSyncedProfile = (reduxProfile?: ConnectedUserProfile, user?: C
     companySize: reduxProfile?.companyDetails?.size || '',
     size: reduxProfile?.companyDetails?.size || '',
     employmentType: reduxProfile?.companyDetails?.employmentType || 'Remote',
-    requiredSkills: reduxProfile?.requiredSkills || [],
   };
 };

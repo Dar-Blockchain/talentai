@@ -9,12 +9,14 @@ const getAll = async (req, res) => {
       interviewType,
       candidateId,
       interviewerId,
+      archived,
     } = req.query;
 
     const filters = {};
     if (interviewType) filters.interviewType = interviewType;
     if (candidateId) filters.candidateId = candidateId;
     if (interviewerId) filters.interviewerId = interviewerId;
+    if (archived !== undefined) filters.archived = archived;
 
     const result = await SkillInterviewAssessmentService.getAllAssessments(
       parseInt(page),

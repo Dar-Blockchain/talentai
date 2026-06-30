@@ -7,7 +7,7 @@
     if (allowedRoles.includes(req.user?.role)) {
       next(); // If the user role matches, continue execution
     } else {
-      res.status(401).json({ success: false, message: "Unauthorized" }); // Otherwise, return a 401 error
+      res.status(403).json({ success: false, message: "Forbidden" }); // 403 = authenticated but not authorised for this role
     }
   };
 };

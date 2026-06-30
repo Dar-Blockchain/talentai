@@ -1,29 +1,23 @@
 import React from "react";
 import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { AuthPageHeader, AccentSpan } from "@/modules/auth/shared/ui/AuthPageHeader";
+import { AuthPageHeader } from "@/modules/auth/shared/ui/AuthPageHeader";
 
 interface Props {
-  isOtpStep:       boolean;
-  hasReturnUrl:    boolean;
-  title:           string;
-  subtitle:        string;
-  registeredEmail: string;
-  onBack:          () => void;
+  hasReturnUrl: boolean;
+  title:        string;
+  subtitle:     string;
+  onBack:       () => void;
 }
 
-const FormHeader: React.FC<Props> = ({ isOtpStep, hasReturnUrl, title, subtitle, registeredEmail, onBack }) => {
+const FormHeader: React.FC<Props> = ({ hasReturnUrl, title, subtitle, onBack }) => {
   const { t } = useTranslation("auth");
   return (
     <AuthPageHeader
       mb={3}
-      title={isOtpStep ? t("register.check_inbox") : title}
-      subtitle={
-        isOtpStep
-          ? <>{t("register.otp_sent_prefix")} <AccentSpan>{registeredEmail || t("register.otp_sent_accent")}</AccentSpan></>
-          : subtitle
-      }
-      above={!isOtpStep && !hasReturnUrl ? (
+      title={title}
+      subtitle={subtitle}
+      above={!hasReturnUrl ? (
         <button
           type="button"
           onClick={onBack}

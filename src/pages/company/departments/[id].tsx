@@ -1,6 +1,6 @@
 ﻿import React, { useCallback, useEffect, useState } from "react";
 import { useRouter }        from "next/router";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { Building2 }        from "lucide-react";
 import { getDashboardLayout } from "@/modules/shared/layouts";
 import type { NextPageWithLayout } from "@/pages/_app";
@@ -10,13 +10,14 @@ import {
 } from "@/modules/company/departments/components/details";
 import { DepartmentFormModal }    from "@/modules/company/departments/components/shared";
 import { DeleteDepartmentDialog } from "@/modules/company/departments/components/delete";
-import { AppDispatch, RootState } from "@/store/store";
+import { RootState } from "@/store/store";
+import type { Member } from "@/modules/company/members/types";
 import {
-  selectMembers, selectEmployeePermissions,
-  updateMemberRole, deleteMember,
-  clearUpdateRoleSuccess, clearDeleteMemberSuccess,
-  Member,
-} from "@/store/slices/memberSlice";
+  useUpdateRoleMutation,
+  useRemoveMemberMutation,
+  useMembersQuery,
+  usePermissionsQuery,
+} from "@/modules/company/employees/queries";
 import { useToast }       from "@/hooks/useToast";
 import { useTranslation } from "react-i18next";
 import {
@@ -31,15 +32,15 @@ import EditRoleModal from "@/modules/company/employees/components/edit/EditRoleM
 import DeleteMemberDialog from "@/modules/company/employees/components/delete/DeleteMemberDialog";
 
 const DepartmentDetailPage: NextPageWithLayout = () => {
-  const router   = useRouter();
-  const id       = typeof router.query.id === "string" ? router.query.id : null;
-  const dispatch = useDispatch<AppDispatch>();
-  const { t }    = useTranslation("dashboard");
+  const router = useRouter();
+  const id     = typeof router.query.id === "string" ? router.query.id : null;
+  const { t }  = useTranslation("dashboard");
   const { showToast } = useToast();
 
-  const user           = useSelector((state: RootState) => state.user.connectedUser.user);
-  const empPerms       = useSelector(selectEmployeePermissions);
-  const isEmp          = user?.role === "Employee";
+  const user   = useSelector((state: RootState) => state.user.connectedUser.user);
+  const isEmp  = user?.role === "Employee";
+
+  const { data: empPerms }     = usePermissionsQuery(isEmp ? user?._id : undefined);
   const canEdit        = !isEmp || !!empPerms?.canEditDepartment;
   const canDelete      = !isEmp || !!empPerms?.canDeleteDepartment;
   const canInvite      = !isEmp || !!empPerms?.canInviteMembers;
@@ -47,10 +48,13 @@ const DepartmentDetailPage: NextPageWithLayout = () => {
   const canRemove      = !isEmp || !!empPerms?.canRemoveEmployee;
 
   const { department, loading: loadingDept, error: deptError } = useDepartmentDetail(id);
-  const { pageTotal, updateRoleSuccess, deleteMemberSuccess }  = useSelector(selectMembers);
+  const { data: membersData } = useMembersQuery({ departmentId: id ?? "" });
+  const pageTotal = membersData?.total ?? 0;
 
-  const updateMutation = useUpdateDepartmentMutation();
-  const deleteMutation = useDeleteDepartmentMutation();
+  const updateDeptMutation   = useUpdateDepartmentMutation();
+  const deleteDeptMutation   = useDeleteDepartmentMutation();
+  const updateRoleMutation   = useUpdateRoleMutation();
+  const removeMemberMutation = useRemoveMemberMutation();
 
   const [editOpen,         setEditOpen]         = useState(false);
   const [deleteOpen,       setDeleteOpen]        = useState(false);
@@ -60,47 +64,36 @@ const DepartmentDetailPage: NextPageWithLayout = () => {
 
   const handleSaveEdit = useCallback((name: string, description: string) => {
     if (!department) return;
-    updateMutation.mutate({ departmentId: department._id, name, description }, {
-      onSuccess: () => { setEditOpen(false); updateMutation.reset(); },
+    updateDeptMutation.mutate({ departmentId: department._id, name, description }, {
+      onSuccess: () => { setEditOpen(false); updateDeptMutation.reset(); },
     });
-  }, [updateMutation.mutate, updateMutation.reset, department]);
+  }, [updateDeptMutation, department]);
 
   const handleConfirmDelete = useCallback(() => {
     if (!department) return;
-    deleteMutation.mutate(department._id, {
+    deleteDeptMutation.mutate(department._id, {
       onSuccess: () => router.push("/company/departments"),
     });
-  }, [deleteMutation.mutate, department, router]);
+  }, [deleteDeptMutation, department, router]);
 
   const handleUpdateMemberRole = useCallback(async (role: string, departmentId?: string) => {
     if (!selectedMember) throw new Error("No member selected");
-    await dispatch(updateMemberRole({ membershipId: selectedMember._id, role, departmentId })).unwrap();
-  }, [dispatch, selectedMember]);
-
-  useEffect(() => {
-    if (updateRoleSuccess) {
-      setMemberEditOpen(false); setSelectedMember(null);
-      dispatch(clearUpdateRoleSuccess());
-      showToast({ message: t("pages.employees.role_updated"), severity: "success" });
-    }
-  }, [updateRoleSuccess, dispatch, showToast, t]);
+    await updateRoleMutation.mutateAsync({ membershipId: selectedMember._id, role, departmentId });
+    setMemberEditOpen(false); setSelectedMember(null);
+    showToast({ message: t("pages.employees.role_updated"), severity: "success" });
+  }, [updateRoleMutation, selectedMember, showToast, t]);
 
   const handleConfirmMemberDelete = useCallback(async () => {
     if (!selectedMember) return;
-    try { await dispatch(deleteMember({ membershipId: selectedMember._id })).unwrap(); }
-    catch (e) { console.error(e); }
-  }, [dispatch, selectedMember]);
-
-  useEffect(() => {
-    if (deleteMemberSuccess) {
+    try {
+      await removeMemberMutation.mutateAsync(selectedMember._id);
       setMemberDeleteOpen(false); setSelectedMember(null);
-      dispatch(clearDeleteMemberSuccess());
       showToast({ message: t("pages.employees.deleted_success"), severity: "success" });
-    }
-  }, [deleteMemberSuccess, dispatch, showToast, t]);
+    } catch (e) { console.error(e); }
+  }, [removeMemberMutation, selectedMember, showToast, t]);
 
-  const updateError = updateMutation.error ? extractAxiosErrorMessage(updateMutation.error) : null;
-  const deleteError = deleteMutation.error ? extractAxiosErrorMessage(deleteMutation.error) : null;
+  const updateError = updateDeptMutation.error ? extractAxiosErrorMessage(updateDeptMutation.error) : null;
+  const deleteError = deleteDeptMutation.error ? extractAxiosErrorMessage(deleteDeptMutation.error) : null;
 
   if (deptError) {
     return (
@@ -159,13 +152,13 @@ const DepartmentDetailPage: NextPageWithLayout = () => {
         <>
           <DepartmentFormModal
             open={editOpen} mode="edit" department={department}
-            onClose={() => { setEditOpen(false); updateMutation.reset(); }}
-            onSave={handleSaveEdit} saving={updateMutation.isPending} error={updateError}
+            onClose={() => { setEditOpen(false); updateDeptMutation.reset(); }}
+            onSave={handleSaveEdit} saving={updateDeptMutation.isPending} error={updateError}
           />
           <DeleteDepartmentDialog
             open={deleteOpen} departmentName={department.name} memberCount={pageTotal}
-            onClose={() => { setDeleteOpen(false); deleteMutation.reset(); }}
-            onConfirm={handleConfirmDelete} deleting={deleteMutation.isPending} error={deleteError}
+            onClose={() => { setDeleteOpen(false); deleteDeptMutation.reset(); }}
+            onConfirm={handleConfirmDelete} deleting={deleteDeptMutation.isPending} error={deleteError}
           />
         </>
       )}

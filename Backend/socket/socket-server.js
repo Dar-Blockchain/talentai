@@ -8,9 +8,8 @@ const logger = require('../utils/logger');
 
 function initializeSocketServer(io) {
   io.on('connection', (sock) => {
-    logger.info(`Socket connected: ${sock.id}`);
     registerAllHandlers(sock);
-    sock.on('disconnect', () => logger.info(`Socket disconnected: ${sock.id}`));
+    sock.on('disconnect', () => {} );
   });
 }
 

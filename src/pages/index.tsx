@@ -15,7 +15,7 @@ import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import type { GetStaticProps } from "next";
 import HeroSection from "@/modules/home/company/components/HeroSection";
-import { SITE_URL, OG_IMAGE, LOGO_URL, CONTACT_EMAIL, LINKEDIN_URL } from "@/constants";
+import { SITE_URL, OG_IMAGE, LOGO_URL, CONTACT_EMAIL, LINKEDIN_URL } from "@/modules/shared/constants";
 
 const CANONICAL = `${SITE_URL}/`;
 

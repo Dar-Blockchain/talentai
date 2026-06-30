@@ -5,6 +5,7 @@ const { PDFParse } = require("pdf-parse");
 const JobApplication = require("./job-application.model");
 const PostInterviewAssessment = require("../interviews/post-interview/post-interview.model");
 const Profile = require("../users/profile.model");
+const ProfileSkill = require("../skills/profile-skill.model");
 const CvAnalysis = require("../cv-analysis/cv-analysis.model");
 const Post = require("../posts/post.model");
 const { callLLM } = require("../../utils/bedrock-client");
@@ -23,7 +24,7 @@ const calculateMatchScoreWithBedrock = async (candidateProfile, jobPost, resumeA
       resumeAnalysis: resumeAnalysis || {},
       skills: candidateProfile.skills?.map((s) => ({
         name: s.name,
-        level: s.Levelconfirmed || s.proficiencyLevel || "Not specified",
+        level: s.levelConfirmed || s.proficiencyLevel || "Not specified",
         experienceLevel: s.experienceLevel || "Not specified",
       })) || [],
       softSkills: candidateProfile.softSkills?.map((s) => ({
@@ -109,13 +110,19 @@ const calculateMatchScoreWithBedrock = async (candidateProfile, jobPost, resumeA
 // ========== CALCULATE MATCH SCORE (via AI Agent) ==========
 const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
   try {
-    const profile = await Profile.findById(profileId).populate("userId", "firstName lastName email");
+    const [profile, profileSkills, profileSoftSkills] = await Promise.all([
+      Profile.findById(profileId).populate("userId", "firstName lastName email"),
+      ProfileSkill.find({ profile: profileId, kind: "technical" }).lean(),
+      ProfileSkill.find({ profile: profileId, kind: "soft" }).lean(),
+    ]);
     if (!profile) {
       return {
         matchScore: 0,
         reasoning: "Candidate profile not found.",
       };
     }
+    profile.skills     = profileSkills;
+    profile.softSkills = profileSoftSkills;
   
     const post = await Post.findById(postId).populate("skillAnalysis");
     if (!post) {
@@ -228,6 +235,140 @@ module.exports.createJobApplication = async (applicationData) => {
   }
 };
 
+// ========== WITHDRAW ==========
+module.exports.withdrawApplication = async (applicationId, profileId) => {
+  const app = await JobApplication.findById(applicationId);
+  if (!app) {
+    const err = new Error("Application not found.");
+    err.status = 404;
+    throw err;
+  }
+  if (String(app.profile) !== String(profileId)) {
+    const err = new Error("Not authorized to withdraw this application.");
+    err.status = 403;
+    throw err;
+  }
+  if (app.status === "withdrawn") {
+    const err = new Error("Application is already withdrawn.");
+    err.status = 409;
+    throw err;
+  }
+  if (app.status === "interview_completed") {
+    const err = new Error("Cannot withdraw an application after the interview has been completed.");
+    err.status = 409;
+    throw err;
+  }
+  app.status      = "withdrawn";
+  app.isWithdrawn = true;
+  app.withdrawnAt = new Date();
+  await app.save();
+  return app;
+};
+
+// ========== RECALCULATE SCORES FOR ALL VISITED APPS ON CV UPDATE ==========
+module.exports.recalculateScoresForVisitedApps = async (profileId, newCvAnalysisId) => {
+  const visitedApps = await JobApplication.find({ profile: profileId, status: "visited" });
+  if (!visitedApps.length) return;
+
+  for (const app of visitedApps) {
+    try {
+      const post = await Post.findById(app.post).lean();
+      if (!post || post.archived) continue;
+
+      app.cvAnalysis          = newCvAnalysisId;
+      const matchResult       = await calculateApplicationMatchScore(profileId, app.post, app.company);
+      app.matchScore          = matchResult.matchScore;
+      app.matchReasoning      = matchResult.reasoning;
+      app.matchRecommendation = matchResult.recommendation || null;
+      app.matchBreakdown      = Array.isArray(matchResult.breakdown) ? matchResult.breakdown : [];
+
+      const thresholdScore = post.thresholdScore || 60;
+      if (app.matchScore < thresholdScore) {
+        app.recruiterDecision   = "rejected";
+        app.recruiterDecisionAt = new Date();
+        app.rejectionReason     = `Candidate's match score (${app.matchScore}/100) is below the required threshold (${thresholdScore}/100).`;
+      } else {
+        app.recruiterDecision   = null;
+        app.recruiterDecisionAt = null;
+        app.rejectionReason     = null;
+      }
+
+      await app.save();
+    } catch (err) {
+      console.warn(`⚠️ [CV Update] Score recalculation failed for application ${app._id}:`, err.message);
+    }
+  }
+};
+
+// ========== REACTIVATE ==========
+module.exports.reactivateApplication = async (applicationId, profileId) => {
+  const app = await JobApplication.findById(applicationId);
+  if (!app) {
+    const err = new Error("Application not found.");
+    err.status = 404;
+    throw err;
+  }
+  if (String(app.profile) !== String(profileId)) {
+    const err = new Error("Not authorized to reactivate this application.");
+    err.status = 403;
+    throw err;
+  }
+  if (app.status !== "withdrawn") {
+    const err = new Error("Only withdrawn applications can be reactivated.");
+    err.status = 409;
+    throw err;
+  }
+
+  // Check post is still open
+  const { POST_STATUS } = require("../posts/posts.constants");
+  const post = await Post.findById(app.post).lean();
+  if (!post || post.archived || post.status !== POST_STATUS.OPEN) {
+    const err = new Error("This job posting is no longer accepting applications.");
+    err.status = 409;
+    throw err;
+  }
+
+  // Check candidate has a CV
+  const profile = await Profile.findById(profileId).lean();
+  if (!profile?.resume) {
+    const err = new Error("You need a CV to reactivate this application. Please upload one in Settings.");
+    err.status = 422;
+    throw err;
+  }
+
+  // Check if CV changed since original application
+  const latestAnalysis = await CvAnalysis.findOne({ profile: profileId }).sort({ createdAt: -1 }).lean();
+  const cvChanged = latestAnalysis && (!app.cvAnalysis || String(app.cvAnalysis) !== String(latestAnalysis._id));
+
+  // Reset withdrawal fields
+  app.status      = "visited";
+  app.isWithdrawn = false;
+  app.withdrawnAt = null;
+
+  if (cvChanged) {
+    app.cvAnalysis = latestAnalysis._id;
+    const matchResult = await calculateApplicationMatchScore(profileId, app.post, app.company);
+    app.matchScore          = matchResult.matchScore;
+    app.matchReasoning      = matchResult.reasoning;
+    app.matchRecommendation = matchResult.recommendation || null;
+    app.matchBreakdown      = Array.isArray(matchResult.breakdown) ? matchResult.breakdown : [];
+
+    const thresholdScore = post.thresholdScore || 60;
+    if (app.matchScore < thresholdScore) {
+      app.recruiterDecision    = "rejected";
+      app.recruiterDecisionAt  = new Date();
+      app.rejectionReason      = `Candidate's match score (${app.matchScore}/100) is below the required threshold (${thresholdScore}/100).`;
+    } else {
+      app.recruiterDecision   = null;
+      app.recruiterDecisionAt = null;
+      app.rejectionReason     = null;
+    }
+  }
+
+  await app.save();
+  return app;
+};
+
 // ========== READ - Get by ID ==========
 module.exports.getJobApplicationById = async (applicationId) => {
   try {
@@ -307,10 +448,42 @@ module.exports.getApplicationsByCandidate = async (profileId, filters = {}, page
       throw error;
     }
 
-    const query = { profile: profileId, isWithdrawn: false };
+    const query = { profile: profileId };
 
     if (filters.status) query.status = filters.status;
     if (filters.isArchived !== undefined) query.isArchived = filters.isArchived;
+
+    if (filters.search) {
+      const rx = { $regex: filters.search, $options: "i" };
+      const postMatches = await Post.find({
+        $or: [{ "jobDetails.title": rx }, { "jobDetails.company": rx }],
+      }).select("_id");
+      query.post = { $in: postMatches.map((p) => p._id) };
+    }
+
+    if (filters.scoreMin !== undefined || filters.scoreMax !== undefined) {
+      query.matchScore = {};
+      if (filters.scoreMin !== undefined) query.matchScore.$gte = Number(filters.scoreMin);
+      if (filters.scoreMax !== undefined) query.matchScore.$lte = Number(filters.scoreMax);
+    }
+
+    if (filters.dateFrom || filters.dateTo) {
+      query.appliedAt = {};
+      if (filters.dateFrom) query.appliedAt.$gte = new Date(filters.dateFrom);
+      if (filters.dateTo) {
+        const to = new Date(filters.dateTo);
+        to.setHours(23, 59, 59, 999);
+        query.appliedAt.$lte = to;
+      }
+    }
+
+    const SORT_MAP = {
+      date_desc:  { appliedAt: -1 },
+      date_asc:   { appliedAt:  1 },
+      score_desc: { matchScore: -1, appliedAt: -1 },
+      score_asc:  { matchScore:  1, appliedAt: -1 },
+    };
+    const sortOrder = SORT_MAP[filters.sortBy] || SORT_MAP.date_desc;
 
     const skip = (page - 1) * limit;
     const totalCount = await JobApplication.countDocuments(query);
@@ -321,7 +494,7 @@ module.exports.getApplicationsByCandidate = async (profileId, filters = {}, page
       .populate("company", "-notifications")
       .populate("cvAnalysis")
       .populate("interviewAssessment")
-      .sort({ appliedAt: -1 })
+      .sort(sortOrder)
       .skip(skip)
       .limit(limit);
 
@@ -386,24 +559,16 @@ module.exports.getApplicationsByCompany = async (companyId, filters = {}, page =
       query.profile = { $in: profileMatches.map((p) => p._id) };
     }
 
-    // Filter by skills
+    // Filter by skills (query ProfileSkill collection)
     if (filters.skills && filters.skills.length > 0) {
       const skillsArray = Array.isArray(filters.skills) ? filters.skills : [filters.skills];
       const skillRegexes = skillsArray.map((s) => new RegExp(s, "i"));
-      const profilesWithSkills = await Profile.find({
-        skills: {
-          $elemMatch: {
-            name: { $in: skillRegexes },
-          },
-        },
-      }).select("_id");
+      const profilesWithSkills = await ProfileSkill.find({ name: { $in: skillRegexes } }).distinct("profile");
 
-      const profileIds = profilesWithSkills.map((p) => p._id);
       if (query.profile) {
-        // If already filtered by name, intersect with skills filter
-        query.profile = { $in: profileIds.filter((id) => query.profile.$in.includes(id)) };
+        query.profile = { $in: profilesWithSkills.filter((id) => query.profile.$in.map(String).includes(String(id))) };
       } else {
-        query.profile = { $in: profileIds };
+        query.profile = { $in: profilesWithSkills };
       }
     }
 
@@ -668,7 +833,7 @@ module.exports.getApplicationsSummaryByCompany = async (companyId, filters = {},
     const PostInterviewAssessment = require("../interviews/post-interview/post-interview.model");
     const ObjectId = require("mongoose").Types.ObjectId;
 
-    const query = { company: new ObjectId(companyId), isWithdrawn: false };
+    const query = { company: new ObjectId(companyId) };
 
     if (filters.status) query.status = filters.status;
     if (filters.postId) query.post = new ObjectId(filters.postId);
@@ -708,7 +873,7 @@ module.exports.getApplicationsSummaryByCompany = async (companyId, filters = {},
       .sort({ appliedAt: -1 })
       .lean();
 
-    const postIds = [...new Set(applications.map((a) => String(a.post?._id)).filter(Boolean))];
+    const postIds = [...new Set(applications.map((a) => a.post?._id).filter(Boolean).map(String))];
     const assessments = await PostInterviewAssessment.find({ post: { $in: postIds } })
       .select("candidate post interviewData.finalReport.scores.overall createdAt")
       .lean();

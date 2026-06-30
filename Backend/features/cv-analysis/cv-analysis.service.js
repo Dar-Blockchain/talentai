@@ -1,9 +1,57 @@
-const CVAnalysis  = require("./cv-analysis.model");
-const Profile     = require("../users/profile.model");
-const User        = require("../users/user.model");
+const CVAnalysis    = require("./cv-analysis.model");
+const Profile       = require("../users/profile.model");
+const ProfileSkill  = require("../skills/profile-skill.model");
+const User          = require("../users/user.model");
 const { analyzeCV } = require("./analyse-resume.service");
 const fs   = require("fs");
 const path = require("path");
+
+// Upsert each technical skill name extracted from a CV into ProfileSkill.
+async function upsertSkillsForCv(profileId, cvAnalysisId, skillNames) {
+  await Promise.all(
+    skillNames.map((name) =>
+      ProfileSkill.findOneAndUpdate(
+        { profile: profileId, kind: "technical", name },
+        { $setOnInsert: { proficiencyLevel: 0, experienceLevel: "", numberTestPassed: 0, testScore: 0, levelConfirmed: 0 },
+          $addToSet: { sourceCvAnalyses: cvAnalysisId } },
+        { upsert: true, new: true }
+      )
+    )
+  );
+}
+
+// Upsert each soft skill extracted from a CV into ProfileSkill.
+async function upsertSoftSkillsForCv(profileId, cvAnalysisId, softSkills) {
+  await Promise.all(
+    softSkills.map((s) =>
+      ProfileSkill.findOneAndUpdate(
+        { profile: profileId, kind: "soft", name: s.name },
+        { $setOnInsert: { category: s.category || "", proficiencyLevel: s.proficiencyLevel || 0, experienceLevel: "", testScore: 0, levelConfirmed: 0 },
+          $addToSet: { sourceCvAnalyses: cvAnalysisId } },
+        { upsert: true, new: true }
+      )
+    )
+  );
+}
+
+// When old CV(s) are deleted: remove unverified skills whose sole source was those CVs;
+// for skills shared with another CV, just pull the old CV id from sourceCvAnalyses.
+async function removeObsoleteSkills(profileId, oldCvIds) {
+  const oldIdSet = oldCvIds.map(String);
+
+  const affected = await ProfileSkill.find({ profile: profileId, sourceCvAnalyses: { $in: oldCvIds } });
+  await Promise.all(
+    affected.map(async (skill) => {
+      const remaining = skill.sourceCvAnalyses.map(String).filter((id) => !oldIdSet.includes(id));
+      const isVerified = (skill.levelConfirmed ?? 0) > 0 || (skill.numberTestPassed ?? 0) > 0;
+      if (!isVerified && remaining.length === 0) {
+        await ProfileSkill.deleteOne({ _id: skill._id });
+      } else {
+        await ProfileSkill.updateOne({ _id: skill._id }, { $pull: { sourceCvAnalyses: { $in: oldCvIds } } });
+      }
+    })
+  );
+}
 
 class CVAnalysisService {
   static normalizeSpokenLanguages(languages) {
@@ -58,13 +106,18 @@ class CVAnalysisService {
   }
 
   static async replaceForProfile(cvData, profileId) {
-    const existing = await CVAnalysis.find({ profile: profileId }).select("_id");
-    if (existing.length) {
-      await Promise.all([
-        CVAnalysis.deleteMany({ profile: profileId }),
-        Profile.findByIdAndUpdate(profileId, { $set: { cvAnalyses: [] } }),
-      ]);
-    }
+    const JobApplication = require("../job-applications/job-application.model");
+    const linkedIds = (await JobApplication.distinct("cvAnalysis", { profile: profileId })).filter(Boolean);
+
+    // CVAnalysis docs not referenced by any job application can be deleted
+    const oldCvIds = (await CVAnalysis.find({ profile: profileId, _id: { $nin: linkedIds } }).select("_id")).map((d) => d._id);
+
+    await CVAnalysis.deleteMany({ profile: profileId, _id: { $nin: linkedIds } });
+    await Profile.findByIdAndUpdate(profileId, { $set: { cvAnalyses: linkedIds } });
+
+    // Remove unverified skills whose only source was the old CV(s) being deleted
+    if (oldCvIds.length) await removeObsoleteSkills(profileId, oldCvIds);
+
     return this.createCVAnalysis(cvData, profileId);
   }
 
@@ -80,10 +133,14 @@ class CVAnalysisService {
     }).save();
 
     if (profileId) {
-      const push = { cvAnalyses: cvAnalysis._id };
-      if (normalized.softSkills?.length)      push.softSkills      = { $each: normalized.softSkills };
-      if (normalized.spokenLanguages?.length) push.spokenLanguages = { $each: normalized.spokenLanguages };
-      await Profile.findByIdAndUpdate(profileId, { $push: push });
+      const profileUpdate = { $addToSet: { cvAnalyses: cvAnalysis._id } };
+      if (normalized.spokenLanguages?.length) profileUpdate.$push = { spokenLanguages: { $each: normalized.spokenLanguages } };
+      await Profile.findByIdAndUpdate(profileId, profileUpdate);
+
+      await Promise.all([
+        normalized.skills?.length     ? upsertSkillsForCv(profileId, cvAnalysis._id, normalized.skills)         : null,
+        normalized.softSkills?.length ? upsertSoftSkillsForCv(profileId, cvAnalysis._id, normalized.softSkills) : null,
+      ]);
     }
 
     return { success: true, data: cvAnalysis };
@@ -198,16 +255,16 @@ class CVAnalysisService {
     return { success: true, message: "CV analysis disassociated from profile successfully.", data: updated };
   }
 
-  static async analyzeResumeBg(userId, profileId, filename, meta = {}) {
+  static async analyzeAndReplace(userId, profileId, filename, meta = {}) {
     const resumePath = path.join(__dirname, "..", "..", "uploads", "resumes", filename);
-    if (!fs.existsSync(resumePath)) return;
+    if (!fs.existsSync(resumePath)) throw Object.assign(new Error("Resume file not found."), { status: 404 });
 
     const user   = await User.findById(userId).select("email");
     const cvData = JSON.parse(await analyzeCV(resumePath));
 
-    await CVAnalysisService.replaceForProfile({
-      name:              cvData.name || meta.name || "Unknown",
-      email:             user?.email || "",
+    const { data: cvAnalysis } = await CVAnalysisService.replaceForProfile({
+      name:              cvData.name              || meta.name || "Unknown",
+      email:             user?.email              || "",
       phone:             cvData.phone             || "",
       location:          cvData.location          || "",
       title:             cvData.title             || "",
@@ -228,14 +285,10 @@ class CVAnalysisService {
       userAgent:         meta.userAgent,
     }, profileId);
 
+    // Skills are upserted into ProfileSkill inside createCVAnalysis (called by replaceForProfile above)
     const profileUpdate = {};
-    if (cvData.skills?.length) {
-      profileUpdate.$push = {
-        skills: { $each: cvData.skills.map((name) => ({ name, proficiencyLevel: 0, experienceLevel: "", NumberTestPassed: 0, ScoreTest: 0, Levelconfirmed: 0 })) },
-      };
-    }
     if (cvData.spokenLanguages?.length) {
-      profileUpdate.$push = { ...(profileUpdate.$push || {}), spokenLanguages: { $each: cvData.spokenLanguages } };
+      profileUpdate.$push = { spokenLanguages: { $each: cvData.spokenLanguages } };
     }
     if (cvData.email || cvData.links || cvData.location) {
       profileUpdate.$set = {
@@ -252,9 +305,11 @@ class CVAnalysisService {
         country:        cvData.country        || "",
       };
     }
-    if (Object.keys(profileUpdate).length) {
+    if (profileId && (profileUpdate.$push || profileUpdate.$set)) {
       await Profile.findByIdAndUpdate(profileId, profileUpdate);
     }
+
+    return cvAnalysis;
   }
 
   // ─── Private ─────────────────────────────────────────────────────────────────

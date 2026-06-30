@@ -9,14 +9,25 @@ async function handleSilenceDetected(socket, data, { service, processing }) {
   }
 
   if (processing.has(sessionId)) {
-    logger.warn('Silence skip ignored â€” AI call in progress', { sessionId });
-    return;
+    // If AI is already processing a response, wait up to 8 s then proceed anyway
+    const waited = await new Promise(resolve => {
+      let elapsed = 0;
+      const poll = setInterval(() => {
+        elapsed += 500;
+        if (!processing.has(sessionId) || elapsed >= 8000) {
+          clearInterval(poll);
+          resolve(!processing.has(sessionId));
+        }
+      }, 500);
+    });
+    if (!waited) {
+      logger.warn('Silence skip proceeding despite concurrent processing', { sessionId });
+    }
   }
   processing.add(sessionId);
 
   try {
     const durationSeconds = data?.durationSeconds ?? 60;
-    logger.info('Silence detected â€” auto-skipping question', { sessionId, durationSeconds });
     safeEmit(socket, 'interviewer_typing', { sessionId, status: 'thinking' });
 
     const result = await service.handleSilence(sessionId, durationSeconds);

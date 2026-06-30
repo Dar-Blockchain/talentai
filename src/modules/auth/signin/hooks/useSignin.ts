@@ -9,7 +9,7 @@ import { useSendSigninCode } from "../queries";
 import { OTP_STORAGE_KEY, SIGNIN_EMAIL_KEY } from "../utils";
 import type { SigninFormValues } from "../types";
 
-export function useSignin() {
+export function useSignin(onOtpSent?: (email: string) => void) {
   const router        = useRouter();
   const { showToast } = useToast();
   const returnUrl     = router.query.returnUrl as string | undefined;
@@ -38,8 +38,12 @@ export function useSignin() {
         // Persist timer expiry so the OTP page restores it via localStorage
         localStorage.setItem(OTP_STORAGE_KEY, (Date.now() + OTP_TTL * 1000).toString());
         sessionStorage.setItem(SIGNIN_EMAIL_KEY, email);
-        const dest = `/signin/otp${returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl)}` : ""}`;
-        router.push(dest);
+        if (onOtpSent) {
+          onOtpSent(email);
+        } else {
+          const dest = `/signin/otp${returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl)}` : ""}`;
+          router.push(dest);
+        }
       });
     } catch (err: any) {
       if (err?.name !== "AbortError")

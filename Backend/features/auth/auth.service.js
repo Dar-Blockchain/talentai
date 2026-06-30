@@ -12,7 +12,36 @@ const Subscription      = require("../billing/subscriptions/subscription.model")
 
 // â”€â”€â”€ Constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-const OTP_EXPIRY_MS = 5 * 60 * 1000;
+const OTP_EXPIRY_MS    = 5 * 60 * 1000;
+const OTP_MAX_ATTEMPTS = 5;
+
+// ─── OTP brute-force protection ───────────────────────────────────────────────
+// In-memory per-email attempt counter. Resets on server restart; for
+// multi-process deployments replace with a Redis-backed counter.
+
+const _otpAttempts = new Map(); // email → { count, windowStart }
+
+function checkOtpRateLimit(email) {
+  const now   = Date.now();
+  const entry = _otpAttempts.get(email);
+
+  if (!entry || now - entry.windowStart >= OTP_EXPIRY_MS) {
+    _otpAttempts.set(email, { count: 1, windowStart: now });
+    return;
+  }
+
+  entry.count += 1;
+  if (entry.count > OTP_MAX_ATTEMPTS) {
+    throw Object.assign(
+      new Error("Too many verification attempts. Please request a new code."),
+      { status: 429 },
+    );
+  }
+}
+
+function clearOtpRateLimit(email) {
+  _otpAttempts.delete(email);
+}
 
 // â”€â”€â”€ Private helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -41,7 +70,6 @@ const assignFreePlanToProfile = module.exports.assignFreePlanToProfile = async (
       planLimits:         freePlan._id,
     }, { runValidators: false });
 
-    logger.info(`âœ… Free plan assigned to profile ${profileId}`);
   } catch (err) {
     logger.error("âŒ Failed to assign free plan:", err.message);
   }
@@ -108,19 +136,19 @@ module.exports.registerUser = async (email, roleType = "Candidate", opts = {}) =
         website:  opts.companyDetails?.website  || "",
         linkedin: opts.companyDetails?.linkedin || "",
       },
-      requiredSkills: [], requiredExperienceLevel: "Entry Level",
+      requiredExperienceLevel: "Entry Level",
     });
   } else if (validRole === "Member" || validRole === "Employee") {
     profile = await Profile.create({
       userId: user._id, type: validRole === "Employee" ? "Employee" : "Member",
       firstName: opts.firstName, lastName: opts.lastName,
-      phone: opts.phone || "", skills: [], overallScore: 0,
+      phone: opts.phone || "", overallScore: 0,
     });
   } else if (validRole === "Candidate") {
     profile = await Profile.create({
       userId: user._id, type: "Candidate",
       firstName: opts.firstName, lastName: opts.lastName,
-      phone: opts.phone || "", resume: resumePath, skills: [], overallScore: 0,
+      phone: opts.phone || "", resume: resumePath, overallScore: 0,
     });
   }
 
@@ -156,9 +184,13 @@ module.exports.verifyUserOTP = async (email, otp, location = null) => {
     throw Object.assign(new Error("OTP has expired. Please request a new one."), { status: 401 });
   }
 
+  checkOtpRateLimit(email); // throws 429 after OTP_MAX_ATTEMPTS failures
+
   if (user.otp.code !== otp) {
     throw Object.assign(new Error("Invalid OTP code. Please check and try again."), { status: 401 });
   }
+
+  clearOtpRateLimit(email); // successful match — reset the counter
 
   const locationUpdate = location
     ? { ip: location.ip, Localisation: formatLocation(location) }
@@ -192,7 +224,7 @@ module.exports.verifyUserOTP = async (email, otp, location = null) => {
   const [profile, companyMembership] = await Promise.all([
     user.profile
       ? Profile.findById(user.profile)
-          .select("_id userId type firstName lastName user_image phone language timeZone country isPublicProfile quota planUsage overallScore contactInformation companyDetails requiredExperienceLevel requiredSkills skills softSkills")
+          .select("_id userId type firstName lastName user_image phone language timeZone country isPublicProfile quota planUsage overallScore contactInformation companyDetails requiredExperienceLevel")
           .lean()
       : null,
     user.companyMembership
@@ -229,23 +261,19 @@ module.exports.loginUser = async (email) => {
   assertUserCanReceiveOtp(user);
 
   const code = await issueOtp(user._id);
-  if (!await sendOTP(email, code, user.language || "en"))
-    throw Object.assign(new Error("Failed to send OTP email. Please try again."), { status: 500 });
+  await sendOTP(email, code, user.language || 'en');
 
-  return { email, username: user.username, message: "Verification code sent to your email." };
+  return { email, username: user.username, message: 'Verification code sent to your email.' };
 };
 
-// â”€â”€â”€ Resend OTP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
 module.exports.resendOTP = async (email) => {
-  const user = await User.findOne({ email }).select("_id username isBanned language").lean();
+  const user = await User.findOne({ email }).select('_id username isBanned language').lean();
   assertUserCanReceiveOtp(user);
 
   const code = await issueOtp(user._id);
-  if (!await sendOTP(email, code, user.language || "en"))
-    throw Object.assign(new Error("Failed to send OTP email. Please try again."), { status: 500 });
+  await sendOTP(email, code, user.language || 'en');
 
-  return { email, username: user.username, message: "New verification code sent. Valid for 5 minutes." };
+  return { email, username: user.username, message: 'New verification code sent. Valid for 5 minutes.' };
 };
 
 // â”€â”€â”€ Get current user (me) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

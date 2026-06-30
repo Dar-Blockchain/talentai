@@ -24,7 +24,6 @@ const { persistSkillInterviewResults } = require('../skill-interview/skill-inter
 
 async function onSessionStarted(socket, config) {
   const interviewType = config?.interviewType;
-  logger.info('onSessionStarted', { interviewType, candidateId: socket.candidateId, postId: socket.postId });
 
   if (interviewType === 'TECHNICAL_SKILL') return;
   if (!socket.postId || !socket.candidateId) {
@@ -48,7 +47,6 @@ async function onSessionStarted(socket, config) {
       },
       { upsert: true, new: false },
     );
-    logger.info('Pending PostInterviewAssessment created/found', { candidateId: socket.candidateId, postId: socket.postId });
   } catch (err) {
     if (err.code !== 11000) {
       logger.warn('Pending assessment creation failed', { err: err.message });
@@ -57,7 +55,6 @@ async function onSessionStarted(socket, config) {
 }
 
 async function onSessionEnded(sessionId, result, socket) {
-  logger.info('onSessionEnded', { sessionId, interviewType: socket.interviewType, candidateId: socket.candidateId, postId: socket.postId });
   try {
     let saved;
     if (socket.interviewType === 'TECHNICAL_SKILL') {
@@ -67,7 +64,6 @@ async function onSessionEnded(sessionId, result, socket) {
     }
     const assessmentId = saved?.assessmentId?.toString?.() ?? null;
     if (assessmentId) {
-      logger.info('Assessment saved', { sessionId, assessmentId });
       safeEmit(socket, 'assessment_saved', { assessmentId });
     } else {
       logger.warn('Assessment save returned no ID', { sessionId });
@@ -91,7 +87,6 @@ class IntelligentInterviewController {
     const ns = io.of('/interview');
 
     ns.on('connection', (socket) => {
-      logger.info('New interview connection', { socketId: socket.id });
 
       socket._lastResponseAt = 0;
       socket._lastAudioAt    = 0;
@@ -126,7 +121,6 @@ class IntelligentInterviewController {
       });
     });
 
-    logger.info('Interview WebSocket handlers initialized');
     return ns;
   }
 }

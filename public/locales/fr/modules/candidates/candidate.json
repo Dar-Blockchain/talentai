@@ -14,7 +14,10 @@
     "your_notifications": "Vos notifications",
     "settings": "Paramètres",
     "manage_profile": "Gérer votre profil",
-    "navigation": "Navigation"
+    "navigation": "Navigation",
+    "group_main": "Principal",
+    "group_workspace": "Espace de travail",
+    "group_account": "Compte"
   },
   "profile": {
     "applications": "Candidatures",
@@ -225,7 +228,10 @@
     "retest": "Retester",
     "locked": "Verrouillé",
     "limit_tooltip": "Limite mensuelle atteinte (5/5)",
+    "add_skill": "Ajouter une compétence",
     "show_more": "Voir {{count}} de plus",
+    "search_placeholder": "Rechercher des compétences…",
+    "loading": "Chargement…",
     "levels": {
       "entry": "Débutant",
       "junior": "Junior",
@@ -234,6 +240,14 @@
       "expert": "Expert",
       "new": "Nouveau"
     },
+    "filter": {
+      "all": "Tout",
+      "technical": "Technique",
+      "soft": "Soft",
+      "level": "Niveau :",
+      "all_levels": "Tous niveaux"
+    },
+    "no_filter_results": "Aucune compétence ne correspond au filtre",
     "empty": {
       "technical_title": "Aucune compétence technique",
       "technical_desc": "Ajoutez vos compétences techniques pour être mis en relation avec des opportunités pertinentes.",

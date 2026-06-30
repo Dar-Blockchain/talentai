@@ -10,7 +10,6 @@ async function handleSpeakingTooLong(socket, data, { service }) {
 
   try {
     const { duration } = data;
-    logger.info('Polite interrupt triggered', { sessionId, durationSec: Math.round(duration / 1000) });
 
     const nextQuestion = await service.handleLongSpeaking(sessionId);
 

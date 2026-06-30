@@ -1,30 +1,7 @@
 const mongoose = require("mongoose");
 
-// Sub-schemas for skills and softSkills to enable per-item timestamps
-const skillSchema = new mongoose.Schema(
-  {
-    name: String,
-    proficiencyLevel: Number,
-    experienceLevel: String,
-    NumberTestPassed: Number,
-    ScoreTest: Number,
-    Levelconfirmed: Number,
-  },
-  { timestamps: true }
-);
-
-const softSkillSchema = new mongoose.Schema(
-  {
-    name: String,
-    category: String,
-    proficiencyLevel: Number, // 0-5
-    experienceLevel: String, // NoLevel , Entry Level..
-    ScoreTest: Number,
-    Levelconfirmed: Number,
-  },
-  { timestamps: true }
-);
-
+// Technical skills → ProfileSkill collection
+// Soft skills → ProfileSoftSkill collection
 const languageSchema = new mongoose.Schema(
   {
     language: String,
@@ -89,8 +66,8 @@ const profileSchema = new mongoose.Schema(
     },
 
     // ========== SKILLS & COMPETENCIES ==========
-    skills: [skillSchema],
-    softSkills: [softSkillSchema],
+    // Technical skills → ProfileSkill collection
+    // Soft skills → ProfileSoftSkill collection
 
     // ========== PROFILE MANAGEMENT ==========
     quota: { type: Number, default: 0 },
@@ -156,7 +133,6 @@ const profileSchema = new mongoose.Schema(
         required: false,
       },
     },
-    requiredSkills: [String],
     requiredExperienceLevel: {
       type: String,
       enum: ["Entry Level", "Junior", "Mid Level", "Senior", "Expert"],
@@ -174,5 +150,9 @@ profileSchema.index({ isPublicProfile: 1 });
 profileSchema.index({ userId: 1 });
 profileSchema.index({ type: 1 });
 profileSchema.index({ payments: 1 });
+// Used by the admin "subscribe a company" search (regex on name/email,
+// scoped to type: "Company") — compound index lets Mongo narrow by type first.
+profileSchema.index({ type: 1, "companyDetails.name": 1 });
+profileSchema.index({ type: 1, "companyDetails.email": 1 });
 
 module.exports = mongoose.model("Profile", profileSchema);

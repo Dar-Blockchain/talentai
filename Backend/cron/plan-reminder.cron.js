@@ -20,7 +20,6 @@ const REMINDER_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 const MAX_REMINDERS = 2;
 
 async function sendPlanReminders() {
-  logger.info('ðŸ”” [PlanReminder] Starting daily plan reminder check...');
 
   try {
     const now = new Date();
@@ -45,8 +44,6 @@ async function sendPlanReminders() {
         },
       ],
     }).select('_id userId lastPlanReminderSentAt planReminderCount').lean();
-
-    logger.info(`ðŸ“‹ [PlanReminder] Found ${companyProfiles.length} company profiles eligible for reminder check`);
 
     let notified = 0;
     let skipped = 0;

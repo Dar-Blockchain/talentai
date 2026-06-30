@@ -6,7 +6,8 @@ import {
   useMemo,
   type ReactNode,
 } from "react";
-import { useQueryClient, type QueryClient } from "@tanstack/react-query";
+import { flushSync } from "react-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useDispatch } from "react-redux";
 import { clearConnectedUser } from "@/store/slices/userSlice";
 import { setAxiosLoggingOut } from "@/utils/axiosInstance";
@@ -21,7 +22,6 @@ interface AuthState {
 
 interface AuthActions {
   login: () => void;
-  clearAuth: () => void;
   logout: () => Promise<void>;
   finishLoggingOut: () => void;
 }
@@ -29,17 +29,14 @@ interface AuthActions {
 const AuthStateContext   = createContext<AuthState   | null>(null);
 const AuthActionsContext = createContext<AuthActions | null>(null);
 
-function endSession(dispatch: AppDispatch, queryClient: QueryClient) {
-  dispatch(clearConnectedUser());
+// Clears the cookie and localStorage only — no React or Redux state changes.
+// Keeping Redux/auth state intact while the overlay is visible prevents the
+// dashboard from re-rendering with null data before navigation completes.
+function clearStorageAndToken() {
   clearTokens();
-
   const userType = localStorage.getItem("userType");
   localStorage.clear();
   if (userType) localStorage.setItem("userType", userType);
-
-  persistor.purge();
-
-  queryClient.clear();
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -49,25 +46,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(() => !!getToken());
   const [isLoggingOut,    setIsLoggingOut]    = useState(false);
 
-  const login     = useCallback(() => setIsAuthenticated(true),  []);
-  const clearAuth = useCallback(() => setIsAuthenticated(false), []);
+  const login = useCallback(() => setIsAuthenticated(true), []);
 
+  // Runs after the route change to /signin completes (or after the 8 s safety
+  // timeout). At this point the user is on the signin page, so clearing
+  // Redux + React Query + auth state cannot flash a broken dashboard.
   const finishLoggingOut = useCallback(() => {
+    dispatch(clearConnectedUser());
+    persistor.purge();
+    queryClient.clear();
+    setIsAuthenticated(false);
     setAxiosLoggingOut(false);
     setIsLoggingOut(false);
-  }, []);
+  }, [dispatch, queryClient]);
 
   const logout = useCallback(async () => {
-    setAxiosLoggingOut(true);
-    setIsLoggingOut(true);
-    clearAuth();
-
-    endSession(dispatch, queryClient);
-
+    // 1. Paint the overlay to the DOM synchronously before anything else runs.
+    //    Without flushSync, setIsLoggingOut is just a scheduled React update —
+    //    it won't actually appear until the next render cycle. On slow networks
+    //    (3G), aborting in-flight requests and clearing storage causes components
+    //    to flash empty/loading states during that gap. flushSync ensures the
+    //    overlay is pixel-visible BEFORE we touch any other state.
+    flushSync(() => { setIsLoggingOut(true); });
+    // 2. Fire server-side JWT revocation before blocking the Axios interceptor.
     authApi.logout().catch(() => {});
-
+    // 3. Block new outgoing requests (overlay is already visible, so any
+    //    in-flight request state changes are safely hidden underneath it).
+    setAxiosLoggingOut(true);
+    // 4. Remove auth_present so the middleware lets /signin through.
+    clearStorageAndToken();
+    // 5. Safety valve: if routeChangeComplete never fires, clean up after 8 s.
     setTimeout(finishLoggingOut, 8000);
-  }, [dispatch, queryClient, clearAuth, finishLoggingOut]);
+  }, [finishLoggingOut]);
 
   const stateValue = useMemo<AuthState>(
     () => ({ isAuthenticated, isLoggingOut }),
@@ -75,8 +85,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const actionsValue = useMemo<AuthActions>(
-    () => ({ login, clearAuth, logout, finishLoggingOut }),
-    [login, clearAuth, logout, finishLoggingOut],
+    () => ({ login, logout, finishLoggingOut }),
+    [login, logout, finishLoggingOut],
   );
 
   return (

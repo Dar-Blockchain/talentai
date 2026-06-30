@@ -1,6 +1,6 @@
 import type { MutableRefObject } from "react";
 export { validators } from "./validators";
-export { getToken, clearTokens, isTokenExpired } from "./token";
+export { getToken, clearTokens } from "./token";
 
 // ─── Shared form constants ────────────────────────────────────────────────────
 
@@ -35,6 +35,16 @@ export function extractInvitationEmail(returnUrl?: string): string {
   }
 }
 
+/** Returns true only when the URL is same-origin (safe to redirect to). */
+function isSafeReturnUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url, window.location.origin);
+    return parsed.origin === window.location.origin;
+  } catch {
+    return false;
+  }
+}
+
 export function resolveRedirectPath(
   role: string | undefined,
   profileId: string | undefined,
@@ -43,7 +53,10 @@ export function resolveRedirectPath(
   if (role === "Admin") return "/admin/dashboard";
   if (!profileId)
     return returnUrl ? `/register?returnUrl=${encodeURIComponent(returnUrl)}` : "/register";
-  if (returnUrl) return decodeURIComponent(returnUrl);
+  if (returnUrl) {
+    const decoded = decodeURIComponent(returnUrl);
+    if (isSafeReturnUrl(decoded)) return decoded;
+  }
   if (role === "Employee") return "/employee/dashboard";
   if (role === "Company")  return "/company/dashboard";
   return "/candidate/dashboard";
