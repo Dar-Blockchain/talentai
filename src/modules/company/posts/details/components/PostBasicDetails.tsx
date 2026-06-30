@@ -28,7 +28,7 @@ const PostBasicDetails: React.FC<Props> = ({ job, canEdit }) => {
         jobId={job._id}
         initial={job.thresholdScore ?? 50}
         canEdit={canEdit}
-        isDraft={job.status === "draft"}
+        isDraft={job.status === "draft" || (job.applicationCount ?? 0) === 0}
       />
 
       <OverviewCard jd={jd} createdAt={job.createdAt} interviewLanguages={languages} />

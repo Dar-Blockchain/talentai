@@ -69,7 +69,7 @@ const ThresholdCard: React.FC<Props> = ({ jobId, initial, canEdit, isDraft }) =>
           <Box component="span" sx={{ color: "#DC2626", fontWeight: 700 }}>Under Threshold</Box>.
           {!isDraft && (
             <Box component="span" sx={{ display: "block", mt: 0.75, color: "#D97706", fontWeight: 600 }}>
-              ⚠ Published — threshold can only be changed while in draft.
+              ⚠ Locked — threshold cannot be changed once candidates have applied.
             </Box>
           )}
         </Typography>

@@ -66,7 +66,7 @@ const JobDetailHeader: React.FC<Props> = ({
 
   const jd      = job.jobDetails || {};
   const isDraft = job.status === "draft";
-  const canEdit = isDraft;
+  const canEdit = isDraft || (job.applicationCount ?? 0) === 0;
 
   const metaItems = [
     jd.location      && { Icon: LocationOnOutlined,       label: jd.location },
