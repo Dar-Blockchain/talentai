@@ -30,11 +30,11 @@ const AdminSkillsBarChart = ({ skillsData }: { skillsData: Array<{ skill: string
           formatter={(value: any) => [value, 'Users']}
           labelFormatter={(label: any) => `Skill: ${label}`}
           contentStyle={{
-            backgroundColor: '#ffffff',
+            fontFamily: 'Poppins',
+            fontSize: 12,
+            borderRadius: 10,
             border: '1px solid #E2E8F0',
-            borderRadius: '8px',
-            boxShadow: '0 4px 12px rgba(15,23,42,0.08)',
-            padding: '8px 12px',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
           }}
        />
         <Bar

@@ -5,7 +5,6 @@ const express = require("express");
 const { registerSwagger } = require('./swagger');
 const { router: authRouter } = require("../features/auth");
 const {
-  companyPermissionsRouter,
   companyInvitationRouter: CompanyInvitationRouters,
   companyMembershipRouter: CompanyMembershipRoutes,
   employeePermissionsRouter,
@@ -16,7 +15,7 @@ const { postRouter } = require("../features/posts");
 const feedbackRouter = require("../features/feedbacks/feedback.routes");
 const postInterviewAssessmentRouter = require("../features/interviews/post-interview/post-interview.routes");
 const { router: notificationSystemRouter } = require("../features/notifications");
-const { stripeRouter: stripRouter } = require("../features/billing/payments");
+const { stripeRouter } = require("../features/billing/payments");
 const SkillInterviewAssessmentRoutes = require("../features/interviews/skill-interview/skill-interview.routes");
 const { router: chatRouter } = require("../features/chat");
 const { router: teamChatRouter } = require("../features/team-chat");
@@ -45,7 +44,6 @@ function registerRoutes(app) {
   // Authentication & Profile
   app.use("/auth", authRouter);
   app.use("/users", usersRouter);
-  app.use("/admin", companyPermissionsRouter);
   app.use("/employee-permissions", employeePermissionsRouter);
   app.use("/dashboard", dashboardRouter);
   app.use("/profiles", profileRouter);
@@ -83,7 +81,7 @@ function registerRoutes(app) {
   app.use("/feedbacks", feedbackRouter);
 
   // Billing
-  app.use("/stripe", stripRouter);
+  app.use("/stripe", stripeRouter);
   app.use("/payments", paymentRouter);
 
   // Internal Campaigns & Departments

@@ -2,7 +2,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogActions, Button, IconButton, CircularProgress } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import { ADMIN_ACCENT, ADMIN_RADIUS } from '../theme';
+import { ADMIN_ACCENT, ADMIN_DANGER, ADMIN_RADIUS } from '../theme';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -15,8 +15,6 @@ interface ConfirmDialogProps {
   onCancel: () => void;
 }
 
-const DESTRUCTIVE_COLOR = '#DC2626';
-
 const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   open,
   title,
@@ -27,7 +25,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   onConfirm,
   onCancel,
 }) => {
-  const accent = destructive ? DESTRUCTIVE_COLOR : ADMIN_ACCENT;
+  const accent = destructive ? ADMIN_DANGER : ADMIN_ACCENT;
   const tintBg = destructive ? '#FEF2F2' : '#EEF2FF';
 
   return (

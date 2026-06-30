@@ -24,13 +24,4 @@ export const adminUsersApi = {
       },
       "Failed to load users.",
     ),
-
-  saveCompanyPermissions: (companyId: string, permissions: any) =>
-    apiCall(
-      async () => {
-        const { data } = await axiosInstance.post(`admin/companies/${companyId}/permissions`, permissions);
-        return data;
-      },
-      "Failed to save permissions.",
-    ),
 };
