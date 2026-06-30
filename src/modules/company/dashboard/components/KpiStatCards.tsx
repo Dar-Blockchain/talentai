@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import { useRouter } from "next/router";
 import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "@/utils/axiosInstance";
-import { Card, CardContent } from "@/modules/shared/ui/shadcn/card";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { cn } from "@/lib/utils";
 import PsychologyOutlined  from "@mui/icons-material/PsychologyOutlined";
@@ -13,6 +12,7 @@ import PeopleOutlined      from "@mui/icons-material/PeopleOutlined";
 import CampaignOutlined    from "@mui/icons-material/CampaignOutlined";
 import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
 import GroupsOutlined      from "@mui/icons-material/GroupsOutlined";
+import ArrowForwardIosRounded from "@mui/icons-material/ArrowForwardIosRounded";
 
 const STALE = 60_000;
 const sel   = (r: any) => r.data?.data ?? r.data;
@@ -26,45 +26,78 @@ const selMember            = (r: any) => r.data?.stats ?? r.data?.data ?? r.data
 // ─── StatCard ─────────────────────────────────────────────────────────────────
 
 interface StatCardProps {
-  icon:     React.ElementType;
-  color:    string;
-  bg:       string;
-  value:    React.ReactNode;
-  label:    string;
-  loading:  boolean;
-  href?:    string;
+  icon:    React.ElementType;
+  color:   string;
+  bg:      string;
+  value:   React.ReactNode;
+  label:   string;
+  loading: boolean;
+  href?:   string;
 }
 
 const StatCard = memo<StatCardProps>(({ icon: Icon, color, bg, value, label, loading, href }) => {
   const router = useRouter();
+  const clickable = !!href;
 
   if (loading) return (
-    <Card>
-      <CardContent className="flex items-center gap-3 py-4">
-        <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
-        <div className="flex-1 min-w-0 space-y-2">
-          <Skeleton className="h-6 w-10" />
-          <Skeleton className="h-3 w-3/4" />
+    <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm p-4">
+      <div className="flex items-start gap-3">
+        <Skeleton className="w-11 h-11 rounded-xl shrink-0" />
+        <div className="flex-1 space-y-2 pt-0.5">
+          <Skeleton className="h-7 w-14" />
+          <Skeleton className="h-3 w-4/5" />
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 
   return (
-    <Card
-      className={cn("group", href && "cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200")}
-      onClick={href ? () => router.push(href) : undefined}
+    <div
+      role={clickable ? "button" : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onClick={clickable ? () => router.push(href!) : undefined}
+      onKeyDown={clickable ? (e) => e.key === "Enter" && router.push(href!) : undefined}
+      className={cn(
+        "group relative overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm p-4 transition-all duration-200",
+        clickable && "cursor-pointer hover:shadow-lg hover:-translate-y-0.5 hover:border-slate-200"
+      )}
     >
-      <CardContent className="flex items-center gap-3 py-4">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110" style={{ background: bg }}>
-          <Icon style={{ fontSize: 20, color }} />
+      <div className="flex items-start gap-3 mt-1">
+        {/* icon bubble */}
+        <div
+          className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110"
+          style={{ background: bg }}
+        >
+          <Icon style={{ fontSize: 22, color }} />
         </div>
-        <div className="min-w-0">
-          <div className="text-[1.35rem] font-extrabold text-slate-900 leading-none tabular-nums">{value}</div>
-          <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-1 truncate">{label}</div>
+
+        {/* text */}
+        <div className="flex-1 min-w-0">
+          <div className="text-2xl font-black text-slate-800 leading-none tabular-nums tracking-tight">
+            {value}
+          </div>
+          <div className="text-[11px] font-semibold text-slate-400 mt-1.5 leading-snug uppercase tracking-wide">
+            {label}
+          </div>
         </div>
-      </CardContent>
-    </Card>
+
+        {/* arrow for clickable cards */}
+        {clickable && (
+          <ArrowForwardIosRounded
+            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-slate-300 shrink-0 mt-0.5"
+            style={{ fontSize: 13 }}
+          />
+        )}
+      </div>
+
+      {/* subtle hover overlay */}
+      {clickable && (
+        <div
+          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none rounded-2xl"
+          style={{ background: `${bg}33` }}
+        />
+      )}
+    </div>
   );
 });
 StatCard.displayName = "StatCard";
@@ -89,22 +122,57 @@ const KpiStatCards = memo(() => {
     : "—";
 
   const campaignValue = (
-    <span className="flex items-baseline gap-1">
+    <span className="flex items-baseline gap-1.5">
       <span>{campMet?.total ?? 0}</span>
       {(campMet?.active ?? 0) > 0 && (
-        <span className="text-[11px] text-emerald-500 font-bold leading-none">+{campMet!.active}</span>
+        <span className="text-[13px] text-emerald-500 font-bold leading-none">+{campMet!.active}</span>
       )}
     </span>
   );
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
-      <StatCard icon={PsychologyOutlined}  color="#3B82F6" bg="#EFF6FF" loading={l0} value={avgScore}                     label={t("overview.stat.avg_interview_score")} />
-      <StatCard icon={WorkOutlined}        color="#0D9488" bg="#F0FDFA" loading={l0} value={stats?.activeJobPosts ?? "—"} label={t("overview.stat.active_job_posts")}    href="/company/posts" />
-      <StatCard icon={PeopleOutlined}      color="#8B5CF6" bg="#F5F3FF" loading={l1} value={appMet?.totalApplicants ?? 0} label={t("overview.stat.applicants")}          href="/company/applications" />
-      <StatCard icon={CampaignOutlined}    color="#F59E0B" bg="#FFF7ED" loading={l2} value={campaignValue}                label={t("overview.stat.campaigns")}           href="/company/campaigns" />
-      <StatCard icon={AccountTreeOutlined} color="#3B82F6" bg="#EFF6FF" loading={l3} value={deptStat?.total ?? 0}         label={t("overview.stat.departments")}         href="/company/departments" />
-      <StatCard icon={GroupsOutlined}      color="#A855F7" bg="#FDF4FF" loading={l4} value={membStat?.total ?? 0}         label={t("overview.stat.team_members")}        href="/company/employees" />
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+      <StatCard
+        icon={PsychologyOutlined}
+        color="#3B82F6" bg="#EFF6FF"
+        loading={l0} value={avgScore}
+        label={t("overview.stat.avg_interview_score")}
+      />
+      <StatCard
+        icon={WorkOutlined}
+        color="#0D9488" bg="#F0FDFA"
+        loading={l0} value={stats?.activeJobPosts ?? "—"}
+        label={t("overview.stat.active_job_posts")}
+        href="/company/posts"
+      />
+      <StatCard
+        icon={PeopleOutlined}
+        color="#8B5CF6" bg="#F5F3FF"
+        loading={l1} value={appMet?.totalApplicants ?? 0}
+        label={t("overview.stat.applicants")}
+        href="/company/applications"
+      />
+      <StatCard
+        icon={CampaignOutlined}
+        color="#F59E0B" bg="#FFFBEB"
+        loading={l2} value={campaignValue}
+        label={t("overview.stat.campaigns")}
+        href="/company/campaigns"
+      />
+      <StatCard
+        icon={AccountTreeOutlined}
+        color="#0EA5E9" bg="#F0F9FF"
+        loading={l3} value={deptStat?.total ?? 0}
+        label={t("overview.stat.departments")}
+        href="/company/departments"
+      />
+      <StatCard
+        icon={GroupsOutlined}
+        color="#A855F7" bg="#FDF4FF"
+        loading={l4} value={membStat?.total ?? 0}
+        label={t("overview.stat.team_members")}
+        href="/company/employees"
+      />
     </div>
   );
 });
