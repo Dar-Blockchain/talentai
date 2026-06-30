@@ -53,8 +53,8 @@ const AdminRevenueSummary: React.FC<AdminRevenueSummaryProps> = ({ mrr, totalAct
               </div>
               <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-slate-600"
-                  style={{ width: `${Math.max((plan.mrr / maxMrr) * 100, 3)}%` }}
+                  className="h-full rounded-full"
+                  style={{ background: "linear-gradient(90deg, #0D9488, #14B8A6)", width: `${Math.max((plan.mrr / maxMrr) * 100, 3)}%` }}
                 />
               </div>
             </div>

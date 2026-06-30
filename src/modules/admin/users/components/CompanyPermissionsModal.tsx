@@ -108,8 +108,7 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
       } else {
         setPermissions(defaultPermissions);
       }
-    } catch (err) {
-      console.error('Error fetching permissions:', err);
+    } catch {
       setPermissions(defaultPermissions);
     } finally {
       setLoading(false);
