@@ -66,42 +66,17 @@ const KNOWN_ROLES = ["Admin", "Company", "Employee", "Candidate"];
 // Company membership roles — users with these are treated as Employee
 const MEMBER_ROLES = ["RH", "TechLead", "Supervisor", "Manager", "Owner"];
 
-/** Decode JWT payload without verification (Edge runtime safe) */
-function getRoleFromToken(token: string): string | null {
-  try {
-    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
-    const payload = JSON.parse(atob(base64));
-    const rawRole =
-      payload.role ??
-      payload.userRole ??
-      payload.roleType ??
-      payload.type ??
-      payload.user?.role ??
-      payload.user?.userRole ??
-      payload.roles ??
-      null;
-
-    const pickOne = (v: unknown): string | null => {
-      if (!v) return null;
-      if (Array.isArray(v)) return typeof v[0] === "string" ? v[0] : null;
-      return typeof v === "string" ? v : null;
-    };
-
-    const roleStr = pickOne(rawRole);
-    if (!roleStr) return null;
-
-    const normalized = roleStr.trim();
-    const canonical =
-      KNOWN_ROLES.find((r) => r.toLowerCase() === normalized.toLowerCase()) ?? null;
-    if (canonical) return canonical;
-
-    if (MEMBER_ROLES.some((r) => r.toLowerCase() === normalized.toLowerCase())) {
-      return "Employee";
-    }
-    return null;
-  } catch {
-    return null;
-  }
+/**
+ * Resolve the canonical role from the auth_present cookie value.
+ * saveToken() stores the role string directly (e.g. "Employee") so this is
+ * a simple normalization — no JWT decode needed.
+ */
+function resolveRoleFromCookie(value: string): string | null {
+  const normalized = value.trim();
+  const canonical = KNOWN_ROLES.find((r) => r.toLowerCase() === normalized.toLowerCase()) ?? null;
+  if (canonical) return canonical;
+  if (MEMBER_ROLES.some((r) => r.toLowerCase() === normalized.toLowerCase())) return "Employee";
+  return null;
 }
 
 function getAllowedRoles(pathname: string): string[] | null {
@@ -126,19 +101,17 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const token = request.cookies.get("jwt_token")?.value;
-  // auth_present is the JS-clearable companion cookie. Clearing it client-side
-  // during logout immediately signals "unauthenticated" to the middleware without
-  // waiting for the server to remove the httpOnly jwt_token cookie.
+  // auth_present stores the user's role (e.g. "Employee") and is set client-side
+  // by saveToken() after OTP verification. We use it — not jwt_token — for route
+  // protection because jwt_token is an httpOnly cookie set by the backend API
+  // domain and is therefore invisible to middleware running on the frontend domain.
   const authPresent = request.cookies.get("auth_present")?.value;
-  const isAuthenticated = !!token && !!authPresent;
-  const role = isAuthenticated ? getRoleFromToken(token!) : null;
+  const isAuthenticated = !!authPresent;
+  const role = isAuthenticated ? resolveRoleFromCookie(authPresent!) : null;
 
-  // Both cookies present but role cannot be decoded → corrupted/invalid token → force logout.
-  // Also clears auth_present so the redirect to /signin isn't blocked by this same check.
+  // auth_present present but role unrecognised → stale/corrupted cookie → force re-login.
   if (isAuthenticated && !role) {
     const res = NextResponse.redirect(new URL("/signin?force_logout=1", request.url));
-    res.cookies.delete("jwt_token");
     res.cookies.delete("auth_present");
     return res;
   }

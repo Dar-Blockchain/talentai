@@ -11,14 +11,13 @@ export function getToken(): string | null {
 }
 
 /**
- * Sets the JS-readable auth indicator cookie.
- * The actual JWT is managed server-side (httpOnly); this function only updates
- * the companion indicator so client code can detect authenticated state.
- * The token parameter is accepted for API compatibility but is not stored.
+ * Sets the JS-readable auth indicator cookie, storing the user's role so the
+ * Next.js middleware can do role-based routing without reading the httpOnly
+ * jwt_token (which lives on the API domain and is invisible to middleware).
  */
-export function saveToken(_token?: string): void {
+export function saveToken(role: string): void {
   if (typeof window === 'undefined') return;
-  Cookies.set('auth_present', '1', { path: '/', expires: 7, sameSite: 'strict' });
+  Cookies.set('auth_present', role, { path: '/', expires: 7, sameSite: 'lax' });
 }
 
 /** Removes the auth indicator cookie. The server clears the httpOnly JWT on logout. */
