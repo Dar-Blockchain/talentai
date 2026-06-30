@@ -152,6 +152,10 @@ postSchema.index({ user: 1, createdAt: -1 });
 postSchema.index({ user: 1, status: 1, archived: 1 });
 postSchema.index({ status: 1, archived: 1 });
 postSchema.index({ "skillAnalysis.requiredSkills.name": 1 });
+// Platform-wide admin aggregations (e.g. getCountsByDay) group/sort across
+// all posts with no per-user filter, so the user-scoped compound index above
+// can't help — they need createdAt indexed on its own.
+postSchema.index({ createdAt: -1 });
 
 const Post = mongoose.models.Post || mongoose.model("Post", postSchema);
 module.exports = Post;

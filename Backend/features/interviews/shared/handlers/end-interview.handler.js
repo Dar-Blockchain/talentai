@@ -9,7 +9,6 @@ async function handleEndInterview(socket, { service, activeSessions, processing,
   }
 
   try {
-    logger.info('Ending session', { sessionId });
 
     const result = await service.endInterview(sessionId);
 
@@ -23,7 +22,6 @@ async function handleEndInterview(socket, { service, activeSessions, processing,
     processing.delete(sessionId);
     socket.sessionId = null;
 
-    logger.info('Session ended', { sessionId });
 
     // Persist after emitting interview_ended so the client gets the result immediately
     if (onSessionEnded) {

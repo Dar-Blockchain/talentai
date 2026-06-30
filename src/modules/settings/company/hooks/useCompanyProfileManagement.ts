@@ -31,7 +31,6 @@ const buildSyncedProfile = (
     avatarUrl: string;
     requiredExperienceLevel?: string;
     targetRole?: string;
-    requiredSkills?: any[];
     language?: string;
     phone?: string;
     address?: string;
@@ -69,7 +68,6 @@ const buildSyncedProfile = (
     size: normalizedSize,
     website: extra.website || companyData?.website || '',
     employmentType: companyData?.employmentType || 'Remote',
-    requiredSkills: extra.requiredSkills || companyData?.requiredSkills || [],
   };
 };
 
@@ -149,7 +147,6 @@ export const useCompanyProfileManagement = () => {
         email:                   companyUser.email || companyData?.email || '',
         avatarUrl:               buildAvatarUrl(companyUser.user_image),
         requiredExperienceLevel: companyProfile?.requiredExperienceLevel,
-        requiredSkills:          companyProfile?.requiredSkills || companyData?.requiredSkills,
       });
     } else {
       if (!reduxProfile) return;
@@ -161,7 +158,6 @@ export const useCompanyProfileManagement = () => {
         avatarUrl:               buildAvatarUrl(reduxProfile.user_image, user.user_image),
         requiredExperienceLevel: reduxProfile?.requiredExperienceLevel,
         targetRole:              reduxProfile?.targetRole,
-        requiredSkills:          reduxProfile?.requiredSkills || companyData?.requiredSkills,
         language:                reduxProfile?.language,
         phone:                   reduxProfile.companyDetails?.phone,
         address:                 reduxProfile.companyDetails?.address,

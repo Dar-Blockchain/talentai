@@ -16,9 +16,9 @@ import CloseOutlined from "@mui/icons-material/CloseOutlined";
 import Link from "next/link";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
+import { usePermissionsQuery } from "@/modules/company/employees/queries";
 import { useLogout } from "@/modules/auth/shared/hooks";
-import { navigation, employeeNavGroups, EmployeeNavItem } from "@/constants/navigation";
-import { selectEmployeePermissions, fetchEmployeePermissions } from "@/store/slices/memberSlice";
+import { navigation, employeeNavGroups, EmployeeNavItem } from "./navigation";
 import { selectCombinedDetails, fetchCombinedSubscriptionDetails } from "@/store/slices/paymentSlice";
 import { LogoutOutlined } from "@mui/icons-material";
 import { useRouter } from "next/router";
@@ -98,7 +98,9 @@ useEffect(() => {
   const companyMembership = useSelector((state: RootState) => state.user.connectedUser.companyMembership);
   const planLimits        = useSelector((state: RootState) => state.user.connectedUser.planLimits);
   const combinedDetails   = useSelector(selectCombinedDetails);
-  const employeePermissions = useSelector(selectEmployeePermissions);
+  const { data: employeePermissions } = usePermissionsQuery(
+    user?.role === "Employee" ? user?._id : undefined,
+  );
 
   // Derive the badge label: prefer paid active plans from combined data, fall back to planLimits
   const activePlanLabel = React.useMemo(() => {
@@ -117,12 +119,6 @@ useEffect(() => {
     || companyMembership?.company?.username
     || null;
 
-  // Fetch permissions on reload if not yet in store
-  useEffect(() => {
-    if (isEmployee && !employeePermissions && user?._id) {
-      dispatch(fetchEmployeePermissions(user._id));
-    }
-  }, [isEmployee, employeePermissions, user?._id]);
 
   // Keep plan badge up-to-date for company users
   useEffect(() => {

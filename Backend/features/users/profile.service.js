@@ -91,6 +91,7 @@ module.exports.getProfileByUserId = async (userId) => {
     throw err;
   }
 
+  const ProfileSkill = require("../skills/profile-skill.model");
   const [profile, companyMembership] = await Promise.all([
     user.profile ? Profile.findById(user.profile).populate("planLimits") : null,
     user.companyMembership
@@ -99,6 +100,16 @@ module.exports.getProfileByUserId = async (userId) => {
           .select("_id role updatedAt company")
       : null,
   ]);
+
+  // Attach skills from dedicated collections onto the profile object for API consumers
+  if (profile) {
+    const [skills, softSkills] = await Promise.all([
+      ProfileSkill.find({ profile: profile._id, kind: "technical" }).lean(),
+      ProfileSkill.find({ profile: profile._id, kind: "soft" }).lean(),
+    ]);
+    profile.skills     = skills;
+    profile.softSkills = softSkills;
+  }
 
   let planLimits = profile?.planLimits || null;
 
@@ -178,6 +189,11 @@ module.exports.applyProfileUpdates = async (userId, profileData, filename) => {
   }
 };
 
+module.exports.checkActiveApplications = async (profileId) => {
+  const JobApplication = require("../job-applications/job-application.model");
+  return JobApplication.exists({ profile: profileId, status: { $in: ["visited"] } });
+};
+
 module.exports.deleteResume = async (userId) => {
   const CVAnalysis = require("../cv-analysis/cv-analysis.model");
 
@@ -188,20 +204,44 @@ module.exports.deleteResume = async (userId) => {
     throw err;
   }
 
+  // Auto-withdraw all active applications before deleting the CV
+  const JobApplication = require("../job-applications/job-application.model");
+  await JobApplication.updateMany(
+    { profile: profile._id, status: "visited" },
+    { $set: { status: "withdrawn", isWithdrawn: true, withdrawnAt: new Date() } },
+  );
+
   if (profile.resume) {
-    const filePath = path.join(
-      __dirname,
-      "..",
-      "..",
-      "uploads",
-      "resumes",
-      profile.resume,
-    );
+    const filePath = path.join(__dirname, "..", "..", "uploads", "resumes", profile.resume);
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    await Profile.findOneAndUpdate({ userId }, { resume: "", cvAnalyses: [] });
   }
 
-  await CVAnalysis.deleteMany({ profile: profile._id });
+  // Preserve CVAnalysis docs still referenced by existing job applications
+  const ProfileSkill = require("../skills/profile-skill.model");
+  const linkedIds = (await JobApplication.distinct("cvAnalysis", { profile: profile._id })).filter(Boolean);
+
+  const deletingIds = (await CVAnalysis.find({ profile: profile._id, _id: { $nin: linkedIds } }).select("_id")).map((d) => d._id);
+
+  await CVAnalysis.deleteMany({ profile: profile._id, _id: { $nin: linkedIds } });
+  await Profile.findOneAndUpdate({ userId }, { $set: { resume: "", cvAnalyses: linkedIds } });
+
+  // Remove unverified skills (technical and soft) whose sole source was the deleted CVs
+  if (deletingIds.length) {
+    const deletingIdSet = deletingIds.map(String);
+
+    const affected = await ProfileSkill.find({ profile: profile._id, sourceCvAnalyses: { $in: deletingIds } });
+    await Promise.all(
+      affected.map(async (skill) => {
+        const remaining = skill.sourceCvAnalyses.map(String).filter((id) => !deletingIdSet.includes(id));
+        const isVerified = (skill.levelConfirmed ?? 0) > 0 || (skill.numberTestPassed ?? 0) > 0;
+        if (!isVerified && remaining.length === 0) {
+          await ProfileSkill.deleteOne({ _id: skill._id });
+        } else {
+          await ProfileSkill.updateOne({ _id: skill._id }, { $pull: { sourceCvAnalyses: { $in: deletingIds } } });
+        }
+      })
+    );
+  }
 };
 
 module.exports.saveResume = async (userId, filename) => {

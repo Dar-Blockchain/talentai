@@ -2,7 +2,7 @@ import React from "react";
 import { Stack, Typography, Box } from "@mui/material";
 import Image from "next/image";
 import { useTranslation } from "react-i18next";
-import { defaultCurrencies } from "@/constants/candidate";
+import { defaultCurrencies } from "@/modules/company/posts/shared/constants";
 import CurrencyDropdown from "./salary-range/CurrencyDropdown";
 import SalaryInput from "./salary-range/SalaryInput";
 

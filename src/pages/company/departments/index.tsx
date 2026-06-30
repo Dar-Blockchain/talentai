@@ -1,5 +1,6 @@
 ﻿import React, { useState, useCallback } from "react";
 import { useSelector }    from "react-redux";
+import { usePermissionsQuery } from "@/modules/company/employees/queries";
 import { useTranslation } from "react-i18next";
 import { Plus }           from "lucide-react";
 import PageHeader         from "@/modules/shared/layouts/dashboard/PageHeader";
@@ -8,7 +9,6 @@ import type { NextPageWithLayout } from "@/pages/_app";
 import { Button }         from "@/modules/shared/ui/shadcn/button";
 import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 import { RootState }      from "@/store/store";
-import { selectEmployeePermissions } from "@/store/slices/memberSlice";
 import { useToast }       from "@/hooks/useToast";
 import { useDepartmentList } from "@/modules/company/departments/hooks";
 import {
@@ -32,7 +32,7 @@ const DepartmentsPage: NextPageWithLayout = () => {
   useCompanyAccess("canViewDepartments");
 
   const user      = useSelector((state: RootState) => state.user.connectedUser.user);
-  const empPerms  = useSelector(selectEmployeePermissions);
+  const { data: empPerms } = usePermissionsQuery(user?._id);
   const canManage = user?.role !== "Employee" || !!empPerms?.canCreateDepartment;
 
   const { departments, total, loading, error, search, onSearch } = useDepartmentList();

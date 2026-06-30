@@ -62,10 +62,9 @@ export interface ConnectedUserProfile {
     address?: string;
     personalWebsite?: string;
     requiredExperienceLevel?: string;
-    requiredSkills?: string[];
     language?: string;
   };
-  requiredSkills?: string[];
+
   quota?: number;
   skills?: any[] | null;
   softSkills?: any[] | null;
@@ -87,28 +86,12 @@ interface UserState {
     loading: boolean;
     error: string | null;
   };
-  targetUser: {
-    user: ConnectedUserEntity | null;
-    profile: ConnectedUserProfile | null;
-    planLimits: any | null;
-    companyMembership: any | null;
-    loading: boolean;
-    error: string | null;
-  };
   userType: "company" | "candidate" | "employee" | null;
   currentSpace?: "personal" | "membership" | null;
 }
 
 const initialState: UserState = {
   connectedUser: {
-    user: null,
-    profile: null,
-    planLimits: null,
-    companyMembership: null,
-    loading: false,
-    error: null,
-  },
-  targetUser: {
     user: null,
     profile: null,
     planLimits: null,
@@ -168,19 +151,6 @@ export const uploadProfileImage = createAsyncThunk<
   }
 });
 
-export const getProfileById = createAsyncThunk<
-  any,
-  string,
-  { rejectValue: string; state: RootState }
->("user/getProfileById", async (userId, { rejectWithValue }) => {
-  try {
-    return await userService.getProfileById(userId);
-  } catch (error: any) {
-    return rejectWithValue(
-      error.response?.data?.message || "An error occurred while fetching profile"
-    );
-  }
-});
 
 const userSlice = createSlice({
   name: "user",
@@ -199,10 +169,6 @@ const userSlice = createSlice({
       state.connectedUser.profile = null;
       state.connectedUser.planLimits = null;
       state.connectedUser.companyMembership = null;
-    },
-    clearTargetUser(state) {
-      state.targetUser.user = null;
-      state.targetUser.profile = null;
     },
     setUserType(state, action: PayloadAction<"company" | "candidate" | "employee">) {
       state.userType = action.payload;
@@ -296,35 +262,12 @@ const userSlice = createSlice({
             state.connectedUser.loading = false;
           }
         )
-        //GET PROFILE BY ID
-        .addCase(getProfileById.pending, (state: UserState) => {
-          state.targetUser.loading = true;
-          state.targetUser.error = null;
-        })
-        .addCase(
-          getProfileById.fulfilled,
-          (state: UserState, action: PayloadAction<any>) => {
-            state.targetUser.loading = false;
-            state.targetUser.profile = action.payload.profile;
-            state.targetUser.planLimits = action.payload.planLimits || null;
-            state.targetUser.user = action.payload.user;
-            state.targetUser.companyMembership = action.payload.companyMembership || null;
-          }
-        )
-        .addCase(
-          getProfileById.rejected,
-          (state: UserState, action: PayloadAction<any>) => {
-            state.targetUser.loading = false;
-            state.targetUser.error = action.payload;
-          }
-        );
     },
   });
 
 export const {
   setConnectedUser,
   clearConnectedUser,
-  clearTargetUser,
   setUserType,
   updateProfileQuota,
   updateProfileSoftSkill,

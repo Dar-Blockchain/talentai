@@ -2,13 +2,13 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useSelector } from "react-redux";
+import { usePermissionsQuery } from "@/modules/company/employees/queries";
 import { useTranslation } from "react-i18next";
 
 import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
 import AppButton from "@/components/ui/AppButton";
 import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 import { RootState } from "@/store/store";
-import { selectEmployeePermissions } from "@/store/slices/memberSlice";
 import { getDashboardLayout } from "@/modules/shared/layouts";
 import type { NextPageWithLayout } from "@/pages/_app";
 
@@ -28,7 +28,7 @@ const CampaignsPage: NextPageWithLayout = () => {
   useCompanyAccess("canViewCampaigns");
 
   const user     = useSelector((state: RootState) => state.user.connectedUser.user);
-  const empPerms = useSelector(selectEmployeePermissions);
+  const { data: empPerms } = usePermissionsQuery(user?._id);
   const isEmp    = user?.role === "Employee";
   const canCreate = !isEmp || !!empPerms?.canCreateCampaign;
 

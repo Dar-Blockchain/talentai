@@ -118,3 +118,14 @@ export function formatTimeAgo(date: string | Date | undefined): string {
 
   return 'just now';
 }
+
+export const fmtSalary = (s: { min?: number; max?: number; currency?: string } | null | undefined): string | null => {
+  if (!s?.min && !s?.max) return null;
+  const c = s.currency || "$";
+  const f = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(0)}k` : String(n));
+  if (s.min && s.max) return `${c}${f(s.min)} – ${c}${f(s.max)}`;
+  return s.max ? `≤${c}${f(s.max)}` : `${c}${f(s.min!)}+`;
+};
+
+export const scoreTier = (score: number): "high" | "mid" | "low" | "crit" =>
+  score >= 80 ? "high" : score >= 60 ? "mid" : score >= 40 ? "low" : "crit";

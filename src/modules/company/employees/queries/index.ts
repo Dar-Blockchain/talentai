@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { employeesApi } from "../api";
-import type { FetchMembersFilters, AddMemberPayload, UpdateRolePayload } from "@/store/slices/memberSlice";
+import type { FetchMembersFilters, AddMemberPayload, UpdateRolePayload } from "@/modules/company/members/types";
 import type { EmployeePermission } from "@/types/employeePermissions";
 
 export const EMPLOYEE_QUERY_KEYS = {
@@ -119,4 +119,39 @@ export function useCancelInvitationMutation() {
       void qc.invalidateQueries({ queryKey: EMPLOYEE_QUERY_KEYS.stats() });
     },
   });
+}
+
+export function useInvitationDetailsQuery(invitationId: string | undefined) {
+  return useQuery({
+    queryKey:  ["invitation-details", invitationId ?? ""],
+    queryFn:   () => employeesApi.fetchInvitationDetails(invitationId!),
+    enabled:   !!invitationId,
+    staleTime: 60_000,
+    retry:     false,
+  });
+}
+
+export function useRespondToInvitationMutation() {
+  return useMutation({
+    mutationFn: (params: {
+      invitationId: string;
+      action: 'accept' | 'reject';
+      token?: string;
+      firstName?: string;
+      lastName?: string;
+    }) => employeesApi.respondToInvitation(params),
+  });
+}
+
+export function useInvitationsByDepartmentQuery(departmentId: string | undefined) {
+  const qc = useQueryClient();
+  const query = useQuery({
+    queryKey:  ["invitations-by-department", departmentId ?? ""],
+    queryFn:   () => employeesApi.fetchInvitationsByDepartment(departmentId!),
+    enabled:   !!departmentId,
+    staleTime: 30_000,
+  });
+  const invalidate = () =>
+    void qc.invalidateQueries({ queryKey: ["invitations-by-department", departmentId ?? ""] });
+  return { ...query, invalidate };
 }

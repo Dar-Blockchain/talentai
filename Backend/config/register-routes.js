@@ -29,6 +29,7 @@ const { jobApplicationRouter } = require("../features/job-applications");
 const { router: apiKeyRouter } = require('../features/api-keys');
 const { paymentRouter } = require('../features/billing/payments');
 const usersRouter = require('../features/users').userRouter;
+const skillRouter = require('../features/skills/skill.routes');
 
 /**
  * Register all routes on the Express app
@@ -89,6 +90,9 @@ function registerRoutes(app) {
   app.use('/internal-campaigns', internalCampaignRoutes);
   app.use('/departments', departmentRoutes);
   app.use('/contact', contactRouter);
+
+  // Skills
+  app.use('/skills', skillRouter);
 
   // API Key Management
   app.use('/api/api-keys', apiKeyRouter);

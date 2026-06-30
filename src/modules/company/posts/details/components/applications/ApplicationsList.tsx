@@ -1,6 +1,6 @@
 import React from "react";
 import ApplicationCard from "@/modules/company/applications/components/ApplicationCard";
-import { ApplicationSummaryItem } from "@/store/slices/jobApplicationSlice";
+import { ApplicationSummaryItem } from "@/modules/company/applications/types";
 import { ContactTarget } from "../ContactCandidateModal";
 import { SimplePagination } from "@/modules/shared/ui/shadcn/pagination-simple";
 

@@ -4,7 +4,7 @@ import Image from "next/image";
 import NextLink from "next/link";
 import { Mail } from "lucide-react";
 import { useRouter } from "next/router";
-import { LINKEDIN_URL, TWITTER_URL, CONTACT_EMAIL } from "@/constants";
+import { LINKEDIN_URL, TWITTER_URL, CONTACT_EMAIL } from "@/modules/shared/constants";
 
 const FooterLink: React.FC<{ children: React.ReactNode; href?: string }> = ({ children, href = "#" }) => (
   <NextLink

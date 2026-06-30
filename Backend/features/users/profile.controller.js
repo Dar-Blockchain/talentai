@@ -1,5 +1,6 @@
 const profileService = require("./profile.service");
 const CVAnalysisService = require("../cv-analysis/cv-analysis.service");
+const jobApplicationService = require("../job-applications/job-application.service");
 
 module.exports.getMyProfile = async (req, res) => {
   try {
@@ -115,24 +116,39 @@ module.exports.updateResume = async (req, res) => {
       req.file.filename,
     );
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "Resume updated successfully.",
-        data: { resume: profile.resume },
-      });
-
-    CVAnalysisService.analyzeResumeBg(
+    const cvAnalysis = await CVAnalysisService.analyzeAndReplace(
       req.user._id,
       profile._id,
       req.file.filename,
       {
-        name: `${profile.firstName} ${profile.lastName}`,
+        name:      `${profile.firstName || ""} ${profile.lastName || ""}`.trim(),
         ipAddress: req.ip,
         userAgent: req.get("user-agent"),
       },
-    ).catch((err) => console.error("⚠️  CV analysis failed:", err.message));
+    );
+
+    // Background: recalculate match scores for all visited applications with the new CV
+    if (cvAnalysis?._id) {
+      jobApplicationService
+        .recalculateScoresForVisitedApps(profile._id, cvAnalysis._id)
+        .catch((err) => console.warn("⚠️ [CV Update] Background recalculation error:", err.message));
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Resume updated and analysed successfully.",
+      data: {
+        resume: profile.resume,
+        cvAnalysis: cvAnalysis ? {
+          _id:             cvAnalysis._id,
+          analysisScore:   cvAnalysis.analysisScore,
+          seniority:       cvAnalysis.seniority,
+          skillsCount:     cvAnalysis.skills?.length     ?? 0,
+          softSkillsCount: cvAnalysis.softSkills?.length ?? 0,
+          createdAt:       cvAnalysis.createdAt,
+        } : null,
+      },
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

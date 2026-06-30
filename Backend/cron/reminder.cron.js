@@ -256,13 +256,6 @@ const scheduleReminders = () => {
   cron.schedule(REMINDER_CONFIG.CRON_PATTERN, () => {
     runReminderJob();
   });
-
-  logger.info(MSG.INITIALIZED);
-  logger.info(MSG.FREQUENCY);
-  logger.info(MSG.FIRST_REMINDER_DESC);
-  logger.info(MSG.SECOND_REMINDER_DESC);
-  logger.info(MSG.STOPS_WHEN);
-  logger.info(MSG.EMAIL_WINDOW);
 };
 
 module.exports = { scheduleReminders, runReminderJob };

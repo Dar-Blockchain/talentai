@@ -40,10 +40,8 @@ import {
 import { MODULE_CONFIG } from "@/constants/campaign";
 import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
-import { useDispatch } from "react-redux";
 import { useCompanyAccess } from "@/hooks/useCompanyAccess";
-import { AppDispatch } from "@/store/store";
-import { createCampaign } from "@/store/slices/campaignSlice";
+import { useCreateCampaignMutation } from "@/modules/company/campaigns/queries";
 import { useToast } from "@/hooks/useToast";
 import { useTranslation } from "react-i18next";
 import ParticipantsStep from "@/modules/company/campaigns/components/new/ParticipantsStep";
@@ -179,7 +177,7 @@ const OptionCard: React.FC<{
 
 const NewCampaignPage: NextPageWithLayout = () => {
   useCompanyAccess("canCreateCampaign");
-  const dispatch = useDispatch<AppDispatch>();
+  const createMutation = useCreateCampaignMutation();
   const { showToast } = useToast();
   const router = useRouter();
   const { t } = useTranslation("dashboard");
@@ -231,7 +229,7 @@ const NewCampaignPage: NextPageWithLayout = () => {
         // type and customType omitted until re-enabled
         ...(selectedParticipants.length > 0 && { participants: selectedParticipants }),
       };
-      const campaign = await dispatch(createCampaign(formattedPayload)).unwrap();
+      const campaign = await createMutation.mutateAsync(formattedPayload);
       showToast({ message: "Campaign created successfully", severity: "success" });
       router.push(`/company/campaigns/${campaign._id}`);
     } catch (error: any) {

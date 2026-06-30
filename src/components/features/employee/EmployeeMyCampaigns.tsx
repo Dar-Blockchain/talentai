@@ -1,16 +1,9 @@
-import React, { memo, useEffect, useState, useCallback } from "react";
+import React, { memo, useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "@/store/store";
-import {
-  fetchEmployeeCampaigns,
-  fetchEmployeeCampaignMetrics,
-  selectEmployeeCampaigns,
-  selectEmployeeCampaignsLoading,
-  selectEmployeeCampaignsError,
-  EmployeeCampaignEntry,
-  EmployeeCampaignFilters,
-} from "@/store/slices/campaignSlice";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
+import { useQuery } from "@tanstack/react-query";
+import { apiFetchEmployeeCampaigns, apiFetchEmployeeCampaignMetrics } from "@/modules/company/campaigns/api";
 import {
   Box, Typography, Chip, Button, LinearProgress, Skeleton, Alert, IconButton, Tooltip,
   TextField, InputAdornment, MenuItem, Select, FormControl,
@@ -25,7 +18,8 @@ import {
   VisibilityOffOutlined,
 } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
-import { Campaign, CampaignType, ModuleType, ParticipantStatus } from "@/types/campaign";
+import { CampaignType, ModuleType, ParticipantStatus } from "@/types/campaign";
+import { EmployeeCampaignEntry } from "@/modules/company/campaigns/types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -79,7 +73,7 @@ const scoreColor = (s: number) => s >= 80 ? GREEN : s >= 60 ? TEAL : s >= 40 ? A
 
 // ─── Campaign Card ────────────────────────────────────────────────────────────
 
-const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: string) => void; onDetails: (id: string) => void }> = memo(
+const CampaignCard: React.FC<{ campaign: EmployeeCampaignEntry; index: number; onStart: (id: string) => void; onDetails: (id: string) => void }> = memo(
   ({ campaign, index, onStart, onDetails }) => {
     const tm = campaign.type ? TYPE_META[campaign.type] : null;
     const mm = MODULE_META[campaign.module.type];
@@ -166,7 +160,7 @@ const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: 
                 </Box>
               )}
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>{campaign.targetEmployeeCount} participants</Typography>
+                <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>{campaign.totalParticipants} participants</Typography>
               </Box>
             </Box>
 
@@ -239,7 +233,7 @@ const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: 
               <Button
                 fullWidth
                 startIcon={<PlayArrowOutlined />}
-                onClick={() => onStart(campaign._id)}
+                onClick={() => onStart(campaign.campaignId)}
                 sx={{
                   bgcolor: TEAL, color: "#fff", fontWeight: 600, fontSize: "13px",
                   textTransform: "none", borderRadius: 2, py: 0.9,
@@ -253,7 +247,7 @@ const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: 
               <Button
                 fullWidth
                 startIcon={<ArrowForwardOutlined />}
-                onClick={() => onStart(campaign._id)}
+                onClick={() => onStart(campaign.campaignId)}
                 sx={{
                   bgcolor: AMBER, color: "#fff", fontWeight: 600, fontSize: "13px",
                   textTransform: "none", borderRadius: 2, py: 0.9,
@@ -284,7 +278,7 @@ const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: 
             )}
             <Tooltip title="Campaign details" arrow>
               <IconButton
-                onClick={() => onDetails(campaign._id)}
+                onClick={() => onDetails(campaign.campaignId)}
                 size="small"
                 sx={{
                   flexShrink: 0, border: "1px solid #E5E7EB", borderRadius: 2,
@@ -339,76 +333,45 @@ const PERIOD_OPTIONS = [
 // ─── Main Component ────────────────────────────────────────────────────────────
 
 const EmployeeMyCampaigns: React.FC = () => {
-  const router   = useRouter();
-  const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
 
   const [activeFilter, setActiveFilter] = useState<FilterTab>("ALL");
-  const [search,  setSearch]  = useState("");
-  const [period,  setPeriod]  = useState("");
-  const [searchInput, setSearchInput] = useState("");
+  const [search,       setSearch]       = useState("");
+  const [period,       setPeriod]       = useState("");
+  const [searchInput,  setSearchInput]  = useState("");
 
-  const userId   = useSelector((state: RootState) => state.user.connectedUser.user?._id);
-  const campaigns = useSelector(selectEmployeeCampaigns);
-  const loading   = useSelector(selectEmployeeCampaignsLoading);
-  const error     = useSelector(selectEmployeeCampaignsError);
-  const metrics   = useSelector((state: RootState) => state.campaign.employeeMetrics);
+  const userId = useSelector((state: RootState) => state.user.connectedUser.user?._id);
 
-  const doFetch = useCallback((filters: Partial<EmployeeCampaignFilters> = {}) => {
-    if (!userId) return;
-    dispatch(fetchEmployeeCampaigns({
-      userId,
-      search:            filters.search            ?? search,
-      participantStatus: filters.participantStatus ?? (activeFilter !== "ALL" ? activeFilter : undefined),
-      period:            filters.period            ?? period,
-    }));
-  }, [dispatch, userId, search, activeFilter, period]);
+  const { data: campaignsData, isLoading: loading, error: queryError } = useQuery({
+    queryKey:  ['employee-campaigns', userId, search, period, activeFilter],
+    queryFn:   () => apiFetchEmployeeCampaigns({
+      userId:            userId!,
+      search:            search || undefined,
+      participantStatus: activeFilter !== "ALL" ? activeFilter : undefined,
+      period:            period || undefined,
+    }),
+    enabled:   !!userId,
+    staleTime: 30_000,
+  });
+  const { data: metricsData } = useQuery({
+    queryKey:  ['employee-campaign-metrics', userId],
+    queryFn:   () => apiFetchEmployeeCampaignMetrics(userId!),
+    enabled:   !!userId,
+    staleTime: 60_000,
+  });
+  const campaigns = campaignsData?.data ?? [];
+  const metrics   = metricsData ?? null;
+  const error     = queryError ? ((queryError as Error).message ?? "An error occurred") : null;
 
-  // initial load + metrics
+  // debounce searchInput → search
   useEffect(() => {
-    if (userId) {
-      doFetch();
-      dispatch(fetchEmployeeCampaignMetrics(userId));
-    }
-  }, [userId]);
-
-  // debounce search
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setSearch(searchInput);
-      if (userId) dispatch(fetchEmployeeCampaigns({
-        userId,
-        search: searchInput,
-        participantStatus: activeFilter !== "ALL" ? activeFilter : undefined,
-        period,
-      }));
-    }, 400);
+    const t = setTimeout(() => setSearch(searchInput), 400);
     return () => clearTimeout(t);
   }, [searchInput]);
 
-  const handleFilterChange = (tab: FilterTab) => {
-    setActiveFilter(tab);
-    if (!userId) return;
-    dispatch(fetchEmployeeCampaigns({
-      userId, search,
-      participantStatus: tab !== "ALL" ? tab : undefined,
-      period,
-    }));
-  };
-
-  const handlePeriodChange = (val: string) => {
-    setPeriod(val);
-    if (!userId) return;
-    dispatch(fetchEmployeeCampaigns({
-      userId, search,
-      participantStatus: activeFilter !== "ALL" ? activeFilter : undefined,
-      period: val,
-    }));
-  };
-
-  const clearFilters = () => {
-    setSearchInput(""); setSearch(""); setPeriod(""); setActiveFilter("ALL");
-    if (userId) dispatch(fetchEmployeeCampaigns({ userId }));
-  };
+  const handleFilterChange = (tab: FilterTab) => setActiveFilter(tab);
+  const handlePeriodChange = (val: string)    => setPeriod(val);
+  const clearFilters = () => { setSearchInput(""); setSearch(""); setPeriod(""); setActiveFilter("ALL"); };
 
   const hasActiveFilters = search || period || activeFilter !== "ALL";
 
@@ -535,7 +498,7 @@ const EmployeeMyCampaigns: React.FC = () => {
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", xl: "repeat(3, 1fr)" }, gap: 3 }}>
           <AnimatePresence mode="popLayout">
             {campaigns.map((campaign, i) => (
-              <CampaignCard key={campaign._id} campaign={campaign} index={i} onStart={handleStart} onDetails={handleDetails} />
+              <CampaignCard key={campaign.campaignId} campaign={campaign} index={i} onStart={handleStart} onDetails={handleDetails} />
             ))}
           </AnimatePresence>
         </Box>

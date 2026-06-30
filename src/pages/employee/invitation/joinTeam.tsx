@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/router";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { Box, Typography, Alert, CircularProgress } from "@mui/material";
 import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
 import EmailOutlined from "@mui/icons-material/EmailOutlined";
@@ -13,10 +13,9 @@ import ErrorOutlineOutlined from "@mui/icons-material/ErrorOutlineOutlined";
 import PersonOutlined from "@mui/icons-material/PersonOutlined";
 import { AppDispatch } from "@/store/store";
 import {
-  fetchInvitationDetails,
-  respondToInvitation,
-  selectMembers,
-} from "@/store/slices/memberSlice";
+  useInvitationDetailsQuery,
+  useRespondToInvitationMutation,
+} from "@/modules/company/employees/queries";
 import { setConnectedUser } from "@/store/slices/userSlice";
 import { useAuthContext } from "@/modules/auth/shared/context/AuthContext";
 import Shell from "@/components/features/invitation/Shell";
@@ -129,28 +128,26 @@ const StyledInput: React.FC<StyledInputProps> = ({ label, value, onChange, icon:
 
 // ── Main page ───────────────────────────────────────────────────────────────
 const JoinTeamPage: React.FC = () => {
-  const router = useRouter();
+  const router      = useRouter();
   const dispatch    = useDispatch<AppDispatch>();
   const { login }   = useAuthContext();
   const { invitationId, token } = router.query;
 
+  const invId = router.isReady && typeof invitationId === "string" ? invitationId : undefined;
+
   const {
-    currentInvitation,
-    fetchingInvitationDetails,
-    respondingToInvitation,
-    error,
-  } = useSelector(selectMembers);
+    data: currentInvitation,
+    isLoading: fetchingInvitationDetails,
+    error: invitationError,
+  } = useInvitationDetailsQuery(invId);
+
+  const respondMutation = useRespondToInvitationMutation();
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [fieldErrors, setFieldErrors] = useState<{ firstName?: string; lastName?: string }>({});
   const [success, setSuccess] = useState(false);
   const [acceptError, setAcceptError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!router.isReady || !invitationId) return;
-    dispatch(fetchInvitationDetails(invitationId as string));
-  }, [router.isReady, invitationId, dispatch]);
 
   const handleAccept = async () => {
     const errs: typeof fieldErrors = {};
@@ -161,15 +158,13 @@ const JoinTeamPage: React.FC = () => {
 
     setAcceptError(null);
     try {
-      const result = await dispatch(
-        respondToInvitation({
-          invitationId: invitationId as string,
-          action: "accept",
-          token: token as string,
-          firstName: firstName.trim(),
-          lastName: lastName.trim(),
-        })
-      ).unwrap();
+      const result = await respondMutation.mutateAsync({
+        invitationId: invitationId as string,
+        action: "accept",
+        token: token as string,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+      });
 
       if (result.token) {
         login();
@@ -184,7 +179,7 @@ const JoinTeamPage: React.FC = () => {
     }
   };
 
-  // ── Loading ── (also covers the window before router.isReady triggers the fetch)
+  // ── Loading ──
   if (!router.isReady || fetchingInvitationDetails) {
     return (
       <Shell>
@@ -197,7 +192,7 @@ const JoinTeamPage: React.FC = () => {
   }
 
   // ── Error / not found ──
-  if (error || !currentInvitation) {
+  if (invitationError || !currentInvitation) {
     return (
       <Shell>
         <Box sx={{ bgcolor: "#fff", borderRadius: "20px", border: "1px solid #E5E7EB", boxShadow: "0 4px 24px rgba(0,0,0,0.06)", p: 5, textAlign: "center" }}>
@@ -206,7 +201,7 @@ const JoinTeamPage: React.FC = () => {
           </Box>
           <Typography sx={{ fontWeight: 700, fontSize: "1.1rem", color: "#1E293B", mb: 1 }}>Invalid Invitation</Typography>
           <Typography sx={{ color: "#64748B", fontSize: "0.875rem", lineHeight: 1.65 }}>
-            {error || "This invitation is no longer valid or has expired."}
+            {(invitationError as Error)?.message || "This invitation is no longer valid or has expired."}
           </Typography>
         </Box>
       </Shell>
@@ -366,7 +361,7 @@ const JoinTeamPage: React.FC = () => {
             label="Accept & Create Account"
             size="large"
             fullWidth
-            loading={respondingToInvitation}
+            loading={respondMutation.isPending}
             startIcon={<CheckCircleOutlined sx={{ fontSize: 17 }} />}
             onClick={handleAccept}
             sx={{ borderRadius: "12px", boxShadow: `0 4px 14px ${PURPLE}35`, "&:hover": { boxShadow: `0 6px 20px ${PURPLE}45` } }}

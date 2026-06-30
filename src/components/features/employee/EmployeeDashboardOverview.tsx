@@ -1,14 +1,10 @@
-import React, { memo, useEffect, useMemo } from "react";
+import React, { memo, useMemo } from "react";
 import { useRouter } from "next/router";
 import { Box, Typography, Chip, Skeleton, LinearProgress } from "@mui/material";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "@/store/store";
-import {
-  fetchEmployeeCampaigns,
-  fetchEmployeeCampaignMetrics,
-  selectEmployeeCampaigns,
-  selectEmployeeCampaignsLoading,
-} from "@/store/slices/campaignSlice";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
+import { useQuery } from "@tanstack/react-query";
+import { apiFetchEmployeeCampaigns, apiFetchEmployeeCampaignMetrics } from "@/modules/company/campaigns/api";
 import {
   CampaignOutlined,
   CheckCircleOutlined,
@@ -25,7 +21,8 @@ import {
   VisibilityOutlined,
 } from "@mui/icons-material";
 import { motion } from "framer-motion";
-import { Campaign, ModuleType, ParticipantStatus } from "@/types/campaign";
+import { ModuleType, ParticipantStatus } from "@/types/campaign";
+import { EmployeeCampaignEntry } from "@/modules/company/campaigns/types";
 import { buildInterviewUrl } from "@/lib/interviewSession";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -167,14 +164,14 @@ const RowSkeleton = () => (
 
 // ─── Campaign Row ─────────────────────────────────────────────────────────────
 
-const CampaignRow: React.FC<{ campaign: Campaign; onAction: () => void }> = ({ campaign, onAction }) => {
+const CampaignRow: React.FC<{ campaign: EmployeeCampaignEntry; onAction: () => void }> = ({ campaign, onAction }) => {
   const ps      = PS_META[campaign.participantStatus ?? "INVITED"];
   const mm      = MODULE_META[campaign.module?.type];
   const PsIcon  = ps.icon;
   const ModIcon = mm?.icon;
   const remaining = daysLeft(campaign.deadline);
   const isCompleted = campaign.participantStatus === "COMPLETED";
-  const score = (campaign as any).score ?? null;
+  const score = campaign.score ?? null;
 
   return (
     <Box
@@ -234,23 +231,26 @@ const CampaignRow: React.FC<{ campaign: Campaign; onAction: () => void }> = ({ c
 // ─── Main Component ────────────────────────────────────────────────────────────
 
 const EmployeeDashboardOverview: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
   const router   = useRouter();
 
-  const userId           = useSelector((state: RootState) => state.user.connectedUser.user?._id);
-  const user            = useSelector((state: RootState) => state.user.connectedUser.user);
-  const profile          = useSelector((state: RootState) => state.user.connectedUser.profile);
+  const userId            = useSelector((state: RootState) => state.user.connectedUser.user?._id);
+  const user              = useSelector((state: RootState) => state.user.connectedUser.user);
+  const profile           = useSelector((state: RootState) => state.user.connectedUser.profile);
   const companyMembership = useSelector((state: RootState) => state.user.connectedUser.companyMembership);
-  const metrics          = useSelector((state: RootState) => state.campaign.employeeMetrics);
 
-  const campaigns        = useSelector(selectEmployeeCampaigns);
-  const campaignsLoading = useSelector(selectEmployeeCampaignsLoading);
-
-  useEffect(() => {
-    if (!userId) return;
-    dispatch(fetchEmployeeCampaigns({ userId, limit: 20 }));
-    dispatch(fetchEmployeeCampaignMetrics(userId));
-  }, [dispatch, userId]);
+  const { data: campaignsData, isLoading: campaignsLoading } = useQuery({
+    queryKey:  ['employee-campaigns-dashboard', userId],
+    queryFn:   () => apiFetchEmployeeCampaigns({ userId: userId!, limit: 20 }),
+    enabled:   !!userId,
+    staleTime: 30_000,
+  });
+  const { data: metrics } = useQuery({
+    queryKey:  ['employee-campaign-metrics', userId],
+    queryFn:   () => apiFetchEmployeeCampaignMetrics(userId!),
+    enabled:   !!userId,
+    staleTime: 60_000,
+  });
+  const campaigns = campaignsData?.data ?? [];
 
   // Derived
   const pending    = useMemo(() => campaigns.filter(c => c.participantStatus === "INVITED" || c.participantStatus === "IN_PROGRESS").slice(0, 5), [campaigns]);
@@ -351,20 +351,20 @@ const EmployeeDashboardOverview: React.FC = () => {
                   : false;
                 return (
                 <CampaignRow
-                  key={c._id}
+                  key={c.campaignId}
                   campaign={c}
                   onAction={() => {
                     if (!isExpired && (c.participantStatus === "IN_PROGRESS" || c.participantStatus === "INVITED")) {
                       const modType = c.module?.type;
                       if (modType === "QUESTIONNAIRE") {
-                        router.push(`/campaign/questionnaire/${c._id}`);
+                        router.push(`/campaign/questionnaire/${c.campaignId}`);
                       } else if (modType === "AI_INTERVIEW" || modType === "SKILL_TEST") {
-                        router.push(buildInterviewUrl({ type: 'campaign', campaignId: c._id, moduleType: modType }));
+                        router.push(buildInterviewUrl({ type: 'campaign', campaignId: c.campaignId, moduleType: modType }));
                       } else {
-                        router.push(`/employee/campaigns/${c._id}`);
+                        router.push(`/employee/campaigns/${c.campaignId}`);
                       }
                     } else {
-                      router.push(`/employee/campaigns/${c._id}`);
+                      router.push(`/employee/campaigns/${c.campaignId}`);
                     }
                   }}
                 />
@@ -388,9 +388,9 @@ const EmployeeDashboardOverview: React.FC = () => {
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               {completed.map(c => (
                 <CampaignRow
-                  key={c._id}
+                  key={c.campaignId}
                   campaign={c}
-                  onAction={() => router.push(`/employee/campaigns/${c._id}`)}
+                  onAction={() => router.push(`/employee/campaigns/${c.campaignId}`)}
                 />
               ))}
             </Box>
@@ -442,7 +442,7 @@ const EmployeeDashboardOverview: React.FC = () => {
                   Recent scores
                 </Typography>
                 {scored.slice(0, 5).map(c => (
-                  <Box key={c._id} sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <Box key={c.campaignId} sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                     <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: scoreColor((c as any).score), flexShrink: 0 }} />
                     <Typography sx={{ fontSize: "12px", color: "#374151", fontWeight: 500, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {c.title}

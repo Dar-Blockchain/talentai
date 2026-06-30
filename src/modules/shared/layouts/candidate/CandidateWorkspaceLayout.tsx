@@ -1,124 +1,76 @@
 "use client";
 
-import React, { useState } from "react";
-import { Box, Drawer } from "@mui/material";
+import React from "react";
+import { cn } from "@/lib/utils";
 import Header from "@/modules/shared/layouts/dashboard/DashboardHeader";
 import CandidateQuickNav from "@/modules/shared/layouts/candidate/CandidateQuickNav";
+import CandidateNavDrawer from "@/modules/shared/layouts/candidate/CandidateNavDrawer";
 
 interface CandidateWorkspaceLayoutProps {
   children: React.ReactNode;
   breadcrumb?: string;
   fillHeight?: boolean;
+  leftPanel?: React.ReactNode;
+  rightPanel?: React.ReactNode;
 }
-
-const HEADER_HEIGHT = 64;
-const NAV_WIDTH = 240;
 
 const CandidateWorkspaceLayout: React.FC<CandidateWorkspaceLayoutProps> = ({
   children,
   breadcrumb,
   fillHeight = false,
+  leftPanel,
+  rightPanel,
 }) => {
-  const [mobileOpen, setMobileOpen] = useState(false);
-
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", bgcolor: "rgb(249 250 251)" }}>
-      <Box
-        sx={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: HEADER_HEIGHT,
-          zIndex: 1200,
-        }}
-      >
-        <Header breadcrumb={breadcrumb} onOpenMobile={() => setMobileOpen(true)} />
-      </Box>
+    <div className="flex flex-col h-screen bg-gray-50">
+      {/* Header + mobile drawer — drawer owns its own open state via trigger prop */}
+      <CandidateNavDrawer
+        trigger={(openDrawer) => (
+          <Header breadcrumb={breadcrumb} onOpenMobile={openDrawer} />
+        )}
+      />
 
-      <Drawer
-        anchor="right"
-        open={mobileOpen}
-        onClose={() => setMobileOpen(false)}
-        PaperProps={{
-          sx: {
-            width: 280,
-            p: 2,
-            bgcolor: "#F9FAFB",
-          },
-        }}
-      >
-        <CandidateQuickNav onNavigate={() => setMobileOpen(false)} />
-      </Drawer>
-
-      <Box
+      {/* Main scroll area */}
+      <main
         id="main-scroll"
-        sx={{
-          flex: 1,
-          mt: `${HEADER_HEIGHT}px`,
-          height: `calc(100vh - ${HEADER_HEIGHT}px)`,
-          overflow: fillHeight ? "hidden" : "auto",
-          px: { xs: 1.5, sm: 2.5, md: 3 },
-          pb: { xs: 1.5, sm: 2.5, md: 3 },
-          pt: { xs: 0.5, sm: 1, md: 1 },
-        }}
-        className={fillHeight ? undefined : "custom-scrollbar"}
+        className={cn(
+          "flex-1 min-h-0",
+          fillHeight ? "overflow-hidden" : "overflow-auto custom-scrollbar"
+        )}
       >
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: `1fr ${NAV_WIDTH}px` },
-            gap: 2.5,
-            alignItems: "start",
-            height: fillHeight ? "100%" : "auto",
-            minHeight: fillHeight ? 0 : undefined,
-          }}
+        <div
+          className={cn(
+            "px-4 sm:px-6 md:px-8 pb-6 pt-2 sm:pt-3 grid gap-5 items-start",
+            fillHeight && "h-full",
+            leftPanel
+              ? "grid-cols-1 lg:grid-cols-[240px_1fr_240px]"
+              : "grid-cols-1 lg:grid-cols-[1fr_240px]"
+          )}
         >
-          <Box
-            sx={{
-              minWidth: 0,
-              minHeight: fillHeight ? 0 : undefined,
-              height: fillHeight ? "100%" : "auto",
-              display: "flex",
-              flexDirection: "column",
-              gap: 1.5,
-              gridColumn: { xs: "1", md: "1" },
-              alignSelf: { xs: "start", md: "start" },
-              mt: { xs: 0, md: 2 },
-            }}
-          >
-            <Box sx={{ display: { xs: "block", md: "none" } }}>
-              <CandidateQuickNav variant="horizontal" />
-            </Box>
-            <Box
-              sx={{
-                flex: fillHeight ? 1 : undefined,
-                minHeight: fillHeight ? 0 : undefined,
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              {children}
-            </Box>
-          </Box>
+          {/* Left panel (injected per-page, e.g. profile sidebar on dashboard) */}
+          {leftPanel && (
+            <aside className="hidden lg:flex flex-col gap-4 sticky top-4 max-h-[calc(100vh-96px)] overflow-y-auto custom-scrollbar">
+              {leftPanel}
+            </aside>
+          )}
 
-          <Box
-            sx={{
-              display: { xs: "none", md: "block" },
-              position: "sticky",
-              top: 16,
-              alignSelf: "start",
-              maxHeight: "calc(100vh - 96px)",
-              overflowY: "auto",
-              gridColumn: { xs: "1", md: "2" },
-            }}
-            className="custom-scrollbar"
+          {/* Center: page content */}
+          <div
+            className={cn(
+              "min-w-0 flex flex-col",
+              fillHeight ? "h-full min-h-0" : "gap-4"
+            )}
           >
-            <CandidateQuickNav />
-          </Box>
-        </Box>
-      </Box>
-    </Box>
+            {children}
+          </div>
+
+          {/* Right panel: custom or QuickNav — desktop only */}
+          <aside className="hidden lg:flex flex-col gap-4 sticky top-4 max-h-[calc(100vh-96px)] overflow-y-auto custom-scrollbar">
+            {rightPanel ?? <CandidateQuickNav />}
+          </aside>
+        </div>
+      </main>
+    </div>
   );
 };
 

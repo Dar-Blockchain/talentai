@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/useToast";
 import { validateEditPost } from "@/validations/postValidation";
 import SalaryRange from "@/modules/company/posts/create/components/SalaryRange";
 import SkillEditorModal from "@/modules/company/posts/create/components/SkillEditorModal";
-import { contractTypes, experienceLevels, workModes } from "@/constants/candidate";
+import { contractTypes, experienceLevels, workModes } from "@/modules/company/posts/shared/constants";
 import AppButton from "@/components/ui/AppButton";
 import EditSkillsSection from "./edit/EditSkillsSection";
 import EditThresholdScore from "./edit/EditThresholdScore";

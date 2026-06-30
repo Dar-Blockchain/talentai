@@ -28,7 +28,6 @@ async function handleSilenceDetected(socket, data, { service, processing }) {
 
   try {
     const durationSeconds = data?.durationSeconds ?? 60;
-    logger.info('Silence detected â€” auto-skipping question', { sessionId, durationSeconds });
     safeEmit(socket, 'interviewer_typing', { sessionId, status: 'thinking' });
 
     const result = await service.handleSilence(sessionId, durationSeconds);

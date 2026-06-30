@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import { updateJobField, updateJobSalaryField } from "../../store/createPostSlice";
-import { contractTypes, workModes, experienceLevels } from "@/constants/candidate";
+import { contractTypes, workModes, experienceLevels } from "@/modules/company/posts/shared/constants";
 import { EMPLOYMENT_OPTION_KEY, EXPERIENCE_OPTION_KEY, WORK_MODE_OPTION_KEY, optionLabel } from "../../utils";
 import SectionCard from "@/components/ui/SectionCard";
 import SalaryRange from "../SalaryRange";

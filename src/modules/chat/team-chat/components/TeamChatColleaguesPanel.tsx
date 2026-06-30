@@ -18,10 +18,11 @@ import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import CloseRounded from "@mui/icons-material/CloseRounded";
 import PeopleOutlineOutlined from "@mui/icons-material/PeopleOutlineOutlined";
 import SearchOffOutlined from "@mui/icons-material/SearchOffOutlined";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
-import { AppDispatch, RootState } from "@/store/store";
-import { fetchMembers, selectMembers, Member } from "@/store/slices/memberSlice";
+import { RootState } from "@/store/store";
+import type { Member } from "@/modules/company/members/types";
+import { useMembersQuery } from "@/modules/company/employees/queries";
 import { useStartTeamChat } from "@/modules/chat/team-chat/hooks/useStartTeamChat";
 import { getRoleLabel } from "@/utils/employeeRoleI18n";
 import { TEAM_MINT_UI, TEAM_MINT_SCROLLBAR_SX } from "@/modules/chat/shared/constants/teamMintUi";
@@ -306,7 +307,6 @@ interface TeamChatColleaguesPanelProps {
 }
 
 const TeamChatColleaguesPanel: React.FC<TeamChatColleaguesPanelProps> = ({ onClose }) => {
-  const dispatch = useDispatch<AppDispatch>();
   const startTeamChat = useStartTeamChat();
   const { t } = useTranslation("modules/company/teamChat");
   const { t: tDashboard } = useTranslation("dashboard");
@@ -314,12 +314,21 @@ const TeamChatColleaguesPanel: React.FC<TeamChatColleaguesPanelProps> = ({ onClo
   const currentUserId = useSelector((state: RootState) => state.user.connectedUser.user?._id);
   const userRole = useSelector((state: RootState) => state.user.connectedUser.user?.role);
   const companyMembership = useSelector((state: RootState) => state.user.connectedUser.companyMembership);
-  const { members, loading, error } = useSelector(selectMembers);
 
   const [loadingUserId, setLoadingUserId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const { data: membersData, isLoading: loading, error: membersError } = useMembersQuery({
+    search: debouncedSearch || undefined,
+    sortBy: "name",
+    order: "asc",
+    page: 1,
+    limit: PAGE_SIZE,
+  });
+  const members = membersData?.members ?? [];
+  const error   = membersError ? (membersError as Error).message : null;
 
   const handleStartChat = useCallback(async (userId: string) => {
     if (loadingUserId) return;
@@ -347,16 +356,6 @@ const TeamChatColleaguesPanel: React.FC<TeamChatColleaguesPanelProps> = ({ onClo
   useEffect(() => () => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
   }, []);
-
-  useEffect(() => {
-    dispatch(fetchMembers({
-      page: 1,
-      limit: PAGE_SIZE,
-      search: debouncedSearch || undefined,
-      sortBy: "name",
-      order: "asc",
-    }));
-  }, [debouncedSearch, dispatch]);
 
   const companyContact = useMemo(() => {
     if (userRole !== "Employee") return null;
