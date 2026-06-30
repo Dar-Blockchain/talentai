@@ -31,7 +31,7 @@ import { useAdminPostAssessmentsQuery, useArchivePostAssessmentMutation, useUnar
 import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/modules/shared/ui/shadcn/tabs';
-import { SimplePagination } from '@/modules/shared/ui/shadcn/pagination-simple';
+import { Pagination } from '@/modules/shared/ui/shadcn/pagination';
 import { ScoreBadge, scoreTone, ADMIN_NEUTRAL, ADMIN_RADIUS, AdminPageHeading, AdminStatCard, AdminTableErrorRow, ConfirmDialog } from '@/modules/admin/shared';
 
 interface PostInterviewAssessmentData {
@@ -241,7 +241,7 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
               className="text-[12px] text-slate-600 border border-slate-200 rounded-md px-2 py-1 outline-none focus:border-teal-400">
               {[5, 10, 25].map((n) => <option key={n} value={n}>{n} / page</option>)}
             </select>
-            <SimplePagination page={page} totalPages={Math.ceil(totalCount / rowsPerPage)} onPageChange={setPage} size="sm" />
+            <Pagination page={page} totalPages={Math.ceil(totalCount / rowsPerPage)} onPageChange={setPage} size="sm" />
           </div>
         </div>
       </Card>

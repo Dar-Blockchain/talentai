@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
 import axiosInstance from '@/utils/axiosInstance';
-import { Campaign } from '@/types/campaign';
+import { Campaign } from '@/modules/company/campaigns/types/campaign';
 import { GlobalStyles, InterviewSpinner, InterviewErrorState, QuestionnaireAssessment } from '@/modules/interviews/questionnaire';
 import { buildInterviewUrl }      from '@/lib/interviewSession';
 

@@ -21,7 +21,7 @@ import {
   VisibilityOutlined,
 } from "@mui/icons-material";
 import { motion } from "framer-motion";
-import { ModuleType, ParticipantStatus } from "@/types/campaign";
+import { ModuleType, ParticipantStatus } from "@/modules/company/campaigns/types/campaign";
 import { EmployeeCampaignEntry } from "@/modules/company/campaigns/types";
 import { buildInterviewUrl } from "@/lib/interviewSession";
 

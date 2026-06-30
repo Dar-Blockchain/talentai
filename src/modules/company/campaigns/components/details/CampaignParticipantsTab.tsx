@@ -24,9 +24,9 @@ import {
   useRemoveParticipantMutation,
 } from "../../queries";
 import { useDepartmentsQuery } from "@/modules/company/employees/queries";
-import { CampaignParticipant, NonParticipant, ParticipantStatus } from "@/types/campaign";
+import { CampaignParticipant, NonParticipant, ParticipantStatus } from "@/modules/company/campaigns/types/campaign";
 import { Pagination } from "@/modules/shared/ui/shadcn/pagination";
-import { ROLES } from "@/constants/employee";
+import { ROLES } from "@/modules/shared/constants/employee";
 import { useTranslation } from "react-i18next";
 
 // ─── Constants ────────────────────────────────────────────────────────────────

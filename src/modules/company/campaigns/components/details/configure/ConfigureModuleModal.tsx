@@ -9,8 +9,8 @@ import {
   Divider,
   Typography,
 } from "@mui/material";
-import { CampaignModule, ModuleType } from "@/types/campaign";
-import { MODULE_CONFIG } from "@/constants/campaign";
+import { CampaignModule, ModuleType } from "@/modules/company/campaigns/types/campaign";
+import { MODULE_CONFIG } from "@/modules/shared/constants/campaign";
 import AppButton from "@/components/ui/AppButton";
 import QuestionnaireForm, { QuestionnaireConfig } from "./QuestionnaireForm";
 import AIInterviewForm, { AIInterviewConfig } from "./AIInterviewForm";

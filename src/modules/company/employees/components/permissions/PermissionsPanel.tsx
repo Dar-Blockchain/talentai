@@ -12,7 +12,7 @@ import GroupsOutlined from "@mui/icons-material/GroupsOutlined";
 import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
 import CampaignOutlined from "@mui/icons-material/CampaignOutlined";
 import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
-import { EmployeePermission, EmployeePermissionKey, EMPLOYEE_PERMISSION_GROUPS, EMPLOYEE_PERMISSION_CATEGORIES } from "@/types/employeePermissions";
+import { EmployeePermission, EmployeePermissionKey, EMPLOYEE_PERMISSION_GROUPS, EMPLOYEE_PERMISSION_CATEGORIES } from "@/modules/company/employees/types/permissions";
 
 const PURPLE = "#8310FF";
 

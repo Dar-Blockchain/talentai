@@ -8,7 +8,7 @@ import EmployeeSkeletonCard from "./EmployeeSkeletonCard";
 import InvitationCard from "./InvitationCard";
 import EmployeesFilterBar from "./EmployeesFilterBar";
 import type { ExtendedMember } from "@/modules/company/employees/types";
-import { Invitation } from "@/types/employee";
+import { Invitation } from "@/modules/company/employees/types/employee";
 import { Department } from "@/modules/company/departments/types";
 import { PURPLE, AMBER, GRID } from "./constants";
 import { Pagination } from "@/modules/shared/ui/shadcn/pagination";

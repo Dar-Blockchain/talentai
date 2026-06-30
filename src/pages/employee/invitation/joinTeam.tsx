@@ -22,7 +22,7 @@ import Shell from "@/modules/employee/invitation/components/Shell";
 import InfoRow from "@/modules/employee/invitation/components/InfoRow";
 import AppButton from "@/components/ui/AppButton";
 import { PURPLE, TEAL } from "@/modules/employee/invitation/constants";
-import { ROLES } from "@/constants/employee";
+import { ROLES } from "@/modules/shared/constants/employee";
 
 // Map legacy backend role strings → ROLES array lookup key
 const ROLE_VALUE_MAP: Record<string, string> = {

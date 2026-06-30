@@ -2,7 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { Box } from "@mui/material";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
-import { getPostSkills } from "@/utils/postHelpers";
+import { getPostSkills } from '@/modules/company/posts/utils/postHelpers';
 import ThresholdCard from "./overview/ThresholdCard";
 import OverviewCard from "./overview/OverviewCard";
 import SkillsCard from "./overview/SkillsCard";

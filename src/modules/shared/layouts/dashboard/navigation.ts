@@ -12,7 +12,7 @@ import {
   NotificationsNoneOutlined,
   PeopleAltOutlined,
 } from "@mui/icons-material";
-import { EmployeePermissionKey } from "@/types/employeePermissions";
+import { EmployeePermissionKey } from "@/modules/company/employees/types/permissions";
 import { MESSAGES_BASE_PATH } from "@/modules/chat/shared/constants/messagesRoutes";
 
 export const navigation = [

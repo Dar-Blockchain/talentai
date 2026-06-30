@@ -3,7 +3,7 @@ import {
   Box, TextField, InputAdornment, MenuItem, Select, FormControl,
   Button, Typography, Chip,
 } from "@mui/material";
-import { CampaignStatus } from "@/types/campaign";
+import { CampaignStatus } from "@/modules/company/campaigns/types/campaign";
 import { motion, AnimatePresence } from "framer-motion";
 import CampaignCard from "./CampaignCard";
 import CampaignsSkeleton from "./CampaignsSkeleton";

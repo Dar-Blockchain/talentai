@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { usePermissionsQuery } from "@/modules/company/employees/queries";
-import { CampaignStatus } from "@/types/campaign";
+import { CampaignStatus } from "@/modules/company/campaigns/types/campaign";
 import {
   useCampaignsListQuery, useCampaignMetricsQuery,
   useDeleteCampaignMutation,

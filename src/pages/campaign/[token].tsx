@@ -23,7 +23,7 @@ import {
 } from '@mui/icons-material';
 import { apiFetchByLinkToken, apiJoinByLink } from '@/modules/company/campaigns/api';
 import { RootState } from '@/store/store';
-import { Campaign } from '@/types/campaign';
+import { Campaign } from '@/modules/company/campaigns/types/campaign';
 import { fmtDate, isDeadlinePassed } from '@/utils/functions';
 import { buildInterviewUrl } from '@/lib/interviewSession';
 

@@ -7,8 +7,8 @@ import PlayArrowOutlined  from "@mui/icons-material/PlayArrow";
 import PauseOutlined      from "@mui/icons-material/PauseOutlined";
 import StopOutlined       from "@mui/icons-material/StopOutlined";
 import InfoOutlined       from "@mui/icons-material/InfoOutlined";
-import { CampaignStatus } from "@/types/campaign";
-import { STATUS_COLORS } from "@/constants/campaign";
+import { CampaignStatus } from "@/modules/company/campaigns/types/campaign";
+import { STATUS_COLORS } from "@/modules/shared/constants/campaign";
 import { useTranslation, Trans } from "react-i18next";
 
 const STATUS_ICONS: Partial<Record<CampaignStatus, React.ElementType>> = {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Briefcase, CheckCircle2, Code2, Brain } from 'lucide-react';
-import { getLevelFromNumber, getSoftSkillLevelLabel, type Skill } from '@/utils/postHelpers';
+import { getLevelFromNumber, getSoftSkillLevelLabel, type Skill } from '@/modules/company/posts/utils/postHelpers';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { SectionCard, SectionTitle } from './JobPanelShared';

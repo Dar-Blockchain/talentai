@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { employeesApi } from "../api";
 import type { FetchMembersFilters, AddMemberPayload, UpdateRolePayload } from "@/modules/company/members/types";
-import type { EmployeePermission } from "@/types/employeePermissions";
+import type { EmployeePermission } from "@/modules/company/employees/types/permissions";
 
 export const EMPLOYEE_QUERY_KEYS = {
   members: (filters: FetchMembersFilters) => ["employees", "list", filters] as const,

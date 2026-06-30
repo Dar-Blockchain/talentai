@@ -10,7 +10,7 @@ import RadioButtonUncheckedOutlined from "@mui/icons-material/RadioButtonUncheck
 import AccessTimeOutlined           from "@mui/icons-material/AccessTimeOutlined";
 import BlockOutlined                from "@mui/icons-material/BlockOutlined";
 import { useCampaignSessionsQuery } from "../../queries";
-import { SessionStatus } from "@/types/campaign";
+import { SessionStatus } from "@/modules/company/campaigns/types/campaign";
 import { Pagination } from "@/modules/shared/ui/shadcn/pagination";
 import { useTranslation } from "react-i18next";
 

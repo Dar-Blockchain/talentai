@@ -18,7 +18,7 @@ import SmartToyIcon from "@mui/icons-material/SmartToy";
 import CampaignIcon from "@mui/icons-material/Campaign";
 import BugReportIcon from "@mui/icons-material/BugReport";
 import BusinessCenterIcon from "@mui/icons-material/BusinessCenter";
-import { ALL_SKILLS } from "@/modules/shared/skills";
+import { ALL_SKILLS } from "@/modules/shared/constants/skills";
 import { useTranslation } from "react-i18next";
 
 // ─── Types ────────────────────────────────────────────────────────────────────

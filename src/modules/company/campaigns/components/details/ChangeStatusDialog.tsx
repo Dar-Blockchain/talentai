@@ -16,12 +16,12 @@ import {
   Check as CheckIcon,
 } from "@mui/icons-material";
 import AppButton from "@/components/ui/AppButton";
-import { CampaignStatus } from "@/types/campaign";
+import { CampaignStatus } from "@/modules/company/campaigns/types/campaign";
 import {
   STATUS_COLORS,
   STATUS_TRANSITIONS,
   STATUS_TRANSITION_LABELS,
-} from "@/constants/campaign";
+} from "@/modules/shared/constants/campaign";
 
 interface Props {
   open: boolean;

@@ -15,8 +15,8 @@ import OpenInNewOutlined from "@mui/icons-material/OpenInNewOutlined";
 import MoreVertOutlined from "@mui/icons-material/MoreVertOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
-import { ROLES } from "@/constants/employee";
-import { getRoleLabel } from "@/utils/employeeRoleI18n";
+import { ROLES } from "@/modules/shared/constants/employee";
+import { getRoleLabel } from '@/modules/company/employees/utils/employeeRoleI18n';
 import type { ExtendedMember } from "@/modules/company/employees/types";
 import { PURPLE, ROLE_STYLES, pickPalette } from "@/modules/company/employees/constants";
 

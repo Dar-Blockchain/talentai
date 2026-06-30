@@ -11,7 +11,7 @@ import { Pagination } from "@/modules/shared/ui/shadcn/pagination";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
 import { EmployeesFilterBar, ROLE_LABELS, ROLE_STYLES } from "@/modules/company/employees/components/list";
 import type { RoleFilter, SortOption } from "@/modules/company/employees/components/list";
-import { ROLES } from "@/constants/employee";
+import { ROLES } from "@/modules/shared/constants/employee";
 
 const PURPLE = "#8310FF";
 const PAGE_SIZE = 10;

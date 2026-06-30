@@ -17,7 +17,7 @@ import {
 import { Search, Loader2 } from 'lucide-react';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { Card } from '@/modules/shared/ui/shadcn/card';
-import { SimplePagination } from '@/modules/shared/ui/shadcn/pagination-simple';
+import { Pagination } from '@/modules/shared/ui/shadcn/pagination';
 import {
   ADMIN_NEUTRAL, AdminPageHeading, AdminStatCard, AdminTableErrorRow, ConfirmDialog,
 } from '@/modules/admin/shared';
@@ -201,7 +201,7 @@ const PostsManagement: React.FC = () => {
             >
               {[5, 10, 25].map((n) => <option key={n} value={n}>{n} / page</option>)}
             </select>
-            <SimplePagination page={page} totalPages={totalPages} onPageChange={setPage} size="sm" />
+            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} size="sm" />
           </div>
         </div>
       </Card>

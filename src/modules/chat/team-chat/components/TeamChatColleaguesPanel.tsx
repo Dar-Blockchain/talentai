@@ -24,7 +24,7 @@ import { RootState } from "@/store/store";
 import type { Member } from "@/modules/company/members/types";
 import { useMembersQuery } from "@/modules/company/employees/queries";
 import { useStartTeamChat } from "@/modules/chat/team-chat/hooks/useStartTeamChat";
-import { getRoleLabel } from "@/utils/employeeRoleI18n";
+import { getRoleLabel } from '@/modules/company/employees/utils/employeeRoleI18n';
 import { TEAM_MINT_UI, TEAM_MINT_SCROLLBAR_SX } from "@/modules/chat/shared/constants/teamMintUi";
 
 const M = TEAM_MINT_UI;

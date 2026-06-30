@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Box } from '@mui/material';
 
-import { Campaign } from '@/types/campaign';
+import { Campaign } from '@/modules/company/campaigns/types/campaign';
 import axiosInstance from '@/utils/axiosInstance';
 
 import InterviewPageHeader from './InterviewPageHeader';

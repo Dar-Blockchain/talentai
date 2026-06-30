@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { usePermissionsQuery } from "@/modules/company/employees/queries";
-import { EmployeePermissionKey } from "@/types/employeePermissions";
+import { EmployeePermissionKey } from "@/modules/company/employees/types/permissions";
 
 export function useCompanyAccess(permission: EmployeePermissionKey) {
   const router = useRouter();

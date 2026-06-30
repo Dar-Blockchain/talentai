@@ -1,7 +1,7 @@
 import React, { memo } from "react";
 import { Box, Typography, Chip } from "@mui/material";
 import CloseOutlined from "@mui/icons-material/CloseOutlined";
-import { ROLES } from "@/constants/employee";
+import { ROLES } from "@/modules/shared/constants/employee";
 
 const DELETE_ICON_STYLE = { fontSize: 11 } as const;
 

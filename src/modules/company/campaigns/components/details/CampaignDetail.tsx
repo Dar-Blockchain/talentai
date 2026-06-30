@@ -1,7 +1,7 @@
 import React, { memo, useState, useMemo, useCallback } from "react";
 import { Box, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import { Campaign, CampaignModule, CampaignStatus, ModuleType, ParticipantStatus } from "@/types/campaign";
+import { Campaign, CampaignModule, CampaignStatus, ModuleType, ParticipantStatus } from "@/modules/company/campaigns/types/campaign";
 import CampaignHeader from "./CampaignHeader";
 import CampaignDetailsCard from "./CampaignDetailsCard";
 import CampaignModuleCard from "./CampaignModuleCard";
@@ -25,7 +25,7 @@ import RadioButtonUncheckedOutlined from "@mui/icons-material/RadioButtonUncheck
 import TuneOutlined                 from "@mui/icons-material/TuneOutlined";
 import RocketLaunchOutlined         from "@mui/icons-material/RocketLaunchOutlined";
 import VisibilityOffOutlined        from "@mui/icons-material/VisibilityOffOutlined";
-import { MODULE_CONFIG } from "@/constants/campaign";
+import { MODULE_CONFIG } from "@/modules/shared/constants/campaign";
 import { daysLeft, isDeadlinePassed } from "@/utils/functions";
 import { buildInterviewUrl } from "@/lib/interviewSession";
 

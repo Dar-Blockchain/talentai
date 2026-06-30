@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Box, Chip } from "@mui/material";
 import CodeOutlined from "@mui/icons-material/CodeOutlined";
 import SectionCard from "@/components/ui/SectionCard";
-import { getLevelFromNumber, getSoftSkillLevelLabel, Skill } from "@/utils/postHelpers";
+import { getLevelFromNumber, getSoftSkillLevelLabel, Skill } from '@/modules/company/posts/utils/postHelpers';
 import SectionTitle from "./SectionTitle";
 
 const TEAL        = "#0D9488";

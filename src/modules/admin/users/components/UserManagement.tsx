@@ -18,7 +18,7 @@ import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { Avatar, AvatarFallback } from '@/modules/shared/ui/shadcn/avatar';
 import { Tabs, TabsList, TabsTrigger } from '@/modules/shared/ui/shadcn/tabs';
-import { SimplePagination } from '@/modules/shared/ui/shadcn/pagination-simple';
+import { Pagination } from '@/modules/shared/ui/shadcn/pagination';
 import { cn } from '@/lib/utils';
 import { ADMIN_ACCENT, AdminPageHeading, AdminStatCard, AdminTableErrorRow } from '@/modules/admin/shared';
 import { Tooltip, IconButton } from '@mui/material';
@@ -258,7 +258,7 @@ const UserManagement: React.FC<UserManagementProps> = ({
             >
               {[5, 10, 25].map((n) => <option key={n} value={n}>{n} / page</option>)}
             </select>
-            <SimplePagination
+            <Pagination
               page={page + 1}
               totalPages={totalPages}
               onPageChange={(p) => handleChangePage(null, p - 1)}
