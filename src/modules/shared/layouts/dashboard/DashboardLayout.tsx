@@ -12,14 +12,8 @@ import OnboardingTour from "@/modules/company/tour";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
-  /** Less top padding on the main scroll area (full-height chat, etc.). */
   tightenMainPaddingTop?: boolean;
-  /** Less bottom padding so full-height chat uses more of the viewport. */
   tightenMainPaddingBottom?: boolean;
-  /**
-   * Main column becomes a flex viewport (overflow hidden); children use flex:1 to fill under the header.
-   * Use with team messages + `chatDashboardShellFlexSx` so chat reaches the bottom with no dead gap.
-   */
   fillMainHeight?: boolean;
 }
 
@@ -33,7 +27,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   tightenMainPaddingBottom = false,
   fillMainHeight = false,
 }) => {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() =>
+    typeof window !== "undefined" && window.innerWidth < 1280
+  );
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
 
@@ -48,7 +44,6 @@ useEffect(() => {
     navigation.forEach((item) => router.prefetch(item.href));
   }, [router]);
 
-  // Close mobile sidebar on every navigation
   useEffect(() => {
     const handleRouteChange = () => setMobileOpen(false);
     router.events.on("routeChangeStart", handleRouteChange);
@@ -57,7 +52,6 @@ useEffect(() => {
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const isSmallDesktop = useMediaQuery(theme.breakpoints.between("md", "lg"));
 
   const breadcrumb = useMemo(() => {
     const path = typeof window !== "undefined" ? window.location.pathname : "";
@@ -65,53 +59,38 @@ useEffect(() => {
     return current?.label || "Dashboard";
   }, []);
 
-  const effectiveCollapsed = collapsed || isSmallDesktop;
-  const drawerWidth = effectiveCollapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH;
+  const sidebarWidth = isMobile ? 0 : (collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH);
 
   useEffect(() => {
-    document.body.style.setProperty(
-      "--layout-sidebar-width",
-      isMobile ? "0px" : `${drawerWidth}px`
-    );
-  }, [drawerWidth, isMobile]);
+    document.body.style.setProperty("--layout-sidebar-width", `${sidebarWidth}px`);
+  }, [sidebarWidth]);
 
   return (
     <Box sx={{ display: "flex", height: "100dvh" }}>
       <OnboardingTour />
-      {/* Sidebar */}
       <Sidebar
-        collapsed={effectiveCollapsed}
+        collapsed={collapsed}
         setCollapsed={setCollapsed}
         mobileOpen={mobileOpen}
         onCloseMobile={() => setMobileOpen(false)}
       />
 
-      {/* Main content wrapper */}
-      <Box
-        sx={{
-          flex: 1,
-          minWidth: 0,
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        {/* Header */}
+      <Box sx={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
         <Box
           sx={{
             position: "fixed",
             top: 0,
-            left: isMobile ? 0 : drawerWidth,
+            left: isMobile ? 0 : sidebarWidth,
             right: 0,
             height: HEADER_HEIGHT,
             zIndex: 1200,
-            width: isMobile ? "100%" : `calc(100% - ${drawerWidth}px)`,
+            width: isMobile ? "100%" : `calc(100% - ${sidebarWidth}px)`,
             transition: "left 0.3s, width 0.3s",
           }}
         >
-          <Header breadcrumb={breadcrumb} onOpenMobile={() => setMobileOpen(true)} />
+          <Header breadcrumb={breadcrumb} mobileOpen={mobileOpen} onOpenMobile={() => setMobileOpen((o) => !o)} />
         </Box>
 
-        {/* Main content: scrollable dashboard pages, or flex viewport for full-height chat */}
         <DashboardMain
           fillMainHeight={fillMainHeight}
           tightenMainPaddingTop={tightenMainPaddingTop}

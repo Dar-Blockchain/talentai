@@ -185,8 +185,8 @@ useEffect(() => {
             display: "flex", alignItems: "center",
             gap: isCollapsed ? 0 : 1.25,
             px: isCollapsed ? 0 : 1.25,
-            py: isCollapsed ? 0 : 0.875,
-            height: isCollapsed ? 42 : "auto",
+            py: isCollapsed ? 0 : 0.25,
+            height: isCollapsed ? 28 : "auto",
             borderRadius: "9px",
             justifyContent: isCollapsed ? "center" : "flex-start",
             cursor: "pointer", transition: "all 0.12s", position: "relative",
@@ -539,41 +539,40 @@ useEffect(() => {
 
   return (
     <>
-      {!isMobile && (
-        <Drawer
-          variant="permanent"
-          sx={{
-            width: drawerWidth,
-            flexShrink: 0,
-            "& .MuiDrawer-paper": {
-              width: drawerWidth,
-              transition: "width 0.22s cubic-bezier(0.4,0,0.2,1)",
-              overflowX: "hidden",
-              borderRight: `1px solid ${BORDER}`,
-              boxShadow: "2px 0 12px rgba(0,0,0,0.06)",
-              bgcolor: BG,
-            },
-          }}
-        >
-          {content(false)}
-        </Drawer>
-      )}
-      {isMobile && (
-        <Drawer
-          open={mobileOpen}
-          onClose={onCloseMobile}
-          sx={{
-            "& .MuiDrawer-paper": {
-              width: DRAWER_WIDTH,
-              overflowX: "hidden",
-              borderRight: `1px solid ${BORDER}`,
-              bgcolor: BG,
-            },
-          }}
-        >
-          {content(true)}
-        </Drawer>
-      )}
+      {/* Permanent sidebar — hidden on mobile via width:0, always present on tablet+ */}
+      <Drawer
+        variant="permanent"
+        sx={{
+          width: isMobile ? 0 : drawerWidth,
+          flexShrink: 0,
+          "& .MuiDrawer-paper": {
+            width: isMobile ? 0 : drawerWidth,
+            transition: "width 0.22s cubic-bezier(0.4,0,0.2,1)",
+            overflowX: "hidden",
+            borderRight: isMobile ? "none" : `1px solid ${BORDER}`,
+            boxShadow: isMobile ? "none" : "2px 0 12px rgba(0,0,0,0.06)",
+            bgcolor: BG,
+          },
+        }}
+      >
+        {content(false)}
+      </Drawer>
+
+      {/* Overlay drawer — opens on hamburger tap for mobile + tablet */}
+      <Drawer
+        open={mobileOpen}
+        onClose={onCloseMobile}
+        sx={{
+          "& .MuiDrawer-paper": {
+            width: DRAWER_WIDTH,
+            overflowX: "hidden",
+            borderRight: `1px solid ${BORDER}`,
+            bgcolor: BG,
+          },
+        }}
+      >
+        {content(true)}
+      </Drawer>
     </>
   );
 };

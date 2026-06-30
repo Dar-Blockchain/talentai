@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Menu } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { Button } from "@/modules/shared/ui/shadcn/button";
@@ -16,10 +16,11 @@ import Link from "next/link";
 
 interface HeaderProps {
   onOpenMobile: () => void;
+  mobileOpen?: boolean;
   breadcrumb?: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
+const Header: React.FC<HeaderProps> = ({ onOpenMobile, mobileOpen }) => {
   const user = useSelector((state: RootState) => state.user.connectedUser.user);
   const isCandidate = user?.role === "Candidate";
 
@@ -31,9 +32,9 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
           variant="ghost"
           size="icon"
           onClick={onOpenMobile}
-          className="min-[900px]:hidden h-9 w-9 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors"
+          className="xl:hidden h-9 w-9 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors"
         >
-          <Menu className="h-5 w-5" />
+          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
 
         {isCandidate && (
@@ -51,7 +52,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
 
       {/* ── Center: search fills remaining space (hidden on mobile) ── */}
       {!isCandidate && (
-        <div className="hidden min-[900px]:flex flex-1 min-w-0 mx-4">
+        <div className="hidden xl:flex flex-1 min-w-0 mx-4">
           <GlobalSearch />
         </div>
       )}
