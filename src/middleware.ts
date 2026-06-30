@@ -55,11 +55,6 @@ function isAuthOnly(pathname: string): boolean {
   return AUTH_ONLY_PATHS.some((pub) => p === pub || p.startsWith(pub + "/"));
 }
 
-function isAllowedForUnauthenticated(pathname: string): boolean {
-  const p = clean(pathname);
-  return isPublic(p);
-}
-
 // Only these values are valid auth roles
 const KNOWN_ROLES = ["Admin", "Company", "Employee", "Candidate"];
 
@@ -106,6 +101,18 @@ export function middleware(request: NextRequest) {
   // protection because jwt_token is an httpOnly cookie set by the backend API
   // domain and is therefore invisible to middleware running on the frontend domain.
   const authPresent = request.cookies.get("auth_present")?.value;
+
+  // Legacy sessions: auth_present = "1" was stored before the role was saved in
+  // the cookie. Clear it and send to /signin so the user re-authenticates once
+  // and gets a fresh cookie with the proper role value.
+  if (authPresent === "1") {
+    const res = isPublic(pathname)
+      ? NextResponse.next()
+      : NextResponse.redirect(new URL("/signin", request.url));
+    res.cookies.delete("auth_present");
+    return res;
+  }
+
   const isAuthenticated = !!authPresent;
   const role = isAuthenticated ? resolveRoleFromCookie(authPresent!) : null;
 
