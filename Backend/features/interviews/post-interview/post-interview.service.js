@@ -211,6 +211,11 @@ module.exports.getAllPostInterviewAssessments = async (filters = {}, page = 1, l
     if (filters.company) {
       query.company = filters.company;
     }
+    if (filters.archived === true || filters.archived === 'true') {
+      query.archived = true;
+    } else if (filters.archived === false || filters.archived === 'false') {
+      query.archived = { $ne: true };
+    }
 
     // Calculate skip and limit for pagination
     const skip = (page - 1) * limit;

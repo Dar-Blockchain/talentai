@@ -261,12 +261,12 @@
       "download": "Download QR"
     },
     "tooltips": {
-      "cannot_edit_published": "Cannot edit — post is already published",
+      "cannot_edit_published": "Cannot edit — candidates have already applied to this post",
       "cannot_edit_passed": "Cannot edit — candidates have already passed this interview"
     },
     "menu": {
       "edit_title": "Edit Post",
-      "edit_desc_published": "Only editable while draft",
+      "edit_desc_published": "Cannot edit once applications exist",
       "edit_desc_draft": "Modify job details",
       "delete_title": "Delete Post",
       "delete_desc": "Permanently remove"

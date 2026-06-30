@@ -201,6 +201,16 @@ const skillInterviewAssessmentSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now
+  },
+
+  // ========== ADMIN MODERATION ==========
+  archived: {
+    type: Boolean,
+    default: false
+  },
+  archivedAt: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: true,
@@ -212,6 +222,7 @@ skillInterviewAssessmentSchema.index({ candidateId: 1 });
 skillInterviewAssessmentSchema.index({ skill: 1 });
 skillInterviewAssessmentSchema.index({ proficiency: 1 });
 skillInterviewAssessmentSchema.index({ createdAt: -1 });
+skillInterviewAssessmentSchema.index({ archived: 1 });
 
 // ========== MIDDLEWARE ==========
 // Update updatedAt on save

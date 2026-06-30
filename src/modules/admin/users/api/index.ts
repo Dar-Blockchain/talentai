@@ -1,6 +1,6 @@
 import axiosInstance from "@/utils/axiosInstance";
 import { apiCall } from "@/utils/apiCall";
-import { FetchUsersParams, User } from "../types";
+import { FetchUsersParams, User, UserStats } from "../types";
 
 export const adminUsersApi = {
   fetchUsers: (params: FetchUsersParams) =>
@@ -19,6 +19,7 @@ export const adminUsersApi = {
         return {
           users: (data.users || []) as User[],
           total: data.pagination?.totalUsers ?? data.total ?? 0,
+          stats: data.stats as UserStats | undefined,
         };
       },
       "Failed to load users.",

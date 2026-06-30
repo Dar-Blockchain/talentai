@@ -63,35 +63,6 @@ module.exports.enableAutoRenew = async (req, res) => {
   }
 };
 
-module.exports.adminCreateSubscription = async (req, res) => {
-  try {
-    const { companyProfileId, planId, startDate, notes } = req.body;
-    const result = await subscriptionService.adminCreateSubscription({ companyProfileId, planId, startDate, notes });
-    res.status(201).json(result);
-  } catch (error) {
-    handleError(res, error, 400);
-  }
-};
-
-module.exports.searchCompanies = async (req, res) => {
-  try {
-    const result = await subscriptionService.searchCompanies(req.query.search);
-    res.status(200).json(result);
-  } catch (error) {
-    handleError(res, error);
-  }
-};
-
-module.exports.getAllCompaniesWithSubscriptions = async (req, res) => {
-  try {
-    const { search = "", page = 1, limit = 20 } = req.query;
-    const result = await subscriptionService.getAllCompaniesWithSubscriptions({ search, page: Number(page), limit: Number(limit) });
-    res.status(200).json(result);
-  } catch (error) {
-    handleError(res, error);
-  }
-};
-
 module.exports.getCombinedActiveDetails = async (req, res) => {
   const safeDefault = {
     success: true,

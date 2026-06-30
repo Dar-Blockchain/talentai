@@ -17,7 +17,7 @@ import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { cn } from '@/lib/utils';
 import { Permission, DEFAULT_PERMISSIONS } from '@/types/permissions';
 import { getToken } from '@/modules/auth/shared/utils/token';
-import { ADMIN_ACCENT, ADMIN_DARK_BANNER } from '@/modules/admin/shared';
+import { ADMIN_ACCENT, ADMIN_RADIUS } from '@/modules/admin/shared';
 
 // Type for the permissions object (without metadata fields)
 export type CompanyPermissions = Omit<Permission, '_id' | 'userId' | 'profileId' | 'lastModifiedBy' | 'notes' | 'createdAt' | 'updatedAt'>;
@@ -161,29 +161,28 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
       fullWidth
       PaperProps={{
         sx: {
-          borderRadius: '16px',
+          borderRadius: ADMIN_RADIUS,
           overflow: 'hidden',
-          boxShadow: '0 25px 50px -12px rgba(0,0,0,0.15)',
+          boxShadow: '0 16px 40px -8px rgba(15,23,42,0.12)',
           maxHeight: '90vh',
         },
       }}
     >
       {/* Header */}
-      <div
-        className="relative px-6 pt-6 pb-6"
-        style={{ backgroundColor: ADMIN_DARK_BANNER }}
-      >
+      <div className="relative px-6 pt-6 pb-4">
         <IconButton
           onClick={onClose}
-          sx={{ position: 'absolute', top: 12, right: 12, color: 'rgba(255,255,255,0.7)', '&:hover': { color: 'white' } }}
+          sx={{ position: 'absolute', top: 12, right: 12, color: '#94A3B8', '&:hover': { color: '#475569' } }}
         >
           <CloseIcon fontSize="small" />
         </IconButton>
         <div className="flex items-center gap-3">
-          <SecurityIcon style={{ fontSize: 28, color: 'rgba(255,255,255,0.9)' }} />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#EEF2FF' }}>
+            <SecurityIcon style={{ fontSize: 20, color: ADMIN_ACCENT }} />
+          </div>
           <div>
-            <h2 className="text-[1.15rem] font-bold text-white">Company Permissions</h2>
-            <p className="text-[13px] text-white/70">
+            <h2 className="text-[1.05rem] font-semibold text-slate-900">Company Permissions</h2>
+            <p className="text-[13px] text-slate-500">
               {getCompanyName()} &middot; {company?.email}
             </p>
           </div>

@@ -1,8 +1,9 @@
-/** Admin dashboard color tokens — mostly black/white/gray.
+/** Admin dashboard design tokens — minimal/Linear-Vercel style.
  *  Color is reserved for exactly three places: the sidebar's active nav
  *  item, primary action buttons, and semantic status badges. Everything
- *  else (icon chips, card headers, charts, table heads) is neutral slate —
- *  no gradients, no per-tab accent variety. */
+ *  else (icon chips, card headers, charts, table heads) is neutral slate.
+ *  Visual weight comes from soft shadows and generous spacing instead of
+ *  hard borders or color. */
 export const ADMIN_ACCENT = "#4F46E5";       // indigo-600 — ONLY for primary buttons + active sidebar item
 export const ADMIN_ACCENT_LIGHT = "#EEF2FF"; // indigo-50
 export const ADMIN_SIDEBAR_BG = "#0F172A";   // slate-900
@@ -11,7 +12,7 @@ export const ADMIN_SIDEBAR_TEXT_MUTED = "#94A3B8"; // slate-400
 
 /** Neutral icon-chip color — used for icon chips on cards/headers (no accent tint). */
 export const ADMIN_NEUTRAL = "#475569"; // slate-600
-export const ADMIN_NEUTRAL_BG = "#F1F5F9"; // slate-100
+export const ADMIN_NEUTRAL_BG = "#F8FAFC"; // slate-50, lighter than before — softer chip fill
 
 /** Dark banner — dialog hero headers (matches sidebar dark, not a washed-out gray). */
 export const ADMIN_DARK_BANNER = "#0F172A"; // slate-900
@@ -26,6 +27,13 @@ export const ADMIN_CHART_COLORS = [
   "#1E293B", "#475569", "#64748B", "#94A3B8", "#CBD5E1",
   "#0F172A", "#334155", "#71839B", "#A8B4C2", "#E2E8F0",
 ];
+
+/** Soft elevation shadows — replace hard 1px borders as the primary way
+ *  cards separate from the page background. Subtle by design: visible on
+ *  hover/focus, barely-there at rest. */
+export const ADMIN_SHADOW_REST = "0 1px 2px rgba(15, 23, 42, 0.04)";
+export const ADMIN_SHADOW_HOVER = "0 8px 24px -4px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04)";
+export const ADMIN_RADIUS = "14px"; // shared corner radius for cards/dialogs/inputs
 
 /**
  * Legacy gradient API — kept so existing call sites compile, but every name
@@ -54,7 +62,7 @@ export const adminGradientCss = (_name: AdminGradientName = "indigo", _deg = 135
 /** Single neutral "cycle" — every slot is the same flat slate, kept only so repeated-card call sites still type-check. */
 export const ADMIN_GRADIENT_CYCLE: AdminGradientName[] = ["indigo"];
 
-/** No glow — flat neutral shadow only, kept for call-site compatibility. */
+/** Soft ambient shadow, kept for call-site compatibility. */
 export const adminGlowShadow = (_name: AdminGradientName = "indigo") => {
-  return `0 1px 3px rgba(15, 23, 42, 0.08)`;
+  return ADMIN_SHADOW_REST;
 };

@@ -9,7 +9,7 @@ export const adminSubscriptionApi = {
   searchCompanies: (search: string) =>
     apiCall(
       async () => {
-        const { data } = await axiosInstance.get("subscriptions/admin/companies", { params: { search } });
+        const { data } = await axiosInstance.get("dashboard/subscriptions/companies", { params: { search } });
         return (data?.data ?? []) as CompanyOption[];
       },
       "Failed to search companies.",
@@ -18,7 +18,7 @@ export const adminSubscriptionApi = {
   create: (payload: { companyProfileId: string; planId: string; startDate?: string; notes?: string }) =>
     apiCall(
       async () => {
-        const { data } = await axiosInstance.post("subscriptions/admin", payload);
+        const { data } = await axiosInstance.post("dashboard/subscriptions", payload);
         return data?.data as AdminSubscription;
       },
       "Failed to create subscription.",
@@ -27,7 +27,7 @@ export const adminSubscriptionApi = {
   fetchCompaniesWithSubscriptions: (params: { search?: string; page?: number; limit?: number }) =>
     apiCall(
       async () => {
-        const { data } = await axiosInstance.get("subscriptions/admin/companies-with-status", { params });
+        const { data } = await axiosInstance.get("dashboard/subscriptions/companies-with-status", { params });
         return {
           data: data?.data ?? [],
           total: data?.total ?? 0,
@@ -43,7 +43,7 @@ export const adminPlanApi = {
   createPlan: (payload: PlanFormValues) =>
     apiCall(
       async () => {
-        const { data } = await axiosInstance.post("plan-limits", payload);
+        const { data } = await axiosInstance.post("dashboard/plans", payload);
         return data?.data as PlanLimit;
       },
       "Failed to create plan.",
@@ -53,7 +53,7 @@ export const adminPlanApi = {
   updatePlan: (name: string, updates: Partial<Omit<PlanFormValues, "name">>) =>
     apiCall(
       async () => {
-        const { data } = await axiosInstance.put("plan-limits", { name, ...updates });
+        const { data } = await axiosInstance.put("dashboard/plans", { name, ...updates });
         return data?.data as PlanLimit;
       },
       "Failed to update plan.",

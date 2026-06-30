@@ -10,9 +10,6 @@ import {
   Avatar,
   IconButton,
   Tooltip,
-  Tab,
-  Tabs,
-  styled,
 } from '@mui/material';
 import {
   Visibility as VisibilityIcon,
@@ -38,28 +35,7 @@ import { usePagination } from '@/hooks/usePagination';
 import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { cn } from '@/lib/utils';
-import { ADMIN_ACCENT, ADMIN_NEUTRAL, ADMIN_TABLE_HEAD_CELL_SX, ADMIN_TABLE_ROW_SX, AdminPageHeading, AdminTableErrorRow } from '@/modules/admin/shared';
-
-const StyledTabs = styled(Tabs)({
-  minHeight: 40,
-  '& .MuiTabs-indicator': {
-    backgroundColor: ADMIN_NEUTRAL,
-    height: 3,
-    borderRadius: '3px 3px 0 0',
-  },
-});
-
-const StyledTab = styled(Tab)({
-  minHeight: 40,
-  textTransform: 'none',
-  fontWeight: 600,
-  fontSize: '0.85rem',
-  color: '#64748B',
-  padding: '8px 16px',
-  '&.Mui-selected': {
-    color: ADMIN_NEUTRAL,
-  },
-});
+import { ADMIN_ACCENT, ADMIN_TABLE_HEAD_CELL_SX, ADMIN_TABLE_ROW_SX, AdminPageHeading, AdminStatCard, AdminTableErrorRow, PillTabs, PillTab } from '@/modules/admin/shared';
 
 const roleBadgeClass = (role: string) => {
   switch (role?.toLowerCase()) {
@@ -125,6 +101,7 @@ const UserManagement: React.FC<UserManagementProps> = ({
 
   const users = (data?.users ?? []) as User[];
   const totalUsers = data?.total ?? 0;
+  const stats = data?.stats;
 
   const handleChangePage = useCallback(
     (event: unknown, newPage: number) => onPageChange(event, newPage),
@@ -158,6 +135,15 @@ const UserManagement: React.FC<UserManagementProps> = ({
     <div>
       {/* Header */}
       <AdminPageHeading title="User Management" subtitle={`${totalUsers.toLocaleString()} total users across the platform`} />
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+        <AdminStatCard icon={PeopleIcon} value={(stats?.total ?? 0).toLocaleString()} label="Total Users" loading={loading && !stats} />
+        <AdminStatCard icon={PersonIcon} value={(stats?.candidates ?? 0).toLocaleString()} label="Candidates" loading={loading && !stats} />
+        <AdminStatCard icon={BusinessIcon} value={(stats?.companies ?? 0).toLocaleString()} label="Companies" loading={loading && !stats} />
+        <AdminStatCard icon={CheckCircleIcon} value={(stats?.verified ?? 0).toLocaleString()} label="Verified" loading={loading && !stats} />
+        <AdminStatCard icon={PendingIcon} value={(stats?.pending ?? 0).toLocaleString()} label="Pending" loading={loading && !stats} />
+      </div>
 
       {/* Filters & Tabs */}
       <Card className="mb-6 overflow-hidden py-0 gap-0">
@@ -199,12 +185,12 @@ const UserManagement: React.FC<UserManagementProps> = ({
         </div>
         {/* Role Tabs */}
         <div className="border-t border-slate-100 px-2">
-          <StyledTabs value={roleTabIndex >= 0 ? roleTabIndex : 0} onChange={handleRoleTabChange}>
-            <StyledTab icon={<PeopleIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="All" />
-            <StyledTab icon={<PersonIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Candidates" />
-            <StyledTab icon={<BusinessIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Companies" />
-            <StyledTab icon={<AdminIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Admins" />
-          </StyledTabs>
+          <PillTabs value={roleTabIndex >= 0 ? roleTabIndex : 0} onChange={handleRoleTabChange}>
+            <PillTab icon={<PeopleIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="All" />
+            <PillTab icon={<PersonIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Candidates" />
+            <PillTab icon={<BusinessIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Companies" />
+            <PillTab icon={<AdminIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Admins" />
+          </PillTabs>
         </div>
       </Card>
 

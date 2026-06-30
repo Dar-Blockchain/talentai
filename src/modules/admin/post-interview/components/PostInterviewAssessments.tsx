@@ -17,9 +17,9 @@ import {
   MenuItem,
   SelectChangeEvent,
   Tooltip,
-  Tab,
-  Tabs,
-  styled,
+  Menu,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import {
   Visibility as VisibilityIcon,
@@ -29,65 +29,40 @@ import {
   TrendingUp as SatisfactoryIcon,
   TrendingDown as NeedsImprovementIcon,
   Assessment as AllIcon,
+  MoreVert as MoreVertIcon,
+  Archive as ArchiveIcon,
+  Unarchive as UnarchiveIcon,
+  DeleteForever as DeleteForeverIcon,
 } from '@mui/icons-material';
-import { useAdminPostAssessmentsQuery } from '../queries';
+import { useAdminPostAssessmentsQuery, useArchivePostAssessmentMutation, useUnarchivePostAssessmentMutation, useDeletePostAssessmentMutation } from '../queries';
 import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
-import { ScoreBadge, scoreTone, ADMIN_ACCENT, ADMIN_NEUTRAL, ADMIN_DARK_BANNER, ADMIN_TABLE_HEAD_CELL_SX, ADMIN_TABLE_ROW_SX, AdminPageHeading, AdminTableErrorRow } from '@/modules/admin/shared';
-
-const StyledTabs = styled(Tabs)({
-  minHeight: 40,
-  '& .MuiTabs-indicator': {
-    backgroundColor: ADMIN_NEUTRAL,
-    height: 3,
-    borderRadius: '3px 3px 0 0',
-  },
-});
-
-const StyledTab = styled(Tab)({
-  minHeight: 40,
-  textTransform: 'none',
-  fontWeight: 600,
-  fontSize: '0.85rem',
-  color: '#64748B',
-  padding: '8px 16px',
-  '&.Mui-selected': {
-    color: ADMIN_NEUTRAL,
-  },
-});
+import { ScoreBadge, scoreTone, ADMIN_NEUTRAL, ADMIN_RADIUS, ADMIN_TABLE_HEAD_CELL_SX, ADMIN_TABLE_ROW_SX, AdminPageHeading, AdminStatCard, AdminTableErrorRow, ConfirmDialog, PillTabs, PillTab } from '@/modules/admin/shared';
 
 // Types
 interface PostInterviewAssessmentData {
   _id: string;
+  // Admin listing only populates these fields (see
+  // dashboard.service.js's getAllPostInterviewAssessmentsForAdmin) — keep
+  // this type in sync with that projection rather than the full Post/User
+  // documents.
   post: {
     _id: string;
     jobDetails?: {
       title?: string;
-      description?: string;
-      requirements?: string[];
-      responsibilities?: string[];
       location?: string;
       employmentType?: string;
-      experienceLevel?: string;
-      salary?: {
-        min?: number;
-        max?: number;
-        currency?: string;
-      };
     };
-    status?: string;
   };
   candidate: {
     _id: string;
     username?: string;
     email?: string;
-    role?: string;
   };
   company: {
     _id: string;
     username?: string;
     email?: string;
-    role?: string;
   };
   interviewData?: {
     finalReport?: {
@@ -120,6 +95,7 @@ interface PostInterviewAssessmentData {
   overallScore?: number;
   createdAt: string;
   updatedAt?: string;
+  archived?: boolean;
 }
 
 interface PostInterviewAssessmentsProps {
@@ -150,6 +126,14 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
   const [selectedAssessment, setSelectedAssessment] = useState<PostInterviewAssessmentData | null>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
 
+  // Row actions menu (archive/unarchive/delete)
+  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+  const [menuAssessment, setMenuAssessment] = useState<PostInterviewAssessmentData | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<PostInterviewAssessmentData | null>(null);
+  const archiveMutation = useArchivePostAssessmentMutation();
+  const unarchiveMutation = useUnarchivePostAssessmentMutation();
+  const deleteMutation = useDeletePostAssessmentMutation();
+
   // Pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -160,6 +144,7 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
   );
   const results = (data?.items ?? []) as PostInterviewAssessmentData[];
   const totalCount = data?.total ?? 0;
+  const stats = data?.stats;
 
   // Extract unique companies from results
   useEffect(() => {
@@ -207,6 +192,39 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
     setSelectedAssessment(assessment);
     setDetailsDialogOpen(true);
   }, []);
+
+  const openMenu = useCallback((event: React.MouseEvent<HTMLElement>, assessment: PostInterviewAssessmentData) => {
+    setMenuAnchor(event.currentTarget);
+    setMenuAssessment(assessment);
+  }, []);
+
+  const closeMenu = useCallback(() => {
+    setMenuAnchor(null);
+    setMenuAssessment(null);
+  }, []);
+
+  const handleArchiveToggle = useCallback(() => {
+    if (!menuAssessment) return;
+    if (menuAssessment.archived) {
+      unarchiveMutation.mutate(menuAssessment._id);
+    } else {
+      archiveMutation.mutate(menuAssessment._id);
+    }
+    closeMenu();
+  }, [menuAssessment, archiveMutation, unarchiveMutation, closeMenu]);
+
+  const handleDeleteRequest = useCallback(() => {
+    if (!menuAssessment) return;
+    setDeleteTarget(menuAssessment);
+    closeMenu();
+  }, [menuAssessment, closeMenu]);
+
+  const handleConfirmDelete = useCallback(() => {
+    if (!deleteTarget) return;
+    deleteMutation.mutate(deleteTarget._id, {
+      onSuccess: () => setDeleteTarget(null),
+    });
+  }, [deleteTarget, deleteMutation]);
 
   const handleScoreTabChange = useCallback((_: React.SyntheticEvent, newValue: number) => {
     setScoreTab(newValue);
@@ -269,6 +287,13 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
       {/* Header */}
       <AdminPageHeading title="Post Interview Assessments" subtitle={`${totalCount.toLocaleString()} assessments recorded`} />
 
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <AdminStatCard icon={AllIcon} value={(stats?.total ?? 0).toLocaleString()} label="Total Assessments" loading={loading && !stats} />
+        <AdminStatCard icon={ExcellentIcon} value={(stats?.excellent ?? 0).toLocaleString()} label="Excellent (70%+)" loading={loading && !stats} />
+        <AdminStatCard icon={SatisfactoryIcon} value={(stats?.satisfactory ?? 0).toLocaleString()} label="Satisfactory" loading={loading && !stats} />
+        <AdminStatCard icon={NeedsImprovementIcon} value={(stats?.needsWork ?? 0).toLocaleString()} label="Needs Work" loading={loading && !stats} />
+      </div>
+
       {/* Filters */}
       <Card className="mb-6 overflow-hidden py-0 gap-0">
         {/* Search & Company filter */}
@@ -309,12 +334,12 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
         </div>
         {/* Score Tabs */}
         <div className="border-t border-slate-100 px-2">
-          <StyledTabs value={scoreTab} onChange={handleScoreTabChange}>
-            <StyledTab icon={<AllIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="All" />
-            <StyledTab icon={<ExcellentIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Excellent (70%+)" />
-            <StyledTab icon={<SatisfactoryIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Satisfactory" />
-            <StyledTab icon={<NeedsImprovementIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Needs Work" />
-          </StyledTabs>
+          <PillTabs value={scoreTab} onChange={handleScoreTabChange}>
+            <PillTab icon={<AllIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="All" />
+            <PillTab icon={<ExcellentIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Excellent (70%+)" />
+            <PillTab icon={<SatisfactoryIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Satisfactory" />
+            <PillTab icon={<NeedsImprovementIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Needs Work" />
+          </PillTabs>
         </div>
       </Card>
 
@@ -392,6 +417,9 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
                             <VisibilityIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
+                        <IconButton size="small" onClick={(e) => openMenu(e, assessment)} sx={{ color: ADMIN_NEUTRAL }}>
+                          <MoreVertIcon fontSize="small" />
+                        </IconButton>
                       </TableCell>
                     </TableRow>
                   );
@@ -417,7 +445,7 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
         onClose={() => setDetailsDialogOpen(false)}
         maxWidth="md"
         fullWidth
-        PaperProps={{ sx: { borderRadius: '16px', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.15)' } }}
+        PaperProps={{ sx: { borderRadius: ADMIN_RADIUS, overflow: 'hidden', boxShadow: '0 16px 40px -8px rgba(15,23,42,0.12)' } }}
       >
         {selectedAssessment && (() => {
           const score = getOverallScore(selectedAssessment);
@@ -425,22 +453,22 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
           return (
             <>
               {/* Header */}
-              <div className="relative px-6 pt-6 pb-8" style={{ backgroundColor: ADMIN_DARK_BANNER }}>
-                <IconButton onClick={() => setDetailsDialogOpen(false)} sx={{ position: 'absolute', top: 12, right: 12, color: 'rgba(255,255,255,0.7)', '&:hover': { color: 'white' } }}>
+              <div className="relative px-6 pt-6 pb-4">
+                <IconButton onClick={() => setDetailsDialogOpen(false)} sx={{ position: 'absolute', top: 12, right: 12, color: '#94A3B8', '&:hover': { color: '#475569' } }}>
                   <CloseIcon fontSize="small" />
                 </IconButton>
-                <span className="text-[11px] uppercase tracking-[1.5px] text-white/70">Post Interview Assessment</span>
-                <h2 className="text-[1.5rem] font-bold text-white mt-1 pr-8">
+                <span className="text-[11px] uppercase tracking-[1.5px] text-slate-400">Post Interview Assessment</span>
+                <h2 className="text-[1.35rem] font-semibold text-slate-900 mt-1 pr-8">
                   {selectedAssessment.post?.jobDetails?.title || 'Assessment Review'}
                 </h2>
                 <div className="flex gap-2 mt-3 flex-wrap">
                   {selectedAssessment.status && (
-                    <Badge variant="outline" className="border-transparent bg-white/20 font-semibold capitalize text-white">
+                    <Badge variant="outline" className="border-transparent bg-slate-100 font-semibold capitalize text-slate-600">
                       {selectedAssessment.status}
                     </Badge>
                   )}
                   {selectedAssessment.stage && (
-                    <Badge variant="outline" className="border-transparent bg-white/15 capitalize text-white/90">
+                    <Badge variant="outline" className="border-transparent bg-slate-100 capitalize text-slate-500">
                       {selectedAssessment.stage}
                     </Badge>
                   )}
@@ -449,8 +477,8 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
 
               <DialogContent sx={{ p: 0 }}>
                 {/* Score Card */}
-                <div className="px-6 -mt-5">
-                  <div className="bg-white rounded-xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.08)] border border-slate-200 flex items-center gap-5">
+                <div className="px-6">
+                  <div className="bg-white rounded-xl p-5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] border border-slate-100 flex items-center gap-5">
                     <div className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${tone.color}14` }}>
                       <span className="text-[1.15rem] font-extrabold" style={{ color: tone.color }}>{score.toFixed(0)}%</span>
                     </div>
@@ -571,6 +599,32 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
           );
         })()}
       </Dialog>
+
+      <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
+        <MenuItem onClick={handleArchiveToggle}>
+          <ListItemIcon>
+            {menuAssessment?.archived ? <UnarchiveIcon fontSize="small" /> : <ArchiveIcon fontSize="small" />}
+          </ListItemIcon>
+          <ListItemText>{menuAssessment?.archived ? 'Unarchive' : 'Archive'}</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={handleDeleteRequest} sx={{ color: '#DC2626' }}>
+          <ListItemIcon sx={{ color: '#DC2626' }}>
+            <DeleteForeverIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Delete permanently</ListItemText>
+        </MenuItem>
+      </Menu>
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="Delete assessment permanently?"
+        description="This will permanently delete this post-interview assessment. This cannot be undone."
+        confirmLabel="Delete permanently"
+        destructive
+        loading={deleteMutation.isPending}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 };

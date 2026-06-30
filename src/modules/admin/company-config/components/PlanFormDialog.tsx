@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogActions, Button, IconButton, TextField, FormControlLabel, Switch, Alert, CircularProgress } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
-import { ADMIN_ACCENT, ADMIN_DARK_BANNER } from '@/modules/admin/shared';
+import { ADMIN_ACCENT, ADMIN_RADIUS } from '@/modules/admin/shared';
 import { useCreatePlanMutation, useUpdatePlanMutation } from '../queries';
 import { PlanLimit, PlanFormValues } from '../types';
 
@@ -87,19 +87,21 @@ const PlanFormDialog: React.FC<PlanFormDialogProps> = ({ open, onClose, plan, on
       onClose={onClose}
       maxWidth="sm"
       fullWidth
-      PaperProps={{ sx: { borderRadius: '16px', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.15)' } }}
+      PaperProps={{ sx: { borderRadius: ADMIN_RADIUS, overflow: 'hidden', boxShadow: '0 16px 40px -8px rgba(15,23,42,0.12)' } }}
     >
-      <div className="relative px-6 pt-6 pb-6" style={{ backgroundColor: ADMIN_DARK_BANNER }}>
-        <IconButton onClick={onClose} sx={{ position: 'absolute', top: 12, right: 12, color: 'rgba(255,255,255,0.7)', '&:hover': { color: 'white' } }}>
+      <div className="relative px-6 pt-6 pb-2">
+        <IconButton onClick={onClose} sx={{ position: 'absolute', top: 12, right: 12, color: '#94A3B8', '&:hover': { color: '#475569' } }}>
           <CloseIcon fontSize="small" />
         </IconButton>
         <div className="flex items-center gap-3">
-          <WorkspacePremiumIcon style={{ fontSize: 28, color: 'rgba(255,255,255,0.9)' }} />
-          <h2 className="text-[1.15rem] font-bold text-white">{isEdit ? 'Edit Plan' : 'New Plan'}</h2>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#EEF2FF' }}>
+            <WorkspacePremiumIcon style={{ fontSize: 20, color: ADMIN_ACCENT }} />
+          </div>
+          <h2 className="text-[1.05rem] font-semibold text-slate-900">{isEdit ? 'Edit Plan' : 'New Plan'}</h2>
         </div>
       </div>
 
-      <DialogContent sx={{ p: 3 }}>
+      <DialogContent sx={{ px: 3, pt: 2, pb: 1 }}>
         {error && (
           <Alert severity="error" sx={{ mb: 2, borderRadius: '10px' }} onClose={() => setError(null)}>
             {error}
@@ -172,12 +174,12 @@ const PlanFormDialog: React.FC<PlanFormDialogProps> = ({ open, onClose, plan, on
         </div>
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid #E2E8F0', backgroundColor: '#F8FAFC', gap: 1.5 }}>
+      <DialogActions sx={{ px: 3, py: 2.5, gap: 1.5 }}>
         <Button
           onClick={onClose}
           disabled={saving}
           variant="outlined"
-          sx={{ textTransform: 'none', borderColor: '#E2E8F0', color: '#64748B', borderRadius: '10px' }}
+          sx={{ textTransform: 'none', borderColor: '#E2E8F0', color: '#64748B', borderRadius: '10px', boxShadow: 'none' }}
         >
           Cancel
         </Button>

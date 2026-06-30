@@ -16,14 +16,15 @@ import dynamic from 'next/dynamic';
 
 // Each admin tab is fetched + code-split on demand — only the active tab's
 // JS (and its heavy deps like recharts/react-leaflet) is downloaded, instead
-// of bundling all 5 tabs' code into the initial admin dashboard chunk.
+// of bundling all 6 tabs' code into the initial admin dashboard chunk.
 const AdminDashboardHome = dynamic(() => import('@/modules/admin/overview').then((m) => m.AdminDashboardHome));
 const UserManagement = dynamic(() => import('@/modules/admin/users').then((m) => m.UserManagement));
+const PostsManagement = dynamic(() => import('@/modules/admin/posts').then((m) => m.PostsManagement));
 const PostInterviewAssessments = dynamic(() => import('@/modules/admin/post-interview').then((m) => m.PostInterviewAssessments));
 const SkillInterviewAssessments = dynamic(() => import('@/modules/admin/skill-interview').then((m) => m.SkillInterviewAssessments));
 const CompanyConfig = dynamic(() => import('@/modules/admin/company-config').then((m) => m.CompanyConfig));
 
-const VALID_TABS = ['dashboard', 'users', 'post-interview', 'skill-interview', 'company-config'] as const;
+const VALID_TABS = ['dashboard', 'users', 'posts', 'post-interview', 'skill-interview', 'company-config'] as const;
 type TabName = typeof VALID_TABS[number];
 
 const DashboardAdmin = () => {
@@ -52,7 +53,7 @@ const DashboardAdmin = () => {
   };
 
   return (
-      <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#ffffff' }}>
+      <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#FAFBFC' }}>
         {/* Sidebar */}
         <Box sx={{ position: 'relative' }}>
           <AdminSidebar
@@ -70,7 +71,7 @@ const DashboardAdmin = () => {
           sx={{
             flexGrow: 1,
             minHeight: '100vh',
-            bgcolor: '#ffffff',
+            bgcolor: '#FAFBFC',
             p: { xs: 1, sm: 2, md: 4 },
             display: 'flex',
             flexDirection: 'column',
@@ -127,6 +128,7 @@ const DashboardAdmin = () => {
                   }}
                 />
               )}
+              {activeTab === 'posts' && <PostsManagement />}
               {activeTab === 'post-interview' && <PostInterviewAssessments />}
               {activeTab === 'skill-interview' && <SkillInterviewAssessments />}
               {activeTab === 'company-config' && <CompanyConfig />}
