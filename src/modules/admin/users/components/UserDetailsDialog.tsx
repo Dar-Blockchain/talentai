@@ -20,7 +20,6 @@ interface UserDetailsDialogProps {
   open: boolean;
   user: User | null;
   onClose: () => void;
-  onEdit?: (user: User) => void;
 }
 
 const UserDetailsDialog: React.FC<UserDetailsDialogProps> = ({ open, user, onClose }) => {

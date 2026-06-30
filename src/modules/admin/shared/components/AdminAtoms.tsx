@@ -7,7 +7,6 @@ import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { Badge } from "@/modules/shared/ui/shadcn/badge";
 import { cn } from "@/lib/utils";
 import { ADMIN_NEUTRAL, ADMIN_NEUTRAL_BG } from "../theme";
-import type { AdminGradientName } from "../theme";
 
 /** Inline retry button shared by the card and table-row error states. */
 const AdminRetryButton = memo<{ onRetry: () => void }>(({ onRetry }) => (
@@ -68,7 +67,7 @@ export const ADMIN_TABLE_ROW_SX = {
 } as const;
 
 /** Tab-level page heading — bold title, light subtitle. */
-export const AdminPageHeading = memo<{ title: string; subtitle?: string; gradient?: AdminGradientName }>(
+export const AdminPageHeading = memo<{ title: string; subtitle?: string }>(
   ({ title, subtitle }) => (
     <div className="mb-7">
       <h1 className="text-[1.5rem] font-semibold tracking-tight text-slate-900">{title}</h1>
@@ -79,7 +78,7 @@ export const AdminPageHeading = memo<{ title: string; subtitle?: string; gradien
 AdminPageHeading.displayName = "AdminPageHeading";
 
 /** Standard admin section header — neutral icon chip + title + divider. */
-export const ZoneHeading = memo<{ icon: React.ElementType; label: string; gradient?: AdminGradientName }>(
+export const ZoneHeading = memo<{ icon: React.ElementType; label: string }>(
   ({ icon: Icon, label }) => (
     <div className="flex items-center gap-3 mb-5 mt-1">
       <div className="w-8 h-8 rounded-[9px] flex items-center justify-center shrink-0" style={{ background: ADMIN_NEUTRAL_BG }}>
@@ -94,11 +93,10 @@ ZoneHeading.displayName = "ZoneHeading";
 
 /** Small stat card: neutral icon chip, big number, uppercase label. */
 export interface AdminStatCardProps {
-  icon:      React.ElementType;
-  value:     React.ReactNode;
-  label:     string;
-  gradient?: AdminGradientName;
-  loading?:  boolean;
+  icon:     React.ElementType;
+  value:    React.ReactNode;
+  label:    string;
+  loading?: boolean;
 }
 
 export const AdminStatCard = memo<AdminStatCardProps>(({ icon: Icon, value, label, loading }) => {
@@ -131,7 +129,7 @@ export const AdminStatCard = memo<AdminStatCardProps>(({ icon: Icon, value, labe
 AdminStatCard.displayName = "AdminStatCard";
 
 /** Chart/section card wrapper — soft elevation, optional icon-chip title row. */
-export const AdminChartCard = memo<{ icon?: React.ElementType; title?: string; gradient?: AdminGradientName; children: React.ReactNode; className?: string }>(
+export const AdminChartCard = memo<{ icon?: React.ElementType; title?: string; children: React.ReactNode; className?: string }>(
   ({ icon: Icon, title, children, className }) => (
     <Card className={cn("border-none overflow-hidden transition-shadow duration-200 hover:shadow-[0_8px_24px_-4px_rgba(15,23,42,0.08),0_2px_6px_rgba(15,23,42,0.04)]", className)}>
       <CardContent className="pt-6">

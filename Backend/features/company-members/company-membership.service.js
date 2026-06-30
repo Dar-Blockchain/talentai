@@ -158,7 +158,6 @@ module.exports.deleteMembership = async (membershipId, companyOwnerId) => {
       deletedUser: deletedUser,
     };
   } catch (error) {
-    console.error("Error during user deletion cascade:", error);
     throw new Error(`Failed to delete user and related data: ${error.message}`);
   }
 };

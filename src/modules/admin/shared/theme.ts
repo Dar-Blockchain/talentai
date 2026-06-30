@@ -28,13 +28,3 @@ export const ADMIN_SHADOW_REST  = "0 1px 2px rgba(15, 23, 42, 0.04)";
 export const ADMIN_SHADOW_HOVER = "0 8px 24px -4px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04)";
 export const ADMIN_RADIUS = "14px";
 
-export const ADMIN_GRADIENTS = {
-  indigo:  ["#6366F1", "#8B5CF6"],
-  violet:  ["#8B5CF6", "#A78BFA"],
-  sky:     ["#0EA5E9", "#38BDF8"],
-  emerald: ["#10B981", "#34D399"],
-  amber:   ["#F59E0B", "#FCD34D"],
-  rose:    ["#F43F5E", "#FB7185"],
-} as const;
-
-export type AdminGradientName = keyof typeof ADMIN_GRADIENTS;
