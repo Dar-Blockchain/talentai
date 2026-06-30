@@ -4,7 +4,7 @@ import Cookies from 'js-cookie';
 // readable by JavaScript. Auth state is tracked via a companion non-sensitive
 // indicator cookie ("auth_present") whose value carries no credential data.
 
-/** Returns a truthy string ("1") when the user has an active session, null otherwise. */
+/** Returns the user's role string (e.g. "Employee") when a session exists, null otherwise. */
 export function getToken(): string | null {
   if (typeof window === 'undefined') return null;
   return Cookies.get('auth_present') ?? null;
