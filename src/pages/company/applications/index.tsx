@@ -11,7 +11,7 @@ import type { ApplicationSummaryItem } from "@/modules/company/applications/type
 import { useApplicationsList } from "@/modules/company/applications/hooks";
 import { ApplicationsToolbar, PostPickerModal } from "@/modules/company/applications/components";
 import { TEAL } from "@/modules/company/applications/components/constants";
-import { SimplePagination } from "@/modules/shared/ui/shadcn/pagination-simple";
+import { Pagination } from "@/modules/shared/ui/shadcn/pagination";
 import { getDashboardLayout } from "@/modules/shared/layouts";
 import type { NextPageWithLayout } from "@/pages/_app";
 
@@ -107,7 +107,7 @@ const ApplicationsPage: NextPageWithLayout = () => {
           ))}
 
           {pagination.totalPages > 1 && (
-            <SimplePagination
+            <Pagination
               page={page}
               totalPages={pagination.totalPages}
               onPageChange={handlePageChange}

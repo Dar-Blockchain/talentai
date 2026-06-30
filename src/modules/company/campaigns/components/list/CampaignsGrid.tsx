@@ -10,7 +10,7 @@ import CampaignsSkeleton from "./CampaignsSkeleton";
 import DeleteCampaignDialog from "../details/DeleteCampaignDialog";
 import ConfirmStatusChangeDialog from "../details/ConfirmStatusChangeDialog";
 import { useCampaignsList } from "../../hooks/useCampaignsList";
-import Pagination from "@/components/ui/Pagination";
+import { Pagination } from "@/modules/shared/ui/shadcn/pagination";
 import SearchOutlined     from "@mui/icons-material/SearchOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import CloseOutlined      from "@mui/icons-material/CloseOutlined";
@@ -228,7 +228,7 @@ const CampaignsGrid: React.FC = memo(() => {
       )}
 
       {count > 0 && (
-        <Pagination page={page} pageSize={limit} total={count} onPageChange={handlePageChange} />
+        <Pagination page={page} totalPages={Math.ceil(count / limit)} onPageChange={handlePageChange} />
       )}
 
       <DeleteCampaignDialog

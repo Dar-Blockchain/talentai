@@ -19,7 +19,7 @@ import { cn }                       from "@/lib/utils";
 import AddEmployeeModal from "@/modules/company/employees/components/create/AddEmployeeModal";
 import { AMBER, EmployeeCard, EmployeesFilterBar, EmployeeSkeletonCard, InvitationCard, RoleFilter, SortOption } from "@/modules/company/employees/components/list";
 import { PURPLE } from "@/modules/company/constants";
-import Pagination from "@/components/ui/Pagination";
+import { Pagination } from "@/modules/shared/ui/shadcn/pagination";
 
 const PAGE_SIZE = 9;
 
@@ -253,7 +253,7 @@ const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({
       </div>
 
       {tab === "members" && !loading && !error && (
-        <Pagination page={page} total={pageTotal} pageSize={PAGE_SIZE} onPageChange={setPage} />
+        <Pagination page={page} totalPages={Math.ceil(pageTotal / PAGE_SIZE)} onPageChange={setPage} />
       )}
 
       <AddEmployeeModal

@@ -11,7 +11,7 @@ import type { ExtendedMember } from "@/modules/company/employees/types";
 import { Invitation } from "@/types/employee";
 import { Department } from "@/modules/company/departments/types";
 import { PURPLE, AMBER, GRID } from "./constants";
-import Pagination from "@/components/ui/Pagination";
+import { Pagination } from "@/modules/shared/ui/shadcn/pagination";
 
 export type RoleFilter = "all" | string;
 export type SortOption = "newest" | "name-asc" | "name-desc";
@@ -233,7 +233,7 @@ const EmployeesList: React.FC<EmployeesListProps> = memo(({
       </Box>
 
       {tab === "employees" && !loading && !error && (
-        <Pagination page={page} total={total} pageSize={pageSize} onPageChange={onPageChange} />
+        <Pagination page={page} totalPages={Math.ceil(total / pageSize)} onPageChange={onPageChange} />
       )}
     </Box>
   );

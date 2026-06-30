@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/shared/ui/shadcn/dialog";
-import { SimplePagination } from "@/modules/shared/ui/shadcn/pagination-simple";
+import { Pagination } from "@/modules/shared/ui/shadcn/pagination";
 import { cn } from "@/lib/utils";
 
 // ─── PostRow ──────────────────────────────────────────────────────────────────
@@ -168,7 +168,7 @@ const PostPickerModal = memo<Props>(({ open, selectedId, onSelect, onClose }) =>
           )}
 
           {totalPages > 1 && (
-            <SimplePagination page={page} totalPages={totalPages} onPageChange={setPage} size="sm" />
+            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} size="sm" />
           )}
         </div>
       </DialogContent>

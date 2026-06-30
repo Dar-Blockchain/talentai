@@ -7,7 +7,7 @@ import {
 import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
 import type { FetchMembersFilters } from "@/modules/company/members/types";
 import { useMembersQuery, useDepartmentsQuery } from "@/modules/company/employees/queries";
-import Pagination from "@/components/ui/Pagination";
+import { Pagination } from "@/modules/shared/ui/shadcn/pagination";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
 import { EmployeesFilterBar, ROLE_LABELS, ROLE_STYLES } from "@/modules/company/employees/components/list";
 import type { RoleFilter, SortOption } from "@/modules/company/employees/components/list";
@@ -262,7 +262,7 @@ const ParticipantsStep = memo<ParticipantsStepProps>(({ selected, onChange }) =>
 
       {/* Pagination */}
       {!loading && pageTotal > PAGE_SIZE && (
-        <Pagination page={page} total={pageTotal} pageSize={PAGE_SIZE} onPageChange={setPage} />
+        <Pagination page={page} totalPages={Math.ceil(pageTotal / PAGE_SIZE)} onPageChange={setPage} />
       )}
     </Box>
   );
