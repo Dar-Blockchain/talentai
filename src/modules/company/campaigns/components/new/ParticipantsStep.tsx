@@ -1,23 +1,23 @@
 "use client";
 
 import React, { memo, useState, useRef, useCallback, useMemo } from "react";
-import {
-  Box, Typography, Checkbox, Avatar, Chip, Skeleton, Alert,
-} from "@mui/material";
-import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
+import { Users, Building2 } from "lucide-react";
 import type { FetchMembersFilters } from "@/modules/company/members/types";
 import { useMembersQuery, useDepartmentsQuery } from "@/modules/company/employees/queries";
 import { Pagination } from "@/modules/shared/ui/shadcn/pagination";
-import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
+import { Checkbox } from "@/modules/shared/ui/shadcn/checkbox";
+import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { EmployeesFilterBar, ROLE_LABELS, ROLE_STYLES } from "@/modules/company/employees/components/list";
 import type { RoleFilter, SortOption } from "@/modules/company/employees/components/list";
 import { ROLES } from "@/modules/shared/constants/employee";
+import { cn } from "@/lib/utils";
 
-const PURPLE = "#8310FF";
+// ─── Constants ────────────────────────────────────────────────────────────────
+
 const PAGE_SIZE = 10;
 
 const SORT_MAP: Record<SortOption, Pick<FetchMembersFilters, "sortBy" | "order">> = {
-  newest:    { sortBy: "date", order: "desc" },
+  newest:      { sortBy: "date", order: "desc" },
   "name-asc":  { sortBy: "name", order: "asc"  },
   "name-desc": { sortBy: "name", order: "desc" },
 };
@@ -29,24 +29,29 @@ const AVATAR_GRADIENTS = [
   "135deg, #D97706, #FCD34D",
   "135deg, #DC2626, #F87171",
 ];
+
 function pickGradient(str: string) {
   let h = 0;
   for (let i = 0; i < str.length; i++) h = str.charCodeAt(i) + ((h << 5) - h);
   return AVATAR_GRADIENTS[Math.abs(h) % AVATAR_GRADIENTS.length];
 }
 
+// ─── Skeleton row ─────────────────────────────────────────────────────────────
+
 const EmployeeRowSkeleton = memo(() => (
-  <Box sx={{ display: "flex", alignItems: "center", gap: 2, px: 2, py: 1.5, borderBottom: "1px solid #F3F4F6" }}>
-    <Skeleton variant="rectangular" width={20} height={20} sx={{ borderRadius: 0.5, flexShrink: 0 }} />
-    <Skeleton variant="circular" width={36} height={36} sx={{ flexShrink: 0 }} />
-    <Box sx={{ flex: 1 }}>
-      <Skeleton variant="text" width="35%" height={16} />
-      <Skeleton variant="text" width="55%" height={13} />
-    </Box>
-    <Skeleton variant="rounded" width={72} height={22} sx={{ borderRadius: "6px", flexShrink: 0 }} />
-  </Box>
+  <div className="flex items-center gap-3 px-4 py-3 border-b border-border/60 last:border-0">
+    <Skeleton className="size-5 rounded shrink-0" />
+    <Skeleton className="size-9 rounded-full shrink-0" />
+    <div className="flex-1 space-y-1.5">
+      <Skeleton className="h-3.5 w-1/3" />
+      <Skeleton className="h-3 w-1/2" />
+    </div>
+    <Skeleton className="h-5 w-16 rounded-full shrink-0" />
+  </div>
 ));
 EmployeeRowSkeleton.displayName = "EmployeeRowSkeleton";
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 interface ParticipantsStepProps {
   selected: string[];
@@ -81,18 +86,21 @@ const ParticipantsStep = memo<ParticipantsStepProps>(({ selected, onChange }) =>
   const departments = (Array.isArray(deptsRaw) ? deptsRaw : (deptsRaw as any)?.data) ?? [];
   const error       = membersError ? String(membersError) : null;
 
+  const hasFilters = !!(search || roleFilter !== "all" || deptFilter !== "all");
+
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
-    clearTimeout(debounceRef.current);
+    clearTimeout(debounceRef.current!);
     debounceRef.current = setTimeout(() => { setDebouncedSearch(value); setPage(1); }, 300);
   }, []);
 
-  const pageIds         = members.map((m) => m.userId ?? m._id);
-  const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selected.includes(id));
-  const somePageSelected = pageIds.some((id) => selected.includes(id)) && !allPageSelected;
+  const pageIds          = members.map((m: any) => m.userId ?? m._id);
+  const allPageSelected  = pageIds.length > 0 && pageIds.every((id: string) => selected.includes(id));
+  const somePageSelected = pageIds.some((id: string) => selected.includes(id)) && !allPageSelected;
 
   const toggleMember = useCallback((id: string) =>
-    onChange(selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id]), [onChange, selected]);
+    onChange(selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id]),
+  [onChange, selected]);
 
   const toggleAllOnPage = useCallback(() => {
     if (allPageSelected) onChange(selected.filter((id) => !pageIds.includes(id)));
@@ -100,173 +108,159 @@ const ParticipantsStep = memo<ParticipantsStepProps>(({ selected, onChange }) =>
   }, [allPageSelected, onChange, selected, pageIds]);
 
   return (
-    <Box>
+    <div className="flex flex-col gap-4">
       {/* Info banner */}
-      <Box sx={{
-        display: "flex", alignItems: "center", gap: 1.5,
-        p: 2, mb: 2.5, borderRadius: 2,
-        bgcolor: "#F5F3FF", border: `1px solid ${PURPLE}20`,
-      }}>
-        <PeopleAltOutlined sx={{ fontSize: 18, color: PURPLE, flexShrink: 0 }} />
-        <Typography sx={{ fontSize: "13px", color: "#374151" }}>
-          Select the employees who can participate in this campaign. Leave empty to allow all employees.
-        </Typography>
+      <div className="flex items-center gap-3 p-3.5 rounded-xl bg-primary/5 border border-primary/15">
+        <Users className="size-4.5 text-primary shrink-0" />
+        <p className="text-[13px] text-foreground/80 flex-1">
+          Select the employees who can participate. Leave empty to allow all.
+        </p>
         {selected.length > 0 && (
-          <Chip
-            label={`${selected.length} selected`}
-            size="small"
-            sx={{
-              fontWeight: 700, fontSize: "12px",
-              bgcolor: PURPLE, color: "#fff",
-              ml: "auto", flexShrink: 0,
-              "& .MuiChip-label": { px: 1.5 },
-            }}
-          />
+          <span className="inline-flex items-center h-6 px-2.5 rounded-full text-[11px] font-bold bg-primary text-primary-foreground shrink-0 ml-auto">
+            {selected.length} selected
+          </span>
         )}
-      </Box>
+      </div>
 
       {/* Filter bar */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-        <EmployeesFilterBar
-          search={search}               onSearchChange={handleSearchChange}
-          roleFilter={roleFilter}       onRoleFilterChange={(f) => { setRoleFilter(f); setPage(1); }}
-          departmentFilter={deptFilter} onDepartmentFilterChange={(d) => { setDeptFilter(d); setPage(1); }}
-          departments={departments}
-          sortBy={sortBy}               onSortChange={(s) => { setSortBy(s); setPage(1); }}
-          resultCount={pageTotal}
-        />
-      </Box>
+      <EmployeesFilterBar
+        search={search}               onSearchChange={handleSearchChange}
+        roleFilter={roleFilter}       onRoleFilterChange={(f) => { setRoleFilter(f); setPage(1); }}
+        departmentFilter={deptFilter} onDepartmentFilterChange={(d) => { setDeptFilter(d); setPage(1); }}
+        departments={departments}
+        sortBy={sortBy}               onSortChange={(s) => { setSortBy(s); setPage(1); }}
+        resultCount={pageTotal}
+      />
 
-      {/* Results count */}
+      {/* Result count */}
       {!loading && !error && (
-        <Typography sx={{ fontSize: "12px", color: "#9CA3AF", mb: 1.5 }}>
+        <p className="text-xs text-muted-foreground">
           {pageTotal} employee{pageTotal !== 1 ? "s" : ""}
-          {search || roleFilter !== "all" || deptFilter !== "all" ? " match your filters" : " total"}
-        </Typography>
+          {hasFilters ? " match your filters" : " total"}
+        </p>
       )}
 
-      {/* Employee list */}
-      <Box sx={{ bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: 3, overflow: "hidden" }}>
-        {/* Select all header */}
+      {/* List */}
+      <div className="border border-border rounded-xl overflow-hidden">
+        {/* Select-all header */}
         {!loading && !error && members.length > 0 && (
-          <Box sx={{
-            display: "flex", alignItems: "center", gap: 1.5,
-            px: 2, py: 1.25, bgcolor: "#F9FAFB", borderBottom: "1px solid #E5E7EB",
-          }}>
+          <div className="flex items-center gap-3 px-4 py-2.5 bg-muted/40 border-b border-border">
             <Checkbox
-              size="small"
               checked={allPageSelected}
-              indeterminate={somePageSelected}
-              onChange={toggleAllOnPage}
-              sx={{ color: "#D1D5DB", "&.Mui-checked": { color: PURPLE }, "&.MuiCheckbox-indeterminate": { color: PURPLE }, p: 0 }}
+              // @ts-ignore – indeterminate not typed in shadcn Checkbox but supported via ref
+              data-indeterminate={somePageSelected || undefined}
+              onCheckedChange={toggleAllOnPage}
+              className="shrink-0"
             />
-            <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#6B7280" }}>
+            <span className="text-xs font-semibold text-muted-foreground">
               Select all on this page ({members.length})
-            </Typography>
-          </Box>
+            </span>
+          </div>
         )}
 
         {error ? (
-          <Alert severity="error" sx={{ m: 2, borderRadius: 2 }}>{error}</Alert>
+          <div className="m-4 p-3.5 rounded-xl bg-destructive/8 border border-destructive/20 text-sm text-destructive">
+            {error}
+          </div>
         ) : loading ? (
-          <Box>{Array.from({ length: 6 }).map((_, i) => <EmployeeRowSkeleton key={i} />)}</Box>
+          <div>
+            {Array.from({ length: 6 }).map((_, i) => <EmployeeRowSkeleton key={i} />)}
+          </div>
         ) : members.length === 0 ? (
-          <Box sx={{ textAlign: "center", py: 8 }}>
-            <PeopleAltOutlined sx={{ fontSize: 40, color: "#D1D5DB", mb: 1.5 }} />
-            <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#374151" }}>
-              {search || roleFilter !== "all" || deptFilter !== "all"
-                ? "No employees match your filters"
-                : "No employees found"}
-            </Typography>
-            <Typography sx={{ fontSize: "12px", color: "#9CA3AF", mt: 0.5 }}>
-              {search || roleFilter !== "all" || deptFilter !== "all"
-                ? "Try adjusting your filters."
-                : "Invite employees to your workspace first."}
-            </Typography>
-          </Box>
+          <div className="flex flex-col items-center justify-center py-14 gap-3 text-center">
+            <div className="size-12 rounded-full bg-muted flex items-center justify-center">
+              <Users className="size-6 text-muted-foreground" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                {hasFilters ? "No employees match your filters" : "No employees found"}
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {hasFilters ? "Try adjusting your filters." : "Invite employees to your workspace first."}
+              </p>
+            </div>
+          </div>
         ) : (
-          members.map((member, i) => {
+          members.map((member: any, i: number) => {
             const isSelected = selected.includes(member.userId);
             const name = (member.firstName && member.lastName)
               ? `${member.firstName} ${member.lastName}`
               : member.firstName || member.lastName || member.username || "Pending";
-            const email      = member.email || "";
-            const letter     = name[0]?.toUpperCase() || "U";
-            const roleStr    = member.role as string;
-            const roleEntry  = ROLES.find((r) => r.value === roleStr || r.value === roleStr.toLowerCase());
-            const roleColor  = roleEntry?.color ?? ROLE_STYLES[member.role]?.color ?? "#6B7280";
-            const roleLabel  = roleEntry?.label ?? ROLE_LABELS[member.role] ?? member.role;
-            const RoleIcon   = roleEntry?.icon ?? null;
-            const dept       = (member as any).department?.name ?? (member as any).departmentName ?? null;
+            const email     = member.email || "";
+            const letter    = name[0]?.toUpperCase() || "U";
+            const roleStr   = member.role as string;
+            const roleEntry = ROLES.find((r) => r.value === roleStr || r.value === roleStr?.toLowerCase());
+            const roleColor = roleEntry?.color ?? ROLE_STYLES[member.role]?.color ?? "#6B7280";
+            const roleLabel = roleEntry?.label ?? ROLE_LABELS[member.role] ?? member.role;
+            const RoleIcon  = roleEntry?.icon ?? null;
+            const dept      = (member as any).department?.name ?? (member as any).departmentName ?? null;
 
             return (
-              <Box
+              <div
                 key={member.userId}
                 onClick={() => toggleMember(member.userId)}
-                sx={{
-                  display: "flex", alignItems: "center", gap: 2,
-                  px: 2, py: 1.5, cursor: "pointer",
-                  borderBottom: i < members.length - 1 ? "1px solid #F3F4F6" : "none",
-                  bgcolor: isSelected ? "#F5F3FF" : "transparent",
-                  "&:hover": { bgcolor: isSelected ? "#EDE9FE" : "#F9FAFB" },
-                  transition: "background-color 0.15s",
-                }}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors",
+                  i < members.length - 1 && "border-b border-border/60",
+                  isSelected ? "bg-primary/5" : "hover:bg-muted/40",
+                )}
               >
                 <Checkbox
-                  size="small" checked={isSelected}
-                  onChange={() => toggleMember(member.userId)}
+                  checked={isSelected}
+                  onCheckedChange={() => toggleMember(member.userId)}
                   onClick={(e) => e.stopPropagation()}
-                  sx={{ color: "#D1D5DB", "&.Mui-checked": { color: PURPLE }, p: 0, flexShrink: 0 }}
+                  className="shrink-0"
                 />
-                <Avatar sx={{
-                  width: 36, height: 36, fontSize: "0.85rem", fontWeight: 700, color: "#fff",
-                  background: `linear-gradient(${pickGradient(email || name)})`, flexShrink: 0,
-                }}>
+
+                {/* Avatar */}
+                <div
+                  className="size-9 rounded-full flex items-center justify-center text-[0.85rem] font-bold text-white shrink-0"
+                  style={{ background: `linear-gradient(${pickGradient(email || name)})` }}
+                >
                   {letter}
-                </Avatar>
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#111827", lineHeight: 1.3 }}>
-                    {name}
-                  </Typography>
-                  <Typography sx={{ fontSize: "12px", color: "#6B7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {email}
-                  </Typography>
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13.5px] font-semibold text-foreground leading-snug truncate">{name}</p>
+                  <p className="text-[12px] text-muted-foreground truncate">{email}</p>
                   {dept && (
-                    <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.4, mt: 0.4 }}>
-                      <BusinessOutlined sx={{ fontSize: 11, color: "#94A3B8" }} />
-                      <Typography sx={{ fontSize: "11px", color: "#94A3B8", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {dept}
-                      </Typography>
-                    </Box>
+                    <span className="inline-flex items-center gap-0.5 mt-0.5">
+                      <Building2 className="size-2.5 text-muted-foreground/60" />
+                      <span className="text-[11px] text-muted-foreground/70 truncate">{dept}</span>
+                    </span>
                   )}
-                </Box>
-                <Box sx={{
-                  display: "inline-flex", alignItems: "center", gap: 0.6,
-                  px: 1.25, py: "4px", borderRadius: "999px", flexShrink: 0,
-                  bgcolor: `${roleColor}10`, border: `1.5px solid ${roleColor}25`,
-                }}>
-                  {RoleIcon && (
-                    <Box sx={{ color: roleColor, display: "flex", alignItems: "center", "& svg": { fontSize: 11 } }}>
-                      <RoleIcon />
-                    </Box>
-                  )}
-                  <Typography sx={{ fontSize: "11px", fontWeight: 700, color: roleColor, letterSpacing: "0.01em" }}>
-                    {roleLabel}
-                  </Typography>
-                </Box>
-              </Box>
+                </div>
+
+                {/* Role badge */}
+                <span
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold shrink-0"
+                  style={{
+                    backgroundColor: `${roleColor}10`,
+                    border:          `1.5px solid ${roleColor}25`,
+                    color:           roleColor,
+                  }}
+                >
+                  {RoleIcon && <RoleIcon style={{ fontSize: 11 }} />}
+                  {roleLabel}
+                </span>
+              </div>
             );
           })
         )}
-      </Box>
+      </div>
 
       {/* Pagination */}
       {!loading && pageTotal > PAGE_SIZE && (
-        <Pagination page={page} totalPages={Math.ceil(pageTotal / PAGE_SIZE)} onPageChange={setPage} />
+        <Pagination
+          page={page}
+          totalPages={Math.ceil(pageTotal / PAGE_SIZE)}
+          onPageChange={setPage}
+        />
       )}
-    </Box>
+    </div>
   );
 });
-ParticipantsStep.displayName = "ParticipantsStep";
 
+ParticipantsStep.displayName = "ParticipantsStep";
 export default ParticipantsStep;
