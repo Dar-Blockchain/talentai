@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import {
-  Check, CheckCircle2, Clock, Users, Settings,
+  CheckCircle2, Clock, Users,
   Eye, EyeOff, Link2, Lock, ArrowRight, ArrowLeft,
   Sparkles, Type, ClipboardList, CalendarIcon,
 } from "lucide-react";
@@ -67,13 +67,13 @@ const ANONYMITY_OPTIONS = [
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <p className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-muted-foreground mb-3">
+  <p className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-muted-foreground mb-2">
     {children}
   </p>
 );
 
 const FieldError: React.FC<{ message?: string }> = ({ message }) =>
-  message ? <p className="text-xs text-destructive mt-1.5">{message}</p> : null;
+  message ? <p className="text-xs text-destructive mt-1">{message}</p> : null;
 
 const OptionCard: React.FC<{
   isSelected: boolean;
@@ -85,23 +85,23 @@ const OptionCard: React.FC<{
 }> = ({ isSelected, onClick, color, Icon, label, desc }) => (
   <div
     onClick={onClick}
-    className="relative flex items-start gap-3 p-3.5 rounded-xl cursor-pointer border-[1.5px] transition-all duration-150 hover:-translate-y-px select-none"
+    className="flex items-center gap-2.5 p-2.5 rounded-xl cursor-pointer border-[1.5px] transition-all duration-150 select-none"
     style={{
       borderColor:     isSelected ? color : undefined,
       backgroundColor: isSelected ? `${color}08` : undefined,
     }}
   >
     <div
-      className="size-9 rounded-[10px] flex items-center justify-center shrink-0"
-      style={{ backgroundColor: `${color}${isSelected ? "18" : "10"}` }}
+      className="size-7 rounded-lg flex items-center justify-center shrink-0"
+      style={{ backgroundColor: `${color}${isSelected ? "18" : "12"}` }}
     >
-      <Icon className="size-[18px]" style={{ color }} />
+      <Icon className="size-3.5" style={{ color }} />
     </div>
     <div className="flex-1 min-w-0">
-      <p className="text-[13px] font-bold text-card-foreground leading-snug">{label}</p>
-      <p className="text-[11.5px] text-muted-foreground mt-0.5 leading-relaxed">{desc}</p>
+      <p className="text-[12px] font-bold text-card-foreground leading-snug">{label}</p>
+      <p className="text-[10.5px] text-muted-foreground leading-snug">{desc}</p>
     </div>
-    {isSelected && <CheckCircle2 className="size-4 shrink-0 mt-0.5" style={{ color }} />}
+    {isSelected && <CheckCircle2 className="size-3.5 shrink-0" style={{ color }} />}
   </div>
 );
 
@@ -111,18 +111,19 @@ const CardSection: React.FC<{
   subtitle: string;
   iconBg: string;
   children: React.ReactNode;
-}> = ({ icon, title, subtitle, iconBg, children }) => (
-  <Card className="gap-0 py-0 overflow-hidden">
-    <div className="flex items-center gap-3 px-5 py-4 border-b border-border/60">
-      <div className="size-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: iconBg }}>
+  className?: string;
+}> = ({ icon, title, subtitle, iconBg, children, className }) => (
+  <Card className={cn("gap-0 py-0 overflow-hidden", className)}>
+    <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border/60">
+      <div className="size-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: iconBg }}>
         {icon}
       </div>
       <div>
-        <p className="text-sm font-bold text-card-foreground">{title}</p>
-        <p className="text-[11.5px] text-muted-foreground">{subtitle}</p>
+        <p className="text-[13px] font-bold text-card-foreground">{title}</p>
+        <p className="text-[11px] text-muted-foreground">{subtitle}</p>
       </div>
     </div>
-    <div className="p-5">{children}</div>
+    <div className="p-4">{children}</div>
   </Card>
 );
 
@@ -239,265 +240,242 @@ const NewCampaignPage: NextPageWithLayout = () => {
         ]}
       />
 
-      {/* ── Stepper (only when ACCOUNTS access method chosen) ── */}
-      {isAccounts && (
-        <div className="flex items-center mb-6 gap-0">
-          {[
-            { label: "Campaign Details", icon: Settings },
-            { label: "Participants",     icon: Users },
-          ].map((step, i) => {
-            const isComplete = activeStep > i;
-            const isActive   = activeStep === i;
-            return (
-              <React.Fragment key={step.label}>
-                <div className={cn(
-                  "flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors",
-                  isActive ? "bg-primary/10" : "",
-                )}>
-                  <div className={cn(
-                    "size-6 rounded-full flex items-center justify-center text-[11px] font-extrabold transition-colors shrink-0",
-                    isComplete || isActive ? "bg-primary text-white" : "bg-muted text-muted-foreground",
-                  )}>
-                    {isComplete ? <Check className="size-3" /> : i + 1}
-                  </div>
-                  <span className={cn(
-                    "text-[13px] whitespace-nowrap transition-colors",
-                    isActive || isComplete ? "font-bold text-primary" : "text-muted-foreground",
-                  )}>
-                    {step.label}
-                  </span>
-                </div>
-                {i === 0 && (
-                  <div className="flex-1 mx-2 h-0.5 rounded-full bg-border overflow-hidden relative">
-                    <div className={cn(
-                      "absolute inset-0 rounded-full bg-primary transition-transform duration-500 origin-left",
-                      isComplete ? "scale-x-100" : "scale-x-0",
-                    )} />
-                  </div>
-                )}
-              </React.Fragment>
-            );
-          })}
-        </div>
-      )}
 
       <div className="flex flex-col gap-4">
 
         {/* ── STEP 1: Campaign Details ── */}
         {activeStep === 0 && (
           <>
-            {/* Basic Information */}
-            <CardSection
-              icon={<Type className="size-4 text-white" />}
-              title="Basic Information"
-              subtitle="Name and description of your campaign"
-              iconBg="linear-gradient(135deg, #6366F1, #8B5CF6)"
-            >
-              <div className="flex flex-col gap-4">
-                <Controller
-                  name="title"
-                  control={control}
-                  rules={{ required: "Title is required" }}
-                  render={({ field, fieldState }) => (
-                    <div className="flex flex-col gap-1.5">
-                      <Label htmlFor="title" className="text-xs font-semibold text-muted-foreground">
-                        Campaign Title <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        id="title"
-                        placeholder="e.g., Q4 Engineering Skills Assessment"
-                        aria-invalid={!!fieldState.error}
-                        {...field}
-                      />
-                      <FieldError message={fieldState.error?.message} />
-                    </div>
-                  )}
-                />
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
 
-                <Controller
-                  name="description"
-                  control={control}
-                  rules={{ required: "Description is required" }}
-                  render={({ field, fieldState }) => (
-                    <div className="flex flex-col gap-1.5">
-                      <Label htmlFor="description" className="text-xs font-semibold text-muted-foreground">
-                        Description <span className="text-destructive">*</span>
-                      </Label>
-                      <Textarea
-                        id="description"
-                        placeholder="Describe the purpose, goals and expected outcomes…"
-                        rows={3}
-                        aria-invalid={!!fieldState.error}
-                        {...field}
-                      />
-                      <FieldError message={fieldState.error?.message} />
-                    </div>
-                  )}
-                />
-              </div>
-            </CardSection>
+              {/* ── Left column: Basic Info + Module ── */}
+              <div className="lg:col-span-3 flex flex-col gap-4">
 
-            {/* Campaign Settings */}
-            <CardSection
-              icon={<Clock className="size-4 text-white" />}
-              title="Campaign Settings"
-              subtitle="Deadline, visibility and access configuration"
-              iconBg="linear-gradient(135deg, #059669, #0D9488)"
-            >
-              <div className="flex flex-col gap-5">
+                {/* Basic Information */}
+                <CardSection
+                  icon={<Type className="size-4 text-white" />}
+                  title="Basic Information"
+                  subtitle="Name and description of your campaign"
+                  iconBg="linear-gradient(135deg, #6366F1, #8B5CF6)"
+                >
+                  <div className="flex flex-col gap-3">
+                    <Controller
+                      name="title"
+                      control={control}
+                      rules={{ required: "Title is required" }}
+                      render={({ field, fieldState }) => (
+                        <div className="flex flex-col gap-1.5">
+                          <Label htmlFor="title" className="text-xs font-semibold text-muted-foreground">
+                            Campaign Title <span className="text-destructive">*</span>
+                          </Label>
+                          <Input
+                            id="title"
+                            placeholder="e.g., Q4 Engineering Skills Assessment"
+                            aria-invalid={!!fieldState.error}
+                            {...field}
+                          />
+                          <FieldError message={fieldState.error?.message} />
+                        </div>
+                      )}
+                    />
 
-                {/* Deadline */}
-                <div>
-                  <SectionLabel>Application Deadline</SectionLabel>
+                    <Controller
+                      name="description"
+                      control={control}
+                      rules={{ required: "Description is required" }}
+                      render={({ field, fieldState }) => (
+                        <div className="flex flex-col gap-1.5">
+                          <Label htmlFor="description" className="text-xs font-semibold text-muted-foreground">
+                            Description <span className="text-destructive">*</span>
+                          </Label>
+                          <Textarea
+                            id="description"
+                            placeholder="Describe the purpose, goals and expected outcomes…"
+                            rows={2}
+                            aria-invalid={!!fieldState.error}
+                            {...field}
+                          />
+                          <FieldError message={fieldState.error?.message} />
+                        </div>
+                      )}
+                    />
+                  </div>
+                </CardSection>
+
+                {/* Assessment Module */}
+                <CardSection
+                  icon={<ClipboardList className="size-4 text-white" />}
+                  title="Assessment Module"
+                  subtitle="Choose one module for this campaign"
+                  iconBg="linear-gradient(135deg, #8B5CF6, #EC4899)"
+                >
                   <Controller
-                    name="deadline"
+                    name="module"
                     control={control}
-                    rules={{
-                      validate: (v) =>
-                        v && dayjs(v).isBefore(dayjs(), "day")
-                          ? "Deadline cannot be in the past"
-                          : true,
-                    }}
-                    render={({ field }) => (
-                      <DatePickerField
-                        value={field.value}
-                        onChange={field.onChange}
-                        error={errors.deadline?.message}
-                      />
-                    )}
-                  />
-                </div>
-
-                <hr className="border-border/60" />
-
-                {/* Anonymity */}
-                <div>
-                  <SectionLabel>Anonymity Mode</SectionLabel>
-                  <Controller
-                    name="anonymityMode"
-                    control={control}
-                    rules={{ required: "Please select an anonymity mode" }}
+                    rules={{ validate: (v) => !!v || "Select a module" }}
                     render={({ field }) => (
                       <div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                          {ANONYMITY_OPTIONS.map((opt) => (
-                            <OptionCard
-                              key={opt.value}
-                              isSelected={field.value === opt.value}
-                              onClick={() => field.onChange(opt.value)}
-                              {...opt}
-                            />
-                          ))}
-                        </div>
-                        <FieldError message={errors.anonymityMode?.message} />
-                      </div>
-                    )}
-                  />
-                </div>
-
-                <hr className="border-border/60" />
-
-                {/* Access Method */}
-                <div>
-                  <SectionLabel>Access Method</SectionLabel>
-                  <Controller
-                    name="accessMethod"
-                    control={control}
-                    rules={{ required: "Please select an access method" }}
-                    render={({ field }) => (
-                      <div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                          {ACCESS_OPTIONS.map((opt) => (
-                            <OptionCard
-                              key={opt.value}
-                              isSelected={field.value === opt.value}
-                              onClick={() => field.onChange(opt.value)}
-                              {...opt}
-                            />
-                          ))}
-                        </div>
-                        <FieldError message={errors.accessMethod?.message} />
-                      </div>
-                    )}
-                  />
-                </div>
-              </div>
-            </CardSection>
-
-            {/* Assessment Module */}
-            <CardSection
-              icon={<ClipboardList className="size-4 text-white" />}
-              title="Assessment Module"
-              subtitle="Choose one module for this campaign"
-              iconBg="linear-gradient(135deg, #8B5CF6, #EC4899)"
-            >
-              <Controller
-                name="module"
-                control={control}
-                rules={{ validate: (v) => !!v || "Select a module" }}
-                render={({ field }) => (
-                  <div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      {(Object.keys(MODULE_CONFIG) as ModuleType[]).map((mod) => {
-                        const m           = MODULE_CONFIG[mod];
-                        const Icon        = m.icon;
-                        const isSelected  = field.value === mod;
-                        const isSoon      = mod === "TRAINING_PATH";
-                        return (
-                          <div
-                            key={mod}
-                            onClick={() => { if (!isSoon) field.onChange(isSelected ? "" : mod); }}
-                            className={cn(
-                              "relative flex items-start gap-3 p-3.5 rounded-xl border-[1.5px] transition-all duration-150 select-none",
-                              isSoon ? "cursor-not-allowed opacity-55" : "cursor-pointer hover:-translate-y-px",
-                            )}
-                            style={{
-                              borderColor:     isSelected ? m.color : undefined,
-                              backgroundColor: isSelected ? `${m.color}08` : undefined,
-                            }}
-                          >
-                            <div
-                              className="size-9 rounded-[10px] flex items-center justify-center shrink-0"
-                              style={{ backgroundColor: `${m.color}${isSelected ? "18" : "10"}` }}
-                            >
-                              <Icon style={{ fontSize: 18, color: m.color }} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <p className="text-[13px] font-bold text-card-foreground">{m.label}</p>
-                                {isSoon && (
-                                  <span className="inline-flex items-center px-1.5 py-px rounded-full text-[9px] font-extrabold uppercase tracking-wide bg-violet-50 text-violet-600 border border-violet-200">
-                                    Soon
-                                  </span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {(Object.keys(MODULE_CONFIG) as ModuleType[]).map((mod) => {
+                            const m          = MODULE_CONFIG[mod];
+                            const Icon       = m.icon;
+                            const isSelected = field.value === mod;
+                            const isSoon     = mod === "TRAINING_PATH";
+                            return (
+                              <div
+                                key={mod}
+                                onClick={() => { if (!isSoon) field.onChange(isSelected ? "" : mod); }}
+                                className={cn(
+                                  "flex items-center gap-2.5 p-2.5 rounded-xl border-[1.5px] transition-all duration-150 select-none",
+                                  isSoon ? "cursor-not-allowed opacity-55" : "cursor-pointer",
+                                )}
+                                style={{
+                                  borderColor:     isSelected ? m.color : undefined,
+                                  backgroundColor: isSelected ? `${m.color}08` : undefined,
+                                }}
+                              >
+                                <div
+                                  className="size-7 rounded-lg flex items-center justify-center shrink-0"
+                                  style={{ backgroundColor: `${m.color}${isSelected ? "18" : "12"}` }}
+                                >
+                                  <Icon style={{ fontSize: 14, color: m.color }} />
+                                </div>
+                                <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                                  <p className="text-[12px] font-bold text-card-foreground truncate">{m.label}</p>
+                                  {isSoon && (
+                                    <span className="inline-flex items-center px-1.5 py-px rounded-full text-[9px] font-extrabold uppercase tracking-wide bg-violet-50 text-violet-600 border border-violet-200 shrink-0">
+                                      Soon
+                                    </span>
+                                  )}
+                                </div>
+                                {isSelected && (
+                                  <CheckCircle2 className="size-3.5 shrink-0" style={{ color: m.color }} />
                                 )}
                               </div>
-                              <p className="text-[11.5px] text-muted-foreground mt-0.5 leading-relaxed">
-                                {m.description}
-                              </p>
-                            </div>
-                            {isSelected && (
-                              <CheckCircle2 className="size-4 shrink-0 mt-0.5" style={{ color: m.color }} />
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <FieldError message={errors.module?.message} />
-                  </div>
-                )}
-              />
-            </CardSection>
+                            );
+                          })}
+                        </div>
+                        <FieldError message={errors.module?.message} />
+                      </div>
+                    )}
+                  />
+                </CardSection>
+              </div>
 
-            {/* Action */}
-            <div className="flex justify-end pt-1">
+              {/* ── Right column: Campaign Settings ── */}
+              <div className="lg:col-span-2">
+                <CardSection
+                  icon={<Clock className="size-4 text-white" />}
+                  title="Campaign Settings"
+                  subtitle="Deadline, visibility and access"
+                  iconBg="linear-gradient(135deg, #059669, #0D9488)"
+                >
+                  <div className="flex flex-col gap-4">
+
+                    {/* Deadline */}
+                    <div>
+                      <SectionLabel>Application Deadline</SectionLabel>
+                      <Controller
+                        name="deadline"
+                        control={control}
+                        rules={{
+                          validate: (v) =>
+                            v && dayjs(v).isBefore(dayjs(), "day")
+                              ? "Deadline cannot be in the past"
+                              : true,
+                        }}
+                        render={({ field }) => (
+                          <DatePickerField
+                            value={field.value}
+                            onChange={field.onChange}
+                            error={errors.deadline?.message}
+                          />
+                        )}
+                      />
+                    </div>
+
+                    <hr className="border-border/60" />
+
+                    {/* Anonymity */}
+                    <div>
+                      <SectionLabel>Anonymity Mode</SectionLabel>
+                      <Controller
+                        name="anonymityMode"
+                        control={control}
+                        rules={{ required: "Please select an anonymity mode" }}
+                        render={({ field }) => (
+                          <div>
+                            <div className="flex flex-col gap-2">
+                              {ANONYMITY_OPTIONS.map((opt) => (
+                                <OptionCard
+                                  key={opt.value}
+                                  isSelected={field.value === opt.value}
+                                  onClick={() => field.onChange(opt.value)}
+                                  {...opt}
+                                />
+                              ))}
+                            </div>
+                            <FieldError message={errors.anonymityMode?.message} />
+                          </div>
+                        )}
+                      />
+                    </div>
+
+                    <hr className="border-border/60" />
+
+                    {/* Access Method */}
+                    <div>
+                      <SectionLabel>Access Method</SectionLabel>
+                      <Controller
+                        name="accessMethod"
+                        control={control}
+                        rules={{ required: "Please select an access method" }}
+                        render={({ field }) => (
+                          <div>
+                            <div className="flex flex-col gap-2">
+                              {ACCESS_OPTIONS.map((opt) => (
+                                <OptionCard
+                                  key={opt.value}
+                                  isSelected={field.value === opt.value}
+                                  onClick={() => field.onChange(opt.value)}
+                                  {...opt}
+                                />
+                              ))}
+                            </div>
+                            <FieldError message={errors.accessMethod?.message} />
+                          </div>
+                        )}
+                      />
+                    </div>
+                  </div>
+                </CardSection>
+              </div>
+            </div>
+
+            {/* Action bar */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl border border-border bg-muted/30">
+              <div className="flex items-center gap-3">
+                <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Sparkles className="size-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-[13px] font-semibold text-foreground">
+                    {isAccounts ? "Almost there!" : "Ready to launch?"}
+                  </p>
+                  <p className="text-[11.5px] text-muted-foreground">
+                    {isAccounts
+                      ? "Next you'll select who can participate."
+                      : "Review your settings above before creating."}
+                  </p>
+                </div>
+              </div>
               <Button
                 type="button"
-                size="default"
-                className="gap-2 px-6"
+                className="gap-2 px-6 w-full sm:w-auto"
                 loading={!isAccounts && isSubmitting}
                 onClick={isAccounts ? handleNext : handleSubmit(onSubmit)}
               >
-                {isAccounts ? "Next: Who Can Participate" : isSubmitting ? "Creating…" : "Create Campaign"}
+                {isAccounts ? "Next: Participants" : isSubmitting ? "Creating…" : "Create Campaign"}
                 {isAccounts ? <ArrowRight className="size-4" /> : <Sparkles className="size-4" />}
               </Button>
             </div>
@@ -524,26 +502,33 @@ const NewCampaignPage: NextPageWithLayout = () => {
               <ParticipantsStep selected={selectedParticipants} onChange={setSelectedParticipants} />
             </div>
 
-            <div className="flex items-center justify-between px-5 py-4 border-t border-border/60">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-4 border-t border-border/60 bg-muted/20">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="gap-1.5"
+                className="gap-1.5 w-full sm:w-auto"
                 onClick={() => setActiveStep(0)}
               >
                 <ArrowLeft className="size-4" />
-                Back
+                Back to Details
               </Button>
-              <Button
-                type="button"
-                className="gap-2 px-6"
-                loading={isSubmitting}
-                onClick={handleSubmit(onSubmit)}
-              >
-                {isSubmitting ? "Creating…" : "Create Campaign"}
-                <Sparkles className="size-4" />
-              </Button>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                {selectedParticipants.length > 0 && (
+                  <span className="text-[12px] text-muted-foreground text-center sm:text-left">
+                    <span className="font-semibold text-foreground">{selectedParticipants.length}</span> participant{selectedParticipants.length !== 1 ? "s" : ""} selected
+                  </span>
+                )}
+                <Button
+                  type="button"
+                  className="gap-2 px-6 w-full sm:w-auto"
+                  loading={isSubmitting}
+                  onClick={handleSubmit(onSubmit)}
+                >
+                  {isSubmitting ? "Creating…" : "Create Campaign"}
+                  <Sparkles className="size-4" />
+                </Button>
+              </div>
             </div>
           </Card>
         )}
