@@ -1,14 +1,48 @@
+# ── Default rule ──────────────────────────────────────────────────────────────
 User-agent: *
 Allow: /
 
-# Private app areas — do not index
+# ── Private app areas ─────────────────────────────────────────────────────────
 Disallow: /signin
-Disallow: /home/company/
-Disallow: /home/candidate/
+Disallow: /signin/
+Disallow: /register
+Disallow: /register/
 Disallow: /admin/
 Disallow: /api/
 Disallow: /_next/
 Disallow: /unauthorized
+Disallow: /ui-kit
 
-# Sitemap
-Sitemap: https://talentai.bid/sitemap-index.xml
+# ── Authenticated app sections ────────────────────────────────────────────────
+Disallow: /company/
+Disallow: /employee/
+Disallow: /candidate/
+Disallow: /settings/
+Disallow: /messages/
+Disallow: /notifications/
+Disallow: /interviews/
+Disallow: /campaign/
+Disallow: /campaigns/
+
+# ── AI / LLM crawlers ─────────────────────────────────────────────────────────
+User-agent: GPTBot
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /company/
+Disallow: /employee/
+Disallow: /candidate/
+Disallow: /campaigns/
+Disallow: /interviews/
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+# ── Sitemap ───────────────────────────────────────────────────────────────────
+Sitemap: https://talentai.bid/sitemap.xml
