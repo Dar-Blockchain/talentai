@@ -6,12 +6,8 @@ import dynamic from 'next/dynamic';
 import axiosInstance from '@/utils/axiosInstance';
 import { Campaign } from '@/modules/company/campaigns/types/campaign';
 import { GlobalStyles, InterviewSpinner, InterviewErrorState, QuestionnaireAssessment } from '@/modules/interviews/questionnaire';
-import { buildInterviewUrl }      from '@/lib/interviewSession';
+import { buildInterviewUrl } from '@/lib/interviewSession';
 
-/**
- * Public questionnaire page for LINK-based campaigns (QUESTIONNAIRE module only).
- * AI_INTERVIEW and SKILL_TEST campaigns are redirected to /interviews/[sessionId].
- */
 const CampaignQuestionnairePage: React.FC = () => {
   const router         = useRouter();
   const { campaignId } = router.query as { campaignId?: string };
@@ -68,7 +64,7 @@ const CampaignQuestionnairePage: React.FC = () => {
   }
 
   return (
-    <>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <style jsx global>{GlobalStyles}</style>
       <QuestionnaireAssessment
         campaign={campaign}
@@ -76,7 +72,7 @@ const CampaignQuestionnairePage: React.FC = () => {
         onBack={() => router.push('/')}
         onComplete={() => {}}
       />
-    </>
+    </div>
   );
 };
 

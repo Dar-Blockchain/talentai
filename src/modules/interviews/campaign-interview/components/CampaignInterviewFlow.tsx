@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React from 'react';
 import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { type RootState } from '@/store/store';
@@ -6,16 +6,17 @@ import { useCampaignInterviewConfig, type CampaignModuleType } from '../hooks/us
 import { useInterviewSession } from '../../shared/hooks/useInterviewSession';
 import InterviewScreen from '../../shared/components/session/InterviewScreen';
 import InterviewLoadingScreen from '../../shared/components/layout/InterviewLoadingScreen';
-import CampaignPreviewPanel from './CampaignPreviewPanel';
 
 interface CampaignInterviewFlowProps {
   campaignId?: string;
   moduleType?: CampaignModuleType;
+  onBack?: () => void;
 }
 
 export default function CampaignInterviewFlow({
   campaignId: propCampaignId,
   moduleType: propModuleType,
+  onBack,
 }: CampaignInterviewFlowProps = {}) {
   const { t } = useTranslation('modules/interview/campaign-interview');
   const authUser = useSelector((state: RootState) => state.user.connectedUser.user);
@@ -23,15 +24,8 @@ export default function CampaignInterviewFlow({
     ? { campaignId: propCampaignId, moduleType: propModuleType }
     : undefined;
 
-  const {
-    interviewConfig,
-    setInterviewConfig,
-    campaignId,
-    moduleType,
-    isReady,
-  } = useCampaignInterviewConfig(overrides);
-
-  const [step, setStep] = useState<'preview' | 'interview'>('preview');
+  const { interviewConfig, setInterviewConfig, campaignId, moduleType, isReady } =
+    useCampaignInterviewConfig(overrides);
 
   const session = useInterviewSession({
     interviewConfig: interviewConfig as any,
@@ -40,10 +34,6 @@ export default function CampaignInterviewFlow({
     jobData: null,
     namespace: '/campaign-interview',
   });
-
-  const handleStartInterview = useCallback(() => {
-    setStep('interview');
-  }, []);
 
   if (!isReady || !campaignId || !moduleType) {
     return (
@@ -54,22 +44,11 @@ export default function CampaignInterviewFlow({
     );
   }
 
-  if (step === 'preview') {
-    return (
-      <CampaignPreviewPanel
-        moduleType={moduleType}
-        onStartInterview={authUser ? handleStartInterview : undefined}
-      />
-    );
-  }
-
   return (
     <InterviewScreen
       session={session}
       configData={{ jobData: null, interviewConfig: interviewConfig as any }}
-      onBack={() => {
-        setStep('preview');
-      }}
+      onBack={onBack}
     />
   );
 }

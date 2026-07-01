@@ -25,7 +25,7 @@ const QuestionnaireAssessment: React.FC<QuestionnaireAssessmentProps> = ({
   }, []);
 
   return (
-    <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#F8FAFC', overflow: 'hidden' }}>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: '#F8FAFC', overflow: 'hidden' }}>
       <InterviewPageHeader
         campaign={campaign}
         moduleType="QUESTIONNAIRE"

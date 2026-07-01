@@ -108,9 +108,10 @@ export const apiFetchEmployeeCampaigns = async (params: {
   if (period)            p.period            = period;
   const res = await axiosInstance.get(`internal-campaigns/employee/${userId}`, { params: p });
   const json = res.data;
+  const raw: any[] = json.data ?? [];
   return {
-    data:  json.data,
-    total: json.pagination?.total ?? json.data?.length ?? 0,
+    data:  raw.map((item) => ({ ...item, campaignId: item.campaignId ?? item._id ?? item.id })),
+    total: json.pagination?.total ?? raw.length,
     pages: json.pagination?.pages ?? 1,
     page:  json.pagination?.page  ?? page,
     limit: json.pagination?.limit ?? limit,
