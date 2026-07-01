@@ -36,8 +36,8 @@ import {
   ModuleType,
   CreateCampaignPayload,
   CreateCampaignForm,
-} from "@/types/campaign";
-import { MODULE_CONFIG } from "@/constants/campaign";
+} from "@/modules/company/campaigns/types/campaign";
+import { MODULE_CONFIG } from "@/modules/shared/constants/campaign";
 import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
 import { useCompanyAccess } from "@/hooks/useCompanyAccess";

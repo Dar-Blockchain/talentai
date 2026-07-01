@@ -22,7 +22,7 @@ import { useAuthContext } from "@/modules/auth/shared/context/AuthContext";
 import { saveToken } from "@/modules/auth/shared/utils/token";
 import { checkEligibility } from "../../../post-interview/api/eligibility.api";
 import { usePersistentCountdown } from "@/hooks/usePersistentCountdown";
-import { getUserLocation } from "@/utils/api";
+import { getUserLocation } from '@/utils/geoLocation';
 import { formatTimeLeft } from "@/utils/functions";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
@@ -331,7 +331,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
         otp: otpCode,
         location,
       });
-      saveToken();
+      saveToken(data.user.role);
       dispatch(
         setConnectedUser({
           user: data.user,

@@ -31,9 +31,10 @@ export function useVerifyOtp(
     mutationFn: (payload: VerifyOtpPayload) => authApi.verifyOtp(payload),
 
     onSuccess: (data) => {
-      // Sets the JS-readable auth_present indicator cookie.
-      // The actual JWT was delivered server-side as an httpOnly cookie.
-      saveToken();
+      // Store the role in auth_present so the middleware can do role-based
+      // routing without needing the httpOnly jwt_token (which is on the API
+      // domain and invisible to Next.js middleware on the frontend domain).
+      saveToken(data.user.role);
 
       dispatch(setConnectedUser({
         user:              data.user,

@@ -4,7 +4,7 @@ import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 import { cn } from "@/lib/utils";
 import { RootState } from "@/store/store";
-import { skillCategories, softSkills } from "@/modules/shared/skills";
+import { skillCategories, softSkills } from "@/modules/shared/constants/skills";
 import {
   Dialog,
   DialogContent,

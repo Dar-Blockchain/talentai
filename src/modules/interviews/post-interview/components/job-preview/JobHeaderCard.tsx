@@ -1,6 +1,6 @@
 import React from 'react';
 import { Building2, Briefcase, MapPin, Banknote, Calendar, CalendarX2 } from 'lucide-react';
-import { formatSalary } from '@/utils/postHelpers';
+import { formatSalary } from '@/modules/company/posts/utils/postHelpers';
 import { fmtDate } from '@/utils/functions';
 import { SectionCard, MetaBadge } from './JobPanelShared';
 

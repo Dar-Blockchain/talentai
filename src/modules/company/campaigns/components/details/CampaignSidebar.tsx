@@ -8,8 +8,8 @@ import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import UpdateOutlined from "@mui/icons-material/UpdateOutlined";
 import SecurityOutlined from "@mui/icons-material/SecurityOutlined";
 import GroupOutlined from "@mui/icons-material/GroupOutlined";
-import { Campaign } from "@/types/campaign";
-import { STATUS_COLORS } from "@/constants/campaign";
+import { Campaign } from "@/modules/company/campaigns/types/campaign";
+import { STATUS_COLORS } from "@/modules/shared/constants/campaign";
 import { fmtDate } from "@/utils/functions";
 import { useTranslation } from "react-i18next";
 

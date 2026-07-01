@@ -2,7 +2,7 @@ import React from "react";
 import ApplicationCard from "@/modules/company/applications/components/ApplicationCard";
 import { ApplicationSummaryItem } from "@/modules/company/applications/types";
 import { ContactTarget } from "../ContactCandidateModal";
-import { SimplePagination } from "@/modules/shared/ui/shadcn/pagination-simple";
+import { Pagination } from "@/modules/shared/ui/shadcn/pagination";
 
 interface Props {
   rows: ApplicationSummaryItem[];
@@ -30,7 +30,7 @@ const ApplicationsList: React.FC<Props> = ({
       />
     ))}
     {pagination.totalPages > 1 && (
-      <SimplePagination page={page} totalPages={pagination.totalPages} onPageChange={onPage} className="mt-2" />
+      <Pagination page={page} totalPages={pagination.totalPages} onPageChange={onPage} className="mt-2" />
     )}
   </div>
 );

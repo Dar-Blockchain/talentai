@@ -10,8 +10,8 @@ import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
 import { useDepartmentsQuery } from "@/modules/company/employees/queries";
 import { useTranslation } from "react-i18next";
-import { ROLES } from "@/constants/employee";
-import { roleMatchesSearch } from "@/utils/employeeRoleI18n";
+import { ROLES } from "@/modules/shared/constants/employee";
+import { roleMatchesSearch } from '@/modules/company/employees/utils/employeeRoleI18n';
 import RoleMenuItem from "../shared/RoleMenuItem";
 import RoleSelectValue from "../shared/RoleSelectValue";
 import {

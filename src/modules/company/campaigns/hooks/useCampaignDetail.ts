@@ -5,7 +5,7 @@ import { RootState } from "@/store/store";
 import { usePermissionsQuery } from "@/modules/company/employees/queries";
 import { useToast } from "@/hooks/useToast";
 import { useTranslation } from "react-i18next";
-import { CampaignModule, CampaignStatus, ModuleType } from "@/types/campaign";
+import { CampaignModule, CampaignStatus, ModuleType } from "@/modules/company/campaigns/types/campaign";
 import {
   useCampaignDetailQuery,
   useUpdateCampaignMutation,

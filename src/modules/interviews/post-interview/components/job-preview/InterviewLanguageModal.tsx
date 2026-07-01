@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Languages, Check, ArrowRight, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { LANG_META } from "@/modules/shared/languages";
+import { LANG_META } from "@/modules/shared/constants/languages";
 import { useTranslation } from "react-i18next";
 import { Dialog, DialogContent } from "@/modules/shared/ui/shadcn/dialog";
 import { Button } from "@/modules/shared/ui/shadcn/button";

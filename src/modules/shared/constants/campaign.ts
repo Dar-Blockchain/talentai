@@ -1,4 +1,4 @@
-import { CampaignStatus, CampaignType, ModuleType } from "@/types/campaign";
+import { CampaignStatus, CampaignType, ModuleType } from "@/modules/company/campaigns/types/campaign";
 import {
   InsightsOutlined,
   AccountTreeOutlined,

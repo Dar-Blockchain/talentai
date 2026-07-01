@@ -24,9 +24,9 @@ import {
   useRemoveParticipantMutation,
 } from "../../queries";
 import { useDepartmentsQuery } from "@/modules/company/employees/queries";
-import { CampaignParticipant, NonParticipant, ParticipantStatus } from "@/types/campaign";
-import Pagination from "@/components/ui/Pagination";
-import { ROLES } from "@/constants/employee";
+import { CampaignParticipant, NonParticipant, ParticipantStatus } from "@/modules/company/campaigns/types/campaign";
+import { Pagination } from "@/modules/shared/ui/shadcn/pagination";
+import { ROLES } from "@/modules/shared/constants/employee";
 import { useTranslation } from "react-i18next";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -717,7 +717,7 @@ const AddParticipantDialog = memo<AddDialogProps>(({ open, campaignId, onClose }
         display: "flex", flexDirection: "column", gap: 1.5,
       }}>
         {!loading && total > PICKER_PAGE_SIZE && (
-          <Pagination page={page} total={total} pageSize={PICKER_PAGE_SIZE} onPageChange={setPage} />
+          <Pagination page={page} totalPages={Math.ceil(total / PICKER_PAGE_SIZE)} onPageChange={setPage} />
         )}
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Typography sx={{ fontSize: "12px", color: "#9CA3AF" }}>{paginationText}</Typography>
@@ -895,7 +895,7 @@ const CampaignParticipantsTab = memo<Props>(({ campaignId, mode = "company" }) =
       </Box>
 
       {!loading && total > PAGE_SIZE && (
-        <Pagination page={page} total={total} pageSize={PAGE_SIZE} onPageChange={setPage} />
+        <Pagination page={page} totalPages={Math.ceil(total / PAGE_SIZE)} onPageChange={setPage} />
       )}
 
       {isCompany && (

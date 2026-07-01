@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/router";
 import { useToast } from "@/hooks/useToast";
-import { isInvitationUrl } from "@/utils/memberInvitation";
+import { isInvitationUrl } from '@/modules/auth/register/utils/memberInvitation';
 import { useCvProgress } from "@/modules/auth/shared/hooks";
 import { extractInvitationEmail, refreshAbort } from "@/modules/auth/shared/utils";
 import { OTP_TTL } from "@/modules/auth/shared/types";

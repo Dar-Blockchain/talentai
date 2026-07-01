@@ -18,7 +18,7 @@ import {
   VisibilityOffOutlined,
 } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
-import { CampaignType, ModuleType, ParticipantStatus } from "@/types/campaign";
+import { CampaignType, ModuleType, ParticipantStatus } from "@/modules/company/campaigns/types/campaign";
 import { EmployeeCampaignEntry } from "@/modules/company/campaigns/types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────

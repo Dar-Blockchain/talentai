@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Search } from "lucide-react";
 import { Input } from "@/modules/shared/ui/shadcn/input";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
-import { SimplePagination } from "@/modules/shared/ui/shadcn/pagination-simple";
+import { Pagination } from "@/modules/shared/ui/shadcn/pagination";
 import { UseSkillsReturn } from "../hooks/useSkills";
 import SkillCard from "./SkillCard";
 import EmptySkills from "./EmptySkills";
@@ -62,7 +62,7 @@ function SoftSkills({
               <SkillCard key={item._id} skill={item} type="soft" last={false} />
             ))}
           </div>
-          <SimplePagination
+          <Pagination
             page={currentPage}
             totalPages={totalPages}
             onPageChange={goToPage}

@@ -8,7 +8,7 @@ import GroupOutlined from "@mui/icons-material/GroupOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
 import UpdateOutlined from "@mui/icons-material/UpdateOutlined";
-import { Campaign } from "@/types/campaign";
+import { Campaign } from "@/modules/company/campaigns/types/campaign";
 import { fmtDate, daysLeft } from "@/utils/functions";
 import { useTranslation } from "react-i18next";
 

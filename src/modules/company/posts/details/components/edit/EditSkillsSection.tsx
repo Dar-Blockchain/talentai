@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
 import Image from "next/image";
-import { getLevelFromNumber } from "@/utils/postHelpers";
+import { getLevelFromNumber } from '@/modules/company/posts/utils/postHelpers';
 import EditSkillChip from "./EditSkillChip";
 import EditAddSkillButton from "./EditAddSkillButton";
 

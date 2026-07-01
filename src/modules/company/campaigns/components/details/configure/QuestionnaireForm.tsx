@@ -3,7 +3,7 @@ import { Box, Button, IconButton, Typography } from "@mui/material";
 import { AddOutlined, CloseOutlined, DeleteOutlined } from "@mui/icons-material";
 import AppInput from "@/components/ui/AppInput";
 import AppSelect from "@/components/ui/AppSelect";
-import { Question, QuestionnaireModule, QuestionType } from "@/types/campaign";
+import { Question, QuestionnaireModule, QuestionType } from "@/modules/company/campaigns/types/campaign";
 import { useTranslation } from "react-i18next";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
