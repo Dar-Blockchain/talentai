@@ -9,12 +9,13 @@ import {
   Psychology as SkillIcon,
   Settings as SettingsIcon,
   WorkOutline as PostsIcon,
+  VideoLibrary as WebinarIcon,
 } from '@mui/icons-material';
 import { cn } from '@/lib/utils';
 
 const DRAWER_WIDTH = 240;
 
-type TabName = 'dashboard' | 'users' | 'posts' | 'post-interview' | 'skill-interview' | 'company-config';
+type TabName = 'dashboard' | 'users' | 'posts' | 'post-interview' | 'skill-interview' | 'company-config' | 'webinars';
 
 const GROUPS = [
   {
@@ -30,6 +31,7 @@ const GROUPS = [
       { id: 'posts'           as TabName, label: 'Posts',           icon: PostsIcon     },
       { id: 'post-interview'  as TabName, label: 'Post Interview',  icon: InterviewIcon },
       { id: 'skill-interview' as TabName, label: 'Skill Interview', icon: SkillIcon     },
+      { id: 'webinars'        as TabName, label: 'Webinars',        icon: WebinarIcon   },
     ],
   },
   {

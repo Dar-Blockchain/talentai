@@ -29,6 +29,7 @@ const { router: apiKeyRouter } = require('../features/api-keys');
 const { paymentRouter } = require('../features/billing/payments');
 const usersRouter = require('../features/users').userRouter;
 const skillRouter = require('../features/skills/skill.routes');
+const { webinarAgentRouter, webinarRouter } = require('../features/webinar-agent');
 
 /**
  * Register all routes on the Express app
@@ -94,6 +95,11 @@ function registerRoutes(app) {
 
   // API Key Management
   app.use('/api/api-keys', apiKeyRouter);
+
+  // Webinar onboarding agent (public submission flow)
+  app.use('/webinar-agent', webinarAgentRouter);
+  // Webinar management (admin CRUD)
+  app.use('/webinars', webinarRouter);
 }
 
 module.exports = {
