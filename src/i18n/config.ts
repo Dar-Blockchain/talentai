@@ -188,7 +188,12 @@ if (!i18n.isInitialized) {
     .use(initReactI18next)
     .init(options);
 } else {
-  i18n.reloadResources();
+  // HMR: push updated static-import bundles into the existing i18next store
+  (Object.keys(resources) as (keyof typeof resources)[]).forEach((lng) => {
+    (Object.entries(resources[lng]) as [string, object][]).forEach(([ns, bundle]) => {
+      i18n.addResourceBundle(lng, ns, bundle, true, true);
+    });
+  });
 }
 
 export default i18n;

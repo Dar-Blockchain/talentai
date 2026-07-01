@@ -75,6 +75,7 @@
     "sent": "Envoyé le {{date}}",
     "invited_as": "Invité en tant que",
     "resend": "Renvoyer",
+    "resending": "Envoi…",
     "cancel": "Annuler"
   },
   "modals": {
@@ -92,7 +93,10 @@
       "no_roles_match": "Aucun rôle ne correspond à « {{term}} »",
       "cancel": "Annuler",
       "sending": "Envoi…",
-      "send_invitation": "Envoyer l'invitation"
+      "send_invitation": "Envoyer l'invitation",
+      "error_generic": "Échec de l'envoi de l'invitation. Veuillez réessayer.",
+      "error_email_exists": "Cet e-mail correspond à un compte déjà enregistré et ne peut pas être invité.",
+      "error_invitation_pending": "Une invitation est déjà en attente pour cet e-mail. Rendez-vous dans l'onglet Invitations pour la renvoyer ou l'annuler."
     },
     "edit": {
       "title": "Modifier le membre",

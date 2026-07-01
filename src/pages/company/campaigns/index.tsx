@@ -28,8 +28,8 @@ const CampaignsPage: NextPageWithLayout = () => {
   useCompanyAccess("canViewCampaigns");
 
   const user     = useSelector((state: RootState) => state.user.connectedUser.user);
-  const { data: empPerms } = usePermissionsQuery(user?._id);
   const isEmp    = user?.role === "Employee";
+  const { data: empPerms } = usePermissionsQuery(user?._id, isEmp);
   const canCreate = !isEmp || !!empPerms?.canCreateCampaign;
 
   return (

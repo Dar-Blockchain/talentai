@@ -83,7 +83,7 @@ export const employeesApi = {
 
   fetchInvitationDetails: async (invitationId: string) => {
     const res = await axiosInstance.get(`company-invitations/details/${invitationId}`);
-    return res.data.data ?? res.data;
+    return res.data.invitation ?? res.data.data ?? res.data;
   },
 
   respondToInvitation: async (params: {
@@ -94,12 +94,12 @@ export const employeesApi = {
     lastName?: string;
   }) => {
     const { invitationId, ...body } = params;
-    const res = await axiosInstance.post(`company-invitations/respond/${invitationId}`, body);
+    const res = await axiosInstance.post(`company-invitations/respondInvitation/${invitationId}`, body);
     return res.data;
   },
 
   fetchInvitationsByDepartment: async (departmentId: string) => {
-    const res = await axiosInstance.get(`company-invitations/department/${departmentId}`);
+    const res = await axiosInstance.get(`company-invitations/byDepartment/${departmentId}`);
     return (res.data.invitations || res.data) as any[];
   },
 };

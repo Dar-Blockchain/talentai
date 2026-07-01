@@ -75,6 +75,7 @@
     "sent": "Sent {{date}}",
     "invited_as": "Invited as",
     "resend": "Resend",
+    "resending": "Sending…",
     "cancel": "Cancel"
   },
   "modals": {
@@ -92,7 +93,10 @@
       "no_roles_match": "No roles match \"{{term}}\"",
       "cancel": "Cancel",
       "sending": "Sending…",
-      "send_invitation": "Send Invitation"
+      "send_invitation": "Send Invitation",
+      "error_generic": "Failed to send invitation. Please try again.",
+      "error_email_exists": "This email already belongs to a registered account and cannot be invited.",
+      "error_invitation_pending": "A pending invitation has already been sent to this email. Go to the Invitations tab to resend or cancel it."
     },
     "edit": {
       "title": "Edit Member",

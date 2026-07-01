@@ -76,16 +76,13 @@ export function useEmployeesList() {
   const error         = membersError ? String(membersError) : null;
 
   const handleAddMember = useCallback(async (email: string, role: string, departmentId?: string) => {
-    inviteMut.mutate({ email, role, departmentId }, {
-      onSuccess: () => {
-        setAddModalOpen(false);
-        showToast({ message: t("pages.employees.invited_success"), severity: "success" });
-      },
-      onError: (err: any) => {
-        const msg = err?.response?.data?.message ?? err?.message ?? t("pages.employees.toast_invite_failed");
-        showToast({ message: msg, severity: "error" });
-      },
-    });
+    try {
+      await inviteMut.mutateAsync({ email, role, departmentId });
+      showToast({ message: t("pages.employees.invited_success"), severity: "success" });
+    } catch (err: any) {
+      // Re-throw original error so err.response.data is accessible in the modal
+      throw err;
+    }
   }, [inviteMut, showToast, t]);
 
   const handleUpdateRole = useCallback(async (role: string, departmentId?: string) => {

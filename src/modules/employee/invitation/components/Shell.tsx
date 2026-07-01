@@ -1,22 +1,19 @@
-import React from 'react';
-import Image from 'next/image';
-import { Box, Container, Typography } from '@mui/material';
+import React from "react";
+import Image from "next/image";
 
 const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <Box sx={{
-    minHeight: '100vh', bgcolor: '#F8FAFC',
-    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-    pt: { xs: 4, sm: 7 }, pb: 6, px: 2,
-  }}>
-    <Container maxWidth="sm" sx={{ flex: 1 }}>{children}</Container>
+  <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-violet-50/40 flex flex-col items-center justify-center px-4 py-10">
+    <div className="w-full max-w-md flex-1 flex flex-col justify-center">
+      {children}
+    </div>
 
-    <Box sx={{ mt: 5, display: 'flex', alignItems: 'center', gap: 1 }}>
-      <Image src="/logo-purple.svg" alt="TalentAI" width={90} height={20} />
-      <Typography sx={{ color: '#CBD5E1', fontSize: '0.75rem' }}>
-        © {new Date().getFullYear()} TalentAI
-      </Typography>
-    </Box>
-  </Box>
+    <div className="mt-8 flex items-center gap-2.5">
+      <Image src="/images/home/logo.svg" alt="TalentAI" width={108} height={28} className="object-contain" />
+      <span className="text-[11px] text-slate-300 font-medium">
+        © {new Date().getFullYear()}
+      </span>
+    </div>
+  </div>
 );
 
 export default Shell;

@@ -2,372 +2,275 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/router";
-import { useDispatch } from "react-redux";
-import { Box, Typography, Alert, CircularProgress } from "@mui/material";
-import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
-import EmailOutlined from "@mui/icons-material/EmailOutlined";
-import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
-import BadgeOutlined from "@mui/icons-material/BadgeOutlined";
-import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
-import ErrorOutlineOutlined from "@mui/icons-material/ErrorOutlineOutlined";
-import PersonOutlined from "@mui/icons-material/PersonOutlined";
-import { AppDispatch } from "@/store/store";
+import { useMutation } from "@tanstack/react-query";
+import {
+  CheckCircle2, Mail, Building2, BadgeCheck,
+  Clock, AlertCircle, User,
+} from "lucide-react";
 import {
   useInvitationDetailsQuery,
   useRespondToInvitationMutation,
 } from "@/modules/company/employees/queries";
-import { setConnectedUser } from "@/store/slices/userSlice";
-import { useAuthContext } from "@/modules/auth/shared/context/AuthContext";
 import Shell from "@/modules/employee/invitation/components/Shell";
 import InfoRow from "@/modules/employee/invitation/components/InfoRow";
-import AppButton from "@/components/ui/AppButton";
-import { PURPLE, TEAL } from "@/modules/employee/invitation/constants";
+import LoadingScreen from "@/modules/shared/ui/LoadingScreen";
+import AppOtpVerifyStep from "@/modules/shared/ui/AppOtpVerifyStep";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import { Input } from "@/modules/shared/ui/shadcn/input";
+import { Label } from "@/modules/shared/ui/shadcn/label";
+import { Card, CardContent } from "@/modules/shared/ui/shadcn/card";
 import { ROLES } from "@/modules/shared/constants/employee";
+import { useVerifyOtp, useOtpFlow } from "@/modules/auth/shared/hooks";
+import { authApi } from "@/modules/auth/shared/api";
 
-// Map legacy backend role strings → ROLES array lookup key
+// Map legacy backend role strings → ROLES array value
 const ROLE_VALUE_MAP: Record<string, string> = {
-  RH: "hr",
-  Manager: "manager",
-  TechLead: "technical_leader",
+  RH:         "hr",
+  Manager:    "manager",
+  TechLead:   "technical_leader",
   Supervisor: "supervisor",
-  Owner: "owner",
+  Owner:      "owner",
 };
 
-function resolveRole(roleStr: string) {
-  const key = ROLE_VALUE_MAP[roleStr] ?? roleStr.toLowerCase();
+function resolveRole(roleStr: string | undefined) {
+  if (!roleStr) return { label: "Member", color: "#6B7280", Icon: null };
+  const normalized = roleStr.toLowerCase().replace(/\s+/g, "_");
+  const key   = ROLE_VALUE_MAP[roleStr] ?? normalized;
   const entry = ROLES.find((r) => r.value === key);
   return {
     label: entry?.label ?? roleStr,
     color: entry?.color ?? "#6B7280",
-    Icon: entry?.icon ?? null,
+    Icon:  entry?.icon  ?? null,
   };
 }
 
-// ── Styled input ────────────────────────────────────────────────────────────
-interface StyledInputProps {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  icon: React.ElementType;
-  error?: string;
-}
-const StyledInput: React.FC<StyledInputProps> = ({ label, value, onChange, icon: Icon, error }) => {
-  const [focused, setFocused] = useState(false);
-  const active = focused || value.length > 0;
-  return (
-    <Box sx={{ flex: 1 }}>
-      <Box sx={{
-        position: "relative",
-        bgcolor: "#F8FAFC",
-        border: `1.5px solid ${error ? "#EF4444" : focused ? PURPLE : "#E2E8F0"}`,
-        borderRadius: "14px",
-        transition: "border-color 0.18s, box-shadow 0.18s",
-        boxShadow: focused ? `0 0 0 3px ${error ? "#EF444420" : `${PURPLE}18`}` : "none",
-        overflow: "visible",
-      }}>
-        {/* Icon */}
-        <Box sx={{
-          position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)",
-          color: error ? "#EF4444" : focused ? PURPLE : "#94A3B8",
-          display: "flex", alignItems: "center", transition: "color 0.18s",
-          "& svg": { fontSize: 17 },
-        }}>
-          <Icon />
-        </Box>
-
-        {/* Floating label */}
-        <Typography sx={{
-          position: "absolute",
-          left: 40, top: active ? 8 : "50%",
-          transform: active ? "none" : "translateY(-50%)",
-          fontSize: active ? "10px" : "13px",
-          fontWeight: active ? 700 : 500,
-          color: error ? "#EF4444" : active ? (focused ? PURPLE : "#64748B") : "#94A3B8",
-          lineHeight: 1,
-          transition: "all 0.18s cubic-bezier(.4,0,.2,1)",
-          pointerEvents: "none",
-          letterSpacing: active ? "0.04em" : 0,
-          textTransform: active ? "uppercase" : "none",
-        }}>
-          {label}
-        </Typography>
-
-        {/* Input */}
-        <input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          style={{
-            width: "100%",
-            border: "none",
-            outline: "none",
-            background: "transparent",
-            fontFamily: "inherit",
-            fontSize: "14px",
-            fontWeight: 600,
-            color: "#0F172A",
-            paddingLeft: 40,
-            paddingRight: 16,
-            paddingTop: 26,
-            paddingBottom: 10,
-            borderRadius: 14,
-            display: "block",
-            boxSizing: "border-box",
-          }}
-        />
-      </Box>
-      {error && (
-        <Typography sx={{ fontSize: "11px", color: "#EF4444", mt: 0.5, ml: 1, fontWeight: 500 }}>
-          {error}
-        </Typography>
-      )}
-    </Box>
-  );
-};
-
-// ── Main page ───────────────────────────────────────────────────────────────
+// ── Page ──────────────────────────────────────────────────────────────────────
 const JoinTeamPage: React.FC = () => {
-  const router      = useRouter();
-  const dispatch    = useDispatch<AppDispatch>();
-  const { login }   = useAuthContext();
+  const router = useRouter();
   const { invitationId, token } = router.query;
 
   const invId = router.isReady && typeof invitationId === "string" ? invitationId : undefined;
 
-  const {
-    data: currentInvitation,
-    isLoading: fetchingInvitationDetails,
-    error: invitationError,
-  } = useInvitationDetailsQuery(invId);
-
+  const { data: inv, isLoading, error: fetchError } = useInvitationDetailsQuery(invId);
   const respondMutation = useRespondToInvitationMutation();
 
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [step,        setStep]        = useState<"form" | "otp">("form");
+  const [firstName,   setFirstName]   = useState("");
+  const [lastName,    setLastName]    = useState("");
   const [fieldErrors, setFieldErrors] = useState<{ firstName?: string; lastName?: string }>({});
-  const [success, setSuccess] = useState(false);
   const [acceptError, setAcceptError] = useState<string | null>(null);
 
+  // ── OTP flow ────────────────────────────────────────────────────────────────
+  const verifyMutation = useVerifyOtp(() => {
+    router.push("/employee/dashboard");
+  });
+
+  const resendMutation = useMutation({
+    mutationFn: ({ email, signal }: { email: string; signal?: AbortSignal }) =>
+      authApi.resendOtp(email, undefined, signal),
+  });
+
+  const otpFlow = useOtpFlow({
+    storageKey:     "jointeam_otp",
+    verifyMutation,
+    resendMutation,
+  });
+
+  // ── Accept handler ─────────────────────────────────────────────────────────
   const handleAccept = async () => {
     const errs: typeof fieldErrors = {};
     if (!firstName.trim()) errs.firstName = "First name is required";
-    if (!lastName.trim()) errs.lastName = "Last name is required";
+    if (!lastName.trim())  errs.lastName  = "Last name is required";
     if (Object.keys(errs).length) { setFieldErrors(errs); return; }
     setFieldErrors({});
-
     setAcceptError(null);
+
     try {
-      const result = await respondMutation.mutateAsync({
+      await respondMutation.mutateAsync({
         invitationId: invitationId as string,
-        action: "accept",
-        token: token as string,
+        action:    "accept",
+        token:     token as string,
         firstName: firstName.trim(),
-        lastName: lastName.trim(),
+        lastName:  lastName.trim(),
       });
-
-      if (result.token) {
-        login();
-      }
-      if (result.user) dispatch(setConnectedUser(result));
       localStorage.setItem("userType", "Employee");
-
-      setSuccess(true);
-      setTimeout(() => router.push("/employee/dashboard"), 1500);
+      otpFlow.timer.start();
+      setStep("otp");
     } catch (err: any) {
-      setAcceptError(typeof err === "string" ? err : "Failed to accept invitation. Please try again.");
+      const msg = err?.response?.data?.message ?? err?.message ?? "Failed to accept invitation. Please try again.";
+      setAcceptError(msg);
     }
   };
 
-  // ── Loading ──
-  if (!router.isReady || fetchingInvitationDetails) {
+  // ── Loading ───────────────────────────────────────────────────────────────
+  if (!router.isReady || isLoading) {
+    return <LoadingScreen title="Loading invitation…" />;
+  }
+
+  // ── Error / not found ─────────────────────────────────────────────────────
+  if (fetchError || !inv) {
     return (
       <Shell>
-        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, py: 8 }}>
-          <CircularProgress sx={{ color: PURPLE }} size={36} />
-          <Typography sx={{ color: "#64748B", fontSize: "0.875rem" }}>Loading invitation…</Typography>
-        </Box>
+        <Card className="gap-0 py-0 overflow-hidden text-center">
+          <CardContent className="py-10 flex flex-col items-center gap-3">
+            <div className="size-14 rounded-2xl bg-destructive/8 flex items-center justify-center">
+              <AlertCircle className="size-7 text-destructive" />
+            </div>
+            <p className="font-bold text-base text-card-foreground">Invalid Invitation</p>
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
+              {(fetchError as Error)?.message || "This invitation is no longer valid or has expired."}
+            </p>
+          </CardContent>
+        </Card>
       </Shell>
     );
   }
 
-  // ── Error / not found ──
-  if (invitationError || !currentInvitation) {
+  // ── OTP step ──────────────────────────────────────────────────────────────
+  if (step === "otp") {
+    const email = inv.email as string;
     return (
       <Shell>
-        <Box sx={{ bgcolor: "#fff", borderRadius: "20px", border: "1px solid #E5E7EB", boxShadow: "0 4px 24px rgba(0,0,0,0.06)", p: 5, textAlign: "center" }}>
-          <Box sx={{ width: 56, height: 56, borderRadius: "16px", bgcolor: "#FEF2F2", display: "flex", alignItems: "center", justifyContent: "center", mx: "auto", mb: 2.5 }}>
-            <ErrorOutlineOutlined sx={{ fontSize: 28, color: "#DC2626" }} />
-          </Box>
-          <Typography sx={{ fontWeight: 700, fontSize: "1.1rem", color: "#1E293B", mb: 1 }}>Invalid Invitation</Typography>
-          <Typography sx={{ color: "#64748B", fontSize: "0.875rem", lineHeight: 1.65 }}>
-            {(invitationError as Error)?.message || "This invitation is no longer valid or has expired."}
-          </Typography>
-        </Box>
+        <Card className="gap-0 py-0 overflow-hidden">
+          <div className="h-1 w-full bg-gradient-to-r from-primary to-primary/40 rounded-t-xl" />
+          <CardContent className="py-7 px-6">
+            <AppOtpVerifyStep
+              savedEmail={email}
+              otp={otpFlow.otp}
+              tPrefix="signin"
+              loading={otpFlow.verifyLoading}
+              timer={otpFlow.timer}
+              resendLoading={otpFlow.resendLoading}
+              onVerify={() => otpFlow.verifyCode(email)}
+              onResend={() => otpFlow.resendCode(email)}
+            />
+          </CardContent>
+        </Card>
       </Shell>
     );
   }
 
-  // ── Email already taken ──
-  if ((currentInvitation as any).emailExists) {
-    return (
-      <Shell>
-        <Box sx={{ bgcolor: "#fff", borderRadius: "20px", border: "1px solid #E5E7EB", boxShadow: "0 4px 24px rgba(0,0,0,0.06)", p: 5, textAlign: "center" }}>
-          <Box sx={{ width: 56, height: 56, borderRadius: "16px", bgcolor: "#FEF2F2", display: "flex", alignItems: "center", justifyContent: "center", mx: "auto", mb: 2.5 }}>
-            <ErrorOutlineOutlined sx={{ fontSize: 28, color: "#DC2626" }} />
-          </Box>
-          <Typography sx={{ fontWeight: 700, fontSize: "1.1rem", color: "#1E293B", mb: 1 }}>Email Already Registered</Typography>
-          <Typography sx={{ color: "#64748B", fontSize: "0.875rem", lineHeight: 1.65 }}>
-            The email{" "}
-            <Box component="span" sx={{ fontWeight: 700, color: "#1E293B" }}>{currentInvitation.email}</Box>
-            {" "}is already associated with an account. You cannot use this email to accept the invitation.
-          </Typography>
-        </Box>
-      </Shell>
-    );
-  }
-
-  // ── Success ──
-  if (success) {
-    return (
-      <Shell>
-        <Box sx={{ bgcolor: "#fff", borderRadius: "20px", border: "1px solid #E5E7EB", boxShadow: "0 4px 24px rgba(0,0,0,0.06)", p: 5, textAlign: "center" }}>
-          <Box sx={{ width: 56, height: 56, borderRadius: "16px", bgcolor: "#F0FDF4", display: "flex", alignItems: "center", justifyContent: "center", mx: "auto", mb: 2.5 }}>
-            <CheckCircleOutlined sx={{ fontSize: 28, color: "#16A34A" }} />
-          </Box>
-          <Typography sx={{ fontWeight: 700, fontSize: "1.1rem", color: "#1E293B", mb: 1 }}>Welcome aboard!</Typography>
-          <Typography sx={{ color: "#64748B", fontSize: "0.875rem" }}>
-            Your account has been created. Redirecting to your dashboard…
-          </Typography>
-        </Box>
-      </Shell>
-    );
-  }
-
-  const roleStr     = (currentInvitation as any).role as string;
+  // ── Resolve role + company ────────────────────────────────────────────────
+  const roleStr     = (inv as any).role as string | undefined;
   const role        = resolveRole(roleStr);
-  const invitedBy   = (currentInvitation as any).company?.name || (currentInvitation as any).company?.email;
-  const companyLetter = (invitedBy?.[0] ?? "C").toUpperCase();
+  const companyName = (inv as any).company?.name || (inv as any).invitedBy?.name || (inv as any).company?.email || "Your Company";
+  const RoleIcon    = role.Icon;
 
   return (
     <Shell>
-      <Box sx={{ bgcolor: "#fff", borderRadius: "20px", border: "1px solid #E5E7EB", boxShadow: "0 4px 24px rgba(0,0,0,0.06)", overflow: "hidden" }}>
-        {/* Gradient header */}
-        <Box sx={{
-          height: 96,
-          background: `linear-gradient(145deg, ${role.color}12, #FFFFFF)`,
-          borderBottom: "1px solid #F1F5F9",
-          position: "relative",
-        }}>
-          <Box sx={{ position: "absolute", inset: 0, pointerEvents: "none", background: `radial-gradient(circle at 15% 50%, ${role.color}10, transparent 65%)` }} />
-        </Box>
+      <Card className="gap-0 py-0 overflow-hidden">
 
-        {/* Company avatar */}
-        <Box sx={{ display: "flex", justifyContent: "center", mt: "-32px", mb: 2, position: "relative", zIndex: 1 }}>
-          <Box sx={{
-            width: 64, height: 64, borderRadius: "16px",
-            background: `linear-gradient(135deg, ${PURPLE} 0%, #A855F7 100%)`,
-            border: "3px solid #fff",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: `0 6px 20px ${PURPLE}30`,
-          }}>
-            <Typography sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#fff", lineHeight: 1 }}>
-              {companyLetter}
-            </Typography>
-          </Box>
-        </Box>
+        {/* Top accent bar */}
+        <div className="h-1 w-full bg-gradient-to-r from-primary to-primary/40 rounded-t-xl" />
 
-        {/* Heading */}
-        <Box sx={{ textAlign: "center", px: 3, mb: 3 }}>
-          <Typography sx={{ fontWeight: 700, fontSize: "1.1rem", color: "#1E293B", letterSpacing: "-0.02em", mb: 0.75 }}>
-            You&apos;re Invited!
-          </Typography>
-          <Typography sx={{ color: "#64748B", fontSize: "0.825rem", lineHeight: 1.65, mb: 1.5 }}>
-            <Box component="span" sx={{ fontWeight: 700, color: PURPLE }}>{invitedBy}</Box>
-            {" "}has invited you to join their team.
-          </Typography>
-
-          {/* Role pill — same as EmployeeCard */}
-          <Box sx={{
-            display: "inline-flex", alignItems: "center", gap: 0.6,
-            px: 1.5, py: "5px", borderRadius: "999px",
-            bgcolor: `${role.color}10`, border: `1.5px solid ${role.color}25`,
-          }}>
-            {role.Icon && (
-              <Box sx={{ color: role.color, display: "flex", alignItems: "center", "& svg": { fontSize: 13 } }}>
-                <role.Icon />
-              </Box>
-            )}
-            <Typography sx={{ fontSize: "12px", fontWeight: 700, color: role.color, letterSpacing: "0.01em" }}>
-              {role.label}
-            </Typography>
-          </Box>
-        </Box>
+        {/* Header */}
+        <div className="flex items-center gap-3 px-6 pt-5 pb-5 border-b border-border">
+          <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <Mail className="size-5 text-primary" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[15px] font-bold text-card-foreground leading-tight">Team Invitation</p>
+            <p className="text-xs text-muted-foreground mt-0.5 truncate">
+              <span className="font-semibold text-foreground">{companyName}</span>
+              {" "}has invited you to join their team
+            </p>
+          </div>
+        </div>
 
         {/* Info rows */}
-        <Box sx={{ mx: 3, mb: 3, borderRadius: "12px", border: "1px solid #F1F5F9", overflow: "hidden" }}>
-          <InfoRow icon={<BusinessOutlined />} label="Organization" value={invitedBy} iconColor={TEAL} />
-          <InfoRow icon={<BadgeOutlined />} label="Role" iconColor={role.color} value={role.label} />
-          {currentInvitation.email && (
-            <InfoRow icon={<EmailOutlined />} label="Email" value={currentInvitation.email} iconColor="#0891B2" />
+        <div className="border-b border-border">
+          <InfoRow icon={<Building2 />} label="Organization" value={companyName} iconColor="#0D9488" />
+          <InfoRow
+            icon={<BadgeCheck />}
+            label="Role"
+            value={
+              <span
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-[11px] font-bold"
+                style={{
+                  color:           role.color,
+                  backgroundColor: `${role.color}12`,
+                  borderColor:     `${role.color}28`,
+                }}
+              >
+                {RoleIcon && <RoleIcon sx={{ fontSize: 11 }} />}
+                {role.label}
+              </span>
+            }
+            iconColor={role.color}
+          />
+          {inv.email && (
+            <InfoRow icon={<Mail />} label="Email" value={inv.email} iconColor="#0891B2" />
           )}
-          {(currentInvitation as any).expiresAt && (
+          {(inv as any).expiresAt && (
             <InfoRow
-              icon={<AccessTimeOutlined />} label="Expires"
-              value={new Date((currentInvitation as any).expiresAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-              iconColor="#2563EB" last
+              icon={<Clock />}
+              label="Expires"
+              value={new Date((inv as any).expiresAt).toLocaleDateString("en-US", {
+                month: "short", day: "numeric", year: "numeric",
+              })}
+              iconColor="var(--color-muted-foreground, #94a3b8)"
+              last
             />
           )}
-        </Box>
+        </div>
 
         {/* Registration form */}
-        <Box sx={{ mx: 3, mb: 2.5 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.75 }}>
-            <Box sx={{ width: 24, height: 24, borderRadius: "7px", bgcolor: `${PURPLE}10`, border: `1px solid ${PURPLE}20`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <PersonOutlined sx={{ fontSize: 14, color: PURPLE }} />
-            </Box>
-            <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-              Your Details
-            </Typography>
-          </Box>
-          <Box sx={{ display: "flex", gap: 1.5 }}>
-            <StyledInput
-              label="First Name"
-              value={firstName}
-              onChange={setFirstName}
-              icon={PersonOutlined}
-              error={fieldErrors.firstName}
-            />
-            <StyledInput
-              label="Last Name"
-              value={lastName}
-              onChange={setLastName}
-              icon={PersonOutlined}
-              error={fieldErrors.lastName}
-            />
-          </Box>
-        </Box>
+        <CardContent className="py-5 space-y-4">
+          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+            <User className="size-3.5" />
+            Your Details
+          </p>
 
-        {acceptError && (
-          <Alert severity="error" sx={{ mx: 3, mb: 2, borderRadius: "10px" }}>
-            {acceptError}
-          </Alert>
-        )}
+          <div className="flex gap-3">
+            <div className="flex-1 flex flex-col gap-1.5">
+              <Label htmlFor="firstName" className="text-xs font-medium text-muted-foreground">
+                First Name
+              </Label>
+              <Input
+                id="firstName"
+                placeholder="John"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                aria-invalid={!!fieldErrors.firstName}
+              />
+              {fieldErrors.firstName && (
+                <p className="text-[11px] text-destructive">{fieldErrors.firstName}</p>
+              )}
+            </div>
+            <div className="flex-1 flex flex-col gap-1.5">
+              <Label htmlFor="lastName" className="text-xs font-medium text-muted-foreground">
+                Last Name
+              </Label>
+              <Input
+                id="lastName"
+                placeholder="Doe"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                aria-invalid={!!fieldErrors.lastName}
+              />
+              {fieldErrors.lastName && (
+                <p className="text-[11px] text-destructive">{fieldErrors.lastName}</p>
+              )}
+            </div>
+          </div>
 
-        {/* Accept button */}
-        <Box sx={{ px: 3, pb: 3.5 }}>
-          <AppButton
-            variant="primary"
-            label="Accept & Create Account"
-            size="large"
-            fullWidth
-            loading={respondMutation.isPending}
-            startIcon={<CheckCircleOutlined sx={{ fontSize: 17 }} />}
+          {acceptError && (
+            <div className="flex items-start gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3.5 py-3 text-sm text-destructive">
+              <AlertCircle className="size-4 mt-px shrink-0" />
+              <span>{acceptError}</span>
+            </div>
+          )}
+
+          <Button
+            className="w-full gap-2 h-10 rounded-xl text-sm font-semibold"
             onClick={handleAccept}
-            sx={{ borderRadius: "12px", boxShadow: `0 4px 14px ${PURPLE}35`, "&:hover": { boxShadow: `0 6px 20px ${PURPLE}45` } }}
-          />
-        </Box>
-      </Box>
+            loading={respondMutation.isPending}
+          >
+            <CheckCircle2 className="size-4" />
+            {respondMutation.isPending ? "Joining…" : "Accept & Create Account"}
+          </Button>
+        </CardContent>
+      </Card>
     </Shell>
   );
 };

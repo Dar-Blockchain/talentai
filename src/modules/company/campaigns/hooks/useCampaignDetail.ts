@@ -27,8 +27,8 @@ export function useCampaignDetail(id: string | string[] | undefined) {
   const deleteMut = useDeleteCampaignMutation();
 
   const user     = useSelector((s: RootState) => s.user.connectedUser.user);
-  const { data: empPerms } = usePermissionsQuery(user?._id);
   const isEmp    = user?.role === "Employee";
+  const { data: empPerms } = usePermissionsQuery(user?._id, isEmp);
   const canEdit    = !isEmp || (empPerms !== null && (!!empPerms.canEditCampaign || !!empPerms.canCreateCampaign));
   const canDelete  = !isEmp || (empPerms !== null && !!empPerms.canDeleteCampaign);
   const canPublish = !isEmp || (empPerms !== null && !!empPerms.canPublishCampaign);

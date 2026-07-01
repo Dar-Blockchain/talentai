@@ -1,9 +1,8 @@
 import React, { memo, useCallback } from "react";
-import { Box } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import { UserPlus } from "lucide-react";
 import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
-import AppButton from "@/components/ui/AppButton";
-import PersonAddOutlined from "@mui/icons-material/PersonAddOutlined";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import AddEmployeeModal from "./create/AddEmployeeModal";
 import EditRoleModal from "./edit/EditRoleModal";
 import DeleteMemberDialog from "./delete/DeleteMemberDialog";
@@ -42,21 +41,10 @@ const EmployeesPageContent: React.FC = memo(() => {
   const handleEdit = useCallback((m: ExtendedMember) => { setSelectedMember(m); setEditModalOpen(true); }, [setSelectedMember, setEditModalOpen]);
   const handleDelete = useCallback((m: ExtendedMember) => { setSelectedMember(m); setDeleteDialogOpen(true); }, [setSelectedMember, setDeleteDialogOpen]);
 
-  const addButton = canInvite ? [
-    <AppButton
-      key="add"
-      label={t("pages.employees.add_employee")}
-      variant="contained"
-      startIcon={<PersonAddOutlined />}
-      size="medium"
-      onClick={openAddModal}
-    />,
-  ] : [];
-
   return (
     <>
       {detailMember ? (
-        <Box>
+        <div>
           <EmployeeDetail
             member={detailMember}
             onBack={clearDetail}
@@ -66,9 +54,9 @@ const EmployeesPageContent: React.FC = memo(() => {
             canRemove={canRemove}
             canManagePermissions={canManagePerms}
           />
-        </Box>
+        </div>
       ) : (
-        <Box>
+        <div>
           <PageHeader
             title={t("pages.employees.title")}
             subtitle={t("pages.employees.subtitle")}
@@ -76,7 +64,12 @@ const EmployeesPageContent: React.FC = memo(() => {
               { label: t("pages.common.dashboard"), href: "/company/dashboard" },
               { label: t("pages.employees.title") },
             ]}
-            actions={addButton}
+            actions={canInvite ? [
+              <Button key="add" onClick={openAddModal} className="gap-2">
+                <UserPlus className="size-4" />
+                {t("pages.employees.add_employee")}
+              </Button>,
+            ] : []}
           />
 
           <EmployeesHeader stats={stats} loading={fetchingStats} active={active} owners={owners} />
@@ -109,7 +102,7 @@ const EmployeesPageContent: React.FC = memo(() => {
             pageSize={PAGE_SIZE}
             onPageChange={setPage}
           />
-        </Box>
+        </div>
       )}
 
       <AddEmployeeModal open={addModalOpen} onClose={closeAddModal} onSave={handleAddMember} />
