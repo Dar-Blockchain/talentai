@@ -390,29 +390,6 @@ function Snapshot({ scoring, lang, questions, answers }: {
         </motion.div>
 
         {/* ── Tier detail card ── */}
-        {tm && tier && (
-          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.50 }}
-            className="bg-white rounded-2xl border border-slate-200/70 p-5"
-            style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.04)" }}>
-            <SectionLabel>{lang === "en" ? "Profile classification" : "Classification du profil"}</SectionLabel>
-            <div className="flex items-start gap-4">
-              <div className="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center text-[1.4rem]"
-                style={{ background: tm.dot + "12", border: `1px solid ${tm.dot}25` }}>
-                {tier === "A" ? "🎯" : tier === "B" ? "📈" : tier === "C" ? "🕐" : "⛔"}
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[14px] font-black text-slate-900">{lang === "en" ? tm.labelEn : tm.label}</span>
-                  <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider"
-                    style={{ background: tm.dot + "15", color: tm.dot }}>
-                    {lang === "en" ? `Priority ${tier}` : `Priorité ${tier}`}
-                  </span>
-                </div>
-                <p className="text-[12.5px] text-slate-500 leading-relaxed">{lang === "en" ? tm.descEn : tm.desc}</p>
-              </div>
-            </div>
-          </motion.div>
-        )}
 
         {/* ── Answers ── */}
         {answered.length > 0 && (
@@ -857,45 +834,66 @@ export default function WebinarAgentPage() {
 
                 {/* ── Contact fields ── */}
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-                  className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[12px] font-semibold text-slate-500 mb-1.5">
-                        {lang === "en" ? "Full name *" : "Nom complet *"}
-                      </label>
+                  className="space-y-4">
+
+                  {/* Full name */}
+                  <div className="relative">
+                    <label className="block text-[12px] font-bold text-slate-500 uppercase tracking-[0.8px] mb-2">
+                      {lang === "en" ? "Full name" : "Nom complet"} <span className="text-teal-500">*</span>
+                    </label>
+                    <div className="relative">
                       <input
                         type="text"
                         value={contact.nom}
                         onChange={e => setContact(c => ({ ...c, nom: e.target.value }))}
                         placeholder={lang === "en" ? "Jane Doe" : "Jean Dupont"}
-                        className="w-full rounded-xl border-2 border-slate-200 focus:border-teal-500 outline-none px-4 py-3 text-[14px] text-slate-700 placeholder:text-slate-300 transition-colors bg-white"
+                        className={`w-full rounded-2xl border-2 outline-none px-5 py-4 text-[15px] text-slate-800 placeholder:text-slate-300 transition-all bg-white
+                          ${contact.nom.trim() ? "border-teal-400 bg-teal-50/20" : "border-slate-200 focus:border-teal-400 focus:bg-teal-50/10"}`}
                       />
-                    </div>
-                    <div>
-                      <label className="block text-[12px] font-semibold text-slate-500 mb-1.5">
-                        {lang === "en" ? "Company" : "Entreprise"}
-                      </label>
-                      <input
-                        type="text"
-                        value={contact.entreprise}
-                        onChange={e => setContact(c => ({ ...c, entreprise: e.target.value }))}
-                        placeholder={lang === "en" ? "Acme Inc." : "Nom de la société"}
-                        className="w-full rounded-xl border-2 border-slate-200 focus:border-teal-500 outline-none px-4 py-3 text-[14px] text-slate-700 placeholder:text-slate-300 transition-colors bg-white"
-                      />
+                      {contact.nom.trim() && (
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-teal-500">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-[12px] font-semibold text-slate-500 mb-1.5">
-                      {lang === "en" ? "Email *" : "Email *"}
+
+                  {/* Email */}
+                  <div className="relative">
+                    <label className="block text-[12px] font-bold text-slate-500 uppercase tracking-[0.8px] mb-2">
+                      Email <span className="text-teal-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        value={contact.email}
+                        onChange={e => setContact(c => ({ ...c, email: e.target.value }))}
+                        placeholder={lang === "en" ? "you@company.com" : "vous@entreprise.com"}
+                        className={`w-full rounded-2xl border-2 outline-none px-5 py-4 text-[15px] text-slate-800 placeholder:text-slate-300 transition-all bg-white
+                          ${contact.email.trim() ? "border-teal-400 bg-teal-50/20" : "border-slate-200 focus:border-teal-400 focus:bg-teal-50/10"}`}
+                      />
+                      {contact.email.trim() && (
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-teal-500">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Company */}
+                  <div className="relative">
+                    <label className="block text-[12px] font-bold text-slate-500 uppercase tracking-[0.8px] mb-2">
+                      {lang === "en" ? "Company" : "Entreprise"} <span className="text-slate-300 font-normal normal-case tracking-normal">{lang === "en" ? "(optional)" : "(optionnel)"}</span>
                     </label>
                     <input
-                      type="email"
-                      value={contact.email}
-                      onChange={e => setContact(c => ({ ...c, email: e.target.value }))}
-                      placeholder={lang === "en" ? "you@company.com" : "vous@entreprise.com"}
-                      className="w-full rounded-xl border-2 border-slate-200 focus:border-teal-500 outline-none px-4 py-3 text-[14px] text-slate-700 placeholder:text-slate-300 transition-colors bg-white"
+                      type="text"
+                      value={contact.entreprise}
+                      onChange={e => setContact(c => ({ ...c, entreprise: e.target.value }))}
+                      placeholder={lang === "en" ? "Acme Inc." : "Nom de la société"}
+                      className="w-full rounded-2xl border-2 border-slate-200 focus:border-teal-400 focus:bg-teal-50/10 outline-none px-5 py-4 text-[15px] text-slate-800 placeholder:text-slate-300 transition-all bg-white"
                     />
                   </div>
+
                 </motion.div>
 
                 <motion.label initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.18 }}

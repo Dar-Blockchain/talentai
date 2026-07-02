@@ -5,6 +5,8 @@
  */
 const axios = require("axios");
 const WebinarSubmission = require("./webinar-submission.model");
+const Webinar = require("./webinar.model");
+const { sendWebinarResultsEmail } = require("../../utils/email.service");
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -139,6 +141,12 @@ async function pushToEsp(submission) {
 async function fanOut(submission) {
   const updates = { synced: {} };
 
+  // Fetch webinar for email (title, date)
+  const webinar = await Webinar.findById(submission.webinar_id)
+    .select("title date lang")
+    .lean()
+    .catch(() => null);
+
   await Promise.allSettled([
     pushToNotion(submission)
       .then(() => { updates.synced.notion = true; })
@@ -151,6 +159,11 @@ async function fanOut(submission) {
     pushToEsp(submission)
       .then(() => { updates.synced.esp = true; })
       .catch(() => { updates.synced.esp = false; }),
+
+    // Send results email to the participant
+    webinar && submission.contact?.email
+      ? sendWebinarResultsEmail(submission, webinar).catch(() => {})
+      : Promise.resolve(),
   ]);
 
   // Persist sync status without blocking the response

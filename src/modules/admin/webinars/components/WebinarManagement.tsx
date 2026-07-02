@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import * as XLSX from "xlsx";
 import { CircularProgress, Snackbar, Alert, Dialog, DialogTitle, DialogContent, DialogActions, Chip } from "@mui/material";
 import {
   Add as AddIcon,
@@ -11,8 +12,10 @@ import {
   OpenInNew as OpenIcon,
   Close as CloseIcon,
   PeopleAlt as PeopleIcon,
+  Download as DownloadIcon,
 } from "@mui/icons-material";
 import WebinarSubmissionsDialog from "./WebinarSubmissionsDialog";
+import { adminWebinarApi } from "../api";
 import {
   AdminPageHeading, AdminQueryError, AdminChartCard,
   ADMIN_TABLE_HEAD_CELL_SX, ADMIN_TABLE_ROW_SX,
@@ -395,6 +398,44 @@ const WebinarManagement: React.FC = () => {
   const [qTargetId, setQTargetId]     = useState<string | null>(null);
   const [subsTarget, setSubsTarget]   = useState<Webinar | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [exportingId, setExportingId]   = useState<string | null>(null);
+
+  const handleExport = async (w: Webinar) => {
+    setExportingId(w._id);
+    try {
+      const result = await adminWebinarApi.listSubmissions(w._id, { limit: 5000 });
+      const submissions = result?.data ?? [];
+      const rows = submissions.map(s => ({
+        Nom:              s.contact?.nom ?? "",
+        Email:            s.contact?.email ?? "",
+        Entreprise:       s.contact?.entreprise ?? "",
+        Langue:           s.lang ?? "",
+        "Complété":       s.completed ? "Oui" : "Non",
+        "Maturité IA":    s.scoring?.maturite_ia ?? "",
+        "Intensité Pain": s.scoring?.intensite_pain ?? "",
+        Tier:             s.scoring?.tier ?? "",
+        "ICP Fit":        s.scoring?.icp_fit ?? "",
+        "UTM Source":     s.source?.utm_source ?? "",
+        "UTM Campaign":   s.source?.utm_campaign ?? "",
+        Date:             new Date(s.createdAt).toLocaleString("fr-FR"),
+        ...Object.fromEntries(
+          w.questions.slice().sort((a, b) => a.order - b.order).map(q => {
+            const raw = (s.answers as Record<string, unknown>)?.[q.key];
+            const opt = q.options.find(o => o.key === raw);
+            return [q.label_fr.slice(0, 40), opt ? opt.label_fr : raw ?? ""];
+          })
+        ),
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Submissions");
+      XLSX.writeFile(wb, `${w.title.replace(/[^a-z0-9]/gi, "_").slice(0, 30)}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    } catch {
+      err("Export failed.");
+    } finally {
+      setExportingId(null);
+    }
+  };
 
   const [snack, setSnack] = useState({ open: false, msg: "", sev: "success" as "success" | "error" });
   const ok  = (msg: string) => setSnack({ open: true, msg, sev: "success" });
@@ -605,6 +646,18 @@ const WebinarManagement: React.FC = () => {
                         <ArchiveIcon sx={{ fontSize: 13 }} /> Archive
                       </button>
                     )}
+
+                    {/* Export Excel */}
+                    <button
+                      onClick={() => handleExport(w)}
+                      disabled={exportingId === w._id}
+                      title="Export submissions to Excel"
+                      className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-500 text-[12px] font-semibold hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-600 transition-colors disabled:opacity-40"
+                    >
+                      {exportingId === w._id
+                        ? <CircularProgress size={12} sx={{ color: "#0D9488" }} />
+                        : <DownloadIcon sx={{ fontSize: 13 }} />}
+                    </button>
 
                     {/* Delete */}
                     <button

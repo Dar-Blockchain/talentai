@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{webinarTitle}} — Vos résultats TalentAI</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f0f4f8;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f4f8;padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table width="620" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+          <!-- Logo header -->
+          <tr>
+            <td style="background-color:#ffffff;padding:20px 28px;border-bottom:1px solid #E5E7EB;">
+              <img src="cid:logo" alt="TalentAI" height="28" style="display:block;border:0;outline:none;">
+            </td>
+          </tr>
+
+          <!-- Green accent bar -->
+          <tr>
+            <td style="height:4px;background:linear-gradient(90deg,#0D9488,#6AD39C);"></td>
+          </tr>
+
+          <!-- Hero -->
+          <tr>
+            <td style="padding:40px 36px 8px 36px;">
+              <p style="margin:0 0 6px 0;font-size:12px;font-weight:700;color:#6AD39C;text-transform:uppercase;letter-spacing:1.5px;">{{webinarTitle}}</p>
+              <h1 style="margin:0 0 12px 0;font-size:26px;font-weight:800;color:#0F172A;line-height:1.2;">
+                {{nom}}, voici votre analyse IA 🎯
+              </h1>
+              <p style="margin:0;font-size:15px;color:#64748B;line-height:1.6;">
+                Merci d'avoir participé. Voici un résumé personnalisé de vos réponses et de votre profil de maturité IA.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Webinar info bar -->
+          <tr>
+            <td style="padding:20px 36px 0 36px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding-right:28px;">
+                          <p style="margin:0;font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:1px;">Webinar</p>
+                          <p style="margin:4px 0 0 0;font-size:14px;font-weight:700;color:#0F172A;">{{webinarTitle}}</p>
+                        </td>
+                        {{#if webinarDate}}
+                        <td style="padding-right:28px;border-left:1px solid #E2E8F0;padding-left:28px;">
+                          <p style="margin:0;font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:1px;">Date</p>
+                          <p style="margin:4px 0 0 0;font-size:14px;font-weight:700;color:#0F172A;">{{webinarDate}}</p>
+                        </td>
+                        {{/if}}
+                        <td style="border-left:1px solid #E2E8F0;padding-left:28px;">
+                          <p style="margin:0;font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:1px;">Format</p>
+                          <p style="margin:4px 0 0 0;font-size:14px;font-weight:700;color:#0F172A;">Live session · Gratuit</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Score cards -->
+          <tr>
+            <td style="padding:28px 36px 0 36px;">
+              <p style="margin:0 0 14px 0;font-size:11px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:1.2px;">Vos scores</p>
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td width="33%" style="padding-right:8px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background:#F0FDF9;border:1px solid #CCFBEE;border-radius:12px;">
+                      <tr><td style="padding:16px;text-align:center;">
+                        <p style="margin:0;font-size:28px;font-weight:900;color:#0D9488;">{{maturite_ia}}</p>
+                        <p style="margin:2px 0 0 0;font-size:10px;font-weight:700;color:#0D9488;text-transform:uppercase;letter-spacing:0.8px;">/100</p>
+                        <p style="margin:8px 0 0 0;font-size:11px;color:#64748B;font-weight:600;">Maturité IA</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                  <td width="33%" style="padding-right:8px;padding-left:8px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:12px;">
+                      <tr><td style="padding:16px;text-align:center;">
+                        <p style="margin:0;font-size:28px;font-weight:900;color:#EA580C;">{{intensite_pain}}</p>
+                        <p style="margin:2px 0 0 0;font-size:10px;font-weight:700;color:#EA580C;text-transform:uppercase;letter-spacing:0.8px;">/100</p>
+                        <p style="margin:8px 0 0 0;font-size:11px;color:#64748B;font-weight:600;">Douleur recrutement</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                  <td width="33%" style="padding-left:8px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;">
+                      <tr><td style="padding:16px;text-align:center;">
+                        <p style="margin:0;font-size:28px;font-weight:900;color:#2563EB;">{{readiness_score}}</p>
+                        <p style="margin:2px 0 0 0;font-size:10px;font-weight:700;color:#2563EB;text-transform:uppercase;letter-spacing:0.8px;">/100</p>
+                        <p style="margin:8px 0 0 0;font-size:11px;color:#64748B;font-weight:600;">Readiness</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Tier badge -->
+          <tr>
+            <td style="padding:20px 36px 0 36px;">
+              <table cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="background:#F0FDF9;border:1px solid #CCFBEE;border-radius:8px;padding:8px 16px;">
+                    <p style="margin:0;font-size:12px;font-weight:800;color:#0D9488;">Profil {{tier}} · {{tierLabel}}</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Key insight -->
+          {{#if key_insight}}
+          <tr>
+            <td style="padding:20px 36px 0 36px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8FAFC;border-left:3px solid #6AD39C;border-radius:0 8px 8px 0;">
+                <tr>
+                  <td style="padding:14px 16px;">
+                    <p style="margin:0 0 4px 0;font-size:10px;font-weight:700;color:#6AD39C;text-transform:uppercase;letter-spacing:1px;">Insight clé</p>
+                    <p style="margin:0;font-size:13px;color:#334155;line-height:1.6;">{{key_insight}}</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {{/if}}
+
+          <!-- Main pain -->
+          {{#if main_pain}}
+          <tr>
+            <td style="padding:12px 36px 0 36px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#FFF8F8;border-left:3px solid #F43F5E;border-radius:0 8px 8px 0;">
+                <tr>
+                  <td style="padding:14px 16px;">
+                    <p style="margin:0 0 4px 0;font-size:10px;font-weight:700;color:#F43F5E;text-transform:uppercase;letter-spacing:1px;">Douleur principale</p>
+                    <p style="margin:0;font-size:13px;color:#334155;line-height:1.6;">{{main_pain}}</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {{/if}}
+
+          <!-- Recommended action -->
+          {{#if recommended_action}}
+          <tr>
+            <td style="padding:12px 36px 0 36px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,#F0FDF9,#ECFDF5);border:1px solid #CCFBEE;border-radius:12px;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <p style="margin:0 0 6px 0;font-size:10px;font-weight:700;color:#0D9488;text-transform:uppercase;letter-spacing:1px;">Action recommandée</p>
+                    <p style="margin:0;font-size:13px;color:#0F172A;line-height:1.6;font-weight:600;">{{recommended_action}}</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {{/if}}
+
+          <!-- CTA -->
+          <tr>
+            <td style="padding:28px 36px 0 36px;text-align:center;">
+              <a href="{{resultsUrl}}" style="display:inline-block;background:linear-gradient(135deg,#0D9488,#6AD39C);color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 32px;border-radius:12px;letter-spacing:0.3px;">
+                Voir mon rapport complet →
+              </a>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:32px 36px;text-align:center;border-top:1px solid #F1F5F9;margin-top:28px;">
+              <p style="margin:0 0 4px 0;font-size:12px;color:#94A3B8;">TalentAI · Données confidentielles · Aucun spam</p>
+              <p style="margin:0;font-size:11px;color:#CBD5E1;">© {{year}} TalentAI. Tous droits réservés.</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
