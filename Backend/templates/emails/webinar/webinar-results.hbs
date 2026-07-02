@@ -165,14 +165,16 @@
           </tr>
           {{/if}}
 
-          <!-- CTA -->
+          <!-- CTA — only shown if admin set a webinar link -->
+          {{#if webinarLink}}
           <tr>
             <td style="padding:28px 36px 0 36px;text-align:center;">
-              <a href="{{resultsUrl}}" style="display:inline-block;background:linear-gradient(135deg,#0D9488,#6AD39C);color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 32px;border-radius:12px;letter-spacing:0.3px;">
-                Voir mon rapport complet →
+              <a href="{{webinarLink}}" style="display:inline-block;background:linear-gradient(135deg,#0D9488,#6AD39C);color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 32px;border-radius:12px;letter-spacing:0.3px;">
+                {{#if isEn}}Join the webinar →{{else}}Rejoindre le webinar →{{/if}}
               </a>
             </td>
           </tr>
+          {{/if}}
 
           <!-- Footer -->
           <tr>

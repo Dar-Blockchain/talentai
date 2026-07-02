@@ -40,6 +40,9 @@ const WebinarSubmissionSchema = new mongoose.Schema({
   },
 
   completed: { type: Boolean, default: false },
+
+  // Reminder tracking
+  reminder_sent_at: { type: Date, default: null },
 }, { timestamps: true });
 
 module.exports = mongoose.models.WebinarSubmission

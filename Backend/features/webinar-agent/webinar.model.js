@@ -23,6 +23,13 @@ const WebinarSchema = new mongoose.Schema({
   // AI prompt context (used to steer question generation)
   ai_context:  { type: String, default: "" },
 
+  // "What is this webinar?" editorial text shown on the landing page
+  about_fr:    { type: String, default: "" },
+  about_en:    { type: String, default: "" },
+
+  // External join link shown in emails (e.g. Zoom/Teams/Google Meet URL)
+  webinar_link: { type: String, default: "" },
+
   // Up to 3 short benefit bullets shown on the landing page card
   highlights:  { type: [String], default: [] },
 

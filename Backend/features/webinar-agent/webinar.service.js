@@ -20,14 +20,14 @@ exports.getWebinar = async (id) => {
 exports.getActiveWebinar = async () => {
   const doc = await Webinar.findOne({ status: "active" })
     .sort({ createdAt: -1 })
-    .select("title description date lang questions highlights stats")
+    .select("title description date lang questions highlights stats about_fr about_en")
     .lean();
   return doc || null;
 };
 
 exports.getPublicWebinar = async (id) => {
   const doc = await Webinar.findById(id)
-    .select("title description date lang questions highlights stats status")
+    .select("title description date lang questions highlights stats status about_fr about_en")
     .lean();
   if (!doc) throw new Error("Webinar not found");
   return doc;

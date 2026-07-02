@@ -22,6 +22,9 @@ export interface Webinar {
   date: string | null;
   status: "draft" | "active" | "archived";
   lang: "fr" | "en" | "both";
+  about_fr: string;
+  about_en: string;
+  webinar_link: string;
   highlights: string[];
   questions: WebinarQuestion[];
   stats: WebinarStats;
@@ -75,6 +78,9 @@ export interface WebinarQuestionDraft {
 export interface WebinarFormValues {
   title: string;
   description: string;
+  about_fr: string;
+  about_en: string;
+  webinar_link: string;
   date: string;
   status: "draft" | "active" | "archived";
   lang: "fr" | "en" | "both";

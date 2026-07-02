@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/router";
+import { useTranslation } from "react-i18next";
 import Head from "next/head";
 import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/modules/shared/layouts/home/HomeHeader";
@@ -630,7 +631,9 @@ export default function WebinarAgentPage() {
   const [webinar, setWebinar]   = useState<WebinarData | null>(null);
   const [loadingW, setLoadingW] = useState(true);
 
-  const lang = langParam === "en" ? "en" : langParam === "fr" ? "fr" : webinar?.lang === "en" ? "en" : "fr";
+  const { i18n } = useTranslation();
+  const i18nLang = i18n.language?.startsWith("en") ? "en" : "fr";
+  const lang = langParam === "en" ? "en" : langParam === "fr" ? "fr" : webinar?.lang === "en" ? "en" : i18nLang;
   const questions = webinar ? [...webinar.questions].sort((a, b) => a.order - b.order) : [];
   const total = questions.length;
 
@@ -859,26 +862,43 @@ export default function WebinarAgentPage() {
                   </div>
 
                   {/* Email */}
-                  <div className="relative">
-                    <label className="block text-[12px] font-bold text-slate-500 uppercase tracking-[0.8px] mb-2">
-                      Email <span className="text-teal-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="email"
-                        value={contact.email}
-                        onChange={e => setContact(c => ({ ...c, email: e.target.value }))}
-                        placeholder={lang === "en" ? "you@company.com" : "vous@entreprise.com"}
-                        className={`w-full rounded-2xl border-2 outline-none px-5 py-4 text-[15px] text-slate-800 placeholder:text-slate-300 transition-all bg-white
-                          ${contact.email.trim() ? "border-teal-400 bg-teal-50/20" : "border-slate-200 focus:border-teal-400 focus:bg-teal-50/10"}`}
-                      />
-                      {contact.email.trim() && (
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-teal-500">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                  {(() => {
+                    const emailVal = contact.email.trim();
+                    const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal);
+                    const showError = emailVal.length > 0 && !validEmail;
+                    return (
+                      <div className="relative">
+                        <label className="block text-[12px] font-bold text-slate-500 uppercase tracking-[0.8px] mb-2">
+                          Email <span className="text-teal-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="email"
+                            value={contact.email}
+                            onChange={e => setContact(c => ({ ...c, email: e.target.value }))}
+                            placeholder={lang === "en" ? "you@company.com" : "vous@entreprise.com"}
+                            className={`w-full rounded-2xl border-2 outline-none px-5 py-4 text-[15px] text-slate-800 placeholder:text-slate-300 transition-all bg-white
+                              ${showError ? "border-red-400 bg-red-50/20" : validEmail ? "border-teal-400 bg-teal-50/20" : "border-slate-200 focus:border-teal-400 focus:bg-teal-50/10"}`}
+                          />
+                          {validEmail && (
+                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-teal-500">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            </span>
+                          )}
+                          {showError && (
+                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-red-400">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            </span>
+                          )}
+                        </div>
+                        {showError && (
+                          <p className="text-[12px] text-red-400 mt-1.5 ml-1">
+                            {lang === "en" ? "Please enter a valid email address" : "Veuillez entrer une adresse email valide"}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* Company */}
                   <div className="relative">
@@ -915,7 +935,7 @@ export default function WebinarAgentPage() {
                 </motion.label>
 
                 {(() => {
-                  const canStart = consent && contact.nom.trim() !== "" && contact.email.trim() !== "";
+                  const canStart = consent && contact.nom.trim() !== "" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email.trim());
                   return (
                     <motion.button initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}
                       onClick={() => canStart && goNext()} disabled={!canStart}

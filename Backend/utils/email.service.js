@@ -65,6 +65,7 @@ const campaignDeadlineReminderTemplate = compileTemplate("campaign/campaign-dead
 const planUpgradeReminderTemplate      = compileTemplate("company/plan-upgrade-reminder.hbs");
 const jobMatchTemplate                 = compileTemplate("job/job-match.hbs");
 const webinarResultsTemplate           = compileTemplate("webinar/webinar-results.hbs");
+const webinarReminderTemplate          = compileTemplate("webinar/webinar-reminder.hbs");
 
 // Format role: "project_manager" → "Project Manager"
 const formatRole = (role) =>
@@ -377,6 +378,7 @@ const sendWebinarResultsEmail = async (submission, webinar) => {
       : `Votre analyse IA est prête — ${webinar.title}`,
     html: webinarResultsTemplate({
       nom,
+      isEn:               lang === "en",
       webinarTitle:       webinar.title,
       webinarDate,
       maturite_ia:        scoring.maturite_ia ?? "—",
@@ -387,7 +389,7 @@ const sendWebinarResultsEmail = async (submission, webinar) => {
       key_insight:        scoring.key_insight || null,
       main_pain:          scoring.main_pain || null,
       recommended_action: scoring.recommended_action || null,
-      resultsUrl,
+      webinarLink:        webinar.webinar_link || null,
       year,
     }),
     attachments: [logoAttachment],
@@ -398,6 +400,48 @@ const sendWebinarResultsEmail = async (submission, webinar) => {
     return true;
   } catch (error) {
     console.error("❌ Webinar results email failed:", error.message);
+    return false;
+  }
+};
+
+const sendWebinarReminderEmail = async (submission, webinar) => {
+  const email = submission.contact?.email;
+  if (!email) return false;
+
+  const nom  = submission.contact?.nom || "Participant";
+  const lang = submission.lang || "fr";
+  const isEn = lang === "en";
+
+  const webinarDate = webinar.date
+    ? new Date(webinar.date).toLocaleDateString(isEn ? "en-GB" : "fr-FR", {
+        day: "numeric", month: "long", year: "numeric",
+      })
+    : null;
+
+  const webinarUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://talentai.bid"}/webinar/${webinar._id || webinar.id}`;
+
+  const mailOptions = {
+    from: FROM_ADDRESS,
+    to: email,
+    subject: isEn
+      ? `Reminder: your webinar is tomorrow — ${webinar.title}`
+      : `Rappel : votre webinar c'est demain — ${webinar.title}`,
+    html: webinarReminderTemplate({
+      nom,
+      webinarTitle: webinar.title,
+      webinarDate,
+      webinarUrl,
+      isEn,
+      year: new Date().getFullYear(),
+    }),
+    attachments: [logoAttachment],
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    return true;
+  } catch (error) {
+    console.error("❌ Webinar reminder email failed:", error.message);
     return false;
   }
 };
@@ -416,5 +460,6 @@ module.exports = {
   sendCampaignDeadlineReminder,
   sendJobMatchEmail,
   sendWebinarResultsEmail,
+  sendWebinarReminderEmail,
   transporter,
 };

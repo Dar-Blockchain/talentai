@@ -42,7 +42,7 @@ const STATUS_META: Record<string, { label: string; color: "success" | "warning" 
 
 // ── Form dialog ───────────────────────────────────────────────────────────────
 const EMPTY_FORM: WebinarFormValues = {
-  title: "", description: "", date: "", status: "draft",
+  title: "", description: "", about_fr: "", about_en: "", webinar_link: "", date: "", status: "draft",
   lang: "fr", highlights: ["", "", ""], questions: [],
 };
 
@@ -230,6 +230,18 @@ function WebinarFormDialog({
               <label className={labelCls}>Description</label>
               <textarea className={inputCls} rows={3} value={form.description} onChange={e => set("description", e.target.value)} placeholder="What's this webinar about?" style={{ resize: "none" }} />
             </div>
+            <div>
+              <label className={labelCls}>
+                "C'est quoi ce webinar ?" — texte FR <span className="text-slate-400 font-normal">(affiché sur la page d'accueil)</span>
+              </label>
+              <textarea className={inputCls} rows={4} value={form.about_fr} onChange={e => set("about_fr", e.target.value)} placeholder="Décrivez ce webinar en français pour la landing page..." style={{ resize: "vertical" }} />
+            </div>
+            <div>
+              <label className={labelCls}>
+                "What is this webinar?" — EN text <span className="text-slate-400 font-normal">(shown on landing page)</span>
+              </label>
+              <textarea className={inputCls} rows={4} value={form.about_en} onChange={e => set("about_en", e.target.value)} placeholder="Describe this webinar in English for the landing page..." style={{ resize: "vertical" }} />
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={labelCls}>Date</label>
@@ -243,6 +255,18 @@ function WebinarFormDialog({
                   <option value="both">Both</option>
                 </select>
               </div>
+            </div>
+            <div>
+              <label className={labelCls}>
+                Lien du webinar <span className="text-slate-400 font-normal">(Zoom / Teams / Meet — inclus dans les emails)</span>
+              </label>
+              <input
+                className={inputCls}
+                type="url"
+                value={form.webinar_link}
+                onChange={e => set("webinar_link", e.target.value)}
+                placeholder="https://zoom.us/j/..."
+              />
             </div>
             <div>
               <label className={labelCls}>Status</label>
@@ -680,6 +704,9 @@ const WebinarManagement: React.FC = () => {
         initial={editTarget ? {
           title: editTarget.title,
           description: editTarget.description,
+          about_fr: editTarget.about_fr ?? "",
+          about_en: editTarget.about_en ?? "",
+          webinar_link: editTarget.webinar_link ?? "",
           date: editTarget.date ? editTarget.date.slice(0, 16) : "",
           status: editTarget.status,
           lang: editTarget.lang,
