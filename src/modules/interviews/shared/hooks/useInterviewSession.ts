@@ -213,7 +213,7 @@ export function useInterviewSession({
     enabled: true,
   });
 
-  useIdentityGuard({
+  const identityGuard = useIdentityGuard({
     videoRef: camera.videoRef,
     active: socket.interviewStatus === 'active',
     onTerminate: () => endInterviewRef.current(),
@@ -288,6 +288,7 @@ export function useInterviewSession({
     timer,
     camera,
     security,
+    identityGuard,
     coverage,
     resultsReady,
     assessmentId: socket.assessmentId,
