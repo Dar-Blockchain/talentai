@@ -52,6 +52,12 @@ export const adminWebinarApi = {
       return data.data as Webinar;
     }, "Failed to refresh stats."),
 
+  sendLinkReminder: (id: string) =>
+    apiCall(async () => {
+      const { data } = await axiosInstance.post(`${BASE}/${id}/send-link`);
+      return data.data as { sent: number; failed: number; total: number };
+    }, "Failed to send reminder."),
+
   listSubmissions: (id: string, params?: { page?: number; limit?: number; completed?: boolean }) =>
     apiCall(async () => {
       const { data } = await axiosInstance.get(`${BASE}/${id}/submissions`, { params });

@@ -104,67 +104,6 @@
             </td>
           </tr>
 
-          <!-- Tier badge -->
-          <tr>
-            <td style="padding:20px 36px 0 36px;">
-              <table cellpadding="0" cellspacing="0">
-                <tr>
-                  <td style="background:#F0FDF9;border:1px solid #CCFBEE;border-radius:8px;padding:8px 16px;">
-                    <p style="margin:0;font-size:12px;font-weight:800;color:#0D9488;">Profil {{tier}} · {{tierLabel}}</p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- Key insight -->
-          {{#if key_insight}}
-          <tr>
-            <td style="padding:20px 36px 0 36px;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8FAFC;border-left:3px solid #6AD39C;border-radius:0 8px 8px 0;">
-                <tr>
-                  <td style="padding:14px 16px;">
-                    <p style="margin:0 0 4px 0;font-size:10px;font-weight:700;color:#6AD39C;text-transform:uppercase;letter-spacing:1px;">Insight clé</p>
-                    <p style="margin:0;font-size:13px;color:#334155;line-height:1.6;">{{key_insight}}</p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          {{/if}}
-
-          <!-- Main pain -->
-          {{#if main_pain}}
-          <tr>
-            <td style="padding:12px 36px 0 36px;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="background:#FFF8F8;border-left:3px solid #F43F5E;border-radius:0 8px 8px 0;">
-                <tr>
-                  <td style="padding:14px 16px;">
-                    <p style="margin:0 0 4px 0;font-size:10px;font-weight:700;color:#F43F5E;text-transform:uppercase;letter-spacing:1px;">Douleur principale</p>
-                    <p style="margin:0;font-size:13px;color:#334155;line-height:1.6;">{{main_pain}}</p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          {{/if}}
-
-          <!-- Recommended action -->
-          {{#if recommended_action}}
-          <tr>
-            <td style="padding:12px 36px 0 36px;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,#F0FDF9,#ECFDF5);border:1px solid #CCFBEE;border-radius:12px;">
-                <tr>
-                  <td style="padding:16px 20px;">
-                    <p style="margin:0 0 6px 0;font-size:10px;font-weight:700;color:#0D9488;text-transform:uppercase;letter-spacing:1px;">Action recommandée</p>
-                    <p style="margin:0;font-size:13px;color:#0F172A;line-height:1.6;font-weight:600;">{{recommended_action}}</p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          {{/if}}
-
           <!-- CTA — only shown if admin set a webinar link -->
           {{#if webinarLink}}
           <tr>

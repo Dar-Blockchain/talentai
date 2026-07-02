@@ -20,14 +20,14 @@ exports.getWebinar = async (id) => {
 exports.getActiveWebinar = async () => {
   const doc = await Webinar.findOne({ status: "active" })
     .sort({ createdAt: -1 })
-    .select("title description date lang questions highlights stats about_fr about_en")
+    .select("title description date lang questions highlights stats about_fr about_en webinar_link")
     .lean();
   return doc || null;
 };
 
 exports.getPublicWebinar = async (id) => {
   const doc = await Webinar.findById(id)
-    .select("title description date lang questions highlights stats status about_fr about_en")
+    .select("title description date lang questions highlights stats status about_fr about_en webinar_link")
     .lean();
   if (!doc) throw new Error("Webinar not found");
   return doc;
@@ -78,6 +78,30 @@ exports.listSubmissions = async ({ webinarId, page = 1, limit = 50, completed })
   const total = await WebinarSubmission.countDocuments(filter);
   const data  = await WebinarSubmission.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean();
   return { data, total, page, totalPages: Math.ceil(total / limit) };
+};
+
+exports.sendLinkReminder = async (id) => {
+  const { sendWebinarReminderEmail } = require("../../utils/email.service");
+  const webinar = await Webinar.findById(id).lean();
+  if (!webinar) throw new Error("Webinar not found");
+  if (!webinar.webinar_link) throw new Error("No webinar link set. Add one in the webinar settings first.");
+
+  const submissions = await WebinarSubmission.find({
+    webinar_id: id,
+    completed: true,
+    "contact.email": { $exists: true, $ne: null, $ne: "" },
+  }).lean();
+
+  let sent = 0;
+  let failed = 0;
+  await Promise.allSettled(
+    submissions.map(s =>
+      sendWebinarReminderEmail(s, webinar)
+        .then(ok => { if (ok) sent++; else failed++; })
+        .catch(() => { failed++; })
+    )
+  );
+  return { sent, failed, total: submissions.length };
 };
 
 exports.refreshStats = async (id) => {

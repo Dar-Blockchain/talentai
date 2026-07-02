@@ -36,8 +36,10 @@ const WebinarPage: React.FC = () => {
 
   const steps = lang === "en" ? STEPS_EN : STEPS_FR;
 
-  const [aboutFr, setAboutFr] = useState<string>("");
-  const [aboutEn, setAboutEn] = useState<string>("");
+  const [aboutFr, setAboutFr]         = useState<string>("");
+  const [aboutEn, setAboutEn]         = useState<string>("");
+  const [webinarTitle, setWebinarTitle] = useState<string>("");
+  const [webinarDesc, setWebinarDesc]   = useState<string>("");
 
   useEffect(() => {
     if (!routerReady) return;
@@ -51,6 +53,8 @@ const WebinarPage: React.FC = () => {
         if (d?.data) {
           setAboutFr(d.data.about_fr || "");
           setAboutEn(d.data.about_en || "");
+          setWebinarTitle(d.data.title || "");
+          setWebinarDesc(d.data.description || "");
         }
       })
       .catch(() => {});
@@ -88,21 +92,15 @@ const WebinarPage: React.FC = () => {
                 {lang === "en" ? "Free · Live · AI-powered" : "Gratuit · Live · IA"}
               </span>
               <h1 className="text-[2.6rem] md:text-[3.4rem] font-black leading-[1.07] tracking-tight mb-5">
-                {lang === "en"
+                {webinarTitle || (lang === "en"
                   ? "The free webinar that reveals your AI recruitment readiness"
-                  : "Le webinar gratuit qui révèle votre maturité IA en recrutement"}
+                  : "Le webinar gratuit qui révèle votre maturité IA en recrutement")}
               </h1>
-              <p className="text-[17px] text-white/80 leading-relaxed mb-8 max-w-[520px]">
-                {lang === "en"
-                  ? "Answer 3 minutes of questions and instantly receive a complete, personalised AI analysis of your recruitment challenges — at no cost."
-                  : "Répondez à 3 minutes de questions et recevez instantanément une analyse IA complète et personnalisée de vos défis recrutement — gratuitement."}
-              </p>
-              <div className="flex flex-wrap gap-4 text-[13px] text-white/70">
-                {(lang === "en"
-                  ? ["✓ No registration", "✓ Results in 3 min", "✓ AI report by email"]
-                  : ["✓ Sans inscription", "✓ Résultats en 3 min", "✓ Rapport IA par email"]
-                ).map(t => <span key={t} className="font-semibold">{t}</span>)}
-              </div>
+              {webinarDesc && (
+                <p className="text-[17px] text-white/80 leading-relaxed max-w-[520px]">
+                  {webinarDesc}
+                </p>
+              )}
             </motion.div>
           </div>
         </div>
@@ -115,34 +113,21 @@ const WebinarPage: React.FC = () => {
               {/* LEFT — editorial content */}
               <div>
 
-                {/* What is it */}
-                <motion.section
-                  initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                  viewport={VP} transition={{ duration: 0.5, ease }}
-                  className="mb-14"
-                >
-                  <h2 className="text-[1.5rem] font-black text-slate-900 tracking-tight mb-4">
-                    {lang === "en" ? "What is this webinar?" : "C'est quoi ce webinar ?"}
-                  </h2>
-                  {aboutText ? (
+                {/* What is it — only shown when admin has filled in the text */}
+                {aboutText && (
+                  <motion.section
+                    initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+                    viewport={VP} transition={{ duration: 0.5, ease }}
+                    className="mb-14"
+                  >
+                    <h2 className="text-[1.5rem] font-black text-slate-900 tracking-tight mb-4">
+                      {lang === "en" ? "What is this webinar?" : "C'est quoi ce webinar ?"}
+                    </h2>
                     <div className="text-[15px] text-slate-600 leading-relaxed whitespace-pre-line">
                       {aboutText}
                     </div>
-                  ) : (
-                    <div className="prose prose-slate max-w-none text-[15px] text-slate-600 leading-relaxed space-y-3">
-                      <p>
-                        {lang === "en"
-                          ? "This is not a classic webinar where you passively watch a presentation. It's an interactive AI-powered assessment that analyses your recruitment maturity in real time and delivers a tailored report directly to your inbox."
-                          : "Ce n'est pas un webinar classique où vous regardez passivement une présentation. C'est une évaluation interactive propulsée par l'IA qui analyse votre maturité recrutement en temps réel et vous livre un rapport personnalisé directement dans votre boîte mail."}
-                      </p>
-                      <p>
-                        {lang === "en"
-                          ? "In just 3 minutes, our AI engine measures your AI adoption level, identifies your main recruitment pain points, and generates a concrete action plan tailored to your profile."
-                          : "En seulement 3 minutes, notre moteur IA mesure votre niveau d'adoption de l'IA, identifie vos principaux points de douleur recrutement, et génère un plan d'action concret adapté à votre profil."}
-                      </p>
-                    </div>
-                  )}
-                </motion.section>
+                  </motion.section>
+                )}
 
                 {/* How it works */}
                 <motion.section

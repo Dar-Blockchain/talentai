@@ -19,6 +19,7 @@ router.delete("/:id",                requireAuth, adminOnly, controller.remove);
 router.patch( "/:id/verify",         requireAuth, adminOnly, controller.verify);
 router.patch( "/:id/archive",        requireAuth, adminOnly, controller.archive);
 router.post(  "/:id/refresh-stats",  requireAuth, adminOnly, controller.refreshStats);
+router.post(  "/:id/send-link",      requireAuth, adminOnly, controller.sendLinkReminder);
 router.get(   "/:id/submissions",    requireAuth, adminOnly, controller.listSubmissions);
 
 module.exports = router;

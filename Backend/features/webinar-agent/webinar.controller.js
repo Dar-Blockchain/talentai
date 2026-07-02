@@ -97,6 +97,15 @@ exports.listSubmissions = async (req, res) => {
   }
 };
 
+exports.sendLinkReminder = async (req, res) => {
+  try {
+    const result = await service.sendLinkReminder(req.params.id);
+    res.json({ success: true, data: result });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+};
+
 exports.refreshStats = async (req, res) => {
   try {
     const doc = await service.refreshStats(req.params.id);

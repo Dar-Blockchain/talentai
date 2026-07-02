@@ -412,24 +412,28 @@ const sendWebinarReminderEmail = async (submission, webinar) => {
   const lang = submission.lang || "fr";
   const isEn = lang === "en";
 
+  const locale = isEn ? "en-GB" : "fr-FR";
   const webinarDate = webinar.date
-    ? new Date(webinar.date).toLocaleDateString(isEn ? "en-GB" : "fr-FR", {
-        day: "numeric", month: "long", year: "numeric",
-      })
+    ? new Date(webinar.date).toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" })
+    : null;
+  const webinarTime = webinar.date
+    ? new Date(webinar.date).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })
     : null;
 
-  const webinarUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://talentai.bid"}/webinar/${webinar._id || webinar.id}`;
+  const webinarUrl = webinar.webinar_link
+    || `${process.env.NEXT_PUBLIC_APP_URL || "https://talentai.bid"}/webinar/${webinar._id || webinar.id}`;
 
   const mailOptions = {
     from: FROM_ADDRESS,
     to: email,
     subject: isEn
-      ? `Reminder: your webinar is tomorrow — ${webinar.title}`
-      : `Rappel : votre webinar c'est demain — ${webinar.title}`,
+      ? `Your webinar link — ${webinar.title}`
+      : `Votre lien webinar — ${webinar.title}`,
     html: webinarReminderTemplate({
       nom,
       webinarTitle: webinar.title,
       webinarDate,
+      webinarTime,
       webinarUrl,
       isEn,
       year: new Date().getFullYear(),

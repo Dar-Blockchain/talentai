@@ -89,18 +89,6 @@ const WebinarSection: React.FC<WebinarSectionProps> = ({ previewId, routerReady 
           )}
         </div>
 
-        {/* Title */}
-        <h3 className="text-[1.2rem] font-black text-slate-900 leading-snug tracking-tight mb-2">
-          {webinar.title}
-        </h3>
-
-        {/* Description */}
-        {webinar.description && webinar.description !== webinar.title && (
-          <p className="text-[13px] text-slate-500 leading-relaxed mb-5">
-            {webinar.description}
-          </p>
-        )}
-
         {/* Stats */}
         <div className="flex flex-wrap gap-x-5 gap-y-2 mb-5">
           {[

@@ -129,14 +129,14 @@ function Snapshot({ scoring, lang, questions, answers }: {
   const readColor = [C.muted, C.teal, C.brand][readLvl];
 
   const matLabel  = lang === "en"
-    ? (["Emerging","Developing","Advanced"])[matLvl]
-    : (["Émergent","En cours","Avancé"])[matLvl];
+    ? (["Beginner","Intermediate","Advanced"])[matLvl]
+    : (["Débutant","Intermédiaire","Avancé"])[matLvl];
   const painLabel = lang === "en"
-    ? (["Low","Moderate","Critical"])[painLvl]
-    : (["Faible","Modéré","Critique"])[painLvl];
+    ? (["Low","Moderate","High"])[painLvl]
+    : (["Faible","Modéré","Élevé"])[painLvl];
   const readLabel = lang === "en"
-    ? (["Not ready","Warming up","Ready"])[readLvl]
-    : (["Pas encore","En réflexion","Prêt"])[readLvl];
+    ? (["Not ready","In progress","Ready"])[readLvl]
+    : (["Pas encore","En cours","Prêt"])[readLvl];
 
   type TierKey = "A" | "B" | "C" | "D";
   const TIER: Record<TierKey, { label: string; labelEn: string; desc: string; descEn: string; dot: string }> = {
@@ -227,9 +227,9 @@ function Snapshot({ scoring, lang, questions, answers }: {
           style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.04)" }}>
           <div className="grid grid-cols-3 divide-x divide-slate-100">
             {[
-              { label: lang === "en" ? "AI Maturity" : "Maturité IA", value: maturite_ia, color: matColor, sub: matLabel },
-              { label: lang === "en" ? "Pain Level"  : "Douleur",      value: intensite_pain, color: painColor, sub: painLabel },
-              { label: lang === "en" ? "Readiness"   : "Disposition",  value: readiness, color: readColor, sub: readLabel },
+              { label: lang === "en" ? "Knowledge"  : "Maîtrise",    value: maturite_ia,    color: matColor,  sub: matLabel  },
+              { label: lang === "en" ? "Engagement"  : "Engagement",  value: intensite_pain, color: painColor, sub: painLabel },
+              { label: lang === "en" ? "Readiness"   : "Disposition", value: readiness,      color: readColor, sub: readLabel },
             ].map(({ label, value, color, sub }, di) => (
               <motion.div key={label} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 + di * 0.07 }}
                 className="flex flex-col items-center text-center py-5 px-2">
@@ -364,9 +364,9 @@ function Snapshot({ scoring, lang, questions, answers }: {
           <SectionLabel>{lang === "en" ? "Score breakdown" : "Détail des scores"}</SectionLabel>
           <div className="space-y-4">
             {[
-              { label: lang === "en" ? "AI Maturity"     : "Maturité IA",      value: maturite_ia,    color: matColor,  sub: matLabel,  i: 0 },
-              { label: lang === "en" ? "Pain Intensity"  : "Intensité douleur", value: intensite_pain, color: painColor, sub: painLabel, i: 1 },
-              { label: lang === "en" ? "Readiness to Act": "Disposition",       value: readiness,      color: readColor, sub: readLabel, i: 2 },
+              { label: lang === "en" ? "Knowledge Level"  : "Niveau de maîtrise", value: maturite_ia,    color: matColor,  sub: matLabel,  i: 0 },
+              { label: lang === "en" ? "Engagement Level": "Niveau d'engagement", value: intensite_pain, color: painColor, sub: painLabel, i: 1 },
+              { label: lang === "en" ? "Readiness to Act": "Disposition à agir",  value: readiness,      color: readColor, sub: readLabel, i: 2 },
             ].map(({ label, value, color, sub, i }) => (
               <div key={label}>
                 <div className="flex items-center justify-between mb-2">

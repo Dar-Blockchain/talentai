@@ -143,7 +143,7 @@ async function fanOut(submission) {
 
   // Fetch webinar for email (title, date)
   const webinar = await Webinar.findById(submission.webinar_id)
-    .select("title date lang")
+    .select("title date lang webinar_link")
     .lean()
     .catch(() => null);
 

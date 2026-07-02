@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{webinarTitle}} — Rappel : demain !</title>
+  <title>{{webinarTitle}} — {{#if isEn}}Your join link{{else}}Votre lien de connexion{{/if}}</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f0f4f8;font-family:'Segoe UI',Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f4f8;padding:32px 0;">
@@ -27,20 +27,20 @@
           <tr>
             <td style="padding:40px 36px 8px 36px;">
               <p style="margin:0 0 6px 0;font-size:12px;font-weight:700;color:#6AD39C;text-transform:uppercase;letter-spacing:1.5px;">
-                {{#if isEn}}Reminder{{else}}Rappel{{/if}}
+                {{#if isEn}}Webinar link{{else}}Lien webinar{{/if}}
               </p>
               <h1 style="margin:0 0 12px 0;font-size:26px;font-weight:800;color:#0F172A;line-height:1.2;">
                 {{#if isEn}}
-                  {{nom}}, your webinar is tomorrow! 🗓️
+                  {{nom}}, here is your join link 🎯
                 {{else}}
-                  {{nom}}, votre webinar c'est demain ! 🗓️
+                  {{nom}}, voici votre lien de connexion 🎯
                 {{/if}}
               </h1>
               <p style="margin:0;font-size:15px;color:#64748B;line-height:1.6;">
                 {{#if isEn}}
-                  Don't forget — your session starts in less than 24 hours. Everything is ready for you.
+                  Everything is ready. Click the button below to join the session at the scheduled time.
                 {{else}}
-                  N'oubliez pas — votre session commence dans moins de 24 heures. Tout est prêt pour vous.
+                  Tout est prêt. Cliquez sur le bouton ci-dessous pour rejoindre la session à l'heure prévue.
                 {{/if}}
               </p>
             </td>
@@ -66,12 +66,14 @@
                           <p style="margin:4px 0 0 0;font-size:14px;font-weight:700;color:#0F172A;">{{webinarDate}}</p>
                         </td>
                         {{/if}}
+                        {{#if webinarTime}}
                         <td style="border-left:1px solid #E2E8F0;padding-left:28px;">
-                          <p style="margin:0;font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:1px;">Format</p>
-                          <p style="margin:4px 0 0 0;font-size:14px;font-weight:700;color:#0F172A;">
-                            {{#if isEn}}Live session · Free{{else}}Session live · Gratuit{{/if}}
+                          <p style="margin:0;font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:1px;">
+                            {{#if isEn}}Time{{else}}Heure{{/if}}
                           </p>
+                          <p style="margin:4px 0 0 0;font-size:20px;font-weight:900;color:#0D9488;">{{webinarTime}}</p>
                         </td>
+                        {{/if}}
                       </tr>
                     </table>
                   </td>
@@ -80,62 +82,21 @@
             </td>
           </tr>
 
-          <!-- What to expect -->
+          <!-- CTA -->
           <tr>
-            <td style="padding:28px 36px 0 36px;">
-              <p style="margin:0 0 14px 0;font-size:11px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:1.2px;">
-                {{#if isEn}}What to expect{{else}}Au programme{{/if}}
-              </p>
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td style="padding-bottom:10px;vertical-align:top;width:28px;">
-                    <div style="width:20px;height:20px;border-radius:50%;background:#0D9488;color:#fff;font-size:11px;font-weight:800;text-align:center;line-height:20px;">1</div>
-                  </td>
-                  <td style="padding-bottom:10px;padding-left:10px;vertical-align:top;">
-                    <p style="margin:0;font-size:13px;font-weight:600;color:#0F172A;">
-                      {{#if isEn}}Answer the questions (3 min){{else}}Répondez aux questions (3 min){{/if}}
-                    </p>
-                    <p style="margin:2px 0 0 0;font-size:12px;color:#64748B;">
-                      {{#if isEn}}Quick AI-powered assessment of your recruitment maturity.{{else}}Évaluation rapide de votre maturité IA en recrutement.{{/if}}
-                    </p>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding-bottom:10px;vertical-align:top;width:28px;">
-                    <div style="width:20px;height:20px;border-radius:50%;background:#6366F1;color:#fff;font-size:11px;font-weight:800;text-align:center;line-height:20px;">2</div>
-                  </td>
-                  <td style="padding-bottom:10px;padding-left:10px;vertical-align:top;">
-                    <p style="margin:0;font-size:13px;font-weight:600;color:#0F172A;">
-                      {{#if isEn}}AI analyses your profile{{else}}L'IA analyse votre profil{{/if}}
-                    </p>
-                    <p style="margin:2px 0 0 0;font-size:12px;color:#64748B;">
-                      {{#if isEn}}Your maturity score is calculated instantly.{{else}}Votre score de maturité est calculé instantanément.{{/if}}
-                    </p>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="vertical-align:top;width:28px;">
-                    <div style="width:20px;height:20px;border-radius:50%;background:#F59E0B;color:#fff;font-size:11px;font-weight:800;text-align:center;line-height:20px;">3</div>
-                  </td>
-                  <td style="padding-left:10px;vertical-align:top;">
-                    <p style="margin:0;font-size:13px;font-weight:600;color:#0F172A;">
-                      {{#if isEn}}Receive your personalised AI report{{else}}Recevez votre rapport IA personnalisé{{/if}}
-                    </p>
-                    <p style="margin:2px 0 0 0;font-size:12px;color:#64748B;">
-                      {{#if isEn}}Action plan delivered directly to your inbox.{{else}}Plan d'action livré directement dans votre boîte mail.{{/if}}
-                    </p>
-                  </td>
-                </tr>
-              </table>
+            <td style="padding:32px 36px 0 36px;text-align:center;">
+              <a href="{{webinarUrl}}" style="display:inline-block;background:linear-gradient(135deg,#0D9488,#6AD39C);color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:16px 40px;border-radius:12px;letter-spacing:0.3px;">
+                {{#if isEn}}Join the webinar →{{else}}Rejoindre le webinar →{{/if}}
+              </a>
             </td>
           </tr>
 
-          <!-- CTA -->
+          <!-- Note -->
           <tr>
-            <td style="padding:28px 36px 0 36px;text-align:center;">
-              <a href="{{webinarUrl}}" style="display:inline-block;background:linear-gradient(135deg,#0D9488,#6AD39C);color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 32px;border-radius:12px;letter-spacing:0.3px;">
-                {{#if isEn}}Join the webinar →{{else}}Rejoindre le webinar →{{/if}}
-              </a>
+            <td style="padding:16px 36px 0 36px;text-align:center;">
+              <p style="margin:0;font-size:12px;color:#94A3B8;">
+                {{#if isEn}}Keep this link handy — it gives you direct access to the live session.{{else}}Gardez ce lien à portée — il vous donne accès direct à la session en direct.{{/if}}
+              </p>
             </td>
           </tr>
 

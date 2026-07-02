@@ -11,6 +11,7 @@ import {
   QuestionAnswer as QIcon,
   OpenInNew as OpenIcon,
   Close as CloseIcon,
+  Send as SendIcon,
   PeopleAlt as PeopleIcon,
   Download as DownloadIcon,
 } from "@mui/icons-material";
@@ -421,8 +422,10 @@ const WebinarManagement: React.FC = () => {
   const [editTarget, setEditTarget]   = useState<Webinar | null>(null);
   const [qTargetId, setQTargetId]     = useState<string | null>(null);
   const [subsTarget, setSubsTarget]   = useState<Webinar | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  const [exportingId, setExportingId]   = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget]     = useState<string | null>(null);
+  const [exportingId, setExportingId]       = useState<string | null>(null);
+  const [reminderTarget, setReminderTarget] = useState<Webinar | null>(null);
+  const [sendingReminderId, setSendingReminderId] = useState<string | null>(null);
 
   const handleExport = async (w: Webinar) => {
     setExportingId(w._id);
@@ -499,6 +502,20 @@ const WebinarManagement: React.FC = () => {
       onSuccess: () => { ok("Webinar deleted."); setDeleteTarget(null); },
       onError:   () => { err("Failed to delete."); setDeleteTarget(null); },
     });
+  };
+
+  const handleSendReminder = async () => {
+    if (!reminderTarget) return;
+    setSendingReminderId(reminderTarget._id);
+    setReminderTarget(null);
+    try {
+      const result = await adminWebinarApi.sendLinkReminder(reminderTarget._id);
+      ok(`Reminder sent to ${result.sent} participant${result.sent !== 1 ? "s" : ""}${result.failed ? ` (${result.failed} failed)` : ""}.`);
+    } catch {
+      err("Failed to send reminder.");
+    } finally {
+      setSendingReminderId(null);
+    }
   };
 
   const handleRefreshStats = (w: Webinar) => {
@@ -683,6 +700,19 @@ const WebinarManagement: React.FC = () => {
                         : <DownloadIcon sx={{ fontSize: 13 }} />}
                     </button>
 
+                    {/* Send webinar link reminder */}
+                    <button
+                      onClick={() => setReminderTarget(w)}
+                      disabled={sendingReminderId === w._id}
+                      title="Send webinar link to all completed participants"
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-teal-200 text-teal-600 text-[12px] font-semibold hover:bg-teal-50 transition-colors disabled:opacity-40"
+                    >
+                      {sendingReminderId === w._id
+                        ? <CircularProgress size={12} sx={{ color: "#0D9488" }} />
+                        : <SendIcon sx={{ fontSize: 13 }} />}
+                      {sendingReminderId !== w._id && "Send link"}
+                    </button>
+
                     {/* Delete */}
                     <button
                       onClick={() => setDeleteTarget(w._id)}
@@ -733,6 +763,17 @@ const WebinarManagement: React.FC = () => {
         webinar={subsTarget}
         open={!!subsTarget}
         onClose={() => setSubsTarget(null)}
+      />
+
+      {/* Confirm send link reminder */}
+      <ConfirmDialog
+        open={!!reminderTarget}
+        title="Send webinar link to all participants?"
+        description={`This will send the webinar join link to all completed participants of "${reminderTarget?.title}". The reminder email will be sent immediately to everyone.`}
+        confirmLabel="Send now"
+        loading={!!sendingReminderId}
+        onConfirm={handleSendReminder}
+        onCancel={() => setReminderTarget(null)}
       />
 
       {/* Confirm delete */}
