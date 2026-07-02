@@ -1,7 +1,7 @@
 import React, { memo, useCallback } from "react";
 import { Search, Briefcase, Layers, X, Check, CalendarDays } from "lucide-react";
-import LoadingState from "@/components/ui/LoadingState";
-import EmptyState   from "@/components/ui/EmptyState";
+import LoadingState from "@/modules/shared/ui/LoadingState";
+import EmptyState   from "@/modules/shared/ui/EmptyState";
 import { usePostPicker } from "../hooks/usePostPicker";
 import { PostPickerItem } from "../queries";
 import { TEAL } from "./constants";

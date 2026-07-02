@@ -1,125 +1,97 @@
-import { useRouter } from "next/router";
-import { Box, Container, Typography, Button } from "@mui/material";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import HomeIcon from "@mui/icons-material/Home";
+import { useRouter } from "next/router"
+import { Button } from "@/modules/shared/ui/shadcn/button"
+import {
+  Card,
+  CardContent,
+} from "@/modules/shared/ui/shadcn/card"
 
 export default function Unauthorized() {
-  const router = useRouter();
+  const router = useRouter()
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "#f9f9fb",
-        p: 2,
-      }}
-    >
-      <Container maxWidth="xs">
-        <Box
-          sx={{
-            textAlign: "center",
-            background: "#fff",
-            borderRadius: "20px",
-            boxShadow: "0 4px 24px rgba(0,0,0,0.07)",
-            border: "1px solid rgba(0,0,0,0.06)",
-            p: { xs: 4, sm: 6 },
-          }}
-        >
+    <div className="min-h-screen flex items-center justify-center bg-[#f9f9fb] p-4">
+      <Card className="w-full max-w-sm text-center border border-black/5 shadow-md rounded-2xl">
+        <CardContent className="p-6 sm:p-10">
+
           {/* Icon */}
-          <Box
-            sx={{
-              width: 72,
-              height: 72,
-              borderRadius: "50%",
-              background: "rgba(220, 53, 69, 0.08)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              mx: "auto",
-              mb: 3,
-            }}
-          >
-            <LockOutlinedIcon sx={{ fontSize: 36, color: "#dc3545" }} />
-          </Box>
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-7 w-7 text-red-600"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </div>
 
           {/* Code */}
-          <Typography
-            sx={{
-              fontSize: "0.75rem",
-              fontWeight: 700,
-              letterSpacing: "0.15em",
-              textTransform: "uppercase",
-              color: "#dc3545",
-              mb: 1,
-            }}
-          >
+          <p className="text-xs font-bold tracking-[0.2em] text-red-600 uppercase mb-2">
             403 — Forbidden
-          </Typography>
+          </p>
 
           {/* Title */}
-          <Typography
-            variant="h5"
-            fontWeight={700}
-            sx={{ color: "#111", mb: 1.5, letterSpacing: "-0.02em" }}
-          >
+          <h1 className="text-xl font-bold text-gray-900 mb-2">
             Access Denied
-          </Typography>
+          </h1>
 
           {/* Description */}
-          <Typography
-            variant="body2"
-            sx={{ color: "#666", lineHeight: 1.7, mb: 4, maxWidth: 300, mx: "auto" }}
-          >
+          <p className="text-sm text-gray-500 leading-relaxed mb-6 max-w-xs mx-auto">
             You don't have permission to view this page. If you think this is a
             mistake, please contact your administrator.
-          </Typography>
+          </p>
 
           {/* Actions */}
-          <Box sx={{ display: "flex", gap: 1.5, justifyContent: "center", flexWrap: "wrap" }}>
+          <div className="flex flex-wrap gap-3 justify-center">
+
             <Button
-              variant="outlined"
-              startIcon={<ArrowBackIcon sx={{ fontSize: 16 }} />}
+              variant="outline"
+              size="sm"
               onClick={() => router.back()}
-              size="small"
-              sx={{
-                borderRadius: "38px",
-                textTransform: "none",
-                fontWeight: 600,
-                fontSize: "0.82rem",
-                px: 2.5,
-                borderColor: "rgba(0,0,0,0.18)",
-                color: "#444",
-                "&:hover": { borderColor: "#999", background: "rgba(0,0,0,0.03)" },
-              }}
             >
-              Go Back
+              <span className="flex items-center gap-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
+                Go Back
+              </span>
             </Button>
+
             <Button
-              variant="contained"
-              startIcon={<HomeIcon sx={{ fontSize: 16 }} />}
+              variant="default"
+              size="sm"
               onClick={() => router.push("/")}
-              size="small"
-              sx={{
-                borderRadius: "38px",
-                textTransform: "none",
-                fontWeight: 600,
-                fontSize: "0.82rem",
-                px: 2.5,
-                background: "#111",
-                color: "#fff",
-                boxShadow: "none",
-                "&:hover": { background: "#333", boxShadow: "none" },
-              }}
             >
-              Go Home
+              <span className="flex items-center gap-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M3 9.5 12 4l9 5.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />
+                </svg>
+                Go Home
+              </span>
             </Button>
-          </Box>
-        </Box>
-      </Container>
-    </Box>
-  );
+
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
 }

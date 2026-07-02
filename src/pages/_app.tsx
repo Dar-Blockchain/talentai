@@ -14,7 +14,7 @@ import { useTheme } from "next-themes";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { useRouter } from "next/router";
 import Head from "next/head";
-import ScrollToTop from "@/components/ui/ScrollToTop";
+import ScrollToTop from "@/modules/shared/ui/ScrollToTop";
 import LoadingScreen from "@/modules/shared/ui/LoadingScreen";
 import { Poppins } from "next/font/google";
 import MuiToast from "@/components/ui/Toast";

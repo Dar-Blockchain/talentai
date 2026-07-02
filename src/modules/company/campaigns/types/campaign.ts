@@ -33,7 +33,14 @@ export interface Campaign {
   targetEmployeeCount?: number;
   deadline?: string;
   participantCount?: number;
+  completedCount?: number;
   sessionCount?: number;
+  statusBreakdown?: {
+    invited: number;
+    inProgress: number;
+    completed: number;
+    dropped: number;
+  };
   participantStatus?: ParticipantStatus;
   targetDepartment?: string | null;
   progress?: number;

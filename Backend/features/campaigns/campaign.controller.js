@@ -147,10 +147,13 @@ exports.getCompanyCampaigns = async (req, res) => {
 
     const result = await getCampaignsByCompanyPaginated(companyId, pageNum, limitNum, filters);
     const campaignsWithCount = await Promise.all(
-      result.data.map(async (campaign) => ({
-        ...campaign.toObject(),
-        targetEmployeeCount: await CampaignParticipant.countDocuments({ campaign: campaign._id }),
-      }))
+      result.data.map(async (campaign) => {
+        const [total, completed] = await Promise.all([
+          CampaignParticipant.countDocuments({ campaign: campaign._id }),
+          CampaignParticipant.countDocuments({ campaign: campaign._id, status: "COMPLETED" }),
+        ]);
+        return { ...campaign.toObject(), targetEmployeeCount: total, completedCount: completed };
+      })
     );
 
     res.status(200).json({ success: true, data: campaignsWithCount, pagination: result.pagination });
@@ -167,12 +170,20 @@ exports.getCampaign = async (req, res) => {
     if (!campaign) return res.status(404).json({ success: false, error: "Campaign not found" });
 
     let data = campaign.toObject ? campaign.toObject() : { ...campaign };
-    const [participantCount, sessionCount] = await Promise.all([
+    const [total, completed, inProgress, dropped] = await Promise.all([
       CampaignParticipant.countDocuments({ campaign: campaignId }),
       CampaignParticipant.countDocuments({ campaign: campaignId, status: "COMPLETED" }),
+      CampaignParticipant.countDocuments({ campaign: campaignId, status: "IN_PROGRESS" }),
+      CampaignParticipant.countDocuments({ campaign: campaignId, status: "DROPPED" }),
     ]);
-    data.participantCount = participantCount;
-    data.sessionCount = sessionCount;
+    data.participantCount = total;
+    data.sessionCount = completed;
+    data.statusBreakdown = {
+      invited:    Math.max(0, total - completed - inProgress - dropped),
+      inProgress,
+      completed,
+      dropped,
+    };
 
     if (userId) {
       const participant = await CampaignParticipant.findOne(
