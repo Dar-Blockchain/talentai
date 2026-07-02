@@ -191,7 +191,7 @@ if (!i18n.isInitialized) {
   // HMR: push updated static-import bundles into the existing i18next store
   (Object.keys(resources) as (keyof typeof resources)[]).forEach((lng) => {
     (Object.entries(resources[lng]) as [string, object][]).forEach(([ns, bundle]) => {
-      i18n.addResourceBundle(lng, ns, bundle, true, true);
+      i18n.addResourceBundle(lng as string, ns, bundle, true, true);
     });
   });
 }
