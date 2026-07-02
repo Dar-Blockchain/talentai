@@ -77,8 +77,15 @@ export default function InterviewScreen({
   const guardBadge = (() => {
     if (!identityGuard) return null;
     const s = identityGuard.status;
+    const dist = identityGuard.identityDistance;
+    const idPart =
+      s === 'watching' && identityGuard.enrolled && dist !== null
+        ? ` · id ${dist.toFixed(2)}`
+        : s === 'watching' && !identityGuard.enrolled
+        ? ' · enrolling…'
+        : '';
     const colour =
-      s === 'watching'       ? { bg: '#DCFCE7', fg: '#166534', label: `Guard: watching · ${identityGuard.faceCount} face(s)` } :
+      s === 'watching'       ? { bg: '#DCFCE7', fg: '#166534', label: `Guard: watching · ${identityGuard.faceCount} face(s)${idPart}` } :
       s === 'terminated'     ? { bg: '#FEE2E2', fg: '#991B1B', label: 'Guard: terminated' } :
       s === 'failed'         ? { bg: '#FEE2E2', fg: '#991B1B', label: `Guard: failed${identityGuard.lastError ? ` — ${identityGuard.lastError.slice(0, 60)}` : ''}` } :
       s === 'waiting-video'  ? { bg: '#FEF3C7', fg: '#92400E', label: 'Guard: waiting for camera' } :

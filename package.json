@@ -14,6 +14,7 @@
     "@fontsource/poppins": "^5.2.7",
     "@hookform/resolvers": "^3.10.0",
     "@mediapipe/tasks-vision": "^0.10.20",
+    "@vladmandic/face-api": "^1.7.15",
     "@mui/icons-material": "^7.0.2",
     "@mui/material": "^7.2.0",
     "@mui/x-date-pickers": "^8.7.0",
