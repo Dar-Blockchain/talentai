@@ -82,7 +82,7 @@ export default function InterviewScreen({
       s === 'watching' && identityGuard.enrolled && dist !== null
         ? ` · id ${dist.toFixed(2)}`
         : s === 'watching' && !identityGuard.enrolled
-        ? ' · enrolling…'
+        ? ` · enrolling ${identityGuard.enrollmentProgress}/${identityGuard.enrollmentTarget}`
         : '';
     const colour =
       s === 'watching'       ? { bg: '#DCFCE7', fg: '#166534', label: `Guard: watching · ${identityGuard.faceCount} face(s)${idPart}` } :

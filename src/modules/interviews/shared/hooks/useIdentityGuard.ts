@@ -38,6 +38,10 @@ export interface UseIdentityGuardReturn {
   enrolled: boolean;
   /** Most recent L2 distance between live face and reference (null before first check). */
   identityDistance: number | null;
+  /** Number of enrollment samples captured so far. */
+  enrollmentProgress: number;
+  /** Total enrollment samples required before the reference is locked. */
+  enrollmentTarget: number;
 }
 
 /**
@@ -66,6 +70,7 @@ export const useIdentityGuard = ({
 
   // Identity-check state
   const referenceDescriptorRef = useRef<Float32Array | null>(null);
+  const enrollmentSamplesRef = useRef<Float32Array[]>([]);
   const identityMismatchTicksRef = useRef(0);
   const identityCheckInProgressRef = useRef(false);
   const lastIdentityCheckRef = useRef(0);
@@ -84,15 +89,18 @@ export const useIdentityGuard = ({
   const [lastError, setLastError] = useState<string | null>(null);
   const [enrolled, setEnrolled] = useState(false);
   const [identityDistance, setIdentityDistance] = useState<number | null>(null);
+  const [enrollmentProgress, setEnrollmentProgress] = useState(0);
 
   const CHECK_INTERVAL_MS = 1000;
   const IDENTITY_CHECK_MS = 2500;
   const NO_FACE_WARN_TICKS = 3;
   const MULTI_FACE_WARN_TICKS = 2;
   const MULTI_FACE_TERMINATE_TICKS = 5;
-  const IDENTITY_MISMATCH_THRESHOLD = 0.6;
+  const IDENTITY_MISMATCH_THRESHOLD = 0.65;
   const IDENTITY_WARN_TICKS = 2;      // ~5 s of consistent mismatch
   const IDENTITY_TERMINATE_TICKS = 5; // ~12 s of consistent mismatch
+  const ENROLLMENT_SAMPLES = 5;       // average N good frames before locking reference
+  const ENROLLMENT_MIN_SCORE = 0.7;   // face-api detection confidence gate
   const WARN_COOLDOWN_MS = 15_000;
 
   const stop = useCallback(() => {
@@ -111,6 +119,7 @@ export const useIdentityGuard = ({
     multiFaceTicksRef.current = 0;
     identityMismatchTicksRef.current = 0;
     referenceDescriptorRef.current = null;
+    enrollmentSamplesRef.current = [];
     faceapiReadyRef.current = false;
     let cancelled = false;
     let waitingVideoLogged = false;
@@ -171,9 +180,32 @@ export const useIdentityGuard = ({
         }
 
         if (!referenceDescriptorRef.current) {
-          referenceDescriptorRef.current = detection.descriptor;
-          setEnrolled(true);
-          console.info(LOG, 'enrollment: reference descriptor captured');
+          // Enrolment: require high-confidence detection, then average N samples.
+          const score = detection.detection?.score ?? 0;
+          if (score < ENROLLMENT_MIN_SCORE) {
+            console.info(LOG, `enrollment sample skipped (score ${score.toFixed(2)} < ${ENROLLMENT_MIN_SCORE})`);
+            return;
+          }
+
+          enrollmentSamplesRef.current.push(detection.descriptor);
+          setEnrollmentProgress(enrollmentSamplesRef.current.length);
+          console.info(
+            LOG,
+            `enrollment sample ${enrollmentSamplesRef.current.length}/${ENROLLMENT_SAMPLES} (score ${score.toFixed(2)})`
+          );
+
+          if (enrollmentSamplesRef.current.length >= ENROLLMENT_SAMPLES) {
+            const dim = enrollmentSamplesRef.current[0].length;
+            const avg = new Float32Array(dim);
+            for (const d of enrollmentSamplesRef.current) {
+              for (let i = 0; i < dim; i++) avg[i] += d[i];
+            }
+            for (let i = 0; i < dim; i++) avg[i] /= enrollmentSamplesRef.current.length;
+            referenceDescriptorRef.current = avg;
+            enrollmentSamplesRef.current = [];
+            setEnrolled(true);
+            console.info(LOG, 'enrollment complete: reference locked (averaged)');
+          }
           return;
         }
 
@@ -328,10 +360,20 @@ export const useIdentityGuard = ({
       setFaceCount(0);
       setEnrolled(false);
       setIdentityDistance(null);
+      setEnrollmentProgress(0);
       referenceDescriptorRef.current = null;
+      enrollmentSamplesRef.current = [];
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
-  return { status, faceCount, lastError, enrolled, identityDistance };
+  return {
+    status,
+    faceCount,
+    lastError,
+    enrolled,
+    identityDistance,
+    enrollmentProgress,
+    enrollmentTarget: ENROLLMENT_SAMPLES,
+  };
 };
