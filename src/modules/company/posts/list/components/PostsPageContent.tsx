@@ -55,7 +55,17 @@ const PostsPageContent: React.FC = () => {
     onError:   () => showToast({ message: t("publish_error"),     severity: "error"   }),
   });
 
-  const handleCreateClick = () => { if (!postsAtLimit) router.push("/company/posts/create"); };
+  const handleCreateClick = () => {
+    if (postsAtLimit) {
+      showToast({
+        message: t("limit_reached", { defaultValue: "Plan limit reached — upgrade your plan to create more posts." }),
+        severity: "warning",
+      });
+      router.push("/company/plans");
+      return;
+    }
+    router.push("/company/posts/create");
+  };
   const totalCount = (pagination as any)?.total ?? posts.length;
 
   return (
