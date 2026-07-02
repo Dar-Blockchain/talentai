@@ -5,11 +5,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useDispatch } from 'react-redux';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/useToast';
-import { UserProfile } from '@/types/profile';
 import { PersonalInformationFormValues, personalInformationSchema } from '../schemas';
 import { useCandidateProfile, useUpdateCandidateProfile, useUploadCandidateAvatar } from '../queries';
 import { VALID_TABS, initialProfile, buildSyncedProfile } from './profileManagement.utils';
-import { profileKeys } from '@/modules/settings/shared';
+import { profileKeys, UserProfile } from '@/modules/settings/shared';
 import { updateProfileResume } from '@/store/slices/userSlice';
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────

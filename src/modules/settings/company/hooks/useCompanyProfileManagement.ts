@@ -4,7 +4,6 @@ import { SelectChangeEvent } from '@mui/material';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useToast } from '@/hooks/useToast';
-import { UserProfile } from '@/types/profile';
 import { normalizeLangCode } from '@/hooks/useLanguage';
 import { companyProfileSchema, CompanyProfileFormValues } from '../schemas/companyProfileSchema';
 import {
@@ -12,6 +11,7 @@ import {
   useUpdateSettingsProfile,
   useUploadSettingsAvatar,
 } from '../queries';
+import { UserProfile } from '../../shared';
 
 // ─── Pure helpers (outside hook — never recreated) ───────────────────────────
 

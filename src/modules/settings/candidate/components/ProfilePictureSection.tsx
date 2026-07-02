@@ -2,7 +2,7 @@ import React from 'react';
 import { Camera } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/modules/shared/ui/shadcn/avatar';
 import { Spinner } from '@/modules/settings/shared/components';
-import { UserProfile } from '@/types/profile';
+import { UserProfile } from '../../shared';
 
 interface ProfilePictureSectionProps {
   profile:        UserProfile;

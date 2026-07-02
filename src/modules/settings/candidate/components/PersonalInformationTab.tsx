@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { Control, Controller, FieldErrors } from 'react-hook-form';
 import { CheckCircle2, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { UserProfile } from '@/types/profile';
 import { PersonalInformationFormValues } from '@/modules/settings/candidate/schemas';
 import { experienceLevels, timezones } from '../constants';
 import ProfilePictureSection from './ProfilePictureSection';
@@ -13,6 +12,7 @@ import { Label } from '@/modules/shared/ui/shadcn/label';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/modules/shared/ui/shadcn/select';
+import { UserProfile } from '../../shared';
 
 type EditingSection = 'profile' | 'contact' | null;
 
