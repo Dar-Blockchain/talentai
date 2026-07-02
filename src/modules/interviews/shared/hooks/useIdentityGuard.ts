@@ -56,6 +56,13 @@ export const useIdentityGuard = ({
   const terminatedRef = useRef(false);
   const disposedRef = useRef(false);
 
+  // Callbacks change identity on every render of the parent — pin them in refs
+  // so the init effect isn't torn down and rebuilt on every render.
+  const onTerminateRef = useRef(onTerminate);
+  const notifyRef = useRef(showNotification);
+  useEffect(() => { onTerminateRef.current = onTerminate; }, [onTerminate]);
+  useEffect(() => { notifyRef.current = showNotification; }, [showNotification]);
+
   const [status, setStatus] = useState<IdentityGuardStatus>('idle');
   const [faceCount, setFaceCount] = useState(0);
   const [lastError, setLastError] = useState<string | null>(null);
@@ -96,7 +103,7 @@ export const useIdentityGuard = ({
         ) {
           lastWarnRef.current.noFace = now;
           console.warn(LOG, 'no-face warning fired');
-          showNotification('Please stay in view of the camera.', 'warning');
+          notifyRef.current('Please stay in view of the camera.', 'warning');
         }
       } else if (count > 1) {
         multiFaceTicksRef.current += 1;
@@ -106,8 +113,8 @@ export const useIdentityGuard = ({
           terminatedRef.current = true;
           setStatus('terminated');
           console.error(LOG, 'multi-face threshold reached → terminating');
-          showNotification('Another person was detected in view — ending the interview.', 'error');
-          try { onTerminate?.(); } catch {}
+          notifyRef.current('Another person was detected in view — ending the interview.', 'error');
+          try { onTerminateRef.current?.(); } catch {}
           return;
         }
         if (
@@ -116,7 +123,7 @@ export const useIdentityGuard = ({
         ) {
           lastWarnRef.current.multiFace = now;
           console.warn(LOG, 'multi-face warning fired');
-          showNotification('Only the interview candidate should be visible in the camera.', 'warning');
+          notifyRef.current('Only the interview candidate should be visible in the camera.', 'warning');
         }
       } else {
         noFaceTicksRef.current = 0;
@@ -171,7 +178,7 @@ export const useIdentityGuard = ({
               }
             } else {
               waitingVideoLogged = false;
-              if (status !== 'watching') setStatus('watching');
+              setStatus(prev => (prev === 'watching' ? prev : 'watching'));
               try {
                 const result = landmarker.detectForVideo(video, now);
                 const count = result?.faceLandmarks?.length || 0;
@@ -204,7 +211,7 @@ export const useIdentityGuard = ({
       setFaceCount(0);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, videoRef, onTerminate, showNotification, stop]);
+  }, [active]);
 
   return { status, faceCount, lastError };
 };
