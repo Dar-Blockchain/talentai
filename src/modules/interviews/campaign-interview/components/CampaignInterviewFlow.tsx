@@ -24,8 +24,13 @@ export default function CampaignInterviewFlow({
     ? { campaignId: propCampaignId, moduleType: propModuleType }
     : undefined;
 
-  const { interviewConfig, setInterviewConfig, campaignId, moduleType, isReady } =
-    useCampaignInterviewConfig(overrides);
+  const {
+    interviewConfig,
+    setInterviewConfig,
+    campaignId,
+    moduleType,
+    isReady,
+  } = useCampaignInterviewConfig(overrides);
 
   const session = useInterviewSession({
     interviewConfig: interviewConfig as any,
