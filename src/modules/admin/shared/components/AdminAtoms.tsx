@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/modules/shared/ui/shadcn/card";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { Badge } from "@/modules/shared/ui/shadcn/badge";
 import { cn } from "@/lib/utils";
-import { ADMIN_ACCENT, ADMIN_NEUTRAL, ADMIN_NEUTRAL_BG, ADMIN_GRADIENTS, AdminGradientName, adminGradientCss, adminGlowShadow } from "../theme";
+import { ADMIN_NEUTRAL, ADMIN_NEUTRAL_BG } from "../theme";
 
 /** Inline retry button shared by the card and table-row error states. */
 const AdminRetryButton = memo<{ onRetry: () => void }>(({ onRetry }) => (
@@ -34,7 +34,7 @@ export const AdminQueryError = memo<{ message?: string; onRetry: () => void; cla
 );
 AdminQueryError.displayName = "AdminQueryError";
 
-/** Error state sized to drop into a <TableRow><TableCell colSpan={n}> slot. */
+/** Error state sized to drop into a table-cell colSpan slot. */
 export const AdminTableErrorRow = memo<{ message?: string; onRetry: () => void }>(
   ({ message = "Failed to load data.", onRetry }) => (
     <div className="flex flex-col items-center justify-center gap-2 py-6">
@@ -48,44 +48,44 @@ export const AdminTableErrorRow = memo<{ message?: string; onRetry: () => void }
 );
 AdminTableErrorRow.displayName = "AdminTableErrorRow";
 
-/** Sticky table header cell — medium-weight neutral gray, sits above scrolling rows. */
+/** MUI TableCell sx — teal-tinted sticky header (used by CompanySubscriptionsTable). */
 export const ADMIN_TABLE_HEAD_CELL_SX = {
-  fontWeight: 600,
-  backgroundColor: "#FAFBFC",
-  color: "#64748B",
-  borderBottom: "1px solid #EEF1F5",
+  fontWeight: 700,
+  backgroundColor: "#F0FDFA",
+  color: "#0D9488",
+  borderBottom: "1px solid #CCFBF1",
+  fontSize: "0.75rem",
+  textTransform: "uppercase",
+  letterSpacing: "0.05em",
 } as const;
 
-/** Table row — hover-only highlight, no zebra striping (cleaner, less busy). */
+/** MUI TableRow sx — teal hover highlight (used by CompanySubscriptionsTable). */
 export const ADMIN_TABLE_ROW_SX = {
   "& td": { borderBottom: "1px solid #F1F4F8" },
-  "&:hover": { backgroundColor: "#FAFBFC !important" },
+  "&:hover": { backgroundColor: "#F0FDFA !important" },
   "&:last-of-type td": { borderBottom: "none" },
 } as const;
 
-/** Tab-level page heading — bold title, light subtitle, no underline rule
- *  (clean Linear-style heading instead of an underlined tab look). */
-export const AdminPageHeading = memo<{ title: string; subtitle?: string; gradient?: AdminGradientName }>(
+/** Tab-level page heading — bold title, light subtitle. */
+export const AdminPageHeading = memo<{ title: string; subtitle?: string }>(
   ({ title, subtitle }) => (
     <div className="mb-7">
-      <h1 className="text-[1.5rem] font-semibold tracking-tight text-slate-900">
-        {title}
-      </h1>
+      <h1 className="text-[1.5rem] font-semibold tracking-tight text-slate-900">{title}</h1>
       {subtitle && <p className="mt-1 text-[13px] text-slate-500">{subtitle}</p>}
     </div>
   ),
 );
 AdminPageHeading.displayName = "AdminPageHeading";
 
-/** Standard admin section header — neutral icon chip + title, no divider line
- *  (the surrounding card edge already provides separation). */
-export const ZoneHeading = memo<{ icon: React.ElementType; label: string; gradient?: AdminGradientName }>(
+/** Standard admin section header — neutral icon chip + title + divider. */
+export const ZoneHeading = memo<{ icon: React.ElementType; label: string }>(
   ({ icon: Icon, label }) => (
-    <div className="flex items-center gap-2.5 mb-5 mt-1">
-      <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: ADMIN_NEUTRAL_BG }}>
-        <Icon style={{ fontSize: 15, color: ADMIN_NEUTRAL }} />
+    <div className="flex items-center gap-3 mb-5 mt-1">
+      <div className="w-8 h-8 rounded-[9px] flex items-center justify-center shrink-0" style={{ background: ADMIN_NEUTRAL_BG }}>
+        <Icon style={{ fontSize: 17, color: ADMIN_NEUTRAL }} />
       </div>
-      <span className="font-semibold text-[14px] text-slate-900 tracking-tight">{label}</span>
+      <span className="font-semibold text-[15px] text-slate-900 tracking-tight">{label}</span>
+      <div className="flex-1 h-px bg-slate-200" />
     </div>
   ),
 );
@@ -93,10 +93,9 @@ ZoneHeading.displayName = "ZoneHeading";
 
 /** Small stat card: neutral icon chip, big number, uppercase label. */
 export interface AdminStatCardProps {
-  icon:    React.ElementType;
-  value:   React.ReactNode;
-  label:   string;
-  gradient?: AdminGradientName;
+  icon:     React.ElementType;
+  value:    React.ReactNode;
+  label:    string;
   loading?: boolean;
 }
 
@@ -129,8 +128,8 @@ export const AdminStatCard = memo<AdminStatCardProps>(({ icon: Icon, value, labe
 });
 AdminStatCard.displayName = "AdminStatCard";
 
-/** Chart/section card wrapper — soft elevation, neutral icon-chip title row. */
-export const AdminChartCard = memo<{ icon?: React.ElementType; title?: string; gradient?: AdminGradientName; children: React.ReactNode; className?: string }>(
+/** Chart/section card wrapper — soft elevation, optional icon-chip title row. */
+export const AdminChartCard = memo<{ icon?: React.ElementType; title?: string; children: React.ReactNode; className?: string }>(
   ({ icon: Icon, title, children, className }) => (
     <Card className={cn("border-none overflow-hidden transition-shadow duration-200 hover:shadow-[0_8px_24px_-4px_rgba(15,23,42,0.08),0_2px_6px_rgba(15,23,42,0.04)]", className)}>
       <CardContent className="pt-6">
@@ -151,7 +150,7 @@ export const AdminChartCard = memo<{ icon?: React.ElementType; title?: string; g
 );
 AdminChartCard.displayName = "AdminChartCard";
 
-/** Labelled icon row used inside detail dialogs (avatar/email/date rows, etc). */
+/** Labelled icon row used inside detail dialogs. */
 export const InfoRow = memo<{ icon: React.ReactNode; label: string; value: string; mono?: boolean }>(
   ({ icon, label, value, mono }) => (
     <div className="flex items-center gap-3 py-[10px]">
@@ -169,7 +168,7 @@ export const InfoRow = memo<{ icon: React.ReactNode; label: string; value: strin
 );
 InfoRow.displayName = "InfoRow";
 
-/** Score-based status badge mapper: >=70 success, >=50 warning, else destructive tint. */
+/** Score-based tone mapper: >=70 excellent, >=50 satisfactory, else needs work. */
 export const scoreTone = (score: number) => {
   if (score >= 70) return { color: "#10B981", bg: "#ECFDF5", label: "Excellent" };
   if (score >= 50) return { color: "#F59E0B", bg: "#FFFBEB", label: "Satisfactory" };

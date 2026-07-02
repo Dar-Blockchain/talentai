@@ -8,8 +8,8 @@ import {
   StopOutlined, LinkOutlined, LockPersonOutlined, VisibilityOffOutlined, VisibilityOutlined,
 } from "@mui/icons-material";
 import { daysLeft, fmtDate } from "@/utils/functions";
-import { MODULE_CONFIG, STATUS_COLORS, STATUS_TRANSITIONS } from "@/constants/campaign";
-import { CampaignStatus, ModuleType, Campaign } from "@/types/campaign";
+import { MODULE_CONFIG, STATUS_COLORS, STATUS_TRANSITIONS } from "@/modules/shared/constants/campaign";
+import { CampaignStatus, ModuleType, Campaign } from "@/modules/company/campaigns/types/campaign";
 import AppButton from "@/components/ui/AppButton";
 import Link from "next/link";
 import { useTranslation, Trans } from "react-i18next";

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
-import { TEAL } from './constants';
+import { TEAL } from '../constants';
 
 const InfoRow: React.FC<{
   icon: React.ReactNode;

@@ -1,40 +1,36 @@
 import { Tab, Tabs, styled } from '@mui/material';
 import { ADMIN_ACCENT } from '../theme';
 
-/**
- * Segmented-control style tab bar — a row of rounded pill buttons with no
- * underline indicator. The active pill fills with the accent color instead.
- * Shared across every admin content-area tab switcher (score filters, role
- * filters, etc) so they all look and behave identically.
- */
 export const PillTabs = styled(Tabs)({
-  minHeight: 40,
+  minHeight: 44,
+  borderBottom: '1px solid #E5E7EB',
   '& .MuiTabs-indicator': {
-    display: 'none',
+    height: 2,
+    borderRadius: '2px 2px 0 0',
+    backgroundColor: ADMIN_ACCENT,
   },
   '& .MuiTabs-flexContainer': {
-    gap: 6,
+    gap: 0,
   },
 });
 
 export const PillTab = styled(Tab)({
-  minHeight: 36,
+  minHeight: 44,
   minWidth: 0,
   textTransform: 'none',
-  fontWeight: 600,
-  fontSize: '0.82rem',
-  color: '#64748B',
-  padding: '6px 16px',
-  borderRadius: 999,
-  transition: 'background-color 0.15s ease, color 0.15s ease',
+  fontWeight: 500,
+  fontSize: '0.875rem',
+  color: '#6B7280',
+  padding: '0 18px',
+  borderRadius: 0,
+  transition: 'color 0.15s ease',
   '&:hover': {
-    backgroundColor: '#F1F5F9',
+    color: ADMIN_ACCENT,
+    backgroundColor: 'transparent',
   },
   '&.Mui-selected': {
-    color: '#FFFFFF',
-    backgroundColor: ADMIN_ACCENT,
-  },
-  '&.Mui-selected:hover': {
-    backgroundColor: ADMIN_ACCENT,
+    color: ADMIN_ACCENT,
+    fontWeight: 600,
+    backgroundColor: 'transparent',
   },
 });

@@ -1,5 +1,5 @@
 import axiosInstance from "@/utils/axiosInstance";
-import type { EmployeePermission } from "@/types/employeePermissions";
+import type { EmployeePermission } from "@/modules/company/employees/types/permissions";
 import type { FetchMembersFilters, AddMemberPayload, UpdateRolePayload } from "@/modules/company/members/types";
 
 export const employeesApi = {

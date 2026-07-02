@@ -1,5 +1,5 @@
 import type { TFunction } from "i18next";
-import { ROLES } from "@/constants/employee";
+import { ROLES } from "@/modules/shared/constants/employee";
 
 /** Legacy API role strings → canonical key in ROLES */
 const LEGACY_ROLE_TO_CANONICAL: Record<string, string> = {

@@ -28,17 +28,23 @@ const deleteFile = (filePath) => {
 const JWT_COOKIE = {
   httpOnly: true,
   secure:   process.env.NODE_ENV === "production",
-  sameSite: "strict",
+  // "lax" instead of "strict": the frontend (staging.talentai.bid) and the
+  // API (backend.staging.talentai.bid) share the same eTLD+1, so SameSite
+  // shouldn't block same-site XHR. However, "strict" has caused cookies to
+  // be silently dropped on fresh navigations in some browsers. "lax" is
+  // correct for an httpOnly API session cookie and still blocks CSRF.
+  sameSite: "lax",
   maxAge:   7 * 24 * 60 * 60 * 1000,
   path:     "/",
 };
 
-// Non-sensitive JS-readable indicator used by the frontend to determine auth
-// state without exposing the actual JWT. Contains no credential data.
+// Non-sensitive JS-readable indicator used by Next.js middleware to determine
+// auth state and role without needing to read the httpOnly jwt_token.
+// Value is the user's role string (e.g. "Employee") — not a credential.
 const AUTH_INDICATOR_COOKIE = {
   httpOnly: false,
   secure:   process.env.NODE_ENV === "production",
-  sameSite: "strict",
+  sameSite: "lax",
   maxAge:   7 * 24 * 60 * 60 * 1000,
   path:     "/",
 };
@@ -171,8 +177,9 @@ module.exports.verifyOTP = async (req, res) => {
     const result = await authService.verifyUserOTP(validEmail, validOTP, req.body.location);
 
     res.cookie("jwt_token", result.token, JWT_COOKIE);
-    // JS-readable auth indicator — value carries no credential, just presence
-    res.cookie("auth_present", "1", AUTH_INDICATOR_COOKIE);
+    // Store the role so the Next.js middleware can do role-based routing
+    // without decoding jwt_token (which lives on the API domain).
+    res.cookie("auth_present", result.user.role, AUTH_INDICATOR_COOKIE);
 
     const p = result.profile;
     const safeProfile = p ? {

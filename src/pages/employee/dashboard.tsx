@@ -1,5 +1,5 @@
 ﻿import React from "react";
-import EmployeeDashboardOverview from "@/components/features/employee/EmployeeDashboardOverview";
+import EmployeeDashboardOverview from "@/modules/employee/dashboard/components/EmployeeDashboardOverview";
 import dynamic from "next/dynamic";
 import { getDashboardLayout } from "@/modules/shared/layouts";
 import type { NextPageWithLayout } from "@/pages/_app";

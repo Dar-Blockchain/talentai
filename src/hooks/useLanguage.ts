@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { setCookie } from 'cookies-next';
 import { LANGUAGE_COOKIE, RTL_LANGUAGES, SUPPORTED_LANGUAGES, type SupportedLanguage } from '@/i18n/config';
-import { SUPPORTED_LANGS } from '@/modules/shared/languages';
+import { SUPPORTED_LANGS } from '@/modules/shared/constants/languages';
 import { updateProfile } from '@/store/slices/userSlice';
 import type { RootState } from '@/store/store';
 

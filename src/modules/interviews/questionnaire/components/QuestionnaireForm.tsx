@@ -13,7 +13,7 @@ import SendRounded           from '@mui/icons-material/SendRounded';
 import StarRounded           from '@mui/icons-material/StarRounded';
 import StarBorderRounded     from '@mui/icons-material/StarBorderRounded';
 import SaveOutlined          from '@mui/icons-material/SaveOutlined';
-import { Question, QuestionType } from '@/types/campaign';
+import { Question, QuestionType } from '@/modules/company/campaigns/types/campaign';
 import axiosInstance from '@/utils/axiosInstance';
 
 // ─── Types ────────────────────────────────────────────────────────────────────

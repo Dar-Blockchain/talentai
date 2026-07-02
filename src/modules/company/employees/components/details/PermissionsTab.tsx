@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import TuneOutlined from "@mui/icons-material/TuneOutlined";
 import CheckOutlined from "@mui/icons-material/CheckOutlined";
 import PermissionsPanel from "../permissions/PermissionsPanel";
-import type { EmployeePermission } from "@/types/employeePermissions";
+import type { EmployeePermission } from "@/modules/company/employees/types/permissions";
 
 const PURPLE = "#8310FF";
 

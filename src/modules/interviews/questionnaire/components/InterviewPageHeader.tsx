@@ -4,8 +4,8 @@ import ArrowBackOutlined          from '@mui/icons-material/ArrowBackOutlined';
 import StopOutlined               from '@mui/icons-material/Stop';
 import AccessTimeIcon             from '@mui/icons-material/AccessTime';
 import AssignmentTurnedInOutlined from '@mui/icons-material/AssignmentTurnedInOutlined';
-import { Campaign }               from '@/types/campaign';
-import { Coverage }               from '@/types/interview';
+import { Campaign }               from '@/modules/company/campaigns/types/campaign';
+import { Coverage }               from '@/modules/interviews/questionnaire/types';
 import { getModuleMeta }          from './interviewMeta';
 
 interface Props {

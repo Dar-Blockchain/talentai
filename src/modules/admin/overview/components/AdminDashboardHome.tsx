@@ -32,6 +32,26 @@ const AdminDashboardHome: React.FC = () => {
   const { data: recentSignups = [], isLoading: signupsLoading, isError: signupsError, refetch: refetchSignups } = useAdminRecentSignupsQuery(6);
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
 
+  const availableMonths = useMemo(() => {
+    const seen = new Set<string>();
+    userGrowthData.forEach((item) => {
+      const d = new Date(item.fullDate);
+      if (!isNaN(d.getTime())) {
+        seen.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+      }
+    });
+    return Array.from(seen).sort();
+  }, [userGrowthData]);
+
+  const filteredGrowthData = useMemo(() => {
+    if (selectedMonth === 'all') return userGrowthData;
+    const [selYear, selMonth] = selectedMonth.split('-').map(Number);
+    return userGrowthData.filter((item) => {
+      const d = new Date(item.fullDate);
+      return d.getFullYear() === selYear && d.getMonth() + 1 === selMonth;
+    });
+  }, [userGrowthData, selectedMonth]);
+
   const skillsData = useMemo(
     () =>
       (stats?.topSkills || [])
@@ -65,18 +85,6 @@ const AdminDashboardHome: React.FC = () => {
     }));
   }, [allUsersForMap]);
 
-  const getFilteredUserGrowthData = () => {
-    if (selectedMonth === 'all') return userGrowthData;
-    return userGrowthData.filter((item) => {
-      const date = new Date(item.fullDate);
-      const month = date.getMonth() + 1;
-      const year = date.getFullYear();
-      const selectedMonthNum = parseInt(selectedMonth.split('-')[1]);
-      const selectedYear = parseInt(selectedMonth.split('-')[0]);
-      return month === selectedMonthNum && year === selectedYear;
-    });
-  };
-
   return (
     <div>
       <AdminHeader />
@@ -107,11 +115,11 @@ const AdminDashboardHome: React.FC = () => {
         <div className="flex flex-wrap gap-6">
           <div className="flex-[1_1_580px] min-w-0">
             <AdminGrowthAnalytics
-              userGrowthData={userGrowthData}
+              data={filteredGrowthData}
+              availableMonths={availableMonths}
               selectedMonth={selectedMonth}
               setSelectedMonth={setSelectedMonth}
-              getFilteredUserGrowthData={getFilteredUserGrowthData}
-           />
+            />
           </div>
           <div className="flex-[1_1_360px] min-w-0">
             {signupsError ? (

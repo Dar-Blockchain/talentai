@@ -10,8 +10,8 @@ import RadioButtonUncheckedOutlined from "@mui/icons-material/RadioButtonUncheck
 import AccessTimeOutlined           from "@mui/icons-material/AccessTimeOutlined";
 import BlockOutlined                from "@mui/icons-material/BlockOutlined";
 import { useCampaignSessionsQuery } from "../../queries";
-import { SessionStatus } from "@/types/campaign";
-import Pagination from "@/components/ui/Pagination";
+import { SessionStatus } from "@/modules/company/campaigns/types/campaign";
+import { Pagination } from "@/modules/shared/ui/shadcn/pagination";
 import { useTranslation } from "react-i18next";
 
 const PAGE_SIZE = 10;
@@ -219,7 +219,7 @@ const SessionsView = memo<{ campaignId: string }>(({ campaignId }) => {
       </Box>
 
       {!loading && total > PAGE_SIZE && (
-        <Pagination page={page} total={total} pageSize={PAGE_SIZE} onPageChange={setPage} />
+        <Pagination page={page} totalPages={Math.ceil(total / PAGE_SIZE)} onPageChange={setPage} />
       )}
     </Box>
   );

@@ -3,9 +3,9 @@ import { Box, Typography, TextField, InputAdornment, FormControl, Select, MenuIt
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
-import { ROLES } from "@/constants/employee";
+import { ROLES } from "@/modules/shared/constants/employee";
 import { useTranslation } from "react-i18next";
-import { getRoleDescription, getRoleLabel, roleMatchesSearch } from "@/utils/employeeRoleI18n";
+import { getRoleDescription, getRoleLabel, roleMatchesSearch } from '@/modules/company/employees/utils/employeeRoleI18n';
 import { PURPLE, INLINE_SELECT_SX } from "./constants";
 
 const MENU_PAPER_SX = {

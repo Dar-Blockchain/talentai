@@ -4,9 +4,10 @@ import type {
   AnonymityMode,
   CampaignModule,
   ParticipantStatus,
-} from "@/types/campaign";
+} from "./campaign";
 
 export type {
+
   Campaign,
   CampaignType,
   CampaignStatus,
@@ -21,7 +22,7 @@ export type {
   NonParticipant,
   CreateCampaignPayload,
   CampaignsResponse,
-} from "@/types/campaign";
+} from "./campaign";
 
 export interface EmployeeCampaignEntry {
   campaignId: string;

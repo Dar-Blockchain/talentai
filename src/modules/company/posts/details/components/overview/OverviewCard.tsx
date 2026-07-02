@@ -6,8 +6,8 @@ import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import MicOutlined from "@mui/icons-material/MicOutlined";
 import SectionCard from "@/components/ui/SectionCard";
-import { LANG_META } from "@/modules/shared/languages";
-import { formatSalary } from "@/utils/postHelpers";
+import { LANG_META } from "@/modules/shared/constants/languages";
+import { formatSalary } from '@/modules/company/posts/utils/postHelpers';
 import { formatDate } from "@/utils/functions";
 import SectionTitle from "./SectionTitle";
 

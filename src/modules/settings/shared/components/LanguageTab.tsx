@@ -4,7 +4,7 @@ import { CheckCircle2, Sparkles, HelpCircle } from "lucide-react";
 import SectionTitle from "./SectionTitle";
 import Spinner from "./Spinner";
 import { useLanguage } from "@/hooks/useLanguage";
-import { SUPPORTED_LANGS } from "@/modules/shared/languages";
+import { SUPPORTED_LANGS } from "@/modules/shared/constants/languages";
 import { GENERATE_LANG_KEY } from "@/modules/company/posts/create/components/GenerateLanguageModal";
 
 interface Props {

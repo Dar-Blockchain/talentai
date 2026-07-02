@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { getPostSkills, type Skill } from "@/utils/postHelpers";
+import { getPostSkills, type Skill } from '@/modules/company/posts/utils/postHelpers';
 import JobHeaderCard from "./JobHeaderCard";
 import JobDetailsColumn from "./JobDetailsColumn";
 import JobApplyPanel from "./JobApplyPanel";

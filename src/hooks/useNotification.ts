@@ -1,5 +1,10 @@
 import { useState, useCallback } from 'react';
-import { NotificationState } from '../types/postInterview';
+
+interface NotificationState {
+  open: boolean;
+  message: string;
+  severity: 'success' | 'error' | 'info' | 'warning';
+}
 
 /**
  * Custom hook for managing notifications/snackbar

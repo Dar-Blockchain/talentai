@@ -1,6 +1,6 @@
 import { useRef, useEffect } from "react";
 import { useToast } from "@/hooks/useToast";
-import { getUserLocation } from "@/utils/api";
+import { getUserLocation } from '@/utils/geoLocation';
 import { refreshAbort } from "@/modules/auth/shared/utils";
 import { OTP_CODE_LENGTH } from "@/modules/auth/shared/types";
 import { useOtpTimer } from "./useOtpTimer";

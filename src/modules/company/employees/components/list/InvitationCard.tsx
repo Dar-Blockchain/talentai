@@ -3,10 +3,10 @@ import { Box, Typography, Avatar, CircularProgress } from "@mui/material";
 import EmailOutlined from "@mui/icons-material/EmailOutlined";
 import SendOutlined from "@mui/icons-material/SendOutlined";
 import DeleteOutlined from "@mui/icons-material/DeleteOutlined";
-import { Invitation } from "@/types/employee";
-import { ROLES } from "@/constants/employee";
+import { Invitation } from "@/modules/company/employees/types/employee";
+import { ROLES } from "@/modules/shared/constants/employee";
 import { ROLE_STYLES } from "./EmployeeCard";
-import { getRoleLabel } from "@/utils/employeeRoleI18n";
+import { getRoleLabel } from '@/modules/company/employees/utils/employeeRoleI18n';
 import { useTranslation } from "react-i18next";
 import { AMBER } from "./constants";
 

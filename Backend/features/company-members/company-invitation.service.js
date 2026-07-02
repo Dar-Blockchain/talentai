@@ -1,12 +1,10 @@
-﻿const crypto = require("crypto");
-const jwt = require("jsonwebtoken");
+﻿const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const User = require("../users/user.model");
 const Profile = require("../users/profile.model");
 const CompanyMembershipModel = require("./company-membership.model");
 const CompanyInvitationModel = require("./company-invitation.model");
 const EmployeePermissionsModel = require("./employee-permissions.model");
-const employeePermissionsService = require("./employee-permissions.service");
 const { sendCompanyInvitation } = require("../../utils/email.service");
 
 // Constants
@@ -61,8 +59,8 @@ const _buildInvitationLink = (token, invitationId, company) =>
 const _sendInvitationEmail = async (email, senderName, role, invitationLink, isResend = false, language = "en") => {
   try {
     await sendCompanyInvitation(email, senderName, role, senderName, invitationLink, language);
-  } catch (error) {
-    console.error(`Failed to send ${isResend ? "resend" : "company"} invitation email:`, error);
+  } catch {
+    // Non-fatal: email delivery failure should not block invitation creation
   }
 };
 
@@ -230,13 +228,7 @@ module.exports.acceptInvitation = async (invitationId, userId, userEmail, token)
     throw new Error("Invitation not found");
   }
 
-  // Verify JWT token validity and expiration
-  let decodedToken;
-  try {
-    decodedToken = _verifyAndDecodeToken(token);
-  } catch (error) {
-    throw error;
-  }
+  const decodedToken = _verifyAndDecodeToken(token);
 
   // Verify token payload matches invitation data (normalize to lowercase for comparison)
   if (decodedToken.userEmail.toLowerCase() !== userEmail.toLowerCase()) {

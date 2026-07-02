@@ -5,8 +5,8 @@ import CheckCircleOutlined           from "@mui/icons-material/CheckCircleOutlin
 import RadioButtonUncheckedOutlined  from "@mui/icons-material/RadioButtonUncheckedOutlined";
 import QuizOutlined                  from "@mui/icons-material/QuizOutlined";
 import InfoOutlined                  from "@mui/icons-material/InfoOutlined";
-import { Campaign, CampaignModule, ModuleType } from "@/types/campaign";
-import { MODULE_CONFIG } from "@/constants/campaign";
+import { Campaign, CampaignModule, ModuleType } from "@/modules/company/campaigns/types/campaign";
+import { MODULE_CONFIG } from "@/modules/shared/constants/campaign";
 import { useTranslation, Trans } from "react-i18next";
 
 const CARD = {

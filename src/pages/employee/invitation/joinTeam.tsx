@@ -18,11 +18,11 @@ import {
 } from "@/modules/company/employees/queries";
 import { setConnectedUser } from "@/store/slices/userSlice";
 import { useAuthContext } from "@/modules/auth/shared/context/AuthContext";
-import Shell from "@/components/features/invitation/Shell";
-import InfoRow from "@/components/features/invitation/InfoRow";
+import Shell from "@/modules/employee/invitation/components/Shell";
+import InfoRow from "@/modules/employee/invitation/components/InfoRow";
 import AppButton from "@/components/ui/AppButton";
-import { PURPLE, TEAL } from "@/components/features/invitation/constants";
-import { ROLES } from "@/constants/employee";
+import { PURPLE, TEAL } from "@/modules/employee/invitation/constants";
+import { ROLES } from "@/modules/shared/constants/employee";
 
 // Map legacy backend role strings → ROLES array lookup key
 const ROLE_VALUE_MAP: Record<string, string> = {

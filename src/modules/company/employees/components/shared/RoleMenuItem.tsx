@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 import { MenuItem, Box, Typography } from "@mui/material";
-import { getRoleDescription, getRoleLabel } from "@/utils/employeeRoleI18n";
+import { getRoleDescription, getRoleLabel } from '@/modules/company/employees/utils/employeeRoleI18n';
 import { useTranslation } from "react-i18next";
 
 interface RoleMenuItemProps {

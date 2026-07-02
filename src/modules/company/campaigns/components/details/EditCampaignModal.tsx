@@ -14,8 +14,8 @@ import LinkOutlined          from "@mui/icons-material/LinkOutlined";
 import AccountCircleOutlined from "@mui/icons-material/AccountCircleOutlined";
 import WarningAmberOutlined  from "@mui/icons-material/WarningAmberOutlined";
 import AppButton             from "@/components/ui/AppButton";
-import { Campaign, ModuleType } from "@/types/campaign";
-import { MODULE_CONFIG }     from "@/constants/campaign";
+import { Campaign, ModuleType } from "@/modules/company/campaigns/types/campaign";
+import { MODULE_CONFIG }     from "@/modules/shared/constants/campaign";
 import { useTranslation, Trans } from "react-i18next";
 import { useUpdateCampaignMutation } from "../../queries";
 
