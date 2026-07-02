@@ -158,7 +158,7 @@ export const useAudioTranscription = ({
 
   // ── Keyword extraction for AssemblyAI word boost ──────────────────────────────
 
-  const extractTechnicalKeywords = (_config: InterviewConfig, jd?: any): string[] => {
+  const extractTechnicalKeywords = (config: InterviewConfig, jd?: any): string[] => {
     const jdKeywords: string[] = [];
     if (jd) {
       (jd.skillAnalysis?.requiredSkills || []).forEach((s: any) => { if (s.name) jdKeywords.push(s.name); });
@@ -169,6 +169,17 @@ export const useAudioTranscription = ({
         });
       });
     }
+    // Proper nouns most likely to be mangled by accented speech
+    const ctx: any = (config as any)?.context || {};
+    const candidateName: string | undefined = ctx.candidateName || (config as any)?.candidateName;
+    const targetRole:    string | undefined = ctx.targetRole    || jd?.jobDetails?.title;
+    const targetCompany: string | undefined = ctx.targetCompany || jd?.createdBy?.name || jd?.companyName;
+    const priorEmployers: string[] = Array.isArray(ctx.priorEmployers) ? ctx.priorEmployers : [];
+    const properNouns = [candidateName, targetRole, targetCompany, ...priorEmployers]
+      .filter((v): v is string => typeof v === 'string' && v.trim().length > 1)
+      .flatMap(v => v.split(/[\s,;/]+/))
+      .filter(v => v.length > 1);
+    jdKeywords.push(...properNouns);
     const baseKeywords = [
       'JavaScript', 'TypeScript', 'Python', 'Java', 'Go', 'Rust', 'PHP', 'Ruby', 'Swift',
       'React', 'Angular', 'Vue', 'Node', 'Express', 'Next', 'Next.js', 'Node.js',
@@ -381,10 +392,10 @@ export const useAudioTranscription = ({
           return;
         }
 
-        if (turn.end_of_turn_confidence < 0.2) {
+        if (turn.end_of_turn_confidence < 0.12) {
           setAgentState('waiting');
-          setAgentMessage('Could not clearly hear you. Please continue speaking...');
-          showNotification('Speech very unclear - please speak more clearly', 'warning');
+          setAgentMessage('We may have missed part of that — please repeat if the text below is wrong.');
+          showNotification('We may have missed part of that — please repeat if the text is wrong.', 'info');
           setAccumulatedTranscript(text);
           addTranscriptDebugLog(`⚠️ Very low confidence: ${(turn.end_of_turn_confidence * 100).toFixed(1)}%`);
           return;
@@ -524,8 +535,10 @@ export const useAudioTranscription = ({
   // ── Initialize audio + transcription ─────────────────────────────────────────
 
   const initializeAudio = useCallback(async () => {
+    // AGC compresses accented vowels and noiseSuppression can smear consonants.
+    // Keep echoCancellation on (needed for laptop mic + speaker setups).
     const stream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, sampleRate: 16000, channelCount: 1 },
+      audio: { echoCancellation: true, noiseSuppression: false, autoGainControl: false, sampleRate: 16000, channelCount: 1 },
     });
 
     audioStreamRef.current = stream;

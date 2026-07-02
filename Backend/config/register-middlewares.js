@@ -26,16 +26,20 @@ function registerMiddlewares(app) {
 
   // ── CORS must come before rate limiting so preflight OPTIONS requests
   //    receive proper CORS headers even when the rate limit is exceeded.
+  const corsOrigins = [
+    "https://staging.talentai.bid",
+    "https://backend.staging.talentai.bid",
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:5173",
+    "https://app.talentai.bid",
+  ];
+  if (process.env.FRONTEND_URL && !corsOrigins.includes(process.env.FRONTEND_URL)) {
+    corsOrigins.push(process.env.FRONTEND_URL);
+  }
   app.use(
     cors({
-      origin: [
-        "https://staging.talentai.bid",
-        "https://backend.staging.talentai.bid",
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://localhost:5173",
-        "https://app.talentai.bid",
-      ],
+      origin: corsOrigins,
       methods:      ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
       allowedHeaders: [
         "Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization",

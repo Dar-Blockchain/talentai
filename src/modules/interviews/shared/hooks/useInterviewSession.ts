@@ -14,6 +14,7 @@ import { useAudioTranscription } from './useAudioTranscription';
 import { useInterviewTimer } from './useInterviewTimer';
 import { useCamera } from './useCamera';
 import { useSecurityMonitoring } from './useSecurityMonitoring';
+import { useIdentityGuard } from './useIdentityGuard';
 import { toast } from 'sonner';
 import { getMyProfile } from '@/store/slices/userSlice';
 import type { AppDispatch } from '@/store/store';
@@ -209,7 +210,14 @@ export function useInterviewSession({
   const security = useSecurityMonitoring({
     interviewStatus: socket.interviewStatus,
     onTerminate: () => endInterviewRef.current(),
-    enabled: false,
+    enabled: true,
+  });
+
+  useIdentityGuard({
+    videoRef: camera.videoRef,
+    active: socket.interviewStatus === 'active',
+    onTerminate: () => endInterviewRef.current(),
+    showNotification: notify,
   });
 
   audioRef.current  = audio;
