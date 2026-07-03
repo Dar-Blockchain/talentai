@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useDispatch } from 'react-redux';
 import { useQueryClient } from '@tanstack/react-query';
-import { useToast } from '@/hooks/useToast';
+import { toast } from 'sonner';
 import { PersonalInformationFormValues, personalInformationSchema } from '../schemas';
 import { useCandidateProfile, useUpdateCandidateProfile, useUploadCandidateAvatar } from '../queries';
 import { VALID_TABS, initialProfile, buildSyncedProfile } from './profileManagement.utils';
@@ -54,7 +54,6 @@ const buildPayload = (values: PersonalInformationFormValues): Record<string, unk
 
 export const useProfileManagement = () => {
   const router = useRouter();
-  const { showToast } = useToast();
   const dispatch = useDispatch();
 
   const queryClient = useQueryClient();
@@ -81,7 +80,6 @@ export const useProfileManagement = () => {
   const [savedProfile,   setSavedProfile]   = useState<UserProfile>(initialProfile);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [saveSuccess,    setSaveSuccess]    = useState(false);
-  const [error,          setError]          = useState<string | null>(null);
 
   useEffect(() => {
     if (router.isReady && router.query.tab) {
@@ -117,65 +115,65 @@ export const useProfileManagement = () => {
     const file = event.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      showToast({ message: 'Please select a valid image file', severity: 'error' });
+      toast.error('Please select a valid image file');
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      showToast({ message: 'Image size should be less than 5MB', severity: 'error' });
+      toast.error('Image size should be less than 5MB');
       return;
     }
     if (!userId) {
-      showToast({ message: 'User not found', severity: 'error' });
+      toast.error('User not found');
       return;
     }
     setUploadingImage(true);
     try {
       await uploadMutation.mutateAsync({ userId, file });
       setSaveSuccess(true);
-      showToast({ message: 'Profile picture updated successfully!', severity: 'success' });
+      toast.success('Profile picture updated successfully!');
     } catch (err: any) {
-      showToast({ message: err?.message || 'Failed to upload image', severity: 'error' });
+      toast.error(err?.message || 'Failed to upload image');
     } finally {
       setUploadingImage(false);
     }
-  }, [showToast, userId, uploadMutation]);
+  }, [userId, uploadMutation]);
 
   const handleSaveProfile = useCallback(async () => {
     await form.handleSubmit(
       async (values) => {
         if (!userId) {
-          showToast({ message: 'User not found', severity: 'error' });
+          toast.error('User not found');
           return;
         }
         const payload = buildPayload(values);
         if (Object.keys(payload).length === 0) {
-          showToast({ message: 'Please fill in at least one field to update', severity: 'warning' });
+          toast.warning('Please fill in at least one field to update');
           return;
         }
         try {
           await updateMutation.mutateAsync({ userId, payload });
           setIsEditing(false);
           setSaveSuccess(true);
-          showToast({ message: 'Profile updated successfully!', severity: 'success' });
+          toast.success('Profile updated successfully!');
         } catch (err: any) {
-          showToast({ message: err?.message || 'Failed to update profile. Please try again.', severity: 'error' });
+          toast.error(err?.message || 'Failed to update profile. Please try again.');
         }
       },
       () => {
-        showToast({ message: 'Please fix the errors before saving.', severity: 'error' });
+        toast.error('Please fix the errors before saving.');
       }
     )();
-  }, [form, showToast, userId, updateMutation]);
+  }, [form, userId, updateMutation]);
 
   const handleSaveLanguage = useCallback(async (lang: string) => {
     if (!userId) return;
     try {
       await updateMutation.mutateAsync({ userId, payload: { language: lang } });
-      showToast({ message: 'Language updated successfully!', severity: 'success' });
+      toast.success('Language updated successfully!');
     } catch (err: any) {
-      showToast({ message: err?.message || 'Failed to update language', severity: 'error' });
+      toast.error(err?.message || 'Failed to update language');
     }
-  }, [showToast, userId, updateMutation]);
+  }, [userId, updateMutation]);
 
   const handleCancel = useCallback(() => {
     setProfile(savedProfile);
@@ -188,7 +186,6 @@ export const useProfileManagement = () => {
     isEditing,
     profile,
     loading,
-    error,
     uploadingImage,
     saveSuccess,
     userId,
@@ -220,7 +217,5 @@ export const useProfileManagement = () => {
         old ? { ...old, profile: { ...old.profile, resume: "" } } : old
       );
     }, [dispatch, queryClient]),
-    handleDismissError:   useCallback(() => setError(null), []),
-    handleDismissSuccess: useCallback(() => setSaveSuccess(false), []),
   };
 };

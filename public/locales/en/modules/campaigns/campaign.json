@@ -245,7 +245,11 @@
         "qtype_TEXT": "Text",
         "qtype_SINGLE_CHOICE": "Single Choice",
         "qtype_MULTIPLE_CHOICE": "Multiple Choice",
-        "qtype_RATING": "Rating"
+        "qtype_RATING": "Rating",
+        "ai_scoring_label": "AI Scoring",
+        "ai_scoring_hint": "Let AI score and summarize responses after submission",
+        "show_results_label": "Show Results to Participants",
+        "show_results_hint": "Let participants view their score and AI report after completing"
       },
       "skill_test": {
         "skill_to_assess": "Skill to assess",
@@ -409,7 +413,13 @@
       "identity_hidden": "Identity hidden",
       "results": "Results",
       "dialog_title": "Results — {{name}}",
-      "load_failed": "Failed to load results"
+      "load_failed": "Failed to load results",
+      "results_dialog": {
+        "title": "Assessment Results",
+        "ai_summary_label": "AI Summary",
+        "empty_title": "No response submitted yet",
+        "ai_scoring_disabled_note": "AI scoring is disabled for this questionnaire."
+      }
     }
   },
 

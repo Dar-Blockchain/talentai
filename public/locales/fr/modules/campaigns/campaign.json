@@ -245,7 +245,11 @@
         "qtype_TEXT": "Texte libre",
         "qtype_SINGLE_CHOICE": "Choix unique",
         "qtype_MULTIPLE_CHOICE": "Choix multiples",
-        "qtype_RATING": "Notation"
+        "qtype_RATING": "Notation",
+        "ai_scoring_label": "Notation par IA",
+        "ai_scoring_hint": "Laisser l'IA noter et résumer les réponses après soumission",
+        "show_results_label": "Afficher les résultats aux participants",
+        "show_results_hint": "Laisser les participants voir leur score et le rapport IA après avoir terminé"
       },
       "skill_test": {
         "skill_to_assess": "Compétence évaluée",
@@ -409,7 +413,13 @@
       "identity_hidden": "Identité masquée",
       "results": "Résultats",
       "dialog_title": "Résultats — {{name}}",
-      "load_failed": "Impossible de charger les résultats"
+      "load_failed": "Impossible de charger les résultats",
+      "results_dialog": {
+        "title": "Résultats de l'évaluation",
+        "ai_summary_label": "Résumé IA",
+        "empty_title": "Aucune réponse soumise pour le moment",
+        "ai_scoring_disabled_note": "La notation par IA est désactivée pour ce questionnaire."
+      }
     }
   },
 

@@ -112,6 +112,8 @@ export interface QuestionnaireModule {
       type: QuestionType;
       options?: string[];
     }[];
+    aiScoringEnabled?: boolean;
+    showResultsToParticipants?: boolean;
   } | null;
 }
 
@@ -202,4 +204,31 @@ export interface CampaignSession {
   startedAt?: string;
   completedAt?: string;
   score?: number;
+}
+
+// ─── Participant results ───────────────────────────────────────────────────────
+
+export interface CampaignResponseAnswer {
+  questionId: string;
+  answer: string | number | string[];
+  score?: number;
+}
+
+export interface CampaignResponse {
+  _id: string;
+  moduleType: ModuleType;
+  answers?: CampaignResponseAnswer[];
+  interviewTranscript?: { role: string; message: string; timestamp?: string }[];
+  testResults?: { score?: number; maxScore?: number; breakdown?: unknown };
+  aiScore?: number | null;
+  aiSummary?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ParticipantResults {
+  campaign: { _id: string; title: string; type?: CampaignType; module: CampaignModule };
+  participant: { _id: string; status: ParticipantStatus; completedAt?: string; score?: number | null };
+  response: CampaignResponse | null;
+  resultsHidden?: boolean;
 }

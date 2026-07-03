@@ -1,20 +1,17 @@
 import React, { memo } from "react";
+import { Play, Pause, Square, Info } from "lucide-react";
 import {
-  Box, Typography, Button,
-  Dialog, DialogTitle, DialogContent, DialogActions,
-} from "@mui/material";
-import PlayArrowOutlined  from "@mui/icons-material/PlayArrow";
-import PauseOutlined      from "@mui/icons-material/PauseOutlined";
-import StopOutlined       from "@mui/icons-material/StopOutlined";
-import InfoOutlined       from "@mui/icons-material/InfoOutlined";
+  Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter,
+} from "@/modules/shared/ui/shadcn/dialog";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { CampaignStatus } from "@/modules/company/campaigns/types/campaign";
 import { STATUS_COLORS } from "@/modules/shared/constants/campaign";
 import { useTranslation, Trans } from "react-i18next";
 
 const STATUS_ICONS: Partial<Record<CampaignStatus, React.ElementType>> = {
-  ACTIVE: PlayArrowOutlined,
-  PAUSED: PauseOutlined,
-  CLOSED: StopOutlined,
+  ACTIVE: Play,
+  PAUSED: Pause,
+  CLOSED: Square,
 };
 
 interface Props {
@@ -55,94 +52,68 @@ const ConfirmStatusChangeDialog: React.FC<Props> = memo(({
   const targetLabel = t(`${pRoot}.status.${targetStatus}`);
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="xs"
-      fullWidth
-      slotProps={{ paper: { sx: { borderRadius: "16px", boxShadow: "0 20px 60px rgba(0,0,0,0.12)" } } }}
-    >
-      <DialogTitle sx={{ pb: 1.5, pt: 2.5, px: 3 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Box sx={{
-            width: 38, height: 38, borderRadius: "10px", flexShrink: 0,
-            bgcolor: sColor?.bg, border: `1px solid ${sColor?.fg}25`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
-            {Icon && <Icon sx={{ fontSize: 18, color: sColor?.fg }} />}
-          </Box>
-          <Box>
-            <Typography sx={{ fontWeight: 700, fontSize: "15px", color: "#0F172A" }}>
+    <Dialog open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
+      <DialogContent className="p-0 gap-0 overflow-hidden rounded-2xl sm:max-w-xs shadow-2xl">
+        <div className="flex items-center gap-3 pl-6 pr-10 pt-6 pb-3">
+          <div
+            className="flex items-center justify-center size-[38px] rounded-[10px] shrink-0 border"
+            style={{ background: sColor?.bg, borderColor: `${sColor?.fg}25` }}
+          >
+            {Icon && <Icon className="size-[18px]" style={{ color: sColor?.fg }} />}
+          </div>
+          <div className="min-w-0">
+            <DialogTitle className="text-[15px] font-bold text-foreground">
               {titleKey ? t(`${pRoot}.${titleKey}`) : t(`${p}.confirm`)}
-            </Typography>
-            <Typography sx={{ fontSize: "11px", color: "#94A3B8", mt: 0.25 }}>
+            </DialogTitle>
+            <DialogDescription className="text-[11px] mt-0.5 truncate">
               {campaignTitle}
-            </Typography>
-          </Box>
-        </Box>
-      </DialogTitle>
+            </DialogDescription>
+          </div>
+        </div>
 
-      <DialogContent sx={{ px: 3, pb: 1 }}>
-        {descKey && (
-          <Typography sx={{ fontSize: "13px", color: "#475569", lineHeight: 1.6 }}>
-            {t(`${pRoot}.${descKey}`)}
-          </Typography>
-        )}
-        <Box sx={{
-          mt: 1.5, px: 1.5, py: 1, borderRadius: "8px",
-          bgcolor: "#F8FAFC", border: "1px solid #E2E8F0",
-          display: "flex", alignItems: "center", gap: 1,
-        }}>
-          <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, px: 1, py: "2px", borderRadius: "999px", bgcolor: cColor.bg }}>
-            <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: cColor.fg }} />
-            <Typography sx={{ fontSize: "11px", fontWeight: 700, color: cColor.fg }}>{currentLabel}</Typography>
-          </Box>
-          <Typography sx={{ fontSize: "12px", color: "#94A3B8" }}>→</Typography>
-          <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, px: 1, py: "2px", borderRadius: "999px", bgcolor: sColor?.bg }}>
-            <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: sColor?.fg }} />
-            <Typography sx={{ fontSize: "11px", fontWeight: 700, color: sColor?.fg }}>{targetLabel}</Typography>
-          </Box>
-        </Box>
+        <div className="px-6 pb-1 flex flex-col gap-0">
+          {descKey && (
+            <p className="text-[13px] text-slate-600 leading-relaxed">
+              {t(`${pRoot}.${descKey}`)}
+            </p>
+          )}
 
-        {targetStatus === "ACTIVE" && (
-          <Box sx={{
-            display: "flex", alignItems: "flex-start", gap: 1,
-            mt: 1.5, px: 1.5, py: 1, borderRadius: "8px",
-            bgcolor: "#FFF7ED", border: "1px solid #FED7AA",
-          }}>
-            <InfoOutlined sx={{ fontSize: 14, color: "#EA580C", flexShrink: 0, mt: "1px" }} />
-            <Typography component="span" sx={{ fontSize: "11.5px", color: "#9A3412", lineHeight: 1.5 }}>
-              <Trans
-                i18nKey={`${p}.active_warning`}
-                ns="dashboard"
-                components={{ strong: <strong /> }}
-              />
-            </Typography>
-          </Box>
-        )}
+          <div className="mt-3 px-2.5 py-2 rounded-lg bg-slate-50 border border-slate-200 flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full" style={{ background: cColor.bg }}>
+              <span className="size-[5px] rounded-full" style={{ background: cColor.fg }} />
+              <span className="text-[11px] font-bold" style={{ color: cColor.fg }}>{currentLabel}</span>
+            </span>
+            <span className="text-xs text-slate-400">→</span>
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full" style={{ background: sColor?.bg }}>
+              <span className="size-[5px] rounded-full" style={{ background: sColor?.fg }} />
+              <span className="text-[11px] font-bold" style={{ color: sColor?.fg }}>{targetLabel}</span>
+            </span>
+          </div>
 
+          {targetStatus === "ACTIVE" && (
+            <div className="flex items-start gap-2 mt-3 px-2.5 py-2 rounded-lg bg-orange-50 border border-orange-200">
+              <Info className="size-3.5 text-orange-600 shrink-0 mt-0.5" />
+              <span className="text-[11.5px] text-orange-900 leading-relaxed">
+                <Trans i18nKey={`${p}.active_warning`} ns="dashboard" components={{ strong: <strong /> }} />
+              </span>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter className="px-6 pb-6 pt-4 gap-2 sm:justify-end">
+          <Button type="button" variant="ghost" onClick={onClose}>
+            {t(`${p}.cancel`)}
+          </Button>
+          <Button
+            type="button"
+            onClick={onConfirm}
+            className="text-white hover:brightness-95"
+            style={{ background: sColor?.fg }}
+          >
+            {t(`${p}.confirm`)}
+          </Button>
+        </DialogFooter>
       </DialogContent>
-
-      <DialogActions sx={{ px: 3, pb: 2.5, pt: 1.5, gap: 1 }}>
-        <Button
-          onClick={onClose}
-          sx={{ textTransform: "none", fontWeight: 600, fontSize: "13px", color: "#6B7280", "&:hover": { bgcolor: "#F3F4F6" } }}
-        >
-          {t(`${p}.cancel`)}
-        </Button>
-        <Button
-          onClick={onConfirm}
-          variant="contained"
-          disableElevation
-          sx={{
-            textTransform: "none", fontWeight: 700, fontSize: "13px",
-            bgcolor: sColor?.fg, borderRadius: "8px", color: "#fff",
-            "&:hover": { bgcolor: sColor?.fg, opacity: 0.88 },
-          }}
-        >
-          {t(`${p}.confirm`)}
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 });

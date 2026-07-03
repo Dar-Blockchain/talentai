@@ -3,7 +3,7 @@ import type {
   Campaign, CampaignMetrics, CampaignParticipant, CampaignSession,
   NonParticipant, CreateCampaignPayload, CampaignsResponse,
   CampaignsListParams, ParticipantsParams, SessionsParams, NonParticipantsParams,
-  EmployeeCampaignEntry,
+  EmployeeCampaignEntry, ParticipantResults,
 } from "../types";
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -89,6 +89,11 @@ export const apiFetchSessions = async (
 ): Promise<{ data: CampaignSession[]; total: number }> => {
   const res = await axiosInstance.get(`internal-campaigns/${campaignId}/sessions`, { params: clean(params) });
   return { data: res.data.data, total: res.data.total ?? res.data.data?.length ?? 0 };
+};
+
+export const apiFetchParticipantResults = async (campaignId: string, participantId: string): Promise<ParticipantResults> => {
+  const res = await axiosInstance.get(`internal-campaigns/${campaignId}/participants/${participantId}/results`);
+  return res.data.data;
 };
 
 // ─── Employee campaigns ───────────────────────────────────────────────────────

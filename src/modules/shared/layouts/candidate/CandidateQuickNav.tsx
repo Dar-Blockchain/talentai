@@ -15,7 +15,7 @@ import ChatUnreadBadge from "@/modules/chat/shared/components/ChatUnreadBadge";
 const NAV_GROUPS = [
   { labelKey: "candidate.nav.group_main",      ids: ["dashboard", "messages"] },
   { labelKey: "candidate.nav.group_workspace", ids: ["applications", "skills", "interviews"] },
-  { labelKey: "candidate.nav.group_account",   ids: ["notifications", "settings"] },
+  { labelKey: "candidate.nav.group_account",   ids: ["settings"] },
 ];
 
 // ─── Vertical nav item ────────────────────────────────────────────────────────

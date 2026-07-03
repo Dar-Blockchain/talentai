@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Box, Typography, Button, TextField, Radio, Checkbox,
-  LinearProgress, Chip, CircularProgress, Alert,
+  LinearProgress, Chip, CircularProgress, Alert, IconButton,
 } from '@mui/material';
 import CheckCircleRounded    from '@mui/icons-material/CheckCircleRounded';
 import ArrowForwardRounded   from '@mui/icons-material/ArrowForwardRounded';
@@ -15,13 +15,16 @@ import StarBorderRounded     from '@mui/icons-material/StarBorderRounded';
 import SaveOutlined          from '@mui/icons-material/SaveOutlined';
 import { Question, QuestionType } from '@/modules/company/campaigns/types/campaign';
 import axiosInstance from '@/utils/axiosInstance';
+import { QuestionnaireResultsPanel } from './QuestionnaireResultsPanel';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Props {
   campaignId:    string;
+  campaignTitle?: string;
   participantId: string;
   questions:     Question[];
+  showResults?:  boolean;
   onComplete:    () => void;
   onBack:        () => void;
 }
@@ -203,8 +206,15 @@ const QuestionCard: React.FC<{
 
 // ─── Completed screen ─────────────────────────────────────────────────────────
 
-const CompletedScreen: React.FC<{ onBack: () => void }> = ({ onBack }) => (
-  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', py: 6, gap: 2.5 }}>
+const CompletedScreen: React.FC<{
+  campaignId: string;
+  campaignTitle?: string;
+  participantId: string;
+  questions: Question[];
+  showResults?: boolean;
+  onDone: () => void;
+}> = ({ campaignId, campaignTitle, participantId, questions, showResults, onDone }) => (
+  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', py: 6, px: 3, gap: 2.5 }}>
     <Box sx={{
       width: 80, height: 80, borderRadius: '50%',
       background: 'linear-gradient(135deg, #10B981, #059669)',
@@ -215,29 +225,34 @@ const CompletedScreen: React.FC<{ onBack: () => void }> = ({ onBack }) => (
     </Box>
     <Box>
       <Typography sx={{ fontSize: 24, fontWeight: 800, color: '#111827', letterSpacing: '-0.02em', mb: 0.5 }}>
-        Questionnaire Submitted!
+        Thank you!
       </Typography>
       <Typography sx={{ fontSize: 14, color: '#6B7280', lineHeight: 1.7, maxWidth: 360 }}>
-        Your answers have been recorded. Thank you for completing this assessment.
+        You have completed {campaignTitle ? `"${campaignTitle}"` : 'this questionnaire'}. Your answers have been recorded.
       </Typography>
     </Box>
+
+    {showResults && (
+      <QuestionnaireResultsPanel campaignId={campaignId} participantId={participantId} questions={questions} />
+    )}
+
     <Button
       variant="outlined"
-      onClick={onBack}
+      onClick={onDone}
       sx={{
         mt: 1, textTransform: 'none', fontWeight: 600, borderRadius: 2.5,
         borderColor: '#E5E7EB', color: '#374151', px: 4, py: 1.25,
         '&:hover': { borderColor: '#10B981', color: '#059669', bgcolor: '#ECFDF5' },
       }}
     >
-      Back to Campaign
+      Back to Dashboard
     </Button>
   </Box>
 );
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-const QuestionnaireForm: React.FC<Props> = ({ campaignId, participantId, questions, onComplete, onBack }) => {
+const QuestionnaireForm: React.FC<Props> = ({ campaignId, campaignTitle, participantId, questions, showResults, onComplete, onBack }) => {
   const draftKey = DRAFT_KEY(campaignId, participantId);
 
   // Load draft from localStorage on first render
@@ -334,7 +349,6 @@ const QuestionnaireForm: React.FC<Props> = ({ campaignId, participantId, questio
       // Clear draft from localStorage on successful submit
       try { localStorage.removeItem(draftKey); } catch {}
       setDone(true);
-      onComplete();
     } catch (err: any) {
       setError(err?.response?.data?.error ?? 'Submission failed. Please try again.');
     } finally {
@@ -348,7 +362,16 @@ const QuestionnaireForm: React.FC<Props> = ({ campaignId, participantId, questio
   const allAnswered = answeredCount === total;
   const isLast      = current === total - 1;
 
-  if (done) return <CompletedScreen onBack={onBack} />;
+  if (done) return (
+    <CompletedScreen
+      campaignId={campaignId}
+      campaignTitle={campaignTitle}
+      participantId={participantId}
+      questions={questions}
+      showResults={showResults}
+      onDone={onComplete}
+    />
+  );
 
   if (total === 0) return (
     <Box sx={{ textAlign: 'center', py: 8 }}>
@@ -366,6 +389,16 @@ const QuestionnaireForm: React.FC<Props> = ({ campaignId, participantId, questio
         borderBottom: '1px solid #F3F4F6',
         display: 'flex', alignItems: 'center', gap: 1.5,
       }}>
+        <IconButton
+          size="small"
+          onClick={onBack}
+          sx={{
+            color: '#94A3B8', ml: -1,
+            '&:hover': { color: '#0F172A', bgcolor: 'rgba(0,0,0,0.04)' },
+          }}
+        >
+          <ArrowBackRounded sx={{ fontSize: 18 }} />
+        </IconButton>
         <Box sx={{
           p: 1, borderRadius: 2,
           background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
@@ -373,9 +406,9 @@ const QuestionnaireForm: React.FC<Props> = ({ campaignId, participantId, questio
         }}>
           <AssignmentOutlined sx={{ fontSize: 18, color: '#fff' }} />
         </Box>
-        <Box sx={{ flex: 1 }}>
-          <Typography sx={{ fontSize: 15, fontWeight: 700, color: '#111827', lineHeight: 1.2 }}>
-            Questionnaire
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography noWrap sx={{ fontSize: 14, fontWeight: 700, color: '#111827', lineHeight: 1.2 }}>
+            {campaignTitle || 'Questionnaire'}
           </Typography>
           <Typography sx={{ fontSize: 11, color: '#9CA3AF' }}>
             {answeredCount} of {total} answered

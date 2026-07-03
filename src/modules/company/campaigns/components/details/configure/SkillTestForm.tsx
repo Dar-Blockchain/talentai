@@ -1,23 +1,9 @@
 import React, { memo, useState, useMemo, useCallback } from "react";
+import { Search, CircleCheck, Code, GitBranch, Bot, Megaphone, Bug, Briefcase } from "lucide-react";
+import { Label } from "@/modules/shared/ui/shadcn/label";
 import {
-  Box,
-  FormControl,
-  Select,
-  MenuItem,
-  ListSubheader,
-  Typography,
-  TextField,
-  InputAdornment,
-  Chip,
-} from "@mui/material";
-import SearchOutlined from "@mui/icons-material/SearchOutlined";
-import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
-import CodeIcon from "@mui/icons-material/Code";
-import AccountTreeIcon from "@mui/icons-material/AccountTree";
-import SmartToyIcon from "@mui/icons-material/SmartToy";
-import CampaignIcon from "@mui/icons-material/Campaign";
-import BugReportIcon from "@mui/icons-material/BugReport";
-import BusinessCenterIcon from "@mui/icons-material/BusinessCenter";
+  Select, SelectContent, SelectGroup, SelectLabel, SelectItem, SelectTrigger, SelectValue,
+} from "@/modules/shared/ui/shadcn/select";
 import { ALL_SKILLS } from "@/modules/shared/constants/skills";
 import { useTranslation } from "react-i18next";
 
@@ -34,15 +20,13 @@ interface Props {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const PURPLE = "#8310FF";
-
 const CATEGORY_META: Record<string, { icon: React.ElementType; color: string }> = {
-  development: { icon: CodeIcon, color: "#3B82F6" },
-  web3:        { icon: AccountTreeIcon, color: "#8B5CF6" },
-  ai:          { icon: SmartToyIcon, color: "#06B6D4" },
-  marketing:   { icon: CampaignIcon, color: "#F59E0B" },
-  qa:          { icon: BugReportIcon, color: "#EF4444" },
-  business:    { icon: BusinessCenterIcon, color: "#10B981" },
+  development: { icon: Code,      color: "#3B82F6" },
+  web3:        { icon: GitBranch, color: "#8B5CF6" },
+  ai:          { icon: Bot,       color: "#06B6D4" },
+  marketing:   { icon: Megaphone, color: "#F59E0B" },
+  qa:          { icon: Bug,       color: "#EF4444" },
+  business:    { icon: Briefcase, color: "#10B981" },
 };
 
 const CATEGORY_ORDER = ["development", "web3", "ai", "marketing", "qa", "business"];
@@ -69,192 +53,95 @@ const SkillTestForm = memo<Props>(({ config, onChange }) => {
 
   const totalVisible = filteredGroups.reduce((n, g) => n + g.skills.length, 0);
 
-  // Find category of selected skill
   const selectedSkillCat = config.skill
     ? ALL_SKILLS.find((s) => s.label === config.skill)?.category
     : undefined;
   const selectedMeta = selectedSkillCat ? CATEGORY_META[selectedSkillCat] : undefined;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+    <div className="flex flex-col gap-1.5">
+      <Label className="text-xs font-bold text-foreground/80">
+        {t(`${cf}.skill_to_assess`)}<span className="text-destructive ml-0.5">*</span>
+      </Label>
 
-      {/* ── Skill Select ─────────────────────────────────────── */}
-      <Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 1 }}>
-          <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-            {t(`${cf}.skill_to_assess`)}
-          </Typography>
-          <Typography sx={{ fontSize: "11px", color: "#EF4444", fontWeight: 700, lineHeight: 1 }}>*</Typography>
-        </Box>
-
-        <FormControl fullWidth size="small">
-          <Select
-            value={config.skill}
-            onChange={(e) => onChange({ ...config, skill: e.target.value as string })}
-            onClose={() => setSkillSearch("")}
-            displayEmpty
-            MenuProps={{
-              PaperProps: {
-                sx: {
-                  maxHeight: 340,
-                  borderRadius: "12px",
-                  boxShadow: "0 12px 40px rgba(0,0,0,0.14)",
-                  mt: 0.75,
-                  overflow: "hidden",
-                },
-              },
-              autoFocus: false,
-            }}
-            sx={{
-              borderRadius: "10px",
-              bgcolor: "#FAFAFA",
-              "& .MuiOutlinedInput-notchedOutline": { borderColor: "#E5E7EB" },
-              "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#C4B5FD" },
-              "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: PURPLE, borderWidth: 2 },
-              "& .MuiSelect-select": { py: "10px" },
-            }}
-            renderValue={(val) => {
-              if (!val) {
-                return (
-                  <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>
-                    {t(`${cf}.choose_skill`)}
-                  </Typography>
-                );
-              }
-              const CatIcon = selectedMeta?.icon;
-              return (
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
-                  {CatIcon && selectedMeta && (
-                    <Box sx={{
-                      width: 26, height: 26, borderRadius: "7px",
-                      bgcolor: `${selectedMeta.color}18`,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      flexShrink: 0,
-                    }}>
-                      <CatIcon sx={{ fontSize: 14, color: selectedMeta.color }} />
-                    </Box>
-                  )}
-                  <Typography sx={{ fontSize: "13.5px", fontWeight: 600, color: "#111827" }}>
-                    {val}
-                  </Typography>
-                  {selectedMeta && (
-                    <Chip
-                      label={categoryLabel(selectedSkillCat!)}
-                      size="small"
-                      sx={{
-                        height: 18, fontSize: "10px", fontWeight: 600,
-                        bgcolor: `${selectedMeta.color}15`,
-                        color: selectedMeta.color,
-                        border: `1px solid ${selectedMeta.color}30`,
-                        "& .MuiChip-label": { px: 0.75 },
-                      }}
-                    />
-                  )}
-                </Box>
-              );
-            }}
-          >
-            {/* ── Sticky search bar ── */}
-            <MenuItem
-              disableRipple
-              onKeyDown={(e) => e.stopPropagation()}
-              sx={{
-                position: "sticky", top: 0, zIndex: 2,
-                bgcolor: "#fff", p: 1.25,
-                borderBottom: "1px solid #F3F4F6",
-                "&:hover": { bgcolor: "#fff" },
-                "&.Mui-focusVisible": { bgcolor: "#fff" },
-              }}
-            >
-              <TextField
-                size="small" fullWidth autoFocus
+      <Select
+        value={config.skill || undefined}
+        onValueChange={(val) => onChange({ ...config, skill: val })}
+        onOpenChange={(open) => { if (!open) setSkillSearch(""); }}
+      >
+        <SelectTrigger className="bg-muted/30">
+          <SelectValue placeholder={t(`${cf}.choose_skill`)}>
+            {config.skill && (
+              <span className="flex items-center gap-2.5">
+                {selectedMeta && (
+                  <span
+                    className="flex items-center justify-center size-[26px] rounded-lg shrink-0"
+                    style={{ background: `${selectedMeta.color}18` }}
+                  >
+                    <selectedMeta.icon className="!size-3.5" style={{ color: selectedMeta.color }} />
+                  </span>
+                )}
+                <span className="text-[13.5px] font-semibold text-foreground">{config.skill}</span>
+                {selectedMeta && selectedSkillCat && (
+                  <span
+                    className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md border"
+                    style={{ background: `${selectedMeta.color}15`, color: selectedMeta.color, borderColor: `${selectedMeta.color}30` }}
+                  >
+                    {categoryLabel(selectedSkillCat)}
+                  </span>
+                )}
+              </span>
+            )}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent className="max-h-[340px]">
+          {/* Sticky search bar */}
+          <div className="sticky top-0 z-10 bg-popover p-2 border-b border-border/60 mb-1">
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-2.5 py-1.5">
+              <Search className="size-4 text-muted-foreground shrink-0" />
+              <input
+                autoFocus
                 placeholder={t(`${cf}.search_skills`)}
                 value={skillSearch}
                 onChange={(e) => setSkillSearch(e.target.value)}
                 onKeyDown={(e) => e.stopPropagation()}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchOutlined sx={{ fontSize: 16, color: "#9CA3AF" }} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "8px", bgcolor: "#F8FAFC", fontSize: "13px",
-                    "& fieldset": { borderColor: "#E5E7EB" },
-                    "&:hover fieldset": { borderColor: "#C4B5FD" },
-                    "&.Mui-focused fieldset": { borderColor: PURPLE, borderWidth: 1.5 },
-                  },
-                  "& input": { py: "7px" },
-                }}
+                className="border-none outline-none bg-transparent text-[13px] w-full font-[inherit]"
               />
-            </MenuItem>
+            </div>
+          </div>
 
-            {/* ── Grouped skill options ── */}
-            {filteredGroups.flatMap(({ catId, meta, skills }) => {
-              const CatIcon = meta.icon;
-              return [
-                <ListSubheader
-                  key={`header-${catId}`}
-                  sx={{
-                    display: "flex", alignItems: "center", gap: 0.75,
-                    fontSize: "10px", fontWeight: 800,
-                    textTransform: "uppercase", letterSpacing: "0.1em",
-                    color: meta.color,
-                    bgcolor: `${meta.color}0D`,
-                    lineHeight: "30px", px: 2,
-                    borderTop: "1px solid #F3F4F6",
-                  }}
-                >
-                  <CatIcon sx={{ fontSize: 13 }} />
-                  {categoryLabel(catId)}
-                </ListSubheader>,
-                ...skills.map((s) => {
-                  const isSelected = config.skill === s.label;
-                  return (
-                    <MenuItem
-                      key={s.label}
-                      value={s.label}
-                      sx={{
-                        fontSize: "13px",
-                        color: isSelected ? meta.color : "#374151",
-                        fontWeight: isSelected ? 700 : 400,
-                        px: 2.5, py: "7px",
-                        display: "flex", alignItems: "center", justifyContent: "space-between",
-                        "&:hover": { bgcolor: `${meta.color}0D` },
-                        "&.Mui-selected": {
-                          bgcolor: `${meta.color}12`,
-                          "&:hover": { bgcolor: `${meta.color}1A` },
-                        },
-                      }}
-                    >
-                      {s.label}
-                      {isSelected && (
-                        <CheckCircleOutlined sx={{ fontSize: 15, color: meta.color, ml: 1 }} />
-                      )}
-                    </MenuItem>
-                  );
-                }),
-              ];
-            })}
+          {filteredGroups.map(({ catId, meta, skills }) => (
+            <SelectGroup key={catId}>
+              <SelectLabel className="flex items-center gap-1.5" style={{ color: meta.color }}>
+                <meta.icon className="!size-3" />
+                {categoryLabel(catId)}
+              </SelectLabel>
+              {skills.map((s) => {
+                const isSelected = config.skill === s.label;
+                return (
+                  <SelectItem
+                    key={s.label}
+                    value={s.label}
+                    className={isSelected ? "font-bold" : ""}
+                    style={{ color: isSelected ? meta.color : undefined }}
+                  >
+                    <span className="flex-1">{s.label}</span>
+                    {isSelected && <CircleCheck className="!size-3.5" style={{ color: meta.color }} />}
+                  </SelectItem>
+                );
+              })}
+            </SelectGroup>
+          ))}
 
-            {/* ── Empty state ── */}
-            {totalVisible === 0 && (
-              <MenuItem disabled sx={{ py: 3, justifyContent: "center" }}>
-                <Box sx={{ textAlign: "center" }}>
-                  <SearchOutlined sx={{ fontSize: 28, color: "#D1D5DB", mb: 0.5 }} />
-                  <Typography sx={{ fontSize: "12px", color: "#9CA3AF" }}>
-                    {t(`${cf}.no_match`, { query: skillSearch })}
-                  </Typography>
-                </Box>
-              </MenuItem>
-            )}
-          </Select>
-        </FormControl>
-      </Box>
-
-    </Box>
+          {totalVisible === 0 && (
+            <div className="py-8 flex flex-col items-center text-center">
+              <Search className="size-7 text-muted-foreground/40 mb-1.5" />
+              <p className="text-xs text-muted-foreground">{t(`${cf}.no_match`, { query: skillSearch })}</p>
+            </div>
+          )}
+        </SelectContent>
+      </Select>
+    </div>
   );
 });
 SkillTestForm.displayName = "SkillTestForm";

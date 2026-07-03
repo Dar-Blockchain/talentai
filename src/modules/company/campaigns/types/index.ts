@@ -22,6 +22,9 @@ export type {
   NonParticipant,
   CreateCampaignPayload,
   CampaignsResponse,
+  CampaignResponseAnswer,
+  CampaignResponse,
+  ParticipantResults,
 } from "./campaign";
 
 export interface EmployeeCampaignEntry {

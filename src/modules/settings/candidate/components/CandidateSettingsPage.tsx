@@ -5,7 +5,6 @@ import { Menu } from "lucide-react";
 import NotificationsTab from "./NotificationsTab";
 import PersonalInformationTab from "./PersonalInformationTab";
 import ProfileVisibilityTab from "./ProfileVisibilityTab";
-import SnackbarNotifications from "./SnackbarNotifications";
 import { useProfileManagement } from "../hooks";
 import { useUpdateCandidateVisibility } from "../queries";
 import { LanguageTab } from "@/modules/settings/shared";
@@ -33,13 +32,13 @@ const CandidateSettingsPage: React.FC = () => {
   }));
 
   const {
-    activeTab, isEditing, profile, loading, error,
+    activeTab, isEditing, profile, loading,
     uploadingImage, saveSuccess, userId,
     companyMembership, isPublicProfile,
     control, formErrors,
     setActiveTab, setIsEditing,
     handleInputChange, handleImageUpload, handleCvUpdated, handleCvDeleted,
-    handleSaveProfile, handleSaveLanguage, handleCancel, handleDismissError, handleDismissSuccess,
+    handleSaveProfile, handleSaveLanguage, handleCancel,
   } = useProfileManagement();
 
   const hasMembership = !!companyMembership?._id;
@@ -180,7 +179,6 @@ const CandidateSettingsPage: React.FC = () => {
               isEditing={isEditing}
               loading={loading}
               saveSuccess={saveSuccess}
-              error={error || null}
               uploadingImage={uploadingImage}
               onImageUpload={handleImageUpload}
               onSave={handleSaveProfile}
@@ -226,13 +224,6 @@ const CandidateSettingsPage: React.FC = () => {
           )}
         </div>
       </div>
-
-      <SnackbarNotifications
-        error={error || null}
-        saveSuccess={saveSuccess}
-        onDismissError={handleDismissError}
-        onDismissSuccess={handleDismissSuccess}
-      />
     </>
   );
 };

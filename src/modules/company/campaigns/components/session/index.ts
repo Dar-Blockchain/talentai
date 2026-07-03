@@ -12,5 +12,4 @@ export { IdentityGate } from './IdentityGate';
 export { ErrorCard } from './ErrorCard';
 export { LoginRequiredCard } from './LoginRequiredCard';
 export { CampaignOverviewCard } from './CampaignOverviewCard';
-export { QuestionnaireView } from './QuestionnaireView';
 export { CampaignInterviewView } from './CampaignInterviewView';

@@ -7,7 +7,7 @@ import {
   apiFetchCampaigns, apiFetchMetrics, apiFetchCampaignById,
   apiCreateCampaign, apiUpdateCampaign, apiUpdateCampaignStatus, apiDeleteCampaign,
   apiFetchParticipants, apiFetchNonParticipants, apiAddParticipant, apiRemoveParticipant,
-  apiFetchSessions,
+  apiFetchSessions, apiFetchParticipantResults,
 } from "../api";
 
 // ─── Query key factory ────────────────────────────────────────────────────────
@@ -78,6 +78,14 @@ export const useCampaignSessionsQuery = (params: SessionsParams) =>
     enabled:         !!params.campaignId,
     staleTime:       30_000,
     placeholderData: keepPreviousData,
+  });
+
+export const useParticipantResultsQuery = (campaignId: string, participantId: string | null) =>
+  useQuery({
+    queryKey: ["campaigns", "results", campaignId, participantId] as const,
+    queryFn:  () => apiFetchParticipantResults(campaignId, participantId!),
+    enabled:  !!campaignId && !!participantId,
+    staleTime: 30_000,
   });
 
 // ─── Mutations ────────────────────────────────────────────────────────────────

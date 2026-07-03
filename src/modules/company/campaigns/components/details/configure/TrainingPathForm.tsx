@@ -1,10 +1,14 @@
 import React, { memo, useMemo, useCallback } from "react";
-import { Box, IconButton, Typography } from "@mui/material";
-import { DeleteOutlined } from "@mui/icons-material";
-import AppInput from "@/components/ui/AppInput";
-import AppSelect from "@/components/ui/AppSelect";
+import { Trash2 } from "lucide-react";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import { Input } from "@/modules/shared/ui/shadcn/input";
+import { Label } from "@/modules/shared/ui/shadcn/label";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/modules/shared/ui/shadcn/select";
 import { EmptyState, AddRowButton } from "./QuestionnaireForm";
 import { useTranslation } from "react-i18next";
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 const RESOURCE_TYPE_KEYS = ["LINK", "DOCUMENT", "COURSE", "VIDEO"] as const;
@@ -26,8 +30,6 @@ interface Props {
   config: TrainingPathConfig;
   onChange: (config: TrainingPathConfig) => void;
 }
-
-// ─── Constants ────────────────────────────────────────────────────────────────
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -55,82 +57,96 @@ const TrainingPathForm = memo<Props>(({ config, onChange }) => {
     onChange({ resources: config.resources.filter((_, idx) => idx !== i) }), [onChange, config.resources]);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <div className="flex flex-col gap-3">
       {config.resources.length === 0 ? (
         <EmptyState label={t(`${cf}.empty`)} />
       ) : (
         config.resources.map((r, i) => (
-          <Box
-            key={i}
-            sx={{ p: 2, borderRadius: 2, border: "1px solid #E5E7EB", bgcolor: "#FAFAFA" }}
-          >
+          <div key={i} className="rounded-xl border border-border bg-muted/30 p-3.5">
             {/* Resource header */}
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                mb: 1.5,
-              }}
-            >
-              <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#374151" }}>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[12px] font-semibold text-foreground/80">
                 {t(`${cf}.resource_heading`, { n: i + 1 })}
-              </Typography>
-              <IconButton
-                size="small"
+              </p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
                 onClick={() => removeResource(i)}
-                sx={{ color: "#EF4444", p: 0.5, "&:hover": { bgcolor: "#FEF2F2" } }}
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
               >
-                <DeleteOutlined sx={{ fontSize: 16 }} />
-              </IconButton>
-            </Box>
+                <Trash2 className="size-4" />
+              </Button>
+            </div>
 
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+            <div className="flex flex-col gap-3">
               {/* Type */}
-              <AppSelect
-                label={t(`${cf}.type_label`)}
-                value={r.type}
-                options={resourceOptions}
-                onChange={(val) => updateResource(i, { type: val as ResourceType })}
-              />
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  {t(`${cf}.type_label`)}
+                </Label>
+                <Select value={r.type} onValueChange={(val) => updateResource(i, { type: val as ResourceType })}>
+                  <SelectTrigger size="sm" className="bg-background">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {resourceOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
               {/* Title */}
-              <AppInput
-                label={t(`${cf}.title_label`)}
-                placeholder={t(`${cf}.title_placeholder`)}
-                value={r.title}
-                onChange={(e) => updateResource(i, { title: e.target.value })}
-              />
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  {t(`${cf}.title_label`)}
+                </Label>
+                <Input
+                  placeholder={t(`${cf}.title_placeholder`)}
+                  value={r.title}
+                  onChange={(e) => updateResource(i, { title: e.target.value })}
+                  className="bg-background"
+                />
+              </div>
 
               {/* URL */}
-              <AppInput
-                label={t(`${cf}.url_label`)}
-                placeholder={t(`${cf}.url_placeholder`)}
-                value={r.url}
-                onChange={(e) => updateResource(i, { url: e.target.value })}
-              />
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  {t(`${cf}.url_label`)}
+                </Label>
+                <Input
+                  placeholder={t(`${cf}.url_placeholder`)}
+                  value={r.url}
+                  onChange={(e) => updateResource(i, { url: e.target.value })}
+                  className="bg-background"
+                />
+              </div>
 
               {/* Estimated time */}
-              <AppInput
-                label={t(`${cf}.time_label`)}
-                type="number"
-                placeholder={t(`${cf}.time_placeholder`)}
-                value={String(r.estimatedTime ?? "")}
-                onChange={(e) =>
-                  updateResource(i, {
-                    estimatedTime: e.target.value ? Number(e.target.value) : undefined,
-                  })
-                }
-                fullWidth={false}
-                sx={{ width: "50%" }}
-              />
-            </Box>
-          </Box>
+              <div className="flex flex-col gap-1.5 w-1/2">
+                <Label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  {t(`${cf}.time_label`)}
+                </Label>
+                <Input
+                  type="number"
+                  placeholder={t(`${cf}.time_placeholder`)}
+                  value={String(r.estimatedTime ?? "")}
+                  onChange={(e) =>
+                    updateResource(i, {
+                      estimatedTime: e.target.value ? Number(e.target.value) : undefined,
+                    })
+                  }
+                  className="bg-background"
+                />
+              </div>
+            </div>
+          </div>
         ))
       )}
 
       <AddRowButton label={t(`${cf}.add_resource`)} onClick={addResource} />
-    </Box>
+    </div>
   );
 });
 TrainingPathForm.displayName = "TrainingPathForm";

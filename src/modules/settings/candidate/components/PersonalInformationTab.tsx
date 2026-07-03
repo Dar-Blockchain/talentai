@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Control, Controller, FieldErrors } from 'react-hook-form';
-import { CheckCircle2, XCircle } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PersonalInformationFormValues } from '@/modules/settings/candidate/schemas';
 import { experienceLevels, timezones } from '../constants';
@@ -23,7 +23,6 @@ interface PersonalInformationTabProps {
   isEditing:      boolean;
   loading:        boolean;
   saveSuccess:    boolean;
-  error:          string | null;
   uploadingImage: boolean;
   onImageUpload:  (event: React.ChangeEvent<HTMLInputElement>) => void;
   onSave:         () => void;
@@ -69,7 +68,7 @@ const Field: React.FC<FieldProps> = ({ label, error, required, className, childr
 // ─── Tab ─────────────────────────────────────────────────────────────────────
 
 const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
-  profile, control, formErrors, loading, saveSuccess, error,
+  profile, control, formErrors, loading, saveSuccess,
   uploadingImage, onImageUpload, onSave, onCancel, onEditToggle,
 }) => {
   const { t } = useTranslation('dashboard');
@@ -158,13 +157,6 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
                 {s('save_success')}
               </div>
             )}
-            {error && (
-              <div className="flex items-center gap-2 rounded-xl bg-danger-light border border-danger-border px-3 py-2 text-xs text-danger">
-                <XCircle size={14} className="shrink-0" />
-                {error}
-              </div>
-            )}
-
             {/* Avatar */}
             <ProfilePictureSection
               profile={profile}

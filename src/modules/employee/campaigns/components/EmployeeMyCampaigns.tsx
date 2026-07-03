@@ -20,6 +20,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { CampaignType, ModuleType, ParticipantStatus } from "@/modules/company/campaigns/types/campaign";
 import { EmployeeCampaignEntry } from "@/modules/company/campaigns/types";
+import { buildCampaignSessionUrl } from "@/lib/campaignSession";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -378,7 +379,7 @@ const EmployeeMyCampaigns: React.FC = () => {
   const avgScore = 10;
 
   const handleStart = (id: string) => {
-    router.push(`/employee/campaigns/${id}`);
+    router.push(buildCampaignSessionUrl(id));
   };
 
   const handleDetails = (id: string) => {

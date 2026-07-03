@@ -192,7 +192,8 @@ exports.getCampaign = async (req, res) => {
       ).lean();
       data.participantStatus = participant?.status ?? null;
       data.completedAt = participant?.completedAt ?? null;
-      if (participant?.status === "COMPLETED") {
+      const resultsVisible = data.module?.type !== "QUESTIONNAIRE" || data.module?.config?.showResultsToParticipants !== false;
+      if (participant?.status === "COMPLETED" && resultsVisible) {
         const response = await CampaignResponse.findOne({ campaign: campaignId, participant: participant._id }, { aiScore: 1 }).lean();
         data.score = response?.aiScore ?? null;
       }
@@ -543,7 +544,9 @@ exports.submitQuestionnaire = async (req, res) => {
     participant.moduleProgress = { moduleType: "QUESTIONNAIRE", status: "COMPLETED", completedAt: new Date(), responseRef: response._id };
     await participant.save();
 
-    scoreQuestionnaireAsync(response._id, campaign, answers);
+    if (campaign.module?.config?.aiScoringEnabled !== false) {
+      scoreQuestionnaireAsync(response._id, campaign, answers);
+    }
     res.status(200).json({ success: true, data: { responseId: response._id } });
   } catch (error) {
     console.error(`âŒ Error in submitQuestionnaire: ${error.message}`);
@@ -582,6 +585,16 @@ exports.startAssessment = async (req, res) => {
   }
 };
 
+async function buildParticipantResultsPayload(campaign, participant) {
+  const response = await CampaignResponse.findOne({ campaign: campaign._id, participant: participant._id }).lean();
+  return {
+    campaign: { _id: campaign._id, title: campaign.title, type: campaign.type, module: campaign.module },
+    participant: { _id: participant._id, status: participant.status, completedAt: participant.completedAt, score: participant.score ?? null },
+    response: response ?? null,
+  };
+}
+
+// Participant-facing: honors the campaign's "show results to participants" setting.
 exports.getParticipantResults = async (req, res) => {
   try {
     const { campaignId, participantId } = req.params;
@@ -597,14 +610,32 @@ exports.getParticipantResults = async (req, res) => {
     if (!campaign) return res.status(404).json({ success: false, error: "Campaign not found" });
     if (!participant) return res.status(404).json({ success: false, error: "Participant not found" });
 
-    const response = await CampaignResponse.findOne({ campaign: campaignId, participant: participant._id }).lean();
-    res.status(200).json({ success: true, data: {
-      campaign: { _id: campaign._id, title: campaign.title, type: campaign.type, module: campaign.module },
-      participant: { _id: participant._id, status: participant.status, completedAt: participant.completedAt, score: participant.score ?? null },
-      response: response ?? null,
-    }});
+    const payload = await buildParticipantResultsPayload(campaign, participant);
+    if (campaign.module?.type === "QUESTIONNAIRE" && campaign.module?.config?.showResultsToParticipants === false) {
+      payload.response = null;
+      payload.resultsHidden = true;
+    }
+
+    res.status(200).json({ success: true, data: payload });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// Company-facing: always returns full results for the campaign owner, regardless of the participant-visibility toggle.
+exports.getParticipantResultsForCompany = async (req, res) => {
+  try {
+    const { campaignId, participantId } = req.params;
+    const actorId = req.auth?.companyId || req.user._id;
+    const campaign = await verifyOwnership(campaignId, actorId, req.user._id);
+
+    const participant = await CampaignParticipant.findOne({ _id: participantId, campaign: campaignId }).lean();
+    if (!participant) return res.status(404).json({ success: false, error: "Participant not found" });
+
+    const payload = await buildParticipantResultsPayload(campaign, participant);
+    res.status(200).json({ success: true, data: payload });
+  } catch (error) {
+    res.status(error.status || 500).json({ success: false, error: error.message });
   }
 };
 

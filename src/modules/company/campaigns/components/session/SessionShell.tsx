@@ -1,9 +1,7 @@
 import React from 'react';
-import InterviewHeader from '@/modules/interviews/shared/components/layout/InterviewHeader';
 
 export const SessionShell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="min-h-screen flex flex-col bg-gradient-to-br from-primary/5 via-background to-violet-50/60">
-    <InterviewHeader />
+  <div className="relative flex-1 flex flex-col bg-gradient-to-br from-primary/5 via-background to-violet-50/60">
     <div
       className="fixed inset-0 pointer-events-none opacity-40"
       style={{ backgroundImage: 'radial-gradient(hsl(var(--border)) 1px, transparent 1px)', backgroundSize: '28px 28px' }}
