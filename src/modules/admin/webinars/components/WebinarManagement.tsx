@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import * as XLSX from "xlsx";
-import { CircularProgress, Snackbar, Alert, Dialog, DialogTitle, DialogContent, DialogActions, Chip } from "@mui/material";
+import { CircularProgress, Snackbar, Alert, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Menu, MenuItem, ListItemIcon, ListItemText, Divider } from "@mui/material";
 import {
   Add as AddIcon,
   VideoLibrary as WebinarIcon,
@@ -14,6 +14,8 @@ import {
   Send as SendIcon,
   PeopleAlt as PeopleIcon,
   Download as DownloadIcon,
+  MoreVert as MoreIcon,
+  Edit as EditIcon,
 } from "@mui/icons-material";
 import WebinarSubmissionsDialog from "./WebinarSubmissionsDialog";
 import { adminWebinarApi } from "../api";
@@ -157,6 +159,12 @@ function QuestionEditor({ q, idx, onChange, onDelete, onMoveUp, onMoveDown, isFi
   );
 }
 
+const STEPS = [
+  { label: "Basics",   desc: "Title, date & link" },
+  { label: "Content",  desc: "Landing page copy" },
+  { label: "Questions", desc: "Registration form" },
+];
+
 function WebinarFormDialog({
   open, initial, onClose, onSave,
 }: {
@@ -166,30 +174,23 @@ function WebinarFormDialog({
   onSave: (v: WebinarFormValues) => void;
 }) {
   const [form, setForm] = React.useState<WebinarFormValues>(initial ?? EMPTY_FORM);
-  const [tab, setTab] = React.useState<"info" | "questions">("info");
+  const [step, setStep] = React.useState(0);
 
   React.useEffect(() => {
     setForm(initial ?? EMPTY_FORM);
-    setTab("info");
+    setStep(0);
   }, [initial, open]);
 
   const set = <K extends keyof WebinarFormValues>(k: K, v: WebinarFormValues[K]) =>
     setForm(f => ({ ...f, [k]: v }));
 
-  const addQuestion = () => {
-    const next = [...form.questions, newQuestion(form.questions.length + 1)];
-    set("questions", next);
-  };
+  const addQuestion = () => set("questions", [...form.questions, newQuestion(form.questions.length + 1)]);
 
-  const updateQuestion = (idx: number, q: WebinarQuestionDraft) => {
-    const next = form.questions.map((old, i) => i === idx ? q : old);
-    set("questions", next);
-  };
+  const updateQuestion = (idx: number, q: WebinarQuestionDraft) =>
+    set("questions", form.questions.map((old, i) => i === idx ? q : old));
 
-  const deleteQuestion = (idx: number) => {
-    const next = form.questions.filter((_, i) => i !== idx).map((q, i) => ({ ...q, order: i + 1 }));
-    set("questions", next);
-  };
+  const deleteQuestion = (idx: number) =>
+    set("questions", form.questions.filter((_, i) => i !== idx).map((q, i) => ({ ...q, order: i + 1 })));
 
   const moveQuestion = (idx: number, dir: -1 | 1) => {
     const arr = [...form.questions];
@@ -199,119 +200,156 @@ function WebinarFormDialog({
     set("questions", arr.map((q, i) => ({ ...q, order: i + 1 })));
   };
 
-  const inputCls = "w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[14px] text-slate-700 outline-none focus:border-teal-400 transition-colors bg-white";
-  const labelCls = "block text-[12px] font-semibold text-slate-600 mb-1";
+  const inp = "w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[14px] text-slate-700 outline-none focus:border-teal-400 transition-colors bg-white";
+  const lbl = "block text-[12px] font-semibold text-slate-600 mb-1.5";
+
+  const canNext0 = form.title.trim().length > 0;
+  const canSave  = form.title.trim().length > 0 && form.questions.length > 0;
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth
-      PaperProps={{ sx: { borderRadius: "16px", display: "flex", flexDirection: "column", maxHeight: "90vh" } }}>
-      <DialogTitle sx={{ fontWeight: 700, fontSize: "1.05rem", pb: 0, borderBottom: "1px solid #F1F5F9" }}>
-        <div className="flex items-center justify-between">
-          <span>{initial?.title ? `Edit — ${initial.title}` : "New Webinar"}</span>
-          <div className="flex gap-1 p-0.5 bg-slate-100 rounded-lg">
-            {(["info", "questions"] as const).map(t => (
-              <button key={t} onClick={() => setTab(t)}
-                className={`px-3 py-1 rounded-md text-[12px] font-semibold transition-colors ${tab === t ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
-                {t === "info" ? "Info" : `Questions ${form.questions.length > 0 ? `(${form.questions.length})` : ""}`}
-              </button>
-            ))}
+      PaperProps={{ sx: { borderRadius: "20px", display: "flex", flexDirection: "column", maxHeight: "92vh", overflow: "hidden" } }}>
+
+      {/* ── Header ── */}
+      <div className="px-6 pt-5 pb-0 border-b border-slate-100">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="text-[11px] font-bold text-teal-600 uppercase tracking-widest mb-0.5">
+              Step {step + 1} of {STEPS.length}
+            </p>
+            <h2 className="text-[17px] font-black text-slate-900">
+              {initial?.title ? `Edit — ${initial.title}` : "New Webinar"}
+            </h2>
           </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors">
+            <CloseIcon sx={{ fontSize: 18 }} />
+          </button>
         </div>
-      </DialogTitle>
 
-      <DialogContent sx={{ pt: 2, overflowY: "auto", flex: 1 }}>
-        {/* ── INFO TAB ── */}
-        {tab === "info" && (
-          <div className="space-y-4 pt-1">
-            <div>
-              <label className={labelCls}>Title *</label>
-              <input className={inputCls} value={form.title} onChange={e => set("title", e.target.value)} placeholder="Webinar title" />
-            </div>
-            <div>
-              <label className={labelCls}>Description</label>
-              <textarea className={inputCls} rows={3} value={form.description} onChange={e => set("description", e.target.value)} placeholder="What's this webinar about?" style={{ resize: "none" }} />
-            </div>
-            <div>
-              <label className={labelCls}>
-                "C'est quoi ce webinar ?" — texte FR <span className="text-slate-400 font-normal">(affiché sur la page d'accueil)</span>
-              </label>
-              <textarea className={inputCls} rows={4} value={form.about_fr} onChange={e => set("about_fr", e.target.value)} placeholder="Décrivez ce webinar en français pour la landing page..." style={{ resize: "vertical" }} />
-            </div>
-            <div>
-              <label className={labelCls}>
-                "What is this webinar?" — EN text <span className="text-slate-400 font-normal">(shown on landing page)</span>
-              </label>
-              <textarea className={inputCls} rows={4} value={form.about_en} onChange={e => set("about_en", e.target.value)} placeholder="Describe this webinar in English for the landing page..." style={{ resize: "vertical" }} />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
+        {/* Stepper */}
+        <div className="flex items-stretch gap-0 -mb-px">
+          {STEPS.map((s, i) => {
+            const done    = i < step;
+            const active  = i === step;
+            return (
+              <button
+                key={i}
+                onClick={() => (done || active) && setStep(i)}
+                disabled={!done && !active}
+                className={`flex-1 flex flex-col items-start px-4 py-2.5 border-b-2 transition-colors text-left
+                  ${active  ? "border-teal-500 bg-teal-50/60" : "border-transparent"}
+                  ${done    ? "cursor-pointer hover:bg-slate-50" : ""}
+                  ${!active && !done ? "opacity-40 cursor-default" : ""}`}
+              >
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black shrink-0
+                    ${active ? "bg-teal-500 text-white" : done ? "bg-emerald-400 text-white" : "bg-slate-200 text-slate-400"}`}>
+                    {done ? "✓" : i + 1}
+                  </span>
+                  <span className={`text-[12px] font-bold ${active ? "text-teal-700" : done ? "text-slate-700" : "text-slate-400"}`}>
+                    {s.label}
+                  </span>
+                </div>
+                <span className="text-[10px] text-slate-400 pl-5">{s.desc}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── Content ── */}
+      <DialogContent sx={{ p: 0, overflowY: "auto", flex: 1 }}>
+        <div className="px-6 py-5">
+
+          {/* Step 0 — Basics */}
+          {step === 0 && (
+            <div className="space-y-4">
               <div>
-                <label className={labelCls}>Date</label>
-                <input type="datetime-local" className={inputCls} value={form.date} onChange={e => set("date", e.target.value)} />
+                <label className={lbl}>Title <span className="text-red-400">*</span></label>
+                <input className={inp} value={form.title} onChange={e => set("title", e.target.value)} placeholder="Webinar title" autoFocus />
               </div>
               <div>
-                <label className={labelCls}>Language</label>
-                <select className={inputCls} value={form.lang} onChange={e => set("lang", e.target.value as WebinarFormValues["lang"])}>
-                  <option value="fr">French</option>
-                  <option value="en">English</option>
-                  <option value="both">Both</option>
-                </select>
+                <label className={lbl}>Short description</label>
+                <textarea className={inp} rows={2} value={form.description} onChange={e => set("description", e.target.value)} placeholder="What's this webinar about?" style={{ resize: "none" }} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={lbl}>Date & time</label>
+                  <input type="datetime-local" className={inp} value={form.date} onChange={e => set("date", e.target.value)} />
+                </div>
+                <div>
+                  <label className={lbl}>Language</label>
+                  <select className={inp} value={form.lang} onChange={e => set("lang", e.target.value as WebinarFormValues["lang"])}>
+                    <option value="fr">French</option>
+                    <option value="en">English</option>
+                    <option value="both">Both</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className={lbl}>Join link <span className="text-slate-400 font-normal text-[11px]">(Zoom / Teams / Meet)</span></label>
+                <input className={inp} type="url" value={form.webinar_link} onChange={e => set("webinar_link", e.target.value)} placeholder="https://zoom.us/j/..." />
+              </div>
+              <div>
+                <label className={lbl}>Status</label>
+                <div className="flex gap-2">
+                  {(["draft", "active", "archived"] as const).map(s => (
+                    <button key={s} onClick={() => set("status", s)}
+                      className={`flex-1 py-2 rounded-xl border text-[12px] font-semibold transition-colors capitalize
+                        ${form.status === s ? "bg-teal-600 border-teal-600 text-white" : "border-slate-200 text-slate-500 hover:border-teal-300 bg-white"}`}>
+                      {s}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-            <div>
-              <label className={labelCls}>
-                Lien du webinar <span className="text-slate-400 font-normal">(Zoom / Teams / Meet — inclus dans les emails)</span>
-              </label>
-              <input
-                className={inputCls}
-                type="url"
-                value={form.webinar_link}
-                onChange={e => set("webinar_link", e.target.value)}
-                placeholder="https://zoom.us/j/..."
-              />
-            </div>
-            <div>
-              <label className={labelCls}>Status</label>
-              <select className={inputCls} value={form.status} onChange={e => set("status", e.target.value as WebinarFormValues["status"])}>
-                <option value="draft">Draft</option>
-                <option value="active">Active</option>
-                <option value="archived">Archived</option>
-              </select>
-            </div>
+          )}
 
-            <div>
-              <label className={labelCls}>Landing page highlights <span className="text-slate-400 font-normal">(up to 3 bullets shown on home page)</span></label>
-              <div className="space-y-2">
-                {[0, 1, 2].map(i => (
-                  <div key={i} className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-teal-100 text-teal-700 text-[10px] font-black flex items-center justify-center shrink-0">{i + 1}</span>
-                    <input
-                      className={inputCls}
-                      value={form.highlights[i] ?? ""}
-                      onChange={e => {
-                        const next = [...form.highlights];
-                        next[i] = e.target.value;
-                        set("highlights", next);
-                      }}
-                      placeholder={`Benefit ${i + 1} (e.g. "Learn how AI cuts time-to-hire by 70%")`}
-                    />
-                  </div>
-                ))}
+          {/* Step 1 — Content */}
+          {step === 1 && (
+            <div className="space-y-5">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={lbl}>
+                    About — FR
+                    <span className="text-slate-400 font-normal text-[11px] ml-1">(landing page)</span>
+                  </label>
+                  <textarea className={inp} rows={6} value={form.about_fr} onChange={e => set("about_fr", e.target.value)} placeholder="Décrivez ce webinar en français…" style={{ resize: "vertical" }} />
+                </div>
+                <div>
+                  <label className={lbl}>
+                    About — EN
+                    <span className="text-slate-400 font-normal text-[11px] ml-1">(landing page)</span>
+                  </label>
+                  <textarea className={inp} rows={6} value={form.about_en} onChange={e => set("about_en", e.target.value)} placeholder="Describe this webinar in English…" style={{ resize: "vertical" }} />
+                </div>
+              </div>
+              <div>
+                <label className={lbl}>Highlights <span className="text-slate-400 font-normal text-[11px]">(up to 3 bullets on home page)</span></label>
+                <div className="space-y-2">
+                  {[0, 1, 2].map(i => (
+                    <div key={i} className="flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-full bg-teal-100 text-teal-700 text-[10px] font-black flex items-center justify-center shrink-0">{i + 1}</span>
+                      <input className={inp} value={form.highlights[i] ?? ""} onChange={e => {
+                        const next = [...form.highlights]; next[i] = e.target.value; set("highlights", next);
+                      }} placeholder={`Benefit ${i + 1}`} />
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* ── QUESTIONS TAB ── */}
-        {tab === "questions" && (
-          <div className="pt-1 space-y-3">
-            {form.questions.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-2 opacity-40"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                <p className="text-[14px] font-medium">No questions yet</p>
-                <p className="text-[12px] mt-0.5">Add questions manually or use AI generation</p>
-              </div>
-            ) : (
-              form.questions.map((q, idx) => (
+          {/* Step 2 — Questions */}
+          {step === 2 && (
+            <div className="space-y-3">
+              {form.questions.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl">
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-2 opacity-40"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  <p className="text-[14px] font-medium">No questions yet</p>
+                  <p className="text-[12px] mt-0.5">Add questions below</p>
+                </div>
+              ) : form.questions.map((q, idx) => (
                 <QuestionEditor key={q.key} q={q} idx={idx}
                   onChange={nq => updateQuestion(idx, nq)}
                   onDelete={() => deleteQuestion(idx)}
@@ -319,37 +357,43 @@ function WebinarFormDialog({
                   onMoveDown={() => moveQuestion(idx, 1)}
                   isFirst={idx === 0} isLast={idx === form.questions.length - 1}
                 />
-              ))
-            )}
-            <button
-              onClick={addQuestion}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-teal-200 text-teal-600 text-[13px] font-semibold hover:bg-teal-50 transition-colors"
-            >
-              <AddIcon sx={{ fontSize: 16 }} /> Add question
-            </button>
-          </div>
-        )}
+              ))}
+              <button onClick={addQuestion}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-teal-200 text-teal-600 text-[13px] font-semibold hover:bg-teal-50 transition-colors">
+                <AddIcon sx={{ fontSize: 16 }} /> Add question
+              </button>
+            </div>
+          )}
+
+        </div>
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, pb: 2.5, pt: 1.5, gap: 1, borderTop: "1px solid #F1F5F9" }}>
-        <button onClick={onClose} className="px-4 py-2 rounded-xl border border-slate-200 text-[13px] font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
+      {/* ── Footer ── */}
+      <div className="flex items-center justify-between gap-2 px-6 py-4 border-t border-slate-100 bg-slate-50/60">
+        <button onClick={onClose} className="px-4 py-2 rounded-xl border border-slate-200 text-[13px] font-semibold text-slate-500 hover:bg-slate-100 transition-colors">
           Cancel
         </button>
-        {tab === "info" && (
-          <button onClick={() => setTab("questions")}
-            className="px-4 py-2 rounded-xl border border-teal-200 text-teal-700 text-[13px] font-semibold hover:bg-teal-50 transition-colors">
-            Questions →
-          </button>
-        )}
-        <button
-          onClick={() => onSave(form)}
-          disabled={!form.title.trim() || form.questions.length === 0}
-          title={form.questions.length === 0 ? "Add at least one question before saving" : undefined}
-          className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:bg-slate-200 disabled:cursor-not-allowed text-white disabled:text-slate-400 text-[13px] font-bold transition-colors"
-        >
-          Save
-        </button>
-      </DialogActions>
+        <div className="flex items-center gap-2">
+          {step > 0 && (
+            <button onClick={() => setStep(s => s - 1)}
+              className="px-4 py-2 rounded-xl border border-slate-200 text-[13px] font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
+              ← Back
+            </button>
+          )}
+          {step < STEPS.length - 1 ? (
+            <button onClick={() => setStep(s => s + 1)} disabled={step === 0 && !canNext0}
+              className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:bg-slate-200 disabled:cursor-not-allowed text-white disabled:text-slate-400 text-[13px] font-bold transition-colors">
+              Next →
+            </button>
+          ) : (
+            <button onClick={() => onSave(form)} disabled={!canSave}
+              title={!canSave ? "Add a title and at least one question" : undefined}
+              className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:bg-slate-200 disabled:cursor-not-allowed text-white disabled:text-slate-400 text-[13px] font-bold transition-colors">
+              Save webinar
+            </button>
+          )}
+        </div>
+      </div>
     </Dialog>
   );
 }
@@ -401,6 +445,144 @@ function QuestionsDialog({ webinar, open, onClose }: {
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ── Webinar card ─────────────────────────────────────────────────────────────
+const TIER_COLORS: Record<string, string> = { A: "#059669", B: "#4338CA", C: "#B45309", D: "#94A3B8" };
+
+function WebinarCard({ w, onEdit, onSubs, onQuestions, onVerify, verifyPending, onArchive, archivePending, onRefresh, refreshPending, onExport, exportPending, onSendLink, sendLinkPending, onDelete }: {
+  w: Webinar;
+  onEdit: () => void; onSubs: () => void; onQuestions: () => void;
+  onVerify: () => void; verifyPending: boolean;
+  onArchive: () => void; archivePending: boolean;
+  onRefresh: () => void; refreshPending: boolean;
+  onExport: () => void; exportPending: boolean;
+  onSendLink: () => void; sendLinkPending: boolean;
+  onDelete: () => void;
+}) {
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const meta = STATUS_META[w.status] ?? STATUS_META.draft;
+  const publicUrl = `/webinar?id=${w._id}`;
+
+  const statusDot: Record<string, string> = {
+    active: "bg-emerald-400",
+    draft: "bg-amber-400",
+    archived: "bg-slate-300",
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden">
+      {/* Top accent line — color by status */}
+      <div className={`h-[3px] ${w.status === "active" ? "bg-gradient-to-r from-teal-500 to-emerald-400" : w.status === "draft" ? "bg-gradient-to-r from-amber-400 to-yellow-300" : "bg-slate-200"}`} />
+
+      <div className="p-5">
+        {/* ── Row 1: title + status + actions ── */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className={`w-2 h-2 rounded-full shrink-0 ${statusDot[w.status] ?? "bg-slate-300"}`} />
+              <h3 className="text-[15px] font-bold text-slate-900 truncate">{w.title}</h3>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-500 uppercase tracking-wide">{w.lang}</span>
+            </div>
+            {w.description && (
+              <p className="text-[12px] text-slate-400 mt-0.5 truncate max-w-[520px] pl-4">{w.description}</p>
+            )}
+          </div>
+
+          {/* Primary actions */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {w.status === "draft" && (
+              <button onClick={onVerify} disabled={verifyPending}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-[12px] font-bold transition-colors disabled:opacity-40">
+                <VerifyIcon sx={{ fontSize: 13 }} /> Publish
+              </button>
+            )}
+            {w.status === "active" && (
+              <button onClick={onSendLink} disabled={sendLinkPending}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-[12px] font-bold transition-colors disabled:opacity-40">
+                {sendLinkPending ? <CircularProgress size={11} sx={{ color: "#fff" }} /> : <SendIcon sx={{ fontSize: 13 }} />}
+                Send link
+              </button>
+            )}
+            <button onClick={onEdit}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 text-[12px] font-semibold hover:bg-slate-50 transition-colors">
+              <EditIcon sx={{ fontSize: 13 }} /> Edit
+            </button>
+            <button onClick={e => setMenuAnchor(e.currentTarget)}
+              className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50 transition-colors">
+              <MoreIcon sx={{ fontSize: 16 }} />
+            </button>
+            <Menu anchorEl={menuAnchor} open={!!menuAnchor} onClose={() => setMenuAnchor(null)}
+              PaperProps={{ sx: { borderRadius: "12px", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", minWidth: 190 } }}>
+              <MenuItem onClick={() => { onQuestions(); setMenuAnchor(null); }} sx={{ fontSize: 13, gap: 1 }}>
+                <ListItemIcon sx={{ minWidth: 28 }}><QIcon sx={{ fontSize: 16, color: "#64748B" }} /></ListItemIcon>
+                <ListItemText primaryTypographyProps={{ fontSize: 13 }}>View questions</ListItemText>
+              </MenuItem>
+              <MenuItem component="a" href={publicUrl} target="_blank" rel="noopener noreferrer" onClick={() => setMenuAnchor(null)} sx={{ fontSize: 13 }}>
+                <ListItemIcon sx={{ minWidth: 28 }}><OpenIcon sx={{ fontSize: 16, color: "#64748B" }} /></ListItemIcon>
+                <ListItemText primaryTypographyProps={{ fontSize: 13 }}>Preview page</ListItemText>
+              </MenuItem>
+              <MenuItem onClick={() => { onExport(); setMenuAnchor(null); }} disabled={exportPending} sx={{ fontSize: 13 }}>
+                <ListItemIcon sx={{ minWidth: 28 }}>{exportPending ? <CircularProgress size={14} /> : <DownloadIcon sx={{ fontSize: 16, color: "#059669" }} />}</ListItemIcon>
+                <ListItemText primaryTypographyProps={{ fontSize: 13 }}>Export Excel</ListItemText>
+              </MenuItem>
+              <MenuItem onClick={() => { onRefresh(); setMenuAnchor(null); }} disabled={refreshPending} sx={{ fontSize: 13 }}>
+                <ListItemIcon sx={{ minWidth: 28 }}><RefreshIcon sx={{ fontSize: 16, color: "#64748B" }} /></ListItemIcon>
+                <ListItemText primaryTypographyProps={{ fontSize: 13 }}>Refresh stats</ListItemText>
+              </MenuItem>
+              {w.status === "active" && (
+                <MenuItem onClick={() => { onArchive(); setMenuAnchor(null); }} disabled={archivePending} sx={{ fontSize: 13 }}>
+                  <ListItemIcon sx={{ minWidth: 28 }}><ArchiveIcon sx={{ fontSize: 16, color: "#B45309" }} /></ListItemIcon>
+                  <ListItemText primaryTypographyProps={{ fontSize: 13 }}>Archive</ListItemText>
+                </MenuItem>
+              )}
+              <Divider />
+              <MenuItem onClick={() => { onDelete(); setMenuAnchor(null); }} sx={{ fontSize: 13, color: "#EF4444" }}>
+                <ListItemIcon sx={{ minWidth: 28 }}><DeleteIcon sx={{ fontSize: 16, color: "#EF4444" }} /></ListItemIcon>
+                <ListItemText primaryTypographyProps={{ fontSize: 13, color: "#EF4444" }}>Delete</ListItemText>
+              </MenuItem>
+            </Menu>
+          </div>
+        </div>
+
+        {/* ── Row 2: stat pills ── */}
+        <div className="flex items-center gap-2 mt-4 flex-wrap">
+          {w.date && (
+            <span className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-100 text-[11px] text-slate-500 font-medium">
+              📅 {new Date(w.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+              {" · "}{new Date(w.date).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+            </span>
+          )}
+          <button onClick={onSubs}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 border border-indigo-100 text-[11px] text-indigo-600 font-bold hover:bg-indigo-100 transition-colors">
+            <PeopleIcon sx={{ fontSize: 11 }} /> {w.stats.total_registrations} inscrits
+          </button>
+          <span className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 border border-teal-100 text-[11px] text-teal-600 font-bold">
+            ✓ {w.stats.total_completions} completed
+          </span>
+          {w.stats.avg_maturite_ia != null && (
+            <span className="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-100 text-[11px] text-slate-500 font-medium">
+              avg <strong className="text-teal-600">{w.stats.avg_maturite_ia}</strong>/100
+            </span>
+          )}
+          <span className="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-100 text-[11px] text-slate-400 font-medium">
+            {w.questions.length} questions
+          </span>
+          {/* Tier breakdown */}
+          {(["A","B","C","D"] as const).map(tier => {
+            const count = (w.stats.tier_breakdown as Record<string,number>)?.[tier] ?? 0;
+            if (!count) return null;
+            return (
+              <span key={tier} className="px-2 py-1 rounded-lg text-[11px] font-bold border"
+                style={{ borderColor: `${TIER_COLORS[tier]}30`, background: `${TIER_COLORS[tier]}10`, color: TIER_COLORS[tier] }}>
+                {tier} · {count}
+              </span>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -575,156 +757,19 @@ const WebinarManagement: React.FC = () => {
           </div>
         </AdminChartCard>
       ) : (
-        <div className="grid gap-4">
-          {webinars.map(w => {
-            const meta = STATUS_META[w.status] ?? STATUS_META.draft;
-            const publicUrl = `/webinar?id=${w._id}`;
-            return (
-              <div key={w._id} className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.05)] p-5">
-                <div className="flex items-start justify-between gap-4 flex-wrap">
-                  {/* Left info */}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <h3 className="text-[15px] font-bold text-slate-900 truncate">{w.title}</h3>
-                      <Chip label={meta.label} color={meta.color} size="small" sx={{ height: 20, fontSize: 11, fontWeight: 700 }} />
-                      <Chip label={w.lang.toUpperCase()} size="small" sx={{ height: 20, fontSize: 11, bgcolor: "#F1F5F9", color: "#64748B" }} />
-                    </div>
-                    {w.description && <p className="text-[13px] text-slate-400 truncate max-w-[480px]">{w.description}</p>}
-                    <div className="flex items-center gap-4 mt-2 text-[12px] text-slate-400">
-                      {w.date && <span>📅 {new Date(w.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>}
-                      <span>{w.questions.length} questions</span>
-                      <span>{w.stats.total_registrations} registered</span>
-                      <span>{w.stats.total_completions} completed</span>
-                      {w.stats.avg_maturite_ia != null && (
-                        <span>avg maturity <strong className="text-teal-600">{w.stats.avg_maturite_ia}</strong>/100</span>
-                      )}
-                    </div>
-
-                    {/* Tier breakdown */}
-                    {Object.keys(w.stats.tier_breakdown ?? {}).length > 0 && (
-                      <div className="flex items-center gap-1.5 mt-2">
-                        {(["A","B","C","D"] as const).map(tier => {
-                          const count = (w.stats.tier_breakdown as Record<string,number>)[tier] ?? 0;
-                          if (!count) return null;
-                          const colors: Record<string,string> = { A:"#059669", B:"#4338CA", C:"#B45309", D:"#94A3B8" };
-                          return (
-                            <span key={tier} className="px-2 py-0.5 rounded-md text-[11px] font-bold border"
-                              style={{ borderColor: `${colors[tier]}30`, background: `${colors[tier]}12`, color: colors[tier] }}>
-                              {tier}·{count}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-1.5 flex-wrap shrink-0">
-                    {/* View public page */}
-                    <a
-                      href={publicUrl} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-500 text-[12px] font-semibold hover:bg-slate-50 transition-colors"
-                    >
-                      <OpenIcon sx={{ fontSize: 13 }} /> Preview
-                    </a>
-
-                    {/* Registrants */}
-                    <button
-                      onClick={() => setSubsTarget(w)}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-indigo-200 text-indigo-600 text-[12px] font-semibold hover:bg-indigo-50 transition-colors"
-                    >
-                      <PeopleIcon sx={{ fontSize: 13 }} />
-                      {w.stats.total_registrations}
-                    </button>
-
-                    {/* Questions */}
-                    <button
-                      onClick={() => setQTargetId(w._id)}
-                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-500 text-[12px] font-semibold hover:bg-slate-50 transition-colors"
-                    >
-                      <QIcon sx={{ fontSize: 13 }} /> Questions
-                    </button>
-
-                    {/* Edit */}
-                    <button
-                      onClick={() => {
-                        setEditTarget(w);
-                        setFormOpen(true);
-                      }}
-                      className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-500 text-[12px] font-semibold hover:bg-slate-50 transition-colors"
-                    >
-                      Edit
-                    </button>
-
-                    {/* Refresh stats */}
-                    <button
-                      onClick={() => handleRefreshStats(w)}
-                      disabled={statsMut.isPending}
-                      className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-500 text-[12px] font-semibold hover:bg-slate-50 transition-colors disabled:opacity-40"
-                      title="Refresh stats"
-                    >
-                      <RefreshIcon sx={{ fontSize: 13 }} />
-                    </button>
-
-                    {/* Verify (draft only) */}
-                    {w.status === "draft" && (
-                      <button
-                        onClick={() => handleVerify(w)}
-                        disabled={verifyMut.isPending}
-                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-teal-50 border border-teal-200 text-teal-700 text-[12px] font-bold hover:bg-teal-100 transition-colors disabled:opacity-40"
-                      >
-                        <VerifyIcon sx={{ fontSize: 13 }} /> Verify & Publish
-                      </button>
-                    )}
-
-                    {/* Archive (active only) */}
-                    {w.status === "active" && (
-                      <button
-                        onClick={() => handleArchive(w)}
-                        disabled={archiveMut.isPending}
-                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-amber-200 text-amber-600 text-[12px] font-semibold hover:bg-amber-50 transition-colors disabled:opacity-40"
-                      >
-                        <ArchiveIcon sx={{ fontSize: 13 }} /> Archive
-                      </button>
-                    )}
-
-                    {/* Export Excel */}
-                    <button
-                      onClick={() => handleExport(w)}
-                      disabled={exportingId === w._id}
-                      title="Export submissions to Excel"
-                      className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-500 text-[12px] font-semibold hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-600 transition-colors disabled:opacity-40"
-                    >
-                      {exportingId === w._id
-                        ? <CircularProgress size={12} sx={{ color: "#0D9488" }} />
-                        : <DownloadIcon sx={{ fontSize: 13 }} />}
-                    </button>
-
-                    {/* Send webinar link reminder */}
-                    <button
-                      onClick={() => setReminderTarget(w)}
-                      disabled={sendingReminderId === w._id}
-                      title="Send webinar link to all completed participants"
-                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-teal-200 text-teal-600 text-[12px] font-semibold hover:bg-teal-50 transition-colors disabled:opacity-40"
-                    >
-                      {sendingReminderId === w._id
-                        ? <CircularProgress size={12} sx={{ color: "#0D9488" }} />
-                        : <SendIcon sx={{ fontSize: 13 }} />}
-                      {sendingReminderId !== w._id && "Send link"}
-                    </button>
-
-                    {/* Delete */}
-                    <button
-                      onClick={() => setDeleteTarget(w._id)}
-                      className="px-2.5 py-1.5 rounded-lg border border-red-200 text-red-500 text-[12px] font-semibold hover:bg-red-50 transition-colors"
-                    >
-                      <DeleteIcon sx={{ fontSize: 13 }} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+        <div className="grid gap-3">
+          {webinars.map(w => <WebinarCard
+            key={w._id} w={w}
+            onEdit={() => { setEditTarget(w); setFormOpen(true); }}
+            onSubs={() => setSubsTarget(w)}
+            onQuestions={() => setQTargetId(w._id)}
+            onVerify={() => handleVerify(w)} verifyPending={verifyMut.isPending}
+            onArchive={() => handleArchive(w)} archivePending={archiveMut.isPending}
+            onRefresh={() => handleRefreshStats(w)} refreshPending={statsMut.isPending}
+            onExport={() => handleExport(w)} exportPending={exportingId === w._id}
+            onSendLink={() => setReminderTarget(w)} sendLinkPending={sendingReminderId === w._id}
+            onDelete={() => setDeleteTarget(w._id)}
+          />)}
         </div>
       )}
 
