@@ -55,7 +55,7 @@ const SidebarContent: React.FC<AdminSidebarProps> = ({
     {/* Logo bar */}
     <div className="h-16 flex items-center justify-between px-4 bg-[#F7FBF9] border-b border-gray-200 shrink-0">
       <Link href="/">
-        <img src="/images/home/logo.svg" alt="TalentAI" className="h-9 cursor-pointer" />
+        <img src="/logo.svg" alt="TalentAI" className="h-9 cursor-pointer" />
       </Link>
       <button
         onClick={onDrawerClose}

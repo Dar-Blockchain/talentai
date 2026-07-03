@@ -28,7 +28,7 @@ const HeaderLogo = () => {
     >
       <Box
         component="img"
-        src="/images/home/logo.svg"
+        src="/logo.svg"
         alt="TalentAI"
         sx={{ height: 36, display: "block", userSelect: "none" }}
       />

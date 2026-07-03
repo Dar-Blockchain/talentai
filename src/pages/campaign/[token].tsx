@@ -129,7 +129,7 @@ const CampaignJoinPage: React.FC = () => {
           boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
           display: 'inline-flex', alignItems: 'center',
         }}>
-          <Box component="img" src="/logo-purple.svg" alt="TalentAI" sx={{ height: 24, display: 'block' }} />
+          <Box component="img" src="/logo.svg" alt="TalentAI" sx={{ height: 24, display: 'block' }} />
         </Box>
         <CircularProgress size={20} thickness={4} sx={{ color: P.indigo }} />
         <Typography sx={{ fontSize: '0.8rem', color: P.slate400, mt: 1.5, fontWeight: 500 }}>Loading campaign…</Typography>
@@ -147,7 +147,7 @@ const CampaignJoinPage: React.FC = () => {
           boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
           display: 'inline-flex',
         }}>
-          <Box component="img" src="/logo-purple.svg" alt="TalentAI" sx={{ height: 22, display: 'block' }} />
+          <Box component="img" src="/logo.svg" alt="TalentAI" sx={{ height: 22, display: 'block' }} />
         </Box>
         <Box sx={{
           width: '100%', textAlign: 'center',
@@ -198,7 +198,7 @@ const CampaignJoinPage: React.FC = () => {
             boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
             display: 'inline-flex', alignItems: 'center',
           }}>
-            <Box component="img" src="/logo-purple.svg" alt="TalentAI" sx={{ height: 26, display: 'block' }} />
+            <Box component="img" src="/logo.svg" alt="TalentAI" sx={{ height: 26, display: 'block' }} />
           </Box>
         </Box>
 
@@ -368,7 +368,7 @@ const CampaignJoinPage: React.FC = () => {
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.25,
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Box component="img" src="/logo-purple.svg" alt="TalentAI" sx={{ height: 18, opacity: 0.55 }} />
+            <Box component="img" src="/logo.svg" alt="TalentAI" sx={{ height: 18, opacity: 0.55 }} />
           </Box>
           <Typography sx={{ fontSize: '0.7rem', color: P.slate400, fontWeight: 500 }}>
             © {new Date().getFullYear()} TalentAI · All rights reserved

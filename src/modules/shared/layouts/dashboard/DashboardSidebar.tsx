@@ -256,7 +256,7 @@ useEffect(() => {
           {!isCollapsed && (
             <Box
               component="img"
-              src="/images/home/logo.svg"
+              src="/logo.svg"
               alt="TalentAI"
               onClick={handleGoHome}
               sx={{ height: 32, cursor: "pointer" }}

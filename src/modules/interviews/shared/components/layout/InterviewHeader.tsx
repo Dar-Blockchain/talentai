@@ -19,7 +19,7 @@ const InterviewHeader: React.FC = () => {
       {/* Logo */}
       <Link href="/" className="inline-flex items-center">
         <Image
-          src="/images/home/logo.svg"
+          src="/logo.svg"
           alt="TalentAI"
           width={130}
           height={34}

@@ -40,7 +40,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile, mobileOpen }) => {
         {isCandidate && (
           <Link href="/" className="hidden sm:inline-flex items-center">
             <Image
-              src="/images/home/logo.svg"
+              src="/logo.svg"
               alt="TalentAI"
               width={130}
               height={36}
