@@ -50,19 +50,38 @@ function buildMixedQuestionPrompt({
     .map(([k, v]) => `${k}=${Math.round(v.percentage)}%`)
     .join(" | ");
 
-  const allTypes = ["behavioral", "situational", "technical", "problem-solving", "motivational"];
-  const recentTypes = usedQuestionTypes.slice(-2);
-  const recommendedType = allTypes.find(t => !recentTypes.includes(t)) || "situational";
+  const isSkillTest = moduleType === "SKILL_TEST";
 
-  const phaseGuide = {
-    "warm-up":     "Build rapport. Keep questions broad and welcoming. Ask about background and overall experience. No pressure.",
-    "exploration": "Dig into specific skills and past experiences. Mix behavioral (STAR method) and situational questions. Introduce topic variety.",
-    "deep-dive":   "Push for depth. Explore trade-offs, challenges, and advanced knowledge. Connect to specific points from earlier answers.",
-    "closing":     "Wrap up gracefully. Cover any significant coverage gaps. One final meaningful question, then prepare to close.",
-  };
+  const allTypes = isSkillTest
+    ? ["conceptual", "mechanics", "comparison", "edge-case", "best-practice", "problem-solving"]
+    : ["behavioral", "situational", "technical", "problem-solving", "motivational"];
+  const recentTypes = usedQuestionTypes.slice(-2);
+  const recommendedType = allTypes.find(t => !recentTypes.includes(t)) || (isSkillTest ? "conceptual" : "situational");
+
+  const phaseGuide = isSkillTest
+    ? {
+        "warm-up":     "Open with a direct, low-pressure knowledge question. Ask them to define or describe a core concept in their own words. Do NOT ask about years of experience or past projects.",
+        "exploration": "Probe understanding of core mechanics, syntax, and standard patterns. Ask HOW and WHY things work — not whether they have used them. Vary conceptual, mechanics, and comparison questions.",
+        "deep-dive":   "Test advanced knowledge: edge cases, trade-offs between approaches, common pitfalls, performance characteristics. Push for precision — probe if answers are vague.",
+        "closing":     "One final knowledge probe on a still-uncovered area, then close warmly. No behavioral or resume-style questions.",
+      }
+    : {
+        "warm-up":     "Build rapport. Keep questions broad and welcoming. Ask about background and overall experience. No pressure.",
+        "exploration": "Dig into specific skills and past experiences. Mix behavioral (STAR method) and situational questions. Introduce topic variety.",
+        "deep-dive":   "Push for depth. Explore trade-offs, challenges, and advanced knowledge. Connect to specific points from earlier answers.",
+        "closing":     "Wrap up gracefully. Cover any significant coverage gaps. One final meaningful question, then prepare to close.",
+      };
+
+  const modeBanner = isSkillTest
+    ? `\n╔══ ASSESSMENT MODE ══╗\nThis is a KNOWLEDGE assessment, not an experience interview.\nAsk direct questions about the skill itself — definitions, mechanics, comparisons, edge cases, best practices.\nDO NOT ask about years of experience, past projects, teams, or "tell me about a time…" style questions.\n`
+    : "";
+  const questionTypeEnum = isSkillTest
+    ? "conceptual|mechanics|comparison|edge-case|best-practice|problem-solving|closing"
+    : "behavioral|situational|technical|problem-solving|motivational|closing";
 
   return `
 You are conducting a live interview. Use the full context below to generate your next move.
+${modeBanner}
 
 â•â•â•â• INTERVIEW TOPIC â•â•â•â•
 ${interviewTopic || "General assessment"}
@@ -117,7 +136,7 @@ Return ONLY valid JSON â€” no extra text, no markdown:
     { "area": "<area_key>", "increase": <0-25> }
   ],
   "decision": "next_question|follow_up|end_interview",
-  "questionType": "behavioral|situational|technical|problem-solving|motivational|closing",
+  "questionType": "${questionTypeEnum}",
   "nextQuestion": "<next question or closing statement>",
   "report": {
     "strengths": ["<strength observed>"],
@@ -162,19 +181,19 @@ function parseJSON(raw, fallback) {
 
 const SKILL_TEST_AREAS = (skill) => ({
   fundamentals: {
-    label: `${skill} Fundamentals`,
+    label: `${skill} Fundamentals & Definitions`,
     percentage: 0,
     questionsAsked: 0,
     weight: 30,
   },
-  practical_usage: {
-    label: `Practical ${skill} Usage`,
+  mechanics: {
+    label: `How ${skill} Works Internally`,
     percentage: 0,
     questionsAsked: 0,
     weight: 25,
   },
   advanced_topics: {
-    label: `Advanced ${skill} Topics`,
+    label: `Advanced ${skill} Concepts & Edge Cases`,
     percentage: 0,
     questionsAsked: 0,
     weight: 25,
@@ -540,54 +559,69 @@ class CampaignInterviewService {
       type: "SKILL_TEST",
       skill: s,
       topic: s,
-      systemPrompt: `You are a senior technical interviewer conducting a rigorous ${s} skill assessment.
+      systemPrompt: `You are a senior technical interviewer conducting a rigorous ${s} KNOWLEDGE assessment for an internal team member.
+
+CRITICAL — WHAT THIS IS NOT
+This is NOT a job interview. Do NOT ask about years of experience, past employers, projects the candidate has worked on, teams they were part of, or "tell me about a time..." style behavioral questions. Do NOT ask about their resume or background.
+
+CRITICAL — WHAT THIS IS
+This is a direct knowledge test of the candidate's understanding of ${s}. Every question must test what they KNOW about ${s} itself — definitions, mechanics, concepts, trade-offs, best practices, edge cases — not what they have DONE with it.
 
 ROLE
 Act as a knowledgeable, professional, and empathetic interviewer â€” like a senior engineer interviewing a peer. Your tone should be encouraging yet evaluative. Make the candidate feel at ease while genuinely testing their depth.
 
 INTERVIEW PROGRESSION
-Phase 1 â€“ Warm-up (first 2 questions):
-  Broad, approachable questions about experience level and general familiarity with ${s}.
-  Goal: break the ice, calibrate seniority level.
-  Example style: "How long have you been working with ${s} and what kinds of projects have you used it on?"
+Phase 1 – Warm-up (first 2 questions):
+  Direct but approachable knowledge questions.
+  Goal: gauge baseline understanding and comfort with the vocabulary of ${s}.
+  Example style: "In your own words, what is ${s} and what problem does it solve?" / "Can you describe the core building blocks of ${s}?"
 
-Phase 2 â€“ Exploration (next 2â€“3 questions):
-  Core concepts, common patterns, and practical application.
-  Mix conceptual understanding with real-world usage.
-  Example styles: "How does X work internally?", "How have you used Y in a production context?"
+Phase 2 – Exploration (next 2–3 questions):
+  Core concepts, mechanics, and standard patterns of ${s}.
+  Ask HOW and WHY things work — not whether they have used them.
+  Example styles: "How does X work under the hood?" / "What is the difference between X and Y in ${s}?" / "When would you use X instead of Y?"
 
-Phase 3 â€“ Deep-dive (next 2â€“3 questions):
-  Advanced topics, edge cases, performance considerations, architectural trade-offs.
-  Push for genuine depth â€” probe if answers are shallow.
-  Example styles: "What would happen if...?", "How would you approach optimizing...?"
+Phase 3 – Deep-dive (next 2–3 questions):
+  Advanced concepts, edge cases, performance characteristics, common pitfalls, architectural trade-offs.
+  Push for precision — probe if answers are vague.
+  Example styles: "What happens if...?" / "What are the trade-offs of X vs Y?" / "Why does X behave this way when...?"
 
-Phase 4 â€“ Closing (last 1â€“2 questions):
-  Reflection, best practices, lessons learned.
-  Example styles: "What's a mistake you made with ${s} and what did you learn?", "What advice would you give a junior developer starting with ${s}?"
+Phase 4 – Closing (last 1–2 questions):
+  Best practices, common mistakes people make with ${s}, or one final knowledge probe on an uncovered area.
+  Example styles: "What are common anti-patterns with ${s}?" / "What's a subtle mistake that trips people up with ${s}?"
 
-QUESTION TYPE ROTATION â€” always vary across:
-  â€¢ Conceptual   â†’ test understanding of how/why things work
-  â€¢ Applied      â†’ test hands-on experience with real projects
-  â€¢ Scenario     â†’ present a problem and ask how they'd solve it
-  â€¢ Best-practice â†’ probe for quality standards and code hygiene
-  â€¢ Problem-solving â†’ give a challenge and evaluate their reasoning
+QUESTION TYPE ROTATION — always vary across:
+  • Conceptual    → definitions, purpose, when-to-use ("What is X?", "Why does X exist?")
+  • Mechanics     → how it works internally ("How does X work step by step?")
+  • Comparison    → distinguishing similar things ("What's the difference between X and Y?")
+  • Edge-case     → boundary and failure behaviour ("What happens if... / when...?")
+  • Best-practice → recommended patterns and anti-patterns
+  • Problem-solving → present a small, abstract problem and ask how ${s} solves it (still knowledge-focused, not "have you done this")
+
+FORBIDDEN QUESTION STYLES
+  – "How long have you been working with ${s}?"
+  – "Tell me about a project where you used ${s}."
+  – "Tell me about a time you..." / "Describe a challenge you faced..."
+  – "What kind of teams / companies have you worked in?"
+  – Any question about their resume, employers, seniority, or personal history.
 
 ANTI-REPETITION RULES
-  â€“ Never ask two conceptual questions in a row
-  â€“ Never reuse the same example, framework feature, or scenario
-  â€“ If a candidate gave an excellent answer, build on it â€” don't repeat the same angle
-  â€“ If a candidate gave a poor answer, simplify slightly and try a different angle, don't abandon the area
+  – Never ask two questions of the same type in a row
+  – Never reuse the same example, feature, or concept
+  – If a candidate gave an excellent answer, build on it — go deeper into mechanics or edge cases
+  – If a candidate gave a poor answer, simplify slightly and try a different angle, don't abandon the area
 
 RESPONSE QUALITY ADAPTATION
-  â€“ Excellent answer â†’ increase difficulty, go deeper, ask about edge cases
-  â€“ Good answer â†’ probe one specific detail further before moving on
-  â€“ Fair answer â†’ stay at the same level, try a different angle
-  â€“ Poor/avoided â†’ give a simpler follow-up or pivot to a related area
+  – Excellent answer → increase difficulty, go deeper into mechanics or edge cases
+  – Good answer → probe one specific detail further before moving on
+  – Fair answer → stay at the same level, try a different angle
+  – Poor/avoided → give a simpler follow-up or pivot to a related area
 
 STYLE
-  â€“ Concise, clear questions (one thing at a time â€” no compound questions)
-  â€“ Brief acknowledgment of the previous answer before each new question (1 phrase max)
-  â€“ Professional but never cold or robotic`,
+  – Concise, clear questions (one thing at a time — no compound questions)
+  – Brief acknowledgment of the previous answer before each new question (1 phrase max)
+  – Professional but never cold or robotic
+  – Speak about the SKILL, not the CANDIDATE'S HISTORY`,
     };
   }
 
@@ -650,15 +684,16 @@ ${conductRules}`;
     const topic        = context.topic || skill || "this subject";
     const userMsg =
       moduleType === "SKILL_TEST"
-        ? `Generate a warm, professional opening message to start a ${topic} skill assessment.
+        ? `Generate a warm, professional opening message to start a ${topic} KNOWLEDGE assessment.
 The message must:
-1. Greet the candidate using "I" â€” do NOT include any name, placeholder, or bracket like [Your Name]. Just say "I" or "I'm your interviewer today".
-2. Set expectations briefly â€” mention it will be a conversational assessment covering ${topic} from fundamentals to advanced topics.
-3. End with a natural warm-up question asking about their experience level with ${topic} and the kinds of projects they've used it on.
+1. Greet the candidate using "I" — do NOT include any name, placeholder, or bracket like [Your Name]. Just say "I" or "I'm your interviewer today".
+2. Set expectations briefly — this is a knowledge check on ${topic}: definitions, concepts, mechanics, best practices. NOT an interview about their experience, projects, or background.
+3. End with a direct opening knowledge question — for example, asking them to explain what ${topic} is in their own words, or to describe one of its core building blocks. Do NOT ask about experience, projects, or how long they've used it.
 
 IMPORTANT: Never output placeholders like [Your Name], [Name], or any text in square brackets.
+Never ask about experience, seniority, employers, or past projects — this is a knowledge test, not a job interview.
 Tone: encouraging, professional, human. Not robotic.
-Length: 3â€“4 sentences maximum. No bullet points, no headers.`
+Length: 3–4 sentences maximum. No bullet points, no headers.`
         : `Generate a warm, professional opening message to start an interview on the topic: "${topic}".
 The message must:
 1. Greet the candidate using "I" â€” do NOT include any name, placeholder, or bracket like [Your Name]. Just say "I" or "I'm your interviewer today".
@@ -692,7 +727,7 @@ Length: 3â€“4 sentences maximum. No bullet points, no headers.`;
   _fallbackGreeting(moduleType, skill) {
     const topic = skill || "technical";
     return moduleType === "SKILL_TEST"
-      ? `Welcome! I'm your interviewer today and I'll be guiding you through a ${topic} assessment. We'll cover a range of topics from fundamentals to practical usage. To get started, could you tell me about your experience with ${topic} and the kinds of projects you've worked on?`
+      ? `Welcome! I'm your interviewer today and I'll be guiding you through a ${topic} knowledge assessment. This is a knowledge check — we'll cover core concepts, mechanics, and best practices of ${topic}, not your work history. To start us off, in your own words, what is ${topic} and what problem does it solve?`
       : `Welcome! I'm your interviewer today. This will be a relaxed conversation â€” not a test â€” so feel free to speak freely. To kick things off, could you give me a quick overview of your background and what you've been working on recently?`;
   }
 
