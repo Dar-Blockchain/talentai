@@ -25,12 +25,12 @@ const CompanySettingsPage: React.FC = () => {
   const { t } = useTranslation("dashboard");
   useCompanyAccess("canViewCompanyProfile");
   const user     = useSelector((s: RootState) => s.user.connectedUser.user);
-  const { data: empPerms } = usePermissionsQuery(user?._id);
   const {
     profile, loading, uploadingImage, isEmployee, isEditing, control,
     handleInputChange, handleImageUpload, handleSaveProfile, handleSaveLanguage, handleCancel,
     setIsEditing,
   } = useCompanyProfileManagement();
+  const { data: empPerms } = usePermissionsQuery(user?._id, isEmployee);
 
   const canEdit = !isEmployee || !!empPerms?.canEditCompanyProfile;
   const [tab, setTab] = useState("0");
