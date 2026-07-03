@@ -104,7 +104,15 @@ const CampaignJoinPage: React.FC = () => {
       } else {
         router.push(`/campaign/questionnaire/${r.campaignId}`);
       }
-    } catch (e: any) { setJoinErr(e); setJoining(false); }
+    } catch (e: any) {
+      const msg =
+        e?.response?.data?.message ??
+        e?.response?.data?.error ??
+        e?.message ??
+        'Failed to join campaign';
+      setJoinErr(String(msg));
+      setJoining(false);
+    }
   };
 
   const handleFormSubmit = () => {
