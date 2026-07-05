@@ -29,8 +29,8 @@ interface Props {
 
 const DEFAULT_CONFIGS: Record<ModuleType, AnyConfig> = {
   QUESTIONNAIRE: { questions: [], aiScoringEnabled: true, showResultsToParticipants: true },
-  AI_INTERVIEW: { agentPrompt: "" },
-  SKILL_TEST: { skill: "" },
+  AI_INTERVIEW: { agentPrompt: "", showResultsToParticipants: true },
+  SKILL_TEST: { skill: "", showResultsToParticipants: true },
   TRAINING_PATH: { resources: [] },
 };
 

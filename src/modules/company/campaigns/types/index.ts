@@ -69,6 +69,7 @@ export interface CampaignsListParams {
 export interface ParticipantsParams {
   campaignId: string;
   search?:    string;
+  status?:    string;
   page?:      number;
   limit?:     number;
 }
@@ -76,6 +77,9 @@ export interface ParticipantsParams {
 export interface SessionsParams {
   campaignId: string;
   search?:    string;
+  period?:    string;
+  sortBy?:    "date" | "score";
+  order?:     "asc" | "desc";
   page?:      number;
   limit?:     number;
 }

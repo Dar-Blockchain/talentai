@@ -1,11 +1,17 @@
 import React, { memo, useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import {
-  ArrowLeft, Trash2, Pencil, Play, Pause, Square, Calendar, TriangleAlert, Megaphone,
+  ArrowLeft, Trash2, Pencil, Play, Pause, Square, Calendar, TriangleAlert, Megaphone, MoreVertical,
+  Link2, Lock, EyeOff, Eye, Users, CalendarPlus,
 } from "lucide-react";
 import {
   Tooltip, TooltipContent, TooltipTrigger, TooltipProvider,
 } from "@/modules/shared/ui/shadcn/tooltip";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/modules/shared/ui/shadcn/dropdown-menu";
+import { Card } from "@/modules/shared/ui/shadcn/card";
 import { Campaign, CampaignStatus } from "@/modules/company/campaigns/types/campaign";
 import { STATUS_COLORS, STATUS_TRANSITIONS, CAMPAIGN_TYPES } from "@/modules/shared/constants/campaign";
 import { daysLeft } from "@/utils/functions";
@@ -32,13 +38,21 @@ interface Props {
   actionsNode?: React.ReactNode;
 }
 
+const fmtDate = (d: string | undefined, locale: string) =>
+  d
+    ? new Date(d).toLocaleDateString(locale.startsWith("fr") ? "fr-FR" : "en-US", {
+      month: "short", day: "numeric", year: "numeric",
+    })
+    : null;
+
 const CampaignHeader: React.FC<Props> = memo(({
   campaign, onChangeStatus, onDeleteClick, onEditClick,
   backUrl = "/company/campaigns", backLabel, actionsNode,
 }) => {
   const router = useRouter();
-  const { t } = useTranslation("dashboard");
+  const { t, i18n } = useTranslation("dashboard");
   const tp = "pages.campaigns.detail";
+  const cp = "pages.campaigns.card";
   const [pendingStatus, setPendingStatus] = useState<CampaignStatus | null>(null);
 
   const resolvedBackLabel = backLabel ?? t(`${tp}.back_company`);
@@ -62,16 +76,17 @@ const CampaignHeader: React.FC<Props> = memo(({
     campaign.module?.type != null ? t(`pages.campaigns.module.${campaign.module.type}`) : campaign.module?.type,
   [campaign.module?.type, t]);
 
+  const createdDate = useMemo(() => fmtDate(campaign.createdAt, i18n.language), [campaign.createdAt, i18n.language]);
+
   return (
     <TooltipProvider delayDuration={200}>
-      <div
-        className="bg-background border border-border rounded-[22px] overflow-hidden shadow-sm"
-        style={{ background: `linear-gradient(135deg, ${typeColor}07 0%, transparent 50%)` }}
-      >
-        <div className="px-5 sm:px-7 pt-5 pb-6">
+      <Card className="p-0 gap-0 overflow-hidden rounded-2xl">
+        {/* Type accent bar */}
+        <div className="h-[3px] w-full shrink-0" style={{ background: typeColor }} />
 
+        <div className="p-5 sm:p-6">
           {/* Nav row */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-5">
             <button
               type="button"
               onClick={handleBack}
@@ -82,72 +97,70 @@ const CampaignHeader: React.FC<Props> = memo(({
             </button>
 
             {actionsNode ?? (
-              <div className="flex items-center gap-2">
-                {onEditClick && (
-                  campaign.status === "DRAFT" ? (
+              (onEditClick || onChangeStatus || onDeleteClick) && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      onClick={onEditClick}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[10px] cursor-pointer border border-border bg-muted/40 hover:bg-indigo-50 hover:border-indigo-200 transition-colors [&_svg]:hover:text-indigo-500 [&_span]:hover:text-indigo-500"
+                      className="size-8 rounded-[10px] flex items-center justify-center border border-border bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer outline-none"
                     >
-                      <Pencil className="size-3.5 text-slate-500" />
-                      <span className="text-[0.775rem] font-semibold text-slate-600">{t(`${tp}.edit`)}</span>
+                      <MoreVertical className="size-4" />
                     </button>
-                  ) : (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[10px] cursor-not-allowed border border-border bg-muted/40 opacity-45">
-                          <Pencil className="size-3.5 text-muted-foreground" />
-                          <span className="text-[0.775rem] font-semibold text-muted-foreground">{t(`${tp}.edit`)}</span>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>{t(`${tp}.edit_draft_only_tooltip`)}</TooltipContent>
-                    </Tooltip>
-                  )
-                )}
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 p-1 shadow-lg">
+                    {onEditClick && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span tabIndex={0}>
+                            <DropdownMenuItem
+                              disabled={campaign.status !== "DRAFT"}
+                              onClick={onEditClick}
+                              className="gap-2 rounded-md px-2.5 py-2 cursor-pointer text-[13px] text-foreground focus:bg-muted focus:text-foreground"
+                            >
+                              <Pencil className="size-3.5 shrink-0 text-muted-foreground" />
+                              <span className="font-medium">{t(`${tp}.edit`)}</span>
+                            </DropdownMenuItem>
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {campaign.status === "DRAFT" ? t(`${tp}.edit_tooltip`) : t(`${tp}.edit_draft_only_tooltip`)}
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
 
-                {onChangeStatus && transitions.map((s) => {
-                  const blocked = s === "ACTIVE" && !moduleConfigured;
-                  const sColor  = STATUS_COLORS[s];
-                  const Icon    = STATUS_ICONS[s];
-                  const label   = t(`${tp}.transition.${s}`);
-                  const btn = (
-                    <button
-                      type="button"
-                      key={s}
-                      onClick={() => !blocked && setPendingStatus(s)}
-                      disabled={blocked}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] border transition-colors"
-                      style={{
-                        cursor: blocked ? "not-allowed" : "pointer",
-                        borderColor: `${sColor?.fg ?? "#E2E8F0"}30`,
-                        background: sColor?.bg ?? "#F8FAFC",
-                        opacity: blocked ? 0.5 : 1,
-                      }}
-                    >
-                      {Icon && <Icon className="size-3.5" style={{ color: sColor?.fg ?? "#6B7280" }} />}
-                      <span className="text-[0.775rem] font-bold" style={{ color: sColor?.fg ?? "#475569" }}>{label}</span>
-                    </button>
-                  );
-                  return blocked ? (
-                    <Tooltip key={s}>
-                      <TooltipTrigger asChild><span>{btn}</span></TooltipTrigger>
-                      <TooltipContent>{t(`${tp}.activate_blocked_tooltip`)}</TooltipContent>
-                    </Tooltip>
-                  ) : btn;
-                })}
+                    {onChangeStatus && transitions.map((s) => {
+                      const blocked = s === "ACTIVE" && !moduleConfigured;
+                      const Icon    = STATUS_ICONS[s];
+                      return (
+                        <DropdownMenuItem
+                          key={s}
+                          disabled={blocked}
+                          onClick={() => setPendingStatus(s)}
+                          className="gap-2 rounded-md px-2.5 py-2 cursor-pointer text-[13px] text-foreground focus:bg-muted focus:text-foreground"
+                        >
+                          {Icon && <Icon className="size-3.5 shrink-0 text-muted-foreground" />}
+                          <span className="font-medium">{t(`${tp}.transition.${s}`)}</span>
+                        </DropdownMenuItem>
+                      );
+                    })}
 
-                {onDeleteClick && (
-                  <button
-                    type="button"
-                    onClick={onDeleteClick}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[10px] cursor-pointer border border-red-200 bg-red-50/60 hover:bg-red-100 hover:border-red-300 transition-colors"
-                  >
-                    <Trash2 className="size-3.5 text-red-400" />
-                    <span className="text-[0.775rem] font-semibold text-destructive">{t(`${tp}.delete`)}</span>
-                  </button>
-                )}
-              </div>
+                    {onDeleteClick && (
+                      <>
+                        {(onEditClick || (onChangeStatus && transitions.length > 0)) && (
+                          <DropdownMenuSeparator className="my-1" />
+                        )}
+                        <DropdownMenuItem
+                          onClick={onDeleteClick}
+                          className="gap-2 rounded-md px-2.5 py-2 cursor-pointer text-[13px] text-foreground focus:bg-muted focus:text-foreground"
+                        >
+                          <Trash2 className="size-3.5 shrink-0 text-muted-foreground" />
+                          <span className="font-medium">{t(`${tp}.delete`)}</span>
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )
             )}
           </div>
 
@@ -196,6 +209,46 @@ const CampaignHeader: React.FC<Props> = memo(({
                   </span>
                 )}
               </div>
+
+              {/* Details row */}
+              <div className="flex items-center gap-x-4 gap-y-1.5 mt-2.5 flex-wrap">
+                {campaign.accessMethod && (
+                  <span className="inline-flex items-center gap-1.5">
+                    {campaign.accessMethod === "LINK"
+                      ? <Link2 className="size-[11px] text-slate-300" />
+                      : <Lock className="size-[11px] text-slate-300" />}
+                    <span className="text-[11.5px] text-muted-foreground font-medium">
+                      {campaign.accessMethod === "LINK" ? t(`${cp}.access_public_link`) : t(`${cp}.access_accounts_only`)}
+                    </span>
+                  </span>
+                )}
+                {campaign.anonymityMode && (
+                  <span className="inline-flex items-center gap-1.5">
+                    {campaign.anonymityMode === "ANONYMOUS"
+                      ? <EyeOff className="size-[11px] text-slate-300" />
+                      : <Eye className="size-[11px] text-slate-300" />}
+                    <span className="text-[11.5px] text-muted-foreground font-medium">
+                      {campaign.anonymityMode === "ANONYMOUS" ? t(`${cp}.privacy_anonymous`) : t(`${cp}.privacy_nominative`)}
+                    </span>
+                  </span>
+                )}
+                {campaign.participantCount != null && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Users className="size-[11px] text-slate-300" />
+                    <span className="text-[11.5px] text-muted-foreground font-medium">
+                      {t(`${tp}.participants_count`, { count: campaign.participantCount })}
+                    </span>
+                  </span>
+                )}
+                {createdDate && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <CalendarPlus className="size-[11px] text-slate-300" />
+                    <span className="text-[11.5px] text-muted-foreground font-medium">
+                      {t(`${tp}.created_on`, { date: createdDate })}
+                    </span>
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -210,7 +263,7 @@ const CampaignHeader: React.FC<Props> = memo(({
             onConfirm={handleStatusConfirm}
           />
         )}
-      </div>
+      </Card>
     </TooltipProvider>
   );
 });

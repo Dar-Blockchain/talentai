@@ -1,16 +1,18 @@
 import React, { memo, useState, useMemo, useCallback } from "react";
-import { Search, CircleCheck, Code, GitBranch, Bot, Megaphone, Bug, Briefcase } from "lucide-react";
+import { Search, CircleCheck, Code, GitBranch, Bot, Megaphone, Bug, Briefcase, Eye } from "lucide-react";
 import { Label } from "@/modules/shared/ui/shadcn/label";
 import {
   Select, SelectContent, SelectGroup, SelectLabel, SelectItem, SelectTrigger, SelectValue,
 } from "@/modules/shared/ui/shadcn/select";
 import { ALL_SKILLS } from "@/modules/shared/constants/skills";
 import { useTranslation } from "react-i18next";
+import { ToggleRow } from "./QuestionnaireForm";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface SkillTestConfig {
   skill: string;
+  showResultsToParticipants?: boolean;
 }
 
 interface Props {
@@ -36,7 +38,14 @@ const CATEGORY_ORDER = ["development", "web3", "ai", "marketing", "qa", "busines
 const SkillTestForm = memo<Props>(({ config, onChange }) => {
   const { t } = useTranslation("dashboard");
   const cf = "pages.campaigns.detail.configure_form.skill_test";
+  const qcf = "pages.campaigns.detail.configure_form.questionnaire";
   const [skillSearch, setSkillSearch] = useState("");
+
+  const showResultsToParticipants = config.showResultsToParticipants !== false;
+  const toggleShowResults = useCallback(
+    (checked: boolean) => onChange({ ...config, showResultsToParticipants: checked }),
+    [onChange, config],
+  );
 
   const categoryLabel = useCallback((catId: string) => t(`${cf}.category_${catId}`), [t, cf]);
 
@@ -59,7 +68,7 @@ const SkillTestForm = memo<Props>(({ config, onChange }) => {
   const selectedMeta = selectedSkillCat ? CATEGORY_META[selectedSkillCat] : undefined;
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-3">
       <Label className="text-xs font-bold text-foreground/80">
         {t(`${cf}.skill_to_assess`)}<span className="text-destructive ml-0.5">*</span>
       </Label>
@@ -141,6 +150,16 @@ const SkillTestForm = memo<Props>(({ config, onChange }) => {
           )}
         </SelectContent>
       </Select>
+
+      <ToggleRow
+        icon={<Eye className="size-4" />}
+        iconBg="#ECFEFF"
+        iconColor="#0891B2"
+        label={t(`${qcf}.show_results_label`)}
+        hint={t(`${qcf}.show_results_hint`)}
+        checked={showResultsToParticipants}
+        onCheckedChange={toggleShowResults}
+      />
     </div>
   );
 });

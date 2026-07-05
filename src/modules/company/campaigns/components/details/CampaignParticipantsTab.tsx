@@ -32,7 +32,7 @@ import { useTranslation } from "react-i18next";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 9;
 const PICKER_PAGE_SIZE = 8;
 
 const AVATAR_GRADIENTS = [
@@ -56,38 +56,30 @@ const PARTICIPANT_STATUS_META: Record<ParticipantStatus, { color: string; bg: st
   DROPPED:     { color: "#EF4444", bg: "#FEF2F2", border: "#FECACA", icon: Circle },
 };
 
-const GRID_COLS_COMPANY  = "44px 1fr 140px 120px 110px";
-const GRID_COLS_EMPLOYEE = "44px 1fr 140px 120px";
+const SKELETON_CARDS  = Array.from({ length: 6 });
+const SKELETON_ROWS_8 = Array.from({ length: PICKER_PAGE_SIZE });
 
-const SKELETON_ROWS_5  = Array.from({ length: 5 });
-const SKELETON_ROWS_8  = Array.from({ length: PICKER_PAGE_SIZE });
+// ─── Card skeleton ────────────────────────────────────────────────────────────
 
-// ─── Skeleton rows ─────────────────────────────────────────────────────────────
-
-const RowSkeleton = memo<{ showActions?: boolean }>(({ showActions }) => (
-  <div
-    className="grid items-center gap-4 px-5 py-3.5 border-b border-border/60"
-    style={{ gridTemplateColumns: showActions ? GRID_COLS_COMPANY : GRID_COLS_EMPLOYEE }}
-  >
-    <Skeleton className="h-[18px] w-[22px] rounded-md" />
-    <div className="flex items-center gap-3">
-      <Skeleton className="size-10 rounded-full shrink-0" />
-      <div className="flex-1">
-        <Skeleton className="h-3.5 w-[45%]" />
-        <Skeleton className="h-3 w-[62%] mt-1" />
+const CardSkeleton = memo(() => (
+  <div className="bg-background border border-border rounded-2xl p-4 flex flex-col gap-3.5">
+    <div className="flex items-start justify-between gap-2">
+      <div className="flex items-center gap-3 flex-1">
+        <Skeleton className="size-10 rounded-full shrink-0" />
+        <div className="flex-1">
+          <Skeleton className="h-[15px] w-[60%]" />
+          <Skeleton className="h-[13px] w-[75%] mt-1.5" />
+        </div>
       </div>
+      <Skeleton className="size-7 rounded-full shrink-0" />
     </div>
-    <div className="flex justify-center"><Skeleton className="h-6 w-[100px] rounded-full" /></div>
-    <div className="flex justify-center"><Skeleton className="h-6 w-[90px] rounded-full" /></div>
-    {showActions && (
-      <div className="flex justify-center gap-2">
-        <Skeleton className="size-7 rounded-full" />
-        <Skeleton className="size-7 rounded-full" />
-      </div>
-    )}
+    <div className="flex items-center justify-between">
+      <Skeleton className="h-[22px] w-24 rounded-full" />
+      <Skeleton className="h-[22px] w-20 rounded-full" />
+    </div>
   </div>
 ));
-RowSkeleton.displayName = "RowSkeleton";
+CardSkeleton.displayName = "ParticipantCardSkeleton";
 
 const PickerRowSkeleton = memo(() => (
   <div className="flex items-center gap-4 px-5 py-3 border-b border-border/60">
@@ -102,18 +94,15 @@ const PickerRowSkeleton = memo(() => (
 ));
 PickerRowSkeleton.displayName = "PickerRowSkeleton";
 
-// ─── Participant row ──────────────────────────────────────────────────────────
+// ─── Participant card ─────────────────────────────────────────────────────────
 
-interface ParticipantRowProps {
+interface ParticipantCardProps {
   participant: CampaignParticipant;
-  index: number;
-  total: number;
-  campaignId: string;
   onRemove?: (id: string) => void;
   removing?: boolean;
 }
 
-const ParticipantRow = memo<ParticipantRowProps>(({ participant: p, index, total, onRemove, removing }) => {
+const ParticipantCard = memo<ParticipantCardProps>(({ participant: p, onRemove, removing }) => {
   const router = useRouter();
   const { t } = useTranslation("dashboard");
   const pp = "pages.campaigns.detail.participants";
@@ -131,7 +120,6 @@ const ParticipantRow = memo<ParticipantRowProps>(({ participant: p, index, total
   const status    = p.status as ParticipantStatus | undefined;
   const sc        = status ? PARTICIPANT_STATUS_META[status] : null;
   const StatusIcon = sc?.icon ?? null;
-  const isLast    = index === total - 1;
   const gradient  = pickGradient(email || name);
 
   const handleNavigateEmployee = useCallback(() => {
@@ -145,54 +133,69 @@ const ParticipantRow = memo<ParticipantRowProps>(({ participant: p, index, total
   const handleRemove = useCallback(() => onRemove?.(p._id), [onRemove, p._id]);
 
   return (
-    <div
-      className={`grid items-center gap-4 px-5 py-3.5 transition-colors hover:bg-primary/[0.02] ${isLast ? "" : "border-b border-border/60"}`}
-      style={{ gridTemplateColumns: onRemove ? GRID_COLS_COMPANY : GRID_COLS_EMPLOYEE }}
-    >
-      <p className="text-xs font-bold text-slate-300 text-center">{index + 1}</p>
-
-      <div
-        onClick={handleNavigateEmployee}
-        className={`group/row flex items-center gap-3 min-w-0 ${p.employeeId ? "cursor-pointer" : ""}`}
-      >
-        <Avatar className="shrink-0 shadow">
-          <AvatarFallback className="text-white font-extrabold text-[0.85rem]" style={{ background: `linear-gradient(${gradient})` }}>
-            {letter}
-          </AvatarFallback>
-        </Avatar>
-        <div className="min-w-0">
-          <p className={`text-[13px] font-bold text-foreground leading-tight truncate transition-colors ${p.employeeId ? "group-hover/row:text-primary" : ""}`}>
-            {name}
-          </p>
-          <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
+    <div className="bg-background border border-border rounded-2xl p-4 flex flex-col gap-3.5 transition-shadow hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
+      <div className="flex items-start justify-between gap-2">
+        <div
+          onClick={handleNavigateEmployee}
+          className={`group/card flex items-center gap-3 min-w-0 ${p.employeeId ? "cursor-pointer" : ""}`}
+        >
+          <Avatar className="shrink-0 shadow">
+            <AvatarFallback className="text-white font-extrabold text-[0.85rem]" style={{ background: `linear-gradient(${gradient})` }}>
+              {letter}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <p className={`text-[13px] font-bold text-foreground leading-tight truncate transition-colors ${p.employeeId ? "group-hover/card:text-primary" : ""}`}>
+              {name}
+            </p>
             {email && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="flex items-center gap-1 min-w-0">
+                  <span className="flex items-center gap-1 min-w-0 mt-0.5">
                     <Mail className="size-2.5 text-slate-300 shrink-0" />
-                    <span className="text-[11px] text-muted-foreground truncate max-w-[160px]">{email}</span>
+                    <span className="text-[11px] text-muted-foreground truncate max-w-[180px]">{email}</span>
                   </span>
                 </TooltipTrigger>
                 <TooltipContent>{email}</TooltipContent>
               </Tooltip>
             )}
-            {dept && (
-              <>
-                <span className="size-[3px] rounded-full bg-border shrink-0" />
-                <span
-                  onClick={handleNavigateDept}
-                  className={`group/dept flex items-center gap-1 shrink-0 px-1.5 py-0.5 rounded-md bg-slate-100 transition-colors ${p.department?.id ? "cursor-pointer hover:bg-primary/10" : ""}`}
-                >
-                  <Building2 className="size-2.5 text-slate-500" />
-                  <span className="text-[10px] font-semibold text-slate-500 whitespace-nowrap group-hover/dept:text-primary transition-colors">{dept}</span>
-                </span>
-              </>
-            )}
           </div>
         </div>
+
+        {onRemove && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={handleRemove}
+                disabled={removing}
+                className="shrink-0 text-destructive bg-destructive/5 border border-destructive/20 hover:bg-destructive/10"
+              >
+                {removing ? <Spinner className="size-3" /> : <Trash2 className="size-3.5" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t(`${pp}.tooltip_remove`)}</TooltipContent>
+          </Tooltip>
+        )}
       </div>
 
-      <div className="flex justify-center">
+      <span
+        onClick={dept ? handleNavigateDept : undefined}
+        className={`group/dept self-start flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-slate-100 transition-colors ${p.department?.id ? "cursor-pointer hover:bg-primary/10" : ""}`}
+      >
+        <Building2 className="size-2.5 text-slate-400" />
+        <span
+          className={`text-[10px] font-semibold whitespace-nowrap transition-colors ${
+            dept ? "text-slate-500 group-hover/dept:text-primary" : "italic text-slate-400"
+          }`}
+        >
+          {dept ?? t(`${pp}.no_department`)}
+        </span>
+      </span>
+
+      <div className="flex items-center justify-between gap-2">
         {sc ? (
           <span
             className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border"
@@ -206,9 +209,7 @@ const ParticipantRow = memo<ParticipantRowProps>(({ participant: p, index, total
         ) : (
           <span className="text-[11px] text-slate-300">—</span>
         )}
-      </div>
 
-      <div className="flex justify-center">
         <span
           className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border"
           style={{ background: `${roleColor}0F`, borderColor: `${roleColor}28` }}
@@ -217,30 +218,10 @@ const ParticipantRow = memo<ParticipantRowProps>(({ participant: p, index, total
           <span className="text-[11px] font-bold whitespace-nowrap" style={{ color: roleColor }}>{roleLabel}</span>
         </span>
       </div>
-
-      {onRemove && (
-        <div className="flex justify-center items-center gap-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                onClick={handleRemove}
-                disabled={removing}
-                className="text-destructive bg-destructive/5 border border-destructive/20 hover:bg-destructive/10"
-              >
-                {removing ? <Spinner className="size-3" /> : <Trash2 className="size-3.5" />}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{t(`${pp}.tooltip_remove`)}</TooltipContent>
-          </Tooltip>
-        </div>
-      )}
     </div>
   );
 });
-ParticipantRow.displayName = "ParticipantRow";
+ParticipantCard.displayName = "ParticipantCard";
 
 // ─── Employee picker row ──────────────────────────────────────────────────────
 
@@ -569,6 +550,7 @@ const CampaignParticipantsTab = memo<Props>(({ campaignId, mode = "company" }) =
 
   const [search,          setSearch]          = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [statusFilter,    setStatusFilter]    = useState<ParticipantStatus | "">("");
   const [page,            setPage]            = useState(1);
   const [addDialogOpen,   setAddDialogOpen]   = useState(false);
   const [removingId,      setRemovingId]      = useState<string | null>(null);
@@ -577,16 +559,17 @@ const CampaignParticipantsTab = memo<Props>(({ campaignId, mode = "company" }) =
   const participantParams = useMemo(() => ({
     campaignId,
     search: debouncedSearch || undefined,
+    status: statusFilter || undefined,
     page,
     limit: PAGE_SIZE,
-  }), [campaignId, debouncedSearch, page]);
+  }), [campaignId, debouncedSearch, statusFilter, page]);
 
   const { data: participantsRaw, isLoading: loading, error: queryError } = useCampaignParticipantsQuery(participantParams);
   const removeMut = useRemoveParticipantMutation(campaignId);
 
-  const participantsData = (participantsRaw as any)?.data ?? participantsRaw;
-  const participants     = participantsData?.participants ?? participantsData?.data ?? participantsData ?? [];
-  const total            = participantsData?.total ?? 0;
+  const participants     = participantsRaw?.data ?? [];
+  const total            = participantsRaw?.total ?? 0;
+  const statusCounts     = participantsRaw?.statusCounts;
   const error            = queryError ? String(queryError) : null;
 
   const handleSearchChange = useCallback((value: string) => {
@@ -594,6 +577,14 @@ const CampaignParticipantsTab = memo<Props>(({ campaignId, mode = "company" }) =
     clearTimeout(debounceRef.current!);
     debounceRef.current = setTimeout(() => { setDebouncedSearch(value); setPage(1); }, 300);
   }, []);
+
+  const toggleStatusFilter = useCallback((s: ParticipantStatus) => {
+    setStatusFilter((prev) => (prev === s ? "" : s));
+    setPage(1);
+  }, []);
+
+  const clearStatusFilter = useCallback(() => { setStatusFilter(""); setPage(1); }, []);
+  const selectStatusFilter = useCallback((s: ParticipantStatus | "") => { setStatusFilter(s); setPage(1); }, []);
 
   const handleRemoveParticipant = useCallback((participantId: string) => {
     setRemovingId(participantId);
@@ -605,16 +596,7 @@ const CampaignParticipantsTab = memo<Props>(({ campaignId, mode = "company" }) =
   const openAddDialog  = useCallback(() => setAddDialogOpen(true), []);
   const closeAddDialog = useCallback(() => setAddDialogOpen(false), []);
   const clearSearch    = useCallback(() => handleSearchChange(""), [handleSearchChange]);
-
-  const tableHeaderCols = useMemo(() => [
-    t(`${pp}.col_hash`),
-    t(`${pp}.col_participant`),
-    t(`${pp}.col_status`),
-    t(`${pp}.col_role`),
-    ...(isCompany ? [t(`${pp}.col_actions`)] : []),
-  ], [t, pp, isCompany]);
-
-  const tableGridCols = isCompany ? GRID_COLS_COMPANY : GRID_COLS_EMPLOYEE;
+  const hasActiveFilters = !!(debouncedSearch || statusFilter);
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -624,33 +606,59 @@ const CampaignParticipantsTab = memo<Props>(({ campaignId, mode = "company" }) =
         <div className="flex items-center justify-between gap-3 flex-wrap">
 
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted/40 border border-border">
+            <button
+              type="button"
+              onClick={clearStatusFilter}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border cursor-pointer transition-colors ${
+                !statusFilter ? "bg-primary/10 border-primary/30" : "bg-muted/40 border-border hover:bg-muted/60"
+              }`}
+            >
               <Users className="size-[13px] text-muted-foreground" />
               <span className="text-xs font-bold text-foreground">{loading ? "…" : total}</span>
               <span className="text-[11px] text-muted-foreground">{t(`${pp}.toolbar_total`)}</span>
-            </div>
-            {!loading && (participants as CampaignParticipant[]).length > 0 && (
-              <>
-                {(["COMPLETED", "IN_PROGRESS", "INVITED"] as ParticipantStatus[]).map((s) => {
-                  const count = (participants as CampaignParticipant[]).filter((p) => p.status === s).length;
-                  if (!count) return null;
-                  const sc = PARTICIPANT_STATUS_META[s];
-                  return (
-                    <span
-                      key={s}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border"
-                      style={{ background: sc.bg, borderColor: sc.border }}
-                    >
-                      <span className="size-1.5 rounded-full" style={{ background: sc.color }} />
-                      <span className="text-[11px] font-bold" style={{ color: sc.color }}>{count} {t(`${pp}.participant_status.${s}`)}</span>
-                    </span>
-                  );
-                })}
-              </>
-            )}
+            </button>
+            {(["COMPLETED", "IN_PROGRESS", "INVITED", "DROPPED"] as ParticipantStatus[]).map((s) => {
+              const count = statusCounts?.[s] ?? 0;
+              if (!count && statusFilter !== s) return null;
+              const sc = PARTICIPANT_STATUS_META[s];
+              const active = statusFilter === s;
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => toggleStatusFilter(s)}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border cursor-pointer transition-all"
+                  style={{
+                    background: active ? sc.color : sc.bg,
+                    borderColor: active ? sc.color : sc.border,
+                    boxShadow: active ? `0 0 0 2px ${sc.color}30` : undefined,
+                  }}
+                >
+                  <span className="size-1.5 rounded-full" style={{ background: active ? "#fff" : sc.color }} />
+                  <span className="text-[11px] font-bold" style={{ color: active ? "#fff" : sc.color }}>
+                    {count} {t(`${pp}.participant_status.${s}`)}
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
           <div className="flex items-center gap-2">
+            <Select
+              value={statusFilter || "__all__"}
+              onValueChange={(v) => selectStatusFilter(v === "__all__" ? "" : (v as ParticipantStatus))}
+            >
+              <SelectTrigger size="sm" className="min-w-[150px] bg-background">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">{t(`${pp}.all_statuses`)}</SelectItem>
+                {(["INVITED", "IN_PROGRESS", "COMPLETED", "DROPPED"] as ParticipantStatus[]).map((s) => (
+                  <SelectItem key={s} value={s}>{t(`${pp}.participant_status.${s}`)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <div className="flex items-center bg-background border border-border rounded-xl px-3 py-1.5 min-w-[220px] shadow-sm">
               <Search className="size-[15px] text-muted-foreground shrink-0 mr-2" />
               <input
@@ -676,46 +684,37 @@ const CampaignParticipantsTab = memo<Props>(({ campaignId, mode = "company" }) =
           </div>
         </div>
 
-        {/* ── Table card ── */}
-        <div className="bg-background border border-border rounded-2xl overflow-hidden shadow-sm">
-          <div
-            className="grid items-center gap-4 px-5 py-3 bg-gradient-to-br from-muted/60 to-muted/30 border-b border-border"
-            style={{ gridTemplateColumns: tableGridCols }}
-          >
-            {tableHeaderCols.map((col, i) => (
-              <p key={col} className={`text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider ${i === 1 ? "text-left" : "text-center"}`}>
-                {col}
-              </p>
-            ))}
+        {/* ── Participant cards ── */}
+        {error ? (
+          <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">{error}</div>
+        ) : loading && (participants as any[]).length === 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
+            {SKELETON_CARDS.map((_, i) => <CardSkeleton key={i} />)}
           </div>
-
-          {error ? (
-            <div className="m-4 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">{error}</div>
-          ) : loading && (participants as any[]).length === 0 ? (
-            <div>{SKELETON_ROWS_5.map((_, i) => <RowSkeleton key={i} showActions={isCompany} />)}</div>
-          ) : (participants as any[]).length === 0 ? (
-            <div className="text-center py-16">
-              <div className="flex items-center justify-center size-14 rounded-2xl bg-muted mx-auto mb-3">
-                <Users className="size-6 text-muted-foreground" />
-              </div>
-              <p className="text-sm font-bold text-slate-700">
-                {debouncedSearch ? t(`${pp}.empty_search_title`) : t(`${pp}.empty_title`)}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {debouncedSearch ? t(`${pp}.empty_search_hint`) : t(`${pp}.empty_hint`)}
-              </p>
+        ) : (participants as any[]).length === 0 ? (
+          <div className="bg-background border border-border rounded-2xl text-center py-16">
+            <div className="flex items-center justify-center size-14 rounded-2xl bg-muted mx-auto mb-3">
+              <Users className="size-6 text-muted-foreground" />
             </div>
-          ) : (
-            (participants as CampaignParticipant[]).map((p, i) => (
-              <ParticipantRow
-                key={p._id} participant={p} index={i} total={(participants as any[]).length}
-                campaignId={campaignId}
+            <p className="text-sm font-bold text-slate-700">
+              {hasActiveFilters ? t(`${pp}.empty_search_title`) : t(`${pp}.empty_title`)}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {hasActiveFilters ? t(`${pp}.empty_search_hint`) : t(`${pp}.empty_hint`)}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
+            {(participants as CampaignParticipant[]).map((p) => (
+              <ParticipantCard
+                key={p._id}
+                participant={p}
                 onRemove={isCompany ? handleRemoveParticipant : undefined}
                 removing={removingId === p._id}
               />
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
 
         {!loading && total > PAGE_SIZE && (
           <Pagination page={page} totalPages={Math.ceil(total / PAGE_SIZE)} onPageChange={setPage} />

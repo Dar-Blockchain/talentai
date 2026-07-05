@@ -467,6 +467,11 @@ class CampaignInterviewService {
       aiScore,
       aiSummary,
       interviewTranscript,
+      aiReport: {
+        strengths:            Array.isArray(finalReport.strengths) ? finalReport.strengths : [],
+        areasForImprovement:  Array.isArray(finalReport.areasForImprovement) ? finalReport.areasForImprovement : [],
+        recommendation:       finalReport.recommendation ?? null,
+      },
     };
 
     if (moduleType === "SKILL_TEST") {

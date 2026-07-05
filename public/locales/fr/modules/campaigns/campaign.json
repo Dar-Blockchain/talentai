@@ -40,6 +40,22 @@
     "completed_participants": "Participants ayant terminé"
   },
 
+  "employee_stats": {
+    "total": "Total",
+    "invited": "Invitées",
+    "in_progress": "En cours",
+    "completed": "Terminées"
+  },
+
+  "my_campaigns": {
+    "title": "Mes campagnes",
+    "subtitle": "Suivez vos campagnes assignées, évaluations et parcours de formation.",
+    "empty_title": "Aucune campagne ici",
+    "empty_invited": "Vous avez été invité(e) à rejoindre des campagnes.",
+    "empty_in_progress": "Aucune campagne en cours pour le moment.",
+    "empty_completed": "Vous n'avez terminé aucune campagne pour le moment."
+  },
+
   "empty": {
     "filtered_title": "Aucune campagne ne correspond à vos filtres",
     "filtered_hint": "Essayez d'ajuster la recherche ou les filtres.",
@@ -97,7 +113,14 @@
       "PAUSED": "Mettre en pause",
       "CLOSED": "Clôturer"
     },
-    "menu_delete": "Supprimer la campagne"
+    "menu_delete": "Supprimer la campagne",
+    "employee_start": "Démarrer la campagne",
+    "employee_continue": "Continuer",
+    "employee_paused": "Campagne en pause",
+    "employee_closed": "Campagne clôturée",
+    "employee_expired": "Échéance dépassée",
+    "employee_show_results": "Voir les résultats",
+    "employee_view_details": "Voir les détails"
   },
 
   "modals": {
@@ -132,13 +155,16 @@
     "back_company": "Campagnes",
     "back_employee": "Mes campagnes",
     "edit": "Modifier",
-    "delete": "Supprimer",
+    "edit_tooltip": "Modifier les détails de la campagne",
     "edit_draft_only_tooltip": "La modification n'est possible que tant que la campagne est en brouillon.",
-    "activate_blocked_tooltip": "Configurez le module avant d'activer cette campagne.",
+    "delete": "Supprimer",
     "module_not_configured_badge": "Non configuré",
     "module_not_configured_tooltip": "Module non configuré — requis avant activation.",
     "deadline_passed": "Échéance dépassée",
     "days_left_short": "{{count}} j",
+    "participants_count_one": "{{count}} participant",
+    "participants_count_other": "{{count}} participants",
+    "created_on": "Créée le {{date}}",
     "employee_deadline_passed": "Échéance dépassée",
     "employee_campaign_paused": "Campagne en pause",
     "employee_campaign_closed": "Campagne clôturée",
@@ -267,7 +293,9 @@
         "category_ai": "IA",
         "category_marketing": "Marketing",
         "category_qa": "QA",
-        "category_business": "Business"
+        "category_business": "Business",
+        "show_results_label": "Afficher les résultats aux participants",
+        "show_results_hint": "Laisser les participants voir leur score après avoir terminé"
       },
       "ai_interview": {
         "agent_prompt": "Consigne de l'agent IA",
@@ -276,7 +304,9 @@
         "duration_placeholder": "ex. 30",
         "scoring_criteria": "Critères de notation",
         "criterion_placeholder": "Critère {{n}}",
-        "add_criterion": "Ajouter un critère"
+        "add_criterion": "Ajouter un critère",
+        "show_results_label": "Afficher les résultats aux participants",
+        "show_results_hint": "Laisser les participants voir leur score après avoir terminé"
       },
       "training_path": {
         "empty": "Aucune ressource pour le moment. Ajoutez votre première ressource.",
@@ -344,6 +374,32 @@
       "error_title_required": "Le titre est obligatoire.",
       "error_save_failed": "Échec de l'enregistrement."
     },
+    "overview": {
+      "participant_status_title": "Statut des participants",
+      "no_participants": "Aucun participant pour le moment",
+      "status": {
+        "completed": "Terminé",
+        "in_progress": "En cours",
+        "invited": "Invité",
+        "dropped": "Abandonné",
+        "not_completed": "Non terminé"
+      },
+      "total_label": "au total",
+      "key_metrics_title": "Indicateurs clés",
+      "stat_participants": "Participants",
+      "stat_completed": "Terminé",
+      "stat_completion_rate": "Taux de complétion",
+      "stat_in_progress": "En cours",
+      "module_configuration_title": "Configuration du module",
+      "questions_count_one": "{{count}} question",
+      "questions_count_other": "{{count}} questions",
+      "agent_prompt_label": "Prompt de l'agent",
+      "agent_prompt_configured": "Prompt de l'agent configuré",
+      "skill_assessed_label": "Compétence évaluée",
+      "skill_summary": "Compétence : {{skill}}",
+      "resources_count_one": "{{count}} ressource",
+      "resources_count_other": "{{count}} ressources"
+    },
     "participants": {
       "participant_status": {
         "INVITED": "Invité",
@@ -359,8 +415,10 @@
       "search_placeholder": "Rechercher par nom ou e-mail…",
       "department_filter": "Service",
       "role_filter": "Rôle",
+      "no_department": "Aucun service",
       "all_departments": "Tous les services",
       "all_roles": "Tous les rôles",
+      "all_statuses": "Tous les statuts",
       "filters_label": "Filtres :",
       "empty_filtered_title": "Aucun employé ne correspond à vos filtres",
       "empty_all_added_title": "Tous les employés sont déjà dans cette campagne",
@@ -374,11 +432,6 @@
       "toolbar_total": "total",
       "search_participants_placeholder": "Rechercher des participants…",
       "add_participant_tooltip": "Ajouter",
-      "col_hash": "#",
-      "col_participant": "Participant",
-      "col_status": "Statut",
-      "col_role": "Rôle",
-      "col_actions": "Actions",
       "empty_search_title": "Aucun participant ne correspond à votre recherche",
       "empty_title": "Aucun participant pour le moment",
       "empty_search_hint": "Essayez un autre nom ou e-mail.",
@@ -393,32 +446,34 @@
         "COMPLETED": "Terminé",
         "EXPIRED": "Expirée"
       },
-      "matches_search_one": "{{count}} session correspond à votre recherche",
-      "matches_search_other": "{{count}} sessions correspondent à votre recherche",
-      "total_sessions_one": "{{count}} session au total",
-      "total_sessions_other": "{{count}} sessions au total",
       "search_placeholder": "Rechercher un participant…",
-      "col_participant": "Participant",
-      "col_status": "Statut",
-      "col_score": "Score",
-      "col_duration": "Durée",
-      "col_completed": "Terminé le",
-      "col_actions": "Actions",
-      "duration_minutes": "{{n}} min",
       "empty_search_title": "Aucune session ne correspond à votre recherche",
       "empty_title": "Aucune session pour le moment",
       "empty_search_hint": "Essayez un autre nom.",
       "empty_hint": "Les sessions apparaîtront ici dès que des participants auront démarré.",
       "anonymous": "Anonyme",
       "identity_hidden": "Identité masquée",
-      "results": "Résultats",
+      "show_results_button": "Voir les résultats",
+      "sort": {
+        "newest": "Plus récent",
+        "highest_score": "Score le plus élevé",
+        "lowest_score": "Score le plus bas"
+      },
       "dialog_title": "Résultats — {{name}}",
       "load_failed": "Impossible de charger les résultats",
       "results_dialog": {
         "title": "Résultats de l'évaluation",
+        "tab_summary": "Résumé",
+        "tab_details": "Détails",
+        "tab_transcript": "Transcription",
         "ai_summary_label": "Résumé IA",
         "empty_title": "Aucune réponse soumise pour le moment",
-        "ai_scoring_disabled_note": "La notation par IA est désactivée pour ce questionnaire."
+        "ai_scoring_disabled_note": "La notation par IA est désactivée pour ce questionnaire.",
+        "recommendation_label": "Recommandation",
+        "strengths_label": "Points forts",
+        "areas_for_improvement_label": "Axes d'amélioration",
+        "transcript_agent": "Intervieweur",
+        "transcript_candidate": "Candidat"
       }
     }
   },

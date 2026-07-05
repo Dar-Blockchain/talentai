@@ -54,6 +54,16 @@ const campaignResponseSchema = new mongoose.Schema(
     },
 
     aiSummary: { type: String, default: null },
+
+    aiReport: {
+      strengths: [String],
+      areasForImprovement: [String],
+      recommendation: {
+        type: String,
+        enum: ["strong_hire", "hire", "consider", "reject", null],
+        default: null,
+      },
+    },
   },
   { timestamps: true }
 );

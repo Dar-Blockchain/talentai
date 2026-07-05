@@ -204,7 +204,7 @@ QuestionnaireForm.displayName = "QuestionnaireForm";
 
 // ─── Local helpers ────────────────────────────────────────────────────────────
 
-const ToggleRow: React.FC<{
+export const ToggleRow: React.FC<{
   icon: React.ReactNode;
   iconBg: string;
   iconColor: string;

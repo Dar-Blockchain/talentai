@@ -192,7 +192,7 @@ exports.getCampaign = async (req, res) => {
       ).lean();
       data.participantStatus = participant?.status ?? null;
       data.completedAt = participant?.completedAt ?? null;
-      const resultsVisible = data.module?.type !== "QUESTIONNAIRE" || data.module?.config?.showResultsToParticipants !== false;
+      const resultsVisible = data.module?.config?.showResultsToParticipants !== false;
       if (participant?.status === "COMPLETED" && resultsVisible) {
         const response = await CampaignResponse.findOne({ campaign: campaignId, participant: participant._id }, { aiScore: 1 }).lean();
         data.score = response?.aiScore ?? null;
@@ -218,7 +218,7 @@ exports.getCampaignParticipants = async (req, res) => {
     const campaignObjectId = new mongoose.Types.ObjectId(campaignId);
 
     const pipeline = [
-      { $match: { campaign: campaignObjectId, ...(status && { status }) } },
+      { $match: { campaign: campaignObjectId } },
       { $lookup: { from: "users", localField: "employee", foreignField: "_id", as: "employee" } },
       { $unwind: { path: "$employee", preserveNullAndEmptyArrays: true } },
       { $lookup: { from: "profiles", localField: "employee._id", foreignField: "userId", as: "employee.profile" } },
@@ -234,27 +234,34 @@ exports.getCampaignParticipants = async (req, res) => {
         { "employee.email": { $regex: search, $options: "i" } },
         { providerName: { $regex: search, $options: "i" } },
       ]}}] : []),
-      { $sort: { createdAt: -1 } },
-      { $lookup: { from: "campaignresponses", let: { participantId: "$_id" }, pipeline: [
-        { $match: { $expr: { $eq: ["$participant", "$$participantId"] } } },
-        { $project: { _id: 0, aiScore: 1 } },
-      ], as: "response" } },
-      { $addFields: { score: { $cond: { if: { $eq: ["$status", "COMPLETED"] }, then: { $ifNull: [{ $arrayElemAt: ["$response.aiScore", 0] }, null] }, else: null } } } },
       { $facet: {
-        metadata: [{ $count: "total" }],
-        data: [{ $skip: skip }, { $limit: limitNum }, { $project: {
-          _id: 1, status: 1, score: 1, createdAt: 1, updatedAt: 1, email: 1, providerName: 1, linkAccessToken: 1,
-          "employee._id": 1, "employee.email": 1, "employee.username": 1,
-          "employee.profile.firstName": 1, "employee.profile.lastName": 1,
-          "employee.companyMembership.role": 1,
-          "employee.companyMembership.department._id": 1,
-          "employee.companyMembership.department.name": 1,
-        }}],
+        metadata: [...(status ? [{ $match: { status } }] : []), { $count: "total" }],
+        statusCounts: [{ $group: { _id: "$status", count: { $sum: 1 } } }],
+        data: [
+          ...(status ? [{ $match: { status } }] : []),
+          { $sort: { createdAt: -1 } },
+          { $skip: skip }, { $limit: limitNum },
+          { $lookup: { from: "campaignresponses", let: { participantId: "$_id" }, pipeline: [
+            { $match: { $expr: { $eq: ["$participant", "$$participantId"] } } },
+            { $project: { _id: 0, aiScore: 1 } },
+          ], as: "response" } },
+          { $addFields: { score: { $cond: { if: { $eq: ["$status", "COMPLETED"] }, then: { $ifNull: [{ $arrayElemAt: ["$response.aiScore", 0] }, null] }, else: null } } } },
+          { $project: {
+            _id: 1, status: 1, score: 1, createdAt: 1, updatedAt: 1, email: 1, providerName: 1, linkAccessToken: 1,
+            "employee._id": 1, "employee.email": 1, "employee.username": 1,
+            "employee.profile.firstName": 1, "employee.profile.lastName": 1,
+            "employee.companyMembership.role": 1,
+            "employee.companyMembership.department._id": 1,
+            "employee.companyMembership.department.name": 1,
+          }},
+        ],
       }},
     ];
 
     const result = await CampaignParticipant.aggregate(pipeline);
     const totalParticipants = result[0]?.metadata[0]?.total || 0;
+    const statusCounts = { INVITED: 0, IN_PROGRESS: 0, COMPLETED: 0, DROPPED: 0 };
+    (result[0]?.statusCounts || []).forEach((s) => { if (s._id in statusCounts) statusCounts[s._id] = s.count; });
     const formatted = (result[0]?.data || []).map((p) => {
       const hasEmployee = !!p.employee?._id;
       const firstName = hasEmployee ? p.employee?.profile?.firstName || p.employee?.username || "Unknown" : p.providerName || "Unknown";
@@ -269,7 +276,7 @@ exports.getCampaignParticipants = async (req, res) => {
       };
     });
 
-    res.status(200).json({ success: true, data: { total: totalParticipants, page: pageNum, limit: limitNum, pages: Math.ceil(totalParticipants / limitNum), data: formatted } });
+    res.status(200).json({ success: true, data: { total: totalParticipants, page: pageNum, limit: limitNum, pages: Math.ceil(totalParticipants / limitNum), data: formatted, statusCounts } });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -393,12 +400,15 @@ exports.getUserCampaigns = async (req, res) => {
     responses.forEach((r) => { scoreMap[r.participant.toString()] = r.aiScore ?? null; });
 
     const campaigns = await Promise.all(
-      paginated.map(async (p) => ({
-        ...p.campaign.toObject(),
-        targetEmployeeCount: await CampaignParticipant.countDocuments({ campaign: p.campaign._id }),
-        participantStatus: p.status,
-        score: p.status === "COMPLETED" ? (scoreMap[p._id.toString()] ?? null) : null,
-      }))
+      paginated.map(async (p) => {
+        const resultsVisible = p.campaign.module?.config?.showResultsToParticipants !== false;
+        return {
+          ...p.campaign.toObject(),
+          targetEmployeeCount: await CampaignParticipant.countDocuments({ campaign: p.campaign._id }),
+          participantStatus: p.status,
+          score: p.status === "COMPLETED" && resultsVisible ? (scoreMap[p._id.toString()] ?? null) : null,
+        };
+      })
     );
 
     res.status(200).json({ success: true, data: campaigns, pagination: { page: pageNum, limit: limitNum, total, pages: Math.ceil(total / limitNum) } });
@@ -611,7 +621,7 @@ exports.getParticipantResults = async (req, res) => {
     if (!participant) return res.status(404).json({ success: false, error: "Participant not found" });
 
     const payload = await buildParticipantResultsPayload(campaign, participant);
-    if (campaign.module?.type === "QUESTIONNAIRE" && campaign.module?.config?.showResultsToParticipants === false) {
+    if (campaign.module?.config?.showResultsToParticipants === false) {
       payload.response = null;
       payload.resultsHidden = true;
     }
@@ -769,7 +779,7 @@ exports.getNonParticipants = async (req, res) => {
 exports.getSessions = async (req, res) => {
   try {
     const { campaignId } = req.params;
-    const { search, page = 1, limit = 10 } = req.query;
+    const { search, page = 1, limit = 10, period, sortBy, order } = req.query;
     const campaign = await InternalCampaign.findById(campaignId).lean();
     if (!campaign) return res.status(404).json({ success: false, error: "Campaign not found" });
 
@@ -779,6 +789,14 @@ exports.getSessions = async (req, res) => {
     const campaignObjectId = new mongoose.Types.ObjectId(campaignId);
     const statusMap = { INVITED: "PENDING", IN_PROGRESS: "IN_PROGRESS", COMPLETED: "COMPLETED", DROPPED: "EXPIRED" };
 
+    const periodMap = { "7d": 7, "30d": 30, "3m": 90, "6m": 180, "1y": 365 };
+    const periodFilter = period && periodMap[period]
+      ? { completedAt: { $gte: new Date(Date.now() - periodMap[period] * 86_400_000) } }
+      : {};
+
+    const sortDir = order === "asc" ? 1 : -1;
+    const sortStage = sortBy === "score" ? { score: sortDir, createdAt: -1 } : { createdAt: sortDir };
+
     let anonIndexMap = {};
     if (campaign.anonymityMode === "ANONYMOUS") {
       const anonAll = await CampaignParticipant.find({ campaign: campaignObjectId, anonymousToken: { $exists: true, $ne: null }, status: "COMPLETED" }, { _id: 1 }).sort({ createdAt: 1 }).lean();
@@ -786,7 +804,11 @@ exports.getSessions = async (req, res) => {
     }
 
     const pipeline = [
-      { $match: { campaign: campaignObjectId, status: "COMPLETED" } },
+      { $match: { campaign: campaignObjectId, status: "COMPLETED", ...periodFilter } },
+      { $lookup: { from: "campaignresponses", let: { pid: "$_id" }, pipeline: [
+        { $match: { $expr: { $eq: ["$participant", "$$pid"] } } }, { $project: { _id: 0, aiScore: 1 } },
+      ], as: "response" } },
+      { $addFields: { score: { $ifNull: [{ $arrayElemAt: ["$response.aiScore", 0] }, null] } } },
       { $lookup: { from: "users", localField: "employee", foreignField: "_id", as: "employeeUser" } },
       { $unwind: { path: "$employeeUser", preserveNullAndEmptyArrays: true } },
       { $lookup: { from: "profiles", localField: "employeeUser._id", foreignField: "userId", as: "employeeProfile" } },
@@ -798,11 +820,7 @@ exports.getSessions = async (req, res) => {
         { email: { $regex: search, $options: "i" } },
         { providerName: { $regex: search, $options: "i" } },
       ]}}] : []),
-      { $sort: { createdAt: -1 } },
-      { $lookup: { from: "campaignresponses", let: { pid: "$_id" }, pipeline: [
-        { $match: { $expr: { $eq: ["$participant", "$$pid"] } } }, { $project: { _id: 0, aiScore: 1 } },
-      ], as: "response" } },
-      { $addFields: { score: { $cond: { if: { $eq: ["$status", "COMPLETED"] }, then: { $ifNull: [{ $arrayElemAt: ["$response.aiScore", 0] }, null] }, else: null } } } },
+      { $sort: sortStage },
       { $facet: {
         metadata: [{ $count: "total" }],
         data: [{ $skip: skip }, { $limit: limitNum }, { $project: {

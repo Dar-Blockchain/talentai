@@ -14,6 +14,8 @@ interface InterviewContainerProps {
   noBorder?: boolean;
   onStartInterview: () => void;
   onBack?: () => void;
+  /** Overrides the default "Back to post details" label (e.g. "Back to campaign" for campaign interviews). */
+  backLabel?: string;
   jobTitle?: string;
   companyName?: string;
   dashboardPath?: string;
@@ -31,6 +33,7 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
   noBorder = false,
   onStartInterview,
   onBack,
+  backLabel,
   jobTitle,
   companyName,
   dashboardPath: _dashboardPath,
@@ -71,6 +74,7 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
             cameraStatus={cameraStatus}
             onStartInterview={onStartInterview}
             onBack={onBack}
+            backLabel={backLabel}
             jobTitle={jobTitle}
             companyName={companyName}
           />
@@ -154,9 +158,10 @@ const ReadinessChecklist: React.FC<{
   cameraStatus: CameraStatus;
   onStartInterview: () => void;
   onBack?: () => void;
+  backLabel?: string;
   jobTitle?: string;
   companyName?: string;
-}> = ({ checks, allReady, cameraStatus, onStartInterview, onBack, jobTitle, companyName }) => {
+}> = ({ checks, allReady, cameraStatus, onStartInterview, onBack, backLabel, jobTitle, companyName }) => {
   const { t } = useTranslation('interview');
 
   return (
@@ -215,7 +220,7 @@ const ReadinessChecklist: React.FC<{
             className="w-full flex items-center justify-center gap-1.5 font-sans font-semibold text-[0.78rem] text-[#9ca3af] py-2 rounded-[12px] hover:text-[#6b7280] hover:bg-[#f9fafb] transition-colors cursor-pointer"
           >
             <ArrowLeft size={15} />
-            {t('container.back_to_post')}
+            {backLabel ?? t('container.back_to_post')}
           </button>
         )}
       </div>

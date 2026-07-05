@@ -121,6 +121,7 @@ export interface AIInterviewModule {
   type: "AI_INTERVIEW";
   config: {
     agentPrompt: string;
+    showResultsToParticipants?: boolean;
   } | null;
 }
 
@@ -128,6 +129,7 @@ export interface SkillTestModule {
   type: "SKILL_TEST";
   config: {
     skill: string;
+    showResultsToParticipants?: boolean;
   } | null;
 }
 
@@ -219,9 +221,14 @@ export interface CampaignResponse {
   moduleType: ModuleType;
   answers?: CampaignResponseAnswer[];
   interviewTranscript?: { role: string; message: string; timestamp?: string }[];
-  testResults?: { score?: number; maxScore?: number; breakdown?: unknown };
+  testResults?: { score?: number; maxScore?: number; breakdown?: { area: string; label: string; score: number }[] };
   aiScore?: number | null;
   aiSummary?: string | null;
+  aiReport?: {
+    strengths?: string[];
+    areasForImprovement?: string[];
+    recommendation?: "strong_hire" | "hire" | "consider" | "reject" | null;
+  };
   createdAt?: string;
   updatedAt?: string;
 }

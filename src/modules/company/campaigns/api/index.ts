@@ -56,10 +56,10 @@ export const apiDeleteCampaign = async (campaignId: string): Promise<string> => 
 
 export const apiFetchParticipants = async (
   { campaignId, ...params }: ParticipantsParams,
-): Promise<{ data: CampaignParticipant[]; total: number }> => {
+): Promise<{ data: CampaignParticipant[]; total: number; statusCounts?: Record<string, number> }> => {
   const res = await axiosInstance.get(`internal-campaigns/${campaignId}/participants`, { params: clean(params) });
   const payload = res.data.data;
-  return { data: payload.data, total: payload.total ?? payload.data?.length ?? 0 };
+  return { data: payload.data, total: payload.total ?? payload.data?.length ?? 0, statusCounts: payload.statusCounts };
 };
 
 export const apiFetchNonParticipants = async (
@@ -93,6 +93,12 @@ export const apiFetchSessions = async (
 
 export const apiFetchParticipantResults = async (campaignId: string, participantId: string): Promise<ParticipantResults> => {
   const res = await axiosInstance.get(`internal-campaigns/${campaignId}/participants/${participantId}/results`);
+  return res.data.data;
+};
+
+/** Self-service: lets a participant fetch their own results (honors the campaign's "show results" setting). */
+export const apiFetchMyParticipantResults = async (campaignId: string, participantId: string): Promise<ParticipantResults> => {
+  const res = await axiosInstance.get(`internal-campaigns/${campaignId}/results/${participantId}`);
   return res.data.data;
 };
 

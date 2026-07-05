@@ -135,6 +135,11 @@ export function useCampaignSession() {
         setView('questionnaire');
         setJoining(false);
       } else if (modType === 'AI_INTERVIEW' || modType === 'SKILL_TEST') {
+        const pid =
+          localStorage.getItem(`anon_token_${resolvedId}`) ||
+          localStorage.getItem(`link_token_${resolvedId}`) ||
+          user?._id || '';
+        setParticipantId(pid);
         setInterviewCampaignId(resolvedId);
         setInterviewModuleType(modType as CampaignModuleType);
         setView('interview');

@@ -1,10 +1,15 @@
 import React, { memo, useMemo } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { Users, CheckCircle2, Clock4, XCircle, TrendingUp } from "lucide-react";
+import { Users, CheckCircle2, Clock4, TrendingUp, ListChecks } from "lucide-react";
 import { Campaign } from "@/modules/company/campaigns/types/campaign";
-import { ChartContainer, ChartTooltipContent, ChartConfig } from "@/modules/shared/ui/shadcn/chart";
+import { ChartConfig } from "@/modules/shared/ui/shadcn/chart";
 import { useTranslation } from "react-i18next";
 import { Card } from "@/modules/shared/ui/shadcn/card";
+import {
+  Accordion, AccordionItem, AccordionTrigger, AccordionContent,
+} from "@/modules/shared/ui/shadcn/accordion";
+import { MODULE_CONFIG } from "@/modules/shared/constants/campaign";
+import type { TFunction } from "i18next";
 
 // ─── Status colours ───────────────────────────────────────────────────────────
 
@@ -22,6 +27,17 @@ const CHART_CONFIG: ChartConfig = {
   dropped:    { label: "Dropped",    color: STATUS_COLOR.dropped    },
 };
 
+// ─── Section header ───────────────────────────────────────────────────────────
+
+const SectionHeader: React.FC<{ icon: React.ElementType; color: string; title: string }> = ({ icon: Icon, color, title }) => (
+  <div className="flex items-center gap-2.5 mb-4">
+    <div className="flex items-center justify-center size-8 rounded-[10px] shrink-0" style={{ background: `${color}14`, border: `1px solid ${color}28` }}>
+      <Icon className="!size-4" style={{ color }} />
+    </div>
+    <p className="text-[13.5px] font-bold text-foreground">{title}</p>
+  </div>
+);
+
 // ─── Stat card ────────────────────────────────────────────────────────────────
 
 interface StatCardProps {
@@ -30,18 +46,19 @@ interface StatCardProps {
   iconBg: string;
   label: string;
   value: string | number;
-  sub?: string;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ icon: Icon, iconColor, iconBg, label, value, sub }) => (
-  <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card px-4 py-3">
-    <div className="size-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: iconBg }}>
-      <Icon className="size-4" style={{ color: iconColor }} />
+const StatCard: React.FC<StatCardProps> = ({ icon: Icon, iconColor, iconBg, label, value }) => (
+  <div className="group flex items-center gap-3 rounded-2xl border border-border/60 bg-card px-4 py-3.5 transition-all duration-200 hover:shadow-[0_6px_20px_rgba(0,0,0,0.06)] hover:-translate-y-0.5">
+    <div
+      className="size-10 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105"
+      style={{ background: iconBg }}
+    >
+      <Icon className="size-[18px]" style={{ color: iconColor }} />
     </div>
     <div className="min-w-0">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="text-[18px] font-extrabold text-foreground leading-tight">{value}</p>
-      {sub && <p className="text-[11px] text-muted-foreground mt-0.5">{sub}</p>}
+      <p className="text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground/80">{label}</p>
+      <p className="text-[19px] font-extrabold text-foreground leading-tight tabular-nums mt-0.5">{value}</p>
     </div>
   </div>
 );
@@ -65,54 +82,75 @@ const LegendItem: React.FC<{ color: string; label: string; count: number; total:
 
 // ─── Custom centre label ──────────────────────────────────────────────────────
 
-const DonutCenter: React.FC<{ pct: number; total: number }> = ({ pct, total }) => (
+const DonutCenter: React.FC<{ pct: number; total: number; totalLabel: string }> = ({ pct, total, totalLabel }) => (
   <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle">
     <tspan x="50%" dy="-10" style={{ fontSize: 22, fontWeight: 800, fill: "#0f172a" }}>
       {pct}%
     </tspan>
     <tspan x="50%" dy="22" style={{ fontSize: 11, fontWeight: 600, fill: "#94a3b8" }}>
-      {total} total
+      {total} {totalLabel}
     </tspan>
   </text>
 );
 
+// ─── Module config summary (collapsed state) ───────────────────────────────────
+
+function moduleConfigSummary(campaign: Campaign, t: TFunction): string | null {
+  const op = "pages.campaigns.detail.overview";
+  const mod = campaign.module;
+  if (!mod?.config) return null;
+
+  if (mod.type === "QUESTIONNAIRE") {
+    return t(`${op}.questions_count`, { count: mod.config.questions?.length ?? 0 });
+  }
+  if (mod.type === "AI_INTERVIEW" && mod.config.agentPrompt) {
+    return t(`${op}.agent_prompt_configured`);
+  }
+  if (mod.type === "SKILL_TEST" && mod.config.skill) {
+    return t(`${op}.skill_summary`, { skill: mod.config.skill });
+  }
+  if (mod.type === "TRAINING_PATH" && mod.config.resources?.length) {
+    return t(`${op}.resources_count`, { count: mod.config.resources.length });
+  }
+  return null;
+}
+
 // ─── Module config display ────────────────────────────────────────────────────
 
 const ModuleConfigPanel: React.FC<{ campaign: Campaign; moduleColor: string }> = ({ campaign, moduleColor }) => {
+  const { t } = useTranslation("dashboard");
+  const op = "pages.campaigns.detail.overview";
   const mod = campaign.module;
   if (!mod?.config) return null;
 
   if (mod.type === "QUESTIONNAIRE") {
     const questions = mod.config.questions ?? [];
-    const typeColors: Record<string, { bg: string; text: string }> = {
-      TEXT:            { bg: "#EFF6FF", text: "#1D4ED8" },
-      SINGLE_CHOICE:   { bg: "#F0FDF4", text: "#16A34A" },
-      MULTIPLE_CHOICE: { bg: "#FFF7ED", text: "#D97706" },
-      RATING:          { bg: "#F5F3FF", text: "#7C3AED" },
+    const typeColor: Record<string, string> = {
+      TEXT:            "#1D4ED8",
+      SINGLE_CHOICE:   "#16A34A",
+      MULTIPLE_CHOICE: "#D97706",
+      RATING:          "#7C3AED",
     };
     return (
-      <div className="space-y-2 mt-1">
-        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-          {questions.length} Question{questions.length !== 1 ? "s" : ""}
+      <div>
+        <p className="text-[11px] font-semibold text-muted-foreground mb-1.5">
+          {t(`${op}.questions_count`, { count: questions.length })}
         </p>
-        <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
-          {questions.map((q, i) => {
-            const tc = typeColors[q.type] ?? { bg: "#F3F4F6", text: "#374151" };
-            return (
-              <div key={i} className="flex items-start gap-2.5 rounded-lg border border-border/50 bg-muted/30 px-3 py-2.5">
-                <span className="mt-0.5 shrink-0 text-[11px] font-bold tabular-nums" style={{ color: moduleColor }}>
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <span className="flex-1 text-[12.5px] font-medium text-foreground/85 leading-snug">{q.question}</span>
-                <span
-                  className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-md"
-                  style={{ background: tc.bg, color: tc.text }}
-                >
-                  {q.type.replace("_", " ")}
-                </span>
-              </div>
-            );
-          })}
+        <div className="divide-y divide-border/50 max-h-52 overflow-y-auto pr-1">
+          {questions.map((q, i) => (
+            <div key={i} className="flex items-start gap-2.5 py-2 first:pt-0 last:pb-0">
+              <span className="mt-0.5 shrink-0 text-[11px] font-semibold tabular-nums text-muted-foreground/50 w-4">
+                {i + 1}
+              </span>
+              <span className="flex-1 text-[12.5px] text-foreground/85 leading-snug">{q.question}</span>
+              <span
+                className="shrink-0 text-[10.5px] font-semibold capitalize"
+                style={{ color: typeColor[q.type] ?? "#6B7280" }}
+              >
+                {q.type.replace("_", " ").toLowerCase()}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -120,27 +158,23 @@ const ModuleConfigPanel: React.FC<{ campaign: Campaign; moduleColor: string }> =
 
   if (mod.type === "AI_INTERVIEW" && mod.config.agentPrompt) {
     return (
-      <div className="mt-1 space-y-2">
-        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Agent Prompt</p>
-        <div className="rounded-xl border border-border/50 bg-muted/30 px-4 py-3">
-          <p className="text-[12.5px] text-foreground/80 leading-relaxed line-clamp-6 whitespace-pre-wrap font-mono">
-            {mod.config.agentPrompt}
-          </p>
-        </div>
+      <div>
+        <p className="text-[11px] font-semibold text-muted-foreground mb-1.5">{t(`${op}.agent_prompt_label`)}</p>
+        <p
+          className="text-[12.5px] text-foreground/75 leading-relaxed line-clamp-6 whitespace-pre-wrap border-l-2 pl-3"
+          style={{ borderColor: `${moduleColor}40` }}
+        >
+          {mod.config.agentPrompt}
+        </p>
       </div>
     );
   }
 
   if (mod.type === "SKILL_TEST" && mod.config.skill) {
     return (
-      <div className="mt-1 space-y-2">
-        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Skill Assessed</p>
-        <div
-          className="inline-flex items-center gap-2 rounded-xl px-4 py-2 font-semibold text-[13px]"
-          style={{ background: `${moduleColor}14`, color: moduleColor, border: `1px solid ${moduleColor}30` }}
-        >
-          {mod.config.skill}
-        </div>
+      <div>
+        <p className="text-[11px] font-semibold text-muted-foreground mb-1.5">{t(`${op}.skill_assessed_label`)}</p>
+        <p className="text-[14px] font-bold" style={{ color: moduleColor }}>{mod.config.skill}</p>
       </div>
     );
   }
@@ -148,15 +182,15 @@ const ModuleConfigPanel: React.FC<{ campaign: Campaign; moduleColor: string }> =
   if (mod.type === "TRAINING_PATH" && mod.config.resources?.length) {
     const typeIcon: Record<string, string> = { LINK: "🔗", DOCUMENT: "📄", COURSE: "🎓", VIDEO: "▶️" };
     return (
-      <div className="mt-1 space-y-2">
-        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-          {mod.config.resources.length} Resource{mod.config.resources.length !== 1 ? "s" : ""}
+      <div>
+        <p className="text-[11px] font-semibold text-muted-foreground mb-1.5">
+          {t(`${op}.resources_count`, { count: mod.config.resources.length })}
         </p>
-        <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+        <div className="divide-y divide-border/50 max-h-52 overflow-y-auto pr-1">
           {mod.config.resources.map((r, i) => (
-            <div key={i} className="flex items-center gap-2.5 rounded-lg border border-border/50 bg-muted/30 px-3 py-2">
-              <span className="text-base">{typeIcon[r.type] ?? "📎"}</span>
-              <span className="flex-1 text-[12.5px] font-medium text-foreground/85 truncate">{r.title}</span>
+            <div key={i} className="flex items-center gap-2.5 py-2 first:pt-0 last:pb-0">
+              <span className="text-base shrink-0">{typeIcon[r.type] ?? "📎"}</span>
+              <span className="flex-1 text-[12.5px] text-foreground/85 truncate">{r.title}</span>
               {r.estimatedTime && (
                 <span className="shrink-0 text-[11px] text-muted-foreground">{r.estimatedTime}min</span>
               )}
@@ -179,6 +213,7 @@ interface Props {
 
 const CampaignOverviewCharts: React.FC<Props> = memo(({ campaign, moduleColor }) => {
   const { t } = useTranslation("dashboard");
+  const op = "pages.campaigns.detail.overview";
 
   const breakdown = campaign.statusBreakdown;
   const total     = campaign.participantCount ?? 0;
@@ -202,18 +237,22 @@ const CampaignOverviewCharts: React.FC<Props> = memo(({ campaign, moduleColor })
   }, [breakdown, total, completed]);
 
   const hasParticipants = total > 0;
+  const ModuleIcon = campaign.module?.type ? MODULE_CONFIG[campaign.module.type]?.icon : null;
+  const configSummary = moduleConfigSummary(campaign, t);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
       {/* ── Donut chart card ────────────────────────────────────────────────── */}
       <Card className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
-        <p className="text-[13px] font-bold text-foreground mb-4">Participant Status</p>
+        <SectionHeader icon={Users} color={moduleColor} title={t(`${op}.participant_status_title`)} />
 
         {!hasParticipants ? (
-          <div className="flex flex-col items-center justify-center h-44 gap-2">
-            <Users className="size-8 text-muted-foreground/40" />
-            <p className="text-[12px] text-muted-foreground">No participants yet</p>
+          <div className="flex flex-col items-center justify-center h-44 gap-3">
+            <div className="flex items-center justify-center size-12 rounded-2xl bg-muted">
+              <Users className="size-5 text-muted-foreground/50" />
+            </div>
+            <p className="text-[12.5px] text-muted-foreground">{t(`${op}.no_participants`)}</p>
           </div>
         ) : (
           <div className="flex items-center gap-5">
@@ -234,7 +273,7 @@ const CampaignOverviewCharts: React.FC<Props> = memo(({ campaign, moduleColor })
                     {donutData.map((entry, i) => (
                       <Cell key={i} fill={entry.color} />
                     ))}
-                    <DonutCenter pct={pct} total={total} />
+                    <DonutCenter pct={pct} total={total} totalLabel={t(`${op}.total_label`)} />
                   </Pie>
                   <Tooltip
                     content={({ active, payload }) =>
@@ -257,17 +296,17 @@ const CampaignOverviewCharts: React.FC<Props> = memo(({ campaign, moduleColor })
             <div className="flex-1 divide-y divide-border/40">
               {breakdown ? (
                 <>
-                  <LegendItem color={STATUS_COLOR.completed}  label="Completed"   count={breakdown.completed}  total={total} />
-                  <LegendItem color={STATUS_COLOR.inProgress} label="In Progress" count={breakdown.inProgress} total={total} />
-                  <LegendItem color={STATUS_COLOR.invited}    label="Invited"     count={breakdown.invited}    total={total} />
+                  <LegendItem color={STATUS_COLOR.completed}  label={t(`${op}.status.completed`)}   count={breakdown.completed}  total={total} />
+                  <LegendItem color={STATUS_COLOR.inProgress} label={t(`${op}.status.in_progress`)} count={breakdown.inProgress} total={total} />
+                  <LegendItem color={STATUS_COLOR.invited}    label={t(`${op}.status.invited`)}     count={breakdown.invited}    total={total} />
                   {breakdown.dropped > 0 && (
-                    <LegendItem color={STATUS_COLOR.dropped} label="Dropped" count={breakdown.dropped} total={total} />
+                    <LegendItem color={STATUS_COLOR.dropped} label={t(`${op}.status.dropped`)} count={breakdown.dropped} total={total} />
                   )}
                 </>
               ) : (
                 <>
-                  <LegendItem color={STATUS_COLOR.completed} label="Completed"     count={completed}         total={total} />
-                  <LegendItem color={STATUS_COLOR.invited}   label="Not completed" count={total - completed} total={total} />
+                  <LegendItem color={STATUS_COLOR.completed} label={t(`${op}.status.completed`)}     count={completed}         total={total} />
+                  <LegendItem color={STATUS_COLOR.invited}   label={t(`${op}.status.not_completed`)} count={total - completed} total={total} />
                 </>
               )}
             </div>
@@ -276,45 +315,66 @@ const CampaignOverviewCharts: React.FC<Props> = memo(({ campaign, moduleColor })
       </Card>
 
       {/* ── Key metrics + module config ──────────────────────────────────────── */}
-      <Card className="flex flex-col gap-3">
+      <Card className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm flex flex-col gap-4">
+        <SectionHeader icon={TrendingUp} color={moduleColor} title={t(`${op}.key_metrics_title`)} />
+
         {/* Metric cards */}
         <div className="grid grid-cols-2 gap-2.5">
           <StatCard
             icon={Users}
             iconColor={moduleColor}
             iconBg={`${moduleColor}14`}
-            label="Participants"
+            label={t(`${op}.stat_participants`)}
             value={total}
           />
           <StatCard
             icon={CheckCircle2}
             iconColor="#22c55e"
             iconBg="#dcfce7"
-            label="Completed"
+            label={t(`${op}.stat_completed`)}
             value={completed}
           />
           <StatCard
             icon={TrendingUp}
             iconColor="#0891b2"
             iconBg="#e0f2fe"
-            label="Completion Rate"
+            label={t(`${op}.stat_completion_rate`)}
             value={`${pct}%`}
           />
           <StatCard
             icon={Clock4}
             iconColor={breakdown?.inProgress ? "#f59e0b" : "#94a3b8"}
             iconBg={breakdown?.inProgress ? "#fffbeb" : "#f1f5f9"}
-            label="In Progress"
+            label={t(`${op}.stat_in_progress`)}
             value={breakdown?.inProgress ?? "—"}
           />
         </div>
 
-        {/* Module config inline */}
+        {/* Module config — collapsible */}
         {campaign.module?.config && (
-          <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm flex-1">
-            <p className="text-[13px] font-bold text-foreground mb-1">Module Configuration</p>
-            <ModuleConfigPanel campaign={campaign} moduleColor={moduleColor} />
-          </div>
+          <Accordion type="single" collapsible className="rounded-2xl border border-border/60 bg-muted/20 flex-1">
+            <AccordionItem value="module-config" className="border-b-0">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline [&>svg]:text-muted-foreground/60">
+                <span className="flex items-center gap-2.5 min-w-0">
+                  <span
+                    className="flex items-center justify-center size-6 rounded-md shrink-0"
+                    style={{ background: `${moduleColor}14` }}
+                  >
+                    {ModuleIcon ? <ModuleIcon className="!size-3.5" style={{ color: moduleColor }} /> : <ListChecks className="size-3.5" style={{ color: moduleColor }} />}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[13px] font-bold text-foreground">{t(`${op}.module_configuration_title`)}</span>
+                    {configSummary && (
+                      <span className="block text-[11.5px] text-muted-foreground truncate">{configSummary}</span>
+                    )}
+                  </span>
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="px-4">
+                <ModuleConfigPanel campaign={campaign} moduleColor={moduleColor} />
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         )}
       </Card>
     </div>

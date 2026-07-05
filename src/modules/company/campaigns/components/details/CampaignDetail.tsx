@@ -401,7 +401,7 @@ const CampaignDetail: React.FC<Props> = memo(
 
         {/* Tabs */}
         <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
-          <div className="flex items-center px-2 py-2.5 border-b border-border">
+          <div className="flex items-center px-2 py-2.5">
             <TabsList className="h-auto bg-muted p-1 gap-1">
               {TABS.map(({ key, label, icon: Icon, count }) => (
                 <TabsTrigger key={key} value={key} className="gap-1.5 px-3 py-1.5 rounded-lg data-[state=active]:shadow-sm">

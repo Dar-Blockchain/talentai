@@ -7,7 +7,7 @@ import {
   apiFetchCampaigns, apiFetchMetrics, apiFetchCampaignById,
   apiCreateCampaign, apiUpdateCampaign, apiUpdateCampaignStatus, apiDeleteCampaign,
   apiFetchParticipants, apiFetchNonParticipants, apiAddParticipant, apiRemoveParticipant,
-  apiFetchSessions, apiFetchParticipantResults,
+  apiFetchSessions, apiFetchParticipantResults, apiFetchMyParticipantResults,
 } from "../api";
 
 // ─── Query key factory ────────────────────────────────────────────────────────
@@ -84,6 +84,14 @@ export const useParticipantResultsQuery = (campaignId: string, participantId: st
   useQuery({
     queryKey: ["campaigns", "results", campaignId, participantId] as const,
     queryFn:  () => apiFetchParticipantResults(campaignId, participantId!),
+    enabled:  !!campaignId && !!participantId,
+    staleTime: 30_000,
+  });
+
+export const useMyParticipantResultsQuery = (campaignId: string, participantId: string | null) =>
+  useQuery({
+    queryKey: ["campaigns", "my-results", campaignId, participantId] as const,
+    queryFn:  () => apiFetchMyParticipantResults(campaignId, participantId!),
     enabled:  !!campaignId && !!participantId,
     staleTime: 30_000,
   });

@@ -29,7 +29,10 @@ function CampaignSessionPage() {
       <CampaignInterviewView
         campaignId={s.interviewCampaignId}
         moduleType={s.interviewModuleType}
+        campaignTitle={s.campaign?.title}
+        participantId={s.participantId}
         onBack={() => s.setView('overview')}
+        onComplete={() => s.router.push('/employee/dashboard')}
       />
     );
   } else if (!s.router.isReady || s.loading) {

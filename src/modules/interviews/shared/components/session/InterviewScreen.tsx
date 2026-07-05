@@ -40,12 +40,18 @@ interface InterviewScreenProps {
     jobData: any;
     interviewConfig: InterviewConfig | null;
   };
+  /** Overrides the header's computed job/assessment title (e.g. campaign title + module type for campaign interviews). */
+  titleOverride?: string;
+  /** Overrides the lobby's "Back to post details" label (e.g. "Back to campaign" for campaign interviews). */
+  backLabel?: string;
   onBack?: () => void;
 }
 
 export default function InterviewScreen({
   session,
   configData,
+  titleOverride,
+  backLabel,
   onBack,
 }: InterviewScreenProps) {
   const router = useRouter();
@@ -149,6 +155,7 @@ export default function InterviewScreen({
         <InterviewSessionHeader
           jobData={jobData}
           interviewConfig={interviewConfig}
+          titleOverride={titleOverride}
           isActive={isActive}
           elapsedTime={timer.elapsedTime}
           timeWarning={timer.timeWarning}
@@ -325,6 +332,7 @@ export default function InterviewScreen({
                   resultsReady={resultsReady}
                   onStartInterview={startInterview}
                   onBack={handleBack}
+                  backLabel={backLabel}
                   dashboardPath={dashboardPath}
                   reportPath={reportPath}
                   jobTitle={jobData?.jobDetails?.title || jobData?.title || ''}
