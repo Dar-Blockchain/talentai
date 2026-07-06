@@ -27,13 +27,15 @@ const PublishConfirmModal: React.FC<PublishConfirmModalProps> = ({
         <div className="h-1 bg-amber-500" />
 
         <div className="p-5">
-          <div className="flex items-center justify-center size-[52px] rounded-2xl bg-amber-50 border-[1.5px] border-amber-200 mb-4">
-            <Rocket className="size-6 text-amber-600" />
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center justify-center size-11 rounded-xl bg-amber-50 border-[1.5px] border-amber-200 shrink-0">
+              <Rocket className="size-5 text-amber-600" />
+            </div>
+            <p className="text-[16px] font-extrabold text-gray-900">
+              {t("detail.publish_modal.title")}
+            </p>
           </div>
 
-          <p className="text-[16px] font-extrabold text-gray-900 mb-1.5">
-            {t("detail.publish_modal.title")}
-          </p>
           <p className="text-[13px] text-gray-500 leading-relaxed mb-3">
             {t("detail.publish_modal.body_pre")}{" "}
             <strong className="text-gray-900">

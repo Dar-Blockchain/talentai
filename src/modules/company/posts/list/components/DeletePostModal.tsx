@@ -1,8 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Dialog, DialogTitle, DialogContent, DialogActions, Typography } from "@mui/material";
-import ErrorIcon from "@mui/icons-material/Error";
-import DeleteIcon from "@mui/icons-material/Delete";
+import { AlertTriangle, Trash2 } from "lucide-react";
+import { Dialog, DialogContent } from "@/modules/shared/ui/shadcn/dialog";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 
 interface DeletePostModalProps {
@@ -16,48 +15,41 @@ const DeletePostModal: React.FC<DeletePostModalProps> = ({ open, onClose, onDele
   const { t } = useTranslation("posts");
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="xs"
-      fullWidth
-      slotProps={{
-        paper: {
-          sx: {
-            borderRadius: "18px",
-            background: "rgba(255,255,255,0.9)",
-            backdropFilter: "blur(12px)",
-            border: "1px solid rgba(0,0,0,0.06)",
-            boxShadow: "0 12px 40px rgba(0,0,0,0.15)",
-            overflow: "hidden",
-          },
-        },
-      }}
-    >
-      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.2, fontSize: "1.2rem", fontWeight: 500, color: "#2d2d2d", px: 3, py: 2.5, borderBottom: "1px solid rgba(0,0,0,0.07)", background: "rgba(250,250,250,0.7)" }}>
-        <ErrorIcon sx={{ color: "#E03E5C", fontSize: 26 }} />
-        {t("delete_modal.title")}
-      </DialogTitle>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-xs w-full rounded-2xl overflow-hidden p-0">
+        <div className="p-5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center justify-center size-11 rounded-xl bg-red-50 border-[1.5px] border-red-200 shrink-0">
+              <AlertTriangle className="size-5 text-red-600" />
+            </div>
+            <p className="text-[16px] font-extrabold text-gray-900">
+              {t("delete_modal.title")}
+            </p>
+          </div>
 
-      <DialogContent sx={{ px: 3, py: 3, color: "#444", background: "white" }}>
-        <Typography sx={{ my: 1.5, fontSize: "0.95rem" }}>{t("delete_modal.body")}</Typography>
-        <Typography sx={{ fontSize: "0.9rem", fontWeight: 600, color: "#5c5c5c" }}>{t("delete_modal.warning")}</Typography>
+          <p className="text-[13px] text-gray-500 leading-relaxed mb-2">
+            {t("delete_modal.body")}
+          </p>
+          <p className="text-[13px] font-semibold text-gray-600 mb-6">
+            {t("delete_modal.warning")}
+          </p>
+
+          <div className="flex gap-2">
+            <Button variant="ghost" className="flex-1" disabled={isDeleting} onClick={onClose}>
+              {t("delete_modal.cancel")}
+            </Button>
+            <Button
+              variant="destructive"
+              className="flex-1 shadow-[0_4px_14px_rgba(224,62,92,0.25)]"
+              loading={isDeleting}
+              onClick={onDelete}
+            >
+              <Trash2 className="size-4" />
+              {t("delete_modal.confirm")}
+            </Button>
+          </div>
+        </div>
       </DialogContent>
-
-      <DialogActions sx={{ px: 3, py: 2, gap: 1, background: "rgba(250,250,250,0.9)", borderTop: "1px solid rgba(0,0,0,0.06)" }}>
-        <Button variant="ghost" disabled={isDeleting} onClick={onClose}>
-          {t("delete_modal.cancel")}
-        </Button>
-        <Button
-          variant="destructive"
-          loading={isDeleting}
-          onClick={onDelete}
-          className="px-6 shadow-[0_4px_14px_rgba(224,62,92,0.25)]"
-        >
-          <DeleteIcon sx={{ fontSize: 16 }} />
-          {t("delete_modal.confirm")}
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 };

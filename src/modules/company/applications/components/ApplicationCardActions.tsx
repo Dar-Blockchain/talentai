@@ -15,7 +15,6 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/modules/shared/ui/shadcn/dropdown-menu";
-import { cn } from "@/lib/utils";
 
 const TEAL   = "#0D9488";
 const PURPLE = "#7C3AED";
@@ -40,31 +39,17 @@ const ActionButton = memo<ActionButtonProps>(({ isInvited, isVisited, hasEmail, 
 
   if (isVisited) {
     return (
-      <Button
-        variant="outline"
-        onClick={onInvite}
-        className="h-[30px] w-[108px] shrink-0 rounded-lg border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100 hover:border-violet-300"
-      >
+      <Button variant="secondary" size="sm" onClick={onInvite}>
         <Video size={14} />
-        <span className="text-[12px] font-semibold whitespace-nowrap">{sendInviteLabel}</span>
+        {sendInviteLabel}
       </Button>
     );
   }
 
   return (
-    <Button
-      variant="outline"
-      disabled={!hasEmail}
-      onClick={onContact}
-      className={cn(
-        "h-[30px] w-[108px] shrink-0 rounded-lg",
-        hasEmail
-          ? "border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:border-blue-300"
-          : "border-slate-200 bg-slate-50 text-slate-400 opacity-55",
-      )}
-    >
+    <Button variant="outline" size="sm" disabled={!hasEmail} onClick={onContact}>
       <Mail size={14} />
-      <span className="text-[12px] font-semibold whitespace-nowrap">{contactLabel}</span>
+      {contactLabel}
     </Button>
   );
 });
