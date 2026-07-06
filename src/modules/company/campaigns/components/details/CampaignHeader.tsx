@@ -2,7 +2,7 @@ import React, { memo, useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import {
   ArrowLeft, Trash2, Pencil, Play, Pause, Square, Calendar, TriangleAlert, Megaphone, MoreVertical,
-  Link2, Lock, EyeOff, Eye, Users, CalendarPlus,
+  Link2, Lock, EyeOff, Eye, Users, CalendarPlus, Copy, Check,
 } from "lucide-react";
 import {
   Tooltip, TooltipContent, TooltipTrigger, TooltipProvider,
@@ -12,9 +12,12 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/modules/shared/ui/shadcn/dropdown-menu";
 import { Card } from "@/modules/shared/ui/shadcn/card";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Campaign, CampaignStatus } from "@/modules/company/campaigns/types/campaign";
 import { STATUS_COLORS, STATUS_TRANSITIONS, CAMPAIGN_TYPES } from "@/modules/shared/constants/campaign";
 import { daysLeft } from "@/utils/functions";
+import { buildCampaignSessionUrl } from "@/lib/campaignSession";
+import { useToast } from "@/hooks/useToast";
 import ConfirmStatusChangeDialog from "./ConfirmStatusChangeDialog";
 import { useTranslation } from "react-i18next";
 
@@ -51,9 +54,11 @@ const CampaignHeader: React.FC<Props> = memo(({
 }) => {
   const router = useRouter();
   const { t, i18n } = useTranslation("dashboard");
+  const { showToast } = useToast();
   const tp = "pages.campaigns.detail";
   const cp = "pages.campaigns.card";
   const [pendingStatus, setPendingStatus] = useState<CampaignStatus | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const resolvedBackLabel = backLabel ?? t(`${tp}.back_company`);
 
@@ -63,6 +68,19 @@ const CampaignHeader: React.FC<Props> = memo(({
     if (pendingStatus) onChangeStatus?.(campaign._id, pendingStatus);
     setPendingStatus(null);
   }, [onChangeStatus, campaign._id, pendingStatus]);
+
+  const handleCopyLink = useCallback(async () => {
+    if (!campaign.linkToken) return;
+    const url = `${window.location.origin}${buildCampaignSessionUrl(campaign._id, campaign.linkToken)}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      showToast({ message: t(`${tp}.link_copied`), severity: "success" });
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      showToast({ message: t(`${tp}.link_copy_failed`), severity: "error" });
+    }
+  }, [campaign._id, campaign.linkToken, showToast, t, tp]);
 
   const sc             = useMemo(() => STATUS_COLORS[campaign.status] ?? STATUS_COLORS.DRAFT, [campaign.status]);
   const typeEntry      = useMemo(() => CAMPAIGN_TYPES.find((ct) => ct.value === campaign.type), [campaign.type]);
@@ -251,6 +269,25 @@ const CampaignHeader: React.FC<Props> = memo(({
               </div>
             </div>
           </div>
+
+          {campaign.accessMethod === "LINK" && campaign.linkToken && (
+            <div className="flex justify-end mt-4">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant={linkCopied ? "default" : "outline"}
+                    size="sm"
+                    onClick={handleCopyLink}
+                  >
+                    {linkCopied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+                    {linkCopied ? t(`${tp}.link_copied`) : t(`${tp}.copy_link_button`)}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{t(`${tp}.copy_link_tooltip`)}</TooltipContent>
+              </Tooltip>
+            </div>
+          )}
         </div>
 
         {pendingStatus && (

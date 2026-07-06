@@ -65,13 +65,20 @@ exports.createInternalCampaign = async (req, res) => {
       skill: skill || "", linkToken, createdBy: req.actualUser?._id || req.user._id,
     });
 
-    if (Array.isArray(participants) && participants.length > 0) {
+    // No explicit selection = "allow all": enroll every employee currently in the company.
+    let employeeIds = Array.isArray(participants) ? participants : [];
+    if (employeeIds.length === 0) {
+      const allMemberships = await CompanyMembership.find({ company: companyId }).select("user").lean();
+      employeeIds = allMemberships.map((m) => m.user?.toString()).filter(Boolean);
+    }
+
+    if (employeeIds.length > 0) {
       try {
         const isAnonymous = campaign.anonymityMode === "ANONYMOUS";
-        const users = await User.find({ _id: { $in: participants } }).select("_id email");
+        const users = await User.find({ _id: { $in: employeeIds } }).select("_id email");
         const userEmailMap = users.reduce((acc, u) => { acc[u._id.toString()] = u.email; return acc; }, {});
 
-        const participantData = participants.map((employeeId) => ({
+        const participantData = employeeIds.map((employeeId) => ({
           campaign: campaign._id,
           employee: employeeId,
           email: userEmailMap[employeeId.toString()] || null,

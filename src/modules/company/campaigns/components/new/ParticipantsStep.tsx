@@ -109,18 +109,13 @@ const ParticipantsStep = memo<ParticipantsStepProps>(({ selected, onChange }) =>
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Info banner */}
-      <div className="flex items-center gap-3 p-3.5 rounded-xl bg-primary/5 border border-primary/15">
-        <Users className="size-4.5 text-primary shrink-0" />
-        <p className="text-[13px] text-foreground/80 flex-1">
-          Select the employees who can participate. Leave empty to allow all.
-        </p>
-        {selected.length > 0 && (
-          <span className="inline-flex items-center h-6 px-2.5 rounded-full text-[11px] font-bold bg-primary text-primary-foreground shrink-0 ml-auto">
+      {selected.length > 0 && (
+        <div className="flex justify-end">
+          <span className="inline-flex items-center h-6 px-2.5 rounded-full text-[11px] font-bold bg-primary text-primary-foreground shrink-0">
             {selected.length} selected
           </span>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Filter bar */}
       <EmployeesFilterBar

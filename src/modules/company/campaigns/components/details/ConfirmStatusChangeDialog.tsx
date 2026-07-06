@@ -21,6 +21,7 @@ interface Props {
   targetStatus: CampaignStatus;
   onClose: () => void;
   onConfirm: () => void;
+  loading?: boolean;
 }
 
 const pRoot = "pages.campaigns";
@@ -38,7 +39,7 @@ const STATUS_DESC_KEY: Partial<Record<CampaignStatus, string>> = {
 };
 
 const ConfirmStatusChangeDialog: React.FC<Props> = memo(({
-  open, campaignTitle, currentStatus, targetStatus, onClose, onConfirm,
+  open, campaignTitle, currentStatus, targetStatus, onClose, onConfirm, loading = false,
 }) => {
   const { t } = useTranslation("dashboard");
   const p = `${pRoot}.modals.status`;
@@ -52,7 +53,7 @@ const ConfirmStatusChangeDialog: React.FC<Props> = memo(({
   const targetLabel = t(`${pRoot}.status.${targetStatus}`);
 
   return (
-    <Dialog open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
+    <Dialog open={open} onOpenChange={(next) => { if (!next && !loading) onClose(); }}>
       <DialogContent className="p-0 gap-0 overflow-hidden rounded-2xl sm:max-w-xs shadow-2xl">
         <div className="flex items-center gap-3 pl-6 pr-10 pt-6 pb-3">
           <div
@@ -101,12 +102,13 @@ const ConfirmStatusChangeDialog: React.FC<Props> = memo(({
         </div>
 
         <DialogFooter className="px-6 pb-6 pt-4 gap-2 sm:justify-end">
-          <Button type="button" variant="ghost" onClick={onClose}>
+          <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
             {t(`${p}.cancel`)}
           </Button>
           <Button
             type="button"
             onClick={onConfirm}
+            loading={loading}
             className="text-white hover:brightness-95"
             style={{ background: sColor?.fg }}
           >

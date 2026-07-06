@@ -174,14 +174,35 @@ const EditCampaignModal = memo<Props>(({ open, campaign, onClose, onSaved }) => 
                 })}
               </div>
 
-              {moduleChanged && (
+              {moduleChanged ? (
                 <div className="flex items-start gap-2 mt-1 px-2.5 py-2 rounded-lg bg-amber-50 border border-amber-200">
                   <TriangleAlert className="size-3.5 text-amber-600 shrink-0 mt-0.5" />
                   <p className="text-[11.5px] text-amber-900 leading-relaxed">
-                    <Trans i18nKey="pages.campaigns.detail.edit_modal.module_change_warning" components={{ strong: <strong /> }} />
+                    <Trans i18nKey="pages.campaigns.detail.edit_modal.module_change_warning" ns="dashboard" components={{ strong: <strong /> }} />
                   </p>
                 </div>
-              )}
+              ) : campaign.module?.type === "QUESTIONNAIRE" && campaign.module.config ? (
+                <div className="mt-1 rounded-xl border border-border bg-muted/20 p-3">
+                  <p className="text-[11px] font-semibold text-muted-foreground mb-1.5">
+                    {t(`${m}.current_questions`, { count: campaign.module.config.questions.length })}
+                  </p>
+                  <div className="divide-y divide-border/50 max-h-40 overflow-y-auto pr-1">
+                    {campaign.module.config.questions.map((q, i) => (
+                      <div key={i} className="flex items-start gap-2 py-1.5 first:pt-0 last:pb-0">
+                        <span className="text-[11px] font-semibold text-muted-foreground/50 w-4 shrink-0">{i + 1}</span>
+                        <span className="text-[12px] text-foreground/80 leading-snug">{q.question}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : campaign.module?.type === "AI_INTERVIEW" && campaign.module.config?.agentPrompt ? (
+                <div className="mt-1 rounded-xl border border-border bg-muted/20 p-3">
+                  <p className="text-[11px] font-semibold text-muted-foreground mb-1.5">{t(`${m}.current_prompt`)}</p>
+                  <p className="text-[12px] text-foreground/75 leading-relaxed line-clamp-6 whitespace-pre-wrap border-l-2 border-border pl-2.5">
+                    {campaign.module.config.agentPrompt}
+                  </p>
+                </div>
+              ) : null}
             </div>
 
             <div className="flex flex-col gap-1.5">

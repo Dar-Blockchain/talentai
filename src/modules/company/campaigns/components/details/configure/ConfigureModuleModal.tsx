@@ -23,6 +23,7 @@ interface Props {
   currentConfig: CampaignModule["config"];
   onClose: () => void;
   onSave: (campaignId: string, moduleType: ModuleType, config: AnyConfig) => void;
+  loading?: boolean;
 }
 
 // ─── Default configs ──────────────────────────────────────────────────────────
@@ -43,6 +44,7 @@ const ConfigureModuleModal = memo<Props>(({
   currentConfig,
   onClose,
   onSave,
+  loading = false,
 }) => {
   const { t } = useTranslation("dashboard");
   const d = "pages.campaigns.detail";
@@ -81,7 +83,7 @@ const ConfigureModuleModal = memo<Props>(({
   const moduleDesc  = moduleType ? t(`pages.campaigns.module_description.${moduleType}`) : "";
 
   return (
-    <Dialog open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
+    <Dialog open={open} onOpenChange={(next) => { if (!next && !loading) onClose(); }}>
       <DialogContent
         className="p-0 gap-0 overflow-hidden rounded-2xl sm:max-w-lg shadow-2xl"
       >
@@ -142,10 +144,10 @@ const ConfigureModuleModal = memo<Props>(({
 
         {/* Actions */}
         <DialogFooter className="px-6 py-4 gap-2 sm:justify-end">
-          <Button type="button" variant="ghost" onClick={onClose}>
+          <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
             {t(`${d}.edit_modal.cancel`)}
           </Button>
-          <Button type="button" disabled={!isValid} onClick={handleSave}>
+          <Button type="button" disabled={!isValid} loading={loading} onClick={handleSave}>
             {t(`${d}.save_configuration`)}
           </Button>
         </DialogFooter>

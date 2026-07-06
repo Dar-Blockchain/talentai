@@ -100,9 +100,10 @@ interface ParticipantCardProps {
   participant: CampaignParticipant;
   onRemove?: (id: string) => void;
   removing?: boolean;
+  hideStatus?: boolean;
 }
 
-const ParticipantCard = memo<ParticipantCardProps>(({ participant: p, onRemove, removing }) => {
+const ParticipantCard = memo<ParticipantCardProps>(({ participant: p, onRemove, removing, hideStatus }) => {
   const router = useRouter();
   const { t } = useTranslation("dashboard");
   const pp = "pages.campaigns.detail.participants";
@@ -196,7 +197,9 @@ const ParticipantCard = memo<ParticipantCardProps>(({ participant: p, onRemove, 
       </span>
 
       <div className="flex items-center justify-between gap-2">
-        {sc ? (
+        {hideStatus ? (
+          <span />
+        ) : sc ? (
           <span
             className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border"
             style={{ background: sc.bg, borderColor: sc.border }}
@@ -542,11 +545,12 @@ AddParticipantDialog.displayName = "AddParticipantDialog";
 
 interface Props { campaignId: string; mode?: "company" | "employee"; anonymityMode?: string }
 
-const CampaignParticipantsTab = memo<Props>(({ campaignId, mode = "company" }) => {
+const CampaignParticipantsTab = memo<Props>(({ campaignId, mode = "company", anonymityMode }) => {
   const { t } = useTranslation("dashboard");
   const pp = "pages.campaigns.detail.participants";
 
   const isCompany = mode === "company";
+  const isAnonymous = anonymityMode === "ANONYMOUS";
 
   const [search,          setSearch]          = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -606,58 +610,70 @@ const CampaignParticipantsTab = memo<Props>(({ campaignId, mode = "company" }) =
         <div className="flex items-center justify-between gap-3 flex-wrap">
 
           <div className="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={clearStatusFilter}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border cursor-pointer transition-colors ${
-                !statusFilter ? "bg-primary/10 border-primary/30" : "bg-muted/40 border-border hover:bg-muted/60"
-              }`}
-            >
-              <Users className="size-[13px] text-muted-foreground" />
-              <span className="text-xs font-bold text-foreground">{loading ? "…" : total}</span>
-              <span className="text-[11px] text-muted-foreground">{t(`${pp}.toolbar_total`)}</span>
-            </button>
-            {(["COMPLETED", "IN_PROGRESS", "INVITED", "DROPPED"] as ParticipantStatus[]).map((s) => {
-              const count = statusCounts?.[s] ?? 0;
-              if (!count && statusFilter !== s) return null;
-              const sc = PARTICIPANT_STATUS_META[s];
-              const active = statusFilter === s;
-              return (
+            {isAnonymous ? (
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border bg-muted/40 border-border">
+                <Users className="size-[13px] text-muted-foreground" />
+                <span className="text-xs font-bold text-foreground">{loading ? "…" : total}</span>
+                <span className="text-[11px] text-muted-foreground">{t(`${pp}.toolbar_total`)}</span>
+              </span>
+            ) : (
+              <>
                 <button
-                  key={s}
                   type="button"
-                  onClick={() => toggleStatusFilter(s)}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border cursor-pointer transition-all"
-                  style={{
-                    background: active ? sc.color : sc.bg,
-                    borderColor: active ? sc.color : sc.border,
-                    boxShadow: active ? `0 0 0 2px ${sc.color}30` : undefined,
-                  }}
+                  onClick={clearStatusFilter}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border cursor-pointer transition-colors ${
+                    !statusFilter ? "bg-primary/10 border-primary/30" : "bg-muted/40 border-border hover:bg-muted/60"
+                  }`}
                 >
-                  <span className="size-1.5 rounded-full" style={{ background: active ? "#fff" : sc.color }} />
-                  <span className="text-[11px] font-bold" style={{ color: active ? "#fff" : sc.color }}>
-                    {count} {t(`${pp}.participant_status.${s}`)}
-                  </span>
+                  <Users className="size-[13px] text-muted-foreground" />
+                  <span className="text-xs font-bold text-foreground">{loading ? "…" : total}</span>
+                  <span className="text-[11px] text-muted-foreground">{t(`${pp}.toolbar_total`)}</span>
                 </button>
-              );
-            })}
+                {(["COMPLETED", "IN_PROGRESS", "INVITED", "DROPPED"] as ParticipantStatus[]).map((s) => {
+                  const count = statusCounts?.[s] ?? 0;
+                  if (!count && statusFilter !== s) return null;
+                  const sc = PARTICIPANT_STATUS_META[s];
+                  const active = statusFilter === s;
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => toggleStatusFilter(s)}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border cursor-pointer transition-all"
+                      style={{
+                        background: active ? sc.color : sc.bg,
+                        borderColor: active ? sc.color : sc.border,
+                        boxShadow: active ? `0 0 0 2px ${sc.color}30` : undefined,
+                      }}
+                    >
+                      <span className="size-1.5 rounded-full" style={{ background: active ? "#fff" : sc.color }} />
+                      <span className="text-[11px] font-bold" style={{ color: active ? "#fff" : sc.color }}>
+                        {count} {t(`${pp}.participant_status.${s}`)}
+                      </span>
+                    </button>
+                  );
+                })}
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
-            <Select
-              value={statusFilter || "__all__"}
-              onValueChange={(v) => selectStatusFilter(v === "__all__" ? "" : (v as ParticipantStatus))}
-            >
-              <SelectTrigger size="sm" className="min-w-[150px] bg-background">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">{t(`${pp}.all_statuses`)}</SelectItem>
-                {(["INVITED", "IN_PROGRESS", "COMPLETED", "DROPPED"] as ParticipantStatus[]).map((s) => (
-                  <SelectItem key={s} value={s}>{t(`${pp}.participant_status.${s}`)}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {!isAnonymous && (
+              <Select
+                value={statusFilter || "__all__"}
+                onValueChange={(v) => selectStatusFilter(v === "__all__" ? "" : (v as ParticipantStatus))}
+              >
+                <SelectTrigger size="sm" className="min-w-[150px] bg-background">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">{t(`${pp}.all_statuses`)}</SelectItem>
+                  {(["INVITED", "IN_PROGRESS", "COMPLETED", "DROPPED"] as ParticipantStatus[]).map((s) => (
+                    <SelectItem key={s} value={s}>{t(`${pp}.participant_status.${s}`)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
             <div className="flex items-center bg-background border border-border rounded-xl px-3 py-1.5 min-w-[220px] shadow-sm">
               <Search className="size-[15px] text-muted-foreground shrink-0 mr-2" />
@@ -711,6 +727,7 @@ const CampaignParticipantsTab = memo<Props>(({ campaignId, mode = "company" }) =
                 participant={p}
                 onRemove={isCompany ? handleRemoveParticipant : undefined}
                 removing={removingId === p._id}
+                hideStatus={isAnonymous}
               />
             ))}
           </div>

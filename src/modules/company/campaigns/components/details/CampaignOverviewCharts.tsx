@@ -137,20 +137,34 @@ const ModuleConfigPanel: React.FC<{ campaign: Campaign; moduleColor: string }> =
           {t(`${op}.questions_count`, { count: questions.length })}
         </p>
         <div className="divide-y divide-border/50 max-h-52 overflow-y-auto pr-1">
-          {questions.map((q, i) => (
-            <div key={i} className="flex items-start gap-2.5 py-2 first:pt-0 last:pb-0">
-              <span className="mt-0.5 shrink-0 text-[11px] font-semibold tabular-nums text-muted-foreground/50 w-4">
-                {i + 1}
-              </span>
-              <span className="flex-1 text-[12.5px] text-foreground/85 leading-snug">{q.question}</span>
-              <span
-                className="shrink-0 text-[10.5px] font-semibold capitalize"
-                style={{ color: typeColor[q.type] ?? "#6B7280" }}
-              >
-                {q.type.replace("_", " ").toLowerCase()}
-              </span>
-            </div>
-          ))}
+          {questions.map((q, i) => {
+            const hasOptions = (q.type === "SINGLE_CHOICE" || q.type === "MULTIPLE_CHOICE") && (q.options?.length ?? 0) > 0;
+            return (
+              <div key={i} className="py-2 first:pt-0 last:pb-0">
+                <div className="flex items-start gap-2.5">
+                  <span className="mt-0.5 shrink-0 text-[11px] font-semibold tabular-nums text-muted-foreground/50 w-4">
+                    {i + 1}
+                  </span>
+                  <span className="flex-1 text-[12.5px] text-foreground/85 leading-snug">{q.question}</span>
+                  <span
+                    className="shrink-0 text-[10.5px] font-semibold capitalize"
+                    style={{ color: typeColor[q.type] ?? "#6B7280" }}
+                  >
+                    {q.type.replace("_", " ").toLowerCase()}
+                  </span>
+                </div>
+                {hasOptions && (
+                  <div className="flex flex-wrap gap-1.5 mt-1.5 pl-[26px]">
+                    {q.options!.map((opt, oi) => (
+                      <span key={oi} className="text-[11px] text-muted-foreground bg-muted/50 rounded-md px-1.5 py-0.5">
+                        {opt}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     );

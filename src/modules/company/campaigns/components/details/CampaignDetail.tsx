@@ -12,6 +12,7 @@ import {
   ParticipantStatus,
 } from "@/modules/company/campaigns/types/campaign";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/modules/shared/ui/shadcn/tabs";
+import { cn } from "@/lib/utils";
 import CampaignHeader from "./CampaignHeader";
 import CampaignOverviewCharts from "./CampaignOverviewCharts";
 import CampaignParticipantsTab from "./CampaignParticipantsTab";
@@ -45,15 +46,17 @@ interface Props {
   campaign: Campaign;
   mode?: "company" | "employee";
   onDelete?: (id: string, title: string) => void;
-  onChangeStatus?: (id: string, status: CampaignStatus) => void;
+  onChangeStatus?: (id: string, status: CampaignStatus) => void | Promise<void>;
   onSaveModuleConfig?: (
     campaignId: string,
     moduleType: ModuleType,
     config: NonNullable<CampaignModule["config"]>,
-  ) => void;
+  ) => void | Promise<void>;
   canEdit?: boolean;
   canDelete?: boolean;
   canPublish?: boolean;
+  statusLoading?: boolean;
+  configLoading?: boolean;
 }
 
 const CampaignDetail: React.FC<Props> = memo(
@@ -66,6 +69,8 @@ const CampaignDetail: React.FC<Props> = memo(
     canEdit = true,
     canDelete = true,
     canPublish = true,
+    statusLoading = false,
+    configLoading = false,
   }) => {
     const { t } = useTranslation("dashboard");
     const tp = "pages.campaigns.detail";
@@ -103,18 +108,18 @@ const CampaignDetail: React.FC<Props> = memo(
       () => onDelete?.(campaign._id, campaign.title),
       [onDelete, campaign._id, campaign.title],
     );
-    const handleActivateConfirm = useCallback(() => {
-      onChangeStatus?.(campaign._id, "ACTIVE");
+    const handleActivateConfirm = useCallback(async () => {
+      await onChangeStatus?.(campaign._id, "ACTIVE");
       setPendingActivate(false);
     }, [onChangeStatus, campaign._id]);
 
     const handleSaveConfig = useCallback(
-      (
+      async (
         campaignId: string,
         moduleType: ModuleType,
         config: NonNullable<CampaignModule["config"]>,
       ) => {
-        onSaveModuleConfig?.(campaignId, moduleType, config);
+        await onSaveModuleConfig?.(campaignId, moduleType, config);
         setConfigureModuleType(null);
       },
       [onSaveModuleConfig],
@@ -333,14 +338,21 @@ const CampaignDetail: React.FC<Props> = memo(
                 <p className="text-[11.5px] leading-relaxed" style={{ color: moduleConfigured ? "#166534" : "#78350F" }}>
                   {moduleConfigured ? t(`${tp}.setup_step1_desc_done`) : t(`${tp}.setup_step1_desc_pending`)}
                 </p>
-                {!moduleConfigured && campaign.module?.type && canEdit && (
+                {campaign.module?.type && canEdit && (
                   <button
                     type="button"
                     onClick={() => openConfigureModule(campaign.module!.type)}
-                    className="self-start mt-0.5 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg cursor-pointer bg-amber-200/70 border border-amber-300 hover:bg-amber-300/70 transition-colors"
+                    className={cn(
+                      "self-start mt-0.5 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg cursor-pointer border transition-colors",
+                      moduleConfigured
+                        ? "bg-green-100/70 border-green-300 hover:bg-green-200/70"
+                        : "bg-amber-200/70 border-amber-300 hover:bg-amber-300/70",
+                    )}
                   >
-                    <SlidersHorizontal className="size-3 text-amber-700" />
-                    <span className="text-xs font-bold text-amber-700">{t(`${tp}.setup_configure_now`)}</span>
+                    <SlidersHorizontal className={cn("size-3", moduleConfigured ? "text-green-700" : "text-amber-700")} />
+                    <span className={cn("text-xs font-bold", moduleConfigured ? "text-green-700" : "text-amber-700")}>
+                      {moduleConfigured ? t(`${tp}.setup_edit_configuration`) : t(`${tp}.setup_configure_now`)}
+                    </span>
                   </button>
                 )}
               </div>
@@ -464,6 +476,7 @@ const CampaignDetail: React.FC<Props> = memo(
               currentConfig={currentModuleConfig}
               onClose={closeConfig}
               onSave={handleSaveConfig}
+              loading={configLoading}
             />
             <ConfirmStatusChangeDialog
               open={pendingActivate}
@@ -472,6 +485,7 @@ const CampaignDetail: React.FC<Props> = memo(
               targetStatus="ACTIVE"
               onClose={closePending}
               onConfirm={handleActivateConfirm}
+              loading={statusLoading}
             />
           </>
         )}
