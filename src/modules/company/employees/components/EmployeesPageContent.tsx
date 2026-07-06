@@ -16,7 +16,7 @@ const EmployeesPageContent: React.FC = memo(() => {
   const { t } = useTranslation("dashboard");
 
   const {
-    members, pageTotal, loading, error,
+    members, pageTotal, loading, fetchingMembers, error,
     invitations, fetchingInvitations, stats, fetchingStats,
     departments, active, owners,
     canInvite, canAssignRoles, canRemove, canManagePerms,
@@ -77,6 +77,7 @@ const EmployeesPageContent: React.FC = memo(() => {
           <EmployeesList
             members={members}
             loading={loading}
+            fetchingMembers={fetchingMembers}
             error={error}
             search={search}
             onSearchChange={handleSearchChange}

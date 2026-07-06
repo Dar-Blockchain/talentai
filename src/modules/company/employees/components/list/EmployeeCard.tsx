@@ -5,14 +5,14 @@ import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 import {
   MessageCircle, Pencil, Trash2, ExternalLink, MoreVertical,
-  Calendar, Building2,
+  Calendar, Building2, Mail,
 } from "lucide-react";
 import { RootState } from "@/store/store";
 import { useStartTeamChat } from "@/modules/chat/team-chat";
 import { ROLES } from "@/modules/shared/constants/employee";
 import { getRoleLabel } from "@/modules/company/employees/utils/employeeRoleI18n";
 import type { ExtendedMember } from "@/modules/company/employees/types";
-import { PURPLE, ROLE_STYLES, pickPalette } from "@/modules/company/employees/constants";
+import { PURPLE, ROLE_STYLES } from "@/modules/company/employees/constants";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -74,7 +74,6 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({
 
   const email   = member.email ?? "";
   const letter  = name[0]?.toUpperCase() ?? "U";
-  const palette = useMemo(() => pickPalette(email || name), [email, name]);
 
   const roleStr   = member.role as string;
   const roleEntry = useMemo(() => ROLES.find((r) => r.value === roleStr || r.value === roleStr.toLowerCase()), [roleStr]);
@@ -106,139 +105,124 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({
     >
       <div
         onClick={handleSelect}
-        className="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-[20px] border border-[#E8EAED] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.05)] transition-all duration-[240ms] cubic-bezier-[.4,0,.2,1] hover:-translate-y-[5px] hover:shadow-[0_16px_40px_rgba(0,0,0,0.10)]"
+        className={cn(
+          "group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-[#EEF0F3] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 ease-out hover:-translate-y-[3px] hover:border-transparent hover:shadow-[0_20px_40px_-8px_rgba(15,23,42,0.16)]",
+          menuOpen && "blur-[1.5px] shadow-[0_20px_40px_-8px_rgba(15,23,42,0.16)]",
+        )}
       >
-        {/* Actions menu */}
-        <div className="absolute top-3 right-3 z-10" onClick={(e) => e.stopPropagation()}>
-          <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-            <DropdownMenuTrigger asChild>
-              <button
-                aria-label={t("pages.employees.card.actions_menu")}
-                className="flex size-7 items-center justify-center rounded-lg border border-[#E8EAED] bg-white/96 text-[#64748B] shadow-[0_2px_8px_rgba(15,23,42,0.08)] transition-colors hover:bg-[#F8FAFC]"
-              >
-                <MoreVertical className="size-[18px]" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[188px] rounded-[14px] border-[#E8EAED] shadow-[0_16px_40px_rgba(15,23,42,0.12)]">
-              {canMessage && (
-                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleMessage(); }} className="gap-2">
-                  <MessageCircle className="size-[18px] text-teal-600" />
-                  <span className="text-[13px] font-semibold">{t("pages.employees.card.message")}</span>
+        {/* Top row: status pill + menu */}
+        <div className="relative flex items-center justify-between">
+          <div
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1"
+            style={{ backgroundColor: status.bg }}
+          >
+            <div className="size-[7px] rounded-full" style={{ backgroundColor: status.dot }} />
+            <span className="text-[11.5px] font-bold" style={{ color: status.color }}>{status.label}</span>
+          </div>
+
+          <div onClick={(e) => e.stopPropagation()}>
+            <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+              <DropdownMenuTrigger asChild>
+                <button
+                  aria-label={t("pages.employees.card.actions_menu")}
+                  className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-[#94A3B8] transition-all duration-150 hover:bg-[#F8FAFC] hover:text-[#475569] data-[state=open]:bg-[#F8FAFC] data-[state=open]:opacity-100"
+                >
+                  <MoreVertical className="size-[18px]" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[188px] rounded-[14px] border-[#E8EAED] shadow-[0_16px_40px_rgba(15,23,42,0.12)]">
+                {canMessage && (
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleMessage(); }} className="cursor-pointer gap-2">
+                    <MessageCircle className="size-[18px] text-teal-600" />
+                    <span className="text-[13px] font-semibold">{t("pages.employees.card.message")}</span>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleView(); }} className="cursor-pointer gap-2">
+                  <ExternalLink className="size-[18px] text-[#64748B]" />
+                  <span className="text-[13px] font-semibold">{t("pages.employees.card.view")}</span>
                 </DropdownMenuItem>
-              )}
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleView(); }} className="gap-2">
-                <ExternalLink className="size-[18px] text-[#64748B]" />
-                <span className="text-[13px] font-semibold">{t("pages.employees.card.view")}</span>
-              </DropdownMenuItem>
-              {canAssignRoles && (
-                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(); }} className="gap-2">
-                  <Pencil className="size-[18px]" style={{ color: PURPLE }} />
-                  <span className="text-[13px] font-semibold">{t("pages.employees.card.edit")}</span>
-                </DropdownMenuItem>
-              )}
-              {canRemove && (
-                <DropdownMenuItem variant="destructive" onClick={(e) => { e.stopPropagation(); handleDelete(); }} className="gap-2">
-                  <Trash2 className="size-[18px] text-red-600" />
-                  <span className="text-[13px] font-semibold text-red-600">{t("pages.employees.card.tooltip_remove")}</span>
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                {canAssignRoles && (
+                  <DropdownMenuItem
+                    onClick={(e) => { e.stopPropagation(); handleEdit(); }}
+                    className="cursor-pointer gap-2 hover:bg-(--edit-hover-bg) focus:bg-(--edit-hover-bg)"
+                    style={{ ["--edit-hover-bg" as string]: `${PURPLE}14` }}
+                  >
+                    <Pencil className="size-[18px]" style={{ color: PURPLE }} />
+                    <span className="text-[13px] font-semibold">{t("pages.employees.card.edit")}</span>
+                  </DropdownMenuItem>
+                )}
+                {canRemove && (
+                  <DropdownMenuItem variant="destructive" onClick={(e) => { e.stopPropagation(); handleDelete(); }} className="cursor-pointer gap-2">
+                    <Trash2 className="size-[18px] text-red-600" />
+                    <span className="text-[13px] font-semibold text-red-600">{t("pages.employees.card.tooltip_remove")}</span>
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
-        {/* Color strip */}
-        <div
-          className="h-1 opacity-60 transition-opacity duration-[240ms] group-hover:opacity-100"
-          style={{ background: `linear-gradient(90deg, ${palette.from}, ${palette.to})` }}
-        />
-
-        {/* Header */}
-        <div
-          className="flex flex-col items-center gap-1.5 px-2.5 pt-2.5 pb-2"
-          style={{ background: `radial-gradient(ellipse 160% 100% at 50% 0%, ${palette.from}0A 0%, transparent 65%)` }}
-        >
-          {/* Avatar ring */}
-          <div className="relative mt-0.5">
-            <div
-              className="flex size-[76px] items-center justify-center rounded-full p-[2.5px]"
-              style={{
-                background: `linear-gradient(145deg, ${palette.from}, ${palette.to})`,
-                boxShadow: `0 6px 20px ${palette.to}40`,
-              }}
-            >
-              <div
-                className="flex size-[71px] items-center justify-center rounded-full text-[1.55rem] font-extrabold text-white"
-                style={{ background: `linear-gradient(145deg, ${palette.from}CC, ${palette.to})` }}
-              >
-                {letter}
-              </div>
-            </div>
-            <div
-              className="absolute right-[3px] bottom-[3px] size-[14px] rounded-full border-[2.5px] border-white shadow-[0_1px_4px_rgba(0,0,0,0.15)]"
-              style={{ backgroundColor: status.dot }}
-            />
-          </div>
-
-          <div className="w-full px-0.5 text-center">
-            <p className="truncate text-[15px] font-bold leading-[1.3] text-[#0F172A]">{name}</p>
-            <p className="mt-[3px] truncate text-[11.5px] tracking-[0.01em] text-[#94A3B8]">{email}</p>
-          </div>
-
-          {/* Role pill */}
+        {/* Centered avatar + identity */}
+        <div className="relative mt-4 flex flex-col items-center text-center">
           <div
-            className="inline-flex items-center gap-[6px] rounded-full border-[1.5px] px-[10px] py-[5px]"
-            style={{ backgroundColor: `${roleColor}10`, borderColor: `${roleColor}25` }}
+            className="flex size-20 items-center justify-center rounded-full text-2xl font-extrabold text-white"
+            style={{ backgroundColor: PURPLE, boxShadow: `0 8px 20px -6px ${PURPLE}80` }}
           >
+            {letter}
+          </div>
+
+          <p title={name} className="mt-3 max-w-full truncate text-[16px] font-bold leading-tight text-[#0F172A]">
+            {name}
+          </p>
+          <div className="mt-1 inline-flex max-w-full items-center gap-1.5">
             {RoleIcon && (
-              <span className="flex items-center" style={{ color: roleColor }}>
-                <RoleIcon style={{ fontSize: 12 }} />
+              <span className="flex shrink-0 items-center" style={{ color: roleColor }}>
+                <RoleIcon size={14} />
               </span>
             )}
-            <span className="text-[11.5px] font-bold tracking-[0.01em]" style={{ color: roleColor }}>
+            <span className="truncate text-[13px] font-semibold" style={{ color: roleColor }}>
               {roleLabel}
             </span>
           </div>
         </div>
 
-        <div className="mx-2.5 h-px bg-[#F1F5F9]" />
-
-        {/* Body */}
-        <div className="flex flex-1 flex-col gap-1.5 px-2.5 pt-[14px] pb-2">
-          {/* Department */}
-          <div
-            onClick={handleDeptClick}
-            className={cn(
-              "flex items-center gap-[6px] rounded-[10px] border px-[10px] py-[7px] transition-all duration-150",
-              dept ? "border-[#E8EAED] bg-[#F8FAFC]" : "border-[#F1F5F9] bg-transparent",
-              member.department?._id && "cursor-pointer hover:border-[#C7D2FE] hover:bg-[#EEF2FF]",
-            )}
-          >
-            <Building2 className={cn("size-[13px] shrink-0", dept ? "text-[#94A3B8]" : "text-[#CBD5E1]")} />
-            <span
-              className={cn(
-                "truncate text-xs font-semibold",
-                dept ? "text-[#475569]" : "italic text-[#CBD5E1]",
-              )}
-            >
-              {dept ?? t("pages.employees.card.no_department")}
-            </span>
-          </div>
-
-          {/* Footer */}
-          <div className="mt-auto flex items-center justify-between">
-            <div
-              className="inline-flex items-center gap-[5px] rounded-full px-2 py-[3px]"
-              style={{ backgroundColor: status.bg }}
-            >
-              <div className="size-[5px] rounded-full" style={{ backgroundColor: status.dot }} />
-              <span className="text-[10.5px] font-bold" style={{ color: status.color }}>{status.label}</span>
+        {/* Info panel */}
+        <div className="relative mt-4 rounded-xl bg-[#F8FAFC] px-4 py-3.5">
+          <div className="flex flex-col gap-2.5">
+            <div>
+              <p className="text-[10.5px] font-semibold uppercase tracking-wide text-[#94A3B8]">
+                {t("pages.employees.card.label_department", "Department")}
+              </p>
+              <div
+                onClick={handleDeptClick}
+                title={dept ?? undefined}
+                className={cn(
+                  "mt-1 flex items-start gap-1.5 text-[12.5px] font-bold leading-snug",
+                  dept ? "text-[#334155]" : "italic text-[#CBD5E1]",
+                  member.department?._id && "cursor-pointer hover:underline",
+                )}
+              >
+                <Building2 className="mt-px size-3 shrink-0 text-[#94A3B8]" />
+                <span className="wrap-break-word">{dept ?? t("pages.employees.card.no_department")}</span>
+              </div>
             </div>
+
             {joinedDate && (
-              <div className="flex items-center gap-[3px]">
-                <Calendar className="size-[10px] text-[#CBD5E1]" />
-                <span className="text-[10.5px] font-medium text-[#CBD5E1]">{joinedDate}</span>
+              <div>
+                <p className="text-[10.5px] font-semibold uppercase tracking-wide text-[#94A3B8]">
+                  {t("pages.employees.card.label_joined", "Joined")}
+                </p>
+                <div className="mt-1 flex items-center gap-1.5 text-[12.5px] font-bold text-[#334155]">
+                  <Calendar className="size-3 shrink-0 text-[#94A3B8]" />
+                  <span>{joinedDate}</span>
+                </div>
               </div>
             )}
+          </div>
+
+          <div className="mt-3 flex items-center gap-2 border-t border-[#EEF0F3] pt-3">
+            <Mail className="size-3.5 shrink-0 text-[#94A3B8]" />
+            <span title={email} className="truncate text-[12.5px] font-medium text-[#64748B]">{email}</span>
           </div>
         </div>
       </div>

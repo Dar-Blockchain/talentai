@@ -30,7 +30,7 @@ const SortSelect: React.FC<Props> = memo(({ value, onChange }) => {
 
   return (
     <Select value={value} onValueChange={handleChange}>
-      <SelectTrigger className="h-full min-h-[36px] rounded-none border-none bg-transparent shadow-none focus:ring-0 px-3 text-[13px] font-semibold text-[#374151] [&>svg]:size-3.5 [&>svg]:text-[#9CA3AF]">
+      <SelectTrigger className="h-full min-h-[36px] w-fit shrink-0 rounded-none border-none bg-transparent shadow-none focus:ring-0 px-3 text-[13px] font-semibold text-[#374151] [&>svg]:size-3.5 [&>svg]:text-[#9CA3AF]">
         <span className="flex items-center gap-1.5">
           <ArrowUpDown className="size-[14px] text-[#9CA3AF]" />
           <SelectValue>{labels[value]}</SelectValue>

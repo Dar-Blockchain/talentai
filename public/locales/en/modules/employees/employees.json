@@ -11,9 +11,12 @@
   "cancel_error": "Failed to cancel invitation",
   "toast_invite_failed": "Failed to send invitation",
   "header": {
-    "total": "Total",
-    "employees": "Employees",
-    "invitations": "Invitations"
+    "total": "Team Size",
+    "total_hint": "Active employees + pending invitations",
+    "employees": "Active Employees",
+    "employees_hint": "Members who joined your team",
+    "invitations": "Pending Invitations",
+    "invitations_hint": "Invites sent, not yet accepted"
   },
   "list": {
     "tab_employees": "Employees",
@@ -76,6 +79,7 @@
     "invited_as": "Invited as",
     "resend": "Resend",
     "resending": "Sending…",
+    "resend_available_in": "Available in {{time}}",
     "cancel": "Cancel"
   },
   "modals": {

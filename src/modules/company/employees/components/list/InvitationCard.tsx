@@ -1,5 +1,5 @@
-import React, { memo, useState, useCallback, useMemo } from "react";
-import { Send, Trash2 } from "lucide-react";
+import React, { memo, useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { Send, Trash2, Mail } from "lucide-react";
 import { Invitation } from "@/modules/company/employees/types/employee";
 import { ROLES } from "@/modules/shared/constants/employee";
 import { ROLE_STYLES } from "./EmployeeCard";
@@ -8,6 +8,17 @@ import { useTranslation } from "react-i18next";
 import { AMBER } from "./constants";
 import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
 import { cn } from "@/lib/utils";
+
+const RESEND_COOLDOWN_MS = 48 * 60 * 60 * 1000;
+
+function formatRemaining(ms: number): string {
+  const hours = Math.ceil(ms / (60 * 60 * 1000));
+  if (hours >= 24) {
+    const days = Math.ceil(hours / 24);
+    return `${days}d`;
+  }
+  return `${hours}h`;
+}
 
 interface Props {
   invitation: Invitation;
@@ -19,6 +30,23 @@ const InvitationCard: React.FC<Props> = memo(({ invitation, onResend, onCancel }
   const { t, i18n } = useTranslation("dashboard");
   const [busy, setBusy] = useState(false);
   const [busyAction, setBusyAction] = useState<"resend" | "cancel" | null>(null);
+  const busyRef = useRef(false);
+  const storageKey = `invite_last_resend_${invitation._id}`;
+
+  const [lastResendAt, setLastResendAt] = useState<number>(() => {
+    const stored = typeof window !== "undefined" ? window.localStorage.getItem(storageKey) : null;
+    if (stored) return Number(stored);
+    return invitation.createdAt ? new Date(invitation.createdAt).getTime() : 0;
+  });
+
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const cooldownRemainingMs = Math.max(0, lastResendAt + RESEND_COOLDOWN_MS - now);
+  const canResend = cooldownRemainingMs <= 0;
 
   const roleEntry = useMemo(() =>
     ROLES.find((r) => r.value === invitation.role || r.value === invitation.role?.toLowerCase()),
@@ -44,116 +72,123 @@ const InvitationCard: React.FC<Props> = memo(({ invitation, onResend, onCancel }
   [invitation.createdAt, i18n.language]);
 
   const handleResend = useCallback(async () => {
+    if (busyRef.current || !canResend) return;
+    busyRef.current = true;
     setBusy(true); setBusyAction("resend");
-    try { await onResend(invitation._id); } finally { setBusy(false); setBusyAction(null); }
-  }, [invitation._id, onResend]);
+    try {
+      await onResend(invitation._id);
+      const ts = Date.now();
+      window.localStorage.setItem(storageKey, String(ts));
+      setLastResendAt(ts);
+    } finally {
+      setBusy(false); setBusyAction(null); busyRef.current = false;
+    }
+  }, [invitation._id, onResend, canResend, storageKey]);
 
   const handleCancel = useCallback(async () => {
+    if (busyRef.current) return;
+    busyRef.current = true;
     setBusy(true); setBusyAction("cancel");
-    try { await onCancel(invitation._id); } finally { setBusy(false); setBusyAction(null); }
+    try { await onCancel(invitation._id); } finally { setBusy(false); setBusyAction(null); busyRef.current = false; }
   }, [invitation._id, onCancel]);
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[18px] border border-[#EBEBEB] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-[220ms] hover:-translate-y-[3px] hover:border-[#D8D8DC] hover:shadow-[0_8px_28px_rgba(0,0,0,0.08)]">
+    <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-[#EEF0F3] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 ease-out hover:-translate-y-[3px] hover:border-transparent hover:shadow-[0_20px_40px_-8px_rgba(15,23,42,0.16)]">
 
-      {/* Header */}
-      <div className="relative flex flex-col items-center gap-1.5 rounded-t-[18px] border-b border-[#EBEBEB] bg-[#F7F7F8] px-2.5 pt-[14px] pb-5">
-        {/* Pending badge */}
-        <div className="absolute top-2.5 right-2.5 flex items-center gap-1 rounded-full border border-[#F5E5A8] bg-[#FEF9EC] px-2 py-[3px]">
-          <span className="size-[5px] animate-pulse rounded-full bg-[#C9920A]" />
-          <span className="text-[10px] font-bold tracking-[0.03em] text-[#A87000]">
+      {/* Top row: pending pill */}
+      <div className="relative flex items-center justify-between">
+        <div className="inline-flex items-center gap-1.5 rounded-full bg-[#FEF9EC] px-2.5 py-[3px]">
+          <span className="size-[6px] animate-pulse rounded-full bg-[#C9920A]" />
+          <span className="text-[10.5px] font-bold text-[#A87000]">
             {t("pages.employees.invitation.pending")}
           </span>
         </div>
+        {sentDate && (
+          <span className="text-[10.5px] font-medium text-[#B0B7C3]">
+            {t("pages.employees.invitation.sent", { date: sentDate })}
+          </span>
+        )}
+      </div>
 
-        {/* Avatar */}
-        <div className="relative mt-4">
-          <div
-            className="flex size-16 items-center justify-center rounded-full text-[1.35rem] font-extrabold text-white shadow-[0_4px_14px_rgba(0,0,0,0.10)]"
-            style={{ background: "linear-gradient(145deg, #F5D78A, #C9920A)" }}
-          >
-            {letter}
-          </div>
-          <div className="absolute right-0.5 bottom-0.5 size-3 rounded-full border-[2.5px] border-[#F7F7F8] bg-[#FEF9EC]" />
+      {/* Centered avatar + identity */}
+      <div className="relative mt-3 flex flex-col items-center text-center">
+        <div
+          className="flex size-14 items-center justify-center rounded-full text-lg font-extrabold text-white"
+          style={{
+            background: "linear-gradient(145deg, #F5D78A, #C9920A)",
+            boxShadow: "0 6px 16px -6px rgba(201,146,10,0.5)",
+          }}
+        >
+          {letter}
         </div>
 
-        {/* Email */}
-        <div className="w-full px-0.5 text-center">
-          <p className="truncate text-sm font-bold leading-[1.35] text-[#1A1A2E]">{invitation.email}</p>
-          {sentDate && (
-            <p className="mt-[3px] text-xs tracking-[0.01em] text-[#B0B7C3]">
-              {t("pages.employees.invitation.sent", { date: sentDate })}
-            </p>
+        <p title={invitation.email} className="mt-2.5 flex max-w-full items-center gap-1.5 truncate text-[13.5px] font-bold leading-tight text-[#0F172A]">
+          <Mail className="size-3 shrink-0 text-[#94A3B8]" />
+          <span className="truncate">{invitation.email}</span>
+        </p>
+        <div className="mt-1 inline-flex max-w-full items-center gap-1.5">
+          {RoleIcon && (
+            <span className="flex shrink-0 items-center" style={{ color: roleStyle.color }}>
+              <RoleIcon size={13} />
+            </span>
           )}
+          <span className="truncate text-[12px] font-semibold" style={{ color: roleStyle.color }}>
+            {roleLabel}
+          </span>
         </div>
       </div>
 
-      {/* Body */}
-      <div className="flex flex-1 flex-col gap-4 px-2.5 pt-4 pb-5">
-        {/* Role */}
-        <div className="flex flex-col gap-[3px] rounded-xl border border-[#EBEBEB] bg-[#F7F7F8] px-3 py-[10px]">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[#B0B7C3]">
-            {t("pages.employees.invitation.invited_as")}
-          </span>
-          <div className="flex items-center gap-1">
-            {RoleIcon && (
-              <span className="flex items-center" style={{ color: roleStyle.color }}>
-                <RoleIcon style={{ fontSize: 12 }} />
-              </span>
-            )}
-            <span className="text-[12.5px] font-bold text-[#374151]">{roleLabel}</span>
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="mt-auto flex gap-2 border-t border-[#F3F4F6] pt-[14px]">
-          <button
-            onClick={!busy ? handleResend : undefined}
-            disabled={busy}
+      {/* Actions */}
+      <div className="relative mt-3.5 flex gap-2 border-t border-[#F1F5F9] pt-3.5">
+        <button
+          onClick={!busy && canResend ? handleResend : undefined}
+          disabled={busy || !canResend}
+          title={!canResend ? t("pages.employees.invitation.resend_available_in", { time: formatRemaining(cooldownRemainingMs) }) : undefined}
+          className={cn(
+            "flex flex-1 items-center justify-center gap-1.5 rounded-xl border py-2 transition-all duration-150",
+            busyAction === "resend"
+              ? "cursor-default border-[#C7D2FE] bg-[#EEF2FF]"
+              : "border-[#E5E7EB] bg-[#F8FAFC]",
+            !busy && canResend && "cursor-pointer hover:border-[#D1D5DB] hover:bg-[#F1F5F9]",
+            (busy && busyAction !== "resend") || !canResend ? "cursor-default opacity-45" : "",
+          )}
+        >
+          <Spinner
             className={cn(
-              "flex flex-1 items-center justify-center gap-[5px] rounded-[10px] border py-[7px] transition-all duration-150",
-              busyAction === "resend"
-                ? "cursor-default border-[#C7D2FE] bg-[#EEF2FF]"
-                : "border-[#E5E7EB] bg-[#F3F4F6]",
-              !busy && "cursor-pointer hover:border-[#D1D5DB] hover:bg-[#EAECF0]",
-              busy && busyAction !== "resend" && "opacity-45 cursor-default",
+              "size-3 transition-opacity duration-150",
+              busyAction === "resend" ? "opacity-100 text-[#6366F1]" : "size-0 opacity-0",
             )}
-          >
-            <Spinner
-              className={cn(
-                "size-3 transition-opacity duration-150",
-                busyAction === "resend" ? "opacity-100 text-[#6366F1]" : "opacity-0 size-0",
-              )}
-            />
-            {busyAction !== "resend" && <Send className="size-[13px] text-[#6B7280]" />}
-            <span className={cn(
-              "text-xs font-semibold transition-colors",
-              busyAction === "resend" ? "text-[#6366F1]" : "text-[#374151]",
-            )}>
-              {busyAction === "resend"
-                ? t("pages.employees.invitation.resending")
+          />
+          {busyAction !== "resend" && <Send className="size-[13px] text-[#6B7280]" />}
+          <span className={cn(
+            "text-xs font-semibold transition-colors",
+            busyAction === "resend" ? "text-[#6366F1]" : "text-[#374151]",
+          )}>
+            {busyAction === "resend"
+              ? t("pages.employees.invitation.resending")
+              : !canResend
+                ? t("pages.employees.invitation.resend_available_in", { time: formatRemaining(cooldownRemainingMs) })
                 : t("pages.employees.invitation.resend")}
-            </span>
-          </button>
+          </span>
+        </button>
 
-          <button
-            onClick={!busy ? handleCancel : undefined}
-            disabled={busy && busyAction !== "cancel"}
-            className={cn(
-              "flex flex-1 items-center justify-center gap-[5px] rounded-[10px] border border-[#FBDADA] bg-[#FDF2F2] py-[7px] transition-all duration-150",
-              !busy && "cursor-pointer hover:border-[#F5C6C6] hover:bg-[#FAE8E8]",
-              busy && busyAction !== "cancel" && "opacity-45 cursor-default",
-            )}
-          >
-            {busy && busyAction === "cancel"
-              ? <Spinner className="size-3 text-[#B45454]" />
-              : <Trash2 className="size-[13px] text-[#B45454]" />
-            }
-            <span className="text-xs font-semibold text-[#B45454]">
-              {t("pages.employees.invitation.cancel")}
-            </span>
-          </button>
-        </div>
+        <button
+          onClick={!busy ? handleCancel : undefined}
+          disabled={busy && busyAction !== "cancel"}
+          className={cn(
+            "flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-red-100 bg-red-50 py-2 transition-all duration-150",
+            !busy && "hover:border-red-200 hover:bg-red-100",
+            busy && busyAction !== "cancel" && "cursor-default opacity-45",
+          )}
+        >
+          {busy && busyAction === "cancel"
+            ? <Spinner className="size-3 text-red-600" />
+            : <Trash2 className="size-[13px] text-red-600" />
+          }
+          <span className="text-xs font-semibold text-red-600">
+            {t("pages.employees.invitation.cancel")}
+          </span>
+        </button>
       </div>
     </div>
   );
