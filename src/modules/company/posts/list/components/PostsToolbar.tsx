@@ -192,24 +192,19 @@ const PostsToolbar: React.FC<PostsToolbarProps> = ({
           <Box sx={{ width: "1px", height: 22, bgcolor: "#E5E7EB", mx: 0.25 }} />
 
           {/* New post button */}
-          <Tooltip title={postsAtLimit ? t("limit_tooltip", { used: postsUsed, limit: postsLimit }) : ""} arrow disableHoverListener={!postsAtLimit}>
-            <span>
-              <AppButton
-                label={postsAtLimit ? t("limit_reached", { used: postsUsed, limit: postsLimit }) : t("new_post")}
-                variant="contained"
-                disabled={postsAtLimit}
-                startIcon={<AddOutlined sx={{ fontSize: 16 }} />}
-                onClick={onCreateClick}
-                size="small"
-                sx={{
-                  borderRadius: "10px", height: 36,
-                  background: `linear-gradient(135deg, ${TEAL} 0%, #0F766E 100%)`,
-                  boxShadow: `0 2px 8px ${TEAL}40`,
-                  "&:hover": { opacity: 0.9, boxShadow: `0 4px 14px ${TEAL}50`, background: `linear-gradient(135deg, ${TEAL} 0%, #0F766E 100%)` },
-                }}
-              />
-            </span>
-          </Tooltip>
+          <AppButton
+            label={t("new_post")}
+            variant="contained"
+            startIcon={<AddOutlined sx={{ fontSize: 16 }} />}
+            onClick={onCreateClick}
+            size="small"
+            sx={{
+              borderRadius: "10px", height: 36,
+              background: `linear-gradient(135deg, ${TEAL} 0%, #0F766E 100%)`,
+              boxShadow: `0 2px 8px ${TEAL}40`,
+              "&:hover": { opacity: 0.9, boxShadow: `0 4px 14px ${TEAL}50`, background: `linear-gradient(135deg, ${TEAL} 0%, #0F766E 100%)` },
+            }}
+          />
         </Box>
       </Box>
     </Box>
