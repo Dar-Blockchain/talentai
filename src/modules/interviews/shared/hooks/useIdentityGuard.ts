@@ -100,7 +100,7 @@ export const useIdentityGuard = ({
   const IDENTITY_WARN_TICKS = 2;      // ~5 s of consistent mismatch
   const IDENTITY_TERMINATE_TICKS = 5; // ~12 s of consistent mismatch
   const ENROLLMENT_SAMPLES = 5;       // average N good frames before locking reference
-  const ENROLLMENT_MIN_SCORE = 0.7;   // face-api detection confidence gate
+  const ENROLLMENT_MIN_SCORE = 0.55;  // face-api detection confidence gate — matches real-world webcam scores; detector already filters at 0.5
   const WARN_COOLDOWN_MS = 15_000;
 
   const stop = useCallback(() => {
