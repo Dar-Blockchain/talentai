@@ -335,12 +335,13 @@ const CandidateApplicationsList: React.FC = () => {
             </div>
 
             {hasActiveFilters && (
-              <button
+              <Button
+                variant="ghost"
                 onClick={clearFilters}
-                className="inline-flex items-center gap-1 text-[0.65rem] font-semibold text-danger hover:text-danger/80 transition-colors"
+                className="p-0 h-auto text-[0.65rem] font-semibold text-danger hover:bg-transparent hover:text-danger/80"
               >
                 <X className="size-3" /> Clear filters
-              </button>
+              </Button>
             )}
           </div>
         )}

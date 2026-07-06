@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Box, Button, Dialog, Typography } from "@mui/material";
+import { Box, Dialog, Typography } from "@mui/material";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import TranslateOutlined from "@mui/icons-material/Translate";
 import CheckOutlined from "@mui/icons-material/CheckOutlined";
 import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
@@ -147,20 +148,22 @@ const InterviewLanguageModal: React.FC<Props> = ({ open, languages, onConfirm, o
         )}
 
         {/* Actions */}
-        <Box sx={{ display: "flex", gap: 1.25 }}>
-          <Button onClick={onClose}
-            sx={{ textTransform: "none", fontWeight: 600, fontSize: "13px", borderRadius: "10px", height: 44, px: 2.5, color: "#6B7280", border: "1px solid #E5E7EB", flexShrink: 0, "&:hover": { bgcolor: "#F9FAFB", borderColor: "#D1D5DB" } }}>
+        <div className="flex gap-2.5">
+          <Button onClick={onClose} variant="outline" className="flex-1">
             {t('lang_modal.btn_back')}
           </Button>
 
-          <Button fullWidth variant="contained" endIcon={<ArrowForwardOutlined sx={{ fontSize: "15px !important" }} />}
+          <Button
             onClick={() => onConfirm(selected)}
-            sx={{ textTransform: "none", fontWeight: 700, fontSize: "13.5px", borderRadius: "10px", height: 44, bgcolor: TEAL, color: "#fff", boxShadow: "none", "&:hover": { bgcolor: "#0F766E", boxShadow: "0 4px 14px rgba(13,148,136,0.3)" } }}>
+            variant="default"
+            className="flex-1"
+          >
             {isMulti
               ? t('lang_modal.btn_start_in', { language: selectedMeta?.label ?? selected })
               : t('lang_modal.btn_start')}
+            <ArrowForwardOutlined sx={{ fontSize: "15px !important" }} />
           </Button>
-        </Box>
+        </div>
       </Box>
     </Dialog>
   );

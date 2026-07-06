@@ -7,6 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ApplicationSummaryItem } from "@/modules/company/applications/types";
 import { applicationsApi } from "@/modules/company/applications/api";
 import { ScoreCircle, DecisionButton } from "@/modules/shared/ui/shadcn/score-circle";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -39,30 +40,32 @@ const ActionButton = memo<ActionButtonProps>(({ isInvited, isVisited, hasEmail, 
 
   if (isVisited) {
     return (
-      <button
+      <Button
+        variant="outline"
         onClick={onInvite}
-        className="flex items-center justify-center gap-1 h-[30px] w-[108px] shrink-0 rounded-lg border border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100 hover:border-violet-300 transition-all duration-150 outline-none"
+        className="h-[30px] w-[108px] shrink-0 rounded-lg border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100 hover:border-violet-300"
       >
         <Video size={14} />
         <span className="text-[12px] font-semibold whitespace-nowrap">{sendInviteLabel}</span>
-      </button>
+      </Button>
     );
   }
 
   return (
-    <button
+    <Button
+      variant="outline"
       disabled={!hasEmail}
       onClick={onContact}
       className={cn(
-        "flex items-center justify-center gap-1 h-[30px] w-[108px] shrink-0 rounded-lg border transition-all duration-150 outline-none",
+        "h-[30px] w-[108px] shrink-0 rounded-lg",
         hasEmail
-          ? "border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:border-blue-300 cursor-pointer"
-          : "border-slate-200 bg-slate-50 text-slate-400 opacity-55 cursor-not-allowed",
+          ? "border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:border-blue-300"
+          : "border-slate-200 bg-slate-50 text-slate-400 opacity-55",
       )}
     >
       <Mail size={14} />
       <span className="text-[12px] font-semibold whitespace-nowrap">{contactLabel}</span>
-    </button>
+    </Button>
   );
 });
 ActionButton.displayName = "ActionButton";

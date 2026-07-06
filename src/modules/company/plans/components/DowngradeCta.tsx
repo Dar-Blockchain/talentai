@@ -2,7 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { ArrowDown } from "lucide-react";
 import { PlanLimit } from "@/store/slices/planLimitsSlice";
-import AppButton from "@/components/ui/AppButton";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 
 interface Props {
   plan: PlanLimit;
@@ -32,18 +32,15 @@ const DowngradeCta: React.FC<Props> = ({ plan, currentSubId, currentAutoRenew, c
   }
 
   return (
-    <AppButton
-      label={t("pages.subscription.card.downgrade_to", "Downgrade to this plan")}
-      variant="outlined" fullWidth disabled={checkingOut}
-      startIcon={<ArrowDown size={16} />}
+    <Button
+      variant="outline"
+      className="w-full border-amber-600 text-amber-600 hover:border-amber-700 hover:bg-amber-50 hover:text-amber-700"
+      disabled={checkingOut}
       onClick={() => onDowngrade(plan, currentSubId)}
-      sx={{
-        borderColor: "#D97706", color: "#D97706",
-        "&:hover": { bgcolor: "#FFFBEB", borderColor: "#B45309", color: "#B45309" },
-        fontWeight: 700, borderRadius: "10px", py: 1.1,
-        fontSize: "0.85rem", textTransform: "none",
-      }}
-    />
+    >
+      <ArrowDown size={16} />
+      {t("pages.subscription.card.downgrade_to", "Downgrade to this plan")}
+    </Button>
   );
 };
 

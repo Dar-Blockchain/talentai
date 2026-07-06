@@ -2,7 +2,7 @@ import React, { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Box, Dialog, DialogContent, DialogTitle, Typography } from "@mui/material";
 import DownloadOutlined from "@mui/icons-material/DownloadOutlined";
-import AppButton from "@/components/ui/AppButton";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { QRCodeCanvas } from "qrcode.react";
 
 interface Props {
@@ -36,13 +36,10 @@ const CardQrDialog: React.FC<Props> = ({ open, jobId, shareLink, onClose }) => {
             </Box>
           </Box>
           <Typography sx={{ fontSize: "12px", color: "#6B7280", textAlign: "center" }}>{t("card.qr.scan_hint")}</Typography>
-          <AppButton
-            label={t("card.qr.download")}
-            variant="outlined"
-            startIcon={<DownloadOutlined sx={{ fontSize: 16 }} />}
-            onClick={handleDownload}
-            sx={{ borderRadius: "10px" }}
-          />
+          <Button variant="outline" onClick={handleDownload}>
+            <DownloadOutlined sx={{ fontSize: 16 }} />
+            {t("card.qr.download")}
+          </Button>
         </Box>
       </DialogContent>
     </Dialog>

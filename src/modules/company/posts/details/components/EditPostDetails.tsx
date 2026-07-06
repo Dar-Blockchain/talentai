@@ -14,7 +14,7 @@ import { validateEditPost } from "@/validations/postValidation";
 import SalaryRange from "@/modules/company/posts/create/components/SalaryRange";
 import SkillEditorModal from "@/modules/company/posts/create/components/SkillEditorModal";
 import { contractTypes, experienceLevels, workModes } from "@/modules/company/posts/shared/constants";
-import AppButton from "@/components/ui/AppButton";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import EditSkillsSection from "./edit/EditSkillsSection";
 import EditThresholdScore from "./edit/EditThresholdScore";
 
@@ -312,18 +312,16 @@ const EditPostDetails: React.FC<Props> = ({ job, onCancel, onSaveSuccess }) => {
 
       {/* Actions */}
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 4, pt: 3, borderTop: "1px solid #E5E7EB" }}>
-        <AppButton
-          label="Cancel"
-          variant="text"
+        <Button
+          variant="ghost"
           onClick={() => { reset(getInitialValues(job)); onCancel(); }}
-          sx={{ color: "rgba(133,169,227,1)", "&:hover": { bgcolor: "transparent", color: "rgba(133,169,227,0.8)" } }}
-        />
-        <AppButton
-          label="Save"
-          variant="contained"
-          type="submit"
-          sx={{ height: "42px", width: "120px", borderRadius: "38px" }}
-        />
+          className="text-[rgba(133,169,227,1)] hover:bg-transparent hover:text-[rgba(133,169,227,0.8)]"
+        >
+          Cancel
+        </Button>
+        <Button variant="default" type="submit" className="h-[42px] w-[120px] rounded-[38px]">
+          Save
+        </Button>
       </Box>
     </Box>
   );

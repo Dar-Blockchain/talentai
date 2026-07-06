@@ -5,18 +5,20 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import { Card, CardContent } from "@/modules/shared/ui/shadcn/card";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { Badge } from "@/modules/shared/ui/shadcn/badge";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { cn } from "@/lib/utils";
 import { ADMIN_NEUTRAL, ADMIN_NEUTRAL_BG } from "../theme";
 
 /** Inline retry button shared by the card and table-row error states. */
 const AdminRetryButton = memo<{ onRetry: () => void }>(({ onRetry }) => (
-  <button
+  <Button
+    variant="ghost"
     onClick={onRetry}
-    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-700 hover:bg-slate-50"
   >
     <RefreshIcon style={{ fontSize: 14 }} />
     Retry
-  </button>
+  </Button>
 ));
 AdminRetryButton.displayName = "AdminRetryButton";
 

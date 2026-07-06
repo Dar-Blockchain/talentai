@@ -1,5 +1,6 @@
 import React from "react";
-import { Box, Button, Typography, LinearProgress, Tooltip, Avatar } from "@mui/material";
+import { Box, Typography, LinearProgress, Tooltip, Avatar } from "@mui/material";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { useTranslation } from "react-i18next";
 import dayjs from "@/lib/dayjs";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
@@ -161,15 +162,10 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({ assessment, onViewDetai
                 <Button
                   onClick={() => onContinueTest(assessment)}
                   disabled={quotaFull}
-                  startIcon={<PlayArrowOutlined sx={{ fontSize: "15px !important" }} />}
-                  sx={{
-                    textTransform: "none", fontWeight: 700, fontSize: "0.78rem",
-                    color: "#fff", bgcolor: "#7C3AED",
-                    borderRadius: "10px", px: 2, py: 0.8, boxShadow: "none", whiteSpace: "nowrap",
-                    "&:hover": { bgcolor: "#6D28D9", boxShadow: "0 4px 12px #7C3AED30" },
-                    "&.Mui-disabled": { bgcolor: "#E5E7EB", color: "#9CA3AF" },
-                  }}
+                  className="whitespace-nowrap rounded-[10px] px-4 py-2 text-[0.78rem] font-bold shadow-none"
+                  style={{ color: "#fff", backgroundColor: "#7C3AED" }}
                 >
+                  <PlayArrowOutlined sx={{ fontSize: "15px !important" }} />
                   {s("continue")}
                 </Button>
               </span>
@@ -177,17 +173,16 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({ assessment, onViewDetai
           ) : (
             <Button
               onClick={() => onViewDetails(assessment._id)}
-              endIcon={<OpenInNewOutlined sx={{ fontSize: "13px !important" }} />}
-              sx={{
-                textTransform: "none", fontWeight: 700, fontSize: "0.78rem",
+              variant="outline"
+              className="whitespace-nowrap rounded-[10px] px-4 py-2 text-[0.78rem] font-bold shadow-none"
+              style={{
                 color: completed ? "#059669" : "#6B7280",
-                bgcolor: completed ? "#ECFDF5" : "#F9FAFB",
-                border: `1px solid ${completed ? "#A7F3D0" : "#E5E7EB"}`,
-                borderRadius: "10px", px: 2, py: 0.8, boxShadow: "none", whiteSpace: "nowrap",
-                "&:hover": { bgcolor: completed ? "#D1FAE5" : "#F3F4F6" },
+                backgroundColor: completed ? "#ECFDF5" : "#F9FAFB",
+                borderColor: completed ? "#A7F3D0" : "#E5E7EB",
               }}
             >
               {s("view_report")}
+              <OpenInNewOutlined sx={{ fontSize: "13px !important" }} />
             </Button>
           )}
         </Box>

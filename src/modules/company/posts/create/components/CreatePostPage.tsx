@@ -1,5 +1,6 @@
 ﻿import React, { useState } from "react";
-import { Box, Button, CircularProgress } from "@mui/material";
+import { Box } from "@mui/material";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutlineOutlined";
 import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
@@ -66,23 +67,19 @@ const CreatePostPage: React.FC = () => {
         <Button
           onClick={handleBack}
           disabled={isFinishing}
-          sx={{ textTransform: "none", fontWeight: 600, fontSize: "13px", borderRadius: "10px", height: 42, px: 3, color: "#374151", border: "1px solid #D1D5DB", "&:hover": { bgcolor: "#F9FAFB", borderColor: "#9CA3AF" } }}
+          variant="outline"
+          className="h-[42px] rounded-[10px] px-6 text-[13px] font-semibold text-gray-700"
         >
           {t("create.btn_cancel")}
         </Button>
 
         <Button
-          variant="contained"
           onClick={() => setLangModalOpen(true)}
           disabled={!generatedPost || isFinishing}
-          sx={{ textTransform: "none", fontWeight: 700, fontSize: "13px", borderRadius: "10px", height: 42, px: 4, bgcolor: TEAL, color: "#fff", "&:hover": { bgcolor: "#0F766E" }, "&:disabled": { bgcolor: "#E5E7EB", color: "#9CA3AF" } }}
+          loading={isFinishing}
+          className="h-[42px] rounded-[10px] px-8 text-[13px] font-bold"
         >
-          {isFinishing ? (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <CircularProgress size={14} sx={{ color: "#9CA3AF" }} />
-              {t("create.btn_saving")}
-            </Box>
-          ) : t("create.btn_save_draft")}
+          {isFinishing ? t("create.btn_saving") : t("create.btn_save_draft")}
         </Button>
       </Box>
 

@@ -17,6 +17,7 @@ import {
   MoreVert as MoreIcon,
   Edit as EditIcon,
 } from "@mui/icons-material";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import WebinarSubmissionsDialog from "./WebinarSubmissionsDialog";
 import { adminWebinarApi } from "../api";
 import {
@@ -79,15 +80,15 @@ function QuestionEditor({ q, idx, onChange, onDelete, onMoveUp, onMoveDown, isFi
         <span className="w-6 h-6 rounded-md bg-teal-100 text-teal-700 text-[11px] font-black flex items-center justify-center shrink-0">{idx + 1}</span>
         <span className="text-[12px] font-bold text-slate-600 flex-1 truncate">{q.label_fr || <span className="text-slate-300 font-normal">Question {idx + 1}</span>}</span>
         <div className="flex items-center gap-0.5">
-          <button onClick={onMoveUp} disabled={isFirst} className="p-1 rounded hover:bg-slate-200 disabled:opacity-30 text-slate-400 transition-colors">
+          <Button variant="ghost" onClick={onMoveUp} disabled={isFirst} className="p-1 h-auto rounded hover:bg-slate-200 text-slate-400">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-          </button>
-          <button onClick={onMoveDown} disabled={isLast} className="p-1 rounded hover:bg-slate-200 disabled:opacity-30 text-slate-400 transition-colors">
+          </Button>
+          <Button variant="ghost" onClick={onMoveDown} disabled={isLast} className="p-1 h-auto rounded hover:bg-slate-200 text-slate-400">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <button onClick={onDelete} className="p-1 rounded hover:bg-red-100 text-slate-300 hover:text-red-500 transition-colors ml-1">
+          </Button>
+          <Button variant="ghost" onClick={onDelete} className="p-1 h-auto rounded hover:bg-red-100 text-slate-300 hover:text-red-500 ml-1">
             <CloseIcon sx={{ fontSize: 14 }} />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -127,18 +128,18 @@ function QuestionEditor({ q, idx, onChange, onDelete, onMoveUp, onMoveDown, isFi
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <p className="text-[10px] font-semibold text-slate-400">Options</p>
-              <button onClick={addOption} className="text-[10px] font-bold text-teal-600 hover:text-teal-700 flex items-center gap-0.5">
+              <Button variant="ghost" onClick={addOption} className="p-0 h-auto text-[10px] font-bold text-teal-600 hover:text-teal-700 hover:bg-transparent">
                 <AddIcon sx={{ fontSize: 12 }} /> Add option
-              </button>
+              </Button>
             </div>
             <div className="space-y-1.5">
               {q.options.map((opt, i) => (
                 <div key={i} className="flex items-center gap-1.5">
                   <input className={inp + " flex-1"} value={opt.label_fr} onChange={e => setOpt(i, "label_fr", e.target.value)} placeholder={`Option ${i + 1} (FR)`} />
                   <input className={inp + " flex-1"} value={opt.label_en} onChange={e => setOpt(i, "label_en", e.target.value)} placeholder={`Option ${i + 1} (EN)`} />
-                  <button onClick={() => delOpt(i)} className="p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors shrink-0">
+                  <Button variant="ghost" onClick={() => delOpt(i)} className="p-1 h-auto rounded hover:bg-red-50 text-slate-300 hover:text-red-400 shrink-0">
                     <CloseIcon sx={{ fontSize: 13 }} />
-                  </button>
+                  </Button>
                 </div>
               ))}
               {q.options.length === 0 && (
@@ -221,9 +222,9 @@ function WebinarFormDialog({
               {initial?.title ? `Edit — ${initial.title}` : "New Webinar"}
             </h2>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors">
+          <Button variant="ghost" onClick={onClose} className="p-1.5 h-auto rounded-lg hover:bg-slate-100 text-slate-400">
             <CloseIcon sx={{ fontSize: 18 }} />
-          </button>
+          </Button>
         </div>
 
         {/* Stepper */}
@@ -358,10 +359,10 @@ function WebinarFormDialog({
                   isFirst={idx === 0} isLast={idx === form.questions.length - 1}
                 />
               ))}
-              <button onClick={addQuestion}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-teal-200 text-teal-600 text-[13px] font-semibold hover:bg-teal-50 transition-colors">
+              <Button variant="outline" onClick={addQuestion}
+                className="w-full rounded-xl border-2 border-dashed border-teal-200 text-teal-600 text-[13px] font-semibold hover:bg-teal-50">
                 <AddIcon sx={{ fontSize: 16 }} /> Add question
-              </button>
+              </Button>
             </div>
           )}
 
@@ -370,27 +371,27 @@ function WebinarFormDialog({
 
       {/* ── Footer ── */}
       <div className="flex items-center justify-between gap-2 px-6 py-4 border-t border-slate-100 bg-slate-50/60">
-        <button onClick={onClose} className="px-4 py-2 rounded-xl border border-slate-200 text-[13px] font-semibold text-slate-500 hover:bg-slate-100 transition-colors">
+        <Button variant="outline" onClick={onClose} className="rounded-xl text-[13px] font-semibold text-slate-500">
           Cancel
-        </button>
+        </Button>
         <div className="flex items-center gap-2">
           {step > 0 && (
-            <button onClick={() => setStep(s => s - 1)}
-              className="px-4 py-2 rounded-xl border border-slate-200 text-[13px] font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
+            <Button variant="outline" onClick={() => setStep(s => s - 1)}
+              className="rounded-xl text-[13px] font-semibold text-slate-600">
               ← Back
-            </button>
+            </Button>
           )}
           {step < STEPS.length - 1 ? (
-            <button onClick={() => setStep(s => s + 1)} disabled={step === 0 && !canNext0}
-              className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:bg-slate-200 disabled:cursor-not-allowed text-white disabled:text-slate-400 text-[13px] font-bold transition-colors">
+            <Button variant="ghost" onClick={() => setStep(s => s + 1)} disabled={step === 0 && !canNext0}
+              className="rounded-xl bg-teal-600 hover:bg-teal-700 hover:text-white text-white text-[13px] font-bold">
               Next →
-            </button>
+            </Button>
           ) : (
-            <button onClick={() => onSave(form)} disabled={!canSave}
+            <Button variant="ghost" onClick={() => onSave(form)} disabled={!canSave}
               title={!canSave ? "Add a title and at least one question" : undefined}
-              className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:bg-slate-200 disabled:cursor-not-allowed text-white disabled:text-slate-400 text-[13px] font-bold transition-colors">
+              className="rounded-xl bg-teal-600 hover:bg-teal-700 hover:text-white text-white text-[13px] font-bold">
               Save webinar
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -408,7 +409,7 @@ function QuestionsDialog({ webinar, open, onClose }: {
       PaperProps={{ sx: { borderRadius: "16px" } }}>
       <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontWeight: 700, fontSize: "1rem" }}>
         <span>Questions — {webinar.title}</span>
-        <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors"><CloseIcon sx={{ fontSize: 18 }} /></button>
+        <Button variant="ghost" onClick={onClose} className="p-1 h-auto rounded-lg hover:bg-slate-100 text-slate-400"><CloseIcon sx={{ fontSize: 18 }} /></Button>
       </DialogTitle>
       <DialogContent dividers sx={{ p: 0 }}>
         {webinar.questions.length === 0 ? (
@@ -493,22 +494,22 @@ function WebinarCard({ w, onEdit, onSubs, onQuestions, onVerify, verifyPending, 
           {/* Primary actions */}
           <div className="flex items-center gap-1.5 shrink-0">
             {w.status === "draft" && (
-              <button onClick={onVerify} disabled={verifyPending}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-[12px] font-bold transition-colors disabled:opacity-40">
+              <Button variant="ghost" onClick={onVerify} disabled={verifyPending}
+                className="px-3 py-1.5 h-auto rounded-lg bg-teal-600 hover:bg-teal-700 hover:text-white text-white text-[12px] font-bold">
                 <VerifyIcon sx={{ fontSize: 13 }} /> Publish
-              </button>
+              </Button>
             )}
             {w.status === "active" && (
-              <button onClick={onSendLink} disabled={sendLinkPending}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-[12px] font-bold transition-colors disabled:opacity-40">
+              <Button variant="ghost" onClick={onSendLink} disabled={sendLinkPending}
+                className="px-3 py-1.5 h-auto rounded-lg bg-teal-600 hover:bg-teal-700 hover:text-white text-white text-[12px] font-bold">
                 {sendLinkPending ? <CircularProgress size={11} sx={{ color: "#fff" }} /> : <SendIcon sx={{ fontSize: 13 }} />}
                 Send link
-              </button>
+              </Button>
             )}
-            <button onClick={onEdit}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 text-[12px] font-semibold hover:bg-slate-50 transition-colors">
+            <Button variant="outline" onClick={onEdit}
+              className="px-3 py-1.5 h-auto rounded-lg text-slate-600 text-[12px] font-semibold">
               <EditIcon sx={{ fontSize: 13 }} /> Edit
-            </button>
+            </Button>
             <button onClick={e => setMenuAnchor(e.currentTarget)}
               className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50 transition-colors">
               <MoreIcon sx={{ fontSize: 16 }} />
@@ -554,10 +555,10 @@ function WebinarCard({ w, onEdit, onSubs, onQuestions, onVerify, verifyPending, 
               {" · "}{new Date(w.date).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
             </span>
           )}
-          <button onClick={onSubs}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 border border-indigo-100 text-[11px] text-indigo-600 font-bold hover:bg-indigo-100 transition-colors">
+          <Button variant="outline" onClick={onSubs}
+            className="px-2.5 py-1 h-auto rounded-lg bg-indigo-50 border-indigo-100 text-[11px] text-indigo-600 font-bold hover:bg-indigo-100">
             <PeopleIcon sx={{ fontSize: 11 }} /> {w.stats.total_registrations} inscrits
-          </button>
+          </Button>
           <span className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 border border-teal-100 text-[11px] text-teal-600 font-bold">
             ✓ {w.stats.total_completions} completed
           </span>
@@ -734,13 +735,14 @@ const WebinarManagement: React.FC = () => {
             </button>
           ))}
         </div>
-        <button
+        <Button
+          variant="ghost"
           onClick={() => { setEditTarget(null); setFormOpen(true); }}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-[13px] font-bold transition-colors shadow-sm"
+          className="rounded-xl bg-teal-600 hover:bg-teal-700 hover:text-white text-white text-[13px] font-bold shadow-sm"
         >
           <AddIcon sx={{ fontSize: 16 }} />
           New Webinar
-        </button>
+        </Button>
       </div>
 
       {/* Content */}

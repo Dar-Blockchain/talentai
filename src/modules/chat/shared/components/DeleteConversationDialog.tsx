@@ -5,11 +5,10 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
-  Button,
-  CircularProgress,
   useTheme,
   alpha,
 } from "@mui/material";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { useTranslation } from "react-i18next";
 
 interface DeleteConversationDialogProps {
@@ -32,7 +31,6 @@ const DeleteConversationDialog = memo(function DeleteConversationDialog({
 }: DeleteConversationDialogProps) {
   const { t } = useTranslation("shared/chat");
   const theme = useTheme();
-  const err = theme.palette.error;
   const handleClose = useCallback(() => {
     if (!isDeleting) onClose();
   }, [isDeleting, onClose]);
@@ -61,42 +59,17 @@ const DeleteConversationDialog = memo(function DeleteConversationDialog({
         </DialogContentText>
       </DialogContent>
       <DialogActions sx={{ px: 2.5, pb: 2, pt: 0.5, gap: 1 }}>
-        <Button
-          onClick={onClose}
-          disabled={isDeleting}
-          color="inherit"
-          sx={{
-            fontWeight: 600,
-            textTransform: "none",
-            borderRadius: 3,
-            px: 2,
-          }}
-        >
+        <Button onClick={onClose} disabled={isDeleting} variant="ghost" className="rounded-xl px-4 font-semibold">
           {t("delete_dialog.cancel")}
         </Button>
         <Button
           onClick={onConfirm}
           disabled={isDeleting}
-          variant="contained"
-          color="error"
-          disableElevation
-          sx={{
-            fontWeight: 700,
-            textTransform: "none",
-            borderRadius: 3,
-            px: 2.5,
-            minWidth: 120,
-            boxShadow: "none",
-            "&:hover": {
-              boxShadow: `0 4px 14px ${alpha(err.main, 0.35)}`,
-            },
-          }}
+          loading={isDeleting}
+          variant="destructive"
+          className="min-w-[120px] rounded-xl px-5 font-bold shadow-none"
         >
-          {isDeleting ? (
-            <CircularProgress size={20} color="inherit" thickness={4} />
-          ) : (
-            t("delete_dialog.delete")
-          )}
+          {t("delete_dialog.delete")}
         </Button>
       </DialogActions>
     </Dialog>

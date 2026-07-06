@@ -2,7 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { Box, Typography } from "@mui/material";
 import PublishOutlined from "@mui/icons-material/PublishOutlined";
-import AppButton from "@/components/ui/AppButton";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 
 interface Props {
   onPublish: (e: React.MouseEvent) => void;
@@ -22,12 +22,9 @@ const CardDraftBanner: React.FC<Props> = ({ onPublish }) => {
           <strong>{t("card.draft_banner.hidden")}</strong> — {t("card.draft_banner.action")}
         </Typography>
       </Box>
-      <AppButton
-        label={t("card.draft_banner.btn")}
-        size="xs"
-        variant="contained"
-        sx={{ bgcolor: "#D97706", "&:hover": { bgcolor: "#B45309" }, flexShrink: 0, borderRadius: "6px", boxShadow: "none" }}
-      />
+      <Button size="xs" variant="warning" className="shrink-0 shadow-none">
+        {t("card.draft_banner.btn")}
+      </Button>
     </Box>
   );
 };

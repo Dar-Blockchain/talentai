@@ -1,4 +1,3 @@
-export { default as AppButton } from "@/components/ui/AppButton";
 export { default as AppInput } from "./AppInput";
 export { default as AppSelect } from "./AppSelect";
 export { default as AppAutocomplete } from "./AppAutocomplete";

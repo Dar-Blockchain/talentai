@@ -2,7 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import Link from "next/link";
 import { Receipt } from "lucide-react";
-import AppButton from "@/components/ui/AppButton";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import MuiToast from "@/components/ui/Toast";
 import LoadingState from "@/modules/shared/ui/LoadingState";
 import { usePlans } from "@/modules/company/plans/hooks";
@@ -60,11 +60,10 @@ const PlansPage: NextPageWithLayout = function PlansPage() {
         ]}
         actions={
           <Link href="/company/billing">
-            <AppButton
-              label={t("pages.subscription.payment_history")}
-              variant="outlined"
-              startIcon={<Receipt size={18} />}
-            />
+            <Button variant="outline">
+              <Receipt size={18} />
+              {t("pages.subscription.payment_history")}
+            </Button>
           </Link>
         }
       />

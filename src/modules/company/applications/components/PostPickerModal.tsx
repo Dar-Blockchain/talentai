@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/modules/shared/ui/shadcn/dialog";
 import { Pagination } from "@/modules/shared/ui/shadcn/pagination";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { cn } from "@/lib/utils";
 
 // ─── PostRow ──────────────────────────────────────────────────────────────────
@@ -103,12 +104,13 @@ const PostPickerModal = memo<Props>(({ open, selectedId, onSelect, onClose }) =>
               <div className="text-[11px] text-slate-400">Select a job to filter applications</div>
             </div>
           </div>
-          <button
+          <Button
+            variant="ghost"
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
+            className="w-8 h-8 p-0 rounded-lg text-slate-500 hover:bg-slate-100"
           >
             <X size={18} />
-          </button>
+          </Button>
         </div>
 
         {/* Body */}

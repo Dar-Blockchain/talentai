@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box, Typography, IconButton, Button, Chip, Tabs, Tab,
+  Box, Typography, IconButton, Chip, Tabs, Tab,
   CircularProgress, Divider, Pagination, Dialog, DialogContent,
 } from '@mui/material';
+import { Button } from '@/modules/shared/ui/shadcn/button';
 import {
   CheckCircle as CheckCircleIcon,
   Info as InfoIcon,
@@ -103,28 +104,19 @@ const DeleteConfirmDialog: React.FC<{
           </Typography>
         </Box>
         <Divider sx={{ borderColor: '#F3F4F6' }} />
-        <Box sx={{ display: 'flex', gap: 1.5, px: 3.5, py: 3, bgcolor: '#FAFAFA' }}>
-          <Button fullWidth variant="outlined" onClick={onCancel} sx={{
-            textTransform: 'none', fontWeight: 600, fontSize: '0.9rem',
-            borderRadius: '12px', borderColor: '#E5E7EB', color: '#374151',
-            bgcolor: '#fff', py: 1.25,
-            '&:hover': { borderColor: '#D1D5DB', bgcolor: '#F9FAFB' },
-          }}>
+        <div className="flex gap-2 p-3">
+          <Button variant="outline" onClick={onCancel} className="flex-1">
             {s('btn_cancel')}
           </Button>
-          <Button fullWidth variant="contained" onClick={onConfirm}
-            startIcon={<DeleteForeverIcon sx={{ fontSize: '18px !important' }} />}
-            sx={{
-              textTransform: 'none', fontWeight: 700, fontSize: '0.9rem',
-              borderRadius: '12px', py: 1.25,
-              bgcolor: '#EF4444', color: '#fff',
-              boxShadow: '0 4px 14px rgba(239,68,68,0.35)',
-              border: '1px solid #EF4444',
-              '&:hover': { bgcolor: '#DC2626', boxShadow: '0 6px 20px rgba(239,68,68,0.45)', border: '1px solid #DC2626' },
-            }}>
+          <Button
+            variant="destructive"
+            onClick={onConfirm}
+            className="flex-1"
+          >
+            <DeleteForeverIcon sx={{ fontSize: '18px !important' }} />
             {s('btn_delete')}
           </Button>
-        </Box>
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -196,46 +188,41 @@ const CandidateNotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
     { label: s('stat_important'), value: importantCount,       color: '#D97706' },
   ];
 
-  const btnBase = { textTransform: 'none' as const, fontWeight: 600, fontSize: isPage ? 13 : '0.75rem' };
+  const actionButtonClass = `rounded-lg font-semibold ${isPage ? 'text-[13px]' : 'text-xs'}`;
 
   const actionButtons = currentList.length > 0 && (
     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
       {!isOnArchivedTab && unreadCount > 0 && (
-        <Button size="small" variant={isPage ? 'outlined' : 'text'}
-          startIcon={<MarkEmailReadIcon sx={{ fontSize: '14px !important' }} />}
+        <Button
+          size="sm"
+          variant={isPage ? 'outline' : 'ghost'}
           onClick={markAllAsRead}
-          sx={{
-            ...btnBase, color: T,
-            ...(isPage
-              ? { borderRadius: 2 }
-              : { bgcolor: TBG, border: `1px solid ${TBRD}`, borderRadius: '8px', px: 1.5, '&:hover': { bgcolor: '#CCFBF1' } }),
-          }}>
+          className={actionButtonClass}
+          style={{ color: T, ...(isPage ? {} : { backgroundColor: TBG, border: `1px solid ${TBRD}` }) }}
+        >
+          <MarkEmailReadIcon sx={{ fontSize: '14px !important' }} />
           {s('mark_all_read')}
         </Button>
       )}
       {!isOnArchivedTab && (
-        <Button size="small" variant={isPage ? 'outlined' : 'text'}
-          startIcon={<ArchiveIcon sx={{ fontSize: '14px !important' }} />}
+        <Button
+          size="sm"
+          variant={isPage ? 'outline' : 'ghost'}
           onClick={() => { archiveAll(); setPage(1); }}
-          sx={{
-            ...btnBase, color: '#6B7280',
-            ...(isPage
-              ? { borderRadius: 2, borderColor: '#E5E7EB' }
-              : { bgcolor: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '8px', px: 1.5, '&:hover': { bgcolor: '#F3F4F6' } }),
-          }}>
+          className={actionButtonClass}
+          style={{ color: '#6B7280', ...(isPage ? {} : { backgroundColor: '#F9FAFB', border: '1px solid #E5E7EB' }) }}
+        >
+          <ArchiveIcon sx={{ fontSize: '14px !important' }} />
           {s('archive_all')}
         </Button>
       )}
-      <Button size="small" variant="contained"
-        startIcon={<DeleteForeverIcon sx={{ fontSize: '14px !important' }} />}
+      <Button
+        size="sm"
+        variant="destructive"
         onClick={() => setConfirm({ open: true, type: 'all' })}
-        sx={{
-          ...btnBase,
-          bgcolor: '#EF4444', color: '#fff', boxShadow: 'none',
-          borderRadius: isPage ? 2 : '8px',
-          px: isPage ? undefined : 1.5,
-          '&:hover': { bgcolor: '#DC2626', boxShadow: 'none' },
-        }}>
+        className={`${actionButtonClass} shadow-none`}
+      >
+        <DeleteForeverIcon sx={{ fontSize: '14px !important' }} />
         {s('delete_all')}
       </Button>
     </Box>
@@ -303,18 +290,12 @@ const CandidateNotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
             <Typography sx={{ fontSize: '0.78rem', color: '#6B7280', lineHeight: 1.5 }}>{n.message}</Typography>
             {n.link && (
               <Button
-                size="small"
-                variant="contained"
-                endIcon={<ArrowForwardIcon sx={{ fontSize: '14px !important' }} />}
+                size="sm"
                 onClick={(e) => { e.stopPropagation(); if (!n.isRead) markAsRead(n.id); router.push(n.link!); }}
-                sx={{
-                  mt: 1, textTransform: 'none', fontWeight: 600, fontSize: '0.75rem',
-                  borderRadius: '8px', px: 1.5, py: 0.5, alignSelf: 'flex-start',
-                  bgcolor: T, color: '#fff', boxShadow: 'none',
-                  '&:hover': { bgcolor: '#0F766E', boxShadow: 'none' },
-                }}
+                className="mt-1 self-start rounded-lg px-3 py-1 text-xs font-semibold shadow-none"
               >
                 {getLinkLabel(n.link!)}
+                <ArrowForwardIcon sx={{ fontSize: '14px !important' }} />
               </Button>
             )}
           </Box>

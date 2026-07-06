@@ -1,5 +1,6 @@
 import React, { memo, useMemo } from "react";
-import { Box, Typography, Button, CircularProgress } from "@mui/material";
+import { Box, Typography, CircularProgress } from "@mui/material";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { motion } from "framer-motion";
 import TuneOutlined from "@mui/icons-material/TuneOutlined";
 import CheckOutlined from "@mui/icons-material/CheckOutlined";
@@ -33,23 +34,11 @@ const PermissionsTab: React.FC<PermissionsTabProps> = memo(({
   permissions, onChange,
   onSave, saving, saved, loading,
 }) => {
-  const saveBtnSx = useMemo(() => ({
-    textTransform: "none" as const, fontWeight: 700, borderRadius: "12px",
-    px: 3, py: 1, fontSize: "0.8125rem",
-    bgcolor: saved ? "#16A34A" : PURPLE,
+  const saveBtnStyle = useMemo(() => ({
+    backgroundColor: saved ? "#16A34A" : PURPLE,
     color: "#fff",
     boxShadow: `0 4px 14px ${saved ? "rgba(22,163,74,0.35)" : "rgba(131,16,255,0.3)"}`,
-    "&:hover": { bgcolor: saved ? "#15803D" : "#7209E6" },
-    "&.Mui-disabled": { bgcolor: "#E5E7EB", color: "#9CA3AF", boxShadow: "none" },
-    transition: "all 0.2s",
-    minWidth: 140,
   }), [saved]);
-
-  const saveIcon = saving
-    ? <CircularProgress size={14} sx={{ color: "#fff" }} />
-    : saved
-    ? <CheckOutlined sx={{ fontSize: 16 }} />
-    : undefined;
 
   if (isSelf) {
     return (
@@ -79,7 +68,15 @@ const PermissionsTab: React.FC<PermissionsTabProps> = memo(({
           </Typography>
         </Box>
 
-        <Button onClick={onSave} disabled={saving || loading} variant="contained" startIcon={saveIcon} sx={saveBtnSx}>
+        <Button
+          onClick={onSave}
+          disabled={saving || loading}
+          loading={saving}
+          variant="default"
+          className="min-w-[140px] rounded-xl px-6 py-2 text-[0.8125rem] font-bold shadow-none transition-all"
+          style={saveBtnStyle}
+        >
+          {!saving && saved && <CheckOutlined sx={{ fontSize: 16 }} />}
           {saving ? "Saving…" : saved ? "Saved!" : "Save Permissions"}
         </Button>
       </Box>

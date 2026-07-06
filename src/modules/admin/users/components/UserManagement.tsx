@@ -16,6 +16,7 @@ import { User, UserFilters } from '../types';
 import { usePagination } from '@/hooks/usePagination';
 import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
+import { Button } from '@/modules/shared/ui/shadcn/button';
 import { Avatar, AvatarFallback } from '@/modules/shared/ui/shadcn/avatar';
 import { Tabs, TabsList, TabsTrigger } from '@/modules/shared/ui/shadcn/tabs';
 import { Pagination } from '@/modules/shared/ui/shadcn/pagination';
@@ -124,19 +125,21 @@ const UserManagement: React.FC<UserManagementProps> = ({
               className="w-full text-[13px] outline-none placeholder:text-slate-400 bg-transparent"
             />
           </div>
-          <button
+          <Button
+            variant="ghost"
             onClick={handleApplyFilters}
-            className="rounded-lg px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:opacity-90"
+            className="rounded-lg px-4 py-2 text-[13px] font-semibold text-white hover:opacity-90 hover:text-white"
             style={{ backgroundColor: ADMIN_ACCENT }}
           >
             Search
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="ghost"
             onClick={handleResetFilters}
-            className="rounded-lg px-3 py-2 text-[13px] font-medium text-slate-500 hover:bg-slate-50 transition-colors"
+            className="rounded-lg px-3 py-2 text-[13px] font-medium text-slate-500"
           >
             Reset
-          </button>
+          </Button>
         </div>
         {/* Role Tabs */}
         <div className="px-4">

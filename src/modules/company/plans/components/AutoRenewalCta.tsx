@@ -1,7 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { BellOff } from "lucide-react";
-import AppButton from "@/components/ui/AppButton";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 
 interface Props {
   autoRenew: boolean;
@@ -16,18 +16,14 @@ const AutoRenewalCta: React.FC<Props> = ({ autoRenew, cancelling, subscriptionId
 
   if (autoRenew) {
     return (
-      <AppButton
-        label={t("pages.subscription.card.disable_auto_renewal")}
-        variant="outlined"
-        fullWidth
+      <Button
+        variant="outline"
+        className="w-full border-red-500 text-red-500 hover:border-red-600 hover:bg-red-50"
         loading={cancelling}
         onClick={() => onCancel(subscriptionId)}
-        sx={{
-          borderColor: "#EF4444", color: "#EF4444", fontWeight: 600,
-          borderRadius: "10px", py: 0.9, fontSize: "0.78rem",
-          "&:hover": { bgcolor: "#FEF2F2", borderColor: "#DC2626" },
-        }}
-      />
+      >
+        {t("pages.subscription.card.disable_auto_renewal")}
+      </Button>
     );
   }
 
@@ -42,17 +38,15 @@ const AutoRenewalCta: React.FC<Props> = ({ autoRenew, cancelling, subscriptionId
           {t("pages.subscription.card.wont_renew_detail")}
         </p>
       </div>
-      <AppButton
-        label={t("pages.subscription.card.reenable")}
-        variant="contained"
+      <Button
+        variant="warning"
+        size="sm"
         loading={cancelling}
         onClick={() => onReEnable(subscriptionId)}
-        sx={{
-          bgcolor: "#D97706", "&:hover": { bgcolor: "#B45309" },
-          fontWeight: 700, borderRadius: "8px", py: 0.4, px: 1.25,
-          fontSize: "0.68rem", minWidth: 0, flexShrink: 0,
-        }}
-      />
+        className="shrink-0"
+      >
+        {t("pages.subscription.card.reenable")}
+      </Button>
     </div>
   );
 };

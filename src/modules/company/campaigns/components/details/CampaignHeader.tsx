@@ -105,14 +105,14 @@ const CampaignHeader: React.FC<Props> = memo(({
         <div className="p-5 sm:p-6">
           {/* Nav row */}
           <div className="flex items-center justify-between mb-5">
-            <button
-              type="button"
+            <Button
+              variant="ghost"
               onClick={handleBack}
-              className="inline-flex items-center gap-1.5 cursor-pointer text-muted-foreground hover:text-foreground/70 transition-colors"
+              className="p-0 h-auto text-muted-foreground hover:bg-transparent hover:text-foreground/70"
             >
               <ArrowLeft className="size-[15px]" />
               <span className="text-[0.8rem] font-semibold">{resolvedBackLabel}</span>
-            </button>
+            </Button>
 
             {actionsNode ?? (
               (onEditClick || onChangeStatus || onDeleteClick) && (

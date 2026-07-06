@@ -84,12 +84,13 @@ export const IdentityGate: React.FC<Props> = ({
 
         <p className="text-center text-xs text-muted-foreground">
           Have an account?{' '}
-          <button
+          <Button
+            variant="ghost"
             onClick={onSignIn}
-            className="font-semibold hover:underline underline-offset-2 text-primary"
+            className="p-0 h-auto font-semibold hover:bg-transparent hover:underline underline-offset-2 text-primary"
           >
             Sign in instead
-          </button>
+          </Button>
         </p>
       </CardContent>
     </Card>

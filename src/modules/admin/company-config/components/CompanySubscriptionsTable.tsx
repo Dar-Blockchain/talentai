@@ -5,6 +5,7 @@ import {
 import SearchIcon from '@mui/icons-material/Search';
 import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
+import { Button } from '@/modules/shared/ui/shadcn/button';
 import { cn } from '@/lib/utils';
 import { ADMIN_TABLE_HEAD_CELL_SX, ADMIN_TABLE_ROW_SX, AdminTableErrorRow } from '@/modules/admin/shared';
 import { useCompanySubscriptionsQuery } from '../queries';
@@ -56,12 +57,13 @@ const CompanySubscriptionsTable: React.FC = () => {
               className="w-full text-[13px] outline-none placeholder:text-slate-400"
             />
           </div>
-          <button
+          <Button
+            variant="ghost"
             onClick={handleSearch}
-            className="rounded-lg px-4 py-2 text-[13px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+            className="rounded-lg px-4 py-2 text-[13px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 hover:text-white"
           >
             Search
-          </button>
+          </Button>
           <div className="flex-1" />
           <span className="text-[13px] text-slate-500">{total.toLocaleString()} subscribed companies</span>
         </div>

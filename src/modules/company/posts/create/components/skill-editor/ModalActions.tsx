@@ -1,4 +1,5 @@
-import { DialogActions, Button } from "@mui/material";
+import { DialogActions } from "@mui/material";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { useTranslation } from "react-i18next";
 
 interface Props {
@@ -16,34 +17,19 @@ const ModalActions = ({ mode, disabled, onClose, onSave }: Props) => {
   return (
     <DialogActions sx={{ p: 3, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
       <Button
-        variant="outlined"
+        variant="ghost"
         onClick={onClose}
-        sx={{
-          border: "none",
-          background: "none",
-          color: "rgba(133, 169, 227, 1)",
-          "&:hover": { background: "none", color: "rgba(133, 169, 227, 0.8)" },
-        }}
+        style={{ color: "rgba(133, 169, 227, 1)" }}
       >
         {t("create.post_form.skill_modal.cancel")}
       </Button>
 
       <Button
-        variant="outlined"
+        variant="outline"
         onClick={onSave}
         disabled={disabled}
-        sx={{
-          width: 130,
-          borderColor: "rgba(77, 217, 163, 1)",
-          color: "rgba(77, 217, 163, 1)",
-          fontWeight: 600,
-          borderRadius: "38px",
-          py: 1.5,
-          height: "42px",
-          textTransform: "none",
-          fontSize: "0.875rem",
-          "&:hover": { backgroundColor: "rgba(77, 217, 163, 0.08)" },
-        }}
+        className="h-[42px] w-[130px] rounded-[38px] text-sm font-semibold"
+        style={{ borderColor: "rgba(77, 217, 163, 1)", color: "rgba(77, 217, 163, 1)" }}
       >
         {t(confirmKey)}
       </Button>

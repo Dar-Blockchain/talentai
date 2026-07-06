@@ -5,12 +5,12 @@ import {
   DialogActions,
   Box,
   Typography,
-  Button,
   Chip,
   IconButton,
   LinearProgress,
   Tooltip,
 } from "@mui/material";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import CloseIcon from "@mui/icons-material/Close";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
@@ -431,20 +431,7 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
           gap: 1.5,
         }}
       >
-        <Button
-          onClick={onClose}
-          sx={{
-            textTransform: "none",
-            color: "rgba(100, 113, 131, 1)",
-            fontWeight: 500,
-            fontSize: "0.875rem",
-            borderRadius: "38px",
-            px: 3,
-            "&:hover": {
-              backgroundColor: "rgba(243, 245, 247, 1)",
-            },
-          }}
-        >
+        <Button onClick={onClose} variant="ghost" className="rounded-[38px] px-6 font-medium" style={{ color: "rgba(100, 113, 131, 1)" }}>
           Cancel
         </Button>
         <Tooltip
@@ -455,29 +442,11 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
           <span>
             <Button
               onClick={onStart}
-              variant="contained"
+              variant="secondary"
               disabled={quota >= 5}
-              startIcon={<PlayArrowIcon />}
-              sx={{
-                textTransform: "none",
-                backgroundColor: "rgba(189, 133, 255, 1)",
-                color: "white",
-                fontWeight: 600,
-                fontSize: "0.875rem",
-                borderRadius: "38px",
-                px: 3,
-                height: "42px",
-                boxShadow: "none",
-                "&:hover": {
-                  backgroundColor: "rgba(160, 100, 230, 1)",
-                  boxShadow: "none",
-                },
-                "&.Mui-disabled": {
-                  backgroundColor: "rgba(189, 133, 255, 0.3)",
-                  color: "rgba(255, 255, 255, 0.6)",
-                },
-              }}
+              className="h-[42px] rounded-[38px] px-6 font-semibold shadow-none"
             >
+              <PlayArrowIcon />
               Start {stepLabel}
             </Button>
           </span>

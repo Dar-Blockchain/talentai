@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Box, Button, Dialog, Typography } from "@mui/material";
+import { Box, Dialog, Typography } from "@mui/material";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import MicOutlined from "@mui/icons-material/MicOutlined";
 import CheckOutlined from "@mui/icons-material/CheckOutlined";
 import { useTranslation } from "react-i18next";
@@ -134,35 +135,23 @@ const InterviewLanguagesModal: React.FC<Props> = ({ open, onConfirm, onClose, in
       </Typography>
 
       {/* Actions */}
-      <Box sx={{ display: "flex", gap: 1.25 }}>
+      <div className="flex gap-2.5">
         <Button
-          fullWidth
           onClick={handleClose}
-          sx={{
-            textTransform: "none", fontWeight: 600, fontSize: "13px",
-            borderRadius: "10px", height: 42,
-            color: "#6B7280", border: "1px solid #E5E7EB",
-            "&:hover": { bgcolor: "#F9FAFB", borderColor: "#D1D5DB" },
-          }}
+          variant="outline"
+          className="flex-1"
         >
           {t("create.interview_lang_modal.btn_cancel")}
         </Button>
 
         <Button
-          fullWidth
-          variant="contained"
+          variant="default"
           onClick={handleConfirm}
-          sx={{
-            textTransform: "none", fontWeight: 700, fontSize: "13px",
-            borderRadius: "10px", height: 42,
-            bgcolor: TEAL, color: "#fff", boxShadow: "none",
-            whiteSpace: "nowrap",
-            "&:hover": { bgcolor: "#0F766E", boxShadow: "0 4px 12px rgba(13,148,136,0.25)" },
-          }}
+          className="flex-1"
         >
           {confirmLabel ?? t("create.interview_lang_modal.btn_save")}
         </Button>
-      </Box>
+      </div>
     </Dialog>
   );
 };

@@ -4,7 +4,7 @@ import {
   Search, ArrowDownUp, Users, Briefcase, CalendarDays,
   Star, BrainCircuit, ArrowDownAZ, X, Download, type LucideIcon,
 } from "lucide-react";
-import AppButton from "@/components/ui/AppButton";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { TEAL } from "./constants";
 import {
   DropdownMenu,
@@ -154,9 +154,10 @@ const ApplicationsToolbar: React.FC<Props> = memo(({
           </select>
 
           {/* Post picker */}
-          <button
+          <Button
+            variant="outline"
             onClick={onPostPickerOpen}
-            className="flex items-center gap-1.5 h-[34px] px-3 rounded-lg border min-w-[130px] max-w-[200px] transition-all duration-150 cursor-pointer"
+            className="h-[34px] px-3 min-w-[130px] max-w-[200px]"
             style={{
               backgroundColor: postId ? `${TEAL}0D` : "#F9FAFB",
               borderColor: postId ? TEAL : "#E5E7EB",
@@ -174,7 +175,7 @@ const ApplicationsToolbar: React.FC<Props> = memo(({
                 <X size={13} style={{ color: TEAL }} />
               </span>
             )}
-          </button>
+          </Button>
 
           {/* Sort dropdown */}
           <DropdownMenu open={sortOpen} onOpenChange={setSortOpen}>
@@ -223,20 +224,18 @@ const ApplicationsToolbar: React.FC<Props> = memo(({
 
           {/* Download */}
           <div title={totalCount === 0 ? t("pages.applications.no_candidates_download") : t("pages.applications.download_cvs_tooltip", { count: totalCount })}>
-            <AppButton
-              label={downloading ? t("pages.applications.preparing") : t("pages.applications.download_cvs")}
-              variant="outlined"
-              size="small"
+            <Button
+              variant="outline"
+              size="sm"
               loading={downloading}
               disabled={totalCount === 0}
-              startIcon={<Download size={15} />}
               onClick={onDownload}
-              sx={{
-                borderColor: `${TEAL}40`, color: TEAL, bgcolor: `${TEAL}08`,
-                "&:hover": { bgcolor: `${TEAL}14`, borderColor: TEAL },
-                borderRadius: "8px", height: 34,
-              }}
-            />
+              className="h-[34px]"
+              style={{ borderColor: `${TEAL}40`, color: TEAL, backgroundColor: `${TEAL}08` }}
+            >
+              <Download size={15} />
+              {downloading ? t("pages.applications.preparing") : t("pages.applications.download_cvs")}
+            </Button>
           </div>
         </div>
       </div>

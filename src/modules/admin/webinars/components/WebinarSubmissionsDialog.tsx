@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Dialog, DialogTitle, DialogContent, Chip, CircularProgress } from "@mui/material";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import {
   Close as CloseIcon,
   CheckCircle as DoneIcon,
@@ -147,9 +148,9 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
               ? <Chip label="Completed" size="small" color="success" sx={{ height: 18, fontSize: 10, fontWeight: 700 }} />
               : <Chip label="In progress" size="small" sx={{ height: 18, fontSize: 10, bgcolor: "#F1F5F9", color: "#64748B" }} />}
           </span>
-          <button onClick={() => setOpen(false)} className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors">
+          <Button variant="ghost" onClick={() => setOpen(false)} className="p-1 h-auto rounded-lg hover:bg-slate-100 text-slate-400">
             <CloseIcon sx={{ fontSize: 18 }} />
-          </button>
+          </Button>
         </DialogTitle>
 
         <DialogContent dividers sx={{ p: 0 }}>
@@ -334,9 +335,9 @@ const WebinarSubmissionsDialog: React.FC<Props> = ({ webinar, open, onClose }) =
             {total}
           </span>
         </div>
-        <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors">
+        <Button variant="ghost" onClick={onClose} className="p-1 h-auto rounded-lg hover:bg-slate-100 text-slate-400">
           <CloseIcon sx={{ fontSize: 18 }} />
-        </button>
+        </Button>
       </DialogTitle>
 
       {/* Filter tabs */}

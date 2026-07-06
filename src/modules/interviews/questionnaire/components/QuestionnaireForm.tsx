@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  Box, Typography, Button, TextField, Radio, Checkbox,
+  Box, Typography, TextField, Radio, Checkbox,
   LinearProgress, Chip, CircularProgress, Alert, IconButton,
 } from '@mui/material';
+import { Button } from '@/modules/shared/ui/shadcn/button';
 import CheckCircleRounded    from '@mui/icons-material/CheckCircleRounded';
 import ArrowForwardRounded   from '@mui/icons-material/ArrowForwardRounded';
 import ArrowBackRounded      from '@mui/icons-material/ArrowBackRounded';
@@ -236,15 +237,7 @@ const CompletedScreen: React.FC<{
       <QuestionnaireResultsPanel campaignId={campaignId} participantId={participantId} questions={questions} />
     )}
 
-    <Button
-      variant="outlined"
-      onClick={onDone}
-      sx={{
-        mt: 1, textTransform: 'none', fontWeight: 600, borderRadius: 2.5,
-        borderColor: '#E5E7EB', color: '#374151', px: 4, py: 1.25,
-        '&:hover': { borderColor: '#10B981', color: '#059669', bgcolor: '#ECFDF5' },
-      }}
-    >
+    <Button variant="outline" onClick={onDone} className="mt-1 rounded-[20px] px-8 py-5 font-semibold">
       Back to Dashboard
     </Button>
   </Box>
@@ -489,18 +482,8 @@ const QuestionnaireForm: React.FC<Props> = ({ campaignId, campaignTitle, partici
         borderTop: '1px solid #F3F4F6',
         display: 'flex', alignItems: 'center', gap: 1.5, flexShrink: 0,
       }}>
-        <Button
-          variant="outlined"
-          startIcon={<ArrowBackRounded />}
-          onClick={goPrev}
-          disabled={current === 0}
-          sx={{
-            textTransform: 'none', fontWeight: 600, borderRadius: 2,
-            borderColor: '#E5E7EB', color: '#374151', px: 2,
-            '&:hover': { borderColor: '#6366F1', color: '#6366F1', bgcolor: '#F5F3FF' },
-            '&.Mui-disabled': { borderColor: '#F3F4F6' },
-          }}
-        >
+        <Button variant="outline" onClick={goPrev} disabled={current === 0} className="rounded-lg px-4 font-semibold">
+          <ArrowBackRounded />
           Back
         </Button>
 
@@ -527,35 +510,26 @@ const QuestionnaireForm: React.FC<Props> = ({ campaignId, campaignTitle, partici
 
         {isLast ? (
           <Button
-            variant="contained"
-            endIcon={submitting ? <CircularProgress size={14} sx={{ color: '#fff' }} /> : <SendRounded sx={{ fontSize: 16 }} />}
+            variant="default"
             onClick={handleSubmit}
             disabled={submitting || !allAnswered}
-            sx={{
-              textTransform: 'none', fontWeight: 700, borderRadius: 2, px: 2.5, color: '#fff',
-              background: 'linear-gradient(135deg, #10B981, #059669)',
-              boxShadow: '0 4px 14px rgba(16,185,129,0.3)',
-              '&:hover': { boxShadow: '0 6px 20px rgba(16,185,129,0.4)' },
-              '&.Mui-disabled': { bgcolor: '#E5E7EB', color: '#9CA3AF', boxShadow: 'none' },
-            }}
+            loading={submitting}
+            className="rounded-lg px-5 font-bold text-white shadow-[0_4px_14px_rgba(16,185,129,0.3)]"
+            style={{ background: 'linear-gradient(135deg, #10B981, #059669)' }}
           >
             {submitting ? 'Submitting…' : 'Submit'}
+            {!submitting && <SendRounded sx={{ fontSize: 16 }} />}
           </Button>
         ) : (
           <Button
-            variant="contained"
-            endIcon={<ArrowForwardRounded />}
+            variant="default"
             onClick={goNext}
             disabled={!isAnswered}
-            sx={{
-              textTransform: 'none', fontWeight: 700, borderRadius: 2, px: 2.5, color: '#fff',
-              background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
-              boxShadow: '0 4px 14px rgba(99,102,241,0.25)',
-              '&:hover': { boxShadow: '0 6px 20px rgba(99,102,241,0.35)' },
-              '&.Mui-disabled': { bgcolor: '#E5E7EB', color: '#9CA3AF', boxShadow: 'none' },
-            }}
+            className="rounded-lg px-5 font-bold text-white shadow-[0_4px_14px_rgba(99,102,241,0.25)]"
+            style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}
           >
             Next
+            <ArrowForwardRounded />
           </Button>
         )}
       </Box>

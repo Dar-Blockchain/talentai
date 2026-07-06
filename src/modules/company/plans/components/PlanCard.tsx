@@ -2,7 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { CheckCircle, CreditCard } from "lucide-react";
 import { PlanLimit } from "@/store/slices/planLimitsSlice";
-import AppButton from "@/components/ui/AppButton";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { usePlanCard } from "../hooks/usePlanCard";
 import FeatureRow from "./FeatureRow";
 import AutoRenewalCta from "./AutoRenewalCta";
@@ -126,33 +126,26 @@ const PlanCard: React.FC<PlanCardProps> = ({
             )}
           </div>
         ) : isEnterprise ? (
-          <AppButton
-            label={t("pages.subscription.card.contact_us")}
-            variant="contained" fullWidth
+          <Button
+            variant="default"
+            className="w-full"
             onClick={onContactUs}
-            sx={{
-              bgcolor: cfg.color,
-              "&:hover": { bgcolor: cfg.color, filter: "brightness(0.88)" },
-              fontWeight: 700, borderRadius: "10px", py: 1.1,
-              fontSize: "0.85rem", boxShadow: `0 4px 14px ${cfg.color}30`,
-              textTransform: "none",
-            }}
-          />
+            style={{ backgroundColor: cfg.color, boxShadow: `0 4px 14px ${cfg.color}30` }}
+          >
+            {t("pages.subscription.card.contact_us")}
+          </Button>
         ) : !isTrial ? (
           <div className="flex flex-col gap-2">
-            <AppButton
-              label={t("pages.subscription.card.add_plan", "Add Plan")}
-              variant="contained" fullWidth loading={isCheckingOutThis}
-              startIcon={<CreditCard size={16} />}
+            <Button
+              variant="default"
+              className="w-full"
+              loading={isCheckingOutThis}
               onClick={() => onSubscribe(plan._id)}
-              sx={{
-                bgcolor: cfg.color,
-                "&:hover": { bgcolor: cfg.color, filter: "brightness(0.88)" },
-                fontWeight: 700, borderRadius: "10px", py: 1.1,
-                fontSize: "0.85rem", boxShadow: `0 4px 14px ${cfg.color}30`,
-                textTransform: "none",
-              }}
-            />
+              style={{ backgroundColor: cfg.color, boxShadow: `0 4px 14px ${cfg.color}30` }}
+            >
+              <CreditCard size={16} />
+              {t("pages.subscription.card.add_plan", "Add Plan")}
+            </Button>
             {isDowngrade && currentSubId && (
               <DowngradeCta
                 plan={plan}

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Dialog, DialogContent, DialogActions, Button, IconButton, TextField, FormControlLabel, Switch, Alert, CircularProgress } from '@mui/material';
+import { Dialog, DialogContent, DialogActions, IconButton, TextField, FormControlLabel, Switch, Alert } from '@mui/material';
+import { Button } from '@/modules/shared/ui/shadcn/button';
 import CloseIcon from '@mui/icons-material/Close';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import { ADMIN_ACCENT, ADMIN_RADIUS } from '@/modules/admin/shared';
@@ -175,20 +176,16 @@ const PlanFormDialog: React.FC<PlanFormDialogProps> = ({ open, onClose, plan, on
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2.5, gap: 1.5 }}>
-        <Button
-          onClick={onClose}
-          disabled={saving}
-          variant="outlined"
-          sx={{ textTransform: 'none', borderColor: '#E2E8F0', color: '#64748B', borderRadius: '10px', boxShadow: 'none' }}
-        >
+        <Button onClick={onClose} disabled={saving} variant="outline" className="rounded-[10px] border-slate-200 text-slate-500 shadow-none">
           Cancel
         </Button>
         <Button
           onClick={handleSubmit}
-          variant="contained"
+          variant="default"
           disabled={!canSubmit || saving}
-          startIcon={saving ? <CircularProgress size={16} color="inherit" /> : undefined}
-          sx={{ textTransform: 'none', backgroundColor: ADMIN_ACCENT, borderRadius: '10px', fontWeight: 600, boxShadow: 'none', '&:hover': { backgroundColor: '#4338CA', boxShadow: 'none' } }}
+          loading={saving}
+          className="rounded-[10px] font-semibold shadow-none"
+          style={{ backgroundColor: ADMIN_ACCENT }}
         >
           {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Plan'}
         </Button>

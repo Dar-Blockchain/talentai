@@ -126,13 +126,14 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({
               <DialogDescription className="text-xs">{m("subtitle")}</DialogDescription>
             </div>
           </div>
-          <button
+          <Button
+            variant="ghost"
             onClick={onClose}
             disabled={loading}
-            className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none"
+            className="size-8 p-0 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <X className="size-4" />
-          </button>
+          </Button>
         </DialogHeader>
 
         {/* Body */}

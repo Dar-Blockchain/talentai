@@ -1,6 +1,7 @@
 import React from "react";
 import { AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent } from "@/modules/shared/ui/shadcn/dialog";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 
 interface Props {
   open: boolean;
@@ -32,14 +33,14 @@ const DeleteCvDialog: React.FC<Props> = ({ open, resumeFilename, activeAppCount,
         )}
       </div>
       <div className="flex justify-end gap-2 px-5 py-4">
-        <button type="button" onClick={onClose}
-          className="text-gray-500 rounded-[10px] text-[0.85rem] px-3 py-2 hover:bg-gray-50">
+        <Button variant="ghost" onClick={onClose}
+          className="h-auto text-gray-500 rounded-[10px] text-[0.85rem] px-3 py-2 hover:bg-gray-50">
           Cancel
-        </button>
-        <button type="button" onClick={onConfirm}
-          className="font-semibold rounded-[10px] text-[0.85rem] px-3 py-2 bg-red-600 text-white hover:bg-red-700">
+        </Button>
+        <Button variant="ghost" onClick={onConfirm}
+          className="h-auto font-semibold rounded-[10px] text-[0.85rem] px-3 py-2 bg-red-600 text-white hover:bg-red-700 hover:text-white">
           Delete
-        </button>
+        </Button>
       </div>
     </DialogContent>
   </Dialog>

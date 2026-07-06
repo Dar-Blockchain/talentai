@@ -1,5 +1,6 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogActions, Button, IconButton, CircularProgress } from '@mui/material';
+import { Dialog, DialogContent, DialogActions, IconButton } from '@mui/material';
+import { Button } from '@/modules/shared/ui/shadcn/button';
 import CloseIcon from '@mui/icons-material/Close';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { ADMIN_ACCENT, ADMIN_DANGER, ADMIN_RADIUS } from '../theme';
@@ -53,27 +54,16 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2.5, gap: 1.5 }}>
-        <Button
-          onClick={onCancel}
-          disabled={loading}
-          variant="outlined"
-          sx={{ textTransform: 'none', borderColor: '#E2E8F0', color: '#64748B', borderRadius: '10px', boxShadow: 'none' }}
-        >
+        <Button onClick={onCancel} disabled={loading} variant="outline" className="rounded-[10px] border-slate-200 text-slate-500 shadow-none">
           Cancel
         </Button>
         <Button
           onClick={onConfirm}
-          variant="contained"
+          variant="default"
           disabled={loading}
-          startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
-          sx={{
-            textTransform: 'none',
-            backgroundColor: accent,
-            borderRadius: '10px',
-            fontWeight: 600,
-            boxShadow: 'none',
-            '&:hover': { backgroundColor: destructive ? '#B91C1C' : '#4338CA', boxShadow: 'none' },
-          }}
+          loading={loading}
+          className="rounded-[10px] font-semibold shadow-none"
+          style={{ backgroundColor: accent }}
         >
           {loading ? 'Working…' : confirmLabel}
         </Button>

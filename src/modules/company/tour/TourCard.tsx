@@ -1,5 +1,6 @@
 import React, { memo } from "react";
-import { Box, Typography, Button } from "@mui/material";
+import { Box, Typography } from "@mui/material";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import CloseOutlined from "@mui/icons-material/CloseOutlined";
 import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
 import ArrowBackOutlined from "@mui/icons-material/ArrowBackOutlined";
@@ -78,15 +79,20 @@ const TourCard: React.FC<TourCardProps> = memo(({ step, current, onPrev, onNext,
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Typography sx={{ fontSize: "0.7rem", color: "#9CA3AF", fontWeight: 500 }}>{step + 1} / {TOTAL}</Typography>
             {!isFirst && (
-              <Button size="small" onClick={onPrev} startIcon={<ArrowBackOutlined sx={{ fontSize: 13 }} />}
-                sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.78rem", color: "#6B7280", borderRadius: "8px", px: 1.5, minWidth: 0, "&:hover": { bgcolor: "#F3F4F6" } }}>
+              <Button size="sm" variant="ghost" onClick={onPrev} className="min-w-0 rounded-lg px-3 text-[0.78rem] font-semibold text-gray-500">
+                <ArrowBackOutlined sx={{ fontSize: 13 }} />
                 {t("tour.nav.back")}
               </Button>
             )}
-            <Button size="small" variant="contained" onClick={onNext}
-              endIcon={isLast ? <CheckOutlined sx={{ fontSize: 13 }} /> : <ArrowForwardOutlined sx={{ fontSize: 13 }} />}
-              sx={{ textTransform: "none", fontWeight: 700, fontSize: "0.78rem", bgcolor: TEAL, color: "#fff", borderRadius: "8px", px: 2, boxShadow: "none", "&:hover": { bgcolor: "#0F766E", boxShadow: "none" } }}>
+            <Button
+              size="sm"
+              variant="default"
+              onClick={onNext}
+              className="rounded-lg px-4 text-[0.78rem] font-bold shadow-none"
+              style={{ backgroundColor: TEAL, color: "#fff" }}
+            >
               {isLast ? t("tour.nav.done") : t("tour.nav.next")}
+              {isLast ? <CheckOutlined sx={{ fontSize: 13 }} /> : <ArrowForwardOutlined sx={{ fontSize: 13 }} />}
             </Button>
           </Box>
         </Box>

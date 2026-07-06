@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   Menu, MenuItem, ListItemIcon, ListItemText,
-  IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, Slider,
+  IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Slider,
 } from '@mui/material';
+import { Button } from '@/modules/shared/ui/shadcn/button';
 import {
   MoreVert as MoreVertIcon,
   Archive as ArchiveIcon,
@@ -258,8 +259,8 @@ const PostsManagement: React.FC = () => {
           </div>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button onClick={() => setThresholdTarget(null)} sx={{ color: ADMIN_NEUTRAL }}>Cancel</Button>
-          <Button onClick={handleSaveThreshold} disabled={updateThresholdMutation.isPending} variant="contained" sx={{ boxShadow: 'none' }}>
+          <Button onClick={() => setThresholdTarget(null)} variant="ghost" style={{ color: ADMIN_NEUTRAL }}>Cancel</Button>
+          <Button onClick={handleSaveThreshold} disabled={updateThresholdMutation.isPending} variant="default" className="shadow-none">
             {updateThresholdMutation.isPending ? 'Saving...' : 'Save'}
           </Button>
         </DialogActions>

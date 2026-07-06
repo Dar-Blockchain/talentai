@@ -3,9 +3,10 @@ import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
 import { useRouter } from "next/router";
 import {
-  Avatar, Box, Button, CircularProgress, Dialog, DialogContent,
+  Avatar, Box, Dialog, DialogContent,
   Divider, IconButton, TextField, Typography,
 } from "@mui/material";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import EmailOutlined from "@mui/icons-material/EmailOutlined";
 import ChatBubbleOutlineOutlined from "@mui/icons-material/ChatBubbleOutlineOutlined";
 import CloseOutlined from "@mui/icons-material/CloseOutlined";
@@ -314,35 +315,22 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
             {/* Actions */}
             <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.25 }}>
               <Button
-                variant="outlined"
+                variant="outline"
                 onClick={onClose}
                 disabled={isBusy}
-                sx={{
-                  borderRadius: "10px", textTransform: "none", fontWeight: 600, fontSize: "13px",
-                  borderColor: "#E5E7EB", color: "#6B7280",
-                  "&:hover": { borderColor: "#D1D5DB", bgcolor: "#F9FAFB" },
-                }}
+                className="rounded-[10px] text-[13px] font-semibold"
               >
                 {t("pages.applications.contact_modal.cancel")}
               </Button>
               <Button
-                variant="contained"
+                variant="default"
                 onClick={mode === "email" ? handleSendEmail : handleSendChat}
                 disabled={!isValid || isBusy}
-                startIcon={
-                  isBusy
-                    ? <CircularProgress size={13} sx={{ color: "rgba(255,255,255,0.7)" }} />
-                    : <SendOutlined sx={{ fontSize: 14 }} />
-                }
-                sx={{
-                  borderRadius: "10px", textTransform: "none", fontWeight: 600,
-                  fontSize: "13px", minWidth: 130,
-                  color: "#fff",
-                  bgcolor: cfg.color, boxShadow: "none",
-                  "&:hover": { filter: "brightness(0.92)", boxShadow: "none" },
-                  "&.Mui-disabled": { bgcolor: "#E5E7EB", color: "#9CA3AF" },
-                }}
+                loading={isBusy}
+                className="min-w-[130px] rounded-[10px] text-[13px] font-semibold shadow-none"
+                style={{ color: "#fff", backgroundColor: cfg.color }}
               >
+                {!isBusy && <SendOutlined sx={{ fontSize: 14 }} />}
                 {isBusy ? t("pages.applications.contact_modal.sending") : mode === "email" ? t("pages.applications.contact_modal.send_email") : t("pages.applications.contact_modal.send_message")}
               </Button>
             </Box>

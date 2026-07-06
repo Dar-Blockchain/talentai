@@ -3,7 +3,6 @@ import {
   Box,
   Typography,
   CircularProgress,
-  Button,
   IconButton,
   useMediaQuery,
   useTheme,
@@ -12,6 +11,7 @@ import {
   Stack,
   Chip,
 } from "@mui/material";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import ChatOutlined      from "@mui/icons-material/ChatOutlined";
 import ArrowBackOutlined from "@mui/icons-material/ArrowBackOutlined";
 import WorkOutlined      from "@mui/icons-material/WorkOutlined";
@@ -233,20 +233,13 @@ const ReturnBanner = memo(function ReturnBanner({ jobTitle, onReturn }: ReturnTo
         </Typography>
       </Stack>
       <Button
-        size="small"
-        variant="outlined"
-        startIcon={<ArrowBackOutlined sx={{ fontSize: 16 }} />}
+        size="sm"
+        variant="outline"
         onClick={onReturn}
-        sx={{
-          textTransform: "none",
-          fontWeight: 600,
-          fontSize: "0.75rem",
-          borderColor: alpha(ACCENT, 0.45),
-          color: ACCENT,
-          borderRadius: 2,
-          "&:hover": { borderColor: ACCENT, bgcolor: alpha(ACCENT, 0.08) },
-        }}
+        className="rounded-lg text-xs font-semibold"
+        style={{ borderColor: alpha(ACCENT, 0.45), color: ACCENT }}
       >
+        <ArrowBackOutlined sx={{ fontSize: 16 }} />
         {t("banner.return_to_post")}
       </Button>
     </Paper>
@@ -510,11 +503,8 @@ const EmptyPanel = memo(function EmptyPanel({
           : (isCompany ? tCompanyHub("panel.contact_candidate") : tCandidate("panel.contact_recruiter"))}
       </Typography>
       {isMobile && (
-        <Button
-          startIcon={<ArrowBackOutlined />}
-          onClick={handleBack}
-          sx={{ textTransform: "none", fontWeight: 600 }}
-        >
+        <Button variant="ghost" onClick={handleBack} className="font-semibold">
+          <ArrowBackOutlined />
           {t("panel.back_to_conversations")}
         </Button>
       )}

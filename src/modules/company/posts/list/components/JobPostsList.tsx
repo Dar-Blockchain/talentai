@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Box, Typography, Skeleton, Pagination } from "@mui/material";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import AddOutlined from "@mui/icons-material/AddOutlined";
-import AppButton from "@/components/ui/AppButton";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import JobPostCard from "./JobPostCard";
 import type { StatusFilter, SortOption, PaginationInfo } from "../types";
 
@@ -88,13 +88,10 @@ const JobPostsList = memo<JobPostsListProps>(({
           {hasFilters ? t("empty.no_match_hint") : t("empty.no_posts_hint")}
         </Typography>
         {!hasFilters && (
-          <AppButton
-            label={t("empty.create_btn")}
-            variant="contained"
-            startIcon={<AddOutlined sx={{ fontSize: 16 }} />}
-            onClick={onCreateClick}
-            sx={{ borderRadius: "10px" }}
-          />
+          <Button variant="default" onClick={onCreateClick}>
+            <AddOutlined sx={{ fontSize: 16 }} />
+            {t("empty.create_btn")}
+          </Button>
         )}
       </Box>
     );

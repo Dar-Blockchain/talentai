@@ -5,7 +5,7 @@ import { useDispatch } from "react-redux";
 import Link from "next/link";
 import { Box, Typography, CircularProgress } from "@mui/material";
 import dynamic from "next/dynamic";
-import AppButton from "@/components/ui/AppButton";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { verifyPayment } from "@/store/slices/paymentSlice";
 import { AppDispatch } from "@/store/store";
 
@@ -107,19 +107,17 @@ const PaymentResultPage: React.FC = () => {
         <Box sx={{ display: "flex", gap: 2, justifyContent: "center", mt: 3, flexWrap: "wrap" }}>
           {!isSuccess && (
             <Link href="/company/plans">
-              <AppButton
-                label="View Plans"
-                variant="outlined"
-                startIcon={<ArrowBackOutlined />}
-              />
+              <Button variant="outline">
+                <ArrowBackOutlined />
+                View Plans
+              </Button>
             </Link>
           )}
           <Link href="/company/dashboard">
-            <AppButton
-              label="Go to Dashboard"
-              variant="contained"
-              startIcon={<DashboardOutlined />}
-            />
+            <Button variant="default">
+              <DashboardOutlined />
+              Go to Dashboard
+            </Button>
           </Link>
         </Box>
       </Box>

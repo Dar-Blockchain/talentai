@@ -1,5 +1,6 @@
 ﻿import React from 'react';
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Typography } from '@mui/material';
+import { Button } from '@/modules/shared/ui/shadcn/button';
 import Header from '@/modules/shared/layouts/home/HomeHeader';
 
 export interface BlockedScreenAction {
@@ -104,33 +105,14 @@ const BlockedScreen: React.FC<BlockedScreenProps> = ({
   const actionsNode = actions.length > 0 && (
     <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center', flexWrap: 'wrap', mt: children || description ? 3.5 : 2 }}>
       {actions.map((action, i) => {
-        const isGradient = action.color?.includes('gradient');
+        const mode = action.variant ?? (i === 0 ? 'contained' : 'outlined');
         return (
           <Button
             key={i}
-            variant={action.variant ?? (i === 0 ? 'contained' : 'outlined')}
+            variant={mode === 'contained' ? 'default' : 'outline'}
             onClick={action.onClick}
-            disableElevation
-            fullWidth={actions.length === 1}
-            sx={{
-              fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.9rem',
-              textTransform: 'none', borderRadius: '12px', py: 1.3,
-              ...(action.color
-                ? isGradient
-                  ? {
-                    background: action.color, color: '#fff',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    '&:hover': { background: action.hoverColor ?? action.color, boxShadow: '0 6px 16px rgba(0,0,0,0.2)', color: '#fff' },
-                  }
-                  : {
-                    bgcolor: action.color, color: '#fff',
-                    '&:hover': { bgcolor: action.hoverColor ?? action.color },
-                  }
-                : action.variant === 'outlined'
-                  ? { borderColor: '#E2E8F0', color: '#475569', '&:hover': { borderColor: '#CBD5E1', bgcolor: '#F8FAFC' } }
-                  : {}
-              ),
-            }}
+            className={actions.length === 1 ? 'w-full rounded-xl font-bold' : 'rounded-xl font-bold'}
+            style={action.color ? { background: action.color, color: '#fff' } : undefined}
           >
             {action.label}
           </Button>

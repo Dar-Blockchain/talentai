@@ -13,7 +13,7 @@
     "headline_accent": "recrutement trop lent",
     "body": "Les agents IA conversationnels de TalentAI interviewent les candidats en vidéo naturelle, évaluent les compétences techniques et comportementales en temps réel, et classent vos candidats objectivement.",
     "body_accent": "réduisant votre cycle de recrutement moyen de 42 jours jusqu'à 75 %",
-    "cta_primary": "Recrutez plus intelligemment",
+    "cta_primary": "Commencer gratuitement",
     "cta_demo": "Voir la démo (2 min)",
     "trust": "Sans carte bancaire. Votre premier pipeline est en ligne en moins de 30 minutes.",
     "stats": {
@@ -61,10 +61,10 @@
     "right_headline_accent": "sur le mérite. Rien d'autre.",
     "right_body": "Les mêmes critères, à chaque fois — compétences, communication, culture. Zéro jugement à l'instinct.",
     "bullet_video": "Entretiens vidéo IA — Sans planification",
-    "bullet_pipeline": "Pipeline drag-and-drop, en ligne en 30 minutes",
+    "bullet_pipeline": "Générez vos offres d'emploi avec l'IA en quelques secondes",
     "bullet_shortlists": "Shortlists auto-classées — vous n'avez qu'à valider",
     "bullet_credits": "Crédits à l'embauche, sans contrats gonflés",
-    "cta": "Recrutez plus intelligemment — Essai gratuit →"
+    "cta": "Voyez-le en action — Essai gratuit →"
   },
   "stakes": {
     "overline": "Le coût de l'inaction",
@@ -83,7 +83,7 @@
     "cta_headline_1": "Les entreprises qui automatisent maintenant",
     "cta_headline_accent": "domineront le marché des talents.",
     "cta_body": "Les autres continueront à perdre leurs meilleurs candidats au profit de concurrents plus rapides.",
-    "cta_button": "Recrutez plus intelligemment dès aujourd'hui",
+    "cta_button": "Automatisez votre recrutement dès aujourd'hui",
     "trust_live": "En ligne en 30 min",
     "trust_cancel": "Résiliation à tout moment"
   },
@@ -131,7 +131,7 @@
     "headline_1": "Votre prochain grand recrutement vous attend.",
     "headline_accent": "Vos concurrents, eux, n'attendent pas.",
     "body": "Pendant que vous lisez ceci, des entreprises dopées à l'IA interviewent déjà vos candidats. TalentAI se déploie en 30 minutes. Votre premier entretien IA peut avoir lieu aujourd'hui.",
-    "btn_primary": "Recrutez plus intelligemment — Essai gratuit →",
+    "btn_primary": "Démarrez votre essai gratuit →",
     "btn_secondary": "Réserver un appel stratégique de 15 min →",
     "trust_setup": "Configuration en 30 min",
     "trust_cancel": "Résiliation à tout moment"

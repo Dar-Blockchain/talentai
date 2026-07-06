@@ -18,6 +18,7 @@ import CoverageTab                from "@/modules/company/assessment/modal/compo
 import AiReportTab                from "@/modules/company/assessment/modal/components/AiReportTab";
 import TranscriptTab              from "@/modules/company/assessment/modal/components/TranscriptTab";
 import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 
 const TAB_ICONS = [BarChartOutlined, LayersOutlined, AutoAwesomeOutlined, ForumOutlined];
 
@@ -75,12 +76,13 @@ const AssessmentPage: React.FC = () => {
     <DashboardLayout>
       {/* Top nav */}
       <div className="flex items-center gap-3 mb-6">
-        <button
+        <Button
+          variant="ghost"
           onClick={() => router.back()}
-          className="flex items-center justify-center w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-slate-800 hover:border-slate-300 hover:shadow-sm transition-all"
+          className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-slate-800 hover:border-slate-300 hover:shadow-sm"
         >
           <ArrowBackOutlined style={{ fontSize: 16 }} />
-        </button>
+        </Button>
         <div>
           <div className="text-[0.6rem] text-slate-400 font-bold uppercase tracking-widest">Interview Assessment</div>
           <div className="text-[0.95rem] font-black text-slate-900 leading-tight">{name || "Candidate"}</div>

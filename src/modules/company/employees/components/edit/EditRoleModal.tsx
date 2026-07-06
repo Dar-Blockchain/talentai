@@ -1,9 +1,10 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
-  Button, Typography, Box, IconButton,
-  CircularProgress, Alert, Select, MenuItem, FormControl,
+  Typography, Box, IconButton,
+  Alert, Select, MenuItem, FormControl,
 } from "@mui/material";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import CloseIcon from "@mui/icons-material/Close";
 import EditOutlined from "@mui/icons-material/EditOutlined";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
@@ -18,7 +19,7 @@ import { cn } from "@/lib/utils";
 import {
   DIALOG_PAPER_SX, HEADER_ICON_SX, CLOSE_BTN_SX,
   SELECT_SX,
-  CANCEL_BTN_SX, PRIMARY_BTN_SX, FIELD_LABEL_SX,
+  FIELD_LABEL_SX,
 } from "../shared/modalStyles";
 
 interface EditRoleModalProps {
@@ -285,13 +286,17 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 3, pt: 2.5, gap: 1.5 }}>
-        <Button onClick={handleClose} disabled={loading} sx={CANCEL_BTN_SX}>
+        <Button onClick={handleClose} disabled={loading} variant="ghost" className="rounded-lg px-6 font-semibold text-gray-500">
           {m("cancel")}
         </Button>
-        <Button onClick={handleSave} disabled={loading || !isChanged} variant="contained" sx={PRIMARY_BTN_SX}>
-          {loading
-            ? <><CircularProgress size={15} sx={{ mr: 1, color: "#fff" }} />{m("updating_btn")}</>
-            : m("save")}
+        <Button
+          onClick={handleSave}
+          disabled={loading || !isChanged}
+          loading={loading}
+          variant="secondary"
+          className="rounded-lg px-6 font-bold shadow-[0_2px_8px_rgba(131,16,255,0.3)]"
+        >
+          {loading ? m("updating_btn") : m("save")}
         </Button>
       </DialogActions>
     </Dialog>

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Box, Button, Dialog, Typography } from "@mui/material";
+import { Box, Dialog, Typography } from "@mui/material";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
 import CheckBoxOutlined from "@mui/icons-material/CheckBoxOutlined";
 import CheckBoxOutlineBlankOutlined from "@mui/icons-material/CheckBoxOutlineBlank";
-import CircularProgress from "@mui/material/CircularProgress";
 import { useTranslation } from "react-i18next";
 import { SUPPORTED_LANGS } from "@/modules/shared/constants/languages";
 
@@ -147,42 +147,27 @@ const GenerateLanguageModal: React.FC<Props> = ({ open, loading, onConfirm, onCl
       </Box>
 
       {/* Actions */}
-      <Box sx={{ display: "flex", gap: 1.25 }}>
+      <div className="flex items-center justify-end gap-2">
         <Button
-          fullWidth
           onClick={onClose}
           disabled={loading}
-          sx={{
-            textTransform: "none", fontWeight: 600, fontSize: "13px",
-            borderRadius: "10px", height: 42,
-            color: "#6B7280", border: "1px solid #E5E7EB",
-            "&:hover": { bgcolor: "#F9FAFB", borderColor: "#D1D5DB" },
-          }}
+          variant="outline"
+          className="flex-1"
         >
           {t("create.lang_modal.btn_cancel")}
         </Button>
 
         <Button
-          fullWidth
-          variant="contained"
+          variant="default"
           onClick={handleConfirm}
           disabled={loading}
-          startIcon={
-            loading
-              ? <CircularProgress size={14} sx={{ color: "#fff" }} />
-              : <AutoAwesomeOutlined sx={{ fontSize: 15 }} />
-          }
-          sx={{
-            textTransform: "none", fontWeight: 700, fontSize: "13px",
-            borderRadius: "10px", height: 42,
-            bgcolor: TEAL, color: "#fff", boxShadow: "none",
-            "&:hover": { bgcolor: "#0F766E", boxShadow: "0 4px 12px rgba(13,148,136,0.25)" },
-            "&.Mui-disabled": { bgcolor: TEAL, opacity: 0.65, color: "#fff" },
-          }}
+          loading={loading}
+          className="flex-1"
         >
+          {!loading && <AutoAwesomeOutlined sx={{ fontSize: 15 }} />}
           {loading ? t("create.lang_modal.btn_generating") : t("create.lang_modal.btn_generate")}
         </Button>
-      </Box>
+      </div>
     </Dialog>
   );
 };

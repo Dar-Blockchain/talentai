@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Dialog, DialogTitle, DialogContent, DialogActions, Typography } from "@mui/material";
 import ErrorIcon from "@mui/icons-material/Error";
 import DeleteIcon from "@mui/icons-material/Delete";
-import AppButton from "@/components/ui/AppButton";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 
 interface DeletePostModalProps {
   open: boolean;
@@ -45,21 +45,18 @@ const DeletePostModal: React.FC<DeletePostModalProps> = ({ open, onClose, onDele
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2, gap: 1, background: "rgba(250,250,250,0.9)", borderTop: "1px solid rgba(0,0,0,0.06)" }}>
-        <AppButton
-          label={t("delete_modal.cancel")}
-          variant="text"
-          disabled={isDeleting}
-          onClick={onClose}
-          sx={{ color: "#333", "&:hover": { bgcolor: "rgba(0,0,0,0.04)" } }}
-        />
-        <AppButton
-          label={t("delete_modal.confirm")}
-          variant="danger"
+        <Button variant="ghost" disabled={isDeleting} onClick={onClose}>
+          {t("delete_modal.cancel")}
+        </Button>
+        <Button
+          variant="destructive"
           loading={isDeleting}
-          startIcon={<DeleteIcon sx={{ fontSize: 16 }} />}
           onClick={onDelete}
-          sx={{ borderRadius: "8px", px: 3, boxShadow: "0 4px 14px rgba(224,62,92,0.25)", "&:hover": { boxShadow: "0 5px 18px rgba(224,62,92,0.35)" } }}
-        />
+          className="px-6 shadow-[0_4px_14px_rgba(224,62,92,0.25)]"
+        >
+          <DeleteIcon sx={{ fontSize: 16 }} />
+          {t("delete_modal.confirm")}
+        </Button>
       </DialogActions>
     </Dialog>
   );

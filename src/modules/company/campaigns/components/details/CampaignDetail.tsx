@@ -12,6 +12,7 @@ import {
   ParticipantStatus,
 } from "@/modules/company/campaigns/types/campaign";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/modules/shared/ui/shadcn/tabs";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { cn } from "@/lib/utils";
 import CampaignHeader from "./CampaignHeader";
 import CampaignOverviewCharts from "./CampaignOverviewCharts";
@@ -232,10 +233,10 @@ const CampaignDetail: React.FC<Props> = memo(
             )}
 
             {supportsAction && canStart && (
-              <button
-                type="button"
+              <Button
+                variant="ghost"
                 onClick={handleAssessmentAction}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[10px] cursor-pointer border transition-opacity hover:opacity-85"
+                className="px-2.5 py-1.5 h-auto rounded-[10px] border hover:opacity-85"
                 style={{
                   background: pStatus === "IN_PROGRESS" ? "#FFFBEB" : "#8310FF10",
                   borderColor: pStatus === "IN_PROGRESS" ? "#FDE68A" : "#8310FF30",
@@ -256,7 +257,7 @@ const CampaignDetail: React.FC<Props> = memo(
                       ? t(`${tp}.start_questionnaire`)
                       : t(`${tp}.start_assessment`)}
                 </span>
-              </button>
+              </Button>
             )}
           </div>
         ),
@@ -339,11 +340,11 @@ const CampaignDetail: React.FC<Props> = memo(
                   {moduleConfigured ? t(`${tp}.setup_step1_desc_done`) : t(`${tp}.setup_step1_desc_pending`)}
                 </p>
                 {campaign.module?.type && canEdit && (
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
                     onClick={() => openConfigureModule(campaign.module!.type)}
                     className={cn(
-                      "self-start mt-0.5 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg cursor-pointer border transition-colors",
+                      "self-start mt-0.5 px-2.5 py-1.5 h-auto rounded-lg border",
                       moduleConfigured
                         ? "bg-green-100/70 border-green-300 hover:bg-green-200/70"
                         : "bg-amber-200/70 border-amber-300 hover:bg-amber-300/70",
@@ -353,7 +354,7 @@ const CampaignDetail: React.FC<Props> = memo(
                     <span className={cn("text-xs font-bold", moduleConfigured ? "text-green-700" : "text-amber-700")}>
                       {moduleConfigured ? t(`${tp}.setup_edit_configuration`) : t(`${tp}.setup_configure_now`)}
                     </span>
-                  </button>
+                  </Button>
                 )}
               </div>
 
@@ -397,14 +398,14 @@ const CampaignDetail: React.FC<Props> = memo(
                   {moduleConfigured ? t(`${tp}.setup_step2_desc_ready`) : t(`${tp}.setup_step2_desc_wait`)}
                 </p>
                 {moduleConfigured && canPublish && (
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
                     onClick={openPending}
-                    className="self-start mt-0.5 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg cursor-pointer bg-blue-600 border border-blue-700 hover:bg-blue-700 transition-colors"
+                    className="self-start mt-0.5 px-2.5 py-1.5 h-auto rounded-lg bg-blue-600 border border-blue-700 hover:bg-blue-700 hover:text-white"
                   >
                     <Rocket className="size-3 text-white" />
                     <span className="text-xs font-bold text-white">{t(`${tp}.setup_activate_now`)}</span>
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>

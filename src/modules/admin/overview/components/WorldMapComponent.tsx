@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Popup, Tooltip, useMap } from 'react-leaflet';
 import { LocationOn as LocationIcon, ZoomIn, ZoomOut } from '@mui/icons-material';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
+import { Button } from '@/modules/shared/ui/shadcn/button';
 import { ADMIN_NEUTRAL, ADMIN_NEUTRAL_BG } from '@/modules/admin/shared';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -476,12 +477,13 @@ const WorldMapComponent: React.FC<WorldMapComponentProps> = ({
                 ))}
                 {showLoadMore && (
                   <div className="flex justify-center my-2">
-                    <button
-                      className="rounded-lg px-5 py-1.5 text-[0.85rem] font-semibold text-white tracking-wide transition-colors bg-slate-700 hover:bg-slate-800"
+                    <Button
+                      variant="ghost"
+                      className="rounded-lg px-5 py-1.5 text-[0.85rem] font-semibold text-white bg-slate-700 hover:bg-slate-800 hover:text-white"
                       onClick={() => setTopCountToShow(sortedCountries.length)}
                     >
                       Load More
-                    </button>
+                    </Button>
                   </div>
                 )}
               </div>

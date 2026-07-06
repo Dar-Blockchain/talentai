@@ -5,12 +5,12 @@ import {
   Avatar,
   Badge,
   Box,
-  Button,
   Divider,
   IconButton,
   Popover,
   Typography,
 } from "@mui/material";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import ChatOutlined from "@mui/icons-material/ChatOutlined";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
@@ -266,19 +266,14 @@ const HeaderChat: React.FC = () => {
 
         <Box sx={{ borderTop: "1px solid #E5E7EB", p: 1.5 }}>
           <Button
-            fullWidth
-            size="small"
+            variant="ghost"
+            size="sm"
+            className="w-full rounded-lg font-semibold"
             onClick={() => {
               router.push(isEmployee ? teamChatBasePath : candidateChatBasePath);
               close();
             }}
-            sx={{
-              textTransform: "none",
-              fontWeight: 600,
-              color: TEAL,
-              borderRadius: 2,
-              "&:hover": { bgcolor: TEAL_BG },
-            }}
+            style={{ color: TEAL }}
           >
             {openLabel}
           </Button>

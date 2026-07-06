@@ -1,5 +1,6 @@
 import React from "react";
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 
 interface Props {
   children: React.ReactNode;
@@ -34,11 +35,7 @@ class ErrorBoundary extends React.Component<Props, State> {
         <Typography sx={{ fontSize: "0.875rem", color: "#6B7280", fontFamily: "Poppins" }}>
           An unexpected error occurred. Please reload the page.
         </Typography>
-        <Button
-          variant="outlined"
-          onClick={() => window.location.reload()}
-          sx={{ textTransform: "none", fontFamily: "Poppins", borderRadius: "10px", mt: 1 }}
-        >
+        <Button variant="outline" onClick={() => window.location.reload()} className="mt-1 rounded-[10px] font-[Poppins]">
           Reload page
         </Button>
       </Box>

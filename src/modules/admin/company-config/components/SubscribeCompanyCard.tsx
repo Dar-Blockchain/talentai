@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search as SearchIcon, Check as CheckIcon, AddBusiness as AddBusinessIcon } from '@mui/icons-material';
 import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
+import { Button } from '@/modules/shared/ui/shadcn/button';
 import { cn } from '@/lib/utils';
 import { adminSubscriptionApi } from '../api';
 import { useCompanySearchQuery } from '../queries';
@@ -143,18 +144,16 @@ const SubscribeCompanyCard: React.FC<SubscribeCompanyCardProps> = ({ plans, onSu
 
         {/* Submit */}
         <div className="flex items-end">
-          <button
+          <Button
+            variant="ghost"
             onClick={() => subscribe()}
             disabled={!canSubmit}
-            className={cn(
-              "flex items-center gap-2 rounded-lg px-4 py-2.5 text-[13px] font-semibold text-white transition-colors",
-              canSubmit ? "hover:bg-indigo-700" : "opacity-40 cursor-not-allowed",
-            )}
+            className="rounded-lg px-4 py-2.5 text-[13px] font-semibold text-white hover:text-white"
             style={{ backgroundColor: ADMIN_ACCENT }}
           >
             <CheckIcon style={{ fontSize: 16 }} />
             {subscribing ? 'Subscribing…' : 'Subscribe Company'}
-          </button>
+          </Button>
         </div>
       </div>
     </Card>

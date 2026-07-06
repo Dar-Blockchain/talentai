@@ -1,6 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import AppButton from "@/components/ui/AppButton";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 
 export interface ConfirmDialogProps {
   open: boolean;
@@ -36,19 +36,17 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         <h2 className="px-6 pt-5 text-[1.05rem] font-bold text-gray-900">{title}</h2>
         <p className="px-6 py-4 text-sm text-gray-600">{body}</p>
         <div className="flex justify-end gap-2 px-6 pb-5 pt-1">
-          <AppButton
-            label={t("pages.subscription.dialog.keep", "Keep Current")}
-            variant="outlined"
-            onClick={onClose}
-            disabled={loading}
-          />
-          <AppButton
-            label={loading ? t("pages.subscription.card.processing") : confirmLabel}
-            variant="contained"
+          <Button variant="outline" onClick={onClose} disabled={loading}>
+            {t("pages.subscription.dialog.keep", "Keep Current")}
+          </Button>
+          <Button
+            variant="default"
             loading={loading}
             onClick={onConfirm}
-            sx={{ bgcolor: confirmColor, "&:hover": { bgcolor: confirmColor, filter: "brightness(0.88)" } }}
-          />
+            style={{ backgroundColor: confirmColor }}
+          >
+            {loading ? t("pages.subscription.card.processing") : confirmLabel}
+          </Button>
         </div>
       </div>
     </div>

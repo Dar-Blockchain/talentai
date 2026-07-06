@@ -21,6 +21,7 @@ import {
   TooltipTrigger,
 } from "@/modules/shared/ui/shadcn/tooltip";
 import { cn } from "@/lib/utils";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 
 export interface EmployeesFilterBarProps {
   search: string;
@@ -68,10 +69,11 @@ const SearchInput: React.FC<{
 SearchInput.displayName = "SearchInput";
 
 const FiltersButton: React.FC<{ activeCount: number; onClick: () => void; label: string }> = memo(({ activeCount, onClick, label }) => (
-  <button
+  <Button
+    variant="outline"
     onClick={onClick}
     className={cn(
-      "relative flex shrink-0 items-center gap-[6px] rounded-xl border px-3 py-[9px] shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-colors",
+      "relative shrink-0 h-auto gap-[6px] rounded-xl px-3 py-[9px] shadow-[0_1px_3px_rgba(0,0,0,0.04)]",
       activeCount > 0
         ? "border-[#C084FC] bg-[#F5F3FF] text-[#8310FF]"
         : "border-[#E5E7EB] bg-white text-[#374151]",
@@ -86,7 +88,7 @@ const FiltersButton: React.FC<{ activeCount: number; onClick: () => void; label:
         {activeCount}
       </span>
     )}
-  </button>
+  </Button>
 ));
 FiltersButton.displayName = "FiltersButton";
 
@@ -245,21 +247,23 @@ const EmployeesFilterBar: React.FC<EmployeesFilterBarProps> = memo(({
 
           {/* Footer */}
           <DrawerFooter className="flex gap-3 border-t border-[#F3F4F6] px-5 py-4">
-            <button
+            <Button
+              variant="outline"
               onClick={clearAll}
-              className="flex-1 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] py-[10px] text-[14px] font-semibold text-[#374151] transition-colors hover:bg-[#F3F4F6]"
+              className="flex-1 h-auto rounded-xl bg-[#F9FAFB] py-[10px] text-[14px] font-semibold text-[#374151] hover:bg-[#F3F4F6]"
             >
               {pf("clear_all")}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
               onClick={closeDrawer}
-              className="flex-[2] rounded-xl py-[10px] text-[14px] font-bold text-white transition-colors hover:opacity-90"
+              className="flex-[2] h-auto rounded-xl py-[10px] text-[14px] font-bold text-white hover:text-white hover:opacity-90"
               style={{ backgroundColor: PURPLE }}
             >
               {resultCount > 0
                 ? t("pages.employees.filters.show_results_count", { count: resultCount })
                 : t("pages.employees.filters.show_results")}
-            </button>
+            </Button>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>

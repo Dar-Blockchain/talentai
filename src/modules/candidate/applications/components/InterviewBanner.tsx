@@ -1,5 +1,6 @@
 import React from "react";
-import { Box, Typography, Button } from "@mui/material";
+import { Box, Typography } from "@mui/material";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import VideoCallOutlined from "@mui/icons-material/VideoCallOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import AccessTimeOutlined from "@mui/icons-material/AccessTime";
@@ -34,11 +35,14 @@ const InterviewBanner: React.FC<InterviewBannerProps> = ({ title, joinLabel, int
         </Box>
       )}
       {interviewLink && (
-        <Button variant="contained" size="small"
-          startIcon={<LinkOutlined sx={{ fontSize: 14 }} />}
+        <Button
+          variant="default"
+          size="sm"
           onClick={() => window.open(interviewLink, "_blank")}
-          sx={{ textTransform: "none", fontWeight: 700, fontSize: "0.78rem", bgcolor: "#fff", color: T, borderRadius: "8px", boxShadow: "none", px: 1.5, "&:hover": { bgcolor: TBG, boxShadow: "none" } }}
+          className="rounded-lg px-3.5 text-[0.78rem] font-bold shadow-none"
+          style={{ backgroundColor: "#fff", color: T }}
         >
+          <LinkOutlined sx={{ fontSize: 14 }} />
           {joinLabel}
         </Button>
       )}

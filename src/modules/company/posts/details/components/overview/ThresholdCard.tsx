@@ -4,7 +4,7 @@ import TrackChangesOutlined from "@mui/icons-material/TrackChangesOutlined";
 import SaveOutlined from "@mui/icons-material/SaveOutlined";
 import CheckOutlined from "@mui/icons-material/Check";
 import SectionCard from "@/components/ui/SectionCard";
-import AppButton from "@/components/ui/AppButton";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { useUpdatePostMutation } from "@/modules/company/posts/details/queries";
 
 import { TEAL, TEAL_BG, TEAL_BORDER } from "@/modules/company/posts/shared/constants";
@@ -105,19 +105,17 @@ const ThresholdCard: React.FC<Props> = ({ jobId, initial, canEdit, isDraft }) =>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 0.5 }}>
         <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>0%</Typography>
         {canEdit && (
-          <AppButton
-            label={saved ? "Saved" : "Save"}
-            size="small"
-            variant="outlined"
+          <Button
+            size="sm"
+            variant="outline"
             loading={saving}
             disabled={!dirty || !isDraft}
             onClick={handleSave}
-            startIcon={saved ? <CheckOutlined sx={{ fontSize: 13 }} /> : <SaveOutlined sx={{ fontSize: 13 }} />}
-            sx={saved ? {
-              borderColor: "#16A34A", color: "#16A34A",
-              "&:hover": { bgcolor: "#F0FDF4", borderColor: "#16A34A" },
-            } : undefined}
-          />
+            className={saved ? "border-green-600 text-green-600 hover:border-green-600 hover:bg-green-50" : undefined}
+          >
+            {saved ? <CheckOutlined sx={{ fontSize: 13 }} /> : <SaveOutlined sx={{ fontSize: 13 }} />}
+            {saved ? "Saved" : "Save"}
+          </Button>
         )}
         <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>100%</Typography>
       </Box>

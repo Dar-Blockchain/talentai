@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Box, Dialog, DialogContent, DialogTitle, Typography } from "@mui/material";
 import DownloadOutlined from "@mui/icons-material/DownloadOutlined";
 import { QRCodeCanvas } from "qrcode.react";
-import AppButton from "@/components/ui/AppButton";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 
 interface Props {
   open: boolean;
@@ -27,13 +27,10 @@ const JobQrDialog: React.FC<Props> = ({ open, shareLink, canvasRef, onClose, onD
             </Box>
           </Box>
           <Typography sx={{ fontSize: "12px", color: "#6B7280", textAlign: "center" }}>{t("detail.qr.scan_hint")}</Typography>
-          <AppButton
-            label={t("detail.qr.download")}
-            variant="outlined"
-            startIcon={<DownloadOutlined sx={{ fontSize: 16 }} />}
-            onClick={onDownload}
-            sx={{ borderRadius: "10px" }}
-          />
+          <Button variant="outline" onClick={onDownload}>
+            <DownloadOutlined sx={{ fontSize: 16 }} />
+            {t("detail.qr.download")}
+          </Button>
         </Box>
       </DialogContent>
     </Dialog>

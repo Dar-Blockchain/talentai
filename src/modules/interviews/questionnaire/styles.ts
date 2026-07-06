@@ -1,7 +1,6 @@
 import {
   AppBar,
   Box,
-  Button,
   Typography,
   Paper,
   styled,
@@ -40,18 +39,6 @@ export const RecordingControls = styled(Box)(({ theme }) => ({
   [theme.breakpoints.up('sm')]: {
     minWidth: '300px',
     maxWidth: '300px',
-  },
-}));
-
-export const RecordingButton = styled(Button)(({ theme }) => ({
-  width: '100%',
-  padding: theme.spacing(1.5),
-  fontSize: '1.1rem',
-  fontWeight: 600,
-  borderRadius: '12px',
-  transition: 'all 0.3s ease',
-  '&:hover': {
-    transform: 'scale(1.02)',
   },
 }));
 

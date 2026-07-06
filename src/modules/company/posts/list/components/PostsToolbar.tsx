@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Typography, FormControl, Select, MenuItem, InputBase, ListSubheader, Divider, Tooltip } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import AddOutlined from "@mui/icons-material/AddOutlined";
-import AppButton from "@/components/ui/AppButton";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutlineOutlined";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import SortOutlined from "@mui/icons-material/SortOutlined";
@@ -194,20 +194,14 @@ const PostsToolbar: React.FC<PostsToolbarProps> = ({
           {/* New post button */}
           <Tooltip title={postsAtLimit ? t("limit_tooltip", { used: postsUsed, limit: postsLimit }) : ""} arrow disableHoverListener={!postsAtLimit}>
             <span>
-              <AppButton
-                label={postsAtLimit ? t("limit_reached", { used: postsUsed, limit: postsLimit }) : t("new_post")}
-                variant="contained"
+              <Button
+                size="sm"
                 disabled={postsAtLimit}
-                startIcon={<AddOutlined sx={{ fontSize: 16 }} />}
                 onClick={onCreateClick}
-                size="small"
-                sx={{
-                  borderRadius: "10px", height: 36,
-                  background: `linear-gradient(135deg, ${TEAL} 0%, #0F766E 100%)`,
-                  boxShadow: `0 2px 8px ${TEAL}40`,
-                  "&:hover": { opacity: 0.9, boxShadow: `0 4px 14px ${TEAL}50`, background: `linear-gradient(135deg, ${TEAL} 0%, #0F766E 100%)` },
-                }}
-              />
+              >
+                <AddOutlined sx={{ fontSize: 16 }} />
+                {postsAtLimit ? t("limit_reached", { used: postsUsed, limit: postsLimit }) : t("new_post")}
+              </Button>
             </span>
           </Tooltip>
         </Box>

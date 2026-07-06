@@ -5,6 +5,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import { IconButton, Tooltip, CircularProgress } from '@mui/material';
 import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
+import { Button } from '@/modules/shared/ui/shadcn/button';
 import { ADMIN_ACCENT, ADMIN_NEUTRAL, ADMIN_NEUTRAL_BG } from '@/modules/admin/shared';
 import { useUpdatePlanMutation } from '../queries';
 import PlanFormDialog from './PlanFormDialog';
@@ -53,14 +54,15 @@ const PlanOverviewGrid: React.FC<PlanOverviewGridProps> = ({ plans, onSaved, onE
     <div className="mb-6">
       <div className="flex items-center justify-between mb-3">
         <span className="text-[13px] font-semibold text-slate-500 uppercase tracking-wide">Available Plans</span>
-        <button
+        <Button
+          variant="ghost"
           onClick={openCreate}
-          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold text-white transition-colors hover:bg-indigo-700"
+          className="rounded-lg px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-indigo-700 hover:text-white"
           style={{ backgroundColor: ADMIN_ACCENT }}
         >
           <AddIcon style={{ fontSize: 16 }} />
           New Plan
-        </button>
+        </Button>
       </div>
 
       {plans.length > 0 && (
@@ -104,14 +106,15 @@ const PlanOverviewGrid: React.FC<PlanOverviewGridProps> = ({ plans, onSaved, onE
                   <span className="font-semibold text-slate-700">{plan.monthlyInterviewLimit}</span>
                 </div>
                 <div className="h-px bg-slate-100 my-3" />
-                <button
+                <Button
+                  variant="outline"
                   onClick={() => handleToggleActive(plan)}
                   disabled={togglingName === plan.name}
-                  className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 py-1.5 text-[12px] font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50"
+                  className="w-full rounded-lg py-1.5 text-[12px] font-semibold text-slate-600"
                 >
                   {togglingName === plan.name && <CircularProgress size={12} sx={{ color: ADMIN_NEUTRAL }} />}
                   {plan.isActive ? 'Deactivate' : 'Reactivate'}
-                </button>
+                </Button>
               </div>
             </Card>
           ))}
