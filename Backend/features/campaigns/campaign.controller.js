@@ -66,8 +66,10 @@ exports.createInternalCampaign = async (req, res) => {
     });
 
     // No explicit selection = "allow all": enroll every employee currently in the company.
+    // Skip this for link-based access — anyone with the link joins on their own
+    // (anonymously or with their identity), so there's no company roster to pre-enroll.
     let employeeIds = Array.isArray(participants) ? participants : [];
-    if (employeeIds.length === 0) {
+    if (employeeIds.length === 0 && accessMethod !== "LINK") {
       const allMemberships = await CompanyMembership.find({ company: companyId }).select("user").lean();
       employeeIds = allMemberships.map((m) => m.user?.toString()).filter(Boolean);
     }

@@ -7,11 +7,12 @@ interface Props {
   campaignId: string;
   campaignTitle?: string;
   participantId?: string;
+  isLoggedIn?: boolean;
   onDone: () => void;
 }
 
 export const CampaignInterviewCompletedScreen: React.FC<Props> = ({
-  campaignId, campaignTitle, participantId, onDone,
+  campaignId, campaignTitle, participantId, isLoggedIn, onDone,
 }) => (
   <div className="flex-1 flex items-start justify-center p-4 lg:pt-8">
     <div className="w-full max-w-xl bg-background border border-border rounded-2xl">
@@ -29,9 +30,11 @@ export const CampaignInterviewCompletedScreen: React.FC<Props> = ({
 
         {participantId && <CampaignInterviewResultsPanel campaignId={campaignId} participantId={participantId} />}
 
-        <Button variant="outline" size="sm" className="mt-1" onClick={onDone}>
-          Back to Dashboard
-        </Button>
+        {isLoggedIn && (
+          <Button variant="outline" size="sm" className="mt-1" onClick={onDone}>
+            Back to Dashboard
+          </Button>
+        )}
       </div>
     </div>
   </div>

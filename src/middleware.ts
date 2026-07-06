@@ -14,6 +14,7 @@ const PUBLIC_PATHS = [
   "/unauthorized",
   "/employee/invitation",
   "/campaign",
+  "/campaigns/sessions",
   "/interviews",
   "/payments/stripe/callback",
   "/ui-kit"

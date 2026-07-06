@@ -46,6 +46,7 @@ export default function CampaignInterviewFlow({
     authUser,
     jobData: null,
     namespace: '/campaign-interview',
+    candidateIdOverride: participantId || undefined,
   });
 
   if (!isReady || !campaignId || !moduleType) {
@@ -63,6 +64,7 @@ export default function CampaignInterviewFlow({
         campaignId={campaignId}
         campaignTitle={campaignTitle}
         participantId={participantId}
+        isLoggedIn={!!authUser?._id}
         onDone={onComplete ?? onBack ?? (() => {})}
       />
     );
