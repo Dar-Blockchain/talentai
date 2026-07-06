@@ -16,6 +16,7 @@ const CampaignDetailsPage: NextPageWithLayout = () => {
     campaign, loading, error,
     canEdit, canDelete, canPublish,
     handleDelete, handleChangeStatus, handleSaveConfig,
+    statusLoading, configLoading,
   } = useCampaignDetail(id);
 
   return loading || checking ? (
@@ -31,6 +32,8 @@ const CampaignDetailsPage: NextPageWithLayout = () => {
       canEdit={canEdit}
       canDelete={canDelete}
       canPublish={canPublish}
+      statusLoading={statusLoading}
+      configLoading={configLoading}
     />
   ) : null;
 };

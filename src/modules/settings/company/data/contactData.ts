@@ -1,5 +1,5 @@
-import { UserProfile } from "@/types/profile";
 import { EMPLOYMENT_TYPES, COMPANY_SIZES } from "@/modules/settings/shared/constants";
+import { UserProfile } from "../../shared";
 
 type OnInputChange = (key: keyof UserProfile, value: string) => void;
 type ResponsiveColumn = string | { xs?: string; sm?: string; md?: string };

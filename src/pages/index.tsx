@@ -206,7 +206,7 @@ const HomePage: React.FC = () => {
         </div>
 
         {/* Final CTA */}
-        <div className="bg-[#F2F4F7]">
+        <div className="bg-white">
           <CtaSection />
         </div>
 

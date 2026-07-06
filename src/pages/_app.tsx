@@ -14,8 +14,8 @@ import { useTheme } from "next-themes";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { useRouter } from "next/router";
 import Head from "next/head";
-import ScrollToTop from "@/components/ui/ScrollToTop";
-import LoadingScreen from "@/components/ui/LoadingScreen";
+import ScrollToTop from "@/modules/shared/ui/ScrollToTop";
+import LoadingScreen from "@/modules/shared/ui/LoadingScreen";
 import { Poppins } from "next/font/google";
 import MuiToast from "@/components/ui/Toast";
 import { Toaster } from "@/modules/shared/ui/shadcn/sonner";
@@ -270,7 +270,7 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
             <meta property="og:title" content="TalentAI — AI Agents That Interview Candidates For You" />
             <meta property="og:description" content="Automate screening, interviews, and evaluation with conversational AI. Reduce hiring time by 75%. Trusted by NVIDIA Inception." />
             <meta property="og:type" content="website" />
-            <link rel="icon" href="/images/home/favico.png" type="image/png" />
+            <link rel="icon" href="/favicon.ico" />
           </Head>
           <main className={poppins.variable}>
             <Toaster richColors />

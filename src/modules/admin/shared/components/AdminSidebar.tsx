@@ -9,12 +9,13 @@ import {
   Psychology as SkillIcon,
   Settings as SettingsIcon,
   WorkOutline as PostsIcon,
+  VideoLibrary as WebinarIcon,
 } from '@mui/icons-material';
 import { cn } from '@/lib/utils';
 
 const DRAWER_WIDTH = 240;
 
-type TabName = 'dashboard' | 'users' | 'posts' | 'post-interview' | 'skill-interview' | 'company-config';
+type TabName = 'dashboard' | 'users' | 'posts' | 'post-interview' | 'skill-interview' | 'company-config' | 'webinars';
 
 const GROUPS = [
   {
@@ -30,6 +31,7 @@ const GROUPS = [
       { id: 'posts'           as TabName, label: 'Posts',           icon: PostsIcon     },
       { id: 'post-interview'  as TabName, label: 'Post Interview',  icon: InterviewIcon },
       { id: 'skill-interview' as TabName, label: 'Skill Interview', icon: SkillIcon     },
+      { id: 'webinars'        as TabName, label: 'Webinars',        icon: WebinarIcon   },
     ],
   },
   {
@@ -55,7 +57,7 @@ const SidebarContent: React.FC<AdminSidebarProps> = ({
     {/* Logo bar */}
     <div className="h-16 flex items-center justify-between px-4 bg-[#F7FBF9] border-b border-gray-200 shrink-0">
       <Link href="/">
-        <img src="/images/home/logo.svg" alt="TalentAI" className="h-9 cursor-pointer" />
+        <img src="/logo.svg" alt="TalentAI" className="h-9 cursor-pointer" />
       </Link>
       <button
         onClick={onDrawerClose}

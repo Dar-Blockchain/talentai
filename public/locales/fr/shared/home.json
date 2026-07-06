@@ -4,7 +4,8 @@
     "how_it_works": "Comment ça marche",
     "find_jobs": "Trouver un emploi",
     "are_you_hiring": "Vous recrutez ?",
-    "contact": "Contact"
+    "contact": "Contact",
+    "webinar": "Webinaire"
   },
   "hero": {
     "headline_1": "Arrêtez de perdre vos meilleurs talents",
@@ -150,6 +151,36 @@
     "a4": "TalentAI propose 8 modules d'évaluation préconstruits : Évaluation des compétences techniques, Évaluation des soft skills, Analyse de l'adéquation culturelle, Test de maîtrise linguistique, Missions pratiques, Défis de résolution de problèmes, Entretiens comportementaux et Vérification des références. Chaque module peut être configuré avec des seuils de réussite personnalisés, un scoring pondéré, des limites de temps et des règles de progression automatique. Les entreprises combinent les modules pour créer des pipelines uniques adaptés à différents rôles, départements ou niveaux de séniorité.",
     "q5": "Combien coûte TalentAI ?",
     "a5": "TalentAI propose des tarifs flexibles à partir de seulement 8 $ par entretien IA, sans engagement — payez uniquement ce que vous utilisez. Pour les équipes avec des besoins récurrents, les abonnements commencent à 99 $/mois (Starter, 15 entretiens) et montent jusqu'à 1 499 $/mois (Illimité, 700 entretiens avec support 24/7 dédié et benchmarks BI). Chaque plan inclut l'IA d'entretien avec scoring et rapports, la création de fiches de poste par IA, et un pipeline builder personnalisable. Les entretiens supplémentaires sont facturés de 8 $ à 4 $ selon le niveau. Une solution entreprise en marque blanche est également disponible avec infrastructure dédiée et SLA."
+  },
+  "webinar": {
+    "overline": "Webinaire gratuit",
+    "headline_1": "L'IA en recrutement :",
+    "headline_accent": "ce qui change vraiment",
+    "body": "Une session live de 60 minutes pour comprendre comment les équipes RH et dirigeants utilisent l'IA pour recruter plus vite, sans sacrifier la qualité.",
+    "benefit_1": "Comprendre l'impact réel de l'IA sur vos recrutements",
+    "benefit_2": "Voir des cas concrets de réduction du time-to-hire",
+    "benefit_3": "Repartir avec un plan d'action actionnable",
+    "cta": "Réserver ma place",
+    "card_type": "Session live",
+    "card_sub": "En ligne · Gratuit",
+    "card_title": "IA & Recrutement : de la hype à la réalité",
+    "card_desc": "3 actes · 60 min · Questions en direct",
+    "acte_1": "Risques & réalités de l'IA en recrutement",
+    "acte_2": "L'entretien IA en pratique : cas concrets",
+    "acte_3": "Comment piloter l'adoption dans votre équipe",
+    "attendees": "+120 inscrits",
+    "spots": "Places limitées",
+    "modal_title": "S'inscrire au webinaire",
+    "modal_sub": "3 minutes pour personnaliser votre session après l'inscription.",
+    "field_name": "Nom complet",
+    "field_name_placeholder": "Jane Dupont",
+    "field_email": "Email professionnel",
+    "field_email_placeholder": "jane@entreprise.com",
+    "modal_cta": "Confirmer mon inscription →",
+    "modal_cta_loading": "Enregistrement…",
+    "modal_privacy": "Vos données restent chez Talent AI · Aucun spam",
+    "success_title": "Inscription confirmée !",
+    "success_sub": "Redirection en cours…"
   },
   "contact": {
     "overline": "Parlons-en",

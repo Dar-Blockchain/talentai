@@ -33,7 +33,6 @@
     "cookies-next": "^5.1.0",
     "date-fns": "^4.4.0",
     "dayjs": "^1.11.20",
-    "formidable": "^3.5.2",
     "framer-motion": "^12.6.5",
     "i18n-iso-countries": "^7.14.0",
     "i18next": "^24.2.3",
@@ -67,6 +66,7 @@
     "typescript": "^5.8.3",
     "uuid": "^11.1.0",
     "vaul": "^1.1.2",
+    "xlsx": "^0.18.5",
     "zod": "^3.24.2"
   }
 }

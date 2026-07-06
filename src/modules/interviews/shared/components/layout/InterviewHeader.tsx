@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import { useRouter } from 'next/router';
 import { type RootState } from '@/store/store';
-import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
+import LanguageSwitcher from '@/modules/shared/layouts/shared/LanguageSwitcher';
 import UserAvatar from '@/modules/shared/layouts/shared/UserAvatar';
 import { Button } from '@/modules/shared/ui/shadcn/button';
 import HeaderNotification from '@/modules/notifications/shared/components/HeaderNotification';
@@ -19,7 +19,7 @@ const InterviewHeader: React.FC = () => {
       {/* Logo */}
       <Link href="/" className="inline-flex items-center">
         <Image
-          src="/images/home/logo.svg"
+          src="/logo.svg"
           alt="TalentAI"
           width={130}
           height={34}

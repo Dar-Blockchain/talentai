@@ -1,10 +1,10 @@
 import React, { useRef, useState, useEffect } from "react";
 import { MapPin, Users, UploadCloud } from "lucide-react";
-import { UserProfile } from "@/types/profile";
 import SectionCard from "@/components/ui/SectionCard";
 import { Spinner } from "@/modules/settings/shared/components";
 import { TEAL, TEAL_BORDER } from "@/modules/settings/shared/constants";
 import { Avatar, AvatarImage, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
+import { UserProfile } from "../../shared";
 
 interface SettingsProfileCardProps {
   profile: UserProfile;

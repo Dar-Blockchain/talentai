@@ -12,8 +12,9 @@ const PostsManagement           = dynamic(() => import('@/modules/admin/posts').
 const PostInterviewAssessments  = dynamic(() => import('@/modules/admin/post-interview').then((m) => m.PostInterviewAssessments));
 const SkillInterviewAssessments = dynamic(() => import('@/modules/admin/skill-interview').then((m) => m.SkillInterviewAssessments));
 const CompanyConfig             = dynamic(() => import('@/modules/admin/company-config').then((m) => m.CompanyConfig));
+const WebinarManagement         = dynamic(() => import('@/modules/admin/webinars').then((m) => m.WebinarManagement));
 
-const VALID_TABS = ['dashboard', 'users', 'posts', 'post-interview', 'skill-interview', 'company-config'] as const;
+const VALID_TABS = ['dashboard', 'users', 'posts', 'post-interview', 'skill-interview', 'company-config', 'webinars'] as const;
 type TabName = typeof VALID_TABS[number];
 
 const DashboardAdmin = () => {
@@ -65,6 +66,7 @@ const DashboardAdmin = () => {
           {activeTab === 'post-interview'  && <PostInterviewAssessments />}
           {activeTab === 'skill-interview' && <SkillInterviewAssessments />}
           {activeTab === 'company-config'  && <CompanyConfig />}
+          {activeTab === 'webinars'        && <WebinarManagement />}
         </div>
       </main>
 

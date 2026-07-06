@@ -3,7 +3,7 @@ import type {
   Campaign, CampaignMetrics, CampaignParticipant, CampaignSession,
   NonParticipant, CreateCampaignPayload, CampaignsResponse,
   CampaignsListParams, ParticipantsParams, SessionsParams, NonParticipantsParams,
-  EmployeeCampaignEntry,
+  EmployeeCampaignEntry, ParticipantResults,
 } from "../types";
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -56,10 +56,10 @@ export const apiDeleteCampaign = async (campaignId: string): Promise<string> => 
 
 export const apiFetchParticipants = async (
   { campaignId, ...params }: ParticipantsParams,
-): Promise<{ data: CampaignParticipant[]; total: number }> => {
+): Promise<{ data: CampaignParticipant[]; total: number; statusCounts?: Record<string, number> }> => {
   const res = await axiosInstance.get(`internal-campaigns/${campaignId}/participants`, { params: clean(params) });
   const payload = res.data.data;
-  return { data: payload.data, total: payload.total ?? payload.data?.length ?? 0 };
+  return { data: payload.data, total: payload.total ?? payload.data?.length ?? 0, statusCounts: payload.statusCounts };
 };
 
 export const apiFetchNonParticipants = async (
@@ -91,6 +91,17 @@ export const apiFetchSessions = async (
   return { data: res.data.data, total: res.data.total ?? res.data.data?.length ?? 0 };
 };
 
+export const apiFetchParticipantResults = async (campaignId: string, participantId: string): Promise<ParticipantResults> => {
+  const res = await axiosInstance.get(`internal-campaigns/${campaignId}/participants/${participantId}/results`);
+  return res.data.data;
+};
+
+/** Self-service: lets a participant fetch their own results (honors the campaign's "show results" setting). */
+export const apiFetchMyParticipantResults = async (campaignId: string, participantId: string): Promise<ParticipantResults> => {
+  const res = await axiosInstance.get(`internal-campaigns/${campaignId}/results/${participantId}`);
+  return res.data.data;
+};
+
 // ─── Employee campaigns ───────────────────────────────────────────────────────
 
 export const apiFetchEmployeeCampaigns = async (params: {
@@ -108,9 +119,10 @@ export const apiFetchEmployeeCampaigns = async (params: {
   if (period)            p.period            = period;
   const res = await axiosInstance.get(`internal-campaigns/employee/${userId}`, { params: p });
   const json = res.data;
+  const raw: any[] = json.data ?? [];
   return {
-    data:  json.data,
-    total: json.pagination?.total ?? json.data?.length ?? 0,
+    data:  raw.map((item) => ({ ...item, campaignId: item.campaignId ?? item._id ?? item.id })),
+    total: json.pagination?.total ?? raw.length,
     pages: json.pagination?.pages ?? 1,
     page:  json.pagination?.page  ?? page,
     limit: json.pagination?.limit ?? limit,

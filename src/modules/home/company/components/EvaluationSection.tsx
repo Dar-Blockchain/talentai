@@ -68,7 +68,7 @@ const EvaluationSection: React.FC = () => {
             onClick={() => setVideoOpen(true)}
             className="relative rounded-2xl overflow-hidden cursor-pointer group shadow-[0_12px_40px_rgba(0,0,0,0.14),_0_0_0_1px_rgba(13,148,136,0.12)] hover:shadow-[0_20px_56px_rgba(0,0,0,0.18),_0_0_0_2px_rgba(13,148,136,0.30)] hover:-translate-y-1 transition-all duration-250"
           >
-            <img src="/images/home/Iframe.png" alt="AI Interview Demo" className="w-full h-auto block" />
+            <img src="/images/home/home-video-poster.png" alt="AI Interview Demo" className="w-full h-auto block" />
 
             {/* Overlay */}
             <div className="absolute inset-0 bg-gradient-to-br from-black/35 via-black/10 to-transparent" />

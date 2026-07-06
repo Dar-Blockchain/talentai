@@ -21,7 +21,7 @@ const BrandLeftPanel: React.FC<Props> = ({ tKey, flex = "0 0 45%" }) => {
       <div className="mb-[clamp(24px,4vh,48px)]">
         <NextLink href="/" className="inline-flex transition-opacity duration-200 hover:opacity-80">
           <Image
-            src="/images/home/logo.svg"
+            src="/logo.svg"
             alt="TalentAI"
             width={148}
             height={36}

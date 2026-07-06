@@ -1,7 +1,7 @@
 import React from "react";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
-import LoadingState from "@/components/ui/LoadingState";
+import LoadingState from "@/modules/shared/ui/LoadingState";
 import EligibilityBlockedScreen from "./EligibilityBlockedScreen";
 import { type EligibilityStatus, type EligibilityMeta } from "../../types/api";
 import { ELIGIBILITY_SCREEN_CONFIG, type BlockableStatus } from "../../constants";

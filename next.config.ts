@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   outputFileTracingRoot: process.cwd(),
   devIndicators: {
-    position: "bottom-right",
+    position: "bottom-left",
   },
   images: {
     remotePatterns: [

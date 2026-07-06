@@ -1,8 +1,12 @@
 import React, { memo, useMemo, useCallback } from "react";
-import { Box, Button, IconButton, Typography } from "@mui/material";
-import { AddOutlined, CloseOutlined, DeleteOutlined } from "@mui/icons-material";
-import AppInput from "@/components/ui/AppInput";
-import AppSelect from "@/components/ui/AppSelect";
+import { Plus, Sparkles, Trash2, Eye, X } from "lucide-react";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import { Input } from "@/modules/shared/ui/shadcn/input";
+import { Label } from "@/modules/shared/ui/shadcn/label";
+import { Switch } from "@/modules/shared/ui/shadcn/switch";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/modules/shared/ui/shadcn/select";
 import { Question, QuestionnaireModule, QuestionType } from "@/modules/company/campaigns/types/campaign";
 import { useTranslation } from "react-i18next";
 
@@ -10,6 +14,8 @@ import { useTranslation } from "react-i18next";
 
 export interface QuestionnaireConfig {
   questions: Question[];
+  aiScoringEnabled?: boolean;
+  showResultsToParticipants?: boolean;
 }
 
 interface Props {
@@ -32,15 +38,16 @@ const QuestionnaireForm = memo<Props>(({ config, onChange }) => {
     [t, cf],
   );
   const addQuestion = useCallback(() =>
-    onChange({ questions: [...config.questions, { question: "", type: "TEXT" }] }), [onChange, config.questions]);
+    onChange({ ...config, questions: [...config.questions, { question: "", type: "TEXT" }] }), [onChange, config]);
 
   const updateQuestion = useCallback((i: number, updates: Partial<Question>) =>
     onChange({
+      ...config,
       questions: config.questions.map((q, idx) => (idx === i ? { ...q, ...updates } : q)),
-    }), [onChange, config.questions]);
+    }), [onChange, config]);
 
   const removeQuestion = useCallback((i: number) =>
-    onChange({ questions: config.questions.filter((_, idx) => idx !== i) }), [onChange, config.questions]);
+    onChange({ ...config, questions: config.questions.filter((_, idx) => idx !== i) }), [onChange, config]);
 
   const addOption = useCallback((qi: number) => {
     const q = config.questions[qi];
@@ -60,138 +67,183 @@ const QuestionnaireForm = memo<Props>(({ config, onChange }) => {
     });
   }, [config.questions, updateQuestion]);
 
+  const aiScoringEnabled = config.aiScoringEnabled !== false;
+  const toggleAiScoring = useCallback(
+    (checked: boolean) => onChange({ ...config, aiScoringEnabled: checked }),
+    [onChange, config],
+  );
+
+  const showResultsToParticipants = config.showResultsToParticipants !== false;
+  const toggleShowResults = useCallback(
+    (checked: boolean) => onChange({ ...config, showResultsToParticipants: checked }),
+    [onChange, config],
+  );
+
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <div className="flex flex-col gap-3">
+      <ToggleRow
+        icon={<Sparkles className="size-4" />}
+        iconBg="#F5F3FF"
+        iconColor="#7C3AED"
+        label={t(`${cf}.ai_scoring_label`)}
+        hint={t(`${cf}.ai_scoring_hint`)}
+        checked={aiScoringEnabled}
+        onCheckedChange={toggleAiScoring}
+      />
+      <ToggleRow
+        icon={<Eye className="size-4" />}
+        iconBg="#ECFEFF"
+        iconColor="#0891B2"
+        label={t(`${cf}.show_results_label`)}
+        hint={t(`${cf}.show_results_hint`)}
+        checked={showResultsToParticipants}
+        onCheckedChange={toggleShowResults}
+      />
+
       {config.questions.length === 0 ? (
         <EmptyState label={t(`${cf}.empty`)} />
       ) : (
-        config.questions.map((q, i) => (
-          <Box
-            key={i}
-            sx={{ p: 2, borderRadius: 2, border: "1px solid #E5E7EB", bgcolor: "#FAFAFA" }}
-          >
-            {/* Question header */}
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                mb: 1.5,
-              }}
-            >
-              <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#374151" }}>
-                {t(`${cf}.question_heading`, { n: i + 1 })}
-              </Typography>
-              <IconButton
-                size="small"
-                onClick={() => removeQuestion(i)}
-                sx={{ color: "#EF4444", p: 0.5, "&:hover": { bgcolor: "#FEF2F2" } }}
-              >
-                <DeleteOutlined sx={{ fontSize: 16 }} />
-              </IconButton>
-            </Box>
+        <div className="flex flex-col gap-3">
+          {config.questions.map((q, i) => (
+            <div key={i} className="rounded-xl border border-border bg-muted/30 p-3.5">
+              {/* Question header */}
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[12px] font-semibold text-foreground/80">
+                  {t(`${cf}.question_heading`, { n: i + 1 })}
+                </p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => removeQuestion(i)}
+                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
 
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-              {/* Question text */}
-              <AppInput
-                placeholder={t(`${cf}.placeholder_question`)}
-                value={q.question}
-                onChange={(e) => updateQuestion(i, { question: e.target.value })}
-              />
+              <div className="flex flex-col gap-3">
+                {/* Question text */}
+                <Input
+                  placeholder={t(`${cf}.placeholder_question`)}
+                  value={q.question}
+                  onChange={(e) => updateQuestion(i, { question: e.target.value })}
+                  className="bg-background"
+                />
 
-              {/* Question type */}
-              <AppSelect
-                label={t(`${cf}.type_label`)}
-                value={q.type}
-                options={typeOptions}
-                onChange={(val) =>
-                  updateQuestion(i, {
-                    type: val as QuestionType,
-                    options: val === "SINGLE_CHOICE" || val === "MULTIPLE_CHOICE" ? [""] : undefined,
-                  })
-                }
-              />
-
-              {/* Options (single choice or multiple choice) */}
-              {(q.type === "SINGLE_CHOICE" || q.type === "MULTIPLE_CHOICE") && (
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mt: 0.5 }}>
-                  {(q.options ?? []).map((opt, oi) => (
-                    <Box key={oi} sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-                      <AppInput
-                        placeholder={t(`${cf}.option_placeholder`, { n: oi + 1 })}
-                        value={opt}
-                        onChange={(e) => updateOption(i, oi, e.target.value)}
-                      />
-                      <IconButton
-                        size="small"
-                        onClick={() => removeOption(i, oi)}
-                        sx={{
-                          color: "#9CA3AF",
-                          flexShrink: 0,
-                          "&:hover": { color: "#EF4444" },
-                        }}
-                      >
-                        <CloseOutlined sx={{ fontSize: 14 }} />
-                      </IconButton>
-                    </Box>
-                  ))}
-                  <Button
-                    size="small"
-                    startIcon={<AddOutlined sx={{ fontSize: 14 }} />}
-                    onClick={() => addOption(i)}
-                    sx={{
-                      alignSelf: "flex-start",
-                      fontSize: "12px",
-                      color: "#6B7280",
-                      textTransform: "none",
-                    }}
+                {/* Question type */}
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t(`${cf}.type_label`)}
+                  </Label>
+                  <Select
+                    value={q.type}
+                    onValueChange={(val) =>
+                      updateQuestion(i, {
+                        type: val as QuestionType,
+                        options: val === "SINGLE_CHOICE" || val === "MULTIPLE_CHOICE" ? [""] : undefined,
+                      })
+                    }
                   >
-                    {t(`${cf}.add_option`)}
-                  </Button>
-                </Box>
-              )}
-            </Box>
-          </Box>
-        ))
+                    <SelectTrigger size="sm" className="bg-background">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {typeOptions.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Options (single choice or multiple choice) */}
+                {(q.type === "SINGLE_CHOICE" || q.type === "MULTIPLE_CHOICE") && (
+                  <div className="flex flex-col gap-2 mt-0.5">
+                    {(q.options ?? []).map((opt, oi) => (
+                      <div key={oi} className="flex items-center gap-2">
+                        <Input
+                          placeholder={t(`${cf}.option_placeholder`, { n: oi + 1 })}
+                          value={opt}
+                          onChange={(e) => updateOption(i, oi, e.target.value)}
+                          className="bg-background"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() => removeOption(i, oi)}
+                          className="shrink-0 text-muted-foreground hover:text-destructive"
+                        >
+                          <X className="size-3.5" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => addOption(i)}
+                      className="self-start text-muted-foreground"
+                    >
+                      <Plus className="size-3.5" />
+                      {t(`${cf}.add_option`)}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
       <AddRowButton label={t(`${cf}.add_question`)} onClick={addQuestion} />
-    </Box>
+    </div>
   );
 });
 QuestionnaireForm.displayName = "QuestionnaireForm";
 
 // ─── Local helpers ────────────────────────────────────────────────────────────
 
+export const ToggleRow: React.FC<{
+  icon: React.ReactNode;
+  iconBg: string;
+  iconColor: string;
+  label: string;
+  hint: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}> = ({ icon, iconBg, iconColor, label, hint, checked, onCheckedChange }) => (
+  <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-muted/30 p-3">
+    <div className="flex items-center gap-3 min-w-0">
+      <div
+        className="flex items-center justify-center size-8 rounded-lg shrink-0"
+        style={{ background: iconBg, color: iconColor }}
+      >
+        {icon}
+      </div>
+      <div className="min-w-0">
+        <p className="text-[13px] font-semibold text-foreground">{label}</p>
+        <p className="text-[11px] text-muted-foreground mt-0.5">{hint}</p>
+      </div>
+    </div>
+    <Switch checked={checked} onCheckedChange={onCheckedChange} />
+  </div>
+);
+
 const EmptyState: React.FC<{ label: string }> = ({ label }) => (
-  <Box
-    sx={{
-      mt: 2,
-      py: 3,
-      textAlign: "center",
-      bgcolor: "#F9FAFB",
-      borderRadius: 2,
-      border: "1px dashed #E5E7EB",
-    }}
-  >
-    <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>{label}</Typography>
-  </Box>
+  <div className="mt-1 py-6 text-center rounded-xl border border-dashed border-border bg-muted/20">
+    <p className="text-[13px] text-muted-foreground">{label}</p>
+  </div>
 );
 
 const AddRowButton: React.FC<{ label: string; onClick: () => void }> = ({ label, onClick }) => (
   <Button
-    variant="outlined"
-    startIcon={<AddOutlined />}
+    type="button"
+    variant="outline"
     onClick={onClick}
-    sx={{
-      borderStyle: "dashed",
-      borderColor: "#D1D5DB",
-      color: "#6B7280",
-      textTransform: "none",
-      fontSize: "13px",
-      "&:hover": { borderColor: "#9CA3AF", bgcolor: "#F9FAFB" },
-    }}
+    className="border-dashed border-border text-muted-foreground hover:border-foreground/30 hover:bg-muted/40"
   >
+    <Plus className="size-4" />
     {label}
   </Button>
 );

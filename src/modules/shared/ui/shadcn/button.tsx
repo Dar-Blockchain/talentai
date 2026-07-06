@@ -59,6 +59,14 @@ const buttonVariants = cva(
           "focus-visible:ring-destructive/30",
         ].join(" "),
 
+        // ── Warning (amber) ──
+        warning: [
+          "bg-amber-500 text-white",
+          "shadow-sm",
+          "hover:bg-amber-600 hover:shadow-md hover:-translate-y-px",
+          "active:translate-y-0 active:shadow-sm",
+        ].join(" "),
+
         // ── Link ──
         link: [
           "bg-transparent text-primary underline-offset-4",

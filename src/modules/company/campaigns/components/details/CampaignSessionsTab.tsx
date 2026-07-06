@@ -1,22 +1,42 @@
 "use client";
 
-import React, { memo, useEffect, useState, useRef, useCallback, useMemo } from "react";
-import { Box, Typography, Avatar, Skeleton, Alert, IconButton } from "@mui/material";
-import SearchOutlined               from "@mui/icons-material/SearchOutlined";
-import CloseOutlined                from "@mui/icons-material/CloseOutlined";
-import AssignmentOutlined           from "@mui/icons-material/AssignmentOutlined";
-import CheckCircleOutlined          from "@mui/icons-material/CheckCircleOutlined";
-import RadioButtonUncheckedOutlined from "@mui/icons-material/RadioButtonUncheckedOutlined";
-import AccessTimeOutlined           from "@mui/icons-material/AccessTimeOutlined";
-import BlockOutlined                from "@mui/icons-material/BlockOutlined";
+import React, { memo, useState, useRef, useCallback, useMemo } from "react";
+import { ClipboardList, CircleCheck, Circle, Clock, Ban, Eye, ArrowUpDown } from "lucide-react";
+import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
+import { Avatar, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/modules/shared/ui/shadcn/select";
 import { useCampaignSessionsQuery } from "../../queries";
-import { SessionStatus } from "@/modules/company/campaigns/types/campaign";
+import { CampaignSession, SessionStatus } from "@/modules/company/campaigns/types/campaign";
 import { Pagination } from "@/modules/shared/ui/shadcn/pagination";
+import CampaignsFilterBar from "../list/CampaignsFilterBar";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
+import ParticipantResultsDialog from "./ParticipantResultsDialog";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 9;
+const SP = "pages.campaigns.detail.sessions";
+const DU = "pages.campaigns.detail";
+const CP = "pages.campaigns.toolbar";
 
-const SKELETON_ROWS_6 = Array.from({ length: 6 });
+const PERIOD_VALUES = ["", "7d", "30d", "3m", "6m", "1y"] as const;
+
+type SortValue = "date_desc" | "score_desc" | "score_asc";
+const SORT_TO_PARAMS: Record<SortValue, { sortBy: "date" | "score"; order: "asc" | "desc" }> = {
+  date_desc:  { sortBy: "date",  order: "desc" },
+  score_desc: { sortBy: "score", order: "desc" },
+  score_asc:  { sortBy: "score", order: "asc"  },
+};
+
+function resolveSessionName(s: CampaignSession, t: TFunction) {
+  const p = s.participant;
+  if (s.isAnonymous) return p?.firstName ?? t(`${SP}.anonymous`);
+  return p ? ((p.firstName && p.lastName) ? `${p.firstName} ${p.lastName}` : p.firstName || p.lastName || p.username || t(`${DU}.unknown_user`)) : t(`${DU}.unknown_user`);
+}
+
+const SKELETON_CARDS = Array.from({ length: 6 });
 
 const fmtDate = (d: string | undefined, locale: string) =>
   d
@@ -29,66 +49,126 @@ function scoreColor(s: number) { return s >= 70 ? "#16A34A" : s >= 40 ? "#D97706
 function scoreBg  (s: number) { return s >= 70 ? "#F0FDF4" : s >= 40 ? "#FFFBEB" : "#FEF2F2"; }
 
 const SESSION_STATUS_META: Record<SessionStatus, { color: string; bg: string; icon: React.ElementType }> = {
-  PENDING:     { color: "#6B7280", bg: "#F3F4F6", icon: RadioButtonUncheckedOutlined },
-  IN_PROGRESS: { color: "#D97706", bg: "#FFFBEB", icon: AccessTimeOutlined },
-  COMPLETED:   { color: "#16A34A", bg: "#F0FDF4", icon: CheckCircleOutlined },
-  EXPIRED:     { color: "#DC2626", bg: "#FEF2F2", icon: BlockOutlined },
+  PENDING:     { color: "#6B7280", bg: "#F3F4F6", icon: Circle },
+  IN_PROGRESS: { color: "#D97706", bg: "#FFFBEB", icon: Clock },
+  COMPLETED:   { color: "#16A34A", bg: "#F0FDF4", icon: CircleCheck },
+  EXPIRED:     { color: "#DC2626", bg: "#FEF2F2", icon: Ban },
 };
 
-const GRID_COLS = "1fr 130px 90px 80px 110px" as const;
+// ─── Card skeleton ────────────────────────────────────────────────────────────
 
-const TABLE_CARD_SX = {
-  bgcolor: "#fff", border: "1px solid #E5E7EB",
-  borderRadius: 3, overflow: "hidden", mt: 1.5,
-} as const;
-
-const HEADER_ROW_SX = {
-  display: "grid", gridTemplateColumns: GRID_COLS,
-  alignItems: "center", px: 2.5, py: 1.25,
-  bgcolor: "#F9FAFB", borderBottom: "1px solid #E5E7EB",
-} as const;
-
-const COL_LABEL_SX = { fontSize: "11px", fontWeight: 700, color: "#6B7280", letterSpacing: "0.02em" } as const;
-
-const SEARCH_BOX_SX = {
-  display: "flex", alignItems: "center",
-  bgcolor: "#fff", border: "1px solid #E5E7EB",
-  borderRadius: "12px", px: 1.5, py: 0.5,
-  minWidth: 220, boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-} as const;
-
-const ANON_AVATAR_BG = "linear-gradient(135deg, #94A3B8, #CBD5E1)" as const;
-const PURPLE_AVATAR_BG = "linear-gradient(135deg, #8310FF, #A855F7)" as const;
-
-// ─── Skeleton row ─────────────────────────────────────────────────────────────
-
-const RowSkeleton = memo(() => (
-  <Box sx={{ display: "flex", alignItems: "center", gap: 2, px: 2.5, py: 1.75, borderBottom: "1px solid #F3F4F6" }}>
-    <Skeleton variant="circular" width={38} height={38} sx={{ flexShrink: 0 }} />
-    <Box sx={{ flex: 1 }}>
-      <Skeleton variant="text" width="30%" height={15} />
-      <Skeleton variant="text" width="45%" height={13} sx={{ mt: 0.25 }} />
-    </Box>
-    <Skeleton variant="rounded" width={80}  height={22} sx={{ borderRadius: "999px", flexShrink: 0 }} />
-    <Skeleton variant="text"    width={40}  sx={{ flexShrink: 0 }} />
-    <Skeleton variant="text"    width={80}  sx={{ flexShrink: 0 }} />
-  </Box>
+const CardSkeleton = memo(() => (
+  <div className="bg-background border border-border rounded-2xl p-4 flex flex-col gap-4">
+    <div className="flex items-center gap-3">
+      <Skeleton className="size-[38px] rounded-full shrink-0" />
+      <div className="flex-1">
+        <Skeleton className="h-[15px] w-[70%]" />
+        <Skeleton className="h-[13px] w-[85%] mt-1.5" />
+      </div>
+    </div>
+    <div className="flex items-center justify-between">
+      <Skeleton className="h-[22px] w-24 rounded-full" />
+      <Skeleton className="h-4 w-16" />
+    </div>
+    <Skeleton className="h-8 w-full rounded-lg" />
+  </div>
 ));
-RowSkeleton.displayName = "SessionRowSkeleton";
+CardSkeleton.displayName = "SessionCardSkeleton";
+
+// ─── Session card ─────────────────────────────────────────────────────────────
+
+interface SessionCardProps {
+  session: CampaignSession;
+  onShowResults: () => void;
+}
+
+const SessionCard = memo<SessionCardProps>(({ session: s, onShowResults }) => {
+  const { t, i18n } = useTranslation("dashboard");
+  const sp = SP;
+
+  const p          = s.participant;
+  const isAnon     = s.isAnonymous;
+  const name       = resolveSessionName(s, t);
+  const email      = isAnon ? null : (p?.email ?? "");
+  const letter     = name[0]?.toUpperCase() || "?";
+  const statusCfg  = SESSION_STATUS_META[s.status] ?? SESSION_STATUS_META.PENDING;
+  const StatusIcon = statusCfg.icon;
+
+  return (
+    <div className="bg-background border border-border rounded-2xl p-4 flex flex-col gap-3.5 transition-shadow hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-3 min-w-0">
+          <Avatar className="shrink-0">
+            <AvatarFallback
+              className="text-white font-bold text-[0.85rem]"
+              style={{ background: isAnon ? "linear-gradient(135deg, #94A3B8, #CBD5E1)" : "linear-gradient(135deg, #8310FF, #A855F7)" }}
+            >
+              {isAnon ? "?" : letter}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <p className="text-[13px] font-semibold text-foreground truncate">{name}</p>
+            <p className="text-[11px] text-muted-foreground truncate">
+              {isAnon ? t(`${sp}.identity_hidden`) : (email || "—")}
+            </p>
+          </div>
+        </div>
+
+        {s.score !== undefined && (
+          <span
+            className="inline-flex shrink-0 px-2 py-0.5 rounded-md border text-[13px] font-bold"
+            style={{ background: scoreBg(s.score), borderColor: `${scoreColor(s.score)}28`, color: scoreColor(s.score) }}
+          >
+            {s.score}%
+          </span>
+        )}
+      </div>
+
+      <div className="flex items-center justify-between gap-2">
+        <span
+          className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border"
+          style={{ background: statusCfg.bg, borderColor: `${statusCfg.color}25` }}
+        >
+          <StatusIcon className="size-[11px]" style={{ color: statusCfg.color }} />
+          <span className="text-[11px] font-bold" style={{ color: statusCfg.color }}>
+            {t(`${sp}.session_status.${s.status}`)}
+          </span>
+        </span>
+        <span className="text-xs text-muted-foreground shrink-0">{fmtDate(s.completedAt || s.startedAt, i18n.language)}</span>
+      </div>
+
+      <Button
+        type="button"
+        variant="secondary"
+        size="sm"
+        onClick={onShowResults}
+        className="w-full justify-center"
+      >
+        <Eye className="size-3.5" />
+        {t(`${sp}.show_results_button`)}
+      </Button>
+    </div>
+  );
+});
+SessionCard.displayName = "SessionCard";
 
 // ─── Sessions view ────────────────────────────────────────────────────────────
 
 const SessionsView = memo<{ campaignId: string }>(({ campaignId }) => {
-  const { t, i18n } = useTranslation("dashboard");
-  const sp = "pages.campaigns.detail.sessions";
-  const du = "pages.campaigns.detail";
+  const { t } = useTranslation("dashboard");
+  const sp = SP;
 
   const [search,          setSearch]          = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [period,          setPeriod]          = useState("");
+  const [sortValue,       setSortValue]       = useState<SortValue>("date_desc");
   const [page,            setPage]            = useState(1);
+  const [selected,        setSelected]        = useState<{ id: string; name: string } | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const { sortBy, order } = SORT_TO_PARAMS[sortValue];
   const { data, isLoading: loading, error: queryError } = useCampaignSessionsQuery({
-    campaignId, search: debouncedSearch || undefined, page, limit: PAGE_SIZE,
+    campaignId, search: debouncedSearch || undefined, period: period || undefined, sortBy, order, page, limit: PAGE_SIZE,
   });
   const sessions = data?.data  ?? [];
   const total    = data?.total ?? 0;
@@ -100,128 +180,104 @@ const SessionsView = memo<{ campaignId: string }>(({ campaignId }) => {
     debounceRef.current = setTimeout(() => { setDebouncedSearch(value); setPage(1); }, 300);
   }, []);
 
-  const clearSearch  = useCallback(() => handleSearchChange(""), [handleSearchChange]);
+  const handlePeriodChange = useCallback((value: string) => { setPeriod(value); setPage(1); }, []);
+  const handleSortChange   = useCallback((value: string) => { setSortValue(value as SortValue); setPage(1); }, []);
 
-  const headerCols = useMemo(() => [
-    t(`${sp}.col_participant`),
-    t(`${sp}.col_status`),
-    t(`${sp}.col_score`),
-    t(`${sp}.col_duration`),
-    t(`${sp}.col_completed`),
-  ], [t, sp]);
+  const hasActiveFilters = !!(debouncedSearch || period || sortValue !== "date_desc");
+  const clearFilters = useCallback(() => {
+    handleSearchChange("");
+    setPeriod("");
+    setSortValue("date_desc");
+    setPage(1);
+  }, [handleSearchChange]);
+
+  const periodOptions = useMemo(() => PERIOD_VALUES.map((value) => ({
+    value,
+    label: value === "" ? t(`${CP}.period.all`) : t(`${CP}.period.${value}`),
+  })), [t]);
+
+  const sortOptions = useMemo(() => ([
+    { value: "date_desc",  label: t(`${sp}.sort.newest`) },
+    { value: "score_desc", label: t(`${sp}.sort.highest_score`) },
+    { value: "score_asc",  label: t(`${sp}.sort.lowest_score`) },
+  ]), [t, sp]);
 
   return (
-    <Box>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, mb: 0, flexWrap: "wrap" }}>
-        <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>
-          {!loading && (debouncedSearch
-            ? t(`${sp}.matches_search`, { count: total })
-            : t(`${sp}.total_sessions`, { count: total }))}
-        </Typography>
-        <Box sx={SEARCH_BOX_SX}>
-          <SearchOutlined sx={{ fontSize: 15, color: "#9CA3AF", flexShrink: 0, mr: 1 }} />
-          <input
-            type="text"
-            placeholder={t(`${sp}.search_placeholder`)}
-            value={search}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            style={{ border: "none", outline: "none", background: "transparent", fontSize: "13px", color: "#111827", width: "100%", fontFamily: "inherit", padding: "4px 0" }}
-          />
-          {search && (
-            <IconButton size="small" onClick={clearSearch} sx={{ p: 0.25, color: "#9CA3AF" }}>
-              <CloseOutlined sx={{ fontSize: 13 }} />
-            </IconButton>
-          )}
-        </Box>
-      </Box>
+    <div>
+      <div className="mb-3">
+        <CampaignsFilterBar
+          search={search}
+          onSearchChange={handleSearchChange}
+          searchPlaceholder={t(`${sp}.search_placeholder`)}
+          period={period}
+          onPeriodChange={handlePeriodChange}
+          periodOptions={periodOptions}
+          periodPlaceholder={t(`${CP}.period_placeholder`)}
+          hasActiveFilters={hasActiveFilters}
+          onClearFilters={clearFilters}
+          clearLabel={t(`${CP}.clear_filters`)}
+          extraFilters={
+            <Select value={sortValue} onValueChange={handleSortChange}>
+              <SelectTrigger className="w-44 bg-card h-9 text-sm">
+                <span className="flex items-center gap-1.5">
+                  <ArrowUpDown className="size-3.5 text-muted-foreground shrink-0" />
+                  <SelectValue />
+                </span>
+              </SelectTrigger>
+              <SelectContent>
+                {sortOptions.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          }
+        />
+      </div>
 
-      <Box sx={TABLE_CARD_SX}>
-        <Box sx={HEADER_ROW_SX}>
-          {headerCols.map((h) => (
-            <Typography key={h} sx={COL_LABEL_SX}>{h}</Typography>
+      {error ? (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
+          {error}
+        </div>
+      ) : loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
+          {SKELETON_CARDS.map((_, i) => <CardSkeleton key={i} />)}
+        </div>
+      ) : sessions.length === 0 ? (
+        <div className="bg-background border border-border rounded-2xl text-center py-16">
+          <ClipboardList className="size-10 text-slate-300 mx-auto mb-3" />
+          <p className="text-sm font-semibold text-slate-700">
+            {hasActiveFilters ? t(`${sp}.empty_search_title`) : t(`${sp}.empty_title`)}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {hasActiveFilters ? t(`${sp}.empty_search_hint`) : t(`${sp}.empty_hint`)}
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
+          {sessions.map((s) => (
+            <SessionCard
+              key={s._id}
+              session={s}
+              onShowResults={() => setSelected({ id: s._id, name: resolveSessionName(s, t) })}
+            />
           ))}
-        </Box>
-
-        {error ? (
-          <Alert severity="error" sx={{ m: 2, borderRadius: 2 }}>{error}</Alert>
-        ) : loading ? (
-          <Box>{SKELETON_ROWS_6.map((_, i) => <RowSkeleton key={i} />)}</Box>
-        ) : sessions.length === 0 ? (
-          <Box sx={{ textAlign: "center", py: 8 }}>
-            <AssignmentOutlined sx={{ fontSize: 40, color: "#D1D5DB", mb: 1.5 }} />
-            <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#374151" }}>
-              {debouncedSearch ? t(`${sp}.empty_search_title`) : t(`${sp}.empty_title`)}
-            </Typography>
-            <Typography sx={{ fontSize: "12px", color: "#9CA3AF", mt: 0.5 }}>
-              {debouncedSearch ? t(`${sp}.empty_search_hint`) : t(`${sp}.empty_hint`)}
-            </Typography>
-          </Box>
-        ) : (
-          sessions.map((s, i) => {
-            const p          = s.participant;
-            const isAnon     = s.isAnonymous;
-            const name       = isAnon
-              ? (p?.firstName ?? t(`${sp}.anonymous`))
-              : (p ? ((p.firstName && p.lastName) ? `${p.firstName} ${p.lastName}` : p.firstName || p.lastName || p.username || t(`${du}.unknown_user`)) : t(`${du}.unknown_user`));
-            const email      = isAnon ? null : (p?.email ?? "");
-            const letter     = name[0]?.toUpperCase() || "?";
-            const statusCfg  = SESSION_STATUS_META[s.status] ?? SESSION_STATUS_META.PENDING;
-            const StatusIcon = statusCfg.icon;
-
-            return (
-              <Box key={s._id} sx={{
-                display: "grid", gridTemplateColumns: GRID_COLS,
-                alignItems: "center", px: 2.5, py: 1.5,
-                borderBottom: i < sessions.length - 1 ? "1px solid #F3F4F6" : "none",
-                "&:hover": { bgcolor: "#FAFAFA" }, transition: "background-color 0.1s",
-              }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0 }}>
-                  <Avatar sx={{
-                    width: 36, height: 36, fontSize: "0.85rem", fontWeight: 700, color: "#fff", flexShrink: 0,
-                    background: isAnon ? ANON_AVATAR_BG : PURPLE_AVATAR_BG,
-                  }}>
-                    {isAnon ? "?" : letter}
-                  </Avatar>
-                  <Box sx={{ minWidth: 0 }}>
-                    <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {name}
-                    </Typography>
-                    <Typography sx={{ fontSize: "11px", color: "#9CA3AF", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {isAnon ? t(`${sp}.identity_hidden`) : (email || "—")}
-                    </Typography>
-                  </Box>
-                </Box>
-
-                <Box>
-                  <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, px: 1, py: "3px", borderRadius: "999px", bgcolor: statusCfg.bg, border: `1px solid ${statusCfg.color}25` }}>
-                    <StatusIcon sx={{ fontSize: 11, color: statusCfg.color }} />
-                    <Typography sx={{ fontSize: "11px", fontWeight: 700, color: statusCfg.color }}>{t(`${sp}.session_status.${s.status}`)}</Typography>
-                  </Box>
-                </Box>
-
-                <Box>
-                  {s.score !== undefined ? (
-                    <Box sx={{ display: "inline-flex", px: 1.25, py: "3px", borderRadius: 1.5, bgcolor: scoreBg(s.score), border: `1px solid ${scoreColor(s.score)}28` }}>
-                      <Typography sx={{ fontSize: "13px", fontWeight: 700, color: scoreColor(s.score) }}>{s.score}%</Typography>
-                    </Box>
-                  ) : (
-                    <Typography sx={{ fontSize: "12px", color: "#D1D5DB" }}>—</Typography>
-                  )}
-                </Box>
-
-                <Typography sx={{ fontSize: "12px", color: "#6B7280" }}>{fmtDate(s.completedAt || s.startedAt, i18n.language)}</Typography>
-
-                <Box />
-              </Box>
-            );
-          })
-        )}
-      </Box>
+        </div>
+      )}
 
       {!loading && total > PAGE_SIZE && (
-        <Pagination page={page} totalPages={Math.ceil(total / PAGE_SIZE)} onPageChange={setPage} />
+        <div className="mt-3">
+          <Pagination page={page} totalPages={Math.ceil(total / PAGE_SIZE)} onPageChange={setPage} />
+        </div>
       )}
-    </Box>
+
+      <ParticipantResultsDialog
+        open={!!selected}
+        campaignId={campaignId}
+        participantId={selected?.id ?? null}
+        participantName={selected?.name ?? ""}
+        onClose={() => setSelected(null)}
+      />
+    </div>
   );
 });
 SessionsView.displayName = "SessionsView";

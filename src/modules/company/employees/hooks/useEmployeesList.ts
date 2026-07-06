@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/useToast";
 import { useRolePermissions } from "./useRolePermissions";
 import type { RoleFilter, SortOption } from "@/modules/company/employees/components/list";
 
-const PAGE_SIZE = 9;
+const PAGE_SIZE = 12;
 
 const SORT_MAP: Record<SortOption, { sortBy?: "name" | "date"; order?: "asc" | "desc" }> = {
   newest:      { sortBy: "date", order: "desc" },
@@ -63,7 +63,7 @@ export function useEmployeesList() {
     limit: PAGE_SIZE,
   }), [debouncedSearch, roleFilter, departmentFilter, sortBy, page]);
 
-  const { data: membersRaw, isLoading: loading, error: membersError } = useMembersQuery(memberFilters);
+  const { data: membersRaw, isLoading: loading, isFetching: fetchingMembers, error: membersError } = useMembersQuery(memberFilters);
   const { data: invitationsRaw, isLoading: fetchingInvitations }      = useInvitationsQuery();
   const { data: statsRaw,       isLoading: fetchingStats }            = useMemberStatsQuery();
   const { data: deptsRaw }                                            = useDepartmentsQuery();
@@ -76,16 +76,13 @@ export function useEmployeesList() {
   const error         = membersError ? String(membersError) : null;
 
   const handleAddMember = useCallback(async (email: string, role: string, departmentId?: string) => {
-    inviteMut.mutate({ email, role, departmentId }, {
-      onSuccess: () => {
-        setAddModalOpen(false);
-        showToast({ message: t("pages.employees.invited_success"), severity: "success" });
-      },
-      onError: (err: any) => {
-        const msg = err?.response?.data?.message ?? err?.message ?? t("pages.employees.toast_invite_failed");
-        showToast({ message: msg, severity: "error" });
-      },
-    });
+    try {
+      await inviteMut.mutateAsync({ email, role, departmentId });
+      showToast({ message: t("pages.employees.invited_success"), severity: "success" });
+    } catch (err: any) {
+      // Re-throw original error so err.response.data is accessible in the modal
+      throw err;
+    }
   }, [inviteMut, showToast, t]);
 
   const handleUpdateRole = useCallback(async (role: string, departmentId?: string) => {
@@ -123,7 +120,7 @@ export function useEmployeesList() {
   const owners = (members as any[]).filter((m) => m.role === "Owner").length;
 
   return {
-    members: members as ExtendedMember[], pageTotal, loading, error,
+    members: members as ExtendedMember[], pageTotal, loading, fetchingMembers, error,
     invitations, fetchingInvitations,
     stats, fetchingStats,
     departments,

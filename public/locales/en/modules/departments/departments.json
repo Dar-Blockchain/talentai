@@ -94,6 +94,17 @@
     "empty_invitations_hint": "Invitations you send for this department will appear here.",
     "toast_invite_sent": "Invitation sent successfully.",
     "toast_invite_resent": "Invitation resent.",
-    "toast_invite_cancelled": "Invitation cancelled."
+    "toast_invite_cancelled": "Invitation cancelled.",
+    "add_existing": "Add existing employee",
+    "add_existing_title": "Add existing employee",
+    "add_existing_subtitle": "Move a current company employee into this department.",
+    "add_existing_subtitle_named": "Move a current company employee into {{department}}.",
+    "add_existing_search_placeholder": "Search by name or email…",
+    "add_existing_empty_all_assigned": "All employees already belong to this department.",
+    "add_existing_empty_no_match": "No employees match your search.",
+    "add_existing_current_department": "Currently in {{department}}",
+    "add_existing_no_department": "No department",
+    "add_existing_action": "Add",
+    "toast_member_added": "Employee added to this department."
   }
 }
