@@ -135,7 +135,7 @@ const EvaluationSection: React.FC = () => {
               const Icon = BULLET_ICONS[i];
               return (
                 <motion.div
-                  key={b}
+                  key={i}
                   variants={{ hidden: { opacity: 0, x: 18 }, visible: { opacity: 1, x: 0, transition: { duration: 0.42, ease } } }}
                   whileHover={{ x: 4, transition: { type: "spring", stiffness: 300, damping: 22 } }}
                 >
