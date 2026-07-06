@@ -29,37 +29,38 @@ function deriverMarche(pays) {
   return COUNTRY_TO_MARCHE[pays.trim()] || "autre";
 }
 
+function clamp100(n) { return Math.max(0, Math.min(100, Math.round(Number(n) || 0))); }
+
 // ── Build rich Q&A block from the actual webinar questions stored in DB ───────
 async function buildQABlock(webinarId, rawAnswers, lang = "fr") {
   try {
     const webinar = await Webinar.findById(webinarId).select("title questions").lean();
-    if (!webinar || !webinar.questions?.length) return { block: null, title: null };
+    if (!webinar?.questions?.length) return { block: null, title: null };
 
-    const sorted = [...webinar.questions].sort((a, b) => a.order - b.order);
-    const lines  = [];
+    const lines = [...webinar.questions]
+      .sort((a, b) => a.order - b.order)
+      .flatMap(q => {
+        const raw = rawAnswers[q.key];
+        if (raw === undefined || raw === null || raw === "") return [];
 
-    for (const q of sorted) {
-      const raw = rawAnswers[q.key];
-      if (raw === undefined || raw === null || raw === "") continue;
+        const label = (lang === "en" ? q.label_en : q.label_fr) || q.label_fr || q.label_en;
 
-      const label = (lang === "en" ? q.label_en : q.label_fr) || q.label_fr || q.label_en;
+        let answer;
+        if (q.type === "scale") {
+          answer = `${raw}/5`;
+        } else if (q.type === "text") {
+          answer = String(raw).trim().slice(0, 600);
+        } else {
+          const opt = q.options?.find(o => o.key === raw);
+          answer = opt
+            ? `${lang === "en" ? opt.label_en : opt.label_fr} [key: ${raw}]`
+            : String(raw);
+        }
 
-      let answer;
-      if (q.type === "scale") {
-        answer = `${raw}/5`;
-      } else if (q.type === "text") {
-        answer = String(raw).trim().slice(0, 600);
-      } else {
-        const opt = q.options?.find(o => o.key === raw);
-        answer = opt
-          ? `${lang === "en" ? opt.label_en : opt.label_fr} [key: ${raw}]`
-          : String(raw);
-      }
+        return [`• ${label}\n  → ${answer}`];
+      });
 
-      lines.push(`• ${label}\n  → ${answer}`);
-    }
-
-    return { block: lines.join("\n\n"), title: webinar.title };
+    return { block: lines.join("\n\n") || null, title: webinar.title };
   } catch {
     return { block: null, title: null };
   }
@@ -186,23 +187,20 @@ Analyze these answers and return the full qualification JSON.`;
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error("No JSON in LLM response");
 
-    const parsed = JSON.parse(jsonMatch[0]);
-
-    const scoring = {
-      maturite_ia:        Math.max(0, Math.min(100, Math.round(Number(parsed.maturite_ia)        || 0))),
-      intensite_pain:     Math.max(0, Math.min(100, Math.round(Number(parsed.intensite_pain)     || 0))),
-      readiness_score:    Math.max(0, Math.min(100, Math.round(Number(parsed.readiness_score)    || 0))),
-      icp_fit:            ["ok", "faible", "hors"].includes(parsed.icp_fit)                        ? parsed.icp_fit    : "faible",
-      these:              ["v1", "v2", "v3", "indetermine"].includes(parsed.these)                 ? parsed.these      : "indetermine",
-      tier:               ["A", "B", "C", "D"].includes(parsed.tier)                              ? parsed.tier       : "C",
-      key_insight:        typeof parsed.key_insight        === "string" ? parsed.key_insight.slice(0, 300)   : null,
-      main_pain:          typeof parsed.main_pain          === "string" ? parsed.main_pain.slice(0, 300)     : null,
-      recommended_action: typeof parsed.recommended_action === "string" ? parsed.recommended_action.slice(0, 300) : null,
-      strengths:          Array.isArray(parsed.strengths) ? parsed.strengths.slice(0, 4).map(s => String(s).slice(0, 120)) : [],
-      blockers:           Array.isArray(parsed.blockers)  ? parsed.blockers.slice(0, 3).map(s => String(s).slice(0, 120))  : [],
+    const p = JSON.parse(jsonMatch[0]);
+    return {
+      maturite_ia:        clamp100(p.maturite_ia),
+      intensite_pain:     clamp100(p.intensite_pain),
+      readiness_score:    clamp100(p.readiness_score),
+      icp_fit:            ["ok", "faible", "hors"].includes(p.icp_fit)               ? p.icp_fit    : "faible",
+      these:              ["v1", "v2", "v3", "indetermine"].includes(p.these)         ? p.these      : "indetermine",
+      tier:               ["A", "B", "C", "D"].includes(p.tier)                      ? p.tier       : "C",
+      key_insight:        typeof p.key_insight        === "string" ? p.key_insight.slice(0, 300)        : null,
+      main_pain:          typeof p.main_pain          === "string" ? p.main_pain.slice(0, 300)          : null,
+      recommended_action: typeof p.recommended_action === "string" ? p.recommended_action.slice(0, 300) : null,
+      strengths:          Array.isArray(p.strengths) ? p.strengths.slice(0, 4).map(s => String(s).slice(0, 120)) : [],
+      blockers:           Array.isArray(p.blockers)  ? p.blockers.slice(0, 3).map(s => String(s).slice(0, 120))  : [],
     };
-
-    return scoring;
   } catch (err) {
     console.error("[webinar-scoring] AI scoring failed, falling back:", err.message);
     return calculerScoreFallback(rawAnswers);

@@ -51,8 +51,15 @@ export interface WebinarSubmission {
   scoring?: {
     maturite_ia: number;
     intensite_pain: number;
+    readiness_score?: number;
     tier: "A" | "B" | "C" | "D";
-    icp_fit: string;
+    icp_fit: "ok" | "faible" | "hors";
+    these?: "v1" | "v2" | "v3" | "indetermine";
+    key_insight?: string | null;
+    main_pain?: string | null;
+    recommended_action?: string | null;
+    strengths?: string[];
+    blockers?: string[];
   };
   source?: { utm_source: string | null; utm_campaign: string | null };
   createdAt: string;

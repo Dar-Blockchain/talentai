@@ -19,7 +19,6 @@ const EASE    = [0.32, 0.72, 0, 1] as [number, number, number, number];
 const ALPHA   = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const BACKEND = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const DEMO_LINK = process.env.NEXT_PUBLIC_WEBINAR_DEMO_LINK || "";
 
 const COUNTRIES = [
   "Tunisie","France","Belgique","Luxembourg","Suisse","Monaco",
@@ -34,17 +33,6 @@ const COUNTRIES = [
 ].sort();
 
 // ── Shared primitives ─────────────────────────────────────────────────────────
-const CARD_SX = { boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.04)" };
-
-const GRID_BG = {
-  backgroundImage: "linear-gradient(rgba(106,211,156,0.07) 1px,transparent 1px),linear-gradient(90deg,rgba(106,211,156,0.07) 1px,transparent 1px)",
-  backgroundSize: "28px 28px",
-};
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <p className="text-[10.5px] font-bold uppercase tracking-[2.5px] text-slate-400 mb-3">{children}</p>;
-}
-
 function CheckIcon({ color = "currentColor" }: { color?: string }) {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -128,350 +116,137 @@ function ArcRing({ value, size = 120, stroke = 10, color }: { value: number; siz
   );
 }
 
-// ── Snapshot results page ─────────────────────────────────────────────────────
-const C = {
-  brand: "#6AD39C",
-  teal:  "#0D9488",
-  red:   "#F43F5E",
-  amber: "#F59E0B",
-  muted: "#94A3B8",
+// ── Snapshot — congratulations screen shown to the user ──────────────────────
+const C = { brand: "#6AD39C", teal: "#0D9488", amber: "#F59E0B", muted: "#94A3B8" };
+
+const SNAP_GRID = {
+  backgroundImage: "linear-gradient(rgba(106,211,156,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(106,211,156,0.06) 1px,transparent 1px)",
+  backgroundSize: "32px 32px",
 };
 
-type TierKey = "A" | "B" | "C" | "D";
-const TIER: Record<TierKey, { label: string; labelEn: string; dot: string }> = {
-  A: { label: "Profil A — Fortement aligné", labelEn: "Profile A — Strongly aligned", dot: C.brand },
-  B: { label: "Profil B — Bon potentiel",    labelEn: "Profile B — Good potential",   dot: C.teal  },
-  C: { label: "Profil C — À maturité",       labelEn: "Profile C — Maturing",         dot: C.amber },
-  D: { label: "Hors cible",                  labelEn: "Out of scope",                 dot: C.muted },
-};
-
-function lvl(v: number) { return v < 35 ? 0 : v < 65 ? 1 : 2; }
-
-function Snapshot({ scoring, lang, questions, answers }: {
-  scoring: WebinarScoring; lang: string; questions: DBQuestion[]; answers: Record<string, unknown>;
-}) {
-  const { maturite_ia, intensite_pain, readiness_score, tier, key_insight, main_pain, recommended_action, strengths, blockers } = scoring;
-  const readiness = readiness_score ?? Math.round((maturite_ia + intensite_pain) / 2);
-  const isEn = lang === "en";
-
-  const matLvl  = lvl(maturite_ia);
-  const painLvl = lvl(intensite_pain);
-  const readLvl = lvl(readiness);
-
-  const scores = [
-    {
-      label:  isEn ? "Knowledge"   : "Maîtrise",
-      detail: isEn ? "Knowledge Level"   : "Niveau de maîtrise",
-      value:  maturite_ia,
-      color:  [C.amber, C.teal, C.brand][matLvl],
-      sub:    (isEn ? ["Beginner","Intermediate","Advanced"] : ["Débutant","Intermédiaire","Avancé"])[matLvl],
-    },
-    {
-      label:  isEn ? "Engagement"  : "Engagement",
-      detail: isEn ? "Engagement Level"  : "Niveau d'engagement",
-      value:  intensite_pain,
-      color:  [C.muted, C.amber, C.red][painLvl],
-      sub:    (isEn ? ["Low","Moderate","High"] : ["Faible","Modéré","Élevé"])[painLvl],
-    },
-    {
-      label:  isEn ? "Readiness"   : "Disposition",
-      detail: isEn ? "Readiness to Act"  : "Disposition à agir",
-      value:  readiness,
-      color:  [C.muted, C.teal, C.brand][readLvl],
-      sub:    (isEn ? ["Not ready","In progress","Ready"] : ["Pas encore","En cours","Prêt"])[readLvl],
-    },
-  ];
-
-  const tm = tier && TIER[tier as TierKey] ? TIER[tier as TierKey] : null;
-
-  const answered = [...questions]
-    .sort((a, b) => a.order - b.order)
-    .filter(q => answers[q.key] !== undefined && answers[q.key] !== "");
-
-  const getAnswerLabel = (q: DBQuestion, raw: unknown): string => {
-    if (q.type === "scale") return `${raw}/5`;
-    if (q.type === "text") { const s = String(raw).trim(); return s.length > 120 ? s.slice(0, 120) + "…" : s; }
-    const opt = q.options.find(o => o.key === raw);
-    return opt ? (isEn ? opt.label_en : opt.label_fr) : String(raw);
-  };
+function Snapshot({ scoring, lang }: { scoring: WebinarScoring; lang: string }) {
+  const isEn       = lang === "en";
+  const score      = scoring.readiness_score ?? Math.round((scoring.maturite_ia + scoring.intensite_pain) / 2);
+  const scoreColor = score >= 65 ? C.brand : score >= 35 ? C.teal : C.amber;
+  const scoreLabel = score >= 65
+    ? (isEn ? "Strong profile" : "Profil solide")
+    : score >= 35
+      ? (isEn ? "Good potential" : "Bon potentiel")
+      : (isEn ? "Keep growing" : "En progression");
 
   return (
-    <div style={{ background: "#F8F9FC" }} className="min-h-screen">
+    <div className="min-h-screen flex flex-col bg-white">
 
-      {/* Hero */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-        style={{ background: "linear-gradient(135deg,#0A1F1C 0%,#10453F 60%,#0D6B5E 100%)" }}
-        className="relative overflow-hidden px-6 pt-10 pb-8">
-        <div className="pointer-events-none absolute inset-0" style={GRID_BG} />
-        <div className="pointer-events-none absolute -top-20 -right-20 w-72 h-72 rounded-full"
-          style={{ background: "radial-gradient(circle, rgba(106,211,156,0.20) 0%, transparent 70%)" }} />
+      {/* Grid texture */}
+      <div className="pointer-events-none fixed inset-0" style={SNAP_GRID} />
 
-        <div className="relative max-w-[600px] mx-auto">
-          <div className="flex items-center gap-2 mb-5">
-            <div className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest"
-              style={{ background: "rgba(106,211,156,0.15)", color: C.brand, border: "1px solid rgba(106,211,156,0.25)" }}>
-              Talent AI · {isEn ? "AI Report" : "Rapport IA"}
-            </div>
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-              style={{ background: "rgba(106,211,156,0.10)", border: "1px solid rgba(106,211,156,0.20)" }}>
-              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: C.brand }} />
-              <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: C.brand }}>
-                {isEn ? "Live" : "En direct"}
-              </span>
-            </div>
-          </div>
+      {/* Glow blobs */}
+      <div className="pointer-events-none fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] opacity-20"
+        style={{ background: "radial-gradient(ellipse,rgba(13,148,136,0.25) 0%,transparent 70%)" }} />
+      <div className="pointer-events-none fixed bottom-0 right-0 w-80 h-80 opacity-10"
+        style={{ background: "radial-gradient(circle,rgba(13,148,136,0.4) 0%,transparent 70%)" }} />
 
-          <h1 className="text-[1.9rem] font-black text-white leading-tight tracking-tight mb-1">
-            {isEn ? "Your AI Analysis" : "Votre analyse IA"}
-          </h1>
-          <p className="text-[13px]" style={{ color: "rgba(106,211,156,0.65)" }}>
-            {isEn ? "Personalized report based on your answers" : "Rapport personnalisé basé sur vos réponses"}
-          </p>
+      <div className="relative flex-1 flex flex-col items-center justify-center px-5 py-16">
+        <motion.div initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          className="w-full max-w-[420px]">
 
-          {tm && tier && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-              className="mt-5 inline-flex items-center gap-2.5 px-4 py-2 rounded-full"
-              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)" }}>
-              <span className="w-2 h-2 rounded-full shrink-0" style={{ background: tm.dot }} />
-              <span className="text-[12px] font-bold text-white">{isEn ? tm.labelEn : tm.label}</span>
+          {/* Checkmark */}
+          <div className="flex justify-center mb-7">
+            <motion.div initial={{ scale: 0, rotate: -15 }} animate={{ scale: 1, rotate: 0 }}
+              transition={{ delay: 0.1, type: "spring", stiffness: 280, damping: 18 }}
+              className="w-[72px] h-[72px] rounded-2xl flex items-center justify-center"
+              style={{ background: "linear-gradient(135deg,#0D9488 0%,#6AD39C 100%)", boxShadow: "0 8px 32px rgba(106,211,156,0.40)" }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
             </motion.div>
-          )}
-        </div>
-      </motion.div>
-
-      <div className="max-w-[600px] mx-auto px-5 py-6 pb-24 space-y-4">
-
-        {/* Score rings */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="bg-white rounded-2xl border border-slate-200/70 overflow-hidden" style={CARD_SX}>
-          <div className="grid grid-cols-3 divide-x divide-slate-100">
-            {scores.map(({ label, value, color, sub }, di) => (
-              <motion.div key={label} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 + di * 0.07 }}
-                className="flex flex-col items-center text-center py-5 px-2">
-                <div className="relative mb-3">
-                  <ArcRing value={value} size={76} stroke={6} color={color} />
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-[1.25rem] font-black leading-none tabular-nums" style={{ color }}>{value}</span>
-                    <span className="text-[8.5px] text-slate-400 font-medium">/100</span>
-                  </div>
-                </div>
-                <p className="text-[11px] font-bold text-slate-700 leading-tight">{label}</p>
-                <span className="mt-1 inline-block px-2 py-0.5 rounded-full text-[9.5px] font-bold"
-                  style={{ background: color + "14", color }}>{sub}</span>
-              </motion.div>
-            ))}
           </div>
-        </motion.div>
 
-        {/* Key insight */}
-        {key_insight && (
-          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.26 }}
-            className="bg-white rounded-2xl border border-slate-200/70 p-5" style={CARD_SX}>
-            <SectionLabel>{isEn ? "Key insight" : "Insight clé"}</SectionLabel>
-            <div className="flex gap-3">
-              <div className="mt-0.5 shrink-0 w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "rgba(106,211,156,0.12)" }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.teal} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2a7 7 0 0 1 5 12l-1 1v2a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1v-2l-1-1A7 7 0 0 1 12 2z"/><line x1="9" y1="21" x2="15" y2="21"/>
-                </svg>
-              </div>
-              <p className="text-[13.5px] text-slate-700 leading-relaxed flex-1">{key_insight}</p>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Main pain */}
-        {main_pain && (
-          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.31 }}
-            className="bg-white rounded-2xl border border-slate-200/70 p-5" style={CARD_SX}>
-            <SectionLabel>{isEn ? "Main pain point" : "Douleur principale"}</SectionLabel>
-            <div className="flex gap-3">
-              <div className="mt-0.5 shrink-0 w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "#FFF1F2" }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.red} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
-              </div>
-              <p className="text-[13.5px] text-slate-700 leading-relaxed flex-1">{main_pain}</p>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Recommended action */}
-        {recommended_action && (
-          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.36 }}
-            className="bg-white rounded-2xl p-5 relative overflow-hidden"
-            style={{ border: "1px solid rgba(13,148,136,0.25)", ...CARD_SX }}>
-            <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: `linear-gradient(90deg,${C.brand},${C.teal})` }} />
-            <SectionLabel>{isEn ? "Recommended next step" : "Prochaine étape conseillée"}</SectionLabel>
-            <div className="flex gap-3">
-              <div className="mt-0.5 shrink-0 w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "rgba(106,211,156,0.12)" }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.teal} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-                </svg>
-              </div>
-              <p className="text-[13.5px] text-slate-700 leading-relaxed flex-1 font-medium">{recommended_action}</p>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Strengths & Blockers */}
-        {((strengths?.length ?? 0) > 0 || (blockers?.length ?? 0) > 0) && (
-          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.41 }}
-            className="grid grid-cols-2 gap-3">
-            {strengths && strengths.length > 0 && (
-              <div className="bg-white rounded-2xl border border-slate-200/70 p-4" style={CARD_SX}>
-                <div className="flex items-center gap-1.5 mb-3">
-                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: C.brand }} />
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{isEn ? "Strengths" : "Points forts"}</p>
-                </div>
-                <ul className="space-y-2">
-                  {strengths.map((s, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <svg className="mt-[3px] shrink-0" width="11" height="11" viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="10" fill="rgba(106,211,156,0.2)"/>
-                        <polyline points="8 12 11 15 16 9" stroke={C.teal} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      <span className="text-[12px] text-slate-600 leading-snug">{s}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {blockers && blockers.length > 0 && (
-              <div className="bg-white rounded-2xl border border-slate-200/70 p-4" style={CARD_SX}>
-                <div className="flex items-center gap-1.5 mb-3">
-                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: C.amber }} />
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{isEn ? "Blockers" : "Freins"}</p>
-                </div>
-                <ul className="space-y-2">
-                  {blockers.map((b, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <svg className="mt-[3px] shrink-0" width="11" height="11" viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="10" fill="#FEF9C3"/>
-                        <line x1="12" y1="8" x2="12" y2="13" stroke={C.amber} strokeWidth="2.5" strokeLinecap="round"/>
-                        <line x1="12" y1="16" x2="12.01" y2="16" stroke={C.amber} strokeWidth="2.5" strokeLinecap="round"/>
-                      </svg>
-                      <span className="text-[12px] text-slate-600 leading-snug">{b}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </motion.div>
-        )}
-
-        {/* Score bars */}
-        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.46 }}
-          className="bg-white rounded-2xl border border-slate-200/70 p-5" style={CARD_SX}>
-          <SectionLabel>{isEn ? "Score breakdown" : "Détail des scores"}</SectionLabel>
-          <div className="space-y-4">
-            {scores.map(({ detail, value, color, sub }, i) => (
-              <div key={detail}>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[12.5px] font-semibold text-slate-800">{detail}</span>
-                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ background: color + "14", color }}>{sub}</span>
-                  </div>
-                  <span className="text-[13px] font-black tabular-nums" style={{ color }}>
-                    {value}<span className="text-[9px] text-slate-300 font-normal">/100</span>
-                  </span>
-                </div>
-                <div className="h-2 rounded-full overflow-hidden" style={{ background: "#F1F5F9" }}>
-                  <motion.div className="h-full rounded-full"
-                    style={{ background: `linear-gradient(90deg,${color}60,${color})` }}
-                    initial={{ width: 0 }} animate={{ width: `${value}%` }}
-                    transition={{ delay: 0.52 + i * 0.08, duration: 1.2, ease: [0.22, 1, 0.36, 1] }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Answers */}
-        {answered.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.54 }}
-            className="bg-white rounded-2xl border border-slate-200/70 overflow-hidden" style={CARD_SX}>
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100">
-              <p className="text-[10.5px] font-bold uppercase tracking-[2.5px] text-slate-400">{isEn ? "Your answers" : "Vos réponses"}</p>
-              <span className="text-[10px] font-bold text-slate-300 tabular-nums">{answered.length}</span>
-            </div>
-            <div className="divide-y divide-slate-50">
-              {answered.map((q, i) => {
-                const raw = answers[q.key];
-                return (
-                  <motion.div key={q.key} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                    transition={{ delay: 0.58 + i * 0.025 }}
-                    className="px-5 py-3.5 flex items-start gap-3">
-                    <span className="mt-0.5 shrink-0 w-5 h-5 rounded-md text-[9.5px] font-black flex items-center justify-center"
-                      style={{ background: "rgba(106,211,156,0.15)", color: C.teal }}>{i + 1}</span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[11.5px] text-slate-400 leading-snug mb-1.5">{isEn ? q.label_en : q.label_fr}</p>
-                      {q.type === "scale" ? (
-                        <div className="flex items-center gap-1.5">
-                          {[1,2,3,4,5].map(n => (
-                            <div key={n} className="h-1.5 flex-1 rounded-full"
-                              style={{ background: n <= Number(raw) ? C.brand : "#E2E8F0" }} />
-                          ))}
-                          <span className="text-[11px] font-bold ml-2 tabular-nums" style={{ color: C.teal }}>{String(raw)}/5</span>
-                        </div>
-                      ) : q.type === "text" ? (
-                        <p className="text-[12.5px] text-slate-700 leading-relaxed">{getAnswerLabel(q, raw)}</p>
-                      ) : (
-                        <span className="inline-block px-2.5 py-0.5 rounded-full text-[11.5px] font-semibold"
-                          style={{ background: "rgba(106,211,156,0.12)", color: C.teal, border: `1px solid rgba(13,148,136,0.25)` }}>
-                          {getAnswerLabel(q, raw)}
-                        </span>
-                      )}
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
-
-        {/* CTA */}
-        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.58 }}
-          className="relative overflow-hidden rounded-2xl p-6 text-white"
-          style={{ background: "linear-gradient(135deg,#0A1F1C 0%,#10453F 60%,#0D6B5E 100%)" }}>
-          <div className="pointer-events-none absolute inset-0" style={{ ...GRID_BG, backgroundSize: "32px 32px" }} />
-          <div className="pointer-events-none absolute -bottom-12 -right-12 w-56 h-56 rounded-full"
-            style={{ background: `radial-gradient(circle,rgba(106,211,156,0.20) 0%,transparent 70%)` }} />
-          <div className="relative">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: C.brand }} />
-              <p className="text-[10.5px] font-bold uppercase tracking-widest" style={{ color: C.brand }}>
-                {isEn ? "You're registered" : "Vous êtes inscrit"}
-              </p>
-            </div>
-            <h3 className="text-[1.25rem] font-black leading-snug mb-2 text-white">
-              {isEn ? "See you at the live session" : "À bientôt en session live"}
-            </h3>
-            <p className="text-[13px] leading-relaxed mb-5" style={{ color: "rgba(106,211,156,0.65)" }}>
-              {isEn
-                ? "Your profile will shape the live discussion. We'll reference your results in real time."
-                : "Votre profil influencera la session live. Vos résultats seront utilisés en temps réel."}
+          {/* Headline */}
+          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+            className="text-center mb-8">
+            <p className="text-[11px] font-bold uppercase tracking-[2.5px] mb-3" style={{ color: C.teal }}>
+              Talent AI · {isEn ? "AI Report" : "Rapport IA"}
             </p>
-            {DEMO_LINK ? (
-              <a href={DEMO_LINK} target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-[14px] font-bold transition-all hover:opacity-90"
-                style={{ background: `linear-gradient(135deg,${C.brand},${C.teal})`, color: "#0A1F1C" }}>
-                {isEn ? "Book a private demo →" : "Réserver une démo privée →"}
-              </a>
-            ) : (
-              <div className="flex items-center gap-3 p-3.5 rounded-xl"
-                style={{ background: "rgba(106,211,156,0.07)", border: "1px solid rgba(106,211,156,0.18)" }}>
-                <span className="text-xl shrink-0">📩</span>
-                <p className="text-[12.5px] leading-snug" style={{ color: "rgba(106,211,156,0.80)" }}>
-                  {isEn ? "Check your inbox — a confirmation is on its way." : "Vérifiez votre boîte mail — une confirmation est en route."}
-                </p>
-              </div>
-            )}
-          </div>
-        </motion.div>
+            <h1 className="text-[2.2rem] font-black text-slate-900 leading-[1.1] tracking-tight mb-3">
+              {isEn ? "You're registered!" : "Vous êtes inscrit !"}
+            </h1>
+            <p className="text-[15px] text-slate-500 leading-relaxed">
+              {isEn
+                ? "Your profile has been analysed by our AI engine."
+                : "Votre profil a été analysé par notre moteur IA."}
+            </p>
+          </motion.div>
 
-        <p className="text-center text-[11px] text-slate-300 pt-1">
-          Talent AI · {isEn ? "Confidential" : "Données confidentielles"}
-        </p>
+          {/* Score card */}
+          <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+            className="rounded-2xl p-6 mb-4 text-center border border-slate-100"
+            style={{ background: "#F8FAFC", boxShadow: "0 1px 3px rgba(0,0,0,0.04),0 4px 16px rgba(0,0,0,0.04)" }}>
+
+            <p className="text-[10.5px] font-bold uppercase tracking-[2px] mb-4 text-slate-400">
+              {isEn ? "Your readiness score" : "Votre score de disposition"}
+            </p>
+
+            <div className="flex items-center justify-center gap-6">
+              {/* Ring */}
+              <div className="relative shrink-0">
+                <ArcRing value={score} size={100} stroke={9} color={scoreColor} />
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-[1.7rem] font-black leading-none tabular-nums" style={{ color: scoreColor }}>{score}</span>
+                  <span className="text-[9px] font-bold" style={{ color: "rgba(255,255,255,0.35)" }}>/100</span>
+                </div>
+              </div>
+
+              {/* Score breakdown bars */}
+              <div className="flex-1 space-y-2.5 text-left min-w-0">
+                {[
+                  { label: isEn ? "Knowledge" : "Maîtrise",   value: scoring.maturite_ia,  color: C.brand },
+                  { label: isEn ? "Engagement" : "Engagement", value: scoring.intensite_pain, color: C.teal  },
+                ].map(({ label, value, color }) => (
+                  <div key={label}>
+                    <div className="flex justify-between text-[10.5px] mb-1 text-slate-400">
+                      <span>{label}</span>
+                      <span className="font-bold tabular-nums" style={{ color }}>{value}</span>
+                    </div>
+                    <div className="h-1.5 rounded-full" style={{ background: "#E2E8F0" }}>
+                      <motion.div className="h-full rounded-full"
+                        style={{ background: color }}
+                        initial={{ width: 0 }} animate={{ width: `${value}%` }}
+                        transition={{ delay: 0.55, duration: 1, ease: [0.22, 1, 0.36, 1] }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full"
+              style={{ background: scoreColor + "18", border: `1px solid ${scoreColor}30` }}>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: scoreColor }} />
+              <span className="text-[11px] font-bold" style={{ color: scoreColor }}>{scoreLabel}</span>
+            </div>
+          </motion.div>
+
+          {/* Email notice */}
+          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.42 }}
+            className="flex items-center gap-3 px-5 py-4 rounded-2xl border border-slate-100 bg-slate-50">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: "rgba(13,148,136,0.08)", border: "1px solid rgba(13,148,136,0.15)" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.teal} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+              </svg>
+            </div>
+            <p className="text-[13px] text-slate-600 leading-snug flex-1">
+              {isEn
+                ? "Your join link & full report are on their way to your inbox."
+                : "Votre lien de connexion et votre rapport complet arrivent dans votre boîte mail."}
+            </p>
+          </motion.div>
+
+          <p className="mt-7 text-center text-[10.5px] text-slate-300">
+            Talent AI · {isEn ? "Confidential · No spam" : "Données confidentielles · Aucun spam"}
+          </p>
+        </motion.div>
       </div>
     </div>
   );
@@ -928,7 +703,7 @@ export default function WebinarAgentPage() {
           {/* Snapshot */}
           {isSnapshot && scoring && (
             <div style={{ paddingTop: "80px" }}>
-              <Snapshot scoring={scoring} lang={lang} questions={questions} answers={answers} />
+              <Snapshot scoring={scoring} lang={lang} />
             </div>
           )}
         </div>

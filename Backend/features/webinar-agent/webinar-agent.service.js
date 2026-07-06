@@ -57,7 +57,7 @@ exports.complete = async (submissionId, finalAnswers) => {
   const doc = await WebinarSubmission.findById(submissionId);
   if (!doc) throw new Error("Submission not found");
 
-  const answers = { ...doc.answers.toObject?.() ?? doc.answers, ...finalAnswers };
+  const answers = { ...(doc.answers?.toObject ? doc.answers.toObject() : doc.answers), ...finalAnswers };
 
   // Derive marche from pays if not already set
   if (!answers.marche && (answers.pays || answers.q4_pays)) {

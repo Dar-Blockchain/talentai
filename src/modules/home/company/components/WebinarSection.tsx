@@ -107,18 +107,26 @@ const WebinarSection: React.FC<WebinarSectionProps> = ({ previewId, routerReady 
         {/* Divider */}
         <div className="border-t border-slate-100 mb-5" />
 
-        {/* Included */}
+        {/* Highlights / Included */}
         <div className="space-y-2 mb-6">
-          {[
-            lang === "en" ? "100% free, no credit card" : "100% gratuit, sans carte bancaire",
-            lang === "en" ? "No registration required" : "Sans inscription requise",
-            lang === "en" ? "AI report sent by email" : "Rapport IA envoyé par email",
-          ].map(label => (
-            <div key={label} className="flex items-center gap-2 text-[12px] text-slate-600">
-              <CheckCircle size={13} className="text-teal-500 shrink-0" />
-              {label}
-            </div>
-          ))}
+          {(webinar.highlights?.filter(h => h.trim()) ?? []).length > 0
+            ? webinar.highlights!.filter(h => h.trim()).map(label => (
+                <div key={label} className="flex items-center gap-2 text-[12px] text-slate-600">
+                  <CheckCircle size={13} className="text-teal-500 shrink-0" />
+                  {label}
+                </div>
+              ))
+            : [
+                lang === "en" ? "100% free, no credit card" : "100% gratuit, sans carte bancaire",
+                lang === "en" ? "No registration required" : "Sans inscription requise",
+                lang === "en" ? "AI report sent by email" : "Rapport IA envoyé par email",
+              ].map(label => (
+                <div key={label} className="flex items-center gap-2 text-[12px] text-slate-600">
+                  <CheckCircle size={13} className="text-teal-500 shrink-0" />
+                  {label}
+                </div>
+              ))
+          }
         </div>
 
         {/* CTA */}

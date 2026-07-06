@@ -22,8 +22,7 @@ async function withRetry(fn, attempts = 3) {
 
 // ── Notion ────────────────────────────────────────────────────────────────────
 
-const NOTION_TOKEN    = process.env.NOTION_TOKEN;
-// Map marche → Notion database ID (set all 6 in env)
+const NOTION_TOKEN  = process.env.NOTION_TOKEN;
 const NOTION_DB_IDS = {
   tunisie:              process.env.NOTION_DB_TUNISIE,
   europe_francophone:   process.env.NOTION_DB_EUROPE_FR,
@@ -67,37 +66,37 @@ async function pushToNotion(submission) {
 
 // ── Google Sheets ─────────────────────────────────────────────────────────────
 
-const SHEETS_WEBHOOK = process.env.WEBINAR_SHEETS_WEBHOOK; // Apps Script Web App URL
+const SHEETS_WEBHOOK = process.env.WEBINAR_SHEETS_WEBHOOK;
 
 async function pushToSheets(submission) {
   if (!SHEETS_WEBHOOK) return;
   const row = {
-    created_at:          submission.createdAt,
-    email:               submission.contact.email,
-    nom:                 submission.contact.nom,
-    entreprise:          submission.contact.entreprise,
-    webinar_id:          submission.webinar_id,
-    lang:                submission.lang,
-    utm_source:          submission.source?.utm_source,
-    utm_campaign:        submission.source?.utm_campaign,
-    role:                submission.answers.role,
-    secteur:             submission.answers.secteur,
-    volume:              submission.answers.volume,
-    pays:                submission.answers.pays,
-    marche:              submission.answers.marche,
-    usage_ia:            submission.answers.usage_ia,
-    frein:               submission.answers.frein,
-    legitimite_ia:       submission.answers.legitimite_entretien_ia,
-    etape_douloureuse:   submission.answers.etape_douloureuse,
-    time_to_hire:        submission.answers.time_to_hire,
-    verbatim:            submission.answers.verbatim,
-    intention:           submission.answers.intention,
-    attente:             submission.answers.attente,
-    maturite_ia:         submission.scoring.maturite_ia,
-    intensite_pain:      submission.scoring.intensite_pain,
-    icp_fit:             submission.scoring.icp_fit,
-    these:               submission.scoring.these,
-    tier:                submission.scoring.tier,
+    created_at:        submission.createdAt,
+    email:             submission.contact.email,
+    nom:               submission.contact.nom,
+    entreprise:        submission.contact.entreprise,
+    webinar_id:        submission.webinar_id,
+    lang:              submission.lang,
+    utm_source:        submission.source?.utm_source,
+    utm_campaign:      submission.source?.utm_campaign,
+    role:              submission.answers.role,
+    secteur:           submission.answers.secteur,
+    volume:            submission.answers.volume,
+    pays:              submission.answers.pays,
+    marche:            submission.answers.marche,
+    usage_ia:          submission.answers.usage_ia,
+    frein:             submission.answers.frein,
+    legitimite_ia:     submission.answers.legitimite_entretien_ia,
+    etape_douloureuse: submission.answers.etape_douloureuse,
+    time_to_hire:      submission.answers.time_to_hire,
+    verbatim:          submission.answers.verbatim,
+    intention:         submission.answers.intention,
+    attente:           submission.answers.attente,
+    maturite_ia:       submission.scoring.maturite_ia,
+    intensite_pain:    submission.scoring.intensite_pain,
+    icp_fit:           submission.scoring.icp_fit,
+    these:             submission.scoring.these,
+    tier:              submission.scoring.tier,
   };
 
   await withRetry(() => axios.post(SHEETS_WEBHOOK, row));
@@ -105,18 +104,19 @@ async function pushToSheets(submission) {
 
 // ── ESP (generic REST — configure for Brevo/Mailchimp/etc.) ──────────────────
 
-const ESP_API_KEY    = process.env.WEBINAR_ESP_API_KEY;
-const ESP_API_URL    = process.env.WEBINAR_ESP_API_URL; // e.g. https://api.brevo.com/v3/contacts
-const ESP_LIST_ID    = process.env.WEBINAR_ESP_LIST_ID ? Number(process.env.WEBINAR_ESP_LIST_ID) : null;
+const ESP_API_KEY = process.env.WEBINAR_ESP_API_KEY;
+const ESP_API_URL = process.env.WEBINAR_ESP_API_URL;
+const ESP_LIST_ID = process.env.WEBINAR_ESP_LIST_ID ? Number(process.env.WEBINAR_ESP_LIST_ID) : null;
 
 async function pushToEsp(submission) {
   if (!ESP_API_KEY || !ESP_API_URL) return;
-  const { marche, these, tier, intention } = submission.scoring || {};
+  const { these, tier } = submission.scoring || {};
+  const marche = submission.answers?.marche;
 
   const tags = [
-    marche   ? `marche:${marche}` : null,
-    these    ? `these:${these}`   : null,
-    tier     ? `tier:${tier}`     : null,
+    marche ? `marche:${marche}` : null,
+    these  ? `these:${these}`   : null,
+    tier   ? `tier:${tier}`     : null,
     tier === "C" ? "nurture:acculturation" : null,
   ].filter(Boolean);
 
@@ -125,7 +125,6 @@ async function pushToEsp(submission) {
     attributes: { FIRSTNAME: submission.contact.nom, WEBINAR_TIER: tier, WEBINAR_THESE: these },
     listIds:    ESP_LIST_ID ? [ESP_LIST_ID] : [],
     updateEnabled: true,
-    // Brevo-style tag field; adjust key for other ESPs
     tags,
   };
 
@@ -139,38 +138,26 @@ async function pushToEsp(submission) {
 // ── Main fan-out ──────────────────────────────────────────────────────────────
 
 async function fanOut(submission) {
-  const updates = { synced: {} };
-
-  // Fetch webinar for email (title, date)
   const webinar = await Webinar.findById(submission.webinar_id)
     .select("title date lang webinar_link")
     .lean()
     .catch(() => null);
 
+  const synced = { notion: false, sheets: false, esp: false };
+
   await Promise.allSettled([
-    pushToNotion(submission)
-      .then(() => { updates.synced.notion = true; })
-      .catch(() => { updates.synced.notion = false; }),
-
-    pushToSheets(submission)
-      .then(() => { updates.synced.sheets = true; })
-      .catch(() => { updates.synced.sheets = false; }),
-
-    pushToEsp(submission)
-      .then(() => { updates.synced.esp = true; })
-      .catch(() => { updates.synced.esp = false; }),
-
-    // Send results email to the participant
+    pushToNotion(submission).then(() => { synced.notion = true; }).catch(() => {}),
+    pushToSheets(submission).then(() => { synced.sheets = true; }).catch(() => {}),
+    pushToEsp(submission)   .then(() => { synced.esp    = true; }).catch(() => {}),
     webinar && submission.contact?.email
       ? sendWebinarResultsEmail(submission, webinar).catch(() => {})
       : Promise.resolve(),
   ]);
 
-  // Persist sync status without blocking the response
   await WebinarSubmission.findByIdAndUpdate(submission._id, {
-    "synced.notion": updates.synced.notion ?? false,
-    "synced.sheets": updates.synced.sheets ?? false,
-    "synced.esp":    updates.synced.esp    ?? false,
+    "synced.notion": synced.notion,
+    "synced.sheets": synced.sheets,
+    "synced.esp":    synced.esp,
   }).catch(() => {});
 }
 

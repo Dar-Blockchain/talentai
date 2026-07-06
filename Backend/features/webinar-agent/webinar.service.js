@@ -1,5 +1,6 @@
 const Webinar           = require("./webinar.model");
 const WebinarSubmission = require("./webinar-submission.model");
+const { sendWebinarReminderEmail } = require("../../utils/email.service");
 
 exports.listWebinars = async ({ page = 1, limit = 20, status } = {}) => {
   const filter = status ? { status } : {};
@@ -34,22 +35,22 @@ exports.getPublicWebinar = async (id) => {
 };
 
 exports.createWebinar = async ({ title, description, date, status, lang, userId, questions: passedQuestions, highlights }) => {
-  const doc = await Webinar.create({
+  return Webinar.create({
     title, description, date,
-    status: status || "draft",
-    lang: lang || "fr",
-    questions: passedQuestions || [],
+    status:     status     || "draft",
+    lang:       lang       || "fr",
+    questions:  passedQuestions || [],
     highlights: highlights || [],
-    created_by: userId || null,
+    created_by: userId     || null,
   });
-  return doc;
 };
 
 exports.updateWebinar = async (id, patch) => {
-  const { questions, ...rest } = patch;
-  const update = { $set: rest };
-  if (questions !== undefined) update.$set.questions = questions;
-  const doc = await Webinar.findByIdAndUpdate(id, update, { new: true, runValidators: false });
+  const doc = await Webinar.findByIdAndUpdate(
+    id,
+    { $set: patch },
+    { new: true, runValidators: false },
+  );
   if (!doc) throw new Error("Webinar not found");
   return doc;
 };
@@ -75,13 +76,14 @@ exports.listSubmissions = async ({ webinarId, page = 1, limit = 50, completed })
   const filter = { webinar_id: webinarId };
   if (completed !== undefined) filter.completed = completed;
   const skip  = (page - 1) * limit;
-  const total = await WebinarSubmission.countDocuments(filter);
-  const data  = await WebinarSubmission.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean();
+  const [data, total] = await Promise.all([
+    WebinarSubmission.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+    WebinarSubmission.countDocuments(filter),
+  ]);
   return { data, total, page, totalPages: Math.ceil(total / limit) };
 };
 
 exports.sendLinkReminder = async (id) => {
-  const { sendWebinarReminderEmail } = require("../../utils/email.service");
   const webinar = await Webinar.findById(id).lean();
   if (!webinar) throw new Error("Webinar not found");
   if (!webinar.webinar_link) throw new Error("No webinar link set. Add one in the webinar settings first.");
@@ -89,11 +91,10 @@ exports.sendLinkReminder = async (id) => {
   const submissions = await WebinarSubmission.find({
     webinar_id: id,
     completed: true,
-    "contact.email": { $exists: true, $ne: null, $ne: "" },
+    "contact.email": { $exists: true, $nin: [null, ""] },
   }).lean();
 
-  let sent = 0;
-  let failed = 0;
+  let sent = 0, failed = 0;
   await Promise.allSettled(
     submissions.map(s =>
       sendWebinarReminderEmail(s, webinar)
@@ -114,8 +115,7 @@ exports.refreshStats = async (id) => {
   const tierBreakdown = {};
   let totalMaturite = 0;
   for (const s of scoring) {
-    const tier = s.scoring?.tier;
-    if (tier) tierBreakdown[tier] = (tierBreakdown[tier] || 0) + 1;
+    if (s.scoring?.tier)           tierBreakdown[s.scoring.tier] = (tierBreakdown[s.scoring.tier] || 0) + 1;
     if (s.scoring?.maturite_ia != null) totalMaturite += s.scoring.maturite_ia;
   }
   const avg_maturite_ia = scoring.length ? Math.round(totalMaturite / scoring.length) : null;
