@@ -1,4 +1,4 @@
-import React, { memo, useState, useCallback, useMemo } from "react";
+import React, { memo, useState, useCallback, useMemo, useRef } from "react";
 import { Users, Mail } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import EmployeeCard from "./EmployeeCard";
@@ -17,9 +17,9 @@ import { cn } from "@/lib/utils";
 export type RoleFilter = "all" | string;
 export type SortOption = "newest" | "name-asc" | "name-desc";
 
-const GRID_CLASS = "grid grid-cols-1 gap-[6px] sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5";
+const GRID_CLASS = "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
 
-const SKELETONS_6 = Array.from({ length: 6 }, (_, i) => <EmployeeSkeletonCard key={i} />);
+const SKELETONS_12 = Array.from({ length: 12 }, (_, i) => <EmployeeSkeletonCard key={i} />);
 
 // ─── TabPill ──────────────────────────────────────────────────────────────────
 
@@ -78,6 +78,7 @@ TabPill.displayName = "TabPill";
 interface EmployeesListProps {
   members: ExtendedMember[];
   loading: boolean;
+  fetchingMembers?: boolean;
   error: string | null;
   search: string;
   onSearchChange: (value: string) => void;
@@ -105,7 +106,7 @@ interface EmployeesListProps {
 }
 
 const EmployeesList: React.FC<EmployeesListProps> = memo(({
-  members, loading, error, search, onSearchChange,
+  members, loading, fetchingMembers = false, error, search, onSearchChange,
   roleFilter, onRoleFilterChange,
   departmentFilter, onDepartmentFilterChange, departments,
   sortBy, onSortChange,
@@ -117,6 +118,12 @@ const EmployeesList: React.FC<EmployeesListProps> = memo(({
   const { t } = useTranslation("dashboard");
   const [tab, setTab] = useState<"employees" | "invitations">("employees");
   const handleTabChange = useCallback((id: "employees" | "invitations") => setTab(id), []);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  const handlePageChange = useCallback((p: number) => {
+    onPageChange(p);
+    panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [onPageChange]);
 
   const hasAnyFilter = roleFilter !== "all" || departmentFilter !== "all" || search.trim().length > 0;
 
@@ -173,14 +180,14 @@ const EmployeesList: React.FC<EmployeesListProps> = memo(({
       </div>
 
       {/* Panel */}
-      <div className="rounded-2xl border border-[#E5E7EB] bg-white p-4 sm:p-6">
+      <div ref={panelRef} className="scroll-mt-6 rounded-2xl bg-[#F8FAF9] p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:p-6">
         {tab === "employees" && (
           error ? (
             <Alert variant="destructive" className="rounded-xl">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
-          ) : loading ? (
-            <div className={GRID_CLASS}>{SKELETONS_6}</div>
+          ) : loading || fetchingMembers ? (
+            <div className={GRID_CLASS}>{SKELETONS_12}</div>
           ) : members.length === 0 ? (
             <div className="py-20 text-center">
               <Users className="mx-auto mb-4 size-12 text-[#D1D5DB]" />
@@ -214,7 +221,7 @@ const EmployeesList: React.FC<EmployeesListProps> = memo(({
       </div>
 
       {tab === "employees" && !loading && !error && (
-        <Pagination page={page} totalPages={Math.ceil(total / pageSize)} onPageChange={onPageChange} />
+        <Pagination page={page} totalPages={Math.ceil(total / pageSize)} onPageChange={handlePageChange} className="mt-5 justify-end" />
       )}
     </div>
   );

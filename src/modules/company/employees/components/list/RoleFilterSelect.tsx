@@ -50,7 +50,7 @@ const RoleFilterSelect: React.FC<Props> = memo(({ value, onChange }) => {
                 className="flex size-[18px] shrink-0 items-center justify-center rounded-[6px]"
                 style={{ backgroundColor: `${selected.color}18`, color: selected.color }}
               >
-                <selected.icon style={{ fontSize: 11 }} />
+                <selected.icon size={11} />
               </span>
               <span className="text-[13px] font-bold" style={{ color: selected.color }}>
                 {getRoleLabel(selected.value, t)}
@@ -65,7 +65,7 @@ const RoleFilterSelect: React.FC<Props> = memo(({ value, onChange }) => {
           <ChevronDown className={cn("size-3.5 text-[#9CA3AF] transition-transform duration-200", open && "rotate-180")} />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" sideOffset={4} className="max-h-[380px] w-56 overflow-hidden rounded-2xl border border-[#E5E7EB] p-0 shadow-[0_8px_32px_rgba(0,0,0,0.14)]">
+      <PopoverContent align="start" side="bottom" avoidCollisions={false} sideOffset={4} className="max-h-[380px] w-56 overflow-hidden rounded-2xl border border-[#E5E7EB] p-0 shadow-[0_8px_32px_rgba(0,0,0,0.14)]">
         {/* Search */}
         <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-[#f3f4f6] bg-white p-2">
           <Search className="size-3.5 shrink-0 text-[#9CA3AF]" />
@@ -114,7 +114,7 @@ const RoleFilterSelect: React.FC<Props> = memo(({ value, onChange }) => {
                 className="flex size-[26px] shrink-0 items-center justify-center rounded-[10px]"
                 style={{ backgroundColor: `${r.color}18`, color: r.color }}
               >
-                <r.icon style={{ fontSize: 14 }} />
+                <r.icon size={14} />
               </span>
               <span>
                 <span className="block text-[13px] font-bold leading-[1.2] text-[#111827]">

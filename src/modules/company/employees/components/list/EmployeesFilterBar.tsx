@@ -56,7 +56,7 @@ const SearchInput: React.FC<{
       placeholder={placeholder}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full bg-transparent py-[5px] text-[13px] text-[#111827] outline-none placeholder:text-[#9CA3AF]"
+      className="w-full min-w-0 bg-transparent py-1.25 text-[13px] text-[#111827] outline-none placeholder:text-gray-400"
     />
     {value && (
       <button onClick={onClear} className="shrink-0 text-[#9CA3AF] transition-colors hover:text-[#374151]">

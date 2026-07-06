@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/useToast";
 import { useRolePermissions } from "./useRolePermissions";
 import type { RoleFilter, SortOption } from "@/modules/company/employees/components/list";
 
-const PAGE_SIZE = 9;
+const PAGE_SIZE = 12;
 
 const SORT_MAP: Record<SortOption, { sortBy?: "name" | "date"; order?: "asc" | "desc" }> = {
   newest:      { sortBy: "date", order: "desc" },
@@ -63,7 +63,7 @@ export function useEmployeesList() {
     limit: PAGE_SIZE,
   }), [debouncedSearch, roleFilter, departmentFilter, sortBy, page]);
 
-  const { data: membersRaw, isLoading: loading, error: membersError } = useMembersQuery(memberFilters);
+  const { data: membersRaw, isLoading: loading, isFetching: fetchingMembers, error: membersError } = useMembersQuery(memberFilters);
   const { data: invitationsRaw, isLoading: fetchingInvitations }      = useInvitationsQuery();
   const { data: statsRaw,       isLoading: fetchingStats }            = useMemberStatsQuery();
   const { data: deptsRaw }                                            = useDepartmentsQuery();
@@ -120,7 +120,7 @@ export function useEmployeesList() {
   const owners = (members as any[]).filter((m) => m.role === "Owner").length;
 
   return {
-    members: members as ExtendedMember[], pageTotal, loading, error,
+    members: members as ExtendedMember[], pageTotal, loading, fetchingMembers, error,
     invitations, fetchingInvitations,
     stats, fetchingStats,
     departments,

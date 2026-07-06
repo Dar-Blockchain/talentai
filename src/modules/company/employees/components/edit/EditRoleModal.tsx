@@ -1,24 +1,23 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
-  Button, TextField, Typography, Box, IconButton,
-  CircularProgress, Alert, Select, MenuItem, FormControl, InputAdornment,
+  Button, Typography, Box, IconButton,
+  CircularProgress, Alert, Select, MenuItem, FormControl,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import EditOutlined from "@mui/icons-material/EditOutlined";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
-import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import { ChevronDown, Search, X, Check } from "lucide-react";
 import { useDepartmentsQuery } from "@/modules/company/employees/queries";
 import { useTranslation } from "react-i18next";
 import { ROLES } from "@/modules/shared/constants/employee";
-import { roleMatchesSearch } from '@/modules/company/employees/utils/employeeRoleI18n';
-import RoleMenuItem from "../shared/RoleMenuItem";
-import RoleSelectValue from "../shared/RoleSelectValue";
+import { getRoleDescription, getRoleLabel, roleMatchesSearch } from '@/modules/company/employees/utils/employeeRoleI18n';
+import { Popover, PopoverContent, PopoverTrigger } from "@/modules/shared/ui/shadcn/popover";
+import { cn } from "@/lib/utils";
 import {
   DIALOG_PAPER_SX, HEADER_ICON_SX, CLOSE_BTN_SX,
-  SELECT_SX, SEARCH_FIELD_SX,
-  STICKY_SEARCH_ITEM_SX, MENU_PAPER_SX,
+  SELECT_SX,
   CANCEL_BTN_SX, PRIMARY_BTN_SX, FIELD_LABEL_SX,
 } from "../shared/modalStyles";
 
@@ -44,10 +43,12 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
 
   const [role,         setRole]         = useState(currentRole);
   const [departmentId, setDepartmentId] = useState(currentDepartmentId ?? "");
+  const [roleOpen,     setRoleOpen]     = useState(false);
   const [roleSearch,   setRoleSearch]   = useState("");
   const [loading,      setLoading]      = useState(false);
   const [error,        setError]        = useState<string | null>(null);
   const [success,      setSuccess]      = useState(false);
+  const roleSearchRef = useRef<HTMLInputElement>(null);
 
   // Prevent setState on unmounted component from the close timeout
   const mountedRef = useRef(true);
@@ -66,6 +67,11 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, currentRole, currentDepartmentId]);
+
+  useEffect(() => {
+    if (roleOpen) setTimeout(() => roleSearchRef.current?.focus(), 50);
+    else setRoleSearch("");
+  }, [roleOpen]);
 
   const isChanged = useMemo(
     () => role !== currentRole || departmentId !== (currentDepartmentId ?? ""),
@@ -91,11 +97,13 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
     }
   }, [role, departmentId, onSave, onClose, m]);
 
-  const handleClose            = useCallback(() => { if (!loading) onClose(); }, [loading, onClose]);
-  const handleRoleChange       = useCallback((e: { target: { value: string } }) => setRole(e.target.value), []);
-  const handleDeptChange       = useCallback((e: { target: { value: string } }) => setDepartmentId(e.target.value), []);
-  const handleRoleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setRoleSearch(e.target.value), []);
-  const handleRoleSearchClose  = useCallback(() => setRoleSearch(""), []);
+  const handleClose      = useCallback(() => { if (!loading) onClose(); }, [loading, onClose]);
+  const handleDeptChange = useCallback((e: { target: { value: string } }) => setDepartmentId(e.target.value), []);
+
+  const handleRoleSelect = useCallback((v: string) => {
+    setRole(v);
+    setRoleOpen(false);
+  }, []);
 
   const filteredRoles = useMemo(() => {
     const q = roleSearch.trim().toLowerCase();
@@ -103,11 +111,7 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
   }, [roleSearch, t]);
 
   const selectedRole = useMemo(() => ROLES.find((r) => r.value === role), [role]);
-
-  const renderRoleValue = useCallback(() => {
-    if (!selectedRole) return null;
-    return <RoleSelectValue value={selectedRole.value} color={selectedRole.color} icon={selectedRole.icon} />;
-  }, [selectedRole]);
+  const SelectedRoleIcon = selectedRole?.icon;
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth
@@ -144,47 +148,111 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
           {/* Role */}
           <Box>
             <Typography sx={FIELD_LABEL_SX}>{m("role_label")}</Typography>
-            <FormControl fullWidth size="small">
-              <Select
-                value={role}
-                onChange={handleRoleChange}
-                disabled={loading}
-                onClose={handleRoleSearchClose}
-                MenuProps={{ PaperProps: { sx: MENU_PAPER_SX }, autoFocus: false }}
-                renderValue={renderRoleValue}
-                sx={SELECT_SX}
+            <Popover open={roleOpen} onOpenChange={setRoleOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  disabled={loading}
+                  className={cn(
+                    "flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-input bg-background px-3.5 text-sm",
+                    "shadow-[0_1px_3px_rgba(0,0,0,0.06)] transition-all",
+                    "hover:border-primary/40",
+                    "focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20",
+                    "disabled:cursor-not-allowed disabled:opacity-50",
+                    roleOpen && "border-primary ring-2 ring-primary/20",
+                  )}
+                >
+                  {selectedRole && SelectedRoleIcon ? (
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span
+                        className="flex size-6 shrink-0 items-center justify-center rounded-lg"
+                        style={{ backgroundColor: `${selectedRole.color}18`, color: selectedRole.color }}
+                      >
+                        <SelectedRoleIcon size={14} />
+                      </span>
+                      <span className="truncate font-semibold text-foreground">
+                        {getRoleLabel(selectedRole.value, t)}
+                      </span>
+                      <span className="truncate text-xs text-muted-foreground">
+                        — {getRoleDescription(selectedRole.value, t)}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">{m("select_role_error")}</span>
+                  )}
+                  <ChevronDown className={cn(
+                    "size-4 shrink-0 text-muted-foreground/60 transition-transform duration-200",
+                    roleOpen && "rotate-180 text-primary",
+                  )} />
+                </button>
+              </PopoverTrigger>
+
+              <PopoverContent
+                align="start"
+                sideOffset={4}
+                className="w-(--radix-popover-trigger-width) p-0"
               >
-                <MenuItem disableRipple onKeyDown={(e) => e.stopPropagation()} sx={STICKY_SEARCH_ITEM_SX}>
-                  <TextField
-                    size="small" fullWidth autoFocus
-                    placeholder={m("search_roles")}
+                {/* Search */}
+                <div className="flex items-center gap-2 border-b px-3 py-2.5">
+                  <Search className="size-4 shrink-0 text-muted-foreground/60" />
+                  <input
+                    ref={roleSearchRef}
                     value={roleSearch}
-                    onChange={handleRoleSearchChange}
-                    onKeyDown={(e) => e.stopPropagation()}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchOutlined sx={{ fontSize: 18, color: "#9CA3AF" }} />
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={SEARCH_FIELD_SX}
+                    onChange={(e) => setRoleSearch(e.target.value)}
+                    placeholder={m("search_roles")}
+                    className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
                   />
-                </MenuItem>
+                  {roleSearch && (
+                    <button onClick={() => setRoleSearch("")} className="text-muted-foreground/60 hover:text-foreground">
+                      <X className="size-3.5" />
+                    </button>
+                  )}
+                </div>
 
-                {filteredRoles.map((r) => (
-                  <RoleMenuItem key={r.value} value={r.value} color={r.color} icon={r.icon} />
-                ))}
-
-                {filteredRoles.length === 0 && (
-                  <MenuItem disabled sx={{ py: 2, justifyContent: "center" }}>
-                    <Typography sx={{ fontSize: "0.8rem", color: "#9CA3AF" }}>
+                {/* List */}
+                <div
+                  className="max-h-60 overflow-y-auto overscroll-contain p-1.5"
+                  onWheel={(e) => e.stopPropagation()}
+                >
+                  {filteredRoles.length === 0 ? (
+                    <p className="py-8 text-center text-sm text-muted-foreground">
                       {m("no_roles_match", { term: roleSearch })}
-                    </Typography>
-                  </MenuItem>
-                )}
-              </Select>
-            </FormControl>
+                    </p>
+                  ) : filteredRoles.map((r) => {
+                    const Icon = r.icon;
+                    const selected = r.value === role;
+                    return (
+                      <button
+                        key={r.value}
+                        type="button"
+                        onClick={() => handleRoleSelect(r.value)}
+                        className={cn(
+                          "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors",
+                          "hover:bg-primary/[0.07]",
+                          selected && "bg-primary/[0.07]",
+                        )}
+                      >
+                        <span
+                          className="flex size-8 shrink-0 items-center justify-center rounded-lg"
+                          style={{ backgroundColor: `${r.color}18`, color: r.color }}
+                        >
+                          <Icon size={16} />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-semibold text-foreground">
+                            {getRoleLabel(r.value, t)}
+                          </span>
+                          <span className="block truncate text-xs text-muted-foreground">
+                            {getRoleDescription(r.value, t)}
+                          </span>
+                        </span>
+                        {selected && <Check className="size-4 shrink-0 text-primary" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </PopoverContent>
+            </Popover>
           </Box>
 
           {/* Department */}

@@ -192,7 +192,7 @@ const JoinTeamPage: React.FC = () => {
                   borderColor:     `${role.color}28`,
                 }}
               >
-                {RoleIcon && <RoleIcon sx={{ fontSize: 11 }} />}
+                {RoleIcon && <RoleIcon size={11} />}
                 {role.label}
               </span>
             }

@@ -208,7 +208,7 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({
                       className="flex size-6 shrink-0 items-center justify-center rounded-lg"
                       style={{ backgroundColor: `${role.color}18`, color: role.color }}
                     >
-                      <RoleIcon sx={{ fontSize: 14 }} />
+                      <RoleIcon size={14} />
                     </span>
                     <span className="font-semibold text-foreground">
                       {getRoleLabel(role.value, t)}
@@ -247,7 +247,10 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({
                 </div>
 
                 {/* List */}
-                <div className="max-h-60 overflow-y-auto p-1.5">
+                <div
+                  className="max-h-60 overflow-y-auto overscroll-contain p-1.5"
+                  onWheel={(e) => e.stopPropagation()}
+                >
                   {filteredRoles.length === 0 ? (
                     <p className="py-8 text-center text-sm text-muted-foreground">
                       {m("no_roles_match", { term: search })}
@@ -270,7 +273,7 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({
                           className="flex size-8 shrink-0 items-center justify-center rounded-lg"
                           style={{ backgroundColor: `${r.color}18`, color: r.color }}
                         >
-                          <Icon sx={{ fontSize: 16 }} />
+                          <Icon size={16} />
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-semibold text-foreground">

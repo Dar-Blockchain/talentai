@@ -236,7 +236,7 @@ const ParticipantsStep = memo<ParticipantsStepProps>(({ selected, onChange }) =>
                     color:           roleColor,
                   }}
                 >
-                  {RoleIcon && <RoleIcon style={{ fontSize: 11 }} />}
+                  {RoleIcon && <RoleIcon size={11} />}
                   {roleLabel}
                 </span>
               </div>
