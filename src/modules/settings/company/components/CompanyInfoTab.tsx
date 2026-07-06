@@ -6,8 +6,8 @@ import { getAllCountryNames } from "@/utils/countryMappings";
 import AppInput from "@/modules/shared/ui/AppInput";
 import AppSelect from "@/modules/shared/ui/AppSelect";
 import AppAutocomplete from "@/modules/shared/ui/AppAutocomplete";
-import { UserProfile } from "@/types/profile";
 import { CompanyProfileFormValues } from "../schemas/companyProfileSchema";
+import { UserProfile } from "../../shared";
 
 interface Props {
   profile: UserProfile;

@@ -1,8 +1,11 @@
-import React, { memo, useCallback } from 'react';
-import { Dialog, DialogContent, DialogActions, Button, Typography, Box } from '@mui/material';
-import DeleteOutlineOutlined from '@mui/icons-material/DeleteOutlineOutlined';
-import WarningAmberOutlined from '@mui/icons-material/WarningAmberOutlined';
-import { useTranslation } from 'react-i18next';
+import React, { memo, useCallback } from "react";
+import { Trash2, TriangleAlert } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import {
+  Dialog,
+  DialogContent,
+} from "@/modules/shared/ui/shadcn/dialog";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 
 interface DeleteMemberDialogProps {
   open: boolean;
@@ -12,107 +15,56 @@ interface DeleteMemberDialogProps {
 }
 
 const DeleteMemberDialog: React.FC<DeleteMemberDialogProps> = ({ open, memberName, onCancel, onConfirm }) => {
-  const { t } = useTranslation('dashboard');
+  const { t } = useTranslation("dashboard");
   const m = useCallback((key: string) => t(`pages.employees.modals.delete.${key}`), [t]);
+
   return (
-    <Dialog
-    open={open}
-    onClose={onCancel}
-    maxWidth="xs"
-    fullWidth
-    slotProps={{
-      paper: {
-        sx: {
-          borderRadius: '20px',
-          boxShadow: '0 24px 60px rgba(0,0,0,0.14)',
-          overflow: 'hidden',
-        },
-      },
-    }}
-  >
-    <DialogContent sx={{ p: 0 }}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onCancel(); }}>
+      <DialogContent showCloseButton={false} className="max-w-xs gap-0 overflow-hidden rounded-[20px] p-0 shadow-[0_24px_60px_rgba(0,0,0,0.14)]">
 
-      {/* Top danger zone */}
-      <Box sx={{
-        bgcolor: '#FFF5F5',
-        borderBottom: '1px solid #FEE2E2',
-        px: 3, pt: 3.5, pb: 3,
-        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5,
-      }}>
-        {/* Icon */}
-        <Box sx={{
-          width: 56, height: 56, borderRadius: '16px',
-          bgcolor: '#FEE2E2', border: '1.5px solid #FECACA',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 4px 14px rgba(239,68,68,0.15)',
-        }}>
-          <DeleteOutlineOutlined sx={{ fontSize: 26, color: '#EF4444' }} />
-        </Box>
+        {/* Danger header */}
+        <div className="flex flex-col items-center gap-1.5 border-b border-red-100 bg-red-50 px-6 pt-7 pb-6">
+          <div className="flex size-14 items-center justify-center rounded-2xl border-[1.5px] border-red-200 bg-red-100 shadow-[0_4px_14px_rgba(239,68,68,0.15)]">
+            <Trash2 className="size-6 text-red-500" />
+          </div>
+          <div className="text-center">
+            <p className="text-[1.05rem] font-extrabold leading-[1.3] text-slate-900">{m("title")}</p>
+            <p className="mt-1 text-[0.775rem] text-slate-400">{m("subtitle")}</p>
+          </div>
+        </div>
 
-        <Box sx={{ textAlign: 'center' }}>
-          <Typography sx={{ fontWeight: 800, fontSize: '1.05rem', color: '#0F172A', lineHeight: 1.3 }}>
-            {m('title')}
-          </Typography>
-          <Typography sx={{ fontSize: '0.775rem', color: '#94A3B8', mt: 0.4 }}>
-            {m('subtitle')}
-          </Typography>
-        </Box>
-      </Box>
+        {/* Body */}
+        <div className="px-6 pt-5 pb-4">
+          <p className="text-center text-sm leading-relaxed text-slate-600">
+            {m("body_pre")}{" "}
+            <span className="font-bold text-slate-900">{memberName}</span>
+            {" "}{m("body_post")}
+          </p>
 
-      {/* Body */}
-      <Box sx={{ px: 3, pt: 2.5, pb: 2 }}>
-        <Typography sx={{ fontSize: '0.875rem', color: '#475569', textAlign: 'center', lineHeight: 1.65 }}>
-          {m('body_pre')}{' '}
-          <Box component="span" sx={{ fontWeight: 700, color: '#0F172A' }}>{memberName}</Box>
-          {' '}{m('body_post')}
-        </Typography>
+          <div className="mt-4 flex items-start gap-2 rounded-xl border border-yellow-200 bg-amber-50 px-[14px] py-[10px]">
+            <TriangleAlert className="mt-px size-[15px] shrink-0 text-yellow-600" />
+            <p className="text-[0.75rem] leading-relaxed text-amber-800">{m("warning")}</p>
+          </div>
+        </div>
 
-        {/* Warning callout */}
-        <Box sx={{
-          mt: 2, px: 1.75, py: 1.25, borderRadius: '12px',
-          bgcolor: '#FFFBEB', border: '1px solid #FEF08A',
-          display: 'flex', alignItems: 'flex-start', gap: 1,
-        }}>
-          <WarningAmberOutlined sx={{ fontSize: 15, color: '#CA8A04', mt: '1px', flexShrink: 0 }} />
-          <Typography sx={{ fontSize: '0.75rem', color: '#92400E', lineHeight: 1.5 }}>
-            {m('warning')}
-          </Typography>
-        </Box>
-      </Box>
-    </DialogContent>
-
-    <DialogActions sx={{ px: 3, pb: 3, pt: 1, gap: 1.5 }}>
-      <Button
-        onClick={onCancel}
-        fullWidth
-        sx={{
-          textTransform: 'none', fontWeight: 600, fontSize: '0.875rem',
-          color: '#64748B', borderRadius: '12px', py: 1.25,
-          border: '1px solid #E2E8F0', bgcolor: '#F8FAFC',
-          '&:hover': { bgcolor: '#F1F5F9', borderColor: '#CBD5E1' },
-          transition: 'all 0.15s',
-        }}
-      >
-        {m('cancel')}
-      </Button>
-      <Button
-        onClick={onConfirm}
-        fullWidth
-        variant="contained"
-        sx={{
-          textTransform: 'none', fontWeight: 700, fontSize: '0.875rem',
-          borderRadius: '12px', py: 1.25,
-          bgcolor: '#EF4444',
-          color: '#fff',
-          boxShadow: '0 4px 14px rgba(239,68,68,0.35)',
-          '&:hover': { bgcolor: '#DC2626', boxShadow: '0 6px 20px rgba(239,68,68,0.45)' },
-          transition: 'all 0.15s',
-        }}
-      >
-        {m('confirm')}
-      </Button>
-    </DialogActions>
-  </Dialog>
+        {/* Actions */}
+        <div className="flex gap-3 px-6 pb-6 pt-2">
+          <Button
+            variant="outline"
+            className="flex-1 rounded-xl py-5 font-semibold text-slate-500 hover:bg-slate-100"
+            onClick={onCancel}
+          >
+            {m("cancel")}
+          </Button>
+          <Button
+            className="flex-1 rounded-xl bg-red-500 py-5 font-bold text-white shadow-[0_4px_14px_rgba(239,68,68,0.35)] hover:bg-red-600 hover:shadow-[0_6px_20px_rgba(239,68,68,0.45)]"
+            onClick={onConfirm}
+          >
+            {m("confirm")}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 

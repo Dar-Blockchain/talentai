@@ -11,6 +11,7 @@
  *   â€¢ Lightweight coverage tracking
  */
 
+const mongoose = require("mongoose");
 const bedrock = require("../../../utils/bedrock-client");
 const sessionMgr = require("../shared/redis-session-manager");
 const Campaign = require("../../campaigns/campaign.model");
@@ -29,6 +30,7 @@ function buildMixedQuestionPrompt({
   usedQuestionTypes = [],
   moduleType,
   interviewTopic,
+  isSkipped = false,
 }) {
   const totalProgress   = Math.round((questionsAsked / Math.max(maxQuestions, 1)) * 100);
   const phase =
@@ -72,7 +74,7 @@ Every question you ask MUST be directly relevant to this topic. Do not ask gener
 ${conversationSummary || "(interview just started â€” this is the first question after the greeting)"}
 
 â•â•â•â• CANDIDATE'S LATEST ANSWER â•â•â•â•
-"${transcript}"
+${isSkipped ? "(The candidate chose to SKIP this question — no answer was given. Do not evaluate or reference an answer that does not exist.)" : `\"${transcript}\"`}
 
 â•â•â•â• LAST QUESTION YOU ASKED â•â•â•â•
 ${lastQuestion ? `"${lastQuestion}"` : "(none yet â€” you just gave the opening greeting)"}
@@ -94,6 +96,8 @@ Step 2 â€” Decide your next move:
   â€¢ "follow_up"      â†’ if the answer was vague, incomplete, or skipped a key detail that needs probing
   â€¢ "next_question"  â†’ if the answer was sufficient and you should move to a new topic or angle
   â€¢ "end_interview"  â†’ ONLY if SHOULD_END is true OR overall coverage across all areas â‰¥ 75%
+${isSkipped ? `NOTE: the candidate SKIPPED this question without answering. decision MUST be "next_question" (never "follow_up" — there is nothing to probe), every coverageUpdates increase MUST be 0, and analysis.quality should be "avoided". Move on to a fresh topic or angle and do not reference or evaluate a nonexistent answer.` : ""}
+
 Step 3 â€” Generate the next question or closing statement following ALL of these rules:
   âœ“ Use a DIFFERENT question type than the last 2 (avoid: ${recentTypes.join(", ") || "none"})
   âœ“ One question only â€” never compound questions or sub-questions
@@ -263,13 +267,13 @@ class CampaignInterviewService {
     const context =
       moduleType === "SKILL_TEST"
         ? this._buildSkillContext(skill)
-        : this._buildAgentContext(agentPrompt, campaign);
+        : await this._buildAgentContext(agentPrompt, campaign);
 
     // 3. Determine coverage areas
     const coverageAreas =
       moduleType === "SKILL_TEST"
         ? SKILL_TEST_AREAS(skill || "the requested skill")
-        : AI_INTERVIEW_DEFAULT_AREAS();
+        : this._buildCoverageAreasFromFocus(context.focusAreas) || AI_INTERVIEW_DEFAULT_AREAS();
 
     // 4. Create Redis session
     const sessionData = {
@@ -319,7 +323,7 @@ class CampaignInterviewService {
 
   // â”€â”€ Process candidate response â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  async processCandidateResponse(sessionId, transcript) {
+  async processCandidateResponse(sessionId, transcript, isSkipped = false) {
     const session = await this.sessionManager.getSession(sessionId);
     if (!session) throw new Error(`Session ${sessionId} not found`);
 
@@ -328,6 +332,7 @@ class CampaignInterviewService {
       type: "candidate",
       content: transcript,
       timestamp: new Date().toISOString(),
+      ...(isSkipped ? { metadata: { skipped: true } } : {}),
     });
 
     const {
@@ -366,6 +371,7 @@ class CampaignInterviewService {
       newCount,
       maxQuestions,
       usedQuestionTypes,
+      isSkipped,
     );
 
     // Track question type for anti-repetition
@@ -433,14 +439,29 @@ class CampaignInterviewService {
       return;
     }
 
-    // Look up the CampaignParticipant by (campaign, employee user _id)
-    let participant = await CampaignParticipant.findOne({
-      campaign: campaignId,
-      employee: candidateId,
-    });
+    // Resolve the CampaignParticipant. candidateId may be a real User _id (authenticated
+    // employee) OR an anonymous/link token (ANONYMOUS-mode or unauthenticated LINK access)
+    // — mirrors the resolution order already proven in campaign.controller.js's
+    // exports.getParticipantResults.
+    const candidateIsObjectId = mongoose.Types.ObjectId.isValid(candidateId);
+
+    let participant = null;
+    if (candidateIsObjectId) {
+      participant = await CampaignParticipant.findOne({ campaign: campaignId, employee: candidateId });
+    }
+    if (!participant) {
+      participant = await CampaignParticipant.findOne({ campaign: campaignId, anonymousToken: candidateId });
+    }
+    if (!participant) {
+      participant = await CampaignParticipant.findOne({ campaign: campaignId, linkAccessToken: candidateId });
+    }
 
     if (!participant) {
-      console.warn(`âš ï¸ [CampaignInterview] No participant found for campaign=${campaignId} employee=${candidateId} â€” upserting`);
+      if (!candidateIsObjectId) {
+        console.warn(`⚠️ [CampaignInterview] No participant found for anonymous/link candidateId=${candidateId}, campaign=${campaignId} — skipping persist`);
+        return;
+      }
+      console.warn(`⚠️ [CampaignInterview] No participant found for campaign=${campaignId} employee=${candidateId} — upserting`);
       participant = await CampaignParticipant.findOneAndUpdate(
         { campaign: campaignId, employee: candidateId },
         { $setOnInsert: { campaign: campaignId, employee: candidateId, status: 'IN_PROGRESS' } },
@@ -467,6 +488,11 @@ class CampaignInterviewService {
       aiScore,
       aiSummary,
       interviewTranscript,
+      aiReport: {
+        strengths:            Array.isArray(finalReport.strengths) ? finalReport.strengths : [],
+        areasForImprovement:  Array.isArray(finalReport.areasForImprovement) ? finalReport.areasForImprovement : [],
+        recommendation:       finalReport.recommendation ?? null,
+      },
     };
 
     if (moduleType === "SKILL_TEST") {
@@ -591,10 +617,85 @@ STYLE
     };
   }
 
-  _buildAgentContext(agentPrompt, campaign) {
+  // Reads the company's free-form agentPrompt (a phrase, a list, or full instructions)
+  // and interprets its INTENT into a short topic label, weighted focus areas, and tone â€”
+  // instead of ever splicing the raw text verbatim into the system prompt.
+  async _interpretAgentPrompt(rawInput, campaignTitle) {
+    if (!rawInput) return null;
+
+    const systemPrompt = `You are an expert interview designer. You read a free-form brief written by a company describing what an AI-led interview should cover, and convert it into a structured, actionable interview plan. You never copy the brief verbatim into your output â€” you interpret its intent and re-express it in your own words.`;
+
+    const userMsg = `Read the brief below and produce a structured interview plan.
+
+BRIEF (written by the company â€” may be a single phrase, a list of topics, or full persona/instructions):
+"""
+${rawInput}
+"""
+${campaignTitle ? `Campaign title (context): "${campaignTitle}"` : ""}
+
+Produce:
+- "topic": a short 2-6 word label for what this interview is about
+- "focusAreas": 3-5 subtopics/competencies to probe, each an object with:
+    "key"    â€” snake_case identifier, no spaces (e.g. "react_expertise")
+    "label"  â€” short human-readable label (e.g. "React Expertise")
+    "weight" â€” integer importance weight; all weights together should sum to ~100
+- "tone": a short phrase describing the interview's tone/style, inferred from the brief (default to "professional and encouraging" if the brief doesn't imply otherwise)
+- "openingContext": one natural sentence (no surrounding quotes, no "the interview will focus on" boilerplate) summarizing what this conversation will explore, written so it can be dropped directly into a greeting
+
+Return ONLY valid JSON, no markdown, no extra text:
+{
+  "topic": "<label>",
+  "focusAreas": [{ "key": "<key>", "label": "<label>", "weight": <int> }],
+  "tone": "<tone>",
+  "openingContext": "<sentence>"
+}`;
+
+    try {
+      const res = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: userMsg }],
+        temperature: 0.4,
+        maxTokens: 500,
+        timeout: 20000,
+        useFastModel: true,
+      });
+      const parsed = parseJSON(res.content, null);
+      if (!parsed || !Array.isArray(parsed.focusAreas) || parsed.focusAreas.length === 0) return null;
+      return parsed;
+    } catch (e) {
+      console.warn("âš ï¸ [CampaignInterview] Prompt interpretation failed:", e.message);
+      return null;
+    }
+  }
+
+  _buildCoverageAreasFromFocus(focusAreas) {
+    if (!Array.isArray(focusAreas) || focusAreas.length === 0) return null;
+    const areas = {};
+    for (const a of focusAreas) {
+      if (!a?.key || !a?.label) continue;
+      areas[a.key] = {
+        label: a.label,
+        percentage: 0,
+        questionsAsked: 0,
+        weight: typeof a.weight === "number" && a.weight > 0 ? a.weight : 25,
+      };
+    }
+    return Object.keys(areas).length > 0 ? areas : null;
+  }
+
+  async _buildAgentContext(agentPrompt, campaign) {
     const rawInput    = agentPrompt?.trim() || "";
-    const topic       = rawInput || campaign.title || "general assessment";
-    const isRealPrompt = rawInput.length > 120;
+    const interpreted  = await this._interpretAgentPrompt(rawInput, campaign.title);
+
+    const topic          = interpreted?.topic || rawInput || campaign.title || "general assessment";
+    const tone            = interpreted?.tone || "professional and encouraging";
+    const openingContext  = interpreted?.openingContext || null;
+    const focusAreas      = Array.isArray(interpreted?.focusAreas) && interpreted.focusAreas.length > 0
+      ? interpreted.focusAreas
+      : null;
+    const focusList = focusAreas
+      ? focusAreas.map((a) => `  â€¢ ${a.label}`).join("\n")
+      : null;
 
     const conductRules = `
 INTERVIEW CONDUCT RULES
@@ -605,20 +706,16 @@ INTERVIEW CONDUCT RULES
 - Never repeat the same angle, example, or scenario twice.
 - Every question must be directly relevant to the interview topic: "${topic}".`;
 
-    let systemPrompt;
-
-    if (isRealPrompt) {
-      systemPrompt = `${rawInput}\n\n---\n${conductRules}`;
-    } else {
-      systemPrompt = `You are an experienced interviewer conducting a structured assessment on the topic: "${topic}".
+    const systemPrompt = `You are an experienced interviewer conducting a structured assessment on the topic: "${topic}".
 Campaign: "${campaign.title}"
+Interview tone: ${tone}.
 
 INTERVIEW FOCUS
-Every single question you ask must be directly and specifically about "${topic}".
+Every single question you ask must be directly and specifically about "${topic}"${focusList ? `, covering these areas:\n${focusList}` : ""}.
 Do not ask generic HR questions unrelated to this topic unless used as a brief warm-up opener.
 
 ROLE
-Act as a knowledgeable, professional, and empathetic interviewer. Your tone is encouraging yet evaluative.
+Act as a knowledgeable, professional, and empathetic interviewer. Your tone is ${tone}.
 You combine behavioral, situational, technical, and problem-solving questions to build a complete picture of the candidate's capabilities in "${topic}".
 
 INTERVIEW PROGRESSION
@@ -635,19 +732,23 @@ QUESTION TYPE ROTATION (always vary):
   â€¢ Best-practice  â†’ "What are the most common mistakes people make with ${topic}?"
 
 ${conductRules}`;
-    }
 
     return {
       type:          "AI_INTERVIEW",
       topic,
+      tone,
+      openingContext,
+      focusAreas,
       systemPrompt,
       campaignTitle: campaign.title,
     };
   }
 
   async _generateGreeting(context, moduleType, skill, onChunk) {
-    const systemPrompt = context.systemPrompt;
-    const topic        = context.topic || skill || "this subject";
+    const systemPrompt   = context.systemPrompt;
+    const topic          = context.topic || skill || "this subject";
+    const tone           = context.tone || "warm, welcoming, professional";
+    const openingContext = context.openingContext;
     const userMsg =
       moduleType === "SKILL_TEST"
         ? `Generate a warm, professional opening message to start a ${topic} skill assessment.
@@ -659,14 +760,14 @@ The message must:
 IMPORTANT: Never output placeholders like [Your Name], [Name], or any text in square brackets.
 Tone: encouraging, professional, human. Not robotic.
 Length: 3â€“4 sentences maximum. No bullet points, no headers.`
-        : `Generate a warm, professional opening message to start an interview on the topic: "${topic}".
+        : `Generate a warm, professional opening message to start an interview${openingContext ? ` covering: ${openingContext}` : ` on the topic: "${topic}"`}.
 The message must:
 1. Greet the candidate using "I" â€” do NOT include any name, placeholder, or bracket like [Your Name]. Just say "I" or "I'm your interviewer today".
-2. Briefly mention the interview will focus on "${topic}" and that it's a conversation, not a test.
+2. Briefly and naturally mention what this conversation will explore${openingContext ? "" : ` â€” "${topic}"`} and that it's a conversation, not a test.
 3. End with an open warm-up question related to "${topic}" â€” for example, asking about their overall experience with it or how they've worked with it in the past.
 
-IMPORTANT: Never output placeholders like [Your Name], [Name], or any text in square brackets.
-Tone: warm, welcoming, professional. Not robotic or formal.
+IMPORTANT: Never output placeholders like [Your Name], [Name], or any text in square brackets. Speak naturally in your own words â€” never quote or copy any source brief verbatim.
+Tone: ${tone}. Not robotic.
 Length: 3â€“4 sentences maximum. No bullet points, no headers.`;
 
     try {
@@ -834,6 +935,7 @@ Respond ONLY with valid JSON â€” no markdown, no extra text:
     questionsAsked = 1,
     maxQuestions = 10,
     usedQuestionTypes = [],
+    isSkipped = false,
   ) {
     const conversationSummary = conversation
       .slice(-4)
@@ -853,6 +955,7 @@ Respond ONLY with valid JSON â€” no markdown, no extra text:
       usedQuestionTypes,
       moduleType,
       interviewTopic,
+      isSkipped,
     });
 
     const fallback = {
@@ -862,7 +965,9 @@ Respond ONLY with valid JSON â€” no markdown, no extra text:
       questionType: "situational",
       nextQuestion: shouldEnd
         ? "Thank you so much for your time today â€” I really enjoyed our conversation. That brings us to the end of this session."
-        : "That's interesting. Could you walk me through a specific situation where you had to apply that in practice?",
+        : isSkipped
+          ? "No problem, let's move on. Could you tell me about a different experience relevant to this role?"
+          : "That's interesting. Could you walk me through a specific situation where you had to apply that in practice?",
       report: { strengths: [], areasForImprovement: [], overallProgress: 30 },
     };
 

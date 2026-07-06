@@ -24,6 +24,7 @@ import { motion } from "framer-motion";
 import { ModuleType, ParticipantStatus } from "@/modules/company/campaigns/types/campaign";
 import { EmployeeCampaignEntry } from "@/modules/company/campaigns/types";
 import { buildInterviewUrl } from "@/lib/interviewSession";
+import { buildCampaignSessionUrl } from "@/lib/campaignSession";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -354,18 +355,7 @@ const EmployeeDashboardOverview: React.FC = () => {
                   key={c.campaignId}
                   campaign={c}
                   onAction={() => {
-                    if (!isExpired && (c.participantStatus === "IN_PROGRESS" || c.participantStatus === "INVITED")) {
-                      const modType = c.module?.type;
-                      if (modType === "QUESTIONNAIRE") {
-                        router.push(`/campaign/questionnaire/${c.campaignId}`);
-                      } else if (modType === "AI_INTERVIEW" || modType === "SKILL_TEST") {
-                        router.push(buildInterviewUrl({ type: 'campaign', campaignId: c.campaignId, moduleType: modType }));
-                      } else {
-                        router.push(`/employee/campaigns/${c.campaignId}`);
-                      }
-                    } else {
-                      router.push(`/employee/campaigns/${c.campaignId}`);
-                    }
+                    router.push(buildCampaignSessionUrl(c.campaignId));
                   }}
                 />
                 );
@@ -390,7 +380,7 @@ const EmployeeDashboardOverview: React.FC = () => {
                 <CampaignRow
                   key={c.campaignId}
                   campaign={c}
-                  onAction={() => router.push(`/employee/campaigns/${c.campaignId}`)}
+                  onAction={() => router.push(buildCampaignSessionUrl(c.campaignId))}
                 />
               ))}
             </Box>

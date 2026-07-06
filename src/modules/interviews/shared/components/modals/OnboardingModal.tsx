@@ -433,7 +433,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
             {/* logo */}
             <div className="flex justify-center mb-3">
               <img
-                src="/images/home/logo.svg"
+                src="/logo.svg"
                 alt="TalentAI"
                 style={{ height: 26, objectFit: "contain", cursor: "pointer" }}
                 onClick={() => router.push("/")}

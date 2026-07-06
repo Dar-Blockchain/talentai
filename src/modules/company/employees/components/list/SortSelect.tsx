@@ -1,17 +1,15 @@
 import React, { memo, useCallback, useMemo } from "react";
-import { Box, Typography, FormControl, Select, MenuItem } from "@mui/material";
-import SortOutlined from "@mui/icons-material/SortOutlined";
+import { ArrowUpDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/modules/shared/ui/shadcn/select";
 import { SortOption } from "./EmployeesList";
-import { PURPLE, INLINE_SELECT_SX, SORT_ORDER, SORT_I18N_KEY } from "./constants";
-
-const MENU_PAPER_SX = {
-  borderRadius: 2,
-  boxShadow: "0 8px 32px rgba(0,0,0,0.14)",
-  border: "1px solid #E5E7EB",
-  minWidth: 170,
-  mt: 0.5,
-} as const;
+import { SORT_ORDER, SORT_I18N_KEY } from "./constants";
 
 interface Props {
   value: SortOption;
@@ -22,41 +20,34 @@ const SortSelect: React.FC<Props> = memo(({ value, onChange }) => {
   const { t } = useTranslation("dashboard");
 
   const labels = useMemo(
-    () => Object.fromEntries(SORT_ORDER.map((id) => [id, t(`pages.employees.filters.sort.${SORT_I18N_KEY[id]}`)])) as Record<SortOption, string>,
+    () => Object.fromEntries(
+      SORT_ORDER.map((id) => [id, t(`pages.employees.filters.sort.${SORT_I18N_KEY[id]}`)])
+    ) as Record<SortOption, string>,
     [t],
   );
 
-  const handleChange = useCallback((e: { target: { value: string } }) => onChange(e.target.value as SortOption), [onChange]);
-
-  const renderValue = useCallback(
-    () => (
-      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-        <SortOutlined sx={{ fontSize: 14, color: "#9CA3AF" }} />
-        <Typography sx={{ fontSize: "13px", color: "#374151", fontWeight: 600 }}>{labels[value]}</Typography>
-      </Box>
-    ),
-    [labels, value],
-  );
+  const handleChange = useCallback((v: string) => onChange(v as SortOption), [onChange]);
 
   return (
-    <FormControl size="small" sx={{ minWidth: 0, flex: "0 0 auto" }}>
-      <Select
-        value={value}
-        onChange={handleChange}
-        displayEmpty
-        MenuProps={{ PaperProps: { sx: MENU_PAPER_SX } }}
-        renderValue={renderValue}
-        sx={INLINE_SELECT_SX}
-      >
+    <Select value={value} onValueChange={handleChange}>
+      <SelectTrigger className="h-full min-h-[36px] w-fit shrink-0 rounded-none border-none bg-transparent shadow-none focus:ring-0 px-3 text-[13px] font-semibold text-[#374151] [&>svg]:size-3.5 [&>svg]:text-[#9CA3AF]">
+        <span className="flex items-center gap-1.5">
+          <ArrowUpDown className="size-[14px] text-[#9CA3AF]" />
+          <SelectValue>{labels[value]}</SelectValue>
+        </span>
+      </SelectTrigger>
+      <SelectContent className="rounded-2xl border border-[#E5E7EB] shadow-[0_8px_32px_rgba(0,0,0,0.14)]" sideOffset={4}>
         {SORT_ORDER.map((id) => (
-          <MenuItem key={id} value={id} sx={{ py: 1, px: 2 }}>
-            <Typography sx={{ fontSize: "13px", fontWeight: id === value ? 700 : 500, color: id === value ? PURPLE : "#374151" }}>
-              {labels[id]}
-            </Typography>
-          </MenuItem>
+          <SelectItem
+            key={id}
+            value={id}
+            className="text-[13px] font-medium data-[state=checked]:font-bold"
+          >
+            {labels[id]}
+          </SelectItem>
         ))}
-      </Select>
-    </FormControl>
+      </SelectContent>
+    </Select>
   );
 });
 

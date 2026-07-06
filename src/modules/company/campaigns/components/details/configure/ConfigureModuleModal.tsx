@@ -1,17 +1,11 @@
 import React, { memo, useEffect, useMemo, useState, useCallback } from "react";
 import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  Typography,
-} from "@mui/material";
+  Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter,
+} from "@/modules/shared/ui/shadcn/dialog";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import { Separator } from "@/modules/shared/ui/shadcn/separator";
 import { CampaignModule, ModuleType } from "@/modules/company/campaigns/types/campaign";
 import { MODULE_CONFIG } from "@/modules/shared/constants/campaign";
-import AppButton from "@/components/ui/AppButton";
 import QuestionnaireForm, { QuestionnaireConfig } from "./QuestionnaireForm";
 import AIInterviewForm, { AIInterviewConfig } from "./AIInterviewForm";
 import SkillTestForm, { SkillTestConfig } from "./SkillTestForm";
@@ -29,14 +23,15 @@ interface Props {
   currentConfig: CampaignModule["config"];
   onClose: () => void;
   onSave: (campaignId: string, moduleType: ModuleType, config: AnyConfig) => void;
+  loading?: boolean;
 }
 
 // ─── Default configs ──────────────────────────────────────────────────────────
 
 const DEFAULT_CONFIGS: Record<ModuleType, AnyConfig> = {
-  QUESTIONNAIRE: { questions: [] },
-  AI_INTERVIEW: { agentPrompt: "" },
-  SKILL_TEST: { skill: "" },
+  QUESTIONNAIRE: { questions: [], aiScoringEnabled: true, showResultsToParticipants: true },
+  AI_INTERVIEW: { agentPrompt: "", showResultsToParticipants: true },
+  SKILL_TEST: { skill: "", showResultsToParticipants: true },
   TRAINING_PATH: { resources: [] },
 };
 
@@ -49,6 +44,7 @@ const ConfigureModuleModal = memo<Props>(({
   currentConfig,
   onClose,
   onSave,
+  loading = false,
 }) => {
   const { t } = useTranslation("dashboard");
   const d = "pages.campaigns.detail";
@@ -87,103 +83,75 @@ const ConfigureModuleModal = memo<Props>(({
   const moduleDesc  = moduleType ? t(`pages.campaigns.module_description.${moduleType}`) : "";
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      fullWidth
-      maxWidth="sm"
-      slotProps={{
-        paper: { sx: { borderRadius: 3, boxShadow: "0 20px 60px rgba(0,0,0,0.12)" } },
-      }}
-    >
-      {/* Header */}
-      <DialogTitle sx={{ p: 0 }}>
+    <Dialog open={open} onOpenChange={(next) => { if (!next && !loading) onClose(); }}>
+      <DialogContent
+        className="p-0 gap-0 overflow-hidden rounded-2xl sm:max-w-lg shadow-2xl"
+      >
+        {/* Header */}
         {cfg && Icon && (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 2.5, pb: 2 }}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: 2,
-                bgcolor: `${cfg.color}18`,
-                border: `1px solid ${cfg.color}28`,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}
+          <div className="flex items-center gap-3 pl-6 pr-10 pt-6 pb-4">
+            <div
+              className="flex items-center justify-center size-10 rounded-xl shrink-0 border"
+              style={{ background: `${cfg.color}18`, borderColor: `${cfg.color}28` }}
             >
-              <Icon sx={{ fontSize: 20, color: cfg.color }} />
-            </Box>
-            <Box>
-              <Typography sx={{ fontWeight: 700, fontSize: "15px", color: "#111827" }}>
+              <Icon className="!size-5" style={{ color: cfg.color }} />
+            </div>
+            <div className="min-w-0">
+              <DialogTitle className="text-[15px] font-bold text-foreground">
                 {t(`${d}.configure_modal_title`, { module: moduleTitle })}
-              </Typography>
-              <Typography sx={{ fontSize: "12px", color: "#6B7280", mt: 0.25 }}>
+              </DialogTitle>
+              <DialogDescription className="text-xs mt-0.5">
                 {moduleDesc}
-              </Typography>
-            </Box>
-          </Box>
+              </DialogDescription>
+            </div>
+          </div>
         )}
-        <Divider />
-      </DialogTitle>
+        <Separator />
 
-      {/* Content */}
-      <DialogContent sx={{ p: 2.5, maxHeight: "60vh", overflowY: "auto" }}>
-        {config !== null && moduleType && (
-          <Box sx={{ pt: 0.5 }}>
-            {moduleType === "QUESTIONNAIRE" && (
-              <QuestionnaireForm
-                config={config as QuestionnaireConfig}
-                onChange={(c) => setConfig(c)}
-              />
-            )}
-            {moduleType === "AI_INTERVIEW" && (
-              <AIInterviewForm
-                config={config as AIInterviewConfig}
-                onChange={(c) => setConfig(c)}
-              />
-            )}
-            {moduleType === "SKILL_TEST" && (
-              <SkillTestForm
-                config={config as SkillTestConfig}
-                onChange={(c) => setConfig(c)}
-              />
-            )}
-            {moduleType === "TRAINING_PATH" && (
-              <TrainingPathForm
-                config={config as TrainingPathConfig}
-                onChange={(c) => setConfig(c)}
-              />
-            )}
-          </Box>
-        )}
+        {/* Content */}
+        <div className="px-6 py-5 max-h-[60vh] overflow-y-auto">
+          {config !== null && moduleType && (
+            <>
+              {moduleType === "QUESTIONNAIRE" && (
+                <QuestionnaireForm
+                  config={config as QuestionnaireConfig}
+                  onChange={(c) => setConfig(c)}
+                />
+              )}
+              {moduleType === "AI_INTERVIEW" && (
+                <AIInterviewForm
+                  config={config as AIInterviewConfig}
+                  onChange={(c) => setConfig(c)}
+                />
+              )}
+              {moduleType === "SKILL_TEST" && (
+                <SkillTestForm
+                  config={config as SkillTestConfig}
+                  onChange={(c) => setConfig(c)}
+                />
+              )}
+              {moduleType === "TRAINING_PATH" && (
+                <TrainingPathForm
+                  config={config as TrainingPathConfig}
+                  onChange={(c) => setConfig(c)}
+                />
+              )}
+            </>
+          )}
+        </div>
+
+        <Separator />
+
+        {/* Actions */}
+        <DialogFooter className="px-6 py-4 gap-2 sm:justify-end">
+          <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
+            {t(`${d}.edit_modal.cancel`)}
+          </Button>
+          <Button type="button" disabled={!isValid} loading={loading} onClick={handleSave}>
+            {t(`${d}.save_configuration`)}
+          </Button>
+        </DialogFooter>
       </DialogContent>
-
-      <Divider />
-
-      {/* Actions */}
-      <DialogActions sx={{ p: 2, gap: 1 }}>
-        <Button
-          onClick={onClose}
-          sx={{
-            textTransform: "none",
-            fontWeight: 600,
-            fontSize: "13px",
-            color: "#6B7280",
-            "&:hover": { bgcolor: "#F3F4F6" },
-          }}
-        >
-          {t(`${d}.edit_modal.cancel`)}
-        </Button>
-        <AppButton
-          label={t(`${d}.save_configuration`)}
-          variant="contained"
-          size="small"
-          disabled={!isValid}
-          onClick={handleSave}
-        />
-      </DialogActions>
     </Dialog>
   );
 });

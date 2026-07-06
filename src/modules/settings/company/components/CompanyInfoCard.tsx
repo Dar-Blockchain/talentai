@@ -1,10 +1,10 @@
 import React from "react";
 import { EditActions } from "@/modules/settings/shared/components";
 import { COMPANY_SIZES } from "@/modules/settings/shared/constants";
-import { UserProfile } from "@/types/profile";
 import SectionCard from "@/components/ui/SectionCard";
 import SectionHeader from "@/components/ui/SectionHeader";
 import AppInput from "@/modules/shared/ui/AppInput";
+import { UserProfile } from "../../shared";
 
 interface CompanyInfoCardProps {
   profile: UserProfile;

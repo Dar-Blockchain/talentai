@@ -1,65 +1,29 @@
 import React, { memo } from "react";
-import { Box, Skeleton } from "@mui/material";
+import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
+import { Card, CardContent } from "@/modules/shared/ui/shadcn/card";
 
-const GRID_SX = {
-  display: "grid",
-  gridTemplateColumns: {
-    xs: "1fr",
-    md: "repeat(2, 1fr)",
-    lg: "repeat(3, 1fr)",
-  },
-  gap: 3,
-  mt: 3,
-} as const;
-
-const CARD_SX = {
-  bgcolor: "#fff",
-  borderRadius: 3,
-  border: "1px solid #E5E7EB",
-  overflow: "hidden",
-} as const;
-
-const FOOTER_SX = {
-  px: 3, py: 2,
-  bgcolor: "#F9FAFB",
-  borderTop: "1px solid #E5E7EB",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-} as const;
-
-const MODULE_CHIPS_3 = Array.from({ length: 3 });
-
-interface CampaignsSkeletonProps {
-  count?: number;
-}
-
-const CampaignsSkeleton = memo<CampaignsSkeletonProps>(({ count = 6 }) => (
-  <Box sx={GRID_SX}>
+const CampaignsSkeleton = memo<{ count?: number }>(({ count = 6 }) => (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-3">
     {Array.from({ length: count }).map((_, i) => (
-      <Box key={i} sx={CARD_SX}>
-        <Box sx={{ p: 3 }}>
-          <Box sx={{ display: "flex", gap: 1, mb: 1 }}>
-            <Skeleton variant="rounded" width={60} height={22} />
-            <Skeleton variant="rounded" width={70} height={22} />
-          </Box>
-          <Skeleton variant="text" width="80%" height={22} />
-          <Skeleton variant="text" width="100%" height={16} />
-          <Skeleton variant="text" width="90%" height={16} />
-          <Box sx={{ display: "flex", gap: 0.7, mt: 2, flexWrap: "wrap" }}>
-            {MODULE_CHIPS_3.map((_, j) => (
-              <Skeleton key={j} variant="rounded" width={60} height={24} />
-            ))}
-          </Box>
-        </Box>
-        <Box sx={FOOTER_SX}>
-          <Skeleton variant="text" width={120} height={16} />
-          <Skeleton variant="rounded" width={60} height={28} />
-        </Box>
-      </Box>
+      <Card key={i} className="gap-0 py-0 overflow-hidden">
+        <div className="p-5 space-y-3">
+          <Skeleton className="h-5 w-16 rounded-full" />
+          <Skeleton className="h-5 w-4/5" />
+          <Skeleton className="h-3.5 w-full" />
+          <Skeleton className="h-3.5 w-11/12" />
+          <div className="flex gap-2 flex-wrap pt-1">
+            <Skeleton className="h-6 w-16 rounded-full" />
+            <Skeleton className="h-6 w-20 rounded-full" />
+          </div>
+        </div>
+        <div className="flex items-center justify-between px-5 py-3 border-t border-border bg-muted/40">
+          <Skeleton className="h-3.5 w-28" />
+          <Skeleton className="h-7 w-16 rounded-lg" />
+        </div>
+      </Card>
     ))}
-  </Box>
+  </div>
 ));
-CampaignsSkeleton.displayName = "CampaignsSkeleton";
 
+CampaignsSkeleton.displayName = "CampaignsSkeleton";
 export default CampaignsSkeleton;

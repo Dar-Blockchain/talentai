@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Receipt } from "lucide-react";
 import AppButton from "@/components/ui/AppButton";
 import MuiToast from "@/components/ui/Toast";
-import LoadingState from "@/components/ui/LoadingState";
+import LoadingState from "@/modules/shared/ui/LoadingState";
 import { usePlans } from "@/modules/company/plans/hooks";
 import {
   SubscriptionBanner, PlanCard, ContactUsModal,

@@ -8,6 +8,8 @@ import { type InterviewConfig } from '../../types/interview';
 interface Props {
   jobData?: any;
   interviewConfig?: InterviewConfig | null;
+  /** Overrides the computed job/assessment title (e.g. campaign title + module type for campaign interviews). */
+  titleOverride?: string;
   isActive: boolean;
   elapsedTime?: number;
   timeWarning?: boolean;
@@ -19,6 +21,7 @@ interface Props {
 export default function InterviewSessionHeader({
   jobData,
   interviewConfig,
+  titleOverride,
   isActive,
   elapsedTime,
   timeWarning,
@@ -44,6 +47,7 @@ export default function InterviewSessionHeader({
   const { t } = useTranslation('modules/interview/interview');
 
   const jobTitle = useMemo(() => {
+    if (titleOverride) return titleOverride;
     if (jobData?.jobDetails?.title) return jobData.jobDetails.title;
     if (jobData?.title)             return jobData.title;
     const type = interviewConfig?.interviewType;
@@ -55,7 +59,7 @@ export default function InterviewSessionHeader({
       return role ? `${role} Assessment` : 'Soft Skills Assessment';
     }
     return t('interview_types.hr');
-  }, [jobData, interviewConfig, t]);
+  }, [titleOverride, jobData, interviewConfig, t]);
 
   const companyName = useMemo(
     () =>

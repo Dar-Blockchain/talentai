@@ -12,4 +12,4 @@ export const YOUTUBE_URL   = "https://www.youtube.com/@TalentAi-w3p";
 export const GITHUB_URL    = "https://github.com/TalentAI-bid/";
 
 export const OG_IMAGE      = `${SITE_URL}/images/home/og-cover.png`;
-export const LOGO_URL      = `${SITE_URL}/images/home/logo.svg`;
+export const LOGO_URL      = `${SITE_URL}/logo.svg`;

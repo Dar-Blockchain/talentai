@@ -26,6 +26,77 @@ class CampaignInterviewController {
     }
   }
 
+  // ── Shared decision → socket-event handling (used by candidate_response & skip_question) ──
+
+  async _emitTurnResult(socket, sessionId, decision, transcriptForAck) {
+    // Emit coverage update
+    if (decision.coverage) {
+      this.safeEmit(socket, 'coverage_update', { coverage: decision.coverage, sessionId });
+    }
+
+    // Emit real-time report update
+    if (decision.report) {
+      this.safeEmit(socket, 'report_update', { report: decision.report, sessionId });
+    }
+
+    if (decision.type === 'end_interview') {
+      // Store closing statement in conversation before persisting
+      if (decision.content) {
+        await this.service.sessionManager.addConversationEntry(sessionId, {
+          type:    'interviewer',
+          content: decision.content,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      // Generate final report and persist to DB
+      const endResult = await this.service.endInterview(sessionId);
+      this.activeSessions.delete(sessionId);
+
+      this.safeEmit(socket, 'interviewer_message', {
+        type:      'closing',
+        content:   decision.content,
+        timestamp: new Date().toISOString(),
+        sessionId,
+      });
+
+      // Small delay before sending ended event so client renders the closing message first
+      setTimeout(() => {
+        this.safeEmit(socket, 'interview_ended', {
+          sessionId,
+          finalReport: endResult.finalReport,
+          analytics:   endResult.analytics,
+        });
+      }, 1500);
+    } else {
+      // Store interviewer question in session so transcript is complete
+      if (decision.content) {
+        await this.service.sessionManager.addConversationEntry(sessionId, {
+          type:    'interviewer',
+          content: decision.content,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      // next_question or follow_up
+      const messageType = decision.type === 'follow_up' ? 'follow_up' : 'question';
+      this.safeEmit(socket, 'interviewer_message', {
+        type:      messageType,
+        content:   decision.content,
+        timestamp: new Date().toISOString(),
+        sessionId,
+        metadata: { analysis: decision.analysis },
+      });
+    }
+
+    // Acknowledge successful processing
+    this.safeEmit(socket, 'response_processed', {
+      status:    'success',
+      transcript: (transcriptForAck || '').substring(0, 100),
+      timestamp: new Date().toISOString(),
+    });
+  }
+
   // ── Register handlers ────────────────────────────────────────────────────────
 
   initializeHandlers(io) {
@@ -88,81 +159,40 @@ class CampaignInterviewController {
         }
 
         try {
-
           this.safeEmit(socket, 'interviewer_typing', { sessionId, status: 'thinking' });
-
           const decision = await this.service.processCandidateResponse(sessionId, transcript);
-
-          // Emit coverage update
-          if (decision.coverage) {
-            this.safeEmit(socket, 'coverage_update', { coverage: decision.coverage, sessionId });
-          }
-
-          // Emit real-time report update
-          if (decision.report) {
-            this.safeEmit(socket, 'report_update', { report: decision.report, sessionId });
-          }
-
-          if (decision.type === 'end_interview') {
-            // Store closing statement in conversation before persisting
-            if (decision.content) {
-              await this.service.sessionManager.addConversationEntry(sessionId, {
-                type:    'interviewer',
-                content: decision.content,
-                timestamp: new Date().toISOString(),
-              });
-            }
-
-            // Generate final report and persist to DB
-            const endResult = await this.service.endInterview(sessionId);
-            this.activeSessions.delete(sessionId);
-
-            this.safeEmit(socket, 'interviewer_message', {
-              type:      'closing',
-              content:   decision.content,
-              timestamp: new Date().toISOString(),
-              sessionId,
-            });
-
-            // Small delay before sending ended event so client renders the closing message first
-            setTimeout(() => {
-              this.safeEmit(socket, 'interview_ended', {
-                sessionId,
-                finalReport: endResult.finalReport,
-                analytics:   endResult.analytics,
-              });
-            }, 1500);
-          } else {
-            // Store interviewer question in session so transcript is complete
-            if (decision.content) {
-              await this.service.sessionManager.addConversationEntry(sessionId, {
-                type:    'interviewer',
-                content: decision.content,
-                timestamp: new Date().toISOString(),
-              });
-            }
-
-            // next_question or follow_up
-            const messageType = decision.type === 'follow_up' ? 'follow_up' : 'question';
-            this.safeEmit(socket, 'interviewer_message', {
-              type:      messageType,
-              content:   decision.content,
-              timestamp: new Date().toISOString(),
-              sessionId,
-              metadata: { analysis: decision.analysis },
-            });
-          }
-
-          // Acknowledge successful processing
-          this.safeEmit(socket, 'response_processed', {
-            status:    'success',
-            transcript: (transcript || '').substring(0, 100),
-            timestamp: new Date().toISOString(),
-          });
+          await this._emitTurnResult(socket, sessionId, decision, transcript);
         } catch (err) {
           console.error('❌ [CampaignInterview] candidate_response error:', err.message);
           this.safeEmit(socket, 'interview_error', {
             error:   'Failed to process response',
+            message: err.message,
+          });
+          this.safeEmit(socket, 'response_processed', {
+            status:    'error',
+            error:     err.message,
+            timestamp: new Date().toISOString(),
+          });
+        }
+      });
+
+      // ── skip_question ───────────────────────────────────────────────────────
+      socket.on('skip_question', async () => {
+        const sessionId = socket.sessionId;
+
+        if (!sessionId) {
+          this.safeEmit(socket, 'interview_error', { error: 'No active session' });
+          return;
+        }
+
+        try {
+          this.safeEmit(socket, 'interviewer_typing', { sessionId, status: 'thinking' });
+          const decision = await this.service.processCandidateResponse(sessionId, '(Candidate skipped this question)', true);
+          await this._emitTurnResult(socket, sessionId, decision, '[SKIPPED]');
+        } catch (err) {
+          console.error('❌ [CampaignInterview] skip_question error:', err.message);
+          this.safeEmit(socket, 'interview_error', {
+            error:   'Failed to skip question',
             message: err.message,
           });
           this.safeEmit(socket, 'response_processed', {

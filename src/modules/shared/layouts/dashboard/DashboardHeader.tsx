@@ -9,7 +9,7 @@ import { Separator } from "@/modules/shared/ui/shadcn/separator";
 import HeaderNotification from "@/modules/notifications/shared/components/HeaderNotification";
 import HeaderChat from "./HeaderChat";
 import GlobalSearch from "./GlobalSearch";
-import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
+import LanguageSwitcher from "@/modules/shared/layouts/shared/LanguageSwitcher";
 import UserAvatar from "../shared/UserAvatar";
 import Image from "next/image";
 import Link from "next/link";
@@ -40,7 +40,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile, mobileOpen }) => {
         {isCandidate && (
           <Link href="/" className="hidden sm:inline-flex items-center">
             <Image
-              src="/images/home/logo.svg"
+              src="/logo.svg"
               alt="TalentAI"
               width={130}
               height={36}

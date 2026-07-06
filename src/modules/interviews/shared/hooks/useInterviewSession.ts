@@ -30,6 +30,7 @@ export function useInterviewSession({
   authUser,
   jobData,
   namespace,
+  candidateIdOverride,
 }: Omit<UseInterviewSessionOptions, 'notify'>) {
   const dispatch = useDispatch<AppDispatch>();
   const [coverage, setCoverage] = useState<Coverage | null>(null);
@@ -223,7 +224,7 @@ export function useInterviewSession({
     if (!socket.socketRef.current || !socket.isConnected) { notify('Not connected to interview system', 'error'); return; }
     try {
       socket.setInterviewStatus('connecting');
-      const candidateId = authUser?._id || authUser?.id || null;
+      const candidateId = candidateIdOverride ?? (authUser?._id || authUser?.id || null);
       const postId = jobData?._id || null;
       await audio.initializeAudio();
       socket.socketRef.current.emit('start_interview', {
@@ -244,7 +245,7 @@ export function useInterviewSession({
       notify('Failed to start interview', 'error');
       socket.setInterviewStatus('idle');
     }
-  }, [socket.socketRef, socket.isConnected, socket.setInterviewStatus, interviewConfig, authUser, audio.initializeAudio, notify]);
+  }, [socket.socketRef, socket.isConnected, socket.setInterviewStatus, interviewConfig, authUser, candidateIdOverride, audio.initializeAudio, notify]);
 
   const endInterview = useCallback(() => {
     if (socket.socketRef.current && socket.sessionId) socket.socketRef.current.emit('end_interview', { sessionId: socket.sessionId });

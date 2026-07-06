@@ -1,7 +1,7 @@
 import type { ElementType } from "react";
 import {
   LayoutDashboard, MessageCircle, ClipboardList,
-  Brain, GraduationCap, Bell, Settings,
+  Brain, GraduationCap, Settings,
 } from "lucide-react";
 import {
   CANDIDATE_MESSAGES_BASE_PATH,
@@ -99,14 +99,6 @@ export const candidateWorkspaceNavItems: CandidateWorkspaceNavItem[] = [
     classes:     AMBER,
   },
   {
-    id:          "notifications",
-    icon:        Bell,
-    labelKey:    "candidate.nav.notifications",
-    sublabelKey: "candidate.nav.your_notifications",
-    href:        "/notifications",
-    classes:     TEAL,
-  },
-  {
     id:          "settings",
     icon:        Settings,
     labelKey:    "candidate.nav.settings",
@@ -125,7 +117,6 @@ export const isCandidateWorkspaceNavActive = (
 ): boolean => {
   if (item.id === "messages")      return isCandidateMessagesPath(pathname);
   if (item.id === "dashboard")     return pathname === "/candidate/dashboard" && !viewQuery;
-  if (item.id === "notifications") return pathname === "/notifications";
   if (item.id === "settings")      return pathname === "/settings";
   if (item.id === "skills")        return pathname === "/candidate/skills";
   if (item.id === "applications")  return pathname === "/candidate/applications" || pathname.startsWith("/candidate/applications/");

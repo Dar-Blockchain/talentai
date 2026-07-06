@@ -1,25 +1,19 @@
 "use client";
 
-import React, { memo, useState, useEffect, useCallback, useMemo } from "react";
+import React, { memo, useState, useEffect, useCallback } from "react";
+import { Pencil, Lock, LockOpen, Link as LinkIcon, UserCircle, TriangleAlert } from "lucide-react";
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  Box, Typography, TextField, ToggleButtonGroup, ToggleButton,
-  CircularProgress, IconButton,
-} from "@mui/material";
-import CloseOutlined         from "@mui/icons-material/CloseOutlined";
-import EditOutlined          from "@mui/icons-material/EditOutlined";
-import LockOutlined          from "@mui/icons-material/LockOutlined";
-import LockOpenOutlined      from "@mui/icons-material/LockOpenOutlined";
-import LinkOutlined          from "@mui/icons-material/LinkOutlined";
-import AccountCircleOutlined from "@mui/icons-material/AccountCircleOutlined";
-import WarningAmberOutlined  from "@mui/icons-material/WarningAmberOutlined";
-import AppButton             from "@/components/ui/AppButton";
+  Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter,
+} from "@/modules/shared/ui/shadcn/dialog";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import { Input } from "@/modules/shared/ui/shadcn/input";
+import { Textarea } from "@/modules/shared/ui/shadcn/textarea";
+import { Label } from "@/modules/shared/ui/shadcn/label";
+import { cn } from "@/lib/utils";
 import { Campaign, ModuleType } from "@/modules/company/campaigns/types/campaign";
 import { MODULE_CONFIG }     from "@/modules/shared/constants/campaign";
 import { useTranslation, Trans } from "react-i18next";
 import { useUpdateCampaignMutation } from "../../queries";
-
-const PURPLE = "#8310FF";
 
 const MODULE_TYPES: ModuleType[] = ["QUESTIONNAIRE", "AI_INTERVIEW", "SKILL_TEST", "TRAINING_PATH"];
 
@@ -30,10 +24,25 @@ interface Props {
   onSaved:  (updated: Campaign) => void;
 }
 
-const FieldLabel: React.FC<{ label: string; required?: boolean }> = ({ label, required }) => (
-  <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#374151", mb: 0.75 }}>
-    {label}{required && <span style={{ color: "#EF4444", marginLeft: 2 }}>*</span>}
-  </Typography>
+const SegmentButton: React.FC<{
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+}> = ({ active, onClick, icon, label }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={cn(
+      "flex items-center gap-1.5 px-3 py-2 rounded-[10px] border text-[12.5px] font-semibold cursor-pointer transition-colors",
+      active
+        ? "bg-primary/10 border-primary/40 text-primary"
+        : "bg-background border-border text-muted-foreground hover:bg-muted/40",
+    )}
+  >
+    {icon}
+    {label}
+  </button>
 );
 
 const EditCampaignModal = memo<Props>(({ open, campaign, onClose, onSaved }) => {
@@ -84,157 +93,171 @@ const EditCampaignModal = memo<Props>(({ open, campaign, onClose, onSaved }) => 
     }
   }, [title, description, deadline, anonymityMode, accessMethod, moduleChanged, moduleType, campaign, updateMut, onSaved, onClose, t, m]);
 
-  const toggleSx = useMemo(() => ({
-    borderRadius: "10px !important",
-    border: "1px solid #E5E7EB !important",
-    px: 1.5, py: 0.875,
-    textTransform: "none",
-    fontSize: "12.5px",
-    fontWeight: 600,
-    color: "#6B7280",
-    gap: 0.625,
-    "&.Mui-selected": {
-      bgcolor: `${PURPLE}10 !important`,
-      borderColor: `${PURPLE}40 !important`,
-      color: PURPLE,
-    },
-  }), []);
-
   const saving = updateMut.isPending;
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-      slotProps={{ paper: { sx: { borderRadius: "20px", boxShadow: "0 20px 60px rgba(0,0,0,0.13)" } } }}
-    >
-      <DialogTitle sx={{ px: 3, pt: 3, pb: 2, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
-          <Box sx={{ width: 36, height: 36, borderRadius: "10px", bgcolor: `${PURPLE}10`, border: `1px solid ${PURPLE}20`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <EditOutlined sx={{ fontSize: 17, color: PURPLE }} />
-          </Box>
-          <Box>
-            <Typography sx={{ fontSize: "15px", fontWeight: 800, color: "#0F172A" }}>{t(`${m}.title`)}</Typography>
-            <Typography sx={{ fontSize: "11px", color: "#94A3B8" }}>{t(`${m}.subtitle`)}</Typography>
-          </Box>
-        </Box>
-        <IconButton size="small" onClick={onClose} sx={{ color: "#94A3B8" }}>
-          <CloseOutlined sx={{ fontSize: 18 }} />
-        </IconButton>
-      </DialogTitle>
+    <Dialog open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
+      <DialogContent className="p-0 gap-0 overflow-hidden rounded-2xl sm:max-w-lg shadow-2xl">
+        <div className="flex items-center gap-3 pl-6 pr-10 pt-6 pb-4">
+          <div className="flex items-center justify-center size-9 rounded-[10px] shrink-0 bg-primary/10 border border-primary/20">
+            <Pencil className="size-[17px] text-primary" />
+          </div>
+          <div className="min-w-0">
+            <DialogTitle className="text-[15px] font-bold text-foreground">{t(`${m}.title`)}</DialogTitle>
+            <DialogDescription className="text-[11px]">{t(`${m}.subtitle`)}</DialogDescription>
+          </div>
+        </div>
 
-      <DialogContent sx={{ px: 3, pb: 1 }}>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+        <div className="px-6 pb-1 max-h-[65vh] overflow-y-auto">
+          <div className="flex flex-col gap-4">
 
-          <Box>
-            <FieldLabel label={t(`${m}.title_label`)} required />
-            <TextField fullWidth size="small" value={title} onChange={(e) => setTitle(e.target.value)}
-              placeholder={t(`${m}.title_placeholder`)}
-              sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px", fontSize: "13.5px" } }} />
-          </Box>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-bold text-foreground/80">
+                {t(`${m}.title_label`)}<span className="text-destructive ml-0.5">*</span>
+              </Label>
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t(`${m}.title_placeholder`)} />
+            </div>
 
-          <Box>
-            <FieldLabel label={t(`${m}.description_label`)} />
-            <TextField fullWidth size="small" multiline minRows={2} maxRows={4}
-              value={description} onChange={(e) => setDescription(e.target.value)}
-              placeholder={t(`${m}.description_placeholder`)}
-              sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px", fontSize: "13px" } }} />
-          </Box>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-bold text-foreground/80">{t(`${m}.description_label`)}</Label>
+              <Textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t(`${m}.description_placeholder`)} />
+            </div>
 
-          <Box>
-            <FieldLabel label={t(`${m}.deadline_label`)} />
-            <TextField fullWidth size="small" type="date" value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-              inputProps={{ min: new Date().toISOString().slice(0, 10) }}
-              sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px", fontSize: "13px" } }} />
-          </Box>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-bold text-foreground/80">{t(`${m}.deadline_label`)}</Label>
+              <Input
+                type="date"
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+                min={new Date().toISOString().slice(0, 10)}
+                className="w-fit"
+              />
+            </div>
 
-          <Box>
-            <FieldLabel label={t(`${m}.module_type_label`)} />
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
-              {MODULE_TYPES.map((mt) => {
-                const cfg        = MODULE_CONFIG[mt];
-                const Icon       = cfg.icon;
-                const selected   = moduleType === mt;
-                const comingSoon = mt === "TRAINING_PATH";
-                return (
-                  <Box key={mt} onClick={() => { if (!comingSoon) setModuleType(mt); }}
-                    sx={{
-                      display: "flex", alignItems: "center", gap: 1.25,
-                      px: 1.5, py: 1.125, borderRadius: "12px",
-                      cursor: comingSoon ? "not-allowed" : "pointer",
-                      border: `1.5px solid ${selected ? cfg.color + "50" : "#E5E7EB"}`,
-                      bgcolor: selected ? `${cfg.color}08` : "#FAFAFA",
-                      opacity: comingSoon ? 0.5 : 1,
-                      transition: "all 0.15s",
-                      ...(!comingSoon && { "&:hover": { borderColor: `${cfg.color}40`, bgcolor: `${cfg.color}06` } }),
-                    }}
-                  >
-                    <Box sx={{ width: 30, height: 30, borderRadius: "8px", flexShrink: 0, bgcolor: selected ? `${cfg.color}15` : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <Icon sx={{ fontSize: 15, color: selected ? cfg.color : "#9CA3AF" }} />
-                    </Box>
-                    <Box>
-                      <Typography sx={{ fontSize: "12.5px", fontWeight: 700, color: selected ? "#111827" : "#6B7280", lineHeight: 1.2 }}>
-                        {t(`pages.campaigns.module.${mt}`)}
-                      </Typography>
-                      {comingSoon && (
-                        <Typography sx={{ fontSize: "9px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: 0.5 }}>
-                          {t(`${m}.coming_soon`)}
-                        </Typography>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-bold text-foreground/80">{t(`${m}.module_type_label`)}</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {MODULE_TYPES.map((mt) => {
+                  const cfg        = MODULE_CONFIG[mt];
+                  const Icon       = cfg.icon;
+                  const selected   = moduleType === mt;
+                  const comingSoon = mt === "TRAINING_PATH";
+                  return (
+                    <div
+                      key={mt}
+                      onClick={() => { if (!comingSoon) setModuleType(mt); }}
+                      className={cn(
+                        "flex items-center gap-2.5 px-3 py-2.5 rounded-xl border-[1.5px] transition-colors",
+                        comingSoon ? "cursor-not-allowed opacity-50" : "cursor-pointer",
+                        selected ? "bg-primary/5" : "bg-muted/30 hover:bg-muted/50",
                       )}
-                    </Box>
-                  </Box>
-                );
-              })}
-            </Box>
+                      style={{ borderColor: selected ? `${cfg.color}50` : undefined }}
+                    >
+                      <div
+                        className="flex items-center justify-center size-[30px] rounded-lg shrink-0"
+                        style={{ background: selected ? `${cfg.color}15` : "#F3F4F6" }}
+                      >
+                        <Icon className="!size-[15px]" style={{ color: selected ? cfg.color : "#9CA3AF" }} />
+                      </div>
+                      <div>
+                        <p className={cn("text-[12.5px] font-bold leading-tight", selected ? "text-foreground" : "text-muted-foreground")}>
+                          {t(`pages.campaigns.module.${mt}`)}
+                        </p>
+                        {comingSoon && (
+                          <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wide">
+                            {t(`${m}.coming_soon`)}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
 
-            {moduleChanged && (
-              <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1, mt: 1.25, px: 1.5, py: 1, borderRadius: "8px", bgcolor: "#FFFBEB", border: "1px solid #FDE68A" }}>
-                <WarningAmberOutlined sx={{ fontSize: 14, color: "#D97706", flexShrink: 0, mt: "1px" }} />
-                <Typography sx={{ fontSize: "11.5px", color: "#92400E", lineHeight: 1.5 }}>
-                  <Trans i18nKey="pages.campaigns.detail.edit_modal.module_change_warning" components={{ strong: <strong /> }} />
-                </Typography>
-              </Box>
+              {moduleChanged ? (
+                <div className="flex items-start gap-2 mt-1 px-2.5 py-2 rounded-lg bg-amber-50 border border-amber-200">
+                  <TriangleAlert className="size-3.5 text-amber-600 shrink-0 mt-0.5" />
+                  <p className="text-[11.5px] text-amber-900 leading-relaxed">
+                    <Trans i18nKey="pages.campaigns.detail.edit_modal.module_change_warning" ns="dashboard" components={{ strong: <strong /> }} />
+                  </p>
+                </div>
+              ) : campaign.module?.type === "QUESTIONNAIRE" && campaign.module.config ? (
+                <div className="mt-1 rounded-xl border border-border bg-muted/20 p-3">
+                  <p className="text-[11px] font-semibold text-muted-foreground mb-1.5">
+                    {t(`${m}.current_questions`, { count: campaign.module.config.questions.length })}
+                  </p>
+                  <div className="divide-y divide-border/50 max-h-40 overflow-y-auto pr-1">
+                    {campaign.module.config.questions.map((q, i) => (
+                      <div key={i} className="flex items-start gap-2 py-1.5 first:pt-0 last:pb-0">
+                        <span className="text-[11px] font-semibold text-muted-foreground/50 w-4 shrink-0">{i + 1}</span>
+                        <span className="text-[12px] text-foreground/80 leading-snug">{q.question}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : campaign.module?.type === "AI_INTERVIEW" && campaign.module.config?.agentPrompt ? (
+                <div className="mt-1 rounded-xl border border-border bg-muted/20 p-3">
+                  <p className="text-[11px] font-semibold text-muted-foreground mb-1.5">{t(`${m}.current_prompt`)}</p>
+                  <p className="text-[12px] text-foreground/75 leading-relaxed line-clamp-6 whitespace-pre-wrap border-l-2 border-border pl-2.5">
+                    {campaign.module.config.agentPrompt}
+                  </p>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-bold text-foreground/80">{t(`${m}.anonymity_label`)}</Label>
+              <div className="flex gap-2">
+                <SegmentButton
+                  active={anonymityMode === "NOMINATIVE"}
+                  onClick={() => setAnonymityMode("NOMINATIVE")}
+                  icon={<LockOpen className="size-3.5" />}
+                  label={t(`pages.campaigns.detail.nominative`)}
+                />
+                <SegmentButton
+                  active={anonymityMode === "ANONYMOUS"}
+                  onClick={() => setAnonymityMode("ANONYMOUS")}
+                  icon={<Lock className="size-3.5" />}
+                  label={t(`pages.campaigns.detail.anonymous`)}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-bold text-foreground/80">{t(`${m}.access_method_label`)}</Label>
+              <div className="flex gap-2">
+                <SegmentButton
+                  active={accessMethod === "ACCOUNTS"}
+                  onClick={() => setAccessMethod("ACCOUNTS")}
+                  icon={<UserCircle className="size-3.5" />}
+                  label={t(`${m}.accounts_only`)}
+                />
+                <SegmentButton
+                  active={accessMethod === "LINK"}
+                  onClick={() => setAccessMethod("LINK")}
+                  icon={<LinkIcon className="size-3.5" />}
+                  label={t(`${m}.public_link`)}
+                />
+              </div>
+            </div>
+
+            {error && (
+              <p className="text-xs text-destructive bg-destructive/10 border border-destructive/25 rounded-lg px-3 py-2">
+                {error}
+              </p>
             )}
-          </Box>
+          </div>
+        </div>
 
-          <Box>
-            <FieldLabel label={t(`${m}.anonymity_label`)} />
-            <ToggleButtonGroup exclusive value={anonymityMode} onChange={(_, v) => v && setAnonymityMode(v)}
-              sx={{ gap: 1, "& .MuiToggleButtonGroup-grouped": { mr: 0 } }}>
-              <ToggleButton value="NOMINATIVE" sx={toggleSx}><LockOpenOutlined sx={{ fontSize: 14 }} />{t(`pages.campaigns.detail.nominative`)}</ToggleButton>
-              <ToggleButton value="ANONYMOUS"  sx={toggleSx}><LockOutlined     sx={{ fontSize: 14 }} />{t(`pages.campaigns.detail.anonymous`)}</ToggleButton>
-            </ToggleButtonGroup>
-          </Box>
-
-          <Box>
-            <FieldLabel label={t(`${m}.access_method_label`)} />
-            <ToggleButtonGroup exclusive value={accessMethod} onChange={(_, v) => v && setAccessMethod(v)}
-              sx={{ gap: 1, "& .MuiToggleButtonGroup-grouped": { mr: 0 } }}>
-              <ToggleButton value="ACCOUNTS" sx={toggleSx}><AccountCircleOutlined sx={{ fontSize: 14 }} />{t(`${m}.accounts_only`)}</ToggleButton>
-              <ToggleButton value="LINK"     sx={toggleSx}><LinkOutlined          sx={{ fontSize: 14 }} />{t(`${m}.public_link`)}</ToggleButton>
-            </ToggleButtonGroup>
-          </Box>
-
-          {error && (
-            <Typography sx={{ fontSize: "12px", color: "#EF4444", bgcolor: "#FEF2F2", px: 1.5, py: 1, borderRadius: "8px", border: "1px solid #FECACA" }}>
-              {error}
-            </Typography>
-          )}
-        </Box>
+        <DialogFooter className="px-6 py-5 gap-2 sm:justify-end">
+          <Button type="button" variant="ghost" onClick={onClose} disabled={saving}>
+            {t(`${m}.cancel`)}
+          </Button>
+          <Button type="button" onClick={handleSave} disabled={saving} loading={saving}>
+            {saving ? t(`${m}.saving`) : t(`${m}.save`)}
+          </Button>
+        </DialogFooter>
       </DialogContent>
-
-      <DialogActions sx={{ px: 3, py: 2.5, gap: 1 }}>
-        <AppButton label={t(`${m}.cancel`)} variant="outlined" size="medium" onClick={onClose} disabled={saving} />
-        <AppButton
-          label={saving ? t(`${m}.saving`) : t(`${m}.save`)}
-          variant="contained" size="medium"
-          onClick={handleSave} disabled={saving}
-          startIcon={saving ? <CircularProgress size={13} sx={{ color: "#fff" }} /> : undefined}
-        />
-      </DialogActions>
     </Dialog>
   );
 });
