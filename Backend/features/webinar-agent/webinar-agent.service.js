@@ -10,19 +10,18 @@ const { refreshStats } = require("./webinar.service");
 exports.saveProgress = async ({ submissionId, webinarId, contact, source, lang, consent, answers }) => {
   const hasEmail = contact?.email && contact.email.trim() !== "";
 
-  // Build the update payload — only include contact if there's something useful to set
+  // Use dot-notation keys for answers so partial saves merge rather than overwrite
   const $set = {
     webinar_id: webinarId,
     lang:       lang || "fr",
     consent:    consent ?? false,
-    ...(hasEmail && contact  ? { contact } : {}),
-    ...(source               ? { source }  : {}),
-    ...(answers              ? { answers } : {}),
+    ...(hasEmail ? { contact } : {}),
+    ...(source   ? { source }  : {}),
+    ...(answers  ? Object.fromEntries(Object.entries(answers).map(([k, v]) => [`answers.${k}`, v])) : {}),
   };
 
   let doc;
   if (submissionId) {
-    // Existing submission — just update it
     doc = await WebinarSubmission.findByIdAndUpdate(
       submissionId,
       { $set },
@@ -30,14 +29,13 @@ exports.saveProgress = async ({ submissionId, webinarId, contact, source, lang, 
     );
     if (!doc) throw new Error("Submission not found");
   } else if (hasEmail) {
-    // No id yet but we have an email — upsert by email + webinarId
+    // Upsert by email + webinarId to deduplicate returning visitors
     doc = await WebinarSubmission.findOneAndUpdate(
       { "contact.email": contact.email.trim(), webinar_id: webinarId },
       { $set },
       { upsert: true, new: true, setDefaultsOnInsert: true },
     );
   } else {
-    // First anonymous step-save — create a fresh document
     doc = await WebinarSubmission.create({
       webinar_id: webinarId,
       lang:       lang || "fr",

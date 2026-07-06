@@ -47,7 +47,7 @@ export interface WebinarSubmission {
   consent: boolean;
   completed: boolean;
   contact: { nom: string | null; email: string | null; entreprise: string | null };
-  answers: Record<string, any>;
+  answers: Record<string, unknown>;
   scoring?: {
     maturite_ia: number;
     intensite_pain: number;

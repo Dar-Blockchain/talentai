@@ -34,14 +34,18 @@ exports.getPublicWebinar = async (id) => {
   return doc;
 };
 
-exports.createWebinar = async ({ title, description, date, status, lang, userId, questions: passedQuestions, highlights }) => {
+exports.createWebinar = async ({ title, description, date, status, lang, userId, questions: passedQuestions, highlights, about_fr, about_en, webinar_link, ai_context }) => {
   return Webinar.create({
     title, description, date,
-    status:     status     || "draft",
-    lang:       lang       || "fr",
-    questions:  passedQuestions || [],
-    highlights: highlights || [],
-    created_by: userId     || null,
+    status:       status       || "draft",
+    lang:         lang         || "fr",
+    questions:    passedQuestions || [],
+    highlights:   highlights   || [],
+    about_fr:     about_fr     || "",
+    about_en:     about_en     || "",
+    webinar_link: webinar_link || "",
+    ai_context:   ai_context   || "",
+    created_by:   userId       || null,
   });
 };
 
