@@ -19,6 +19,7 @@ const EASE    = [0.32, 0.72, 0, 1] as [number, number, number, number];
 const ALPHA   = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const BACKEND = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const DEMO_LINK = process.env.NEXT_PUBLIC_WEBINAR_DEMO_LINK || "";
 
 const COUNTRIES = [
   "Tunisie","France","Belgique","Luxembourg","Suisse","Monaco",
@@ -35,6 +36,11 @@ const COUNTRIES = [
 // ── Shared primitives ─────────────────────────────────────────────────────────
 const CARD_SX = { boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.04)" };
 
+const GRID_BG = {
+  backgroundImage: "linear-gradient(rgba(106,211,156,0.07) 1px,transparent 1px),linear-gradient(90deg,rgba(106,211,156,0.07) 1px,transparent 1px)",
+  backgroundSize: "28px 28px",
+};
+
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <p className="text-[10.5px] font-bold uppercase tracking-[2.5px] text-slate-400 mb-3">{children}</p>;
 }
@@ -43,6 +49,14 @@ function CheckIcon({ color = "currentColor" }: { color?: string }) {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="20 6 9 17 4 12"/>
+    </svg>
+  );
+}
+
+function ErrorIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
     </svg>
   );
 }
@@ -169,7 +183,6 @@ function Snapshot({ scoring, lang, questions, answers }: {
   ];
 
   const tm = tier && TIER[tier as TierKey] ? TIER[tier as TierKey] : null;
-  const demoLink = process.env.NEXT_PUBLIC_WEBINAR_DEMO_LINK || "";
 
   const answered = [...questions]
     .sort((a, b) => a.order - b.order)
@@ -180,11 +193,6 @@ function Snapshot({ scoring, lang, questions, answers }: {
     if (q.type === "text") { const s = String(raw).trim(); return s.length > 120 ? s.slice(0, 120) + "…" : s; }
     const opt = q.options.find(o => o.key === raw);
     return opt ? (isEn ? opt.label_en : opt.label_fr) : String(raw);
-  };
-
-  const GRID_BG = {
-    backgroundImage: "linear-gradient(rgba(106,211,156,0.07) 1px,transparent 1px),linear-gradient(90deg,rgba(106,211,156,0.07) 1px,transparent 1px)",
-    backgroundSize: "28px 28px",
   };
 
   return (
@@ -443,8 +451,8 @@ function Snapshot({ scoring, lang, questions, answers }: {
                 ? "Your profile will shape the live discussion. We'll reference your results in real time."
                 : "Votre profil influencera la session live. Vos résultats seront utilisés en temps réel."}
             </p>
-            {demoLink ? (
-              <a href={demoLink} target="_blank" rel="noopener noreferrer"
+            {DEMO_LINK ? (
+              <a href={DEMO_LINK} target="_blank" rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-[14px] font-bold transition-all hover:opacity-90"
                 style={{ background: `linear-gradient(135deg,${C.brand},${C.teal})`, color: "#0A1F1C" }}>
                 {isEn ? "Book a private demo →" : "Réserver une démo privée →"}
@@ -635,11 +643,10 @@ export default function WebinarAgentPage() {
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Email validation state (derived, not stored)
-  const emailVal   = contact.email.trim();
-  const validEmail = EMAIL_RE.test(emailVal);
+  const emailVal       = contact.email.trim();
+  const validEmail     = EMAIL_RE.test(emailVal);
   const showEmailError = emailVal.length > 0 && !validEmail;
-  const canStart   = consent && contact.nom.trim() !== "" && validEmail;
+  const canStart       = consent && contact.nom.trim() !== "" && validEmail;
 
   useEffect(() => {
     if (!webinarId) return;
@@ -718,18 +725,23 @@ export default function WebinarAgentPage() {
     await handleComplete();
   }, [currentQ, saveStep, answers, handleComplete]);
 
+  const handleNavNext = useCallback(() => {
+    if (!currentQ) return;
+    if (qIdx === total - 1) handleLastQuestion();
+    else saveAndNext({ [currentQ.key]: answers[currentQ.key] });
+  }, [currentQ, qIdx, total, handleLastQuestion, saveAndNext, answers]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Enter" || isConsent || isSnapshot || !currentQ) return;
       if (currentQ.type === "choice") return;
       const hasVal = answers[currentQ.key] !== undefined && answers[currentQ.key] !== "";
       if (currentQ.required && !hasVal) return;
-      if (qIdx === total - 1) handleLastQuestion();
-      else saveAndNext({ [currentQ.key]: answers[currentQ.key] });
+      handleNavNext();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [currentQ, qIdx, total, answers, isConsent, isSnapshot, handleLastQuestion, saveAndNext]);
+  }, [currentQ, answers, isConsent, isSnapshot, handleNavNext]);
 
   if (loadingW) {
     return (
@@ -840,11 +852,7 @@ export default function WebinarAgentPage() {
                       />
                       {validEmail && <span className="absolute right-4 top-1/2 -translate-y-1/2 text-teal-500"><CheckIcon /></span>}
                       {showEmailError && (
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-red-400">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                          </svg>
-                        </span>
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-red-400"><ErrorIcon /></span>
                       )}
                     </div>
                   </ContactField>
@@ -932,13 +940,8 @@ export default function WebinarAgentPage() {
               className="w-10 h-10 rounded-full bg-white border border-slate-200 shadow-md text-slate-400 hover:text-slate-700 hover:border-slate-300 disabled:opacity-30 transition-all flex items-center justify-center">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
             </button>
-            <button
-              onClick={() => {
-                if (!currentQ) return;
-                if (qIdx === total - 1) handleLastQuestion();
-                else saveAndNext({ [currentQ.key]: answers[currentQ.key] });
-              }}
-              disabled={!!(currentQ?.required && !answers[currentQ.key])}
+            <button onClick={handleNavNext}
+              disabled={!!(currentQ?.required && !answers[currentQ?.key])}
               className="w-10 h-10 rounded-full bg-white border border-slate-200 shadow-md text-slate-400 hover:text-slate-700 hover:border-slate-300 disabled:opacity-30 transition-all flex items-center justify-center">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
