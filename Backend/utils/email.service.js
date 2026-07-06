@@ -64,6 +64,8 @@ const campaignInviteTemplate           = compileTemplate("campaign/campaign-invi
 const campaignDeadlineReminderTemplate = compileTemplate("campaign/campaign-deadline-reminder.hbs");
 const planUpgradeReminderTemplate      = compileTemplate("company/plan-upgrade-reminder.hbs");
 const jobMatchTemplate                 = compileTemplate("job/job-match.hbs");
+const webinarResultsTemplate           = compileTemplate("webinar/webinar-results.hbs");
+const webinarReminderTemplate          = compileTemplate("webinar/webinar-reminder.hbs");
 
 // Format role: "project_manager" → "Project Manager"
 const formatRole = (role) =>
@@ -345,6 +347,109 @@ const sendJobMatchEmail = async (candidateEmail, { candidateName, jobTitle, comp
   }
 };
 
+// ─── Send Webinar Results (to participant after completing the questionnaire) ──
+const TIER_LABELS = {
+  A: "Fortement aligné",
+  B: "Potentiel identifié",
+  C: "En cours de maturation",
+  D: "Hors cible",
+};
+
+const sendWebinarResultsEmail = async (submission, webinar) => {
+  const email = submission.contact?.email;
+  if (!email) return false;
+
+  const nom         = submission.contact?.nom || "Participant";
+  const scoring     = submission.scoring || {};
+  const lang        = submission.lang || "fr";
+  const resultsUrl  = `${process.env.NEXT_PUBLIC_APP_URL || "https://talentai.bid"}/webinar/${webinar._id || webinar.id}?submission=${submission._id}&snapshot=1`;
+
+  const webinarDate = webinar.date
+    ? new Date(webinar.date).toLocaleDateString(lang === "en" ? "en-GB" : "fr-FR", {
+        day: "numeric", month: "long", year: "numeric",
+      })
+    : null;
+
+  const mailOptions = {
+    from: FROM_ADDRESS,
+    to: email,
+    subject: lang === "en"
+      ? `Your AI analysis is ready — ${webinar.title}`
+      : `Votre analyse IA est prête — ${webinar.title}`,
+    html: webinarResultsTemplate({
+      nom,
+      isEn:               lang === "en",
+      webinarTitle:       webinar.title,
+      webinarDate,
+      maturite_ia:        scoring.maturite_ia ?? "—",
+      intensite_pain:     scoring.intensite_pain ?? "—",
+      readiness_score:    scoring.readiness_score ?? "—",
+      tier:               scoring.tier ?? "—",
+      tierLabel:          TIER_LABELS[scoring.tier] || "",
+      key_insight:        scoring.key_insight || null,
+      main_pain:          scoring.main_pain || null,
+      recommended_action: scoring.recommended_action || null,
+      webinarLink:        webinar.webinar_link || null,
+      year,
+    }),
+    attachments: [logoAttachment],
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    return true;
+  } catch (error) {
+    console.error("❌ Webinar results email failed:", error.message);
+    return false;
+  }
+};
+
+const sendWebinarReminderEmail = async (submission, webinar) => {
+  const email = submission.contact?.email;
+  if (!email) return false;
+
+  const nom  = submission.contact?.nom || "Participant";
+  const lang = submission.lang || "fr";
+  const isEn = lang === "en";
+
+  const locale = isEn ? "en-GB" : "fr-FR";
+  const webinarDate = webinar.date
+    ? new Date(webinar.date).toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" })
+    : null;
+  const webinarTime = webinar.date
+    ? new Date(webinar.date).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })
+    : null;
+
+  const webinarUrl = webinar.webinar_link
+    || `${process.env.NEXT_PUBLIC_APP_URL || "https://talentai.bid"}/webinar/${webinar._id || webinar.id}`;
+
+  const mailOptions = {
+    from: FROM_ADDRESS,
+    to: email,
+    subject: isEn
+      ? `Your webinar link — ${webinar.title}`
+      : `Votre lien webinar — ${webinar.title}`,
+    html: webinarReminderTemplate({
+      nom,
+      webinarTitle: webinar.title,
+      webinarDate,
+      webinarTime,
+      webinarUrl,
+      isEn,
+      year: new Date().getFullYear(),
+    }),
+    attachments: [logoAttachment],
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    return true;
+  } catch (error) {
+    console.error("❌ Webinar reminder email failed:", error.message);
+    return false;
+  }
+};
+
 module.exports = {
   sendOTP,
   sendCompanyInvitation,
@@ -358,5 +463,7 @@ module.exports = {
   sendCampaignInvitation,
   sendCampaignDeadlineReminder,
   sendJobMatchEmail,
+  sendWebinarResultsEmail,
+  sendWebinarReminderEmail,
   transporter,
 };

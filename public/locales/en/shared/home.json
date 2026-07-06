@@ -4,7 +4,8 @@
     "how_it_works": "How It Works",
     "find_jobs": "Find Jobs",
     "are_you_hiring": "Are You Hiring?",
-    "contact": "Contact"
+    "contact": "Contact",
+    "webinar": "Webinar"
   },
   "hero": {
     "headline_1": "Stop Losing Top Talent",
@@ -150,6 +151,36 @@
     "a4": "TalentAI offers 8 pre-built assessment modules: Technical Skills Evaluation, Soft Skills Assessment, Cultural Fit Analysis, Language Proficiency Testing, Practical Task Assignments, Problem-Solving Challenges, Behavioral Interviews, and Reference Verification. Each module can be configured with custom pass/fail thresholds, weighted scoring, time limits, and automatic progression rules. Companies mix and match modules to create unique pipelines for different roles, departments, or seniority levels.",
     "q5": "How much does TalentAI cost?",
     "a5": "TalentAI offers flexible pricing starting at just $8 per AI interview with zero commitment — pay only for what you use. For teams with recurring hiring needs, subscription plans start at $99/month (Starter, 15 interviews) and scale to $1,499/month (Unlimited, 700 interviews with dedicated 24/7 support and BI benchmarks). Every plan includes Interview AI with scoring and reports, AI-powered job post creation, and a customizable pipeline builder. Extra interviews beyond your plan are discounted from $8 down to $4 depending on tier. A white-label enterprise solution is also available with custom infrastructure and SLA."
+  },
+  "webinar": {
+    "overline": "Free webinar",
+    "headline_1": "AI in recruitment:",
+    "headline_accent": "what's really changing",
+    "body": "A 60-minute live session to understand how HR teams and managers are using AI to hire faster without sacrificing quality.",
+    "benefit_1": "Understand the real impact of AI on your hiring process",
+    "benefit_2": "See concrete examples of time-to-hire reduction",
+    "benefit_3": "Leave with an actionable plan",
+    "cta": "Reserve my spot",
+    "card_type": "Live session",
+    "card_sub": "Online · Free",
+    "card_title": "AI & Recruitment: from hype to reality",
+    "card_desc": "3 acts · 60 min · Live Q&A",
+    "acte_1": "Risks & realities of AI in recruitment",
+    "acte_2": "AI interviews in practice: real cases",
+    "acte_3": "How to drive adoption in your team",
+    "attendees": "+120 registered",
+    "spots": "Limited spots",
+    "modal_title": "Register for the webinar",
+    "modal_sub": "3 minutes to personalise your session after registration.",
+    "field_name": "Full name",
+    "field_name_placeholder": "Jane Smith",
+    "field_email": "Work email",
+    "field_email_placeholder": "jane@company.com",
+    "modal_cta": "Confirm my registration →",
+    "modal_cta_loading": "Saving…",
+    "modal_privacy": "Your data stays with Talent AI · No spam",
+    "success_title": "Registration confirmed!",
+    "success_sub": "Redirecting…"
   },
   "contact": {
     "overline": "Let's Talk",
