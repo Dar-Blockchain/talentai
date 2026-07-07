@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Controller, Control } from "react-hook-form";
 import { COMPANY_SIZES } from "@/modules/settings/shared/constants";
 import { getAllCountryNames } from "@/utils/countryMappings";
-import AppInput from "@/modules/shared/ui/AppInput";
+import { Input } from "@/modules/shared/ui/shadcn/input";
 import AppSelect from "@/modules/shared/ui/AppSelect";
 import AppAutocomplete from "@/modules/shared/ui/AppAutocomplete";
 import { CompanyProfileFormValues } from "../schemas/companyProfileSchema";
@@ -48,27 +48,33 @@ const CompanyInfoTab: React.FC<Props> = ({ profile, isEditing, control }) => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {/* Email — read-only, not managed by RHF */}
-          <AppInput
-            label={t("pages.settings.company_info.email_label")}
-            value={profile.email || ""}
-            disabled
-            sx={{ gridColumn: "1 / -1" }}
-          />
+          <label className="flex flex-col gap-1.5 sm:col-span-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-gray-700">
+              {t("pages.settings.company_info.email_label")}
+            </span>
+            <Input value={profile.email || ""} disabled />
+          </label>
 
           {/* Company Name */}
           <Controller
             name="name"
             control={control}
             render={({ field, fieldState }) => (
-              <AppInput
-                label={t("pages.settings.company_info.name_label")}
-                value={field.value}
-                onChange={(e) => field.onChange(e.target.value)}
-                disabled={!isEditing}
-                placeholder={t("pages.settings.company_info.name_placeholder")}
-                error={fieldState.error?.message || ""}
-                sx={{ gridColumn: "1 / -1" }}
-              />
+              <label className="flex flex-col gap-1.5 sm:col-span-2">
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-700">
+                  {t("pages.settings.company_info.name_label")}
+                </span>
+                <Input
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  disabled={!isEditing}
+                  placeholder={t("pages.settings.company_info.name_placeholder")}
+                  aria-invalid={!!fieldState.error}
+                />
+                {fieldState.error?.message && (
+                  <span className="text-[11px] text-red-500">{fieldState.error.message}</span>
+                )}
+              </label>
             )}
           />
 
@@ -142,16 +148,22 @@ const CompanyInfoTab: React.FC<Props> = ({ profile, isEditing, control }) => {
             name="linkedin"
             control={control}
             render={({ field, fieldState }) => (
-              <AppInput
-                label={t("pages.settings.contact.linkedin_label")}
-                value={field.value}
-                onChange={(e) => field.onChange(e.target.value)}
-                disabled={!isEditing}
-                placeholder="https://linkedin.com/company/yourcompany"
-                type="url"
-                error={fieldState.error?.message || ""}
-                sx={{ gridColumn: "1 / -1" }}
-              />
+              <label className="flex flex-col gap-1.5 sm:col-span-2">
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-700">
+                  {t("pages.settings.contact.linkedin_label")}
+                </span>
+                <Input
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  disabled={!isEditing}
+                  placeholder="https://linkedin.com/company/yourcompany"
+                  type="url"
+                  aria-invalid={!!fieldState.error}
+                />
+                {fieldState.error?.message && (
+                  <span className="text-[11px] text-red-500">{fieldState.error.message}</span>
+                )}
+              </label>
             )}
           />
 
@@ -159,16 +171,22 @@ const CompanyInfoTab: React.FC<Props> = ({ profile, isEditing, control }) => {
             name="website"
             control={control}
             render={({ field, fieldState }) => (
-              <AppInput
-                label={t("pages.settings.contact.website_label")}
-                value={field.value}
-                onChange={(e) => field.onChange(e.target.value)}
-                disabled={!isEditing}
-                placeholder="https://yourcompany.com"
-                type="url"
-                error={fieldState.error?.message || ""}
-                sx={{ gridColumn: "1 / -1" }}
-              />
+              <label className="flex flex-col gap-1.5 sm:col-span-2">
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-700">
+                  {t("pages.settings.contact.website_label")}
+                </span>
+                <Input
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  disabled={!isEditing}
+                  placeholder="https://yourcompany.com"
+                  type="url"
+                  aria-invalid={!!fieldState.error}
+                />
+                {fieldState.error?.message && (
+                  <span className="text-[11px] text-red-500">{fieldState.error.message}</span>
+                )}
+              </label>
             )}
           />
         </div>

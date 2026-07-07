@@ -6,6 +6,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { Button } from '@/modules/shared/ui/shadcn/button';
+import { Input } from '@/modules/shared/ui/shadcn/input';
 import { cn } from '@/lib/utils';
 import { ADMIN_TABLE_HEAD_CELL_SX, ADMIN_TABLE_ROW_SX, AdminTableErrorRow } from '@/modules/admin/shared';
 import { useCompanySubscriptionsQuery } from '../queries';
@@ -49,12 +50,12 @@ const CompanySubscriptionsTable: React.FC = () => {
         <div className="p-4 flex flex-wrap gap-3 items-center">
           <div className="flex-[1_1_240px] flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2">
             <SearchIcon style={{ fontSize: 18 }} className="text-slate-400 shrink-0" />
-            <input
+            <Input
               placeholder="Search by company name or email..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              className="w-full text-[13px] outline-none placeholder:text-slate-400"
+              className="h-auto border-0 bg-transparent p-0 shadow-none text-[13px] focus-visible:ring-0"
             />
           </div>
           <Button

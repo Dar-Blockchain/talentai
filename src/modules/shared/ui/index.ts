@@ -1,4 +1,3 @@
-export { default as AppInput } from "./AppInput";
 export { default as AppSelect } from "./AppSelect";
 export { default as AppAutocomplete } from "./AppAutocomplete";
 export { default as AppOtpVerifyStep } from "./AppOtpVerifyStep";
