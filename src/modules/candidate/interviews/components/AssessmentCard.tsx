@@ -3,12 +3,14 @@ import { Box, Typography, LinearProgress, Tooltip, Avatar } from "@mui/material"
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { useTranslation } from "react-i18next";
 import dayjs from "@/lib/dayjs";
-import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
-import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
-import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
-import HourglassEmptyOutlined from "@mui/icons-material/HourglassEmptyOutlined";
-import PlayArrowOutlined from "@mui/icons-material/PlayArrowOutlined";
-import OpenInNewOutlined from "@mui/icons-material/OpenInNew";
+import {
+  Building2 as BusinessOutlined,
+  Clock as AccessTimeOutlined,
+  CheckCircle2 as CheckCircleOutlined,
+  Hourglass as HourglassEmptyOutlined,
+  Play as PlayArrowOutlined,
+  ExternalLink as OpenInNewOutlined,
+} from "lucide-react";
 
 export interface PostAssessment {
   _id: string;
@@ -108,7 +110,7 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({ assessment, onViewDetai
           variant="rounded"
           sx={{ width: 48, height: 48, borderRadius: "12px", flexShrink: 0, bgcolor: completed ? "#ECFDF5" : "#FFFBEB", border: `1px solid ${completed ? "#A7F3D0" : "#FDE68A"}`, "& img": { objectFit: "contain", p: "4px" } }}
         >
-          <BusinessOutlined sx={{ fontSize: 22, color: statusColor }} />
+          <BusinessOutlined size={22} color={statusColor} />
         </Avatar>
 
         <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -118,8 +120,8 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({ assessment, onViewDetai
             </Typography>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.4, px: 1, py: 0.25, borderRadius: "20px", bgcolor: completed ? "#ECFDF5" : "#FFFBEB", border: `1px solid ${completed ? "#A7F3D0" : "#FDE68A"}`, flexShrink: 0 }}>
               {completed
-                ? <CheckCircleOutlined sx={{ fontSize: 11, color: "#059669" }} />
-                : <HourglassEmptyOutlined sx={{ fontSize: 11, color: "#D97706" }} />}
+                ? <CheckCircleOutlined size={11} color="#059669" />
+                : <HourglassEmptyOutlined size={11} color="#D97706" />}
               <Typography sx={{ fontSize: "0.62rem", fontWeight: 700, color: statusColor }}>
                 {completed ? s("completed") : s("ongoing")}
               </Typography>
@@ -129,12 +131,12 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({ assessment, onViewDetai
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}>
             {companyName && (
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
-                <BusinessOutlined sx={{ fontSize: 11, color: "#9CA3AF" }} />
+                <BusinessOutlined size={11} color="#9CA3AF" />
                 <Typography sx={{ fontSize: "0.7rem", color: "#6B7280", fontWeight: 500 }}>{companyName}</Typography>
               </Box>
             )}
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
-              <AccessTimeOutlined sx={{ fontSize: 11, color: "#9CA3AF" }} />
+              <AccessTimeOutlined size={11} color="#9CA3AF" />
               <Typography sx={{ fontSize: "0.7rem", color: "#9CA3AF" }}>{timeAgo}</Typography>
             </Box>
           </Box>
@@ -165,7 +167,7 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({ assessment, onViewDetai
                   className="whitespace-nowrap rounded-[10px] px-4 py-2 text-[0.78rem] font-bold shadow-none"
                   style={{ color: "#fff", backgroundColor: "#7C3AED" }}
                 >
-                  <PlayArrowOutlined sx={{ fontSize: "15px !important" }} />
+                  <PlayArrowOutlined size={15} />
                   {s("continue")}
                 </Button>
               </span>
@@ -182,7 +184,7 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({ assessment, onViewDetai
               }}
             >
               {s("view_report")}
-              <OpenInNewOutlined sx={{ fontSize: "13px !important" }} />
+              <OpenInNewOutlined size={13} />
             </Button>
           )}
         </Box>

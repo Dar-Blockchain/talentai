@@ -1,7 +1,7 @@
 ﻿import React, { useState } from "react";
 import { Box } from "@mui/material";
 import { Button } from "@/modules/shared/ui/shadcn/button";
-import WorkOutlineOutlined from "@mui/icons-material/WorkOutlineOutlined";
+import { Briefcase as WorkOutlineOutlined } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
@@ -10,8 +10,6 @@ import { useAiPostStepper } from "../hooks";
 import PostDetailsStep from "./PostDetailsStep";
 import InterviewLanguagesModal from "./InterviewLanguagesModal";
 import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
-
-import { TEAL } from "@/modules/company/posts/shared/constants";
 
 const CreatePostPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();

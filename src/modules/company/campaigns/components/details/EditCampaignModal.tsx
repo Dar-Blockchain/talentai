@@ -9,6 +9,7 @@ import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Input } from "@/modules/shared/ui/shadcn/input";
 import { Textarea } from "@/modules/shared/ui/shadcn/textarea";
 import { Label } from "@/modules/shared/ui/shadcn/label";
+import { DatePicker } from "@/modules/shared/ui/DatePicker";
 import { cn } from "@/lib/utils";
 import { Campaign, ModuleType } from "@/modules/company/campaigns/types/campaign";
 import { MODULE_CONFIG }     from "@/modules/shared/constants/campaign";
@@ -125,11 +126,11 @@ const EditCampaignModal = memo<Props>(({ open, campaign, onClose, onSaved }) => 
 
             <div className="flex flex-col gap-1.5">
               <Label className="text-xs font-bold text-foreground/80">{t(`${m}.deadline_label`)}</Label>
-              <Input
-                type="date"
+              <DatePicker
                 value={deadline}
-                onChange={(e) => setDeadline(e.target.value)}
-                min={new Date().toISOString().slice(0, 10)}
+                onChange={setDeadline}
+                minDate={new Date()}
+                clearable
                 className="w-fit"
               />
             </div>

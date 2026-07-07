@@ -6,14 +6,16 @@ import {
   LinearProgress, Chip, CircularProgress, Alert, IconButton,
 } from '@mui/material';
 import { Button } from '@/modules/shared/ui/shadcn/button';
-import CheckCircleRounded    from '@mui/icons-material/CheckCircleRounded';
-import ArrowForwardRounded   from '@mui/icons-material/ArrowForwardRounded';
-import ArrowBackRounded      from '@mui/icons-material/ArrowBackRounded';
-import AssignmentOutlined    from '@mui/icons-material/AssignmentOutlined';
-import SendRounded           from '@mui/icons-material/SendRounded';
-import StarRounded           from '@mui/icons-material/StarRounded';
-import StarBorderRounded     from '@mui/icons-material/StarBorderRounded';
-import SaveOutlined          from '@mui/icons-material/SaveOutlined';
+import {
+  CheckCircle2 as CheckCircleRounded,
+  ArrowRight as ArrowForwardRounded,
+  ArrowLeft as ArrowBackRounded,
+  ClipboardList as AssignmentOutlined,
+  Send as SendRounded,
+  Star as StarRounded,
+  Star as StarBorderRounded,
+  Save as SaveOutlined,
+} from 'lucide-react';
 import { Question, QuestionType } from '@/modules/company/campaigns/types/campaign';
 import axiosInstance from '@/utils/axiosInstance';
 import { QuestionnaireResultsPanel } from './QuestionnaireResultsPanel';
@@ -50,8 +52,8 @@ const StarRating: React.FC<{ value: number; onChange: (v: number) => void }> = (
           sx={{ cursor: 'pointer', color: star <= (hovered || value) ? '#F59E0B' : '#D1D5DB', transition: 'color 0.15s', lineHeight: 0 }}
         >
           {star <= (hovered || value)
-            ? <StarRounded sx={{ fontSize: 36 }} />
-            : <StarBorderRounded sx={{ fontSize: 36 }} />
+            ? <StarRounded size={36} fill="currentColor" />
+            : <StarBorderRounded size={36} />
           }
         </Box>
       ))}
@@ -150,7 +152,7 @@ const QuestionCard: React.FC<{
                 {opt}
               </Typography>
               {answer === opt && (
-                <CheckCircleRounded sx={{ fontSize: 18, color: '#8B5CF6', ml: 1 }} />
+                <CheckCircleRounded size={18} color='#8B5CF6' className="ml-2" />
               )}
             </Box>
           ))}
@@ -189,7 +191,7 @@ const QuestionCard: React.FC<{
                     {opt}
                   </Typography>
                   {checked && (
-                    <CheckCircleRounded sx={{ fontSize: 18, color: '#8B5CF6', ml: 1 }} />
+                    <CheckCircleRounded size={18} color='#8B5CF6' className="ml-2" />
                   )}
                 </Box>
               );
@@ -222,7 +224,7 @@ const CompletedScreen: React.FC<{
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       boxShadow: '0 8px 32px rgba(16,185,129,0.35)',
     }}>
-      <CheckCircleRounded sx={{ fontSize: 44, color: '#fff' }} />
+      <CheckCircleRounded size={44} color='#fff' />
     </Box>
     <Box>
       <Typography sx={{ fontSize: 24, fontWeight: 800, color: '#111827', letterSpacing: '-0.02em', mb: 0.5 }}>
@@ -368,7 +370,7 @@ const QuestionnaireForm: React.FC<Props> = ({ campaignId, campaignTitle, partici
 
   if (total === 0) return (
     <Box sx={{ textAlign: 'center', py: 8 }}>
-      <AssignmentOutlined sx={{ fontSize: 48, color: '#E5E7EB', mb: 2 }} />
+      <AssignmentOutlined size={48} color='#E5E7EB' className="mb-4" />
       <Typography sx={{ fontSize: 15, color: '#6B7280' }}>No questions configured for this questionnaire.</Typography>
     </Box>
   );
@@ -390,14 +392,14 @@ const QuestionnaireForm: React.FC<Props> = ({ campaignId, campaignTitle, partici
             '&:hover': { color: '#0F172A', bgcolor: 'rgba(0,0,0,0.04)' },
           }}
         >
-          <ArrowBackRounded sx={{ fontSize: 18 }} />
+          <ArrowBackRounded size={18} />
         </IconButton>
         <Box sx={{
           p: 1, borderRadius: 2,
           background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
           display: 'flex', alignItems: 'center',
         }}>
-          <AssignmentOutlined sx={{ fontSize: 18, color: '#fff' }} />
+          <AssignmentOutlined size={18} color='#fff' />
         </Box>
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography noWrap sx={{ fontSize: 14, fontWeight: 700, color: '#111827', lineHeight: 1.2 }}>
@@ -418,7 +420,7 @@ const QuestionnaireForm: React.FC<Props> = ({ campaignId, campaignTitle, partici
           )}
           {saveStatus === 'saved' && (
             <>
-              <SaveOutlined sx={{ fontSize: 13, color: '#10B981' }} />
+              <SaveOutlined size={13} color='#10B981' />
               <Typography sx={{ fontSize: 11, color: '#10B981', fontWeight: 600 }}>Saved</Typography>
             </>
           )}
@@ -454,7 +456,7 @@ const QuestionnaireForm: React.FC<Props> = ({ campaignId, campaignTitle, partici
         {resumed && (
           <Alert
             severity="info"
-            icon={<SaveOutlined sx={{ fontSize: 16 }} />}
+            icon={<SaveOutlined size={16} />}
             onClose={() => setResumed(false)}
             sx={{ mb: 2, borderRadius: 2, fontSize: 13, '& .MuiAlert-message': { fontWeight: 500 } }}
           >
@@ -518,7 +520,7 @@ const QuestionnaireForm: React.FC<Props> = ({ campaignId, campaignTitle, partici
             style={{ background: 'linear-gradient(135deg, #10B981, #059669)' }}
           >
             {submitting ? 'Submitting…' : 'Submit'}
-            {!submitting && <SendRounded sx={{ fontSize: 16 }} />}
+            {!submitting && <SendRounded size={16} />}
           </Button>
         ) : (
           <Button

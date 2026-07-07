@@ -1,11 +1,11 @@
 import { Box, Typography } from "@mui/material";
-import InfoOutlined from "@mui/icons-material/InfoOutlined";
+import { Info as InfoOutlined } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import { HardSkill, SoftSkill, deleteHardSkill, deleteSoftSkill } from "../../store/createPostSlice";
 import { hardSkillLevelLabel, softSkillLevelLabel } from "../../utils";
-import SectionCard from "@/components/ui/SectionCard";
+import { Card } from "@/modules/shared/ui/shadcn/card";
 import SkillChip from "./SkillChip";
 import AddSkillButton from "./AddSkillButton";
 
@@ -27,11 +27,11 @@ const SkillsSection = ({ hardSkills, softSkills, onEdit, onAdd }: Props) => {
   const { t } = useTranslation("posts");
 
   return (
-    <SectionCard>
+    <Card className="p-6 gap-0">
       <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827", mb: 1.5 }}>{t("create.preview.section_skills")}</Typography>
 
       <Box sx={{ display: "flex", gap: 1, p: 1.5, borderRadius: 2, bgcolor: "#EFF6FF", border: "1px solid #BFDBFE", mb: 2 }}>
-        <InfoOutlined sx={{ fontSize: 16, color: "#3B82F6", flexShrink: 0, mt: "1px" }} />
+        <InfoOutlined size={16} color="#3B82F6" className="shrink-0 mt-px" />
         <Typography sx={{ fontSize: "12px", color: "#1E40AF", lineHeight: 1.5 }}>
           <Trans i18nKey="create.preview.skills_info" ns="posts" components={{ bold: <b /> }} />
         </Typography>
@@ -66,7 +66,7 @@ const SkillsSection = ({ hardSkills, softSkills, onEdit, onAdd }: Props) => {
           <AddSkillButton skillType="soft" onClick={() => onAdd("soft")} />
         </Box>
       </Box>
-    </SectionCard>
+    </Card>
   );
 };
 

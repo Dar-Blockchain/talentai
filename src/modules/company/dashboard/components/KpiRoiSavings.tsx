@@ -2,7 +2,7 @@
 import React, { memo, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
-import SavingsOutlined from "@mui/icons-material/SavingsOutlined";
+import { PiggyBank as SavingsOutlined } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 import { ZoneHeading, KpiCard, MetricRow } from "./KpiAtoms";
 import { ChartTooltip, GRAY, T } from "../utils/kpiTokens";

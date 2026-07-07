@@ -3,8 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 import { Box } from "@mui/material";
-import PersonSearchOutlined from "@mui/icons-material/PersonSearchOutlined";
-import ForumOutlined from "@mui/icons-material/ForumOutlined";
+import { UserSearch as PersonSearchOutlined, MessagesSquare as ForumOutlined } from "lucide-react";
 import { RootState } from "@/store/store";
 import CompanyHubChatFrame from "@/modules/chat/shared/components/CompanyHubChatFrame";
 import CompanyHubMintChatShell from "@/modules/chat/shared/components/CompanyHubMintChatShell";
@@ -28,7 +27,7 @@ const companyTitleIcon = (
       boxShadow: "0 4px 20px rgba(15, 23, 42, 0.05)",
     }}
   >
-    <PersonSearchOutlined sx={{ fontSize: 20 }} />
+    <PersonSearchOutlined size={20} />
   </Box>
 );
 
@@ -48,7 +47,7 @@ const candidateTitleIcon = (
       boxShadow: "0 4px 20px rgba(15, 23, 42, 0.05)",
     }}
   >
-    <ForumOutlined sx={{ fontSize: 20 }} />
+    <ForumOutlined size={20} />
   </Box>
 );
 

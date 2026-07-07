@@ -2,16 +2,16 @@ import React, { useState } from "react";
 import { Dialog, DialogTitle, DialogContent, Chip, CircularProgress } from "@mui/material";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import {
-  Close as CloseIcon,
-  CheckCircle as DoneIcon,
-  HourglassEmpty as PendingIcon,
-  Person as PersonIcon,
-  BarChart as ScoreIcon,
+  X as CloseIcon,
+  CheckCircle2 as DoneIcon,
+  Hourglass as PendingIcon,
+  User as PersonIcon,
+  BarChart3 as ScoreIcon,
   Lightbulb as InsightIcon,
   TrendingUp as ReadinessIcon,
-  Warning as BlockerIcon,
+  AlertTriangle as BlockerIcon,
   Star as StrengthIcon,
-} from "@mui/icons-material";
+} from "lucide-react";
 import { useWebinarSubmissionsQuery } from "../queries";
 import type { WebinarSubmission, Webinar } from "../types";
 import { ADMIN_ACCENT } from "@/modules/admin/shared";
@@ -85,7 +85,7 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-full bg-teal-100 flex items-center justify-center shrink-0">
-              <PersonIcon sx={{ fontSize: 14, color: ADMIN_ACCENT }} />
+              <PersonIcon size={14} color={ADMIN_ACCENT} />
             </div>
             <div className="min-w-0">
               <p className="text-[13px] font-semibold text-slate-800 truncate">{nom}</p>
@@ -128,8 +128,8 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
         <div className="flex items-center gap-1.5 justify-end">
           <TierBadge tier={sub.scoring?.tier} />
           {sub.completed
-            ? <DoneIcon sx={{ fontSize: 15, color: "#10B981" }} />
-            : <PendingIcon sx={{ fontSize: 15, color: "#94A3B8" }} />}
+            ? <DoneIcon size={15} color="#10B981" />
+            : <PendingIcon size={15} color="#94A3B8" />}
         </div>
       </div>
 
@@ -149,7 +149,7 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
               : <Chip label="In progress" size="small" sx={{ height: 18, fontSize: 10, bgcolor: "#F1F5F9", color: "#64748B" }} />}
           </span>
           <Button variant="ghost" onClick={() => setOpen(false)} className="p-1 h-auto rounded-lg hover:bg-slate-100 text-slate-400">
-            <CloseIcon sx={{ fontSize: 18 }} />
+            <CloseIcon size={18} />
           </Button>
         </DialogTitle>
 
@@ -200,7 +200,7 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
 
               {sub.scoring?.key_insight && (
                 <div className="flex gap-2.5">
-                  <InsightIcon sx={{ fontSize: 16, color: ADMIN_ACCENT, mt: "2px", shrink: 0 }} />
+                  <InsightIcon size={16} color={ADMIN_ACCENT} className="mt-0.5 shrink-0" />
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Insight clé</p>
                     <p className="text-[13px] text-slate-700 leading-relaxed">{sub.scoring.key_insight}</p>
@@ -210,7 +210,7 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
 
               {sub.scoring?.main_pain && (
                 <div className="flex gap-2.5">
-                  <BlockerIcon sx={{ fontSize: 16, color: "#EF4444", mt: "2px", shrink: 0 }} />
+                  <BlockerIcon size={16} color="#EF4444" className="mt-0.5 shrink-0" />
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Douleur principale</p>
                     <p className="text-[13px] text-slate-700 leading-relaxed">{sub.scoring.main_pain}</p>
@@ -220,7 +220,7 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
 
               {sub.scoring?.recommended_action && (
                 <div className="flex gap-2.5">
-                  <ReadinessIcon sx={{ fontSize: 16, color: "#0D9488", mt: "2px", shrink: 0 }} />
+                  <ReadinessIcon size={16} color="#0D9488" className="mt-0.5 shrink-0" />
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Action recommandée</p>
                     <p className="text-[13px] text-slate-700 leading-relaxed font-medium">{sub.scoring.recommended_action}</p>
@@ -237,7 +237,7 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
                 {(sub.scoring?.strengths?.length ?? 0) > 0 && (
                   <div>
                     <div className="flex items-center gap-1.5 mb-2">
-                      <StrengthIcon sx={{ fontSize: 13, color: "#10B981" }} />
+                      <StrengthIcon size={13} color="#10B981" />
                       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Points forts</p>
                     </div>
                     <ul className="space-y-1.5">
@@ -253,7 +253,7 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
                 {(sub.scoring?.blockers?.length ?? 0) > 0 && (
                   <div>
                     <div className="flex items-center gap-1.5 mb-2">
-                      <BlockerIcon sx={{ fontSize: 13, color: "#F59E0B" }} />
+                      <BlockerIcon size={13} color="#F59E0B" />
                       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Freins</p>
                     </div>
                     <ul className="space-y-1.5">
@@ -336,7 +336,7 @@ const WebinarSubmissionsDialog: React.FC<Props> = ({ webinar, open, onClose }) =
           </span>
         </div>
         <Button variant="ghost" onClick={onClose} className="p-1 h-auto rounded-lg hover:bg-slate-100 text-slate-400">
-          <CloseIcon sx={{ fontSize: 18 }} />
+          <CloseIcon size={18} />
         </Button>
       </DialogTitle>
 
@@ -360,7 +360,7 @@ const WebinarSubmissionsDialog: React.FC<Props> = ({ webinar, open, onClose }) =
         <span className="text-[11px] font-bold uppercase tracking-[1.2px] text-slate-400">Maîtrise</span>
         <span className="text-[11px] font-bold uppercase tracking-[1.2px] text-slate-400">Pain</span>
         <span className="text-[11px] font-bold uppercase tracking-[1.2px] text-slate-400 text-right">
-          <ScoreIcon sx={{ fontSize: 13 }} />
+          <ScoreIcon size={13} />
         </span>
       </div>
 
@@ -371,7 +371,7 @@ const WebinarSubmissionsDialog: React.FC<Props> = ({ webinar, open, onClose }) =
           </div>
         ) : submissions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-slate-400">
-            <PersonIcon sx={{ fontSize: 40, mb: 1, opacity: 0.3 }} />
+            <PersonIcon size={40} className="mb-2 opacity-30" />
             <p className="text-[14px]">No registrants yet</p>
           </div>
         ) : (

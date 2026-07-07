@@ -1,5 +1,5 @@
 import { Box, Typography } from "@mui/material";
-import CheckIcon from "@mui/icons-material/Check";
+import { Check as CheckIcon } from "lucide-react";
 
 interface CurrencyOption {
   value: string;
@@ -79,7 +79,7 @@ const CurrencyList = ({ options, selected, onSelect }: Props) => (
             >
               {currencyName(c.label)}
             </Typography>
-            {isSelected && <CheckIcon sx={{ fontSize: 14, color: "#0891B2", flexShrink: 0 }} />}
+            {isSelected && <CheckIcon size={14} color="#0891B2" className="shrink-0" />}
           </Box>
         );
       })

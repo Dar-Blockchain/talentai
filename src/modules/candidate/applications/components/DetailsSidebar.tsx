@@ -1,9 +1,6 @@
 import React from "react";
 import { Box, Typography, Divider } from "@mui/material";
-import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
-import WorkOutlineOutlined from "@mui/icons-material/WorkOutline";
-import BusinessCenterOutlined from "@mui/icons-material/BusinessCenterOutlined";
-import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
+import { MapPin as LocationOnOutlined, Briefcase as WorkOutlineOutlined, Building2 as BusinessCenterOutlined, Calendar as CalendarTodayOutlined } from "lucide-react";
 import { fmtDate } from "../utils/constants";
 
 interface DetailsSidebarProps {
@@ -23,25 +20,25 @@ const DetailsSidebar: React.FC<DetailsSidebarProps> = ({ title, location, employ
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
       {location && (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <LocationOnOutlined sx={{ fontSize: 14, color: "#9CA3AF", flexShrink: 0 }} />
+          <LocationOnOutlined size={14} color="#9CA3AF" className="shrink-0" />
           <Typography sx={{ fontSize: "0.78rem", color: "#374151" }}>{location}</Typography>
         </Box>
       )}
       {employmentType && (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <WorkOutlineOutlined sx={{ fontSize: 14, color: "#9CA3AF", flexShrink: 0 }} />
+          <WorkOutlineOutlined size={14} color="#9CA3AF" className="shrink-0" />
           <Typography sx={{ fontSize: "0.78rem", color: "#374151" }}>{employmentType}</Typography>
         </Box>
       )}
       {workMode && (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <BusinessCenterOutlined sx={{ fontSize: 14, color: "#9CA3AF", flexShrink: 0 }} />
+          <BusinessCenterOutlined size={14} color="#9CA3AF" className="shrink-0" />
           <Typography sx={{ fontSize: "0.78rem", color: "#374151" }}>{workMode}</Typography>
         </Box>
       )}
       <Divider />
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <CalendarTodayOutlined sx={{ fontSize: 14, color: "#9CA3AF", flexShrink: 0 }} />
+        <CalendarTodayOutlined size={14} color="#9CA3AF" className="shrink-0" />
         <Typography sx={{ fontSize: "0.75rem", color: "#6B7280" }}>{appliedOnLabel(fmtDate(appliedAt))}</Typography>
       </Box>
     </Box>

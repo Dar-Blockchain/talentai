@@ -1,8 +1,6 @@
 import React from "react";
 import { Box, Typography, LinearProgress } from "@mui/material";
-import TrendingUpOutlined from "@mui/icons-material/TrendingUpOutlined";
-import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
-import RadioButtonUncheckedOutlined from "@mui/icons-material/RadioButtonUncheckedOutlined";
+import { TrendingUp as TrendingUpOutlined, CheckCircle2 as CheckCircleOutlined, Circle as RadioButtonUncheckedOutlined } from "lucide-react";
 import { NAVY } from "../utils/constants";
 
 interface ChecklistItem {
@@ -18,7 +16,7 @@ interface ProfileStrengthCardProps {
 const ProfileStrengthCard: React.FC<ProfileStrengthCardProps> = ({ title, checklist }) => (
   <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 2, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
-      <TrendingUpOutlined sx={{ fontSize: 16, color: "#7C3AED" }} />
+      <TrendingUpOutlined size={16} color="#7C3AED" />
       <Typography sx={{ fontWeight: 700, fontSize: "0.82rem", color: NAVY }}>{title}</Typography>
     </Box>
     <LinearProgress variant="determinate"
@@ -28,8 +26,8 @@ const ProfileStrengthCard: React.FC<ProfileStrengthCardProps> = ({ title, checkl
       {checklist.map((item, i) => (
         <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           {item.done
-            ? <CheckCircleOutlined sx={{ fontSize: 14, color: "#059669" }} />
-            : <RadioButtonUncheckedOutlined sx={{ fontSize: 14, color: "#D1D5DB" }} />}
+            ? <CheckCircleOutlined size={14} color="#059669" />
+            : <RadioButtonUncheckedOutlined size={14} color="#D1D5DB" />}
           <Typography sx={{ fontSize: "0.72rem", color: item.done ? "#374151" : "#9CA3AF", fontWeight: item.done ? 500 : 400 }}>
             {item.label}
           </Typography>

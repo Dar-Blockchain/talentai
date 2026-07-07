@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Popup, Tooltip, useMap } from 'react-leaflet';
-import { LocationOn as LocationIcon, ZoomIn, ZoomOut } from '@mui/icons-material';
+import { MapPin as LocationIcon, ZoomIn, ZoomOut } from 'lucide-react';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { Button } from '@/modules/shared/ui/shadcn/button';
 import { ADMIN_NEUTRAL, ADMIN_NEUTRAL_BG } from '@/modules/admin/shared';
@@ -374,7 +374,7 @@ const WorldMapComponent: React.FC<WorldMapComponentProps> = ({
             className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
             style={{ background: ADMIN_NEUTRAL_BG }}
           >
-            <LocationIcon style={{ fontSize: 18, color: ADMIN_NEUTRAL }} />
+            <LocationIcon size={18} color={ADMIN_NEUTRAL} />
           </span>
           Global User Distribution
         </h2>
@@ -446,13 +446,13 @@ const WorldMapComponent: React.FC<WorldMapComponentProps> = ({
               onClick={handleZoomIn}
               className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
             >
-              <ZoomIn fontSize="small" />
+              <ZoomIn size={18} />
             </button>
             <button
               onClick={handleZoomOut}
               className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
             >
-              <ZoomOut fontSize="small" />
+              <ZoomOut size={18} />
             </button>
           </div>
 

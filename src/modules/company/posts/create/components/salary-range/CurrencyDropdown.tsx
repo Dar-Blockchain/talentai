@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Box, Typography } from "@mui/material";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import { ChevronDown as KeyboardArrowDownIcon } from "lucide-react";
 import CurrencySearchInput from "./CurrencySearchInput";
 import CurrencyList from "./CurrencyList";
 
@@ -154,14 +154,10 @@ const CurrencyDropdown: React.FC<Props> = ({ currencies, value, onChange, placeh
             <Typography sx={{ fontSize: "12px", color: "#9CA3AF", flex: 1 }}>{placeholder}</Typography>
           )}
           <KeyboardArrowDownIcon
-            sx={{
-              fontSize: 18,
-              color: "#9CA3AF",
-              flexShrink: 0,
-              ml: 0.5,
-              transform: open ? "rotate(180deg)" : "rotate(0deg)",
-              transition: "transform 0.2s",
-            }}
+            size={18}
+            color="#9CA3AF"
+            className="ml-1 shrink-0 transition-transform duration-200"
+            style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
           />
         </Box>
         {error && (

@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, TextField, Typography } from "@mui/material";
-import AttachMoneyOutlined from "@mui/icons-material/AttachMoneyOutlined";
+import { DollarSign as AttachMoneyOutlined } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { defaultCurrencies } from "@/modules/company/posts/shared/constants";
 import { CurrencyDropdown } from "../SalaryRange";

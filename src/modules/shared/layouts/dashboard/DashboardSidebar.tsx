@@ -12,7 +12,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import CloseOutlined from "@mui/icons-material/CloseOutlined";
+import { X, LogOut, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
@@ -20,10 +20,7 @@ import { usePermissionsQuery } from "@/modules/company/employees/queries";
 import { useLogout } from "@/modules/auth/shared/hooks";
 import { navigation, employeeNavGroups, EmployeeNavItem } from "./navigation";
 import { selectCombinedDetails, fetchCombinedSubscriptionDetails } from "@/store/slices/paymentSlice";
-import { LogoutOutlined } from "@mui/icons-material";
 import { useRouter } from "next/router";
-import ChevronLeftOutlined from "@mui/icons-material/ChevronLeftOutlined";
-import ChevronRightOutlined from "@mui/icons-material/ChevronRightOutlined";
 import { useTranslation } from "react-i18next";
 import { useChatUnreadBadges } from "@/modules/chat/shared/hooks/useChatUnreadBadges";
 import ChatUnreadBadge from "@/modules/chat/shared/components/ChatUnreadBadge";
@@ -208,7 +205,7 @@ useEffect(() => {
             borderRadius: "8px", flexShrink: 0,
             color: isActive ? ACTIVE_ICO : ICO_CLR, transition: "color 0.12s",
           }}>
-            <item.icon sx={{ fontSize: 20 }} />
+            <item.icon size={20} />
           </Box>
           {!isCollapsed && (
             <Typography sx={{ fontSize: "14px", fontWeight: isActive ? 700 : 600, color: "inherit", lineHeight: 1, flex: 1 }}>
@@ -280,7 +277,7 @@ useEffect(() => {
                   transition: "all 0.15s",
                 }}
               >
-                <ChevronLeftOutlined sx={{ fontSize: 14 }} />
+                <ChevronLeft size={14} />
               </IconButton>
             </Tooltip>
           )}
@@ -308,7 +305,7 @@ useEffect(() => {
                   transition: "all 0.15s",
                 }}
               >
-                <ChevronRightOutlined sx={{ fontSize: 16 }} />
+                <ChevronRight size={16} />
               </IconButton>
             </Tooltip>
           )}
@@ -319,7 +316,7 @@ useEffect(() => {
               size="small"
               sx={{ color: ICO_CLR }}
             >
-              <CloseOutlined sx={{ fontSize: 17 }} />
+              <X size={17} />
             </IconButton>
           )}
         </Box>
@@ -527,7 +524,7 @@ useEffect(() => {
                     transition: "all 0.15s",
                   }}
                 >
-                  <LogoutOutlined sx={{ fontSize: 18 }} />
+                  <LogOut size={18} />
                 </IconButton>
               </Tooltip>
             )}

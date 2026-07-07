@@ -1,8 +1,8 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Box, Chip } from "@mui/material";
-import CodeOutlined from "@mui/icons-material/CodeOutlined";
-import SectionCard from "@/components/ui/SectionCard";
+import { Code2 as CodeOutlined } from "lucide-react";
+import { Card } from "@/modules/shared/ui/shadcn/card";
 import { getLevelFromNumber, getSoftSkillLevelLabel, Skill } from '@/modules/company/posts/utils/postHelpers';
 import SectionTitle from "./SectionTitle";
 
@@ -19,8 +19,8 @@ const SkillsCard: React.FC<Props> = ({ skills }) => {
   if (!skills.length) return null;
 
   return (
-    <SectionCard>
-      <SectionTitle icon={<CodeOutlined sx={{ fontSize: 15 }} />} title={t("detail.details.skills")} />
+    <Card className="p-6 gap-0">
+      <SectionTitle icon={<CodeOutlined size={15} />} title={t("detail.details.skills")} />
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
         {skills.map((skill, i) => {
           const level = skill.type === "soft"
@@ -32,7 +32,7 @@ const SkillsCard: React.FC<Props> = ({ skills }) => {
           );
         })}
       </Box>
-    </SectionCard>
+    </Card>
   );
 };
 

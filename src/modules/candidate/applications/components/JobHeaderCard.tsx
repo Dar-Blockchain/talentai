@@ -1,9 +1,6 @@
 import React from "react";
 import { Box, Typography, Chip, Divider } from "@mui/material";
-import WorkOutlineOutlined from "@mui/icons-material/WorkOutline";
-import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
-import BusinessCenterOutlined from "@mui/icons-material/BusinessCenterOutlined";
-import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
+import { Briefcase as WorkOutlineOutlined, MapPin as LocationOnOutlined, Building2 as BusinessCenterOutlined, Calendar as CalendarTodayOutlined } from "lucide-react";
 import { T, TL, TBG, TBRD, NAVY, fmtDate } from "../utils/constants";
 
 interface JobHeaderCardProps {
@@ -24,7 +21,7 @@ const JobHeaderCard: React.FC<JobHeaderCardProps> = ({ title, location, employme
     <Box sx={{ p: 2.5 }}>
       <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2, flexWrap: "wrap" }}>
         <Box sx={{ width: 52, height: 52, borderRadius: "12px", bgcolor: TBG, border: `1px solid ${TBRD}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <WorkOutlineOutlined sx={{ fontSize: 24, color: T }} />
+          <WorkOutlineOutlined size={24} color={T} />
         </Box>
         <Box sx={{ flex: 1, minWidth: 200 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap", mb: 0.5 }}>
@@ -34,14 +31,14 @@ const JobHeaderCard: React.FC<JobHeaderCardProps> = ({ title, location, employme
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mt: 0.5 }}>
             {location && (
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
-                <LocationOnOutlined sx={{ fontSize: 13, color: "#9CA3AF" }} />
+                <LocationOnOutlined size={13} color="#9CA3AF" />
                 <Typography sx={{ fontSize: "0.78rem", color: "#6B7280" }}>{location}</Typography>
               </Box>
             )}
             {employmentType && <Chip label={employmentType} size="small" sx={{ height: 20, fontSize: "0.67rem", bgcolor: "#F3F4F6", color: "#374151" }} />}
             {workMode && <Chip label={workMode} size="small" sx={{ height: 20, fontSize: "0.67rem", bgcolor: "#F3F4F6", color: "#374151" }} />}
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.4, ml: "auto" }}>
-              <CalendarTodayOutlined sx={{ fontSize: 12, color: "#9CA3AF" }} />
+              <CalendarTodayOutlined size={12} color="#9CA3AF" />
               <Typography sx={{ fontSize: "0.72rem", color: "#9CA3AF" }}>{appliedOnLabel(fmtDate(appliedAt))}</Typography>
             </Box>
           </Box>
@@ -52,7 +49,7 @@ const JobHeaderCard: React.FC<JobHeaderCardProps> = ({ title, location, employme
         <>
           <Divider sx={{ my: 2 }} />
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <BusinessCenterOutlined sx={{ fontSize: 15, color: "#9CA3AF" }} />
+            <BusinessCenterOutlined size={15} color="#9CA3AF" />
             <Typography sx={{ fontSize: "0.82rem", color: "#374151", fontWeight: 600 }}>
               {salary.min && salary.max ? `${salary.min} – ${salary.max}` : salary.min || salary.max} {salary.currency || ""}
             </Typography>

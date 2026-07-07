@@ -5,11 +5,7 @@ import {
   Alert, Select, MenuItem, FormControl,
 } from "@mui/material";
 import { Button } from "@/modules/shared/ui/shadcn/button";
-import CloseIcon from "@mui/icons-material/Close";
-import EditOutlined from "@mui/icons-material/EditOutlined";
-import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { ChevronDown, Search, X, Check } from "lucide-react";
+import { X as CloseIcon, Pencil as EditOutlined, Building2 as BusinessOutlined, CheckCircle as CheckCircleIcon, ChevronDown, Search, X, Check } from "lucide-react";
 import { useDepartmentsQuery } from "@/modules/company/employees/queries";
 import { useTranslation } from "react-i18next";
 import { ROLES } from "@/modules/shared/constants/employee";
@@ -122,7 +118,7 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 3, py: 2.5, borderBottom: "1px solid #f3f4f6" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
             <Box sx={HEADER_ICON_SX}>
-              <EditOutlined sx={{ fontSize: 20 }} />
+              <EditOutlined size={20} />
             </Box>
             <Box>
               <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "#111827", lineHeight: 1.2 }}>
@@ -135,7 +131,7 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
             </Box>
           </Box>
           <IconButton onClick={handleClose} disabled={loading} size="small" sx={CLOSE_BTN_SX}>
-            <CloseIcon fontSize="small" />
+            <CloseIcon size={18} />
           </IconButton>
         </Box>
       </DialogTitle>
@@ -270,7 +266,7 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
                 onChange={handleDeptChange}
                 disabled={loading || departmentsLoading}
                 displayEmpty
-                startAdornment={<BusinessOutlined sx={{ fontSize: 18, color: "#9CA3AF", mr: 1 }} />}
+                startAdornment={<BusinessOutlined size={18} color="#9CA3AF" className="mr-2" />}
                 sx={SELECT_SX}
               >
                 <MenuItem value="">

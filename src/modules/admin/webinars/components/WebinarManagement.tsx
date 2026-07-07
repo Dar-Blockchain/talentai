@@ -1,22 +1,23 @@
 import React, { useState, useRef } from "react";
 import * as XLSX from "xlsx";
-import { CircularProgress, Snackbar, Alert, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Menu, MenuItem, ListItemIcon, ListItemText, Divider } from "@mui/material";
+import { toast } from "sonner";
+import { CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Menu, MenuItem, ListItemIcon, ListItemText, Divider } from "@mui/material";
 import {
-  Add as AddIcon,
-  VideoLibrary as WebinarIcon,
-  CheckCircle as VerifyIcon,
-  Refresh as RefreshIcon,
-  Delete as DeleteIcon,
+  Plus as AddIcon,
+  Video as WebinarIcon,
+  CheckCircle2 as VerifyIcon,
+  RefreshCw as RefreshIcon,
+  Trash2 as DeleteIcon,
   Archive as ArchiveIcon,
-  QuestionAnswer as QIcon,
-  OpenInNew as OpenIcon,
-  Close as CloseIcon,
+  MessageSquare as QIcon,
+  ExternalLink as OpenIcon,
+  X as CloseIcon,
   Send as SendIcon,
-  PeopleAlt as PeopleIcon,
+  Users as PeopleIcon,
   Download as DownloadIcon,
-  MoreVert as MoreIcon,
-  Edit as EditIcon,
-} from "@mui/icons-material";
+  MoreVertical as MoreIcon,
+  Pencil as EditIcon,
+} from "lucide-react";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import WebinarSubmissionsDialog from "./WebinarSubmissionsDialog";
 import { adminWebinarApi } from "../api";
@@ -87,7 +88,7 @@ function QuestionEditor({ q, idx, onChange, onDelete, onMoveUp, onMoveDown, isFi
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
           </Button>
           <Button variant="ghost" onClick={onDelete} className="p-1 h-auto rounded hover:bg-red-100 text-slate-300 hover:text-red-500 ml-1">
-            <CloseIcon sx={{ fontSize: 14 }} />
+            <CloseIcon size={14} />
           </Button>
         </div>
       </div>
@@ -129,7 +130,7 @@ function QuestionEditor({ q, idx, onChange, onDelete, onMoveUp, onMoveDown, isFi
             <div className="flex items-center justify-between mb-1.5">
               <p className="text-[10px] font-semibold text-slate-400">Options</p>
               <Button variant="ghost" onClick={addOption} className="p-0 h-auto text-[10px] font-bold text-teal-600 hover:text-teal-700 hover:bg-transparent">
-                <AddIcon sx={{ fontSize: 12 }} /> Add option
+                <AddIcon size={12} /> Add option
               </Button>
             </div>
             <div className="space-y-1.5">
@@ -138,7 +139,7 @@ function QuestionEditor({ q, idx, onChange, onDelete, onMoveUp, onMoveDown, isFi
                   <input className={inp + " flex-1"} value={opt.label_fr} onChange={e => setOpt(i, "label_fr", e.target.value)} placeholder={`Option ${i + 1} (FR)`} />
                   <input className={inp + " flex-1"} value={opt.label_en} onChange={e => setOpt(i, "label_en", e.target.value)} placeholder={`Option ${i + 1} (EN)`} />
                   <Button variant="ghost" onClick={() => delOpt(i)} className="p-1 h-auto rounded hover:bg-red-50 text-slate-300 hover:text-red-400 shrink-0">
-                    <CloseIcon sx={{ fontSize: 13 }} />
+                    <CloseIcon size={13} />
                   </Button>
                 </div>
               ))}
@@ -223,7 +224,7 @@ function WebinarFormDialog({
             </h2>
           </div>
           <Button variant="ghost" onClick={onClose} className="p-1.5 h-auto rounded-lg hover:bg-slate-100 text-slate-400">
-            <CloseIcon sx={{ fontSize: 18 }} />
+            <CloseIcon size={18} />
           </Button>
         </div>
 
@@ -361,7 +362,7 @@ function WebinarFormDialog({
               ))}
               <Button variant="outline" onClick={addQuestion}
                 className="w-full rounded-xl border-2 border-dashed border-teal-200 text-teal-600 text-[13px] font-semibold hover:bg-teal-50">
-                <AddIcon sx={{ fontSize: 16 }} /> Add question
+                <AddIcon size={16} /> Add question
               </Button>
             </div>
           )}
@@ -409,12 +410,12 @@ function QuestionsDialog({ webinar, open, onClose }: {
       PaperProps={{ sx: { borderRadius: "16px" } }}>
       <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontWeight: 700, fontSize: "1rem" }}>
         <span>Questions — {webinar.title}</span>
-        <Button variant="ghost" onClick={onClose} className="p-1 h-auto rounded-lg hover:bg-slate-100 text-slate-400"><CloseIcon sx={{ fontSize: 18 }} /></Button>
+        <Button variant="ghost" onClick={onClose} className="p-1 h-auto rounded-lg hover:bg-slate-100 text-slate-400"><CloseIcon size={18} /></Button>
       </DialogTitle>
       <DialogContent dividers sx={{ p: 0 }}>
         {webinar.questions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-slate-400">
-            <QIcon sx={{ fontSize: 40, mb: 1 }} />
+            <QIcon size={40} className="mb-2" />
             <p className="text-[14px]">No questions yet. Edit the webinar to add questions.</p>
           </div>
         ) : (
@@ -496,51 +497,51 @@ function WebinarCard({ w, onEdit, onSubs, onQuestions, onVerify, verifyPending, 
             {w.status === "draft" && (
               <Button variant="ghost" onClick={onVerify} disabled={verifyPending}
                 className="px-3 py-1.5 h-auto rounded-lg bg-teal-600 hover:bg-teal-700 hover:text-white text-white text-[12px] font-bold">
-                <VerifyIcon sx={{ fontSize: 13 }} /> Publish
+                <VerifyIcon size={13} /> Publish
               </Button>
             )}
             {w.status === "active" && (
               <Button variant="ghost" onClick={onSendLink} disabled={sendLinkPending}
                 className="px-3 py-1.5 h-auto rounded-lg bg-teal-600 hover:bg-teal-700 hover:text-white text-white text-[12px] font-bold">
-                {sendLinkPending ? <CircularProgress size={11} sx={{ color: "#fff" }} /> : <SendIcon sx={{ fontSize: 13 }} />}
+                {sendLinkPending ? <CircularProgress size={11} sx={{ color: "#fff" }} /> : <SendIcon size={13} />}
                 Send link
               </Button>
             )}
             <Button variant="outline" onClick={onEdit}
               className="px-3 py-1.5 h-auto rounded-lg text-slate-600 text-[12px] font-semibold">
-              <EditIcon sx={{ fontSize: 13 }} /> Edit
+              <EditIcon size={13} /> Edit
             </Button>
             <button onClick={e => setMenuAnchor(e.currentTarget)}
               className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50 transition-colors">
-              <MoreIcon sx={{ fontSize: 16 }} />
+              <MoreIcon size={16} />
             </button>
             <Menu anchorEl={menuAnchor} open={!!menuAnchor} onClose={() => setMenuAnchor(null)}
               PaperProps={{ sx: { borderRadius: "12px", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", minWidth: 190 } }}>
               <MenuItem onClick={() => { onQuestions(); setMenuAnchor(null); }} sx={{ fontSize: 13, gap: 1 }}>
-                <ListItemIcon sx={{ minWidth: 28 }}><QIcon sx={{ fontSize: 16, color: "#64748B" }} /></ListItemIcon>
+                <ListItemIcon sx={{ minWidth: 28 }}><QIcon size={16} color="#64748B" /></ListItemIcon>
                 <ListItemText primaryTypographyProps={{ fontSize: 13 }}>View questions</ListItemText>
               </MenuItem>
               <MenuItem component="a" href={publicUrl} target="_blank" rel="noopener noreferrer" onClick={() => setMenuAnchor(null)} sx={{ fontSize: 13 }}>
-                <ListItemIcon sx={{ minWidth: 28 }}><OpenIcon sx={{ fontSize: 16, color: "#64748B" }} /></ListItemIcon>
+                <ListItemIcon sx={{ minWidth: 28 }}><OpenIcon size={16} color="#64748B" /></ListItemIcon>
                 <ListItemText primaryTypographyProps={{ fontSize: 13 }}>Preview page</ListItemText>
               </MenuItem>
               <MenuItem onClick={() => { onExport(); setMenuAnchor(null); }} disabled={exportPending} sx={{ fontSize: 13 }}>
-                <ListItemIcon sx={{ minWidth: 28 }}>{exportPending ? <CircularProgress size={14} /> : <DownloadIcon sx={{ fontSize: 16, color: "#059669" }} />}</ListItemIcon>
+                <ListItemIcon sx={{ minWidth: 28 }}>{exportPending ? <CircularProgress size={14} /> : <DownloadIcon size={16} color="#059669" />}</ListItemIcon>
                 <ListItemText primaryTypographyProps={{ fontSize: 13 }}>Export Excel</ListItemText>
               </MenuItem>
               <MenuItem onClick={() => { onRefresh(); setMenuAnchor(null); }} disabled={refreshPending} sx={{ fontSize: 13 }}>
-                <ListItemIcon sx={{ minWidth: 28 }}><RefreshIcon sx={{ fontSize: 16, color: "#64748B" }} /></ListItemIcon>
+                <ListItemIcon sx={{ minWidth: 28 }}><RefreshIcon size={16} color="#64748B" /></ListItemIcon>
                 <ListItemText primaryTypographyProps={{ fontSize: 13 }}>Refresh stats</ListItemText>
               </MenuItem>
               {w.status === "active" && (
                 <MenuItem onClick={() => { onArchive(); setMenuAnchor(null); }} disabled={archivePending} sx={{ fontSize: 13 }}>
-                  <ListItemIcon sx={{ minWidth: 28 }}><ArchiveIcon sx={{ fontSize: 16, color: "#B45309" }} /></ListItemIcon>
+                  <ListItemIcon sx={{ minWidth: 28 }}><ArchiveIcon size={16} color="#B45309" /></ListItemIcon>
                   <ListItemText primaryTypographyProps={{ fontSize: 13 }}>Archive</ListItemText>
                 </MenuItem>
               )}
               <Divider />
               <MenuItem onClick={() => { onDelete(); setMenuAnchor(null); }} sx={{ fontSize: 13, color: "#EF4444" }}>
-                <ListItemIcon sx={{ minWidth: 28 }}><DeleteIcon sx={{ fontSize: 16, color: "#EF4444" }} /></ListItemIcon>
+                <ListItemIcon sx={{ minWidth: 28 }}><DeleteIcon size={16} color="#EF4444" /></ListItemIcon>
                 <ListItemText primaryTypographyProps={{ fontSize: 13, color: "#EF4444" }}>Delete</ListItemText>
               </MenuItem>
             </Menu>
@@ -557,7 +558,7 @@ function WebinarCard({ w, onEdit, onSubs, onQuestions, onVerify, verifyPending, 
           )}
           <Button variant="outline" onClick={onSubs}
             className="px-2.5 py-1 h-auto rounded-lg bg-indigo-50 border-indigo-100 text-[11px] text-indigo-600 font-bold hover:bg-indigo-100">
-            <PeopleIcon sx={{ fontSize: 11 }} /> {w.stats.total_registrations} inscrits
+            <PeopleIcon size={11} /> {w.stats.total_registrations} inscrits
           </Button>
           <span className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 border border-teal-100 text-[11px] text-teal-600 font-bold">
             ✓ {w.stats.total_completions} completed
@@ -647,9 +648,8 @@ const WebinarManagement: React.FC = () => {
     }
   };
 
-  const [snack, setSnack] = useState({ open: false, msg: "", sev: "success" as "success" | "error" });
-  const ok  = (msg: string) => setSnack({ open: true, msg, sev: "success" });
-  const err = (msg: string) => setSnack({ open: true, msg, sev: "error" });
+  const ok  = (msg: string) => toast.success(msg);
+  const err = (msg: string) => toast.error(msg);
 
   const handleSave = async (values: WebinarFormValues) => {
     if (editTarget) {
@@ -740,7 +740,7 @@ const WebinarManagement: React.FC = () => {
           onClick={() => { setEditTarget(null); setFormOpen(true); }}
           className="rounded-xl bg-teal-600 hover:bg-teal-700 hover:text-white text-white text-[13px] font-bold shadow-sm"
         >
-          <AddIcon sx={{ fontSize: 16 }} />
+          <AddIcon size={16} />
           New Webinar
         </Button>
       </div>
@@ -753,7 +753,7 @@ const WebinarManagement: React.FC = () => {
       ) : webinars.length === 0 ? (
         <AdminChartCard>
           <div className="flex flex-col items-center justify-center py-16 text-slate-400">
-            <WebinarIcon sx={{ fontSize: 48, mb: 2, opacity: 0.4 }} />
+            <WebinarIcon size={48} className="mb-4 opacity-40" />
             <p className="text-[15px] font-medium">No webinars yet</p>
             <p className="text-[13px] mt-1">Create your first webinar to get started</p>
           </div>
@@ -834,16 +834,6 @@ const WebinarManagement: React.FC = () => {
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />
-
-      {/* Snackbar */}
-      <Snackbar
-        open={snack.open}
-        autoHideDuration={3500}
-        onClose={() => setSnack(s => ({ ...s, open: false }))}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      >
-        <Alert severity={snack.sev} sx={{ borderRadius: "10px" }}>{snack.msg}</Alert>
-      </Snackbar>
     </div>
   );
 };

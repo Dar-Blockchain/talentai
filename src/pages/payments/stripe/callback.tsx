@@ -4,15 +4,10 @@ import { useRouter } from "next/router";
 import { useDispatch } from "react-redux";
 import Link from "next/link";
 import { Box, Typography, CircularProgress } from "@mui/material";
-import dynamic from "next/dynamic";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { verifyPayment } from "@/store/slices/paymentSlice";
 import { AppDispatch } from "@/store/store";
-
-const CheckCircleOutlined = dynamic(() => import("@mui/icons-material/CheckCircleOutlined"));
-const CancelOutlined = dynamic(() => import("@mui/icons-material/CancelOutlined"));
-const ArrowBackOutlined = dynamic(() => import("@mui/icons-material/ArrowBackOutlined"));
-const DashboardOutlined = dynamic(() => import("@mui/icons-material/DashboardOutlined"));
+import { CheckCircle2 as CheckCircleOutlined, XCircle as CancelOutlined, ArrowLeft as ArrowBackOutlined, LayoutDashboard as DashboardOutlined } from "lucide-react";
 
 const PaymentResultPage: React.FC = () => {
   const router = useRouter();
@@ -79,9 +74,9 @@ const PaymentResultPage: React.FC = () => {
           }}
         >
           {isSuccess ? (
-            <CheckCircleOutlined sx={{ fontSize: 44, color: "#059669" }} />
+            <CheckCircleOutlined size={44} color="#059669" />
           ) : (
-            <CancelOutlined sx={{ fontSize: 44, color: "#dc2626" }} />
+            <CancelOutlined size={44} color="#dc2626" />
           )}
         </Box>
 

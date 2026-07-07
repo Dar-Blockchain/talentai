@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Box, Dialog, Typography } from "@mui/material";
 import { Button } from "@/modules/shared/ui/shadcn/button";
-import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
-import CheckBoxOutlined from "@mui/icons-material/CheckBoxOutlined";
-import CheckBoxOutlineBlankOutlined from "@mui/icons-material/CheckBoxOutlineBlank";
+import { Sparkles as AutoAwesomeOutlined, CheckSquare as CheckBoxOutlined, Square as CheckBoxOutlineBlankOutlined } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { SUPPORTED_LANGS } from "@/modules/shared/constants/languages";
 
@@ -58,7 +56,7 @@ const GenerateLanguageModal: React.FC<Props> = ({ open, loading, onConfirm, onCl
             display: "flex", alignItems: "center", justifyContent: "center",
           }}
         >
-          <AutoAwesomeOutlined sx={{ fontSize: 22, color: TEAL }} />
+          <AutoAwesomeOutlined size={22} color={TEAL} />
         </Box>
         <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>
           {t("create.lang_modal.title")}
@@ -134,8 +132,8 @@ const GenerateLanguageModal: React.FC<Props> = ({ open, loading, onConfirm, onCl
         }}
       >
         {saveAsDefault
-          ? <CheckBoxOutlined sx={{ fontSize: 18, color: TEAL, flexShrink: 0 }} />
-          : <CheckBoxOutlineBlankOutlined sx={{ fontSize: 18, color: "#9CA3AF", flexShrink: 0 }} />}
+          ? <CheckBoxOutlined size={18} color={TEAL} className="shrink-0" />
+          : <CheckBoxOutlineBlankOutlined size={18} color="#9CA3AF" className="shrink-0" />}
         <Box>
           <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: saveAsDefault ? TEAL : "#374151", lineHeight: 1.3 }}>
             Always use this language
@@ -164,7 +162,7 @@ const GenerateLanguageModal: React.FC<Props> = ({ open, loading, onConfirm, onCl
           loading={loading}
           className="flex-1"
         >
-          {!loading && <AutoAwesomeOutlined sx={{ fontSize: 15 }} />}
+          {!loading && <AutoAwesomeOutlined size={15} />}
           {loading ? t("create.lang_modal.btn_generating") : t("create.lang_modal.btn_generate")}
         </Button>
       </div>

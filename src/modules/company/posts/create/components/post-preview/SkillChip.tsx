@@ -1,6 +1,6 @@
 import React from "react";
 import { Chip } from "@mui/material";
-import CloseOutlined from "@mui/icons-material/CloseOutlined";
+import { X as CloseOutlined } from "lucide-react";
 import { TEAL } from "./styles";
 
 interface Props {
@@ -19,7 +19,8 @@ const SkillChip: React.FC<Props> = ({ label, onDelete, onClick, sx }) => (
       onDelete
         ? <CloseOutlined
             aria-label={`Remove ${label}`}
-            sx={{ fontSize: "14px !important", color: "rgba(255,255,255,0.8)" }}
+            size={14}
+            color="rgba(255,255,255,0.8)"
           />
         : undefined
     }

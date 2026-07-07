@@ -7,11 +7,13 @@ import {
   Divider, IconButton, TextField, Typography,
 } from "@mui/material";
 import { Button } from "@/modules/shared/ui/shadcn/button";
-import EmailOutlined from "@mui/icons-material/EmailOutlined";
-import ChatBubbleOutlineOutlined from "@mui/icons-material/ChatBubbleOutlineOutlined";
-import CloseOutlined from "@mui/icons-material/CloseOutlined";
-import SendOutlined from "@mui/icons-material/Send";
-import CheckCircleOutlineOutlined from "@mui/icons-material/CheckCircleOutline";
+import {
+  Mail as EmailOutlined,
+  MessageCircle as ChatBubbleOutlineOutlined,
+  X as CloseOutlined,
+  Send as SendOutlined,
+  CheckCircle2 as CheckCircleOutlineOutlined,
+} from "lucide-react";
 import axiosInstance from "@/utils/axiosInstance";
 import { RootState } from "@/store/store";
 import {
@@ -176,7 +178,7 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
             bgcolor: cfg.color, border: "2px solid #fff",
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
-            <cfg.Icon sx={{ fontSize: 7, color: "#fff" }} />
+            <cfg.Icon size={7} color="#fff" />
           </Box>
         </Box>
 
@@ -193,7 +195,7 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
           disabled={isBusy}
           sx={{ color: "#9CA3AF", borderRadius: "8px", "&:hover": { bgcolor: "#F3F4F6", color: "#374151" } }}
         >
-          <CloseOutlined sx={{ fontSize: 16 }} />
+          <CloseOutlined size={16} />
         </IconButton>
       </Box>
 
@@ -224,7 +226,7 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
                   display: "flex", alignItems: "center", justifyContent: "center",
                   transition: "background 0.15s",
                 }}>
-                  <ModeIcon sx={{ fontSize: 15, color: active ? "#fff" : "#9CA3AF" }} />
+                  <ModeIcon size={15} color={active ? "#fff" : "#9CA3AF"} />
                 </Box>
                 <Box>
                   <Typography sx={{ fontSize: "12px", fontWeight: 700, color: active ? c.color : "#374151", lineHeight: 1.2 }}>
@@ -247,7 +249,7 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
               bgcolor: `${TEAL}12`, mx: "auto", mb: 2,
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>
-              <CheckCircleOutlineOutlined sx={{ fontSize: 30, color: TEAL }} />
+              <CheckCircleOutlineOutlined size={30} color={TEAL} />
             </Box>
             <Typography sx={{ fontSize: "16px", fontWeight: 700, color: "#111827", mb: 0.5 }}>
               {mode === "email" ? t("pages.applications.contact_modal.success_email_title") : t("pages.applications.contact_modal.success_chat_title")}
@@ -281,7 +283,7 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
                 bgcolor: `${TEAL}08`, borderRadius: "10px",
                 border: `1px solid ${TEAL}20`, alignItems: "flex-start",
               }}>
-                <ChatBubbleOutlineOutlined sx={{ fontSize: 13, color: TEAL, mt: 0.2, flexShrink: 0 }} />
+                <ChatBubbleOutlineOutlined size={13} color={TEAL} className="mt-0.5 shrink-0" />
                 <Typography sx={{ fontSize: "11.5px", color: "#0F766E", lineHeight: 1.5 }}>
                   {t("pages.applications.contact_modal.chat_banner", { name: target.name })}
                 </Typography>
@@ -330,7 +332,7 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
                 className="min-w-[130px] rounded-[10px] text-[13px] font-semibold shadow-none"
                 style={{ color: "#fff", backgroundColor: cfg.color }}
               >
-                {!isBusy && <SendOutlined sx={{ fontSize: 14 }} />}
+                {!isBusy && <SendOutlined size={14} />}
                 {isBusy ? t("pages.applications.contact_modal.sending") : mode === "email" ? t("pages.applications.contact_modal.send_email") : t("pages.applications.contact_modal.send_message")}
               </Button>
             </Box>

@@ -1,10 +1,7 @@
 import React, { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { Box, Typography, Skeleton } from "@mui/material";
-import WorkOutlineOutlined from "@mui/icons-material/WorkOutlineOutlined";
-import CheckCircleOutline  from "@mui/icons-material/CheckCircleOutline";
-import EditNoteOutlined    from "@mui/icons-material/EditNoteOutlined";
-import AccessTimeOutlined  from "@mui/icons-material/AccessTimeOutlined";
+import { Briefcase as WorkOutlineOutlined, CheckCircle2 as CheckCircleOutline, FileEdit as EditNoteOutlined, Clock as AccessTimeOutlined } from "lucide-react";
 import { usePostMetricsQuery } from "../queries";
 
 const CARD_DEFS = [
@@ -29,7 +26,7 @@ const PostsStats: React.FC = memo(() => {
       {CARD_DEFS.map(({ key, Icon, color, bg }) => (
         <Box key={key} sx={CARD_SX}>
           <Box sx={{ ...ICON_BOX_BASE, bgcolor: bg }}>
-            <Icon sx={{ fontSize: 20, color }} />
+            <Icon size={20} color={color} />
           </Box>
           <Box>
             {isLoading

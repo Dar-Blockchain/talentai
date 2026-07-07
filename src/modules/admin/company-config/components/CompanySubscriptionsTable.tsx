@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TablePagination,
 } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
+import { Search as SearchIcon } from 'lucide-react';
 import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { Button } from '@/modules/shared/ui/shadcn/button';
@@ -49,7 +49,7 @@ const CompanySubscriptionsTable: React.FC = () => {
       <Card className="mb-4 overflow-hidden py-0 gap-0">
         <div className="p-4 flex flex-wrap gap-3 items-center">
           <div className="flex-[1_1_240px] flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2">
-            <SearchIcon style={{ fontSize: 18 }} className="text-slate-400 shrink-0" />
+            <SearchIcon size={18} className="text-slate-400 shrink-0" />
             <Input
               placeholder="Search by company name or email..."
               value={searchInput}

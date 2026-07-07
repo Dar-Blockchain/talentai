@@ -1,10 +1,7 @@
 import React, { memo } from "react";
 import { Box, Typography } from "@mui/material";
 import { Button } from "@/modules/shared/ui/shadcn/button";
-import CloseOutlined from "@mui/icons-material/CloseOutlined";
-import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
-import ArrowBackOutlined from "@mui/icons-material/ArrowBackOutlined";
-import CheckOutlined from "@mui/icons-material/CheckOutlined";
+import { X as CloseOutlined, ArrowRight as ArrowForwardOutlined, ArrowLeft as ArrowBackOutlined, Check as CheckOutlined } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { STEPS, TOTAL, type Step } from "./tourSteps";
 import { W } from "./tourUtils";
@@ -53,7 +50,7 @@ const TourCard: React.FC<TourCardProps> = memo(({ step, current, onPrev, onNext,
             {t(current.titleKey)}
           </Typography>
           <Box onClick={onFinish} sx={{ cursor: "pointer", color: "#9CA3AF", "&:hover": { color: "#374151" }, flexShrink: 0, mt: 0.25 }}>
-            <CloseOutlined sx={{ fontSize: 16 }} />
+            <CloseOutlined size={16} />
           </Box>
         </Box>
       </Box>
@@ -80,7 +77,7 @@ const TourCard: React.FC<TourCardProps> = memo(({ step, current, onPrev, onNext,
             <Typography sx={{ fontSize: "0.7rem", color: "#9CA3AF", fontWeight: 500 }}>{step + 1} / {TOTAL}</Typography>
             {!isFirst && (
               <Button size="sm" variant="ghost" onClick={onPrev} className="min-w-0 rounded-lg px-3 text-[0.78rem] font-semibold text-gray-500">
-                <ArrowBackOutlined sx={{ fontSize: 13 }} />
+                <ArrowBackOutlined size={13} />
                 {t("tour.nav.back")}
               </Button>
             )}
@@ -92,7 +89,7 @@ const TourCard: React.FC<TourCardProps> = memo(({ step, current, onPrev, onNext,
               style={{ backgroundColor: TEAL, color: "#fff" }}
             >
               {isLast ? t("tour.nav.done") : t("tour.nav.next")}
-              {isLast ? <CheckOutlined sx={{ fontSize: 13 }} /> : <ArrowForwardOutlined sx={{ fontSize: 13 }} />}
+              {isLast ? <CheckOutlined size={13} /> : <ArrowForwardOutlined size={13} />}
             </Button>
           </Box>
         </Box>

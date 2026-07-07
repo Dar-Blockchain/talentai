@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
-import ArrowBackOutlined   from "@mui/icons-material/ArrowBackOutlined";
-import AssessmentOutlined  from "@mui/icons-material/AssessmentOutlined";
-import BarChartOutlined    from "@mui/icons-material/BarChartOutlined";
-import LayersOutlined      from "@mui/icons-material/LayersOutlined";
-import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
-import ForumOutlined       from "@mui/icons-material/ForumOutlined";
+import {
+  ArrowLeft as ArrowBackOutlined,
+  ClipboardList as AssessmentOutlined,
+  BarChart3 as BarChartOutlined,
+  Layers as LayersOutlined,
+  Sparkles as AutoAwesomeOutlined,
+  MessagesSquare as ForumOutlined,
+} from "lucide-react";
 import { DashboardLayout }        from "@/modules/shared/layouts";
 import { usePostAssessmentQuery } from "@/modules/company/assessment/modal/queries";
 import { useAssessmentModal }     from "@/modules/company/assessment/modal/hooks/useAssessmentModal";
@@ -81,7 +83,7 @@ const AssessmentPage: React.FC = () => {
           onClick={() => router.back()}
           className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-slate-800 hover:border-slate-300 hover:shadow-sm"
         >
-          <ArrowBackOutlined style={{ fontSize: 16 }} />
+          <ArrowBackOutlined size={16} />
         </Button>
         <div>
           <div className="text-[0.6rem] text-slate-400 font-bold uppercase tracking-widest">Interview Assessment</div>
@@ -101,7 +103,7 @@ const AssessmentPage: React.FC = () => {
       {!isLoading && isError && (
         <div className="flex flex-col items-center justify-center py-32 gap-3">
           <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center">
-            <AssessmentOutlined style={{ fontSize: 28, color: "#CBD5E1" }} />
+            <AssessmentOutlined size={28} color="#CBD5E1" />
           </div>
           <span className="text-sm font-semibold text-slate-700">{t("pages.applications.assessment_modal.not_found")}</span>
           <span className="text-xs text-slate-400">{error instanceof Error ? error.message : ""}</span>
@@ -133,7 +135,7 @@ const AssessmentPage: React.FC = () => {
                   className={`relative flex items-center gap-1.5 px-4 py-3.5 text-[0.8rem] font-semibold transition-colors outline-none bg-transparent border-none ${active ? "" : "text-slate-400 hover:text-slate-600"}`}
                   style={{ color: active ? vt.color : undefined }}
                 >
-                  <Icon style={{ fontSize: 15 }} />
+                  <Icon size={15} />
                   {label}
                   {active && (
                     <span className="absolute bottom-0 left-0 right-0 h-[2.5px] rounded-t-full" style={{ backgroundColor: vt.color }} />

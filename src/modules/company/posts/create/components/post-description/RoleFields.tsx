@@ -1,9 +1,8 @@
 import { Box, MenuItem, TextField, Typography } from "@mui/material";
-import WorkOutlined from "@mui/icons-material/WorkOutlined";
-import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
-import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
+import { Briefcase as WorkOutlined, MapPin as LocationOnOutlined, Calendar as CalendarTodayOutlined } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { contractTypes, workModes } from "@/modules/company/posts/shared/constants";
+import { DatePicker } from "@/modules/shared/ui/DatePicker";
 import { EMPLOYMENT_OPTION_KEY, optionLabel, WORK_MODE_OPTION_KEY } from "../../utils";
 import FieldLabel from "./FieldLabel";
 import SectionLabel from "./SectionLabel";
@@ -45,12 +44,10 @@ const RoleFields = ({ employmentType, workMode, expirationDate, errors, onEmploy
 
         <Box>
           <FieldLabel icon={CalendarTodayOutlined} label={t("create.post_form.labels.expires")} />
-          <TextField
-            type="date" fullWidth
-            value={expirationDate ? new Date(expirationDate).toISOString().split("T")[0] : ""}
-            onChange={(e) => { if (e.target.value) onExpirationChange(new Date(e.target.value).toISOString()); }}
-            slotProps={{ htmlInput: { min: new Date().toISOString().split("T")[0] } }}
-            sx={fieldSx}
+          <DatePicker
+            value={expirationDate ?? ""}
+            onChange={onExpirationChange}
+            minDate={new Date()}
           />
         </Box>
       </Box>

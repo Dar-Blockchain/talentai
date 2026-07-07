@@ -3,15 +3,15 @@ import {
   Box, Typography, Switch,
   Accordion, AccordionSummary, AccordionDetails,
 } from "@mui/material";
-import ExpandMoreOutlined from "@mui/icons-material/ExpandMoreOutlined";
-import WorkOutlineOutlined from "@mui/icons-material/WorkOutlineOutlined";
-import PeopleOutlineOutlined from "@mui/icons-material/PeopleOutlineOutlined";
-import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesome";
-import PsychologyOutlined from "@mui/icons-material/PsychologyOutlined";
-import GroupsOutlined from "@mui/icons-material/GroupsOutlined";
-import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
-import CampaignOutlined from "@mui/icons-material/CampaignOutlined";
-import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
+import {
+  ChevronDown as ExpandMoreOutlined,
+  Briefcase as WorkOutlineOutlined,
+  Users as PeopleOutlineOutlined,
+  Users as GroupsOutlined,
+  Network as AccountTreeOutlined,
+  Megaphone as CampaignOutlined,
+  Settings as SettingsOutlined,
+} from "lucide-react";
 import { EmployeePermission, EmployeePermissionKey, EMPLOYEE_PERMISSION_GROUPS, EMPLOYEE_PERMISSION_CATEGORIES } from "@/modules/company/employees/types/permissions";
 
 const PURPLE = "#8310FF";
@@ -43,7 +43,7 @@ const PACK_ABSORBED = new Set<EmployeePermissionKey>(
 );
 
 interface CategoryMeta {
-  icon: React.ComponentType<{ sx?: object }>;
+  icon: React.ComponentType<{ size?: number; color?: string; className?: string }>;
   color: string;
   description: string;
 }
@@ -187,9 +187,7 @@ const AccordionGroup: React.FC<AccordionGroupProps> = memo(({
     transition: "background 0.2s",
   }), [isOpen, meta.color]);
 
-  const expandIconSx = useMemo(() => ({
-    fontSize: 18, color: isOpen ? meta.color : "#94A3B8", transition: "color 0.2s",
-  }), [isOpen, meta.color]);
+  const expandIconColor = isOpen ? meta.color : "#94A3B8";
 
   const iconBoxSx = useMemo(() => ({
     width: 36, height: 36, borderRadius: "10px", flexShrink: 0,
@@ -222,8 +220,8 @@ const AccordionGroup: React.FC<AccordionGroupProps> = memo(({
 
   return (
     <Accordion key={group.category} expanded={isOpen} onChange={handleExpand} disableGutters elevation={0} sx={accordSx}>
-      <AccordionSummary expandIcon={<ExpandMoreOutlined sx={expandIconSx} />} sx={summarySx}>
-        <Box sx={iconBoxSx}><Icon sx={{ fontSize: 18 }} /></Box>
+      <AccordionSummary expandIcon={<ExpandMoreOutlined size={18} color={expandIconColor} className="transition-colors duration-200" />} sx={summarySx}>
+        <Box sx={iconBoxSx}><Icon size={18} /></Box>
 
         <Box sx={META_BOX_SX}>
           <Typography sx={META_TITLE_SX}>{group.category}</Typography>

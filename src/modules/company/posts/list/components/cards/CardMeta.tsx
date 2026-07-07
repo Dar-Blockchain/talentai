@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
-import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
+import { MapPin as LocationOnOutlined } from "lucide-react";
 
 interface Props {
   location?: string;
@@ -14,7 +14,7 @@ const CardMeta: React.FC<Props> = ({ location, employmentType, workMode, descrip
     <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
       {location && (
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
-          <LocationOnOutlined sx={{ fontSize: 12, color: "#9CA3AF" }} />
+          <LocationOnOutlined size={12} color="#9CA3AF" />
           <Typography noWrap sx={{ fontSize: "12px", color: "#6B7280", maxWidth: 120 }}>{location}</Typography>
         </Box>
       )}

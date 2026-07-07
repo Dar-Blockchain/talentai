@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
-import BusinessCenterOutlined from "@mui/icons-material/BusinessCenterOutlined";
+import { Briefcase as BusinessCenterOutlined } from "lucide-react";
 import Section from "./Section";
 import { T, NAVY } from "../utils/constants";
 
@@ -20,7 +20,7 @@ const CvMatchScore: React.FC<CvMatchScoreProps> = ({ score, title, strongLabel, 
   const filled = (Math.min(score, 100) / 100) * circ;
 
   return (
-    <Section icon={<BusinessCenterOutlined sx={{ fontSize: 14, color: T }} />} title={title}>
+    <Section icon={<BusinessCenterOutlined size={14} color={T} />} title={title}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 2.5 }}>
         <Box sx={{ position: "relative", width: 80, height: 80, flexShrink: 0 }}>
           <svg width={80} height={80} style={{ transform: "rotate(-90deg)" }}>

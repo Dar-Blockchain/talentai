@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogActions, IconButton, TextField, FormControlLabel, Switch, Alert } from '@mui/material';
 import { Button } from '@/modules/shared/ui/shadcn/button';
-import CloseIcon from '@mui/icons-material/Close';
-import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
+import { X as CloseIcon, Award as WorkspacePremiumIcon } from 'lucide-react';
 import { ADMIN_ACCENT, ADMIN_RADIUS } from '@/modules/admin/shared';
 import { useCreatePlanMutation, useUpdatePlanMutation } from '../queries';
 import { PlanLimit, PlanFormValues } from '../types';
@@ -92,11 +91,11 @@ const PlanFormDialog: React.FC<PlanFormDialogProps> = ({ open, onClose, plan, on
     >
       <div className="relative px-6 pt-6 pb-2">
         <IconButton onClick={onClose} sx={{ position: 'absolute', top: 12, right: 12, color: '#94A3B8', '&:hover': { color: '#475569' } }}>
-          <CloseIcon fontSize="small" />
+          <CloseIcon size={18} />
         </IconButton>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#EEF2FF' }}>
-            <WorkspacePremiumIcon style={{ fontSize: 20, color: ADMIN_ACCENT }} />
+            <WorkspacePremiumIcon size={20} color={ADMIN_ACCENT} />
           </div>
           <h2 className="text-[1.05rem] font-semibold text-slate-900">{isEdit ? 'Edit Plan' : 'New Plan'}</h2>
         </div>

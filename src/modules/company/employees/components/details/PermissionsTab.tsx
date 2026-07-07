@@ -2,8 +2,7 @@ import React, { memo, useMemo } from "react";
 import { Box, Typography, CircularProgress } from "@mui/material";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { motion } from "framer-motion";
-import TuneOutlined from "@mui/icons-material/TuneOutlined";
-import CheckOutlined from "@mui/icons-material/CheckOutlined";
+import { SlidersHorizontal as TuneOutlined, Check as CheckOutlined } from "lucide-react";
 import PermissionsPanel from "../permissions/PermissionsPanel";
 import type { EmployeePermission } from "@/modules/company/employees/types/permissions";
 
@@ -44,7 +43,7 @@ const PermissionsTab: React.FC<PermissionsTabProps> = memo(({
     return (
       <motion.div key="permissions-self" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <Box sx={SELF_BOX_SX}>
-          <TuneOutlined sx={{ fontSize: 40, color: "#E2E8F0", mb: 1.5 }} />
+          <TuneOutlined size={40} color="#E2E8F0" className="mb-3" />
           <Typography sx={{ fontWeight: 700, fontSize: "0.9375rem", color: "#0F172A", mb: 0.5 }}>
             You cannot manage your own permissions
           </Typography>
@@ -76,7 +75,7 @@ const PermissionsTab: React.FC<PermissionsTabProps> = memo(({
           className="min-w-[140px] rounded-xl px-6 py-2 text-[0.8125rem] font-bold shadow-none transition-all"
           style={saveBtnStyle}
         >
-          {!saving && saved && <CheckOutlined sx={{ fontSize: 16 }} />}
+          {!saving && saved && <CheckOutlined size={16} />}
           {saving ? "Saving…" : saved ? "Saved!" : "Save Permissions"}
         </Button>
       </Box>

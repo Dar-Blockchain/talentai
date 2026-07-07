@@ -17,7 +17,6 @@ import Head from "next/head";
 import ScrollToTop from "@/modules/shared/ui/ScrollToTop";
 import LoadingScreen from "@/modules/shared/ui/LoadingScreen";
 import { Poppins } from "next/font/google";
-import MuiToast from "@/components/ui/Toast";
 import { Toaster } from "@/modules/shared/ui/shadcn/sonner";
 import { useToast, ToastProvider } from "@/hooks/useToast";
 import { NotificationProvider } from "@/modules/notifications/shared/context";
@@ -275,7 +274,7 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
           <main className={poppins.variable}>
             <Toaster richColors />
             <ToastProvider>
-              <MuiToastWrapper />
+              <ToastAndSessionBridge />
               <AuthWrapper>
                 {getLayout(<Component {...pageProps} />)}
                 <ScrollToTop />
@@ -291,10 +290,11 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
   );
 }
 
-// MuiToastWrapper only calls logout — it never needs to know about
+// ToastAndSessionBridge only calls logout — it never needs to know about
 // isAuthenticated. Using useAuthActions() means it won't re-render on login.
-function MuiToastWrapper() {
-  const { open, toastOptions, closeToast, showToast } = useToast();
+// Renders nothing: toast UI is handled globally by the <Toaster /> above.
+function ToastAndSessionBridge() {
+  const { showToast } = useToast();
   const { logout } = useAuthActions();
 
   useEffect(() => {
@@ -311,12 +311,5 @@ function MuiToastWrapper() {
     });
   }, [logout]);
 
-  return (
-    <MuiToast
-      open={open}
-      message={toastOptions.message}
-      severity={toastOptions.severity}
-      onClose={closeToast}
-    />
-  );
+  return null;
 }

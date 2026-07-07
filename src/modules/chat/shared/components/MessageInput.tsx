@@ -9,7 +9,7 @@ import {
   alpha,
   Tooltip,
 } from "@mui/material";
-import SendRounded from "@mui/icons-material/SendRounded";
+import { Send as SendRounded } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { safeAlpha } from "@/utils/safeMuiAlpha";
 
@@ -183,7 +183,7 @@ const MessageInput = memo(function MessageInput({
               {sending ? (
                 <CircularProgress size={20} sx={{ color: "inherit" }} />
               ) : (
-                <SendRounded sx={{ fontSize: 22 }} />
+                <SendRounded size={22} />
               )}
             </IconButton>
           </span>

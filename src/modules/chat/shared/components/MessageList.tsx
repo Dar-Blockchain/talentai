@@ -15,10 +15,7 @@ import {
   ListItemIcon,
 } from "@mui/material";
 import { keyframes } from "@mui/system";
-import ChatOutlined from "@mui/icons-material/ChatOutlined";
-import DeleteOutlined from "@mui/icons-material/DeleteOutlined";
-import CancelOutlined from "@mui/icons-material/CancelOutlined";
-import MoreVert from "@mui/icons-material/MoreVert";
+import { MessageCircle as ChatOutlined, Trash2 as DeleteOutlined, XCircle as CancelOutlined, MoreVertical as MoreVert } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { formatTime, getParticipantDisplayName, isSameCalendarDay, messageDayKey, chatContextMenuPaperSlotProps, chatContextMenuItemSx } from "./helpers";
 import type { Participant } from "./helpers";
@@ -306,12 +303,9 @@ const MessageBubble = memo(function MessageBubble({
       {showDeliveryBlocked && deliveryBlockedCaption ? (
         <Stack direction="row" spacing={0.75} alignItems="flex-start" sx={{ mt: 0.75 }}>
           <CancelOutlined
-            sx={{
-              fontSize: 16,
-              color: isDark ? alpha(theme.palette.error.light, 0.9) : theme.palette.error.main,
-              mt: "1px",
-              flexShrink: 0,
-            }}
+            size={16}
+            color={isDark ? alpha(theme.palette.error.light, 0.9) : theme.palette.error.main}
+            className="mt-px shrink-0"
           />
           <Typography
             component="p"
@@ -471,7 +465,7 @@ const MessageRow = memo(function MessageRow({
             },
           }}
         >
-          <MoreVert sx={{ fontSize: 18 }} />
+          <MoreVert size={18} />
         </IconButton>
       </Tooltip>
       <Menu
@@ -485,7 +479,7 @@ const MessageRow = memo(function MessageRow({
       >
         <MenuItem onClick={handleDeleteForMe} sx={chatContextMenuItemSx}>
           <ListItemIcon sx={{ minWidth: 32 }}>
-            <DeleteOutlined fontSize="small" />
+            <DeleteOutlined size={18} />
           </ListItemIcon>
           {tTeam("message.delete_for_me", { defaultValue: "Delete for me" })}
         </MenuItem>
@@ -495,7 +489,7 @@ const MessageRow = memo(function MessageRow({
             sx={{ ...chatContextMenuItemSx, color: "error.main", fontWeight: 600, "&:hover": { bgcolor: alpha(theme.palette.error.main, 0.08) } }}
           >
             <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}>
-              <DeleteOutlined fontSize="small" />
+              <DeleteOutlined size={18} />
             </ListItemIcon>
             {tTeam("message.delete_for_everyone", { defaultValue: "Delete for everyone" })}
           </MenuItem>
@@ -546,7 +540,7 @@ const MessageRow = memo(function MessageRow({
                   },
                 }}
               >
-                <DeleteOutlined sx={{ fontSize: 18 }} />
+                <DeleteOutlined size={18} />
               </IconButton>
             </Tooltip>
           )}
@@ -693,7 +687,7 @@ const MessageList = memo(function MessageList({
                 boxShadow: mintLightTeamUi ? TEAM_MINT_UI.shadowSoft : undefined,
               }}
             >
-              <ChatOutlined sx={{ fontSize: 28, color: mintLightTeamUi ? TEAM_MINT_UI.primaryHover : theme.palette.primary.main }} />
+              <ChatOutlined size={28} color={mintLightTeamUi ? TEAM_MINT_UI.primaryHover : theme.palette.primary.main} />
             </Box>
             <Typography sx={{ color: mintLightTeamUi ? TEAM_MINT_UI.textPrimary : "text.primary", fontWeight: 600, fontSize: "0.875rem" }}>
               {t("messages.no_messages")}

@@ -1,8 +1,7 @@
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { Box, Typography, Skeleton, Pagination } from "@mui/material";
-import WorkOutlined from "@mui/icons-material/WorkOutlined";
-import AddOutlined from "@mui/icons-material/AddOutlined";
+import { Briefcase as WorkOutlined, Plus as AddOutlined } from "lucide-react";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import JobPostCard from "./JobPostCard";
 import type { StatusFilter, SortOption, PaginationInfo } from "../types";
@@ -80,7 +79,7 @@ const JobPostsList = memo<JobPostsListProps>(({
   if (jobs.length === 0) {
     return (
       <Box sx={{ py: 12, textAlign: "center", border: "1.5px dashed #E5E7EB", borderRadius: "12px", bgcolor: "#FAFAFA" }}>
-        <WorkOutlined sx={{ fontSize: 44, color: "#D1D5DB", mb: 1.5 }} />
+        <WorkOutlined size={44} color="#D1D5DB" className="mb-3" />
         <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#374151", mb: 0.5 }}>
           {hasFilters ? t("empty.no_match") : t("empty.no_posts")}
         </Typography>
@@ -89,7 +88,7 @@ const JobPostsList = memo<JobPostsListProps>(({
         </Typography>
         {!hasFilters && (
           <Button variant="default" onClick={onCreateClick}>
-            <AddOutlined sx={{ fontSize: 16 }} />
+            <AddOutlined size={16} />
             {t("empty.create_btn")}
           </Button>
         )}

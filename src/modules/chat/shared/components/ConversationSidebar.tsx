@@ -15,9 +15,7 @@ import {
   alpha,
   Chip,
 } from "@mui/material";
-import ChatOutlined from "@mui/icons-material/ChatOutlined";
-import MoreVert from "@mui/icons-material/MoreVert";
-import DeleteOutline from "@mui/icons-material/DeleteOutline";
+import { MessageCircle as ChatOutlined, MoreVertical as MoreVert, Trash2 as DeleteOutline } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TEAM_LAST_MESSAGE_DELETED_SENTINEL } from "@/modules/chat/team-chat/constants/lastMessagePreview";
 import { CHAT_LAST_MESSAGE_BLOCKED_PREVIEW } from "@/modules/chat/shared/constants/contactPolicy";
@@ -337,7 +335,7 @@ const ConversationRow = memo(function ConversationRow({
             aria-label={t("sidebar.conversation_menu_aria")}
             onClick={handleMenuOpen}
           >
-            <MoreVert sx={{ fontSize: 18 }} />
+            <MoreVert size={18} />
           </ChatContextMenuTrigger>
         </Box>
       )}
@@ -365,7 +363,7 @@ const ConversationRow = memo(function ConversationRow({
             }}
           >
             <ListItemIcon sx={{ minWidth: 36, color: "inherit" }}>
-              <DeleteOutline fontSize="small" />
+              <DeleteOutline size={18} />
             </ListItemIcon>
             {t("sidebar.delete_conversation_menu")}
           </MenuItem>
@@ -455,7 +453,7 @@ const ConversationSidebar = memo(function ConversationSidebar({
               boxShadow: mintLightTeamUi ? "0 4px 20px rgba(15, 23, 42, 0.05)" : undefined,
             }}
           >
-            <ChatOutlined sx={{ fontSize: 28, color: mintLightTeamUi ? "#10B981" : primary }} />
+            <ChatOutlined size={28} color={mintLightTeamUi ? "#10B981" : primary} />
           </Box>
           <Typography fontWeight={700} sx={{ color: mintLightTeamUi ? "#111827" : "text.primary", fontSize: "0.8125rem" }}>
             {t("sidebar.no_conversations")}

@@ -2,8 +2,7 @@
 
 import React, { ReactNode } from "react";
 import { Box, Typography, Breadcrumbs, Link as MuiLink } from "@mui/material";
-import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import HomeOutlined from "@mui/icons-material/HomeOutlined";
+import { ChevronRight, Home } from "lucide-react";
 import Link from "next/link";
 
 interface BreadcrumbItem {
@@ -62,7 +61,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
               flexShrink: 0,
             }}
           >
-            <Icon sx={{ fontSize: 24, color: accentColor }} />
+            <Icon size={24} color={accentColor} />
           </Box>
         )}
 
@@ -71,13 +70,13 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           {breadcrumbs.length > 0 && (
             <Breadcrumbs
               separator={
-                <NavigateNextIcon sx={{ fontSize: 12, color: "#D1D5DB" }} />
+                <ChevronRight size={12} color="#D1D5DB" />
               }
               aria-label="breadcrumb"
               sx={{ mb: 0.5, "& .MuiBreadcrumbs-separator": { mx: 0.25 } }}
             >
               <Box sx={{ display: "flex", alignItems: "center" }}>
-                <HomeOutlined sx={{ fontSize: 11, color: "#9CA3AF" }} />
+                <Home size={11} color="#9CA3AF" />
               </Box>
               {breadcrumbs.map((item, index) =>
                 item.href ? (

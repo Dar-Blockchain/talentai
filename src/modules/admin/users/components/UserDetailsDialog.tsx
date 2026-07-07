@@ -1,17 +1,17 @@
 import React from 'react';
 import { Dialog, DialogContent, IconButton, Avatar } from '@mui/material';
 import {
-  Close as CloseIcon,
-  Email as EmailIcon,
-  CalendarToday as CalendarIcon,
-  Login as LoginIcon,
-  Language as LanguageIcon,
-  VerifiedUser as VerifiedIcon,
-  Business as BusinessIcon,
+  X as CloseIcon,
+  Mail as EmailIcon,
+  Calendar as CalendarIcon,
+  LogIn as LoginIcon,
+  Globe as LanguageIcon,
+  BadgeCheck as VerifiedIcon,
+  Building2 as BusinessIcon,
   Phone as PhoneIcon,
-  LocationOn as LocationIcon,
-  Badge as BadgeIcon,
-} from '@mui/icons-material';
+  MapPin as LocationIcon,
+  IdCard as BadgeIcon,
+} from 'lucide-react';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { InfoRow, ADMIN_NEUTRAL, ADMIN_ACCENT, ADMIN_RADIUS } from '@/modules/admin/shared';
 import { User } from '../types';
@@ -50,7 +50,7 @@ const UserDetailsDialog: React.FC<UserDetailsDialogProps> = ({ open, user, onClo
           onClick={onClose}
           sx={{ position: 'absolute', top: 12, right: 12, color: '#94A3B8', '&:hover': { color: '#475569' } }}
         >
-          <CloseIcon fontSize="small" />
+          <CloseIcon size={18} />
         </IconButton>
         <Avatar
           sx={{
@@ -77,7 +77,7 @@ const UserDetailsDialog: React.FC<UserDetailsDialogProps> = ({ open, user, onClo
             className="gap-1 border-transparent bg-slate-100 font-semibold"
             style={{ color: user.isVerified ? '#10b981' : '#f59e0b' }}
           >
-            <VerifiedIcon style={{ fontSize: 14 }} />
+            <VerifiedIcon size={14} />
             {user.isVerified ? 'Verified' : 'Pending'}
           </Badge>
         </div>
@@ -86,24 +86,24 @@ const UserDetailsDialog: React.FC<UserDetailsDialogProps> = ({ open, user, onClo
       <DialogContent sx={{ p: 0 }}>
         {/* Info List */}
         <div className="px-6 pt-4 pb-1">
-          <InfoRow icon={<EmailIcon sx={{ fontSize: 18, color: ADMIN_NEUTRAL }} />} label="Email" value={user.email} />
+          <InfoRow icon={<EmailIcon size={18} color={ADMIN_NEUTRAL} />} label="Email" value={user.email} />
           <InfoRow
-            icon={<CalendarIcon sx={{ fontSize: 18, color: ADMIN_NEUTRAL }} />}
+            icon={<CalendarIcon size={18} color={ADMIN_NEUTRAL} />}
             label="Joined"
             value={new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
           />
           {user.lastLogin && (
             <InfoRow
-              icon={<LoginIcon sx={{ fontSize: 18, color: ADMIN_NEUTRAL }} />}
+              icon={<LoginIcon size={18} color={ADMIN_NEUTRAL} />}
               label="Last Login"
               value={new Date(user.lastLogin).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
             />
           )}
           {user.Localisation && (
-            <InfoRow icon={<LanguageIcon sx={{ fontSize: 18, color: ADMIN_NEUTRAL }} />} label="Location" value={user.Localisation} />
+            <InfoRow icon={<LanguageIcon size={18} color={ADMIN_NEUTRAL} />} label="Location" value={user.Localisation} />
           )}
           {user.ip && (
-            <InfoRow icon={<LanguageIcon sx={{ fontSize: 18, color: ADMIN_NEUTRAL }} />} label="IP Address" value={user.ip} mono />
+            <InfoRow icon={<LanguageIcon size={18} color={ADMIN_NEUTRAL} />} label="IP Address" value={user.ip} mono />
           )}
         </div>
 
@@ -113,16 +113,16 @@ const UserDetailsDialog: React.FC<UserDetailsDialogProps> = ({ open, user, onClo
             <div className="border-t border-slate-200 pt-3">
               <span className="text-[11px] uppercase tracking-[1.2px] text-slate-500">Profile</span>
               {user.profile.phone && (
-                <InfoRow icon={<PhoneIcon sx={{ fontSize: 18, color: ADMIN_NEUTRAL }} />} label="Phone" value={user.profile.phone} />
+                <InfoRow icon={<PhoneIcon size={18} color={ADMIN_NEUTRAL} />} label="Phone" value={user.profile.phone} />
               )}
               {user.profile.location && (
-                <InfoRow icon={<LocationIcon sx={{ fontSize: 18, color: ADMIN_NEUTRAL }} />} label="Location" value={user.profile.location} />
+                <InfoRow icon={<LocationIcon size={18} color={ADMIN_NEUTRAL} />} label="Location" value={user.profile.location} />
               )}
               {user.profile.company && (
-                <InfoRow icon={<BusinessIcon sx={{ fontSize: 18, color: ADMIN_NEUTRAL }} />} label="Company" value={user.profile.company} />
+                <InfoRow icon={<BusinessIcon size={18} color={ADMIN_NEUTRAL} />} label="Company" value={user.profile.company} />
               )}
               {user.profile.position && (
-                <InfoRow icon={<BadgeIcon sx={{ fontSize: 18, color: ADMIN_NEUTRAL }} />} label="Position" value={user.profile.position} />
+                <InfoRow icon={<BadgeIcon size={18} color={ADMIN_NEUTRAL} />} label="Position" value={user.profile.position} />
               )}
             </div>
           </div>

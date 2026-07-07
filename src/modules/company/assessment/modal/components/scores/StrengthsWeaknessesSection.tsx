@@ -1,6 +1,5 @@
 import React from "react";
-import TrendingUpOutlined   from "@mui/icons-material/TrendingUpOutlined";
-import TrendingDownOutlined from "@mui/icons-material/TrendingDownOutlined";
+import { TrendingUp as TrendingUpOutlined, TrendingDown as TrendingDownOutlined } from "lucide-react";
 import { PostAssessmentData } from "../../types";
 
 interface Props {
@@ -20,7 +19,7 @@ const StrengthsWeaknessesSection: React.FC<Props> = ({ aiAssessment, strengthsLa
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50 overflow-hidden">
           <div className="flex items-center gap-2 px-4 pt-3.5 pb-2.5 border-b border-emerald-100">
             <div className="w-5 h-5 rounded-md bg-emerald-100 flex items-center justify-center">
-              <TrendingUpOutlined style={{ fontSize: 12, color: "#059669" }} />
+              <TrendingUpOutlined size={12} color="#059669" />
             </div>
             <span className="text-[0.65rem] font-black text-emerald-700 uppercase tracking-widest">
               {strengthsLabel}
@@ -40,7 +39,7 @@ const StrengthsWeaknessesSection: React.FC<Props> = ({ aiAssessment, strengthsLa
         <div className="rounded-2xl border border-amber-100 bg-amber-50 overflow-hidden">
           <div className="flex items-center gap-2 px-4 pt-3.5 pb-2.5 border-b border-amber-100">
             <div className="w-5 h-5 rounded-md bg-amber-100 flex items-center justify-center">
-              <TrendingDownOutlined style={{ fontSize: 12, color: "#D97706" }} />
+              <TrendingDownOutlined size={12} color="#D97706" />
             </div>
             <span className="text-[0.65rem] font-black text-amber-700 uppercase tracking-widest">
               {weakAreasLabel}

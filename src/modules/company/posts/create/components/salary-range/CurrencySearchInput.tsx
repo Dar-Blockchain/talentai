@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
+import { Search as SearchIcon } from "lucide-react";
 import { RefObject } from "react";
 
 interface Props {
@@ -22,7 +22,7 @@ const CurrencySearchInput = ({ value, onChange, inputRef }: Props) => (
         height: 34,
       }}
     >
-      <SearchIcon sx={{ fontSize: 15, color: "#9CA3AF", flexShrink: 0 }} />
+      <SearchIcon size={15} color="#9CA3AF" className="shrink-0" />
       <input
         ref={inputRef}
         value={value}

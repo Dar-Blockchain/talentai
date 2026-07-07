@@ -1,5 +1,5 @@
 import { Box, Typography, TextField, MenuItem, InputAdornment } from "@mui/material";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import { TrendingUp as TrendingUpIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { hardSkillLevels, softSkillLevels } from "@/modules/shared/constants/skills";
 import { inputStyle, labelSx } from "./styles";
@@ -32,7 +32,7 @@ const LevelField = ({ skillType, value, onChange }: Props) => {
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
-              <TrendingUpIcon sx={{ color: "rgba(98, 111, 134, 1)", width: "16px", height: "14px" }} />
+              <TrendingUpIcon size={16} color="rgba(98, 111, 134, 1)" />
             </InputAdornment>
           ),
         }}

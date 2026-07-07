@@ -18,7 +18,7 @@ const CardInfo: React.FC<Props> = ({ campaign, data }) => {
           className="size-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
           style={{ backgroundColor: `${moduleConf.color}18` }}
         >
-          <ModuleIcon style={{ fontSize: 18, color: moduleConf.color }} />
+          <ModuleIcon size={18} color={moduleConf.color} />
         </div>
       )}
       <div className="flex-1 min-w-0">

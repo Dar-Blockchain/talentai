@@ -5,7 +5,7 @@ import { useForm, Controller } from "react-hook-form";
 import {
   CheckCircle2, Clock, Users,
   Eye, EyeOff, Link2, Lock, ArrowRight, ArrowLeft,
-  Sparkles, Type, ClipboardList, CalendarIcon,
+  Sparkles, Type, ClipboardList,
 } from "lucide-react";
 import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
 import { getDashboardLayout } from "@/modules/shared/layouts";
@@ -17,8 +17,7 @@ import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Input } from "@/modules/shared/ui/shadcn/input";
 import { Label } from "@/modules/shared/ui/shadcn/label";
 import { Textarea } from "@/modules/shared/ui/shadcn/textarea";
-import { Popover, PopoverContent, PopoverTrigger } from "@/modules/shared/ui/shadcn/popover";
-import { Calendar } from "@/modules/shared/ui/shadcn/calendar";
+import { DatePicker } from "@/modules/shared/ui/DatePicker";
 import { cn } from "@/lib/utils";
 import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
@@ -126,51 +125,6 @@ const CardSection: React.FC<{
     <div className="p-4">{children}</div>
   </Card>
 );
-
-const DatePickerField: React.FC<{
-  value: string;
-  onChange: (v: string) => void;
-  error?: string;
-}> = ({ value, onChange, error }) => {
-  const [open, setOpen] = useState(false);
-  return (
-    <div>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
-            className={cn(
-              "w-full justify-start gap-2 h-10 text-sm font-normal",
-              !value && "text-muted-foreground",
-            )}
-          >
-            <CalendarIcon className="size-4 shrink-0 text-muted-foreground" />
-            {value ? dayjs(value).format("MMM D, YYYY") : "Pick a deadline date"}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={value ? new Date(value) : undefined}
-            onSelect={(date) => { onChange(date ? date.toISOString() : ""); setOpen(false); }}
-            disabled={{ before: new Date() }}
-          />
-        </PopoverContent>
-      </Popover>
-      {value && (
-        <button
-          type="button"
-          onClick={() => onChange("")}
-          className="mt-1 text-[11px] text-muted-foreground hover:text-destructive transition-colors"
-        >
-          Clear date
-        </button>
-      )}
-      <FieldError message={error} />
-    </div>
-  );
-};
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -338,7 +292,7 @@ const NewCampaignPage: NextPageWithLayout = () => {
                                   className="size-7 rounded-lg flex items-center justify-center shrink-0"
                                   style={{ backgroundColor: `${m.color}${isSelected ? "18" : "12"}` }}
                                 >
-                                  <Icon style={{ fontSize: 14, color: m.color }} />
+                                  <Icon size={14} color={m.color} />
                                 </div>
                                 <div className="flex items-center gap-1.5 flex-1 min-w-0">
                                   <p className="text-[12px] font-bold text-card-foreground truncate">{m.label}</p>
@@ -385,9 +339,12 @@ const NewCampaignPage: NextPageWithLayout = () => {
                               : true,
                         }}
                         render={({ field }) => (
-                          <DatePickerField
+                          <DatePicker
                             value={field.value}
                             onChange={field.onChange}
+                            placeholder="Pick a deadline date"
+                            minDate={new Date()}
+                            clearable
                             error={errors.deadline?.message}
                           />
                         )}

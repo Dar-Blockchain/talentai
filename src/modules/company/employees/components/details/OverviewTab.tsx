@@ -1,15 +1,17 @@
 import React, { memo, useMemo } from "react";
 import { Box, Typography, Chip } from "@mui/material";
 import { motion } from "framer-motion";
-import EmailOutlined from "@mui/icons-material/EmailOutlined";
-import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
-import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
-import BadgeOutlined from "@mui/icons-material/BadgeOutlined";
-import UpdateOutlined from "@mui/icons-material/UpdateOutlined";
-import CampaignOutlined from "@mui/icons-material/CampaignOutlined";
-import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
-import PsychologyOutlined from "@mui/icons-material/PsychologyOutlined";
-import WorkHistoryOutlined from "@mui/icons-material/WorkHistoryOutlined";
+import {
+  Mail as EmailOutlined,
+  Calendar as CalendarTodayOutlined,
+  Building2 as BusinessOutlined,
+  IdCard as BadgeOutlined,
+  RefreshCw as UpdateOutlined,
+  Megaphone as CampaignOutlined,
+  CheckCircle2 as CheckCircleOutlined,
+  Brain as PsychologyOutlined,
+  History as WorkHistoryOutlined,
+} from "lucide-react";
 import StatCard from "./StatCard";
 import MetricCard from "./MetricCard";
 import type { ExtendedMember } from "@/modules/company/employees/types";
@@ -46,10 +48,10 @@ const OverviewTab: React.FC<OverviewTabProps> = memo(({ member, email, roleLabel
   return (
     <motion.div {...MOTION_PROPS}>
       <Box sx={METRICS_GRID_SX}>
-        <MetricCard icon={<CampaignOutlined sx={{ fontSize: 20 }} />} iconColor="#8310FF" label="Campaigns"  value={campaignsValue}  sub="participated in" />
-        <MetricCard icon={<CheckCircleOutlined sx={{ fontSize: 20 }} />} iconColor="#16A34A" label="Interviews" value={interviewsValue} sub="passed" />
-        <MetricCard icon={<PsychologyOutlined sx={{ fontSize: 20 }} />} iconColor="#0891B2" label="Skills"     value={skillsValue}     sub="listed" />
-        <MetricCard icon={<WorkHistoryOutlined sx={{ fontSize: 20 }} />} iconColor="#D97706" label="Job Posts" value={jobPostsValue}   sub="created" />
+        <MetricCard icon={<CampaignOutlined size={20} />} iconColor="#8310FF" label="Campaigns"  value={campaignsValue}  sub="participated in" />
+        <MetricCard icon={<CheckCircleOutlined size={20} />} iconColor="#16A34A" label="Interviews" value={interviewsValue} sub="passed" />
+        <MetricCard icon={<PsychologyOutlined size={20} />} iconColor="#0891B2" label="Skills"     value={skillsValue}     sub="listed" />
+        <MetricCard icon={<WorkHistoryOutlined size={20} />} iconColor="#D97706" label="Job Posts" value={jobPostsValue}   sub="created" />
       </Box>
 
       {Array.isArray(member.skills) && member.skills.length > 0 && (
@@ -64,11 +66,11 @@ const OverviewTab: React.FC<OverviewTabProps> = memo(({ member, email, roleLabel
       )}
 
       <Box sx={STATS_GRID_SX}>
-        <StatCard icon={<EmailOutlined sx={{ fontSize: 18 }} />}         iconColor="#0891B2"   label="Email"        value={email} />
-        <StatCard icon={<BadgeOutlined sx={{ fontSize: 18 }} />}          iconColor={roleColor} label="Role"         value={roleLabel} />
-        <StatCard icon={<BusinessOutlined sx={{ fontSize: 18 }} />}      iconColor="#8B5CF6"   label="Department"   value={dept ?? "No department"} />
-        <StatCard icon={<CalendarTodayOutlined sx={{ fontSize: 18 }} />} iconColor="#16A34A"   label="Joined"       value={fmtDate(member.createdAt)} />
-        <StatCard icon={<UpdateOutlined sx={{ fontSize: 18 }} />}        iconColor="#D97706"   label="Last Updated" value={fmtDate(member.updatedAt)} />
+        <StatCard icon={<EmailOutlined size={18} />}         iconColor="#0891B2"   label="Email"        value={email} />
+        <StatCard icon={<BadgeOutlined size={18} />}          iconColor={roleColor} label="Role"         value={roleLabel} />
+        <StatCard icon={<BusinessOutlined size={18} />}      iconColor="#8B5CF6"   label="Department"   value={dept ?? "No department"} />
+        <StatCard icon={<CalendarTodayOutlined size={18} />} iconColor="#16A34A"   label="Joined"       value={fmtDate(member.createdAt)} />
+        <StatCard icon={<UpdateOutlined size={18} />}        iconColor="#D97706"   label="Last Updated" value={fmtDate(member.updatedAt)} />
       </Box>
     </motion.div>
   );

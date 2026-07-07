@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Box, Slider, Typography } from "@mui/material";
-import { TrackChangesOutlined } from "@mui/icons-material";
+import { Target as TrackChangesOutlined } from "lucide-react";
 import { useSelector, useDispatch, shallowEqual } from "react-redux";
 import type { RootState } from "@/store/store";
 import { useTranslation } from "react-i18next";
@@ -12,7 +12,7 @@ import { LoadingState, EmptyState } from "./post-preview/EmptyState";
 import DetailsSection from "./post-preview/DetailsSection";
 import SkillsSection from "./post-preview/SkillsSection";
 import ContentSection from "./post-preview/ContentSection";
-import SectionCard from "@/components/ui/SectionCard";
+import { Card } from "@/modules/shared/ui/shadcn/card";
 
 interface PostPreviewProps {
   generating?: boolean;
@@ -71,9 +71,9 @@ const PostPreview = ({ generating = false }: PostPreviewProps) => {
         onAdd={handleAdd}
       />
 
-      <SectionCard>
+      <Card className="p-6 gap-0">
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-          <TrackChangesOutlined sx={{ fontSize: 16, color: "#0D9488" }} />
+          <TrackChangesOutlined size={16} color="#0D9488" />
           <Typography variant="subtitle2" sx={{ color: "rgba(84, 98, 116, 1)", fontSize: "16px", fontWeight: 600 }}>
             Threshold Score
           </Typography>
@@ -97,7 +97,7 @@ const PostPreview = ({ generating = false }: PostPreviewProps) => {
               <Typography sx={{ fontSize: "16px", fontWeight: 800, color: sliderColor }}>{thresholdScore}%</Typography>
             </Box>
           </Box>
-      </SectionCard>
+      </Card>
 
       <ContentSection
         description={description}

@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import Link from "next/link";
 import { Receipt } from "lucide-react";
 import { Button } from "@/modules/shared/ui/shadcn/button";
-import MuiToast from "@/components/ui/Toast";
 import LoadingState from "@/modules/shared/ui/LoadingState";
 import { usePlans } from "@/modules/company/plans/hooks";
 import {
@@ -18,7 +17,6 @@ const PlansPage: NextPageWithLayout = function PlansPage() {
   const {
     sortedPlans, plansLoading, combinedLoading, cancelling,
     activeSubByPlanName, currentPlanName, cancellingPlanName, checkingOut, checkingOutPlanId,
-    snackbar, setSnackbar,
     confirmOpen, openCancelDialog, closeCancelDialog,
     contactOpen, setContactOpen,
     downgradePlan, openDowngradeDialog, closeDowngradeDialog,
@@ -41,13 +39,6 @@ const PlansPage: NextPageWithLayout = function PlansPage() {
         cancelling={cancelling}
         onClose={closeCancelDialog}
         onConfirm={handleConfirmCancel}
-      />
-
-      <MuiToast
-        open={snackbar.open}
-        message={snackbar.message}
-        severity={snackbar.severity}
-        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
       />
 
       <PageHeader

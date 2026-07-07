@@ -5,17 +5,18 @@ import {
 } from '@mui/material';
 import { Button } from '@/modules/shared/ui/shadcn/button';
 import {
-  MoreVert as MoreVertIcon,
+  MoreVertical as MoreVertIcon,
   Archive as ArchiveIcon,
-  Unarchive as UnarchiveIcon,
-  DeleteForever as DeleteForeverIcon,
-  WorkOutline as WorkOutlineIcon,
-  CheckCircleOutline as OpenIcon,
-  DraftsOutlined as DraftIcon,
-  HighlightOff as ClosedIcon,
-  TrackChangesOutlined as ThresholdIcon,
-} from '@mui/icons-material';
-import { Search, Loader2 } from 'lucide-react';
+  ArchiveRestore as UnarchiveIcon,
+  Trash2 as DeleteForeverIcon,
+  Briefcase as WorkOutlineIcon,
+  CheckCircle2 as OpenIcon,
+  FileText as DraftIcon,
+  XCircle as ClosedIcon,
+  Target as ThresholdIcon,
+  Search,
+  Loader2,
+} from 'lucide-react';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Pagination } from '@/modules/shared/ui/shadcn/pagination';
@@ -183,7 +184,7 @@ const PostsManagement: React.FC = () => {
                     <td className={TD}><span className="text-slate-500">{formatDate(post.createdAt)}</span></td>
                     <td className={TD}>
                       <IconButton size="small" onClick={(e) => openMenu(e, post)} sx={{ color: ADMIN_NEUTRAL }}>
-                        <MoreVertIcon fontSize="small" />
+                        <MoreVertIcon size={18} />
                       </IconButton>
                     </td>
                   </tr>
@@ -209,15 +210,15 @@ const PostsManagement: React.FC = () => {
 
       <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
         <MenuItem onClick={handleEditThreshold}>
-          <ListItemIcon><ThresholdIcon fontSize="small" /></ListItemIcon>
+          <ListItemIcon><ThresholdIcon size={18} /></ListItemIcon>
           <ListItemText>Edit threshold</ListItemText>
         </MenuItem>
         <MenuItem onClick={handleArchiveToggle}>
-          <ListItemIcon>{menuPost?.archived ? <UnarchiveIcon fontSize="small" /> : <ArchiveIcon fontSize="small" />}</ListItemIcon>
+          <ListItemIcon>{menuPost?.archived ? <UnarchiveIcon size={18} /> : <ArchiveIcon size={18} />}</ListItemIcon>
           <ListItemText>{menuPost?.archived ? 'Unarchive' : 'Archive'}</ListItemText>
         </MenuItem>
         <MenuItem onClick={handleDeleteRequest} sx={{ color: '#DC2626' }}>
-          <ListItemIcon sx={{ color: '#DC2626' }}><DeleteForeverIcon fontSize="small" /></ListItemIcon>
+          <ListItemIcon sx={{ color: '#DC2626' }}><DeleteForeverIcon size={18} /></ListItemIcon>
           <ListItemText>Delete permanently</ListItemText>
         </MenuItem>
       </Menu>

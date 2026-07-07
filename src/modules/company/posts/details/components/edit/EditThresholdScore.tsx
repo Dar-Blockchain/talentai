@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Slider, Typography } from "@mui/material";
-import TrackChangesOutlined from "@mui/icons-material/TrackChangesOutlined";
+import { Target as TrackChangesOutlined } from "lucide-react";
 import { Controller, Control } from "react-hook-form";
 
 import { TEAL } from "@/modules/company/posts/shared/constants";
@@ -18,7 +18,7 @@ const MARKS = [
 const EditThresholdScore: React.FC<Props> = ({ control }) => (
   <Box sx={{ mt: 3 }}>
     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-      <TrackChangesOutlined sx={{ fontSize: 16, color: TEAL }} />
+      <TrackChangesOutlined size={16} color={TEAL} />
       <Typography variant="subtitle2" sx={{ color: "rgba(84,98,116,1)", fontSize: "16px", fontWeight: 600 }}>
         Threshold Score
       </Typography>

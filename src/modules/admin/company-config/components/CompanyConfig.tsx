@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Alert, Snackbar, CircularProgress } from '@mui/material';
-import BusinessIcon from '@mui/icons-material/Business';
+import { toast } from 'sonner';
+import { Alert, CircularProgress } from '@mui/material';
+import { Building2 as BusinessIcon } from 'lucide-react';
 import { AppDispatch } from '@/store/store';
 import { fetchPlanLimits } from '../api';
 import { selectPlanLimits, selectPlanLimitsLoading, selectPlanLimitsError } from '../queries';
@@ -15,8 +16,6 @@ const CompanyConfig: React.FC = () => {
   const plans = useSelector(selectPlanLimits);
   const loading = useSelector(selectPlanLimitsLoading);
   const error = useSelector(selectPlanLimitsError);
-
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 
   useEffect(() => {
     dispatch(fetchPlanLimits());
@@ -47,18 +46,18 @@ const CompanyConfig: React.FC = () => {
       <PlanOverviewGrid
         plans={plans}
         onSaved={(planName, mode) =>
-          setSnackbar({ open: true, message: mode === 'created' ? `Plan "${planName}" created.` : `Plan "${planName}" updated.`, severity: 'success' })
+          toast.success(mode === 'created' ? `Plan "${planName}" created.` : `Plan "${planName}" updated.`)
         }
-        onError={(message) => setSnackbar({ open: true, message, severity: 'error' })}
+        onError={(message) => toast.error(message)}
       />
 
       {/* Subscribe a company */}
       <SubscribeCompanyCard
         plans={plans}
         onSubscribed={(companyName, planName) =>
-          setSnackbar({ open: true, message: `${companyName} subscribed to ${planName} successfully!`, severity: 'success' })
+          toast.success(`${companyName} subscribed to ${planName} successfully!`)
         }
-        onError={(message) => setSnackbar({ open: true, message, severity: 'error' })}
+        onError={(message) => toast.error(message)}
      />
 
       {plans.length === 0 && !loading && (
@@ -72,22 +71,6 @@ const CompanyConfig: React.FC = () => {
         <ZoneHeading icon={BusinessIcon} label="All Companies" />
         <CompanySubscriptionsTable />
       </div>
-
-      {/* Snackbar */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-          severity={snackbar.severity}
-          sx={{ borderRadius: '10px' }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </div>
   );
 };

@@ -4,21 +4,23 @@ import { useTranslation } from "react-i18next";
 import { Box, Breadcrumbs, Chip, IconButton, Menu, MenuItem, Tab, Tabs, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 import MuiLink from "@mui/material/Link";
-import NavigateNextIcon        from "@mui/icons-material/NavigateNext";
-import WorkOutlineOutlined     from "@mui/icons-material/WorkOutline";
-import LocationOnOutlined      from "@mui/icons-material/LocationOn";
-import LaptopOutlined          from "@mui/icons-material/Laptop";
-import BusinessCenterOutlined  from "@mui/icons-material/BusinessCenter";
-import SignalCellularAltOutlined from "@mui/icons-material/SignalCellularAlt";
-import CalendarTodayOutlined   from "@mui/icons-material/CalendarToday";
-import MicOutlined             from "@mui/icons-material/Mic";
-import PublishOutlined         from "@mui/icons-material/PublishOutlined";
-import QrCode2Outlined         from "@mui/icons-material/QrCode2";
-import ContentCopyOutlined     from "@mui/icons-material/ContentCopy";
-import MoreVertOutlined        from "@mui/icons-material/MoreVert";
-import EditOutlined            from "@mui/icons-material/EditOutlined";
-import DeleteOutlineOutlined   from "@mui/icons-material/DeleteOutline";
-import PeopleOutlined          from "@mui/icons-material/PeopleOutlined";
+import {
+  ChevronRight as NavigateNextIcon,
+  Briefcase as WorkOutlineOutlined,
+  MapPin as LocationOnOutlined,
+  Laptop as LaptopOutlined,
+  Building2 as BusinessCenterOutlined,
+  SignalHigh as SignalCellularAltOutlined,
+  Calendar as CalendarTodayOutlined,
+  Mic as MicOutlined,
+  Rocket as PublishOutlined,
+  QrCode as QrCode2Outlined,
+  Copy as ContentCopyOutlined,
+  MoreVertical as MoreVertOutlined,
+  Pencil as EditOutlined,
+  Trash2 as DeleteOutlineOutlined,
+  Users as PeopleOutlined,
+} from "lucide-react";
 
 import { TEAL } from "@/modules/company/posts/shared/constants";
 
@@ -27,7 +29,7 @@ const DOT = <Typography sx={{ fontSize: "12px", color: "#D1D5DB" }}>·</Typograp
 interface MetaItemProps { Icon: React.ElementType; label: string }
 const MetaItem: React.FC<MetaItemProps> = ({ Icon, label }) => (
   <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-    <Icon sx={{ fontSize: 13, color: "#9CA3AF" }} />
+    <Icon size={13} color="#9CA3AF" />
     <Typography sx={{ fontSize: "12px", color: "#6B7280", fontWeight: 500 }}>{label}</Typography>
   </Box>
 );
@@ -87,7 +89,7 @@ const JobDetailHeader: React.FC<Props> = ({
       <Box sx={{ px: { xs: 2.5, md: 3 }, pt: 2.5, pb: isDraft ? 2.5 : 0 }}>
 
         {/* Breadcrumbs */}
-        <Breadcrumbs separator={<NavigateNextIcon sx={{ fontSize: 14, color: "#D1D5DB" }} />} sx={{ mb: 2, "& .MuiBreadcrumbs-separator": { mx: 0.25 } }}>
+        <Breadcrumbs separator={<NavigateNextIcon size={14} color="#D1D5DB" />} sx={{ mb: 2, "& .MuiBreadcrumbs-separator": { mx: 0.25 } }}>
           {[
             { label: td("pages.common.dashboard"), href: "/company/dashboard" },
             { label: t("title"),                   href: "/company/posts" },
@@ -109,7 +111,7 @@ const JobDetailHeader: React.FC<Props> = ({
           {/* Left: icon + title + meta */}
           <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2, flex: 1, minWidth: 0 }}>
             <Box sx={{ width: 52, height: 52, borderRadius: "12px", flexShrink: 0, background: `linear-gradient(135deg, ${TEAL}, #34D399)`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 4px 12px ${TEAL}30` }}>
-              <WorkOutlineOutlined sx={{ fontSize: 26, color: "#fff" }} />
+              <WorkOutlineOutlined size={26} color="#fff" />
             </Box>
             <Box sx={{ minWidth: 0 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", mb: 0.75 }}>
@@ -137,24 +139,24 @@ const JobDetailHeader: React.FC<Props> = ({
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}>
             {isDraft && isOwner && (
               <Box onClick={onOpenLanguages} sx={actionBtnSx("#F0FDFA", "#99F6E4", "#CCFBF1")}>
-                <MicOutlined sx={{ fontSize: 15, color: TEAL }} />
+                <MicOutlined size={15} color={TEAL} />
                 <Typography sx={{ fontSize: "13px", fontWeight: 600, color: TEAL, lineHeight: 1 }}>{t("detail.actions.edit_languages")}</Typography>
               </Box>
             )}
             {isDraft && isOwner && (
               <Box onClick={onPublish} sx={{ display: "flex", alignItems: "center", gap: 0.75, px: 1.75, height: 36, borderRadius: "10px", cursor: "pointer", bgcolor: "#D97706", transition: "background 0.15s", "&:hover": { bgcolor: "#B45309" } }}>
-                <PublishOutlined sx={{ fontSize: 15, color: "#fff" }} />
+                <PublishOutlined size={15} color="#fff" />
                 <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#fff", lineHeight: 1 }}>{t("detail.actions.publish")}</Typography>
               </Box>
             )}
             {!isDraft && (
               <>
                 <Box onClick={onOpenQr} sx={actionBtnSx("#F0FDF4", "#A7F3D0", "#DCFCE7")}>
-                  <QrCode2Outlined sx={{ fontSize: 14, color: "#059669" }} />
+                  <QrCode2Outlined size={14} color="#059669" />
                   <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#059669", lineHeight: 1 }}>{t("detail.actions.qr_link")}</Typography>
                 </Box>
                 <Box onClick={onCopyLink} sx={actionBtnSx("#F0FDF4", "#A7F3D0", "#DCFCE7")}>
-                  <ContentCopyOutlined sx={{ fontSize: 14, color: "#059669" }} />
+                  <ContentCopyOutlined size={14} color="#059669" />
                   <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#059669", lineHeight: 1 }}>{t("detail.actions.copy_link")}</Typography>
                 </Box>
               </>
@@ -162,7 +164,7 @@ const JobDetailHeader: React.FC<Props> = ({
             {isOwner && (
               <>
                 <IconButton onClick={onMenuOpen} sx={{ width: 36, height: 36, borderRadius: "10px", border: "1.5px solid #E5E7EB", bgcolor: "#fff", color: "#6B7280", transition: "all 0.15s", "&:hover": { borderColor: "#D1D5DB", bgcolor: "#F9FAFB", color: "#374151" } }}>
-                  <MoreVertOutlined sx={{ fontSize: 18 }} />
+                  <MoreVertOutlined size={18} />
                 </IconButton>
                 <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={onMenuClose}
                   transformOrigin={{ horizontal: "right", vertical: "top" }}
@@ -175,7 +177,7 @@ const JobDetailHeader: React.FC<Props> = ({
                         sx={{ mx: 0.5, borderRadius: "8px", gap: 1.25, py: 1, px: 1.25, "&:hover": { bgcolor: "#F0FDFA" }, "&.Mui-disabled": { opacity: 0.45 } }}
                       >
                         <Box sx={{ width: 28, height: 28, borderRadius: "7px", bgcolor: "#F0FDFA", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <EditOutlined sx={{ fontSize: 14, color: TEAL }} />
+                          <EditOutlined size={14} color={TEAL} />
                         </Box>
                         <Box>
                           <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>{t("detail.menu.edit_title")}</Typography>
@@ -189,7 +191,7 @@ const JobDetailHeader: React.FC<Props> = ({
                     sx={{ mx: 0.5, borderRadius: "8px", gap: 1.25, py: 1, px: 1.25, "&:hover": { bgcolor: "#FEF2F2" } }}
                   >
                     <Box sx={{ width: 28, height: 28, borderRadius: "7px", bgcolor: "#FEF2F2", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <DeleteOutlineOutlined sx={{ fontSize: 14, color: "#EF4444" }} />
+                      <DeleteOutlineOutlined size={14} color="#EF4444" />
                     </Box>
                     <Box>
                       <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#EF4444", lineHeight: 1.2 }}>{t("detail.menu.delete_title")}</Typography>
@@ -207,8 +209,8 @@ const JobDetailHeader: React.FC<Props> = ({
           <Tabs value={activeTab} onChange={(_, v) => onTabChange(v)}
             sx={{ mt: 2.5, minHeight: 44, "& .MuiTab-root": { textTransform: "none", fontWeight: 600, fontSize: "13px", minHeight: 44, px: 1.5, mr: 0.5, gap: 0.75, color: "#9CA3AF", "&.Mui-selected": { color: TEAL } }, "& .MuiTabs-indicator": { bgcolor: TEAL, height: 2.5, borderRadius: "2px 2px 0 0" } }}
           >
-            <Tab value="details"      label={t("detail.tabs.details")}      icon={<WorkOutlineOutlined sx={{ fontSize: 15 }} />} iconPosition="start" />
-            <Tab value="applications" label={t("detail.tabs.applications")} icon={<PeopleOutlined      sx={{ fontSize: 15 }} />} iconPosition="start" />
+            <Tab value="details"      label={t("detail.tabs.details")}      icon={<WorkOutlineOutlined size={15} />} iconPosition="start" />
+            <Tab value="applications" label={t("detail.tabs.applications")} icon={<PeopleOutlined      size={15} />} iconPosition="start" />
           </Tabs>
         )}
       </Box>

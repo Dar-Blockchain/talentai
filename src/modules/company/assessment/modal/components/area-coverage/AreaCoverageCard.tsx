@@ -1,5 +1,5 @@
 import React from "react";
-import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
+import { CheckCircle2 as CheckCircleOutlined } from "lucide-react";
 import { AreaData } from "../../types";
 import { ScoreBar, scoreTheme } from "../ui";
 
@@ -21,7 +21,7 @@ const AreaCoverageCard: React.FC<Props> = ({ area, data }) => {
             <span className="text-[0.875rem] font-bold text-slate-800 capitalize">
               {area.replace(/_/g, " ")}
             </span>
-            {data.completed && <CheckCircleOutlined style={{ fontSize: 14, color: "#10B981" }} />}
+            {data.completed && <CheckCircleOutlined size={14} color="#10B981" />}
           </div>
           <div className="flex items-center gap-2">
             {data.weight > 0 && (

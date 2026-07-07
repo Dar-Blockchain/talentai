@@ -4,13 +4,15 @@ import {
   Box, Chip, Divider, FormControl, InputBase,
   ListSubheader, MenuItem, Select, Typography,
 } from "@mui/material";
-import SearchOutlined from "@mui/icons-material/SearchOutlined";
-import SortOutlined from "@mui/icons-material/SortOutlined";
-import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
-import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
-import StarOutlineOutlined from "@mui/icons-material/StarOutlineOutlined";
-import PsychologyOutlined from "@mui/icons-material/PsychologyOutlined";
-import SortByAlphaOutlined from "@mui/icons-material/SortByAlphaOutlined";
+import {
+  Search as SearchOutlined,
+  ArrowDownUp as SortOutlined,
+  Users as PeopleAltOutlined,
+  Calendar as CalendarTodayOutlined,
+  Star as StarOutlineOutlined,
+  Brain as PsychologyOutlined,
+  ArrowDownAZ as SortByAlphaOutlined,
+} from "lucide-react";
 
 import { TEAL } from "@/modules/company/posts/shared/constants";
 
@@ -75,7 +77,7 @@ const ApplicationsToolbar: React.FC<Props> = ({
       {/* Title + count */}
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
         <Box sx={{ width: 32, height: 32, borderRadius: "8px", bgcolor: `${TEAL}15`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <PeopleAltOutlined sx={{ fontSize: 17, color: TEAL }} />
+          <PeopleAltOutlined size={17} color={TEAL} />
         </Box>
         <Typography sx={{ fontWeight: 700, fontSize: "15px", color: "#111827" }}>{t("pages.applications.title")}</Typography>
         {!loading && totalCount !== undefined && (
@@ -88,7 +90,7 @@ const ApplicationsToolbar: React.FC<Props> = ({
       <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
         {/* Search */}
         <Box sx={{ display: "flex", alignItems: "center", bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "8px", px: 1.25, height: 34, minWidth: 210, "&:focus-within": { borderColor: TEAL }, transition: "border-color 0.15s" }}>
-          <SearchOutlined sx={{ fontSize: 15, color: "#9CA3AF", mr: 0.75 }} />
+          <SearchOutlined size={15} color="#9CA3AF" className="mr-1.5" />
           <InputBase
             placeholder={t("pages.applications.search_placeholder")}
             value={searchInput}
@@ -112,7 +114,7 @@ const ApplicationsToolbar: React.FC<Props> = ({
           <Select
             value={sort}
             onChange={(e) => onSortChange(e.target.value)}
-            startAdornment={<SortOutlined sx={{ fontSize: 14, color: "#9CA3AF", mr: 0.5 }} />}
+            startAdornment={<SortOutlined size={14} color="#9CA3AF" className="mr-1" />}
             renderValue={(val) => {
               const opt = SORT_GROUP_DEFS.flatMap(g => g.options).find(o => o.value === val);
               return <Typography sx={{ fontSize: "13px", color: "#374151" }}>{opt ? t(opt.labelKey) : t("pages.applications.sort.most_recent")}</Typography>;
@@ -122,7 +124,7 @@ const ApplicationsToolbar: React.FC<Props> = ({
           >
             {SORT_GROUP_DEFS.flatMap((group, gi) => [
               <ListSubheader key={`h-${gi}`} sx={{ display: "flex", alignItems: "center", gap: 0.75, fontSize: "10px", fontWeight: 700, color: group.color, textTransform: "uppercase", letterSpacing: "0.06em", lineHeight: "32px", bgcolor: "#fff", px: 1.5 }}>
-                <group.Icon sx={{ fontSize: 12 }} />{t(group.labelKey)}
+                <group.Icon size={12} />{t(group.labelKey)}
               </ListSubheader>,
               ...group.options.map(({ value, labelKey }) => (
                 <MenuItem key={value} value={value} sx={{ mx: 0.5, borderRadius: "8px", py: 0.75, px: 1.5, "&:hover": { bgcolor: `${group.color}0D` }, "&.Mui-selected": { bgcolor: `${group.color}12`, "&:hover": { bgcolor: `${group.color}1A` } } }}>

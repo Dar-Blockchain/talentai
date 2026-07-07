@@ -3,9 +3,7 @@ import { Box, Typography } from "@mui/material";
 import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import { RootState } from "@/store/store";
-import PsychologyOutlined from "@mui/icons-material/PsychologyOutlined";
-import CodeOutlined from "@mui/icons-material/CodeOutlined";
-import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
+import { Brain as PsychologyOutlined, Code2 as CodeOutlined, Users as PeopleOutlined } from "lucide-react";
 
 const T    = "#0D9488";
 const TBG  = "#F0FDFA";
@@ -31,7 +29,7 @@ const SkillsHeader: React.FC = () => {
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 2 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <Box sx={{ width: 42, height: 42, borderRadius: "12px", bgcolor: TBG, border: `1px solid ${TBD}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <PsychologyOutlined sx={{ fontSize: 22, color: T }} />
+            <PsychologyOutlined size={22} color={T} />
           </Box>
           <Box>
             <Typography sx={{ fontSize: "1.2rem", fontWeight: 900, color: NAVY, lineHeight: 1 }}>{s("title")}</Typography>

@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { Button } from "@/modules/shared/ui/shadcn/button";
-import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
+import { Sparkles as AutoAwesomeOutlined } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface Props {
@@ -18,7 +18,7 @@ const GenerateButton = ({ loading, onClick }: Props) => {
         disabled={loading}
         loading={loading}
       >
-        {!loading && <AutoAwesomeOutlined sx={{ fontSize: 17 }} />}
+        {!loading && <AutoAwesomeOutlined size={17} />}
         {loading ? t("create.form.btn_generating") : t("create.form.btn_generate")}
       </Button>
     </Box>

@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
-import SectionCard from "@/components/ui/SectionCard";
+import { Card } from "@/modules/shared/ui/shadcn/card";
 import SectionTitle from "./SectionTitle";
 
 interface Props {
@@ -14,7 +14,7 @@ const BulletListCard: React.FC<Props> = ({ icon, title, items, bulletColor = "#0
   if (!items.length) return null;
 
   return (
-    <SectionCard>
+    <Card className="p-6 gap-0">
       <SectionTitle icon={icon} title={title} />
       <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
         {items.map((item, i) => (
@@ -24,7 +24,7 @@ const BulletListCard: React.FC<Props> = ({ icon, title, items, bulletColor = "#0
           </Box>
         ))}
       </Box>
-    </SectionCard>
+    </Card>
   );
 };
 

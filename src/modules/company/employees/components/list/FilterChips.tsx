@@ -1,9 +1,9 @@
 import React, { memo } from "react";
 import { Box, Typography, Chip } from "@mui/material";
-import CloseOutlined from "@mui/icons-material/CloseOutlined";
+import { X as CloseOutlined } from "lucide-react";
 import { ROLES } from "@/modules/shared/constants/employee";
 
-const DELETE_ICON_STYLE = { fontSize: 11 } as const;
+const DELETE_ICON_SIZE = 11;
 
 const BASE_CHIP_SX = {
   height: 24,
@@ -34,7 +34,7 @@ const CONTAINER_SX = { display: "flex", alignItems: "center", gap: 0.75, mb: 2, 
 const LABEL_SX = { fontSize: "11px", fontWeight: 600, color: "#9CA3AF", mr: 0.25 } as const;
 const CLEAR_ALL_SX = { fontSize: "11px", fontWeight: 600, color: "#9CA3AF", cursor: "pointer", ml: 0.5, "&:hover": { color: "#374151" }, transition: "color 0.15s" } as const;
 
-const deleteIcon = <CloseOutlined style={DELETE_ICON_STYLE} />;
+const deleteIcon = <CloseOutlined size={DELETE_ICON_SIZE} />;
 
 function roleChipSx(color: string) {
   return {

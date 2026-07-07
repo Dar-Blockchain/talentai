@@ -11,11 +11,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import { Button } from "@/modules/shared/ui/shadcn/button";
-import CloseIcon from "@mui/icons-material/Close";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
-import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
+import { X as CloseIcon, Play as PlayArrowIcon, CheckCircle2 as CheckCircleOutlineIcon, Hourglass as HourglassEmptyIcon, Circle as RadioButtonUncheckedIcon } from "lucide-react";
 import { PostAssessment } from "./AssessmentCard";
 
 interface StepInfoModalProps {
@@ -30,11 +26,11 @@ const getStepIcon = (status: string) => {
   switch (status) {
     case "done":
     case "passed":
-      return <CheckCircleOutlineIcon sx={{ fontSize: 20, color: "#10b981" }} />;
+      return <CheckCircleOutlineIcon size={20} color="#10b981" />;
     case "inProgress":
-      return <HourglassEmptyIcon sx={{ fontSize: 20, color: "#f59e0b" }} />;
+      return <HourglassEmptyIcon size={20} color="#f59e0b" />;
     default:
-      return <RadioButtonUncheckedIcon sx={{ fontSize: 20, color: "#9ca3af" }} />;
+      return <RadioButtonUncheckedIcon size={20} color="#9ca3af" />;
   }
 };
 

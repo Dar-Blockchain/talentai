@@ -1,17 +1,19 @@
 import React from "react";
 import { Box, Typography, FormControl, Select, MenuItem, InputBase, ListSubheader, Divider, Tooltip } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import AddOutlined from "@mui/icons-material/AddOutlined";
 import { Button } from "@/modules/shared/ui/shadcn/button";
-import WorkOutlineOutlined from "@mui/icons-material/WorkOutlineOutlined";
-import SearchOutlined from "@mui/icons-material/SearchOutlined";
-import SortOutlined from "@mui/icons-material/SortOutlined";
-import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
-import SortByAlphaOutlined from "@mui/icons-material/SortByAlphaOutlined";
-import CheckCircleOutlineOutlined from "@mui/icons-material/CheckCircleOutline";
-import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
-import EditNoteOutlined from "@mui/icons-material/EditNoteOutlined";
-import FilterListOutlined from "@mui/icons-material/FilterListOutlined";
+import {
+  Plus as AddOutlined,
+  Briefcase as WorkOutlineOutlined,
+  Search as SearchOutlined,
+  ArrowDownUp as SortOutlined,
+  Calendar as CalendarTodayOutlined,
+  ArrowDownAZ as SortByAlphaOutlined,
+  CheckCircle2 as CheckCircleOutlineOutlined,
+  Sparkles as AutoAwesomeOutlined,
+  FileEdit as EditNoteOutlined,
+  ListFilter as FilterListOutlined,
+} from "lucide-react";
 import type { StatusFilter, SortOption, TypeFilter } from "../types";
 
 import { TEAL } from "@/modules/company/posts/shared/constants";
@@ -97,7 +99,7 @@ const PostsToolbar: React.FC<PostsToolbarProps> = ({
         {/* Title + count */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <Box sx={{ width: 40, height: 40, borderRadius: "10px", bgcolor: `${TEAL}12`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <WorkOutlineOutlined sx={{ fontSize: 20, color: TEAL }} />
+            <WorkOutlineOutlined size={20} color={TEAL} />
           </Box>
           <Box>
             <Typography sx={{ fontWeight: 800, fontSize: "1.1rem", color: "#111827", lineHeight: 1.2 }}>{t("title")}</Typography>
@@ -112,14 +114,14 @@ const PostsToolbar: React.FC<PostsToolbarProps> = ({
 
           {/* Search */}
           <Box sx={{ display: "flex", alignItems: "center", bgcolor: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "8px", px: 1.25, height: 34, width: { xs: "100%", sm: 220, md: 300, lg: 380 }, "&:focus-within": { borderColor: TEAL }, transition: "border-color 0.15s" }}>
-            <SearchOutlined sx={{ fontSize: 15, color: "#9CA3AF", mr: 0.75 }} />
+            <SearchOutlined size={15} color="#9CA3AF" className="mr-1.5" />
             <InputBase placeholder={t("search_placeholder")} value={search} onChange={(e) => onSearchChange(e.target.value)} sx={{ fontSize: "13px", flex: 1 }} />
           </Box>
 
           {/* Status filter */}
           <FormControl size="small">
             <Select value={statusFilter} onChange={(e) => onStatusChange(e.target.value as StatusFilter)} displayEmpty
-              startAdornment={<CheckCircleOutlineOutlined sx={{ fontSize: 14, color: "#9CA3AF", mr: 0.5 }} />}
+              startAdornment={<CheckCircleOutlineOutlined size={14} color="#9CA3AF" className="mr-1" />}
               renderValue={(val) => {
                 const opt = statusOpts.find((o) => o.value === val);
                 return <Typography sx={{ fontSize: "13px", color: val === "all" ? "#9CA3AF" : (opt?.color ?? "#374151") }}>{opt?.label ?? t("status.all")}</Typography>;
@@ -143,7 +145,7 @@ const PostsToolbar: React.FC<PostsToolbarProps> = ({
                 const Icon = opt?.Icon ?? FilterListOutlined;
                 return (
                   <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                    <Icon sx={{ fontSize: 14, color: val === "all" ? "#9CA3AF" : opt?.color }} />
+                    <Icon size={14} color={val === "all" ? "#9CA3AF" : opt?.color} />
                     <Typography sx={{ fontSize: "13px", color: val === "all" ? "#9CA3AF" : opt?.color }}>{opt?.label ?? t("type.all")}</Typography>
                   </Box>
                 );
@@ -155,7 +157,7 @@ const PostsToolbar: React.FC<PostsToolbarProps> = ({
                 <MenuItem key={value} value={value} sx={{ mx: 0.5, borderRadius: "8px", py: 0.75, px: 1.25, gap: 1, "&:hover": { bgcolor: `${color}0D` }, "&.Mui-selected": { bgcolor: `${color}12`, "&:hover": { bgcolor: `${color}1A` } } }}>
                   {value !== "all" && (
                     <Box sx={{ width: 20, height: 20, borderRadius: "5px", bgcolor: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <Icon sx={{ fontSize: 11, color }} />
+                      <Icon size={11} color={color} />
                     </Box>
                   )}
                   <Typography sx={{ fontSize: "13px", fontWeight: typeFilter === value ? 700 : 400, color: typeFilter === value ? color : "#374151" }}>{label}</Typography>
@@ -167,7 +169,7 @@ const PostsToolbar: React.FC<PostsToolbarProps> = ({
           {/* Sort */}
           <FormControl size="small">
             <Select value={sortBy} onChange={(e) => onSortChange(e.target.value as SortOption)}
-              startAdornment={<SortOutlined sx={{ fontSize: 14, color: "#9CA3AF", mr: 0.5 }} />}
+              startAdornment={<SortOutlined size={14} color="#9CA3AF" className="mr-1" />}
               renderValue={(val) => {
                 const opt = sortFlat.find((o) => o.value === val);
                 return <Typography sx={{ fontSize: "13px", color: "#374151" }}>{opt?.label ?? td("pages.common.sort")}</Typography>;
@@ -177,7 +179,7 @@ const PostsToolbar: React.FC<PostsToolbarProps> = ({
             >
               {sortGroups.flatMap((group, gi) => [
                 <ListSubheader key={`h-${gi}`} sx={{ display: "flex", alignItems: "center", gap: 0.75, fontSize: "10px", fontWeight: 700, color: group.color, textTransform: "uppercase", letterSpacing: "0.06em", lineHeight: "32px", bgcolor: "#fff", px: 1.5 }}>
-                  <group.Icon sx={{ fontSize: 12 }} />{group.label}
+                  <group.Icon size={12} />{group.label}
                 </ListSubheader>,
                 ...group.options.map(({ value, label }) => (
                   <MenuItem key={value} value={value} sx={{ mx: 0.5, borderRadius: "8px", py: 0.75, px: 1.5, "&:hover": { bgcolor: `${group.color}0D` }, "&.Mui-selected": { bgcolor: `${group.color}12`, "&:hover": { bgcolor: `${group.color}1A` } } }}>
@@ -199,7 +201,7 @@ const PostsToolbar: React.FC<PostsToolbarProps> = ({
                 disabled={postsAtLimit}
                 onClick={onCreateClick}
               >
-                <AddOutlined sx={{ fontSize: 16 }} />
+                <AddOutlined size={16} />
                 {postsAtLimit ? t("limit_reached", { used: postsUsed, limit: postsLimit }) : t("new_post")}
               </Button>
             </span>

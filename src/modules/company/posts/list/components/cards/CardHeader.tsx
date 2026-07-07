@@ -1,14 +1,16 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Box, IconButton, Menu, MenuItem, Typography } from "@mui/material";
-import WorkOutlineOutlined from "@mui/icons-material/WorkOutlineOutlined";
-import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
-import EditNoteOutlined from "@mui/icons-material/EditNoteOutlined";
-import MoreVertOutlined from "@mui/icons-material/MoreVert";
-import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
-import OpenInNewOutlined from "@mui/icons-material/OpenInNewOutlined";
-import ContentCopyOutlined from "@mui/icons-material/ContentCopyOutlined";
-import PublishOutlined from "@mui/icons-material/PublishOutlined";
+import {
+  Briefcase as WorkOutlineOutlined,
+  Sparkles as AutoAwesomeOutlined,
+  FileEdit as EditNoteOutlined,
+  MoreVertical as MoreVertOutlined,
+  Trash2 as DeleteOutlineOutlined,
+  ExternalLink as OpenInNewOutlined,
+  Copy as ContentCopyOutlined,
+  Rocket as PublishOutlined,
+} from "lucide-react";
 import { useRouter } from "next/router";
 
 const CREATION_TYPE: Record<string, { i18nKey: string; color: string; bg: string; Icon: React.ElementType }> = {
@@ -52,7 +54,7 @@ const CardHeader: React.FC<Props> = ({
   return (
     <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.25 }}>
       <Box sx={{ width: 44, height: 44, borderRadius: "11px", flexShrink: 0, bgcolor: "#F3F4F6", border: "1px solid #E5E7EB", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <WorkOutlineOutlined sx={{ fontSize: 20, color: "#6B7280" }} />
+        <WorkOutlineOutlined size={20} color="#6B7280" />
       </Box>
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -61,7 +63,7 @@ const CardHeader: React.FC<Props> = ({
         </Typography>
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
           <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.4, px: "7px", py: "3px", borderRadius: "5px", bgcolor: ctInfo.bg, border: `1px solid ${ctInfo.color}28` }}>
-            <CtIcon sx={{ fontSize: 10, color: ctInfo.color }} />
+            <CtIcon size={10} color={ctInfo.color} />
             <Typography sx={{ fontSize: "10.5px", fontWeight: 700, color: ctInfo.color, lineHeight: 1 }}>
               {t(`card.creation_type.${ctInfo.i18nKey}`)}
             </Typography>
@@ -80,7 +82,7 @@ const CardHeader: React.FC<Props> = ({
         onClick={(e) => { e.stopPropagation(); onMenuOpen(e); }}
         sx={{ color: "#9CA3AF", borderRadius: "6px", p: 0.3, flexShrink: 0, "&:hover": { bgcolor: "#F3F4F6", color: "#374151" } }}
       >
-        <MoreVertOutlined sx={{ fontSize: 15 }} />
+        <MoreVertOutlined size={15} />
       </IconButton>
 
       <Menu
@@ -100,7 +102,7 @@ const CardHeader: React.FC<Props> = ({
 
         <MenuItem onClick={(e) => { e.stopPropagation(); onMenuClose(); router.push(`/company/posts/${jobId}`); }} sx={{ gap: 1.25, borderRadius: "8px", py: 0.9, px: 1.25, "&:hover": { bgcolor: "#F5F5F5", "& .menu-icon-box": { bgcolor: "#E9E9E9" } } }}>
           <Box className="menu-icon-box" sx={{ width: 26, height: 26, borderRadius: "7px", bgcolor: "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background 0.15s" }}>
-            <OpenInNewOutlined sx={{ fontSize: 13, color: "#6B7280" }} />
+            <OpenInNewOutlined size={13} color="#6B7280" />
           </Box>
           <Box>
             <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>{t("card.menu.view_title")}</Typography>
@@ -111,7 +113,7 @@ const CardHeader: React.FC<Props> = ({
         {isDraft && onPublish && (
           <MenuItem onClick={(e) => { e.stopPropagation(); onMenuClose(); onPublish(); }} sx={{ gap: 1.25, borderRadius: "8px", py: 0.9, px: 1.25, "&:hover": { bgcolor: "#ECFDF5", "& .menu-icon-box": { bgcolor: "#D1FAE5" } } }}>
             <Box className="menu-icon-box" sx={{ width: 26, height: 26, borderRadius: "7px", bgcolor: "#ECFDF5", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background 0.15s" }}>
-              <PublishOutlined sx={{ fontSize: 13, color: "#059669" }} />
+              <PublishOutlined size={13} color="#059669" />
             </Box>
             <Box>
               <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>{t("card.menu.publish_title")}</Typography>
@@ -123,7 +125,7 @@ const CardHeader: React.FC<Props> = ({
         {!isDraft && (
           <MenuItem onClick={onCopyLink} sx={{ gap: 1.25, borderRadius: "8px", py: 0.9, px: 1.25, "&:hover": { bgcolor: "#F5F5F5", "& .menu-icon-box": { bgcolor: "#E9E9E9" } } }}>
             <Box className="menu-icon-box" sx={{ width: 26, height: 26, borderRadius: "7px", bgcolor: "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background 0.15s" }}>
-              <ContentCopyOutlined sx={{ fontSize: 13, color: "#6B7280" }} />
+              <ContentCopyOutlined size={13} color="#6B7280" />
             </Box>
             <Box>
               <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>{copied ? t("card.copied") : t("card.menu.share_title")}</Typography>
@@ -136,7 +138,7 @@ const CardHeader: React.FC<Props> = ({
 
         <MenuItem onClick={(e) => { e.stopPropagation(); onMenuClose(); onDelete(); }} sx={{ gap: 1.25, borderRadius: "8px", py: 0.9, px: 1.25, "&:hover": { bgcolor: "#F5F5F5", "& .menu-icon-box": { bgcolor: "#E9E9E9" } } }}>
           <Box className="menu-icon-box" sx={{ width: 26, height: 26, borderRadius: "7px", bgcolor: "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background 0.15s" }}>
-            <DeleteOutlineOutlined sx={{ fontSize: 13, color: "#6B7280" }} />
+            <DeleteOutlineOutlined size={13} color="#6B7280" />
           </Box>
           <Box>
             <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#374151", lineHeight: 1.2 }}>{t("card.menu.delete_title")}</Typography>

@@ -2,7 +2,7 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip as RechartsTooltip, Legend,
 } from 'recharts';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import { TrendingUp as TrendingUpIcon } from 'lucide-react';
 import { AdminChartCard, ADMIN_NEUTRAL, ADMIN_NEUTRAL_BG } from '@/modules/admin/shared';
 import { ChartTooltip } from '@/modules/company/dashboard/utils/kpiTokens';
 import type { UserGrowthPoint } from '../types';
@@ -31,7 +31,7 @@ const AdminGrowthAnalytics = ({ data, availableMonths, selectedMonth, setSelecte
     <div className="flex justify-between items-center mb-5 flex-wrap gap-2">
       <div className="flex items-center gap-2">
         <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: ADMIN_NEUTRAL_BG }}>
-          <TrendingUpIcon style={{ fontSize: 17, color: ADMIN_NEUTRAL }} />
+          <TrendingUpIcon size={17} color={ADMIN_NEUTRAL} />
         </div>
         <span className="font-semibold text-[15px] text-slate-900">Growth Analytics</span>
       </div>

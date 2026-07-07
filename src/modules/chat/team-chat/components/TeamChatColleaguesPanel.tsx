@@ -14,10 +14,7 @@ import {
   Typography,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import SearchOutlined from "@mui/icons-material/SearchOutlined";
-import CloseRounded from "@mui/icons-material/CloseRounded";
-import PeopleOutlineOutlined from "@mui/icons-material/PeopleOutlineOutlined";
-import SearchOffOutlined from "@mui/icons-material/SearchOffOutlined";
+import { Search as SearchOutlined, X as CloseRounded, Users as PeopleOutlineOutlined, SearchX as SearchOffOutlined } from "lucide-react";
 import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import { RootState } from "@/store/store";
@@ -288,7 +285,7 @@ const EmptyState: React.FC<{ title: string; subtitle?: string; icon: "people" | 
           boxShadow: M.shadowSoft,
         }}
       >
-        <Icon sx={{ fontSize: 34, color: M.primaryHover }} />
+        <Icon size={34} color={M.primaryHover} />
       </Box>
       <Typography sx={{ fontSize: "1rem", fontWeight: 700, color: M.textPrimary, letterSpacing: "-0.02em" }}>
         {title}
@@ -468,14 +465,14 @@ const TeamChatColleaguesPanel: React.FC<TeamChatColleaguesPanelProps> = ({ onClo
             placeholder={t("colleagues.search_placeholder")}
             InputProps={{
               startAdornment: (
-                <InputAdornment position="start" sx={{ mr: 0.25, "& .MuiSvgIcon-root": { fontSize: 18 } }}>
-                  <SearchOutlined sx={{ color: M.textMuted }} />
+                <InputAdornment position="start" sx={{ mr: 0.25 }}>
+                  <SearchOutlined size={18} color={M.textMuted} />
                 </InputAdornment>
               ),
               endAdornment: search ? (
                 <InputAdornment position="end" sx={{ ml: 0 }}>
                   <IconButton size="small" onClick={clearSearch} aria-label={t("colleagues.clear_search")} edge="end" sx={{ color: M.textMuted, p: "4px" }}>
-                    <CloseRounded sx={{ fontSize: 18 }} />
+                    <CloseRounded size={18} />
                   </IconButton>
                 </InputAdornment>
               ) : undefined,

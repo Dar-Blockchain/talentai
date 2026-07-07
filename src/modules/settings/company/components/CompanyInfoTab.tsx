@@ -4,7 +4,7 @@ import { Controller, Control } from "react-hook-form";
 import { COMPANY_SIZES } from "@/modules/settings/shared/constants";
 import { getAllCountryNames } from "@/utils/countryMappings";
 import { Input } from "@/modules/shared/ui/shadcn/input";
-import AppSelect from "@/modules/shared/ui/AppSelect";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
 import AppAutocomplete from "@/modules/shared/ui/AppAutocomplete";
 import { CompanyProfileFormValues } from "../schemas/companyProfileSchema";
 import { UserProfile } from "../../shared";
@@ -83,16 +83,24 @@ const CompanyInfoTab: React.FC<Props> = ({ profile, isEditing, control }) => {
             name="industry"
             control={control}
             render={({ field, fieldState }) => (
-              <AppSelect
-                label={t("pages.settings.company_info.industry_label")}
-                value={field.value}
-                onChange={(val) => field.onChange(val)}
-                options={industryOptions}
-                disabled={!isEditing}
-                placeholder={t("pages.settings.company_info.industry_placeholder")}
-                error={fieldState.error?.message || ""}
-                sx={{ gridColumn: { xs: "1 / -1", sm: "auto" } }}
-              />
+              <div className="flex flex-col gap-1.5">
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-700">
+                  {t("pages.settings.company_info.industry_label")}
+                </span>
+                <Select value={field.value} onValueChange={field.onChange} disabled={!isEditing}>
+                  <SelectTrigger className="w-full" aria-invalid={!!fieldState.error}>
+                    <SelectValue placeholder={t("pages.settings.company_info.industry_placeholder")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {industryOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {fieldState.error?.message && (
+                  <span className="text-[11px] text-red-500">{fieldState.error.message}</span>
+                )}
+              </div>
             )}
           />
 
@@ -101,16 +109,24 @@ const CompanyInfoTab: React.FC<Props> = ({ profile, isEditing, control }) => {
             name="size"
             control={control}
             render={({ field, fieldState }) => (
-              <AppSelect
-                label={t("pages.settings.company_info.size_label")}
-                value={field.value}
-                onChange={(val) => field.onChange(val)}
-                options={sizeOptions}
-                disabled={!isEditing}
-                error={fieldState.error?.message || ""}
-                columns={3}
-                sx={{ gridColumn: { xs: "1 / -1", sm: "auto" } }}
-              />
+              <div className="flex flex-col gap-1.5">
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-700">
+                  {t("pages.settings.company_info.size_label")}
+                </span>
+                <Select value={field.value} onValueChange={field.onChange} disabled={!isEditing}>
+                  <SelectTrigger className="w-full" aria-invalid={!!fieldState.error}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sizeOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {fieldState.error?.message && (
+                  <span className="text-[11px] text-red-500">{fieldState.error.message}</span>
+                )}
+              </div>
             )}
           />
         </div>

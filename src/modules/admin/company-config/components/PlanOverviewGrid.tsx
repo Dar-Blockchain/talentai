@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
-import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
-import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
+import { Award as WorkspacePremiumIcon, Plus as AddIcon, Pencil as EditIcon } from 'lucide-react';
 import { IconButton, Tooltip, CircularProgress } from '@mui/material';
 import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
@@ -60,7 +58,7 @@ const PlanOverviewGrid: React.FC<PlanOverviewGridProps> = ({ plans, onSaved, onE
           className="rounded-lg px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-indigo-700 hover:text-white"
           style={{ backgroundColor: ADMIN_ACCENT }}
         >
-          <AddIcon style={{ fontSize: 16 }} />
+          <AddIcon size={16} />
           New Plan
         </Button>
       </div>
@@ -73,7 +71,7 @@ const PlanOverviewGrid: React.FC<PlanOverviewGridProps> = ({ plans, onSaved, onE
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: ADMIN_NEUTRAL_BG }}>
-                      <WorkspacePremiumIcon style={{ fontSize: 16, color: ADMIN_NEUTRAL }} />
+                      <WorkspacePremiumIcon size={16} color={ADMIN_NEUTRAL} />
                     </div>
                     <span className="text-[13.5px] font-semibold text-slate-900">{plan.name}</span>
                   </div>
@@ -85,7 +83,7 @@ const PlanOverviewGrid: React.FC<PlanOverviewGridProps> = ({ plans, onSaved, onE
                     )}
                     <Tooltip title="Edit plan">
                       <IconButton size="small" onClick={() => openEdit(plan)} sx={{ color: '#64748B' }}>
-                        <EditIcon fontSize="small" />
+                        <EditIcon size={18} />
                       </IconButton>
                     </Tooltip>
                   </div>

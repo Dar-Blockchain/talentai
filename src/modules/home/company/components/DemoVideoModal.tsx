@@ -1,11 +1,13 @@
 import { useRef, useState } from "react";
 import { Box, Dialog, DialogContent, IconButton, Typography } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
-import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
-import PauseRoundedIcon from "@mui/icons-material/PauseRounded";
-import VolumeUpRoundedIcon from "@mui/icons-material/VolumeUpRounded";
-import VolumeOffRoundedIcon from "@mui/icons-material/VolumeOffRounded";
-import FullscreenRoundedIcon from "@mui/icons-material/FullscreenRounded";
+import {
+  X as CloseIcon,
+  Play as PlayArrowRoundedIcon,
+  Pause as PauseRoundedIcon,
+  Volume2 as VolumeUpRoundedIcon,
+  VolumeX as VolumeOffRoundedIcon,
+  Maximize as FullscreenRoundedIcon,
+} from "lucide-react";
 
 const TEAL = "#0D9488";
 
@@ -83,7 +85,7 @@ const DemoVideoModal: React.FC<DemoVideoModalProps> = ({ open, onClose }) => {
           TalentAI — Product Demo
         </Typography>
         <IconButton onClick={handleClose} size="small" sx={{ color: "#9CA3AF", "&:hover": { color: "#fff" } }}>
-          <CloseIcon fontSize="small" />
+          <CloseIcon size={18} />
         </IconButton>
       </Box>
 
@@ -122,7 +124,7 @@ const DemoVideoModal: React.FC<DemoVideoModalProps> = ({ open, onClose }) => {
                 display: "flex", alignItems: "center", justifyContent: "center",
                 boxShadow: `0 0 32px ${TEAL}80`,
               }}>
-                <PlayArrowRoundedIcon sx={{ fontSize: 42, color: "#fff" }} />
+                <PlayArrowRoundedIcon size={42} color="#fff" />
               </Box>
             </Box>
           )}
@@ -154,16 +156,16 @@ const DemoVideoModal: React.FC<DemoVideoModalProps> = ({ open, onClose }) => {
             {/* Buttons */}
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
               <IconButton size="small" onClick={togglePlay} sx={{ color: "#fff" }}>
-                {playing ? <PauseRoundedIcon fontSize="small" /> : <PlayArrowRoundedIcon fontSize="small" />}
+                {playing ? <PauseRoundedIcon size={18} /> : <PlayArrowRoundedIcon size={18} />}
               </IconButton>
               <IconButton size="small" onClick={toggleMute} sx={{ color: "#fff" }}>
-                {muted ? <VolumeOffRoundedIcon fontSize="small" /> : <VolumeUpRoundedIcon fontSize="small" />}
+                {muted ? <VolumeOffRoundedIcon size={18} /> : <VolumeUpRoundedIcon size={18} />}
               </IconButton>
               <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.7)", fontFamily: "Poppins", flex: 1, pl: 0.5 }}>
                 {fmt(currentTime)} / {fmt(duration)}
               </Typography>
               <IconButton size="small" onClick={handleFullscreen} sx={{ color: "#fff" }}>
-                <FullscreenRoundedIcon fontSize="small" />
+                <FullscreenRoundedIcon size={18} />
               </IconButton>
             </Box>
           </Box>

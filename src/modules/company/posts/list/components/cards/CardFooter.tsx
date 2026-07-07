@@ -1,9 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Box, IconButton, Tooltip, Typography } from "@mui/material";
-import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
-import QrCode2Outlined from "@mui/icons-material/QrCode2Outlined";
-import ContentCopyOutlined from "@mui/icons-material/ContentCopyOutlined";
+import { Clock as AccessTimeOutlined, QrCode as QrCode2Outlined, Copy as ContentCopyOutlined } from "lucide-react";
 import { fmtDate } from "../../utils";
 
 interface Props {
@@ -36,7 +34,7 @@ const CardFooter: React.FC<Props> = ({ isDraft, createdAt, expirationDate, daysL
         )}
         {expirationDate && !isExpired && (
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
-            <AccessTimeOutlined sx={{ fontSize: 11, color: "#D1D5DB" }} />
+            <AccessTimeOutlined size={11} color="#D1D5DB" />
             <Typography sx={{ fontSize: "11.5px", color: "#9CA3AF" }}>{fmtDate(expirationDate)}</Typography>
           </Box>
         )}
@@ -46,12 +44,12 @@ const CardFooter: React.FC<Props> = ({ isDraft, createdAt, expirationDate, daysL
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
           <Tooltip title={t("card.qr.show")} placement="top">
             <IconButton size="small" onClick={onOpenQr} sx={{ p: 0.75, borderRadius: "8px", color: "#9CA3AF", border: "1px solid", borderColor: "#E5E7EB", transition: "all 0.18s", "&:hover": { color: "#374151", bgcolor: "#F3F4F6" } }}>
-              <QrCode2Outlined sx={{ fontSize: 14 }} />
+              <QrCode2Outlined size={14} />
             </IconButton>
           </Tooltip>
           <Tooltip title={copied ? t("card.copied") : t("card.menu.share_title")} placement="top">
             <IconButton size="small" onClick={onCopyLink} sx={{ p: 0.75, borderRadius: "8px", color: copied ? "#374151" : "#9CA3AF", bgcolor: copied ? "#F3F4F6" : "transparent", border: "1px solid", borderColor: "#E5E7EB", transition: "all 0.18s", "&:hover": { color: "#374151", bgcolor: "#F3F4F6" } }}>
-              <ContentCopyOutlined sx={{ fontSize: 14 }} />
+              <ContentCopyOutlined size={14} />
             </IconButton>
           </Tooltip>
         </Box>

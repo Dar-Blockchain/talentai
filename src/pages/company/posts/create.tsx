@@ -1,6 +1,6 @@
 ﻿import React from "react";
 import { Box, Typography } from "@mui/material";
-import LockOutlined from "@mui/icons-material/LockOutlined";
+import { Lock as LockOutlined } from "lucide-react";
 import Link from "next/link";
 import CreatePostPage from "@/modules/company/posts/create/components/CreatePostPage";
 import { useCreatePostPage } from "@/modules/company/posts/create/hooks";
@@ -15,7 +15,7 @@ const CreatePage: NextPageWithLayout = () => {
       {atLimit ? (
         <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 400, gap: 2, textAlign: "center" }}>
           <Box sx={{ width: 64, height: 64, borderRadius: "50%", bgcolor: "#FEF2F2", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <LockOutlined sx={{ fontSize: 30, color: "#EF4444" }} />
+            <LockOutlined size={30} color="#EF4444" />
           </Box>
           <Typography sx={{ fontWeight: 700, fontSize: "1.2rem", color: "#111827" }}>Post limit reached</Typography>
           <Typography sx={{ color: "#6B7280", fontSize: "0.9rem", maxWidth: 360 }}>

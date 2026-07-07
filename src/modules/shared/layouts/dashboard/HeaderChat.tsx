@@ -11,7 +11,7 @@ import {
   Typography,
 } from "@mui/material";
 import { Button } from "@/modules/shared/ui/shadcn/button";
-import ChatOutlined from "@mui/icons-material/ChatOutlined";
+import { MessageCircle } from "lucide-react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { selectCandidateConversations } from "@/modules/chat/candidate-chat/store/candidateChatSlice";
@@ -84,7 +84,7 @@ const HeaderChat: React.FC = () => {
         sx={{ color: "#6B7280" }}
       >
         <div style={{ position: "relative", display: "inline-flex" }}>
-          <ChatOutlined sx={{ fontSize: 20 }} />
+          <MessageCircle size={20} />
           {totalBadge > 0 && (
             <span
               style={{
@@ -166,7 +166,7 @@ const HeaderChat: React.FC = () => {
         >
           {conversations.length === 0 ? (
             <Box sx={{ py: 6, textAlign: "center" }}>
-              <ChatOutlined sx={{ fontSize: 40, color: "#D1D5DB", mb: 1 }} />
+              <MessageCircle size={40} color="#D1D5DB" className="mb-2" />
               <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>
                 {emptyLabel}
               </Typography>

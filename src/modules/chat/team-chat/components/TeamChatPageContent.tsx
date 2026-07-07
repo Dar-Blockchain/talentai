@@ -10,9 +10,7 @@ import {
   IconButton,
   Tooltip,
 } from "@mui/material";
-import GroupsRounded from "@mui/icons-material/GroupsRounded";
-import AddCommentOutlined from "@mui/icons-material/AddCommentOutlined";
-import CloseRounded from "@mui/icons-material/CloseRounded";
+import { Users as GroupsRounded, MessageSquarePlus as AddCommentOutlined, X as CloseRounded } from "lucide-react";
 import { RootState } from "@/store/store";
 import CompanyHubChatFrame from "@/modules/chat/shared/components/CompanyHubChatFrame";
 import CompanyHubMintChatShell from "@/modules/chat/shared/components/CompanyHubMintChatShell";
@@ -37,7 +35,7 @@ const titleIcon = (
       boxShadow: "0 4px 20px rgba(15, 23, 42, 0.05)",
     }}
   >
-    <GroupsRounded sx={{ fontSize: 20 }} />
+    <GroupsRounded size={20} />
   </Box>
 );
 
@@ -99,7 +97,7 @@ const TeamChatPageContent = memo(function TeamChatPageContent({
             },
           }}
         >
-          <AddCommentOutlined sx={{ fontSize: 18 }} />
+          <AddCommentOutlined size={18} />
         </IconButton>
       </Tooltip>
     ),
@@ -178,7 +176,7 @@ const TeamChatPageContent = memo(function TeamChatPageContent({
                 justifyContent: "center",
               }}
             >
-              <GroupsRounded sx={{ fontSize: 16, color: "#10B981" }} />
+              <GroupsRounded size={16} color="#10B981" />
             </Box>
             <Box
               component="span"
@@ -202,7 +200,7 @@ const TeamChatPageContent = memo(function TeamChatPageContent({
               "&:hover": { bgcolor: "#F3F4F6", color: "#111827" },
             }}
           >
-            <CloseRounded sx={{ fontSize: 20 }} />
+            <CloseRounded size={20} />
           </IconButton>
         </DialogTitle>
         <DialogContent sx={{ p: 0, flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>

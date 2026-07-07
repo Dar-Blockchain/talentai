@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Controller, useWatch, type Control, type FieldErrors } from "react-hook-form";
 import { Input } from "@/modules/shared/ui/shadcn/input";
 import { Textarea } from "@/modules/shared/ui/shadcn/textarea";
-import AppSelect from "@/modules/shared/ui/AppSelect";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
 import { FieldLabel } from "@/modules/settings/shared/components";
 import { AVAILABLE_SCOPES } from "@/modules/settings/shared/constants";
 
@@ -130,12 +130,19 @@ export const KeyFormFields = ({
       </div>
 
       <Controller name="ipMode" control={control} render={({ field }) => (
-        <AppSelect
-          label={t("pages.settings.api_keys.fields.ip_whitelist")}
-          value={field.value}
-          onChange={(v) => field.onChange(v)}
-          options={ipModeOptions}
-        />
+        <div className="flex flex-col gap-1">
+          <FieldLabel text={t("pages.settings.api_keys.fields.ip_whitelist")} />
+          <Select value={field.value} onValueChange={field.onChange}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ipModeOptions.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       )} />
 
       {ipMode === "custom" && (

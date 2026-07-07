@@ -1,5 +1,5 @@
 import React from 'react';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import { UserPlus } from 'lucide-react';
 import { Avatar } from '@mui/material';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { cn } from '@/lib/utils';
@@ -32,7 +32,7 @@ const timeAgo = (iso: string) => {
 };
 
 const AdminRecentSignups: React.FC<AdminRecentSignupsProps> = ({ signups, loading }) => (
-  <AdminChartCard icon={PersonAddIcon} title="Recent Signups" className="mb-4">
+  <AdminChartCard icon={UserPlus} title="Recent Signups" className="mb-4">
     {loading ? (
       <p className="text-[13px] text-slate-400">Loading…</p>
     ) : signups.length === 0 ? (

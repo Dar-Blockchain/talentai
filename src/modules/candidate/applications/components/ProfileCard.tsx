@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Typography, Avatar, Chip, Divider } from "@mui/material";
-import EmojiEventsOutlined from "@mui/icons-material/EmojiEventsOutlined";
+import { Trophy as EmojiEventsOutlined } from "lucide-react";
 import { T, TL, TBG, TBRD, NAVY } from "../utils/constants";
 
 interface StatPillProps {
@@ -44,7 +44,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ displayName, email, initial, 
       {targetRole && <Chip label={targetRole} size="small" sx={{ fontSize: "0.65rem", height: 20, bgcolor: TBG, border: `1px solid ${TBRD}`, color: T, fontWeight: 600, mb: 1 }} />}
       {experienceLevel && (
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-          <EmojiEventsOutlined sx={{ fontSize: 12, color: "#D97706" }} />
+          <EmojiEventsOutlined size={12} color="#D97706" />
           <Typography sx={{ fontSize: "0.7rem", color: "#6B7280", fontWeight: 500 }}>{experienceLevel}</Typography>
         </Box>
       )}

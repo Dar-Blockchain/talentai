@@ -1,10 +1,7 @@
 import React, { useState } from "react";
 import { Box, Dialog, Typography } from "@mui/material";
 import { Button } from "@/modules/shared/ui/shadcn/button";
-import TranslateOutlined from "@mui/icons-material/Translate";
-import CheckOutlined from "@mui/icons-material/CheckOutlined";
-import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
-import LockOutlined from "@mui/icons-material/LockOutlined";
+import { Globe as TranslateOutlined, Check as CheckOutlined, ArrowRight as ArrowForwardOutlined, Lock as LockOutlined } from "lucide-react";
 import { LANG_META } from "@/modules/shared/constants/languages";
 import { useTranslation } from "react-i18next";
 
@@ -44,7 +41,7 @@ const InterviewLanguageModal: React.FC<Props> = ({ open, languages, onConfirm, o
         {/* Icon + title */}
         <Box sx={{ textAlign: "center", mb: 3 }}>
           <Box sx={{ width: 48, height: 48, borderRadius: "14px", background: `linear-gradient(135deg, ${TEAL_BG}, #E0F2FE)`, border: "1.5px solid #99F6E4", mx: "auto", mb: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <TranslateOutlined sx={{ fontSize: 24, color: TEAL }} />
+            <TranslateOutlined size={24} color={TEAL} />
           </Box>
 
           <Typography sx={{ fontSize: "16px", fontWeight: 800, color: "#111827", letterSpacing: "-0.01em" }}>
@@ -82,7 +79,7 @@ const InterviewLanguageModal: React.FC<Props> = ({ open, languages, onConfirm, o
                   >
                     {active && (
                       <Box sx={{ position: "absolute", top: 7, right: 7, width: 18, height: 18, borderRadius: "50%", bgcolor: TEAL, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 6px rgba(13,148,136,0.4)" }}>
-                        <CheckOutlined sx={{ fontSize: 11, color: "#fff" }} />
+                        <CheckOutlined size={11} color="#fff" />
                       </Box>
                     )}
                     <img
@@ -117,7 +114,7 @@ const InterviewLanguageModal: React.FC<Props> = ({ open, languages, onConfirm, o
                 <Typography sx={{ fontSize: "12px", color: "#374151", flex: 1 }}>
                   {t('lang_modal.interviewing_in', { language: selectedMeta.label })}
                 </Typography>
-                <LockOutlined sx={{ fontSize: 13, color: "#94A3B8", flexShrink: 0 }} />
+                <LockOutlined size={13} color="#94A3B8" className="shrink-0" />
               </Box>
             )}
           </>
@@ -161,7 +158,7 @@ const InterviewLanguageModal: React.FC<Props> = ({ open, languages, onConfirm, o
             {isMulti
               ? t('lang_modal.btn_start_in', { language: selectedMeta?.label ?? selected })
               : t('lang_modal.btn_start')}
-            <ArrowForwardOutlined sx={{ fontSize: "15px !important" }} />
+            <ArrowForwardOutlined size={15} />
           </Button>
         </div>
       </Box>

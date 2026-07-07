@@ -6,20 +6,20 @@ import { RootState } from "@/store/store";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetchEmployeeCampaigns, apiFetchEmployeeCampaignMetrics } from "@/modules/company/campaigns/api";
 import {
-  CampaignOutlined,
-  CheckCircleOutlined,
-  PlayArrowOutlined,
-  ChevronRightOutlined,
-  RadioButtonUncheckedOutlined,
-  AccessTimeOutlined,
-  EmojiEventsOutlined,
-  TrendingUpOutlined,
-  DescriptionOutlined,
-  PsychologyOutlined,
-  AssignmentTurnedInOutlined,
-  ArrowForwardOutlined,
-  VisibilityOutlined,
-} from "@mui/icons-material";
+  Megaphone as CampaignOutlined,
+  CheckCircle2 as CheckCircleOutlined,
+  Play as PlayArrowOutlined,
+  ChevronRight as ChevronRightOutlined,
+  Circle as RadioButtonUncheckedOutlined,
+  Clock as AccessTimeOutlined,
+  Trophy as EmojiEventsOutlined,
+  TrendingUp as TrendingUpOutlined,
+  FileText as DescriptionOutlined,
+  Brain as PsychologyOutlined,
+  ClipboardCheck as AssignmentTurnedInOutlined,
+  ArrowRight as ArrowForwardOutlined,
+  Eye as VisibilityOutlined,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { ModuleType, ParticipantStatus } from "@/modules/company/campaigns/types/campaign";
 import { EmployeeCampaignEntry } from "@/modules/company/campaigns/types";
@@ -111,7 +111,7 @@ const StatCard: React.FC<{
     }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
         <Box sx={{ p: 1.1, borderRadius: 2, bgcolor: bg }}>
-          <Icon sx={{ fontSize: 20, color }} />
+          <Icon size={20} color={color} />
         </Box>
         <Typography sx={{ fontSize: "28px", fontWeight: 800, color: "#111827", lineHeight: 1 }}>{value}</Typography>
       </Box>
@@ -141,13 +141,13 @@ const Section: React.FC<{ title: string; subtitle?: string; action?: React.React
 
 const ViewAll: React.FC<{ color?: string; onClick: () => void }> = ({ color = TEAL, onClick }) => (
   <Typography onClick={onClick} sx={{ fontSize: "12px", fontWeight: 600, color, cursor: "pointer", display: "flex", alignItems: "center", gap: 0.3, "&:hover": { textDecoration: "underline" } }}>
-    View all <ChevronRightOutlined sx={{ fontSize: 14 }} />
+    View all <ChevronRightOutlined size={14} />
   </Typography>
 );
 
 const EmptyState: React.FC<{ text: string }> = ({ text }) => (
   <Box sx={{ py: 5, textAlign: "center" }}>
-    <CampaignOutlined sx={{ fontSize: 32, color: "#E5E7EB", mb: 1 }} />
+    <CampaignOutlined size={32} color="#E5E7EB" className="mb-2" />
     <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>{text}</Typography>
   </Box>
 );
@@ -185,7 +185,7 @@ const CampaignRow: React.FC<{ campaign: EmployeeCampaignEntry; onAction: () => v
       }}
     >
       <Box sx={{ width: 36, height: 36, borderRadius: 2, bgcolor: `${PURPLE}10`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        {ModIcon ? <ModIcon sx={{ fontSize: 18, color: mm.color }} /> : <CampaignOutlined sx={{ fontSize: 18, color: PURPLE }} />}
+        {ModIcon ? <ModIcon size={18} color={mm.color} /> : <CampaignOutlined size={18} color={PURPLE} />}
       </Box>
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -198,7 +198,7 @@ const CampaignRow: React.FC<{ campaign: EmployeeCampaignEntry; onAction: () => v
             <>
               <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>·</Typography>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
-                <AccessTimeOutlined sx={{ fontSize: 11, color: remaining <= 7 ? ROSE : "#9CA3AF" }} />
+                <AccessTimeOutlined size={11} color={remaining <= 7 ? ROSE : "#9CA3AF"} />
                 <Typography sx={{ fontSize: "11px", color: remaining <= 7 ? ROSE : "#9CA3AF", fontWeight: remaining <= 7 ? 600 : 400 }}>
                   {remaining}d left
                 </Typography>
@@ -215,14 +215,14 @@ const CampaignRow: React.FC<{ campaign: EmployeeCampaignEntry; onAction: () => v
           </Box>
         )}
         <Chip
-          icon={<PsIcon sx={{ fontSize: "10px !important" }} />}
+          icon={<PsIcon size={10} />}
           label={ps.label}
           size="small"
           sx={{ fontSize: "10px", height: 20, bgcolor: ps.bg, color: ps.color, fontWeight: 700, border: "none", "& .MuiChip-icon": { color: ps.color } }}
         />
         {isCompleted
-          ? <VisibilityOutlined   sx={{ fontSize: 15, color: "#9CA3AF" }} />
-          : <ArrowForwardOutlined sx={{ fontSize: 15, color: "#9CA3AF" }} />
+          ? <VisibilityOutlined   size={15} color="#9CA3AF" />
+          : <ArrowForwardOutlined size={15} color="#9CA3AF" />
         }
       </Box>
     </Box>
@@ -399,7 +399,7 @@ const EmployeeDashboardOverview: React.FC = () => {
                 <Typography sx={{ fontSize: "12px", color: "#9CA3AF", mt: 0.2 }}>Based on {scored.length} scored assessment{scored.length !== 1 ? "s" : ""}</Typography>
               </Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, bgcolor: `${scoreColor(avgScore)}10`, borderRadius: 2, px: 2, py: 0.75 }}>
-                <TrendingUpOutlined sx={{ fontSize: 16, color: scoreColor(avgScore) }} />
+                <TrendingUpOutlined size={16} color={scoreColor(avgScore)} />
                 <Typography sx={{ fontSize: "13px", fontWeight: 700, color: scoreColor(avgScore) }}>{avgScore} avg</Typography>
               </Box>
             </Box>

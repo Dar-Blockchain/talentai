@@ -12,9 +12,7 @@ import {
   Chip,
 } from "@mui/material";
 import { Button } from "@/modules/shared/ui/shadcn/button";
-import ChatOutlined      from "@mui/icons-material/ChatOutlined";
-import ArrowBackOutlined from "@mui/icons-material/ArrowBackOutlined";
-import WorkOutlined      from "@mui/icons-material/WorkOutlined";
+import { MessageCircle as ChatOutlined, ArrowLeft as ArrowBackOutlined, Briefcase as WorkOutlined } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Participant } from "./helpers";
 import ConversationSidebar      from "./ConversationSidebar";
@@ -224,7 +222,7 @@ const ReturnBanner = memo(function ReturnBanner({ jobTitle, onReturn }: ReturnTo
       }}
     >
       <Stack direction="row" alignItems="center" spacing={1}>
-        <WorkOutlined sx={{ fontSize: 18, color: ACCENT }} />
+        <WorkOutlined size={18} color={ACCENT} />
         <Typography sx={{ fontSize: "0.8125rem", fontWeight: 600, color: "text.primary" }}>
           {t("banner.chatting_about")}{" "}
           <Box component="span" sx={{ fontWeight: 700, color: ACCENT }}>
@@ -239,7 +237,7 @@ const ReturnBanner = memo(function ReturnBanner({ jobTitle, onReturn }: ReturnTo
         className="rounded-lg text-xs font-semibold"
         style={{ borderColor: alpha(ACCENT, 0.45), color: ACCENT }}
       >
-        <ArrowBackOutlined sx={{ fontSize: 16 }} />
+        <ArrowBackOutlined size={16} />
         {t("banner.return_to_post")}
       </Button>
     </Paper>
@@ -426,7 +424,7 @@ const Panel = memo(function Panel(p: PanelProps) {
               sx={{ alignSelf: "flex-start", m: 0.5, color: "text.secondary" }}
               aria-label="Back"
             >
-              <ArrowBackOutlined sx={{ fontSize: 20 }} />
+              <ArrowBackOutlined size={20} />
             </IconButton>
           )}
           <ConversationHeader
@@ -492,7 +490,7 @@ const EmptyPanel = memo(function EmptyPanel({
           boxShadow: mintLightTeamUi ? "0 4px 20px rgba(15, 23, 42, 0.05)" : undefined,
         }}
       >
-        <ChatOutlined sx={{ fontSize: 34, color: mintLightTeamUi ? "#10B981" : theme.palette.primary.main }} />
+        <ChatOutlined size={34} color={mintLightTeamUi ? "#10B981" : theme.palette.primary.main} />
       </Box>
       <Typography sx={{ color: mintLightTeamUi ? "#111827" : "text.primary", fontWeight: 700, fontSize: "0.9375rem" }}>
         {hasConversations ? t("panel.select_conversation") : t("panel.no_conversations")}

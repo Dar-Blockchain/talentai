@@ -5,19 +5,19 @@ import {
 } from '@mui/material';
 import { Button } from '@/modules/shared/ui/shadcn/button';
 import {
-  CheckCircle as CheckCircleIcon,
+  CheckCircle2 as CheckCircleIcon,
   Info as InfoIcon,
-  Warning as WarningIcon,
-  Error as ErrorIcon,
-  AccessTime as AccessTimeIcon,
-  MarkEmailRead as MarkEmailReadIcon,
+  AlertTriangle as WarningIcon,
+  AlertCircle as ErrorIcon,
+  Clock as AccessTimeIcon,
+  MailCheck as MarkEmailReadIcon,
   Archive as ArchiveIcon,
-  DeleteOutline as DeleteIcon,
-  DeleteForever as DeleteForeverIcon,
+  Trash2 as DeleteIcon,
+  Trash2 as DeleteForeverIcon,
   Wifi as WifiIcon,
   WifiOff as WifiOffIcon,
-  ArrowForward as ArrowForwardIcon,
-} from '@mui/icons-material';
+  ArrowRight as ArrowForwardIcon,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 import {
@@ -41,10 +41,10 @@ const PAGE_SIZE = 10;
 
 const getIcon = (type: string) => {
   switch (type) {
-    case 'success': return <CheckCircleIcon sx={{ fontSize: 18 }} />;
-    case 'warning': return <WarningIcon     sx={{ fontSize: 18 }} />;
-    case 'error':   return <ErrorIcon       sx={{ fontSize: 18 }} />;
-    default:        return <InfoIcon        sx={{ fontSize: 18 }} />;
+    case 'success': return <CheckCircleIcon size={18} />;
+    case 'warning': return <WarningIcon     size={18} />;
+    case 'error':   return <ErrorIcon       size={18} />;
+    default:        return <InfoIcon        size={18} />;
   }
 };
 
@@ -94,7 +94,7 @@ const DeleteConfirmDialog: React.FC<{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             mx: 'auto', mb: 2.5,
           }}>
-            <DeleteForeverIcon sx={{ fontSize: 36, color: '#EF4444' }} />
+            <DeleteForeverIcon size={36} color='#EF4444' />
           </Box>
           <Typography sx={{ fontWeight: 800, fontSize: '1.1rem', color: '#111827', mb: 1 }}>
             {confirm.type === 'all' ? s('confirm_delete_all_title') : s('confirm_delete_one_title')}
@@ -113,7 +113,7 @@ const DeleteConfirmDialog: React.FC<{
             onClick={onConfirm}
             className="flex-1"
           >
-            <DeleteForeverIcon sx={{ fontSize: '18px !important' }} />
+            <DeleteForeverIcon size={18} />
             {s('btn_delete')}
           </Button>
         </div>
@@ -200,7 +200,7 @@ const CandidateNotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
           className={actionButtonClass}
           style={{ color: T, ...(isPage ? {} : { backgroundColor: TBG, border: `1px solid ${TBRD}` }) }}
         >
-          <MarkEmailReadIcon sx={{ fontSize: '14px !important' }} />
+          <MarkEmailReadIcon size={14} />
           {s('mark_all_read')}
         </Button>
       )}
@@ -212,7 +212,7 @@ const CandidateNotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
           className={actionButtonClass}
           style={{ color: '#6B7280', ...(isPage ? {} : { backgroundColor: '#F9FAFB', border: '1px solid #E5E7EB' }) }}
         >
-          <ArchiveIcon sx={{ fontSize: '14px !important' }} />
+          <ArchiveIcon size={14} />
           {s('archive_all')}
         </Button>
       )}
@@ -222,7 +222,7 @@ const CandidateNotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
         onClick={() => setConfirm({ open: true, type: 'all' })}
         className={`${actionButtonClass} shadow-none`}
       >
-        <DeleteForeverIcon sx={{ fontSize: '14px !important' }} />
+        <DeleteForeverIcon size={14} />
         {s('delete_all')}
       </Button>
     </Box>
@@ -231,7 +231,7 @@ const CandidateNotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
   const emptyState = (
     <Box sx={{ py: isPage ? 10 : 6, textAlign: 'center', ...(!isPage ? { border: '2px dashed #E5E7EB', borderRadius: '12px', bgcolor: '#FAFAFA' } : {}) }}>
       <Box sx={{ width: isPage ? 64 : 56, height: isPage ? 64 : 56, borderRadius: '50%', bgcolor: isPage ? '#F3F4F6' : '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: isPage ? 2 : 1.5 }}>
-        <InfoIcon sx={{ fontSize: isPage ? 32 : 28, color: isPage ? '#9CA3AF' : '#CBD5E1' }} />
+        <InfoIcon size={isPage ? 32 : 28} color={isPage ? '#9CA3AF' : '#CBD5E1'} />
       </Box>
       <Typography sx={{ fontWeight: 600, fontSize: '0.9rem', color: isPage ? '#374151' : NAVY, mb: 0.5 }}>
         {isOnArchivedTab ? s('empty_archived_title') : s(isPage ? 'page_empty_title' : 'empty_title')}
@@ -283,7 +283,7 @@ const CandidateNotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
                 )}
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: '#94A3B8', flexShrink: 0 }}>
-                <AccessTimeIcon sx={{ fontSize: 13 }} />
+                <AccessTimeIcon size={13} />
                 <Typography sx={{ fontSize: '0.7rem' }}>{n.timestamp}</Typography>
               </Box>
             </Box>
@@ -295,7 +295,7 @@ const CandidateNotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
                 className="mt-1 self-start rounded-lg px-3 py-1 text-xs font-semibold shadow-none"
               >
                 {getLinkLabel(n.link!)}
-                <ArrowForwardIcon sx={{ fontSize: '14px !important' }} />
+                <ArrowForwardIcon size={14} />
               </Button>
             )}
           </Box>
@@ -304,13 +304,13 @@ const CandidateNotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
               <IconButton size="small" title="Archive"
                 onClick={(e) => { e.stopPropagation(); handleArchive(n.id); }}
                 sx={{ borderRadius: 1.5, '&:hover': { bgcolor: '#F1F5F9' } }}>
-                <ArchiveIcon sx={{ fontSize: 17, color: '#9CA3AF' }} />
+                <ArchiveIcon size={17} color='#9CA3AF' />
               </IconButton>
             )}
             <IconButton size="small" title="Delete"
               onClick={(e) => { e.stopPropagation(); setConfirm({ open: true, type: 'single', id: n.id }); }}
               sx={{ borderRadius: 1.5, bgcolor: '#FEF2F2', border: '1px solid #FECACA', '&:hover': { bgcolor: '#FEE2E2', borderColor: '#FCA5A5' } }}>
-              <DeleteIcon sx={{ fontSize: 17, color: '#EF4444' }} />
+              <DeleteIcon size={17} color='#EF4444' />
             </IconButton>
           </Box>
         </Box>
@@ -334,7 +334,7 @@ const CandidateNotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
             {!isPage && (
               <Chip
-                icon={isConnected ? <WifiIcon sx={{ fontSize: '14px !important' }} /> : <WifiOffIcon sx={{ fontSize: '14px !important' }} />}
+                icon={isConnected ? <WifiIcon size={14} /> : <WifiOffIcon size={14} />}
                 label={isConnected ? s('connected') : s('disconnected')}
                 size="small" color={isConnected ? 'success' : 'error'}
                 sx={{ fontWeight: 600, fontSize: '0.72rem' }}

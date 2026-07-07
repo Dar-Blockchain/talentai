@@ -1,11 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import dayjs from "@/lib/dayjs";
 import { Box, MenuItem, TextField, Typography } from "@mui/material";
 import InputAdornment from "@mui/material/InputAdornment";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import { TrendingUp as TrendingUpIcon } from "lucide-react";
 import Image from "next/image";
 import { useForm, Controller } from "react-hook-form";
 import { useUpdatePostMutation } from "@/modules/company/posts/details/queries";
@@ -15,6 +11,7 @@ import SalaryRange from "@/modules/company/posts/create/components/SalaryRange";
 import SkillEditorModal from "@/modules/company/posts/create/components/SkillEditorModal";
 import { contractTypes, experienceLevels, workModes } from "@/modules/company/posts/shared/constants";
 import { Button } from "@/modules/shared/ui/shadcn/button";
+import { DatePicker } from "@/modules/shared/ui/DatePicker";
 import EditSkillsSection from "./edit/EditSkillsSection";
 import EditThresholdScore from "./edit/EditThresholdScore";
 
@@ -156,21 +153,25 @@ const EditPostDetails: React.FC<Props> = ({ job, onCancel, onSaveSuccess }) => {
           </Box>
           <Box sx={{ flex: 1 }}>
             <Typography sx={labelSx}>Expiration Date</Typography>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <Controller
-                name="expirationDate"
-                control={control}
-                render={({ field }) => (
+            <Controller
+              name="expirationDate"
+              control={control}
+              render={({ field }) => {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const maxDate = job?.expirationDate ? new Date(job.expirationDate) : undefined;
+                return (
                   <DatePicker
-                    value={field.value ? dayjs(field.value) : null}
-                    onChange={(date) => field.onChange(date ? date.toISOString() : "")}
-                    minDate={dayjs()}
-                    maxDate={job?.expirationDate ? dayjs(job.expirationDate) : undefined}
-                    slotProps={{ textField: { fullWidth: true, sx: inputStyle } }}
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="Select date"
+                    minDate={today}
+                    maxDate={maxDate}
+                    className="text-[12px] font-medium"
                   />
-                )}
-              />
-            </LocalizationProvider>
+                );
+              }}
+            />
           </Box>
         </Box>
 
@@ -217,7 +218,7 @@ const EditPostDetails: React.FC<Props> = ({ job, onCancel, onSaveSuccess }) => {
               control={control}
               render={({ field }) => (
                 <TextField select {...field} fullWidth sx={inputStyle}
-                  InputProps={{ startAdornment: <InputAdornment position="start"><TrendingUpIcon sx={{ color: "rgba(98,111,134,1)", width: 16, height: 14 }} /></InputAdornment> }}
+                  InputProps={{ startAdornment: <InputAdornment position="start"><TrendingUpIcon size={16} color="rgba(98,111,134,1)" /></InputAdornment> }}
                 >
                   <MenuItem disabled value="" sx={{ fontSize: "12px", fontWeight: 500 }}>Experience Level</MenuItem>
                   {experienceLevels.map((l) => <MenuItem key={l} value={l} sx={{ fontSize: "12px", fontWeight: 500 }}>{l}</MenuItem>)}

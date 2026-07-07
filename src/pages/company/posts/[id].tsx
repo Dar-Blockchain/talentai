@@ -96,7 +96,7 @@ const PostDetailsPage: NextPageWithLayout = () => {
         <InterviewLanguagesModal
           open={langModalOpen}
           initialLanguages={job?.interviewLanguages ?? ["en"]}
-          confirmLabel={savingLanguages ? "…" : t("create.interview_lang_modal.btn_update")}
+          isLoading={savingLanguages}
           onConfirm={handleUpdateLanguages}
           onClose={() => setLangModalOpen(false)}
         />

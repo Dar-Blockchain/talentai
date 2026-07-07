@@ -15,9 +15,8 @@ import { Button } from "@/modules/shared/ui/shadcn/button";
 import AppUserInfo from "@/modules/shared/ui/AppUserInfo";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/modules/shared/ui/shadcn/tabs";
 import {
-  Building2, MapPin, Key, CreditCard, Globe, Users, Tag,
+  Building2, MapPin, Key, CreditCard, Globe, Users, Tag, Settings as SettingsOutlined,
 } from "lucide-react";
-import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
 
 const TEAL = "#0D9488";
 

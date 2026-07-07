@@ -2,15 +2,17 @@ import React, { memo, useState, useCallback, useEffect, useMemo } from "react";
 import { useUpdatePermissionsMutation } from "@/modules/company/employees/queries";
 import { Box, Typography, Avatar } from "@mui/material";
 import { AnimatePresence } from "framer-motion";
-import ArrowBackOutlined from "@mui/icons-material/ArrowBackOutlined";
-import EditOutlined from "@mui/icons-material/EditOutlined";
-import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
-import ChatBubbleOutlineOutlined from "@mui/icons-material/ChatBubbleOutlineOutlined";
+import {
+  ArrowLeft as ArrowBackOutlined,
+  Pencil as EditOutlined,
+  Trash2 as DeleteOutlineOutlined,
+  MessageCircle as ChatBubbleOutlineOutlined,
+  Building2 as BusinessOutlined,
+  Calendar as CalendarTodayOutlined,
+  SlidersHorizontal as TuneOutlined,
+  User as PersonOutlined,
+} from "lucide-react";
 import { useStartTeamChat } from "@/modules/chat/team-chat";
-import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
-import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
-import TuneOutlined from "@mui/icons-material/TuneOutlined";
-import PersonOutlined from "@mui/icons-material/PersonOutlined";
 import { useTranslation } from "react-i18next";
 import { ROLES } from "@/modules/shared/constants/employee";
 import { getRoleLabel } from '@/modules/company/employees/utils/employeeRoleI18n';
@@ -129,26 +131,26 @@ const EmployeeDetail: React.FC<EmployeeDetailProps> = memo(({
         <Box sx={{ px: { xs: 2.5, sm: 3.5 }, pt: 2.5, pb: 3 }}>
           <Box sx={NAV_ROW_SX}>
             <Box onClick={onBack} sx={BACK_SX}>
-              <ArrowBackOutlined sx={{ fontSize: 15 }} />
+              <ArrowBackOutlined size={15} />
               <Typography sx={{ fontSize: "0.8rem", fontWeight: 600, color: "inherit" }}>Employees</Typography>
             </Box>
 
             <Box sx={ACTIONS_SX}>
               {!isSelf && member.status === "active" && (
                 <Box onClick={handleChatClick} sx={{ ...MSG_BTN_BASE, border: "1px solid #CCFBF1", bgcolor: "#F0FDFA", "&:hover": { bgcolor: "#CCFBF1", borderColor: "#99F6E4", "& *": { color: "#0F766E" } } }}>
-                  <ChatBubbleOutlineOutlined sx={{ fontSize: 14, color: "#0D9488" }} />
+                  <ChatBubbleOutlineOutlined size={14} color="#0D9488" />
                   <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#0F766E" }}>Message</Typography>
                 </Box>
               )}
               {canAssignRoles && (
                 <Box onClick={handleEditClick} sx={{ ...MSG_BTN_BASE, border: "1px solid #E2E8F0", bgcolor: "#F8FAFC", "&:hover": { bgcolor: `${PURPLE}08`, borderColor: `${PURPLE}30`, "& *": { color: PURPLE } } }}>
-                  <EditOutlined sx={{ fontSize: 14, color: "#64748B" }} />
+                  <EditOutlined size={14} color="#64748B" />
                   <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#475569" }}>Edit</Typography>
                 </Box>
               )}
               {canRemove && (
                 <Box onClick={handleDeleteClick} sx={{ ...MSG_BTN_BASE, border: "1px solid #FECACA", bgcolor: "#FEF7F7", "&:hover": { bgcolor: "#FEE2E2", borderColor: "#FCA5A5" } }}>
-                  <DeleteOutlineOutlined sx={{ fontSize: 14, color: "#F87171" }} />
+                  <DeleteOutlineOutlined size={14} color="#F87171" />
                   <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#EF4444" }}>Remove</Typography>
                 </Box>
               )}
@@ -178,14 +180,14 @@ const EmployeeDetail: React.FC<EmployeeDetailProps> = memo(({
 
                 {dept && (
                   <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, px: 1.25, py: "4px", borderRadius: "999px", bgcolor: "#F1F5F9", border: "1px solid #E2E8F0" }}>
-                    <BusinessOutlined sx={{ fontSize: 11, color: "#64748B" }} />
+                    <BusinessOutlined size={11} color="#64748B" />
                     <Typography sx={{ fontSize: "11.5px", fontWeight: 600, color: "#475569" }}>{dept}</Typography>
                   </Box>
                 )}
 
                 {member.createdAt && (
                   <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
-                    <CalendarTodayOutlined sx={{ fontSize: 11, color: "#CBD5E1" }} />
+                    <CalendarTodayOutlined size={11} color="#CBD5E1" />
                     <Typography sx={{ fontSize: "11.5px", color: "#94A3B8", fontWeight: 500 }}>Joined {fmtDate(member.createdAt)}</Typography>
                   </Box>
                 )}

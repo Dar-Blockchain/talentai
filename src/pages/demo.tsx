@@ -1,11 +1,13 @@
 ﻿import Head from "next/head";
 import { useRef, useState } from "react";
 import { Box, Container, IconButton, Typography } from "@mui/material";
-import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
-import PauseRoundedIcon from "@mui/icons-material/PauseRounded";
-import VolumeUpRoundedIcon from "@mui/icons-material/VolumeUpRounded";
-import VolumeOffRoundedIcon from "@mui/icons-material/VolumeOffRounded";
-import FullscreenRoundedIcon from "@mui/icons-material/FullscreenRounded";
+import {
+  Play as PlayArrowRoundedIcon,
+  Pause as PauseRoundedIcon,
+  Volume2 as VolumeUpRoundedIcon,
+  VolumeX as VolumeOffRoundedIcon,
+  Maximize as FullscreenRoundedIcon,
+} from "lucide-react";
 import Header from "@/modules/shared/layouts/home/HomeHeader";
 
 const TEAL = "#0D9488";
@@ -172,7 +174,7 @@ export default function DemoPage() {
                       boxShadow: `0 0 40px ${TEAL}80`,
                     }}
                   >
-                    <PlayArrowRoundedIcon sx={{ fontSize: 48, color: "#fff" }} />
+                    <PlayArrowRoundedIcon size={48} color="#fff" />
                   </Box>
                 </Box>
               )}
@@ -227,14 +229,14 @@ export default function DemoPage() {
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                   <IconButton size="small" onClick={togglePlay} sx={{ color: "#fff" }}>
                     {playing
-                      ? <PauseRoundedIcon fontSize="small" />
-                      : <PlayArrowRoundedIcon fontSize="small" />
+                      ? <PauseRoundedIcon size={18} />
+                      : <PlayArrowRoundedIcon size={18} />
                     }
                   </IconButton>
                   <IconButton size="small" onClick={toggleMute} sx={{ color: "#fff" }}>
                     {muted
-                      ? <VolumeOffRoundedIcon fontSize="small" />
-                      : <VolumeUpRoundedIcon fontSize="small" />
+                      ? <VolumeOffRoundedIcon size={18} />
+                      : <VolumeUpRoundedIcon size={18} />
                     }
                   </IconButton>
                   <Typography
@@ -244,7 +246,7 @@ export default function DemoPage() {
                     {fmt(currentTime)} / {fmt(duration)}
                   </Typography>
                   <IconButton size="small" onClick={handleFullscreen} sx={{ color: "#fff" }}>
-                    <FullscreenRoundedIcon fontSize="small" />
+                    <FullscreenRoundedIcon size={18} />
                   </IconButton>
                 </Box>
               </Box>

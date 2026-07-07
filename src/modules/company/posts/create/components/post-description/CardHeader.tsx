@@ -1,5 +1,5 @@
 import { Box, Typography } from "@mui/material";
-import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
+import { Sparkles as AutoAwesomeOutlined } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TEAL, TEAL_BG, TEAL_BORDER } from "./styles";
 
@@ -8,7 +8,7 @@ const CardHeader = () => {
   return (
     <Box sx={{ bgcolor: TEAL_BG, borderBottom: `1px solid ${TEAL_BORDER}`, px: 2.5, py: 1.75, display: "flex", alignItems: "center", gap: 1.5 }}>
       <Box sx={{ width: 34, height: 34, borderRadius: "9px", bgcolor: TEAL, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <AutoAwesomeOutlined sx={{ fontSize: 17, color: "#fff" }} />
+        <AutoAwesomeOutlined size={17} color="#fff" />
       </Box>
       <Box>
         <Typography sx={{ fontSize: "13.5px", fontWeight: 700, color: "#111827", lineHeight: 1.25 }}>

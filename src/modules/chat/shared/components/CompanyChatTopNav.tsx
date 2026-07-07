@@ -1,9 +1,7 @@
 import React from "react";
 import NextLink from "next/link";
 import { Box, Paper, Typography } from "@mui/material";
-import GroupsOutlined from "@mui/icons-material/GroupsOutlined";
-import GroupsRounded from "@mui/icons-material/GroupsRounded";
-import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
+import { Users as GroupsOutlined, Users as GroupsRounded, UserCircle as PeopleAltOutlined } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useChatUnreadBadges } from "@/modules/chat/shared/hooks/useChatUnreadBadges";
 import {
@@ -67,8 +65,8 @@ const CompanyChatTopNav: React.FC<CompanyChatTopNavProps> = ({ activeChannel }) 
         >
           <Box aria-hidden sx={companyChatSx.teamTitleIconWrap}>
             {activeChannel === "team"
-              ? <GroupsRounded sx={{ fontSize: 20 }} />
-              : <PeopleAltOutlined sx={{ fontSize: 20 }} />}
+              ? <GroupsRounded size={20} />
+              : <PeopleAltOutlined size={20} />}
           </Box>
           <Box sx={{ minWidth: 0 }}>
             <Typography
@@ -100,7 +98,7 @@ const CompanyChatTopNav: React.FC<CompanyChatTopNavProps> = ({ activeChannel }) 
                   ...(isActive ? chatSegmentedControlSx.itemActive : {}),
                 }}
               >
-                <Icon sx={chatSegmentedControlSx.icon} />
+                <Icon size={18} color="inherit" />
                 <Typography component="span" sx={chatSegmentedControlSx.label}>
                   {t(`top_nav.${item.labelKey}`)}
                 </Typography>

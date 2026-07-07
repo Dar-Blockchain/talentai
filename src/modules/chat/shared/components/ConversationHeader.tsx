@@ -13,8 +13,7 @@ import {
   alpha,
   Tooltip,
 } from "@mui/material";
-import DeleteOutlined from "@mui/icons-material/DeleteOutlined";
-import MoreVert from "@mui/icons-material/MoreVert";
+import { Trash2 as DeleteOutlined, MoreVertical as MoreVert } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Participant, getParticipantDisplayName, getParticipantInitial, chatContextMenuPaperSlotProps, chatContextMenuItemSx } from "./helpers";
 
@@ -141,7 +140,7 @@ const ConversationHeader = memo(function ConversationHeader({
                   },
                 }}
               >
-                <MoreVert sx={{ fontSize: h.trashIcon }} />
+                <MoreVert size={h.trashIcon} />
               </IconButton>
             </Tooltip>
             <Menu
@@ -158,7 +157,7 @@ const ConversationHeader = memo(function ConversationHeader({
                 sx={{ ...chatContextMenuItemSx, color: "error.main", fontWeight: 600, "&:hover": { bgcolor: alpha(theme.palette.error.main, 0.08) } }}
               >
                 <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}>
-                  <DeleteOutlined fontSize="small" />
+                  <DeleteOutlined size={18} />
                 </ListItemIcon>
                 {t("delete_dialog.title")}
               </MenuItem>

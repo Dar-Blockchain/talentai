@@ -2,7 +2,7 @@
 import React, { memo, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
-import TrendingUpOutlined from "@mui/icons-material/TrendingUpOutlined";
+import { TrendingUp as TrendingUpOutlined } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from "recharts";
 import { ZoneHeading, KpiCard, Delta, MetricRow } from "./KpiAtoms";
 import { ChartTooltip, GRAY, T, passRate } from "../utils/kpiTokens";

@@ -15,18 +15,18 @@ import {
   ListItemText,
 } from '@mui/material';
 import {
-  Visibility as VisibilityIcon,
-  Close as CloseIcon,
-  EmojiEvents as ExcellentIcon,
+  Eye as VisibilityIcon,
+  X as CloseIcon,
+  Trophy as ExcellentIcon,
   TrendingUp as SatisfactoryIcon,
   TrendingDown as NeedsImprovementIcon,
-  Assessment as AllIcon,
-  MoreVert as MoreVertIcon,
+  ClipboardList as AllIcon,
+  MoreVertical as MoreVertIcon,
   Archive as ArchiveIcon,
-  Unarchive as UnarchiveIcon,
-  DeleteForever as DeleteForeverIcon,
-} from '@mui/icons-material';
-import { Search } from 'lucide-react';
+  ArchiveRestore as UnarchiveIcon,
+  Trash2 as DeleteForeverIcon,
+  Search,
+} from 'lucide-react';
 import { useAdminSkillAssessmentsQuery, useArchiveSkillAssessmentMutation, useUnarchiveSkillAssessmentMutation, useDeleteSkillAssessmentMutation } from '../queries';
 import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
@@ -232,11 +232,11 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
                   <td className={TD}>
                     <Tooltip title="View Details">
                       <IconButton size="small" onClick={() => { setSelectedAssessment(a); setDetailsDialogOpen(true); }} sx={{ color: ADMIN_NEUTRAL }}>
-                        <VisibilityIcon fontSize="small" />
+                        <VisibilityIcon size={18} />
                       </IconButton>
                     </Tooltip>
                     <IconButton size="small" onClick={(e) => openMenu(e, a)} sx={{ color: ADMIN_NEUTRAL }}>
-                      <MoreVertIcon fontSize="small" />
+                      <MoreVertIcon size={18} />
                     </IconButton>
                   </td>
                 </tr>
@@ -266,7 +266,7 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
             <>
               <div className="relative px-6 pt-6 pb-4">
                 <IconButton onClick={() => setDetailsDialogOpen(false)} sx={{ position: 'absolute', top: 12, right: 12, color: '#94A3B8', '&:hover': { color: '#0D9488' } }}>
-                  <CloseIcon fontSize="small" />
+                  <CloseIcon size={18} />
                 </IconButton>
                 <span className="text-[11px] uppercase tracking-[1.5px] text-slate-400">Skill Interview Assessment</span>
                 <h2 className="text-[1.35rem] font-semibold text-slate-900 mt-1 pr-8">{selectedAssessment.skill || 'Assessment Review'}</h2>
@@ -413,11 +413,11 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
 
       <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
         <MenuItem onClick={handleArchiveToggle}>
-          <ListItemIcon>{menuAssessment?.archived ? <UnarchiveIcon fontSize="small" /> : <ArchiveIcon fontSize="small" />}</ListItemIcon>
+          <ListItemIcon>{menuAssessment?.archived ? <UnarchiveIcon size={18} /> : <ArchiveIcon size={18} />}</ListItemIcon>
           <ListItemText>{menuAssessment?.archived ? 'Unarchive' : 'Archive'}</ListItemText>
         </MenuItem>
         <MenuItem onClick={handleDeleteRequest} sx={{ color: '#DC2626' }}>
-          <ListItemIcon sx={{ color: '#DC2626' }}><DeleteForeverIcon fontSize="small" /></ListItemIcon>
+          <ListItemIcon sx={{ color: '#DC2626' }}><DeleteForeverIcon size={18} /></ListItemIcon>
           <ListItemText>Delete permanently</ListItemText>
         </MenuItem>
       </Menu>

@@ -1,8 +1,8 @@
 import React from "react";
 import { EditActions } from "@/modules/settings/shared/components";
 import { COMPANY_SIZES } from "@/modules/settings/shared/constants";
-import SectionCard from "@/components/ui/SectionCard";
-import SectionHeader from "@/components/ui/SectionHeader";
+import { Card } from "@/modules/shared/ui/shadcn/card";
+import SectionHeader from "@/modules/shared/ui/SectionHeader";
 import { Input } from "@/modules/shared/ui/shadcn/input";
 import { UserProfile } from "../../shared";
 
@@ -19,7 +19,7 @@ interface CompanyInfoCardProps {
 }
 
 const CompanyInfoCard: React.FC<CompanyInfoCardProps> = ({ profile, isEditing, loading, fieldErrors, onEdit, onCancel, onSave, onInputChange, readOnly = false }) => (
-  <SectionCard>
+  <Card className="p-6 gap-0">
     <SectionHeader
       title="Company Information"
       subtitle="Basic company details and profile settings"
@@ -72,7 +72,7 @@ const CompanyInfoCard: React.FC<CompanyInfoCardProps> = ({ profile, isEditing, l
         {fieldErrors.size && <span className="text-[11px] text-red-500">{fieldErrors.size}</span>}
       </label>
     </div>
-  </SectionCard>
+  </Card>
 );
 
 export default CompanyInfoCard;

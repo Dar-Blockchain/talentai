@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import { updateJobField, updateRequirements, updateResponsibilities } from "../../store/createPostSlice";
-import SectionCard from "@/components/ui/SectionCard";
+import { Card } from "@/modules/shared/ui/shadcn/card";
 import { labelSx, textareaSx } from "./styles";
 
 interface Props {
@@ -17,7 +17,7 @@ const ContentSection = ({ description, requirements, responsibilities }: Props) 
   const { t } = useTranslation("posts");
 
   return (
-    <SectionCard>
+    <Card className="p-6 gap-0">
       <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827", mb: 2 }}>{t("create.preview.section_content")}</Typography>
 
       <Box sx={{ mb: 2 }}>
@@ -34,7 +34,7 @@ const ContentSection = ({ description, requirements, responsibilities }: Props) 
         <Typography sx={labelSx}>{t("create.preview.label_responsibilities")}</Typography>
         <TextField value={responsibilities.join("\n")} multiline minRows={4} fullWidth onChange={(e) => dispatch(updateResponsibilities(e.target.value))} sx={textareaSx} />
       </Box>
-    </SectionCard>
+    </Card>
   );
 };
 

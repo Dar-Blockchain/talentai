@@ -1,7 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Box } from "@mui/material";
-import WorkOutlined from "@mui/icons-material/WorkOutlined";
+import { Briefcase as WorkOutlined } from "lucide-react";
 import { getPostSkills } from '@/modules/company/posts/utils/postHelpers';
 import ThresholdCard from "./overview/ThresholdCard";
 import OverviewCard from "./overview/OverviewCard";
@@ -36,14 +36,14 @@ const PostBasicDetails: React.FC<Props> = ({ job, canEdit }) => {
       <SkillsCard skills={displaySkills} />
 
       <BulletListCard
-        icon={<WorkOutlined sx={{ fontSize: 15 }} />}
+        icon={<WorkOutlined size={15} />}
         title={t("detail.details.requirements")}
         items={jd.requirements || []}
         bulletColor="#0D9488"
       />
 
       <BulletListCard
-        icon={<WorkOutlined sx={{ fontSize: 15 }} />}
+        icon={<WorkOutlined size={15} />}
         title={t("detail.details.responsibilities")}
         items={jd.responsibilities || []}
         bulletColor="#6366F1"

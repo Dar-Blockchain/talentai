@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { Box, Dialog, Typography } from "@mui/material";
 import { Button } from "@/modules/shared/ui/shadcn/button";
-import MicOutlined from "@mui/icons-material/MicOutlined";
-import CheckOutlined from "@mui/icons-material/CheckOutlined";
+import { Mic as MicOutlined, Check as CheckOutlined } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { SUPPORTED_LANGS } from "@/modules/shared/constants/languages";
 
@@ -15,10 +14,10 @@ interface Props {
   onConfirm: (languages: string[]) => void;
   onClose: () => void;
   initialLanguages?: string[];
-  confirmLabel?: string;
+  isLoading?: boolean;
 }
 
-const InterviewLanguagesModal: React.FC<Props> = ({ open, onConfirm, onClose, initialLanguages, confirmLabel }) => {
+const InterviewLanguagesModal: React.FC<Props> = ({ open, isLoading, onConfirm, onClose, initialLanguages }) => {
   const [selected, setSelected] = useState<string[]>(initialLanguages ?? ["en"]);
   const { t } = useTranslation("posts");
 
@@ -60,7 +59,7 @@ const InterviewLanguagesModal: React.FC<Props> = ({ open, onConfirm, onClose, in
             display: "flex", alignItems: "center", justifyContent: "center",
           }}
         >
-          <MicOutlined sx={{ fontSize: 22, color: TEAL }} />
+          <MicOutlined size={22} color={TEAL} />
         </Box>
         <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>
           {t("create.interview_lang_modal.title")}
@@ -105,7 +104,7 @@ const InterviewLanguagesModal: React.FC<Props> = ({ open, onConfirm, onClose, in
                     display: "flex", alignItems: "center", justifyContent: "center",
                   }}
                 >
-                  <CheckOutlined sx={{ fontSize: 10, color: "#fff" }} />
+                  <CheckOutlined size={10} color="#fff" />
                 </Box>
               )}
               <img src={`https://flagcdn.com/w40/${lang.flag}.png`} srcSet={`https://flagcdn.com/w80/${lang.flag}.png 2x`} width={28} height={20} alt={lang.label} style={{ borderRadius: 2, display: "block" }} />
@@ -145,11 +144,11 @@ const InterviewLanguagesModal: React.FC<Props> = ({ open, onConfirm, onClose, in
         </Button>
 
         <Button
-          variant="default"
           onClick={handleConfirm}
           className="flex-1"
+          loading={isLoading}
         >
-          {confirmLabel ?? t("create.interview_lang_modal.btn_save")}
+          {t("create.interview_lang_modal.btn_save")}
         </Button>
       </div>
     </Dialog>

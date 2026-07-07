@@ -1,11 +1,8 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Box, Divider, Typography } from "@mui/material";
-import WorkOutlined from "@mui/icons-material/WorkOutlined";
-import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
-import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
-import MicOutlined from "@mui/icons-material/MicOutlined";
-import SectionCard from "@/components/ui/SectionCard";
+import { Briefcase as WorkOutlined, MapPin as LocationOnOutlined, Calendar as CalendarTodayOutlined, Mic as MicOutlined } from "lucide-react";
+import { Card } from "@/modules/shared/ui/shadcn/card";
 import { LANG_META } from "@/modules/shared/constants/languages";
 import { formatSalary } from '@/modules/company/posts/utils/postHelpers';
 import { formatDate } from "@/utils/functions";
@@ -21,20 +18,20 @@ const OverviewCard: React.FC<Props> = ({ jd, createdAt, interviewLanguages }) =>
   const { t } = useTranslation("posts");
 
   return (
-    <SectionCard>
-      <SectionTitle icon={<WorkOutlined sx={{ fontSize: 15 }} />} title={t("detail.details.overview")} />
+    <Card className="p-6 gap-0">
+      <SectionTitle icon={<WorkOutlined size={15} />} title={t("detail.details.overview")} />
 
       {/* Meta chips */}
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
         {jd.workMode && (
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, bgcolor: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 2, px: 1.5, py: 0.75 }}>
-            <LocationOnOutlined sx={{ fontSize: 14, color: "#2563EB" }} />
+            <LocationOnOutlined size={14} color="#2563EB" />
             <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#2563EB" }}>{jd.workMode}</Typography>
           </Box>
         )}
         {jd.employmentType && (
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, bgcolor: "#F5F3FF", border: "1px solid #DDD6FE", borderRadius: 2, px: 1.5, py: 0.75 }}>
-            <WorkOutlined sx={{ fontSize: 14, color: "#7C3AED" }} />
+            <WorkOutlined size={14} color="#7C3AED" />
             <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#7C3AED" }}>{jd.employmentType}</Typography>
           </Box>
         )}
@@ -45,7 +42,7 @@ const OverviewCard: React.FC<Props> = ({ jd, createdAt, interviewLanguages }) =>
         )}
         {createdAt && (
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, bgcolor: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: 2, px: 1.5, py: 0.75 }}>
-            <CalendarTodayOutlined sx={{ fontSize: 14, color: "#6B7280" }} />
+            <CalendarTodayOutlined size={14} color="#6B7280" />
             <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#6B7280" }}>{formatDate(createdAt)}</Typography>
           </Box>
         )}
@@ -55,7 +52,7 @@ const OverviewCard: React.FC<Props> = ({ jd, createdAt, interviewLanguages }) =>
       <Divider sx={{ my: 2 }} />
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-          <MicOutlined sx={{ fontSize: 15, color: "#6B7280" }} />
+          <MicOutlined size={15} color="#6B7280" />
           <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#6B7280" }}>
             {t("detail.details.interview_languages")}
           </Typography>
@@ -82,7 +79,7 @@ const OverviewCard: React.FC<Props> = ({ jd, createdAt, interviewLanguages }) =>
           <Typography sx={{ fontSize: "13px", color: "#6B7280", lineHeight: 1.8 }}>{jd.description}</Typography>
         </>
       )}
-    </SectionCard>
+    </Card>
   );
 };
 

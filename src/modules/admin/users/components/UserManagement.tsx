@@ -1,16 +1,16 @@
 import React, { useState, useCallback } from 'react';
 import {
-  Visibility as VisibilityIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  CheckCircle as CheckCircleIcon,
-  Pending as PendingIcon,
-  LocationOn as LocationIcon,
-  People as PeopleIcon,
-  Person as PersonIcon,
-  Business as BusinessIcon,
-} from '@mui/icons-material';
-import { Search } from 'lucide-react';
+  Eye as VisibilityIcon,
+  Pencil as EditIcon,
+  Trash2 as DeleteIcon,
+  CheckCircle2 as CheckCircleIcon,
+  Clock as PendingIcon,
+  MapPin as LocationIcon,
+  Users as PeopleIcon,
+  User as PersonIcon,
+  Building2 as BusinessIcon,
+  Search,
+} from 'lucide-react';
 import { useAdminUsersQuery } from '../queries';
 import { User, UserFilters } from '../types';
 import { usePagination } from '@/hooks/usePagination';
@@ -210,7 +210,7 @@ const UserManagement: React.FC<UserManagementProps> = ({
                   </td>
                   <td className={TD}>
                     <Badge variant="outline" className={cn('gap-1 border-transparent font-semibold', user.isVerified ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600')}>
-                      {user.isVerified ? <CheckCircleIcon style={{ fontSize: 12 }} /> : <PendingIcon style={{ fontSize: 12 }} />}
+                      {user.isVerified ? <CheckCircleIcon size={12} /> : <PendingIcon size={12} />}
                       {user.isVerified ? 'Verified' : 'Pending'}
                     </Badge>
                   </td>
@@ -218,7 +218,7 @@ const UserManagement: React.FC<UserManagementProps> = ({
                     {user.Localisation ? (
                       <div>
                         <div className="flex items-center gap-1 text-slate-700">
-                          <LocationIcon style={{ fontSize: 14 }} className="text-slate-400" />
+                          <LocationIcon size={14} className="text-slate-400" />
                           {user.Localisation}
                         </div>
                         {user.ip && <div className="text-[11px] text-slate-400">IP: {user.ip}</div>}
@@ -231,17 +231,17 @@ const UserManagement: React.FC<UserManagementProps> = ({
                     <div className="flex items-center gap-0.5">
                       <Tooltip title="View">
                         <IconButton size="small" onClick={() => onUserSelect?.(user)} sx={{ color: '#64748B', '&:hover': { color: '#0D9488' } }}>
-                          <VisibilityIcon fontSize="small" />
+                          <VisibilityIcon size={18} />
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="Edit">
                         <IconButton size="small" onClick={() => onUserEdit?.(user)} sx={{ color: '#64748B', '&:hover': { color: '#0D9488' } }}>
-                          <EditIcon fontSize="small" />
+                          <EditIcon size={18} />
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="Delete">
                         <IconButton size="small" onClick={() => onUserDelete?.(user._id)} sx={{ color: '#CBD5E1', '&:hover': { color: '#ef4444' } }}>
-                          <DeleteIcon fontSize="small" />
+                          <DeleteIcon size={18} />
                         </IconButton>
                       </Tooltip>
                     </div>

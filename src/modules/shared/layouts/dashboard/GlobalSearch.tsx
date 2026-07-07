@@ -10,12 +10,7 @@ import {
   Paper,
   ClickAwayListener,
 } from "@mui/material";
-import SearchOutlined from "@mui/icons-material/SearchOutlined";
-import WorkOutlineOutlined from "@mui/icons-material/WorkOutlineOutlined";
-import PeopleAltOutlined from "@mui/icons-material/PeopleAlt";
-import SpaceDashboardOutlined from "@mui/icons-material/SpaceDashboardOutlined";
-import TuneOutlined from "@mui/icons-material/TuneOutlined";
-import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
+import { Search, Briefcase, Users, LayoutDashboard, SlidersHorizontal, ArrowRight } from "lucide-react";
 import { useRouter } from "next/router";
 import axiosInstance from "@/utils/axiosInstance";
 
@@ -27,10 +22,10 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 const QUICK_LINKS = [
-  { label: "Dashboard",    href: "/company/dashboard",    Icon: SpaceDashboardOutlined },
-  { label: "Posts",        href: "/company/posts",        Icon: WorkOutlineOutlined },
-  { label: "Applications", href: "/company/applications", Icon: PeopleAltOutlined },
-  { label: "Settings",     href: "/settings",             Icon: TuneOutlined },
+  { label: "Dashboard",    href: "/company/dashboard",    Icon: LayoutDashboard },
+  { label: "Posts",        href: "/company/posts",        Icon: Briefcase },
+  { label: "Applications", href: "/company/applications", Icon: Users },
+  { label: "Settings",     href: "/settings",             Icon: SlidersHorizontal },
 ];
 
 interface SearchResult {
@@ -156,7 +151,7 @@ const GlobalSearch: React.FC = () => {
           width: "100%",
         }}
       >
-        <SearchOutlined sx={{ fontSize: 14, color: "#9CA3AF", flexShrink: 0 }} />
+        <Search size={14} color="#9CA3AF" className="shrink-0" />
         <Typography sx={{ fontSize: "12.5px", color: "#9CA3AF", flex: 1, userSelect: "none" }}>
           Search...
         </Typography>
@@ -194,7 +189,7 @@ const GlobalSearch: React.FC = () => {
             }}>
               {loading
                 ? <CircularProgress size={14} sx={{ color: TEAL, flexShrink: 0 }} />
-                : <SearchOutlined sx={{ fontSize: 16, color: "#9CA3AF", flexShrink: 0 }} />
+                : <Search size={16} color="#9CA3AF" className="shrink-0" />
               }
               <InputBase
                 inputRef={inputRef}
@@ -242,10 +237,10 @@ const GlobalSearch: React.FC = () => {
                       onMouseEnter={() => setFocused(i)}
                     >
                       <Box sx={{ width: 26, height: 26, borderRadius: "7px", bgcolor: "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <link.Icon sx={{ fontSize: 13, color: "#6B7280" }} />
+                        <link.Icon size={13} color="#6B7280" />
                       </Box>
                       <Typography sx={{ fontSize: "13px", fontWeight: 500, color: "#374151" }}>{link.label}</Typography>
-                      <ArrowForwardOutlined sx={{ fontSize: 12, color: "#D1D5DB", ml: "auto" }} />
+                      <ArrowRight size={12} color="#D1D5DB" className="ml-auto" />
                     </Box>
                   ))}
                 </Box>
@@ -272,7 +267,7 @@ const GlobalSearch: React.FC = () => {
                         onMouseEnter={() => setFocused(idx)}
                       >
                         <Box sx={{ width: 26, height: 26, borderRadius: "7px", bgcolor: `${TEAL}0F`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                          <WorkOutlineOutlined sx={{ fontSize: 13, color: TEAL }} />
+                          <Briefcase size={13} color={TEAL} />
                         </Box>
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                           <Typography noWrap sx={{ fontSize: "13px", fontWeight: 600, color: "#111827" }}>{r.title}</Typography>
@@ -336,7 +331,7 @@ const GlobalSearch: React.FC = () => {
               {/* Empty state */}
               {showEmpty && (
                 <Box sx={{ py: 5, textAlign: "center" }}>
-                  <SearchOutlined sx={{ fontSize: 32, color: "#E5E7EB", mb: 1 }} />
+                  <Search size={32} color="#E5E7EB" className="mb-2" />
                   <Typography sx={{ fontSize: "13px", fontWeight: 500, color: "#9CA3AF" }}>No results for "{query}"</Typography>
                   <Typography sx={{ fontSize: "11.5px", color: "#C4C9D4", mt: 0.5 }}>Try a job title or candidate name</Typography>
                 </Box>

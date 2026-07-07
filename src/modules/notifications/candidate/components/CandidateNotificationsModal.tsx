@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Dialog, DialogContent, IconButton } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
+import { X as CloseIcon } from 'lucide-react';
 import CandidateNotificationsPanel from './CandidateNotificationsPanel';
 
 interface Props {
@@ -24,7 +24,7 @@ const CandidateNotificationsModal: React.FC<Props> = ({ open, onClose }) => (
         onClick={onClose}
         sx={{ bgcolor: '#F3F4F6', '&:hover': { bgcolor: '#E5E7EB' }, borderRadius: '10px' }}
       >
-        <CloseIcon sx={{ fontSize: 18, color: '#6B7280' }} />
+        <CloseIcon size={18} color='#6B7280' />
       </IconButton>
     </Box>
     <DialogContent sx={{ pt: 0, pb: 2.5, px: 2.5 }}>

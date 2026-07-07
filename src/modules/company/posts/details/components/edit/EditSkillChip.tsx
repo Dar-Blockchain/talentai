@@ -1,6 +1,6 @@
 import React from "react";
 import { Chip } from "@mui/material";
-import { Close } from "@mui/icons-material";
+import { X as Close } from "lucide-react";
 
 interface Props {
   label: string;
@@ -17,11 +17,9 @@ const EditSkillChip: React.FC<Props> = ({ label, onDelete, onClick, sx }) => (
     deleteIcon={
       onDelete ? (
         <Close
-          sx={{
-            color: "rgba(6,65,96,1)", fontSize: "16px",
-            transition: "transform 0.2s ease", cursor: "pointer",
-            "&:hover": { transform: "scale(1.2)" },
-          }}
+          size={16}
+          color="rgba(6,65,96,1)"
+          className="cursor-pointer transition-transform duration-200 hover:scale-125"
         />
       ) : undefined
     }

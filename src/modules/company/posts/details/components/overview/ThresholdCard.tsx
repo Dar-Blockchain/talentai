@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import { Box, Slider, Typography } from "@mui/material";
-import TrackChangesOutlined from "@mui/icons-material/TrackChangesOutlined";
-import SaveOutlined from "@mui/icons-material/SaveOutlined";
-import CheckOutlined from "@mui/icons-material/Check";
-import SectionCard from "@/components/ui/SectionCard";
+import { Target as TrackChangesOutlined, Save as SaveOutlined, Check as CheckOutlined } from "lucide-react";
+import { Card } from "@/modules/shared/ui/shadcn/card";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { useUpdatePostMutation } from "@/modules/company/posts/details/queries";
 
@@ -40,12 +38,12 @@ const ThresholdCard: React.FC<Props> = ({ jobId, initial, canEdit, isDraft }) =>
     : "linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%)";
 
   return (
-    <SectionCard>
+    <Card className="p-6 gap-0">
       {/* Header */}
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Box sx={{ width: 32, height: 32, borderRadius: 2, bgcolor: TEAL_BG, border: `1px solid ${TEAL_BORDER}`, display: "flex", alignItems: "center", justifyContent: "center", color: TEAL }}>
-            <TrackChangesOutlined sx={{ fontSize: 17 }} />
+            <TrackChangesOutlined size={17} />
           </Box>
           <Box>
             <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: 0.5 }}>
@@ -113,13 +111,13 @@ const ThresholdCard: React.FC<Props> = ({ jobId, initial, canEdit, isDraft }) =>
             onClick={handleSave}
             className={saved ? "border-green-600 text-green-600 hover:border-green-600 hover:bg-green-50" : undefined}
           >
-            {saved ? <CheckOutlined sx={{ fontSize: 13 }} /> : <SaveOutlined sx={{ fontSize: 13 }} />}
+            {saved ? <CheckOutlined size={13} /> : <SaveOutlined size={13} />}
             {saved ? "Saved" : "Save"}
           </Button>
         )}
         <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>100%</Typography>
       </Box>
-    </SectionCard>
+    </Card>
   );
 };
 

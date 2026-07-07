@@ -1,8 +1,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogActions, IconButton } from '@mui/material';
 import { Button } from '@/modules/shared/ui/shadcn/button';
-import CloseIcon from '@mui/icons-material/Close';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import { X, AlertTriangle } from 'lucide-react';
 import { ADMIN_ACCENT, ADMIN_DANGER, ADMIN_RADIUS } from '../theme';
 
 interface ConfirmDialogProps {
@@ -39,11 +38,11 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     >
       <div className="relative px-6 pt-6 pb-2">
         <IconButton onClick={onCancel} sx={{ position: 'absolute', top: 12, right: 12, color: '#94A3B8', '&:hover': { color: '#475569' } }}>
-          <CloseIcon fontSize="small" />
+          <X size={18} />
         </IconButton>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: tintBg }}>
-            <WarningAmberIcon style={{ fontSize: 20, color: accent }} />
+            <AlertTriangle size={20} color={accent} />
           </div>
           <h2 className="text-[1.05rem] font-semibold text-slate-900">{title}</h2>
         </div>

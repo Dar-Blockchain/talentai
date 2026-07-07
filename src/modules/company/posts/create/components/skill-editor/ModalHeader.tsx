@@ -1,5 +1,5 @@
 import { Box, Typography, IconButton } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
+import { X as CloseIcon } from "lucide-react";
 import { DialogTitle } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
