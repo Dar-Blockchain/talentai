@@ -64,7 +64,7 @@ const PlansPage: NextPageWithLayout = function PlansPage() {
       {plansLoading || combinedLoading ? (
         <LoadingState message={t("pages.subscription.loading", "Loading plans…")} color="#0D9488" />
       ) : (
-        <div className="mt-1 grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+        <div className="mt-1 grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
           {sortedPlans.map((plan: any) => (
             <PlanCard
               key={plan._id}
