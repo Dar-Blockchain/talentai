@@ -5,6 +5,7 @@ import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { Button } from '@/modules/shared/ui/shadcn/button';
 import { Input } from '@/modules/shared/ui/shadcn/input';
 import { Pagination } from '@/modules/shared/ui/shadcn/pagination';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/modules/shared/ui/shadcn/select';
 import { cn } from '@/lib/utils';
 import { AdminTableErrorRow } from '@/modules/admin/shared';
 import { useCompanySubscriptionsQuery } from '../queries';
@@ -132,13 +133,17 @@ const CompanySubscriptionsTable: React.FC = () => {
         <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100">
           <div className="flex items-center gap-2">
             <span className="text-[12px] text-slate-500">Rows per page:</span>
-            <select
-              value={rowsPerPage}
-              onChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-              className="text-[12px] text-slate-600 border border-slate-200 rounded-md px-2 py-1 outline-none focus:border-teal-400"
+            <Select
+              value={String(rowsPerPage)}
+              onValueChange={(v) => { setRowsPerPage(parseInt(v, 10)); setPage(0); }}
             >
-              {[10, 20, 50].map((n) => <option key={n} value={n}>{n}</option>)}
-            </select>
+              <SelectTrigger size="sm" className="text-[12px] text-slate-600">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[10, 20, 50].map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
           <Pagination page={page + 1} totalPages={totalPages} onPageChange={(p) => setPage(p - 1)} size="sm" />
         </div>

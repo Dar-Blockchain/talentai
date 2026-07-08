@@ -5,6 +5,7 @@ import {
 import { TrendingUp as TrendingUpIcon } from 'lucide-react';
 import { AdminChartCard, ADMIN_NEUTRAL, ADMIN_NEUTRAL_BG } from '@/modules/admin/shared';
 import { ChartTooltip } from '@/modules/company/dashboard/utils/kpiTokens';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/modules/shared/ui/shadcn/select';
 import type { UserGrowthPoint } from '../types';
 
 const SERIES = [
@@ -35,16 +36,17 @@ const AdminGrowthAnalytics = ({ data, availableMonths, selectedMonth, setSelecte
         </div>
         <span className="font-semibold text-[15px] text-slate-900">Growth Analytics</span>
       </div>
-      <select
-        value={selectedMonth}
-        onChange={(e) => setSelectedMonth(e.target.value)}
-        className="text-[13px] border border-slate-200 rounded-lg px-3 py-1.5 outline-none focus:border-teal-400 text-slate-600 bg-white transition-colors"
-      >
-        <option value="all">All Time</option>
-        {availableMonths.map((ym) => (
-          <option key={ym} value={ym}>{formatMonthLabel(ym)}</option>
-        ))}
-      </select>
+      <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+        <SelectTrigger size="sm" className="text-[13px] text-slate-600 bg-white">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Time</SelectItem>
+          {availableMonths.map((ym) => (
+            <SelectItem key={ym} value={ym}>{formatMonthLabel(ym)}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
 
     <ResponsiveContainer width="100%" height={300}>

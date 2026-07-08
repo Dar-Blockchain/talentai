@@ -4,6 +4,7 @@ import { Search as SearchIcon, Check as CheckIcon, Building2 as AddBusinessIcon 
 import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { Button } from '@/modules/shared/ui/shadcn/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/modules/shared/ui/shadcn/select';
 import { adminSubscriptionApi } from '../api';
 import { useCompanySearchQuery } from '../queries';
 import { CompanyOption, PlanLimit } from '../types';
@@ -129,16 +130,16 @@ const SubscribeCompanyCard: React.FC<SubscribeCompanyCardProps> = ({ plans, onSu
         {/* Plan select */}
         <div className="flex-[1_1_180px]">
           <label className="text-[12px] font-semibold text-slate-600 mb-1.5 block">Plan</label>
-          <select
-            value={selectedPlanId}
-            onChange={(e) => setSelectedPlanId(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-[13px] outline-none bg-white"
-          >
-            <option value="">Select a plan…</option>
-            {plans.map((p) => (
-              <option key={p._id} value={p._id}>{p.name} ({p.postsLimit} posts / {p.monthlyInterviewLimit} interviews)</option>
-            ))}
-          </select>
+          <Select value={selectedPlanId || undefined} onValueChange={setSelectedPlanId}>
+            <SelectTrigger className="w-full text-[13px] bg-white">
+              <SelectValue placeholder="Select a plan…" />
+            </SelectTrigger>
+            <SelectContent>
+              {plans.map((p) => (
+                <SelectItem key={p._id} value={p._id}>{p.name} ({p.postsLimit} posts / {p.monthlyInterviewLimit} interviews)</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Submit */}

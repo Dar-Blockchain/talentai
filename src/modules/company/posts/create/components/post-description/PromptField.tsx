@@ -23,7 +23,7 @@ const PromptField = ({ value, error, onChange }: Props) => {
         rows={5}
         aria-invalid={!!error}
         className={cn(
-          "max-h-44 min-h-[120px] resize-y rounded-[10px] border-[#E5E7EB] bg-[#FAFAFA] text-[13px] leading-[1.75] hover:border-[#0D9488] focus-visible:border-[#0D9488] focus-visible:ring-[#0D9488]/20",
+          "max-h-44 min-h-[120px] resize-y rounded-[10px] border-[#E5E7EB] bg-[#FAFAFA] text-[13px] leading-[1.75] placeholder:text-[11.5px] hover:border-[#0D9488] focus-visible:border-[#0D9488] focus-visible:ring-[#0D9488]/20",
           error && "border-red-500",
         )}
       />

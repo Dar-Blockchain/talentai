@@ -82,7 +82,6 @@ const DetailsSection = ({ title, employmentType, workMode, experienceLevel, sala
         </p>
         <Select value={experienceLevel} onValueChange={(v) => dispatch(updateJobField({ field: "experienceLevel", value: v }))}>
           <SelectTrigger className="h-10 text-[13px]">
-            <TrendingUpIcon size={16} className="text-[#9CA3AF]" />
             <SelectValue placeholder={t("create.post_form.placeholders.select_experience_level")} />
           </SelectTrigger>
           <SelectContent>

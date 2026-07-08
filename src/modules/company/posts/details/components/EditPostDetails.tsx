@@ -10,17 +10,13 @@ import SkillEditorModal from "@/modules/company/posts/create/components/SkillEdi
 import { contractTypes, experienceLevels, workModes } from "@/modules/company/posts/shared/constants";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Input } from "@/modules/shared/ui/shadcn/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
 import { Textarea } from "@/modules/shared/ui/shadcn/textarea";
 import { DatePicker } from "@/modules/shared/ui/DatePicker";
 import EditSkillsSection from "./edit/EditSkillsSection";
 import EditThresholdScore from "./edit/EditThresholdScore";
 
 // ── Styles ────────────────────────────────────────────────────────────────────
-
-const selectBoxClass =
-  "flex h-10 items-center gap-2 rounded-md border border-input bg-transparent px-3 text-[12px] font-medium shadow-xs transition-[color,box-shadow] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50";
-
-const selectClass = "flex-1 appearance-none bg-transparent text-[12px] font-medium outline-none";
 
 const labelClass = "leading-[42px] text-[12px] font-medium text-[rgba(84,98,116,0.53)]";
 
@@ -177,13 +173,15 @@ const EditPostDetails: React.FC<Props> = ({ job, onCancel, onSaveSuccess }) => {
             name="jobDetails.workMode"
             control={control}
             render={({ field }) => (
-              <div className={selectBoxClass}>
-                <Image src="/icons/building3.svg" alt="work mode" width={16} height={16} />
-                <select {...field} className={selectClass}>
-                  <option disabled value="">Work Mode</option>
-                  {workModes.map((m) => <option key={m} value={m}>{m}</option>)}
-                </select>
-              </div>
+              <Select value={field.value || undefined} onValueChange={field.onChange}>
+                <SelectTrigger className="w-full text-[12px] font-medium">
+                  <Image src="/icons/building3.svg" alt="work mode" width={16} height={16} />
+                  <SelectValue placeholder="Work Mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  {workModes.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                </SelectContent>
+              </Select>
             )}
           />
         </div>
@@ -196,13 +194,15 @@ const EditPostDetails: React.FC<Props> = ({ job, onCancel, onSaveSuccess }) => {
               name="jobDetails.employmentType"
               control={control}
               render={({ field }) => (
-                <div className={selectBoxClass}>
-                  <Image src="/icons/bag.svg" alt="employment" width={16} height={16} />
-                  <select {...field} className={selectClass}>
-                    <option disabled value="">Employment Type</option>
-                    {contractTypes.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
+                <Select value={field.value || undefined} onValueChange={field.onChange}>
+                  <SelectTrigger className="w-full text-[12px] font-medium">
+                    <Image src="/icons/bag.svg" alt="employment" width={16} height={16} />
+                    <SelectValue placeholder="Employment Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {contractTypes.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               )}
             />
           </div>
@@ -212,13 +212,15 @@ const EditPostDetails: React.FC<Props> = ({ job, onCancel, onSaveSuccess }) => {
               name="jobDetails.experienceLevel"
               control={control}
               render={({ field }) => (
-                <div className={selectBoxClass}>
-                  <TrendingUpIcon size={16} color="rgba(98,111,134,1)" />
-                  <select {...field} className={selectClass}>
-                    <option disabled value="">Experience Level</option>
-                    {experienceLevels.map((l) => <option key={l} value={l}>{l}</option>)}
-                  </select>
-                </div>
+                <Select value={field.value || undefined} onValueChange={field.onChange}>
+                  <SelectTrigger className="w-full text-[12px] font-medium">
+                    <TrendingUpIcon size={16} color="rgba(98,111,134,1)" />
+                    <SelectValue placeholder="Experience Level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {experienceLevels.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               )}
             />
           </div>

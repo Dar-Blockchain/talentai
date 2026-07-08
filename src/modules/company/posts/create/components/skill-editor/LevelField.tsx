@@ -1,6 +1,7 @@
 import { TrendingUp as TrendingUpIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { hardSkillLevels, softSkillLevels } from "@/modules/shared/constants/skills";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
 
 interface Props {
   skillType: "hard" | "soft";
@@ -22,28 +23,22 @@ const LevelField = ({ skillType, value, onChange }: Props) => {
       <label className="block leading-[42px] text-[12px] font-medium text-[rgba(84,98,116,0.53)]">
         {t("create.post_form.skill_modal.experience_level")}
       </label>
-      <div className="relative">
-        <TrendingUpIcon
-          size={16}
-          color="rgba(98, 111, 134, 1)"
-          className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2"
-        />
-        <select
-          value={value ?? ""}
-          onChange={(e) => onChange(e.target.value)}
+      <Select value={value != null && value !== "" ? String(value) : undefined} onValueChange={onChange}>
+        <SelectTrigger
           aria-label={t("create.post_form.skill_modal.experience_level")}
-          className="h-10 w-full rounded-md border border-input pr-3 pl-9 text-[12px] font-medium outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+          className="w-full text-[12px] font-medium"
         >
-          <option disabled value="" className="text-[12px] font-medium">
-            {t("create.post_form.placeholders.select_skill_level")}
-          </option>
+          <TrendingUpIcon size={16} color="rgba(98, 111, 134, 1)" />
+          <SelectValue placeholder={t("create.post_form.placeholders.select_skill_level")} />
+        </SelectTrigger>
+        <SelectContent>
           {levels.map((item) => (
-            <option key={item.value} value={item.value} className="text-[12px] font-medium">
+            <SelectItem key={item.value} value={String(item.value)}>
               {levelMenuLabel(item.value)}
-            </option>
+            </SelectItem>
           ))}
-        </select>
-      </div>
+        </SelectContent>
+      </Select>
     </div>
   );
 };

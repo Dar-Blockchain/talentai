@@ -22,6 +22,7 @@ import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/modules/shared/ui/shadcn/tabs';
 import { Pagination } from '@/modules/shared/ui/shadcn/pagination';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/modules/shared/ui/shadcn/select';
 import { ScoreBadge, scoreTone, ADMIN_NEUTRAL, ADMIN_RADIUS, AdminPageHeading, AdminStatCard, AdminTableErrorRow, ConfirmDialog } from '@/modules/admin/shared';
 import { cn } from '@/lib/utils';
 
@@ -156,14 +157,18 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
               className="w-full text-[13px] outline-none placeholder:text-slate-400 bg-transparent"
             />
           </div>
-          <select
-            value={selectedSkill}
-            onChange={(e) => { setSelectedSkill(e.target.value); setPage(1); }}
-            className="text-[13px] border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-teal-400 text-slate-600 bg-white min-w-[180px]"
+          <Select
+            value={selectedSkill || "all"}
+            onValueChange={(v) => { setSelectedSkill(v === "all" ? "" : v); setPage(1); }}
           >
-            <option value="">All Skills</option>
-            {skills.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
+            <SelectTrigger size="sm" className="min-w-[180px] text-[13px] text-slate-600 bg-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Skills</SelectItem>
+              {skills.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
           {loading && <Spinner className="size-4" style={{ color: '#0D9488' }} />}
           <div className="flex-1" />
           <span className="text-[12px] text-slate-400">{filteredResults.length} of {totalCount}</span>
@@ -248,10 +253,14 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
         <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100">
           <span className="text-[12px] text-slate-400">{totalCount.toLocaleString()} assessments</span>
           <div className="flex items-center gap-3">
-            <select value={rowsPerPage} onChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(1); }}
-              className="text-[12px] text-slate-600 border border-slate-200 rounded-md px-2 py-1 outline-none focus:border-teal-400">
-              {[5, 10, 25].map((n) => <option key={n} value={n}>{n} / page</option>)}
-            </select>
+            <Select value={String(rowsPerPage)} onValueChange={(v) => { setRowsPerPage(Number(v)); setPage(1); }}>
+              <SelectTrigger size="sm" className="text-[12px] text-slate-600">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[5, 10, 25].map((n) => <SelectItem key={n} value={String(n)}>{n} / page</SelectItem>)}
+              </SelectContent>
+            </Select>
             <Pagination page={page} totalPages={Math.ceil(totalCount / rowsPerPage)} onPageChange={setPage} size="sm" />
           </div>
         </div>

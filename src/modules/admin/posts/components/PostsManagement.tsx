@@ -21,6 +21,7 @@ import {
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Pagination } from '@/modules/shared/ui/shadcn/pagination';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/modules/shared/ui/shadcn/select';
 import {
   ADMIN_NEUTRAL, AdminPageHeading, AdminStatCard, AdminTableErrorRow, ConfirmDialog,
 } from '@/modules/admin/shared';
@@ -115,16 +116,20 @@ const PostsManagement: React.FC = () => {
               className="w-full text-[13px] outline-none placeholder:text-slate-400 bg-transparent"
             />
           </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-            className="text-[13px] border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-teal-400 text-slate-600 bg-white"
+          <Select
+            value={statusFilter || "all"}
+            onValueChange={(v) => { setStatusFilter(v === "all" ? "" : v); setPage(1); }}
           >
-            <option value="">All Statuses</option>
-            <option value="draft">Draft</option>
-            <option value="open">Open</option>
-            <option value="closed">Closed</option>
-          </select>
+            <SelectTrigger size="sm" className="text-[13px] text-slate-600 bg-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="open">Open</SelectItem>
+              <SelectItem value="closed">Closed</SelectItem>
+            </SelectContent>
+          </Select>
           {loading && <Loader2 size={16} className="animate-spin text-teal-500" />}
           <div className="flex-1" />
           <span className="text-[12px] text-slate-400">{totalCount.toLocaleString()} total</span>
@@ -206,13 +211,17 @@ const PostsManagement: React.FC = () => {
         <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100">
           <span className="text-[12px] text-slate-400">{totalCount.toLocaleString()} posts</span>
           <div className="flex items-center gap-3">
-            <select
-              value={rowsPerPage}
-              onChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(1); }}
-              className="text-[12px] text-slate-600 border border-slate-200 rounded-md px-2 py-1 outline-none focus:border-teal-400"
+            <Select
+              value={String(rowsPerPage)}
+              onValueChange={(v) => { setRowsPerPage(Number(v)); setPage(1); }}
             >
-              {[5, 10, 25].map((n) => <option key={n} value={n}>{n} / page</option>)}
-            </select>
+              <SelectTrigger size="sm" className="text-[12px] text-slate-600">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[5, 10, 25].map((n) => <SelectItem key={n} value={String(n)}>{n} / page</SelectItem>)}
+              </SelectContent>
+            </Select>
             <Pagination page={page} totalPages={totalPages} onPageChange={setPage} size="sm" />
           </div>
         </div>

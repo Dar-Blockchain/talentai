@@ -28,6 +28,7 @@ import {
   Pencil as EditIcon,
 } from "lucide-react";
 import { Button } from "@/modules/shared/ui/shadcn/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
 import WebinarSubmissionsDialog from "./WebinarSubmissionsDialog";
 import { adminWebinarApi } from "../api";
 import {
@@ -117,9 +118,14 @@ function QuestionEditor({ q, idx, onChange, onDelete, onMoveUp, onMoveDown, isFi
         <div className="grid grid-cols-2 gap-2">
           <div>
             <p className="text-[10px] font-semibold text-slate-400 mb-1">Type</p>
-            <select className={inp} value={q.type} onChange={e => onChange({ ...q, type: e.target.value as WebinarQuestionDraft["type"], options: [] })}>
-              {QUESTION_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
+            <Select value={q.type} onValueChange={v => onChange({ ...q, type: v as WebinarQuestionDraft["type"], options: [] })}>
+              <SelectTrigger size="sm" className="w-full text-[13px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {QUESTION_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex items-end gap-3">
             <label className="flex items-center gap-1.5 cursor-pointer pb-1.5">
@@ -293,11 +299,16 @@ function WebinarFormDialog({
                 </div>
                 <div>
                   <label className={lbl}>Language</label>
-                  <select className={inp} value={form.lang} onChange={e => set("lang", e.target.value as WebinarFormValues["lang"])}>
-                    <option value="fr">French</option>
-                    <option value="en">English</option>
-                    <option value="both">Both</option>
-                  </select>
+                  <Select value={form.lang} onValueChange={v => set("lang", v as WebinarFormValues["lang"])}>
+                    <SelectTrigger className="w-full text-[14px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="fr">French</SelectItem>
+                      <SelectItem value="en">English</SelectItem>
+                      <SelectItem value="both">Both</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <div>

@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/modules/shared/layouts/home/HomeHeader";
 import { webinarApi } from "@/modules/webinar/api";
 import type { WebinarScoring } from "@/modules/webinar/types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface QuestionOption { key: string; label_fr: string; label_en: string; }
@@ -315,19 +316,17 @@ function QuestionSlide({ q, idx, total, lang, value, onChange, onNext, onBack, s
         )}
 
         {q.type === "select" && (
-          <div className="relative">
-            <select value={(value as string) || ""} onChange={e => onChange(e.target.value)}
-              className="w-full rounded-2xl border-2 border-slate-200 focus:border-teal-500 outline-none px-5 py-4 text-[15px] text-slate-700 bg-white/80 appearance-none pr-12 transition-colors">
-              <option value="">{isEn ? "Select…" : "Sélectionner…"}</option>
+          <Select value={(value as string) || undefined} onValueChange={onChange}>
+            <SelectTrigger className="w-full h-auto rounded-2xl border-2 border-slate-200 px-5 py-4 text-[15px] text-slate-700 bg-white/80 data-[state=open]:border-teal-500 data-[state=open]:ring-teal-500/20">
+              <SelectValue placeholder={isEn ? "Select…" : "Sélectionner…"} />
+            </SelectTrigger>
+            <SelectContent>
               {q.options.length > 0
-                ? q.options.map(o => <option key={o.key} value={o.key}>{isEn ? o.label_en : o.label_fr}</option>)
-                : COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)
+                ? q.options.map(o => <SelectItem key={o.key} value={o.key}>{isEn ? o.label_en : o.label_fr}</SelectItem>)
+                : COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)
               }
-            </select>
-            <svg className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </div>
+            </SelectContent>
+          </Select>
         )}
       </motion.div>
 

@@ -102,10 +102,10 @@ const JobDetailHeader: React.FC<Props> = ({
         className="mb-6 overflow-hidden rounded-2xl bg-white"
         style={{
           border: `1px solid ${isDraft ? "#FDE68A" : "#E5E7EB"}`,
-          borderTop: `3px solid ${isDraft ? "#F59E0B" : TEAL}`,
           boxShadow: isDraft ? "0 2px 12px #D9770618" : "0 1px 4px rgba(0,0,0,0.04)",
         }}
       >
+        <div className="h-0.75 w-full" style={{ backgroundColor: isDraft ? "#F59E0B" : TEAL }} />
         <div className={cn("px-5 pt-5 md:px-6", isDraft ? "pb-5" : "pb-0")}>
 
           {/* Breadcrumbs */}

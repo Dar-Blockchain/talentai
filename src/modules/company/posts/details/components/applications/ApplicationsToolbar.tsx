@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/modules/shared/ui/shadcn/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
 
 import { TEAL } from "@/modules/company/posts/shared/constants";
 
@@ -83,11 +84,11 @@ const ApplicationsToolbar: React.FC<Props> = ({
   const currentSortLabel = SORT_OPTIONS_FLAT.find((o) => o.value === sort)?.labelKey;
 
   return (
-    <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <div className="mb-5 flex flex-nowrap items-center justify-between gap-3 overflow-x-auto">
       {/* Title + count */}
-      <div className="flex items-center gap-2.5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ backgroundColor: `${TEAL}15` }}>
-          <PeopleAltOutlined size={17} color={TEAL} />
+      <div className="flex shrink-0 items-center gap-2.5">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg leading-none" style={{ backgroundColor: `${TEAL}15` }}>
+          <PeopleAltOutlined size={17} color={TEAL} className="shrink-0" />
         </div>
         <span className="text-[15px] font-bold text-gray-900">{t("pages.applications.title")}</span>
         {!loading && totalCount !== undefined && (
@@ -102,7 +103,7 @@ const ApplicationsToolbar: React.FC<Props> = ({
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex shrink-0 flex-nowrap items-center gap-2">
         {/* Search */}
         <div className="flex h-[34px] min-w-[210px] items-center rounded-lg border border-gray-200 bg-white px-3 transition-colors focus-within:border-teal-500">
           <SearchOutlined size={15} color="#9CA3AF" className="mr-1.5" />
@@ -115,16 +116,20 @@ const ApplicationsToolbar: React.FC<Props> = ({
         </div>
 
         {/* Status filter */}
-        <select
-          value={status}
-          onChange={(e) => onStatusChange(e.target.value)}
-          className="h-[34px] cursor-pointer rounded-lg border border-gray-200 bg-white px-2 text-[13px] outline-none transition-colors focus:border-teal-500"
+        <Select
+          value={status || "all"}
+          onValueChange={(v) => onStatusChange(v === "all" ? "" : v)}
         >
-          <option value="">{t("pages.applications.status.all")}</option>
-          {Object.entries(STATUS_I18N_KEYS).map(([val, key]) => (
-            <option key={val} value={val}>{t(key)}</option>
-          ))}
-        </select>
+          <SelectTrigger size="sm" className="h-[34px] min-w-[130px] text-[13px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("pages.applications.status.all")}</SelectItem>
+            {Object.entries(STATUS_I18N_KEYS).map(([val, key]) => (
+              <SelectItem key={val} value={val}>{t(key)}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {/* Sort */}
         <DropdownMenu>

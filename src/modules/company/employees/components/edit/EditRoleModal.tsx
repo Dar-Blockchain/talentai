@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { ROLES } from "@/modules/shared/constants/employee";
 import { getRoleDescription, getRoleLabel, roleMatchesSearch } from '@/modules/company/employees/utils/employeeRoleI18n';
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/shared/ui/shadcn/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
 import { cn } from "@/lib/utils";
 
 const PURPLE = "#8310FF";
@@ -89,7 +90,7 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
   }, [role, departmentId, onSave, onClose, m]);
 
   const handleClose      = useCallback(() => { if (!loading) onClose(); }, [loading, onClose]);
-  const handleDeptChange = useCallback((e: { target: { value: string } }) => setDepartmentId(e.target.value), []);
+  const handleDeptChange = useCallback((v: string) => setDepartmentId(v === "none" ? "" : v), []);
 
   const handleRoleSelect = useCallback((v: string) => {
     setRole(v);
@@ -269,20 +270,22 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
                 {m("optional")}
               </span>
             </p>
-            <div className="relative">
-              <BusinessOutlined size={18} color="#9CA3AF" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" />
-              <select
-                value={departmentId}
-                onChange={(e) => handleDeptChange({ target: { value: e.target.value } })}
-                disabled={loading || departmentsLoading}
-                className="h-10 w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] pl-10 pr-3 text-sm text-[#111827] outline-none transition-colors hover:border-[#CBD5E1] focus:border-2 focus:border-[#8310FF] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="" className="text-[#9CA3AF]">{m("no_department")}</option>
+            <Select
+              value={departmentId || "none"}
+              onValueChange={handleDeptChange}
+              disabled={loading || departmentsLoading}
+            >
+              <SelectTrigger className="w-full bg-[#F8FAFC] text-sm text-[#111827]">
+                <BusinessOutlined size={18} color="#9CA3AF" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">{m("no_department")}</SelectItem>
                 {departments.map((d) => (
-                  <option key={d._id} value={d._id}>{d.name}</option>
+                  <SelectItem key={d._id} value={d._id}>{d.name}</SelectItem>
                 ))}
-              </select>
-            </div>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>

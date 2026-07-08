@@ -20,6 +20,7 @@ import { Button } from '@/modules/shared/ui/shadcn/button';
 import { Avatar, AvatarFallback } from '@/modules/shared/ui/shadcn/avatar';
 import { Tabs, TabsList, TabsTrigger } from '@/modules/shared/ui/shadcn/tabs';
 import { Pagination } from '@/modules/shared/ui/shadcn/pagination';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/modules/shared/ui/shadcn/select';
 import { cn } from '@/lib/utils';
 import { ADMIN_ACCENT, AdminPageHeading, AdminStatCard, AdminTableErrorRow } from '@/modules/admin/shared';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/modules/shared/ui/shadcn/tooltip';
@@ -264,13 +265,17 @@ const UserManagement: React.FC<UserManagementProps> = ({
         <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100">
           <span className="text-[12px] text-slate-400">{totalUsers.toLocaleString()} users</span>
           <div className="flex items-center gap-3">
-            <select
-              value={rowsPerPage}
-              onChange={(e) => handleChangeRowsPerPage(e as any)}
-              className="text-[12px] text-slate-600 border border-slate-200 rounded-md px-2 py-1 outline-none focus:border-teal-400"
+            <Select
+              value={String(rowsPerPage)}
+              onValueChange={(v) => handleChangeRowsPerPage({ target: { value: v } } as any)}
             >
-              {[5, 10, 25].map((n) => <option key={n} value={n}>{n} / page</option>)}
-            </select>
+              <SelectTrigger size="sm" className="text-[12px] text-slate-600">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[5, 10, 25].map((n) => <SelectItem key={n} value={String(n)}>{n} / page</SelectItem>)}
+              </SelectContent>
+            </Select>
             <Pagination
               page={page + 1}
               totalPages={totalPages}

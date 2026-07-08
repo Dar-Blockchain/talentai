@@ -4,6 +4,7 @@ import { COMPANY_SIZES } from "@/modules/settings/shared/constants";
 import { Card } from "@/modules/shared/ui/shadcn/card";
 import SectionHeader from "@/modules/shared/ui/SectionHeader";
 import { Input } from "@/modules/shared/ui/shadcn/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
 import { UserProfile } from "../../shared";
 
 interface CompanyInfoCardProps {
@@ -58,17 +59,18 @@ const CompanyInfoCard: React.FC<CompanyInfoCardProps> = ({ profile, isEditing, l
       </label>
       <label className="flex flex-col gap-1.5">
         <span className="text-xs font-semibold uppercase tracking-wide text-gray-700">Company Size</span>
-        <select
-          value={profile.size || profile.companySize || ""}
-          onChange={(e) => { onInputChange("size", e.target.value); onInputChange("companySize", e.target.value); }}
+        <Select
+          value={profile.size || profile.companySize || undefined}
+          onValueChange={(v) => { onInputChange("size", v); onInputChange("companySize", v); }}
           disabled={!isEditing}
-          className={`rounded-lg border px-3 py-2 text-sm outline-none transition-colors disabled:bg-gray-100 disabled:text-gray-500 ${
-            fieldErrors.size ? "border-red-400" : "border-gray-200 focus:border-teal-600"
-          }`}
         >
-          <option value="" disabled hidden></option>
-          {COMPANY_SIZES.map((s) => <option key={s} value={s}>{s} employees</option>)}
-        </select>
+          <SelectTrigger className={fieldErrors.size ? "border-red-400" : undefined}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {COMPANY_SIZES.map((s) => <SelectItem key={s} value={s}>{s} employees</SelectItem>)}
+          </SelectContent>
+        </Select>
         {fieldErrors.size && <span className="text-[11px] text-red-500">{fieldErrors.size}</span>}
       </label>
     </div>
