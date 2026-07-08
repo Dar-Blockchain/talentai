@@ -111,7 +111,7 @@ const TeamChatPageContent = memo(function TeamChatPageContent({
       <Dialog open={colleaguesOpen} onOpenChange={(next) => { if (!next) setColleaguesOpen(false); }}>
         <DialogContent
           showCloseButton={false}
-          className="sm:max-w-sm p-0 gap-0 flex flex-col h-[72vh] overflow-hidden rounded-[20px] border border-[#E5E7EB] shadow-[0_24px_48px_rgba(15,23,42,0.14)]"
+          className="sm:max-w-md p-0 gap-0 flex flex-col h-[72vh] overflow-hidden rounded-[20px] border border-[#E5E7EB] shadow-[0_24px_48px_rgba(15,23,42,0.14)]"
         >
           <div className="flex shrink-0 items-center justify-between border-b border-[#E5E7EB] bg-white px-5 py-3">
             <div className="flex items-center gap-2">

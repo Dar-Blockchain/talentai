@@ -75,7 +75,7 @@ const CompanyChatTopNav: React.FC<CompanyChatTopNavProps> = ({ activeChannel }) 
                 href={item.href}
                 className={cn(chatSegmentedControlCn.item, isActive && chatSegmentedControlCn.itemActive)}
               >
-                <Icon size={18} color="inherit" />
+                <Icon size={18} color="currentColor" />
                 <span className={chatSegmentedControlCn.label}>
                   {t(`top_nav.${item.labelKey}`)}
                 </span>
