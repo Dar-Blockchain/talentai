@@ -151,7 +151,7 @@ const ConversationRow = memo(function ConversationRow({
         type="button"
         onClick={handleRowClick}
         className={cn(
-          "flex min-w-0 flex-1 items-center gap-2.5 text-left",
+          "flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 text-left",
           "hover:[background:var(--row-hover-bg)] hover:[border-color:var(--row-hover-border)] hover:[transform:var(--row-hover-transform)]",
         )}
         style={{

@@ -183,7 +183,7 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
           <button
             onClick={onClose}
             disabled={isBusy}
-            className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:pointer-events-none disabled:opacity-50"
+            className="cursor-pointer rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:pointer-events-none disabled:cursor-default disabled:opacity-50"
           >
             <CloseOutlined size={16} />
           </button>

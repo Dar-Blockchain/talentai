@@ -66,7 +66,7 @@ const TeamChatPageContent = memo(function TeamChatPageContent({
           <TooltipTrigger asChild>
             <button
               onClick={() => setColleaguesOpen(true)}
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#10B981] text-white shadow-[0_2px_8px_rgba(16,185,129,0.3)] transition-all hover:-translate-y-px hover:bg-[#059669] hover:shadow-[0_4px_14px_rgba(16,185,129,0.45)]"
+              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl bg-[#10B981] text-white shadow-[0_2px_8px_rgba(16,185,129,0.3)] transition-all hover:-translate-y-px hover:bg-[#059669] hover:shadow-[0_4px_14px_rgba(16,185,129,0.45)]"
             >
               <AddCommentOutlined size={18} />
             </button>
@@ -124,7 +124,7 @@ const TeamChatPageContent = memo(function TeamChatPageContent({
             </div>
             <button
               onClick={() => setColleaguesOpen(false)}
-              className="rounded-[10px] p-1.5 text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#111827]"
+              className="cursor-pointer rounded-[10px] p-1.5 text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#111827]"
             >
               <CloseRounded size={20} />
             </button>

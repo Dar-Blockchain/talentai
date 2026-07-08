@@ -130,7 +130,7 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
         <button
           onClick={handleClose}
           disabled={loading}
-          className="rounded-md p-1.5 text-[#9CA3AF] hover:bg-[#F3F4F6] hover:text-[#374151] disabled:pointer-events-none disabled:opacity-50"
+          className="cursor-pointer rounded-md p-1.5 text-[#9CA3AF] hover:bg-[#F3F4F6] hover:text-[#374151] disabled:pointer-events-none disabled:cursor-default disabled:opacity-50"
         >
           <CloseIcon size={18} />
         </button>

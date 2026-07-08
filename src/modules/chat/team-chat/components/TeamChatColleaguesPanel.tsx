@@ -140,9 +140,9 @@ const ColleagueRow: React.FC<ColleagueRowProps> = ({
         transition: M.transition,
         cursor: isLoading ? "default" : "pointer",
         opacity: isLoading ? 0.75 : 1,
-        ["--colleague-row-hover-border" as string]: `${M.primary}40`,
+        ["--colleague-row-hover-border" as string]: `${M.primary}66`,
         ["--colleague-row-hover-shadow" as string]: M.shadowLift,
-        ["--colleague-row-hover-bg" as string]: `${M.primary}0A`,
+        ["--colleague-row-hover-bg" as string]: `${M.primary}1F`,
       }}
       className={cn(
         "flex min-w-0 flex-row items-center gap-3 rounded-xl px-[10px] py-[7px]",

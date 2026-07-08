@@ -112,7 +112,7 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
                 Step {completedSteps} of {sortedSteps.length}
               </p>
             </div>
-            <button onClick={onClose} className="p-1.5 rounded-md text-[#6b7280] hover:bg-slate-100">
+            <button onClick={onClose} className="cursor-pointer p-1.5 rounded-md text-[#6b7280] hover:bg-slate-100">
               <CloseIcon size={20} />
             </button>
           </div>

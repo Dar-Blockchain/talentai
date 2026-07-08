@@ -80,7 +80,7 @@ const DemoVideoModal: React.FC<DemoVideoModalProps> = ({ open, onClose }) => {
           <span className="text-[14px] font-semibold text-white">
             TalentAI — Product Demo
           </span>
-          <button onClick={handleClose} className="rounded-md p-1 text-[#9CA3AF] hover:text-white">
+          <button onClick={handleClose} className="cursor-pointer rounded-md p-1 text-[#9CA3AF] hover:text-white">
             <CloseIcon size={18} />
           </button>
         </div>
